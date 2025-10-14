@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Tilemaps;
 
-namespace _01.Code.System.Grids
+namespace _01.Code.Entities
 {
     public interface IPlaceable
     {

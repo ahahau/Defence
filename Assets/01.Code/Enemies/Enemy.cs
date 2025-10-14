@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using _01.Code.Entities;
-using _01.Code.Manager;
 using DG.Tweening;
 using UnityEngine;
 

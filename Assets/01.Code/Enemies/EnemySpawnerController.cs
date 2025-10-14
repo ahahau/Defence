@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using _01.Code.System;
+using _01.Code.System.Grids;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace _01.Code.Manager
+namespace _01.Code.Enemies
 {
-    public class EnemySpawnManager : MonoBehaviour
+    public class EnemySpawnerController : MonoBehaviour
     {
         [SerializeField] private GameObject enemySpawner;
         [SerializeField] private float spawnTime = 0.5f;

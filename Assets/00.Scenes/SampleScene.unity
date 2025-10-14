@@ -253,7 +253,7 @@ MonoBehaviour:
   <Grid>k__BackingField: {fileID: 1279667706}
   <Tilemap>k__BackingField: {fileID: 1279667708}
   cellSize: 1
-  commandCenter: {fileID: 0}
+  commandCenter: {fileID: 1176901304}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -575,7 +575,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a6399fb9a954808aa087b6badac6761, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enemyPrefabs: []
+  enemyPrefabs:
+  - {fileID: 1233538141649279599, guid: 1aa4641388342184c9f0e5ac1c81c5ad, type: 3}
   path: []
 --- !u!1 &1176901300
 GameObject:
@@ -587,8 +588,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1176901303}
   - component: {fileID: 1176901302}
-  - component: {fileID: 1176901304}
   - component: {fileID: 1176901301}
+  - component: {fileID: 1176901304}
   m_Layer: 0
   m_Name: CommandCenter
   m_TagString: Untagged
@@ -692,11 +693,18 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1176901300}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3edea697791a4a8b95bf814bce7ef0d6, type: 3}
+  m_Script: {fileID: 11500000, guid: d9d11886420a4f7e9df605c703688bee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  hp: 0
+  onHitEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  onDeathEvent:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1279667705
 GameObject:
   m_ObjectHideFlags: 0

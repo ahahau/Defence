@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using _01.Code.Enemies;
-using _01.Code.Manager;
+using _01.Code.Entities;
 using _01.Code.System.Grids;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-namespace _01.Code.System
+namespace _01.Code.Enemies
 {
     public class EnemySpawner : MonoBehaviour, IPlaceable
     {
@@ -15,6 +14,14 @@ namespace _01.Code.System
         [SerializeField] private List<Vector2Int> path = new List<Vector2Int>();
         private Vector3Int _position;
         public Tile Tile { get; private set; }
+
+        private void Start()
+        {
+            Vector2Int trm = new Vector2Int(GridManager.Instance.Grid.WorldToCell(transform.position).x,
+                GridManager.Instance.Grid.WorldToCell(transform.position).y); 
+            GridManager.Instance.PathFinder.FindPath(trm, new Vector2Int(0,0));
+        }
+
         public void Initialize(Vector2Int position)
         {
             _position = new Vector3Int(position.x,position.y, 0);

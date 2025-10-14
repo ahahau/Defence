@@ -1,6 +1,5 @@
 ﻿using System;
 using _01.Code.Entities;
-using _01.Code.Manager;
 using _01.Code.System.Grids;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -11,7 +10,7 @@ namespace _01.Code.Players
     {
         public Vector3Int Position { get; private set; }
 
-        private void OnEnable()
+        private void Start()
         {
             Initialize(new Vector2Int((int)transform.position.x, (int)transform.position.y));
         }

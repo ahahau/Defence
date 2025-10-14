@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using _01.Code.PathFinder;
-using _01.Code.Players;
-using _01.Code.System;
-using _01.Code.System.Grids;
+﻿using _01.Code.Players;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-namespace _01.Code.Manager
+namespace _01.Code.System.Grids
 {
     public class GridManager : MonoSingleton<GridManager>
     {

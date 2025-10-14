@@ -3,7 +3,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-namespace _01.Code.PathFinder
+namespace _01.Code.System.Grids
 {
     public class Pathfinder
     {
