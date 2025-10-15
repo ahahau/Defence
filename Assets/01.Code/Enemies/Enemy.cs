@@ -9,9 +9,10 @@ namespace _01.Code.Enemies
 {
     public class Enemy : Entity
     {
-        public List<Vector2Int> Path;
-        private void OnEnable()
+        private List<Vector2Int> _path;
+        public void Initalize(List<Vector2Int> path)
         {
+            _path = path;
             OnDeath += OnDeadHandle;
             StartCoroutine(Move());
         }
@@ -23,7 +24,7 @@ namespace _01.Code.Enemies
 
         IEnumerator Move()
         {
-            foreach (var pos in Path)
+            foreach (var pos in _path)
             {
                 Vector3 targetPos = new Vector3(pos.x, pos.y, 0);
                 Tween t = transform.DOMove(targetPos, 0.2f).SetEase(Ease.Linear);

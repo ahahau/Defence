@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using _01.Code.Manager;
 using _01.Code.System;
 using _01.Code.System.Grids;
 using UnityEngine;
@@ -8,13 +9,13 @@ namespace _01.Code.Enemies
 {
     public class EnemySpawnerController : MonoBehaviour
     {
-        [SerializeField] private GameObject enemySpawner;
+        [SerializeField] private EnemySpawner enemySpawner;
         [SerializeField] private float spawnTime = 0.5f;
         [SerializeField] private List<EnemySpawner> enemySpawners;
 
-        private void Start()
+        public void Initialize()
         {
-            SetSpawn(5);
+            SetSpawn(1);
         }
 
         private void Update()
@@ -32,21 +33,20 @@ namespace _01.Code.Enemies
         {
             for (int i = 0; i < cnt; i++)
             {
-                GameObject spawnerObject = Instantiate(enemySpawner);
-                EnemySpawner spawner = spawnerObject.GetComponent<EnemySpawner>();
-                spawner.Initialize(SpawnPos());
-                enemySpawners.Add(spawner);
+                var ins = Instantiate(enemySpawner);
+                ins.Initialize(SpawnPos());
+                enemySpawners.Add(ins);
             }
         }
         private Vector2Int SpawnPos()
         {
             while (true)
             {
-                int x = Random.Range(-30, 30);
-                int y = Random.Range(-30, 30);
-                if (Mathf.Abs(x) > GridManager.Instance.commandCenter.Position.x + 5 &&
-                    Mathf.Abs(y) > GridManager.Instance.commandCenter.Position.y + 5 &&
-                    GridManager.Instance.Tilemap.GetTile(new Vector3Int(x, y)) == null) 
+                int x = Random.Range(-5, 5);
+                int y = Random.Range(-5, 5);
+                if (Mathf.Abs(x) > GameManager.Instance.GridManager.commandCenter.transform.position.x + 3 &&
+                    Mathf.Abs(y) > GameManager.Instance.GridManager.commandCenter.transform.position.y + 3 &&
+                    GameManager.Instance.GridManager.Tilemap.GetTile(new Vector3Int(x, y)) == null) 
                 {
                     return new Vector2Int(x, y);
                 }
