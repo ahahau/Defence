@@ -100,4 +100,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 28092601d193f8644b0a6e70d7278999, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridManager: {fileID: 0}
+  onHitEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  onDeathEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  entityHealth: {fileID: 0}

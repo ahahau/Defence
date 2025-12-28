@@ -8,12 +8,12 @@ namespace _01.Code.Players
 {
     public class CommandCenter : PlaceableEntity
     {
-        [SerializeField] private EntityHealth entityHealth;
-        public override void Initialize(Vector2Int position = default)
+        
+        public override void Initialize(Vector2Int position)
         {
             position = new Vector2Int((int)transform.position.x, (int)transform.position.y);
             base.Initialize(position);
-            entityHealth.Initialize(this);
+            //entityHealth.Initialize(this);
         }
     }
 }

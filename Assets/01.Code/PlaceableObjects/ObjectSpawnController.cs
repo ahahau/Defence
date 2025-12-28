@@ -21,9 +21,10 @@ namespace _01.Code.PlaceableObjects
                 {
                     int x = Random.Range(-5, 5);
                     int y = Random.Range(-5, 5);
-                    if (GameManager.Instance.GridManager.Tilemap.GetTile(new Vector3Int(x, y)) == null)
+                    Vector2Int pos = new Vector2Int(x, y);
+                    if (GameManager.Instance.GridManager.Tilemap.TileEmpty(pos))
                     {
-                        obstacle.Initialize(new Vector2Int(x,y));
+                        obstacle.Initialize(pos);
                         break;
                     }
                 }

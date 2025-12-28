@@ -1,13 +1,11 @@
 ﻿using System.Collections.Generic;
-using _01.Code.Manager;
-using _01.Code.System;
-using _01.Code.System.Grids;
+using _01.Code.Enemies;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace _01.Code.Enemies
+namespace _01.Code.Manager
 {
-    public class EnemySpawnerController : MonoBehaviour
+    public class EnemySpawnManager : MonoBehaviour
     {
         [SerializeField] private EnemySpawner enemySpawner;
         [SerializeField] private float spawnTime = 0.5f;
@@ -17,8 +15,8 @@ namespace _01.Code.Enemies
         {
             SetSpawn(1);
         }
-
-        private void Update()
+        [ContextMenu("Spawn EnemySpawner")]
+        private void Spawn()
         {
             if (Input.GetKeyDown(KeyCode.LeftShift))
             {
@@ -46,7 +44,7 @@ namespace _01.Code.Enemies
                 int y = Random.Range(-5, 5);
                 if (Mathf.Abs(x) > GameManager.Instance.GridManager.commandCenter.transform.position.x + 3 &&
                     Mathf.Abs(y) > GameManager.Instance.GridManager.commandCenter.transform.position.y + 3 &&
-                    GameManager.Instance.GridManager.Tilemap.GetTile(new Vector3Int(x, y)) == null) 
+                    GameManager.Instance.GridManager.Tilemap.TileEmpty(new Vector2Int(x, y))) 
                 {
                     return new Vector2Int(x, y);
                 }
