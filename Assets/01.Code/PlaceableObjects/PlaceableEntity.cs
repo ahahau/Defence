@@ -17,16 +17,14 @@ namespace _01.Code.PlaceableObjects
         }
         public virtual void Initialize()
         {
-            Vector2Int _position;
             Vector2Int randomPos = GameManager.Instance.GridManager.GetRandomGridPosition();
             if(randomPos == Vector2Int.zero)
             {
                 Debug.LogError(gameObject.name + ": No Empty Tile Found");
             }
-            _position = randomPos;
-            print(":ass");
-            Position = new Vector2Int(_position.x,_position.y);
-            SetTile(_position);
+            Vector2Int position = randomPos;
+            Position = new Vector2Int(position.x,position.y);
+            SetTile(position);
         }
         public virtual void SetTile(Vector2Int tilePos)
         {

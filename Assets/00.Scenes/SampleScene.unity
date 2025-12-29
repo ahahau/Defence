@@ -873,7 +873,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   size: 30
   cellSize: 1
-  lineMaterial: {fileID: 2100000, guid: e40079a6c78c70e41acf9ca5c42dfb61, type: 2}
+  lineMat: {fileID: 2100000, guid: e40079a6c78c70e41acf9ca5c42dfb61, type: 2}
 --- !u!1001 &1809138629
 PrefabInstance:
   m_ObjectHideFlags: 0
