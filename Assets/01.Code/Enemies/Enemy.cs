@@ -10,37 +10,33 @@ namespace _01.Code.Enemies
 {
     public class Enemy : Entity
     {
-        private EnemyMovement _movement;
         private EnemyRender _render;
-        
-        
-        private int _currentPathIndex;
-        private Vector2 _targetPosition;
-        
-        public List<Vector2Int> Path {get; private set;}
+        private EnemyMovement _movement;
+        public List<Vector2Int> Path { get; private set; }
+
         public void Initialize(List<Vector2Int> path)
         {
-            base.Initialize();
             Path = path;
-            _movement = GetCompo<EnemyMovement>();
-            _render = GetCompo<EnemyRender>();
-            _targetPosition = new Vector2(transform.position.x, transform.position.y);
-            _currentPathIndex = 0;
+            _render = GetModule<EnemyRender>();
+            _movement = GetModule<EnemyMovement>();
+            
+            _movement.SetPath(path);
+            _movement.MoveNext();
         }
 
-        private void Update()
+
+        public void OnMoveDirection(Vector2 dir)
         {
-            if (Mathf.Abs(_targetPosition.y - transform.position.y) <= 0.05f && Mathf.Abs(_targetPosition.x - transform.position.x) <= 0.05f)
+            //_render.ChangeAnimation(dir);
+        }
+
+        private void OnCollisionEnter2D(Collision2D other)
+        {
+            if (other.gameObject.CompareTag("CC"))
             {
-                _currentPathIndex++;
-                if (_currentPathIndex >= Path.Count)
-                {
-                    _movement.isMoving = false;
-                    return;
-                }
-                _targetPosition = new Vector2(Path[_currentPathIndex].x, Path[_currentPathIndex].y);
-                _render.ChangeAnimation(_targetPosition - new Vector2(transform.position.x, transform.position.y));
-                _movement.targetPosition = _targetPosition;
+                other.gameObject.TryGetComponent<EntityHealth>(out var health);
+                health?.ApplyDamage(4, this);
+                Destroy(gameObject);
             }
         }
     }

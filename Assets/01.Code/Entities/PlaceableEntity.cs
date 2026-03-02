@@ -1,10 +1,8 @@
-﻿using _01.Code.Entities;
-using _01.Code.Manager;
+﻿using _01.Code.Manager;
 using _01.Code.System.Grids;
 using UnityEngine;
-using UnityEngine.Tilemaps;
 
-namespace _01.Code.PlaceableObjects
+namespace _01.Code.Entities
 {
     public abstract class PlaceableEntity : Entity
     {
@@ -15,6 +13,7 @@ namespace _01.Code.PlaceableObjects
             Position = new Vector2Int(position.x,position.y);
             SetTile(position);
         }
+
         public virtual void Initialize()
         {
             Vector2Int randomPos = GameManager.Instance.GridManager.GetRandomGridPosition();

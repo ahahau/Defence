@@ -1,6 +1,6 @@
-﻿using _01.Code.Enemies;
-using _01.Code.PlaceableObjects;
-using _01.Code.Players;
+﻿using _01.Code.Buildings;
+using _01.Code.Enemies;
+using _01.Code.Entities;
 using UnityEngine;
 
 namespace _01.Code.Manager

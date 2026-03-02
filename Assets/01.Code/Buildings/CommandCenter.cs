@@ -1,10 +1,7 @@
-﻿using System;
-using _01.Code.Entities;
-using _01.Code.PlaceableObjects;
+﻿using _01.Code.Entities;
 using UnityEngine;
-using UnityEngine.Tilemaps;
 
-namespace _01.Code.Players
+namespace _01.Code.Buildings
 {
     public class CommandCenter : PlaceableEntity
     {

@@ -2,6 +2,6 @@
 {
     public interface IDamageable
     {
-        public void ApplyDamage(int damage, Entity dealer);
+        public void ApplyDamage(float damage, Entity dealer);
     }
 }

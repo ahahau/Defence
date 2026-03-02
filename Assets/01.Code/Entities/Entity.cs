@@ -1,46 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using _01.Code.Enemies;
+using _01.Code.Modules;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace _01.Code.Entities
 {
-    public class Entity : MonoBehaviour
-    {
-        public UnityEvent OnHitEvent;
-        public UnityEvent OnDeathEvent;
-        
+    public class Entity : ModuleOwner
+    { 
+        [field: SerializeField] public bool IsSuperArmor { get; set; }
         public bool IsDead { get; set; }
-        protected Dictionary<Type, IEntityComponent> _components;
-
-        public void EntityDestroy()
-        {
-            Destroy(gameObject);
-        }
-        protected virtual void Initialize()
-        {
-            _components = new Dictionary<Type, IEntityComponent>();
-            AddComponents();
-            InitializeComponents();
-        }
         
+        public UnityEvent OnHit;
+        public UnityEvent OnDeath;
 
-        protected virtual void AddComponents()
+
+        protected virtual void Start()
         {
-            GetComponentsInChildren<IEntityComponent>().ToList()
-                .ForEach(component => _components.Add(component.GetType(), component));
+            IsDead = false;
         }
-
-        protected virtual void InitializeComponents()
-        {
-            _components.Values.ToList().ForEach(component => component.Initialize(this));
-        }
-        
-        public T GetCompo<T>() where T : IEntityComponent
-            => (T)_components.GetValueOrDefault(typeof(T));
-
-        public IEntityComponent GetCompo(Type type)
-            => _components.GetValueOrDefault(type);
     }
 }

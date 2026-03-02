@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using _01.Code.Entities;
 using _01.Code.Manager;
-using _01.Code.PlaceableObjects;
 using _01.Code.System.Grids;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -20,7 +19,7 @@ namespace _01.Code.Enemies
         {
             if (Keyboard.current.spaceKey.wasPressedThisFrame)
             {
-                StartCoroutine(EnemySpawn(0.1f));
+                StartCoroutine(EnemySpawn(0.5f));
             }
         }
 

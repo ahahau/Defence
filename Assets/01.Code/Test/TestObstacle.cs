@@ -1,7 +1,6 @@
-﻿using System;
+﻿using _01.Code.Buildings;
 using _01.Code.Enemies;
 using _01.Code.Manager;
-using _01.Code.PlaceableObjects;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -11,6 +10,7 @@ namespace _01.Code.Test
     {
         [SerializeField] private GameObject obstaclePrefab;
         [SerializeField] private GameObject enemyPrefab;
+        [SerializeField] private GameObject obstacb;
         private void Update()
         {
             if (Input.GetKeyDown(KeyCode.Mouse0))
@@ -22,7 +22,7 @@ namespace _01.Code.Test
                     Debug.Log("Tile is not Empty " + mousePos);
                     return;
                 }
-                Obstacle obstacle = Instantiate(obstaclePrefab, Vector3.zero, Quaternion.identity).GetComponent<Obstacle>();
+                Building obstacle = Instantiate(obstaclePrefab, Vector3.zero, Quaternion.identity).GetComponent<Building>();
                 obstacle.Initialize(GameManager.Instance.GridManager.Tilemap.CellToWorld(gridPos));
             }
             
@@ -36,6 +36,18 @@ namespace _01.Code.Test
                     return;
                 }
                 EnemySpawner obstacle = Instantiate(enemyPrefab, Vector3.zero, Quaternion.identity).GetComponent<EnemySpawner>();
+                obstacle.Initialize(GameManager.Instance.GridManager.Tilemap.CellToWorld(gridPos));
+            }
+            if (Keyboard.current.eKey.wasPressedThisFrame)
+            {
+                Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                Vector2Int gridPos = GameManager.Instance.GridManager.Tilemap.WorldToCell(mousePos);
+                if(!GameManager.Instance.GridManager.Tilemap.Tiles[gridPos.x][gridPos.y].IsEmpty())
+                {
+                    Debug.Log("Tile is not Empty " + mousePos);
+                    return;
+                }
+                Obstacle obstacle = Instantiate(obstacb, Vector3.zero, Quaternion.identity).GetComponent<Obstacle>();
                 obstacle.Initialize(GameManager.Instance.GridManager.Tilemap.CellToWorld(gridPos));
             }
         }

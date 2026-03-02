@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
+using _01.Code.Buildings;
 using _01.Code.Manager;
 using UnityEngine;
 
-namespace _01.Code.PlaceableObjects
+namespace _01.Code.Entities
 {
     public class ObjectSpawnController : MonoBehaviour
     {

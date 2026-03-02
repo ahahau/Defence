@@ -22,7 +22,7 @@ namespace _01.Code.System.Grids
 
             List<Vector2Int> openList = new List<Vector2Int> { start };
             gCost[start] = 0;
-            fCost[start] = GetDistance(start, end);
+            fCost[start] = GetDistance(start, end);      
 
             int safety = 0;
 
@@ -76,7 +76,7 @@ namespace _01.Code.System.Grids
         private Vector2Int GetLowestFCost(List<Vector2Int> openList, Dictionary<Vector2Int, int> fCost)
         {
             Vector2Int lowest = openList[0];
-            int lowestCost = fCost.ContainsKey(lowest) ? fCost[lowest] : int.MaxValue;
+            int lowestCost = fCost.GetValueOrDefault(lowest, int.MaxValue);
 
             foreach (var pos in openList)
             {
