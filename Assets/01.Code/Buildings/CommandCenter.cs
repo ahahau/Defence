@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace _01.Code.Buildings
 {
-    public class CommandCenter : PlaceableEntity
+    public class CommandCenter : Building
     {
         
         public override void Initialize(Vector2Int position)

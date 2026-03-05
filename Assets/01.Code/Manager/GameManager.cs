@@ -9,9 +9,13 @@ namespace _01.Code.Manager
     {
         public static GameManager Instance;
         public GridManager GridManager { get; private set; }
-        public SpawnerManager SpawnerManager { get; private set; }
         
         public CostManager CostManager { get; private set; }
+        public UIManager UiManager { get; private set; }
+        
+        public WaveManager WaveManager { get; private set; }
+        
+        public EnemySpawnerManager EnemySpawnerManager { get; private set; }
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -24,12 +28,17 @@ namespace _01.Code.Manager
             }
             
             GridManager = GetComponentInChildren<GridManager>();
-            SpawnerManager = GetComponentInChildren<SpawnerManager>(); 
             CostManager = GetComponentInChildren<CostManager>();
+            UiManager = GetComponentInChildren<UIManager>();
+            WaveManager = GetComponentInChildren<WaveManager>();
+            EnemySpawnerManager = GetComponentInChildren<EnemySpawnerManager>();
+            
             
             GridManager.Initialize();
-            SpawnerManager.Initialize();
             CostManager.Initialize();
+            UiManager.Initialize();
+            WaveManager.Initialize();
+            EnemySpawnerManager.Initialize();
         }
         
     }

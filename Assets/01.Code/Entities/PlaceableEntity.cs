@@ -27,10 +27,9 @@ namespace _01.Code.Entities
         }
         public virtual void SetTile(Vector2Int tilePos)
         {
-            if (!GameManager.Instance.GridManager.Tilemap.TileObjectInstall(tilePos, gameObject))
+            if (!GameManager.Instance.GridManager.Tilemap.TileObjectInstall(tilePos, this))
             {
-                Debug.Log(gameObject.name + ": Tile object not found or Tile is not Empty " + tilePos);
-                return;
+                Debug.LogError(gameObject.name + ": Tile object not found or Tile is not Empty " + tilePos);
             }
             
             transform.position = GameManager.Instance.GridManager.Grid.CellToWorld(new Vector3Int(Position.x,Position.y, 0));

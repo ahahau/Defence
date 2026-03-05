@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace _01.Code.Test
 {
@@ -9,6 +10,11 @@ namespace _01.Code.Test
         public Material lineMat; 
 
         void Start()
+        {
+            
+        }
+
+        private void OnValidate()
         {
             DrawGrid();
         }

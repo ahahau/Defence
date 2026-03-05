@@ -2,9 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using _01.Code.Entities;
-using DG.Tweening;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 namespace _01.Code.Enemies
 {
@@ -12,18 +10,29 @@ namespace _01.Code.Enemies
     {
         private EnemyRender _render;
         private EnemyMovement _movement;
-        public List<Vector2Int> Path { get; private set; }
+        private EnemyHealth _enemyHealth;
+        public List<Vector2Int> Path { get; private set; }          
 
-        public void Initialize(List<Vector2Int> path)
+        public void Initialize(List<Vector2Int> path, EnemySpawner parent/*, EnemyDataSO data, int level*/)
         {
             Path = path;
             _render = GetModule<EnemyRender>();
             _movement = GetModule<EnemyMovement>();
-            
+            _enemyHealth = GetModule<EnemyHealth>();
+            // TODO : 이거 고쳐야함
+            //_enemyHealth.Initialize(data, level);
+            OnDeath?.AddListener(() =>
+            {
+                parent.EnemyDied(this);
+            });
             _movement.SetPath(path);
             _movement.MoveNext();
         }
 
+        private void OnDestroy()
+        {
+            OnDeath?.Invoke();
+        }
 
         public void OnMoveDirection(Vector2 dir)
         {

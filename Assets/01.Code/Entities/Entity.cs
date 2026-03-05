@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using _01.Code.Enemies;
-using _01.Code.Modules;
+﻿using _01.Code.Modules;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -16,7 +12,7 @@ namespace _01.Code.Entities
         public UnityEvent OnHit;
         public UnityEvent OnDeath;
 
-
+        
         protected virtual void Start()
         {
             IsDead = false;

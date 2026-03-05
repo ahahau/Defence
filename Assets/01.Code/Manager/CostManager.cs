@@ -32,7 +32,7 @@ namespace _01.Code.Manager
 
         private readonly Dictionary<CostType, int> _current = new();
         private readonly Dictionary<CostType, int> _max = new();
-
+		
         /// <summary>
         /// (type, current, max) 형태로 변경 알림
         /// </summary>

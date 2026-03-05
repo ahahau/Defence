@@ -2,90 +2,41 @@
 using System.Collections;
 using System.Collections.Generic;
 using _01.Code.Enemies;
+using _01.Code.Manager;
 using _01.Code.WaveSystem;
 using UnityEngine;
-
-public class WaveManager : MonoBehaviour
+// ** 규칙 ** 웨이브에 관련한건 WaveManager에서만 관리한다. 이외의 다른 
+public class WaveManager : MonoBehaviour, IManageable
 {
-    [Header("Data")]
-    [SerializeField] private WaveDataSO database;
-    [SerializeField] private EnemySpawner spawner;
-
-    [Header("Options")]
-    [SerializeField] private bool autoStart = true;
-
-    public event Action<int> OnWaveStarted;   
-    public event Action<int> OnWaveCleared;   
-    public event Action OnAllWavesCleared;
-
-    private readonly HashSet<Enemy> _alive = new();
-    private Coroutine _routine;
-    private int _currentWaveIndex = -1;
+    public event Action OnWaveStarted;   
+    public event Action OnWaveCleared;   
     private bool _isRunning;
 
-    private void Start()
+    public void Initialize()
     {
-        if (autoStart) StartWaves();
+        
     }
+    
 
     public void StartWaves()
     {
-        if (_isRunning) return;
-        if (database == null || database.waves == null || database.waves.Count == 0)
-        {
-            Debug.LogWarning("WaveManager: database is empty");
+        if (_isRunning)
             return;
-        }
-        if (spawner == null)
-        {
-            Debug.LogWarning("WaveManager: spawner is null");
-            return;
-        }
-
         _isRunning = true;
-        _routine = StartCoroutine(RunWaves());
+        RunWaves();
     }
 
-    public void StopWaves()
+    private void RunWaves()
     {
-        _isRunning = false;
-        if (_routine != null) StopCoroutine(_routine);
-        _routine = null;
+        OnWaveStarted?.Invoke();
+        GameManager.Instance.EnemySpawnerManager.RunWaves();
     }
 
-    private IEnumerator RunWaves()
+
+    public void WaveEnd()
     {
-        for (int i = 0; i < database.waves.Count; i++)
-        {
-            _currentWaveIndex = i;
-            var wave = database.waves[i];
-
-            if (wave.preDelay > 0) yield return new WaitForSeconds(wave.preDelay);
-
-            OnWaveStarted?.Invoke(i + 1);
-
-            // spawn groups
-            foreach (var g in wave.groups)
-            {
-                if (g == null || g.enemyPrefab == null) continue;
-
-                if (g.startDelay > 0) yield return new WaitForSeconds(g.startDelay);
-
-                for (int c = 0; c < g.count; c++)
-                {
-                    var enemy = spawner.EnemySpawn(g.startDelay);
-                    if (g.interval > 0) yield return new WaitForSeconds(g.interval);
-                }
-            }
-            yield return new WaitUntil(() => _alive.Count == 0);
-
-            OnWaveCleared?.Invoke(i + 1);
-
-            if (wave.postDelay > 0) yield return new WaitForSeconds(wave.postDelay);
-        }
-
+        if (!_isRunning) return;
         _isRunning = false;
-        OnAllWavesCleared?.Invoke();
+        OnWaveCleared?.Invoke();
     }
-
 }

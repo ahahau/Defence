@@ -6,16 +6,16 @@ namespace _01.Code.Entities
 {
     public class EntityHealth : MonoBehaviour, IModule, IDamageable
     {
-        private Entity _entity;
+        protected Entity _entity;
         
-        [SerializeField] private float maxHealth;
-        [SerializeField] private float currentHealth;
+        [SerializeField] protected float baseHealth;
+        [SerializeField] protected float currentHealth;
+        
         public void Initialize(ModuleOwner owner)
         {
             _entity = owner as Entity;
-            currentHealth = maxHealth;
+            currentHealth = baseHealth;
         }
-
         public void ApplyDamage(float damage, Entity dealer)
         {
             currentHealth -= damage;
@@ -23,6 +23,7 @@ namespace _01.Code.Entities
             {
                 _entity.OnDeath?.Invoke();
                 Destroy(gameObject);
+                
             }
         }
     }

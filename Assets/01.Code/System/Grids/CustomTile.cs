@@ -1,4 +1,5 @@
 ﻿using System;
+using _01.Code.Entities;
 using UnityEngine;
 
 namespace _01.Code.System.Grids
@@ -10,21 +11,31 @@ namespace _01.Code.System.Grids
         Wet,
         Hearty
     }
+    public enum TileObjectType
+    {
+        None,
+        Tower,
+        Obstacle,
+        Enemy
+    }
     [Serializable]
     public class CustomTile
     {
         public TileType Type { get; private set; }
-        public CustomTile(Vector2 position, TileType type = TileType.Normal)
+        public TileObjectType ObjectType { get; private set; }
+        public CustomTile(Vector2 position, TileType type = TileType.Normal, TileObjectType objectType = TileObjectType.None)
         {
             Position = position;
             Type = type;
+            ObjectType = objectType;
         }
-        [field:SerializeField]public Vector2 Position { get; private set; }
-        public GameObject TileObject { get; private set; }
-
-        public void SetTileObj(GameObject tileObj = null)
+        [field:SerializeField] public Vector2 Position { get; private set; }
+        public Entity TileObject { get; private set; }
+        // <summary>아무것도 안넣으면 </summary>
+        public void SetTileObj(Entity tileObj = null, TileObjectType objectType = TileObjectType.None)
         {
             TileObject = tileObj;
+            ObjectType = objectType;
         }
 
         public bool IsEmpty()

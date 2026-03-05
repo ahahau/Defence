@@ -1,4 +1,5 @@
 ﻿using System;
+using _01.Code.Entities;
 using UnityEngine;
 
 namespace _01.Code.System.Grids
@@ -18,7 +19,7 @@ namespace _01.Code.System.Grids
             Size = size;
             Initialize();
         }
-
+        
         public CustomTilemap(int x, int y)
         {
             Size = new Vector2Int(x, y);
@@ -40,7 +41,34 @@ namespace _01.Code.System.Grids
                 }
             }
         }
-
+        /// <summary>
+        /// 셀 좌표로 반환함
+        /// </summary>
+        public Vector2Int Randomize(bool isBreakable)
+        {
+            Vector2Int randomPos = new Vector2Int();
+           
+            while (true)
+            {
+                randomPos.x = UnityEngine.Random.Range(0, Size.x * 2 + 1);
+                randomPos.y = UnityEngine.Random.Range(0, Size.y * 2 + 1);
+                if (Tiles[randomPos.x][randomPos.y].IsEmpty())
+                {
+                    return randomPos;
+                }
+                if (isBreakable)
+                {
+                    if (Tiles[randomPos.x][randomPos.y].ObjectType == TileObjectType.Obstacle)
+                    {
+                        return randomPos;
+                    }
+                }
+            }
+        }
+        public void BreakTile(Vector2Int position)
+        {
+            
+        }
         public Vector2Int WorldToCell(Vector2 worldPosition)
         {
             int x = (int)Math.Round(worldPosition.x, MidpointRounding.AwayFromZero) + Size.x;
@@ -65,27 +93,28 @@ namespace _01.Code.System.Grids
             Vector2Int cellPos = WorldToCell(position);
 
             bool empty = Tiles[cellPos.x][cellPos.y].IsEmpty();
+            
             return empty;
         }
 
         /// <summary>
         /// 이 함수는 타일에 오브젝트를 설치 해주는 함수입니다.
         /// </summary>
-        /// <param name="position">그리드로 셀전환한 position을 전달</param>
+        /// <param name="worldPosition">그리드로 셀전환한 position을 전달</param>
         /// <param name="obj">tile에 들어갈 타일위에 올라갈 게임 오브젝트를 넣어주세요 먼저 TileEmpty를 통해 없는지 체크해야 정상적으로 동작합니다</param>
         /// <returns></returns>
-        public bool TileObjectInstall(Vector2Int position, GameObject obj)
+        public bool TileObjectInstall(Vector2Int worldPosition, Entity obj)
         {
-            Vector2Int cellPos = WorldToCell(position);
-            bool isValidPosition = IsValidPosition(position);
+            Vector2Int cellPos = WorldToCell(worldPosition);
+            bool isValidPosition = IsValidPosition(worldPosition);
             if (!isValidPosition || !Tiles[cellPos.x][cellPos.y].IsEmpty())
                 return false;
             Tiles[cellPos.x][cellPos.y].SetTileObj(obj);
             return true;
         }
-        private bool IsValidPosition(Vector2Int position)
+        private bool IsValidPosition(Vector2Int worldPosition)
         {
-            return position.x >= -Size.x && position.x < Size.x && position.y >= -Size.y && position.y < Size.y;
+            return worldPosition.x >= -Size.x && worldPosition.x < Size.x && worldPosition.y >= -Size.y && worldPosition.y < Size.y;
         }
     }
 }
