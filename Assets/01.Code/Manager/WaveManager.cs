@@ -10,7 +10,7 @@ public class WaveManager : MonoBehaviour, IManageable
 {
     public event Action OnWaveStarted;   
     public event Action OnWaveCleared;   
-    private bool _isRunning;
+    private bool _isRunning = false;
 
     public void Initialize()
     {
@@ -23,6 +23,7 @@ public class WaveManager : MonoBehaviour, IManageable
         if (_isRunning)
             return;
         _isRunning = true;
+        print("웨이브 시작");
         RunWaves();
     }
 

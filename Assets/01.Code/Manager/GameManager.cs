@@ -36,7 +36,7 @@ namespace _01.Code.Manager
             
             GridManager.Initialize();
             CostManager.Initialize();
-            UiManager.Initialize();
+            //UiManager.Initialize();
             WaveManager.Initialize();
             EnemySpawnerManager.Initialize();
         }
