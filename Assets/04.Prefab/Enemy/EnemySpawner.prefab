@@ -240,14 +240,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a6399fb9a954808aa087b6badac6761, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  OnHitEvent:
+  <IsSuperArmor>k__BackingField: 0
+  OnHit:
     m_PersistentCalls:
       m_Calls: []
-  OnDeathEvent:
+  OnDeath:
     m_PersistentCalls:
       m_Calls: []
   <Tile>k__BackingField:
     <Position>k__BackingField: {x: 0, y: 0}
   path: []
-  enemyPrefab: {fileID: 9145050925329036043, guid: 1aa4641388342184c9f0e5ac1c81c5ad, type: 3}
+  waveDataList: []
   lineRenderer: {fileID: 482112727154854607}
+  testEnemyPrefab: {fileID: 9145050925329036043, guid: 1aa4641388342184c9f0e5ac1c81c5ad, type: 3}

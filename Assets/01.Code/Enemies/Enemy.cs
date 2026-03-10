@@ -11,11 +11,11 @@ namespace _01.Code.Enemies
         private EnemyRender _render;
         private EnemyMovement _movement;
         private EnemyHealth _enemyHealth;
-        public List<Vector2Int> Path { get; private set; }          
+        private List<Vector2Int> _path;         
 
         public void Initialize(List<Vector2Int> path, EnemySpawner parent/*, EnemyDataSO data, int level*/)
         {
-            Path = path;
+            _path = path;
             _render = GetModule<EnemyRender>();
             _movement = GetModule<EnemyMovement>();
             _enemyHealth = GetModule<EnemyHealth>();

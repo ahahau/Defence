@@ -45,7 +45,7 @@ namespace _01.Code.Enemies
             Vector2 dir = target - currentPos;
 
             _enemy.OnMoveDirection(dir);
-
+            
             float distance = dir.magnitude;
             float duration = distance / moveSpeed;
 

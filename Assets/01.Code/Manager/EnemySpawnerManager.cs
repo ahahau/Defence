@@ -59,8 +59,9 @@ namespace _01.Code.Manager
             for (int i = 0; i < 5; i++)
             {
                 Vector2Int pos = GameManager.Instance.GridManager.Tilemap.Randomize(true);
-                EnemySpawner spawner = Instantiate(enemySpawnerPrefab, new Vector3(pos.x, pos.y, 0), Quaternion.identity);
-                spawner.Initialize(pos);
+                Vector2Int worldPos = GameManager.Instance.GridManager.Tilemap.CellToWorld(pos);
+                EnemySpawner spawner = Instantiate(enemySpawnerPrefab, new Vector3(worldPos.x, worldPos.y, 0), Quaternion.identity);
+                spawner.Initialize(worldPos);
                 CurrentWaveEnemySpawnerList.Add(spawner);
             }
         }

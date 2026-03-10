@@ -31,7 +31,7 @@ namespace _01.Code.Entities
             {
                 Debug.LogError(gameObject.name + ": Tile object not found or Tile is not Empty " + tilePos);
             }
-            
+           
             transform.position = GameManager.Instance.GridManager.Grid.CellToWorld(new Vector3Int(Position.x,Position.y, 0));
         }
     }

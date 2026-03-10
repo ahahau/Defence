@@ -47,22 +47,23 @@ namespace _01.Code.System.Grids
         public Vector2Int Randomize(bool isBreakable)
         {
             Vector2Int randomPos = new Vector2Int();
-           
+            
             while (true)
             {
-                randomPos.x = UnityEngine.Random.Range(0, Size.x * 2 + 1);
-                randomPos.y = UnityEngine.Random.Range(0, Size.y * 2 + 1);
+                randomPos.x = UnityEngine.Random.Range(Size.x / 2, Size.x * 3 / 2 + 1);
+                randomPos.y = UnityEngine.Random.Range(Size.y / 2, Size.y * 3 / 2 + 1);
                 if (Tiles[randomPos.x][randomPos.y].IsEmpty())
                 {
                     return randomPos;
                 }
-                if (isBreakable)
-                {
-                    if (Tiles[randomPos.x][randomPos.y].ObjectType == TileObjectType.Obstacle)
-                    {
-                        return randomPos;
-                    }
-                }
+                //Todo : isBreakable이 true면 부술수 있는 타일도 반환하게끔 바꿔야함
+                //if (isBreakable)
+                //{
+                //    if (Tiles[randomPos.x][randomPos.y].ObjectType == TileObjectType.Obstacle)
+                //    {
+                //        return randomPos;
+                //    }
+                //}
             }
         }
         public void BreakTile(Vector2Int position)
@@ -89,9 +90,9 @@ namespace _01.Code.System.Grids
             {
                 return false;
             }
-
+            
             Vector2Int cellPos = WorldToCell(position);
-
+            
             bool empty = Tiles[cellPos.x][cellPos.y].IsEmpty();
             
             return empty;
@@ -106,7 +107,9 @@ namespace _01.Code.System.Grids
         public bool TileObjectInstall(Vector2Int worldPosition, Entity obj)
         {
             Vector2Int cellPos = WorldToCell(worldPosition);
-            bool isValidPosition = IsValidPosition(worldPosition);
+            bool isValidPosition = IsValidPosition(worldPosition); 
+            if(worldPosition != Vector2Int.zero)
+                Debug.Log(isValidPosition);
             if (!isValidPosition || !Tiles[cellPos.x][cellPos.y].IsEmpty())
                 return false;
             Tiles[cellPos.x][cellPos.y].SetTileObj(obj);

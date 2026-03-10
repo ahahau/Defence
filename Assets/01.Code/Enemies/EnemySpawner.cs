@@ -17,13 +17,13 @@ namespace _01.Code.Enemies
         
         [SerializeField] private Enemy testEnemyPrefab; // Todo : 테스트용 프리팹 나중에 삭제
         
-        private HashSet<Enemy> alive = new HashSet<Enemy>();
+        private HashSet<Enemy> _alive = new HashSet<Enemy>();
         
-        private bool isSpawning = false;
+        private bool _isSpawning = false;
 
         private IEnumerator EnemySpawn(float sec)
         {
-            isSpawning = false;
+            _isSpawning = false;
             Vector2Int target = Vector2Int.RoundToInt(GameManager.Instance.GridManager.commandCenter.transform.position);
             path = GameManager.Instance.GridManager.PathFinder.FindPath(new Vector2Int(Position.x, Position.y), target);
             lineRenderer.positionCount = path.Count;
@@ -34,11 +34,11 @@ namespace _01.Code.Enemies
             for (int i = 0; i < 5; i++)
             {
                 Enemy enemy = Instantiate(testEnemyPrefab, transform.position, Quaternion.identity);
-                alive.Add(enemy);
+                _alive.Add(enemy);
                 enemy.Initialize(path, this);
                 yield return new WaitForSeconds(sec);
             }
-            isSpawning = false;
+            _isSpawning = false;
         }
 
         public void StartWave()
@@ -47,8 +47,8 @@ namespace _01.Code.Enemies
         }
         public void EnemyDied(Enemy enemy)
         {
-            alive.Remove(enemy);
-            if(alive.Count >= 0 && isSpawning)
+            _alive.Remove(enemy);
+            if(_alive.Count >= 0 && _isSpawning)
                 GameManager.Instance.EnemySpawnerManager.SpawnerAllEnemyDied(this);
         }
     }
