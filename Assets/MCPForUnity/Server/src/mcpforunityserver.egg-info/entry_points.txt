@@ -1,0 +1,3 @@
+[console_scripts]
+mcp-for-unity = main:main
+unity-mcp = cli.main:main
