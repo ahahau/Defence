@@ -1,64 +1,114 @@
-﻿using System;
 using System.Collections.Generic;
+using _01.Code.Manager;
 using UnityEngine;
 
 namespace _01.Code.Entities
 {
-    [Serializable]
-    public class AttackField
-    {
-        public Vector2 position;
-        public float size;
-        public string animationParam;
-    }
     public class EntitySensor : MonoBehaviour
     {
         [SerializeField] private LayerMask targetLayer;
-        
-        [SerializeField] private List<AttackField> attackFields;
+        [SerializeField] private AttackPatternDataSO attackPatternData;
+        [SerializeField] private List<Vector2Int> attackOffsets = new();
+        [SerializeField] [Range(0.1f, 1f)] private float cellSearchSize = 0.8f;
 
-        
-        public Vector2 BoxCastTarget(out RaycastHit2D hit)
+        public AttackPatternDataSO AttackPatternData => attackPatternData;
+        public IReadOnlyList<Vector2Int> AttackOffsets => HasPatternOffsets() ? attackPatternData.AttackOffsets : attackOffsets;
+
+        public bool TryGetTargetCollider(Vector2Int originCell, out Collider2D targetCollider)
         {
-            foreach (var field in attackFields)
+            IReadOnlyList<Vector2Int> offsets = AttackOffsets;
+            for (int i = 0; i < offsets.Count; i++)
             {
-                Vector2 center = (Vector2)transform.position + field.position;
-                Vector2 size = Vector2.one * field.size;
-
-                hit = Physics2D.BoxCast(center, size, 0, Vector2.zero, 0, targetLayer);
-                if (hit.collider != null)
-                    return field.position;
-            }
-            hit = new RaycastHit2D();
-            return Vector2.zero;
-        }
-
-        public bool IsTargetInRange()
-        {
-            foreach(var field in attackFields)
-            {
-                Vector2 center = (Vector2)transform.position + field.position;
-                Vector2 size = Vector2.one * field.size;
-
-                Collider2D hitCollider = Physics2D.OverlapBox(center, size, 0, targetLayer);
-                if (hitCollider != null)
+                Vector2Int targetCell = originCell + offsets[i];
+                if (TryGetColliderAtCell(targetCell, out targetCollider))
+                {
                     return true;
+                }
             }
+
+            targetCollider = null;
             return false;
-            //hitCollider = Physics2D.OverlapCircle(transform.position, range, targetLayer);
-            //return hitCollider != null;
         }
+
+        public bool TryGetTargetEntity(Vector2Int originCell, out Entity targetEntity)
+        {
+            if (TryGetTargetCollider(originCell, out Collider2D targetCollider) &&
+                targetCollider.TryGetComponent(out targetEntity))
+            {
+                return true;
+            }
+
+            targetEntity = null;
+            return false;
+        }
+
+        public bool TryGetDamageableTarget(Vector2Int originCell, out IDamageable damageable, out Entity targetEntity)
+        {
+            if (TryGetTargetCollider(originCell, out Collider2D targetCollider))
+            {
+                targetCollider.TryGetComponent(out targetEntity);
+                if (targetCollider.TryGetComponent(out damageable))
+                {
+                    return true;
+                }
+            }
+            
+            damageable = null;
+            targetEntity = null;
+            return false;
+        }
+
+        public bool IsTargetInRange(Vector2Int originCell)
+        {
+            return TryGetTargetCollider(originCell, out _);
+        }
+
+        private bool TryGetColliderAtCell(Vector2Int targetCell, out Collider2D targetCollider)
+        {
+            Vector2 worldCenter = GetWorldCenter(targetCell);
+            Vector2 searchSize = Vector2.one * cellSearchSize;
+            targetCollider = Physics2D.OverlapBox(worldCenter, searchSize, 0f, targetLayer);
+            return targetCollider != null;
+        }
+
+        private Vector2 GetWorldCenter(Vector2Int cellPosition)
+        {
+            if (GameManager.Instance != null && GameManager.Instance.GridManager != null)
+            {
+                Vector3 cellWorld = GameManager.Instance.GridManager.Grid.CellToWorld(new Vector3Int(cellPosition.x, cellPosition.y, 0));
+                return new Vector2(cellWorld.x, cellWorld.y);
+            }
+
+            return cellPosition;
+        }
+
+        private Vector2Int GetGizmoOriginCell()
+        {
+            if (GameManager.Instance != null && GameManager.Instance.GridManager != null)
+            {
+                return GameManager.Instance.GridManager.Tilemap.WorldToCell(transform.position);
+            }
+
+            return Vector2Int.RoundToInt(transform.position);
+        }
+
         private void OnDrawGizmos()
         {
             Gizmos.color = Color.red;
-            
-            foreach (var field in attackFields)
-            {
-                Vector2 center = (Vector2)transform.position + field.position;
-                Vector2 size = Vector2.one * field.size;
 
-                Gizmos.DrawWireCube(center, size);
+            Vector2Int originCell = GetGizmoOriginCell();
+            IReadOnlyList<Vector2Int> offsets = AttackOffsets;
+            for (int i = 0; i < offsets.Count; i++)
+            {
+                Vector2Int targetCell = originCell + offsets[i];
+                Vector2 worldCenter = GetWorldCenter(targetCell);
+                Gizmos.DrawWireCube(worldCenter, Vector3.one * cellSearchSize);
             }
+        }
+
+        private bool HasPatternOffsets()
+        {
+            return attackPatternData != null && attackPatternData.AttackOffsets != null && attackPatternData.AttackOffsets.Count > 0;
         }
     }
 }

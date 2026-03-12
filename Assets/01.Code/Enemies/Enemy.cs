@@ -11,7 +11,8 @@ namespace _01.Code.Enemies
         private EnemyRender _render;
         private EnemyMovement _movement;
         private EnemyHealth _enemyHealth;
-        private List<Vector2Int> _path;         
+        private List<Vector2Int> _path;
+        private bool _deathNotified;
 
         public void Initialize(List<Vector2Int> path, EnemySpawner parent/*, EnemyDataSO data, int level*/)
         {
@@ -29,8 +30,15 @@ namespace _01.Code.Enemies
             _movement.MoveNext();
         }
 
-        private void OnDestroy()
+        private void NotifyDeath()
         {
+            if (_deathNotified)
+            {
+                return;
+            }
+
+            _deathNotified = true;
+            IsDead = true;
             OnDeath?.Invoke();
         }
 
@@ -45,6 +53,7 @@ namespace _01.Code.Enemies
             {
                 other.gameObject.TryGetComponent<EntityHealth>(out var health);
                 health?.ApplyDamage(4, this);
+                NotifyDeath();
                 Destroy(gameObject);
             }
         }

@@ -49,10 +49,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 387b07371bd343ca80a1564161d1497e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  OnHitEvent:
+  <IsSuperArmor>k__BackingField: 0
+  OnHit:
     m_PersistentCalls:
       m_Calls: []
-  OnDeathEvent:
+  OnDeath:
     m_PersistentCalls:
       m_Calls: []
 --- !u!114 &5322116674003759625
@@ -67,7 +68,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1627ac36eb547d78f09a074e604a7c4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 20
+  baseHealth: 0
   currentHealth: 0
 --- !u!50 &3888785918288915050
 Rigidbody2D:
@@ -220,7 +221,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 8359676936704984736, guid: e40182c49209bb94791378d8099d0112, type: 3}
+  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -265,7 +266,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 82f0dafa10064a8bb0e9dd7c9913de9d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  renderer: {fileID: 8630843936359311189}
+  <FacingDirection>k__BackingField: 1
   backParam: {fileID: 11400000, guid: 11369e086c079f745ab1d5ddec0093d3, type: 2}
   forwardParam: {fileID: 11400000, guid: c2ee8d351dc17c242ad93b0e1329da0d, type: 2}
   sideParam: {fileID: 11400000, guid: a6a0685d624032342998258e15839711, type: 2}
@@ -313,4 +314,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4cdc2b6eed6145149f0d6801ab014968, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _path: []
   moveSpeed: 1

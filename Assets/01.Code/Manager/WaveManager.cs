@@ -1,42 +1,55 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using _01.Code.Enemies;
-using _01.Code.Manager;
-using _01.Code.WaveSystem;
+using System;
+using _01.Code.Core;
+using _01.Code.Events;
 using UnityEngine;
-// ** 규칙 ** 웨이브에 관련한건 WaveManager에서만 관리한다. 이외의 다른 
-public class WaveManager : MonoBehaviour, IManageable
+
+// Rule: Wave flow should be controlled only by WaveManager.
+public class WaveManager : MonoBehaviour, _01.Code.Manager.IManageable
 {
-    public event Action OnWaveStarted;   
-    public event Action OnWaveCleared;   
-    private bool _isRunning = false;
+    [SerializeField] private GameEventChannelSO waveEventChannel;
+
+    public event Action OnWaveStarted;
+    public event Action OnWaveCleared;
+
+    private bool _isRunning;
 
     public void Initialize()
     {
-        
+        if (waveEventChannel != null)
+        {
+            waveEventChannel.RemoveListener<WaveClearedEvent>(HandleWaveClearedEvent);
+            waveEventChannel.AddListener<WaveClearedEvent>(HandleWaveClearedEvent);
+        }
     }
-    
+
+    private void OnDestroy()
+    {
+        if (waveEventChannel != null)
+        {
+            waveEventChannel.RemoveListener<WaveClearedEvent>(HandleWaveClearedEvent);
+        }
+    }
 
     public void StartWaves()
     {
         if (_isRunning)
+        {
             return;
+        }
+
         _isRunning = true;
-        print("웨이브 시작");
-        RunWaves();
-    }
-
-    private void RunWaves()
-    {
+        Debug.Log("Wave started");
         OnWaveStarted?.Invoke();
-        GameManager.Instance.EnemySpawnerManager.RunWaves();
+        waveEventChannel?.RaiseEvent(WaveEvents.WaveStartedEvent);
     }
 
-
-    public void WaveEnd()
+    private void HandleWaveClearedEvent(WaveClearedEvent _)
     {
-        if (!_isRunning) return;
+        if (!_isRunning)
+        {
+            return;
+        }
+
         _isRunning = false;
         OnWaveCleared?.Invoke();
     }

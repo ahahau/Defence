@@ -7,10 +7,11 @@ namespace _01.Code.Entities
     public abstract class PlaceableEntity : Entity
     {
         [field:SerializeField]public CustomTile Tile { get; private set; }
-        protected Vector2Int Position;
+        [field: SerializeField] public Vector2Int GridPosition { get; protected set; }
+
         public virtual void Initialize(Vector2Int position)
         {
-            Position = new Vector2Int(position.x,position.y);
+            GridPosition = position;
             SetTile(position);
         }
 
@@ -22,7 +23,7 @@ namespace _01.Code.Entities
                 Debug.LogError(gameObject.name + ": No Empty Tile Found");
             }
             Vector2Int position = randomPos;
-            Position = new Vector2Int(position.x,position.y);
+            GridPosition = new Vector2Int(position.x,position.y);
             SetTile(position);
         }
         public virtual void SetTile(Vector2Int tilePos)
@@ -30,9 +31,22 @@ namespace _01.Code.Entities
             if (!GameManager.Instance.GridManager.Tilemap.TileObjectInstall(tilePos, this))
             {
                 Debug.LogError(gameObject.name + ": Tile object not found or Tile is not Empty " + tilePos);
+                return;
             }
-           
-            transform.position = GameManager.Instance.GridManager.Grid.CellToWorld(new Vector3Int(Position.x,Position.y, 0));
+
+            CommitPosition(tilePos);
+        }
+
+        public virtual void PreviewPosition(Vector2Int tilePos)
+        {
+            transform.position = GameManager.Instance.GridManager.Grid.CellToWorld(new Vector3Int(tilePos.x, tilePos.y, 0));
+        }
+
+        public virtual void CommitPosition(Vector2Int tilePos)
+        {
+            GridPosition = tilePos;
+            Tile = GameManager.Instance.GridManager.Tilemap.GetTile(tilePos);
+            transform.position = GameManager.Instance.GridManager.Grid.CellToWorld(new Vector3Int(GridPosition.x,GridPosition.y, 0));
         }
     }
 }

@@ -48,6 +48,8 @@ namespace _01.Code.Manager
 
             foreach (var kv in _current)
                 RaiseChanged(kv.Key);
+            SetMax(CostType.Gold,100);
+            SetCurrent(CostType.Gold,100);
         }
 
         public int GetCurrent(CostType type) => _current.TryGetValue(type, out var v) ? v : 0;

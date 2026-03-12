@@ -1,66 +1,87 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
+using _01.Code.Core;
 using _01.Code.Enemies;
-using _01.Code.WaveSystem;
-using Unity.VisualScripting;
+using _01.Code.Events;
 using UnityEngine;
-using NotImplementedException = System.NotImplementedException;
 
 namespace _01.Code.Manager
 {
-    // ** 규칙 ** 스포너에 관련한건 EnemySpawnerManager에서만 관리한다.
+    // Rule: Spawner lifecycle should be managed only by EnemySpawnerManager.
     public class EnemySpawnerManager : MonoBehaviour, IManageable
     {
-        //[SerializeField] private List<WaveDataSO> waveDataList; // 모든 웨이브에서 사용할 웨이브 데이터 리스트
-        
-        [SerializeField] private EnemySpawner enemySpawnerPrefab; // 
-        public HashSet<EnemySpawner> CurrentWaveEnemySpawnerList { get; private set; } = new HashSet<EnemySpawner>(); // 이번 웨이브의 스포너 리스트
-        
-        
-        
+        [SerializeField] private EnemySpawner enemySpawnerPrefab;
+        [SerializeField] private GameEventChannelSO waveEventChannel;
+
+        public HashSet<EnemySpawner> CurrentWaveEnemySpawnerList { get; } = new HashSet<EnemySpawner>();
+
         public void Initialize()
         {
-            // 들어가야하는거 
-            // 1. EnemySpawner 프리팹을 풀링해서 관리할 리스트 만들기
-            // 2. 웨이브 끝났을때 적 스포너 다시 생성 
-            // 3. 웨이브 시작할땨 설치 되있는 스포너 활성화
-            // 4. 적이 죽으면 스포너에 전달 스포너는 모든 적이 죽은게 확인 되면 에너미스포너 메니저에 전달 
-            // 5. 
+            if (waveEventChannel != null)
+            {
+                waveEventChannel.RemoveListener<WaveStartedEvent>(HandleWaveStartedEvent);
+                waveEventChannel.AddListener<WaveStartedEvent>(HandleWaveStartedEvent);
+            }
+
             SpawnSpawner();
         }
 
-        public void RunWaves()
+        private void OnDestroy()
         {
-            foreach (var spawner  in CurrentWaveEnemySpawnerList)
+            if (waveEventChannel != null)
             {
-                spawner.StartWave();
+                waveEventChannel.RemoveListener<WaveStartedEvent>(HandleWaveStartedEvent);
             }
         }
 
         public void SpawnerAllEnemyDied(EnemySpawner enemySpawner)
         {
             CurrentWaveEnemySpawnerList.Remove(enemySpawner);
-            if (CurrentWaveEnemySpawnerList.Count >= 0)
+
+            if (CurrentWaveEnemySpawnerList.Count > 0)
             {
-                WaveEnd();
-                SpawnSpawner();
+                return;
+            }
+
+            ClearCurrentWave();
+            waveEventChannel?.RaiseEvent(WaveEvents.WaveClearedEvent);
+            SpawnSpawner();
+        }
+
+        private void HandleWaveStartedEvent(WaveStartedEvent _)
+        {
+            foreach (EnemySpawner spawner in CurrentWaveEnemySpawnerList)
+            {
+                if (spawner == null)
+                {
+                    continue;
+                }
+
+                spawner.StartWave();
             }
         }
 
-        private void WaveEnd()
+        private void ClearCurrentWave()
         {
-            foreach (var spawner in CurrentWaveEnemySpawnerList)
+            foreach (EnemySpawner spawner in CurrentWaveEnemySpawnerList)
             {
-                Destroy(spawner); // Todo : 풀링으로 바꿔야할듯
+                if (spawner == null)
+                {
+                    continue;
+                }
+
+                Destroy(spawner.gameObject);
             }
+
+            CurrentWaveEnemySpawnerList.Clear();
         }
+
         private void SpawnSpawner()
         {
-            GameManager.Instance.WaveManager.WaveEnd();
             for (int i = 0; i < 5; i++)
             {
-                Vector2Int pos = GameManager.Instance.GridManager.Tilemap.Randomize(true);
-                Vector2Int worldPos = GameManager.Instance.GridManager.Tilemap.CellToWorld(pos);
-                EnemySpawner spawner = Instantiate(enemySpawnerPrefab, new Vector3(worldPos.x, worldPos.y, 0), Quaternion.identity);
+                Vector2Int cellPos = GameManager.Instance.GridManager.Tilemap.Randomize(true);
+                Vector2Int worldPos = GameManager.Instance.GridManager.Tilemap.CellToWorld(cellPos);
+                EnemySpawner spawner = Instantiate(enemySpawnerPrefab, new Vector3(worldPos.x, worldPos.y, 0f), Quaternion.identity);
                 spawner.Initialize(worldPos);
                 CurrentWaveEnemySpawnerList.Add(spawner);
             }

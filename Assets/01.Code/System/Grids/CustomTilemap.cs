@@ -108,13 +108,43 @@ namespace _01.Code.System.Grids
         {
             Vector2Int cellPos = WorldToCell(worldPosition);
             bool isValidPosition = IsValidPosition(worldPosition); 
-            if(worldPosition != Vector2Int.zero)
-                Debug.Log(isValidPosition);
             if (!isValidPosition || !Tiles[cellPos.x][cellPos.y].IsEmpty())
                 return false;
             Tiles[cellPos.x][cellPos.y].SetTileObj(obj);
             return true;
         }
+
+        public bool ClearTileObject(Vector2Int worldPosition, Entity expectedObject = null)
+        {
+            bool isValidPosition = IsValidPosition(worldPosition);
+            if (!isValidPosition)
+            {
+                return false;
+            }
+
+            Vector2Int cellPos = WorldToCell(worldPosition);
+            CustomTile tile = Tiles[cellPos.x][cellPos.y];
+
+            if (expectedObject != null && tile.TileObject != expectedObject)
+            {
+                return false;
+            }
+
+            tile.SetTileObj();
+            return true;
+        }
+
+        public CustomTile GetTile(Vector2Int worldPosition)
+        {
+            if (!IsValidPosition(worldPosition))
+            {
+                return null;
+            }
+
+            Vector2Int cellPos = WorldToCell(worldPosition);
+            return Tiles[cellPos.x][cellPos.y];
+        }
+
         private bool IsValidPosition(Vector2Int worldPosition)
         {
             return worldPosition.x >= -Size.x && worldPosition.x < Size.x && worldPosition.y >= -Size.y && worldPosition.y < Size.y;
