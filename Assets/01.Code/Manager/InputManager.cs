@@ -1,6 +1,9 @@
 using _01.Code.Buildings;
 using _01.Code.Cameras;
+using _01.Code.Core;
+using _01.Code.Events;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 namespace _01.Code.Manager
@@ -12,23 +15,19 @@ namespace _01.Code.Manager
         [field: SerializeField] public Vector2Int CurrentMouseCellPosition { get; private set; }
 
         [SerializeField] private LayerMask whatIsClickable;
+        [SerializeField] private float dragStartThresholdPixels = 8f;
+        [SerializeField] private GameEventChannelSO uiEventChannel;
+        [SerializeField] private GameEventChannelSO buildEventChannel;
 
         private Building _draggedBuilding;
-        private Vector2Int _draggedBuildingStartPosition;
+        private bool _isPointerDown;
+        private bool _isDraggingBuilding;
+        private Vector2 _pointerDownScreenPosition;
         
         public void Initialize()
         {
         }
 
-        private void Awake()
-        {
-            InputData.OnMouseClicked += OnClick;
-        }
-
-        private void OnDestroy()
-        {
-            InputData.OnMouseClicked -= OnClick;
-        }
 
         private void Update()
         {
@@ -41,17 +40,22 @@ namespace _01.Code.Manager
 
             if (Mouse.current.leftButton.wasPressedThisFrame)
             {
-                TryBeginDrag(worldPosition);
+                BeginPointerInteraction(worldPosition);
             }
 
-            if (_draggedBuilding != null && Mouse.current.leftButton.isPressed)
+            if (_isPointerDown && !_isDraggingBuilding && ShouldStartDragging())
+            {
+                StartDragging();
+            }
+
+            if (_isDraggingBuilding && _draggedBuilding != null && Mouse.current.leftButton.isPressed)
             {
                 DragBuilding(worldPosition);
             }
 
-            if (_draggedBuilding != null && Mouse.current.leftButton.wasReleasedThisFrame)
+            if (_isPointerDown && Mouse.current.leftButton.wasReleasedThisFrame)
             {
-                ReleaseDrag(worldPosition);
+                EndPointerInteraction(worldPosition);
             }
         }
 
@@ -64,15 +68,19 @@ namespace _01.Code.Manager
                 ClickGround(worldPosition);
                 return;
             }
-
+            
+            // 지금은 하는일 없음
             ClickObject(hit.gameObject);
         }
 
+        /// <summary>
+        /// 이 함수는 오브젝트 클릭시 빌드 패널을 닫고 오브젝트 분기를 처리합니다
+        /// </summary>
         private void ClickObject(GameObject hitGameObject)
         {
-            GameManager.Instance.UiManager.HideBuildingPanel();
+            uiEventChannel.RaiseEvent(UIEvents.HideBuildPanelRequested);
 
-            if (hitGameObject.CompareTag("EnemySpawner"))
+            if (!hitGameObject.CompareTag("Building"))
             {
                 return;
             }
@@ -84,15 +92,28 @@ namespace _01.Code.Manager
             }
         }
 
+        /// <summary>
+        /// 이 함수는 빈 땅 클릭을 빌드 패널 열기 요청으로 바꿔줍니다
+        /// </summary>
         private void ClickGround(Vector2 worldPosition)
         {
             Vector2Int gridPos = GameManager.Instance.GridManager.Tilemap.WorldToCell(worldPosition);
             CurrentMouseCellPosition = gridPos;
-            GameManager.Instance.UiManager.ShowBuildingPanel(worldPosition);
+            uiEventChannel.RaiseEvent(UIEvents.ShowBuildPanelRequested.Initializer(worldPosition));
         }
         
-        private void TryBeginDrag(Vector2 worldPosition)
+        private void BeginPointerInteraction(Vector2 worldPosition)
         {
+            if (IsPointerOverUi())
+            {
+                ResetPointerState();
+                return;
+            }
+
+            _isPointerDown = true;
+            _isDraggingBuilding = false;
+            _pointerDownScreenPosition = Mouse.current.position.ReadValue();
+
             Collider2D hit = GetHitCollider(worldPosition);
             if (hit == null)
             {
@@ -111,8 +132,17 @@ namespace _01.Code.Manager
             }
 
             _draggedBuilding = building;
-            _draggedBuildingStartPosition = building.GridPosition;
-            GameManager.Instance.UiManager.HideBuildingPanel();
+        }
+
+        private void StartDragging()
+        {
+            if (_draggedBuilding == null)
+            {
+                return;
+            }
+
+            _isDraggingBuilding = true;
+            uiEventChannel.RaiseEvent(UIEvents.HideBuildPanelRequested);
         }
 
         private void DragBuilding(Vector2 worldPosition)
@@ -123,15 +153,49 @@ namespace _01.Code.Manager
             _draggedBuilding.PreviewPosition(snappedWorldPosition);
         }
 
+        private void EndPointerInteraction(Vector2 worldPosition)
+        {
+            if (_isDraggingBuilding && _draggedBuilding != null)
+            {
+                ReleaseDrag(worldPosition);
+                ResetPointerState();
+                return;
+            }
+
+            if (!IsPointerOverUi())
+            {
+                OnClick(worldPosition);
+            }
+
+            ResetPointerState();
+        }
+
         private void ReleaseDrag(Vector2 worldPosition)
         {
-            Building building = _draggedBuilding;
-            _draggedBuilding = null;
+            buildEventChannel.RaiseEvent(BuildEvents.MoveBuildingRequested.Initializer(_draggedBuilding, worldPosition));
+        }
 
-            if (!GameManager.Instance.BuildManager.TryMove(building, worldPosition))
+        private bool ShouldStartDragging()
+        {
+            if (_draggedBuilding == null || Mouse.current == null)
             {
-                building.CommitPosition(_draggedBuildingStartPosition);
+                return false;
             }
+
+            Vector2 pointerDelta = Mouse.current.position.ReadValue() - _pointerDownScreenPosition;
+            return pointerDelta.sqrMagnitude >= dragStartThresholdPixels * dragStartThresholdPixels;
+        }
+
+        private bool IsPointerOverUi()
+        {
+            return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+        }
+
+        private void ResetPointerState()
+        {
+            _isPointerDown = false;
+            _isDraggingBuilding = false;
+            _draggedBuilding = null;
         }
 
         private Vector2 GetMouseWorldPosition()

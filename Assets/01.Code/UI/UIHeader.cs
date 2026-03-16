@@ -1,5 +1,7 @@
 using _01.Code.Manager;
 using System;
+using _01.Code.Core;
+using _01.Code.Events;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -9,6 +11,8 @@ namespace _01.Code.UI
 {
     public class UIHeader : UIBaseView
     {
+        [SerializeField] private GameEventChannelSO costEventChannel;
+        [SerializeField] private GameEventChannelSO waveEventChannel;
         [SerializeField] private TMP_Text goldText;
         [SerializeField] private TMP_Text waveStateText;
         [SerializeField] private Button startWaveButton;
@@ -21,68 +25,54 @@ namespace _01.Code.UI
 
         public event Action OnStartWaveRequested;
 
+        /// <summary>
+        /// 이 함수는 헤더 버튼과 비용, 웨이브 이벤트를 연결합니다
+        /// </summary>
         public override void Initialize()
         {
             base.Initialize();
             Show();
 
-            if (startWaveButton != null)
-            {
-                startWaveButton.onClick.RemoveListener(RequestStartWave);
-                startWaveButton.onClick.AddListener(RequestStartWave);
-            }
+            startWaveButton.onClick.AddListener(RequestStartWave);
+
+            costEventChannel.AddListener<CostChangedEvent>(HandleCostChangedEvent);
+
+            waveEventChannel.AddListener<WaveStartedEvent>(HandleWaveStartedEvent);
+            waveEventChannel.AddListener<WaveClearedEvent>(HandleWaveClearedEvent);
 
             RefreshTexts();
             RefreshAvailability();
         }
 
-        public void Bind(CostManager costManager, WaveManager waveManager)
-        {
-            if (costManager != null)
-            {
-                costManager.OnCostChanged -= HandleCostChanged;
-                costManager.OnCostChanged += HandleCostChanged;
-                HandleCostChanged(CostType.Gold, costManager.GetCurrent(CostType.Gold), costManager.GetMax(CostType.Gold));
-            }
-
-            if (waveManager != null)
-            {
-                waveManager.OnWaveStarted -= HandleWaveStarted;
-                waveManager.OnWaveStarted += HandleWaveStarted;
-                waveManager.OnWaveCleared -= HandleWaveCleared;
-                waveManager.OnWaveCleared += HandleWaveCleared;
-            }
-        }
-
         private void OnDestroy()
         {
             startWaveButton.onClick.RemoveListener(RequestStartWave);
-            GameManager.Instance.CostManager.OnCostChanged -= HandleCostChanged;
 
-            GameManager.Instance.WaveManager.OnWaveStarted -= HandleWaveStarted;
-            GameManager.Instance.WaveManager.OnWaveCleared -= HandleWaveCleared;
+            costEventChannel.RemoveListener<CostChangedEvent>(HandleCostChangedEvent);
+            waveEventChannel.RemoveListener<WaveStartedEvent>(HandleWaveStartedEvent);
+            waveEventChannel.RemoveListener<WaveClearedEvent>(HandleWaveClearedEvent);
         }
 
-        private void HandleCostChanged(CostType type, int current, int max)
+        private void HandleCostChangedEvent(CostChangedEvent evt)
         {
-            if (type != CostType.Gold)
+            if (evt == null || evt.Type != CostType.Gold)
             {
                 return;
             }
 
-            CurrentGold = current;
-            MaxGold = max;
+            CurrentGold = evt.Current;
+            MaxGold = evt.Max;
             RefreshTexts();
         }
 
-        private void HandleWaveStarted()
+        private void HandleWaveStartedEvent(WaveStartedEvent _)
         {
             IsWaveRunning = true;
             RefreshAvailability();
             RefreshTexts();
         }
 
-        private void HandleWaveCleared()
+        private void HandleWaveClearedEvent(WaveClearedEvent _)
         {
             IsWaveRunning = false;
             RefreshAvailability();
@@ -98,29 +88,19 @@ namespace _01.Code.UI
 
             onWaveStartedRequested?.Invoke();
             OnStartWaveRequested?.Invoke();
+            waveEventChannel.RaiseEvent(WaveEvents.WaveStartRequestedEvent);
         }
 
         public void RefreshAvailability()
         {
             CanStartWave = !IsWaveRunning;
-
-            if (startWaveButton != null)
-            {
-                startWaveButton.interactable = CanStartWave;
-            }
+            startWaveButton.interactable = CanStartWave;
         }
 
         private void RefreshTexts()
         {
-            if (goldText != null)
-            {
-                goldText.text = $"{CurrentGold}/{MaxGold}";
-            }
-
-            if (waveStateText != null)
-            {
-                waveStateText.text = IsWaveRunning ? "Wave Running" : "Build Phase";
-            }
+            goldText.text = $"{CurrentGold}/{MaxGold}";
+            waveStateText.text = IsWaveRunning ? "Wave Running" : "Build Phase";
         }
     }
 }

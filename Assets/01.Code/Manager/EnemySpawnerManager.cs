@@ -14,23 +14,19 @@ namespace _01.Code.Manager
 
         public HashSet<EnemySpawner> CurrentWaveEnemySpawnerList { get; } = new HashSet<EnemySpawner>();
 
+        /// <summary>
+        /// 이 함수는 웨이브 시작 이벤트를 구독하고 첫 스포너들을 생성합니다
+        /// </summary>
         public void Initialize()
         {
-            if (waveEventChannel != null)
-            {
-                waveEventChannel.RemoveListener<WaveStartedEvent>(HandleWaveStartedEvent);
-                waveEventChannel.AddListener<WaveStartedEvent>(HandleWaveStartedEvent);
-            }
+            waveEventChannel.AddListener<WaveStartedEvent>(HandleWaveStartedEvent);
 
             SpawnSpawner();
         }
 
         private void OnDestroy()
         {
-            if (waveEventChannel != null)
-            {
-                waveEventChannel.RemoveListener<WaveStartedEvent>(HandleWaveStartedEvent);
-            }
+            waveEventChannel.RemoveListener<WaveStartedEvent>(HandleWaveStartedEvent);
         }
 
         public void SpawnerAllEnemyDied(EnemySpawner enemySpawner)
@@ -43,10 +39,13 @@ namespace _01.Code.Manager
             }
 
             ClearCurrentWave();
-            waveEventChannel?.RaiseEvent(WaveEvents.WaveClearedEvent);
+            waveEventChannel.RaiseEvent(WaveEvents.WaveClearedEvent);
             SpawnSpawner();
         }
 
+        /// <summary>
+        /// 이 함수는 현재 웨이브에 남아있는 스포너들에게 시작 명령을 내려줍니다
+        /// </summary>
         private void HandleWaveStartedEvent(WaveStartedEvent _)
         {
             foreach (EnemySpawner spawner in CurrentWaveEnemySpawnerList)

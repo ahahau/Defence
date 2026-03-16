@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using _01.Code.Core;
+using _01.Code.Events;
 using UnityEngine;
 
 namespace _01.Code.Manager
@@ -19,6 +21,8 @@ namespace _01.Code.Manager
 
     public class CostManager : MonoBehaviour
     {
+        [SerializeField] private GameEventChannelSO costEventChannel;
+
         [Serializable]
         public class InitialCost
         {
@@ -38,8 +42,14 @@ namespace _01.Code.Manager
         /// </summary>
         public event Action<CostType, int, int> OnCostChanged;
 
+        /// <summary>
+        /// 이 함수는 비용 채널 구독과 시작 비용 세팅을 담당합니다
+        /// </summary>
         public void Initialize()
         {
+            costEventChannel.AddListener<TrySpendCostEvent>(HandleTrySpendCostEvent);
+            costEventChannel.AddListener<RefundCostEvent>(HandleRefundCostEvent);
+
             foreach (var c in initialCosts)
             {
                 _max[c.type] = Mathf.Max(0, c.max);
@@ -50,6 +60,12 @@ namespace _01.Code.Manager
                 RaiseChanged(kv.Key);
             SetMax(CostType.Gold,100);
             SetCurrent(CostType.Gold,100);
+        }
+
+        private void OnDestroy()
+        {
+            costEventChannel.RemoveListener<TrySpendCostEvent>(HandleTrySpendCostEvent);
+            costEventChannel.RemoveListener<RefundCostEvent>(HandleRefundCostEvent);
         }
 
         public int GetCurrent(CostType type) => _current.TryGetValue(type, out var v) ? v : 0;
@@ -117,6 +133,33 @@ namespace _01.Code.Manager
         private void RaiseChanged(CostType type)
         {
             OnCostChanged?.Invoke(type, GetCurrent(type), GetMax(type));
+            costEventChannel.RaiseEvent(CostEvents.CostChanged.Initializer(type, GetCurrent(type), GetMax(type)));
+        }
+
+        /// <summary>
+        /// 이 함수는 외부에서 비용 사용 요청이 오면 실제 차감을 처리합니다
+        /// </summary>
+        private void HandleTrySpendCostEvent(TrySpendCostEvent evt)
+        {
+            if (evt == null)
+            {
+                return;
+            }
+
+            evt.Succeeded = TryPay(evt.Type, evt.Amount);
+        }
+
+        /// <summary>
+        /// 이 함수는 외부에서 환불 요청이 오면 현재 비용에 다시 더해줍니다
+        /// </summary>
+        private void HandleRefundCostEvent(RefundCostEvent evt)
+        {
+            if (evt == null)
+            {
+                return;
+            }
+
+            Add(evt.Type, evt.Amount);
         }
     }
 }

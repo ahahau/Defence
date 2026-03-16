@@ -2,16 +2,22 @@ using _01.Code.UI;
 using System;
 using System.Collections.Generic;
 using _01.Code.Buildings;
+using _01.Code.Core;
+using _01.Code.Events;
 using UnityEngine;
 
 namespace _01.Code.Manager
 {
     public class UIManager : MonoBehaviour, IManageable
     {
+        [SerializeField] private GameEventChannelSO uiEventChannel;
+        [SerializeField] private GameEventChannelSO buildEventChannel;
+        [SerializeField] private GameEventChannelSO costEventChannel;
         [SerializeField] private GameObject buildingPenalPrefab;
         [SerializeField] private MainPanel mainPanel;
         [SerializeField] private UIHeader uiHeader;
         [SerializeField] private List<BuildingDataSO> availableBuildings = new();
+        private int _currentGold;
 
         public BuildingDataSO SelectedBuilding { get; private set; }
         public Vector3 CurrentBuildPosition { get; private set; }
@@ -20,6 +26,9 @@ namespace _01.Code.Manager
         public event Action<BuildingDataSO> OnBuildingSelected;
         public event Action<BuildingDataSO, Vector3> OnBuildRequested;
 
+        /// <summary>
+        /// 이 함수는 UI 뷰와 채널 구독을 전부 연결해주는 시작점입니다
+        /// </summary>
         public void Initialize()
         {
             if (mainPanel == null && buildingPenalPrefab != null)
@@ -30,56 +39,40 @@ namespace _01.Code.Manager
             mainPanel?.Initialize();
             uiHeader?.Initialize();
 
-            uiHeader?.Bind(GameManager.Instance.CostManager, GameManager.Instance.WaveManager);
-
             uiHeader?.RefreshAvailability();
 
-            if (mainPanel != null)
-            {
-                mainPanel.BindOptions(availableBuildings);
-                mainPanel.RefreshAvailability(CanAfford);
-                mainPanel.OnBuildingSelected -= HandleBuildingSelected;
-                mainPanel.OnBuildingSelected += HandleBuildingSelected;
-                mainPanel.OnBuildRequested -= HandleBuildRequested;
-                mainPanel.OnBuildRequested += HandleBuildRequested;
-                mainPanel.OnCancelled -= HandlePanelCancelled;
-                mainPanel.OnCancelled += HandlePanelCancelled;
-            }
+            mainPanel.BindOptions(availableBuildings);
+            mainPanel.RefreshAvailability(CanAfford);
+            mainPanel.OnBuildingSelected -= HandleBuildingSelected;
+            mainPanel.OnBuildingSelected += HandleBuildingSelected;
+            mainPanel.OnBuildRequested -= HandleBuildRequested;
+            mainPanel.OnBuildRequested += HandleBuildRequested;
+            mainPanel.OnCancelled -= HandlePanelCancelled;
+            mainPanel.OnCancelled += HandlePanelCancelled;
 
-            if (uiHeader != null)
-            {
-                    uiHeader.OnStartWaveRequested -= HandleStartWaveRequested;
-                    uiHeader.OnStartWaveRequested += HandleStartWaveRequested; 
-            }
+            // 입력과 빌드 결과는 채널로 받고, UI는 화면 갱신만 담당합니다
+            uiEventChannel.AddListener<ShowBuildPanelRequestedEvent>(HandleShowBuildPanelRequestedEvent);
+            uiEventChannel.AddListener<HideBuildPanelRequestedEvent>(HandleHideBuildPanelRequestedEvent);
 
-            GameManager.Instance.CostManager.OnCostChanged -= HandleCostChanged;
-            GameManager.Instance.CostManager.OnCostChanged += HandleCostChanged;
-            GameManager.Instance.BuildManager.OnBuildingInstalled -= HandleBuildingInstalled;
-            GameManager.Instance.BuildManager.OnBuildingInstalled += HandleBuildingInstalled;
-            GameManager.Instance.BuildManager.OnBuildFailed -= HandleBuildFailed;
-            GameManager.Instance.BuildManager.OnBuildFailed += HandleBuildFailed;
+            buildEventChannel.AddListener<BuildInstalledEvent>(HandleBuildInstalledEvent);
+            buildEventChannel.AddListener<BuildFailedEvent>(HandleBuildFailedEvent);
+
+            costEventChannel.AddListener<CostChangedEvent>(HandleCostChangedEvent);
 
             HideBuildingPanel();
         }
 
         private void OnDestroy()
         {
-            if (mainPanel != null)
-            {
-                mainPanel.OnBuildingSelected -= HandleBuildingSelected;
-                mainPanel.OnBuildRequested -= HandleBuildRequested;
-                mainPanel.OnCancelled -= HandlePanelCancelled;
-            }
+            mainPanel.OnBuildingSelected -= HandleBuildingSelected;
+            mainPanel.OnBuildRequested -= HandleBuildRequested;
+            mainPanel.OnCancelled -= HandlePanelCancelled;
 
-            if (uiHeader != null)
-            {
-                uiHeader.OnStartWaveRequested -= HandleStartWaveRequested;
-            }
-                
-            GameManager.Instance.CostManager.OnCostChanged -= HandleCostChanged;
-
-            GameManager.Instance.BuildManager.OnBuildingInstalled -= HandleBuildingInstalled;
-            GameManager.Instance.BuildManager.OnBuildFailed -= HandleBuildFailed;
+            uiEventChannel.RemoveListener<ShowBuildPanelRequestedEvent>(HandleShowBuildPanelRequestedEvent);
+            uiEventChannel.RemoveListener<HideBuildPanelRequestedEvent>(HandleHideBuildPanelRequestedEvent);
+            buildEventChannel.RemoveListener<BuildInstalledEvent>(HandleBuildInstalledEvent);
+            buildEventChannel.RemoveListener<BuildFailedEvent>(HandleBuildFailedEvent);
+            costEventChannel.RemoveListener<CostChangedEvent>(HandleCostChangedEvent);
         }
 
         public void ShowBuildingPanel(Vector3 worldPosition)
@@ -122,7 +115,8 @@ namespace _01.Code.Manager
             {
                 return false;
             }
-            return GameManager.Instance.CostManager.CanPay(CostType.Gold, buildingData.Cost);
+
+            return _currentGold >= buildingData.Cost;
         }
 
         private void HandleBuildingSelected(BuildingDataSO buildingData)
@@ -138,29 +132,17 @@ namespace _01.Code.Manager
                 return;
             }
 
-            if (!GameManager.Instance.CostManager.CanPay(CostType.Gold, buildingData.Cost))
+            // 현재 보유 골드 기준으로 먼저 막고, 실제 설치 판단은 BuildManager가 다시 합니다
+            if (!CanAfford(buildingData))
             {
-                mainPanel?.RefreshAvailability(CanAfford);
-                return;
-            }
-
-            if (!GameManager.Instance.CostManager.TryPay(CostType.Gold, buildingData.Cost))
-            {
-                mainPanel?.RefreshAvailability(CanAfford);
-                return;
-            }
-
-            if (!GameManager.Instance.BuildManager.TryInstall(buildingData, worldPosition, out _))
-            {
-                GameManager.Instance.CostManager.Add(CostType.Gold, buildingData.Cost);
                 mainPanel?.RefreshAvailability(CanAfford);
                 return;
             }
 
             CurrentBuildPosition = worldPosition;
             OnBuildRequested?.Invoke(buildingData, worldPosition);
+            buildEventChannel.RaiseEvent(BuildEvents.BuildInstallRequested.Initializer(buildingData, worldPosition));
             mainPanel?.RefreshAvailability(CanAfford);
-            HideBuildingPanel();
         }
 
         private void HandlePanelCancelled()
@@ -168,24 +150,52 @@ namespace _01.Code.Manager
             SelectedBuilding = null;
         }
 
-        private void HandleStartWaveRequested()
+        /// <summary>
+        /// 이 함수는 입력에서 온 패널 열기 요청을 실제 UI 열기로 바꿔줍니다
+        /// </summary>
+        private void HandleShowBuildPanelRequestedEvent(ShowBuildPanelRequestedEvent evt)
         {
-            GameManager.Instance.WaveManager.StartWaves();
+            if (evt == null)
+            {
+                return;
+            }
+
+            ShowBuildingPanel(evt.WorldPosition);
         }
 
-        private void HandleCostChanged(CostType _, int __, int ___)
+        private void HandleHideBuildPanelRequestedEvent(HideBuildPanelRequestedEvent _)
         {
+            HideBuildingPanel();
+        }
+
+        private void HandleCostChangedEvent(CostChangedEvent evt)
+        {
+            if (evt == null || evt.Type != CostType.Gold)
+            {
+                return;
+            }
+
+            _currentGold = evt.Current;
             mainPanel?.RefreshAvailability(CanAfford);
             uiHeader?.RefreshAvailability();
         }
 
-        private void HandleBuildingInstalled(BuildingDataSO _, Entities.PlaceableEntity __)
+        /// <summary>
+        /// 이 함수는 설치 성공 이후 선택 상태와 패널 상태를 정리합니다
+        /// </summary>
+        private void HandleBuildInstalledEvent(BuildInstalledEvent evt)
         {
+            if (evt == null)
+            {
+                return;
+            }
+
             SelectedBuilding = null;
             mainPanel?.RefreshAvailability(CanAfford);
+            HideBuildingPanel();
         }
 
-        private void HandleBuildFailed(BuildingDataSO _, Vector2Int __)
+        private void HandleBuildFailedEvent(BuildFailedEvent _)
         {
             mainPanel?.RefreshAvailability(CanAfford);
         }

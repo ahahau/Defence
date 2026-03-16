@@ -34,12 +34,12 @@ namespace _01.Code.Manager
             EnemySpawnerManager = GetComponentInChildren<EnemySpawnerManager>();
 
             GridManager.Initialize();
-            CostManager.Initialize();
             InputManager.Initialize();
             UiManager.Initialize();
             BuildManager.Initialize();
             WaveManager.Initialize();
             EnemySpawnerManager.Initialize();
+            CostManager.Initialize();
         }
     }
 }

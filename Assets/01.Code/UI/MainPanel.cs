@@ -29,34 +29,26 @@ namespace _01.Code.UI
         public event Action<BuildingDataSO, Vector3> OnBuildRequested;
         public event Action OnCancelled;
 
+        /// <summary>
+        /// 이 함수는 패널 내부 버튼과 옵션 선택 이벤트를 연결합니다
+        /// </summary>
         public override void Initialize()
         {
             base.Initialize();
 
+            // 슬롯마다 자신의 선택 이벤트를 패널로 올려보냅니다
             for (int i = 0; i < buildingOptions.Count; i++)
             {
                 BuildingOptionView option = buildingOptions[i];
-                if (option == null)
-                {
-                    continue;
-                }
-
                 option.Initialize();
-                option.OnSelected -= HandleOptionSelected;
                 option.OnSelected += HandleOptionSelected;
             }
 
-            if (confirmButton != null)
-            {
-                confirmButton.onClick.RemoveListener(ConfirmSelection);
-                confirmButton.onClick.AddListener(ConfirmSelection);
-            }
+            confirmButton.onClick.RemoveListener(ConfirmSelection);
+            confirmButton.onClick.AddListener(ConfirmSelection);
 
-            if (cancelButton != null)
-            {
-                cancelButton.onClick.RemoveListener(Cancel);
-                cancelButton.onClick.AddListener(Cancel);
-            }
+            cancelButton.onClick.RemoveListener(Cancel);
+            cancelButton.onClick.AddListener(Cancel);
 
             RefreshSelectionVisuals();
         }
@@ -66,33 +58,27 @@ namespace _01.Code.UI
             for (int i = 0; i < buildingOptions.Count; i++)
             {
                 BuildingOptionView option = buildingOptions[i];
-                if (option == null)
-                {
-                    continue;
-                }
-
                 option.OnSelected -= HandleOptionSelected;
             }
 
-            if (confirmButton != null)
-            {
-                confirmButton.onClick.RemoveListener(ConfirmSelection);
-            }
-
-            if (cancelButton != null)
-            {
-                cancelButton.onClick.RemoveListener(Cancel);
-            }
+            confirmButton.onClick.RemoveListener(ConfirmSelection);
+            cancelButton.onClick.RemoveListener(Cancel);
         }
 
+        /// <summary>
+        /// 이 함수는 빌드 데이터 목록을 슬롯 뷰들에 나눠서 연결합니다
+        /// </summary>
         public void BindOptions(IReadOnlyList<BuildingDataSO> buildingDatas)
         {
             int count = Mathf.Min(buildingOptions.Count, buildingDatas.Count);
+
+            // 전달된 건물 데이터만 앞쪽 슬롯부터 순서대로 채웁니다
             for (int i = 0; i < count; i++)
             {
                 buildingOptions[i].Bind(buildingDatas[i]);
             }
 
+            // 남는 슬롯은 비워서 이전 세션 데이터가 남지 않게 만듭니다
             for (int i = count; i < buildingOptions.Count; i++)
             {
                 buildingOptions[i].Bind(null);
@@ -101,6 +87,7 @@ namespace _01.Code.UI
 
         public void RefreshAvailability(Func<BuildingDataSO, bool> canAfford)
         {
+            // 비용과 데이터 유효성을 같이 확인해서 각 슬롯의 클릭 가능 여부를 다시 정합니다
             for (int i = 0; i < buildingOptions.Count; i++)
             {
                 BuildingOptionView option = buildingOptions[i];
@@ -116,6 +103,10 @@ namespace _01.Code.UI
 
             RefreshSelectionVisuals();
         }
+
+        /// <summary>
+        /// 이 함수는 월드 위치 기준으로 패널을 열기 전에 화면 위치를 먼저 계산합니다
+        /// </summary>
         public void ShowAt(Vector3 worldPosition)
         {
             CurrentWorldPosition = worldPosition;
@@ -134,6 +125,9 @@ namespace _01.Code.UI
             OnBuildRequested?.Invoke(SelectedBuilding, CurrentWorldPosition);
         }
 
+        /// <summary>
+        /// 이 함수는 선택 상태를 지우고 패널 닫기 이벤트를 같이 보냅니다
+        /// </summary>
         public void Cancel()
         {
             ClearSelection();
@@ -148,10 +142,14 @@ namespace _01.Code.UI
             base.Hide();
         }
 
+        /// <summary>
+        /// 이 함수는 한 슬롯이 선택되면 나머지 슬롯 상태와 상세 표시를 같이 갱신합니다
+        /// </summary>
         private void HandleOptionSelected(BuildingOptionView option)
         {
             SelectedBuilding = option.BuildingData;
 
+            // 현재 클릭한 슬롯만 선택 상태로 두고 나머지는 전부 해제합니다
             for (int i = 0; i < buildingOptions.Count; i++)
             {
                 if (buildingOptions[i] == null)
@@ -167,10 +165,14 @@ namespace _01.Code.UI
             OnBuildingSelected?.Invoke(SelectedBuilding);
         }
 
+        /// <summary>
+        /// 이 함수는 현재 선택 상태를 전부 해제하고 화면을 초기화합니다
+        /// </summary>
         private void ClearSelection()
         {
             SelectedBuilding = null;
 
+            // 선택 해제 시 모든 슬롯의 하이라이트를 같이 정리합니다
             for (int i = 0; i < buildingOptions.Count; i++)
             {
                 if (buildingOptions[i] == null)
@@ -184,29 +186,20 @@ namespace _01.Code.UI
             RefreshSelectionVisuals();
         }
 
+        /// <summary>
+        /// 이 함수는 선택된 건물 정보와 확인 버튼 상태를 화면에 반영합니다
+        /// </summary>
         private void RefreshSelectionVisuals()
         {
-            if (selectedNameText != null)
-            {
-                selectedNameText.text = SelectedBuilding != null ? SelectedBuilding.Name : "Select Building";
-            }
-
-            if (selectedDescriptionText != null)
-            {
-                selectedDescriptionText.text = SelectedBuilding != null ? SelectedBuilding.Explanation : string.Empty;
-            }
-
-            if (selectedCostText != null)
-            {
-                selectedCostText.text = SelectedBuilding != null ? SelectedBuilding.Cost.ToString() : "-";
-            }
-
-            if (confirmButton != null)
-            {
-                confirmButton.interactable = SelectedBuilding != null;
-            }
+            selectedNameText.text = SelectedBuilding != null ? SelectedBuilding.Name : "Select Building";
+            selectedDescriptionText.text = SelectedBuilding != null ? SelectedBuilding.Explanation : string.Empty;
+            selectedCostText.text = SelectedBuilding != null ? SelectedBuilding.Cost.ToString() : "-";
+            confirmButton.interactable = SelectedBuilding != null;
         }
 
+        /// <summary>
+        /// 이 함수는 패널이 화면 밖으로 나가지 않게 보정해서 배치합니다
+        /// </summary>
         private void PositionPanel(Vector3 worldPosition)
         {
             RectTransform panelRect = transform as RectTransform;
@@ -237,6 +230,7 @@ namespace _01.Code.UI
                 return;
             }
 
+            // 패널 pivot과 padding을 기준으로 화면 밖으로 나가는 좌표를 다시 보정합니다
             Vector2 panelSize = panelRect.rect.size;
             Vector2 pivot = panelRect.pivot;
             Rect canvasBounds = canvasRect.rect;

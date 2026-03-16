@@ -13,21 +13,19 @@ public class WaveManager : MonoBehaviour, _01.Code.Manager.IManageable
 
     private bool _isRunning;
 
+    /// <summary>
+    /// 이 함수는 웨이브 요청과 웨이브 클리어 이벤트를 구독합니다
+    /// </summary>
     public void Initialize()
     {
-        if (waveEventChannel != null)
-        {
-            waveEventChannel.RemoveListener<WaveClearedEvent>(HandleWaveClearedEvent);
-            waveEventChannel.AddListener<WaveClearedEvent>(HandleWaveClearedEvent);
-        }
+        waveEventChannel.AddListener<WaveStartRequestedEvent>(HandleWaveStartRequestedEvent);
+        waveEventChannel.AddListener<WaveClearedEvent>(HandleWaveClearedEvent);
     }
 
     private void OnDestroy()
     {
-        if (waveEventChannel != null)
-        {
-            waveEventChannel.RemoveListener<WaveClearedEvent>(HandleWaveClearedEvent);
-        }
+        waveEventChannel.RemoveListener<WaveStartRequestedEvent>(HandleWaveStartRequestedEvent);
+        waveEventChannel.RemoveListener<WaveClearedEvent>(HandleWaveClearedEvent);
     }
 
     public void StartWaves()
@@ -40,7 +38,7 @@ public class WaveManager : MonoBehaviour, _01.Code.Manager.IManageable
         _isRunning = true;
         Debug.Log("Wave started");
         OnWaveStarted?.Invoke();
-        waveEventChannel?.RaiseEvent(WaveEvents.WaveStartedEvent);
+        waveEventChannel.RaiseEvent(WaveEvents.WaveStartedEvent);
     }
 
     private void HandleWaveClearedEvent(WaveClearedEvent _)
@@ -52,5 +50,13 @@ public class WaveManager : MonoBehaviour, _01.Code.Manager.IManageable
 
         _isRunning = false;
         OnWaveCleared?.Invoke();
+    }
+
+    /// <summary>
+    /// 이 함수는 외부의 웨이브 시작 요청을 실제 시작 함수로 연결합니다
+    /// </summary>
+    private void HandleWaveStartRequestedEvent(WaveStartRequestedEvent _)
+    {
+        StartWaves();
     }
 }

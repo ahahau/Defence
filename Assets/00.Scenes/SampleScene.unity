@@ -459,6 +459,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 84d1f68b77fd4231af59a8681e9dabb6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  costEventChannel: {fileID: 11400000, guid: b9313a107d364d1b95a1a38beb70b838, type: 2}
   initialCosts:
   - type: 0
     current: 10
@@ -507,6 +508,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f3df9a6d31f0864e868afad05aeefc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  buildEventChannel: {fileID: 11400000, guid: 43ac707ddd2c4ab8b72218ab4ccb251b, type: 2}
+  costEventChannel: {fileID: 11400000, guid: b9313a107d364d1b95a1a38beb70b838, type: 2}
 --- !u!1 &60072150
 GameObject:
   m_ObjectHideFlags: 0
@@ -2839,6 +2842,9 @@ MonoBehaviour:
   whatIsClickable:
     serializedVersion: 2
     m_Bits: 128
+  dragStartThresholdPixels: 8
+  uiEventChannel: {fileID: 11400000, guid: 65fe9b6359134cd4947a05bdbc25753a, type: 2}
+  buildEventChannel: {fileID: 11400000, guid: 43ac707ddd2c4ab8b72218ab4ccb251b, type: 2}
 --- !u!1 &177119828
 GameObject:
   m_ObjectHideFlags: 0
@@ -8876,6 +8882,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ccd10afeab4420085b0d49c55f46541, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  uiEventChannel: {fileID: 11400000, guid: 65fe9b6359134cd4947a05bdbc25753a, type: 2}
+  buildEventChannel: {fileID: 11400000, guid: 43ac707ddd2c4ab8b72218ab4ccb251b, type: 2}
+  costEventChannel: {fileID: 11400000, guid: b9313a107d364d1b95a1a38beb70b838, type: 2}
   buildingPenalPrefab: {fileID: 2044789523}
   mainPanel: {fileID: 2044789525}
   uiHeader: {fileID: 1482175382}
@@ -16192,6 +16201,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e0374df2baf4b63b17514a95a5dee1e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  costEventChannel: {fileID: 11400000, guid: b9313a107d364d1b95a1a38beb70b838, type: 2}
+  waveEventChannel: {fileID: 11400000, guid: 0e4a0518e3dd1a2489b812a34a67bfcd, type: 2}
   goldText: {fileID: 1362882060}
   waveStateText: {fileID: 548636822}
   startWaveButton: {fileID: 512688823}

@@ -23,6 +23,9 @@ namespace _01.Code.UI
 
         public event Action<BuildingOptionView> OnSelected;
 
+        /// <summary>
+        /// 이 함수는 슬롯 초기 상태와 버튼 클릭 이벤트를 연결합니다
+        /// </summary>
         public override void Initialize()
         {
             Show();
@@ -30,21 +33,18 @@ namespace _01.Code.UI
             SetInteractable(true);
             RefreshVisuals();
 
-            if (selectButton != null)
-            {
-                selectButton.onClick.RemoveListener(Select);
-                selectButton.onClick.AddListener(Select);
-            }
+            selectButton.onClick.RemoveListener(Select);
+            selectButton.onClick.AddListener(Select);
         }
 
         private void OnDestroy()
         {
-            if (selectButton != null)
-            {
-                selectButton.onClick.RemoveListener(Select);
-            }
+            selectButton.onClick.RemoveListener(Select);
         }
 
+        /// <summary>
+        /// 이 함수는 슬롯에 표시할 건물 데이터를 연결하고 화면을 갱신합니다
+        /// </summary>
         public void Bind(BuildingDataSO data)
         {
             buildingData = data;
@@ -58,48 +58,40 @@ namespace _01.Code.UI
                 return;
             }
 
+            // 버튼 클릭을 유니티 이벤트와 패널 이벤트 둘 다로 전달합니다
             onSelected?.Invoke();
             OnSelected?.Invoke(this);
         }
 
+        /// <summary>
+        /// 이 함수는 현재 슬롯의 선택 표시 상태를 바꿉니다
+        /// </summary>
         public void SetSelected(bool isSelected)
         {
             IsSelected = isSelected;
             RefreshVisuals();
         }
 
+        /// <summary>
+        /// 이 함수는 현재 슬롯의 상호작용 가능 여부를 바꿉니다
+        /// </summary>
         public void SetInteractable(bool isInteractable)
         {
             IsInteractable = isInteractable;
             RefreshVisuals();
         }
 
+        /// <summary>
+        /// 이 함수는 이름, 비용, 선택 마커, 비활성 마커를 한번에 갱신합니다
+        /// </summary>
         private void RefreshVisuals()
         {
-            if (nameText != null)
-            {
-                nameText.text = buildingData != null ? buildingData.Name : "Empty";
-            }
-
-            if (costText != null)
-            {
-                costText.text = buildingData != null ? buildingData.Cost.ToString() : "-";
-            }
-
-            if (selectButton != null)
-            {
-                selectButton.interactable = IsInteractable && buildingData != null;
-            }
-
-            if (selectedMarker != null)
-            {
-                selectedMarker.SetActive(IsSelected);
-            }
-
-            if (disabledMarker != null)
-            {
-                disabledMarker.SetActive(!IsInteractable || buildingData == null);
-            }
+            // 슬롯 데이터와 선택 상태를 한 번에 맞춰서 화면을 갱신합니다
+            nameText.text = buildingData != null ? buildingData.Name : "Empty";
+            costText.text = buildingData != null ? buildingData.Cost.ToString() : "-";
+            selectButton.interactable = IsInteractable && buildingData != null;
+            selectedMarker.SetActive(IsSelected);
+            disabledMarker.SetActive(!IsInteractable || buildingData == null);
         }
     }
 }
