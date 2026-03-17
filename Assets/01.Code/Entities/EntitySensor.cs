@@ -9,7 +9,6 @@ namespace _01.Code.Entities
         [SerializeField] private LayerMask targetLayer;
         [SerializeField] private AttackPatternDataSO attackPatternData;
         [SerializeField] private List<Vector2Int> attackOffsets = new();
-        [SerializeField] [Range(0.1f, 1f)] private float cellSearchSize = 0.8f;
 
         public AttackPatternDataSO AttackPatternData => attackPatternData;
         public IReadOnlyList<Vector2Int> AttackOffsets => HasPatternOffsets() ? attackPatternData.AttackOffsets : attackOffsets;
@@ -66,8 +65,7 @@ namespace _01.Code.Entities
         private bool TryGetColliderAtCell(Vector2Int targetCell, out Collider2D targetCollider)
         {
             Vector2 worldCenter = GetWorldCenter(targetCell);
-            Vector2 searchSize = Vector2.one * cellSearchSize;
-            targetCollider = Physics2D.OverlapBox(worldCenter, searchSize, 0f, targetLayer);
+            targetCollider = Physics2D.OverlapBox(worldCenter, Vector2.one, 0f, targetLayer);
             return targetCollider != null;
         }
 
@@ -102,7 +100,7 @@ namespace _01.Code.Entities
             {
                 Vector2Int targetCell = originCell + offsets[i];
                 Vector2 worldCenter = GetWorldCenter(targetCell);
-                Gizmos.DrawWireCube(worldCenter, Vector3.one * cellSearchSize);
+                Gizmos.DrawWireCube(worldCenter, Vector3.one);
             }
         }
 

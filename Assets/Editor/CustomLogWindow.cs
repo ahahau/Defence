@@ -158,32 +158,23 @@ namespace Editor
 
         private void EnsureStyles()
         {
-            if (_entryStyle == null)
+            _entryStyle ??= new GUIStyle(EditorStyles.helpBox)
             {
-                _entryStyle = new GUIStyle(EditorStyles.helpBox)
-                {
-                    alignment = TextAnchor.UpperLeft,
-                    richText = true,
-                    wordWrap = true,
-                    padding = new RectOffset(10, 10, 6, 6)
-                };
-            }
+                alignment = TextAnchor.UpperLeft,
+                richText = true,
+                wordWrap = true,
+                padding = new RectOffset(10, 10, 6, 6)
+            };
 
-            if (_metaStyle == null)
+            _metaStyle ??= new GUIStyle(EditorStyles.miniLabel)
             {
-                _metaStyle = new GUIStyle(EditorStyles.miniLabel)
-                {
-                    richText = true
-                };
-            }
+                richText = true
+            };
 
-            if (_categoryLabelStyle == null)
+            _categoryLabelStyle ??= new GUIStyle(EditorStyles.label)
             {
-                _categoryLabelStyle = new GUIStyle(EditorStyles.label)
-                {
-                    richText = true
-                };
-            }
+                richText = true
+            };
         }
 
         private void SetAllFilters(bool value)

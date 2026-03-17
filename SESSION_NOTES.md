@@ -4,7 +4,7 @@ This file is maintained automatically by the Unity editor helper in `Assets/Edit
 
 ## Generated Snapshot
 
-- Updated: `2026-03-17 09:10:31`
+- Updated: `2026-03-17 23:50:07`
 - Active scene: `Assets/00.Scenes/SampleScene.unity`
 - Scene dirty: `False`
 
@@ -53,7 +53,7 @@ This file is maintained automatically by the Unity editor helper in `Assets/Edit
 - `Assets/01.Code/Manager/EnemySpawnerManager.cs` : `2026-03-16 22:46:55`
 - `Assets/01.Code/Manager/BuildManager.cs` : `2026-03-16 22:46:39`
 - `Assets/01.Code/Cameras/CameraInputSO.cs` : missing
-- `Assets/00.Scenes/SampleScene.unity` : `2026-03-16 17:36:55`
+- `Assets/00.Scenes/SampleScene.unity` : `2026-03-17 20:28:34`
 
 ### Known Focus Areas
 - BuildPanel screen placement and click behavior

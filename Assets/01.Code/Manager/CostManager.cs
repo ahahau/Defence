@@ -68,8 +68,8 @@ namespace _01.Code.Manager
             costEventChannel.RemoveListener<RefundCostEvent>(HandleRefundCostEvent);
         }
 
-        public int GetCurrent(CostType type) => _current.TryGetValue(type, out var v) ? v : 0;
-        public int GetMax(CostType type) => _max.TryGetValue(type, out var v) ? v : 0;
+        public int GetCurrent(CostType type) => _current.GetValueOrDefault(type, 0);
+        public int GetMax(CostType type) => _max.GetValueOrDefault(type, 0);
 
         public void SetMax(CostType type, int max)
         {
