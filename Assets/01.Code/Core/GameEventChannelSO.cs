@@ -21,13 +21,9 @@ namespace _01.Code.Core
                 _lookUp[handler] = castHandler;
                 
                 Type evtType = typeof(T);
-                if (_events.ContainsKey(evtType))
+                if (!_events.TryAdd(evtType, castHandler))
                 {
                     _events[evtType] += castHandler;
-                }
-                else
-                {
-                    _events[evtType] = castHandler;
                 }
             }
         }

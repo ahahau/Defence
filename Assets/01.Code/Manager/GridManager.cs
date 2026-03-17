@@ -6,7 +6,7 @@ using NotImplementedException = System.NotImplementedException;
 
 namespace _01.Code.Manager
 {
-    public class GridManager : MonoBehaviour, IManageable
+    public class GridManager : MonoBehaviour
     {
         [field: SerializeField] public Grid Grid { get; private set; }
         [field:SerializeField] public CustomTilemap Tilemap{get; private set;}

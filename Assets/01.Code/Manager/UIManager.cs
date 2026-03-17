@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace _01.Code.Manager
 {
-    public class UIManager : MonoBehaviour, IManageable
+    public class UIManager : MonoBehaviour
     {
         [SerializeField] private GameEventChannelSO uiEventChannel;
         [SerializeField] private GameEventChannelSO buildEventChannel;
@@ -60,6 +60,7 @@ namespace _01.Code.Manager
             costEventChannel.AddListener<CostChangedEvent>(HandleCostChangedEvent);
 
             HideBuildingPanel();
+            GameManager.Instance.LogManager?.System("UIManager initialized.");
         }
 
         private void OnDestroy()
@@ -78,6 +79,7 @@ namespace _01.Code.Manager
         public void ShowBuildingPanel(Vector3 worldPosition)
         {
             CurrentBuildPosition = worldPosition;
+            GameManager.Instance.LogManager?.UI($"Show build panel at {worldPosition}.");
 
             if (mainPanel != null)
             {
@@ -97,6 +99,7 @@ namespace _01.Code.Manager
 
         public void HideBuildingPanel()
         {
+            GameManager.Instance.LogManager?.UI("Hide build panel.");
             if (mainPanel != null)
             {
                 mainPanel.Hide();
@@ -135,11 +138,13 @@ namespace _01.Code.Manager
             // 현재 보유 골드 기준으로 먼저 막고, 실제 설치 판단은 BuildManager가 다시 합니다
             if (!CanAfford(buildingData))
             {
+                GameManager.Instance.LogManager?.Building($"Blocked install request for `{buildingData.Name}` because gold is insufficient.", LogLevel.Warning);
                 mainPanel?.RefreshAvailability(CanAfford);
                 return;
             }
 
             CurrentBuildPosition = worldPosition;
+            GameManager.Instance.LogManager?.Building($"Requested install for `{buildingData.Name}` at {worldPosition}.");
             OnBuildRequested?.Invoke(buildingData, worldPosition);
             buildEventChannel.RaiseEvent(BuildEvents.BuildInstallRequested.Initializer(buildingData, worldPosition));
             mainPanel?.RefreshAvailability(CanAfford);
@@ -190,6 +195,7 @@ namespace _01.Code.Manager
                 return;
             }
 
+            GameManager.Instance.LogManager?.Building($"Installed `{evt.BuildingData?.Name}` successfully.");
             SelectedBuilding = null;
             mainPanel?.RefreshAvailability(CanAfford);
             HideBuildingPanel();
@@ -197,6 +203,7 @@ namespace _01.Code.Manager
 
         private void HandleBuildFailedEvent(BuildFailedEvent _)
         {
+            GameManager.Instance.LogManager?.Building("Build failed.", LogLevel.Warning);
             mainPanel?.RefreshAvailability(CanAfford);
         }
     }

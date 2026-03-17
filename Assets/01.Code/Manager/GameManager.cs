@@ -14,6 +14,7 @@ namespace _01.Code.Manager
         public BuildManager BuildManager { get; private set; }
         public WaveManager WaveManager { get; private set; }
         public EnemySpawnerManager EnemySpawnerManager { get; private set; }
+        public LogManager LogManager { get; private set; }
 
         private void Awake()
         {
@@ -32,7 +33,13 @@ namespace _01.Code.Manager
             BuildManager = GetComponentInChildren<BuildManager>();
             WaveManager = GetComponentInChildren<WaveManager>();
             EnemySpawnerManager = GetComponentInChildren<EnemySpawnerManager>();
+            LogManager = GetComponentInChildren<LogManager>();
+            if (LogManager == null)
+            {
+                LogManager = gameObject.AddComponent<LogManager>();
+            }
 
+            LogManager?.Initialize();
             GridManager.Initialize();
             InputManager.Initialize();
             UiManager.Initialize();
@@ -40,6 +47,8 @@ namespace _01.Code.Manager
             WaveManager.Initialize();
             EnemySpawnerManager.Initialize();
             CostManager.Initialize();
+
+            LogManager?.System("GameManager initialization completed.");
         }
     }
 }

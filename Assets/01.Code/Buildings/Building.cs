@@ -6,6 +6,6 @@ namespace _01.Code.Buildings
 {
     public class Building : PlaceableEntity
     {
-        public event Action OnClick;
+        //public event Action OnClick;
     }
 }

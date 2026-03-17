@@ -11,7 +11,7 @@ namespace _01.Code.Enemies
         [SerializeField] private ParamSO forwardParam;
         [SerializeField] private ParamSO sideParam;
         private Entity _entity;
-        public void Initialize(ModuleOwner owner)
+        public override void Initialize(ModuleOwner owner)
         {
             _entity = owner as Entity;
         }

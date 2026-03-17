@@ -13,7 +13,7 @@ namespace _01.Code.Entities
         
         [field: SerializeField] public float FacingDirection { get; private set; } = 1f;//1f가 오른쪽 보는거다.
         
-        public void Initialize(ModuleOwner owner)
+        public virtual void Initialize(ModuleOwner owner)
         {
             _owner = owner as Entity;
             _animator = GetComponent<Animator>();

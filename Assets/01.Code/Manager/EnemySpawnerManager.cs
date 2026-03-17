@@ -7,7 +7,7 @@ using UnityEngine;
 namespace _01.Code.Manager
 {
     // Rule: Spawner lifecycle should be managed only by EnemySpawnerManager.
-    public class EnemySpawnerManager : MonoBehaviour, IManageable
+    public class EnemySpawnerManager : MonoBehaviour
     {
         [SerializeField] private EnemySpawner enemySpawnerPrefab;
         [SerializeField] private GameEventChannelSO waveEventChannel;
@@ -22,6 +22,7 @@ namespace _01.Code.Manager
             waveEventChannel.AddListener<WaveStartedEvent>(HandleWaveStartedEvent);
 
             SpawnSpawner();
+            GameManager.Instance.LogManager?.System("EnemySpawnerManager initialized.");
         }
 
         private void OnDestroy()
@@ -39,6 +40,7 @@ namespace _01.Code.Manager
             }
 
             ClearCurrentWave();
+            GameManager.Instance.LogManager?.Enemy("All enemies from current wave were cleared.");
             waveEventChannel.RaiseEvent(WaveEvents.WaveClearedEvent);
             SpawnSpawner();
         }
@@ -48,6 +50,7 @@ namespace _01.Code.Manager
         /// </summary>
         private void HandleWaveStartedEvent(WaveStartedEvent _)
         {
+            GameManager.Instance.LogManager?.Enemy($"Starting wave for {CurrentWaveEnemySpawnerList.Count} spawners.");
             foreach (EnemySpawner spawner in CurrentWaveEnemySpawnerList)
             {
                 if (spawner == null)
@@ -83,6 +86,7 @@ namespace _01.Code.Manager
                 EnemySpawner spawner = Instantiate(enemySpawnerPrefab, new Vector3(worldPos.x, worldPos.y, 0f), Quaternion.identity);
                 spawner.Initialize(worldPos);
                 CurrentWaveEnemySpawnerList.Add(spawner);
+                GameManager.Instance.LogManager?.Enemy($"Spawned enemy spawner at {worldPos}.");
             }
         }
     }

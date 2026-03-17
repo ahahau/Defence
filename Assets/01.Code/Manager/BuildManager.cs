@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace _01.Code.Manager
 {
-    public class BuildManager : MonoBehaviour, IManageable
+    public class BuildManager : MonoBehaviour
     {
         [SerializeField] private GameEventChannelSO buildEventChannel;
         [SerializeField] private GameEventChannelSO costEventChannel;
@@ -18,13 +18,11 @@ namespace _01.Code.Manager
         public event Action OnBuildingMoved;
         public event Action OnBuildingMoveFailed;
 
-        /// <summary>
-        /// 이 함수는 빌드 채널 요청을 실제 설치, 이동 로직에 연결합니다
-        /// </summary>
         public void Initialize()
         {
             buildEventChannel.AddListener<BuildInstallRequestedEvent>(HandleBuildInstallRequestedEvent);
             buildEventChannel.AddListener<MoveBuildingRequestedEvent>(HandleMoveBuildingRequestedEvent);
+            GameManager.Instance.LogManager?.System("BuildManager initialized.");
         }
 
         private void OnDestroy()
@@ -35,22 +33,22 @@ namespace _01.Code.Manager
 
         public bool TryPlace(PlaceableEntity placeableEntity, Vector3 worldPosition)
         {
-            if(placeableEntity == null)
+            if (placeableEntity == null)
             {
                 return false;
             }
-            
+
             Vector2Int cellPosition = GameManager.Instance.GridManager.Tilemap.WorldToCell(worldPosition);
             Vector2Int buildPosition = GameManager.Instance.GridManager.Tilemap.CellToWorld(cellPosition);
-            
-            if(!GameManager.Instance.GridManager.Tilemap.TileEmpty(buildPosition))
+
+            if (!GameManager.Instance.GridManager.Tilemap.TileEmpty(buildPosition))
             {
+                GameManager.Instance.LogManager?.Building($"Move blocked for `{placeableEntity.name}` to {buildPosition}.", LogLevel.Warning);
                 RaiseBuildingMoveFailed(placeableEntity, placeableEntity.GridPosition);
                 return false;
             }
-            
+
             RaiseBuildingMoved(placeableEntity, buildPosition);
-            
             return true;
         }
 
@@ -65,7 +63,6 @@ namespace _01.Code.Manager
             Vector2Int targetPosition = GameManager.Instance.GridManager.Tilemap.CellToWorld(cellPosition);
             Vector2Int currentPosition = placeableEntity.GridPosition;
 
-            // 같은 칸으로 놓았으면 타일 데이터 변경 없이 위치만 확정합니다
             if (targetPosition == currentPosition)
             {
                 placeableEntity.CommitPosition(targetPosition);
@@ -73,28 +70,30 @@ namespace _01.Code.Manager
                 return true;
             }
 
-            // 이동은 비어있는 타일만 허용하고, 기존 타일 해제와 새 타일 설치가 모두 성공해야 합니다
             if (!GameManager.Instance.GridManager.Tilemap.TileEmpty(targetPosition))
             {
+                GameManager.Instance.LogManager?.Building($"Target cell {targetPosition} is not empty for `{placeableEntity.name}`.", LogLevel.Warning);
                 RaiseBuildingMoveFailed(placeableEntity, currentPosition);
                 return false;
             }
 
             if (!GameManager.Instance.GridManager.Tilemap.ClearTileObject(currentPosition, placeableEntity))
             {
+                GameManager.Instance.LogManager?.Building($"Failed to clear current cell {currentPosition} for `{placeableEntity.name}`.", LogLevel.Error);
                 RaiseBuildingMoveFailed(placeableEntity, currentPosition);
                 return false;
             }
 
             if (!GameManager.Instance.GridManager.Tilemap.TileObjectInstall(targetPosition, placeableEntity))
             {
-                // 새 타일 설치에 실패하면 기존 점유 상태를 다시 복구합니다
                 GameManager.Instance.GridManager.Tilemap.TileObjectInstall(currentPosition, placeableEntity);
+                GameManager.Instance.LogManager?.Building($"Failed to place `{placeableEntity.name}` at {targetPosition}; restored original cell {currentPosition}.", LogLevel.Error);
                 RaiseBuildingMoveFailed(placeableEntity, currentPosition);
                 return false;
             }
 
             placeableEntity.CommitPosition(targetPosition);
+            GameManager.Instance.LogManager?.Building($"Moved `{placeableEntity.name}` to {targetPosition}.");
             RaiseBuildingMoved(placeableEntity, targetPosition);
             return true;
         }
@@ -102,7 +101,7 @@ namespace _01.Code.Manager
         public bool TryInstall(BuildingDataSO buildingData, Vector3 worldPosition, out PlaceableEntity placedEntity)
         {
             placedEntity = null;
-            
+
             if (buildingData == null)
             {
                 return false;
@@ -110,32 +109,31 @@ namespace _01.Code.Manager
 
             Vector2Int cellPosition = GameManager.Instance.GridManager.Tilemap.WorldToCell(worldPosition);
             Vector2Int buildPosition = GameManager.Instance.GridManager.Tilemap.CellToWorld(cellPosition);
-            
+
             if (!GameManager.Instance.GridManager.Tilemap.TileEmpty(buildPosition))
             {
+                GameManager.Instance.LogManager?.Building($"Install blocked for `{buildingData.Name}` at occupied cell {buildPosition}.", LogLevel.Warning);
                 RaiseBuildFailed(buildingData, buildPosition);
                 return false;
             }
 
-            // 설치 전에 비용을 먼저 차감 요청하고, 실패하면 설치를 진행하지 않습니다
             TrySpendCostEvent spendRequest = CostEvents.TrySpendCost.Initializer(CostType.Gold, buildingData.Cost);
             costEventChannel.RaiseEvent(spendRequest);
             if (!spendRequest.Succeeded)
             {
+                GameManager.Instance.LogManager?.Building($"Failed to spend gold for `{buildingData.Name}`.", LogLevel.Warning);
                 RaiseBuildFailed(buildingData, buildPosition);
                 return false;
             }
 
             placedEntity = Instantiate(buildingData.Prefab, new Vector3(buildPosition.x, buildPosition.y, 0f), Quaternion.identity);
             placedEntity.Initialize(buildPosition);
+            GameManager.Instance.LogManager?.Building($"Installed `{buildingData.Name}` at {buildPosition}.");
             OnBuildingInstalled?.Invoke(buildingData, placedEntity);
             buildEventChannel.RaiseEvent(BuildEvents.BuildInstalled.Initializer(buildingData, placedEntity));
             return true;
         }
 
-        /// <summary>
-        /// 이 함수는 UI에서 들어온 설치 요청을 실제 설치 함수로 넘깁니다
-        /// </summary>
         private void HandleBuildInstallRequestedEvent(BuildInstallRequestedEvent evt)
         {
             if (evt == null)
@@ -146,9 +144,6 @@ namespace _01.Code.Manager
             TryInstall(evt.BuildingData, evt.WorldPosition, out _);
         }
 
-        /// <summary>
-        /// 이 함수는 입력에서 들어온 이동 요청을 실제 이동 함수로 넘깁니다
-        /// </summary>
         private void HandleMoveBuildingRequestedEvent(MoveBuildingRequestedEvent evt)
         {
             if (evt?.PlaceableEntity == null)
@@ -159,9 +154,6 @@ namespace _01.Code.Manager
             TryMove(evt.PlaceableEntity, evt.WorldPosition);
         }
 
-        /// <summary>
-        /// 이 함수는 설치 실패를 내부 이벤트와 채널 이벤트로 같이 알려줍니다
-        /// </summary>
         private void RaiseBuildFailed(BuildingDataSO buildingData, Vector2Int buildPosition)
         {
             OnBuildFailed?.Invoke(buildingData, buildPosition);

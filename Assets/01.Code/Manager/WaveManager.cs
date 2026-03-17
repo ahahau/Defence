@@ -4,59 +4,64 @@ using _01.Code.Events;
 using UnityEngine;
 
 // Rule: Wave flow should be controlled only by WaveManager.
-public class WaveManager : MonoBehaviour, _01.Code.Manager.IManageable
+namespace _01.Code.Manager
 {
-    [SerializeField] private GameEventChannelSO waveEventChannel;
-
-    public event Action OnWaveStarted;
-    public event Action OnWaveCleared;
-
-    private bool _isRunning;
-
-    /// <summary>
-    /// 이 함수는 웨이브 요청과 웨이브 클리어 이벤트를 구독합니다
-    /// </summary>
-    public void Initialize()
+    public class WaveManager : MonoBehaviour
     {
-        waveEventChannel.AddListener<WaveStartRequestedEvent>(HandleWaveStartRequestedEvent);
-        waveEventChannel.AddListener<WaveClearedEvent>(HandleWaveClearedEvent);
-    }
+        [SerializeField] private GameEventChannelSO waveEventChannel;
 
-    private void OnDestroy()
-    {
-        waveEventChannel.RemoveListener<WaveStartRequestedEvent>(HandleWaveStartRequestedEvent);
-        waveEventChannel.RemoveListener<WaveClearedEvent>(HandleWaveClearedEvent);
-    }
+        public event Action OnWaveStarted;
+        public event Action OnWaveCleared;
 
-    public void StartWaves()
-    {
-        if (_isRunning)
+        private bool _isRunning;
+
+        /// <summary>
+        /// 이 함수는 웨이브 요청과 웨이브 클리어 이벤트를 구독합니다
+        /// </summary>
+        public void Initialize()
         {
-            return;
+            waveEventChannel.AddListener<WaveStartRequestedEvent>(HandleWaveStartRequestedEvent);
+            waveEventChannel.AddListener<WaveClearedEvent>(HandleWaveClearedEvent);
+            GameManager.Instance.LogManager?.System("WaveManager initialized.");
         }
 
-        _isRunning = true;
-        Debug.Log("Wave started");
-        OnWaveStarted?.Invoke();
-        waveEventChannel.RaiseEvent(WaveEvents.WaveStartedEvent);
-    }
-
-    private void HandleWaveClearedEvent(WaveClearedEvent _)
-    {
-        if (!_isRunning)
+        private void OnDestroy()
         {
-            return;
+            waveEventChannel.RemoveListener<WaveStartRequestedEvent>(HandleWaveStartRequestedEvent);
+            waveEventChannel.RemoveListener<WaveClearedEvent>(HandleWaveClearedEvent);
         }
 
-        _isRunning = false;
-        OnWaveCleared?.Invoke();
-    }
+        public void StartWaves()
+        {
+            if (_isRunning)
+            {
+                return;
+            }
 
-    /// <summary>
-    /// 이 함수는 외부의 웨이브 시작 요청을 실제 시작 함수로 연결합니다
-    /// </summary>
-    private void HandleWaveStartRequestedEvent(WaveStartRequestedEvent _)
-    {
-        StartWaves();
+            _isRunning = true;
+            GameManager.Instance.LogManager?.Wave("Wave started.");
+            OnWaveStarted?.Invoke();
+            waveEventChannel.RaiseEvent(WaveEvents.WaveStartedEvent);
+        }
+
+        private void HandleWaveClearedEvent(WaveClearedEvent _)
+        {
+            if (!_isRunning)
+            {
+                return;
+            }
+
+            _isRunning = false;
+            GameManager.Instance.LogManager?.Wave("Wave cleared.");
+            OnWaveCleared?.Invoke();
+        }
+
+        /// <summary>
+        /// 이 함수는 외부의 웨이브 시작 요청을 실제 시작 함수로 연결합니다
+        /// </summary>
+        private void HandleWaveStartRequestedEvent(WaveStartRequestedEvent _)
+        {
+            StartWaves();
+        }
     }
 }

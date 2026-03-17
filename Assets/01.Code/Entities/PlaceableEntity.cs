@@ -20,7 +20,7 @@ namespace _01.Code.Entities
             Vector2Int randomPos = GameManager.Instance.GridManager.GetRandomGridPosition();
             if(randomPos == Vector2Int.zero)
             {
-                Debug.LogError(gameObject.name + ": No Empty Tile Found");
+                GameManager.Instance.LogManager?.Building($"{gameObject.name}: no empty tile found.", LogLevel.Error);
             }
             Vector2Int position = randomPos;
             GridPosition = new Vector2Int(position.x,position.y);
@@ -30,7 +30,7 @@ namespace _01.Code.Entities
         {
             if (!GameManager.Instance.GridManager.Tilemap.TileObjectInstall(tilePos, this))
             {
-                Debug.LogError(gameObject.name + ": Tile object not found or Tile is not Empty " + tilePos);
+                GameManager.Instance.LogManager?.Building($"{gameObject.name}: tile install failed at {tilePos}.", LogLevel.Error);
                 return;
             }
 

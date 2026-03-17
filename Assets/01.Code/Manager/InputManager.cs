@@ -8,8 +8,7 @@ using UnityEngine.InputSystem;
 
 namespace _01.Code.Manager
 {
-    // TODO: Separate input routing from click target handling.
-    public class InputManager : MonoBehaviour, IManageable
+    public class InputManager : MonoBehaviour
     {
         [field: SerializeField] public InputDataSO InputData { get; private set; }
         [field: SerializeField] public Vector2Int CurrentMouseCellPosition { get; private set; }
@@ -26,6 +25,7 @@ namespace _01.Code.Manager
         
         public void Initialize()
         {
+            GameManager.Instance.LogManager?.System("InputManager initialized.");
         }
 
 
@@ -82,12 +82,14 @@ namespace _01.Code.Manager
 
             if (!hitGameObject.CompareTag("Building"))
             {
+                GameManager.Instance.LogManager?.UI($"Clicked object `{hitGameObject.name}` and hid build panel.");
                 return;
             }
 
             Building building = hitGameObject.GetComponentInParent<Building>();
             if (building != null)
             {
+                GameManager.Instance.LogManager?.Building($"Selected existing building `{building.name}`.");
                 return;
             }
         }
@@ -99,6 +101,7 @@ namespace _01.Code.Manager
         {
             Vector2Int gridPos = GameManager.Instance.GridManager.Tilemap.WorldToCell(worldPosition);
             CurrentMouseCellPosition = gridPos;
+            GameManager.Instance.LogManager?.UI($"Requested build panel at cell {gridPos}.");
             uiEventChannel.RaiseEvent(UIEvents.ShowBuildPanelRequested.Initializer(worldPosition));
         }
         
@@ -142,6 +145,7 @@ namespace _01.Code.Manager
             }
 
             _isDraggingBuilding = true;
+            GameManager.Instance.LogManager?.Building($"Started dragging `{_draggedBuilding.name}` from {_draggedBuilding.GridPosition}.");
             uiEventChannel.RaiseEvent(UIEvents.HideBuildPanelRequested);
         }
 
@@ -172,6 +176,7 @@ namespace _01.Code.Manager
 
         private void ReleaseDrag(Vector2 worldPosition)
         {
+            GameManager.Instance.LogManager?.Building($"Requested move for `{_draggedBuilding.name}`.");
             buildEventChannel.RaiseEvent(BuildEvents.MoveBuildingRequested.Initializer(_draggedBuilding, worldPosition));
         }
 
