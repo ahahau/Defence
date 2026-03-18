@@ -201,20 +201,11 @@ namespace _01.Code.Manager
 
         private bool IsPointerOverUi() => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
 
-        private void QueueLeftPointerPressed()
-        {
-            _queuedLeftPointerPressed = true;
-        }
+        private void QueueLeftPointerPressed() => _queuedLeftPointerPressed = true;
 
-        private void QueueLeftPointerReleased()
-        {
-            _queuedLeftPointerReleased = true;
-        }
+        private void QueueLeftPointerReleased() => _queuedLeftPointerReleased = true;
 
-        private void QueueRightPointerPressed()
-        {
-            _queuedRightPointerPressed = true;
-        }
+        private void QueueRightPointerPressed() => _queuedRightPointerPressed = true;
 
         private void ResetPointerState()
         {

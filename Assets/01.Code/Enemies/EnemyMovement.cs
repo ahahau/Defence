@@ -26,20 +26,13 @@ namespace _01.Code.Enemies
             _pathIndex = 0;
         }
 
-        private void Start()
-        {
-            MoveNext();
-        }
-
         public void MoveNext()
         {
             if (_pathIndex >= _path.Count)
                 return;
 
-            Vector2 target = new Vector2(
-                _path[_pathIndex].x,
-                _path[_pathIndex].y
-            );
+            Vector3 targetWorld = Manager.GameManager.Instance.GridManager.CellToWorld(_path[_pathIndex]);
+            Vector2 target = new Vector2(targetWorld.x, targetWorld.y);
 
             Vector2 currentPos = _rb.position;
             Vector2 dir = target - currentPos;
@@ -69,6 +62,11 @@ namespace _01.Code.Enemies
         public void SetPath(List<Vector2Int> path)
         {
             _path = path;
+        }
+
+        public void SetSpeed(float speed)
+        {
+            moveSpeed = speed;
         }
     }
 }

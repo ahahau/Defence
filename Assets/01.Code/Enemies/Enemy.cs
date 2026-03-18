@@ -14,14 +14,14 @@ namespace _01.Code.Enemies
         private List<Vector2Int> _path;
         private bool _deathNotified;
 
-        public void Initialize(List<Vector2Int> path, EnemySpawner parent/*, EnemyDataSO data, int level*/)
+        public void Initialize(List<Vector2Int> path, EnemySpawner parent, EnemyDataSO data, int level = 0)
         {
             _path = path;
             _render = GetModule<EnemyRender>();
             _movement = GetModule<EnemyMovement>();
             _enemyHealth = GetModule<EnemyHealth>();
-            // TODO : 이거 고쳐야함
-            //_enemyHealth.Initialize(data, level);
+            _enemyHealth.Initialize(data, level);
+            _movement.SetSpeed(data.Speed);
             OnDeath?.AddListener(() =>
             {
                 parent.EnemyDied(this);

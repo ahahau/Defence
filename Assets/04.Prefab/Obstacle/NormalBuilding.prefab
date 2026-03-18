@@ -47,7 +47,7 @@ MonoBehaviour:
   targetLayer:
     serializedVersion: 2
     m_Bits: 64
-  attackPatternData: {fileID: 11400000, guid: 7198d85bbf940cc4e93fb09a57c37381, type: 2}
+  attackPatternData: {fileID: 11400000, guid: f1a2e539f6dde304190573e2fc621950, type: 2}
   attackOffsets: []
   cellSearchSize: 1
 --- !u!1 &5988216743583921018
@@ -125,7 +125,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a5ee3164f48447a8a8286b52e09823ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <IsSuperArmor>k__BackingField: 0
   OnHit:
     m_PersistentCalls:
       m_Calls: []

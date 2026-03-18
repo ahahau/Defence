@@ -88,11 +88,6 @@ namespace _01.Code.Manager
                 return;
             }
 
-            if (buildingPenalPrefab == null)
-            {
-                return;
-            }
-
             buildingPenalPrefab.transform.position = worldPosition;
             buildingPenalPrefab.SetActive(true);
         }

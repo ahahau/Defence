@@ -7,32 +7,48 @@ using UnityEngine;
 
 namespace _01.Code.Enemies
 {
-    // Handles enemy spawning only. Enemy behaviour is owned by Enemy itself.
     public class EnemySpawner : PlaceableEntity
     {
         [SerializeField] private List<Vector2Int> path = new List<Vector2Int>();
         [SerializeField] private List<WaveDataSO> waveDataList = new List<WaveDataSO>();
         [SerializeField] private LineRenderer lineRenderer;
         [SerializeField] private float lineWidth = 0.18f;
-        [SerializeField] private Enemy testEnemyPrefab;
-
+        
         private readonly HashSet<Enemy> _alive = new HashSet<Enemy>();
         private bool _isSpawning;
-
+        
         private IEnumerator EnemySpawn(float sec)
         {
             _isSpawning = true;
 
-            Vector2Int target = Vector2Int.RoundToInt(GameManager.Instance.GridManager.commandCenter.transform.position);
-            path = GameManager.Instance.GridManager.PathFinder.FindPath(new Vector2Int(GridPosition.x, GridPosition.y), target);
-            DrawPathLine();
-
-            for (int i = 0; i < 5; i++)
+            Vector2Int start = GridPosition;
+            Vector2Int target = GameManager.Instance.GridManager.commandCenter.GridPosition;
+            path = GameManager.Instance.GridManager.PathFinder.FindPath(start, target);
+            if (path.Count == 0)
             {
-                Enemy enemy = Instantiate(testEnemyPrefab, transform.position, Quaternion.identity);
-                _alive.Add(enemy);
-                enemy.Initialize(path, this);
-                yield return new WaitForSeconds(sec);
+                GameManager.Instance.LogManager?.Enemy($"Path not found from {start} to {target}.", LogLevel.Error);
+                _isSpawning = false;
+                yield break;
+            }
+
+            DrawPathLine();
+            
+            List<WaveData> spawnWaves = GetSpawnWaves();
+            for (int waveIndex = 0; waveIndex < spawnWaves.Count; waveIndex++)
+            {
+
+                if (spawnWaves[waveIndex].startDelay > 0f)
+                {
+                    yield return new WaitForSeconds(spawnWaves[waveIndex].startDelay);
+                }
+
+                for (int i = 0; i < spawnWaves[waveIndex].count; i++)
+                {
+                    Enemy enemy = Instantiate(spawnWaves[waveIndex].enemyPrefab.EnemyPrefab, transform.position, Quaternion.identity);
+                    _alive.Add(enemy);
+                    enemy.Initialize(path, this, spawnWaves[waveIndex].enemyPrefab);
+                    yield return new WaitForSeconds(spawnWaves[waveIndex].interval);
+                }
             }
 
             _isSpawning = false;
@@ -46,6 +62,18 @@ namespace _01.Code.Enemies
         public void StartWave()
         {
             StartCoroutine(EnemySpawn(0.5f));
+        }
+
+        private List<WaveData> GetSpawnWaves()
+        {
+            List<WaveData> result = new List<WaveData>();
+            for (int i = 0; i < waveDataList.Count; i++)
+            {
+                WaveDataSO waveData = waveDataList[i];
+                result.AddRange(waveData.waveDataList);
+            }
+
+            return result;
         }
 
         private void DrawPathLine()
@@ -74,7 +102,8 @@ namespace _01.Code.Enemies
             for (int i = 0; i < path.Count; i++)
             {
                 Vector2Int cell = path[i];
-                Vector3 localPoint = new Vector3(cell.x - transform.position.x, cell.y - transform.position.y, 0f);
+                Vector3 worldPoint = GameManager.Instance.GridManager.CellToWorld(cell);
+                Vector3 localPoint = transform.InverseTransformPoint(worldPoint);
                 lineRenderer.SetPosition(i, localPoint);
             }
 

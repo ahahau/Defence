@@ -5,13 +5,10 @@ namespace _01.Code.Enemies
 {
     public class EnemyHealth : EntityHealth
     {
-        public void Initialize(int health)
+        public void Initialize(EnemyDataSO data, int level = 0)
         {
-            baseHealth = health;
-        }
-        public void SetHealth(int health)
-        {
-            currentHealth += health;
+            baseHealth = data.Health + data.GrowthHealth * level;
+            currentHealth = baseHealth;
         }
     }
 }

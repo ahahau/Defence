@@ -252,10 +252,10 @@ MonoBehaviour:
     <Position>k__BackingField: {x: 0, y: 0}
   Position: {x: 0, y: 0}
   path: []
-  waveDataList: []
+  waveDataList:
+  - {fileID: 11400000, guid: b6a79f4df1b649018d4f5881295c2ef1, type: 2}
   lineRenderer: {fileID: 482112727154854607}
   lineWidth: 0.75
-  testEnemyPrefab: {fileID: 9145050925329036043, guid: 1aa4641388342184c9f0e5ac1c81c5ad, type: 3}
 --- !u!61 &2237187412355126881
 BoxCollider2D:
   m_ObjectHideFlags: 0

@@ -139,27 +139,11 @@ namespace _01.Code.Manager
         /// <summary>
         /// 이 함수는 외부에서 비용 사용 요청이 오면 실제 차감을 처리합니다
         /// </summary>
-        private void HandleTrySpendCostEvent(TrySpendCostEvent evt)
-        {
-            if (evt == null)
-            {
-                return;
-            }
-
-            evt.Succeeded = TryPay(evt.Type, evt.Amount);
-        }
+        private void HandleTrySpendCostEvent(TrySpendCostEvent evt) => evt.Succeeded = TryPay(evt.Type, evt.Amount);
 
         /// <summary>
         /// 이 함수는 외부에서 환불 요청이 오면 현재 비용에 다시 더해줍니다
         /// </summary>
-        private void HandleRefundCostEvent(RefundCostEvent evt)
-        {
-            if (evt == null)
-            {
-                return;
-            }
-
-            Add(evt.Type, evt.Amount);
-        }
+        private void HandleRefundCostEvent(RefundCostEvent evt) => Add(evt.Type, evt.Amount);
     }
 }

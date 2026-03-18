@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1bed2b8434b24f689e12459830a1c178, type: 3}
+  m_Name: TestEnemy
+  m_EditorClassIdentifier: 
+  <EnemyPrefab>k__BackingField: {fileID: 9145050925329036043, guid: 1aa4641388342184c9f0e5ac1c81c5ad, type: 3}
+  <Health>k__BackingField: 100
+  <GrowthHealth>k__BackingField: 10
+  <Speed>k__BackingField: 1
