@@ -6,7 +6,6 @@ namespace _01.Code.Entities
 {
     public class Entity : ModuleOwner
     { 
-        [field: SerializeField] public bool IsSuperArmor { get; set; }
         public bool IsDead { get; set; }
         
         public UnityEvent OnHit;

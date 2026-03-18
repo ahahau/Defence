@@ -1,3 +1,4 @@
+using System;
 using _01.Code.Manager;
 using _01.Code.System;
 using UnityEditor;
@@ -43,6 +44,7 @@ namespace Editor
             CustomLogStore.Changed -= HandleLogStoreChanged;
         }
 
+        [Obsolete("Obsolete")]
         private void OnGUI()
         {
             EnsureStyles();
@@ -67,6 +69,7 @@ namespace Editor
             EditorGUILayout.EndHorizontal();
         }
 
+        [Obsolete("Obsolete")]
         private void DrawCategoryFilters()
         {
             EditorGUILayout.BeginHorizontal();
@@ -185,6 +188,7 @@ namespace Editor
             }
         }
 
+        [Obsolete("Obsolete")]
         private void DrawCategoryToggle(int index, string categoryName)
         {
             string colorHex = ColorUtility.ToHtmlStringRGB(GetCategoryColor((LogCategory)index));
@@ -201,6 +205,7 @@ namespace Editor
             Repaint();
         }
 
+        [Obsolete("Obsolete")]
         private static Color GetCategoryColor(LogCategory category)
         {
             LogManager logManager = UnityEngine.Object.FindObjectOfType<LogManager>();

@@ -3,7 +3,6 @@ using _01.Code.Events;
 using _01.Code.Manager;
 using UnityEngine;
 using CostType = _01.Code.Manager.CostType;
-using NotImplementedException = System.NotImplementedException;
 
 namespace _01.Code.Buildings
 {
@@ -13,8 +12,9 @@ namespace _01.Code.Buildings
     {
         [SerializeField] private GameEventChannelSO waveEventChannel;
         [SerializeField] private GameEventChannelSO costEventChannel;
-        
+        [SerializeField] private CollectableBuildingDataSO collectableBuildingData;
         [SerializeField] private CostType costType = CostType.Gold;
+        [SerializeField] private int gainCost = 10;
         
         protected override void Start()
         {
@@ -34,7 +34,17 @@ namespace _01.Code.Buildings
 
         private void CollectCost()
         {
-            costEventChannel.RaiseEvent(CostEvents.RefundCost.Initializer(costType, 10));
+            costEventChannel.RaiseEvent(CostEvents.RefundCost.Initializer(GetCostType(), GetGainCost()));
+        }
+
+        private CostType GetCostType()
+        {
+            return collectableBuildingData != null ? collectableBuildingData.Type : costType;
+        }
+
+        private int GetGainCost()
+        {
+            return collectableBuildingData != null ? collectableBuildingData.GainCost : gainCost;
         }
     }
 }

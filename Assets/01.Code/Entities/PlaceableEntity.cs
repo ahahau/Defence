@@ -28,7 +28,7 @@ namespace _01.Code.Entities
         }
         public virtual void SetTile(Vector2Int tilePos)
         {
-            if (!GameManager.Instance.GridManager.Tilemap.TileObjectInstall(tilePos, this))
+            if (!GameManager.Instance.GridManager.TryInstall(tilePos, this))
             {
                 GameManager.Instance.LogManager?.Building($"{gameObject.name}: tile install failed at {tilePos}.", LogLevel.Error);
                 return;
@@ -39,14 +39,14 @@ namespace _01.Code.Entities
 
         public virtual void PreviewPosition(Vector2Int tilePos)
         {
-            transform.position = GameManager.Instance.GridManager.Grid.CellToWorld(new Vector3Int(tilePos.x, tilePos.y, 0));
+            transform.position = GameManager.Instance.GridManager.CellToWorld(tilePos);
         }
 
         public virtual void CommitPosition(Vector2Int tilePos)
         {
             GridPosition = tilePos;
-            Tile = GameManager.Instance.GridManager.Tilemap.GetTile(tilePos);
-            transform.position = GameManager.Instance.GridManager.Grid.CellToWorld(new Vector3Int(GridPosition.x,GridPosition.y, 0));
+            Tile = GameManager.Instance.GridManager.GetTile(tilePos);
+            transform.position = GameManager.Instance.GridManager.CellToWorld(GridPosition);
         }
     }
 }

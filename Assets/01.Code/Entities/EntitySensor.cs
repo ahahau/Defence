@@ -1,27 +1,42 @@
 using System.Collections.Generic;
 using _01.Code.Manager;
+using _01.Code.Modules;
 using UnityEngine;
 
 namespace _01.Code.Entities
 {
-    public class EntitySensor : MonoBehaviour
+    public class EntitySensor : MonoBehaviour, IModule
     {
         [SerializeField] private LayerMask targetLayer;
         [SerializeField] private AttackPatternDataSO attackPatternData;
         [SerializeField] private List<Vector2Int> attackOffsets = new();
+        [SerializeField] private int cellSearchSize = 1;
 
         public AttackPatternDataSO AttackPatternData => attackPatternData;
-        public IReadOnlyList<Vector2Int> AttackOffsets => HasPatternOffsets() ? attackPatternData.AttackOffsets : attackOffsets;
+        public IReadOnlyList<AttackPatternData> AttackPatterns => HasPatternData()
+            ? attackPatternData.AttackOffsets
+            : _fallbackPatterns;
+
+        private readonly List<AttackPatternData> _fallbackPatterns = new();
 
         public bool TryGetTargetCollider(Vector2Int originCell, out Collider2D targetCollider)
         {
-            IReadOnlyList<Vector2Int> offsets = AttackOffsets;
-            for (int i = 0; i < offsets.Count; i++)
+            IReadOnlyList<AttackPatternData> patterns = AttackPatterns;
+            for (int patternIndex = 0; patternIndex < patterns.Count; patternIndex++)
             {
-                Vector2Int targetCell = originCell + offsets[i];
-                if (TryGetColliderAtCell(targetCell, out targetCollider))
+                AttackPatternData pattern = patterns[patternIndex];
+                if (pattern == null || pattern.attackOffsets == null)
                 {
-                    return true;
+                    continue;
+                }
+
+                for (int offsetIndex = 0; offsetIndex < pattern.attackOffsets.Count; offsetIndex++)
+                {
+                    Vector2Int targetCell = originCell + pattern.attackOffsets[offsetIndex];
+                    if (TryGetColliderAtCell(targetCell, pattern.cellSearchSize, out targetCollider))
+                    {
+                        return true;
+                    }
                 }
             }
 
@@ -62,10 +77,21 @@ namespace _01.Code.Entities
             return TryGetTargetCollider(originCell, out _);
         }
 
-        private bool TryGetColliderAtCell(Vector2Int targetCell, out Collider2D targetCollider)
+        private void Awake()
         {
-            Vector2 worldCenter = GetWorldCenter(targetCell);
-            targetCollider = Physics2D.OverlapBox(worldCenter, Vector2.one, 0f, targetLayer);
+            RefreshFallbackPatterns();
+        }
+
+        private void OnValidate()
+        {
+            RefreshFallbackPatterns();
+        }
+
+        private bool TryGetColliderAtCell(Vector2Int targetCell, int searchSizeValue, out Collider2D targetCollider)
+        {
+            Vector2 worldCenter = GameManager.Instance.GridManager.CellToWorld(targetCell);
+            Vector2 searchSize = Vector2.one * Mathf.Max(1, searchSizeValue);
+            targetCollider = Physics2D.OverlapBox(worldCenter, searchSize, 0f, targetLayer);
             return targetCollider != null;
         }
 
@@ -73,40 +99,72 @@ namespace _01.Code.Entities
         {
             if (GameManager.Instance != null && GameManager.Instance.GridManager != null)
             {
-                Vector3 cellWorld = GameManager.Instance.GridManager.Grid.CellToWorld(new Vector3Int(cellPosition.x, cellPosition.y, 0));
+                Vector3 cellWorld = GameManager.Instance.GridManager.CellToWorld(cellPosition);
                 return new Vector2(cellWorld.x, cellWorld.y);
             }
 
             return cellPosition;
         }
 
-        private Vector2Int GetGizmoOriginCell()
-        {
-            if (GameManager.Instance != null && GameManager.Instance.GridManager != null)
-            {
-                return GameManager.Instance.GridManager.Tilemap.WorldToCell(transform.position);
-            }
-
-            return Vector2Int.RoundToInt(transform.position);
-        }
 
         private void OnDrawGizmos()
         {
             Gizmos.color = Color.red;
 
-            Vector2Int originCell = GetGizmoOriginCell();
-            IReadOnlyList<Vector2Int> offsets = AttackOffsets;
-            for (int i = 0; i < offsets.Count; i++)
+            Vector2Int originCell = GetOriginCellForGizmos();
+            IReadOnlyList<AttackPatternData> patterns = AttackPatterns;
+            for (int patternIndex = 0; patternIndex < patterns.Count; patternIndex++)
             {
-                Vector2Int targetCell = originCell + offsets[i];
-                Vector2 worldCenter = GetWorldCenter(targetCell);
-                Gizmos.DrawWireCube(worldCenter, Vector3.one);
+                AttackPatternData pattern = patterns[patternIndex];
+                if (pattern == null || pattern.attackOffsets == null)
+                {
+                    continue;
+                }
+
+                int gizmoSize = Mathf.Max(1, pattern.cellSearchSize);
+                for (int offsetIndex = 0; offsetIndex < pattern.attackOffsets.Count; offsetIndex++)
+                {
+                    Vector2Int targetCell = originCell + pattern.attackOffsets[offsetIndex];
+                    Vector2 worldCenter = GetWorldCenter(targetCell);
+                    Gizmos.DrawWireCube(worldCenter, Vector3.one * gizmoSize);
+                }
             }
         }
 
-        private bool HasPatternOffsets()
+        private Vector2Int GetOriginCellForGizmos()
+        {
+            if (GameManager.Instance != null && GameManager.Instance.GridManager != null)
+            {
+                return GameManager.Instance.GridManager.WorldToCell(transform.position);
+            }
+
+            return Vector2Int.RoundToInt(transform.position);
+        }
+
+        private bool HasPatternData()
         {
             return attackPatternData != null && attackPatternData.AttackOffsets != null && attackPatternData.AttackOffsets.Count > 0;
+        }
+
+        private void RefreshFallbackPatterns()
+        {
+            _fallbackPatterns.Clear();
+
+            if (attackOffsets == null || attackOffsets.Count == 0)
+            {
+                return;
+            }
+
+            _fallbackPatterns.Add(new AttackPatternData
+            {
+                attackOffsets = new List<Vector2Int>(attackOffsets),
+                cellSearchSize = Mathf.Max(1, cellSearchSize)
+            });
+        }
+
+        public void Initialize(ModuleOwner owner)
+        {
+            
         }
     }
 }

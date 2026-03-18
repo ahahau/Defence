@@ -4,7 +4,6 @@ using _01.Code.Core;
 using _01.Code.Events;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
 
 namespace _01.Code.Manager
 {
@@ -16,46 +15,62 @@ namespace _01.Code.Manager
         [SerializeField] private LayerMask whatIsClickable;
         [SerializeField] private float dragStartThresholdPixels = 8f;
         [SerializeField] private GameEventChannelSO uiEventChannel;
-        [SerializeField] private GameEventChannelSO buildEventChannel;
 
         private Building _draggedBuilding;
         private bool _isPointerDown;
         private bool _isDraggingBuilding;
+        private bool _queuedLeftPointerPressed;
+        private bool _queuedLeftPointerReleased;
+        private bool _queuedRightPointerPressed;
         private Vector2 _pointerDownScreenPosition;
-        
+
         public void Initialize()
         {
+            InputData.LeftPointerPressed += QueueLeftPointerPressed;
+            InputData.LeftPointerReleased += QueueLeftPointerReleased;
+            InputData.RightPointerPressed += QueueRightPointerPressed;
             GameManager.Instance.LogManager?.System("InputManager initialized.");
         }
 
+        private void OnDestroy()
+        {
+            InputData.LeftPointerPressed -= QueueLeftPointerPressed;
+            InputData.LeftPointerReleased -= QueueLeftPointerReleased;
+            InputData.RightPointerPressed -= QueueRightPointerPressed;
+        }
 
         private void Update()
         {
-            if (Mouse.current == null)
+            Vector2 worldPosition = InputData.GetWorldPosition2D();
+            Vector2Int hoveredCell = GameManager.Instance.GridManager.WorldToCell(worldPosition);
+            CurrentMouseCellPosition = hoveredCell;
+
+            if (_queuedRightPointerPressed)
             {
-                return;
+                _queuedRightPointerPressed = false;
+                HandleRightPointerPressed();
             }
 
-            Vector2 worldPosition = GetMouseWorldPosition();
-
-            if (Mouse.current.leftButton.wasPressedThisFrame)
+            if (_queuedLeftPointerPressed)
             {
-                BeginPointerInteraction(worldPosition);
+                _queuedLeftPointerPressed = false;
+                HandleLeftPointerPressed();
             }
 
-            if (_isPointerDown && !_isDraggingBuilding && ShouldStartDragging())
+            if (_isPointerDown && !_isDraggingBuilding && ShouldStartDragging(hoveredCell))
             {
                 StartDragging();
             }
 
-            if (_isDraggingBuilding && _draggedBuilding != null && Mouse.current.leftButton.isPressed)
+            if (_isDraggingBuilding && _draggedBuilding != null && InputData.IsLeftPointerPressed)
             {
-                DragBuilding(worldPosition);
+                DragBuilding(hoveredCell);
             }
 
-            if (_isPointerDown && Mouse.current.leftButton.wasReleasedThisFrame)
+            if (_queuedLeftPointerReleased)
             {
-                EndPointerInteraction(worldPosition);
+                _queuedLeftPointerReleased = false;
+                HandleLeftPointerReleased();
             }
         }
 
@@ -68,14 +83,10 @@ namespace _01.Code.Manager
                 ClickGround(worldPosition);
                 return;
             }
-            
-            // 지금은 하는일 없음
+
             ClickObject(hit.gameObject);
         }
 
-        /// <summary>
-        /// 이 함수는 오브젝트 클릭시 빌드 패널을 닫고 오브젝트 분기를 처리합니다
-        /// </summary>
         private void ClickObject(GameObject hitGameObject)
         {
             uiEventChannel.RaiseEvent(UIEvents.HideBuildPanelRequested);
@@ -90,51 +101,68 @@ namespace _01.Code.Manager
             if (building != null)
             {
                 GameManager.Instance.LogManager?.Building($"Selected existing building `{building.name}`.");
-                return;
             }
         }
 
-        /// <summary>
-        /// 이 함수는 빈 땅 클릭을 빌드 패널 열기 요청으로 바꿔줍니다
-        /// </summary>
         private void ClickGround(Vector2 worldPosition)
         {
-            Vector2Int gridPos = GameManager.Instance.GridManager.Tilemap.WorldToCell(worldPosition);
+            Vector2Int gridPos = GameManager.Instance.GridManager.WorldToCell(worldPosition);
             CurrentMouseCellPosition = gridPos;
             GameManager.Instance.LogManager?.UI($"Requested build panel at cell {gridPos}.");
             uiEventChannel.RaiseEvent(UIEvents.ShowBuildPanelRequested.Initializer(worldPosition));
         }
-        
-        private void BeginPointerInteraction(Vector2 worldPosition)
+
+        private void HandleRightPointerPressed()
         {
+            if (IsPointerOverUi())
+            {
+                return;
+            }
+
+            OnClick(InputData.GetWorldPosition2D());
+        }
+
+        private void HandleLeftPointerPressed()
+        {
+            Vector2 worldPosition = InputData.GetWorldPosition2D();
             if (IsPointerOverUi())
             {
                 ResetPointerState();
                 return;
             }
 
-            _isPointerDown = true;
-            _isDraggingBuilding = false;
-            _pointerDownScreenPosition = Mouse.current.position.ReadValue();
-
             Collider2D hit = GetHitCollider(worldPosition);
-            if (hit == null)
+            if (hit == null || hit.CompareTag("EnemySpawner"))
             {
                 return;
             }
 
-            if (hit.CompareTag("EnemySpawner"))
+            _draggedBuilding = hit.GetComponentInParent<Building>();
+            if (_draggedBuilding != null)
+            {
+                _isPointerDown = true;
+                _isDraggingBuilding = false;
+                _pointerDownScreenPosition = InputData.MousePosition;
+                StartDragging();
+            }
+        }
+
+        private void HandleLeftPointerReleased()
+        {
+            if (!_isPointerDown)
             {
                 return;
             }
 
-            Building building = hit.GetComponentInParent<Building>();
-            if (building == null)
+            Vector3 targetWorldPosition = GameManager.Instance.GridManager.CellToWorld(CurrentMouseCellPosition);
+
+            if (_isDraggingBuilding && _draggedBuilding != null)
             {
-                return;
+                GameManager.Instance.LogManager?.Building($"Requested move for `{_draggedBuilding.name}`.");
+                GameManager.Instance.BuildManager.TryMove(_draggedBuilding, targetWorldPosition);
             }
 
-            _draggedBuilding = building;
+            ResetPointerState();
         }
 
         private void StartDragging()
@@ -149,51 +177,43 @@ namespace _01.Code.Manager
             uiEventChannel.RaiseEvent(UIEvents.HideBuildPanelRequested);
         }
 
-        private void DragBuilding(Vector2 worldPosition)
+        private void DragBuilding(Vector2Int gridPos)
         {
-            Vector2Int gridPos = GameManager.Instance.GridManager.Tilemap.WorldToCell(worldPosition);
-            Vector2Int snappedWorldPosition = GameManager.Instance.GridManager.Tilemap.CellToWorld(gridPos);
             CurrentMouseCellPosition = gridPos;
-            _draggedBuilding.PreviewPosition(snappedWorldPosition);
+            _draggedBuilding.PreviewPosition(gridPos);
         }
 
-        private void EndPointerInteraction(Vector2 worldPosition)
+        private bool ShouldStartDragging(Vector2Int hoveredCell)
         {
-            if (_isDraggingBuilding && _draggedBuilding != null)
-            {
-                ReleaseDrag(worldPosition);
-                ResetPointerState();
-                return;
-            }
-
-            if (!IsPointerOverUi())
-            {
-                OnClick(worldPosition);
-            }
-
-            ResetPointerState();
-        }
-
-        private void ReleaseDrag(Vector2 worldPosition)
-        {
-            GameManager.Instance.LogManager?.Building($"Requested move for `{_draggedBuilding.name}`.");
-            buildEventChannel.RaiseEvent(BuildEvents.MoveBuildingRequested.Initializer(_draggedBuilding, worldPosition));
-        }
-
-        private bool ShouldStartDragging()
-        {
-            if (_draggedBuilding == null || Mouse.current == null)
+            if (_draggedBuilding == null)
             {
                 return false;
             }
 
-            Vector2 pointerDelta = Mouse.current.position.ReadValue() - _pointerDownScreenPosition;
+            if (hoveredCell != _draggedBuilding.GridPosition)
+            {
+                return true;
+            }
+
+            Vector2 pointerDelta = InputData.MousePosition - _pointerDownScreenPosition;
             return pointerDelta.sqrMagnitude >= dragStartThresholdPixels * dragStartThresholdPixels;
         }
 
-        private bool IsPointerOverUi()
+        private bool IsPointerOverUi() => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+
+        private void QueueLeftPointerPressed()
         {
-            return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+            _queuedLeftPointerPressed = true;
+        }
+
+        private void QueueLeftPointerReleased()
+        {
+            _queuedLeftPointerReleased = true;
+        }
+
+        private void QueueRightPointerPressed()
+        {
+            _queuedRightPointerPressed = true;
         }
 
         private void ResetPointerState()
@@ -201,20 +221,6 @@ namespace _01.Code.Manager
             _isPointerDown = false;
             _isDraggingBuilding = false;
             _draggedBuilding = null;
-        }
-
-        private Vector2 GetMouseWorldPosition()
-        {
-            Camera mainCam = Camera.main;
-            if (mainCam == null)
-            {
-                return Vector2.zero;
-            }
-
-            Vector2 mouseScreenPosition = Mouse.current.position.ReadValue();
-            Vector3 screenPoint = new Vector3(mouseScreenPosition.x, mouseScreenPosition.y, Mathf.Abs(mainCam.transform.position.z));
-            Vector3 worldPos = mainCam.ScreenToWorldPoint(screenPoint);
-            return new Vector2(worldPos.x, worldPos.y);
         }
 
         private Collider2D GetHitCollider(Vector2 worldPosition)

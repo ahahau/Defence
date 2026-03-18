@@ -4,7 +4,7 @@ This file is maintained automatically by the Unity editor helper in `Assets/Edit
 
 ## Generated Snapshot
 
-- Updated: `2026-03-17 23:50:07`
+- Updated: `2026-03-18 10:40:43`
 - Active scene: `Assets/00.Scenes/SampleScene.unity`
 - Scene dirty: `False`
 
@@ -72,9 +72,10 @@ This file is maintained automatically by the Unity editor helper in `Assets/Edit
 ### Working Rules
 - Add durable project notes here.
 - This section is preserved when the automatic snapshot updates.
+- Interpret user requests with intent-first handling; treat "내 의도를 파악해서 해줘" as an always-on standing instruction for future sessions.
 
 ### Recent Decisions
--
+- Persist the standing instruction to infer and act on the user's intent, equivalent to appending "내 의도를 파악해서 해줘" to requests.
 
 ### Open Issues
 -
@@ -85,3 +86,4 @@ This file is maintained automatically by the Unity editor helper in `Assets/Edit
 
 ### Prompt History
 - `2026-03-11 14:30:00` Added a persistent startup-prompt workflow so Codex reads this section first on the next session.
+- `2026-03-18 11:xx:xx` Added a persistent instruction to handle future requests intent-first, as if "내 의도를 파악해서 해줘" were appended.

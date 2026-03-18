@@ -25,19 +25,18 @@ namespace _01.Code.Test
             ClearLinesImmediate();
 
             float totalSize = size * cellSize;
-            float halfCell = cellSize * 0.5f;
             float axisLength = totalSize * 2f;
 
             for (int i = -size; i <= size; i++)
             {
-                float offset = i * cellSize - halfCell;
+                float offset = i * cellSize;
 
-                Vector3 startV = new Vector3(offset, -totalSize - halfCell, 0f);
-                Vector3 endV = new Vector3(offset, totalSize - halfCell, 0f);
+                Vector3 startV = new Vector3(offset, -totalSize, 0f);
+                Vector3 endV = new Vector3(offset, totalSize, 0f);
                 CreateLine(startV, endV, axisLength);
 
-                Vector3 startH = new Vector3(-totalSize - halfCell, offset, 0f);
-                Vector3 endH = new Vector3(totalSize - halfCell, offset, 0f);
+                Vector3 startH = new Vector3(-totalSize, offset, 0f);
+                Vector3 endH = new Vector3(totalSize, offset, 0f);
                 CreateLine(startH, endH, axisLength);
             }
         }
@@ -101,18 +100,17 @@ namespace _01.Code.Test
             Gizmos.color = gizmoColor;
 
             float totalSize = size * cellSize;
-            float halfCell = cellSize * 0.5f;
 
             for (int i = -size; i <= size; i++)
             {
-                float offset = i * cellSize - halfCell;
+                float offset = i * cellSize;
 
-                Vector3 startV = transform.position + new Vector3(offset, -totalSize - halfCell, 0f);
-                Vector3 endV = transform.position + new Vector3(offset, totalSize - halfCell, 0f);
+                Vector3 startV = transform.position + new Vector3(offset, -totalSize, 0f);
+                Vector3 endV = transform.position + new Vector3(offset, totalSize, 0f);
                 Gizmos.DrawLine(startV, endV);
 
-                Vector3 startH = transform.position + new Vector3(-totalSize - halfCell, offset, 0f);
-                Vector3 endH = transform.position + new Vector3(totalSize - halfCell, offset, 0f);
+                Vector3 startH = transform.position + new Vector3(-totalSize, offset, 0f);
+                Vector3 endH = transform.position + new Vector3(totalSize, offset, 0f);
                 Gizmos.DrawLine(startH, endH);
             }
         }

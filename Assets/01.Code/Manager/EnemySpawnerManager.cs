@@ -81,12 +81,12 @@ namespace _01.Code.Manager
         {
             for (int i = 0; i < 5; i++)
             {
-                Vector2Int cellPos = GameManager.Instance.GridManager.Tilemap.Randomize(true);
-                Vector2Int worldPos = GameManager.Instance.GridManager.Tilemap.CellToWorld(cellPos);
-                EnemySpawner spawner = Instantiate(enemySpawnerPrefab, new Vector3(worldPos.x, worldPos.y, 0f), Quaternion.identity);
-                spawner.Initialize(worldPos);
+                Vector2Int cellPos = GameManager.Instance.GridManager.GetRandomGridPosition();
+                Vector3 worldPos = GameManager.Instance.GridManager.CellToWorld(cellPos);
+                EnemySpawner spawner = Instantiate(enemySpawnerPrefab, worldPos, Quaternion.identity);
+                spawner.Initialize(cellPos);
                 CurrentWaveEnemySpawnerList.Add(spawner);
-                GameManager.Instance.LogManager?.Enemy($"Spawned enemy spawner at {worldPos}.");
+                GameManager.Instance.LogManager?.Enemy($"Spawned enemy spawner at {cellPos}.");
             }
         }
     }

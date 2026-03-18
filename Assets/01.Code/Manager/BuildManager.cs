@@ -38,10 +38,9 @@ namespace _01.Code.Manager
                 return false;
             }
 
-            Vector2Int cellPosition = GameManager.Instance.GridManager.Tilemap.WorldToCell(worldPosition);
-            Vector2Int buildPosition = GameManager.Instance.GridManager.Tilemap.CellToWorld(cellPosition);
+            Vector2Int buildPosition = GameManager.Instance.GridManager.WorldToCell(worldPosition);
 
-            if (!GameManager.Instance.GridManager.Tilemap.TileEmpty(buildPosition))
+            if (!GameManager.Instance.GridManager.IsCellEmpty(buildPosition))
             {
                 GameManager.Instance.LogManager?.Building($"Move blocked for `{placeableEntity.name}` to {buildPosition}.", LogLevel.Warning);
                 RaiseBuildingMoveFailed(placeableEntity, placeableEntity.GridPosition);
@@ -59,8 +58,7 @@ namespace _01.Code.Manager
                 return false;
             }
 
-            Vector2Int cellPosition = GameManager.Instance.GridManager.Tilemap.WorldToCell(worldPosition);
-            Vector2Int targetPosition = GameManager.Instance.GridManager.Tilemap.CellToWorld(cellPosition);
+            Vector2Int targetPosition = GameManager.Instance.GridManager.WorldToCell(worldPosition);
             Vector2Int currentPosition = placeableEntity.GridPosition;
 
             if (targetPosition == currentPosition)
@@ -70,23 +68,23 @@ namespace _01.Code.Manager
                 return true;
             }
 
-            if (!GameManager.Instance.GridManager.Tilemap.TileEmpty(targetPosition))
+            if (!GameManager.Instance.GridManager.IsCellEmpty(targetPosition))
             {
                 GameManager.Instance.LogManager?.Building($"Target cell {targetPosition} is not empty for `{placeableEntity.name}`.", LogLevel.Warning);
                 RaiseBuildingMoveFailed(placeableEntity, currentPosition);
                 return false;
             }
 
-            if (!GameManager.Instance.GridManager.Tilemap.ClearTileObject(currentPosition, placeableEntity))
+            if (!GameManager.Instance.GridManager.TryClear(currentPosition, placeableEntity))
             {
                 GameManager.Instance.LogManager?.Building($"Failed to clear current cell {currentPosition} for `{placeableEntity.name}`.", LogLevel.Error);
                 RaiseBuildingMoveFailed(placeableEntity, currentPosition);
                 return false;
             }
 
-            if (!GameManager.Instance.GridManager.Tilemap.TileObjectInstall(targetPosition, placeableEntity))
+            if (!GameManager.Instance.GridManager.TryInstall(targetPosition, placeableEntity))
             {
-                GameManager.Instance.GridManager.Tilemap.TileObjectInstall(currentPosition, placeableEntity);
+                GameManager.Instance.GridManager.TryInstall(currentPosition, placeableEntity);
                 GameManager.Instance.LogManager?.Building($"Failed to place `{placeableEntity.name}` at {targetPosition}; restored original cell {currentPosition}.", LogLevel.Error);
                 RaiseBuildingMoveFailed(placeableEntity, currentPosition);
                 return false;
@@ -107,10 +105,9 @@ namespace _01.Code.Manager
                 return false;
             }
 
-            Vector2Int cellPosition = GameManager.Instance.GridManager.Tilemap.WorldToCell(worldPosition);
-            Vector2Int buildPosition = GameManager.Instance.GridManager.Tilemap.CellToWorld(cellPosition);
+            Vector2Int buildPosition = GameManager.Instance.GridManager.WorldToCell(worldPosition);
 
-            if (!GameManager.Instance.GridManager.Tilemap.TileEmpty(buildPosition))
+            if (!GameManager.Instance.GridManager.IsCellEmpty(buildPosition))
             {
                 GameManager.Instance.LogManager?.Building($"Install blocked for `{buildingData.Name}` at occupied cell {buildPosition}.", LogLevel.Warning);
                 RaiseBuildFailed(buildingData, buildPosition);
@@ -126,7 +123,8 @@ namespace _01.Code.Manager
                 return false;
             }
 
-            placedEntity = Instantiate(buildingData.Prefab, new Vector3(buildPosition.x, buildPosition.y, 0f), Quaternion.identity);
+            Vector3 buildWorldPosition = GameManager.Instance.GridManager.CellToWorld(buildPosition);
+            placedEntity = Instantiate(buildingData.Prefab, buildWorldPosition, Quaternion.identity);
             placedEntity.Initialize(buildPosition);
             GameManager.Instance.LogManager?.Building($"Installed `{buildingData.Name}` at {buildPosition}.");
             OnBuildingInstalled?.Invoke(buildingData, placedEntity);

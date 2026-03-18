@@ -46,8 +46,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   targetLayer:
     serializedVersion: 2
-    m_Bits: 0
-  attackPatternData: {fileID: 11400000, guid: 1cf3439a125923146bd786e67b3706d3, type: 2}
+    m_Bits: 64
+  attackPatternData: {fileID: 11400000, guid: 7198d85bbf940cc4e93fb09a57c37381, type: 2}
   attackOffsets: []
   cellSearchSize: 1
 --- !u!1 &5988216743583921018

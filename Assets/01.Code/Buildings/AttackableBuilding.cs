@@ -18,7 +18,7 @@ namespace _01.Code.Buildings
         protected override void Awake()
         {
             base.Awake();
-            Sensor = sensor != null ? sensor : GetComponentInChildren<EntitySensor>();
+            Sensor = GetModule<EntitySensor>();
             _nextAttackTime = 0f;
         }
 

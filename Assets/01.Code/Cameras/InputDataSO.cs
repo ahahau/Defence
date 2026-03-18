@@ -9,11 +9,13 @@ namespace _01.Code.Cameras
     {
         public Vector2 MovementKey { get; private set; }
         public Vector2 MousePosition { get; private set; }
-        
+        public bool IsLeftPointerPressed { get; private set; }
 
         private Controls _controls;
 
-        public event Action<Vector2> OnMouseClicked;
+        public event Action LeftPointerPressed;
+        public event Action LeftPointerReleased;
+        public event Action RightPointerPressed;
 
         private void OnEnable()
         {
@@ -48,16 +50,31 @@ namespace _01.Code.Cameras
 
         public void OnPoint(InputAction.CallbackContext context)
         {
-            if (!context.performed)
+            MousePosition = context.ReadValue<Vector2>();
+        }
+
+        public void OnClick(InputAction.CallbackContext context)
+        {
+            bool isPressed = context.ReadValueAsButton();
+
+            if (isPressed && !IsLeftPointerPressed)
             {
+                IsLeftPointerPressed = true;
+                LeftPointerPressed?.Invoke();
                 return;
             }
 
-            MousePosition = Mouse.current != null
-                ? Mouse.current.position.ReadValue()
-                : Vector2.zero;
+            if (!isPressed && IsLeftPointerPressed)
+            {
+                IsLeftPointerPressed = false;
+                LeftPointerReleased?.Invoke();
+            }
+        }
 
-            OnMouseClicked?.Invoke(GetWorldPosition2D());
+        public void OnRightClick(InputAction.CallbackContext context)
+        {
+            if (context.ReadValueAsButton())
+                RightPointerPressed?.Invoke();
         }
     }
 }
