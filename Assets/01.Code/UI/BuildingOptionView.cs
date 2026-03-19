@@ -58,7 +58,6 @@ namespace _01.Code.UI
                 return;
             }
 
-            // 버튼 클릭을 유니티 이벤트와 패널 이벤트 둘 다로 전달합니다
             onSelected?.Invoke();
             OnSelected?.Invoke(this);
         }

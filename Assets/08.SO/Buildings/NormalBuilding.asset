@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: NormalBuilding
   m_EditorClassIdentifier: 
   <Name>k__BackingField: Normal Building
-  <Explanation>k__BackingField: Basic building slot for expansion.
+  <Explanation>k__BackingField: buildingg
   <Cost>k__BackingField: 25
   <Prefab>k__BackingField: {fileID: 7700407476922260051, guid: 3e09f903ec7eea243b3b9bc6ffce9b9d, type: 3}

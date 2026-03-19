@@ -2844,7 +2844,6 @@ MonoBehaviour:
     m_Bits: 128
   dragStartThresholdPixels: 8
   uiEventChannel: {fileID: 11400000, guid: 65fe9b6359134cd4947a05bdbc25753a, type: 2}
-  buildEventChannel: {fileID: 11400000, guid: 43ac707ddd2c4ab8b72218ab4ccb251b, type: 2}
 --- !u!1 &177119828
 GameObject:
   m_ObjectHideFlags: 0
@@ -3211,7 +3210,10 @@ PrefabInstance:
       objectReference: {fileID: 1279667708}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 5570896238601154320, guid: ed695d2de8aa9da479d0eb85211eeeba, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1279667707}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ed695d2de8aa9da479d0eb85211eeeba, type: 3}
 --- !u!4 &213271345 stripped
@@ -12802,7 +12804,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9d11886420a4f7e9df605c703688bee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <IsSuperArmor>k__BackingField: 0
   OnHit:
     m_PersistentCalls:
       m_Calls: []
@@ -13456,12 +13457,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1279667705}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 213271345}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1839735485 &1279667708
 Tilemap:
@@ -14434,7 +14435,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 0/0
+  m_text: '0
+
+'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -22483,7 +22486,6 @@ SceneRoots:
   - {fileID: 519420032}
   - {fileID: 619394802}
   - {fileID: 1176901303}
-  - {fileID: 1279667707}
   - {fileID: 1809138629}
   - {fileID: 1464710909}
   - {fileID: 1042548867}

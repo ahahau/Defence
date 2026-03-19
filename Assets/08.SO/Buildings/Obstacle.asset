@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Obstacle
   m_EditorClassIdentifier: 
   <Name>k__BackingField: Obstacle
-  <Explanation>k__BackingField: Cheap blocker for path shaping.
+  <Explanation>k__BackingField: obstatatatcklemikre
   <Cost>k__BackingField: 10
   <Prefab>k__BackingField: {fileID: 8015836151657315665, guid: d7b2b9d0742052041a32494ccfb1cb0c, type: 3}

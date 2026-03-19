@@ -77,10 +77,6 @@ namespace _01.Code.Entities
             return TryGetTargetCollider(originCell, out _);
         }
 
-        private void Awake()
-        {
-            RefreshFallbackPatterns();
-        }
 
         private void OnValidate()
         {
@@ -113,9 +109,8 @@ namespace _01.Code.Entities
 
             Vector2Int originCell = GetOriginCellForGizmos();
             IReadOnlyList<AttackPatternData> patterns = AttackPatterns;
-            for (int patternIndex = 0; patternIndex < patterns.Count; patternIndex++)
+            foreach (var pattern in patterns)
             {
-                AttackPatternData pattern = patterns[patternIndex];
                 if (pattern == null || pattern.attackOffsets == null)
                 {
                     continue;
@@ -164,7 +159,7 @@ namespace _01.Code.Entities
 
         public void Initialize(ModuleOwner owner)
         {
-            
+            RefreshFallbackPatterns();
         }
     }
 }

@@ -1,4 +1,5 @@
 using _01.Code.Entities;
+using _01.Code.Manager;
 using UnityEngine;
 
 namespace _01.Code.Buildings
@@ -31,7 +32,6 @@ namespace _01.Code.Buildings
         {
             if (!TryGetTarget(out Entity target, out IDamageable damageable) || !CanAttack())
                 return false; 
-
             PerformAttack(target, damageable);
             return true;
         }

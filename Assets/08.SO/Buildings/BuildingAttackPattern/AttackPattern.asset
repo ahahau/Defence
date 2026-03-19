@@ -12,4 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e9091c55c9f483181c36cf20cc076be, type: 3}
   m_Name: AttackPattern
   m_EditorClassIdentifier: 
-  attackOffsets: []
+  attackOffsets:
+  - attackOffsets:
+    - {x: 1, y: 0}
+    - {x: -1, y: 0}
+    - {x: 0, y: 1}
+    - {x: 0, y: -1}
+    cellSearchSize: 1
