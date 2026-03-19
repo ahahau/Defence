@@ -29,7 +29,6 @@ namespace _01.Code.Manager
             InputData.LeftPointerPressed += QueueLeftPointerPressed;
             InputData.LeftPointerReleased += QueueLeftPointerReleased;
             InputData.RightPointerPressed += QueueRightPointerPressed;
-            GameManager.Instance.LogManager?.System("InputManager initialized.");
         }
 
         private void OnDestroy()
@@ -93,22 +92,16 @@ namespace _01.Code.Manager
 
             if (!hitGameObject.CompareTag("Building"))
             {
-                GameManager.Instance.LogManager?.UI($"Clicked object `{hitGameObject.name}` and hid build panel.");
+                Building building = hitGameObject.GetComponentInParent<Building>();
                 return;
             }
 
-            Building building = hitGameObject.GetComponentInParent<Building>();
-            if (building != null)
-            {
-                GameManager.Instance.LogManager?.Building($"Selected existing building `{building.name}`.");
-            }
         }
 
         private void ClickGround(Vector2 worldPosition)
         {
             Vector2Int gridPos = GameManager.Instance.GridManager.WorldToCell(worldPosition);
             CurrentMouseCellPosition = gridPos;
-            GameManager.Instance.LogManager?.UI($"Requested build panel at cell {gridPos}.");
             uiEventChannel.RaiseEvent(UIEvents.ShowBuildPanelRequested.Initializer(worldPosition));
         }
 
@@ -158,7 +151,6 @@ namespace _01.Code.Manager
 
             if (_isDraggingBuilding && _draggedBuilding != null)
             {
-                GameManager.Instance.LogManager?.Building($"Requested move for `{_draggedBuilding.name}`.");
                 GameManager.Instance.BuildManager.TryMove(_draggedBuilding, targetWorldPosition);
             }
 
@@ -173,7 +165,6 @@ namespace _01.Code.Manager
             }
 
             _isDraggingBuilding = true;
-            GameManager.Instance.LogManager?.Building($"Started dragging `{_draggedBuilding.name}` from {_draggedBuilding.GridPosition}.");
             uiEventChannel.RaiseEvent(UIEvents.HideBuildPanelRequested);
         }
 

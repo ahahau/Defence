@@ -22,7 +22,6 @@ namespace _01.Code.Manager
         {
             waveEventChannel.AddListener<WaveStartRequestedEvent>(HandleWaveStartRequestedEvent);
             waveEventChannel.AddListener<WaveClearedEvent>(HandleWaveClearedEvent);
-            GameManager.Instance.LogManager?.System("WaveManager initialized.");
         }
 
         private void OnDestroy()
@@ -39,7 +38,6 @@ namespace _01.Code.Manager
             }
 
             _isRunning = true;
-            GameManager.Instance.LogManager?.Wave("Wave started.");
             OnWaveStarted?.Invoke();
             waveEventChannel.RaiseEvent(WaveEvents.WaveStartedEvent);
         }
@@ -52,7 +50,6 @@ namespace _01.Code.Manager
             }
 
             _isRunning = false;
-            GameManager.Instance.LogManager?.Wave("Wave cleared.");
             OnWaveCleared?.Invoke();
         }
 

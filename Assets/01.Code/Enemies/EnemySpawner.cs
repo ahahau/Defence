@@ -21,6 +21,11 @@ namespace _01.Code.Enemies
         {
             _isSpawning = true;
 
+            if (sec > 0f)
+            {
+                yield return new WaitForSeconds(sec);
+            }
+
             Vector2Int start = GridPosition;
             Vector2Int target = GameManager.Instance.GridManager.commandCenter.GridPosition;
             path = GameManager.Instance.GridManager.PathFinder.FindPath(start, target);
@@ -44,10 +49,19 @@ namespace _01.Code.Enemies
 
                 for (int i = 0; i < spawnWaves[waveIndex].count; i++)
                 {
-                    Enemy enemy = Instantiate(spawnWaves[waveIndex].enemyPrefab.EnemyPrefab, transform.position, Quaternion.identity);
+                    WaveData wave = spawnWaves[waveIndex];
+                    if (wave.enemyPrefab == null || wave.enemyPrefab.EnemyPrefab == null)
+                    {
+                        GameManager.Instance.LogManager?.Enemy(
+                            $"Skipped invalid wave entry on `{name}` at wave index {waveIndex}. EnemyDataSO or prefab is missing.",
+                            LogLevel.Warning);
+                        break;
+                    }
+
+                    Enemy enemy = Instantiate(wave.enemyPrefab.EnemyPrefab, transform.position, Quaternion.identity);
                     _alive.Add(enemy);
-                    enemy.Initialize(path, this, spawnWaves[waveIndex].enemyPrefab);
-                    yield return new WaitForSeconds(spawnWaves[waveIndex].interval);
+                    enemy.Initialize(path, this, wave.enemyPrefab);
+                    yield return new WaitForSeconds(wave.interval);
                 }
             }
 
@@ -61,6 +75,11 @@ namespace _01.Code.Enemies
 
         public void StartWave()
         {
+            if (_isSpawning)
+            {
+                return;
+            }
+
             StartCoroutine(EnemySpawn(0.5f));
         }
 
@@ -70,6 +89,14 @@ namespace _01.Code.Enemies
             for (int i = 0; i < waveDataList.Count; i++)
             {
                 WaveDataSO waveData = waveDataList[i];
+                if (waveData == null)
+                {
+                    GameManager.Instance.LogManager?.Enemy(
+                        $"Skipped missing WaveDataSO reference on `{name}` at slot {i}.",
+                        LogLevel.Warning);
+                    continue;
+                }
+
                 result.AddRange(waveData.waveDataList);
             }
 

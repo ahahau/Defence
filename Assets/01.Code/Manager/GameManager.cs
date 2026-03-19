@@ -47,8 +47,6 @@ namespace _01.Code.Manager
             WaveManager.Initialize();
             EnemySpawnerManager.Initialize();
             CostManager.Initialize();
-
-            LogManager?.System("GameManager initialization completed.");
         }
     }
 }

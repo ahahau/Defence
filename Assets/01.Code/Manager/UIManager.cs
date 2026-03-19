@@ -60,7 +60,6 @@ namespace _01.Code.Manager
             costEventChannel.AddListener<CostChangedEvent>(HandleCostChangedEvent);
 
             HideBuildingPanel();
-            GameManager.Instance.LogManager?.System("UIManager initialized.");
         }
 
         private void OnDestroy()
@@ -79,7 +78,6 @@ namespace _01.Code.Manager
         public void ShowBuildingPanel(Vector3 worldPosition)
         {
             CurrentBuildPosition = worldPosition;
-            GameManager.Instance.LogManager?.UI($"Show build panel at {worldPosition}.");
 
             if (mainPanel != null)
             {
@@ -94,7 +92,6 @@ namespace _01.Code.Manager
 
         public void HideBuildingPanel()
         {
-            GameManager.Instance.LogManager?.UI("Hide build panel.");
             if (mainPanel != null)
             {
                 mainPanel.Hide();
@@ -109,11 +106,6 @@ namespace _01.Code.Manager
 
         private bool CanAfford(BuildingDataSO buildingData)
         {
-            if (buildingData == null )
-            {
-                return false;
-            }
-
             return _currentGold >= buildingData.Cost;
         }
 
@@ -125,11 +117,6 @@ namespace _01.Code.Manager
 
         private void HandleBuildRequested(BuildingDataSO buildingData, Vector3 worldPosition)
         {
-            if (buildingData == null)
-            {
-                return;
-            }
-
             // 현재 보유 골드 기준으로 먼저 막고, 실제 설치 판단은 BuildManager가 다시 합니다
             if (!CanAfford(buildingData))
             {
@@ -139,7 +126,6 @@ namespace _01.Code.Manager
             }
 
             CurrentBuildPosition = worldPosition;
-            GameManager.Instance.LogManager?.Building($"Requested install for `{buildingData.Name}` at {worldPosition}.");
             OnBuildRequested?.Invoke(buildingData, worldPosition);
             buildEventChannel.RaiseEvent(BuildEvents.BuildInstallRequested.Initializer(buildingData, worldPosition));
             mainPanel?.RefreshAvailability(CanAfford);
@@ -155,11 +141,6 @@ namespace _01.Code.Manager
         /// </summary>
         private void HandleShowBuildPanelRequestedEvent(ShowBuildPanelRequestedEvent evt)
         {
-            if (evt == null)
-            {
-                return;
-            }
-
             ShowBuildingPanel(evt.WorldPosition);
         }
 
@@ -170,11 +151,6 @@ namespace _01.Code.Manager
 
         private void HandleCostChangedEvent(CostChangedEvent evt)
         {
-            if (evt == null || evt.Type != CostType.Gold)
-            {
-                return;
-            }
-
             _currentGold = evt.Current;
             mainPanel?.RefreshAvailability(CanAfford);
             uiHeader?.RefreshAvailability();
@@ -185,12 +161,6 @@ namespace _01.Code.Manager
         /// </summary>
         private void HandleBuildInstalledEvent(BuildInstalledEvent evt)
         {
-            if (evt == null)
-            {
-                return;
-            }
-
-            GameManager.Instance.LogManager?.Building($"Installed `{evt.BuildingData?.Name}` successfully.");
             SelectedBuilding = null;
             mainPanel?.RefreshAvailability(CanAfford);
             HideBuildingPanel();

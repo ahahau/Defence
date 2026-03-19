@@ -22,7 +22,6 @@ namespace _01.Code.Manager
             waveEventChannel.AddListener<WaveStartedEvent>(HandleWaveStartedEvent);
 
             SpawnSpawner();
-            GameManager.Instance.LogManager?.System("EnemySpawnerManager initialized.");
         }
 
         private void OnDestroy()
@@ -32,15 +31,20 @@ namespace _01.Code.Manager
 
         public void SpawnerAllEnemyDied(EnemySpawner enemySpawner)
         {
+            if (enemySpawner == null)
+            {
+                return;
+            }
+
             CurrentWaveEnemySpawnerList.Remove(enemySpawner);
+            GameManager.Instance.GridManager.TryClear(enemySpawner.GridPosition, enemySpawner);
+            Destroy(enemySpawner.gameObject);
 
             if (CurrentWaveEnemySpawnerList.Count > 0)
             {
                 return;
             }
 
-            ClearCurrentWave();
-            GameManager.Instance.LogManager?.Enemy("All enemies from current wave were cleared.");
             waveEventChannel.RaiseEvent(WaveEvents.WaveClearedEvent);
             SpawnSpawner();
         }
@@ -50,14 +54,8 @@ namespace _01.Code.Manager
         /// </summary>
         private void HandleWaveStartedEvent(WaveStartedEvent _)
         {
-            GameManager.Instance.LogManager?.Enemy($"Starting wave for {CurrentWaveEnemySpawnerList.Count} spawners.");
             foreach (EnemySpawner spawner in CurrentWaveEnemySpawnerList)
             {
-                if (spawner == null)
-                {
-                    continue;
-                }
-
                 spawner.StartWave();
             }
         }
@@ -66,11 +64,7 @@ namespace _01.Code.Manager
         {
             foreach (EnemySpawner spawner in CurrentWaveEnemySpawnerList)
             {
-                if (spawner == null)
-                {
-                    continue;
-                }
-
+                GameManager.Instance.GridManager.TryClear(spawner.GridPosition, spawner);
                 Destroy(spawner.gameObject);
             }
 
@@ -79,6 +73,12 @@ namespace _01.Code.Manager
 
         private void SpawnSpawner()
         {
+            if (enemySpawnerPrefab == null)
+            {
+                GameManager.Instance.LogManager?.Enemy("EnemySpawner prefab is missing.", LogLevel.Error);
+                return;
+            }
+
             for (int i = 0; i < 5; i++)
             {
                 Vector2Int cellPos = GameManager.Instance.GridManager.GetRandomGridPosition();
@@ -86,7 +86,6 @@ namespace _01.Code.Manager
                 EnemySpawner spawner = Instantiate(enemySpawnerPrefab, worldPos, Quaternion.identity);
                 spawner.Initialize(cellPos);
                 CurrentWaveEnemySpawnerList.Add(spawner);
-                GameManager.Instance.LogManager?.Enemy($"Spawned enemy spawner at {cellPos}.");
             }
         }
     }

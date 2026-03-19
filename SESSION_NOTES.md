@@ -4,7 +4,7 @@ This file is maintained automatically by the Unity editor helper in `Assets/Edit
 
 ## Generated Snapshot
 
-- Updated: `2026-03-18 10:40:43`
+- Updated: `2026-03-18 23:48:13`
 - Active scene: `Assets/00.Scenes/SampleScene.unity`
 - Scene dirty: `False`
 
@@ -41,19 +41,19 @@ This file is maintained automatically by the Unity editor helper in `Assets/Edit
 
 ### Recent Important Files
 - `Assets/08.SO/Events/WaveEventChannel.asset` : `2026-03-11 10:17:43`
-- `Assets/08.SO/Buildings/Obstacle.asset` : `2026-03-11 10:23:13`
-- `Assets/08.SO/Buildings/NormalBuilding.asset` : `2026-03-11 10:23:13`
-- `Assets/01.Code/UI/UIHeader.cs` : `2026-03-16 19:40:47`
-- `Assets/01.Code/UI/MainPanel.cs` : `2026-03-16 19:40:47`
+- `Assets/08.SO/Buildings/Obstacle.asset` : `2026-03-18 17:50:13`
+- `Assets/08.SO/Buildings/NormalBuilding.asset` : `2026-03-18 17:50:13`
+- `Assets/01.Code/UI/UIHeader.cs` : `2026-03-18 17:41:51`
+- `Assets/01.Code/UI/MainPanel.cs` : `2026-03-18 20:11:57`
 - `Assets/01.Code/UI/BuildingOptionView.cs` : `2026-03-16 19:40:47`
 - `Assets/01.Code/Manager/WaveManager.cs` : `2026-03-16 22:46:55`
-- `Assets/01.Code/Manager/UIManager.cs` : `2026-03-16 22:45:26`
-- `Assets/01.Code/Manager/InputManager.cs` : `2026-03-16 22:45:26`
+- `Assets/01.Code/Manager/UIManager.cs` : `2026-03-18 23:42:13`
+- `Assets/01.Code/Manager/InputManager.cs` : `2026-03-18 14:35:16`
 - `Assets/01.Code/Manager/GameManager.cs` : `2026-03-16 22:48:40`
-- `Assets/01.Code/Manager/EnemySpawnerManager.cs` : `2026-03-16 22:46:55`
-- `Assets/01.Code/Manager/BuildManager.cs` : `2026-03-16 22:46:39`
+- `Assets/01.Code/Manager/EnemySpawnerManager.cs` : `2026-03-18 12:27:26`
+- `Assets/01.Code/Manager/BuildManager.cs` : `2026-03-18 12:27:26`
 - `Assets/01.Code/Cameras/CameraInputSO.cs` : missing
-- `Assets/00.Scenes/SampleScene.unity` : `2026-03-17 20:28:34`
+- `Assets/00.Scenes/SampleScene.unity` : `2026-03-18 17:50:13`
 
 ### Known Focus Areas
 - BuildPanel screen placement and click behavior

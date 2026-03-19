@@ -22,7 +22,6 @@ namespace _01.Code.Manager
         {
             buildEventChannel.AddListener<BuildInstallRequestedEvent>(HandleBuildInstallRequestedEvent);
             buildEventChannel.AddListener<MoveBuildingRequestedEvent>(HandleMoveBuildingRequestedEvent);
-            GameManager.Instance.LogManager?.System("BuildManager initialized.");
         }
 
         private void OnDestroy()
@@ -91,7 +90,6 @@ namespace _01.Code.Manager
             }
 
             placeableEntity.CommitPosition(targetPosition);
-            GameManager.Instance.LogManager?.Building($"Moved `{placeableEntity.name}` to {targetPosition}.");
             RaiseBuildingMoved(placeableEntity, targetPosition);
             return true;
         }
@@ -126,7 +124,6 @@ namespace _01.Code.Manager
             Vector3 buildWorldPosition = GameManager.Instance.GridManager.CellToWorld(buildPosition);
             placedEntity = Instantiate(buildingData.Prefab, buildWorldPosition, Quaternion.identity);
             placedEntity.Initialize(buildPosition);
-            GameManager.Instance.LogManager?.Building($"Installed `{buildingData.Name}` at {buildPosition}.");
             OnBuildingInstalled?.Invoke(buildingData, placedEntity);
             buildEventChannel.RaiseEvent(BuildEvents.BuildInstalled.Initializer(buildingData, placedEntity));
             return true;

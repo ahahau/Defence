@@ -8,7 +8,7 @@ namespace _01.Code.WaveSystem
     [Serializable]
     public class WaveData
     {
-        [field: SerializeField] public EnemyDataSO enemyPrefab;
+        [field: SerializeField] public EnemyDataSO enemyPrefab { get; private set; }
 
         [Min(1)] [field: SerializeField] public int count = 5;
         // 적 스폰 간격
