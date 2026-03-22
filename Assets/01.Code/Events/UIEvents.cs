@@ -23,4 +23,19 @@ namespace _01.Code.Events
     public class HideBuildPanelRequestedEvent : GameEvent
     {
     }
+
+    public class ShowDamageTextRequestedEvent : GameEvent
+    {
+        public Vector3 WorldPosition { get; private set; }
+        public float Damage { get; private set; }
+        public Transform FollowTarget { get; private set; }
+
+        public ShowDamageTextRequestedEvent Initializer(Vector3 worldPosition, float damage, Transform followTarget = null)
+        {
+            WorldPosition = worldPosition;
+            Damage = damage;
+            FollowTarget = followTarget;
+            return this;
+        }
+    }
 }

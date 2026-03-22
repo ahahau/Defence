@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using _01.Code.Core;
 using _01.Code.Enemies;
 using _01.Code.Events;
+using GondrLib.ObjectPool.Runtime;
 using UnityEngine;
 
 namespace _01.Code.Manager
@@ -11,16 +12,14 @@ namespace _01.Code.Manager
     {
         [SerializeField] private EnemySpawner enemySpawnerPrefab;
         [SerializeField] private GameEventChannelSO waveEventChannel;
+        [SerializeField] private PoolManagerMono enemyPoolManager;
 
         public HashSet<EnemySpawner> CurrentWaveEnemySpawnerList { get; } = new HashSet<EnemySpawner>();
 
-        /// <summary>
-        /// 이 함수는 웨이브 시작 이벤트를 구독하고 첫 스포너들을 생성합니다
-        /// </summary>
         public void Initialize()
         {
             waveEventChannel.AddListener<WaveStartedEvent>(HandleWaveStartedEvent);
-
+            Physics2D.IgnoreLayerCollision(6, 6, true);
             SpawnSpawner();
         }
 
@@ -49,26 +48,35 @@ namespace _01.Code.Manager
             SpawnSpawner();
         }
 
-        /// <summary>
-        /// 이 함수는 현재 웨이브에 남아있는 스포너들에게 시작 명령을 내려줍니다
-        /// </summary>
+        public Enemy SpawnEnemy(Enemy enemyPrefab, Vector3 worldPosition)
+        {
+            if (enemyPrefab == null)
+            {
+                return null;
+            }
+
+            if (enemyPoolManager != null && enemyPrefab.PoolingType != null)
+            {
+                Enemy pooledEnemy = enemyPoolManager.Pop<Enemy>(enemyPrefab.PoolingType);
+                if (pooledEnemy != null)
+                {
+                    pooledEnemy.SetSpawnPosition(worldPosition);
+                    pooledEnemy.gameObject.SetActive(true);
+                    return pooledEnemy;
+                }
+            }
+
+            Enemy spawnedEnemy = Instantiate(enemyPrefab, worldPosition, Quaternion.identity);
+            spawnedEnemy.SetSpawnPosition(worldPosition);
+            return spawnedEnemy;
+        }
+
         private void HandleWaveStartedEvent(WaveStartedEvent _)
         {
             foreach (EnemySpawner spawner in CurrentWaveEnemySpawnerList)
             {
                 spawner.StartWave();
             }
-        }
-
-        private void ClearCurrentWave()
-        {
-            foreach (EnemySpawner spawner in CurrentWaveEnemySpawnerList)
-            {
-                GameManager.Instance.GridManager.TryClear(spawner.GridPosition, spawner);
-                Destroy(spawner.gameObject);
-            }
-
-            CurrentWaveEnemySpawnerList.Clear();
         }
 
         private void SpawnSpawner()

@@ -49,6 +49,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 387b07371bd343ca80a1564161d1497e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  poolingType: {fileID: 11400000, guid: b6b0b1f1c2d34e5f8a9b0c1d2e3f4a5b, type: 2}
   <IsSuperArmor>k__BackingField: 0
   OnHit:
     m_PersistentCalls:
@@ -68,6 +69,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ed5f7fedbe94a829f581ef33aef96d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  uiEventChannel: {fileID: 11400000, guid: 65fe9b6359134cd4947a05bdbc25753a, type: 2}
   baseHealth: 0
   currentHealth: 0
 --- !u!50 &3888785918288915050

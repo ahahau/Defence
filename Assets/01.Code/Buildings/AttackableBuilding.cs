@@ -55,6 +55,7 @@ namespace _01.Code.Buildings
 
         protected virtual void PerformAttack(Entity target, IDamageable damageable)
         {
+            
             damageable.ApplyDamage(attackDamage, this);
             _nextAttackTime = Time.time + attackCooldown;
             OnAttackPerformed(target, damageable);

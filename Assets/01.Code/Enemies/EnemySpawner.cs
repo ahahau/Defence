@@ -13,10 +13,10 @@ namespace _01.Code.Enemies
         [SerializeField] private List<WaveDataSO> waveDataList = new List<WaveDataSO>();
         [SerializeField] private LineRenderer lineRenderer;
         [SerializeField] private float lineWidth = 0.18f;
-        
+
         private readonly HashSet<Enemy> _alive = new HashSet<Enemy>();
         private bool _isSpawning;
-        
+
         private IEnumerator EnemySpawn(float sec)
         {
             _isSpawning = true;
@@ -37,11 +37,10 @@ namespace _01.Code.Enemies
             }
 
             DrawPathLine();
-            
+
             List<WaveData> spawnWaves = GetSpawnWaves();
             for (int waveIndex = 0; waveIndex < spawnWaves.Count; waveIndex++)
             {
-
                 if (spawnWaves[waveIndex].startDelay > 0f)
                 {
                     yield return new WaitForSeconds(spawnWaves[waveIndex].startDelay);
@@ -58,7 +57,13 @@ namespace _01.Code.Enemies
                         break;
                     }
 
-                    Enemy enemy = Instantiate(wave.enemyPrefab.EnemyPrefab, transform.position, Quaternion.identity);
+                    Enemy enemy = GameManager.Instance.EnemySpawnerManager.SpawnEnemy(wave.enemyPrefab.EnemyPrefab, transform.position);
+                    if (enemy == null)
+                    {
+                        GameManager.Instance.LogManager?.Enemy($"Failed to spawn enemy `{wave.enemyPrefab.name}`.", LogLevel.Error);
+                        continue;
+                    }
+
                     _alive.Add(enemy);
                     enemy.Initialize(path, this, wave.enemyPrefab);
                     yield return new WaitForSeconds(wave.interval);
@@ -81,6 +86,16 @@ namespace _01.Code.Enemies
             }
 
             StartCoroutine(EnemySpawn(0.5f));
+        }
+
+        public void EnemyDied(Enemy enemy)
+        {
+            _alive.Remove(enemy);
+
+            if (_alive.Count <= 0 && !_isSpawning)
+            {
+                NotifySpawnerCleared();
+            }
         }
 
         private List<WaveData> GetSpawnWaves()
@@ -134,7 +149,6 @@ namespace _01.Code.Enemies
                 lineRenderer.SetPosition(i, localPoint);
             }
 
-            // Keep dash spacing consistent across spawners instead of scaling by path length.
             lineRenderer.textureScale = Vector2.one;
         }
 
@@ -147,16 +161,6 @@ namespace _01.Code.Enemies
 
             lineRenderer.positionCount = 0;
             lineRenderer.enabled = false;
-        }
-
-        public void EnemyDied(Enemy enemy)
-        {
-            _alive.Remove(enemy);
-
-            if (_alive.Count <= 0 && !_isSpawning)
-            {
-                NotifySpawnerCleared();
-            }
         }
 
         private void NotifySpawnerCleared()

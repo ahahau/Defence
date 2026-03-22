@@ -1,33 +1,98 @@
-﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using _01.Code.Entities;
+using GondrLib.ObjectPool.Runtime;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace _01.Code.Enemies
 {
-    public class Enemy : Entity
+    public class Enemy : Entity, IPoolable
     {
-        private EnemyRender _render;
+        [SerializeField] private PoolingItemSO poolingType;
+
         private EnemyMovement _movement;
         private EnemyHealth _enemyHealth;
-        private List<Vector2Int> _path;
+        private Rigidbody2D _rigidbody2D;
+        private Pool _pool;
+        private EnemySpawner _parentSpawner;
         private bool _deathNotified;
+        private bool _returnedToPool;
+
+        public PoolingItemSO PoolingType => poolingType;
+        public GameObject GameObject => gameObject;
 
         public void Initialize(List<Vector2Int> path, EnemySpawner parent, EnemyDataSO data, int level = 0)
         {
-            _path = path;
-            _render = GetModule<EnemyRender>();
+            _parentSpawner = parent;
             _movement = GetModule<EnemyMovement>();
             _enemyHealth = GetModule<EnemyHealth>();
+
+            ResetRuntimeState();
             _enemyHealth.Initialize(data, level);
             _movement.SetSpeed(data.Speed);
-            OnDeath?.AddListener(() =>
-            {
-                parent.EnemyDied(this);
-            });
             _movement.SetPath(path);
             _movement.MoveNext();
+        }
+
+        public void SetUpPool(Pool pool)
+        {
+            _pool = pool;
+            _rigidbody2D ??= GetComponent<Rigidbody2D>();
+        }
+
+        public void ResetItem()
+        {
+            ResetRuntimeState();
+            _movement ??= GetModule<EnemyMovement>();
+            _enemyHealth ??= GetModule<EnemyHealth>();
+            _movement?.ResetState();
+            _enemyHealth?.ResetHealthToFull();
+        }
+
+        public void ReturnToPool()
+        {
+            if (_returnedToPool)
+            {
+                return;
+            }
+
+            _returnedToPool = true;
+            if (_pool != null)
+            {
+                _pool.Push(this);
+                return;
+            }
+
+            Destroy(gameObject);
+        }
+
+        public void OnMoveDirection(Vector2 dir)
+        {
+            //_render.ChangeAnimation(dir);
+        }
+
+        public void SetSpawnPosition(Vector3 worldPosition)
+        {
+            transform.position = worldPosition;
+            _rigidbody2D ??= GetComponent<Rigidbody2D>();
+            if (_rigidbody2D != null)
+            {
+                _rigidbody2D.position = new Vector2(worldPosition.x, worldPosition.y);
+                _rigidbody2D.linearVelocity = Vector2.zero;
+            }
+        }
+
+        private void OnCollisionEnter2D(Collision2D other)
+        {
+            if (!other.gameObject.CompareTag("CC"))
+            {
+                return;
+            }
+
+            other.gameObject.TryGetComponent<EntityHealth>(out var health);
+            health?.ApplyDamage(4, this);
+            NotifyDeath();
+            ReturnToPool();
         }
 
         private void NotifyDeath()
@@ -42,20 +107,21 @@ namespace _01.Code.Enemies
             OnDeath?.Invoke();
         }
 
-        public void OnMoveDirection(Vector2 dir)
+        private void HandleDeath()
         {
-            //_render.ChangeAnimation(dir);
+            _parentSpawner?.EnemyDied(this);
         }
 
-        private void OnCollisionEnter2D(Collision2D other)
+        private void ResetRuntimeState()
         {
-            if (other.gameObject.CompareTag("CC"))
-            {
-                other.gameObject.TryGetComponent<EntityHealth>(out var health);
-                health?.ApplyDamage(4, this);
-                NotifyDeath();
-                Destroy(gameObject);
-            }
+            _returnedToPool = false;
+            _deathNotified = false;
+            IsDead = false;
+
+            OnHit ??= new UnityEvent();
+            OnDeath ??= new UnityEvent();
+            OnDeath.RemoveAllListeners();
+            OnDeath.AddListener(HandleDeath);
         }
     }
 }

@@ -2,8 +2,10 @@ using _01.Code.UI;
 using System;
 using System.Collections.Generic;
 using _01.Code.Buildings;
+using _01.Code.Combat;
 using _01.Code.Core;
 using _01.Code.Events;
+using GondrLib.ObjectPool.Runtime;
 using UnityEngine;
 
 namespace _01.Code.Manager
@@ -16,6 +18,9 @@ namespace _01.Code.Manager
         [SerializeField] private GameObject buildingPenalPrefab;
         [SerializeField] private MainPanel mainPanel;
         [SerializeField] private UIHeader uiHeader;
+        [SerializeField] private DamageText damageTextPrefab;
+        [SerializeField] private PoolManagerMono poolManager;
+        [SerializeField] private PoolingItemSO damageTextPoolingItem;
         [SerializeField] private List<BuildingDataSO> availableBuildings = new();
         private int _currentGold;
 
@@ -26,9 +31,6 @@ namespace _01.Code.Manager
         public event Action<BuildingDataSO> OnBuildingSelected;
         public event Action<BuildingDataSO, Vector3> OnBuildRequested;
 
-        /// <summary>
-        /// 이 함수는 UI 뷰와 채널 구독을 전부 연결해주는 시작점입니다
-        /// </summary>
         public void Initialize()
         {
             if (mainPanel == null && buildingPenalPrefab != null)
@@ -50,9 +52,9 @@ namespace _01.Code.Manager
             mainPanel.OnCancelled -= HandlePanelCancelled;
             mainPanel.OnCancelled += HandlePanelCancelled;
 
-            // 입력과 빌드 결과는 채널로 받고, UI는 화면 갱신만 담당합니다
             uiEventChannel.AddListener<ShowBuildPanelRequestedEvent>(HandleShowBuildPanelRequestedEvent);
             uiEventChannel.AddListener<HideBuildPanelRequestedEvent>(HandleHideBuildPanelRequestedEvent);
+            uiEventChannel.AddListener<ShowDamageTextRequestedEvent>(HandleShowDamageTextRequestedEvent);
 
             buildEventChannel.AddListener<BuildInstalledEvent>(HandleBuildInstalledEvent);
             buildEventChannel.AddListener<BuildFailedEvent>(HandleBuildFailedEvent);
@@ -70,6 +72,7 @@ namespace _01.Code.Manager
 
             uiEventChannel.RemoveListener<ShowBuildPanelRequestedEvent>(HandleShowBuildPanelRequestedEvent);
             uiEventChannel.RemoveListener<HideBuildPanelRequestedEvent>(HandleHideBuildPanelRequestedEvent);
+            uiEventChannel.RemoveListener<ShowDamageTextRequestedEvent>(HandleShowDamageTextRequestedEvent);
             buildEventChannel.RemoveListener<BuildInstalledEvent>(HandleBuildInstalledEvent);
             buildEventChannel.RemoveListener<BuildFailedEvent>(HandleBuildFailedEvent);
             costEventChannel.RemoveListener<CostChangedEvent>(HandleCostChangedEvent);
@@ -117,7 +120,6 @@ namespace _01.Code.Manager
 
         private void HandleBuildRequested(BuildingDataSO buildingData, Vector3 worldPosition)
         {
-            // 현재 보유 골드 기준으로 먼저 막고, 실제 설치 판단은 BuildManager가 다시 합니다
             if (!CanAfford(buildingData))
             {
                 GameManager.Instance.LogManager?.Building($"Blocked install request for `{buildingData.Name}` because gold is insufficient.", LogLevel.Warning);
@@ -136,9 +138,6 @@ namespace _01.Code.Manager
             SelectedBuilding = null;
         }
 
-        /// <summary>
-        /// 이 함수는 입력에서 온 패널 열기 요청을 실제 UI 열기로 바꿔줍니다
-        /// </summary>
         private void HandleShowBuildPanelRequestedEvent(ShowBuildPanelRequestedEvent evt)
         {
             ShowBuildingPanel(evt.WorldPosition);
@@ -149,6 +148,38 @@ namespace _01.Code.Manager
             HideBuildingPanel();
         }
 
+        private void HandleShowDamageTextRequestedEvent(ShowDamageTextRequestedEvent evt)
+        {
+            if (evt == null)
+            {
+                return;
+            }
+
+            DamageText damageText = null;
+            if (poolManager != null && damageTextPoolingItem != null)
+            {
+                damageText = poolManager.Pop<DamageText>(damageTextPoolingItem);
+                if (damageText != null)
+                {
+                    damageText.transform.position = evt.WorldPosition;
+                }
+            }
+
+            if (damageText == null && damageTextPrefab != null)
+            {
+                damageText = Instantiate(damageTextPrefab, evt.WorldPosition, Quaternion.identity);
+            }
+
+            if (damageText == null)
+            {
+                GameObject damageTextObject = new GameObject("DamageText");
+                damageTextObject.transform.position = evt.WorldPosition;
+                damageText = damageTextObject.AddComponent<DamageText>();
+            }
+
+            damageText.Initialize(evt.Damage, evt.FollowTarget);
+        }
+
         private void HandleCostChangedEvent(CostChangedEvent evt)
         {
             _currentGold = evt.Current;
@@ -156,9 +187,6 @@ namespace _01.Code.Manager
             uiHeader?.RefreshAvailability();
         }
 
-        /// <summary>
-        /// 이 함수는 설치 성공 이후 선택 상태와 패널 상태를 정리합니다
-        /// </summary>
         private void HandleBuildInstalledEvent(BuildInstalledEvent evt)
         {
             SelectedBuilding = null;

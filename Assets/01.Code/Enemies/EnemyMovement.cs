@@ -1,4 +1,3 @@
-﻿using System;
 using System.Collections.Generic;
 using _01.Code.Entities;
 using _01.Code.Modules;
@@ -7,12 +6,12 @@ using UnityEngine;
 
 namespace _01.Code.Enemies
 {
-    public class EnemyMovement : MonoBehaviour , IModule
+    public class EnemyMovement : MonoBehaviour, IModule
     {
         private Enemy _enemy;
         private Rigidbody2D _rb;
 
-        [SerializeField]private List<Vector2Int> _path;
+        [SerializeField] private List<Vector2Int> _path;
         private int _pathIndex;
 
         [SerializeField] private float moveSpeed = 5f;
@@ -28,8 +27,10 @@ namespace _01.Code.Enemies
 
         public void MoveNext()
         {
-            if (_pathIndex >= _path.Count)
+            if (_path == null || _pathIndex >= _path.Count)
+            {
                 return;
+            }
 
             Vector3 targetWorld = Manager.GameManager.Instance.GridManager.CellToWorld(_path[_pathIndex]);
             Vector2 target = new Vector2(targetWorld.x, targetWorld.y);
@@ -38,7 +39,7 @@ namespace _01.Code.Enemies
             Vector2 dir = target - currentPos;
 
             _enemy.OnMoveDirection(dir);
-            
+
             float distance = dir.magnitude;
             float duration = distance / moveSpeed;
 
@@ -62,11 +63,23 @@ namespace _01.Code.Enemies
         public void SetPath(List<Vector2Int> path)
         {
             _path = path;
+            _pathIndex = 0;
         }
 
         public void SetSpeed(float speed)
         {
             moveSpeed = speed;
+        }
+
+        public void ResetState()
+        {
+            _pathIndex = 0;
+            _moveTween?.Kill();
+
+            if (_rb != null)
+            {
+                _rb.linearVelocity = Vector2.zero;
+            }
         }
     }
 }
