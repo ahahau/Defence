@@ -1,14 +1,17 @@
+using System.Collections;
 using _01.Code.Manager;
+using DG.Tweening;
 using GondrLib.ObjectPool.Runtime;
 using TMPro;
 using UnityEngine;
 
 namespace _01.Code.Combat
 {
+    [RequireComponent(typeof(TextMeshPro))]
     public class DamageText : MonoBehaviour, IPoolable
     {
         [SerializeField] private PoolingItemSO poolingType;
-        [SerializeField] private Vector3 worldOffset = new(0f, 1.2f, 0f);
+        [SerializeField] private Vector3 worldOffset;
         [SerializeField] private float riseDistance = 0.75f;
         [SerializeField] private float lifetime = 0.7f;
         [SerializeField] private float fontSize = 4f;
@@ -16,17 +19,26 @@ namespace _01.Code.Combat
 
         private TextMeshPro _text;
         private Transform _followTarget;
-        private float _elapsed;
         private Color _baseColor;
         private Vector3 _spawnPosition;
         private Pool _pool;
+        private Coroutine _followRoutine;
+        private Sequence _animationSequence;
+        private float _riseProgress;
 
         public PoolingItemSO PoolingType => poolingType;
         public GameObject GameObject => gameObject;
 
         private void Awake()
         {
-            EnsureTextComponent();
+            CacheTextComponent();
+            ApplyTextStyle();
+        }
+
+        private void OnValidate()
+        {
+            CacheTextComponent();
+            ApplyTextStyle();
         }
 
         public void SetUpPool(Pool pool)
@@ -36,53 +48,90 @@ namespace _01.Code.Combat
 
         public void ResetItem()
         {
-            _elapsed = 0f;
+            StopAnimation();
+            CacheTextComponent();
             _followTarget = null;
             _spawnPosition = Vector3.zero;
-            EnsureTextComponent();
-            _text.text = string.Empty;
+            _riseProgress = 0f;
+
+            if (_text == null)
+            {
+                return;
+            }
+
+            _text.text = " ";
             _text.color = textColor;
+            transform.position = Vector3.zero;
+            ApplyTextStyle();
         }
 
         public void Initialize(float damage, Transform followTarget)
         {
-            _elapsed = 0f;
+            StopAnimation();
+            CacheTextComponent();
+            if (_text == null)
+            {
+                GameManager.Instance.LogManager.System("DamageText requires a TextMeshPro component.", LogLevel.Error);
+                return;
+            }
+
             _followTarget = followTarget;
             _baseColor = textColor;
+            _riseProgress = 0f;
             _spawnPosition = followTarget != null ? followTarget.position : transform.position;
-            EnsureTextComponent();
 
             _text.font = TMP_Settings.defaultFontAsset;
             _text.text = Mathf.CeilToInt(damage).ToString();
             _text.color = _baseColor;
-            UpdatePosition(0f);
+            ApplyTextStyle();
+            SetPosition();
+            StartAnimation();
+            _followRoutine = StartCoroutine(FollowTargetRoutine());
         }
 
-        private void Update()
+        private void SetPosition()
         {
-            _elapsed += Time.deltaTime;
+            Vector3 basePosition = _followTarget != null ? _followTarget.position : _spawnPosition;
+            transform.position = basePosition + worldOffset + (Vector3.up * (riseDistance * _riseProgress));
+        }
 
-            float normalizedTime = Mathf.Clamp01(_elapsed / lifetime);
-            UpdatePosition(normalizedTime);
-
-            Color currentColor = _baseColor;
-            currentColor.a = 1f - normalizedTime;
-            _text.color = currentColor;
-
-            if (normalizedTime >= 1f)
+        private IEnumerator FollowTargetRoutine()
+        {
+            while (_animationSequence != null && _animationSequence.IsActive() && _animationSequence.IsPlaying())
             {
-                ReturnToPool();
+                SetPosition();
+                yield return null;
             }
         }
 
-        private void UpdatePosition(float normalizedTime)
+        private void StartAnimation()
         {
-            Vector3 basePosition = _followTarget != null ? _followTarget.position : _spawnPosition;
-            transform.position = basePosition + worldOffset + (Vector3.up * (riseDistance * normalizedTime));
+            _animationSequence = DOTween.Sequence();
+            _animationSequence
+                .Join(DOTween.To(() => _riseProgress, value => _riseProgress = value, 1f, lifetime).SetEase(Ease.OutQuad))
+                .Join(_text.DOFade(0f, lifetime).SetEase(Ease.Linear))
+                .OnComplete(ReturnToPool);
+        }
+
+        private void StopAnimation()
+        {
+            if (_followRoutine != null)
+            {
+                StopCoroutine(_followRoutine);
+                _followRoutine = null;
+            }
+
+            if (_animationSequence != null)
+            {
+                _animationSequence.Kill();
+                _animationSequence = null;
+            }
         }
 
         private void ReturnToPool()
         {
+            StopAnimation();
+
             if (_pool != null)
             {
                 _pool.Push(this);
@@ -92,15 +141,24 @@ namespace _01.Code.Combat
             Destroy(gameObject);
         }
 
-        private void EnsureTextComponent()
+        private void CacheTextComponent()
         {
             if (_text == null)
             {
                 _text = GetComponent<TextMeshPro>();
-                if (_text == null)
-                {
-                    _text = gameObject.AddComponent<TextMeshPro>();
-                }
+            }
+
+            if (_text == null)
+            {
+                _text = gameObject.AddComponent<TextMeshPro>();
+            }
+        }
+
+        private void ApplyTextStyle()
+        {
+            if (_text == null)
+            {
+                return;
             }
 
             _text.alignment = TextAlignmentOptions.Center;
@@ -108,6 +166,11 @@ namespace _01.Code.Combat
             _text.raycastTarget = false;
             _text.sortingOrder = 100;
             _text.outlineWidth = 0.2f;
+        }
+
+        private void OnDisable()
+        {
+            StopAnimation();
         }
     }
 }
