@@ -4,7 +4,7 @@ This file is maintained automatically by the Unity editor helper in `Assets/Edit
 
 ## Generated Snapshot
 
-- Updated: `2026-03-23 23:46:16`
+- Updated: `2026-03-24 20:30:32`
 - Active scene: `Assets/00.Scenes/SampleScene.unity`
 - Scene dirty: `False`
 
@@ -44,16 +44,16 @@ This file is maintained automatically by the Unity editor helper in `Assets/Edit
 - `Assets/08.SO/Buildings/Obstacle.asset` : `2026-03-19 12:58:12`
 - `Assets/08.SO/Buildings/NormalBuilding.asset` : `2026-03-19 12:58:12`
 - `Assets/01.Code/UI/UIHeader.cs` : `2026-03-19 10:20:28`
-- `Assets/01.Code/UI/MainPanel.cs` : `2026-03-19 12:36:17`
+- `Assets/01.Code/UI/MainPanel.cs` : `2026-03-24 17:54:48`
 - `Assets/01.Code/UI/BuildingOptionView.cs` : `2026-03-19 12:00:21`
 - `Assets/01.Code/Manager/WaveManager.cs` : `2026-03-19 10:34:28`
 - `Assets/01.Code/Manager/UIManager.cs` : `2026-03-22 23:44:00`
-- `Assets/01.Code/Manager/InputManager.cs` : `2026-03-19 10:34:28`
+- `Assets/01.Code/Manager/InputManager.cs` : `2026-03-24 18:23:32`
 - `Assets/01.Code/Manager/GameManager.cs` : `2026-03-19 10:34:28`
-- `Assets/01.Code/Manager/EnemySpawnerManager.cs` : `2026-03-22 23:39:25`
+- `Assets/01.Code/Manager/EnemySpawnerManager.cs` : `2026-03-24 20:29:57`
 - `Assets/01.Code/Manager/BuildManager.cs` : `2026-03-19 10:34:28`
 - `Assets/01.Code/Cameras/CameraInputSO.cs` : missing
-- `Assets/00.Scenes/SampleScene.unity` : `2026-03-22 23:44:00`
+- `Assets/00.Scenes/SampleScene.unity` : `2026-03-24 20:21:29`
 
 ### Known Focus Areas
 - BuildPanel screen placement and click behavior

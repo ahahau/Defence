@@ -1,0 +1,728 @@
+fileFormatVersion: 2
+guid: 38c1be8e1de5c1c4696b7127b6e3ad71
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 7329121086823368019
+    second: swampStructures_ [wallFence]_0
+  - first:
+      213: 7659680149377229669
+    second: swampStructures_ [wallFence]_1
+  - first:
+      213: 2959357143206535560
+    second: swampStructures_ [wallFence]_2
+  - first:
+      213: -5736622849284899544
+    second: swampStructures_ [wallFence]_3
+  - first:
+      213: -1536943142517654380
+    second: swampStructures_ [wallFence]_4
+  - first:
+      213: -4235112058621907122
+    second: swampStructures_ [wallFence]_5
+  - first:
+      213: -6288236280886030185
+    second: swampStructures_ [wallFence]_6
+  - first:
+      213: -3974191362694193263
+    second: swampStructures_ [wallFence]_7
+  - first:
+      213: 8232498375874145223
+    second: swampStructures_ [wallFence]_8
+  - first:
+      213: -4714179717018339941
+    second: swampStructures_ [wallFence]_9
+  - first:
+      213: -4250211677523329348
+    second: swampStructures_ [wallFence]_10
+  - first:
+      213: -982746604736473695
+    second: swampStructures_ [wallFence]_11
+  - first:
+      213: -5453182252827578810
+    second: swampStructures_ [wallFence]_12
+  - first:
+      213: -854874577503940838
+    second: swampStructures_ [wallFence]_13
+  - first:
+      213: -7387106550331341521
+    second: swampStructures_ [wallFence]_14
+  - first:
+      213: 7151624321746180825
+    second: swampStructures_ [wallFence]_15
+  - first:
+      213: 2405324751632459542
+    second: swampStructures_ [wallFence]_16
+  - first:
+      213: 4042513318348898688
+    second: swampStructures_ [wallFence]_17
+  - first:
+      213: -2477005645169381429
+    second: swampStructures_ [wallFence]_18
+  - first:
+      213: 5905929995239408554
+    second: swampStructures_ [wallFence]_19
+  - first:
+      213: -6680033974790503314
+    second: swampStructures_ [wallFence]_20
+  - first:
+      213: -9088934077537267205
+    second: swampStructures_ [wallFence]_21
+  - first:
+      213: 7138856892896196962
+    second: swampStructures_ [wallFence]_22
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: swampStructures_ [wallFence]_0
+      rect:
+        serializedVersion: 2
+        x: 19
+        y: 131
+        width: 42
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3558eef0cc446b560800000000000000
+      internalID: 7329121086823368019
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [wallFence]_1
+      rect:
+        serializedVersion: 2
+        x: 67
+        y: 131
+        width: 10
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 563adbc5386ac4a60800000000000000
+      internalID: 7659680149377229669
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [wallFence]_2
+      rect:
+        serializedVersion: 2
+        x: 82
+        y: 131
+        width: 44
+        height: 35
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 881275474afb11920800000000000000
+      internalID: 2959357143206535560
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [wallFence]_3
+      rect:
+        serializedVersion: 2
+        x: 130
+        y: 143
+        width: 28
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 82dfbf999eb6360b0800000000000000
+      internalID: -5736622849284899544
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [wallFence]_4
+      rect:
+        serializedVersion: 2
+        x: 162
+        y: 114
+        width: 60
+        height: 67
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 49c334eda5eabaae0800000000000000
+      internalID: -1536943142517654380
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [wallFence]_5
+      rect:
+        serializedVersion: 2
+        x: 19
+        y: 115
+        width: 42
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e4f2ed1750cd935c0800000000000000
+      internalID: -4235112058621907122
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [wallFence]_6
+      rect:
+        serializedVersion: 2
+        x: 67
+        y: 115
+        width: 10
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 79090164b62bbb8a0800000000000000
+      internalID: -6288236280886030185
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [wallFence]_7
+      rect:
+        serializedVersion: 2
+        x: 79
+        y: 115
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 19fdf250306d8d8c0800000000000000
+      internalID: -3974191362694193263
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [wallFence]_8
+      rect:
+        serializedVersion: 2
+        x: 115
+        y: 115
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7cb65fbb7a5bf3270800000000000000
+      internalID: 8232498375874145223
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [wallFence]_9
+      rect:
+        serializedVersion: 2
+        x: 130
+        y: 111
+        width: 28
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b9535cf268ed39eb0800000000000000
+      internalID: -4714179717018339941
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [wallFence]_10
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 82
+        width: 12
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cbe31057ff63405c0800000000000000
+      internalID: -4250211677523329348
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [wallFence]_11
+      rect:
+        serializedVersion: 2
+        x: 34
+        y: 82
+        width: 44
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1a516787b259c52f0800000000000000
+      internalID: -982746604736473695
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [wallFence]_12
+      rect:
+        serializedVersion: 2
+        x: 82
+        y: 18
+        width: 44
+        height: 83
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 64e6fbc12a76254b0800000000000000
+      internalID: -5453182252827578810
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [wallFence]_13
+      rect:
+        serializedVersion: 2
+        x: 130
+        y: 82
+        width: 76
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a1f8d50e910e224f0800000000000000
+      internalID: -854874577503940838
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [wallFence]_14
+      rect:
+        serializedVersion: 2
+        x: 210
+        y: 79
+        width: 12
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f250a852bb9bb7990800000000000000
+      internalID: -7387106550331341521
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [wallFence]_15
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 34
+        width: 12
+        height: 47
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9da99b00e6caf3360800000000000000
+      internalID: 7151624321746180825
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [wallFence]_16
+      rect:
+        serializedVersion: 2
+        x: 34
+        y: 65
+        width: 12
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 617e18e1e1e616120800000000000000
+      internalID: 2405324751632459542
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [wallFence]_17
+      rect:
+        serializedVersion: 2
+        x: 50
+        y: 66
+        width: 12
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 081c8f3e174e91830800000000000000
+      internalID: 4042513318348898688
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [wallFence]_18
+      rect:
+        serializedVersion: 2
+        x: 127
+        y: 34
+        width: 65
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bcfaa0d4d78ef9dd0800000000000000
+      internalID: -2477005645169381429
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [wallFence]_19
+      rect:
+        serializedVersion: 2
+        x: 203
+        y: 34
+        width: 22
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aa3c19a2a0416f150800000000000000
+      internalID: 5905929995239408554
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [wallFence]_20
+      rect:
+        serializedVersion: 2
+        x: 33
+        y: 50
+        width: 14
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e6442150e70cb43a0800000000000000
+      internalID: -6680033974790503314
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [wallFence]_21
+      rect:
+        serializedVersion: 2
+        x: 58
+        y: 50
+        width: 12
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bf1d2799c9e9dd180800000000000000
+      internalID: -9088934077537267205
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [wallFence]_22
+      rect:
+        serializedVersion: 2
+        x: 34
+        y: 18
+        width: 44
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2693d635580521360800000000000000
+      internalID: 7138856892896196962
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      swampStructures_ [wallFence]_0: 7329121086823368019
+      swampStructures_ [wallFence]_1: 7659680149377229669
+      swampStructures_ [wallFence]_10: -4250211677523329348
+      swampStructures_ [wallFence]_11: -982746604736473695
+      swampStructures_ [wallFence]_12: -5453182252827578810
+      swampStructures_ [wallFence]_13: -854874577503940838
+      swampStructures_ [wallFence]_14: -7387106550331341521
+      swampStructures_ [wallFence]_15: 7151624321746180825
+      swampStructures_ [wallFence]_16: 2405324751632459542
+      swampStructures_ [wallFence]_17: 4042513318348898688
+      swampStructures_ [wallFence]_18: -2477005645169381429
+      swampStructures_ [wallFence]_19: 5905929995239408554
+      swampStructures_ [wallFence]_2: 2959357143206535560
+      swampStructures_ [wallFence]_20: -6680033974790503314
+      swampStructures_ [wallFence]_21: -9088934077537267205
+      swampStructures_ [wallFence]_22: 7138856892896196962
+      swampStructures_ [wallFence]_3: -5736622849284899544
+      swampStructures_ [wallFence]_4: -1536943142517654380
+      swampStructures_ [wallFence]_5: -4235112058621907122
+      swampStructures_ [wallFence]_6: -6288236280886030185
+      swampStructures_ [wallFence]_7: -3974191362694193263
+      swampStructures_ [wallFence]_8: 8232498375874145223
+      swampStructures_ [wallFence]_9: -4714179717018339941
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

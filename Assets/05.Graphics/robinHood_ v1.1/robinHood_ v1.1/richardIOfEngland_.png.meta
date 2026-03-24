@@ -1,0 +1,1378 @@
+fileFormatVersion: 2
+guid: 27c3942a13427eb499980e870d86108d
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -3277462763465512936
+    second: richardIOfEngland__0
+  - first:
+      213: 2536607438130022489
+    second: richardIOfEngland__1
+  - first:
+      213: 4999933898585151431
+    second: richardIOfEngland__2
+  - first:
+      213: -3584808980957183318
+    second: richardIOfEngland__3
+  - first:
+      213: 3961844285602619457
+    second: richardIOfEngland__4
+  - first:
+      213: -7913342809401268987
+    second: richardIOfEngland__5
+  - first:
+      213: -3619208703915687810
+    second: richardIOfEngland__6
+  - first:
+      213: -8406205755190349872
+    second: richardIOfEngland__7
+  - first:
+      213: -9102400374240863496
+    second: richardIOfEngland__8
+  - first:
+      213: 5262967699757071496
+    second: richardIOfEngland__9
+  - first:
+      213: -3340887554353882591
+    second: richardIOfEngland__10
+  - first:
+      213: -6080324927662101047
+    second: richardIOfEngland__11
+  - first:
+      213: -5497120755844051971
+    second: richardIOfEngland__12
+  - first:
+      213: -4993026713351708028
+    second: richardIOfEngland__13
+  - first:
+      213: -3462048749731218198
+    second: richardIOfEngland__14
+  - first:
+      213: -7101349502702747384
+    second: richardIOfEngland__15
+  - first:
+      213: 4349342609376937020
+    second: richardIOfEngland__16
+  - first:
+      213: -7502035279161434694
+    second: richardIOfEngland__17
+  - first:
+      213: 6904629008733826867
+    second: richardIOfEngland__18
+  - first:
+      213: 6548586266790216475
+    second: richardIOfEngland__19
+  - first:
+      213: -9173212060828707439
+    second: richardIOfEngland__20
+  - first:
+      213: 5834403962864279560
+    second: richardIOfEngland__21
+  - first:
+      213: 3968269785345922922
+    second: richardIOfEngland__22
+  - first:
+      213: -8130519870890978263
+    second: richardIOfEngland__23
+  - first:
+      213: -2802502150184423437
+    second: richardIOfEngland__24
+  - first:
+      213: 7826706948201007617
+    second: richardIOfEngland__25
+  - first:
+      213: 2841987755436519064
+    second: richardIOfEngland__26
+  - first:
+      213: -4244093127015594321
+    second: richardIOfEngland__27
+  - first:
+      213: 7030466791387319029
+    second: richardIOfEngland__28
+  - first:
+      213: 1931092822659668800
+    second: richardIOfEngland__29
+  - first:
+      213: -5843948871328587716
+    second: richardIOfEngland__30
+  - first:
+      213: -5468274515600484497
+    second: richardIOfEngland__31
+  - first:
+      213: -1935956570727192253
+    second: richardIOfEngland__32
+  - first:
+      213: -2722778439086726152
+    second: richardIOfEngland__33
+  - first:
+      213: -3386875444658284193
+    second: richardIOfEngland__34
+  - first:
+      213: 4216327445386373940
+    second: richardIOfEngland__35
+  - first:
+      213: 2811559732346082350
+    second: richardIOfEngland__36
+  - first:
+      213: 5456100859484497650
+    second: richardIOfEngland__37
+  - first:
+      213: -1155957891101895114
+    second: richardIOfEngland__38
+  - first:
+      213: 5226193820092319143
+    second: richardIOfEngland__39
+  - first:
+      213: -5427356149647870455
+    second: richardIOfEngland__40
+  - first:
+      213: -8152441535874616498
+    second: richardIOfEngland__41
+  - first:
+      213: -8251330411174814402
+    second: richardIOfEngland__42
+  - first:
+      213: 4462520025892628113
+    second: richardIOfEngland__43
+  - first:
+      213: -3279168064162088756
+    second: richardIOfEngland__44
+  - first:
+      213: 3069517888803718562
+    second: richardIOfEngland__45
+  - first:
+      213: 1238754307978945777
+    second: richardIOfEngland__46
+  - first:
+      213: 1741561624776903668
+    second: richardIOfEngland__47
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: richardIOfEngland__0
+      rect:
+        serializedVersion: 2
+        x: 5
+        y: 119
+        width: 13
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 818611b3bfc1482d0800000000000000
+      internalID: -3277462763465512936
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__1
+      rect:
+        serializedVersion: 2
+        x: 29
+        y: 119
+        width: 13
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9588a548607d33320800000000000000
+      internalID: 2536607438130022489
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__2
+      rect:
+        serializedVersion: 2
+        x: 53
+        y: 119
+        width: 13
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c71a95d365536540800000000000000
+      internalID: 4999933898585151431
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__3
+      rect:
+        serializedVersion: 2
+        x: 77
+        y: 119
+        width: 13
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aa2ca669933304ec0800000000000000
+      internalID: -3584808980957183318
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__4
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 119
+        width: 13
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 14061c2136c4bf630800000000000000
+      internalID: 3961844285602619457
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__5
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 119
+        width: 13
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 505eebb34a82e2290800000000000000
+      internalID: -7913342809401268987
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__6
+      rect:
+        serializedVersion: 2
+        x: 150
+        y: 119
+        width: 13
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e708a13fbdcf5cdc0800000000000000
+      internalID: -3619208703915687810
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__7
+      rect:
+        serializedVersion: 2
+        x: 174
+        y: 119
+        width: 13
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0dfe8055768275b80800000000000000
+      internalID: -8406205755190349872
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__8
+      rect:
+        serializedVersion: 2
+        x: 5
+        y: 95
+        width: 13
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8fa9df11617cda180800000000000000
+      internalID: -9102400374240863496
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__9
+      rect:
+        serializedVersion: 2
+        x: 29
+        y: 95
+        width: 13
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 88cff501d31d90940800000000000000
+      internalID: 5262967699757071496
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__10
+      rect:
+        serializedVersion: 2
+        x: 53
+        y: 95
+        width: 13
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 12a96385878c2a1d0800000000000000
+      internalID: -3340887554353882591
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__11
+      rect:
+        serializedVersion: 2
+        x: 77
+        y: 95
+        width: 13
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9cd6fb771b85e9ba0800000000000000
+      internalID: -6080324927662101047
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__12
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 95
+        width: 13
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dfb0d7c2ccd46b3b0800000000000000
+      internalID: -5497120755844051971
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__13
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 95
+        width: 13
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 482a2ac88a435bab0800000000000000
+      internalID: -4993026713351708028
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__14
+      rect:
+        serializedVersion: 2
+        x: 150
+        y: 95
+        width: 13
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aec7f2d310554ffc0800000000000000
+      internalID: -3462048749731218198
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__15
+      rect:
+        serializedVersion: 2
+        x: 174
+        y: 95
+        width: 13
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 80181897040f27d90800000000000000
+      internalID: -7101349502702747384
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__16
+      rect:
+        serializedVersion: 2
+        x: 5
+        y: 72
+        width: 13
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c3402663f08fb5c30800000000000000
+      internalID: 4349342609376937020
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__17
+      rect:
+        serializedVersion: 2
+        x: 28
+        y: 73
+        width: 15
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: abd522d39aa63e790800000000000000
+      internalID: -7502035279161434694
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__18
+      rect:
+        serializedVersion: 2
+        x: 51
+        y: 71
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 33fef6b408b22df50800000000000000
+      internalID: 6904629008733826867
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__19
+      rect:
+        serializedVersion: 2
+        x: 76
+        y: 71
+        width: 14
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b134805838041ea50800000000000000
+      internalID: 6548586266790216475
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__20
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 72
+        width: 13
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 195d9f08b3432b080800000000000000
+      internalID: -9173212060828707439
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__21
+      rect:
+        serializedVersion: 2
+        x: 125
+        y: 73
+        width: 15
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 80028a20e77f7f050800000000000000
+      internalID: 5834403962864279560
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__22
+      rect:
+        serializedVersion: 2
+        x: 150
+        y: 71
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a6795705850221730800000000000000
+      internalID: 3968269785345922922
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__23
+      rect:
+        serializedVersion: 2
+        x: 174
+        y: 71
+        width: 14
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 924d94831479a2f80800000000000000
+      internalID: -8130519870890978263
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__24
+      rect:
+        serializedVersion: 2
+        x: 5
+        y: 47
+        width: 13
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3ff2df784238b19d0800000000000000
+      internalID: -2802502150184423437
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__25
+      rect:
+        serializedVersion: 2
+        x: 29
+        y: 47
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 10a4a90708c0e9c60800000000000000
+      internalID: 7826706948201007617
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__26
+      rect:
+        serializedVersion: 2
+        x: 53
+        y: 47
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 89eadca5ec4c07720800000000000000
+      internalID: 2841987755436519064
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__27
+      rect:
+        serializedVersion: 2
+        x: 78
+        y: 47
+        width: 13
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fa60f8289c3f915c0800000000000000
+      internalID: -4244093127015594321
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__28
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 47
+        width: 13
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5fa42d93c4c319160800000000000000
+      internalID: 7030466791387319029
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__29
+      rect:
+        serializedVersion: 2
+        x: 125
+        y: 47
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 04b9fead0be9cca10800000000000000
+      internalID: 1931092822659668800
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__30
+      rect:
+        serializedVersion: 2
+        x: 149
+        y: 47
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c302aeec67f16eea0800000000000000
+      internalID: -5843948871328587716
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__31
+      rect:
+        serializedVersion: 2
+        x: 173
+        y: 47
+        width: 13
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f67df4bdc49cc14b0800000000000000
+      internalID: -5468274515600484497
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__32
+      rect:
+        serializedVersion: 2
+        x: 5
+        y: 23
+        width: 13
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 349e83d81c91225e0800000000000000
+      internalID: -1935956570727192253
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__33
+      rect:
+        serializedVersion: 2
+        x: 28
+        y: 23
+        width: 13
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8f3a4208f6fb63ad0800000000000000
+      internalID: -2722778439086726152
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__34
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 23
+        width: 13
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f5956ae3ab66ff0d0800000000000000
+      internalID: -3386875444658284193
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__35
+      rect:
+        serializedVersion: 2
+        x: 76
+        y: 23
+        width: 13
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 43b2cf6f877638a30800000000000000
+      internalID: 4216327445386373940
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__36
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 23
+        width: 13
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e24d7472eaaa40720800000000000000
+      internalID: 2811559732346082350
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__37
+      rect:
+        serializedVersion: 2
+        x: 127
+        y: 23
+        width: 13
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2f6e644f2d6f7bb40800000000000000
+      internalID: 5456100859484497650
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__38
+      rect:
+        serializedVersion: 2
+        x: 151
+        y: 23
+        width: 13
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 636df8d2c6635ffe0800000000000000
+      internalID: -1155957891101895114
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__39
+      rect:
+        serializedVersion: 2
+        x: 175
+        y: 23
+        width: 13
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a5c1fdf69b278840800000000000000
+      internalID: 5226193820092319143
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__40
+      rect:
+        serializedVersion: 2
+        x: 5
+        y: 0
+        width: 13
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 906f4b656582ea4b0800000000000000
+      internalID: -5427356149647870455
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__41
+      rect:
+        serializedVersion: 2
+        x: 29
+        y: 0
+        width: 13
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e43bd0add95bcde80800000000000000
+      internalID: -8152441535874616498
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__42
+      rect:
+        serializedVersion: 2
+        x: 53
+        y: 0
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e3d1c8d55b26d7d80800000000000000
+      internalID: -8251330411174814402
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__43
+      rect:
+        serializedVersion: 2
+        x: 78
+        y: 0
+        width: 17
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 196a562f15e0eed30800000000000000
+      internalID: 4462520025892628113
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__44
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 0
+        width: 13
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cc830d8f40e0e72d0800000000000000
+      internalID: -3279168064162088756
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__45
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 0
+        width: 13
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2a54ad1c14e199a20800000000000000
+      internalID: 3069517888803718562
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__46
+      rect:
+        serializedVersion: 2
+        x: 150
+        y: 0
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1f4e11bda70f03110800000000000000
+      internalID: 1238754307978945777
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: richardIOfEngland__47
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 0
+        width: 17
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4fb874f02154b2810800000000000000
+      internalID: 1741561624776903668
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      richardIOfEngland__0: -3277462763465512936
+      richardIOfEngland__1: 2536607438130022489
+      richardIOfEngland__10: -3340887554353882591
+      richardIOfEngland__11: -6080324927662101047
+      richardIOfEngland__12: -5497120755844051971
+      richardIOfEngland__13: -4993026713351708028
+      richardIOfEngland__14: -3462048749731218198
+      richardIOfEngland__15: -7101349502702747384
+      richardIOfEngland__16: 4349342609376937020
+      richardIOfEngland__17: -7502035279161434694
+      richardIOfEngland__18: 6904629008733826867
+      richardIOfEngland__19: 6548586266790216475
+      richardIOfEngland__2: 4999933898585151431
+      richardIOfEngland__20: -9173212060828707439
+      richardIOfEngland__21: 5834403962864279560
+      richardIOfEngland__22: 3968269785345922922
+      richardIOfEngland__23: -8130519870890978263
+      richardIOfEngland__24: -2802502150184423437
+      richardIOfEngland__25: 7826706948201007617
+      richardIOfEngland__26: 2841987755436519064
+      richardIOfEngland__27: -4244093127015594321
+      richardIOfEngland__28: 7030466791387319029
+      richardIOfEngland__29: 1931092822659668800
+      richardIOfEngland__3: -3584808980957183318
+      richardIOfEngland__30: -5843948871328587716
+      richardIOfEngland__31: -5468274515600484497
+      richardIOfEngland__32: -1935956570727192253
+      richardIOfEngland__33: -2722778439086726152
+      richardIOfEngland__34: -3386875444658284193
+      richardIOfEngland__35: 4216327445386373940
+      richardIOfEngland__36: 2811559732346082350
+      richardIOfEngland__37: 5456100859484497650
+      richardIOfEngland__38: -1155957891101895114
+      richardIOfEngland__39: 5226193820092319143
+      richardIOfEngland__4: 3961844285602619457
+      richardIOfEngland__40: -5427356149647870455
+      richardIOfEngland__41: -8152441535874616498
+      richardIOfEngland__42: -8251330411174814402
+      richardIOfEngland__43: 4462520025892628113
+      richardIOfEngland__44: -3279168064162088756
+      richardIOfEngland__45: 3069517888803718562
+      richardIOfEngland__46: 1238754307978945777
+      richardIOfEngland__47: 1741561624776903668
+      richardIOfEngland__5: -7913342809401268987
+      richardIOfEngland__6: -3619208703915687810
+      richardIOfEngland__7: -8406205755190349872
+      richardIOfEngland__8: -9102400374240863496
+      richardIOfEngland__9: 5262967699757071496
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

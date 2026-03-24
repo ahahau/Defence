@@ -33,6 +33,7 @@ namespace _01.Code.Enemies
             {
                 GameManager.Instance.LogManager?.Enemy($"Path not found from {start} to {target}.", LogLevel.Error);
                 _isSpawning = false;
+                NotifySpawnerCleared();
                 yield break;
             }
 

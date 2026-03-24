@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85476989930142cfb54c9486477367ba, type: 3}
+  m_Name: CollectableBuildingData
+  m_EditorClassIdentifier: 
+  <Name>k__BackingField: CollectableBulding
+  <Explanation>k__BackingField: c
+  <Cost>k__BackingField: 10
+  <Prefab>k__BackingField: {fileID: 8662478738771581376, guid: b555c62700d9578448e82565a74606a8, type: 3}
+  <Type>k__BackingField: 0
+  <GainCost>k__BackingField: 20

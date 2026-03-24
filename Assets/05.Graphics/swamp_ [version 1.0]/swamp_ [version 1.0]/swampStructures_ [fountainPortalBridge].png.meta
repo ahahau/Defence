@@ -1,0 +1,442 @@
+fileFormatVersion: 2
+guid: dc99861e77124764782da9f70a66523e
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 2693773808595881797
+    second: swampStructures_ [fountainPortalBridge]_0
+  - first:
+      213: -6986943682149191109
+    second: swampStructures_ [fountainPortalBridge]_1
+  - first:
+      213: -2025199772123259081
+    second: swampStructures_ [fountainPortalBridge]_2
+  - first:
+      213: -6335700602070292428
+    second: swampStructures_ [fountainPortalBridge]_3
+  - first:
+      213: 6575709377648657444
+    second: swampStructures_ [fountainPortalBridge]_4
+  - first:
+      213: 802707654919798537
+    second: swampStructures_ [fountainPortalBridge]_5
+  - first:
+      213: -205975386726103762
+    second: swampStructures_ [fountainPortalBridge]_6
+  - first:
+      213: -309773793343112817
+    second: swampStructures_ [fountainPortalBridge]_7
+  - first:
+      213: -5834495310216604945
+    second: swampStructures_ [fountainPortalBridge]_8
+  - first:
+      213: -1296991505304639520
+    second: swampStructures_ [fountainPortalBridge]_9
+  - first:
+      213: -704527750584257218
+    second: swampStructures_ [fountainPortalBridge]_10
+  - first:
+      213: -1773896956128692558
+    second: swampStructures_ [fountainPortalBridge]_11
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: swampStructures_ [fountainPortalBridge]_0
+      rect:
+        serializedVersion: 2
+        x: 17
+        y: 273
+        width: 30
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 54fcb96b105326520800000000000000
+      internalID: 2693773808595881797
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [fountainPortalBridge]_1
+      rect:
+        serializedVersion: 2
+        x: 49
+        y: 273
+        width: 30
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b3276df4db3690f90800000000000000
+      internalID: -6986943682149191109
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [fountainPortalBridge]_2
+      rect:
+        serializedVersion: 2
+        x: 81
+        y: 273
+        width: 30
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 73f1467898b05e3e0800000000000000
+      internalID: -2025199772123259081
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [fountainPortalBridge]_3
+      rect:
+        serializedVersion: 2
+        x: 113
+        y: 273
+        width: 30
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4382f52ded11318a0800000000000000
+      internalID: -6335700602070292428
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [fountainPortalBridge]_4
+      rect:
+        serializedVersion: 2
+        x: 145
+        y: 273
+        width: 30
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 42404f0e6dc914b50800000000000000
+      internalID: 6575709377648657444
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [fountainPortalBridge]_5
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 272
+        width: 32
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 90f3bf5fb5ac32b00800000000000000
+      internalID: 802707654919798537
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [fountainPortalBridge]_6
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 191
+        width: 258
+        height: 70
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e2587b12a7a342df0800000000000000
+      internalID: -205975386726103762
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [fountainPortalBridge]_7
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 146
+        width: 67
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f89fe0f406673bbf0800000000000000
+      internalID: -309773793343112817
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [fountainPortalBridge]_8
+      rect:
+        serializedVersion: 2
+        x: 47
+        y: 15
+        width: 226
+        height: 131
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fe25bd68d65b70fa0800000000000000
+      internalID: -5834495310216604945
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [fountainPortalBridge]_9
+      rect:
+        serializedVersion: 2
+        x: 91
+        y: 146
+        width: 22
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0e72e910919200ee0800000000000000
+      internalID: -1296991505304639520
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [fountainPortalBridge]_10
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 144
+        width: 32
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e35350c5eb30936f0800000000000000
+      internalID: -704527750584257218
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: swampStructures_ [fountainPortalBridge]_11
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 98
+        width: 194
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b67dcded1ad167e0800000000000000
+      internalID: -1773896956128692558
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      swampStructures_ [fountainPortalBridge]_0: 2693773808595881797
+      swampStructures_ [fountainPortalBridge]_1: -6986943682149191109
+      swampStructures_ [fountainPortalBridge]_10: -704527750584257218
+      swampStructures_ [fountainPortalBridge]_11: -1773896956128692558
+      swampStructures_ [fountainPortalBridge]_2: -2025199772123259081
+      swampStructures_ [fountainPortalBridge]_3: -6335700602070292428
+      swampStructures_ [fountainPortalBridge]_4: 6575709377648657444
+      swampStructures_ [fountainPortalBridge]_5: 802707654919798537
+      swampStructures_ [fountainPortalBridge]_6: -205975386726103762
+      swampStructures_ [fountainPortalBridge]_7: -309773793343112817
+      swampStructures_ [fountainPortalBridge]_8: -5834495310216604945
+      swampStructures_ [fountainPortalBridge]_9: -1296991505304639520
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

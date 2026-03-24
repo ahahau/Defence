@@ -10,6 +10,7 @@ namespace _01.Code.Enemies
     {
         private Enemy _enemy;
         private Rigidbody2D _rb;
+        private EnemyRender _enemyRender;
 
         [SerializeField] private List<Vector2Int> _path;
         private int _pathIndex;
@@ -22,6 +23,7 @@ namespace _01.Code.Enemies
         {
             _enemy = owner as Enemy;
             _rb = owner.GetComponent<Rigidbody2D>();
+            _enemyRender = _enemy.GetModule<EnemyRender>();
             _pathIndex = 0;
         }
 
@@ -44,7 +46,10 @@ namespace _01.Code.Enemies
             float duration = distance / moveSpeed;
 
             _moveTween?.Kill();
-
+            
+            if(_pathIndex > 0)
+                _enemyRender.ChangeAnimation(_path[_pathIndex] - _path[_pathIndex - 1]);
+            
             _moveTween = _rb
                 .DOMove(target, duration)
                 .SetEase(Ease.Linear)

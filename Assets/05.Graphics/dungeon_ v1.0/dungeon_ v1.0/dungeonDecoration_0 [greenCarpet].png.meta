@@ -1,0 +1,676 @@
+fileFormatVersion: 2
+guid: 61ae7f1d9c2f762478200d6516c4cf11
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 9184288469222530041
+    second: dungeonDecoration_0 [greenCarpet]_0
+  - first:
+      213: 934194913531789715
+    second: dungeonDecoration_0 [greenCarpet]_1
+  - first:
+      213: -3521528857628813056
+    second: dungeonDecoration_0 [greenCarpet]_2
+  - first:
+      213: 3535989324886325177
+    second: dungeonDecoration_0 [greenCarpet]_3
+  - first:
+      213: 4033012065296553578
+    second: dungeonDecoration_0 [greenCarpet]_4
+  - first:
+      213: 6771282254448188020
+    second: dungeonDecoration_0 [greenCarpet]_5
+  - first:
+      213: 495009665012011839
+    second: dungeonDecoration_0 [greenCarpet]_6
+  - first:
+      213: -4162145382813174558
+    second: dungeonDecoration_0 [greenCarpet]_7
+  - first:
+      213: -2495427622777753899
+    second: dungeonDecoration_0 [greenCarpet]_8
+  - first:
+      213: 1158581334497691451
+    second: dungeonDecoration_0 [greenCarpet]_9
+  - first:
+      213: 4522811180735151758
+    second: dungeonDecoration_0 [greenCarpet]_10
+  - first:
+      213: -6927253632707185799
+    second: dungeonDecoration_0 [greenCarpet]_11
+  - first:
+      213: 4108686194425974992
+    second: dungeonDecoration_0 [greenCarpet]_12
+  - first:
+      213: 4937505946308645439
+    second: dungeonDecoration_0 [greenCarpet]_13
+  - first:
+      213: -1366877928617730070
+    second: dungeonDecoration_0 [greenCarpet]_14
+  - first:
+      213: -8744096952965340730
+    second: dungeonDecoration_0 [greenCarpet]_15
+  - first:
+      213: -7568496549243954766
+    second: dungeonDecoration_0 [greenCarpet]_16
+  - first:
+      213: -8699713866358521838
+    second: dungeonDecoration_0 [greenCarpet]_17
+  - first:
+      213: 3304922288339196553
+    second: dungeonDecoration_0 [greenCarpet]_18
+  - first:
+      213: 9120056789165868236
+    second: dungeonDecoration_0 [greenCarpet]_19
+  - first:
+      213: 2593181293180294871
+    second: dungeonDecoration_0 [greenCarpet]_20
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [greenCarpet]_0
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 179
+        width: 12
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9fb99bac3b5257f70800000000000000
+      internalID: 9184288469222530041
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [greenCarpet]_1
+      rect:
+        serializedVersion: 2
+        x: 34
+        y: 180
+        width: 12
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3910a04035de6fc00800000000000000
+      internalID: 934194913531789715
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [greenCarpet]_2
+      rect:
+        serializedVersion: 2
+        x: 57
+        y: 180
+        width: 14
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0095fbe6924012fc0800000000000000
+      internalID: -3521528857628813056
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [greenCarpet]_3
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 145
+        width: 16
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b73c677e8b521130800000000000000
+      internalID: 3535989324886325177
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [greenCarpet]_4
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 145
+        width: 16
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a669dd60b1328f730800000000000000
+      internalID: 4033012065296553578
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [greenCarpet]_5
+      rect:
+        serializedVersion: 2
+        x: 50
+        y: 145
+        width: 28
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 47a5a4aa55d68fd50800000000000000
+      internalID: 6771282254448188020
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [greenCarpet]_6
+      rect:
+        serializedVersion: 2
+        x: 82
+        y: 145
+        width: 28
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f331d6beaa0aed600800000000000000
+      internalID: 495009665012011839
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [greenCarpet]_7
+      rect:
+        serializedVersion: 2
+        x: 19
+        y: 113
+        width: 26
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2e473e983d61d36c0800000000000000
+      internalID: -4162145382813174558
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [greenCarpet]_8
+      rect:
+        serializedVersion: 2
+        x: 51
+        y: 113
+        width: 26
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5de62a56cc57e5dd0800000000000000
+      internalID: -2495427622777753899
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [greenCarpet]_9
+      rect:
+        serializedVersion: 2
+        x: 81
+        y: 113
+        width: 30
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b370226d59b141010800000000000000
+      internalID: 1158581334497691451
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [greenCarpet]_10
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 68
+        width: 18
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e8e32e55ec044ce30800000000000000
+      internalID: 4522811180735151758
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [greenCarpet]_11
+      rect:
+        serializedVersion: 2
+        x: 33
+        y: 81
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9733471f5837ddf90800000000000000
+      internalID: -6927253632707185799
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [greenCarpet]_12
+      rect:
+        serializedVersion: 2
+        x: 49
+        y: 81
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0d0df48335cf40930800000000000000
+      internalID: 4108686194425974992
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [greenCarpet]_13
+      rect:
+        serializedVersion: 2
+        x: 65
+        y: 81
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f321b168f7b858440800000000000000
+      internalID: 4937505946308645439
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [greenCarpet]_14
+      rect:
+        serializedVersion: 2
+        x: 81
+        y: 81
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aef1b6514cfd70de0800000000000000
+      internalID: -1366877928617730070
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [greenCarpet]_15
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 81
+        width: 16
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6c1ece4462ab6a680800000000000000
+      internalID: -8744096952965340730
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [greenCarpet]_16
+      rect:
+        serializedVersion: 2
+        x: 50
+        y: 67
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b95b82fc7c47f690800000000000000
+      internalID: -7568496549243954766
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [greenCarpet]_17
+      rect:
+        serializedVersion: 2
+        x: 65
+        y: 48
+        width: 46
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2100924e458644780800000000000000
+      internalID: -8699713866358521838
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [greenCarpet]_18
+      rect:
+        serializedVersion: 2
+        x: 17
+        y: 39
+        width: 46
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 98a9abe9f417ddd20800000000000000
+      internalID: 3304922288339196553
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [greenCarpet]_19
+      rect:
+        serializedVersion: 2
+        x: 65
+        y: 16
+        width: 46
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cc40f916453f09e70800000000000000
+      internalID: 9120056789165868236
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [greenCarpet]_20
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 19
+        width: 44
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7d6133a95a4dcf320800000000000000
+      internalID: 2593181293180294871
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      dungeonDecoration_0 [greenCarpet]_0: 9184288469222530041
+      dungeonDecoration_0 [greenCarpet]_1: 934194913531789715
+      dungeonDecoration_0 [greenCarpet]_10: 4522811180735151758
+      dungeonDecoration_0 [greenCarpet]_11: -6927253632707185799
+      dungeonDecoration_0 [greenCarpet]_12: 4108686194425974992
+      dungeonDecoration_0 [greenCarpet]_13: 4937505946308645439
+      dungeonDecoration_0 [greenCarpet]_14: -1366877928617730070
+      dungeonDecoration_0 [greenCarpet]_15: -8744096952965340730
+      dungeonDecoration_0 [greenCarpet]_16: -7568496549243954766
+      dungeonDecoration_0 [greenCarpet]_17: -8699713866358521838
+      dungeonDecoration_0 [greenCarpet]_18: 3304922288339196553
+      dungeonDecoration_0 [greenCarpet]_19: 9120056789165868236
+      dungeonDecoration_0 [greenCarpet]_2: -3521528857628813056
+      dungeonDecoration_0 [greenCarpet]_20: 2593181293180294871
+      dungeonDecoration_0 [greenCarpet]_3: 3535989324886325177
+      dungeonDecoration_0 [greenCarpet]_4: 4033012065296553578
+      dungeonDecoration_0 [greenCarpet]_5: 6771282254448188020
+      dungeonDecoration_0 [greenCarpet]_6: 495009665012011839
+      dungeonDecoration_0 [greenCarpet]_7: -4162145382813174558
+      dungeonDecoration_0 [greenCarpet]_8: -2495427622777753899
+      dungeonDecoration_0 [greenCarpet]_9: 1158581334497691451
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

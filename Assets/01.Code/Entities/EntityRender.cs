@@ -26,7 +26,7 @@ namespace _01.Code.Entities
                 Flip();
         }
 
-        private void Flip()
+        protected void Flip()
         {
             FacingDirection *= -1;
             //float targetYRotation = FacingDirection > 0 ? 0 : 180f;

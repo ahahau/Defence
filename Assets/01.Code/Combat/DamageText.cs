@@ -31,13 +31,13 @@ namespace _01.Code.Combat
 
         private void Awake()
         {
-            CacheTextComponent();
+            _text = GetComponent<TextMeshPro>();
             ApplyTextStyle();
         }
 
         private void OnValidate()
         {
-            CacheTextComponent();
+            _text = GetComponent<TextMeshPro>();
             ApplyTextStyle();
         }
 
@@ -49,7 +49,7 @@ namespace _01.Code.Combat
         public void ResetItem()
         {
             StopAnimation();
-            CacheTextComponent();
+            _text = GetComponent<TextMeshPro>();
             _followTarget = null;
             _spawnPosition = Vector3.zero;
             _riseProgress = 0f;
@@ -68,7 +68,7 @@ namespace _01.Code.Combat
         public void Initialize(float damage, Transform followTarget)
         {
             StopAnimation();
-            CacheTextComponent();
+            _text = GetComponent<TextMeshPro>();
             if (_text == null)
             {
                 GameManager.Instance.LogManager.System("DamageText requires a TextMeshPro component.", LogLevel.Error);
@@ -141,18 +141,6 @@ namespace _01.Code.Combat
             Destroy(gameObject);
         }
 
-        private void CacheTextComponent()
-        {
-            if (_text == null)
-            {
-                _text = GetComponent<TextMeshPro>();
-            }
-
-            if (_text == null)
-            {
-                _text = gameObject.AddComponent<TextMeshPro>();
-            }
-        }
 
         private void ApplyTextStyle()
         {

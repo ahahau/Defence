@@ -5,11 +5,8 @@ using UnityEngine;
 
 namespace _01.Code.Enemies
 {
-    public class EnemyRender : EntityRender,  IModule
+    public class EnemyRender : EntityRender
     {
-        [SerializeField] private ParamSO backParam;
-        [SerializeField] private ParamSO forwardParam;
-        [SerializeField] private ParamSO sideParam;
         private Entity _entity;
         public override void Initialize(ModuleOwner owner)
         {
@@ -17,28 +14,14 @@ namespace _01.Code.Enemies
         }
         public void ChangeAnimation(Vector2 dir)
         {
-            //if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
-            //{
-            //    SetParameter(backParam, false);
-            //    SetParameter(forwardParam, false); 
-            //    SetParameter(sideParam, true);
-            //    GetComponent<Renderer>().flipX = dir.x < 0;
-            //}
-            //else
-            //{
-            //    if (dir.y > 0)
-            //    {
-            //        SetParameter(backParam, false);
-            //        SetParameter(sideParam, false);
-            //        SetParameter(forwardParam, true);
-            //    }
-            //    else if (dir.y < 0)
-            //    {
-            //        SetParameter(forwardParam, false);
-            //        SetParameter(sideParam, false);
-            //        SetParameter(backParam, true);
-            //    }
-            //}
+            if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
+            {
+                FlipController(dir.x);
+            }
+            else
+            {
+                Flip();
+            }
         }
     }
 }

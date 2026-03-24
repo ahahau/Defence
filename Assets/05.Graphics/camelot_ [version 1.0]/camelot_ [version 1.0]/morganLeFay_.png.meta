@@ -1,0 +1,1586 @@
+fileFormatVersion: 2
+guid: 210ff411ff0bf0b408a31f8ab374d8d1
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -8557219725911740166
+    second: morganLeFay__0
+  - first:
+      213: 8323171019758765052
+    second: morganLeFay__1
+  - first:
+      213: 5247049842569835787
+    second: morganLeFay__2
+  - first:
+      213: -1529099147934870161
+    second: morganLeFay__3
+  - first:
+      213: -5456913418644509609
+    second: morganLeFay__4
+  - first:
+      213: 1881426319488139450
+    second: morganLeFay__5
+  - first:
+      213: 2248927155354843842
+    second: morganLeFay__6
+  - first:
+      213: 5381820570755323674
+    second: morganLeFay__7
+  - first:
+      213: -213377080700737775
+    second: morganLeFay__8
+  - first:
+      213: 4885189940156231619
+    second: morganLeFay__9
+  - first:
+      213: 3103921184481040021
+    second: morganLeFay__10
+  - first:
+      213: 5246357458258602164
+    second: morganLeFay__11
+  - first:
+      213: 1016451497812778726
+    second: morganLeFay__12
+  - first:
+      213: 3353759877125814914
+    second: morganLeFay__13
+  - first:
+      213: 8121983325085250816
+    second: morganLeFay__14
+  - first:
+      213: 8390129292795237688
+    second: morganLeFay__15
+  - first:
+      213: 9131909952905731849
+    second: morganLeFay__16
+  - first:
+      213: -3706705013696857587
+    second: morganLeFay__17
+  - first:
+      213: -8450186075810985345
+    second: morganLeFay__18
+  - first:
+      213: 9217667690321681793
+    second: morganLeFay__19
+  - first:
+      213: -5770681758849448058
+    second: morganLeFay__20
+  - first:
+      213: -121233667866649872
+    second: morganLeFay__21
+  - first:
+      213: -7560919453967390114
+    second: morganLeFay__22
+  - first:
+      213: -1701500058537094755
+    second: morganLeFay__23
+  - first:
+      213: -1295896675276286906
+    second: morganLeFay__24
+  - first:
+      213: -2851654414573569686
+    second: morganLeFay__25
+  - first:
+      213: -4360209152314260545
+    second: morganLeFay__26
+  - first:
+      213: 7501058525641324213
+    second: morganLeFay__27
+  - first:
+      213: 5815929305938103604
+    second: morganLeFay__28
+  - first:
+      213: -4353858942175645551
+    second: morganLeFay__29
+  - first:
+      213: -5156240376677024342
+    second: morganLeFay__30
+  - first:
+      213: 2812946930496962885
+    second: morganLeFay__31
+  - first:
+      213: -2993187880675223717
+    second: morganLeFay__32
+  - first:
+      213: -8662610073191445301
+    second: morganLeFay__33
+  - first:
+      213: 3453203685497632297
+    second: morganLeFay__34
+  - first:
+      213: 2151319571841160830
+    second: morganLeFay__35
+  - first:
+      213: -1803640049103016591
+    second: morganLeFay__36
+  - first:
+      213: 8520101020155131597
+    second: morganLeFay__37
+  - first:
+      213: 476849823700942550
+    second: morganLeFay__38
+  - first:
+      213: 1543924762515178910
+    second: morganLeFay__39
+  - first:
+      213: -999386958691424844
+    second: morganLeFay__40
+  - first:
+      213: -2051811054751446275
+    second: morganLeFay__41
+  - first:
+      213: 3369588398285933053
+    second: morganLeFay__42
+  - first:
+      213: 5005998901442099811
+    second: morganLeFay__43
+  - first:
+      213: -4728790362319158045
+    second: morganLeFay__44
+  - first:
+      213: 585615264244868818
+    second: morganLeFay__45
+  - first:
+      213: -2946634756894144308
+    second: morganLeFay__46
+  - first:
+      213: 5328933014898868754
+    second: morganLeFay__47
+  - first:
+      213: -3978356139160929535
+    second: morganLeFay__48
+  - first:
+      213: 1125340640445065481
+    second: morganLeFay__49
+  - first:
+      213: -3240866113957266170
+    second: morganLeFay__50
+  - first:
+      213: -8011004153428399122
+    second: morganLeFay__51
+  - first:
+      213: 9129693450088692256
+    second: morganLeFay__52
+  - first:
+      213: -4973744504521416400
+    second: morganLeFay__53
+  - first:
+      213: -7228713390904383136
+    second: morganLeFay__54
+  - first:
+      213: -5612377654009612035
+    second: morganLeFay__55
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: morganLeFay__0
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 195
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: af0b0145ff5ae3980800000000000000
+      internalID: -8557219725911740166
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__1
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 195
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cf30c85c1f7d18370800000000000000
+      internalID: 8323171019758765052
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__2
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 195
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b05f421280441d840800000000000000
+      internalID: 5247049842569835787
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__3
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 195
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f655dfc2d6c87cae0800000000000000
+      internalID: -1529099147934870161
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__4
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 195
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 75ca1af58262544b0800000000000000
+      internalID: -5456913418644509609
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__5
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 195
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ab04924f44b2c1a10800000000000000
+      internalID: 1881426319488139450
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__6
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 195
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2cab7ac155bc53f10800000000000000
+      internalID: 2248927155354843842
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__7
+      rect:
+        serializedVersion: 2
+        x: 233
+        y: 195
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a17d2c48b4110ba40800000000000000
+      internalID: 5381820570755323674
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__8
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 163
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1176f95fcaee90df0800000000000000
+      internalID: -213377080700737775
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__9
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 163
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3cfe2532e5eabc340800000000000000
+      internalID: 4885189940156231619
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__10
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 163
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5965dcb3fd7531b20800000000000000
+      internalID: 3103921184481040021
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__11
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 163
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4b8a938df4ecec840800000000000000
+      internalID: 5246357458258602164
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__12
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 163
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6ee5b8a70492b1e00800000000000000
+      internalID: 1016451497812778726
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__13
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 163
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 28aba0ad6d2fa8e20800000000000000
+      internalID: 3353759877125814914
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__14
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 163
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0053a535dc417b070800000000000000
+      internalID: 8121983325085250816
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__15
+      rect:
+        serializedVersion: 2
+        x: 233
+        y: 163
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 835d8a4932abf6470800000000000000
+      internalID: 8390129292795237688
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__16
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 131
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 90fdccf18bf0bbe70800000000000000
+      internalID: 9131909952905731849
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__17
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 131
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d0a7073dd632f8cc0800000000000000
+      internalID: -3706705013696857587
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__18
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 131
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f7a8559f888eaba80800000000000000
+      internalID: -8450186075810985345
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__19
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 131
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 18d18335debbbef70800000000000000
+      internalID: 9217667690321681793
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__20
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 131
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 687c3f3c38b6aefa0800000000000000
+      internalID: -5770681758849448058
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__21
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 131
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0fa9df31f9a415ef0800000000000000
+      internalID: -121233667866649872
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__22
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 131
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e5aeeeae0d7321790800000000000000
+      internalID: -7560919453967390114
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__23
+      rect:
+        serializedVersion: 2
+        x: 233
+        y: 131
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d91179136be0368e0800000000000000
+      internalID: -1701500058537094755
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__24
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 99
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6441c8cf6dc040ee0800000000000000
+      internalID: -1295896675276286906
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__25
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 99
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a69fa2d2b63ec68d0800000000000000
+      internalID: -2851654414573569686
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__26
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 99
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb3c6e990ec6d73c0800000000000000
+      internalID: -4360209152314260545
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__27
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 99
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5b6344c9cfc191860800000000000000
+      internalID: 7501058525641324213
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__28
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 99
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 43d893fb3e456b050800000000000000
+      internalID: 5815929305938103604
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__29
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 99
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 190767d1c5cf393c0800000000000000
+      internalID: -4353858942175645551
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__30
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 99
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aadb3a342ba5178b0800000000000000
+      internalID: -5156240376677024342
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__31
+      rect:
+        serializedVersion: 2
+        x: 233
+        y: 99
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5410c446458990720800000000000000
+      internalID: 2812946930496962885
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__32
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 67
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b57595a2b7f0676d0800000000000000
+      internalID: -2993187880675223717
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__33
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 67
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bcc04bfe80a38c780800000000000000
+      internalID: -8662610073191445301
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__34
+      rect:
+        serializedVersion: 2
+        x: 73
+        y: 67
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 926f723c47e3cef20800000000000000
+      internalID: 3453203685497632297
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__35
+      rect:
+        serializedVersion: 2
+        x: 105
+        y: 67
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e7610fd90c50bdd10800000000000000
+      internalID: 2151319571841160830
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__36
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 67
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 17deb827eee28f6e0800000000000000
+      internalID: -1803640049103016591
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__37
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 67
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dc63ac48cba7d3670800000000000000
+      internalID: 8520101020155131597
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__38
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 67
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6def6e0636c1e9600800000000000000
+      internalID: 476849823700942550
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__39
+      rect:
+        serializedVersion: 2
+        x: 232
+        y: 67
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e9585a5346f1d6510800000000000000
+      internalID: 1543924762515178910
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__40
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 35
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4b52a062bd67122f0800000000000000
+      internalID: -999386958691424844
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__41
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 35
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dfa025777b08683e0800000000000000
+      internalID: -2051811054751446275
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__42
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 35
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: df94c1f9bce23ce20800000000000000
+      internalID: 3369588398285933053
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__43
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 35
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 36ab37a5a71e87540800000000000000
+      internalID: 5005998901442099811
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__44
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 35
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e40dac3836ff5eb0800000000000000
+      internalID: -4728790362319158045
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__45
+      rect:
+        serializedVersion: 2
+        x: 170
+        y: 35
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2d6ac58eaf5802800800000000000000
+      internalID: 585615264244868818
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__46
+      rect:
+        serializedVersion: 2
+        x: 202
+        y: 35
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cc84180fc437b17d0800000000000000
+      internalID: -2946634756894144308
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__47
+      rect:
+        serializedVersion: 2
+        x: 234
+        y: 35
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 21206e8d75c24f940800000000000000
+      internalID: 5328933014898868754
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__48
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 3
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 10b715f6b2a0ac8c0800000000000000
+      internalID: -3978356139160929535
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__49
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 3
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 909e905a9530e9f00800000000000000
+      internalID: 1125340640445065481
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__50
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 3
+        width: 15
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 60df9f0b0712603d0800000000000000
+      internalID: -3240866113957266170
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__51
+      rect:
+        serializedVersion: 2
+        x: 105
+        y: 3
+        width: 19
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eeba8b4aa2233d090800000000000000
+      internalID: -8011004153428399122
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__52
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 3
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 02a3fb852df23be70800000000000000
+      internalID: 9129693450088692256
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__53
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 3
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0312374a9b5b9fab0800000000000000
+      internalID: -4973744504521416400
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__54
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 3
+        width: 15
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 069e80868737eab90800000000000000
+      internalID: -7228713390904383136
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: morganLeFay__55
+      rect:
+        serializedVersion: 2
+        x: 228
+        y: 3
+        width: 19
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: df8ba636244dc12b0800000000000000
+      internalID: -5612377654009612035
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      morganLeFay__0: -8557219725911740166
+      morganLeFay__1: 8323171019758765052
+      morganLeFay__10: 3103921184481040021
+      morganLeFay__11: 5246357458258602164
+      morganLeFay__12: 1016451497812778726
+      morganLeFay__13: 3353759877125814914
+      morganLeFay__14: 8121983325085250816
+      morganLeFay__15: 8390129292795237688
+      morganLeFay__16: 9131909952905731849
+      morganLeFay__17: -3706705013696857587
+      morganLeFay__18: -8450186075810985345
+      morganLeFay__19: 9217667690321681793
+      morganLeFay__2: 5247049842569835787
+      morganLeFay__20: -5770681758849448058
+      morganLeFay__21: -121233667866649872
+      morganLeFay__22: -7560919453967390114
+      morganLeFay__23: -1701500058537094755
+      morganLeFay__24: -1295896675276286906
+      morganLeFay__25: -2851654414573569686
+      morganLeFay__26: -4360209152314260545
+      morganLeFay__27: 7501058525641324213
+      morganLeFay__28: 5815929305938103604
+      morganLeFay__29: -4353858942175645551
+      morganLeFay__3: -1529099147934870161
+      morganLeFay__30: -5156240376677024342
+      morganLeFay__31: 2812946930496962885
+      morganLeFay__32: -2993187880675223717
+      morganLeFay__33: -8662610073191445301
+      morganLeFay__34: 3453203685497632297
+      morganLeFay__35: 2151319571841160830
+      morganLeFay__36: -1803640049103016591
+      morganLeFay__37: 8520101020155131597
+      morganLeFay__38: 476849823700942550
+      morganLeFay__39: 1543924762515178910
+      morganLeFay__4: -5456913418644509609
+      morganLeFay__40: -999386958691424844
+      morganLeFay__41: -2051811054751446275
+      morganLeFay__42: 3369588398285933053
+      morganLeFay__43: 5005998901442099811
+      morganLeFay__44: -4728790362319158045
+      morganLeFay__45: 585615264244868818
+      morganLeFay__46: -2946634756894144308
+      morganLeFay__47: 5328933014898868754
+      morganLeFay__48: -3978356139160929535
+      morganLeFay__49: 1125340640445065481
+      morganLeFay__5: 1881426319488139450
+      morganLeFay__50: -3240866113957266170
+      morganLeFay__51: -8011004153428399122
+      morganLeFay__52: 9129693450088692256
+      morganLeFay__53: -4973744504521416400
+      morganLeFay__54: -7228713390904383136
+      morganLeFay__55: -5612377654009612035
+      morganLeFay__6: 2248927155354843842
+      morganLeFay__7: 5381820570755323674
+      morganLeFay__8: -213377080700737775
+      morganLeFay__9: 4885189940156231619
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

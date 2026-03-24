@@ -1,0 +1,2210 @@
+fileFormatVersion: 2
+guid: 5173f6dace51c5e46ad47c24086c9290
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 2600451253912492030
+    second: percival__0
+  - first:
+      213: -7071719862085203269
+    second: percival__1
+  - first:
+      213: -3362082690680519239
+    second: percival__2
+  - first:
+      213: -7862138144658485115
+    second: percival__3
+  - first:
+      213: 2265323322224152514
+    second: percival__4
+  - first:
+      213: -5437132954927294068
+    second: percival__5
+  - first:
+      213: 5707729937856282779
+    second: percival__6
+  - first:
+      213: 3893241642680875614
+    second: percival__7
+  - first:
+      213: 565739767350175090
+    second: percival__8
+  - first:
+      213: 3684211072491359839
+    second: percival__9
+  - first:
+      213: -5501472631843156139
+    second: percival__10
+  - first:
+      213: -7280572273814800639
+    second: percival__11
+  - first:
+      213: -5776677020572283963
+    second: percival__12
+  - first:
+      213: 8940042997951080522
+    second: percival__13
+  - first:
+      213: -3134781632116948781
+    second: percival__14
+  - first:
+      213: 1038297686718503694
+    second: percival__15
+  - first:
+      213: -8793717608289133120
+    second: percival__16
+  - first:
+      213: -2897134924263706327
+    second: percival__17
+  - first:
+      213: -423747662968020666
+    second: percival__18
+  - first:
+      213: -6095155356625627494
+    second: percival__19
+  - first:
+      213: 4181645741812789966
+    second: percival__20
+  - first:
+      213: 4128610436316413455
+    second: percival__21
+  - first:
+      213: -1778581904264633171
+    second: percival__22
+  - first:
+      213: 8292072654101394805
+    second: percival__23
+  - first:
+      213: 1286798246459597431
+    second: percival__24
+  - first:
+      213: 7491843038567991415
+    second: percival__25
+  - first:
+      213: 2367156805346393566
+    second: percival__26
+  - first:
+      213: 1455159860458755816
+    second: percival__27
+  - first:
+      213: 6854510503153201374
+    second: percival__28
+  - first:
+      213: -5742795582905770878
+    second: percival__29
+  - first:
+      213: 3215881521266463401
+    second: percival__30
+  - first:
+      213: 6541087741915644802
+    second: percival__31
+  - first:
+      213: -369020673783376303
+    second: percival__32
+  - first:
+      213: -2730662989360474763
+    second: percival__33
+  - first:
+      213: 8974865033588292063
+    second: percival__34
+  - first:
+      213: -400624621918991631
+    second: percival__35
+  - first:
+      213: -3904144284890738124
+    second: percival__36
+  - first:
+      213: 5206415893005220889
+    second: percival__37
+  - first:
+      213: -5522362333182416113
+    second: percival__38
+  - first:
+      213: 3165589338650345839
+    second: percival__39
+  - first:
+      213: 8915503190340851357
+    second: percival__40
+  - first:
+      213: -1042504454627005181
+    second: percival__41
+  - first:
+      213: 4283688149933260303
+    second: percival__42
+  - first:
+      213: 7824725324099615113
+    second: percival__43
+  - first:
+      213: -8395420227349461974
+    second: percival__44
+  - first:
+      213: -7166548237849516742
+    second: percival__45
+  - first:
+      213: 3263488597335427063
+    second: percival__46
+  - first:
+      213: 2922388458436218323
+    second: percival__47
+  - first:
+      213: 7068745801004896269
+    second: percival__48
+  - first:
+      213: 663230315658755299
+    second: percival__49
+  - first:
+      213: 8043309926395014504
+    second: percival__50
+  - first:
+      213: 5795634515365696713
+    second: percival__51
+  - first:
+      213: 3262041698246119710
+    second: percival__52
+  - first:
+      213: -7821113397877725202
+    second: percival__53
+  - first:
+      213: -8518532204097738266
+    second: percival__54
+  - first:
+      213: 8946565791851579383
+    second: percival__55
+  - first:
+      213: -8189636904604525680
+    second: percival__56
+  - first:
+      213: -1176105353074914079
+    second: percival__57
+  - first:
+      213: 539435839265246511
+    second: percival__58
+  - first:
+      213: 2870644811733221925
+    second: percival__59
+  - first:
+      213: 8027984148809093666
+    second: percival__60
+  - first:
+      213: 8832964710763378278
+    second: percival__61
+  - first:
+      213: -6862132701356718117
+    second: percival__62
+  - first:
+      213: -4887569123625441899
+    second: percival__63
+  - first:
+      213: -1847597618953694122
+    second: percival__64
+  - first:
+      213: -5913280212145397181
+    second: percival__65
+  - first:
+      213: -5178834058633727607
+    second: percival__66
+  - first:
+      213: -5419929130293075063
+    second: percival__67
+  - first:
+      213: -3275006877028986502
+    second: percival__68
+  - first:
+      213: -3380658946671681342
+    second: percival__69
+  - first:
+      213: 6196348569921756430
+    second: percival__70
+  - first:
+      213: 3654151574891604018
+    second: percival__71
+  - first:
+      213: 1063838412863806262
+    second: percival__72
+  - first:
+      213: -2191298975854412839
+    second: percival__73
+  - first:
+      213: -3697454624743453796
+    second: percival__74
+  - first:
+      213: -8009080882613969956
+    second: percival__75
+  - first:
+      213: -4760201473880943917
+    second: percival__76
+  - first:
+      213: 2186013893303336024
+    second: percival__77
+  - first:
+      213: 4322754330436099380
+    second: percival__78
+  - first:
+      213: 8548199383581379948
+    second: percival__79
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: percival__0
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 291
+        width: 15
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ef75c2d33a8a61420800000000000000
+      internalID: 2600451253912492030
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__1
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 291
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bba4655c0443cdd90800000000000000
+      internalID: -7071719862085203269
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__2
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 291
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b58f7c1b9b7751d0800000000000000
+      internalID: -3362082690680519239
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__3
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 291
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5801598430314e290800000000000000
+      internalID: -7862138144658485115
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__4
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 291
+        width: 15
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2cf04923f8b007f10800000000000000
+      internalID: 2265323322224152514
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__5
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 291
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c891df8726c6b84b0800000000000000
+      internalID: -5437132954927294068
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__6
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 291
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b9049cb332ee53f40800000000000000
+      internalID: 5707729937856282779
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__7
+      rect:
+        serializedVersion: 2
+        x: 233
+        y: 291
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e5a70c095a2970630800000000000000
+      internalID: 3893241642680875614
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__8
+      rect:
+        serializedVersion: 2
+        x: 7
+        y: 259
+        width: 16
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 275283c2259e9d700800000000000000
+      internalID: 565739767350175090
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__9
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 259
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f5e886d5372f02330800000000000000
+      internalID: 3684211072491359839
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__10
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 259
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 55f84751ac7d6a3b0800000000000000
+      internalID: -5501472631843156139
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__11
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 259
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 107f5b1571636fa90800000000000000
+      internalID: -7280572273814800639
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__12
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 259
+        width: 16
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5cb80ae1bde15dfa0800000000000000
+      internalID: -5776677020572283963
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__13
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 259
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a48a7918db9611c70800000000000000
+      internalID: 8940042997951080522
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__14
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 259
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d00041e6b40f74d0800000000000000
+      internalID: -3134781632116948781
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__15
+      rect:
+        serializedVersion: 2
+        x: 233
+        y: 259
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e0b57f3be36c86e00800000000000000
+      internalID: 1038297686718503694
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__16
+      rect:
+        serializedVersion: 2
+        x: 7
+        y: 227
+        width: 16
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0cd14d62d6076f580800000000000000
+      internalID: -8793717608289133120
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__17
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 227
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 92132e4d22f4bc7d0800000000000000
+      internalID: -2897134924263706327
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__18
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 227
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 641a362eebb8e1af0800000000000000
+      internalID: -423747662968020666
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__19
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 227
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a9692852f78a96ba0800000000000000
+      internalID: -6095155356625627494
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__20
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 227
+        width: 16
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ec2b64995a0380a30800000000000000
+      internalID: 4181645741812789966
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__21
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 227
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f0e3c984155cb4930800000000000000
+      internalID: 4128610436316413455
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__22
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 227
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: da46e507e253157e0800000000000000
+      internalID: -1778581904264633171
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__23
+      rect:
+        serializedVersion: 2
+        x: 233
+        y: 227
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 575b177452c531370800000000000000
+      internalID: 8292072654101394805
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__24
+      rect:
+        serializedVersion: 2
+        x: 7
+        y: 196
+        width: 16
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 772e1d9ff20abd110800000000000000
+      internalID: 1286798246459597431
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__25
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 195
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 77804d2dc8f58f760800000000000000
+      internalID: 7491843038567991415
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__26
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 195
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eddf15e9294d9d020800000000000000
+      internalID: 2367156805346393566
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__27
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 195
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8e61d0eee24c13410800000000000000
+      internalID: 1455159860458755816
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__28
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 196
+        width: 16
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ed071a16cfc102f50800000000000000
+      internalID: 6854510503153201374
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__29
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 195
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 28c183f08dd7d40b0800000000000000
+      internalID: -5742795582905770878
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__30
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 195
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9a294d2843b11ac20800000000000000
+      internalID: 3215881521266463401
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__31
+      rect:
+        serializedVersion: 2
+        x: 233
+        y: 195
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2834b8525ac96ca50800000000000000
+      internalID: 6541087741915644802
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__32
+      rect:
+        serializedVersion: 2
+        x: 7
+        y: 163
+        width: 16
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 156dd5007a9f0eaf0800000000000000
+      internalID: -369020673783376303
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__33
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 163
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 575dcd59a7cba1ad0800000000000000
+      internalID: -2730662989360474763
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__34
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 163
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fd9ba1a72302d8c70800000000000000
+      internalID: 8974865033588292063
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__35
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 163
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1fa4e3a6702b07af0800000000000000
+      internalID: -400624621918991631
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__36
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 163
+        width: 16
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 432573b3571b1d9c0800000000000000
+      internalID: -3904144284890738124
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__37
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 163
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 91c368f7ba7e04840800000000000000
+      internalID: 5206415893005220889
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__38
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 163
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f0b2aa977b0ac53b0800000000000000
+      internalID: -5522362333182416113
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__39
+      rect:
+        serializedVersion: 2
+        x: 233
+        y: 163
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f6184034bbe6eeb20800000000000000
+      internalID: 3165589338650345839
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__40
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 131
+        width: 15
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d96d02e4aea3abb70800000000000000
+      internalID: 8915503190340851357
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__41
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 131
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30de131d8b74881f0800000000000000
+      internalID: -1042504454627005181
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__42
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 131
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f0e72592da7b27b30800000000000000
+      internalID: 4283688149933260303
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__43
+      rect:
+        serializedVersion: 2
+        x: 105
+        y: 130
+        width: 17
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 989f5ff9932079c60800000000000000
+      internalID: 7824725324099615113
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__44
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 131
+        width: 15
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a24c4b8b8c97d7b80800000000000000
+      internalID: -8395420227349461974
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__45
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 131
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a352741095e4b8c90800000000000000
+      internalID: -7166548237849516742
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__46
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 131
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7f747bca69d3a4d20800000000000000
+      internalID: 3263488597335427063
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__47
+      rect:
+        serializedVersion: 2
+        x: 230
+        y: 130
+        width: 17
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3ddcac8c1d86e8820800000000000000
+      internalID: 2922388458436218323
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__48
+      rect:
+        serializedVersion: 2
+        x: 9
+        y: 98
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d005e6caada391260800000000000000
+      internalID: 7068745801004896269
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__49
+      rect:
+        serializedVersion: 2
+        x: 39
+        y: 97
+        width: 17
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3ec3c194574443900800000000000000
+      internalID: 663230315658755299
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__50
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 99
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 86de52543c39f9f60800000000000000
+      internalID: 8043309926395014504
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__51
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 99
+        width: 15
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9c49d5892ea3e6050800000000000000
+      internalID: 5795634515365696713
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__52
+      rect:
+        serializedVersion: 2
+        x: 136
+        y: 98
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e11d87a34a9154d20800000000000000
+      internalID: 3262041698246119710
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__53
+      rect:
+        serializedVersion: 2
+        x: 168
+        y: 97
+        width: 17
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ee7237b7dc2d57390800000000000000
+      internalID: -7821113397877725202
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__54
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 99
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6e9670fe71818c980800000000000000
+      internalID: -8518532204097738266
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__55
+      rect:
+        serializedVersion: 2
+        x: 233
+        y: 99
+        width: 15
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7f789fecf26982c70800000000000000
+      internalID: 8946565791851579383
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__56
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 67
+        width: 15
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 09b1e9530a0985e80800000000000000
+      internalID: -8189636904604525680
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__57
+      rect:
+        serializedVersion: 2
+        x: 41
+        y: 67
+        width: 14
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1ecc883a962adafe0800000000000000
+      internalID: -1176105353074914079
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__58
+      rect:
+        serializedVersion: 2
+        x: 73
+        y: 67
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f2d058aa9067c7700800000000000000
+      internalID: 539435839265246511
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__59
+      rect:
+        serializedVersion: 2
+        x: 105
+        y: 67
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5224da73f3496d720800000000000000
+      internalID: 2870644811733221925
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__60
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 67
+        width: 15
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2229b3c9c01296f60800000000000000
+      internalID: 8027984148809093666
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__61
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 67
+        width: 14
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 666bc9afa9ef49a70800000000000000
+      internalID: 8832964710763378278
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__62
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 67
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bd78a0e4aaec4c0a0800000000000000
+      internalID: -6862132701356718117
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__63
+      rect:
+        serializedVersion: 2
+        x: 232
+        y: 67
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 595632b07cddb2cb0800000000000000
+      internalID: -4887569123625441899
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__64
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 35
+        width: 15
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 654586a21c30c56e0800000000000000
+      internalID: -1847597618953694122
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__65
+      rect:
+        serializedVersion: 2
+        x: 39
+        y: 35
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3422ab91afecfeda0800000000000000
+      internalID: -5913280212145397181
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__66
+      rect:
+        serializedVersion: 2
+        x: 71
+        y: 35
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9813170ccd51128b0800000000000000
+      internalID: -5178834058633727607
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__67
+      rect:
+        serializedVersion: 2
+        x: 103
+        y: 35
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 983e6190c2b88c4b0800000000000000
+      internalID: -5419929130293075063
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__68
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 35
+        width: 15
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a71d9b9d896dc82d0800000000000000
+      internalID: -3275006877028986502
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__69
+      rect:
+        serializedVersion: 2
+        x: 170
+        y: 35
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2c063e8799c7511d0800000000000000
+      internalID: -3380658946671681342
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__70
+      rect:
+        serializedVersion: 2
+        x: 202
+        y: 35
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e0d9fa6d13addf550800000000000000
+      internalID: 6196348569921756430
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__71
+      rect:
+        serializedVersion: 2
+        x: 234
+        y: 35
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 23829d03f7726b230800000000000000
+      internalID: 3654151574891604018
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__72
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 3
+        width: 15
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 63b9929666383ce00800000000000000
+      internalID: 1063838412863806262
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__73
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 3
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9db35830131f691e0800000000000000
+      internalID: -2191298975854412839
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__74
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 3
+        width: 15
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c9b8a07db9000bcc0800000000000000
+      internalID: -3697454624743453796
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__75
+      rect:
+        serializedVersion: 2
+        x: 106
+        y: 3
+        width: 18
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cdb1c660f570ad090800000000000000
+      internalID: -8009080882613969956
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__76
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 3
+        width: 15
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d2190aeafd50fdb0800000000000000
+      internalID: -4760201473880943917
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__77
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 3
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 85cf960dd08465e10800000000000000
+      internalID: 2186013893303336024
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__78
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 3
+        width: 15
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 43ddcec19228dfb30800000000000000
+      internalID: 4322754330436099380
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: percival__79
+      rect:
+        serializedVersion: 2
+        x: 228
+        y: 3
+        width: 18
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c6dc49f8c0e41a670800000000000000
+      internalID: 8548199383581379948
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      percival__0: 2600451253912492030
+      percival__1: -7071719862085203269
+      percival__10: -5501472631843156139
+      percival__11: -7280572273814800639
+      percival__12: -5776677020572283963
+      percival__13: 8940042997951080522
+      percival__14: -3134781632116948781
+      percival__15: 1038297686718503694
+      percival__16: -8793717608289133120
+      percival__17: -2897134924263706327
+      percival__18: -423747662968020666
+      percival__19: -6095155356625627494
+      percival__2: -3362082690680519239
+      percival__20: 4181645741812789966
+      percival__21: 4128610436316413455
+      percival__22: -1778581904264633171
+      percival__23: 8292072654101394805
+      percival__24: 1286798246459597431
+      percival__25: 7491843038567991415
+      percival__26: 2367156805346393566
+      percival__27: 1455159860458755816
+      percival__28: 6854510503153201374
+      percival__29: -5742795582905770878
+      percival__3: -7862138144658485115
+      percival__30: 3215881521266463401
+      percival__31: 6541087741915644802
+      percival__32: -369020673783376303
+      percival__33: -2730662989360474763
+      percival__34: 8974865033588292063
+      percival__35: -400624621918991631
+      percival__36: -3904144284890738124
+      percival__37: 5206415893005220889
+      percival__38: -5522362333182416113
+      percival__39: 3165589338650345839
+      percival__4: 2265323322224152514
+      percival__40: 8915503190340851357
+      percival__41: -1042504454627005181
+      percival__42: 4283688149933260303
+      percival__43: 7824725324099615113
+      percival__44: -8395420227349461974
+      percival__45: -7166548237849516742
+      percival__46: 3263488597335427063
+      percival__47: 2922388458436218323
+      percival__48: 7068745801004896269
+      percival__49: 663230315658755299
+      percival__5: -5437132954927294068
+      percival__50: 8043309926395014504
+      percival__51: 5795634515365696713
+      percival__52: 3262041698246119710
+      percival__53: -7821113397877725202
+      percival__54: -8518532204097738266
+      percival__55: 8946565791851579383
+      percival__56: -8189636904604525680
+      percival__57: -1176105353074914079
+      percival__58: 539435839265246511
+      percival__59: 2870644811733221925
+      percival__6: 5707729937856282779
+      percival__60: 8027984148809093666
+      percival__61: 8832964710763378278
+      percival__62: -6862132701356718117
+      percival__63: -4887569123625441899
+      percival__64: -1847597618953694122
+      percival__65: -5913280212145397181
+      percival__66: -5178834058633727607
+      percival__67: -5419929130293075063
+      percival__68: -3275006877028986502
+      percival__69: -3380658946671681342
+      percival__7: 3893241642680875614
+      percival__70: 6196348569921756430
+      percival__71: 3654151574891604018
+      percival__72: 1063838412863806262
+      percival__73: -2191298975854412839
+      percival__74: -3697454624743453796
+      percival__75: -8009080882613969956
+      percival__76: -4760201473880943917
+      percival__77: 2186013893303336024
+      percival__78: 4322754330436099380
+      percival__79: 8548199383581379948
+      percival__8: 565739767350175090
+      percival__9: 3684211072491359839
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

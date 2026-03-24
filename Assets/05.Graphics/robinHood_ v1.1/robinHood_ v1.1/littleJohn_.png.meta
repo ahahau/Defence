@@ -1,0 +1,1378 @@
+fileFormatVersion: 2
+guid: 664bedd39d5566549bc8575c8b80ddbe
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -3402306283679976560
+    second: littleJohn__0
+  - first:
+      213: 7636106482319839689
+    second: littleJohn__1
+  - first:
+      213: 4810099868890137167
+    second: littleJohn__2
+  - first:
+      213: 8007838685433243617
+    second: littleJohn__3
+  - first:
+      213: -3952280335269212537
+    second: littleJohn__4
+  - first:
+      213: 1232201434486429022
+    second: littleJohn__5
+  - first:
+      213: 3715353485366949609
+    second: littleJohn__6
+  - first:
+      213: -2994985698034977280
+    second: littleJohn__7
+  - first:
+      213: -4183999024691015064
+    second: littleJohn__8
+  - first:
+      213: 5832025600547696688
+    second: littleJohn__9
+  - first:
+      213: -7446077954494347004
+    second: littleJohn__10
+  - first:
+      213: -8864538633880172810
+    second: littleJohn__11
+  - first:
+      213: -4522912004215968439
+    second: littleJohn__12
+  - first:
+      213: 5756517535460048342
+    second: littleJohn__13
+  - first:
+      213: 6405287241974691744
+    second: littleJohn__14
+  - first:
+      213: 775829245125590331
+    second: littleJohn__15
+  - first:
+      213: -1877127046694739429
+    second: littleJohn__16
+  - first:
+      213: 8075839574336378090
+    second: littleJohn__17
+  - first:
+      213: -5258513479622117197
+    second: littleJohn__18
+  - first:
+      213: 8002970970889418175
+    second: littleJohn__19
+  - first:
+      213: -7488653221990870463
+    second: littleJohn__20
+  - first:
+      213: -2454460599314444958
+    second: littleJohn__21
+  - first:
+      213: -773634294866804703
+    second: littleJohn__22
+  - first:
+      213: 5126683710528992817
+    second: littleJohn__23
+  - first:
+      213: -5772804998795906190
+    second: littleJohn__24
+  - first:
+      213: 6694945976544290812
+    second: littleJohn__25
+  - first:
+      213: 3194804466717617145
+    second: littleJohn__26
+  - first:
+      213: -2525348206179345670
+    second: littleJohn__27
+  - first:
+      213: 5219935867241268216
+    second: littleJohn__28
+  - first:
+      213: 4501952541440441581
+    second: littleJohn__29
+  - first:
+      213: -1724277773516335345
+    second: littleJohn__30
+  - first:
+      213: 4560637638320052920
+    second: littleJohn__31
+  - first:
+      213: -5156239267731812701
+    second: littleJohn__32
+  - first:
+      213: -2281191095603715457
+    second: littleJohn__33
+  - first:
+      213: -7432114848297394977
+    second: littleJohn__34
+  - first:
+      213: 5438474601464572572
+    second: littleJohn__35
+  - first:
+      213: -3108136084406262881
+    second: littleJohn__36
+  - first:
+      213: -3809535205733967395
+    second: littleJohn__37
+  - first:
+      213: 2820629969648976485
+    second: littleJohn__38
+  - first:
+      213: -7277147432755470719
+    second: littleJohn__39
+  - first:
+      213: 6150870627324387987
+    second: littleJohn__40
+  - first:
+      213: -1587989505819166645
+    second: littleJohn__41
+  - first:
+      213: -6587254958866009727
+    second: littleJohn__42
+  - first:
+      213: 6614564466186841752
+    second: littleJohn__43
+  - first:
+      213: -480666518522974270
+    second: littleJohn__44
+  - first:
+      213: 2075790056396901317
+    second: littleJohn__45
+  - first:
+      213: 5340327190847305768
+    second: littleJohn__46
+  - first:
+      213: -5847545834004092432
+    second: littleJohn__47
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: littleJohn__0
+      rect:
+        serializedVersion: 2
+        x: 7
+        y: 139
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 093fc20167498c0d0800000000000000
+      internalID: -3402306283679976560
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__1
+      rect:
+        serializedVersion: 2
+        x: 35
+        y: 139
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9c15bb94366e8f960800000000000000
+      internalID: 7636106482319839689
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__2
+      rect:
+        serializedVersion: 2
+        x: 63
+        y: 139
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f4289538858e0c240800000000000000
+      internalID: 4810099868890137167
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__3
+      rect:
+        serializedVersion: 2
+        x: 91
+        y: 139
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1e721e76bde812f60800000000000000
+      internalID: 8007838685433243617
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__4
+      rect:
+        serializedVersion: 2
+        x: 116
+        y: 139
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 78e4483a9fda629c0800000000000000
+      internalID: -3952280335269212537
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__5
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 139
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e555a4a1da8a91110800000000000000
+      internalID: 1232201434486429022
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__6
+      rect:
+        serializedVersion: 2
+        x: 172
+        y: 139
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9e67e466f469f8330800000000000000
+      internalID: 3715353485366949609
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__7
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 139
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 006ff31306caf66d0800000000000000
+      internalID: -2994985698034977280
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__8
+      rect:
+        serializedVersion: 2
+        x: 7
+        y: 111
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 86216b80e037fe5c0800000000000000
+      internalID: -4183999024691015064
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__9
+      rect:
+        serializedVersion: 2
+        x: 35
+        y: 111
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 03031a162648fe050800000000000000
+      internalID: 5832025600547696688
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__10
+      rect:
+        serializedVersion: 2
+        x: 62
+        y: 83
+        width: 18
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4094f782d873aa890800000000000000
+      internalID: -7446077954494347004
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__11
+      rect:
+        serializedVersion: 2
+        x: 63
+        y: 111
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6f688dd2415daf480800000000000000
+      internalID: -8864538633880172810
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__12
+      rect:
+        serializedVersion: 2
+        x: 91
+        y: 111
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 94d6b5ede736b31c0800000000000000
+      internalID: -4522912004215968439
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__13
+      rect:
+        serializedVersion: 2
+        x: 116
+        y: 111
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6dd376cf23243ef40800000000000000
+      internalID: 5756517535460048342
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__14
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 111
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0a73e365fc624e850800000000000000
+      internalID: 6405287241974691744
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__15
+      rect:
+        serializedVersion: 2
+        x: 172
+        y: 111
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b3df112869c44ca00800000000000000
+      internalID: 775829245125590331
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__16
+      rect:
+        serializedVersion: 2
+        x: 172
+        y: 83
+        width: 18
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b126b7f75ea13f5e0800000000000000
+      internalID: -1877127046694739429
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__17
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 111
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae49c532e45231070800000000000000
+      internalID: 8075839574336378090
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__18
+      rect:
+        serializedVersion: 2
+        x: 7
+        y: 84
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3b83580e9d10607b0800000000000000
+      internalID: -5258513479622117197
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__19
+      rect:
+        serializedVersion: 2
+        x: 34
+        y: 85
+        width: 18
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb570ab42b3401f60800000000000000
+      internalID: 8002970970889418175
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__20
+      rect:
+        serializedVersion: 2
+        x: 91
+        y: 83
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 14256293295f21890800000000000000
+      internalID: -7488653221990870463
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__21
+      rect:
+        serializedVersion: 2
+        x: 116
+        y: 84
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 26d8ba6d61100fdd0800000000000000
+      internalID: -2454460599314444958
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__22
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 85
+        width: 18
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 120876c25bf7345f0800000000000000
+      internalID: -773634294866804703
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__23
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 83
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 136bcd12ca3a52740800000000000000
+      internalID: 5126683710528992817
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__24
+      rect:
+        serializedVersion: 2
+        x: 7
+        y: 55
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 273bb217070e2efa0800000000000000
+      internalID: -5772804998795906190
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__25
+      rect:
+        serializedVersion: 2
+        x: 35
+        y: 55
+        width: 15
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cf76a52f4e939ec50800000000000000
+      internalID: 6694945976544290812
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__26
+      rect:
+        serializedVersion: 2
+        x: 62
+        y: 55
+        width: 15
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9fbe8855cb9365c20800000000000000
+      internalID: 3194804466717617145
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__27
+      rect:
+        serializedVersion: 2
+        x: 88
+        y: 55
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: afa9284bf2924fcd0800000000000000
+      internalID: -2525348206179345670
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__28
+      rect:
+        serializedVersion: 2
+        x: 116
+        y: 55
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8f38c3dc300f07840800000000000000
+      internalID: 5219935867241268216
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__29
+      rect:
+        serializedVersion: 2
+        x: 146
+        y: 55
+        width: 15
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dec793cebf52a7e30800000000000000
+      internalID: 4501952541440441581
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__30
+      rect:
+        serializedVersion: 2
+        x: 175
+        y: 55
+        width: 15
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f07157720822218e0800000000000000
+      internalID: -1724277773516335345
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__31
+      rect:
+        serializedVersion: 2
+        x: 203
+        y: 55
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8bad75dc4c3aa4f30800000000000000
+      internalID: 4560637638320052920
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__32
+      rect:
+        serializedVersion: 2
+        x: 7
+        y: 27
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3aecce574bb5178b0800000000000000
+      internalID: -5156239267731812701
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__33
+      rect:
+        serializedVersion: 2
+        x: 34
+        y: 27
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f72a1c9e8c49750e0800000000000000
+      internalID: -2281191095603715457
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__34
+      rect:
+        serializedVersion: 2
+        x: 62
+        y: 27
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fdcd3592ce2dbd890800000000000000
+      internalID: -7432114848297394977
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__35
+      rect:
+        serializedVersion: 2
+        x: 90
+        y: 27
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c9aa744f5d7597b40800000000000000
+      internalID: 5438474601464572572
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__36
+      rect:
+        serializedVersion: 2
+        x: 116
+        y: 27
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f932467e2beadd4d0800000000000000
+      internalID: -3108136084406262881
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__37
+      rect:
+        serializedVersion: 2
+        x: 145
+        y: 27
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dd9d1e60aefc12bc0800000000000000
+      internalID: -3809535205733967395
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__38
+      rect:
+        serializedVersion: 2
+        x: 173
+        y: 27
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5628fb75304e42720800000000000000
+      internalID: 2820629969648976485
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__39
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 27
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 18ed67447f0620b90800000000000000
+      internalID: -7277147432755470719
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__40
+      rect:
+        serializedVersion: 2
+        x: 7
+        y: 0
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 392ed013f384c5550800000000000000
+      internalID: 6150870627324387987
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__41
+      rect:
+        serializedVersion: 2
+        x: 35
+        y: 0
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b48b99e35f356f9e0800000000000000
+      internalID: -1587989505819166645
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__42
+      rect:
+        serializedVersion: 2
+        x: 63
+        y: 0
+        width: 17
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1817cd3048e5594a0800000000000000
+      internalID: -6587254958866009727
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__43
+      rect:
+        serializedVersion: 2
+        x: 91
+        y: 0
+        width: 21
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 89eecf62657abcb50800000000000000
+      internalID: 6614564466186841752
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__44
+      rect:
+        serializedVersion: 2
+        x: 116
+        y: 0
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2cfa30c19545459f0800000000000000
+      internalID: -480666518522974270
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__45
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 0
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5cb43dbee00becc10800000000000000
+      internalID: 2075790056396901317
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__46
+      rect:
+        serializedVersion: 2
+        x: 172
+        y: 0
+        width: 17
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 82830da2947ac1a40800000000000000
+      internalID: 5340327190847305768
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: littleJohn__47
+      rect:
+        serializedVersion: 2
+        x: 196
+        y: 0
+        width: 21
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0f9ee5cab0859dea0800000000000000
+      internalID: -5847545834004092432
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      littleJohn__0: -3402306283679976560
+      littleJohn__1: 7636106482319839689
+      littleJohn__10: -7446077954494347004
+      littleJohn__11: -8864538633880172810
+      littleJohn__12: -4522912004215968439
+      littleJohn__13: 5756517535460048342
+      littleJohn__14: 6405287241974691744
+      littleJohn__15: 775829245125590331
+      littleJohn__16: -1877127046694739429
+      littleJohn__17: 8075839574336378090
+      littleJohn__18: -5258513479622117197
+      littleJohn__19: 8002970970889418175
+      littleJohn__2: 4810099868890137167
+      littleJohn__20: -7488653221990870463
+      littleJohn__21: -2454460599314444958
+      littleJohn__22: -773634294866804703
+      littleJohn__23: 5126683710528992817
+      littleJohn__24: -5772804998795906190
+      littleJohn__25: 6694945976544290812
+      littleJohn__26: 3194804466717617145
+      littleJohn__27: -2525348206179345670
+      littleJohn__28: 5219935867241268216
+      littleJohn__29: 4501952541440441581
+      littleJohn__3: 8007838685433243617
+      littleJohn__30: -1724277773516335345
+      littleJohn__31: 4560637638320052920
+      littleJohn__32: -5156239267731812701
+      littleJohn__33: -2281191095603715457
+      littleJohn__34: -7432114848297394977
+      littleJohn__35: 5438474601464572572
+      littleJohn__36: -3108136084406262881
+      littleJohn__37: -3809535205733967395
+      littleJohn__38: 2820629969648976485
+      littleJohn__39: -7277147432755470719
+      littleJohn__4: -3952280335269212537
+      littleJohn__40: 6150870627324387987
+      littleJohn__41: -1587989505819166645
+      littleJohn__42: -6587254958866009727
+      littleJohn__43: 6614564466186841752
+      littleJohn__44: -480666518522974270
+      littleJohn__45: 2075790056396901317
+      littleJohn__46: 5340327190847305768
+      littleJohn__47: -5847545834004092432
+      littleJohn__5: 1232201434486429022
+      littleJohn__6: 3715353485366949609
+      littleJohn__7: -2994985698034977280
+      littleJohn__8: -4183999024691015064
+      littleJohn__9: 5832025600547696688
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

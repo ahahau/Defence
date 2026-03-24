@@ -1,0 +1,1586 @@
+fileFormatVersion: 2
+guid: 61c917990d9023c48808cc0dd3fa1e0e
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 3129485836467812552
+    second: ladyOfTheLake__0
+  - first:
+      213: 8689462021924716160
+    second: ladyOfTheLake__1
+  - first:
+      213: -1059320894469092951
+    second: ladyOfTheLake__2
+  - first:
+      213: -301477770254288064
+    second: ladyOfTheLake__3
+  - first:
+      213: 5590898428315749845
+    second: ladyOfTheLake__4
+  - first:
+      213: 1445751644076005436
+    second: ladyOfTheLake__5
+  - first:
+      213: -5864556687138934596
+    second: ladyOfTheLake__6
+  - first:
+      213: 8801515908236515783
+    second: ladyOfTheLake__7
+  - first:
+      213: -4400963335177728526
+    second: ladyOfTheLake__8
+  - first:
+      213: -212042483043070971
+    second: ladyOfTheLake__9
+  - first:
+      213: -1027138884609432740
+    second: ladyOfTheLake__10
+  - first:
+      213: -7873272845051984766
+    second: ladyOfTheLake__11
+  - first:
+      213: -647320377960289091
+    second: ladyOfTheLake__12
+  - first:
+      213: -5016003501043338797
+    second: ladyOfTheLake__13
+  - first:
+      213: -4841052357122543045
+    second: ladyOfTheLake__14
+  - first:
+      213: 8769971744395866099
+    second: ladyOfTheLake__15
+  - first:
+      213: -5767130152645148144
+    second: ladyOfTheLake__16
+  - first:
+      213: 1235052587454299567
+    second: ladyOfTheLake__17
+  - first:
+      213: 4962250024597437230
+    second: ladyOfTheLake__18
+  - first:
+      213: 3831742389255948914
+    second: ladyOfTheLake__19
+  - first:
+      213: 1178570695192062190
+    second: ladyOfTheLake__20
+  - first:
+      213: 3082919482131287819
+    second: ladyOfTheLake__21
+  - first:
+      213: 210917344987463637
+    second: ladyOfTheLake__22
+  - first:
+      213: 5231377538250013542
+    second: ladyOfTheLake__23
+  - first:
+      213: 1077338133375904470
+    second: ladyOfTheLake__24
+  - first:
+      213: -4224455008011544339
+    second: ladyOfTheLake__25
+  - first:
+      213: 7450541271265702035
+    second: ladyOfTheLake__26
+  - first:
+      213: -7073010325124963520
+    second: ladyOfTheLake__27
+  - first:
+      213: 6296598419835037359
+    second: ladyOfTheLake__28
+  - first:
+      213: -744474879252203471
+    second: ladyOfTheLake__29
+  - first:
+      213: 2836985766823320354
+    second: ladyOfTheLake__30
+  - first:
+      213: -5943034864095138464
+    second: ladyOfTheLake__31
+  - first:
+      213: 5594060381786599242
+    second: ladyOfTheLake__32
+  - first:
+      213: -1519473417164453654
+    second: ladyOfTheLake__33
+  - first:
+      213: -8634003451467681994
+    second: ladyOfTheLake__34
+  - first:
+      213: -6621510594307608485
+    second: ladyOfTheLake__35
+  - first:
+      213: -4726762972386304149
+    second: ladyOfTheLake__36
+  - first:
+      213: 3626045432882610869
+    second: ladyOfTheLake__37
+  - first:
+      213: -6044370388627973101
+    second: ladyOfTheLake__38
+  - first:
+      213: 9154361340863107432
+    second: ladyOfTheLake__39
+  - first:
+      213: -835433637592380416
+    second: ladyOfTheLake__40
+  - first:
+      213: 2386822597050129448
+    second: ladyOfTheLake__41
+  - first:
+      213: 2825435740968656913
+    second: ladyOfTheLake__42
+  - first:
+      213: 8805177158495894668
+    second: ladyOfTheLake__43
+  - first:
+      213: -9029234129276593184
+    second: ladyOfTheLake__44
+  - first:
+      213: -8036315091034680200
+    second: ladyOfTheLake__45
+  - first:
+      213: 2596102459162220852
+    second: ladyOfTheLake__46
+  - first:
+      213: 2139384686517812550
+    second: ladyOfTheLake__47
+  - first:
+      213: -7401578650850345556
+    second: ladyOfTheLake__48
+  - first:
+      213: 7341418405577701874
+    second: ladyOfTheLake__49
+  - first:
+      213: 1554841688622068312
+    second: ladyOfTheLake__50
+  - first:
+      213: 8649177268715396142
+    second: ladyOfTheLake__51
+  - first:
+      213: -4034311847970945270
+    second: ladyOfTheLake__52
+  - first:
+      213: -9041055590494813769
+    second: ladyOfTheLake__53
+  - first:
+      213: -6845425795704991560
+    second: ladyOfTheLake__54
+  - first:
+      213: -1336756978580085837
+    second: ladyOfTheLake__55
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: ladyOfTheLake__0
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 195
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c8b74c99ca2e6b20800000000000000
+      internalID: 3129485836467812552
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__1
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 195
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 08ef1129bab279870800000000000000
+      internalID: 8689462021924716160
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__2
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 195
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9a9450e42498c41f0800000000000000
+      internalID: -1059320894469092951
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__3
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 195
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 04bf054b09fe0dbf0800000000000000
+      internalID: -301477770254288064
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__4
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 195
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5ddcc0baf7cd69d40800000000000000
+      internalID: 5590898428315749845
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__5
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 195
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c38569ad577501410800000000000000
+      internalID: 1445751644076005436
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__6
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 195
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cb031f9c3c8ec9ea0800000000000000
+      internalID: -5864556687138934596
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__7
+      rect:
+        serializedVersion: 2
+        x: 233
+        y: 195
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c9136b0614452a70800000000000000
+      internalID: 8801515908236515783
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__8
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 163
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2fd8639f923ace2c0800000000000000
+      internalID: -4400963335177728526
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__9
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 163
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 50c0de03c7cae0df0800000000000000
+      internalID: -212042483043070971
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__10
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 163
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c532ddf50aedeb1f0800000000000000
+      internalID: -1027138884609432740
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__11
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 163
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 28482f2df048cb290800000000000000
+      internalID: -7873272845051984766
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__12
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 163
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dbc2ecfbb814407f0800000000000000
+      internalID: -647320377960289091
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__13
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 163
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d132384463936ab0800000000000000
+      internalID: -5016003501043338797
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__14
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 163
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b32b4aab78021dcb0800000000000000
+      internalID: -4841052357122543045
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__15
+      rect:
+        serializedVersion: 2
+        x: 233
+        y: 163
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3ffade216d235b970800000000000000
+      internalID: 8769971744395866099
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__16
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 131
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 01244268ea907ffa0800000000000000
+      internalID: -5767130152645148144
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__17
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 131
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fadf322e8c9c32110800000000000000
+      internalID: 1235052587454299567
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__18
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 131
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e2bbdc23b147dd440800000000000000
+      internalID: 4962250024597437230
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__19
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 131
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 27a486ec6651d2530800000000000000
+      internalID: 3831742389255948914
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__20
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 131
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ee8ab9d8dcf1b5010800000000000000
+      internalID: 1178570695192062190
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__21
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 131
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b0f019b5feab8ca20800000000000000
+      internalID: 3082919482131287819
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__22
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 131
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5df32f035345de200800000000000000
+      internalID: 210917344987463637
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__23
+      rect:
+        serializedVersion: 2
+        x: 233
+        y: 131
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 66b795d6726999840800000000000000
+      internalID: 5231377538250013542
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__24
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 99
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6da6ad6035973fe00800000000000000
+      internalID: 1077338133375904470
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__25
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 99
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: de81ad56d88bf55c0800000000000000
+      internalID: -4224455008011544339
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__26
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 99
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 390fd22cfc3a56760800000000000000
+      internalID: 7450541271265702035
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__27
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 99
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 043a14e659e97dd90800000000000000
+      internalID: -7073010325124963520
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__28
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 99
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fa6ad8be6e2026750800000000000000
+      internalID: 6296598419835037359
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__29
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 99
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 13878fdaa081ba5f0800000000000000
+      internalID: -744474879252203471
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__30
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 99
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 22bd750268ffe5720800000000000000
+      internalID: 2836985766823320354
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__31
+      rect:
+        serializedVersion: 2
+        x: 233
+        y: 99
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 06de8d55749168da0800000000000000
+      internalID: -5943034864095138464
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__32
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 67
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a4fe974574812ad40800000000000000
+      internalID: 5594060381786599242
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__33
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 67
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae883444afeb9eae0800000000000000
+      internalID: -1519473417164453654
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__34
+      rect:
+        serializedVersion: 2
+        x: 73
+        y: 67
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 63fa5c51b9bdd2880800000000000000
+      internalID: -8634003451467681994
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__35
+      rect:
+        serializedVersion: 2
+        x: 105
+        y: 67
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b503fcd523bab14a0800000000000000
+      internalID: -6621510594307608485
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__36
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 67
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b6fd17dbe1a276eb0800000000000000
+      internalID: -4726762972386304149
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__37
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 67
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5b2456e0c1d425230800000000000000
+      internalID: 3626045432882610869
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__38
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 67
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 31c90fee7251e1ca0800000000000000
+      internalID: -6044370388627973101
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__39
+      rect:
+        serializedVersion: 2
+        x: 232
+        y: 67
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 861d6bb3323da0f70800000000000000
+      internalID: 9154361340863107432
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__40
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 35
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00cc4ed6881f764f0800000000000000
+      internalID: -835433637592380416
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__41
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 35
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 82c5c0f8182bf1120800000000000000
+      internalID: 2386822597050129448
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__42
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 35
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 110212c26d6f53720800000000000000
+      internalID: 2825435740968656913
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__43
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 35
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c8cf78c49f5423a70800000000000000
+      internalID: 8805177158495894668
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__44
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 35
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0eb92aaf567b1b280800000000000000
+      internalID: -9029234129276593184
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__45
+      rect:
+        serializedVersion: 2
+        x: 170
+        y: 35
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 87454cfb006497090800000000000000
+      internalID: -8036315091034680200
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__46
+      rect:
+        serializedVersion: 2
+        x: 202
+        y: 35
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 439d1ee8e65370420800000000000000
+      internalID: 2596102459162220852
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__47
+      rect:
+        serializedVersion: 2
+        x: 234
+        y: 35
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 64dfdc5990f90bd10800000000000000
+      internalID: 2139384686517812550
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__48
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 3
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cad33faae6f484990800000000000000
+      internalID: -7401578650850345556
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__49
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 3
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2f939f3b425f1e560800000000000000
+      internalID: 7341418405577701874
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__50
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 3
+        width: 15
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 85279442748e39510800000000000000
+      internalID: 1554841688622068312
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__51
+      rect:
+        serializedVersion: 2
+        x: 105
+        y: 3
+        width: 19
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e2c1a2d86ec080870800000000000000
+      internalID: 8649177268715396142
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__52
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 3
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a07ca8cbfbe3308c0800000000000000
+      internalID: -4034311847970945270
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__53
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 3
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b14ffd87d7b78280800000000000000
+      internalID: -9041055590494813769
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__54
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 3
+        width: 15
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b055b6e1892001a0800000000000000
+      internalID: -6845425795704991560
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladyOfTheLake__55
+      rect:
+        serializedVersion: 2
+        x: 228
+        y: 3
+        width: 19
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3b3a5b44c92e27de0800000000000000
+      internalID: -1336756978580085837
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      ladyOfTheLake__0: 3129485836467812552
+      ladyOfTheLake__1: 8689462021924716160
+      ladyOfTheLake__10: -1027138884609432740
+      ladyOfTheLake__11: -7873272845051984766
+      ladyOfTheLake__12: -647320377960289091
+      ladyOfTheLake__13: -5016003501043338797
+      ladyOfTheLake__14: -4841052357122543045
+      ladyOfTheLake__15: 8769971744395866099
+      ladyOfTheLake__16: -5767130152645148144
+      ladyOfTheLake__17: 1235052587454299567
+      ladyOfTheLake__18: 4962250024597437230
+      ladyOfTheLake__19: 3831742389255948914
+      ladyOfTheLake__2: -1059320894469092951
+      ladyOfTheLake__20: 1178570695192062190
+      ladyOfTheLake__21: 3082919482131287819
+      ladyOfTheLake__22: 210917344987463637
+      ladyOfTheLake__23: 5231377538250013542
+      ladyOfTheLake__24: 1077338133375904470
+      ladyOfTheLake__25: -4224455008011544339
+      ladyOfTheLake__26: 7450541271265702035
+      ladyOfTheLake__27: -7073010325124963520
+      ladyOfTheLake__28: 6296598419835037359
+      ladyOfTheLake__29: -744474879252203471
+      ladyOfTheLake__3: -301477770254288064
+      ladyOfTheLake__30: 2836985766823320354
+      ladyOfTheLake__31: -5943034864095138464
+      ladyOfTheLake__32: 5594060381786599242
+      ladyOfTheLake__33: -1519473417164453654
+      ladyOfTheLake__34: -8634003451467681994
+      ladyOfTheLake__35: -6621510594307608485
+      ladyOfTheLake__36: -4726762972386304149
+      ladyOfTheLake__37: 3626045432882610869
+      ladyOfTheLake__38: -6044370388627973101
+      ladyOfTheLake__39: 9154361340863107432
+      ladyOfTheLake__4: 5590898428315749845
+      ladyOfTheLake__40: -835433637592380416
+      ladyOfTheLake__41: 2386822597050129448
+      ladyOfTheLake__42: 2825435740968656913
+      ladyOfTheLake__43: 8805177158495894668
+      ladyOfTheLake__44: -9029234129276593184
+      ladyOfTheLake__45: -8036315091034680200
+      ladyOfTheLake__46: 2596102459162220852
+      ladyOfTheLake__47: 2139384686517812550
+      ladyOfTheLake__48: -7401578650850345556
+      ladyOfTheLake__49: 7341418405577701874
+      ladyOfTheLake__5: 1445751644076005436
+      ladyOfTheLake__50: 1554841688622068312
+      ladyOfTheLake__51: 8649177268715396142
+      ladyOfTheLake__52: -4034311847970945270
+      ladyOfTheLake__53: -9041055590494813769
+      ladyOfTheLake__54: -6845425795704991560
+      ladyOfTheLake__55: -1336756978580085837
+      ladyOfTheLake__6: -5864556687138934596
+      ladyOfTheLake__7: 8801515908236515783
+      ladyOfTheLake__8: -4400963335177728526
+      ladyOfTheLake__9: -212042483043070971
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

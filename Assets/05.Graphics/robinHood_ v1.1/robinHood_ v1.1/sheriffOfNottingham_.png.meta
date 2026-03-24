@@ -1,0 +1,1378 @@
+fileFormatVersion: 2
+guid: 93051e1bb6e4a8b4097e3aeda343d210
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -6905197098645215344
+    second: sheriffOfNottingham__0
+  - first:
+      213: -6331854390388949309
+    second: sheriffOfNottingham__1
+  - first:
+      213: 5179838730177948588
+    second: sheriffOfNottingham__2
+  - first:
+      213: 4230348002712440434
+    second: sheriffOfNottingham__3
+  - first:
+      213: 6581554701496070840
+    second: sheriffOfNottingham__4
+  - first:
+      213: -8527699409392104195
+    second: sheriffOfNottingham__5
+  - first:
+      213: 2373366544484801521
+    second: sheriffOfNottingham__6
+  - first:
+      213: 6938703885281810922
+    second: sheriffOfNottingham__7
+  - first:
+      213: 5154747069730961122
+    second: sheriffOfNottingham__8
+  - first:
+      213: 6938024964583632949
+    second: sheriffOfNottingham__9
+  - first:
+      213: -7721270534604899759
+    second: sheriffOfNottingham__10
+  - first:
+      213: 6057679551519615478
+    second: sheriffOfNottingham__11
+  - first:
+      213: -3604831293604366107
+    second: sheriffOfNottingham__12
+  - first:
+      213: 5409382693270464028
+    second: sheriffOfNottingham__13
+  - first:
+      213: -5117112099572481040
+    second: sheriffOfNottingham__14
+  - first:
+      213: -8551303043531139772
+    second: sheriffOfNottingham__15
+  - first:
+      213: -1764181394923944492
+    second: sheriffOfNottingham__16
+  - first:
+      213: -8829820744553986619
+    second: sheriffOfNottingham__17
+  - first:
+      213: -3978703061940539023
+    second: sheriffOfNottingham__18
+  - first:
+      213: 1589191228457761054
+    second: sheriffOfNottingham__19
+  - first:
+      213: 901597560828505568
+    second: sheriffOfNottingham__20
+  - first:
+      213: -6412803089295543028
+    second: sheriffOfNottingham__21
+  - first:
+      213: 3481353731144422066
+    second: sheriffOfNottingham__22
+  - first:
+      213: -7087396846716465802
+    second: sheriffOfNottingham__23
+  - first:
+      213: -6426808898249531933
+    second: sheriffOfNottingham__24
+  - first:
+      213: 3912573837257497310
+    second: sheriffOfNottingham__25
+  - first:
+      213: -2282692806369621291
+    second: sheriffOfNottingham__26
+  - first:
+      213: 2903136891285855620
+    second: sheriffOfNottingham__27
+  - first:
+      213: -8572087181626556207
+    second: sheriffOfNottingham__28
+  - first:
+      213: 4244591197530368418
+    second: sheriffOfNottingham__29
+  - first:
+      213: -1832360824664293839
+    second: sheriffOfNottingham__30
+  - first:
+      213: -5760178096993395390
+    second: sheriffOfNottingham__31
+  - first:
+      213: -4689594468244561915
+    second: sheriffOfNottingham__32
+  - first:
+      213: 2322558927430443111
+    second: sheriffOfNottingham__33
+  - first:
+      213: -4537515692590181373
+    second: sheriffOfNottingham__34
+  - first:
+      213: -6774407233313422704
+    second: sheriffOfNottingham__35
+  - first:
+      213: 734507562894755982
+    second: sheriffOfNottingham__36
+  - first:
+      213: -4819964914119287998
+    second: sheriffOfNottingham__37
+  - first:
+      213: -5128329545408344247
+    second: sheriffOfNottingham__38
+  - first:
+      213: -7212591016046709448
+    second: sheriffOfNottingham__39
+  - first:
+      213: 2152224341501572044
+    second: sheriffOfNottingham__40
+  - first:
+      213: 1149834295612789376
+    second: sheriffOfNottingham__41
+  - first:
+      213: -2829969765125623234
+    second: sheriffOfNottingham__42
+  - first:
+      213: -3218030708135027888
+    second: sheriffOfNottingham__43
+  - first:
+      213: -4582003065759815567
+    second: sheriffOfNottingham__44
+  - first:
+      213: -4769112680157885799
+    second: sheriffOfNottingham__45
+  - first:
+      213: -6626577906627105286
+    second: sheriffOfNottingham__46
+  - first:
+      213: -3495708252910419621
+    second: sheriffOfNottingham__47
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: sheriffOfNottingham__0
+      rect:
+        serializedVersion: 2
+        x: 5
+        y: 119
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 097a137f2dfcb20a0800000000000000
+      internalID: -6905197098645215344
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__1
+      rect:
+        serializedVersion: 2
+        x: 29
+        y: 119
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3ce7e53cafbb028a0800000000000000
+      internalID: -6331854390388949309
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__2
+      rect:
+        serializedVersion: 2
+        x: 53
+        y: 119
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cab211291eb72e740800000000000000
+      internalID: 5179838730177948588
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__3
+      rect:
+        serializedVersion: 2
+        x: 77
+        y: 119
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 27e45f9581735ba30800000000000000
+      internalID: 4230348002712440434
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__4
+      rect:
+        serializedVersion: 2
+        x: 101
+        y: 119
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b2b9746121665b50800000000000000
+      internalID: 6581554701496070840
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__5
+      rect:
+        serializedVersion: 2
+        x: 125
+        y: 119
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dfc00ef919687a980800000000000000
+      internalID: -8527699409392104195
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__6
+      rect:
+        serializedVersion: 2
+        x: 149
+        y: 119
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1fb10dd2c44efe020800000000000000
+      internalID: 2373366544484801521
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__7
+      rect:
+        serializedVersion: 2
+        x: 173
+        y: 119
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae958dbbb6a3b4060800000000000000
+      internalID: 6938703885281810922
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__8
+      rect:
+        serializedVersion: 2
+        x: 5
+        y: 95
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2e6bc4e1627598740800000000000000
+      internalID: 5154747069730961122
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__9
+      rect:
+        serializedVersion: 2
+        x: 29
+        y: 95
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 530bcc032f0d84060800000000000000
+      internalID: 6938024964583632949
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__10
+      rect:
+        serializedVersion: 2
+        x: 53
+        y: 95
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 15a3f2a9b5988d490800000000000000
+      internalID: -7721270534604899759
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__11
+      rect:
+        serializedVersion: 2
+        x: 77
+        y: 95
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6f969770573311450800000000000000
+      internalID: 6057679551519615478
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__12
+      rect:
+        serializedVersion: 2
+        x: 101
+        y: 95
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5e8ff75a90119fdc0800000000000000
+      internalID: -3604831293604366107
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__13
+      rect:
+        serializedVersion: 2
+        x: 125
+        y: 95
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c16288e36ecf11b40800000000000000
+      internalID: 5409382693270464028
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__14
+      rect:
+        serializedVersion: 2
+        x: 149
+        y: 95
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0f3012538ad5cf8b0800000000000000
+      internalID: -5117112099572481040
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__15
+      rect:
+        serializedVersion: 2
+        x: 173
+        y: 95
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4451c9b403ba35980800000000000000
+      internalID: -8551303043531139772
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__16
+      rect:
+        serializedVersion: 2
+        x: 5
+        y: 72
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4d5843c4e5e5487e0800000000000000
+      internalID: -1764181394923944492
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__17
+      rect:
+        serializedVersion: 2
+        x: 28
+        y: 73
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5c50c72b0dc267580800000000000000
+      internalID: -8829820744553986619
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__18
+      rect:
+        serializedVersion: 2
+        x: 51
+        y: 71
+        width: 16
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 171764e25aec8c8c0800000000000000
+      internalID: -3978703061940539023
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__19
+      rect:
+        serializedVersion: 2
+        x: 76
+        y: 71
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e19346c9001fd0610800000000000000
+      internalID: 1589191228457761054
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__20
+      rect:
+        serializedVersion: 2
+        x: 101
+        y: 72
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0edaa87643e138c00800000000000000
+      internalID: 901597560828505568
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__21
+      rect:
+        serializedVersion: 2
+        x: 125
+        y: 73
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c05f20811952107a0800000000000000
+      internalID: -6412803089295543028
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__22
+      rect:
+        serializedVersion: 2
+        x: 149
+        y: 71
+        width: 16
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b2185206c0405030800000000000000
+      internalID: 3481353731144422066
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__23
+      rect:
+        serializedVersion: 2
+        x: 173
+        y: 71
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 67dcd395e1284ad90800000000000000
+      internalID: -7087396846716465802
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__24
+      rect:
+        serializedVersion: 2
+        x: 5
+        y: 47
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3ed54849b536fc6a0800000000000000
+      internalID: -6426808898249531933
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__25
+      rect:
+        serializedVersion: 2
+        x: 29
+        y: 47
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eda583fdc214c4630800000000000000
+      internalID: 3912573837257497310
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__26
+      rect:
+        serializedVersion: 2
+        x: 53
+        y: 47
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5dacff0acfe3250e0800000000000000
+      internalID: -2282692806369621291
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__27
+      rect:
+        serializedVersion: 2
+        x: 77
+        y: 47
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 48ddc630f930a4820800000000000000
+      internalID: 2903136891285855620
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__28
+      rect:
+        serializedVersion: 2
+        x: 101
+        y: 47
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1d0487b0024d90980800000000000000
+      internalID: -8572087181626556207
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__29
+      rect:
+        serializedVersion: 2
+        x: 125
+        y: 47
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2a92c819431d7ea30800000000000000
+      internalID: 4244591197530368418
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__30
+      rect:
+        serializedVersion: 2
+        x: 149
+        y: 47
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 13efa89c9852296e0800000000000000
+      internalID: -1832360824664293839
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__31
+      rect:
+        serializedVersion: 2
+        x: 173
+        y: 47
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 24d19bd1a8cbf00b0800000000000000
+      internalID: -5760178096993395390
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__32
+      rect:
+        serializedVersion: 2
+        x: 5
+        y: 23
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 50065ab7da63beeb0800000000000000
+      internalID: -4689594468244561915
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__33
+      rect:
+        serializedVersion: 2
+        x: 28
+        y: 23
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 760676ff9036b3020800000000000000
+      internalID: 2322558927430443111
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__34
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 23
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 304d664b4818701c0800000000000000
+      internalID: -4537515692590181373
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__35
+      rect:
+        serializedVersion: 2
+        x: 76
+        y: 23
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 092448e73887cf1a0800000000000000
+      internalID: -6774407233313422704
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__36
+      rect:
+        serializedVersion: 2
+        x: 101
+        y: 23
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e880e23acbe713a00800000000000000
+      internalID: 734507562894755982
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__37
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 23
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 24bd218a27b0c1db0800000000000000
+      internalID: -4819964914119287998
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__38
+      rect:
+        serializedVersion: 2
+        x: 150
+        y: 23
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 94f8bc2137384d8b0800000000000000
+      internalID: -5128329545408344247
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__39
+      rect:
+        serializedVersion: 2
+        x: 174
+        y: 23
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 835bc525faab7eb90800000000000000
+      internalID: -7212591016046709448
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__40
+      rect:
+        serializedVersion: 2
+        x: 5
+        y: 0
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cc37628b2ac3edd10800000000000000
+      internalID: 2152224341501572044
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__41
+      rect:
+        serializedVersion: 2
+        x: 29
+        y: 0
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 082df84233805ff00800000000000000
+      internalID: 1149834295612789376
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__42
+      rect:
+        serializedVersion: 2
+        x: 53
+        y: 0
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e3277901e7de9b8d0800000000000000
+      internalID: -2829969765125623234
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__43
+      rect:
+        serializedVersion: 2
+        x: 78
+        y: 0
+        width: 18
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 05b105dee124753d0800000000000000
+      internalID: -3218030708135027888
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__44
+      rect:
+        serializedVersion: 2
+        x: 101
+        y: 0
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 178a2a9fc747960c0800000000000000
+      internalID: -4582003065759815567
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__45
+      rect:
+        serializedVersion: 2
+        x: 125
+        y: 0
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 99ac0650945b0ddb0800000000000000
+      internalID: -4769112680157885799
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__46
+      rect:
+        serializedVersion: 2
+        x: 149
+        y: 0
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: afd2a07c08aa904a0800000000000000
+      internalID: -6626577906627105286
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sheriffOfNottingham__47
+      rect:
+        serializedVersion: 2
+        x: 168
+        y: 0
+        width: 18
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b518fd27ddfbc7fc0800000000000000
+      internalID: -3495708252910419621
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      sheriffOfNottingham__0: -6905197098645215344
+      sheriffOfNottingham__1: -6331854390388949309
+      sheriffOfNottingham__10: -7721270534604899759
+      sheriffOfNottingham__11: 6057679551519615478
+      sheriffOfNottingham__12: -3604831293604366107
+      sheriffOfNottingham__13: 5409382693270464028
+      sheriffOfNottingham__14: -5117112099572481040
+      sheriffOfNottingham__15: -8551303043531139772
+      sheriffOfNottingham__16: -1764181394923944492
+      sheriffOfNottingham__17: -8829820744553986619
+      sheriffOfNottingham__18: -3978703061940539023
+      sheriffOfNottingham__19: 1589191228457761054
+      sheriffOfNottingham__2: 5179838730177948588
+      sheriffOfNottingham__20: 901597560828505568
+      sheriffOfNottingham__21: -6412803089295543028
+      sheriffOfNottingham__22: 3481353731144422066
+      sheriffOfNottingham__23: -7087396846716465802
+      sheriffOfNottingham__24: -6426808898249531933
+      sheriffOfNottingham__25: 3912573837257497310
+      sheriffOfNottingham__26: -2282692806369621291
+      sheriffOfNottingham__27: 2903136891285855620
+      sheriffOfNottingham__28: -8572087181626556207
+      sheriffOfNottingham__29: 4244591197530368418
+      sheriffOfNottingham__3: 4230348002712440434
+      sheriffOfNottingham__30: -1832360824664293839
+      sheriffOfNottingham__31: -5760178096993395390
+      sheriffOfNottingham__32: -4689594468244561915
+      sheriffOfNottingham__33: 2322558927430443111
+      sheriffOfNottingham__34: -4537515692590181373
+      sheriffOfNottingham__35: -6774407233313422704
+      sheriffOfNottingham__36: 734507562894755982
+      sheriffOfNottingham__37: -4819964914119287998
+      sheriffOfNottingham__38: -5128329545408344247
+      sheriffOfNottingham__39: -7212591016046709448
+      sheriffOfNottingham__4: 6581554701496070840
+      sheriffOfNottingham__40: 2152224341501572044
+      sheriffOfNottingham__41: 1149834295612789376
+      sheriffOfNottingham__42: -2829969765125623234
+      sheriffOfNottingham__43: -3218030708135027888
+      sheriffOfNottingham__44: -4582003065759815567
+      sheriffOfNottingham__45: -4769112680157885799
+      sheriffOfNottingham__46: -6626577906627105286
+      sheriffOfNottingham__47: -3495708252910419621
+      sheriffOfNottingham__5: -8527699409392104195
+      sheriffOfNottingham__6: 2373366544484801521
+      sheriffOfNottingham__7: 6938703885281810922
+      sheriffOfNottingham__8: 5154747069730961122
+      sheriffOfNottingham__9: 6938024964583632949
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

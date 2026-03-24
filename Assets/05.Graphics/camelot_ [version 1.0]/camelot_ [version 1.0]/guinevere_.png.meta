@@ -1,0 +1,1586 @@
+fileFormatVersion: 2
+guid: cfa315b833fcb6b4699245f9091ff46d
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 2510426989496611011
+    second: guinevere__0
+  - first:
+      213: 5160692146990537873
+    second: guinevere__1
+  - first:
+      213: -1587894555730153441
+    second: guinevere__2
+  - first:
+      213: 2747559925679653641
+    second: guinevere__3
+  - first:
+      213: 3237202542466920201
+    second: guinevere__4
+  - first:
+      213: 8337639731833531451
+    second: guinevere__5
+  - first:
+      213: 1704933173302676299
+    second: guinevere__6
+  - first:
+      213: 8665853063441919438
+    second: guinevere__7
+  - first:
+      213: -5962195170445333568
+    second: guinevere__8
+  - first:
+      213: 6569471553753123282
+    second: guinevere__9
+  - first:
+      213: 8161767375370274504
+    second: guinevere__10
+  - first:
+      213: -5363416209268623005
+    second: guinevere__11
+  - first:
+      213: -6350676738383705095
+    second: guinevere__12
+  - first:
+      213: -1094132813224792461
+    second: guinevere__13
+  - first:
+      213: 989605080029364763
+    second: guinevere__14
+  - first:
+      213: -4153406760520574304
+    second: guinevere__15
+  - first:
+      213: 4887916993858295391
+    second: guinevere__16
+  - first:
+      213: -1188923589233592078
+    second: guinevere__17
+  - first:
+      213: 9024755816795633718
+    second: guinevere__18
+  - first:
+      213: 2131804210125228741
+    second: guinevere__19
+  - first:
+      213: -1990165423399550059
+    second: guinevere__20
+  - first:
+      213: -2366702597551392220
+    second: guinevere__21
+  - first:
+      213: 3104513703738984218
+    second: guinevere__22
+  - first:
+      213: 2541073775527816535
+    second: guinevere__23
+  - first:
+      213: 867104550650518498
+    second: guinevere__24
+  - first:
+      213: 6159100734690275968
+    second: guinevere__25
+  - first:
+      213: -1953737411939736038
+    second: guinevere__26
+  - first:
+      213: 423208875993671623
+    second: guinevere__27
+  - first:
+      213: -5838228106933999165
+    second: guinevere__28
+  - first:
+      213: 6687504908265249986
+    second: guinevere__29
+  - first:
+      213: -4545287028764108613
+    second: guinevere__30
+  - first:
+      213: 8197094116325538326
+    second: guinevere__31
+  - first:
+      213: -1823274586547377175
+    second: guinevere__32
+  - first:
+      213: 5082360235901788718
+    second: guinevere__33
+  - first:
+      213: -3007746373942018145
+    second: guinevere__34
+  - first:
+      213: -6927921465871250871
+    second: guinevere__35
+  - first:
+      213: -7011986373412346641
+    second: guinevere__36
+  - first:
+      213: -4893635086724339040
+    second: guinevere__37
+  - first:
+      213: -576396266561466088
+    second: guinevere__38
+  - first:
+      213: 8813519000573898991
+    second: guinevere__39
+  - first:
+      213: 1293228864715062764
+    second: guinevere__40
+  - first:
+      213: -8788824218485917147
+    second: guinevere__41
+  - first:
+      213: -2784843623590184758
+    second: guinevere__42
+  - first:
+      213: 2992137313244663849
+    second: guinevere__43
+  - first:
+      213: -1683535450165397787
+    second: guinevere__44
+  - first:
+      213: -8453126659746967208
+    second: guinevere__45
+  - first:
+      213: 6603024244797916388
+    second: guinevere__46
+  - first:
+      213: -6774668456918795359
+    second: guinevere__47
+  - first:
+      213: 8837615094863570511
+    second: guinevere__48
+  - first:
+      213: -4176514962345750849
+    second: guinevere__49
+  - first:
+      213: 3820395083218749546
+    second: guinevere__50
+  - first:
+      213: 9146529778854468769
+    second: guinevere__51
+  - first:
+      213: -4323527312487475929
+    second: guinevere__52
+  - first:
+      213: 12052504057163645
+    second: guinevere__53
+  - first:
+      213: 4765701803866158943
+    second: guinevere__54
+  - first:
+      213: 7180688124983962148
+    second: guinevere__55
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: guinevere__0
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 195
+        width: 14
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3c0bf7fcb04d6d220800000000000000
+      internalID: 2510426989496611011
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__1
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 195
+        width: 14
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 19cd4884a267e9740800000000000000
+      internalID: 5160692146990537873
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__2
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 195
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f107de8805aa6f9e0800000000000000
+      internalID: -1587894555730153441
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__3
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 195
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9030c39f13b412620800000000000000
+      internalID: 2747559925679653641
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__4
+      rect:
+        serializedVersion: 2
+        x: 138
+        y: 195
+        width: 14
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 90f6bb99f8adcec20800000000000000
+      internalID: 3237202542466920201
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__5
+      rect:
+        serializedVersion: 2
+        x: 170
+        y: 195
+        width: 14
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b3cee11592f35b370800000000000000
+      internalID: 8337639731833531451
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__6
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 195
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b4b4c7020b329a710800000000000000
+      internalID: 1704933173302676299
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__7
+      rect:
+        serializedVersion: 2
+        x: 234
+        y: 195
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ecdaf22927b434870800000000000000
+      internalID: 8665853063441919438
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__8
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 163
+        width: 15
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0cb6e00e417024da0800000000000000
+      internalID: -5962195170445333568
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__9
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 163
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2d90d7352937b2b50800000000000000
+      internalID: 6569471553753123282
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__10
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 163
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c6415c5f2c644170800000000000000
+      internalID: 8161767375370274504
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__11
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 163
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 369b8ffcf515195b0800000000000000
+      internalID: -5363416209268623005
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__12
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 163
+        width: 15
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9fb8d4d572dddd7a0800000000000000
+      internalID: -6350676738383705095
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__13
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 163
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 37e23aad00cd0d0f0800000000000000
+      internalID: -1094132813224792461
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__14
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 163
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b12821fb398cbbd00800000000000000
+      internalID: 989605080029364763
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__15
+      rect:
+        serializedVersion: 2
+        x: 234
+        y: 163
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0aa17779e822c56c0800000000000000
+      internalID: -4153406760520574304
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__16
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 131
+        width: 15
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f56d48ecb9e55d340800000000000000
+      internalID: 4887916993858295391
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__17
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 131
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2f836a67b48108fe0800000000000000
+      internalID: -1188923589233592078
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__18
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 131
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6387eb4a99f5e3d70800000000000000
+      internalID: 9024755816795633718
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__19
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 131
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5ca423362a0b59d10800000000000000
+      internalID: 2131804210125228741
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__20
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 131
+        width: 15
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 593410e77138164e0800000000000000
+      internalID: -1990165423399550059
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__21
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 131
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 42a74ffd688c72fd0800000000000000
+      internalID: -2366702597551392220
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__22
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 131
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a17c1bfd3c2751b20800000000000000
+      internalID: 3104513703738984218
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__23
+      rect:
+        serializedVersion: 2
+        x: 234
+        y: 131
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 75d656ab225b34320800000000000000
+      internalID: 2541073775527816535
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__24
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 99
+        width: 15
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2eb16a4aef2980c00800000000000000
+      internalID: 867104550650518498
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__25
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 99
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 082bf036c75897550800000000000000
+      internalID: 6159100734690275968
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__26
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 99
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a16e0f8dc2ee2e4e0800000000000000
+      internalID: -1953737411939736038
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__27
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 99
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c7256ffa3a8fd500800000000000000
+      internalID: 423208875993671623
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__28
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 99
+        width: 15
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3c96f7018727afea0800000000000000
+      internalID: -5838228106933999165
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__29
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 99
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2ccd4da384acecc50800000000000000
+      internalID: 6687504908265249986
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__30
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 99
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bb813508785ebe0c0800000000000000
+      internalID: -4545287028764108613
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__31
+      rect:
+        serializedVersion: 2
+        x: 234
+        y: 99
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 61a37023bade1c170800000000000000
+      internalID: 8197094116325538326
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__32
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 67
+        width: 14
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9eba8d47c6d62b6e0800000000000000
+      internalID: -1823274586547377175
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__33
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 67
+        width: 15
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e222f7105bb288640800000000000000
+      internalID: 5082360235901788718
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__34
+      rect:
+        serializedVersion: 2
+        x: 73
+        y: 67
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f9f77becb965246d0800000000000000
+      internalID: -3007746373942018145
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__35
+      rect:
+        serializedVersion: 2
+        x: 106
+        y: 67
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 94ac0fae1241bdf90800000000000000
+      internalID: -6927921465871250871
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__36
+      rect:
+        serializedVersion: 2
+        x: 138
+        y: 67
+        width: 14
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fe4a0e26b8b60be90800000000000000
+      internalID: -7011986373412346641
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__37
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 67
+        width: 15
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0aa6863f0d0561cb0800000000000000
+      internalID: -4893635086724339040
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__38
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 67
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8111eb146aa3008f0800000000000000
+      internalID: -576396266561466088
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__39
+      rect:
+        serializedVersion: 2
+        x: 232
+        y: 67
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fe0fc52c5d8ef4a70800000000000000
+      internalID: 8813519000573898991
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__40
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 35
+        width: 14
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ced7f96fcc872f110800000000000000
+      internalID: 1293228864715062764
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__41
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 35
+        width: 14
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 52afbcf30f2d70680800000000000000
+      internalID: -8788824218485917147
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__42
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 35
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ac835e4aa7f3a59d0800000000000000
+      internalID: -2784843623590184758
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__43
+      rect:
+        serializedVersion: 2
+        x: 104
+        y: 35
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 920d32b8805368920800000000000000
+      internalID: 2992137313244663849
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__44
+      rect:
+        serializedVersion: 2
+        x: 138
+        y: 35
+        width: 14
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5e63d168d61e2a8e0800000000000000
+      internalID: -1683535450165397787
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__45
+      rect:
+        serializedVersion: 2
+        x: 170
+        y: 35
+        width: 14
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 851d56ce61670ba80800000000000000
+      internalID: -8453126659746967208
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__46
+      rect:
+        serializedVersion: 2
+        x: 202
+        y: 35
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4e4c87af097a2ab50800000000000000
+      internalID: 6603024244797916388
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__47
+      rect:
+        serializedVersion: 2
+        x: 234
+        y: 35
+        width: 14
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1abbf42aeea8bf1a0800000000000000
+      internalID: -6774668456918795359
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__48
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 3
+        width: 14
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f4629f6ea1485aa70800000000000000
+      internalID: 8837615094863570511
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__49
+      rect:
+        serializedVersion: 2
+        x: 40
+        y: 3
+        width: 14
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fbe074615c90a06c0800000000000000
+      internalID: -4176514962345750849
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__50
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 3
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a6807ec3615c40530800000000000000
+      internalID: 3820395083218749546
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__51
+      rect:
+        serializedVersion: 2
+        x: 105
+        y: 3
+        width: 18
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1ac172c9f500fee70800000000000000
+      internalID: 9146529778854468769
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__52
+      rect:
+        serializedVersion: 2
+        x: 138
+        y: 3
+        width: 14
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7251c7af0debff3c0800000000000000
+      internalID: -4323527312487475929
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__53
+      rect:
+        serializedVersion: 2
+        x: 170
+        y: 3
+        width: 14
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d7f2bf640b1da2000800000000000000
+      internalID: 12052504057163645
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__54
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 3
+        width: 15
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f5771e47a8c232240800000000000000
+      internalID: 4765701803866158943
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: guinevere__55
+      rect:
+        serializedVersion: 2
+        x: 229
+        y: 3
+        width: 18
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 42ae8840ecde6a360800000000000000
+      internalID: 7180688124983962148
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      guinevere__0: 2510426989496611011
+      guinevere__1: 5160692146990537873
+      guinevere__10: 8161767375370274504
+      guinevere__11: -5363416209268623005
+      guinevere__12: -6350676738383705095
+      guinevere__13: -1094132813224792461
+      guinevere__14: 989605080029364763
+      guinevere__15: -4153406760520574304
+      guinevere__16: 4887916993858295391
+      guinevere__17: -1188923589233592078
+      guinevere__18: 9024755816795633718
+      guinevere__19: 2131804210125228741
+      guinevere__2: -1587894555730153441
+      guinevere__20: -1990165423399550059
+      guinevere__21: -2366702597551392220
+      guinevere__22: 3104513703738984218
+      guinevere__23: 2541073775527816535
+      guinevere__24: 867104550650518498
+      guinevere__25: 6159100734690275968
+      guinevere__26: -1953737411939736038
+      guinevere__27: 423208875993671623
+      guinevere__28: -5838228106933999165
+      guinevere__29: 6687504908265249986
+      guinevere__3: 2747559925679653641
+      guinevere__30: -4545287028764108613
+      guinevere__31: 8197094116325538326
+      guinevere__32: -1823274586547377175
+      guinevere__33: 5082360235901788718
+      guinevere__34: -3007746373942018145
+      guinevere__35: -6927921465871250871
+      guinevere__36: -7011986373412346641
+      guinevere__37: -4893635086724339040
+      guinevere__38: -576396266561466088
+      guinevere__39: 8813519000573898991
+      guinevere__4: 3237202542466920201
+      guinevere__40: 1293228864715062764
+      guinevere__41: -8788824218485917147
+      guinevere__42: -2784843623590184758
+      guinevere__43: 2992137313244663849
+      guinevere__44: -1683535450165397787
+      guinevere__45: -8453126659746967208
+      guinevere__46: 6603024244797916388
+      guinevere__47: -6774668456918795359
+      guinevere__48: 8837615094863570511
+      guinevere__49: -4176514962345750849
+      guinevere__5: 8337639731833531451
+      guinevere__50: 3820395083218749546
+      guinevere__51: 9146529778854468769
+      guinevere__52: -4323527312487475929
+      guinevere__53: 12052504057163645
+      guinevere__54: 4765701803866158943
+      guinevere__55: 7180688124983962148
+      guinevere__6: 1704933173302676299
+      guinevere__7: 8665853063441919438
+      guinevere__8: -5962195170445333568
+      guinevere__9: 6569471553753123282
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

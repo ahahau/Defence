@@ -1,0 +1,1170 @@
+fileFormatVersion: 2
+guid: d49d3ec9b6b9b724d92298418f80f019
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 8150510389077547751
+    second: bishopOfHereford__0
+  - first:
+      213: 2618472392402643049
+    second: bishopOfHereford__1
+  - first:
+      213: -8851232387256521042
+    second: bishopOfHereford__2
+  - first:
+      213: 4904965967515232519
+    second: bishopOfHereford__3
+  - first:
+      213: 5682285146264244962
+    second: bishopOfHereford__4
+  - first:
+      213: 4970587170217569357
+    second: bishopOfHereford__5
+  - first:
+      213: 6811812216082713291
+    second: bishopOfHereford__6
+  - first:
+      213: -8979039938232266330
+    second: bishopOfHereford__7
+  - first:
+      213: 8711763552301700085
+    second: bishopOfHereford__8
+  - first:
+      213: -1114600382863706782
+    second: bishopOfHereford__9
+  - first:
+      213: 4224657880838988651
+    second: bishopOfHereford__10
+  - first:
+      213: 7960877016345113126
+    second: bishopOfHereford__11
+  - first:
+      213: 7025839671024161329
+    second: bishopOfHereford__12
+  - first:
+      213: -4061490458363862964
+    second: bishopOfHereford__13
+  - first:
+      213: 140223116379285735
+    second: bishopOfHereford__14
+  - first:
+      213: -4397420049692997691
+    second: bishopOfHereford__15
+  - first:
+      213: 2247261057067561785
+    second: bishopOfHereford__16
+  - first:
+      213: -3550023098398067273
+    second: bishopOfHereford__17
+  - first:
+      213: 3736886921652225841
+    second: bishopOfHereford__18
+  - first:
+      213: -7502110195163530506
+    second: bishopOfHereford__19
+  - first:
+      213: 171698761727497363
+    second: bishopOfHereford__20
+  - first:
+      213: 209130219794467072
+    second: bishopOfHereford__21
+  - first:
+      213: -9104506294467224495
+    second: bishopOfHereford__22
+  - first:
+      213: 3369852613090117037
+    second: bishopOfHereford__23
+  - first:
+      213: -5602081712429461749
+    second: bishopOfHereford__24
+  - first:
+      213: -769395283728748895
+    second: bishopOfHereford__25
+  - first:
+      213: -1896566602713696398
+    second: bishopOfHereford__26
+  - first:
+      213: 7491776330218636201
+    second: bishopOfHereford__27
+  - first:
+      213: 7156299139512000385
+    second: bishopOfHereford__28
+  - first:
+      213: -3952754242022119844
+    second: bishopOfHereford__29
+  - first:
+      213: -2781257635606829516
+    second: bishopOfHereford__30
+  - first:
+      213: 4796715126905188941
+    second: bishopOfHereford__31
+  - first:
+      213: -6854972715618996542
+    second: bishopOfHereford__32
+  - first:
+      213: -1925225764668797317
+    second: bishopOfHereford__33
+  - first:
+      213: 3254467042575269485
+    second: bishopOfHereford__34
+  - first:
+      213: -1631715988101270267
+    second: bishopOfHereford__35
+  - first:
+      213: 2687945997424246528
+    second: bishopOfHereford__36
+  - first:
+      213: -2204713413948638119
+    second: bishopOfHereford__37
+  - first:
+      213: -2031681184317849612
+    second: bishopOfHereford__38
+  - first:
+      213: -1120767577644650305
+    second: bishopOfHereford__39
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: bishopOfHereford__0
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 95
+        width: 14
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7ea191ff30e6c1170800000000000000
+      internalID: 8150510389077547751
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__1
+      rect:
+        serializedVersion: 2
+        x: 28
+        y: 95
+        width: 14
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 968a35384cea65420800000000000000
+      internalID: 2618472392402643049
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__2
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 95
+        width: 14
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eae64252a0b1a2580800000000000000
+      internalID: -8851232387256521042
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__3
+      rect:
+        serializedVersion: 2
+        x: 76
+        y: 95
+        width: 14
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 70920215f80f11440800000000000000
+      internalID: 4904965967515232519
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__4
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 95
+        width: 14
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2e21f870c388bde40800000000000000
+      internalID: 5682285146264244962
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__5
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 95
+        width: 14
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d4caeed22b21bf440800000000000000
+      internalID: 4970587170217569357
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__6
+      rect:
+        serializedVersion: 2
+        x: 150
+        y: 95
+        width: 14
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bcac648be1b688e50800000000000000
+      internalID: 6811812216082713291
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__7
+      rect:
+        serializedVersion: 2
+        x: 174
+        y: 95
+        width: 14
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6a1de99cfba046380800000000000000
+      internalID: -8979039938232266330
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__8
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 71
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5f3532e3bc666e870800000000000000
+      internalID: 8711763552301700085
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__9
+      rect:
+        serializedVersion: 2
+        x: 28
+        y: 71
+        width: 14
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 265f4e07bd42880f0800000000000000
+      internalID: -1114600382863706782
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__10
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 71
+        width: 15
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b6366fc95fff0aa30800000000000000
+      internalID: 4224657880838988651
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__11
+      rect:
+        serializedVersion: 2
+        x: 77
+        y: 71
+        width: 14
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 62272d3c777ba7e60800000000000000
+      internalID: 7960877016345113126
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__12
+      rect:
+        serializedVersion: 2
+        x: 78
+        y: 47
+        width: 14
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1321e30d4fbc08160800000000000000
+      internalID: 7025839671024161329
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__13
+      rect:
+        serializedVersion: 2
+        x: 101
+        y: 71
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c40659262ffa2a7c0800000000000000
+      internalID: -4061490458363862964
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__14
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 71
+        width: 14
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7e8e5117e2c22f100800000000000000
+      internalID: 140223116379285735
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__15
+      rect:
+        serializedVersion: 2
+        x: 149
+        y: 71
+        width: 15
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5c74ed963c939f2c0800000000000000
+      internalID: -4397420049692997691
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__16
+      rect:
+        serializedVersion: 2
+        x: 172
+        y: 47
+        width: 14
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 933b4106600ef2f10800000000000000
+      internalID: 2247261057067561785
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__17
+      rect:
+        serializedVersion: 2
+        x: 173
+        y: 71
+        width: 14
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b53d830dc8cbbec0800000000000000
+      internalID: -3550023098398067273
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__18
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 47
+        width: 14
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 13742ea3bd61cd330800000000000000
+      internalID: 3736886921652225841
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__19
+      rect:
+        serializedVersion: 2
+        x: 28
+        y: 47
+        width: 15
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6faf07f768623e790800000000000000
+      internalID: -7502110195163530506
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__20
+      rect:
+        serializedVersion: 2
+        x: 53
+        y: 47
+        width: 15
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 39454253d1ff16200800000000000000
+      internalID: 171698761727497363
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__21
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 47
+        width: 14
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00906aea3daf6e200800000000000000
+      internalID: 209130219794467072
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__22
+      rect:
+        serializedVersion: 2
+        x: 125
+        y: 47
+        width: 15
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 15c19fe43cb46a180800000000000000
+      internalID: -9104506294467224495
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__23
+      rect:
+        serializedVersion: 2
+        x: 148
+        y: 47
+        width: 15
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: da588ace81f14ce20800000000000000
+      internalID: 3369852613090117037
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__24
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 23
+        width: 14
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b0f0ee71d586142b0800000000000000
+      internalID: -5602081712429461749
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__25
+      rect:
+        serializedVersion: 2
+        x: 28
+        y: 23
+        width: 14
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1aeac7dd01f8255f0800000000000000
+      internalID: -769395283728748895
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__26
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 23
+        width: 14
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 277716829ba0ea5e0800000000000000
+      internalID: -1896566602713696398
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__27
+      rect:
+        serializedVersion: 2
+        x: 76
+        y: 23
+        width: 14
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9a38c5311e228f760800000000000000
+      internalID: 7491776330218636201
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__28
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 23
+        width: 14
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 18fdb05d628405360800000000000000
+      internalID: 7156299139512000385
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__29
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 23
+        width: 14
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c566adf95fef429c0800000000000000
+      internalID: -3952754242022119844
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__30
+      rect:
+        serializedVersion: 2
+        x: 150
+        y: 23
+        width: 14
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 436efc88aecf669d0800000000000000
+      internalID: -2781257635606829516
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__31
+      rect:
+        serializedVersion: 2
+        x: 174
+        y: 23
+        width: 14
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d423deb6efa519240800000000000000
+      internalID: 4796715126905188941
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__32
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 0
+        width: 14
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2cee88462ae3ed0a0800000000000000
+      internalID: -6854972715618996542
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__33
+      rect:
+        serializedVersion: 2
+        x: 27
+        y: 0
+        width: 16
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b7e8c780e593845e0800000000000000
+      internalID: -1925225764668797317
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__34
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 0
+        width: 16
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d6e3ae548803a2d20800000000000000
+      internalID: 3254467042575269485
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__35
+      rect:
+        serializedVersion: 2
+        x: 77
+        y: 0
+        width: 18
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 505f5ea34fafa59e0800000000000000
+      internalID: -1631715988101270267
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__36
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 0
+        width: 14
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00fb7efa4a08d4520800000000000000
+      internalID: 2687945997424246528
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__37
+      rect:
+        serializedVersion: 2
+        x: 125
+        y: 0
+        width: 16
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 95c7d02c4d84761e0800000000000000
+      internalID: -2204713413948638119
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__38
+      rect:
+        serializedVersion: 2
+        x: 148
+        y: 0
+        width: 16
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4ffb3e72ab40ec3e0800000000000000
+      internalID: -2031681184317849612
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: bishopOfHereford__39
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 0
+        width: 18
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb037b283db3270f0800000000000000
+      internalID: -1120767577644650305
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      bishopOfHereford__0: 8150510389077547751
+      bishopOfHereford__1: 2618472392402643049
+      bishopOfHereford__10: 4224657880838988651
+      bishopOfHereford__11: 7960877016345113126
+      bishopOfHereford__12: 7025839671024161329
+      bishopOfHereford__13: -4061490458363862964
+      bishopOfHereford__14: 140223116379285735
+      bishopOfHereford__15: -4397420049692997691
+      bishopOfHereford__16: 2247261057067561785
+      bishopOfHereford__17: -3550023098398067273
+      bishopOfHereford__18: 3736886921652225841
+      bishopOfHereford__19: -7502110195163530506
+      bishopOfHereford__2: -8851232387256521042
+      bishopOfHereford__20: 171698761727497363
+      bishopOfHereford__21: 209130219794467072
+      bishopOfHereford__22: -9104506294467224495
+      bishopOfHereford__23: 3369852613090117037
+      bishopOfHereford__24: -5602081712429461749
+      bishopOfHereford__25: -769395283728748895
+      bishopOfHereford__26: -1896566602713696398
+      bishopOfHereford__27: 7491776330218636201
+      bishopOfHereford__28: 7156299139512000385
+      bishopOfHereford__29: -3952754242022119844
+      bishopOfHereford__3: 4904965967515232519
+      bishopOfHereford__30: -2781257635606829516
+      bishopOfHereford__31: 4796715126905188941
+      bishopOfHereford__32: -6854972715618996542
+      bishopOfHereford__33: -1925225764668797317
+      bishopOfHereford__34: 3254467042575269485
+      bishopOfHereford__35: -1631715988101270267
+      bishopOfHereford__36: 2687945997424246528
+      bishopOfHereford__37: -2204713413948638119
+      bishopOfHereford__38: -2031681184317849612
+      bishopOfHereford__39: -1120767577644650305
+      bishopOfHereford__4: 5682285146264244962
+      bishopOfHereford__5: 4970587170217569357
+      bishopOfHereford__6: 6811812216082713291
+      bishopOfHereford__7: -8979039938232266330
+      bishopOfHereford__8: 8711763552301700085
+      bishopOfHereford__9: -1114600382863706782
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

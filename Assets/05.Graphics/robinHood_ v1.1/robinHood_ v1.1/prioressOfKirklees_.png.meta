@@ -1,0 +1,1170 @@
+fileFormatVersion: 2
+guid: 9ac66ed6116846f4dbbd62b49b80acdd
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -3281141618593227951
+    second: prioressOfKirklees__0
+  - first:
+      213: -1952866529331895536
+    second: prioressOfKirklees__1
+  - first:
+      213: 9201911824255058046
+    second: prioressOfKirklees__2
+  - first:
+      213: -2295125067082775136
+    second: prioressOfKirklees__3
+  - first:
+      213: -6547767658682288207
+    second: prioressOfKirklees__4
+  - first:
+      213: -558628201910089456
+    second: prioressOfKirklees__5
+  - first:
+      213: -6890295904972756902
+    second: prioressOfKirklees__6
+  - first:
+      213: 5210793113185731772
+    second: prioressOfKirklees__7
+  - first:
+      213: 1682210421935971295
+    second: prioressOfKirklees__8
+  - first:
+      213: 5622541802883868559
+    second: prioressOfKirklees__9
+  - first:
+      213: -4813984613398375298
+    second: prioressOfKirklees__10
+  - first:
+      213: 1427873536285369172
+    second: prioressOfKirklees__11
+  - first:
+      213: -5640553358438189053
+    second: prioressOfKirklees__12
+  - first:
+      213: 4886521527269645940
+    second: prioressOfKirklees__13
+  - first:
+      213: 7585254902867541631
+    second: prioressOfKirklees__14
+  - first:
+      213: -6622291879065159340
+    second: prioressOfKirklees__15
+  - first:
+      213: 9192637564290491772
+    second: prioressOfKirklees__16
+  - first:
+      213: -758165892301069485
+    second: prioressOfKirklees__17
+  - first:
+      213: 8499666723350910798
+    second: prioressOfKirklees__18
+  - first:
+      213: -7054516701382600386
+    second: prioressOfKirklees__19
+  - first:
+      213: 50770503810280670
+    second: prioressOfKirklees__20
+  - first:
+      213: -7833937107957412509
+    second: prioressOfKirklees__21
+  - first:
+      213: -6887789749718050892
+    second: prioressOfKirklees__22
+  - first:
+      213: 1102086182869018772
+    second: prioressOfKirklees__23
+  - first:
+      213: -6102249243226710457
+    second: prioressOfKirklees__24
+  - first:
+      213: -3729011038234037913
+    second: prioressOfKirklees__25
+  - first:
+      213: 2514930171224886817
+    second: prioressOfKirklees__26
+  - first:
+      213: -7239191091726654051
+    second: prioressOfKirklees__27
+  - first:
+      213: -3395886733499657871
+    second: prioressOfKirklees__28
+  - first:
+      213: -8482420926997614071
+    second: prioressOfKirklees__29
+  - first:
+      213: -3853862531244788569
+    second: prioressOfKirklees__30
+  - first:
+      213: 6908812213368364950
+    second: prioressOfKirklees__31
+  - first:
+      213: -6311629436993715049
+    second: prioressOfKirklees__32
+  - first:
+      213: -1739843549928624132
+    second: prioressOfKirklees__33
+  - first:
+      213: 4429292807293736725
+    second: prioressOfKirklees__34
+  - first:
+      213: -8724777982716972390
+    second: prioressOfKirklees__35
+  - first:
+      213: 3710342156549039356
+    second: prioressOfKirklees__36
+  - first:
+      213: 7550948201878826637
+    second: prioressOfKirklees__37
+  - first:
+      213: -489614168921920441
+    second: prioressOfKirklees__38
+  - first:
+      213: -981173587718675195
+    second: prioressOfKirklees__39
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: prioressOfKirklees__0
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 95
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 15b1006051b0772d0800000000000000
+      internalID: -3281141618593227951
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__1
+      rect:
+        serializedVersion: 2
+        x: 28
+        y: 95
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0132c610d3606e4e0800000000000000
+      internalID: -1952866529331895536
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__2
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 95
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e708033ec02c3bf70800000000000000
+      internalID: 9201911824255058046
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__3
+      rect:
+        serializedVersion: 2
+        x: 76
+        y: 95
+        width: 15
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0a5cf6d59e31620e0800000000000000
+      internalID: -2295125067082775136
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__4
+      rect:
+        serializedVersion: 2
+        x: 101
+        y: 95
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1b773788108a125a0800000000000000
+      internalID: -6547767658682288207
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__5
+      rect:
+        serializedVersion: 2
+        x: 125
+        y: 95
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 01942af2c9a5f38f0800000000000000
+      internalID: -558628201910089456
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__6
+      rect:
+        serializedVersion: 2
+        x: 149
+        y: 95
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a5825ca7160c060a0800000000000000
+      internalID: -6890295904972756902
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__7
+      rect:
+        serializedVersion: 2
+        x: 173
+        y: 95
+        width: 15
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cb4cc7d7ab4705840800000000000000
+      internalID: 5210793113185731772
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__8
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 71
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fdb14fc4779685710800000000000000
+      internalID: 1682210421935971295
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__9
+      rect:
+        serializedVersion: 2
+        x: 28
+        y: 71
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f876dafeaf7470e40800000000000000
+      internalID: 5622541802883868559
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__10
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 71
+        width: 16
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e74913cef7a413db0800000000000000
+      internalID: -4813984613398375298
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__11
+      rect:
+        serializedVersion: 2
+        x: 77
+        y: 71
+        width: 15
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 45368728a63d0d310800000000000000
+      internalID: 1427873536285369172
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__12
+      rect:
+        serializedVersion: 2
+        x: 100
+        y: 71
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 308b7adfa9ab8b1b0800000000000000
+      internalID: -5640553358438189053
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__13
+      rect:
+        serializedVersion: 2
+        x: 125
+        y: 71
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 47ed43c607960d340800000000000000
+      internalID: 4886521527269645940
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__14
+      rect:
+        serializedVersion: 2
+        x: 148
+        y: 71
+        width: 16
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f7eb530552d344960800000000000000
+      internalID: 7585254902867541631
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__15
+      rect:
+        serializedVersion: 2
+        x: 172
+        y: 71
+        width: 15
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 459fd555f94e814a0800000000000000
+      internalID: -6622291879065159340
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__16
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 47
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c756278f82fc29f70800000000000000
+      internalID: 9192637564290491772
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__17
+      rect:
+        serializedVersion: 2
+        x: 28
+        y: 47
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 353e39c43247a75f0800000000000000
+      internalID: -758165892301069485
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__18
+      rect:
+        serializedVersion: 2
+        x: 53
+        y: 47
+        width: 15
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e471a8a0ad1e4f570800000000000000
+      internalID: 8499666723350910798
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__19
+      rect:
+        serializedVersion: 2
+        x: 77
+        y: 47
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e399700cf62591e90800000000000000
+      internalID: -7054516701382600386
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__20
+      rect:
+        serializedVersion: 2
+        x: 101
+        y: 47
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: edceda4118f54b000800000000000000
+      internalID: 50770503810280670
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__21
+      rect:
+        serializedVersion: 2
+        x: 125
+        y: 47
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 36d827fc4b3484390800000000000000
+      internalID: -7833937107957412509
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__22
+      rect:
+        serializedVersion: 2
+        x: 148
+        y: 47
+        width: 15
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4b79a7837b7a960a0800000000000000
+      internalID: -6887789749718050892
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__23
+      rect:
+        serializedVersion: 2
+        x: 172
+        y: 47
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 49826c15b856b4f00800000000000000
+      internalID: 1102086182869018772
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__24
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 23
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 74e5396f4a4705ba0800000000000000
+      internalID: -6102249243226710457
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__25
+      rect:
+        serializedVersion: 2
+        x: 28
+        y: 23
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 761bc86c734ef3cc0800000000000000
+      internalID: -3729011038234037913
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__26
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 23
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 12e85c28aa3d6e220800000000000000
+      internalID: 2514930171224886817
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__27
+      rect:
+        serializedVersion: 2
+        x: 76
+        y: 23
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d95e5749e0a398b90800000000000000
+      internalID: -7239191091726654051
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__28
+      rect:
+        serializedVersion: 2
+        x: 101
+        y: 23
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1719a4012036fd0d0800000000000000
+      internalID: -3395886733499657871
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__29
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 23
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 902b7f2db13684a80800000000000000
+      internalID: -8482420926997614071
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__30
+      rect:
+        serializedVersion: 2
+        x: 150
+        y: 23
+        width: 14
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a477fb4274548ac0800000000000000
+      internalID: -3853862531244788569
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__31
+      rect:
+        serializedVersion: 2
+        x: 174
+        y: 23
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 69f93b58a1801ef50800000000000000
+      internalID: 6908812213368364950
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__32
+      rect:
+        serializedVersion: 2
+        x: 4
+        y: 0
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 794471ea7769868a0800000000000000
+      internalID: -6311629436993715049
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__33
+      rect:
+        serializedVersion: 2
+        x: 27
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cffefb96285dad7e0800000000000000
+      internalID: -1739843549928624132
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__34
+      rect:
+        serializedVersion: 2
+        x: 52
+        y: 0
+        width: 16
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5179fe04752087d30800000000000000
+      internalID: 4429292807293736725
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__35
+      rect:
+        serializedVersion: 2
+        x: 77
+        y: 0
+        width: 19
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a92710c86ac5be680800000000000000
+      internalID: -8724777982716972390
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__36
+      rect:
+        serializedVersion: 2
+        x: 101
+        y: 0
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cf4234c7888cd7330800000000000000
+      internalID: 3710342156549039356
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__37
+      rect:
+        serializedVersion: 2
+        x: 125
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d8eac5a026b5ac860800000000000000
+      internalID: 7550948201878826637
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__38
+      rect:
+        serializedVersion: 2
+        x: 148
+        y: 0
+        width: 16
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 74c2968e18a8439f0800000000000000
+      internalID: -489614168921920441
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: prioressOfKirklees__39
+      rect:
+        serializedVersion: 2
+        x: 168
+        y: 0
+        width: 19
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 505680902db2262f0800000000000000
+      internalID: -981173587718675195
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      prioressOfKirklees__0: -3281141618593227951
+      prioressOfKirklees__1: -1952866529331895536
+      prioressOfKirklees__10: -4813984613398375298
+      prioressOfKirklees__11: 1427873536285369172
+      prioressOfKirklees__12: -5640553358438189053
+      prioressOfKirklees__13: 4886521527269645940
+      prioressOfKirklees__14: 7585254902867541631
+      prioressOfKirklees__15: -6622291879065159340
+      prioressOfKirklees__16: 9192637564290491772
+      prioressOfKirklees__17: -758165892301069485
+      prioressOfKirklees__18: 8499666723350910798
+      prioressOfKirklees__19: -7054516701382600386
+      prioressOfKirklees__2: 9201911824255058046
+      prioressOfKirklees__20: 50770503810280670
+      prioressOfKirklees__21: -7833937107957412509
+      prioressOfKirklees__22: -6887789749718050892
+      prioressOfKirklees__23: 1102086182869018772
+      prioressOfKirklees__24: -6102249243226710457
+      prioressOfKirklees__25: -3729011038234037913
+      prioressOfKirklees__26: 2514930171224886817
+      prioressOfKirklees__27: -7239191091726654051
+      prioressOfKirklees__28: -3395886733499657871
+      prioressOfKirklees__29: -8482420926997614071
+      prioressOfKirklees__3: -2295125067082775136
+      prioressOfKirklees__30: -3853862531244788569
+      prioressOfKirklees__31: 6908812213368364950
+      prioressOfKirklees__32: -6311629436993715049
+      prioressOfKirklees__33: -1739843549928624132
+      prioressOfKirklees__34: 4429292807293736725
+      prioressOfKirklees__35: -8724777982716972390
+      prioressOfKirklees__36: 3710342156549039356
+      prioressOfKirklees__37: 7550948201878826637
+      prioressOfKirklees__38: -489614168921920441
+      prioressOfKirklees__39: -981173587718675195
+      prioressOfKirklees__4: -6547767658682288207
+      prioressOfKirklees__5: -558628201910089456
+      prioressOfKirklees__6: -6890295904972756902
+      prioressOfKirklees__7: 5210793113185731772
+      prioressOfKirklees__8: 1682210421935971295
+      prioressOfKirklees__9: 5622541802883868559
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

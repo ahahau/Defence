@@ -1,0 +1,676 @@
+fileFormatVersion: 2
+guid: dffbeacc570cb7c4991ca388ac09ed90
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -2483166859002614384
+    second: dungeonDecoration_0 [redCarpet]_0
+  - first:
+      213: 4560861776192060540
+    second: dungeonDecoration_0 [redCarpet]_1
+  - first:
+      213: -3576447488689699276
+    second: dungeonDecoration_0 [redCarpet]_2
+  - first:
+      213: -7909420933098082766
+    second: dungeonDecoration_0 [redCarpet]_3
+  - first:
+      213: -8547066452559286408
+    second: dungeonDecoration_0 [redCarpet]_4
+  - first:
+      213: 7772826232546154958
+    second: dungeonDecoration_0 [redCarpet]_5
+  - first:
+      213: -1241635701962373045
+    second: dungeonDecoration_0 [redCarpet]_6
+  - first:
+      213: -7100749511692294828
+    second: dungeonDecoration_0 [redCarpet]_7
+  - first:
+      213: 5452819264647253671
+    second: dungeonDecoration_0 [redCarpet]_8
+  - first:
+      213: -2933233881163154527
+    second: dungeonDecoration_0 [redCarpet]_9
+  - first:
+      213: -4375216081838984741
+    second: dungeonDecoration_0 [redCarpet]_10
+  - first:
+      213: -4078419054677784014
+    second: dungeonDecoration_0 [redCarpet]_11
+  - first:
+      213: 653102236916445137
+    second: dungeonDecoration_0 [redCarpet]_12
+  - first:
+      213: 2013405388160693514
+    second: dungeonDecoration_0 [redCarpet]_13
+  - first:
+      213: -2249057385313801296
+    second: dungeonDecoration_0 [redCarpet]_14
+  - first:
+      213: 2285860387753912316
+    second: dungeonDecoration_0 [redCarpet]_15
+  - first:
+      213: -2949678027421626346
+    second: dungeonDecoration_0 [redCarpet]_16
+  - first:
+      213: 7033632828357729960
+    second: dungeonDecoration_0 [redCarpet]_17
+  - first:
+      213: 5447727517809482719
+    second: dungeonDecoration_0 [redCarpet]_18
+  - first:
+      213: -4537592249339458522
+    second: dungeonDecoration_0 [redCarpet]_19
+  - first:
+      213: 1986072158202285791
+    second: dungeonDecoration_0 [redCarpet]_20
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [redCarpet]_0
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 179
+        width: 12
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 09d602be5e40a8dd0800000000000000
+      internalID: -2483166859002614384
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [redCarpet]_1
+      rect:
+        serializedVersion: 2
+        x: 34
+        y: 180
+        width: 12
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c7cb597fe9f6b4f30800000000000000
+      internalID: 4560861776192060540
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [redCarpet]_2
+      rect:
+        serializedVersion: 2
+        x: 57
+        y: 180
+        width: 14
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 43600d635f7ed5ec0800000000000000
+      internalID: -3576447488689699276
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [redCarpet]_3
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 145
+        width: 16
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 23e66a731971c3290800000000000000
+      internalID: -7909420933098082766
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [redCarpet]_4
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 145
+        width: 16
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 87fab8f7858b26980800000000000000
+      internalID: -8547066452559286408
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [redCarpet]_5
+      rect:
+        serializedVersion: 2
+        x: 50
+        y: 145
+        width: 28
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ec950cbb640aedb60800000000000000
+      internalID: 7772826232546154958
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [redCarpet]_6
+      rect:
+        serializedVersion: 2
+        x: 82
+        y: 145
+        width: 28
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b48071458e2d4cee0800000000000000
+      internalID: -1241635701962373045
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [redCarpet]_7
+      rect:
+        serializedVersion: 2
+        x: 19
+        y: 113
+        width: 26
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4556d84c0f1157d90800000000000000
+      internalID: -7100749511692294828
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [redCarpet]_8
+      rect:
+        serializedVersion: 2
+        x: 51
+        y: 113
+        width: 26
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7aec4bd1b3e4cab40800000000000000
+      internalID: 5452819264647253671
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [redCarpet]_9
+      rect:
+        serializedVersion: 2
+        x: 81
+        y: 113
+        width: 30
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1ab3126735f0b47d0800000000000000
+      internalID: -2933233881163154527
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [redCarpet]_10
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 68
+        width: 18
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bd1396a872c1843c0800000000000000
+      internalID: -4375216081838984741
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [redCarpet]_11
+      rect:
+        serializedVersion: 2
+        x: 33
+        y: 81
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 23a0fb86a7b8667c0800000000000000
+      internalID: -4078419054677784014
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [redCarpet]_12
+      rect:
+        serializedVersion: 2
+        x: 49
+        y: 81
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1dfea613609401900800000000000000
+      internalID: 653102236916445137
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [redCarpet]_13
+      rect:
+        serializedVersion: 2
+        x: 65
+        y: 81
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a05fc26788d01fb10800000000000000
+      internalID: 2013405388160693514
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [redCarpet]_14
+      rect:
+        serializedVersion: 2
+        x: 81
+        y: 81
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0bbe6ec593eb9c0e0800000000000000
+      internalID: -2249057385313801296
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [redCarpet]_15
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 81
+        width: 16
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cf7653269e109bf10800000000000000
+      internalID: 2285860387753912316
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [redCarpet]_16
+      rect:
+        serializedVersion: 2
+        x: 50
+        y: 67
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 61052cd4673a017d0800000000000000
+      internalID: -2949678027421626346
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [redCarpet]_17
+      rect:
+        serializedVersion: 2
+        x: 65
+        y: 48
+        width: 46
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8aed9c6aacb7c9160800000000000000
+      internalID: 7033632828357729960
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [redCarpet]_18
+      rect:
+        serializedVersion: 2
+        x: 17
+        y: 39
+        width: 46
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fdb972c60573a9b40800000000000000
+      internalID: 5447727517809482719
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [redCarpet]_19
+      rect:
+        serializedVersion: 2
+        x: 65
+        y: 16
+        width: 46
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 62c4e82f3eb3701c0800000000000000
+      internalID: -4537592249339458522
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: dungeonDecoration_0 [redCarpet]_20
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 19
+        width: 44
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fdec0ffea12ff8b10800000000000000
+      internalID: 1986072158202285791
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      dungeonDecoration_0 [redCarpet]_0: -2483166859002614384
+      dungeonDecoration_0 [redCarpet]_1: 4560861776192060540
+      dungeonDecoration_0 [redCarpet]_10: -4375216081838984741
+      dungeonDecoration_0 [redCarpet]_11: -4078419054677784014
+      dungeonDecoration_0 [redCarpet]_12: 653102236916445137
+      dungeonDecoration_0 [redCarpet]_13: 2013405388160693514
+      dungeonDecoration_0 [redCarpet]_14: -2249057385313801296
+      dungeonDecoration_0 [redCarpet]_15: 2285860387753912316
+      dungeonDecoration_0 [redCarpet]_16: -2949678027421626346
+      dungeonDecoration_0 [redCarpet]_17: 7033632828357729960
+      dungeonDecoration_0 [redCarpet]_18: 5447727517809482719
+      dungeonDecoration_0 [redCarpet]_19: -4537592249339458522
+      dungeonDecoration_0 [redCarpet]_2: -3576447488689699276
+      dungeonDecoration_0 [redCarpet]_20: 1986072158202285791
+      dungeonDecoration_0 [redCarpet]_3: -7909420933098082766
+      dungeonDecoration_0 [redCarpet]_4: -8547066452559286408
+      dungeonDecoration_0 [redCarpet]_5: 7772826232546154958
+      dungeonDecoration_0 [redCarpet]_6: -1241635701962373045
+      dungeonDecoration_0 [redCarpet]_7: -7100749511692294828
+      dungeonDecoration_0 [redCarpet]_8: 5452819264647253671
+      dungeonDecoration_0 [redCarpet]_9: -2933233881163154527
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
