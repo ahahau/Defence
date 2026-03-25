@@ -1,18 +1,17 @@
 ﻿using _01.Code.Core;
-using _01.Code.Entities;
 using _01.Code.Events;
 using _01.Code.Manager;
 using UnityEngine;
 
-namespace _01.Code.Buildings
+namespace _01.Code.Unit
 {
     // 웨이브 끝났을때 자원 생성
     // 건물 업그레이드?
-    public class CollectibleBuilding : Building
+    public class CollectibleUnit : Unit
     {
         [SerializeField] private GameEventChannelSO waveEventChannel;
         [SerializeField] private GameEventChannelSO costEventChannel;
-        [SerializeField] private CollectableBuildingDataSO collectableBuildingData;
+        [SerializeField] private CollectableUnitDataSo collectableUnitData;
         
         protected override void Start()
         {
@@ -32,14 +31,14 @@ namespace _01.Code.Buildings
 
         private void CollectCost()
         {
-            if (collectableBuildingData == null)
+            if (collectableUnitData == null)
             {
                 GameManager.Instance.LogManager?.Building($"{name}: CollectableBuildingDataSO is missing.", LogLevel.Error);
                 return;
             }
 
             costEventChannel.RaiseEvent(
-                CostEvents.RefundCost.Initializer(collectableBuildingData.Type, collectableBuildingData.GainCost));
+                CostEvents.RefundCost.Initializer(collectableUnitData.Type, collectableUnitData.GainCost));
         }
     }
 }

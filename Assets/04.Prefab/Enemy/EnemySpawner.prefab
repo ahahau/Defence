@@ -53,7 +53,7 @@ LineRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
-  m_RenderingLayerMask: 1
+  m_RenderingLayerMask: 4294967295
   m_RendererPriority: 0
   m_Materials:
   - {fileID: 2100000, guid: 2c41e3a84de14f23afb72d287f2aa6b3, type: 2}
@@ -76,7 +76,7 @@ LineRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 50
+  m_SortingOrder: -32768
   m_Positions:
   - {x: 0, y: 0, z: 0}
   - {x: 0, y: 0, z: 1}
@@ -241,7 +241,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a6399fb9a954808aa087b6badac6761, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <IsSuperArmor>k__BackingField: 0
   OnHit:
     m_PersistentCalls:
       m_Calls: []
@@ -250,7 +249,7 @@ MonoBehaviour:
       m_Calls: []
   <Tile>k__BackingField:
     <Position>k__BackingField: {x: 0, y: 0}
-  Position: {x: 0, y: 0}
+  <GridPosition>k__BackingField: {x: 0, y: 0}
   path: []
   waveDataList:
   - {fileID: 11400000, guid: b6a79f4df1b649018d4f5881295c2ef1, type: 2}

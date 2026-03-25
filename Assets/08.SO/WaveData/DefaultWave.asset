@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: DefaultWave
   m_EditorClassIdentifier: 
   waveDataList:
-  - <enemyPrefab>k__BackingField: {fileID: 11400000, guid: 0f5dfad4d2d14494b2d4a4fe5d2a6b31, type: 2}
+  - <Enemy>k__BackingField: {fileID: 11400000, guid: 0f5dfad4d2d14494b2d4a4fe5d2a6b31, type: 2}
     count: 5
-    interval: 0.5
+    interval: 2
     startDelay: 0
   <Interval>k__BackingField: 0.5

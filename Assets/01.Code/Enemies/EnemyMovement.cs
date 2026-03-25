@@ -40,11 +40,10 @@ namespace _01.Code.Enemies
             Vector2 currentPos = _rb.position;
             Vector2 dir = target - currentPos;
 
-            _enemy.OnMoveDirection(dir);
 
             float distance = dir.magnitude;
             float duration = distance / moveSpeed;
-
+            
             _moveTween?.Kill();
             
             if(_pathIndex > 0)

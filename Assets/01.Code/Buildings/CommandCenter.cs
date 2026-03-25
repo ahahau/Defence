@@ -1,10 +1,11 @@
 using _01.Code.Entities;
 using _01.Code.Manager;
+using _01.Code.Unit;
 using UnityEngine;
 
 namespace _01.Code.Buildings
 {
-    public class CommandCenter : Building
+    public class CommandCenter : Unit.Unit
     {
         public override void Initialize(Vector2Int position)
         {

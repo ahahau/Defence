@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using _01.Code.Buildings;
+using _01.Code.Unit;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -23,10 +24,10 @@ namespace _01.Code.UI
         [SerializeField] private UnityEvent onCancelled;
 
         public Vector3 CurrentWorldPosition { get; private set; }
-        public BuildingDataSO SelectedBuilding { get; private set; }
+        public UnitDataSO SelectedUnit { get; private set; }
 
-        public event Action<BuildingDataSO> OnBuildingSelected;
-        public event Action<BuildingDataSO, Vector3> OnBuildRequested;
+        public event Action<UnitDataSO> OnBuildingSelected;
+        public event Action<UnitDataSO, Vector3> OnBuildRequested;
         public event Action OnCancelled;
 
         /// <summary>
@@ -68,7 +69,7 @@ namespace _01.Code.UI
         /// <summary>
         /// 이 함수는 빌드 데이터 목록을 슬롯 뷰들에 나눠서 연결합니다
         /// </summary>
-        public void BindOptions(IReadOnlyList<BuildingDataSO> buildingDatas)
+        public void BindOptions(IReadOnlyList<UnitDataSO> buildingDatas)
         {
             int count = Mathf.Min(buildingOptions.Count, buildingDatas.Count);
 
@@ -85,7 +86,7 @@ namespace _01.Code.UI
             }
         }
 
-        public void RefreshAvailability(Func<BuildingDataSO, bool> canAfford)
+        public void RefreshAvailability(Func<UnitDataSO, bool> canAfford)
         {
             // 비용과 데이터 유효성을 같이 확인해서 각 슬롯의 클릭 가능 여부를 다시 정합니다
             for (int i = 0; i < buildingOptions.Count; i++)
@@ -96,7 +97,7 @@ namespace _01.Code.UI
                     continue;
                 }
 
-                BuildingDataSO data = option.BuildingData;
+                UnitDataSO data = option.UnitData;
                 bool isAvailable = data != null && (canAfford == null || canAfford(data));
                 option.SetInteractable(isAvailable);
             }
@@ -116,13 +117,13 @@ namespace _01.Code.UI
 
         public void ConfirmSelection()
         {
-            if (SelectedBuilding == null)
+            if (SelectedUnit == null)
             {
                 return;
             }
 
             onBuildConfirmed?.Invoke();
-            OnBuildRequested?.Invoke(SelectedBuilding, CurrentWorldPosition);
+            OnBuildRequested?.Invoke(SelectedUnit, CurrentWorldPosition);
         }
 
         /// <summary>
@@ -147,7 +148,7 @@ namespace _01.Code.UI
         /// </summary>
         private void HandleOptionSelected(BuildingOptionView option)
         {
-            SelectedBuilding = option.BuildingData;
+            SelectedUnit = option.UnitData;
 
             // 현재 클릭한 슬롯만 선택 상태로 두고 나머지는 전부 해제합니다
             for (int i = 0; i < buildingOptions.Count; i++)
@@ -162,7 +163,7 @@ namespace _01.Code.UI
 
             RefreshSelectionVisuals();
             onSelectionChanged?.Invoke();
-            OnBuildingSelected?.Invoke(SelectedBuilding);
+            OnBuildingSelected?.Invoke(SelectedUnit);
         }
 
         /// <summary>
@@ -170,7 +171,7 @@ namespace _01.Code.UI
         /// </summary>
         private void ClearSelection()
         {
-            SelectedBuilding = null;
+            SelectedUnit = null;
 
             // 선택 해제 시 모든 슬롯의 하이라이트를 같이 정리합니다
             for (int i = 0; i < buildingOptions.Count; i++)
@@ -191,10 +192,10 @@ namespace _01.Code.UI
         /// </summary>
         private void RefreshSelectionVisuals()
         {
-            selectedNameText.text = SelectedBuilding != null ? SelectedBuilding.Name : "Select Building";
-            selectedDescriptionText.text = SelectedBuilding != null ? SelectedBuilding.Explanation : string.Empty;
-            selectedCostText.text = SelectedBuilding != null ? SelectedBuilding.Cost.ToString() : "-";
-            confirmButton.interactable = SelectedBuilding != null;
+            selectedNameText.text = SelectedUnit != null ? SelectedUnit.Name : "Select Building";
+            selectedDescriptionText.text = SelectedUnit != null ? SelectedUnit.Explanation : string.Empty;
+            selectedCostText.text = SelectedUnit != null ? SelectedUnit.Cost.ToString() : "-";
+            confirmButton.interactable = SelectedUnit != null;
         }
 
         /// <summary>

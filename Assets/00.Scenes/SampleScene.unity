@@ -8446,7 +8446,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa7c020888e6009499d6c323f153e0c7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  buildingData: {fileID: 0}
+  unitData: {fileID: 0}
   selectButton: {fileID: 730053726}
   nameText: {fileID: 1427094727}
   costText: {fileID: 702092980}
@@ -15929,7 +15929,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1464710909}
-  - component: {fileID: 1464710908}
   - component: {fileID: 1464710910}
   m_Layer: 0
   m_Name: Test
@@ -15938,18 +15937,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1464710908
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1464710907}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 873f82ddf5df4b79a867fcb54dfa5c0b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!4 &1464710909
 Transform:
   m_ObjectHideFlags: 0
@@ -21994,7 +21981,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa7c020888e6009499d6c323f153e0c7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  buildingData: {fileID: 0}
+  unitData: {fileID: 0}
   selectButton: {fileID: 2051071324}
   nameText: {fileID: 966402248}
   costText: {fileID: 1550329239}

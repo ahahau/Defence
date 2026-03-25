@@ -10,15 +10,23 @@ namespace _01.Code.Enemies
         private Entity _entity;
         public override void Initialize(ModuleOwner owner)
         {
+            base.Initialize(owner);
             _entity = owner as Entity;
         }
         public void ChangeAnimation(Vector2 dir)
         {
-            if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
+            bool hasHorizontal = Mathf.Abs(dir.x) >= 0.01f;
+            bool hasVertical = Mathf.Abs(dir.y) >= 0.01f;
+
+            if (!hasHorizontal && !hasVertical)
             {
-                FlipController(dir.x);
+                return;
             }
-            else
+
+            bool shouldFlip = dir.x < -0.01f || dir.y > 0.01f;
+            bool isFlipped = FacingDirection < 0f;
+
+            if (isFlipped != shouldFlip)
             {
                 Flip();
             }

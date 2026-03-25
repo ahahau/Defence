@@ -10,7 +10,9 @@ namespace _01.Code.Cameras
         public Vector2 MovementKey { get; private set; }
         public Vector2 MousePosition { get; private set; }
         public bool IsLeftPointerPressed { get; private set; }
-
+        
+        public float ScrollValue { get; private set; }
+        
         private Controls _controls;
 
         public event Action LeftPointerPressed;
@@ -75,6 +77,11 @@ namespace _01.Code.Cameras
         {
             if (context.ReadValueAsButton())
                 RightPointerPressed?.Invoke();
+        }
+
+        public void OnScroll(InputAction.CallbackContext context)
+        {
+            ScrollValue = context.ReadValue<Vector2>().y;
         }
     }
 }

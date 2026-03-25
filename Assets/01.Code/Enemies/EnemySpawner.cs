@@ -37,6 +37,8 @@ namespace _01.Code.Enemies
                 yield break;
             }
 
+            path = CompressPath(path);
+
             DrawPathLine();
 
             List<WaveData> spawnWaves = GetSpawnWaves();
@@ -50,7 +52,7 @@ namespace _01.Code.Enemies
                 for (int i = 0; i < spawnWaves[waveIndex].count; i++)
                 {
                     WaveData wave = spawnWaves[waveIndex];
-                    if (wave.enemyPrefab == null || wave.enemyPrefab.EnemyPrefab == null)
+                    if (wave.Enemy == null || wave.Enemy.EnemyPrefab == null)
                     {
                         GameManager.Instance.LogManager?.Enemy(
                             $"Skipped invalid wave entry on `{name}` at wave index {waveIndex}. EnemyDataSO or prefab is missing.",
@@ -58,15 +60,15 @@ namespace _01.Code.Enemies
                         break;
                     }
 
-                    Enemy enemy = GameManager.Instance.EnemySpawnerManager.SpawnEnemy(wave.enemyPrefab.EnemyPrefab, transform.position);
+                    Enemy enemy = GameManager.Instance.EnemySpawnerManager.SpawnEnemy(wave.Enemy.EnemyPrefab, transform.position);
                     if (enemy == null)
                     {
-                        GameManager.Instance.LogManager?.Enemy($"Failed to spawn enemy `{wave.enemyPrefab.name}`.", LogLevel.Error);
+                        GameManager.Instance.LogManager?.Enemy($"Failed to spawn enemy `{wave.Enemy.name}`.", LogLevel.Error);
                         continue;
                     }
 
                     _alive.Add(enemy);
-                    enemy.Initialize(path, this, wave.enemyPrefab);
+                    enemy.Initialize(path, this, wave.Enemy);
                     yield return new WaitForSeconds(wave.interval);
                 }
             }
@@ -138,7 +140,6 @@ namespace _01.Code.Enemies
             lineRenderer.textureMode = LineTextureMode.Tile;
             lineRenderer.alignment = LineAlignment.TransformZ;
             lineRenderer.widthMultiplier = lineWidth;
-            lineRenderer.sortingOrder = 20;
             lineRenderer.numCapVertices = 0;
             lineRenderer.positionCount = path.Count;
 
@@ -151,6 +152,30 @@ namespace _01.Code.Enemies
             }
 
             lineRenderer.textureScale = Vector2.one;
+        }
+
+        private List<Vector2Int> CompressPath(List<Vector2Int> sourcePath)
+        {
+            if (sourcePath == null || sourcePath.Count <= 2)
+            {
+                return sourcePath ?? new List<Vector2Int>();
+            }
+
+            List<Vector2Int> compressed = new List<Vector2Int> { sourcePath[0] };
+            Vector2Int previousDirection = sourcePath[1] - sourcePath[0];
+
+            for (int i = 1; i < sourcePath.Count - 1; i++)
+            {
+                Vector2Int currentDirection = sourcePath[i + 1] - sourcePath[i];
+                if (currentDirection != previousDirection)
+                {
+                    compressed.Add(sourcePath[i]);
+                    previousDirection = currentDirection;
+                }
+            }
+
+            compressed.Add(sourcePath[sourcePath.Count - 1]);
+            return compressed;
         }
 
         private void OnDisable()

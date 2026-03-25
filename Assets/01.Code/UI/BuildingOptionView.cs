@@ -1,5 +1,6 @@
 using System;
 using _01.Code.Buildings;
+using _01.Code.Unit;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -9,7 +10,7 @@ namespace _01.Code.UI
 {
     public class BuildingOptionView : UIBaseView
     {
-        [SerializeField] private BuildingDataSO buildingData;
+        [SerializeField] private UnitDataSO unitData;
         [SerializeField] private Button selectButton;
         [SerializeField] private TMP_Text nameText;
         [SerializeField] private TMP_Text costText;
@@ -17,7 +18,7 @@ namespace _01.Code.UI
         [SerializeField] private GameObject disabledMarker;
         [SerializeField] private UnityEvent onSelected;
         
-        public BuildingDataSO BuildingData => buildingData;
+        public UnitDataSO UnitData => unitData;
         public bool IsSelected { get; private set; }
         public bool IsInteractable { get; private set; } = true;
 
@@ -45,9 +46,9 @@ namespace _01.Code.UI
         /// <summary>
         /// 이 함수는 슬롯에 표시할 건물 데이터를 연결하고 화면을 갱신합니다
         /// </summary>
-        public void Bind(BuildingDataSO data)
+        public void Bind(UnitDataSO data)
         {
-            buildingData = data;
+            unitData = data;
             RefreshVisuals();
         }
 
@@ -86,11 +87,11 @@ namespace _01.Code.UI
         private void RefreshVisuals()
         {
             // 슬롯 데이터와 선택 상태를 한 번에 맞춰서 화면을 갱신합니다
-            nameText.text = buildingData != null ? buildingData.Name : "Empty";
-            costText.text = buildingData != null ? buildingData.Cost.ToString() : "-";
-            selectButton.interactable = IsInteractable && buildingData != null;
+            nameText.text = unitData != null ? unitData.Name : "Empty";
+            costText.text = unitData != null ? unitData.Cost.ToString() : "-";
+            selectButton.interactable = IsInteractable && unitData != null;
             selectedMarker.SetActive(IsSelected);
-            disabledMarker.SetActive(!IsInteractable || buildingData == null);
+            disabledMarker.SetActive(!IsInteractable || unitData == null);
         }
     }
 }

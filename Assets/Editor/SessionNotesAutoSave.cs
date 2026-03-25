@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using _01.Code.Buildings;
 using _01.Code.Manager;
+using _01.Code.Unit;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -106,8 +107,8 @@ public static class SessionNotesAutoSave
         EnemySpawnerManager enemySpawnerManager = gameManagerRoot != null ? gameManagerRoot.GetComponentInChildren<EnemySpawnerManager>(true) : null;
 
         bool hasWaveChannel = AssetDatabase.LoadAssetAtPath<ScriptableObject>("Assets/08.SO/Events/WaveEventChannel.asset") != null;
-        bool hasObstacleData = AssetDatabase.LoadAssetAtPath<BuildingDataSO>("Assets/08.SO/Buildings/Obstacle.asset") != null;
-        bool hasNormalBuildingData = AssetDatabase.LoadAssetAtPath<BuildingDataSO>("Assets/08.SO/Buildings/NormalBuilding.asset") != null;
+        bool hasObstacleData = AssetDatabase.LoadAssetAtPath<UnitDataSO>("Assets/08.SO/Buildings/Obstacle.asset") != null;
+        bool hasNormalBuildingData = AssetDatabase.LoadAssetAtPath<UnitDataSO>("Assets/08.SO/Buildings/NormalBuilding.asset") != null;
 
         int availableBuildingCount = 0;
         if (uiManager != null)

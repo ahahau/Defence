@@ -2,6 +2,7 @@ using _01.Code.Buildings;
 using _01.Code.Cameras;
 using _01.Code.Core;
 using _01.Code.Events;
+using _01.Code.Unit;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -16,13 +17,15 @@ namespace _01.Code.Manager
         [SerializeField] private float dragStartThresholdPixels = 8f;
         [SerializeField] private GameEventChannelSO uiEventChannel;
 
-        private Building _draggedBuilding;
+        private Unit.Unit _draggedUnit;
+        private Collider2D _pointerDownCollider;
         private bool _isPointerDown;
         private bool _isDraggingBuilding;
         private bool _queuedLeftPointerPressed;
         private bool _queuedLeftPointerReleased;
         private bool _queuedRightPointerPressed;
         private Vector2 _pointerDownScreenPosition;
+        private Vector2 _pointerDownWorldPosition;
 
         public void Initialize()
         {
@@ -61,7 +64,7 @@ namespace _01.Code.Manager
                 StartDragging();
             }
 
-            if (_isDraggingBuilding && _draggedBuilding != null && InputData.IsLeftPointerPressed)
+            if (_isDraggingBuilding && _draggedUnit != null && InputData.IsLeftPointerPressed)
             {
                 DragBuilding(hoveredCell);
             }
@@ -92,7 +95,7 @@ namespace _01.Code.Manager
 
             if (!hitGameObject.CompareTag("Building"))
             {
-                Building building = hitGameObject.GetComponentInParent<Building>();
+                Unit.Unit unit = hitGameObject.GetComponentInParent<Unit.Unit>();
                 return;
             }
 
@@ -112,7 +115,8 @@ namespace _01.Code.Manager
                 return;
             }
 
-            OnClick(InputData.GetWorldPosition2D());
+            uiEventChannel.RaiseEvent(UIEvents.HideBuildPanelRequested);
+            ResetPointerState();
         }
 
         private void HandleLeftPointerPressed()
@@ -124,20 +128,14 @@ namespace _01.Code.Manager
                 return;
             }
 
-            Collider2D hit = GetHitCollider(worldPosition);
-            if (hit == null || hit.CompareTag("EnemySpawner"))
-            {
-                return;
-            }
-
-            _draggedBuilding = hit.GetComponentInParent<Building>();
-            if (_draggedBuilding != null)
-            {
-                _isPointerDown = true;
-                _isDraggingBuilding = false;
-                _pointerDownScreenPosition = InputData.MousePosition;
-                StartDragging();
-            }
+            _isPointerDown = true;
+            _isDraggingBuilding = false;
+            _pointerDownScreenPosition = InputData.MousePosition;
+            _pointerDownWorldPosition = worldPosition;
+            _pointerDownCollider = GetHitCollider(worldPosition);
+            _draggedUnit = _pointerDownCollider != null && !_pointerDownCollider.CompareTag("EnemySpawner")
+                ? _pointerDownCollider.GetComponentInParent<Unit.Unit>()
+                : null;
         }
 
         private void HandleLeftPointerReleased()
@@ -149,9 +147,20 @@ namespace _01.Code.Manager
 
             Vector3 targetWorldPosition = GameManager.Instance.GridManager.CellToWorld(CurrentMouseCellPosition);
 
-            if (_isDraggingBuilding && _draggedBuilding != null)
+            if (_isDraggingBuilding && _draggedUnit != null)
             {
-                GameManager.Instance.BuildManager.TryMove(_draggedBuilding, targetWorldPosition);
+                GameManager.Instance.BuildManager.TryMove(_draggedUnit, targetWorldPosition);
+                ResetPointerState();
+                return;
+            }
+
+            if (_pointerDownCollider == null)
+            {
+                ClickGround(_pointerDownWorldPosition);
+            }
+            else if (!_pointerDownCollider.CompareTag("EnemySpawner"))
+            {
+                ClickObject(_pointerDownCollider.gameObject);
             }
 
             ResetPointerState();
@@ -159,7 +168,7 @@ namespace _01.Code.Manager
 
         private void StartDragging()
         {
-            if (_draggedBuilding == null)
+            if (_draggedUnit == null)
             {
                 return;
             }
@@ -171,17 +180,17 @@ namespace _01.Code.Manager
         private void DragBuilding(Vector2Int gridPos)
         {
             CurrentMouseCellPosition = gridPos;
-            _draggedBuilding.PreviewPosition(gridPos);
+            _draggedUnit.PreviewPosition(gridPos);
         }
 
         private bool ShouldStartDragging(Vector2Int hoveredCell)
         {
-            if (_draggedBuilding == null)
+            if (_draggedUnit == null)
             {
                 return false;
             }
 
-            if (hoveredCell != _draggedBuilding.GridPosition)
+            if (hoveredCell != _draggedUnit.GridPosition)
             {
                 return true;
             }
@@ -202,7 +211,8 @@ namespace _01.Code.Manager
         {
             _isPointerDown = false;
             _isDraggingBuilding = false;
-            _draggedBuilding = null;
+            _draggedUnit = null;
+            _pointerDownCollider = null;
         }
 
         private Collider2D GetHitCollider(Vector2 worldPosition)

@@ -16,10 +16,16 @@ namespace _01.Code.Entities
         public virtual void Initialize(ModuleOwner owner)
         {
             _owner = owner as Entity;
-            _animator = GetComponent<Animator>();
-            _spriteRenderer = GetComponent<SpriteRenderer>();
+            _animator = GetComponentInChildren<Animator>();
+            _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         }
-        
+
+        private void Update()
+        {
+            _spriteRenderer.sortingOrder = Mathf.RoundToInt(transform.position.y * -1000f);
+            _spriteRenderer.sortingOrder = Mathf.RoundToInt(transform.position.y * -10f);
+        }
+
         public void FlipController(float xMove)
         {
             if (Mathf.Abs(FacingDirection + xMove) < 0.5f)
@@ -28,10 +34,10 @@ namespace _01.Code.Entities
 
         protected void Flip()
         {
+            if (!_spriteRenderer)
+                return;
             FacingDirection *= -1;
-            //float targetYRotation = FacingDirection > 0 ? 0 : 180f;
-            //_owner.transform.rotation = Quaternion.Euler(0, targetYRotation, 0);
-            _spriteRenderer.flipX = FacingDirection > 0;
+            _spriteRenderer.flipX = FacingDirection < 0;
         }
         
         public void PlayClip(int clipHash, int layer = -1, float normalPosition = float.NegativeInfinity)

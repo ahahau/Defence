@@ -1,10 +1,10 @@
+using _01.Code.Buildings;
 using _01.Code.Entities;
-using _01.Code.Manager;
 using UnityEngine;
 
-namespace _01.Code.Buildings
+namespace _01.Code.Unit
 {
-    public class AttackableBuilding : Building
+    public class AttackableUnit : Unit
     {
         [SerializeField] private EntitySensor sensor;
         [SerializeField] private float attackDamage = 1f;

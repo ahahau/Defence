@@ -5,6 +5,7 @@ using _01.Code.Buildings;
 using _01.Code.Combat;
 using _01.Code.Core;
 using _01.Code.Events;
+using _01.Code.Unit;
 using GondrLib.ObjectPool.Runtime;
 using UnityEngine;
 
@@ -21,15 +22,15 @@ namespace _01.Code.Manager
         [SerializeField] private DamageText damageTextPrefab;
         [SerializeField] private PoolManagerMono poolManager;
         [SerializeField] private PoolingItemSO damageTextPoolingItem;
-        [SerializeField] private List<BuildingDataSO> availableBuildings = new();
+        [SerializeField] private List<UnitDataSO> availableBuildings = new();
         private int _currentGold;
 
-        public BuildingDataSO SelectedBuilding { get; private set; }
+        public UnitDataSO SelectedUnit { get; private set; }
         public Vector3 CurrentBuildPosition { get; private set; }
         public bool IsBuildingPanelVisible => mainPanel != null ? mainPanel.IsVisible : buildingPenalPrefab != null && buildingPenalPrefab.activeSelf;
 
-        public event Action<BuildingDataSO> OnBuildingSelected;
-        public event Action<BuildingDataSO, Vector3> OnBuildRequested;
+        public event Action<UnitDataSO> OnBuildingSelected;
+        public event Action<UnitDataSO, Vector3> OnBuildRequested;
 
         public void Initialize()
         {
@@ -56,8 +57,8 @@ namespace _01.Code.Manager
             uiEventChannel.AddListener<HideBuildPanelRequestedEvent>(HandleHideBuildPanelRequestedEvent);
             uiEventChannel.AddListener<ShowDamageTextRequestedEvent>(HandleShowDamageTextRequestedEvent);
 
-            buildEventChannel.AddListener<BuildInstalledEvent>(HandleBuildInstalledEvent);
-            buildEventChannel.AddListener<BuildFailedEvent>(HandleBuildFailedEvent);
+            buildEventChannel.AddListener<UnitGenerationEvent>(HandleBuildInstalledEvent);
+            buildEventChannel.AddListener<UnitGenerationFailedEvent>(HandleBuildFailedEvent);
 
             costEventChannel.AddListener<CostChangedEvent>(HandleCostChangedEvent);
 
@@ -73,8 +74,8 @@ namespace _01.Code.Manager
             uiEventChannel.RemoveListener<ShowBuildPanelRequestedEvent>(HandleShowBuildPanelRequestedEvent);
             uiEventChannel.RemoveListener<HideBuildPanelRequestedEvent>(HandleHideBuildPanelRequestedEvent);
             uiEventChannel.RemoveListener<ShowDamageTextRequestedEvent>(HandleShowDamageTextRequestedEvent);
-            buildEventChannel.RemoveListener<BuildInstalledEvent>(HandleBuildInstalledEvent);
-            buildEventChannel.RemoveListener<BuildFailedEvent>(HandleBuildFailedEvent);
+            buildEventChannel.RemoveListener<UnitGenerationEvent>(HandleBuildInstalledEvent);
+            buildEventChannel.RemoveListener<UnitGenerationFailedEvent>(HandleBuildFailedEvent);
             costEventChannel.RemoveListener<CostChangedEvent>(HandleCostChangedEvent);
         }
 
@@ -107,35 +108,35 @@ namespace _01.Code.Manager
             }
         }
 
-        private bool CanAfford(BuildingDataSO buildingData)
+        private bool CanAfford(UnitDataSO unitData)
         {
-            return _currentGold >= buildingData.Cost;
+            return _currentGold >= unitData.Cost;
         }
 
-        private void HandleBuildingSelected(BuildingDataSO buildingData)
+        private void HandleBuildingSelected(UnitDataSO unitData)
         {
-            SelectedBuilding = buildingData;
-            OnBuildingSelected?.Invoke(buildingData);
+            SelectedUnit = unitData;
+            OnBuildingSelected?.Invoke(unitData);
         }
 
-        private void HandleBuildRequested(BuildingDataSO buildingData, Vector3 worldPosition)
+        private void HandleBuildRequested(UnitDataSO unitData, Vector3 worldPosition)
         {
-            if (!CanAfford(buildingData))
+            if (!CanAfford(unitData))
             {
-                GameManager.Instance.LogManager?.Building($"Blocked install request for `{buildingData.Name}` because gold is insufficient.", LogLevel.Warning);
+                GameManager.Instance.LogManager?.Building($"Blocked install request for `{unitData.Name}` because gold is insufficient.", LogLevel.Warning);
                 mainPanel?.RefreshAvailability(CanAfford);
                 return;
             }
 
             CurrentBuildPosition = worldPosition;
-            OnBuildRequested?.Invoke(buildingData, worldPosition);
-            buildEventChannel.RaiseEvent(BuildEvents.BuildInstallRequested.Initializer(buildingData, worldPosition));
+            OnBuildRequested?.Invoke(unitData, worldPosition);
+            buildEventChannel.RaiseEvent(UnitEvents.UnitGenerationRequested.Initializer(unitData, worldPosition));
             mainPanel?.RefreshAvailability(CanAfford);
         }
 
         private void HandlePanelCancelled()
         {
-            SelectedBuilding = null;
+            SelectedUnit = null;
         }
 
         private void HandleShowBuildPanelRequestedEvent(ShowBuildPanelRequestedEvent evt)
@@ -187,14 +188,14 @@ namespace _01.Code.Manager
             uiHeader?.RefreshAvailability();
         }
 
-        private void HandleBuildInstalledEvent(BuildInstalledEvent evt)
+        private void HandleBuildInstalledEvent(UnitGenerationEvent evt)
         {
-            SelectedBuilding = null;
+            SelectedUnit = null;
             mainPanel?.RefreshAvailability(CanAfford);
             HideBuildingPanel();
         }
 
-        private void HandleBuildFailedEvent(BuildFailedEvent _)
+        private void HandleBuildFailedEvent(UnitGenerationFailedEvent _)
         {
             GameManager.Instance.LogManager?.Building("Build failed.", LogLevel.Warning);
             mainPanel?.RefreshAvailability(CanAfford);
