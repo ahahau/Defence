@@ -91,11 +91,8 @@ namespace _01.Code.Manager
 
         private void ClickObject(GameObject hitGameObject)
         {
-            uiEventChannel.RaiseEvent(UIEvents.HideBuildPanelRequested);
-
             if (!hitGameObject.CompareTag("Building"))
             {
-                Unit.Unit unit = hitGameObject.GetComponentInParent<Unit.Unit>();
                 return;
             }
 
@@ -105,7 +102,6 @@ namespace _01.Code.Manager
         {
             Vector2Int gridPos = GameManager.Instance.GridManager.WorldToCell(worldPosition);
             CurrentMouseCellPosition = gridPos;
-            uiEventChannel.RaiseEvent(UIEvents.ShowBuildPanelRequested.Initializer(worldPosition));
         }
 
         private void HandleRightPointerPressed()
@@ -114,8 +110,6 @@ namespace _01.Code.Manager
             {
                 return;
             }
-
-            uiEventChannel.RaiseEvent(UIEvents.HideBuildPanelRequested);
             ResetPointerState();
         }
 
@@ -174,7 +168,6 @@ namespace _01.Code.Manager
             }
 
             _isDraggingBuilding = true;
-            uiEventChannel.RaiseEvent(UIEvents.HideBuildPanelRequested);
         }
 
         private void DragBuilding(Vector2Int gridPos)

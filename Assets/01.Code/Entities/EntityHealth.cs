@@ -23,21 +23,17 @@ namespace _01.Code.Entities
 
         public void ApplyDamage(float damage, Entity dealer)
         {
-            if (_entity != null && _entity.IsDead)
-            {
+            if (_entity.IsDead)
                 return;
-            }
 
             currentHealth -= damage;
             currentHealth = Mathf.Max(0f, currentHealth);
             _entity.OnHit?.Invoke();
 
-            if (ShouldShowDamageText() && uiEventChannel != null)
+            if (ShouldShowDamageText())
             {
                 uiEventChannel.RaiseEvent(new ShowDamageTextRequestedEvent().Initializer(GetDamageTextPosition(), damage, transform));
             }
-
-            GameManager.Instance.LogManager.Enemy($" {_entity.name} took {damage} damage from {dealer.name}. Current health: {currentHealth}/{baseHealth}");
             if (currentHealth <= 0)
             {
                 _entity.IsDead = true;

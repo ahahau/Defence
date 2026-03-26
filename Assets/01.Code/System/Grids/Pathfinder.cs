@@ -29,7 +29,7 @@ namespace _01.Code.System.Grids
             while (openList.Count > 0)
             {
                 safety++;
-                if (safety > 2000)
+                if (safety > 10000)
                 {
                     break;
                 }
@@ -56,7 +56,7 @@ namespace _01.Code.System.Grids
                     if (!walkable)
                         continue;
 
-                    int tentativeGCost = gCost[current] + 1;
+                    int tentativeGCost = gCost[current] + GetTraversalCost(neighbor);
 
                     if (!gCost.ContainsKey(neighbor) || tentativeGCost < gCost[neighbor])
                     {
@@ -125,6 +125,17 @@ namespace _01.Code.System.Grids
         private int GetDistance(Vector2Int a, Vector2Int b)
         {
             return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
+        }
+
+        private int GetTraversalCost(Vector2Int position)
+        {
+            CustomTile tile = _tilemap.GetTile(position);
+            if (tile == null)
+            {
+                return 1;
+            }
+
+            return Mathf.Max(1, tile.Cost);
         }
     }
 }

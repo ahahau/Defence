@@ -8,12 +8,12 @@ namespace _01.Code.Events
 {
     public static class UnitEvents
     {
-        public static readonly UnitGenerationRequestedEvent UnitGenerationRequested = new UnitGenerationRequestedEvent();
-        public static readonly UnitGenerationEvent UnitGeneration = new UnitGenerationEvent();
-        public static readonly UnitGenerationFailedEvent UnitGenerationFailed = new UnitGenerationFailedEvent();
-        public static readonly MoveUnitRequestedEvent MoveUnitRequested = new MoveUnitRequestedEvent();
-        public static readonly UnitMovedEvent UnitMoved = new UnitMovedEvent();
-        public static readonly UnitMoveFailedEvent UnitMoveFailed = new UnitMoveFailedEvent();
+        public static readonly UnitGenerationRequestedEvent UnitGenerationRequestedEvent = new UnitGenerationRequestedEvent();
+        public static readonly UnitGenerationEvent UnitGenerationEvent = new UnitGenerationEvent();
+        public static readonly UnitGenerationFailedEvent UnitGenerationFailedEvent = new UnitGenerationFailedEvent();
+        public static readonly MoveUnitRequestedEvent MoveUnitRequestedEvent = new MoveUnitRequestedEvent();
+        public static readonly UnitMovedEvent UnitMovedEvent = new UnitMovedEvent();
+        public static readonly UnitMoveFailedEvent UnitMoveFailedEvent = new UnitMoveFailedEvent();
     }
 
     public class UnitGenerationRequestedEvent : GameEvent

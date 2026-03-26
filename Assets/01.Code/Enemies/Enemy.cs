@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using _01.Code.Entities;
 using DG.Tweening;
 using GondrLib.ObjectPool.Runtime;
+using UnityEditor.Search;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -87,6 +88,7 @@ namespace _01.Code.Enemies
                 _rigidbody2D.position = new Vector2(worldPosition.x, worldPosition.y);
                 _rigidbody2D.linearVelocity = Vector2.zero;
             }
+            
         }
 
         private void OnCollisionEnter2D(Collision2D other)

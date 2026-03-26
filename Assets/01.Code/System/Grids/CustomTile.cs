@@ -23,19 +23,23 @@ namespace _01.Code.System.Grids
     {
         public TileType Type { get; private set; }
         public TileObjectType ObjectType { get; private set; }
-        public CustomTile(Vector2 position, TileType type = TileType.Normal, TileObjectType objectType = TileObjectType.None)
+        
+        public int Cost { get; private set; }
+        public CustomTile(Vector2 position, TileType type = TileType.Normal, TileObjectType objectType = TileObjectType.None, int cost = 1)
         {
             Position = position;
             Type = type;
             ObjectType = objectType;
+            Cost = cost;
         }
         [field:SerializeField] public Vector2 Position { get; private set; }
         public Entity TileObject { get; private set; }
         // <summary>아무것도 안넣으면 </summary>
-        public void SetTileObj(Entity tileObj = null, TileObjectType objectType = TileObjectType.None)
+        public void SetTileObj(Entity tileObj = null, int cost = 1, TileObjectType objectType = TileObjectType.None)
         {
             TileObject = tileObj;
             ObjectType = objectType;
+            Cost = cost;
         }
 
         public bool IsEmpty()

@@ -113,7 +113,7 @@ namespace _01.Code.Manager
                 return false;
             }
 
-            TrySpendCostEvent spendRequest = CostEvents.TrySpendCost.Initializer(CostType.Gold, unitData.Cost);
+            TrySpendCostEvent spendRequest = CostEvents.TrySpendCostEvent.Initializer(CostType.Gold, unitData.Cost);
             costEventChannel.RaiseEvent(spendRequest);
             if (!spendRequest.Succeeded)
             {
@@ -126,7 +126,7 @@ namespace _01.Code.Manager
             UnitManager = Instantiate(unitData.Prefab, buildWorldPosition, Quaternion.identity);
             UnitManager.Initialize(buildPosition);
             OnBuildingInstalled?.Invoke(unitData, UnitManager);
-            buildEventChannel.RaiseEvent(UnitEvents.UnitGeneration.Initializer(unitData, UnitManager));
+            buildEventChannel.RaiseEvent(UnitEvents.UnitGenerationEvent.Initializer(unitData, UnitManager));
             return true;
         }
 
@@ -153,19 +153,19 @@ namespace _01.Code.Manager
         private void RaiseBuildFailed(UnitDataSO unitData, Vector2Int buildPosition)
         {
             OnBuildFailed?.Invoke(unitData, buildPosition);
-            buildEventChannel.RaiseEvent(UnitEvents.UnitGenerationFailed.Initializer(unitData, buildPosition));
+            buildEventChannel.RaiseEvent(UnitEvents.UnitGenerationFailedEvent.Initializer(unitData, buildPosition));
         }
 
         private void RaiseBuildingMoved(PlaceableEntity placeableEntity, Vector2Int targetPosition)
         {
             OnBuildingMoved?.Invoke();
-            buildEventChannel.RaiseEvent(UnitEvents.UnitMoved.Initializer(placeableEntity, targetPosition));
+            buildEventChannel.RaiseEvent(UnitEvents.UnitMovedEvent.Initializer(placeableEntity, targetPosition));
         }
 
         private void RaiseBuildingMoveFailed(PlaceableEntity placeableEntity, Vector2Int originalPosition)
         {
             OnBuildingMoveFailed?.Invoke();
-            buildEventChannel.RaiseEvent(UnitEvents.UnitMoveFailed.Initializer(placeableEntity, originalPosition));
+            buildEventChannel.RaiseEvent(UnitEvents.UnitMoveFailedEvent.Initializer(placeableEntity, originalPosition));
         }
     }
 }

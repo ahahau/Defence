@@ -5,9 +5,9 @@ namespace _01.Code.Events
 {
     public static class CostEvents
     {
-        public static readonly CostChangedEvent CostChanged = new CostChangedEvent();
-        public static readonly TrySpendCostEvent TrySpendCost = new TrySpendCostEvent();
-        public static readonly RefundCostEvent RefundCost = new RefundCostEvent();
+        public static readonly CostChangedEvent CostChangedEvent = new CostChangedEvent();
+        public static readonly TrySpendCostEvent TrySpendCostEvent = new TrySpendCostEvent();
+        public static readonly RefundCostEvent RefundCostEvent = new RefundCostEvent();
     }
 
     public class CostChangedEvent : GameEvent

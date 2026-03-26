@@ -7,7 +7,6 @@ using UnityEngine;
 
 namespace _01.Code.Combat
 {
-    [RequireComponent(typeof(TextMeshPro))]
     public class DamageText : MonoBehaviour, IPoolable
     {
         [SerializeField] private PoolingItemSO poolingType;
@@ -32,13 +31,13 @@ namespace _01.Code.Combat
         private void Awake()
         {
             _text = GetComponent<TextMeshPro>();
-            ApplyTextStyle();
+            ApplyTextStyle(includeMaterialProperties: true);
         }
 
         private void OnValidate()
         {
             _text = GetComponent<TextMeshPro>();
-            ApplyTextStyle();
+            ApplyTextStyle(includeMaterialProperties: false);
         }
 
         public void SetUpPool(Pool pool)
@@ -62,7 +61,7 @@ namespace _01.Code.Combat
             _text.text = " ";
             _text.color = textColor;
             transform.position = Vector3.zero;
-            ApplyTextStyle();
+            ApplyTextStyle(includeMaterialProperties: true);
         }
 
         public void Initialize(float damage, Transform followTarget)
@@ -83,7 +82,7 @@ namespace _01.Code.Combat
             _text.font = TMP_Settings.defaultFontAsset;
             _text.text = Mathf.CeilToInt(damage).ToString();
             _text.color = _baseColor;
-            ApplyTextStyle();
+            ApplyTextStyle(includeMaterialProperties: true);
             SetPosition();
             StartAnimation();
             _followRoutine = StartCoroutine(FollowTargetRoutine());
@@ -142,7 +141,7 @@ namespace _01.Code.Combat
         }
 
 
-        private void ApplyTextStyle()
+        private void ApplyTextStyle(bool includeMaterialProperties)
         {
             if (_text == null)
             {
@@ -153,7 +152,11 @@ namespace _01.Code.Combat
             _text.fontSize = fontSize;
             _text.raycastTarget = false;
             _text.sortingOrder = 100;
-            _text.outlineWidth = 0.2f;
+
+            if (includeMaterialProperties)
+            {
+                _text.outlineWidth = 0.2f;
+            }
         }
 
         private void OnDisable()

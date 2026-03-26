@@ -38,7 +38,7 @@ namespace _01.Code.Unit
             }
 
             costEventChannel.RaiseEvent(
-                CostEvents.RefundCost.Initializer(collectableUnitData.Type, collectableUnitData.GainCost));
+                CostEvents.RefundCostEvent.Initializer(collectableUnitData.Type, collectableUnitData.GainCost));
         }
     }
 }

@@ -8,7 +8,10 @@ namespace _01.Code.Manager
 {
     public enum CostType
     {
-        Gold
+        Gold,
+        Wood,
+        Stone,
+        Food,
     }
 
     [Serializable]
@@ -133,7 +136,7 @@ namespace _01.Code.Manager
         private void RaiseChanged(CostType type)
         {
             OnCostChanged?.Invoke(type, GetCurrent(type), GetMax(type));
-            costEventChannel.RaiseEvent(CostEvents.CostChanged.Initializer(type, GetCurrent(type), GetMax(type)));
+            costEventChannel.RaiseEvent(CostEvents.CostChangedEvent.Initializer(type, GetCurrent(type), GetMax(type)));
         }
 
         /// <summary>
