@@ -1,7 +1,5 @@
-using _01.Code.Buildings;
 using _01.Code.Cameras;
 using _01.Code.Core;
-using _01.Code.Events;
 using _01.Code.Unit;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -15,8 +13,6 @@ namespace _01.Code.Manager
 
         [SerializeField] private LayerMask whatIsClickable;
         [SerializeField] private float dragStartThresholdPixels = 8f;
-        [SerializeField] private GameEventChannelSO uiEventChannel;
-
         private Unit.Unit _draggedUnit;
         private Collider2D _pointerDownCollider;
         private bool _isPointerDown;
@@ -95,13 +91,13 @@ namespace _01.Code.Manager
             {
                 return;
             }
-
         }
 
         private void ClickGround(Vector2 worldPosition)
         {
             Vector2Int gridPos = GameManager.Instance.GridManager.WorldToCell(worldPosition);
             CurrentMouseCellPosition = gridPos;
+            GameManager.Instance.UiManager?.TryRequestBuild(GameManager.Instance.GridManager.CellToWorld(gridPos));
         }
 
         private void HandleRightPointerPressed()
@@ -110,6 +106,8 @@ namespace _01.Code.Manager
             {
                 return;
             }
+
+            GameManager.Instance.UiManager?.CancelSelection();
             ResetPointerState();
         }
 

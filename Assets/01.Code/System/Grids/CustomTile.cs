@@ -34,12 +34,16 @@ namespace _01.Code.System.Grids
         }
         [field:SerializeField] public Vector2 Position { get; private set; }
         public Entity TileObject { get; private set; }
-        // <summary>아무것도 안넣으면 </summary>
-        public void SetTileObj(Entity tileObj = null, int cost = 1, TileObjectType objectType = TileObjectType.None)
+
+        public void SetTileObj(Entity tileObj = null, TileObjectType objectType = TileObjectType.None)
         {
             TileObject = tileObj;
             ObjectType = objectType;
-            Cost = cost;
+        }
+
+        public void SetCost(int cost)
+        {
+            Cost = Mathf.Max(1, cost);
         }
 
         public bool IsEmpty()

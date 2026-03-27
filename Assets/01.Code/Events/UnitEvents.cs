@@ -59,11 +59,14 @@ namespace _01.Code.Events
     {
         public PlaceableEntity PlaceableEntity { get; private set; }
         public Vector3 WorldPosition { get; private set; }
+        
+        public int TileScore {get; private set;}
 
-        public MoveUnitRequestedEvent Initializer(PlaceableEntity placeableEntity, Vector3 worldPosition)
+        public MoveUnitRequestedEvent Initializer(PlaceableEntity placeableEntity, Vector3 worldPosition, int tileScore)
         {
             PlaceableEntity = placeableEntity;
             WorldPosition = worldPosition;
+            TileScore = tileScore;
             return this;
         }
     }

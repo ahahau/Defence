@@ -57,7 +57,7 @@ namespace _01.Code.Manager
             {
                 return false;
             }
-
+            
             Vector2Int targetPosition = GameManager.Instance.GridManager.WorldToCell(worldPosition);
             Vector2Int currentPosition = placeableEntity.GridPosition;
 
@@ -71,6 +71,18 @@ namespace _01.Code.Manager
             if (!GameManager.Instance.GridManager.IsCellEmpty(targetPosition))
             {
                 GameManager.Instance.LogManager?.Building($"Target cell {targetPosition} is not empty for `{placeableEntity.name}`.", LogLevel.Warning);
+                RaiseBuildingMoveFailed(placeableEntity, currentPosition);
+                return false;
+            }
+
+            int moveCost = GameManager.Instance.GridManager.GetTileCost(targetPosition);
+            TrySpendCostEvent moveSpendRequest = CostEvents.TrySpendCostEvent.Initializer(CostType.Gold, moveCost);
+            costEventChannel.RaiseEvent(moveSpendRequest);
+            if (!moveSpendRequest.Succeeded)
+            {
+                GameManager.Instance.LogManager?.Building(
+                    $"Failed to spend move cost ({moveCost}) for `{placeableEntity.name}` to {targetPosition}.",
+                    LogLevel.Warning);
                 RaiseBuildingMoveFailed(placeableEntity, currentPosition);
                 return false;
             }
@@ -113,11 +125,16 @@ namespace _01.Code.Manager
                 return false;
             }
 
-            TrySpendCostEvent spendRequest = CostEvents.TrySpendCostEvent.Initializer(CostType.Gold, unitData.Cost);
+            int tileCost = GameManager.Instance.GridManager.GetTileCost(buildPosition);
+            int totalCost = unitData.Cost + tileCost;
+
+            TrySpendCostEvent spendRequest = CostEvents.TrySpendCostEvent.Initializer(CostType.Gold, totalCost);
             costEventChannel.RaiseEvent(spendRequest);
             if (!spendRequest.Succeeded)
             {
-                GameManager.Instance.LogManager?.Building($"Failed to spend gold for `{unitData.Name}`.", LogLevel.Warning);
+                GameManager.Instance.LogManager?.Building(
+                    $"Failed to spend gold for `{unitData.Name}`. Unit cost={unitData.Cost}, tile cost={tileCost}, total={totalCost}.",
+                    LogLevel.Warning);
                 RaiseBuildFailed(unitData, buildPosition);
                 return false;
             }

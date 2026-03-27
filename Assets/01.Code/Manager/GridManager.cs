@@ -40,6 +40,12 @@ namespace _01.Code.Manager
 
         public CustomTile GetTile(Vector2Int cellPosition) => Tilemap.GetTile(cellPosition);
 
+        public int GetTileCost(Vector2Int cellPosition)
+        {
+            CustomTile tile = GetTile(cellPosition);
+            return tile == null ? 1 : Mathf.Max(1, tile.Cost);
+        }
+
         public Vector2Int GetRandomGridPosition()
         {
             int cnt = 0;

@@ -22,4 +22,15 @@ namespace _01.Code.Events
             return this;
         }
     }
+
+    public class LeftUpperPanelChange : GameEvent
+    {
+        public int PanelIndex{get; private set;}
+
+        public LeftUpperPanelChange Initializer(int panelIndex)
+        {
+            PanelIndex = panelIndex;
+            return this;
+        }
+    }
 }
