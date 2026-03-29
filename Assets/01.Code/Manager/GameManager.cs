@@ -13,6 +13,7 @@ namespace _01.Code.Manager
         public UIManager UiManager { get; private set; }
         public BuildManager BuildManager { get; private set; }
         public WaveManager WaveManager { get; private set; }
+        public TimeManager TimeManager { get; private set; }
         public EnemySpawnerManager EnemySpawnerManager { get; private set; }
         public LogManager LogManager { get; private set; }
 
@@ -32,21 +33,19 @@ namespace _01.Code.Manager
             UiManager = GetComponentInChildren<UIManager>();
             BuildManager = GetComponentInChildren<BuildManager>();
             WaveManager = GetComponentInChildren<WaveManager>();
+            TimeManager = GetComponentInChildren<TimeManager>();
             EnemySpawnerManager = GetComponentInChildren<EnemySpawnerManager>();
             LogManager = GetComponentInChildren<LogManager>();
-            if (LogManager == null)
-            {
-                LogManager = gameObject.AddComponent<LogManager>();
-            }
 
-            LogManager?.Initialize();
+            LogManager.Initialize();
             GridManager.Initialize();
-            InputManager.Initialize();
-            UiManager.Initialize();
-            BuildManager.Initialize();
+            CostManager.Initialize();
             WaveManager.Initialize();
             EnemySpawnerManager.Initialize();
-            CostManager.Initialize();
+            BuildManager.Initialize();
+            TimeManager.Initialize();
+            UiManager.Initialize();
+            InputManager.Initialize();
         }
     }
 }

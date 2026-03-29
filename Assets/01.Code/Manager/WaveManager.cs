@@ -15,6 +15,8 @@ namespace _01.Code.Manager
 
         private bool _isRunning;
 
+        public bool IsRunning => _isRunning;
+
         /// <summary>
         /// 이 함수는 웨이브 요청과 웨이브 클리어 이벤트를 구독합니다
         /// </summary>

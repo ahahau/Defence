@@ -1,14 +1,12 @@
-using _01.Code.UI;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using _01.Code.Combat;
 using _01.Code.Core;
 using _01.Code.Events;
 using _01.Code.Unit;
 using GondrLib.ObjectPool.Runtime;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace _01.Code.Manager
 {
@@ -17,15 +15,16 @@ namespace _01.Code.Manager
         [SerializeField] private GameEventChannelSO uiEventChannel;
         [SerializeField] private GameEventChannelSO buildEventChannel;
         [SerializeField] private GameEventChannelSO costEventChannel;
-        [SerializeField] private GameObject buildingPenalPrefab;
-        [SerializeField] private UIHeader uiHeader;
         [SerializeField] private DamageText damageTextPrefab;
         [SerializeField] private PoolManagerMono poolManager;
         [SerializeField] private PoolingItemSO damageTextPoolingItem;
         [SerializeField] private List<UnitDataSO> availableBuildings = new();
-        [SerializeField] private RectTransform buildPanelRoot;
-        private int _currentGold;
-        private readonly List<BuildingPaletteEntry> _paletteEntries = new();
+        [SerializeField] private List<UnitDataSO> availableUnits = new();
+
+        private bool _showResourcePage = true;
+        private Unit.Unit _placementPreview;
+        private readonly List<UiCostValueEntry> _defaultCostEntries = new();
+        private readonly List<UiResourceStackEntry> _resourceStackEntries = new();
 
         public UnitDataSO SelectedUnit { get; private set; }
         public Vector3 CurrentBuildPosition { get; private set; }
@@ -35,50 +34,61 @@ namespace _01.Code.Manager
 
         public void Initialize()
         {
-            if (buildPanelRoot == null)
-            {
-                GameObject panelObject = GameObject.Find("LeftPanel");
-                buildPanelRoot = panelObject != null ? panelObject.GetComponent<RectTransform>() : null;
-            }
-            
-            uiHeader?.Initialize();
-            BuildPalette();
-            RefreshAvailability();
-            uiEventChannel.AddListener<ShowDamageTextRequestedEvent>(HandleShowDamageTextRequestedEvent);
-            costEventChannel.AddListener<CostChangedEvent>(HandleCostChangedEvent);
-            buildEventChannel.AddListener<UnitGenerationEvent>(HandleUnitGenerationEvent);
-            buildEventChannel.AddListener<UnitGenerationFailedEvent>(HandleUnitGenerationFailedEvent);
+            HookEvents();
+            PublishUiState();
+        }
+
+        private void Start()
+        {
+            PublishUiState();
         }
 
         private void OnDestroy()
         {
             uiEventChannel.RemoveListener<ShowDamageTextRequestedEvent>(HandleShowDamageTextRequestedEvent);
+            uiEventChannel.RemoveListener<UiSkipDayRequestedEvent>(HandleSkipDayRequestedEvent);
+            uiEventChannel.RemoveListener<UiInventoryPageRequestedEvent>(HandleInventoryPageRequestedEvent);
+            uiEventChannel.RemoveListener<UiUnitSlotRequestedEvent>(HandleUnitSlotRequestedEvent);
             costEventChannel.RemoveListener<CostChangedEvent>(HandleCostChangedEvent);
             buildEventChannel.RemoveListener<UnitGenerationEvent>(HandleUnitGenerationEvent);
             buildEventChannel.RemoveListener<UnitGenerationFailedEvent>(HandleUnitGenerationFailedEvent);
-        }
 
-        private bool CanAfford(UnitDataSO unitData)
-        {
-            return unitData != null && _currentGold >= unitData.Cost;
+            if (GameManager.Instance?.TimeManager != null)
+            {
+                GameManager.Instance.TimeManager.OnDayCountChanged -= HandleTimeChanged;
+                GameManager.Instance.TimeManager.OnPhaseChanged -= HandlePhaseChanged;
+            }
         }
 
         public void SelectBuilding(UnitDataSO unitData)
         {
+            if (!CanUseDayActions())
+            {
+                return;
+            }
+
+            if (SelectedUnit == unitData)
+            {
+                CancelSelection();
+                return;
+            }
+
             SelectedUnit = unitData;
+            EnsurePlacementPreview();
             OnBuildingSelected?.Invoke(unitData);
-            RefreshAvailability();
+            PublishUiState();
         }
 
         public void CancelSelection()
         {
             SelectedUnit = null;
-            RefreshAvailability();
+            ClearPlacementPreview();
+            PublishUiState();
         }
 
         public bool TryRequestBuild(Vector3 worldPosition)
         {
-            if (SelectedUnit == null)
+            if (!CanUseDayActions() || SelectedUnit == null)
             {
                 return false;
             }
@@ -88,26 +98,131 @@ namespace _01.Code.Manager
             buildEventChannel.RaiseEvent(UnitEvents.UnitGenerationRequestedEvent.Initializer(SelectedUnit, worldPosition));
             return true;
         }
-    
-        private void HandleCostChangedEvent(CostChangedEvent evt)
+
+        private void HookEvents()
         {
-            if (evt == null || evt.Type != CostType.Gold)
+            uiEventChannel.AddListener<ShowDamageTextRequestedEvent>(HandleShowDamageTextRequestedEvent);
+            uiEventChannel.AddListener<UiSkipDayRequestedEvent>(HandleSkipDayRequestedEvent);
+            uiEventChannel.AddListener<UiInventoryPageRequestedEvent>(HandleInventoryPageRequestedEvent);
+            uiEventChannel.AddListener<UiUnitSlotRequestedEvent>(HandleUnitSlotRequestedEvent);
+            costEventChannel.AddListener<CostChangedEvent>(HandleCostChangedEvent);
+            buildEventChannel.AddListener<UnitGenerationEvent>(HandleUnitGenerationEvent);
+            buildEventChannel.AddListener<UnitGenerationFailedEvent>(HandleUnitGenerationFailedEvent);
+
+            if (GameManager.Instance?.TimeManager != null)
+            {
+                GameManager.Instance.TimeManager.OnDayCountChanged += HandleTimeChanged;
+                GameManager.Instance.TimeManager.OnPhaseChanged += HandlePhaseChanged;
+            }
+        }
+
+        private void Update()
+        {
+            if (_placementPreview == null || SelectedUnit == null || GameManager.Instance?.GridManager == null || GameManager.Instance?.InputManager == null)
             {
                 return;
             }
 
-            _currentGold = evt.Current;
-            RefreshAvailability();
+            _placementPreview.PreviewPosition(GameManager.Instance.InputManager.CurrentMouseCellPosition);
+        }
+
+        private void HandleSkipDayRequestedEvent(UiSkipDayRequestedEvent _)
+        {
+            CancelSelection();
+            GameManager.Instance?.TimeManager?.TrySkipDay();
+        }
+
+        private void HandleInventoryPageRequestedEvent(UiInventoryPageRequestedEvent evt)
+        {
+            if (evt == null)
+            {
+                return;
+            }
+
+            _showResourcePage = evt.ShowResources;
+            PublishUiState();
+        }
+
+        private void HandleUnitSlotRequestedEvent(UiUnitSlotRequestedEvent evt)
+        {
+            if (evt?.UnitData == null)
+            {
+                return;
+            }
+
+            SelectBuilding(evt.UnitData);
+        }
+
+        private void HandleTimeChanged(int _)
+        {
+            PublishUiState();
+        }
+
+        private void HandlePhaseChanged(TimePhase _)
+        {
+            PublishUiState();
+        }
+
+        private void HandleCostChangedEvent(CostChangedEvent _)
+        {
+            PublishUiState();
         }
 
         private void HandleUnitGenerationEvent(UnitGenerationEvent _)
         {
-            RefreshAvailability();
+            ClearPlacementPreview();
+            SelectedUnit = null;
+            PublishUiState();
         }
 
         private void HandleUnitGenerationFailedEvent(UnitGenerationFailedEvent _)
         {
-            RefreshAvailability();
+            PublishUiState();
+        }
+
+        private void EnsurePlacementPreview()
+        {
+            ClearPlacementPreview();
+
+            if (SelectedUnit?.Prefab == null)
+            {
+                return;
+            }
+
+            _placementPreview = Instantiate(SelectedUnit.Prefab);
+            _placementPreview.name = $"{SelectedUnit.Name}_Preview";
+
+            foreach (MonoBehaviour behaviour in _placementPreview.GetComponentsInChildren<MonoBehaviour>(true))
+            {
+                behaviour.enabled = false;
+            }
+
+            foreach (Collider2D collider2D in _placementPreview.GetComponentsInChildren<Collider2D>(true))
+            {
+                collider2D.enabled = false;
+            }
+
+            foreach (Rigidbody2D body in _placementPreview.GetComponentsInChildren<Rigidbody2D>(true))
+            {
+                body.simulated = false;
+            }
+
+            foreach (SpriteRenderer spriteRenderer in _placementPreview.GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                Color color = spriteRenderer.color;
+                spriteRenderer.color = new Color(color.r, color.g, color.b, color.a * 0.45f);
+                spriteRenderer.sortingOrder += 1000;
+            }
+
+        }
+
+        private void ClearPlacementPreview()
+        {
+            if (_placementPreview != null)
+            {
+                Destroy(_placementPreview.gameObject);
+                _placementPreview = null;
+            }
         }
 
         private void HandleShowDamageTextRequestedEvent(ShowDamageTextRequestedEvent evt)
@@ -134,144 +249,83 @@ namespace _01.Code.Manager
 
             if (damageText == null)
             {
-                GameObject damageTextObject = new GameObject("DamageText");
-                damageTextObject.transform.position = evt.WorldPosition;
-                damageText = damageTextObject.AddComponent<DamageText>();
+                GameObject textObject = new GameObject("DamageText");
+                textObject.transform.position = evt.WorldPosition;
+                damageText = textObject.AddComponent<DamageText>();
             }
 
             damageText.Initialize(evt.Damage, evt.FollowTarget);
         }
 
-        private void BuildPalette()
+        private void PublishUiState()
         {
-            if (buildPanelRoot == null)
+            int day = GameManager.Instance.TimeManager.DayCount;
+            bool isDay = GameManager.Instance.TimeManager.IsDay;
+            int primaryCost = GetCost(GameManager.Instance.CostManager.PrimarySpendCost);
+
+            BuildDefaultCostEntries();
+            BuildResourceStackEntries();
+
+            uiEventChannel.RaiseEvent(UIEvents.UiClockStateChangedEvent.Initializer(day, isDay));
+            uiEventChannel.RaiseEvent(UIEvents.UiDefaultCostBarStateChangedEvent.Initializer(_defaultCostEntries));
+            uiEventChannel.RaiseEvent(UIEvents.UiResourceGridStateChangedEvent.Initializer(_resourceStackEntries));
+            uiEventChannel.RaiseEvent(UIEvents.UiInventoryPageChangedEvent.Initializer(_showResourcePage));
+            uiEventChannel.RaiseEvent(UIEvents.UiUnitInventoryStateChangedEvent.Initializer(
+                availableUnits,
+                SelectedUnit,
+                CanUseDayActions(),
+                primaryCost));
+        }
+
+        private int GetCost(CostDefinitionSO type)
+        {
+            return GameManager.Instance.CostManager.GetCurrent(type);
+        }
+
+        private bool CanUseDayActions()
+        {
+            return GameManager.Instance.TimeManager.IsDay;
+        }
+
+        private bool CanAfford(UnitDataSO unitData)
+        {
+            return unitData != null && GetCost(GameManager.Instance.CostManager.PrimarySpendCost) >= unitData.Cost;
+        }
+
+        private void BuildDefaultCostEntries()
+        {
+            _defaultCostEntries.Clear();
+            IReadOnlyList<CostDefinitionSO> defaultCosts = GameManager.Instance.CostManager.DefaultCosts;
+            for (int i = 0; i < defaultCosts.Count; i++)
             {
-                return;
+                CostDefinitionSO definition = defaultCosts[i];
+                _defaultCostEntries.Add(new UiCostValueEntry().Initialize(
+                    definition,
+                    GameManager.Instance.CostManager.GetCurrent(definition),
+                    GameManager.Instance.CostManager.GetMax(definition)));
             }
+        }
 
-            _paletteEntries.Clear();
-            ClearBuildPanelChildren();
-
-            if (availableBuildings.Count == 0)
+        private void BuildResourceStackEntries()
+        {
+            _resourceStackEntries.Clear();
+            IReadOnlyList<CostDefinitionSO> resourceCosts = GameManager.Instance.CostManager.ResourceCosts;
+            for (int i = 0; i < resourceCosts.Count; i++)
             {
-                return;
-            }
-
-            VerticalLayoutGroup layoutGroup = buildPanelRoot.GetComponent<VerticalLayoutGroup>();
-            if (layoutGroup == null)
-            {
-                layoutGroup = buildPanelRoot.gameObject.AddComponent<VerticalLayoutGroup>();
-                layoutGroup.childControlHeight = true;
-                layoutGroup.childControlWidth = true;
-                layoutGroup.childForceExpandHeight = false;
-                layoutGroup.childForceExpandWidth = true;
-                layoutGroup.spacing = 12f;
-                layoutGroup.padding = new RectOffset(18, 18, 24, 24);
-            }
-
-            ContentSizeFitter sizeFitter = buildPanelRoot.GetComponent<ContentSizeFitter>();
-            if (sizeFitter == null)
-            {
-                sizeFitter = buildPanelRoot.gameObject.AddComponent<ContentSizeFitter>();
-                sizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            }
-
-            foreach (UnitDataSO unitData in availableBuildings)
-            {
-                if (unitData == null)
+                CostDefinitionSO definition = resourceCosts[i];
+                int current = GameManager.Instance.CostManager.GetCurrent(definition);
+                if (current <= 0)
                 {
                     continue;
                 }
 
-                _paletteEntries.Add(CreatePaletteEntry(unitData));
+                while (current > 0)
+                {
+                    int stackAmount = Mathf.Min(99, current);
+                    _resourceStackEntries.Add(new UiResourceStackEntry().Initialize(definition, stackAmount));
+                    current -= stackAmount;
+                }
             }
-        }
-
-        private void ClearBuildPanelChildren()
-        {
-            for (int i = buildPanelRoot.childCount - 1; i >= 0; i--)
-            {
-                Destroy(buildPanelRoot.GetChild(i).gameObject);
-            }
-        }
-
-        private BuildingPaletteEntry CreatePaletteEntry(UnitDataSO unitData)
-        {
-            GameObject buttonObject = new GameObject($"{unitData.Name}Button", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
-            buttonObject.transform.SetParent(buildPanelRoot, false);
-
-            RectTransform rectTransform = buttonObject.GetComponent<RectTransform>();
-            rectTransform.sizeDelta = new Vector2(0f, 84f);
-
-            Image background = buttonObject.GetComponent<Image>();
-            background.color = new Color(0.12f, 0.16f, 0.22f, 0.92f);
-
-            Button button = buttonObject.GetComponent<Button>();
-            button.targetGraphic = background;
-            button.onClick.AddListener(() => SelectBuilding(unitData));
-
-            ColorBlock colors = button.colors;
-            colors.normalColor = background.color;
-            colors.highlightedColor = new Color(0.18f, 0.24f, 0.32f, 0.96f);
-            colors.pressedColor = new Color(0.28f, 0.36f, 0.46f, 1f);
-            colors.selectedColor = colors.highlightedColor;
-            colors.disabledColor = new Color(0.12f, 0.12f, 0.12f, 0.45f);
-            button.colors = colors;
-
-            LayoutElement layoutElement = buttonObject.GetComponent<LayoutElement>();
-            layoutElement.minHeight = 84f;
-            layoutElement.preferredHeight = 84f;
-
-            GameObject textObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-            textObject.transform.SetParent(buttonObject.transform, false);
-
-            RectTransform textRect = textObject.GetComponent<RectTransform>();
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.offsetMin = new Vector2(18f, 12f);
-            textRect.offsetMax = new Vector2(-18f, -12f);
-
-            TextMeshProUGUI label = textObject.GetComponent<TextMeshProUGUI>();
-            label.text = $"{unitData.Name}\n<size=60%>Cost {unitData.Cost}</size>";
-            label.fontSize = 28f;
-            label.alignment = TextAlignmentOptions.MidlineLeft;
-            label.enableWordWrapping = false;
-            label.color = Color.white;
-
-            return new BuildingPaletteEntry(unitData, button, background, label);
-        }
-
-        private void RefreshAvailability()
-        {
-            uiHeader?.RefreshAvailability();
-
-            foreach (BuildingPaletteEntry entry in _paletteEntries)
-            {
-                bool isAffordable = CanAfford(entry.UnitData);
-                bool isSelected = entry.UnitData == SelectedUnit;
-
-                entry.Button.interactable = isAffordable;
-                entry.Background.color = isSelected
-                    ? new Color(0.8f, 0.56f, 0.18f, 0.98f)
-                    : new Color(0.12f, 0.16f, 0.22f, 0.92f);
-                entry.Label.color = isAffordable ? Color.white : new Color(1f, 1f, 1f, 0.45f);
-            }
-        }
-
-        private readonly struct BuildingPaletteEntry
-        {
-            public BuildingPaletteEntry(UnitDataSO unitData, Button button, Image background, TextMeshProUGUI label)
-            {
-                UnitData = unitData;
-                Button = button;
-                Background = background;
-                Label = label;
-            }
-
-            public UnitDataSO UnitData { get; }
-            public Button Button { get; }
-            public Image Background { get; }
-            public TextMeshProUGUI Label { get; }
         }
     }
 }

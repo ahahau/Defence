@@ -38,6 +38,12 @@ namespace _01.Code.Manager
                 return false;
             }
 
+            if (!CanModifyPlacements())
+            {
+                RaiseBuildingMoveFailed(placeableEntity, placeableEntity.GridPosition);
+                return false;
+            }
+
             Vector2Int buildPosition = GameManager.Instance.GridManager.WorldToCell(worldPosition);
 
             if (!GameManager.Instance.GridManager.IsCellEmpty(buildPosition))
@@ -55,6 +61,12 @@ namespace _01.Code.Manager
         {
             if (placeableEntity == null)
             {
+                return false;
+            }
+
+            if (!CanModifyPlacements())
+            {
+                RaiseBuildingMoveFailed(placeableEntity, placeableEntity.GridPosition);
                 return false;
             }
             
@@ -75,8 +87,8 @@ namespace _01.Code.Manager
                 return false;
             }
 
-            int moveCost = GameManager.Instance.GridManager.GetTileCost(targetPosition);
-            TrySpendCostEvent moveSpendRequest = CostEvents.TrySpendCostEvent.Initializer(CostType.Gold, moveCost);
+            int moveCost = 0;
+            TrySpendCostEvent moveSpendRequest = CostEvents.TrySpendCostEvent.Initializer(GameManager.Instance.CostManager.PrimarySpendCost, moveCost);
             costEventChannel.RaiseEvent(moveSpendRequest);
             if (!moveSpendRequest.Succeeded)
             {
@@ -118,6 +130,12 @@ namespace _01.Code.Manager
 
             Vector2Int buildPosition = GameManager.Instance.GridManager.WorldToCell(worldPosition);
 
+            if (!CanModifyPlacements())
+            {
+                RaiseBuildFailed(unitData, buildPosition);
+                return false;
+            }
+
             if (!GameManager.Instance.GridManager.IsCellEmpty(buildPosition))
             {
                 GameManager.Instance.LogManager?.Building($"Install blocked for `{unitData.Name}` at occupied cell {buildPosition}.", LogLevel.Warning);
@@ -125,15 +143,14 @@ namespace _01.Code.Manager
                 return false;
             }
 
-            int tileCost = GameManager.Instance.GridManager.GetTileCost(buildPosition);
-            int totalCost = unitData.Cost + tileCost;
+            int totalCost = unitData.Cost;
 
-            TrySpendCostEvent spendRequest = CostEvents.TrySpendCostEvent.Initializer(CostType.Gold, totalCost);
+            TrySpendCostEvent spendRequest = CostEvents.TrySpendCostEvent.Initializer(GameManager.Instance.CostManager.PrimarySpendCost, totalCost);
             costEventChannel.RaiseEvent(spendRequest);
             if (!spendRequest.Succeeded)
             {
                 GameManager.Instance.LogManager?.Building(
-                    $"Failed to spend gold for `{unitData.Name}`. Unit cost={unitData.Cost}, tile cost={tileCost}, total={totalCost}.",
+                    $"Failed to spend gold for `{unitData.Name}`. Unit cost={unitData.Cost}, total={totalCost}.",
                     LogLevel.Warning);
                 RaiseBuildFailed(unitData, buildPosition);
                 return false;
@@ -183,6 +200,17 @@ namespace _01.Code.Manager
         {
             OnBuildingMoveFailed?.Invoke();
             buildEventChannel.RaiseEvent(UnitEvents.UnitMoveFailedEvent.Initializer(placeableEntity, originalPosition));
+        }
+
+        private bool CanModifyPlacements()
+        {
+            if (GameManager.Instance?.TimeManager == null || GameManager.Instance.TimeManager.IsDay)
+            {
+                return true;
+            }
+
+            GameManager.Instance.LogManager?.Building("Placement and movement are disabled at night.", LogLevel.Warning);
+            return false;
         }
     }
 }

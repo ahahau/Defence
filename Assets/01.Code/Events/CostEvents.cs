@@ -12,11 +12,11 @@ namespace _01.Code.Events
 
     public class CostChangedEvent : GameEvent
     {
-        public CostType Type { get; private set; }
+        public CostDefinitionSO Type { get; private set; }
         public int Current { get; private set; }
         public int Max { get; private set; }
 
-        public CostChangedEvent Initializer(CostType type, int current, int max)
+        public CostChangedEvent Initializer(CostDefinitionSO type, int current, int max)
         {
             Type = type;
             Current = current;
@@ -27,11 +27,11 @@ namespace _01.Code.Events
 
     public class TrySpendCostEvent : GameEvent
     {
-        public CostType Type { get; private set; }
+        public CostDefinitionSO Type { get; private set; }
         public int Amount { get; private set; }
         public bool Succeeded { get; set; }
 
-        public TrySpendCostEvent Initializer(CostType type, int amount)
+        public TrySpendCostEvent Initializer(CostDefinitionSO type, int amount)
         {
             Type = type;
             Amount = amount;
@@ -42,10 +42,10 @@ namespace _01.Code.Events
 
     public class RefundCostEvent : GameEvent
     {
-        public CostType Type { get; private set; }
+        public CostDefinitionSO Type { get; private set; }
         public int Amount { get; private set; }
 
-        public RefundCostEvent Initializer(CostType type, int amount)
+        public RefundCostEvent Initializer(CostDefinitionSO type, int amount)
         {
             Type = type;
             Amount = amount;
