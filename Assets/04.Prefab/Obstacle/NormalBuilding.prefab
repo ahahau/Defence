@@ -62,9 +62,9 @@ GameObject:
   - component: {fileID: 6316483169468099511}
   - component: {fileID: 7700407476922260051}
   - component: {fileID: 3912201845637812345}
-  m_Layer: 7
+  m_Layer: 8
   m_Name: NormalBuilding
-  m_TagString: Building
+  m_TagString: Unit
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -134,7 +134,7 @@ MonoBehaviour:
   <Tile>k__BackingField:
     <Position>k__BackingField: {x: 0, y: 0}
   <GridPosition>k__BackingField: {x: 0, y: 0}
-  sensor: {fileID: 0}
+  sensor: {fileID: 5617472471396013486}
   attackDamage: 1000
   attackCooldown: 0.3
 --- !u!61 &3912201845637812345

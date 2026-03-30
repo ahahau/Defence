@@ -7,11 +7,10 @@ namespace _01.Code.Buildings
 {
     public class CommandCenter : Unit.Unit
     {
-        public override void Initialize(Vector2Int position)
+        public override bool Initialize(Vector2Int position)
         {
             position = GameManager.Instance.GridManager.WorldToCell(transform.position);
-            base.Initialize(position);
-            //entityHealth.Initialize(this);
+            return base.Initialize(position);
         }
     }
 }

@@ -9,32 +9,33 @@ namespace _01.Code.Entities
         [field:SerializeField]public CustomTile Tile { get; private set; }
         [field: SerializeField] public Vector2Int GridPosition { get; protected set; }
 
-        public virtual void Initialize(Vector2Int position)
+        public virtual bool Initialize(Vector2Int position)
         {
-            GridPosition = position;
-            SetTile(position);
+            return SetTile(position);
         }
 
-        public virtual void Initialize()
+        public virtual bool Initialize()
         {
             Vector2Int randomPos = GameManager.Instance.GridManager.GetRandomGridPosition();
             if(randomPos == Vector2Int.zero)
             {
                 GameManager.Instance.LogManager?.Building($"{gameObject.name}: no empty tile found.", LogLevel.Error);
+                return false;
             }
-            Vector2Int position = randomPos;
-            GridPosition = new Vector2Int(position.x,position.y);
-            SetTile(position);
+
+            return SetTile(randomPos);
         }
-        public virtual void SetTile(Vector2Int tilePos)
+
+        public virtual bool SetTile(Vector2Int tilePos)
         {
             if (!GameManager.Instance.GridManager.TryInstall(tilePos, this))
             {
                 GameManager.Instance.LogManager?.Building($"{gameObject.name}: tile install failed at {tilePos}.", LogLevel.Error);
-                return;
+                return false;
             }
 
             CommitPosition(tilePos);
+            return true;
         }
 
         public virtual void PreviewPosition(Vector2Int tilePos)

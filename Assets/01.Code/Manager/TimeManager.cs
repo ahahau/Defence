@@ -28,6 +28,13 @@ namespace _01.Code.Manager
             NotifyCurrentState();
         }
 
+        public void RestoreState(int dayCount, TimePhase phase)
+        {
+            DayCount = Mathf.Max(1, dayCount);
+            CurrentPhase = phase;
+            NotifyCurrentState();
+        }
+
         private void OnDestroy()
         {
             GameManager.Instance.WaveManager.OnWaveStarted -= HandleWaveStarted;

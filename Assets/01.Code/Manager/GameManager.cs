@@ -16,6 +16,7 @@ namespace _01.Code.Manager
         public TimeManager TimeManager { get; private set; }
         public EnemySpawnerManager EnemySpawnerManager { get; private set; }
         public LogManager LogManager { get; private set; }
+        public SaveManager SaveManager { get; private set; }
 
         private void Awake()
         {
@@ -36,6 +37,11 @@ namespace _01.Code.Manager
             TimeManager = GetComponentInChildren<TimeManager>();
             EnemySpawnerManager = GetComponentInChildren<EnemySpawnerManager>();
             LogManager = GetComponentInChildren<LogManager>();
+            SaveManager = GetComponentInChildren<SaveManager>();
+            if (SaveManager == null)
+            {
+                SaveManager = gameObject.AddComponent<SaveManager>();
+            }
 
             LogManager.Initialize();
             GridManager.Initialize();
@@ -45,6 +51,7 @@ namespace _01.Code.Manager
             BuildManager.Initialize();
             TimeManager.Initialize();
             UiManager.Initialize();
+            SaveManager.Initialize();
             InputManager.Initialize();
         }
     }

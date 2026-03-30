@@ -21,7 +21,10 @@ namespace _01.Code.Manager
             Grid.cellSize = new Vector3(cellSize, cellSize, 0);
             Tilemap = new CustomTilemap(Size, Size);
             PathFinder = new Pathfinder(Tilemap);
-            commandCenter.Initialize(new Vector2Int(0, 0));
+            if (!commandCenter.Initialize(new Vector2Int(0, 0)))
+            {
+                GameManager.Instance.LogManager?.Building("CommandCenter tile install failed during grid initialization.", LogLevel.Error);
+            }
         }
 
         public Vector2Int WorldToCell(Vector3 worldPosition)

@@ -28,6 +28,8 @@ namespace _01.Code.Manager
 
         public UnitDataSO SelectedUnit { get; private set; }
         public Vector3 CurrentBuildPosition { get; private set; }
+        public IReadOnlyList<UnitDataSO> AvailableBuildings => availableBuildings;
+        public IReadOnlyList<UnitDataSO> AvailableUnits => availableUnits;
 
         public event Action<UnitDataSO> OnBuildingSelected;
         public event Action<UnitDataSO, Vector3> OnBuildRequested;
@@ -50,8 +52,8 @@ namespace _01.Code.Manager
             uiEventChannel.RemoveListener<UiInventoryPageRequestedEvent>(HandleInventoryPageRequestedEvent);
             uiEventChannel.RemoveListener<UiUnitSlotRequestedEvent>(HandleUnitSlotRequestedEvent);
             costEventChannel.RemoveListener<CostChangedEvent>(HandleCostChangedEvent);
-            buildEventChannel.RemoveListener<UnitGenerationEvent>(HandleUnitGenerationEvent);
-            buildEventChannel.RemoveListener<UnitGenerationFailedEvent>(HandleUnitGenerationFailedEvent);
+            buildEventChannel.RemoveListener<BuildCompletedEvent>(HandleBuildCompletedEvent);
+            buildEventChannel.RemoveListener<BuildFailedEvent>(HandleBuildFailedEvent);
 
             if (GameManager.Instance?.TimeManager != null)
             {
@@ -95,8 +97,13 @@ namespace _01.Code.Manager
 
             CurrentBuildPosition = worldPosition;
             OnBuildRequested?.Invoke(SelectedUnit, worldPosition);
-            buildEventChannel.RaiseEvent(UnitEvents.UnitGenerationRequestedEvent.Initializer(SelectedUnit, worldPosition));
+            buildEventChannel.RaiseEvent(BuildEvents.BuildRequestedEvent.Initializer(SelectedUnit, worldPosition));
             return true;
+        }
+
+        public void RefreshUiState()
+        {
+            PublishUiState();
         }
 
         private void HookEvents()
@@ -106,8 +113,8 @@ namespace _01.Code.Manager
             uiEventChannel.AddListener<UiInventoryPageRequestedEvent>(HandleInventoryPageRequestedEvent);
             uiEventChannel.AddListener<UiUnitSlotRequestedEvent>(HandleUnitSlotRequestedEvent);
             costEventChannel.AddListener<CostChangedEvent>(HandleCostChangedEvent);
-            buildEventChannel.AddListener<UnitGenerationEvent>(HandleUnitGenerationEvent);
-            buildEventChannel.AddListener<UnitGenerationFailedEvent>(HandleUnitGenerationFailedEvent);
+            buildEventChannel.AddListener<BuildCompletedEvent>(HandleBuildCompletedEvent);
+            buildEventChannel.AddListener<BuildFailedEvent>(HandleBuildFailedEvent);
 
             if (GameManager.Instance?.TimeManager != null)
             {
@@ -168,14 +175,14 @@ namespace _01.Code.Manager
             PublishUiState();
         }
 
-        private void HandleUnitGenerationEvent(UnitGenerationEvent _)
+        private void HandleBuildCompletedEvent(BuildCompletedEvent _)
         {
             ClearPlacementPreview();
             SelectedUnit = null;
             PublishUiState();
         }
 
-        private void HandleUnitGenerationFailedEvent(UnitGenerationFailedEvent _)
+        private void HandleBuildFailedEvent(BuildFailedEvent _)
         {
             PublishUiState();
         }

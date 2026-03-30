@@ -111,11 +111,14 @@ public static class SessionNotesAutoSave
         bool hasNormalBuildingData = AssetDatabase.LoadAssetAtPath<UnitDataSO>("Assets/08.SO/Buildings/NormalBuilding.asset") != null;
 
         int availableBuildingCount = 0;
+        int availableUnitCount = 0;
         if (uiManager != null)
         {
             SerializedObject serialized = new SerializedObject(uiManager);
             SerializedProperty availableBuildings = serialized.FindProperty("availableBuildings");
+            SerializedProperty availableUnits = serialized.FindProperty("availableUnits");
             availableBuildingCount = availableBuildings != null ? availableBuildings.arraySize : 0;
+            availableUnitCount = availableUnits != null ? availableUnits.arraySize : 0;
         }
 
         var sb = new StringBuilder();
@@ -136,6 +139,7 @@ public static class SessionNotesAutoSave
         sb.AppendLine($"- WaveManager present: `{(waveManager != null)}`");
         sb.AppendLine($"- EnemySpawnerManager present: `{(enemySpawnerManager != null)}`");
         sb.AppendLine($"- UIManager available building count: `{availableBuildingCount}`");
+        sb.AppendLine($"- UIManager available unit count: `{availableUnitCount}`");
         sb.AppendLine();
 
         sb.AppendLine("### Assets");
@@ -157,7 +161,7 @@ public static class SessionNotesAutoSave
         sb.AppendLine("### Current Setup");
         sb.AppendLine("- Build flow: `InputManager -> UIManager -> MainPanel -> BuildManager`");
         sb.AppendLine("- Wave flow: `WaveManager <-> WaveEventChannel.asset <-> EnemySpawnerManager`");
-        sb.AppendLine("- Scene bootstrap helper: `Tools/Setup Game Scene UI`");
+        sb.AppendLine("- Scene bootstrap helper: `missing / update handoff if replaced`");
         sb.AppendLine("- Session notes manual update: `Tools/Session Notes/Update Now`");
         sb.AppendLine("- Auto update trigger: Unity Editor quit");
         sb.AppendLine();

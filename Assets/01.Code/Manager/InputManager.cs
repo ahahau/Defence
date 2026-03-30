@@ -1,4 +1,5 @@
 using _01.Code.Cameras;
+using _01.Code.Entities;
 using _01.Code.Core;
 using _01.Code.Unit;
 using UnityEngine;
@@ -14,9 +15,10 @@ namespace _01.Code.Manager
         [SerializeField] private LayerMask whatIsClickable;
         [SerializeField] private float dragStartThresholdPixels = 8f;
         private Unit.Unit _draggedUnit;
+        private PlaceableEntity _selectedBuilding;
         private Collider2D _pointerDownCollider;
         private bool _isPointerDown;
-        private bool _isDraggingBuilding;
+        private bool _isDraggingUnit;
         private bool _queuedLeftPointerPressed;
         private bool _queuedLeftPointerReleased;
         private bool _queuedRightPointerPressed;
@@ -55,14 +57,14 @@ namespace _01.Code.Manager
                 HandleLeftPointerPressed();
             }
 
-            if (_isPointerDown && !_isDraggingBuilding && ShouldStartDragging(hoveredCell))
+            if (_isPointerDown && !_isDraggingUnit && ShouldStartDragging(hoveredCell))
             {
                 StartDragging();
             }
 
-            if (_isDraggingBuilding && _draggedUnit != null && InputData.IsLeftPointerPressed)
+            if (_isDraggingUnit && _draggedUnit != null && InputData.IsLeftPointerPressed)
             {
-                DragBuilding(hoveredCell);
+                DragUnit(hoveredCell);
             }
 
             if (_queuedLeftPointerReleased)
@@ -87,9 +89,15 @@ namespace _01.Code.Manager
 
         private void ClickObject(GameObject hitGameObject)
         {
-            if (!hitGameObject.CompareTag("Building"))
+            if (TryGetClickedUnit(hitGameObject, out Unit.Unit unit))
             {
+                ClickUnit(unit);
                 return;
+            }
+
+            if (TryGetClickedBuilding(hitGameObject, out PlaceableEntity building))
+            {
+                ClickBuilding(building);
             }
         }
 
@@ -121,13 +129,12 @@ namespace _01.Code.Manager
             }
 
             _isPointerDown = true;
-            _isDraggingBuilding = false;
+            _isDraggingUnit = false;
             _pointerDownScreenPosition = InputData.MousePosition;
             _pointerDownWorldPosition = worldPosition;
             _pointerDownCollider = GetHitCollider(worldPosition);
-            _draggedUnit = _pointerDownCollider != null && !_pointerDownCollider.CompareTag("EnemySpawner")
-                ? _pointerDownCollider.GetComponentInParent<Unit.Unit>()
-                : null;
+            _draggedUnit = ResolveDraggedUnit(_pointerDownCollider);
+            _selectedBuilding = ResolveSelectedBuilding(_pointerDownCollider);
         }
 
         private void HandleLeftPointerReleased()
@@ -139,9 +146,14 @@ namespace _01.Code.Manager
 
             Vector3 targetWorldPosition = GameManager.Instance.GridManager.CellToWorld(CurrentMouseCellPosition);
 
-            if (_isDraggingBuilding && _draggedUnit != null)
+            if (_isDraggingUnit && _draggedUnit != null)
             {
-                GameManager.Instance.BuildManager.TryMove(_draggedUnit, targetWorldPosition);
+                bool moved = GameManager.Instance.BuildManager.TryMove(_draggedUnit, targetWorldPosition);
+                if (!moved)
+                {
+                    _draggedUnit.CommitPosition(_draggedUnit.GridPosition);
+                }
+
                 ResetPointerState();
                 return;
             }
@@ -160,15 +172,15 @@ namespace _01.Code.Manager
 
         private void StartDragging()
         {
-            if (_draggedUnit == null)
+            if (_draggedUnit == null || !CanModifyPlacements())
             {
                 return;
             }
 
-            _isDraggingBuilding = true;
+            _isDraggingUnit = true;
         }
 
-        private void DragBuilding(Vector2Int gridPos)
+        private void DragUnit(Vector2Int gridPos)
         {
             CurrentMouseCellPosition = gridPos;
             _draggedUnit.PreviewPosition(gridPos);
@@ -176,7 +188,7 @@ namespace _01.Code.Manager
 
         private bool ShouldStartDragging(Vector2Int hoveredCell)
         {
-            if (_draggedUnit == null)
+            if (_draggedUnit == null || !CanModifyPlacements())
             {
                 return false;
             }
@@ -201,9 +213,16 @@ namespace _01.Code.Manager
         private void ResetPointerState()
         {
             _isPointerDown = false;
-            _isDraggingBuilding = false;
+            _isDraggingUnit = false;
             _draggedUnit = null;
+            _selectedBuilding = null;
             _pointerDownCollider = null;
+        }
+
+        private static bool CanModifyPlacements()
+        {
+            // return GameManager.Instance?.TimeManager == null || GameManager.Instance.TimeManager.IsDay;
+            return true;
         }
 
         private Collider2D GetHitCollider(Vector2 worldPosition)
@@ -214,6 +233,48 @@ namespace _01.Code.Manager
             }
 
             return Physics2D.OverlapPoint(worldPosition, whatIsClickable);
+        }
+
+        private static Unit.Unit ResolveDraggedUnit(Collider2D hitCollider)
+        {
+            if (hitCollider == null || hitCollider.CompareTag("EnemySpawner"))
+            {
+                return null;
+            }
+
+            return hitCollider.GetComponentInParent<Unit.Unit>();
+        }
+
+        private static PlaceableEntity ResolveSelectedBuilding(Collider2D hitCollider)
+        {
+            if (hitCollider == null || hitCollider.CompareTag("EnemySpawner"))
+            {
+                return null;
+            }
+
+            PlaceableEntity placeable = hitCollider.GetComponentInParent<PlaceableEntity>();
+            return placeable is Unit.Unit ? null : placeable;
+        }
+
+        private static bool TryGetClickedUnit(GameObject hitGameObject, out Unit.Unit unit)
+        {
+            unit = hitGameObject.GetComponentInParent<Unit.Unit>();
+            return unit != null;
+        }
+
+        private static bool TryGetClickedBuilding(GameObject hitGameObject, out PlaceableEntity building)
+        {
+            building = hitGameObject.GetComponentInParent<PlaceableEntity>();
+            return building != null && building is not Unit.Unit;
+        }
+
+        private static void ClickUnit(Unit.Unit _)
+        {
+        }
+
+        private void ClickBuilding(PlaceableEntity building)
+        {
+            _selectedBuilding = building;
         }
     }
 }

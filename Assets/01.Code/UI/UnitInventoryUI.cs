@@ -19,6 +19,10 @@ namespace _01.Code.UI
         [SerializeField] private Image[] images;
         [SerializeField] private TextMeshProUGUI[] titles;
         [SerializeField] private TextMeshProUGUI[] costs;
+        [SerializeField] private Color emptySlotTint = new(1f, 1f, 1f, 0.18f);
+        [SerializeField] private Color availableSlotTint = new(1f, 1f, 1f, 1f);
+        [SerializeField] private Color disabledSlotTint = new(0.7f, 0.7f, 0.7f, 0.65f);
+        [SerializeField] private Color selectedSlotTint = new(0.55f, 0.9f, 0.55f, 1f);
 
         private readonly List<UnitDataSO> _units = new();
         private UnitDataSO _selectedUnit;
@@ -97,6 +101,7 @@ namespace _01.Code.UI
                 button.onClick.RemoveAllListeners();
                 if (!hasData)
                 {
+                    ApplySlotVisuals(button, image, title, cost, emptySlotTint, false);
                     title.text = string.Empty;
                     cost.text = string.Empty;
                     button.interactable = false;
@@ -105,13 +110,53 @@ namespace _01.Code.UI
 
                 UnitDataSO unitData = _units[unitIndex];
                 bool interactable = _canUseDayActions && _currentPrimaryCost >= unitData.Cost;
+                bool isSelected = _selectedUnit == unitData;
                 title.text = unitData.Name;
                 cost.text = $"Cost {unitData.Cost}";
                 button.interactable = interactable;
+                ApplySlotVisuals(
+                    button,
+                    image,
+                    title,
+                    cost,
+                    isSelected ? selectedSlotTint : interactable ? availableSlotTint : disabledSlotTint,
+                    interactable);
 
                 UnitDataSO localUnitData = unitData;
                 button.onClick.AddListener(() => uiEventChannel.RaiseEvent(UIEvents.UiUnitSlotRequestedEvent.Initializer(localUnitData)));
             }
+        }
+
+        private static void ApplySlotVisuals(
+            Button button,
+            Graphic iconGraphic,
+            TMP_Text title,
+            TMP_Text cost,
+            Color tint,
+            bool interactable)
+        {
+            if (iconGraphic != null)
+            {
+                iconGraphic.color = tint;
+            }
+
+            if (title != null)
+            {
+                title.color = tint;
+            }
+
+            if (cost != null)
+            {
+                cost.color = tint;
+            }
+
+            ColorBlock colors = button.colors;
+            colors.normalColor = tint;
+            colors.selectedColor = tint;
+            colors.highlightedColor = interactable ? Color.Lerp(tint, Color.white, 0.12f) : tint;
+            colors.pressedColor = interactable ? Color.Lerp(tint, Color.black, 0.08f) : tint;
+            colors.disabledColor = tint;
+            button.colors = colors;
         }
     }
 }

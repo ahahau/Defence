@@ -112,8 +112,8 @@ namespace _01.Code.System.Grids
         }
         private bool IsValidPosition(Vector2Int cellPosition)
         {
-            return cellPosition.x >= -Size.x && cellPosition.x < Size.x &&
-                   cellPosition.y >= -Size.y && cellPosition.y < Size.y;
+            return cellPosition.x >= -Size.x && cellPosition.x <= Size.x &&
+                   cellPosition.y >= -Size.y && cellPosition.y <= Size.y;
         }
     }
 }

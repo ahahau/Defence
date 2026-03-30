@@ -47,7 +47,7 @@ namespace _01.Code.Entities
         public bool TryGetTargetEntity(Vector2Int originCell, out Entity targetEntity)
         {
             if (TryGetTargetCollider(originCell, out Collider2D targetCollider) &&
-                targetCollider.TryGetComponent(out targetEntity))
+                TryResolveTargetEntity(targetCollider, out targetEntity))
             {
                 return true;
             }
@@ -60,8 +60,8 @@ namespace _01.Code.Entities
         {
             if (TryGetTargetCollider(originCell, out Collider2D targetCollider))
             {
-                targetCollider.TryGetComponent(out targetEntity);
-                if (targetCollider.TryGetComponent(out damageable))
+                TryResolveTargetEntity(targetCollider, out targetEntity);
+                if (TryResolveDamageable(targetCollider, out damageable))
                 {
                     return true;
                 }
@@ -89,6 +89,28 @@ namespace _01.Code.Entities
             Vector2 searchSize = Vector2.one * Mathf.Max(1, searchSizeValue);
             targetCollider = Physics2D.OverlapBox(worldCenter, searchSize, 0f, targetLayer);
             return targetCollider != null;
+        }
+
+        private static bool TryResolveTargetEntity(Component source, out Entity targetEntity)
+        {
+            if (source.TryGetComponent(out targetEntity))
+            {
+                return true;
+            }
+
+            targetEntity = source.GetComponentInParent<Entity>();
+            return targetEntity != null;
+        }
+
+        private static bool TryResolveDamageable(Component source, out IDamageable damageable)
+        {
+            if (source.TryGetComponent(out damageable))
+            {
+                return true;
+            }
+
+            damageable = source.GetComponentInParent<IDamageable>();
+            return damageable != null;
         }
 
         private Vector2 GetWorldCenter(Vector2Int cellPosition)

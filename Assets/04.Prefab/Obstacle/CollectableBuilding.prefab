@@ -12,9 +12,9 @@ GameObject:
   - component: {fileID: 6316483169468099511}
   - component: {fileID: 3912201845637812345}
   - component: {fileID: 8662478738771581376}
-  m_Layer: 7
+  m_Layer: 8
   m_Name: CollectableBuilding
-  m_TagString: Building
+  m_TagString: Unit
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

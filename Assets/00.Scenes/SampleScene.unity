@@ -3549,7 +3549,7 @@ MonoBehaviour:
   <CurrentMouseCellPosition>k__BackingField: {x: 0, y: 0}
   whatIsClickable:
     serializedVersion: 2
-    m_Bits: 128
+    m_Bits: 384
   dragStartThresholdPixels: 8
 --- !u!1 &165890038
 GameObject:
@@ -10092,7 +10092,7 @@ GameObject:
   - component: {fileID: 519420034}
   - component: {fileID: 519420033}
   m_Layer: 0
-  m_Name: Main Camera
+  m_Name: Main
   m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -13779,7 +13779,7 @@ Canvas:
   m_Enabled: 1
   serializedVersion: 3
   m_RenderMode: 0
-  m_Camera: {fileID: 0}
+  m_Camera: {fileID: 519420031}
   m_PlaneDistance: 100
   m_PixelPerfect: 0
   m_ReceivesEvents: 1
@@ -27140,7 +27140,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.78039217, g: 0.78039217, b: 0.8, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -30153,6 +30153,50 @@ LineRenderer:
   m_UseWorldSpace: 1
   m_Loop: 0
   m_ApplyActiveColorSpace: 1
+--- !u!1 &1740378004
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1740378006}
+  - component: {fileID: 1740378005}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1740378005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1740378004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a35ddcea9cc34a4d85634560d540676e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &1740378006
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1740378004}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -998.35114, y: 2866.4949, z: 8.120131}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1746708507
 GameObject:
   m_ObjectHideFlags: 0
@@ -30896,6 +30940,10 @@ MonoBehaviour:
   - {fileID: 1859223347}
   - {fileID: 301575744}
   - {fileID: 622479786}
+  emptySlotTint: {r: 1, g: 1, b: 1, a: 0.18}
+  availableSlotTint: {r: 1, g: 1, b: 1, a: 1}
+  disabledSlotTint: {r: 0.7, g: 0.7, b: 0.7, a: 0.65}
+  selectedSlotTint: {r: 0.55, g: 0.9, b: 0.55, a: 1}
 --- !u!114 &1783914786
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -36258,3 +36306,4 @@ SceneRoots:
   - {fileID: 1042548867}
   - {fileID: 739844555}
   - {fileID: 624500002}
+  - {fileID: 1740378006}

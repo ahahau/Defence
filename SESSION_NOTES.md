@@ -4,7 +4,7 @@ This file is maintained automatically by the Unity editor helper in `Assets/Edit
 
 ## Generated Snapshot
 
-- Updated: `2026-03-24 20:30:32`
+- Updated: `2026-03-30 23:44:31`
 - Active scene: `Assets/00.Scenes/SampleScene.unity`
 - Scene dirty: `False`
 
@@ -25,7 +25,8 @@ This file is maintained automatically by the Unity editor helper in `Assets/Edit
 - BuildManager present: `True`
 - WaveManager present: `True`
 - EnemySpawnerManager present: `True`
-- UIManager available building count: `2`
+- UIManager available building count: `0`
+- UIManager available unit count: `1`
 
 ### Assets
 - Wave channel asset present: `True`
@@ -35,7 +36,7 @@ This file is maintained automatically by the Unity editor helper in `Assets/Edit
 ### Current Setup
 - Build flow: `InputManager -> UIManager -> MainPanel -> BuildManager`
 - Wave flow: `WaveManager <-> WaveEventChannel.asset <-> EnemySpawnerManager`
-- Scene bootstrap helper: `Tools/Setup Game Scene UI`
+- Scene bootstrap helper: `missing / update handoff if replaced`
 - Session notes manual update: `Tools/Session Notes/Update Now`
 - Auto update trigger: Unity Editor quit
 
@@ -43,17 +44,17 @@ This file is maintained automatically by the Unity editor helper in `Assets/Edit
 - `Assets/08.SO/Events/WaveEventChannel.asset` : `2026-03-11 10:17:43`
 - `Assets/08.SO/Buildings/Obstacle.asset` : `2026-03-19 12:58:12`
 - `Assets/08.SO/Buildings/NormalBuilding.asset` : `2026-03-19 12:58:12`
-- `Assets/01.Code/UI/UIHeader.cs` : `2026-03-19 10:20:28`
-- `Assets/01.Code/UI/MainPanel.cs` : `2026-03-24 17:54:48`
-- `Assets/01.Code/UI/BuildingOptionView.cs` : `2026-03-19 12:00:21`
-- `Assets/01.Code/Manager/WaveManager.cs` : `2026-03-19 10:34:28`
-- `Assets/01.Code/Manager/UIManager.cs` : `2026-03-22 23:44:00`
-- `Assets/01.Code/Manager/InputManager.cs` : `2026-03-24 18:23:32`
-- `Assets/01.Code/Manager/GameManager.cs` : `2026-03-19 10:34:28`
-- `Assets/01.Code/Manager/EnemySpawnerManager.cs` : `2026-03-24 20:29:57`
-- `Assets/01.Code/Manager/BuildManager.cs` : `2026-03-19 10:34:28`
+- `Assets/01.Code/UI/UIHeader.cs` : missing
+- `Assets/01.Code/UI/MainPanel.cs` : missing
+- `Assets/01.Code/UI/BuildingOptionView.cs` : missing
+- `Assets/01.Code/Manager/WaveManager.cs` : `2026-03-29 20:09:25`
+- `Assets/01.Code/Manager/UIManager.cs` : `2026-03-30 21:29:18`
+- `Assets/01.Code/Manager/InputManager.cs` : `2026-03-30 20:03:49`
+- `Assets/01.Code/Manager/GameManager.cs` : `2026-03-30 21:29:18`
+- `Assets/01.Code/Manager/EnemySpawnerManager.cs` : `2026-03-30 23:25:50`
+- `Assets/01.Code/Manager/BuildManager.cs` : `2026-03-30 20:16:27`
 - `Assets/01.Code/Cameras/CameraInputSO.cs` : missing
-- `Assets/00.Scenes/SampleScene.unity` : `2026-03-24 20:21:29`
+- `Assets/00.Scenes/SampleScene.unity` : `2026-03-30 21:35:25`
 
 ### Known Focus Areas
 - BuildPanel screen placement and click behavior

@@ -3,6 +3,7 @@ using _01.Code.Events;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using VHierarchy.Libs;
 
 namespace _01.Code.UI
 {
@@ -53,8 +54,8 @@ namespace _01.Code.UI
             unitPage.SetActive(!showResources);
             resourceTabButton.interactable = !showResources;
             unitTabButton.interactable = showResources;
-            resourceTabImage.color = showResources ? _resourceRaisedColor : _unitLoweredColor;
-            unitTabImage.color = showResources ? _unitLoweredColor : _resourceRaisedColor;
+            resourceTabImage.color.SetAlpha(showResources ? 175f : 255f);
+            unitTabImage.color.SetAlpha(!showResources ? 175f : 255f);
         }
     }
 }

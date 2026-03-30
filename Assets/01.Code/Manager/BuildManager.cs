@@ -5,11 +5,13 @@ using _01.Code.Entities;
 using _01.Code.Events;
 using _01.Code.Unit;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace _01.Code.Manager
 {
     public class BuildManager : MonoBehaviour
     {
+        [FormerlySerializedAs("unitEventChannel")]
         [SerializeField] private GameEventChannelSO buildEventChannel;
         [SerializeField] private GameEventChannelSO costEventChannel;
 
@@ -21,14 +23,25 @@ namespace _01.Code.Manager
 
         public void Initialize()
         {
-            buildEventChannel.AddListener<UnitGenerationRequestedEvent>(HandleBuildInstallRequestedEvent);
-            buildEventChannel.AddListener<MoveUnitRequestedEvent>(HandleMoveBuildingRequestedEvent);
+            if (buildEventChannel == null)
+            {
+                GameManager.Instance.LogManager?.Building("Build event channel is missing on BuildManager.", LogLevel.Error);
+                return;
+            }
+
+            buildEventChannel.AddListener<BuildRequestedEvent>(HandleBuildInstallRequestedEvent);
+            buildEventChannel.AddListener<BuildMoveRequestedEvent>(HandleMoveBuildingRequestedEvent);
         }
 
         private void OnDestroy()
         {
-            buildEventChannel.RemoveListener<UnitGenerationRequestedEvent>(HandleBuildInstallRequestedEvent);
-            buildEventChannel.RemoveListener<MoveUnitRequestedEvent>(HandleMoveBuildingRequestedEvent);
+            if (buildEventChannel == null)
+            {
+                return;
+            }
+
+            buildEventChannel.RemoveListener<BuildRequestedEvent>(HandleBuildInstallRequestedEvent);
+            buildEventChannel.RemoveListener<BuildMoveRequestedEvent>(HandleMoveBuildingRequestedEvent);
         }
 
         public bool TryPlace(PlaceableEntity placeableEntity, Vector3 worldPosition)
@@ -158,13 +171,22 @@ namespace _01.Code.Manager
 
             Vector3 buildWorldPosition = GameManager.Instance.GridManager.CellToWorld(buildPosition);
             UnitManager = Instantiate(unitData.Prefab, buildWorldPosition, Quaternion.identity);
-            UnitManager.Initialize(buildPosition);
+            if (!UnitManager.Initialize(buildPosition))
+            {
+                costEventChannel.RaiseEvent(CostEvents.RefundCostEvent.Initializer(GameManager.Instance.CostManager.PrimarySpendCost, totalCost));
+                GameManager.Instance.LogManager?.Building($"Failed to finalize install for `{unitData.Name}` at {buildPosition}; cost refunded.", LogLevel.Error);
+                Destroy(UnitManager.gameObject);
+                UnitManager = null;
+                RaiseBuildFailed(unitData, buildPosition);
+                return false;
+            }
+
             OnBuildingInstalled?.Invoke(unitData, UnitManager);
-            buildEventChannel.RaiseEvent(UnitEvents.UnitGenerationEvent.Initializer(unitData, UnitManager));
+            buildEventChannel.RaiseEvent(BuildEvents.BuildCompletedEvent.Initializer(unitData, UnitManager));
             return true;
         }
 
-        private void HandleBuildInstallRequestedEvent(UnitGenerationRequestedEvent evt)
+        private void HandleBuildInstallRequestedEvent(BuildRequestedEvent evt)
         {
             if (evt == null)
             {
@@ -174,7 +196,7 @@ namespace _01.Code.Manager
             TryInstall(evt.UnitData, evt.WorldPosition, out _);
         }
 
-        private void HandleMoveBuildingRequestedEvent(MoveUnitRequestedEvent evt)
+        private void HandleMoveBuildingRequestedEvent(BuildMoveRequestedEvent evt)
         {
             if (evt?.PlaceableEntity == null)
             {
@@ -187,30 +209,31 @@ namespace _01.Code.Manager
         private void RaiseBuildFailed(UnitDataSO unitData, Vector2Int buildPosition)
         {
             OnBuildFailed?.Invoke(unitData, buildPosition);
-            buildEventChannel.RaiseEvent(UnitEvents.UnitGenerationFailedEvent.Initializer(unitData, buildPosition));
+            buildEventChannel.RaiseEvent(BuildEvents.BuildFailedEvent.Initializer(unitData, buildPosition));
         }
 
         private void RaiseBuildingMoved(PlaceableEntity placeableEntity, Vector2Int targetPosition)
         {
             OnBuildingMoved?.Invoke();
-            buildEventChannel.RaiseEvent(UnitEvents.UnitMovedEvent.Initializer(placeableEntity, targetPosition));
+            buildEventChannel.RaiseEvent(BuildEvents.BuildMovedEvent.Initializer(placeableEntity, targetPosition));
         }
 
         private void RaiseBuildingMoveFailed(PlaceableEntity placeableEntity, Vector2Int originalPosition)
         {
             OnBuildingMoveFailed?.Invoke();
-            buildEventChannel.RaiseEvent(UnitEvents.UnitMoveFailedEvent.Initializer(placeableEntity, originalPosition));
+            buildEventChannel.RaiseEvent(BuildEvents.BuildMoveFailedEvent.Initializer(placeableEntity, originalPosition));
         }
 
         private bool CanModifyPlacements()
         {
-            if (GameManager.Instance?.TimeManager == null || GameManager.Instance.TimeManager.IsDay)
-            {
-                return true;
-            }
-
-            GameManager.Instance.LogManager?.Building("Placement and movement are disabled at night.", LogLevel.Warning);
-            return false;
+            // if (GameManager.Instance?.TimeManager == null || GameManager.Instance.TimeManager.IsDay)
+            // {
+            //     return true;
+            // }
+            //
+            // GameManager.Instance.LogManager?.Building("Placement and movement are disabled at night.", LogLevel.Warning);
+            // return false;
+            return true;
         }
     }
 }

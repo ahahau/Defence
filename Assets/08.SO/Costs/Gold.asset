@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Gold
   m_EditorClassIdentifier: 
   <DisplayName>k__BackingField: "\uACE8\uB4DC"
-  <Icon>k__BackingField: {fileID: 0}
+  <Icon>k__BackingField: {fileID: 21300000, guid: 8d139fab909234157bd309ea8bf39ba6, type: 3}
   <Category>k__BackingField: 0
   <InitialCurrent>k__BackingField: 100
   <InitialMax>k__BackingField: 99999
