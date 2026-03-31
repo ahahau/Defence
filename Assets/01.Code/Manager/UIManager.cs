@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using _01.Code.Combat;
 using _01.Code.Core;
+using _01.Code.Cost;
 using _01.Code.Events;
 using _01.Code.Unit;
 using GondrLib.ObjectPool.Runtime;
@@ -28,8 +29,8 @@ namespace _01.Code.Manager
 
         public UnitDataSO SelectedUnit { get; private set; }
         public Vector3 CurrentBuildPosition { get; private set; }
-        public IReadOnlyList<UnitDataSO> AvailableBuildings => availableBuildings;
-        public IReadOnlyList<UnitDataSO> AvailableUnits => availableUnits;
+        public List<UnitDataSO> AvailableBuildings => availableBuildings;
+        public List<UnitDataSO> AvailableUnits => availableUnits;
 
         public event Action<UnitDataSO> OnBuildingSelected;
         public event Action<UnitDataSO, Vector3> OnBuildRequested;
@@ -302,7 +303,7 @@ namespace _01.Code.Manager
         private void BuildDefaultCostEntries()
         {
             _defaultCostEntries.Clear();
-            IReadOnlyList<CostDefinitionSO> defaultCosts = GameManager.Instance.CostManager.DefaultCosts;
+            List<CostDefinitionSO> defaultCosts = GameManager.Instance.CostManager.DefaultCosts;
             for (int i = 0; i < defaultCosts.Count; i++)
             {
                 CostDefinitionSO definition = defaultCosts[i];
@@ -316,7 +317,7 @@ namespace _01.Code.Manager
         private void BuildResourceStackEntries()
         {
             _resourceStackEntries.Clear();
-            IReadOnlyList<CostDefinitionSO> resourceCosts = GameManager.Instance.CostManager.ResourceCosts;
+            List<CostDefinitionSO> resourceCosts = GameManager.Instance.CostManager.ResourceCosts;
             for (int i = 0; i < resourceCosts.Count; i++)
             {
                 CostDefinitionSO definition = resourceCosts[i];

@@ -15,6 +15,6 @@ namespace _01.Code.Entities
     public class AttackPatternDataSO : ScriptableObject
     {
         [SerializeField] private List<AttackPatternData> attackOffsets = new();
-        public IReadOnlyList<AttackPatternData> AttackOffsets => attackOffsets;
+        public List<AttackPatternData> AttackOffsets => attackOffsets;
     }
 }

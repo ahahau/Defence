@@ -37,8 +37,13 @@ namespace _01.Code.UI
                 icons[i].sprite = evt.Costs[i].Definition.Icon;
                 icons[i].enabled = evt.Costs[i].Definition.Icon != null;
                 labels[i].text = evt.Costs[i].Definition.DisplayName;
-                values[i].text = evt.Costs[i].Current.ToString();
+                values[i].text = GetResourceAmountLabel(evt.Costs[i].Current);
             }
+        }
+
+        private string GetResourceAmountLabel(int current)
+        {
+            return current.ToString();
         }
     }
 }

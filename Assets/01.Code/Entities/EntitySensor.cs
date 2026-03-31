@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using _01.Code.Combat;
 using _01.Code.Manager;
 using _01.Code.Modules;
 using UnityEngine;
@@ -13,7 +14,7 @@ namespace _01.Code.Entities
         [SerializeField] private int cellSearchSize = 1;
 
         public AttackPatternDataSO AttackPatternData => attackPatternData;
-        public IReadOnlyList<AttackPatternData> AttackPatterns => HasPatternData()
+        public List<AttackPatternData> AttackPatterns => HasPatternData()
             ? attackPatternData.AttackOffsets
             : _fallbackPatterns;
 
@@ -21,7 +22,7 @@ namespace _01.Code.Entities
 
         public bool TryGetTargetCollider(Vector2Int originCell, out Collider2D targetCollider)
         {
-            IReadOnlyList<AttackPatternData> patterns = AttackPatterns;
+            List<AttackPatternData> patterns = AttackPatterns;
             for (int patternIndex = 0; patternIndex < patterns.Count; patternIndex++)
             {
                 AttackPatternData pattern = patterns[patternIndex];
@@ -130,7 +131,7 @@ namespace _01.Code.Entities
             Gizmos.color = Color.red;
 
             Vector2Int originCell = GetOriginCellForGizmos();
-            IReadOnlyList<AttackPatternData> patterns = AttackPatterns;
+            List<AttackPatternData> patterns = AttackPatterns;
             foreach (var pattern in patterns)
             {
                 if (pattern == null || pattern.attackOffsets == null)

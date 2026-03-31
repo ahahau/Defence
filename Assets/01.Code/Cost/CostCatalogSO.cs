@@ -1,7 +1,8 @@
 using System.Collections.Generic;
+using _01.Code.Manager;
 using UnityEngine;
 
-namespace _01.Code.Manager
+namespace _01.Code.Cost
 {
     [CreateAssetMenu(fileName = "CostCatalog", menuName = "SO/Cost/Catalog", order = 1)]
     public class CostCatalogSO : ScriptableObject
@@ -9,7 +10,7 @@ namespace _01.Code.Manager
         [SerializeField] private List<CostDefinitionSO> defaultCosts = new();
         [SerializeField] private List<CostDefinitionSO> resourceCosts = new();
 
-        public IReadOnlyList<CostDefinitionSO> DefaultCosts => defaultCosts;
-        public IReadOnlyList<CostDefinitionSO> ResourceCosts => resourceCosts;
+        public List<CostDefinitionSO> DefaultCosts => defaultCosts;
+        public List<CostDefinitionSO> ResourceCosts => resourceCosts;
     }
 }

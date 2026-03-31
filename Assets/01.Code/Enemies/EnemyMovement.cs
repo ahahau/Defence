@@ -31,6 +31,7 @@ namespace _01.Code.Enemies
         {
             if (_path == null || _pathIndex >= _path.Count)
             {
+                _enemy?.ReachDestination();
                 return;
             }
 

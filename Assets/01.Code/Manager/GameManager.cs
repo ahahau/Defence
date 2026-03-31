@@ -38,10 +38,6 @@ namespace _01.Code.Manager
             EnemySpawnerManager = GetComponentInChildren<EnemySpawnerManager>();
             LogManager = GetComponentInChildren<LogManager>();
             SaveManager = GetComponentInChildren<SaveManager>();
-            if (SaveManager == null)
-            {
-                SaveManager = gameObject.AddComponent<SaveManager>();
-            }
 
             LogManager.Initialize();
             GridManager.Initialize();

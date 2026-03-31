@@ -1,30 +1,44 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using _01.Code.Cost;
 using _01.Code.Enemies;
 using _01.Code.Entities;
+using _01.Code.Save;
 using _01.Code.Unit;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace _01.Code.Manager
 {
+    [Serializable]
+    public struct SaveDataEntry
+    {
+        public string id;
+        public string data;
+    }
+
+    [Serializable]
+    public struct SaveDataCollection
+    {
+        public List<SaveDataEntry> dataCollection;
+    }
+
     public class SaveManager : MonoBehaviour
     {
-        private const string SavePrefix = "defence.save";
         private const string EnemySpawnerSaveKey = "enemy_spawner";
-        private const string SceneRegistryCountKey = SavePrefix + ".scene.count";
-        private const string DayCountKey = SavePrefix + ".dayCount";
-        private const string PhaseKey = SavePrefix + ".phase";
-        private const string CostCountKey = SavePrefix + ".cost.count";
+        private const string PlacementAgentSaveKey = "scene.placements";
 
-        private readonly Dictionary<string, CostDefinitionSO> _costRegistry = new();
+        [SerializeField] private string saveKey = "defence.saveData";
+
         private readonly Dictionary<string, UnitDataSO> _unitRegistry = new();
+        private readonly List<SaveDataEntry> _unusedData = new();
 
         private bool _initialized;
         private bool _isApplyingSave;
         private bool _isQuitting;
 
-        public bool HasSaveData => PlayerPrefs.HasKey(DayCountKey);
+        public bool HasSaveData => PlayerPrefs.HasKey(saveKey);
 
         public void Initialize()
         {
@@ -34,6 +48,7 @@ namespace _01.Code.Manager
             }
 
             RebuildRegistries();
+            EnsureSaveAgents();
             LoadGame();
             Subscribe();
             _initialized = true;
@@ -48,8 +63,7 @@ namespace _01.Code.Manager
 
             if (!_isQuitting && !_isApplyingSave)
             {
-                SaveSceneState();
-                PlayerPrefs.Save();
+                SaveGame();
             }
 
             Unsubscribe();
@@ -77,9 +91,8 @@ namespace _01.Code.Manager
                 return;
             }
 
-            SaveTimeState();
-            SaveCostState();
-            SaveSceneState();
+            string dataJson = GetDataToSave();
+            PlayerPrefs.SetString(saveKey, dataJson);
             PlayerPrefs.Save();
         }
 
@@ -96,9 +109,8 @@ namespace _01.Code.Manager
             try
             {
                 RebuildRegistries();
-                RestoreCosts();
-                RestoreTime();
-                RestoreCurrentSceneState();
+                EnsureSaveAgents();
+                RestoreDataFromJson(PlayerPrefs.GetString(saveKey, string.Empty));
                 GameManager.Instance?.UiManager?.RefreshUiState();
                 return true;
             }
@@ -137,13 +149,81 @@ namespace _01.Code.Manager
         [ContextMenu("Delete Save")]
         public void DeleteSave()
         {
-            DeleteIndexedGroup(CostCountKey, GetCostKey);
-            DeleteAllScenePlacementData();
-            PlayerPrefs.DeleteKey(DayCountKey);
-            PlayerPrefs.DeleteKey(PhaseKey);
-            PlayerPrefs.DeleteKey(CostCountKey);
-            PlayerPrefs.DeleteKey(SceneRegistryCountKey);
+            PlayerPrefs.DeleteKey(saveKey);
             PlayerPrefs.Save();
+            _unusedData.Clear();
+        }
+
+        public void RegisterEnemySpawnerForSave(EnemySpawner spawner)
+        {
+            if (spawner == null)
+            {
+                return;
+            }
+
+            RegisterPlacementForSave(spawner, EnemySpawnerSaveKey);
+        }
+
+        public void RegisterPlacementForSave(PlaceableEntity placeableEntity, string placementKey)
+        {
+            if (placeableEntity == null || string.IsNullOrWhiteSpace(placementKey))
+            {
+                return;
+            }
+
+            placeableEntity.BindPlacementSaveKey(placementKey);
+            placeableEntity.EnsureRuntimeSaveId();
+        }
+
+        public void ClearSavedPlacementsInScene()
+        {
+            GameManager.Instance.EnemySpawnerManager?.ClearTrackedSpawners();
+            PlaceableEntity[] placements = FindObjectsByType<PlaceableEntity>(FindObjectsSortMode.None);
+            for (int i = placements.Length - 1; i >= 0; i--)
+            {
+                PlaceableEntity placement = placements[i];
+                if (placement == null || string.IsNullOrWhiteSpace(placement.PlacementSaveKey))
+                {
+                    continue;
+                }
+
+                GameManager.Instance.GridManager.TryClear(placement.GridPosition, placement);
+                Destroy(placement.gameObject);
+            }
+        }
+
+        public bool TryCreatePlacement(string placementKey, string runtimeSaveId, Vector2Int gridPosition, out PlaceableEntity placeableEntity)
+        {
+            placeableEntity = null;
+
+            if (_unitRegistry.TryGetValue(placementKey, out UnitDataSO unitData) && unitData.Prefab != null)
+            {
+                placeableEntity = Instantiate(unitData.Prefab, Vector3.zero, Quaternion.identity);
+                if (!placeableEntity.Initialize(gridPosition))
+                {
+                    Destroy(placeableEntity.gameObject);
+                    GameManager.Instance.LogManager?.Building($"Failed to restore `{unitData.name}` at {gridPosition}.", LogLevel.Error);
+                    placeableEntity = null;
+                    return false;
+                }
+
+                RegisterPlacementForSave(placeableEntity, placementKey);
+                if (!string.IsNullOrWhiteSpace(runtimeSaveId))
+                {
+                    placeableEntity.BindRuntimeSaveId(runtimeSaveId);
+                }
+
+                return true;
+            }
+
+            if (placementKey == EnemySpawnerSaveKey)
+            {
+                return GameManager.Instance.EnemySpawnerManager != null &&
+                       GameManager.Instance.EnemySpawnerManager.TryCreateSavedSpawner(gridPosition, out placeableEntity);
+            }
+
+            GameManager.Instance.LogManager?.Building($"Unknown save placement key `{placementKey}`.", LogLevel.Warning);
+            return false;
         }
 
         private void Subscribe()
@@ -186,7 +266,7 @@ namespace _01.Code.Manager
                 return;
             }
 
-            EnsureSavedPlacementMarker(placeableEntity, unitData.name);
+            RegisterPlacementForSave(placeableEntity, unitData.name);
             SaveGame();
         }
 
@@ -197,30 +277,12 @@ namespace _01.Code.Manager
 
         private void RebuildRegistries()
         {
-            _costRegistry.Clear();
             _unitRegistry.Clear();
-
-            RegisterCosts(GameManager.Instance.CostManager.DefaultCosts);
-            RegisterCosts(GameManager.Instance.CostManager.ResourceCosts);
             RegisterUnits(GameManager.Instance.UiManager.AvailableBuildings);
             RegisterUnits(GameManager.Instance.UiManager.AvailableUnits);
         }
 
-        private void RegisterCosts(IReadOnlyList<CostDefinitionSO> definitions)
-        {
-            for (int i = 0; i < definitions.Count; i++)
-            {
-                CostDefinitionSO definition = definitions[i];
-                if (definition == null)
-                {
-                    continue;
-                }
-
-                _costRegistry[definition.name] = definition;
-            }
-        }
-
-        private void RegisterUnits(IReadOnlyList<UnitDataSO> units)
+        private void RegisterUnits(List<UnitDataSO> units)
         {
             for (int i = 0; i < units.Count; i++)
             {
@@ -234,284 +296,117 @@ namespace _01.Code.Manager
             }
         }
 
-        private void SaveTimeState()
+        private void EnsureSaveAgents()
         {
-            PlayerPrefs.SetInt(DayCountKey, GameManager.Instance.TimeManager.DayCount);
-            PlayerPrefs.SetInt(PhaseKey, (int)GameManager.Instance.TimeManager.CurrentPhase);
+            EnsureAgentOnObject<PlacementSaveAgent>(gameObject);
+            EnsureAgentOnObject<TimeSaveAgent>(GameManager.Instance.TimeManager.gameObject);
+            EnsureAgentOnObject<CostSaveAgent>(GameManager.Instance.CostManager.gameObject);
         }
 
-        private void SaveCostState()
+        private void EnsureAgentOnObject<T>(GameObject target) where T : Component
         {
-            int previousCount = PlayerPrefs.GetInt(CostCountKey, 0);
-            int index = 0;
-            foreach (KeyValuePair<string, CostDefinitionSO> pair in _costRegistry)
-            {
-                CostDefinitionSO definition = pair.Value;
-                PlayerPrefs.SetString(GetCostKey(index), pair.Key);
-                PlayerPrefs.SetInt(GetCostCurrentKey(index), GameManager.Instance.CostManager.GetCurrent(definition));
-                PlayerPrefs.SetInt(GetCostMaxKey(index), GameManager.Instance.CostManager.GetMax(definition));
-                index++;
-            }
-
-            DeleteUnusedIndexedEntries(index, previousCount, GetCostKey);
-            PlayerPrefs.SetInt(CostCountKey, index);
-        }
-
-        private void SaveSceneState()
-        {
-            string sceneKey = GetCurrentSceneKey();
-            string placementCountKey = GetScenePlacementCountKey(sceneKey);
-            IReadOnlyList<SavedPlacementInstance> placements = SavedPlacementInstance.ActiveInstances;
-            int previousCount = PlayerPrefs.GetInt(placementCountKey, 0);
-            int index = 0;
-            for (int i = 0; i < placements.Count; i++)
-            {
-                SavedPlacementInstance placement = placements[i];
-                if (placement == null || string.IsNullOrWhiteSpace(placement.SaveKey) || placement.PlaceableEntity == null)
-                {
-                    continue;
-                }
-
-                PlayerPrefs.SetString(GetPlacementUnitKey(sceneKey, index), placement.SaveKey);
-                PlayerPrefs.SetInt(GetPlacementXKey(sceneKey, index), placement.PlaceableEntity.GridPosition.x);
-                PlayerPrefs.SetInt(GetPlacementYKey(sceneKey, index), placement.PlaceableEntity.GridPosition.y);
-                index++;
-            }
-
-            DeleteUnusedIndexedEntries(index, previousCount, i => GetPlacementUnitKey(sceneKey, i));
-            PlayerPrefs.SetInt(placementCountKey, index);
-            RegisterSceneKey(sceneKey);
-        }
-
-        private void RestoreCosts()
-        {
-            int count = PlayerPrefs.GetInt(CostCountKey, 0);
-            for (int i = 0; i < count; i++)
-            {
-                string key = PlayerPrefs.GetString(GetCostKey(i), string.Empty);
-                if (string.IsNullOrWhiteSpace(key) || !_costRegistry.TryGetValue(key, out CostDefinitionSO definition))
-                {
-                    continue;
-                }
-
-                int max = PlayerPrefs.GetInt(GetCostMaxKey(i), definition.InitialMax);
-                int current = PlayerPrefs.GetInt(GetCostCurrentKey(i), definition.InitialCurrent);
-                GameManager.Instance.CostManager.SetMax(definition, max);
-                GameManager.Instance.CostManager.SetCurrent(definition, current);
-            }
-        }
-
-        private void RestoreTime()
-        {
-            int savedDayCount = PlayerPrefs.GetInt(DayCountKey, 1);
-            int savedPhase = PlayerPrefs.GetInt(PhaseKey, 0);
-            TimePhase phase = Enum.IsDefined(typeof(TimePhase), savedPhase)
-                ? (TimePhase)savedPhase
-                : TimePhase.Day;
-
-            GameManager.Instance.TimeManager.RestoreState(savedDayCount, phase);
-        }
-
-        private void RestoreCurrentSceneState()
-        {
-            ClearSavedPlacementsInScene();
-
-            string sceneKey = GetCurrentSceneKey();
-            int count = PlayerPrefs.GetInt(GetScenePlacementCountKey(sceneKey), 0);
-            for (int i = 0; i < count; i++)
-            {
-                string unitKey = PlayerPrefs.GetString(GetPlacementUnitKey(sceneKey, i), string.Empty);
-                if (string.IsNullOrWhiteSpace(unitKey))
-                {
-                    continue;
-                }
-
-                Vector2Int gridPosition = new Vector2Int(
-                    PlayerPrefs.GetInt(GetPlacementXKey(sceneKey, i), 0),
-                    PlayerPrefs.GetInt(GetPlacementYKey(sceneKey, i), 0));
-                if (!TryCreatePlacement(unitKey, gridPosition, out PlaceableEntity placeableEntity))
-                {
-                    continue;
-                }
-            }
-        }
-
-        private void ClearSavedPlacementsInScene()
-        {
-            GameManager.Instance.EnemySpawnerManager?.ClearTrackedSpawners();
-            IReadOnlyList<SavedPlacementInstance> placements = SavedPlacementInstance.ActiveInstances;
-            for (int i = placements.Count - 1; i >= 0; i--)
-            {
-                SavedPlacementInstance placement = placements[i];
-                if (placement == null || placement.PlaceableEntity == null)
-                {
-                    continue;
-                }
-
-                GameManager.Instance.GridManager.TryClear(placement.PlaceableEntity.GridPosition, placement.PlaceableEntity);
-                Destroy(placement.gameObject);
-            }
-        }
-
-        public void RegisterEnemySpawnerForSave(EnemySpawner spawner)
-        {
-            if (spawner == null)
+            if (target == null || target.GetComponent<T>() != null)
             {
                 return;
             }
 
-            EnsureSavedPlacementMarker(spawner, EnemySpawnerSaveKey);
+            target.AddComponent<T>();
         }
 
-        private bool TryCreatePlacement(string saveKey, Vector2Int gridPosition, out PlaceableEntity placeableEntity)
+        private void RestoreDataFromJson(string loadData)
         {
-            placeableEntity = null;
+            SaveDataCollection loadCollection = string.IsNullOrEmpty(loadData)
+                ? new SaveDataCollection()
+                : JsonUtility.FromJson<SaveDataCollection>(loadData);
 
-            if (_unitRegistry.TryGetValue(saveKey, out UnitDataSO unitData) && unitData.Prefab != null)
+            _unusedData.Clear();
+            if (loadCollection.dataCollection == null || loadCollection.dataCollection.Count <= 0)
             {
-                placeableEntity = Instantiate(unitData.Prefab, Vector3.zero, Quaternion.identity);
-                if (!placeableEntity.Initialize(gridPosition))
-                {
-                    Destroy(placeableEntity.gameObject);
-                    GameManager.Instance.LogManager?.Building($"Failed to restore `{unitData.name}` at {gridPosition}.", LogLevel.Error);
-                    placeableEntity = null;
-                    return false;
-                }
-
-                EnsureSavedPlacementMarker(placeableEntity, saveKey);
-                return true;
+                return;
             }
 
-            if (saveKey == EnemySpawnerSaveKey)
+            RestorePlacementEntries(loadCollection);
+
+            IEnumerable<ISaveable> saveableObjects =
+                FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<ISaveable>();
+
+            foreach (SaveDataEntry data in loadCollection.dataCollection)
             {
-                return GameManager.Instance.EnemySpawnerManager != null &&
-                       GameManager.Instance.EnemySpawnerManager.TryCreateSavedSpawner(gridPosition, out placeableEntity);
-            }
-
-            GameManager.Instance.LogManager?.Building($"Unknown save placement key `{saveKey}`.", LogLevel.Warning);
-            return false;
-        }
-
-        private static void EnsureSavedPlacementMarker(PlaceableEntity placeableEntity, string saveKey)
-        {
-            SavedPlacementInstance marker = placeableEntity.GetComponent<SavedPlacementInstance>();
-            if (marker == null)
-            {
-                marker = placeableEntity.gameObject.AddComponent<SavedPlacementInstance>();
-            }
-
-            marker.Bind(saveKey);
-        }
-
-        private void DeleteAllScenePlacementData()
-        {
-            int sceneCount = PlayerPrefs.GetInt(SceneRegistryCountKey, 0);
-            for (int i = 0; i < sceneCount; i++)
-            {
-                string sceneKey = PlayerPrefs.GetString(GetSceneRegistryKey(i), string.Empty);
-                if (string.IsNullOrWhiteSpace(sceneKey))
+                if (data.id == PlacementAgentSaveKey)
                 {
                     continue;
                 }
 
-                string placementCountKey = GetScenePlacementCountKey(sceneKey);
-                DeleteIndexedGroup(placementCountKey, index => GetPlacementUnitKey(sceneKey, index));
-                PlayerPrefs.DeleteKey(placementCountKey);
-                PlayerPrefs.DeleteKey(GetSceneRegistryKey(i));
-            }
-        }
-
-        private static void RegisterSceneKey(string sceneKey)
-        {
-            int sceneCount = PlayerPrefs.GetInt(SceneRegistryCountKey, 0);
-            for (int i = 0; i < sceneCount; i++)
-            {
-                if (PlayerPrefs.GetString(GetSceneRegistryKey(i), string.Empty) == sceneKey)
+                ISaveable saveable = saveableObjects.FirstOrDefault(s => s.SaveKey == data.id);
+                if (saveable != null)
                 {
-                    return;
+                    saveable.RestoreData(data.data);
+                    continue;
                 }
+
+                _unusedData.Add(data);
             }
-
-            PlayerPrefs.SetString(GetSceneRegistryKey(sceneCount), sceneKey);
-            PlayerPrefs.SetInt(SceneRegistryCountKey, sceneCount + 1);
         }
 
-        private static string GetCurrentSceneKey()
+        private void RestorePlacementEntries(SaveDataCollection loadCollection)
         {
-            Scene activeScene = SceneManager.GetActiveScene();
-            string source = string.IsNullOrWhiteSpace(activeScene.path) ? activeScene.name : activeScene.path;
-            return source.Replace('/', '_').Replace('\\', '_').Replace(' ', '_');
-        }
-
-        private static void DeleteUnusedIndexedEntries(int activeCount, int previousCount, Func<int, string> baseKeySelector)
-        {
-            for (int i = activeCount; i < previousCount; i++)
+            IEnumerable<ISaveable> saveableObjects =
+                FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<ISaveable>();
+            ISaveable placementSaveable = saveableObjects.FirstOrDefault(s => s.SaveKey == PlacementAgentSaveKey);
+            if (placementSaveable == null)
             {
-                DeleteIndexedEntry(baseKeySelector(i));
+                return;
             }
-        }
 
-        private static void DeleteIndexedGroup(string countKey, Func<int, string> baseKeySelector)
-        {
-            int count = PlayerPrefs.GetInt(countKey, 0);
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < loadCollection.dataCollection.Count; i++)
             {
-                DeleteIndexedEntry(baseKeySelector(i));
+                SaveDataEntry data = loadCollection.dataCollection[i];
+                if (data.id != PlacementAgentSaveKey)
+                {
+                    continue;
+                }
+
+                placementSaveable.RestoreData(data.data);
+                return;
             }
         }
 
-        private static void DeleteIndexedEntry(string baseKey)
+        private string GetDataToSave()
         {
-            PlayerPrefs.DeleteKey(baseKey);
-            PlayerPrefs.DeleteKey(baseKey + ".current");
-            PlayerPrefs.DeleteKey(baseKey + ".max");
-            PlayerPrefs.DeleteKey(baseKey + ".x");
-            PlayerPrefs.DeleteKey(baseKey + ".y");
-        }
+            IEnumerable<ISaveable> saveableObjects =
+                FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<ISaveable>();
 
-        private static string GetCostKey(int index)
-        {
-            return $"{SavePrefix}.cost.{index}.id";
-        }
+            List<SaveDataEntry> saveDataList = new List<SaveDataEntry>();
+            HashSet<string> activeKeys = new HashSet<string>();
 
-        private static string GetCostCurrentKey(int index)
-        {
-            return GetCostKey(index) + ".current";
-        }
+            foreach (ISaveable saveable in saveableObjects)
+            {
+                if (saveable == null || string.IsNullOrWhiteSpace(saveable.SaveKey))
+                {
+                    continue;
+                }
 
-        private static string GetCostMaxKey(int index)
-        {
-            return GetCostKey(index) + ".max";
-        }
+                activeKeys.Add(saveable.SaveKey);
+                saveDataList.Add(new SaveDataEntry
+                {
+                    id = saveable.SaveKey,
+                    data = saveable.GetSaveData()
+                });
+            }
 
-        private static string GetPlacementUnitKey(int index)
-        {
-            return $"{SavePrefix}.placement.{index}.unit";
-        }
+            for (int i = 0; i < _unusedData.Count; i++)
+            {
+                SaveDataEntry unused = _unusedData[i];
+                if (activeKeys.Contains(unused.id))
+                {
+                    continue;
+                }
 
-        private static string GetPlacementUnitKey(string sceneKey, int index)
-        {
-            return $"{SavePrefix}.scene.{sceneKey}.placement.{index}.unit";
-        }
+                saveDataList.Add(unused);
+            }
 
-        private static string GetPlacementXKey(string sceneKey, int index)
-        {
-            return GetPlacementUnitKey(sceneKey, index) + ".x";
-        }
-
-        private static string GetPlacementYKey(string sceneKey, int index)
-        {
-            return GetPlacementUnitKey(sceneKey, index) + ".y";
-        }
-
-        private static string GetScenePlacementCountKey(string sceneKey)
-        {
-            return $"{SavePrefix}.scene.{sceneKey}.placement.count";
-        }
-
-        private static string GetSceneRegistryKey(int index)
-        {
-            return $"{SavePrefix}.scene.registry.{index}";
+            SaveDataCollection dataCollection = new SaveDataCollection { dataCollection = saveDataList };
+            return JsonUtility.ToJson(dataCollection);
         }
     }
 }

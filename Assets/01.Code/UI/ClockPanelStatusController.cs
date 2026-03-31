@@ -1,0 +1,175 @@
+using _01.Code.Core;
+using _01.Code.Events;
+using _01.Code.Manager;
+using _01.Code.Unit;
+using UnityEngine;
+
+namespace _01.Code.UI
+{
+    [RequireComponent(typeof(ClockPanelUI))]
+    public class ClockPanelStatusController : MonoBehaviour
+    {
+        [SerializeField] private float transientMessageDuration = 2.25f;
+
+        private ClockPanelUI _clockPanelUI;
+        private GameEventChannelSO _uiEventChannel;
+        private bool _isDay = true;
+        private UnitDataSO _selectedUnit;
+        private int _currentPrimaryCost;
+        private string _transientMessage;
+        private float _transientMessageUntil;
+        private bool _buildManagerHooked;
+
+        private void Awake()
+        {
+            _clockPanelUI = GetComponent<ClockPanelUI>();
+            _uiEventChannel = _clockPanelUI.UiEventChannel;
+        }
+
+        private void OnEnable()
+        {
+            if (_uiEventChannel != null)
+            {
+                _uiEventChannel.AddListener<UiClockStateChangedEvent>(HandleClockStateChanged);
+                _uiEventChannel.AddListener<UiUnitInventoryStateChangedEvent>(HandleInventoryStateChanged);
+            }
+
+            TryHookBuildManager();
+            RefreshStatusMessage();
+        }
+
+        private void OnDisable()
+        {
+            if (_uiEventChannel != null)
+            {
+                _uiEventChannel.RemoveListener<UiClockStateChangedEvent>(HandleClockStateChanged);
+                _uiEventChannel.RemoveListener<UiUnitInventoryStateChangedEvent>(HandleInventoryStateChanged);
+            }
+
+            UnhookBuildManager();
+        }
+
+        private void Update()
+        {
+            if (!_buildManagerHooked)
+            {
+                TryHookBuildManager();
+            }
+
+            if (!string.IsNullOrEmpty(_transientMessage) && Time.unscaledTime >= _transientMessageUntil)
+            {
+                _transientMessage = null;
+                RefreshStatusMessage();
+            }
+        }
+
+        private void HandleClockStateChanged(UiClockStateChangedEvent evt)
+        {
+            _isDay = evt.IsDay;
+            RefreshStatusMessage();
+        }
+
+        private void HandleInventoryStateChanged(UiUnitInventoryStateChangedEvent evt)
+        {
+            _selectedUnit = evt.SelectedUnit;
+            _currentPrimaryCost = evt.CurrentPrimaryCost;
+            RefreshStatusMessage();
+        }
+
+        private void HandleBuildingInstalled(UnitDataSO unitData, _01.Code.Entities.PlaceableEntity _)
+        {
+            ShowTransientMessage(GetBuildCompletedMessage(unitData));
+        }
+
+        private void HandleBuildFailed(UnitDataSO unitData, Vector2Int buildPosition)
+        {
+            ShowTransientMessage(GetBuildFailedMessage(unitData, buildPosition));
+        }
+
+        private void HandleBuildingMoved()
+        {
+            ShowTransientMessage("유닛 위치 이동 완료");
+        }
+
+        private void HandleBuildingMoveFailed()
+        {
+            ShowTransientMessage("이동 실패 · 빈 칸을 선택하세요");
+        }
+
+        private void TryHookBuildManager()
+        {
+            if (_buildManagerHooked || GameManager.Instance?.BuildManager == null)
+            {
+                return;
+            }
+
+            GameManager.Instance.BuildManager.OnBuildingInstalled += HandleBuildingInstalled;
+            GameManager.Instance.BuildManager.OnBuildFailed += HandleBuildFailed;
+            GameManager.Instance.BuildManager.OnBuildingMoved += HandleBuildingMoved;
+            GameManager.Instance.BuildManager.OnBuildingMoveFailed += HandleBuildingMoveFailed;
+            _buildManagerHooked = true;
+        }
+
+        private void UnhookBuildManager()
+        {
+            if (!_buildManagerHooked || GameManager.Instance?.BuildManager == null)
+            {
+                return;
+            }
+
+            GameManager.Instance.BuildManager.OnBuildingInstalled -= HandleBuildingInstalled;
+            GameManager.Instance.BuildManager.OnBuildFailed -= HandleBuildFailed;
+            GameManager.Instance.BuildManager.OnBuildingMoved -= HandleBuildingMoved;
+            GameManager.Instance.BuildManager.OnBuildingMoveFailed -= HandleBuildingMoveFailed;
+            _buildManagerHooked = false;
+        }
+
+        private void ShowTransientMessage(string message)
+        {
+            _transientMessage = message;
+            _transientMessageUntil = Time.unscaledTime + transientMessageDuration;
+            RefreshStatusMessage();
+        }
+
+        private void RefreshStatusMessage()
+        {
+            string message = !string.IsNullOrEmpty(_transientMessage) && Time.unscaledTime < _transientMessageUntil
+                ? _transientMessage
+                : GetClockStatusMessage();
+
+            _clockPanelUI.SetStatusMessage(message);
+        }
+
+        private string GetClockStatusMessage()
+        {
+            if (!_isDay)
+            {
+                return "밤 · 배치 비활성";
+            }
+
+            if (_selectedUnit == null)
+            {
+                return "낮 · 유닛을 선택하세요";
+            }
+
+            int shortage = _selectedUnit.Cost - _currentPrimaryCost;
+            if (shortage > 0)
+            {
+                return $"{_selectedUnit.Name} · 비용 {shortage} 부족";
+            }
+
+            return $"{_selectedUnit.Name} 선택됨 · 빈 타일 클릭";
+        }
+
+        private string GetBuildCompletedMessage(UnitDataSO unitData)
+        {
+            return unitData == null ? "배치 완료" : $"{unitData.Name} 배치 완료";
+        }
+
+        private string GetBuildFailedMessage(UnitDataSO unitData, Vector2Int buildPosition)
+        {
+            string unitName = unitData == null ? "유닛" : unitData.Name;
+            return $"{unitName} 배치 실패 · {buildPosition.x}, {buildPosition.y}";
+        }
+    }
+}

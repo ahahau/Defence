@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace _01.Code.Manager
+namespace _01.Code.Cost
 {
     public enum CostCategory
     {

@@ -112,7 +112,7 @@ namespace _01.Code.UI
                 bool interactable = _canUseDayActions && _currentPrimaryCost >= unitData.Cost;
                 bool isSelected = _selectedUnit == unitData;
                 title.text = unitData.Name;
-                cost.text = $"Cost {unitData.Cost}";
+                cost.text = GetUnitSlotCostLabel(unitData, isSelected);
                 button.interactable = interactable;
                 ApplySlotVisuals(
                     button,
@@ -127,7 +127,7 @@ namespace _01.Code.UI
             }
         }
 
-        private static void ApplySlotVisuals(
+        private void ApplySlotVisuals(
             Button button,
             Graphic iconGraphic,
             TMP_Text title,
@@ -157,6 +157,32 @@ namespace _01.Code.UI
             colors.pressedColor = interactable ? Color.Lerp(tint, Color.black, 0.08f) : tint;
             colors.disabledColor = tint;
             button.colors = colors;
+        }
+
+        private string GetUnitSlotCostLabel(UnitDataSO unitData, bool isSelected)
+        {
+            if (unitData == null)
+            {
+                return string.Empty;
+            }
+
+            if (isSelected)
+            {
+                return "선택됨";
+            }
+
+            if (!_canUseDayActions)
+            {
+                return "밤에는 배치 불가";
+            }
+
+            int shortage = unitData.Cost - _currentPrimaryCost;
+            if (shortage > 0)
+            {
+                return $"비용 +{shortage}";
+            }
+
+            return $"Cost {unitData.Cost}";
         }
     }
 }

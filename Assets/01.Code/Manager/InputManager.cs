@@ -4,6 +4,7 @@ using _01.Code.Core;
 using _01.Code.Unit;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 
 namespace _01.Code.Manager
 {
@@ -41,6 +42,8 @@ namespace _01.Code.Manager
 
         private void Update()
         {
+            HandleDeleteSaveHotkey();
+
             Vector2 worldPosition = InputData.GetWorldPosition2D();
             Vector2Int hoveredCell = GameManager.Instance.GridManager.WorldToCell(worldPosition);
             CurrentMouseCellPosition = hoveredCell;
@@ -219,7 +222,23 @@ namespace _01.Code.Manager
             _pointerDownCollider = null;
         }
 
-        private static bool CanModifyPlacements()
+        private void HandleDeleteSaveHotkey()
+        {
+            if (Keyboard.current == null || !Keyboard.current.mKey.wasPressedThisFrame)
+            {
+                return;
+            }
+
+            if (GameManager.Instance?.SaveManager == null)
+            {
+                return;
+            }
+
+            GameManager.Instance.SaveManager.DeleteSave();
+            GameManager.Instance.SaveManager.ReloadCurrentScene();
+        }
+
+        private bool CanModifyPlacements()
         {
             // return GameManager.Instance?.TimeManager == null || GameManager.Instance.TimeManager.IsDay;
             return true;
@@ -235,7 +254,7 @@ namespace _01.Code.Manager
             return Physics2D.OverlapPoint(worldPosition, whatIsClickable);
         }
 
-        private static Unit.Unit ResolveDraggedUnit(Collider2D hitCollider)
+        private Unit.Unit ResolveDraggedUnit(Collider2D hitCollider)
         {
             if (hitCollider == null || hitCollider.CompareTag("EnemySpawner"))
             {
@@ -245,7 +264,7 @@ namespace _01.Code.Manager
             return hitCollider.GetComponentInParent<Unit.Unit>();
         }
 
-        private static PlaceableEntity ResolveSelectedBuilding(Collider2D hitCollider)
+        private PlaceableEntity ResolveSelectedBuilding(Collider2D hitCollider)
         {
             if (hitCollider == null || hitCollider.CompareTag("EnemySpawner"))
             {
@@ -256,19 +275,19 @@ namespace _01.Code.Manager
             return placeable is Unit.Unit ? null : placeable;
         }
 
-        private static bool TryGetClickedUnit(GameObject hitGameObject, out Unit.Unit unit)
+        private bool TryGetClickedUnit(GameObject hitGameObject, out Unit.Unit unit)
         {
             unit = hitGameObject.GetComponentInParent<Unit.Unit>();
             return unit != null;
         }
 
-        private static bool TryGetClickedBuilding(GameObject hitGameObject, out PlaceableEntity building)
+        private bool TryGetClickedBuilding(GameObject hitGameObject, out PlaceableEntity building)
         {
             building = hitGameObject.GetComponentInParent<PlaceableEntity>();
             return building != null && building is not Unit.Unit;
         }
 
-        private static void ClickUnit(Unit.Unit _)
+        private void ClickUnit(Unit.Unit _)
         {
         }
 

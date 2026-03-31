@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
+using _01.Code.Manager;
 using UnityEngine;
 
-namespace _01.Code.Manager
+namespace _01.Code.Cost
 {
     [CreateAssetMenu(fileName = "CostBundle", menuName = "SO/Cost/Bundle", order = 0)]
     public class CostBundleSO : ScriptableObject
@@ -16,6 +17,6 @@ namespace _01.Code.Manager
 
         [SerializeField] private List<Entry> entries = new();
 
-        public IReadOnlyList<Entry> Entries => entries;
+        public List<Entry> Entries => entries;
     }
 }

@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using _01.Code.Buildings;
 using _01.Code.Entities;
+using _01.Code.Manager;
 using DG.Tweening;
 using GondrLib.ObjectPool.Runtime;
 using UnityEditor.Search;
@@ -23,6 +25,7 @@ namespace _01.Code.Enemies
         private bool _deathNotified;
         private bool _returnedToPool;
         private EnemyRender _enemyRender;
+        private EnemyDataSO _runtimeData;
 
         public PoolingItemSO PoolingType => poolingType;
         public GameObject GameObject => gameObject;
@@ -33,6 +36,7 @@ namespace _01.Code.Enemies
             _movement = GetModule<EnemyMovement>();
             _enemyHealth = GetModule<EnemyHealth>();
             _enemyRender = GetModule<EnemyRender>();
+            _runtimeData = data;
 
             ResetRuntimeState();
             _enemyHealth.Initialize(data, level);
@@ -91,19 +95,6 @@ namespace _01.Code.Enemies
             
         }
 
-        private void OnCollisionEnter2D(Collision2D other)
-        {
-            if (!other.gameObject.CompareTag("CC"))
-            {
-                return;
-            }
-
-            other.gameObject.TryGetComponent<EntityHealth>(out var health);
-            health?.ApplyDamage(4, this);
-            NotifyDeath();
-            ReturnToPool();
-        }
-
         private void NotifyDeath()
         {
             if (_deathNotified)
@@ -126,11 +117,43 @@ namespace _01.Code.Enemies
             _returnedToPool = false;
             _deathNotified = false;
             IsDead = false;
+            _runtimeData = null;
 
             OnHit ??= new UnityEvent();
             OnDeath ??= new UnityEvent();
             OnDeath.RemoveAllListeners();
             OnDeath.AddListener(HandleDeath);
+        }
+
+        public void ReachDestination()
+        {
+            if (_returnedToPool)
+            {
+                return;
+            }
+
+            ApplyCommandCenterDamage();
+            _parentSpawner?.EnemyDied(this);
+            ReturnToPool();
+        }
+
+        private void ApplyCommandCenterDamage()
+        {
+            if (_runtimeData == null)
+            {
+                return;
+            }
+
+            CommandCenter commandCenter = GameManager.Instance?.GridManager?.commandCenter;
+            if (commandCenter == null)
+            {
+                return;
+            }
+
+            if (commandCenter.TryGetComponent(out _01.Code.Combat.IDamageable damageable))
+            {
+                damageable.ApplyDamage(_runtimeData.Damage, this);
+            }
         }
 
         private void CacheVisualTransform()

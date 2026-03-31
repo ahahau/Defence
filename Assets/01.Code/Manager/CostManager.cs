@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using _01.Code.Core;
+using _01.Code.Cost;
 using _01.Code.Events;
 using UnityEngine;
 
@@ -23,8 +24,8 @@ namespace _01.Code.Manager
         public event Action<CostDefinitionSO, int, int> OnCostChanged;
 
         public CostDefinitionSO PrimarySpendCost => primarySpendCost;
-        public IReadOnlyList<CostDefinitionSO> DefaultCosts => costCatalog.DefaultCosts;
-        public IReadOnlyList<CostDefinitionSO> ResourceCosts => costCatalog.ResourceCosts;
+        public List<CostDefinitionSO> DefaultCosts => costCatalog.DefaultCosts;
+        public List<CostDefinitionSO> ResourceCosts => costCatalog.ResourceCosts;
 
         /// <summary>
         /// 이 함수는 비용 채널 구독과 시작 비용 세팅을 담당합니다
@@ -93,7 +94,7 @@ namespace _01.Code.Manager
         /// </summary>
         public bool CanPayAll(CostBundleSO costBundle)
         {
-            IReadOnlyList<CostBundleSO.Entry> costs = costBundle.Entries;
+            List<CostBundleSO.Entry> costs = costBundle.Entries;
             for (int i = 0; i < costs.Count; i++)
             {
                 if (!CanPay(costs[i].type, costs[i].amount))
@@ -105,7 +106,7 @@ namespace _01.Code.Manager
 
         public bool TryPayAll(CostBundleSO costBundle)
         {
-            IReadOnlyList<CostBundleSO.Entry> costs = costBundle.Entries;
+            List<CostBundleSO.Entry> costs = costBundle.Entries;
             if (!CanPayAll(costBundle)) return false;
 
             for (int i = 0; i < costs.Count; i++)
@@ -130,7 +131,7 @@ namespace _01.Code.Manager
         /// </summary>
         private void HandleRefundCostEvent(RefundCostEvent evt) => Add(evt.Type, evt.Amount);
 
-        private void InitializeCatalog(IReadOnlyList<CostDefinitionSO> definitions)
+        private void InitializeCatalog(List<CostDefinitionSO> definitions)
         {
             for (int i = 0; i < definitions.Count; i++)
             {

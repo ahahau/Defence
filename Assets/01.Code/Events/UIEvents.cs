@@ -1,5 +1,6 @@
 using _01.Code.Core;
 using System.Collections.Generic;
+using _01.Code.Cost;
 using UnityEngine;
 
 namespace _01.Code.Events
@@ -58,11 +59,11 @@ namespace _01.Code.Events
 
     public class UiCostValueEntry
     {
-        public _01.Code.Manager.CostDefinitionSO Definition { get; private set; }
+        public CostDefinitionSO Definition { get; private set; }
         public int Current { get; private set; }
         public int Max { get; private set; }
 
-        public UiCostValueEntry Initialize(_01.Code.Manager.CostDefinitionSO definition, int current, int max)
+        public UiCostValueEntry Initialize(CostDefinitionSO definition, int current, int max)
         {
             Definition = definition;
             Current = current;
@@ -73,9 +74,9 @@ namespace _01.Code.Events
 
     public class UiDefaultCostBarStateChangedEvent : GameEvent
     {
-        public IReadOnlyList<UiCostValueEntry> Costs { get; private set; }
+        public List<UiCostValueEntry> Costs { get; private set; }
 
-        public UiDefaultCostBarStateChangedEvent Initializer(IReadOnlyList<UiCostValueEntry> costs)
+        public UiDefaultCostBarStateChangedEvent Initializer(List<UiCostValueEntry> costs)
         {
             Costs = costs;
             return this;
@@ -84,10 +85,10 @@ namespace _01.Code.Events
 
     public class UiResourceStackEntry
     {
-        public _01.Code.Manager.CostDefinitionSO Definition { get; private set; }
+        public CostDefinitionSO Definition { get; private set; }
         public int StackAmount { get; private set; }
 
-        public UiResourceStackEntry Initialize(_01.Code.Manager.CostDefinitionSO definition, int stackAmount)
+        public UiResourceStackEntry Initialize(CostDefinitionSO definition, int stackAmount)
         {
             Definition = definition;
             StackAmount = stackAmount;
@@ -97,9 +98,9 @@ namespace _01.Code.Events
 
     public class UiResourceGridStateChangedEvent : GameEvent
     {
-        public IReadOnlyList<UiResourceStackEntry> Stacks { get; private set; }
+        public List<UiResourceStackEntry> Stacks { get; private set; }
 
-        public UiResourceGridStateChangedEvent Initializer(IReadOnlyList<UiResourceStackEntry> stacks)
+        public UiResourceGridStateChangedEvent Initializer(List<UiResourceStackEntry> stacks)
         {
             Stacks = stacks;
             return this;
@@ -108,13 +109,13 @@ namespace _01.Code.Events
 
     public class UiUnitInventoryStateChangedEvent : GameEvent
     {
-        public IReadOnlyList<_01.Code.Unit.UnitDataSO> Units { get; private set; }
+        public List<_01.Code.Unit.UnitDataSO> Units { get; private set; }
         public _01.Code.Unit.UnitDataSO SelectedUnit { get; private set; }
         public bool CanUseDayActions { get; private set; }
         public int CurrentPrimaryCost { get; private set; }
 
         public UiUnitInventoryStateChangedEvent Initializer(
-            IReadOnlyList<_01.Code.Unit.UnitDataSO> units,
+            List<_01.Code.Unit.UnitDataSO> units,
             _01.Code.Unit.UnitDataSO selectedUnit,
             bool canUseDayActions,
             int currentPrimaryCost)

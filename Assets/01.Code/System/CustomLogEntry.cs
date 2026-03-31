@@ -31,7 +31,7 @@ namespace _01.Code.System
 
         public static event Action Changed;
 
-        public static IReadOnlyList<CustomLogEntry> Entries => EntriesInternal;
+        public static List<CustomLogEntry> Entries => EntriesInternal;
 
         public static void Add(LogCategory category, LogLevel level, string message, Color accentColor)
         {
