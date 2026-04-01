@@ -13,8 +13,7 @@ MonoBehaviour:
   m_Name: Stone
   m_EditorClassIdentifier: 
   <DisplayName>k__BackingField: "\uB3CC"
-  <Icon>k__BackingField: {fileID: 0}
-  <Category>k__BackingField: 0
+  <Icon>k__BackingField: {fileID: -929541546, guid: 7e70ae16eb0b4fe47b2192ef1c7b6109, type: 3}
   <InitialCurrent>k__BackingField: 0
   <InitialMax>k__BackingField: 99999
   <SortOrder>k__BackingField: 2

@@ -5,7 +5,7 @@ using _01.Code.Combat;
 using _01.Code.Core;
 using _01.Code.Cost;
 using _01.Code.Events;
-using _01.Code.Unit;
+using _01.Code.Units;
 using GondrLib.ObjectPool.Runtime;
 using UnityEngine;
 
@@ -22,10 +22,8 @@ namespace _01.Code.Manager
         [SerializeField] private List<UnitDataSO> availableBuildings = new();
         [SerializeField] private List<UnitDataSO> availableUnits = new();
 
-        private bool _showResourcePage = true;
-        private Unit.Unit _placementPreview;
+        private Unit _placementPreview;
         private readonly List<UiCostValueEntry> _defaultCostEntries = new();
-        private readonly List<UiResourceStackEntry> _resourceStackEntries = new();
 
         public UnitDataSO SelectedUnit { get; private set; }
         public Vector3 CurrentBuildPosition { get; private set; }
@@ -50,8 +48,6 @@ namespace _01.Code.Manager
         {
             uiEventChannel.RemoveListener<ShowDamageTextRequestedEvent>(HandleShowDamageTextRequestedEvent);
             uiEventChannel.RemoveListener<UiSkipDayRequestedEvent>(HandleSkipDayRequestedEvent);
-            uiEventChannel.RemoveListener<UiInventoryPageRequestedEvent>(HandleInventoryPageRequestedEvent);
-            uiEventChannel.RemoveListener<UiUnitSlotRequestedEvent>(HandleUnitSlotRequestedEvent);
             costEventChannel.RemoveListener<CostChangedEvent>(HandleCostChangedEvent);
             buildEventChannel.RemoveListener<BuildCompletedEvent>(HandleBuildCompletedEvent);
             buildEventChannel.RemoveListener<BuildFailedEvent>(HandleBuildFailedEvent);
@@ -111,8 +107,6 @@ namespace _01.Code.Manager
         {
             uiEventChannel.AddListener<ShowDamageTextRequestedEvent>(HandleShowDamageTextRequestedEvent);
             uiEventChannel.AddListener<UiSkipDayRequestedEvent>(HandleSkipDayRequestedEvent);
-            uiEventChannel.AddListener<UiInventoryPageRequestedEvent>(HandleInventoryPageRequestedEvent);
-            uiEventChannel.AddListener<UiUnitSlotRequestedEvent>(HandleUnitSlotRequestedEvent);
             costEventChannel.AddListener<CostChangedEvent>(HandleCostChangedEvent);
             buildEventChannel.AddListener<BuildCompletedEvent>(HandleBuildCompletedEvent);
             buildEventChannel.AddListener<BuildFailedEvent>(HandleBuildFailedEvent);
@@ -138,27 +132,6 @@ namespace _01.Code.Manager
         {
             CancelSelection();
             GameManager.Instance?.TimeManager?.TrySkipDay();
-        }
-
-        private void HandleInventoryPageRequestedEvent(UiInventoryPageRequestedEvent evt)
-        {
-            if (evt == null)
-            {
-                return;
-            }
-
-            _showResourcePage = evt.ShowResources;
-            PublishUiState();
-        }
-
-        private void HandleUnitSlotRequestedEvent(UiUnitSlotRequestedEvent evt)
-        {
-            if (evt?.UnitData == null)
-            {
-                return;
-            }
-
-            SelectBuilding(evt.UnitData);
         }
 
         private void HandleTimeChanged(int _)
@@ -218,7 +191,8 @@ namespace _01.Code.Manager
             foreach (SpriteRenderer spriteRenderer in _placementPreview.GetComponentsInChildren<SpriteRenderer>(true))
             {
                 Color color = spriteRenderer.color;
-                spriteRenderer.color = new Color(color.r, color.g, color.b, color.a * 0.45f);
+                color.a *= 0.45f;
+                spriteRenderer.color = color;
                 spriteRenderer.sortingOrder += 1000;
             }
 
@@ -272,17 +246,9 @@ namespace _01.Code.Manager
             int primaryCost = GetCost(GameManager.Instance.CostManager.PrimarySpendCost);
 
             BuildDefaultCostEntries();
-            BuildResourceStackEntries();
 
             uiEventChannel.RaiseEvent(UIEvents.UiClockStateChangedEvent.Initializer(day, isDay));
             uiEventChannel.RaiseEvent(UIEvents.UiDefaultCostBarStateChangedEvent.Initializer(_defaultCostEntries));
-            uiEventChannel.RaiseEvent(UIEvents.UiResourceGridStateChangedEvent.Initializer(_resourceStackEntries));
-            uiEventChannel.RaiseEvent(UIEvents.UiInventoryPageChangedEvent.Initializer(_showResourcePage));
-            uiEventChannel.RaiseEvent(UIEvents.UiUnitInventoryStateChangedEvent.Initializer(
-                availableUnits,
-                SelectedUnit,
-                CanUseDayActions(),
-                primaryCost));
         }
 
         private int GetCost(CostDefinitionSO type)
@@ -303,36 +269,14 @@ namespace _01.Code.Manager
         private void BuildDefaultCostEntries()
         {
             _defaultCostEntries.Clear();
-            List<CostDefinitionSO> defaultCosts = GameManager.Instance.CostManager.DefaultCosts;
-            for (int i = 0; i < defaultCosts.Count; i++)
+            List<CostDefinitionSO> costs = GameManager.Instance.CostManager.AllCosts;
+            for (int i = 0; i < costs.Count; i++)
             {
-                CostDefinitionSO definition = defaultCosts[i];
+                CostDefinitionSO definition = costs[i];
                 _defaultCostEntries.Add(new UiCostValueEntry().Initialize(
                     definition,
                     GameManager.Instance.CostManager.GetCurrent(definition),
                     GameManager.Instance.CostManager.GetMax(definition)));
-            }
-        }
-
-        private void BuildResourceStackEntries()
-        {
-            _resourceStackEntries.Clear();
-            List<CostDefinitionSO> resourceCosts = GameManager.Instance.CostManager.ResourceCosts;
-            for (int i = 0; i < resourceCosts.Count; i++)
-            {
-                CostDefinitionSO definition = resourceCosts[i];
-                int current = GameManager.Instance.CostManager.GetCurrent(definition);
-                if (current <= 0)
-                {
-                    continue;
-                }
-
-                while (current > 0)
-                {
-                    int stackAmount = Mathf.Min(99, current);
-                    _resourceStackEntries.Add(new UiResourceStackEntry().Initialize(definition, stackAmount));
-                    current -= stackAmount;
-                }
             }
         }
     }

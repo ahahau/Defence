@@ -8,7 +8,15 @@ namespace _01.Code.Test
         [Min(0.1f)] public float cellSize = 1f;
         [Min(0.001f)] public float lineWidth = 0.03f;
         public Material lineMat;
-        public Color gizmoColor = new Color(1f, 1f, 1f, 0.2f);
+        public Color gizmoColor = default;
+
+        private void Awake()
+        {
+            if (IsUnset(gizmoColor))
+            {
+                gizmoColor = GetWhiteWithAlpha(0.2f);
+            }
+        }
 
         private void Start()
         {
@@ -113,6 +121,21 @@ namespace _01.Code.Test
                 Vector3 endH = transform.position + new Vector3(totalSize, offset, 0f);
                 Gizmos.DrawLine(startH, endH);
             }
+        }
+
+        private Color GetWhiteWithAlpha(float alpha)
+        {
+            Color color = Color.white;
+            color.a = alpha;
+            return color;
+        }
+
+        private bool IsUnset(Color color)
+        {
+            return Mathf.Approximately(color.r, 0f) &&
+                   Mathf.Approximately(color.g, 0f) &&
+                   Mathf.Approximately(color.b, 0f) &&
+                   Mathf.Approximately(color.a, 0f);
         }
     }
 }

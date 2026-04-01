@@ -18,7 +18,7 @@ namespace _01.Code.Cameras
         private void Update()
         {
             mover.direction = InputData.MovementKey;
-            ScrollMove();
+            //ScrollMove();
         }
 
         private void ScrollMove()

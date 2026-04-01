@@ -1,6 +1,7 @@
 using _01.Code.Core;
 using System.Collections.Generic;
 using _01.Code.Cost;
+using _01.Code.Units;
 using UnityEngine;
 
 namespace _01.Code.Events
@@ -10,11 +11,8 @@ namespace _01.Code.Events
         public static readonly ShowDamageTextRequestedEvent ShowDamageTextRequestedEvent = new ShowDamageTextRequestedEvent();
         public static readonly UiClockStateChangedEvent UiClockStateChangedEvent = new UiClockStateChangedEvent();
         public static readonly UiDefaultCostBarStateChangedEvent UiDefaultCostBarStateChangedEvent = new UiDefaultCostBarStateChangedEvent();
-        public static readonly UiResourceGridStateChangedEvent UiResourceGridStateChangedEvent = new UiResourceGridStateChangedEvent();
         public static readonly UiUnitInventoryStateChangedEvent UiUnitInventoryStateChangedEvent = new UiUnitInventoryStateChangedEvent();
-        public static readonly UiInventoryPageChangedEvent UiInventoryPageChangedEvent = new UiInventoryPageChangedEvent();
         public static readonly UiSkipDayRequestedEvent UiSkipDayRequestedEvent = new UiSkipDayRequestedEvent();
-        public static readonly UiInventoryPageRequestedEvent UiInventoryPageRequestedEvent = new UiInventoryPageRequestedEvent();
         public static readonly UiUnitSlotRequestedEvent UiUnitSlotRequestedEvent = new UiUnitSlotRequestedEvent();
     }
 
@@ -83,40 +81,16 @@ namespace _01.Code.Events
         }
     }
 
-    public class UiResourceStackEntry
-    {
-        public CostDefinitionSO Definition { get; private set; }
-        public int StackAmount { get; private set; }
-
-        public UiResourceStackEntry Initialize(CostDefinitionSO definition, int stackAmount)
-        {
-            Definition = definition;
-            StackAmount = stackAmount;
-            return this;
-        }
-    }
-
-    public class UiResourceGridStateChangedEvent : GameEvent
-    {
-        public List<UiResourceStackEntry> Stacks { get; private set; }
-
-        public UiResourceGridStateChangedEvent Initializer(List<UiResourceStackEntry> stacks)
-        {
-            Stacks = stacks;
-            return this;
-        }
-    }
-
     public class UiUnitInventoryStateChangedEvent : GameEvent
     {
-        public List<_01.Code.Unit.UnitDataSO> Units { get; private set; }
-        public _01.Code.Unit.UnitDataSO SelectedUnit { get; private set; }
+        public List<UnitDataSO> Units { get; private set; }
+        public UnitDataSO SelectedUnit { get; private set; }
         public bool CanUseDayActions { get; private set; }
         public int CurrentPrimaryCost { get; private set; }
 
         public UiUnitInventoryStateChangedEvent Initializer(
-            List<_01.Code.Unit.UnitDataSO> units,
-            _01.Code.Unit.UnitDataSO selectedUnit,
+            List<UnitDataSO> units,
+            UnitDataSO selectedUnit,
             bool canUseDayActions,
             int currentPrimaryCost)
         {
@@ -128,35 +102,13 @@ namespace _01.Code.Events
         }
     }
 
-    public class UiInventoryPageChangedEvent : GameEvent
-    {
-        public bool ShowResources { get; private set; }
-
-        public UiInventoryPageChangedEvent Initializer(bool showResources)
-        {
-            ShowResources = showResources;
-            return this;
-        }
-    }
-
     public class UiSkipDayRequestedEvent : GameEvent { }
-
-    public class UiInventoryPageRequestedEvent : GameEvent
-    {
-        public bool ShowResources { get; private set; }
-
-        public UiInventoryPageRequestedEvent Initializer(bool showResources)
-        {
-            ShowResources = showResources;
-            return this;
-        }
-    }
 
     public class UiUnitSlotRequestedEvent : GameEvent
     {
-        public _01.Code.Unit.UnitDataSO UnitData { get; private set; }
+        public UnitDataSO UnitData { get; private set; }
 
-        public UiUnitSlotRequestedEvent Initializer(_01.Code.Unit.UnitDataSO unitData)
+        public UiUnitSlotRequestedEvent Initializer(UnitDataSO unitData)
         {
             UnitData = unitData;
             return this;

@@ -8,7 +8,6 @@ namespace _01.Code.Save
     public struct TimeSaveData
     {
         public int dayCount;
-        public int phase;
     }
 
     public class TimeSaveAgent : MonoBehaviour, ISaveable
@@ -22,8 +21,7 @@ namespace _01.Code.Save
             TimeManager timeManager = GameManager.Instance.TimeManager;
             TimeSaveData data = new TimeSaveData
             {
-                dayCount = timeManager.DayCount,
-                phase = (int)timeManager.CurrentPhase
+                dayCount = timeManager.DayCount
             };
             return JsonUtility.ToJson(data);
         }
@@ -36,10 +34,7 @@ namespace _01.Code.Save
             }
 
             TimeSaveData data = JsonUtility.FromJson<TimeSaveData>(savedData);
-            TimePhase phase = Enum.IsDefined(typeof(TimePhase), data.phase)
-                ? (TimePhase)data.phase
-                : TimePhase.Day;
-            GameManager.Instance.TimeManager.RestoreState(Mathf.Max(1, data.dayCount), phase);
+            GameManager.Instance.TimeManager.RestoreState(Mathf.Max(1, data.dayCount));
         }
     }
 }

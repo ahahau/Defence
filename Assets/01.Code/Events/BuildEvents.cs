@@ -1,6 +1,6 @@
 using _01.Code.Core;
 using _01.Code.Entities;
-using _01.Code.Unit;
+using _01.Code.Units;
 using UnityEngine;
 
 namespace _01.Code.Events

@@ -1,7 +1,7 @@
 using _01.Code.Core;
 using _01.Code.Events;
 using _01.Code.Manager;
-using _01.Code.Unit;
+using _01.Code.Units;
 using UnityEngine;
 
 namespace _01.Code.UI
@@ -14,8 +14,6 @@ namespace _01.Code.UI
         private ClockPanelUI _clockPanelUI;
         private GameEventChannelSO _uiEventChannel;
         private bool _isDay = true;
-        private UnitDataSO _selectedUnit;
-        private int _currentPrimaryCost;
         private string _transientMessage;
         private float _transientMessageUntil;
         private bool _buildManagerHooked;
@@ -31,7 +29,6 @@ namespace _01.Code.UI
             if (_uiEventChannel != null)
             {
                 _uiEventChannel.AddListener<UiClockStateChangedEvent>(HandleClockStateChanged);
-                _uiEventChannel.AddListener<UiUnitInventoryStateChangedEvent>(HandleInventoryStateChanged);
             }
 
             TryHookBuildManager();
@@ -43,7 +40,6 @@ namespace _01.Code.UI
             if (_uiEventChannel != null)
             {
                 _uiEventChannel.RemoveListener<UiClockStateChangedEvent>(HandleClockStateChanged);
-                _uiEventChannel.RemoveListener<UiUnitInventoryStateChangedEvent>(HandleInventoryStateChanged);
             }
 
             UnhookBuildManager();
@@ -66,13 +62,6 @@ namespace _01.Code.UI
         private void HandleClockStateChanged(UiClockStateChangedEvent evt)
         {
             _isDay = evt.IsDay;
-            RefreshStatusMessage();
-        }
-
-        private void HandleInventoryStateChanged(UiUnitInventoryStateChangedEvent evt)
-        {
-            _selectedUnit = evt.SelectedUnit;
-            _currentPrimaryCost = evt.CurrentPrimaryCost;
             RefreshStatusMessage();
         }
 
@@ -147,18 +136,7 @@ namespace _01.Code.UI
                 return "밤 · 배치 비활성";
             }
 
-            if (_selectedUnit == null)
-            {
-                return "낮 · 유닛을 선택하세요";
-            }
-
-            int shortage = _selectedUnit.Cost - _currentPrimaryCost;
-            if (shortage > 0)
-            {
-                return $"{_selectedUnit.Name} · 비용 {shortage} 부족";
-            }
-
-            return $"{_selectedUnit.Name} 선택됨 · 빈 타일 클릭";
+            return "낮 · 진행 중";
         }
 
         private string GetBuildCompletedMessage(UnitDataSO unitData)

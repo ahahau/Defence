@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using _01.Code.Buildings;
 using _01.Code.Manager;
-using _01.Code.Unit;
+using _01.Code.Units;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;

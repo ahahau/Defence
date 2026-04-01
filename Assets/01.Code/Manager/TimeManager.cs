@@ -28,7 +28,7 @@ namespace _01.Code.Manager
             NotifyCurrentState();
         }
 
-        public void RestoreState(int dayCount, TimePhase phase)
+        public void RestoreState(int dayCount, TimePhase phase = TimePhase.Day)
         {
             DayCount = Mathf.Max(1, dayCount);
             CurrentPhase = phase;

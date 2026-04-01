@@ -12,11 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d625daa2f12733c4f9cec522a2517ae9, type: 3}
   m_Name: CostCatalog
   m_EditorClassIdentifier: 
-  defaultCosts:
+  costs:
   - {fileID: 11400000, guid: 1d08d337822dffc4ba130fa84ab5e2bd, type: 2}
   - {fileID: 11400000, guid: 3e376f69cfbdac14283452c5f95687d9, type: 2}
-  - {fileID: 11400000, guid: 4f4feeaf968d27c49bb248987722d989, type: 2}
+  - {fileID: 11400000, guid: 3fa7e23cad644616a4dff5e7a92853db, type: 2}
   - {fileID: 11400000, guid: d3cac2555506ea74aa2f82492bc33a1f, type: 2}
-  resourceCosts:
-  - {fileID: 11400000, guid: f0d202a076859534b8213fc64a85698d, type: 2}
-  - {fileID: 11400000, guid: fb04ca54d4363d449ac3e5770299d4b0, type: 2}
+  - {fileID: 11400000, guid: 4f4feeaf968d27c49bb248987722d989, type: 2}

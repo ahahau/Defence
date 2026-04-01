@@ -3,7 +3,7 @@ using _01.Code.Buildings;
 using _01.Code.Core;
 using _01.Code.Entities;
 using _01.Code.Events;
-using _01.Code.Unit;
+using _01.Code.Units;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -183,6 +183,34 @@ namespace _01.Code.Manager
 
             OnBuildingInstalled?.Invoke(unitData, UnitManager);
             buildEventChannel.RaiseEvent(BuildEvents.BuildCompletedEvent.Initializer(unitData, UnitManager));
+            return true;
+        }
+
+        public bool TrySpawnFree(UnitDataSO unitData, out PlaceableEntity spawnedEntity)
+        {
+            spawnedEntity = null;
+
+            if (unitData == null || unitData.Prefab == null)
+            {
+                return false;
+            }
+
+            spawnedEntity = Instantiate(unitData.Prefab, Vector3.zero, Quaternion.identity);
+            if (!spawnedEntity.Initialize())
+            {
+                GameManager.Instance.LogManager?.Building($"Failed to spawn `{unitData.Name}` on a free tile.", LogLevel.Error);
+                Destroy(spawnedEntity.gameObject);
+                spawnedEntity = null;
+                return false;
+            }
+
+            if (spawnedEntity is Unit spawnedUnit)
+            {
+                spawnedUnit.level = 1;
+            }
+
+            OnBuildingInstalled?.Invoke(unitData, spawnedEntity);
+            buildEventChannel.RaiseEvent(BuildEvents.BuildCompletedEvent.Initializer(unitData, spawnedEntity));
             return true;
         }
 

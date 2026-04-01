@@ -31,8 +31,7 @@ namespace _01.Code.Save
             CostManager costManager = GameManager.Instance.CostManager;
             List<CostSaveEntry> entries = new List<CostSaveEntry>();
 
-            AppendCosts(entries, costManager.DefaultCosts, costManager);
-            AppendCosts(entries, costManager.ResourceCosts, costManager);
+            AppendCosts(entries, costManager.AllCosts, costManager);
 
             return JsonUtility.ToJson(new CostSaveCollection { costs = entries });
         }
@@ -86,8 +85,7 @@ namespace _01.Code.Save
         private Dictionary<string, CostDefinitionSO> BuildRegistry()
         {
             Dictionary<string, CostDefinitionSO> registry = new Dictionary<string, CostDefinitionSO>();
-            RegisterDefinitions(registry, GameManager.Instance.CostManager.DefaultCosts);
-            RegisterDefinitions(registry, GameManager.Instance.CostManager.ResourceCosts);
+            RegisterDefinitions(registry, GameManager.Instance.CostManager.AllCosts);
             return registry;
         }
 

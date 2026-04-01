@@ -24,8 +24,7 @@ namespace _01.Code.Manager
         public event Action<CostDefinitionSO, int, int> OnCostChanged;
 
         public CostDefinitionSO PrimarySpendCost => primarySpendCost;
-        public List<CostDefinitionSO> DefaultCosts => costCatalog.DefaultCosts;
-        public List<CostDefinitionSO> ResourceCosts => costCatalog.ResourceCosts;
+        public List<CostDefinitionSO> AllCosts => costCatalog.Costs;
 
         /// <summary>
         /// 이 함수는 비용 채널 구독과 시작 비용 세팅을 담당합니다
@@ -35,14 +34,7 @@ namespace _01.Code.Manager
             costEventChannel.AddListener<TrySpendCostEvent>(HandleTrySpendCostEvent);
             costEventChannel.AddListener<RefundCostEvent>(HandleRefundCostEvent);
 
-            InitializeCatalog(costCatalog.DefaultCosts);
-            InitializeCatalog(costCatalog.ResourceCosts);
-
-            if (primarySpendCost != null)
-            {
-                SetMax(primarySpendCost, DefaultCostMax);
-                SetCurrent(primarySpendCost, Mathf.Max(GetCurrent(primarySpendCost), 100));
-            }
+            InitializeCatalog(costCatalog.Costs);
         }
 
         private void OnDestroy()
@@ -130,6 +122,17 @@ namespace _01.Code.Manager
         /// 이 함수는 외부에서 환불 요청이 오면 현재 비용에 다시 더해줍니다
         /// </summary>
         private void HandleRefundCostEvent(RefundCostEvent evt) => Add(evt.Type, evt.Amount);
+
+        public void ApplyNewGameStartingCosts()
+        {
+            if (primarySpendCost == null)
+            {
+                return;
+            }
+
+            SetMax(primarySpendCost, DefaultCostMax);
+            SetCurrent(primarySpendCost, 100);
+        }
 
         private void InitializeCatalog(List<CostDefinitionSO> definitions)
         {

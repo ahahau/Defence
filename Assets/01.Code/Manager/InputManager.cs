@@ -1,7 +1,8 @@
 using _01.Code.Cameras;
 using _01.Code.Entities;
 using _01.Code.Core;
-using _01.Code.Unit;
+using _01.Code.UI;
+using _01.Code.Units;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -15,7 +16,7 @@ namespace _01.Code.Manager
 
         [SerializeField] private LayerMask whatIsClickable;
         [SerializeField] private float dragStartThresholdPixels = 8f;
-        private Unit.Unit _draggedUnit;
+        private Units.Unit _draggedUnit;
         private PlaceableEntity _selectedBuilding;
         private Collider2D _pointerDownCollider;
         private bool _isPointerDown;
@@ -43,6 +44,7 @@ namespace _01.Code.Manager
         private void Update()
         {
             HandleDeleteSaveHotkey();
+            HandleSpawnUnitHotkey();
 
             Vector2 worldPosition = InputData.GetWorldPosition2D();
             Vector2Int hoveredCell = GameManager.Instance.GridManager.WorldToCell(worldPosition);
@@ -92,7 +94,7 @@ namespace _01.Code.Manager
 
         private void ClickObject(GameObject hitGameObject)
         {
-            if (TryGetClickedUnit(hitGameObject, out Unit.Unit unit))
+            if (TryGetClickedUnit(hitGameObject, out Units.Unit unit))
             {
                 ClickUnit(unit);
                 return;
@@ -234,8 +236,35 @@ namespace _01.Code.Manager
                 return;
             }
 
-            GameManager.Instance.SaveManager.DeleteSave();
-            GameManager.Instance.SaveManager.ReloadCurrentScene();
+            GameManager.Instance.SaveManager.StartNewGame();
+        }
+
+        private void HandleSpawnUnitHotkey()
+        {
+            if (Keyboard.current == null || !Keyboard.current.rKey.wasPressedThisFrame)
+            {
+                return;
+            }
+
+            UIManager uiManager = GameManager.Instance?.UiManager;
+            if (uiManager == null || uiManager.AvailableUnits == null || uiManager.AvailableUnits.Count == 0)
+            {
+                return;
+            }
+
+            UnitDataSO unitData = uiManager.AvailableUnits[0];
+            if (unitData == null)
+            {
+                return;
+            }
+
+            UnitPanelUI unitPanelUi = FindFirstObjectByType<UnitPanelUI>();
+            if (unitPanelUi == null)
+            {
+                return;
+            }
+
+            unitPanelUi.TryAddCard(unitData);
         }
 
         private bool CanModifyPlacements()
@@ -254,14 +283,14 @@ namespace _01.Code.Manager
             return Physics2D.OverlapPoint(worldPosition, whatIsClickable);
         }
 
-        private Unit.Unit ResolveDraggedUnit(Collider2D hitCollider)
+        private Units.Unit ResolveDraggedUnit(Collider2D hitCollider)
         {
             if (hitCollider == null || hitCollider.CompareTag("EnemySpawner"))
             {
                 return null;
             }
 
-            return hitCollider.GetComponentInParent<Unit.Unit>();
+            return hitCollider.GetComponentInParent<Units.Unit>();
         }
 
         private PlaceableEntity ResolveSelectedBuilding(Collider2D hitCollider)
@@ -272,22 +301,22 @@ namespace _01.Code.Manager
             }
 
             PlaceableEntity placeable = hitCollider.GetComponentInParent<PlaceableEntity>();
-            return placeable is Unit.Unit ? null : placeable;
+            return placeable is Units.Unit ? null : placeable;
         }
 
-        private bool TryGetClickedUnit(GameObject hitGameObject, out Unit.Unit unit)
+        private bool TryGetClickedUnit(GameObject hitGameObject, out Units.Unit unit)
         {
-            unit = hitGameObject.GetComponentInParent<Unit.Unit>();
+            unit = hitGameObject.GetComponentInParent<Units.Unit>();
             return unit != null;
         }
 
         private bool TryGetClickedBuilding(GameObject hitGameObject, out PlaceableEntity building)
         {
             building = hitGameObject.GetComponentInParent<PlaceableEntity>();
-            return building != null && building is not Unit.Unit;
+            return building != null && building is not Units.Unit;
         }
 
-        private void ClickUnit(Unit.Unit _)
+        private void ClickUnit(Units.Unit _)
         {
         }
 

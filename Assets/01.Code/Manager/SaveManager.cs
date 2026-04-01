@@ -5,7 +5,7 @@ using _01.Code.Cost;
 using _01.Code.Enemies;
 using _01.Code.Entities;
 using _01.Code.Save;
-using _01.Code.Unit;
+using _01.Code.Units;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -49,7 +49,16 @@ namespace _01.Code.Manager
 
             RebuildRegistries();
             EnsureSaveAgents();
-            LoadGame();
+
+            if (HasSaveData)
+            {
+                LoadGame();
+            }
+            else
+            {
+                GameManager.Instance?.CostManager?.ApplyNewGameStartingCosts();
+            }
+
             Subscribe();
             _initialized = true;
         }
@@ -143,6 +152,13 @@ namespace _01.Code.Manager
                 return;
             }
 
+            ReloadCurrentScene();
+        }
+
+        [ContextMenu("Start New Game")]
+        public void StartNewGame()
+        {
+            DeleteSave();
             ReloadCurrentScene();
         }
 
@@ -278,7 +294,7 @@ namespace _01.Code.Manager
         private void RebuildRegistries()
         {
             _unitRegistry.Clear();
-            RegisterUnits(GameManager.Instance.UiManager.AvailableBuildings);
+            ///RegisterUnits(GameManager.Instance.UiManager.AvailableBuildings);
             RegisterUnits(GameManager.Instance.UiManager.AvailableUnits);
         }
 
@@ -299,6 +315,7 @@ namespace _01.Code.Manager
         private void EnsureSaveAgents()
         {
             EnsureAgentOnObject<PlacementSaveAgent>(gameObject);
+            EnsureAgentOnObject<UintAgentSaveAgent>(gameObject);
             EnsureAgentOnObject<TimeSaveAgent>(GameManager.Instance.TimeManager.gameObject);
             EnsureAgentOnObject<CostSaveAgent>(GameManager.Instance.CostManager.gameObject);
         }
