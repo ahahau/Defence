@@ -15,5 +15,5 @@ MonoBehaviour:
   <DisplayName>k__BackingField: "\uC778\uAD6C\uC218"
   <Icon>k__BackingField: {fileID: 21300000, guid: 7280e9a9fcb034f2e9b0c83dcb8c0eff, type: 3}
   <InitialCurrent>k__BackingField: 0
-  <InitialMax>k__BackingField: 99999
+  <InitialMax>k__BackingField: 20
   <SortOrder>k__BackingField: 4

@@ -23,21 +23,24 @@ namespace _01.Code.Save
     public class CostSaveAgent : MonoBehaviour, ISaveable
     {
         [SerializeField] private string saveKey = "cost.state";
+        private CostManager _costManager;
 
         public string SaveKey => saveKey;
+        public int RestoreOrder => 100;
 
         public string GetSaveData()
         {
-            CostManager costManager = GameManager.Instance.CostManager;
+            _costManager ??= GetComponent<CostManager>();
             List<CostSaveEntry> entries = new List<CostSaveEntry>();
 
-            AppendCosts(entries, costManager.AllCosts, costManager);
+            AppendCosts(entries, _costManager.AllCosts, _costManager);
 
             return JsonUtility.ToJson(new CostSaveCollection { costs = entries });
         }
 
         public void RestoreData(string savedData)
         {
+            _costManager ??= GetComponent<CostManager>();
             if (string.IsNullOrWhiteSpace(savedData))
             {
                 return;
@@ -58,8 +61,8 @@ namespace _01.Code.Save
                     continue;
                 }
 
-                GameManager.Instance.CostManager.SetMax(definition, entry.max);
-                GameManager.Instance.CostManager.SetCurrent(definition, entry.current);
+                _costManager.SetMax(definition, entry.max);
+                _costManager.SetCurrent(definition, entry.current);
             }
         }
 
@@ -85,7 +88,7 @@ namespace _01.Code.Save
         private Dictionary<string, CostDefinitionSO> BuildRegistry()
         {
             Dictionary<string, CostDefinitionSO> registry = new Dictionary<string, CostDefinitionSO>();
-            RegisterDefinitions(registry, GameManager.Instance.CostManager.AllCosts);
+            RegisterDefinitions(registry, _costManager.AllCosts);
             return registry;
         }
 

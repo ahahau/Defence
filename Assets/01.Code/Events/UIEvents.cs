@@ -14,6 +14,12 @@ namespace _01.Code.Events
         public static readonly UiUnitInventoryStateChangedEvent UiUnitInventoryStateChangedEvent = new UiUnitInventoryStateChangedEvent();
         public static readonly UiSkipDayRequestedEvent UiSkipDayRequestedEvent = new UiSkipDayRequestedEvent();
         public static readonly UiUnitSlotRequestedEvent UiUnitSlotRequestedEvent = new UiUnitSlotRequestedEvent();
+        public static readonly UiBuildAtWorldPositionRequestedEvent UiBuildAtWorldPositionRequestedEvent = new UiBuildAtWorldPositionRequestedEvent();
+        public static readonly UiCancelSelectionRequestedEvent UiCancelSelectionRequestedEvent = new UiCancelSelectionRequestedEvent();
+        public static readonly UiHoverCellChangedEvent UiHoverCellChangedEvent = new UiHoverCellChangedEvent();
+        public static readonly UiRefreshRequestedEvent UiRefreshRequestedEvent = new UiRefreshRequestedEvent();
+        public static readonly UiUnitCatalogQueryEvent UiUnitCatalogQueryEvent = new UiUnitCatalogQueryEvent();
+        public static readonly UiClockStateQueryEvent UiClockStateQueryEvent = new UiClockStateQueryEvent();
     }
 
     public class ShowDamageTextRequestedEvent : GameEvent
@@ -103,6 +109,58 @@ namespace _01.Code.Events
     }
 
     public class UiSkipDayRequestedEvent : GameEvent { }
+
+    public class UiBuildAtWorldPositionRequestedEvent : GameEvent
+    {
+        public Vector3 WorldPosition { get; private set; }
+        public bool Succeeded { get; set; }
+
+        public UiBuildAtWorldPositionRequestedEvent Initializer(Vector3 worldPosition)
+        {
+            WorldPosition = worldPosition;
+            Succeeded = false;
+            return this;
+        }
+    }
+
+    public class UiCancelSelectionRequestedEvent : GameEvent { }
+
+    public class UiHoverCellChangedEvent : GameEvent
+    {
+        public Vector2Int CellPosition { get; private set; }
+
+        public UiHoverCellChangedEvent Initializer(Vector2Int cellPosition)
+        {
+            CellPosition = cellPosition;
+            return this;
+        }
+    }
+
+    public class UiRefreshRequestedEvent : GameEvent { }
+
+    public class UiUnitCatalogQueryEvent : GameEvent
+    {
+        public List<UnitDataSO> Units { get; set; }
+
+        public UiUnitCatalogQueryEvent Initializer()
+        {
+            Units = null;
+            return this;
+        }
+    }
+
+    public class UiClockStateQueryEvent : GameEvent
+    {
+        public int Day { get; set; }
+        public bool IsDay { get; set; }
+
+        public UiClockStateQueryEvent Initializer()
+        {
+            Day = 1;
+            IsDay = true;
+            return this;
+        }
+    }
 
     public class UiUnitSlotRequestedEvent : GameEvent
     {

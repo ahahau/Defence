@@ -59,12 +59,14 @@ namespace _01.Code.Events
         public PlaceableEntity PlaceableEntity { get; private set; }
         public Vector3 WorldPosition { get; private set; }
         public int TileScore { get; private set; }
+        public bool Succeeded { get; set; }
 
         public BuildMoveRequestedEvent Initializer(PlaceableEntity placeableEntity, Vector3 worldPosition, int tileScore)
         {
             PlaceableEntity = placeableEntity;
             WorldPosition = worldPosition;
             TileScore = tileScore;
+            Succeeded = false;
             return this;
         }
     }

@@ -13,28 +13,31 @@ namespace _01.Code.Save
     public class TimeSaveAgent : MonoBehaviour, ISaveable
     {
         [SerializeField] private string saveKey = "time.state";
+        private TimeManager _timeManager;
 
         public string SaveKey => saveKey;
+        public int RestoreOrder => 100;
 
         public string GetSaveData()
         {
-            TimeManager timeManager = GameManager.Instance.TimeManager;
+            _timeManager ??= GetComponent<TimeManager>();
             TimeSaveData data = new TimeSaveData
             {
-                dayCount = timeManager.DayCount
+                dayCount = _timeManager.DayCount
             };
             return JsonUtility.ToJson(data);
         }
 
         public void RestoreData(string savedData)
         {
+            _timeManager ??= GetComponent<TimeManager>();
             if (string.IsNullOrWhiteSpace(savedData))
             {
                 return;
             }
 
             TimeSaveData data = JsonUtility.FromJson<TimeSaveData>(savedData);
-            GameManager.Instance.TimeManager.RestoreState(Mathf.Max(1, data.dayCount));
+            _timeManager.RestoreState(Mathf.Max(1, data.dayCount));
         }
     }
 }

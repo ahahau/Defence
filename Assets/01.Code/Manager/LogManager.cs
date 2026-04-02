@@ -21,7 +21,7 @@ namespace _01.Code.Manager
         System,
     }
 
-    public class LogManager : MonoBehaviour
+    public class LogManager : MonoBehaviour, IManageable
     {
         [SerializeField, HideInInspector] private List<bool> enableLogsByCategory = new List<bool> { true, true, true, true, true };
         [SerializeField, HideInInspector] private List<Color> categoryColors = new List<Color>
@@ -33,7 +33,7 @@ namespace _01.Code.Manager
             Color.white // System
         };
 
-        public void Initialize()
+        public void Initialize(IManagerContainer managerContainer)
         {
             EnsureCategorySettings();
         }

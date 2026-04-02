@@ -9,6 +9,7 @@ namespace _01.Code.UI
     {
         [SerializeField] private RectTransform cardRoot;
         [SerializeField] private UnitCardUI cardPrefab;
+        [SerializeField] private UIManager uiManager;
         [SerializeField] private float cardsY = 0f;
         [SerializeField] private float cardStride = 112f;
         [SerializeField] private int maxCards = 5;
@@ -16,6 +17,12 @@ namespace _01.Code.UI
 
         private readonly List<UnitDataSO> _ownedUnits = new();
         private readonly List<UnitCardUI> _cards = new();
+
+        private void Awake()
+        {
+            uiManager ??= GetComponentInParent<UIManager>();
+            uiManager ??= FindFirstObjectByType<UIManager>();
+        }
 
         private void Start()
         {
@@ -85,7 +92,6 @@ namespace _01.Code.UI
 
         private void HandleCardClicked(UnitCardUI clickedCard)
         {
-            UIManager uiManager = GameManager.Instance?.UiManager;
             if (clickedCard == null || uiManager == null)
             {
                 return;

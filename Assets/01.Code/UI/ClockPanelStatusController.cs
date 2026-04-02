@@ -1,6 +1,5 @@
 using _01.Code.Core;
 using _01.Code.Events;
-using _01.Code.Manager;
 using _01.Code.Units;
 using UnityEngine;
 
@@ -10,6 +9,7 @@ namespace _01.Code.UI
     public class ClockPanelStatusController : MonoBehaviour
     {
         [SerializeField] private float transientMessageDuration = 2.25f;
+        [SerializeField] private _01.Code.Manager.BuildManager buildManager;
 
         private ClockPanelUI _clockPanelUI;
         private GameEventChannelSO _uiEventChannel;
@@ -22,6 +22,7 @@ namespace _01.Code.UI
         {
             _clockPanelUI = GetComponent<ClockPanelUI>();
             _uiEventChannel = _clockPanelUI.UiEventChannel;
+            buildManager ??= FindFirstObjectByType<_01.Code.Manager.BuildManager>();
         }
 
         private void OnEnable()
@@ -87,29 +88,29 @@ namespace _01.Code.UI
 
         private void TryHookBuildManager()
         {
-            if (_buildManagerHooked || GameManager.Instance?.BuildManager == null)
+            if (_buildManagerHooked || buildManager == null)
             {
                 return;
             }
 
-            GameManager.Instance.BuildManager.OnBuildingInstalled += HandleBuildingInstalled;
-            GameManager.Instance.BuildManager.OnBuildFailed += HandleBuildFailed;
-            GameManager.Instance.BuildManager.OnBuildingMoved += HandleBuildingMoved;
-            GameManager.Instance.BuildManager.OnBuildingMoveFailed += HandleBuildingMoveFailed;
+            buildManager.OnBuildingInstalled += HandleBuildingInstalled;
+            buildManager.OnBuildFailed += HandleBuildFailed;
+            buildManager.OnBuildingMoved += HandleBuildingMoved;
+            buildManager.OnBuildingMoveFailed += HandleBuildingMoveFailed;
             _buildManagerHooked = true;
         }
 
         private void UnhookBuildManager()
         {
-            if (!_buildManagerHooked || GameManager.Instance?.BuildManager == null)
+            if (!_buildManagerHooked || buildManager == null)
             {
                 return;
             }
 
-            GameManager.Instance.BuildManager.OnBuildingInstalled -= HandleBuildingInstalled;
-            GameManager.Instance.BuildManager.OnBuildFailed -= HandleBuildFailed;
-            GameManager.Instance.BuildManager.OnBuildingMoved -= HandleBuildingMoved;
-            GameManager.Instance.BuildManager.OnBuildingMoveFailed -= HandleBuildingMoveFailed;
+            buildManager.OnBuildingInstalled -= HandleBuildingInstalled;
+            buildManager.OnBuildFailed -= HandleBuildFailed;
+            buildManager.OnBuildingMoved -= HandleBuildingMoved;
+            buildManager.OnBuildingMoveFailed -= HandleBuildingMoveFailed;
             _buildManagerHooked = false;
         }
 
@@ -125,8 +126,6 @@ namespace _01.Code.UI
             string message = !string.IsNullOrEmpty(_transientMessage) && Time.unscaledTime < _transientMessageUntil
                 ? _transientMessage
                 : GetClockStatusMessage();
-
-            _clockPanelUI.SetStatusMessage(message);
         }
 
         private string GetClockStatusMessage()

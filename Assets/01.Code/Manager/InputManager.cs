@@ -1,6 +1,7 @@
 using _01.Code.Cameras;
-using _01.Code.Entities;
 using _01.Code.Core;
+using _01.Code.Entities;
+using _01.Code.Events;
 using _01.Code.UI;
 using _01.Code.Units;
 using UnityEngine;
@@ -9,15 +10,19 @@ using UnityEngine.InputSystem;
 
 namespace _01.Code.Manager
 {
-    public class InputManager : MonoBehaviour
+    public class InputManager : MonoBehaviour, IManageable, IAfterManageable
     {
         [field: SerializeField] public InputDataSO InputData { get; private set; }
         [field: SerializeField] public Vector2Int CurrentMouseCellPosition { get; private set; }
 
+        [SerializeField] private GameEventChannelSO uiEventChannel;
+        [SerializeField] private GameEventChannelSO buildEventChannel;
         [SerializeField] private LayerMask whatIsClickable;
         [SerializeField] private float dragStartThresholdPixels = 8f;
-        private Units.Unit _draggedUnit;
+        private GridManager _gridManager;
+        private Unit _draggedUnit;
         private PlaceableEntity _selectedBuilding;
+        private global::System.Collections.Generic.List<UnitDataSO> _availableUnits = new();
         private Collider2D _pointerDownCollider;
         private bool _isPointerDown;
         private bool _isDraggingUnit;
@@ -26,12 +31,21 @@ namespace _01.Code.Manager
         private bool _queuedRightPointerPressed;
         private Vector2 _pointerDownScreenPosition;
         private Vector2 _pointerDownWorldPosition;
+        private Camera _worldCamera;
 
-        public void Initialize()
+        public void Initialize(IManagerContainer managerContainer)
         {
+            _gridManager = managerContainer.GetManager<GridManager>();
+            ResolveChannels();
             InputData.LeftPointerPressed += QueueLeftPointerPressed;
             InputData.LeftPointerReleased += QueueLeftPointerReleased;
             InputData.RightPointerPressed += QueueRightPointerPressed;
+        }
+
+        public void AfterInitialize(IManagerContainer managerContainer)
+        {
+            RefreshUnitCatalog();
+            ResolveWorldCamera();
         }
 
         private void OnDestroy()
@@ -47,8 +61,14 @@ namespace _01.Code.Manager
             HandleSpawnUnitHotkey();
 
             Vector2 worldPosition = InputData.GetWorldPosition2D();
-            Vector2Int hoveredCell = GameManager.Instance.GridManager.WorldToCell(worldPosition);
+            if (_gridManager == null)
+            {
+                return;
+            }
+
+            Vector2Int hoveredCell = _gridManager.WorldToCell(worldPosition);
             CurrentMouseCellPosition = hoveredCell;
+            uiEventChannel?.RaiseEvent(UIEvents.UiHoverCellChangedEvent.Initializer(hoveredCell));
 
             if (_queuedRightPointerPressed)
             {
@@ -108,9 +128,15 @@ namespace _01.Code.Manager
 
         private void ClickGround(Vector2 worldPosition)
         {
-            Vector2Int gridPos = GameManager.Instance.GridManager.WorldToCell(worldPosition);
+            if (_gridManager == null)
+            {
+                return;
+            }
+
+            Vector2Int gridPos = _gridManager.WorldToCell(worldPosition);
             CurrentMouseCellPosition = gridPos;
-            GameManager.Instance.UiManager?.TryRequestBuild(GameManager.Instance.GridManager.CellToWorld(gridPos));
+            Vector3 buildWorldPosition = _gridManager.CellToWorld(gridPos);
+            uiEventChannel?.RaiseEvent(UIEvents.UiBuildAtWorldPositionRequestedEvent.Initializer(buildWorldPosition));
         }
 
         private void HandleRightPointerPressed()
@@ -120,7 +146,7 @@ namespace _01.Code.Manager
                 return;
             }
 
-            GameManager.Instance.UiManager?.CancelSelection();
+            uiEventChannel?.RaiseEvent(UIEvents.UiCancelSelectionRequestedEvent);
             ResetPointerState();
         }
 
@@ -149,11 +175,20 @@ namespace _01.Code.Manager
                 return;
             }
 
-            Vector3 targetWorldPosition = GameManager.Instance.GridManager.CellToWorld(CurrentMouseCellPosition);
+            if (_gridManager == null)
+            {
+                ResetPointerState();
+                return;
+            }
+
+            Vector3 targetWorldPosition = _gridManager.CellToWorld(CurrentMouseCellPosition);
 
             if (_isDraggingUnit && _draggedUnit != null)
             {
-                bool moved = GameManager.Instance.BuildManager.TryMove(_draggedUnit, targetWorldPosition);
+                BuildMoveRequestedEvent moveRequest =
+                    BuildEvents.BuildMoveRequestedEvent.Initializer(_draggedUnit, targetWorldPosition, 0);
+                buildEventChannel?.RaiseEvent(moveRequest);
+                bool moved = moveRequest.Succeeded;
                 if (!moved)
                 {
                     _draggedUnit.CommitPosition(_draggedUnit.GridPosition);
@@ -231,12 +266,7 @@ namespace _01.Code.Manager
                 return;
             }
 
-            if (GameManager.Instance?.SaveManager == null)
-            {
-                return;
-            }
-
-            GameManager.Instance.SaveManager.StartNewGame();
+            uiEventChannel?.RaiseEvent(SaveEvents.SaveStartNewGameRequestedEvent);
         }
 
         private void HandleSpawnUnitHotkey()
@@ -246,13 +276,13 @@ namespace _01.Code.Manager
                 return;
             }
 
-            UIManager uiManager = GameManager.Instance?.UiManager;
-            if (uiManager == null || uiManager.AvailableUnits == null || uiManager.AvailableUnits.Count == 0)
+            RefreshUnitCatalog();
+            if (_availableUnits == null || _availableUnits.Count == 0)
             {
                 return;
             }
 
-            UnitDataSO unitData = uiManager.AvailableUnits[0];
+            UnitDataSO unitData = _availableUnits[0];
             if (unitData == null)
             {
                 return;
@@ -269,18 +299,37 @@ namespace _01.Code.Manager
 
         private bool CanModifyPlacements()
         {
-            // return GameManager.Instance?.TimeManager == null || GameManager.Instance.TimeManager.IsDay;
             return true;
+        }
+
+        private void ResolveWorldCamera()
+        {
+            _worldCamera = Camera.main;
+            if (_worldCamera == null)
+            {
+                _worldCamera = FindFirstObjectByType<Camera>();
+            }
         }
 
         private Collider2D GetHitCollider(Vector2 worldPosition)
         {
-            if (whatIsClickable.value == 0)
+            ResolveWorldCamera();
+            if (_worldCamera == null)
             {
-                return Physics2D.OverlapPoint(worldPosition);
+                return null;
             }
 
-            return Physics2D.OverlapPoint(worldPosition, whatIsClickable);
+            Ray ray = _worldCamera.ScreenPointToRay(InputData.MousePosition);
+            RaycastHit2D hit = whatIsClickable.value == 0
+                ? Physics2D.GetRayIntersection(ray, Mathf.Infinity)
+                : Physics2D.GetRayIntersection(ray, Mathf.Infinity, whatIsClickable);
+
+            if (hit.collider != null)
+            {
+                return hit.collider;
+            }
+
+            return null;
         }
 
         private Units.Unit ResolveDraggedUnit(Collider2D hitCollider)
@@ -323,6 +372,27 @@ namespace _01.Code.Manager
         private void ClickBuilding(PlaceableEntity building)
         {
             _selectedBuilding = building;
+        }
+
+        private void RefreshUnitCatalog()
+        {
+            UiUnitCatalogQueryEvent query = UIEvents.UiUnitCatalogQueryEvent.Initializer();
+            uiEventChannel?.RaiseEvent(query);
+            _availableUnits = query.Units ?? new global::System.Collections.Generic.List<UnitDataSO>();
+        }
+
+        private void ResolveChannels()
+        {
+            UIManager uiManager = FindFirstObjectByType<UIManager>();
+            if (uiEventChannel == null)
+            {
+                uiEventChannel = uiManager != null ? uiManager.UiEventChannel : null;
+            }
+
+            if (buildEventChannel == null)
+            {
+                buildEventChannel = uiManager != null ? uiManager.BuildEventChannel : null;
+            }
         }
     }
 }

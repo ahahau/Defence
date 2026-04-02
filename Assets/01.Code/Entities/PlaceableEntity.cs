@@ -21,7 +21,17 @@ namespace _01.Code.Entities
         [field: SerializeField] public string PlacementSaveKey { get; private set; }
         [field: SerializeField] public string RuntimeSaveId { get; private set; }
 
+        protected GridManager GridManager { get; private set; }
+        protected LogManager LogManager { get; private set; }
+
         public string SaveKey => RuntimeSaveId;
+        public int RestoreOrder { get; }
+
+        public void BindSceneServices(GridManager gridManager, LogManager logManager)
+        {
+            GridManager = gridManager;
+            LogManager = logManager;
+        }
 
         public virtual bool Initialize(Vector2Int position)
         {
@@ -30,10 +40,11 @@ namespace _01.Code.Entities
 
         public virtual bool Initialize()
         {
-            Vector2Int randomPos = GameManager.Instance.GridManager.GetRandomGridPosition();
+            EnsureSceneServices();
+            Vector2Int randomPos = GridManager.GetRandomGridPosition();
             if (randomPos == Vector2Int.zero)
             {
-                GameManager.Instance.LogManager?.Building($"{gameObject.name}: no empty tile found.", LogLevel.Error);
+                LogManager?.Building($"{gameObject.name}: no empty tile found.", LogLevel.Error);
                 return false;
             }
 
@@ -42,9 +53,10 @@ namespace _01.Code.Entities
 
         public virtual bool SetTile(Vector2Int tilePos)
         {
-            if (!GameManager.Instance.GridManager.TryInstall(tilePos, this))
+            EnsureSceneServices();
+            if (!GridManager.TryInstall(tilePos, this))
             {
-                GameManager.Instance.LogManager?.Building($"{gameObject.name}: tile install failed at {tilePos}.", LogLevel.Error);
+                LogManager?.Building($"{gameObject.name}: tile install failed at {tilePos}.", LogLevel.Error);
                 return false;
             }
 
@@ -54,14 +66,16 @@ namespace _01.Code.Entities
 
         public virtual void PreviewPosition(Vector2Int tilePos)
         {
-            transform.position = GameManager.Instance.GridManager.CellToWorld(tilePos);
+            EnsureSceneServices();
+            transform.position = GridManager.CellToWorld(tilePos);
         }
 
         public virtual void CommitPosition(Vector2Int tilePos)
         {
+            EnsureSceneServices();
             GridPosition = tilePos;
-            Tile = GameManager.Instance.GridManager.GetTile(tilePos);
-            transform.position = GameManager.Instance.GridManager.CellToWorld(GridPosition);
+            Tile = GridManager.GetTile(tilePos);
+            transform.position = GridManager.CellToWorld(GridPosition);
         }
 
         public void BindPlacementSaveKey(string saveKey)
@@ -124,6 +138,12 @@ namespace _01.Code.Entities
 
         protected virtual void RestoreCustomSaveData(string savedData)
         {
+        }
+
+        private void EnsureSceneServices()
+        {
+            GridManager ??= FindFirstObjectByType<GridManager>();
+            LogManager ??= FindFirstObjectByType<LogManager>();
         }
     }
 }

@@ -1,54 +1,86 @@
-using _01.Code.System.Grids;
+using System.Linq;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace _01.Code.Manager
 {
     [DefaultExecutionOrder(-100)]
-    public class GameManager : MonoBehaviour
+    public class GameManager : MonoBehaviour, IManagerContainer
     {
-        public static GameManager Instance;
-        public GridManager GridManager { get; private set; }
-        public CostManager CostManager { get; private set; }
-        public InputManager InputManager { get; private set; }
-        public UIManager UiManager { get; private set; }
-        public BuildManager BuildManager { get; private set; }
-        public WaveManager WaveManager { get; private set; }
-        public TimeManager TimeManager { get; private set; }
-        public EnemySpawnerManager EnemySpawnerManager { get; private set; }
-        public LogManager LogManager { get; private set; }
-        public SaveManager SaveManager { get; private set; }
+        private Dictionary<Type, IManageable> _managerMap;
+        private GridManager _gridManager;
+        private CostManager _costManager;
+        private LogManager _logManager;
+        private SaveManager _saveManager;
+
+        public GridManager GridManager => _gridManager;
+        public CostManager CostManager => _costManager;
+        public LogManager LogManager => _logManager;
+        public SaveManager SaveManager => _saveManager;
 
         private void Awake()
         {
-            if (Instance != null && Instance != this)
+            BuildManagerMap();
+            ResolveCoreManagers();
+            InitializeManagers();
+            AfterInitializeManagers();
+        }
+
+        public T GetManager<T>() where T : class, IManageable
+        {
+            if (_managerMap == null)
             {
-                Destroy(gameObject);
+                return null;
+            }
+
+            if (_managerMap.TryGetValue(typeof(T), out IManageable manager))
+            {
+                return manager as T;
+            }
+
+            return _managerMap.Values.OfType<T>().FirstOrDefault();
+        }
+
+        private void BuildManagerMap()
+        {
+            _managerMap = GetComponentsInChildren<MonoBehaviour>(true)
+                .OfType<IManageable>()
+                .ToDictionary(manageable => manageable.GetType(), manageable => manageable);
+        }
+
+        private void ResolveCoreManagers()
+        {
+            _gridManager = GetManager<GridManager>();
+            _costManager = GetManager<CostManager>();
+            _logManager = GetManager<LogManager>();
+            _saveManager = GetManager<SaveManager>();
+        }
+
+        private void InitializeManagers()
+        {
+            if (_managerMap == null)
+            {
                 return;
             }
 
-            Instance = this;
+            foreach (IManageable manageable in _managerMap.Values)
+            {
+                manageable.Initialize(this);
+            }
+        }
 
-            GridManager = GetComponentInChildren<GridManager>();
-            CostManager = GetComponentInChildren<CostManager>();
-            InputManager = GetComponentInChildren<InputManager>();
-            UiManager = GetComponentInChildren<UIManager>();
-            BuildManager = GetComponentInChildren<BuildManager>();
-            WaveManager = GetComponentInChildren<WaveManager>();
-            TimeManager = GetComponentInChildren<TimeManager>();
-            EnemySpawnerManager = GetComponentInChildren<EnemySpawnerManager>();
-            LogManager = GetComponentInChildren<LogManager>();
-            SaveManager = GetComponentInChildren<SaveManager>();
+        private void AfterInitializeManagers()
+        {
+            if (_managerMap == null)
+            {
+                return;
+            }
 
-            LogManager.Initialize();
-            GridManager.Initialize();
-            CostManager.Initialize();
-            WaveManager.Initialize();
-            EnemySpawnerManager.Initialize();
-            BuildManager.Initialize();
-            TimeManager.Initialize();
-            UiManager.Initialize();
-            SaveManager.Initialize();
-            InputManager.Initialize();
+            foreach (IAfterManageable manageable in _managerMap.Values.OfType<IAfterManageable>())
+            {
+                manageable.AfterInitialize(this);
+            }
         }
     }
 }

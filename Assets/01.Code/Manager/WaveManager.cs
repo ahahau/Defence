@@ -6,7 +6,7 @@ using UnityEngine;
 // Rule: Wave flow should be controlled only by WaveManager.
 namespace _01.Code.Manager
 {
-    public class WaveManager : MonoBehaviour
+    public class WaveManager : MonoBehaviour, IManageable
     {
         [SerializeField] private GameEventChannelSO waveEventChannel;
 
@@ -16,20 +16,22 @@ namespace _01.Code.Manager
         private bool _isRunning;
 
         public bool IsRunning => _isRunning;
+        public GameEventChannelSO WaveEventChannel => waveEventChannel;
 
         /// <summary>
         /// 이 함수는 웨이브 요청과 웨이브 클리어 이벤트를 구독합니다
         /// </summary>
-        public void Initialize()
+        public void Initialize(IManagerContainer managerContainer)
         {
-            waveEventChannel.AddListener<WaveStartRequestedEvent>(HandleWaveStartRequestedEvent);
-            waveEventChannel.AddListener<WaveClearedEvent>(HandleWaveClearedEvent);
+            ResolveChannel();
+            waveEventChannel?.AddListener<WaveStartRequestedEvent>(HandleWaveStartRequestedEvent);
+            waveEventChannel?.AddListener<WaveClearedEvent>(HandleWaveClearedEvent);
         }
 
         private void OnDestroy()
         {
-            waveEventChannel.RemoveListener<WaveStartRequestedEvent>(HandleWaveStartRequestedEvent);
-            waveEventChannel.RemoveListener<WaveClearedEvent>(HandleWaveClearedEvent);
+            waveEventChannel?.RemoveListener<WaveStartRequestedEvent>(HandleWaveStartRequestedEvent);
+            waveEventChannel?.RemoveListener<WaveClearedEvent>(HandleWaveClearedEvent);
         }
 
         public void StartWaves()
@@ -41,7 +43,7 @@ namespace _01.Code.Manager
 
             _isRunning = true;
             OnWaveStarted?.Invoke();
-            waveEventChannel.RaiseEvent(WaveEvents.WaveStartedEvent);
+            waveEventChannel?.RaiseEvent(WaveEvents.WaveStartedEvent);
         }
 
         private void HandleWaveClearedEvent(WaveClearedEvent _)
@@ -61,6 +63,20 @@ namespace _01.Code.Manager
         private void HandleWaveStartRequestedEvent(WaveStartRequestedEvent _)
         {
             StartWaves();
+        }
+
+        private void ResolveChannel()
+        {
+            if (waveEventChannel != null)
+            {
+                return;
+            }
+
+            EnemySpawnerManager enemySpawnerManager = FindFirstObjectByType<EnemySpawnerManager>();
+            if (enemySpawnerManager != null)
+            {
+                waveEventChannel = enemySpawnerManager.WaveEventChannel;
+            }
         }
     }
 }

@@ -23,6 +23,7 @@ namespace _01.Code.Save
         [SerializeField] private string saveKey = "scene.units";
 
         public string SaveKey => saveKey;
+        public int RestoreOrder => 200;
 
         public string GetSaveData()
         {

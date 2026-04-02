@@ -17,4 +17,5 @@ MonoBehaviour:
     values: []
   bookmarks: []
   bookmarkedScenePaths:
-  - Assets/00.Scenes/SampleScene.unity
+  - Assets/00.Scenes/TownScene.unity
+  - Assets/00.Scenes/BattleScene.unity

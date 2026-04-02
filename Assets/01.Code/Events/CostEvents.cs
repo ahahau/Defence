@@ -9,6 +9,9 @@ namespace _01.Code.Events
         public static readonly CostChangedEvent CostChangedEvent = new CostChangedEvent();
         public static readonly TrySpendCostEvent TrySpendCostEvent = new TrySpendCostEvent();
         public static readonly RefundCostEvent RefundCostEvent = new RefundCostEvent();
+        public static readonly PrimarySpendCostQueryEvent PrimarySpendCostQueryEvent = new PrimarySpendCostQueryEvent();
+        public static readonly CostSnapshotQueryEvent CostSnapshotQueryEvent = new CostSnapshotQueryEvent();
+        public static readonly ApplyNewGameStartingCostsRequestedEvent ApplyNewGameStartingCostsRequestedEvent = new ApplyNewGameStartingCostsRequestedEvent();
     }
 
     public class CostChangedEvent : GameEvent
@@ -52,5 +55,46 @@ namespace _01.Code.Events
             Amount = amount;
             return this;
         }
+    }
+
+    public class PrimarySpendCostQueryEvent : GameEvent
+    {
+        public CostDefinitionSO Type { get; set; }
+
+        public PrimarySpendCostQueryEvent Initializer()
+        {
+            Type = null;
+            return this;
+        }
+    }
+
+    public class CostSnapshotEntry
+    {
+        public CostDefinitionSO Definition { get; private set; }
+        public int Current { get; private set; }
+        public int Max { get; private set; }
+
+        public CostSnapshotEntry Initialize(CostDefinitionSO definition, int current, int max)
+        {
+            Definition = definition;
+            Current = current;
+            Max = max;
+            return this;
+        }
+    }
+
+    public class CostSnapshotQueryEvent : GameEvent
+    {
+        public global::System.Collections.Generic.List<CostSnapshotEntry> Entries { get; set; }
+
+        public CostSnapshotQueryEvent Initializer()
+        {
+            Entries = null;
+            return this;
+        }
+    }
+
+    public class ApplyNewGameStartingCostsRequestedEvent : GameEvent
+    {
     }
 }

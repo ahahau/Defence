@@ -19,6 +19,7 @@ namespace _01.Code.Entities
             : _fallbackPatterns;
 
         private readonly List<AttackPatternData> _fallbackPatterns = new();
+        private GridManager _gridManager;
 
         public bool TryGetTargetCollider(Vector2Int originCell, out Collider2D targetCollider)
         {
@@ -86,7 +87,7 @@ namespace _01.Code.Entities
 
         private bool TryGetColliderAtCell(Vector2Int targetCell, int searchSizeValue, out Collider2D targetCollider)
         {
-            Vector2 worldCenter = GameManager.Instance.GridManager.CellToWorld(targetCell);
+            Vector2 worldCenter = GetWorldCenter(targetCell);
             Vector2 searchSize = Vector2.one * Mathf.Max(1, searchSizeValue);
             targetCollider = Physics2D.OverlapBox(worldCenter, searchSize, 0f, targetLayer);
             return targetCollider != null;
@@ -116,9 +117,9 @@ namespace _01.Code.Entities
 
         private Vector2 GetWorldCenter(Vector2Int cellPosition)
         {
-            if (GameManager.Instance != null && GameManager.Instance.GridManager != null)
+            if (_gridManager != null)
             {
-                Vector3 cellWorld = GameManager.Instance.GridManager.CellToWorld(cellPosition);
+                Vector3 cellWorld = _gridManager.CellToWorld(cellPosition);
                 return new Vector2(cellWorld.x, cellWorld.y);
             }
 
@@ -138,7 +139,7 @@ namespace _01.Code.Entities
                 {
                     continue;
                 }
-
+                
                 int gizmoSize = Mathf.Max(1, pattern.cellSearchSize);
                 for (int offsetIndex = 0; offsetIndex < pattern.attackOffsets.Count; offsetIndex++)
                 {
@@ -151,9 +152,9 @@ namespace _01.Code.Entities
 
         private Vector2Int GetOriginCellForGizmos()
         {
-            if (GameManager.Instance != null && GameManager.Instance.GridManager != null)
+            if (_gridManager != null)
             {
-                return GameManager.Instance.GridManager.WorldToCell(transform.position);
+                return _gridManager.WorldToCell(transform.position);
             }
 
             return Vector2Int.RoundToInt(transform.position);
@@ -182,6 +183,12 @@ namespace _01.Code.Entities
 
         public void Initialize(ModuleOwner owner)
         {
+            if (owner is PlaceableEntity placeableEntity)
+            {
+                _gridManager = placeableEntity.GetComponentInParent<GridManager>();
+            }
+
+            _gridManager ??= FindFirstObjectByType<GridManager>();
             RefreshFallbackPatterns();
         }
     }

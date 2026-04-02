@@ -11,6 +11,7 @@ namespace _01.Code.Enemies
         private Enemy _enemy;
         private Rigidbody2D _rb;
         private EnemyRender _enemyRender;
+        private _01.Code.Manager.GridManager _gridManager;
 
         [SerializeField] private List<Vector2Int> _path;
         private int _pathIndex;
@@ -24,6 +25,7 @@ namespace _01.Code.Enemies
             _enemy = owner as Enemy;
             _rb = owner.GetComponent<Rigidbody2D>();
             _enemyRender = _enemy.GetModule<EnemyRender>();
+            _gridManager = FindFirstObjectByType<_01.Code.Manager.GridManager>();
             _pathIndex = 0;
         }
 
@@ -35,7 +37,7 @@ namespace _01.Code.Enemies
                 return;
             }
 
-            Vector3 targetWorld = Manager.GameManager.Instance.GridManager.CellToWorld(_path[_pathIndex]);
+            Vector3 targetWorld = _gridManager.CellToWorld(_path[_pathIndex]);
             Vector2 target = new Vector2(targetWorld.x, targetWorld.y);
 
             Vector2 currentPos = _rb.position;

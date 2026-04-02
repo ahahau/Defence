@@ -33,7 +33,7 @@ namespace _01.Code.Units
         {
             if (collectableUnitData == null)
             {
-                GameManager.Instance.LogManager?.Building($"{name}: CollectableBuildingDataSO is missing.", LogLevel.Error);
+                LogManager?.Building($"{name}: CollectableBuildingDataSO is missing.", LogLevel.Error);
                 return;
             }
 

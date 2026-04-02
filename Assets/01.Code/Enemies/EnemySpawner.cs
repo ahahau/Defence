@@ -14,8 +14,18 @@ namespace _01.Code.Enemies
         [SerializeField] private LineRenderer lineRenderer;
         [SerializeField] private float lineWidth = 0.18f;
 
+        private GridManager _gridManager;
+        private LogManager _logManager;
+        private EnemySpawnerManager _enemySpawnerManager;
         private readonly HashSet<Enemy> _alive = new HashSet<Enemy>();
         private bool _isSpawning;
+
+        public void Configure(GridManager gridManager, LogManager logManager, EnemySpawnerManager enemySpawnerManager)
+        {
+            _gridManager = gridManager;
+            _logManager = logManager;
+            _enemySpawnerManager = enemySpawnerManager;
+        }
 
         private IEnumerator EnemySpawn(float sec)
         {
@@ -27,11 +37,11 @@ namespace _01.Code.Enemies
             }
 
             Vector2Int start = GridPosition;
-            Vector2Int target = GameManager.Instance.GridManager.commandCenter.GridPosition;
-            path = GameManager.Instance.GridManager.PathFinder.FindPath(start, target);
+            Vector2Int target = _gridManager.commandCenter.GridPosition;
+            path = _gridManager.PathFinder.FindPath(start, target);
             if (path.Count == 0)
             {
-                GameManager.Instance.LogManager?.Enemy($"Path not found from {start} to {target}.", LogLevel.Error);
+                _logManager?.Enemy($"Path not found from {start} to {target}.", LogLevel.Error);
                 _isSpawning = false;
                 NotifySpawnerCleared();
                 yield break;
@@ -54,16 +64,16 @@ namespace _01.Code.Enemies
                     WaveData wave = spawnWaves[waveIndex];
                     if (wave.Enemy == null || wave.Enemy.EnemyPrefab == null)
                     {
-                        GameManager.Instance.LogManager?.Enemy(
+                        _logManager?.Enemy(
                             $"Skipped invalid wave entry on `{name}` at wave index {waveIndex}. EnemyDataSO or prefab is missing.",
                             LogLevel.Warning);
                         break;
                     }
 
-                    Enemy enemy = GameManager.Instance.EnemySpawnerManager.SpawnEnemy(wave.Enemy.EnemyPrefab, transform.position);
+                    Enemy enemy = _enemySpawnerManager.SpawnEnemy(wave.Enemy.EnemyPrefab, transform.position);
                     if (enemy == null)
                     {
-                        GameManager.Instance.LogManager?.Enemy($"Failed to spawn enemy `{wave.Enemy.name}`.", LogLevel.Error);
+                        _logManager?.Enemy($"Failed to spawn enemy `{wave.Enemy.name}`.", LogLevel.Error);
                         continue;
                     }
 
@@ -109,7 +119,7 @@ namespace _01.Code.Enemies
                 WaveDataSO waveData = waveDataList[i];
                 if (waveData == null)
                 {
-                    GameManager.Instance.LogManager?.Enemy(
+                    _logManager?.Enemy(
                         $"Skipped missing WaveDataSO reference on `{name}` at slot {i}.",
                         LogLevel.Warning);
                     continue;
@@ -146,7 +156,7 @@ namespace _01.Code.Enemies
             for (int i = 0; i < path.Count; i++)
             {
                 Vector2Int cell = path[i];
-                Vector3 worldPoint = GameManager.Instance.GridManager.CellToWorld(cell);
+                Vector3 worldPoint = _gridManager.CellToWorld(cell);
                 Vector3 localPoint = transform.InverseTransformPoint(worldPoint);
                 lineRenderer.SetPosition(i, localPoint);
             }
@@ -191,7 +201,7 @@ namespace _01.Code.Enemies
 
         private void NotifySpawnerCleared()
         {
-            GameManager.Instance.EnemySpawnerManager.SpawnerAllEnemyDied(this);
+            _enemySpawnerManager.SpawnerAllEnemyDied(this);
         }
     }
 }

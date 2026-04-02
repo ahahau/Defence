@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace _01.Code.Manager
 {
-    public class CostManager : MonoBehaviour
+    public class CostManager : MonoBehaviour, IManageable
     {
         private const int DefaultCostMax = 99999;
 
@@ -29,10 +29,13 @@ namespace _01.Code.Manager
         /// <summary>
         /// 이 함수는 비용 채널 구독과 시작 비용 세팅을 담당합니다
         /// </summary>
-        public void Initialize()
+        public void Initialize(IManagerContainer managerContainer)
         {
             costEventChannel.AddListener<TrySpendCostEvent>(HandleTrySpendCostEvent);
             costEventChannel.AddListener<RefundCostEvent>(HandleRefundCostEvent);
+            costEventChannel.AddListener<PrimarySpendCostQueryEvent>(HandlePrimarySpendCostQueryEvent);
+            costEventChannel.AddListener<CostSnapshotQueryEvent>(HandleCostSnapshotQueryEvent);
+            costEventChannel.AddListener<ApplyNewGameStartingCostsRequestedEvent>(HandleApplyNewGameStartingCostsRequestedEvent);
 
             InitializeCatalog(costCatalog.Costs);
         }
@@ -41,6 +44,9 @@ namespace _01.Code.Manager
         {
             costEventChannel.RemoveListener<TrySpendCostEvent>(HandleTrySpendCostEvent);
             costEventChannel.RemoveListener<RefundCostEvent>(HandleRefundCostEvent);
+            costEventChannel.RemoveListener<PrimarySpendCostQueryEvent>(HandlePrimarySpendCostQueryEvent);
+            costEventChannel.RemoveListener<CostSnapshotQueryEvent>(HandleCostSnapshotQueryEvent);
+            costEventChannel.RemoveListener<ApplyNewGameStartingCostsRequestedEvent>(HandleApplyNewGameStartingCostsRequestedEvent);
         }
 
         public int GetCurrent(CostDefinitionSO type) => _current.GetValueOrDefault(type, 0);
@@ -122,6 +128,36 @@ namespace _01.Code.Manager
         /// 이 함수는 외부에서 환불 요청이 오면 현재 비용에 다시 더해줍니다
         /// </summary>
         private void HandleRefundCostEvent(RefundCostEvent evt) => Add(evt.Type, evt.Amount);
+
+        private void HandlePrimarySpendCostQueryEvent(PrimarySpendCostQueryEvent evt)
+        {
+            evt.Type = primarySpendCost;
+        }
+
+        private void HandleCostSnapshotQueryEvent(CostSnapshotQueryEvent evt)
+        {
+            List<CostSnapshotEntry> entries = new List<CostSnapshotEntry>();
+            for (int i = 0; i < AllCosts.Count; i++)
+            {
+                CostDefinitionSO definition = AllCosts[i];
+                if (definition == null)
+                {
+                    continue;
+                }
+
+                entries.Add(new CostSnapshotEntry().Initialize(
+                    definition,
+                    GetCurrent(definition),
+                    GetMax(definition)));
+            }
+
+            evt.Entries = entries;
+        }
+
+        private void HandleApplyNewGameStartingCostsRequestedEvent(ApplyNewGameStartingCostsRequestedEvent _)
+        {
+            ApplyNewGameStartingCosts();
+        }
 
         public void ApplyNewGameStartingCosts()
         {

@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using _01.Code.Buildings;
 using _01.Code.Entities;
-using _01.Code.Manager;
 using DG.Tweening;
 using GondrLib.ObjectPool.Runtime;
 using UnityEditor.Search;
@@ -26,6 +25,7 @@ namespace _01.Code.Enemies
         private bool _returnedToPool;
         private EnemyRender _enemyRender;
         private EnemyDataSO _runtimeData;
+        private CommandCenter _commandCenter;
 
         public PoolingItemSO PoolingType => poolingType;
         public GameObject GameObject => gameObject;
@@ -44,6 +44,11 @@ namespace _01.Code.Enemies
             _movement.SetPath(path);
             _movement.MoveNext();
             PlayScaleEffect();
+        }
+
+        public void Configure(CommandCenter commandCenter)
+        {
+            _commandCenter = commandCenter;
         }
 
         public void SetUpPool(Pool pool)
@@ -144,13 +149,12 @@ namespace _01.Code.Enemies
                 return;
             }
 
-            CommandCenter commandCenter = GameManager.Instance?.GridManager?.commandCenter;
-            if (commandCenter == null)
+            if (_commandCenter == null)
             {
                 return;
             }
 
-            if (commandCenter.TryGetComponent(out _01.Code.Combat.IDamageable damageable))
+            if (_commandCenter.TryGetComponent(out _01.Code.Combat.IDamageable damageable))
             {
                 damageable.ApplyDamage(_runtimeData.Damage, this);
             }

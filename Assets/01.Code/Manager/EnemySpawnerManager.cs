@@ -9,24 +9,35 @@ using UnityEngine;
 namespace _01.Code.Manager
 {
     // Rule: Spawner lifecycle should be managed only by EnemySpawnerManager.
-    public class EnemySpawnerManager : MonoBehaviour
+    public class EnemySpawnerManager : MonoBehaviour, IManageable
     {
         [SerializeField] private EnemySpawner enemySpawnerPrefab;
         [SerializeField] private GameEventChannelSO waveEventChannel;
         [SerializeField] private PoolManagerMono enemyPoolManager;
+        [SerializeField] private string spawnerSaveKey = "enemy_spawner";
+
+        private GridManager _gridManager;
+        private LogManager _logManager;
+        private SaveManager _saveManager;
 
         public HashSet<EnemySpawner> CurrentWaveEnemySpawnerList { get; } = new HashSet<EnemySpawner>();
+        public GameEventChannelSO WaveEventChannel => waveEventChannel;
+        public string SpawnerSaveKey => spawnerSaveKey;
 
-        public void Initialize()
+        public void Initialize(IManagerContainer managerContainer)
         {
-            waveEventChannel.AddListener<WaveStartedEvent>(HandleWaveStartedEvent);
+            _gridManager = managerContainer.GetManager<GridManager>();
+            _logManager = managerContainer.GetManager<LogManager>();
+            _saveManager = managerContainer.GetManager<SaveManager>();
+            ResolveChannel();
+            waveEventChannel?.AddListener<WaveStartedEvent>(HandleWaveStartedEvent);
             Physics2D.IgnoreLayerCollision(6, 6, true);
             SpawnSpawner();
         }
 
         private void OnDestroy()
         {
-            waveEventChannel.RemoveListener<WaveStartedEvent>(HandleWaveStartedEvent);
+            waveEventChannel?.RemoveListener<WaveStartedEvent>(HandleWaveStartedEvent);
         }
 
         public void SpawnerAllEnemyDied(EnemySpawner enemySpawner)
@@ -37,7 +48,7 @@ namespace _01.Code.Manager
             }
 
             CurrentWaveEnemySpawnerList.Remove(enemySpawner);
-            GameManager.Instance.GridManager.TryClear(enemySpawner.GridPosition, enemySpawner);
+            _gridManager?.TryClear(enemySpawner.GridPosition, enemySpawner);
             Destroy(enemySpawner.gameObject);
 
             if (CurrentWaveEnemySpawnerList.Count > 0)
@@ -45,7 +56,7 @@ namespace _01.Code.Manager
                 return;
             }
 
-            waveEventChannel.RaiseEvent(WaveEvents.WaveClearedEvent);
+            waveEventChannel?.RaiseEvent(WaveEvents.WaveClearedEvent);
             SpawnSpawner();
         }
 
@@ -62,17 +73,24 @@ namespace _01.Code.Manager
                 return false;
             }
 
-            Vector3 worldPos = GameManager.Instance.GridManager.CellToWorld(cellPos);
+            if (_gridManager == null)
+            {
+                return false;
+            }
+
+            Vector3 worldPos = _gridManager.CellToWorld(cellPos);
             EnemySpawner spawner = Instantiate(enemySpawnerPrefab, worldPos, Quaternion.identity);
+            spawner.BindSceneServices(_gridManager, _logManager);
+            spawner.Configure(_gridManager, _logManager, this);
             if (!spawner.Initialize(cellPos))
             {
                 Destroy(spawner.gameObject);
-                GameManager.Instance.LogManager?.Enemy($"Failed to restore spawned spawner at {cellPos}.", LogLevel.Error);
+                _logManager?.Enemy($"Failed to restore spawned spawner at {cellPos}.", LogLevel.Error);
                 return false;
             }
 
             CurrentWaveEnemySpawnerList.Add(spawner);
-            GameManager.Instance.SaveManager?.RegisterEnemySpawnerForSave(spawner);
+            _saveManager?.RegisterEnemySpawnerForSave(spawner, spawnerSaveKey);
             placeableEntity = spawner;
             return true;
         }
@@ -89,6 +107,7 @@ namespace _01.Code.Manager
                 Enemy pooledEnemy = enemyPoolManager.Pop<Enemy>(enemyPrefab.PoolingType);
                 if (pooledEnemy != null)
                 {
+                    pooledEnemy.Configure(_gridManager.commandCenter);
                     pooledEnemy.SetSpawnPosition(worldPosition);
                     pooledEnemy.gameObject.SetActive(true);
                     return pooledEnemy;
@@ -96,6 +115,7 @@ namespace _01.Code.Manager
             }
 
             Enemy spawnedEnemy = Instantiate(enemyPrefab, worldPosition, Quaternion.identity);
+            spawnedEnemy.Configure(_gridManager.commandCenter);
             spawnedEnemy.SetSpawnPosition(worldPosition);
             return spawnedEnemy;
         }
@@ -108,28 +128,46 @@ namespace _01.Code.Manager
             }
         }
 
+        private void ResolveChannel()
+        {
+            if (waveEventChannel != null)
+            {
+                return;
+            }
+
+            WaveManager waveManager = FindFirstObjectByType<WaveManager>();
+            waveEventChannel = waveManager != null ? waveManager.WaveEventChannel : null;
+        }
+
         private void SpawnSpawner()
         {
             if (enemySpawnerPrefab == null)
             {
-                GameManager.Instance.LogManager?.Enemy("EnemySpawner prefab is missing.", LogLevel.Error);
+                _logManager?.Enemy("EnemySpawner prefab is missing.", LogLevel.Error);
+                return;
+            }
+
+            if (_gridManager == null)
+            {
                 return;
             }
 
             for (int i = 0; i < 5; i++)
             {
-                Vector2Int cellPos = GameManager.Instance.GridManager.GetRandomGridPosition();
-                Vector3 worldPos = GameManager.Instance.GridManager.CellToWorld(cellPos);
+                Vector2Int cellPos = _gridManager.GetRandomGridPosition();
+                Vector3 worldPos = _gridManager.CellToWorld(cellPos);
                 EnemySpawner spawner = Instantiate(enemySpawnerPrefab, worldPos, Quaternion.identity);
+                spawner.BindSceneServices(_gridManager, _logManager);
+                spawner.Configure(_gridManager, _logManager, this);
                 if (!spawner.Initialize(cellPos))
                 {
-                    GameManager.Instance.LogManager?.Enemy($"Failed to install spawned spawner at {cellPos}.", LogLevel.Error);
+                    _logManager?.Enemy($"Failed to install spawned spawner at {cellPos}.", LogLevel.Error);
                     Destroy(spawner.gameObject);
                     continue;
                 }
 
                 CurrentWaveEnemySpawnerList.Add(spawner);
-                GameManager.Instance.SaveManager?.RegisterEnemySpawnerForSave(spawner);
+                _saveManager?.RegisterEnemySpawnerForSave(spawner, spawnerSaveKey);
             }
         }
     }

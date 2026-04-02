@@ -24,8 +24,10 @@ namespace _01.Code.Save
     public class PlacementSaveAgent : MonoBehaviour, ISaveable
     {
         [SerializeField] private string saveKey = "scene.placements";
+        private SaveManager _saveManager;
 
         public string SaveKey => saveKey;
+        public int RestoreOrder => 0;
 
         public string GetSaveData()
         {
@@ -55,21 +57,22 @@ namespace _01.Code.Save
 
         public void RestoreData(string savedData)
         {
+            _saveManager ??= FindFirstObjectByType<SaveManager>();
             PlacementSaveCollection collection = string.IsNullOrWhiteSpace(savedData)
                 ? new PlacementSaveCollection()
                 : JsonUtility.FromJson<PlacementSaveCollection>(savedData);
 
-            GameManager.Instance.SaveManager.ClearSavedPlacementsInScene();
-
-            if (collection.placements == null)
+            if (collection.placements == null || collection.placements.Count == 0)
             {
                 return;
             }
 
+            _saveManager.ClearSavedPlacementsInScene();
+
             for (int i = 0; i < collection.placements.Count; i++)
             {
                 PlacementSaveRecord record = collection.placements[i];
-                GameManager.Instance.SaveManager.TryCreatePlacement(
+                _saveManager.TryCreatePlacement(
                     record.key,
                     record.runtimeId,
                     new Vector2Int(record.x, record.y),

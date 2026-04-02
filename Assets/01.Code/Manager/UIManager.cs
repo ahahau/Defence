@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using _01.Code.Combat;
 using _01.Code.Core;
 using _01.Code.Cost;
@@ -11,7 +10,7 @@ using UnityEngine;
 
 namespace _01.Code.Manager
 {
-    public class UIManager : MonoBehaviour
+    public class UIManager : MonoBehaviour, IManageable, IAfterManageable
     {
         [SerializeField] private GameEventChannelSO uiEventChannel;
         [SerializeField] private GameEventChannelSO buildEventChannel;
@@ -24,18 +23,30 @@ namespace _01.Code.Manager
 
         private Unit _placementPreview;
         private readonly List<UiCostValueEntry> _defaultCostEntries = new();
+        private Vector2Int _hoveredCellPosition;
+        private int _dayCount = 1;
+        private bool _isDay = true;
+        private int _currentPrimaryCost;
 
         public UnitDataSO SelectedUnit { get; private set; }
         public Vector3 CurrentBuildPosition { get; private set; }
         public List<UnitDataSO> AvailableBuildings => availableBuildings;
         public List<UnitDataSO> AvailableUnits => availableUnits;
+        public GameEventChannelSO UiEventChannel => uiEventChannel;
+        public GameEventChannelSO BuildEventChannel => buildEventChannel;
+        public GameEventChannelSO CostEventChannel => costEventChannel;
 
         public event Action<UnitDataSO> OnBuildingSelected;
         public event Action<UnitDataSO, Vector3> OnBuildRequested;
 
-        public void Initialize()
+        public void Initialize(IManagerContainer managerContainer)
         {
             HookEvents();
+        }
+
+        public void AfterInitialize(IManagerContainer managerContainer)
+        {
+            RefreshCachedState();
             PublishUiState();
         }
 
@@ -44,18 +55,39 @@ namespace _01.Code.Manager
             PublishUiState();
         }
 
+        private void Update()
+        {
+            if (_placementPreview == null || SelectedUnit == null)
+            {
+                return;
+            }
+
+            _placementPreview.PreviewPosition(_hoveredCellPosition);
+        }
+
         private void OnDestroy()
         {
-            uiEventChannel.RemoveListener<ShowDamageTextRequestedEvent>(HandleShowDamageTextRequestedEvent);
-            uiEventChannel.RemoveListener<UiSkipDayRequestedEvent>(HandleSkipDayRequestedEvent);
-            costEventChannel.RemoveListener<CostChangedEvent>(HandleCostChangedEvent);
-            buildEventChannel.RemoveListener<BuildCompletedEvent>(HandleBuildCompletedEvent);
-            buildEventChannel.RemoveListener<BuildFailedEvent>(HandleBuildFailedEvent);
-
-            if (GameManager.Instance?.TimeManager != null)
+            if (uiEventChannel != null)
             {
-                GameManager.Instance.TimeManager.OnDayCountChanged -= HandleTimeChanged;
-                GameManager.Instance.TimeManager.OnPhaseChanged -= HandlePhaseChanged;
+                uiEventChannel.RemoveListener<ShowDamageTextRequestedEvent>(HandleShowDamageTextRequestedEvent);
+                uiEventChannel.RemoveListener<UiSkipDayRequestedEvent>(HandleSkipDayRequestedEvent);
+                uiEventChannel.RemoveListener<UiCancelSelectionRequestedEvent>(HandleCancelSelectionRequestedEvent);
+                uiEventChannel.RemoveListener<UiBuildAtWorldPositionRequestedEvent>(HandleBuildAtWorldPositionRequestedEvent);
+                uiEventChannel.RemoveListener<UiHoverCellChangedEvent>(HandleHoverCellChangedEvent);
+                uiEventChannel.RemoveListener<UiRefreshRequestedEvent>(HandleRefreshRequestedEvent);
+                uiEventChannel.RemoveListener<UiUnitCatalogQueryEvent>(HandleUnitCatalogQueryEvent);
+                uiEventChannel.RemoveListener<UiClockStateChangedEvent>(HandleClockStateChangedEvent);
+            }
+
+            if (costEventChannel != null)
+            {
+                costEventChannel.RemoveListener<CostChangedEvent>(HandleCostChangedEvent);
+            }
+
+            if (buildEventChannel != null)
+            {
+                buildEventChannel.RemoveListener<BuildCompletedEvent>(HandleBuildCompletedEvent);
+                buildEventChannel.RemoveListener<BuildFailedEvent>(HandleBuildFailedEvent);
             }
         }
 
@@ -94,58 +126,86 @@ namespace _01.Code.Manager
 
             CurrentBuildPosition = worldPosition;
             OnBuildRequested?.Invoke(SelectedUnit, worldPosition);
-            buildEventChannel.RaiseEvent(BuildEvents.BuildRequestedEvent.Initializer(SelectedUnit, worldPosition));
+            buildEventChannel?.RaiseEvent(BuildEvents.BuildRequestedEvent.Initializer(SelectedUnit, worldPosition));
             return true;
         }
 
         public void RefreshUiState()
         {
+            RefreshCachedState();
             PublishUiState();
         }
 
         private void HookEvents()
         {
-            uiEventChannel.AddListener<ShowDamageTextRequestedEvent>(HandleShowDamageTextRequestedEvent);
-            uiEventChannel.AddListener<UiSkipDayRequestedEvent>(HandleSkipDayRequestedEvent);
-            costEventChannel.AddListener<CostChangedEvent>(HandleCostChangedEvent);
-            buildEventChannel.AddListener<BuildCompletedEvent>(HandleBuildCompletedEvent);
-            buildEventChannel.AddListener<BuildFailedEvent>(HandleBuildFailedEvent);
-
-            if (GameManager.Instance?.TimeManager != null)
-            {
-                GameManager.Instance.TimeManager.OnDayCountChanged += HandleTimeChanged;
-                GameManager.Instance.TimeManager.OnPhaseChanged += HandlePhaseChanged;
-            }
-        }
-
-        private void Update()
-        {
-            if (_placementPreview == null || SelectedUnit == null || GameManager.Instance?.GridManager == null || GameManager.Instance?.InputManager == null)
-            {
-                return;
-            }
-
-            _placementPreview.PreviewPosition(GameManager.Instance.InputManager.CurrentMouseCellPosition);
+            uiEventChannel?.AddListener<ShowDamageTextRequestedEvent>(HandleShowDamageTextRequestedEvent);
+            uiEventChannel?.AddListener<UiSkipDayRequestedEvent>(HandleSkipDayRequestedEvent);
+            uiEventChannel?.AddListener<UiCancelSelectionRequestedEvent>(HandleCancelSelectionRequestedEvent);
+            uiEventChannel?.AddListener<UiBuildAtWorldPositionRequestedEvent>(HandleBuildAtWorldPositionRequestedEvent);
+            uiEventChannel?.AddListener<UiHoverCellChangedEvent>(HandleHoverCellChangedEvent);
+            uiEventChannel?.AddListener<UiRefreshRequestedEvent>(HandleRefreshRequestedEvent);
+            uiEventChannel?.AddListener<UiUnitCatalogQueryEvent>(HandleUnitCatalogQueryEvent);
+            uiEventChannel?.AddListener<UiClockStateChangedEvent>(HandleClockStateChangedEvent);
+            costEventChannel?.AddListener<CostChangedEvent>(HandleCostChangedEvent);
+            buildEventChannel?.AddListener<BuildCompletedEvent>(HandleBuildCompletedEvent);
+            buildEventChannel?.AddListener<BuildFailedEvent>(HandleBuildFailedEvent);
         }
 
         private void HandleSkipDayRequestedEvent(UiSkipDayRequestedEvent _)
         {
             CancelSelection();
-            GameManager.Instance?.TimeManager?.TrySkipDay();
         }
 
-        private void HandleTimeChanged(int _)
+        private void HandleCancelSelectionRequestedEvent(UiCancelSelectionRequestedEvent _)
         {
-            PublishUiState();
+            CancelSelection();
         }
 
-        private void HandlePhaseChanged(TimePhase _)
+        private void HandleBuildAtWorldPositionRequestedEvent(UiBuildAtWorldPositionRequestedEvent evt)
         {
+            if (evt == null)
+            {
+                return;
+            }
+
+            evt.Succeeded = TryRequestBuild(evt.WorldPosition);
+        }
+
+        private void HandleHoverCellChangedEvent(UiHoverCellChangedEvent evt)
+        {
+            if (evt == null)
+            {
+                return;
+            }
+
+            _hoveredCellPosition = evt.CellPosition;
+        }
+
+        private void HandleRefreshRequestedEvent(UiRefreshRequestedEvent _)
+        {
+            RefreshUiState();
+        }
+
+        private void HandleUnitCatalogQueryEvent(UiUnitCatalogQueryEvent evt)
+        {
+            evt.Units = availableUnits;
+        }
+
+        private void HandleClockStateChangedEvent(UiClockStateChangedEvent evt)
+        {
+            if (evt == null)
+            {
+                return;
+            }
+
+            _dayCount = evt.Day;
+            _isDay = evt.IsDay;
             PublishUiState();
         }
 
         private void HandleCostChangedEvent(CostChangedEvent _)
         {
+            RefreshCachedCosts();
             PublishUiState();
         }
 
@@ -195,7 +255,6 @@ namespace _01.Code.Manager
                 spriteRenderer.color = color;
                 spriteRenderer.sortingOrder += 1000;
             }
-
         }
 
         private void ClearPlacementPreview()
@@ -241,43 +300,86 @@ namespace _01.Code.Manager
 
         private void PublishUiState()
         {
-            int day = GameManager.Instance.TimeManager.DayCount;
-            bool isDay = GameManager.Instance.TimeManager.IsDay;
-            int primaryCost = GetCost(GameManager.Instance.CostManager.PrimarySpendCost);
-
             BuildDefaultCostEntries();
-
-            uiEventChannel.RaiseEvent(UIEvents.UiClockStateChangedEvent.Initializer(day, isDay));
-            uiEventChannel.RaiseEvent(UIEvents.UiDefaultCostBarStateChangedEvent.Initializer(_defaultCostEntries));
-        }
-
-        private int GetCost(CostDefinitionSO type)
-        {
-            return GameManager.Instance.CostManager.GetCurrent(type);
+            uiEventChannel?.RaiseEvent(UIEvents.UiDefaultCostBarStateChangedEvent.Initializer(_defaultCostEntries));
+            uiEventChannel?.RaiseEvent(UIEvents.UiUnitInventoryStateChangedEvent.Initializer(
+                availableUnits,
+                SelectedUnit,
+                CanUseDayActions(),
+                _currentPrimaryCost));
         }
 
         private bool CanUseDayActions()
         {
-            return GameManager.Instance.TimeManager.IsDay;
+            return _isDay;
         }
 
-        private bool CanAfford(UnitDataSO unitData)
+        private void RefreshCachedState()
         {
-            return unitData != null && GetCost(GameManager.Instance.CostManager.PrimarySpendCost) >= unitData.Cost;
+            QueryClockState();
+            RefreshCachedCosts();
+        }
+
+        private void QueryClockState()
+        {
+            UiClockStateQueryEvent query = UIEvents.UiClockStateQueryEvent.Initializer();
+            uiEventChannel?.RaiseEvent(query);
+            _dayCount = query.Day;
+            _isDay = query.IsDay;
+        }
+
+        private void RefreshCachedCosts()
+        {
+            _currentPrimaryCost = 0;
+            _defaultCostEntries.Clear();
+
+            CostSnapshotQueryEvent costSnapshotQuery = CostEvents.CostSnapshotQueryEvent.Initializer();
+            costEventChannel?.RaiseEvent(costSnapshotQuery);
+
+            if (costSnapshotQuery.Entries != null)
+            {
+                for (int i = 0; i < costSnapshotQuery.Entries.Count; i++)
+                {
+                    CostSnapshotEntry entry = costSnapshotQuery.Entries[i];
+                    if (entry?.Definition == null)
+                    {
+                        continue;
+                    }
+
+                    _defaultCostEntries.Add(new UiCostValueEntry().Initialize(
+                        entry.Definition,
+                        entry.Current,
+                        entry.Max));
+                }
+            }
+
+            PrimarySpendCostQueryEvent primaryCostQuery = CostEvents.PrimarySpendCostQueryEvent.Initializer();
+            costEventChannel?.RaiseEvent(primaryCostQuery);
+            CostDefinitionSO primaryCost = primaryCostQuery.Type;
+            if (primaryCost == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < _defaultCostEntries.Count; i++)
+            {
+                UiCostValueEntry entry = _defaultCostEntries[i];
+                if (entry.Definition == primaryCost)
+                {
+                    _currentPrimaryCost = entry.Current;
+                    break;
+                }
+            }
         }
 
         private void BuildDefaultCostEntries()
         {
-            _defaultCostEntries.Clear();
-            List<CostDefinitionSO> costs = GameManager.Instance.CostManager.AllCosts;
-            for (int i = 0; i < costs.Count; i++)
+            if (_defaultCostEntries.Count > 0)
             {
-                CostDefinitionSO definition = costs[i];
-                _defaultCostEntries.Add(new UiCostValueEntry().Initialize(
-                    definition,
-                    GameManager.Instance.CostManager.GetCurrent(definition),
-                    GameManager.Instance.CostManager.GetMax(definition)));
+                return;
             }
+
+            RefreshCachedCosts();
         }
     }
 }

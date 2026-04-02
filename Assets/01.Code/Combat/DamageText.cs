@@ -1,5 +1,4 @@
 using System.Collections;
-using _01.Code.Manager;
 using DG.Tweening;
 using GondrLib.ObjectPool.Runtime;
 using TMPro;
@@ -70,7 +69,7 @@ namespace _01.Code.Combat
             _text = GetComponent<TextMeshPro>();
             if (_text == null)
             {
-                GameManager.Instance.LogManager.System("DamageText requires a TextMeshPro component.", LogLevel.Error);
+                Debug.LogError("DamageText requires a TextMeshPro component.", this);
                 return;
             }
 

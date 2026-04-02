@@ -12,23 +12,24 @@ namespace _01.Code.UI
     {
         [SerializeField] private GameEventChannelSO uiEventChannel;
         [SerializeField] private TextMeshProUGUI dayLabel;
-        [SerializeField] private TextMeshProUGUI actionLabel;
         [SerializeField] private Image cardImage;
         [SerializeField] private Image faceImage;
         [SerializeField] private Image handImage;
 
-        private bool _canSkipDay;
+        private bool _canSkipDay = true;
 
         public GameEventChannelSO UiEventChannel => uiEventChannel;
 
         private void OnEnable()
         {
-            uiEventChannel.AddListener<UiClockStateChangedEvent>(HandleClockStateChanged);
+            ResolveEventChannel();
+            uiEventChannel?.AddListener<UiClockStateChangedEvent>(HandleClockStateChanged);
+            SyncClockState();
         }
 
         private void OnDisable()
         {
-            uiEventChannel.RemoveListener<UiClockStateChangedEvent>(HandleClockStateChanged);
+            uiEventChannel?.RemoveListener<UiClockStateChangedEvent>(HandleClockStateChanged);
         }
 
         private void HandleClockStateChanged(UiClockStateChangedEvent evt)
@@ -38,18 +39,10 @@ namespace _01.Code.UI
             _canSkipDay = evt.IsDay;
         }
 
-        public void SetStatusMessage(string message)
-        {
-            if (actionLabel == null)
-            {
-                return;
-            }
-
-            actionLabel.text = message ?? string.Empty;
-        }
 
         public void OnPointerClick(PointerEventData eventData)
         {
+            SyncClockState();
             if (!_canSkipDay || eventData.button != PointerEventData.InputButton.Left)
             {
                 return;
@@ -60,12 +53,31 @@ namespace _01.Code.UI
 
         private void HandleSkipDayClicked()
         {
-            uiEventChannel.RaiseEvent(UIEvents.UiSkipDayRequestedEvent);
+            uiEventChannel?.RaiseEvent(UIEvents.UiSkipDayRequestedEvent);
+        }
 
-            if (GameManager.Instance?.WaveManager != null && !GameManager.Instance.WaveManager.IsRunning)
+        private void ResolveEventChannel()
+        {
+            if (uiEventChannel != null)
             {
-                GameManager.Instance.TimeManager?.TrySkipDay();
+                return;
             }
+
+            UIManager uiManager = FindFirstObjectByType<UIManager>();
+            uiEventChannel = uiManager != null ? uiManager.UiEventChannel : null;
+        }
+
+        private void SyncClockState()
+        {
+            if (uiEventChannel == null)
+            {
+                _canSkipDay = true;
+                return;
+            }
+
+            UiClockStateQueryEvent query = UIEvents.UiClockStateQueryEvent.Initializer();
+            uiEventChannel.RaiseEvent(query);
+            HandleClockStateChanged(UIEvents.UiClockStateChangedEvent.Initializer(query.Day, query.IsDay));
         }
     }
 }

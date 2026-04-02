@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace _01.Code.Manager
 {
-    public class GridManager : MonoBehaviour
+    public class GridManager : MonoBehaviour, IManageable
     {
         [field: SerializeField] public Grid Grid { get; private set; }
         [field: SerializeField] public CustomTilemap Tilemap { get; private set; }
@@ -16,15 +16,12 @@ namespace _01.Code.Manager
 
         public Pathfinder PathFinder { get; private set; }
 
-        public void Initialize()
+        public void Initialize(IManagerContainer managerContainer)
         {
             Grid.cellSize = new Vector3(cellSize, cellSize, 0);
             Tilemap = new CustomTilemap(Size, Size);
             PathFinder = new Pathfinder(Tilemap);
-            if (!commandCenter.Initialize(new Vector2Int(0, 0)))
-            {
-                GameManager.Instance.LogManager?.Building("CommandCenter tile install failed during grid initialization.", LogLevel.Error);
-            }
+            commandCenter?.BindGrid(this);
         }
 
         public Vector2Int WorldToCell(Vector3 worldPosition)
