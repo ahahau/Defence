@@ -1,7 +1,11 @@
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace _01.Code.Test
 {
+    [ExecuteAlways]
     public class TestLine : MonoBehaviour
     {
         [Min(1)] public int size = 30;
@@ -18,13 +22,29 @@ namespace _01.Code.Test
             }
         }
 
+        private void OnEnable()
+        {
+            RebuildGrid();
+        }
+
         private void Start()
         {
             RebuildGrid();
         }
 
+        private void OnValidate()
+        {
+#if UNITY_EDITOR
+            EditorApplication.delayCall -= RebuildGrid;
+            EditorApplication.delayCall += RebuildGrid;
+#endif
+        }
+
         private void OnDisable()
         {
+#if UNITY_EDITOR
+            EditorApplication.delayCall -= RebuildGrid;
+#endif
             ClearLinesImmediate();
         }
 
@@ -32,6 +52,8 @@ namespace _01.Code.Test
         {
             ClearLinesImmediate();
 
+            float halfCell = cellSize * 0.5f;
+            Vector3 lineOrigin = new Vector3(halfCell, halfCell, 0f);
             float totalSize = size * cellSize;
             float axisLength = totalSize * 2f;
 
@@ -39,12 +61,12 @@ namespace _01.Code.Test
             {
                 float offset = i * cellSize;
 
-                Vector3 startV = new Vector3(offset, -totalSize, 0f);
-                Vector3 endV = new Vector3(offset, totalSize, 0f);
+                Vector3 startV = lineOrigin + new Vector3(offset, -totalSize, 0f);
+                Vector3 endV = lineOrigin + new Vector3(offset, totalSize, 0f);
                 CreateLine(startV, endV, axisLength);
 
-                Vector3 startH = new Vector3(-totalSize, offset, 0f);
-                Vector3 endH = new Vector3(totalSize, offset, 0f);
+                Vector3 startH = lineOrigin + new Vector3(-totalSize, offset, 0f);
+                Vector3 endH = lineOrigin + new Vector3(totalSize, offset, 0f);
                 CreateLine(startH, endH, axisLength);
             }
         }
@@ -107,18 +129,20 @@ namespace _01.Code.Test
         {
             Gizmos.color = gizmoColor;
 
+            float halfCell = cellSize * 0.5f;
+            Vector3 lineOrigin = transform.position + new Vector3(halfCell, halfCell, 0f);
             float totalSize = size * cellSize;
 
             for (int i = -size; i <= size; i++)
             {
                 float offset = i * cellSize;
 
-                Vector3 startV = transform.position + new Vector3(offset, -totalSize, 0f);
-                Vector3 endV = transform.position + new Vector3(offset, totalSize, 0f);
+                Vector3 startV = lineOrigin + new Vector3(offset, -totalSize, 0f);
+                Vector3 endV = lineOrigin + new Vector3(offset, totalSize, 0f);
                 Gizmos.DrawLine(startV, endV);
 
-                Vector3 startH = transform.position + new Vector3(-totalSize, offset, 0f);
-                Vector3 endH = transform.position + new Vector3(totalSize, offset, 0f);
+                Vector3 startH = lineOrigin + new Vector3(-totalSize, offset, 0f);
+                Vector3 endH = lineOrigin + new Vector3(totalSize, offset, 0f);
                 Gizmos.DrawLine(startH, endH);
             }
         }

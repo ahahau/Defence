@@ -66,7 +66,7 @@ namespace _01.Code.Manager
                 return;
             }
 
-            Vector2Int hoveredCell = _gridManager.WorldToCell(worldPosition);
+            Vector2Int hoveredCell = _gridManager.WorldToPlacementCell(worldPosition);
             CurrentMouseCellPosition = hoveredCell;
             uiEventChannel?.RaiseEvent(UIEvents.UiHoverCellChangedEvent.Initializer(hoveredCell));
 
@@ -133,10 +133,9 @@ namespace _01.Code.Manager
                 return;
             }
 
-            Vector2Int gridPos = _gridManager.WorldToCell(worldPosition);
+            Vector2Int gridPos = _gridManager.WorldToPlacementCell(worldPosition);
             CurrentMouseCellPosition = gridPos;
-            Vector3 buildWorldPosition = _gridManager.CellToWorld(gridPos);
-            uiEventChannel?.RaiseEvent(UIEvents.UiBuildAtWorldPositionRequestedEvent.Initializer(buildWorldPosition));
+            uiEventChannel?.RaiseEvent(UIEvents.UiBuildAtWorldPositionRequestedEvent.Initializer(worldPosition));
         }
 
         private void HandleRightPointerPressed()
@@ -181,7 +180,7 @@ namespace _01.Code.Manager
                 return;
             }
 
-            Vector3 targetWorldPosition = _gridManager.CellToWorld(CurrentMouseCellPosition);
+            Vector3 targetWorldPosition = InputData.GetWorldPosition2D();
 
             if (_isDraggingUnit && _draggedUnit != null)
             {

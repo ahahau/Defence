@@ -62,7 +62,7 @@ namespace _01.Code.Manager
                 return false;
             }
 
-            Vector2Int targetPosition = _gridManager.WorldToCell(worldPosition);
+            Vector2Int targetPosition = _gridManager.WorldToPlacementCell(worldPosition);
             Vector2Int currentPosition = placeableEntity.GridPosition;
 
             if (targetPosition == currentPosition)
@@ -122,7 +122,7 @@ namespace _01.Code.Manager
                 return false;
             }
 
-            Vector2Int buildPosition = _gridManager.WorldToCell(worldPosition);
+            Vector2Int buildPosition = _gridManager.WorldToPlacementCell(worldPosition);
             if (!CanModifyPlacements())
             {
                 RaiseBuildFailed(unitData, buildPosition);
@@ -149,7 +149,7 @@ namespace _01.Code.Manager
                 return false;
             }
 
-            Vector3 buildWorldPosition = _gridManager.CellToWorld(buildPosition);
+            Vector3 buildWorldPosition = _gridManager.CellToObjectWorld(buildPosition);
             placedEntity = Instantiate(unitData.Prefab, buildWorldPosition, Quaternion.identity);
             placedEntity.BindSceneServices(_gridManager, _logManager);
             if (!placedEntity.Initialize(buildPosition))

@@ -1,4 +1,6 @@
-namespace _01.Code.Manager
+using _01.Code.Manager;
+
+namespace _01.Code.Save
 {
     public interface ISaveAgentModule
     {

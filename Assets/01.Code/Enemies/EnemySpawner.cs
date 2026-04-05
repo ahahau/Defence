@@ -156,7 +156,7 @@ namespace _01.Code.Enemies
             for (int i = 0; i < path.Count; i++)
             {
                 Vector2Int cell = path[i];
-                Vector3 worldPoint = _gridManager.CellToWorld(cell);
+                Vector3 worldPoint = _gridManager.CellToObjectWorld(cell);
                 Vector3 localPoint = transform.InverseTransformPoint(worldPoint);
                 lineRenderer.SetPosition(i, localPoint);
             }

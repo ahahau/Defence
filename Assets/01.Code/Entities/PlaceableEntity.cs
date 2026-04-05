@@ -67,7 +67,7 @@ namespace _01.Code.Entities
         public virtual void PreviewPosition(Vector2Int tilePos)
         {
             EnsureSceneServices();
-            transform.position = GridManager.CellToWorld(tilePos);
+            transform.position = GridManager.CellToObjectWorld(tilePos);
         }
 
         public virtual void CommitPosition(Vector2Int tilePos)
@@ -75,7 +75,7 @@ namespace _01.Code.Entities
             EnsureSceneServices();
             GridPosition = tilePos;
             Tile = GridManager.GetTile(tilePos);
-            transform.position = GridManager.CellToWorld(GridPosition);
+            transform.position = GridManager.CellToObjectWorld(GridPosition);
         }
 
         public void BindPlacementSaveKey(string saveKey)

@@ -37,7 +37,7 @@ namespace _01.Code.Enemies
                 return;
             }
 
-            Vector3 targetWorld = _gridManager.CellToWorld(_path[_pathIndex]);
+            Vector3 targetWorld = _gridManager.CellToObjectWorld(_path[_pathIndex]);
             Vector2 target = new Vector2(targetWorld.x, targetWorld.y);
 
             Vector2 currentPos = _rb.position;
@@ -45,7 +45,7 @@ namespace _01.Code.Enemies
 
 
             float distance = dir.magnitude;
-            float duration = distance / moveSpeed;
+                float duration = distance / moveSpeed;
             
             _moveTween?.Kill();
             

@@ -19,6 +19,8 @@ namespace _01.Code.UI
 
         private void OnEnable()
         {
+            ResolveEventChannel();
+            CacheEntries();
             uiEventChannel.AddListener<UiDefaultCostBarStateChangedEvent>(HandleChanged);
         }
 
@@ -65,6 +67,9 @@ namespace _01.Code.UI
 
         private void CacheEntries()
         {
+            entryViews.Clear();
+            entryViews.AddRange(GetComponentsInChildren<CostEntryViewUI>(true));
+
             for (int i = entryViews.Count - 1; i >= 0; i--)
             {
                 if (entryViews[i] == null)
@@ -75,6 +80,17 @@ namespace _01.Code.UI
 
                 entryViews[i].RefreshBindings();
             }
+        }
+
+        private void ResolveEventChannel()
+        {
+            if (uiEventChannel != null)
+            {
+                return;
+            }
+
+            _01.Code.Manager.UIManager uiManager = FindFirstObjectByType<_01.Code.Manager.UIManager>();
+            uiEventChannel = uiManager != null ? uiManager.UiEventChannel : null;
         }
     }
 }

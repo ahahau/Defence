@@ -30,7 +30,22 @@ namespace _01.Code.Manager
             return new Vector2Int(cellPosition.x, cellPosition.y);
         }
 
+        public Vector2Int WorldToPlacementCell(Vector3 worldPosition)
+        {
+            float halfCell = cellSize * 0.5f;
+            Vector3 adjustedWorldPosition = worldPosition + new Vector3(halfCell, halfCell, 0f);
+            Vector3Int cellPosition = Grid.WorldToCell(adjustedWorldPosition);
+            return new Vector2Int(cellPosition.x, cellPosition.y);
+        }
+
         public Vector3 CellToWorld(Vector2Int cellPosition) => Grid.GetCellCenterWorld(new Vector3Int(cellPosition.x, cellPosition.y, 0));
+
+        public Vector3 CellToObjectWorld(Vector2Int cellPosition)
+        {
+            Vector3 centerWorld = CellToWorld(cellPosition);
+            float halfCell = cellSize * 0.5f;
+            return centerWorld - new Vector3(halfCell, halfCell, 0f);
+        }
 
         public bool IsCellEmpty(Vector2Int cellPosition) => Tilemap.TileEmpty(cellPosition);
 

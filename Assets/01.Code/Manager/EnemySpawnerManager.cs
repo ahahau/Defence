@@ -78,7 +78,7 @@ namespace _01.Code.Manager
                 return false;
             }
 
-            Vector3 worldPos = _gridManager.CellToWorld(cellPos);
+            Vector3 worldPos = _gridManager.CellToObjectWorld(cellPos);
             EnemySpawner spawner = Instantiate(enemySpawnerPrefab, worldPos, Quaternion.identity);
             spawner.BindSceneServices(_gridManager, _logManager);
             spawner.Configure(_gridManager, _logManager, this);
@@ -155,7 +155,7 @@ namespace _01.Code.Manager
             for (int i = 0; i < 5; i++)
             {
                 Vector2Int cellPos = _gridManager.GetRandomGridPosition();
-                Vector3 worldPos = _gridManager.CellToWorld(cellPos);
+                Vector3 worldPos = _gridManager.CellToObjectWorld(cellPos);
                 EnemySpawner spawner = Instantiate(enemySpawnerPrefab, worldPos, Quaternion.identity);
                 spawner.BindSceneServices(_gridManager, _logManager);
                 spawner.Configure(_gridManager, _logManager, this);
