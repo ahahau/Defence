@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using _01.Code.Buildings;
 using _01.Code.Manager;
 using _01.Code.Units;
 using TMPro;
@@ -10,12 +11,9 @@ namespace _01.Code.UI
     [ExecuteAlways]
     public class TownInteriorScreenUI : MonoBehaviour
     {
-        [SerializeField] private UIManager uiManager;
         [SerializeField] private GridManager gridManager;
         [SerializeField] private BuildManager buildManager;
-        [SerializeField] private CostManager costManager;
         [SerializeField] private UnitCardUI unitCardPrefab;
-        [SerializeField] private GameObject costEntryPrefab;
         [SerializeField] private List<UnitDataSO> availableBuildings = new();
         [SerializeField] private Vector2 leftCostBarPosition = new(28f, 0f);
         [SerializeField] private Vector2 leftCostBarSize = new(220f, 360f);
@@ -43,7 +41,6 @@ namespace _01.Code.UI
             if (Application.isPlaying)
             {
                 EnsureCatalog();
-                uiManager?.RefreshUiState();
             }
         }
 
@@ -54,11 +51,6 @@ namespace _01.Code.UI
                 ResolveReferences();
                 BuildLayout();
                 return;
-            }
-
-            if (buildManager == null)
-            {
-                buildManager = FindFirstObjectByType<BuildManager>();
             }
 
             if (buildManager != null)
@@ -85,10 +77,6 @@ namespace _01.Code.UI
 
         private void ResolveReferences()
         {
-            uiManager ??= FindFirstObjectByType<UIManager>();
-            gridManager ??= FindFirstObjectByType<GridManager>();
-            buildManager ??= FindFirstObjectByType<BuildManager>();
-            costManager ??= FindFirstObjectByType<CostManager>();
             _root = transform as RectTransform;
             if (_root != null)
             {
@@ -98,20 +86,12 @@ namespace _01.Code.UI
 
         private void EnsureCatalog()
         {
-            if (uiManager == null || availableBuildings.Count == 0)
+            if (buildManager == null || availableBuildings.Count == 0)
             {
                 return;
             }
 
-            List<UnitDataSO> targetCatalog = uiManager.AvailableBuildings;
-            targetCatalog.Clear();
-            for (int i = 0; i < availableBuildings.Count; i++)
-            {
-                if (availableBuildings[i] != null)
-                {
-                    targetCatalog.Add(availableBuildings[i]);
-                }
-            }
+            buildManager.ReplaceAvailableBuildings(availableBuildings);
         }
 
         private void BuildLayout()
@@ -127,45 +107,18 @@ namespace _01.Code.UI
 
         private void CreateCostBar()
         {
-            RectTransform costRoot = FindOrCreateRect("LeftCostBar", _root);
+            Transform existing = _root.Find("LeftCostBar");
+            RectTransform costRoot = existing as RectTransform;
+            if (costRoot == null)
+            {
+                return;
+            }
+
             costRoot.anchorMin = new Vector2(0f, 0.5f);
             costRoot.anchorMax = new Vector2(0f, 0.5f);
             costRoot.pivot = new Vector2(0f, 0.5f);
             costRoot.anchoredPosition = leftCostBarPosition;
             costRoot.sizeDelta = leftCostBarSize;
-
-            VerticalLayoutGroup layoutGroup = GetOrAddComponent<VerticalLayoutGroup>(costRoot.gameObject);
-            layoutGroup.spacing = 10f;
-            layoutGroup.childAlignment = TextAnchor.MiddleLeft;
-            layoutGroup.childControlHeight = false;
-            layoutGroup.childControlWidth = true;
-            layoutGroup.childForceExpandHeight = false;
-            layoutGroup.childForceExpandWidth = true;
-
-            ContentSizeFitter fitter = GetOrAddComponent<ContentSizeFitter>(costRoot.gameObject);
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-
-            if (costRoot.GetComponentsInChildren<CostEntryViewUI>(true).Length == 0)
-            {
-                int entryCount = costManager != null ? Mathf.Max(1, costManager.AllCosts.Count) : 5;
-                for (int i = 0; i < entryCount; i++)
-                {
-                    if (costEntryPrefab == null)
-                    {
-                        break;
-                    }
-
-                    GameObject entryObject = Instantiate(costEntryPrefab, costRoot);
-                    entryObject.name = $"{costEntryPrefab.name}_{i}";
-                    entryObject.SetActive(true);
-                }
-            }
-
-            if (costRoot.GetComponent<DefaultCostBarUI>() == null)
-            {
-                costRoot.gameObject.AddComponent<DefaultCostBarUI>();
-            }
         }
 
         private void CreateBuildPanel()
@@ -218,7 +171,7 @@ namespace _01.Code.UI
         private void CreateBuildCards()
         {
             _cards.Clear();
-            if (_cardRoot == null || unitCardPrefab == null || uiManager == null)
+            if (_cardRoot == null || unitCardPrefab == null || buildManager == null)
             {
                 return;
             }
@@ -230,7 +183,7 @@ namespace _01.Code.UI
                 return;
             }
 
-            IReadOnlyList<UnitDataSO> catalog = uiManager.AvailableBuildings;
+            IReadOnlyList<UnitDataSO> catalog = buildManager.GetAvailableBuildingsForCurrentScene();
             for (int i = 0; i < catalog.Count; i++)
             {
                 UnitDataSO unitData = catalog[i];
@@ -264,17 +217,17 @@ namespace _01.Code.UI
 
         private void HandleBuildCardClicked(UnitCardUI card)
         {
-            if (!_hasSelectedCell || card?.BoundUnitData == null || uiManager == null || gridManager == null)
+            if (!_hasSelectedCell || card?.BoundUnitData == null || buildManager == null || gridManager == null)
             {
                 return;
             }
 
             Vector3 worldPosition = gridManager.CellToWorld(_selectedCell);
-            uiManager.SelectBuilding(card.BoundUnitData);
-            bool succeeded = uiManager.TryRequestBuild(worldPosition);
+            buildManager.SelectBuilding(card.BoundUnitData);
+            bool succeeded = buildManager.TryRequestBuild(worldPosition);
             if (!succeeded)
             {
-                uiManager.CancelSelection();
+                buildManager.CancelSelection();
             }
 
             HideBuildPanel();

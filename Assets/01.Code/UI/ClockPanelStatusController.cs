@@ -22,15 +22,11 @@ namespace _01.Code.UI
         {
             _clockPanelUI = GetComponent<ClockPanelUI>();
             _uiEventChannel = _clockPanelUI.UiEventChannel;
-            buildManager ??= FindFirstObjectByType<_01.Code.Manager.BuildManager>();
         }
 
         private void OnEnable()
         {
-            if (_uiEventChannel != null)
-            {
-                _uiEventChannel.AddListener<UiClockStateChangedEvent>(HandleClockStateChanged);
-            }
+            _uiEventChannel.AddListener<UiClockStateChangedEvent>(HandleClockStateChanged);
 
             TryHookBuildManager();
             RefreshStatusMessage();
@@ -38,10 +34,7 @@ namespace _01.Code.UI
 
         private void OnDisable()
         {
-            if (_uiEventChannel != null)
-            {
-                _uiEventChannel.RemoveListener<UiClockStateChangedEvent>(HandleClockStateChanged);
-            }
+            _uiEventChannel.RemoveListener<UiClockStateChangedEvent>(HandleClockStateChanged);
 
             UnhookBuildManager();
         }

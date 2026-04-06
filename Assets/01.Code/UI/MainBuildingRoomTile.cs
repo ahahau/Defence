@@ -5,27 +5,22 @@ namespace _01.Code.UI
     public class MainBuildingRoomTile : MonoBehaviour
     {
         private MainBuildingRoomWorld _owner;
-        private Renderer _renderer;
-        private MaterialPropertyBlock _propertyBlock;
+        private SpriteRenderer _spriteRenderer;
 
         public Vector2Int Cell { get; private set; }
 
-        public void Configure(MainBuildingRoomWorld owner, Vector2Int cell, Renderer tileRenderer)
+        public void Configure(MainBuildingRoomWorld owner, Vector2Int cell, SpriteRenderer spriteRenderer)
         {
             _owner = owner;
             Cell = cell;
-            _renderer = tileRenderer;
+            _spriteRenderer = spriteRenderer;
         }
 
         public void SetColor(Color color)
         {
-            if (_renderer != null)
+            if (_spriteRenderer != null)
             {
-                _propertyBlock ??= new MaterialPropertyBlock();
-                _renderer.GetPropertyBlock(_propertyBlock);
-                _propertyBlock.SetColor("_BaseColor", color);
-                _propertyBlock.SetColor("_Color", color);
-                _renderer.SetPropertyBlock(_propertyBlock);
+                _spriteRenderer.color = color;
             }
         }
 

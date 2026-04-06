@@ -20,7 +20,7 @@ namespace _01.Code.Save
 
         public string GetSaveData()
         {
-            _timeManager ??= GetComponent<TimeManager>();
+            _timeManager = GetComponent<TimeManager>();
             TimeSaveData data = new TimeSaveData
             {
                 dayCount = _timeManager.DayCount
@@ -30,7 +30,7 @@ namespace _01.Code.Save
 
         public void RestoreData(string savedData)
         {
-            _timeManager ??= GetComponent<TimeManager>();
+            _timeManager = GetComponent<TimeManager>();
             if (string.IsNullOrWhiteSpace(savedData))
             {
                 return;

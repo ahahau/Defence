@@ -8,7 +8,7 @@ namespace _01.Code.UI
 
         protected override void CacheReferences()
         {
-            inventoryTabsUI ??= GetComponent<InventoryTabsUI>();
+            inventoryTabsUI = GetComponent<InventoryTabsUI>();
         }
 
         protected override void OnInitializeSection()

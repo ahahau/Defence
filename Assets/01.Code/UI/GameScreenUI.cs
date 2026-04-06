@@ -15,7 +15,7 @@ namespace _01.Code.UI
 
         private void CacheReferences()
         {
-            hudSection ??= GetComponent<HudSectionUIController>();
+            hudSection = GetComponent<HudSectionUIController>();
             if (buildSection == null)
             {
                 buildSection = GetComponentInChildren<BuildSectionUIController>(true);

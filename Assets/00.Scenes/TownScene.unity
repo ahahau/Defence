@@ -1909,58 +1909,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 486822936}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!1 &492664470
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 492664471}
-  - component: {fileID: 492664472}
-  m_Layer: 0
-  m_Name: UIManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &492664471
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 492664470}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 680778421}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &492664472
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 492664470}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4ccd10afeab4420085b0d49c55f46541, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  uiEventChannel: {fileID: 11400000, guid: 65fe9b6359134cd4947a05bdbc25753a, type: 2}
-  buildEventChannel: {fileID: 11400000, guid: 43ac707ddd2c4ab8b72218ab4ccb251b, type: 2}
-  costEventChannel: {fileID: 11400000, guid: b9313a107d364d1b95a1a38beb70b838, type: 2}
-  damageTextPrefab: {fileID: 0}
-  poolManager: {fileID: 0}
-  damageTextPoolingItem: {fileID: 0}
-  availableBuildings: []
-  availableUnits: []
 --- !u!1 &505757333
 GameObject:
   m_ObjectHideFlags: 0
@@ -2527,9 +2475,6 @@ PrefabInstance:
     - {fileID: 7121183673426129060, guid: 41eab865640196049978c49c9a884162, type: 3}
     - {fileID: 4382549243069408591, guid: 41eab865640196049978c49c9a884162, type: 3}
     m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: 7373935818809128369, guid: 41eab865640196049978c49c9a884162, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 492664471}
     - targetCorrespondingSourceObject: {fileID: 7373935818809128369, guid: 41eab865640196049978c49c9a884162, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1437636486}
@@ -3688,8 +3633,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f3df9a6d31f0864e868afad05aeefc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  uiEventChannel: {fileID: 11400000, guid: 65fe9b6359134cd4947a05bdbc25753a, type: 2}
   buildEventChannel: {fileID: 11400000, guid: 43ac707ddd2c4ab8b72218ab4ccb251b, type: 2}
   costEventChannel: {fileID: 11400000, guid: b9313a107d364d1b95a1a38beb70b838, type: 2}
+  availableBuildings: []
+  availableUnits:
+  - {fileID: 11400000, guid: 515a6e175650d6346868e7a4142fa5fe, type: 2}
 --- !u!1 &1455961667
 GameObject:
   m_ObjectHideFlags: 0

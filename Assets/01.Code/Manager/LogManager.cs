@@ -21,7 +21,7 @@ namespace _01.Code.Manager
         System,
     }
 
-    public class LogManager : MonoBehaviour, IManageable
+    public class LogManager : BaseManager
     {
         [SerializeField, HideInInspector] private List<bool> enableLogsByCategory = new List<bool> { true, true, true, true, true };
         [SerializeField, HideInInspector] private List<Color> categoryColors = new List<Color>
@@ -33,7 +33,7 @@ namespace _01.Code.Manager
             Color.white // System
         };
 
-        public void Initialize(IManagerContainer managerContainer)
+        protected override void OnInitialize(IManagerContainer managerContainer)
         {
             EnsureCategorySettings();
         }
@@ -104,8 +104,15 @@ namespace _01.Code.Manager
         {
             int categoryCount = Enum.GetValues(typeof(LogCategory)).Length;
 
-            enableLogsByCategory ??= new List<bool>(categoryCount);
-            categoryColors ??= new List<Color>(categoryCount);
+            if (enableLogsByCategory == null)
+            {
+                enableLogsByCategory = new List<bool>(categoryCount);
+            }
+
+            if (categoryColors == null)
+            {
+                categoryColors = new List<Color>(categoryCount);
+            }
 
             while (enableLogsByCategory.Count < categoryCount)
             {

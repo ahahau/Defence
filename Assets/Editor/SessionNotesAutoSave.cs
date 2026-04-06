@@ -25,7 +25,6 @@ public static class SessionNotesAutoSave
         "Assets/00.Scenes/SampleScene.unity",
         "Assets/01.Code/Manager/GameManager.cs",
         "Assets/01.Code/Manager/InputManager.cs",
-        "Assets/01.Code/Manager/UIManager.cs",
         "Assets/01.Code/Manager/BuildManager.cs",
         "Assets/01.Code/Manager/WaveManager.cs",
         "Assets/01.Code/Manager/EnemySpawnerManager.cs",
@@ -100,7 +99,6 @@ public static class SessionNotesAutoSave
         GameObject canvas = GameObject.Find("GameCanvas");
         GameObject eventSystem = GameObject.Find("EventSystem");
 
-        UIManager uiManager = gameManagerRoot != null ? gameManagerRoot.GetComponentInChildren<UIManager>(true) : null;
         InputManager inputManager = gameManagerRoot != null ? gameManagerRoot.GetComponentInChildren<InputManager>(true) : null;
         BuildManager buildManager = gameManagerRoot != null ? gameManagerRoot.GetComponentInChildren<BuildManager>(true) : null;
         WaveManager waveManager = gameManagerRoot != null ? gameManagerRoot.GetComponentInChildren<WaveManager>(true) : null;
@@ -112,9 +110,9 @@ public static class SessionNotesAutoSave
 
         int availableBuildingCount = 0;
         int availableUnitCount = 0;
-        if (uiManager != null)
+        if (buildManager != null)
         {
-            SerializedObject serialized = new SerializedObject(uiManager);
+            SerializedObject serialized = new SerializedObject(buildManager);
             SerializedProperty availableBuildings = serialized.FindProperty("availableBuildings");
             SerializedProperty availableUnits = serialized.FindProperty("availableUnits");
             availableBuildingCount = availableBuildings != null ? availableBuildings.arraySize : 0;
@@ -133,13 +131,12 @@ public static class SessionNotesAutoSave
         sb.AppendLine($"- GameManager root present: `{(gameManagerRoot != null)}`");
         sb.AppendLine($"- GameCanvas present: `{(canvas != null)}`");
         sb.AppendLine($"- EventSystem present: `{(eventSystem != null)}`");
-        sb.AppendLine($"- UIManager present: `{(uiManager != null)}`");
         sb.AppendLine($"- InputManager present: `{(inputManager != null)}`");
         sb.AppendLine($"- BuildManager present: `{(buildManager != null)}`");
         sb.AppendLine($"- WaveManager present: `{(waveManager != null)}`");
         sb.AppendLine($"- EnemySpawnerManager present: `{(enemySpawnerManager != null)}`");
-        sb.AppendLine($"- UIManager available building count: `{availableBuildingCount}`");
-        sb.AppendLine($"- UIManager available unit count: `{availableUnitCount}`");
+        sb.AppendLine($"- BuildManager available building count: `{availableBuildingCount}`");
+        sb.AppendLine($"- BuildManager available unit count: `{availableUnitCount}`");
         sb.AppendLine();
 
         sb.AppendLine("### Assets");
@@ -159,7 +156,7 @@ public static class SessionNotesAutoSave
         }
 
         sb.AppendLine("### Current Setup");
-        sb.AppendLine("- Build flow: `InputManager -> UIManager -> MainPanel -> BuildManager`");
+        sb.AppendLine("- Build flow: `InputManager -> BuildManager -> TownInteriorScreenUI`");
         sb.AppendLine("- Wave flow: `WaveManager <-> WaveEventChannel.asset <-> EnemySpawnerManager`");
         sb.AppendLine("- Scene bootstrap helper: `missing / update handoff if replaced`");
         sb.AppendLine("- Session notes manual update: `Tools/Session Notes/Update Now`");

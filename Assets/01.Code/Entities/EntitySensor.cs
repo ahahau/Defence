@@ -188,7 +188,10 @@ namespace _01.Code.Entities
                 _gridManager = placeableEntity.GetComponentInParent<GridManager>();
             }
 
-            _gridManager ??= FindFirstObjectByType<GridManager>();
+            if (_gridManager == null)
+            {
+                _gridManager = FindFirstObjectByType<GridManager>();
+            }
             RefreshFallbackPatterns();
         }
     }

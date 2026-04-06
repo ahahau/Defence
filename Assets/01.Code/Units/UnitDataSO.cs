@@ -1,3 +1,4 @@
+using _01.Code.Entities;
 using UnityEngine;
 
 namespace _01.Code.Units
@@ -10,6 +11,6 @@ namespace _01.Code.Units
         [field: SerializeField] public int Cost { get; private set; }
         [field: SerializeField] public Sprite CardIcon { get; private set; }
         [field: SerializeField] public Color CardColor { get; private set; } = Color.white;
-        [field: SerializeField] public Unit Prefab { get; private set; }
+        [field: SerializeField] public PlaceableEntity Prefab { get; private set; }
     }
 }

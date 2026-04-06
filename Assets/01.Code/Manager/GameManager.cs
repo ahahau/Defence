@@ -9,22 +9,24 @@ namespace _01.Code.Manager
     public class GameManager : MonoBehaviour, IManagerContainer
     {
         private Dictionary<Type, IManageable> _managerMap;
-        private GridManager _gridManager;
-        private CostManager _costManager;
+        
         private LogManager _logManager;
         private SaveManager _saveManager;
-
-        public GridManager GridManager => _gridManager;
-        public CostManager CostManager => _costManager;
         public LogManager LogManager => _logManager;
         public SaveManager SaveManager => _saveManager;
 
         private void Awake()
         {
+            ValidateHierarchy();
             BuildManagerMap();
             ResolveCoreManagers();
             InitializeManagers();
             AfterInitializeManagers();
+        }
+
+        private void OnValidate()
+        {
+            ValidateHierarchy();
         }
 
         public T GetManager<T>() where T : class, IManageable
@@ -44,15 +46,55 @@ namespace _01.Code.Manager
 
         private void BuildManagerMap()
         {
-            _managerMap = GetComponentsInChildren<MonoBehaviour>(true)
+            _managerMap = GetComponentsInChildren<Transform>(true)
+                .Where(IsDirectChildOfGameManager)
+                .SelectMany(child => child.GetComponents<MonoBehaviour>())
+                .Where(IsRegisteredManagerComponent)
                 .OfType<IManageable>()
                 .ToDictionary(manageable => manageable.GetType(), manageable => manageable);
         }
 
+        private bool IsDirectChildOfGameManager(Transform target)
+        {
+            return target != null && target != transform && target.parent == transform;
+        }
+
+        private bool IsRegisteredManagerComponent(MonoBehaviour behaviour)
+        {
+            if (behaviour == null || behaviour == this || behaviour is not IManageable)
+            {
+                return false;
+            }
+
+            Type behaviourType = behaviour.GetType();
+            return behaviourType.Namespace == typeof(GameManager).Namespace;
+        }
+
+        private void ValidateHierarchy()
+        {
+            if (transform == null)
+            {
+                return;
+            }
+
+            foreach (Transform child in transform)
+            {
+                if (child == null)
+                {
+                    continue;
+                }
+
+                MonoBehaviour[] behaviours = child.GetComponents<MonoBehaviour>();
+                bool hasRegisteredManager = behaviours.Any(IsRegisteredManagerComponent);
+                if (!hasRegisteredManager)
+                {
+                    Debug.LogWarning($"`{child.name}` is under GameManager but is not a manager. Move it out of the GameManager hierarchy.", child);
+                }
+            }
+        }
+
         private void ResolveCoreManagers()
         {
-            _gridManager = GetManager<GridManager>();
-            _costManager = GetManager<CostManager>();
             _logManager = GetManager<LogManager>();
             _saveManager = GetManager<SaveManager>();
         }

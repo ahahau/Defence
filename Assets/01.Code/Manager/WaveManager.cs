@@ -9,15 +9,15 @@ namespace _01.Code.Manager
     public class WaveManager : MonoBehaviour, IManageable
     {
         [SerializeField] private GameEventChannelSO waveEventChannel;
-
+        
         public event Action OnWaveStarted;
         public event Action OnWaveCleared;
-
+        
         private bool _isRunning;
-
+        
         public bool IsRunning => _isRunning;
         public GameEventChannelSO WaveEventChannel => waveEventChannel;
-
+        
         /// <summary>
         /// 이 함수는 웨이브 요청과 웨이브 클리어 이벤트를 구독합니다
         /// </summary>
@@ -27,13 +27,13 @@ namespace _01.Code.Manager
             waveEventChannel?.AddListener<WaveStartRequestedEvent>(HandleWaveStartRequestedEvent);
             waveEventChannel?.AddListener<WaveClearedEvent>(HandleWaveClearedEvent);
         }
-
+        
         private void OnDestroy()
         {
             waveEventChannel?.RemoveListener<WaveStartRequestedEvent>(HandleWaveStartRequestedEvent);
             waveEventChannel?.RemoveListener<WaveClearedEvent>(HandleWaveClearedEvent);
         }
-
+        
         public void StartWaves()
         {
             if (_isRunning)
@@ -45,7 +45,7 @@ namespace _01.Code.Manager
             OnWaveStarted?.Invoke();
             waveEventChannel?.RaiseEvent(WaveEvents.WaveStartedEvent);
         }
-
+        
         private void HandleWaveClearedEvent(WaveClearedEvent _)
         {
             if (!_isRunning)

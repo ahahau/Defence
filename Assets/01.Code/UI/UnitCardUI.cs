@@ -81,7 +81,7 @@ namespace _01.Code.UI
 
         public void SetPosition(Vector2 anchoredPosition)
         {
-            _rectTransform ??= transform as RectTransform;
+            _rectTransform = transform as RectTransform;
             if (_rectTransform == null)
             {
                 return;

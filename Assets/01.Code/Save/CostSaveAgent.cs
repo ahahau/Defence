@@ -30,7 +30,7 @@ namespace _01.Code.Save
 
         public string GetSaveData()
         {
-            _costManager ??= GetComponent<CostManager>();
+            _costManager = GetComponent<CostManager>();
             List<CostSaveEntry> entries = new List<CostSaveEntry>();
 
             AppendCosts(entries, _costManager.AllCosts, _costManager);
@@ -40,7 +40,7 @@ namespace _01.Code.Save
 
         public void RestoreData(string savedData)
         {
-            _costManager ??= GetComponent<CostManager>();
+            _costManager = GetComponent<CostManager>();
             if (string.IsNullOrWhiteSpace(savedData))
             {
                 return;

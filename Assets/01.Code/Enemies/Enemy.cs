@@ -54,15 +54,15 @@ namespace _01.Code.Enemies
         public void SetUpPool(Pool pool)
         {
             _pool = pool;
-            _rigidbody2D ??= GetComponent<Rigidbody2D>();
+            _rigidbody2D = GetComponent<Rigidbody2D>();
             CacheVisualTransform();
         }
 
         public void ResetItem()
         {
             ResetRuntimeState();
-            _movement ??= GetModule<EnemyMovement>();
-            _enemyHealth ??= GetModule<EnemyHealth>();
+            _movement = GetModule<EnemyMovement>();
+            _enemyHealth = GetModule<EnemyHealth>();
             _movement?.ResetState();
             _enemyHealth?.ResetHealthToFull();
             StopScaleEffect();
@@ -91,7 +91,7 @@ namespace _01.Code.Enemies
         public void SetSpawnPosition(Vector3 worldPosition)
         {
             transform.position = worldPosition;
-            _rigidbody2D ??= GetComponent<Rigidbody2D>();
+            _rigidbody2D = GetComponent<Rigidbody2D>();
             if (_rigidbody2D != null)
             {
                 _rigidbody2D.position = new Vector2(worldPosition.x, worldPosition.y);
@@ -124,8 +124,8 @@ namespace _01.Code.Enemies
             IsDead = false;
             _runtimeData = null;
 
-            OnHit ??= new UnityEvent();
-            OnDeath ??= new UnityEvent();
+            OnHit = OnHit ?? new UnityEvent();
+            OnDeath = OnDeath ?? new UnityEvent();
             OnDeath.RemoveAllListeners();
             OnDeath.AddListener(HandleDeath);
         }
@@ -162,7 +162,7 @@ namespace _01.Code.Enemies
 
         private void CacheVisualTransform()
         {
-            _enemyRender ??= GetModule<EnemyRender>();
+            _enemyRender = GetModule<EnemyRender>();
             _visualTransform = _enemyRender != null ? _enemyRender.transform : transform;
         }
 

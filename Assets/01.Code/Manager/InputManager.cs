@@ -36,7 +36,6 @@ namespace _01.Code.Manager
         public void Initialize(IManagerContainer managerContainer)
         {
             _gridManager = managerContainer.GetManager<GridManager>();
-            ResolveChannels();
             InputData.LeftPointerPressed += QueueLeftPointerPressed;
             InputData.LeftPointerReleased += QueueLeftPointerReleased;
             InputData.RightPointerPressed += QueueRightPointerPressed;
@@ -68,7 +67,7 @@ namespace _01.Code.Manager
 
             Vector2Int hoveredCell = _gridManager.WorldToPlacementCell(worldPosition);
             CurrentMouseCellPosition = hoveredCell;
-            uiEventChannel?.RaiseEvent(UIEvents.UiHoverCellChangedEvent.Initializer(hoveredCell));
+            uiEventChannel.RaiseEvent(UIEvents.UiHoverCellChangedEvent.Initializer(hoveredCell));
 
             if (_queuedRightPointerPressed)
             {
@@ -135,7 +134,7 @@ namespace _01.Code.Manager
 
             Vector2Int gridPos = _gridManager.WorldToPlacementCell(worldPosition);
             CurrentMouseCellPosition = gridPos;
-            uiEventChannel?.RaiseEvent(UIEvents.UiBuildAtWorldPositionRequestedEvent.Initializer(worldPosition));
+            uiEventChannel.RaiseEvent(UIEvents.UiBuildAtWorldPositionRequestedEvent.Initializer(worldPosition));
         }
 
         private void HandleRightPointerPressed()
@@ -145,7 +144,7 @@ namespace _01.Code.Manager
                 return;
             }
 
-            uiEventChannel?.RaiseEvent(UIEvents.UiCancelSelectionRequestedEvent);
+            uiEventChannel.RaiseEvent(UIEvents.UiCancelSelectionRequestedEvent);
             ResetPointerState();
         }
 
@@ -186,7 +185,7 @@ namespace _01.Code.Manager
             {
                 BuildMoveRequestedEvent moveRequest =
                     BuildEvents.BuildMoveRequestedEvent.Initializer(_draggedUnit, targetWorldPosition, 0);
-                buildEventChannel?.RaiseEvent(moveRequest);
+                buildEventChannel.RaiseEvent(moveRequest);
                 bool moved = moveRequest.Succeeded;
                 if (!moved)
                 {
@@ -265,7 +264,7 @@ namespace _01.Code.Manager
                 return;
             }
 
-            uiEventChannel?.RaiseEvent(SaveEvents.SaveStartNewGameRequestedEvent);
+            uiEventChannel.RaiseEvent(SaveEvents.SaveStartNewGameRequestedEvent);
         }
 
         private void HandleSpawnUnitHotkey()
@@ -376,22 +375,8 @@ namespace _01.Code.Manager
         private void RefreshUnitCatalog()
         {
             UiUnitCatalogQueryEvent query = UIEvents.UiUnitCatalogQueryEvent.Initializer();
-            uiEventChannel?.RaiseEvent(query);
+            uiEventChannel.RaiseEvent(query);
             _availableUnits = query.Units ?? new global::System.Collections.Generic.List<UnitDataSO>();
-        }
-
-        private void ResolveChannels()
-        {
-            UIManager uiManager = FindFirstObjectByType<UIManager>();
-            if (uiEventChannel == null)
-            {
-                uiEventChannel = uiManager != null ? uiManager.UiEventChannel : null;
-            }
-
-            if (buildEventChannel == null)
-            {
-                buildEventChannel = uiManager != null ? uiManager.BuildEventChannel : null;
-            }
         }
     }
 }

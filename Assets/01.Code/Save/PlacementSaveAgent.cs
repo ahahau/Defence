@@ -57,7 +57,7 @@ namespace _01.Code.Save
 
         public void RestoreData(string savedData)
         {
-            _saveManager ??= FindFirstObjectByType<SaveManager>();
+            _saveManager = FindFirstObjectByType<SaveManager>();
             PlacementSaveCollection collection = string.IsNullOrWhiteSpace(savedData)
                 ? new PlacementSaveCollection()
                 : JsonUtility.FromJson<PlacementSaveCollection>(savedData);

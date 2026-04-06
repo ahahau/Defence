@@ -29,18 +29,10 @@ namespace _01.Code.Manager
 
         public void Initialize(IManagerContainer managerContainer)
         {
-            ResolveChannels();
-            if (waveEventChannel != null)
-            {
-                waveEventChannel.AddListener<WaveStartedEvent>(HandleWaveStartedEvent);
-                waveEventChannel.AddListener<WaveClearedEvent>(HandleWaveClearedEvent);
-            }
-
-            if (uiEventChannel != null)
-            {
-                uiEventChannel.AddListener<UiSkipDayRequestedEvent>(HandleSkipDayRequestedEvent);
-                uiEventChannel.AddListener<UiClockStateQueryEvent>(HandleClockStateQueryEvent);
-            }
+            waveEventChannel.AddListener<WaveStartedEvent>(HandleWaveStartedEvent);
+            waveEventChannel.AddListener<WaveClearedEvent>(HandleWaveClearedEvent);
+            uiEventChannel.AddListener<UiSkipDayRequestedEvent>(HandleSkipDayRequestedEvent);
+            uiEventChannel.AddListener<UiClockStateQueryEvent>(HandleClockStateQueryEvent);
 
             NotifyCurrentState();
         }
@@ -54,17 +46,10 @@ namespace _01.Code.Manager
 
         private void OnDestroy()
         {
-            if (waveEventChannel != null)
-            {
-                waveEventChannel.RemoveListener<WaveStartedEvent>(HandleWaveStartedEvent);
-                waveEventChannel.RemoveListener<WaveClearedEvent>(HandleWaveClearedEvent);
-            }
-
-            if (uiEventChannel != null)
-            {
-                uiEventChannel.RemoveListener<UiSkipDayRequestedEvent>(HandleSkipDayRequestedEvent);
-                uiEventChannel.RemoveListener<UiClockStateQueryEvent>(HandleClockStateQueryEvent);
-            }
+            waveEventChannel.RemoveListener<WaveStartedEvent>(HandleWaveStartedEvent);
+            waveEventChannel.RemoveListener<WaveClearedEvent>(HandleWaveClearedEvent);
+            uiEventChannel.RemoveListener<UiSkipDayRequestedEvent>(HandleSkipDayRequestedEvent);
+            uiEventChannel.RemoveListener<UiClockStateQueryEvent>(HandleClockStateQueryEvent);
         }
 
         public bool TrySkipDay()
@@ -74,16 +59,11 @@ namespace _01.Code.Manager
                 return false;
             }
 
-            ResolveChannels();
-
             WaveManager waveManager = FindFirstObjectByType<WaveManager>();
-            if (waveEventChannel != null)
+            waveEventChannel.RaiseEvent(WaveEvents.WaveStartRequestedEvent);
+            if (waveManager == null || waveManager.IsRunning)
             {
-                waveEventChannel.RaiseEvent(WaveEvents.WaveStartRequestedEvent);
-                if (waveManager == null || waveManager.IsRunning)
-                {
-                    return true;
-                }
+                return true;
             }
 
             if (waveManager == null)
@@ -136,21 +116,6 @@ namespace _01.Code.Manager
             evt.IsDay = IsDay;
         }
 
-        private void ResolveChannels()
-        {
-            if (waveEventChannel == null)
-            {
-                WaveManager waveManager = FindFirstObjectByType<WaveManager>();
-                waveEventChannel = waveManager != null ? waveManager.WaveEventChannel : null;
-            }
-
-            if (uiEventChannel == null)
-            {
-                UIManager uiManager = FindFirstObjectByType<UIManager>();
-                uiEventChannel = uiManager != null ? uiManager.UiEventChannel : null;
-            }
-        }
-
         private void NotifyCurrentState()
         {
             OnDayCountChanged?.Invoke(DayCount);
@@ -168,7 +133,7 @@ namespace _01.Code.Manager
 
         private void PublishClockState()
         {
-            uiEventChannel?.RaiseEvent(UIEvents.UiClockStateChangedEvent.Initializer(DayCount, IsDay));
+            uiEventChannel.RaiseEvent(UIEvents.UiClockStateChangedEvent.Initializer(DayCount, IsDay));
         }
     }
 }

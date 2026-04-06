@@ -142,8 +142,8 @@ namespace _01.Code.Entities
 
         private void EnsureSceneServices()
         {
-            GridManager ??= FindFirstObjectByType<GridManager>();
-            LogManager ??= FindFirstObjectByType<LogManager>();
+            GridManager = FindFirstObjectByType<GridManager>();
+            LogManager = FindFirstObjectByType<LogManager>();
         }
     }
 }

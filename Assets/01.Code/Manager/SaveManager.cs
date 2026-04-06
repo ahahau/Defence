@@ -25,7 +25,7 @@ namespace _01.Code.Manager
         public List<SaveDataEntry> dataCollection;
     }
 
-    public class SaveManager : MonoBehaviour, IManageable, IAfterManageable
+    public class SaveManager : BaseManager, IAfterManageable
     {
         [SerializeField] private string saveKey = "defence.saveData";
         [SerializeField] private GameEventChannelSO uiEventChannel;
@@ -36,7 +36,7 @@ namespace _01.Code.Manager
         private readonly List<SaveDataEntry> _unusedData = new();
         private readonly List<ISaveable> _registeredSaveables = new();
 
-        private bool _initialized;
+        private bool _hasCompletedStartupLoad;
         private bool _isApplyingSave;
         private bool _isQuitting;
 
@@ -61,23 +61,17 @@ namespace _01.Code.Manager
             _registeredSaveables.Add(saveable);
         }
 
-        public void Initialize(IManagerContainer managerContainer)
+        protected override void OnInitialize(IManagerContainer managerContainer)
         {
-            if (_initialized)
-            {
-                return;
-            }
-
             _gridManager = managerContainer.GetManager<GridManager>();
             _logManager = managerContainer.GetManager<LogManager>();
-            ResolveChannels();
             EnsureSaveAgents();
             Subscribe();
         }
 
         public void AfterInitialize(IManagerContainer managerContainer)
         {
-            if (_initialized)
+            if (_hasCompletedStartupLoad)
             {
                 return;
             }
@@ -91,20 +85,20 @@ namespace _01.Code.Manager
             }
             else
             {
-                costEventChannel?.RaiseEvent(CostEvents.ApplyNewGameStartingCostsRequestedEvent);
+                costEventChannel.RaiseEvent(CostEvents.ApplyNewGameStartingCostsRequestedEvent);
             }
 
-            _initialized = true;
+            _hasCompletedStartupLoad = true;
         }
 
         private void OnDestroy()
         {
-            if (!_initialized)
+            if (!IsManagerInitialized)
             {
                 return;
             }
 
-            if (!_isQuitting && !_isApplyingSave)
+            if (_hasCompletedStartupLoad && !_isQuitting && !_isApplyingSave)
             {
                 SaveGame();
             }
@@ -129,7 +123,7 @@ namespace _01.Code.Manager
         [ContextMenu("Save Game")]
         public void SaveGame()
         {
-            if (!_initialized || _isApplyingSave)
+            if (!IsManagerInitialized || !_hasCompletedStartupLoad || _isApplyingSave)
             {
                 return;
             }
@@ -153,7 +147,7 @@ namespace _01.Code.Manager
                 RebuildRegistries();
                 EnsureSaveAgents();
                 RestoreDataFromJson(PlayerPrefs.GetString(saveKey, string.Empty));
-                uiEventChannel?.RaiseEvent(UIEvents.UiRefreshRequestedEvent);
+                uiEventChannel.RaiseEvent(UIEvents.UiRefreshRequestedEvent);
                 return true;
             }
             finally
@@ -276,20 +270,20 @@ namespace _01.Code.Manager
 
         private void Subscribe()
         {
-            costEventChannel?.AddListener<CostChangedEvent>(HandleCostChangedEvent);
-            uiEventChannel?.AddListener<UiClockStateChangedEvent>(HandleClockStateChangedEvent);
-            uiEventChannel?.AddListener<SaveStartNewGameRequestedEvent>(HandleStartNewGameRequestedEvent);
-            buildEventChannel?.AddListener<BuildCompletedEvent>(HandleBuildingInstalledEvent);
-            buildEventChannel?.AddListener<BuildMovedEvent>(HandleBuildingLayoutChangedEvent);
+            costEventChannel.AddListener<CostChangedEvent>(HandleCostChangedEvent);
+            uiEventChannel.AddListener<UiClockStateChangedEvent>(HandleClockStateChangedEvent);
+            uiEventChannel.AddListener<SaveStartNewGameRequestedEvent>(HandleStartNewGameRequestedEvent);
+            buildEventChannel.AddListener<BuildCompletedEvent>(HandleBuildingInstalledEvent);
+            buildEventChannel.AddListener<BuildMovedEvent>(HandleBuildingLayoutChangedEvent);
         }
 
         private void Unsubscribe()
         {
-            costEventChannel?.RemoveListener<CostChangedEvent>(HandleCostChangedEvent);
-            uiEventChannel?.RemoveListener<UiClockStateChangedEvent>(HandleClockStateChangedEvent);
-            uiEventChannel?.RemoveListener<SaveStartNewGameRequestedEvent>(HandleStartNewGameRequestedEvent);
-            buildEventChannel?.RemoveListener<BuildCompletedEvent>(HandleBuildingInstalledEvent);
-            buildEventChannel?.RemoveListener<BuildMovedEvent>(HandleBuildingLayoutChangedEvent);
+            costEventChannel.RemoveListener<CostChangedEvent>(HandleCostChangedEvent);
+            uiEventChannel.RemoveListener<UiClockStateChangedEvent>(HandleClockStateChangedEvent);
+            uiEventChannel.RemoveListener<SaveStartNewGameRequestedEvent>(HandleStartNewGameRequestedEvent);
+            buildEventChannel.RemoveListener<BuildCompletedEvent>(HandleBuildingInstalledEvent);
+            buildEventChannel.RemoveListener<BuildMovedEvent>(HandleBuildingLayoutChangedEvent);
         }
 
         private void HandleCostChangedEvent(CostChangedEvent _)
@@ -344,27 +338,8 @@ namespace _01.Code.Manager
         private List<UnitDataSO> QueryUnitCatalog()
         {
             UiUnitCatalogQueryEvent query = UIEvents.UiUnitCatalogQueryEvent.Initializer();
-            uiEventChannel?.RaiseEvent(query);
+            uiEventChannel.RaiseEvent(query);
             return query.Units ?? new List<UnitDataSO>();
-        }
-
-        private void ResolveChannels()
-        {
-            UIManager uiManager = FindFirstObjectByType<UIManager>();
-            if (uiEventChannel == null)
-            {
-                uiEventChannel = uiManager != null ? uiManager.UiEventChannel : null;
-            }
-
-            if (buildEventChannel == null)
-            {
-                buildEventChannel = uiManager != null ? uiManager.BuildEventChannel : null;
-            }
-
-            if (costEventChannel == null)
-            {
-                costEventChannel = uiManager != null ? uiManager.CostEventChannel : null;
-            }
         }
 
         private void EnsureSaveAgents()

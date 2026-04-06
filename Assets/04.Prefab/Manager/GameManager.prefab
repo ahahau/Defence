@@ -34,7 +34,6 @@ Transform:
   - {fileID: 572483049207270142}
   - {fileID: 3745735918491763077}
   - {fileID: 1154124499664754497}
-  - {fileID: 3717040449114472902}
   - {fileID: 3226517679847896477}
   - {fileID: 8158536013378952571}
   - {fileID: 1464815188182140474}
@@ -151,6 +150,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <InputData>k__BackingField: {fileID: 11400000, guid: f34de0eaac0c2494292ceb8da3af6db7, type: 2}
   <CurrentMouseCellPosition>k__BackingField: {x: 0, y: 0}
+  uiEventChannel: {fileID: 11400000, guid: 65fe9b6359134cd4947a05bdbc25753a, type: 2}
+  buildEventChannel: {fileID: 11400000, guid: 43ac707ddd2c4ab8b72218ab4ccb251b, type: 2}
   whatIsClickable:
     serializedVersion: 2
     m_Bits: 384
@@ -199,58 +200,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f3df9a6d31f0864e868afad05aeefc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  buildEventChannel: {fileID: 11400000, guid: 43ac707ddd2c4ab8b72218ab4ccb251b, type: 2}
-  costEventChannel: {fileID: 11400000, guid: b9313a107d364d1b95a1a38beb70b838, type: 2}
---- !u!1 &1309659495015823492
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 3717040449114472902}
-  - component: {fileID: 3828279167131234086}
-  m_Layer: 0
-  m_Name: UIManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &3717040449114472902
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1309659495015823492}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 7373935818809128369}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3828279167131234086
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1309659495015823492}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4ccd10afeab4420085b0d49c55f46541, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
   uiEventChannel: {fileID: 11400000, guid: 65fe9b6359134cd4947a05bdbc25753a, type: 2}
   buildEventChannel: {fileID: 11400000, guid: 43ac707ddd2c4ab8b72218ab4ccb251b, type: 2}
   costEventChannel: {fileID: 11400000, guid: b9313a107d364d1b95a1a38beb70b838, type: 2}
-  damageTextPrefab: {fileID: 1553078634664723812, guid: 54a38ee87c7f4d16ae44ca348b66bf90, type: 3}
-  poolManager: {fileID: 0}
-  damageTextPoolingItem: {fileID: 11400000, guid: 0fecb3b7378a85148a12e1ea7003eeb2, type: 2}
   availableBuildings: []
   availableUnits:
   - {fileID: 11400000, guid: 515a6e175650d6346868e7a4142fa5fe, type: 2}
@@ -429,6 +381,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   saveKey: defence.saveData
+  uiEventChannel: {fileID: 11400000, guid: 65fe9b6359134cd4947a05bdbc25753a, type: 2}
+  buildEventChannel: {fileID: 11400000, guid: 43ac707ddd2c4ab8b72218ab4ccb251b, type: 2}
+  costEventChannel: {fileID: 11400000, guid: b9313a107d364d1b95a1a38beb70b838, type: 2}
 --- !u!1 &7121183673426129060
 GameObject:
   m_ObjectHideFlags: 0

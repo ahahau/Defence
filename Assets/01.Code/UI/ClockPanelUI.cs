@@ -22,14 +22,13 @@ namespace _01.Code.UI
 
         private void OnEnable()
         {
-            ResolveEventChannel();
-            uiEventChannel?.AddListener<UiClockStateChangedEvent>(HandleClockStateChanged);
+            uiEventChannel.AddListener<UiClockStateChangedEvent>(HandleClockStateChanged);
             SyncClockState();
         }
 
         private void OnDisable()
         {
-            uiEventChannel?.RemoveListener<UiClockStateChangedEvent>(HandleClockStateChanged);
+            uiEventChannel.RemoveListener<UiClockStateChangedEvent>(HandleClockStateChanged);
         }
 
         private void HandleClockStateChanged(UiClockStateChangedEvent evt)
@@ -53,28 +52,11 @@ namespace _01.Code.UI
 
         private void HandleSkipDayClicked()
         {
-            uiEventChannel?.RaiseEvent(UIEvents.UiSkipDayRequestedEvent);
-        }
-
-        private void ResolveEventChannel()
-        {
-            if (uiEventChannel != null)
-            {
-                return;
-            }
-
-            UIManager uiManager = FindFirstObjectByType<UIManager>();
-            uiEventChannel = uiManager != null ? uiManager.UiEventChannel : null;
+            uiEventChannel.RaiseEvent(UIEvents.UiSkipDayRequestedEvent);
         }
 
         private void SyncClockState()
         {
-            if (uiEventChannel == null)
-            {
-                _canSkipDay = true;
-                return;
-            }
-
             UiClockStateQueryEvent query = UIEvents.UiClockStateQueryEvent.Initializer();
             uiEventChannel.RaiseEvent(query);
             HandleClockStateChanged(UIEvents.UiClockStateChangedEvent.Initializer(query.Day, query.IsDay));

@@ -9,8 +9,8 @@ namespace _01.Code.UI
 
         protected override void CacheReferences()
         {
-            costBarUI ??= GetComponentInChildren<DefaultCostBarUI>(true);
-            clockPanelUI ??= GetComponentInChildren<ClockPanelUI>(true);
+            costBarUI = GetComponentInChildren<DefaultCostBarUI>(true);
+            clockPanelUI = GetComponentInChildren<ClockPanelUI>(true);
         }
 
         protected override void OnInitializeSection()

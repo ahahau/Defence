@@ -14,12 +14,14 @@ namespace _01.Code.UI
         [SerializeField] private int boardRows = 4;
         [SerializeField] private Vector2 tileScale = new(1.2f, 1.2f);
         [SerializeField] private Vector2 boardOffset = new(0f, 0f);
-        [SerializeField] private Color emptyColor = new(0.92f, 0.88f, 0.75f, 1f);
-        [SerializeField] private Color occupiedColor = new(0.67f, 0.52f, 0.42f, 1f);
-        [SerializeField] private Color selectedColor = new(0.95f, 0.71f, 0.31f, 1f);
+        [SerializeField] private int sortingOrder = -10;
+        [SerializeField] [Range(0f, 1f)] private float emptyAlpha = 0.2f;
+        [SerializeField] [Range(0f, 1f)] private float selectedAlpha = 0.55f;
+        [SerializeField] [Range(0f, 1f)] private float occupiedAlpha = 0.85f;
 
         private readonly Dictionary<Vector2Int, MainBuildingRoomTile> _tiles = new();
         private readonly List<Vector2Int> _orderedCells = new();
+        private static Sprite _tileSprite;
         private BuildManager _buildManager;
         private Vector2Int _selectedCell;
         private bool _hasSelectedCell;
@@ -42,7 +44,6 @@ namespace _01.Code.UI
                 return;
             }
 
-            _buildManager ??= FindFirstObjectByType<BuildManager>();
             if (_buildManager == null)
             {
                 return;
@@ -69,8 +70,7 @@ namespace _01.Code.UI
 
         private void ResolveReferences()
         {
-            gridManager ??= FindFirstObjectByType<GridManager>();
-            townInteriorScreenUI ??= FindFirstObjectByType<TownInteriorScreenUI>();
+            _buildManager = FindFirstObjectByType<BuildManager>();
         }
 
         private void EnsureBoard()
@@ -99,14 +99,14 @@ namespace _01.Code.UI
             string objectName = $"Tile_{cell.x}_{cell.y}";
             Transform existing = transform.Find(objectName);
             GameObject tileObject;
-            if (existing == null || existing.GetComponent<MeshRenderer>() == null || existing.GetComponent<BoxCollider>() == null)
+            if (existing == null || existing.GetComponent<SpriteRenderer>() == null || existing.GetComponent<BoxCollider2D>() == null)
             {
                 if (existing != null)
                 {
                     DestroyTileObject(existing.gameObject);
                 }
 
-                tileObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                tileObject = new GameObject(objectName);
                 tileObject.name = objectName;
                 tileObject.transform.SetParent(transform, false);
             }
@@ -116,14 +116,16 @@ namespace _01.Code.UI
             }
 
             MainBuildingRoomTile tile = GetOrAddComponent<MainBuildingRoomTile>(tileObject);
-            MeshRenderer meshRenderer = GetOrAddComponent<MeshRenderer>(tileObject);
-            BoxCollider box = GetOrAddComponent<BoxCollider>(tileObject);
+            SpriteRenderer spriteRenderer = GetOrAddComponent<SpriteRenderer>(tileObject);
+            BoxCollider2D boxCollider = GetOrAddComponent<BoxCollider2D>(tileObject);
 
             tileObject.transform.position = GetCellWorldPosition(cell);
             tileObject.transform.localScale = GetTileVisualScale();
-            box.size = Vector3.one;
+            spriteRenderer.sprite = GetTileSprite();
+            spriteRenderer.sortingOrder = sortingOrder;
+            boxCollider.size = Vector2.one;
 
-            tile.Configure(this, cell, meshRenderer);
+            tile.Configure(this, cell, spriteRenderer);
             _tiles[cell] = tile;
         }
 
@@ -133,7 +135,7 @@ namespace _01.Code.UI
                 ? gridManager.CellToWorld(cell)
                 : new Vector3(cell.x, cell.y, 0f);
 
-            return basePosition + GetCenteredBoardOffset() + new Vector3(boardOffset.x, boardOffset.y, 0f);
+            return basePosition + GetCenteredBoardOffset() + new Vector3(boardOffset.x, boardOffset.y, 1f);
         }
 
         public void HandleTileClicked(Vector2Int cell)
@@ -198,7 +200,8 @@ namespace _01.Code.UI
 
                 bool isEmpty = IsCellEmpty(cell);
                 bool isSelected = _hasSelectedCell && cell == _selectedCell && isEmpty;
-                Color color = isSelected ? selectedColor : isEmpty ? emptyColor : occupiedColor;
+                float alpha = isSelected ? selectedAlpha : isEmpty ? emptyAlpha : occupiedAlpha;
+                Color color = new Color(Color.white.r,Color.white.g,Color.white.b, alpha);
                 tile.SetColor(color);
                 tile.transform.position = GetCellWorldPosition(cell);
             }
@@ -210,7 +213,7 @@ namespace _01.Code.UI
             {
                 return true;
             }
-
+            
             return gridManager.IsCellEmpty(cell);
         }
 
@@ -226,7 +229,19 @@ namespace _01.Code.UI
             const float gap = 0.3f;
             float x = Mathf.Max(0.1f, tileScale.x - gap);
             float y = Mathf.Max(0.1f, tileScale.y - gap);
-            return new Vector3(x, y, 0.3f);
+            return new Vector3(x, y, 1f);
+        }
+
+        private Sprite GetTileSprite()
+        {
+            if (_tileSprite != null)
+            {
+                return _tileSprite;
+            }
+
+            _tileSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0f, 0f, 1f, 1f), new Vector2(0.5f, 0.5f), 1f);
+            _tileSprite.name = "MainBuildingRoomTileSprite";
+            return _tileSprite;
         }
 
         private void DestroyTileObject(GameObject tileObject)
