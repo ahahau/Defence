@@ -29,7 +29,10 @@ namespace _01.Code.Manager
         public event Action<UnitDataSO, Vector2Int> OnBuildFailed;
         public event Action OnBuildingMoved;
         public event Action OnBuildingMoveFailed;
-        public UnitDataSO SelectedUnit => _selectionController != null ? _selectionController.SelectedUnit : null;
+        public UnitDataSO SelectedUnit
+        {
+            get { return _selectionController != null ? _selectionController.SelectedUnit : null; }
+        }
 
         public void Initialize(IManagerContainer managerContainer)
         {
@@ -88,6 +91,7 @@ namespace _01.Code.Manager
 
         public IReadOnlyList<UnitDataSO> GetAvailableBuildingsForCurrentScene()
         {
+            EnsureCatalog();
             return _catalog.GetAvailableBuildingsForCurrentScene();
         }
 
@@ -321,6 +325,7 @@ namespace _01.Code.Manager
 
         private void HandleUnitCatalogQueryEvent(UiUnitCatalogQueryEvent evt)
         {
+            EnsureCatalog();
             evt.Units = _catalog.GetAvailableUnitsForCurrentScene();
         }
 
@@ -334,6 +339,11 @@ namespace _01.Code.Manager
         private bool CanModifyPlacements()
         {
             return true;
+        }
+
+        private void EnsureCatalog()
+        {
+            _catalog ??= new UiCatalog(availableBuildings, availableUnits);
         }
     }
 }

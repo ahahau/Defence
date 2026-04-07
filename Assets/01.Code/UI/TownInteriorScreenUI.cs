@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using _01.Code.Buildings;
 using _01.Code.Manager;
-using _01.Code.Units;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,19 +12,8 @@ namespace _01.Code.UI
     {
         [SerializeField] private GridManager gridManager;
         [SerializeField] private BuildManager buildManager;
-        [SerializeField] private UnitCardUI unitCardPrefab;
-        [SerializeField] private List<UnitDataSO> availableBuildings = new();
-        [SerializeField] private Vector2 leftCostBarPosition = new(28f, 0f);
-        [SerializeField] private Vector2 leftCostBarSize = new(220f, 360f);
-        [SerializeField] private Vector2 buildPanelPosition = new(40f, 22f);
-        [SerializeField] private Vector2 buildPanelSize = new(760f, 290f);
-        [SerializeField] private Vector2 buildPanelTitlePosition = new(0f, -14f);
-        [SerializeField] private Vector2 buildPanelTitleSize = new(280f, 34f);
+        [SerializeField] private TownBuildingCatalogSO townBuildingCatalog;
         [SerializeField] private float buildPanelTitleFontSize = 26f;
-        [SerializeField] private Vector2 cardsRootPosition = new(0f, -12f);
-        [SerializeField] private Vector2 cardsRootSize = new(700f, 210f);
-
-        private readonly List<UnitCardUI> _cards = new();
 
         private RectTransform _root;
         private RectTransform _buildPanelRoot;
@@ -38,10 +26,6 @@ namespace _01.Code.UI
         {
             ResolveReferences();
             BuildLayout();
-            if (Application.isPlaying)
-            {
-                EnsureCatalog();
-            }
         }
 
         private void OnEnable()
@@ -78,20 +62,6 @@ namespace _01.Code.UI
         private void ResolveReferences()
         {
             _root = transform as RectTransform;
-            if (_root != null)
-            {
-                Stretch(_root);
-            }
-        }
-
-        private void EnsureCatalog()
-        {
-            if (buildManager == null || availableBuildings.Count == 0)
-            {
-                return;
-            }
-
-            buildManager.ReplaceAvailableBuildings(availableBuildings);
         }
 
         private void BuildLayout()
@@ -113,22 +83,11 @@ namespace _01.Code.UI
             {
                 return;
             }
-
-            costRoot.anchorMin = new Vector2(0f, 0.5f);
-            costRoot.anchorMax = new Vector2(0f, 0.5f);
-            costRoot.pivot = new Vector2(0f, 0.5f);
-            costRoot.anchoredPosition = leftCostBarPosition;
-            costRoot.sizeDelta = leftCostBarSize;
         }
 
         private void CreateBuildPanel()
         {
             _buildPanelRoot = FindOrCreateRect("BuildPanel", _root);
-            _buildPanelRoot.anchorMin = new Vector2(0.5f, 0f);
-            _buildPanelRoot.anchorMax = new Vector2(0.5f, 0f);
-            _buildPanelRoot.pivot = new Vector2(0.5f, 0f);
-            _buildPanelRoot.anchoredPosition = buildPanelPosition;
-            _buildPanelRoot.sizeDelta = buildPanelSize;
 
             Image panelBackground = GetOrAddComponent<Image>(_buildPanelRoot.gameObject);
             panelBackground.color = new Color(0.12f, 0.09f, 0.08f, 0.94f);
@@ -136,11 +95,6 @@ namespace _01.Code.UI
             _buildPanelCanvasGroup = GetOrAddComponent<CanvasGroup>(_buildPanelRoot.gameObject);
 
             RectTransform titleRoot = FindOrCreateRect("PanelTitle", _buildPanelRoot);
-            titleRoot.anchorMin = new Vector2(0.5f, 1f);
-            titleRoot.anchorMax = new Vector2(0.5f, 1f);
-            titleRoot.pivot = new Vector2(0.5f, 1f);
-            titleRoot.anchoredPosition = buildPanelTitlePosition;
-            titleRoot.sizeDelta = buildPanelTitleSize;
 
             TextMeshProUGUI title = GetOrAddComponent<TextMeshProUGUI>(titleRoot.gameObject);
             title.text = "Choose A Building";
@@ -149,11 +103,6 @@ namespace _01.Code.UI
             title.color = new Color(0.98f, 0.92f, 0.8f, 1f);
 
             _cardRoot = FindOrCreateRect("Cards", _buildPanelRoot);
-            _cardRoot.anchorMin = new Vector2(0.5f, 0.5f);
-            _cardRoot.anchorMax = new Vector2(0.5f, 0.5f);
-            _cardRoot.pivot = new Vector2(0.5f, 0.5f);
-            _cardRoot.anchoredPosition = cardsRootPosition;
-            _cardRoot.sizeDelta = cardsRootSize;
 
             HorizontalLayoutGroup layoutGroup = GetOrAddComponent<HorizontalLayoutGroup>(_cardRoot.gameObject);
             layoutGroup.spacing = 18f;
@@ -170,35 +119,22 @@ namespace _01.Code.UI
 
         private void CreateBuildCards()
         {
-            _cards.Clear();
-            if (_cardRoot == null || unitCardPrefab == null || buildManager == null)
+            if (_cardRoot == null)
             {
                 return;
             }
 
-            UnitCardUI[] existingCards = _cardRoot.GetComponentsInChildren<UnitCardUI>(true);
-            if (existingCards.Length > 0)
+            for (int i = _cardRoot.childCount - 1; i >= 0; i--)
             {
-                _cards.AddRange(existingCards);
-                return;
-            }
-
-            IReadOnlyList<UnitDataSO> catalog = buildManager.GetAvailableBuildingsForCurrentScene();
-            for (int i = 0; i < catalog.Count; i++)
-            {
-                UnitDataSO unitData = catalog[i];
-                if (unitData == null)
+                Transform child = _cardRoot.GetChild(i);
+                if (Application.isPlaying)
                 {
-                    continue;
+                    Destroy(child.gameObject);
                 }
-
-                UnitCardUI card = Instantiate(unitCardPrefab, _cardRoot);
-                card.name = $"{unitCardPrefab.name}_{unitData.Name}";
-                card.SetData(unitData);
-                card.SetClickHandler(HandleBuildCardClicked);
-                card.transform.localScale = Vector3.one;
-                card.gameObject.SetActive(true);
-                _cards.Add(card);
+                else
+                {
+                    DestroyImmediate(child.gameObject);
+                }
             }
         }
 
@@ -215,25 +151,7 @@ namespace _01.Code.UI
             HideBuildPanel();
         }
 
-        private void HandleBuildCardClicked(UnitCardUI card)
-        {
-            if (!_hasSelectedCell || card?.BoundUnitData == null || buildManager == null || gridManager == null)
-            {
-                return;
-            }
-
-            Vector3 worldPosition = gridManager.CellToWorld(_selectedCell);
-            buildManager.SelectBuilding(card.BoundUnitData);
-            bool succeeded = buildManager.TryRequestBuild(worldPosition);
-            if (!succeeded)
-            {
-                buildManager.CancelSelection();
-            }
-
-            HideBuildPanel();
-        }
-
-        private void HandleBuildingInstalled(UnitDataSO _, _01.Code.Entities.PlaceableEntity __)
+        private void HandleBuildingInstalled(_01.Code.Units.UnitDataSO _, _01.Code.Entities.PlaceableEntity __)
         {
             _hasSelectedCell = false;
         }
@@ -242,7 +160,7 @@ namespace _01.Code.UI
         {
         }
 
-        private void HandleBuildFailed(UnitDataSO _, Vector2Int __)
+        private void HandleBuildFailed(_01.Code.Units.UnitDataSO _, Vector2Int __)
         {
         }
 
@@ -310,14 +228,9 @@ namespace _01.Code.UI
             return component;
         }
 
-        private void Stretch(RectTransform rectTransform)
+        public List<TownBuildingDataSO> GetTownBuildings()
         {
-            rectTransform.anchorMin = Vector2.zero;
-            rectTransform.anchorMax = Vector2.one;
-            rectTransform.offsetMin = Vector2.zero;
-            rectTransform.offsetMax = Vector2.zero;
-            rectTransform.anchoredPosition = Vector2.zero;
-            rectTransform.sizeDelta = Vector2.zero;
+            return townBuildingCatalog != null ? townBuildingCatalog.Buildings : new List<TownBuildingDataSO>();
         }
     }
 }

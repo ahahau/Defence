@@ -9,6 +9,9 @@ namespace _01.Code.Cost
     {
         [SerializeField] private List<CostDefinitionSO> costs = new();
 
-        public List<CostDefinitionSO> Costs => costs;
+        public List<CostDefinitionSO> Costs
+        {
+            get { return costs; }
+        }
     }
 }

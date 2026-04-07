@@ -81,6 +81,11 @@ namespace _01.Code.UI
 
         private void TryHookBuildManager()
         {
+            if (buildManager == null)
+            {
+                buildManager = _01.Code.Manager.GameManager.Instance?.GetManager<_01.Code.Manager.BuildManager>();
+            }
+
             if (_buildManagerHooked || buildManager == null)
             {
                 return;

@@ -10,6 +10,7 @@ namespace _01.Code.UI
         [SerializeField] private GridManager gridManager;
         [SerializeField] private TownInteriorScreenUI townInteriorScreenUI;
         [SerializeField] private Vector2Int boardOrigin = Vector2Int.zero;
+        [SerializeField] private bool useChildTileCount = true;
         [SerializeField] private int boardColumns = 4;
         [SerializeField] private int boardRows = 4;
         [SerializeField] private Vector2 tileScale = new(1.2f, 1.2f);
@@ -30,6 +31,12 @@ namespace _01.Code.UI
         {
             ResolveReferences();
             EnsureBoard();
+            RefreshTiles();
+        }
+
+        private void Start()
+        {
+            AlignTilesToGrid();
             RefreshTiles();
         }
 
@@ -70,7 +77,8 @@ namespace _01.Code.UI
 
         private void ResolveReferences()
         {
-            _buildManager = FindFirstObjectByType<BuildManager>();
+            gridManager ??= GameManager.Instance?.GetManager<GridManager>();
+            _buildManager = GameManager.Instance?.GetManager<BuildManager>();
         }
 
         private void EnsureBoard()
@@ -83,43 +91,31 @@ namespace _01.Code.UI
             _tiles.Clear();
             _orderedCells.Clear();
 
-            for (int y = boardRows - 1; y >= 0; y--)
+            int tileCount = GetTargetTileCount();
+            EnsureTileObjects(tileCount);
+            List<Vector2Int> cells = useChildTileCount
+                ? CreateSquareSpiralCells(tileCount)
+                : CreateRectangularCells(tileCount);
+
+            for (int i = 0; i < cells.Count; i++)
             {
-                for (int x = 0; x < boardColumns; x++)
-                {
-                    Vector2Int cell = boardOrigin + new Vector2Int(x, y);
-                    _orderedCells.Add(cell);
-                    EnsureTile(cell);
-                }
+                Vector2Int cell = cells[i];
+                _orderedCells.Add(cell);
+                EnsureTile(cell, i);
             }
         }
 
-        private void EnsureTile(Vector2Int cell)
+        private void EnsureTile(Vector2Int cell, int tileIndex)
         {
-            string objectName = $"Tile_{cell.x}_{cell.y}";
-            Transform existing = transform.Find(objectName);
-            GameObject tileObject;
-            if (existing == null || existing.GetComponent<SpriteRenderer>() == null || existing.GetComponent<BoxCollider2D>() == null)
-            {
-                if (existing != null)
-                {
-                    DestroyTileObject(existing.gameObject);
-                }
-
-                tileObject = new GameObject(objectName);
-                tileObject.name = objectName;
-                tileObject.transform.SetParent(transform, false);
-            }
-            else
-            {
-                tileObject = existing.gameObject;
-            }
+            Transform childTransform = transform.GetChild(tileIndex);
+            GameObject tileObject = childTransform.gameObject;
+            tileObject.name = $"Tile_{cell.x}_{cell.y}";
 
             MainBuildingRoomTile tile = GetOrAddComponent<MainBuildingRoomTile>(tileObject);
             SpriteRenderer spriteRenderer = GetOrAddComponent<SpriteRenderer>(tileObject);
             BoxCollider2D boxCollider = GetOrAddComponent<BoxCollider2D>(tileObject);
 
-            tileObject.transform.position = GetCellWorldPosition(cell);
+            tileObject.transform.localPosition = GetCellLocalPosition(cell);
             tileObject.transform.localScale = GetTileVisualScale();
             spriteRenderer.sprite = GetTileSprite();
             spriteRenderer.sortingOrder = sortingOrder;
@@ -135,7 +131,12 @@ namespace _01.Code.UI
                 ? gridManager.CellToWorld(cell)
                 : new Vector3(cell.x, cell.y, 0f);
 
-            return basePosition + GetCenteredBoardOffset() + new Vector3(boardOffset.x, boardOffset.y, 1f);
+            return basePosition + new Vector3(boardOffset.x, boardOffset.y, 1f);
+        }
+
+        private Vector3 GetCellLocalPosition(Vector2Int cell)
+        {
+            return transform.InverseTransformPoint(GetCellWorldPosition(cell));
         }
 
         public void HandleTileClicked(Vector2Int cell)
@@ -203,7 +204,21 @@ namespace _01.Code.UI
                 float alpha = isSelected ? selectedAlpha : isEmpty ? emptyAlpha : occupiedAlpha;
                 Color color = new Color(Color.white.r,Color.white.g,Color.white.b, alpha);
                 tile.SetColor(color);
-                tile.transform.position = GetCellWorldPosition(cell);
+                tile.transform.localPosition = GetCellLocalPosition(cell);
+            }
+        }
+
+        private void AlignTilesToGrid()
+        {
+            for (int i = 0; i < _orderedCells.Count; i++)
+            {
+                Vector2Int cell = _orderedCells[i];
+                if (!_tiles.TryGetValue(cell, out MainBuildingRoomTile tile) || tile == null)
+                {
+                    continue;
+                }
+
+                tile.transform.localPosition = GetCellLocalPosition(cell);
             }
         }
 
@@ -217,11 +232,102 @@ namespace _01.Code.UI
             return gridManager.IsCellEmpty(cell);
         }
 
-        private Vector3 GetCenteredBoardOffset()
+        private int GetTargetTileCount()
         {
-            float xOffset = -(boardOrigin.x + boardColumns * 0.5f);
-            float yOffset = -(boardOrigin.y + boardRows * 0.5f);
-            return new Vector3(xOffset, yOffset, 0f);
+            if (useChildTileCount && transform.childCount > 0)
+            {
+                return transform.childCount;
+            }
+
+            return Mathf.Max(1, boardColumns * boardRows);
+        }
+
+        private Vector2Int GetBoardSize(int tileCount)
+        {
+            if (!useChildTileCount || transform.childCount <= 0)
+            {
+                return new Vector2Int(Mathf.Max(1, boardColumns), Mathf.Max(1, boardRows));
+            }
+
+            int columns = Mathf.Max(1, Mathf.CeilToInt(Mathf.Sqrt(tileCount)));
+            int rows = Mathf.Max(1, Mathf.CeilToInt(tileCount / (float)columns));
+            return new Vector2Int(columns, rows);
+        }
+
+        private List<Vector2Int> CreateRectangularCells(int tileCount)
+        {
+            Vector2Int boardSize = GetBoardSize(tileCount);
+            List<Vector2Int> cells = new List<Vector2Int>(tileCount);
+
+            for (int y = boardSize.y - 1; y >= 0; y--)
+            {
+                for (int x = 0; x < boardSize.x; x++)
+                {
+                    if (cells.Count >= tileCount)
+                    {
+                        return cells;
+                    }
+
+                    cells.Add(boardOrigin + new Vector2Int(x, y));
+                }
+            }
+
+            return cells;
+        }
+
+        private List<Vector2Int> CreateSquareSpiralCells(int tileCount)
+        {
+            List<Vector2Int> cells = new List<Vector2Int>(tileCount);
+            if (tileCount <= 0)
+            {
+                return cells;
+            }
+
+            Vector2Int current = boardOrigin;
+            cells.Add(current);
+
+            Vector2Int[] directions =
+            {
+                Vector2Int.right,
+                Vector2Int.up,
+                Vector2Int.left,
+                Vector2Int.down
+            };
+
+            int stepLength = 1;
+            int directionIndex = 0;
+            while (cells.Count < tileCount)
+            {
+                for (int repeat = 0; repeat < 2 && cells.Count < tileCount; repeat++)
+                {
+                    Vector2Int direction = directions[directionIndex % directions.Length];
+                    for (int step = 0; step < stepLength && cells.Count < tileCount; step++)
+                    {
+                        current += direction;
+                        cells.Add(current);
+                    }
+
+                    directionIndex++;
+                }
+
+                stepLength++;
+            }
+
+            return cells;
+        }
+
+        private void EnsureTileObjects(int targetTileCount)
+        {
+            for (int i = transform.childCount; i < targetTileCount; i++)
+            {
+                GameObject tileObject = new GameObject($"Tile_{i}");
+                tileObject.transform.SetParent(transform, false);
+            }
+
+            for (int i = transform.childCount - 1; i >= targetTileCount; i--)
+            {
+                DestroyTileObject(transform.GetChild(i).gameObject);
+            }
         }
 
         private Vector3 GetTileVisualScale()

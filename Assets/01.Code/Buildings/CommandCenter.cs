@@ -18,7 +18,7 @@ namespace _01.Code.Buildings
         {
             if (_gridManager != null)
             {
-                position = _gridManager.WorldToCell(transform.position);
+                position = _gridManager.WorldToPlacementCell(transform.position);
             }
 
             return base.Initialize(position);

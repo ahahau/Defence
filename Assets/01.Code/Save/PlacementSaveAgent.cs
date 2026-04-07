@@ -26,8 +26,15 @@ namespace _01.Code.Save
         [SerializeField] private string saveKey = "scene.placements";
         private SaveManager _saveManager;
 
-        public string SaveKey => saveKey;
-        public int RestoreOrder => 0;
+        public string SaveKey
+        {
+            get { return saveKey; }
+        }
+
+        public int RestoreOrder
+        {
+            get { return 0; }
+        }
 
         public string GetSaveData()
         {
@@ -57,7 +64,7 @@ namespace _01.Code.Save
 
         public void RestoreData(string savedData)
         {
-            _saveManager = FindFirstObjectByType<SaveManager>();
+            _saveManager = GameManager.Instance?.GetManager<SaveManager>();
             PlacementSaveCollection collection = string.IsNullOrWhiteSpace(savedData)
                 ? new PlacementSaveCollection()
                 : JsonUtility.FromJson<PlacementSaveCollection>(savedData);

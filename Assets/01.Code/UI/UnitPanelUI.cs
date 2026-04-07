@@ -18,12 +18,14 @@ namespace _01.Code.UI
         private readonly List<UnitDataSO> _ownedUnits = new();
         private readonly List<UnitCardUI> _cards = new();
 
+        private void Awake()
+        {
+            ResolveReferences();
+        }
+
         private void Start()
         {
-            if (cardRoot == null)
-            {
-                cardRoot = transform as RectTransform;
-            }
+            ResolveReferences();
         }
 
         public bool TryAddCard(UnitDataSO unitData)
@@ -86,6 +88,7 @@ namespace _01.Code.UI
 
         private void HandleCardClicked(UnitCardUI clickedCard)
         {
+            ResolveReferences();
             if (clickedCard == null || buildManager == null)
             {
                 return;
@@ -119,6 +122,19 @@ namespace _01.Code.UI
             Destroy(clickedCard.gameObject);
 
             ArrangeCards();
+        }
+
+        private void ResolveReferences()
+        {
+            if (cardRoot == null)
+            {
+                cardRoot = transform as RectTransform;
+            }
+
+            if (buildManager == null)
+            {
+                buildManager = GameManager.Instance?.GetManager<BuildManager>();
+            }
         }
     }
 }

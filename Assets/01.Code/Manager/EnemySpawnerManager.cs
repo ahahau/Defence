@@ -21,8 +21,15 @@ namespace _01.Code.Manager
         private SaveManager _saveManager;
 
         public HashSet<EnemySpawner> CurrentWaveEnemySpawnerList { get; } = new HashSet<EnemySpawner>();
-        public GameEventChannelSO WaveEventChannel => waveEventChannel;
-        public string SpawnerSaveKey => spawnerSaveKey;
+        public GameEventChannelSO WaveEventChannel
+        {
+            get { return waveEventChannel; }
+        }
+
+        public string SpawnerSaveKey
+        {
+            get { return spawnerSaveKey; }
+        }
 
         public void Initialize(IManagerContainer managerContainer)
         {
@@ -122,10 +129,21 @@ namespace _01.Code.Manager
 
         private void HandleWaveStartedEvent(WaveStartedEvent _)
         {
+            RemoveDestroyedSpawners();
+            if (CurrentWaveEnemySpawnerList.Count == 0)
+            {
+                SpawnSpawner();
+            }
+
             foreach (EnemySpawner spawner in CurrentWaveEnemySpawnerList)
             {
                 spawner.StartWave();
             }
+        }
+
+        private void RemoveDestroyedSpawners()
+        {
+            CurrentWaveEnemySpawnerList.RemoveWhere(spawner => spawner == null);
         }
 
         private void ResolveChannel()
@@ -135,7 +153,7 @@ namespace _01.Code.Manager
                 return;
             }
 
-            WaveManager waveManager = FindFirstObjectByType<WaveManager>();
+            WaveManager waveManager = GameManager.Instance?.GetManager<WaveManager>();
             waveEventChannel = waveManager != null ? waveManager.WaveEventChannel : null;
         }
 

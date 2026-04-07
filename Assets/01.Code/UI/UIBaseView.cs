@@ -4,7 +4,10 @@ namespace _01.Code.UI
 {
     public abstract class UIBaseView : MonoBehaviour
     {
-        public bool IsVisible => gameObject.activeSelf;
+        public bool IsVisible
+        {
+            get { return gameObject.activeSelf; }
+        }
 
         public virtual void Initialize()
         {

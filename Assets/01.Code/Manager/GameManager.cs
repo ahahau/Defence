@@ -8,20 +8,38 @@ namespace _01.Code.Manager
     [DefaultExecutionOrder(-100)]
     public class GameManager : MonoBehaviour, IManagerContainer
     {
+        public static GameManager Instance { get; private set; }
+
         private Dictionary<Type, IManageable> _managerMap;
         
         private LogManager _logManager;
         private SaveManager _saveManager;
-        public LogManager LogManager => _logManager;
-        public SaveManager SaveManager => _saveManager;
+        public LogManager LogManager
+        {
+            get { return _logManager; }
+        }
+
+        public SaveManager SaveManager
+        {
+            get { return _saveManager; }
+        }
 
         private void Awake()
         {
+            Instance = this;
             ValidateHierarchy();
             BuildManagerMap();
             ResolveCoreManagers();
             InitializeManagers();
             AfterInitializeManagers();
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
         }
 
         private void OnValidate()
@@ -33,7 +51,7 @@ namespace _01.Code.Manager
         {
             if (_managerMap == null)
             {
-                return null;
+                _managerMap = new Dictionary<Type, IManageable>();
             }
 
             if (_managerMap.TryGetValue(typeof(T), out IManageable manager))
@@ -41,7 +59,13 @@ namespace _01.Code.Manager
                 return manager as T;
             }
 
-            return _managerMap.Values.OfType<T>().FirstOrDefault();
+            T resolvedManager = _managerMap.Values.OfType<T>().FirstOrDefault() ?? FindManagerInScene<T>();
+            if (resolvedManager is IManageable manageable)
+            {
+                _managerMap[typeof(T)] = manageable;
+            }
+
+            return resolvedManager;
         }
 
         private void BuildManagerMap()
@@ -52,6 +76,13 @@ namespace _01.Code.Manager
                 .Where(IsRegisteredManagerComponent)
                 .OfType<IManageable>()
                 .ToDictionary(manageable => manageable.GetType(), manageable => manageable);
+        }
+
+        private T FindManagerInScene<T>() where T : class, IManageable
+        {
+            return FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+                .OfType<T>()
+                .FirstOrDefault();
         }
 
         private bool IsDirectChildOfGameManager(Transform target)

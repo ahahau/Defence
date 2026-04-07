@@ -44,7 +44,10 @@ namespace _01.Code.Manager
         private LogManager _logManager;
         private EnemySpawnerManager _enemySpawnerManager;
 
-        public bool HasSaveData => PlayerPrefs.HasKey(saveKey);
+        public bool HasSaveData
+        {
+            get { return PlayerPrefs.HasKey(saveKey); }
+        }
 
         public void RegisterSaveable(ISaveable saveable)
         {
@@ -193,6 +196,14 @@ namespace _01.Code.Manager
         public void DeleteSave()
         {
             PlayerPrefs.DeleteKey(saveKey);
+            PlayerPrefs.Save();
+            _unusedData.Clear();
+        }
+
+        [ContextMenu("Delete All PlayerPrefs")]
+        public void DeleteAllPlayerPrefs()
+        {
+            PlayerPrefs.DeleteAll();
             PlayerPrefs.Save();
             _unusedData.Clear();
         }

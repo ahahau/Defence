@@ -13,8 +13,15 @@ namespace _01.Code.Units
         private float _nextAttackTime;
 
         public EntitySensor Sensor { get; private set; }
-        protected float AttackDamage => attackDamage;
-        protected float AttackCooldown => attackCooldown;
+        protected float AttackDamage
+        {
+            get { return attackDamage; }
+        }
+
+        protected float AttackCooldown
+        {
+            get { return attackCooldown; }
+        }
         
         protected override void Awake()
         {

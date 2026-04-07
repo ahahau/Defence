@@ -27,8 +27,15 @@ namespace _01.Code.Enemies
         private EnemyDataSO _runtimeData;
         private CommandCenter _commandCenter;
 
-        public PoolingItemSO PoolingType => poolingType;
-        public GameObject GameObject => gameObject;
+        public PoolingItemSO PoolingType
+        {
+            get { return poolingType; }
+        }
+
+        public GameObject GameObject
+        {
+            get { return gameObject; }
+        }
 
         public void Initialize(List<Vector2Int> path, EnemySpawner parent, EnemyDataSO data, int level = 0)
         {

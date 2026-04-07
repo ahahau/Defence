@@ -264,7 +264,14 @@ namespace _01.Code.Manager
                 return;
             }
 
-            uiEventChannel.RaiseEvent(SaveEvents.SaveStartNewGameRequestedEvent);
+            SaveManager saveManager = GameManager.Instance?.GetManager<SaveManager>();
+            if (saveManager == null)
+            {
+                return;
+            }
+
+            saveManager.DeleteAllPlayerPrefs();
+            saveManager.ReloadCurrentScene();
         }
 
         private void HandleSpawnUnitHotkey()

@@ -24,7 +24,10 @@ namespace _01.Code.Entities
         protected GridManager GridManager { get; private set; }
         protected LogManager LogManager { get; private set; }
 
-        public string SaveKey => RuntimeSaveId;
+        public string SaveKey
+        {
+            get { return RuntimeSaveId; }
+        }
         public int RestoreOrder { get; }
 
         public void BindSceneServices(GridManager gridManager, LogManager logManager)
@@ -142,8 +145,8 @@ namespace _01.Code.Entities
 
         private void EnsureSceneServices()
         {
-            GridManager = FindFirstObjectByType<GridManager>();
-            LogManager = FindFirstObjectByType<LogManager>();
+            GridManager ??= GameManager.Instance?.GetManager<GridManager>();
+            LogManager ??= GameManager.Instance?.GetManager<LogManager>();
         }
     }
 }

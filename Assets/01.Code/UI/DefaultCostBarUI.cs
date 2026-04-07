@@ -12,7 +12,10 @@ namespace _01.Code.UI
         [SerializeField] private GameEventChannelSO costEventChannel;
         private readonly List<CostEntryViewUI> entryViews = new();
 
-        public IReadOnlyList<CostEntryViewUI> EntryViews => entryViews;
+        public List<CostEntryViewUI> EntryViews
+        {
+            get { return entryViews; }
+        }
 
         private void Awake()
         {
@@ -29,8 +32,15 @@ namespace _01.Code.UI
 
         private void OnDisable()
         {
-            uiEventChannel.RemoveListener<UiRefreshRequestedEvent>(HandleUiRefreshRequested);
-            costEventChannel.RemoveListener<CostChangedEvent>(HandleCostChanged);
+            if (uiEventChannel != null)
+            {
+                uiEventChannel.RemoveListener<UiRefreshRequestedEvent>(HandleUiRefreshRequested);
+            }
+
+            if (costEventChannel != null)
+            {
+                costEventChannel.RemoveListener<CostChangedEvent>(HandleCostChanged);
+            }
         }
 
         private bool IsPopulation(_01.Code.Cost.CostDefinitionSO definition)

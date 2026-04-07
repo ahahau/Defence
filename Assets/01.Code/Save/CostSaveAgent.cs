@@ -25,8 +25,15 @@ namespace _01.Code.Save
         [SerializeField] private string saveKey = "cost.state";
         private CostManager _costManager;
 
-        public string SaveKey => saveKey;
-        public int RestoreOrder => 100;
+        public string SaveKey
+        {
+            get { return saveKey; }
+        }
+
+        public int RestoreOrder
+        {
+            get { return 100; }
+        }
 
         public string GetSaveData()
         {

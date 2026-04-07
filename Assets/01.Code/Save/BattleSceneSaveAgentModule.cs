@@ -5,7 +5,10 @@ namespace _01.Code.Manager
 {
     public class BattleSceneSaveAgentModule : MonoBehaviour, ISaveAgentModule
     {
-        public int Order => 100;
+        public int Order
+        {
+            get { return 100; }
+        }
 
         public void Configure(SaveManager saveManager)
         {

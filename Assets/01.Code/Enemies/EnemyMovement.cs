@@ -25,7 +25,7 @@ namespace _01.Code.Enemies
             _enemy = owner as Enemy;
             _rb = owner.GetComponent<Rigidbody2D>();
             _enemyRender = _enemy.GetModule<EnemyRender>();
-            _gridManager = FindFirstObjectByType<_01.Code.Manager.GridManager>();
+            _gridManager = _01.Code.Manager.GameManager.Instance?.GetManager<_01.Code.Manager.GridManager>();
             _pathIndex = 0;
         }
 

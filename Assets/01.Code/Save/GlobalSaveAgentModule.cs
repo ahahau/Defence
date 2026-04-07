@@ -5,18 +5,21 @@ namespace _01.Code.Save
 {
     public class GlobalSaveAgentModule : MonoBehaviour, ISaveAgentModule
     {
-        public int Order => 0;
+        public int Order
+        {
+            get { return 0; }
+        }
 
         public void Configure(SaveManager saveManager)
         {
-            TimeManager timeManager = FindFirstObjectByType<TimeManager>();
+            TimeManager timeManager = GameManager.Instance?.GetManager<TimeManager>();
             if (timeManager != null)
             {
                 TimeSaveAgent timeSaveAgent = EnsureAgentOnObject<TimeSaveAgent>(timeManager.gameObject);
                 saveManager.RegisterSaveable(timeSaveAgent);
             }
 
-            CostManager costManager = FindFirstObjectByType<CostManager>();
+            CostManager costManager = GameManager.Instance?.GetManager<CostManager>();
             if (costManager != null)
             {
                 CostSaveAgent costSaveAgent = EnsureAgentOnObject<CostSaveAgent>(costManager.gameObject);

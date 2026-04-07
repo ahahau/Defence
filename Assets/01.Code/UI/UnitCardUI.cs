@@ -26,7 +26,10 @@ namespace _01.Code.UI
         private UnitDataSO _boundUnitData;
         private Action<UnitCardUI> _clickHandler;
 
-        public UnitDataSO BoundUnitData => _boundUnitData;
+        public UnitDataSO BoundUnitData
+        {
+            get { return _boundUnitData; }
+        }
 
         private void Awake()
         {

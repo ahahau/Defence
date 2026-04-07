@@ -15,21 +15,39 @@ namespace _01.Code.Manager
         [SerializeField] private PoolingItemSO damageTextPoolingItem;
 
         private UiDamageTextPresenter _presenter;
+        private bool _isSubscribed;
 
         public void Initialize(IManagerContainer managerContainer)
         {
+            ResolveReferences();
             _presenter = new UiDamageTextPresenter(damageTextPrefab, poolManager, damageTextPoolingItem);
-            uiEventChannel.AddListener<ShowDamageTextRequestedEvent>(HandleShowDamageTextRequestedEvent);
+            if (uiEventChannel != null)
+            {
+                uiEventChannel.AddListener<ShowDamageTextRequestedEvent>(HandleShowDamageTextRequestedEvent);
+                _isSubscribed = true;
+            }
         }
 
         private void OnDestroy()
         {
-            uiEventChannel.RemoveListener<ShowDamageTextRequestedEvent>(HandleShowDamageTextRequestedEvent);
+            if (_isSubscribed && uiEventChannel != null)
+            {
+                uiEventChannel.RemoveListener<ShowDamageTextRequestedEvent>(HandleShowDamageTextRequestedEvent);
+                _isSubscribed = false;
+            }
         }
 
         private void HandleShowDamageTextRequestedEvent(ShowDamageTextRequestedEvent evt)
         {
             _presenter?.ShowDamage(evt);
+        }
+
+        private void ResolveReferences()
+        {
+            if (damageTextPrefab == null && damageTextPoolingItem != null && damageTextPoolingItem.prefab != null)
+            {
+                damageTextPrefab = damageTextPoolingItem.prefab.GetComponent<DamageText>();
+            }
         }
     }
 }

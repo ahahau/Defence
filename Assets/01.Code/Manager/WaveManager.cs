@@ -15,8 +15,15 @@ namespace _01.Code.Manager
         
         private bool _isRunning;
         
-        public bool IsRunning => _isRunning;
-        public GameEventChannelSO WaveEventChannel => waveEventChannel;
+        public bool IsRunning
+        {
+            get { return _isRunning; }
+        }
+
+        public GameEventChannelSO WaveEventChannel
+        {
+            get { return waveEventChannel; }
+        }
         
         /// <summary>
         /// 이 함수는 웨이브 요청과 웨이브 클리어 이벤트를 구독합니다
@@ -72,7 +79,7 @@ namespace _01.Code.Manager
                 return;
             }
 
-            EnemySpawnerManager enemySpawnerManager = FindFirstObjectByType<EnemySpawnerManager>();
+            EnemySpawnerManager enemySpawnerManager = GameManager.Instance?.GetManager<EnemySpawnerManager>();
             if (enemySpawnerManager != null)
             {
                 waveEventChannel = enemySpawnerManager.WaveEventChannel;

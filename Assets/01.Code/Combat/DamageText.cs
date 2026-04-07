@@ -24,8 +24,15 @@ namespace _01.Code.Combat
         private Sequence _animationSequence;
         private float _riseProgress;
 
-        public PoolingItemSO PoolingType => poolingType;
-        public GameObject GameObject => gameObject;
+        public PoolingItemSO PoolingType
+        {
+            get { return poolingType; }
+        }
+
+        public GameObject GameObject
+        {
+            get { return gameObject; }
+        }
 
         private void Awake()
         {

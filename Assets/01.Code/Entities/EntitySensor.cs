@@ -13,13 +13,24 @@ namespace _01.Code.Entities
         [SerializeField] private List<Vector2Int> attackOffsets = new();
         [SerializeField] private int cellSearchSize = 1;
 
-        public AttackPatternDataSO AttackPatternData => attackPatternData;
-        public List<AttackPatternData> AttackPatterns => HasPatternData()
-            ? attackPatternData.AttackOffsets
-            : _fallbackPatterns;
+        public AttackPatternDataSO AttackPatternData
+        {
+            get { return attackPatternData; }
+        }
+
+        public List<AttackPatternData> AttackPatterns
+        {
+            get
+            {
+                return HasPatternData()
+                    ? attackPatternData.AttackOffsets
+                    : _fallbackPatterns;
+            }
+        }
 
         private readonly List<AttackPatternData> _fallbackPatterns = new();
         private GridManager _gridManager;
+        private PlaceableEntity _owner;
 
         public bool TryGetTargetCollider(Vector2Int originCell, out Collider2D targetCollider)
         {
@@ -119,7 +130,7 @@ namespace _01.Code.Entities
         {
             if (_gridManager != null)
             {
-                Vector3 cellWorld = _gridManager.CellToWorld(cellPosition);
+                Vector3 cellWorld = _gridManager.CellToObjectWorld(cellPosition);
                 return new Vector2(cellWorld.x, cellWorld.y);
             }
 
@@ -152,9 +163,19 @@ namespace _01.Code.Entities
 
         private Vector2Int GetOriginCellForGizmos()
         {
+            if (_owner != null)
+            {
+                if (_gridManager != null)
+                {
+                    return _gridManager.WorldToPlacementCell(_owner.transform.position);
+                }
+
+                return _owner.GridPosition;
+            }
+
             if (_gridManager != null)
             {
-                return _gridManager.WorldToCell(transform.position);
+                return _gridManager.WorldToPlacementCell(transform.position);
             }
 
             return Vector2Int.RoundToInt(transform.position);
@@ -185,12 +206,13 @@ namespace _01.Code.Entities
         {
             if (owner is PlaceableEntity placeableEntity)
             {
+                _owner = placeableEntity;
                 _gridManager = placeableEntity.GetComponentInParent<GridManager>();
             }
 
             if (_gridManager == null)
             {
-                _gridManager = FindFirstObjectByType<GridManager>();
+                _gridManager = GameManager.Instance?.GetManager<GridManager>();
             }
             RefreshFallbackPatterns();
         }

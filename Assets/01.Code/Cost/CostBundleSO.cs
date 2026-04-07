@@ -17,6 +17,9 @@ namespace _01.Code.Cost
 
         [SerializeField] private List<Entry> entries = new();
 
-        public List<Entry> Entries => entries;
+        public List<Entry> Entries
+        {
+            get { return entries; }
+        }
     }
 }

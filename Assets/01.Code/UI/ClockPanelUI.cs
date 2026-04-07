@@ -18,7 +18,10 @@ namespace _01.Code.UI
 
         private bool _canSkipDay = true;
 
-        public GameEventChannelSO UiEventChannel => uiEventChannel;
+        public GameEventChannelSO UiEventChannel
+        {
+            get { return uiEventChannel; }
+        }
 
         private void OnEnable()
         {

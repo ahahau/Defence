@@ -23,8 +23,15 @@ namespace _01.Code.Manager
         /// </summary>
         public event Action<CostDefinitionSO, int, int> OnCostChanged;
 
-        public CostDefinitionSO PrimarySpendCost => primarySpendCost;
-        public List<CostDefinitionSO> AllCosts => costCatalog.Costs;
+        public CostDefinitionSO PrimarySpendCost
+        {
+            get { return primarySpendCost; }
+        }
+
+        public List<CostDefinitionSO> AllCosts
+        {
+            get { return costCatalog.Costs; }
+        }
 
         /// <summary>
         /// 이 함수는 비용 채널 구독과 시작 비용 세팅을 담당합니다

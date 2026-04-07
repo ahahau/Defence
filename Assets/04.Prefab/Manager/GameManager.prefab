@@ -166,6 +166,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3226517679847896477}
   - component: {fileID: 4628453813708425419}
+  - component: {fileID: 6721459083412567812}
   m_Layer: 0
   m_Name: BuildManager
   m_TagString: Untagged
@@ -206,6 +207,22 @@ MonoBehaviour:
   availableBuildings: []
   availableUnits:
   - {fileID: 11400000, guid: 515a6e175650d6346868e7a4142fa5fe, type: 2}
+--- !u!114 &6721459083412567812
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1066465625941593336}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c0f5be7b07d4b3c8b5d5f6122ae5d44, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiEventChannel: {fileID: 11400000, guid: 65fe9b6359134cd4947a05bdbc25753a, type: 2}
+  damageTextPrefab: {fileID: 4283242926989342001, guid: 54a38ee87c7f4d16ae44ca348b66bf90, type: 3}
+  poolManager: {fileID: 0}
+  damageTextPoolingItem: {fileID: 11400000, guid: 0fecb3b7378a85148a12e1ea7003eeb2, type: 2}
 --- !u!1 &4382549243069408591
 GameObject:
   m_ObjectHideFlags: 0
@@ -473,6 +490,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21a602a8b2f99b44d9762fa538a1ac20, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  waveEventChannel: {fileID: 11400000, guid: 0e4a0518e3dd1a2489b812a34a67bfcd, type: 2}
+  uiEventChannel: {fileID: 11400000, guid: 65fe9b6359134cd4947a05bdbc25753a, type: 2}
 --- !u!1 &7813147076814435561
 GameObject:
   m_ObjectHideFlags: 0

@@ -19,8 +19,15 @@ namespace _01.Code.Manager
 
         public int DayCount { get; private set; } = 1;
         public TimePhase CurrentPhase { get; private set; } = TimePhase.Day;
-        public bool IsDay => CurrentPhase == TimePhase.Day;
-        public bool IsNight => CurrentPhase == TimePhase.Night;
+        public bool IsDay
+        {
+            get { return CurrentPhase == TimePhase.Day; }
+        }
+
+        public bool IsNight
+        {
+            get { return CurrentPhase == TimePhase.Night; }
+        }
 
         public event Action<int> OnDayCountChanged;
         public event Action<TimePhase> OnPhaseChanged;
@@ -46,10 +53,17 @@ namespace _01.Code.Manager
 
         private void OnDestroy()
         {
-            waveEventChannel.RemoveListener<WaveStartedEvent>(HandleWaveStartedEvent);
-            waveEventChannel.RemoveListener<WaveClearedEvent>(HandleWaveClearedEvent);
-            uiEventChannel.RemoveListener<UiSkipDayRequestedEvent>(HandleSkipDayRequestedEvent);
-            uiEventChannel.RemoveListener<UiClockStateQueryEvent>(HandleClockStateQueryEvent);
+            if (waveEventChannel != null)
+            {
+                waveEventChannel.RemoveListener<WaveStartedEvent>(HandleWaveStartedEvent);
+                waveEventChannel.RemoveListener<WaveClearedEvent>(HandleWaveClearedEvent);
+            }
+
+            if (uiEventChannel != null)
+            {
+                uiEventChannel.RemoveListener<UiSkipDayRequestedEvent>(HandleSkipDayRequestedEvent);
+                uiEventChannel.RemoveListener<UiClockStateQueryEvent>(HandleClockStateQueryEvent);
+            }
         }
 
         public bool TrySkipDay()
@@ -59,7 +73,7 @@ namespace _01.Code.Manager
                 return false;
             }
 
-            WaveManager waveManager = FindFirstObjectByType<WaveManager>();
+            WaveManager waveManager = GameManager.Instance?.GetManager<WaveManager>();
             waveEventChannel.RaiseEvent(WaveEvents.WaveStartRequestedEvent);
             if (waveManager == null || waveManager.IsRunning)
             {
