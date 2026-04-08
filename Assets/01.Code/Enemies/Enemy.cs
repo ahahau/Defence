@@ -3,7 +3,6 @@ using _01.Code.Buildings;
 using _01.Code.Entities;
 using DG.Tweening;
 using GondrLib.ObjectPool.Runtime;
-using UnityEditor.Search;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -11,7 +10,7 @@ namespace _01.Code.Enemies
 {
     public class Enemy : Entity, IPoolable
     {
-        [SerializeField] private PoolingItemSO poolingType;
+        [field: SerializeField] public PoolingItemSO PoolingType { get; private set; }
 
         private EnemyMovement _movement;
         private EnemyHealth _enemyHealth;
@@ -27,14 +26,12 @@ namespace _01.Code.Enemies
         private EnemyDataSO _runtimeData;
         private CommandCenter _commandCenter;
 
-        public PoolingItemSO PoolingType
-        {
-            get { return poolingType; }
-        }
+        public GameObject GameObject { get; private set; }
 
-        public GameObject GameObject
+        protected override void Awake()
         {
-            get { return gameObject; }
+            base.Awake();
+            GameObject = gameObject;
         }
 
         public void Initialize(List<Vector2Int> path, EnemySpawner parent, EnemyDataSO data, int level = 0)
@@ -53,7 +50,7 @@ namespace _01.Code.Enemies
             PlayScaleEffect();
         }
 
-        public void Configure(CommandCenter commandCenter)
+        public void Initialize(CommandCenter commandCenter)
         {
             _commandCenter = commandCenter;
         }

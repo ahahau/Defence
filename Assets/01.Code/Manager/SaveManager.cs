@@ -6,6 +6,7 @@ using _01.Code.Enemies;
 using _01.Code.Entities;
 using _01.Code.Events;
 using _01.Code.Save;
+using _01.Code.Tiles;
 using _01.Code.Units;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -33,6 +34,7 @@ namespace _01.Code.Manager
         [SerializeField] private GameEventChannelSO costEventChannel;
 
         private readonly Dictionary<string, UnitDataSO> _unitRegistry = new();
+        private readonly Dictionary<string, TownTileObjectDataSO> _townTileObjectRegistry = new();
         private readonly List<SaveDataEntry> _unusedData = new();
         private readonly List<ISaveable> _registeredSaveables = new();
 
@@ -270,6 +272,34 @@ namespace _01.Code.Manager
                 return true;
             }
 
+            if (_townTileObjectRegistry.TryGetValue(placementKey, out TownTileObjectDataSO townTileObjectData) &&
+                townTileObjectData != null &&
+                townTileObjectData.Prefab != null)
+            {
+                placeableEntity = Instantiate(townTileObjectData.Prefab, Vector3.zero, Quaternion.identity);
+                if (placeableEntity is TownTileObject townTileObject)
+                {
+                    townTileObject.BindData(townTileObjectData);
+                }
+
+                placeableEntity.BindSceneServices(_gridManager, _logManager);
+                if (!placeableEntity.Initialize(gridPosition))
+                {
+                    Destroy(placeableEntity.gameObject);
+                    _logManager?.Building($"Failed to restore `{townTileObjectData.name}` at {gridPosition}.", LogLevel.Error);
+                    placeableEntity = null;
+                    return false;
+                }
+
+                RegisterPlacementForSave(placeableEntity, placementKey);
+                if (!string.IsNullOrWhiteSpace(runtimeSaveId))
+                {
+                    placeableEntity.BindRuntimeSaveId(runtimeSaveId);
+                }
+
+                return true;
+            }
+
             if (_enemySpawnerManager != null && placementKey == _enemySpawnerManager.SpawnerSaveKey)
             {
                 return _enemySpawnerManager.TryCreateSavedSpawner(gridPosition, out placeableEntity);
@@ -333,6 +363,7 @@ namespace _01.Code.Manager
         private void RebuildRegistries()
         {
             _unitRegistry.Clear();
+            _townTileObjectRegistry.Clear();
             List<UnitDataSO> units = QueryUnitCatalog();
             for (int i = 0; i < units.Count; i++)
             {
@@ -344,6 +375,18 @@ namespace _01.Code.Manager
 
                 _unitRegistry[unitData.name] = unitData;
             }
+
+            List<TownTileObjectDataSO> townTileObjects = QueryTownTileObjectCatalog();
+            for (int i = 0; i < townTileObjects.Count; i++)
+            {
+                TownTileObjectDataSO townTileObjectData = townTileObjects[i];
+                if (townTileObjectData == null || string.IsNullOrWhiteSpace(townTileObjectData.SaveKey))
+                {
+                    continue;
+                }
+
+                _townTileObjectRegistry[townTileObjectData.SaveKey] = townTileObjectData;
+            }
         }
 
         private List<UnitDataSO> QueryUnitCatalog()
@@ -351,6 +394,44 @@ namespace _01.Code.Manager
             UiUnitCatalogQueryEvent query = UIEvents.UiUnitCatalogQueryEvent.Initializer();
             uiEventChannel.RaiseEvent(query);
             return query.Units ?? new List<UnitDataSO>();
+        }
+
+        private List<TownTileObjectDataSO> QueryTownTileObjectCatalog()
+        {
+            List<TownTileObjectDataSO> catalog = new List<TownTileObjectDataSO>();
+            MainBuildingRoomWorld[] worlds = FindObjectsByType<MainBuildingRoomWorld>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < worlds.Length; i++)
+            {
+                MainBuildingRoomWorld world = worlds[i];
+                if (world == null)
+                {
+                    continue;
+                }
+
+                if (world.DefaultObstacleData != null && !catalog.Contains(world.DefaultObstacleData))
+                {
+                    catalog.Add(world.DefaultObstacleData);
+                }
+
+                if (world.DefaultTileObjects == null)
+                {
+                    continue;
+                }
+
+                for (int j = 0; j < world.DefaultTileObjects.Count; j++)
+                {
+                    TownTileObjectPlacement placement = world.DefaultTileObjects[j];
+                    TownTileObjectDataSO data = placement != null ? placement.Data : null;
+                    if (data == null || catalog.Contains(data))
+                    {
+                        continue;
+                    }
+
+                    catalog.Add(data);
+                }
+            }
+
+            return catalog;
         }
 
         private void EnsureSaveAgents()
@@ -365,7 +446,7 @@ namespace _01.Code.Manager
 
             for (int i = 0; i < saveAgentModules.Length; i++)
             {
-                saveAgentModules[i]?.Configure(this);
+                saveAgentModules[i]?.Initialize(this);
             }
         }
 

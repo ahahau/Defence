@@ -13,12 +13,7 @@ namespace _01.Code.Manager
         public event Action OnWaveStarted;
         public event Action OnWaveCleared;
         
-        private bool _isRunning;
-        
-        public bool IsRunning
-        {
-            get { return _isRunning; }
-        }
+        public bool IsRunning { get; private set; }
 
         public GameEventChannelSO WaveEventChannel
         {
@@ -43,24 +38,24 @@ namespace _01.Code.Manager
         
         public void StartWaves()
         {
-            if (_isRunning)
+            if (IsRunning)
             {
                 return;
             }
 
-            _isRunning = true;
+            IsRunning = true;
             OnWaveStarted?.Invoke();
             waveEventChannel?.RaiseEvent(WaveEvents.WaveStartedEvent);
         }
         
         private void HandleWaveClearedEvent(WaveClearedEvent _)
         {
-            if (!_isRunning)
+            if (!IsRunning)
             {
                 return;
             }
 
-            _isRunning = false;
+            IsRunning = false;
             OnWaveCleared?.Invoke();
         }
 

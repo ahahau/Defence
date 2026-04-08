@@ -88,7 +88,7 @@ namespace _01.Code.Manager
             Vector3 worldPos = _gridManager.CellToObjectWorld(cellPos);
             EnemySpawner spawner = Instantiate(enemySpawnerPrefab, worldPos, Quaternion.identity);
             spawner.BindSceneServices(_gridManager, _logManager);
-            spawner.Configure(_gridManager, _logManager, this);
+            spawner.Initialize(_gridManager, _logManager, this);
             if (!spawner.Initialize(cellPos))
             {
                 Destroy(spawner.gameObject);
@@ -114,7 +114,7 @@ namespace _01.Code.Manager
                 Enemy pooledEnemy = enemyPoolManager.Pop<Enemy>(enemyPrefab.PoolingType);
                 if (pooledEnemy != null)
                 {
-                    pooledEnemy.Configure(_gridManager.commandCenter);
+                    pooledEnemy.Initialize(_gridManager.commandCenter);
                     pooledEnemy.SetSpawnPosition(worldPosition);
                     pooledEnemy.gameObject.SetActive(true);
                     return pooledEnemy;
@@ -122,7 +122,7 @@ namespace _01.Code.Manager
             }
 
             Enemy spawnedEnemy = Instantiate(enemyPrefab, worldPosition, Quaternion.identity);
-            spawnedEnemy.Configure(_gridManager.commandCenter);
+            spawnedEnemy.Initialize(_gridManager.commandCenter);
             spawnedEnemy.SetSpawnPosition(worldPosition);
             return spawnedEnemy;
         }
@@ -176,7 +176,7 @@ namespace _01.Code.Manager
                 Vector3 worldPos = _gridManager.CellToObjectWorld(cellPos);
                 EnemySpawner spawner = Instantiate(enemySpawnerPrefab, worldPos, Quaternion.identity);
                 spawner.BindSceneServices(_gridManager, _logManager);
-                spawner.Configure(_gridManager, _logManager, this);
+                spawner.Initialize(_gridManager, _logManager, this);
                 if (!spawner.Initialize(cellPos))
                 {
                     _logManager?.Enemy($"Failed to install spawned spawner at {cellPos}.", LogLevel.Error);

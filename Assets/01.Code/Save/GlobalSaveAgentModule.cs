@@ -10,7 +10,7 @@ namespace _01.Code.Save
             get { return 0; }
         }
 
-        public void Configure(SaveManager saveManager)
+        public void Initialize(SaveManager saveManager)
         {
             TimeManager timeManager = GameManager.Instance?.GetManager<TimeManager>();
             if (timeManager != null)

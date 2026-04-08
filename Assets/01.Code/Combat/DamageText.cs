@@ -8,42 +8,26 @@ namespace _01.Code.Combat
 {
     public class DamageText : MonoBehaviour, IPoolable
     {
-        [SerializeField] private PoolingItemSO poolingType;
+        [field: SerializeField] public PoolingItemSO PoolingType { get; private set; }
         [SerializeField] private Vector3 worldOffset;
         [SerializeField] private float riseDistance = 0.75f;
         [SerializeField] private float lifetime = 0.7f;
-        [SerializeField] private float fontSize = 4f;
         [SerializeField] private Color textColor = Color.red;
 
         private TextMeshPro _text;
         private Transform _followTarget;
-        private Color _baseColor;
         private Vector3 _spawnPosition;
         private Pool _pool;
         private Coroutine _followRoutine;
         private Sequence _animationSequence;
         private float _riseProgress;
 
-        public PoolingItemSO PoolingType
-        {
-            get { return poolingType; }
-        }
-
-        public GameObject GameObject
-        {
-            get { return gameObject; }
-        }
+        public GameObject GameObject { get; private set; }
 
         private void Awake()
         {
+            GameObject = gameObject;
             _text = GetComponent<TextMeshPro>();
-            ApplyTextStyle(includeMaterialProperties: true);
-        }
-
-        private void OnValidate()
-        {
-            _text = GetComponent<TextMeshPro>();
-            ApplyTextStyle(includeMaterialProperties: false);
         }
 
         public void SetUpPool(Pool pool)
@@ -67,7 +51,6 @@ namespace _01.Code.Combat
             _text.text = " ";
             _text.color = textColor;
             transform.position = Vector3.zero;
-            ApplyTextStyle(includeMaterialProperties: true);
         }
 
         public void Initialize(float damage, Transform followTarget)
@@ -81,14 +64,11 @@ namespace _01.Code.Combat
             }
 
             _followTarget = followTarget;
-            _baseColor = textColor;
             _riseProgress = 0f;
             _spawnPosition = followTarget != null ? followTarget.position : transform.position;
 
-            _text.font = TMP_Settings.defaultFontAsset;
             _text.text = Mathf.CeilToInt(damage).ToString();
-            _text.color = _baseColor;
-            ApplyTextStyle(includeMaterialProperties: true);
+            _text.color = textColor;
             SetPosition();
             StartAnimation();
             _followRoutine = StartCoroutine(FollowTargetRoutine());
@@ -145,26 +125,6 @@ namespace _01.Code.Combat
 
             Destroy(gameObject);
         }
-
-
-        private void ApplyTextStyle(bool includeMaterialProperties)
-        {
-            if (_text == null)
-            {
-                return;
-            }
-
-            _text.alignment = TextAlignmentOptions.Center;
-            _text.fontSize = fontSize;
-            _text.raycastTarget = false;
-            _text.sortingOrder = 100;
-
-            if (includeMaterialProperties)
-            {
-                _text.outlineWidth = 0.2f;
-            }
-        }
-
         private void OnDisable()
         {
             StopAnimation();

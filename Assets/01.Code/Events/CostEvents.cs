@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using _01.Code.Core;
 using _01.Code.Cost;
 using _01.Code.Manager;
@@ -85,7 +86,7 @@ namespace _01.Code.Events
 
     public class CostSnapshotQueryEvent : GameEvent
     {
-        public global::System.Collections.Generic.List<CostSnapshotEntry> Entries { get; set; }
+        public List<CostSnapshotEntry> Entries { get; set; }
 
         public CostSnapshotQueryEvent Initializer()
         {

@@ -20,7 +20,7 @@ namespace _01.Code.Enemies
         private readonly HashSet<Enemy> _alive = new HashSet<Enemy>();
         private bool _isSpawning;
 
-        public void Configure(GridManager gridManager, LogManager logManager, EnemySpawnerManager enemySpawnerManager)
+        public void Initialize(GridManager gridManager, LogManager logManager, EnemySpawnerManager enemySpawnerManager)
         {
             _gridManager = gridManager;
             _logManager = logManager;

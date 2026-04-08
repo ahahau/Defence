@@ -12,17 +12,8 @@ namespace _01.Code.Manager
 
         private Dictionary<Type, IManageable> _managerMap;
         
-        private LogManager _logManager;
-        private SaveManager _saveManager;
-        public LogManager LogManager
-        {
-            get { return _logManager; }
-        }
-
-        public SaveManager SaveManager
-        {
-            get { return _saveManager; }
-        }
+        public LogManager LogManager { get; private set; }
+        public SaveManager SaveManager { get; private set; }
 
         private void Awake()
         {
@@ -126,8 +117,8 @@ namespace _01.Code.Manager
 
         private void ResolveCoreManagers()
         {
-            _logManager = GetManager<LogManager>();
-            _saveManager = GetManager<SaveManager>();
+            LogManager = GetManager<LogManager>();
+            SaveManager = GetManager<SaveManager>();
         }
 
         private void InitializeManagers()

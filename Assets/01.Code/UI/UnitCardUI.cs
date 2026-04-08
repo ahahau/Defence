@@ -23,13 +23,8 @@ namespace _01.Code.UI
         private Vector3 _baseScale = Vector3.one;
         private Vector2 _basePosition;
         private int _baseSiblingIndex;
-        private UnitDataSO _boundUnitData;
+        public UnitDataSO BoundUnitData { get; private set; }
         private Action<UnitCardUI> _clickHandler;
-
-        public UnitDataSO BoundUnitData
-        {
-            get { return _boundUnitData; }
-        }
 
         private void Awake()
         {
@@ -43,7 +38,7 @@ namespace _01.Code.UI
 
         public void SetData(UnitDataSO data)
         {
-            _boundUnitData = data;
+            BoundUnitData = data;
 
             if (data == null)
             {
@@ -129,7 +124,7 @@ namespace _01.Code.UI
 
         public void OnPointerClick(PointerEventData eventData)
         {
-            if (eventData.button != PointerEventData.InputButton.Left || _boundUnitData == null)
+            if (eventData.button != PointerEventData.InputButton.Left || BoundUnitData == null)
             {
                 return;
             }

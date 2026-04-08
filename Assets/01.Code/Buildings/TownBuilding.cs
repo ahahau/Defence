@@ -1,6 +1,8 @@
+using _01.Code.Tiles;
+
 namespace _01.Code.Buildings
 {
-    public class TownBuilding : Building
+    public class TownBuilding : TownTileObject
     {
     }
 }

@@ -220,7 +220,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   uiEventChannel: {fileID: 11400000, guid: 65fe9b6359134cd4947a05bdbc25753a, type: 2}
-  damageTextPrefab: {fileID: 4283242926989342001, guid: 54a38ee87c7f4d16ae44ca348b66bf90, type: 3}
+  damageTextPrefab: {fileID: 0}
   poolManager: {fileID: 0}
   damageTextPoolingItem: {fileID: 11400000, guid: 0fecb3b7378a85148a12e1ea7003eeb2, type: 2}
 --- !u!1 &4382549243069408591
@@ -270,6 +270,7 @@ MonoBehaviour:
   enemySpawnerPrefab: {fileID: 8316228646948030242, guid: dad593dca1bfbd344a21bf10875d5a24, type: 3}
   waveEventChannel: {fileID: 11400000, guid: 0e4a0518e3dd1a2489b812a34a67bfcd, type: 2}
   enemyPoolManager: {fileID: 0}
+  spawnerSaveKey: enemy_spawner
 --- !u!1 &4451112198690832411
 GameObject:
   m_ObjectHideFlags: 0

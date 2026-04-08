@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Rendering;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -11,6 +12,7 @@ namespace _01.Code.Test
         [Min(1)] public int size = 30;
         [Min(0.1f)] public float cellSize = 1f;
         [Min(0.001f)] public float lineWidth = 0.03f;
+        [Min(0.5f)] public float minScreenPixelWidth = 2f;
         public Material lineMat;
         public Color gizmoColor = default;
 
@@ -30,6 +32,11 @@ namespace _01.Code.Test
         private void Start()
         {
             RebuildGrid();
+        }
+
+        private void LateUpdate()
+        {
+            RefreshLineWidths();
         }
 
         private void OnValidate()
@@ -55,39 +62,45 @@ namespace _01.Code.Test
             float halfCell = cellSize * 0.5f;
             Vector3 lineOrigin = new Vector3(halfCell, halfCell, 0f);
             float totalSize = size * cellSize;
-            float axisLength = totalSize * 2f;
-
             for (int i = -size; i <= size; i++)
             {
                 float offset = i * cellSize;
 
                 Vector3 startV = lineOrigin + new Vector3(offset, -totalSize, 0f);
                 Vector3 endV = lineOrigin + new Vector3(offset, totalSize, 0f);
-                CreateLine(startV, endV, axisLength);
+                CreateLine(startV, endV);
 
                 Vector3 startH = lineOrigin + new Vector3(-totalSize, offset, 0f);
                 Vector3 endH = lineOrigin + new Vector3(totalSize, offset, 0f);
-                CreateLine(startH, endH, axisLength);
+                CreateLine(startH, endH);
             }
+
+            RefreshLineWidths();
         }
 
-        private void CreateLine(Vector3 start, Vector3 end, float axisLength)
+        private void CreateLine(Vector3 start, Vector3 end)
         {
             GameObject lineObj = new GameObject("GridLine");
             lineObj.transform.SetParent(transform, false);
+            lineObj.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
 
             LineRenderer lineRenderer = lineObj.AddComponent<LineRenderer>();
             lineRenderer.sharedMaterial = GetLineMaterial();
             lineRenderer.positionCount = 2;
             lineRenderer.SetPosition(0, start);
             lineRenderer.SetPosition(1, end);
-            lineRenderer.startWidth = lineWidth;
-            lineRenderer.endWidth = lineWidth;
+            float appliedWidth = GetAppliedLineWidth();
+            lineRenderer.startWidth = appliedWidth;
+            lineRenderer.endWidth = appliedWidth;
             lineRenderer.useWorldSpace = false;
             lineRenderer.sortingOrder = 1000;
-            lineRenderer.textureMode = LineTextureMode.Tile;
-            lineRenderer.alignment = LineAlignment.TransformZ;
-            lineRenderer.textureScale = new Vector2(Mathf.Max(1f, axisLength / cellSize), 1f);
+            lineRenderer.startColor = gizmoColor;
+            lineRenderer.endColor = gizmoColor;
+            lineRenderer.textureMode = LineTextureMode.Stretch;
+            lineRenderer.alignment = LineAlignment.View;
+            lineRenderer.textureScale = Vector2.one;
+            lineRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            lineRenderer.receiveShadows = false;
         }
 
         private Material GetLineMaterial()
@@ -116,7 +129,7 @@ namespace _01.Code.Test
             for (int i = transform.childCount - 1; i >= 0; i--)
             {
                 Transform child = transform.GetChild(i);
-                if (child.name != "GridLine")
+                if (child == null || child.GetComponent<LineRenderer>() == null)
                 {
                     continue;
                 }
@@ -132,7 +145,6 @@ namespace _01.Code.Test
             float halfCell = cellSize * 0.5f;
             Vector3 lineOrigin = transform.position + new Vector3(halfCell, halfCell, 0f);
             float totalSize = size * cellSize;
-
             for (int i = -size; i <= size; i++)
             {
                 float offset = i * cellSize;
@@ -145,6 +157,42 @@ namespace _01.Code.Test
                 Vector3 endH = lineOrigin + new Vector3(totalSize, offset, 0f);
                 Gizmos.DrawLine(startH, endH);
             }
+        }
+
+        private void RefreshLineWidths()
+        {
+            float appliedWidth = GetAppliedLineWidth();
+
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                Transform child = transform.GetChild(i);
+                if (child == null || child.name != "GridLine")
+                {
+                    continue;
+                }
+
+                LineRenderer lineRenderer = child.GetComponent<LineRenderer>();
+                if (lineRenderer == null)
+                {
+                    continue;
+                }
+
+                lineRenderer.startWidth = appliedWidth;
+                lineRenderer.endWidth = appliedWidth;
+            }
+        }
+
+        private float GetAppliedLineWidth()
+        {
+            Camera targetCamera = Camera.main;
+            if (targetCamera == null || !targetCamera.orthographic || Screen.height <= 0)
+            {
+                return lineWidth;
+            }
+
+            float worldUnitsPerPixel = (targetCamera.orthographicSize * 2f) / Screen.height;
+            float minimumWidthFromScreen = worldUnitsPerPixel * minScreenPixelWidth;
+            return Mathf.Max(lineWidth, minimumWidthFromScreen);
         }
 
         private Color GetWhiteWithAlpha(float alpha)

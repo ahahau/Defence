@@ -10,7 +10,7 @@ namespace _01.Code.Manager
             get { return 100; }
         }
 
-        public void Configure(SaveManager saveManager)
+        public void Initialize(SaveManager saveManager)
         {
             PlacementSaveAgent placementSaveAgent = EnsureAgentOnObject<PlacementSaveAgent>(gameObject);
             UintAgentSaveAgent unitSaveAgent = EnsureAgentOnObject<UintAgentSaveAgent>(gameObject);

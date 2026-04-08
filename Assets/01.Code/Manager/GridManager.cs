@@ -2,6 +2,9 @@ using _01.Code.Buildings;
 using _01.Code.Entities;
 using _01.Code.System.Grids;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace _01.Code.Manager
 {
@@ -10,7 +13,8 @@ namespace _01.Code.Manager
         [field: SerializeField] public Grid Grid { get; private set; }
         [field: SerializeField] public CustomTilemap Tilemap { get; private set; }
         [field: SerializeField] public int Size { get; private set; }
-        [SerializeField] private int cellSize = 1;
+        [field: SerializeField] public int CellSize { get; private set; } = 1;
+        [SerializeField] [Min(0f)] private float cellGap = 0f;
 
         public CommandCenter commandCenter;
 
@@ -18,10 +22,18 @@ namespace _01.Code.Manager
 
         public void Initialize(IManagerContainer managerContainer)
         {
-            Grid.cellSize = new Vector3(cellSize, cellSize, 0);
+            ApplyGridCellSize();
             Tilemap = new CustomTilemap(Size, Size);
             PathFinder = new Pathfinder(Tilemap);
             commandCenter?.BindGrid(this);
+        }
+
+        private void OnValidate()
+        {
+#if UNITY_EDITOR
+            EditorApplication.delayCall -= HandleEditorValidate;
+            EditorApplication.delayCall += HandleEditorValidate;
+#endif
         }
 
         public Vector2Int WorldToCell(Vector3 worldPosition)
@@ -31,7 +43,7 @@ namespace _01.Code.Manager
 
         public Vector2Int WorldToPlacementCell(Vector3 worldPosition)
         {
-            float halfCell = cellSize * 0.5f;
+            float halfCell = GetCellStep() * 0.5f;
             Vector3 adjustedWorldPosition = worldPosition + new Vector3(halfCell, halfCell, 0f);
             Vector3Int cellPosition = Grid.WorldToCell(adjustedWorldPosition);
             return new Vector2Int(cellPosition.x, cellPosition.y);
@@ -75,5 +87,33 @@ namespace _01.Code.Manager
                 }
             }
         }
+
+        private void ApplyGridCellSize()
+        {
+            if (Grid == null)
+            {
+                return;
+            }
+
+            float cellStep = GetCellStep();
+            Grid.cellSize = new Vector3(cellStep, cellStep, 0f);
+        }
+
+        private float GetCellStep()
+        {
+            return Mathf.Max(0.01f, CellSize + cellGap);
+        }
+
+#if UNITY_EDITOR
+        private void HandleEditorValidate()
+        {
+            if (this == null)
+            {
+                return;
+            }
+
+            ApplyGridCellSize();
+        }
+#endif
     }
 }

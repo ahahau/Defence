@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using _01.Code.Cameras;
 using _01.Code.Core;
 using _01.Code.Entities;
@@ -22,7 +23,7 @@ namespace _01.Code.Manager
         private GridManager _gridManager;
         private Unit _draggedUnit;
         private PlaceableEntity _selectedBuilding;
-        private global::System.Collections.Generic.List<UnitDataSO> _availableUnits = new();
+        private List<UnitDataSO> _availableUnits = new();
         private Collider2D _pointerDownCollider;
         private bool _isPointerDown;
         private bool _isDraggingUnit;
@@ -383,7 +384,7 @@ namespace _01.Code.Manager
         {
             UiUnitCatalogQueryEvent query = UIEvents.UiUnitCatalogQueryEvent.Initializer();
             uiEventChannel.RaiseEvent(query);
-            _availableUnits = query.Units ?? new global::System.Collections.Generic.List<UnitDataSO>();
+            _availableUnits = query.Units ?? new List<UnitDataSO>();
         }
     }
 }
