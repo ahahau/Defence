@@ -3,6 +3,7 @@ using _01.Code.Cameras;
 using _01.Code.Core;
 using _01.Code.Entities;
 using _01.Code.Events;
+using _01.Code.Tiles;
 using _01.Code.UI;
 using _01.Code.Units;
 using UnityEngine;
@@ -33,6 +34,7 @@ namespace _01.Code.Manager
         private Vector2 _pointerDownScreenPosition;
         private Vector2 _pointerDownWorldPosition;
         private Camera _worldCamera;
+        private MainBuildingRoomWorld _townInteriorWorld;
 
         public void Initialize(IManagerContainer managerContainer)
         {
@@ -46,6 +48,7 @@ namespace _01.Code.Manager
         {
             RefreshUnitCatalog();
             ResolveWorldCamera();
+            ResolveTownInteriorWorld();
         }
 
         private void OnDestroy()
@@ -114,6 +117,11 @@ namespace _01.Code.Manager
 
         private void ClickObject(GameObject hitGameObject)
         {
+            if (TryHandleTownInteriorObjectClick(hitGameObject))
+            {
+                return;
+            }
+
             if (TryGetClickedUnit(hitGameObject, out Units.Unit unit))
             {
                 ClickUnit(unit);
@@ -128,6 +136,11 @@ namespace _01.Code.Manager
 
         private void ClickGround(Vector2 worldPosition)
         {
+            if (TryHandleTownInteriorGroundClick(worldPosition))
+            {
+                return;
+            }
+
             if (_gridManager == null)
             {
                 return;
@@ -181,6 +194,12 @@ namespace _01.Code.Manager
             }
 
             Vector3 targetWorldPosition = InputData.GetWorldPosition2D();
+
+            if (TryHandleTownInteriorGroundClick(_pointerDownWorldPosition))
+            {
+                ResetPointerState();
+                return;
+            }
 
             if (_isDraggingUnit && _draggedUnit != null)
             {
@@ -317,6 +336,11 @@ namespace _01.Code.Manager
             }
         }
 
+        private void ResolveTownInteriorWorld()
+        {
+            _townInteriorWorld = FindFirstObjectByType<MainBuildingRoomWorld>();
+        }
+
         private Collider2D GetHitCollider(Vector2 worldPosition)
         {
             ResolveWorldCamera();
@@ -333,6 +357,22 @@ namespace _01.Code.Manager
             if (hit.collider != null)
             {
                 return hit.collider;
+            }
+
+            RaycastHit2D fallbackHit = Physics2D.GetRayIntersection(ray, Mathf.Infinity);
+            if (fallbackHit.collider == null)
+            {
+                return null;
+            }
+
+            if (fallbackHit.collider.GetComponentInParent<MainBuildingRoomTile>() != null)
+            {
+                return fallbackHit.collider;
+            }
+
+            if (fallbackHit.collider.GetComponentInParent<TownTileObject>() != null)
+            {
+                return fallbackHit.collider;
             }
 
             return null;
@@ -385,6 +425,31 @@ namespace _01.Code.Manager
             UiUnitCatalogQueryEvent query = UIEvents.UiUnitCatalogQueryEvent.Initializer();
             uiEventChannel.RaiseEvent(query);
             _availableUnits = query.Units ?? new List<UnitDataSO>();
+        }
+
+        private bool TryHandleTownInteriorGroundClick(Vector2 worldPosition)
+        {
+            ResolveTownInteriorWorld();
+            return _townInteriorWorld != null && _townInteriorWorld.TryHandleWorldClick(worldPosition);
+        }
+
+        private bool TryHandleTownInteriorObjectClick(GameObject hitGameObject)
+        {
+            ResolveTownInteriorWorld();
+            if (_townInteriorWorld == null || hitGameObject == null)
+            {
+                return false;
+            }
+
+            MainBuildingRoomTile roomTile = hitGameObject.GetComponentInParent<MainBuildingRoomTile>();
+            if (roomTile != null)
+            {
+                _townInteriorWorld.HandleTileClicked(roomTile.Cell);
+                return true;
+            }
+
+            TownTileObject tileObject = hitGameObject.GetComponentInParent<TownTileObject>();
+            return _townInteriorWorld.TryHandleTileObjectClick(tileObject);
         }
     }
 }

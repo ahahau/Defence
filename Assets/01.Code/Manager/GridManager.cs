@@ -19,13 +19,35 @@ namespace _01.Code.Manager
         public CommandCenter commandCenter;
 
         public Pathfinder PathFinder { get; private set; }
+        private bool _isInitialized;
 
         public void Initialize(IManagerContainer managerContainer)
+        {
+            InitializeRuntimeState();
+        }
+
+        private void Awake()
+        {
+            EnsureRuntimeState();
+        }
+
+        private void OnEnable()
+        {
+            EnsureRuntimeState();
+        }
+
+        public void EnsureInitialized()
+        {
+            EnsureRuntimeState();
+        }
+
+        private void InitializeRuntimeState()
         {
             ApplyGridCellSize();
             Tilemap = new CustomTilemap(Size, Size);
             PathFinder = new Pathfinder(Tilemap);
             commandCenter?.BindGrid(this);
+            _isInitialized = true;
         }
 
         private void OnValidate()
@@ -43,6 +65,7 @@ namespace _01.Code.Manager
 
         public Vector2Int WorldToPlacementCell(Vector3 worldPosition)
         {
+            EnsureRuntimeState();
             float halfCell = GetCellStep() * 0.5f;
             Vector3 adjustedWorldPosition = worldPosition + new Vector3(halfCell, halfCell, 0f);
             Vector3Int cellPosition = Grid.WorldToCell(adjustedWorldPosition);
@@ -53,13 +76,29 @@ namespace _01.Code.Manager
 
         public Vector3 CellToObjectWorld(Vector2Int cellPosition) => CellToWorld(cellPosition);
 
-        public bool IsCellEmpty(Vector2Int cellPosition) => Tilemap.TileEmpty(cellPosition);
+        public bool IsCellEmpty(Vector2Int cellPosition)
+        {
+            EnsureRuntimeState();
+            return Tilemap.TileEmpty(cellPosition);
+        }
 
-        public bool TryInstall(Vector2Int cellPosition, Entity entity) => Tilemap.TileObjectInstall(cellPosition, entity);
+        public bool TryInstall(Vector2Int cellPosition, Entity entity)
+        {
+            EnsureRuntimeState();
+            return Tilemap.TileObjectInstall(cellPosition, entity);
+        }
 
-        public bool TryClear(Vector2Int cellPosition, Entity expectedObject = null) => Tilemap.ClearTileObject(cellPosition, expectedObject);
+        public bool TryClear(Vector2Int cellPosition, Entity expectedObject = null)
+        {
+            EnsureRuntimeState();
+            return Tilemap.ClearTileObject(cellPosition, expectedObject);
+        }
 
-        public CustomTile GetTile(Vector2Int cellPosition) => Tilemap.GetTile(cellPosition);
+        public CustomTile GetTile(Vector2Int cellPosition)
+        {
+            EnsureRuntimeState();
+            return Tilemap.GetTile(cellPosition);
+        }
 
         public int GetTileCost(Vector2Int cellPosition)
         {
@@ -69,6 +108,7 @@ namespace _01.Code.Manager
 
         public Vector2Int GetRandomGridPosition()
         {
+            EnsureRuntimeState();
             int cnt = 0;
             while (true)
             {
@@ -102,6 +142,21 @@ namespace _01.Code.Manager
         private float GetCellStep()
         {
             return Mathf.Max(0.01f, CellSize + cellGap);
+        }
+
+        private void EnsureRuntimeState()
+        {
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            if (_isInitialized && Tilemap != null && PathFinder != null)
+            {
+                return;
+            }
+
+            InitializeRuntimeState();
         }
 
 #if UNITY_EDITOR

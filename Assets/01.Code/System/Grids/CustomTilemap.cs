@@ -11,6 +11,7 @@ namespace _01.Code.System.Grids
     [Serializable]
     public class CustomTilemap
     {
+        
         public Vector2Int Size { get; private set; }
         public CustomTile[][] Tiles { get; private set; }
 
@@ -19,7 +20,6 @@ namespace _01.Code.System.Grids
             Size = size;
             Initialize();
         }
-
         public CustomTilemap(int x, int y)
         {
             Size = new Vector2Int(x, y);

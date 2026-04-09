@@ -94,11 +94,7 @@ namespace _01.Code.Events
         public bool CanUseDayActions { get; private set; }
         public int CurrentPrimaryCost { get; private set; }
 
-        public UiUnitInventoryStateChangedEvent Initializer(
-            List<UnitDataSO> units,
-            UnitDataSO selectedUnit,
-            bool canUseDayActions,
-            int currentPrimaryCost)
+        public UiUnitInventoryStateChangedEvent Initializer(List<UnitDataSO> units, UnitDataSO selectedUnit, bool canUseDayActions, int currentPrimaryCost)
         {
             Units = units;
             SelectedUnit = selectedUnit;

@@ -17,11 +17,7 @@ namespace _01.Code.UI
         private PlaceableEntity _placementPreview;
         private Vector2Int _hoveredCellPosition;
 
-        public UiBuildSelectionController(
-            GameEventChannelSO buildEventChannel,
-            Func<bool> canUseDayActions,
-            Func<UnitDataSO, bool> canSelectBuilding,
-            Action notifyStateChanged)
+        public UiBuildSelectionController(GameEventChannelSO buildEventChannel, Func<bool> canUseDayActions, Func<UnitDataSO, bool> canSelectBuilding, Action notifyStateChanged)
         {
             _buildEventChannel = buildEventChannel;
             _canUseDayActions = canUseDayActions;

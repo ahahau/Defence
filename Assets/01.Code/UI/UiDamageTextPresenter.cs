@@ -11,10 +11,7 @@ namespace _01.Code.UI
         private readonly PoolManagerMono _poolManager;
         private readonly PoolingItemSO _damageTextPoolingItem;
 
-        public UiDamageTextPresenter(
-            DamageText damageTextPrefab,
-            PoolManagerMono poolManager,
-            PoolingItemSO damageTextPoolingItem)
+        public UiDamageTextPresenter(DamageText damageTextPrefab, PoolManagerMono poolManager, PoolingItemSO damageTextPoolingItem)
         {
             _damageTextPrefab = damageTextPrefab;
             _poolManager = poolManager;

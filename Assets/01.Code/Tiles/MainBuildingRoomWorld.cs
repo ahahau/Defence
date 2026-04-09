@@ -1,7 +1,11 @@
 using System;
 using System.Collections.Generic;
+using _01.Code.Core;
+using _01.Code.Events;
 using _01.Code.Manager;
+using _01.Code.TownCommands;
 using _01.Code.UI;
+using _01.Code.Units;
 using UnityEngine;
 
 namespace _01.Code.Tiles
@@ -26,6 +30,7 @@ namespace _01.Code.Tiles
         [field: SerializeField] public Vector2 BoardOffset { get; private set; } = new(0f, 0f);
         [field: SerializeField] public int SortingOrder { get; private set; } = -10;
         [field: SerializeField] public TownObstacleDataSO DefaultObstacleData { get; private set; }
+        [field: SerializeField] public List<TownObstacleDataSO> DefaultObstacleVariants { get; private set; } = new();
         [field: SerializeField] public List<TownTileObjectPlacement> DefaultTileObjects { get; private set; } = new();
         [SerializeField] [Min(8)] private int tileOutlineResolution = 32;
         [SerializeField] [Min(1)] private int tileOutlineThickness = 2;
@@ -79,8 +84,15 @@ namespace _01.Code.Tiles
         private BuildManager _buildManager;
         private CostManager _costManager;
         private SaveManager _saveManager;
+        private LogManager _logManager;
+        private GameEventChannelSO _uiEventChannel;
         private Vector2Int _selectedCell;
         private bool _hasSelectedCell;
+        private Camera _worldCamera;
+        private int _lastHandledClickFrame = -1;
+        private bool _hasProcessedStartupPlacements;
+        private readonly List<TownCommandSO> _townBuildCommands = new();
+        private TownRemoveObstacleCommandSO _removeObstacleCommand;
 
         private void Awake()
         {
@@ -91,9 +103,53 @@ namespace _01.Code.Tiles
             
         private void Start()
         {
-            SpawnDefaultTileObjects();
+            TryApplyStartupPlacements();
             AlignTilesToGrid();
             RefreshTiles();
+        }
+
+        private void Update()
+        {
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            if (!_hasProcessedStartupPlacements)
+            {
+                TryApplyStartupPlacements();
+            }
+
+            if (!Input.GetMouseButtonDown(0))
+            {
+                return;
+            }
+
+            if (TownInteriorScreenUI != null && TownInteriorScreenUI.IsPointerOverBuildPanel())
+            {
+                return;
+            }
+
+            if (_lastHandledClickFrame == Time.frameCount)
+            {
+                return;
+            }
+
+            ResolveReferences();
+            if (GridManager == null)
+            {
+                return;
+            }
+
+            ResolveWorldCamera();
+            if (_worldCamera == null)
+            {
+                return;
+            }
+
+            Vector3 worldPosition = _worldCamera.ScreenToWorldPoint(Input.mousePosition);
+            worldPosition.z = 0f;
+            TryHandlePointerClick(worldPosition);
         }
 
         private void OnEnable()
@@ -112,6 +168,7 @@ namespace _01.Code.Tiles
                 return;
             }
 
+            SubscribeToTownCommandEvents();
             _buildManager.OnBuildingInstalled += HandleBuildingInstalled;
             _buildManager.OnBuildingMoved += HandleBuildStateChanged;
             _buildManager.OnBuildingMoveFailed += HandleBuildStateChanged;
@@ -125,6 +182,7 @@ namespace _01.Code.Tiles
                 return;
             }
 
+            UnsubscribeFromTownCommandEvents();
             _buildManager.OnBuildingInstalled -= HandleBuildingInstalled;
             _buildManager.OnBuildingMoved -= HandleBuildStateChanged;
             _buildManager.OnBuildingMoveFailed -= HandleBuildStateChanged;
@@ -148,6 +206,31 @@ namespace _01.Code.Tiles
             _buildManager ??= GameManager.Instance.GetManager<BuildManager>();
             _costManager ??= GameManager.Instance.GetManager<CostManager>();
             _saveManager ??= GameManager.Instance.GetManager<SaveManager>();
+            _logManager ??= GameManager.Instance.GetManager<LogManager>();
+            _uiEventChannel ??= _buildManager != null ? _buildManager.UiEventChannel : null;
+            if (GridManager != null && GridManager.Tilemap == null)
+            {
+                GridManager.Initialize(GameManager.Instance);
+            }
+
+            if (GridManager != null && _orderedCells.Count == 0)
+            {
+                EnsureBoard();
+            }
+
+            if (Application.isPlaying)
+            {
+                EnsureCommands();
+            }
+        }
+
+        private void ResolveWorldCamera()
+        {
+            _worldCamera = Camera.main;
+            if (_worldCamera == null)
+            {
+                _worldCamera = FindFirstObjectByType<Camera>();
+            }
         }
 
         private void SpawnDefaultTileObjects()
@@ -157,7 +240,7 @@ namespace _01.Code.Tiles
                 return;
             }
 
-            if (_saveManager != null && _saveManager.HasSaveData)
+            if (_saveManager != null && _saveManager.HasSavedPlacements())
             {
                 return;
             }
@@ -173,7 +256,8 @@ namespace _01.Code.Tiles
                 SpawnTileObject(placement.Data, placement.CellPosition);
             }
 
-            if (DefaultObstacleData == null)
+            List<TownObstacleDataSO> obstacleVariants = GetDefaultObstacleVariants();
+            if (obstacleVariants.Count == 0)
             {
                 return;
             }
@@ -186,8 +270,34 @@ namespace _01.Code.Tiles
                     continue;
                 }
 
-                SpawnTileObject(DefaultObstacleData, cell);
+                if (!GridManager.IsCellEmpty(cell))
+                {
+                    continue;
+                }
+
+                TownObstacleDataSO obstacleData = obstacleVariants[i % obstacleVariants.Count];
+                SpawnTileObject(obstacleData, cell);
             }
+        }
+
+        private void TryApplyStartupPlacements()
+        {
+            if (!Application.isPlaying || GridManager == null)
+            {
+                return;
+            }
+
+            if (_saveManager != null && _saveManager.HasSavedPlacements())
+            {
+                _logManager?.Building("Town startup placements skipped: saved placements detected.");
+                _hasProcessedStartupPlacements = true;
+                return;
+            }
+
+            _logManager?.Building("Town startup placements: no saved placements detected, filling default obstacles.");
+            SpawnDefaultTileObjects();
+            _hasProcessedStartupPlacements = true;
+            RefreshTiles();
         }
 
         private void EnsureBoard()
@@ -250,6 +360,12 @@ namespace _01.Code.Tiles
 
         public void HandleTileClicked(Vector2Int cell)
         {
+            _lastHandledClickFrame = Time.frameCount;
+            ResolveReferences();
+            if (GameManager.Instance != null && GridManager != null && GridManager.Tilemap == null)
+            {
+                GridManager.Initialize(GameManager.Instance);
+            }
             if (!Application.isPlaying || GridManager == null || GridManager.Tilemap == null)
             {
                 return;
@@ -257,8 +373,11 @@ namespace _01.Code.Tiles
 
             if (!IsCellEmpty(cell))
             {
-                if (TryRemoveObstacle(cell))
+                if (TryGetObstacle(cell, out TownObstacle obstacle))
                 {
+                    _selectedCell = cell;
+                    _hasSelectedCell = true;
+                    ShowObstacleCommands(obstacle);
                     RefreshTiles();
                     return;
                 }
@@ -279,12 +398,108 @@ namespace _01.Code.Tiles
 
             _selectedCell = cell;
             _hasSelectedCell = true;
-            TownInteriorScreenUI?.OpenBuildPanel(cell);
+            ShowBuildCommands(cell);
             RefreshTiles();
+        }
+
+        public bool TryHandleWorldClick(Vector2 worldPosition)
+        {
+            ResolveReferences();
+            if (GridManager == null)
+            {
+                return false;
+            }
+
+            Vector2Int cell = GridManager.WorldToPlacementCell(worldPosition);
+            if (!_tiles.ContainsKey(cell))
+            {
+                return false;
+            }
+
+            HandleTileClicked(cell);
+            return true;
+        }
+
+        private bool TryHandlePointerClick(Vector2 worldPosition)
+        {
+            Collider2D[] hits = Physics2D.OverlapPointAll(worldPosition);
+            Array.Sort(hits, CompareHitPriority);
+            for (int i = 0; i < hits.Length; i++)
+            {
+                Collider2D hit = hits[i];
+                if (hit == null)
+                {
+                    continue;
+                }
+
+                MainBuildingRoomTile roomTile = hit.GetComponentInParent<MainBuildingRoomTile>();
+                if (roomTile != null && roomTile.transform.parent == transform)
+                {
+                    HandleTileClicked(roomTile.Cell);
+                    return true;
+                }
+
+                TownTileObject tileObject = hit.GetComponentInParent<TownTileObject>();
+                if (tileObject != null && TryHandleTileObjectClick(tileObject))
+                {
+                    return true;
+                }
+            }
+
+            return TryHandleWorldClick(worldPosition);
+        }
+
+        private int CompareHitPriority(Collider2D left, Collider2D right)
+        {
+            int leftOrder = GetHitSortingOrder(left);
+            int rightOrder = GetHitSortingOrder(right);
+            if (leftOrder != rightOrder)
+            {
+                return rightOrder.CompareTo(leftOrder);
+            }
+
+            float leftDepth = left != null ? left.transform.position.z : float.MinValue;
+            float rightDepth = right != null ? right.transform.position.z : float.MinValue;
+            return leftDepth.CompareTo(rightDepth);
+        }
+
+        private int GetHitSortingOrder(Collider2D hit)
+        {
+            if (hit == null)
+            {
+                return int.MinValue;
+            }
+
+            SpriteRenderer spriteRenderer = hit.GetComponentInParent<SpriteRenderer>();
+            if (spriteRenderer == null)
+            {
+                return int.MinValue;
+            }
+
+            return spriteRenderer.sortingOrder;
+        }
+
+        public bool TryHandleTileObjectClick(TownTileObject tileObject)
+        {
+            ResolveReferences();
+            if (tileObject == null)
+            {
+                return false;
+            }
+
+            Vector2Int cell = tileObject.GridPosition;
+            if (!_tiles.ContainsKey(cell))
+            {
+                return false;
+            }
+
+            HandleTileClicked(cell);
+            return true;
         }
 
         private void HandleBuildingInstalled(Units.UnitDataSO _, Entities.PlaceableEntity __)
         {
+            ResolveReferences();
             _hasSelectedCell = false;
             RefreshTiles();
         }
@@ -299,13 +514,36 @@ namespace _01.Code.Tiles
             RefreshTiles();
         }
 
-        private void RefreshTiles()
+        private void HandleTownCommandSelected(TownCommandSelectedEvent evt)
         {
-            if (GridManager == null)
+            ResolveReferences();
+            if (!_hasSelectedCell || evt == null || evt.Command == null)
             {
                 return;
             }
 
+            TownCommandContext context = new TownCommandContext(this, _buildManager, _costManager, _selectedCell, GetObstacle(_selectedCell));
+            if (!evt.Command.CanExecute(context) || !evt.Command.Execute(context))
+            {
+                return;
+            }
+
+            if (_hasSelectedCell)
+            {
+                TownObstacle obstacle = GetObstacle(_selectedCell);
+                if (obstacle != null)
+                {
+                    ShowObstacleCommands(obstacle);
+                    return;
+                }
+
+                ShowBuildCommands(_selectedCell);
+            }
+        }
+
+        private void RefreshTiles()
+        {
+            ResolveReferences();
             for (int i = 0; i < _orderedCells.Count; i++)
             {
                 Vector2Int cell = _orderedCells[i];
@@ -315,12 +553,91 @@ namespace _01.Code.Tiles
                 }
 
                 bool isEmpty = IsCellEmpty(cell);
-                bool isSelected = _hasSelectedCell && cell == _selectedCell && isEmpty;
+                bool isSelected = _hasSelectedCell && cell == _selectedCell;
                 float alpha = isSelected ? selectedAlpha : isEmpty ? emptyAlpha : occupiedAlpha;
                 Color color = new Color(Color.white.r,Color.white.g,Color.white.b, alpha);
                 tile.SetVisualState(color, isSelected);
                 tile.transform.localPosition = GetCellLocalPosition(cell);
             }
+        }
+
+        private void ShowBuildCommands(Vector2Int cell)
+        {
+            if (TownInteriorScreenUI == null)
+            {
+                return;
+            }
+
+            EnsureCommands();
+            TownInteriorScreenUI.ShowCommands("COMMAND", "Choose a building.", _townBuildCommands);
+        }
+
+        private void ShowObstacleCommands(TownObstacle obstacle)
+        {
+            if (TownInteriorScreenUI == null || obstacle == null)
+            {
+                return;
+            }
+
+            EnsureCommands();
+            TownObstacleDataSO obstacleData = obstacle.Data as TownObstacleDataSO;
+            int removeCost = obstacleData != null ? obstacleData.RemoveCost : 0;
+            string title = obstacle.Data != null && !string.IsNullOrWhiteSpace(obstacle.Data.DisplayName)
+                ? obstacle.Data.DisplayName.ToUpperInvariant()
+                : "OBSTACLE";
+            TownInteriorScreenUI.ShowCommands(title, $"Remove Cost : {removeCost}", new List<TownCommandSO> { _removeObstacleCommand });
+        }
+
+        private void EnsureCommands()
+        {
+            if (_removeObstacleCommand == null)
+            {
+                _removeObstacleCommand = ScriptableObject.CreateInstance<TownRemoveObstacleCommandSO>();
+                _removeObstacleCommand.ConfigureRuntime(0);
+                _removeObstacleCommand.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
+            }
+
+            IReadOnlyList<UnitDataSO> availableBuildings = _buildManager != null ? _buildManager.GetAvailableBuildingsForCurrentScene() : null;
+            if (availableBuildings == null || _townBuildCommands.Count == availableBuildings.Count)
+            {
+                return;
+            }
+
+            _townBuildCommands.Clear();
+            for (int i = 0; i < availableBuildings.Count && i < 5; i++)
+            {
+                UnitDataSO unitData = availableBuildings[i];
+                if (unitData == null)
+                {
+                    continue;
+                }
+
+                TownBuildCommandSO buildCommand = ScriptableObject.CreateInstance<TownBuildCommandSO>();
+                buildCommand.ConfigureRuntime(unitData, i);
+                buildCommand.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
+                _townBuildCommands.Add(buildCommand);
+            }
+        }
+
+        private void SubscribeToTownCommandEvents()
+        {
+            if (_uiEventChannel == null)
+            {
+                return;
+            }
+
+            _uiEventChannel.RemoveListener<TownCommandSelectedEvent>(HandleTownCommandSelected);
+            _uiEventChannel.AddListener<TownCommandSelectedEvent>(HandleTownCommandSelected);
+        }
+
+        private void UnsubscribeFromTownCommandEvents()
+        {
+            if (_uiEventChannel == null)
+            {
+                return;
+            }
+
+            _uiEventChannel.RemoveListener<TownCommandSelectedEvent>(HandleTownCommandSelected);
         }
 
         private void AlignTilesToGrid()
@@ -339,6 +656,7 @@ namespace _01.Code.Tiles
 
         private bool IsCellEmpty(Vector2Int cell)
         {
+            ResolveReferences();
             if (GridManager == null || GridManager.Tilemap == null || GridManager.Tilemap.Tiles == null)
             {
                 return true;
@@ -347,29 +665,87 @@ namespace _01.Code.Tiles
             return GridManager.IsCellEmpty(cell);
         }
 
-        private bool TryRemoveObstacle(Vector2Int cell)
+        public bool TryRemoveSelectedObstacle(Vector2Int cell)
         {
+            ResolveReferences();
             if (GridManager == null || _costManager == null)
             {
                 return false;
             }
 
-            TownObstacle obstacle = GridManager.GetTile(cell)?.TileObject as TownObstacle;
+            TownObstacle obstacle = GetObstacle(cell);
             if (obstacle == null || !obstacle.TryRemove(_costManager))
             {
                 return false;
             }
 
-            _selectedCell = cell;
-            _hasSelectedCell = true;
-            TownInteriorScreenUI?.OpenBuildPanel(cell);
+            _hasSelectedCell = false;
+            TownInteriorScreenUI?.HideBuildPanelExternally();
+            RefreshTiles();
             return true;
+        }
+
+        public bool TryBuildAtCell(UnitDataSO unitData, Vector2Int cell)
+        {
+            ResolveReferences();
+            if (_buildManager == null || GridManager == null || unitData == null)
+            {
+                return false;
+            }
+
+            if (!_buildManager.TryInstall(unitData, GridManager.CellToObjectWorld(cell), out _))
+            {
+                return false;
+            }
+
+            _hasSelectedCell = false;
+            TownInteriorScreenUI?.HideBuildPanelExternally();
+            RefreshTiles();
+            return true;
+        }
+
+        private bool TryGetObstacle(Vector2Int cell, out TownObstacle obstacle)
+        {
+            obstacle = GetObstacle(cell);
+            return obstacle != null;
+        }
+
+        private TownObstacle GetObstacle(Vector2Int cell)
+        {
+            return GridManager?.GetTile(cell)?.TileObject as TownObstacle;
+        }
+
+        private List<TownObstacleDataSO> GetDefaultObstacleVariants()
+        {
+            List<TownObstacleDataSO> variants = new List<TownObstacleDataSO>();
+            for (int i = 0; i < DefaultObstacleVariants.Count; i++)
+            {
+                TownObstacleDataSO variant = DefaultObstacleVariants[i];
+                if (variant == null || variant.Prefab == null || variants.Contains(variant))
+                {
+                    continue;
+                }
+
+                variants.Add(variant);
+            }
+
+            if (variants.Count == 0 && DefaultObstacleData != null && DefaultObstacleData.Prefab != null)
+            {
+                variants.Add(DefaultObstacleData);
+            }
+
+            return variants;
         }
 
         private void SpawnTileObject(TownTileObjectDataSO data, Vector2Int cellPosition)
         {
             if (data == null || data.Prefab == null || !GridManager.IsCellEmpty(cellPosition))
             {
+                if (data != null && data.Prefab != null && GridManager != null && !GridManager.IsCellEmpty(cellPosition))
+                {
+                    _logManager?.Building($"Town startup placement skipped at {cellPosition}: cell already occupied.");
+                }
+
                 return;
             }
 
@@ -382,9 +758,12 @@ namespace _01.Code.Tiles
             spawnedObject.BindSceneServices(GridManager, GameManager.Instance?.GetManager<LogManager>());
             if (!spawnedObject.Initialize(cellPosition))
             {
+                _logManager?.Building($"Town startup placement failed for `{data.name}` at {cellPosition}.", LogLevel.Error);
                 Destroy(spawnedObject.gameObject);
                 return;
             }
+
+            _logManager?.Building($"Town startup placement spawned `{data.name}` at {cellPosition}.");
 
             if (!string.IsNullOrWhiteSpace(data.SaveKey))
             {

@@ -129,11 +129,12 @@ MonoBehaviour:
   <Tile>k__BackingField:
     <Position>k__BackingField: {x: 0, y: 0}
   <GridPosition>k__BackingField: {x: 0, y: 0}
+  <PlacementSaveKey>k__BackingField: 
+  <RuntimeSaveId>k__BackingField: 
+  level: 1
   waveEventChannel: {fileID: 11400000, guid: 0e4a0518e3dd1a2489b812a34a67bfcd, type: 2}
   costEventChannel: {fileID: 11400000, guid: b9313a107d364d1b95a1a38beb70b838, type: 2}
-  collectableBuildingData: {fileID: 11400000, guid: ed28bd6c95b43384696d479ea59fd4b3, type: 2}
-  costType: 0
-  gainCost: 10
+  collectableUnitData: {fileID: 0}
 --- !u!1 &8696924155765760419
 GameObject:
   m_ObjectHideFlags: 0
@@ -144,6 +145,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3302808666755266190}
   - component: {fileID: 5381956793110417020}
+  - component: {fileID: 4973823151146727401}
   m_Layer: 0
   m_Name: Visual
   m_TagString: Untagged
@@ -221,3 +223,20 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &4973823151146727401
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8696924155765760419}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1d6389f596a463f9d9a4eb9595653df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <TargetRenderer>k__BackingField: {fileID: 5381956793110417020}
+  <GlowColor>k__BackingField: {r: 0.66, g: 0.84, b: 1, a: 0.8}
+  <GlowIntensity>k__BackingField: 1.85
+  <GlowScaleMultiplier>k__BackingField: 1.1
+  <SortingOrderOffset>k__BackingField: -1

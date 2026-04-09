@@ -26,6 +26,12 @@ namespace _01.Code.Manager
         public List<SaveDataEntry> dataCollection;
     }
 
+    [Serializable]
+    internal struct PlacementSaveCollectionProbe
+    {
+        public List<PlacementSaveRecord> placements;
+    }
+
     public class SaveManager : BaseManager, IAfterManageable
     {
         [SerializeField] private string saveKey = "defence.saveData";
@@ -49,6 +55,40 @@ namespace _01.Code.Manager
         public bool HasSaveData
         {
             get { return PlayerPrefs.HasKey(saveKey); }
+        }
+
+        public bool HasSavedPlacements()
+        {
+            if (!HasSaveData)
+            {
+                return false;
+            }
+
+            string savedJson = PlayerPrefs.GetString(saveKey, string.Empty);
+            if (string.IsNullOrWhiteSpace(savedJson))
+            {
+                return false;
+            }
+
+            SaveDataCollection dataCollection = JsonUtility.FromJson<SaveDataCollection>(savedJson);
+            if (dataCollection.dataCollection == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < dataCollection.dataCollection.Count; i++)
+            {
+                SaveDataEntry entry = dataCollection.dataCollection[i];
+                if (entry.id != "scene.placements" || string.IsNullOrWhiteSpace(entry.data))
+                {
+                    continue;
+                }
+
+                PlacementSaveCollectionProbe placementCollection = JsonUtility.FromJson<PlacementSaveCollectionProbe>(entry.data);
+                return placementCollection.placements != null && placementCollection.placements.Count > 0;
+            }
+
+            return false;
         }
 
         public void RegisterSaveable(ISaveable saveable)
@@ -123,6 +163,22 @@ namespace _01.Code.Manager
         {
             _isQuitting = true;
             SaveGame();
+        }
+
+        private void Update()
+        {
+            if (!Application.isPlaying || !IsManagerInitialized)
+            {
+                return;
+            }
+
+            if (!Input.GetKeyDown(KeyCode.M))
+            {
+                return;
+            }
+
+            _logManager?.System("Manual save reset requested with M key.");
+            StartNewGame();
         }
 
         [ContextMenu("Save Game")]
@@ -413,6 +469,20 @@ namespace _01.Code.Manager
                     catalog.Add(world.DefaultObstacleData);
                 }
 
+                if (world.DefaultObstacleVariants != null)
+                {
+                    for (int j = 0; j < world.DefaultObstacleVariants.Count; j++)
+                    {
+                        TownObstacleDataSO obstacleVariant = world.DefaultObstacleVariants[j];
+                        if (obstacleVariant == null || catalog.Contains(obstacleVariant))
+                        {
+                            continue;
+                        }
+
+                        catalog.Add(obstacleVariant);
+                    }
+                }
+
                 if (world.DefaultTileObjects == null)
                 {
                     continue;
@@ -448,6 +518,14 @@ namespace _01.Code.Manager
             {
                 saveAgentModules[i]?.Initialize(this);
             }
+
+            PlacementSaveAgent placementSaveAgent = FindFirstObjectByType<PlacementSaveAgent>(FindObjectsInactive.Include);
+            if (placementSaveAgent == null)
+            {
+                placementSaveAgent = gameObject.AddComponent<PlacementSaveAgent>();
+            }
+
+            RegisterSaveable(placementSaveAgent);
         }
 
         private void RestoreDataFromJson(string loadData)

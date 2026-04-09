@@ -44,6 +44,11 @@ namespace _01.Code.Tiles
 
         private void OnMouseDown()
         {
+            if (Application.isPlaying)
+            {
+                return;
+            }
+
             _owner?.HandleTileClicked(Cell);
         }
 

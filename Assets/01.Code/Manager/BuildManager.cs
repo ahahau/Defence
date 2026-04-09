@@ -29,6 +29,11 @@ namespace _01.Code.Manager
         public event Action<UnitDataSO, Vector2Int> OnBuildFailed;
         public event Action OnBuildingMoved;
         public event Action OnBuildingMoveFailed;
+        public GameEventChannelSO UiEventChannel
+        {
+            get { return uiEventChannel; }
+        }
+
         public UnitDataSO SelectedUnit
         {
             get { return _selectionController != null ? _selectionController.SelectedUnit : null; }
