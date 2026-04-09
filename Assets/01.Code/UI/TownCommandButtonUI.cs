@@ -1,24 +1,31 @@
 using _01.Code.TownCommands;
-using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace _01.Code.UI
 {
-    public class TownCommandButtonUI : MonoBehaviour, IUIElement<TownCommandSO, UnityAction>
+    public class TownCommandButtonUI : MonoBehaviour, IUIElement<TownCommandSO, UnityAction>, IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler
     {
         [SerializeField] private Image icon;
         [SerializeField] private Button button;
-        [SerializeField] private TextMeshProUGUI label;
         [SerializeField] private Image background;
+        private TownCommandContext _context;
+        private TownCommandSO _boundCommand;
+        private TownInteriorScreenUI _owner;
 
-        public void Configure(Image iconImage, Button targetButton, TextMeshProUGUI labelText, Image backgroundImage)
+        public void Configure(Image iconImage, Button targetButton, Image backgroundImage, TownInteriorScreenUI owner)
         {
             icon = iconImage;
             button = targetButton;
-            label = labelText;
             background = backgroundImage;
+            _owner = owner;
+        }
+
+        public void BindContext(TownCommandContext context)
+        {
+            _context = context;
         }
 
         private void Awake()
@@ -28,7 +35,7 @@ namespace _01.Code.UI
 
         public void EnableFor(TownCommandSO item, UnityAction callback)
         {
-            if (button == null || label == null)
+            if (button == null)
             {
                 return;
             }
@@ -36,17 +43,17 @@ namespace _01.Code.UI
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(callback);
             button.interactable = true;
-            label.text = item != null ? item.GetDisplayName(null) : string.Empty;
+            _boundCommand = item;
             if (icon != null)
             {
-                Sprite sprite = item != null ? item.GetIcon(null) : null;
+                Sprite sprite = item != null ? item.GetIcon(_context) : null;
                 icon.sprite = sprite;
                 icon.enabled = sprite != null;
             }
 
             if (background != null)
             {
-                background.color = new Color(0.18f, 0.20f, 0.22f, 1f);
+                background.color = new Color(0.82f, 0.84f, 0.88f, 1f);
             }
         }
 
@@ -58,11 +65,6 @@ namespace _01.Code.UI
                 button.onClick.RemoveAllListeners();
             }
 
-            if (label != null)
-            {
-                label.text = string.Empty;
-            }
-
             if (icon != null)
             {
                 icon.sprite = null;
@@ -71,7 +73,30 @@ namespace _01.Code.UI
 
             if (background != null)
             {
-                background.color = new Color(0.10f, 0.11f, 0.12f, 0.65f);
+                background.color = new Color(0.45f, 0.47f, 0.50f, 0.85f);
+            }
+
+            _boundCommand = null;
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            if (_owner != null && _boundCommand != null)
+            {
+                _owner.ShowTooltip(_boundCommand, _context);
+            }
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            _owner?.HideTooltip();
+        }
+
+        public void OnPointerMove(PointerEventData eventData)
+        {
+            if (_owner != null && _boundCommand != null)
+            {
+                _owner.ShowTooltip(_boundCommand, _context);
             }
         }
     }

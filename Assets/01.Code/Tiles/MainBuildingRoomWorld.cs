@@ -371,6 +371,14 @@ namespace _01.Code.Tiles
                 return;
             }
 
+            if (_hasSelectedCell && _selectedCell == cell)
+            {
+                _hasSelectedCell = false;
+                TownInteriorScreenUI?.HideBuildPanelExternally();
+                RefreshTiles();
+                return;
+            }
+
             if (!IsCellEmpty(cell))
             {
                 if (TryGetObstacle(cell, out TownObstacle obstacle))
@@ -382,14 +390,6 @@ namespace _01.Code.Tiles
                     return;
                 }
 
-                _hasSelectedCell = false;
-                TownInteriorScreenUI?.HideBuildPanelExternally();
-                RefreshTiles();
-                return;
-            }
-
-            if (_hasSelectedCell && _selectedCell == cell)
-            {
                 _hasSelectedCell = false;
                 TownInteriorScreenUI?.HideBuildPanelExternally();
                 RefreshTiles();
@@ -569,7 +569,8 @@ namespace _01.Code.Tiles
             }
 
             EnsureCommands();
-            TownInteriorScreenUI.ShowCommands("COMMAND", "Choose a building.", _townBuildCommands);
+            TownCommandContext context = new TownCommandContext(this, _buildManager, _costManager, cell, null);
+            TownInteriorScreenUI.ShowCommands("COMMAND", _townBuildCommands, context);
         }
 
         private void ShowObstacleCommands(TownObstacle obstacle)
@@ -581,11 +582,11 @@ namespace _01.Code.Tiles
 
             EnsureCommands();
             TownObstacleDataSO obstacleData = obstacle.Data as TownObstacleDataSO;
-            int removeCost = obstacleData != null ? obstacleData.RemoveCost : 0;
             string title = obstacle.Data != null && !string.IsNullOrWhiteSpace(obstacle.Data.DisplayName)
                 ? obstacle.Data.DisplayName.ToUpperInvariant()
                 : "OBSTACLE";
-            TownInteriorScreenUI.ShowCommands(title, $"Remove Cost : {removeCost}", new List<TownCommandSO> { _removeObstacleCommand });
+            TownCommandContext context = new TownCommandContext(this, _buildManager, _costManager, obstacle.GridPosition, obstacle);
+            TownInteriorScreenUI.ShowCommands(title, new List<TownCommandSO> { _removeObstacleCommand }, context);
         }
 
         private void EnsureCommands()

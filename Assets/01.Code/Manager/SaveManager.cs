@@ -47,6 +47,7 @@ namespace _01.Code.Manager
         private bool _hasCompletedStartupLoad;
         private bool _isApplyingSave;
         private bool _isQuitting;
+        private bool _skipSaveOnDestroy;
 
         private GridManager _gridManager;
         private LogManager _logManager;
@@ -143,7 +144,7 @@ namespace _01.Code.Manager
                 return;
             }
 
-            if (_hasCompletedStartupLoad && !_isQuitting && !_isApplyingSave)
+            if (_hasCompletedStartupLoad && !_isQuitting && !_isApplyingSave && !_skipSaveOnDestroy)
             {
                 SaveGame();
             }
@@ -246,6 +247,7 @@ namespace _01.Code.Manager
         [ContextMenu("Start New Game")]
         public void StartNewGame()
         {
+            _skipSaveOnDestroy = true;
             DeleteSave();
             ReloadCurrentScene();
         }
