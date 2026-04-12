@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using _01.Code.Cameras;
 using _01.Code.Core;
@@ -35,6 +36,7 @@ namespace _01.Code.Manager
         private Vector2 _pointerDownWorldPosition;
         private Camera _worldCamera;
         private MainBuildingRoomWorld _townInteriorWorld;
+        private BattleCommandPanelController _battleCommandPanel;
 
         public void Initialize(IManagerContainer managerContainer)
         {
@@ -49,6 +51,7 @@ namespace _01.Code.Manager
             RefreshUnitCatalog();
             ResolveWorldCamera();
             ResolveTownInteriorWorld();
+            ResolveBattleCommandPanel(managerContainer);
         }
 
         private void OnDestroy()
@@ -141,6 +144,11 @@ namespace _01.Code.Manager
                 return;
             }
 
+            if (_battleCommandPanel != null && _battleCommandPanel.HandleGroundClicked(worldPosition))
+            {
+                return;
+            }
+
             if (_gridManager == null)
             {
                 return;
@@ -159,6 +167,7 @@ namespace _01.Code.Manager
             }
 
             uiEventChannel.RaiseEvent(UIEvents.UiCancelSelectionRequestedEvent);
+            _battleCommandPanel?.HidePanel();
             ResetPointerState();
         }
 
@@ -341,6 +350,33 @@ namespace _01.Code.Manager
             _townInteriorWorld = FindFirstObjectByType<MainBuildingRoomWorld>();
         }
 
+        private void ResolveBattleCommandPanel(IManagerContainer managerContainer)
+        {
+            if (gameObject.scene.name.IndexOf("Battle", global::System.StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                return;
+            }
+
+            _battleCommandPanel = FindFirstObjectByType<BattleCommandPanelController>(FindObjectsInactive.Include);
+            if (_battleCommandPanel == null)
+            {
+                Canvas canvas = FindFirstObjectByType<Canvas>(FindObjectsInactive.Include);
+                if (canvas == null)
+                {
+                    return;
+                }
+
+                GameObject controllerObject = new GameObject("BattleCommandPanelController");
+                controllerObject.transform.SetParent(canvas.transform, false);
+                _battleCommandPanel = controllerObject.AddComponent<BattleCommandPanelController>();
+            }
+
+            _battleCommandPanel.Initialize(
+                managerContainer.GetManager<BuildManager>(),
+                managerContainer.GetManager<GridManager>(),
+                managerContainer.GetManager<SaveManager>());
+        }
+
         private Collider2D GetHitCollider(Vector2 worldPosition)
         {
             ResolveWorldCamera();
@@ -417,6 +453,11 @@ namespace _01.Code.Manager
 
         private void ClickBuilding(PlaceableEntity building)
         {
+            if (_battleCommandPanel != null && _battleCommandPanel.HandlePlaceableClicked(building))
+            {
+                return;
+            }
+
             _selectedBuilding = building;
         }
 

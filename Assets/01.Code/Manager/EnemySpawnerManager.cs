@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using _01.Code.Core;
 using _01.Code.Enemies;
 using _01.Code.Entities;
@@ -11,6 +12,9 @@ namespace _01.Code.Manager
     // Rule: Spawner lifecycle should be managed only by EnemySpawnerManager.
     public class EnemySpawnerManager : MonoBehaviour, IManageable
     {
+        private const int SpawnRestrictedMin = -5;
+        private const int SpawnRestrictedMax = 5;
+
         [SerializeField] private EnemySpawner enemySpawnerPrefab;
         [SerializeField] private GameEventChannelSO waveEventChannel;
         [SerializeField] private PoolManagerMono enemyPoolManager;
@@ -19,6 +23,7 @@ namespace _01.Code.Manager
         private GridManager _gridManager;
         private LogManager _logManager;
         private SaveManager _saveManager;
+        private TimeManager _timeManager;
 
         public HashSet<EnemySpawner> CurrentWaveEnemySpawnerList { get; } = new HashSet<EnemySpawner>();
         public GameEventChannelSO WaveEventChannel
@@ -36,6 +41,7 @@ namespace _01.Code.Manager
             _gridManager = managerContainer.GetManager<GridManager>();
             _logManager = managerContainer.GetManager<LogManager>();
             _saveManager = managerContainer.GetManager<SaveManager>();
+            _timeManager = managerContainer.GetManager<TimeManager>();
             ResolveChannel();
             waveEventChannel?.AddListener<WaveStartedEvent>(HandleWaveStartedEvent);
             Physics2D.IgnoreLayerCollision(6, 6, true);
@@ -64,6 +70,11 @@ namespace _01.Code.Manager
             }
 
             waveEventChannel?.RaiseEvent(WaveEvents.WaveClearedEvent);
+            if (_timeManager != null)
+            {
+                _gridManager?.TryExpandBattleGridForDay(_timeManager.DayCount);
+            }
+
             SpawnSpawner();
         }
 
@@ -82,6 +93,12 @@ namespace _01.Code.Manager
 
             if (_gridManager == null)
             {
+                return false;
+            }
+
+            if (!_gridManager.EnsureCellAvailable(cellPos))
+            {
+                _logManager?.Enemy($"Failed to restore spawned spawner at {cellPos}: target cell is outside the active battle grid.", LogLevel.Error);
                 return false;
             }
 
@@ -172,7 +189,12 @@ namespace _01.Code.Manager
 
             for (int i = 0; i < 5; i++)
             {
-                Vector2Int cellPos = _gridManager.GetRandomGridPosition();
+                if (!TryGetSpawnerCell(out Vector2Int cellPos))
+                {
+                    _logManager?.Enemy("Failed to find a valid enemy spawner cell outside the restricted center area.", LogLevel.Warning);
+                    return;
+                }
+
                 Vector3 worldPos = _gridManager.CellToObjectWorld(cellPos);
                 EnemySpawner spawner = Instantiate(enemySpawnerPrefab, worldPos, Quaternion.identity);
                 spawner.BindSceneServices(_gridManager, _logManager);
@@ -187,6 +209,34 @@ namespace _01.Code.Manager
                 CurrentWaveEnemySpawnerList.Add(spawner);
                 _saveManager?.RegisterEnemySpawnerForSave(spawner, spawnerSaveKey);
             }
+        }
+
+        private bool TryGetSpawnerCell(out Vector2Int cellPosition)
+        {
+            cellPosition = Vector2Int.zero;
+            if (_gridManager == null)
+            {
+                return false;
+            }
+
+            List<Vector2Int> candidates = _gridManager.ActiveCells
+                .Where(cell => _gridManager.IsCellEmpty(cell) && !IsRestrictedSpawnerCell(cell))
+                .ToList();
+            if (candidates.Count == 0)
+            {
+                return false;
+            }
+
+            cellPosition = candidates[Random.Range(0, candidates.Count)];
+            return true;
+        }
+
+        private bool IsRestrictedSpawnerCell(Vector2Int cell)
+        {
+            return cell.x >= SpawnRestrictedMin &&
+                   cell.x <= SpawnRestrictedMax &&
+                   cell.y >= SpawnRestrictedMin &&
+                   cell.y <= SpawnRestrictedMax;
         }
     }
 }

@@ -50,7 +50,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7aa1b6fa277a474d830fcd831a478ad0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  poolingType: {fileID: 11400000, guid: 0fecb3b7378a85148a12e1ea7003eeb2, type: 2}
+  <PoolingType>k__BackingField: {fileID: 11400000, guid: 0fecb3b7378a85148a12e1ea7003eeb2, type: 2}
   worldOffset: {x: 0, y: 1.2, z: 0}
   riseDistance: 0.75
   lifetime: 0.7

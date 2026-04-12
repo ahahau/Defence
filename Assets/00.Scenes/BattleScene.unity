@@ -1634,6 +1634,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d8f9f5e90b64dec9309b6800651c7c4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <GridManager>k__BackingField: {fileID: 1921869964}
   size: 30
   cellSize: 1
   lineWidth: 0.02
@@ -2317,6 +2318,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1890936405}
   m_CullTransparentMesh: 1
+--- !u!114 &1921869964 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 307213170478159724, guid: 41eab865640196049978c49c9a884162, type: 3}
+  m_PrefabInstance: {fileID: 1809138629}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eefa62690c10446898c6275329609ceb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &2010296551
 PrefabInstance:
   m_ObjectHideFlags: 0

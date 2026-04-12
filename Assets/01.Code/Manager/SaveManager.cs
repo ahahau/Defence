@@ -132,6 +132,7 @@ namespace _01.Code.Manager
             else
             {
                 costEventChannel.RaiseEvent(CostEvents.ApplyNewGameStartingCostsRequestedEvent);
+                _gridManager?.SpawnInitialResources();
             }
 
             _hasCompletedStartupLoad = true;
@@ -209,6 +210,7 @@ namespace _01.Code.Manager
                 RebuildRegistries();
                 EnsureSaveAgents();
                 RestoreDataFromJson(PlayerPrefs.GetString(saveKey, string.Empty));
+                _gridManager?.SpawnInitialResources();
                 uiEventChannel.RaiseEvent(UIEvents.UiRefreshRequestedEvent);
                 return true;
             }
@@ -304,6 +306,28 @@ namespace _01.Code.Manager
                 _gridManager?.TryClear(placement.GridPosition, placement);
                 Destroy(placement.gameObject);
             }
+        }
+
+        public bool CanRestorePlacement(string placementKey)
+        {
+            if (string.IsNullOrWhiteSpace(placementKey))
+            {
+                return false;
+            }
+
+            if (_unitRegistry.TryGetValue(placementKey, out UnitDataSO unitData) && unitData != null && unitData.Prefab != null)
+            {
+                return true;
+            }
+
+            if (_townTileObjectRegistry.TryGetValue(placementKey, out TownTileObjectDataSO townTileObjectData) &&
+                townTileObjectData != null &&
+                townTileObjectData.Prefab != null)
+            {
+                return true;
+            }
+
+            return _enemySpawnerManager != null && placementKey == _enemySpawnerManager.SpawnerSaveKey;
         }
 
         public bool TryCreatePlacement(string placementKey, string runtimeSaveId, Vector2Int gridPosition, out PlaceableEntity placeableEntity)

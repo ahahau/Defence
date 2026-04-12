@@ -22,11 +22,13 @@ namespace _01.Code.Combat
         private Sequence _animationSequence;
         private float _riseProgress;
 
-        public GameObject GameObject { get; private set; }
+        public GameObject GameObject
+        {
+            get { return gameObject; }
+        }
 
         private void Awake()
         {
-            GameObject = gameObject;
             _text = GetComponent<TextMeshPro>();
         }
 

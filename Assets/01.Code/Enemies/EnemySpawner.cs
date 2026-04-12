@@ -13,11 +13,17 @@ namespace _01.Code.Enemies
         [SerializeField] private List<WaveDataSO> waveDataList = new List<WaveDataSO>();
         [SerializeField] private LineRenderer lineRenderer;
         [SerializeField] private float lineWidth = 0.18f;
+        [SerializeField] private Color lineBaseColor = new Color(1f, 1f, 1f, 0.9f);
+        [SerializeField] private float lineBlinkSpeed = 3.2f;
+        [SerializeField] private float lineMinAlpha = 0.2f;
+        [SerializeField] private float lineMaxAlpha = 0.95f;
+        [SerializeField] private float linePulseWidth = 0.08f;
 
         private GridManager _gridManager;
         private LogManager _logManager;
         private EnemySpawnerManager _enemySpawnerManager;
         private readonly HashSet<Enemy> _alive = new HashSet<Enemy>();
+        private MaterialPropertyBlock _linePropertyBlock;
         private bool _isSpawning;
 
         public void Initialize(GridManager gridManager, LogManager logManager, EnemySpawnerManager enemySpawnerManager)
@@ -25,6 +31,13 @@ namespace _01.Code.Enemies
             _gridManager = gridManager;
             _logManager = logManager;
             _enemySpawnerManager = enemySpawnerManager;
+            EnsureLinePropertyBlock();
+            ApplyLineVisuals(Time.time);
+        }
+
+        private void Update()
+        {
+            ApplyLineVisuals(Time.time);
         }
 
         private IEnumerator EnemySpawn(float sec)
@@ -157,11 +170,12 @@ namespace _01.Code.Enemies
             {
                 Vector2Int cell = path[i];
                 Vector3 worldPoint = _gridManager.CellToObjectWorld(cell);
-                Vector3 localPoint = transform.InverseTransformPoint(worldPoint);
-                lineRenderer.SetPosition(i, localPoint);
+                lineRenderer.SetPosition(i, transform.InverseTransformPoint(worldPoint));
             }
 
             lineRenderer.textureScale = Vector2.one;
+            EnsureLinePropertyBlock();
+            ApplyLineVisuals(Time.time);
         }
 
         private List<Vector2Int> CompressPath(List<Vector2Int> sourcePath)
@@ -197,6 +211,49 @@ namespace _01.Code.Enemies
 
             lineRenderer.positionCount = 0;
             lineRenderer.enabled = false;
+        }
+
+        private void EnsureLinePropertyBlock()
+        {
+            if (_linePropertyBlock == null)
+            {
+                _linePropertyBlock = new MaterialPropertyBlock();
+            }
+        }
+
+        private void ApplyLineVisuals(float currentTime)
+        {
+            if (lineRenderer == null || !lineRenderer.enabled || lineRenderer.positionCount < 2)
+            {
+                return;
+            }
+
+            EnsureLinePropertyBlock();
+            float pulsePosition = Mathf.Repeat(currentTime * lineBlinkSpeed, 1f);
+            float halfWidth = Mathf.Max(0.01f, linePulseWidth * 0.5f);
+            GradientAlphaKey[] alphaKeys =
+            {
+                new GradientAlphaKey(lineMinAlpha, 0f),
+                new GradientAlphaKey(lineMinAlpha, Mathf.Clamp01(pulsePosition - halfWidth)),
+                new GradientAlphaKey(lineMaxAlpha, pulsePosition),
+                new GradientAlphaKey(lineMinAlpha, Mathf.Clamp01(pulsePosition + halfWidth)),
+                new GradientAlphaKey(lineMinAlpha, 1f)
+            };
+            GradientColorKey[] colorKeys =
+            {
+                new GradientColorKey(lineBaseColor, 0f),
+                new GradientColorKey(lineBaseColor, 1f)
+            };
+            Gradient gradient = new Gradient();
+            gradient.SetKeys(colorKeys, alphaKeys);
+            lineRenderer.colorGradient = gradient;
+
+            Color currentColor = lineBaseColor;
+            currentColor.a = lineMaxAlpha;
+            lineRenderer.GetPropertyBlock(_linePropertyBlock);
+            _linePropertyBlock.SetColor("_BaseColor", currentColor);
+            _linePropertyBlock.SetColor("_Color", currentColor);
+            lineRenderer.SetPropertyBlock(_linePropertyBlock);
         }
 
         private void NotifySpawnerCleared()

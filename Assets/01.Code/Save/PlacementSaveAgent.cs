@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using _01.Code.Entities;
 using _01.Code.Manager;
 using UnityEngine;
@@ -74,11 +75,24 @@ namespace _01.Code.Save
                 return;
             }
 
+            if (_saveManager == null)
+            {
+                return;
+            }
+
+            List<PlacementSaveRecord> applicableRecords = collection.placements
+                .Where(record => _saveManager.CanRestorePlacement(record.key))
+                .ToList();
+            if (applicableRecords.Count == 0)
+            {
+                return;
+            }
+
             _saveManager.ClearSavedPlacementsInScene();
 
-            for (int i = 0; i < collection.placements.Count; i++)
+            for (int i = 0; i < applicableRecords.Count; i++)
             {
-                PlacementSaveRecord record = collection.placements[i];
+                PlacementSaveRecord record = applicableRecords[i];
                 _saveManager.TryCreatePlacement(
                     record.key,
                     record.runtimeId,

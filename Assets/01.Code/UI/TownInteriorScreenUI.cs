@@ -1,8 +1,11 @@
+using System.Collections;
 using System.Collections.Generic;
 using _01.Code.Core;
 using _01.Code.Events;
 using _01.Code.Manager;
 using _01.Code.TownCommands;
+using _01.Code.TownPanels;
+using _01.Code.Tiles;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -18,12 +21,27 @@ namespace _01.Code.UI
         private const float TooltipCursorOffsetX = 18f;
         private const float TooltipCursorOffsetY = 28f;
         private const float TooltipScreenMargin = 8f;
+        private const float SkillTreeMinZoom = 0.55f;
+        private const float SkillTreeMaxZoom = 1.45f;
+        private const float SkillTreeZoomStep = 0.12f;
 
         [SerializeField] private BuildManager buildManager;
 
         private RectTransform _root;
         private RectTransform _buildPanelRoot;
+        private RectTransform _detailPanelRoot;
         private TextMeshProUGUI _titleText;
+        private TextMeshProUGUI _detailTitleText;
+        private TextMeshProUGUI _detailSectionTitleText;
+        private TextMeshProUGUI _detailBodyText;
+        private RectTransform _detailBodyLayoutRoot;
+        private RectTransform _skillTreeViewportRoot;
+        private RectTransform _skillTreeCanvasRoot;
+        private UILineRenderer _skillTreeLineRenderer;
+        private RectTransform _skillTreeTooltipRoot;
+        private TextMeshProUGUI _skillTreeTooltipTitleText;
+        private TextMeshProUGUI _skillTreeTooltipRequirementText;
+        private TextMeshProUGUI _skillTreeTooltipDescriptionText;
         private RectTransform _tooltipRoot;
         private TextMeshProUGUI _tooltipTitleText;
         private TextMeshProUGUI _tooltipDescriptionText;
@@ -33,6 +51,10 @@ namespace _01.Code.UI
         private readonly List<UIPointerHoverTracker> _hoverTrackers = new();
         private GameEventChannelSO _uiEventChannel;
         private TownCommandContext _currentCommandContext;
+        private bool _isSkillTreeVisible;
+        private float _skillTreeZoom = 1f;
+        private int _consumeWorldClickFrame = -1;
+        private Coroutine _pendingDetailCloseCoroutine;
 
         private void Awake()
         {
@@ -49,6 +71,7 @@ namespace _01.Code.UI
         private void Update()
         {
             UpdateTooltipPosition();
+            HandleSkillTreeZoomInput();
         }
 
         private void ResolveReferences()
@@ -72,6 +95,7 @@ namespace _01.Code.UI
 
             AllowClickThroughForPassiveHud();
             CreateBuildPanel();
+            CreateDetailPanel();
         }
 
         private void AllowClickThroughForPassiveHud()
@@ -108,7 +132,7 @@ namespace _01.Code.UI
 
             ClearPanelChildren(_buildPanelRoot);
             _buildPanelRoot.SetAsLastSibling();
-            ConfigurePanelRoot(_buildPanelRoot);
+            ConfigurePanelRoot(_buildPanelRoot, true);
             RegisterHoverTarget(_buildPanelRoot.gameObject);
 
             RectTransform headerRoot = FindOrCreateRect("HeaderPlate", _buildPanelRoot);
@@ -120,8 +144,8 @@ namespace _01.Code.UI
             RectTransform titleRoot = FindOrCreateRect("PanelTitle", headerRoot);
             ConfigureFillRect(titleRoot);
             _titleText = GetOrAddComponent<TextMeshProUGUI>(titleRoot.gameObject);
-            _titleText.alignment = TextAlignmentOptions.Center;
-            _titleText.color = new Color(1f, 1f, 1f, 1f);
+            _titleText.raycastTarget = false;
+            ConfigureSingleLineText(_titleText);
 
             RectTransform actionSlotsRoot = FindOrCreateRect("ActionSlots", commandRoot);
             ConfigureFillRect(actionSlotsRoot);
@@ -130,23 +154,200 @@ namespace _01.Code.UI
             HideBuildPanelExternally();
         }
 
+        private void CreateDetailPanel()
+        {
+            _detailPanelRoot = FindOrCreateRect("TownObjectDetailsPanel", _root);
+            if (_detailPanelRoot == null)
+            {
+                return;
+            }
+
+            ClearPanelChildren(_detailPanelRoot);
+            _detailPanelRoot.SetAsLastSibling();
+            ConfigurePanelRoot(_detailPanelRoot, false);
+            RegisterHoverTarget(_detailPanelRoot.gameObject);
+
+            RectTransform headerRoot = FindOrCreateRect("DetailHeaderPlate", _detailPanelRoot);
+            ConfigureSection(headerRoot, new Vector2(0.04f, 0.82f), new Vector2(0.96f, 0.95f));
+
+            RectTransform bodyRoot = FindOrCreateRect("DetailBodyPlate", _detailPanelRoot);
+            ConfigureSection(bodyRoot, new Vector2(0.04f, 0.08f), new Vector2(0.96f, 0.78f));
+            RectMask2D bodyMask = GetOrAddComponent<RectMask2D>(bodyRoot.gameObject);
+            bodyMask.padding = Vector4.zero;
+
+            RectTransform titleRoot = FindOrCreateRect("DetailPanelTitle", headerRoot);
+            titleRoot.anchorMin = new Vector2(0.04f, 0f);
+            titleRoot.anchorMax = new Vector2(0.82f, 1f);
+            titleRoot.offsetMin = Vector2.zero;
+            titleRoot.offsetMax = Vector2.zero;
+            _detailTitleText = GetOrAddComponent<TextMeshProUGUI>(titleRoot.gameObject);
+            _detailTitleText.raycastTarget = false;
+            ConfigureSingleLineText(_detailTitleText);
+
+            RectTransform closeButtonRoot = FindOrCreateRect("CloseButton", headerRoot);
+            closeButtonRoot.anchorMin = new Vector2(0.84f, 0.18f);
+            closeButtonRoot.anchorMax = new Vector2(0.96f, 0.82f);
+            closeButtonRoot.offsetMin = Vector2.zero;
+            closeButtonRoot.offsetMax = Vector2.zero;
+            Image closeButtonBackground = GetOrAddComponent<Image>(closeButtonRoot.gameObject);
+            Button closeButton = GetOrAddComponent<Button>(closeButtonRoot.gameObject);
+            closeButton.onClick.RemoveAllListeners();
+            closeButton.onClick.AddListener(RequestCloseObjectWindows);
+            closeButtonBackground.color = new Color(0.48f, 0.18f, 0.18f, 0.98f);
+            RegisterHoverTarget(closeButtonRoot.gameObject);
+
+            RectTransform closeLabelRoot = FindOrCreateRect("Label", closeButtonRoot);
+            ConfigureFillRect(closeLabelRoot);
+            TextMeshProUGUI closeLabel = GetOrAddComponent<TextMeshProUGUI>(closeLabelRoot.gameObject);
+            closeLabel.text = "X";
+            closeLabel.raycastTarget = false;
+            ConfigureSingleLineText(closeLabel);
+
+            RectTransform bodyLayoutRoot = FindOrCreateRect("DetailBodyLayout", bodyRoot);
+            ConfigureFillRect(bodyLayoutRoot);
+            _detailBodyLayoutRoot = bodyLayoutRoot;
+            VerticalLayoutGroup bodyLayout = GetOrAddComponent<VerticalLayoutGroup>(bodyLayoutRoot.gameObject);
+            bodyLayout.spacing = 8f;
+            bodyLayout.padding = new RectOffset(12, 12, 12, 12);
+            bodyLayout.childAlignment = TextAnchor.UpperLeft;
+            bodyLayout.childControlWidth = true;
+            bodyLayout.childControlHeight = false;
+            bodyLayout.childForceExpandWidth = true;
+            bodyLayout.childForceExpandHeight = false;
+
+            RectTransform sectionTitleRoot = FindOrCreateRect("DetailSectionTitle", bodyLayoutRoot);
+            LayoutElement sectionTitleLayout = GetOrAddComponent<LayoutElement>(sectionTitleRoot.gameObject);
+            sectionTitleLayout.preferredHeight = 28f;
+            _detailSectionTitleText = GetOrAddComponent<TextMeshProUGUI>(sectionTitleRoot.gameObject);
+            _detailSectionTitleText.raycastTarget = false;
+            ConfigureSingleLineText(_detailSectionTitleText);
+
+            RectTransform bodyTextRoot = FindOrCreateRect("DetailSectionBody", bodyLayoutRoot);
+            LayoutElement bodyTextLayout = GetOrAddComponent<LayoutElement>(bodyTextRoot.gameObject);
+            bodyTextLayout.flexibleHeight = 1f;
+            _detailBodyText = GetOrAddComponent<TextMeshProUGUI>(bodyTextRoot.gameObject);
+            _detailBodyText.raycastTarget = false;
+            ConfigureMultiLineText(_detailBodyText);
+
+            CreateSkillTreeTooltip(bodyRoot);
+
+            HideObjectDetailsExternally();
+        }
+
         public void ShowCommands(string title, List<TownCommandSO> commands, TownCommandContext context)
         {
             ResolveReferences();
             _currentCommandContext = context;
             SetBuildPanelVisible(true);
-            _titleText.text = title;
+            if (_titleText != null)
+            {
+                _titleText.text = title;
+            }
+
             RenderCommands(commands);
+        }
+
+        public void ShowObjectSectionWindow(TownTileObjectDataSO data, TownObjectPanelSectionSO section)
+        {
+            if (_detailPanelRoot == null || data == null || data.InteractionPanel == null || section == null)
+            {
+                HideObjectDetailsExternally();
+                return;
+            }
+
+            if (_detailTitleText != null)
+            {
+                _detailTitleText.text = data.InteractionPanel.GetPanelTitle(data);
+            }
+
+            if (_detailSectionTitleText != null)
+            {
+                _detailSectionTitleText.text = section.GetSectionTitle();
+            }
+
+            if (_detailBodyText != null)
+            {
+                _detailBodyText.text = section.GetBodyText();
+            }
+
+            bool isSkillTree = section is TownSkillTreePanelSectionSO;
+            ConfigureDetailWindowLayout(isSkillTree);
+            RenderSectionVisual(section);
+            SetDetailPanelVisible(true);
         }
 
         public void HideBuildPanelExternally()
         {
+            ConsumeCurrentClickFrame();
             _currentCommandContext = null;
             HideTooltip();
             SetBuildPanelVisible(false);
             for (int i = 0; i < _actionSlots.Count; i++)
             {
                 _actionSlots[i].Disable();
+            }
+        }
+
+        public void HideObjectDetailsExternally()
+        {
+            ConsumeCurrentClickFrame();
+            CancelPendingDetailClose();
+            HideTooltip();
+            HideSkillTreeNodeTooltip();
+            SetDetailPanelVisible(false);
+            _isSkillTreeVisible = false;
+            _skillTreeZoom = 1f;
+
+            if (_detailTitleText != null)
+            {
+                _detailTitleText.text = string.Empty;
+            }
+
+            if (_detailSectionTitleText != null)
+            {
+                _detailSectionTitleText.text = string.Empty;
+            }
+
+            if (_detailBodyText != null)
+            {
+                _detailBodyText.text = string.Empty;
+            }
+            ClearSkillTreeCanvas();
+        }
+
+        public void ShowSkillTreeNodeTooltip(TownSkillTreeNodeEntry node)
+        {
+            if (_skillTreeTooltipRoot == null || node == null)
+            {
+                return;
+            }
+
+            if (_skillTreeTooltipTitleText != null)
+            {
+                _skillTreeTooltipTitleText.text = node.NodeName;
+            }
+
+            if (_skillTreeTooltipRequirementText != null)
+            {
+                _skillTreeTooltipRequirementText.text = string.IsNullOrWhiteSpace(node.Requirement)
+                    ? string.Empty
+                    : $"Requirement: {node.Requirement}";
+                _skillTreeTooltipRequirementText.gameObject.SetActive(!string.IsNullOrWhiteSpace(node.Requirement));
+            }
+
+            if (_skillTreeTooltipDescriptionText != null)
+            {
+                _skillTreeTooltipDescriptionText.text = node.EffectDescription;
+            }
+
+            _skillTreeTooltipRoot.gameObject.SetActive(true);
+        }
+
+        public void HideSkillTreeNodeTooltip()
+        {
+            if (_skillTreeTooltipRoot != null)
+            {
+                _skillTreeTooltipRoot.gameObject.SetActive(false);
             }
         }
 
@@ -169,7 +370,6 @@ namespace _01.Code.UI
             }
 
             _tooltipCostText.color = command.CanAfford(context) ? Color.white : Color.red;
-
             _tooltipRoot.gameObject.SetActive(true);
             UpdateTooltipPosition();
         }
@@ -184,7 +384,13 @@ namespace _01.Code.UI
 
         public bool IsPointerOverBuildPanel()
         {
-            if (_buildPanelRoot == null || !_buildPanelRoot.gameObject.activeSelf)
+            if (_consumeWorldClickFrame == Time.frameCount)
+            {
+                return true;
+            }
+
+            if ((_buildPanelRoot == null || !_buildPanelRoot.gameObject.activeSelf) &&
+                (_detailPanelRoot == null || !_detailPanelRoot.gameObject.activeSelf))
             {
                 return false;
             }
@@ -268,12 +474,19 @@ namespace _01.Code.UI
                 background.color = new Color(0.72f, 0.74f, 0.78f, 0.98f);
 
                 Button button = GetOrAddComponent<Button>(slotRoot.gameObject);
+
                 RectTransform iconRoot = FindOrCreateRect("Icon", slotRoot);
                 ConfigureSlotIconRect(iconRoot);
                 Image icon = GetOrAddComponent<Image>(iconRoot.gameObject);
 
+                RectTransform labelRoot = FindOrCreateRect("Label", slotRoot);
+                ConfigureSlotLabelRect(labelRoot);
+                TextMeshProUGUI label = GetOrAddComponent<TextMeshProUGUI>(labelRoot.gameObject);
+                label.raycastTarget = false;
+                ConfigureSingleLineText(label);
+
                 TownCommandButtonUI buttonUi = GetOrAddComponent<TownCommandButtonUI>(slotRoot.gameObject);
-                buttonUi.Configure(icon, button, background, this);
+                buttonUi.Configure(icon, button, background, label, this);
                 buttonUi.Disable();
                 _actionSlots.Add(buttonUi);
                 RegisterHoverTarget(slotRoot.gameObject);
@@ -288,8 +501,33 @@ namespace _01.Code.UI
             }
         }
 
-        private void ConfigurePanelRoot(RectTransform panelRoot)
+        private void SetDetailPanelVisible(bool visible)
         {
+            if (_detailPanelRoot != null)
+            {
+                _detailPanelRoot.gameObject.SetActive(visible);
+            }
+        }
+
+        private void ConfigurePanelRoot(RectTransform panelRoot, bool isBottomPanel)
+        {
+            if (isBottomPanel)
+            {
+                panelRoot.anchorMin = new Vector2(0.5f, 0f);
+                panelRoot.anchorMax = new Vector2(0.5f, 0f);
+                panelRoot.pivot = new Vector2(0.5f, 0f);
+                panelRoot.anchoredPosition = new Vector2(0f, 60f);
+                panelRoot.sizeDelta = new Vector2(520f, 190f);
+            }
+            else
+            {
+                panelRoot.anchorMin = new Vector2(1f, 1f);
+                panelRoot.anchorMax = new Vector2(1f, 1f);
+                panelRoot.pivot = new Vector2(1f, 1f);
+                panelRoot.anchoredPosition = new Vector2(-24f, -24f);
+                panelRoot.sizeDelta = new Vector2(360f, 320f);
+            }
+
             Image background = GetOrAddComponent<Image>(panelRoot.gameObject);
             background.color = new Color(0.26f, 0.28f, 0.31f, 0.98f);
 
@@ -302,6 +540,300 @@ namespace _01.Code.UI
             shadow.effectColor = Color.black;
             shadow.effectDistance = new Vector2(4f, -4f);
             shadow.useGraphicAlpha = false;
+        }
+
+        private void ConfigureDetailWindowLayout(bool isSkillTree)
+        {
+            if (_detailPanelRoot == null)
+            {
+                return;
+            }
+
+            _isSkillTreeVisible = isSkillTree;
+
+            if (isSkillTree)
+            {
+                _detailPanelRoot.anchorMin = new Vector2(0.04f, 0.06f);
+                _detailPanelRoot.anchorMax = new Vector2(0.96f, 0.94f);
+                _detailPanelRoot.pivot = new Vector2(0.5f, 0.5f);
+                _detailPanelRoot.anchoredPosition = Vector2.zero;
+                _detailPanelRoot.offsetMin = Vector2.zero;
+                _detailPanelRoot.offsetMax = Vector2.zero;
+                return;
+            }
+
+            _detailPanelRoot.anchorMin = new Vector2(1f, 1f);
+            _detailPanelRoot.anchorMax = new Vector2(1f, 1f);
+            _detailPanelRoot.pivot = new Vector2(1f, 1f);
+            _detailPanelRoot.anchoredPosition = new Vector2(-24f, -24f);
+            _detailPanelRoot.sizeDelta = new Vector2(360f, 320f);
+        }
+
+        private void RenderSectionVisual(TownObjectPanelSectionSO section)
+        {
+            ClearSkillTreeCanvas();
+            if (section is not TownSkillTreePanelSectionSO skillTreeSection)
+            {
+                if (_detailBodyLayoutRoot != null)
+                {
+                    _detailBodyLayoutRoot.gameObject.SetActive(true);
+                }
+
+                if (_detailSectionTitleText != null)
+                {
+                    _detailSectionTitleText.gameObject.SetActive(true);
+                }
+
+                if (_detailBodyText != null)
+                {
+                    _detailBodyText.gameObject.SetActive(true);
+                }
+
+                return;
+            }
+
+            if (_detailBodyLayoutRoot != null)
+            {
+                _detailBodyLayoutRoot.gameObject.SetActive(true);
+            }
+
+            if (_detailSectionTitleText != null)
+            {
+                _detailSectionTitleText.gameObject.SetActive(false);
+            }
+
+            if (_detailBodyText != null)
+            {
+                _detailBodyText.gameObject.SetActive(false);
+            }
+
+            CreateSkillTreeCanvas();
+            RenderSkillTree(skillTreeSection);
+        }
+
+        private void CreateSkillTreeCanvas()
+        {
+            if (_detailBodyLayoutRoot == null)
+            {
+                return;
+            }
+
+            _skillTreeViewportRoot = FindOrCreateRect("SkillTreeViewport", _detailBodyLayoutRoot);
+            _skillTreeViewportRoot.SetAsLastSibling();
+            _skillTreeViewportRoot.anchorMin = new Vector2(0f, 0f);
+            _skillTreeViewportRoot.anchorMax = new Vector2(1f, 1f);
+            _skillTreeViewportRoot.offsetMin = new Vector2(8f, 8f);
+            _skillTreeViewportRoot.offsetMax = new Vector2(-8f, -8f);
+            Image viewportBackground = GetOrAddComponent<Image>(_skillTreeViewportRoot.gameObject);
+            viewportBackground.color = new Color(0.16f, 0.18f, 0.20f, 0.92f);
+            RectMask2D viewportMask = GetOrAddComponent<RectMask2D>(_skillTreeViewportRoot.gameObject);
+            viewportMask.padding = Vector4.zero;
+
+            _skillTreeCanvasRoot = FindOrCreateRect("SkillTreeCanvas", _skillTreeViewportRoot);
+            _skillTreeCanvasRoot.anchorMin = new Vector2(0.5f, 0.5f);
+            _skillTreeCanvasRoot.anchorMax = new Vector2(0.5f, 0.5f);
+            _skillTreeCanvasRoot.pivot = new Vector2(0.5f, 0.5f);
+            _skillTreeCanvasRoot.anchoredPosition = Vector2.zero;
+            _skillTreeCanvasRoot.sizeDelta = new Vector2(1200f, 800f);
+            _skillTreeCanvasRoot.localScale = Vector3.one * _skillTreeZoom;
+
+            Image canvasBackground = GetOrAddComponent<Image>(_skillTreeCanvasRoot.gameObject);
+            canvasBackground.color = new Color(0f, 0f, 0f, 0f);
+            canvasBackground.raycastTarget = false;
+
+            RectTransform lineRoot = FindOrCreateRect("SkillTreeLines", _skillTreeCanvasRoot);
+            ConfigureFillRect(lineRoot);
+            _skillTreeLineRenderer = GetOrAddComponent<UILineRenderer>(lineRoot.gameObject);
+            _skillTreeLineRenderer.color = new Color(0.88f, 0.80f, 0.36f, 0.95f);
+            _skillTreeLineRenderer.raycastTarget = false;
+        }
+
+        private void CreateSkillTreeTooltip(RectTransform parent)
+        {
+            _skillTreeTooltipRoot = FindOrCreateRect("SkillTreeTooltip", parent);
+            _skillTreeTooltipRoot.SetAsLastSibling();
+            _skillTreeTooltipRoot.anchorMin = new Vector2(1f, 1f);
+            _skillTreeTooltipRoot.anchorMax = new Vector2(1f, 1f);
+            _skillTreeTooltipRoot.pivot = new Vector2(1f, 1f);
+            _skillTreeTooltipRoot.anchoredPosition = new Vector2(-12f, -12f);
+            _skillTreeTooltipRoot.sizeDelta = new Vector2(260f, 128f);
+
+            Image background = GetOrAddComponent<Image>(_skillTreeTooltipRoot.gameObject);
+            background.color = new Color(0.08f, 0.09f, 0.11f, 0.96f);
+            RectMask2D tooltipMask = GetOrAddComponent<RectMask2D>(_skillTreeTooltipRoot.gameObject);
+            tooltipMask.padding = Vector4.zero;
+
+            VerticalLayoutGroup layoutGroup = GetOrAddComponent<VerticalLayoutGroup>(_skillTreeTooltipRoot.gameObject);
+            layoutGroup.spacing = 6f;
+            layoutGroup.padding = new RectOffset(12, 12, 12, 12);
+            layoutGroup.childAlignment = TextAnchor.UpperLeft;
+            layoutGroup.childControlWidth = true;
+            layoutGroup.childControlHeight = false;
+            layoutGroup.childForceExpandWidth = true;
+            layoutGroup.childForceExpandHeight = false;
+
+            RectTransform titleRoot = FindOrCreateRect("Title", _skillTreeTooltipRoot);
+            LayoutElement titleLayout = GetOrAddComponent<LayoutElement>(titleRoot.gameObject);
+            titleLayout.preferredHeight = 24f;
+            _skillTreeTooltipTitleText = GetOrAddComponent<TextMeshProUGUI>(titleRoot.gameObject);
+            _skillTreeTooltipTitleText.raycastTarget = false;
+            ConfigureSingleLineText(_skillTreeTooltipTitleText);
+
+            RectTransform requirementRoot = FindOrCreateRect("Requirement", _skillTreeTooltipRoot);
+            LayoutElement requirementLayout = GetOrAddComponent<LayoutElement>(requirementRoot.gameObject);
+            requirementLayout.preferredHeight = 22f;
+            _skillTreeTooltipRequirementText = GetOrAddComponent<TextMeshProUGUI>(requirementRoot.gameObject);
+            _skillTreeTooltipRequirementText.raycastTarget = false;
+            ConfigureSingleLineText(_skillTreeTooltipRequirementText);
+
+            RectTransform descriptionRoot = FindOrCreateRect("Description", _skillTreeTooltipRoot);
+            LayoutElement descriptionLayout = GetOrAddComponent<LayoutElement>(descriptionRoot.gameObject);
+            descriptionLayout.preferredHeight = 60f;
+            _skillTreeTooltipDescriptionText = GetOrAddComponent<TextMeshProUGUI>(descriptionRoot.gameObject);
+            _skillTreeTooltipDescriptionText.raycastTarget = false;
+            ConfigureMultiLineText(_skillTreeTooltipDescriptionText);
+
+            _skillTreeTooltipRoot.gameObject.SetActive(false);
+        }
+
+        private void RenderSkillTree(TownSkillTreePanelSectionSO section)
+        {
+            if (section == null || _skillTreeCanvasRoot == null || _skillTreeLineRenderer == null)
+            {
+                return;
+            }
+
+            Dictionary<string, Vector2> nodeCenters = new Dictionary<string, Vector2>();
+            for (int i = _skillTreeCanvasRoot.childCount - 1; i >= 0; i--)
+            {
+                Transform child = _skillTreeCanvasRoot.GetChild(i);
+                if (child.name == "SkillTreeLines")
+                {
+                    continue;
+                }
+
+                DestroyImmediate(child.gameObject);
+            }
+
+            Rect canvasRect = _skillTreeCanvasRoot.rect;
+            for (int i = 0; i < section.Nodes.Count; i++)
+            {
+                TownSkillTreeNodeEntry node = section.Nodes[i];
+                if (node == null || string.IsNullOrWhiteSpace(node.NodeName))
+                {
+                    continue;
+                }
+
+                RectTransform nodeRoot = FindOrCreateRect($"Node_{i}", _skillTreeCanvasRoot);
+                nodeRoot.sizeDelta = new Vector2(148f, 60f);
+                nodeRoot.anchorMin = new Vector2(0f, 0f);
+                nodeRoot.anchorMax = new Vector2(0f, 0f);
+                nodeRoot.pivot = new Vector2(0.5f, 0.5f);
+                nodeRoot.anchoredPosition = node.CanvasPosition;
+
+                Image background = GetOrAddComponent<Image>(nodeRoot.gameObject);
+                background.color = new Color(0.17f, 0.19f, 0.22f, 0.98f);
+
+                Outline outline = GetOrAddComponent<Outline>(nodeRoot.gameObject);
+                outline.effectColor = new Color(0.76f, 0.70f, 0.38f, 0.90f);
+                outline.effectDistance = new Vector2(1f, -1f);
+
+                Shadow shadow = GetOrAddComponent<Shadow>(nodeRoot.gameObject);
+                shadow.effectColor = new Color(0f, 0f, 0f, 0.28f);
+                shadow.effectDistance = new Vector2(4f, -4f);
+
+                RectTransform titleRoot = FindOrCreateRect("Title", nodeRoot);
+                titleRoot.anchorMin = new Vector2(0.08f, 0.16f);
+                titleRoot.anchorMax = new Vector2(0.92f, 0.84f);
+                titleRoot.offsetMin = Vector2.zero;
+                titleRoot.offsetMax = Vector2.zero;
+                TextMeshProUGUI title = GetOrAddComponent<TextMeshProUGUI>(titleRoot.gameObject);
+                title.text = node.NodeName;
+                title.alignment = TextAlignmentOptions.Center;
+                title.raycastTarget = false;
+                ConfigureSingleLineText(title);
+
+                RectTransform descriptionRoot = FindOrCreateRect("Description", nodeRoot);
+                descriptionRoot.anchorMin = new Vector2(0f, 0f);
+                descriptionRoot.anchorMax = new Vector2(0f, 0f);
+                descriptionRoot.offsetMin = Vector2.zero;
+                descriptionRoot.offsetMax = Vector2.zero;
+                TextMeshProUGUI description = GetOrAddComponent<TextMeshProUGUI>(descriptionRoot.gameObject);
+                description.text = string.Empty;
+                description.gameObject.SetActive(false);
+                description.raycastTarget = false;
+                ConfigureMultiLineText(description);
+
+                TownSkillTreeNodeUI nodeUi = GetOrAddComponent<TownSkillTreeNodeUI>(nodeRoot.gameObject);
+                nodeUi.Configure(this, node, title, description);
+                RegisterHoverTarget(nodeRoot.gameObject);
+
+                nodeCenters[node.NodeName] = node.CanvasPosition;
+            }
+
+            List<Vector2> linePoints = new List<Vector2>();
+            for (int i = 0; i < section.Nodes.Count; i++)
+            {
+                TownSkillTreeNodeEntry node = section.Nodes[i];
+                if (node == null || string.IsNullOrWhiteSpace(node.NodeName) || node.NextNodeNames == null)
+                {
+                    continue;
+                }
+
+                if (!nodeCenters.TryGetValue(node.NodeName, out Vector2 start))
+                {
+                    continue;
+                }
+
+                for (int j = 0; j < node.NextNodeNames.Count; j++)
+                {
+                    string nextNodeName = node.NextNodeNames[j];
+                    if (string.IsNullOrWhiteSpace(nextNodeName) || !nodeCenters.TryGetValue(nextNodeName, out Vector2 end))
+                    {
+                        continue;
+                    }
+
+                    linePoints.Add(start);
+                    linePoints.Add(end);
+                }
+            }
+
+            _skillTreeLineRenderer.SetPoints(linePoints);
+        }
+
+        private void ClearSkillTreeCanvas()
+        {
+            if (_skillTreeCanvasRoot != null)
+            {
+                DestroyImmediate(_skillTreeCanvasRoot.gameObject);
+                _skillTreeCanvasRoot = null;
+            }
+
+            if (_skillTreeViewportRoot != null)
+            {
+                DestroyImmediate(_skillTreeViewportRoot.gameObject);
+                _skillTreeViewportRoot = null;
+            }
+
+            _skillTreeLineRenderer = null;
+        }
+
+        private void HandleSkillTreeZoomInput()
+        {
+            if (!_isSkillTreeVisible || _skillTreeCanvasRoot == null || !IsPointerOverBuildPanel())
+            {
+                return;
+            }
+
+            float scrollDelta = Input.mouseScrollDelta.y;
+            if (Mathf.Approximately(scrollDelta, 0f))
+            {
+                return;
+            }
+
+            _skillTreeZoom += scrollDelta > 0f ? SkillTreeZoomStep : -SkillTreeZoomStep;
+            _skillTreeZoom = Mathf.Clamp(_skillTreeZoom, SkillTreeMinZoom, SkillTreeMaxZoom);
+            _skillTreeCanvasRoot.localScale = Vector3.one * _skillTreeZoom;
         }
 
         private void ConfigureSection(RectTransform sectionRoot, Vector2 anchorMin, Vector2 anchorMax)
@@ -340,11 +872,20 @@ namespace _01.Code.UI
 
         private void ConfigureSlotIconRect(RectTransform iconRoot)
         {
-            iconRoot.anchorMin = new Vector2(0.18f, 0.36f);
+            iconRoot.anchorMin = new Vector2(0.18f, 0.38f);
             iconRoot.anchorMax = new Vector2(0.82f, 0.80f);
             iconRoot.pivot = new Vector2(0.5f, 0.5f);
             iconRoot.offsetMin = Vector2.zero;
             iconRoot.offsetMax = Vector2.zero;
+        }
+
+        private void ConfigureSlotLabelRect(RectTransform labelRoot)
+        {
+            labelRoot.anchorMin = new Vector2(0.08f, 0.06f);
+            labelRoot.anchorMax = new Vector2(0.92f, 0.30f);
+            labelRoot.pivot = new Vector2(0.5f, 0.5f);
+            labelRoot.offsetMin = Vector2.zero;
+            labelRoot.offsetMax = Vector2.zero;
         }
 
         private void RegisterHoverTarget(GameObject target)
@@ -372,11 +913,10 @@ namespace _01.Code.UI
             _tooltipRoot.sizeDelta = new Vector2(220f, 94f);
 
             Image background = GetOrAddComponent<Image>(_tooltipRoot.gameObject);
-            if (background != null)
-            {
-                background.color = new Color(0.10f, 0.10f, 0.12f, 0.96f);
-                background.raycastTarget = false;
-            }
+            background.color = new Color(0.10f, 0.10f, 0.12f, 0.96f);
+            background.raycastTarget = false;
+            RectMask2D tooltipMask = GetOrAddComponent<RectMask2D>(_tooltipRoot.gameObject);
+            tooltipMask.padding = Vector4.zero;
 
             VerticalLayoutGroup layoutGroup = GetOrAddComponent<VerticalLayoutGroup>(_tooltipRoot.gameObject);
             layoutGroup.spacing = 4f;
@@ -388,35 +928,22 @@ namespace _01.Code.UI
             layoutGroup.childForceExpandHeight = false;
 
             ContentSizeFitter fitter = GetOrAddComponent<ContentSizeFitter>(_tooltipRoot.gameObject);
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
 
             RectTransform tooltipTitleRoot = FindOrCreateRect("TooltipTitle", _tooltipRoot);
-            if (tooltipTitleRoot == null)
-            {
-                return;
-            }
-
             LayoutElement titleLayout = GetOrAddComponent<LayoutElement>(tooltipTitleRoot.gameObject);
             titleLayout.preferredHeight = 22f;
             _tooltipTitleText = GetOrAddComponent<TextMeshProUGUI>(tooltipTitleRoot.gameObject);
-            if (_tooltipTitleText != null)
-            {
-                _tooltipTitleText.alignment = TextAlignmentOptions.Left;
-                _tooltipTitleText.color = new Color(1f, 1f, 1f, 1f);
-                _tooltipTitleText.raycastTarget = false;
-            }
+            _tooltipTitleText.raycastTarget = false;
+            ConfigureSingleLineText(_tooltipTitleText);
 
             RectTransform tooltipDescriptionRoot = FindOrCreateRect("TooltipDescription", _tooltipRoot);
             LayoutElement descriptionLayout = GetOrAddComponent<LayoutElement>(tooltipDescriptionRoot.gameObject);
             descriptionLayout.preferredHeight = 36f;
             _tooltipDescriptionText = GetOrAddComponent<TextMeshProUGUI>(tooltipDescriptionRoot.gameObject);
-            if (_tooltipDescriptionText != null)
-            {
-                _tooltipDescriptionText.alignment = TextAlignmentOptions.TopLeft;
-                _tooltipDescriptionText.color = new Color(0.90f, 0.92f, 0.95f, 1f);
-                _tooltipDescriptionText.textWrappingMode = TextWrappingModes.Normal;
-                _tooltipDescriptionText.raycastTarget = false;
-            }
+            _tooltipDescriptionText.raycastTarget = false;
+            ConfigureMultiLineText(_tooltipDescriptionText);
 
             RectTransform tooltipCostRoot = FindOrCreateRect("TooltipCostRow", _tooltipRoot);
             HorizontalLayoutGroup costLayout = GetOrAddComponent<HorizontalLayoutGroup>(tooltipCostRoot.gameObject);
@@ -434,22 +961,15 @@ namespace _01.Code.UI
             costIconLayout.preferredWidth = 14f;
             costIconLayout.preferredHeight = 14f;
             _tooltipCostIcon = GetOrAddComponent<Image>(tooltipCostIconRoot.gameObject);
-            if (_tooltipCostIcon != null)
-            {
-                _tooltipCostIcon.raycastTarget = false;
-            }
+            _tooltipCostIcon.raycastTarget = false;
 
             RectTransform tooltipCostTextRoot = FindOrCreateRect("TooltipCostText", tooltipCostRoot);
             LayoutElement costTextLayout = GetOrAddComponent<LayoutElement>(tooltipCostTextRoot.gameObject);
             costTextLayout.preferredWidth = 48f;
             costTextLayout.preferredHeight = 18f;
             _tooltipCostText = GetOrAddComponent<TextMeshProUGUI>(tooltipCostTextRoot.gameObject);
-            if (_tooltipCostText != null)
-            {
-                _tooltipCostText.alignment = TextAlignmentOptions.Left;
-                _tooltipCostText.color = new Color(1f, 1f, 1f, 1f);
-                _tooltipCostText.raycastTarget = false;
-            }
+            _tooltipCostText.raycastTarget = false;
+            ConfigureSingleLineText(_tooltipCostText);
 
             _tooltipRoot.gameObject.SetActive(false);
         }
@@ -502,8 +1022,7 @@ namespace _01.Code.UI
         {
             for (int i = panelRoot.childCount - 1; i >= 0; i--)
             {
-                Transform child = panelRoot.GetChild(i);
-                DestroyImmediate(child.gameObject);
+                DestroyImmediate(panelRoot.GetChild(i).gameObject);
             }
         }
 
@@ -547,6 +1066,71 @@ namespace _01.Code.UI
             }
 
             return component;
+        }
+
+        private void ConsumeCurrentClickFrame()
+        {
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            _consumeWorldClickFrame = Time.frameCount;
+        }
+
+        private void RequestCloseObjectWindows()
+        {
+            ConsumeCurrentClickFrame();
+            if (!Application.isPlaying)
+            {
+                HideBuildPanelExternally();
+                HideObjectDetailsExternally();
+                return;
+            }
+
+            CancelPendingDetailClose();
+            _pendingDetailCloseCoroutine = StartCoroutine(CloseObjectWindowsDeferred());
+        }
+
+        private IEnumerator CloseObjectWindowsDeferred()
+        {
+            yield return null;
+            _pendingDetailCloseCoroutine = null;
+            HideBuildPanelExternally();
+            HideObjectDetailsExternally();
+        }
+
+        private void CancelPendingDetailClose()
+        {
+            if (_pendingDetailCloseCoroutine == null)
+            {
+                return;
+            }
+
+            StopCoroutine(_pendingDetailCloseCoroutine);
+            _pendingDetailCloseCoroutine = null;
+        }
+
+        private void ConfigureSingleLineText(TextMeshProUGUI text)
+        {
+            if (text == null)
+            {
+                return;
+            }
+
+            text.textWrappingMode = TextWrappingModes.NoWrap;
+            text.overflowMode = TextOverflowModes.Ellipsis;
+        }
+
+        private void ConfigureMultiLineText(TextMeshProUGUI text)
+        {
+            if (text == null)
+            {
+                return;
+            }
+
+            text.textWrappingMode = TextWrappingModes.Normal;
+            text.overflowMode = TextOverflowModes.Ellipsis;
         }
     }
 }

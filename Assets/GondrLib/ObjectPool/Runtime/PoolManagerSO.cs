@@ -19,8 +19,30 @@ namespace GondrLib.ObjectPool.Runtime
 
             foreach (var item in itemList)
             {
+                if (item == null)
+                {
+                    Debug.LogWarning("PoolManagerSO has a null PoolingItemSO entry.", this);
+                    continue;
+                }
+
+                if (item.prefab == null)
+                {
+                    Debug.LogWarning($"Pooling item `{item.name}` has no prefab assigned.", item);
+                    continue;
+                }
+
                 IPoolable poolable = item.prefab.GetComponent<IPoolable>();
-                Debug.Assert(poolable != default(IPoolable), $"Pooling item {item.prefab.name} has no poolable component" );
+                if (poolable == default(IPoolable))
+                {
+                    Debug.LogWarning($"Pooling item `{item.prefab.name}` has no IPoolable component.", item.prefab);
+                    continue;
+                }
+
+                if (poolable.PoolingType == null)
+                {
+                    Debug.LogWarning($"Pooling prefab `{item.prefab.name}` has no PoolingType assigned.", item.prefab);
+                    continue;
+                }
 
                 GameObject newParent = new GameObject(poolable.PoolingType.poolingName);
                 newParent.transform.SetParent(_rootTrm);

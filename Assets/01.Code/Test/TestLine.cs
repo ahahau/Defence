@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using _01.Code.Manager;
 using UnityEngine;
 using UnityEngine.Rendering;
 #if UNITY_EDITOR
@@ -9,6 +11,7 @@ namespace _01.Code.Test
     [ExecuteAlways]
     public class TestLine : MonoBehaviour
     {
+        [field: SerializeField] public GridManager GridManager { get; private set; }
         [Min(1)] public int size = 30;
         [Min(0.1f)] public float cellSize = 1f;
         [Min(0.001f)] public float lineWidth = 0.03f;
@@ -18,6 +21,7 @@ namespace _01.Code.Test
 
         private void Awake()
         {
+            ResolveGridManager();
             if (IsUnset(gizmoColor))
             {
                 gizmoColor = GetWhiteWithAlpha(0.2f);
@@ -25,6 +29,11 @@ namespace _01.Code.Test
         }
 
         private void OnEnable()
+        {
+            RebuildGrid();
+        }
+
+        public void Refresh()
         {
             RebuildGrid();
         }
@@ -59,6 +68,13 @@ namespace _01.Code.Test
         {
             ClearLinesImmediate();
 
+            ResolveGridManager();
+            if (TryRebuildFromRuntimeGrid())
+            {
+                RefreshLineWidths();
+                return;
+            }
+
             float halfCell = cellSize * 0.5f;
             Vector3 lineOrigin = new Vector3(halfCell, halfCell, 0f);
             float totalSize = size * cellSize;
@@ -76,6 +92,46 @@ namespace _01.Code.Test
             }
 
             RefreshLineWidths();
+        }
+
+        private bool TryRebuildFromRuntimeGrid()
+        {
+            if (GridManager == null || GridManager.Tilemap == null)
+            {
+                return false;
+            }
+
+            float step = GridManager.CellStep;
+            float halfStep = step * 0.5f;
+            HashSet<Vector2Int> cells = new HashSet<Vector2Int>(GridManager.ActiveCells);
+            if (cells.Count == 0)
+            {
+                return false;
+            }
+
+            foreach (Vector2Int cell in cells)
+            {
+                Vector3 origin = transform.InverseTransformPoint(GridManager.CellToWorld(cell)) + new Vector3(-halfStep, -halfStep, 0f);
+                Vector3 bottomLeft = origin;
+                Vector3 bottomRight = origin + new Vector3(step, 0f, 0f);
+                Vector3 topLeft = origin + new Vector3(0f, step, 0f);
+                Vector3 topRight = origin + new Vector3(step, step, 0f);
+
+                CreateLine(bottomLeft, topLeft);
+                CreateLine(topLeft, topRight);
+
+                if (!cells.Contains(cell + Vector2Int.right))
+                {
+                    CreateLine(bottomRight, topRight);
+                }
+
+                if (!cells.Contains(cell + Vector2Int.down))
+                {
+                    CreateLine(bottomLeft, bottomRight);
+                }
+            }
+
+            return true;
         }
 
         private void CreateLine(Vector3 start, Vector3 end)
@@ -141,6 +197,11 @@ namespace _01.Code.Test
         private void OnDrawGizmos()
         {
             Gizmos.color = gizmoColor;
+            ResolveGridManager();
+            if (DrawRuntimeGridGizmos())
+            {
+                return;
+            }
 
             float halfCell = cellSize * 0.5f;
             Vector3 lineOrigin = transform.position + new Vector3(halfCell, halfCell, 0f);
@@ -157,6 +218,46 @@ namespace _01.Code.Test
                 Vector3 endH = lineOrigin + new Vector3(totalSize, offset, 0f);
                 Gizmos.DrawLine(startH, endH);
             }
+        }
+
+        private bool DrawRuntimeGridGizmos()
+        {
+            if (GridManager == null || GridManager.Tilemap == null)
+            {
+                return false;
+            }
+
+            float step = GridManager.CellStep;
+            float halfStep = step * 0.5f;
+            HashSet<Vector2Int> cells = new HashSet<Vector2Int>(GridManager.ActiveCells);
+            if (cells.Count == 0)
+            {
+                return false;
+            }
+
+            foreach (Vector2Int cell in cells)
+            {
+                Vector3 origin = GridManager.CellToWorld(cell) + new Vector3(-halfStep, -halfStep, 0f);
+                Vector3 bottomLeft = origin;
+                Vector3 bottomRight = origin + new Vector3(step, 0f, 0f);
+                Vector3 topLeft = origin + new Vector3(0f, step, 0f);
+                Vector3 topRight = origin + new Vector3(step, step, 0f);
+
+                Gizmos.DrawLine(bottomLeft, topLeft);
+                Gizmos.DrawLine(topLeft, topRight);
+
+                if (!cells.Contains(cell + Vector2Int.right))
+                {
+                    Gizmos.DrawLine(bottomRight, topRight);
+                }
+
+                if (!cells.Contains(cell + Vector2Int.down))
+                {
+                    Gizmos.DrawLine(bottomLeft, bottomRight);
+                }
+            }
+
+            return true;
         }
 
         private void RefreshLineWidths()
@@ -208,6 +309,11 @@ namespace _01.Code.Test
                    Mathf.Approximately(color.g, 0f) &&
                    Mathf.Approximately(color.b, 0f) &&
                    Mathf.Approximately(color.a, 0f);
+        }
+
+        private void ResolveGridManager()
+        {
+            GridManager ??= FindFirstObjectByType<GridManager>();
         }
     }
 }

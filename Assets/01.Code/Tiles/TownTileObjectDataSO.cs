@@ -1,4 +1,5 @@
 using _01.Code.Cost;
+using _01.Code.TownPanels;
 using UnityEngine;
 
 namespace _01.Code.Tiles
@@ -12,5 +13,6 @@ namespace _01.Code.Tiles
         [field: SerializeField] public Sprite Icon { get; private set; }
         [field: SerializeField] public Color Color { get; private set; } = Color.white;
         [field: SerializeField] public CostBundleSO BuildCosts { get; private set; }
+        [field: SerializeField] public TownObjectPanelDefinitionSO InteractionPanel { get; private set; }
     }
 }

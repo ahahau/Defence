@@ -601,9 +601,13 @@ PrefabInstance:
       value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 5780217087384731550, guid: ed695d2de8aa9da479d0eb85211eeeba, type: 3}
-      propertyPath: <Tilemap>k__BackingField
+      propertyPath: <RockPrefab>k__BackingField
       value: 
-      objectReference: {fileID: 7140434886052349907}
+      objectReference: {fileID: 11400000, guid: 4a7f2e58c5fb4ab6a6c1f8a347b0e912, type: 3}
+    - target: {fileID: 5780217087384731550, guid: ed695d2de8aa9da479d0eb85211eeeba, type: 3}
+      propertyPath: <TreePrefab>k__BackingField
+      value: 
+      objectReference: {fileID: 11400000, guid: d6f4c2e5b7a14b2f8a5c69e9f4b28a11, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:

@@ -45,8 +45,7 @@ namespace _01.Code.System.Grids
 
                 foreach (var neighbor in GetNeighbours(current))
                 {
-                    if (neighbor.x < -_tilemap.Size.x || neighbor.x > _tilemap.Size.x ||
-                        neighbor.y < -_tilemap.Size.y || neighbor.y > _tilemap.Size.y)
+                    if (!_tilemap.ContainsCell(neighbor))
                         continue;
 
                     if (closedSet.Contains(neighbor))

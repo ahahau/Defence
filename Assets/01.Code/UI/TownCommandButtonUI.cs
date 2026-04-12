@@ -1,4 +1,5 @@
 using _01.Code.TownCommands;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
@@ -11,15 +12,17 @@ namespace _01.Code.UI
         [SerializeField] private Image icon;
         [SerializeField] private Button button;
         [SerializeField] private Image background;
+        [SerializeField] private TextMeshProUGUI label;
         private TownCommandContext _context;
         private TownCommandSO _boundCommand;
         private TownInteriorScreenUI _owner;
 
-        public void Configure(Image iconImage, Button targetButton, Image backgroundImage, TownInteriorScreenUI owner)
+        public void Configure(Image iconImage, Button targetButton, Image backgroundImage, TextMeshProUGUI labelText, TownInteriorScreenUI owner)
         {
             icon = iconImage;
             button = targetButton;
             background = backgroundImage;
+            label = labelText;
             _owner = owner;
         }
 
@@ -55,6 +58,11 @@ namespace _01.Code.UI
             {
                 background.color = new Color(0.82f, 0.84f, 0.88f, 1f);
             }
+
+            if (label != null)
+            {
+                label.text = item != null ? item.GetDisplayName(_context) : string.Empty;
+            }
         }
 
         public void Disable()
@@ -74,6 +82,11 @@ namespace _01.Code.UI
             if (background != null)
             {
                 background.color = new Color(0.45f, 0.47f, 0.50f, 0.85f);
+            }
+
+            if (label != null)
+            {
+                label.text = string.Empty;
             }
 
             _boundCommand = null;

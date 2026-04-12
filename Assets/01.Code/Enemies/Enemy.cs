@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using _01.Code.Buildings;
 using _01.Code.Entities;
-using DG.Tweening;
 using GondrLib.ObjectPool.Runtime;
 using UnityEngine;
 using UnityEngine.Events;
@@ -17,21 +16,15 @@ namespace _01.Code.Enemies
         private Rigidbody2D _rigidbody2D;
         private Pool _pool;
         private EnemySpawner _parentSpawner;
-        private Transform _visualTransform;
-        private Tween _scaleTween;
-        private Tween _rotationTween;
         private bool _deathNotified;
         private bool _returnedToPool;
         private EnemyRender _enemyRender;
         private EnemyDataSO _runtimeData;
         private CommandCenter _commandCenter;
 
-        public GameObject GameObject { get; private set; }
-
-        protected override void Awake()
+        public GameObject GameObject
         {
-            base.Awake();
-            GameObject = gameObject;
+            get { return gameObject; }
         }
 
         public void Initialize(List<Vector2Int> path, EnemySpawner parent, EnemyDataSO data, int level = 0)
@@ -47,7 +40,6 @@ namespace _01.Code.Enemies
             _movement.SetSpeed(data.Speed);
             _movement.SetPath(path);
             _movement.MoveNext();
-            PlayScaleEffect();
         }
 
         public void Initialize(CommandCenter commandCenter)
@@ -69,7 +61,6 @@ namespace _01.Code.Enemies
             _enemyHealth = GetModule<EnemyHealth>();
             _movement?.ResetState();
             _enemyHealth?.ResetHealthToFull();
-            StopScaleEffect();
         }
 
         public void ReturnToPool()
@@ -82,12 +73,10 @@ namespace _01.Code.Enemies
             _returnedToPool = true;
             if (_pool != null)
             {
-                StopScaleEffect();
                 _pool.Push(this);
                 return;
             }
 
-            StopScaleEffect();
             Destroy(gameObject);
         }
 
@@ -101,7 +90,6 @@ namespace _01.Code.Enemies
                 _rigidbody2D.position = new Vector2(worldPosition.x, worldPosition.y);
                 _rigidbody2D.linearVelocity = Vector2.zero;
             }
-            
         }
 
         private void NotifyDeath()
@@ -167,42 +155,6 @@ namespace _01.Code.Enemies
         private void CacheVisualTransform()
         {
             _enemyRender = GetModule<EnemyRender>();
-            _visualTransform = _enemyRender != null ? _enemyRender.transform : transform;
-        }
-
-        private void PlayScaleEffect()
-        {
-            CacheVisualTransform();
-            StopScaleEffect();
-            float duration = Random.Range(0.5f, 1f);
-            float upScale = Random.Range(1.2f, 1.25f);
-            float rotationAngle = Random.Range(2f, 6f);
-
-            _scaleTween = _visualTransform
-                .DOScale(Vector2.one * upScale, duration)
-                .SetEase(Ease.InOutSine)
-                .SetLoops(-1, LoopType.Yoyo);
-
-            _visualTransform.localRotation = Quaternion.Euler(0f, 0f, -rotationAngle);
-
-            _rotationTween = _visualTransform
-                .DOLocalRotate(new Vector3(0f, 0f, rotationAngle), duration)
-                .SetEase(Ease.InOutSine)
-                .SetLoops(-1, LoopType.Yoyo);
-        }
-
-        private void StopScaleEffect()
-        {
-            _scaleTween?.Kill();
-            _scaleTween = null;
-            _rotationTween?.Kill();
-            _rotationTween = null;
-
-            if (_visualTransform != null)
-            {
-                _visualTransform.localScale = Vector3.one;
-                _visualTransform.localRotation = Quaternion.identity;
-            }
         }
     }
 }

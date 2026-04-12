@@ -55,7 +55,7 @@ MonoBehaviour:
   OnDeath:
     m_PersistentCalls:
       m_Calls: []
-  poolingType: {fileID: 11400000, guid: b6b0b1f1c2d34e5f8a9b0c1d2e3f4a5b, type: 2}
+  <PoolingType>k__BackingField: {fileID: 11400000, guid: b6b0b1f1c2d34e5f8a9b0c1d2e3f4a5b, type: 2}
 --- !u!114 &5322116674003759625
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -201,7 +201,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 4f80580599b9497584c9215009f2e4e6, type: 2}
+  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

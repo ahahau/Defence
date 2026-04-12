@@ -15,15 +15,12 @@ namespace _01.Code.Enemies
         }
         public void ChangeAnimation(Vector2 dir)
         {
-            bool hasHorizontal = Mathf.Abs(dir.x) >= 0.01f;
-            bool hasVertical = Mathf.Abs(dir.y) >= 0.01f;
-
-            if (!hasHorizontal && !hasVertical)
+            if (Mathf.Abs(dir.x) < 0.01f)
             {
                 return;
             }
 
-            bool shouldFlip = dir.x < -0.01f || dir.y > 0.01f;
+            bool shouldFlip = dir.x < 0f;
             bool isFlipped = FacingDirection < 0f;
 
             if (isFlipped != shouldFlip)
