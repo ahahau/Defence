@@ -136,6 +136,7 @@ MonoBehaviour:
   <GridPosition>k__BackingField: {x: 0, y: 0}
   <PlacementSaveKey>k__BackingField: 
   <RuntimeSaveId>k__BackingField: 
+  pathTraversalCostOverride: 0
   level: 1
   sensor: {fileID: 5617472471396013486}
   attackDamage: 1000
@@ -241,7 +242,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 4f80580599b9497584c9215009f2e4e6, type: 2}
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

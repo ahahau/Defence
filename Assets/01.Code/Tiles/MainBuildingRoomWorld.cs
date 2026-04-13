@@ -380,6 +380,11 @@ namespace _01.Code.Tiles
                 return;
             }
 
+            if (TryHandleSelectedUnitPlacement(cell))
+            {
+                return;
+            }
+
             if (_hasSelectedCell && _selectedCell == cell)
             {
                 _hasSelectedCell = false;
@@ -423,6 +428,34 @@ namespace _01.Code.Tiles
             TownInteriorScreenUI?.HideObjectDetailsExternally();
             ShowBuildCommands(cell);
             RefreshTiles();
+        }
+
+        private bool TryHandleSelectedUnitPlacement(Vector2Int cell)
+        {
+            if (_buildManager == null || _buildManager.SelectedUnit == null)
+            {
+                return false;
+            }
+
+            if (!GridManager.ContainsCell(cell))
+            {
+                return true;
+            }
+
+            _selectedCell = cell;
+            _hasSelectedCell = true;
+            TownInteriorScreenUI?.HideBuildPanelExternally();
+            TownInteriorScreenUI?.HideObjectDetailsExternally();
+
+            if (!IsCellEmpty(cell))
+            {
+                RefreshTiles();
+                return true;
+            }
+
+            TryBuildAtCell(_buildManager.SelectedUnit, cell);
+            RefreshTiles();
+            return true;
         }
 
         public bool TryHandleWorldClick(Vector2 worldPosition)
@@ -741,6 +774,56 @@ namespace _01.Code.Tiles
             if (obstacle == null || !obstacle.TryRemove(_costManager))
             {
                 return false;
+            }
+
+            _hasSelectedCell = false;
+            TownInteriorScreenUI?.HideBuildPanelExternally();
+            TownInteriorScreenUI?.HideObjectDetailsExternally();
+            RefreshTiles();
+            return true;
+        }
+
+        public bool TryBuildTownObjectAtCell(TownTileObjectDataSO data, Vector2Int cell, TownObstacle obstacleToReplace = null)
+        {
+            ResolveReferences();
+            if (GridManager == null || _costManager == null || data == null || data.Prefab == null)
+            {
+                return false;
+            }
+
+            if (obstacleToReplace != null && obstacleToReplace.GridPosition != cell)
+            {
+                return false;
+            }
+
+            if (obstacleToReplace == null && !GridManager.IsCellEmpty(cell))
+            {
+                return false;
+            }
+
+            if (data.BuildCosts != null && !_costManager.TryPayAll(data.BuildCosts))
+            {
+                return false;
+            }
+
+            if (obstacleToReplace != null)
+            {
+                GridManager.TryClear(cell, obstacleToReplace);
+                Destroy(obstacleToReplace.gameObject);
+            }
+
+            TownTileObject spawnedObject = Instantiate(data.Prefab, GridManager.CellToObjectWorld(cell), Quaternion.identity);
+            spawnedObject.BindData(data);
+            spawnedObject.BindSceneServices(GridManager, _logManager);
+            if (!spawnedObject.Initialize(cell))
+            {
+                Destroy(spawnedObject.gameObject);
+                return false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(data.SaveKey))
+            {
+                _saveManager?.RegisterPlacementForSave(spawnedObject, data.SaveKey);
             }
 
             _hasSelectedCell = false;

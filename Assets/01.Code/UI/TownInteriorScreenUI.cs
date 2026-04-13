@@ -26,6 +26,25 @@ namespace _01.Code.UI
         private const float SkillTreeZoomStep = 0.12f;
 
         [SerializeField] private BuildManager buildManager;
+        [SerializeField] private RectTransform buildPanelRoot;
+        [SerializeField] private RectTransform detailPanelRoot;
+        [SerializeField] private Button buildCloseButton;
+        [SerializeField] private Button detailCloseButton;
+        [SerializeField] private TextMeshProUGUI panelTitleText;
+        [SerializeField] private TextMeshProUGUI detailPanelTitleText;
+        [SerializeField] private TextMeshProUGUI detailSectionTitleText;
+        [SerializeField] private TextMeshProUGUI detailSectionBodyText;
+        [SerializeField] private RectTransform detailBodyLayoutRoot;
+        [SerializeField] private RectTransform tooltipRoot;
+        [SerializeField] private TextMeshProUGUI tooltipTitleText;
+        [SerializeField] private TextMeshProUGUI tooltipDescriptionText;
+        [SerializeField] private Image tooltipCostIcon;
+        [SerializeField] private TextMeshProUGUI tooltipCostText;
+        [SerializeField] private RectTransform skillTreeTooltipRoot;
+        [SerializeField] private TextMeshProUGUI skillTreeTooltipTitleText;
+        [SerializeField] private TextMeshProUGUI skillTreeTooltipRequirementText;
+        [SerializeField] private TextMeshProUGUI skillTreeTooltipDescriptionText;
+        [SerializeField] private List<TownCommandButtonUI> actionSlotViews = new();
 
         private RectTransform _root;
         private RectTransform _buildPanelRoot;
@@ -93,14 +112,182 @@ namespace _01.Code.UI
                 return;
             }
 
+            ApplySerializedReferences();
+            EnsureRuntimeLayout();
+            ConfigureCloseButtons();
             AllowClickThroughForPassiveHud();
-            CreateBuildPanel();
-            CreateDetailPanel();
+            CacheActionSlots();
+            RegisterHoverTargets();
+        }
+
+        private void EnsureRuntimeLayout()
+        {
+            if (_buildPanelRoot == null || actionSlotViews == null || actionSlotViews.Count == 0)
+            {
+                CreateBuildPanel();
+                SyncSerializedBuildReferencesFromRuntime();
+            }
+
+            if (_detailPanelRoot == null)
+            {
+                CreateDetailPanel();
+                SyncSerializedDetailReferencesFromRuntime();
+            }
+        }
+
+        private void ApplySerializedReferences()
+        {
+            _buildPanelRoot = buildPanelRoot;
+            _detailPanelRoot = detailPanelRoot;
+            _titleText = panelTitleText;
+            _detailTitleText = detailPanelTitleText;
+            _detailSectionTitleText = detailSectionTitleText;
+            _detailBodyText = detailSectionBodyText;
+            _detailBodyLayoutRoot = detailBodyLayoutRoot;
+            _tooltipRoot = tooltipRoot;
+            _tooltipTitleText = tooltipTitleText;
+            _tooltipDescriptionText = tooltipDescriptionText;
+            _tooltipCostIcon = tooltipCostIcon;
+            _tooltipCostText = tooltipCostText;
+            _skillTreeTooltipRoot = skillTreeTooltipRoot;
+            _skillTreeTooltipTitleText = skillTreeTooltipTitleText;
+            _skillTreeTooltipRequirementText = skillTreeTooltipRequirementText;
+            _skillTreeTooltipDescriptionText = skillTreeTooltipDescriptionText;
+        }
+
+        private void SyncSerializedBuildReferencesFromRuntime()
+        {
+            buildPanelRoot = _buildPanelRoot;
+            panelTitleText = _titleText;
+            tooltipRoot = _tooltipRoot;
+            tooltipTitleText = _tooltipTitleText;
+            tooltipDescriptionText = _tooltipDescriptionText;
+            tooltipCostIcon = _tooltipCostIcon;
+            tooltipCostText = _tooltipCostText;
+
+            actionSlotViews.Clear();
+            for (int i = 0; i < _actionSlots.Count; i++)
+            {
+                if (_actionSlots[i] != null)
+                {
+                    actionSlotViews.Add(_actionSlots[i]);
+                }
+            }
+        }
+
+        private void SyncSerializedDetailReferencesFromRuntime()
+        {
+            detailPanelRoot = _detailPanelRoot;
+            detailPanelTitleText = _detailTitleText;
+            detailSectionTitleText = _detailSectionTitleText;
+            detailSectionBodyText = _detailBodyText;
+            detailBodyLayoutRoot = _detailBodyLayoutRoot;
+            skillTreeTooltipRoot = _skillTreeTooltipRoot;
+            skillTreeTooltipTitleText = _skillTreeTooltipTitleText;
+            skillTreeTooltipRequirementText = _skillTreeTooltipRequirementText;
+            skillTreeTooltipDescriptionText = _skillTreeTooltipDescriptionText;
+        }
+
+        private void ConfigureCloseButtons()
+        {
+            if (buildCloseButton != null)
+            {
+                buildCloseButton.onClick.RemoveListener(HideBuildPanelExternally);
+                buildCloseButton.onClick.AddListener(HideBuildPanelExternally);
+            }
+
+            if (detailCloseButton != null)
+            {
+                detailCloseButton.onClick.RemoveListener(RequestCloseObjectWindows);
+                detailCloseButton.onClick.AddListener(RequestCloseObjectWindows);
+            }
+        }
+
+        private void CacheActionSlots()
+        {
+            _actionSlots.Clear();
+            if (actionSlotViews == null)
+            {
+                actionSlotViews = new List<TownCommandButtonUI>();
+            }
+
+            if (actionSlotViews.Count == 0 && _buildPanelRoot != null)
+            {
+                CollectActionSlotsFromBuildPanel();
+            }
+
+            for (int i = 0; i < actionSlotViews.Count; i++)
+            {
+                TownCommandButtonUI slot = actionSlotViews[i];
+                if (slot == null)
+                {
+                    continue;
+                }
+
+                slot.SetOwner(this);
+                slot.EnsureReferences();
+                slot.Disable();
+                _actionSlots.Add(slot);
+            }
+
+            if (_actionSlots.Count == 0 && _buildPanelRoot != null)
+            {
+                CollectActionSlotsFromBuildPanel();
+                for (int i = 0; i < actionSlotViews.Count; i++)
+                {
+                    TownCommandButtonUI slot = actionSlotViews[i];
+                    if (slot == null)
+                    {
+                        continue;
+                    }
+
+                    slot.SetOwner(this);
+                    slot.EnsureReferences();
+                    slot.Disable();
+                    _actionSlots.Add(slot);
+                }
+            }
+        }
+
+        private void CollectActionSlotsFromBuildPanel()
+        {
+            actionSlotViews.Clear();
+            TownCommandButtonUI[] slots = _buildPanelRoot.GetComponentsInChildren<TownCommandButtonUI>(true);
+            for (int i = 0; i < slots.Length; i++)
+            {
+                if (slots[i] != null && !actionSlotViews.Contains(slots[i]))
+                {
+                    actionSlotViews.Add(slots[i]);
+                }
+            }
+        }
+
+        private void RegisterHoverTargets()
+        {
+            _hoverTrackers.Clear();
+            if (_buildPanelRoot != null)
+            {
+                RegisterHoverTarget(_buildPanelRoot.gameObject);
+            }
+
+            if (_detailPanelRoot != null)
+            {
+                RegisterHoverTarget(_detailPanelRoot.gameObject);
+            }
+
+            for (int i = 0; i < _actionSlots.Count; i++)
+            {
+                if (_actionSlots[i] != null)
+                {
+                    RegisterHoverTarget(_actionSlots[i].gameObject);
+                }
+            }
         }
 
         private void AllowClickThroughForPassiveHud()
         {
             DisableRaycastsForRoot("Cards");
+            DisableRaycastsForRoot("CostBar");
             DisableRaycastsForRoot("LeftCostBar");
         }
 
@@ -142,10 +329,32 @@ namespace _01.Code.UI
             ConfigureSection(commandRoot, new Vector2(0.04f, 0.08f), new Vector2(0.96f, 0.72f));
 
             RectTransform titleRoot = FindOrCreateRect("PanelTitle", headerRoot);
-            ConfigureFillRect(titleRoot);
+            titleRoot.anchorMin = new Vector2(0.04f, 0f);
+            titleRoot.anchorMax = new Vector2(0.82f, 1f);
+            titleRoot.offsetMin = Vector2.zero;
+            titleRoot.offsetMax = Vector2.zero;
             _titleText = GetOrAddComponent<TextMeshProUGUI>(titleRoot.gameObject);
             _titleText.raycastTarget = false;
             ConfigureSingleLineText(_titleText);
+
+            RectTransform closeButtonRoot = FindOrCreateRect("CloseButton", headerRoot);
+            closeButtonRoot.anchorMin = new Vector2(0.86f, 0.22f);
+            closeButtonRoot.anchorMax = new Vector2(0.96f, 0.78f);
+            closeButtonRoot.offsetMin = Vector2.zero;
+            closeButtonRoot.offsetMax = Vector2.zero;
+            Image closeButtonBackground = GetOrAddComponent<Image>(closeButtonRoot.gameObject);
+            Button closeButton = GetOrAddComponent<Button>(closeButtonRoot.gameObject);
+            closeButton.onClick.RemoveAllListeners();
+            closeButton.onClick.AddListener(HideBuildPanelExternally);
+            closeButtonBackground.color = new Color(0.48f, 0.18f, 0.18f, 0.98f);
+            RegisterHoverTarget(closeButtonRoot.gameObject);
+
+            RectTransform closeLabelRoot = FindOrCreateRect("Label", closeButtonRoot);
+            ConfigureFillRect(closeLabelRoot);
+            TextMeshProUGUI closeLabel = GetOrAddComponent<TextMeshProUGUI>(closeLabelRoot.gameObject);
+            closeLabel.text = "X";
+            closeLabel.raycastTarget = false;
+            ConfigureSingleLineText(closeLabel);
 
             RectTransform actionSlotsRoot = FindOrCreateRect("ActionSlots", commandRoot);
             ConfigureFillRect(actionSlotsRoot);
@@ -237,6 +446,7 @@ namespace _01.Code.UI
         public void ShowCommands(string title, List<TownCommandSO> commands, TownCommandContext context)
         {
             ResolveReferences();
+            BuildLayout();
             _currentCommandContext = context;
             SetBuildPanelVisible(true);
             if (_titleText != null)
@@ -245,6 +455,15 @@ namespace _01.Code.UI
             }
 
             RenderCommands(commands);
+            TownCommandSO initialCommand = FindInitialCommand(commands);
+            if (initialCommand != null)
+            {
+                ShowTooltip(initialCommand, _currentCommandContext);
+            }
+            else
+            {
+                HideTooltip();
+            }
         }
 
         public void ShowObjectSectionWindow(TownTileObjectDataSO data, TownObjectPanelSectionSO section)
@@ -411,6 +630,13 @@ namespace _01.Code.UI
             for (int i = 0; i < _actionSlots.Count; i++)
             {
                 TownCommandButtonUI slot = _actionSlots[i];
+                if (slot == null)
+                {
+                    continue;
+                }
+
+                slot.gameObject.SetActive(true);
+                slot.transform.SetAsLastSibling();
                 TownCommandSO command = FindCommandForSlot(commands, i);
                 if (command == null)
                 {
@@ -436,6 +662,29 @@ namespace _01.Code.UI
                 if (command != null && command.Slot == slotIndex)
                 {
                     return command;
+                }
+            }
+
+            if (slotIndex >= 0 && slotIndex < commands.Count)
+            {
+                return commands[slotIndex];
+            }
+
+            return null;
+        }
+
+        private TownCommandSO FindInitialCommand(List<TownCommandSO> commands)
+        {
+            if (commands == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < commands.Count; i++)
+            {
+                if (commands[i] != null)
+                {
+                    return commands[i];
                 }
             }
 
@@ -516,16 +765,16 @@ namespace _01.Code.UI
                 panelRoot.anchorMin = new Vector2(0.5f, 0f);
                 panelRoot.anchorMax = new Vector2(0.5f, 0f);
                 panelRoot.pivot = new Vector2(0.5f, 0f);
-                panelRoot.anchoredPosition = new Vector2(0f, 60f);
+                panelRoot.anchoredPosition = new Vector2(0f, 8f);
                 panelRoot.sizeDelta = new Vector2(520f, 190f);
             }
             else
             {
-                panelRoot.anchorMin = new Vector2(1f, 1f);
-                panelRoot.anchorMax = new Vector2(1f, 1f);
-                panelRoot.pivot = new Vector2(1f, 1f);
-                panelRoot.anchoredPosition = new Vector2(-24f, -24f);
-                panelRoot.sizeDelta = new Vector2(360f, 320f);
+                panelRoot.anchorMin = new Vector2(0.5f, 0f);
+                panelRoot.anchorMax = new Vector2(0.5f, 0f);
+                panelRoot.pivot = new Vector2(0.5f, 0f);
+                panelRoot.anchoredPosition = new Vector2(0f, 8f);
+                panelRoot.sizeDelta = new Vector2(520f, 260f);
             }
 
             Image background = GetOrAddComponent<Image>(panelRoot.gameObject);
@@ -562,11 +811,11 @@ namespace _01.Code.UI
                 return;
             }
 
-            _detailPanelRoot.anchorMin = new Vector2(1f, 1f);
-            _detailPanelRoot.anchorMax = new Vector2(1f, 1f);
-            _detailPanelRoot.pivot = new Vector2(1f, 1f);
-            _detailPanelRoot.anchoredPosition = new Vector2(-24f, -24f);
-            _detailPanelRoot.sizeDelta = new Vector2(360f, 320f);
+            _detailPanelRoot.anchorMin = new Vector2(0.5f, 0f);
+            _detailPanelRoot.anchorMax = new Vector2(0.5f, 0f);
+            _detailPanelRoot.pivot = new Vector2(0.5f, 0f);
+            _detailPanelRoot.anchoredPosition = new Vector2(0f, 8f);
+            _detailPanelRoot.sizeDelta = new Vector2(520f, 260f);
         }
 
         private void RenderSectionVisual(TownObjectPanelSectionSO section)

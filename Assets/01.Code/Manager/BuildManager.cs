@@ -48,6 +48,7 @@ namespace _01.Code.Manager
                 buildEventChannel,
                 CanUseDayActions,
                 unitData => _catalog.IsSelectablePlacementForCurrentScene(unitData),
+                CanPreviewPlacementAtCell,
                 null);
             buildEventChannel.AddListener<BuildRequestedEvent>(HandleBuildInstallRequestedEvent);
             buildEventChannel.AddListener<BuildMoveRequestedEvent>(HandleMoveBuildingRequestedEvent);
@@ -344,6 +345,13 @@ namespace _01.Code.Manager
         private bool CanModifyPlacements()
         {
             return true;
+        }
+
+        private bool CanPreviewPlacementAtCell(Vector2Int cellPosition)
+        {
+            return _gridManager != null &&
+                   _gridManager.ContainsCell(cellPosition) &&
+                   _gridManager.IsCellEmpty(cellPosition);
         }
 
         private void EnsureCatalog()

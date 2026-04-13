@@ -135,6 +135,7 @@ namespace _01.Code.Manager
                 _gridManager?.SpawnInitialResources();
             }
 
+            _enemySpawnerManager?.EnsureReadySpawners();
             _hasCompletedStartupLoad = true;
         }
 
@@ -481,6 +482,18 @@ namespace _01.Code.Manager
         private List<TownTileObjectDataSO> QueryTownTileObjectCatalog()
         {
             List<TownTileObjectDataSO> catalog = new List<TownTileObjectDataSO>();
+            TownTileObjectDataSO[] resourceCatalog = Resources.LoadAll<TownTileObjectDataSO>("Town");
+            for (int i = 0; i < resourceCatalog.Length; i++)
+            {
+                TownTileObjectDataSO resourceData = resourceCatalog[i];
+                if (resourceData == null || catalog.Contains(resourceData))
+                {
+                    continue;
+                }
+
+                catalog.Add(resourceData);
+            }
+
             MainBuildingRoomWorld[] worlds = FindObjectsByType<MainBuildingRoomWorld>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             for (int i = 0; i < worlds.Length; i++)
             {

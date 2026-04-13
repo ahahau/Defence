@@ -12,16 +12,23 @@ namespace _01.Code.UI
         private readonly GameEventChannelSO _buildEventChannel;
         private readonly Func<bool> _canUseDayActions;
         private readonly Func<UnitDataSO, bool> _canSelectBuilding;
+        private readonly Func<Vector2Int, bool> _canPreviewAtCell;
         private readonly Action _notifyStateChanged;
 
         private PlaceableEntity _placementPreview;
         private Vector2Int _hoveredCellPosition;
 
-        public UiBuildSelectionController(GameEventChannelSO buildEventChannel, Func<bool> canUseDayActions, Func<UnitDataSO, bool> canSelectBuilding, Action notifyStateChanged)
+        public UiBuildSelectionController(
+            GameEventChannelSO buildEventChannel,
+            Func<bool> canUseDayActions,
+            Func<UnitDataSO, bool> canSelectBuilding,
+            Func<Vector2Int, bool> canPreviewAtCell,
+            Action notifyStateChanged)
         {
             _buildEventChannel = buildEventChannel;
             _canUseDayActions = canUseDayActions;
             _canSelectBuilding = canSelectBuilding;
+            _canPreviewAtCell = canPreviewAtCell;
             _notifyStateChanged = notifyStateChanged;
         }
 
@@ -37,6 +44,17 @@ namespace _01.Code.UI
             if (_placementPreview == null || SelectedUnit == null)
             {
                 return;
+            }
+
+            if (_canPreviewAtCell != null && !_canPreviewAtCell(_hoveredCellPosition))
+            {
+                _placementPreview.gameObject.SetActive(false);
+                return;
+            }
+
+            if (!_placementPreview.gameObject.activeSelf)
+            {
+                _placementPreview.gameObject.SetActive(true);
             }
 
             _placementPreview.PreviewPosition(_hoveredCellPosition);

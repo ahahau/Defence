@@ -50,12 +50,17 @@ namespace _01.Code.System.Grids
 
                     if (closedSet.Contains(neighbor))
                         continue;
+
+                    CustomTile neighborTile = _tilemap.GetTile(neighbor);
+                    if (neighborTile == null)
+                        continue;
+
                     bool isStartOrEnd = neighbor == start || neighbor == end;
-                    bool walkable = _tilemap.TileEmpty(neighbor) || isStartOrEnd;
+                    bool walkable = neighborTile.IsEmpty() || isStartOrEnd || neighborTile.TileObject is Entities.PlaceableEntity;
                     if (!walkable)
                         continue;
 
-                    int tentativeGCost = gCost[current] + GetTraversalCost(neighbor);
+                    int tentativeGCost = gCost[current] + GetTraversalCost(neighborTile, isStartOrEnd);
 
                     if (!gCost.ContainsKey(neighbor) || tentativeGCost < gCost[neighbor])
                     {
@@ -126,10 +131,9 @@ namespace _01.Code.System.Grids
             return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
         }
 
-        private int GetTraversalCost(Vector2Int position)
+        private int GetTraversalCost(CustomTile tile, bool isStartOrEnd)
         {
-            CustomTile tile = _tilemap.GetTile(position);
-            if (tile == null)
+            if (tile == null || isStartOrEnd)
             {
                 return 1;
             }

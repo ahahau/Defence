@@ -4,6 +4,7 @@ using System.Linq;
 using _01.Code.Entities;
 using _01.Code.Manager;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace _01.Code.Save
 {
@@ -12,6 +13,7 @@ namespace _01.Code.Save
     {
         public string key;
         public string runtimeId;
+        public string sceneName;
         public int x;
         public int y;
     }
@@ -41,6 +43,7 @@ namespace _01.Code.Save
         {
             List<PlacementSaveRecord> records = new List<PlacementSaveRecord>();
             PlaceableEntity[] placements = FindObjectsByType<PlaceableEntity>(FindObjectsSortMode.None);
+            string activeSceneName = SceneManager.GetActiveScene().name;
 
             for (int i = 0; i < placements.Length; i++)
             {
@@ -55,6 +58,7 @@ namespace _01.Code.Save
                 {
                     key = placement.PlacementSaveKey,
                     runtimeId = placement.RuntimeSaveId,
+                    sceneName = activeSceneName,
                     x = placement.GridPosition.x,
                     y = placement.GridPosition.y
                 });
@@ -66,6 +70,7 @@ namespace _01.Code.Save
         public void RestoreData(string savedData)
         {
             _saveManager = GameManager.Instance?.GetManager<SaveManager>();
+            string activeSceneName = SceneManager.GetActiveScene().name;
             PlacementSaveCollection collection = string.IsNullOrWhiteSpace(savedData)
                 ? new PlacementSaveCollection()
                 : JsonUtility.FromJson<PlacementSaveCollection>(savedData);
@@ -81,7 +86,7 @@ namespace _01.Code.Save
             }
 
             List<PlacementSaveRecord> applicableRecords = collection.placements
-                .Where(record => _saveManager.CanRestorePlacement(record.key))
+                .Where(record => IsApplicableToActiveScene(record, activeSceneName) && _saveManager.CanRestorePlacement(record.key))
                 .ToList();
             if (applicableRecords.Count == 0)
             {
@@ -99,6 +104,16 @@ namespace _01.Code.Save
                     new Vector2Int(record.x, record.y),
                     out PlaceableEntity _);
             }
+        }
+
+        private bool IsApplicableToActiveScene(PlacementSaveRecord record, string activeSceneName)
+        {
+            if (string.IsNullOrWhiteSpace(record.sceneName))
+            {
+                return false;
+            }
+
+            return string.Equals(record.sceneName, activeSceneName, StringComparison.Ordinal);
         }
     }
 }

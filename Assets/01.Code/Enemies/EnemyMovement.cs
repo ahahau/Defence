@@ -45,7 +45,7 @@ namespace _01.Code.Enemies
 
 
             float distance = dir.magnitude;
-                float duration = distance / moveSpeed;
+            float duration = distance / moveSpeed;
             
             _moveTween?.Kill();
             
@@ -57,6 +57,7 @@ namespace _01.Code.Enemies
                 .SetEase(Ease.Linear)
                 .OnComplete(() =>
                 {
+                    HandleArrivedAtCurrentCell();
                     _pathIndex++;
                     MoveNext();
                 });
@@ -87,6 +88,16 @@ namespace _01.Code.Enemies
             {
                 _rb.linearVelocity = Vector2.zero;
             }
+        }
+
+        private void HandleArrivedAtCurrentCell()
+        {
+            if (_enemy == null || _gridManager == null || _path == null || _pathIndex <= 0 || _pathIndex >= _path.Count)
+            {
+                return;
+            }
+
+            _gridManager.NotifyEnemyPassedThroughCell(_path[_pathIndex], _enemy);
         }
     }
 }

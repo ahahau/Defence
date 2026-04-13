@@ -152,6 +152,7 @@ MonoBehaviour:
   <CurrentMouseCellPosition>k__BackingField: {x: 0, y: 0}
   uiEventChannel: {fileID: 11400000, guid: 65fe9b6359134cd4947a05bdbc25753a, type: 2}
   buildEventChannel: {fileID: 11400000, guid: 43ac707ddd2c4ab8b72218ab4ccb251b, type: 2}
+  battleCommandPanel: {fileID: 0}
   whatIsClickable:
     serializedVersion: 2
     m_Bits: 384

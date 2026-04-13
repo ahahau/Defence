@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
 using _01.Code.Core;
+using _01.Code.Buildings;
 using _01.Code.Entities;
 using _01.Code.Events;
 using _01.Code.Manager;
 using _01.Code.TownCommands;
+using _01.Code.Tiles;
 using _01.Code.Units;
 using UnityEngine;
 
@@ -13,9 +15,14 @@ namespace _01.Code.UI
     public class BattleCommandPanelController : MonoBehaviour
     {
         private const int MaxBuildCommandCount = 4;
-        private const int RemoveCommandSlot = 4;
+        private const int RemoveCommandSlot = 0;
+        private const int LoggingGroundCommandSlot = 1;
+        private const int QuarryCommandSlot = 1;
+
+        [SerializeField] private TownInteriorScreenUI panelUi;
 
         private readonly List<TownCommandSO> _buildCommands = new();
+        private readonly List<TownCommandSO> _obstacleCommands = new();
 
         private BuildManager _buildManager;
         private GridManager _gridManager;
@@ -23,6 +30,10 @@ namespace _01.Code.UI
         private GameEventChannelSO _uiEventChannel;
         private TownInteriorScreenUI _panelUi;
         private BattleRemovePlacementCommandSO _removeCommand;
+        private TownBuildTileObjectCommandSO _loggingGroundCommand;
+        private TownBuildTileObjectCommandSO _quarryCommand;
+        private TownBuildingDataSO _loggingGroundData;
+        private TownBuildingDataSO _quarryData;
         private Vector2Int _selectedCell;
         private PlaceableEntity _selectedEntity;
         private bool _hasSelection;
@@ -47,6 +58,12 @@ namespace _01.Code.UI
         {
             if (!IsBattleScene() || _gridManager == null)
             {
+                return false;
+            }
+
+            if (_buildManager != null && _buildManager.SelectedUnit != null)
+            {
+                HidePanel();
                 return false;
             }
 
@@ -108,31 +125,18 @@ namespace _01.Code.UI
 
         private void EnsurePanel()
         {
-            if (_panelUi != null)
+            _panelUi ??= panelUi;
+            if (_panelUi == null)
             {
-                return;
+                _panelUi = FindFirstObjectByType<TownInteriorScreenUI>(FindObjectsInactive.Include);
+                panelUi = _panelUi;
             }
-
-            Canvas canvas = FindFirstObjectByType<Canvas>(FindObjectsInactive.Include);
-            if (canvas == null)
-            {
-                return;
-            }
-
-            _panelUi = canvas.GetComponentInChildren<TownInteriorScreenUI>(true);
-            if (_panelUi != null)
-            {
-                return;
-            }
-
-            GameObject panelRoot = new GameObject("BattleCommandPanelUI", typeof(RectTransform), typeof(TownInteriorScreenUI));
-            panelRoot.transform.SetParent(canvas.transform, false);
-            _panelUi = panelRoot.GetComponent<TownInteriorScreenUI>();
         }
 
         private void RebuildCommands()
         {
             _buildCommands.Clear();
+            _obstacleCommands.Clear();
 
             IReadOnlyList<UnitDataSO> availableBuildings = _buildManager != null ? _buildManager.GetAvailableBuildingsForCurrentScene() : null;
             if (availableBuildings != null)
@@ -156,6 +160,22 @@ namespace _01.Code.UI
             _removeCommand = ScriptableObject.CreateInstance<BattleRemovePlacementCommandSO>();
             _removeCommand.ConfigureRuntime(RemoveCommandSlot);
             _removeCommand.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
+
+            _loggingGroundData ??= Resources.Load<TownBuildingDataSO>("Town/LoggingGroundData");
+            if (_loggingGroundData != null)
+            {
+                _loggingGroundCommand = ScriptableObject.CreateInstance<TownBuildTileObjectCommandSO>();
+                _loggingGroundCommand.ConfigureRuntime(_loggingGroundData, LoggingGroundCommandSlot);
+                _loggingGroundCommand.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
+            }
+
+            _quarryData ??= Resources.Load<TownBuildingDataSO>("Town/QuarryData");
+            if (_quarryData != null)
+            {
+                _quarryCommand = ScriptableObject.CreateInstance<TownBuildTileObjectCommandSO>();
+                _quarryCommand.ConfigureRuntime(_quarryData, QuarryCommandSlot);
+                _quarryCommand.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
+            }
         }
 
         private void ShowCommands(string title, bool includeRemoveCommand)
@@ -167,10 +187,14 @@ namespace _01.Code.UI
                 return;
             }
 
-            List<TownCommandSO> commands = new List<TownCommandSO>(_buildCommands);
+            List<TownCommandSO> commands;
             if (includeRemoveCommand && _selectedEntity != null)
             {
-                commands.Add(_removeCommand);
+                commands = BuildObstacleCommands();
+            }
+            else
+            {
+                commands = new List<TownCommandSO>(_buildCommands);
             }
 
             _panelUi.ShowCommands(title, commands, null);
@@ -222,6 +246,18 @@ namespace _01.Code.UI
             if (evt.Command == _removeCommand)
             {
                 TryRemoveSelectedEntity();
+                return;
+            }
+
+            if (evt.Command == _loggingGroundCommand)
+            {
+                TryBuildLoggingGround();
+                return;
+            }
+
+            if (evt.Command == _quarryCommand)
+            {
+                TryBuildQuarry();
             }
         }
 
@@ -239,6 +275,85 @@ namespace _01.Code.UI
             }
 
             Destroy(_selectedEntity.gameObject);
+            _saveManager?.SaveGame();
+            HidePanel();
+        }
+
+        private List<TownCommandSO> BuildObstacleCommands()
+        {
+            _obstacleCommands.Clear();
+            _obstacleCommands.Add(_removeCommand);
+
+            if (CanBuildLoggingGroundOnSelectedEntity())
+            {
+                _obstacleCommands.Add(_loggingGroundCommand);
+            }
+
+            if (CanBuildQuarryOnSelectedEntity())
+            {
+                _obstacleCommands.Add(_quarryCommand);
+            }
+
+            return _obstacleCommands;
+        }
+
+        private bool CanBuildLoggingGroundOnSelectedEntity()
+        {
+            if (_selectedEntity == null || _loggingGroundCommand == null || _loggingGroundData == null)
+            {
+                return false;
+            }
+
+            string entityName = _selectedEntity.name ?? string.Empty;
+            return entityName.IndexOf("tree", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private bool CanBuildQuarryOnSelectedEntity()
+        {
+            if (_selectedEntity == null || _quarryCommand == null || _quarryData == null)
+            {
+                return false;
+            }
+
+            string entityName = _selectedEntity.name ?? string.Empty;
+            return entityName.IndexOf("rock", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private void TryBuildLoggingGround()
+        {
+            TryBuildSelectedTileObject(_loggingGroundData);
+        }
+
+        private void TryBuildQuarry()
+        {
+            TryBuildSelectedTileObject(_quarryData);
+        }
+
+        private void TryBuildSelectedTileObject(TownBuildingDataSO buildingData)
+        {
+            if (_selectedEntity == null || _gridManager == null || buildingData == null || buildingData.Prefab == null)
+            {
+                return;
+            }
+
+            Vector2Int gridPosition = _selectedEntity.GridPosition;
+            if (!_gridManager.TryClear(gridPosition, _selectedEntity))
+            {
+                return;
+            }
+
+            Destroy(_selectedEntity.gameObject);
+
+            TownTileObject spawnedObject = Instantiate(buildingData.Prefab, _gridManager.CellToObjectWorld(gridPosition), Quaternion.identity);
+            spawnedObject.BindData(buildingData);
+            spawnedObject.BindSceneServices(_gridManager, GameManager.Instance?.GetManager<LogManager>());
+            if (!spawnedObject.Initialize(gridPosition))
+            {
+                Destroy(spawnedObject.gameObject);
+                return;
+            }
+
+            _saveManager?.RegisterPlacementForSave(spawnedObject, buildingData.SaveKey);
             _saveManager?.SaveGame();
             HidePanel();
         }

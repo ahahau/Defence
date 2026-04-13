@@ -26,17 +26,23 @@ namespace _01.Code.Enemies
         private MaterialPropertyBlock _linePropertyBlock;
         private bool _isSpawning;
 
+        protected override int GetDefaultPathTraversalCost()
+        {
+            return 1;
+        }
+
         public void Initialize(GridManager gridManager, LogManager logManager, EnemySpawnerManager enemySpawnerManager)
         {
             _gridManager = gridManager;
             _logManager = logManager;
             _enemySpawnerManager = enemySpawnerManager;
             EnsureLinePropertyBlock();
-            ApplyLineVisuals(Time.time);
+            RefreshPath(false);
         }
 
         private void Update()
         {
+            UpdateLineVisibility();
             ApplyLineVisuals(Time.time);
         }
 
@@ -49,20 +55,12 @@ namespace _01.Code.Enemies
                 yield return new WaitForSeconds(sec);
             }
 
-            Vector2Int start = GridPosition;
-            Vector2Int target = _gridManager.commandCenter.GridPosition;
-            path = _gridManager.PathFinder.FindPath(start, target);
-            if (path.Count == 0)
+            if (!RefreshPath())
             {
-                _logManager?.Enemy($"Path not found from {start} to {target}.", LogLevel.Error);
                 _isSpawning = false;
                 NotifySpawnerCleared();
                 yield break;
             }
-
-            path = CompressPath(path);
-
-            DrawPathLine();
 
             List<WaveData> spawnWaves = GetSpawnWaves();
             for (int waveIndex = 0; waveIndex < spawnWaves.Count; waveIndex++)
@@ -102,6 +100,40 @@ namespace _01.Code.Enemies
             {
                 NotifySpawnerCleared();
             }
+        }
+
+        public bool RefreshPath(bool rerouteAliveEnemies = true)
+        {
+            if (_gridManager == null || _gridManager.commandCenter == null)
+            {
+                return false;
+            }
+
+            Vector2Int start = GridPosition;
+            Vector2Int target = _gridManager.commandCenter.GridPosition;
+            List<Vector2Int> recalculatedPath = _gridManager.PathFinder.FindPath(start, target);
+            if (recalculatedPath == null || recalculatedPath.Count == 0)
+            {
+                path = new List<Vector2Int>();
+                DrawPathLine();
+                _logManager?.Enemy($"Path not found from {start} to {target}.", LogLevel.Error);
+                return false;
+            }
+
+            path = recalculatedPath;
+            DrawPathLine();
+
+            if (!rerouteAliveEnemies)
+            {
+                return true;
+            }
+
+            foreach (Enemy enemy in _alive)
+            {
+                enemy?.RecalculatePath(_gridManager);
+            }
+
+            return true;
         }
 
         public void StartWave()
@@ -174,32 +206,9 @@ namespace _01.Code.Enemies
             }
 
             lineRenderer.textureScale = Vector2.one;
+            UpdateLineVisibility();
             EnsureLinePropertyBlock();
             ApplyLineVisuals(Time.time);
-        }
-
-        private List<Vector2Int> CompressPath(List<Vector2Int> sourcePath)
-        {
-            if (sourcePath == null || sourcePath.Count <= 2)
-            {
-                return sourcePath ?? new List<Vector2Int>();
-            }
-
-            List<Vector2Int> compressed = new List<Vector2Int> { sourcePath[0] };
-            Vector2Int previousDirection = sourcePath[1] - sourcePath[0];
-
-            for (int i = 1; i < sourcePath.Count - 1; i++)
-            {
-                Vector2Int currentDirection = sourcePath[i + 1] - sourcePath[i];
-                if (currentDirection != previousDirection)
-                {
-                    compressed.Add(sourcePath[i]);
-                    previousDirection = currentDirection;
-                }
-            }
-
-            compressed.Add(sourcePath[sourcePath.Count - 1]);
-            return compressed;
         }
 
         private void OnDisable()
@@ -218,6 +227,22 @@ namespace _01.Code.Enemies
             if (_linePropertyBlock == null)
             {
                 _linePropertyBlock = new MaterialPropertyBlock();
+            }
+        }
+
+        private void UpdateLineVisibility()
+        {
+            if (lineRenderer == null)
+            {
+                return;
+            }
+
+            bool hasValidPath = path != null && path.Count >= 2;
+            bool shouldShow = hasValidPath;
+            lineRenderer.enabled = shouldShow;
+            if (!shouldShow)
+            {
+                lineRenderer.positionCount = hasValidPath ? lineRenderer.positionCount : 0;
             }
         }
 

@@ -22,7 +22,7 @@ namespace _01.Code.Manager
         [field: SerializeField] public int CellSize { get; private set; } = 1;
         [field: SerializeField] public int ChunkSize { get; private set; } = 5;
         [field: SerializeField] public int InitialChunkSpan { get; private set; } = 3;
-        [field: SerializeField] public int ExpandEveryDays { get; private set; } = 3;
+        [field: SerializeField] public int ExpandEveryDays { get; private set; } = 1;
         [field: SerializeField] public bool UseChunkedBattleGrid { get; private set; } = true;
         [field: SerializeField] public PlaceableEntity TreePrefab { get; private set; }
         [field: SerializeField] public PlaceableEntity RockPrefab { get; private set; }
@@ -151,13 +151,27 @@ namespace _01.Code.Manager
         public bool TryInstall(Vector2Int cellPosition, Entity entity)
         {
             EnsureRuntimeState();
-            return Tilemap.TileObjectInstall(cellPosition, entity);
+            bool installed = Tilemap.TileObjectInstall(cellPosition, entity);
+            if (!installed)
+            {
+                return false;
+            }
+
+            ApplyTraversalCost(cellPosition, entity);
+            return true;
         }
 
         public bool TryClear(Vector2Int cellPosition, Entity expectedObject = null)
         {
             EnsureRuntimeState();
-            return Tilemap.ClearTileObject(cellPosition, expectedObject);
+            bool cleared = Tilemap.ClearTileObject(cellPosition, expectedObject);
+            if (!cleared)
+            {
+                return false;
+            }
+
+            ResetTraversalCost(cellPosition);
+            return true;
         }
 
         public CustomTile GetTile(Vector2Int cellPosition)
@@ -170,6 +184,15 @@ namespace _01.Code.Manager
         {
             CustomTile tile = GetTile(cellPosition);
             return tile == null ? 1 : Mathf.Max(1, tile.Cost);
+        }
+
+        public void NotifyEnemyPassedThroughCell(Vector2Int cellPosition, Enemies.Enemy enemy)
+        {
+            CustomTile tile = GetTile(cellPosition);
+            if (tile?.TileObject is PlaceableEntity placeableEntity)
+            {
+                placeableEntity.NotifyEnemyPassedThrough(enemy);
+            }
         }
 
         public Vector2Int GetRandomGridPosition()
@@ -209,6 +232,40 @@ namespace _01.Code.Manager
             }
 
             return expanded;
+        }
+
+        public List<Vector2Int> GetActiveChunkCoordinates()
+        {
+            EnsureRuntimeState();
+            if (Tilemap == null || !Tilemap.UsesChunkGrid)
+            {
+                return new List<Vector2Int>();
+            }
+
+            return Tilemap.ActiveChunks.ToList();
+        }
+
+        public void RestoreActiveChunks(List<Vector2Int> chunkCoordinates)
+        {
+            EnsureRuntimeState();
+            if (Tilemap == null || !Tilemap.UsesChunkGrid || chunkCoordinates == null || chunkCoordinates.Count == 0)
+            {
+                return;
+            }
+
+            bool changed = false;
+            for (int i = 0; i < chunkCoordinates.Count; i++)
+            {
+                if (Tilemap.AddChunk(chunkCoordinates[i]))
+                {
+                    changed = true;
+                }
+            }
+
+            if (changed)
+            {
+                RefreshVisuals();
+            }
         }
 
         public bool ContainsCell(Vector2Int cellPosition)
@@ -313,25 +370,57 @@ namespace _01.Code.Manager
                 return;
             }
 
-            SpawnResourcesInCells(chunkCells);
+            SpawnResourcesInCells(chunkCells, true);
         }
 
-        private void SpawnResourcesInCells(List<Vector2Int> sourceCells)
+        private void SpawnResourcesInCells(List<Vector2Int> sourceCells, bool ensureAtLeastOneResource = false)
         {
             if (sourceCells == null || sourceCells.Count == 0)
             {
                 return;
             }
 
+            int spawnedCount = 0;
+            Vector2Int bestFallbackCell = default;
+            PlaceableEntity bestFallbackPrefab = null;
+            float bestFallbackScore = float.MinValue;
+
             for (int i = 0; i < sourceCells.Count; i++)
             {
                 Vector2Int cell = sourceCells[i];
-                if (!IsResourceSpawnCandidate(cell) || !TryGetResourcePrefab(cell, out PlaceableEntity prefab))
+                if (!IsResourceSpawnCandidate(cell))
                 {
                     continue;
                 }
 
-                TrySpawnResource(prefab, cell);
+                if (TryGetResourcePrefab(cell, out PlaceableEntity prefab))
+                {
+                    if (TrySpawnResource(prefab, cell))
+                    {
+                        spawnedCount++;
+                    }
+
+                    continue;
+                }
+
+                if (!ensureAtLeastOneResource || !TryGetBestFallbackResource(cell, out PlaceableEntity fallbackPrefab, out float fallbackScore))
+                {
+                    continue;
+                }
+
+                if (fallbackScore <= bestFallbackScore)
+                {
+                    continue;
+                }
+
+                bestFallbackScore = fallbackScore;
+                bestFallbackCell = cell;
+                bestFallbackPrefab = fallbackPrefab;
+            }
+
+            if (ensureAtLeastOneResource && spawnedCount == 0 && bestFallbackPrefab != null)
+            {
+                TrySpawnResource(bestFallbackPrefab, bestFallbackCell);
             }
         }
 
@@ -371,6 +460,38 @@ namespace _01.Code.Manager
             }
 
             return false;
+        }
+
+        private bool TryGetBestFallbackResource(Vector2Int cellPosition, out PlaceableEntity prefab, out float score)
+        {
+            prefab = null;
+            score = float.MinValue;
+
+            float thresholdBonus = GetCenterThresholdBonus(cellPosition);
+            float treeNoise = SampleResourceNoise(cellPosition, 0f, 0f);
+            float rockNoise = SampleResourceNoise(cellPosition, RockNoiseOffsetX, RockNoiseOffsetY);
+
+            if (TreePrefab != null)
+            {
+                float treeScore = treeNoise - (TreeNoiseThreshold + thresholdBonus);
+                if (treeScore > score)
+                {
+                    score = treeScore;
+                    prefab = TreePrefab;
+                }
+            }
+
+            if (RockPrefab != null)
+            {
+                float rockScore = rockNoise - (RockNoiseThreshold + thresholdBonus);
+                if (rockScore > score)
+                {
+                    score = rockScore;
+                    prefab = RockPrefab;
+                }
+            }
+
+            return prefab != null;
         }
 
         private float SampleResourceNoise(Vector2Int cellPosition, float offsetX, float offsetY)
@@ -444,6 +565,26 @@ namespace _01.Code.Manager
         private bool IsBattleScene()
         {
             return gameObject.scene.name.IndexOf("Battle", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private void ApplyTraversalCost(Vector2Int cellPosition, Entity entity)
+        {
+            CustomTile tile = GetTile(cellPosition);
+            if (tile == null)
+            {
+                return;
+            }
+
+            int traversalCost = entity is PlaceableEntity placeableEntity
+                ? placeableEntity.PathTraversalCost
+                : 1;
+            tile.SetCost(traversalCost);
+        }
+
+        private void ResetTraversalCost(Vector2Int cellPosition)
+        {
+            CustomTile tile = GetTile(cellPosition);
+            tile?.SetCost(1);
         }
 
 #if UNITY_EDITOR

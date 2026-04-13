@@ -26,6 +26,11 @@ namespace _01.Code.UI
             _owner = owner;
         }
 
+        public void SetOwner(TownInteriorScreenUI owner)
+        {
+            _owner = owner;
+        }
+
         public void BindContext(TownCommandContext context)
         {
             _context = context;
@@ -33,22 +38,28 @@ namespace _01.Code.UI
 
         private void Awake()
         {
+            EnsureReferences();
             Disable();
         }
 
         public void EnableFor(TownCommandSO item, UnityAction callback)
         {
+            EnsureReferences();
             if (button == null)
             {
                 return;
             }
 
+            gameObject.SetActive(true);
+            button.enabled = true;
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(callback);
             button.interactable = true;
             _boundCommand = item;
             if (icon != null)
             {
+                icon.gameObject.SetActive(true);
+                icon.enabled = true;
                 Sprite sprite = item != null ? item.GetIcon(_context) : null;
                 icon.sprite = sprite;
                 icon.enabled = sprite != null;
@@ -56,17 +67,29 @@ namespace _01.Code.UI
 
             if (background != null)
             {
+                background.gameObject.SetActive(true);
+                background.enabled = true;
+                background.raycastTarget = true;
                 background.color = new Color(0.82f, 0.84f, 0.88f, 1f);
             }
 
             if (label != null)
             {
-                label.text = item != null ? item.GetDisplayName(_context) : string.Empty;
+                label.gameObject.SetActive(true);
+                label.enabled = true;
+                string displayName = item != null ? item.GetDisplayName(_context) : string.Empty;
+                if (string.IsNullOrWhiteSpace(displayName) && item != null)
+                {
+                    displayName = item.name;
+                }
+
+                label.text = displayName;
             }
         }
 
         public void Disable()
         {
+            EnsureReferences();
             if (button != null)
             {
                 button.interactable = false;
@@ -86,10 +109,34 @@ namespace _01.Code.UI
 
             if (label != null)
             {
+                label.enabled = true;
                 label.text = string.Empty;
             }
 
             _boundCommand = null;
+        }
+
+        public void EnsureReferences()
+        {
+            button ??= GetComponent<Button>();
+            background ??= GetComponent<Image>();
+            label ??= GetComponentInChildren<TextMeshProUGUI>(true);
+
+            if (icon == null)
+            {
+                Image[] images = GetComponentsInChildren<Image>(true);
+                for (int i = 0; i < images.Length; i++)
+                {
+                    Image candidate = images[i];
+                    if (candidate == null || candidate == background)
+                    {
+                        continue;
+                    }
+
+                    icon = candidate;
+                    break;
+                }
+            }
         }
 
         public void OnPointerEnter(PointerEventData eventData)

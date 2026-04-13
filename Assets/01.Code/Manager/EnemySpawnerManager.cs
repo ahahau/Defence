@@ -24,6 +24,7 @@ namespace _01.Code.Manager
         private LogManager _logManager;
         private SaveManager _saveManager;
         private TimeManager _timeManager;
+        private BuildManager _buildManager;
 
         public HashSet<EnemySpawner> CurrentWaveEnemySpawnerList { get; } = new HashSet<EnemySpawner>();
         public GameEventChannelSO WaveEventChannel
@@ -42,15 +43,25 @@ namespace _01.Code.Manager
             _logManager = managerContainer.GetManager<LogManager>();
             _saveManager = managerContainer.GetManager<SaveManager>();
             _timeManager = managerContainer.GetManager<TimeManager>();
+            _buildManager = managerContainer.GetManager<BuildManager>();
             ResolveChannel();
             waveEventChannel?.AddListener<WaveStartedEvent>(HandleWaveStartedEvent);
+            if (_buildManager != null)
+            {
+                _buildManager.OnBuildingInstalled += HandleBuildingInstalled;
+                _buildManager.OnBuildingMoved += HandleBuildingMoved;
+            }
             Physics2D.IgnoreLayerCollision(6, 6, true);
-            SpawnSpawner();
         }
 
         private void OnDestroy()
         {
             waveEventChannel?.RemoveListener<WaveStartedEvent>(HandleWaveStartedEvent);
+            if (_buildManager != null)
+            {
+                _buildManager.OnBuildingInstalled -= HandleBuildingInstalled;
+                _buildManager.OnBuildingMoved -= HandleBuildingMoved;
+            }
         }
 
         public void SpawnerAllEnemyDied(EnemySpawner enemySpawner)
@@ -83,6 +94,18 @@ namespace _01.Code.Manager
             CurrentWaveEnemySpawnerList.Clear();
         }
 
+        public void EnsureReadySpawners()
+        {
+            RemoveDestroyedSpawners();
+            if (CurrentWaveEnemySpawnerList.Count > 0)
+            {
+                RefreshAllRoutes();
+                return;
+            }
+
+            SpawnSpawner();
+        }
+
         public bool TryCreateSavedSpawner(Vector2Int cellPos, out PlaceableEntity placeableEntity)
         {
             placeableEntity = null;
@@ -113,6 +136,7 @@ namespace _01.Code.Manager
                 return false;
             }
 
+            spawner.RefreshPath(false);
             CurrentWaveEnemySpawnerList.Add(spawner);
             _saveManager?.RegisterEnemySpawnerForSave(spawner, spawnerSaveKey);
             placeableEntity = spawner;
@@ -146,6 +170,7 @@ namespace _01.Code.Manager
 
         private void HandleWaveStartedEvent(WaveStartedEvent _)
         {
+            RefreshAllRoutes();
             RemoveDestroyedSpawners();
             if (CurrentWaveEnemySpawnerList.Count == 0)
             {
@@ -206,6 +231,7 @@ namespace _01.Code.Manager
                     continue;
                 }
 
+                spawner.RefreshPath(false);
                 CurrentWaveEnemySpawnerList.Add(spawner);
                 _saveManager?.RegisterEnemySpawnerForSave(spawner, spawnerSaveKey);
             }
@@ -229,6 +255,25 @@ namespace _01.Code.Manager
 
             cellPosition = candidates[Random.Range(0, candidates.Count)];
             return true;
+        }
+
+        private void HandleBuildingInstalled(Units.UnitDataSO _, PlaceableEntity __)
+        {
+            RefreshAllRoutes();
+        }
+
+        private void HandleBuildingMoved()
+        {
+            RefreshAllRoutes();
+        }
+
+        private void RefreshAllRoutes()
+        {
+            RemoveDestroyedSpawners();
+            foreach (EnemySpawner spawner in CurrentWaveEnemySpawnerList)
+            {
+                spawner?.RefreshPath();
+            }
         }
 
         private bool IsRestrictedSpawnerCell(Vector2Int cell)

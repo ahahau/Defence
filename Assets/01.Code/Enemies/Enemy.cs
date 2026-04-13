@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using _01.Code.Buildings;
 using _01.Code.Entities;
+using _01.Code.Manager;
 using GondrLib.ObjectPool.Runtime;
 using UnityEngine;
 using UnityEngine.Events;
@@ -132,6 +133,25 @@ namespace _01.Code.Enemies
             ApplyCommandCenterDamage();
             _parentSpawner?.EnemyDied(this);
             ReturnToPool();
+        }
+
+        public void RecalculatePath(GridManager gridManager)
+        {
+            if (_returnedToPool || gridManager == null || _commandCenter == null || _movement == null)
+            {
+                return;
+            }
+
+            Vector2Int start = gridManager.WorldToPlacementCell(transform.position);
+            Vector2Int end = _commandCenter.GridPosition;
+            List<Vector2Int> recalculatedPath = gridManager.PathFinder.FindPath(start, end);
+            if (recalculatedPath == null || recalculatedPath.Count == 0)
+            {
+                return;
+            }
+
+            _movement.SetPath(recalculatedPath);
+            _movement.MoveNext();
         }
 
         private void ApplyCommandCenterDamage()

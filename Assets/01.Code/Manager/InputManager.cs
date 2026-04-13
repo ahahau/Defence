@@ -20,8 +20,10 @@ namespace _01.Code.Manager
 
         [SerializeField] private GameEventChannelSO uiEventChannel;
         [SerializeField] private GameEventChannelSO buildEventChannel;
+        [SerializeField] private BattleCommandPanelController battleCommandPanel;
         [SerializeField] private LayerMask whatIsClickable;
         [SerializeField] private float dragStartThresholdPixels = 8f;
+        private BuildManager _buildManager;
         private GridManager _gridManager;
         private Unit _draggedUnit;
         private PlaceableEntity _selectedBuilding;
@@ -32,14 +34,17 @@ namespace _01.Code.Manager
         private bool _queuedLeftPointerPressed;
         private bool _queuedLeftPointerReleased;
         private bool _queuedRightPointerPressed;
+        private bool _hasDragOrigin;
         private Vector2 _pointerDownScreenPosition;
         private Vector2 _pointerDownWorldPosition;
+        private Vector2Int _dragOriginCell;
         private Camera _worldCamera;
         private MainBuildingRoomWorld _townInteriorWorld;
         private BattleCommandPanelController _battleCommandPanel;
 
         public void Initialize(IManagerContainer managerContainer)
         {
+            _buildManager = managerContainer.GetManager<BuildManager>();
             _gridManager = managerContainer.GetManager<GridManager>();
             InputData.LeftPointerPressed += QueueLeftPointerPressed;
             InputData.LeftPointerReleased += QueueLeftPointerReleased;
@@ -156,6 +161,11 @@ namespace _01.Code.Manager
 
             Vector2Int gridPos = _gridManager.WorldToPlacementCell(worldPosition);
             CurrentMouseCellPosition = gridPos;
+            if (TryHandleSelectedUnitBuild(worldPosition, gridPos))
+            {
+                return;
+            }
+
             uiEventChannel.RaiseEvent(UIEvents.UiBuildAtWorldPositionRequestedEvent.Initializer(worldPosition));
         }
 
@@ -186,6 +196,11 @@ namespace _01.Code.Manager
             _pointerDownWorldPosition = worldPosition;
             _pointerDownCollider = GetHitCollider(worldPosition);
             _draggedUnit = ResolveDraggedUnit(_pointerDownCollider);
+            if (_draggedUnit != null)
+            {
+                _dragOriginCell = _draggedUnit.GridPosition;
+                _hasDragOrigin = true;
+            }
             _selectedBuilding = ResolveSelectedBuilding(_pointerDownCollider);
         }
 
@@ -212,15 +227,28 @@ namespace _01.Code.Manager
 
             if (_isDraggingUnit && _draggedUnit != null)
             {
+                if (!CanDropDraggedUnitAt(targetWorldPosition))
+                {
+                    ReturnDraggedUnitToOrigin();
+                    ResetPointerState();
+                    return;
+                }
+
                 BuildMoveRequestedEvent moveRequest =
                     BuildEvents.BuildMoveRequestedEvent.Initializer(_draggedUnit, targetWorldPosition, 0);
                 buildEventChannel.RaiseEvent(moveRequest);
                 bool moved = moveRequest.Succeeded;
                 if (!moved)
                 {
-                    _draggedUnit.CommitPosition(_draggedUnit.GridPosition);
+                    ReturnDraggedUnitToOrigin();
                 }
 
+                ResetPointerState();
+                return;
+            }
+
+            if (TryHandleSelectedUnitBuildFromRelease(targetWorldPosition))
+            {
                 ResetPointerState();
                 return;
             }
@@ -250,7 +278,10 @@ namespace _01.Code.Manager
         private void DragUnit(Vector2Int gridPos)
         {
             CurrentMouseCellPosition = gridPos;
-            _draggedUnit.PreviewPosition(gridPos);
+            if (CanPreviewDraggedUnitAt(gridPos))
+            {
+                _draggedUnit.PreviewPosition(gridPos);
+            }
         }
 
         private bool ShouldStartDragging(Vector2Int hoveredCell)
@@ -282,8 +313,50 @@ namespace _01.Code.Manager
             _isPointerDown = false;
             _isDraggingUnit = false;
             _draggedUnit = null;
+            _hasDragOrigin = false;
             _selectedBuilding = null;
             _pointerDownCollider = null;
+        }
+
+        private bool CanPreviewDraggedUnitAt(Vector2Int gridPosition)
+        {
+            if (_gridManager == null || _draggedUnit == null || !_hasDragOrigin)
+            {
+                return false;
+            }
+
+            if (!_gridManager.ContainsCell(gridPosition))
+            {
+                return false;
+            }
+
+            return gridPosition == _dragOriginCell || _gridManager.IsCellEmpty(gridPosition);
+        }
+
+        private bool CanDropDraggedUnitAt(Vector3 worldPosition)
+        {
+            if (_gridManager == null || !_hasDragOrigin)
+            {
+                return false;
+            }
+
+            Vector2Int targetCell = _gridManager.WorldToPlacementCell(worldPosition);
+            if (!_gridManager.ContainsCell(targetCell))
+            {
+                return false;
+            }
+
+            return targetCell == _dragOriginCell || _gridManager.IsCellEmpty(targetCell);
+        }
+
+        private void ReturnDraggedUnitToOrigin()
+        {
+            if (_draggedUnit == null || !_hasDragOrigin)
+            {
+                return;
+            }
+
+            _draggedUnit.CommitPosition(_dragOriginCell);
         }
 
         private void HandleDeleteSaveHotkey()
@@ -357,18 +430,16 @@ namespace _01.Code.Manager
                 return;
             }
 
-            _battleCommandPanel = FindFirstObjectByType<BattleCommandPanelController>(FindObjectsInactive.Include);
+            _battleCommandPanel = battleCommandPanel;
             if (_battleCommandPanel == null)
             {
-                Canvas canvas = FindFirstObjectByType<Canvas>(FindObjectsInactive.Include);
-                if (canvas == null)
-                {
-                    return;
-                }
+                _battleCommandPanel = FindFirstObjectByType<BattleCommandPanelController>(FindObjectsInactive.Include);
+                battleCommandPanel = _battleCommandPanel;
+            }
 
-                GameObject controllerObject = new GameObject("BattleCommandPanelController");
-                controllerObject.transform.SetParent(canvas.transform, false);
-                _battleCommandPanel = controllerObject.AddComponent<BattleCommandPanelController>();
+            if (_battleCommandPanel == null)
+            {
+                return;
             }
 
             _battleCommandPanel.Initialize(
@@ -385,33 +456,68 @@ namespace _01.Code.Manager
                 return null;
             }
 
-            Ray ray = _worldCamera.ScreenPointToRay(InputData.MousePosition);
-            RaycastHit2D hit = whatIsClickable.value == 0
-                ? Physics2D.GetRayIntersection(ray, Mathf.Infinity)
-                : Physics2D.GetRayIntersection(ray, Mathf.Infinity, whatIsClickable);
-
-            if (hit.collider != null)
+            Collider2D[] overlaps = whatIsClickable.value == 0
+                ? Physics2D.OverlapPointAll(worldPosition)
+                : Physics2D.OverlapPointAll(worldPosition, whatIsClickable);
+            if (overlaps != null && overlaps.Length > 0)
             {
-                return hit.collider;
+                Array.Sort(overlaps, CompareColliderPriority);
+                return overlaps[0];
             }
 
-            RaycastHit2D fallbackHit = Physics2D.GetRayIntersection(ray, Mathf.Infinity);
-            if (fallbackHit.collider == null)
+            Collider2D[] fallbackOverlaps = Physics2D.OverlapPointAll(worldPosition);
+            if (fallbackOverlaps == null || fallbackOverlaps.Length == 0)
             {
                 return null;
             }
 
-            if (fallbackHit.collider.GetComponentInParent<MainBuildingRoomTile>() != null)
+            Array.Sort(fallbackOverlaps, CompareColliderPriority);
+            return fallbackOverlaps[0];
+        }
+
+        private int CompareColliderPriority(Collider2D left, Collider2D right)
+        {
+            int leftPriority = GetColliderPriority(left);
+            int rightPriority = GetColliderPriority(right);
+            if (leftPriority != rightPriority)
             {
-                return fallbackHit.collider;
+                return rightPriority.CompareTo(leftPriority);
             }
 
-            if (fallbackHit.collider.GetComponentInParent<TownTileObject>() != null)
+            int leftSortingOrder = GetColliderSortingOrder(left);
+            int rightSortingOrder = GetColliderSortingOrder(right);
+            if (leftSortingOrder != rightSortingOrder)
             {
-                return fallbackHit.collider;
+                return rightSortingOrder.CompareTo(leftSortingOrder);
             }
 
-            return null;
+            return 0;
+        }
+
+        private int GetColliderPriority(Collider2D collider)
+        {
+            if (collider == null)
+            {
+                return int.MinValue;
+            }
+
+            if (collider.GetComponentInParent<MainBuildingRoomTile>() != null)
+            {
+                return 1;
+            }
+
+            if (collider.GetComponentInParent<PlaceableEntity>() != null)
+            {
+                return 2;
+            }
+
+            return 0;
+        }
+
+        private int GetColliderSortingOrder(Collider2D collider)
+        {
+            SpriteRenderer spriteRenderer = collider != null ? collider.GetComponentInParent<SpriteRenderer>() : null;
+            return spriteRenderer != null ? spriteRenderer.sortingOrder : int.MinValue;
         }
 
         private Units.Unit ResolveDraggedUnit(Collider2D hitCollider)
@@ -491,6 +597,55 @@ namespace _01.Code.Manager
 
             TownTileObject tileObject = hitGameObject.GetComponentInParent<TownTileObject>();
             return _townInteriorWorld.TryHandleTileObjectClick(tileObject);
+        }
+
+        private bool TryHandleSelectedUnitBuild(Vector2 worldPosition, Vector2Int gridPosition)
+        {
+            if (_buildManager == null || _buildManager.SelectedUnit == null || _gridManager == null)
+            {
+                return false;
+            }
+
+            if (!_gridManager.ContainsCell(gridPosition))
+            {
+                return false;
+            }
+
+            return _buildManager.TryRequestBuild(worldPosition);
+        }
+
+        private bool TryHandleSelectedUnitBuildFromRelease(Vector2 worldPosition)
+        {
+            if (_buildManager == null || _buildManager.SelectedUnit == null || _gridManager == null)
+            {
+                return false;
+            }
+
+            if (_pointerDownCollider != null)
+            {
+                if (_pointerDownCollider.CompareTag("EnemySpawner"))
+                {
+                    return false;
+                }
+
+                if (_pointerDownCollider.GetComponentInParent<Units.Unit>() != null)
+                {
+                    return false;
+                }
+
+                if (_pointerDownCollider.GetComponentInParent<PlaceableEntity>() != null)
+                {
+                    return false;
+                }
+            }
+
+            Vector2Int gridPosition = _gridManager.WorldToPlacementCell(worldPosition);
+            if (!_gridManager.ContainsCell(gridPosition))
+            {
+                return false;
+            }
+
+            return _buildManager.TryRequestBuild(worldPosition);
         }
     }
 }
