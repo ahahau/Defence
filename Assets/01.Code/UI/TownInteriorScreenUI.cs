@@ -448,6 +448,7 @@ namespace _01.Code.UI
             ResolveReferences();
             BuildLayout();
             _currentCommandContext = context;
+            ConsumeCurrentClickFrame();
             SetBuildPanelVisible(true);
             if (_titleText != null)
             {
@@ -455,15 +456,7 @@ namespace _01.Code.UI
             }
 
             RenderCommands(commands);
-            TownCommandSO initialCommand = FindInitialCommand(commands);
-            if (initialCommand != null)
-            {
-                ShowTooltip(initialCommand, _currentCommandContext);
-            }
-            else
-            {
-                HideTooltip();
-            }
+            HideTooltip();
         }
 
         public void ShowObjectSectionWindow(TownTileObjectDataSO data, TownObjectPanelSectionSO section)
@@ -599,6 +592,11 @@ namespace _01.Code.UI
             {
                 _tooltipRoot.gameObject.SetActive(false);
             }
+        }
+
+        public bool ShouldSuppressTooltipThisFrame()
+        {
+            return Application.isPlaying && _consumeWorldClickFrame == Time.frameCount;
         }
 
         public bool IsPointerOverBuildPanel()

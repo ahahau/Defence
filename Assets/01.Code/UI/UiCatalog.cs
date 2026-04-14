@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using _01.Code.Buildings;
+using _01.Code.Core;
 using _01.Code.Units;
 using UnityEngine.SceneManagement;
 
@@ -94,12 +95,43 @@ namespace _01.Code.UI
 
         private bool IsBattleBuildingEntry(UnitDataSO unitData)
         {
-            return unitData?.Prefab != null && unitData.Prefab.GetComponent<BattleBuilding>() != null;
+            if (unitData?.Prefab == null)
+            {
+                return false;
+            }
+
+            if (MatchesSceneScope(unitData.SceneScope, false, true))
+            {
+                return true;
+            }
+
+            if (unitData.SceneScope != BuildSceneScope.Auto)
+            {
+                return false;
+            }
+
+            return unitData.Prefab.GetComponent<BattleBuilding>() != null ||
+                   unitData.Prefab.GetComponent<BattleTownBuilding>() != null;
         }
 
         private bool IsTownBuildingEntry(UnitDataSO unitData)
         {
             if (unitData?.Prefab == null)
+            {
+                return false;
+            }
+
+            if (MatchesSceneScope(unitData.SceneScope, true, false))
+            {
+                return true;
+            }
+
+            if (unitData.SceneScope != BuildSceneScope.Auto)
+            {
+                return false;
+            }
+
+            if (unitData.Prefab.GetComponent<BattleTownBuilding>() != null)
             {
                 return false;
             }
@@ -110,6 +142,17 @@ namespace _01.Code.UI
             }
 
             return unitData.Prefab.GetComponent<BattleBuilding>() == null;
+        }
+
+        private bool MatchesSceneScope(BuildSceneScope scope, bool isTownScene, bool isBattleScene)
+        {
+            return scope switch
+            {
+                BuildSceneScope.Town => isTownScene,
+                BuildSceneScope.Battle => isBattleScene,
+                BuildSceneScope.Any => true,
+                _ => false
+            };
         }
     }
 }

@@ -482,17 +482,7 @@ namespace _01.Code.Manager
         private List<TownTileObjectDataSO> QueryTownTileObjectCatalog()
         {
             List<TownTileObjectDataSO> catalog = new List<TownTileObjectDataSO>();
-            TownTileObjectDataSO[] resourceCatalog = Resources.LoadAll<TownTileObjectDataSO>("Town");
-            for (int i = 0; i < resourceCatalog.Length; i++)
-            {
-                TownTileObjectDataSO resourceData = resourceCatalog[i];
-                if (resourceData == null || catalog.Contains(resourceData))
-                {
-                    continue;
-                }
-
-                catalog.Add(resourceData);
-            }
+            AddTownTileObjectCatalogEntries(Resources.LoadAll<TownTileObjectDataSO>("Town"), catalog);
 
             MainBuildingRoomWorld[] worlds = FindObjectsByType<MainBuildingRoomWorld>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             for (int i = 0; i < worlds.Length; i++)
@@ -501,6 +491,11 @@ namespace _01.Code.Manager
                 if (world == null)
                 {
                     continue;
+                }
+
+                if (world.BuildingCatalog != null)
+                {
+                    AddTownTileObjectCatalogEntries(world.BuildingCatalog.Buildings, catalog);
                 }
 
                 if (world.DefaultObstacleData != null && !catalog.Contains(world.DefaultObstacleData))
@@ -541,6 +536,24 @@ namespace _01.Code.Manager
             }
 
             return catalog;
+        }
+
+        private void AddTownTileObjectCatalogEntries(IEnumerable<TownTileObjectDataSO> entries, List<TownTileObjectDataSO> catalog)
+        {
+            if (catalog == null || entries == null)
+            {
+                return;
+            }
+
+            foreach (TownTileObjectDataSO entry in entries)
+            {
+                if (entry == null || catalog.Contains(entry))
+                {
+                    continue;
+                }
+
+                catalog.Add(entry);
+            }
         }
 
         private void EnsureSaveAgents()

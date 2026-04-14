@@ -8,6 +8,7 @@ using _01.Code.TownPanels;
 using _01.Code.UI;
 using _01.Code.Units;
 using _01.Code.Buildings;
+using _01.Code.Cost;
 using UnityEngine;
 
 namespace _01.Code.Tiles
@@ -24,6 +25,7 @@ namespace _01.Code.Tiles
     {
         [field: SerializeField] public GridManager GridManager { get; private set; }
         [field: SerializeField] public TownInteriorScreenUI TownInteriorScreenUI { get; private set; }
+        [field: SerializeField] public BattleBuildingCatalogSO BuildingCatalog { get; private set; }
         [field: SerializeField] public Vector2Int BoardOrigin { get; private set; } = Vector2Int.zero;
         [field: SerializeField] public bool UseChildTileCount { get; private set; } = true;
         [field: SerializeField] public int BoardColumns { get; private set; } = 4;
@@ -96,6 +98,7 @@ namespace _01.Code.Tiles
         private readonly List<TownCommandSO> _townBuildCommands = new();
         private readonly List<TownCommandSO> _townObjectCommands = new();
         private TownRemoveObstacleCommandSO _removeObstacleCommand;
+        private TownUpgradeTileObjectCommandSO _upgradeTileObjectCommand;
 
         private void Awake()
         {
@@ -407,11 +410,11 @@ namespace _01.Code.Tiles
                 }
 
                 TownTileObject tileObject = GetTileObject(cell);
-                if (tileObject != null && tileObject.Data != null && tileObject.Data.InteractionPanel != null)
+                if (tileObject != null && tileObject.Data != null && HasObjectCommands(tileObject))
                 {
                     _selectedCell = cell;
                     _hasSelectedCell = true;
-                    ShowObjectCommands(tileObject.Data);
+                    ShowObjectCommands(tileObject);
                     RefreshTiles();
                     return;
                 }
@@ -646,16 +649,16 @@ namespace _01.Code.Tiles
             TownInteriorScreenUI.ShowCommands(title, new List<TownCommandSO> { _removeObstacleCommand }, context);
         }
 
-        private void ShowObjectCommands(TownTileObjectDataSO tileObjectData)
+        private void ShowObjectCommands(TownTileObject tileObject)
         {
-            if (TownInteriorScreenUI == null || tileObjectData == null || tileObjectData.InteractionPanel == null)
+            if (TownInteriorScreenUI == null || tileObject == null || tileObject.Data == null)
             {
                 return;
             }
 
-            BuildTownObjectCommands(tileObjectData);
-            string title = !string.IsNullOrWhiteSpace(tileObjectData.DisplayName)
-                ? tileObjectData.DisplayName.ToUpperInvariant()
+            BuildTownObjectCommands(tileObject);
+            string title = !string.IsNullOrWhiteSpace(tileObject.Data.DisplayName)
+                ? tileObject.Data.DisplayName.ToUpperInvariant()
                 : "OBJECT";
             TownCommandContext context = new TownCommandContext(this, _buildManager, _costManager, _selectedCell, null);
             TownInteriorScreenUI.HideObjectDetailsExternally();
@@ -693,15 +696,45 @@ namespace _01.Code.Tiles
             }
         }
 
-        private void BuildTownObjectCommands(TownTileObjectDataSO tileObjectData)
+        private bool HasObjectCommands(TownTileObject tileObject)
+        {
+            if (tileObject == null || tileObject.Data == null)
+            {
+                return false;
+            }
+
+            return tileObject.Data.GetResolvedNextUpgrade() != null ||
+                   (tileObject.Data.InteractionPanel != null &&
+                    tileObject.Data.InteractionPanel.Sections != null &&
+                    tileObject.Data.InteractionPanel.Sections.Count > 0);
+        }
+
+        private void BuildTownObjectCommands(TownTileObject tileObject)
         {
             _townObjectCommands.Clear();
-            if (tileObjectData == null || tileObjectData.InteractionPanel == null || tileObjectData.InteractionPanel.Sections == null)
+
+            TownTileObjectDataSO tileObjectData = tileObject != null ? tileObject.Data : null;
+            if (tileObjectData == null)
             {
                 return;
             }
 
-            for (int i = 0; i < tileObjectData.InteractionPanel.Sections.Count && i < 5; i++)
+            int slot = 0;
+            if (tileObjectData.GetResolvedNextUpgrade() != null)
+            {
+                _upgradeTileObjectCommand = ScriptableObject.CreateInstance<TownUpgradeTileObjectCommandSO>();
+                _upgradeTileObjectCommand.ConfigureRuntime(tileObjectData, slot);
+                _upgradeTileObjectCommand.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
+                _townObjectCommands.Add(_upgradeTileObjectCommand);
+                slot++;
+            }
+
+            if (tileObjectData.InteractionPanel == null || tileObjectData.InteractionPanel.Sections == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < tileObjectData.InteractionPanel.Sections.Count && slot < 5; i++)
             {
                 TownObjectPanelSectionSO section = tileObjectData.InteractionPanel.Sections[i];
                 if (section == null)
@@ -710,9 +743,10 @@ namespace _01.Code.Tiles
                 }
 
                 TownOpenPanelSectionCommandSO command = ScriptableObject.CreateInstance<TownOpenPanelSectionCommandSO>();
-                command.ConfigureRuntime(section, tileObjectData, i);
+                command.ConfigureRuntime(section, tileObjectData, slot);
                 command.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
                 _townObjectCommands.Add(command);
+                slot++;
             }
         }
 
@@ -830,6 +864,64 @@ namespace _01.Code.Tiles
             TownInteriorScreenUI?.HideBuildPanelExternally();
             TownInteriorScreenUI?.HideObjectDetailsExternally();
             RefreshTiles();
+            return true;
+        }
+
+        public bool TryUpgradeTownObjectAtCell(Vector2Int cell)
+        {
+            ResolveReferences();
+            if (GridManager == null || _costManager == null)
+            {
+                return false;
+            }
+
+            TownTileObject currentObject = GetTileObject(cell);
+            if (currentObject == null || currentObject.Data == null || currentObject.Data.GetResolvedNextUpgrade() == null)
+            {
+                return false;
+            }
+
+            TownTileObjectDataSO nextUpgrade = currentObject.Data.GetResolvedNextUpgrade();
+            if (nextUpgrade.Prefab == null)
+            {
+                return false;
+            }
+
+            CostBundleSO upgradeCosts = currentObject.Data.GetResolvedUpgradeCosts();
+            if (upgradeCosts != null && !_costManager.TryPayAll(upgradeCosts))
+            {
+                return false;
+            }
+
+            string runtimeSaveId = currentObject.RuntimeSaveId;
+
+            GridManager.TryClear(cell, currentObject);
+            Destroy(currentObject.gameObject);
+
+            TownTileObject upgradedObject = Instantiate(nextUpgrade.Prefab, GridManager.CellToObjectWorld(cell), Quaternion.identity);
+            upgradedObject.BindData(nextUpgrade);
+            upgradedObject.BindSceneServices(GridManager, _logManager);
+            if (!upgradedObject.Initialize(cell))
+            {
+                Destroy(upgradedObject.gameObject);
+                return false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(nextUpgrade.SaveKey))
+            {
+                _saveManager?.RegisterPlacementForSave(upgradedObject, nextUpgrade.SaveKey);
+            }
+
+            if (!string.IsNullOrWhiteSpace(runtimeSaveId))
+            {
+                upgradedObject.BindRuntimeSaveId(runtimeSaveId);
+            }
+
+            _selectedCell = cell;
+            _hasSelectedCell = true;
+            ShowObjectCommands(upgradedObject);
+            RefreshTiles();
+            _saveManager?.SaveGame();
             return true;
         }
 

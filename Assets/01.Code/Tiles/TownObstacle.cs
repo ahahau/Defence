@@ -32,10 +32,6 @@ namespace _01.Code.Tiles
 
         private void RefundReturnCosts(CostManager costManager, CostBundleSO returnCosts)
         {
-            if (costManager == null || returnCosts == null)
-            {
-                return;
-            }
 
             for (int i = 0; i < returnCosts.Entries.Count; i++)
             {

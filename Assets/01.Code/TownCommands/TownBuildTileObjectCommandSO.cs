@@ -1,4 +1,3 @@
-using _01.Code.Buildings;
 using _01.Code.Cost;
 using _01.Code.Tiles;
 using UnityEngine;
@@ -7,9 +6,9 @@ namespace _01.Code.TownCommands
 {
     public class TownBuildTileObjectCommandSO : TownCommandSO
     {
-        [field: SerializeField] public TownBuildingDataSO BuildingData { get; private set; }
+        [field: SerializeField] public TownTileObjectDataSO BuildingData { get; private set; }
 
-        public void ConfigureRuntime(TownBuildingDataSO buildingData, int slot)
+        public void ConfigureRuntime(TownTileObjectDataSO buildingData, int slot)
         {
             BuildingData = buildingData;
             ConfigureRuntime(

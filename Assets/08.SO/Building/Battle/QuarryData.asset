@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e0a462af77534d22932b36ec1d3677be, type: 3}
+  m_Script: {fileID: 11500000, guid: 3b99d8da04d44ae7892a96cfd1fb4637, type: 3}
   m_Name: QuarryData
   m_EditorClassIdentifier: 
   <SaveKey>k__BackingField: town_quarry
@@ -20,3 +20,12 @@ MonoBehaviour:
   <Color>k__BackingField: {r: 0.5, g: 0.5, b: 0.54, a: 1}
   <BuildCosts>k__BackingField: {fileID: 0}
   <InteractionPanel>k__BackingField: {fileID: 0}
+  <NextUpgrade>k__BackingField: {fileID: 11400000, guid: b7100ce0578246858c5f87efd8e1f495, type: 2}
+  <UpgradeCosts>k__BackingField: {fileID: 11400000, guid: 60c8fbd59f3240c49be559773f2ff1b0, type: 2}
+  <RequiredSourcePrefab>k__BackingField: {fileID: 11400000, guid: 4a7f2e58c5fb4ab6a6c1f8a347b0e912, type: 3}
+  <Role>k__BackingField: 1
+  <UpgradeData>k__BackingField: {fileID: 11400000, guid: 7dcc85f5e8c4403b88bc8d8ad8fe431c, type: 2}
+  <CollectCostType>k__BackingField: {fileID: 11400000, guid: 4f4feeaf968d27c49bb248987722d989, type: 2}
+  <CollectAmountPerWave>k__BackingField: 8
+  <SceneScope>k__BackingField: 2
+  <BattlePlacementKind>k__BackingField: 3

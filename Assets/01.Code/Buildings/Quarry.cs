@@ -1,6 +1,6 @@
 namespace _01.Code.Buildings
 {
-    public class Quarry : TownBuilding
+    public class Quarry : BattleTownBuilding
     {
     }
 }

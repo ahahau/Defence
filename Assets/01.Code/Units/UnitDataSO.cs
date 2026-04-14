@@ -1,9 +1,10 @@
 using _01.Code.Entities;
+using _01.Code.Core;
 using UnityEngine;
 
 namespace _01.Code.Units
 {
-    [CreateAssetMenu(fileName = "BuildingData", menuName = "SO/Building/Data", order = 0)]
+    [CreateAssetMenu(fileName = "UnitSO", menuName = "SO/Units/Data", order = 0)]
     public class UnitDataSO : ScriptableObject
     {
         [field: SerializeField] public string Name { get; private set; }
@@ -12,5 +13,6 @@ namespace _01.Code.Units
         [field: SerializeField] public Sprite CardIcon { get; private set; }
         [field: SerializeField] public Color CardColor { get; private set; } = Color.white;
         [field: SerializeField] public PlaceableEntity Prefab { get; private set; }
+        [field: SerializeField] public BuildSceneScope SceneScope { get; private set; } = BuildSceneScope.Battle;
     }
 }

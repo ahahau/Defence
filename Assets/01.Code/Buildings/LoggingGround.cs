@@ -1,6 +1,6 @@
 namespace _01.Code.Buildings
 {
-    public class LoggingGround : TownBuilding
+    public class LoggingGround : BattleTownBuilding
     {
     }
 }

@@ -1845,6 +1845,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   panelUi: {fileID: 739844559}
+  buildingCatalog: {fileID: 11400000, guid: d01794b98f9e4761ab31a51594513fba, type: 2}
 --- !u!224 &803294254 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8532574134966672948, guid: fe32120523dbec5448206cd28487cc39, type: 3}

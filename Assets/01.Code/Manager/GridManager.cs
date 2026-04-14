@@ -2,6 +2,7 @@ using _01.Code.Buildings;
 using _01.Code.Entities;
 using _01.Code.System.Grids;
 using _01.Code.Test;
+using _01.Code.Tiles;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -572,6 +573,12 @@ namespace _01.Code.Manager
             CustomTile tile = GetTile(cellPosition);
             if (tile == null)
             {
+                return;
+            }
+
+            if (!_usesBattleChunkGrid && entity is TownTileObject)
+            {
+                tile.SetCost(1);
                 return;
             }
 

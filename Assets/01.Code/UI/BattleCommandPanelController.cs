@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using _01.Code.Core;
 using _01.Code.Buildings;
+using _01.Code.Cost;
 using _01.Code.Entities;
 using _01.Code.Events;
 using _01.Code.Manager;
@@ -16,24 +17,25 @@ namespace _01.Code.UI
     {
         private const int MaxBuildCommandCount = 4;
         private const int RemoveCommandSlot = 0;
-        private const int LoggingGroundCommandSlot = 1;
-        private const int QuarryCommandSlot = 1;
 
         [SerializeField] private TownInteriorScreenUI panelUi;
+        [SerializeField] private BattleBuildingCatalogSO buildingCatalog;
 
         private readonly List<TownCommandSO> _buildCommands = new();
         private readonly List<TownCommandSO> _obstacleCommands = new();
+        private readonly List<TownCommandSO> _placedObjectCommands = new();
+        private readonly List<BattleTileBuildingDataSO> _battleTileBuildingData = new();
 
         private BuildManager _buildManager;
+        private CostManager _costManager;
         private GridManager _gridManager;
         private SaveManager _saveManager;
         private GameEventChannelSO _uiEventChannel;
         private TownInteriorScreenUI _panelUi;
+        private BattleBuildingCatalogSO _buildingCatalog;
         private BattleRemovePlacementCommandSO _removeCommand;
-        private TownBuildTileObjectCommandSO _loggingGroundCommand;
-        private TownBuildTileObjectCommandSO _quarryCommand;
-        private TownBuildingDataSO _loggingGroundData;
-        private TownBuildingDataSO _quarryData;
+        private TownUpgradeTileObjectCommandSO _upgradeCommand;
+        private TownCommandContext _commandContext;
         private Vector2Int _selectedCell;
         private PlaceableEntity _selectedEntity;
         private bool _hasSelection;
@@ -48,6 +50,7 @@ namespace _01.Code.UI
             _buildManager = buildManager;
             _gridManager = gridManager;
             _saveManager = saveManager;
+            _costManager = GameManager.Instance?.GetManager<CostManager>();
             _uiEventChannel = _buildManager != null ? _buildManager.UiEventChannel : null;
             EnsurePanel();
             RebuildCommands();
@@ -131,6 +134,9 @@ namespace _01.Code.UI
                 _panelUi = FindFirstObjectByType<TownInteriorScreenUI>(FindObjectsInactive.Include);
                 panelUi = _panelUi;
             }
+
+            _buildingCatalog ??= buildingCatalog;
+            buildingCatalog = _buildingCatalog;
         }
 
         private void RebuildCommands()
@@ -160,22 +166,6 @@ namespace _01.Code.UI
             _removeCommand = ScriptableObject.CreateInstance<BattleRemovePlacementCommandSO>();
             _removeCommand.ConfigureRuntime(RemoveCommandSlot);
             _removeCommand.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
-
-            _loggingGroundData ??= Resources.Load<TownBuildingDataSO>("Town/LoggingGroundData");
-            if (_loggingGroundData != null)
-            {
-                _loggingGroundCommand = ScriptableObject.CreateInstance<TownBuildTileObjectCommandSO>();
-                _loggingGroundCommand.ConfigureRuntime(_loggingGroundData, LoggingGroundCommandSlot);
-                _loggingGroundCommand.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
-            }
-
-            _quarryData ??= Resources.Load<TownBuildingDataSO>("Town/QuarryData");
-            if (_quarryData != null)
-            {
-                _quarryCommand = ScriptableObject.CreateInstance<TownBuildTileObjectCommandSO>();
-                _quarryCommand.ConfigureRuntime(_quarryData, QuarryCommandSlot);
-                _quarryCommand.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
-            }
         }
 
         private void ShowCommands(string title, bool includeRemoveCommand)
@@ -188,7 +178,11 @@ namespace _01.Code.UI
             }
 
             List<TownCommandSO> commands;
-            if (includeRemoveCommand && _selectedEntity != null)
+            if (_selectedEntity is BattleTownBuilding selectedBuilding)
+            {
+                commands = BuildPlacedObjectCommands(selectedBuilding);
+            }
+            else if (includeRemoveCommand && _selectedEntity != null)
             {
                 commands = BuildObstacleCommands();
             }
@@ -197,7 +191,8 @@ namespace _01.Code.UI
                 commands = new List<TownCommandSO>(_buildCommands);
             }
 
-            _panelUi.ShowCommands(title, commands, null);
+            _commandContext = new TownCommandContext(null, _buildManager, _costManager, _selectedCell, null);
+            _panelUi.ShowCommands(title, commands, _commandContext);
         }
 
         private void Subscribe()
@@ -249,15 +244,15 @@ namespace _01.Code.UI
                 return;
             }
 
-            if (evt.Command == _loggingGroundCommand)
+            if (evt.Command == _upgradeCommand)
             {
-                TryBuildLoggingGround();
+                TryUpgradeSelectedTileObject();
                 return;
             }
 
-            if (evt.Command == _quarryCommand)
+            if (evt.Command is TownBuildTileObjectCommandSO tileObjectCommand)
             {
-                TryBuildQuarry();
+                TryBuildSelectedTileObject(tileObjectCommand.BuildingData);
             }
         }
 
@@ -284,52 +279,206 @@ namespace _01.Code.UI
             _obstacleCommands.Clear();
             _obstacleCommands.Add(_removeCommand);
 
-            if (CanBuildLoggingGroundOnSelectedEntity())
+            EnsureBattleTileBuildingData();
+            int slot = 1;
+            for (int i = 0; i < _battleTileBuildingData.Count && slot < MaxBuildCommandCount; i++)
             {
-                _obstacleCommands.Add(_loggingGroundCommand);
-            }
+                BattleTileBuildingDataSO buildingData = _battleTileBuildingData[i];
+                if (!CanBuildTileObjectOnSelectedEntity(buildingData))
+                {
+                    continue;
+                }
 
-            if (CanBuildQuarryOnSelectedEntity())
-            {
-                _obstacleCommands.Add(_quarryCommand);
+                TownBuildTileObjectCommandSO command = ScriptableObject.CreateInstance<TownBuildTileObjectCommandSO>();
+                command.ConfigureRuntime(buildingData, slot);
+                command.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
+                _obstacleCommands.Add(command);
+                slot++;
             }
 
             return _obstacleCommands;
         }
 
-        private bool CanBuildLoggingGroundOnSelectedEntity()
+        private List<TownCommandSO> BuildPlacedObjectCommands(BattleTownBuilding building)
         {
-            if (_selectedEntity == null || _loggingGroundCommand == null || _loggingGroundData == null)
+            _placedObjectCommands.Clear();
+            if (building == null || building.Data == null)
+            {
+                return _placedObjectCommands;
+            }
+
+            int slot = 0;
+            if (building.Data.GetResolvedNextUpgrade() != null)
+            {
+                _upgradeCommand = ScriptableObject.CreateInstance<TownUpgradeTileObjectCommandSO>();
+                _upgradeCommand.ConfigureRuntime(building.Data, slot);
+                _upgradeCommand.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
+                _placedObjectCommands.Add(_upgradeCommand);
+                slot++;
+            }
+
+            _removeCommand.ConfigureRuntime(slot);
+            _placedObjectCommands.Add(_removeCommand);
+            return _placedObjectCommands;
+        }
+
+        private void EnsureBattleTileBuildingData()
+        {
+            if (_battleTileBuildingData.Count > 0)
+            {
+                return;
+            }
+
+            EnsurePanel();
+            List<BattleTileBuildingDataSO> loadedData = _buildingCatalog != null
+                ? _buildingCatalog.GetBuildingsForScope(BuildSceneScope.Battle)
+                : new List<BattleTileBuildingDataSO>();
+
+            for (int i = 0; i < loadedData.Count; i++)
+            {
+                BattleTileBuildingDataSO buildingData = loadedData[i];
+                if (buildingData == null || !IsBattleTileBuildingData(buildingData))
+                {
+                    continue;
+                }
+
+                _battleTileBuildingData.Add(buildingData);
+            }
+
+            _battleTileBuildingData.Sort(CompareBattleTileBuildingData);
+        }
+
+        private bool IsBattleTileBuildingData(BattleTileBuildingDataSO buildingData)
+        {
+            if (buildingData == null)
             {
                 return false;
             }
 
-            string entityName = _selectedEntity.name ?? string.Empty;
-            return entityName.IndexOf("tree", StringComparison.OrdinalIgnoreCase) >= 0;
+            return buildingData.SceneScope == BuildSceneScope.Battle &&
+                   buildingData.BattlePlacementKind != BattleTilePlacementKind.None;
         }
 
-        private bool CanBuildQuarryOnSelectedEntity()
+        private int CompareBattleTileBuildingData(BattleTileBuildingDataSO left, BattleTileBuildingDataSO right)
         {
-            if (_selectedEntity == null || _quarryCommand == null || _quarryData == null)
+            string leftName = left != null ? left.DisplayName ?? string.Empty : string.Empty;
+            string rightName = right != null ? right.DisplayName ?? string.Empty : string.Empty;
+            return string.Compare(leftName, rightName, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool CanBuildTileObjectOnSelectedEntity(BattleTileBuildingDataSO buildingData)
+        {
+            if (_selectedEntity == null || buildingData == null)
             {
                 return false;
             }
 
-            string entityName = _selectedEntity.name ?? string.Empty;
-            return entityName.IndexOf("rock", StringComparison.OrdinalIgnoreCase) >= 0;
+            if (buildingData.BattlePlacementKind == BattleTilePlacementKind.AnyObstacle)
+            {
+                return true;
+            }
+
+            BattleTilePlacementKind selectedKind = ResolveSelectedPlacementKind();
+            if (selectedKind == BattleTilePlacementKind.None)
+            {
+                return false;
+            }
+
+            if (buildingData.RequiredSourcePrefab != null &&
+                MatchesSelectedResourcePrefab(buildingData.RequiredSourcePrefab))
+            {
+                return true;
+            }
+
+            BattleTilePlacementKind requiredKind = ResolvePlacementKind(buildingData.RequiredSourcePrefab);
+            if (requiredKind != BattleTilePlacementKind.None)
+            {
+                return requiredKind == selectedKind;
+            }
+
+            return buildingData.BattlePlacementKind switch
+            {
+                BattleTilePlacementKind.Tree => selectedKind == BattleTilePlacementKind.Tree,
+                BattleTilePlacementKind.Rock => selectedKind == BattleTilePlacementKind.Rock,
+                _ => false
+            };
         }
 
-        private void TryBuildLoggingGround()
+        private BattleTilePlacementKind ResolveSelectedPlacementKind()
         {
-            TryBuildSelectedTileObject(_loggingGroundData);
+            if (_selectedEntity == null)
+            {
+                return BattleTilePlacementKind.None;
+            }
+
+            return ResolvePlacementKind(_selectedEntity);
         }
 
-        private void TryBuildQuarry()
+        private BattleTilePlacementKind ResolvePlacementKind(PlaceableEntity entity)
         {
-            TryBuildSelectedTileObject(_quarryData);
+            if (entity == null)
+            {
+                return BattleTilePlacementKind.None;
+            }
+
+            if (MatchesResourcePrefab(entity, _gridManager != null ? _gridManager.TreePrefab : null))
+            {
+                return BattleTilePlacementKind.Tree;
+            }
+
+            if (MatchesResourcePrefab(entity, _gridManager != null ? _gridManager.RockPrefab : null))
+            {
+                return BattleTilePlacementKind.Rock;
+            }
+
+            string normalizedName = NormalizeEntityName(entity.name);
+            if (normalizedName.Contains("tree"))
+            {
+                return BattleTilePlacementKind.Tree;
+            }
+
+            if (normalizedName.Contains("rock"))
+            {
+                return BattleTilePlacementKind.Rock;
+            }
+
+            return BattleTilePlacementKind.None;
         }
 
-        private void TryBuildSelectedTileObject(TownBuildingDataSO buildingData)
+        private bool MatchesSelectedResourcePrefab(PlaceableEntity resourcePrefab)
+        {
+            return MatchesResourcePrefab(_selectedEntity, resourcePrefab);
+        }
+
+        private bool MatchesResourcePrefab(PlaceableEntity entity, PlaceableEntity resourcePrefab)
+        {
+            if (entity == null || resourcePrefab == null)
+            {
+                return false;
+            }
+
+            string entityName = NormalizeEntityName(entity.name);
+            string prefabName = NormalizeEntityName(resourcePrefab.name);
+            return !string.IsNullOrWhiteSpace(prefabName) &&
+                   (entityName.Contains(prefabName) || prefabName.Contains(entityName));
+        }
+
+        private string NormalizeEntityName(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            return value
+                .Replace("(Clone)", string.Empty, StringComparison.OrdinalIgnoreCase)
+                .Replace("_", string.Empty, StringComparison.OrdinalIgnoreCase)
+                .Replace(" ", string.Empty, StringComparison.OrdinalIgnoreCase)
+                .Trim()
+                .ToLowerInvariant();
+        }
+
+        private void TryBuildSelectedTileObject(TownTileObjectDataSO buildingData)
         {
             if (_selectedEntity == null || _gridManager == null || buildingData == null || buildingData.Prefab == null)
             {
@@ -354,6 +503,57 @@ namespace _01.Code.UI
             }
 
             _saveManager?.RegisterPlacementForSave(spawnedObject, buildingData.SaveKey);
+            _saveManager?.SaveGame();
+            HidePanel();
+        }
+
+        private void TryUpgradeSelectedTileObject()
+        {
+            if (_selectedEntity is not BattleTownBuilding currentBuilding ||
+                _gridManager == null ||
+                currentBuilding.Data == null ||
+                currentBuilding.Data.GetResolvedNextUpgrade() == null)
+            {
+                return;
+            }
+
+            TownTileObjectDataSO nextUpgrade = currentBuilding.Data.GetResolvedNextUpgrade();
+            if (nextUpgrade.Prefab == null)
+            {
+                return;
+            }
+
+            CostBundleSO upgradeCosts = currentBuilding.Data.GetResolvedUpgradeCosts();
+            if (upgradeCosts != null &&
+                (_costManager == null || !_costManager.TryPayAll(upgradeCosts)))
+            {
+                return;
+            }
+
+            Vector2Int gridPosition = currentBuilding.GridPosition;
+            string runtimeSaveId = currentBuilding.RuntimeSaveId;
+            if (!_gridManager.TryClear(gridPosition, currentBuilding))
+            {
+                return;
+            }
+
+            Destroy(currentBuilding.gameObject);
+
+            TownTileObject upgradedObject = Instantiate(nextUpgrade.Prefab, _gridManager.CellToObjectWorld(gridPosition), Quaternion.identity);
+            upgradedObject.BindData(nextUpgrade);
+            upgradedObject.BindSceneServices(_gridManager, GameManager.Instance?.GetManager<LogManager>());
+            if (!upgradedObject.Initialize(gridPosition))
+            {
+                Destroy(upgradedObject.gameObject);
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(runtimeSaveId))
+            {
+                upgradedObject.BindRuntimeSaveId(runtimeSaveId);
+            }
+
+            _saveManager?.RegisterPlacementForSave(upgradedObject, nextUpgrade.SaveKey);
             _saveManager?.SaveGame();
             HidePanel();
         }

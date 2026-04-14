@@ -141,6 +141,11 @@ namespace _01.Code.UI
 
         public void OnPointerEnter(PointerEventData eventData)
         {
+            if (_owner != null && _owner.ShouldSuppressTooltipThisFrame())
+            {
+                return;
+            }
+
             if (_owner != null && _boundCommand != null)
             {
                 _owner.ShowTooltip(_boundCommand, _context);
@@ -154,6 +159,11 @@ namespace _01.Code.UI
 
         public void OnPointerMove(PointerEventData eventData)
         {
+            if (_owner != null && _owner.ShouldSuppressTooltipThisFrame())
+            {
+                return;
+            }
+
             if (_owner != null && _boundCommand != null)
             {
                 _owner.ShowTooltip(_boundCommand, _context);
