@@ -1,4 +1,5 @@
-﻿using _01.Code.Core;
+using _01.Code.Core;
+using _01.Code.Cost;
 using _01.Code.Events;
 using _01.Code.Manager;
 using UnityEngine;
@@ -12,10 +13,12 @@ namespace _01.Code.Units
         [SerializeField] private GameEventChannelSO waveEventChannel;
         [SerializeField] private GameEventChannelSO costEventChannel;
         [SerializeField] private CollectableUnitDataSo collectableUnitData;
-        
+        private CostManager _costManager;
+
         protected override void Start()
         {
             base.Start();
+            _costManager = GameManager.Instance?.GetManager<CostManager>();
             waveEventChannel.AddListener<WaveClearedEvent>(HandleWaveClearedEvent);
         }
 
@@ -37,8 +40,15 @@ namespace _01.Code.Units
                 return;
             }
 
+            CostDefinitionSO resolvedType = collectableUnitData.ResolveType();
+            if (resolvedType == null)
+            {
+                LogManager?.Building($"{name}: Collect cost type is missing.", LogLevel.Error);
+                return;
+            }
+
             costEventChannel.RaiseEvent(
-                CostEvents.RefundCostEvent.Initializer(collectableUnitData.Type, collectableUnitData.GainCost));
+                CostEvents.RefundCostEvent.Initializer(resolvedType, collectableUnitData.GainCost));
         }
     }
 }

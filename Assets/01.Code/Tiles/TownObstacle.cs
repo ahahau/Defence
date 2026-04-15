@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using _01.Code.Cost;
 using _01.Code.Manager;
 using UnityEngine;
@@ -30,18 +31,28 @@ namespace _01.Code.Tiles
             return true;
         }
 
-        private void RefundReturnCosts(CostManager costManager, CostBundleSO returnCosts)
+        private void RefundReturnCosts(CostManager costManager, List<TownTileObjectDataSO.Entry> returnCosts)
         {
-
-            for (int i = 0; i < returnCosts.Entries.Count; i++)
+            if (returnCosts == null)
             {
-                CostBundleSO.Entry entry = returnCosts.Entries[i];
-                if (entry == null || entry.type == null || entry.amount <= 0)
+                return;
+            }
+
+            for (int i = 0; i < returnCosts.Count; i++)
+            {
+                TownTileObjectDataSO.Entry entry = returnCosts[i];
+                if (entry == null || entry.Amount <= 0)
                 {
                     continue;
                 }
 
-                costManager.Add(entry.type, entry.amount);
+                CostDefinitionSO resolvedType = entry.ResolveType();
+                if (resolvedType == null)
+                {
+                    continue;
+                }
+
+                costManager.Add(resolvedType, entry.Amount);
             }
         }
     }

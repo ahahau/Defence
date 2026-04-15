@@ -1,4 +1,5 @@
 using _01.Code.Core;
+using _01.Code.Cost;
 using _01.Code.Events;
 using _01.Code.Manager;
 using _01.Code.Tiles;
@@ -44,16 +45,19 @@ namespace _01.Code.Buildings
         private void HandleWaveClearedEvent(WaveClearedEvent _)
         {
             BattleTileBuildingDataSO battleData = Data as BattleTileBuildingDataSO;
+            CostDefinitionSO costType = battleData != null
+                ? battleData.ResolveCollectCostType()
+                : null;
             if (battleData == null ||
                 battleData.Role != BattleBuildingRole.Collect ||
-                battleData.CollectCostType == null ||
+                costType == null ||
                 battleData.CollectAmountPerWave <= 0 ||
                 _costManager == null)
             {
                 return;
             }
 
-            _costManager.Add(battleData.CollectCostType, battleData.CollectAmountPerWave);
+            _costManager.Add(costType, battleData.CollectAmountPerWave);
         }
     }
 }

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using _01.Code.Cost;
 using _01.Code.Tiles;
 using UnityEngine;
@@ -37,33 +38,35 @@ namespace _01.Code.TownCommands
 
         public override Sprite GetCostIcon(TownCommandContext context)
         {
-            CostDefinitionSO primaryCost = context != null && context.CostManager != null ? context.CostManager.PrimarySpendCost : null;
-            return primaryCost != null ? primaryCost.Icon : null;
+            CostDefinitionSO displayCostType = ResolveDisplayCostType(context);
+            return displayCostType != null ? displayCostType.Icon : null;
         }
 
         public override int GetCostAmount(TownCommandContext context)
         {
-            if (BuildingData == null || BuildingData.BuildCosts == null || context == null || context.CostManager == null)
+            // 툴팁 비용도 실제 지불에 쓰는 해석 결과와 동일해야 합니다.
+            List<TownTileObjectDataSO.Entry> buildCosts = BuildingData != null ? BuildingData.GetResolvedBuildCosts() : null;
+            if (buildCosts == null || context == null || context.CostManager == null)
             {
                 return 0;
             }
 
-            CostDefinitionSO primaryCost = context.CostManager.PrimarySpendCost;
-            if (primaryCost == null)
+            CostDefinitionSO displayCostType = ResolveDisplayCostType(context);
+            if (displayCostType == null)
             {
                 return 0;
             }
 
             int totalCost = 0;
-            for (int i = 0; i < BuildingData.BuildCosts.Entries.Count; i++)
+            for (int i = 0; i < buildCosts.Count; i++)
             {
-                CostBundleSO.Entry entry = BuildingData.BuildCosts.Entries[i];
-                if (entry == null || entry.type != primaryCost)
+                TownTileObjectDataSO.Entry entry = buildCosts[i];
+                if (entry == null || entry.ResolveType() != displayCostType)
                 {
                     continue;
                 }
 
-                totalCost += entry.amount;
+                totalCost += entry.Amount;
             }
 
             return totalCost;
@@ -71,12 +74,13 @@ namespace _01.Code.TownCommands
 
         public override bool CanAfford(TownCommandContext context)
         {
-            if (BuildingData == null || BuildingData.BuildCosts == null || context == null || context.CostManager == null)
+            List<TownTileObjectDataSO.Entry> buildCosts = BuildingData != null ? BuildingData.GetResolvedBuildCosts() : null;
+            if (buildCosts == null || context == null || context.CostManager == null)
             {
                 return true;
             }
 
-            return context.CostManager.CanPayAll(BuildingData.BuildCosts);
+            return context.CostManager.CanPayAll(buildCosts);
         }
 
         public override bool CanExecute(TownCommandContext context)
@@ -87,7 +91,34 @@ namespace _01.Code.TownCommands
         
         public override bool Execute(TownCommandContext context)
         {
+            // 타일 오브젝트 설치/교체는 월드가 처리해야 그리드 점유 상태가 한 곳에서 유지됩니다.
             return CanExecute(context) && context.World.TryBuildTownObjectAtCell(BuildingData, context.CellPosition, context.Obstacle);
+        }
+
+        private CostDefinitionSO ResolveDisplayCostType(TownCommandContext context)
+        {
+            List<TownTileObjectDataSO.Entry> buildCosts = BuildingData != null ? BuildingData.GetResolvedBuildCosts() : null;
+            if (buildCosts == null || context == null || context.CostManager == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < buildCosts.Count; i++)
+            {
+                TownTileObjectDataSO.Entry entry = buildCosts[i];
+                if (entry == null)
+                {
+                    continue;
+                }
+
+                CostDefinitionSO resolvedType = entry.ResolveType();
+                if (resolvedType != null)
+                {
+                    return resolvedType;
+                }
+            }
+
+            return null;
         }
     }
 }

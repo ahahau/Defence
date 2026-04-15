@@ -1,10 +1,8 @@
 using _01.Code.Combat;
 using _01.Code.Core;
 using _01.Code.Events;
-using _01.Code.Manager;
 using _01.Code.Modules;
 using UnityEngine;
-using NotImplementedException = System.NotImplementedException;
 
 namespace _01.Code.Entities
 {

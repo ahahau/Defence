@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using _01.Code.Buildings;
+using _01.Code.Combat;
 using _01.Code.Entities;
 using _01.Code.Manager;
 using GondrLib.ObjectPool.Runtime;
@@ -162,11 +163,11 @@ namespace _01.Code.Enemies
             }
 
             if (_commandCenter == null)
-            {
+            {   
                 return;
             }
 
-            if (_commandCenter.TryGetComponent(out _01.Code.Combat.IDamageable damageable))
+            if (_commandCenter.TryGetComponent(out IDamageable damageable))
             {
                 damageable.ApplyDamage(_runtimeData.Damage, this);
             }
@@ -178,3 +179,4 @@ namespace _01.Code.Enemies
         }
     }
 }
+ 

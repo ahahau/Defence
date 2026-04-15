@@ -10,22 +10,28 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3b99d8da04d44ae7892a96cfd1fb4637, type: 3}
-  m_Name: LoggingGroundLv2Data
+  m_Name: LoggingGroundData
   m_EditorClassIdentifier: 
-  <SaveKey>k__BackingField: battle_logging_ground_lv2
+  <SaveKey>k__BackingField: battle_logging_ground
   <Prefab>k__BackingField: {fileID: 8293758758459809814, guid: 2bc22a387ac082f45ad67e266c5b5967, type: 3}
-  <DisplayName>k__BackingField: Logging Ground II
-  <Description>k__BackingField: Upgraded logging ground with stronger output capacity.
+  <DisplayName>k__BackingField: Logging Ground
+  <Description>k__BackingField: Build a logging ground on a cleared tree tile.
   <Icon>k__BackingField: {fileID: 0}
-  <Color>k__BackingField: {r: 0.76, g: 0.54, b: 0.27, a: 1}
-  <BuildCosts>k__BackingField: {fileID: 0}
+  <Color>k__BackingField: {r: 0.68, g: 0.46, b: 0.22, a: 1}
+  <BuildCosts>k__BackingField: []
   <InteractionPanel>k__BackingField: {fileID: 0}
-  <NextUpgrade>k__BackingField: {fileID: 0}
-  <UpgradeCosts>k__BackingField: {fileID: 0}
+  <NextUpgrade>k__BackingField: {fileID: 11400000, guid: a9f12afd598b4f0ca18b163c690528ea, type: 2}
+  <UpgradeCosts>k__BackingField:
+  - <UseDefaultCost>k__BackingField: 1
+    <DefaultType>k__BackingField: {fileID: 0}
+    <Type>k__BackingField: {fileID: 0}
+    <Amount>k__BackingField: 0
   <SceneScope>k__BackingField: 2
   <BattlePlacementKind>k__BackingField: 2
   <RequiredSourcePrefab>k__BackingField: {fileID: 11400000, guid: d6f4c2e5b7a14b2f8a5c69e9f4b28a11, type: 3}
   <Role>k__BackingField: 1
   <UpgradeData>k__BackingField: {fileID: 11400000, guid: 4f79d445c4964758a6fc0efe95e9315c, type: 2}
+  <UseDefaultCost>k__BackingField: 0
+  <DefaultCollectCostType>k__BackingField: {fileID: 0}
   <CollectCostType>k__BackingField: {fileID: 11400000, guid: 3e376f69cfbdac14283452c5f95687d9, type: 2}
-  <CollectAmountPerWave>k__BackingField: 20
+  <CollectAmountPerWave>k__BackingField: 10

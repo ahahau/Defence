@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using _01.Code.Core;
 using _01.Code.Cost;
 using _01.Code.Events;
+using _01.Code.Tiles;
 using UnityEngine;
 
 namespace _01.Code.Manager
@@ -94,28 +95,60 @@ namespace _01.Code.Manager
             return true;
         }
 
-        /// <summary>
-        /// 여러 비용을 한번에 검사 후 지불 (원자적 처리)
-        /// </summary>
-        public bool CanPayAll(CostBundleSO costBundle)
+        public bool CanPayAll(List<TownTileObjectDataSO.Entry> costs)
         {
-            List<CostBundleSO.Entry> costs = costBundle.Entries;
+            if (costs == null)
+            {
+                return true;
+            }
+
+            // 이 리스트 형식은 타운 타일 오브젝트와 배틀 건물 업그레이드 라인이 함께 사용합니다.
             for (int i = 0; i < costs.Count; i++)
             {
-                if (!CanPay(costs[i].type, costs[i].amount))
+                TownTileObjectDataSO.Entry entry = costs[i];
+                if (entry == null)
+                {
                     return false;
+                }
+
+                CostDefinitionSO resolvedType = entry.ResolveType();
+                if (resolvedType == null || !CanPay(resolvedType, entry.Amount))
+                {
+                    return false;
+                }
             }
 
             return true;
         }
 
-        public bool TryPayAll(CostBundleSO costBundle)
+        public bool TryPayAll(List<TownTileObjectDataSO.Entry> costs)
         {
-            List<CostBundleSO.Entry> costs = costBundle.Entries;
-            if (!CanPayAll(costBundle)) return false;
+            if (!CanPayAll(costs))
+            {
+                return false;
+            }
+
+            if (costs == null)
+            {
+                return true;
+            }
 
             for (int i = 0; i < costs.Count; i++)
-                Add(costs[i].type, -costs[i].amount);
+            {
+                TownTileObjectDataSO.Entry entry = costs[i];
+                if (entry == null)
+                {
+                    continue;
+                }
+
+                CostDefinitionSO resolvedType = entry.ResolveType();
+                if (resolvedType == null)
+                {
+                    continue;
+                }
+
+                Add(resolvedType, -entry.Amount);
+            }
 
             return true;
         }
@@ -136,10 +169,7 @@ namespace _01.Code.Manager
         /// </summary>
         private void HandleRefundCostEvent(RefundCostEvent evt) => Add(evt.Type, evt.Amount);
 
-        private void HandlePrimarySpendCostQueryEvent(PrimarySpendCostQueryEvent evt)
-        {
-            evt.Type = primarySpendCost;
-        }
+        private void HandlePrimarySpendCostQueryEvent(PrimarySpendCostQueryEvent evt) => evt.Type = primarySpendCost;
 
         private void HandleCostSnapshotQueryEvent(CostSnapshotQueryEvent evt)
         {

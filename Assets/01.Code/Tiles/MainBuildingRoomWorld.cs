@@ -372,6 +372,11 @@ namespace _01.Code.Tiles
 
         public void HandleTileClicked(Vector2Int cell)
         {
+            if (Application.isPlaying && _lastHandledClickFrame == Time.frameCount)
+            {
+                return;
+            }
+
             _lastHandledClickFrame = Time.frameCount;
             ResolveReferences();
             if (GameManager.Instance != null && GridManager != null && GridManager.Tilemap == null)
@@ -674,16 +679,16 @@ namespace _01.Code.Tiles
                 _removeObstacleCommand.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
             }
 
-            IReadOnlyList<UnitDataSO> availableBuildings = _buildManager != null ? _buildManager.GetAvailableBuildingsForCurrentScene() : null;
-            if (availableBuildings == null || _townBuildCommands.Count == availableBuildings.Count)
+            List<UnitDataSO> availableUnits = _buildManager != null ? _buildManager.GetAvailableUnitsForCurrentScene() : null;
+            if (availableUnits == null)
             {
                 return;
             }
 
             _townBuildCommands.Clear();
-            for (int i = 0; i < availableBuildings.Count && i < 5; i++)
+            for (int i = 0; i < availableUnits.Count && i < 5; i++)
             {
-                UnitDataSO unitData = availableBuildings[i];
+                UnitDataSO unitData = availableUnits[i];
                 if (unitData == null)
                 {
                     continue;
@@ -835,11 +840,13 @@ namespace _01.Code.Tiles
                 return false;
             }
 
-            if (data.BuildCosts != null && !_costManager.TryPayAll(data.BuildCosts))
+            List<TownTileObjectDataSO.Entry> buildCosts = data.GetResolvedBuildCosts();
+            if (buildCosts != null && !_costManager.TryPayAll(buildCosts))
             {
                 return false;
             }
 
+            // 장애물 위 건설인 경우 기존 장애물을 먼저 제거한 뒤 같은 칸에 설치합니다.
             if (obstacleToReplace != null)
             {
                 GridManager.TryClear(cell, obstacleToReplace);
@@ -887,14 +894,32 @@ namespace _01.Code.Tiles
                 return false;
             }
 
-            CostBundleSO upgradeCosts = currentObject.Data.GetResolvedUpgradeCosts();
+            List<TownTileObjectDataSO.Entry> upgradeCosts = currentObject.Data.GetResolvedUpgradeCosts();
             if (upgradeCosts != null && !_costManager.TryPayAll(upgradeCosts))
             {
                 return false;
             }
 
+            // 프리팹이 동일하면 인스턴스는 유지하고 데이터만 상위 레벨로 바꿉니다.
+            if (nextUpgrade.Prefab == currentObject.Data.Prefab)
+            {
+                currentObject.BindData(nextUpgrade);
+                if (!string.IsNullOrWhiteSpace(nextUpgrade.SaveKey))
+                {
+                    _saveManager?.RegisterPlacementForSave(currentObject, nextUpgrade.SaveKey);
+                }
+
+                _selectedCell = cell;
+                _hasSelectedCell = true;
+                ShowObjectCommands(currentObject);
+                RefreshTiles();
+                _saveManager?.SaveGame();
+                return true;
+            }
+
             string runtimeSaveId = currentObject.RuntimeSaveId;
 
+            // 프리팹이 달라지면 기존 오브젝트를 지우고 새 업그레이드 프리팹을 같은 칸에 배치합니다.
             GridManager.TryClear(cell, currentObject);
             Destroy(currentObject.gameObject);
 

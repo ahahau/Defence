@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using _01.Code.Cost;
 using _01.Code.Tiles;
 using UnityEngine;
@@ -40,34 +41,35 @@ namespace _01.Code.TownCommands
 
         public override Sprite GetCostIcon(TownCommandContext context)
         {
-            CostDefinitionSO primaryCost = context != null && context.CostManager != null ? context.CostManager.PrimarySpendCost : null;
-            return primaryCost != null ? primaryCost.Icon : null;
+            CostDefinitionSO displayCostType = ResolveDisplayCostType(context);
+            return displayCostType != null ? displayCostType.Icon : null;
         }
 
         public override int GetCostAmount(TownCommandContext context)
         {
-            CostBundleSO upgradeCosts = SourceData != null ? SourceData.GetResolvedUpgradeCosts() : null;
+            // 툴팁 비용은 현재 레벨 기준으로 해석된 업그레이드 비용을 그대로 보여줍니다.
+            List<TownTileObjectDataSO.Entry> upgradeCosts = SourceData != null ? SourceData.GetResolvedUpgradeCosts() : null;
             if (upgradeCosts == null || context == null || context.CostManager == null)
             {
                 return 0;
             }
 
-            CostDefinitionSO primaryCost = context.CostManager.PrimarySpendCost;
-            if (primaryCost == null)
+            CostDefinitionSO displayCostType = ResolveDisplayCostType(context);
+            if (displayCostType == null)
             {
                 return 0;
             }
 
             int totalCost = 0;
-            for (int i = 0; i < upgradeCosts.Entries.Count; i++)
+            for (int i = 0; i < upgradeCosts.Count; i++)
             {
-                CostBundleSO.Entry entry = upgradeCosts.Entries[i];
-                if (entry == null || entry.type != primaryCost)
+                TownTileObjectDataSO.Entry entry = upgradeCosts[i];
+                if (entry == null || entry.ResolveType() != displayCostType)
                 {
                     continue;
                 }
 
-                totalCost += entry.amount;
+                totalCost += entry.Amount;
             }
 
             return totalCost;
@@ -75,7 +77,7 @@ namespace _01.Code.TownCommands
 
         public override bool CanAfford(TownCommandContext context)
         {
-            CostBundleSO upgradeCosts = SourceData != null ? SourceData.GetResolvedUpgradeCosts() : null;
+            List<TownTileObjectDataSO.Entry> upgradeCosts = SourceData != null ? SourceData.GetResolvedUpgradeCosts() : null;
             if (upgradeCosts == null || context == null || context.CostManager == null)
             {
                 return true;
@@ -94,7 +96,34 @@ namespace _01.Code.TownCommands
 
         public override bool Execute(TownCommandContext context)
         {
+            // 업그레이드는 월드가 처리해야 교체, 저장 ID, 그리드 상태를 함께 맞출 수 있습니다.
             return CanExecute(context) && context.World.TryUpgradeTownObjectAtCell(context.CellPosition);
+        }
+
+        private CostDefinitionSO ResolveDisplayCostType(TownCommandContext context)
+        {
+            List<TownTileObjectDataSO.Entry> upgradeCosts = SourceData != null ? SourceData.GetResolvedUpgradeCosts() : null;
+            if (upgradeCosts == null || context == null || context.CostManager == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < upgradeCosts.Count; i++)
+            {
+                TownTileObjectDataSO.Entry entry = upgradeCosts[i];
+                if (entry == null)
+                {
+                    continue;
+                }
+
+                CostDefinitionSO resolvedType = entry.ResolveType();
+                if (resolvedType != null)
+                {
+                    return resolvedType;
+                }
+            }
+
+            return null;
         }
     }
 }

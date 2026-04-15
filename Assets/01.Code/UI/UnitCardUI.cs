@@ -8,31 +8,24 @@ using _01.Code.Units;
 
 namespace _01.Code.UI
 {
-    public class UnitCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
+    public class UnitCardUI : MonoBehaviour, IPointerClickHandler
     {
         [SerializeField] private Image frameImage;
         [SerializeField] private Image iconImage;
         [SerializeField] private TextMeshProUGUI titleLabel;
         [SerializeField] private TextMeshProUGUI descriptionLabel;
         [SerializeField] private TextMeshProUGUI countLabel;
-        [SerializeField] private float hoverScale = 1.08f;
-        [SerializeField] private float tweenDuration = 0.12f;
-        [SerializeField] private float hoverYOffset = 12f;
+        [SerializeField] private float selectedFrameBrightness = 1.25f;
 
-        private RectTransform _rectTransform;
-        private Vector3 _baseScale = Vector3.one;
-        private Vector2 _basePosition;
-        private int _baseSiblingIndex;
+        private Color _baseFrameColor = Color.white;
         public UnitDataSO BoundUnitData { get; private set; }
         private Action<UnitCardUI> _clickHandler;
 
         private void Awake()
         {
-            _rectTransform = transform as RectTransform;
-            _baseScale = transform.localScale;
-            if (_rectTransform != null)
+            if (frameImage != null)
             {
-                _basePosition = _rectTransform.anchoredPosition;
+                _baseFrameColor = frameImage.color;
             }
         }
 
@@ -47,6 +40,7 @@ namespace _01.Code.UI
 
             if (frameImage != null)
             {
+                _baseFrameColor = data.CardColor;
                 frameImage.color = data.CardColor;
             }
 
@@ -79,47 +73,33 @@ namespace _01.Code.UI
 
         public void SetPosition(Vector2 anchoredPosition)
         {
-            _rectTransform = transform as RectTransform;
-            if (_rectTransform == null)
+            RectTransform rectTransform = transform as RectTransform;
+            if (rectTransform == null)
             {
                 return;
             }
 
-            _rectTransform.anchoredPosition = anchoredPosition;
-            _basePosition = anchoredPosition;
+            rectTransform.anchoredPosition = anchoredPosition;
         }
 
-        public void OnPointerEnter(PointerEventData eventData)
+        public void SetSelected(bool selected)
         {
-            if (!isActiveAndEnabled)
+            if (frameImage == null)
             {
                 return;
             }
 
-            transform.DOKill();
-            _baseSiblingIndex = transform.GetSiblingIndex();
-            transform.SetAsLastSibling();
-            if (_rectTransform != null)
+            if (!selected)
             {
-                _rectTransform.DOAnchorPos(_basePosition + new Vector2(0f, hoverYOffset), tweenDuration).SetEase(Ease.OutQuad);
-            }
-            transform.DOScale(_baseScale * hoverScale, tweenDuration).SetEase(Ease.OutQuad);
-        }
-
-        public void OnPointerExit(PointerEventData eventData)
-        {
-            if (!isActiveAndEnabled)
-            {
+                frameImage.color = _baseFrameColor;
                 return;
             }
 
-            transform.DOKill();
-            transform.SetSiblingIndex(_baseSiblingIndex);
-            if (_rectTransform != null)
-            {
-                _rectTransform.DOAnchorPos(_basePosition, tweenDuration).SetEase(Ease.OutQuad);
-            }
-            transform.DOScale(_baseScale, tweenDuration).SetEase(Ease.OutQuad);
+            frameImage.color = new Color(
+                Mathf.Clamp01(_baseFrameColor.r * selectedFrameBrightness),
+                Mathf.Clamp01(_baseFrameColor.g * selectedFrameBrightness),
+                Mathf.Clamp01(_baseFrameColor.b * selectedFrameBrightness),
+                _baseFrameColor.a);
         }
 
         public void OnPointerClick(PointerEventData eventData)

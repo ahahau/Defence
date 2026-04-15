@@ -120,10 +120,10 @@ namespace _01.Code.Manager
                 return;
             }
 
-            ClickObject(hit.gameObject);
+            ClickObject(hit.gameObject, worldPosition);
         }
 
-        private void ClickObject(GameObject hitGameObject)
+        private void ClickObject(GameObject hitGameObject, Vector2 worldPosition)
         {
             if (TryHandleTownInteriorObjectClick(hitGameObject))
             {
@@ -139,7 +139,10 @@ namespace _01.Code.Manager
             if (TryGetClickedBuilding(hitGameObject, out PlaceableEntity building))
             {
                 ClickBuilding(building);
+                return;
             }
+
+            ClickGround(worldPosition);
         }
 
         private void ClickGround(Vector2 worldPosition)
@@ -259,7 +262,7 @@ namespace _01.Code.Manager
             }
             else if (!_pointerDownCollider.CompareTag("EnemySpawner"))
             {
-                ClickObject(_pointerDownCollider.gameObject);
+                ClickObject(_pointerDownCollider.gameObject, _pointerDownWorldPosition);
             }
 
             ResetPointerState();

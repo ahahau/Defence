@@ -1,4 +1,4 @@
-using _01.Code.Cost;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace _01.Code.Tiles
@@ -7,7 +7,7 @@ namespace _01.Code.Tiles
     public class TownObstacleDataSO : TownTileObjectDataSO
     {
         [field: SerializeField] public int RemoveCost { get; private set; }
-        [field: SerializeField] public CostBundleSO ReturnCosts { get; private set; }
+        [field: SerializeField] public List<TownTileObjectDataSO.Entry> ReturnCosts { get; private set; }
 
         public TownObstacle ObstaclePrefab
         {

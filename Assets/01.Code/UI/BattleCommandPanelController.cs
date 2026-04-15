@@ -16,8 +16,6 @@ namespace _01.Code.UI
     public class BattleCommandPanelController : MonoBehaviour
     {
         private const int MaxBuildCommandCount = 4;
-        private const int RemoveCommandSlot = 0;
-
         [SerializeField] private TownInteriorScreenUI panelUi;
         [SerializeField] private BattleBuildingCatalogSO buildingCatalog;
 
@@ -39,6 +37,7 @@ namespace _01.Code.UI
         private Vector2Int _selectedCell;
         private PlaceableEntity _selectedEntity;
         private bool _hasSelection;
+        private UnitPanelUI _unitPanelUi;
 
         public bool IsPointerOverPanel()
         {
@@ -144,27 +143,27 @@ namespace _01.Code.UI
             _buildCommands.Clear();
             _obstacleCommands.Clear();
 
-            IReadOnlyList<UnitDataSO> availableBuildings = _buildManager != null ? _buildManager.GetAvailableBuildingsForCurrentScene() : null;
-            if (availableBuildings != null)
+            List<UnitDataSO> availableUnits = _buildManager != null ? _buildManager.GetAvailableUnitsForCurrentScene() : null;
+            if (availableUnits != null)
             {
-                int commandCount = Math.Min(MaxBuildCommandCount, availableBuildings.Count);
+                int commandCount = Math.Min(MaxBuildCommandCount, availableUnits.Count);
                 for (int i = 0; i < commandCount; i++)
                 {
-                    UnitDataSO buildingData = availableBuildings[i];
-                    if (buildingData == null)
+                    UnitDataSO unitData = availableUnits[i];
+                    if (unitData == null)
                     {
                         continue;
                     }
 
                     TownBuildCommandSO buildCommand = ScriptableObject.CreateInstance<TownBuildCommandSO>();
-                    buildCommand.ConfigureRuntime(buildingData, i);
+                    buildCommand.ConfigureRuntime(unitData, i);
                     buildCommand.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
                     _buildCommands.Add(buildCommand);
                 }
             }
 
             _removeCommand = ScriptableObject.CreateInstance<BattleRemovePlacementCommandSO>();
-            _removeCommand.ConfigureRuntime(RemoveCommandSlot);
+            _removeCommand.ConfigureRuntime(MaxBuildCommandCount - 1);
             _removeCommand.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
         }
 
@@ -178,10 +177,12 @@ namespace _01.Code.UI
             }
 
             List<TownCommandSO> commands;
-            if (_selectedEntity is BattleTownBuilding selectedBuilding)
+            // 이미 설치된 타일 오브젝트는 업그레이드/제거 커맨드를 노출할 수 있습니다.
+            if (_selectedEntity is TownTileObject selectedTileObject)
             {
-                commands = BuildPlacedObjectCommands(selectedBuilding);
+                commands = BuildPlacedObjectCommands(selectedTileObject);
             }
+            // 장애물이나 자원 오브젝트는 그 위에 짓는 액션과 제거 액션을 함께 보여줍니다.
             else if (includeRemoveCommand && _selectedEntity != null)
             {
                 commands = BuildObstacleCommands();
@@ -223,33 +224,42 @@ namespace _01.Code.UI
                 return;
             }
 
+            // 일반 유닛 설치 커맨드는 BuildManager 흐름을 그대로 사용합니다.
             if (evt.Command is TownBuildCommandSO buildCommand)
             {
-                if (buildCommand.BuildingData == null || _buildManager == null)
+                if (buildCommand.BuildingData == null)
                 {
                     return;
                 }
 
-                if (_buildManager.TryInstall(buildCommand.BuildingData, _gridManager.CellToObjectWorld(_selectedCell), out _))
+                EnsureUnitPanel();
+                if (_unitPanelUi == null)
                 {
-                    HidePanel();
+                    return;
+                }
+
+                _unitPanelUi.ShowInstallPanel(_selectedCell);
+                if (_panelUi != null)
+                {
+                    _panelUi.HideBuildPanelExternally();
                 }
 
                 return;
             }
 
-            if (evt.Command == _removeCommand)
+            if (evt.Command is BattleRemovePlacementCommandSO)
             {
                 TryRemoveSelectedEntity();
                 return;
             }
 
-            if (evt.Command == _upgradeCommand)
+            if (evt.Command is TownUpgradeTileObjectCommandSO)
             {
                 TryUpgradeSelectedTileObject();
                 return;
             }
 
+            // 배틀 타일 오브젝트 설치는 현재 선택된 자원/장애물을 대체하는 흐름입니다.
             if (evt.Command is TownBuildTileObjectCommandSO tileObjectCommand)
             {
                 TryBuildSelectedTileObject(tileObjectCommand.BuildingData);
@@ -277,11 +287,11 @@ namespace _01.Code.UI
         private List<TownCommandSO> BuildObstacleCommands()
         {
             _obstacleCommands.Clear();
-            _obstacleCommands.Add(_removeCommand);
 
             EnsureBattleTileBuildingData();
-            int slot = 1;
-            for (int i = 0; i < _battleTileBuildingData.Count && slot < MaxBuildCommandCount; i++)
+            // 설치 액션들을 앞쪽에 배치하고 remove는 항상 마지막 슬롯으로 보냅니다.
+            int slot = 0;
+            for (int i = 0; i < _battleTileBuildingData.Count && slot < MaxBuildCommandCount - 1; i++)
             {
                 BattleTileBuildingDataSO buildingData = _battleTileBuildingData[i];
                 if (!CanBuildTileObjectOnSelectedEntity(buildingData))
@@ -296,10 +306,12 @@ namespace _01.Code.UI
                 slot++;
             }
 
+            _removeCommand.ConfigureRuntime(slot);
+            _obstacleCommands.Add(_removeCommand);
             return _obstacleCommands;
         }
 
-        private List<TownCommandSO> BuildPlacedObjectCommands(BattleTownBuilding building)
+        private List<TownCommandSO> BuildPlacedObjectCommands(TownTileObject building)
         {
             _placedObjectCommands.Clear();
             if (building == null || building.Data == null)
@@ -308,6 +320,7 @@ namespace _01.Code.UI
             }
 
             int slot = 0;
+            // 업그레이드 가능하면 첫 슬롯에 두고, remove는 항상 그 뒤로 둡니다.
             if (building.Data.GetResolvedNextUpgrade() != null)
             {
                 _upgradeCommand = ScriptableObject.CreateInstance<TownUpgradeTileObjectCommandSO>();
@@ -491,6 +504,7 @@ namespace _01.Code.UI
                 return;
             }
 
+            // 자원 타일 위 건설은 기존 오브젝트를 지우고 같은 칸에 새 건물을 배치합니다.
             Destroy(_selectedEntity.gameObject);
 
             TownTileObject spawnedObject = Instantiate(buildingData.Prefab, _gridManager.CellToObjectWorld(gridPosition), Quaternion.identity);
@@ -509,7 +523,7 @@ namespace _01.Code.UI
 
         private void TryUpgradeSelectedTileObject()
         {
-            if (_selectedEntity is not BattleTownBuilding currentBuilding ||
+            if (_selectedEntity is not TownTileObject currentBuilding ||
                 _gridManager == null ||
                 currentBuilding.Data == null ||
                 currentBuilding.Data.GetResolvedNextUpgrade() == null)
@@ -523,10 +537,20 @@ namespace _01.Code.UI
                 return;
             }
 
-            CostBundleSO upgradeCosts = currentBuilding.Data.GetResolvedUpgradeCosts();
+            List<TownTileObjectDataSO.Entry> upgradeCosts = currentBuilding.Data.GetResolvedUpgradeCosts();
             if (upgradeCosts != null &&
                 (_costManager == null || !_costManager.TryPayAll(upgradeCosts)))
             {
+                return;
+            }
+
+            // 레벨만 바뀌고 프리팹은 같은 경우에는 오브젝트를 다시 만들지 않고 데이터만 교체합니다.
+            if (nextUpgrade.Prefab == currentBuilding.Data.Prefab)
+            {
+                currentBuilding.BindData(nextUpgrade);
+                _saveManager?.RegisterPlacementForSave(currentBuilding, nextUpgrade.SaveKey);
+                _saveManager?.SaveGame();
+                HidePanel();
                 return;
             }
 
@@ -537,6 +561,7 @@ namespace _01.Code.UI
                 return;
             }
 
+            // 프리팹이 달라지는 업그레이드는 같은 칸에서 런타임 오브젝트를 교체합니다.
             Destroy(currentBuilding.gameObject);
 
             TownTileObject upgradedObject = Instantiate(nextUpgrade.Prefab, _gridManager.CellToObjectWorld(gridPosition), Quaternion.identity);
@@ -561,6 +586,14 @@ namespace _01.Code.UI
         private bool IsBattleScene()
         {
             return gameObject.scene.name.IndexOf("Battle", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private void EnsureUnitPanel()
+        {
+            if (_unitPanelUi == null)
+            {
+                _unitPanelUi = FindFirstObjectByType<UnitPanelUI>(FindObjectsInactive.Include);
+            }
         }
     }
 }

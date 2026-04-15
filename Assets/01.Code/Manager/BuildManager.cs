@@ -101,6 +101,12 @@ namespace _01.Code.Manager
             return _catalog.GetAvailableBuildingsForCurrentScene();
         }
 
+        public List<UnitDataSO> GetAvailableUnitsForCurrentScene()
+        {
+            EnsureCatalog();
+            return _catalog.GetAvailableUnitsForCurrentScene();
+        }
+
         public void SelectBuilding(UnitDataSO unitData)
         {
             _selectionController.SelectBuilding(unitData);

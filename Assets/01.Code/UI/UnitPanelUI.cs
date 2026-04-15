@@ -2,23 +2,32 @@ using System.Collections.Generic;
 using _01.Code.Manager;
 using _01.Code.Units;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace _01.Code.UI
 {
     public class UnitPanelUI : MonoBehaviour
     {
+        [SerializeField] private RectTransform panelRoot;
+        [SerializeField] private ScrollRect scrollRect;
         [SerializeField] private RectTransform cardRoot;
         [SerializeField] private UnitCardUI cardPrefab;
         [SerializeField] private BuildManager buildManager;
-        [SerializeField] private float cardsY = 0f;
-        [SerializeField] private float cardStride = 112f;
-        [SerializeField] private int maxCards = 5;
-        [SerializeField] private float sidePadding = 40f;
+        [SerializeField] private float cardScale = 1.3f;
+        [SerializeField] private int maxCards = 0;
 
-        private readonly List<UnitDataSO> _ownedUnits = new();
         private readonly List<UnitCardUI> _cards = new();
+        private GridManager _gridManager;
+        private Vector2Int _pendingInstallCell;
+        private bool _hasPendingInstallCell;
 
         private void Awake()
+        {
+            ResolveReferences();
+            SetPanelVisible(false);
+        }
+
+        private void OnEnable()
         {
             ResolveReferences();
         }
@@ -26,10 +35,13 @@ namespace _01.Code.UI
         private void Start()
         {
             ResolveReferences();
+            ArrangeCards();
+            SetPanelVisible(false);
         }
 
         public bool TryAddCard(UnitDataSO unitData)
         {
+            ResolveReferences();
             if (cardRoot == null || cardPrefab == null || unitData == null)
             {
                 return false;
@@ -40,67 +52,55 @@ namespace _01.Code.UI
                 return false;
             }
 
-            UnitCardUI createdCard = Instantiate(cardPrefab, cardRoot);
+            UnitCardUI createdCard = Instantiate(cardPrefab);
+            createdCard.transform.SetParent(cardRoot, false);
             createdCard.name = $"{cardPrefab.name}_{_cards.Count}";
             createdCard.SetData(unitData);
             createdCard.SetClickHandler(HandleCardClicked);
+            createdCard.SetSelected(false);
+            createdCard.transform.localScale = new Vector3(cardScale, cardScale, 1f);
             createdCard.gameObject.SetActive(true);
 
-            _ownedUnits.Add(unitData);
             _cards.Add(createdCard);
             ArrangeCards();
             return true;
         }
 
-        public void ArrangeCards()
+        public void ShowPanel()
         {
-            if (_cards.Count == 0)
-            {
-                return;
-            }
-
-            float appliedStride = GetAppliedStride();
-            float totalWidth = (_cards.Count - 1) * appliedStride;
-            float startX = -(totalWidth * 0.5f);
-            for (int i = 0; i < _cards.Count; i++)
-            {
-                float x = startX + (appliedStride * i);
-                _cards[i].SetPosition(new Vector2(x, cardsY));
-            }
+            ResolveReferences();
+            ArrangeCards();
+            SetPanelVisible(true);
         }
 
-        private float GetAppliedStride()
+        public void ShowInstallPanel(Vector2Int targetCell)
         {
-            if (cardRoot == null || _cards.Count <= 1)
-            {
-                return cardStride;
-            }
+            ResolveReferences();
+            _pendingInstallCell = targetCell;
+            _hasPendingInstallCell = true;
+            ArrangeCards();
+            SetPanelVisible(true);
+        }
 
-            float availableWidth = Mathf.Max(0f, cardRoot.rect.width - (sidePadding * 2f));
-            if (availableWidth <= 0f)
-            {
-                return cardStride;
-            }
+        public void HidePanel()
+        {
+            _hasPendingInstallCell = false;
+            SetPanelVisible(false);
+        }
 
-            float maxStrideInsidePanel = availableWidth / (_cards.Count - 1);
-            return Mathf.Min(cardStride, maxStrideInsidePanel);
+        public void ArrangeCards()
+        {
+            ResolveReferences();
+            if (scrollRect != null)
+            {
+                scrollRect.horizontalNormalizedPosition = 0f;
+            }
         }
 
         private void HandleCardClicked(UnitCardUI clickedCard)
         {
             ResolveReferences();
-            if (clickedCard == null || buildManager == null)
-            {
-                return;
-            }
-
-            if (buildManager.SelectedUnit != null)
-            {
-                return;
-            }
-
-            int cardIndex = _cards.IndexOf(clickedCard);
-            if (cardIndex < 0 || cardIndex >= _cards.Count)
+            if (clickedCard == null || buildManager == null || _gridManager == null || !_hasPendingInstallCell)
             {
                 return;
             }
@@ -111,29 +111,93 @@ namespace _01.Code.UI
                 return;
             }
 
-            buildManager.SelectBuilding(unitData);
-            if (buildManager.SelectedUnit != unitData)
+            if (!buildManager.TryInstall(unitData, _gridManager.CellToObjectWorld(_pendingInstallCell), out _))
             {
                 return;
             }
 
-            _cards.RemoveAt(cardIndex);
-            _ownedUnits.RemoveAt(cardIndex);
-            Destroy(clickedCard.gameObject);
-
+            RemoveCard(clickedCard);
             ArrangeCards();
+            HidePanel();
+        }
+
+        private void RemoveCard(UnitCardUI card)
+        {
+            if (card == null)
+            {
+                return;
+            }
+
+            _cards.Remove(card);
+            Destroy(card.gameObject);
         }
 
         private void ResolveReferences()
         {
-            if (cardRoot == null)
-            {
-                cardRoot = transform as RectTransform;
-            }
+            panelRoot = FindSceneRectTransform("UnitInstallPanel");
+            scrollRect = ResolveInstallScrollRect(panelRoot);
+            cardRoot = scrollRect != null ? scrollRect.content : null;
 
             if (buildManager == null)
             {
                 buildManager = GameManager.Instance?.GetManager<BuildManager>();
+            }
+
+            if (_gridManager == null)
+            {
+                _gridManager = GameManager.Instance?.GetManager<GridManager>();
+            }
+        }
+
+        private ScrollRect ResolveInstallScrollRect(RectTransform installPanelRoot)
+        {
+            if (installPanelRoot == null)
+            {
+                return null;
+            }
+
+            Transform scrollView = installPanelRoot.Find("Scroll View");
+            if (scrollView == null)
+            {
+                return installPanelRoot.GetComponentInChildren<ScrollRect>(true);
+            }
+
+            return scrollView.GetComponent<ScrollRect>();
+        }
+
+
+        private RectTransform FindSceneRectTransform(string objectName)
+        {
+            if (string.IsNullOrWhiteSpace(objectName))
+            {
+                return null;
+            }
+
+            RectTransform[] rectTransforms = Resources.FindObjectsOfTypeAll<RectTransform>();
+            for (int i = 0; i < rectTransforms.Length; i++)
+            {
+                RectTransform candidate = rectTransforms[i];
+                if (candidate == null || candidate.name != objectName || !candidate.gameObject.scene.IsValid())
+                {
+                    continue;
+                }
+
+                return candidate;
+            }
+
+            return null;
+        }
+
+
+        private void SetPanelVisible(bool visible)
+        {
+            if (panelRoot != null)
+            {
+                panelRoot.gameObject.SetActive(visible);
+                if (visible)
+                {
+                    panelRoot.SetAsLastSibling();
+                }
             }
         }
     }

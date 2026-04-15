@@ -7,10 +7,7 @@ namespace _01.Code.Save
 {
     public class GlobalSaveAgentModule : MonoBehaviour, ISaveAgentModule
     {
-        public int Order
-        {
-            get { return 0; }
-        }
+        public int Order => 0;
 
         public void Initialize(SaveManager saveManager)
         {
@@ -64,6 +61,7 @@ namespace _01.Code.Save
     public struct GridStateSaveData
     {
         public List<GridChunkSaveEntry> activeChunks;
+        public int resourceNoiseSeed;
     }
 
     public class GridStateSaveAgent : MonoBehaviour, ISaveable
@@ -71,15 +69,9 @@ namespace _01.Code.Save
         [SerializeField] private string saveKey = "grid.state";
         private GridManager _gridManager;
 
-        public string SaveKey
-        {
-            get { return saveKey; }
-        }
+        public string SaveKey => saveKey;
 
-        public int RestoreOrder
-        {
-            get { return -100; }
-        }
+        public int RestoreOrder => -100;
 
         public string GetSaveData()
         {
@@ -101,7 +93,11 @@ namespace _01.Code.Save
                 });
             }
 
-            return JsonUtility.ToJson(new GridStateSaveData { activeChunks = activeChunks });
+            return JsonUtility.ToJson(new GridStateSaveData
+            {
+                activeChunks = activeChunks,
+                resourceNoiseSeed = _gridManager.RuntimeResourceNoiseSeed
+            });
         }
 
         public void RestoreData(string savedData)
@@ -113,6 +109,7 @@ namespace _01.Code.Save
             }
 
             GridStateSaveData data = JsonUtility.FromJson<GridStateSaveData>(savedData);
+            _gridManager.RestoreResourceNoiseSeed(data.resourceNoiseSeed);
             if (data.activeChunks == null || data.activeChunks.Count == 0)
             {
                 return;

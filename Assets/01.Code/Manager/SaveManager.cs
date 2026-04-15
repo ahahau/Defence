@@ -92,6 +92,54 @@ namespace _01.Code.Manager
             return false;
         }
 
+        public bool HasSavedResourcePlacements()
+        {
+            if (!HasSaveData)
+            {
+                return false;
+            }
+
+            string savedJson = PlayerPrefs.GetString(saveKey, string.Empty);
+            if (string.IsNullOrWhiteSpace(savedJson))
+            {
+                return false;
+            }
+
+            SaveDataCollection dataCollection = JsonUtility.FromJson<SaveDataCollection>(savedJson);
+            if (dataCollection.dataCollection == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < dataCollection.dataCollection.Count; i++)
+            {
+                SaveDataEntry entry = dataCollection.dataCollection[i];
+                if (entry.id != "scene.placements" || string.IsNullOrWhiteSpace(entry.data))
+                {
+                    continue;
+                }
+
+                PlacementSaveCollectionProbe placementCollection = JsonUtility.FromJson<PlacementSaveCollectionProbe>(entry.data);
+                if (placementCollection.placements == null)
+                {
+                    return false;
+                }
+
+                for (int placementIndex = 0; placementIndex < placementCollection.placements.Count; placementIndex++)
+                {
+                    PlacementSaveRecord placement = placementCollection.placements[placementIndex];
+                    if (_gridManager != null && _gridManager.CanRestoreResourcePlacement(placement.key))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            return false;
+        }
+
         public void RegisterSaveable(ISaveable saveable)
         {
             if (saveable == null || string.IsNullOrWhiteSpace(saveable.SaveKey))
@@ -208,10 +256,14 @@ namespace _01.Code.Manager
             _isApplyingSave = true;
             try
             {
+                bool hasSavedResourcePlacements = HasSavedResourcePlacements();
                 RebuildRegistries();
                 EnsureSaveAgents();
                 RestoreDataFromJson(PlayerPrefs.GetString(saveKey, string.Empty));
-                _gridManager?.SpawnInitialResources();
+                if (!hasSavedResourcePlacements)
+                {
+                    _gridManager?.SpawnInitialResources();
+                }
                 uiEventChannel.RaiseEvent(UIEvents.UiRefreshRequestedEvent);
                 return true;
             }
@@ -251,6 +303,7 @@ namespace _01.Code.Manager
         public void StartNewGame()
         {
             _skipSaveOnDestroy = true;
+            GridManager.PrepareNewGameResourceNoiseSeed();
             DeleteSave();
             ReloadCurrentScene();
         }
@@ -266,7 +319,9 @@ namespace _01.Code.Manager
         [ContextMenu("Delete All PlayerPrefs")]
         public void DeleteAllPlayerPrefs()
         {
+            GridManager.PrepareNewGameResourceNoiseSeed();
             PlayerPrefs.DeleteAll();
+            GridManager.PrepareNewGameResourceNoiseSeed();
             PlayerPrefs.Save();
             _unusedData.Clear();
         }
@@ -324,6 +379,11 @@ namespace _01.Code.Manager
             if (_townTileObjectRegistry.TryGetValue(placementKey, out TownTileObjectDataSO townTileObjectData) &&
                 townTileObjectData != null &&
                 townTileObjectData.Prefab != null)
+            {
+                return true;
+            }
+
+            if (_gridManager != null && _gridManager.CanRestoreResourcePlacement(placementKey))
             {
                 return true;
             }
@@ -386,6 +446,11 @@ namespace _01.Code.Manager
             if (_enemySpawnerManager != null && placementKey == _enemySpawnerManager.SpawnerSaveKey)
             {
                 return _enemySpawnerManager.TryCreateSavedSpawner(gridPosition, out placeableEntity);
+            }
+
+            if (_gridManager != null && _gridManager.TryCreateResourcePlacement(placementKey, runtimeSaveId, gridPosition, out placeableEntity))
+            {
+                return true;
             }
 
             _logManager?.Building($"Unknown save placement key `{placementKey}`.", LogLevel.Warning);

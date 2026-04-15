@@ -107,6 +107,7 @@ namespace _01.Code.Manager
             OnNightStarted?.Invoke();
             PublishClockState();
         }
+        
 
         private void HandleWaveClearedEvent(WaveClearedEvent _)
         {
