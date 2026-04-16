@@ -1,17 +1,18 @@
 using _01.Code.Units;
 using UnityEngine;
 using _01.Code.Cost;
+using _01.Code.Commands;
 
-namespace _01.Code.TownCommands
+namespace _01.Code.Commands.Battle
 {
-    [CreateAssetMenu(fileName = "TownBuildCommand", menuName = "SO/Town/Command/Build", order = 0)]
-    public class TownBuildCommandSO : TownCommandSO
+    public class BattleBuildUnitCommandSO : BaseCommandSO
     {
         [field: SerializeField] public UnitDataSO BuildingData { get; private set; }
 
         public void ConfigureRuntime(UnitDataSO buildingData, int slot)
         {
             BuildingData = buildingData;
+            IsSingleUnitCommand = true;
             ConfigureRuntime(
                 buildingData != null && !string.IsNullOrWhiteSpace(buildingData.Name) ? buildingData.Name : "BUILD",
                 buildingData != null ? buildingData.CardIcon : null,
@@ -19,40 +20,48 @@ namespace _01.Code.TownCommands
                 false);
         }
 
-        public override string GetDisplayName(TownCommandContext context)
+        public override string GetDisplayName(CommandContext context)
         {
             return BuildingData != null && !string.IsNullOrWhiteSpace(BuildingData.Name) ? BuildingData.Name : base.GetDisplayName(context);
         }
 
-        public override string GetDescription(TownCommandContext context)
+        public override string GetDescription(CommandContext context)
         {
             return BuildingData != null ? BuildingData.Explanation ?? string.Empty : string.Empty;
         }
 
-        public override Sprite GetIcon(TownCommandContext context)
+        public override Sprite GetIcon(CommandContext context)
         {
             return BuildingData != null && BuildingData.CardIcon != null ? BuildingData.CardIcon : base.GetIcon(context);
         }
 
-        public override Sprite GetCostIcon(TownCommandContext context)
+        public override Sprite GetCostIcon(CommandContext context)
         {
             CostDefinitionSO primaryCost = context != null && context.CostManager != null ? context.CostManager.PrimarySpendCost : null;
             return primaryCost != null ? primaryCost.Icon : null;
         }
 
-        public override int GetCostAmount(TownCommandContext context)
+        public override int GetCostAmount(CommandContext context)
         {
             return BuildingData != null ? BuildingData.Cost : 0;
         }
 
-        public override bool CanExecute(TownCommandContext context)
+        public override bool IsLocked(CommandContext context)
         {
-            return context != null && context.World != null && context.BuildManager != null && BuildingData != null;
+            return !CanAfford(context);
         }
 
-        public override bool Execute(TownCommandContext context)
+        public override bool CanHandle(CommandContext context)
         {
-            return CanExecute(context) && context.World.TryBuildAtCell(BuildingData, context.CellPosition);
+            return context != null &&
+                   context.BuildManager != null &&
+                   BuildingData != null &&
+                   context.CanRequestUnitBuild();
+        }
+
+        public override bool Handle(CommandContext context)
+        {
+            return context.TryRequestUnitBuild(BuildingData);
         }
     }
 }

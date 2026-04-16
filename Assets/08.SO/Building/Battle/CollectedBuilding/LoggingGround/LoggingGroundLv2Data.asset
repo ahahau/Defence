@@ -18,6 +18,9 @@ MonoBehaviour:
   <Description>k__BackingField: Upgraded logging ground with stronger output capacity.
   <Icon>k__BackingField: {fileID: 0}
   <Color>k__BackingField: {r: 0.76, g: 0.54, b: 0.27, a: 1}
+  <CommandTitle>k__BackingField: LOGGING GROUND
+  <Commands>k__BackingField:
+  - {fileID: 11400000, guid: 52f8444f1baf4dc6b76ca2e9a18eb001, type: 2}
   <BuildCosts>k__BackingField:
   - <UseDefaultCost>k__BackingField: 0
     <DefaultType>k__BackingField: {fileID: 0}

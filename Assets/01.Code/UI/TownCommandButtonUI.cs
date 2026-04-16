@@ -1,4 +1,4 @@
-using _01.Code.TownCommands;
+using _01.Code.Commands;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -7,17 +7,17 @@ using UnityEngine.UI;
 
 namespace _01.Code.UI
 {
-    public class TownCommandButtonUI : MonoBehaviour, IUIElement<TownCommandSO, UnityAction>, IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler
+    public class TownCommandButtonUI : MonoBehaviour, IUIElement<BaseCommandSO, UnityAction>, IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler
     {
         [SerializeField] private Image icon;
         [SerializeField] private Button button;
         [SerializeField] private Image background;
         [SerializeField] private TextMeshProUGUI label;
-        private TownCommandContext _context;
-        private TownCommandSO _boundCommand;
-        private TownInteriorScreenUI _owner;
+        private CommandContext _context;
+        private BaseCommandSO _boundCommand;
+        private ICommandTooltipOwner _owner;
 
-        public void Configure(Image iconImage, Button targetButton, Image backgroundImage, TextMeshProUGUI labelText, TownInteriorScreenUI owner)
+        public void Configure(Image iconImage, Button targetButton, Image backgroundImage, TextMeshProUGUI labelText, ICommandTooltipOwner owner)
         {
             icon = iconImage;
             button = targetButton;
@@ -26,12 +26,12 @@ namespace _01.Code.UI
             _owner = owner;
         }
 
-        public void SetOwner(TownInteriorScreenUI owner)
+        public void SetOwner(ICommandTooltipOwner owner)
         {
             _owner = owner;
         }
 
-        public void BindContext(TownCommandContext context)
+        public void BindContext(CommandContext context)
         {
             _context = context;
         }
@@ -42,7 +42,7 @@ namespace _01.Code.UI
             Disable();
         }
 
-        public void EnableFor(TownCommandSO item, UnityAction callback)
+        public void EnableFor(BaseCommandSO item, UnityAction callback)
         {
             EnsureReferences();
             if (button == null)
@@ -54,8 +54,9 @@ namespace _01.Code.UI
             button.enabled = true;
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(callback);
-            button.interactable = true;
             _boundCommand = item;
+            bool isLocked = item != null && item.IsLocked(_context);
+            button.interactable = !isLocked;
             if (icon != null)
             {
                 icon.gameObject.SetActive(true);
@@ -70,7 +71,9 @@ namespace _01.Code.UI
                 background.gameObject.SetActive(true);
                 background.enabled = true;
                 background.raycastTarget = true;
-                background.color = new Color(0.82f, 0.84f, 0.88f, 1f);
+                background.color = isLocked
+                    ? new Color(0.45f, 0.47f, 0.50f, 0.85f)
+                    : new Color(0.82f, 0.84f, 0.88f, 1f);
             }
 
             if (label != null)

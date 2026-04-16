@@ -18,6 +18,10 @@ MonoBehaviour:
   <Description>k__BackingField: Triangle test rock obstacle.
   <Icon>k__BackingField: {fileID: 0}
   <Color>k__BackingField: {r: 0.58, g: 0.66, b: 0.72, a: 1}
+  <CommandTitle>k__BackingField: BUILD
+  <Commands>k__BackingField:
+  - {fileID: 11400000, guid: 4ff99bc18bb04abf9342dbe4f9819001, type: 2}
+  - {fileID: 11400000, guid: 8a5d95e319a24a42b98f8260f4ffa001, type: 2}
   <BuildCosts>k__BackingField: {fileID: 0}
   <RemoveCost>k__BackingField: 3
   <ReturnCosts>k__BackingField: {fileID: 0}

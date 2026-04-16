@@ -18,6 +18,10 @@ MonoBehaviour:
   <Description>k__BackingField: Build a logging ground on a cleared tree tile.
   <Icon>k__BackingField: {fileID: 0}
   <Color>k__BackingField: {r: 0.68, g: 0.46, b: 0.22, a: 1}
+  <CommandTitle>k__BackingField: LOGGING GROUND
+  <Commands>k__BackingField:
+  - {fileID: 11400000, guid: c0995d1f9f7a4b4d897c6ea8b8b37001, type: 2}
+  - {fileID: 11400000, guid: a5e2ae7ecb2843cab6f44a5da0d68001, type: 2}
   <BuildCosts>k__BackingField: []
   <InteractionPanel>k__BackingField: {fileID: 0}
   <NextUpgrade>k__BackingField: {fileID: 11400000, guid: a9f12afd598b4f0ca18b163c690528ea, type: 2}

@@ -5,9 +5,7 @@ namespace _01.Code.Buildings
 {
     public class Building : PlaceableEntity
     {
-        protected override int GetDefaultPathTraversalCost()
-        {
-            return 10;
-        }
+        [field: SerializeField] public int level { get; set; } = 1;
+
     }
 }

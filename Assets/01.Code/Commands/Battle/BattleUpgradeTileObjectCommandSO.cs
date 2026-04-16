@@ -1,11 +1,12 @@
 using System.Collections.Generic;
 using _01.Code.Cost;
+using _01.Code.Commands;
 using _01.Code.Tiles;
 using UnityEngine;
 
-namespace _01.Code.TownCommands
+namespace _01.Code.Commands.Battle
 {
-    public class TownUpgradeTileObjectCommandSO : TownCommandSO
+    public class BattleUpgradeTileObjectCommandSO : BaseCommandSO
     {
         [field: SerializeField] public TownTileObjectDataSO SourceData { get; private set; }
 
@@ -15,7 +16,7 @@ namespace _01.Code.TownCommands
             ConfigureRuntime("UPGRADE", sourceData != null ? sourceData.Icon : null, slot, false);
         }
 
-        public override string GetDisplayName(TownCommandContext context)
+        public override string GetDisplayName(CommandContext context)
         {
             TownTileObjectDataSO nextUpgrade = SourceData != null ? SourceData.GetResolvedNextUpgrade() : null;
             return nextUpgrade != null && !string.IsNullOrWhiteSpace(nextUpgrade.DisplayName)
@@ -23,7 +24,7 @@ namespace _01.Code.TownCommands
                 : "UPGRADE";
         }
 
-        public override string GetDescription(TownCommandContext context)
+        public override string GetDescription(CommandContext context)
         {
             TownTileObjectDataSO nextUpgrade = SourceData != null ? SourceData.GetResolvedNextUpgrade() : null;
             return nextUpgrade != null
@@ -31,7 +32,7 @@ namespace _01.Code.TownCommands
                 : string.Empty;
         }
 
-        public override Sprite GetIcon(TownCommandContext context)
+        public override Sprite GetIcon(CommandContext context)
         {
             TownTileObjectDataSO nextUpgrade = SourceData != null ? SourceData.GetResolvedNextUpgrade() : null;
             return nextUpgrade != null && nextUpgrade.Icon != null
@@ -39,13 +40,13 @@ namespace _01.Code.TownCommands
                 : base.GetIcon(context);
         }
 
-        public override Sprite GetCostIcon(TownCommandContext context)
+        public override Sprite GetCostIcon(CommandContext context)
         {
             CostDefinitionSO displayCostType = ResolveDisplayCostType(context);
             return displayCostType != null ? displayCostType.Icon : null;
         }
 
-        public override int GetCostAmount(TownCommandContext context)
+        public override int GetCostAmount(CommandContext context)
         {
             // 툴팁 비용은 현재 레벨 기준으로 해석된 업그레이드 비용을 그대로 보여줍니다.
             List<TownTileObjectDataSO.Entry> upgradeCosts = SourceData != null ? SourceData.GetResolvedUpgradeCosts() : null;
@@ -75,7 +76,7 @@ namespace _01.Code.TownCommands
             return totalCost;
         }
 
-        public override bool CanAfford(TownCommandContext context)
+        public override bool CanAfford(CommandContext context)
         {
             List<TownTileObjectDataSO.Entry> upgradeCosts = SourceData != null ? SourceData.GetResolvedUpgradeCosts() : null;
             if (upgradeCosts == null || context == null || context.CostManager == null)
@@ -86,21 +87,25 @@ namespace _01.Code.TownCommands
             return context.CostManager.CanPayAll(upgradeCosts);
         }
 
-        public override bool CanExecute(TownCommandContext context)
+        public override bool IsLocked(CommandContext context)
+        {
+            return !CanAfford(context);
+        }
+
+        public override bool CanHandle(CommandContext context)
         {
             return context != null &&
-                   context.World != null &&
                    SourceData != null &&
-                   SourceData.GetResolvedNextUpgrade() != null;
+                   SourceData.GetResolvedNextUpgrade() != null &&
+                   context.CanUpgradeTileObject();
         }
 
-        public override bool Execute(TownCommandContext context)
+        public override bool Handle(CommandContext context)
         {
-            // 업그레이드는 월드가 처리해야 교체, 저장 ID, 그리드 상태를 함께 맞출 수 있습니다.
-            return CanExecute(context) && context.World.TryUpgradeTownObjectAtCell(context.CellPosition);
+            return context.TryUpgradeTileObject();
         }
 
-        private CostDefinitionSO ResolveDisplayCostType(TownCommandContext context)
+        private CostDefinitionSO ResolveDisplayCostType(CommandContext context)
         {
             List<TownTileObjectDataSO.Entry> upgradeCosts = SourceData != null ? SourceData.GetResolvedUpgradeCosts() : null;
             if (upgradeCosts == null || context == null || context.CostManager == null)

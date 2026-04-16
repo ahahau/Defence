@@ -7,12 +7,7 @@ namespace _01.Code.Tiles
     {
         [field: SerializeField] public TownTileObjectDataSO Data { get; private set; }
 
-        protected override int GetDefaultPathTraversalCost()
-        {
-            return 12;
-        }
-
-        public void BindData(TownTileObjectDataSO data)
+        public virtual void BindData(TownTileObjectDataSO data)
         {
             Data = data;
         }

@@ -26,10 +26,6 @@ namespace _01.Code.Enemies
         private MaterialPropertyBlock _linePropertyBlock;
         private bool _isSpawning;
 
-        protected override int GetDefaultPathTraversalCost()
-        {
-            return 1;
-        }
 
         public void Initialize(GridManager gridManager, LogManager logManager, EnemySpawnerManager enemySpawnerManager)
         {

@@ -18,5 +18,9 @@ MonoBehaviour:
   <Description>k__BackingField: Core building placed at the center of the town board.
   <Icon>k__BackingField: {fileID: 0}
   <Color>k__BackingField: {r: 0.95, g: 0.76, b: 0.18, a: 1}
+  <CommandTitle>k__BackingField: TOWN HALL
+  <Commands>k__BackingField:
+  - {fileID: 11400000, guid: 2c2cbca20ab24ecf86810ca58a322001, type: 2}
+  - {fileID: 11400000, guid: 2e845d8ea2874b8c848ef670340bb001, type: 2}
   <BuildCosts>k__BackingField: {fileID: 0}
   <InteractionPanel>k__BackingField: {fileID: 11400000, guid: c2ec541a061c4fcf88093b4fd0a43010, type: 2}

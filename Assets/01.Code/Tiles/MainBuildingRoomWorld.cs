@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using _01.Code.Commands;
+using _01.Code.Commands.Battle;
+using _01.Code.Commands.Town;
 using _01.Code.Core;
 using _01.Code.Events;
 using _01.Code.Manager;
-using _01.Code.TownCommands;
 using _01.Code.TownPanels;
 using _01.Code.UI;
 using _01.Code.Units;
@@ -95,10 +97,7 @@ namespace _01.Code.Tiles
         private Camera _worldCamera;
         private int _lastHandledClickFrame = -1;
         private bool _hasProcessedStartupPlacements;
-        private readonly List<TownCommandSO> _townBuildCommands = new();
-        private readonly List<TownCommandSO> _townObjectCommands = new();
-        private TownRemoveObstacleCommandSO _removeObstacleCommand;
-        private TownUpgradeTileObjectCommandSO _upgradeTileObjectCommand;
+        private UnitPanelUI _unitPanelUi;
 
         private void Awake()
         {
@@ -125,37 +124,6 @@ namespace _01.Code.Tiles
             {
                 TryApplyStartupPlacements();
             }
-
-            if (!Input.GetMouseButtonDown(0))
-            {
-                return;
-            }
-
-            if (TownInteriorScreenUI != null && TownInteriorScreenUI.IsPointerOverBuildPanel())
-            {
-                return;
-            }
-
-            if (_lastHandledClickFrame == Time.frameCount)
-            {
-                return;
-            }
-
-            ResolveReferences();
-            if (GridManager == null)
-            {
-                return;
-            }
-
-            ResolveWorldCamera();
-            if (_worldCamera == null)
-            {
-                return;
-            }
-
-            Vector3 worldPosition = _worldCamera.ScreenToWorldPoint(Input.mousePosition);
-            worldPosition.z = 0f;
-            TryHandlePointerClick(worldPosition);
         }
 
         private void OnEnable()
@@ -214,6 +182,7 @@ namespace _01.Code.Tiles
             _saveManager ??= GameManager.Instance.GetManager<SaveManager>();
             _logManager ??= GameManager.Instance.GetManager<LogManager>();
             _uiEventChannel ??= _buildManager != null ? _buildManager.UiEventChannel : null;
+            _unitPanelUi ??= FindFirstObjectByType<UnitPanelUI>(FindObjectsInactive.Include);
             if (GridManager != null && GridManager.Tilemap == null)
             {
                 GridManager.Initialize(GameManager.Instance);
@@ -224,10 +193,6 @@ namespace _01.Code.Tiles
                 EnsureBoard();
             }
 
-            if (Application.isPlaying)
-            {
-                EnsureCommands();
-            }
         }
 
         private void ResolveWorldCamera()
@@ -374,22 +339,21 @@ namespace _01.Code.Tiles
         {
             if (Application.isPlaying && _lastHandledClickFrame == Time.frameCount)
             {
+                Debug.Log($"TownWorld HandleTileClicked skipped same frame for {cell}.");
                 return;
             }
 
             _lastHandledClickFrame = Time.frameCount;
             ResolveReferences();
-            if (GameManager.Instance != null && GridManager != null && GridManager.Tilemap == null)
+            if (!Application.isPlaying || !_tiles.ContainsKey(cell))
             {
-                GridManager.Initialize(GameManager.Instance);
-            }
-            if (!Application.isPlaying || GridManager == null || GridManager.Tilemap == null)
-            {
+                Debug.Log($"TownWorld HandleTileClicked ignored. isPlaying={Application.isPlaying}, hasCell={_tiles.ContainsKey(cell)}, cell={cell}");
                 return;
             }
 
             if (TryHandleSelectedUnitPlacement(cell))
             {
+                Debug.Log($"TownWorld HandleTileClicked consumed by selected unit at {cell}.");
                 return;
             }
 
@@ -398,12 +362,14 @@ namespace _01.Code.Tiles
                 _hasSelectedCell = false;
                 TownInteriorScreenUI?.HideBuildPanelExternally();
                 TownInteriorScreenUI?.HideObjectDetailsExternally();
+                _unitPanelUi?.HidePanel();
                 RefreshTiles();
                 return;
             }
 
             if (!IsCellEmpty(cell))
             {
+                _unitPanelUi?.HidePanel();
                 if (TryGetObstacle(cell, out TownObstacle obstacle))
                 {
                     _selectedCell = cell;
@@ -424,17 +390,17 @@ namespace _01.Code.Tiles
                     return;
                 }
 
-                _hasSelectedCell = false;
-                TownInteriorScreenUI?.HideBuildPanelExternally();
+                _selectedCell = cell;
+                _hasSelectedCell = true;
                 TownInteriorScreenUI?.HideObjectDetailsExternally();
+                ShowSelectedTileCommands();
                 RefreshTiles();
-                return;
             }
 
             _selectedCell = cell;
             _hasSelectedCell = true;
             TownInteriorScreenUI?.HideObjectDetailsExternally();
-            ShowBuildCommands(cell);
+            ShowSelectedTileCommands();
             RefreshTiles();
         }
 
@@ -445,7 +411,7 @@ namespace _01.Code.Tiles
                 return false;
             }
 
-            if (!GridManager.ContainsCell(cell))
+            if (!_tiles.ContainsKey(cell))
             {
                 return true;
             }
@@ -454,6 +420,7 @@ namespace _01.Code.Tiles
             _hasSelectedCell = true;
             TownInteriorScreenUI?.HideBuildPanelExternally();
             TownInteriorScreenUI?.HideObjectDetailsExternally();
+            _unitPanelUi?.HidePanel();
 
             if (!IsCellEmpty(cell))
             {
@@ -469,78 +436,61 @@ namespace _01.Code.Tiles
         public bool TryHandleWorldClick(Vector2 worldPosition)
         {
             ResolveReferences();
-            if (GridManager == null)
+            if (_tiles.Count == 0)
             {
+                Debug.Log("TownWorld TryHandleWorldClick failed: tile cache empty.");
                 return false;
             }
 
-            Vector2Int cell = GridManager.WorldToPlacementCell(worldPosition);
-            if (!_tiles.ContainsKey(cell))
+            if (!TryGetClickedCell(worldPosition, out Vector2Int cell))
             {
+                Debug.Log($"TownWorld TryHandleWorldClick failed: no tile near {worldPosition}.");
                 return false;
             }
 
+            Debug.Log($"TownWorld TryHandleWorldClick resolved {worldPosition} -> {cell}.");
             HandleTileClicked(cell);
             return true;
         }
 
-        private bool TryHandlePointerClick(Vector2 worldPosition)
+        private bool TryGetClickedCell(Vector2 worldPosition, out Vector2Int cell)
         {
-            Collider2D[] hits = Physics2D.OverlapPointAll(worldPosition);
-            Array.Sort(hits, CompareHitPriority);
-            for (int i = 0; i < hits.Length; i++)
+            cell = default;
+
+            float maxDistanceSqr = GetTileSelectionRadiusSqr();
+            float closestDistanceSqr = float.MaxValue;
+            bool found = false;
+
+            foreach (KeyValuePair<Vector2Int, MainBuildingRoomTile> pair in _tiles)
             {
-                Collider2D hit = hits[i];
-                if (hit == null)
+                MainBuildingRoomTile tile = pair.Value;
+                if (tile == null)
                 {
                     continue;
                 }
 
-                MainBuildingRoomTile roomTile = hit.GetComponentInParent<MainBuildingRoomTile>();
-                if (roomTile != null && roomTile.transform.parent == transform)
+                Vector3 tileWorldPosition = tile.transform.position;
+                Vector2 delta = (Vector2)tileWorldPosition - worldPosition;
+                float distanceSqr = delta.sqrMagnitude;
+                if (distanceSqr > maxDistanceSqr || distanceSqr >= closestDistanceSqr)
                 {
-                    HandleTileClicked(roomTile.Cell);
-                    return true;
+                    continue;
                 }
 
-                TownTileObject tileObject = hit.GetComponentInParent<TownTileObject>();
-                if (tileObject != null && TryHandleTileObjectClick(tileObject))
-                {
-                    return true;
-                }
+                closestDistanceSqr = distanceSqr;
+                cell = pair.Key;
+                found = true;
             }
 
-            return TryHandleWorldClick(worldPosition);
+            return found;
         }
 
-        private int CompareHitPriority(Collider2D left, Collider2D right)
+        private float GetTileSelectionRadiusSqr()
         {
-            int leftOrder = GetHitSortingOrder(left);
-            int rightOrder = GetHitSortingOrder(right);
-            if (leftOrder != rightOrder)
-            {
-                return rightOrder.CompareTo(leftOrder);
-            }
-
-            float leftDepth = left != null ? left.transform.position.z : float.MinValue;
-            float rightDepth = right != null ? right.transform.position.z : float.MinValue;
-            return leftDepth.CompareTo(rightDepth);
-        }
-
-        private int GetHitSortingOrder(Collider2D hit)
-        {
-            if (hit == null)
-            {
-                return int.MinValue;
-            }
-
-            SpriteRenderer spriteRenderer = hit.GetComponentInParent<SpriteRenderer>();
-            if (spriteRenderer == null)
-            {
-                return int.MinValue;
-            }
-
-            return spriteRenderer.sortingOrder;
+            float halfWidth = Mathf.Max(0.5f, TileScale.x * 0.5f);
+            float halfHeight = Mathf.Max(0.5f, TileScale.y * 0.5f);
+            float radius = Mathf.Max(halfWidth, halfHeight);
+            return radius * radius;
         }
 
         public bool TryHandleTileObjectClick(TownTileObject tileObject)
@@ -587,7 +537,7 @@ namespace _01.Code.Tiles
                 return;
             }
 
-            TownCommandContext context = new TownCommandContext(this, _buildManager, _costManager, _selectedCell, GetObstacle(_selectedCell));
+            CommandContext context = new CommandContext(this, _buildManager, _costManager, _selectedCell, GetObstacle(_selectedCell));
             if (!evt.Command.CanExecute(context) || !evt.Command.Execute(context))
             {
                 return;
@@ -602,7 +552,7 @@ namespace _01.Code.Tiles
                     return;
                 }
 
-                ShowBuildCommands(_selectedCell);
+                ShowSelectedTileCommands();
             }
         }
 
@@ -626,16 +576,31 @@ namespace _01.Code.Tiles
             }
         }
 
-        private void ShowBuildCommands(Vector2Int cell)
+        public void ShowTileCommands(MainBuildingRoomTile tile)
         {
-            if (TownInteriorScreenUI == null)
+            if (TownInteriorScreenUI == null || tile == null)
             {
+                Debug.Log($"TownWorld ShowTileCommands aborted. tileNull={tile == null}, uiNull={TownInteriorScreenUI == null}");
                 return;
             }
 
-            EnsureCommands();
-            TownCommandContext context = new TownCommandContext(this, _buildManager, _costManager, cell, null);
-            TownInteriorScreenUI.ShowCommands("COMMAND", _townBuildCommands, context);
+            string title = string.IsNullOrWhiteSpace(tile.CommandTitle)
+                ? "COMMAND"
+                : tile.CommandTitle;
+            CommandContext context = new CommandContext(this, _buildManager, _costManager, tile.Cell, null);
+            TownInteriorScreenUI.ShowCommands(title, tile.Commands, context);
+        }
+
+        private void ShowUnitPanel(Vector2Int cell)
+        {
+            if (_unitPanelUi == null)
+            {
+                Debug.Log($"TownWorld ShowUnitPanel aborted: UnitPanelUI missing for {cell}.");
+                return;
+            }
+
+            Debug.Log($"TownWorld showing unit panel for empty cell {cell}.");
+            _unitPanelUi.ShowInstallPanel(cell);
         }
 
         private void ShowObstacleCommands(TownObstacle obstacle)
@@ -645,13 +610,13 @@ namespace _01.Code.Tiles
                 return;
             }
 
-            EnsureCommands();
-            TownObstacleDataSO obstacleData = obstacle.Data as TownObstacleDataSO;
-            string title = obstacle.Data != null && !string.IsNullOrWhiteSpace(obstacle.Data.DisplayName)
-                ? obstacle.Data.DisplayName.ToUpperInvariant()
-                : "OBSTACLE";
-            TownCommandContext context = new TownCommandContext(this, _buildManager, _costManager, obstacle.GridPosition, obstacle);
-            TownInteriorScreenUI.ShowCommands(title, new List<TownCommandSO> { _removeObstacleCommand }, context);
+            string title = obstacle.Data != null && !string.IsNullOrWhiteSpace(obstacle.Data.CommandTitle)
+                ? obstacle.Data.CommandTitle
+                : obstacle.Data != null && !string.IsNullOrWhiteSpace(obstacle.Data.DisplayName)
+                    ? obstacle.Data.DisplayName.ToUpperInvariant()
+                    : "OBSTACLE";
+            CommandContext context = new CommandContext(this, _buildManager, _costManager, obstacle.GridPosition, obstacle);
+            TownInteriorScreenUI.ShowCommands(title, obstacle.Data.Commands, context);
         }
 
         private void ShowObjectCommands(TownTileObject tileObject)
@@ -661,44 +626,14 @@ namespace _01.Code.Tiles
                 return;
             }
 
-            BuildTownObjectCommands(tileObject);
-            string title = !string.IsNullOrWhiteSpace(tileObject.Data.DisplayName)
-                ? tileObject.Data.DisplayName.ToUpperInvariant()
+            string title = !string.IsNullOrWhiteSpace(tileObject.Data.CommandTitle)
+                ? tileObject.Data.CommandTitle
+                : !string.IsNullOrWhiteSpace(tileObject.Data.DisplayName)
+                    ? tileObject.Data.DisplayName.ToUpperInvariant()
                 : "OBJECT";
-            TownCommandContext context = new TownCommandContext(this, _buildManager, _costManager, _selectedCell, null);
+            CommandContext context = new CommandContext(this, _buildManager, _costManager, _selectedCell, null);
             TownInteriorScreenUI.HideObjectDetailsExternally();
-            TownInteriorScreenUI.ShowCommands(title, _townObjectCommands, context);
-        }
-
-        private void EnsureCommands()
-        {
-            if (_removeObstacleCommand == null)
-            {
-                _removeObstacleCommand = ScriptableObject.CreateInstance<TownRemoveObstacleCommandSO>();
-                _removeObstacleCommand.ConfigureRuntime(0);
-                _removeObstacleCommand.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
-            }
-
-            List<UnitDataSO> availableUnits = _buildManager != null ? _buildManager.GetAvailableUnitsForCurrentScene() : null;
-            if (availableUnits == null)
-            {
-                return;
-            }
-
-            _townBuildCommands.Clear();
-            for (int i = 0; i < availableUnits.Count && i < 5; i++)
-            {
-                UnitDataSO unitData = availableUnits[i];
-                if (unitData == null)
-                {
-                    continue;
-                }
-
-                TownBuildCommandSO buildCommand = ScriptableObject.CreateInstance<TownBuildCommandSO>();
-                buildCommand.ConfigureRuntime(unitData, i);
-                buildCommand.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
-                _townBuildCommands.Add(buildCommand);
-            }
+            TownInteriorScreenUI.ShowCommands(title, tileObject.Data.Commands, context);
         }
 
         private bool HasObjectCommands(TownTileObject tileObject)
@@ -708,51 +643,7 @@ namespace _01.Code.Tiles
                 return false;
             }
 
-            return tileObject.Data.GetResolvedNextUpgrade() != null ||
-                   (tileObject.Data.InteractionPanel != null &&
-                    tileObject.Data.InteractionPanel.Sections != null &&
-                    tileObject.Data.InteractionPanel.Sections.Count > 0);
-        }
-
-        private void BuildTownObjectCommands(TownTileObject tileObject)
-        {
-            _townObjectCommands.Clear();
-
-            TownTileObjectDataSO tileObjectData = tileObject != null ? tileObject.Data : null;
-            if (tileObjectData == null)
-            {
-                return;
-            }
-
-            int slot = 0;
-            if (tileObjectData.GetResolvedNextUpgrade() != null)
-            {
-                _upgradeTileObjectCommand = ScriptableObject.CreateInstance<TownUpgradeTileObjectCommandSO>();
-                _upgradeTileObjectCommand.ConfigureRuntime(tileObjectData, slot);
-                _upgradeTileObjectCommand.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
-                _townObjectCommands.Add(_upgradeTileObjectCommand);
-                slot++;
-            }
-
-            if (tileObjectData.InteractionPanel == null || tileObjectData.InteractionPanel.Sections == null)
-            {
-                return;
-            }
-
-            for (int i = 0; i < tileObjectData.InteractionPanel.Sections.Count && slot < 5; i++)
-            {
-                TownObjectPanelSectionSO section = tileObjectData.InteractionPanel.Sections[i];
-                if (section == null)
-                {
-                    continue;
-                }
-
-                TownOpenPanelSectionCommandSO command = ScriptableObject.CreateInstance<TownOpenPanelSectionCommandSO>();
-                command.ConfigureRuntime(section, tileObjectData, slot);
-                command.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
-                _townObjectCommands.Add(command);
-                slot++;
-            }
+            return tileObject.Data.Commands != null && tileObject.Data.Commands.Count > 0;
         }
 
         private void SubscribeToTownCommandEvents()
@@ -773,7 +664,18 @@ namespace _01.Code.Tiles
                 return;
             }
 
-            _uiEventChannel.RemoveListener<TownCommandSelectedEvent>(HandleTownCommandSelected);
+                _uiEventChannel.RemoveListener<TownCommandSelectedEvent>(HandleTownCommandSelected);
+        }
+
+        private void ShowSelectedTileCommands()
+        {
+            if (!_tiles.TryGetValue(_selectedCell, out MainBuildingRoomTile tile) || tile == null || !tile.HasCommands)
+            {
+                TownInteriorScreenUI?.HideBuildPanelExternally();
+                return;
+            }
+
+            ShowTileCommands(tile);
         }
 
         private void AlignTilesToGrid()

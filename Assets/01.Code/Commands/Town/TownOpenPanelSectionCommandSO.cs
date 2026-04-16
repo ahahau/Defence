@@ -1,10 +1,11 @@
 using _01.Code.TownPanels;
 using _01.Code.Tiles;
 using UnityEngine;
+using _01.Code.Commands;
 
-namespace _01.Code.TownCommands
+namespace _01.Code.Commands.Town
 {
-    public class TownOpenPanelSectionCommandSO : TownCommandSO
+    public class TownOpenPanelSectionCommandSO : BaseCommandSO
     {
         [field: SerializeField] public TownObjectPanelSectionSO Section { get; private set; }
         [field: SerializeField] public TownTileObjectDataSO SourceData { get; private set; }
@@ -20,29 +21,34 @@ namespace _01.Code.TownCommands
                 false);
         }
 
-        public override string GetDisplayName(TownCommandContext context)
+        public override string GetDisplayName(CommandContext context)
         {
             return Section != null ? Section.GetSectionTitle() : base.GetDisplayName(context);
         }
 
-        public override string GetDescription(TownCommandContext context)
+        public override string GetDescription(CommandContext context)
         {
             return Section != null ? Section.GetBodyText() : string.Empty;
         }
 
-        public override Sprite GetIcon(TownCommandContext context)
+        public override Sprite GetIcon(CommandContext context)
         {
             return Section != null ? Section.GetSectionIcon() : base.GetIcon(context);
         }
 
-        public override bool CanExecute(TownCommandContext context)
+        public override bool IsLocked(CommandContext context)
+        {
+            return false;
+        }
+
+        public override bool CanHandle(CommandContext context)
         {
             return context != null && context.World != null && Section != null;
         }
 
-        public override bool Execute(TownCommandContext context)
+        public override bool Handle(CommandContext context)
         {
-            return CanExecute(context) && context.World.ShowPanelSection(Section, SourceData);
+            return context.World.ShowPanelSection(Section, SourceData);
         }
     }
 }

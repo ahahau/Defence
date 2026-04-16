@@ -25,19 +25,19 @@ namespace _01.Code.Buildings
             get { return Prefab as BattleTownBuilding; }
         }
 
-        public BattleTileBuildingDataSO GetNextBattleUpgrade()
+        public override TownTileObjectDataSO GetResolvedNextUpgrade()
         {
             // 배틀 건물은 공통 NextUpgrade를 보지 않고 업그레이드 라인만 신뢰합니다.
             return UpgradeData != null ? UpgradeData.GetNext(this) : null;
         }
 
-        public List<TownTileObjectDataSO.Entry> GetBuildCost()
+        public override List<TownTileObjectDataSO.Entry> GetResolvedBuildCosts()
         {
             // 설치 비용은 개별 단계 엔트리가 아니라 라인 본체에서 가져옵니다.
             return UpgradeData != null ? UpgradeData.GetBuildCost(this) : null;
         }
 
-        public List<TownTileObjectDataSO.Entry> GetUpgradeCost()
+        public override List<TownTileObjectDataSO.Entry> GetResolvedUpgradeCosts()
         {
             // 업그레이드 비용은 현재 단계 엔트리에서 가져옵니다.
             return UpgradeData != null ? UpgradeData.GetUpgradeCost(this) : null;

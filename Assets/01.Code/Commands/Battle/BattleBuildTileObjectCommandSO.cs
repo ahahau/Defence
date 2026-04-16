@@ -1,11 +1,12 @@
 using System.Collections.Generic;
 using _01.Code.Cost;
+using _01.Code.Commands;
 using _01.Code.Tiles;
 using UnityEngine;
 
-namespace _01.Code.TownCommands
+namespace _01.Code.Commands.Battle
 {
-    public class TownBuildTileObjectCommandSO : TownCommandSO
+    public class BattleBuildTileObjectCommandSO : BaseCommandSO
     {
         [field: SerializeField] public TownTileObjectDataSO BuildingData { get; private set; }
 
@@ -19,30 +20,30 @@ namespace _01.Code.TownCommands
                 false);
         }
 
-        public override string GetDisplayName(TownCommandContext context)
+        public override string GetDisplayName(CommandContext context)
         {
             return BuildingData != null && !string.IsNullOrWhiteSpace(BuildingData.DisplayName)
                 ? BuildingData.DisplayName
                 : base.GetDisplayName(context);
         }
 
-        public override string GetDescription(TownCommandContext context)
+        public override string GetDescription(CommandContext context)
         {
             return BuildingData != null ? BuildingData.Description ?? string.Empty : string.Empty;
         }
 
-        public override Sprite GetIcon(TownCommandContext context)
+        public override Sprite GetIcon(CommandContext context)
         {
             return BuildingData != null && BuildingData.Icon != null ? BuildingData.Icon : base.GetIcon(context);
         }
 
-        public override Sprite GetCostIcon(TownCommandContext context)
+        public override Sprite GetCostIcon(CommandContext context)
         {
             CostDefinitionSO displayCostType = ResolveDisplayCostType(context);
             return displayCostType != null ? displayCostType.Icon : null;
         }
 
-        public override int GetCostAmount(TownCommandContext context)
+        public override int GetCostAmount(CommandContext context)
         {
             // 툴팁 비용도 실제 지불에 쓰는 해석 결과와 동일해야 합니다.
             List<TownTileObjectDataSO.Entry> buildCosts = BuildingData != null ? BuildingData.GetResolvedBuildCosts() : null;
@@ -72,7 +73,7 @@ namespace _01.Code.TownCommands
             return totalCost;
         }
 
-        public override bool CanAfford(TownCommandContext context)
+        public override bool CanAfford(CommandContext context)
         {
             List<TownTileObjectDataSO.Entry> buildCosts = BuildingData != null ? BuildingData.GetResolvedBuildCosts() : null;
             if (buildCosts == null || context == null || context.CostManager == null)
@@ -83,19 +84,22 @@ namespace _01.Code.TownCommands
             return context.CostManager.CanPayAll(buildCosts);
         }
 
-        public override bool CanExecute(TownCommandContext context)
+        public override bool IsLocked(CommandContext context)
         {
-            return context != null && context.World != null && BuildingData != null;
+            return !CanAfford(context);
         }
 
-        
-        public override bool Execute(TownCommandContext context)
+        public override bool CanHandle(CommandContext context)
         {
-            // 타일 오브젝트 설치/교체는 월드가 처리해야 그리드 점유 상태가 한 곳에서 유지됩니다.
-            return CanExecute(context) && context.World.TryBuildTownObjectAtCell(BuildingData, context.CellPosition, context.Obstacle);
+            return context != null && BuildingData != null && context.CanBuildTileObject();
         }
 
-        private CostDefinitionSO ResolveDisplayCostType(TownCommandContext context)
+        public override bool Handle(CommandContext context)
+        {
+            return context.TryBuildTileObject(BuildingData);
+        }
+
+        private CostDefinitionSO ResolveDisplayCostType(CommandContext context)
         {
             List<TownTileObjectDataSO.Entry> buildCosts = BuildingData != null ? BuildingData.GetResolvedBuildCosts() : null;
             if (buildCosts == null || context == null || context.CostManager == null)

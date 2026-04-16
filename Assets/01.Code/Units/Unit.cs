@@ -1,14 +1,11 @@
-﻿using _01.Code.Entities;
+using _01.Code.Entities;
+using UnityEngine;
 
 namespace _01.Code.Units
 {
     public class Unit : PlaceableEntity
     {
-        public int level = 1;
+        [field: SerializeField] public int level { get; set; } = 1;
 
-        protected override int GetDefaultPathTraversalCost()
-        {
-            return 6;
-        }
     }
 }

@@ -21,7 +21,6 @@ namespace _01.Code.Entities
         [field: SerializeField] public Vector2Int GridPosition { get; protected set; }
         [field: SerializeField] public string PlacementSaveKey { get; private set; }
         [field: SerializeField] public string RuntimeSaveId { get; private set; }
-        [SerializeField] [Min(0)] private int pathTraversalCostOverride;
 
         protected GridManager GridManager { get; private set; }
         protected LogManager LogManager { get; private set; }
@@ -34,15 +33,7 @@ namespace _01.Code.Entities
         }
         public int RestoreOrder { get; }
 
-        public int PathTraversalCost
-        {
-            get
-            {
-                return pathTraversalCostOverride > 0
-                    ? pathTraversalCostOverride
-                    : GetDefaultPathTraversalCost();
-            }
-        }
+        [field: SerializeField] public int PathTraversalCost { get; private set; } = 1;
 
         public void BindSceneServices(GridManager gridManager, LogManager logManager)
         {
@@ -166,11 +157,6 @@ namespace _01.Code.Entities
 
             EnemyPassedThrough?.Invoke(enemy);
             OnEnemyPassedThrough(enemy);
-        }
-
-        protected virtual int GetDefaultPathTraversalCost()
-        {
-            return 10;
         }
 
         protected virtual void OnEnemyPassedThrough(Enemy enemy)

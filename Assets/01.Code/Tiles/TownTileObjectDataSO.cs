@@ -1,6 +1,6 @@
 using System.Collections.Generic;
+using _01.Code.Commands;
 using _01.Code.Cost;
-using _01.Code.Buildings;
 using _01.Code.Core;
 using _01.Code.TownPanels;
 using UnityEngine;
@@ -30,6 +30,8 @@ namespace _01.Code.Tiles
         [field: SerializeField] public string Description { get; private set; }
         [field: SerializeField] public Sprite Icon { get; private set; }
         [field: SerializeField] public Color Color { get; private set; } = Color.white;
+        [field: SerializeField] public string CommandTitle { get; private set; } = "COMMAND";
+        [field: SerializeField] public List<BaseCommandSO> Commands { get; private set; } = new();
         [field: SerializeField] public List<Entry> BuildCosts { get; private set; }
         [field: SerializeField] public TownObjectPanelDefinitionSO InteractionPanel { get; private set; }
         [field: SerializeField] public TownTileObjectDataSO NextUpgrade { get; private set; }
@@ -37,36 +39,18 @@ namespace _01.Code.Tiles
         [field: SerializeField] public BuildSceneScope SceneScope { get; private set; } = BuildSceneScope.Auto;
         [field: SerializeField] public BattleTilePlacementKind BattlePlacementKind { get; private set; } = BattleTilePlacementKind.None;
 
-        public TownTileObjectDataSO GetResolvedNextUpgrade()
+        public virtual TownTileObjectDataSO GetResolvedNextUpgrade()
         {
-            if (this is BattleTileBuildingDataSO battleData)
-            {
-                // 배틀 건물은 공통 필드 대신 업그레이드 라인에서 다음 단계를 해석합니다.
-                return battleData.GetNextBattleUpgrade();
-            }
-
             return NextUpgrade;
         }
 
-        public List<Entry> GetResolvedBuildCosts()
+        public virtual List<Entry> GetResolvedBuildCosts()
         {
-            if (this is BattleTileBuildingDataSO battleData)
-            {
-                // 배틀 건물의 설치 비용은 업그레이드 라인에서 가져옵니다.
-                return battleData.GetBuildCost();
-            }
-
             return BuildCosts;
         }
 
-        public List<Entry> GetResolvedUpgradeCosts()
+        public virtual List<Entry> GetResolvedUpgradeCosts()
         {
-            if (this is BattleTileBuildingDataSO battleData)
-            {
-                // 배틀 건물의 업그레이드 비용은 현재 라인 단계에서 가져옵니다.
-                return battleData.GetUpgradeCost();
-            }
-
             return UpgradeCosts;
         }
     }

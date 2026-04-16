@@ -4,9 +4,5 @@ namespace _01.Code.Buildings
 {
     public class Obstacle : PlaceableEntity
     {
-        protected override int GetDefaultPathTraversalCost()
-        {
-            return 20;
-        }
     }
 }

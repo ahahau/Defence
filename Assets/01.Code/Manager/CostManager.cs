@@ -111,6 +111,11 @@ namespace _01.Code.Manager
                     return false;
                 }
 
+                if (entry.Amount <= 0)
+                {
+                    continue;
+                }
+
                 CostDefinitionSO resolvedType = entry.ResolveType();
                 if (resolvedType == null || !CanPay(resolvedType, entry.Amount))
                 {
@@ -137,6 +142,11 @@ namespace _01.Code.Manager
             {
                 TownTileObjectDataSO.Entry entry = costs[i];
                 if (entry == null)
+                {
+                    continue;
+                }
+
+                if (entry.Amount <= 0)
                 {
                     continue;
                 }
