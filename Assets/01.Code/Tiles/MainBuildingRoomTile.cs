@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using _01.Code.Commands;
 using _01.Code.UI;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace _01.Code.Tiles
 {
@@ -44,6 +45,20 @@ namespace _01.Code.Tiles
         private void OnMouseDown()
         {
             if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            {
+                return;
+            }
+
+            Vector3 mouseWorldPosition = Camera.main != null
+                ? Camera.main.ScreenToWorldPoint(Input.mousePosition)
+                : Input.mousePosition;
+            Collider2D hitCollider = Physics2D.OverlapPoint(mouseWorldPosition);
+            if (hitCollider != null && hitCollider.GetComponentInParent<TownTileObject>() != null)
             {
                 return;
             }

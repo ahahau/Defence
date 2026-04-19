@@ -21,4 +21,8 @@ MonoBehaviour:
       <Type>k__BackingField: {fileID: 0}
       <Amount>k__BackingField: 0
   - <BuildingData>k__BackingField: {fileID: 11400000, guid: a9f12afd598b4f0ca18b163c690528ea, type: 2}
-    <UpgradeCosts>k__BackingField: []
+    <UpgradeCosts>k__BackingField:
+    - <UseDefaultCost>k__BackingField: 0
+      <DefaultType>k__BackingField: {fileID: 0}
+      <Type>k__BackingField: {fileID: 0}
+      <Amount>k__BackingField: 0

@@ -15,9 +15,13 @@ namespace _01.Code.UI
     [ExecuteAlways]
     public class TownInteriorScreenUI : MonoBehaviour, ICommandTooltipOwner
     {
+        private const string UnitTreeSectionPrefabPath = "Prefabs/UI/TownUnitTreeSection";
+
         [SerializeField] private BuildManager buildManager;
         [SerializeField] private RectTransform buildPanelRoot;
         [SerializeField] private RectTransform detailPanelRoot;
+        [SerializeField] private RectTransform detailHeaderRoot;
+        [SerializeField] private RectTransform detailBodyPlateRoot;
         [SerializeField] private Button buildCloseButton;
         [SerializeField] private Button detailCloseButton;
         [SerializeField] private TextMeshProUGUI panelTitleText;
@@ -25,6 +29,7 @@ namespace _01.Code.UI
         [SerializeField] private TextMeshProUGUI detailSectionTitleText;
         [SerializeField] private TextMeshProUGUI detailSectionBodyText;
         [SerializeField] private RectTransform detailBodyLayoutRoot;
+        [SerializeField] private TownUnitTreeSectionUI unitTreeSectionView;
         [SerializeField] private RectTransform tooltipRoot;
         [SerializeField] private TextMeshProUGUI tooltipTitleText;
         [SerializeField] private TextMeshProUGUI tooltipDescriptionText;
@@ -39,13 +44,16 @@ namespace _01.Code.UI
 
         private readonly List<TownCommandButtonUI> _actionSlots = new();
         private readonly List<UIPointerHoverTracker> _hoverTrackers = new();
+        private readonly List<BaseCommandSO> _lastRenderedCommands = new();
 
         private GameEventChannelSO _uiEventChannel;
         private CommandContext _currentCommandContext;
         private TownCommandTooltipUI _commandTooltip;
+        private TownUnitTreeSectionUI _runtimeUnitTreeSectionView;
         private bool _isSkillTreeVisible;
         private int _consumeWorldClickFrame = -1;
         private Coroutine _pendingDetailCloseCoroutine;
+        private string _lastCommandTitle = string.Empty;
 
         private void Awake()
         {
@@ -75,14 +83,24 @@ namespace _01.Code.UI
             ForceResolveUiReferences();
 
             _currentCommandContext = context;
+            _lastCommandTitle = title ?? string.Empty;
+            _lastRenderedCommands.Clear();
+            if (commands != null)
+            {
+                _lastRenderedCommands.AddRange(commands);
+            }
+
             ConsumeCurrentClickFrame();
+            CancelPendingDetailClose();
+            HideSkillTreeNodeTooltip();
+            unitTreeSectionView?.Hide();
+            ApplyUnitTreeLayout(false);
+            SetDetailPanelVisible(false);
             if (panelTitleText != null)
             {
                 panelTitleText.text = title;
             }
 
-            Debug.Log(
-                $"TownInteriorScreenUI.ShowCommands obj={name}, title={title}, commandCount={(commands != null ? commands.Count : -1)}, buildPanelRootNull={buildPanelRoot == null}");
             SetBuildPanelVisible(true);
             RenderCommands(commands);
             HideTooltip();
@@ -91,12 +109,17 @@ namespace _01.Code.UI
         public void ShowObjectSectionWindow(TownTileObjectDataSO data, TownObjectPanelSectionSO section)
         {
             Initialize();
+            ForceResolveUiReferences();
 
             if (data == null || section == null || data.InteractionPanel == null)
             {
                 HideObjectDetailsExternally();
                 return;
             }
+
+            CancelPendingDetailClose();
+            HideTooltip();
+            SetBuildPanelVisible(false);
 
             if (detailPanelTitleText != null)
             {
@@ -121,6 +144,8 @@ namespace _01.Code.UI
         {
             ConsumeCurrentClickFrame();
             _currentCommandContext = null;
+            _lastCommandTitle = string.Empty;
+            _lastRenderedCommands.Clear();
             HideTooltip();
             SetBuildPanelVisible(false);
 
@@ -136,6 +161,8 @@ namespace _01.Code.UI
             CancelPendingDetailClose();
             HideTooltip();
             HideSkillTreeNodeTooltip();
+            GetResolvedUnitTreeSectionView()?.Hide();
+            ApplyUnitTreeLayout(false);
             SetDetailPanelVisible(false);
             _isSkillTreeVisible = false;
 
@@ -157,30 +184,22 @@ namespace _01.Code.UI
 
         public void ShowSkillTreeNodeTooltip(TownSkillTreeNodeEntry node)
         {
-            if (skillTreeTooltipRoot == null || node == null)
+            if (node == null)
             {
                 return;
             }
 
-            if (skillTreeTooltipTitleText != null)
+            ShowSkillTreeTooltip(node.NodeName, node.Requirement, node.EffectDescription);
+        }
+
+        public void ShowSkillTreeNodeTooltip(TownUnitTreeNodeEntry node)
+        {
+            if (node == null)
             {
-                skillTreeTooltipTitleText.text = node.NodeName;
+                return;
             }
 
-            if (skillTreeTooltipRequirementText != null)
-            {
-                skillTreeTooltipRequirementText.text = string.IsNullOrWhiteSpace(node.Requirement)
-                    ? string.Empty
-                    : $"Requirement: {node.Requirement}";
-                skillTreeTooltipRequirementText.gameObject.SetActive(!string.IsNullOrWhiteSpace(node.Requirement));
-            }
-
-            if (skillTreeTooltipDescriptionText != null)
-            {
-                skillTreeTooltipDescriptionText.text = node.EffectDescription;
-            }
-
-            skillTreeTooltipRoot.gameObject.SetActive(true);
+            ShowSkillTreeTooltip(node.GetDisplayName(), node.Requirement, node.GetDescription());
         }
 
         public void HideSkillTreeNodeTooltip()
@@ -227,6 +246,11 @@ namespace _01.Code.UI
             }
 
             return false;
+        }
+
+        public bool HasVisiblePanel()
+        {
+            return IsAnyPanelVisible();
         }
 
         private void Initialize()
@@ -284,6 +308,24 @@ namespace _01.Code.UI
                 }
             }
 
+            if (detailHeaderRoot == null && detailPanelRoot != null)
+            {
+                Transform detailHeaderTransform = detailPanelRoot.Find("DetailHeaderPlate");
+                if (detailHeaderTransform != null)
+                {
+                    detailHeaderRoot = detailHeaderTransform as RectTransform;
+                }
+            }
+
+            if (detailBodyPlateRoot == null && detailPanelRoot != null)
+            {
+                Transform detailBodyPlateTransform = detailPanelRoot.Find("DetailBodyPlate");
+                if (detailBodyPlateTransform != null)
+                {
+                    detailBodyPlateRoot = detailBodyPlateTransform as RectTransform;
+                }
+            }
+
             if (detailBodyLayoutRoot == null && detailPanelRoot != null)
             {
                 Transform bodyLayoutTransform = detailPanelRoot.Find("DetailBodyPlate/DetailBodyLayout");
@@ -291,6 +333,11 @@ namespace _01.Code.UI
                 {
                     detailBodyLayoutRoot = bodyLayoutTransform as RectTransform;
                 }
+            }
+
+            if (unitTreeSectionView == null && detailBodyLayoutRoot != null)
+            {
+                unitTreeSectionView = detailBodyLayoutRoot.GetComponentInChildren<TownUnitTreeSectionUI>(true);
             }
 
             if (GameManager.Instance != null)
@@ -308,6 +355,32 @@ namespace _01.Code.UI
             detailPanelRoot = FindRectByName("TownObjectDetailsPanel");
             tooltipRoot = FindRectByName("Tooltip");
             skillTreeTooltipRoot = FindRectByName("SkillTreeTooltip");
+            if (detailHeaderRoot == null && detailPanelRoot != null)
+            {
+                Transform detailHeaderTransform = detailPanelRoot.Find("DetailHeaderPlate");
+                if (detailHeaderTransform != null)
+                {
+                    detailHeaderRoot = detailHeaderTransform as RectTransform;
+                }
+            }
+
+            if (detailBodyPlateRoot == null && detailPanelRoot != null)
+            {
+                Transform detailBodyPlateTransform = detailPanelRoot.Find("DetailBodyPlate");
+                if (detailBodyPlateTransform != null)
+                {
+                    detailBodyPlateRoot = detailBodyPlateTransform as RectTransform;
+                }
+            }
+
+            if (detailBodyLayoutRoot == null && detailPanelRoot != null)
+            {
+                Transform bodyLayoutTransform = detailPanelRoot.Find("DetailBodyPlate/DetailBodyLayout");
+                if (bodyLayoutTransform != null)
+                {
+                    detailBodyLayoutRoot = bodyLayoutTransform as RectTransform;
+                }
+            }
 
             panelTitleText ??= FindTextByName("PanelTitle");
             detailPanelTitleText ??= FindTextByName("DetailPanelTitle");
@@ -319,6 +392,11 @@ namespace _01.Code.UI
 
             EnsureTooltipController();
             CacheActionSlots();
+
+            if (unitTreeSectionView == null && detailBodyLayoutRoot != null)
+            {
+                unitTreeSectionView = detailBodyLayoutRoot.GetComponentInChildren<TownUnitTreeSectionUI>(true);
+            }
         }
 
         private void ConfigureCloseButtons()
@@ -339,10 +417,12 @@ namespace _01.Code.UI
         private void CacheActionSlots()
         {
             _actionSlots.Clear();
+            actionSlotViews.RemoveAll(slot => slot == null);
 
-            if (actionSlotViews.Count == 0 && buildPanelRoot != null)
+            if (buildPanelRoot != null)
             {
                 TownCommandButtonUI[] slots = buildPanelRoot.GetComponentsInChildren<TownCommandButtonUI>(true);
+                actionSlotViews.Clear();
                 for (int i = 0; i < slots.Length; i++)
                 {
                     if (slots[i] != null)
@@ -456,11 +536,33 @@ namespace _01.Code.UI
 
         private void RenderSectionVisual(TownObjectPanelSectionSO section)
         {
-            _isSkillTreeVisible = section is TownSkillTreePanelSectionSO;
+            _isSkillTreeVisible = section is TownSkillTreePanelSectionSO || section is TownUnitTreePanelSectionSO;
             if (detailBodyLayoutRoot != null)
             {
-                detailBodyLayoutRoot.gameObject.SetActive(true);
+                detailBodyLayoutRoot.gameObject.SetActive(section is not TownUnitTreePanelSectionSO);
             }
+
+            if (section is TownUnitTreePanelSectionSO unitTreeSection)
+            {
+                if (detailSectionTitleText != null)
+                {
+                    detailSectionTitleText.gameObject.SetActive(false);
+                    detailSectionTitleText.text = unitTreeSection.GetSectionTitle();
+                }
+
+                if (detailSectionBodyText != null)
+                {
+                    detailSectionBodyText.gameObject.SetActive(false);
+                    detailSectionBodyText.text = unitTreeSection.GetBodyText();
+                }
+
+                ApplyUnitTreeLayout(true);
+                EnsureUnitTreeSectionView();
+                GetResolvedUnitTreeSectionView()?.Render(unitTreeSection, this);
+                return;
+            }
+
+            ApplyUnitTreeLayout(false);
 
             if (detailSectionTitleText != null)
             {
@@ -470,6 +572,135 @@ namespace _01.Code.UI
             if (detailSectionBodyText != null)
             {
                 detailSectionBodyText.gameObject.SetActive(true);
+            }
+
+            GetResolvedUnitTreeSectionView()?.Hide();
+        }
+
+        private void ShowSkillTreeTooltip(string title, string requirement, string description)
+        {
+            if (skillTreeTooltipRoot == null)
+            {
+                return;
+            }
+
+            if (skillTreeTooltipTitleText != null)
+            {
+                skillTreeTooltipTitleText.text = title;
+            }
+
+            if (skillTreeTooltipRequirementText != null)
+            {
+                skillTreeTooltipRequirementText.text = string.IsNullOrWhiteSpace(requirement)
+                    ? string.Empty
+                    : $"Requirement: {requirement}";
+                skillTreeTooltipRequirementText.gameObject.SetActive(!string.IsNullOrWhiteSpace(requirement));
+            }
+
+            if (skillTreeTooltipDescriptionText != null)
+            {
+                skillTreeTooltipDescriptionText.text = description;
+            }
+
+            skillTreeTooltipRoot.gameObject.SetActive(true);
+        }
+
+        private void EnsureUnitTreeSectionView()
+        {
+            if (detailBodyPlateRoot == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                if (_runtimeUnitTreeSectionView != null)
+                {
+                    return;
+                }
+
+                TownUnitTreeSectionUI runtimePrefab = Resources.Load<TownUnitTreeSectionUI>(UnitTreeSectionPrefabPath);
+                if (runtimePrefab == null)
+                {
+                    Debug.LogError($"TownInteriorScreenUI missing prefab at Resources/{UnitTreeSectionPrefabPath}.prefab");
+                    return;
+                }
+
+                _runtimeUnitTreeSectionView = Instantiate(runtimePrefab, detailBodyPlateRoot);
+                RectTransform runtimeTreeRect = _runtimeUnitTreeSectionView.transform as RectTransform;
+                if (runtimeTreeRect != null)
+                {
+                    runtimeTreeRect.anchorMin = new Vector2(0f, 0f);
+                    runtimeTreeRect.anchorMax = new Vector2(1f, 1f);
+                    runtimeTreeRect.offsetMin = Vector2.zero;
+                    runtimeTreeRect.offsetMax = Vector2.zero;
+                }
+
+                LayoutElement runtimeLayoutElement = _runtimeUnitTreeSectionView.GetComponent<LayoutElement>();
+                if (runtimeLayoutElement == null)
+                {
+                    runtimeLayoutElement = _runtimeUnitTreeSectionView.gameObject.AddComponent<LayoutElement>();
+                }
+
+                runtimeLayoutElement.ignoreLayout = true;
+                _runtimeUnitTreeSectionView.gameObject.SetActive(false);
+
+                if (unitTreeSectionView != null)
+                {
+                    unitTreeSectionView.gameObject.SetActive(false);
+                }
+
+                return;
+            }
+
+            if (unitTreeSectionView != null)
+            {
+                return;
+            }
+
+            TownUnitTreeSectionUI prefab = Resources.Load<TownUnitTreeSectionUI>(UnitTreeSectionPrefabPath);
+            if (prefab == null)
+            {
+                Debug.LogError($"TownInteriorScreenUI missing prefab at Resources/{UnitTreeSectionPrefabPath}.prefab");
+                return;
+            }
+
+            unitTreeSectionView = Instantiate(prefab, detailBodyPlateRoot);
+            RectTransform treeRect = unitTreeSectionView.transform as RectTransform;
+            if (treeRect != null)
+            {
+                treeRect.anchorMin = new Vector2(0f, 0f);
+                treeRect.anchorMax = new Vector2(1f, 1f);
+                treeRect.offsetMin = Vector2.zero;
+                treeRect.offsetMax = Vector2.zero;
+            }
+
+            LayoutElement layoutElement = unitTreeSectionView.GetComponent<LayoutElement>();
+            if (layoutElement == null)
+            {
+                layoutElement = unitTreeSectionView.gameObject.AddComponent<LayoutElement>();
+            }
+
+            layoutElement.ignoreLayout = true;
+
+            unitTreeSectionView.gameObject.SetActive(false);
+        }
+
+        private TownUnitTreeSectionUI GetResolvedUnitTreeSectionView()
+        {
+            return Application.isPlaying ? _runtimeUnitTreeSectionView : unitTreeSectionView;
+        }
+
+        private void ApplyUnitTreeLayout(bool isUnitTreeVisible)
+        {
+            if (detailSectionTitleText != null)
+            {
+                detailSectionTitleText.gameObject.SetActive(!isUnitTreeVisible);
+            }
+
+            if (detailSectionBodyText != null)
+            {
+                detailSectionBodyText.gameObject.SetActive(!isUnitTreeVisible);
             }
         }
 
@@ -537,8 +768,7 @@ namespace _01.Code.UI
                 return null;
             }
 
-            RectTransform[] rects =
-                FindObjectsByType<RectTransform>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            RectTransform[] rects = FindObjectsByType<RectTransform>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             for (int i = 0; i < rects.Length; i++)
             {
                 RectTransform candidate = rects[i];
@@ -581,11 +811,10 @@ namespace _01.Code.UI
             }
         }
 
-
         private void RequestCloseObjectWindows()
         {
             ConsumeCurrentClickFrame();
-            
+
             if (!Application.isPlaying)
             {
                 HideBuildPanelExternally();
@@ -601,6 +830,18 @@ namespace _01.Code.UI
         {
             yield return null;
             _pendingDetailCloseCoroutine = null;
+
+            if (_isSkillTreeVisible && _currentCommandContext != null && _lastRenderedCommands.Count > 0)
+            {
+                HideSkillTreeNodeTooltip();
+                GetResolvedUnitTreeSectionView()?.Hide();
+                ApplyUnitTreeLayout(false);
+                SetDetailPanelVisible(false);
+                _isSkillTreeVisible = false;
+                ShowCommands(_lastCommandTitle, _lastRenderedCommands, _currentCommandContext);
+                yield break;
+            }
+
             HideBuildPanelExternally();
             HideObjectDetailsExternally();
         }

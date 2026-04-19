@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using _01.Code.Commands;
-using _01.Code.Commands.Battle;
 using _01.Code.Commands.Town;
 using _01.Code.Core;
 using _01.Code.Events;
@@ -10,7 +9,6 @@ using _01.Code.TownPanels;
 using _01.Code.UI;
 using _01.Code.Units;
 using _01.Code.Buildings;
-using _01.Code.Cost;
 using UnityEngine;
 
 namespace _01.Code.Tiles
@@ -98,6 +96,7 @@ namespace _01.Code.Tiles
         private int _lastHandledClickFrame = -1;
         private bool _hasProcessedStartupPlacements;
         private UnitPanelUI _unitPanelUi;
+        private MainBuildingRoomCommandPresenter _commandPresenter;
 
         private void Awake()
         {
@@ -183,6 +182,7 @@ namespace _01.Code.Tiles
             _logManager ??= GameManager.Instance.GetManager<LogManager>();
             _uiEventChannel ??= _buildManager != null ? _buildManager.UiEventChannel : null;
             _unitPanelUi ??= FindFirstObjectByType<UnitPanelUI>(FindObjectsInactive.Include);
+            _commandPresenter ??= new MainBuildingRoomCommandPresenter(this);
             if (GridManager != null && GridManager.Tilemap == null)
             {
                 GridManager.Initialize(GameManager.Instance);
@@ -202,6 +202,29 @@ namespace _01.Code.Tiles
             {
                 _worldCamera = FindFirstObjectByType<Camera>();
             }
+        }
+
+        private void TryApplyStartupPlacements()
+        {
+            if (!Application.isPlaying || GridManager == null)
+            {
+                return;
+            }
+
+            SpawnMissingDefaultTileObjects();
+
+            if (_saveManager != null && _saveManager.HasSavedPlacements())
+            {
+                _logManager?.Building("Town startup obstacle placements skipped: saved placements detected. Required default tile objects were still ensured.");
+                _hasProcessedStartupPlacements = true;
+                RefreshTiles();
+                return;
+            }
+
+            _logManager?.Building("Town startup placements: no saved placements detected, filling default obstacles.");
+            SpawnDefaultObstacles();
+            _hasProcessedStartupPlacements = true;
+            RefreshTiles();
         }
 
         private void SpawnMissingDefaultTileObjects()
@@ -252,29 +275,6 @@ namespace _01.Code.Tiles
                 TownObstacleDataSO obstacleData = obstacleVariants[i % obstacleVariants.Count];
                 SpawnTileObject(obstacleData, cell);
             }
-        }
-
-        private void TryApplyStartupPlacements()
-        {
-            if (!Application.isPlaying || GridManager == null)
-            {
-                return;
-            }
-
-            SpawnMissingDefaultTileObjects();
-
-            if (_saveManager != null && _saveManager.HasSavedPlacements())
-            {
-                _logManager?.Building("Town startup obstacle placements skipped: saved placements detected. Required default tile objects were still ensured.");
-                _hasProcessedStartupPlacements = true;
-                RefreshTiles();
-                return;
-            }
-
-            _logManager?.Building("Town startup placements: no saved placements detected, filling default obstacles.");
-            SpawnDefaultObstacles();
-            _hasProcessedStartupPlacements = true;
-            RefreshTiles();
         }
 
         private void EnsureBoard()
@@ -348,6 +348,11 @@ namespace _01.Code.Tiles
             if (!Application.isPlaying || !_tiles.ContainsKey(cell))
             {
                 Debug.Log($"TownWorld HandleTileClicked ignored. isPlaying={Application.isPlaying}, hasCell={_tiles.ContainsKey(cell)}, cell={cell}");
+                return;
+            }
+
+            if (TownInteriorScreenUI != null && TownInteriorScreenUI.HasVisiblePanel())
+            {
                 return;
             }
 
@@ -501,13 +506,39 @@ namespace _01.Code.Tiles
                 return false;
             }
 
+            if (_tiles.Count == 0)
+            {
+                EnsureBoard();
+                RefreshTiles();
+            }
+
             Vector2Int cell = tileObject.GridPosition;
-            if (!_tiles.ContainsKey(cell))
+            if (!_tiles.ContainsKey(cell) && (GridManager == null || !GridManager.ContainsCell(cell)))
             {
                 return false;
             }
 
-            HandleTileClicked(cell);
+            _selectedCell = cell;
+            _hasSelectedCell = true;
+            _unitPanelUi?.HidePanel();
+            TownInteriorScreenUI?.HideObjectDetailsExternally();
+
+            if (tileObject is TownObstacle obstacle)
+            {
+                ShowObstacleCommands(obstacle);
+                RefreshTiles();
+                return true;
+            }
+
+            if (tileObject.Data != null && HasObjectCommands(tileObject))
+            {
+                ShowObjectCommands(tileObject);
+                RefreshTiles();
+                return true;
+            }
+
+            ShowSelectedTileCommands();
+            RefreshTiles();
             return true;
         }
 
@@ -543,12 +574,25 @@ namespace _01.Code.Tiles
                 return;
             }
 
+            if (evt.Command is TownOpenPanelSectionCommandSO)
+            {
+                TownInteriorScreenUI?.HideBuildPanelExternally();
+                return;
+            }
+
             if (_hasSelectedCell)
             {
                 TownObstacle obstacle = GetObstacle(_selectedCell);
                 if (obstacle != null)
                 {
                     ShowObstacleCommands(obstacle);
+                    return;
+                }
+
+                TownTileObject tileObject = GetTileObject(_selectedCell);
+                if (tileObject != null && tileObject.Data != null && HasObjectCommands(tileObject))
+                {
+                    ShowObjectCommands(tileObject);
                     return;
                 }
 
@@ -578,17 +622,7 @@ namespace _01.Code.Tiles
 
         public void ShowTileCommands(MainBuildingRoomTile tile)
         {
-            if (TownInteriorScreenUI == null || tile == null)
-            {
-                Debug.Log($"TownWorld ShowTileCommands aborted. tileNull={tile == null}, uiNull={TownInteriorScreenUI == null}");
-                return;
-            }
-
-            string title = string.IsNullOrWhiteSpace(tile.CommandTitle)
-                ? "COMMAND"
-                : tile.CommandTitle;
-            CommandContext context = new CommandContext(this, _buildManager, _costManager, tile.Cell, null);
-            TownInteriorScreenUI.ShowCommands(title, tile.Commands, context);
+            _commandPresenter?.ShowTileCommands(tile, _buildManager, _costManager, TownInteriorScreenUI);
         }
 
         private void ShowUnitPanel(Vector2Int cell)
@@ -605,35 +639,12 @@ namespace _01.Code.Tiles
 
         private void ShowObstacleCommands(TownObstacle obstacle)
         {
-            if (TownInteriorScreenUI == null || obstacle == null)
-            {
-                return;
-            }
-
-            string title = obstacle.Data != null && !string.IsNullOrWhiteSpace(obstacle.Data.CommandTitle)
-                ? obstacle.Data.CommandTitle
-                : obstacle.Data != null && !string.IsNullOrWhiteSpace(obstacle.Data.DisplayName)
-                    ? obstacle.Data.DisplayName.ToUpperInvariant()
-                    : "OBSTACLE";
-            CommandContext context = new CommandContext(this, _buildManager, _costManager, obstacle.GridPosition, obstacle);
-            TownInteriorScreenUI.ShowCommands(title, obstacle.Data.Commands, context);
+            _commandPresenter?.ShowObstacleCommands(obstacle, _buildManager, _costManager, TownInteriorScreenUI);
         }
 
         private void ShowObjectCommands(TownTileObject tileObject)
         {
-            if (TownInteriorScreenUI == null || tileObject == null || tileObject.Data == null)
-            {
-                return;
-            }
-
-            string title = !string.IsNullOrWhiteSpace(tileObject.Data.CommandTitle)
-                ? tileObject.Data.CommandTitle
-                : !string.IsNullOrWhiteSpace(tileObject.Data.DisplayName)
-                    ? tileObject.Data.DisplayName.ToUpperInvariant()
-                : "OBJECT";
-            CommandContext context = new CommandContext(this, _buildManager, _costManager, _selectedCell, null);
-            TownInteriorScreenUI.HideObjectDetailsExternally();
-            TownInteriorScreenUI.ShowCommands(title, tileObject.Data.Commands, context);
+            _commandPresenter?.ShowObjectCommands(tileObject, _selectedCell, _buildManager, _costManager, TownInteriorScreenUI);
         }
 
         private bool HasObjectCommands(TownTileObject tileObject)

@@ -351,7 +351,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_Sprite: {fileID: 21300000, guid: 4d88af1ca708d274885248659c5d3984, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -2051,6 +2051,8 @@ MonoBehaviour:
   buildManager: {fileID: 0}
   buildPanelRoot: {fileID: 1900000103}
   detailPanelRoot: {fileID: 438793495}
+  detailHeaderRoot: {fileID: 565762628}
+  detailBodyPlateRoot: {fileID: 859663016}
   buildCloseButton: {fileID: 1900000203}
   detailCloseButton: {fileID: 1079866227}
   panelTitleText: {fileID: 1900000061}
@@ -2058,6 +2060,9 @@ MonoBehaviour:
   detailSectionTitleText: {fileID: 2136533143}
   detailSectionBodyText: {fileID: 496281927}
   detailBodyLayoutRoot: {fileID: 669572494}
+  unitTreeSectionView: {fileID: 0}
+  unitTreePanelOffsetMin: {x: 32, y: 32}
+  unitTreePanelOffsetMax: {x: -32, y: -32}
   tooltipRoot: {fileID: 1900000096}
   tooltipTitleText: {fileID: 1900000007}
   tooltipDescriptionText: {fileID: 1900000002}
@@ -3289,7 +3294,7 @@ MonoBehaviour:
   <GridPosition>k__BackingField: {x: 0, y: 0}
   <PlacementSaveKey>k__BackingField: 
   <RuntimeSaveId>k__BackingField: 
-  pathTraversalCostOverride: 0
+  <PathTraversalCost>k__BackingField: 1
   <level>k__BackingField: 1
 --- !u!114 &1176901305
 MonoBehaviour:

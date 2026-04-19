@@ -568,19 +568,6 @@ namespace _01.Code.Manager
                     catalog.Add(world.DefaultObstacleData);
                 }
 
-                if (world.DefaultObstacleVariants != null)
-                {
-                    for (int j = 0; j < world.DefaultObstacleVariants.Count; j++)
-                    {
-                        TownObstacleDataSO obstacleVariant = world.DefaultObstacleVariants[j];
-                        if (obstacleVariant == null || catalog.Contains(obstacleVariant))
-                        {
-                            continue;
-                        }
-
-                        catalog.Add(obstacleVariant);
-                    }
-                }
 
                 if (world.DefaultTileObjects == null)
                 {

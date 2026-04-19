@@ -57,7 +57,7 @@ MonoBehaviour:
   <GridPosition>k__BackingField: {x: 0, y: 0}
   <PlacementSaveKey>k__BackingField: 
   <RuntimeSaveId>k__BackingField: 
-  <Data>k__BackingField: {fileID: 0}
+  <Data>k__BackingField: {fileID: 11400000, guid: 46d774750d4f454c9e868bf78c90fd65, type: 2}
 --- !u!61 &6100000
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -102,7 +102,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 5.0625, y: 4.875}
   m_EdgeRadius: 0
 --- !u!1 &3128003642691720045
 GameObject:

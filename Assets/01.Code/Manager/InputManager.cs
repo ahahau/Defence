@@ -40,6 +40,7 @@ namespace _01.Code.Manager
         private Vector2Int _dragOriginCell;
         private Camera _worldCamera;
         private MainBuildingRoomWorld _townInteriorWorld;
+        private TownInteriorScreenUI _townInteriorScreenUi;
         private BattleCommandPanelController _battleCommandPanel;
 
         public void Initialize(IManagerContainer managerContainer)
@@ -222,12 +223,6 @@ namespace _01.Code.Manager
 
             Vector3 targetWorldPosition = InputData.GetWorldPosition2D();
 
-            if (TryHandleTownInteriorGroundClick(_pointerDownWorldPosition))
-            {
-                ResetPointerState();
-                return;
-            }
-
             if (_isDraggingUnit && _draggedUnit != null)
             {
                 if (!CanDropDraggedUnitAt(targetWorldPosition))
@@ -256,13 +251,30 @@ namespace _01.Code.Manager
                 return;
             }
 
-            if (_pointerDownCollider == null)
+            ResolveTownInteriorWorld();
+            if (_townInteriorScreenUi != null &&
+                _townInteriorScreenUi.HasVisiblePanel() &&
+                !IsPointerOverUi())
+            {
+                ResetPointerState();
+                return;
+            }
+
+            if (_pointerDownCollider != null)
+            {
+                if (!_pointerDownCollider.CompareTag("EnemySpawner"))
+                {
+                    ClickObject(_pointerDownCollider.gameObject, _pointerDownWorldPosition);
+                }
+            }
+            else if (TryHandleTownInteriorGroundClick(_pointerDownWorldPosition))
+            {
+                ResetPointerState();
+                return;
+            }
+            else
             {
                 ClickGround(_pointerDownWorldPosition);
-            }
-            else if (!_pointerDownCollider.CompareTag("EnemySpawner"))
-            {
-                ClickObject(_pointerDownCollider.gameObject, _pointerDownWorldPosition);
             }
 
             ResetPointerState();
@@ -424,6 +436,7 @@ namespace _01.Code.Manager
         private void ResolveTownInteriorWorld()
         {
             _townInteriorWorld = FindFirstObjectByType<MainBuildingRoomWorld>();
+            _townInteriorScreenUi ??= FindFirstObjectByType<TownInteriorScreenUI>(FindObjectsInactive.Include);
         }
 
         private void ResolveBattleCommandPanel(IManagerContainer managerContainer)
