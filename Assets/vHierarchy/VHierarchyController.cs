@@ -19,12 +19,6 @@ using static VHierarchy.VHierarchy;
 using static VHierarchy.VHierarchyData;
 using static VHierarchy.VHierarchyCache;
 
-#if UNITY_6000_2_OR_NEWER
-using TreeViewItem = UnityEditor.IMGUI.Controls.TreeViewItem<int>;
-using TreeViewState = UnityEditor.IMGUI.Controls.TreeViewState<int>;
-#endif
-
-
 
 
 namespace VHierarchy
@@ -169,11 +163,11 @@ namespace VHierarchy
 
 
 
-            var treeViewControllerState = treeViewController?.GetPropertyValue<TreeViewState>("state");
+            var treeViewControllerState = treeViewController?.GetPropertyValue("state");
 
-            currentScrollPos = treeViewControllerState?.scrollPos.y ?? 0;
+            currentScrollPos = ReadScrollPos(treeViewControllerState);
 
-            expandedIds = treeViewControllerState?.expandedIDs ?? new List<int>();
+            expandedIds = ReadExpandedIds(treeViewControllerState);
 
 
 
@@ -192,6 +186,58 @@ namespace VHierarchy
         public float currentScrollPos;
 
         public List<int> expandedIds = new();
+
+        private float ReadScrollPos(object treeViewState)
+        {
+            if (treeViewState == null)
+                return 0;
+
+            return treeViewState.GetMemberValue<Vector2>("scrollPos").y;
+        }
+
+        private List<int> ReadExpandedIds(object treeViewState)
+        {
+            if (treeViewState == null)
+                return new List<int>();
+
+            if (treeViewState.GetMemberValue("expandedIDs") is List<int> ids)
+                return ids;
+
+            var convertedIds = new List<int>();
+            foreach (var id in (IEnumerable)treeViewState.GetMemberValue("expandedIDs"))
+                if (TryConvertTreeViewId(id, out var convertedId))
+                    convertedIds.Add(convertedId);
+
+            return convertedIds;
+        }
+
+        private bool TryConvertTreeViewId(object id, out int convertedId)
+        {
+            if (id is int intId)
+            {
+                convertedId = intId;
+                return true;
+            }
+
+            var getRawData = id.GetType().GetMethod("GetRawData", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (getRawData != null)
+            {
+                var rawData = getRawData.Invoke(id, null);
+                try
+                {
+                    convertedId = System.Convert.ToInt32(rawData);
+                    return true;
+                }
+                catch (System.OverflowException)
+                {
+                    convertedId = 0;
+                    return false;
+                }
+            }
+
+            convertedId = 0;
+            return false;
+        }
 
         public bool treeViewAnimatesScroll;
         public bool treeViewAnimatesExpansion;
@@ -416,7 +462,7 @@ namespace VHierarchy
 
         public void SetScrollPos(float targetScrollPos)
         {
-            window.GetMemberValue("m_SceneHierarchy").GetMemberValue<UnityEditor.IMGUI.Controls.TreeViewState>("m_TreeViewState").scrollPos = Vector2.up * targetScrollPos;
+            window.GetMemberValue("m_SceneHierarchy").GetMemberValue("m_TreeViewState").SetMemberValue("scrollPos", Vector2.up * targetScrollPos);
         }
 
 

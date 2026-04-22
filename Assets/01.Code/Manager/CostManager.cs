@@ -1,236 +1,93 @@
-﻿using System;
-using System.Collections.Generic;
 using _01.Code.Core;
-using _01.Code.Cost;
 using _01.Code.Events;
-using _01.Code.Tiles;
 using UnityEngine;
 
 namespace _01.Code.Manager
 {
-    public class CostManager : MonoBehaviour, IManageable
+    public class CostManager : MonoBehaviour
     {
-        private const int DefaultCostMax = 99999;
+        [field: SerializeField]
+        public GameEventChannelSO EventChannel { get; private set; }
 
-        [SerializeField] private GameEventChannelSO costEventChannel;
-        [SerializeField] private CostCatalogSO costCatalog;
-        [SerializeField] private CostDefinitionSO primarySpendCost;
+        [field: SerializeField]
+        public int InitialGold { get; private set; } = 100;
 
-        private readonly Dictionary<CostDefinitionSO, int> _current = new();
-        private readonly Dictionary<CostDefinitionSO, int> _max = new();
-		
-        /// <summary>
-        /// (type, current, max) 형태로 변경 알림
-        /// </summary>
-        public event Action<CostDefinitionSO, int, int> OnCostChanged;
+        public int CurrentGold { get; private set; }
 
-        public CostDefinitionSO PrimarySpendCost
+        private void Awake()
         {
-            get { return primarySpendCost; }
+            CurrentGold = InitialGold;
         }
 
-        public List<CostDefinitionSO> AllCosts
+        private void OnEnable()
         {
-            get { return costCatalog.Costs; }
+            EventChannel.AddListener<BuildCostRequestedEvent>(HandleBuildCostRequested);
+            EventChannel.AddListener<HireUnitCostRequestedEvent>(HandleHireUnitCostRequested);
+            EventChannel.AddListener<SalaryCostRequestedEvent>(HandleSalaryCostRequested);
         }
 
-        /// <summary>
-        /// 이 함수는 비용 채널 구독과 시작 비용 세팅을 담당합니다
-        /// </summary>
-        public void Initialize(IManagerContainer managerContainer)
+        private void Start()
         {
-            costEventChannel.AddListener<TrySpendCostEvent>(HandleTrySpendCostEvent);
-            costEventChannel.AddListener<RefundCostEvent>(HandleRefundCostEvent);
-            costEventChannel.AddListener<PrimarySpendCostQueryEvent>(HandlePrimarySpendCostQueryEvent);
-            costEventChannel.AddListener<CostSnapshotQueryEvent>(HandleCostSnapshotQueryEvent);
-            costEventChannel.AddListener<ApplyNewGameStartingCostsRequestedEvent>(HandleApplyNewGameStartingCostsRequestedEvent);
-
-            InitializeCatalog(costCatalog.Costs);
+            RaiseGoldChanged();
         }
 
-        private void OnDestroy()
+        private void OnDisable()
         {
-            costEventChannel.RemoveListener<TrySpendCostEvent>(HandleTrySpendCostEvent);
-            costEventChannel.RemoveListener<RefundCostEvent>(HandleRefundCostEvent);
-            costEventChannel.RemoveListener<PrimarySpendCostQueryEvent>(HandlePrimarySpendCostQueryEvent);
-            costEventChannel.RemoveListener<CostSnapshotQueryEvent>(HandleCostSnapshotQueryEvent);
-            costEventChannel.RemoveListener<ApplyNewGameStartingCostsRequestedEvent>(HandleApplyNewGameStartingCostsRequestedEvent);
+            EventChannel.RemoveListener<BuildCostRequestedEvent>(HandleBuildCostRequested);
+            EventChannel.RemoveListener<HireUnitCostRequestedEvent>(HandleHireUnitCostRequested);
+            EventChannel.RemoveListener<SalaryCostRequestedEvent>(HandleSalaryCostRequested);
         }
 
-        public int GetCurrent(CostDefinitionSO type) => _current.GetValueOrDefault(type, 0);
-        public int GetMax(CostDefinitionSO type) => _max.GetValueOrDefault(type, 0);
-
-        public void SetMax(CostDefinitionSO type, int max)
+        private void HandleBuildCostRequested(BuildCostRequestedEvent evt)
         {
-            max = Mathf.Max(0, max);
-            _max[type] = max;
-
-            _current[type] = Mathf.Clamp(GetCurrent(type), 0, max);
-            RaiseChanged(type);
-        }
-
-        public void SetCurrent(CostDefinitionSO type, int value)
-        {
-            int m = GetMax(type);
-            _current[type] = Mathf.Clamp(value, 0, m);
-            RaiseChanged(type);
-        }
-
-        public void Add(CostDefinitionSO type, int amount)
-        {
-            if (amount == 0) return;
-            SetCurrent(type, GetCurrent(type) + amount);
-        }
-
-        public bool CanPay(CostDefinitionSO type, int amount)
-        {
-            if (amount <= 0) return true;
-            return GetCurrent(type) >= amount;
-        }
-
-        public bool TryPay(CostDefinitionSO type, int amount)
-        {
-            if (!CanPay(type, amount)) return false;
-            Add(type, -amount);
-            return true;
-        }
-
-        public bool CanPayAll(List<TownTileObjectDataSO.Entry> costs)
-        {
-            if (costs == null)
+            if (evt.GoldAmount <= 0)
             {
-                return true;
-            }
-
-            // 이 리스트 형식은 타운 타일 오브젝트와 배틀 건물 업그레이드 라인이 함께 사용합니다.
-            for (int i = 0; i < costs.Count; i++)
-            {
-                TownTileObjectDataSO.Entry entry = costs[i];
-                if (entry == null)
-                {
-                    return false;
-                }
-
-                if (entry.Amount <= 0)
-                {
-                    continue;
-                }
-
-                CostDefinitionSO resolvedType = entry.ResolveType();
-                if (resolvedType == null || !CanPay(resolvedType, entry.Amount))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        public bool TryPayAll(List<TownTileObjectDataSO.Entry> costs)
-        {
-            if (!CanPayAll(costs))
-            {
-                return false;
-            }
-
-            if (costs == null)
-            {
-                return true;
-            }
-
-            for (int i = 0; i < costs.Count; i++)
-            {
-                TownTileObjectDataSO.Entry entry = costs[i];
-                if (entry == null)
-                {
-                    continue;
-                }
-
-                if (entry.Amount <= 0)
-                {
-                    continue;
-                }
-
-                CostDefinitionSO resolvedType = entry.ResolveType();
-                if (resolvedType == null)
-                {
-                    continue;
-                }
-
-                Add(resolvedType, -entry.Amount);
-            }
-
-            return true;
-        }
-
-        private void RaiseChanged(CostDefinitionSO type)
-        {
-            OnCostChanged?.Invoke(type, GetCurrent(type), GetMax(type));
-            costEventChannel.RaiseEvent(CostEvents.CostChangedEvent.Initializer(type, GetCurrent(type), GetMax(type)));
-        }
-
-        /// <summary>
-        /// 이 함수는 외부에서 비용 사용 요청이 오면 실제 차감을 처리합니다
-        /// </summary>
-        private void HandleTrySpendCostEvent(TrySpendCostEvent evt) => evt.Succeeded = TryPay(evt.Type, evt.Amount);
-
-        /// <summary>
-        /// 이 함수는 외부에서 환불 요청이 오면 현재 비용에 다시 더해줍니다
-        /// </summary>
-        private void HandleRefundCostEvent(RefundCostEvent evt) => Add(evt.Type, evt.Amount);
-
-        private void HandlePrimarySpendCostQueryEvent(PrimarySpendCostQueryEvent evt) => evt.Type = primarySpendCost;
-
-        private void HandleCostSnapshotQueryEvent(CostSnapshotQueryEvent evt)
-        {
-            List<CostSnapshotEntry> entries = new List<CostSnapshotEntry>();
-            for (int i = 0; i < AllCosts.Count; i++)
-            {
-                CostDefinitionSO definition = AllCosts[i];
-                if (definition == null)
-                {
-                    continue;
-                }
-
-                entries.Add(new CostSnapshotEntry().Initialize(
-                    definition,
-                    GetCurrent(definition),
-                    GetMax(definition)));
-            }
-
-            evt.Entries = entries;
-        }
-
-        private void HandleApplyNewGameStartingCostsRequestedEvent(ApplyNewGameStartingCostsRequestedEvent _)
-        {
-            ApplyNewGameStartingCosts();
-        }
-
-        public void ApplyNewGameStartingCosts()
-        {
-            if (primarySpendCost == null)
-            {
+                EventChannel.RaiseEvent(new BuildCostPaidEvent(evt.Node, evt.GoldAmount, CurrentGold));
                 return;
             }
 
-            SetMax(primarySpendCost, DefaultCostMax);
-            SetCurrent(primarySpendCost, 100);
+            if (CurrentGold < evt.GoldAmount)
+            {
+                EventChannel.RaiseEvent(new BuildCostRejectedEvent(evt.Node, evt.GoldAmount, CurrentGold));
+                return;
+            }
+
+            CurrentGold -= evt.GoldAmount;
+            RaiseGoldChanged();
+            EventChannel.RaiseEvent(new BuildCostPaidEvent(evt.Node, evt.GoldAmount, CurrentGold));
         }
 
-        private void InitializeCatalog(List<CostDefinitionSO> definitions)
+        private void HandleHireUnitCostRequested(HireUnitCostRequestedEvent evt)
         {
-            for (int i = 0; i < definitions.Count; i++)
+            if (evt.GoldAmount <= 0)
             {
-                CostDefinitionSO definition = definitions[i];
-                if (definition == null)
-                {
-                    continue;
-                }
-
-                _max[definition] = Mathf.Max(0, definition.InitialMax);
-                _current[definition] = Mathf.Clamp(definition.InitialCurrent, 0, _max[definition]);
-                RaiseChanged(definition);
+                EventChannel.RaiseEvent(new HireUnitCostPaidEvent(evt.Node, evt.Unit, evt.GoldAmount, CurrentGold));
+                return;
             }
+
+            if (CurrentGold < evt.GoldAmount)
+            {
+                EventChannel.RaiseEvent(new HireUnitCostRejectedEvent(evt.Node, evt.Unit, evt.GoldAmount, CurrentGold));
+                return;
+            }
+
+            CurrentGold -= evt.GoldAmount;
+            RaiseGoldChanged();
+            EventChannel.RaiseEvent(new HireUnitCostPaidEvent(evt.Node, evt.Unit, evt.GoldAmount, CurrentGold));
+        }
+
+        private void HandleSalaryCostRequested(SalaryCostRequestedEvent evt)
+        {
+            if (evt.GoldAmount <= 0)
+                return;
+
+            CurrentGold = Mathf.Max(0, CurrentGold - evt.GoldAmount);
+            RaiseGoldChanged();
+        }
+
+        private void RaiseGoldChanged()
+        {
+            EventChannel.RaiseEvent(new GoldChangedEvent(CurrentGold));
         }
     }
 }

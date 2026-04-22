@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -21,9 +21,13 @@ namespace _01.Code.Core
                 _lookUp[handler] = castHandler;
                 
                 Type evtType = typeof(T);
-                if (!_events.TryAdd(evtType, castHandler))
+                if (_events.ContainsKey(evtType))
                 {
                     _events[evtType] += castHandler;
+                }
+                else
+                {
+                    _events[evtType] = castHandler;
                 }
             }
         }
@@ -49,7 +53,7 @@ namespace _01.Code.Core
         public void RaiseEvent(GameEvent evt)
         {
             if(_events.TryGetValue(evt.GetType(), out Action<GameEvent> handlers))
-                handlers?.Invoke(evt);
+                handlers.Invoke(evt);
         }
 
         public void Clear()

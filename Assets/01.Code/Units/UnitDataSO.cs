@@ -1,18 +1,13 @@
-using _01.Code.Entities;
-using _01.Code.Core;
 using UnityEngine;
 
 namespace _01.Code.Units
 {
-    [CreateAssetMenu(fileName = "UnitSO", menuName = "SO/Units/Data", order = 0)]
+    [CreateAssetMenu(menuName = "SO/Unit/Data", fileName = "UnitData", order = 0)]
     public class UnitDataSO : ScriptableObject
     {
-        [field: SerializeField] public string Name { get; private set; }
-        [field: SerializeField] public string Explanation { get; private set; }
-        [field: SerializeField] public int Cost { get; private set; }
-        [field: SerializeField] public Sprite CardIcon { get; private set; }
-        [field: SerializeField] public Color CardColor { get; private set; } = Color.white;
-        [field: SerializeField] public PlaceableEntity Prefab { get; private set; }
-        [field: SerializeField] public BuildSceneScope SceneScope { get; private set; } = BuildSceneScope.Battle;
+        [field:SerializeField] public Sprite Sprite { get; private set; }
+        [field:SerializeField] public string Name { get; private set; }
+        [field:SerializeField] public int Cost { get; private set; }
+        [field:SerializeField] public bool Locked { get; private set; }
     }
 }

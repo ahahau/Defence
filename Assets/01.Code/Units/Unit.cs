@@ -1,11 +1,14 @@
-using _01.Code.Entities;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace _01.Code.Units
 {
-    public class Unit : PlaceableEntity
+    public class Unit : MonoBehaviour
     {
-        [field: SerializeField] public int level { get; set; } = 1;
+        [SerializeField] private SpriteRenderer spriteRenderer;
 
+        public void Initialize(UnitDataSO unitData)
+        {
+            spriteRenderer.sprite = unitData.Sprite;
+        }
     }
 }

@@ -53,7 +53,7 @@ namespace VHierarchy
                 if (keyboardFocusedRowIndex == -1) return;
                 if (keyboardFocusedEntry == null) return;
 
-                QueueOpenScene(keyboardFocusedEntry, curEvent.holdingAlt);
+                OpenScene(keyboardFocusedEntry, curEvent.holdingAlt);
 
                 this.Close();
 
@@ -500,7 +500,7 @@ namespace VHierarchy
 
                     curEvent.Use();
 
-                    QueueOpenScene(entry, curEvent.holdingAlt);
+                    OpenScene(entry, curEvent.holdingAlt);
 
                     this.Close();
 
@@ -543,8 +543,9 @@ namespace VHierarchy
         Vector2 mouseDownPosition;
 
         SceneEntry keyboardFocusedEntry;
-        SceneEntry pendingSceneEntry;
-        bool pendingOpenAdditive;
+
+
+
 
         void OpenScene(SceneEntry entry, bool openAdditive)
         {
@@ -583,32 +584,6 @@ namespace VHierarchy
             }
 
 
-        }
-
-        void QueueOpenScene(SceneEntry entry, bool openAdditive)
-        {
-            if (entry == null) return;
-
-            pendingSceneEntry = entry;
-            pendingOpenAdditive = openAdditive;
-
-            EditorApplication.delayCall -= OpenQueuedScene;
-            EditorApplication.delayCall += OpenQueuedScene;
-        }
-
-        void OpenQueuedScene()
-        {
-            EditorApplication.delayCall -= OpenQueuedScene;
-
-            if (pendingSceneEntry == null) return;
-
-            var entry = pendingSceneEntry;
-            var openAdditive = pendingOpenAdditive;
-
-            pendingSceneEntry = null;
-            pendingOpenAdditive = false;
-
-            OpenScene(entry, openAdditive);
         }
 
 

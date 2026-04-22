@@ -131,7 +131,7 @@ namespace VHierarchy
 
                 var sceneHierarchy = window.GetMemberValue("m_SceneHierarchy");
                 var m_CustomParentForNewGameObjects = window.GetMemberValue("m_SceneHierarchy").GetMemberValue<Transform>("m_CustomParentForNewGameObjects");
-                var targetSceneHandle = m_CustomParentForNewGameObjects != null ? m_CustomParentForNewGameObjects.gameObject.scene.handle : 0;
+                var targetSceneHandle = m_CustomParentForNewGameObjects != null ? m_CustomParentForNewGameObjects.gameObject.scene.handle : default(SceneHandle);
 
 
                 var menu = new GenericMenu();

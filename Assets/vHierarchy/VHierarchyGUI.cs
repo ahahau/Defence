@@ -985,7 +985,7 @@ namespace VHierarchy
 
 
 #if UNITY_2021_1_OR_NEWER
-            dragSelectionList = treeViewController?.GetFieldValue("m_DragSelection")?.GetFieldValue<List<int>>("m_List");
+            dragSelectionList = GetDragSelectionList(treeViewController?.GetFieldValue("m_DragSelection"));
 #else
             dragSelectionList = treeViewController?.GetFieldValue<List<int>>("m_DragSelection");
 #endif
@@ -998,6 +998,14 @@ namespace VHierarchy
 
         public bool isTreeFocused;
         public bool renamingRow;
+        
+        private List<int> GetDragSelectionList(object dragSelection)
+        {
+            if (dragSelection?.GetFieldValue("m_List") is List<int> intIds)
+                return intIds;
+
+            return new List<int>();
+        }
 
         public List<int> dragSelectionList = new();
 

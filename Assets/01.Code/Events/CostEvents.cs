@@ -1,101 +1,115 @@
-using System.Collections.Generic;
 using _01.Code.Core;
-using _01.Code.Cost;
-using _01.Code.Manager;
+using _01.Code.MapCreateSystem;
+using _01.Code.Units;
 
 namespace _01.Code.Events
 {
-    public static class CostEvents
+    public class BuildCostRequestedEvent : GameEvent
     {
-        public static readonly CostChangedEvent CostChangedEvent = new CostChangedEvent();
-        public static readonly TrySpendCostEvent TrySpendCostEvent = new TrySpendCostEvent();
-        public static readonly RefundCostEvent RefundCostEvent = new RefundCostEvent();
-        public static readonly PrimarySpendCostQueryEvent PrimarySpendCostQueryEvent = new PrimarySpendCostQueryEvent();
-        public static readonly CostSnapshotQueryEvent CostSnapshotQueryEvent = new CostSnapshotQueryEvent();
-        public static readonly ApplyNewGameStartingCostsRequestedEvent ApplyNewGameStartingCostsRequestedEvent = new ApplyNewGameStartingCostsRequestedEvent();
-    }
-
-    public class CostChangedEvent : GameEvent
-    {
-        public CostDefinitionSO Type { get; private set; }
-        public int Current { get; private set; }
-        public int Max { get; private set; }
-
-        public CostChangedEvent Initializer(CostDefinitionSO type, int current, int max)
+        public BuildCostRequestedEvent(Node node, int goldAmount)
         {
-            Type = type;
-            Current = current;
-            Max = max;
-            return this;
+            Node = node;
+            GoldAmount = goldAmount;
         }
+
+        public Node Node { get; }
+        public int GoldAmount { get; }
     }
 
-    public class TrySpendCostEvent : GameEvent
+    public class BuildCostPaidEvent : GameEvent
     {
-        public CostDefinitionSO Type { get; private set; }
-        public int Amount { get; private set; }
-        public bool Succeeded { get; set; }
-
-        public TrySpendCostEvent Initializer(CostDefinitionSO type, int amount)
+        public BuildCostPaidEvent(Node node, int goldAmount, int remainingGold)
         {
-            Type = type;
-            Amount = amount;
-            Succeeded = amount <= 0;
-            return this;
+            Node = node;
+            GoldAmount = goldAmount;
+            RemainingGold = remainingGold;
         }
+
+        public Node Node { get; }
+        public int GoldAmount { get; }
+        public int RemainingGold { get; }
     }
 
-    public class RefundCostEvent : GameEvent
+    public class BuildCostRejectedEvent : GameEvent
     {
-        public CostDefinitionSO Type { get; private set; }
-        public int Amount { get; private set; }
-
-        public RefundCostEvent Initializer(CostDefinitionSO type, int amount)
+        public BuildCostRejectedEvent(Node node, int goldAmount, int currentGold)
         {
-            Type = type;
-            Amount = amount;
-            return this;
+            Node = node;
+            GoldAmount = goldAmount;
+            CurrentGold = currentGold;
         }
+
+        public Node Node { get; }
+        public int GoldAmount { get; }
+        public int CurrentGold { get; }
     }
 
-    public class PrimarySpendCostQueryEvent : GameEvent
+    public class GoldChangedEvent : GameEvent
     {
-        public CostDefinitionSO Type { get; set; }
-
-        public PrimarySpendCostQueryEvent Initializer()
+        public GoldChangedEvent(int currentGold)
         {
-            Type = null;
-            return this;
+            CurrentGold = currentGold;
         }
+
+        public int CurrentGold { get; }
     }
 
-    public class CostSnapshotEntry
+    public class SalaryCostRequestedEvent : GameEvent
     {
-        public CostDefinitionSO Definition { get; private set; }
-        public int Current { get; private set; }
-        public int Max { get; private set; }
-
-        public CostSnapshotEntry Initialize(CostDefinitionSO definition, int current, int max)
+        public SalaryCostRequestedEvent(int day, int goldAmount)
         {
-            Definition = definition;
-            Current = current;
-            Max = max;
-            return this;
+            Day = day;
+            GoldAmount = goldAmount;
         }
+
+        public int Day { get; }
+        public int GoldAmount { get; }
     }
 
-    public class CostSnapshotQueryEvent : GameEvent
+    public class HireUnitCostRequestedEvent : GameEvent
     {
-        public List<CostSnapshotEntry> Entries { get; set; }
-
-        public CostSnapshotQueryEvent Initializer()
+        public HireUnitCostRequestedEvent(Node node, UnitDataSO unit, int goldAmount)
         {
-            Entries = null;
-            return this;
+            Node = node;
+            Unit = unit;
+            GoldAmount = goldAmount;
         }
+
+        public Node Node { get; }
+        public UnitDataSO Unit { get; }
+        public int GoldAmount { get; }
     }
 
-    public class ApplyNewGameStartingCostsRequestedEvent : GameEvent
+    public class HireUnitCostPaidEvent : GameEvent
     {
+        public HireUnitCostPaidEvent(Node node, UnitDataSO unit, int goldAmount, int remainingGold)
+        {
+            Node = node;
+            Unit = unit;
+            GoldAmount = goldAmount;
+            RemainingGold = remainingGold;
+        }
+
+        public Node Node { get; }
+        public UnitDataSO Unit { get; }
+        public int GoldAmount { get; }
+        public int RemainingGold { get; }
     }
+
+    public class HireUnitCostRejectedEvent : GameEvent
+    {
+        public HireUnitCostRejectedEvent(Node node, UnitDataSO unit, int goldAmount, int currentGold)
+        {
+            Node = node;
+            Unit = unit;
+            GoldAmount = goldAmount;
+            CurrentGold = currentGold;
+        }
+
+        public Node Node { get; }
+        public UnitDataSO Unit { get; }
+        public int GoldAmount { get; }
+        public int CurrentGold { get; }
+    }
+
 }
