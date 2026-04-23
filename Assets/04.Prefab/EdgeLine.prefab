@@ -164,4 +164,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 894fb069468fa354d995cc6f138fdfd8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.MapCreateSystem.EdgeLine
-  <LineRenderer>k__BackingField: {fileID: 5830104069319056153}
+  lineRenderer: {fileID: 5830104069319056153}

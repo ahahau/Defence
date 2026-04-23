@@ -1,5 +1,5 @@
-using _01.Code.Core;
 using _01.Code.Events;
+using _01.Code.Core;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,28 +7,28 @@ namespace _01.Code.UI
 {
     public class GoldCostView : MonoBehaviour
     {
-        [field: SerializeField]
-        public GameEventChannelSO EventChannel { get; private set; }
+        [SerializeField]
+        private GameEventChannelSO costEventChannel;
 
-        [field: SerializeField]
-        public Text GoldText { get; private set; }
+        [SerializeField]
+        private Text goldText;
 
-        [field: SerializeField]
-        public string Format { get; private set; } = "Gold: {0}";
+        [SerializeField]
+        private string format = "Gold: {0}";
 
         private void OnEnable()
         {
-            EventChannel.AddListener<GoldChangedEvent>(HandleGoldChanged);
+            costEventChannel.AddListener<GoldChangedEvent>(HandleGoldChanged);
         }
 
         private void OnDisable()
         {
-            EventChannel.RemoveListener<GoldChangedEvent>(HandleGoldChanged);
+            costEventChannel.RemoveListener<GoldChangedEvent>(HandleGoldChanged);
         }
 
         private void HandleGoldChanged(GoldChangedEvent evt)
         {
-            GoldText.text = string.Format(Format, evt.CurrentGold);
+            goldText.text = string.Format(format, evt.CurrentGold);
         }
     }
 }

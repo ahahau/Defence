@@ -4,16 +4,16 @@ namespace _01.Code.MapCreateSystem
 {
     public class EdgeLine : MonoBehaviour
     {
-        [field: SerializeField]
-        public LineRenderer LineRenderer { get; private set; }
+        [SerializeField]
+        private LineRenderer lineRenderer;
 
         public void Initialize(string objectName, Vector3 start, Vector3 end)
         {
             name = objectName;
 
-            LineRenderer.positionCount = 2;
-            LineRenderer.SetPosition(0, start);
-            LineRenderer.SetPosition(1, end);
+            lineRenderer.positionCount = 2;
+            lineRenderer.SetPosition(0, start);
+            lineRenderer.SetPosition(1, end);
         }
     }
 }

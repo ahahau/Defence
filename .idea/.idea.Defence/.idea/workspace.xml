@@ -4,14 +4,55 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="70a8c057-6163-4912-961a-e601b54b4aa9" name="변경" comment="" />
+    <list default="true" id="70a8c057-6163-4912-961a-e601b54b4aa9" name="변경" comment="">
+      <change afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings.meta" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings/Building.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings/Building.cs.meta" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings/Portal.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings/Portal.cs.meta" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings/Trap.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings/Trap.cs.meta" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Assets/01.Code/Enemies.meta" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Assets/01.Code/Enemies/Enemy.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Assets/01.Code/Enemies/Enemy.cs.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.Defence/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Defence/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/00.Scenes/SampleScene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/00.Scenes/SampleScene.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Events/NodeEvents.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Events/NodeEvents.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/CostManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/CostManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/DayManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/DayManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/DungeonGraphController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/DungeonGraphController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/DungeonGraphView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/DungeonGraphView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/EdgeLine.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/EdgeLine.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/Node.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/Node.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/DayView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/DayView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/GoldCostView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/GoldCostView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/NodePanelView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/NodePanelView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/UnitHireEntryView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/UnitHireEntryView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Units/Unit.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Units/Unit.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/03.SO/DungeonGameEventChannel.asset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/03.SO/DungeonGameEventChannel.asset.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Units/TestUnit1 1.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/Units/TestUnit1 1.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Units/TestUnit1 2.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/Units/TestUnit1 2.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Units/TestUnit1 3.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/Units/TestUnit1 3.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Units/TestUnit1 4.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/Units/TestUnit1 4.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Units/TestUnit1.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/Units/TestUnit1.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/EdgeLine.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/EdgeLine.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Node.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Node.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/UnitHireEntry.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/UnitHireEntry.prefab" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/Node.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.ai.assistant@fc16ca46e208/Editor/Assistant/ErrorHandling/ErrorHandlingUtility.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.ai.assistant@fc16ca46e208/Modules/Unity.AI.MCP.Editor/Security/ProcessInfoCollector.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.inputsystem@21a28c3a6c83/InputSystem/Plugins/UI/InputSystemUIInputModule.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.inputsystem@21a28c3a6c83/InputSystem/Utilities/DelegateHelpers.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/5ea200363ab142a582463089d51cabd3214200/61/98b7cb7d/Camera.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/3ea01e77be99618395f448b16bd7cc2bd4248bd9e5d8474964b2d97f39c5d74/System.cs" root0="FORCE_HIGHLIGHTING" />
@@ -30,6 +71,8 @@
   &quot;keyToString&quot;: {
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
@@ -102,6 +145,8 @@
       <workItem from="1776813188596" duration="14224000" />
       <workItem from="1776838735281" duration="17837000" />
       <workItem from="1776867540848" duration="594000" />
+      <workItem from="1776900345767" duration="17014000" />
+      <workItem from="1776933689482" duration="4425000" />
     </task>
     <servers />
   </component>

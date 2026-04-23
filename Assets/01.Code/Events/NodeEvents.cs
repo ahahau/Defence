@@ -25,4 +25,24 @@ namespace _01.Code.Events
         public Node Node { get; }
         public UnitDataSO Unit { get; }
     }
+
+    public class NodeCameraFocusStartedEvent : GameEvent
+    {
+        public NodeCameraFocusStartedEvent(Node node)
+        {
+            Node = node;
+        }
+
+        public Node Node { get; }
+    }
+
+    public class NodeCameraFocusCompletedEvent : GameEvent
+    {
+        public NodeCameraFocusCompletedEvent(Node node)
+        {
+            Node = node;
+        }
+
+        public Node Node { get; }
+    }
 }

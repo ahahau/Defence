@@ -8,14 +8,17 @@ namespace _01.Code.Manager
 {
     public class DayManager : MonoBehaviour
     {
-        [field: SerializeField]
-        public GameEventChannelSO EventChannel { get; private set; }
+        [SerializeField] private GameEventChannelSO dayEventChannel;
 
-        [field: SerializeField]
-        public float SecondsPerDay { get; private set; } = 1f;
+        [SerializeField] private GameEventChannelSO nodeEventChannel;
 
-        [field: SerializeField]
-        public int SalaryIntervalDays { get; private set; } = 30;
+        [SerializeField] private GameEventChannelSO costEventChannel;
+
+        [SerializeField]
+        private float secondsPerDay = 1f;
+
+        [SerializeField]
+        private int salaryIntervalDays = 30;
 
         private readonly Dictionary<Node, int> salaryByNode = new();
         private float elapsedSeconds;
@@ -23,7 +26,7 @@ namespace _01.Code.Manager
 
         private void OnEnable()
         {
-            EventChannel.AddListener<UnitAssignedToNodeEvent>(HandleUnitAssigned);
+            nodeEventChannel.AddListener<UnitAssignedToNodeEvent>(HandleUnitAssigned);
         }
 
         private void Start()
@@ -35,24 +38,24 @@ namespace _01.Code.Manager
         private void Update()
         {
             elapsedSeconds += Time.deltaTime;
-            if (elapsedSeconds < SecondsPerDay)
+            if (elapsedSeconds < secondsPerDay)
             {
                 RaiseDayProgressChanged();
                 return;
             }
 
-            elapsedSeconds -= SecondsPerDay;
+            elapsedSeconds -= secondsPerDay;
             currentDay++;
             RaiseDayChanged();
             RaiseDayProgressChanged();
 
-            if (currentDay % SalaryIntervalDays == 0)
-                EventChannel.RaiseEvent(new SalaryCostRequestedEvent(currentDay, CalculateTotalSalary()));
+            if (currentDay % salaryIntervalDays == 0)
+                costEventChannel.RaiseEvent(new SalaryCostRequestedEvent(currentDay, CalculateTotalSalary()));
         }
 
         private void OnDisable()
         {
-            EventChannel.RemoveListener<UnitAssignedToNodeEvent>(HandleUnitAssigned);
+            nodeEventChannel.RemoveListener<UnitAssignedToNodeEvent>(HandleUnitAssigned);
         }
 
         private void HandleUnitAssigned(UnitAssignedToNodeEvent evt)
@@ -71,12 +74,12 @@ namespace _01.Code.Manager
 
         private void RaiseDayChanged()
         {
-            EventChannel.RaiseEvent(new DayChangedEvent(currentDay));
+            dayEventChannel.RaiseEvent(new DayChangedEvent(currentDay));
         }
 
         private void RaiseDayProgressChanged()
         {
-            EventChannel.RaiseEvent(new DayProgressChangedEvent(elapsedSeconds / SecondsPerDay));
+            dayEventChannel.RaiseEvent(new DayProgressChangedEvent(elapsedSeconds / secondsPerDay));
         }
     }
 }

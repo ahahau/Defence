@@ -105,7 +105,17 @@ namespace _01.Code.MapCreateSystem
 
         private void DestroyChildRoot(string childName)
         {
-            var child = root.Find(childName);
+            Transform child = null;
+            for (var i = 0; i < root.childCount; i++)
+            {
+                var currentChild = root.GetChild(i);
+                if (currentChild.name != childName)
+                    continue;
+
+                child = currentChild;
+                break;
+            }
+
             if (child != null)
                 DestroyObject(child.gameObject);
         }

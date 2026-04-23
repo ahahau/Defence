@@ -7,17 +7,17 @@ namespace _01.Code.UI
 {
     public class UnitHireEntryView : MonoBehaviour
     {
-        [field: SerializeField]
-        public Text NameText { get; private set; }
+        [SerializeField]
+        private Text nameText;
 
-        [field: SerializeField]
-        public Text CostText { get; private set; }
+        [SerializeField]
+        private Text costText;
 
-        [field: SerializeField]
-        public Button HireButton { get; private set; }
+        [SerializeField]
+        private Button hireButton;
 
-        [field: SerializeField]
-        public string CostFormat { get; private set; } = "{0} Gold";
+        [SerializeField]
+        private string costFormat = "{0} Gold";
 
         private UnitDataSO _unit;
         private Action<UnitDataSO> _hireRequested;
@@ -27,16 +27,16 @@ namespace _01.Code.UI
             _unit = unitDefinition;
             _hireRequested = onHireRequested;
 
-            NameText.text = _unit.name;
-            CostText.text = string.Format(CostFormat, _unit.Cost);
+            nameText.text = _unit.name;
+            costText.text = string.Format(costFormat, _unit.Cost);
 
-            HireButton.onClick.RemoveListener(HandleHireClicked);
-            HireButton.onClick.AddListener(HandleHireClicked);
+            hireButton.onClick.RemoveListener(HandleHireClicked);
+            hireButton.onClick.AddListener(HandleHireClicked);
         }
 
         private void OnDestroy()
         {
-            HireButton.onClick.RemoveListener(HandleHireClicked);
+            hireButton.onClick.RemoveListener(HandleHireClicked);
         }
 
         private void HandleHireClicked()

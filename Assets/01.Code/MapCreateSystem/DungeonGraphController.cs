@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using _01.Code.Core;
 using _01.Code.Events;
+using DG.Tweening;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace _01.Code.MapCreateSystem
 {
@@ -16,53 +18,67 @@ namespace _01.Code.MapCreateSystem
         };
 
         [Header("Layout")]
-        [field: SerializeField]
-        public float GridSpacing { get; private set; } = 2.4f;
+        [SerializeField]
+        private float gridSpacing = 2.4f;
 
-        [field: SerializeField]
-        public float NodeSize { get; private set; } = 1f;
+        [SerializeField]
+        private float nodeSize = 1f;
 
         [Header("Prefabs")]
-        [field: SerializeField]
-        public Node NodePrefab { get; private set; }
+        [SerializeField]
+        private Node nodePrefab;
 
-        [field: SerializeField]
-        public EdgeLine EdgeLinePrefab { get; private set; }
+        [SerializeField]
+        private EdgeLine edgeLinePrefab;
 
         [Header("Build")]
-        [field: SerializeField]
-        public DungeonNodeType SelectedType { get; private set; } = DungeonNodeType.Corridor;
+        [SerializeField]
+        private DungeonNodeType selectedType = DungeonNodeType.Corridor;
 
-        [field: SerializeField]
-        public int BuildGoldCost { get; private set; } = 10;
+        [SerializeField]
+        private int buildGoldCost = 10;
 
         [Header("Events")]
-        [field: SerializeField]
-        public GameEventChannelSO EventChannel { get; private set; }
+        [SerializeField] private GameEventChannelSO costEventChannel;
+
+        [SerializeField] private GameEventChannelSO nodeEventChannel;
 
         [Header("Random Links")]
-        [field: SerializeField]
-        public bool UseRandomAdjacentLinks { get; private set; } = true;
+        [SerializeField]
+        private bool useRandomAdjacentLinks = true;
 
-        [field: SerializeField, Range(0f, 1f)]
-        public float AdjacentLinkChance { get; private set; } = 0.35f;
+        [SerializeField, Range(0f, 1f)]
+        private float adjacentLinkChance = 0.35f;
 
-        [field: SerializeField]
-        public int MaxRandomAdjacentLinks { get; private set; } = 1;
+        [SerializeField]
+        private int maxRandomAdjacentLinks = 1;
         
         [Header("Input")]
-        [field: SerializeField]
-        public InputDataSO InputDataSO { get; private set; }
+        [SerializeField]
+        private InputDataSO inputDataSO;
 
-        [field: SerializeField]
-        public Camera InputCamera { get; private set; }
+        [SerializeField]
+        private Camera inputCamera;
 
-        [field: SerializeField]
-        public LayerMask NodeClickMask { get; private set; } = Physics2D.DefaultRaycastLayers;
+        [SerializeField]
+        private LayerMask nodeClickMask = Physics2D.DefaultRaycastLayers;
 
         [Header("UI Blocking")]
-        [field: SerializeField]
-        public RectTransform NodePanelBlockRect { get; private set; }
+        [SerializeField]
+        private RectTransform nodePanelBlockRect;
+
+        [Header("Camera Focus")]
+        [SerializeField]
+        private float focusedOrthographicSize = 3f;
+
+        [SerializeField]
+        private float cameraFocusDuration = 0.25f;
+
+        [SerializeField]
+        private Ease cameraFocusEase = Ease.OutCubic;
+
+        [SerializeField]
+        private Vector2 cameraFocusOffset;
 
         private DungeonGraph graph;
         private DungeonGraphView view;
@@ -72,23 +88,32 @@ namespace _01.Code.MapCreateSystem
         private readonly List<DungeonNode> randomAdjacentCandidates = new();
         private Node lastBuiltNodeView;
         private int lastBuiltFrame = -1;
+        private Sequence cameraFocusSequence;
+        private bool hasPendingMouseInput;
+        private Node focusedNode;
+        private bool isCameraFocused;
+        private bool hasDefaultCameraState;
+        private Vector3 defaultCameraPosition;
+        private float defaultOrthographicSize;
 
         public bool HasLockedNodesVisible { get; private set; }
 
         private void OnEnable()
         {
-            EventChannel.AddListener<BuildCostPaidEvent>(HandleBuildCostPaid);
-            EventChannel.AddListener<UnlockedNodeClickedEvent>(HandleUnlockedNodeClicked);
-            InputDataSO.OnMouseInputEvent += HandleMouseInput;
+            costEventChannel.AddListener<BuildCostPaidEvent>(HandleBuildCostPaid);
+            nodeEventChannel.AddListener<UnlockedNodeClickedEvent>(HandleUnlockedNodeClicked);
+            inputDataSO.OnMouseInputEvent += HandleMouseInput;
         }
 
         
 
         private void OnDisable()
         {
-            EventChannel.RemoveListener<BuildCostPaidEvent>(HandleBuildCostPaid);
-            EventChannel.RemoveListener<UnlockedNodeClickedEvent>(HandleUnlockedNodeClicked);
-            InputDataSO.OnMouseInputEvent -= HandleMouseInput;
+            costEventChannel.RemoveListener<BuildCostPaidEvent>(HandleBuildCostPaid);
+            nodeEventChannel.RemoveListener<UnlockedNodeClickedEvent>(HandleUnlockedNodeClicked);
+            inputDataSO.OnMouseInputEvent -= HandleMouseInput;
+            cameraFocusSequence?.Kill();
+            cameraFocusSequence = null;
         }
 
         private void Awake()
@@ -99,11 +124,20 @@ namespace _01.Code.MapCreateSystem
                 ShowLockedNodes();
         }
 
+        private void Update()
+        {
+            if (!hasPendingMouseInput)
+                return;
+
+            hasPendingMouseInput = false;
+            ProcessMouseInput();
+        }
+
         [ContextMenu("Rebuild Initial Graph")]
         public void RebuildInitialGraph()
         {
             graph = new DungeonGraph();
-            view = new DungeonGraphView(transform, NodePrefab, EdgeLinePrefab, GridSpacing, NodeSize);
+            view = new DungeonGraphView(transform, nodePrefab, edgeLinePrefab, gridSpacing, nodeSize);
             view.ClearAll();
             lockedNodeByCollider.Clear();
             unlockedNodeByCollider.Clear();
@@ -133,7 +167,7 @@ namespace _01.Code.MapCreateSystem
             if (graph.IsOccupied(lockedNode.GridPosition) || lockedNode.FromNode.FreePorts <= 0)
                 return;
 
-            EventChannel.RaiseEvent(new BuildCostRequestedEvent(lockedNode, BuildGoldCost));
+            costEventChannel.RaiseEvent(new BuildCostRequestedEvent(lockedNode, buildGoldCost));
         }
 
         private void HandleBuildCostPaid(BuildCostPaidEvent evt)
@@ -157,7 +191,7 @@ namespace _01.Code.MapCreateSystem
         public void SelectBuildType(DungeonNodeType type)
         {
             if (type != DungeonNodeType.Entrance)
-                SelectedType = type;
+                selectedType = type;
         }
 
         private DungeonNodeType ResolveBuildType(Node lockedNode)
@@ -165,14 +199,14 @@ namespace _01.Code.MapCreateSystem
             if (lockedNode.FromNode.Type == DungeonNodeType.Entrance && graph.Nodes.Count == 1)
                 return DungeonNodeType.Corridor;
 
-            return SelectedType;
+            return selectedType;
         }
 
         private void ConnectAdjacentNodes(DungeonNode node, DungeonNode preferredFirstNode)
         {
             TryConnectNodes(preferredFirstNode, node);
 
-            if (!UseRandomAdjacentLinks || MaxRandomAdjacentLinks <= 0)
+            if (!useRandomAdjacentLinks || maxRandomAdjacentLinks <= 0)
                 return;
 
             var randomLinkCount = 0;
@@ -186,7 +220,7 @@ namespace _01.Code.MapCreateSystem
                 if (adjacentNode == preferredFirstNode)
                     continue;
 
-                if (randomLinkCount >= MaxRandomAdjacentLinks)
+                if (randomLinkCount >= maxRandomAdjacentLinks)
                     return;
 
                 if (!CanRandomConnect(node, adjacentNode))
@@ -195,13 +229,13 @@ namespace _01.Code.MapCreateSystem
                 randomAdjacentCandidates.Add(adjacentNode);
             }
 
-            while (randomAdjacentCandidates.Count > 0 && randomLinkCount < MaxRandomAdjacentLinks)
+            while (randomAdjacentCandidates.Count > 0 && randomLinkCount < maxRandomAdjacentLinks)
             {
                 var index = Random.Range(0, randomAdjacentCandidates.Count);
                 var adjacentNode = randomAdjacentCandidates[index];
                 randomAdjacentCandidates.RemoveAt(index);
 
-                if (Random.value > AdjacentLinkChance)
+                if (Random.value > adjacentLinkChance)
                     continue;
 
                 TryConnectNodes(adjacentNode, node);
@@ -287,11 +321,16 @@ namespace _01.Code.MapCreateSystem
 
         private void HandleMouseInput()
         {
-            if (IsPointerOverNodePanel())
+            hasPendingMouseInput = true;
+        }
+
+        private void ProcessMouseInput()
+        {
+            if (IsPointerOverUi() || IsPointerOverNodePanel())
                 return;
 
-            Vector2 worldPosition = InputDataSO.SceneToWorldPoint(InputCamera);
-            var clickedCollider = Physics2D.OverlapPoint(worldPosition, NodeClickMask);
+            Vector2 worldPosition = inputDataSO.SceneToWorldPoint(inputCamera);
+            var clickedCollider = Physics2D.OverlapPoint(worldPosition, nodeClickMask);
 
             if (clickedCollider == null)
                 return;
@@ -301,21 +340,29 @@ namespace _01.Code.MapCreateSystem
                 if (!unlockedNodeByCollider.TryGetValue(clickedCollider, out var unlockedNode))
                     return;
 
-                EventChannel.RaiseEvent(new UnlockedNodeClickedEvent(unlockedNode));
+                nodeEventChannel.RaiseEvent(new UnlockedNodeClickedEvent(unlockedNode));
                 return;
             }
+
+            if (isCameraFocused)
+                return;
 
             TryBuildAt(lockedNode);
         }
 
+        private bool IsPointerOverUi()
+        {
+            return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+        }
+
         private bool IsPointerOverNodePanel()
         {
-            if (!NodePanelBlockRect.gameObject.activeInHierarchy)
+            if (nodePanelBlockRect == null || !nodePanelBlockRect.gameObject.activeInHierarchy)
                 return false;
 
             return RectTransformUtility.RectangleContainsScreenPoint(
-                NodePanelBlockRect,
-                InputDataSO.ReadScreenMousePosition(),
+                nodePanelBlockRect,
+                inputDataSO.ReadScreenMousePosition(),
                 null);
         }
 
@@ -324,10 +371,82 @@ namespace _01.Code.MapCreateSystem
             if (evt.Node == lastBuiltNodeView && Time.frameCount <= lastBuiltFrame + 1)
                 return;
 
-            if (evt.Node.HasAssignedUnit)
+            if (isCameraFocused && focusedNode == evt.Node)
+            {
+                ReleaseCameraFocus(evt.Node);
+                return;
+            }
+
+            FocusCameraOnNode(evt.Node);
+        }
+
+        private void FocusCameraOnNode(Node node)
+        {
+            if (node == null)
                 return;
 
-            EventChannel.RaiseEvent(new ShowNodePanelEvent(evt.Node));
+            var targetCamera = inputCamera != null ? inputCamera : Camera.main;
+            if (targetCamera == null)
+                return;
+
+            if (!hasDefaultCameraState)
+            {
+                defaultCameraPosition = targetCamera.transform.position;
+                defaultOrthographicSize = targetCamera.orthographicSize;
+                hasDefaultCameraState = true;
+            }
+
+            nodeEventChannel.RaiseEvent(new NodeCameraFocusStartedEvent(node));
+
+            var targetPosition = new Vector3(
+                node.transform.position.x + cameraFocusOffset.x,
+                node.transform.position.y + cameraFocusOffset.y,
+                targetCamera.transform.position.z);
+
+            cameraFocusSequence?.Kill();
+
+            var duration = Mathf.Max(0.01f, cameraFocusDuration);
+            cameraFocusSequence = DOTween.Sequence()
+                .SetUpdate(true)
+                .SetEase(cameraFocusEase)
+                .Append(targetCamera.transform.DOMove(targetPosition, duration));
+
+            if (targetCamera.orthographic)
+                cameraFocusSequence.Join(targetCamera.DOOrthoSize(focusedOrthographicSize, duration));
+
+            cameraFocusSequence.OnComplete(() =>
+            {
+                cameraFocusSequence = null;
+                focusedNode = node;
+                isCameraFocused = true;
+                nodeEventChannel.RaiseEvent(new NodeCameraFocusCompletedEvent(node));
+            });
+        }
+
+        private void ReleaseCameraFocus(Node node)
+        {
+            var targetCamera = inputCamera != null ? inputCamera : Camera.main;
+            if (targetCamera == null || !hasDefaultCameraState)
+                return;
+
+            nodeEventChannel.RaiseEvent(new NodeCameraFocusStartedEvent(node));
+            cameraFocusSequence?.Kill();
+
+            var duration = Mathf.Max(0.01f, cameraFocusDuration);
+            cameraFocusSequence = DOTween.Sequence()
+                .SetUpdate(true)
+                .SetEase(cameraFocusEase)
+                .Append(targetCamera.transform.DOMove(defaultCameraPosition, duration));
+
+            if (targetCamera.orthographic)
+                cameraFocusSequence.Join(targetCamera.DOOrthoSize(defaultOrthographicSize, duration));
+
+            cameraFocusSequence.OnComplete(() =>
+            {
+                cameraFocusSequence = null;
+                focusedNode = null;
+                isCameraFocused = false;
+            });
         }
     }
 }

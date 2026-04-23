@@ -54,6 +54,16 @@ namespace _01.Code.Events
         public int CurrentGold { get; }
     }
 
+    public class GoldEarnedEvent : GameEvent
+    {
+        public GoldEarnedEvent(int goldAmount)
+        {
+            GoldAmount = goldAmount;
+        }
+
+        public int GoldAmount { get; }
+    }
+
     public class SalaryCostRequestedEvent : GameEvent
     {
         public SalaryCostRequestedEvent(int day, int goldAmount)

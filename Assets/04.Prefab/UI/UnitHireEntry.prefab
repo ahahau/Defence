@@ -212,10 +212,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f6711c061638b1c44803935a18fcc346, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.UI.UnitHireEntryView
-  <NameText>k__BackingField: {fileID: 8441784415281754787}
-  <CostText>k__BackingField: {fileID: 5597363225726413759}
-  <HireButton>k__BackingField: {fileID: 7917401159369376491}
-  <CostFormat>k__BackingField: '{0} Gold'
+  nameText: {fileID: 8441784415281754787}
+  costText: {fileID: 5597363225726413759}
+  hireButton: {fileID: 7917401159369376491}
+  costFormat: '{0} Gold'
 --- !u!114 &-8922672372494864093
 MonoBehaviour:
   m_ObjectHideFlags: 0
