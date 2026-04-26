@@ -1033,6 +1033,7 @@ GameObject:
   - component: {fileID: 519420029}
   - component: {fileID: 519420030}
   - component: {fileID: 519420033}
+  - component: {fileID: 519420034}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1172,6 +1173,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Core.InputSystemCameraMover
   inputData: {fileID: 11400000, guid: 59016cf6aa98b7640810e5f7fca83b82, type: 2}
   moveSpeed: 5
+  useUnscaledTime: 1
+--- !u!114 &519420034
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc1a84ec08f87444ab2a6526aadea946, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Core.NodeCameraFocusController
+  nodeEventChannel: {fileID: 11400000, guid: f1b1e574478592a46b08a62e4c3db082, type: 2}
+  targetCamera: {fileID: 519420031}
+  focusOrthographicSize: 4.5
+  focusDuration: 0.25
   useUnscaledTime: 1
 --- !u!1 &594596012
 GameObject:
@@ -2779,10 +2797,6 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 8
   nodePanelBlockRect: {fileID: 594596013}
-  focusedOrthographicSize: 3
-  cameraFocusDuration: 0.25
-  cameraFocusEase: 9
-  cameraFocusOffset: {x: 0, y: 0}
 --- !u!4 &1658808570
 Transform:
   m_ObjectHideFlags: 0

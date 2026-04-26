@@ -5,40 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="70a8c057-6163-4912-961a-e601b54b4aa9" name="변경" comment="">
-      <change afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings.meta" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings/Building.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings/Building.cs.meta" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings/Portal.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings/Portal.cs.meta" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings/Trap.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings/Trap.cs.meta" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/01.Code/Enemies.meta" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/01.Code/Enemies/Enemy.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Assets/01.Code/Enemies/Enemy.cs.meta" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Defence/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Defence/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/00.Scenes/SampleScene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/00.Scenes/SampleScene.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Events/NodeEvents.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Events/NodeEvents.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/CostManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/CostManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/DayManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/DayManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Buildings/Portal.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings/Portal.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/DungeonGraphController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/DungeonGraphController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/DungeonGraphView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/DungeonGraphView.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/EdgeLine.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/EdgeLine.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/Node.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/Node.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/DayView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/DayView.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/GoldCostView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/GoldCostView.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/NodePanelView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/NodePanelView.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/UnitHireEntryView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/UnitHireEntryView.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Units/Unit.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Units/Unit.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/03.SO/DungeonGameEventChannel.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/03.SO/DungeonGameEventChannel.asset.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Units/TestUnit1 1.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/Units/TestUnit1 1.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Units/TestUnit1 2.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/Units/TestUnit1 2.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Units/TestUnit1 3.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/Units/TestUnit1 3.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Units/TestUnit1 4.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/Units/TestUnit1 4.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Units/TestUnit1.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/Units/TestUnit1.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/EdgeLine.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/EdgeLine.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Node.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Node.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/UnitHireEntry.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/UnitHireEntry.prefab" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -147,6 +117,8 @@
       <workItem from="1776867540848" duration="594000" />
       <workItem from="1776900345767" duration="17014000" />
       <workItem from="1776933689482" duration="4425000" />
+      <workItem from="1776952593383" duration="1856000" />
+      <workItem from="1776988815163" duration="4196000" />
     </task>
     <servers />
   </component>

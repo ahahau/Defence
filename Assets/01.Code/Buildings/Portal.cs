@@ -13,7 +13,7 @@ namespace _01.Code.Buildings
         private float enemyTurnInterval = 5f;
 
         private Enemy spawnedEnemy;
-
+        
         public void Initialize(Node installedNode)
         {
             if (spawnedEnemy != null || installedNode == null)

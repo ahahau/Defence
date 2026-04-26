@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using _01.Code.Core;
 using _01.Code.Events;
-using DG.Tweening;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -67,19 +66,6 @@ namespace _01.Code.MapCreateSystem
         [SerializeField]
         private RectTransform nodePanelBlockRect;
 
-        [Header("Camera Focus")]
-        [SerializeField]
-        private float focusedOrthographicSize = 3f;
-
-        [SerializeField]
-        private float cameraFocusDuration = 0.25f;
-
-        [SerializeField]
-        private Ease cameraFocusEase = Ease.OutCubic;
-
-        [SerializeField]
-        private Vector2 cameraFocusOffset;
-
         private DungeonGraph graph;
         private DungeonGraphView view;
         private readonly Dictionary<Collider2D, Node> lockedNodeByCollider = new();
@@ -88,20 +74,13 @@ namespace _01.Code.MapCreateSystem
         private readonly List<DungeonNode> randomAdjacentCandidates = new();
         private Node lastBuiltNodeView;
         private int lastBuiltFrame = -1;
-        private Sequence cameraFocusSequence;
         private bool hasPendingMouseInput;
-        private Node focusedNode;
-        private bool isCameraFocused;
-        private bool hasDefaultCameraState;
-        private Vector3 defaultCameraPosition;
-        private float defaultOrthographicSize;
 
         public bool HasLockedNodesVisible { get; private set; }
 
         private void OnEnable()
         {
             costEventChannel.AddListener<BuildCostPaidEvent>(HandleBuildCostPaid);
-            nodeEventChannel.AddListener<UnlockedNodeClickedEvent>(HandleUnlockedNodeClicked);
             inputDataSO.OnMouseInputEvent += HandleMouseInput;
         }
 
@@ -110,10 +89,7 @@ namespace _01.Code.MapCreateSystem
         private void OnDisable()
         {
             costEventChannel.RemoveListener<BuildCostPaidEvent>(HandleBuildCostPaid);
-            nodeEventChannel.RemoveListener<UnlockedNodeClickedEvent>(HandleUnlockedNodeClicked);
             inputDataSO.OnMouseInputEvent -= HandleMouseInput;
-            cameraFocusSequence?.Kill();
-            cameraFocusSequence = null;
         }
 
         private void Awake()
@@ -340,12 +316,10 @@ namespace _01.Code.MapCreateSystem
                 if (!unlockedNodeByCollider.TryGetValue(clickedCollider, out var unlockedNode))
                     return;
 
+                nodeEventChannel.RaiseEvent(new NodeCameraFocusStartedEvent(unlockedNode));
                 nodeEventChannel.RaiseEvent(new UnlockedNodeClickedEvent(unlockedNode));
                 return;
             }
-
-            if (isCameraFocused)
-                return;
 
             TryBuildAt(lockedNode);
         }
@@ -366,87 +340,5 @@ namespace _01.Code.MapCreateSystem
                 null);
         }
 
-        private void HandleUnlockedNodeClicked(UnlockedNodeClickedEvent evt)
-        {
-            if (evt.Node == lastBuiltNodeView && Time.frameCount <= lastBuiltFrame + 1)
-                return;
-
-            if (isCameraFocused && focusedNode == evt.Node)
-            {
-                ReleaseCameraFocus(evt.Node);
-                return;
-            }
-
-            FocusCameraOnNode(evt.Node);
-        }
-
-        private void FocusCameraOnNode(Node node)
-        {
-            if (node == null)
-                return;
-
-            var targetCamera = inputCamera != null ? inputCamera : Camera.main;
-            if (targetCamera == null)
-                return;
-
-            if (!hasDefaultCameraState)
-            {
-                defaultCameraPosition = targetCamera.transform.position;
-                defaultOrthographicSize = targetCamera.orthographicSize;
-                hasDefaultCameraState = true;
-            }
-
-            nodeEventChannel.RaiseEvent(new NodeCameraFocusStartedEvent(node));
-
-            var targetPosition = new Vector3(
-                node.transform.position.x + cameraFocusOffset.x,
-                node.transform.position.y + cameraFocusOffset.y,
-                targetCamera.transform.position.z);
-
-            cameraFocusSequence?.Kill();
-
-            var duration = Mathf.Max(0.01f, cameraFocusDuration);
-            cameraFocusSequence = DOTween.Sequence()
-                .SetUpdate(true)
-                .SetEase(cameraFocusEase)
-                .Append(targetCamera.transform.DOMove(targetPosition, duration));
-
-            if (targetCamera.orthographic)
-                cameraFocusSequence.Join(targetCamera.DOOrthoSize(focusedOrthographicSize, duration));
-
-            cameraFocusSequence.OnComplete(() =>
-            {
-                cameraFocusSequence = null;
-                focusedNode = node;
-                isCameraFocused = true;
-                nodeEventChannel.RaiseEvent(new NodeCameraFocusCompletedEvent(node));
-            });
-        }
-
-        private void ReleaseCameraFocus(Node node)
-        {
-            var targetCamera = inputCamera != null ? inputCamera : Camera.main;
-            if (targetCamera == null || !hasDefaultCameraState)
-                return;
-
-            nodeEventChannel.RaiseEvent(new NodeCameraFocusStartedEvent(node));
-            cameraFocusSequence?.Kill();
-
-            var duration = Mathf.Max(0.01f, cameraFocusDuration);
-            cameraFocusSequence = DOTween.Sequence()
-                .SetUpdate(true)
-                .SetEase(cameraFocusEase)
-                .Append(targetCamera.transform.DOMove(defaultCameraPosition, duration));
-
-            if (targetCamera.orthographic)
-                cameraFocusSequence.Join(targetCamera.DOOrthoSize(defaultOrthographicSize, duration));
-
-            cameraFocusSequence.OnComplete(() =>
-            {
-                cameraFocusSequence = null;
-                focusedNode = null;
-                isCameraFocused = false;
-            });
-        }
     }
 }

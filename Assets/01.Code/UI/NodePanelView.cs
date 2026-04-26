@@ -61,7 +61,7 @@ namespace _01.Code.UI
         {
             panelRoot.SetActive(false);
             SetActionButtonsActive(false);
-            ShowUnitPanel();
+            HideInstallPanels();
             CreateUnitEntries();
             CreateBuildingEntries();
         }
@@ -69,8 +69,6 @@ namespace _01.Code.UI
         private void OnEnable()
         {
             nodeEventChannel.AddListener<UnlockedNodeClickedEvent>(HandleNodeSelected);
-            nodeEventChannel.AddListener<NodeCameraFocusStartedEvent>(HandleNodeCameraFocusStarted);
-            nodeEventChannel.AddListener<NodeCameraFocusCompletedEvent>(HandleNodeCameraFocusCompleted);
             closeButton.onClick.AddListener(HandleCloseClicked);
             if (installButton != null)
                 installButton.onClick.AddListener(HandleInstallClicked);
@@ -82,8 +80,6 @@ namespace _01.Code.UI
         private void OnDisable()
         {
             nodeEventChannel.RemoveListener<UnlockedNodeClickedEvent>(HandleNodeSelected);
-            nodeEventChannel.RemoveListener<NodeCameraFocusStartedEvent>(HandleNodeCameraFocusStarted);
-            nodeEventChannel.RemoveListener<NodeCameraFocusCompletedEvent>(HandleNodeCameraFocusCompleted);
             closeButton.onClick.RemoveListener(HandleCloseClicked);
             if (installButton != null)
                 installButton.onClick.RemoveListener(HandleInstallClicked);
@@ -96,20 +92,11 @@ namespace _01.Code.UI
         {
             _selectedNode = evt.Node;
             titleText.text = string.Format(emptyNodeTitleFormat, evt.Node.Data.Type);
-            ShowUnitPanel();
+            HideInstallPanels();
+            panelRoot.SetActive(false);
+            SetActionButtonsActive(true);
             RefreshDemolishButton();
             RefreshBuildingInstallButtons();
-        }
-
-        private void HandleNodeCameraFocusStarted(NodeCameraFocusStartedEvent evt)
-        {
-            SetActionButtonsActive(false);
-        }
-
-        private void HandleNodeCameraFocusCompleted(NodeCameraFocusCompletedEvent evt)
-        {
-            if (_selectedNode == evt.Node)
-                SetActionButtonsActive(true);
         }
 
         private void HandleInstallClicked()
@@ -329,7 +316,16 @@ namespace _01.Code.UI
 
         private void HandleCloseClicked()
         {
+            HideInstallPanels();
             panelRoot.SetActive(false);
+        }
+
+        private void HideInstallPanels()
+        {
+            SetPanelActive(unitViewSelector, false);
+            SetPanelActive(buildingViewSelector, false);
+            SetPanelActive(unitViewRoot, false);
+            SetPanelActive(buildingViewRoot, false);
         }
     }
 }
