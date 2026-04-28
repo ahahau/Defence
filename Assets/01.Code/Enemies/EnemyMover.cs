@@ -2,100 +2,131 @@ using _01.Code.MapCreateSystem;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace _01.Code.Enemies
 {
     public class EnemyMover : MonoBehaviour
     {
-        private readonly HashSet<string> visitedNodeIds = new();
-        private float turnInterval = 5f;
-        private Node currentNode;
-        private Coroutine moveRoutine;
+        [SerializeField] private float moveSpeed = 5f;
+
+        private static readonly HashSet<string> _occupiedNodes = new();
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void ResetOccupied() => _occupiedNodes.Clear();
+
+        private readonly HashSet<string> _visitedNodes = new();
+        private Node _currentNode;
+        private Tween _moveTween;
+        private bool _isTurning;
 
         public Func<Node, bool> NodeArrived { get; set; }
-        public Node CurrentNode => currentNode;
-        public bool IsMoving => moveRoutine != null;
+        public Node CurrentNode => _currentNode;
 
-        public void Initialize(Node startNode, float interval)
+        public void Initialize(Node startNode)
         {
-            StopMove();
+            _currentNode = startNode;
+            _visitedNodes.Clear();
 
-            currentNode = startNode;
-            turnInterval = interval;
-            visitedNodeIds.Clear();
-
-            if (currentNode == null)
+            if (_currentNode == null)
                 return;
 
-            visitedNodeIds.Add(currentNode.Data.Id);
-            MoveToCurrentNode();
+            _visitedNodes.Add(_currentNode.Data.Id);
+            _occupiedNodes.Add(_currentNode.Data.Id);
+            transform.position = GetEnemyPosition(_currentNode);
         }
 
-        public void StartMove()
+        public void TakeTurn()
         {
-            if (moveRoutine != null || currentNode == null || !isActiveAndEnabled)
+            if (_isTurning || _currentNode == null)
                 return;
 
-            moveRoutine = StartCoroutine(MoveByTurn());
+            StartCoroutine(DoTurn());
         }
 
-        public void StopMove()
+        private IEnumerator DoTurn()
         {
-            if (moveRoutine != null)
-                StopCoroutine(moveRoutine);
+            _isTurning = true;
 
-            moveRoutine = null;
-        }
-
-        private IEnumerator MoveByTurn()
-        {
-            while (currentNode != null)
+            var nextNode = SelectNextNode();
+            if (nextNode == null)
             {
-                yield return new WaitForSeconds(turnInterval);
-
-                var nextNode = SelectNextUnvisitedNode();
-                if (nextNode == null)
-                    continue;
-
-                currentNode = nextNode;
-                visitedNodeIds.Add(currentNode.Data.Id);
-                MoveToCurrentNode();
-
-                if (NodeArrived != null && !NodeArrived.Invoke(currentNode))
-                {
-                    moveRoutine = null;
-                    yield break;
-                }
+                _isTurning = false;
+                yield break;
             }
 
-            moveRoutine = null;
+            _occupiedNodes.Remove(_currentNode.Data.Id);
+            _occupiedNodes.Add(nextNode.Data.Id);
+
+            _currentNode = nextNode;
+            _visitedNodes.Add(_currentNode.Data.Id);
+
+            yield return SmoothMove();
+
+            _isTurning = false;
+            NodeArrived?.Invoke(_currentNode);
         }
 
-        private void MoveToCurrentNode()
+        private IEnumerator SmoothMove()
         {
-            transform.position = currentNode.EnemyPosition.position;
+            var targetPos = GetEnemyPosition(_currentNode);
+            var distance = Vector3.Distance(transform.position, targetPos);
+            var duration = distance / Mathf.Max(moveSpeed, 0.1f);
+
+            _moveTween?.Kill();
+            _moveTween = transform.DOMove(targetPos, duration)
+                .SetEase(Ease.Linear)
+                .SetLink(gameObject);
+
+            yield return _moveTween.WaitForCompletion();
         }
 
-        private Node SelectNextUnvisitedNode()
+        private Node SelectNextNode()
         {
-            if (currentNode == null || currentNode.Data == null)
+            if (_currentNode?.Data == null)
                 return null;
 
-            var candidates = new List<Node>();
-            foreach (var connectedNodeId in currentNode.Data.ConnectedNodeIds)
+            var unvisitedFree = new List<Node>();
+            var visitedFree = new List<Node>();
+
+            foreach (var id in _currentNode.Data.ConnectedNodeIds)
             {
-                if (visitedNodeIds.Contains(connectedNodeId))
+                if (!Node.TryGetByDataId(id, out var node))
                     continue;
 
-                if (Node.TryGetByDataId(connectedNodeId, out var connectedNode))
-                    candidates.Add(connectedNode);
+                if (_occupiedNodes.Contains(id))
+                    continue;
+
+                if (!_visitedNodes.Contains(id))
+                    unvisitedFree.Add(node);
+                else
+                    visitedFree.Add(node);
             }
 
-            if (candidates.Count == 0)
-                return null;
+            if (unvisitedFree.Count > 0)
+                return unvisitedFree[UnityEngine.Random.Range(0, unvisitedFree.Count)];
 
-            return candidates[UnityEngine.Random.Range(0, candidates.Count)];
+            if (visitedFree.Count > 0)
+                return visitedFree[UnityEngine.Random.Range(0, visitedFree.Count)];
+
+            return null;
+        }
+
+        private static Vector3 GetEnemyPosition(Node node)
+        {
+            return node.EnemyPosition != null
+                ? node.EnemyPosition.position
+                : node.transform.position;
+        }
+
+        private void OnDestroy()
+        {
+            if (_currentNode?.Data != null)
+                _occupiedNodes.Remove(_currentNode.Data.Id);
+
+            _moveTween?.Kill();
         }
     }
 }

@@ -10,7 +10,7 @@ namespace _01.Code.Combat
     {
         [SerializeField] private int attackDamage = 1;
         [SerializeField] private float attackInterval = 1f;
-        [SerializeField] private float bodySlamDistance = 0.18f;
+        [SerializeField] private float bodySlamDistance = 0.3f;
         [SerializeField] private float bodySlamDuration = 0.12f;
 
         private SpriteRenderer healthFill;
@@ -27,10 +27,8 @@ namespace _01.Code.Combat
 
         public void AddAttackDamage(int amount)
         {
-            if (amount <= 0)
-                return;
-
-            attackDamage += amount;
+            if (amount > 0)
+                attackDamage += amount;
         }
 
         private void Awake()
@@ -90,14 +88,15 @@ namespace _01.Code.Combat
                 {
                     isAttacking = true;
                     yield return PlayBodySlam(target);
-                    if (target.Health != null)
+
+                    if (target != null && target.Health != null)
                         target.Health.TakeDamage(attackDamage);
 
                     attackTimer = 0f;
                     RefreshAttackBar(0f);
                     isAttacking = false;
 
-                    if (!target.IsAlive)
+                    if (target == null || !target.IsAlive)
                     {
                         targetDefeated?.Invoke(target);
                         break;
@@ -118,7 +117,8 @@ namespace _01.Code.Combat
             bodySlamTween?.Kill();
 
             var startPosition = transform.position;
-            var direction = target.transform.position - startPosition;
+            var targetPos = target != null ? target.transform.position : startPosition;
+            var direction = targetPos - startPosition;
             direction.z = 0f;
 
             if (direction.sqrMagnitude <= Mathf.Epsilon)
@@ -127,7 +127,8 @@ namespace _01.Code.Combat
             var hitPosition = startPosition + direction.normalized * bodySlamDistance;
             bodySlamTween = DOTween.Sequence()
                 .Append(transform.DOMove(hitPosition, bodySlamDuration).SetEase(Ease.OutQuad))
-                .Append(transform.DOMove(startPosition, bodySlamDuration).SetEase(Ease.InQuad));
+                .Append(transform.DOMove(startPosition, bodySlamDuration).SetEase(Ease.InQuad))
+                .SetLink(gameObject);
 
             yield return bodySlamTween.WaitForCompletion();
         }
@@ -178,20 +179,14 @@ namespace _01.Code.Combat
 
         private void RefreshBars(float attackRatio)
         {
-            RefreshHealthBar();
-            RefreshAttackBar(attackRatio);
-        }
-
-        private void RefreshHealthBar()
-        {
             RefreshHealthBar(health != null ? health.CurrentRatio : 0f);
+            RefreshAttackBar(attackRatio);
         }
 
         private void RefreshHealthBar(float ratio)
         {
             if (healthFill == null)
                 return;
-
             SetFillRatio(healthFill.transform, ratio);
         }
 
@@ -199,7 +194,6 @@ namespace _01.Code.Combat
         {
             if (attackFill == null)
                 return;
-
             SetFillRatio(attackFill.transform, Mathf.Clamp01(ratio));
         }
 

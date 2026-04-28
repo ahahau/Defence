@@ -9,77 +9,72 @@ namespace _01.Code.Manager
     public class DayManager : MonoBehaviour
     {
         [SerializeField] private GameEventChannelSO dayEventChannel;
-
         [SerializeField] private GameEventChannelSO nodeEventChannel;
-
         [SerializeField] private GameEventChannelSO costEventChannel;
+        [SerializeField] private GameEventChannelSO waveEventChannel;
 
-        [SerializeField]
-        private float secondsPerDay = 1f;
-
-        [SerializeField]
-        private int salaryIntervalDays = 30;
+        [SerializeField, Min(1)] private int salaryIntervalDays = 30;
 
         private readonly Dictionary<Node, int> salaryByNode = new();
-        private float elapsedSeconds;
-        private int currentDay = 1;
+        private int _rosterSalaryCost;
+        private int currentDay;
+        private bool _isStandby = true;
 
         private void OnEnable()
         {
             nodeEventChannel.AddListener<UnitAssignedToNodeEvent>(HandleUnitAssigned);
-        }
-
-        private void Start()
-        {
-            RaiseDayChanged();
-            RaiseDayProgressChanged();
-        }
-
-        private void Update()
-        {
-            elapsedSeconds += Time.deltaTime;
-            if (elapsedSeconds < secondsPerDay)
-            {
-                RaiseDayProgressChanged();
-                return;
-            }
-
-            elapsedSeconds -= secondsPerDay;
-            currentDay++;
-            RaiseDayChanged();
-            RaiseDayProgressChanged();
-
-            if (currentDay % salaryIntervalDays == 0)
-                costEventChannel.RaiseEvent(new SalaryCostRequestedEvent(currentDay, CalculateTotalSalary()));
+            if (waveEventChannel != null)
+                waveEventChannel.AddListener<WaveEndedEvent>(HandleWaveEnded);
+            if (costEventChannel != null)
+                costEventChannel.AddListener<RosterHirePaidEvent>(HandleRosterHired);
         }
 
         private void OnDisable()
         {
             nodeEventChannel.RemoveListener<UnitAssignedToNodeEvent>(HandleUnitAssigned);
+            if (waveEventChannel != null)
+                waveEventChannel.RemoveListener<WaveEndedEvent>(HandleWaveEnded);
+            if (costEventChannel != null)
+                costEventChannel.RemoveListener<RosterHirePaidEvent>(HandleRosterHired);
+        }
+
+        public void StartWave()
+        {
+            if (!_isStandby)
+                return;
+
+            _isStandby = false;
+            currentDay++;
+            dayEventChannel.RaiseEvent(new DayChangedEvent(currentDay));
+
+            if (salaryIntervalDays > 0 && currentDay % salaryIntervalDays == 0)
+                costEventChannel.RaiseEvent(new SalaryCostRequestedEvent(currentDay, CalculateTotalSalary()));
+        }
+
+        public void SkipToNextDay() => StartWave();
+
+        private void HandleWaveEnded(WaveEndedEvent evt)
+        {
+            _isStandby = true;
+        }
+
+        private void HandleRosterHired(RosterHirePaidEvent evt)
+        {
+            _rosterSalaryCost += evt.Unit.Cost;
         }
 
         private void HandleUnitAssigned(UnitAssignedToNodeEvent evt)
         {
             salaryByNode[evt.Node] = evt.Unit.Cost;
+            _rosterSalaryCost = Mathf.Max(0, _rosterSalaryCost - evt.Unit.Cost);
         }
 
         private int CalculateTotalSalary()
         {
-            var total = 0;
+            var total = _rosterSalaryCost;
             foreach (var salary in salaryByNode.Values)
                 total += salary;
-
             return total;
-        }
-
-        private void RaiseDayChanged()
-        {
-            dayEventChannel.RaiseEvent(new DayChangedEvent(currentDay));
-        }
-
-        private void RaiseDayProgressChanged()
-        {
-            dayEventChannel.RaiseEvent(new DayProgressChangedEvent(elapsedSeconds / secondsPerDay));
         }
     }
 }

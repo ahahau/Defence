@@ -1,0 +1,132 @@
+using System.Collections;
+using System.Collections.Generic;
+using _01.Code.Core;
+using _01.Code.Enemies;
+using _01.Code.Events;
+using _01.Code.MapCreateSystem;
+using UnityEngine;
+
+namespace _01.Code.Manager
+{
+    public class WaveManager : MonoBehaviour
+    {
+        [SerializeField] private GameEventChannelSO dayEventChannel;
+        [SerializeField] private GameEventChannelSO nodeEventChannel;
+        [SerializeField] private GameEventChannelSO waveEventChannel;
+        [SerializeField] private WaveConfigSO waveConfig;
+        [SerializeField] private Enemy enemyPrefab;
+
+        private Node _portalNode;
+        private int _currentDay;
+        private int _aliveEnemies;
+        private Coroutine _waveCoroutine;
+        private readonly List<Enemy> _activeEnemies = new();
+
+        private void OnEnable()
+        {
+            dayEventChannel.AddListener<DayChangedEvent>(HandleDayChanged);
+            nodeEventChannel.AddListener<PortalInstalledEvent>(HandlePortalInstalled);
+        }
+
+        private void OnDisable()
+        {
+            dayEventChannel.RemoveListener<DayChangedEvent>(HandleDayChanged);
+            nodeEventChannel.RemoveListener<PortalInstalledEvent>(HandlePortalInstalled);
+        }
+
+        private void HandlePortalInstalled(PortalInstalledEvent evt)
+        {
+            _portalNode = evt.Node;
+        }
+
+        private void HandleDayChanged(DayChangedEvent evt)
+        {
+            _currentDay = evt.Day;
+
+            if (_portalNode == null || waveConfig == null)
+                return;
+
+            var entry = waveConfig.GetWaveForDay(evt.Day);
+            if (entry == null)
+                return;
+
+            if (_waveCoroutine != null)
+                StopCoroutine(_waveCoroutine);
+
+            _waveCoroutine = StartCoroutine(RunWave(entry));
+        }
+
+        private IEnumerator RunWave(WaveConfigSO.WaveEntry entry)
+        {
+            _aliveEnemies = entry.enemyCount;
+            _activeEnemies.Clear();
+
+            waveEventChannel.RaiseEvent(new WaveStartedEvent(_currentDay, entry.enemyCount));
+
+            // 1번째 적 즉시 스폰
+            SpawnNextEnemy();
+
+            int remaining = entry.enemyCount - 1;
+
+            while (_aliveEnemies > 0)
+            {
+                yield return new WaitForSeconds(entry.enemyTurnInterval);
+
+                if (_aliveEnemies <= 0)
+                    break;
+
+                // 모든 적 동시에 한 칸 이동
+                foreach (var enemy in _activeEnemies)
+                {
+                    if (enemy != null)
+                        enemy.TakeTurn();
+                }
+
+                // 이전 적이 포탈에서 이동한 후 다음 적 스폰
+                if (remaining > 0)
+                {
+                    SpawnNextEnemy();
+                    remaining--;
+                }
+            }
+
+            _waveCoroutine = null;
+            waveEventChannel.RaiseEvent(new WaveEndedEvent(_currentDay));
+        }
+
+        private void SpawnNextEnemy()
+        {
+            if (_portalNode == null)
+                return;
+
+            var spawnPos = _portalNode.EnemyPosition != null
+                ? _portalNode.EnemyPosition.position
+                : _portalNode.transform.position;
+
+            Enemy enemy;
+            if (enemyPrefab != null)
+            {
+                enemy = Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
+            }
+            else
+            {
+                var go = new GameObject("WaveEnemy");
+                go.transform.position = spawnPos;
+                enemy = go.AddComponent<Enemy>();
+            }
+
+            var captured = enemy;
+            var tracker = enemy.gameObject.AddComponent<WaveEnemyTracker>();
+            tracker.OnEnemyDied = () =>
+            {
+                _activeEnemies.Remove(captured);
+                _aliveEnemies = Mathf.Max(0, _aliveEnemies - 1);
+            };
+
+            enemy.Initialize(_portalNode);
+
+            if (enemy != null)
+                _activeEnemies.Add(enemy);
+        }
+    }
+}

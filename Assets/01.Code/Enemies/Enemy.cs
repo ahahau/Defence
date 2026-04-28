@@ -9,24 +9,27 @@ namespace _01.Code.Enemies
     {
         private Combatant _combatant;
         private EnemyMover _mover;
+        private bool _isInCombat;
 
-        public void Initialize(Node startNode, float interval)
+        public bool IsInCombat => _isInCombat;
+
+        public void Initialize(Node startNode)
         {
-            _combatant = GetComponent<Combatant>();
-            if (_combatant == null)
-                _combatant = gameObject.AddComponent<Combatant>();
-
-            _mover = GetComponent<EnemyMover>();
-            if (_mover == null)
-                _mover = gameObject.AddComponent<EnemyMover>();
+            _combatant = GetComponent<Combatant>() ?? gameObject.AddComponent<Combatant>();
+            _mover = GetComponent<EnemyMover>() ?? gameObject.AddComponent<EnemyMover>();
 
             _mover.NodeArrived = HandleNodeArrived;
-            _mover.Initialize(startNode, interval);
+            _mover.Initialize(startNode);
 
-            if (!HandleNodeArrived(startNode))
+            HandleNodeArrived(startNode);
+        }
+
+        public void TakeTurn()
+        {
+            if (_isInCombat)
                 return;
 
-            _mover.StartMove();
+            _mover?.TakeTurn();
         }
 
         private bool HandleNodeArrived(Node node)
@@ -47,8 +50,7 @@ namespace _01.Code.Enemies
 
         private void ApplyPassBuildingEffect(Node node)
         {
-            if (node == null)
-                return;
+            if (node == null) return;
 
             switch (node.AssignedBuilding)
             {
@@ -79,7 +81,6 @@ namespace _01.Code.Enemies
             if (_combatant.IsAlive)
                 return false;
 
-            _mover.StopMove();
             Destroy(gameObject);
             return true;
         }
@@ -87,50 +88,33 @@ namespace _01.Code.Enemies
         private void HandleUnitEncounter(Node unitNode)
         {
             var unit = unitNode.AssignedUnitInstance;
-            if (unit == null)
-            {
-                ResumeMove();
-                return;
-            }
+            if (unit == null) return;
 
             var unitCombatant = unit.Combatant;
-            if (unitCombatant == null)
-            {
-                ResumeMove();
-                return;
-            }
+            if (unitCombatant == null) return;
 
+            _isInCombat = true;
             _combatant.BeginCombat(unitCombatant, HandleUnitDefeated);
             unitCombatant.BeginCombat(_combatant, HandleEnemyDefeated);
         }
 
-        private void HandleEnemyDefeated(Combatant enemyCombatant)
+        private void HandleEnemyDefeated(Combatant defeatedCombatant)
         {
-            var currentNode = _mover != null ? _mover.CurrentNode : null;
-            if (currentNode != null && currentNode.AssignedUnitInstance != null)
-                currentNode.AssignedUnitInstance.Combatant.StopCombat();
-
+            var node = _mover?.CurrentNode;
+            node?.AssignedUnitInstance?.Combatant?.StopCombat();
             Destroy(gameObject);
         }
 
-        private void HandleUnitDefeated(Combatant unitCombatant)
+        private void HandleUnitDefeated(Combatant defeatedCombatant)
         {
-            var currentNode = _mover != null ? _mover.CurrentNode : null;
-            if (currentNode != null)
-                currentNode.ClearUnit();
+            var node = _mover?.CurrentNode;
+            if (node != null)
+                node.ClearUnit();
 
-            if (unitCombatant != null)
-                Destroy(unitCombatant.gameObject);
+            if (defeatedCombatant != null)
+                Destroy(defeatedCombatant.gameObject);
 
-            ResumeMove();
-        }
-
-        private void ResumeMove()
-        {
-            if (_mover == null || _mover.IsMoving || _mover.CurrentNode == null || !isActiveAndEnabled)
-                return;
-
-            _mover.StartMove();
+            _isInCombat = false;
         }
     }
 }

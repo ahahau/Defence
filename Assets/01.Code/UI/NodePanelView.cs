@@ -3,6 +3,7 @@ using _01.Code.Core;
 using _01.Code.Buildings;
 using _01.Code.MapCreateSystem;
 using _01.Code.Units;
+using _01.Code.Manager;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,85 +12,88 @@ namespace _01.Code.UI
 {
     public class NodePanelView : MonoBehaviour
     {
-
-        [SerializeField]
-        private GameObject panelRoot;
-
-        [SerializeField]
-        private Text titleText;
-
+        [SerializeField] private GameObject panelRoot;
+        [SerializeField] private Text titleText;
         [SerializeField] private Button closeButton;
-
         [SerializeField] private Button installButton;
-
         [SerializeField] private Button demolishButton;
-
         [SerializeField] private Button portalInstallButton;
-
         [SerializeField] private GameObject unitViewSelector;
-
         [SerializeField] private GameObject buildingViewSelector;
-
         [SerializeField] private GameObject unitViewRoot;
-
         [SerializeField] private GameObject buildingViewRoot;
-
         [SerializeField] private string emptyNodeTitleFormat = "{0} Unit Hire";
-
-        [SerializeField] private UnitHireEntryView unitEntryPrefab;
-
-        [SerializeField] private UnitDataSO[] hireableUnits;
-        
         [SerializeField] private Unit unitPrefab;
-
         [SerializeField] private Portal portalPrefab;
-
         [SerializeField] private BuildingDataSO[] installableBuildings;
-
         [SerializeField] private GameEventChannelSO nodeEventChannel;
-        
+        [SerializeField] private GameEventChannelSO uiEventChannel;
+        [SerializeField] private GameEventChannelSO costEventChannel;
         [SerializeField] private Transform unitContentRoot;
-
         [SerializeField] private Transform buildingContentRoot;
-        
-        
+
+        [Header("Roster Deploy")]
+        [SerializeField] private RosterDeployEntryView deployEntryPrefab;
+        [SerializeField] private HiredUnitRoster hiredUnitRoster;
+
         private Node _selectedNode;
         private bool hasInstalledPortal;
+        private bool _isDeployModeActive;
         private readonly List<Button> buildingInstallButtons = new();
+        private readonly List<RosterDeployEntryView> _deployEntries = new();
 
         private void Awake()
         {
             panelRoot.SetActive(false);
             SetActionButtonsActive(false);
             HideInstallPanels();
-            CreateUnitEntries();
             CreateBuildingEntries();
         }
 
         private void OnEnable()
         {
             nodeEventChannel.AddListener<UnlockedNodeClickedEvent>(HandleNodeSelected);
+            if (uiEventChannel != null)
+                uiEventChannel.AddListener<DeployModeChangedEvent>(HandleDeployModeChanged);
+            if (costEventChannel != null)
+                costEventChannel.AddListener<RosterChangedEvent>(HandleRosterChanged);
             closeButton.onClick.AddListener(HandleCloseClicked);
             if (installButton != null)
                 installButton.onClick.AddListener(HandleInstallClicked);
             if (demolishButton != null)
                 demolishButton.onClick.AddListener(HandleDemolishClicked);
-
         }
 
         private void OnDisable()
         {
             nodeEventChannel.RemoveListener<UnlockedNodeClickedEvent>(HandleNodeSelected);
+            if (uiEventChannel != null)
+                uiEventChannel.RemoveListener<DeployModeChangedEvent>(HandleDeployModeChanged);
+            if (costEventChannel != null)
+                costEventChannel.RemoveListener<RosterChangedEvent>(HandleRosterChanged);
             closeButton.onClick.RemoveListener(HandleCloseClicked);
             if (installButton != null)
                 installButton.onClick.RemoveListener(HandleInstallClicked);
             if (demolishButton != null)
                 demolishButton.onClick.RemoveListener(HandleDemolishClicked);
+        }
 
+        private void HandleDeployModeChanged(DeployModeChangedEvent evt)
+        {
+            _isDeployModeActive = evt.IsActive;
+        }
+
+        private void HandleRosterChanged(RosterChangedEvent evt)
+        {
+            if (panelRoot.activeSelf && unitViewRoot != null && unitViewRoot.activeSelf)
+                RefreshRosterEntries();
         }
 
         private void HandleNodeSelected(UnlockedNodeClickedEvent evt)
         {
+            if (_isDeployModeActive)
+                return;
+
             _selectedNode = evt.Node;
             titleText.text = string.Format(emptyNodeTitleFormat, evt.Node.Data.Type);
             HideInstallPanels();
@@ -116,6 +120,7 @@ namespace _01.Code.UI
             SetPanelActive(unitViewRoot, true);
             SetPanelActive(buildingViewRoot, false);
             RefreshBuildingInstallButtons();
+            RefreshRosterEntries();
         }
 
         public void ShowBuildingPanel()
@@ -126,6 +131,51 @@ namespace _01.Code.UI
             SetPanelActive(buildingViewRoot, true);
             RefreshBuildingInstallButtons();
         }
+
+        // ── 로스터 배치 엔트리 ──────────────────────────────
+
+        private void RefreshRosterEntries()
+        {
+            ClearDeployEntries();
+
+            if (hiredUnitRoster == null || deployEntryPrefab == null || unitContentRoot == null)
+                return;
+
+            foreach (var unit in hiredUnitRoster.AvailableUnits)
+            {
+                var entry = Instantiate(deployEntryPrefab, unitContentRoot);
+                entry.Initialize(unit, HandleDeployRequested);
+                _deployEntries.Add(entry);
+            }
+        }
+
+        private void ClearDeployEntries()
+        {
+            foreach (var entry in _deployEntries)
+            {
+                if (entry != null)
+                    Destroy(entry.gameObject);
+            }
+            _deployEntries.Clear();
+        }
+
+        private void HandleDeployRequested(UnitDataSO unitData)
+        {
+            if (_selectedNode == null || _selectedNode.HasAssignedUnit)
+                return;
+
+            var spawnPos = _selectedNode.UnitPosition != null
+                ? _selectedNode.UnitPosition.position
+                : _selectedNode.transform.position;
+
+            var unitGo = Instantiate(unitPrefab, spawnPos, Quaternion.identity);
+            unitGo.Initialize(unitData);
+            _selectedNode.AssignUnit(unitData, unitGo);
+            nodeEventChannel.RaiseEvent(new UnitAssignedToNodeEvent(_selectedNode, unitData));
+            panelRoot.SetActive(false);
+        }
+
+        // ── 빌딩 엔트리 ────────────────────────────────────
 
         private void SetPanelActive(GameObject target, bool active)
         {
@@ -150,18 +200,6 @@ namespace _01.Code.UI
             SetInstallButtonActive(active);
             SetDemolishButtonActive(active);
             RefreshDemolishButton();
-        }
-
-        private void CreateUnitEntries()
-        {
-            if (unitEntryPrefab == null || unitContentRoot == null)
-                return;
-
-            foreach (var unit in hireableUnits)
-            {
-                var entry = Instantiate(unitEntryPrefab, unitContentRoot);
-                entry.Initialize(unit, HandleHireRequested);
-            }
         }
 
         private void CreateBuildingEntries()
@@ -202,18 +240,6 @@ namespace _01.Code.UI
             text.text = buildingData.Cost > 0 ? $"{displayName}\n{buildingData.Cost} Gold" : displayName;
         }
 
-        private void HandleHireRequested(UnitDataSO unit)
-        {
-            if (_selectedNode == null || _selectedNode.HasAssignedUnit)
-                return;
-
-            Unit unitGo = Instantiate(unitPrefab, _selectedNode.UnitPosition.position, Quaternion.identity);
-            unitGo.Initialize(unit);
-            _selectedNode.AssignUnit(unit, unitGo);
-            nodeEventChannel.RaiseEvent(new UnitAssignedToNodeEvent(_selectedNode, unit));
-            panelRoot.SetActive(false);
-        }
-
         private void HandleBuildingInstallRequested(BuildingDataSO buildingData)
         {
             if (buildingData == null || buildingData.Prefab == null || _selectedNode == null || _selectedNode.HasAssignedBuilding)
@@ -229,6 +255,7 @@ namespace _01.Code.UI
             {
                 portal.Initialize(_selectedNode);
                 hasInstalledPortal = true;
+                nodeEventChannel.RaiseEvent(new PortalInstalledEvent(_selectedNode));
             }
 
             RefreshBuildingInstallButtons();
@@ -316,6 +343,7 @@ namespace _01.Code.UI
 
         private void HandleCloseClicked()
         {
+            ClearDeployEntries();
             HideInstallPanels();
             panelRoot.SetActive(false);
         }

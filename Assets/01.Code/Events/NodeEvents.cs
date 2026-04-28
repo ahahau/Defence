@@ -45,4 +45,14 @@ namespace _01.Code.Events
 
         public Node Node { get; }
     }
+
+    public class PortalInstalledEvent : GameEvent
+    {
+        public PortalInstalledEvent(Node node)
+        {
+            Node = node;
+        }
+
+        public Node Node { get; }
+    }
 }

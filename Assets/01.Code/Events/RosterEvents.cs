@@ -1,0 +1,56 @@
+using System.Collections.Generic;
+using _01.Code.Core;
+using _01.Code.Units;
+
+namespace _01.Code.Events
+{
+    public class RosterHireRequestedEvent : GameEvent
+    {
+        public RosterHireRequestedEvent(UnitDataSO unit, int goldAmount)
+        {
+            Unit = unit;
+            GoldAmount = goldAmount;
+        }
+
+        public UnitDataSO Unit { get; }
+        public int GoldAmount { get; }
+    }
+
+    public class RosterHirePaidEvent : GameEvent
+    {
+        public RosterHirePaidEvent(UnitDataSO unit, int goldAmount, int remainingGold)
+        {
+            Unit = unit;
+            GoldAmount = goldAmount;
+            RemainingGold = remainingGold;
+        }
+
+        public UnitDataSO Unit { get; }
+        public int GoldAmount { get; }
+        public int RemainingGold { get; }
+    }
+
+    public class RosterHireRejectedEvent : GameEvent
+    {
+        public RosterHireRejectedEvent(UnitDataSO unit, int goldAmount, int currentGold)
+        {
+            Unit = unit;
+            GoldAmount = goldAmount;
+            CurrentGold = currentGold;
+        }
+
+        public UnitDataSO Unit { get; }
+        public int GoldAmount { get; }
+        public int CurrentGold { get; }
+    }
+
+    public class RosterChangedEvent : GameEvent
+    {
+        public RosterChangedEvent(IReadOnlyList<UnitDataSO> availableUnits)
+        {
+            AvailableUnits = availableUnits;
+        }
+
+        public IReadOnlyList<UnitDataSO> AvailableUnits { get; }
+    }
+}
