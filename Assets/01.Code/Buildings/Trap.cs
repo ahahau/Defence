@@ -11,6 +11,9 @@ namespace _01.Code.Buildings
         [SerializeField]
         private int damage = 3;
 
+        [field: SerializeField, Min(0)]
+        public int DangerIncreaseOnTrigger { get; private set; } = 1;
+
         public bool TryDamage(IDamageable target)
         {
             if (target == null || !target.IsAlive)

@@ -13,6 +13,8 @@ namespace _01.Code.Combat
         public event Action<int> Damaged;
         public bool IsAlive => currentHealth > 0;
         public float CurrentRatio => Ratio;
+        public int CurrentHealth => currentHealth;
+        public int MaxHealth => maxHealth;
 
         private void Awake()
         {
@@ -36,6 +38,34 @@ namespace _01.Code.Combat
                 return;
 
             currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
+            Changed?.Invoke(Ratio);
+        }
+
+        public void Restore(int amount)
+        {
+            if (amount <= 0)
+                return;
+
+            currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
+            Changed?.Invoke(Ratio);
+        }
+
+        public void RestoreToFull()
+        {
+            currentHealth = maxHealth;
+            Changed?.Invoke(Ratio);
+        }
+
+        public void AddMaxHealth(int amount, bool healAddedHealth)
+        {
+            if (amount <= 0)
+                return;
+
+            maxHealth += amount;
+            if (healAddedHealth)
+                currentHealth += amount;
+
+            currentHealth = Mathf.Min(currentHealth, maxHealth);
             Changed?.Invoke(Ratio);
         }
 

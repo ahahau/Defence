@@ -13,6 +13,7 @@ namespace _01.Code.UI
         [SerializeField] private Text statusText;
         [SerializeField] private Button startButton;
         [SerializeField] private DayManager dayManager;
+        [SerializeField] private GameEventChannelSO gameStateEventChannel;
 
         private void Start()
         {
@@ -23,6 +24,8 @@ namespace _01.Code.UI
         {
             waveEventChannel.AddListener<WaveStartedEvent>(HandleWaveStarted);
             waveEventChannel.AddListener<WaveEndedEvent>(HandleWaveEnded);
+            if (gameStateEventChannel != null)
+                gameStateEventChannel.AddListener<GameOverEvent>(HandleGameOver);
             if (startButton != null)
                 startButton.onClick.AddListener(HandleStartClicked);
         }
@@ -31,6 +34,8 @@ namespace _01.Code.UI
         {
             waveEventChannel.RemoveListener<WaveStartedEvent>(HandleWaveStarted);
             waveEventChannel.RemoveListener<WaveEndedEvent>(HandleWaveEnded);
+            if (gameStateEventChannel != null)
+                gameStateEventChannel.RemoveListener<GameOverEvent>(HandleGameOver);
             if (startButton != null)
                 startButton.onClick.RemoveListener(HandleStartClicked);
         }
@@ -54,6 +59,13 @@ namespace _01.Code.UI
             if (statusText != null)
                 statusText.text = "웨이브 클리어!";
             SetStartButtonVisible(true);
+        }
+
+        private void HandleGameOver(GameOverEvent evt)
+        {
+            if (statusText != null)
+                statusText.text = "게임 오버";
+            SetStartButtonVisible(false);
         }
 
         private void SetStartButtonVisible(bool visible)

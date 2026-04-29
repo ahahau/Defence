@@ -1,29 +1,34 @@
 using System;
 using System.Collections;
+using _01.Code.Core;
+using _01.Code.Events;
 using DG.Tweening;
 using UnityEngine;
 
 namespace _01.Code.Combat
 {
     [RequireComponent(typeof(Health))]
+    [RequireComponent(typeof(DamageFeedback))]
     public class Combatant : MonoBehaviour
     {
         [SerializeField] private int attackDamage = 1;
         [SerializeField] private float attackInterval = 1f;
         [SerializeField] private float bodySlamDistance = 0.3f;
         [SerializeField] private float bodySlamDuration = 0.12f;
+        [SerializeField] private CombatBarsView barsView;
 
-        private SpriteRenderer healthFill;
-        private SpriteRenderer attackFill;
-        private Coroutine attackRoutine;
-        private Tween bodySlamTween;
-        private Health health;
-        private DamageFeedback damageFeedback;
-        private bool isAttacking;
+        private Coroutine _attackRoutine;
+        private Tween _bodySlamTween;
+        private Health _health;
+        private DamageFeedback _damageFeedback;
+        private bool _isAttacking;
+        private int artifactAttackDamageBonus;
+        private float artifactAttackDamageMultiplier = 1f;
+        private GameEventChannelSO artifactEventChannel;
 
-        public bool IsAlive => health != null && health.IsAlive;
-        public bool IsAttacking => isAttacking;
-        public Health Health => health;
+        public bool IsAlive => _health != null && _health.IsAlive;
+        public bool IsAttacking => _isAttacking;
+        public Health Health => _health;
 
         public void AddAttackDamage(int amount)
         {
@@ -31,25 +36,37 @@ namespace _01.Code.Combat
                 attackDamage += amount;
         }
 
+        public void SetArtifactAttackModifier(int damageBonus, float damageMultiplier)
+        {
+            artifactAttackDamageBonus = damageBonus;
+            artifactAttackDamageMultiplier = Mathf.Max(0.05f, damageMultiplier);
+        }
+
+        public void SetArtifactEventChannel(GameEventChannelSO eventChannel)
+        {
+            artifactEventChannel = eventChannel;
+        }
+
+        public void MultiplyAttackInterval(float multiplier)
+        {
+            if (multiplier <= 0f || Mathf.Approximately(multiplier, 1f))
+                return;
+
+            attackInterval = Mathf.Max(0.05f, attackInterval * multiplier);
+        }
+
         private void Awake()
         {
-            health = GetComponent<Health>();
-            if (health == null)
-                health = gameObject.AddComponent<Health>();
-
-            damageFeedback = GetComponent<DamageFeedback>();
-            if (damageFeedback == null)
-                damageFeedback = gameObject.AddComponent<DamageFeedback>();
-
-            CreateBars();
-            health.Changed += RefreshHealthBar;
+            _health = GetComponent<Health>();
+            _damageFeedback = GetComponent<DamageFeedback>();
+            _health.Changed += RefreshHealthBar;
             RefreshBars(0f);
         }
 
         private void OnDestroy()
         {
-            if (health != null)
-                health.Changed -= RefreshHealthBar;
+            if (_health != null)
+                _health.Changed -= RefreshHealthBar;
         }
 
         public void BeginCombat(Combatant target, Action<Combatant> targetDefeated)
@@ -57,20 +74,20 @@ namespace _01.Code.Combat
             if (target == null || !target.IsAlive || !IsAlive)
                 return;
 
-            if (attackRoutine != null)
-                StopCoroutine(attackRoutine);
+            if (_attackRoutine != null)
+                StopCoroutine(_attackRoutine);
 
-            attackRoutine = StartCoroutine(AttackLoop(target, targetDefeated));
+            _attackRoutine = StartCoroutine(AttackLoop(target, targetDefeated));
         }
 
         public void StopCombat()
         {
-            if (attackRoutine != null)
-                StopCoroutine(attackRoutine);
+            if (_attackRoutine != null)
+                StopCoroutine(_attackRoutine);
 
-            attackRoutine = null;
-            isAttacking = false;
-            bodySlamTween?.Kill();
+            _attackRoutine = null;
+            _isAttacking = false;
+            _bodySlamTween?.Kill();
             RefreshBars(0f);
         }
 
@@ -84,17 +101,17 @@ namespace _01.Code.Combat
                 attackTimer += Time.deltaTime;
                 RefreshAttackBar(attackTimer / attackInterval);
 
-                if (attackTimer >= attackInterval && !isAttacking)
+                if (attackTimer >= attackInterval && !_isAttacking)
                 {
-                    isAttacking = true;
+                    _isAttacking = true;
                     yield return PlayBodySlam(target);
 
                     if (target != null && target.Health != null)
-                        target.Health.TakeDamage(attackDamage);
+                        target.Health.TakeDamage(ResolveAttackDamage(target));
 
                     attackTimer = 0f;
                     RefreshAttackBar(0f);
-                    isAttacking = false;
+                    _isAttacking = false;
 
                     if (target == null || !target.IsAlive)
                     {
@@ -114,7 +131,7 @@ namespace _01.Code.Combat
             if (target == null)
                 yield break;
 
-            bodySlamTween?.Kill();
+            _bodySlamTween?.Kill();
 
             var startPosition = transform.position;
             var targetPos = target != null ? target.transform.position : startPosition;
@@ -125,82 +142,40 @@ namespace _01.Code.Combat
                 direction = Vector3.right;
 
             var hitPosition = startPosition + direction.normalized * bodySlamDistance;
-            bodySlamTween = DOTween.Sequence()
+            _bodySlamTween = DOTween.Sequence()
                 .Append(transform.DOMove(hitPosition, bodySlamDuration).SetEase(Ease.OutQuad))
                 .Append(transform.DOMove(startPosition, bodySlamDuration).SetEase(Ease.InQuad))
                 .SetLink(gameObject);
 
-            yield return bodySlamTween.WaitForCompletion();
-        }
-
-        private void CreateBars()
-        {
-            var barSprite = CreateBarSprite();
-            var healthRoot = CreateBar("HealthBar", new Vector3(0f, 0.72f, 0f), Color.red, barSprite);
-            healthFill = healthRoot.transform.GetChild(1).GetComponent<SpriteRenderer>();
-
-            var attackRoot = CreateBar("AttackSpeedBar", new Vector3(0f, -0.62f, 0f), Color.yellow, barSprite);
-            attackFill = attackRoot.transform.GetChild(1).GetComponent<SpriteRenderer>();
-        }
-
-        private GameObject CreateBar(string objectName, Vector3 localPosition, Color fillColor, Sprite sprite)
-        {
-            var root = new GameObject(objectName);
-            root.transform.SetParent(transform, false);
-            root.transform.localPosition = localPosition;
-
-            var background = new GameObject("Background");
-            background.transform.SetParent(root.transform, false);
-            background.transform.localScale = new Vector3(0.72f, 0.09f, 1f);
-            var backgroundRenderer = background.AddComponent<SpriteRenderer>();
-            backgroundRenderer.sprite = sprite;
-            backgroundRenderer.color = Color.black;
-            backgroundRenderer.sortingOrder = 40;
-
-            var fill = new GameObject("Fill");
-            fill.transform.SetParent(root.transform, false);
-            fill.transform.localPosition = new Vector3(-0.36f, 0f, -0.01f);
-            fill.transform.localScale = new Vector3(0.72f, 0.06f, 1f);
-            var fillRenderer = fill.AddComponent<SpriteRenderer>();
-            fillRenderer.sprite = sprite;
-            fillRenderer.color = fillColor;
-            fillRenderer.sortingOrder = 41;
-
-            return root;
-        }
-
-        private Sprite CreateBarSprite()
-        {
-            var texture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
-            texture.SetPixel(0, 0, Color.white);
-            texture.Apply();
-            return Sprite.Create(texture, new Rect(0, 0, 1, 1), Vector2.one * 0.5f, 1f);
+            yield return _bodySlamTween.WaitForCompletion();
         }
 
         private void RefreshBars(float attackRatio)
         {
-            RefreshHealthBar(health != null ? health.CurrentRatio : 0f);
+            RefreshHealthBar(_health != null ? _health.CurrentRatio : 0f);
             RefreshAttackBar(attackRatio);
         }
 
         private void RefreshHealthBar(float ratio)
         {
-            if (healthFill == null)
-                return;
-            SetFillRatio(healthFill.transform, ratio);
+            barsView.SetHealthRatio(ratio);
         }
 
         private void RefreshAttackBar(float ratio)
         {
-            if (attackFill == null)
-                return;
-            SetFillRatio(attackFill.transform, Mathf.Clamp01(ratio));
+            barsView.SetAttackRatio(ratio);
         }
 
-        private void SetFillRatio(Transform fillTransform, float ratio)
+        private int ResolveAttackDamage(Combatant target)
         {
-            fillTransform.localScale = new Vector3(0.72f * ratio, fillTransform.localScale.y, fillTransform.localScale.z);
-            fillTransform.localPosition = new Vector3(-0.36f + 0.36f * ratio, fillTransform.localPosition.y, fillTransform.localPosition.z);
+            var modifiedDamage = (attackDamage + artifactAttackDamageBonus) * artifactAttackDamageMultiplier;
+            var damage = Mathf.Max(1, Mathf.RoundToInt(modifiedDamage));
+            if (artifactEventChannel == null)
+                return damage;
+
+            var evt = new CombatDamageCalculatedEvent(this, target, damage);
+            artifactEventChannel.RaiseEvent(evt);
+            return evt.Damage;
         }
     }
 }

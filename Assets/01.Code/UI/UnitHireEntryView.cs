@@ -28,7 +28,7 @@ namespace _01.Code.UI
             _hireRequested = onHireRequested;
 
             nameText.text = _unit.name;
-            costText.text = string.Format(costFormat, _unit.Cost);
+            costText.text = $"{string.Format(costFormat, _unit.Cost)} / 마력 {_unit.MagicCost}";
 
             hireButton.onClick.RemoveListener(HandleHireClicked);
             hireButton.onClick.AddListener(HandleHireClicked);

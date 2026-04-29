@@ -26,6 +26,8 @@ namespace _01.Code.Manager
             costEventChannel.AddListener<RosterHireRequestedEvent>(HandleRosterHireRequested);
             costEventChannel.AddListener<SalaryCostRequestedEvent>(HandleSalaryCostRequested);
             costEventChannel.AddListener<GoldEarnedEvent>(HandleGoldEarned);
+            costEventChannel.AddListener<GoldLostEvent>(HandleGoldLost);
+            costEventChannel.AddListener<UnitRecoveryCostRequestedEvent>(HandleUnitRecoveryCostRequested);
         }
 
         private void Start()
@@ -40,6 +42,8 @@ namespace _01.Code.Manager
             costEventChannel.RemoveListener<RosterHireRequestedEvent>(HandleRosterHireRequested);
             costEventChannel.RemoveListener<SalaryCostRequestedEvent>(HandleSalaryCostRequested);
             costEventChannel.RemoveListener<GoldEarnedEvent>(HandleGoldEarned);
+            costEventChannel.RemoveListener<GoldLostEvent>(HandleGoldLost);
+            costEventChannel.RemoveListener<UnitRecoveryCostRequestedEvent>(HandleUnitRecoveryCostRequested);
         }
 
         private void HandleBuildCostRequested(BuildCostRequestedEvent evt)
@@ -115,6 +119,34 @@ namespace _01.Code.Manager
 
             CurrentGold += evt.GoldAmount;
             RaiseGoldChanged();
+        }
+
+        private void HandleGoldLost(GoldLostEvent evt)
+        {
+            if (evt.GoldAmount <= 0)
+                return;
+
+            CurrentGold = Mathf.Max(0, CurrentGold - evt.GoldAmount);
+            RaiseGoldChanged();
+        }
+
+        private void HandleUnitRecoveryCostRequested(UnitRecoveryCostRequestedEvent evt)
+        {
+            if (evt.GoldAmount <= 0)
+            {
+                costEventChannel.RaiseEvent(new UnitRecoveryCostPaidEvent(evt.Node, evt.Unit, evt.GoldAmount, CurrentGold));
+                return;
+            }
+
+            if (CurrentGold < evt.GoldAmount)
+            {
+                costEventChannel.RaiseEvent(new UnitRecoveryCostRejectedEvent(evt.Node, evt.Unit, evt.GoldAmount, CurrentGold));
+                return;
+            }
+
+            CurrentGold -= evt.GoldAmount;
+            RaiseGoldChanged();
+            costEventChannel.RaiseEvent(new UnitRecoveryCostPaidEvent(evt.Node, evt.Unit, evt.GoldAmount, CurrentGold));
         }
 
         private void RaiseGoldChanged()

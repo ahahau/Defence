@@ -45,11 +45,11 @@ namespace _01.Code.Core
                 OnMouseInputEvent?.Invoke();
         }
 
-        public Vector2 SceneToWorldPoint(Camera inputCamera)
+        public Vector2 SceneToWorldPoint()
         {
             Vector3 mousePos = ReadScreenMousePosition();
             mousePos.z = 0;
-            WorldMousePosition = inputCamera.ScreenToWorldPoint(mousePos);
+            WorldMousePosition = Camera.main.ScreenToWorldPoint(mousePos);
             return WorldMousePosition;
         }
 

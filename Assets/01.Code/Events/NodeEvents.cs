@@ -55,4 +55,14 @@ namespace _01.Code.Events
 
         public Node Node { get; }
     }
+
+    public class UnitStatusRequestedEvent : GameEvent
+    {
+        public UnitStatusRequestedEvent(Node node)
+        {
+            Node = node;
+        }
+
+        public Node Node { get; }
+    }
 }

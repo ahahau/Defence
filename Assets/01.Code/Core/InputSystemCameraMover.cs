@@ -9,33 +9,33 @@ namespace _01.Code.Core
         [SerializeField] private float moveSpeed = 5f;
         [SerializeField] private bool useUnscaledTime = true;
 
-        private Controls controls;
-        private Vector2 directMoveInput;
+        private Controls _controls;
+        private Vector2 _directMoveInput;
 
         private void OnEnable()
         {
             if (inputData != null)
                 return;
 
-            controls ??= new Controls();
-            controls.Player.Move.performed += HandleMove;
-            controls.Player.Move.canceled += HandleMove;
-            controls.Player.Enable();
+            _controls ??= new Controls();
+            _controls.Player.Move.performed += HandleMove;
+            _controls.Player.Move.canceled += HandleMove;
+            _controls.Player.Enable();
         }
 
         private void OnDisable()
         {
-            if (controls == null)
+            if (_controls == null)
                 return;
 
-            controls.Player.Move.performed -= HandleMove;
-            controls.Player.Move.canceled -= HandleMove;
-            controls.Player.Disable();
+            _controls.Player.Move.performed -= HandleMove;
+            _controls.Player.Move.canceled -= HandleMove;
+            _controls.Player.Disable();
         }
 
         private void Update()
         {
-            var moveInput = inputData != null ? inputData.MovementKey : directMoveInput;
+            var moveInput = inputData != null ? inputData.MovementKey : _directMoveInput;
             if (moveInput.sqrMagnitude <= Mathf.Epsilon)
                 return;
 
@@ -49,7 +49,7 @@ namespace _01.Code.Core
 
         private void HandleMove(InputAction.CallbackContext context)
         {
-            directMoveInput = context.ReadValue<Vector2>();
+            _directMoveInput = context.ReadValue<Vector2>();
         }
     }
 }

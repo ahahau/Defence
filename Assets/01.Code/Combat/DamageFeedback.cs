@@ -11,34 +11,35 @@ namespace _01.Code.Combat
         [SerializeField] private float textFloatDistance = 0.45f;
         [SerializeField] private float textDuration = 0.55f;
         [SerializeField] private int textSortingOrder = 60;
+        [SerializeField] private TextMesh damageTextPrefab;
 
-        private Health health;
-        private SpriteRenderer[] spriteRenderers;
-        private Color[] originalColors;
-        private Sequence bloomSequence;
+        private Health _health;
+        private SpriteRenderer[] _spriteRenderers;
+        private Color[] _originalColors;
+        private Sequence _bloomSequence;
 
         private void Awake()
         {
-            health = GetComponent<Health>();
-            spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
-            originalColors = new Color[spriteRenderers.Length];
+            _health = GetComponent<Health>();
+            _spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
+            _originalColors = new Color[_spriteRenderers.Length];
 
-            for (var i = 0; i < spriteRenderers.Length; i++)
-                originalColors[i] = spriteRenderers[i].color;
+            for (var i = 0; i < _spriteRenderers.Length; i++)
+                _originalColors[i] = _spriteRenderers[i].color;
         }
 
         private void OnEnable()
         {
-            if (health != null)
-                health.Damaged += Play;
+            if (_health != null)
+                _health.Damaged += Play;
         }
 
         private void OnDisable()
         {
-            if (health != null)
-                health.Damaged -= Play;
+            if (_health != null)
+                _health.Damaged -= Play;
 
-            bloomSequence?.Kill();
+            _bloomSequence?.Kill();
         }
 
         private void Play(int damage)
@@ -52,27 +53,24 @@ namespace _01.Code.Combat
 
         private void PlayBloom()
         {
-            bloomSequence?.Kill();
-            bloomSequence = DOTween.Sequence();
+            _bloomSequence?.Kill();
+            _bloomSequence = DOTween.Sequence();
 
-            for (var i = 0; i < spriteRenderers.Length; i++)
+            for (var i = 0; i < _spriteRenderers.Length; i++)
             {
-                var spriteRenderer = spriteRenderers[i];
+                var spriteRenderer = _spriteRenderers[i];
                 if (spriteRenderer == null || spriteRenderer.sortingOrder >= 40)
                     continue;
 
-                var originalColor = originalColors[i];
-                bloomSequence.Join(spriteRenderer.DOColor(bloomColor, bloomDuration));
-                bloomSequence.Insert(bloomDuration, spriteRenderer.DOColor(originalColor, bloomDuration));
+                var originalColor = _originalColors[i];
+                _bloomSequence.Join(spriteRenderer.DOColor(bloomColor, bloomDuration));
+                _bloomSequence.Insert(bloomDuration, spriteRenderer.DOColor(originalColor, bloomDuration));
             }
         }
 
         private void CreateDamageText(int damage)
         {
-            var textObject = new GameObject("DamageText");
-            textObject.transform.position = transform.position + Vector3.up * 0.85f;
-
-            var textMesh = textObject.AddComponent<TextMesh>();
+            var textMesh = Instantiate(damageTextPrefab, transform.position + Vector3.up * 0.85f, Quaternion.identity);
             textMesh.text = damage.ToString();
             textMesh.anchor = TextAnchor.MiddleCenter;
             textMesh.alignment = TextAlignment.Center;
@@ -80,12 +78,12 @@ namespace _01.Code.Combat
             textMesh.fontSize = 32;
             textMesh.color = Color.red;
 
-            var meshRenderer = textObject.GetComponent<MeshRenderer>();
+            var meshRenderer = textMesh.GetComponent<MeshRenderer>();
             meshRenderer.sortingOrder = textSortingOrder;
 
-            var endPosition = textObject.transform.position + Vector3.up * textFloatDistance;
+            var endPosition = textMesh.transform.position + Vector3.up * textFloatDistance;
             DOTween.Sequence()
-                .Append(textObject.transform.DOMove(endPosition, textDuration).SetEase(Ease.OutQuad))
+                .Append(textMesh.transform.DOMove(endPosition, textDuration).SetEase(Ease.OutQuad))
                 .Join(DOTween.To(
                     () => textMesh.color.a,
                     alpha =>
@@ -96,7 +94,7 @@ namespace _01.Code.Combat
                     },
                     0f,
                     textDuration))
-                .OnComplete(() => Destroy(textObject));
+                .OnComplete(() => Destroy(textMesh.gameObject));
         }
     }
 }

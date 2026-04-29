@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c95403332b4dc154a86423dce0b0559b, type: 3}
+  m_Name: Test_NoAdjacentEnemyDamageArtifact
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Artifacts.ArtifactDataSO
+  <DisplayName>k__BackingField: "\uACE0\uB9BD \uC804\uD22C \uC544\uD2B8\uD399\uD2B8"
+  <Description>k__BackingField: "\uC8FC\uBCC0 \uB178\uB4DC\uC5D0 \uC801\uC774 \uC5C6\uC73C\uBA74
+    \uACF5\uACA9 \uD53C\uD574 30% \uC99D\uAC00"
+  <Icon>k__BackingField: {fileID: 0}
+  <IconColor>k__BackingField: {r: 0.3, g: 0.9, b: 0.65, a: 1}
+  <Target>k__BackingField: 0
+  <AttackDamageBonus>k__BackingField: 0
+  <AttackDamageMultiplier>k__BackingField: 1
+  <MaxHealthBonus>k__BackingField: 0
+  <AttackIntervalMultiplier>k__BackingField: 1
+  <Effects>k__BackingField:
+  - {fileID: 11400000, guid: f626b9e0e24b3df428a8ed47c9314f05, type: 2}

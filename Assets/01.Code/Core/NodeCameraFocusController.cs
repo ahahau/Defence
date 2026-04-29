@@ -14,10 +14,10 @@ namespace _01.Code.Core
         [SerializeField] private float focusDuration = 0.25f;
         [SerializeField] private bool useUnscaledTime = true;
 
-        private Coroutine focusRoutine;
-        private Vector3 defaultPosition;
-        private float defaultOrthographicSize;
-        private Node focusedNode;
+        private Coroutine _focusRoutine;
+        private Vector3 _defaultPosition;
+        private float _defaultOrthographicSize;
+        private Node _focusedNode;
 
         private void Awake()
         {
@@ -28,15 +28,13 @@ namespace _01.Code.Core
         }
 
         private void OnEnable()
-        {
-            if (nodeEventChannel != null)
-                nodeEventChannel.AddListener<NodeCameraFocusStartedEvent>(HandleFocusStarted);
+        { 
+            nodeEventChannel.AddListener<NodeCameraFocusStartedEvent>(HandleFocusStarted);
         }
 
         private void OnDisable()
-        {
-            if (nodeEventChannel != null)
-                nodeEventChannel.RemoveListener<NodeCameraFocusStartedEvent>(HandleFocusStarted);
+        { 
+            nodeEventChannel.RemoveListener<NodeCameraFocusStartedEvent>(HandleFocusStarted);
         }
 
         private void HandleFocusStarted(NodeCameraFocusStartedEvent evt)
@@ -44,19 +42,19 @@ namespace _01.Code.Core
             if (evt?.Node == null || targetCamera == null)
                 return;
 
-            if (focusRoutine != null)
-                StopCoroutine(focusRoutine);
+            if (_focusRoutine != null)
+                StopCoroutine(_focusRoutine);
 
-            if (focusedNode == evt.Node)
+            if (_focusedNode == evt.Node)
             {
-                focusRoutine = StartCoroutine(RestoreCameraRoutine());
+                _focusRoutine = StartCoroutine(RestoreCameraRoutine());
                 return;
             }
 
-            if (focusedNode == null)
+            if (_focusedNode == null)
                 CacheDefaultCameraState();
 
-            focusRoutine = StartCoroutine(FocusNodeRoutine(evt.Node));
+            _focusRoutine = StartCoroutine(FocusNodeRoutine(evt.Node));
         }
 
         private IEnumerator FocusNodeRoutine(Node node)
@@ -82,9 +80,9 @@ namespace _01.Code.Core
 
             transform.position = targetPosition;
             targetCamera.orthographicSize = focusOrthographicSize;
-            focusedNode = node;
+            _focusedNode = node;
             nodeEventChannel?.RaiseEvent(new NodeCameraFocusCompletedEvent(node));
-            focusRoutine = null;
+            _focusRoutine = null;
         }
 
         private IEnumerator RestoreCameraRoutine()
@@ -99,22 +97,22 @@ namespace _01.Code.Core
                 var t = focusDuration <= Mathf.Epsilon ? 1f : Mathf.Clamp01(elapsed / focusDuration);
                 var easedT = Mathf.SmoothStep(0f, 1f, t);
 
-                transform.position = Vector3.Lerp(startPosition, defaultPosition, easedT);
-                targetCamera.orthographicSize = Mathf.Lerp(startSize, defaultOrthographicSize, easedT);
+                transform.position = Vector3.Lerp(startPosition, _defaultPosition, easedT);
+                targetCamera.orthographicSize = Mathf.Lerp(startSize, _defaultOrthographicSize, easedT);
 
                 yield return null;
             }
 
-            transform.position = defaultPosition;
-            targetCamera.orthographicSize = defaultOrthographicSize;
-            focusedNode = null;
-            focusRoutine = null;
+            transform.position = _defaultPosition;
+            targetCamera.orthographicSize = _defaultOrthographicSize;
+            _focusedNode = null;
+            _focusRoutine = null;
         }
 
         private void CacheDefaultCameraState()
         {
-            defaultPosition = transform.position;
-            defaultOrthographicSize = targetCamera != null ? targetCamera.orthographicSize : 0f;
+            _defaultPosition = transform.position;
+            _defaultOrthographicSize = targetCamera != null ? targetCamera.orthographicSize : 0f;
         }
     }
 }

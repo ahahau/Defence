@@ -13,8 +13,10 @@ namespace _01.Code.Manager
         [SerializeField] private GameEventChannelSO dayEventChannel;
         [SerializeField] private GameEventChannelSO nodeEventChannel;
         [SerializeField] private GameEventChannelSO waveEventChannel;
+        [SerializeField] private GameEventChannelSO costEventChannel;
         [SerializeField] private WaveConfigSO waveConfig;
         [SerializeField] private Enemy enemyPrefab;
+        [SerializeField, Min(0)] private int treasuryGoldLoss = 10;
 
         private Node _portalNode;
         private int _currentDay;
@@ -63,7 +65,6 @@ namespace _01.Code.Manager
 
             waveEventChannel.RaiseEvent(new WaveStartedEvent(_currentDay, entry.enemyCount));
 
-            // 1번째 적 즉시 스폰
             SpawnNextEnemy();
 
             int remaining = entry.enemyCount - 1;
@@ -103,27 +104,17 @@ namespace _01.Code.Manager
                 ? _portalNode.EnemyPosition.position
                 : _portalNode.transform.position;
 
-            Enemy enemy;
-            if (enemyPrefab != null)
-            {
-                enemy = Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
-            }
-            else
-            {
-                var go = new GameObject("WaveEnemy");
-                go.transform.position = spawnPos;
-                enemy = go.AddComponent<Enemy>();
-            }
+            Enemy enemy = Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
 
             var captured = enemy;
-            var tracker = enemy.gameObject.AddComponent<WaveEnemyTracker>();
+            var tracker = enemy.GetComponent<WaveEnemyTracker>();
             tracker.OnEnemyDied = () =>
             {
                 _activeEnemies.Remove(captured);
                 _aliveEnemies = Mathf.Max(0, _aliveEnemies - 1);
             };
 
-            enemy.Initialize(_portalNode);
+            enemy.Initialize(_portalNode, costEventChannel, treasuryGoldLoss);
 
             if (enemy != null)
                 _activeEnemies.Add(enemy);

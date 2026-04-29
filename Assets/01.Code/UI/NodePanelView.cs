@@ -1,3 +1,4 @@
+using _01.Code.Artifacts;
 using _01.Code.Events;
 using _01.Code.Core;
 using _01.Code.Buildings;
@@ -29,6 +30,7 @@ namespace _01.Code.UI
         [SerializeField] private GameEventChannelSO nodeEventChannel;
         [SerializeField] private GameEventChannelSO uiEventChannel;
         [SerializeField] private GameEventChannelSO costEventChannel;
+        [SerializeField] private GameEventChannelSO artifactEventChannel;
         [SerializeField] private Transform unitContentRoot;
         [SerializeField] private Transform buildingContentRoot;
 
@@ -53,29 +55,25 @@ namespace _01.Code.UI
         private void OnEnable()
         {
             nodeEventChannel.AddListener<UnlockedNodeClickedEvent>(HandleNodeSelected);
-            if (uiEventChannel != null)
-                uiEventChannel.AddListener<DeployModeChangedEvent>(HandleDeployModeChanged);
-            if (costEventChannel != null)
-                costEventChannel.AddListener<RosterChangedEvent>(HandleRosterChanged);
+            uiEventChannel.AddListener<DeployModeChangedEvent>(HandleDeployModeChanged);
+            costEventChannel.AddListener<RosterChangedEvent>(HandleRosterChanged);
+            costEventChannel.AddListener<UnitDeployMagicPaidEvent>(HandleDeployMagicPaid);
+            costEventChannel.AddListener<UnitDeployMagicRejectedEvent>(HandleDeployMagicRejected);
             closeButton.onClick.AddListener(HandleCloseClicked);
-            if (installButton != null)
-                installButton.onClick.AddListener(HandleInstallClicked);
-            if (demolishButton != null)
-                demolishButton.onClick.AddListener(HandleDemolishClicked);
+            installButton.onClick.AddListener(HandleInstallClicked); 
+            demolishButton.onClick.AddListener(HandleDemolishClicked);
         }
 
         private void OnDisable()
         {
             nodeEventChannel.RemoveListener<UnlockedNodeClickedEvent>(HandleNodeSelected);
-            if (uiEventChannel != null)
-                uiEventChannel.RemoveListener<DeployModeChangedEvent>(HandleDeployModeChanged);
-            if (costEventChannel != null)
-                costEventChannel.RemoveListener<RosterChangedEvent>(HandleRosterChanged);
+            uiEventChannel.RemoveListener<DeployModeChangedEvent>(HandleDeployModeChanged);
+            costEventChannel.RemoveListener<RosterChangedEvent>(HandleRosterChanged);
+            costEventChannel.RemoveListener<UnitDeployMagicPaidEvent>(HandleDeployMagicPaid);
+            costEventChannel.RemoveListener<UnitDeployMagicRejectedEvent>(HandleDeployMagicRejected);
             closeButton.onClick.RemoveListener(HandleCloseClicked);
-            if (installButton != null)
-                installButton.onClick.RemoveListener(HandleInstallClicked);
-            if (demolishButton != null)
-                demolishButton.onClick.RemoveListener(HandleDemolishClicked);
+            installButton.onClick.RemoveListener(HandleInstallClicked);
+            demolishButton.onClick.RemoveListener(HandleDemolishClicked);
         }
 
         private void HandleDeployModeChanged(DeployModeChangedEvent evt)
@@ -138,6 +136,9 @@ namespace _01.Code.UI
         {
             ClearDeployEntries();
 
+            if (_selectedNode == null || _selectedNode.HasInstallation)
+                return;
+
             if (hiredUnitRoster == null || deployEntryPrefab == null || unitContentRoot == null)
                 return;
 
@@ -161,18 +162,40 @@ namespace _01.Code.UI
 
         private void HandleDeployRequested(UnitDataSO unitData)
         {
-            if (_selectedNode == null || _selectedNode.HasAssignedUnit)
+            if (_selectedNode == null || _selectedNode.HasInstallation)
                 return;
 
-            var spawnPos = _selectedNode.UnitPosition != null
-                ? _selectedNode.UnitPosition.position
-                : _selectedNode.transform.position;
+            costEventChannel.RaiseEvent(new UnitDeployMagicRequestedEvent(
+                _selectedNode,
+                unitData,
+                unitData.MagicCost));
+        }
+
+        private void HandleDeployMagicPaid(UnitDeployMagicPaidEvent evt)
+        {
+            if (evt.Node == null || evt.Node.HasInstallation)
+                return;
+
+            DeployUnit(evt.Node, evt.Unit);
+            panelRoot.SetActive(false);
+        }
+
+        private void HandleDeployMagicRejected(UnitDeployMagicRejectedEvent evt)
+        {
+            titleText.text = $"마력 부족 ({evt.UsedMagic}/{evt.MaxMagic})";
+        }
+
+        private void DeployUnit(Node node, UnitDataSO unitData)
+        {
+            var spawnPos = node.UnitPosition != null
+                ? node.UnitPosition.position
+                : node.transform.position;
 
             var unitGo = Instantiate(unitPrefab, spawnPos, Quaternion.identity);
             unitGo.Initialize(unitData);
-            _selectedNode.AssignUnit(unitData, unitGo);
-            nodeEventChannel.RaiseEvent(new UnitAssignedToNodeEvent(_selectedNode, unitData));
-            panelRoot.SetActive(false);
+            node.AssignUnit(unitData, unitGo);
+            artifactEventChannel.RaiseEvent(new UnitArtifactApplyRequestedEvent(unitGo));
+            nodeEventChannel.RaiseEvent(new UnitAssignedToNodeEvent(node, unitData));
         }
 
         // ── 빌딩 엔트리 ────────────────────────────────────
@@ -242,13 +265,14 @@ namespace _01.Code.UI
 
         private void HandleBuildingInstallRequested(BuildingDataSO buildingData)
         {
-            if (buildingData == null || buildingData.Prefab == null || _selectedNode == null || _selectedNode.HasAssignedBuilding)
+            if (buildingData == null || buildingData.Prefab == null || _selectedNode == null || _selectedNode.HasInstallation)
                 return;
 
             if (buildingData.Unique && buildingData.Prefab is Portal && hasInstalledPortal)
                 return;
 
             var building = CreateBuilding(_selectedNode, buildingData.Prefab);
+            building.Initialize(buildingData);
             _selectedNode.AssignBuilding(building);
 
             if (building is Portal portal)
@@ -326,7 +350,7 @@ namespace _01.Code.UI
 
         private bool CanInstallBuilding(BuildingDataSO buildingData)
         {
-            if (buildingData == null || _selectedNode == null || _selectedNode.HasAssignedBuilding)
+            if (buildingData == null || _selectedNode == null || _selectedNode.HasInstallation)
                 return false;
 
             if (buildingData.Unique && buildingData.Prefab is Portal && hasInstalledPortal)

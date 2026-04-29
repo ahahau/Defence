@@ -19,8 +19,7 @@ namespace _01.Code.UI
             _onDeploy = onDeploy;
 
             var displayName = !string.IsNullOrWhiteSpace(unit.Name) ? unit.Name : unit.name;
-            if (nameText != null)
-                nameText.text = displayName;
+            nameText.text = $"{displayName} / 마력 {unit.MagicCost}";
 
             deployButton.onClick.RemoveListener(HandleDeployClicked);
             deployButton.onClick.AddListener(HandleDeployClicked);

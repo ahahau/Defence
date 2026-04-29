@@ -1,8 +1,11 @@
 using System.Collections.Generic;
+using _01.Code.Artifacts;
 using _01.Code.Core;
 using _01.Code.Events;
+using _01.Code.Units;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 
 namespace _01.Code.MapCreateSystem
 {
@@ -37,27 +40,24 @@ namespace _01.Code.MapCreateSystem
         [SerializeField]
         private int buildGoldCost = 10;
 
+        [Header("Main Unit")]
+        [SerializeField]
+        private MainUnit mainUnitPrefab;
+
+        [SerializeField]
+        private GameEventChannelSO gameStateEventChannel;
+
+        [SerializeField]
+        private GameEventChannelSO artifactEventChannel;
+
         [Header("Events")]
         [SerializeField] private GameEventChannelSO costEventChannel;
 
         [SerializeField] private GameEventChannelSO nodeEventChannel;
 
-        [Header("Random Links")]
-        [SerializeField]
-        private bool useRandomAdjacentLinks = true;
-
-        [SerializeField, Range(0f, 1f)]
-        private float adjacentLinkChance = 0.35f;
-
-        [SerializeField]
-        private int maxRandomAdjacentLinks = 1;
-        
         [Header("Input")]
         [SerializeField]
         private InputDataSO inputDataSO;
-
-        [SerializeField]
-        private Camera inputCamera;
 
         [SerializeField]
         private LayerMask nodeClickMask = Physics2D.DefaultRaycastLayers;
@@ -71,10 +71,10 @@ namespace _01.Code.MapCreateSystem
         private readonly Dictionary<Collider2D, Node> lockedNodeByCollider = new();
         private readonly Dictionary<Collider2D, Node> unlockedNodeByCollider = new();
         private readonly List<DungeonNode> buildParentCandidates = new();
-        private readonly List<DungeonNode> randomAdjacentCandidates = new();
         private Node lastBuiltNodeView;
         private int lastBuiltFrame = -1;
         private bool hasPendingMouseInput;
+        private bool hasPendingRightMouseInput;
 
         public bool HasLockedNodesVisible { get; private set; }
 
@@ -103,10 +103,30 @@ namespace _01.Code.MapCreateSystem
         private void Update()
         {
             if (!hasPendingMouseInput)
-                return;
+            {
+                if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
+                    hasPendingRightMouseInput = true;
 
-            hasPendingMouseInput = false;
-            ProcessMouseInput();
+                if (!hasPendingRightMouseInput)
+                    return;
+            }
+
+            if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
+                hasPendingRightMouseInput = true;
+
+            if (hasPendingRightMouseInput)
+            {
+                hasPendingRightMouseInput = false;
+                ProcessRightMouseInput();
+                hasPendingMouseInput = false;
+                return;
+            }
+
+            if (hasPendingMouseInput)
+            {
+                hasPendingMouseInput = false;
+                ProcessMouseInput();
+            }
         }
 
         [ContextMenu("Rebuild Initial Graph")]
@@ -119,8 +139,32 @@ namespace _01.Code.MapCreateSystem
             unlockedNodeByCollider.Clear();
 
             var entrance = graph.AddNode(DungeonNodeType.Entrance, Vector2Int.zero);
-            RegisterUnlockedNode(view.CreateNode(entrance));
+            var entranceView = view.CreateNode(entrance);
+            RegisterUnlockedNode(entranceView);
+            CreateMainUnit(entranceView);
+
+            var treasury = graph.AddNode(DungeonNodeType.Treasury, Vector2Int.right);
+            graph.Connect(entrance, treasury);
+            var treasuryView = view.CreateNode(treasury);
+            RegisterUnlockedNode(treasuryView);
+            view.CreateEdge(entrance.GridPosition, treasury.GridPosition);
+
             HasLockedNodesVisible = false;
+        }
+
+        private void CreateMainUnit(Node entranceNode)
+        {
+            var spawnPosition = entranceNode.UnitPosition.position;
+
+            MainUnit mainUnit = Instantiate(mainUnitPrefab, spawnPosition, Quaternion.identity);
+            mainUnit.transform.SetParent(entranceNode.transform, true);
+            mainUnit.transform.position = spawnPosition;
+            mainUnit.name = "Player";
+            mainUnit.Initialize(null);
+            mainUnit.InitializeMainUnit(gameStateEventChannel);
+
+            entranceNode.AssignUnit(null, mainUnit);
+            artifactEventChannel.RaiseEvent(new UnitArtifactApplyRequestedEvent(mainUnit));
         }
 
         [ContextMenu("Show Locked Nodes")]
@@ -182,11 +226,6 @@ namespace _01.Code.MapCreateSystem
         {
             TryConnectNodes(preferredFirstNode, node);
 
-            if (!useRandomAdjacentLinks || maxRandomAdjacentLinks <= 0)
-                return;
-
-            var randomLinkCount = 0;
-            randomAdjacentCandidates.Clear();
             foreach (var direction in directions)
             {
                 var adjacentPosition = node.GridPosition + direction;
@@ -196,41 +235,8 @@ namespace _01.Code.MapCreateSystem
                 if (adjacentNode == preferredFirstNode)
                     continue;
 
-                if (randomLinkCount >= maxRandomAdjacentLinks)
-                    return;
-
-                if (!CanRandomConnect(node, adjacentNode))
-                    continue;
-
-                randomAdjacentCandidates.Add(adjacentNode);
-            }
-
-            while (randomAdjacentCandidates.Count > 0 && randomLinkCount < maxRandomAdjacentLinks)
-            {
-                var index = Random.Range(0, randomAdjacentCandidates.Count);
-                var adjacentNode = randomAdjacentCandidates[index];
-                randomAdjacentCandidates.RemoveAt(index);
-
-                if (Random.value > adjacentLinkChance)
-                    continue;
-
                 TryConnectNodes(adjacentNode, node);
-                randomLinkCount++;
             }
-        }
-
-        private bool CanRandomConnect(DungeonNode node, DungeonNode adjacentNode)
-        {
-            if (node.FreePorts <= 0 || adjacentNode.FreePorts <= 0)
-                return false;
-
-            if (node.Type == DungeonNodeType.Boss || node.Type == DungeonNodeType.Treasury)
-                return false;
-
-            if (adjacentNode.Type == DungeonNodeType.Boss || adjacentNode.Type == DungeonNodeType.Treasury)
-                return false;
-
-            return true;
         }
 
         private void TryConnectNodes(DungeonNode fromNode, DungeonNode toNode)
@@ -305,7 +311,7 @@ namespace _01.Code.MapCreateSystem
             if (IsPointerOverUi() || IsPointerOverNodePanel())
                 return;
 
-            Vector2 worldPosition = inputDataSO.SceneToWorldPoint(inputCamera);
+            Vector2 worldPosition = inputDataSO.SceneToWorldPoint();
             var clickedCollider = Physics2D.OverlapPoint(worldPosition, nodeClickMask);
 
             if (clickedCollider == null)
@@ -322,6 +328,26 @@ namespace _01.Code.MapCreateSystem
             }
 
             TryBuildAt(lockedNode);
+        }
+
+        private void ProcessRightMouseInput()
+        {
+            if (IsPointerOverUi())
+                return;
+
+            Vector2 worldPosition = inputDataSO.SceneToWorldPoint();
+            var clickedCollider = Physics2D.OverlapPoint(worldPosition, nodeClickMask);
+
+            if (clickedCollider == null)
+                return;
+
+            if (!unlockedNodeByCollider.TryGetValue(clickedCollider, out var unlockedNode))
+                return;
+
+            if (!unlockedNode.HasAssignedUnit)
+                return;
+
+            nodeEventChannel.RaiseEvent(new UnitStatusRequestedEvent(unlockedNode));
         }
 
         private bool IsPointerOverUi()

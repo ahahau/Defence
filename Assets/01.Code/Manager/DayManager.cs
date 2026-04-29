@@ -19,6 +19,7 @@ namespace _01.Code.Manager
         private int _rosterSalaryCost;
         private int currentDay;
         private bool _isStandby = true;
+        public bool IsStandby => _isStandby;
 
         private void OnEnable()
         {
@@ -65,6 +66,9 @@ namespace _01.Code.Manager
 
         private void HandleUnitAssigned(UnitAssignedToNodeEvent evt)
         {
+            if (evt.Unit == null)
+                return;
+
             salaryByNode[evt.Node] = evt.Unit.Cost;
             _rosterSalaryCost = Mathf.Max(0, _rosterSalaryCost - evt.Unit.Cost);
         }

@@ -64,6 +64,16 @@ namespace _01.Code.Events
         public int GoldAmount { get; }
     }
 
+    public class GoldLostEvent : GameEvent
+    {
+        public GoldLostEvent(int goldAmount)
+        {
+            GoldAmount = goldAmount;
+        }
+
+        public int GoldAmount { get; }
+    }
+
     public class SalaryCostRequestedEvent : GameEvent
     {
         public SalaryCostRequestedEvent(int day, int goldAmount)
@@ -118,6 +128,52 @@ namespace _01.Code.Events
 
         public Node Node { get; }
         public UnitDataSO Unit { get; }
+        public int GoldAmount { get; }
+        public int CurrentGold { get; }
+    }
+
+    public class UnitRecoveryCostRequestedEvent : GameEvent
+    {
+        public UnitRecoveryCostRequestedEvent(Node node, Unit unit, int goldAmount)
+        {
+            Node = node;
+            Unit = unit;
+            GoldAmount = goldAmount;
+        }
+
+        public Node Node { get; }
+        public Unit Unit { get; }
+        public int GoldAmount { get; }
+    }
+
+    public class UnitRecoveryCostPaidEvent : GameEvent
+    {
+        public UnitRecoveryCostPaidEvent(Node node, Unit unit, int goldAmount, int remainingGold)
+        {
+            Node = node;
+            Unit = unit;
+            GoldAmount = goldAmount;
+            RemainingGold = remainingGold;
+        }
+
+        public Node Node { get; }
+        public Unit Unit { get; }
+        public int GoldAmount { get; }
+        public int RemainingGold { get; }
+    }
+
+    public class UnitRecoveryCostRejectedEvent : GameEvent
+    {
+        public UnitRecoveryCostRejectedEvent(Node node, Unit unit, int goldAmount, int currentGold)
+        {
+            Node = node;
+            Unit = unit;
+            GoldAmount = goldAmount;
+            CurrentGold = currentGold;
+        }
+
+        public Node Node { get; }
+        public Unit Unit { get; }
         public int GoldAmount { get; }
         public int CurrentGold { get; }
     }

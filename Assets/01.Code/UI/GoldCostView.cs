@@ -25,7 +25,7 @@ namespace _01.Code.UI
         {
             costEventChannel.RemoveListener<GoldChangedEvent>(HandleGoldChanged);
         }
-
+        
         private void HandleGoldChanged(GoldChangedEvent evt)
         {
             goldText.text = string.Format(format, evt.CurrentGold);
