@@ -21,7 +21,7 @@ namespace _01.Code.Buildings
 
             if (Random.value > triggerChance)
                 return false;
-
+         
             target.TakeDamage(damage);
             return true;
         }

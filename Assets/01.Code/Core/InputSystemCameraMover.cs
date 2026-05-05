@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 namespace _01.Code.Core
@@ -7,6 +8,10 @@ namespace _01.Code.Core
     {
         [SerializeField] private InputDataSO inputData;
         [SerializeField] private float moveSpeed = 5f;
+        [SerializeField] private Camera targetCamera;
+        [SerializeField] private float zoomSpeed = 0.5f;
+        [SerializeField] private float minOrthographicSize = 3f;
+        [SerializeField] private float maxOrthographicSize = 12f;
         [SerializeField] private bool useUnscaledTime = true;
 
         private Controls _controls;
@@ -35,6 +40,8 @@ namespace _01.Code.Core
 
         private void Update()
         {
+            HandleZoom();
+
             var moveInput = inputData != null ? inputData.MovementKey : _directMoveInput;
             if (moveInput.sqrMagnitude <= Mathf.Epsilon)
                 return;
@@ -50,6 +57,30 @@ namespace _01.Code.Core
         private void HandleMove(InputAction.CallbackContext context)
         {
             _directMoveInput = context.ReadValue<Vector2>();
+        }
+
+        private void HandleZoom()
+        {
+            if (Mouse.current == null)
+                return;
+
+            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+                return;
+
+            if (targetCamera == null)
+                targetCamera = GetComponent<Camera>();
+
+            if (targetCamera == null || !targetCamera.orthographic)
+                return;
+
+            var scrollY = Mouse.current.scroll.ReadValue().y;
+            if (Mathf.Abs(scrollY) <= Mathf.Epsilon)
+                return;
+
+            targetCamera.orthographicSize = Mathf.Clamp(
+                targetCamera.orthographicSize - scrollY * zoomSpeed,
+                minOrthographicSize,
+                maxOrthographicSize);
         }
     }
 }

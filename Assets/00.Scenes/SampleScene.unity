@@ -450,7 +450,6 @@ Transform:
   - {fileID: 1909500062}
   - {fileID: 50358837}
   - {fileID: 1854270888}
-  - {fileID: 638210900}
   m_Father: {fileID: 1142800620}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!61 &87358785
@@ -512,6 +511,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.MapCreateSystem.Node
   spriteRenderer: {fileID: 1909500063}
+  unlockedSprite: {fileID: 0}
+  lockedCandidateSprite: {fileID: 0}
   <ClickCollider>k__BackingField: {fileID: 87358785}
   <UnitPosition>k__BackingField: {fileID: 50358837}
   enemyPosition: {fileID: 1854270888}
@@ -734,6 +735,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.MapCreateSystem.Node
   spriteRenderer: {fileID: 95010250}
+  unlockedSprite: {fileID: 0}
+  lockedCandidateSprite: {fileID: 0}
   <ClickCollider>k__BackingField: {fileID: 113081011}
   <UnitPosition>k__BackingField: {fileID: 1997754997}
   enemyPosition: {fileID: 364582283}
@@ -2782,6 +2785,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Core.InputSystemCameraMover
   inputData: {fileID: 11400000, guid: 59016cf6aa98b7640810e5f7fca83b82, type: 2}
   moveSpeed: 5
+  targetCamera: {fileID: 519420031}
+  zoomSpeed: 0.5
+  minOrthographicSize: 3
+  maxOrthographicSize: 12
   useUnscaledTime: 1
 --- !u!114 &519420034
 MonoBehaviour:
@@ -2797,7 +2804,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Core.NodeCameraFocusController
   nodeEventChannel: {fileID: 11400000, guid: f1b1e574478592a46b08a62e4c3db082, type: 2}
   targetCamera: {fileID: 519420031}
-  focusOrthographicSize: 4.5
   focusDuration: 0.25
   useUnscaledTime: 1
 --- !u!1 &523661873
@@ -3351,14 +3357,14 @@ Transform:
   m_GameObject: {fileID: 638210899}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.3, y: -0.162, z: 0}
-  m_LocalScale: {x: 0.25, y: 0.41666666, z: 0.625}
+  m_LocalPosition: {x: 1.2, y: -0.3888, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1273440426}
   - {fileID: 497434788}
   - {fileID: 2094619783}
-  m_Father: {fileID: 87358784}
+  m_Father: {fileID: 2146000001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &638210901
 MonoBehaviour:
@@ -3374,6 +3380,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Units.MainUnit
   spriteRenderer: {fileID: 1273440427}
   gameStateEventChannel: {fileID: 11400000, guid: 959e35f08825cd94a8b68a1c032d7836, type: 2}
+  idleSprite: {fileID: -4208413977036319912, guid: 04e1c700f9787eb4f987e965f729bc19, type: 3}
+  hitSprite: {fileID: -9030365041162893800, guid: 28c61687a54f1e34fbd7d56883871257, type: 3}
+  defeatedSprite: {fileID: 1617423343354356677, guid: 43367cb7fa3eb2b4683122335baad020, type: 3}
+  hitSpriteDuration: 0.25
 --- !u!114 &638210902
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3535,6 +3545,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.MapCreateSystem.Node
   spriteRenderer: {fileID: 2024698694}
+  unlockedSprite: {fileID: 0}
+  lockedCandidateSprite: {fileID: 0}
   <ClickCollider>k__BackingField: {fileID: 654050645}
   <UnitPosition>k__BackingField: {fileID: 483751227}
   enemyPosition: {fileID: 628224740}
@@ -5494,6 +5506,9 @@ MonoBehaviour:
   startButton: {fileID: 0}
   dayManager: {fileID: 0}
   gameStateEventChannel: {fileID: 11400000, guid: 959e35f08825cd94a8b68a1c032d7836, type: 2}
+  costEventChannel: {fileID: 11400000, guid: 734ca3593b5d2884dae267b0e3e601be, type: 2}
+  rewardPanelPrefab: {fileID: 1004, guid: 31fc0bc45ef24048832b4340bf8e1b36, type: 3}
+  rewardPanelParent: {fileID: 689885982}
 --- !u!114 &1024418389
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5843,6 +5858,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.MapCreateSystem.Node
   spriteRenderer: {fileID: 1602614465}
+  unlockedSprite: {fileID: 0}
+  lockedCandidateSprite: {fileID: 0}
   <ClickCollider>k__BackingField: {fileID: 1114225095}
   <UnitPosition>k__BackingField: {fileID: 1432326192}
   enemyPosition: {fileID: 1615606285}
@@ -6451,8 +6468,8 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 30
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
-  m_Color: {r: 0.18, g: 0.55, b: 1, a: 1}
+  m_Sprite: {fileID: -4208413977036319912, guid: 04e1c700f9787eb4f987e965f729bc19, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -7264,6 +7281,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.MapCreateSystem.Node
   spriteRenderer: {fileID: 180887464}
+  unlockedSprite: {fileID: 0}
+  lockedCandidateSprite: {fileID: 0}
   <ClickCollider>k__BackingField: {fileID: 1527542583}
   <UnitPosition>k__BackingField: {fileID: 523661874}
   enemyPosition: {fileID: 2055479113}
@@ -7534,6 +7553,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.MapCreateSystem.Node
   spriteRenderer: {fileID: 1742474130}
+  unlockedSprite: {fileID: 0}
+  lockedCandidateSprite: {fileID: 0}
   <ClickCollider>k__BackingField: {fileID: 1609652615}
   <UnitPosition>k__BackingField: {fileID: 757273790}
   enemyPosition: {fileID: 27806020}
@@ -7690,11 +7711,7 @@ MonoBehaviour:
   artifactEventChannel: {fileID: 11400000, guid: cc88dffc4f05ec147bf3370d40b143c7, type: 2}
   costEventChannel: {fileID: 11400000, guid: 734ca3593b5d2884dae267b0e3e601be, type: 2}
   nodeEventChannel: {fileID: 11400000, guid: f1b1e574478592a46b08a62e4c3db082, type: 2}
-  useRandomAdjacentLinks: 1
-  adjacentLinkChance: 0.35
-  maxRandomAdjacentLinks: 1
   inputDataSO: {fileID: 11400000, guid: 59016cf6aa98b7640810e5f7fca83b82, type: 2}
-  inputCamera: {fileID: 519420031}
   nodeClickMask:
     serializedVersion: 2
     m_Bits: 8
@@ -7716,7 +7733,40 @@ Transform:
   - {fileID: 1142800620}
   - {fileID: 445849741}
   - {fileID: 1135882199}
+  - {fileID: 2146000001}
   m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2146000000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2146000001}
+  m_Layer: 0
+  m_Name: Units
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2146000001
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2146000000}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 638210900}
+  m_Father: {fileID: 1658808570}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1658808571
 MonoBehaviour:
@@ -8717,7 +8767,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1, y: 1.6666667, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 87358784}
@@ -8771,7 +8821,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
+  m_Sprite: {fileID: -9029404108982260363, guid: 1884bb4c0390c82439d07bf7b11cc236, type: 3}
   m_Color: {r: 0.509434, g: 0.50222504, b: 0.50222504, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -9032,6 +9082,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.MapCreateSystem.Node
   spriteRenderer: {fileID: 809809382}
+  unlockedSprite: {fileID: 0}
+  lockedCandidateSprite: {fileID: 0}
   <ClickCollider>k__BackingField: {fileID: 1985280036}
   <UnitPosition>k__BackingField: {fileID: 1006355853}
   enemyPosition: {fileID: 212864390}
@@ -9414,6 +9466,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.MapCreateSystem.Node
   spriteRenderer: {fileID: 778344071}
+  unlockedSprite: {fileID: 0}
+  lockedCandidateSprite: {fileID: 0}
   <ClickCollider>k__BackingField: {fileID: 2072829887}
   <UnitPosition>k__BackingField: {fileID: 702781603}
   enemyPosition: {fileID: 475062634}

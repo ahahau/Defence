@@ -3,6 +3,7 @@ using _01.Code.Combat;
 using _01.Code.Enemies;
 using _01.Code.MapCreateSystem;
 using _01.Code.Units;
+using UnityEngine;
 
 namespace _01.Code.Artifacts
 {
@@ -34,6 +35,15 @@ namespace _01.Code.Artifacts
         public IReadOnlyList<EnemyMover> Enemies { get; }
         public int Damage { get; set; }
 
+        public float AttackerHealthRatio
+        {
+            get
+            {
+                var health = Attacker != null ? Attacker.Health : null;
+                return health != null ? health.CurrentRatio : 0f;
+            }
+        }
+
         public bool HasEnemyOnAdjacentNode()
         {
             if (AttackerNode?.Data == null)
@@ -50,6 +60,11 @@ namespace _01.Code.Artifacts
             }
 
             return false;
+        }
+
+        public bool IsAttackerHealthAtOrBelow(float ratio)
+        {
+            return AttackerHealthRatio <= Mathf.Clamp01(ratio);
         }
     }
 }

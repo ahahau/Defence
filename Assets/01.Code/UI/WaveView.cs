@@ -14,10 +14,16 @@ namespace _01.Code.UI
         [SerializeField] private Button startButton;
         [SerializeField] private DayManager dayManager;
         [SerializeField] private GameEventChannelSO gameStateEventChannel;
+        [SerializeField] private GameEventChannelSO costEventChannel;
+        [SerializeField] private WaveRewardPanelView rewardPanelPrefab;
+        [SerializeField] private Transform rewardPanelParent;
+
+        private WaveRewardPanelView _rewardPanel;
 
         private void Start()
         {
             SetStartButtonVisible(true);
+            EnsureRewardPanel()?.Hide();
         }
 
         private void OnEnable()
@@ -51,6 +57,7 @@ namespace _01.Code.UI
                 waveText.text = $"Day {evt.Day}";
             if (statusText != null)
                 statusText.text = $"적 {evt.EnemyCount}마리 침공!";
+            EnsureRewardPanel()?.Hide();
             SetStartButtonVisible(false);
         }
 
@@ -58,6 +65,8 @@ namespace _01.Code.UI
         {
             if (statusText != null)
                 statusText.text = "웨이브 클리어!";
+
+            EnsureRewardPanel()?.ShowGoldReward(evt.ClearGoldReward);
             SetStartButtonVisible(true);
         }
 
@@ -72,6 +81,22 @@ namespace _01.Code.UI
         {
             if (startButton != null)
                 startButton.gameObject.SetActive(visible);
+        }
+
+        private WaveRewardPanelView EnsureRewardPanel()
+        {
+            if (_rewardPanel != null)
+                return _rewardPanel;
+
+            if (rewardPanelPrefab == null)
+                return null;
+
+            var parent = rewardPanelParent != null ? rewardPanelParent : transform.parent;
+            _rewardPanel = Instantiate(rewardPanelPrefab, parent != null ? parent : transform);
+            _rewardPanel.name = rewardPanelPrefab.name;
+            _rewardPanel.Initialize(costEventChannel);
+            _rewardPanel.transform.SetAsLastSibling();
+            return _rewardPanel;
         }
     }
 }

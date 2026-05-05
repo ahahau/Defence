@@ -10,13 +10,11 @@ namespace _01.Code.Core
     {
         [SerializeField] private GameEventChannelSO nodeEventChannel;
         [SerializeField] private Camera targetCamera;
-        [SerializeField] private float focusOrthographicSize = 4.5f;
         [SerializeField] private float focusDuration = 0.25f;
         [SerializeField] private bool useUnscaledTime = true;
 
         private Coroutine _focusRoutine;
         private Vector3 _defaultPosition;
-        private float _defaultOrthographicSize;
         private Node _focusedNode;
 
         private void Awake()
@@ -60,7 +58,6 @@ namespace _01.Code.Core
         private IEnumerator FocusNodeRoutine(Node node)
         {
             var startPosition = transform.position;
-            var startSize = targetCamera.orthographicSize;
 
             var targetPosition = node.transform.position;
             targetPosition.z = startPosition.z;
@@ -73,13 +70,11 @@ namespace _01.Code.Core
                 var easedT = Mathf.SmoothStep(0f, 1f, t);
 
                 transform.position = Vector3.Lerp(startPosition, targetPosition, easedT);
-                targetCamera.orthographicSize = Mathf.Lerp(startSize, focusOrthographicSize, easedT);
 
                 yield return null;
             }
 
             transform.position = targetPosition;
-            targetCamera.orthographicSize = focusOrthographicSize;
             _focusedNode = node;
             nodeEventChannel?.RaiseEvent(new NodeCameraFocusCompletedEvent(node));
             _focusRoutine = null;
@@ -88,7 +83,6 @@ namespace _01.Code.Core
         private IEnumerator RestoreCameraRoutine()
         {
             var startPosition = transform.position;
-            var startSize = targetCamera.orthographicSize;
             var elapsed = 0f;
 
             while (elapsed < focusDuration)
@@ -98,13 +92,11 @@ namespace _01.Code.Core
                 var easedT = Mathf.SmoothStep(0f, 1f, t);
 
                 transform.position = Vector3.Lerp(startPosition, _defaultPosition, easedT);
-                targetCamera.orthographicSize = Mathf.Lerp(startSize, _defaultOrthographicSize, easedT);
 
                 yield return null;
             }
 
             transform.position = _defaultPosition;
-            targetCamera.orthographicSize = _defaultOrthographicSize;
             _focusedNode = null;
             _focusRoutine = null;
         }
@@ -112,7 +104,6 @@ namespace _01.Code.Core
         private void CacheDefaultCameraState()
         {
             _defaultPosition = transform.position;
-            _defaultOrthographicSize = targetCamera != null ? targetCamera.orthographicSize : 0f;
         }
     }
 }

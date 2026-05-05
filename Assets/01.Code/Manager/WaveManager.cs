@@ -92,7 +92,7 @@ namespace _01.Code.Manager
             }
 
             _waveCoroutine = null;
-            waveEventChannel.RaiseEvent(new WaveEndedEvent(_currentDay));
+            waveEventChannel.RaiseEvent(new WaveEndedEvent(_currentDay, entry.clearGoldReward));
         }
 
         private void SpawnNextEnemy()
@@ -115,7 +115,6 @@ namespace _01.Code.Manager
             };
 
             enemy.Initialize(_portalNode, costEventChannel, treasuryGoldLoss);
-
             if (enemy != null)
                 _activeEnemies.Add(enemy);
         }

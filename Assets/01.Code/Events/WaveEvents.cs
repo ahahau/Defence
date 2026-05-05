@@ -16,11 +16,13 @@ namespace _01.Code.Events
 
     public class WaveEndedEvent : GameEvent
     {
-        public WaveEndedEvent(int day)
+        public WaveEndedEvent(int day, int clearGoldReward)
         {
             Day = day;
+            ClearGoldReward = clearGoldReward;
         }
 
         public int Day { get; }
+        public int ClearGoldReward { get; }
     }
 }

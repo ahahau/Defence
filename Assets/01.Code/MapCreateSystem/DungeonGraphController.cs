@@ -71,10 +71,12 @@ namespace _01.Code.MapCreateSystem
         private readonly Dictionary<Collider2D, Node> lockedNodeByCollider = new();
         private readonly Dictionary<Collider2D, Node> unlockedNodeByCollider = new();
         private readonly List<DungeonNode> buildParentCandidates = new();
+        private const string UnitsRootName = "Units";
         private Node lastBuiltNodeView;
         private int lastBuiltFrame = -1;
         private bool hasPendingMouseInput;
         private bool hasPendingRightMouseInput;
+        private Transform unitsRoot;
 
         public bool HasLockedNodesVisible { get; private set; }
 
@@ -137,6 +139,7 @@ namespace _01.Code.MapCreateSystem
             view.ClearAll();
             lockedNodeByCollider.Clear();
             unlockedNodeByCollider.Clear();
+            ClearUnitsRoot();
 
             var entrance = graph.AddNode(DungeonNodeType.Entrance, Vector2Int.zero);
             var entranceView = view.CreateNode(entrance);
@@ -157,14 +160,59 @@ namespace _01.Code.MapCreateSystem
             var spawnPosition = entranceNode.UnitPosition.position;
 
             MainUnit mainUnit = Instantiate(mainUnitPrefab, spawnPosition, Quaternion.identity);
-            mainUnit.transform.SetParent(entranceNode.transform, true);
+            mainUnit.transform.SetParent(GetOrCreateUnitsRoot(), true);
             mainUnit.transform.position = spawnPosition;
+            mainUnit.transform.localScale = Vector3.one;
             mainUnit.name = "Player";
             mainUnit.Initialize(null);
             mainUnit.InitializeMainUnit(gameStateEventChannel);
 
             entranceNode.AssignUnit(null, mainUnit);
             artifactEventChannel.RaiseEvent(new UnitArtifactApplyRequestedEvent(mainUnit));
+        }
+
+        private Transform GetOrCreateUnitsRoot()
+        {
+            if (unitsRoot != null)
+                return unitsRoot;
+
+            var existingRoot = transform.Find(UnitsRootName);
+            if (existingRoot != null)
+            {
+                unitsRoot = existingRoot;
+                return unitsRoot;
+            }
+
+            var rootObject = new GameObject(UnitsRootName);
+            unitsRoot = rootObject.transform;
+            unitsRoot.SetParent(transform);
+            unitsRoot.localPosition = Vector3.zero;
+            unitsRoot.localRotation = Quaternion.identity;
+            unitsRoot.localScale = Vector3.one;
+            return unitsRoot;
+        }
+
+        private void ClearUnitsRoot()
+        {
+            var existingRoot = transform.Find(UnitsRootName);
+            if (existingRoot == null)
+            {
+                unitsRoot = null;
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                existingRoot.name = $"{UnitsRootName}_Destroying";
+                existingRoot.SetParent(null);
+                Destroy(existingRoot.gameObject);
+            }
+            else
+            {
+                DestroyImmediate(existingRoot.gameObject);
+            }
+
+            unitsRoot = null;
         }
 
         [ContextMenu("Show Locked Nodes")]

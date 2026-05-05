@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Test_AttackPowerArtifact
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Artifacts.ArtifactDataSO
   <DisplayName>k__BackingField: "\uACF5\uACA9\uB825 20% \uC99D\uAC00 \uC544\uD2B8\uD399\uD2B8"
-  <Description>k__BackingField: "\uBAA8\uB4E0 \uC720\uB2DB \uACF5\uACA9\uB825 20% \uC99D\uAC00"
+  <Description>k__BackingField: "\uBAA8\uB4E0 \uC720\uB2DB \uACF5\uACA9\uB825 20%
+    \uC99D\uAC00"
   <Icon>k__BackingField: {fileID: 0}
   <IconColor>k__BackingField: {r: 0.9, g: 0.22, b: 0.18, a: 1}
   <Target>k__BackingField: 0
@@ -21,3 +22,5 @@ MonoBehaviour:
   <AttackDamageMultiplier>k__BackingField: 1.2
   <MaxHealthBonus>k__BackingField: 0
   <AttackIntervalMultiplier>k__BackingField: 1
+  <Effects>k__BackingField:
+  - {fileID: 11400000, guid: f88f3775efa36024098de88fa850bca8, type: 2}

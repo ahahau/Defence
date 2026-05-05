@@ -34,7 +34,7 @@ namespace _01.Code.Units
         {
             Data = unitData;
             if (unitData != null)
-                spriteRenderer.sprite = unitData.Sprite;
+                SetUnitSprite(unitData.Sprite);
 
             EnsureCombatant();
         }
@@ -78,6 +78,12 @@ namespace _01.Code.Units
             IsIncapacitated = !Health.IsAlive;
             if (IsIncapacitated)
                 Combatant.StopCombat();
+        }
+
+        protected void SetUnitSprite(Sprite sprite)
+        {
+            if (spriteRenderer != null && sprite != null)
+                spriteRenderer.sprite = sprite;
         }
     }
 }

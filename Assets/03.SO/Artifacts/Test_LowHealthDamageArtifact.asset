@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c95403332b4dc154a86423dce0b0559b, type: 3}
-  m_Name: Test_RawStatArtifact
+  m_Name: Test_LowHealthDamageArtifact
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Artifacts.ArtifactDataSO
-  <DisplayName>k__BackingField: "\uAE61\uC2A4\uD0EF \uD14C\uC2A4\uD2B8 \uC544\uD2B8\uD399\uD2B8"
-  <Description>k__BackingField: "\uBAA8\uB4E0 \uC720\uB2DB \uCD5C\uB300 \uCCB4\uB825
-    +10, \uACF5\uACA9 \uC18D\uB3C4 10% \uC99D\uAC00"
+  <DisplayName>k__BackingField: "\uBC30\uC218\uC9C4 \uC544\uD2B8\uD399\uD2B8"
+  <Description>k__BackingField: "\uD604\uC7AC \uCCB4\uB825\uC774 50% \uC774\uD558\uC77C
+    \uB54C \uACF5\uACA9 \uD53C\uD574 50% \uC99D\uAC00"
   <Icon>k__BackingField: {fileID: 0}
-  <IconColor>k__BackingField: {r: 0.16, g: 0.7, b: 0.95, a: 1}
+  <IconColor>k__BackingField: {r: 0.95, g: 0.35, b: 0.35, a: 1}
   <Target>k__BackingField: 0
   <AttackDamageBonus>k__BackingField: 0
   <AttackDamageMultiplier>k__BackingField: 1
-  <MaxHealthBonus>k__BackingField: 10
-  <AttackIntervalMultiplier>k__BackingField: 0.9
+  <MaxHealthBonus>k__BackingField: 0
+  <AttackIntervalMultiplier>k__BackingField: 1
   <Effects>k__BackingField:
-  - {fileID: 11400000, guid: f88f3775efa36024098de88fa850bca8, type: 2}
+  - {fileID: 11400000, guid: f422b4f3a2df5a947903b04f375859fe, type: 2}

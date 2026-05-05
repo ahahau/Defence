@@ -13,6 +13,7 @@ namespace _01.Code.Manager
             [Min(1)] public int enemyCount = 3;
             [Min(0.5f)] public float spawnInterval = 1f;
             public float enemyTurnInterval = 3f;
+            [Min(0)] public int clearGoldReward = 30;
         }
 
         [SerializeField] private WaveEntry[] specificWaves = Array.Empty<WaveEntry>();

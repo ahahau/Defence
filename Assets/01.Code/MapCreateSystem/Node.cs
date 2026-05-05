@@ -14,6 +14,18 @@ namespace _01.Code.MapCreateSystem
         [SerializeField]
         private SpriteRenderer spriteRenderer;
 
+        [SerializeField]
+        private Sprite unlockedSprite;
+
+        [SerializeField]
+        private Sprite lockedCandidateSprite;
+
+        [SerializeField]
+        private Vector3 unlockedSpriteScale = new(1f, 1.6666667f, 1f);
+
+        [SerializeField]
+        private Vector3 lockedCandidateSpriteScale = Vector3.one;
+
         [field: SerializeField]
         public Collider2D ClickCollider { get; private set; }
         
@@ -61,6 +73,8 @@ namespace _01.Code.MapCreateSystem
             name = $"Node_{data.Type}_{data.GridPosition.x}_{data.GridPosition.y}";
             transform.localScale = ResolvePrefabScale() * size;
             DangerLevel = 0;
+            SetSprite(unlockedSprite);
+            SetSpriteScale(unlockedSpriteScale);
             SetVisualAlpha(1f);
             nodesByDataId[data.Id] = this;
         }
@@ -77,6 +91,8 @@ namespace _01.Code.MapCreateSystem
 
             name = $"LockedNode_{gridPosition.x}_{gridPosition.y}";
             transform.localScale = ResolvePrefabScale() * size * lockedVisualScale;
+            SetSprite(lockedCandidateSprite);
+            SetSpriteScale(lockedCandidateSpriteScale);
             SetVisualAlpha(lockedVisualAlpha);
         }
 
@@ -128,6 +144,18 @@ namespace _01.Code.MapCreateSystem
             var color = spriteRenderer.color;
             color.a = alpha;
             spriteRenderer.color = color;
+        }
+
+        private void SetSprite(Sprite sprite)
+        {
+            if (spriteRenderer != null && sprite != null)
+                spriteRenderer.sprite = sprite;
+        }
+
+        private void SetSpriteScale(Vector3 scale)
+        {
+            if (spriteRenderer != null)
+                spriteRenderer.transform.localScale = scale;
         }
 
         private Vector3 ResolvePrefabScale()

@@ -18,4 +18,5 @@ MonoBehaviour:
     enemyCount: 3
     spawnInterval: 1
     enemyTurnInterval: 3
+    clearGoldReward: 30
   waveEveryNDays: 1
