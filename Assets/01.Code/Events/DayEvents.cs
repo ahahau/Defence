@@ -11,14 +11,4 @@ namespace _01.Code.Events
 
         public int Day { get; }
     }
-
-    public class DayProgressChangedEvent : GameEvent
-    {
-        public DayProgressChangedEvent(float progress)
-        {
-            Progress = progress;
-        }
-
-        public float Progress { get; }
-    }
 }

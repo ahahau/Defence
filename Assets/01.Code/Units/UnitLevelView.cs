@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -5,7 +6,7 @@ namespace _01.Code.Units
 {
     public class UnitLevelView : MonoBehaviour
     {
-        [SerializeField] private Text levelText;
+        [SerializeField] private TextMeshProUGUI levelText;
         [SerializeField] private Image experienceFill;
 
         public void SetLevel(int level)

@@ -6,6 +6,7 @@ using _01.Code.MapCreateSystem;
 using _01.Code.Units;
 using _01.Code.Manager;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,7 +15,7 @@ namespace _01.Code.UI
     public class NodePanelView : MonoBehaviour
     {
         [SerializeField] private GameObject panelRoot;
-        [SerializeField] private Text titleText;
+        [SerializeField] private TMP_Text titleText;
         [SerializeField] private Button closeButton;
         [SerializeField] private Button installButton;
         [SerializeField] private Button demolishButton;
@@ -46,7 +47,7 @@ namespace _01.Code.UI
 
         private void Awake()
         {
-            panelRoot.SetActive(false);
+            panelRoot?.SetActive(false);
             SetActionButtonsActive(false);
             HideInstallPanels();
             CreateBuildingEntries();
@@ -54,26 +55,26 @@ namespace _01.Code.UI
 
         private void OnEnable()
         {
-            nodeEventChannel.AddListener<UnlockedNodeClickedEvent>(HandleNodeSelected);
-            uiEventChannel.AddListener<DeployModeChangedEvent>(HandleDeployModeChanged);
-            costEventChannel.AddListener<RosterChangedEvent>(HandleRosterChanged);
-            costEventChannel.AddListener<UnitDeployMagicPaidEvent>(HandleDeployMagicPaid);
-            costEventChannel.AddListener<UnitDeployMagicRejectedEvent>(HandleDeployMagicRejected);
-            closeButton.onClick.AddListener(HandleCloseClicked);
-            installButton.onClick.AddListener(HandleInstallClicked); 
-            demolishButton.onClick.AddListener(HandleDemolishClicked);
+            nodeEventChannel?.AddListener<UnlockedNodeClickedEvent>(HandleNodeSelected);
+            uiEventChannel?.AddListener<DeployModeChangedEvent>(HandleDeployModeChanged);
+            costEventChannel?.AddListener<RosterChangedEvent>(HandleRosterChanged);
+            costEventChannel?.AddListener<UnitDeployMagicPaidEvent>(HandleDeployMagicPaid);
+            costEventChannel?.AddListener<UnitDeployMagicRejectedEvent>(HandleDeployMagicRejected);
+            closeButton?.onClick.AddListener(HandleCloseClicked);
+            installButton?.onClick.AddListener(HandleInstallClicked);
+            demolishButton?.onClick.AddListener(HandleDemolishClicked);
         }
 
         private void OnDisable()
         {
-            nodeEventChannel.RemoveListener<UnlockedNodeClickedEvent>(HandleNodeSelected);
-            uiEventChannel.RemoveListener<DeployModeChangedEvent>(HandleDeployModeChanged);
-            costEventChannel.RemoveListener<RosterChangedEvent>(HandleRosterChanged);
-            costEventChannel.RemoveListener<UnitDeployMagicPaidEvent>(HandleDeployMagicPaid);
-            costEventChannel.RemoveListener<UnitDeployMagicRejectedEvent>(HandleDeployMagicRejected);
-            closeButton.onClick.RemoveListener(HandleCloseClicked);
-            installButton.onClick.RemoveListener(HandleInstallClicked);
-            demolishButton.onClick.RemoveListener(HandleDemolishClicked);
+            nodeEventChannel?.RemoveListener<UnlockedNodeClickedEvent>(HandleNodeSelected);
+            uiEventChannel?.RemoveListener<DeployModeChangedEvent>(HandleDeployModeChanged);
+            costEventChannel?.RemoveListener<RosterChangedEvent>(HandleRosterChanged);
+            costEventChannel?.RemoveListener<UnitDeployMagicPaidEvent>(HandleDeployMagicPaid);
+            costEventChannel?.RemoveListener<UnitDeployMagicRejectedEvent>(HandleDeployMagicRejected);
+            closeButton?.onClick.RemoveListener(HandleCloseClicked);
+            installButton?.onClick.RemoveListener(HandleInstallClicked);
+            demolishButton?.onClick.RemoveListener(HandleDemolishClicked);
         }
 
         private void HandleDeployModeChanged(DeployModeChangedEvent evt)
@@ -83,19 +84,19 @@ namespace _01.Code.UI
 
         private void HandleRosterChanged(RosterChangedEvent evt)
         {
-            if (panelRoot.activeSelf && unitViewRoot != null && unitViewRoot.activeSelf)
+            if (panelRoot != null && panelRoot.activeSelf && unitViewRoot != null && unitViewRoot.activeSelf)
                 RefreshRosterEntries();
         }
 
         private void HandleNodeSelected(UnlockedNodeClickedEvent evt)
         {
-            if (_isDeployModeActive)
+            if (_isDeployModeActive || evt.Node == null || evt.Node.Data == null)
                 return;
 
             _selectedNode = evt.Node;
-            titleText.text = string.Format(emptyNodeTitleFormat, evt.Node.Data.Type);
+            SetTitle(string.Format(emptyNodeTitleFormat, evt.Node.Data.Type));
             HideInstallPanels();
-            panelRoot.SetActive(false);
+            panelRoot?.SetActive(false);
             SetActionButtonsActive(true);
             RefreshDemolishButton();
             RefreshBuildingInstallButtons();
@@ -106,9 +107,10 @@ namespace _01.Code.UI
             if (_selectedNode == null)
                 return;
 
-            titleText.text = string.Format(emptyNodeTitleFormat, _selectedNode.Data.Type);
+            if (_selectedNode.Data != null)
+                SetTitle(string.Format(emptyNodeTitleFormat, _selectedNode.Data.Type));
             ShowUnitPanel();
-            panelRoot.SetActive(true);
+            panelRoot?.SetActive(true);
         }
 
         public void ShowUnitPanel()
@@ -162,10 +164,10 @@ namespace _01.Code.UI
 
         private void HandleDeployRequested(UnitDataSO unitData)
         {
-            if (_selectedNode == null || _selectedNode.HasInstallation)
+            if (_selectedNode == null || _selectedNode.HasInstallation || unitData == null)
                 return;
 
-            costEventChannel.RaiseEvent(new UnitDeployMagicRequestedEvent(
+            costEventChannel?.RaiseEvent(new UnitDeployMagicRequestedEvent(
                 _selectedNode,
                 unitData,
                 unitData.MagicCost));
@@ -177,16 +179,19 @@ namespace _01.Code.UI
                 return;
 
             DeployUnit(evt.Node, evt.Unit);
-            panelRoot.SetActive(false);
+            panelRoot?.SetActive(false);
         }
 
         private void HandleDeployMagicRejected(UnitDeployMagicRejectedEvent evt)
         {
-            titleText.text = $"마력 부족 ({evt.UsedMagic}/{evt.MaxMagic})";
+            SetTitle($"마력 부족 ({evt.UsedMagic}/{evt.MaxMagic})");
         }
 
         private void DeployUnit(Node node, UnitDataSO unitData)
         {
+            if (node == null || unitData == null || unitPrefab == null)
+                return;
+
             var spawnPos = node.UnitPosition != null
                 ? node.UnitPosition.position
                 : node.transform.position;
@@ -194,8 +199,8 @@ namespace _01.Code.UI
             var unitGo = Instantiate(unitPrefab, spawnPos, Quaternion.identity);
             unitGo.Initialize(unitData);
             node.AssignUnit(unitData, unitGo);
-            artifactEventChannel.RaiseEvent(new UnitArtifactApplyRequestedEvent(unitGo));
-            nodeEventChannel.RaiseEvent(new UnitAssignedToNodeEvent(node, unitData));
+            artifactEventChannel?.RaiseEvent(new UnitArtifactApplyRequestedEvent(unitGo));
+            nodeEventChannel?.RaiseEvent(new UnitAssignedToNodeEvent(node, unitData));
         }
 
         // ── 빌딩 엔트리 ────────────────────────────────────
@@ -227,7 +232,7 @@ namespace _01.Code.UI
 
         private void CreateBuildingEntries()
         {
-            if (portalInstallButton == null)
+            if (portalInstallButton == null || installableBuildings == null)
                 return;
 
             var contentRoot = buildingContentRoot != null ? buildingContentRoot : portalInstallButton.transform.parent;
@@ -253,7 +258,10 @@ namespace _01.Code.UI
 
         private void SetButtonLabel(Button button, BuildingDataSO buildingData)
         {
-            var text = button.GetComponentInChildren<Text>();
+            if (button == null || buildingData == null)
+                return;
+
+            var text = button.GetComponentInChildren<TMP_Text>();
             if (text == null)
                 return;
 
@@ -272,6 +280,9 @@ namespace _01.Code.UI
                 return;
 
             var building = CreateBuilding(_selectedNode, buildingData.Prefab);
+            if (building == null)
+                return;
+
             building.Initialize(buildingData);
             _selectedNode.AssignBuilding(building);
 
@@ -279,11 +290,11 @@ namespace _01.Code.UI
             {
                 portal.Initialize(_selectedNode);
                 hasInstalledPortal = true;
-                nodeEventChannel.RaiseEvent(new PortalInstalledEvent(_selectedNode));
+                nodeEventChannel?.RaiseEvent(new PortalInstalledEvent(_selectedNode));
             }
 
             RefreshBuildingInstallButtons();
-            panelRoot.SetActive(false);
+            panelRoot?.SetActive(false);
         }
 
         private void HandleDemolishClicked()
@@ -293,7 +304,10 @@ namespace _01.Code.UI
 
             var building = _selectedNode.AssignedBuilding;
             if (building is Portal)
+            {
                 hasInstalledPortal = false;
+                nodeEventChannel?.RaiseEvent(new PortalRemovedEvent());
+            }
 
             _selectedNode.ClearBuilding();
 
@@ -302,11 +316,14 @@ namespace _01.Code.UI
 
             RefreshDemolishButton();
             RefreshBuildingInstallButtons();
-            panelRoot.SetActive(false);
+            panelRoot?.SetActive(false);
         }
 
         private Building CreateBuilding(Node targetNode, Building buildingPrefab)
         {
+            if (targetNode == null || buildingPrefab == null)
+                return null;
+
             var spawnPosition = targetNode.UnitPosition != null
                 ? targetNode.UnitPosition.position
                 : targetNode.transform.position;
@@ -332,6 +349,9 @@ namespace _01.Code.UI
 
         private BuildingDataSO ResolveBuildingData(Button button)
         {
+            if (installableBuildings == null)
+                return null;
+
             var index = buildingInstallButtons.IndexOf(button);
             var dataIndex = 0;
             foreach (var buildingData in installableBuildings)
@@ -369,7 +389,7 @@ namespace _01.Code.UI
         {
             ClearDeployEntries();
             HideInstallPanels();
-            panelRoot.SetActive(false);
+            panelRoot?.SetActive(false);
         }
 
         private void HideInstallPanels()
@@ -378,6 +398,12 @@ namespace _01.Code.UI
             SetPanelActive(buildingViewSelector, false);
             SetPanelActive(unitViewRoot, false);
             SetPanelActive(buildingViewRoot, false);
+        }
+
+        private void SetTitle(string value)
+        {
+            if (titleText != null)
+                titleText.text = value;
         }
     }
 }

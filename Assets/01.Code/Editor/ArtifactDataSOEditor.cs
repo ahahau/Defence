@@ -10,7 +10,7 @@ using UnityEngine;
 namespace _01.Code.EditorTools
 {
     [CustomEditor(typeof(ArtifactDataSO))]
-    public class ArtifactDataSOEditor : Editor
+    public class ArtifactDataSOEditor : UnityEditor.Editor
     {
         private Type[] effectTypes = Array.Empty<Type>();
         private string[] effectTypeNames = Array.Empty<string>();

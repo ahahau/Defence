@@ -291,6 +291,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.UI.RosterDeployEntryView
   nameText: {fileID: 8265743905813913947}
+  boardImage: {fileID: 7171006963925695878}
   deployButton: {fileID: 81703270195021961}
 --- !u!1 &8127884711221516038
 GameObject:

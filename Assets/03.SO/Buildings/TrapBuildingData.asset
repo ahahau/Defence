@@ -12,7 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 34c4dc0ecf9801d4aa0c5c4a452b0163, type: 3}
   m_Name: TrapBuildingData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Buildings.BuildingDataSO
+  <Grade>k__BackingField: 1
+  <BoardSprite>k__BackingField: {fileID: -855298285791758126, guid: cb57f21d1c6c2b14f87fb1bae1e53de2, type: 3}
   <DisplayName>k__BackingField: Trap
   <Cost>k__BackingField: 0
   <Prefab>k__BackingField: {fileID: 1428848070512300419, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
   <Unique>k__BackingField: 0
+  <BaseDanger>k__BackingField: 1

@@ -51,6 +51,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 20e614fa890c4018ac1965285a0faec6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Enemies.Enemy
+  killExperience: 1
 --- !u!114 &2709196990148380843
 MonoBehaviour:
   m_ObjectHideFlags: 0

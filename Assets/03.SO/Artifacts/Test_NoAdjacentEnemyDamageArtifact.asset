@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c95403332b4dc154a86423dce0b0559b, type: 3}
   m_Name: Test_NoAdjacentEnemyDamageArtifact
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Artifacts.ArtifactDataSO
-  <DisplayName>k__BackingField: "\uACE0\uB9BD \uC804\uD22C \uC544\uD2B8\uD399\uD2B8"
+  <DisplayName>k__BackingField: c
   <Description>k__BackingField: "\uC8FC\uBCC0 \uB178\uB4DC\uC5D0 \uC801\uC774 \uC5C6\uC73C\uBA74
     \uACF5\uACA9 \uD53C\uD574 30% \uC99D\uAC00"
   <Icon>k__BackingField: {fileID: 0}

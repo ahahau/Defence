@@ -219,6 +219,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.UI.UnitDeployEntryView
   unitIcon: {fileID: 4580750793919986512}
+  boardImage: {fileID: 8049774422648153525}
   nameText: {fileID: 8183912487875323534}
   costText: {fileID: 3783940924610876434}
   selectButton: {fileID: 165899415760289930}

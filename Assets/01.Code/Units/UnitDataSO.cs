@@ -1,9 +1,10 @@
+using _01.Code.Entities;
 using UnityEngine;
 
 namespace _01.Code.Units
 {
     [CreateAssetMenu(menuName = "SO/Unit/Data", fileName = "UnitData", order = 0)]
-    public class UnitDataSO : ScriptableObject
+    public class UnitDataSO : EntityDataSO
     {
         [field:SerializeField] public Sprite Sprite { get; private set; }
         [field:SerializeField] public string Name { get; private set; }

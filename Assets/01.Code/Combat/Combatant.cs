@@ -7,8 +7,6 @@ using UnityEngine;
 
 namespace _01.Code.Combat
 {
-    [RequireComponent(typeof(Health))]
-    [RequireComponent(typeof(DamageFeedback))]
     public class Combatant : MonoBehaviour
     {
         [SerializeField] private int attackDamage = 1;

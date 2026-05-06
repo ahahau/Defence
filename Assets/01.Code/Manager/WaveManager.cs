@@ -19,6 +19,7 @@ namespace _01.Code.Manager
         [SerializeField, Min(0)] private int treasuryGoldLoss = 10;
 
         private Node _portalNode;
+        public bool HasPortal => _portalNode != null;
         private int _currentDay;
         private int _aliveEnemies;
         private Coroutine _waveCoroutine;
@@ -28,17 +29,24 @@ namespace _01.Code.Manager
         {
             dayEventChannel.AddListener<DayChangedEvent>(HandleDayChanged);
             nodeEventChannel.AddListener<PortalInstalledEvent>(HandlePortalInstalled);
+            nodeEventChannel.AddListener<PortalRemovedEvent>(HandlePortalRemoved);
         }
 
         private void OnDisable()
         {
             dayEventChannel.RemoveListener<DayChangedEvent>(HandleDayChanged);
             nodeEventChannel.RemoveListener<PortalInstalledEvent>(HandlePortalInstalled);
+            nodeEventChannel.RemoveListener<PortalRemovedEvent>(HandlePortalRemoved);
         }
 
         private void HandlePortalInstalled(PortalInstalledEvent evt)
         {
             _portalNode = evt.Node;
+        }
+
+        private void HandlePortalRemoved(PortalRemovedEvent evt)
+        {
+            _portalNode = null;
         }
 
         private void HandleDayChanged(DayChangedEvent evt)

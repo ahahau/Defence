@@ -3,6 +3,7 @@ using _01.Code.Events;
 using _01.Code.Manager;
 using _01.Code.MapCreateSystem;
 using _01.Code.Units;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -15,11 +16,11 @@ namespace _01.Code.UI
         [SerializeField] private GameEventChannelSO costEventChannel;
         [SerializeField] private DayManager dayManager;
         [SerializeField] private GameObject panelRoot;
-        [SerializeField] private Text titleText;
-        [SerializeField] private Text statusText;
-        [SerializeField] private Text hpText;
-        [SerializeField] private Text levelText;
-        [SerializeField] private Text hintText;
+        [SerializeField] private TMP_Text titleText;
+        [SerializeField] private TMP_Text statusText;
+        [SerializeField] private TMP_Text hpText;
+        [SerializeField] private TMP_Text levelText;
+        [SerializeField] private TMP_Text hintText;
         [SerializeField] private Button recoverButton;
         [SerializeField] private Button closeButton;
         [SerializeField] private Vector2 screenOffset = new(16f, -16f);
@@ -116,7 +117,7 @@ namespace _01.Code.UI
             levelText.text = $"Lv {selectedUnit.Level.Level}  EXP {selectedUnit.Level.Experience}/{selectedUnit.Level.ExperienceToNextLevel}";
 
             recoverButton.interactable = CanRecoverSelectedUnit();
-            var label = recoverButton.GetComponentInChildren<Text>();
+            var label = recoverButton.GetComponentInChildren<TMP_Text>();
             label.text = selectedUnit.IsIncapacitated
                 ? $"회복 {selectedUnit.RecoveryCost} Gold"
                 : "회복 불필요";

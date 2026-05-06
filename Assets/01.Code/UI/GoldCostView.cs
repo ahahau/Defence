@@ -1,7 +1,7 @@
 using _01.Code.Events;
 using _01.Code.Core;
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace _01.Code.UI
 {
@@ -11,7 +11,7 @@ namespace _01.Code.UI
         private GameEventChannelSO costEventChannel;
 
         [SerializeField]
-        private Text goldText;
+        private TMP_Text goldText;
 
         [SerializeField]
         private string format = "Gold: {0}";

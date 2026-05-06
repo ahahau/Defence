@@ -214,6 +214,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.UI.UnitHireEntryView
   nameText: {fileID: 8441784415281754787}
   costText: {fileID: 5597363225726413759}
+  boardImage: {fileID: 2876707801378625366}
   hireButton: {fileID: 7917401159369376491}
   costFormat: '{0} Gold'
 --- !u!114 &-8922672372494864093

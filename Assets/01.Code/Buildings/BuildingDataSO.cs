@@ -1,9 +1,10 @@
+using _01.Code.Entities;
 using UnityEngine;
 
 namespace _01.Code.Buildings
 {
     [CreateAssetMenu(menuName = "SO/Building/Data", fileName = "BuildingData", order = 0)]
-    public class BuildingDataSO : ScriptableObject
+    public class BuildingDataSO : EntityDataSO
     {
         [field: SerializeField] public string DisplayName { get; private set; }
         [field: SerializeField] public int Cost { get; private set; }

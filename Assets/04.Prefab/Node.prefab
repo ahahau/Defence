@@ -202,13 +202,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.MapCreateSystem.Node
   spriteRenderer: {fileID: 122353296997631996}
-  unlockedSprite: {fileID: -9029404108982260363, guid: 1884bb4c0390c82439d07bf7b11cc236, type: 3}
-  lockedCandidateSprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
+  lockedOverlayRenderer: {fileID: 0}
+  unlockedSprite: {fileID: -3384411708189302445, guid: 9173dff71398ab441b2cd0472cab8975, type: 3}
+  lockedCandidateSprite: {fileID: -2705092886968552188, guid: 47a3f8bf0ac10e24d91cffc8a95c5ddb, type: 3}
   unlockedSpriteScale: {x: 1, y: 1.6666667, z: 1}
-  lockedCandidateSpriteScale: {x: 1, y: 1, z: 1}
+  lockedOverlayLocalScale: {x: 1, y: 1.25, z: 1}
+  unlockedVisualColor: {r: 1, g: 1, b: 1, a: 1}
+  lockedVisualColor: {r: 0.45, g: 0.45, b: 0.45, a: 1}
   <ClickCollider>k__BackingField: {fileID: 5022518355753927776}
   <UnitPosition>k__BackingField: {fileID: 2097231252395536016}
   enemyPosition: {fileID: 8142629751096979764}
+  lockedVisualAlpha: 1
+  lockedVisualScale: 0.72
 --- !u!61 &5022518355753927776
 BoxCollider2D:
   m_ObjectHideFlags: 0

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using _01.Code.Core;
 using _01.Code.Events;
 using _01.Code.Units;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,7 +16,7 @@ namespace _01.Code.UI
         [SerializeField] private Button closeButton;
         [SerializeField] private Transform contentRoot;
         [SerializeField] private UnitDeployEntryView entryPrefab;
-        [SerializeField] private Text hintText;
+        [SerializeField] private TMP_Text hintText;
 
         [Header("Data")]
         [SerializeField] private UnitDataSO[] deployableUnits;

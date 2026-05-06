@@ -20,6 +20,13 @@ namespace _01.Code.Manager
         private int currentDay;
         private bool _isStandby = true;
         public bool IsStandby => _isStandby;
+        public int CurrentDay => currentDay;
+        public int NextWaveDay => currentDay + 1;
+
+        private void Start()
+        {
+            dayEventChannel?.RaiseEvent(new DayChangedEvent(NextWaveDay));
+        }
 
         private void OnEnable()
         {
@@ -43,7 +50,6 @@ namespace _01.Code.Manager
         {
             if (!_isStandby)
                 return;
-
             _isStandby = false;
             currentDay++;
             dayEventChannel.RaiseEvent(new DayChangedEvent(currentDay));

@@ -1,5 +1,6 @@
 using System;
 using _01.Code.Units;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,10 +9,10 @@ namespace _01.Code.UI
     public class UnitHireEntryView : MonoBehaviour
     {
         [SerializeField]
-        private Text nameText;
+        private TMP_Text nameText;
 
         [SerializeField]
-        private Text costText;
+        private TMP_Text costText;
 
         [SerializeField]
         private Button hireButton;

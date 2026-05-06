@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using _01.Code.Artifacts;
 using _01.Code.Core;
 using _01.Code.Events;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,8 +16,8 @@ namespace _01.Code.UI
         [SerializeField] private ArtifactEntryView entryPrefab;
         [SerializeField] private GameObject tooltipRoot;
         [SerializeField] private RectTransform tooltipRect;
-        [SerializeField] private Text tooltipNameText;
-        [SerializeField] private Text tooltipDescriptionText;
+        [SerializeField] private TMP_Text tooltipNameText;
+        [SerializeField] private TMP_Text tooltipDescriptionText;
         [SerializeField] private Vector2 tooltipOffset = new(18f, 18f);
 
         private readonly List<ArtifactEntryView> entries = new();

@@ -56,6 +56,8 @@ namespace _01.Code.Events
         public Node Node { get; }
     }
 
+    public class PortalRemovedEvent : GameEvent { }
+
     public class UnitStatusRequestedEvent : GameEvent
     {
         public UnitStatusRequestedEvent(Node node)

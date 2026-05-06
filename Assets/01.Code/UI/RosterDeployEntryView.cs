@@ -1,5 +1,6 @@
 using System;
 using _01.Code.Units;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,7 +8,8 @@ namespace _01.Code.UI
 {
     public class RosterDeployEntryView : MonoBehaviour
     {
-        [SerializeField] private Text nameText;
+        [SerializeField] private TMP_Text nameText;
+        [SerializeField] private Image boardImage;
         [SerializeField] private Button deployButton;
 
         public UnitDataSO Unit { get; private set; }
@@ -18,16 +20,34 @@ namespace _01.Code.UI
             Unit = unit;
             _onDeploy = onDeploy;
 
-            var displayName = !string.IsNullOrWhiteSpace(unit.Name) ? unit.Name : unit.name;
-            nameText.text = $"{displayName} / 마력 {unit.MagicCost}";
+            if (unit != null)
+            {
+                var displayName = !string.IsNullOrWhiteSpace(unit.Name) ? unit.Name : unit.name;
+                if (nameText != null)
+                    nameText.text = $"{displayName} / 마력 {unit.MagicCost}";
+                ApplyBoard(unit.BoardSprite);
+            }
 
-            deployButton.onClick.RemoveListener(HandleDeployClicked);
-            deployButton.onClick.AddListener(HandleDeployClicked);
+            if (deployButton != null)
+            {
+                deployButton.onClick.RemoveListener(HandleDeployClicked);
+                deployButton.onClick.AddListener(HandleDeployClicked);
+            }
+        }
+
+        private void ApplyBoard(Sprite boardSprite)
+        {
+            if (boardImage == null)
+                return;
+
+            boardImage.enabled = boardSprite != null;
+            boardImage.sprite = boardSprite;
         }
 
         private void OnDestroy()
         {
-            deployButton.onClick.RemoveListener(HandleDeployClicked);
+            if (deployButton != null)
+                deployButton.onClick.RemoveListener(HandleDeployClicked);
         }
 
         private void HandleDeployClicked()

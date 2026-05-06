@@ -1,5 +1,6 @@
 using _01.Code.Events;
 using _01.Code.Core;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,10 +12,7 @@ namespace _01.Code.UI
         private GameEventChannelSO dayEventChannel;
 
         [SerializeField]
-        private Text dayText;
-
-        [SerializeField]
-        private RectTransform clockHand;
+        private TMP_Text dayText;
 
         [SerializeField]
         private string format = "Day {0}";
@@ -22,13 +20,13 @@ namespace _01.Code.UI
         private void OnEnable()
         {
             dayEventChannel.AddListener<DayChangedEvent>(HandleDayChanged);
-            dayEventChannel.AddListener<DayProgressChangedEvent>(HandleDayProgressChanged);
+            if (dayText == null)
+                dayText = GetComponent<TMP_Text>();
         }
 
         private void OnDisable()
         {
             dayEventChannel.RemoveListener<DayChangedEvent>(HandleDayChanged);
-            dayEventChannel.RemoveListener<DayProgressChangedEvent>(HandleDayProgressChanged);
         }
 
         private void HandleDayChanged(DayChangedEvent evt)
@@ -36,9 +34,5 @@ namespace _01.Code.UI
             dayText.text = string.Format(format, evt.Day);
         }
 
-        private void HandleDayProgressChanged(DayProgressChangedEvent evt)
-        {
-            clockHand.localRotation = Quaternion.Euler(0f, 0f, -360f * evt.Progress);
-        }
     }
 }

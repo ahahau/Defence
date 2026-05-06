@@ -15,6 +15,9 @@ namespace _01.Code.MapCreateSystem
         private SpriteRenderer spriteRenderer;
 
         [SerializeField]
+        private SpriteRenderer lockedOverlayRenderer;
+
+        [SerializeField]
         private Sprite unlockedSprite;
 
         [SerializeField]
@@ -24,7 +27,13 @@ namespace _01.Code.MapCreateSystem
         private Vector3 unlockedSpriteScale = new(1f, 1.6666667f, 1f);
 
         [SerializeField]
-        private Vector3 lockedCandidateSpriteScale = Vector3.one;
+        private Vector3 lockedOverlayLocalScale = new(1f, 1.25f, 1f);
+
+        [SerializeField]
+        private Color unlockedVisualColor = Color.white;
+
+        [SerializeField]
+        private Color lockedVisualColor = new(0.45f, 0.45f, 0.45f, 1f);
 
         [field: SerializeField]
         public Collider2D ClickCollider { get; private set; }
@@ -36,7 +45,7 @@ namespace _01.Code.MapCreateSystem
         private Transform enemyPosition;
 
         [SerializeField, Range(0.1f, 1f)]
-        private float lockedVisualAlpha = 0.35f;
+        private float lockedVisualAlpha = 1f;
 
         [SerializeField, Range(0.1f, 1f)]
         private float lockedVisualScale = 0.72f;
@@ -75,7 +84,8 @@ namespace _01.Code.MapCreateSystem
             DangerLevel = 0;
             SetSprite(unlockedSprite);
             SetSpriteScale(unlockedSpriteScale);
-            SetVisualAlpha(1f);
+            SetVisualColor(unlockedVisualColor);
+            SetLockedOverlayVisible(false);
             nodesByDataId[data.Id] = this;
         }
 
@@ -91,9 +101,10 @@ namespace _01.Code.MapCreateSystem
 
             name = $"LockedNode_{gridPosition.x}_{gridPosition.y}";
             transform.localScale = ResolvePrefabScale() * size * lockedVisualScale;
-            SetSprite(lockedCandidateSprite);
-            SetSpriteScale(lockedCandidateSpriteScale);
-            SetVisualAlpha(lockedVisualAlpha);
+            SetSprite(unlockedSprite);
+            SetSpriteScale(unlockedSpriteScale);
+            SetVisualColor(lockedVisualColor);
+            SetLockedOverlayVisible(true);
         }
 
         public void ShowClickFeedback()
@@ -139,10 +150,11 @@ namespace _01.Code.MapCreateSystem
             DangerLevel += amount;
         }
 
-        private void SetVisualAlpha(float alpha)
+        private void SetVisualColor(Color color)
         {
-            var color = spriteRenderer.color;
-            color.a = alpha;
+            if (spriteRenderer == null)
+                return;
+
             spriteRenderer.color = color;
         }
 
@@ -156,6 +168,35 @@ namespace _01.Code.MapCreateSystem
         {
             if (spriteRenderer != null)
                 spriteRenderer.transform.localScale = scale;
+        }
+
+        private void SetLockedOverlayVisible(bool visible)
+        {
+            var overlay = ResolveLockedOverlayRenderer();
+            if (overlay == null)
+                return;
+
+            overlay.enabled = visible && lockedCandidateSprite != null;
+            overlay.sprite = lockedCandidateSprite;
+            overlay.color = new Color(1f, 1f, 1f, lockedVisualAlpha);
+            overlay.transform.localScale = lockedOverlayLocalScale;
+        }
+
+        private SpriteRenderer ResolveLockedOverlayRenderer()
+        {
+            if (lockedOverlayRenderer != null)
+                return lockedOverlayRenderer;
+
+            var overlayObject = new GameObject("LockedOverlay");
+            overlayObject.transform.SetParent(transform);
+            overlayObject.transform.localPosition = new Vector3(0f, 0f, -0.05f);
+            overlayObject.transform.localRotation = Quaternion.identity;
+            overlayObject.transform.localScale = Vector3.one;
+
+            lockedOverlayRenderer = overlayObject.AddComponent<SpriteRenderer>();
+            lockedOverlayRenderer.sortingLayerID = spriteRenderer != null ? spriteRenderer.sortingLayerID : 0;
+            lockedOverlayRenderer.sortingOrder = spriteRenderer != null ? spriteRenderer.sortingOrder + 1 : 1;
+            return lockedOverlayRenderer;
         }
 
         private Vector3 ResolvePrefabScale()

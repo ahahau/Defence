@@ -1,5 +1,6 @@
 using _01.Code.Core;
 using _01.Code.Events;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,7 +9,7 @@ namespace _01.Code.UI
     public class WaveRewardPanelView : MonoBehaviour
     {
         [SerializeField] private Image iconImage;
-        [SerializeField] private Text goldAmountText;
+        [SerializeField] private TMP_Text goldAmountText;
         [SerializeField] private Button goldRewardButton;
         [SerializeField] private Button closeButton;
         [SerializeField] private GameObject warningPanel;
@@ -21,26 +22,18 @@ namespace _01.Code.UI
 
         private void OnEnable()
         {
-            if (goldRewardButton != null)
-                goldRewardButton.onClick.AddListener(HandleGoldRewardClicked);
-            if (closeButton != null)
-                closeButton.onClick.AddListener(HandleCloseClicked);
-            if (warningCancelButton != null)
-                warningCancelButton.onClick.AddListener(HideWarning);
-            if (warningCloseButton != null)
-                warningCloseButton.onClick.AddListener(ForceClose);
+            goldRewardButton.onClick.AddListener(HandleGoldRewardClicked);
+            closeButton.onClick.AddListener(HandleCloseClicked);
+            warningCancelButton.onClick.AddListener(HideWarning);
+            warningCloseButton.onClick.AddListener(ForceClose);
         }
 
         private void OnDisable()
         {
-            if (goldRewardButton != null)
-                goldRewardButton.onClick.RemoveListener(HandleGoldRewardClicked);
-            if (closeButton != null)
-                closeButton.onClick.RemoveListener(HandleCloseClicked);
-            if (warningCancelButton != null)
-                warningCancelButton.onClick.RemoveListener(HideWarning);
-            if (warningCloseButton != null)
-                warningCloseButton.onClick.RemoveListener(ForceClose);
+            goldRewardButton.onClick.RemoveListener(HandleGoldRewardClicked);
+            closeButton.onClick.RemoveListener(HandleCloseClicked);
+            warningCancelButton.onClick.RemoveListener(HideWarning);
+            warningCloseButton.onClick.RemoveListener(ForceClose);
         }
 
         public void Initialize(GameEventChannelSO costEventChannel)
@@ -61,10 +54,8 @@ namespace _01.Code.UI
 
             if (iconImage != null)
                 iconImage.gameObject.SetActive(true);
-
             if (goldAmountText != null)
                 goldAmountText.text = goldAmount.ToString();
-
             if (goldRewardButton != null)
                 goldRewardButton.interactable = true;
 
@@ -84,16 +75,16 @@ namespace _01.Code.UI
             if (!_hasPendingGoldReward || _pendingGoldAmount <= 0)
                 return;
 
-            _costEventChannel?.RaiseEvent(new GoldEarnedEvent(_pendingGoldAmount));
+            _costEventChannel.RaiseEvent(new GoldEarnedEvent(_pendingGoldAmount));
             _hasPendingGoldReward = false;
             _pendingGoldAmount = 0;
 
             if (goldRewardButton != null)
                 goldRewardButton.interactable = false;
-            if (iconImage != null)
-                iconImage.gameObject.SetActive(false);
             if (goldAmountText != null)
-                goldAmountText.text = string.Empty;
+                goldAmountText.text = "수령 완료";
+
+            HideWarning();
         }
 
         private void HandleCloseClicked()
@@ -109,14 +100,12 @@ namespace _01.Code.UI
 
         private void ShowWarning()
         {
-            if (warningPanel != null)
-                warningPanel.SetActive(true);
+            warningPanel.SetActive(true);
         }
 
         private void HideWarning()
         {
-            if (warningPanel != null)
-                warningPanel.SetActive(false);
+            warningPanel.SetActive(false);
         }
 
         private void ForceClose()

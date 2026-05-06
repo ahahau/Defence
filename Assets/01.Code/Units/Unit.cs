@@ -4,9 +4,6 @@ using UnityEngine;
 
 namespace _01.Code.Units
 {
-    [RequireComponent(typeof(Health))]
-    [RequireComponent(typeof(Combatant))]
-    [RequireComponent(typeof(UnitLevel))]
     public class Unit : MonoBehaviour
     {
         [SerializeField] private SpriteRenderer spriteRenderer;
@@ -33,8 +30,6 @@ namespace _01.Code.Units
         public void Initialize(UnitDataSO unitData)
         {
             Data = unitData;
-            if (unitData != null)
-                SetUnitSprite(unitData.Sprite);
 
             EnsureCombatant();
         }
@@ -80,10 +75,6 @@ namespace _01.Code.Units
                 Combatant.StopCombat();
         }
 
-        protected void SetUnitSprite(Sprite sprite)
-        {
-            if (spriteRenderer != null && sprite != null)
-                spriteRenderer.sprite = sprite;
-        }
+        
     }
 }

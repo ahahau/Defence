@@ -83,10 +83,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Units.MainUnit
   spriteRenderer: {fileID: 1816607769188706741}
   gameStateEventChannel: {fileID: 11400000, guid: 959e35f08825cd94a8b68a1c032d7836, type: 2}
-  idleSprite: {fileID: -4208413977036319912, guid: 04e1c700f9787eb4f987e965f729bc19, type: 3}
-  hitSprite: {fileID: -9030365041162893800, guid: 28c61687a54f1e34fbd7d56883871257, type: 3}
-  defeatedSprite: {fileID: 1617423343354356677, guid: 43367cb7fa3eb2b4683122335baad020, type: 3}
   hitSpriteDuration: 0.25
+  unitRenderer: {fileID: 9208969084259638768}
 --- !u!114 &7098595463026590609
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -133,6 +131,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9074050451630688437}
   - component: {fileID: 1816607769188706741}
+  - component: {fileID: 9208969084259638768}
   m_Layer: 0
   m_Name: Visual
   m_TagString: Untagged
@@ -214,6 +213,23 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &9208969084259638768
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8357328393588773581}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b3b415ae8554c33b54e3f910e4dbbaa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Entities.EntityRender
+  gameStateEventChannel: {fileID: 11400000, guid: 959e35f08825cd94a8b68a1c032d7836, type: 2}
+  idleSprite: {fileID: -4208413977036319912, guid: 04e1c700f9787eb4f987e965f729bc19, type: 3}
+  hitSprite: {fileID: -9030365041162893800, guid: 28c61687a54f1e34fbd7d56883871257, type: 3}
+  defeatedSprite: {fileID: 1617423343354356677, guid: 43367cb7fa3eb2b4683122335baad020, type: 3}
+  spriteRenderer: {fileID: 1816607769188706741}
 --- !u!1001 &2524600608494934784
 PrefabInstance:
   m_ObjectHideFlags: 0

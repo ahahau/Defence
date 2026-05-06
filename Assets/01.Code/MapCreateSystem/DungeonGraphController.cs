@@ -9,6 +9,7 @@ using UnityEngine.InputSystem;
 
 namespace _01.Code.MapCreateSystem
 {
+    [ExecuteAlways]
     public class DungeonGraphController : MonoBehaviour
     {
         private readonly Vector2Int[] directions =
@@ -82,6 +83,9 @@ namespace _01.Code.MapCreateSystem
 
         private void OnEnable()
         {
+            if (!Application.isPlaying)
+                return;
+
             costEventChannel.AddListener<BuildCostPaidEvent>(HandleBuildCostPaid);
             inputDataSO.OnMouseInputEvent += HandleMouseInput;
         }
@@ -90,6 +94,9 @@ namespace _01.Code.MapCreateSystem
 
         private void OnDisable()
         {
+            if (!Application.isPlaying)
+                return;
+
             costEventChannel.RemoveListener<BuildCostPaidEvent>(HandleBuildCostPaid);
             inputDataSO.OnMouseInputEvent -= HandleMouseInput;
         }
@@ -97,13 +104,14 @@ namespace _01.Code.MapCreateSystem
         private void Awake()
         {
             RebuildInitialGraph();
-
-            if (Application.isPlaying)
-                ShowLockedNodes();
+            ShowLockedNodes();
         }
 
         private void Update()
         {
+            if (!Application.isPlaying)
+                return;
+
             if (!hasPendingMouseInput)
             {
                 if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
@@ -157,6 +165,9 @@ namespace _01.Code.MapCreateSystem
 
         private void CreateMainUnit(Node entranceNode)
         {
+            if (!Application.isPlaying)
+                return;
+
             var spawnPosition = entranceNode.UnitPosition.position;
 
             MainUnit mainUnit = Instantiate(mainUnitPrefab, spawnPosition, Quaternion.identity);

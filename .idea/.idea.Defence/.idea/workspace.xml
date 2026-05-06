@@ -5,24 +5,68 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="70a8c057-6163-4912-961a-e601b54b4aa9" name="변경" comment="">
+      <change afterPath="$PROJECT_DIR$/Assets/01.Code/Entities/EntityRender.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Assets/01.Code/Entities/EntityRender.cs.meta" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.claude/settings.local.json" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/settings.local.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Defence/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Defence/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/00.Scenes/SampleScene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/00.Scenes/SampleScene.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Artifacts/ArtifactEffectContext.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Artifacts/ArtifactEffectContext.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Buildings/Trap.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings/Trap.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Core/InputSystemCameraMover.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Core/InputSystemCameraMover.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Core/NodeCameraFocusController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Core/NodeCameraFocusController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Buildings/BuildingDataSO.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings/BuildingDataSO.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Combat/Combatant.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Combat/Combatant.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Editor/ArtifactDataSOEditor.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Editor/ArtifactDataSOEditor.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Events/DayEvents.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Events/DayEvents.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Events/NodeEvents.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Events/NodeEvents.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/DayManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/DayManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/HiredUnitRoster.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/HiredUnitRoster.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/WaveManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/WaveManager.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/DungeonGraphController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/DungeonGraphController.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/Node.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/Node.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/ArtifactPanelView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/ArtifactPanelView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/DangerPanelView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/DangerPanelView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/DayView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/DayView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/GoldCostView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/GoldCostView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/MagicView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/MagicView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/NodePanelView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/NodePanelView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/RosterDeployEntryView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/RosterDeployEntryView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/UnifiedUITheme.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/UnifiedUITheme.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/UnitDeployEntryView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/UnitDeployEntryView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/UnitDeployPanelView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/UnitDeployPanelView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/UnitHireEntryView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/UnitHireEntryView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/UnitStatusPanelView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/UnitStatusPanelView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/WaveRewardPanelView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/WaveRewardPanelView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/WaveView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/WaveView.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/01.Code/Units/MainUnit.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Units/MainUnit.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/01.Code/Units/Unit.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Units/Unit.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Artifacts/ObtainedArtifactInventory.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/Artifacts/ObtainedArtifactInventory.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Units/UnitDataSO.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Units/UnitDataSO.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Units/UnitLevelView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Units/UnitLevelView.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/03.SO/Artifacts/Test_AttackPowerArtifact.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/Artifacts/Test_AttackPowerArtifact.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Artifacts/Test_LowHealthDamageArtifact.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/Artifacts/Test_LowHealthDamageArtifact.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Artifacts/Test_NoAdjacentEnemyDamageArtifact.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/Artifacts/Test_NoAdjacentEnemyDamageArtifact.asset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/03.SO/Artifacts/Test_RawStatArtifact.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/Artifacts/Test_RawStatArtifact.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Buildings/TrapBuildingData.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/Buildings/TrapBuildingData.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/EdgeLine.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/EdgeLine.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Enemy.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Enemy.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Inn.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Inn.prefab" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Node.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Node.prefab" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Player.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Player.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Packages/manifest.json" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/manifest.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Packages/packages-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/packages-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Potal.prefab" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Potal.prefab.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Store.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Store.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Trap.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Trap.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/RosterDeployEntry.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/RosterDeployEntry.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/UnitDeployEntry.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/UnitDeployEntry.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/UnitHireEntry.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/UnitHireEntry.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/UnitLevelView.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/UnitLevelView.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/WaveRewardPanel.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/WaveRewardPanel.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/05.Graphs/Node/BeautyPlus-BG-CHANGER-1777744006221.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/05.Graphs/Node/BeautyPlus-BG-CHANGER-1777744006221.jpg.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/TextMesh Pro/Resources/Fonts &amp; Materials/LiberationSans SDF - Fallback.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/TextMesh Pro/Resources/Fonts &amp; Materials/LiberationSans SDF - Fallback.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/TextMesh Pro/Resources/TMP Settings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/TextMesh Pro/Resources/TMP Settings.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/_Recovery.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/_Recovery/0 (1).unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/_Recovery/0 (1).unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/_Recovery/0.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/_Recovery/0.unity.meta" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -34,11 +78,11 @@
   </component>
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/Node.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.ai.assistant@fc16ca46e208/Editor/Assistant/ErrorHandling/ErrorHandlingUtility.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.ai.assistant@fc16ca46e208/Editor/Assistant/RunCommand/AgentRunCommand.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.ai.assistant@fc16ca46e208/Modules/Unity.AI.MCP.Editor/Security/ProcessInfoCollector.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.ai.assistant@84e99ed7b906/Modules/Unity.AI.MCP.Editor/Security/ExecutableIdentityCollector.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.inputsystem@21a28c3a6c83/InputSystem/Plugins/UI/InputSystemUIInputModule.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.inputsystem@21a28c3a6c83/InputSystem/Utilities/DelegateHelpers.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.ugui@d8a2716f3013/Editor/TMP/TMP_BaseShaderGUI.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.ugui@d8a2716f3013/Runtime/TMP/TextMeshProUGUI.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/5ea200363ab142a582463089d51cabd3214200/61/98b7cb7d/Camera.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/3ea01e77be99618395f448b16bd7cc2bd4248bd9e5d8474964b2d97f39c5d74/System.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/d44b17e136d09081da1e8fd0e8c83fde60e11818b9f2442d7ed8cb733fae895e/System.Collections.Generic.cs" root0="FORCE_HIGHLIGHTING" />
@@ -143,6 +187,7 @@
       <workItem from="1777450233973" duration="11690000" />
       <workItem from="1777504449373" duration="8297000" />
       <workItem from="1777907752138" duration="908000" />
+      <workItem from="1778022293574" duration="26220000" />
     </task>
     <servers />
   </component>

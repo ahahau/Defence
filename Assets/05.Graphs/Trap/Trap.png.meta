@@ -1,0 +1,741 @@
+fileFormatVersion: 2
+guid: 9d2b7a3e6051ea94286df9f353dffb9f
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 2233463843983677960
+    second: Trap-Photoroom_0
+  - first:
+      213: 7735695692949718562
+    second: Trap-Photoroom_1
+  - first:
+      213: -1841103733396789378
+    second: Trap-Photoroom_2
+  - first:
+      213: 154622607773227217
+    second: Trap-Photoroom_3
+  - first:
+      213: -3324361723361075969
+    second: Trap-Photoroom_4
+  - first:
+      213: -1266374190162710671
+    second: Trap-Photoroom_5
+  - first:
+      213: -7284043898624128765
+    second: Trap-Photoroom_6
+  - first:
+      213: -2665687926437465473
+    second: Trap-Photoroom_7
+  - first:
+      213: -8162866656710317213
+    second: Trap-Photoroom_8
+  - first:
+      213: -2233021306381846339
+    second: Trap-Photoroom_9
+  - first:
+      213: 9075109239963315280
+    second: Trap-Photoroom_10
+  - first:
+      213: -7633063292332831994
+    second: Trap-Photoroom_11
+  - first:
+      213: 6879949544856862789
+    second: Trap-Photoroom_12
+  - first:
+      213: 5333551704184610594
+    second: Trap-Photoroom_13
+  - first:
+      213: -2233365083570887611
+    second: Trap-Photoroom_14
+  - first:
+      213: 5014652714833498045
+    second: Trap-Photoroom_15
+  - first:
+      213: 1398296804406834930
+    second: Trap-Photoroom_16
+  - first:
+      213: -8775771167992102437
+    second: Trap-Photoroom_17
+  - first:
+      213: 1887700295530662330
+    second: Trap-Photoroom_18
+  - first:
+      213: 8912848116521941623
+    second: Trap-Photoroom_19
+  - first:
+      213: 5838570461469687714
+    second: Trap-Photoroom_20
+  - first:
+      213: -8725732157894059865
+    second: Trap-Photoroom_21
+  - first:
+      213: 5148397813730439778
+    second: Trap-Photoroom_22
+  - first:
+      213: 5959598610370827993
+    second: Trap-Photoroom_23
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 1254
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Trap-Photoroom_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 801
+        width: 393
+        height: 453
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 80a535f588bdefe10800000000000000
+      internalID: 2233463843983677960
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Trap-Photoroom_1
+      rect:
+        serializedVersion: 2
+        x: 399
+        y: 682
+        width: 255
+        height: 284
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 22689cc4f36ba5b60800000000000000
+      internalID: 7735695692949718562
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Trap-Photoroom_2
+      rect:
+        serializedVersion: 2
+        x: 614
+        y: 932
+        width: 19
+        height: 167
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e772d38b8e51376e0800000000000000
+      internalID: -1841103733396789378
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Trap-Photoroom_3
+      rect:
+        serializedVersion: 2
+        x: 690
+        y: 808
+        width: 20
+        height: 211
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1d8519a4174552200800000000000000
+      internalID: 154622607773227217
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Trap-Photoroom_4
+      rect:
+        serializedVersion: 2
+        x: 758
+        y: 863
+        width: 20
+        height: 203
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ffc582630ae7dd1d0800000000000000
+      internalID: -3324361723361075969
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Trap-Photoroom_5
+      rect:
+        serializedVersion: 2
+        x: 851
+        y: 818
+        width: 403
+        height: 436
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 17fe0a2326fec6ee0800000000000000
+      internalID: -1266374190162710671
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Trap-Photoroom_6
+      rect:
+        serializedVersion: 2
+        x: 804
+        y: 835
+        width: 20
+        height: 59
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 309482eaaa0e9ea90800000000000000
+      internalID: -7284043898624128765
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Trap-Photoroom_7
+      rect:
+        serializedVersion: 2
+        x: 938
+        y: 603
+        width: 41
+        height: 233
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f72b5ae44f2910bd0800000000000000
+      internalID: -2665687926437465473
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Trap-Photoroom_8
+      rect:
+        serializedVersion: 2
+        x: 296
+        y: 563
+        width: 37
+        height: 246
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 36ba6e1460ca7be80800000000000000
+      internalID: -8162866656710317213
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Trap-Photoroom_9
+      rect:
+        serializedVersion: 2
+        x: 337
+        y: 575
+        width: 105
+        height: 111
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: db83b31f3f6b201e0800000000000000
+      internalID: -2233021306381846339
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Trap-Photoroom_10
+      rect:
+        serializedVersion: 2
+        x: 428
+        y: 242
+        width: 404
+        height: 428
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 05ce0e195c341fd70800000000000000
+      internalID: 9075109239963315280
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Trap-Photoroom_11
+      rect:
+        serializedVersion: 2
+        x: 690
+        y: 595
+        width: 236
+        height: 238
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 60b8d689069e11690800000000000000
+      internalID: -7633063292332831994
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Trap-Photoroom_12
+      rect:
+        serializedVersion: 2
+        x: 923
+        y: 494
+        width: 29
+        height: 141
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 540cdc5d8ad7a7f50800000000000000
+      internalID: 6879949544856862789
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Trap-Photoroom_13
+      rect:
+        serializedVersion: 2
+        x: 324
+        y: 458
+        width: 20
+        height: 90
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 22f5a1f3405940a40800000000000000
+      internalID: 5333551704184610594
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Trap-Photoroom_14
+      rect:
+        serializedVersion: 2
+        x: 371
+        y: 429
+        width: 19
+        height: 101
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5442ff31a4e7101e0800000000000000
+      internalID: -2233365083570887611
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Trap-Photoroom_15
+      rect:
+        serializedVersion: 2
+        x: 825
+        y: 502
+        width: 64
+        height: 67
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dbf499b4310a79540800000000000000
+      internalID: 5014652714833498045
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Trap-Photoroom_16
+      rect:
+        serializedVersion: 2
+        x: 297
+        y: 329
+        width: 93
+        height: 104
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2f6bb3df88fb76310800000000000000
+      internalID: 1398296804406834930
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Trap-Photoroom_17
+      rect:
+        serializedVersion: 2
+        x: 868
+        y: 382
+        width: 82
+        height: 81
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bd147b56e92363680800000000000000
+      internalID: -8775771167992102437
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Trap-Photoroom_18
+      rect:
+        serializedVersion: 2
+        x: 410
+        y: 316
+        width: 31
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ab94185da65723a10800000000000000
+      internalID: 1887700295530662330
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Trap-Photoroom_19
+      rect:
+        serializedVersion: 2
+        x: 836
+        y: 319
+        width: 30
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 77abc42c32cc0bb70800000000000000
+      internalID: 8912848116521941623
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Trap-Photoroom_20
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 584
+        height: 303
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2af3dff86e4c60150800000000000000
+      internalID: 5838570461469687714
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Trap-Photoroom_21
+      rect:
+        serializedVersion: 2
+        x: 347
+        y: 257
+        width: 36
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a8958355d8f7e680800000000000000
+      internalID: -8725732157894059865
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Trap-Photoroom_22
+      rect:
+        serializedVersion: 2
+        x: 681
+        y: 174
+        width: 205
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 262fcc1c888c27740800000000000000
+      internalID: 5148397813730439778
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Trap-Photoroom_23
+      rect:
+        serializedVersion: 2
+        x: 877
+        y: 275
+        width: 37
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9d6901f5c5fb4b250800000000000000
+      internalID: 5959598610370827993
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Trap-Photoroom_0: 2233463843983677960
+      Trap-Photoroom_1: 7735695692949718562
+      Trap-Photoroom_10: 9075109239963315280
+      Trap-Photoroom_11: -7633063292332831994
+      Trap-Photoroom_12: 6879949544856862789
+      Trap-Photoroom_13: 5333551704184610594
+      Trap-Photoroom_14: -2233365083570887611
+      Trap-Photoroom_15: 5014652714833498045
+      Trap-Photoroom_16: 1398296804406834930
+      Trap-Photoroom_17: -8775771167992102437
+      Trap-Photoroom_18: 1887700295530662330
+      Trap-Photoroom_19: 8912848116521941623
+      Trap-Photoroom_2: -1841103733396789378
+      Trap-Photoroom_20: 5838570461469687714
+      Trap-Photoroom_21: -8725732157894059865
+      Trap-Photoroom_22: 5148397813730439778
+      Trap-Photoroom_23: 5959598610370827993
+      Trap-Photoroom_3: 154622607773227217
+      Trap-Photoroom_4: -3324361723361075969
+      Trap-Photoroom_5: -1266374190162710671
+      Trap-Photoroom_6: -7284043898624128765
+      Trap-Photoroom_7: -2665687926437465473
+      Trap-Photoroom_8: -8162866656710317213
+      Trap-Photoroom_9: -2233021306381846339
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -1,21 +1,19 @@
 using System.Collections;
 using _01.Code.Combat;
 using _01.Code.Core;
+using _01.Code.Entities;
 using _01.Code.Events;
 using UnityEngine;
 
 namespace _01.Code.Units
 {
-    [RequireComponent(typeof(Health))]
-    [RequireComponent(typeof(Combatant))]
     public class MainUnit : Unit
     {
         [SerializeField] private GameEventChannelSO gameStateEventChannel;
-        [SerializeField] private Sprite idleSprite;
-        [SerializeField] private Sprite hitSprite;
-        [SerializeField] private Sprite defeatedSprite;
         [SerializeField, Min(0f)] private float hitSpriteDuration = 0.25f;
-
+        [SerializeField] private EntityRender unitRenderer;
+        
+        
         private Health health;
         private bool defeatRaised;
         private Coroutine hitSpriteRoutine;
@@ -62,11 +60,11 @@ namespace _01.Code.Units
             if (health.IsAlive)
             {
                 if (hitSpriteRoutine == null)
-                    SetUnitSprite(idleSprite);
+                    unitRenderer.SetUnitSprite(EntityState.Idle);
                 return;
             }
 
-            SetUnitSprite(defeatedSprite);
+            unitRenderer.SetUnitSprite();
 
             if (defeatRaised || health.IsAlive)
                 return;
@@ -88,12 +86,12 @@ namespace _01.Code.Units
 
         private IEnumerator PlayHitSprite()
         {
-            SetUnitSprite(hitSprite);
+            unitRenderer.SetUnitSprite(EntityState.Hit);
             yield return new WaitForSeconds(hitSpriteDuration);
 
             hitSpriteRoutine = null;
             if (health != null && health.IsAlive)
-                SetUnitSprite(idleSprite);
+                unitRenderer.SetUnitSprite(EntityState.Idle);
         }
     }
 }

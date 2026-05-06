@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c95403332b4dc154a86423dce0b0559b, type: 3}
   m_Name: Test_LowHealthDamageArtifact
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Artifacts.ArtifactDataSO
-  <DisplayName>k__BackingField: "\uBC30\uC218\uC9C4 \uC544\uD2B8\uD399\uD2B8"
+  <DisplayName>k__BackingField: v
   <Description>k__BackingField: "\uD604\uC7AC \uCCB4\uB825\uC774 50% \uC774\uD558\uC77C
     \uB54C \uACF5\uACA9 \uD53C\uD574 50% \uC99D\uAC00"
   <Icon>k__BackingField: {fileID: 0}
