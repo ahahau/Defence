@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Reflection;
 using _01.Code.Core;
 using _01.Code.Events;
 using DG.Tweening;
@@ -14,19 +15,27 @@ namespace _01.Code.Combat
         [SerializeField] private float bodySlamDistance = 0.3f;
         [SerializeField] private float bodySlamDuration = 0.12f;
         [SerializeField] private CombatBarsView barsView;
+        [SerializeField] private MonoBehaviour attackFeelFeedbacks;
+        [SerializeField] private ParticleSystem attackHitParticles;
+        [SerializeField] private Color attackParticleColor = new(1f, 0.82f, 0.35f, 1f);
+        [SerializeField, Min(1)] private int attackParticleBurstCount = 14;
+        [SerializeField, Min(0f)] private float attackImpactOffset = 0.08f;
+        [SerializeField] private int attackParticleSortingOrder = 75;
+        [SerializeField] private Health health;
+        [SerializeField] private DamageFeedback damageFeedback;
 
         private Coroutine _attackRoutine;
         private Tween _bodySlamTween;
-        private Health _health;
-        private DamageFeedback _damageFeedback;
+        private MethodInfo _playFeelFeedbacksAtPosition;
         private bool _isAttacking;
         private int artifactAttackDamageBonus;
         private float artifactAttackDamageMultiplier = 1f;
         private GameEventChannelSO artifactEventChannel;
+        private static Material _attackParticleMaterial;
 
-        public bool IsAlive => _health != null && _health.IsAlive;
+        public bool IsAlive => health != null && health.IsAlive;
         public bool IsAttacking => _isAttacking;
-        public Health Health => _health;
+        public Health Health => health;
 
         public void AddAttackDamage(int amount)
         {
@@ -55,16 +64,16 @@ namespace _01.Code.Combat
 
         private void Awake()
         {
-            _health = GetComponent<Health>();
-            _damageFeedback = GetComponent<DamageFeedback>();
-            _health.Changed += RefreshHealthBar;
+            EnsureAttackFeedbacks();
+            if (health != null)
+                health.Changed += RefreshHealthBar;
             RefreshBars(0f);
         }
 
         private void OnDestroy()
         {
-            if (_health != null)
-                _health.Changed -= RefreshHealthBar;
+            if (health != null)
+                health.Changed -= RefreshHealthBar;
         }
 
         public void BeginCombat(Combatant target, Action<Combatant> targetDefeated)
@@ -105,7 +114,10 @@ namespace _01.Code.Combat
                     yield return PlayBodySlam(target);
 
                     if (target != null && target.Health != null)
+                    {
+                        PlayAttackFeedback(transform.position, target.transform.position);
                         target.Health.TakeDamage(ResolveAttackDamage(target));
+                    }
 
                     attackTimer = 0f;
                     RefreshAttackBar(0f);
@@ -150,7 +162,7 @@ namespace _01.Code.Combat
 
         private void RefreshBars(float attackRatio)
         {
-            RefreshHealthBar(_health != null ? _health.CurrentRatio : 0f);
+            RefreshHealthBar(health != null ? health.CurrentRatio : 0f);
             RefreshAttackBar(attackRatio);
         }
 
@@ -174,6 +186,123 @@ namespace _01.Code.Combat
             var evt = new CombatDamageCalculatedEvent(this, target, damage);
             artifactEventChannel.RaiseEvent(evt);
             return evt.Damage;
+        }
+
+        private void EnsureAttackFeedbacks()
+        {
+            _playFeelFeedbacksAtPosition = attackFeelFeedbacks != null
+                ? attackFeelFeedbacks.GetType().GetMethod("PlayFeedbacks", new[] { typeof(Vector3), typeof(float), typeof(bool) })
+                : null;
+        }
+
+        private void PlayAttackFeedback(Vector3 attackerPosition, Vector3 targetPosition)
+        {
+            var direction = targetPosition - attackerPosition;
+            direction.z = 0f;
+
+            if (direction.sqrMagnitude <= Mathf.Epsilon)
+                direction = Vector3.right;
+
+            var impactPosition = targetPosition - direction.normalized * attackImpactOffset;
+            _playFeelFeedbacksAtPosition?.Invoke(attackFeelFeedbacks, new object[] { impactPosition, 1f, false });
+
+            if (attackHitParticles == null)
+                return;
+
+            attackHitParticles.transform.position = impactPosition;
+            attackHitParticles.transform.right = direction.normalized;
+            attackHitParticles.Play(true);
+        }
+
+        private void EnsureDefaultAttackParticles()
+        {
+            if (attackHitParticles != null)
+                return;
+
+            var particleObject = new GameObject("AttackHitParticles");
+            particleObject.transform.SetParent(transform);
+            particleObject.transform.localPosition = Vector3.zero;
+            particleObject.transform.localRotation = Quaternion.identity;
+            particleObject.transform.localScale = Vector3.one;
+
+            attackHitParticles = particleObject.AddComponent<ParticleSystem>();
+            ConfigureAttackParticles(attackHitParticles);
+        }
+
+        private void ConfigureAttackParticles(ParticleSystem particles)
+        {
+            particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+            var main = particles.main;
+            main.playOnAwake = false;
+            main.loop = false;
+            main.duration = 0.22f;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.12f, 0.22f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(1.2f, 2.6f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.04f, 0.11f);
+            main.startColor = attackParticleColor;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.maxParticles = 48;
+
+            var emission = particles.emission;
+            emission.enabled = true;
+            emission.rateOverTime = 0f;
+            emission.SetBursts(new[]
+            {
+                new ParticleSystem.Burst(0f, (short)attackParticleBurstCount)
+            });
+
+            var shape = particles.shape;
+            shape.enabled = true;
+            shape.shapeType = ParticleSystemShapeType.Cone;
+            shape.angle = 24f;
+            shape.radius = 0.03f;
+
+            var colorOverLifetime = particles.colorOverLifetime;
+            colorOverLifetime.enabled = true;
+            var gradient = new Gradient();
+            gradient.SetKeys(
+                new[]
+                {
+                    new GradientColorKey(attackParticleColor, 0f),
+                    new GradientColorKey(new Color(1f, 0.2f, 0.12f, 1f), 1f)
+                },
+                new[]
+                {
+                    new GradientAlphaKey(1f, 0f),
+                    new GradientAlphaKey(0f, 1f)
+                });
+            colorOverLifetime.color = gradient;
+
+            var sizeOverLifetime = particles.sizeOverLifetime;
+            sizeOverLifetime.enabled = true;
+            sizeOverLifetime.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.EaseInOut(0f, 1f, 1f, 0f));
+
+            var renderer = particles.GetComponent<ParticleSystemRenderer>();
+            renderer.renderMode = ParticleSystemRenderMode.Billboard;
+            renderer.sortingOrder = attackParticleSortingOrder;
+            renderer.sharedMaterial = GetAttackParticleMaterial();
+        }
+
+        private static Material GetAttackParticleMaterial()
+        {
+            if (_attackParticleMaterial != null)
+                return _attackParticleMaterial;
+
+            var shader = Shader.Find("Sprites/Default")
+                         ?? Shader.Find("Universal Render Pipeline/Particles/Unlit")
+                         ?? Shader.Find("Particles/Standard Unlit");
+
+            if (shader == null)
+                return null;
+
+            _attackParticleMaterial = new Material(shader)
+            {
+                name = "Runtime Attack Particle Material",
+                hideFlags = HideFlags.HideAndDontSave
+            };
+
+            return _attackParticleMaterial;
         }
     }
 }

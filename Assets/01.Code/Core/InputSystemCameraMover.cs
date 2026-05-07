@@ -67,9 +67,6 @@ namespace _01.Code.Core
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                 return;
 
-            if (targetCamera == null)
-                targetCamera = GetComponent<Camera>();
-
             if (targetCamera == null || !targetCamera.orthographic)
                 return;
 

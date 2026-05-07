@@ -7,11 +7,14 @@ namespace _01.Code.Units
     public class Unit : MonoBehaviour
     {
         [SerializeField] private SpriteRenderer spriteRenderer;
+        [SerializeField] private Combatant combatant;
+        [SerializeField] private Health health;
+        [SerializeField] private UnitLevel level;
 
-        public Combatant Combatant { get; private set; }
+        public Combatant Combatant => combatant;
         public UnitDataSO Data { get; private set; }
-        public Health Health { get; private set; }
-        public UnitLevel Level { get; private set; }
+        public Health Health => health;
+        public UnitLevel Level => level;
         public bool IsIncapacitated { get; private set; }
         public bool CanFight => !IsIncapacitated && Combatant.IsAlive;
         public int RecoveryCost => Data != null ? Mathf.Max(1, Data.Cost / 2) : 10;
@@ -19,19 +22,20 @@ namespace _01.Code.Units
 
         protected virtual void Awake()
         {
-            EnsureCombatant();
+            SubscribeHealth();
         }
 
         protected virtual void OnDestroy()
         {
-            Health.Changed -= HandleHealthChanged;
+            if (health != null)
+                health.Changed -= HandleHealthChanged;
         }
 
         public void Initialize(UnitDataSO unitData)
         {
             Data = unitData;
 
-            EnsureCombatant();
+            SubscribeHealth();
         }
 
         public void RecoverFromIncapacitated()
@@ -50,29 +54,21 @@ namespace _01.Code.Units
             appliedArtifactBonus = bonus;
         }
 
-        private void EnsureCombatant()
+        private void SubscribeHealth()
         {
-            Combatant ??= GetComponent<Combatant>();
-            Level ??= GetComponent<UnitLevel>();
+            if (health == null)
+                return;
 
-            var resolvedHealth = Combatant.Health ?? GetComponent<Health>();
-            if (Health != resolvedHealth)
-            {
-                if (Health != null)
-                    Health.Changed -= HandleHealthChanged;
-
-                Health = resolvedHealth;
-                Health.Changed += HandleHealthChanged;
-            }
-
-            IsIncapacitated = !Health.IsAlive;
+            health.Changed -= HandleHealthChanged;
+            health.Changed += HandleHealthChanged;
+            IsIncapacitated = !health.IsAlive;
         }
 
         private void HandleHealthChanged(float ratio)
         {
-            IsIncapacitated = !Health.IsAlive;
+            IsIncapacitated = !health.IsAlive;
             if (IsIncapacitated)
-                Combatant.StopCombat();
+                combatant?.StopCombat();
         }
 
         

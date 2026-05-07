@@ -1,3 +1,4 @@
+using System;
 using _01.Code.Core;
 using _01.Code.Events;
 using TMPro;
@@ -19,6 +20,9 @@ namespace _01.Code.UI
         private GameEventChannelSO _costEventChannel;
         private int _pendingGoldAmount;
         private bool _hasPendingGoldReward;
+        private bool _hasShownReward;
+
+        public event Action Closed;
 
         private void OnEnable()
         {
@@ -51,6 +55,7 @@ namespace _01.Code.UI
 
             _pendingGoldAmount = goldAmount;
             _hasPendingGoldReward = true;
+            _hasShownReward = true;
 
             if (iconImage != null)
                 iconImage.gameObject.SetActive(true);
@@ -66,8 +71,15 @@ namespace _01.Code.UI
 
         public void Hide()
         {
+            var shouldNotifyClosed = _hasShownReward && gameObject.activeSelf;
             HideWarning();
             gameObject.SetActive(false);
+
+            if (!shouldNotifyClosed)
+                return;
+
+            _hasShownReward = false;
+            Closed?.Invoke();
         }
 
         private void HandleGoldRewardClicked()

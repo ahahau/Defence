@@ -1762,6 +1762,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.UI.HorizontalScrollWheel
   scrollSensitivity: 0.1
+  scrollRect: {fileID: 6841386228068499368}
 --- !u!1 &9073153910352559657
 GameObject:
   m_ObjectHideFlags: 0
@@ -1843,3 +1844,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.UI.HorizontalScrollWheel
   scrollSensitivity: 0.1
+  scrollRect: {fileID: 7133677709031564180}

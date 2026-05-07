@@ -52,6 +52,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Enemies.Enemy
   killExperience: 1
+  hitSpriteDuration: 0.25
+  enemyRenderer: {fileID: 7749111140017749111}
+  combatant: {fileID: 9186542388326355933}
+  mover: {fileID: 3739512902420668162}
+  health: {fileID: 2709196990148380843}
 --- !u!114 &2709196990148380843
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -77,12 +82,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 91d206f33eb5362418db8c3fe653f581, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Combat.DamageFeedback
-  bloomColor: {r: 3, g: 0.25, b: 0.15, a: 1}
+  bloomColor: {r: 1, g: 0.12, b: 0.08, a: 1}
   bloomDuration: 0.12
+  distortionDuration: 0.16
+  distortionScaleAmount: 0.22
+  distortionRotationAngle: 8
   textFloatDistance: 0.45
   textDuration: 0.55
   textSortingOrder: 60
   damageTextPrefab: {fileID: 2763252915929347062, guid: 8c9f5ae6dfc45c64881eb2539d305043, type: 3}
+  hitParticles: {fileID: 0}
+  health: {fileID: 2709196990148380843}
+  spriteRenderers:
+  - {fileID: 2624532001765305233}
+  hitParticleColor: {r: 1, g: 0.18, b: 0.06, a: 1}
+  hitParticleBurstCount: 18
+  hitParticleYOffset: 0.35
+  hitParticleSortingOrder: 80
 --- !u!114 &9186542388326355933
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -100,6 +116,14 @@ MonoBehaviour:
   bodySlamDistance: 0.3
   bodySlamDuration: 0.12
   barsView: {fileID: 4835492364946728964}
+  attackFeelFeedbacks: {fileID: 0}
+  attackHitParticles: {fileID: 0}
+  attackParticleColor: {r: 1, g: 0.82, b: 0.35, a: 1}
+  attackParticleBurstCount: 14
+  attackImpactOffset: 0.08
+  attackParticleSortingOrder: 75
+  health: {fileID: 2709196990148380843}
+  damageFeedback: {fileID: 3065682830328054744}
 --- !u!114 &3739512902420668162
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -113,6 +137,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Enemies.EnemyMover
   moveSpeed: 5
+  minMoveDuration: 0.28
+  maxMoveDuration: 0.75
+  visualHopHeight: 0.12
+  visualSquashAmount: 0.08
+  visual: {fileID: 2787899817810343432}
 --- !u!114 &2211442224303028780
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -135,6 +164,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2787899817810343432}
   - component: {fileID: 2624532001765305233}
+  - component: {fileID: 7749111140017749111}
   m_Layer: 0
   m_Name: Visual
   m_TagString: Untagged
@@ -206,8 +236,8 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 20
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
-  m_Color: {r: 0.4196079, g: 0.5568628, b: 0.1372549, a: 1}
+  m_Sprite: {fileID: 21300000, guid: 0d978ab7d273ba9449a4ab01920beb3a, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -216,6 +246,23 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &7749111140017749111
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7473952817250454834}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b3b415ae8554c33b54e3f910e4dbbaa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Entities.EntityRender
+  gameStateEventChannel: {fileID: 11400000, guid: 959e35f08825cd94a8b68a1c032d7836, type: 2}
+  idleSprite: {fileID: 21300000, guid: 0d978ab7d273ba9449a4ab01920beb3a, type: 3}
+  hitSprite: {fileID: 21300000, guid: 251c1bad2088f7545b598dd41a312f36, type: 3}
+  defeatedSprite: {fileID: 21300000, guid: 11ea87e96aa1d5346ac82b87cdb016bf, type: 3}
+  spriteRenderer: {fileID: 2624532001765305233}
 --- !u!1001 &4121340199369248225
 PrefabInstance:
   m_ObjectHideFlags: 0

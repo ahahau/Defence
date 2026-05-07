@@ -11,6 +11,11 @@ namespace _01.Code.Enemies
     public class EnemyMover : MonoBehaviour
     {
         [SerializeField] private float moveSpeed = 5f;
+        [SerializeField, Min(0.01f)] private float minMoveDuration = 0.28f;
+        [SerializeField, Min(0.01f)] private float maxMoveDuration = 0.75f;
+        [SerializeField, Min(0f)] private float visualHopHeight = 0.12f;
+        [SerializeField, Min(0f)] private float visualSquashAmount = 0.08f;
+        [SerializeField] private Transform visual;
 
         private static readonly HashSet<string> _occupiedNodes = new();
 
@@ -20,6 +25,8 @@ namespace _01.Code.Enemies
         private readonly HashSet<string> _visitedNodes = new();
         private Node _currentNode;
         private Tween _moveTween;
+        private Vector3 _visualStartLocalPosition;
+        private Vector3 _visualStartLocalScale;
         private bool _isTurning;
 
         public Func<Node, bool> NodeArrived { get; set; }
@@ -27,6 +34,7 @@ namespace _01.Code.Enemies
 
         public void Initialize(Node startNode)
         {
+            CacheVisualPose();
             _currentNode = startNode;
             _visitedNodes.Clear();
 
@@ -73,11 +81,38 @@ namespace _01.Code.Enemies
         {
             var targetPos = GetEnemyPosition(_currentNode);
             var distance = Vector3.Distance(transform.position, targetPos);
-            var duration = distance / Mathf.Max(moveSpeed, 0.1f);
+            var duration = Mathf.Clamp(distance / Mathf.Max(moveSpeed, 0.1f), minMoveDuration, maxMoveDuration);
+            var direction = targetPos - transform.position;
+            FaceMoveDirection(direction);
 
             _moveTween?.Kill();
-            _moveTween = transform.DOMove(targetPos, duration)
-                .SetEase(Ease.Linear)
+            ResetVisualPose();
+
+            var sequence = DOTween.Sequence();
+            sequence.Join(transform.DOMove(targetPos, duration).SetEase(Ease.InOutSine));
+
+            if (visual != null && visualHopHeight > 0f)
+            {
+                sequence.Join(visual.DOLocalMoveY(_visualStartLocalPosition.y + visualHopHeight, duration * 0.5f)
+                    .SetEase(Ease.OutSine)
+                    .SetLoops(2, LoopType.Yoyo));
+            }
+
+            if (visual != null && visualSquashAmount > 0f)
+            {
+                var squashScale = new Vector3(
+                    _visualStartLocalScale.x * (1f + visualSquashAmount),
+                    _visualStartLocalScale.y * (1f - visualSquashAmount),
+                    _visualStartLocalScale.z);
+
+                sequence.Join(visual.DOScale(squashScale, duration * 0.18f)
+                    .SetEase(Ease.OutSine)
+                    .SetLoops(2, LoopType.Yoyo));
+            }
+
+            sequence.OnKill(ResetVisualPose);
+            sequence.OnComplete(ResetVisualPose);
+            _moveTween = sequence
                 .SetLink(gameObject);
 
             yield return _moveTween.WaitForCompletion();
@@ -119,6 +154,35 @@ namespace _01.Code.Enemies
             return node.EnemyPosition != null
                 ? node.EnemyPosition.position
                 : node.transform.position;
+        }
+
+        private void CacheVisualPose()
+        {
+            if (visual == null)
+                return;
+
+            _visualStartLocalPosition = visual.localPosition;
+            _visualStartLocalScale = visual.localScale;
+        }
+
+        private void FaceMoveDirection(Vector3 direction)
+        {
+            if (visual == null || Mathf.Abs(direction.x) <= 0.001f)
+                return;
+
+            var scale = _visualStartLocalScale;
+            scale.x = Mathf.Abs(scale.x) * (direction.x < 0f ? -1f : 1f);
+            visual.localScale = scale;
+            _visualStartLocalScale = scale;
+        }
+
+        private void ResetVisualPose()
+        {
+            if (visual == null)
+                return;
+
+            visual.localPosition = _visualStartLocalPosition;
+            visual.localScale = _visualStartLocalScale;
         }
 
         private void OnDestroy()

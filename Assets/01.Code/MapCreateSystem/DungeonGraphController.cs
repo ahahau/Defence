@@ -9,7 +9,6 @@ using UnityEngine.InputSystem;
 
 namespace _01.Code.MapCreateSystem
 {
-    [ExecuteAlways]
     public class DungeonGraphController : MonoBehaviour
     {
         private readonly Vector2Int[] directions =
@@ -20,20 +19,17 @@ namespace _01.Code.MapCreateSystem
             Vector2Int.left
         };
 
-        [Header("Layout")]
+        [Header("Scene Managers")]
         [SerializeField]
-        private float gridSpacing = 2.4f;
+        private DungeonNodeManager nodeManager;
 
         [SerializeField]
-        private float nodeSize = 1f;
-
-        [Header("Prefabs")]
-        [SerializeField]
-        private Node nodePrefab;
+        private DungeonEdgeManager edgeManager;
 
         [SerializeField]
-        private EdgeLine edgeLinePrefab;
+        private Transform unitsRoot;
 
+        
         [Header("Build")]
         [SerializeField]
         private DungeonNodeType selectedType = DungeonNodeType.Corridor;
@@ -68,16 +64,13 @@ namespace _01.Code.MapCreateSystem
         private RectTransform nodePanelBlockRect;
 
         private DungeonGraph graph;
-        private DungeonGraphView view;
         private readonly Dictionary<Collider2D, Node> lockedNodeByCollider = new();
         private readonly Dictionary<Collider2D, Node> unlockedNodeByCollider = new();
         private readonly List<DungeonNode> buildParentCandidates = new();
-        private const string UnitsRootName = "Units";
         private Node lastBuiltNodeView;
         private int lastBuiltFrame = -1;
         private bool hasPendingMouseInput;
         private bool hasPendingRightMouseInput;
-        private Transform unitsRoot;
 
         public bool HasLockedNodesVisible { get; private set; }
 
@@ -99,10 +92,16 @@ namespace _01.Code.MapCreateSystem
 
             costEventChannel.RemoveListener<BuildCostPaidEvent>(HandleBuildCostPaid);
             inputDataSO.OnMouseInputEvent -= HandleMouseInput;
+            nodeManager?.ClearAll();
+            edgeManager?.ClearAll();
+            ClearUnitsRoot();
         }
 
         private void Awake()
         {
+            if (!Application.isPlaying)
+                return;
+
             RebuildInitialGraph();
             ShowLockedNodes();
         }
@@ -142,23 +141,26 @@ namespace _01.Code.MapCreateSystem
         [ContextMenu("Rebuild Initial Graph")]
         public void RebuildInitialGraph()
         {
+            if (!Application.isPlaying)
+                return;
+
             graph = new DungeonGraph();
-            view = new DungeonGraphView(transform, nodePrefab, edgeLinePrefab, gridSpacing, nodeSize);
-            view.ClearAll();
+            if (nodeManager == null || edgeManager == null)
+            {
+                Debug.LogError("DungeonGraphController requires preconfigured node and edge managers before play starts.", this);
+                return;
+            }
+
+            nodeManager.ClearAll();
+            edgeManager.ClearAll();
             lockedNodeByCollider.Clear();
             unlockedNodeByCollider.Clear();
             ClearUnitsRoot();
 
             var entrance = graph.AddNode(DungeonNodeType.Entrance, Vector2Int.zero);
-            var entranceView = view.CreateNode(entrance);
+            var entranceView = nodeManager.CreateNode(entrance);
             RegisterUnlockedNode(entranceView);
             CreateMainUnit(entranceView);
-
-            var treasury = graph.AddNode(DungeonNodeType.Treasury, Vector2Int.right);
-            graph.Connect(entrance, treasury);
-            var treasuryView = view.CreateNode(treasury);
-            RegisterUnlockedNode(treasuryView);
-            view.CreateEdge(entrance.GridPosition, treasury.GridPosition);
 
             HasLockedNodesVisible = false;
         }
@@ -169,9 +171,14 @@ namespace _01.Code.MapCreateSystem
                 return;
 
             var spawnPosition = entranceNode.UnitPosition.position;
+            if (unitsRoot == null)
+            {
+                Debug.LogError("DungeonGraphController requires a preconfigured Units root before play starts.", this);
+                return;
+            }
 
             MainUnit mainUnit = Instantiate(mainUnitPrefab, spawnPosition, Quaternion.identity);
-            mainUnit.transform.SetParent(GetOrCreateUnitsRoot(), true);
+            mainUnit.transform.SetParent(unitsRoot, true);
             mainUnit.transform.position = spawnPosition;
             mainUnit.transform.localScale = Vector3.one;
             mainUnit.name = "Player";
@@ -182,53 +189,39 @@ namespace _01.Code.MapCreateSystem
             artifactEventChannel.RaiseEvent(new UnitArtifactApplyRequestedEvent(mainUnit));
         }
 
-        private Transform GetOrCreateUnitsRoot()
-        {
-            if (unitsRoot != null)
-                return unitsRoot;
-
-            var existingRoot = transform.Find(UnitsRootName);
-            if (existingRoot != null)
-            {
-                unitsRoot = existingRoot;
-                return unitsRoot;
-            }
-
-            var rootObject = new GameObject(UnitsRootName);
-            unitsRoot = rootObject.transform;
-            unitsRoot.SetParent(transform);
-            unitsRoot.localPosition = Vector3.zero;
-            unitsRoot.localRotation = Quaternion.identity;
-            unitsRoot.localScale = Vector3.one;
-            return unitsRoot;
-        }
-
         private void ClearUnitsRoot()
         {
-            var existingRoot = transform.Find(UnitsRootName);
-            if (existingRoot == null)
-            {
-                unitsRoot = null;
+            if (unitsRoot == null)
                 return;
-            }
 
             if (Application.isPlaying)
             {
-                existingRoot.name = $"{UnitsRootName}_Destroying";
-                existingRoot.SetParent(null);
-                Destroy(existingRoot.gameObject);
+                ClearChildren(unitsRoot);
             }
             else
             {
-                DestroyImmediate(existingRoot.gameObject);
+                ClearChildrenImmediate(unitsRoot);
             }
+        }
 
-            unitsRoot = null;
+        private void ClearChildren(Transform root)
+        {
+            for (var i = root.childCount - 1; i >= 0; i--)
+                Destroy(root.GetChild(i).gameObject);
+        }
+
+        private void ClearChildrenImmediate(Transform root)
+        {
+            for (var i = root.childCount - 1; i >= 0; i--)
+                DestroyImmediate(root.GetChild(i).gameObject);
         }
 
         [ContextMenu("Show Locked Nodes")]
         public void ShowLockedNodes()
         {
+            if (!Application.isPlaying || graph == null || nodeManager == null)
+                return;
+
             HasLockedNodesVisible = true;
             RefreshLockedNodes();
         }
@@ -238,7 +231,7 @@ namespace _01.Code.MapCreateSystem
         {
             HasLockedNodesVisible = false;
             lockedNodeByCollider.Clear();
-            view.ClearLockedNodes();
+            nodeManager?.ClearLockedNodes();
         }
 
         public void TryBuildAt(Node lockedNode)
@@ -254,14 +247,21 @@ namespace _01.Code.MapCreateSystem
             var lockedNode = evt.Node;
             if (graph.IsOccupied(lockedNode.GridPosition) || lockedNode.FromNode.FreePorts <= 0)
                 return;
+
+            var buildPosition = lockedNode.GridPosition;
+            var buildParent = lockedNode.FromNode;
             var type = ResolveBuildType(lockedNode);
-            var node = graph.AddNode(type, lockedNode.GridPosition);
-            var nodeView = view.CreateNode(node);
+
+            HideLockedNodeView(lockedNode);
+            nodeManager.ClearLockedNodeAt(buildPosition);
+
+            var node = graph.AddNode(type, buildPosition);
+            var nodeView = nodeManager.CreateNode(node);
 
             lastBuiltNodeView = nodeView;
             lastBuiltFrame = Time.frameCount;
             RegisterUnlockedNode(nodeView);
-            ConnectAdjacentNodes(node, lockedNode.FromNode);
+            ConnectAdjacentNodes(node, buildParent);
 
             if (HasLockedNodesVisible)
                 RefreshLockedNodes();
@@ -303,7 +303,17 @@ namespace _01.Code.MapCreateSystem
             if (!graph.Connect(fromNode, toNode))
                 return;
 
-            view.CreateEdge(fromNode.GridPosition, toNode.GridPosition);
+            edgeManager.CreateEdge(fromNode.GridPosition, toNode.GridPosition);
+        }
+
+        private void HideLockedNodeView(Node lockedNode)
+        {
+            if (lockedNode == null)
+                return;
+
+            lockedNodeByCollider.Remove(lockedNode.ClickCollider);
+            lockedNode.gameObject.SetActive(false);
+            Destroy(lockedNode.gameObject);
         }
 
         public void RegisterLockedNode(Node lockedNode)
@@ -319,7 +329,7 @@ namespace _01.Code.MapCreateSystem
         private void RefreshLockedNodes()
         {
             lockedNodeByCollider.Clear();
-            view.ClearLockedNodes();
+            nodeManager.ClearLockedNodes();
 
             var usedLockedNodePositions = new HashSet<Vector2Int>();
             foreach (var node in graph.Nodes)
@@ -333,7 +343,8 @@ namespace _01.Code.MapCreateSystem
                     if (!TryResolveBuildParent(position, out var parentNode))
                         continue;
 
-                    view.CreateLockedNode(this, parentNode, position, position - parentNode.GridPosition);
+                    var lockedNode = nodeManager.CreateLockedNode(parentNode, position, position - parentNode.GridPosition);
+                    RegisterLockedNode(lockedNode);
                 }
             }
         }

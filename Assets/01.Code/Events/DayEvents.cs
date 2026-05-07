@@ -11,4 +11,16 @@ namespace _01.Code.Events
 
         public int Day { get; }
     }
+
+    public class DayPreviewChangedEvent : GameEvent
+    {
+        public DayPreviewChangedEvent(int day, float animationDuration)
+        {
+            Day = day;
+            AnimationDuration = animationDuration;
+        }
+
+        public int Day { get; }
+        public float AnimationDuration { get; }
+    }
 }

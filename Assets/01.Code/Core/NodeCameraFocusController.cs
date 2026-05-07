@@ -19,9 +19,6 @@ namespace _01.Code.Core
 
         private void Awake()
         {
-            if (targetCamera == null)
-                targetCamera = GetComponent<Camera>();
-
             CacheDefaultCameraState();
         }
 

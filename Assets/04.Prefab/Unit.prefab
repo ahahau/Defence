@@ -52,6 +52,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Units.Unit
   spriteRenderer: {fileID: 2624532001765305233}
+  combatant: {fileID: 9186542388326355933}
+  health: {fileID: 2709196990148380843}
+  level: {fileID: 1126963852839561618}
 --- !u!114 &2709196990148380843
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -77,12 +80,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 91d206f33eb5362418db8c3fe653f581, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Combat.DamageFeedback
-  bloomColor: {r: 3, g: 0.25, b: 0.15, a: 1}
+  bloomColor: {r: 1, g: 0.12, b: 0.08, a: 1}
   bloomDuration: 0.12
+  distortionDuration: 0.16
+  distortionScaleAmount: 0.22
+  distortionRotationAngle: 8
   textFloatDistance: 0.45
   textDuration: 0.55
   textSortingOrder: 60
   damageTextPrefab: {fileID: 2763252915929347062, guid: 8c9f5ae6dfc45c64881eb2539d305043, type: 3}
+  hitParticles: {fileID: 0}
+  health: {fileID: 2709196990148380843}
+  spriteRenderers:
+  - {fileID: 2624532001765305233}
+  hitParticleColor: {r: 1, g: 0.18, b: 0.06, a: 1}
+  hitParticleBurstCount: 18
+  hitParticleYOffset: 0.35
+  hitParticleSortingOrder: 80
 --- !u!114 &9186542388326355933
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -100,6 +114,14 @@ MonoBehaviour:
   bodySlamDistance: 0.3
   bodySlamDuration: 0.12
   barsView: {fileID: 4583688762365962377}
+  attackFeelFeedbacks: {fileID: 0}
+  attackHitParticles: {fileID: 0}
+  attackParticleColor: {r: 1, g: 0.82, b: 0.35, a: 1}
+  attackParticleBurstCount: 14
+  attackImpactOffset: 0.08
+  attackParticleSortingOrder: 75
+  health: {fileID: 2709196990148380843}
+  damageFeedback: {fileID: 3065682830328054744}
 --- !u!114 &1126963852839561618
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -118,6 +140,7 @@ MonoBehaviour:
   baseExperienceToNextLevel: 3
   experienceGrowthPerLevel: 2
   attackDamageBonusPerLevel: 1
+  unit: {fileID: 8763816506036182599}
 --- !u!1 &7473952817250454834
 GameObject:
   m_ObjectHideFlags: 0

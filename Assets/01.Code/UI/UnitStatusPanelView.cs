@@ -21,8 +21,10 @@ namespace _01.Code.UI
         [SerializeField] private TMP_Text hpText;
         [SerializeField] private TMP_Text levelText;
         [SerializeField] private TMP_Text hintText;
+        [SerializeField] private TMP_Text recoverButtonLabel;
         [SerializeField] private Button recoverButton;
         [SerializeField] private Button closeButton;
+        [SerializeField] private Canvas panelCanvas;
         [SerializeField] private Vector2 screenOffset = new(16f, -16f);
         [SerializeField] private bool keepInsideScreen = true;
 
@@ -117,10 +119,12 @@ namespace _01.Code.UI
             levelText.text = $"Lv {selectedUnit.Level.Level}  EXP {selectedUnit.Level.Experience}/{selectedUnit.Level.ExperienceToNextLevel}";
 
             recoverButton.interactable = CanRecoverSelectedUnit();
-            var label = recoverButton.GetComponentInChildren<TMP_Text>();
-            label.text = selectedUnit.IsIncapacitated
-                ? $"회복 {selectedUnit.RecoveryCost} Gold"
-                : "회복 불필요";
+            if (recoverButtonLabel != null)
+            {
+                recoverButtonLabel.text = selectedUnit.IsIncapacitated
+                    ? $"회복 {selectedUnit.RecoveryCost} Gold"
+                    : "회복 불필요";
+            }
 
             if (string.IsNullOrWhiteSpace(hintText.text))
                 hintText.text = CanRecoverSelectedUnit() ? string.Empty : ResolveRecoverBlockedReason();
@@ -163,18 +167,20 @@ namespace _01.Code.UI
             if (keepInsideScreen)
                 screenPosition = ClampToScreen(panelRect, screenPosition);
 
-            var canvas = panelRoot.GetComponentInParent<Canvas>();
-            if (canvas.renderMode == RenderMode.ScreenSpaceOverlay)
+            if (panelCanvas == null)
+                return;
+
+            if (panelCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
             {
                 panelRect.position = screenPosition;
                 return;
             }
 
-            var canvasRect = (RectTransform)canvas.transform;
+            var canvasRect = (RectTransform)panelCanvas.transform;
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
                 canvasRect,
                 screenPosition,
-                canvas.worldCamera,
+                panelCanvas.worldCamera,
                 out var localPosition);
             panelRect.anchoredPosition = localPosition;
         }

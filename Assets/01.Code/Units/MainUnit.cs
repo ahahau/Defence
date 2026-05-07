@@ -12,52 +12,47 @@ namespace _01.Code.Units
         [SerializeField] private GameEventChannelSO gameStateEventChannel;
         [SerializeField, Min(0f)] private float hitSpriteDuration = 0.25f;
         [SerializeField] private EntityRender unitRenderer;
+        [SerializeField] private Health mainHealth;
         
-        
-        private Health health;
         private bool defeatRaised;
         private Coroutine hitSpriteRoutine;
 
         public void InitializeMainUnit(GameEventChannelSO eventChannel)
         {
             gameStateEventChannel = eventChannel;
-            CacheHealth();
             SubscribeHealth();
         }
 
         protected override void Awake()
         {
             base.Awake();
-            CacheHealth();
             SubscribeHealth();
         }
 
         protected override void OnDestroy()
         {
             base.OnDestroy();
-            if (health == null)
+            if (mainHealth == null)
                 return;
 
-            health.Changed -= HandleHealthChanged;
-            health.Damaged -= HandleDamaged;
-        }
-
-        private void CacheHealth()
-        {
-            health ??= GetComponent<Health>();
+            mainHealth.Changed -= HandleHealthChanged;
+            mainHealth.Damaged -= HandleDamaged;
         }
 
         private void SubscribeHealth()
         {
-            health.Changed -= HandleHealthChanged;
-            health.Changed += HandleHealthChanged;
-            health.Damaged -= HandleDamaged;
-            health.Damaged += HandleDamaged;
+            if (mainHealth == null)
+                return;
+
+            mainHealth.Changed -= HandleHealthChanged;
+            mainHealth.Changed += HandleHealthChanged;
+            mainHealth.Damaged -= HandleDamaged;
+            mainHealth.Damaged += HandleDamaged;
         }
 
         private void HandleHealthChanged(float ratio)
         {
-            if (health.IsAlive)
+            if (mainHealth.IsAlive)
             {
                 if (hitSpriteRoutine == null)
                     unitRenderer.SetUnitSprite(EntityState.Idle);
@@ -66,7 +61,7 @@ namespace _01.Code.Units
 
             unitRenderer.SetUnitSprite();
 
-            if (defeatRaised || health.IsAlive)
+            if (defeatRaised || mainHealth.IsAlive)
                 return;
 
             defeatRaised = true;
@@ -75,7 +70,7 @@ namespace _01.Code.Units
 
         private void HandleDamaged(int damage)
         {
-            if (damage <= 0 || health == null || !health.IsAlive)
+            if (damage <= 0 || mainHealth == null || !mainHealth.IsAlive)
                 return;
 
             if (hitSpriteRoutine != null)
@@ -90,7 +85,7 @@ namespace _01.Code.Units
             yield return new WaitForSeconds(hitSpriteDuration);
 
             hitSpriteRoutine = null;
-            if (health != null && health.IsAlive)
+            if (mainHealth != null && mainHealth.IsAlive)
                 unitRenderer.SetUnitSprite(EntityState.Idle);
         }
     }

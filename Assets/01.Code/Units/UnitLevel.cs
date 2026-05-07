@@ -11,8 +11,7 @@ namespace _01.Code.Units
         [SerializeField] private int baseExperienceToNextLevel = 3;
         [SerializeField] private int experienceGrowthPerLevel = 2;
         [SerializeField] private int attackDamageBonusPerLevel = 1;
-
-        private Unit _unit;
+        [SerializeField] private Unit unit;
 
         public event Action<UnitLevel> Changed;
         public int Level => level;
@@ -22,7 +21,6 @@ namespace _01.Code.Units
 
         private void Awake()
         {
-            _unit = GetComponent<Unit>();
             RefreshView();
         }
 
@@ -37,7 +35,7 @@ namespace _01.Code.Units
             {
                 experience -= ExperienceToNextLevel;
                 level++;
-                _unit.Combatant.AddAttackDamage(attackDamageBonusPerLevel);
+                unit.Combatant.AddAttackDamage(attackDamageBonusPerLevel);
             }
 
             RefreshView();

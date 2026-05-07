@@ -60,6 +60,14 @@ namespace _01.Code.Manager
 
         public void SkipToNextDay() => StartWave();
 
+        public void ShowNextWaveDay(float animationDuration)
+        {
+            if (!_isStandby)
+                return;
+
+            dayEventChannel?.RaiseEvent(new DayPreviewChangedEvent(NextWaveDay, animationDuration));
+        }
+
         private void HandleWaveEnded(WaveEndedEvent evt)
         {
             _isStandby = true;

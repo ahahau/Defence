@@ -69,6 +69,14 @@ MonoBehaviour:
   bodySlamDistance: 0.3
   bodySlamDuration: 0.12
   barsView: {fileID: 6423190095618195173}
+  attackFeelFeedbacks: {fileID: 0}
+  attackHitParticles: {fileID: 0}
+  attackParticleColor: {r: 1, g: 0.82, b: 0.35, a: 1}
+  attackParticleBurstCount: 14
+  attackImpactOffset: 0.08
+  attackParticleSortingOrder: 75
+  health: {fileID: 804072662716526524}
+  damageFeedback: {fileID: 7098595463026590609}
 --- !u!114 &4689645077024247560
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -82,9 +90,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Units.MainUnit
   spriteRenderer: {fileID: 1816607769188706741}
+  combatant: {fileID: 8383914075598154588}
+  health: {fileID: 804072662716526524}
+  level: {fileID: 8690583679549977268}
   gameStateEventChannel: {fileID: 11400000, guid: 959e35f08825cd94a8b68a1c032d7836, type: 2}
   hitSpriteDuration: 0.25
   unitRenderer: {fileID: 9208969084259638768}
+  mainHealth: {fileID: 804072662716526524}
 --- !u!114 &7098595463026590609
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -97,12 +109,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 91d206f33eb5362418db8c3fe653f581, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Combat.DamageFeedback
-  bloomColor: {r: 3, g: 0.25, b: 0.15, a: 1}
+  bloomColor: {r: 1, g: 0.12, b: 0.08, a: 1}
   bloomDuration: 0.12
+  distortionDuration: 0.16
+  distortionScaleAmount: 0.22
+  distortionRotationAngle: 8
   textFloatDistance: 0.45
   textDuration: 0.55
   textSortingOrder: 60
   damageTextPrefab: {fileID: 2763252915929347062, guid: 8c9f5ae6dfc45c64881eb2539d305043, type: 3}
+  hitParticles: {fileID: 0}
+  health: {fileID: 804072662716526524}
+  spriteRenderers:
+  - {fileID: 1816607769188706741}
+  hitParticleColor: {r: 1, g: 0.18, b: 0.06, a: 1}
+  hitParticleBurstCount: 18
+  hitParticleYOffset: 0.35
+  hitParticleSortingOrder: 80
 --- !u!114 &8690583679549977268
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -121,6 +144,7 @@ MonoBehaviour:
   baseExperienceToNextLevel: 3
   experienceGrowthPerLevel: 2
   attackDamageBonusPerLevel: 1
+  unit: {fileID: 4689645077024247560}
 --- !u!1 &8357328393588773581
 GameObject:
   m_ObjectHideFlags: 0

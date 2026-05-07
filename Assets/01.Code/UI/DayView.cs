@@ -2,7 +2,6 @@ using _01.Code.Events;
 using _01.Code.Core;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace _01.Code.UI
 {
@@ -17,20 +16,29 @@ namespace _01.Code.UI
         [SerializeField]
         private string format = "Day {0}";
 
+        private int _displayedDay = 1;
+
         private void OnEnable()
         {
             dayEventChannel.AddListener<DayChangedEvent>(HandleDayChanged);
-            if (dayText == null)
-                dayText = GetComponent<TMP_Text>();
+            dayEventChannel.AddListener<DayPreviewChangedEvent>(HandleDayPreviewChanged);
         }
 
         private void OnDisable()
         {
             dayEventChannel.RemoveListener<DayChangedEvent>(HandleDayChanged);
+            dayEventChannel.RemoveListener<DayPreviewChangedEvent>(HandleDayPreviewChanged);
         }
 
         private void HandleDayChanged(DayChangedEvent evt)
         {
+            _displayedDay = evt.Day;
+            dayText.text = string.Format(format, evt.Day);
+        }
+
+        private void HandleDayPreviewChanged(DayPreviewChangedEvent evt)
+        {
+            _displayedDay = evt.Day;
             dayText.text = string.Format(format, evt.Day);
         }
 
