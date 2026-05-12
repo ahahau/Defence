@@ -4,6 +4,7 @@ using _01.Code.Buildings;
 using _01.Code.Core;
 using _01.Code.Entities;
 using _01.Code.Events;
+using _01.Code.StatusEffects;
 using System.Collections;
 using UnityEngine;
 
@@ -12,6 +13,7 @@ namespace _01.Code.Enemies
     [RequireComponent(typeof(Health))]
     [RequireComponent(typeof(Combatant))]
     [RequireComponent(typeof(EnemyMover))]
+    [RequireComponent(typeof(EnemyStatusController))]
     public class Enemy : MonoBehaviour
     {
         [SerializeField] private int killExperience = 1;
@@ -20,6 +22,7 @@ namespace _01.Code.Enemies
         [SerializeField] private Combatant combatant;
         [SerializeField] private EnemyMover mover;
         [SerializeField] private Health health;
+        [SerializeField] private EnemyStatusController statusController;
 
         private GameEventChannelSO _costEventChannel;
         private Coroutine _hitSpriteRoutine;
@@ -29,6 +32,10 @@ namespace _01.Code.Enemies
 
         private void Awake()
         {
+            if (statusController == null)
+                statusController = GetComponent<EnemyStatusController>();
+            if (statusController == null)
+                statusController = gameObject.AddComponent<EnemyStatusController>();
             SubscribeHealth();
         }
 
@@ -67,6 +74,8 @@ namespace _01.Code.Enemies
         {
             if (node == null)
                 return false;
+
+            statusController?.TickNodeVisit();
 
             if (TryTriggerTrap(node))
                 return false;

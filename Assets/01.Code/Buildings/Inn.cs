@@ -1,6 +1,7 @@
 using _01.Code.Combat;
 using _01.Code.Core;
 using _01.Code.Events;
+using _01.Code.StatusEffects;
 using UnityEngine;
 
 namespace _01.Code.Buildings
@@ -10,13 +11,25 @@ namespace _01.Code.Buildings
         [SerializeField] private GameEventChannelSO costEventChannel;
         [SerializeField] private int healAmount = 2;
         [SerializeField] private int goldReward = 10;
+        [SerializeField] private StatusEffectDataSO statusEffect;
+        [Header("Feedback")]
+        [SerializeField] private MonoBehaviour healFeelFeedback;
+        [SerializeField] private Color healFlashColor = new(0.35f, 1f, 0.55f, 1f);
+        [SerializeField, Min(0.01f)] private float healFlashDuration = 0.28f;
 
         public void ApplyPassEffect(Combatant enemy)
         {
             if (enemy == null || !enemy.IsAlive)
                 return;
 
+            var previousHealth = enemy.Health != null ? enemy.Health.CurrentHealth : 0;
             enemy.Health?.Heal(healAmount);
+            if (statusEffect != null && enemy.TryGetComponent<EnemyStatusController>(out var statusController))
+                statusController.Apply(statusEffect);
+
+            if (enemy.Health != null && enemy.Health.CurrentHealth > previousHealth)
+                PlayPassEffectFeedback(enemy, healFlashColor, healFlashDuration, healFeelFeedback);
+
             costEventChannel?.RaiseEvent(new GoldEarnedEvent(goldReward));
         }
     }

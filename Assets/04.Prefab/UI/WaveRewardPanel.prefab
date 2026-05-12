@@ -96,6 +96,18 @@ MonoBehaviour:
   warningPanel: {fileID: 5000}
   warningCancelButton: {fileID: 7004}
   warningCloseButton: {fileID: 8004}
+  artifactInventory: {fileID: 11400000, guid: 3099ecc58234bda409805efab871af7f, type: 2}
+  artifactEventChannel: {fileID: 11400000, guid: cc88dffc4f05ec147bf3370d40b143c7, type: 2}
+  artifactPool:
+  - {fileID: 11400000, guid: b14444460c1b82c4097c03c7e55d2763, type: 2}
+  - {fileID: 11400000, guid: 5f628d467d96df34a886a2021303b517, type: 2}
+  - {fileID: 11400000, guid: 9d1ab5dd7e95766459835a868e7ae261, type: 2}
+  - {fileID: 11400000, guid: a995049f4a0079f47af8fcc66286197f, type: 2}
+  artifactRewardButton: {fileID: 0}
+  artifactRewardText: {fileID: 0}
+  artifactChoicePanelPrefab: {fileID: 1004, guid: ba804b1d3d1d4edcb93f7c6672e2db6a, type: 3}
+  artifactChoicePanelParent: {fileID: 0}
+  artifactChoiceCount: 3
 --- !u!1 &9000
 GameObject:
   m_ObjectHideFlags: 0

@@ -19,14 +19,23 @@ namespace _01.Code.Artifacts
             return obtainedArtifacts.Contains(artifact);
         }
 
+        public void Clear(GameEventChannelSO artifactEventChannel = null)
+        {
+            if (obtainedArtifacts.Count == 0)
+                return;
+
+            obtainedArtifacts.Clear();
+            artifactEventChannel?.RaiseEvent(new ArtifactInventoryChangedEvent(this));
+        }
+
         public void Obtain(ArtifactDataSO artifact, GameEventChannelSO artifactEventChannel)
         {
             if (artifact == null || obtainedArtifacts.Contains(artifact))
                 return;
 
             obtainedArtifacts.Add(artifact);
-            artifactEventChannel.RaiseEvent(new ArtifactObtainedEvent(this, artifact));
-            artifactEventChannel.RaiseEvent(new ArtifactInventoryChangedEvent(this));
+            artifactEventChannel?.RaiseEvent(new ArtifactObtainedEvent(this, artifact));
+            artifactEventChannel?.RaiseEvent(new ArtifactInventoryChangedEvent(this));
         }
 
         public ArtifactStatBonus CalculateBonus(Unit unit)

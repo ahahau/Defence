@@ -49,6 +49,7 @@ MonoBehaviour:
   costEventChannel: {fileID: 11400000, guid: 734ca3593b5d2884dae267b0e3e601be, type: 2}
   healAmount: 2
   goldReward: 10
+  statusEffect: {fileID: 11400000, guid: 46137902b7a64ee2917a54169713ec5a, type: 2}
 --- !u!1 &7473952817250454834
 GameObject:
   m_ObjectHideFlags: 0

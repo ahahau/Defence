@@ -17,6 +17,11 @@ namespace _01.Code.Artifacts
         private readonly List<Unit> appliedUnits = new();
         private readonly List<EnemyMover> enemies = new();
 
+        private void Awake()
+        {
+            artifactInventory?.Clear();
+        }
+
         private void OnEnable()
         {
             artifactEventChannel.AddListener<UnitArtifactApplyRequestedEvent>(HandleUnitApplyRequested);

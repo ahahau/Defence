@@ -1,4 +1,5 @@
 using _01.Code.Combat;
+using _01.Code.StatusEffects;
 using UnityEngine;
 
 namespace _01.Code.Buildings
@@ -22,7 +23,11 @@ namespace _01.Code.Buildings
             if (Random.value > triggerChance)
                 return false;
          
-            target.TakeDamage(damage);
+            var resolvedDamage = damage;
+            if (target is Component component && component.TryGetComponent<EnemyStatusController>(out var statusController))
+                resolvedDamage = statusController.ModifyTrapDamage(resolvedDamage);
+
+            target.TakeDamage(resolvedDamage);
             return true;
         }
     }

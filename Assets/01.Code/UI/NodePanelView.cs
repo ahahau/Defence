@@ -40,6 +40,8 @@ namespace _01.Code.UI
         [SerializeField] private HiredUnitRoster hiredUnitRoster;
 
         private Node _selectedNode;
+        private Node _pendingBuildingNode;
+        private BuildingDataSO _pendingBuildingData;
         private bool hasInstalledPortal;
         private bool _isDeployModeActive;
         private readonly List<Button> buildingInstallButtons = new();
@@ -60,6 +62,8 @@ namespace _01.Code.UI
             costEventChannel?.AddListener<RosterChangedEvent>(HandleRosterChanged);
             costEventChannel?.AddListener<UnitDeployMagicPaidEvent>(HandleDeployMagicPaid);
             costEventChannel?.AddListener<UnitDeployMagicRejectedEvent>(HandleDeployMagicRejected);
+            costEventChannel?.AddListener<BuildCostPaidEvent>(HandleBuildCostPaid);
+            costEventChannel?.AddListener<BuildCostRejectedEvent>(HandleBuildCostRejected);
             closeButton?.onClick.AddListener(HandleCloseClicked);
             installButton?.onClick.AddListener(HandleInstallClicked);
             demolishButton?.onClick.AddListener(HandleDemolishClicked);
@@ -72,6 +76,8 @@ namespace _01.Code.UI
             costEventChannel?.RemoveListener<RosterChangedEvent>(HandleRosterChanged);
             costEventChannel?.RemoveListener<UnitDeployMagicPaidEvent>(HandleDeployMagicPaid);
             costEventChannel?.RemoveListener<UnitDeployMagicRejectedEvent>(HandleDeployMagicRejected);
+            costEventChannel?.RemoveListener<BuildCostPaidEvent>(HandleBuildCostPaid);
+            costEventChannel?.RemoveListener<BuildCostRejectedEvent>(HandleBuildCostRejected);
             closeButton?.onClick.RemoveListener(HandleCloseClicked);
             installButton?.onClick.RemoveListener(HandleInstallClicked);
             demolishButton?.onClick.RemoveListener(HandleDemolishClicked);
@@ -279,18 +285,57 @@ namespace _01.Code.UI
             if (buildingData.Unique && buildingData.Prefab is Portal && hasInstalledPortal)
                 return;
 
-            var building = CreateBuilding(_selectedNode, buildingData.Prefab);
+            _pendingBuildingNode = _selectedNode;
+            _pendingBuildingData = buildingData;
+            RefreshBuildingInstallButtons();
+
+            costEventChannel?.RaiseEvent(new BuildCostRequestedEvent(_pendingBuildingNode, buildingData.Cost));
+        }
+
+        private void HandleBuildCostPaid(BuildCostPaidEvent evt)
+        {
+            if (_pendingBuildingNode == null || _pendingBuildingData == null || evt.Node != _pendingBuildingNode)
+                return;
+
+            InstallPendingBuilding();
+        }
+
+        private void HandleBuildCostRejected(BuildCostRejectedEvent evt)
+        {
+            if (_pendingBuildingNode == null || evt.Node != _pendingBuildingNode)
+                return;
+
+            SetTitle($"골드 부족 ({evt.CurrentGold}/{evt.GoldAmount})");
+            _pendingBuildingNode = null;
+            _pendingBuildingData = null;
+            RefreshBuildingInstallButtons();
+        }
+
+        private void InstallPendingBuilding()
+        {
+            var node = _pendingBuildingNode;
+            var buildingData = _pendingBuildingData;
+            _pendingBuildingNode = null;
+            _pendingBuildingData = null;
+
+            if (node == null || buildingData == null || buildingData.Prefab == null || node.HasInstallation)
+            {
+                RefreshBuildingInstallButtons();
+                return;
+            }
+
+            var building = CreateBuilding(node, buildingData.Prefab);
             if (building == null)
                 return;
 
             building.Initialize(buildingData);
-            _selectedNode.AssignBuilding(building);
+            node.AssignBuilding(building);
 
             if (building is Portal portal)
             {
-                portal.Initialize(_selectedNode);
+                portal.Initialize(node);
                 hasInstalledPortal = true;
-                nodeEventChannel?.RaiseEvent(new PortalInstalledEvent(_selectedNode));
+                nodeEventChannel?.RaiseEvent(new PortalInstalledEvent(node));
             }
 
             RefreshBuildingInstallButtons();
@@ -376,7 +421,7 @@ namespace _01.Code.UI
             if (buildingData.Unique && buildingData.Prefab is Portal && hasInstalledPortal)
                 return false;
 
-            return true;
+            return _pendingBuildingNode == null;
         }
 
         private void RefreshDemolishButton()

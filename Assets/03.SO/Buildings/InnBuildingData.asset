@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 34c4dc0ecf9801d4aa0c5c4a452b0163, type: 3}
   m_Name: InnBuildingData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Buildings.BuildingDataSO
-  <DisplayName>k__BackingField: Inn
+  <DisplayName>k__BackingField: "\uC8FC\uC810"
   <Cost>k__BackingField: 10
   <Prefab>k__BackingField: {fileID: 7635352072880509772, guid: be49d149227014945b5df3f840093cf9, type: 3}
   <Unique>k__BackingField: 0

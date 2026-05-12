@@ -3,6 +3,7 @@ using System.Collections;
 using System.Reflection;
 using _01.Code.Core;
 using _01.Code.Events;
+using _01.Code.StatusEffects;
 using DG.Tweening;
 using UnityEngine;
 
@@ -31,6 +32,7 @@ namespace _01.Code.Combat
         private int artifactAttackDamageBonus;
         private float artifactAttackDamageMultiplier = 1f;
         private GameEventChannelSO artifactEventChannel;
+        private EnemyStatusController enemyStatusController;
         private static Material _attackParticleMaterial;
 
         public bool IsAlive => health != null && health.IsAlive;
@@ -64,6 +66,7 @@ namespace _01.Code.Combat
 
         private void Awake()
         {
+            enemyStatusController = GetComponent<EnemyStatusController>();
             EnsureAttackFeedbacks();
             if (health != null)
                 health.Changed += RefreshHealthBar;
@@ -105,10 +108,11 @@ namespace _01.Code.Combat
 
             while (target != null && target.IsAlive && IsAlive)
             {
+                var currentAttackInterval = ResolveAttackInterval();
                 attackTimer += Time.deltaTime;
-                RefreshAttackBar(attackTimer / attackInterval);
+                RefreshAttackBar(attackTimer / currentAttackInterval);
 
-                if (attackTimer >= attackInterval && !_isAttacking)
+                if (attackTimer >= currentAttackInterval && !_isAttacking)
                 {
                     _isAttacking = true;
                     yield return PlayBodySlam(target);
@@ -186,6 +190,14 @@ namespace _01.Code.Combat
             var evt = new CombatDamageCalculatedEvent(this, target, damage);
             artifactEventChannel.RaiseEvent(evt);
             return evt.Damage;
+        }
+
+        private float ResolveAttackInterval()
+        {
+            var multiplier = enemyStatusController != null
+                ? enemyStatusController.GetAttackIntervalMultiplier()
+                : 1f;
+            return Mathf.Max(0.05f, attackInterval * multiplier);
         }
 
         private void EnsureAttackFeedbacks()
