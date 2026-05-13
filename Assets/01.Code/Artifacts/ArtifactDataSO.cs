@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using _01.Code.Units;
 using UnityEngine;
 
@@ -24,6 +25,12 @@ namespace _01.Code.Artifacts
         [field: SerializeField] public float AttackIntervalMultiplier { get; private set; } = 1f;
         [field: SerializeField] public ArtifactEffectSO[] Effects { get; private set; }
 
+        public ArtifactStatBonus BaseStatBonus => new(
+            AttackDamageBonus,
+            Mathf.Max(0.05f, AttackDamageMultiplier),
+            MaxHealthBonus,
+            Mathf.Max(0.05f, AttackIntervalMultiplier));
+
         public bool AppliesTo(Unit unit)
         {
             return Target switch
@@ -32,6 +39,38 @@ namespace _01.Code.Artifacts
                 ArtifactTarget.HiredUnitsOnly => unit is not MainUnit,
                 _ => true
             };
+        }
+
+        public ArtifactStatBonus CalculateStatBonus(ArtifactEffectContext context)
+        {
+            var bonus = BaseStatBonus;
+
+            foreach (var effect in EnumerateEffects())
+            {
+                bonus.Add(effect.GetStatBonus(context));
+            }
+
+            return bonus;
+        }
+
+        public void ApplyEffects(ArtifactEffectContext context)
+        {
+            foreach (var effect in EnumerateEffects())
+            {
+                effect.Apply(context);
+            }
+        }
+
+        private IEnumerable<ArtifactEffectSO> EnumerateEffects()
+        {
+            if (Effects == null)
+                yield break;
+
+            foreach (var effect in Effects)
+            {
+                if (effect != null)
+                    yield return effect;
+            }
         }
     }
 }

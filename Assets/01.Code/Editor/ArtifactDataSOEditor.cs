@@ -5,7 +5,9 @@ using System.Linq;
 using System.Reflection;
 using _01.Code.Artifacts;
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace _01.Code.EditorTools
 {
@@ -22,75 +24,116 @@ namespace _01.Code.EditorTools
             RefreshEffectTypes();
         }
 
-        public override void OnInspectorGUI()
+        public override VisualElement CreateInspectorGUI()
         {
-            serializedObject.Update();
+            var root = new VisualElement();
+            root.style.paddingTop = 4f;
 
-            DrawDefaultInspector();
+            var defaultInspector = new VisualElement();
+            InspectorElement.FillDefaultInspector(defaultInspector, serializedObject, this);
+            root.Add(defaultInspector);
 
-            EditorGUILayout.Space(8f);
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-            {
-                EditorGUILayout.LabelField("Artifact Effect Tools", EditorStyles.boldLabel);
-                EditorGUILayout.LabelField(
-                    "Reflection으로 ArtifactEffectSO 타입을 찾아서 바로 생성하고 Effects 배열에 연결합니다.",
-                    EditorStyles.wordWrappedMiniLabel);
-
-                DrawExistingEffectAdder();
-                EditorGUILayout.Space(4f);
-                DrawEffectCreator();
-            }
-
-            serializedObject.ApplyModifiedProperties();
+            root.Add(BuildToolsPanel());
+            return root;
         }
 
-        private void DrawExistingEffectAdder()
+        private VisualElement BuildToolsPanel()
         {
-            effectToAdd = (ArtifactEffectSO)EditorGUILayout.ObjectField(
-                "Existing Effect",
-                effectToAdd,
-                typeof(ArtifactEffectSO),
-                false);
+            var panel = new VisualElement();
+            panel.style.marginTop = 8f;
+            panel.style.paddingLeft = 6f;
+            panel.style.paddingRight = 6f;
+            panel.style.paddingTop = 6f;
+            panel.style.paddingBottom = 6f;
+            panel.style.borderLeftWidth = 1f;
+            panel.style.borderRightWidth = 1f;
+            panel.style.borderTopWidth = 1f;
+            panel.style.borderBottomWidth = 1f;
+            panel.style.borderLeftColor = new Color(0.25f, 0.25f, 0.25f);
+            panel.style.borderRightColor = new Color(0.25f, 0.25f, 0.25f);
+            panel.style.borderTopColor = new Color(0.25f, 0.25f, 0.25f);
+            panel.style.borderBottomColor = new Color(0.25f, 0.25f, 0.25f);
 
-            using (new EditorGUI.DisabledScope(effectToAdd == null))
+            var title = new Label("Artifact Effect Tools");
+            title.style.unityFontStyleAndWeight = FontStyle.Bold;
+            panel.Add(title);
+
+            var description = new Label("Reflection으로 ArtifactEffectSO 타입을 찾아서 바로 생성하고 Effects 배열에 연결합니다.");
+            description.style.whiteSpace = WhiteSpace.Normal;
+            description.style.fontSize = 10f;
+            panel.Add(description);
+
+            var existingEffectField = new ObjectField("Existing Effect")
             {
-                if (GUILayout.Button("Add Existing Effect"))
-                {
-                    AddEffectReference(effectToAdd);
-                    effectToAdd = null;
-                }
-            }
+                objectType = typeof(ArtifactEffectSO),
+                allowSceneObjects = false,
+                value = effectToAdd
+            };
+            panel.Add(existingEffectField);
+
+            var addExistingButton = new Button(() =>
+            {
+                AddEffectReference(effectToAdd);
+                effectToAdd = null;
+                existingEffectField.value = null;
+            })
+            {
+                text = "Add Existing Effect"
+            };
+            addExistingButton.SetEnabled(effectToAdd != null);
+            existingEffectField.RegisterValueChangedCallback(evt =>
+            {
+                effectToAdd = (ArtifactEffectSO)evt.newValue;
+                addExistingButton.SetEnabled(effectToAdd != null);
+            });
+            panel.Add(addExistingButton);
+
+            var effectCreator = new VisualElement();
+            effectCreator.style.marginTop = 4f;
+            panel.Add(effectCreator);
+            RebuildEffectCreator(effectCreator);
+
+            return panel;
         }
 
-        private void DrawEffectCreator()
+        private void RebuildEffectCreator(VisualElement container)
         {
-            using (new EditorGUILayout.HorizontalScope())
+            container.Clear();
+
+            var row = new VisualElement();
+            row.style.flexDirection = FlexDirection.Row;
+            container.Add(row);
+
+            var dropdown = new PopupField<string>("New Effect Type", effectTypeNames.ToList(), selectedEffectTypeIndex);
+            dropdown.style.flexGrow = 1f;
+            dropdown.SetEnabled(effectTypes.Length > 0);
+            dropdown.RegisterValueChangedCallback(_ =>
             {
-                EditorGUI.BeginChangeCheck();
-                selectedEffectTypeIndex = EditorGUILayout.Popup(
-                    "New Effect Type",
-                    selectedEffectTypeIndex,
-                    effectTypeNames);
+                selectedEffectTypeIndex = dropdown.index;
+            });
+            row.Add(dropdown);
 
-                if (EditorGUI.EndChangeCheck())
-                    GUI.FocusControl(null);
-
-                if (GUILayout.Button("Refresh", GUILayout.Width(72f)))
-                    RefreshEffectTypes();
-            }
-
-            using (new EditorGUI.DisabledScope(effectTypes.Length == 0))
+            var refreshButton = new Button(() =>
             {
-                if (GUILayout.Button("Create Effect Asset And Add", GUILayout.Height(28f)))
-                    CreateEffectAssetAndAdd();
-            }
+                RefreshEffectTypes();
+                RebuildEffectCreator(container);
+            })
+            {
+                text = "Refresh"
+            };
+            refreshButton.style.width = 72f;
+            row.Add(refreshButton);
+
+            var createButton = new Button(CreateEffectAssetAndAdd)
+            {
+                text = "Create Effect Asset And Add"
+            };
+            createButton.style.height = 28f;
+            createButton.SetEnabled(effectTypes.Length > 0);
+            container.Add(createButton);
 
             if (effectTypes.Length == 0)
-            {
-                EditorGUILayout.HelpBox(
-                    "CreateAssetMenu가 붙은 ArtifactEffectSO 타입이 없습니다.",
-                    MessageType.Info);
-            }
+                container.Add(new HelpBox("CreateAssetMenu가 붙은 ArtifactEffectSO 타입이 없습니다.", HelpBoxMessageType.Info));
         }
 
         private void RefreshEffectTypes()
@@ -111,7 +154,7 @@ namespace _01.Code.EditorTools
             selectedEffectTypeIndex = Mathf.Clamp(selectedEffectTypeIndex, 0, Mathf.Max(0, effectTypes.Length - 1));
         }
 
-        private static string BuildEffectTypeDisplayName(Type type)
+        private string BuildEffectTypeDisplayName(Type type)
         {
             var menu = type.GetCustomAttribute<CreateAssetMenuAttribute>();
             if (menu == null || string.IsNullOrWhiteSpace(menu.menuName))
@@ -162,7 +205,7 @@ namespace _01.Code.EditorTools
             EditorUtility.SetDirty(target);
         }
 
-        private static string ResolveEffectFolder(string artifactPath)
+        private string ResolveEffectFolder(string artifactPath)
         {
             var artifactFolder = Path.GetDirectoryName(artifactPath)?.Replace("\\", "/");
             if (string.IsNullOrWhiteSpace(artifactFolder))
@@ -171,7 +214,7 @@ namespace _01.Code.EditorTools
             return $"{artifactFolder}/Effects";
         }
 
-        private static void EnsureFolder(string folder)
+        private void EnsureFolder(string folder)
         {
             if (AssetDatabase.IsValidFolder(folder))
                 return;

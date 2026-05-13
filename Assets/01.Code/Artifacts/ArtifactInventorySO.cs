@@ -47,10 +47,8 @@ namespace _01.Code.Artifacts
                 if (artifact == null || !artifact.AppliesTo(unit))
                     continue;
 
-                bonus.AttackDamage += artifact.AttackDamageBonus;
-                bonus.AttackDamageMultiplier *= Mathf.Max(0.05f, artifact.AttackDamageMultiplier);
-                bonus.MaxHealth += artifact.MaxHealthBonus;
-                bonus.AttackIntervalMultiplier *= Mathf.Max(0.05f, artifact.AttackIntervalMultiplier);
+                var context = new ArtifactEffectContext(artifact, unit);
+                bonus.Add(artifact.CalculateStatBonus(context));
             }
 
             return bonus;

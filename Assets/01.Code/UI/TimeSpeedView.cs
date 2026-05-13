@@ -65,17 +65,34 @@ namespace _01.Code.UI
 
         private void RefreshVisuals()
         {
-            SetButtonColor(pauseButtonBackground, Mathf.Approximately(_currentSpeed, 0f));
-            SetButtonColor(normalButtonBackground, Mathf.Approximately(_currentSpeed, 1f));
-            SetButtonColor(fastButtonBackground, Mathf.Approximately(_currentSpeed, 2f));
+            SetButtonVisual(pauseButton, ref pauseButtonBackground, Mathf.Approximately(_currentSpeed, 0f));
+            SetButtonVisual(normalButton, ref normalButtonBackground, Mathf.Approximately(_currentSpeed, 1f));
+            SetButtonVisual(fastButton, ref fastButtonBackground, Mathf.Approximately(_currentSpeed, 2f));
         }
 
-        private void SetButtonColor(Image image, bool selected)
+        private void SetButtonVisual(Button button, ref Image background, bool selected)
         {
-            if (image == null)
+            if (button == null)
                 return;
 
-            image.color = selected ? selectedColor : normalColor;
+            if (background == null)
+                background = button.targetGraphic as Image ?? button.GetComponent<Image>();
+            if (background == null)
+                return;
+
+            var baseColor = selected ? selectedColor : normalColor;
+            background.color = baseColor;
+            button.targetGraphic = background;
+
+            var colors = button.colors;
+            colors.normalColor = baseColor;
+            colors.highlightedColor = Color.Lerp(baseColor, Color.white, 0.12f);
+            colors.pressedColor = Color.Lerp(baseColor, Color.black, 0.18f);
+            colors.selectedColor = selectedColor;
+            colors.disabledColor = new Color(normalColor.r, normalColor.g, normalColor.b, 0.45f);
+            colors.colorMultiplier = 1f;
+            colors.fadeDuration = 0.04f;
+            button.colors = colors;
         }
     }
 }

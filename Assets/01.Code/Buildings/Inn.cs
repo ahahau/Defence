@@ -14,7 +14,7 @@ namespace _01.Code.Buildings
         [SerializeField] private StatusEffectDataSO statusEffect;
         [Header("Feedback")]
         [SerializeField] private MonoBehaviour healFeelFeedback;
-        [SerializeField] private Color healFlashColor = new(0.35f, 1f, 0.55f, 1f);
+        [SerializeField] private Color healFlashColor = Color.green;
         [SerializeField, Min(0.01f)] private float healFlashDuration = 0.28f;
 
         public void ApplyPassEffect(Combatant enemy)
@@ -24,8 +24,7 @@ namespace _01.Code.Buildings
 
             var previousHealth = enemy.Health != null ? enemy.Health.CurrentHealth : 0;
             enemy.Health?.Heal(healAmount);
-            if (statusEffect != null && enemy.TryGetComponent<EnemyStatusController>(out var statusController))
-                statusController.Apply(statusEffect);
+            statusEffect?.TryApplyTo(enemy);
 
             if (enemy.Health != null && enemy.Health.CurrentHealth > previousHealth)
                 PlayPassEffectFeedback(enemy, healFlashColor, healFlashDuration, healFeelFeedback);

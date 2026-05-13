@@ -24,13 +24,12 @@ namespace _01.Code.UI
         [SerializeField] private ArtifactDataSO[] artifactPool;
         [SerializeField] private Button artifactRewardButton;
         [SerializeField] private Graphic artifactRewardText;
-        [SerializeField] private ArtifactRewardChoicePanelView artifactChoicePanelPrefab;
-        [SerializeField] private Transform artifactChoicePanelParent;
+        [SerializeField] private ArtifactRewardChoicePanelView artifactChoicePanel;
+        [SerializeField] private RectTransform rewardChoiceRoot;
         [SerializeField, Min(1)] private int artifactChoiceCount = 3;
 
         private readonly List<ArtifactDataSO> pendingArtifactChoices = new();
         private GameEventChannelSO _costEventChannel;
-        private ArtifactRewardChoicePanelView _artifactChoicePanel;
         private int _pendingGoldAmount;
         private bool _hasPendingGoldReward;
         private bool _hasPendingArtifactReward;
@@ -40,7 +39,10 @@ namespace _01.Code.UI
 
         private void Awake()
         {
-            EnsureArtifactRewardButton();
+            if (artifactChoicePanel == null)
+                artifactChoicePanel = GetComponentInChildren<ArtifactRewardChoicePanelView>(true);
+
+            ConfigureRewardChoiceLayout();
         }
 
         private void OnEnable()
@@ -68,12 +70,12 @@ namespace _01.Code.UI
 
         public void ShowGoldReward(int goldAmount)
         {
-            EnsureArtifactRewardButton();
+            ConfigureRewardChoiceLayout();
             PrepareArtifactChoices();
 
             _pendingGoldAmount = Mathf.Max(0, goldAmount);
             _hasPendingGoldReward = _pendingGoldAmount > 0;
-            _hasPendingArtifactReward = pendingArtifactChoices.Count > 0;
+            _hasPendingArtifactReward = pendingArtifactChoices.Count > 0 && artifactRewardButton != null && artifactChoicePanel != null;
 
             if (!_hasPendingGoldReward && !_hasPendingArtifactReward)
             {
@@ -134,7 +136,13 @@ namespace _01.Code.UI
             if (!_hasPendingArtifactReward || pendingArtifactChoices.Count == 0)
                 return;
 
-            EnsureArtifactChoicePanel().Show(pendingArtifactChoices, ObtainArtifact);
+            if (artifactChoicePanel == null)
+            {
+                Debug.LogError($"{nameof(WaveRewardPanelView)} requires an assigned artifact choice panel.", this);
+                return;
+            }
+
+            artifactChoicePanel.Show(pendingArtifactChoices, ObtainArtifact);
         }
 
         private void ObtainArtifact(ArtifactDataSO artifact)
@@ -203,36 +211,71 @@ namespace _01.Code.UI
             }
         }
 
-        private ArtifactRewardChoicePanelView EnsureArtifactChoicePanel()
+        private void ConfigureRewardChoiceLayout()
         {
-            if (_artifactChoicePanel != null)
-                return _artifactChoicePanel;
-
-            var parent = artifactChoicePanelParent != null ? artifactChoicePanelParent : transform;
-            _artifactChoicePanel = artifactChoicePanelPrefab != null
-                ? Instantiate(artifactChoicePanelPrefab, parent)
-                : new GameObject("ArtifactRewardChoicePanel", typeof(RectTransform), typeof(ArtifactRewardChoicePanelView)).GetComponent<ArtifactRewardChoicePanelView>();
-
-            if (_artifactChoicePanel.transform.parent == null)
-                _artifactChoicePanel.transform.SetParent(parent, false);
-
-            _artifactChoicePanel.gameObject.SetActive(false);
-            _artifactChoicePanel.transform.SetAsLastSibling();
-            return _artifactChoicePanel;
-        }
-
-        private void EnsureArtifactRewardButton()
-        {
-            if (artifactRewardButton != null || goldRewardButton == null)
+            if (goldRewardButton == null)
                 return;
 
-            artifactRewardButton = Instantiate(goldRewardButton, goldRewardButton.transform.parent);
-            artifactRewardButton.name = "ArtifactRewardButton";
-            artifactRewardButton.onClick.RemoveAllListeners();
-            artifactRewardText = FindLabelGraphic(artifactRewardButton);
+            if (rewardChoiceRoot == null)
+                rewardChoiceRoot = goldRewardButton.transform.parent as RectTransform;
 
-            if (artifactRewardButton.transform is RectTransform rect)
-                rect.anchoredPosition += new Vector2(0f, -96f);
+            if (rewardChoiceRoot != null)
+            {
+                rewardChoiceRoot.anchorMin = new Vector2(0.5f, 0.5f);
+                rewardChoiceRoot.anchorMax = new Vector2(0.5f, 0.5f);
+                rewardChoiceRoot.pivot = new Vector2(0.5f, 0.5f);
+                rewardChoiceRoot.anchoredPosition = new Vector2(0f, 36f);
+                rewardChoiceRoot.sizeDelta = new Vector2(304f, 128f);
+            }
+
+            var layout = rewardChoiceRoot != null
+                ? rewardChoiceRoot.GetComponent<HorizontalLayoutGroup>()
+                : goldRewardButton.GetComponentInParent<HorizontalLayoutGroup>();
+            if (layout != null)
+            {
+                layout.spacing = 24f;
+                layout.childAlignment = TextAnchor.MiddleCenter;
+                layout.childControlWidth = false;
+                layout.childControlHeight = false;
+                layout.childForceExpandWidth = false;
+                layout.childForceExpandHeight = false;
+            }
+
+            ConfigureRewardButtonRect(goldRewardButton);
+
+            if (artifactRewardButton != null)
+                ConfigureRewardButtonRect(artifactRewardButton);
+
+            if (layout == null && goldRewardButton.transform is RectTransform goldRect)
+            {
+                var hasArtifactButton = artifactRewardButton != null && artifactRewardButton.transform is RectTransform;
+                goldRect.anchoredPosition = hasArtifactButton ? new Vector2(-76f, 36f) : new Vector2(0f, 36f);
+
+                if (artifactRewardButton != null && artifactRewardButton.transform is RectTransform artifactRect)
+                    artifactRect.anchoredPosition = new Vector2(76f, 36f);
+            }
+        }
+
+        private static void ConfigureRewardButtonRect(Button button)
+        {
+            if (button == null)
+                return;
+
+            if (button.transform is RectTransform rect)
+            {
+                rect.anchorMin = new Vector2(0.5f, 0.5f);
+                rect.anchorMax = new Vector2(0.5f, 0.5f);
+                rect.pivot = new Vector2(0.5f, 0.5f);
+                rect.sizeDelta = new Vector2(128f, 128f);
+            }
+
+            if (button.TryGetComponent<LayoutElement>(out var layoutElement))
+            {
+                layoutElement.preferredWidth = 128f;
+                layoutElement.preferredHeight = 128f;
+                layoutElement.flexibleWidth = 0f;
+                layoutElement.flexibleHeight = 0f;
+            }
         }
 
         private void SetArtifactRewardButtonState(bool interactable, string label, bool visible = true)
@@ -250,8 +293,7 @@ namespace _01.Code.UI
 
         private void HideArtifactChoices()
         {
-            if (_artifactChoicePanel != null)
-                _artifactChoicePanel.Hide();
+            artifactChoicePanel?.Hide();
         }
 
         private static Graphic FindLabelGraphic(Button button)

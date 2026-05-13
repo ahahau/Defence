@@ -9,6 +9,18 @@ namespace _01.Code.Artifacts
 {
     public class ArtifactEffectContext
     {
+        public ArtifactEffectContext(ArtifactDataSO artifact, Unit attackerUnit)
+            : this(
+                artifact,
+                attackerUnit,
+                null,
+                attackerUnit != null ? attackerUnit.Combatant : null,
+                null,
+                0,
+                null)
+        {
+        }
+
         public ArtifactEffectContext(
             ArtifactDataSO artifact,
             Unit attackerUnit,
@@ -24,7 +36,7 @@ namespace _01.Code.Artifacts
             Attacker = attacker;
             Target = target;
             Damage = damage;
-            Enemies = enemies;
+            Enemies = enemies ?? new List<EnemyMover>();
         }
 
         public ArtifactDataSO Artifact { get; }

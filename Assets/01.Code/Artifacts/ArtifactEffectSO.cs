@@ -4,6 +4,13 @@ namespace _01.Code.Artifacts
 {
     public abstract class ArtifactEffectSO : ScriptableObject
     {
-        public abstract void Apply(ArtifactEffectContext context);
+        public virtual ArtifactStatBonus GetStatBonus(ArtifactEffectContext context)
+        {
+            return new ArtifactStatBonus(0, 1f, 0, 1f);
+        }
+
+        public virtual void Apply(ArtifactEffectContext context)
+        {
+        }
     }
 }

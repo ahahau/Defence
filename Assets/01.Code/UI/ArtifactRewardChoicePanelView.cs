@@ -28,9 +28,15 @@ namespace _01.Code.UI
 
         public void Show(IReadOnlyList<ArtifactDataSO> choices, Action<ArtifactDataSO> selected)
         {
-            EnsureLayout();
             ClearChoices();
             onSelected = selected;
+
+            if (choiceRoot == null || choiceButtonPrefab == null)
+            {
+                Debug.LogError($"{nameof(ArtifactRewardChoicePanelView)} requires a choice root and choice button prefab assigned in the inspector.", this);
+                Hide();
+                return;
+            }
 
             if (choices == null || choices.Count == 0)
             {
@@ -45,6 +51,7 @@ namespace _01.Code.UI
 
                 var button = Instantiate(choiceButtonPrefab, choiceRoot);
                 button.gameObject.SetActive(true);
+                ConfigureChoiceButtonLayout(button);
                 SetButtonText(button, artifact);
                 button.onClick.AddListener(() => Select(artifact));
                 spawnedButtons.Add(button);
@@ -77,85 +84,36 @@ namespace _01.Code.UI
 
         private static void SetButtonText(Button button, ArtifactDataSO artifact)
         {
-            var text = button.GetComponentInChildren<TMP_Text>();
-            if (text == null)
-                return;
-
             var displayName = string.IsNullOrWhiteSpace(artifact.DisplayName)
                 ? artifact.name
                 : artifact.DisplayName;
-            text.text = $"{displayName}\n{artifact.Description}";
+            var label = $"{displayName}\n{artifact.Description}";
+
+            var tmpText = button.GetComponentInChildren<TMP_Text>();
+            if (tmpText != null)
+            {
+                tmpText.text = label;
+                return;
+            }
+
+            var legacyText = button.GetComponentInChildren<Text>();
+            if (legacyText != null)
+                legacyText.text = label;
         }
 
-        private void EnsureLayout()
+        private static void ConfigureChoiceButtonLayout(Button button)
         {
-            if (choiceRoot != null && choiceButtonPrefab != null)
+            if (button == null)
                 return;
 
-            var panelImage = GetComponent<Image>();
-            if (panelImage == null)
+            if (button.TryGetComponent<LayoutElement>(out var layoutElement))
             {
-                panelImage = gameObject.AddComponent<Image>();
-                panelImage.color = new Color(0.05f, 0.05f, 0.07f, 0.95f);
+                layoutElement.minWidth = 190f;
+                layoutElement.preferredWidth = 210f;
+                layoutElement.preferredHeight = 180f;
+                layoutElement.flexibleWidth = 1f;
+                layoutElement.flexibleHeight = 1f;
             }
-
-            var rect = transform as RectTransform;
-            if (rect != null)
-            {
-                rect.anchorMin = new Vector2(0.5f, 0.5f);
-                rect.anchorMax = new Vector2(0.5f, 0.5f);
-                rect.anchoredPosition = Vector2.zero;
-                rect.sizeDelta = new Vector2(560f, 360f);
-            }
-
-            if (choiceRoot == null)
-            {
-                var root = new GameObject("ArtifactChoices", typeof(RectTransform), typeof(VerticalLayoutGroup));
-                root.transform.SetParent(transform, false);
-                choiceRoot = root.transform;
-
-                var rootRect = (RectTransform)root.transform;
-                rootRect.anchorMin = new Vector2(0f, 0f);
-                rootRect.anchorMax = new Vector2(1f, 1f);
-                rootRect.offsetMin = new Vector2(28f, 28f);
-                rootRect.offsetMax = new Vector2(-28f, -28f);
-
-                var layout = root.GetComponent<VerticalLayoutGroup>();
-                layout.spacing = 12f;
-                layout.childControlWidth = true;
-                layout.childControlHeight = true;
-                layout.childForceExpandWidth = true;
-                layout.childForceExpandHeight = true;
-            }
-
-            if (choiceButtonPrefab == null)
-                choiceButtonPrefab = CreateChoiceButtonPrefab(choiceRoot);
-        }
-
-        private static Button CreateChoiceButtonPrefab(Transform parent)
-        {
-            var buttonObject = new GameObject("ArtifactChoiceButton", typeof(RectTransform), typeof(Image), typeof(Button));
-            buttonObject.transform.SetParent(parent, false);
-            buttonObject.SetActive(false);
-
-            var buttonImage = buttonObject.GetComponent<Image>();
-            buttonImage.color = new Color(0.16f, 0.15f, 0.18f, 1f);
-
-            var textObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-            textObject.transform.SetParent(buttonObject.transform, false);
-            var textRect = (RectTransform)textObject.transform;
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.offsetMin = new Vector2(16f, 8f);
-            textRect.offsetMax = new Vector2(-16f, -8f);
-
-            var text = textObject.GetComponent<TMP_Text>();
-            text.alignment = TextAlignmentOptions.MidlineLeft;
-            text.fontSize = 20f;
-            text.color = Color.white;
-            text.textWrappingMode = TextWrappingModes.Normal;
-
-            return buttonObject.GetComponent<Button>();
         }
     }
 }

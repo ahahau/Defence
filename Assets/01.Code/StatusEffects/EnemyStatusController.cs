@@ -19,10 +19,12 @@ namespace _01.Code.StatusEffects
                     continue;
 
                 _activeEffects[i] = new ActiveStatusEffect(effect, duration);
+                effect.OnRefreshed(CreateContext(effect));
                 return;
             }
 
             _activeEffects.Add(new ActiveStatusEffect(effect, duration));
+            effect.OnApplied(CreateContext(effect));
         }
 
         public void TickNodeVisit()
@@ -33,28 +35,63 @@ namespace _01.Code.StatusEffects
                 activeEffect.RemainingNodeVisits--;
 
                 if (activeEffect.RemainingNodeVisits <= 0)
+                {
+                    activeEffect.Effect?.OnExpired(CreateContext(activeEffect.Effect));
                     _activeEffects.RemoveAt(i);
+                }
                 else
+                {
                     _activeEffects[i] = activeEffect;
+                }
             }
+        }
+
+        private void OnDisable()
+        {
+            for (var i = _activeEffects.Count - 1; i >= 0; i--)
+            {
+                var effect = _activeEffects[i].Effect;
+                if (effect != null)
+                    effect.OnExpired(CreateContext(effect));
+            }
+
+            _activeEffects.Clear();
         }
 
         public float GetAttackIntervalMultiplier()
         {
             var multiplier = 1f;
-            foreach (var activeEffect in _activeEffects)
-                multiplier *= activeEffect.Effect.AttackIntervalMultiplier;
+            foreach (var activeEffect in EnumerateActiveEffects())
+                multiplier *= activeEffect.Effect.GetAttackIntervalMultiplier(activeEffect.Context);
 
             return Mathf.Max(0.05f, multiplier);
         }
 
         public int ModifyTrapDamage(int baseDamage)
         {
-            var multiplier = 1f;
-            foreach (var activeEffect in _activeEffects)
-                multiplier *= activeEffect.Effect.TrapDamageTakenMultiplier;
+            var resolvedDamage = Mathf.Max(1, baseDamage);
+            foreach (var activeEffect in EnumerateActiveEffects())
+                resolvedDamage = activeEffect.Effect.ModifyTrapDamage(activeEffect.Context, resolvedDamage);
 
-            return Mathf.Max(1, Mathf.RoundToInt(baseDamage * multiplier));
+            return Mathf.Max(1, resolvedDamage);
+        }
+
+        private IEnumerable<ActiveStatusEffectView> EnumerateActiveEffects()
+        {
+            foreach (var activeEffect in _activeEffects)
+            {
+                if (activeEffect.Effect == null)
+                    continue;
+
+                yield return new ActiveStatusEffectView(
+                    activeEffect.Effect,
+                    CreateContext(activeEffect.Effect));
+            }
+        }
+
+        private StatusEffectContext CreateContext(StatusEffectDataSO effect)
+        {
+            return new StatusEffectContext(effect, this);
         }
 
         private struct ActiveStatusEffect
@@ -66,6 +103,18 @@ namespace _01.Code.StatusEffects
             {
                 Effect = effect;
                 RemainingNodeVisits = remainingNodeVisits;
+            }
+        }
+
+        private readonly struct ActiveStatusEffectView
+        {
+            public readonly StatusEffectDataSO Effect;
+            public readonly StatusEffectContext Context;
+
+            public ActiveStatusEffectView(StatusEffectDataSO effect, StatusEffectContext context)
+            {
+                Effect = effect;
+                Context = context;
             }
         }
     }

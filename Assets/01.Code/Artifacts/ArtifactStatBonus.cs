@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace _01.Code.Artifacts
 {
     public struct ArtifactStatBonus
@@ -17,6 +19,14 @@ namespace _01.Code.Artifacts
             AttackDamageMultiplier = attackDamageMultiplier;
             MaxHealth = maxHealth;
             AttackIntervalMultiplier = attackIntervalMultiplier;
+        }
+
+        public void Add(ArtifactStatBonus other)
+        {
+            AttackDamage += other.AttackDamage;
+            AttackDamageMultiplier *= Mathf.Max(0.05f, other.AttackDamageMultiplier);
+            MaxHealth += other.MaxHealth;
+            AttackIntervalMultiplier *= Mathf.Max(0.05f, other.AttackIntervalMultiplier);
         }
     }
 }

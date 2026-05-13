@@ -24,6 +24,9 @@ namespace _01.Code.Artifacts
 
         private void OnEnable()
         {
+            if (artifactEventChannel == null)
+                return;
+
             artifactEventChannel.AddListener<UnitArtifactApplyRequestedEvent>(HandleUnitApplyRequested);
             artifactEventChannel.AddListener<ArtifactInventoryChangedEvent>(HandleInventoryChanged);
             artifactEventChannel.AddListener<CombatDamageCalculatedEvent>(HandleCombatDamageCalculated);
@@ -31,6 +34,9 @@ namespace _01.Code.Artifacts
 
         private void OnDisable()
         {
+            if (artifactEventChannel == null)
+                return;
+
             artifactEventChannel.RemoveListener<UnitArtifactApplyRequestedEvent>(HandleUnitApplyRequested);
             artifactEventChannel.RemoveListener<ArtifactInventoryChangedEvent>(HandleInventoryChanged);
             artifactEventChannel.RemoveListener<CombatDamageCalculatedEvent>(HandleCombatDamageCalculated);
@@ -79,23 +85,17 @@ namespace _01.Code.Artifacts
                 if (artifact == null || !artifact.AppliesTo(unit))
                     continue;
 
-                foreach (var effect in artifact.Effects)
-                {
-                    if (effect == null)
-                        continue;
+                var context = new ArtifactEffectContext(
+                    artifact,
+                    unit,
+                    attackerNode,
+                    evt.Attacker,
+                    evt.Target,
+                    evt.Damage,
+                    enemies);
 
-                    var context = new ArtifactEffectContext(
-                        artifact,
-                        unit,
-                        attackerNode,
-                        evt.Attacker,
-                        evt.Target,
-                        evt.Damage,
-                        enemies);
-
-                    effect.Apply(context);
-                    evt.Damage = context.Damage;
-                }
+                artifact.ApplyEffects(context);
+                evt.Damage = context.Damage;
             }
         }
 

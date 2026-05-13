@@ -13,7 +13,11 @@ MonoBehaviour:
   m_Name: DrunkStatusEffect
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.StatusEffects.StatusEffectDataSO
   displayName: "\uCDE8\uD568"
-  description: "\uACF5\uACA9 \uC18D\uB3C4\uAC00 10% \uAC10\uC18C\uD558\uACE0 \uD2B8\uB7A9\uC5D0\uAC8C \uBC1B\uB294 \uD53C\uD574\uAC00 10% \uC99D\uAC00\uD569\uB2C8\uB2E4."
+  description: "\uACF5\uACA9 \uC18D\uB3C4\uAC00 10% \uAC10\uC18C\uD558\uACE0 \uD2B8\uB7A9\uC5D0\uAC8C
+    \uBC1B\uB294 \uD53C\uD574\uAC00 10% \uC99D\uAC00\uD569\uB2C8\uB2E4."
   durationNodeVisits: 3
   attackIntervalMultiplier: 1.1
   trapDamageTakenMultiplier: 1.1
+  effects:
+  - {fileID: 11400000, guid: e3c181fcdffed5b418c8356173c7973f, type: 2}
+  - {fileID: 11400000, guid: b79a26058dcb72648b5d6d4aeba0204b, type: 2}

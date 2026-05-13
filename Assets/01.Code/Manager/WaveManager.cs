@@ -4,6 +4,7 @@ using _01.Code.Core;
 using _01.Code.Enemies;
 using _01.Code.Events;
 using _01.Code.MapCreateSystem;
+using _01.Code.UI;
 using UnityEngine;
 
 namespace _01.Code.Manager
@@ -17,12 +18,19 @@ namespace _01.Code.Manager
         [SerializeField] private WaveConfigSO waveConfig;
         [SerializeField] private Enemy enemyPrefab;
         [SerializeField, Min(0)] private int treasuryGoldLoss = 10;
+        [Header("Reward")]
+        [SerializeField] private WaveRewardPanelView rewardPanelPrefab;
+        [SerializeField] private Transform rewardPanelParent;
 
         private Node _portalNode;
         public bool HasPortal => _portalNode != null;
         private int _currentDay;
-        private int _aliveEnemies;
+        private int _remainingSpawns;
+        private int _aliveSpawnedEnemies;
+        private int _currentClearGoldReward;
+        private bool _isWaveRunning;
         private Coroutine _waveCoroutine;
+        private WaveRewardPanelView _rewardPanel;
         private readonly List<Enemy> _activeEnemies = new();
 
         private void OnEnable()
@@ -68,63 +76,163 @@ namespace _01.Code.Manager
 
         private IEnumerator RunWave(WaveConfigSO.WaveEntry entry)
         {
-            _aliveEnemies = entry.enemyCount;
+            _remainingSpawns = Mathf.Max(0, entry.enemyCount);
+            _aliveSpawnedEnemies = 0;
+            _currentClearGoldReward = entry.clearGoldReward;
+            _isWaveRunning = true;
             _activeEnemies.Clear();
 
             waveEventChannel.RaiseEvent(new WaveStartedEvent(_currentDay, entry.enemyCount));
 
-            SpawnNextEnemy();
+            SpawnNextEnemyIfNeeded(false);
 
-            int remaining = entry.enemyCount - 1;
-
-            while (_aliveEnemies > 0)
+            while (_isWaveRunning)
             {
                 yield return new WaitForSeconds(entry.enemyTurnInterval);
 
-                if (_aliveEnemies <= 0)
+                if (!_isWaveRunning)
                     break;
 
-                // 모든 적 동시에 한 칸 이동
+                RemoveMissingEnemies();
+
                 foreach (var enemy in _activeEnemies)
                 {
                     if (enemy != null)
                         enemy.TakeTurn();
                 }
 
-                // 이전 적이 포탈에서 이동한 후 다음 적 스폰
-                if (remaining > 0)
-                {
-                    SpawnNextEnemy();
-                    remaining--;
-                }
+                SpawnNextEnemyIfNeeded(false);
+                CompleteWaveIfCleared(false);
             }
 
-            _waveCoroutine = null;
-            waveEventChannel.RaiseEvent(new WaveEndedEvent(_currentDay, entry.clearGoldReward));
+            CompleteWave(false);
         }
 
-        private void SpawnNextEnemy()
+        private void SpawnNextEnemyIfNeeded(bool stopRunningCoroutine)
         {
-            if (_portalNode == null)
+            if (_portalNode == null || _remainingSpawns <= 0)
+            {
+                CompleteWaveIfCleared(stopRunningCoroutine);
                 return;
+            }
 
             var spawnPos = _portalNode.EnemyPosition != null
                 ? _portalNode.EnemyPosition.position
                 : _portalNode.transform.position;
 
             Enemy enemy = Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
+            _remainingSpawns--;
+            _aliveSpawnedEnemies++;
 
             var captured = enemy;
             var tracker = enemy.GetComponent<WaveEnemyTracker>();
+            if (tracker == null)
+                tracker = enemy.gameObject.AddComponent<WaveEnemyTracker>();
+
             tracker.OnEnemyDied = () =>
             {
-                _activeEnemies.Remove(captured);
-                _aliveEnemies = Mathf.Max(0, _aliveEnemies - 1);
+                HandleEnemyRemoved(captured);
             };
 
             enemy.Initialize(_portalNode, costEventChannel, treasuryGoldLoss);
             if (enemy != null)
                 _activeEnemies.Add(enemy);
+
+            CompleteWaveIfCleared(stopRunningCoroutine);
+        }
+
+        private void HandleEnemyRemoved(Enemy enemy)
+        {
+            if (!_isWaveRunning)
+                return;
+
+            _activeEnemies.Remove(enemy);
+            _aliveSpawnedEnemies = Mathf.Max(0, _aliveSpawnedEnemies - 1);
+            CompleteWaveIfCleared(true);
+        }
+
+        private void RemoveMissingEnemies()
+        {
+            for (var i = _activeEnemies.Count - 1; i >= 0; i--)
+            {
+                if (_activeEnemies[i] != null)
+                    continue;
+
+                _activeEnemies.RemoveAt(i);
+                _aliveSpawnedEnemies = Mathf.Max(0, _aliveSpawnedEnemies - 1);
+            }
+        }
+
+        private void CompleteWaveIfCleared(bool stopRunningCoroutine)
+        {
+            if (_remainingSpawns <= 0 && _aliveSpawnedEnemies <= 0)
+                CompleteWave(stopRunningCoroutine);
+        }
+
+        private void CompleteWave(bool stopRunningCoroutine)
+        {
+            if (!_isWaveRunning)
+                return;
+
+            _isWaveRunning = false;
+            _remainingSpawns = 0;
+            _aliveSpawnedEnemies = 0;
+            _activeEnemies.Clear();
+
+            if (stopRunningCoroutine && _waveCoroutine != null)
+            {
+                StopCoroutine(_waveCoroutine);
+                _waveCoroutine = null;
+            }
+            else
+            {
+                _waveCoroutine = null;
+            }
+
+            var rewardPanel = ShowRewardPanel(_currentClearGoldReward);
+            if (rewardPanel == null && _currentClearGoldReward > 0)
+                costEventChannel?.RaiseEvent(new GoldEarnedEvent(_currentClearGoldReward));
+
+            waveEventChannel.RaiseEvent(new WaveEndedEvent(_currentDay, _currentClearGoldReward));
+        }
+
+        private WaveRewardPanelView ShowRewardPanel(int clearGoldReward)
+        {
+            var rewardPanel = EnsureRewardPanel();
+            if (rewardPanel == null)
+                return null;
+
+            rewardPanel.ShowGoldReward(clearGoldReward);
+            rewardPanel.transform.SetAsLastSibling();
+            return rewardPanel;
+        }
+
+        private WaveRewardPanelView EnsureRewardPanel()
+        {
+            if (_rewardPanel != null)
+                return _rewardPanel;
+
+            if (rewardPanelPrefab == null)
+                return null;
+
+            var parent = ResolveRewardPanelParent();
+            _rewardPanel = Instantiate(rewardPanelPrefab, parent);
+            _rewardPanel.name = rewardPanelPrefab.name;
+            _rewardPanel.Initialize(costEventChannel);
+            _rewardPanel.gameObject.SetActive(false);
+            return _rewardPanel;
+        }
+
+        private Transform ResolveRewardPanelParent()
+        {
+            if (rewardPanelParent != null)
+                return rewardPanelParent;
+
+            var canvas = FindAnyObjectByType<Canvas>();
+            if (canvas != null)
+                return canvas.transform;
+
+            return transform;
         }
     }
 }

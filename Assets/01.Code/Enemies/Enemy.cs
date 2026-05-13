@@ -10,10 +10,6 @@ using UnityEngine;
 
 namespace _01.Code.Enemies
 {
-    [RequireComponent(typeof(Health))]
-    [RequireComponent(typeof(Combatant))]
-    [RequireComponent(typeof(EnemyMover))]
-    [RequireComponent(typeof(EnemyStatusController))]
     public class Enemy : MonoBehaviour
     {
         [SerializeField] private int killExperience = 1;

@@ -189,7 +189,7 @@ namespace _01.Code.UI
         {
             return Mouse.current != null
                 ? Mouse.current.position.ReadValue()
-                : Input.mousePosition;
+                : Vector2.zero;
         }
 
         private static Vector2 ClampToScreen(RectTransform panelRect, Vector2 screenPosition)

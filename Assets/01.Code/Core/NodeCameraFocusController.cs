@@ -23,12 +23,12 @@ namespace _01.Code.Core
         }
 
         private void OnEnable()
-        { 
+        {
             nodeEventChannel.AddListener<NodeCameraFocusStartedEvent>(HandleFocusStarted);
         }
 
         private void OnDisable()
-        { 
+        {
             nodeEventChannel.RemoveListener<NodeCameraFocusStartedEvent>(HandleFocusStarted);
         }
 

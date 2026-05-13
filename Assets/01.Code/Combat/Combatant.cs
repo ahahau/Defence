@@ -194,10 +194,19 @@ namespace _01.Code.Combat
 
         private float ResolveAttackInterval()
         {
-            var multiplier = enemyStatusController != null
-                ? enemyStatusController.GetAttackIntervalMultiplier()
+            var statusController = ResolveEnemyStatusController();
+            var multiplier = statusController != null
+                ? statusController.GetAttackIntervalMultiplier()
                 : 1f;
             return Mathf.Max(0.05f, attackInterval * multiplier);
+        }
+
+        private EnemyStatusController ResolveEnemyStatusController()
+        {
+            if (enemyStatusController == null)
+                enemyStatusController = GetComponent<EnemyStatusController>();
+
+            return enemyStatusController;
         }
 
         private void EnsureAttackFeedbacks()
