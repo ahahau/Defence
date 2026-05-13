@@ -11,6 +11,12 @@ namespace _01.Code.Dialogue
         public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? name : displayName;
         public int LineCount => lines?.Length ?? 0;
 
+        public void Configure(string sequenceDisplayName, params DialogueLine[] dialogueLines)
+        {
+            displayName = sequenceDisplayName;
+            lines = dialogueLines;
+        }
+
         public bool TryGetLine(int index, out DialogueLine line)
         {
             if (lines == null || index < 0 || index >= lines.Length)

@@ -5,50 +5,109 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="60a71e54-2ed6-426f-84f0-8dc9ea69b70b" name="변경" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.Defence/.idea/encodings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Defence/.idea/encodings.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.Defence/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Defence/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Defence/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/00.Scenes/SampleScene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/00.Scenes/SampleScene.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Artifacts/ArtifactDataSO.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Artifacts/ArtifactDataSO.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Artifacts/ArtifactEffectContext.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Artifacts/ArtifactEffectContext.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Artifacts/ArtifactEffectController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Artifacts/ArtifactEffectController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Artifacts/ArtifactEffectSO.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Artifacts/ArtifactEffectSO.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Artifacts/ArtifactInventorySO.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Artifacts/ArtifactInventorySO.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Artifacts/ArtifactStatBonus.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Artifacts/ArtifactStatBonus.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Buildings/Inn.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings/Inn.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Combat/Combatant.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Combat/Combatant.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Combat/DamageFeedback.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Combat/DamageFeedback.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Core/NodeCameraFocusController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Core/NodeCameraFocusController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Editor/ArtifactBatchFactoryWindow.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Editor/ArtifactBatchFactoryWindow.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Editor/ArtifactDataSOEditor.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Editor/ArtifactDataSOEditor.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Enemies/Enemy.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Enemies/Enemy.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/WaveManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/WaveManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/StatusEffects/EnemyStatusController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/StatusEffects/EnemyStatusController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/StatusEffects/StatusEffectDataSO.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/StatusEffects/StatusEffectDataSO.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/ArtifactRewardChoicePanelView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/ArtifactRewardChoicePanelView.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/HorizontalScrollWheel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/HorizontalScrollWheel.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/TimeSpeedView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/TimeSpeedView.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/UnitStatusPanelView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/UnitStatusPanelView.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/WaveRewardPanelView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/WaveRewardPanelView.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/WaveView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/WaveView.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/03.SO/StatusEffects/DrunkStatusEffect.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/StatusEffects/DrunkStatusEffect.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/ArtifactPanel.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/ArtifactPanel.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/ArtifactRewardChoicePanel.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/ArtifactRewardChoicePanel.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/GoldCostPanel.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/GoldCostPanel.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/Node.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/Node.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/UnitDeploy.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/UnitDeploy.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/UnitLevelView.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/UnitLevelView.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/WaveRewardPanel.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/WaveRewardPanel.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/08.Font/BlackHanSans-Regular SDF.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/08.Font/BlackHanSans-Regular SDF.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/08.Font/BlackHanSans-Regular SDF.asset.meta" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/08.Font/BlackHanSans-Regular SDF.asset.meta" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/TextMesh Pro/Resources/TMP Settings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/TextMesh Pro/Resources/TMP Settings.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/vHierarchy/vHierarchy Data.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/vHierarchy/vHierarchy Data.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Packages/manifest.json" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/manifest.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Packages/packages-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/packages-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ProjectSettings/Packages/com.unity.ai.assistant/Settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/Packages/com.unity.ai.assistant/Settings.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/00.Scenes/DialogueTestScene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/00.Scenes/DialogueTestScene.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Dialogue/DialogueLine.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Dialogue/DialogueLine.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Dialogue/DialogueRunner.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Dialogue/DialogueRunner.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Dialogue/DialogueSequenceSO.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Dialogue/DialogueSequenceSO.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Dialogue/DialogueView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Dialogue/DialogueView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Editor/DialogueTestSceneFactory.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Editor/DialogueTestSceneFactory.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Barbarians/FeelBarbarians.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Barbarians/FeelBarbarians.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Blob/FeelBlob.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Blob/FeelBlob.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Bounce/FeelBounce.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Bounce/FeelBounce.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Brass/FeelBrass.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Brass/FeelBrass.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/CardsUI/FeelCardsUI.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/CardsUI/FeelCardsUI.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Duck/FeelDuck.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Duck/FeelDuck.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/GettingStartedTutorial/FeelGettingStartedTutorial.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/GettingStartedTutorial/FeelGettingStartedTutorial.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Letters/FeelLetters.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Letters/FeelLetters.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/MMProgressBar/FeelMMProgressBar.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/MMProgressBar/FeelMMProgressBar.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/MMSequencer/FeelMMSequencer.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/MMSequencer/FeelMMSequencer.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/MMSoundManager/FeelMMSoundManagerPlaylistManager.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/MMSoundManager/FeelMMSoundManagerPlaylistManager.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/MMSoundManager/FeelMMSoundManagerTrackControl.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/MMSoundManager/FeelMMSoundManagerTrackControl.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/ParallaxUI/FeelParallaxUI.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/ParallaxUI/FeelParallaxUI.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Snake/FeelSnake.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Snake/FeelSnake.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Snake/FeelSnakeWithoutFeedbacks.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Snake/FeelSnakeWithoutFeedbacks.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Springs/FeelSprings.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Springs/FeelSprings.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/SquashAndStretch/FeelSquashAndStretch.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/SquashAndStretch/FeelSquashAndStretch.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Tactical/FeelTactical.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Tactical/FeelTactical.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Toaster/FeelToaster.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Toaster/FeelToaster.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/UIToolkitFeedbacksDemo/FeelUIToolkitFeedbacksDemo.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/UIToolkitFeedbacksDemo/FeelUIToolkitFeedbacksDemo.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Wheel/FeelWheel.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Wheel/FeelWheel.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemosHDRP/Falcon/FalconHDRP.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemosHDRP/Falcon/FalconHDRP.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMFeedbacks/Demos/MMFeedbacksDemo/MMF_PlayerDemo.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMFeedbacks/Demos/MMFeedbacksDemo/MMF_PlayerDemo.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMFeedbacks/Demos/SequencingDemo/SequencerDemo.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMFeedbacks/Demos/SequencingDemo/SequencerDemo.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Core/MMSaveLoad/MMSaveLoadTestScene.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Core/MMSaveLoad/MMSaveLoadTestScene.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Core/MMSceneLoading/LoadingScreens/LoadingScreen.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Core/MMSceneLoading/LoadingScreens/LoadingScreen.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Core/MMSceneLoading/LoadingScreens/MMAdditiveLoadingScreen.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Core/MMSceneLoading/LoadingScreens/MMAdditiveLoadingScreen.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Core/MMSceneLoading/LoadingScreens/MMAdditiveLoadingScreenBigText.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Core/MMSceneLoading/LoadingScreens/MMAdditiveLoadingScreenBigText.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Core/MMSceneLoading/LoadingScreens/MMAdditiveLoadingScreenFastFade.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Core/MMSceneLoading/LoadingScreens/MMAdditiveLoadingScreenFastFade.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Core/MMSceneLoading/LoadingScreens/MMAdditiveLoadingScreenSimple.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Core/MMSceneLoading/LoadingScreens/MMAdditiveLoadingScreenSimple.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMBezierLineRenderer/MMBezierLineRenderer.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMBezierLineRenderer/MMBezierLineRenderer.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMControls/MMControlsDemo.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMControls/MMControlsDemo.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMDebugMenu/MMDebugMenu.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMDebugMenu/MMDebugMenu.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMFollowTarget/MMFollowTargetDemo.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMFollowTarget/MMFollowTargetDemo.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMGhostCamera/MMGhostCameraDemo.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMGhostCamera/MMGhostCameraDemo.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMGizmos/MMGizmoDemo.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMGizmos/MMGizmoDemo.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMObservable/MMObservableDemo.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMObservable/MMObservableDemo.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMPrototypeTextures/MMPrototypeTexturesDemo.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMPrototypeTextures/MMPrototypeTexturesDemo.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMRadio/MMRadioDemo.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMRadio/MMRadioDemo.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMSceneLoading/MMSceneLoadingDemoSceneA.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMSceneLoading/MMSceneLoadingDemoSceneA.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMSceneLoading/MMSceneLoadingDemoSceneB.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMSceneLoading/MMSceneLoadingDemoSceneB.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMTween/MMTweenPlotter.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMTween/MMTweenPlotter.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/NiceVibrations/Demo/NiceVibrationsDemo.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/NiceVibrations/Demo/NiceVibrationsDemo.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Plugins/Demigiant/DOTweenPro Examples/DOTweenAnimation_Advanced.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Plugins/Demigiant/DOTweenPro Examples/DOTweenAnimation_Advanced.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Plugins/Demigiant/DOTweenPro Examples/DOTweenAnimation_Basics.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Plugins/Demigiant/DOTweenPro Examples/DOTweenAnimation_Basics.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Plugins/Demigiant/DOTweenPro Examples/DOTweenPath.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Plugins/Demigiant/DOTweenPro Examples/DOTweenPath.unity.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Settings/Scenes/URP2DSceneTemplate.unity" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Settings/Scenes/URP2DSceneTemplate.unity.meta" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/ProjectSettings/ProjectSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/ProjectSettings.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ProjectSettings/ProjectVersion.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/ProjectVersion.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ProjectSettings/UnityConnectSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/ProjectSettings/UnityConnectSettings.asset" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -62,6 +121,7 @@
     <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.ai.assistant@198d71476a35/Modules/Unity.AI.Toolkit.Accounts/Services/States/ApiAccessibleState.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.ugui@473409526770/Editor/TMP/TMP_BaseEditorPanel.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.ugui@473409526770/Runtime/TMP/MaterialReferenceManager.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/5fef58e500dd4224983b2c076ac56b869dd600/5d/ea3fafb1/SerializedObject.cs" root0="SKIP_HIGHLIGHTING" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
@@ -151,7 +211,7 @@
       <workItem from="1778632139418" duration="4599000" />
       <workItem from="1778650230776" duration="309000" />
       <workItem from="1778660102046" duration="2407000" />
-      <workItem from="1778666086998" duration="1287000" />
+      <workItem from="1778666086998" duration="3793000" />
     </task>
     <servers />
   </component>

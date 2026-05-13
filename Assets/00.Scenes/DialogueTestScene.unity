@@ -736,7 +736,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8c948c47f4e4f88a1f053cb3d433a36, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Dialogue.DialogueRunner
-  initialSequence: {fileID: 11400000, guid: 5371ce39b10c4555ad3c9bc0cc2b36c7, type: 2}
+  initialSequence: {fileID: 11400000, guid: f871f389eb9f473e81e615c44e97b224, type: 2}
   view: {fileID: 315981638}
   playOnStart: 1
 --- !u!4 &1023064207

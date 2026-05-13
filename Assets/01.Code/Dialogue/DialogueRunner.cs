@@ -9,16 +9,16 @@ namespace _01.Code.Dialogue
         [SerializeField] private DialogueView view;
         [SerializeField] private bool playOnStart = true;
 
-        private DialogueSequenceSO currentSequence;
-        private int currentLineIndex = -1;
+        private readonly DialogueSequencePlayer player = new();
 
         public event Action<DialogueSequenceSO> DialogueStarted;
-        public event Action<DialogueSequenceSO, int, DialogueLine> LineChanged;
+        public event Action<DialogueSequenceSO, int, DialogueDisplayData> LineChanged;
+        public event Action<DialogueSequenceSO, int, DialogueChoice> ChoiceSelected;
         public event Action<DialogueSequenceSO> DialogueEnded;
 
-        public DialogueSequenceSO CurrentSequence => currentSequence;
-        public int CurrentLineIndex => currentLineIndex;
-        public bool IsPlaying => currentSequence != null && currentLineIndex >= 0;
+        public DialogueSequenceSO CurrentSequence => player.CurrentSequence;
+        public int CurrentLineIndex => player.CurrentLineIndex;
+        public bool IsPlaying => player.IsPlaying;
 
         public void Configure(DialogueSequenceSO sequence, DialogueView dialogueView, bool shouldPlayOnStart)
         {
@@ -46,16 +46,14 @@ namespace _01.Code.Dialogue
 
         public void Play(DialogueSequenceSO sequence)
         {
-            if (sequence == null || sequence.LineCount == 0)
+            if (!player.Play(sequence, out var displayData))
             {
                 Stop();
                 return;
             }
 
-            currentSequence = sequence;
-            currentLineIndex = 0;
-            DialogueStarted?.Invoke(currentSequence);
-            ShowCurrentLine();
+            DialogueStarted?.Invoke(player.CurrentSequence);
+            Show(displayData);
         }
 
         public void PlayInitial()
@@ -71,37 +69,45 @@ namespace _01.Code.Dialogue
                 return;
             }
 
-            currentLineIndex++;
-            if (currentLineIndex >= currentSequence.LineCount)
+            if (!player.Next(out var displayData))
             {
                 Stop();
                 return;
             }
 
-            ShowCurrentLine();
+            Show(displayData);
+        }
+
+        public void SelectChoice(int choiceIndex)
+        {
+            if (!IsPlaying)
+                return;
+
+            var sequence = player.CurrentSequence;
+            var lineIndex = player.CurrentLineIndex;
+            if (!player.SelectChoice(choiceIndex, out var choice, out var displayData))
+            {
+                Stop();
+                return;
+            }
+
+            ChoiceSelected?.Invoke(sequence, lineIndex, choice);
+            Show(displayData);
         }
 
         public void Stop()
         {
-            var endedSequence = currentSequence;
-            currentSequence = null;
-            currentLineIndex = -1;
+            var endedSequence = player.Stop();
             view?.Hide();
 
             if (endedSequence != null)
                 DialogueEnded?.Invoke(endedSequence);
         }
 
-        private void ShowCurrentLine()
+        private void Show(DialogueDisplayData displayData)
         {
-            if (currentSequence == null || !currentSequence.TryGetLine(currentLineIndex, out var line))
-            {
-                Stop();
-                return;
-            }
-
-            view?.Show(currentSequence, currentLineIndex, line);
-            LineChanged?.Invoke(currentSequence, currentLineIndex, line);
+            view?.Show(displayData);
+            LineChanged?.Invoke(player.CurrentSequence, player.CurrentLineIndex, displayData);
         }
     }
 }

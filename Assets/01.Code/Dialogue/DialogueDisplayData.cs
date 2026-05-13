@@ -1,0 +1,30 @@
+using System;
+using System.Collections.Generic;
+
+namespace _01.Code.Dialogue
+{
+    public readonly struct DialogueDisplayData
+    {
+        public DialogueDisplayData(
+            string title,
+            string speakerName,
+            string text,
+            string progress,
+            IReadOnlyList<DialogueChoice> choices)
+        {
+            Title = title ?? string.Empty;
+            SpeakerName = speakerName ?? string.Empty;
+            Text = text ?? string.Empty;
+            Progress = progress ?? string.Empty;
+            Choices = choices ?? Array.Empty<DialogueChoice>();
+        }
+
+        public string Title { get; }
+        public string SpeakerName { get; }
+        public string Text { get; }
+        public string Progress { get; }
+        public IReadOnlyList<DialogueChoice> Choices { get; }
+        public int ChoiceCount => Choices.Count;
+        public bool HasChoices => ChoiceCount > 0;
+    }
+}
