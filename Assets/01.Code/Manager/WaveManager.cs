@@ -134,7 +134,7 @@ namespace _01.Code.Manager
                 HandleEnemyRemoved(captured);
             };
 
-            enemy.Initialize(_portalNode, costEventChannel, treasuryGoldLoss);
+            enemy.Initialize(_portalNode, costEventChannel, treasuryGoldLoss, nodeEventChannel);
             if (enemy != null)
                 _activeEnemies.Add(enemy);
 
@@ -227,10 +227,6 @@ namespace _01.Code.Manager
         {
             if (rewardPanelParent != null)
                 return rewardPanelParent;
-
-            var canvas = FindAnyObjectByType<Canvas>();
-            if (canvas != null)
-                return canvas.transform;
 
             return transform;
         }

@@ -6,11 +6,17 @@ namespace _01.Code.Dialogue
     public class DialogueSequencePlayer
     {
         private DialogueSequenceSO currentSequence;
+        private DialogueValueTableSO valueTable;
         private int currentLineIndex = -1;
 
         public DialogueSequenceSO CurrentSequence => currentSequence;
         public int CurrentLineIndex => currentLineIndex;
         public bool IsPlaying => currentSequence != null && currentLineIndex >= 0;
+
+        public void SetValueTable(DialogueValueTableSO table)
+        {
+            valueTable = table;
+        }
 
         public bool Play(DialogueSequenceSO sequence, out DialogueDisplayData displayData)
         {
@@ -39,9 +45,16 @@ namespace _01.Code.Dialogue
             return Advance(out displayData);
         }
 
-        public bool SelectChoice(int choiceIndex, out DialogueChoice selectedChoice, out DialogueDisplayData displayData)
+        public bool SelectChoice(
+            int choiceIndex,
+            out DialogueChoice selectedChoice,
+            out DialogueChoiceRoute matchedRoute,
+            out bool ended,
+            out DialogueDisplayData displayData)
         {
             selectedChoice = default;
+            matchedRoute = default;
+            ended = false;
             displayData = default;
 
             if (!IsPlaying || currentSequence == null)
@@ -56,19 +69,27 @@ namespace _01.Code.Dialogue
             if (!line.TryGetChoice(choiceIndex, out selectedChoice))
                 return TryBuildDisplayData(out displayData);
 
-            if (selectedChoice.HasExplicitNextLine)
+            selectedChoice.TryResolveTarget(valueTable, currentSequence, out var targetSequence, out var targetLineIndex, out matchedRoute);
+            if (targetLineIndex < 0)
             {
-                currentLineIndex = selectedChoice.NextLineIndex;
-                if (currentLineIndex < 0 || currentLineIndex >= currentSequence.LineCount)
-                {
-                    Stop();
-                    return false;
-                }
-
-                return TryBuildDisplayData(out displayData);
+                Stop();
+                ended = true;
+                return true;
             }
 
-            return Advance(out displayData);
+            if (targetSequence == null)
+                targetSequence = currentSequence;
+
+            if (targetLineIndex >= targetSequence.LineCount)
+            {
+                Stop();
+                ended = true;
+                return true;
+            }
+
+            currentSequence = targetSequence;
+            currentLineIndex = targetLineIndex;
+            return TryBuildDisplayData(out displayData);
         }
 
         public DialogueSequenceSO Stop()
@@ -107,10 +128,10 @@ namespace _01.Code.Dialogue
             }
 
             displayData = new DialogueDisplayData(
-                currentSequence.DisplayName,
                 line.SpeakerName,
                 line.Text,
                 $"{currentLineIndex + 1}/{currentSequence.LineCount}",
+                line.EnterActions,
                 line.Choices ?? Array.Empty<DialogueChoice>());
             return true;
         }

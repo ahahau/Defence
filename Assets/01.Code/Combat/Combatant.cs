@@ -38,6 +38,8 @@ namespace _01.Code.Combat
         public bool IsAlive => health != null && health.IsAlive;
         public bool IsAttacking => _isAttacking;
         public Health Health => health;
+        public int AttackDamage => ResolveAttackDamagePreview();
+        public float AttackInterval => ResolveAttackInterval();
 
         public void AddAttackDamage(int amount)
         {
@@ -190,6 +192,12 @@ namespace _01.Code.Combat
             var evt = new CombatDamageCalculatedEvent(this, target, damage);
             artifactEventChannel.RaiseEvent(evt);
             return evt.Damage;
+        }
+
+        private int ResolveAttackDamagePreview()
+        {
+            var modifiedDamage = (attackDamage + artifactAttackDamageBonus) * artifactAttackDamageMultiplier;
+            return Mathf.Max(1, Mathf.RoundToInt(modifiedDamage));
         }
 
         private float ResolveAttackInterval()

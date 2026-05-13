@@ -82,7 +82,7 @@ namespace _01.Code.Dialogue
                 root = gameObject;
 
             root.SetActive(true);
-            SetText(titleText, data.Title);
+            SetText(titleText, string.Empty);
             SetText(speakerText, data.SpeakerName);
             SetText(bodyText, data.Text);
             SetText(progressText, data.Progress);

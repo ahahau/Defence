@@ -18,9 +18,15 @@ namespace _01.Code.Enemies
         [SerializeField] private Transform visual;
 
         private static readonly HashSet<string> _occupiedNodes = new();
+        private static readonly List<EnemyMover> _activeEnemies = new();
+        public static IReadOnlyList<EnemyMover> ActiveEnemies => _activeEnemies;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        private static void ResetOccupied() => _occupiedNodes.Clear();
+        private static void ResetOccupied()
+        {
+            _occupiedNodes.Clear();
+            _activeEnemies.Clear();
+        }
 
         private readonly HashSet<string> _visitedNodes = new();
         private Node _currentNode;
@@ -187,10 +193,23 @@ namespace _01.Code.Enemies
 
         private void OnDestroy()
         {
+            _activeEnemies.Remove(this);
+
             if (_currentNode?.Data != null)
                 _occupiedNodes.Remove(_currentNode.Data.Id);
 
             _moveTween?.Kill();
+        }
+
+        private void OnEnable()
+        {
+            if (!_activeEnemies.Contains(this))
+                _activeEnemies.Add(this);
+        }
+
+        private void OnDisable()
+        {
+            _activeEnemies.Remove(this);
         }
     }
 }

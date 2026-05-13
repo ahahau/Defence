@@ -25,6 +25,9 @@ namespace _01.Code.Enemies
         private bool _isInCombat;
 
         public bool IsInCombat => _isInCombat;
+        public Combatant Combatant => combatant;
+        public EnemyMover Mover => mover;
+        public Health Health => health;
 
         private void Awake()
         {
@@ -44,16 +47,32 @@ namespace _01.Code.Enemies
             health.Damaged -= HandleDamaged;
         }
 
-        public void Initialize(Node startNode, GameEventChannelSO costEventChannel, int treasuryGoldLoss)
+        public void Initialize(
+            Node startNode,
+            GameEventChannelSO costEventChannel,
+            int treasuryGoldLoss,
+            GameEventChannelSO nodeEventChannel = null)
         {
             _costEventChannel = costEventChannel;
             SubscribeHealth();
+            EnsureClickTarget(nodeEventChannel);
 
             mover.NodeArrived = HandleNodeArrived;
             _treasuryGoldLoss = treasuryGoldLoss;
             mover.Initialize(startNode);
 
             HandleNodeArrived(startNode);
+        }
+
+        private void EnsureClickTarget(GameEventChannelSO nodeEventChannel)
+        {
+            if (nodeEventChannel == null)
+                return;
+
+            if (!TryGetComponent<EnemyClickTarget>(out var clickTarget))
+                clickTarget = gameObject.AddComponent<EnemyClickTarget>();
+
+            clickTarget.Initialize(this, nodeEventChannel);
         }
 
         private int _treasuryGoldLoss;

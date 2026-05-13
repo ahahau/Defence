@@ -736,7 +736,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8c948c47f4e4f88a1f053cb3d433a36, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Dialogue.DialogueRunner
-  initialSequence: {fileID: 11400000, guid: f871f389eb9f473e81e615c44e97b224, type: 2}
+  initialSequence: {fileID: 11400000, guid: 6085b8e5e7a144a49c48ed559bd96aa2, type: 2}
+  valueTable: {fileID: 11400000, guid: 25ce477c3f4a4b0ebf6af4a2c8f0e67b, type: 2}
+  costEventChannel: {fileID: 11400000, guid: 734ca3593b5d2884dae267b0e3e601be, type: 2}
   view: {fileID: 315981638}
   playOnStart: 1
 --- !u!4 &1023064207

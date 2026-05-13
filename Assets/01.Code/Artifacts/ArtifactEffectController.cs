@@ -113,7 +113,11 @@ namespace _01.Code.Artifacts
         private void RefreshEnemyList()
         {
             enemies.Clear();
-            enemies.AddRange(Object.FindObjectsByType<EnemyMover>(FindObjectsInactive.Exclude));
+            foreach (var enemy in EnemyMover.ActiveEnemies)
+            {
+                if (enemy != null && enemy.isActiveAndEnabled)
+                    enemies.Add(enemy);
+            }
         }
     }
 }

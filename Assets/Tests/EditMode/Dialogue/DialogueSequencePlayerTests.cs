@@ -23,7 +23,6 @@ namespace Tests.EditMode.Dialogue
             var displayData = args[1];
 
             Assert.That(played, Is.True);
-            Assert.That(GetProperty<string>(displayData, "Title"), Is.EqualTo("Choice Test"));
             Assert.That(GetProperty<string>(displayData, "SpeakerName"), Is.EqualTo("Speaker"));
             Assert.That(GetProperty<string>(displayData, "Text"), Is.EqualTo("Hello"));
             Assert.That(GetProperty<string>(displayData, "Progress"), Is.EqualTo("1/1"));
@@ -55,7 +54,7 @@ namespace Tests.EditMode.Dialogue
             var player = BuildPlayer();
 
             Invoke<bool>(player, "Play", new object[] { sequence, null });
-            Invoke<bool>(player, "SelectChoice", new object[] { 0, null, null });
+            Invoke<bool>(player, "SelectChoice", new object[] { 0, null, null, null, null });
 
             Assert.That(GetProperty<int>(player, "CurrentLineIndex"), Is.EqualTo(2));
 
@@ -63,15 +62,16 @@ namespace Tests.EditMode.Dialogue
         }
 
         [Test]
-        public void SelectChoice_AdvancesToNextLine_WhenNoExplicitNextLineIsSet()
+        public void SelectChoice_Stops_WhenNextLineIndexIsEnd()
         {
             var sequence = BuildSequence(("Speaker", "Pick one", new[] { ("Continue", -1) }), ("Speaker", "After", null));
             var player = BuildPlayer();
 
             Invoke<bool>(player, "Play", new object[] { sequence, null });
-            Invoke<bool>(player, "SelectChoice", new object[] { 0, null, null });
+            Invoke<bool>(player, "SelectChoice", new object[] { 0, null, null, null, null });
 
-            Assert.That(GetProperty<int>(player, "CurrentLineIndex"), Is.EqualTo(1));
+            Assert.That(GetProperty<bool>(player, "IsPlaying"), Is.False);
+            Assert.That(GetProperty<int>(player, "CurrentLineIndex"), Is.EqualTo(-1));
 
             UnityEngine.Object.DestroyImmediate(sequence);
         }
@@ -83,7 +83,7 @@ namespace Tests.EditMode.Dialogue
             var player = BuildPlayer();
 
             Invoke<bool>(player, "Play", new object[] { sequence, null });
-            Invoke<bool>(player, "SelectChoice", new object[] { 0, null, null });
+            Invoke<bool>(player, "SelectChoice", new object[] { 0, null, null, null, null });
 
             Assert.That(GetProperty<bool>(player, "IsPlaying"), Is.False);
             Assert.That(GetProperty<int>(player, "CurrentLineIndex"), Is.EqualTo(-1));
@@ -114,7 +114,7 @@ namespace Tests.EditMode.Dialogue
                 lineArray.SetValue(BuildLine(lines[i].speaker, lines[i].text, choiceArray), i);
             }
 
-            Invoke<object>(sequence, "Configure", "Choice Test", lineArray);
+            Invoke<object>(sequence, "Configure", lineArray);
             return sequence;
         }
 

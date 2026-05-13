@@ -1,4 +1,5 @@
 using _01.Code.Core;
+using _01.Code.Enemies;
 using _01.Code.MapCreateSystem;
 using _01.Code.Units;
 
@@ -66,5 +67,15 @@ namespace _01.Code.Events
         }
 
         public Node Node { get; }
+    }
+
+    public class EnemyStatusRequestedEvent : GameEvent
+    {
+        public EnemyStatusRequestedEvent(Enemy enemy)
+        {
+            Enemy = enemy;
+        }
+
+        public Enemy Enemy { get; }
     }
 }

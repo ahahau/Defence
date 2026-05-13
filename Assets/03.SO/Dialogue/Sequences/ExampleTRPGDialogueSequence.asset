@@ -1,0 +1,105 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47b6fbf626d84142a85744b0f9e1e3dc, type: 3}
+  m_Name: ExampleTRPGDialogueSequence
+  m_EditorClassIdentifier: 
+  lines:
+  - speakerName: Narrator
+    text: 닫힌 철문 앞에 섰다. 어떻게 할까?
+    enterActions: []
+    choices:
+    - text: 힘으로 밀어붙인다
+      actions: []
+      nextSequence: {fileID: 0}
+      nextLineIndex: 2
+      routes:
+      - valueKey: forceDoorSuccess
+        expectedValue: 1
+        actions: []
+        nextSequence: {fileID: 0}
+        nextLineIndex: 1
+    - text: 경비병을 설득한다
+      actions: []
+      nextSequence: {fileID: 0}
+      nextLineIndex: 4
+      routes:
+      - valueKey: persuadeGuardSuccess
+        expectedValue: 1
+        actions: []
+        nextSequence: {fileID: 0}
+        nextLineIndex: 3
+    - text: 경비병에게 10골드를 건넨다
+      actions:
+      - {fileID: 11400000, guid: 4e1b705b11594f81b9cde45709783eef, type: 2}
+      nextSequence: {fileID: 0}
+      nextLineIndex: 5
+      routes: []
+  - speakerName: Narrator
+    text: 힘 판정 성공. 문이 크게 흔들리더니 천천히 열린다.
+    enterActions: []
+    choices:
+    - text: 안으로 들어간다
+      actions: []
+      nextSequence: {fileID: 0}
+      nextLineIndex: 6
+      routes: []
+  - speakerName: Narrator
+    text: 힘 판정 실패. 문은 꿈쩍도 하지 않고 어깨만 얼얼하다.
+    enterActions: []
+    choices:
+    - text: 물러난다
+      actions: []
+      nextSequence: {fileID: 0}
+      nextLineIndex: -1
+      routes: []
+  - speakerName: Guard
+    text: 설득 성공. 경비병이 한숨을 쉬며 문을 열어준다.
+    enterActions: []
+    choices:
+    - text: 고맙다고 말한다
+      actions: []
+      nextSequence: {fileID: 0}
+      nextLineIndex: 6
+      routes: []
+  - speakerName: Guard
+    text: 설득 실패. 경비병은 팔짱을 낀 채 고개를 젓는다.
+    enterActions: []
+    choices:
+    - text: 10골드를 내민다
+      actions:
+      - {fileID: 11400000, guid: 4e1b705b11594f81b9cde45709783eef, type: 2}
+      nextSequence: {fileID: 0}
+      nextLineIndex: 5
+      routes: []
+    - text: 돌아간다
+      actions: []
+      nextSequence: {fileID: 0}
+      nextLineIndex: -1
+      routes: []
+  - speakerName: Guard
+    text: 경비병이 금화를 받아 챙기고 문을 열어준다. 골드가 10 감소했다.
+    enterActions: []
+    choices:
+    - text: 안으로 들어간다
+      actions: []
+      nextSequence: {fileID: 0}
+      nextLineIndex: 6
+      routes: []
+  - speakerName: Narrator
+    text: 당신은 문 너머 어두운 복도로 들어선다.
+    enterActions: []
+    choices:
+    - text: 대화를 끝낸다
+      actions: []
+      nextSequence: {fileID: 0}
+      nextLineIndex: -1
+      routes: []

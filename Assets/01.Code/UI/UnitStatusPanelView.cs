@@ -12,6 +12,8 @@ namespace _01.Code.UI
 {
     public class UnitStatusPanelView : MonoBehaviour
     {
+        public static UnitStatusPanelView ActiveInstance { get; private set; }
+
         [SerializeField] private GameEventChannelSO nodeEventChannel;
         [SerializeField] private GameEventChannelSO costEventChannel;
         [SerializeField] private DayManager dayManager;
@@ -33,6 +35,7 @@ namespace _01.Code.UI
 
         private void Awake()
         {
+            ActiveInstance = this;
             SetPanelVisible(false);
         }
 
@@ -52,6 +55,12 @@ namespace _01.Code.UI
             costEventChannel.RemoveListener<UnitRecoveryCostRejectedEvent>(HandleRecoveryRejected);
             recoverButton.onClick.RemoveListener(HandleRecoverClicked);
             closeButton.onClick.RemoveListener(HandleCloseClicked);
+        }
+
+        private void OnDestroy()
+        {
+            if (ActiveInstance == this)
+                ActiveInstance = null;
         }
 
         private void HandleUnitStatusRequested(UnitStatusRequestedEvent evt)

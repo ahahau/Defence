@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using _01.Code.Core;
 using UnityEngine;
 
 namespace _01.Code.Dialogue
@@ -6,6 +8,8 @@ namespace _01.Code.Dialogue
     public class DialogueRunner : MonoBehaviour
     {
         [SerializeField] private DialogueSequenceSO initialSequence;
+        [SerializeField] private DialogueValueTableSO valueTable;
+        [SerializeField] private GameEventChannelSO costEventChannel;
         [SerializeField] private DialogueView view;
         [SerializeField] private bool playOnStart = true;
 
@@ -25,15 +29,19 @@ namespace _01.Code.Dialogue
             initialSequence = sequence;
             view = dialogueView;
             playOnStart = shouldPlayOnStart;
+            player.SetValueTable(valueTable);
             view?.Initialize(this);
         }
 
         private void Awake()
         {
-            if (view == null)
-                view = FindAnyObjectByType<DialogueView>(FindObjectsInactive.Include);
-
+            player.SetValueTable(valueTable);
             view?.Initialize(this);
+        }
+
+        public void SetDialogueValue(string key, bool value)
+        {
+            valueTable?.SetValue(key, value);
         }
 
         private void Start()
@@ -53,6 +61,7 @@ namespace _01.Code.Dialogue
             }
 
             DialogueStarted?.Invoke(player.CurrentSequence);
+            ExecuteActions(displayData.EnterActions);
             Show(displayData);
         }
 
@@ -75,6 +84,7 @@ namespace _01.Code.Dialogue
                 return;
             }
 
+            ExecuteActions(displayData.EnterActions);
             Show(displayData);
         }
 
@@ -85,13 +95,23 @@ namespace _01.Code.Dialogue
 
             var sequence = player.CurrentSequence;
             var lineIndex = player.CurrentLineIndex;
-            if (!player.SelectChoice(choiceIndex, out var choice, out var displayData))
+            if (!player.SelectChoice(choiceIndex, out var choice, out var matchedRoute, out var ended, out var displayData))
             {
                 Stop();
                 return;
             }
 
             ChoiceSelected?.Invoke(sequence, lineIndex, choice);
+            ExecuteActions(choice.Actions);
+            ExecuteActions(matchedRoute.Actions);
+
+            if (ended)
+            {
+                Stop();
+                return;
+            }
+
+            ExecuteActions(displayData.EnterActions);
             Show(displayData);
         }
 
@@ -108,6 +128,16 @@ namespace _01.Code.Dialogue
         {
             view?.Show(displayData);
             LineChanged?.Invoke(player.CurrentSequence, player.CurrentLineIndex, displayData);
+        }
+
+        private void ExecuteActions(IReadOnlyList<DialogueActionSO> actions)
+        {
+            if (actions == null || actions.Count == 0)
+                return;
+
+            var context = new DialogueActionContext(this, costEventChannel, valueTable);
+            foreach (var action in actions)
+                action?.Execute(context);
         }
     }
 }
