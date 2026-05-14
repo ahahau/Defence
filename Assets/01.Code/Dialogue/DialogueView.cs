@@ -82,14 +82,32 @@ namespace _01.Code.Dialogue
                 root = gameObject;
 
             root.SetActive(true);
-            SetText(titleText, string.Empty);
-            SetText(speakerText, data.SpeakerName);
-            SetText(bodyText, data.Text);
-            SetText(progressText, data.Progress);
+            BindButtonListeners();
+
+            if (titleText != null)
+                titleText.text = string.Empty;
+
+            if (speakerText != null)
+                speakerText.text = data.SpeakerName;
+
+            if (bodyText != null)
+                bodyText.text = data.Text;
+
+            if (progressText != null)
+                progressText.text = data.Progress;
+
             BuildChoices(data.Choices);
 
             if (nextButton != null)
-                nextButton.interactable = !data.HasChoices;
+            {
+                var hasChoices = data.HasChoices;
+                nextButton.gameObject.SetActive(!hasChoices);
+                nextButton.interactable = !hasChoices;
+                nextButton.transform.SetAsLastSibling();
+            }
+
+            if (closeButton != null)
+                closeButton.transform.SetAsLastSibling();
         }
 
         public void Hide()
@@ -132,12 +150,6 @@ namespace _01.Code.Dialogue
             boundCloseButton = null;
         }
 
-        private static void SetText(TMP_Text text, string value)
-        {
-            if (text != null)
-                text.text = value;
-        }
-
         private void BuildChoices(IReadOnlyList<DialogueChoice> choices)
         {
             ClearChoices();
@@ -160,10 +172,18 @@ namespace _01.Code.Dialogue
                 button.onClick.AddListener(() => HandleChoiceClicked(index));
 
                 var label = button.GetComponentInChildren<TMP_Text>(true);
-                SetText(label, choice.Text);
+                if (label != null)
+                    label.text = choice.Text;
 
                 choiceButtons.Add(button);
+            }
 
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(choiceRoot);
+
+            for (var i = 0; i < choiceButtons.Count; i++)
+            {
+                var button = choiceButtons[i];
                 var rect = button.transform as RectTransform;
                 if (rect != null && gameObject.activeInHierarchy)
                     choiceAnimations.Add(StartCoroutine(SlideChoiceIn(rect, i * choiceStaggerDelay)));

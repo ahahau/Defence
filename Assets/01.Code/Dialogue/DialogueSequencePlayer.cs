@@ -39,9 +39,6 @@ namespace _01.Code.Dialogue
             if (!IsPlaying)
                 return false;
 
-            if (CurrentLineHasChoices())
-                return TryBuildDisplayData(out displayData);
-
             return Advance(out displayData);
         }
 
@@ -136,11 +133,5 @@ namespace _01.Code.Dialogue
             return true;
         }
 
-        private bool CurrentLineHasChoices()
-        {
-            return currentSequence != null
-                   && currentSequence.TryGetLine(currentLineIndex, out var line)
-                   && line.HasChoices;
-        }
     }
 }

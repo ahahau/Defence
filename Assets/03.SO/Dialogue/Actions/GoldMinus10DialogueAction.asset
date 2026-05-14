@@ -12,4 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4dfd16e2121f476ca3f50686f687d945, type: 3}
   m_Name: GoldMinus10DialogueAction
   m_EditorClassIdentifier: 
+  costEventChannel: {fileID: 11400000, guid: 734ca3593b5d2884dae267b0e3e601be, type: 2}
   amount: -10

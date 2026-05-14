@@ -14,61 +14,82 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lines:
   - speakerName: Narrator
-    text: 닫힌 철문 앞에 섰다. 어떻게 할까?
+    text: 오래된 복도 끝에서 닫힌 철문을 발견했다. 이 줄은 선택지가 없어서 Next 버튼으로 넘어간다.
+    enterActions: []
+    choices: []
+  - speakerName: Narrator
+    text: 철문 앞에 섰다. 어떻게 할까?
     enterActions: []
     choices:
     - text: 힘으로 밀어붙인다
       actions: []
-      nextSequence: {fileID: 0}
-      nextLineIndex: 2
+      nextSequence: {fileID: 11400000, guid: 6085b8e5e7a144a49c48ed559bd96aa2, type: 2}
+      nextLineIndex: 4
       routes:
       - valueKey: forceDoorSuccess
         expectedValue: 1
         actions: []
-        nextSequence: {fileID: 0}
-        nextLineIndex: 1
+        nextSequence: {fileID: 11400000, guid: 6085b8e5e7a144a49c48ed559bd96aa2, type: 2}
+        nextLineIndex: 2
     - text: 경비병을 설득한다
       actions: []
-      nextSequence: {fileID: 0}
-      nextLineIndex: 4
+      nextSequence: {fileID: 11400000, guid: 6085b8e5e7a144a49c48ed559bd96aa2, type: 2}
+      nextLineIndex: 8
       routes:
       - valueKey: persuadeGuardSuccess
         expectedValue: 1
         actions: []
-        nextSequence: {fileID: 0}
-        nextLineIndex: 3
+        nextSequence: {fileID: 11400000, guid: 6085b8e5e7a144a49c48ed559bd96aa2, type: 2}
+        nextLineIndex: 6
     - text: 경비병에게 10골드를 건넨다
       actions:
       - {fileID: 11400000, guid: 4e1b705b11594f81b9cde45709783eef, type: 2}
-      nextSequence: {fileID: 0}
-      nextLineIndex: 5
+      nextSequence: {fileID: 11400000, guid: 6085b8e5e7a144a49c48ed559bd96aa2, type: 2}
+      nextLineIndex: 10
       routes: []
   - speakerName: Narrator
-    text: 힘 판정 성공. 문이 크게 흔들리더니 천천히 열린다.
+    text: 힘 판정 성공. 문이 크게 흔들리더니 천천히 열린다. 이 줄도 Next로 넘어간다.
+    enterActions: []
+    choices: []
+  - speakerName: Narrator
+    text: 당신은 힘으로 열린 문 너머 어두운 복도로 들어선다.
     enterActions: []
     choices:
-    - text: 안으로 들어간다
+    - text: 대화를 끝낸다
       actions: []
-      nextSequence: {fileID: 0}
-      nextLineIndex: 6
+      nextSequence: {fileID: 11400000, guid: 6085b8e5e7a144a49c48ed559bd96aa2, type: 2}
+      nextLineIndex: -1
       routes: []
   - speakerName: Narrator
     text: 힘 판정 실패. 문은 꿈쩍도 하지 않고 어깨만 얼얼하다.
     enterActions: []
     choices:
-    - text: 물러난다
+    - text: 대화를 끝낸다
       actions: []
-      nextSequence: {fileID: 0}
+      nextSequence: {fileID: 11400000, guid: 6085b8e5e7a144a49c48ed559bd96aa2, type: 2}
+      nextLineIndex: -1
+      routes: []
+  - speakerName: Narrator
+    text: 이 줄은 힘 실패 분기 뒤에 있는 더미 줄이다. 정상 흐름에서는 오지 않는다.
+    enterActions: []
+    choices:
+    - text: 대화를 끝낸다
+      actions: []
+      nextSequence: {fileID: 11400000, guid: 6085b8e5e7a144a49c48ed559bd96aa2, type: 2}
       nextLineIndex: -1
       routes: []
   - speakerName: Guard
-    text: 설득 성공. 경비병이 한숨을 쉬며 문을 열어준다.
+    text: 설득 성공. 경비병이 한숨을 쉬며 문을 열어준다. 이 줄은 Next로 넘어간다.
+    enterActions: []
+    choices: []
+  - speakerName: Narrator
+    text: 당신은 설득으로 열린 문 너머 어두운 복도로 들어선다.
     enterActions: []
     choices:
-    - text: 고맙다고 말한다
+    - text: 대화를 끝낸다
       actions: []
-      nextSequence: {fileID: 0}
-      nextLineIndex: 6
+      nextSequence: {fileID: 11400000, guid: 6085b8e5e7a144a49c48ed559bd96aa2, type: 2}
+      nextLineIndex: -1
       routes: []
   - speakerName: Guard
     text: 설득 실패. 경비병은 팔짱을 낀 채 고개를 젓는다.
@@ -77,29 +98,33 @@ MonoBehaviour:
     - text: 10골드를 내민다
       actions:
       - {fileID: 11400000, guid: 4e1b705b11594f81b9cde45709783eef, type: 2}
-      nextSequence: {fileID: 0}
-      nextLineIndex: 5
+      nextSequence: {fileID: 11400000, guid: 6085b8e5e7a144a49c48ed559bd96aa2, type: 2}
+      nextLineIndex: 10
       routes: []
     - text: 돌아간다
       actions: []
-      nextSequence: {fileID: 0}
+      nextSequence: {fileID: 11400000, guid: 6085b8e5e7a144a49c48ed559bd96aa2, type: 2}
       nextLineIndex: -1
       routes: []
-  - speakerName: Guard
-    text: 경비병이 금화를 받아 챙기고 문을 열어준다. 골드가 10 감소했다.
-    enterActions: []
-    choices:
-    - text: 안으로 들어간다
-      actions: []
-      nextSequence: {fileID: 0}
-      nextLineIndex: 6
-      routes: []
   - speakerName: Narrator
-    text: 당신은 문 너머 어두운 복도로 들어선다.
+    text: 이 줄은 설득 실패 분기 뒤에 있는 더미 줄이다. 정상 흐름에서는 오지 않는다.
     enterActions: []
     choices:
     - text: 대화를 끝낸다
       actions: []
-      nextSequence: {fileID: 0}
+      nextSequence: {fileID: 11400000, guid: 6085b8e5e7a144a49c48ed559bd96aa2, type: 2}
+      nextLineIndex: -1
+      routes: []
+  - speakerName: Guard
+    text: 경비병이 금화를 받아 챙기고 문을 열어준다. 골드가 10 감소했다. 이 줄은 Next로 넘어간다.
+    enterActions: []
+    choices: []
+  - speakerName: Narrator
+    text: 당신은 뇌물로 열린 문 너머 어두운 복도로 들어선다.
+    enterActions: []
+    choices:
+    - text: 대화를 끝낸다
+      actions: []
+      nextSequence: {fileID: 11400000, guid: 6085b8e5e7a144a49c48ed559bd96aa2, type: 2}
       nextLineIndex: -1
       routes: []
