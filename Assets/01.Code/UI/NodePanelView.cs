@@ -24,8 +24,7 @@ namespace _01.Code.UI
         [SerializeField] private GameObject buildingViewSelector;
         [SerializeField] private GameObject unitViewRoot;
         [SerializeField] private GameObject buildingViewRoot;
-        [SerializeField] private BuildingInfoPanelView buildingInfoPanelPrefab;
-        [SerializeField] private Transform buildingInfoPanelParent;
+        [SerializeField] private BuildingInfoPanelView buildingInfoPanel;
         [SerializeField] private string emptyNodeTitleFormat = "{0} Unit Hire";
         [SerializeField] private Unit unitPrefab;
         [SerializeField] private Portal portalPrefab;
@@ -45,7 +44,6 @@ namespace _01.Code.UI
         private Node _pendingBuildingNode;
         private BuildingDataSO _pendingBuildingData;
         private BuildingDataSO _selectedBuildingData;
-        private BuildingInfoPanelView _buildingInfoPanel;
         private bool hasInstalledPortal;
         private bool _isDeployModeActive;
         private string _installButtonDefaultLabel;
@@ -499,16 +497,18 @@ namespace _01.Code.UI
 
         private void RefreshInstallButtonState()
         {
-            if (installButton == null)
-                return;
-
             if (IsBuildingPanelOpen())
             {
-                installButton.interactable = CanInstallBuilding(_selectedBuildingData);
+                var canInstallSelectedBuilding = CanInstallBuilding(_selectedBuildingData);
+                if (installButton != null)
+                    installButton.interactable = canInstallSelectedBuilding;
+                buildingInfoPanel?.SetInstallInteractable(canInstallSelectedBuilding);
                 return;
             }
 
-            installButton.interactable = _selectedNode != null;
+            if (installButton != null)
+                installButton.interactable = _selectedNode != null;
+            buildingInfoPanel?.SetInstallInteractable(false);
         }
 
         private void RefreshDemolishButton()
@@ -557,44 +557,40 @@ namespace _01.Code.UI
 
         private void EnsureBuildingInfoPanel()
         {
-            if (_buildingInfoPanel != null)
-                return;
+            if (buildingInfoPanel == null)
+                buildingInfoPanel = GetComponentInChildren<BuildingInfoPanelView>(true);
 
-            if (buildingInfoPanelPrefab == null)
-                return;
-
-            var parent = ResolveBuildingInfoPanelParent();
-            if (parent == null)
-                return;
-
-            _buildingInfoPanel = Instantiate(buildingInfoPanelPrefab, parent);
-            _buildingInfoPanel.name = buildingInfoPanelPrefab.name;
+            buildingInfoPanel?.SetInstallHandler(HandleBuildingInfoInstallClicked);
         }
 
-        private Transform ResolveBuildingInfoPanelParent()
+        private void HandleBuildingInfoInstallClicked()
         {
-            if (buildingInfoPanelParent != null)
-                return buildingInfoPanelParent;
+            if (_selectedBuildingData == null)
+            {
+                ShowEmptyBuildingInfo();
+                RefreshInstallButtonState();
+                return;
+            }
 
-            return panelRoot != null ? panelRoot.transform : transform;
+            RequestSelectedBuildingInstall();
         }
 
         private void ShowEmptyBuildingInfo()
         {
             EnsureBuildingInfoPanel();
-            _buildingInfoPanel?.ShowEmpty();
+            buildingInfoPanel?.ShowEmpty();
         }
 
         private void ShowBuildingInfoPanel(BuildingDataSO buildingData)
         {
             EnsureBuildingInfoPanel();
-            _buildingInfoPanel?.Show(buildingData);
+            buildingInfoPanel?.Show(buildingData);
         }
 
         private void HideBuildingInfoPanel()
         {
-            if (_buildingInfoPanel != null)
-                _buildingInfoPanel.Hide();
+            if (buildingInfoPanel != null)
+                buildingInfoPanel.Hide();
         }
     }
 }
