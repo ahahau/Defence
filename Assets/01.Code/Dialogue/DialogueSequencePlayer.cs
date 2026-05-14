@@ -18,6 +18,11 @@ namespace _01.Code.Dialogue
             valueTable = table;
         }
 
+        public bool CanSelect(DialogueChoice choice)
+        {
+            return choice.CanSelect(valueTable);
+        }
+
         public bool Play(DialogueSequenceSO sequence, out DialogueDisplayData displayData)
         {
             if (sequence == null || sequence.LineCount == 0)

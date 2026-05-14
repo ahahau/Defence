@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 244f0e9d7c13f894fb81b7c9c760c202
+guid: 80df9382ce46c8849a632242b11f3ae3
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -9,7 +9,7 @@ TrueTypeFontImporter:
   characterPadding: 1
   includeFontData: 1
   fontNames:
-  - Black Han Sans
+  - The Jamsil
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0

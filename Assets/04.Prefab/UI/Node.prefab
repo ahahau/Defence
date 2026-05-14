@@ -396,8 +396,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Node
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: e4b024b0372945e48b40a91b3f4ea305, type: 2}
-  m_sharedMaterial: {fileID: -1082112635989722007, guid: e4b024b0372945e48b40a91b3f4ea305, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 3f8032d827a35ae408110e189f3a4ca7, type: 2}
+  m_sharedMaterial: {fileID: -3203892243947276002, guid: 3f8032d827a35ae408110e189f3a4ca7, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -834,8 +834,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Bulding
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: e4b024b0372945e48b40a91b3f4ea305, type: 2}
-  m_sharedMaterial: {fileID: -1082112635989722007, guid: e4b024b0372945e48b40a91b3f4ea305, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 3f8032d827a35ae408110e189f3a4ca7, type: 2}
+  m_sharedMaterial: {fileID: -3203892243947276002, guid: 3f8032d827a35ae408110e189f3a4ca7, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -971,8 +971,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Portal
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: e4b024b0372945e48b40a91b3f4ea305, type: 2}
-  m_sharedMaterial: {fileID: -1082112635989722007, guid: e4b024b0372945e48b40a91b3f4ea305, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 3f8032d827a35ae408110e189f3a4ca7, type: 2}
+  m_sharedMaterial: {fileID: -3203892243947276002, guid: 3f8032d827a35ae408110e189f3a4ca7, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1108,8 +1108,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\xD7"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: e4b024b0372945e48b40a91b3f4ea305, type: 2}
-  m_sharedMaterial: {fileID: -1082112635989722007, guid: e4b024b0372945e48b40a91b3f4ea305, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 3f8032d827a35ae408110e189f3a4ca7, type: 2}
+  m_sharedMaterial: {fileID: -3203892243947276002, guid: 3f8032d827a35ae408110e189f3a4ca7, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1446,6 +1446,8 @@ MonoBehaviour:
   buildingViewSelector: {fileID: 5995867190163090945}
   unitViewRoot: {fileID: 8816200756352839093}
   buildingViewRoot: {fileID: 9073153910352559657}
+  buildingInfoPanelPrefab: {fileID: 1200000000000000005, guid: b4a6a31b436348b1a9e107bf12e8f0a5, type: 3}
+  buildingInfoPanelParent: {fileID: 0}
   emptyNodeTitleFormat: '{0} Unit Hire'
   unitPrefab: {fileID: 8763816506036182599, guid: 3fd3e8355402864469408219b7a7eecb, type: 3}
   portalPrefab: {fileID: 6750984763358774362, guid: 6eaa4d203b053694b965f2b5b22059a7, type: 3}
@@ -1530,8 +1532,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Unit
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: e4b024b0372945e48b40a91b3f4ea305, type: 2}
-  m_sharedMaterial: {fileID: -1082112635989722007, guid: e4b024b0372945e48b40a91b3f4ea305, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 3f8032d827a35ae408110e189f3a4ca7, type: 2}
+  m_sharedMaterial: {fileID: -3203892243947276002, guid: 3f8032d827a35ae408110e189f3a4ca7, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

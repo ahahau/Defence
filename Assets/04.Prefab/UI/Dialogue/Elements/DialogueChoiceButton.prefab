@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 6283536823512221808}
   - component: {fileID: 6186080249453303753}
   - component: {fileID: 7429454143319291509}
+  - component: {fileID: 5903316602810905072}
   m_Layer: 0
   m_Name: DialogueChoiceButton
   m_TagString: Untagged
@@ -142,6 +143,26 @@ MonoBehaviour:
   m_FlexibleWidth: 1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &5903316602810905072
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2145380463530688912}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20bba2b44de244eeb21641d736ac3c33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  background: {fileID: 6283536823512221808}
+  labelGraphic: {fileID: 4572156083450873530}
+  activeBackgroundColor: {r: 0.18, g: 0.38, b: 0.45, a: 1}
+  activeLabelColor: {r: 0.96, g: 0.98, b: 1, a: 1}
+  disabledBackgroundColor: {r: 0.08, g: 0.09, b: 0.1, a: 0.88}
+  disabledLabelColor: {r: 0.48, g: 0.5, b: 0.52, a: 1}
+  hoverOffsetX: -24
+  hoverDuration: 0.12
 --- !u!1 &3505626111013249693
 GameObject:
   m_ObjectHideFlags: 0
@@ -209,8 +230,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\uC120\uD0DD\uC9C0"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: e4b024b0372945e48b40a91b3f4ea305, type: 2}
-  m_sharedMaterial: {fileID: -1082112635989722007, guid: e4b024b0372945e48b40a91b3f4ea305, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 3f8032d827a35ae408110e189f3a4ca7, type: 2}
+  m_sharedMaterial: {fileID: -3203892243947276002, guid: 3f8032d827a35ae408110e189f3a4ca7, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

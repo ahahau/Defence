@@ -610,7 +610,7 @@ TextMesh:
   m_FontSize: 106
   m_FontStyle: 0
   m_RichText: 1
-  m_Font: {fileID: 12800000, guid: 61165c170c0b97c48a9bf5be5ee0f5b6, type: 3}
+  m_Font: {fileID: 12800000, guid: 80df9382ce46c8849a632242b11f3ae3, type: 3}
   m_Color:
     serializedVersion: 2
     rgba: 4294967295

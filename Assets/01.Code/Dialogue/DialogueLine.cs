@@ -27,6 +27,21 @@ namespace _01.Code.Dialogue
         public DialogueSequenceSO NextSequence => nextSequence;
         public int NextLineIndex => nextLineIndex;
         public IReadOnlyList<DialogueChoiceRoute> Routes => routes;
+        public bool HasConditions => routes != null && routes.Length > 0;
+
+        public bool CanSelect(DialogueValueTableSO valueTable)
+        {
+            if (!HasConditions)
+                return true;
+
+            foreach (var route in routes)
+            {
+                if (route.Matches(valueTable))
+                    return true;
+            }
+
+            return false;
+        }
 
         public bool TryResolveTarget(
             DialogueValueTableSO valueTable,

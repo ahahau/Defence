@@ -44,6 +44,11 @@ namespace _01.Code.Dialogue
             valueTable?.SetValue(key, value);
         }
 
+        public bool CanSelect(DialogueChoice choice)
+        {
+            return player.CanSelect(choice);
+        }
+
         private void Start()
         {
             if (playOnStart && initialSequence != null)

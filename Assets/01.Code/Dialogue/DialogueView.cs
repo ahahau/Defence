@@ -14,12 +14,15 @@ namespace _01.Code.Dialogue
         [SerializeField] private TMP_Text bodyText;
         [SerializeField] private TMP_Text progressText;
         [SerializeField] private Button nextButton;
-        [SerializeField] private Button closeButton;
         [SerializeField] private RectTransform choiceRoot;
         [SerializeField] private Button choiceButtonPrefab;
         [SerializeField, Min(0f)] private float choiceSlideDuration = 0.22f;
         [SerializeField] private float choiceSlideOffset = 280f;
         [SerializeField, Min(0f)] private float choiceStaggerDelay = 0.045f;
+        [SerializeField, Min(0f)] private float choiceTopPadding = 14f;
+        [SerializeField, Min(0f)] private float choiceSidePadding = 14f;
+        [SerializeField, Min(1f)] private float choiceButtonHeight = 54f;
+        [SerializeField, Min(0f)] private float choiceButtonSpacing = 10f;
         
         private DialogueRunner runner;
         private Button boundNextButton;
@@ -68,7 +71,6 @@ namespace _01.Code.Dialogue
             bodyText = body;
             progressText = progress;
             nextButton = next;
-            closeButton = close;
             choiceRoot = choices;
             choiceButtonPrefab = choicePrefab;
 
@@ -106,8 +108,6 @@ namespace _01.Code.Dialogue
                 nextButton.transform.SetAsLastSibling();
             }
 
-            if (closeButton != null)
-                closeButton.transform.SetAsLastSibling();
         }
 
         public void Hide()
@@ -131,13 +131,9 @@ namespace _01.Code.Dialogue
 
         private void BindButtonListeners()
         {
-            if (boundNextButton == nextButton && boundCloseButton == closeButton)
-                return;
-
             UnbindButtonListeners();
 
             boundNextButton = nextButton;
-            boundCloseButton = closeButton;
             boundNextButton?.onClick.AddListener(HandleNextClicked);
             boundCloseButton?.onClick.AddListener(HandleCloseClicked);
         }
@@ -159,34 +155,60 @@ namespace _01.Code.Dialogue
                 if (choiceRoot != null)
                     choiceRoot.gameObject.SetActive(false);
                 return;
+                
             }
 
             choiceRoot.gameObject.SetActive(true);
+            var layoutGroup = choiceRoot.GetComponent<LayoutGroup>();
+            if (layoutGroup != null)
+                layoutGroup.enabled = false;
 
             for (var i = 0; i < choices.Count; i++)
             {
                 var choice = choices[i];
                 var index = i;
                 var button = Instantiate(choiceButtonPrefab, choiceRoot);
-                button.gameObject.SetActive(true);
-                button.onClick.AddListener(() => HandleChoiceClicked(index));
+                var choiceButtonView = button.GetComponent<DialogueChoiceButtonView>();
+                var canSelect = runner == null || runner.CanSelect(choice);
+                var buttonRect = button.transform as RectTransform;
+                var targetPosition = new Vector2(0f, -choiceTopPadding - i * (choiceButtonHeight + choiceButtonSpacing));
 
-                var label = button.GetComponentInChildren<TMP_Text>(true);
-                if (label != null)
-                    label.text = choice.Text;
+                if (buttonRect != null)
+                {
+                    buttonRect.anchorMin = new Vector2(0f, 1f);
+                    buttonRect.anchorMax = new Vector2(1f, 1f);
+                    buttonRect.pivot = new Vector2(0.5f, 1f);
+                    buttonRect.anchoredPosition = targetPosition;
+                    buttonRect.sizeDelta = new Vector2(-choiceSidePadding * 2f, choiceButtonHeight);
+                }
+
+                choiceButtonView?.SetRestPosition(targetPosition);
+                button.gameObject.SetActive(true);
+                button.interactable = canSelect;
+
+                if (canSelect)
+                    button.onClick.AddListener(() => HandleChoiceClicked(index));
+
+                if (choiceButtonView != null)
+                {
+                    choiceButtonView.Bind(choice, canSelect);
+                }
+                else
+                {
+                    var label = button.GetComponentInChildren<TMP_Text>(true);
+                    if (label != null)
+                        label.text = choice.Text;
+                }
 
                 choiceButtons.Add(button);
             }
-
-            Canvas.ForceUpdateCanvases();
-            LayoutRebuilder.ForceRebuildLayoutImmediate(choiceRoot);
 
             for (var i = 0; i < choiceButtons.Count; i++)
             {
                 var button = choiceButtons[i];
                 var rect = button.transform as RectTransform;
                 if (rect != null && gameObject.activeInHierarchy)
-                    choiceAnimations.Add(StartCoroutine(SlideChoiceIn(rect, i * choiceStaggerDelay)));
+                    choiceAnimations.Add(StartCoroutine(SlideChoiceIn(button, rect, i * choiceStaggerDelay)));
             }
         }
 
@@ -225,7 +247,7 @@ namespace _01.Code.Dialogue
             runner?.SelectChoice(choiceIndex);
         }
 
-        private IEnumerator SlideChoiceIn(RectTransform choiceRect, float delay)
+        private IEnumerator SlideChoiceIn(Button choiceButton, RectTransform choiceRect, float delay)
         {
             if (delay > 0f)
                 yield return new WaitForSecondsRealtime(delay);
@@ -246,6 +268,8 @@ namespace _01.Code.Dialogue
             }
 
             choiceRect.anchoredPosition = target;
+            var choiceButtonView = choiceButton.GetComponent<DialogueChoiceButtonView>();
+            choiceButtonView?.SetRestPosition(target);
         }
     }
 }

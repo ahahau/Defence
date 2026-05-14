@@ -7,16 +7,61 @@
     <list default="true" id="60a71e54-2ed6-426f-84f0-8dc9ea69b70b" name="변경" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Defence/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Defence/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/00.Scenes/DialogueTestScene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/00.Scenes/DialogueTestScene.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/00.Scenes/SampleScene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/00.Scenes/SampleScene.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Dialogue/DialogueLine.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Dialogue/DialogueLine.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Dialogue/DialogueRunner.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Dialogue/DialogueRunner.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/01.Code/Dialogue/DialogueSequencePlayer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Dialogue/DialogueSequencePlayer.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/01.Code/Dialogue/DialogueView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Dialogue/DialogueView.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Dialogue/GoldChangeDialogueActionSO.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Dialogue/GoldChangeDialogueActionSO.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Dialogue/Actions/GoldMinus10DialogueAction.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/Dialogue/Actions/GoldMinus10DialogueAction.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Dialogue/Sequences/ExampleTRPGDialogueSequence.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/Dialogue/Sequences/ExampleTRPGDialogueSequence.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Dialogue/Sequences/TestDialogueChoiceSequence.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Dialogue/Sequences/TestDialogueChoiceSequence.asset.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Dialogue/ValueTables/ExampleTRPGValueTable.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Dialogue/ValueTables/ExampleTRPGValueTable.asset.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/08.Font/BlackHanSans-Regular SDF.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/08.Font/BlackHanSans-Regular SDF.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/NodePanelView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/NodePanelView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/DamageText.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/DamageText.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/ArtifactPanel.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/ArtifactPanel.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/ArtifactRewardChoicePanel.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/ArtifactRewardChoicePanel.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/Dialogue/Elements/DialogueChoiceButton.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/Dialogue/Elements/DialogueChoiceButton.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/GoldCostPanel.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/GoldCostPanel.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/Node.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/Node.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/RosterDeployEntry.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/RosterDeployEntry.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/UnitDeploy.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/UnitDeploy.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/UnitDeployEntry.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/UnitDeployEntry.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/UnitHireEntry.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/UnitHireEntry.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/UnitLevelView.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/UnitLevelView.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/UI/WaveRewardPanel.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/UI/WaveRewardPanel.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/08.Font/BlackHanSans-Regular SDF.asset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/08.Font/BlackHanSans-Regular SDF.asset.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/08.Font/BlackHanSans-Regular.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/08.Font/BlackHanSans-Regular.ttf.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Barbarians/Prefabs/FeelBarbarianFloatingText.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Barbarians/Prefabs/FeelBarbarianFloatingText.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/CardsUI/Prefabs/FeelCardsUI_Card.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/FeelDemos/CardsUI/Prefabs/FeelCardsUI_Card.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Common/Prefabs/NextDemoCanvas.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Common/Prefabs/NextDemoCanvas.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Springs/Prefabs/FeelSpringsButton.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Springs/Prefabs/FeelSpringsButton.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Springs/Prefabs/FeelSpringsSlider.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Springs/Prefabs/FeelSpringsSlider.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Tactical/Prefabs/FeelTacticalFeedbackPoweredFloatingText.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Tactical/Prefabs/FeelTacticalFeedbackPoweredFloatingText.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Tactical/Prefabs/FeelTacticalSimpleFloatingText.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Tactical/Prefabs/FeelTacticalSimpleFloatingText.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Tactical/Prefabs/FeelTacticalTMPFloatingText.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/FeelDemos/Tactical/Prefabs/FeelTacticalTMPFloatingText.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMFeedbacks/Demos/MMFeedbacksDemo/UI/Button.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/MMFeedbacks/Demos/MMFeedbacksDemo/UI/Button.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMFeedbacks/Demos/MMFeedbacksDemo/UI/Title.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/MMFeedbacks/Demos/MMFeedbacksDemo/UI/Title.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMFeedbacks/MMFeedbacks/MMFloatingText/Prefabs/MMFloatingText.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/MMFeedbacks/MMFeedbacks/MMFloatingText/Prefabs/MMFloatingText.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMFeedbacks/MMFeedbacks/MMFloatingText/Prefabs/MMFloatingTextPixel.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/MMFeedbacks/MMFeedbacks/MMFloatingText/Prefabs/MMFloatingTextPixel.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMFeedbacks/MMFeedbacksForThirdParty/TextMeshPro/MMFloatingText/Prefabs/MMFloatingTextMeshPro.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/MMFeedbacks/MMFeedbacksForThirdParty/TextMeshPro/MMFloatingText/Prefabs/MMFloatingTextMeshPro.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuButton.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuButton.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuButtonBorder.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuButtonBorder.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuCheckbox.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuCheckbox.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuChoicesThree.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuChoicesThree.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuChoicesTwo.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuChoicesTwo.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuDebugPanel.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuDebugPanel.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuSlider.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuSlider.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuTab.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuTab.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuTextLong.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuTextLong.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuTextSmall.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuTextSmall.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuTextTiny.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuTextTiny.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuTitle.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuTitle.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuValue.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugMenu/Prefabs/MMDebugMenuValue.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugOnScreen/Resources/MMDebugOnScreenConsole.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/MMTools/Accessories/MMDebugOnScreen/Resources/MMDebugOnScreenConsole.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMTween/Prefabs/PlotterAxisCanvas.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/MMTools/Demos/MMTween/Prefabs/PlotterAxisCanvas.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Foundation/MMAchievements/Prefabs/AchievementDisplay.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/MMTools/Foundation/MMAchievements/Prefabs/AchievementDisplay.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/MMTools/Foundation/MMAchievements/Resources/AchievementDisplay.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/MMTools/Foundation/MMAchievements/Resources/AchievementDisplay.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/NiceVibrations/Demo/Common/Prefabs/HorizontalSliderComponent.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/NiceVibrations/Demo/Common/Prefabs/HorizontalSliderComponent.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Feel/NiceVibrations/Demo/Common/Prefabs/VerticalSliderComponent.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Feel/NiceVibrations/Demo/Common/Prefabs/VerticalSliderComponent.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/TextMesh Pro/Resources/TMP Settings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/TextMesh Pro/Resources/TMP Settings.asset" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -121,7 +166,9 @@
       <workItem from="1778650230776" duration="309000" />
       <workItem from="1778660102046" duration="2407000" />
       <workItem from="1778666086998" duration="3793000" />
-      <workItem from="1778728776752" duration="1089000" />
+      <workItem from="1778728776752" duration="1809000" />
+      <workItem from="1778746697404" duration="760000" />
+      <workItem from="1778754799593" duration="342000" />
     </task>
     <servers />
   </component>
