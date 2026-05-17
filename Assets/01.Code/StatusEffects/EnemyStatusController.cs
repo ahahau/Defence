@@ -6,6 +6,7 @@ namespace _01.Code.StatusEffects
     public class EnemyStatusController : MonoBehaviour
     {
         private readonly List<ActiveStatusEffect> _activeEffects = new();
+        private readonly List<ActiveStatusEffectSnapshot> _activeEffectSnapshots = new();
 
         public void Apply(StatusEffectDataSO effect)
         {
@@ -76,6 +77,23 @@ namespace _01.Code.StatusEffects
             return Mathf.Max(1, resolvedDamage);
         }
 
+        public IReadOnlyList<ActiveStatusEffectSnapshot> GetActiveEffects()
+        {
+            _activeEffectSnapshots.Clear();
+
+            foreach (var activeEffect in _activeEffects)
+            {
+                if (activeEffect.Effect == null)
+                    continue;
+
+                _activeEffectSnapshots.Add(new ActiveStatusEffectSnapshot(
+                    activeEffect.Effect,
+                    activeEffect.RemainingNodeVisits));
+            }
+
+            return _activeEffectSnapshots;
+        }
+
         private IEnumerable<ActiveStatusEffectView> EnumerateActiveEffects()
         {
             foreach (var activeEffect in _activeEffects)
@@ -100,6 +118,18 @@ namespace _01.Code.StatusEffects
             public int RemainingNodeVisits;
 
             public ActiveStatusEffect(StatusEffectDataSO effect, int remainingNodeVisits)
+            {
+                Effect = effect;
+                RemainingNodeVisits = remainingNodeVisits;
+            }
+        }
+
+        public readonly struct ActiveStatusEffectSnapshot
+        {
+            public readonly StatusEffectDataSO Effect;
+            public readonly int RemainingNodeVisits;
+
+            public ActiveStatusEffectSnapshot(StatusEffectDataSO effect, int remainingNodeVisits)
             {
                 Effect = effect;
                 RemainingNodeVisits = remainingNodeVisits;

@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using _01.Code.Core;
 using _01.Code.Enemies;
 using _01.Code.Events;
+using _01.Code.StatusEffects;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -13,43 +15,25 @@ namespace _01.Code.UI
         [SerializeField] private GameEventChannelSO nodeEventChannel;
         [SerializeField] private GameObject panelRoot;
         [SerializeField] private TMP_Text titleText;
-        [SerializeField] private TMP_Text statusText;
+        [SerializeField] private TMP_Text stateText;
         [SerializeField] private TMP_Text hpText;
         [SerializeField] private TMP_Text attackText;
         [SerializeField] private TMP_Text locationText;
-        [SerializeField] private TMP_Text hintText;
+        [SerializeField] private TMP_Text emptyStatusText;
+        [SerializeField] private RectTransform statusListRoot;
+        [SerializeField] private TMP_Text statusEntryPrefab;
         [SerializeField] private Button closeButton;
         [SerializeField] private Canvas panelCanvas;
         [SerializeField] private Vector2 screenOffset = new(16f, -16f);
         [SerializeField] private bool keepInsideScreen = true;
 
+        private readonly List<TMP_Text> statusEntries = new();
         private Enemy selectedEnemy;
         private bool isSubscribed;
 
-        public void Configure(
-            GameEventChannelSO eventChannel,
-            GameObject root,
-            TMP_Text title,
-            TMP_Text status,
-            TMP_Text hp,
-            TMP_Text attack,
-            TMP_Text location,
-            Button close,
-            Canvas canvas)
+        public void Configure(GameEventChannelSO eventChannel)
         {
             nodeEventChannel = eventChannel;
-            panelRoot = root;
-            titleText = title;
-            statusText = status;
-            hpText = hp;
-            attackText = attack;
-            locationText = location;
-            closeButton = close;
-            panelCanvas = canvas;
-
-            Subscribe();
-            closeButton?.onClick.RemoveListener(HandleCloseClicked);
-            closeButton?.onClick.AddListener(HandleCloseClicked);
         }
 
         private void Awake()
@@ -120,21 +104,15 @@ namespace _01.Code.UI
                 return;
             }
 
-            if (titleText != null)
-                titleText.text = selectedEnemy.name;
-            if (statusText != null)
-                statusText.text = ResolveStatusText();
-            if (hpText != null)
-                hpText.text = ResolveHpText();
-            if (attackText != null)
-                attackText.text = ResolveAttackText();
-            if (locationText != null)
-                locationText.text = ResolveLocationText();
-            if (hintText != null)
-                hintText.text = "적 클릭으로 정보 갱신";
+            SetText(titleText, selectedEnemy.DisplayName);
+            SetText(stateText, ResolveStateText());
+            SetText(hpText, ResolveHpText());
+            SetText(attackText, ResolveAttackText());
+            SetText(locationText, ResolveLocationText());
+            RefreshStatusEffects();
         }
 
-        private string ResolveStatusText()
+        private string ResolveStateText()
         {
             if (selectedEnemy.Health == null || !selectedEnemy.Health.IsAlive)
                 return "처치됨";
@@ -167,6 +145,53 @@ namespace _01.Code.UI
             return $"위치 {node.Data.Type} ({node.GridPosition.x}, {node.GridPosition.y})";
         }
 
+        private void RefreshStatusEffects()
+        {
+            var controller = selectedEnemy.StatusController != null
+                ? selectedEnemy.StatusController
+                : selectedEnemy.GetComponent<EnemyStatusController>();
+            var activeEffects = controller != null ? controller.GetActiveEffects() : null;
+            var count = activeEffects != null ? activeEffects.Count : 0;
+
+            if (emptyStatusText != null)
+                emptyStatusText.gameObject.SetActive(count == 0);
+
+            for (var i = 0; i < statusEntries.Count; i++)
+                statusEntries[i].gameObject.SetActive(i < count);
+
+            if (activeEffects == null)
+                return;
+
+            for (var i = 0; i < activeEffects.Count; i++)
+            {
+                var entry = GetStatusEntry(i);
+                var effect = activeEffects[i].Effect;
+                if (entry == null || effect == null)
+                    continue;
+
+                var description = string.IsNullOrWhiteSpace(effect.Description)
+                    ? string.Empty
+                    : $"\n<size=80%>{effect.Description}</size>";
+                entry.text = $"{effect.DisplayName}  {activeEffects[i].RemainingNodeVisits}칸{description}";
+                entry.gameObject.SetActive(true);
+            }
+        }
+
+        private TMP_Text GetStatusEntry(int index)
+        {
+            while (statusEntries.Count <= index)
+            {
+                if (statusEntryPrefab == null || statusListRoot == null)
+                    return null;
+
+                var entry = Instantiate(statusEntryPrefab, statusListRoot);
+                entry.gameObject.SetActive(false);
+                statusEntries.Add(entry);
+            }
+
+            return statusEntries[index];
+        }
+
         private void SetPanelVisible(bool visible)
         {
             panelRoot?.SetActive(visible);
@@ -184,7 +209,10 @@ namespace _01.Code.UI
                 screenPosition = ClampToScreen(panelRect, screenPosition);
 
             if (panelCanvas == null)
+            {
+                panelRect.position = screenPosition;
                 return;
+            }
 
             if (panelCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
             {
@@ -221,6 +249,12 @@ namespace _01.Code.UI
             screenPosition.x = Mathf.Clamp(screenPosition.x, minX, maxX);
             screenPosition.y = Mathf.Clamp(screenPosition.y, minY, maxY);
             return screenPosition;
+        }
+
+        private static void SetText(TMP_Text text, string value)
+        {
+            if (text != null)
+                text.text = value;
         }
     }
 }

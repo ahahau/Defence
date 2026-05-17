@@ -12,6 +12,7 @@ namespace _01.Code.Enemies
 {
     public class Enemy : MonoBehaviour
     {
+        [SerializeField] private EnemyDataSO data;
         [SerializeField] private int killExperience = 1;
         [SerializeField, Min(0f)] private float hitSpriteDuration = 0.25f;
         [SerializeField] private EntityRender enemyRenderer;
@@ -25,9 +26,14 @@ namespace _01.Code.Enemies
         private bool _isInCombat;
 
         public bool IsInCombat => _isInCombat;
+        public EnemyDataSO Data => data;
+        public string DisplayName => data != null && !string.IsNullOrWhiteSpace(data.Name)
+            ? data.Name
+            : name;
         public Combatant Combatant => combatant;
         public EnemyMover Mover => mover;
         public Health Health => health;
+        public EnemyStatusController StatusController => statusController;
 
         private void Awake()
         {
