@@ -165,6 +165,9 @@ namespace _01.Code.UI
 
         private void SetPanelVisible(bool visible)
         {
+            if (visible)
+                transform.SetAsLastSibling();
+
             panelRoot.SetActive(visible);
         }
 

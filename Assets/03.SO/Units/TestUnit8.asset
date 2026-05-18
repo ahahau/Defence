@@ -10,9 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 68a53ce40c9c46bfad7deb6d16cf6bdb, type: 3}
-  m_Name: TestUnit1 2
+  m_Name: TestUnit8
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Units.UnitDataSO
   <Sprite>k__BackingField: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
-  <Name>k__BackingField: Unit3
-  <Cost>k__BackingField: 10
+  <Name>k__BackingField: Unit8
+  <Cost>k__BackingField: 25
+  <MagicCost>k__BackingField: 2
   <Locked>k__BackingField: 1
+  <BaseDanger>k__BackingField: 2
+  <DangerIncreaseOnCombat>k__BackingField: 2

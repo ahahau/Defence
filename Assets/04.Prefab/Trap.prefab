@@ -140,6 +140,13 @@ MonoBehaviour:
   <DangerRating>k__BackingField: 0
   triggerChance: 0.5
   damage: 3
+  injuryChance: 0.15
+  bonusDamage: 0
+  injuryStatusEffect: {fileID: 11400000, guid: c63b724cc988423d94c25149a6102883, type: 2}
+  hitAnimationTarget: {fileID: 2787899817810343432}
+  hitShakeDistance: 0.16
+  hitShakeDuration: 0.18
+  hitShakeSteps: 4
   <DangerIncreaseOnTrigger>k__BackingField: 1
 --- !u!1 &7473952817250454834
 GameObject:

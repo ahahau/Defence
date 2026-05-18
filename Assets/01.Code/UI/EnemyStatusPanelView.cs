@@ -19,6 +19,7 @@ namespace _01.Code.UI
         [SerializeField] private TMP_Text hpText;
         [SerializeField] private TMP_Text attackText;
         [SerializeField] private TMP_Text locationText;
+        [SerializeField] private TMP_Text statusTitleText;
         [SerializeField] private TMP_Text emptyStatusText;
         [SerializeField] private RectTransform statusListRoot;
         [SerializeField] private TMP_Text statusEntryPrefab;
@@ -30,11 +31,6 @@ namespace _01.Code.UI
         private readonly List<TMP_Text> statusEntries = new();
         private Enemy selectedEnemy;
         private bool isSubscribed;
-
-        public void Configure(GameEventChannelSO eventChannel)
-        {
-            nodeEventChannel = eventChannel;
-        }
 
         private void Awake()
         {
@@ -105,10 +101,10 @@ namespace _01.Code.UI
             }
 
             SetText(titleText, selectedEnemy.DisplayName);
-            SetText(stateText, ResolveStateText());
+            SetTextVisible(stateText, ResolveStateText());
             SetText(hpText, ResolveHpText());
             SetText(attackText, ResolveAttackText());
-            SetText(locationText, ResolveLocationText());
+            SetTextVisible(locationText, string.Empty);
             RefreshStatusEffects();
         }
 
@@ -117,7 +113,7 @@ namespace _01.Code.UI
             if (selectedEnemy.Health == null || !selectedEnemy.Health.IsAlive)
                 return "처치됨";
 
-            return selectedEnemy.IsInCombat ? "전투 중" : "이동 중";
+            return selectedEnemy.IsInCombat ? "전투 중" : string.Empty;
         }
 
         private string ResolveHpText()
@@ -136,15 +132,6 @@ namespace _01.Code.UI
                 : "ATK -  SPD -";
         }
 
-        private string ResolveLocationText()
-        {
-            var node = selectedEnemy.Mover != null ? selectedEnemy.Mover.CurrentNode : null;
-            if (node == null)
-                return "위치 -";
-
-            return $"위치 {node.Data.Type} ({node.GridPosition.x}, {node.GridPosition.y})";
-        }
-
         private void RefreshStatusEffects()
         {
             var controller = selectedEnemy.StatusController != null
@@ -153,8 +140,12 @@ namespace _01.Code.UI
             var activeEffects = controller != null ? controller.GetActiveEffects() : null;
             var count = activeEffects != null ? activeEffects.Count : 0;
 
+            if (statusTitleText != null)
+                statusTitleText.gameObject.SetActive(count > 0);
             if (emptyStatusText != null)
-                emptyStatusText.gameObject.SetActive(count == 0);
+                emptyStatusText.gameObject.SetActive(false);
+            if (statusListRoot != null)
+                statusListRoot.gameObject.SetActive(count > 0);
 
             for (var i = 0; i < statusEntries.Count; i++)
                 statusEntries[i].gameObject.SetActive(i < count);
@@ -169,10 +160,7 @@ namespace _01.Code.UI
                 if (entry == null || effect == null)
                     continue;
 
-                var description = string.IsNullOrWhiteSpace(effect.Description)
-                    ? string.Empty
-                    : $"\n<size=80%>{effect.Description}</size>";
-                entry.text = $"{effect.DisplayName}  {activeEffects[i].RemainingNodeVisits}칸{description}";
+                entry.text = $"{effect.DisplayName}  {activeEffects[i].RemainingNodeVisits}칸";
                 entry.gameObject.SetActive(true);
             }
         }
@@ -194,6 +182,9 @@ namespace _01.Code.UI
 
         private void SetPanelVisible(bool visible)
         {
+            if (visible)
+                transform.SetAsLastSibling();
+
             panelRoot?.SetActive(visible);
         }
 
@@ -255,6 +246,15 @@ namespace _01.Code.UI
         {
             if (text != null)
                 text.text = value;
+        }
+
+        private static void SetTextVisible(TMP_Text text, string value)
+        {
+            if (text == null)
+                return;
+
+            text.text = value;
+            text.gameObject.SetActive(!string.IsNullOrWhiteSpace(value));
         }
     }
 }

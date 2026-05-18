@@ -20,19 +20,17 @@ namespace _01.Code.UI
 
         [Header("Data")]
         [SerializeField] private UnitDataSO[] deployableUnits;
-        [SerializeField] private int maxHirePerDay = 5;
 
         [Header("Event Channels")]
         [SerializeField] private GameEventChannelSO costEventChannel;
-        [SerializeField] private GameEventChannelSO dayEventChannel;
 
-        private readonly List<UnitDataSO> _dailyPool = new();
+        private readonly List<UnitDataSO> _unlockedUnits = new();
         private readonly List<UnitDeployEntryView> _entries = new();
 
         private void Awake()
         {
             panelRoot.SetActive(false);
-            InitDailyPool();
+            InitUnlockedUnitsFromData();
             RefreshHireEntries();
         }
 
@@ -42,8 +40,7 @@ namespace _01.Code.UI
             if (closeButton != null)  closeButton.onClick.AddListener(HandleClose);
             costEventChannel.AddListener<RosterHirePaidEvent>(HandleHirePaid);
             costEventChannel.AddListener<RosterHireRejectedEvent>(HandleHireRejected);
-            if (dayEventChannel != null)
-                dayEventChannel.AddListener<DayChangedEvent>(HandleDayChanged);
+            costEventChannel.AddListener<UnitUnlockChangedEvent>(HandleUnitUnlockChanged);
         }
 
         private void OnDisable()
@@ -52,18 +49,20 @@ namespace _01.Code.UI
             if (closeButton != null)  closeButton.onClick.RemoveListener(HandleClose);
             costEventChannel.RemoveListener<RosterHirePaidEvent>(HandleHirePaid);
             costEventChannel.RemoveListener<RosterHireRejectedEvent>(HandleHireRejected);
-            if (dayEventChannel != null)
-                dayEventChannel.RemoveListener<DayChangedEvent>(HandleDayChanged);
+            costEventChannel.RemoveListener<UnitUnlockChangedEvent>(HandleUnitUnlockChanged);
         }
 
-        private void InitDailyPool()
+        private void InitUnlockedUnitsFromData()
         {
-            _dailyPool.Clear();
-            var limit = Mathf.Min(deployableUnits.Length, maxHirePerDay);
-            for (var i = 0; i < limit; i++)
+            _unlockedUnits.Clear();
+
+            if (deployableUnits == null)
+                return;
+
+            foreach (var unit in deployableUnits)
             {
-                if (deployableUnits[i] != null)
-                    _dailyPool.Add(deployableUnits[i]);
+                if (unit != null && !unit.Locked && !_unlockedUnits.Contains(unit))
+                    _unlockedUnits.Add(unit);
             }
         }
 
@@ -75,19 +74,23 @@ namespace _01.Code.UI
 
             if (entryPrefab == null || contentRoot == null) return;
 
-            foreach (var unit in _dailyPool)
+            foreach (var unit in _unlockedUnits)
             {
                 var entry = Instantiate(entryPrefab, contentRoot);
                 entry.Initialize(unit, HandleHireRequested);
                 _entries.Add(entry);
             }
 
-            UpdateHint(_dailyPool.Count == 0 ? "오늘 고용 가능한 유닛 없음" : string.Empty);
+            UpdateHint(_unlockedUnits.Count == 0 ? "해금된 유닛 없음" : string.Empty);
         }
 
         private void HandleToggle()
         {
-            panelRoot.SetActive(!panelRoot.activeSelf);
+            var shouldShow = !panelRoot.activeSelf;
+            if (shouldShow)
+                transform.SetAsLastSibling();
+
+            panelRoot.SetActive(shouldShow);
         }
 
         private void HandleClose()
@@ -95,9 +98,19 @@ namespace _01.Code.UI
             panelRoot.SetActive(false);
         }
 
-        private void HandleDayChanged(DayChangedEvent evt)
+        private void HandleUnitUnlockChanged(UnitUnlockChangedEvent evt)
         {
-            InitDailyPool();
+            _unlockedUnits.Clear();
+
+            if (evt.UnlockedUnits != null)
+            {
+                foreach (var unit in evt.UnlockedUnits)
+                {
+                    if (unit != null && !_unlockedUnits.Contains(unit))
+                        _unlockedUnits.Add(unit);
+                }
+            }
+
             RefreshHireEntries();
         }
 
@@ -108,10 +121,9 @@ namespace _01.Code.UI
 
         private void HandleHirePaid(RosterHirePaidEvent evt)
         {
-            _dailyPool.Remove(evt.Unit);
             RefreshHireEntries();
             var name = !string.IsNullOrWhiteSpace(evt.Unit.Name) ? evt.Unit.Name : evt.Unit.name;
-            UpdateHint(_dailyPool.Count == 0 ? "오늘 고용 완료!" : $"{name} 고용 완료!");
+            UpdateHint($"{name} 고용 완료!");
         }
 
         private void HandleHireRejected(RosterHireRejectedEvent evt)

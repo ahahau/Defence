@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using _01.Code.Artifacts;
 using _01.Code.Core;
 using _01.Code.Events;
+using _01.Code.Units;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -27,12 +28,20 @@ namespace _01.Code.UI
         [SerializeField] private ArtifactRewardChoicePanelView artifactChoicePanel;
         [SerializeField] private RectTransform rewardChoiceRoot;
         [SerializeField, Min(1)] private int artifactChoiceCount = 3;
+        [Header("Unit Unlock Reward")]
+        [SerializeField] private UnitDataSO[] unitRewardPool;
+        [SerializeField] private Button unitRewardButton;
+        [SerializeField] private Graphic unitRewardText;
+        [SerializeField, Min(1)] private int unitChoiceCount = 3;
 
         private readonly List<ArtifactDataSO> pendingArtifactChoices = new();
+        private readonly List<UnitDataSO> pendingUnitChoices = new();
+        private readonly List<UnitDataSO> unlockedUnitRewards = new();
         private GameEventChannelSO _costEventChannel;
         private int _pendingGoldAmount;
         private bool _hasPendingGoldReward;
         private bool _hasPendingArtifactReward;
+        private bool _hasPendingUnitReward;
         private bool _hasShownReward;
 
         public event Action Closed;
@@ -49,6 +58,7 @@ namespace _01.Code.UI
         {
             goldRewardButton?.onClick.AddListener(HandleGoldRewardClicked);
             artifactRewardButton?.onClick.AddListener(HandleArtifactRewardClicked);
+            unitRewardButton?.onClick.AddListener(HandleUnitRewardClicked);
             closeButton?.onClick.AddListener(HandleCloseClicked);
             warningCancelButton?.onClick.AddListener(HideWarning);
             warningCloseButton?.onClick.AddListener(ForceClose);
@@ -58,6 +68,7 @@ namespace _01.Code.UI
         {
             goldRewardButton?.onClick.RemoveListener(HandleGoldRewardClicked);
             artifactRewardButton?.onClick.RemoveListener(HandleArtifactRewardClicked);
+            unitRewardButton?.onClick.RemoveListener(HandleUnitRewardClicked);
             closeButton?.onClick.RemoveListener(HandleCloseClicked);
             warningCancelButton?.onClick.RemoveListener(HideWarning);
             warningCloseButton?.onClick.RemoveListener(ForceClose);
@@ -72,12 +83,14 @@ namespace _01.Code.UI
         {
             ConfigureRewardChoiceLayout();
             PrepareArtifactChoices();
+            PrepareUnitChoices();
 
             _pendingGoldAmount = Mathf.Max(0, goldAmount);
             _hasPendingGoldReward = _pendingGoldAmount > 0;
             _hasPendingArtifactReward = pendingArtifactChoices.Count > 0 && artifactRewardButton != null && artifactChoicePanel != null;
+            _hasPendingUnitReward = pendingUnitChoices.Count > 0 && unitRewardButton != null && artifactChoicePanel != null;
 
-            if (!_hasPendingGoldReward && !_hasPendingArtifactReward)
+            if (!_hasPendingGoldReward && !_hasPendingArtifactReward && !_hasPendingUnitReward)
             {
                 Hide();
                 return;
@@ -95,6 +108,7 @@ namespace _01.Code.UI
             }
 
             SetArtifactRewardButtonState(_hasPendingArtifactReward, _hasPendingArtifactReward ? "아티팩트 선택" : "선택 완료", _hasPendingArtifactReward);
+            SetUnitRewardButtonState(_hasPendingUnitReward, _hasPendingUnitReward ? "유닛 해금" : "선택 완료", _hasPendingUnitReward);
             HideWarning();
             HideArtifactChoices();
 
@@ -145,6 +159,20 @@ namespace _01.Code.UI
             artifactChoicePanel.Show(pendingArtifactChoices, ObtainArtifact);
         }
 
+        private void HandleUnitRewardClicked()
+        {
+            if (!_hasPendingUnitReward || pendingUnitChoices.Count == 0)
+                return;
+
+            if (artifactChoicePanel == null)
+            {
+                Debug.LogError($"{nameof(WaveRewardPanelView)} requires an assigned reward choice panel.", this);
+                return;
+            }
+
+            artifactChoicePanel.ShowUnits(pendingUnitChoices, UnlockUnit);
+        }
+
         private void ObtainArtifact(ArtifactDataSO artifact)
         {
             if (artifact == null || artifactInventory == null)
@@ -158,9 +186,25 @@ namespace _01.Code.UI
             HideWarning();
         }
 
+        private void UnlockUnit(UnitDataSO unit)
+        {
+            if (unit == null)
+                return;
+
+            if (!unlockedUnitRewards.Contains(unit))
+                unlockedUnitRewards.Add(unit);
+
+            _costEventChannel?.RaiseEvent(new UnitUnlockRequestedEvent(unit));
+            _hasPendingUnitReward = false;
+            pendingUnitChoices.Clear();
+            SetUnitRewardButtonState(false, "선택 완료");
+            HideArtifactChoices();
+            HideWarning();
+        }
+
         private void HandleCloseClicked()
         {
-            if (_hasPendingGoldReward || _hasPendingArtifactReward)
+            if (_hasPendingGoldReward || _hasPendingArtifactReward || _hasPendingUnitReward)
             {
                 ShowWarning();
                 return;
@@ -183,8 +227,10 @@ namespace _01.Code.UI
         {
             _hasPendingGoldReward = false;
             _hasPendingArtifactReward = false;
+            _hasPendingUnitReward = false;
             _pendingGoldAmount = 0;
             pendingArtifactChoices.Clear();
+            pendingUnitChoices.Clear();
             HideArtifactChoices();
             Hide();
         }
@@ -211,6 +257,28 @@ namespace _01.Code.UI
             }
         }
 
+        private void PrepareUnitChoices()
+        {
+            pendingUnitChoices.Clear();
+
+            if (unitRewardPool == null || unitRewardPool.Length == 0)
+                return;
+
+            var candidates = new List<UnitDataSO>();
+            foreach (var unit in unitRewardPool)
+            {
+                if (unit != null && unit.Locked && !unlockedUnitRewards.Contains(unit))
+                    candidates.Add(unit);
+            }
+
+            for (var i = 0; i < unitChoiceCount && candidates.Count > 0; i++)
+            {
+                var index = UnityEngine.Random.Range(0, candidates.Count);
+                pendingUnitChoices.Add(candidates[index]);
+                candidates.RemoveAt(index);
+            }
+        }
+
         private void ConfigureRewardChoiceLayout()
         {
             if (goldRewardButton == null)
@@ -225,7 +293,7 @@ namespace _01.Code.UI
                 rewardChoiceRoot.anchorMax = new Vector2(0.5f, 0.5f);
                 rewardChoiceRoot.pivot = new Vector2(0.5f, 0.5f);
                 rewardChoiceRoot.anchoredPosition = new Vector2(0f, 36f);
-                rewardChoiceRoot.sizeDelta = new Vector2(304f, 128f);
+                rewardChoiceRoot.sizeDelta = new Vector2(572f, 320f);
             }
 
             var layout = rewardChoiceRoot != null
@@ -245,14 +313,25 @@ namespace _01.Code.UI
 
             if (artifactRewardButton != null)
                 ConfigureRewardButtonRect(artifactRewardButton);
+            if (unitRewardButton != null)
+                ConfigureRewardButtonRect(unitRewardButton);
 
             if (layout == null && goldRewardButton.transform is RectTransform goldRect)
             {
-                var hasArtifactButton = artifactRewardButton != null && artifactRewardButton.transform is RectTransform;
-                goldRect.anchoredPosition = hasArtifactButton ? new Vector2(-76f, 36f) : new Vector2(0f, 36f);
+                var visibleButtonCount = 1;
+                if (artifactRewardButton != null)
+                    visibleButtonCount++;
+                if (unitRewardButton != null)
+                    visibleButtonCount++;
+
+                var spacing = 152f;
+                goldRect.anchoredPosition = new Vector2((1 - visibleButtonCount) * spacing * 0.5f, 36f);
 
                 if (artifactRewardButton != null && artifactRewardButton.transform is RectTransform artifactRect)
-                    artifactRect.anchoredPosition = new Vector2(76f, 36f);
+                    artifactRect.anchoredPosition = new Vector2(goldRect.anchoredPosition.x + spacing, 36f);
+
+                if (unitRewardButton != null && unitRewardButton.transform is RectTransform unitRect)
+                    unitRect.anchoredPosition = new Vector2(goldRect.anchoredPosition.x + spacing * 2f, 36f);
             }
         }
 
@@ -289,6 +368,19 @@ namespace _01.Code.UI
             if (artifactRewardText == null)
                 artifactRewardText = FindLabelGraphic(artifactRewardButton);
             SetLabelText(artifactRewardText, label);
+        }
+
+        private void SetUnitRewardButtonState(bool interactable, string label, bool visible = true)
+        {
+            if (unitRewardButton == null)
+                return;
+
+            unitRewardButton.gameObject.SetActive(visible);
+            unitRewardButton.interactable = interactable;
+
+            if (unitRewardText == null)
+                unitRewardText = FindLabelGraphic(unitRewardButton);
+            SetLabelText(unitRewardText, label);
         }
 
         private void HideArtifactChoices()

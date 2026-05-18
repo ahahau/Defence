@@ -53,4 +53,24 @@ namespace _01.Code.Events
 
         public IReadOnlyList<UnitDataSO> AvailableUnits { get; }
     }
+
+    public class UnitUnlockRequestedEvent : GameEvent
+    {
+        public UnitUnlockRequestedEvent(UnitDataSO unit)
+        {
+            Unit = unit;
+        }
+
+        public UnitDataSO Unit { get; }
+    }
+
+    public class UnitUnlockChangedEvent : GameEvent
+    {
+        public UnitUnlockChangedEvent(IReadOnlyList<UnitDataSO> unlockedUnits)
+        {
+            UnlockedUnits = unlockedUnits;
+        }
+
+        public IReadOnlyList<UnitDataSO> UnlockedUnits { get; }
+    }
 }

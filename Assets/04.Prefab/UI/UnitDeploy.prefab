@@ -115,7 +115,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
   m_AnchoredPosition: {x: 826, y: 0}
-  m_SizeDelta: {x: 520, y: 360}
+  m_SizeDelta: {x: 2040, y: 620}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!222 &2536546062838926367
 CanvasRenderer:
@@ -1097,9 +1097,10 @@ MonoBehaviour:
   - {fileID: 11400000, guid: c1d7a08109aff374fb56a1babc87b94b, type: 2}
   - {fileID: 11400000, guid: 2efde0415855cb04c94b1542482674df, type: 2}
   - {fileID: 11400000, guid: fa870892fa77c8744a4a3858fb8fae01, type: 2}
-  maxHirePerDay: 5
+  - {fileID: 11400000, guid: d5737a8944904cbfbb280db863cced84, type: 2}
+  - {fileID: 11400000, guid: 551ae3e7bc234718be42089db015a1ca, type: 2}
+  - {fileID: 11400000, guid: 90ecdf95300c42f08b5c256aaa1329dd, type: 2}
   costEventChannel: {fileID: 11400000, guid: 734ca3593b5d2884dae267b0e3e601be, type: 2}
-  dayEventChannel: {fileID: 11400000, guid: f16b75998f67eed45be9a7061ca817f7, type: 2}
 --- !u!1 &6340109213379370949
 GameObject:
   m_ObjectHideFlags: 0
@@ -1132,11 +1133,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1207088487085144705}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 1}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 24, y: 0}
-  m_Pivot: {x: 0, y: 0.5}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0, y: 1}
 --- !u!114 &623875368847577904
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1149,8 +1150,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.ContentSizeFitter
-  m_HorizontalFit: 2
-  m_VerticalFit: 0
+  m_HorizontalFit: 0
+  m_VerticalFit: 2
 --- !u!114 &5252689884103144351
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1160,23 +1161,21 @@ MonoBehaviour:
   m_GameObject: {fileID: 6340109213379370949}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+  m_Script: {fileID: 11500000, guid: 8a8695521f0d02e499659fee002a26c2, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.HorizontalLayoutGroup
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GridLayoutGroup
   m_Padding:
     m_Left: 12
     m_Right: 12
-    m_Top: 12
-    m_Bottom: 12
-  m_ChildAlignment: 0
-  m_Spacing: 12
-  m_ChildForceExpandWidth: 0
-  m_ChildForceExpandHeight: 1
-  m_ChildControlWidth: 0
-  m_ChildControlHeight: 1
-  m_ChildScaleWidth: 0
-  m_ChildScaleHeight: 0
-  m_ReverseArrangement: 0
+    m_Top: 20
+    m_Bottom: 20
+  m_ChildAlignment: 4
+  m_StartCorner: 0
+  m_StartAxis: 0
+  m_CellSize: {x: 240, y: 480}
+  m_Spacing: {x: 12, y: 20}
+  m_Constraint: 1
+  m_ConstraintCount: 8
 --- !u!1 &6706716912737397113
 GameObject:
   m_ObjectHideFlags: 0
@@ -1227,8 +1226,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.ScrollRect
   m_Content: {fileID: 5550329979987448567}
-  m_Horizontal: 1
-  m_Vertical: 0
+  m_Horizontal: 0
+  m_Vertical: 1
   m_MovementType: 1
   m_Elasticity: 0.1
   m_Inertia: 1

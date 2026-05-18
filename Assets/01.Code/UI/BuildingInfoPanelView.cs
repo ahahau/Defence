@@ -16,17 +16,6 @@ namespace _01.Code.UI
         [SerializeField] private TMP_Text gradeText;
         [SerializeField] private Button installButton;
 
-        public void Configure(GameObject rootObject, Image icon, TMP_Text name, TMP_Text cost, TMP_Text danger, TMP_Text grade, Button install)
-        {
-            root = rootObject;
-            iconImage = icon;
-            nameText = name;
-            costText = cost;
-            dangerText = danger;
-            gradeText = grade;
-            installButton = install;
-        }
-
         public void SetInstallHandler(Action handler)
         {
             if (installButton == null)
@@ -70,7 +59,8 @@ namespace _01.Code.UI
             SetText(costText, string.Empty);
             SetText(dangerText, string.Empty);
             SetText(gradeText, string.Empty);
-            SetInstallButtonVisible(false);
+            SetInstallButtonVisible(true);
+            SetInstallInteractable(false);
             ApplyIcon(null);
         }
 
