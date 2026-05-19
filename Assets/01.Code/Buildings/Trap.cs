@@ -38,6 +38,7 @@ namespace _01.Code.Buildings
         public int Damage => damage;
         public float InjuryChance => injuryChance;
         public int BonusDamage => bonusDamage;
+        public StatusEffectDataSO StatusEffect => injuryStatusEffect;
 
         private void Awake()
         {

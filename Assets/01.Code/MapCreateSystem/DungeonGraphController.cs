@@ -2,8 +2,10 @@ using System.Collections.Generic;
 using _01.Code.Artifacts;
 using _01.Code.Core;
 using _01.Code.Events;
+using _01.Code.UI;
 using _01.Code.Units;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
@@ -52,6 +54,13 @@ namespace _01.Code.MapCreateSystem
 
         [SerializeField] private GameEventChannelSO nodeEventChannel;
 
+        [Header("Build Warning")]
+        [SerializeField]
+        private BuildConfirmPanelView buildConfirmPanelPrefab;
+
+        [SerializeField]
+        private Transform buildConfirmPanelParent;
+
         [Header("Input")]
         [SerializeField]
         private InputDataSO inputDataSO;
@@ -68,6 +77,7 @@ namespace _01.Code.MapCreateSystem
         private readonly Dictionary<Collider2D, Node> unlockedNodeByCollider = new();
         private readonly List<DungeonNode> buildParentCandidates = new();
         private Node lastBuiltNodeView;
+        private BuildConfirmPanelView buildConfirmPanel;
         private int lastBuiltFrame = -1;
         private bool hasPendingMouseInput;
         private bool hasPendingRightMouseInput;
@@ -80,6 +90,7 @@ namespace _01.Code.MapCreateSystem
                 return;
 
             costEventChannel.AddListener<BuildCostPaidEvent>(HandleBuildCostPaid);
+            costEventChannel.AddListener<BuildCostRejectedEvent>(HandleBuildCostRejected);
             inputDataSO.OnMouseInputEvent += HandleMouseInput;
         }
 
@@ -91,6 +102,7 @@ namespace _01.Code.MapCreateSystem
                 return;
 
             costEventChannel.RemoveListener<BuildCostPaidEvent>(HandleBuildCostPaid);
+            costEventChannel.RemoveListener<BuildCostRejectedEvent>(HandleBuildCostRejected);
             inputDataSO.OnMouseInputEvent -= HandleMouseInput;
             nodeManager?.ClearAll();
             edgeManager?.ClearAll();
@@ -236,6 +248,20 @@ namespace _01.Code.MapCreateSystem
 
         public void TryBuildAt(Node lockedNode)
         {
+            if (lockedNode == null)
+                return;
+
+            if (graph.IsOccupied(lockedNode.GridPosition) || lockedNode.FromNode.FreePorts <= 0)
+                return;
+
+            ShowBuildConfirmPanel(lockedNode);
+        }
+
+        private void RequestBuildCost(Node lockedNode)
+        {
+            if (lockedNode == null)
+                return;
+
             if (graph.IsOccupied(lockedNode.GridPosition) || lockedNode.FromNode.FreePorts <= 0)
                 return;
 
@@ -265,6 +291,14 @@ namespace _01.Code.MapCreateSystem
 
             if (HasLockedNodesVisible)
                 RefreshLockedNodes();
+        }
+
+        private void HandleBuildCostRejected(BuildCostRejectedEvent evt)
+        {
+            if (evt.Node == null || graph.IsOccupied(evt.Node.GridPosition))
+                return;
+
+            EnsureBuildConfirmPanel().ShowNotEnoughGold(evt.GoldAmount, evt.CurrentGold);
         }
 
         public void SelectBuildType(DungeonNodeType type)
@@ -344,9 +378,53 @@ namespace _01.Code.MapCreateSystem
                         continue;
 
                     var lockedNode = nodeManager.CreateLockedNode(parentNode, position, position - parentNode.GridPosition);
+                    lockedNode.SetBuildCost(buildGoldCost);
                     RegisterLockedNode(lockedNode);
                 }
             }
+        }
+
+        private void ShowBuildConfirmPanel(Node lockedNode)
+        {
+            EnsureBuildConfirmPanel().Show(buildGoldCost, () => RequestBuildCost(lockedNode));
+        }
+
+        private BuildConfirmPanelView EnsureBuildConfirmPanel()
+        {
+            if (buildConfirmPanel != null)
+                return buildConfirmPanel;
+
+            var parent = ResolveBuildConfirmPanelParent();
+            if (buildConfirmPanelPrefab != null)
+            {
+                buildConfirmPanel = Instantiate(buildConfirmPanelPrefab, parent);
+                return buildConfirmPanel;
+            }
+
+            buildConfirmPanel = BuildConfirmPanelView.CreateRuntime(parent);
+            return buildConfirmPanel;
+        }
+
+        private Transform ResolveBuildConfirmPanelParent()
+        {
+            if (buildConfirmPanelParent != null)
+                return buildConfirmPanelParent;
+
+            var canvas = FindFirstObjectByType<Canvas>();
+            if (canvas != null)
+                return canvas.transform;
+
+            var canvasObject = new GameObject("BuildConfirmCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            var runtimeCanvas = canvasObject.GetComponent<Canvas>();
+            runtimeCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            runtimeCanvas.overrideSorting = true;
+            runtimeCanvas.sortingOrder = short.MaxValue;
+
+            var scaler = canvasObject.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.matchWidthOrHeight = 0.5f;
+            return canvasObject.transform;
         }
 
         private bool TryResolveBuildParent(Vector2Int position, out DungeonNode parentNode)

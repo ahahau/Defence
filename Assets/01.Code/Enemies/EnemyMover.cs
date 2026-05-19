@@ -15,6 +15,7 @@ namespace _01.Code.Enemies
         [SerializeField, Min(0.01f)] private float maxMoveDuration = 0.75f;
         [SerializeField, Min(0f)] private float visualHopHeight = 0.12f;
         [SerializeField, Min(0f)] private float visualSquashAmount = 0.08f;
+        [SerializeField, Min(0f)] private float visualLeanAngle = 7f;
         [SerializeField] private Transform visual;
 
         private static readonly HashSet<string> _occupiedNodes = new();
@@ -33,6 +34,7 @@ namespace _01.Code.Enemies
         private Tween _moveTween;
         private Vector3 _visualStartLocalPosition;
         private Vector3 _visualStartLocalScale;
+        private Vector3 _visualStartLocalEulerAngles;
         private bool _isTurning;
 
         public Func<Node, bool> NodeArrived { get; set; }
@@ -95,7 +97,7 @@ namespace _01.Code.Enemies
             ResetVisualPose();
 
             var sequence = DOTween.Sequence();
-            sequence.Join(transform.DOMove(targetPos, duration).SetEase(Ease.InOutSine));
+            sequence.Join(transform.DOMove(targetPos, duration).SetEase(Ease.InOutQuad));
 
             if (visual != null && visualHopHeight > 0f)
             {
@@ -110,10 +112,25 @@ namespace _01.Code.Enemies
                     _visualStartLocalScale.x * (1f + visualSquashAmount),
                     _visualStartLocalScale.y * (1f - visualSquashAmount),
                     _visualStartLocalScale.z);
+                var stretchScale = new Vector3(
+                    _visualStartLocalScale.x * (1f - visualSquashAmount * 0.45f),
+                    _visualStartLocalScale.y * (1f + visualSquashAmount * 0.45f),
+                    _visualStartLocalScale.z);
 
-                sequence.Join(visual.DOScale(squashScale, duration * 0.18f)
-                    .SetEase(Ease.OutSine)
-                    .SetLoops(2, LoopType.Yoyo));
+                sequence.Insert(0f, visual.DOScale(squashScale, duration * 0.2f).SetEase(Ease.OutSine));
+                sequence.Insert(duration * 0.2f, visual.DOScale(stretchScale, duration * 0.2f).SetEase(Ease.InOutSine));
+                sequence.Insert(duration * 0.42f, visual.DOScale(_visualStartLocalScale, duration * 0.28f).SetEase(Ease.OutBack));
+            }
+
+            if (visual != null && visualLeanAngle > 0f)
+            {
+                var leanDirection = Mathf.Abs(direction.x) > 0.001f
+                    ? -Mathf.Sign(direction.x)
+                    : Mathf.Sign(direction.y);
+                var leanRotation = new Vector3(0f, 0f, visualLeanAngle * leanDirection);
+
+                sequence.Join(visual.DOLocalRotate(leanRotation, duration * 0.25f).SetEase(Ease.OutSine));
+                sequence.Insert(duration * 0.55f, visual.DOLocalRotate(Vector3.zero, duration * 0.35f).SetEase(Ease.OutQuad));
             }
 
             sequence.OnKill(ResetVisualPose);
@@ -169,6 +186,7 @@ namespace _01.Code.Enemies
 
             _visualStartLocalPosition = visual.localPosition;
             _visualStartLocalScale = visual.localScale;
+            _visualStartLocalEulerAngles = visual.localEulerAngles;
         }
 
         private void FaceMoveDirection(Vector3 direction)
@@ -189,6 +207,7 @@ namespace _01.Code.Enemies
 
             visual.localPosition = _visualStartLocalPosition;
             visual.localScale = _visualStartLocalScale;
+            visual.localEulerAngles = _visualStartLocalEulerAngles;
         }
 
         private void OnDestroy()

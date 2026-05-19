@@ -81,6 +81,8 @@ namespace _01.Code.UI
 
         public void ShowGoldReward(int goldAmount)
         {
+            gameObject.SetActive(true);
+            ConfigureModalLayout();
             ConfigureRewardChoiceLayout();
             PrepareArtifactChoices();
             PrepareUnitChoices();
@@ -111,8 +113,45 @@ namespace _01.Code.UI
             SetUnitRewardButtonState(_hasPendingUnitReward, _hasPendingUnitReward ? "유닛 해금" : "선택 완료", _hasPendingUnitReward);
             HideWarning();
             HideArtifactChoices();
+        }
 
-            gameObject.SetActive(true);
+        private void ConfigureModalLayout()
+        {
+            if (transform is RectTransform rootRect)
+            {
+                rootRect.anchorMin = Vector2.zero;
+                rootRect.anchorMax = Vector2.one;
+                rootRect.pivot = new Vector2(0.5f, 0.5f);
+                rootRect.anchoredPosition = Vector2.zero;
+                rootRect.offsetMin = Vector2.zero;
+                rootRect.offsetMax = Vector2.zero;
+                rootRect.localScale = Vector3.one;
+            }
+
+            var canvas = GetComponent<Canvas>();
+            if (canvas != null)
+            {
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                canvas.overrideSorting = true;
+                canvas.sortingOrder = short.MaxValue;
+            }
+
+            var blocker = GetComponent<Image>();
+            if (blocker != null)
+            {
+                blocker.color = Color.black;
+                blocker.raycastTarget = true;
+            }
+
+            var canvasGroup = GetComponent<CanvasGroup>();
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = 1f;
+                canvasGroup.interactable = true;
+                canvasGroup.blocksRaycasts = true;
+            }
+
+            transform.SetAsLastSibling();
         }
 
         public void Hide()

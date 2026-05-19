@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34c4dc0ecf9801d4aa0c5c4a452b0163, type: 3}
+  m_Name: GrandInnBuildingData
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Buildings.BuildingDataSO
+  <Grade>k__BackingField: 2
+  <BoardSprite>k__BackingField: {fileID: -855298285791758126, guid: cb57f21d1c6c2b14f87fb1bae1e53de2, type: 3}
+  <DisplayName>k__BackingField: 큰 주점
+  <Cost>k__BackingField: 25
+  <Prefab>k__BackingField: {fileID: 7635352072880509772, guid: be49d149227014945b5df3f840093cf9, type: 3}
+  <Unique>k__BackingField: 0
+  <BaseDanger>k__BackingField: 2
+  <Category>k__BackingField: 0

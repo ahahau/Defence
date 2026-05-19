@@ -29,6 +29,8 @@ namespace _01.Code.UI
         [SerializeField] private Canvas panelCanvas;
         [SerializeField] private Vector2 screenOffset = new(16f, -16f);
         [SerializeField] private bool keepInsideScreen = true;
+        [SerializeField, Min(1f)] private float normalPanelHeight = 120f;
+        [SerializeField, Min(1f)] private float recoveryPanelHeight = 180f;
 
         private Node selectedNode;
         private Unit selectedUnit;
@@ -41,26 +43,34 @@ namespace _01.Code.UI
 
         private void OnEnable()
         {
-            nodeEventChannel.AddListener<UnitStatusRequestedEvent>(HandleUnitStatusRequested);
-            costEventChannel.AddListener<UnitRecoveryCostPaidEvent>(HandleRecoveryPaid);
-            costEventChannel.AddListener<UnitRecoveryCostRejectedEvent>(HandleRecoveryRejected);
-            recoverButton.onClick.AddListener(HandleRecoverClicked);
-            closeButton.onClick.AddListener(HandleCloseClicked);
+            nodeEventChannel?.AddListener<UnitStatusRequestedEvent>(HandleUnitStatusRequested);
+            costEventChannel?.AddListener<UnitRecoveryCostPaidEvent>(HandleRecoveryPaid);
+            costEventChannel?.AddListener<UnitRecoveryCostRejectedEvent>(HandleRecoveryRejected);
+            recoverButton?.onClick.AddListener(HandleRecoverClicked);
+            closeButton?.onClick.AddListener(HandleCloseClicked);
         }
 
         private void OnDisable()
         {
-            nodeEventChannel.RemoveListener<UnitStatusRequestedEvent>(HandleUnitStatusRequested);
-            costEventChannel.RemoveListener<UnitRecoveryCostPaidEvent>(HandleRecoveryPaid);
-            costEventChannel.RemoveListener<UnitRecoveryCostRejectedEvent>(HandleRecoveryRejected);
-            recoverButton.onClick.RemoveListener(HandleRecoverClicked);
-            closeButton.onClick.RemoveListener(HandleCloseClicked);
+            nodeEventChannel?.RemoveListener<UnitStatusRequestedEvent>(HandleUnitStatusRequested);
+            costEventChannel?.RemoveListener<UnitRecoveryCostPaidEvent>(HandleRecoveryPaid);
+            costEventChannel?.RemoveListener<UnitRecoveryCostRejectedEvent>(HandleRecoveryRejected);
+            recoverButton?.onClick.RemoveListener(HandleRecoverClicked);
+            closeButton?.onClick.RemoveListener(HandleCloseClicked);
         }
 
         private void OnDestroy()
         {
             if (ActiveInstance == this)
                 ActiveInstance = null;
+        }
+
+        private void Update()
+        {
+            if (selectedUnit == null || panelRoot == null || !panelRoot.activeSelf)
+                return;
+
+            Refresh();
         }
 
         private void HandleUnitStatusRequested(UnitStatusRequestedEvent evt)
@@ -71,6 +81,8 @@ namespace _01.Code.UI
             if (selectedUnit == null)
                 return;
 
+            EnemyStatusPanelView.ActiveInstance?.HidePanel();
+            SetHint(string.Empty);
             Refresh();
             MovePanelToMousePosition();
             SetPanelVisible(true);
@@ -108,26 +120,44 @@ namespace _01.Code.UI
 
         private void HandleCloseClicked()
         {
+            HidePanel();
+        }
+
+        public void HidePanel()
+        {
             SetPanelVisible(false);
+            selectedNode = null;
+            selectedUnit = null;
         }
 
         private void Refresh()
         {
             if (selectedUnit == null)
+            {
+                SetPanelVisible(false);
                 return;
+            }
 
             var unitName = selectedUnit.Data != null && !string.IsNullOrWhiteSpace(selectedUnit.Data.Name)
                 ? selectedUnit.Data.Name
                 : selectedUnit.name;
 
-            titleText.text = unitName;
-            statusText.text = selectedUnit.IsIncapacitated ? "전투 불능" : "전투 가능";
+            var level = selectedUnit.Level;
+            SetText(titleText, $"{unitName} Lv {level.Level}");
+            SetTextVisible(statusText, selectedUnit.IsIncapacitated ? "전투 불능" : string.Empty);
 
             var health = selectedUnit.Health;
-            hpText.text = $"HP {health.CurrentHealth}/{health.MaxHealth}";
-            levelText.text = $"Lv {selectedUnit.Level.Level}  EXP {selectedUnit.Level.Experience}/{selectedUnit.Level.ExperienceToNextLevel}";
+            SetText(hpText, $"HP {health.CurrentHealth}/{health.MaxHealth}");
+            SetText(levelText, ResolveCombatText());
 
-            recoverButton.interactable = CanRecoverSelectedUnit();
+            var shouldShowRecovery = selectedUnit.IsIncapacitated;
+            ApplyPanelHeight(shouldShowRecovery ? recoveryPanelHeight : normalPanelHeight);
+            if (recoverButton != null)
+            {
+                recoverButton.gameObject.SetActive(shouldShowRecovery);
+                recoverButton.interactable = CanRecoverSelectedUnit();
+            }
+
             if (recoverButtonLabel != null)
             {
                 recoverButtonLabel.text = selectedUnit.IsIncapacitated
@@ -136,7 +166,30 @@ namespace _01.Code.UI
             }
 
             if (string.IsNullOrWhiteSpace(hintText.text))
-                hintText.text = CanRecoverSelectedUnit() ? string.Empty : ResolveRecoverBlockedReason();
+                SetTextVisible(hintText, shouldShowRecovery && !CanRecoverSelectedUnit() ? ResolveRecoverBlockedReason() : string.Empty);
+        }
+
+        private void ApplyPanelHeight(float height)
+        {
+            if (panelRoot == null)
+                return;
+
+            var panelRect = panelRoot.transform as RectTransform;
+            if (panelRect == null)
+                return;
+
+            panelRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
+        }
+
+        private string ResolveCombatText()
+        {
+            var combatant = selectedUnit.Combatant;
+            var combatText = combatant != null
+                ? $"ATK {combatant.AttackDamage}  SPD {combatant.AttackInterval:0.##}s"
+                : "ATK -  SPD -";
+
+            var level = selectedUnit.Level;
+            return $"{combatText}\nEXP {level.Experience}/{level.ExperienceToNextLevel}";
         }
 
         private bool CanRecoverSelectedUnit()
@@ -144,7 +197,7 @@ namespace _01.Code.UI
             if (selectedUnit == null || !selectedUnit.IsIncapacitated)
                 return false;
 
-            return dayManager.IsStandby;
+            return dayManager != null && dayManager.IsStandby;
         }
 
         private string ResolveRecoverBlockedReason()
@@ -160,7 +213,7 @@ namespace _01.Code.UI
 
         private void SetHint(string message)
         {
-            hintText.text = message;
+            SetTextVisible(hintText, message);
         }
 
         private void SetPanelVisible(bool visible)
@@ -168,11 +221,14 @@ namespace _01.Code.UI
             if (visible)
                 transform.SetAsLastSibling();
 
-            panelRoot.SetActive(visible);
+            panelRoot?.SetActive(visible);
         }
 
         private void MovePanelToMousePosition()
         {
+            if (panelRoot == null)
+                return;
+
             var panelRect = (RectTransform)panelRoot.transform;
             var screenPosition = ResolveMouseScreenPosition() + screenOffset;
 
@@ -197,6 +253,12 @@ namespace _01.Code.UI
             panelRect.anchoredPosition = localPosition;
         }
 
+        private static void SetText(TMP_Text text, string value)
+        {
+            if (text != null)
+                text.text = value;
+        }
+
         private static Vector2 ResolveMouseScreenPosition()
         {
             return Mouse.current != null
@@ -217,6 +279,15 @@ namespace _01.Code.UI
             screenPosition.x = Mathf.Clamp(screenPosition.x, minX, maxX);
             screenPosition.y = Mathf.Clamp(screenPosition.y, minY, maxY);
             return screenPosition;
+        }
+
+        private static void SetTextVisible(TMP_Text text, string value)
+        {
+            if (text == null)
+                return;
+
+            text.text = value;
+            text.gameObject.SetActive(!string.IsNullOrWhiteSpace(value));
         }
     }
 }

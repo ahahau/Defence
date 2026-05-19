@@ -17,6 +17,10 @@ namespace _01.Code.UI
         [SerializeField] private Transform contentRoot;
         [SerializeField] private UnitDeployEntryView entryPrefab;
         [SerializeField] private TMP_Text hintText;
+        [SerializeField, Min(1)] private int gridColumns = 8;
+        [SerializeField, Min(120f)] private float minCardWidth = 180f;
+        [SerializeField, Min(120f)] private float maxCardWidth = 240f;
+        [SerializeField, Min(1f)] private float cardHeightRatio = 2f;
 
         [Header("Data")]
         [SerializeField] private UnitDataSO[] deployableUnits;
@@ -81,6 +85,8 @@ namespace _01.Code.UI
                 _entries.Add(entry);
             }
 
+            ConfigureHireGrid();
+            ScrollViewContentSizer.ResizeToGridItemCount(contentRoot, _entries.Count);
             UpdateHint(_unlockedUnits.Count == 0 ? "해금된 유닛 없음" : string.Empty);
         }
 
@@ -91,6 +97,12 @@ namespace _01.Code.UI
                 transform.SetAsLastSibling();
 
             panelRoot.SetActive(shouldShow);
+
+            if (shouldShow)
+            {
+                ConfigureHireGrid();
+                ScrollViewContentSizer.ResizeToGridItemCount(contentRoot, _entries.Count);
+            }
         }
 
         private void HandleClose()
@@ -134,6 +146,51 @@ namespace _01.Code.UI
         private void UpdateHint(string message)
         {
             if (hintText != null) hintText.text = message;
+        }
+
+        private void ConfigureHireGrid()
+        {
+            if (contentRoot == null || contentRoot is not RectTransform contentRect)
+                return;
+
+            contentRect.anchorMin = new Vector2(0f, 1f);
+            contentRect.anchorMax = new Vector2(0f, 1f);
+            contentRect.pivot = new Vector2(0f, 1f);
+            contentRect.anchoredPosition = Vector2.zero;
+
+            if (contentRoot.TryGetComponent<ContentSizeFitter>(out var fitter))
+                fitter.enabled = false;
+
+            var grid = contentRoot.GetComponent<GridLayoutGroup>();
+            if (grid == null)
+                return;
+
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = Mathf.Max(1, gridColumns);
+            grid.startCorner = GridLayoutGroup.Corner.UpperLeft;
+            grid.startAxis = GridLayoutGroup.Axis.Horizontal;
+            grid.childAlignment = TextAnchor.UpperLeft;
+
+            var viewportWidth = ResolveViewportWidth(contentRect);
+            var columns = Mathf.Max(1, grid.constraintCount);
+            var availableWidth = viewportWidth
+                                 - grid.padding.left
+                                 - grid.padding.right
+                                 - Mathf.Max(0, columns - 1) * grid.spacing.x;
+            var cardWidth = Mathf.Clamp(Mathf.Floor(availableWidth / columns), minCardWidth, maxCardWidth);
+            grid.cellSize = new Vector2(cardWidth, Mathf.Round(cardWidth * cardHeightRatio));
+        }
+
+        private static float ResolveViewportWidth(RectTransform contentRect)
+        {
+            if (contentRect.parent is RectTransform viewport)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(viewport);
+                if (viewport.rect.width > 1f)
+                    return viewport.rect.width;
+            }
+
+            return 2040f;
         }
     }
 }

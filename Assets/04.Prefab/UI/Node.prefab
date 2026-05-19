@@ -2419,10 +2419,16 @@ MonoBehaviour:
   portalPrefab: {fileID: 6750984763358774362, guid: 6eaa4d203b053694b965f2b5b22059a7, type: 3}
   installableBuildings:
   - {fileID: 11400000, guid: 42825de8a3367de46a6089d639890ae2, type: 2}
-  - {fileID: 11400000, guid: e59c19b7f7aa8f24fab5873a086bf446, type: 2}
   - {fileID: 11400000, guid: 3be975d9f7e84f2ca311f8d4f7a31e6a, type: 2}
   - {fileID: 11400000, guid: 29e49c3215d74e87a2f48f1429a0246d, type: 2}
   - {fileID: 11400000, guid: 63a68a01c1e746e49a3bc6917d59ab69, type: 2}
+  - {fileID: 11400000, guid: 6b7d4a8b65db4ce7ac9796c41147c597, type: 2}
+  - {fileID: 11400000, guid: 6120671860064b739c4fe040da4747f0, type: 2}
+  - {fileID: 11400000, guid: 4bc0888fea494b3da0e4c05d659baaf9, type: 2}
+  - {fileID: 11400000, guid: e54bdac488bf4a19b5cbcf504e34f6e8, type: 2}
+  - {fileID: 11400000, guid: b7e6ba90fa9242e7840b10a701686e97, type: 2}
+  - {fileID: 11400000, guid: 169a0159d9454abba7660ea48c46532c, type: 2}
+  - {fileID: 11400000, guid: 2f9619c18a6e4290b76a38e11290abd5, type: 2}
   nodeEventChannel: {fileID: 11400000, guid: f1b1e574478592a46b08a62e4c3db082, type: 2}
   uiEventChannel: {fileID: 11400000, guid: 1094f1f431d6c7f4c9bcc9e7ad8ac246, type: 2}
   costEventChannel: {fileID: 11400000, guid: 734ca3593b5d2884dae267b0e3e601be, type: 2}

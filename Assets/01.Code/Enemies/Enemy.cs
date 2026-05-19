@@ -6,6 +6,7 @@ using _01.Code.Entities;
 using _01.Code.Events;
 using _01.Code.StatusEffects;
 using System.Collections;
+using DG.Tweening;
 using UnityEngine;
 
 namespace _01.Code.Enemies
@@ -20,16 +21,34 @@ namespace _01.Code.Enemies
         [SerializeField] private EnemyMover mover;
         [SerializeField] private Health health;
         [SerializeField] private EnemyStatusController statusController;
+        [Header("Return Mood")]
+        [SerializeField, Min(0)] private int fearGainPerTurn = 1;
+        [SerializeField, Min(0)] private int fearGainOnTrap = 3;
+        [SerializeField, Min(0)] private int fearGainOnCombat = 4;
+        [SerializeField, Min(0)] private int greedGainOnBuilding = 2;
+        [SerializeField, Min(0)] private int fearReductionOnBuilding = 2;
+        [SerializeField, Min(0f)] private float fearReturnChancePerPoint = 0.018f;
+        [SerializeField, Min(0f)] private float greedReturnResistancePerPoint = 0.04f;
+        [SerializeField, Min(0f)] private float returnChanceStartThreshold = 6f;
+        [SerializeField, Min(0.01f)] private float returnAnimationDuration = 0.42f;
+        [SerializeField, Min(0f)] private float returnShakeDistance = 0.08f;
 
         private GameEventChannelSO _costEventChannel;
         private Coroutine _hitSpriteRoutine;
         private bool _isInCombat;
+        private bool _isReturning;
+        private int _currentFear;
+        private int _currentGreed;
+        private Tween _returnTween;
 
         public bool IsInCombat => _isInCombat;
         public EnemyDataSO Data => data;
         public string DisplayName => data != null && !string.IsNullOrWhiteSpace(data.Name)
             ? data.Name
             : name;
+        public int Level { get; private set; } = 1;
+        public int Fear => _currentFear;
+        public int Greed => _currentGreed;
         public Combatant Combatant => combatant;
         public EnemyMover Mover => mover;
         public Health Health => health;
@@ -41,6 +60,7 @@ namespace _01.Code.Enemies
                 statusController = GetComponent<EnemyStatusController>();
             if (statusController == null)
                 statusController = gameObject.AddComponent<EnemyStatusController>();
+            InitializeMoodStats();
             SubscribeHealth();
         }
 
@@ -51,6 +71,7 @@ namespace _01.Code.Enemies
 
             health.Changed -= HandleHealthChanged;
             health.Damaged -= HandleDamaged;
+            _returnTween?.Kill();
         }
 
         public void Initialize(
@@ -85,10 +106,25 @@ namespace _01.Code.Enemies
 
         public void TakeTurn()
         {
-            if (_isInCombat)
+            if (_isInCombat || _isReturning || combatant != null && combatant.IsAttacking)
+                return;
+
+            IncreaseFear(fearGainPerTurn);
+            if (TryReturn())
                 return;
 
             mover?.TakeTurn();
+        }
+
+        public void ApplyWaveLevel(int level, int healthPerLevel, int attackPerLevel)
+        {
+            Level = Mathf.Max(1, level);
+            var bonusLevel = Level - 1;
+            if (bonusLevel <= 0)
+                return;
+
+            health?.AddMaxHealth(Mathf.Max(0, healthPerLevel) * bonusLevel, true);
+            combatant?.AddAttackDamage(Mathf.Max(0, attackPerLevel) * bonusLevel);
         }
 
         private bool HandleNodeArrived(Node node)
@@ -125,16 +161,22 @@ namespace _01.Code.Enemies
         private void ApplyPassBuildingEffect(Node node)
         {
             if (node == null) return;
+            var appliedBuildingEffect = false;
 
             switch (node.AssignedBuilding)
             {
                 case Inn inn:
                     inn.ApplyPassEffect(combatant);
+                    appliedBuildingEffect = true;
                     break;
                 case Store store:
                     store.ApplyPassEffect(combatant);
+                    appliedBuildingEffect = true;
                     break;
             }
+
+            if (appliedBuildingEffect)
+                ApplyBuildingMoodChange();
         }
 
         private bool TryStopOnUnit(Node node)
@@ -152,7 +194,10 @@ namespace _01.Code.Enemies
                 return false;
 
             if (trap.TryDamage(combatant.Health))
+            {
                 node.IncreaseDanger(trap.DangerIncreaseOnTrigger);
+                IncreaseFear(fearGainOnTrap);
+            }
 
             if (combatant.IsAlive)
                 return false;
@@ -173,9 +218,62 @@ namespace _01.Code.Enemies
                 ? unitNode.AssignedUnit.DangerIncreaseOnCombat
                 : 1);
 
+            IncreaseFear(fearGainOnCombat);
             _isInCombat = true;
             combatant.BeginCombat(unitCombatant, HandleUnitDefeated);
             unitCombatant.BeginCombat(combatant, HandleEnemyDefeated);
+        }
+
+        private void InitializeMoodStats()
+        {
+            _currentFear = data != null ? Mathf.Max(0, data.Fear) : 0;
+            _currentGreed = data != null ? Mathf.Max(0, data.Greed) : 0;
+        }
+
+        private void IncreaseFear(int amount)
+        {
+            if (amount > 0)
+                _currentFear += amount;
+        }
+
+        private void ApplyBuildingMoodChange()
+        {
+            _currentGreed += Mathf.Max(0, greedGainOnBuilding);
+            _currentFear = Mathf.Max(0, _currentFear - Mathf.Max(0, fearReductionOnBuilding));
+        }
+
+        private bool TryReturn()
+        {
+            if (_isInCombat || _isReturning || combatant != null && combatant.IsAttacking)
+                return false;
+
+            var fearPressure = Mathf.Max(0f, _currentFear * fearReturnChancePerPoint);
+            fearPressure = Mathf.Max(0f, fearPressure - returnChanceStartThreshold * fearReturnChancePerPoint);
+            var greedResistance = 1f + Mathf.Max(0f, _currentGreed * greedReturnResistancePerPoint);
+            var returnChance = Mathf.Clamp01(fearPressure / greedResistance);
+            if (Random.value > returnChance)
+                return false;
+
+            PlayReturnAnimation();
+            return true;
+        }
+
+        private void PlayReturnAnimation()
+        {
+            if (_isReturning)
+                return;
+
+            _isReturning = true;
+            mover.enabled = false;
+            combatant?.StopCombat();
+
+            var target = enemyRenderer != null ? enemyRenderer.transform : transform;
+            _returnTween?.Kill();
+            _returnTween = DOTween.Sequence()
+                .Join(target.DOShakePosition(returnAnimationDuration * 0.55f, returnShakeDistance, 10, 70f, false, true))
+                .Join(target.DOScale(Vector3.zero, returnAnimationDuration).SetEase(Ease.InBack))
+                .OnComplete(() => Destroy(gameObject))
+                .SetLink(gameObject);
         }
 
         private void HandleEnemyDefeated(Combatant defeatedCombatant)

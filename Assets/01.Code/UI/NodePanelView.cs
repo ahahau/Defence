@@ -283,6 +283,7 @@ namespace _01.Code.UI
             CreateCategoryCard(contentRoot, InstallCategory.Unit);
             CreateCategoryCard(contentRoot, InstallCategory.Trap);
             CreateCategoryCard(contentRoot, InstallCategory.Decoration);
+            ScrollViewContentSizer.ResizeToGridItemCount(contentRoot, _categoryCards.Count);
         }
 
         private void CreateCategoryCard(Transform contentRoot, InstallCategory category)
@@ -311,6 +312,7 @@ namespace _01.Code.UI
 
             _categoryCards.Clear();
             HideBuildingTemplate();
+            ScrollViewContentSizer.ResizeToGridItemCount(buildingContentRoot, 0);
         }
 
         private void RefreshRosterEntries()
@@ -329,6 +331,8 @@ namespace _01.Code.UI
                 entry.Initialize(unit, HandleDeployRequested);
                 _deployEntries.Add(entry);
             }
+
+            ScrollViewContentSizer.ResizeToGridItemCount(unitContentRoot, _deployEntries.Count);
         }
 
         private void ClearDeployEntries()
@@ -339,6 +343,7 @@ namespace _01.Code.UI
                     Destroy(entry.gameObject);
             }
             _deployEntries.Clear();
+            ScrollViewContentSizer.ResizeToGridItemCount(unitContentRoot, 0);
         }
 
         private void HandleDeployRequested(UnitDataSO unitData)
@@ -447,6 +452,8 @@ namespace _01.Code.UI
                 buildingInstallButtons.Add(entry);
                 _buildingButtonData[entry] = buildingData;
             }
+
+            ScrollViewContentSizer.ResizeToGridItemCount(contentRoot, buildingInstallButtons.Count);
         }
 
         private void ClearBuildingEntries()
@@ -460,6 +467,7 @@ namespace _01.Code.UI
             buildingInstallButtons.Clear();
             _buildingButtonData.Clear();
             HideBuildingTemplate();
+            ScrollViewContentSizer.ResizeToGridItemCount(buildingContentRoot, 0);
         }
 
         private void SetButtonLabel(Button button, BuildingDataSO buildingData)
@@ -522,7 +530,9 @@ namespace _01.Code.UI
                     return sprite;
             }
 
-            return null;
+            return unitPrefab != null
+                ? unitPrefab.GetComponentInChildren<SpriteRenderer>(true)?.sprite
+                : null;
         }
 
         private Sprite ResolveUnitCategorySprite()
@@ -542,9 +552,7 @@ namespace _01.Code.UI
                 }
             }
 
-            return unitPrefab != null
-                ? unitPrefab.GetComponentInChildren<SpriteRenderer>(true)?.sprite
-                : null;
+            return null;
         }
 
         private Sprite ResolvePreviewSprite(BuildingDataSO buildingData)
@@ -571,7 +579,7 @@ namespace _01.Code.UI
             if (buildingData.Prefab is Trap trap)
             {
                 text += $"\n피해: {FormatTrapDamage(trap)}";
-                text += $"\n발동: {FormatPercent(trap.TriggerChance)} / 부상: {FormatPercent(trap.InjuryChance)}";
+                text += $"\n발동: {FormatPercent(trap.TriggerChance)} / {FormatTrapStatus(trap)}";
             }
 
             return text;
@@ -583,6 +591,17 @@ namespace _01.Code.UI
                 return trap.Damage.ToString();
 
             return $"{trap.Damage}+{trap.BonusDamage}";
+        }
+
+        private string FormatTrapStatus(Trap trap)
+        {
+            if (trap.StatusEffect == null || trap.InjuryChance <= 0f)
+                return "상태이상 없음";
+
+            var displayName = string.IsNullOrWhiteSpace(trap.StatusEffect.DisplayName)
+                ? trap.StatusEffect.name
+                : trap.StatusEffect.DisplayName;
+            return $"{displayName}: {FormatPercent(trap.InjuryChance)}";
         }
 
         private string FormatPercent(float value)

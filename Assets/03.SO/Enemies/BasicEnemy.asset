@@ -15,3 +15,5 @@ MonoBehaviour:
   <Grade>k__BackingField: 1
   <BoardSprite>k__BackingField: {fileID: 0}
   <Name>k__BackingField: Enemy
+  <Fear>k__BackingField: 1
+  <Greed>k__BackingField: 1

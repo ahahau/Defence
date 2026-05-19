@@ -1,4 +1,5 @@
 using DG.Tweening;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace _01.Code.Combat
@@ -8,9 +9,10 @@ namespace _01.Code.Combat
     {
         [SerializeField] private Color bloomColor = new(1f, 0.12f, 0.08f, 1f);
         [SerializeField] private float bloomDuration = 0.12f;
-        [SerializeField, Min(0f)] private float distortionDuration = 0.16f;
-        [SerializeField, Min(0f)] private float distortionScaleAmount = 0.22f;
-        [SerializeField, Min(0f)] private float distortionRotationAngle = 8f;
+        [SerializeField, Min(0f)] private float impactDuration = 0.18f;
+        [SerializeField, Min(0f)] private float impactShakeDistance = 0.08f;
+        [SerializeField, Min(0f)] private float impactScaleAmount = 0.12f;
+        [SerializeField, Min(0f)] private float impactRotationAngle = 5f;
         [SerializeField] private float textFloatDistance = 0.45f;
         [SerializeField] private float textDuration = 0.55f;
         [SerializeField] private int textSortingOrder = 60;
@@ -25,7 +27,7 @@ namespace _01.Code.Combat
 
         private Color[] _originalColors;
         private Sequence _bloomSequence;
-        private Sequence _distortionSequence;
+        private Sequence _impactSequence;
         private static Material _hitParticleMaterial;
 
         private void Awake()
@@ -48,8 +50,8 @@ namespace _01.Code.Combat
                 health.Damaged -= Play;
 
             _bloomSequence?.Kill();
-            _distortionSequence?.Complete();
-            _distortionSequence?.Kill();
+            _impactSequence?.Complete();
+            _impactSequence?.Kill();
         }
 
         private void Play(int damage)
@@ -58,7 +60,7 @@ namespace _01.Code.Combat
                 return;
 
             PlayBloom();
-            PlayDistortion();
+            PlayImpactMotion();
             PlayHitParticles();
             CreateDamageText(damage);
         }
@@ -80,45 +82,57 @@ namespace _01.Code.Combat
             }
         }
 
-        private void PlayDistortion()
+        private void PlayImpactMotion()
         {
-            if (distortionDuration <= 0f || distortionScaleAmount <= 0f)
+            if (impactDuration <= 0f)
                 return;
 
-            _distortionSequence?.Complete();
-            _distortionSequence?.Kill();
-            _distortionSequence = DOTween.Sequence();
+            _impactSequence?.Complete();
+            _impactSequence?.Kill();
+            _impactSequence = DOTween.Sequence();
 
+            var animatedTargets = new HashSet<Transform>();
             foreach (var spriteRenderer in spriteRenderers)
             {
                 if (spriteRenderer == null || spriteRenderer.sortingOrder >= 40)
                     continue;
 
                 var target = spriteRenderer.transform;
+                if (!animatedTargets.Add(target))
+                    continue;
+
                 var baseScale = target.localScale;
+                var basePosition = target.localPosition;
                 var baseRotation = target.localEulerAngles;
                 var direction = UnityEngine.Random.value < 0.5f ? -1f : 1f;
-                var squashScale = new Vector3(
-                    baseScale.x * (1f + distortionScaleAmount),
-                    baseScale.y * (1f - distortionScaleAmount),
-                    baseScale.z);
-                var stretchScale = new Vector3(
-                    baseScale.x * (1f - distortionScaleAmount * 0.6f),
-                    baseScale.y * (1f + distortionScaleAmount * 0.6f),
-                    baseScale.z);
 
                 var rendererSequence = DOTween.Sequence();
-                rendererSequence.Join(target.DOScale(squashScale, distortionDuration * 0.28f).SetEase(Ease.OutQuad));
-                rendererSequence.Join(target.DOLocalRotate(
-                    new Vector3(baseRotation.x, baseRotation.y, baseRotation.z + distortionRotationAngle * direction),
-                    distortionDuration * 0.28f).SetEase(Ease.OutQuad));
-                rendererSequence.Append(target.DOScale(stretchScale, distortionDuration * 0.24f).SetEase(Ease.InOutSine));
-                rendererSequence.Join(target.DOLocalRotate(
-                    new Vector3(baseRotation.x, baseRotation.y, baseRotation.z - distortionRotationAngle * 0.55f * direction),
-                    distortionDuration * 0.24f).SetEase(Ease.InOutSine));
-                rendererSequence.Append(target.DOScale(baseScale, distortionDuration * 0.48f).SetEase(Ease.OutBack));
-                rendererSequence.Join(target.DOLocalRotate(baseRotation, distortionDuration * 0.48f).SetEase(Ease.OutQuad));
-                _distortionSequence.Join(rendererSequence);
+                if (impactShakeDistance > 0f)
+                    rendererSequence.Join(target.DOShakePosition(
+                        impactDuration,
+                        impactShakeDistance,
+                        12,
+                        70f,
+                        false,
+                        true));
+
+                if (impactScaleAmount > 0f)
+                    rendererSequence.Join(target.DOPunchScale(Vector3.one * impactScaleAmount, impactDuration, 1, 0.4f));
+
+                if (impactRotationAngle > 0f)
+                    rendererSequence.Join(target.DOPunchRotation(
+                        new Vector3(0f, 0f, impactRotationAngle * direction),
+                        impactDuration,
+                        1,
+                        0.35f));
+
+                rendererSequence.OnComplete(() =>
+                {
+                    target.localPosition = basePosition;
+                    target.localScale = baseScale;
+                    target.localEulerAngles = baseRotation;
+                });
+                _impactSequence.Join(rendererSequence);
             }
         }
 

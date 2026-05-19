@@ -12,6 +12,8 @@ namespace _01.Code.UI
 {
     public class EnemyStatusPanelView : MonoBehaviour
     {
+        public static EnemyStatusPanelView ActiveInstance { get; private set; }
+
         [SerializeField] private GameEventChannelSO nodeEventChannel;
         [SerializeField] private GameObject panelRoot;
         [SerializeField] private TMP_Text titleText;
@@ -34,6 +36,7 @@ namespace _01.Code.UI
 
         private void Awake()
         {
+            ActiveInstance = this;
             SetPanelVisible(false);
         }
 
@@ -47,6 +50,12 @@ namespace _01.Code.UI
         {
             Unsubscribe();
             closeButton?.onClick.RemoveListener(HandleCloseClicked);
+        }
+
+        private void OnDestroy()
+        {
+            if (ActiveInstance == this)
+                ActiveInstance = null;
         }
 
         private void Subscribe()
@@ -81,12 +90,18 @@ namespace _01.Code.UI
             if (selectedEnemy == null)
                 return;
 
+            UnitStatusPanelView.ActiveInstance?.HidePanel();
             Refresh();
             MovePanelToMousePosition();
             SetPanelVisible(true);
         }
 
         private void HandleCloseClicked()
+        {
+            HidePanel();
+        }
+
+        public void HidePanel()
         {
             SetPanelVisible(false);
             selectedEnemy = null;
@@ -100,7 +115,7 @@ namespace _01.Code.UI
                 return;
             }
 
-            SetText(titleText, selectedEnemy.DisplayName);
+            SetText(titleText, $"{selectedEnemy.DisplayName} Lv {selectedEnemy.Level}");
             SetTextVisible(stateText, ResolveStateText());
             SetText(hpText, ResolveHpText());
             SetText(attackText, ResolveAttackText());
@@ -113,7 +128,7 @@ namespace _01.Code.UI
             if (selectedEnemy.Health == null || !selectedEnemy.Health.IsAlive)
                 return "처치됨";
 
-            return selectedEnemy.IsInCombat ? "전투 중" : string.Empty;
+            return string.Empty;
         }
 
         private string ResolveHpText()
@@ -127,9 +142,11 @@ namespace _01.Code.UI
         private string ResolveAttackText()
         {
             var combatant = selectedEnemy.Combatant;
-            return combatant != null
+            var combatText = combatant != null
                 ? $"ATK {combatant.AttackDamage}  SPD {combatant.AttackInterval:0.##}s"
                 : "ATK -  SPD -";
+
+            return $"{combatText}\n공포 {selectedEnemy.Fear}  욕심 {selectedEnemy.Greed}";
         }
 
         private void RefreshStatusEffects()

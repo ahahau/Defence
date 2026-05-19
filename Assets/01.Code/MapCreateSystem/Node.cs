@@ -2,6 +2,7 @@ using _01.Code.Buildings;
 using _01.Code.Units;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 
 namespace _01.Code.MapCreateSystem
@@ -18,6 +19,9 @@ namespace _01.Code.MapCreateSystem
         private SpriteRenderer lockedOverlayRenderer;
 
         [SerializeField]
+        private TextMeshPro lockedCostText;
+
+        [SerializeField]
         private Sprite unlockedSprite;
 
         [SerializeField]
@@ -28,6 +32,18 @@ namespace _01.Code.MapCreateSystem
 
         [SerializeField]
         private Vector3 lockedOverlayLocalScale = new(1f, 1.25f, 1f);
+
+        [SerializeField]
+        private Vector3 lockedCostLocalPosition = new(0f, -0.56f, -0.08f);
+
+        [SerializeField]
+        private Vector3 lockedCostLocalScale = new(0.12f, 0.12f, 0.12f);
+
+        [SerializeField]
+        private float lockedCostFontSize = 2.6f;
+
+        [SerializeField]
+        private Color lockedCostColor = new(1f, 0.84f, 0.28f, 1f);
 
         [SerializeField]
         private Color unlockedVisualColor = Color.white;
@@ -86,6 +102,7 @@ namespace _01.Code.MapCreateSystem
             SetSpriteScale(unlockedSpriteScale);
             SetVisualColor(unlockedVisualColor);
             SetLockedOverlayVisible(false);
+            SetLockedCostVisible(false);
             nodesByDataId[data.Id] = this;
         }
 
@@ -105,6 +122,17 @@ namespace _01.Code.MapCreateSystem
             SetSpriteScale(unlockedSpriteScale);
             SetVisualColor(lockedVisualColor);
             SetLockedOverlayVisible(true);
+            SetLockedCostVisible(false);
+        }
+
+        public void SetBuildCost(int goldCost)
+        {
+            var costText = ResolveLockedCostText();
+            if (costText == null)
+                return;
+
+            costText.text = $"{goldCost}G";
+            SetLockedCostVisible(true);
         }
 
         public void ShowClickFeedback()
@@ -182,6 +210,15 @@ namespace _01.Code.MapCreateSystem
             overlay.transform.localScale = lockedOverlayLocalScale;
         }
 
+        private void SetLockedCostVisible(bool visible)
+        {
+            var costText = ResolveLockedCostText();
+            if (costText == null)
+                return;
+
+            costText.gameObject.SetActive(visible);
+        }
+
         private SpriteRenderer ResolveLockedOverlayRenderer()
         {
             if (lockedOverlayRenderer != null)
@@ -197,6 +234,29 @@ namespace _01.Code.MapCreateSystem
             lockedOverlayRenderer.sortingLayerID = spriteRenderer != null ? spriteRenderer.sortingLayerID : 0;
             lockedOverlayRenderer.sortingOrder = spriteRenderer != null ? spriteRenderer.sortingOrder + 1 : 1;
             return lockedOverlayRenderer;
+        }
+
+        private TextMeshPro ResolveLockedCostText()
+        {
+            if (lockedCostText != null)
+                return lockedCostText;
+
+            var textObject = new GameObject("LockedCostText");
+            textObject.transform.SetParent(transform);
+            textObject.transform.localPosition = lockedCostLocalPosition;
+            textObject.transform.localRotation = Quaternion.identity;
+            textObject.transform.localScale = lockedCostLocalScale;
+
+            lockedCostText = textObject.AddComponent<TextMeshPro>();
+            lockedCostText.alignment = TextAlignmentOptions.Center;
+            lockedCostText.enableWordWrapping = false;
+            lockedCostText.fontSize = lockedCostFontSize;
+            lockedCostText.color = lockedCostColor;
+            lockedCostText.text = string.Empty;
+            lockedCostText.sortingLayerID = spriteRenderer != null ? spriteRenderer.sortingLayerID : 0;
+            lockedCostText.sortingOrder = spriteRenderer != null ? spriteRenderer.sortingOrder + 3 : 3;
+            lockedCostText.rectTransform.sizeDelta = new Vector2(8f, 2f);
+            return lockedCostText;
         }
 
         private Vector3 ResolvePrefabScale()
