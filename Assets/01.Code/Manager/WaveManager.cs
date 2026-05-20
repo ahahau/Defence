@@ -67,11 +67,19 @@ namespace _01.Code.Manager
             _currentDay = evt.Day;
 
             if (_portalNode == null || waveConfig == null)
+            {
+                _currentClearGoldReward = 0;
+                RaiseWaveEnded();
                 return;
+            }
 
             var entry = waveConfig.GetWaveForDay(evt.Day);
             if (entry == null)
+            {
+                _currentClearGoldReward = 0;
+                RaiseWaveEnded();
                 return;
+            }
 
             if (_waveCoroutine != null)
                 StopCoroutine(_waveCoroutine);
@@ -197,13 +205,20 @@ namespace _01.Code.Manager
                 _waveCoroutine = null;
             }
 
-            var rewardPanel = ShowRewardPanel(_currentClearGoldReward);
+            var rewardPanel = EnsureRewardPanel();
             if (rewardPanel != null)
             {
                 _isWaitingForRewardPanel = true;
                 rewardPanel.Closed -= HandleRewardPanelClosed;
                 rewardPanel.Closed += HandleRewardPanelClosed;
-                return;
+                rewardPanel.ShowGoldReward(_currentClearGoldReward);
+                rewardPanel.transform.SetAsLastSibling();
+
+                if (rewardPanel.IsShowingReward)
+                    return;
+
+                rewardPanel.Closed -= HandleRewardPanelClosed;
+                _isWaitingForRewardPanel = false;
             }
 
             if (_currentClearGoldReward > 0)
@@ -227,17 +242,6 @@ namespace _01.Code.Manager
         private void RaiseWaveEnded()
         {
             waveEventChannel.RaiseEvent(new WaveEndedEvent(_currentDay, _currentClearGoldReward));
-        }
-
-        private WaveRewardPanelView ShowRewardPanel(int clearGoldReward)
-        {
-            var rewardPanel = EnsureRewardPanel();
-            if (rewardPanel == null)
-                return null;
-
-            rewardPanel.ShowGoldReward(clearGoldReward);
-            rewardPanel.transform.SetAsLastSibling();
-            return rewardPanel;
         }
 
         private WaveRewardPanelView EnsureRewardPanel()

@@ -43,6 +43,25 @@ namespace _01.Code.UI
 
             rectTransform.sizeDelta = new Vector2(width, height);
             LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
+            ResetScrollPosition(contentRoot, rectTransform);
+        }
+
+        private static void ResetScrollPosition(Transform contentRoot, RectTransform rectTransform)
+        {
+            rectTransform.anchoredPosition = Vector2.zero;
+
+            var scrollRect = contentRoot.GetComponentInParent<ScrollRect>(true);
+            if (scrollRect == null)
+                return;
+
+            Canvas.ForceUpdateCanvases();
+            scrollRect.StopMovement();
+
+            if (scrollRect.horizontal)
+                scrollRect.horizontalNormalizedPosition = 0f;
+
+            if (scrollRect.vertical)
+                scrollRect.verticalNormalizedPosition = 1f;
         }
     }
 }

@@ -45,6 +45,7 @@ namespace _01.Code.UI
         private bool _hasShownReward;
 
         public event Action Closed;
+        public bool IsShowingReward => _hasShownReward && gameObject.activeSelf;
 
         private void Awake()
         {
@@ -94,6 +95,7 @@ namespace _01.Code.UI
 
             if (!_hasPendingGoldReward && !_hasPendingArtifactReward && !_hasPendingUnitReward)
             {
+                _hasShownReward = false;
                 Hide();
                 return;
             }

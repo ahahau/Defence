@@ -5,7 +5,6 @@ using _01.Code.Events;
 using _01.Code.UI;
 using _01.Code.Units;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
@@ -56,10 +55,7 @@ namespace _01.Code.MapCreateSystem
 
         [Header("Build Warning")]
         [SerializeField]
-        private BuildConfirmPanelView buildConfirmPanelPrefab;
-
-        [SerializeField]
-        private Transform buildConfirmPanelParent;
+        private BuildConfirmPanelView buildConfirmPanel;
 
         [Header("Input")]
         [SerializeField]
@@ -77,7 +73,7 @@ namespace _01.Code.MapCreateSystem
         private readonly Dictionary<Collider2D, Node> unlockedNodeByCollider = new();
         private readonly List<DungeonNode> buildParentCandidates = new();
         private Node lastBuiltNodeView;
-        private BuildConfirmPanelView buildConfirmPanel;
+        private Vector2 lastBuildClickScreenPosition;
         private int lastBuiltFrame = -1;
         private bool hasPendingMouseInput;
         private bool hasPendingRightMouseInput;
@@ -254,7 +250,7 @@ namespace _01.Code.MapCreateSystem
             if (graph.IsOccupied(lockedNode.GridPosition) || lockedNode.FromNode.FreePorts <= 0)
                 return;
 
-            ShowBuildConfirmPanel(lockedNode);
+            ShowBuildConfirmPanel(lockedNode, inputDataSO.ReadScreenMousePosition());
         }
 
         private void RequestBuildCost(Node lockedNode)
@@ -298,7 +294,10 @@ namespace _01.Code.MapCreateSystem
             if (evt.Node == null || graph.IsOccupied(evt.Node.GridPosition))
                 return;
 
-            EnsureBuildConfirmPanel().ShowNotEnoughGold(evt.GoldAmount, evt.CurrentGold);
+            if (buildConfirmPanel == null)
+                return;
+
+            buildConfirmPanel.ShowNotEnoughGoldAt(evt.GoldAmount, evt.CurrentGold, lastBuildClickScreenPosition);
         }
 
         public void SelectBuildType(DungeonNodeType type)
@@ -384,47 +383,16 @@ namespace _01.Code.MapCreateSystem
             }
         }
 
-        private void ShowBuildConfirmPanel(Node lockedNode)
+        private void ShowBuildConfirmPanel(Node lockedNode, Vector2 screenPosition)
         {
-            EnsureBuildConfirmPanel().Show(buildGoldCost, () => RequestBuildCost(lockedNode));
-        }
-
-        private BuildConfirmPanelView EnsureBuildConfirmPanel()
-        {
+            lastBuildClickScreenPosition = screenPosition;
             if (buildConfirmPanel != null)
-                return buildConfirmPanel;
-
-            var parent = ResolveBuildConfirmPanelParent();
-            if (buildConfirmPanelPrefab != null)
             {
-                buildConfirmPanel = Instantiate(buildConfirmPanelPrefab, parent);
-                return buildConfirmPanel;
+                buildConfirmPanel.ShowAt(buildGoldCost, screenPosition, () => RequestBuildCost(lockedNode));
+                return;
             }
 
-            buildConfirmPanel = BuildConfirmPanelView.CreateRuntime(parent);
-            return buildConfirmPanel;
-        }
-
-        private Transform ResolveBuildConfirmPanelParent()
-        {
-            if (buildConfirmPanelParent != null)
-                return buildConfirmPanelParent;
-
-            var canvas = FindFirstObjectByType<Canvas>();
-            if (canvas != null)
-                return canvas.transform;
-
-            var canvasObject = new GameObject("BuildConfirmCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-            var runtimeCanvas = canvasObject.GetComponent<Canvas>();
-            runtimeCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            runtimeCanvas.overrideSorting = true;
-            runtimeCanvas.sortingOrder = short.MaxValue;
-
-            var scaler = canvasObject.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920f, 1080f);
-            scaler.matchWidthOrHeight = 0.5f;
-            return canvasObject.transform;
+            Debug.LogError("DungeonGraphController needs an existing BuildConfirmPanelView assigned in the inspector.", this);
         }
 
         private bool TryResolveBuildParent(Vector2Int position, out DungeonNode parentNode)
@@ -456,6 +424,9 @@ namespace _01.Code.MapCreateSystem
 
         private void ProcessMouseInput()
         {
+            if (buildConfirmPanel != null && buildConfirmPanel.IsOpen)
+                return;
+
             if (IsPointerOverUi() || IsPointerOverNodePanel())
                 return;
 
@@ -480,6 +451,9 @@ namespace _01.Code.MapCreateSystem
 
         private void ProcessRightMouseInput()
         {
+            if (buildConfirmPanel != null && buildConfirmPanel.IsOpen)
+                return;
+
             if (IsPointerOverUi())
                 return;
 

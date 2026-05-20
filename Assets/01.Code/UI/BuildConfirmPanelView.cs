@@ -1,6 +1,7 @@
 using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace _01.Code.UI
@@ -9,6 +10,12 @@ namespace _01.Code.UI
     {
         [SerializeField]
         private CanvasGroup canvasGroup;
+
+        [SerializeField]
+        private Image blockerImage;
+
+        [SerializeField]
+        private RectTransform windowRect;
 
         [SerializeField]
         private TMP_Text titleText;
@@ -23,15 +30,24 @@ namespace _01.Code.UI
         private Button cancelButton;
 
         private Action confirmAction;
+        private RectTransform rootRect;
+        private int shownFrame = -1;
+        private int handledClickFrame = -1;
+        public bool IsOpen => gameObject.activeInHierarchy && canvasGroup != null && canvasGroup.blocksRaycasts;
 
         private void Awake()
         {
             WireButtons();
-            Hide();
         }
 
         public void Show(int goldCost, Action onConfirm)
         {
+            ShowAt(goldCost, null, onConfirm);
+        }
+
+        public void ShowAt(int goldCost, Vector2? screenPosition, Action onConfirm)
+        {
+            gameObject.SetActive(true);
             EnsureLayout();
             WireButtons();
 
@@ -45,13 +61,20 @@ namespace _01.Code.UI
             SetButtonLabel(confirmButton, "확장");
             SetButtonLabel(cancelButton, "취소");
             SetButtonActive(cancelButton, true);
-            gameObject.SetActive(true);
             transform.SetAsLastSibling();
             SetVisible(true);
+            PositionWindow(screenPosition);
+            shownFrame = Time.frameCount;
         }
 
         public void ShowNotEnoughGold(int goldCost, int currentGold)
         {
+            ShowNotEnoughGoldAt(goldCost, currentGold, null);
+        }
+
+        public void ShowNotEnoughGoldAt(int goldCost, int currentGold, Vector2? screenPosition)
+        {
+            gameObject.SetActive(true);
             EnsureLayout();
             WireButtons();
 
@@ -64,9 +87,32 @@ namespace _01.Code.UI
 
             SetButtonLabel(confirmButton, "확인");
             SetButtonActive(cancelButton, false);
-            gameObject.SetActive(true);
             transform.SetAsLastSibling();
             SetVisible(true);
+            PositionWindow(screenPosition);
+            shownFrame = Time.frameCount;
+        }
+
+        private void Update()
+        {
+            if (Mouse.current == null)
+                return;
+
+            if (!Mouse.current.leftButton.wasReleasedThisFrame)
+                return;
+
+            if (Time.frameCount == shownFrame || Time.frameCount == handledClickFrame)
+                return;
+
+            var screenPoint = Mouse.current.position.ReadValue();
+            if (IsButtonHit(confirmButton, screenPoint))
+            {
+                OnConfirmClicked();
+                return;
+            }
+
+            if (cancelButton != null && cancelButton.gameObject.activeInHierarchy && IsButtonHit(cancelButton, screenPoint))
+                OnCancelClicked();
         }
 
         public void Hide()
@@ -76,47 +122,40 @@ namespace _01.Code.UI
             gameObject.SetActive(false);
         }
 
-        public static BuildConfirmPanelView CreateRuntime(Transform parent)
+        public void OnConfirmClicked()
         {
-            var root = new GameObject("BuildConfirmPanel", typeof(RectTransform), typeof(CanvasGroup), typeof(Image));
-            root.transform.SetParent(parent, false);
+            if (Time.frameCount == handledClickFrame)
+                return;
 
-            var rootRect = root.GetComponent<RectTransform>();
-            rootRect.anchorMin = Vector2.zero;
-            rootRect.anchorMax = Vector2.one;
-            rootRect.offsetMin = Vector2.zero;
-            rootRect.offsetMax = Vector2.zero;
-
-            var blocker = root.GetComponent<Image>();
-            blocker.color = new Color(0f, 0f, 0f, 0.72f);
-            blocker.raycastTarget = true;
-
-            var view = root.AddComponent<BuildConfirmPanelView>();
-            view.canvasGroup = root.GetComponent<CanvasGroup>();
-            view.BuildRuntimeContent(root.transform);
-            view.Hide();
-            return view;
-        }
-
-        private void Confirm()
-        {
+            handledClickFrame = Time.frameCount;
             var action = confirmAction;
             Hide();
             action?.Invoke();
+        }
+
+        public void OnCancelClicked()
+        {
+            if (Time.frameCount == handledClickFrame)
+                return;
+
+            handledClickFrame = Time.frameCount;
+            Hide();
         }
 
         private void WireButtons()
         {
             if (confirmButton != null)
             {
-                confirmButton.onClick.RemoveListener(Confirm);
-                confirmButton.onClick.AddListener(Confirm);
+                confirmButton.interactable = true;
+                confirmButton.onClick.RemoveListener(OnConfirmClicked);
+                confirmButton.onClick.AddListener(OnConfirmClicked);
             }
 
             if (cancelButton != null)
             {
-                cancelButton.onClick.RemoveListener(Hide);
-                cancelButton.onClick.AddListener(Hide);
+                cancelButton.interactable = true;
+                cancelButton.onClick.RemoveListener(OnCancelClicked);
+                cancelButton.onClick.AddListener(OnCancelClicked);
             }
         }
 
@@ -125,12 +164,22 @@ namespace _01.Code.UI
             if (canvasGroup == null)
                 canvasGroup = GetComponent<CanvasGroup>();
 
+            if (blockerImage == null)
+                blockerImage = GetComponent<Image>();
+
             if (canvasGroup == null)
                 return;
 
             canvasGroup.alpha = visible ? 1f : 0f;
             canvasGroup.interactable = visible;
             canvasGroup.blocksRaycasts = visible;
+
+            if (blockerImage != null)
+            {
+                blockerImage.enabled = visible;
+                blockerImage.raycastTarget = visible;
+                blockerImage.color = new Color(0f, 0f, 0f, 0.55f);
+            }
         }
 
         private void SetButtonLabel(Button button, string label)
@@ -138,9 +187,12 @@ namespace _01.Code.UI
             if (button == null)
                 return;
 
-            var text = button.GetComponentInChildren<TMP_Text>();
+            var text = button.GetComponentInChildren<TMP_Text>(true);
             if (text != null)
+            {
                 text.text = label;
+                text.raycastTarget = false;
+            }
         }
 
         private void SetButtonActive(Button button, bool active)
@@ -154,99 +206,88 @@ namespace _01.Code.UI
             if (canvasGroup == null)
                 canvasGroup = GetComponent<CanvasGroup>();
 
-            if (titleText != null && messageText != null && confirmButton != null && cancelButton != null)
+            if (blockerImage == null)
+                blockerImage = GetComponent<Image>();
+
+            if (rootRect == null)
+                rootRect = GetComponent<RectTransform>();
+
+            if (rootRect != null)
+            {
+                rootRect.anchorMin = Vector2.zero;
+                rootRect.anchorMax = Vector2.one;
+                rootRect.offsetMin = Vector2.zero;
+                rootRect.offsetMax = Vector2.zero;
+            }
+
+            if (windowRect == null)
+                windowRect = GetComponent<RectTransform>();
+
+            if (titleText == null || messageText == null || confirmButton == null || cancelButton == null)
+                Debug.LogError("BuildConfirmPanelView needs its existing title, message, confirm button, and cancel button assigned in the inspector.", this);
+
+            if (titleText != null)
+                titleText.raycastTarget = false;
+
+            if (messageText != null)
+                messageText.raycastTarget = false;
+        }
+
+        private bool IsButtonHit(Button button, Vector2 screenPoint)
+        {
+            if (button == null || !button.gameObject.activeInHierarchy || !button.interactable)
+                return false;
+
+            var rect = button.GetComponent<RectTransform>();
+            if (rect == null)
+                return false;
+
+            var canvas = button.GetComponentInParent<Canvas>();
+            var camera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+            return RectTransformUtility.RectangleContainsScreenPoint(rect, screenPoint, camera);
+        }
+
+        private void PositionWindow(Vector2? screenPosition)
+        {
+            if (windowRect == null)
                 return;
 
-            BuildRuntimeContent(transform);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(windowRect);
+
+            if (!screenPosition.HasValue)
+            {
+                windowRect.pivot = new Vector2(0.5f, 0.5f);
+                windowRect.anchoredPosition = Vector2.zero;
+                return;
+            }
+
+            if (rootRect == null)
+                rootRect = GetComponent<RectTransform>();
+
+            if (rootRect == null)
+                return;
+
+            var canvas = GetComponentInParent<Canvas>();
+            var camera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(rootRect, screenPosition.Value, camera, out var localPoint))
+                localPoint = Vector2.zero;
+
+            var padding = 18f;
+            var target = localPoint;
+            var rootSize = rootRect.rect.size;
+            var windowSize = windowRect.rect.size;
+
+            windowRect.pivot = new Vector2(0.5f, 0.5f);
+            target.x = Mathf.Clamp(
+                target.x,
+                -rootSize.x * 0.5f + windowSize.x * 0.5f + padding,
+                rootSize.x * 0.5f - windowSize.x * 0.5f - padding);
+            target.y = Mathf.Clamp(
+                target.y,
+                -rootSize.y * 0.5f + windowSize.y * 0.5f + padding,
+                rootSize.y * 0.5f - windowSize.y * 0.5f - padding);
+            windowRect.anchoredPosition = target;
         }
 
-        private void BuildRuntimeContent(Transform parent)
-        {
-            var panel = new GameObject("WarningPanel", typeof(RectTransform), typeof(Image), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
-            panel.transform.SetParent(parent, false);
-
-            var panelRect = panel.GetComponent<RectTransform>();
-            panelRect.anchorMin = new Vector2(0.5f, 0.5f);
-            panelRect.anchorMax = new Vector2(0.5f, 0.5f);
-            panelRect.pivot = new Vector2(0.5f, 0.5f);
-            panelRect.anchoredPosition = Vector2.zero;
-            panelRect.sizeDelta = new Vector2(420f, 0f);
-
-            var panelImage = panel.GetComponent<Image>();
-            panelImage.color = new Color(0.08f, 0.09f, 0.1f, 0.98f);
-            panelImage.raycastTarget = true;
-
-            var panelLayout = panel.GetComponent<VerticalLayoutGroup>();
-            panelLayout.padding = new RectOffset(28, 28, 24, 24);
-            panelLayout.spacing = 18f;
-            panelLayout.childAlignment = TextAnchor.MiddleCenter;
-            panelLayout.childControlHeight = true;
-            panelLayout.childControlWidth = true;
-            panelLayout.childForceExpandHeight = false;
-            panelLayout.childForceExpandWidth = true;
-
-            var fitter = panel.GetComponent<ContentSizeFitter>();
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            titleText = CreateText(panel.transform, "Title", 32f, FontStyles.Bold, TextAlignmentOptions.Center);
-            messageText = CreateText(panel.transform, "Message", 24f, FontStyles.Normal, TextAlignmentOptions.Center);
-
-            var buttonRow = new GameObject("ButtonRow", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-            buttonRow.transform.SetParent(panel.transform, false);
-
-            var rowRect = buttonRow.GetComponent<RectTransform>();
-            rowRect.sizeDelta = new Vector2(0f, 58f);
-
-            var rowLayout = buttonRow.GetComponent<HorizontalLayoutGroup>();
-            rowLayout.spacing = 14f;
-            rowLayout.childAlignment = TextAnchor.MiddleCenter;
-            rowLayout.childControlHeight = true;
-            rowLayout.childControlWidth = true;
-            rowLayout.childForceExpandHeight = true;
-            rowLayout.childForceExpandWidth = true;
-
-            cancelButton = CreateButton(buttonRow.transform, "CancelButton", "취소", new Color(0.22f, 0.24f, 0.27f, 1f));
-            confirmButton = CreateButton(buttonRow.transform, "ConfirmButton", "확장", new Color(0.88f, 0.63f, 0.18f, 1f));
-        }
-
-        private TMP_Text CreateText(Transform parent, string objectName, float fontSize, FontStyles style, TextAlignmentOptions alignment)
-        {
-            var textObject = new GameObject(objectName, typeof(RectTransform));
-            textObject.transform.SetParent(parent, false);
-
-            var text = textObject.AddComponent<TextMeshProUGUI>();
-            text.fontSize = fontSize;
-            text.fontStyle = style;
-            text.alignment = alignment;
-            text.color = Color.white;
-            text.enableWordWrapping = true;
-            return text;
-        }
-
-        private Button CreateButton(Transform parent, string objectName, string label, Color color)
-        {
-            var buttonObject = new GameObject(objectName, typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
-            buttonObject.transform.SetParent(parent, false);
-
-            var rect = buttonObject.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(0f, 56f);
-
-            var image = buttonObject.GetComponent<Image>();
-            image.color = color;
-
-            var layout = buttonObject.GetComponent<LayoutElement>();
-            layout.preferredHeight = 56f;
-
-            var button = buttonObject.GetComponent<Button>();
-            var labelText = CreateText(buttonObject.transform, "Label", 22f, FontStyles.Bold, TextAlignmentOptions.Center);
-            labelText.text = label;
-
-            var labelRect = labelText.rectTransform;
-            labelRect.anchorMin = Vector2.zero;
-            labelRect.anchorMax = Vector2.one;
-            labelRect.offsetMin = Vector2.zero;
-            labelRect.offsetMax = Vector2.zero;
-            return button;
-        }
     }
 }

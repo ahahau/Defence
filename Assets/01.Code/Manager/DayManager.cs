@@ -25,7 +25,7 @@ namespace _01.Code.Manager
 
         private void Start()
         {
-            dayEventChannel?.RaiseEvent(new DayChangedEvent(NextWaveDay));
+            dayEventChannel?.RaiseEvent(new DayPreviewChangedEvent(NextWaveDay, 0f));
         }
 
         private void OnEnable()

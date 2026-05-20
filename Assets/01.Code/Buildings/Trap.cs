@@ -42,9 +42,6 @@ namespace _01.Code.Buildings
 
         private void Awake()
         {
-            if (hitAnimationTarget == null)
-                hitAnimationTarget = transform.Find("Visual") ?? transform;
-
             _hitAnimationBaseLocalPosition = hitAnimationTarget.localPosition;
         }
 
@@ -65,20 +62,20 @@ namespace _01.Code.Buildings
             var resolvedDamage = damage + bonusDamage;
             if (targetComponent != null && targetComponent.TryGetComponent<EnemyStatusController>(out var statusController))
                 resolvedDamage = statusController.ModifyTrapDamage(resolvedDamage);
-
+            
             target.TakeDamage(resolvedDamage);
             PlayHitAnimation();
             TryApplyInjury(target, targetComponent);
             return true;
         }
-
+        
         private void PlayHitAnimation()
         {
             if (hitAnimationTarget == null || hitShakeDistance <= 0f)
                 return;
 
             StopHitAnimation(false);
-
+            
             hitAnimationTarget.localPosition = _hitAnimationBaseLocalPosition;
             _hitAnimationTween = hitAnimationTarget
                 .DOLocalMoveX(_hitAnimationBaseLocalPosition.x + hitShakeDistance, hitShakeDuration / hitShakeSteps)
@@ -96,9 +93,9 @@ namespace _01.Code.Buildings
                 else
                     _hitAnimationTween.Kill();
             }
-
+            
             _hitAnimationTween = null;
-
+            
             if (hitAnimationTarget != null)
                 hitAnimationTarget.localPosition = _hitAnimationBaseLocalPosition;
         }

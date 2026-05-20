@@ -14,6 +14,7 @@ namespace _01.Code.Dialogue
         [SerializeField] private TMP_Text bodyText;
         [SerializeField] private TMP_Text progressText;
         [SerializeField] private Button nextButton;
+        [SerializeField] private Button closeButton;
         [SerializeField] private RectTransform choiceRoot;
         [SerializeField] private Button choiceButtonPrefab;
         [SerializeField, Min(0f)] private float choiceSlideDuration = 0.22f;
@@ -71,6 +72,7 @@ namespace _01.Code.Dialogue
             bodyText = body;
             progressText = progress;
             nextButton = next;
+            closeButton = close;
             choiceRoot = choices;
             choiceButtonPrefab = choicePrefab;
 
@@ -85,9 +87,6 @@ namespace _01.Code.Dialogue
 
             root.SetActive(true);
             BindButtonListeners();
-
-            if (titleText != null)
-                titleText.text = string.Empty;
 
             if (speakerText != null)
                 speakerText.text = data.SpeakerName;
@@ -135,6 +134,7 @@ namespace _01.Code.Dialogue
 
             boundNextButton = nextButton;
             boundNextButton?.onClick.AddListener(HandleNextClicked);
+            boundCloseButton = closeButton;
             boundCloseButton?.onClick.AddListener(HandleCloseClicked);
         }
 
