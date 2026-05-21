@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using _01.Code.Buildings;
 using _01.Code.Core;
 using _01.Code.Units;
 
@@ -72,5 +73,25 @@ namespace _01.Code.Events
         }
 
         public IReadOnlyList<UnitDataSO> UnlockedUnits { get; }
+    }
+
+    public class BuildingUnlockRequestedEvent : GameEvent
+    {
+        public BuildingUnlockRequestedEvent(BuildingDataSO building)
+        {
+            Building = building;
+        }
+
+        public BuildingDataSO Building { get; }
+    }
+
+    public class BuildingUnlockChangedEvent : GameEvent
+    {
+        public BuildingUnlockChangedEvent(IReadOnlyList<BuildingDataSO> unlockedBuildings)
+        {
+            UnlockedBuildings = unlockedBuildings;
+        }
+
+        public IReadOnlyList<BuildingDataSO> UnlockedBuildings { get; }
     }
 }

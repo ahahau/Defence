@@ -199,6 +199,17 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d5737a8944904cbfbb280db863cced84, type: 2}
   - {fileID: 11400000, guid: 551ae3e7bc234718be42089db015a1ca, type: 2}
   - {fileID: 11400000, guid: 90ecdf95300c42f08b5c256aaa1329dd, type: 2}
+  buildingRewardPool:
+  - {fileID: 11400000, guid: 3be975d9f7e84f2ca311f8d4f7a31e6a, type: 2}
+  - {fileID: 11400000, guid: 29e49c3215d74e87a2f48f1429a0246d, type: 2}
+  - {fileID: 11400000, guid: 63a68a01c1e746e49a3bc6917d59ab69, type: 2}
+  - {fileID: 11400000, guid: 6b7d4a8b65db4ce7ac9796c41147c597, type: 2}
+  - {fileID: 11400000, guid: 6120671860064b739c4fe040da4747f0, type: 2}
+  - {fileID: 11400000, guid: 4bc0888fea494b3da0e4c05d659baaf9, type: 2}
+  - {fileID: 11400000, guid: e54bdac488bf4a19b5cbcf504e34f6e8, type: 2}
+  - {fileID: 11400000, guid: b7e6ba90fa9242e7840b10a701686e97, type: 2}
+  - {fileID: 11400000, guid: 169a0159d9454abba7660ea48c46532c, type: 2}
+  - {fileID: 11400000, guid: 2f9619c18a6e4290b76a38e11290abd5, type: 2}
   unitRewardButton: {fileID: 11004}
   unitRewardText: {fileID: 3882212198854312077}
   unitChoiceCount: 3

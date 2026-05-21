@@ -43,6 +43,12 @@ namespace _01.Code.UI
 
         private void HandleStartClicked()
         {
+            if (dayManager == null || waveManager == null || !waveManager.CanStartWave(dayManager.NextWaveDay))
+            {
+                RefreshStartButton();
+                return;
+            }
+
             dayManager?.StartWave();
         }
 
@@ -77,7 +83,10 @@ namespace _01.Code.UI
             if (startButton == null)
                 return;
 
-            startButton.interactable = waveManager != null && waveManager.HasPortal && dayManager != null && dayManager.IsStandby;
+            startButton.interactable = waveManager != null
+                                       && dayManager != null
+                                       && dayManager.IsStandby
+                                       && waveManager.CanStartWave(dayManager.NextWaveDay);
         }
 
         private void SetStartButtonVisible(bool visible)

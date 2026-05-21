@@ -1264,7 +1264,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4294964720
   m_fontColor: {r: 0.94, g: 0.96, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -1277,7 +1277,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -1406,7 +1406,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -2975,7 +2975,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &576978049
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3744,7 +3744,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &739031303
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3930,7 +3930,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -4231,6 +4231,7 @@ MonoBehaviour:
   spriteRenderer: {fileID: 1307807646}
   lockedOverlayRenderer: {fileID: 69148848}
   lockedCostText: {fileID: 0}
+  lockedCostTextPrefab: {fileID: 0}
   unlockedSprite: {fileID: -3384411708189302445, guid: 9173dff71398ab441b2cd0472cab8975, type: 3}
   lockedCandidateSprite: {fileID: -2705092886968552188, guid: 47a3f8bf0ac10e24d91cffc8a95c5ddb, type: 3}
   unlockedSpriteScale: {x: 1, y: 1.6666667, z: 1}
@@ -4708,6 +4709,7 @@ MonoBehaviour:
   spriteRenderer: {fileID: 1203453881}
   lockedOverlayRenderer: {fileID: 377335878}
   lockedCostText: {fileID: 0}
+  lockedCostTextPrefab: {fileID: 0}
   unlockedSprite: {fileID: -3384411708189302445, guid: 9173dff71398ab441b2cd0472cab8975, type: 3}
   lockedCandidateSprite: {fileID: -2705092886968552188, guid: 47a3f8bf0ac10e24d91cffc8a95c5ddb, type: 3}
   unlockedSpriteScale: {x: 1, y: 1.6666667, z: 1}
@@ -5553,7 +5555,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4293648603
   m_fontColor: {r: 0.86, g: 0.88, b: 0.92, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -5566,7 +5568,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -7316,7 +7318,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4294964720
   m_fontColor: {r: 0.94, g: 0.96, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -7329,7 +7331,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -7866,7 +7868,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4294964720
   m_fontColor: {r: 0.94, g: 0.96, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -7879,7 +7881,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -8089,6 +8091,7 @@ MonoBehaviour:
   spriteRenderer: {fileID: 865626586}
   lockedOverlayRenderer: {fileID: 149552278}
   lockedCostText: {fileID: 0}
+  lockedCostTextPrefab: {fileID: 0}
   unlockedSprite: {fileID: -3384411708189302445, guid: 9173dff71398ab441b2cd0472cab8975, type: 3}
   lockedCandidateSprite: {fileID: -2705092886968552188, guid: 47a3f8bf0ac10e24d91cffc8a95c5ddb, type: 3}
   unlockedSpriteScale: {x: 1, y: 1.6666667, z: 1}
@@ -8202,6 +8205,7 @@ MonoBehaviour:
   spriteRenderer: {fileID: 1788401260}
   lockedOverlayRenderer: {fileID: 664182927}
   lockedCostText: {fileID: 0}
+  lockedCostTextPrefab: {fileID: 0}
   unlockedSprite: {fileID: -3384411708189302445, guid: 9173dff71398ab441b2cd0472cab8975, type: 3}
   lockedCandidateSprite: {fileID: -2705092886968552188, guid: 47a3f8bf0ac10e24d91cffc8a95c5ddb, type: 3}
   unlockedSpriteScale: {x: 1, y: 1.6666667, z: 1}
@@ -8352,6 +8356,7 @@ MonoBehaviour:
   spriteRenderer: {fileID: 1458721546}
   lockedOverlayRenderer: {fileID: 1021453030}
   lockedCostText: {fileID: 0}
+  lockedCostTextPrefab: {fileID: 0}
   unlockedSprite: {fileID: -3384411708189302445, guid: 9173dff71398ab441b2cd0472cab8975, type: 3}
   lockedCandidateSprite: {fileID: -2705092886968552188, guid: 47a3f8bf0ac10e24d91cffc8a95c5ddb, type: 3}
   unlockedSpriteScale: {x: 1, y: 1.6666667, z: 1}

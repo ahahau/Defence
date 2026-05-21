@@ -10,6 +10,7 @@ namespace _01.Code.Buildings
         [field: SerializeField] public int Cost { get; private set; }
         [field: SerializeField] public Building Prefab { get; private set; }
         [field: SerializeField] public bool Unique { get; private set; }
+        [field: SerializeField] public bool Locked { get; private set; } = true;
         [field: SerializeField, Min(0)] public int BaseDanger { get; private set; } = 1;
         [field: SerializeField] public InstallCategory Category { get; private set; } = InstallCategory.Building;
     }

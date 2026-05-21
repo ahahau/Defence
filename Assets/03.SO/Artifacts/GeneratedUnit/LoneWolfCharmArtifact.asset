@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c95403332b4dc154a86423dce0b0559b, type: 3}
+  m_Name: LoneWolfCharmArtifact
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Artifacts.ArtifactDataSO
+  <DisplayName>k__BackingField: "\uACE0\uB9BD \uB291\uB300 \uBD80\uC801"
+  <Description>k__BackingField: "\uACE0\uC6A9 \uC720\uB2DB\uC774 \uC778\uC811 \uC801
+    \uC5C6\uC774 \uC2F8\uC6B8 \uB54C \uD53C\uD574\uB7C9 \uC99D\uAC00"
+  <Icon>k__BackingField: {fileID: 0}
+  <IconColor>k__BackingField: {r: 0.7, g: 0.7, b: 0.96, a: 1}
+  <Target>k__BackingField: 1
+  <AttackDamageBonus>k__BackingField: 0
+  <AttackDamageMultiplier>k__BackingField: 1
+  <MaxHealthBonus>k__BackingField: 0
+  <AttackIntervalMultiplier>k__BackingField: 1
+  <Effects>k__BackingField:
+  - {fileID: 11400000, guid: d880327bd9043c44481e197234a72c19, type: 2}

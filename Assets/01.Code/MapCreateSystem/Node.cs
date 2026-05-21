@@ -16,6 +16,9 @@ namespace _01.Code.MapCreateSystem
         private SpriteRenderer spriteRenderer;
 
         [SerializeField]
+        private GameObject lockedRoot;
+
+        [SerializeField]
         private SpriteRenderer lockedOverlayRenderer;
 
         [SerializeField]
@@ -31,21 +34,6 @@ namespace _01.Code.MapCreateSystem
         private Vector3 unlockedSpriteScale = new(1f, 1.6666667f, 1f);
 
         [SerializeField]
-        private Vector3 lockedOverlayLocalScale = new(1f, 1.25f, 1f);
-
-        [SerializeField]
-        private Vector3 lockedCostLocalPosition = new(0f, -0.56f, -0.08f);
-
-        [SerializeField]
-        private Vector3 lockedCostLocalScale = new(0.12f, 0.12f, 0.12f);
-
-        [SerializeField]
-        private float lockedCostFontSize = 2.6f;
-
-        [SerializeField]
-        private Color lockedCostColor = new(1f, 0.84f, 0.28f, 1f);
-
-        [SerializeField]
         private Color unlockedVisualColor = Color.white;
 
         [SerializeField]
@@ -59,9 +47,6 @@ namespace _01.Code.MapCreateSystem
         
         [SerializeField]
         private Transform enemyPosition;
-
-        [SerializeField, Range(0.1f, 1f)]
-        private float lockedVisualAlpha = 1f;
 
         [SerializeField, Range(0.1f, 1f)]
         private float lockedVisualScale = 0.72f;
@@ -200,40 +185,27 @@ namespace _01.Code.MapCreateSystem
 
         private void SetLockedOverlayVisible(bool visible)
         {
-            var overlay = ResolveLockedOverlayRenderer();
-            if (overlay == null)
+            SetLockedRootVisible(visible);
+
+            if (lockedOverlayRenderer == null)
                 return;
 
-            overlay.enabled = visible && lockedCandidateSprite != null;
-            overlay.sprite = lockedCandidateSprite;
-            overlay.color = new Color(1f, 1f, 1f, lockedVisualAlpha);
-            overlay.transform.localScale = lockedOverlayLocalScale;
+            lockedOverlayRenderer.gameObject.SetActive(visible);
+            lockedOverlayRenderer.enabled = visible;
         }
 
         private void SetLockedCostVisible(bool visible)
         {
-            var costText = ResolveLockedCostText();
-            if (costText == null)
+            if (lockedCostText == null)
                 return;
 
-            costText.gameObject.SetActive(visible);
+            lockedCostText.gameObject.SetActive(visible);
         }
 
-        private SpriteRenderer ResolveLockedOverlayRenderer()
+        private void SetLockedRootVisible(bool visible)
         {
-            if (lockedOverlayRenderer != null)
-                return lockedOverlayRenderer;
-
-            var overlayObject = new GameObject("LockedOverlay");
-            overlayObject.transform.SetParent(transform);
-            overlayObject.transform.localPosition = new Vector3(0f, 0f, -0.05f);
-            overlayObject.transform.localRotation = Quaternion.identity;
-            overlayObject.transform.localScale = Vector3.one;
-
-            lockedOverlayRenderer = overlayObject.AddComponent<SpriteRenderer>();
-            lockedOverlayRenderer.sortingLayerID = spriteRenderer != null ? spriteRenderer.sortingLayerID : 0;
-            lockedOverlayRenderer.sortingOrder = spriteRenderer != null ? spriteRenderer.sortingOrder + 1 : 1;
-            return lockedOverlayRenderer;
+            if (lockedRoot != null)
+                lockedRoot.SetActive(visible);
         }
 
         private TextMeshPro ResolveLockedCostText()
@@ -241,22 +213,8 @@ namespace _01.Code.MapCreateSystem
             if (lockedCostText != null)
                 return lockedCostText;
 
-            var textObject = new GameObject("LockedCostText");
-            textObject.transform.SetParent(transform);
-            textObject.transform.localPosition = lockedCostLocalPosition;
-            textObject.transform.localRotation = Quaternion.identity;
-            textObject.transform.localScale = lockedCostLocalScale;
-
-            lockedCostText = textObject.AddComponent<TextMeshPro>();
-            lockedCostText.alignment = TextAlignmentOptions.Center;
-            lockedCostText.enableWordWrapping = false;
-            lockedCostText.fontSize = lockedCostFontSize;
-            lockedCostText.color = lockedCostColor;
-            lockedCostText.text = string.Empty;
-            lockedCostText.sortingLayerID = spriteRenderer != null ? spriteRenderer.sortingLayerID : 0;
-            lockedCostText.sortingOrder = spriteRenderer != null ? spriteRenderer.sortingOrder + 3 : 3;
-            lockedCostText.rectTransform.sizeDelta = new Vector2(8f, 2f);
-            return lockedCostText;
+            Debug.LogError($"{nameof(Node)} requires a locked cost text assigned in the node prefab.", this);
+            return null;
         }
 
         private Vector3 ResolvePrefabScale()

@@ -8,13 +8,13 @@
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Defence/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Defence/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/00.Scenes/SampleScene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/00.Scenes/SampleScene.unity" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/01.Code/Buildings/Trap.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings/Trap.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Dialogue/DialogueView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Dialogue/DialogueView.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/DayManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/DayManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Editor/StartTutorialDialogueInstaller.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Editor/StartTutorialDialogueInstaller.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/WaveManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/WaveManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/DungeonGraphController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/DungeonGraphController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/BuildConfirmPanelView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/BuildConfirmPanelView.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/ScrollViewContentSizer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/ScrollViewContentSizer.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/WaveRewardPanelView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/WaveRewardPanelView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/Node.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/Node.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/NodePanelView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/NodePanelView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Units/UnitDataSO.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Units/UnitDataSO.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/03.SO/WaveConfig.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/WaveConfig.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Map/Node.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Map/Node.prefab" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -132,6 +132,8 @@
       <workItem from="1779195922691" duration="3090000" />
       <workItem from="1779237071280" duration="7264000" />
       <workItem from="1779264652317" duration="1969000" />
+      <workItem from="1779319120385" duration="7313000" />
+      <workItem from="1779357497781" duration="2085000" />
     </task>
     <servers />
   </component>

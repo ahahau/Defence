@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using _01.Code.Artifacts;
+using _01.Code.Buildings;
 using _01.Code.Core;
 using _01.Code.Events;
 using _01.Code.Units;
@@ -30,13 +31,16 @@ namespace _01.Code.UI
         [SerializeField, Min(1)] private int artifactChoiceCount = 3;
         [Header("Unit Unlock Reward")]
         [SerializeField] private UnitDataSO[] unitRewardPool;
+        [SerializeField] private BuildingDataSO[] buildingRewardPool;
         [SerializeField] private Button unitRewardButton;
         [SerializeField] private Graphic unitRewardText;
         [SerializeField, Min(1)] private int unitChoiceCount = 3;
 
         private readonly List<ArtifactDataSO> pendingArtifactChoices = new();
         private readonly List<UnitDataSO> pendingUnitChoices = new();
+        private readonly List<BuildingDataSO> pendingBuildingChoices = new();
         private readonly List<UnitDataSO> unlockedUnitRewards = new();
+        private readonly List<BuildingDataSO> unlockedBuildingRewards = new();
         private GameEventChannelSO _costEventChannel;
         private int _pendingGoldAmount;
         private bool _hasPendingGoldReward;
@@ -80,18 +84,18 @@ namespace _01.Code.UI
             _costEventChannel = costEventChannel;
         }
 
-        public void ShowGoldReward(int goldAmount)
+        public void ShowGoldReward(int goldAmount, bool includeArtifactReward = true)
         {
             gameObject.SetActive(true);
             ConfigureModalLayout();
             ConfigureRewardChoiceLayout();
-            PrepareArtifactChoices();
-            PrepareUnitChoices();
+            PrepareArtifactChoices(includeArtifactReward);
+            PrepareUnlockChoices();
 
             _pendingGoldAmount = Mathf.Max(0, goldAmount);
             _hasPendingGoldReward = _pendingGoldAmount > 0;
             _hasPendingArtifactReward = pendingArtifactChoices.Count > 0 && artifactRewardButton != null && artifactChoicePanel != null;
-            _hasPendingUnitReward = pendingUnitChoices.Count > 0 && unitRewardButton != null && artifactChoicePanel != null;
+            _hasPendingUnitReward = HasPendingUnlockReward() && unitRewardButton != null && artifactChoicePanel != null;
 
             if (!_hasPendingGoldReward && !_hasPendingArtifactReward && !_hasPendingUnitReward)
             {
@@ -112,7 +116,7 @@ namespace _01.Code.UI
             }
 
             SetArtifactRewardButtonState(_hasPendingArtifactReward, _hasPendingArtifactReward ? "아티팩트 선택" : "선택 완료", _hasPendingArtifactReward);
-            SetUnitRewardButtonState(_hasPendingUnitReward, _hasPendingUnitReward ? "유닛 해금" : "선택 완료", _hasPendingUnitReward);
+            SetUnitRewardButtonState(_hasPendingUnitReward, _hasPendingUnitReward ? "해금 선택" : "선택 완료", _hasPendingUnitReward);
             HideWarning();
             HideArtifactChoices();
         }
@@ -202,7 +206,7 @@ namespace _01.Code.UI
 
         private void HandleUnitRewardClicked()
         {
-            if (!_hasPendingUnitReward || pendingUnitChoices.Count == 0)
+            if (!_hasPendingUnitReward || !HasPendingUnlockReward())
                 return;
 
             if (artifactChoicePanel == null)
@@ -211,7 +215,7 @@ namespace _01.Code.UI
                 return;
             }
 
-            artifactChoicePanel.ShowUnits(pendingUnitChoices, UnlockUnit);
+            artifactChoicePanel.ShowUnlocks(pendingUnitChoices, pendingBuildingChoices, UnlockUnit, UnlockBuilding);
         }
 
         private void ObtainArtifact(ArtifactDataSO artifact)
@@ -238,6 +242,24 @@ namespace _01.Code.UI
             _costEventChannel?.RaiseEvent(new UnitUnlockRequestedEvent(unit));
             _hasPendingUnitReward = false;
             pendingUnitChoices.Clear();
+            pendingBuildingChoices.Clear();
+            SetUnitRewardButtonState(false, "선택 완료");
+            HideArtifactChoices();
+            HideWarning();
+        }
+
+        private void UnlockBuilding(BuildingDataSO building)
+        {
+            if (building == null)
+                return;
+
+            if (!unlockedBuildingRewards.Contains(building))
+                unlockedBuildingRewards.Add(building);
+
+            _costEventChannel?.RaiseEvent(new BuildingUnlockRequestedEvent(building));
+            _hasPendingUnitReward = false;
+            pendingUnitChoices.Clear();
+            pendingBuildingChoices.Clear();
             SetUnitRewardButtonState(false, "선택 완료");
             HideArtifactChoices();
             HideWarning();
@@ -272,13 +294,17 @@ namespace _01.Code.UI
             _pendingGoldAmount = 0;
             pendingArtifactChoices.Clear();
             pendingUnitChoices.Clear();
+            pendingBuildingChoices.Clear();
             HideArtifactChoices();
             Hide();
         }
 
-        private void PrepareArtifactChoices()
+        private void PrepareArtifactChoices(bool includeArtifactReward)
         {
             pendingArtifactChoices.Clear();
+
+            if (!includeArtifactReward)
+                return;
 
             if (artifactPool == null || artifactPool.Length == 0 || artifactInventory == null)
                 return;
@@ -298,26 +324,50 @@ namespace _01.Code.UI
             }
         }
 
-        private void PrepareUnitChoices()
+        private void PrepareUnlockChoices()
         {
             pendingUnitChoices.Clear();
+            pendingBuildingChoices.Clear();
 
-            if (unitRewardPool == null || unitRewardPool.Length == 0)
-                return;
-
-            var candidates = new List<UnitDataSO>();
-            foreach (var unit in unitRewardPool)
+            var unitCandidates = new List<UnitDataSO>();
+            if (unitRewardPool != null)
             {
-                if (unit != null && unit.Locked && !unlockedUnitRewards.Contains(unit))
-                    candidates.Add(unit);
+                foreach (var unit in unitRewardPool)
+                {
+                    if (unit != null && unit.Locked && !unlockedUnitRewards.Contains(unit))
+                        unitCandidates.Add(unit);
+                }
             }
 
-            for (var i = 0; i < unitChoiceCount && candidates.Count > 0; i++)
+            var buildingCandidates = new List<BuildingDataSO>();
+            if (buildingRewardPool != null)
             {
-                var index = UnityEngine.Random.Range(0, candidates.Count);
-                pendingUnitChoices.Add(candidates[index]);
-                candidates.RemoveAt(index);
+                foreach (var building in buildingRewardPool)
+                {
+                    if (building != null && building.Locked && !unlockedBuildingRewards.Contains(building))
+                        buildingCandidates.Add(building);
+                }
             }
+
+            for (var i = 0; i < unitChoiceCount && unitCandidates.Count + buildingCandidates.Count > 0; i++)
+            {
+                var index = UnityEngine.Random.Range(0, unitCandidates.Count + buildingCandidates.Count);
+                if (index < unitCandidates.Count)
+                {
+                    pendingUnitChoices.Add(unitCandidates[index]);
+                    unitCandidates.RemoveAt(index);
+                    continue;
+                }
+
+                var buildingIndex = index - unitCandidates.Count;
+                pendingBuildingChoices.Add(buildingCandidates[buildingIndex]);
+                buildingCandidates.RemoveAt(buildingIndex);
+            }
+        }
+
+        private bool HasPendingUnlockReward()
+        {
+            return pendingUnitChoices.Count > 0 || pendingBuildingChoices.Count > 0;
         }
 
         private void ConfigureRewardChoiceLayout()

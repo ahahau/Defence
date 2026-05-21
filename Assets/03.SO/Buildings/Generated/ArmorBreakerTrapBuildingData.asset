@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34c4dc0ecf9801d4aa0c5c4a452b0163, type: 3}
+  m_Name: ArmorBreakerTrapBuildingData
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Buildings.BuildingDataSO
+  <Grade>k__BackingField: 3
+  <BoardSprite>k__BackingField: {fileID: 21300000, guid: 9d2b7a3e6051ea94286df9f353dffb9f, type: 3}
+  <DisplayName>k__BackingField: "\uAC11\uC637\uBD84\uC1C4 \uD2B8\uB7A9"
+  <Cost>k__BackingField: 32
+  <Prefab>k__BackingField: {fileID: 1428848070512300419, guid: 9bc597468ad27a34ead5e993c93ab57d, type: 3}
+  <Unique>k__BackingField: 0
+  <Locked>k__BackingField: 1
+  <BaseDanger>k__BackingField: 3
+  <Category>k__BackingField: 2

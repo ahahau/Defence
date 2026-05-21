@@ -6,7 +6,6 @@ using _01.Code.Events;
 using _01.Code.MapCreateSystem;
 using _01.Code.UI;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace _01.Code.Manager
 {
@@ -62,6 +61,11 @@ namespace _01.Code.Manager
             _portalNode = null;
         }
 
+        public bool CanStartWave(int day)
+        {
+            return _portalNode != null && waveConfig != null && waveConfig.GetWaveForDay(day) != null;
+        }
+
         private void HandleDayChanged(DayChangedEvent evt)
         {
             _currentDay = evt.Day;
@@ -98,14 +102,35 @@ namespace _01.Code.Manager
             waveEventChannel.RaiseEvent(new WaveStartedEvent(_currentDay, entry.enemyCount));
 
             SpawnNextEnemyIfNeeded(false);
+            var spawnInterval = Mathf.Max(0.5f, entry.spawnInterval);
+            var turnInterval = Mathf.Max(0.1f, entry.enemyTurnInterval);
+            var spawnTimer = 0f;
+            var turnTimer = 0f;
 
             while (_isWaveRunning)
             {
-                yield return new WaitForSeconds(entry.enemyTurnInterval);
+                yield return null;
 
                 if (!_isWaveRunning)
                     break;
 
+                var deltaTime = Time.deltaTime;
+                spawnTimer += deltaTime;
+                turnTimer += deltaTime;
+
+                if (spawnTimer >= spawnInterval)
+                {
+                    spawnTimer = 0f;
+                    SpawnNextEnemyIfNeeded(false);
+                }
+
+                if (turnTimer < turnInterval)
+                {
+                    CompleteWaveIfCleared(false);
+                    continue;
+                }
+
+                turnTimer = 0f;
                 RemoveMissingEnemies();
 
                 _turnEnemies.Clear();
@@ -117,7 +142,6 @@ namespace _01.Code.Manager
                 }
                 _turnEnemies.Clear();
 
-                SpawnNextEnemyIfNeeded(false);
                 CompleteWaveIfCleared(false);
             }
 
@@ -139,17 +163,17 @@ namespace _01.Code.Manager
             Enemy enemy = Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
             enemy.ApplyWaveLevel(_currentDay, enemyHealthPerLevel, enemyAttackPerLevel);
             _remainingSpawns--;
-
+            
             var captured = enemy;
             var tracker = enemy.GetComponent<WaveEnemyTracker>();
             if (tracker == null)
                 tracker = enemy.gameObject.AddComponent<WaveEnemyTracker>();
-
+            
             tracker.OnEnemyDied = () =>
             {
                 HandleEnemyRemoved(captured);
             };
-
+            
             enemy.Initialize(_portalNode, costEventChannel, treasuryGoldLoss, nodeEventChannel);
             if (enemy != null)
                 _activeEnemies.Add(enemy);
@@ -189,12 +213,12 @@ namespace _01.Code.Manager
         {
             if (!_isWaveRunning)
                 return;
-
+            
             _isWaveRunning = false;
             _remainingSpawns = 0;
             _activeEnemies.Clear();
             _turnEnemies.Clear();
-
+            
             if (stopRunningCoroutine && _waveCoroutine != null)
             {
                 StopCoroutine(_waveCoroutine);
@@ -211,12 +235,12 @@ namespace _01.Code.Manager
                 _isWaitingForRewardPanel = true;
                 rewardPanel.Closed -= HandleRewardPanelClosed;
                 rewardPanel.Closed += HandleRewardPanelClosed;
-                rewardPanel.ShowGoldReward(_currentClearGoldReward);
+                rewardPanel.ShowGoldReward(_currentClearGoldReward, _currentDay > 0 && _currentDay % 5 == 0);
                 rewardPanel.transform.SetAsLastSibling();
 
                 if (rewardPanel.IsShowingReward)
                     return;
-
+            
                 rewardPanel.Closed -= HandleRewardPanelClosed;
                 _isWaitingForRewardPanel = false;
             }
@@ -229,9 +253,8 @@ namespace _01.Code.Manager
 
         private void HandleRewardPanelClosed()
         {
-            if (_rewardPanel != null)
-                _rewardPanel.Closed -= HandleRewardPanelClosed;
-
+            _rewardPanel.Closed -= HandleRewardPanelClosed;
+            
             if (!_isWaitingForRewardPanel)
                 return;
 
@@ -248,7 +271,7 @@ namespace _01.Code.Manager
         {
             if (_rewardPanel != null)
                 return _rewardPanel;
-
+            
             var parent = ResolveRewardPanelParent();
             _rewardPanel = FindExistingRewardPanel(parent);
             if (_rewardPanel != null)
@@ -274,7 +297,7 @@ namespace _01.Code.Manager
         private WaveRewardPanelView FindExistingRewardPanel(Transform parent)
         {
             if (parent == null)
-                return FindFirstObjectByType<WaveRewardPanelView>(FindObjectsInactive.Include);
+                return null;
 
             var panels = parent.GetComponentsInChildren<WaveRewardPanelView>(true);
             return panels.Length > 0 ? panels[0] : null;
@@ -285,10 +308,7 @@ namespace _01.Code.Manager
             if (rewardPanelParent != null)
                 return rewardPanelParent;
 
-            var canvas = FindFirstObjectByType<Canvas>();
-            if (canvas != null)
-                return canvas.transform;
-            Debug.LogError($"{nameof(WaveManager)} could not find a Canvas for reward panel.", this);
+            Debug.LogError($"{nameof(WaveManager)} requires a reward panel parent assigned.", this);
             return transform;
         }
     }

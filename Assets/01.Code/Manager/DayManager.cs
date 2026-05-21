@@ -19,6 +19,7 @@ namespace _01.Code.Manager
         private int _rosterSalaryCost;
         private int currentDay;
         private bool _isStandby = true;
+        private bool _hasPortal;
         public bool IsStandby => _isStandby;
         public int CurrentDay => currentDay;
         public int NextWaveDay => currentDay + 1;
@@ -31,6 +32,8 @@ namespace _01.Code.Manager
         private void OnEnable()
         {
             nodeEventChannel.AddListener<UnitAssignedToNodeEvent>(HandleUnitAssigned);
+            nodeEventChannel.AddListener<PortalInstalledEvent>(HandlePortalInstalled);
+            nodeEventChannel.AddListener<PortalRemovedEvent>(HandlePortalRemoved);
             if (waveEventChannel != null)
                 waveEventChannel.AddListener<WaveEndedEvent>(HandleWaveEnded);
             if (costEventChannel != null)
@@ -40,6 +43,8 @@ namespace _01.Code.Manager
         private void OnDisable()
         {
             nodeEventChannel.RemoveListener<UnitAssignedToNodeEvent>(HandleUnitAssigned);
+            nodeEventChannel.RemoveListener<PortalInstalledEvent>(HandlePortalInstalled);
+            nodeEventChannel.RemoveListener<PortalRemovedEvent>(HandlePortalRemoved);
             if (waveEventChannel != null)
                 waveEventChannel.RemoveListener<WaveEndedEvent>(HandleWaveEnded);
             if (costEventChannel != null)
@@ -48,8 +53,9 @@ namespace _01.Code.Manager
 
         public void StartWave()
         {
-            if (!_isStandby)
+            if (!_isStandby || !_hasPortal)
                 return;
+
             _isStandby = false;
             currentDay++;
             dayEventChannel.RaiseEvent(new DayChangedEvent(currentDay));
@@ -71,6 +77,16 @@ namespace _01.Code.Manager
         private void HandleWaveEnded(WaveEndedEvent evt)
         {
             _isStandby = true;
+        }
+
+        private void HandlePortalInstalled(PortalInstalledEvent evt)
+        {
+            _hasPortal = evt.Node != null;
+        }
+
+        private void HandlePortalRemoved(PortalRemovedEvent evt)
+        {
+            _hasPortal = false;
         }
 
         private void HandleRosterHired(RosterHirePaidEvent evt)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using _01.Code.Artifacts;
+using _01.Code.Buildings;
 using _01.Code.Units;
 using TMPro;
 using UnityEngine;
@@ -17,6 +18,7 @@ namespace _01.Code.UI
         private readonly List<Button> spawnedButtons = new();
         private Action<ArtifactDataSO> onSelected;
         private Action<UnitDataSO> onUnitSelected;
+        private Action<BuildingDataSO> onBuildingSelected;
 
         private void OnEnable()
         {
@@ -33,6 +35,7 @@ namespace _01.Code.UI
             ClearChoices();
             onSelected = selected;
             onUnitSelected = null;
+            onBuildingSelected = null;
 
             if (choiceRoot == null || choiceButtonPrefab == null)
             {
@@ -73,6 +76,7 @@ namespace _01.Code.UI
             ClearChoices();
             onSelected = null;
             onUnitSelected = selected;
+            onBuildingSelected = null;
 
             if (choiceRoot == null || choiceButtonPrefab == null)
             {
@@ -103,6 +107,68 @@ namespace _01.Code.UI
             gameObject.SetActive(true);
         }
 
+        public void ShowUnlocks(
+            IReadOnlyList<UnitDataSO> unitChoices,
+            IReadOnlyList<BuildingDataSO> buildingChoices,
+            Action<UnitDataSO> unitSelected,
+            Action<BuildingDataSO> buildingSelected)
+        {
+            ClearChoices();
+            onSelected = null;
+            onUnitSelected = unitSelected;
+            onBuildingSelected = buildingSelected;
+
+            if (choiceRoot == null || choiceButtonPrefab == null)
+            {
+                Debug.LogError($"{nameof(ArtifactRewardChoicePanelView)} requires a choice root and choice button prefab assigned in the inspector.", this);
+                Hide();
+                return;
+            }
+
+            var hasChoices = false;
+            if (unitChoices != null)
+            {
+                foreach (var unit in unitChoices)
+                {
+                    if (unit == null)
+                        continue;
+
+                    hasChoices = true;
+                    var button = Instantiate(choiceButtonPrefab, choiceRoot);
+                    button.gameObject.SetActive(true);
+                    ConfigureChoiceButtonLayout(button);
+                    SetButtonText(button, unit);
+                    button.onClick.AddListener(() => SelectUnit(unit));
+                    spawnedButtons.Add(button);
+                }
+            }
+
+            if (buildingChoices != null)
+            {
+                foreach (var building in buildingChoices)
+                {
+                    if (building == null)
+                        continue;
+
+                    hasChoices = true;
+                    var button = Instantiate(choiceButtonPrefab, choiceRoot);
+                    button.gameObject.SetActive(true);
+                    ConfigureChoiceButtonLayout(button);
+                    SetButtonText(button, building);
+                    button.onClick.AddListener(() => SelectBuilding(building));
+                    spawnedButtons.Add(button);
+                }
+            }
+
+            if (!hasChoices)
+            {
+                Hide();
+                return;
+            }
+
+            gameObject.SetActive(true);
+        }
+
         private void Select(ArtifactDataSO artifact)
         {
             onSelected?.Invoke(artifact);
@@ -112,6 +178,12 @@ namespace _01.Code.UI
         private void SelectUnit(UnitDataSO unit)
         {
             onUnitSelected?.Invoke(unit);
+            Hide();
+        }
+
+        private void SelectBuilding(BuildingDataSO building)
+        {
+            onBuildingSelected?.Invoke(building);
             Hide();
         }
 
@@ -151,6 +223,26 @@ namespace _01.Code.UI
                 ? unit.Name
                 : unit.name;
             var label = $"{displayName}\n해금\n고용 {unit.Cost} Gold / 배치 마력 {unit.MagicCost}";
+
+            var tmpText = button.GetComponentInChildren<TMP_Text>();
+            if (tmpText != null)
+            {
+                tmpText.text = label;
+                return;
+            }
+
+            var legacyText = button.GetComponentInChildren<Text>();
+            if (legacyText != null)
+                legacyText.text = label;
+        }
+
+        private static void SetButtonText(Button button, BuildingDataSO building)
+        {
+            var displayName = string.IsNullOrWhiteSpace(building.DisplayName)
+                ? building.name
+                : building.DisplayName;
+            var costText = building.Cost > 0 ? $"{building.Cost} Gold" : "무료";
+            var label = $"{displayName}\n건물 해금\n설치 {costText}";
 
             var tmpText = button.GetComponentInChildren<TMP_Text>();
             if (tmpText != null)

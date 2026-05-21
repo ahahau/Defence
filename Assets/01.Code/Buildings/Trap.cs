@@ -73,7 +73,7 @@ namespace _01.Code.Buildings
         {
             if (hitAnimationTarget == null || hitShakeDistance <= 0f)
                 return;
-
+            
             StopHitAnimation(false);
             
             hitAnimationTarget.localPosition = _hitAnimationBaseLocalPosition;

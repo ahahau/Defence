@@ -54,11 +54,13 @@ namespace _01.Code.UI
         private readonly List<RosterDeployEntryView> _deployEntries = new();
         private readonly List<Button> _categoryCards = new();
         private readonly List<GameObject> _categorySelectors = new();
+        private readonly List<BuildingDataSO> _unlockedBuildings = new();
         private bool _isCategoryPanelOpen;
 
         private void Awake()
         {
             _installButtonDefaultLabel = GetButtonLabel(installButton);
+            InitializeUnlockedBuildings();
             ConfigureCategorySelectors();
             panelRoot?.SetActive(false);
             SetActionButtonsActive(false);
@@ -76,6 +78,8 @@ namespace _01.Code.UI
             costEventChannel?.AddListener<UnitDeployMagicRejectedEvent>(HandleDeployMagicRejected);
             costEventChannel?.AddListener<BuildCostPaidEvent>(HandleBuildCostPaid);
             costEventChannel?.AddListener<BuildCostRejectedEvent>(HandleBuildCostRejected);
+            costEventChannel?.AddListener<BuildingUnlockRequestedEvent>(HandleBuildingUnlockRequested);
+            costEventChannel?.AddListener<BuildingUnlockChangedEvent>(HandleBuildingUnlockChanged);
             closeButton?.onClick.AddListener(HandleCloseClicked);
             backButton?.onClick.AddListener(HandleBackClicked);
             installButton?.onClick.AddListener(HandleInstallClicked);
@@ -91,6 +95,8 @@ namespace _01.Code.UI
             costEventChannel?.RemoveListener<UnitDeployMagicRejectedEvent>(HandleDeployMagicRejected);
             costEventChannel?.RemoveListener<BuildCostPaidEvent>(HandleBuildCostPaid);
             costEventChannel?.RemoveListener<BuildCostRejectedEvent>(HandleBuildCostRejected);
+            costEventChannel?.RemoveListener<BuildingUnlockRequestedEvent>(HandleBuildingUnlockRequested);
+            costEventChannel?.RemoveListener<BuildingUnlockChangedEvent>(HandleBuildingUnlockChanged);
             closeButton?.onClick.RemoveListener(HandleCloseClicked);
             backButton?.onClick.RemoveListener(HandleBackClicked);
             installButton?.onClick.RemoveListener(HandleInstallClicked);
@@ -175,6 +181,12 @@ namespace _01.Code.UI
         {
             if (_selectedNode == null)
                 return;
+
+            if (!HasVisibleInstallOptions(category))
+            {
+                ShowCategoryPanel();
+                return;
+            }
 
             BringToFront();
             SetCategorySelectorsActive(false);
@@ -279,11 +291,17 @@ namespace _01.Code.UI
                 return;
 
             portalInstallButton.gameObject.SetActive(false);
-            CreateCategoryCard(contentRoot, InstallCategory.Building);
-            CreateCategoryCard(contentRoot, InstallCategory.Unit);
-            CreateCategoryCard(contentRoot, InstallCategory.Trap);
-            CreateCategoryCard(contentRoot, InstallCategory.Decoration);
+            TryCreateCategoryCard(contentRoot, InstallCategory.Building);
+            TryCreateCategoryCard(contentRoot, InstallCategory.Unit);
+            TryCreateCategoryCard(contentRoot, InstallCategory.Trap);
+            TryCreateCategoryCard(contentRoot, InstallCategory.Decoration);
             ScrollViewContentSizer.ResizeToGridItemCount(contentRoot, _categoryCards.Count);
+        }
+
+        private void TryCreateCategoryCard(Transform contentRoot, InstallCategory category)
+        {
+            if (HasVisibleInstallOptions(category))
+                CreateCategoryCard(contentRoot, category);
         }
 
         private void CreateCategoryCard(Transform contentRoot, InstallCategory category)
@@ -313,6 +331,23 @@ namespace _01.Code.UI
             _categoryCards.Clear();
             HideBuildingTemplate();
             ScrollViewContentSizer.ResizeToGridItemCount(buildingContentRoot, 0);
+        }
+
+        private bool HasVisibleInstallOptions(InstallCategory category)
+        {
+            if (category == InstallCategory.Unit)
+                return hiredUnitRoster != null && hiredUnitRoster.AvailableUnits.Count > 0;
+
+            if (installableBuildings == null)
+                return false;
+
+            foreach (var buildingData in installableBuildings)
+            {
+                if (IsVisibleBuildingOption(buildingData, category))
+                    return true;
+            }
+
+            return false;
         }
 
         private void RefreshRosterEntries()
@@ -373,14 +408,18 @@ namespace _01.Code.UI
 
         private void DeployUnit(Node node, UnitDataSO unitData)
         {
-            if (node == null || unitData == null || unitPrefab == null)
+            if (node == null || unitData == null)
+                return;
+
+            var resolvedUnitPrefab = unitData.Prefab != null ? unitData.Prefab : unitPrefab;
+            if (resolvedUnitPrefab == null)
                 return;
 
             var spawnPos = node.UnitPosition != null
                 ? node.UnitPosition.position
                 : node.transform.position;
 
-            var unitGo = Instantiate(unitPrefab, spawnPos, Quaternion.identity);
+            var unitGo = Instantiate(resolvedUnitPrefab, spawnPos, Quaternion.identity);
             unitGo.Initialize(unitData);
             node.AssignUnit(unitData, unitGo);
             artifactEventChannel?.RaiseEvent(new UnitArtifactApplyRequestedEvent(unitGo));
@@ -439,7 +478,7 @@ namespace _01.Code.UI
 
             foreach (var buildingData in installableBuildings)
             {
-                if (buildingData == null || buildingData.Prefab == null || buildingData.Category != category)
+                if (!IsVisibleBuildingOption(buildingData, category))
                     continue;
 
                 var entry = Instantiate(portalInstallButton, contentRoot);
@@ -522,7 +561,7 @@ namespace _01.Code.UI
 
             foreach (var buildingData in installableBuildings)
             {
-                if (buildingData == null || buildingData.Category != category)
+                if (!IsVisibleBuildingOption(buildingData, category))
                     continue;
 
                 var sprite = ResolvePreviewSprite(buildingData);
@@ -565,6 +604,69 @@ namespace _01.Code.UI
                 : null;
 
             return prefabSprite != null ? prefabSprite : buildingData.BoardSprite;
+        }
+
+        private void HandleBuildingUnlockRequested(BuildingUnlockRequestedEvent evt)
+        {
+            if (evt.Building == null || _unlockedBuildings.Contains(evt.Building))
+                return;
+
+            _unlockedBuildings.Add(evt.Building);
+            costEventChannel?.RaiseEvent(new BuildingUnlockChangedEvent(_unlockedBuildings));
+            RefreshAfterBuildingUnlock();
+        }
+
+        private void HandleBuildingUnlockChanged(BuildingUnlockChangedEvent evt)
+        {
+            _unlockedBuildings.Clear();
+
+            if (evt.UnlockedBuildings != null)
+            {
+                foreach (var building in evt.UnlockedBuildings)
+                {
+                    if (building != null && !_unlockedBuildings.Contains(building))
+                        _unlockedBuildings.Add(building);
+                }
+            }
+
+            RefreshAfterBuildingUnlock();
+        }
+
+        private void InitializeUnlockedBuildings()
+        {
+            _unlockedBuildings.Clear();
+
+            if (installableBuildings == null)
+                return;
+
+            foreach (var buildingData in installableBuildings)
+            {
+                if (buildingData != null && !buildingData.Locked && !_unlockedBuildings.Contains(buildingData))
+                    _unlockedBuildings.Add(buildingData);
+            }
+        }
+
+        private void RefreshAfterBuildingUnlock()
+        {
+            if (panelRoot == null || !panelRoot.activeSelf)
+                return;
+
+            if (IsCategoryPanelOpen())
+            {
+                RebuildCategoryEntries();
+                return;
+            }
+
+            if (IsBuildingPanelOpen())
+                ShowCategoryPanel();
+        }
+
+        private bool IsVisibleBuildingOption(BuildingDataSO buildingData, InstallCategory category)
+        {
+            return buildingData != null
+                   && buildingData.Prefab != null
+                   && buildingData.Category == category
+                   && _unlockedBuildings.Contains(buildingData);
         }
 
         private string BuildCardText(BuildingDataSO buildingData)

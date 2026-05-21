@@ -24,8 +24,8 @@ namespace _01.Code.Editor
         {
             var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             var sequence = EnsureTutorialSequence();
-            var canvas = EnsureCanvas();
-            EnsureEventSystem();
+            var canvas = EnsureCanvas(scene);
+            EnsureEventSystem(scene);
 
             var overlay = EnsureObject("StartTutorialDialogueOverlay", canvas.transform, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(CanvasGroup), typeof(DialogueView));
             ConfigureOverlay(overlay);
@@ -81,9 +81,9 @@ namespace _01.Code.Editor
             return sequence;
         }
 
-        private static Canvas EnsureCanvas()
+        private static Canvas EnsureCanvas(UnityEngine.SceneManagement.Scene scene)
         {
-            var canvas = UnityEngine.Object.FindFirstObjectByType<Canvas>(FindObjectsInactive.Include);
+            var canvas = GetComponentInScene<Canvas>(scene);
             if (canvas != null)
                 return canvas;
 
@@ -97,9 +97,9 @@ namespace _01.Code.Editor
             return canvas;
         }
 
-        private static void EnsureEventSystem()
+        private static void EnsureEventSystem(UnityEngine.SceneManagement.Scene scene)
         {
-            if (UnityEngine.Object.FindFirstObjectByType<EventSystem>(FindObjectsInactive.Include) != null)
+            if (GetComponentInScene<EventSystem>(scene) != null)
                 return;
 
             new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
@@ -174,6 +174,19 @@ namespace _01.Code.Editor
 
             EnsureComponents(gameObject, components);
             return gameObject;
+        }
+
+        private static T GetComponentInScene<T>(UnityEngine.SceneManagement.Scene scene) where T : Component
+        {
+            var roots = scene.GetRootGameObjects();
+            foreach (var root in roots)
+            {
+                var component = root.GetComponentInChildren<T>(true);
+                if (component != null)
+                    return component;
+            }
+
+            return null;
         }
 
         private static GameObject EnsureChild(Transform parent, string name, params Type[] components)
