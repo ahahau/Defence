@@ -1,23 +1,23 @@
 using UnityEngine;
 
-namespace _01.Code.Enemies
+namespace _01.Code.Units
 {
-    public class EnemyClickTarget : MonoBehaviour
+    public class UnitClickTarget : MonoBehaviour
     {
-        [SerializeField] private Enemy enemy;
+        [SerializeField] private Unit unit;
 
-        public Enemy Target => enemy;
+        public Unit Target => unit;
 
-        public void Initialize(Enemy targetEnemy)
+        public void Initialize(Unit targetUnit)
         {
-            enemy = targetEnemy;
+            unit = targetUnit;
             EnsureCollider();
         }
 
         private void Awake()
         {
-            if (enemy == null)
-                enemy = GetComponent<Enemy>();
+            if (unit == null)
+                unit = GetComponent<Unit>();
 
             EnsureCollider();
         }
