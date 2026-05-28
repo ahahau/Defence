@@ -19,5 +19,8 @@ namespace _01.Code.Entities
 
         [field: SerializeField]
         public Sprite BoardSprite { get; private set; }
+
+        [field: SerializeField, Min(0)]
+        public int Defense { get; private set; }
     }
 }

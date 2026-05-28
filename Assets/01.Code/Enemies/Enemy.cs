@@ -60,6 +60,7 @@ namespace _01.Code.Enemies
                 statusController = GetComponent<EnemyStatusController>();
             if (statusController == null)
                 statusController = gameObject.AddComponent<EnemyStatusController>();
+            combatant?.SetDefense(data != null ? data.Defense : 0);
             InitializeMoodStats();
             SubscribeHealth();
         }
@@ -99,7 +100,7 @@ namespace _01.Code.Enemies
             if (!TryGetComponent<EnemyClickTarget>(out var clickTarget))
                 clickTarget = gameObject.AddComponent<EnemyClickTarget>();
 
-            clickTarget.Initialize(this, nodeEventChannel);
+            clickTarget.Initialize(this);
         }
 
         private int _treasuryGoldLoss;

@@ -11,6 +11,12 @@ namespace _01.Code.MapCreateSystem
         {
             name = objectName;
 
+            if (lineRenderer == null)
+            {
+                Debug.LogError($"{nameof(EdgeLine)} requires a line renderer.", this);
+                return;
+            }
+
             lineRenderer.positionCount = 2;
             lineRenderer.SetPosition(0, start);
             lineRenderer.SetPosition(1, end);

@@ -17,12 +17,14 @@ namespace _01.Code.Units
         public UnitLevel Level => level;
         public bool IsIncapacitated { get; private set; }
         public bool CanFight => !IsIncapacitated && Combatant.IsAlive;
+        public bool NeedsRecovery => Health != null && Health.CurrentHealth < Health.MaxHealth;
         public int RecoveryCost => Data != null ? Mathf.Max(1, Data.Cost / 2) : 10;
         private ArtifactStatBonus appliedArtifactBonus = new(0, 1f, 0, 1f);
 
         protected virtual void Awake()
         {
             SubscribeHealth();
+            EnsureClickTarget();
         }
 
         protected virtual void OnDestroy()
@@ -34,13 +36,20 @@ namespace _01.Code.Units
         public void Initialize(UnitDataSO unitData)
         {
             Data = unitData;
+            Combatant?.SetDefense(unitData != null ? unitData.Defense : 0);
 
             SubscribeHealth();
+            EnsureClickTarget();
         }
 
         public void RecoverFromIncapacitated()
         {
-            if (!IsIncapacitated)
+            RecoverToFull();
+        }
+
+        public void RecoverToFull()
+        {
+            if (!NeedsRecovery)
                 return;
 
             Health.RestoreToFull();
@@ -71,6 +80,12 @@ namespace _01.Code.Units
                 combatant?.StopCombat();
         }
 
-        
+        private void EnsureClickTarget()
+        {
+            if (!TryGetComponent<UnitClickTarget>(out var clickTarget))
+                clickTarget = gameObject.AddComponent<UnitClickTarget>();
+
+            clickTarget.Initialize(this);
+        }
     }
 }

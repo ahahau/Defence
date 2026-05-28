@@ -21,6 +21,12 @@ namespace _01.Code.MapCreateSystem
  
         public void CreateEdge(Vector2Int from, Vector2Int to)
         {
+            if (edgeLinePrefab == null)
+            {
+                Debug.LogError("DungeonEdgeManager requires an edge line prefab.", this);
+                return;
+            }
+
             var edgeLine = Instantiate(edgeLinePrefab);
             edgeLine.transform.SetParent(transform);
 
