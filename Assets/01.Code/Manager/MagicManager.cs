@@ -20,6 +20,7 @@ namespace _01.Code.Manager
         private void OnEnable()
         {
             costEventChannel.AddListener<UnitDeployMagicRequestedEvent>(HandleUnitDeployMagicRequested);
+            costEventChannel.AddListener<UnitDeployMagicRefundRequestedEvent>(HandleUnitDeployMagicRefundRequested);
         }
 
         private void Start()
@@ -30,6 +31,7 @@ namespace _01.Code.Manager
         private void OnDisable()
         {
             costEventChannel.RemoveListener<UnitDeployMagicRequestedEvent>(HandleUnitDeployMagicRequested);
+            costEventChannel.RemoveListener<UnitDeployMagicRefundRequestedEvent>(HandleUnitDeployMagicRefundRequested);
         }
 
         private void HandleUnitDeployMagicRequested(UnitDeployMagicRequestedEvent evt)
@@ -51,6 +53,21 @@ namespace _01.Code.Manager
                 evt.Node,
                 evt.Unit,
                 evt.MagicAmount,
+                UsedMagic,
+                maxMagic));
+        }
+
+        private void HandleUnitDeployMagicRefundRequested(UnitDeployMagicRefundRequestedEvent evt)
+        {
+            if (evt.MagicAmount <= 0)
+                return;
+
+            var refunded = Mathf.Min(UsedMagic, evt.MagicAmount);
+            UsedMagic = Mathf.Max(0, UsedMagic - refunded);
+            RaiseMagicChanged();
+            costEventChannel.RaiseEvent(new UnitDeployMagicRefundedEvent(
+                evt.Unit,
+                refunded,
                 UsedMagic,
                 maxMagic));
         }

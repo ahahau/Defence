@@ -65,4 +65,32 @@ namespace _01.Code.Events
         public int UsedMagic { get; }
         public int MaxMagic { get; }
     }
+
+    public class UnitDeployMagicRefundRequestedEvent : GameEvent
+    {
+        public UnitDeployMagicRefundRequestedEvent(UnitDataSO unit, int magicAmount)
+        {
+            Unit = unit;
+            MagicAmount = magicAmount;
+        }
+
+        public UnitDataSO Unit { get; }
+        public int MagicAmount { get; }
+    }
+
+    public class UnitDeployMagicRefundedEvent : GameEvent
+    {
+        public UnitDeployMagicRefundedEvent(UnitDataSO unit, int magicAmount, int usedMagic, int maxMagic)
+        {
+            Unit = unit;
+            MagicAmount = magicAmount;
+            UsedMagic = usedMagic;
+            MaxMagic = maxMagic;
+        }
+
+        public UnitDataSO Unit { get; }
+        public int MagicAmount { get; }
+        public int UsedMagic { get; }
+        public int MaxMagic { get; }
+    }
 }

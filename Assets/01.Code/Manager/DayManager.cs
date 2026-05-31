@@ -32,6 +32,7 @@ namespace _01.Code.Manager
         private void OnEnable()
         {
             nodeEventChannel.AddListener<UnitAssignedToNodeEvent>(HandleUnitAssigned);
+            nodeEventChannel.AddListener<UnitReturnedFromNodeEvent>(HandleUnitReturned);
             nodeEventChannel.AddListener<PortalInstalledEvent>(HandlePortalInstalled);
             nodeEventChannel.AddListener<PortalRemovedEvent>(HandlePortalRemoved);
             if (waveEventChannel != null)
@@ -43,6 +44,7 @@ namespace _01.Code.Manager
         private void OnDisable()
         {
             nodeEventChannel.RemoveListener<UnitAssignedToNodeEvent>(HandleUnitAssigned);
+            nodeEventChannel.RemoveListener<UnitReturnedFromNodeEvent>(HandleUnitReturned);
             nodeEventChannel.RemoveListener<PortalInstalledEvent>(HandlePortalInstalled);
             nodeEventChannel.RemoveListener<PortalRemovedEvent>(HandlePortalRemoved);
             if (waveEventChannel != null)
@@ -101,6 +103,17 @@ namespace _01.Code.Manager
 
             salaryByNode[evt.Node] = evt.Unit.Cost;
             _rosterSalaryCost = Mathf.Max(0, _rosterSalaryCost - evt.Unit.Cost);
+        }
+
+        private void HandleUnitReturned(UnitReturnedFromNodeEvent evt)
+        {
+            if (evt.Unit == null)
+                return;
+
+            if (evt.Node != null)
+                salaryByNode.Remove(evt.Node);
+
+            _rosterSalaryCost += evt.Unit.Cost;
         }
 
         private int CalculateTotalSalary()
