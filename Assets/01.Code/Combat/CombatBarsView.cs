@@ -18,7 +18,7 @@ namespace _01.Code.Combat
             SetFillScale(attackFill, ratio);
         }
 
-        private static void SetFillScale(Image fill, float ratio)
+        private void SetFillScale(Image fill, float ratio)
         {
             var rectTransform = fill.rectTransform;
             var scale = rectTransform.localScale;

@@ -4,7 +4,6 @@ using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
-using UnityEngine.Scripting;
 
 namespace _01.Code.Enemies
 {
@@ -21,13 +20,6 @@ namespace _01.Code.Enemies
         private static readonly HashSet<string> _occupiedNodes = new();
         private static readonly List<EnemyMover> _activeEnemies = new();
         public static IReadOnlyList<EnemyMover> ActiveEnemies => _activeEnemies;
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        private static void ResetOccupied()
-        {
-            _occupiedNodes.Clear();
-            _activeEnemies.Clear();
-        }
 
         private readonly HashSet<string> _visitedNodes = new();
         private Node _currentNode;
@@ -151,7 +143,8 @@ namespace _01.Code.Enemies
 
             foreach (var id in _currentNode.Data.ConnectedNodeIds)
             {
-                if (!Node.TryGetByDataId(id, out var node))
+                var node = FindNodeByDataId(id);
+                if (node == null)
                     continue;
 
                 if (_occupiedNodes.Contains(id))
@@ -172,7 +165,18 @@ namespace _01.Code.Enemies
             return null;
         }
 
-        private static Vector3 GetEnemyPosition(Node node)
+        private Node FindNodeByDataId(string dataId)
+        {
+            foreach (var node in Node.ActiveNodes)
+            {
+                if (node != null && node.Data != null && node.Data.Id == dataId)
+                    return node;
+            }
+
+            return null;
+        }
+
+        private Vector3 GetEnemyPosition(Node node)
         {
             return node.EnemyPosition != null
                 ? node.EnemyPosition.position

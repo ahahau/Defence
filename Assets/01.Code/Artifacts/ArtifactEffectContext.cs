@@ -55,7 +55,6 @@ namespace _01.Code.Artifacts
                 return health != null ? health.CurrentRatio : 0f;
             }
         }
-
         public bool HasEnemyOnAdjacentNode()
         {
             if (AttackerNode?.Data == null)

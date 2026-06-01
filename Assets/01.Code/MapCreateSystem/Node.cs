@@ -227,11 +227,6 @@ namespace _01.Code.MapCreateSystem
             return prefabScale;
         }
 
-        public static bool TryGetByDataId(string dataId, out Node node)
-        {
-            return nodesByDataId.TryGetValue(dataId, out node);
-        }
-
         private void OnDestroy()
         {
             if (Data != null)
