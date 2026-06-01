@@ -9,7 +9,6 @@ namespace _01.Code.Buildings
     public class Building : MonoBehaviour
     {
         [field: SerializeField, Min(0)] public int DangerRating { get; private set; }
-
         public virtual void Initialize(BuildingDataSO data)
         {
             DangerRating = data.BaseDanger;
@@ -28,7 +27,7 @@ namespace _01.Code.Buildings
             StartCoroutine(FlashTargetColor(target, flashColor, duration));
         }
 
-        private static void PlayFeelFeedback(MonoBehaviour feelFeedback, Vector3 position)
+        private void PlayFeelFeedback(MonoBehaviour feelFeedback, Vector3 position)
         {
             if (feelFeedback == null)
                 return;
@@ -51,7 +50,7 @@ namespace _01.Code.Buildings
             play?.Invoke(feelFeedback, null);
         }
 
-        private static IEnumerator FlashTargetColor(Combatant target, Color flashColor, float duration)
+        private IEnumerator FlashTargetColor(Combatant target, Color flashColor, float duration)
         {
             if (target == null)
                 yield break;
