@@ -24,6 +24,7 @@ namespace _01.Code.Manager
             costEventChannel.AddListener<RosterHirePaidEvent>(HandleHirePaid);
             costEventChannel.AddListener<UnitUnlockRequestedEvent>(HandleUnitUnlockRequested);
             nodeEventChannel.AddListener<UnitAssignedToNodeEvent>(HandleUnitDeployed);
+            nodeEventChannel.AddListener<UnitReturnedFromNodeEvent>(HandleUnitReturned);
             RaiseUnlockChanged();
         }
 
@@ -32,6 +33,7 @@ namespace _01.Code.Manager
             costEventChannel.RemoveListener<RosterHirePaidEvent>(HandleHirePaid);
             costEventChannel.RemoveListener<UnitUnlockRequestedEvent>(HandleUnitUnlockRequested);
             nodeEventChannel.RemoveListener<UnitAssignedToNodeEvent>(HandleUnitDeployed);
+            nodeEventChannel.RemoveListener<UnitReturnedFromNodeEvent>(HandleUnitReturned);
         }
 
         public bool IsUnlocked(UnitDataSO unit)
@@ -51,6 +53,11 @@ namespace _01.Code.Manager
             costEventChannel.RaiseEvent(new RosterChangedEvent(_availableUnits));
         }
 
+        private void HandleUnitReturned(UnitReturnedFromNodeEvent evt)
+        {
+            AddAvailableUnit(evt.Unit);
+        }
+
         private void HandleUnitUnlockRequested(UnitUnlockRequestedEvent evt)
         {
             if (evt.Unit == null || _unlockedUnits.Contains(evt.Unit))
@@ -58,6 +65,15 @@ namespace _01.Code.Manager
 
             _unlockedUnits.Add(evt.Unit);
             RaiseUnlockChanged();
+        }
+
+        private void AddAvailableUnit(UnitDataSO unit)
+        {
+            if (unit == null || _availableUnits.Contains(unit))
+                return;
+
+            _availableUnits.Add(unit);
+            costEventChannel.RaiseEvent(new RosterChangedEvent(_availableUnits));
         }
 
         private void InitializeUnlockedUnits()

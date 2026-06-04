@@ -28,8 +28,6 @@ namespace _01.Code.Combat
         private Color[] _originalColors;
         private Sequence _bloomSequence;
         private Sequence _impactSequence;
-        private static Material _hitParticleMaterial;
-
         private void Awake()
         {
             _originalColors = new Color[spriteRenderers.Length];
@@ -250,28 +248,6 @@ namespace _01.Code.Combat
             var renderer = particles.GetComponent<ParticleSystemRenderer>();
             renderer.renderMode = ParticleSystemRenderMode.Billboard;
             renderer.sortingOrder = hitParticleSortingOrder;
-            renderer.sharedMaterial = GetHitParticleMaterial();
-        }
-
-        private static Material GetHitParticleMaterial()
-        {
-            if (_hitParticleMaterial != null)
-                return _hitParticleMaterial;
-
-            var shader = Shader.Find("Sprites/Default")
-                         ?? Shader.Find("Universal Render Pipeline/Particles/Unlit")
-                         ?? Shader.Find("Particles/Standard Unlit");
-
-            if (shader == null)
-                return null;
-
-            _hitParticleMaterial = new Material(shader)
-            {
-                name = "Runtime Hit Particle Material",
-                hideFlags = HideFlags.HideAndDontSave
-            };
-
-            return _hitParticleMaterial;
         }
     }
 }

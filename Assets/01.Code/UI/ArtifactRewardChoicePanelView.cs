@@ -203,7 +203,9 @@ namespace _01.Code.UI
             var displayName = string.IsNullOrWhiteSpace(artifact.DisplayName)
                 ? artifact.name
                 : artifact.DisplayName;
-            var label = $"{displayName}\n{artifact.Description}";
+            var label = string.IsNullOrWhiteSpace(artifact.Description)
+                ? $"{displayName}\n아티팩트 획득"
+                : $"{displayName}\n{artifact.Description}";
 
             var tmpText = button.GetComponentInChildren<TMP_Text>();
             if (tmpText != null)
@@ -222,7 +224,7 @@ namespace _01.Code.UI
             var displayName = !string.IsNullOrWhiteSpace(unit.Name)
                 ? unit.Name
                 : unit.name;
-            var label = $"{displayName}\n해금\n고용 {unit.Cost} Gold / 배치 마력 {unit.MagicCost}";
+            var label = $"{displayName}\n유닛 해금\n고용: {unit.Cost} Gold\n배치 마력: {unit.MagicCost}";
 
             var tmpText = button.GetComponentInChildren<TMP_Text>();
             if (tmpText != null)
@@ -242,7 +244,8 @@ namespace _01.Code.UI
                 ? building.name
                 : building.DisplayName;
             var costText = building.Cost > 0 ? $"{building.Cost} Gold" : "무료";
-            var label = $"{displayName}\n건물 해금\n설치 {costText}";
+            var categoryText = building.Category == InstallCategory.Trap ? "트랩 해금" : "건물 해금";
+            var label = $"{displayName}\n{categoryText}\n설치: {costText}";
 
             var tmpText = button.GetComponentInChildren<TMP_Text>();
             if (tmpText != null)
@@ -264,8 +267,8 @@ namespace _01.Code.UI
             if (button.TryGetComponent<LayoutElement>(out var layoutElement))
             {
                 layoutElement.minWidth = 190f;
-                layoutElement.preferredWidth = 210f;
-                layoutElement.preferredHeight = 180f;
+                layoutElement.preferredWidth = 230f;
+                layoutElement.preferredHeight = 192f;
                 layoutElement.flexibleWidth = 1f;
                 layoutElement.flexibleHeight = 1f;
             }

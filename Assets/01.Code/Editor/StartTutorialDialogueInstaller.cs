@@ -50,7 +50,7 @@ namespace _01.Code.Editor
             var runnerObject = EnsureObject("StartTutorialDialogueSystem", null, typeof(DialogueRunner));
             ConfigureRunner(runnerObject.GetComponent<DialogueRunner>(), sequence, view);
 
-            overlay.SetActive(true);
+            overlay.SetActive(false);
             overlay.transform.SetAsLastSibling();
 
             EditorSceneManager.MarkSceneDirty(scene);
@@ -157,16 +157,14 @@ namespace _01.Code.Editor
             serializedRunner.FindProperty("valueTable").objectReferenceValue = AssetDatabase.LoadAssetAtPath<DialogueValueTableSO>(ValueTablePath);
             serializedRunner.FindProperty("costEventChannel").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameEventChannelSO>(CostChannelPath);
             serializedRunner.FindProperty("view").objectReferenceValue = view;
-            serializedRunner.FindProperty("playOnStart").boolValue = true;
+            serializedRunner.FindProperty("playOnStart").boolValue = false;
             serializedRunner.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(runner);
         }
 
         private static GameObject EnsureObject(string name, Transform parent, params Type[] components)
         {
-            var objectTransform = parent == null
-                ? GameObject.Find(name)?.transform
-                : parent.Find(name);
+            var objectTransform = GetObjectTransform(name, parent);
 
             var gameObject = objectTransform != null ? objectTransform.gameObject : new GameObject(name, components);
             if (parent != null)
@@ -174,6 +172,30 @@ namespace _01.Code.Editor
 
             EnsureComponents(gameObject, components);
             return gameObject;
+        }
+
+        private static Transform GetObjectTransform(string name, Transform parent)
+        {
+            if (parent != null)
+            {
+                for (var i = 0; i < parent.childCount; i++)
+                {
+                    var child = parent.GetChild(i);
+                    if (child.name == name)
+                        return child;
+                }
+
+                return null;
+            }
+
+            var roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
+            foreach (var root in roots)
+            {
+                if (root.name == name)
+                    return root.transform;
+            }
+
+            return null;
         }
 
         private static T GetComponentInScene<T>(UnityEngine.SceneManagement.Scene scene) where T : Component

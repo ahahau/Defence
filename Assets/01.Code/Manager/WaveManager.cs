@@ -235,7 +235,7 @@ namespace _01.Code.Manager
                 _isWaitingForRewardPanel = true;
                 rewardPanel.Closed -= HandleRewardPanelClosed;
                 rewardPanel.Closed += HandleRewardPanelClosed;
-                rewardPanel.ShowGoldReward(_currentClearGoldReward, _currentDay > 0 && _currentDay % 5 == 0);
+                rewardPanel.ShowGoldReward(_currentClearGoldReward, _currentDay > 0 && _currentDay % 3 == 0);
                 rewardPanel.transform.SetAsLastSibling();
 
                 if (rewardPanel.IsShowingReward)

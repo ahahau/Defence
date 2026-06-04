@@ -12,6 +12,7 @@ namespace _01.Code.Combat
     public class Combatant : MonoBehaviour
     {
         [SerializeField] private int attackDamage = 1;
+        [SerializeField, Min(0)] private int defense;
         [SerializeField] private float attackInterval = 1f;
         [SerializeField] private float bodySlamDistance = 0.3f;
         [SerializeField] private float bodySlamDuration = 0.12f;
@@ -33,18 +34,22 @@ namespace _01.Code.Combat
         private float artifactAttackDamageMultiplier = 1f;
         private GameEventChannelSO artifactEventChannel;
         private EnemyStatusController enemyStatusController;
-        private static Material _attackParticleMaterial;
-
         public bool IsAlive => health != null && health.IsAlive;
         public bool IsAttacking => _isAttacking;
         public Health Health => health;
         public int AttackDamage => ResolveAttackDamagePreview();
+        public int Defense => Mathf.Max(0, defense);
         public float AttackInterval => ResolveAttackInterval();
 
         public void AddAttackDamage(int amount)
         {
             if (amount > 0)
                 attackDamage += amount;
+        }
+
+        public void SetDefense(int value)
+        {
+            defense = Mathf.Max(0, value);
         }
 
         public void SetArtifactAttackModifier(int damageBonus, float damageMultiplier)
@@ -186,18 +191,33 @@ namespace _01.Code.Combat
         {
             var modifiedDamage = (attackDamage + artifactAttackDamageBonus) * artifactAttackDamageMultiplier;
             var damage = Mathf.Max(1, Mathf.RoundToInt(modifiedDamage));
-            if (artifactEventChannel == null)
-                return damage;
+            if (artifactEventChannel != null)
+            {
+                var evt = new CombatDamageCalculatedEvent(this, target, damage);
+                artifactEventChannel.RaiseEvent(evt);
+                damage = evt.Damage;
+            }
 
-            var evt = new CombatDamageCalculatedEvent(this, target, damage);
-            artifactEventChannel.RaiseEvent(evt);
-            return evt.Damage;
+            return CalculateDamageAfterDefense(damage, target);
         }
 
         private int ResolveAttackDamagePreview()
         {
             var modifiedDamage = (attackDamage + artifactAttackDamageBonus) * artifactAttackDamageMultiplier;
             return Mathf.Max(1, Mathf.RoundToInt(modifiedDamage));
+        }
+
+        private int CalculateDamageAfterDefense(int damage, Combatant target)
+        {
+            if (target == null)
+                return Mathf.Max(1, damage);
+
+            var defense = target.Defense;
+            if (defense <= 0)
+                return Mathf.Max(1, damage);
+
+            var reducedDamage = damage - damage * (defense / (defense + 100f));
+            return Mathf.Max(1, Mathf.RoundToInt(reducedDamage));
         }
 
         private float ResolveAttackInterval()
@@ -310,28 +330,6 @@ namespace _01.Code.Combat
             var renderer = particles.GetComponent<ParticleSystemRenderer>();
             renderer.renderMode = ParticleSystemRenderMode.Billboard;
             renderer.sortingOrder = attackParticleSortingOrder;
-            renderer.sharedMaterial = GetAttackParticleMaterial();
-        }
-
-        private static Material GetAttackParticleMaterial()
-        {
-            if (_attackParticleMaterial != null)
-                return _attackParticleMaterial;
-
-            var shader = Shader.Find("Sprites/Default")
-                         ?? Shader.Find("Universal Render Pipeline/Particles/Unlit")
-                         ?? Shader.Find("Particles/Standard Unlit");
-
-            if (shader == null)
-                return null;
-
-            _attackParticleMaterial = new Material(shader)
-            {
-                name = "Runtime Attack Particle Material",
-                hideFlags = HideFlags.HideAndDontSave
-            };
-
-            return _attackParticleMaterial;
         }
     }
 }

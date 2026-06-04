@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using _01.Code.Artifacts;
 using _01.Code.Core;
+using _01.Code.Enemies;
 using _01.Code.Events;
 using _01.Code.UI;
 using _01.Code.Units;
@@ -16,6 +17,20 @@ namespace _01.Code.MapCreateSystem
         {
             Vector2Int.up,
             Vector2Int.right,
+            Vector2Int.down,
+            Vector2Int.left
+        };
+
+        private readonly Vector2Int[] initialBuildCandidateOffsets =
+        {
+            new(-1, 1),
+            Vector2Int.left,
+            new(-1, -1)
+        };
+
+        private readonly Vector2Int[] nodeBuildCandidateOffsets =
+        {
+            Vector2Int.up,
             Vector2Int.down,
             Vector2Int.left
         };
@@ -41,6 +56,16 @@ namespace _01.Code.MapCreateSystem
         [Header("Main Unit")]
         [SerializeField]
         private MainUnit mainUnitPrefab;
+
+        [SerializeField]
+        private PlayerStatusHudView playerStatusHud;
+
+#if UNITY_EDITOR
+        public void EditorSetPlayerStatusHud(PlayerStatusHudView hud)
+        {
+            playerStatusHud = hud;
+        }
+#endif
 
         [SerializeField]
         private GameEventChannelSO gameStateEventChannel;
@@ -194,6 +219,7 @@ namespace _01.Code.MapCreateSystem
             mainUnit.InitializeMainUnit(gameStateEventChannel);
 
             entranceNode.AssignUnit(null, mainUnit);
+            playerStatusHud?.SetTarget(mainUnit);
             artifactEventChannel.RaiseEvent(new UnitArtifactApplyRequestedEvent(mainUnit));
         }
 
@@ -284,6 +310,7 @@ namespace _01.Code.MapCreateSystem
             lastBuiltFrame = Time.frameCount;
             RegisterUnlockedNode(nodeView);
             ConnectAdjacentNodes(node, buildParent);
+            nodeEventChannel?.RaiseEvent(new NodeBuiltEvent(nodeView));
 
             if (HasLockedNodesVisible)
                 RefreshLockedNodes();
@@ -333,10 +360,53 @@ namespace _01.Code.MapCreateSystem
 
         private void TryConnectNodes(DungeonNode fromNode, DungeonNode toNode)
         {
+            if (!CanConnectNodes(fromNode, toNode))
+                return;
+
             if (!graph.Connect(fromNode, toNode))
                 return;
 
             edgeManager.CreateEdge(fromNode.GridPosition, toNode.GridPosition);
+        }
+
+        private bool CanConnectNodes(DungeonNode a, DungeonNode b)
+        {
+            return AreOrthogonallyAdjacent(a, b) || IsInitialEntranceCandidateConnection(a, b);
+        }
+
+        private bool AreOrthogonallyAdjacent(DungeonNode a, DungeonNode b)
+        {
+            if (a == null || b == null)
+                return false;
+
+            var delta = a.GridPosition - b.GridPosition;
+            return Mathf.Abs(delta.x) + Mathf.Abs(delta.y) == 1;
+        }
+
+        private bool IsInitialEntranceCandidateConnection(DungeonNode a, DungeonNode b)
+        {
+            if (a == null || b == null)
+                return false;
+
+            if (a.Type == DungeonNodeType.Entrance)
+                return IsInitialEntranceCandidatePosition(a.GridPosition, b.GridPosition);
+
+            if (b.Type == DungeonNodeType.Entrance)
+                return IsInitialEntranceCandidatePosition(b.GridPosition, a.GridPosition);
+
+            return false;
+        }
+
+        private bool IsInitialEntranceCandidatePosition(Vector2Int entrancePosition, Vector2Int candidatePosition)
+        {
+            var offset = candidatePosition - entrancePosition;
+            foreach (var candidateOffset in initialBuildCandidateOffsets)
+            {
+                if (offset == candidateOffset)
+                    return true;
+            }
+
+            return false;
         }
 
         private void HideLockedNodeView(Node lockedNode)
@@ -365,15 +435,20 @@ namespace _01.Code.MapCreateSystem
             nodeManager.ClearLockedNodes();
 
             var usedLockedNodePositions = new HashSet<Vector2Int>();
+            var mainGridPosition = ResolveMainGridPosition();
             foreach (var node in graph.Nodes)
             {
-                foreach (var direction in directions)
+                var candidateOffsets = ResolveBuildCandidateOffsets(node);
+                foreach (var offset in candidateOffsets)
                 {
-                    var position = node.GridPosition + direction;
+                    var position = node.GridPosition + offset;
                     if (graph.IsOccupied(position) || !usedLockedNodePositions.Add(position))
                         continue;
 
-                    if (!TryResolveBuildParent(position, out var parentNode))
+                    if (!IsAllowedBuildCandidatePosition(position, mainGridPosition))
+                        continue;
+
+                    if (!TryResolveBuildParent(position, node, out var parentNode))
                         continue;
 
                     var lockedNode = nodeManager.CreateLockedNode(parentNode, position, position - parentNode.GridPosition);
@@ -395,9 +470,39 @@ namespace _01.Code.MapCreateSystem
             Debug.LogError("DungeonGraphController needs an existing BuildConfirmPanelView assigned in the inspector.", this);
         }
 
-        private bool TryResolveBuildParent(Vector2Int position, out DungeonNode parentNode)
+        private Vector2Int[] ResolveBuildCandidateOffsets(DungeonNode node)
+        {
+            return node.Type == DungeonNodeType.Entrance
+                ? initialBuildCandidateOffsets
+                : nodeBuildCandidateOffsets;
+        }
+
+        private Vector2Int ResolveMainGridPosition()
+        {
+            foreach (var node in graph.Nodes)
+            {
+                if (node.Type == DungeonNodeType.Entrance)
+                    return node.GridPosition;
+            }
+
+            return Vector2Int.zero;
+        }
+
+        private bool IsAllowedBuildCandidatePosition(Vector2Int position, Vector2Int mainGridPosition)
+        {
+            if (position.x >= mainGridPosition.x)
+                return false;
+
+            return true;
+        }
+
+        private bool TryResolveBuildParent(Vector2Int position, DungeonNode preferredParent, out DungeonNode parentNode)
         {
             parentNode = null;
+
+            if (preferredParent != null && preferredParent.FreePorts > 0)
+                parentNode = preferredParent;
+
             foreach (var direction in directions)
             {
                 var adjacentPosition = position + direction;
@@ -458,6 +563,10 @@ namespace _01.Code.MapCreateSystem
                 return;
 
             Vector2 worldPosition = inputDataSO.SceneToWorldPoint();
+            var screenPosition = inputDataSO.ReadScreenMousePosition();
+            if (TryRaiseEntityStatusAt(worldPosition, screenPosition))
+                return;
+
             var clickedCollider = Physics2D.OverlapPoint(worldPosition, nodeClickMask);
 
             if (clickedCollider == null)
@@ -469,7 +578,73 @@ namespace _01.Code.MapCreateSystem
             if (!unlockedNode.HasAssignedUnit)
                 return;
 
-            nodeEventChannel.RaiseEvent(new UnitStatusRequestedEvent(unlockedNode));
+            nodeEventChannel.RaiseEvent(new UnitStatusRequestedEvent(unlockedNode, screenPosition));
+        }
+
+        private bool TryRaiseEntityStatusAt(Vector2 worldPosition, Vector2 screenPosition)
+        {
+            var colliders = Physics2D.OverlapPointAll(worldPosition);
+            if (colliders == null || colliders.Length == 0)
+                return false;
+
+            Unit closestUnit = null;
+            Enemy closestEnemy = null;
+            var closestUnitDistance = float.PositiveInfinity;
+            var closestEnemyDistance = float.PositiveInfinity;
+
+            foreach (var hit in colliders)
+            {
+                if (hit == null)
+                    continue;
+
+                var unitTarget = hit.GetComponentInParent<UnitClickTarget>();
+                if (unitTarget != null && unitTarget.Target != null)
+                {
+                    var distance = Vector2.SqrMagnitude((Vector2)hit.bounds.center - worldPosition);
+                    if (distance < closestUnitDistance)
+                    {
+                        closestUnitDistance = distance;
+                        closestUnit = unitTarget.Target;
+                    }
+                }
+
+                var enemyTarget = hit.GetComponentInParent<EnemyClickTarget>();
+                if (enemyTarget != null && enemyTarget.Target != null)
+                {
+                    var distance = Vector2.SqrMagnitude((Vector2)hit.bounds.center - worldPosition);
+                    if (distance < closestEnemyDistance)
+                    {
+                        closestEnemyDistance = distance;
+                        closestEnemy = enemyTarget.Target;
+                    }
+                }
+            }
+
+            if (closestUnit == null && closestEnemy == null)
+                return false;
+
+            if (closestEnemy != null && (closestUnit == null || closestEnemyDistance <= closestUnitDistance))
+            {
+                nodeEventChannel.RaiseEvent(new EnemyStatusRequestedEvent(closestEnemy, screenPosition));
+                return true;
+            }
+
+            nodeEventChannel.RaiseEvent(new UnitStatusRequestedEvent(FindNodeForUnit(closestUnit), closestUnit, screenPosition));
+            return true;
+        }
+
+        private Node FindNodeForUnit(Unit unit)
+        {
+            if (unit == null)
+                return null;
+
+            foreach (var node in Node.ActiveNodes)
+            {
+                if (node != null && node.AssignedUnitInstance == unit)
+                    return node;
+            }
+
+            return null;
         }
 
         private bool IsPointerOverUi()
