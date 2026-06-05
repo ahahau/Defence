@@ -182,12 +182,6 @@ namespace _01.Code.UI
             if (_selectedNode == null)
                 return;
 
-            if (!HasVisibleInstallOptions(category))
-            {
-                ShowCategoryPanel();
-                return;
-            }
-
             BringToFront();
             SetCategorySelectorsActive(false);
             _isCategoryPanelOpen = false;
@@ -300,8 +294,7 @@ namespace _01.Code.UI
 
         private void TryCreateCategoryCard(Transform contentRoot, InstallCategory category)
         {
-            if (HasVisibleInstallOptions(category))
-                CreateCategoryCard(contentRoot, category);
+            CreateCategoryCard(contentRoot, category);
         }
 
         private void CreateCategoryCard(Transform contentRoot, InstallCategory category)
@@ -338,10 +331,7 @@ namespace _01.Code.UI
             if (category == InstallCategory.Unit)
                 return hiredUnitRoster != null && hiredUnitRoster.AvailableUnits.Count > 0;
 
-            if (installableBuildings == null)
-                return false;
-
-            foreach (var buildingData in installableBuildings)
+            foreach (var buildingData in EnumerateInstallableBuildingOptions())
             {
                 if (IsVisibleBuildingOption(buildingData, category))
                     return true;
@@ -467,7 +457,7 @@ namespace _01.Code.UI
         {
             ClearBuildingEntries();
 
-            if (portalInstallButton == null || installableBuildings == null)
+            if (portalInstallButton == null)
                 return;
 
             var contentRoot = buildingContentRoot != null ? buildingContentRoot : portalInstallButton.transform.parent;
@@ -476,7 +466,7 @@ namespace _01.Code.UI
 
             portalInstallButton.gameObject.SetActive(false);
 
-            foreach (var buildingData in installableBuildings)
+            foreach (var buildingData in EnumerateInstallableBuildingOptions())
             {
                 if (!IsVisibleBuildingOption(buildingData, category))
                     continue;
@@ -537,9 +527,12 @@ namespace _01.Code.UI
 
         private Image ResolveCardIconImage(Button button)
         {
-            var iconTransform = button.transform.Find("Icon");
-            if (iconTransform != null && iconTransform.TryGetComponent<Image>(out var iconImage))
-                return iconImage;
+            for (var i = 0; i < button.transform.childCount; i++)
+            {
+                var child = button.transform.GetChild(i);
+                if (child.name == "Icon" && child.TryGetComponent<Image>(out var iconImage))
+                    return iconImage;
+            }
 
             var images = button.GetComponentsInChildren<Image>(true);
             foreach (var image in images)
@@ -556,10 +549,7 @@ namespace _01.Code.UI
             if (category == InstallCategory.Unit)
                 return ResolveUnitCategorySprite();
 
-            if (installableBuildings == null)
-                return null;
-
-            foreach (var buildingData in installableBuildings)
+            foreach (var buildingData in EnumerateInstallableBuildingOptions())
             {
                 if (!IsVisibleBuildingOption(buildingData, category))
                     continue;
@@ -646,6 +636,30 @@ namespace _01.Code.UI
             }
         }
 
+        private IEnumerable<BuildingDataSO> EnumerateInstallableBuildingOptions()
+        {
+            var yielded = new HashSet<BuildingDataSO>();
+
+            if (installableBuildings != null)
+            {
+                foreach (var buildingData in installableBuildings)
+                {
+                    if (buildingData == null || buildingData.Locked || !yielded.Add(buildingData))
+                        continue;
+
+                    yield return buildingData;
+                }
+            }
+
+            foreach (var buildingData in _unlockedBuildings)
+            {
+                if (buildingData == null || !yielded.Add(buildingData))
+                    continue;
+
+                yield return buildingData;
+            }
+        }
+
         private void RefreshAfterBuildingUnlock()
         {
             if (panelRoot == null || !panelRoot.activeSelf)
@@ -665,8 +679,7 @@ namespace _01.Code.UI
         {
             return buildingData != null
                    && buildingData.Prefab != null
-                   && buildingData.Category == category
-                   && _unlockedBuildings.Contains(buildingData);
+                   && buildingData.Category == category;
         }
 
         private string BuildCardText(BuildingDataSO buildingData)

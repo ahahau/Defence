@@ -11,6 +11,14 @@ using UnityEngine.UI;
 
 namespace _01.Code.UI
 {
+    public enum UnlockRewardKind
+    {
+        None,
+        Unit,
+        Building,
+        Trap
+    }
+
     public class WaveRewardPanelView : MonoBehaviour
     {
         [SerializeField] private Image iconImage;
@@ -41,7 +49,12 @@ namespace _01.Code.UI
         private readonly List<BuildingDataSO> pendingBuildingChoices = new();
         private readonly List<UnitDataSO> unlockedUnitRewards = new();
         private readonly List<BuildingDataSO> unlockedBuildingRewards = new();
+        private int offeredUnitUnlockRewards;
+        private int offeredBuildingUnlockRewards;
+        private int offeredTrapUnlockRewards;
+        private UnlockRewardKind pendingUnlockRewardKind;
         private GameEventChannelSO _costEventChannel;
+        private Graphic _unitRewardTitleText;
         private int _pendingGoldAmount;
         private bool _hasPendingGoldReward;
         private bool _hasPendingArtifactReward;
@@ -116,7 +129,7 @@ namespace _01.Code.UI
             }
 
             SetArtifactRewardButtonState(_hasPendingArtifactReward, _hasPendingArtifactReward ? "아티팩트 선택" : "선택 완료", _hasPendingArtifactReward);
-            SetUnitRewardButtonState(_hasPendingUnitReward, _hasPendingUnitReward ? "해금 선택" : "선택 완료", _hasPendingUnitReward);
+            SetUnitRewardButtonState(_hasPendingUnitReward, _hasPendingUnitReward ? ResolveUnlockRewardLabel() : "선택 완료", _hasPendingUnitReward);
             HideWarning();
             HideArtifactChoices();
         }
@@ -243,6 +256,7 @@ namespace _01.Code.UI
             _hasPendingUnitReward = false;
             pendingUnitChoices.Clear();
             pendingBuildingChoices.Clear();
+            pendingUnlockRewardKind = UnlockRewardKind.None;
             SetUnitRewardButtonState(false, "선택 완료");
             HideArtifactChoices();
             HideWarning();
@@ -260,6 +274,7 @@ namespace _01.Code.UI
             _hasPendingUnitReward = false;
             pendingUnitChoices.Clear();
             pendingBuildingChoices.Clear();
+            pendingUnlockRewardKind = UnlockRewardKind.None;
             SetUnitRewardButtonState(false, "선택 완료");
             HideArtifactChoices();
             HideWarning();
@@ -295,6 +310,7 @@ namespace _01.Code.UI
             pendingArtifactChoices.Clear();
             pendingUnitChoices.Clear();
             pendingBuildingChoices.Clear();
+            pendingUnlockRewardKind = UnlockRewardKind.None;
             HideArtifactChoices();
             Hide();
         }
@@ -328,6 +344,7 @@ namespace _01.Code.UI
         {
             pendingUnitChoices.Clear();
             pendingBuildingChoices.Clear();
+            pendingUnlockRewardKind = UnlockRewardKind.None;
 
             var unitCandidates = new List<UnitDataSO>();
             if (unitRewardPool != null)
@@ -340,34 +357,102 @@ namespace _01.Code.UI
             }
 
             var buildingCandidates = new List<BuildingDataSO>();
+            var trapCandidates = new List<BuildingDataSO>();
             if (buildingRewardPool != null)
             {
                 foreach (var building in buildingRewardPool)
                 {
-                    if (building != null && building.Locked && !unlockedBuildingRewards.Contains(building))
+                    if (building == null || !building.Locked || unlockedBuildingRewards.Contains(building))
+                        continue;
+
+                    if (building.Category == InstallCategory.Trap)
+                        trapCandidates.Add(building);
+                    else if (building.Category == InstallCategory.Building)
                         buildingCandidates.Add(building);
                 }
             }
 
-            for (var i = 0; i < unitChoiceCount && unitCandidates.Count + buildingCandidates.Count > 0; i++)
+            pendingUnlockRewardKind = ChooseUnlockRewardKind(unitCandidates.Count, buildingCandidates.Count, trapCandidates.Count);
+            switch (pendingUnlockRewardKind)
             {
-                var index = UnityEngine.Random.Range(0, unitCandidates.Count + buildingCandidates.Count);
-                if (index < unitCandidates.Count)
-                {
-                    pendingUnitChoices.Add(unitCandidates[index]);
-                    unitCandidates.RemoveAt(index);
-                    continue;
-                }
-
-                var buildingIndex = index - unitCandidates.Count;
-                pendingBuildingChoices.Add(buildingCandidates[buildingIndex]);
-                buildingCandidates.RemoveAt(buildingIndex);
+                case UnlockRewardKind.Unit:
+                    PickUnitChoices(unitCandidates);
+                    offeredUnitUnlockRewards++;
+                    break;
+                case UnlockRewardKind.Building:
+                    PickBuildingChoices(buildingCandidates);
+                    offeredBuildingUnlockRewards++;
+                    break;
+                case UnlockRewardKind.Trap:
+                    PickBuildingChoices(trapCandidates);
+                    offeredTrapUnlockRewards++;
+                    break;
             }
         }
 
         private bool HasPendingUnlockReward()
         {
             return pendingUnitChoices.Count > 0 || pendingBuildingChoices.Count > 0;
+        }
+
+        private UnlockRewardKind ChooseUnlockRewardKind(int unitCandidateCount, int buildingCandidateCount, int trapCandidateCount)
+        {
+            var unitWeight = ResolveUnlockWeight(unitCandidateCount, offeredUnitUnlockRewards, 0.65f);
+            var buildingWeight = ResolveUnlockWeight(buildingCandidateCount, offeredBuildingUnlockRewards, 0.45f);
+            var trapWeight = ResolveUnlockWeight(trapCandidateCount, offeredTrapUnlockRewards, 0.45f);
+            var totalWeight = unitWeight + buildingWeight + trapWeight;
+
+            if (totalWeight <= 0f)
+                return UnlockRewardKind.None;
+
+            var roll = UnityEngine.Random.value * totalWeight;
+            if (roll < unitWeight)
+                return UnlockRewardKind.Unit;
+
+            roll -= unitWeight;
+            if (roll < buildingWeight)
+                return UnlockRewardKind.Building;
+
+            return UnlockRewardKind.Trap;
+        }
+
+        private static float ResolveUnlockWeight(int candidateCount, int offeredCount, float penalty)
+        {
+            if (candidateCount <= 0)
+                return 0f;
+
+            return candidateCount / (1f + offeredCount * penalty);
+        }
+
+        private void PickUnitChoices(List<UnitDataSO> candidates)
+        {
+            for (var i = 0; i < unitChoiceCount && candidates.Count > 0; i++)
+            {
+                var index = UnityEngine.Random.Range(0, candidates.Count);
+                pendingUnitChoices.Add(candidates[index]);
+                candidates.RemoveAt(index);
+            }
+        }
+
+        private void PickBuildingChoices(List<BuildingDataSO> candidates)
+        {
+            for (var i = 0; i < unitChoiceCount && candidates.Count > 0; i++)
+            {
+                var index = UnityEngine.Random.Range(0, candidates.Count);
+                pendingBuildingChoices.Add(candidates[index]);
+                candidates.RemoveAt(index);
+            }
+        }
+
+        private string ResolveUnlockRewardLabel()
+        {
+            return pendingUnlockRewardKind switch
+            {
+                UnlockRewardKind.Unit => "유닛 선택",
+                UnlockRewardKind.Building => "건물 선택",
+                UnlockRewardKind.Trap => "트랩 선택",
+                _ => "해금 선택"
+            };
         }
 
         private void ConfigureRewardChoiceLayout()
@@ -380,11 +465,7 @@ namespace _01.Code.UI
 
             if (rewardChoiceRoot != null)
             {
-                rewardChoiceRoot.anchorMin = new Vector2(0.5f, 0.5f);
-                rewardChoiceRoot.anchorMax = new Vector2(0.5f, 0.5f);
-                rewardChoiceRoot.pivot = new Vector2(0.5f, 0.5f);
-                rewardChoiceRoot.anchoredPosition = new Vector2(0f, 36f);
-                rewardChoiceRoot.sizeDelta = new Vector2(572f, 320f);
+                rewardChoiceRoot.localScale = Vector3.one;
             }
 
             var layout = rewardChoiceRoot != null
@@ -392,59 +473,11 @@ namespace _01.Code.UI
                 : goldRewardButton.GetComponentInParent<HorizontalLayoutGroup>();
             if (layout != null)
             {
-                layout.spacing = 24f;
                 layout.childAlignment = TextAnchor.MiddleCenter;
                 layout.childControlWidth = false;
                 layout.childControlHeight = false;
                 layout.childForceExpandWidth = false;
                 layout.childForceExpandHeight = false;
-            }
-
-            ConfigureRewardButtonRect(goldRewardButton);
-
-            if (artifactRewardButton != null)
-                ConfigureRewardButtonRect(artifactRewardButton);
-            if (unitRewardButton != null)
-                ConfigureRewardButtonRect(unitRewardButton);
-
-            if (layout == null && goldRewardButton.transform is RectTransform goldRect)
-            {
-                var visibleButtonCount = 1;
-                if (artifactRewardButton != null)
-                    visibleButtonCount++;
-                if (unitRewardButton != null)
-                    visibleButtonCount++;
-
-                var spacing = 152f;
-                goldRect.anchoredPosition = new Vector2((1 - visibleButtonCount) * spacing * 0.5f, 36f);
-
-                if (artifactRewardButton != null && artifactRewardButton.transform is RectTransform artifactRect)
-                    artifactRect.anchoredPosition = new Vector2(goldRect.anchoredPosition.x + spacing, 36f);
-
-                if (unitRewardButton != null && unitRewardButton.transform is RectTransform unitRect)
-                    unitRect.anchoredPosition = new Vector2(goldRect.anchoredPosition.x + spacing * 2f, 36f);
-            }
-        }
-
-        private static void ConfigureRewardButtonRect(Button button)
-        {
-            if (button == null)
-                return;
-
-            if (button.transform is RectTransform rect)
-            {
-                rect.anchorMin = new Vector2(0.5f, 0.5f);
-                rect.anchorMax = new Vector2(0.5f, 0.5f);
-                rect.pivot = new Vector2(0.5f, 0.5f);
-                rect.sizeDelta = new Vector2(128f, 128f);
-            }
-
-            if (button.TryGetComponent<LayoutElement>(out var layoutElement))
-            {
-                layoutElement.preferredWidth = 128f;
-                layoutElement.preferredHeight = 128f;
-                layoutElement.flexibleWidth = 0f;
-                layoutElement.flexibleHeight = 0f;
             }
         }
 
@@ -457,7 +490,7 @@ namespace _01.Code.UI
             artifactRewardButton.interactable = interactable;
 
             if (artifactRewardText == null)
-                artifactRewardText = FindLabelGraphic(artifactRewardButton);
+                artifactRewardText = ResolveLabelGraphic(artifactRewardButton);
             SetLabelText(artifactRewardText, label);
         }
 
@@ -469,8 +502,12 @@ namespace _01.Code.UI
             unitRewardButton.gameObject.SetActive(visible);
             unitRewardButton.interactable = interactable;
 
+            if (_unitRewardTitleText == null)
+                _unitRewardTitleText = ResolveChildLabelGraphic(unitRewardButton, "Title");
+            SetLabelText(_unitRewardTitleText, visible ? ResolveUnlockRewardTitle() : "해금");
+
             if (unitRewardText == null)
-                unitRewardText = FindLabelGraphic(unitRewardButton);
+                unitRewardText = ResolveLabelGraphic(unitRewardButton);
             SetLabelText(unitRewardText, label);
         }
 
@@ -479,7 +516,7 @@ namespace _01.Code.UI
             artifactChoicePanel?.Hide();
         }
 
-        private static Graphic FindLabelGraphic(Button button)
+        private static Graphic ResolveLabelGraphic(Button button)
         {
             if (button == null)
                 return null;
@@ -489,6 +526,37 @@ namespace _01.Code.UI
                 return tmpText;
 
             return button.GetComponentInChildren<Text>(true);
+        }
+
+        private static Graphic ResolveChildLabelGraphic(Button button, string childName)
+        {
+            if (button == null)
+                return null;
+
+            foreach (var tmpText in button.GetComponentsInChildren<TMP_Text>(true))
+            {
+                if (tmpText != null && tmpText.name == childName)
+                    return tmpText;
+            }
+
+            foreach (var legacyText in button.GetComponentsInChildren<Text>(true))
+            {
+                if (legacyText != null && legacyText.name == childName)
+                    return legacyText;
+            }
+
+            return null;
+        }
+
+        private string ResolveUnlockRewardTitle()
+        {
+            return pendingUnlockRewardKind switch
+            {
+                UnlockRewardKind.Unit => "유닛",
+                UnlockRewardKind.Building => "건물",
+                UnlockRewardKind.Trap => "트랩",
+                _ => "해금"
+            };
         }
 
         private static void SetLabelText(Graphic labelGraphic, string value)
