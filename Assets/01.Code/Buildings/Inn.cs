@@ -29,7 +29,7 @@ namespace _01.Code.Buildings
             if (enemy.Health != null && enemy.Health.CurrentHealth > previousHealth)
                 PlayPassEffectFeedback(enemy, healFlashColor, healFlashDuration, healFeelFeedback);
 
-            costEventChannel?.RaiseEvent(new GoldEarnedEvent(goldReward));
+            costEventChannel?.RaiseEvent(new GoldEarnedEvent(goldReward, GoldChangeSource.Inn));
         }
     }
 }

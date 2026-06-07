@@ -154,7 +154,7 @@ namespace _01.Code.Enemies
             if (node.Data.Type != DungeonNodeType.Treasury)
                 return false;
 
-            _costEventChannel.RaiseEvent(new GoldLostEvent(_treasuryGoldLoss));
+            _costEventChannel.RaiseEvent(new GoldLostEvent(_treasuryGoldLoss, GoldChangeSource.TreasuryLoot));
             Destroy(gameObject);
             return true;
         }

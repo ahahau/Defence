@@ -17,9 +17,9 @@ namespace _01.Code.Dialogue
                 return;
 
             if (amount > 0)
-                channel.RaiseEvent(new GoldEarnedEvent(amount));
+                channel.RaiseEvent(new GoldEarnedEvent(amount, GoldChangeSource.Dialogue));
             else
-                channel.RaiseEvent(new GoldLostEvent(-amount));
+                channel.RaiseEvent(new GoldLostEvent(-amount, GoldChangeSource.Dialogue));
         }
     }
 }

@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6cec2de7cb574a51b3d26073c6d6ae0d, type: 3}
+  m_Name: EmergencyDraft
+  m_EditorClassIdentifier: 
+  displayName: 비상 징집
+  description: 방어 태세를 강화하는 대신 며칠간 민심이 흔들린다.
+  moraleDeltaOnSelect: -8
+  goldDeltaOnSelect: 30
+  dailyMoraleDelta: -2
+  durationDays: 3
+  canRepeat: 1

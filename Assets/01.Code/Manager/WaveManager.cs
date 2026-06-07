@@ -246,7 +246,7 @@ namespace _01.Code.Manager
             }
 
             if (_currentClearGoldReward > 0)
-                costEventChannel?.RaiseEvent(new GoldEarnedEvent(_currentClearGoldReward));
+                costEventChannel?.RaiseEvent(new GoldEarnedEvent(_currentClearGoldReward, GoldChangeSource.WaveReward));
 
             RaiseWaveEnded();
         }

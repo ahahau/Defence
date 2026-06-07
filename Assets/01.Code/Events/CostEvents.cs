@@ -4,6 +4,18 @@ using _01.Code.Units;
 
 namespace _01.Code.Events
 {
+    public enum GoldChangeSource
+    {
+        General,
+        WaveReward,
+        Mine,
+        Inn,
+        Store,
+        TreasuryLoot,
+        Dialogue,
+        Policy
+    }
+
     public class BuildCostRequestedEvent : GameEvent
     {
         public BuildCostRequestedEvent(Node node, int goldAmount)
@@ -57,21 +69,35 @@ namespace _01.Code.Events
     public class GoldEarnedEvent : GameEvent
     {
         public GoldEarnedEvent(int goldAmount)
+            : this(goldAmount, GoldChangeSource.General)
+        {
+        }
+
+        public GoldEarnedEvent(int goldAmount, GoldChangeSource source)
         {
             GoldAmount = goldAmount;
+            Source = source;
         }
 
         public int GoldAmount { get; }
+        public GoldChangeSource Source { get; }
     }
 
     public class GoldLostEvent : GameEvent
     {
         public GoldLostEvent(int goldAmount)
+            : this(goldAmount, GoldChangeSource.General)
+        {
+        }
+
+        public GoldLostEvent(int goldAmount, GoldChangeSource source)
         {
             GoldAmount = goldAmount;
+            Source = source;
         }
 
         public int GoldAmount { get; }
+        public GoldChangeSource Source { get; }
     }
 
     public class SalaryCostRequestedEvent : GameEvent

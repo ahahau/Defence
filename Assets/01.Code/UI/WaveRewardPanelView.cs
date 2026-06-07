@@ -35,7 +35,6 @@ namespace _01.Code.UI
         [SerializeField] private Button artifactRewardButton;
         [SerializeField] private Graphic artifactRewardText;
         [SerializeField] private ArtifactRewardChoicePanelView artifactChoicePanel;
-        [SerializeField] private RectTransform rewardChoiceRoot;
         [SerializeField, Min(1)] private int artifactChoiceCount = 3;
         [Header("Unit Unlock Reward")]
         [SerializeField] private UnitDataSO[] unitRewardPool;
@@ -68,8 +67,6 @@ namespace _01.Code.UI
         {
             if (artifactChoicePanel == null)
                 artifactChoicePanel = GetComponentInChildren<ArtifactRewardChoicePanelView>(true);
-
-            ConfigureRewardChoiceLayout();
         }
 
         private void OnEnable()
@@ -101,7 +98,6 @@ namespace _01.Code.UI
         {
             gameObject.SetActive(true);
             ConfigureModalLayout();
-            ConfigureRewardChoiceLayout();
             PrepareArtifactChoices(includeArtifactReward);
             PrepareUnlockChoices();
 
@@ -192,7 +188,7 @@ namespace _01.Code.UI
             if (!_hasPendingGoldReward || _pendingGoldAmount <= 0)
                 return;
 
-            _costEventChannel?.RaiseEvent(new GoldEarnedEvent(_pendingGoldAmount));
+            _costEventChannel?.RaiseEvent(new GoldEarnedEvent(_pendingGoldAmount, GoldChangeSource.WaveReward));
             _hasPendingGoldReward = false;
             _pendingGoldAmount = 0;
 
@@ -453,32 +449,6 @@ namespace _01.Code.UI
                 UnlockRewardKind.Trap => "트랩 선택",
                 _ => "해금 선택"
             };
-        }
-
-        private void ConfigureRewardChoiceLayout()
-        {
-            if (goldRewardButton == null)
-                return;
-
-            if (rewardChoiceRoot == null)
-                rewardChoiceRoot = goldRewardButton.transform.parent as RectTransform;
-
-            if (rewardChoiceRoot != null)
-            {
-                rewardChoiceRoot.localScale = Vector3.one;
-            }
-
-            var layout = rewardChoiceRoot != null
-                ? rewardChoiceRoot.GetComponent<HorizontalLayoutGroup>()
-                : goldRewardButton.GetComponentInParent<HorizontalLayoutGroup>();
-            if (layout != null)
-            {
-                layout.childAlignment = TextAnchor.MiddleCenter;
-                layout.childControlWidth = false;
-                layout.childControlHeight = false;
-                layout.childForceExpandWidth = false;
-                layout.childForceExpandHeight = false;
-            }
         }
 
         private void SetArtifactRewardButtonState(bool interactable, string label, bool visible = true)

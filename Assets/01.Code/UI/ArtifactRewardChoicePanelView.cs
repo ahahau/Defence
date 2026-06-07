@@ -14,6 +14,7 @@ namespace _01.Code.UI
         [SerializeField] private Transform choiceRoot;
         [SerializeField] private Button choiceButtonPrefab;
         [SerializeField] private Button closeButton;
+        [SerializeField] private TMP_Text titleText;
 
         private readonly List<Button> spawnedButtons = new();
         private Action<ArtifactDataSO> onSelected;
@@ -50,6 +51,8 @@ namespace _01.Code.UI
                 return;
             }
 
+            SetTitle("아티팩트 선택");
+
             foreach (var artifact in choices)
             {
                 if (artifact == null)
@@ -57,7 +60,6 @@ namespace _01.Code.UI
 
                 var button = Instantiate(choiceButtonPrefab, choiceRoot);
                 button.gameObject.SetActive(true);
-                ConfigureChoiceButtonLayout(button);
                 SetButtonText(button, artifact);
                 button.onClick.AddListener(() => Select(artifact));
                 spawnedButtons.Add(button);
@@ -91,6 +93,8 @@ namespace _01.Code.UI
                 return;
             }
 
+            SetTitle("유닛 해금 선택");
+
             foreach (var unit in choices)
             {
                 if (unit == null)
@@ -98,7 +102,6 @@ namespace _01.Code.UI
 
                 var button = Instantiate(choiceButtonPrefab, choiceRoot);
                 button.gameObject.SetActive(true);
-                ConfigureChoiceButtonLayout(button);
                 SetButtonText(button, unit);
                 button.onClick.AddListener(() => SelectUnit(unit));
                 spawnedButtons.Add(button);
@@ -126,6 +129,9 @@ namespace _01.Code.UI
             }
 
             var hasChoices = false;
+            var unitCount = 0;
+            var buildingCount = 0;
+            var trapCount = 0;
             if (unitChoices != null)
             {
                 foreach (var unit in unitChoices)
@@ -134,9 +140,9 @@ namespace _01.Code.UI
                         continue;
 
                     hasChoices = true;
+                    unitCount++;
                     var button = Instantiate(choiceButtonPrefab, choiceRoot);
                     button.gameObject.SetActive(true);
-                    ConfigureChoiceButtonLayout(button);
                     SetButtonText(button, unit);
                     button.onClick.AddListener(() => SelectUnit(unit));
                     spawnedButtons.Add(button);
@@ -151,9 +157,13 @@ namespace _01.Code.UI
                         continue;
 
                     hasChoices = true;
+                    if (building.Category == InstallCategory.Trap)
+                        trapCount++;
+                    else
+                        buildingCount++;
+
                     var button = Instantiate(choiceButtonPrefab, choiceRoot);
                     button.gameObject.SetActive(true);
-                    ConfigureChoiceButtonLayout(button);
                     SetButtonText(button, building);
                     button.onClick.AddListener(() => SelectBuilding(building));
                     spawnedButtons.Add(button);
@@ -166,6 +176,7 @@ namespace _01.Code.UI
                 return;
             }
 
+            SetTitle(ResolveUnlockTitle(unitCount, buildingCount, trapCount));
             gameObject.SetActive(true);
         }
 
@@ -196,6 +207,45 @@ namespace _01.Code.UI
             }
 
             spawnedButtons.Clear();
+        }
+
+        private void SetTitle(string value)
+        {
+            if (titleText == null)
+                titleText = ResolveTitleText();
+
+            if (titleText != null)
+                titleText.text = value;
+        }
+
+        private TMP_Text ResolveTitleText()
+        {
+            foreach (var tmpText in GetComponentsInChildren<TMP_Text>(true))
+            {
+                if (tmpText != null && tmpText.name == "ChoiceTitle")
+                    return tmpText;
+            }
+
+            return null;
+        }
+
+        private static string ResolveUnlockTitle(int unitCount, int buildingCount, int trapCount)
+        {
+            var kinds = 0;
+            if (unitCount > 0)
+                kinds++;
+            if (buildingCount > 0)
+                kinds++;
+            if (trapCount > 0)
+                kinds++;
+
+            if (kinds != 1)
+                return "해금 선택";
+
+            if (unitCount > 0)
+                return "유닛 해금 선택";
+
+            return trapCount > 0 ? "트랩 해금 선택" : "건물 해금 선택";
         }
 
         private static void SetButtonText(Button button, ArtifactDataSO artifact)
@@ -259,19 +309,5 @@ namespace _01.Code.UI
                 legacyText.text = label;
         }
 
-        private static void ConfigureChoiceButtonLayout(Button button)
-        {
-            if (button == null)
-                return;
-
-            if (button.TryGetComponent<LayoutElement>(out var layoutElement))
-            {
-                layoutElement.minWidth = 190f;
-                layoutElement.preferredWidth = 230f;
-                layoutElement.preferredHeight = 192f;
-                layoutElement.flexibleWidth = 1f;
-                layoutElement.flexibleHeight = 1f;
-            }
-        }
     }
 }

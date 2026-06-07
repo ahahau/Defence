@@ -24,7 +24,7 @@ namespace _01.Code.Buildings
             if (damageBonus > 0)
                 PlayPassEffectFeedback(enemy, buffFlashColor, buffFlashDuration, buffFeelFeedback);
 
-            costEventChannel?.RaiseEvent(new GoldEarnedEvent(goldReward));
+            costEventChannel?.RaiseEvent(new GoldEarnedEvent(goldReward, GoldChangeSource.Store));
         }
     }
 }

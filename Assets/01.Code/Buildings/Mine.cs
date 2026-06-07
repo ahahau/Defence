@@ -25,7 +25,7 @@ namespace _01.Code.Buildings
             if (goldPerDay <= 0)
                 return;
 
-            costEventChannel?.RaiseEvent(new GoldEarnedEvent(goldPerDay));
+            costEventChannel?.RaiseEvent(new GoldEarnedEvent(goldPerDay, GoldChangeSource.Mine));
         }
     }
 }

@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6cec2de7cb574a51b3d26073c6d6ae0d, type: 3}
+  m_Name: RationControl
+  m_EditorClassIdentifier: 
+  displayName: 배급 통제
+  description: 즉시 비용을 줄이지만 민심 회복이 느려진다.
+  moraleDeltaOnSelect: -5
+  goldDeltaOnSelect: 45
+  dailyMoraleDelta: -1
+  durationDays: 4
+  canRepeat: 1
