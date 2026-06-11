@@ -34,6 +34,7 @@ namespace _01.Code.UI
         private int shownFrame = -1;
         private int handledClickFrame = -1;
         public bool IsOpen => gameObject.activeInHierarchy && canvasGroup != null && canvasGroup.blocksRaycasts;
+        public RectTransform ConfirmButtonRect => confirmButton != null ? confirmButton.transform as RectTransform : null;
 
         private void Awake()
         {

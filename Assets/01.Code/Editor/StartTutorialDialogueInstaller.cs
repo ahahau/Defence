@@ -17,6 +17,7 @@ namespace _01.Code.Editor
         private const string SequencePath = "Assets/03.SO/Dialogue/Sequences/StartTutorialDialogue.asset";
         private const string ValueTablePath = "Assets/03.SO/Dialogue/ValueTables/Example.asset";
         private const string CostChannelPath = "Assets/03.SO/Event/CostGameEventChannel.asset";
+        private const string NodeChannelPath = "Assets/03.SO/Event/NodeGameEventChannel.asset";
         private const string ChoiceButtonPath = "Assets/04.Prefab/UI/Dialogue/Elements/DialogueChoiceButton.prefab";
 
         [MenuItem("Tools/Defence/Install Start Tutorial Dialogue")]
@@ -70,12 +71,16 @@ namespace _01.Code.Editor
                 AssetDatabase.CreateAsset(sequence, SequencePath);
             }
 
+            var serializedSequence = new SerializedObject(sequence);
+            serializedSequence.FindProperty("displayTitle").stringValue = "튜토리얼";
+            serializedSequence.ApplyModifiedPropertiesWithoutUndo();
+
             sequence.Configure(
-                new DialogueLine("관리자", "자물쇠 타일을 눌러 던전을 확장하세요. 비용은 자물쇠 아래에 표시됩니다."),
-                new DialogueLine("관리자", "빈 타일을 클릭하면 설치 패널이 열립니다. 빌딩, 유닛, 트랩, 장식품 카드 중 하나를 고르세요."),
-                new DialogueLine("관리자", "포탈을 설치하면 웨이브 시작 버튼이 활성화됩니다. 준비가 끝났을 때 웨이브를 시작하세요."),
-                new DialogueLine("관리자", "웨이브를 클리어하면 보상창이 뜹니다. 보상을 받고 닫으면 다시 건설 단계로 돌아옵니다."),
-                new DialogueLine("관리자", "전투 중에는 적 정보에서 상태이상, 공포, 욕심을 보고 함정과 유닛 배치를 조정하세요.", new DialogueChoice("시작하기", -1)));
+                new DialogueLine("관리자", "자물쇠 타일을 눌러 던전을 확장하세요. 필요한 골드는 자물쇠 아래에 표시됩니다."),
+                new DialogueLine("관리자", "빈 타일을 클릭하면 설치 패널이 열립니다. 건물, 유닛, 트랩, 장식 카테고리 중 하나를 고르세요."),
+                new DialogueLine("관리자", "포탈을 설치하면 웨이브 시작 버튼이 활성화됩니다. 배치가 끝난 뒤 웨이브를 시작하세요."),
+                new DialogueLine("관리자", "웨이브를 클리어하면 보상창이 열립니다. 보상을 받고 닫으면 다시 건설 단계로 돌아옵니다."),
+                new DialogueLine("관리자", "전투 중에는 적 정보에서 체력과 상태이상을 확인하고, 함정과 유닛 배치를 조정하세요.", new DialogueChoice("시작하기", -1)));
 
             EditorUtility.SetDirty(sequence);
             return sequence;
@@ -157,7 +162,10 @@ namespace _01.Code.Editor
             serializedRunner.FindProperty("valueTable").objectReferenceValue = AssetDatabase.LoadAssetAtPath<DialogueValueTableSO>(ValueTablePath);
             serializedRunner.FindProperty("costEventChannel").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameEventChannelSO>(CostChannelPath);
             serializedRunner.FindProperty("view").objectReferenceValue = view;
-            serializedRunner.FindProperty("playOnStart").boolValue = false;
+            serializedRunner.FindProperty("playOnStart").boolValue = true;
+            serializedRunner.FindProperty("useGuidedStartTutorial").boolValue = true;
+            serializedRunner.FindProperty("guidedNodeEventChannel").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameEventChannelSO>(NodeChannelPath);
+            serializedRunner.FindProperty("tutorialSpeakerName").stringValue = "관리자";
             serializedRunner.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(runner);
         }
