@@ -37,6 +37,7 @@ namespace _01.Code.Units
         {
             Data = unitData;
             Combatant?.SetDefense(unitData != null ? unitData.Defense : 0);
+            Combatant?.SetEvasionChance(unitData != null ? unitData.EvasionChance : 0f);
 
             SubscribeHealth();
             EnsureClickTarget();

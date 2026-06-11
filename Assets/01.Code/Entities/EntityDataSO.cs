@@ -22,5 +22,8 @@ namespace _01.Code.Entities
 
         [field: SerializeField, Min(0)]
         public int Defense { get; private set; }
+
+        [field: SerializeField, Range(0f, 1f)]
+        public float EvasionChance { get; private set; }
     }
 }

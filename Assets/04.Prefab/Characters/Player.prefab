@@ -94,7 +94,6 @@ MonoBehaviour:
   health: {fileID: 804072662716526524}
   level: {fileID: 8690583679549977268}
   gameStateEventChannel: {fileID: 11400000, guid: 959e35f08825cd94a8b68a1c032d7836, type: 2}
-  hitSpriteDuration: 0.25
   unitRenderer: {fileID: 9208969084259638768}
   mainHealth: {fileID: 804072662716526524}
 --- !u!114 &7098595463026590609
@@ -251,7 +250,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Entities.EntityRender
   gameStateEventChannel: {fileID: 11400000, guid: 959e35f08825cd94a8b68a1c032d7836, type: 2}
   idleSprite: {fileID: -4208413977036319912, guid: 04e1c700f9787eb4f987e965f729bc19, type: 3}
-  hitSprite: {fileID: -9030365041162893800, guid: 28c61687a54f1e34fbd7d56883871257, type: 3}
+  attackSprite: {fileID: -9030365041162893800, guid: 28c61687a54f1e34fbd7d56883871257, type: 3}
   defeatedSprite: {fileID: 1617423343354356677, guid: 43367cb7fa3eb2b4683122335baad020, type: 3}
   spriteRenderer: {fileID: 1816607769188706741}
 --- !u!1001 &2524600608494934784

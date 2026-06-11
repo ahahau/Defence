@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13a7129936dd488895088d04b1e793ac, type: 3}
+  m_Name: HealterEnemy
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Enemies.EnemyDataSO
+  <Grade>k__BackingField: 1
+  <BoardSprite>k__BackingField: {fileID: 4723107735738678597, guid: 182b0ee12ea4a864fba362276291060c, type: 3}
+  <Defense>k__BackingField: 1
+  <EvasionChance>k__BackingField: 0.08
+  <Name>k__BackingField: Healter
+  <Fear>k__BackingField: 1
+  <Greed>k__BackingField: 2
+  <MaxHealth>k__BackingField: 12
+  <AttackDamage>k__BackingField: 1
+  <AttackInterval>k__BackingField: 1.4
+  <IdleSprite>k__BackingField: {fileID: 4723107735738678597, guid: 182b0ee12ea4a864fba362276291060c, type: 3}
+  <AttackSprite>k__BackingField: {fileID: -7008412969330441016, guid: 962f971193e765b47913e59ee23756ad, type: 3}
+  <DefeatedSprite>k__BackingField: {fileID: 2649847697073447219, guid: 6a8e74ed35bbaf343be4fbfbf794ac0f, type: 3}

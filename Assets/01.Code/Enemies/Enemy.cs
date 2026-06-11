@@ -5,7 +5,6 @@ using _01.Code.Core;
 using _01.Code.Entities;
 using _01.Code.Events;
 using _01.Code.StatusEffects;
-using System.Collections;
 using DG.Tweening;
 using UnityEngine;
 
@@ -15,7 +14,6 @@ namespace _01.Code.Enemies
     {
         [SerializeField] private EnemyDataSO data;
         [SerializeField] private int killExperience = 1;
-        [SerializeField, Min(0f)] private float hitSpriteDuration = 0.25f;
         [SerializeField] private EntityRender enemyRenderer;
         [SerializeField] private Combatant combatant;
         [SerializeField] private EnemyMover mover;
@@ -34,7 +32,6 @@ namespace _01.Code.Enemies
         [SerializeField, Min(0f)] private float returnShakeDistance = 0.08f;
 
         private GameEventChannelSO _costEventChannel;
-        private Coroutine _hitSpriteRoutine;
         private bool _isInCombat;
         private bool _isReturning;
         private int _currentFear;
@@ -60,7 +57,7 @@ namespace _01.Code.Enemies
                 statusController = GetComponent<EnemyStatusController>();
             if (statusController == null)
                 statusController = gameObject.AddComponent<EnemyStatusController>();
-            combatant?.SetDefense(data != null ? data.Defense : 0);
+            ApplyData(data);
             InitializeMoodStats();
             SubscribeHealth();
         }
@@ -71,7 +68,6 @@ namespace _01.Code.Enemies
                 return;
 
             health.Changed -= HandleHealthChanged;
-            health.Damaged -= HandleDamaged;
             _returnTween?.Kill();
         }
 
@@ -82,6 +78,7 @@ namespace _01.Code.Enemies
             GameEventChannelSO nodeEventChannel = null)
         {
             _costEventChannel = costEventChannel;
+            ApplyData(data);
             SubscribeHealth();
             EnsureClickTarget(nodeEventChannel);
 
@@ -90,6 +87,16 @@ namespace _01.Code.Enemies
             mover.Initialize(startNode);
 
             HandleNodeArrived(startNode);
+        }
+
+        public void ConfigureData(EnemyDataSO enemyData)
+        {
+            if (enemyData == null)
+                return;
+
+            data = enemyData;
+            ApplyData(data);
+            InitializeMoodStats();
         }
 
         private void EnsureClickTarget(GameEventChannelSO nodeEventChannel)
@@ -101,6 +108,20 @@ namespace _01.Code.Enemies
                 clickTarget = gameObject.AddComponent<EnemyClickTarget>();
 
             clickTarget.Initialize(this);
+        }
+
+        private void ApplyData(EnemyDataSO enemyData)
+        {
+            if (enemyData == null)
+                return;
+
+            name = $"Enemy_{enemyData.Name}";
+            combatant?.SetDefense(enemyData.Defense);
+            combatant?.SetEvasionChance(enemyData.EvasionChance);
+            combatant?.SetAttackDamage(enemyData.AttackDamage);
+            combatant?.SetAttackInterval(enemyData.AttackInterval);
+            health?.SetMaxHealth(enemyData.MaxHealth, true);
+            enemyRenderer?.ConfigureSprites(enemyData.IdleSprite, enemyData.AttackSprite, enemyData.DefeatedSprite);
         }
 
         private int _treasuryGoldLoss;
@@ -305,8 +326,6 @@ namespace _01.Code.Enemies
 
             health.Changed -= HandleHealthChanged;
             health.Changed += HandleHealthChanged;
-            health.Damaged -= HandleDamaged;
-            health.Damaged += HandleDamaged;
         }
 
         private void HandleHealthChanged(float ratio)
@@ -316,33 +335,11 @@ namespace _01.Code.Enemies
 
             if (health.IsAlive)
             {
-                if (_hitSpriteRoutine == null)
-                    enemyRenderer.SetUnitSprite(EntityState.Idle);
+                enemyRenderer.SetUnitSprite(EntityState.Idle);
                 return;
             }
 
             enemyRenderer.SetUnitSprite();
-        }
-
-        private void HandleDamaged(int damage)
-        {
-            if (damage <= 0 || health == null || !health.IsAlive || enemyRenderer == null)
-                return;
-
-            if (_hitSpriteRoutine != null)
-                StopCoroutine(_hitSpriteRoutine);
-
-            _hitSpriteRoutine = StartCoroutine(PlayHitSprite());
-        }
-
-        private IEnumerator PlayHitSprite()
-        {
-            enemyRenderer.SetUnitSprite(EntityState.Hit);
-            yield return new WaitForSeconds(hitSpriteDuration);
-
-            _hitSpriteRoutine = null;
-            if (health != null && health.IsAlive)
-                enemyRenderer.SetUnitSprite(EntityState.Idle);
         }
     }
 }

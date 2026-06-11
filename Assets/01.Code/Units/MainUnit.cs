@@ -1,4 +1,3 @@
-using System.Collections;
 using _01.Code.Combat;
 using _01.Code.Core;
 using _01.Code.Entities;
@@ -10,12 +9,10 @@ namespace _01.Code.Units
     public class MainUnit : Unit
     {
         [SerializeField] private GameEventChannelSO gameStateEventChannel;
-        [SerializeField, Min(0f)] private float hitSpriteDuration = 0.25f;
         [SerializeField] private EntityRender unitRenderer;
         [SerializeField] private Health mainHealth;
         
         private bool defeatRaised;
-        private Coroutine hitSpriteRoutine;
 
         public void InitializeMainUnit(GameEventChannelSO eventChannel)
         {
@@ -36,7 +33,6 @@ namespace _01.Code.Units
                 return;
 
             mainHealth.Changed -= HandleHealthChanged;
-            mainHealth.Damaged -= HandleDamaged;
         }
 
         private void SubscribeHealth()
@@ -46,16 +42,13 @@ namespace _01.Code.Units
 
             mainHealth.Changed -= HandleHealthChanged;
             mainHealth.Changed += HandleHealthChanged;
-            mainHealth.Damaged -= HandleDamaged;
-            mainHealth.Damaged += HandleDamaged;
         }
 
         private void HandleHealthChanged(float ratio)
         {
             if (mainHealth.IsAlive)
             {
-                if (hitSpriteRoutine == null)
-                    unitRenderer.SetUnitSprite(EntityState.Idle);
+                unitRenderer.SetUnitSprite(EntityState.Idle);
                 return;
             }
 
@@ -68,25 +61,5 @@ namespace _01.Code.Units
             gameStateEventChannel.RaiseEvent(new MainUnitDefeatedEvent(this));
         }
 
-        private void HandleDamaged(int damage)
-        {
-            if (damage <= 0 || mainHealth == null || !mainHealth.IsAlive)
-                return;
-
-            if (hitSpriteRoutine != null)
-                StopCoroutine(hitSpriteRoutine);
-
-            hitSpriteRoutine = StartCoroutine(PlayHitSprite());
-        }
-
-        private IEnumerator PlayHitSprite()
-        {
-            unitRenderer.SetUnitSprite(EntityState.Hit);
-            yield return new WaitForSeconds(hitSpriteDuration);
-
-            hitSpriteRoutine = null;
-            if (mainHealth != null && mainHealth.IsAlive)
-                unitRenderer.SetUnitSprite(EntityState.Idle);
-        }
     }
 }

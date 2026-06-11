@@ -17,6 +17,8 @@ namespace _01.Code.Manager
         [SerializeField] private GameEventChannelSO costEventChannel;
         [SerializeField] private WaveConfigSO waveConfig;
         [SerializeField] private Enemy enemyPrefab;
+        [SerializeField] private Enemy[] enemyPrefabs;
+        [SerializeField] private EnemyDataSO[] enemyDataPool;
         [SerializeField, Min(0)] private int treasuryGoldLoss = 10;
         [Header("Enemy Level Scaling")]
         [SerializeField, Min(0)] private int enemyHealthPerLevel = 2;
@@ -36,9 +38,11 @@ namespace _01.Code.Manager
         private readonly List<Enemy> _activeEnemies = new();
         private readonly List<Enemy> _turnEnemies = new();
         private bool _isWaitingForRewardPanel;
+        private bool _isDestroying;
 
         private void OnEnable()
         {
+            _isDestroying = false;
             dayEventChannel.AddListener<DayChangedEvent>(HandleDayChanged);
             nodeEventChannel.AddListener<PortalInstalledEvent>(HandlePortalInstalled);
             nodeEventChannel.AddListener<PortalRemovedEvent>(HandlePortalRemoved);
@@ -49,6 +53,16 @@ namespace _01.Code.Manager
             dayEventChannel.RemoveListener<DayChangedEvent>(HandleDayChanged);
             nodeEventChannel.RemoveListener<PortalInstalledEvent>(HandlePortalInstalled);
             nodeEventChannel.RemoveListener<PortalRemovedEvent>(HandlePortalRemoved);
+            StopRunningWave();
+            UnsubscribeRewardPanel();
+        }
+
+        private void OnDestroy()
+        {
+            _isDestroying = true;
+            StopRunningWave();
+            UnsubscribeRewardPanel();
+            ClearEnemyTrackers();
         }
 
         private void HandlePortalInstalled(PortalInstalledEvent evt)
@@ -160,7 +174,17 @@ namespace _01.Code.Manager
                 ? _portalNode.EnemyPosition.position
                 : _portalNode.transform.position;
 
-            Enemy enemy = Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
+            var prefab = ResolveEnemyPrefab();
+            if (prefab == null)
+            {
+                Debug.LogError($"{nameof(WaveManager)} requires at least one enemy prefab assigned.", this);
+                _remainingSpawns = 0;
+                CompleteWaveIfCleared(stopRunningCoroutine);
+                return;
+            }
+
+            Enemy enemy = Instantiate(prefab, spawnPos, Quaternion.identity);
+            enemy.ConfigureData(ResolveEnemyData());
             enemy.ApplyWaveLevel(_currentDay, enemyHealthPerLevel, enemyAttackPerLevel);
             _remainingSpawns--;
             
@@ -171,6 +195,9 @@ namespace _01.Code.Manager
             
             tracker.OnEnemyDied = () =>
             {
+                if (this == null || _isDestroying)
+                    return;
+
                 HandleEnemyRemoved(captured);
             };
             
@@ -181,8 +208,44 @@ namespace _01.Code.Manager
             CompleteWaveIfCleared(stopRunningCoroutine);
         }
 
+        private Enemy ResolveEnemyPrefab()
+        {
+            if (enemyPrefabs != null && enemyPrefabs.Length > 0)
+            {
+                var candidates = new List<Enemy>();
+                foreach (var prefab in enemyPrefabs)
+                {
+                    if (prefab != null)
+                        candidates.Add(prefab);
+                }
+
+                if (candidates.Count > 0)
+                    return candidates[Random.Range(0, candidates.Count)];
+            }
+
+            return enemyPrefab;
+        }
+
+        private EnemyDataSO ResolveEnemyData()
+        {
+            if (enemyDataPool == null || enemyDataPool.Length == 0)
+                return null;
+
+            var candidates = new List<EnemyDataSO>();
+            foreach (var enemyData in enemyDataPool)
+            {
+                if (enemyData != null)
+                    candidates.Add(enemyData);
+            }
+
+            return candidates.Count > 0 ? candidates[Random.Range(0, candidates.Count)] : null;
+        }
+
         private void HandleEnemyRemoved(Enemy enemy)
         {
+            if (this == null || _isDestroying)
+                return;
+
             if (!_isWaveRunning)
                 return;
 
@@ -211,6 +274,9 @@ namespace _01.Code.Manager
 
         private void CompleteWave(bool stopRunningCoroutine)
         {
+            if (_isDestroying)
+                return;
+
             if (!_isWaveRunning)
                 return;
             
@@ -235,7 +301,7 @@ namespace _01.Code.Manager
                 _isWaitingForRewardPanel = true;
                 rewardPanel.Closed -= HandleRewardPanelClosed;
                 rewardPanel.Closed += HandleRewardPanelClosed;
-                rewardPanel.ShowGoldReward(_currentClearGoldReward, _currentDay > 0 && _currentDay % 3 == 0);
+                rewardPanel.ShowGoldReward(_currentClearGoldReward, _currentDay, _currentDay > 0 && _currentDay % 3 == 0);
                 rewardPanel.transform.SetAsLastSibling();
 
                 if (rewardPanel.IsShowingReward)
@@ -253,7 +319,10 @@ namespace _01.Code.Manager
 
         private void HandleRewardPanelClosed()
         {
-            _rewardPanel.Closed -= HandleRewardPanelClosed;
+            if (this == null || _isDestroying)
+                return;
+
+            UnsubscribeRewardPanel();
             
             if (!_isWaitingForRewardPanel)
                 return;
@@ -264,6 +333,9 @@ namespace _01.Code.Manager
 
         private void RaiseWaveEnded()
         {
+            if (_isDestroying || waveEventChannel == null)
+                return;
+
             waveEventChannel.RaiseEvent(new WaveEndedEvent(_currentDay, _currentClearGoldReward));
         }
 
@@ -308,8 +380,49 @@ namespace _01.Code.Manager
             if (rewardPanelParent != null)
                 return rewardPanelParent;
 
-            Debug.LogError($"{nameof(WaveManager)} requires a reward panel parent assigned.", this);
+            var canvas = FindFirstObjectByType<Canvas>();
+            if (canvas != null)
+            {
+                rewardPanelParent = canvas.transform;
+                return rewardPanelParent;
+            }
+
+            Debug.LogWarning($"{nameof(WaveManager)} could not find a Canvas for the reward panel parent. Falling back to this transform.", this);
             return transform;
+        }
+
+        private void StopRunningWave()
+        {
+            if (_waveCoroutine != null)
+            {
+                StopCoroutine(_waveCoroutine);
+                _waveCoroutine = null;
+            }
+
+            _isWaveRunning = false;
+            _isWaitingForRewardPanel = false;
+            _turnEnemies.Clear();
+        }
+
+        private void UnsubscribeRewardPanel()
+        {
+            if (_rewardPanel != null)
+                _rewardPanel.Closed -= HandleRewardPanelClosed;
+        }
+
+        private void ClearEnemyTrackers()
+        {
+            foreach (var enemy in _activeEnemies)
+            {
+                if (enemy == null)
+                    continue;
+
+                var tracker = enemy.GetComponent<WaveEnemyTracker>();
+                if (tracker != null)
+                    tracker.OnEnemyDied = null;
+            }
+
+            _activeEnemies.Clear();
         }
     }
 }

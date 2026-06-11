@@ -56,6 +56,13 @@ namespace _01.Code.Combat
             Changed?.Invoke(Ratio);
         }
 
+        public void SetMaxHealth(int value, bool restoreToFull)
+        {
+            maxHealth = Mathf.Max(1, value);
+            currentHealth = restoreToFull ? maxHealth : Mathf.Min(currentHealth, maxHealth);
+            Changed?.Invoke(Ratio);
+        }
+
         public void AddMaxHealth(int amount, bool healAddedHealth)
         {
             if (amount <= 0)

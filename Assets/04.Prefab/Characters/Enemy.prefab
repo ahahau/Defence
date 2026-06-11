@@ -53,7 +53,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Enemies.Enemy
   data: {fileID: 11400000, guid: 6031153906814462808020aadde25242, type: 2}
   killExperience: 1
-  hitSpriteDuration: 0.25
   enemyRenderer: {fileID: 7749111140017749111}
   combatant: {fileID: 9186542388326355933}
   mover: {fileID: 3739512902420668162}
@@ -116,6 +115,10 @@ MonoBehaviour:
   attackInterval: 1
   bodySlamDistance: 0.3
   bodySlamDuration: 0.12
+  evasionChance: 0
+  dodgeBackDistance: 0.22
+  dodgeBackDuration: 0.1
+  dodgeReturnDuration: 0.12
   barsView: {fileID: 4835492364946728964}
   attackFeelFeedbacks: {fileID: 0}
   attackHitParticles: {fileID: 0}
@@ -261,7 +264,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Entities.EntityRender
   gameStateEventChannel: {fileID: 11400000, guid: 959e35f08825cd94a8b68a1c032d7836, type: 2}
   idleSprite: {fileID: 21300000, guid: 0d978ab7d273ba9449a4ab01920beb3a, type: 3}
-  hitSprite: {fileID: 21300000, guid: 251c1bad2088f7545b598dd41a312f36, type: 3}
+  attackSprite: {fileID: 21300000, guid: 251c1bad2088f7545b598dd41a312f36, type: 3}
   defeatedSprite: {fileID: 21300000, guid: 11ea87e96aa1d5346ac82b87cdb016bf, type: 3}
   spriteRenderer: {fileID: 2624532001765305233}
 --- !u!1001 &4121340199369248225

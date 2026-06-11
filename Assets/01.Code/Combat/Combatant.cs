@@ -16,6 +16,10 @@ namespace _01.Code.Combat
         [SerializeField] private float attackInterval = 1f;
         [SerializeField] private float bodySlamDistance = 0.3f;
         [SerializeField] private float bodySlamDuration = 0.12f;
+        [SerializeField, Range(0f, 1f)] private float evasionChance;
+        [SerializeField, Min(0f)] private float dodgeBackDistance = 0.22f;
+        [SerializeField, Min(0f)] private float dodgeBackDuration = 0.1f;
+        [SerializeField, Min(0f)] private float dodgeReturnDuration = 0.12f;
         [SerializeField] private CombatBarsView barsView;
         [SerializeField] private MonoBehaviour attackFeelFeedbacks;
         [SerializeField] private ParticleSystem attackHitParticles;
@@ -28,6 +32,7 @@ namespace _01.Code.Combat
 
         private Coroutine _attackRoutine;
         private Tween _bodySlamTween;
+        private Tween _dodgeTween;
         private MethodInfo _playFeelFeedbacksAtPosition;
         private bool _isAttacking;
         private int artifactAttackDamageBonus;
@@ -40,6 +45,7 @@ namespace _01.Code.Combat
         public int AttackDamage => ResolveAttackDamagePreview();
         public int Defense => Mathf.Max(0, defense);
         public float AttackInterval => ResolveAttackInterval();
+        public float EvasionChance => evasionChance;
 
         public void AddAttackDamage(int amount)
         {
@@ -47,9 +53,19 @@ namespace _01.Code.Combat
                 attackDamage += amount;
         }
 
+        public void SetAttackDamage(int value)
+        {
+            attackDamage = Mathf.Max(1, value);
+        }
+
         public void SetDefense(int value)
         {
             defense = Mathf.Max(0, value);
+        }
+
+        public void SetEvasionChance(float value)
+        {
+            evasionChance = Mathf.Clamp01(value);
         }
 
         public void SetArtifactAttackModifier(int damageBonus, float damageMultiplier)
@@ -69,6 +85,11 @@ namespace _01.Code.Combat
                 return;
 
             attackInterval = Mathf.Max(0.05f, attackInterval * multiplier);
+        }
+
+        public void SetAttackInterval(float value)
+        {
+            attackInterval = Mathf.Max(0.05f, value);
         }
 
         private void Awake()
@@ -105,6 +126,7 @@ namespace _01.Code.Combat
             _attackRoutine = null;
             _isAttacking = false;
             _bodySlamTween?.Kill();
+            _dodgeTween?.Kill();
             RefreshBars(0f);
         }
 
@@ -126,6 +148,15 @@ namespace _01.Code.Combat
 
                     if (target != null && target.Health != null)
                     {
+                        if (target.TryDodgeAttack(transform.position))
+                        {
+                            attackTimer = 0f;
+                            RefreshAttackBar(0f);
+                            _isAttacking = false;
+                            yield return null;
+                            continue;
+                        }
+
                         PlayAttackFeedback(transform.position, target.transform.position);
                         target.Health.TakeDamage(ResolveAttackDamage(target));
                     }
@@ -169,6 +200,36 @@ namespace _01.Code.Combat
                 .SetLink(gameObject);
 
             yield return _bodySlamTween.WaitForCompletion();
+        }
+
+        private bool TryDodgeAttack(Vector3 attackerPosition)
+        {
+            if (!IsAlive || evasionChance <= 0f || UnityEngine.Random.value >= evasionChance)
+                return false;
+
+            PlayDodgeBack(attackerPosition);
+            return true;
+        }
+
+        private void PlayDodgeBack(Vector3 attackerPosition)
+        {
+            if (dodgeBackDistance <= 0f)
+                return;
+
+            _dodgeTween?.Kill();
+
+            var startPosition = transform.position;
+            var direction = startPosition - attackerPosition;
+            direction.z = 0f;
+
+            if (direction.sqrMagnitude <= Mathf.Epsilon)
+                direction = Vector3.right;
+
+            var dodgePosition = startPosition + direction.normalized * dodgeBackDistance;
+            _dodgeTween = DOTween.Sequence()
+                .Append(transform.DOMove(dodgePosition, dodgeBackDuration).SetEase(Ease.OutQuad))
+                .Append(transform.DOMove(startPosition, dodgeReturnDuration).SetEase(Ease.InQuad))
+                .SetLink(gameObject);
         }
 
         private void RefreshBars(float attackRatio)
