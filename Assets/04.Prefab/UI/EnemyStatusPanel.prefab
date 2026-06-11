@@ -974,7 +974,7 @@ MonoBehaviour:
   statusEntryPrefab: {fileID: 9190113305958514977}
   closeButton: {fileID: 4429976662176695970}
   panelCanvas: {fileID: 0}
-  screenOffset: {x: 16, y: -16}
+  screenOffset: {x: 24, y: 24}
   keepInsideScreen: 1
 --- !u!1 &4161300966568250043
 GameObject:

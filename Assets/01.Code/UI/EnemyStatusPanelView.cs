@@ -5,7 +5,6 @@ using _01.Code.Events;
 using _01.Code.StatusEffects;
 using TMPro;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace _01.Code.UI
@@ -27,7 +26,7 @@ namespace _01.Code.UI
         [SerializeField] private TMP_Text statusEntryPrefab;
         [SerializeField] private Button closeButton;
         [SerializeField] private Canvas panelCanvas;
-        [SerializeField] private Vector2 screenOffset = new(16f, -16f);
+        [SerializeField] private Vector2 screenOffset = new(24f, 24f);
         [SerializeField] private bool keepInsideScreen = true;
 
         private readonly List<TMP_Text> statusEntries = new();
@@ -92,7 +91,7 @@ namespace _01.Code.UI
 
             UnitStatusPanelView.ActiveInstance?.HidePanel();
             Refresh();
-            MovePanelToMousePosition();
+            MovePanelToScreenPosition(evt.ScreenPosition);
             SetPanelVisible(true);
         }
 
@@ -205,13 +204,14 @@ namespace _01.Code.UI
             panelRoot?.SetActive(visible);
         }
 
-        private void MovePanelToMousePosition()
+        private void MovePanelToScreenPosition(Vector2 originScreenPosition)
         {
             if (panelRoot == null)
                 return;
 
             var panelRect = (RectTransform)panelRoot.transform;
-            var screenPosition = ResolveMouseScreenPosition() + screenOffset;
+            panelRect.pivot = new Vector2(0f, 1f);
+            var screenPosition = originScreenPosition + screenOffset;
 
             if (keepInsideScreen)
                 screenPosition = ClampToScreen(panelRect, screenPosition);
@@ -235,13 +235,6 @@ namespace _01.Code.UI
                 panelCanvas.worldCamera,
                 out var localPosition);
             panelRect.anchoredPosition = localPosition;
-        }
-
-        private static Vector2 ResolveMouseScreenPosition()
-        {
-            return Mouse.current != null
-                ? Mouse.current.position.ReadValue()
-                : Vector2.zero;
         }
 
         private static Vector2 ClampToScreen(RectTransform panelRect, Vector2 screenPosition)

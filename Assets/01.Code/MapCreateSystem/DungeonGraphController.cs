@@ -3,6 +3,7 @@ using _01.Code.Artifacts;
 using _01.Code.Core;
 using _01.Code.Enemies;
 using _01.Code.Events;
+using _01.Code.Tutorial;
 using _01.Code.UI;
 using _01.Code.Units;
 using UnityEngine;
@@ -546,10 +547,16 @@ namespace _01.Code.MapCreateSystem
                 if (!unlockedNodeByCollider.TryGetValue(clickedCollider, out var unlockedNode))
                     return;
 
+                if (!TutorialInputGate.AllowsUnlockedNode(unlockedNode))
+                    return;
+
                 nodeEventChannel.RaiseEvent(new NodeCameraFocusStartedEvent(unlockedNode));
                 nodeEventChannel.RaiseEvent(new UnlockedNodeClickedEvent(unlockedNode));
                 return;
             }
+
+            if (!TutorialInputGate.AllowsLockedNode(lockedNode))
+                return;
 
             TryBuildAt(lockedNode);
         }
