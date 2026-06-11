@@ -8,17 +8,11 @@ namespace _01.Code.UI
 {
     public class UnitHireEntryView : MonoBehaviour
     {
-        [SerializeField]
-        private TMP_Text nameText;
-
-        [SerializeField]
-        private TMP_Text costText;
-
-        [SerializeField]
-        private Button hireButton;
-
-        [SerializeField]
-        private string costFormat = "{0} Gold";
+        [SerializeField] private Graphic nameText;
+        [SerializeField] private Graphic costText;
+        [SerializeField] private Image boardImage;
+        [SerializeField] private Button hireButton;
+        [SerializeField] private string costFormat = "{0} Gold";
 
         private UnitDataSO _unit;
         private Action<UnitDataSO> _hireRequested;
@@ -28,21 +22,48 @@ namespace _01.Code.UI
             _unit = unitDefinition;
             _hireRequested = onHireRequested;
 
-            nameText.text = _unit.name;
-            costText.text = $"{string.Format(costFormat, _unit.Cost)} / 마력 {_unit.MagicCost}";
+            var displayName = !string.IsNullOrWhiteSpace(_unit.Name) ? _unit.Name : _unit.name;
+            SetText(nameText, displayName);
+            SetText(costText, $"{string.Format(costFormat, _unit.Cost)} / 마력 {_unit.MagicCost}");
+            ApplyBoard(_unit.BoardSprite);
 
-            hireButton.onClick.RemoveListener(HandleHireClicked);
-            hireButton.onClick.AddListener(HandleHireClicked);
+            if (hireButton != null)
+            {
+                hireButton.onClick.RemoveListener(HandleHireClicked);
+                hireButton.onClick.AddListener(HandleHireClicked);
+            }
         }
 
         private void OnDestroy()
         {
-            hireButton.onClick.RemoveListener(HandleHireClicked);
+            if (hireButton != null)
+                hireButton.onClick.RemoveListener(HandleHireClicked);
         }
 
         private void HandleHireClicked()
         {
             _hireRequested?.Invoke(_unit);
+        }
+
+        private void ApplyBoard(Sprite boardSprite)
+        {
+            if (boardImage == null)
+                return;
+
+            boardImage.enabled = boardSprite != null;
+            boardImage.sprite = boardSprite;
+        }
+
+        private void SetText(Graphic target, string value)
+        {
+            if (target is TMP_Text tmpText)
+            {
+                tmpText.text = value;
+                return;
+            }
+
+            if (target is Text uiText)
+                uiText.text = value;
         }
     }
 }

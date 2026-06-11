@@ -61,11 +61,11 @@ namespace _01.Code.Editor
             var specs = new[]
             {
                 new UnitSpec("Scout", "정찰병", EntityGrade.Grade1, 18, 1, false, 1, 1, 8, 2, 0.85f),
-                new UnitSpec("Pikeman", "창병", EntityGrade.Grade2, 28, 2, true, 2, 1, 14, 3, 1.1f),
-                new UnitSpec("Arbalist", "석궁병", EntityGrade.Grade3, 42, 2, true, 2, 2, 11, 5, 1.35f),
-                new UnitSpec("Guardian", "수호병", EntityGrade.Grade3, 48, 3, true, 3, 1, 24, 2, 1.45f),
-                new UnitSpec("BattleMage", "전투 마도사", EntityGrade.Grade4, 64, 4, true, 3, 2, 16, 6, 1.6f),
-                new UnitSpec("Vanguard", "선봉대", EntityGrade.Grade5, 82, 5, true, 4, 2, 28, 7, 1.25f),
+                new UnitSpec("Pikeman", "창병", EntityGrade.Grade2, 28, 2, false, 2, 1, 14, 3, 1.1f),
+                new UnitSpec("Arbalist", "석궁병", EntityGrade.Grade3, 42, 2, false, 2, 2, 11, 5, 1.35f),
+                new UnitSpec("Guardian", "수호병", EntityGrade.Grade3, 48, 3, false, 3, 1, 24, 2, 1.45f),
+                new UnitSpec("BattleMage", "전투 마도사", EntityGrade.Grade4, 64, 4, false, 3, 2, 16, 6, 1.6f),
+                new UnitSpec("Vanguard", "선봉대", EntityGrade.Grade5, 82, 5, false, 4, 2, 28, 7, 1.25f),
             };
 
             foreach (var spec in specs)
@@ -229,7 +229,7 @@ namespace _01.Code.Editor
                 Set(data, "<Cost>k__BackingField", spec.Cost);
                 Set(data, "<Prefab>k__BackingField", prefab != null ? prefab.GetComponent<Building>() : null);
                 Set(data, "<Unique>k__BackingField", false);
-                Set(data, "<Locked>k__BackingField", true);
+                Set(data, "<Locked>k__BackingField", false);
                 Set(data, "<BaseDanger>k__BackingField", spec.BaseDanger);
                 Set(data, "<Category>k__BackingField", InstallCategory.Trap);
                 EditorUtility.SetDirty(data);

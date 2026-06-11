@@ -4,6 +4,7 @@ using _01.Code.Artifacts;
 using _01.Code.Buildings;
 using _01.Code.Core;
 using _01.Code.Events;
+using _01.Code.Tutorial;
 using _01.Code.Units;
 using TMPro;
 using UnityEngine;
@@ -36,7 +37,7 @@ namespace _01.Code.UI
         [SerializeField] private Graphic artifactRewardText;
         [SerializeField] private ArtifactRewardChoicePanelView artifactChoicePanel;
         [SerializeField, Min(1)] private int artifactChoiceCount = 3;
-        [Header("Unit Unlock Reward")]
+        [Header("Supply Reward")]
         [SerializeField] private UnitDataSO[] unitRewardPool;
         [SerializeField] private BuildingDataSO[] buildingRewardPool;
         [SerializeField] private Button unitRewardButton;
@@ -55,6 +56,7 @@ namespace _01.Code.UI
         private GameEventChannelSO _costEventChannel;
         private Graphic _unitRewardTitleText;
         private int _pendingGoldAmount;
+        private int _currentRewardDay;
         private bool _hasPendingGoldReward;
         private bool _hasPendingArtifactReward;
         private bool _hasPendingUnitReward;
@@ -62,6 +64,11 @@ namespace _01.Code.UI
 
         public event Action Closed;
         public bool IsShowingReward => _hasShownReward && gameObject.activeSelf;
+        public RectTransform UnlockRewardButtonRect => unitRewardButton != null ? unitRewardButton.transform as RectTransform : null;
+        public RectTransform UnlockChoiceRect => artifactChoicePanel != null ? artifactChoicePanel.FirstChoiceRect : null;
+        public RectTransform CurrentUnlockTutorialRect => artifactChoicePanel != null && artifactChoicePanel.IsShowingChoices
+            ? artifactChoicePanel.FirstChoiceRect
+            : UnlockRewardButtonRect;
 
         private void Awake()
         {
@@ -96,10 +103,16 @@ namespace _01.Code.UI
 
         public void ShowGoldReward(int goldAmount, bool includeArtifactReward = true)
         {
+            ShowGoldReward(goldAmount, 0, includeArtifactReward);
+        }
+
+        public void ShowGoldReward(int goldAmount, int day, bool includeArtifactReward = true)
+        {
             gameObject.SetActive(true);
+            _currentRewardDay = Mathf.Max(0, day);
             ConfigureModalLayout();
             PrepareArtifactChoices(includeArtifactReward);
-            PrepareUnlockChoices();
+            PrepareSupplyChoices();
 
             _pendingGoldAmount = Mathf.Max(0, goldAmount);
             _hasPendingGoldReward = _pendingGoldAmount > 0;
@@ -218,13 +231,16 @@ namespace _01.Code.UI
             if (!_hasPendingUnitReward || !HasPendingUnlockReward())
                 return;
 
+            if (!TutorialInputGate.AllowsUnlockReward(pendingUnlockRewardKind))
+                return;
+
             if (artifactChoicePanel == null)
             {
                 Debug.LogError($"{nameof(WaveRewardPanelView)} requires an assigned reward choice panel.", this);
                 return;
             }
 
-            artifactChoicePanel.ShowUnlocks(pendingUnitChoices, pendingBuildingChoices, UnlockUnit, UnlockBuilding);
+            artifactChoicePanel.ShowUnlocks(pendingUnitChoices, pendingBuildingChoices, AcquireUnit, AcquireBuilding);
         }
 
         private void ObtainArtifact(ArtifactDataSO artifact)
@@ -240,15 +256,15 @@ namespace _01.Code.UI
             HideWarning();
         }
 
-        private void UnlockUnit(UnitDataSO unit)
+        private void AcquireUnit(UnitDataSO unit)
         {
             if (unit == null)
                 return;
 
-            if (!unlockedUnitRewards.Contains(unit))
-                unlockedUnitRewards.Add(unit);
+            if (!TutorialInputGate.AllowsUnlockReward(UnlockRewardKind.Unit))
+                return;
 
-            _costEventChannel?.RaiseEvent(new UnitUnlockRequestedEvent(unit));
+            _costEventChannel?.RaiseEvent(new UnitAcquiredEvent(unit));
             _hasPendingUnitReward = false;
             pendingUnitChoices.Clear();
             pendingBuildingChoices.Clear();
@@ -258,15 +274,18 @@ namespace _01.Code.UI
             HideWarning();
         }
 
-        private void UnlockBuilding(BuildingDataSO building)
+        private void AcquireBuilding(BuildingDataSO building)
         {
             if (building == null)
                 return;
 
-            if (!unlockedBuildingRewards.Contains(building))
-                unlockedBuildingRewards.Add(building);
+            var rewardKind = building.Category == InstallCategory.Trap
+                ? UnlockRewardKind.Trap
+                : UnlockRewardKind.Building;
+            if (!TutorialInputGate.AllowsUnlockReward(rewardKind))
+                return;
 
-            _costEventChannel?.RaiseEvent(new BuildingUnlockRequestedEvent(building));
+            _costEventChannel?.RaiseEvent(new BuildingAcquiredEvent(building));
             _hasPendingUnitReward = false;
             pendingUnitChoices.Clear();
             pendingBuildingChoices.Clear();
@@ -336,18 +355,23 @@ namespace _01.Code.UI
             }
         }
 
-        private void PrepareUnlockChoices()
+        private void ClearUnlockChoices()
         {
             pendingUnitChoices.Clear();
             pendingBuildingChoices.Clear();
             pendingUnlockRewardKind = UnlockRewardKind.None;
+        }
+
+        private void PrepareSupplyChoices()
+        {
+            ClearUnlockChoices();
 
             var unitCandidates = new List<UnitDataSO>();
             if (unitRewardPool != null)
             {
                 foreach (var unit in unitRewardPool)
                 {
-                    if (unit != null && unit.Locked && !unlockedUnitRewards.Contains(unit))
+                    if (unit != null)
                         unitCandidates.Add(unit);
                 }
             }
@@ -358,7 +382,7 @@ namespace _01.Code.UI
             {
                 foreach (var building in buildingRewardPool)
                 {
-                    if (building == null || !building.Locked || unlockedBuildingRewards.Contains(building))
+                    if (building == null)
                         continue;
 
                     if (building.Category == InstallCategory.Trap)
@@ -368,22 +392,40 @@ namespace _01.Code.UI
                 }
             }
 
-            pendingUnlockRewardKind = ChooseUnlockRewardKind(unitCandidates.Count, buildingCandidates.Count, trapCandidates.Count);
+            pendingUnlockRewardKind = ChooseSupplyRewardKind(unitCandidates.Count, buildingCandidates.Count, trapCandidates.Count);
             switch (pendingUnlockRewardKind)
             {
                 case UnlockRewardKind.Unit:
                     PickUnitChoices(unitCandidates);
-                    offeredUnitUnlockRewards++;
                     break;
                 case UnlockRewardKind.Building:
-                    PickBuildingChoices(buildingCandidates);
-                    offeredBuildingUnlockRewards++;
+                    PickBuildingChoices(buildingCandidates, unitChoiceCount);
                     break;
                 case UnlockRewardKind.Trap:
-                    PickBuildingChoices(trapCandidates);
-                    offeredTrapUnlockRewards++;
+                    PickBuildingChoices(trapCandidates, _currentRewardDay == 1 ? 1 : unitChoiceCount);
                     break;
             }
+        }
+
+        private UnlockRewardKind ChooseSupplyRewardKind(int unitCandidateCount, int buildingCandidateCount, int trapCandidateCount)
+        {
+            if (_currentRewardDay == 1 && trapCandidateCount > 0)
+                return UnlockRewardKind.Trap;
+
+            var unitWeight = unitCandidateCount > 0 ? 0.45f : 0f;
+            var buildingWeight = buildingCandidateCount > 0 ? 0.3f : 0f;
+            var trapWeight = trapCandidateCount > 0 ? 0.25f : 0f;
+            var totalWeight = unitWeight + buildingWeight + trapWeight;
+
+            if (totalWeight <= 0f)
+                return UnlockRewardKind.None;
+
+            var roll = UnityEngine.Random.value * totalWeight;
+            if (roll < unitWeight)
+                return UnlockRewardKind.Unit;
+
+            roll -= unitWeight;
+            return roll < buildingWeight ? UnlockRewardKind.Building : UnlockRewardKind.Trap;
         }
 
         private bool HasPendingUnlockReward()
@@ -393,6 +435,12 @@ namespace _01.Code.UI
 
         private UnlockRewardKind ChooseUnlockRewardKind(int unitCandidateCount, int buildingCandidateCount, int trapCandidateCount)
         {
+            if (_currentRewardDay == 1 && trapCandidateCount > 0)
+                return UnlockRewardKind.Trap;
+
+            if (_currentRewardDay == 2 && buildingCandidateCount > 0)
+                return UnlockRewardKind.Building;
+
             var unitWeight = ResolveUnlockWeight(unitCandidateCount, offeredUnitUnlockRewards, 0.65f);
             var buildingWeight = ResolveUnlockWeight(buildingCandidateCount, offeredBuildingUnlockRewards, 0.45f);
             var trapWeight = ResolveUnlockWeight(trapCandidateCount, offeredTrapUnlockRewards, 0.45f);
@@ -430,9 +478,9 @@ namespace _01.Code.UI
             }
         }
 
-        private void PickBuildingChoices(List<BuildingDataSO> candidates)
+        private void PickBuildingChoices(List<BuildingDataSO> candidates, int maxChoices)
         {
-            for (var i = 0; i < unitChoiceCount && candidates.Count > 0; i++)
+            for (var i = 0; i < maxChoices && candidates.Count > 0; i++)
             {
                 var index = UnityEngine.Random.Range(0, candidates.Count);
                 pendingBuildingChoices.Add(candidates[index]);
@@ -444,10 +492,10 @@ namespace _01.Code.UI
         {
             return pendingUnlockRewardKind switch
             {
-                UnlockRewardKind.Unit => "유닛 선택",
-                UnlockRewardKind.Building => "건물 선택",
-                UnlockRewardKind.Trap => "트랩 선택",
-                _ => "해금 선택"
+                UnlockRewardKind.Unit => "유닛 보급",
+                UnlockRewardKind.Building => "건물 보급",
+                UnlockRewardKind.Trap => "트랩 보급",
+                _ => "보급 선택"
             };
         }
 
@@ -474,7 +522,7 @@ namespace _01.Code.UI
 
             if (_unitRewardTitleText == null)
                 _unitRewardTitleText = ResolveChildLabelGraphic(unitRewardButton, "Title");
-            SetLabelText(_unitRewardTitleText, visible ? ResolveUnlockRewardTitle() : "해금");
+            SetLabelText(_unitRewardTitleText, visible ? ResolveUnlockRewardTitle() : "선택");
 
             if (unitRewardText == null)
                 unitRewardText = ResolveLabelGraphic(unitRewardButton);
@@ -522,10 +570,10 @@ namespace _01.Code.UI
         {
             return pendingUnlockRewardKind switch
             {
-                UnlockRewardKind.Unit => "유닛",
-                UnlockRewardKind.Building => "건물",
-                UnlockRewardKind.Trap => "트랩",
-                _ => "해금"
+                UnlockRewardKind.Unit => "유닛 보급",
+                UnlockRewardKind.Building => "건물 보급",
+                UnlockRewardKind.Trap => "트랩 보급",
+                _ => "보급"
             };
         }
 

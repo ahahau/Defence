@@ -5,7 +5,6 @@ using _01.Code.MapCreateSystem;
 using _01.Code.Units;
 using TMPro;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace _01.Code.UI
@@ -27,10 +26,10 @@ namespace _01.Code.UI
         [SerializeField] private Button recoverButton;
         [SerializeField] private Button closeButton;
         [SerializeField] private Canvas panelCanvas;
-        [SerializeField] private Vector2 screenOffset = new(16f, -16f);
+        [SerializeField] private Vector2 screenOffset = new(24f, 24f);
         [SerializeField] private bool keepInsideScreen = true;
-        [SerializeField, Min(1f)] private float normalPanelHeight = 120f;
-        [SerializeField, Min(1f)] private float recoveryPanelHeight = 180f;
+        [SerializeField, Min(1f)] private float normalPanelHeight = 190f;
+        [SerializeField, Min(1f)] private float recoveryPanelHeight = 220f;
 
         private Node selectedNode;
         private Unit selectedUnit;
@@ -84,7 +83,7 @@ namespace _01.Code.UI
             EnemyStatusPanelView.ActiveInstance?.HidePanel();
             SetHint(string.Empty);
             Refresh();
-            MovePanelToMousePosition();
+            MovePanelToScreenPosition(evt.ScreenPosition);
             SetPanelVisible(true);
         }
 
@@ -224,13 +223,14 @@ namespace _01.Code.UI
             panelRoot?.SetActive(visible);
         }
 
-        private void MovePanelToMousePosition()
+        private void MovePanelToScreenPosition(Vector2 originScreenPosition)
         {
             if (panelRoot == null)
                 return;
 
             var panelRect = (RectTransform)panelRoot.transform;
-            var screenPosition = ResolveMouseScreenPosition() + screenOffset;
+            panelRect.pivot = new Vector2(0f, 1f);
+            var screenPosition = originScreenPosition + screenOffset;
 
             if (keepInsideScreen)
                 screenPosition = ClampToScreen(panelRect, screenPosition);
@@ -257,13 +257,6 @@ namespace _01.Code.UI
         {
             if (text != null)
                 text.text = value;
-        }
-
-        private static Vector2 ResolveMouseScreenPosition()
-        {
-            return Mouse.current != null
-                ? Mouse.current.position.ReadValue()
-                : Vector2.zero;
         }
 
         private static Vector2 ClampToScreen(RectTransform panelRect, Vector2 screenPosition)

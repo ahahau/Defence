@@ -1,4 +1,5 @@
 using _01.Code.Core;
+using _01.Code.Buildings;
 using _01.Code.Enemies;
 using _01.Code.MapCreateSystem;
 using _01.Code.Units;
@@ -78,6 +79,18 @@ namespace _01.Code.Events
         }
 
         public Node Node { get; }
+    }
+
+    public class BuildingInstalledEvent : GameEvent
+    {
+        public BuildingInstalledEvent(Node node, BuildingDataSO building)
+        {
+            Node = node;
+            Building = building;
+        }
+
+        public Node Node { get; }
+        public BuildingDataSO Building { get; }
     }
 
     public class PortalRemovedEvent : GameEvent { }

@@ -14,5 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Units.UnitDataSO
   <Sprite>k__BackingField: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
   <Name>k__BackingField: Unit2
-  <Cost>k__BackingField: 10
-  <Locked>k__BackingField: 1
+  <Cost>k__BackingField: 16
+  <MagicCost>k__BackingField: 1
+  <Locked>k__BackingField: 0

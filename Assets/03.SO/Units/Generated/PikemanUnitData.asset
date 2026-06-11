@@ -19,6 +19,6 @@ MonoBehaviour:
   <Name>k__BackingField: "\uCC3D\uBCD1"
   <Cost>k__BackingField: 28
   <MagicCost>k__BackingField: 2
-  <Locked>k__BackingField: 1
+  <Locked>k__BackingField: 0
   <BaseDanger>k__BackingField: 2
   <DangerIncreaseOnCombat>k__BackingField: 1

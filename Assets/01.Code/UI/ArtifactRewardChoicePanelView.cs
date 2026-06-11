@@ -21,6 +21,12 @@ namespace _01.Code.UI
         private Action<UnitDataSO> onUnitSelected;
         private Action<BuildingDataSO> onBuildingSelected;
 
+        public RectTransform FirstChoiceRect => spawnedButtons.Count > 0 && spawnedButtons[0] != null
+            ? spawnedButtons[0].transform as RectTransform
+            : null;
+
+        public bool IsShowingChoices => gameObject.activeInHierarchy && spawnedButtons.Count > 0;
+
         private void OnEnable()
         {
             closeButton?.onClick.AddListener(Hide);
@@ -93,7 +99,7 @@ namespace _01.Code.UI
                 return;
             }
 
-            SetTitle("유닛 해금 선택");
+            SetTitle("유닛 보급 선택");
 
             foreach (var unit in choices)
             {
@@ -240,12 +246,12 @@ namespace _01.Code.UI
                 kinds++;
 
             if (kinds != 1)
-                return "해금 선택";
+                return "선택";
 
             if (unitCount > 0)
-                return "유닛 해금 선택";
+                return "유닛 선택";
 
-            return trapCount > 0 ? "트랩 해금 선택" : "건물 해금 선택";
+            return trapCount > 0 ? "트랩 보급 선택" : "건물 보급 선택";
         }
 
         private static void SetButtonText(Button button, ArtifactDataSO artifact)
@@ -274,7 +280,7 @@ namespace _01.Code.UI
             var displayName = !string.IsNullOrWhiteSpace(unit.Name)
                 ? unit.Name
                 : unit.name;
-            var label = $"{displayName}\n유닛 해금\n고용: {unit.Cost} Gold\n배치 마력: {unit.MagicCost}";
+            var label = $"{displayName}\n유닛 1명 획득\n배치 마력: {unit.MagicCost}";
 
             var tmpText = button.GetComponentInChildren<TMP_Text>();
             if (tmpText != null)
@@ -293,9 +299,8 @@ namespace _01.Code.UI
             var displayName = string.IsNullOrWhiteSpace(building.DisplayName)
                 ? building.name
                 : building.DisplayName;
-            var costText = building.Cost > 0 ? $"{building.Cost} Gold" : "무료";
-            var categoryText = building.Category == InstallCategory.Trap ? "트랩 해금" : "건물 해금";
-            var label = $"{displayName}\n{categoryText}\n설치: {costText}";
+            var categoryText = building.Category == InstallCategory.Trap ? "트랩" : "건물";
+            var label = $"{displayName}\n{categoryText} 1개 획득\n배치 가능 수량 +1";
 
             var tmpText = button.GetComponentInChildren<TMP_Text>();
             if (tmpText != null)

@@ -19,6 +19,6 @@ MonoBehaviour:
   <Name>k__BackingField: "\uC120\uBD09\uB300"
   <Cost>k__BackingField: 82
   <MagicCost>k__BackingField: 5
-  <Locked>k__BackingField: 1
+  <Locked>k__BackingField: 0
   <BaseDanger>k__BackingField: 4
   <DangerIncreaseOnCombat>k__BackingField: 2

@@ -55,6 +55,60 @@ namespace _01.Code.Events
         public IReadOnlyList<UnitDataSO> AvailableUnits { get; }
     }
 
+    public class UnitAcquiredEvent : GameEvent
+    {
+        public UnitAcquiredEvent(UnitDataSO unit, int amount = 1)
+        {
+            Unit = unit;
+            Amount = amount;
+        }
+
+        public UnitDataSO Unit { get; }
+        public int Amount { get; }
+    }
+
+    public class UnitInventoryChangedEvent : GameEvent
+    {
+        public UnitInventoryChangedEvent(IReadOnlyDictionary<UnitDataSO, int> ownedUnits)
+        {
+            OwnedUnits = ownedUnits;
+        }
+
+        public IReadOnlyDictionary<UnitDataSO, int> OwnedUnits { get; }
+    }
+
+    public class BuildingAcquiredEvent : GameEvent
+    {
+        public BuildingAcquiredEvent(BuildingDataSO building, int amount = 1)
+        {
+            Building = building;
+            Amount = amount;
+        }
+
+        public BuildingDataSO Building { get; }
+        public int Amount { get; }
+    }
+
+    public class BuildingInventoryChangedEvent : GameEvent
+    {
+        public BuildingInventoryChangedEvent(IReadOnlyDictionary<BuildingDataSO, int> ownedBuildings)
+        {
+            OwnedBuildings = ownedBuildings;
+        }
+
+        public IReadOnlyDictionary<BuildingDataSO, int> OwnedBuildings { get; }
+    }
+
+    public class BuildingConsumedEvent : GameEvent
+    {
+        public BuildingConsumedEvent(BuildingDataSO building)
+        {
+            Building = building;
+        }
+
+        public BuildingDataSO Building { get; }
+    }
+
     public class UnitUnlockRequestedEvent : GameEvent
     {
         public UnitUnlockRequestedEvent(UnitDataSO unit)

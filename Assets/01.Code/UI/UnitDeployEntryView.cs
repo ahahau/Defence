@@ -10,8 +10,8 @@ namespace _01.Code.UI
     {
         [SerializeField] private Image unitIcon;
         [SerializeField] private Image boardImage;
-        [SerializeField] private TMP_Text nameText;
-        [SerializeField] private TMP_Text costText;
+        [SerializeField] private Graphic nameText;
+        [SerializeField] private Graphic costText;
         [SerializeField] private Button selectButton;
         [SerializeField] private Image selectedHighlight;
 
@@ -20,6 +20,11 @@ namespace _01.Code.UI
 
         public void Initialize(UnitDataSO unit, Action<UnitDataSO> onSelected)
         {
+            Initialize(unit, onSelected, -1);
+        }
+
+        public void Initialize(UnitDataSO unit, Action<UnitDataSO> onSelected, int ownedCount)
+        {
             Unit = unit;
             _onSelected = onSelected;
 
@@ -27,10 +32,9 @@ namespace _01.Code.UI
                 return;
 
             var displayName = !string.IsNullOrWhiteSpace(unit.Name) ? unit.Name : unit.name;
-            if (nameText != null)
-                nameText.text = displayName;
-            if (costText != null)
-                costText.text = $"{unit.Cost} Gold";
+            SetText(nameText, displayName);
+            var countText = ownedCount >= 0 ? $"보유 {ownedCount}" : "보유 -";
+            SetText(costText, $"{countText} / 배치 마력 {unit.MagicCost}");
             if (unitIcon != null && unit.Sprite != null)
                 unitIcon.sprite = unit.Sprite;
             ApplyBoard(unit.BoardSprite);
@@ -41,6 +45,7 @@ namespace _01.Code.UI
                 selectButton.onClick.AddListener(HandleSelectClicked);
             }
             SetSelected(false);
+            SetInteractable(ownedCount != 0);
         }
 
         private void ApplyBoard(Sprite boardSprite)
@@ -58,6 +63,12 @@ namespace _01.Code.UI
                 selectedHighlight.gameObject.SetActive(selected);
         }
 
+        public void SetInteractable(bool interactable)
+        {
+            if (selectButton != null)
+                selectButton.interactable = interactable;
+        }
+
         private void OnDestroy()
         {
             if (selectButton != null)
@@ -67,6 +78,18 @@ namespace _01.Code.UI
         private void HandleSelectClicked()
         {
             _onSelected?.Invoke(Unit);
+        }
+
+        private void SetText(Graphic target, string value)
+        {
+            if (target is TMP_Text tmpText)
+            {
+                tmpText.text = value;
+                return;
+            }
+
+            if (target is Text uiText)
+                uiText.text = value;
         }
     }
 }

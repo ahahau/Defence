@@ -8,7 +8,7 @@ namespace _01.Code.UI
 {
     public class RosterDeployEntryView : MonoBehaviour
     {
-        [SerializeField] private TMP_Text nameText;
+        [SerializeField] private Graphic nameText;
         [SerializeField] private Image boardImage;
         [SerializeField] private Button deployButton;
 
@@ -23,8 +23,7 @@ namespace _01.Code.UI
             if (unit != null)
             {
                 var displayName = !string.IsNullOrWhiteSpace(unit.Name) ? unit.Name : unit.name;
-                if (nameText != null)
-                    nameText.text = $"{displayName} / 마력 {unit.MagicCost}";
+                SetText(nameText, $"{displayName} / 마력 {unit.MagicCost}");
                 ApplyBoard(unit.BoardSprite);
             }
 
@@ -53,6 +52,18 @@ namespace _01.Code.UI
         private void HandleDeployClicked()
         {
             _onDeploy?.Invoke(Unit);
+        }
+
+        private void SetText(Graphic target, string value)
+        {
+            if (target is TMP_Text tmpText)
+            {
+                tmpText.text = value;
+                return;
+            }
+
+            if (target is Text uiText)
+                uiText.text = value;
         }
     }
 }
