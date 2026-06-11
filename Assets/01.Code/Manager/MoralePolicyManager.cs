@@ -20,7 +20,8 @@ namespace _01.Code.Manager
         [Header("Policies")]
         [SerializeField] private PolicyDataSO[] availablePolicies;
         [SerializeField, Min(1)] private int offeredPolicyCount = 3;
-        [SerializeField, Min(1)] private int offerIntervalDays = 1;
+        [SerializeField] private bool autoOfferPolicies = true;
+        [SerializeField, Min(1)] private int offerIntervalDays = 3;
         [SerializeField] private bool offerAfterWaveEnd = true;
 
         private readonly List<PolicyDataSO> currentChoices = new();
@@ -41,6 +42,7 @@ namespace _01.Code.Manager
         {
             dayEventChannel?.AddListener<DayChangedEvent>(HandleDayChanged);
             waveEventChannel?.AddListener<WaveEndedEvent>(HandleWaveEnded);
+            managementEventChannel?.AddListener<MoraleChangeRequestedEvent>(HandleMoraleChangeRequested);
         }
 
         private void Start()
@@ -52,6 +54,7 @@ namespace _01.Code.Manager
         {
             dayEventChannel?.RemoveListener<DayChangedEvent>(HandleDayChanged);
             waveEventChannel?.RemoveListener<WaveEndedEvent>(HandleWaveEnded);
+            managementEventChannel?.RemoveListener<MoraleChangeRequestedEvent>(HandleMoraleChangeRequested);
         }
 
         public void SelectPolicy(PolicyDataSO policy)
@@ -107,8 +110,16 @@ namespace _01.Code.Manager
                 OfferPolicies();
         }
 
+        private void HandleMoraleChangeRequested(MoraleChangeRequestedEvent evt)
+        {
+            ChangeMorale(evt.Delta, evt.Reason);
+        }
+
         private bool ShouldOfferPolicy()
         {
+            if (!autoOfferPolicies)
+                return false;
+
             return offerIntervalDays <= 1 || currentDay % offerIntervalDays == 0;
         }
 

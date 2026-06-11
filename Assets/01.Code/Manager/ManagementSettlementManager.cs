@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Text;
 using _01.Code.Core;
 using _01.Code.Events;
+using _01.Code.MapCreateSystem;
+using _01.Code.Units;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,6 +15,11 @@ namespace _01.Code.Manager
         [SerializeField] private GameEventChannelSO dayEventChannel;
         [SerializeField] private GameEventChannelSO costEventChannel;
         [SerializeField] private GameEventChannelSO waveEventChannel;
+        [SerializeField] private GameEventChannelSO nodeEventChannel;
+
+        [Header("Unit Upkeep")]
+        [SerializeField, Min(1)] private int upkeepCostDivisor = 5;
+        [SerializeField, Min(0)] private int fatiguePerBattle = 1;
 
         [Header("Panel References")]
         [SerializeField] private GameObject panelRoot;
@@ -26,16 +33,29 @@ namespace _01.Code.Manager
 
         private readonly Dictionary<string, int> incomeByLabel = new();
         private readonly Dictionary<string, int> expenseByLabel = new();
+        private readonly Dictionary<UnitDataSO, int> hiredUnitCount = new();
+        private readonly Dictionary<Node, UnitDataSO> deployedUnitByNode = new();
+        private readonly Dictionary<string, int> fatigueByLabel = new();
+        private readonly Dictionary<string, int> dailyFatigueByLabel = new();
         private int currentDay;
         private int totalIncome;
         private int totalExpense;
         private int waveRewardIncome;
         private bool ledgerClosed;
 
+        public bool IsPanelOpen => panelRoot != null && panelRoot.activeInHierarchy;
+
+        public void ForceHidePanel()
+        {
+            HidePanel();
+        }
+
         private void OnEnable()
         {
             dayEventChannel?.AddListener<DayChangedEvent>(HandleDayChanged);
             waveEventChannel?.AddListener<WaveEndedEvent>(HandleWaveEnded);
+            nodeEventChannel?.AddListener<UnitAssignedToNodeEvent>(HandleUnitAssigned);
+            nodeEventChannel?.AddListener<UnitReturnedFromNodeEvent>(HandleUnitReturned);
             costEventChannel?.AddListener<GoldEarnedEvent>(HandleGoldEarned);
             costEventChannel?.AddListener<GoldLostEvent>(HandleGoldLost);
             costEventChannel?.AddListener<SalaryCostRequestedEvent>(HandleSalaryCostRequested);
@@ -50,6 +70,8 @@ namespace _01.Code.Manager
         {
             dayEventChannel?.RemoveListener<DayChangedEvent>(HandleDayChanged);
             waveEventChannel?.RemoveListener<WaveEndedEvent>(HandleWaveEnded);
+            nodeEventChannel?.RemoveListener<UnitAssignedToNodeEvent>(HandleUnitAssigned);
+            nodeEventChannel?.RemoveListener<UnitReturnedFromNodeEvent>(HandleUnitReturned);
             costEventChannel?.RemoveListener<GoldEarnedEvent>(HandleGoldEarned);
             costEventChannel?.RemoveListener<GoldLostEvent>(HandleGoldLost);
             costEventChannel?.RemoveListener<SalaryCostRequestedEvent>(HandleSalaryCostRequested);
@@ -67,6 +89,9 @@ namespace _01.Code.Manager
         private void HandleWaveEnded(WaveEndedEvent evt)
         {
             currentDay = evt.Day;
+            ApplyDailyUpkeep();
+            ApplyBattleFatigue();
+
             var missingWaveReward = Mathf.Max(0, evt.ClearGoldReward - waveRewardIncome);
             if (missingWaveReward > 0)
                 RecordIncome(ResolveIncomeLabel(GoldChangeSource.WaveReward), missingWaveReward);
@@ -97,7 +122,7 @@ namespace _01.Code.Manager
 
         private void HandleSalaryCostRequested(SalaryCostRequestedEvent evt)
         {
-            RecordExpense("급여", evt.GoldAmount);
+            RecordExpense("유지비", evt.GoldAmount);
         }
 
         private void HandleBuildCostPaid(BuildCostPaidEvent evt)
@@ -107,12 +132,71 @@ namespace _01.Code.Manager
 
         private void HandleRosterHirePaid(RosterHirePaidEvent evt)
         {
+            AddHiredUnit(evt.Unit);
             RecordExpense("유닛 고용", evt.GoldAmount);
         }
 
         private void HandleUnitRecoveryCostPaid(UnitRecoveryCostPaidEvent evt)
         {
             RecordExpense("유닛 회복", evt.GoldAmount);
+        }
+
+        private void HandleUnitAssigned(UnitAssignedToNodeEvent evt)
+        {
+            if (evt.Node == null || evt.Unit == null)
+                return;
+
+            deployedUnitByNode[evt.Node] = evt.Unit;
+        }
+
+        private void HandleUnitReturned(UnitReturnedFromNodeEvent evt)
+        {
+            if (evt.Node != null)
+                deployedUnitByNode.Remove(evt.Node);
+        }
+
+        private void AddHiredUnit(UnitDataSO unit)
+        {
+            if (unit == null)
+                return;
+
+            if (!hiredUnitCount.TryAdd(unit, 1))
+                hiredUnitCount[unit]++;
+        }
+
+        private void ApplyDailyUpkeep()
+        {
+            var upkeep = CalculateDailyUpkeep();
+            if (upkeep > 0)
+                costEventChannel?.RaiseEvent(new SalaryCostRequestedEvent(currentDay, upkeep));
+        }
+
+        private int CalculateDailyUpkeep()
+        {
+            var total = 0;
+            foreach (var pair in hiredUnitCount)
+            {
+                if (pair.Key == null || pair.Value <= 0)
+                    continue;
+
+                var unitUpkeep = Mathf.Max(1, Mathf.CeilToInt(pair.Key.Cost / (float)upkeepCostDivisor));
+                total += unitUpkeep * pair.Value;
+            }
+
+            return total;
+        }
+
+        private void ApplyBattleFatigue()
+        {
+            if (fatiguePerBattle <= 0 || deployedUnitByNode.Count == 0)
+                return;
+
+            foreach (var unit in deployedUnitByNode.Values)
+            {
+                var label = ResolveUnitLabel(unit);
+                AddAmount(fatigueByLabel, label, fatiguePerBattle);
+                AddAmount(dailyFatigueByLabel, label, fatiguePerBattle);
+            }
         }
 
         private void RecordIncome(string label, int amount)
@@ -157,6 +241,7 @@ namespace _01.Code.Manager
         {
             incomeByLabel.Clear();
             expenseByLabel.Clear();
+            dailyFatigueByLabel.Clear();
             totalIncome = 0;
             totalExpense = 0;
             waveRewardIncome = 0;
@@ -178,7 +263,7 @@ namespace _01.Code.Manager
         {
             titleText.text = string.Format(titleFormat, Mathf.Max(0, currentDay));
             incomeText.text = BuildLedgerText("수입", incomeByLabel, totalIncome);
-            expenseText.text = BuildLedgerText("비용", expenseByLabel, totalExpense);
+            expenseText.text = BuildExpenseText();
 
             var net = totalIncome - totalExpense;
             netText.text = $"순이익: {FormatGold(net)}";
@@ -199,13 +284,32 @@ namespace _01.Code.Manager
             return lines.ToString();
         }
 
+        private string BuildExpenseText()
+        {
+            var lines = new StringBuilder(BuildLedgerText("비용", expenseByLabel, totalExpense));
+            if (dailyFatigueByLabel.Count == 0)
+                return lines.ToString();
+
+            lines.AppendLine();
+            lines.AppendLine();
+            lines.AppendLine("전투 피로도");
+            foreach (var pair in dailyFatigueByLabel)
+            {
+                fatigueByLabel.TryGetValue(pair.Key, out var totalFatigue);
+                lines.AppendLine($"- {pair.Key}: +{pair.Value} (누적 {totalFatigue})");
+            }
+
+            return lines.ToString();
+        }
+
         private bool HasSettlementEntries()
         {
             return !ledgerClosed
                    && (totalIncome > 0
                    || totalExpense > 0
                    || incomeByLabel.Count > 0
-                   || expenseByLabel.Count > 0);
+                   || expenseByLabel.Count > 0
+                   || dailyFatigueByLabel.Count > 0);
         }
 
         private bool HasPanelReferences()
@@ -245,6 +349,14 @@ namespace _01.Code.Manager
                 GoldChangeSource.Policy => "정책 비용",
                 _ => "기타 비용"
             };
+        }
+
+        private string ResolveUnitLabel(UnitDataSO unit)
+        {
+            if (unit == null)
+                return "알 수 없는 유닛";
+
+            return !string.IsNullOrWhiteSpace(unit.Name) ? unit.Name : unit.name;
         }
     }
 }

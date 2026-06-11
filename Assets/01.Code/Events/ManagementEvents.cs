@@ -18,6 +18,18 @@ namespace _01.Code.Events
         public string Reason { get; }
     }
 
+    public class MoraleChangeRequestedEvent : GameEvent
+    {
+        public MoraleChangeRequestedEvent(int delta, string reason)
+        {
+            Delta = delta;
+            Reason = reason;
+        }
+
+        public int Delta { get; }
+        public string Reason { get; }
+    }
+
     public class PolicyChoicesOfferedEvent : GameEvent
     {
         public PolicyChoicesOfferedEvent(int day, IReadOnlyList<PolicyDataSO> choices)

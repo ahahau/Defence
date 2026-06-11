@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using _01.Code.Core;
 using _01.Code.Events;
 using _01.Code.Manager;
+using _01.Code.Tutorial;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -29,20 +30,33 @@ namespace _01.Code.UI
         private readonly List<PolicyDataSO> currentChoices = new();
         private readonly List<UnityAction> policyButtonActions = new();
 
+        public bool IsPanelOpen => panelRoot != null && panelRoot.activeInHierarchy;
+        public RectTransform FirstPolicyButtonRect => policyButtons != null
+                                                      && policyButtons.Length > 0
+                                                      && policyButtons[0] != null
+            ? policyButtons[0].transform as RectTransform
+            : null;
+
+        public void BringToFront()
+        {
+            if (panelRoot != null)
+                panelRoot.transform.SetAsLastSibling();
+        }
+
         private void OnEnable()
         {
             managementEventChannel?.AddListener<PolicyChoicesOfferedEvent>(HandlePolicyChoicesOffered);
             managementEventChannel?.AddListener<MoraleChangedEvent>(HandleMoraleChanged);
-            closeButton?.onClick.AddListener(Hide);
+            closeButton?.onClick.AddListener(HandleCloseClicked);
             WirePolicyButtons();
-            Hide();
+            ForceHide();
         }
 
         private void OnDisable()
         {
             managementEventChannel?.RemoveListener<PolicyChoicesOfferedEvent>(HandlePolicyChoicesOffered);
             managementEventChannel?.RemoveListener<MoraleChangedEvent>(HandleMoraleChanged);
-            closeButton?.onClick.RemoveListener(Hide);
+            closeButton?.onClick.RemoveListener(HandleCloseClicked);
             UnwirePolicyButtons();
         }
 
@@ -54,7 +68,7 @@ namespace _01.Code.UI
 
             if (currentChoices.Count == 0 || !HasPanelReferences())
             {
-                Hide();
+                ForceHide();
                 return;
             }
 
@@ -117,8 +131,9 @@ namespace _01.Code.UI
                 if (!hasChoice)
                     continue;
 
-                SetText(policyNameTexts, i, currentChoices[i].DisplayName);
-                SetText(policyDescriptionTexts, i, currentChoices[i].Description);
+                var policy = currentChoices[i];
+                SetText(policyNameTexts, i, policy.DisplayName);
+                SetText(policyDescriptionTexts, i, $"{policy.Description}\n\n{BuildEffectSummary(policy)}");
             }
         }
 
@@ -127,8 +142,11 @@ namespace _01.Code.UI
             if (index < 0 || index >= currentChoices.Count)
                 return;
 
+            if (!TutorialInputGate.AllowsPolicyChoice(index))
+                return;
+
             moralePolicyManager?.SelectPolicy(currentChoices[index]);
-            Hide();
+            ForceHide();
         }
 
         private void Show()
@@ -137,7 +155,15 @@ namespace _01.Code.UI
             panelRoot.transform.SetAsLastSibling();
         }
 
-        private void Hide()
+        private void HandleCloseClicked()
+        {
+            if (!TutorialInputGate.AllowsPolicyPanelClose())
+                return;
+
+            ForceHide();
+        }
+
+        private void ForceHide()
         {
             if (panelRoot != null)
                 panelRoot.SetActive(false);
@@ -154,6 +180,27 @@ namespace _01.Code.UI
                 return;
 
             texts[index].text = value;
+        }
+
+        private string BuildEffectSummary(PolicyDataSO policy)
+        {
+            var parts = new List<string>();
+
+            if (policy.MoraleDeltaOnSelect != 0)
+                parts.Add($"민심 {FormatSigned(policy.MoraleDeltaOnSelect)}");
+
+            if (policy.GoldDeltaOnSelect != 0)
+                parts.Add($"골드 {FormatSigned(policy.GoldDeltaOnSelect)}");
+
+            if (policy.DailyMoraleDelta != 0 && policy.DurationDays > 0)
+                parts.Add($"{policy.DurationDays}일간 민심 {FormatSigned(policy.DailyMoraleDelta)}/일");
+
+            return parts.Count > 0 ? string.Join(" / ", parts) : "효과 없음";
+        }
+
+        private string FormatSigned(int value)
+        {
+            return value > 0 ? $"+{value}" : value.ToString();
         }
     }
 }

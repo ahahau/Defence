@@ -13,7 +13,7 @@ namespace _01.Code.Manager
         [SerializeField] private GameEventChannelSO costEventChannel;
         [SerializeField] private GameEventChannelSO waveEventChannel;
 
-        [SerializeField, Min(1)] private int salaryIntervalDays = 30;
+        [SerializeField, Min(0)] private int salaryIntervalDays;
 
         private readonly Dictionary<Node, int> salaryByNode = new();
         private int _rosterSalaryCost;

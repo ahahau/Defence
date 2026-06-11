@@ -44,6 +44,9 @@ namespace _01.Code.Dialogue
             if (!IsPlaying)
                 return false;
 
+            if (currentSequence.TryGetLine(currentLineIndex, out var line) && line.HasChoices)
+                return TryBuildDisplayData(out displayData);
+
             return Advance(out displayData);
         }
 
@@ -69,6 +72,9 @@ namespace _01.Code.Dialogue
             }
 
             if (!line.TryGetChoice(choiceIndex, out selectedChoice))
+                return TryBuildDisplayData(out displayData);
+
+            if (!selectedChoice.CanSelect(valueTable))
                 return TryBuildDisplayData(out displayData);
 
             selectedChoice.TryResolveTarget(valueTable, currentSequence, out var targetSequence, out var targetLineIndex, out matchedRoute);
@@ -130,6 +136,7 @@ namespace _01.Code.Dialogue
             }
 
             displayData = new DialogueDisplayData(
+                currentSequence.DisplayTitle,
                 line.SpeakerName,
                 line.Text,
                 $"{currentLineIndex + 1}/{currentSequence.LineCount}",

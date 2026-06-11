@@ -24,7 +24,11 @@ namespace _01.Code.Dialogue
                 button = GetComponent<Button>();
 
             if (label != null)
-                label.text = choice.Text;
+            {
+                label.text = string.IsNullOrWhiteSpace(choice.EffectSummary)
+                    ? choice.Text
+                    : $"{choice.Text}\n<size=80%><color=#B8F0FF>{choice.EffectSummary}</color></size>";
+            }
 
             if (button != null)
                 button.interactable = canSelect;

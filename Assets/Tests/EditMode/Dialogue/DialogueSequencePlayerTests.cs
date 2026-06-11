@@ -37,9 +37,12 @@ namespace Tests.EditMode.Dialogue
             var player = BuildPlayer();
 
             Invoke<bool>(player, "Play", new object[] { sequence, null });
-            Invoke<bool>(player, "Next", new object[] { null });
+            var args = new object[] { null };
+            var advanced = Invoke<bool>(player, "Next", args);
 
+            Assert.That(advanced, Is.True);
             Assert.That(GetProperty<int>(player, "CurrentLineIndex"), Is.EqualTo(0));
+            Assert.That(GetProperty<string>(args[0], "Text"), Is.EqualTo("Pick one"));
 
             UnityEngine.Object.DestroyImmediate(sequence);
         }

@@ -52,8 +52,16 @@ namespace _01.Code.Core
 
         public void RaiseEvent(GameEvent evt)
         {
-            if(_events.TryGetValue(evt.GetType(), out Action<GameEvent> handlers))
-                handlers.Invoke(evt);
+            if (!_events.TryGetValue(evt.GetType(), out Action<GameEvent> handlers))
+                return;
+
+            foreach (Action<GameEvent> handler in handlers.GetInvocationList())
+            {
+                if (handler.Target is UnityEngine.Object unityObject && unityObject == null)
+                    continue;
+
+                handler.Invoke(evt);
+            }
         }
 
         public void Clear()

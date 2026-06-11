@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47b6fbf626d84142a85744b0f9e1e3dc, type: 3}
+  m_Name: DayEvent_MerchantStrike
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Dialogue.DialogueSequenceSO
+  displayTitle: "\uC815\uAE30 \uC774\uBCA4\uD2B8"
+  lines:
+  - speakerName: "\uC0C1\uC778 \uC870\uD569"
+    text: "\uC0C1\uC778\uB4E4\uC774 \uC138\uAE08\uACFC \uC704\uD5D8 \uBD80\uB2F4\uC744 \uC774\uC720\uB85C \uAC70\uB798\uB97C \uC904\uC774\uACA0\uB2E4\uACE0 \uD1B5\uBCF4\uD588\uC2B5\uB2C8\uB2E4."
+    enterActions: []
+    choices:
+    - text: "\uBCF4\uC0C1\uAE08\uC744 \uC9C0\uAE09\uD55C\uB2E4"
+      effectSummary: "\uACE8\uB4DC -30 / \uBBFC\uC2EC +8"
+      actions:
+      - {fileID: 11400000, guid: b1598559066f4da1a99c9462289c5c43, type: 2}
+      - {fileID: 11400000, guid: 6417ab2e2c004248958113df7cba4a78, type: 2}
+      nextSequence: {fileID: 0}
+      nextLineIndex: -1
+      routes: []
+    - text: "\uC138\uAE08\uC744 \uAC15\uD654\uD574 \uBD80\uC871\uBD84\uC744 \uBA54\uC6B4\uB2E4"
+      effectSummary: "\uACE8\uB4DC +60 / \uBBFC\uC2EC -10"
+      actions:
+      - {fileID: 11400000, guid: 992436563d7645f1bf1a74531a5afcd6, type: 2}
+      - {fileID: 11400000, guid: d3d4b6154371449f976ea6cf09b37fe9, type: 2}
+      nextSequence: {fileID: 0}
+      nextLineIndex: -1
+      routes: []

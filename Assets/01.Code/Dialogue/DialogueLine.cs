@@ -8,6 +8,7 @@ namespace _01.Code.Dialogue
     public struct DialogueChoice
     {
         [SerializeField] private string text;
+        [SerializeField, TextArea(1, 2)] private string effectSummary;
         [SerializeField] private DialogueActionSO[] actions;
         [SerializeField] private DialogueSequenceSO nextSequence;
         [SerializeField] private int nextLineIndex;
@@ -16,6 +17,7 @@ namespace _01.Code.Dialogue
         public DialogueChoice(string text, int nextLineIndex = -1)
         {
             this.text = text;
+            this.effectSummary = string.Empty;
             this.actions = Array.Empty<DialogueActionSO>();
             this.nextSequence = null;
             this.nextLineIndex = nextLineIndex;
@@ -23,6 +25,7 @@ namespace _01.Code.Dialogue
         }
 
         public string Text => text;
+        public string EffectSummary => effectSummary;
         public IReadOnlyList<DialogueActionSO> Actions => actions;
         public DialogueSequenceSO NextSequence => nextSequence;
         public int NextLineIndex => nextLineIndex;

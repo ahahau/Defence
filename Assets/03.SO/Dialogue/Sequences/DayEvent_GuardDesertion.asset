@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47b6fbf626d84142a85744b0f9e1e3dc, type: 3}
+  m_Name: DayEvent_GuardDesertion
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Dialogue.DialogueSequenceSO
+  displayTitle: "\uC815\uAE30 \uC774\uBCA4\uD2B8"
+  lines:
+  - speakerName: "\uACBD\uBE44\uB300\uC7A5"
+    text: "\uD53C\uB85C\uAC00 \uC313\uC778 \uACBD\uBE44\uBCD1\uB4E4\uC774 \uC774\uD0C8\uC744 \uACE0\uBBFC\uD558\uACE0 \uC788\uC2B5\uB2C8\uB2E4. \uC0AC\uAE30\uB97C \uB2E4\uC2DC \uC138\uC6B0\uAC70\uB098 \uC5C4\uACA9\uD788 \uCC98\uBC8C\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+    enterActions: []
+    choices:
+    - text: "\uBCF4\uB108\uC2A4\uB97C \uC9C0\uAE09\uD55C\uB2E4"
+      effectSummary: "\uACE8\uB4DC -30 / \uBBFC\uC2EC +8"
+      actions:
+      - {fileID: 11400000, guid: b1598559066f4da1a99c9462289c5c43, type: 2}
+      - {fileID: 11400000, guid: 6417ab2e2c004248958113df7cba4a78, type: 2}
+      nextSequence: {fileID: 0}
+      nextLineIndex: -1
+      routes: []
+    - text: "\uC5C4\uACA9\uD55C \uAD70\uAE30\uB97C \uC120\uD3EC\uD55C\uB2E4"
+      effectSummary: "\uBBFC\uC2EC -10"
+      actions:
+      - {fileID: 11400000, guid: d3d4b6154371449f976ea6cf09b37fe9, type: 2}
+      nextSequence: {fileID: 0}
+      nextLineIndex: -1
+      routes: []
