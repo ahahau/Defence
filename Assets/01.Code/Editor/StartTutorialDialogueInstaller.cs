@@ -76,11 +76,11 @@ namespace _01.Code.Editor
             serializedSequence.ApplyModifiedPropertiesWithoutUndo();
 
             sequence.Configure(
-                new DialogueLine("관리자", "자물쇠 타일을 눌러 던전을 확장하세요. 필요한 골드는 자물쇠 아래에 표시됩니다."),
-                new DialogueLine("관리자", "빈 타일을 클릭하면 설치 패널이 열립니다. 건물, 유닛, 트랩, 장식 카테고리 중 하나를 고르세요."),
-                new DialogueLine("관리자", "포탈을 설치하면 웨이브 시작 버튼이 활성화됩니다. 배치가 끝난 뒤 웨이브를 시작하세요."),
-                new DialogueLine("관리자", "웨이브를 클리어하면 보상창이 열립니다. 보상을 받고 닫으면 다시 건설 단계로 돌아옵니다."),
-                new DialogueLine("관리자", "전투 중에는 적 정보에서 체력과 상태이상을 확인하고, 함정과 유닛 배치를 조정하세요.", new DialogueChoice("시작하기", -1)));
+                new DialogueLine("관리자", "잠긴 노드를 클릭하고 확장 버튼을 눌러 첫 방을 만드세요."),
+                new DialogueLine("관리자", "유닛 패널을 열고 밝게 표시된 유닛을 획득하세요."),
+                new DialogueLine("관리자", "첫 방을 클릭한 뒤 유닛 설치 패널에서 획득한 유닛을 배치하세요."),
+                new DialogueLine("관리자", "중앙 줄의 잠긴 노드를 하나 더 확장하고 그 방에 포탈을 설치하세요."),
+                new DialogueLine("관리자", "포탈 설치가 끝나면 웨이브 시작 버튼을 눌러 첫 전투를 시작하세요.", new DialogueChoice("시작하기", -1)));
 
             EditorUtility.SetDirty(sequence);
             return sequence;
@@ -165,6 +165,7 @@ namespace _01.Code.Editor
             serializedRunner.FindProperty("playOnStart").boolValue = true;
             serializedRunner.FindProperty("useGuidedStartTutorial").boolValue = true;
             serializedRunner.FindProperty("guidedNodeEventChannel").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameEventChannelSO>(NodeChannelPath);
+            serializedRunner.FindProperty("guidedWorldCamera").objectReferenceValue = GetComponentInScene<Camera>(runner.gameObject.scene);
             serializedRunner.FindProperty("tutorialSpeakerName").stringValue = "관리자";
             serializedRunner.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(runner);
