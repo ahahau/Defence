@@ -1,10 +1,10 @@
 using System;
 using System.Collections;
 using System.Reflection;
+using _01.Code.Audio;
 using _01.Code.Core;
 using _01.Code.Events;
 using _01.Code.StatusEffects;
-using DG.Tweening;
 using UnityEngine;
 
 namespace _01.Code.Combat
@@ -14,12 +14,7 @@ namespace _01.Code.Combat
         [SerializeField] private int attackDamage = 1;
         [SerializeField, Min(0)] private int defense;
         [SerializeField] private float attackInterval = 1f;
-        [SerializeField] private float bodySlamDistance = 0.3f;
-        [SerializeField] private float bodySlamDuration = 0.12f;
         [SerializeField, Range(0f, 1f)] private float evasionChance;
-        [SerializeField, Min(0f)] private float dodgeBackDistance = 0.22f;
-        [SerializeField, Min(0f)] private float dodgeBackDuration = 0.1f;
-        [SerializeField, Min(0f)] private float dodgeReturnDuration = 0.12f;
         [SerializeField] private CombatBarsView barsView;
         [SerializeField] private MonoBehaviour attackFeelFeedbacks;
         [SerializeField] private ParticleSystem attackHitParticles;
@@ -27,20 +22,28 @@ namespace _01.Code.Combat
         [SerializeField, Min(1)] private int attackParticleBurstCount = 14;
         [SerializeField, Min(0f)] private float attackImpactOffset = 0.08f;
         [SerializeField] private int attackParticleSortingOrder = 75;
+        [SerializeField] private StatusEffectDataSO attackStatusEffect;
+        [SerializeField, Range(0f, 1f)] private float attackStatusEffectChance;
         [SerializeField] private Health health;
         [SerializeField] private DamageFeedback damageFeedback;
 
         private Coroutine _attackRoutine;
-        private Tween _bodySlamTween;
-        private Tween _dodgeTween;
+        private Combatant _target;
         private MethodInfo _playFeelFeedbacksAtPosition;
         private bool _isAttacking;
+        private bool _isPaused;
+        private float _attackTimer;
         private int artifactAttackDamageBonus;
         private float artifactAttackDamageMultiplier = 1f;
         private GameEventChannelSO artifactEventChannel;
         private EnemyStatusController enemyStatusController;
+        /// <summary>공격이 적중한 순간 발생(타격 연출/돌진용). BattleAgent가 구독해 lunge 모션을 낸다.</summary>
+        public event Action AttackLanded;
+
         public bool IsAlive => health != null && health.IsAlive;
         public bool IsAttacking => _isAttacking;
+        public bool IsPaused => _isPaused;
+        public Combatant Target => _target;
         public Health Health => health;
         public int AttackDamage => ResolveAttackDamagePreview();
         public int Defense => Mathf.Max(0, defense);
@@ -112,9 +115,11 @@ namespace _01.Code.Combat
             if (target == null || !target.IsAlive || !IsAlive)
                 return;
 
-            if (_attackRoutine != null)
-                StopCoroutine(_attackRoutine);
+            if (_attackRoutine != null && _target == target)
+                return;
 
+            StopCombat();
+            _target = target;
             _attackRoutine = StartCoroutine(AttackLoop(target, targetDefeated));
         }
 
@@ -124,33 +129,54 @@ namespace _01.Code.Combat
                 StopCoroutine(_attackRoutine);
 
             _attackRoutine = null;
+            _target = null;
             _isAttacking = false;
-            _bodySlamTween?.Kill();
-            _dodgeTween?.Kill();
+            _isPaused = false;
+            _attackTimer = 0f;
             RefreshBars(0f);
+        }
+
+        public void SetPaused(bool paused)
+        {
+            if (_isPaused == paused)
+                return;
+
+            _isPaused = paused;
+            if (!paused)
+                return;
+
+            _attackTimer = 0f;
+            _isAttacking = false;
+            RefreshAttackBar(0f);
         }
 
         private IEnumerator AttackLoop(Combatant target, Action<Combatant> targetDefeated)
         {
-            var attackTimer = 0f;
-            RefreshBars(attackTimer);
+            _attackTimer = 0f;
+            RefreshBars(_attackTimer);
 
             while (target != null && target.IsAlive && IsAlive)
             {
-                var currentAttackInterval = ResolveAttackInterval();
-                attackTimer += Time.deltaTime;
-                RefreshAttackBar(attackTimer / currentAttackInterval);
+                if (_isPaused)
+                {
+                    yield return null;
+                    continue;
+                }
 
-                if (attackTimer >= currentAttackInterval && !_isAttacking)
+                var currentAttackInterval = ResolveAttackInterval();
+                _attackTimer += Time.deltaTime;
+                RefreshAttackBar(_attackTimer / currentAttackInterval);
+
+                if (_attackTimer >= currentAttackInterval && !_isAttacking)
                 {
                     _isAttacking = true;
-                    yield return PlayBodySlam(target);
 
                     if (target != null && target.Health != null)
                     {
                         if (target.TryDodgeAttack(transform.position))
                         {
-                            attackTimer = 0f;
+                            GameSfxPlayer.Play(GameSfxCue.Dodge);
+                            _attackTimer = 0f;
                             RefreshAttackBar(0f);
                             _isAttacking = false;
                             yield return null;
@@ -158,10 +184,14 @@ namespace _01.Code.Combat
                         }
 
                         PlayAttackFeedback(transform.position, target.transform.position);
+                        GameSfxPlayer.Play(GameSfxCue.Attack);
                         target.Health.TakeDamage(ResolveAttackDamage(target));
+                        GameSfxPlayer.Play(GameSfxCue.Hit);
+                        TryApplyAttackStatusEffect(target);
+                        AttackLanded?.Invoke();
                     }
 
-                    attackTimer = 0f;
+                    _attackTimer = 0f;
                     RefreshAttackBar(0f);
                     _isAttacking = false;
 
@@ -175,61 +205,28 @@ namespace _01.Code.Combat
                 yield return null;
             }
 
-            StopCombat();
+            _attackRoutine = null;
+            _target = null;
+            _isAttacking = false;
+            _isPaused = false;
+            _attackTimer = 0f;
+            RefreshBars(0f);
         }
 
-        private IEnumerator PlayBodySlam(Combatant target)
-        {
-            if (target == null)
-                yield break;
-
-            _bodySlamTween?.Kill();
-
-            var startPosition = transform.position;
-            var targetPos = target != null ? target.transform.position : startPosition;
-            var direction = targetPos - startPosition;
-            direction.z = 0f;
-
-            if (direction.sqrMagnitude <= Mathf.Epsilon)
-                direction = Vector3.right;
-
-            var hitPosition = startPosition + direction.normalized * bodySlamDistance;
-            _bodySlamTween = DOTween.Sequence()
-                .Append(transform.DOMove(hitPosition, bodySlamDuration).SetEase(Ease.OutQuad))
-                .Append(transform.DOMove(startPosition, bodySlamDuration).SetEase(Ease.InQuad))
-                .SetLink(gameObject);
-
-            yield return _bodySlamTween.WaitForCompletion();
-        }
-
+        // 회피: 이동 없이 확률만 적용(트윈 이동 제거). 새 전투에서 위치는 외부 이동 시스템이 관리.
         private bool TryDodgeAttack(Vector3 attackerPosition)
         {
             if (!IsAlive || evasionChance <= 0f || UnityEngine.Random.value >= evasionChance)
                 return false;
 
-            PlayDodgeBack(attackerPosition);
+            if (_isAttacking)
+            {
+                _isAttacking = false;
+                _attackTimer = 0f;
+                RefreshAttackBar(0f);
+            }
+
             return true;
-        }
-
-        private void PlayDodgeBack(Vector3 attackerPosition)
-        {
-            if (dodgeBackDistance <= 0f)
-                return;
-
-            _dodgeTween?.Kill();
-
-            var startPosition = transform.position;
-            var direction = startPosition - attackerPosition;
-            direction.z = 0f;
-
-            if (direction.sqrMagnitude <= Mathf.Epsilon)
-                direction = Vector3.right;
-
-            var dodgePosition = startPosition + direction.normalized * dodgeBackDistance;
-            _dodgeTween = DOTween.Sequence()
-                .Append(transform.DOMove(dodgePosition, dodgeBackDuration).SetEase(Ease.OutQuad))
-                .Append(transform.DOMove(startPosition, dodgeReturnDuration).SetEase(Ease.InQuad))
-                .SetLink(gameObject);
         }
 
         private void RefreshBars(float attackRatio)
@@ -240,12 +237,12 @@ namespace _01.Code.Combat
 
         private void RefreshHealthBar(float ratio)
         {
-            barsView.SetHealthRatio(ratio);
+            barsView?.SetHealthRatio(ratio);
         }
 
         private void RefreshAttackBar(float ratio)
         {
-            barsView.SetAttackRatio(ratio);
+            barsView?.SetAttackRatio(ratio);
         }
 
         private int ResolveAttackDamage(Combatant target)
@@ -260,6 +257,17 @@ namespace _01.Code.Combat
             }
 
             return CalculateDamageAfterDefense(damage, target);
+        }
+
+        private void TryApplyAttackStatusEffect(Combatant target)
+        {
+            if (target == null || attackStatusEffect == null || attackStatusEffectChance <= 0f)
+                return;
+
+            if (!target.IsAlive || UnityEngine.Random.value > attackStatusEffectChance)
+                return;
+
+            attackStatusEffect.TryApplyTo(target);
         }
 
         private int ResolveAttackDamagePreview()

@@ -24,7 +24,7 @@ namespace _01.Code.Combat
 
         public void TakeDamage(int damage)
         {
-            if (!IsAlive)
+            if (!IsAlive || damage <= 0)
                 return;
 
             currentHealth = Mathf.Max(0, currentHealth - damage);

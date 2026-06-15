@@ -1,7 +1,6 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace Code.Agents
+namespace _01.Code
 {
     
     public class AgentSensor : MonoBehaviour
@@ -43,6 +42,31 @@ namespace Code.Agents
         {
             hitCollider = Physics2D.OverlapCircle(transform.position, range, targetLayer);
             return hitCollider != null;
+        }
+
+        /// <summary>Returns the closest target on the target layer within range, or null.
+        /// Used by team-fight combat to pick an opponent.</summary>
+        public Collider2D FindNearestTarget(float range)
+        {
+            var hits = Physics2D.OverlapCircleAll(transform.position, range, targetLayer);
+            Collider2D nearest = null;
+            var bestSqr = float.MaxValue;
+            Vector2 origin = transform.position;
+
+            foreach (var hit in hits)
+            {
+                if (hit == null)
+                    continue;
+
+                var sqr = ((Vector2)hit.transform.position - origin).sqrMagnitude;
+                if (sqr < bestSqr)
+                {
+                    bestSqr = sqr;
+                    nearest = hit;
+                }
+            }
+
+            return nearest;
         }
 
         public bool IsTargetInSight(Vector3 startPosition, float range, Collider2D target)
