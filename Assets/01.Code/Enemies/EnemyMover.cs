@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
+using _01.Code.BT;
 using UnityEngine;
 
 namespace _01.Code.Enemies
@@ -17,7 +18,7 @@ namespace _01.Code.Enemies
         [SerializeField, Min(0f)] private float visualLeanAngle = 7f;
         [SerializeField] private Transform visual;
 
-        private static readonly HashSet<string> _occupiedNodes = new();
+        private static readonly Dictionary<string, int> _occupiedNodeCounts = new();
         private static readonly List<EnemyMover> _activeEnemies = new();
         public static IReadOnlyList<EnemyMover> ActiveEnemies => _activeEnemies;
 
@@ -28,13 +29,21 @@ namespace _01.Code.Enemies
         private Vector3 _visualStartLocalScale;
         private Vector3 _visualStartLocalEulerAngles;
         private bool _isTurning;
+        private BattleAgent _battleAgent;
 
         public Func<Node, bool> NodeArrived { get; set; }
         public Node CurrentNode => _currentNode;
+        public bool IsMoving => _isTurning;
+        public NodeBattlefield CurrentBattlefield => _battleAgent != null ? _battleAgent.Battlefield : null;
 
         public void Initialize(Node startNode)
         {
             CacheVisualPose();
+            _battleAgent ??= GetComponent<BattleAgent>();
+
+            if (_currentNode?.Data != null)
+                VacateNode(_currentNode.Data.Id);
+
             _currentNode = startNode;
             _visitedNodes.Clear();
 
@@ -42,8 +51,9 @@ namespace _01.Code.Enemies
                 return;
 
             _visitedNodes.Add(_currentNode.Data.Id);
-            _occupiedNodes.Add(_currentNode.Data.Id);
+            OccupyNode(_currentNode.Data.Id);
             transform.position = GetEnemyPosition(_currentNode);
+            TryEnterBattlefield(_currentNode);
         }
 
         public void TakeTurn()
@@ -52,6 +62,16 @@ namespace _01.Code.Enemies
                 return;
 
             StartCoroutine(DoTurn());
+        }
+
+        public void StopMoving()
+        {
+            StopAllCoroutines();
+            _moveTween?.Kill();
+            _moveTween = null;
+            _isTurning = false;
+            _battleAgent?.EndTraversal();
+            ResetVisualPose();
         }
 
         private IEnumerator DoTurn()
@@ -65,14 +85,27 @@ namespace _01.Code.Enemies
                 yield break;
             }
 
-            _occupiedNodes.Remove(_currentNode.Data.Id);
-            _occupiedNodes.Add(nextNode.Data.Id);
+            var previousBattlefield = CurrentBattlefield;
+            var nextBattlefield = nextNode.GetComponent<NodeBattlefield>();
+            previousBattlefield?.Leave(_battleAgent);
+            if (nextBattlefield != null && _battleAgent != null && !nextBattlefield.TryEnter(_battleAgent))
+            {
+                previousBattlefield?.TryEnter(_battleAgent);
+                _isTurning = false;
+                yield break;
+            }
+
+            _battleAgent?.BeginTraversal();
+
+            VacateNode(_currentNode.Data.Id);
+            OccupyNode(nextNode.Data.Id);
 
             _currentNode = nextNode;
             _visitedNodes.Add(_currentNode.Data.Id);
 
             yield return SmoothMove();
 
+            _battleAgent?.EndTraversal();
             _isTurning = false;
             NodeArrived?.Invoke(_currentNode);
         }
@@ -143,11 +176,15 @@ namespace _01.Code.Enemies
 
             foreach (var id in _currentNode.Data.ConnectedNodeIds)
             {
-                var node = FindNodeByDataId(id);
+                var node = ResolveNodeByDataId(id);
                 if (node == null)
                     continue;
 
-                if (_occupiedNodes.Contains(id))
+                if (IsNodeOccupied(id))
+                    continue;
+
+                var battlefield = node.GetComponent<NodeBattlefield>();
+                if (battlefield != null && _battleAgent != null && !battlefield.CanEnter(_battleAgent.Team))
                     continue;
 
                 if (!_visitedNodes.Contains(id))
@@ -165,7 +202,7 @@ namespace _01.Code.Enemies
             return null;
         }
 
-        private Node FindNodeByDataId(string dataId)
+        private Node ResolveNodeByDataId(string dataId)
         {
             foreach (var node in Node.ActiveNodes)
             {
@@ -176,11 +213,47 @@ namespace _01.Code.Enemies
             return null;
         }
 
+        private static bool IsNodeOccupied(string nodeId)
+        {
+            return !string.IsNullOrEmpty(nodeId)
+                   && _occupiedNodeCounts.TryGetValue(nodeId, out var count)
+                   && count > 0;
+        }
+
+        private static void OccupyNode(string nodeId)
+        {
+            if (string.IsNullOrEmpty(nodeId))
+                return;
+
+            _occupiedNodeCounts.TryGetValue(nodeId, out var count);
+            _occupiedNodeCounts[nodeId] = count + 1;
+        }
+
+        private static void VacateNode(string nodeId)
+        {
+            if (string.IsNullOrEmpty(nodeId)
+                || !_occupiedNodeCounts.TryGetValue(nodeId, out var count))
+                return;
+
+            if (count <= 1)
+                _occupiedNodeCounts.Remove(nodeId);
+            else
+                _occupiedNodeCounts[nodeId] = count - 1;
+        }
+
         private Vector3 GetEnemyPosition(Node node)
         {
             return node.EnemyPosition != null
                 ? node.EnemyPosition.position
                 : node.transform.position;
+        }
+
+        private void TryEnterBattlefield(Node node)
+        {
+            if (node == null || _battleAgent == null)
+                return;
+
+            node.GetComponent<NodeBattlefield>()?.TryEnter(_battleAgent);
         }
 
         private void CacheVisualPose()
@@ -219,7 +292,9 @@ namespace _01.Code.Enemies
             _activeEnemies.Remove(this);
 
             if (_currentNode?.Data != null)
-                _occupiedNodes.Remove(_currentNode.Data.Id);
+                VacateNode(_currentNode.Data.Id);
+
+            CurrentBattlefield?.Leave(_battleAgent);
 
             _moveTween?.Kill();
         }

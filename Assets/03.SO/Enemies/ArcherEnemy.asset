@@ -17,6 +17,8 @@ MonoBehaviour:
   <Defense>k__BackingField: 0
   <EvasionChance>k__BackingField: 0.18
   <Name>k__BackingField: Archer
+  <Role>k__BackingField: 1
+  <Prefab>k__BackingField: {fileID: 6453398018867074118, guid: 2e3d13168afd6cf428bbf3cfab14e6f4, type: 3}
   <Fear>k__BackingField: 2
   <Greed>k__BackingField: 1
   <MaxHealth>k__BackingField: 8

@@ -15,6 +15,10 @@ GameObject:
   - component: {fileID: 9186542388326355933}
   - component: {fileID: 3739512902420668162}
   - component: {fileID: 2211442224303028780}
+  - component: {fileID: 1409114061074559305}
+  - component: {fileID: 7044045837501711256}
+  - component: {fileID: 2871377792837210728}
+  - component: {fileID: 4933797280049562216}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Untagged
@@ -57,6 +61,21 @@ MonoBehaviour:
   combatant: {fileID: 9186542388326355933}
   mover: {fileID: 3739512902420668162}
   health: {fileID: 2709196990148380843}
+  statusController: {fileID: 0}
+  fearGainPerTurn: 1
+  fearGainOnTrap: 3
+  fearGainOnCombat: 4
+  greedGainOnBuilding: 2
+  fearReductionOnBuilding: 2
+  fearReturnChancePerPoint: 0.018
+  greedReturnResistancePerPoint: 0.04
+  returnChanceStartThreshold: 6
+  returnAnimationDuration: 0.42
+  returnShakeDistance: 0.08
+  idleDuration: 0.2
+  chaseInterval: 0.8
+  hitStunDuration: 0.25
+  deadDuration: 0.45
 --- !u!114 &2709196990148380843
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -84,9 +103,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Combat.DamageFeedback
   bloomColor: {r: 1, g: 0.12, b: 0.08, a: 1}
   bloomDuration: 0.12
-  distortionDuration: 0.16
-  distortionScaleAmount: 0.22
-  distortionRotationAngle: 8
+  impactDuration: 0.18
+  impactShakeDistance: 0.08
+  impactScaleAmount: 0.12
+  impactRotationAngle: 5
   textFloatDistance: 0.45
   textDuration: 0.55
   textSortingOrder: 60
@@ -112,13 +132,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Combat.Combatant
   attackDamage: 1
+  defense: 0
   attackInterval: 1
-  bodySlamDistance: 0.3
-  bodySlamDuration: 0.12
   evasionChance: 0
-  dodgeBackDistance: 0.22
-  dodgeBackDuration: 0.1
-  dodgeReturnDuration: 0.12
   barsView: {fileID: 4835492364946728964}
   attackFeelFeedbacks: {fileID: 0}
   attackHitParticles: {fileID: 0}
@@ -126,6 +142,8 @@ MonoBehaviour:
   attackParticleBurstCount: 14
   attackImpactOffset: 0.08
   attackParticleSortingOrder: 75
+  attackStatusEffect: {fileID: 0}
+  attackStatusEffectChance: 0
   health: {fileID: 2709196990148380843}
   damageFeedback: {fileID: 3065682830328054744}
 --- !u!114 &3739512902420668162
@@ -145,6 +163,7 @@ MonoBehaviour:
   maxMoveDuration: 0.75
   visualHopHeight: 0.12
   visualSquashAmount: 0.08
+  visualLeanAngle: 7
   visual: {fileID: 2787899817810343432}
 --- !u!114 &2211442224303028780
 MonoBehaviour:
@@ -158,6 +177,133 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b14b713669090bd4693241c780a7adc8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Manager.WaveEnemyTracker
+--- !u!50 &1409114061074559305
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4328671716576560348}
+  m_BodyType: 1
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 0
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 4
+--- !u!114 &7044045837501711256
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4328671716576560348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6515a146a41c0d54d8cf5130c246a570, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.BT.BattleAgent
+  team: 1
+  role: 0
+  combatant: {fileID: 9186542388326355933}
+  body: {fileID: 2787899817810343432}
+  senseRange: 6
+  attackRange: 1.3
+  moveSpeed: 3
+  threatWeight: 12
+  outOfCombatRegenPerSecond: 0
+  supportHealRange: 4
+  supportHealAmount: 2
+  meleeLifestealRatio: 0.3
+  rangedSplashRatio: 0.5
+  supportAuraInterval: 3
+  attackLungeDistance: 0.22
+  attackLungeDuration: 0.16
+  hitKnockbackDistance: 0.3
+  weaveAfterHitTime: 0.3
+  projectileSpeed: 12
+  projectileSize: {x: 0.5, y: 0.15}
+  projectileColor: {r: 1, g: 0.95, b: 0.55, a: 1}
+  meleeAttackEffectPrefab: {fileID: 0}
+  autoDrive: 0
+--- !u!58 &2871377792837210728
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4328671716576560348}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Radius: 0.4
+--- !u!114 &4933797280049562216
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4328671716576560348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0038c16c34866b4f9e25c9c0dc0f7e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Behavior::Unity.Behavior.BehaviorGraphAgent
+  m_Graph: {fileID: 4253047209375283788, guid: 95a622b74b375df4c817c9111d0260c2, type: 2}
+  m_BlackboardVariableOverridesList:
+  - rid: 5910678154635117338
+  m_OriginalGraph: {fileID: 4253047209375283788, guid: 95a622b74b375df4c817c9111d0260c2, type: 2}
+  m_IsInitialised: 0
+  m_IsStarted: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: 5910678154635117338
+      type: {class: 'BlackboardVariable`1[[UnityEngine.GameObject, UnityEngine.CoreModule]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        GUID:
+          m_Value0: 1
+          m_Value1: 0
+        Name: Self
+        m_Value: {fileID: 4328671716576560348}
 --- !u!1 &7473952817250454834
 GameObject:
   m_ObjectHideFlags: 0
@@ -248,7 +394,7 @@ SpriteRenderer:
   m_Size: {x: 1, y: 1}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
 --- !u!114 &7749111140017749111
 MonoBehaviour:

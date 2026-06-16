@@ -17,6 +17,8 @@ MonoBehaviour:
   <Defense>k__BackingField: 2
   <EvasionChance>k__BackingField: 0.05
   <Name>k__BackingField: Sword
+  <Role>k__BackingField: 3
+  <Prefab>k__BackingField: {fileID: 6453398018867074118, guid: 8130c1f18f0b8334eae8a599efde258c, type: 3}
   <Fear>k__BackingField: 1
   <Greed>k__BackingField: 3
   <MaxHealth>k__BackingField: 14

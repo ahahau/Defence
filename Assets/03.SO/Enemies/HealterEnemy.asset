@@ -17,6 +17,8 @@ MonoBehaviour:
   <Defense>k__BackingField: 1
   <EvasionChance>k__BackingField: 0.08
   <Name>k__BackingField: Healter
+  <Role>k__BackingField: 2
+  <Prefab>k__BackingField: {fileID: 6453398018867074118, guid: dc606b17b232b0b40851cbd65e1fdc44, type: 3}
   <Fear>k__BackingField: 1
   <Greed>k__BackingField: 2
   <MaxHealth>k__BackingField: 12

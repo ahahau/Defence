@@ -1,3 +1,4 @@
+using _01.Code.BT;
 using _01.Code.Entities;
 using UnityEngine;
 
@@ -8,6 +9,12 @@ namespace _01.Code.Enemies
     {
         [field: SerializeField]
         public string Name { get; private set; } = "Enemy";
+
+        [field: SerializeField, Tooltip("전투 역할. 전열(Tank/Melee)/후열(Ranged)/지원(Support).")]
+        public BattleRole Role { get; private set; } = BattleRole.Melee;
+
+        [field: SerializeField, Tooltip("이 적 종류의 전용 프리팹. 비어 있으면 WaveManager의 기본 프리팹 사용.")]
+        public Enemy Prefab { get; private set; }
 
         [field: SerializeField, Min(0)]
         public int Fear { get; private set; }

@@ -13,15 +13,17 @@ MonoBehaviour:
   m_Name: BasicEnemy
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Enemies.EnemyDataSO
   <Grade>k__BackingField: 1
-  <BoardSprite>k__BackingField: {fileID: 21300000, guid: 0d978ab7d273ba9449a4ab01920beb3a, type: 3}
+  <BoardSprite>k__BackingField: {fileID: 4723107735738678597, guid: fb84d3b2af781aa4bbc5268c9c1b36f7, type: 3}
   <Defense>k__BackingField: 0
   <EvasionChance>k__BackingField: 0
-  <Name>k__BackingField: Enemy
+  <Name>k__BackingField: Scout
+  <Role>k__BackingField: 0
+  <Prefab>k__BackingField: {fileID: 6453398018867074118, guid: a5af3a434bf432348801f90079a3ea66, type: 3}
   <Fear>k__BackingField: 1
   <Greed>k__BackingField: 1
-  <MaxHealth>k__BackingField: 10
+  <MaxHealth>k__BackingField: 5
   <AttackDamage>k__BackingField: 1
   <AttackInterval>k__BackingField: 1
-  <IdleSprite>k__BackingField: {fileID: 21300000, guid: 0d978ab7d273ba9449a4ab01920beb3a, type: 3}
-  <AttackSprite>k__BackingField: {fileID: 21300000, guid: 251c1bad2088f7545b598dd41a312f36, type: 3}
-  <DefeatedSprite>k__BackingField: {fileID: 21300000, guid: 11ea87e96aa1d5346ac82b87cdb016bf, type: 3}
+  <IdleSprite>k__BackingField: {fileID: 4723107735738678597, guid: fb84d3b2af781aa4bbc5268c9c1b36f7, type: 3}
+  <AttackSprite>k__BackingField: {fileID: -3124414793415215421, guid: e750451a232e84149abf6604583d0077, type: 3}
+  <DefeatedSprite>k__BackingField: {fileID: 4723107735738678597, guid: fb84d3b2af781aa4bbc5268c9c1b36f7, type: 3}
