@@ -19,6 +19,9 @@ namespace _01.Code.Manager
         [SerializeField] private Enemy enemyPrefab;
         [SerializeField] private Enemy[] enemyPrefabs;
         [SerializeField] private EnemyDataSO[] enemyDataPool;
+        [Header("Adventurer Parties")]
+        [SerializeField, Tooltip("설정하면 웨이브가 랜덤 파티 구성(순서대로)으로 스폰된다. 비어있으면 enemyDataPool 랜덤.")]
+        private AdventurerPartySO[] parties;
         [SerializeField, Min(0)] private int treasuryGoldLoss = 10;
         [Header("Enemy Level Scaling")]
         [SerializeField, Min(0)] private int enemyHealthPerLevel = 2;
@@ -36,7 +39,8 @@ namespace _01.Code.Manager
         private Coroutine _waveCoroutine;
         private WaveRewardPanelView _rewardPanel;
         private readonly List<Enemy> _activeEnemies = new();
-        private readonly List<Enemy> _turnEnemies = new();
+        private readonly List<EnemyDataSO> _partyQueue = new();
+        private int _partyIndex;
         private bool _isWaitingForRewardPanel;
         private bool _isDestroying;
 
@@ -112,14 +116,13 @@ namespace _01.Code.Manager
             _isWaveRunning = true;
             _isWaitingForRewardPanel = false;
             _activeEnemies.Clear();
+            SetupPartyForWave();
 
             waveEventChannel.RaiseEvent(new WaveStartedEvent(_currentDay, entry.enemyCount));
 
             SpawnNextEnemyIfNeeded(false);
             var spawnInterval = Mathf.Max(0.5f, entry.spawnInterval);
-            var turnInterval = Mathf.Max(0.1f, entry.enemyTurnInterval);
             var spawnTimer = 0f;
-            var turnTimer = 0f;
 
             while (_isWaveRunning)
             {
@@ -128,9 +131,7 @@ namespace _01.Code.Manager
                 if (!_isWaveRunning)
                     break;
 
-                var deltaTime = Time.deltaTime;
-                spawnTimer += deltaTime;
-                turnTimer += deltaTime;
+                spawnTimer += Time.deltaTime;
 
                 if (spawnTimer >= spawnInterval)
                 {
@@ -138,24 +139,7 @@ namespace _01.Code.Manager
                     SpawnNextEnemyIfNeeded(false);
                 }
 
-                if (turnTimer < turnInterval)
-                {
-                    CompleteWaveIfCleared(false);
-                    continue;
-                }
-
-                turnTimer = 0f;
                 RemoveMissingEnemies();
-
-                _turnEnemies.Clear();
-                _turnEnemies.AddRange(_activeEnemies);
-                foreach (var enemy in _turnEnemies)
-                {
-                    if (enemy != null && _activeEnemies.Contains(enemy))
-                        enemy.TakeTurn();
-                }
-                _turnEnemies.Clear();
-
                 CompleteWaveIfCleared(false);
             }
 
@@ -174,7 +158,12 @@ namespace _01.Code.Manager
                 ? _portalNode.EnemyPosition.position
                 : _portalNode.transform.position;
 
-            var prefab = ResolveEnemyPrefab();
+            // 데이터를 먼저 뽑고, 그 데이터 전용 프리팹이 있으면 그것을 스폰(종류↔프리팹 짝 보장).
+            // 없으면 기존 방식(공용 프리팹 풀)으로 폴백한다.
+            var enemyData = ResolveEnemyData();
+            var prefab = enemyData != null && enemyData.Prefab != null
+                ? enemyData.Prefab
+                : ResolveEnemyPrefab();
             if (prefab == null)
             {
                 Debug.LogError($"{nameof(WaveManager)} requires at least one enemy prefab assigned.", this);
@@ -184,7 +173,7 @@ namespace _01.Code.Manager
             }
 
             Enemy enemy = Instantiate(prefab, spawnPos, Quaternion.identity);
-            enemy.ConfigureData(ResolveEnemyData());
+            enemy.ConfigureData(enemyData);
             enemy.ApplyWaveLevel(_currentDay, enemyHealthPerLevel, enemyAttackPerLevel);
             _remainingSpawns--;
             
@@ -226,8 +215,43 @@ namespace _01.Code.Manager
             return enemyPrefab;
         }
 
+        /// <summary>웨이브 시작 시 랜덤 모험가 파티를 골라 등장 순서 큐를 채운다. 파티 없으면 큐 비움(풀 랜덤).</summary>
+        private void SetupPartyForWave()
+        {
+            _partyQueue.Clear();
+            _partyIndex = 0;
+
+            if (parties == null || parties.Length == 0)
+                return;
+
+            var validParties = new List<AdventurerPartySO>();
+            foreach (var party in parties)
+            {
+                if (party != null && party.Members != null && party.Members.Length > 0)
+                    validParties.Add(party);
+            }
+
+            if (validParties.Count == 0)
+                return;
+
+            var chosen = validParties[Random.Range(0, validParties.Count)];
+            foreach (var member in chosen.Members)
+            {
+                if (member != null)
+                    _partyQueue.Add(member);
+            }
+        }
+
         private EnemyDataSO ResolveEnemyData()
         {
+            // 파티가 설정된 웨이브: 구성 순서대로(부족하면 순환) 스폰해 역할 섞인 그룹이 함께 온다.
+            if (_partyQueue.Count > 0)
+            {
+                var data = _partyQueue[_partyIndex % _partyQueue.Count];
+                _partyIndex++;
+                return data;
+            }
+
             if (enemyDataPool == null || enemyDataPool.Length == 0)
                 return null;
 
@@ -283,7 +307,6 @@ namespace _01.Code.Manager
             _isWaveRunning = false;
             _remainingSpawns = 0;
             _activeEnemies.Clear();
-            _turnEnemies.Clear();
             
             if (stopRunningCoroutine && _waveCoroutine != null)
             {
@@ -401,7 +424,6 @@ namespace _01.Code.Manager
 
             _isWaveRunning = false;
             _isWaitingForRewardPanel = false;
-            _turnEnemies.Clear();
         }
 
         private void UnsubscribeRewardPanel()
