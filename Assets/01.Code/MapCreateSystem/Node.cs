@@ -39,6 +39,12 @@ namespace _01.Code.MapCreateSystem
         [SerializeField]
         private Color lockedVisualColor = new(0.45f, 0.45f, 0.45f, 1f);
 
+        [SerializeField]
+        private NodeTrapGrid trapGrid;
+
+        /// <summary>트랩 노드 내부 격자(없으면 null). 여러 트랩을 셀에 자유 배치.</summary>
+        public NodeTrapGrid TrapGrid => trapGrid != null ? trapGrid : (trapGrid = GetComponent<NodeTrapGrid>());
+
         [field: SerializeField]
         public Collider2D ClickCollider { get; private set; }
         
@@ -136,6 +142,15 @@ namespace _01.Code.MapCreateSystem
             AssignedUnit = unit;
             AssignedUnitInstance = unitInstance;
             IncreaseDanger(unit != null ? unit.BaseDanger : 0);
+        }
+
+        public bool TryAssignUnit(UnitDataSO unit, Unit unitInstance)
+        {
+            if (unit == null || unitInstance == null || HasInstallation)
+                return false;
+
+            AssignUnit(unit, unitInstance);
+            return true;
         }
 
         public void ClearUnit()

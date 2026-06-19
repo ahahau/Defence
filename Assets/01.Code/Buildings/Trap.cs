@@ -1,3 +1,4 @@
+using _01.Code.Audio;
 using _01.Code.Combat;
 using _01.Code.StatusEffects;
 using DG.Tweening;
@@ -64,6 +65,7 @@ namespace _01.Code.Buildings
                 resolvedDamage = statusController.ModifyTrapDamage(resolvedDamage);
             
             target.TakeDamage(resolvedDamage);
+            GameSfxPlayer.Play(GameSfxCue.Trap);
             PlayHitAnimation();
             TryApplyInjury(target, targetComponent);
             return true;

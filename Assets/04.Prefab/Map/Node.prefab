@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 109346635099613854}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.3, y: -0.162, z: 0}
+  m_LocalPosition: {x: 0.32, y: -0.05, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -56,7 +56,7 @@ Transform:
   m_GameObject: {fileID: 2484585898608622506}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.3, y: -0.162, z: 0}
+  m_LocalPosition: {x: -0.32, y: -0.05, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -89,7 +89,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1.6666667, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8969328646574706792}
@@ -164,6 +164,7 @@ GameObject:
   - component: {fileID: 8969328646574706792}
   - component: {fileID: 4683472917447393176}
   - component: {fileID: 5022518355753927776}
+  - component: {fileID: 6623850691390691873}
   m_Layer: 3
   m_Name: Node
   m_TagString: Untagged
@@ -181,7 +182,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 5, y: 3, z: 2}
+  m_LocalScale: {x: 10, y: 10, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 6726607010836837348}
@@ -208,9 +209,10 @@ MonoBehaviour:
   lockedCostText: {fileID: 4767655088705141222}
   unlockedSprite: {fileID: -3384411708189302445, guid: 9173dff71398ab441b2cd0472cab8975, type: 3}
   lockedCandidateSprite: {fileID: -2705092886968552188, guid: 47a3f8bf0ac10e24d91cffc8a95c5ddb, type: 3}
-  unlockedSpriteScale: {x: 1, y: 1.6666667, z: 1}
+  unlockedSpriteScale: {x: 1, y: 1, z: 1}
   unlockedVisualColor: {r: 1, g: 1, b: 1, a: 1}
   lockedVisualColor: {r: 0.45, g: 0.45, b: 0.45, a: 1}
+  trapGrid: {fileID: 0}
   <ClickCollider>k__BackingField: {fileID: 5022518355753927776}
   <UnitPosition>k__BackingField: {fileID: 2097231252395536016}
   enemyPosition: {fileID: 8142629751096979764}
@@ -261,6 +263,20 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
+--- !u!114 &6623850691390691873
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4594048493997532775}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cb6e544431b0dc439517216999c3fd7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.BT.NodeBattlefield
+  maxPerTeam: 3
+  arenaRadius: 4
 --- !u!1 &5300513331299341621
 GameObject:
   m_ObjectHideFlags: 0
