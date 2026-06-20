@@ -22,6 +22,15 @@ namespace _01.Code.UI
 
         private readonly List<ArtifactEntryView> entries = new();
 
+        private void Awake()
+        {
+            foreach (var text in GetComponentsInChildren<TMP_Text>(true))
+            {
+                if (text.text == "아티팩트" || text.text == "Artifacts")
+                    TmpTextLayoutUtility.KeepHorizontal(text, true);
+            }
+        }
+
         private void OnEnable()
         {
             artifactEventChannel.AddListener<ArtifactInventoryChangedEvent>(HandleInventoryChanged);

@@ -18,6 +18,7 @@ namespace _01.Code.UI
             panelView = owner;
 
             iconImage.sprite = artifact.Icon;
+            iconImage.preserveAspect = true;
             iconImage.color = artifact.Icon != null ? Color.white : artifact.IconColor;
         }
 

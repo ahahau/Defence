@@ -12,6 +12,8 @@ namespace _01.Code.UI
 {
     public class PolicyChoicePanelView : MonoBehaviour
     {
+        public static PolicyChoicePanelView Current { get; private set; }
+
         [SerializeField] private GameEventChannelSO managementEventChannel;
         [SerializeField] private MoralePolicyManager moralePolicyManager;
 
@@ -29,6 +31,8 @@ namespace _01.Code.UI
 
         private readonly List<PolicyDataSO> currentChoices = new();
         private readonly List<UnityAction> policyButtonActions = new();
+        private bool _isPausingGame;
+        private float _previousTimeScale = 1f;
 
         public bool IsPanelOpen => panelRoot != null && panelRoot.activeInHierarchy;
         public RectTransform FirstPolicyButtonRect => policyButtons != null
@@ -45,6 +49,8 @@ namespace _01.Code.UI
 
         private void OnEnable()
         {
+            Current = this;
+
             managementEventChannel?.AddListener<PolicyChoicesOfferedEvent>(HandlePolicyChoicesOffered);
             managementEventChannel?.AddListener<MoraleChangedEvent>(HandleMoraleChanged);
             closeButton?.onClick.AddListener(HandleCloseClicked);
@@ -54,10 +60,14 @@ namespace _01.Code.UI
 
         private void OnDisable()
         {
+            if (Current == this)
+                Current = null;
+
             managementEventChannel?.RemoveListener<PolicyChoicesOfferedEvent>(HandlePolicyChoicesOffered);
             managementEventChannel?.RemoveListener<MoraleChangedEvent>(HandleMoraleChanged);
             closeButton?.onClick.RemoveListener(HandleCloseClicked);
             UnwirePolicyButtons();
+            ResumeGameIfPaused();
         }
 
         private void HandlePolicyChoicesOffered(PolicyChoicesOfferedEvent evt)
@@ -153,6 +163,7 @@ namespace _01.Code.UI
         {
             panelRoot.SetActive(true);
             panelRoot.transform.SetAsLastSibling();
+            PauseGameForSelection();
         }
 
         private void HandleCloseClicked()
@@ -167,6 +178,27 @@ namespace _01.Code.UI
         {
             if (panelRoot != null)
                 panelRoot.SetActive(false);
+
+            ResumeGameIfPaused();
+        }
+
+        private void PauseGameForSelection()
+        {
+            if (_isPausingGame)
+                return;
+
+            _previousTimeScale = Time.timeScale;
+            Time.timeScale = 0f;
+            _isPausingGame = true;
+        }
+
+        private void ResumeGameIfPaused()
+        {
+            if (!_isPausingGame)
+                return;
+
+            Time.timeScale = Mathf.Approximately(_previousTimeScale, 0f) ? 1f : _previousTimeScale;
+            _isPausingGame = false;
         }
 
         private bool HasPanelReferences()

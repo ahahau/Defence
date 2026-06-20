@@ -82,6 +82,7 @@ namespace _01.Code.UI
 
             var sprite = ResolvePreviewSprite(buildingData);
             iconImage.sprite = sprite;
+            iconImage.preserveAspect = true;
             iconImage.enabled = sprite != null;
         }
 

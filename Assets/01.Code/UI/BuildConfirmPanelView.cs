@@ -8,6 +8,8 @@ namespace _01.Code.UI
 {
     public class BuildConfirmPanelView : MonoBehaviour
     {
+        public static BuildConfirmPanelView Current { get; private set; }
+
         [SerializeField]
         private CanvasGroup canvasGroup;
 
@@ -39,6 +41,17 @@ namespace _01.Code.UI
         private void Awake()
         {
             WireButtons();
+        }
+
+        private void OnEnable()
+        {
+            Current = this;
+        }
+
+        private void OnDisable()
+        {
+            if (Current == this)
+                Current = null;
         }
 
         public void Show(int goldCost, Action onConfirm)

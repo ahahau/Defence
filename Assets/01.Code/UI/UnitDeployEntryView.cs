@@ -36,7 +36,10 @@ namespace _01.Code.UI
             var countText = ownedCount >= 0 ? $"보유 {ownedCount}" : "보유 -";
             SetText(costText, $"{countText} / 배치 마력 {unit.MagicCost}");
             if (unitIcon != null && unit.Sprite != null)
+            {
                 unitIcon.sprite = unit.Sprite;
+                unitIcon.preserveAspect = true;
+            }
             ApplyBoard(unit.BoardSprite);
 
             if (selectButton != null)
@@ -55,6 +58,7 @@ namespace _01.Code.UI
 
             boardImage.enabled = boardSprite != null;
             boardImage.sprite = boardSprite;
+            boardImage.preserveAspect = true;
         }
 
         public void SetSelected(bool selected)

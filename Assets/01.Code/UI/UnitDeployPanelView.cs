@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using _01.Code.Combat;
 using _01.Code.Core;
 using _01.Code.Events;
+using _01.Code.Manager;
 using _01.Code.Tutorial;
 using _01.Code.Units;
 using TMPro;
@@ -12,6 +13,8 @@ namespace _01.Code.UI
 {
     public class UnitDeployPanelView : MonoBehaviour
     {
+        public static UnitDeployPanelView Current { get; private set; }
+
         [Header("UI References")]
         [SerializeField] private GameObject panelRoot;
         [SerializeField] private Button toggleButton;
@@ -30,6 +33,7 @@ namespace _01.Code.UI
 
         [Header("Event Channels")]
         [SerializeField] private GameEventChannelSO costEventChannel;
+        [SerializeField] private DayManager dayManager;
 
         private readonly List<UnitDataSO> _hireableUnits = new();
         private readonly List<UnitDeployEntryView> _entries = new();
@@ -39,10 +43,40 @@ namespace _01.Code.UI
         public RectTransform ToggleButtonRect => toggleButton != null ? toggleButton.transform as RectTransform : null;
         public RectTransform FirstEntryRect => _entries.Count > 0 && _entries[0] != null ? _entries[0].transform as RectTransform : null;
         public UnitDataSO FirstEntryUnit => _entries.Count > 0 && _entries[0] != null ? _entries[0].Unit : null;
+        public UnitDataSO FirstOwnedUnit
+        {
+            get
+            {
+                foreach (var unit in _hireableUnits)
+                {
+                    if (unit != null && GetOwnedUnitCount(unit) > 0)
+                        return unit;
+                }
+
+                return FirstEntryUnit;
+            }
+        }
         public bool IsPanelOpen => panelRoot != null && panelRoot.activeInHierarchy;
+
+        public RectTransform GetEntryRect(UnitDataSO unit)
+        {
+            if (unit == null)
+                return null;
+
+            foreach (var entry in _entries)
+            {
+                if (entry != null && entry.Unit == unit)
+                    return entry.transform as RectTransform;
+            }
+
+            return null;
+        }
 
         private void Awake()
         {
+            dayManager ??= FindFirstObjectByType<DayManager>();
+            ConfigureStaticTextLayout();
+
             if (panelRoot != null)
                 panelRoot.SetActive(false);
 
@@ -50,8 +84,16 @@ namespace _01.Code.UI
             RefreshHireEntries();
         }
 
+        private void Update()
+        {
+            if (panelRoot != null && panelRoot.activeSelf && !IsManagementAllowed())
+                panelRoot.SetActive(false);
+        }
+
         private void OnEnable()
         {
+            Current = this;
+
             if (toggleButton != null) toggleButton.onClick.AddListener(HandleToggle);
             if (closeButton != null)  closeButton.onClick.AddListener(HandleClose);
 
@@ -62,10 +104,14 @@ namespace _01.Code.UI
             costEventChannel.AddListener<RosterHireRejectedEvent>(HandleHireRejected);
             costEventChannel.AddListener<UnitUnlockChangedEvent>(HandleUnitUnlockChanged);
             costEventChannel.AddListener<UnitInventoryChangedEvent>(HandleUnitInventoryChanged);
+            SyncInventoryFromRoster();
         }
 
         private void OnDisable()
         {
+            if (Current == this)
+                Current = null;
+
             if (toggleButton != null) toggleButton.onClick.RemoveListener(HandleToggle);
             if (closeButton != null)  closeButton.onClick.RemoveListener(HandleClose);
 
@@ -109,6 +155,8 @@ namespace _01.Code.UI
             {
                 var entry = Instantiate(entryPrefab, contentRoot);
                 entry.Initialize(unit, HandleUnitSelected, GetOwnedUnitCount(unit));
+                if (TutorialInputGate.IsActive && !TutorialInputGate.AllowsHireUnit(unit))
+                    entry.SetInteractable(false);
                 _entries.Add(entry);
             }
 
@@ -130,7 +178,7 @@ namespace _01.Code.UI
 
         private void HandleToggle()
         {
-            if (panelRoot == null)
+            if (panelRoot == null || !IsManagementAllowed())
                 return;
 
             if (!TutorialInputGate.AllowsHirePanel())
@@ -144,6 +192,9 @@ namespace _01.Code.UI
 
             if (shouldShow)
             {
+                SyncInventoryFromRoster();
+                RefreshHireEntries();
+                RefreshEntryInteractableStates();
                 selectedUnit = null;
                 SetEntrySelection(null);
                 SetDetailVisible(false);
@@ -178,6 +229,17 @@ namespace _01.Code.UI
             }
 
             RefreshHireEntries();
+        }
+
+        private void RefreshEntryInteractableStates()
+        {
+            foreach (var entry in _entries)
+            {
+                if (entry == null || entry.Unit == null)
+                    continue;
+
+                entry.SetInteractable(GetOwnedUnitCount(entry.Unit) > 0 && TutorialInputGate.AllowsHireUnit(entry.Unit));
+            }
         }
 
         private void HandleUnitSelected(UnitDataSO unit)
@@ -234,6 +296,15 @@ namespace _01.Code.UI
             if (hintText != null) hintText.text = message;
         }
 
+        private void ConfigureStaticTextLayout()
+        {
+            if (toggleButton != null)
+                TmpTextLayoutUtility.KeepHorizontal(toggleButton.GetComponentInChildren<TMP_Text>(true), true);
+
+            if (closeButton != null)
+                TmpTextLayoutUtility.KeepHorizontal(closeButton.GetComponentInChildren<TMP_Text>(true), true);
+        }
+
         private void SelectUnit(UnitDataSO unit)
         {
             selectedUnit = unit;
@@ -285,6 +356,20 @@ namespace _01.Code.UI
         private int GetOwnedUnitCount(UnitDataSO unit)
         {
             return unit != null && _ownedUnitCounts.TryGetValue(unit, out var count) ? count : 0;
+        }
+
+        private void SyncInventoryFromRoster()
+        {
+            var roster = HiredUnitRoster.Current;
+            if (roster == null)
+                return;
+
+            _ownedUnitCounts.Clear();
+            foreach (var pair in roster.OwnedUnits)
+            {
+                if (pair.Key != null)
+                    _ownedUnitCounts[pair.Key] = pair.Value;
+            }
         }
 
         private T ResolvePreviewComponent<T>(UnitDataSO unit) where T : Component
@@ -343,6 +428,12 @@ namespace _01.Code.UI
             }
 
             return maxCardWidth * Mathf.Max(1, gridColumns);
+        }
+
+        private bool IsManagementAllowed()
+        {
+            dayManager ??= FindFirstObjectByType<DayManager>();
+            return dayManager == null || dayManager.IsStandby;
         }
     }
 }

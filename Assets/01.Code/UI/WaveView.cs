@@ -9,6 +9,8 @@ namespace _01.Code.UI
 {
     public class WaveView : MonoBehaviour
     {
+        public static WaveView Current { get; private set; }
+
         [SerializeField] private GameEventChannelSO waveEventChannel;
         [SerializeField] private Button startButton;
         [SerializeField] private DayManager dayManager;
@@ -31,6 +33,8 @@ namespace _01.Code.UI
 
         private void OnEnable()
         {
+            Current = this;
+
             waveEventChannel?.AddListener<WaveStartedEvent>(HandleWaveStarted);
             waveEventChannel?.AddListener<WaveEndedEvent>(HandleWaveEnded);
             gameStateEventChannel?.AddListener<GameOverEvent>(HandleGameOver);
@@ -41,6 +45,9 @@ namespace _01.Code.UI
 
         private void OnDisable()
         {
+            if (Current == this)
+                Current = null;
+
             waveEventChannel?.RemoveListener<WaveStartedEvent>(HandleWaveStarted);
             waveEventChannel?.RemoveListener<WaveEndedEvent>(HandleWaveEnded);
             gameStateEventChannel?.RemoveListener<GameOverEvent>(HandleGameOver);
@@ -52,6 +59,9 @@ namespace _01.Code.UI
 
         public void HighlightTutorialStartButton()
         {
+            SetStartButtonVisible(true);
+            RefreshStartButton();
+
             var graphic = startButton != null ? startButton.targetGraphic : null;
             if (graphic == null)
                 return;
@@ -64,6 +74,7 @@ namespace _01.Code.UI
                 _hasTutorialHighlightDefaultColor = true;
             }
 
+            startButton.transform.SetAsLastSibling();
             graphic.color = _tutorialHighlightColor;
         }
 

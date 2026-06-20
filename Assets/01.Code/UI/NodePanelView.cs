@@ -1,3 +1,4 @@
+using _01.Code.Audio;
 using _01.Code.Artifacts;
 using _01.Code.Buildings;
 using _01.Code.Core;
@@ -6,6 +7,7 @@ using _01.Code.Manager;
 using _01.Code.MapCreateSystem;
 using _01.Code.Tutorial;
 using _01.Code.Units;
+using _01.Code.BT;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -15,6 +17,8 @@ namespace _01.Code.UI
 {
     public class NodePanelView : MonoBehaviour
     {
+        public static NodePanelView Current { get; private set; }
+
         [SerializeField] private GameObject panelRoot;
         [SerializeField] private TMP_Text titleText;
         [SerializeField] private Button closeButton;
@@ -29,7 +33,7 @@ namespace _01.Code.UI
         [SerializeField] private GameObject unitViewRoot;
         [SerializeField] private GameObject buildingViewRoot;
         [SerializeField] private BuildingInfoPanelView buildingInfoPanel;
-        [SerializeField] private string emptyNodeTitleFormat = "{0} Unit Hire";
+        [SerializeField] private string emptyNodeTitleFormat = "{0} 설치";
         [SerializeField] private Unit unitPrefab;
         [SerializeField] private Portal portalPrefab;
         [SerializeField] private BuildingDataSO[] installableBuildings;
@@ -44,8 +48,11 @@ namespace _01.Code.UI
         [Header("Roster Deploy")]
         [SerializeField] private RosterDeployEntryView deployEntryPrefab;
         [SerializeField] private HiredUnitRoster hiredUnitRoster;
+        [SerializeField] private DayManager dayManager;
 
         private Node _selectedNode;
+        private Node _pendingUnitNode;
+        private UnitDataSO _pendingUnitData;
         private Node _pendingBuildingNode;
         private BuildingDataSO _pendingBuildingData;
         private bool hasInstalledPortal;
@@ -102,6 +109,23 @@ namespace _01.Code.UI
         public void HighlightCurrentTutorialInstallTarget()
         {
             _tutorialHighlightActive = true;
+            EnsureSelectedTutorialNode();
+            if (_selectedNode != null
+                && TutorialInputGate.AllowsInstallMenu()
+                && TutorialInputGate.AllowsUnlockedNode(_selectedNode)
+                && !_selectedNode.HasInstallation
+                && !IsPreferredInstallPanelOpen())
+            {
+                ShowPreferredInstallPanel();
+                return;
+            }
+
+            if (_selectedNode != null && _selectedNode.HasInstallation)
+            {
+                HideInstallPanels();
+                panelRoot?.SetActive(false);
+            }
+
             RefreshTutorialHighlight();
         }
 
@@ -114,6 +138,16 @@ namespace _01.Code.UI
         public void HighlightCurrentTutorialUnitTarget()
         {
             _tutorialHighlightActive = true;
+            EnsureSelectedTutorialNode();
+            if (_selectedNode != null
+                && TutorialInputGate.AllowsInstallMenu()
+                && TutorialInputGate.AllowsUnlockedNode(_selectedNode)
+                && !_selectedNode.HasInstallation
+                && !IsUnitPanelOpen())
+            {
+                ShowPreferredInstallPanel();
+            }
+
             SetTutorialHighlight(ResolveCurrentTutorialUnitButton());
         }
 
@@ -130,7 +164,9 @@ namespace _01.Code.UI
 
         private void Awake()
         {
-            ResolveMissingReferences();
+            dayManager ??= FindFirstObjectByType<DayManager>();
+            LogMissingSerializedReferences();
+            ConfigureStaticTextLayout();
             _installButtonDefaultLabel = GetButtonLabel(installButton);
             InitializeUnlockedBuildings();
             ConfigureCategorySelectors();
@@ -143,7 +179,9 @@ namespace _01.Code.UI
 
         private void OnEnable()
         {
-            ResolveMissingReferences();
+            Current = this;
+
+            LogMissingSerializedReferences();
             nodeEventChannel?.AddListener<UnlockedNodeClickedEvent>(HandleNodeSelected);
             uiEventChannel?.AddListener<DeployModeChangedEvent>(HandleDeployModeChanged);
             costEventChannel?.AddListener<RosterChangedEvent>(HandleRosterChanged);
@@ -162,6 +200,9 @@ namespace _01.Code.UI
 
         private void OnDisable()
         {
+            if (Current == this)
+                Current = null;
+
             nodeEventChannel?.RemoveListener<UnlockedNodeClickedEvent>(HandleNodeSelected);
             uiEventChannel?.RemoveListener<DeployModeChangedEvent>(HandleDeployModeChanged);
             costEventChannel?.RemoveListener<RosterChangedEvent>(HandleRosterChanged);
@@ -176,6 +217,12 @@ namespace _01.Code.UI
             backButton?.onClick.RemoveListener(HandleBackClicked);
             installButton?.onClick.RemoveListener(HandleInstallClicked);
             demolishButton?.onClick.RemoveListener(HandleDemolishClicked);
+        }
+
+        private void Update()
+        {
+            if (panelRoot != null && panelRoot.activeSelf && !IsManagementAllowed())
+                HandleCloseClicked();
         }
 
         private void HandleDeployModeChanged(DeployModeChangedEvent evt)
@@ -200,8 +247,29 @@ namespace _01.Code.UI
             _selectedNode = evt.Node;
             SetTitle(string.Format(emptyNodeTitleFormat, evt.Node.Data.Type));
             HideInstallPanels();
-            panelRoot?.SetActive(true);
-            SetActionButtonsActive(true);
+
+            if (_selectedNode.HasInstallation)
+            {
+                panelRoot?.SetActive(false);
+                SetActionButtonsActive(false);
+                HideInstallPanels();
+                HideBuildingInfoPanel();
+                ClearTutorialHighlight();
+                return;
+            }
+
+            panelRoot?.SetActive(false);
+            if (TutorialInputGate.IsActive && ShouldOpenInstallPanelImmediately())
+            {
+                ShowPreferredInstallPanel();
+            }
+            else if (!TutorialInputGate.IsActive && IsManagementAllowed())
+            {
+                // The legacy SampleUiLayoutController overlay (with its own 설치 button)
+                // is retired, so open the install menu directly when an empty node is
+                // selected during standby.
+                ShowSelectedNodeInstallOptions();
+            }
             RefreshDemolishButton();
             RefreshBuildingInstallButtons();
             RefreshTutorialHighlight();
@@ -209,13 +277,13 @@ namespace _01.Code.UI
 
         private void HandleInstallClicked()
         {
-            if (_selectedNode == null)
+            if (_selectedNode == null || !IsManagementAllowed())
                 return;
 
             if (!TutorialInputGate.AllowsInstallMenu())
                 return;
 
-            ShowCategoryPanel();
+            ShowPreferredInstallPanel();
         }
 
         public void ShowUnitPanel()
@@ -226,6 +294,56 @@ namespace _01.Code.UI
         public void ShowBuildingPanel()
         {
             ShowInstallCategory(InstallCategory.Building);
+        }
+
+        public void ShowSelectedNodeInstallOptions()
+        {
+            if (_selectedNode == null || _selectedNode.HasInstallation || !IsManagementAllowed())
+                return;
+
+            ShowCategoryPanel();
+        }
+
+        public void DemolishSelectedBuilding()
+        {
+            HandleDemolishClicked();
+        }
+
+        public bool CanReturnSelectedUnit()
+        {
+            if (!IsManagementAllowed()
+                || nodeEventChannel == null
+                || costEventChannel == null
+                || _selectedNode == null
+                || !_selectedNode.HasAssignedUnit)
+                return false;
+
+            var unit = _selectedNode.AssignedUnitInstance;
+            return unit != null
+                   && unit is not MainUnit
+                   && !unit.NeedsRecovery
+                   && (unit.Combatant == null || unit.Combatant.Target == null);
+        }
+
+        public bool ReturnSelectedUnit()
+        {
+            if (!CanReturnSelectedUnit())
+                return false;
+
+            var node = _selectedNode;
+            var unitData = node.AssignedUnit;
+            var unit = node.AssignedUnitInstance;
+
+            unit.Combatant?.StopCombat();
+            var battleAgent = unit.GetComponent<BattleAgent>();
+            battleAgent?.Battlefield?.Leave(battleAgent);
+            node.ClearUnit();
+            costEventChannel?.RaiseEvent(new UnitDeployMagicRefundRequestedEvent(unitData, unitData.MagicCost));
+            nodeEventChannel?.RaiseEvent(new UnitReturnedFromNodeEvent(node, unitData));
+            Destroy(unit.gameObject);
+            panelRoot?.SetActive(false);
+            ClearTutorialHighlight();
+            return true;
         }
 
         public void ShowTrapPanel()
@@ -240,7 +358,7 @@ namespace _01.Code.UI
 
         private void ShowCategoryPanel()
         {
-            if (_selectedNode == null)
+            if (_selectedNode == null || !IsManagementAllowed())
                 return;
 
             ClearDeployEntries();
@@ -263,13 +381,21 @@ namespace _01.Code.UI
 
         private void ShowInstallCategory(InstallCategory category)
         {
-            if (_selectedNode == null)
+            if (_selectedNode == null || !IsManagementAllowed())
                 return;
 
             if (!TutorialInputGate.AllowsInstallCategory(category))
                 return;
 
+            panelRoot?.SetActive(true);
             BringToFront();
+
+            if (IsInstallCategoryOpen(category))
+            {
+                RefreshTutorialHighlight();
+                return;
+            }
+
             SetCategorySelectorsActive(false);
             _isCategoryPanelOpen = false;
             _currentInstallCategory = category;
@@ -285,7 +411,10 @@ namespace _01.Code.UI
                 SetPanelActive(buildingViewRoot, false);
                 ClearBuildingEntries();
                 RefreshRosterEntries();
-                ClearTutorialHighlight();
+                if (TutorialInputGate.IsActive && TutorialInputGate.AllowedInstallCategory == InstallCategory.Unit)
+                    RefreshTutorialHighlight();
+                else
+                    ClearTutorialHighlight();
                 return;
             }
 
@@ -339,7 +468,10 @@ namespace _01.Code.UI
         {
             var text = selector.GetComponentInChildren<TMP_Text>();
             if (text != null)
+            {
+                TmpTextLayoutUtility.KeepHorizontal(text);
                 text.text = GetCategoryCardText(category);
+            }
         }
 
         private string GetCategoryCardText(InstallCategory category)
@@ -384,6 +516,12 @@ namespace _01.Code.UI
 
         private void TryCreateCategoryCard(Transform contentRoot, InstallCategory category)
         {
+            if (!TutorialInputGate.AllowsInstallCategory(category))
+                return;
+
+            if (!HasVisibleInstallOptions(category))
+                return;
+
             CreateCategoryCard(contentRoot, category);
         }
 
@@ -395,7 +533,10 @@ namespace _01.Code.UI
 
             var text = entry.GetComponentInChildren<TMP_Text>();
             if (text != null)
+            {
+                TmpTextLayoutUtility.KeepHorizontal(text);
                 text.text = GetCategoryCardText(category);
+            }
 
             ApplyCardSprite(entry, ResolveCategorySprite(category));
             entry.onClick.RemoveAllListeners();
@@ -419,8 +560,15 @@ namespace _01.Code.UI
 
         private bool HasVisibleInstallOptions(InstallCategory category)
         {
+            hiredUnitRoster ??= HiredUnitRoster.Current;
+
             if (category == InstallCategory.Unit)
-                return hiredUnitRoster != null && hiredUnitRoster.AvailableUnits.Count > 0;
+            {
+                foreach (var unit in EnumerateDeployableUnits())
+                    return true;
+
+                return false;
+            }
 
             foreach (var buildingData in EnumerateInstallableBuildingOptions())
             {
@@ -436,12 +584,26 @@ namespace _01.Code.UI
             ClearDeployEntries();
 
             if (_selectedNode == null || _selectedNode.HasInstallation)
+            {
+                Debug.LogWarning($"{nameof(NodePanelView)} skipped unit deploy entries. selectedNode={_selectedNode}, hasInstallation={(_selectedNode != null && _selectedNode.HasInstallation)}", this);
                 return;
+            }
 
-            if (hiredUnitRoster == null || deployEntryPrefab == null || unitContentRoot == null)
+            hiredUnitRoster ??= HiredUnitRoster.Current;
+
+            if (deployEntryPrefab == null || unitContentRoot == null)
+            {
+                Debug.LogWarning($"{nameof(NodePanelView)} cannot build unit deploy entries. deployEntryPrefab={deployEntryPrefab}, unitContentRoot={unitContentRoot}", this);
                 return;
+            }
 
-            foreach (var unit in hiredUnitRoster.AvailableUnits)
+            var deployableUnits = new List<UnitDataSO>(EnumerateDeployableUnits());
+            if (deployableUnits.Count == 0)
+            {
+                Debug.LogWarning($"{nameof(NodePanelView)} found no deployable units. roster={hiredUnitRoster}, tutorialUnit={TutorialInputGate.AllowedDeployUnit}, tutorialActive={TutorialInputGate.IsActive}", this);
+            }
+
+            foreach (var unit in deployableUnits)
             {
                 var entry = Instantiate(deployEntryPrefab, unitContentRoot);
                 entry.Initialize(unit, HandleDeployRequested);
@@ -462,43 +624,101 @@ namespace _01.Code.UI
             ScrollViewContentSizer.ResizeToGridItemCount(unitContentRoot, 0);
         }
 
+        private IEnumerable<UnitDataSO> EnumerateDeployableUnits()
+        {
+            var yielded = new HashSet<UnitDataSO>();
+            hiredUnitRoster ??= HiredUnitRoster.Current;
+
+            if (hiredUnitRoster != null)
+            {
+                foreach (var unit in hiredUnitRoster.AvailableUnits)
+                {
+                    if (unit == null || !TutorialInputGate.AllowsRosterDeployUnit(unit) || !yielded.Add(unit))
+                        continue;
+
+                    yield return unit;
+                }
+            }
+        }
+
         private void HandleDeployRequested(UnitDataSO unitData)
         {
-            if (_selectedNode == null || _selectedNode.HasInstallation || unitData == null)
+            if (_pendingUnitNode != null
+                || _selectedNode == null
+                || _selectedNode.HasInstallation
+                || unitData == null
+                || !IsManagementAllowed())
                 return;
 
             if (!TutorialInputGate.AllowsRosterDeployUnit(unitData))
                 return;
 
-            costEventChannel?.RaiseEvent(new UnitDeployMagicRequestedEvent(
-                _selectedNode,
+            hiredUnitRoster ??= HiredUnitRoster.Current;
+            if (hiredUnitRoster == null || !hiredUnitRoster.HasAvailableUnit(unitData))
+            {
+                SetTitle("대기 로스터에 없는 유닛");
+                RefreshRosterEntries();
+                return;
+            }
+
+            if (costEventChannel == null || nodeEventChannel == null)
+                return;
+
+            _pendingUnitNode = _selectedNode;
+            _pendingUnitData = unitData;
+
+            costEventChannel.RaiseEvent(new UnitDeployMagicRequestedEvent(
+                _pendingUnitNode,
                 unitData,
                 unitData.MagicCost));
         }
 
         private void HandleDeployMagicPaid(UnitDeployMagicPaidEvent evt)
         {
-            if (evt.Node == null || evt.Node.HasInstallation)
+            if (evt.Node != _pendingUnitNode || evt.Unit != _pendingUnitData)
                 return;
 
-            DeployUnit(evt.Node, evt.Unit);
+            var node = _pendingUnitNode;
+            var unitData = _pendingUnitData;
+            _pendingUnitNode = null;
+            _pendingUnitData = null;
+
+            hiredUnitRoster ??= HiredUnitRoster.Current;
+            if (!IsManagementAllowed()
+                || node == null
+                || node.HasInstallation
+                || unitData == null
+                || hiredUnitRoster == null
+                || !hiredUnitRoster.HasAvailableUnit(unitData)
+                || !DeployUnit(node, unitData))
+            {
+                RefundDeployMagic(unitData, evt.MagicAmount);
+                RefreshRosterEntries();
+                return;
+            }
+
             panelRoot?.SetActive(false);
             ClearTutorialHighlight();
         }
 
         private void HandleDeployMagicRejected(UnitDeployMagicRejectedEvent evt)
         {
+            if (evt.Node != _pendingUnitNode || evt.Unit != _pendingUnitData)
+                return;
+
+            _pendingUnitNode = null;
+            _pendingUnitData = null;
             SetTitle($"마력 부족 ({evt.UsedMagic}/{evt.MaxMagic})");
         }
 
-        private void DeployUnit(Node node, UnitDataSO unitData)
+        private bool DeployUnit(Node node, UnitDataSO unitData)
         {
             if (node == null || unitData == null)
-                return;
+                return false;
 
             var resolvedUnitPrefab = unitData.Prefab != null ? unitData.Prefab : unitPrefab;
             if (resolvedUnitPrefab == null)
-                return;
+                return false;
 
             var spawnPos = node.UnitPosition != null
                 ? node.UnitPosition.position
@@ -506,9 +726,24 @@ namespace _01.Code.UI
 
             var unitGo = Instantiate(resolvedUnitPrefab, spawnPos, Quaternion.identity);
             unitGo.Initialize(unitData);
-            node.AssignUnit(unitData, unitGo);
+            if (!node.TryAssignUnit(unitData, unitGo))
+            {
+                Destroy(unitGo.gameObject);
+                return false;
+            }
+
+            var battleAgent = unitGo.GetComponent<BattleAgent>();
+            node.GetComponent<NodeBattlefield>()?.TryEnter(battleAgent);
+
             artifactEventChannel?.RaiseEvent(new UnitArtifactApplyRequestedEvent(unitGo));
             nodeEventChannel?.RaiseEvent(new UnitAssignedToNodeEvent(node, unitData));
+            return true;
+        }
+
+        private void RefundDeployMagic(UnitDataSO unitData, int magicAmount)
+        {
+            if (unitData != null && magicAmount > 0)
+                costEventChannel?.RaiseEvent(new UnitDeployMagicRefundRequestedEvent(unitData, magicAmount));
         }
 
         private void SetPanelActive(GameObject target, bool active)
@@ -537,7 +772,7 @@ namespace _01.Code.UI
 
         private void SetActionButtonsActive(bool active)
         {
-            SetInstallButtonActive(active);
+            SetInstallButtonActive(false);
             SetDemolishButtonActive(active);
             RefreshDemolishButton();
         }
@@ -581,6 +816,74 @@ namespace _01.Code.UI
             ScrollViewContentSizer.ResizeToGridItemCount(contentRoot, buildingInstallButtons.Count);
         }
 
+        private bool ShouldOpenInstallPanelImmediately()
+        {
+            if (installButton == null)
+                return true;
+
+            return TutorialInputGate.IsActive
+                   && TutorialInputGate.AllowInstallMenu
+                   && TutorialInputGate.AllowedInstallCategory.HasValue
+                   && _selectedNode != null
+                   && !_selectedNode.HasInstallation;
+        }
+
+        private void ShowPreferredInstallPanel()
+        {
+            EnsureSelectedTutorialNode();
+
+            if (IsPreferredInstallPanelOpen())
+            {
+                RefreshTutorialHighlight();
+                return;
+            }
+
+            if (TutorialInputGate.IsActive && TutorialInputGate.AllowedInstallCategory.HasValue)
+            {
+                ShowInstallCategory(TutorialInputGate.AllowedInstallCategory.Value);
+                return;
+            }
+
+            ShowCategoryPanel();
+        }
+
+        private bool IsPreferredInstallPanelOpen()
+        {
+            if (!TutorialInputGate.IsActive || !TutorialInputGate.AllowedInstallCategory.HasValue)
+                return panelRoot != null && panelRoot.activeSelf && IsCategoryPanelOpen();
+
+            return IsInstallCategoryOpen(TutorialInputGate.AllowedInstallCategory.Value);
+        }
+
+        private bool IsInstallCategoryOpen(InstallCategory category)
+        {
+            if (panelRoot == null || !panelRoot.activeSelf || !_currentInstallCategory.HasValue)
+                return false;
+
+            if (_currentInstallCategory.Value != category)
+                return false;
+
+            return category == InstallCategory.Unit
+                ? IsUnitPanelOpen()
+                : IsBuildingPanelOpen();
+        }
+
+        private void EnsureSelectedTutorialNode()
+        {
+            if (_selectedNode != null)
+                return;
+
+            if (!TutorialInputGate.IsActive || TutorialInputGate.AllowedUnlockedNode == null)
+                return;
+
+            _selectedNode = TutorialInputGate.AllowedUnlockedNode;
+            var nodeType = _selectedNode.Data != null ? _selectedNode.Data.Type : DungeonNodeType.Corridor;
+            SetTitle(string.Format(emptyNodeTitleFormat, nodeType));
+            panelRoot?.SetActive(true);
+            BringToFront();
+            RefreshDemolishButton();
+        }
+
         private void ClearBuildingEntries()
         {
             foreach (var button in buildingInstallButtons)
@@ -604,6 +907,7 @@ namespace _01.Code.UI
             if (text == null)
                 return;
 
+            TmpTextLayoutUtility.KeepHorizontal(text);
             text.text = BuildCardText(buildingData);
         }
 
@@ -662,6 +966,8 @@ namespace _01.Code.UI
 
         private Sprite ResolveUnitCategorySprite()
         {
+            hiredUnitRoster ??= HiredUnitRoster.Current;
+
             if (hiredUnitRoster != null)
             {
                 foreach (var unit in hiredUnitRoster.AvailableUnits)
@@ -803,7 +1109,9 @@ namespace _01.Code.UI
         {
             return buildingData != null
                    && buildingData.Prefab != null
-                   && buildingData.Category == category;
+                   && buildingData.Category == category
+                   && CanInstallBuilding(buildingData)
+                   && TutorialInputGate.AllowsBuildingInstall(buildingData);
         }
 
         private RectTransform ResolveFirstBuildingCardRect(InstallCategory category)
@@ -890,9 +1198,20 @@ namespace _01.Code.UI
             if (installButton == null)
                 return;
 
-            var text = installButton.GetComponentInChildren<TMP_Text>();
+            SetButtonText(installButton, value);
+        }
+
+        private void SetButtonText(Button button, string value)
+        {
+            if (button == null)
+                return;
+
+            var text = button.GetComponentInChildren<TMP_Text>();
             if (text != null)
+            {
+                TmpTextLayoutUtility.KeepHorizontal(text);
                 text.text = value;
+            }
         }
 
         private void RestoreInstallButtonLabel()
@@ -903,7 +1222,7 @@ namespace _01.Code.UI
 
         private void RequestBuildingInstall(BuildingDataSO buildingData)
         {
-            if (!CanInstallBuilding(buildingData))
+            if (!IsManagementAllowed() || !CanInstallBuilding(buildingData))
                 return;
 
             if (!TutorialInputGate.AllowsBuildingInstall(buildingData))
@@ -914,6 +1233,22 @@ namespace _01.Code.UI
             RefreshBuildingInstallButtons();
 
             costEventChannel?.RaiseEvent(new BuildCostRequestedEvent(_pendingBuildingNode, 0));
+        }
+
+        private void ShowBuildingInfoPanel(BuildingDataSO buildingData)
+        {
+            if (buildingInfoPanel == null || buildingData == null)
+                return;
+
+            if (!TutorialInputGate.AllowsBuildingInstall(buildingData))
+                return;
+
+            buildingInfoPanel.Show(buildingData);
+            buildingInfoPanel.SetInstallInteractable(CanInstallBuilding(buildingData));
+            buildingInfoPanel.SetInstallHandler(() => RequestBuildingInstall(buildingData));
+            GameSfxPlayer.Play(GameSfxCue.UiOpen);
+            BringToFront();
+            RefreshTutorialHighlight();
         }
 
         private void HandleBuildCostPaid(BuildCostPaidEvent evt)
@@ -942,7 +1277,33 @@ namespace _01.Code.UI
             _pendingBuildingNode = null;
             _pendingBuildingData = null;
 
-            if (node == null || buildingData == null || buildingData.Prefab == null || node.HasInstallation)
+            if (!IsManagementAllowed()
+                || node == null
+                || buildingData == null
+                || buildingData.Prefab == null)
+            {
+                RefreshBuildingInstallButtons();
+                return;
+            }
+
+            // 트랩 그리드 노드: 가장 가까운 빈 셀에 배치(여러 개 가능, HasInstallation 무시).
+            var trapGrid = node.TrapGrid;
+            if (trapGrid != null && buildingData.Prefab is Trap trapPrefab)
+            {
+                var placedTrap = trapGrid.PlaceNearestFreeCell(node.transform.position, trapPrefab);
+                if (placedTrap != null)
+                {
+                    placedTrap.Initialize(buildingData);
+                    node.IncreaseDanger(placedTrap.DangerRating);
+                    ConsumeOwnedBuilding(buildingData);
+                    nodeEventChannel?.RaiseEvent(new BuildingInstalledEvent(node, buildingData));
+                }
+
+                RefreshBuildingInstallButtons();
+                return; // 패널 유지 → 연속 설치
+            }
+
+            if (node.HasInstallation)
             {
                 RefreshBuildingInstallButtons();
                 return;
@@ -971,7 +1332,7 @@ namespace _01.Code.UI
 
         private void HandleDemolishClicked()
         {
-            if (_selectedNode == null || !_selectedNode.HasAssignedBuilding)
+            if (!IsManagementAllowed() || _selectedNode == null || !_selectedNode.HasAssignedBuilding)
                 return;
 
             var building = _selectedNode.AssignedBuilding;
@@ -997,9 +1358,7 @@ namespace _01.Code.UI
             if (targetNode == null || buildingPrefab == null)
                 return null;
 
-            var spawnPosition = targetNode.UnitPosition != null
-                ? targetNode.UnitPosition.position
-                : targetNode.transform.position;
+            var spawnPosition = targetNode.transform.position;
 
             var building = Instantiate(buildingPrefab, spawnPosition, Quaternion.identity);
             building.transform.SetParent(targetNode.transform, true);
@@ -1016,7 +1375,8 @@ namespace _01.Code.UI
                     continue;
 
                 _buildingButtonData.TryGetValue(button, out var buildingData);
-                button.interactable = CanInstallBuilding(buildingData);
+                button.interactable = CanInstallBuilding(buildingData)
+                                      && TutorialInputGate.AllowsBuildingInstall(buildingData);
             }
 
             RefreshInstallButtonState();
@@ -1024,13 +1384,20 @@ namespace _01.Code.UI
 
         private bool CanInstallBuilding(BuildingDataSO buildingData)
         {
-            if (buildingData == null || _selectedNode == null || _selectedNode.HasInstallation)
+            if (!IsManagementAllowed()
+                || buildingData == null
+                || _selectedNode == null
+                || _selectedNode.HasInstallation)
                 return false;
 
             if (GetOwnedBuildingCount(buildingData) <= 0)
                 return false;
 
             if (buildingData.Unique && buildingData.Prefab is Portal && hasInstalledPortal)
+                return false;
+
+            // 트랩 그리드가 가득 차면 더 못 놓음
+            if (buildingData.Prefab is Trap && _selectedNode.TrapGrid != null && !_selectedNode.TrapGrid.HasFreeCell)
                 return false;
 
             return _pendingBuildingNode == null;
@@ -1067,15 +1434,26 @@ namespace _01.Code.UI
 
             if (installButton != null)
             {
-                installButton.gameObject.SetActive(_selectedNode != null);
-                installButton.interactable = _selectedNode != null;
+                var canOpenInstall = IsManagementAllowed()
+                                     && _selectedNode != null
+                                     && !_selectedNode.HasInstallation;
+                installButton.gameObject.SetActive(canOpenInstall);
+                installButton.interactable = canOpenInstall;
             }
         }
 
         private void RefreshDemolishButton()
         {
             if (demolishButton != null)
-                demolishButton.interactable = _selectedNode != null && _selectedNode.HasAssignedBuilding;
+                demolishButton.interactable = IsManagementAllowed()
+                                              && _selectedNode != null
+                                              && _selectedNode.HasAssignedBuilding;
+        }
+
+        private bool IsManagementAllowed()
+        {
+            dayManager ??= FindFirstObjectByType<DayManager>();
+            return dayManager == null || dayManager.IsStandby;
         }
 
         private void HandleCloseClicked()
@@ -1107,19 +1485,60 @@ namespace _01.Code.UI
             ClearCategoryEntries();
             ClearBuildingEntries();
             SetBackButtonActive(false);
-            SetInstallButtonActive(_selectedNode != null);
+            SetInstallButtonActive(_selectedNode != null && !_selectedNode.HasInstallation);
             RestoreInstallButtonLabel();
+        }
+
+        private string BuildInstalledNodeTitle(Node node)
+        {
+            if (node == null)
+                return string.Empty;
+
+            if (node.HasAssignedUnit)
+            {
+                var unit = node.AssignedUnit;
+                var name = unit != null && !string.IsNullOrWhiteSpace(unit.Name) ? unit.Name : unit != null ? unit.name : "유닛";
+                return $"{name} 배치됨";
+            }
+
+            if (node.HasAssignedBuilding)
+            {
+                var building = node.AssignedBuilding;
+                var name = building != null ? building.name.Replace("(Clone)", string.Empty).Trim() : "건물";
+                return $"{name} 설치됨";
+            }
+
+            return string.Format(emptyNodeTitleFormat, node.Data.Type);
         }
 
         private void SetTitle(string value)
         {
             if (titleText != null)
+            {
+                TmpTextLayoutUtility.KeepHorizontal(titleText, true);
                 titleText.text = value;
+            }
         }
 
         private void BringToFront()
         {
-            transform.SetAsLastSibling();
+            // SetAsLastSibling only reorders within the immediate parent. If this panel
+            // is nested below the Canvas root, lifting only our own transform leaves it
+            // behind Canvas-level HUD panels (RightInfoPanel etc.). Walk up to the direct
+            // child of the Canvas and lift that whole subtree so the panel renders on top.
+            var canvas = GetComponentInParent<Canvas>(true);
+            if (canvas == null)
+            {
+                transform.SetAsLastSibling();
+                return;
+            }
+
+            var canvasTransform = canvas.transform;
+            var node = transform;
+            while (node.parent != null && node.parent != canvasTransform)
+                node = node.parent;
+
+            node.SetAsLastSibling();
         }
 
         private bool IsCategoryPanelOpen()
@@ -1189,6 +1608,16 @@ namespace _01.Code.UI
 
         private Button ResolveCurrentTutorialUnitButton()
         {
+            var targetUnit = TutorialInputGate.AllowedDeployUnit;
+            if (targetUnit != null)
+            {
+                foreach (var entry in _deployEntries)
+                {
+                    if (entry != null && entry.Unit == targetUnit)
+                        return entry.GetComponentInChildren<Button>(true);
+                }
+            }
+
             if (_deployEntries.Count > 0 && _deployEntries[0] != null)
                 return _deployEntries[0].GetComponentInChildren<Button>(true);
 
@@ -1243,31 +1672,48 @@ namespace _01.Code.UI
             if (!_tutorialHighlightActive)
                 return;
 
-            SetTutorialHighlight(ResolveCurrentTutorialInstallButton());
+            if (TutorialInputGate.AllowedInstallCategory == InstallCategory.Unit)
+                SetTutorialHighlight(ResolveCurrentTutorialUnitButton());
+            else
+                SetTutorialHighlight(ResolveCurrentTutorialInstallButton());
         }
 
-        private void ResolveMissingReferences()
+        private void LogMissingSerializedReferences()
         {
-            closeButton ??= FindChildComponent<Button>("NodePanelCloseButton");
-            backButton ??= FindChildComponent<Button>("NodePanelBackButton");
-            installButton ??= FindChildComponent<Button>("InstallButton");
-            demolishButton ??= FindChildComponent<Button>("DemolishButton");
-            portalInstallButton ??= FindChildComponent<Button>("PortalInstallButton");
+            if (closeButton == null || backButton == null || installButton == null || demolishButton == null || portalInstallButton == null)
+                Debug.LogWarning($"{nameof(NodePanelView)} has missing serialized button references. close={closeButton}, back={backButton}, install={installButton}, demolish={demolishButton}, portal={portalInstallButton}", this);
         }
 
-        private T FindChildComponent<T>(string objectName) where T : Component
+        private void ConfigureStaticTextLayout()
         {
-            if (string.IsNullOrWhiteSpace(objectName))
-                return null;
+            TmpTextLayoutUtility.KeepHorizontal(titleText, true);
 
-            var components = GetComponentsInChildren<T>(true);
-            foreach (var component in components)
-            {
-                if (component != null && component.name == objectName)
-                    return component;
-            }
+            if (installButton != null)
+                TmpTextLayoutUtility.KeepHorizontal(installButton.GetComponentInChildren<TMP_Text>(true), true);
 
-            return null;
+            if (demolishButton != null)
+                TmpTextLayoutUtility.KeepHorizontal(demolishButton.GetComponentInChildren<TMP_Text>(true), true);
+
+            if (backButton != null)
+                TmpTextLayoutUtility.KeepHorizontal(backButton.GetComponentInChildren<TMP_Text>(true), true);
+
+            if (closeButton != null)
+                TmpTextLayoutUtility.KeepHorizontal(closeButton.GetComponentInChildren<TMP_Text>(true), true);
+        }
+    }
+
+    internal static class TmpTextLayoutUtility
+    {
+        public static void KeepHorizontal(TMP_Text text, bool replaceLineBreaks = false)
+        {
+            if (text == null)
+                return;
+
+            if (replaceLineBreaks && !string.IsNullOrEmpty(text.text))
+                text.text = text.text.Replace('\n', ' ');
+
+            text.enableWordWrapping = false;
+            text.overflowMode = TextOverflowModes.Overflow;
         }
     }
 }

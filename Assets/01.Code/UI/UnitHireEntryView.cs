@@ -52,6 +52,7 @@ namespace _01.Code.UI
 
             boardImage.enabled = boardSprite != null;
             boardImage.sprite = boardSprite;
+            boardImage.preserveAspect = true;
         }
 
         private void SetText(Graphic target, string value)

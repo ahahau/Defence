@@ -25,6 +25,15 @@ namespace _01.Code.Units
         {
             SubscribeHealth();
             EnsureClickTarget();
+            EnsureBattleAgent();
+        }
+
+        private void EnsureBattleAgent()
+        {
+            // 역할은 프리팹/인스톨러가 정한 값을 유지하고, 팀(Player)·BT 제어만 보장한다.
+            var battleAgent = GetComponent<_01.Code.BT.BattleAgent>();
+            if (battleAgent != null)
+                battleAgent.EnsureTeam(_01.Code.BT.BattleTeam.Player, false);
         }
 
         protected virtual void OnDestroy()

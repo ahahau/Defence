@@ -41,6 +41,7 @@ namespace _01.Code.UI
 
             boardImage.enabled = boardSprite != null;
             boardImage.sprite = boardSprite;
+            boardImage.preserveAspect = true;
         }
 
         private void OnDestroy()
@@ -58,6 +59,7 @@ namespace _01.Code.UI
         {
             if (target is TMP_Text tmpText)
             {
+                TmpTextLayoutUtility.KeepHorizontal(tmpText, true);
                 tmpText.text = value;
                 return;
             }

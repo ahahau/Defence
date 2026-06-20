@@ -22,6 +22,8 @@ namespace _01.Code.UI
 
     public class WaveRewardPanelView : MonoBehaviour
     {
+        public static WaveRewardPanelView Current { get; private set; }
+
         [SerializeField] private Image iconImage;
         [SerializeField] private Graphic goldAmountText;
         [SerializeField] private Button goldRewardButton;
@@ -78,6 +80,8 @@ namespace _01.Code.UI
 
         private void OnEnable()
         {
+            Current = this;
+
             goldRewardButton?.onClick.AddListener(HandleGoldRewardClicked);
             artifactRewardButton?.onClick.AddListener(HandleArtifactRewardClicked);
             unitRewardButton?.onClick.AddListener(HandleUnitRewardClicked);
@@ -88,6 +92,9 @@ namespace _01.Code.UI
 
         private void OnDisable()
         {
+            if (Current == this)
+                Current = null;
+
             goldRewardButton?.onClick.RemoveListener(HandleGoldRewardClicked);
             artifactRewardButton?.onClick.RemoveListener(HandleArtifactRewardClicked);
             unitRewardButton?.onClick.RemoveListener(HandleUnitRewardClicked);
