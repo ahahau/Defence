@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68a53ce40c9c46bfad7deb6d16cf6bdb, type: 3}
+  m_Name: SlimeGreenUnitData
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Units.UnitDataSO
+  <Grade>k__BackingField: 2
+  <BoardSprite>k__BackingField: {fileID: 4723107735738678597, guid: 566d59dea2136f540ab3350aa1c31392, type: 3}
+  <Defense>k__BackingField: 0
+  <EvasionChance>k__BackingField: 0.1
+  <Sprite>k__BackingField: {fileID: 4723107735738678597, guid: 566d59dea2136f540ab3350aa1c31392, type: 3}
+  <Prefab>k__BackingField: {fileID: 8763816506036182599, guid: c14c7979f79c4883b1dcbb6e4e455e61, type: 3}
+  <Name>k__BackingField: "\uADF8\uB9B0 \uC2AC\uB77C\uC784"
+  <Cost>k__BackingField: 18
+  <MagicCost>k__BackingField: 1
+  <Locked>k__BackingField: 0
+  <BaseDanger>k__BackingField: 1
+  <DangerIncreaseOnCombat>k__BackingField: 2

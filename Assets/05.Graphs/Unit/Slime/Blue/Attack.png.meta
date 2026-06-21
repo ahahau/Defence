@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 103c98c3a4c345640ab6aff8e2b701b7
+guid: a19d47dbc6c3a7c49a6a2b426e278196
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 8442247372213805325
-    second: DemonAttack_0
+      213: -7008412969330441016
+    second: Attack_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,7 +100,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: DemonAttack_0
+      name: Attack_0
       rect:
         serializedVersion: 2
         x: 0
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: d0167ce8143e82570800000000000000
-      internalID: 8442247372213805325
+      spriteID: 8c481db598d1dbe90800000000000000
+      internalID: -7008412969330441016
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      DemonAttack_0: 8442247372213805325
+      Attack_0: -7008412969330441016
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
