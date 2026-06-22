@@ -12,6 +12,8 @@ namespace _01.Code.Manager
 {
     public class ManagementSettlementManager : MonoBehaviour
     {
+        public static ManagementSettlementManager Current { get; private set; }
+
         [SerializeField] private GameEventChannelSO dayEventChannel;
         [SerializeField] private GameEventChannelSO costEventChannel;
         [SerializeField] private GameEventChannelSO waveEventChannel;
@@ -52,6 +54,8 @@ namespace _01.Code.Manager
 
         private void OnEnable()
         {
+            Current = this;
+
             dayEventChannel?.AddListener<DayChangedEvent>(HandleDayChanged);
             waveEventChannel?.AddListener<WaveEndedEvent>(HandleWaveEnded);
             nodeEventChannel?.AddListener<UnitAssignedToNodeEvent>(HandleUnitAssigned);
@@ -68,6 +72,9 @@ namespace _01.Code.Manager
 
         private void OnDisable()
         {
+            if (Current == this)
+                Current = null;
+
             dayEventChannel?.RemoveListener<DayChangedEvent>(HandleDayChanged);
             waveEventChannel?.RemoveListener<WaveEndedEvent>(HandleWaveEnded);
             nodeEventChannel?.RemoveListener<UnitAssignedToNodeEvent>(HandleUnitAssigned);

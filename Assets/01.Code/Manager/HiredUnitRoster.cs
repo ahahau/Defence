@@ -9,6 +9,8 @@ namespace _01.Code.Manager
 {
     public class HiredUnitRoster : MonoBehaviour
     {
+        public static HiredUnitRoster Current { get; private set; }
+
         [SerializeField] private GameEventChannelSO costEventChannel;
         [SerializeField] private GameEventChannelSO nodeEventChannel;
         [SerializeField] private UnitDataSO[] unitCatalog;
@@ -28,6 +30,8 @@ namespace _01.Code.Manager
 
         private void OnEnable()
         {
+            Current = this;
+
             InitializeUnlockedUnits();
             costEventChannel.AddListener<RosterHirePaidEvent>(HandleHirePaid);
             costEventChannel.AddListener<RosterHireRequestedEvent>(HandleRosterHireRequested);
@@ -43,6 +47,9 @@ namespace _01.Code.Manager
 
         private void OnDisable()
         {
+            if (Current == this)
+                Current = null;
+
             costEventChannel.RemoveListener<RosterHirePaidEvent>(HandleHirePaid);
             costEventChannel.RemoveListener<RosterHireRequestedEvent>(HandleRosterHireRequested);
             costEventChannel.RemoveListener<UnitAcquiredEvent>(HandleUnitAcquired);
@@ -57,6 +64,11 @@ namespace _01.Code.Manager
         public bool IsUnlocked(UnitDataSO unit)
         {
             return unit != null && _unlockedUnits.Contains(unit);
+        }
+
+        public bool HasAvailableUnit(UnitDataSO unit)
+        {
+            return unit != null && _availableUnits.Contains(unit);
         }
 
         private void HandleHirePaid(RosterHirePaidEvent evt)
@@ -117,7 +129,12 @@ namespace _01.Code.Manager
 
         private void HandleUnitDeployed(UnitAssignedToNodeEvent evt)
         {
-            _availableUnits.Remove(evt.Unit);
+            if (evt.Unit == null || !_availableUnits.Remove(evt.Unit))
+            {
+                Debug.LogWarning($"{nameof(HiredUnitRoster)} received a deploy event for a unit that is not available: {evt.Unit}", this);
+                return;
+            }
+
             costEventChannel.RaiseEvent(new RosterChangedEvent(_availableUnits));
         }
 
@@ -146,7 +163,7 @@ namespace _01.Code.Manager
 
         private void AddAvailableUnit(UnitDataSO unit)
         {
-            if (unit == null || _availableUnits.Contains(unit))
+            if (unit == null)
                 return;
 
             _availableUnits.Add(unit);

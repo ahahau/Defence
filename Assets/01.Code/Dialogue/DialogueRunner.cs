@@ -243,7 +243,7 @@ namespace _01.Code.Dialogue
                 guidedBuiltNode = evt.Node;
                 guidedStep = GuidedStartTutorialStep.HireUnit;
                 PlayGuidedMessage(
-                    "좋아요. 이제 배치할 유닛을 준비합니다.\n\n오른쪽 유닛 고용 패널을 열고, 밝게 표시된 유닛 카드를 두 번 클릭해 고용하세요.");
+                    "확장 완료. 다음은 유닛 고용입니다.\n\n유닛 고용 패널을 열고, 밝게 표시된 보유 유닛 카드를 두 번 클릭해 고용하세요.");
                 guidedHiredUnit = ResolveFirstHireUnit();
                 TutorialInputGate.OnlyHireUnit(guidedHiredUnit);
                 HighlightUnitHireTarget();
@@ -553,12 +553,13 @@ namespace _01.Code.Dialogue
             }
 
             if (guidedHiredUnit == null)
-                guidedHiredUnit = unitDeployPanelView.FirstEntryUnit;
+                guidedHiredUnit = unitDeployPanelView.FirstOwnedUnit;
 
             TutorialInputGate.OnlyHireUnit(guidedHiredUnit);
 
-            var target = unitDeployPanelView.IsPanelOpen && unitDeployPanelView.FirstEntryRect != null
-                ? unitDeployPanelView.FirstEntryRect
+            var targetEntry = unitDeployPanelView.GetEntryRect(guidedHiredUnit);
+            var target = unitDeployPanelView.IsPanelOpen && targetEntry != null
+                ? targetEntry
                 : unitDeployPanelView.ToggleButtonRect;
 
             if (!TryBuildRectTransformScreenRect(target, out var rect))
@@ -573,7 +574,7 @@ namespace _01.Code.Dialogue
         private UnitDataSO ResolveFirstHireUnit()
         {
             unitDeployPanelView ??= FindFirstObjectByType<UnitDeployPanelView>(FindObjectsInactive.Include);
-            return unitDeployPanelView != null ? unitDeployPanelView.FirstEntryUnit : null;
+            return unitDeployPanelView != null ? unitDeployPanelView.FirstOwnedUnit : null;
         }
 
         private void HighlightUnitDeployTarget()

@@ -9,11 +9,14 @@ using _01.Code.Units;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 namespace _01.Code.MapCreateSystem
 {
     public class DungeonGraphController : MonoBehaviour
     {
+        public static DungeonGraphController Current { get; private set; }
+
         private readonly Vector2Int[] directions =
         {
             Vector2Int.up,
@@ -88,6 +91,9 @@ namespace _01.Code.MapCreateSystem
         private InputDataSO inputDataSO;
 
         [SerializeField]
+        private Camera inputCamera;
+
+        [SerializeField]
         private LayerMask nodeClickMask = Physics2D.DefaultRaycastLayers;
 
         [Header("UI Blocking")]
@@ -98,6 +104,7 @@ namespace _01.Code.MapCreateSystem
         private readonly Dictionary<Collider2D, Node> lockedNodeByCollider = new();
         private readonly Dictionary<Collider2D, Node> unlockedNodeByCollider = new();
         private readonly List<DungeonNode> buildParentCandidates = new();
+        private readonly List<RaycastResult> uiRaycastResults = new();
         private Node lastBuiltNodeView;
         private Vector2 lastBuildClickScreenPosition;
         private int lastBuiltFrame = -1;
@@ -105,14 +112,18 @@ namespace _01.Code.MapCreateSystem
         private bool hasPendingRightMouseInput;
 
         public bool HasLockedNodesVisible { get; private set; }
+        public IEnumerable<Node> LockedCandidateNodes => lockedNodeByCollider.Values;
 
         private void OnEnable()
         {
+            Current = this;
+
             if (!Application.isPlaying)
                 return;
 
             costEventChannel.AddListener<BuildCostPaidEvent>(HandleBuildCostPaid);
             costEventChannel.AddListener<BuildCostRejectedEvent>(HandleBuildCostRejected);
+            inputDataSO?.SetWorldCamera(inputCamera);
             inputDataSO.OnMouseInputEvent += HandleMouseInput;
         }
 
@@ -120,6 +131,9 @@ namespace _01.Code.MapCreateSystem
 
         private void OnDisable()
         {
+            if (Current == this)
+                Current = null;
+
             if (!Application.isPlaying)
                 return;
 
@@ -636,11 +650,11 @@ namespace _01.Code.MapCreateSystem
                 return true;
             }
 
-            nodeEventChannel.RaiseEvent(new UnitStatusRequestedEvent(FindNodeForUnit(closestUnit), closestUnit, screenPosition));
+            nodeEventChannel.RaiseEvent(new UnitStatusRequestedEvent(ResolveNodeForUnit(closestUnit), closestUnit, screenPosition));
             return true;
         }
 
-        private Node FindNodeForUnit(Unit unit)
+        private Node ResolveNodeForUnit(Unit unit)
         {
             if (unit == null)
                 return null;
@@ -656,7 +670,29 @@ namespace _01.Code.MapCreateSystem
 
         private bool IsPointerOverUi()
         {
-            return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+            if (EventSystem.current == null || Mouse.current == null)
+                return false;
+
+            uiRaycastResults.Clear();
+            var pointerData = new PointerEventData(EventSystem.current)
+            {
+                position = Mouse.current.position.ReadValue()
+            };
+
+            EventSystem.current.RaycastAll(pointerData, uiRaycastResults);
+            foreach (var hit in uiRaycastResults)
+            {
+                if (hit.gameObject == null)
+                    continue;
+
+                if (hit.gameObject.GetComponentInParent<Selectable>() != null)
+                    return true;
+
+                if (hit.gameObject.GetComponentInParent<ScrollRect>() != null)
+                    return true;
+            }
+
+            return false;
         }
 
         private bool IsPointerOverNodePanel()

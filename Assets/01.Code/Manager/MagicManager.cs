@@ -36,6 +36,17 @@ namespace _01.Code.Manager
 
         private void HandleUnitDeployMagicRequested(UnitDeployMagicRequestedEvent evt)
         {
+            if (evt.Node == null || evt.Unit == null || evt.MagicAmount < 0)
+            {
+                costEventChannel.RaiseEvent(new UnitDeployMagicRejectedEvent(
+                    evt.Node,
+                    evt.Unit,
+                    Mathf.Max(0, evt.MagicAmount),
+                    UsedMagic,
+                    maxMagic));
+                return;
+            }
+
             if (UsedMagic + evt.MagicAmount > maxMagic)
             {
                 costEventChannel.RaiseEvent(new UnitDeployMagicRejectedEvent(

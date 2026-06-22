@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
+using System.IO;
 using _01.Code.Artifacts;
 using _01.Code.Buildings;
 using _01.Code.Combat;
@@ -332,10 +333,15 @@ namespace _01.Code.Editor
 
         private static Sprite LoadFirstSprite(string folder)
         {
-            var guids = AssetDatabase.FindAssets("t:Sprite", new[] { folder });
-            foreach (var guid in guids)
+            if (!AssetDatabase.IsValidFolder(folder))
+                return null;
+
+            foreach (var filePath in Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories))
             {
-                var path = AssetDatabase.GUIDToAssetPath(guid);
+                if (filePath.EndsWith(".meta", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var path = filePath.Replace('\\', '/');
                 var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
                 if (sprite != null)
                     return sprite;

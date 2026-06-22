@@ -16,6 +16,13 @@ namespace _01.Code.Core
         public Vector2 MovementKey { get; private set; }
         
         private Controls _controls;
+        private Camera _worldCamera;
+
+        public void SetWorldCamera(Camera worldCamera)
+        {
+            _worldCamera = worldCamera;
+        }
+
         private void OnEnable()
         {
             if (_controls == null)
@@ -47,9 +54,12 @@ namespace _01.Code.Core
 
         public Vector2 SceneToWorldPoint()
         {
+            if (_worldCamera == null)
+                return WorldMousePosition;
+
             Vector3 mousePos = ReadScreenMousePosition();
             mousePos.z = 0;
-            WorldMousePosition = Camera.main.ScreenToWorldPoint(mousePos);
+            WorldMousePosition = _worldCamera.ScreenToWorldPoint(mousePos);
             return WorldMousePosition;
         }
 

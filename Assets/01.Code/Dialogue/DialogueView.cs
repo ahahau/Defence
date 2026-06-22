@@ -32,6 +32,7 @@ namespace _01.Code.Dialogue
         private Button boundCloseButton;
         private Graphic rootGraphic;
         private Color rootGraphicDefaultColor;
+        private bool rootGraphicDefaultRaycastTarget;
         private bool hasRootGraphicDefaultColor;
         private RectTransform rootRect;
         private RectTransform spotlightRoot;
@@ -154,8 +155,14 @@ namespace _01.Code.Dialogue
 
         public void Hide()
         {
+            if (this == null)
+                return;
+
             if (root == null)
                 root = gameObject;
+
+            if (root == null)
+                return;
 
             ClearChoices();
             root.SetActive(false);
@@ -181,6 +188,7 @@ namespace _01.Code.Dialogue
             spotlightRoot.gameObject.SetActive(true);
             spotlightRoot.SetAsFirstSibling();
             SetRootGraphicAlpha(0f);
+            SetRootGraphicRaycast(false);
 
             var minScreen = new Vector2(screenRect.xMin - padding, screenRect.yMin - padding);
             var maxScreen = new Vector2(screenRect.xMax + padding, screenRect.yMax + padding);
@@ -366,6 +374,7 @@ namespace _01.Code.Dialogue
                 return;
 
             rootGraphicDefaultColor = rootGraphic.color;
+            rootGraphicDefaultRaycastTarget = rootGraphic.raycastTarget;
             hasRootGraphicDefaultColor = true;
         }
 
@@ -383,7 +392,19 @@ namespace _01.Code.Dialogue
         private void RestoreRootGraphicColor()
         {
             if (rootGraphic != null && hasRootGraphicDefaultColor)
+            {
                 rootGraphic.color = rootGraphicDefaultColor;
+                rootGraphic.raycastTarget = rootGraphicDefaultRaycastTarget;
+            }
+        }
+
+        private void SetRootGraphicRaycast(bool raycastTarget)
+        {
+            if (rootGraphic == null)
+                return;
+
+            CaptureRootGraphicColor();
+            rootGraphic.raycastTarget = raycastTarget;
         }
 
         private RectTransform CreateSpotlightPanel(string panelName, Transform parent)
@@ -393,7 +414,7 @@ namespace _01.Code.Dialogue
 
             var image = panel.GetComponent<Image>();
             image.color = spotlightDimColor;
-            image.raycastTarget = true;
+            image.raycastTarget = false;
 
             return panel.GetComponent<RectTransform>();
         }

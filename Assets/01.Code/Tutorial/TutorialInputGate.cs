@@ -38,6 +38,12 @@ namespace _01.Code.Tutorial
 
         public static void OnlyLockedNode(Node node)
         {
+            if (node == null)
+            {
+                Clear();
+                return;
+            }
+
             ClearAllowedTargets();
             IsActive = true;
             AllowedLockedNode = node;
@@ -45,6 +51,12 @@ namespace _01.Code.Tutorial
 
         public static void OnlyUnlockedNode(Node node)
         {
+            if (node == null)
+            {
+                Clear();
+                return;
+            }
+
             ClearAllowedTargets();
             IsActive = true;
             AllowedUnlockedNode = node;
@@ -52,6 +64,12 @@ namespace _01.Code.Tutorial
 
         public static void OnlyHireUnit(UnitDataSO unit)
         {
+            if (unit == null)
+            {
+                Clear();
+                return;
+            }
+
             ClearAllowedTargets();
             IsActive = true;
             AllowedHireUnit = unit;
@@ -60,6 +78,12 @@ namespace _01.Code.Tutorial
 
         public static void OnlyDeployUnit(Node node, UnitDataSO unit)
         {
+            if (node == null || unit == null)
+            {
+                Clear();
+                return;
+            }
+
             ClearAllowedTargets();
             IsActive = true;
             AllowedUnlockedNode = node;
@@ -70,6 +94,12 @@ namespace _01.Code.Tutorial
 
         public static void OnlyInstallPortal(Node node)
         {
+            if (node == null)
+            {
+                Clear();
+                return;
+            }
+
             ClearAllowedTargets();
             IsActive = true;
             AllowedUnlockedNode = node;
@@ -79,6 +109,12 @@ namespace _01.Code.Tutorial
 
         public static void OnlyInstallTrap(Node node, BuildingDataSO building = null)
         {
+            if (node == null)
+            {
+                Clear();
+                return;
+            }
+
             ClearAllowedTargets();
             IsActive = true;
             AllowedUnlockedNode = node;
