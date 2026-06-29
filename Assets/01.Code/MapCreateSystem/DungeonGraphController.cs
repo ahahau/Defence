@@ -96,6 +96,9 @@ namespace _01.Code.MapCreateSystem
         [SerializeField]
         private LayerMask nodeClickMask = Physics2D.DefaultRaycastLayers;
 
+        [SerializeField, Range(0.1f, 1f), Tooltip("노드 클릭 유효 범위(콜라이더 대비 비율). 작을수록 노드 중심 가까이서만 클릭이 먹는다. 콜라이더/전투 트리거는 안 건드림.")]
+        private float nodeClickAreaScale = 0.55f;
+
         [Header("UI Blocking")]
         [SerializeField]
         private RectTransform nodePanelBlockRect;
@@ -542,6 +545,21 @@ namespace _01.Code.MapCreateSystem
             hasPendingMouseInput = true;
         }
 
+        /// <summary>클릭 지점이 노드 콜라이더 중심부의 좁힌 영역 안인지. 콜라이더 자체(전투 트리거 공유)는
+        /// 그대로 두고 클릭 판정만 nodeClickAreaScale 비율로 줄인다. 노드는 회전이 없어 AABB로 충분.</summary>
+        private bool IsWithinClickArea(Collider2D clickedCollider, Vector2 worldPosition)
+        {
+            if (clickedCollider == null)
+                return false;
+            if (nodeClickAreaScale >= 1f)
+                return true;
+
+            var bounds = clickedCollider.bounds;
+            var half = (Vector2)bounds.extents * nodeClickAreaScale;
+            var offset = worldPosition - (Vector2)bounds.center;
+            return Mathf.Abs(offset.x) <= half.x && Mathf.Abs(offset.y) <= half.y;
+        }
+
         private void ProcessMouseInput()
         {
             if (buildConfirmPanel != null && buildConfirmPanel.IsOpen)
@@ -554,6 +572,10 @@ namespace _01.Code.MapCreateSystem
             var clickedCollider = Physics2D.OverlapPoint(worldPosition, nodeClickMask);
 
             if (clickedCollider == null)
+                return;
+
+            // 콜라이더(=전투필드 트리거 공유)는 크게 두고, 클릭 유효 범위만 중심부로 좁힌다.
+            if (!IsWithinClickArea(clickedCollider, worldPosition))
                 return;
 
             if (!lockedNodeByCollider.TryGetValue(clickedCollider, out var lockedNode))

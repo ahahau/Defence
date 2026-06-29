@@ -1101,6 +1101,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: f32955b7a7e548c0a75dc10419558c81, type: 2}
   fallbackStartingCopiesOfFirstUnit: 1
   costEventChannel: {fileID: 11400000, guid: 734ca3593b5d2884dae267b0e3e601be, type: 2}
+  dayManager: {fileID: 0}
 --- !u!1 &6340109213379370949
 GameObject:
   m_ObjectHideFlags: 0

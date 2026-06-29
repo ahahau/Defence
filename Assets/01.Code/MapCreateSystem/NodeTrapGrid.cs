@@ -1,35 +1,55 @@
 using System.Collections.Generic;
 using _01.Code.Buildings;
+using _01.Code.BT;
 using UnityEngine;
 
 namespace _01.Code.MapCreateSystem
 {
-    /// <summary>트랩 노드 내부의 격자. 셀 단위로 트랩을 자유 배치하고 점유를 관리한다.
-    /// 셀 좌표는 노드 중심 기준 '월드 단위'로 계산해 노드의 큰 스케일 영향을 받지 않는다.</summary>
+    /// <summary>노드 내부의 격자. 셀 단위로 건물(트랩 포함)을 자유 배치하고 점유를 관리한다.
+    /// 셀 좌표는 노드 중심 기준 '월드 단위'로 계산해 노드의 큰 스케일 영향을 받지 않는다.
+    /// (클래스명은 직렬화 참조 호환을 위해 유지하되, 트랩 외 일반 건물도 여러 개 배치할 수 있다.)</summary>
     public class NodeTrapGrid : MonoBehaviour
     {
         [SerializeField, Min(1)] private int columns = 3;
-        [SerializeField, Min(1)] private int rows = 2;
-        [SerializeField, Min(0.1f), Tooltip("셀 간격(월드 단위).")] private float cellSize = 1.5f;
+        [SerializeField, Min(1)] private int rows = 3;
+        [SerializeField, Min(0.1f), Tooltip("셀 간격(월드 단위). 노드에 NodeBattlefield가 있으면 아레나에 맞게 자동 조정된다.")] private float cellSize = 2f;
         [SerializeField, Tooltip("노드 중심에서 격자 중심까지의 오프셋(월드 단위).")] private Vector2 originOffset;
+        [SerializeField, Tooltip("아레나 반지름에 맞춰 셀 간격 자동 조정(켜두면 노드 크기에 맞게 퍼진다).")] private bool autoFitToArena = true;
 
-        private Trap[] _cells;
-        private readonly List<Trap> _placed = new();
+        private Building[] _cells;
+        private readonly List<Building> _placed = new();
 
         public int Columns => columns;
         public int Rows => rows;
         public int CellCount => columns * rows;
-        public IReadOnlyList<Trap> PlacedTraps => _placed;
+        /// <summary>그리드에 배치된 모든 건물(트랩 발동·정리 등에서 순회. 트랩만 필요하면 is Trap으로 거른다).</summary>
+        public IReadOnlyList<Building> PlacedBuildings => _placed;
 
         private void Awake()
         {
             EnsureCells();
+            FitToArena();
+        }
+
+        /// <summary>같은 노드의 전투 아레나 반지름에 맞춰 셀 간격을 키운다 → 격자가 노드 전체에 퍼져
+        /// 트랩/건물이 가운데에 몰리지 않는다(여백 80%). 아레나가 없으면 인스펙터 값 유지.</summary>
+        private void FitToArena()
+        {
+            if (!autoFitToArena) return;
+
+            var battlefield = GetComponent<NodeBattlefield>();
+            if (battlefield == null || battlefield.ArenaRadius <= 0f) return;
+
+            var usable = battlefield.ArenaRadius * 2f * 0.8f;
+            var span = Mathf.Max(columns, rows) - 1;
+            if (span > 0)
+                cellSize = usable / span;
         }
 
         private void EnsureCells()
         {
             if (_cells == null || _cells.Length != CellCount)
-                _cells = new Trap[CellCount];
+                _cells = new Building[CellCount];
         }
 
         public bool IsValidCell(int column, int row) =>
@@ -40,6 +60,9 @@ namespace _01.Code.MapCreateSystem
             EnsureCells();
             return IsValidCell(column, row) && _cells[Index(column, row)] == null;
         }
+
+        /// <summary>현재 배치된 개수.</summary>
+        public int PlacedCount => _placed.Count;
 
         private int Index(int column, int row) => row * columns + column;
 
@@ -64,26 +87,26 @@ namespace _01.Code.MapCreateSystem
             return IsValidCell(column, row);
         }
 
-        /// <summary>지정 셀에 트랩 프리팹을 설치한다(빈 셀일 때만). 성공 시 인스턴스 반환.</summary>
-        public Trap TryPlaceTrap(int column, int row, Trap trapPrefab)
+        /// <summary>지정 셀에 건물 프리팹을 설치한다(빈 셀일 때만). 성공 시 인스턴스 반환.</summary>
+        public Building TryPlace(int column, int row, Building buildingPrefab)
         {
             EnsureCells();
-            if (trapPrefab == null || !IsCellFree(column, row))
+            if (buildingPrefab == null || !IsCellFree(column, row))
                 return null;
 
-            var trap = Instantiate(trapPrefab, CellWorldPosition(column, row), Quaternion.identity);
-            trap.transform.SetParent(transform, true); // worldPositionStays=true → 노드 스케일에 안 끌려감
+            var building = Instantiate(buildingPrefab, CellWorldPosition(column, row), Quaternion.identity);
+            building.transform.SetParent(transform, true); // worldPositionStays=true → 노드 스케일에 안 끌려감
 
-            _cells[Index(column, row)] = trap;
-            _placed.Add(trap);
-            return trap;
+            _cells[Index(column, row)] = building;
+            _placed.Add(building);
+            return building;
         }
 
         /// <summary>월드 클릭 위치에서 가장 가까운 셀에 설치(클릭 배치용 진입점).</summary>
-        public Trap TryPlaceTrapAtWorld(Vector3 worldPosition, Trap trapPrefab)
+        public Building TryPlaceAtWorld(Vector3 worldPosition, Building buildingPrefab)
         {
             return TryGetCell(worldPosition, out var column, out var row)
-                ? TryPlaceTrap(column, row, trapPrefab)
+                ? TryPlace(column, row, buildingPrefab)
                 : null;
         }
 
@@ -99,10 +122,10 @@ namespace _01.Code.MapCreateSystem
         }
 
         /// <summary>기준 위치에서 가장 가까운 '빈' 셀에 설치한다(클릭/중심 기준 자유 배치).</summary>
-        public Trap PlaceNearestFreeCell(Vector3 worldPosition, Trap trapPrefab)
+        public Building PlaceNearestFreeCell(Vector3 worldPosition, Building buildingPrefab)
         {
             EnsureCells();
-            if (trapPrefab == null) return null;
+            if (buildingPrefab == null) return null;
 
             int bestColumn = -1, bestRow = -1;
             var bestDistance = float.MaxValue;
@@ -114,20 +137,20 @@ namespace _01.Code.MapCreateSystem
                 if (d < bestDistance) { bestDistance = d; bestColumn = c; bestRow = r; }
             }
 
-            return bestColumn >= 0 ? TryPlaceTrap(bestColumn, bestRow, trapPrefab) : null;
+            return bestColumn >= 0 ? TryPlace(bestColumn, bestRow, buildingPrefab) : null;
         }
 
-        public bool RemoveTrap(int column, int row)
+        public bool Remove(int column, int row)
         {
             EnsureCells();
             if (!IsValidCell(column, row)) return false;
 
-            var trap = _cells[Index(column, row)];
-            if (trap == null) return false;
+            var building = _cells[Index(column, row)];
+            if (building == null) return false;
 
             _cells[Index(column, row)] = null;
-            _placed.Remove(trap);
-            Destroy(trap.gameObject);
+            _placed.Remove(building);
+            Destroy(building.gameObject);
             return true;
         }
 
@@ -139,10 +162,10 @@ namespace _01.Code.MapCreateSystem
                     _cells[i] = null;
             }
 
-            foreach (var trap in _placed)
+            foreach (var building in _placed)
             {
-                if (trap != null)
-                    Destroy(trap.gameObject);
+                if (building != null)
+                    Destroy(building.gameObject);
             }
             _placed.Clear();
         }

@@ -213,7 +213,7 @@ namespace _01.Code.BT
             StopAttack();
             var hp = combatant != null ? combatant.Health : null;
             if (hp != null) hp.Damaged -= OnDamaged;
-            if (combatant != null) combatant.AttackLanded -= OnAttackLanded;
+            if (combatant != null) combatant.AttackLanded -= OnAttackLanded; 
         }
 
         /// <summary>공격 적중 시 타깃 방향으로 살짝 돌진하는 타격감 모션 + 직후 '빠지는' 윈도우 시작.</summary>
@@ -261,7 +261,6 @@ namespace _01.Code.BT
             Vector3 to = target.transform.position;
             var dir = to - from;
             if (dir.sqrMagnitude < 0.0001f) return;
-
             var go = new GameObject("Projectile");
             go.transform.position = from;
             go.transform.right = dir.normalized; // 진행 방향으로 회전
@@ -605,6 +604,63 @@ namespace _01.Code.BT
             transform.position = ClampToArena(Vector2.MoveTowards(self, desired, moveSpeed * deltaTime));
         }
 
+        /// <summary>현재 타깃을 같은 전투필드의 다른 생존 적으로 가끔 교체한다. 난전용 보조 동작.</summary>
+        public void SwitchTargetRandomly()
+        {
+            if (_traversalLocked || _battlefield == null)
+                return;
+
+            var candidates = new List<BattleAgent>();
+            foreach (var a in _battlefield.Opponents(team))
+            {
+                if (a == null || !a.IsAlive || a._traversalLocked || a == _target)
+                    continue;
+
+                candidates.Add(a);
+            }
+
+            if (candidates.Count > 0)
+                _target = candidates[Random.Range(0, candidates.Count)];
+        }
+
+        /// <summary>공격 루프를 끊지 않고 타깃 주변을 옆으로 돈다. EngageTargetAction의 쿨다운 기동용.</summary>
+        public void CombatStrafe(float deltaTime, float direction)
+        {
+            if (_traversalLocked || IsSnared)
+                return;
+
+            var t = CurrentTarget;
+            if (t == null) return;
+
+            Vector2 self = transform.position;
+            Vector2 target = t.transform.position;
+            Vector2 away = self - target;
+            if (away.sqrMagnitude < 0.0001f) away = Vector2.right;
+            away.Normalize();
+
+            var tangent = new Vector2(-away.y, away.x) * Mathf.Sign(direction);
+            Vector2 desired = self + tangent * (moveSpeed * deltaTime);
+
+            Face(target.x - self.x);
+            transform.position = ClampToArena(desired);
+        }
+
+        /// <summary>공격 루프를 끊지 않고 현재 타깃에게서 짧게 물러난다. EngageTargetAction의 쿨다운 기동용.</summary>
+        public void CombatBackStep(float deltaTime)
+        {
+            if (_traversalLocked || IsSnared)
+                return;
+
+            var t = CurrentTarget;
+            if (t == null) return;
+
+            Vector2 self = transform.position;
+            Vector2 target = t.transform.position;
+
+            Face(target.x - self.x);
+            transform.position = ClampToArena(RetreatStep(self, target, moveSpeed * deltaTime));
+        }
+
         /// <summary>속박을 건다(이동 불가). 탱커 속박 스킬이 적에게 호출.</summary>
         public void ApplySnare(float duration)
         {
@@ -729,6 +785,115 @@ namespace _01.Code.BT
             if (count == 0) return false;
             center /= count;
             return true;
+        }
+
+        private bool TryGetAllyCentroid(out Vector2 center)
+        {
+            center = Vector2.zero;
+            var count = 0;
+            if (_battlefield == null) return false;
+            foreach (var a in _battlefield.Allies(team))
+            {
+                if (a == null || a == this || !a.IsAlive)
+                    continue;
+                center += (Vector2)a.transform.position;
+                count++;
+            }
+
+            if (count == 0) return false;
+            center /= count;
+            return true;
+        }
+
+        // ── 추가 전투 행동(BT 노드가 호출) ─────────────────────────
+
+        /// <summary>도발: 사거리 내 적들이 잠시 나를 노리게 어그로를 끈다(탱커가 후열 보호).</summary>
+        public void TauntNearbyEnemies(float range)
+        {
+            if (_traversalLocked || _battlefield == null)
+                return;
+
+            Vector2 pos = transform.position;
+            foreach (var a in _battlefield.Opponents(team))
+            {
+                if (a == null || !a.IsAlive || a._traversalLocked)
+                    continue;
+                if (((Vector2)a.transform.position - pos).magnitude <= range)
+                    a._target = this; // 같은 타입이라 다른 인스턴스의 private 접근 가능
+            }
+        }
+
+        /// <summary>아군 무리 쪽으로 후퇴(저체력 도주/재집결). 아군이 없으면 현재 타깃 반대로 물러난다.</summary>
+        public void RetreatTowardAllies(float deltaTime)
+        {
+            if (_traversalLocked || IsSnared)
+                return;
+
+            if (combatant.IsAttacking) combatant.StopCombat();
+
+            Vector2 self = transform.position;
+            Vector2 goal;
+            if (TryGetAllyCentroid(out var allyCenter))
+            {
+                goal = allyCenter;
+            }
+            else
+            {
+                var t = CurrentTarget;
+                goal = t != null ? self + (self - (Vector2)t.transform.position) : self + Vector2.right;
+            }
+
+            Face(goal.x - self.x);
+            transform.position = ClampToArena(Vector2.MoveTowards(self, goal, moveSpeed * deltaTime));
+        }
+
+        /// <summary>타깃에게 빠르게 돌진(평소보다 빠른 접근). 사거리 안에 들면 false(=공격 전환), 아직 멀면 true.</summary>
+        public bool ChargeToTarget(float deltaTime, float speedMultiplier)
+        {
+            if (_traversalLocked || IsSnared)
+                return false;
+
+            var t = CurrentTarget;
+            if (t == null) return false;
+
+            Vector2 self = transform.position;
+            Vector2 there = t.transform.position;
+            var offset = there - self;
+            var dist = offset.magnitude;
+            if (dist <= attackRange) return false; // 도착 → 공격 분기로
+
+            if (combatant.IsAttacking) combatant.StopCombat();
+            var speed = moveSpeed * Mathf.Max(1f, speedMultiplier);
+            Vector2 goal = there - offset / Mathf.Max(0.0001f, dist) * (attackRange * 0.9f);
+            Face(offset.x);
+            transform.position = ClampToArena(Vector2.MoveTowards(self, goal, speed * deltaTime));
+            return true;
+        }
+
+        /// <summary>전투필드에서 체력이 가장 낮은 적을 팀 공유 포커스로 지정(협동 집중공격). 지정했으면 true.</summary>
+        public bool RegisterFocusLowestHealth()
+        {
+            if (_battlefield == null) return false;
+
+            BattleAgent best = null;
+            var worst = float.MaxValue;
+            foreach (var a in _battlefield.Opponents(team))
+            {
+                if (a == null || !a.IsAlive || a._traversalLocked)
+                    continue;
+                if (a.HealthRatio < worst) { worst = a.HealthRatio; best = a; }
+            }
+
+            if (best == null) return false;
+            _battlefield.SetFocusTarget(team, best);
+            return true;
+        }
+
+        /// <summary>이 전투필드에서 적 팀 인원이 아군 팀보다 많은지(수세 판단).</summary>
+        public bool IsOutnumbered()
+        {
+            if (_battlefield == null) return false;
+            return _battlefield.Opponents(team).Count > _battlefield.Allies(team).Count;
         }
 
         public void StopAttack()

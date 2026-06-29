@@ -24,6 +24,8 @@ namespace _01.Code.BT
         public int MaxPerTeam => maxPerTeam;
         public int PlayerCount => _players.Count;
         public int EnemyCount => _enemies.Count;
+        /// <summary>전투 아레나 반지름(노드 내부 배치 그리드가 칸 간격을 맞출 때 참조).</summary>
+        public float ArenaRadius => arenaRadius;
 
         public bool IsFull(BattleTeam team) => Roster(team).Count >= maxPerTeam;
 

@@ -1,7 +1,41 @@
 {
   "permissions": {
     "allow": [
-      "mcp__unity-mcp__Unity_GetConsoleLogs"
+      "mcp__unity-mcp__Unity_GetConsoleLogs",
+      "Bash(python3 -c ' *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Fork\\\\Defence\\\\Assets\\\\01.Code\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(xargs grep -l \"CombatDamageCalculatedEvent\\\\|MainUnitDefeatedEvent\")",
+      "Bash(xargs grep -l \"BehaviorGraph\\\\|BehaviorAuthoringGraph\")",
+      "Bash(grep -v \"//\")",
+      "Bash(grep -rln \"EnemyCombatBehaviourTree\\\\|EnsureBehaviourTree\\\\|SetPaused\\\\|class EnemyCombatBehaviourTree\" Assets/01.Code/)",
+      "Bash(ls -la Assets/01.Code/BehaviourTree/ Assets/01.Code/BehaviourTree/Nodes/)",
+      "Bash(grep -n \"m_Color: {r: 0, g: 0, b: 0\" Assets/00.Scenes/SampleScene.unity)",
+      "Bash(xargs grep -l \"WaveManager\")",
+      "Read(//tmp/**)",
+      "Bash(/c/Users/ahaha/AppData/Local/Programs/Python/Python39/python.exe -c ' *)",
+      "Bash(node -e \"const P=require\\('pptxgenjs'\\); console.log\\('ok', typeof P\\)\")",
+      "Read(//c/Program Files/LibreOffice/program/**)",
+      "Read(//c/Program Files \\(x86\\)/LibreOffice/program/**)",
+      "Bash(command -v soffice soffice.exe libreoffice)",
+      "Read(//c/Users/ahaha/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/fb0db117-0d20-41d3-97df-6f9d284b44b0/28933769-1b43-4836-934e-f2fcc214d870/skills/pptx/scripts/office/**)",
+      "Bash(/c/Users/ahaha/AppData/Local/Programs/Python/Python39/python.exe C:/Users/ahaha/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/fb0db117-0d20-41d3-97df-6f9d284b44b0/28933769-1b43-4836-934e-f2fcc214d870/skills/pptx/scripts/office/soffice.py --headless --convert-to pdf 월간발표_박연우.pptx)",
+      "PowerShell($paths = @\\(\\); Get-ChildItem -Path \"C:\\\\Program Files\",\"C:\\\\Program Files \\(x86\\)\",\"$env:LOCALAPPDATA\" -Filter \"soffice.exe\" -Recurse -ErrorAction SilentlyContinue -Depth 4 | ForEach-Object { $paths += $_.FullName }; if \\($paths\\) { $paths } else { \"NO LibreOffice\" }; \"---PowerPoint?---\"; $pp = Get-ChildItem -Path \"C:\\\\Program Files\",\"C:\\\\Program Files \\(x86\\)\" -Filter \"POWERPNT.EXE\" -Recurse -ErrorAction SilentlyContinue -Depth 5 | Select-Object -First 1 -ExpandProperty FullName; if \\($pp\\) { $pp } else { \"NO PowerPoint\" })",
+      "Bash(PYTHONUTF8=1 /c/Users/ahaha/AppData/Local/Programs/Python/Python39/python.exe -c ' *)",
+      "Bash(sed -i 's#s.addShape\\(p.ShapeType.rect, { x: CX, y: fy + 0.08, w: 0.14, h: 0.55, fill: { color: LIGHT } }\\);#s.addShape\\(p.ShapeType.ellipse, { x: CX + 0.02, y: fy + 0.26, w: 0.18, h: 0.18, fill: { color: LIGHT } }\\);#' build.js)",
+      "Bash(sed -i 's#s.addText\\(\"+ 스킬·궁극기·집중 공격까지 — 배치만 잘하면 전투 자체가 볼거리\", { x: 6.85, y: 5.05#s.addText\\(\"+ 스킬·궁극기·집중 공격까지 — 배치만 잘하면 전투 자체가 볼거리\", { x: 6.85, y: 5.3#' build.js)",
+      "Bash(grep -n \"ellipse, { x: CX + 0.02\\\\|y: 5.3, w: 5.55\" build.js)",
+      "Bash(node build.js)",
+      "Bash(awk '/&128565463059744043/{f=1} f{print NR\": \"$0} f&&/m_GameObject/{print \"  -> GameObject above\"; exit}' \"Assets/04.Prefab/UI/Node.prefab\")",
+      "Bash(awk '/&1053432102601489800$/{g=1} g&&/component:/{print NR\": \"$0} g&&/m_Name:/{print NR\": \"$0; exit}' \"Assets/04.Prefab/UI/Node.prefab\")",
+      "Bash(awk '/&1513056232$/{f=1} f{print NR\": \"$0} f&&/m_GameObject/{exit}' \"Assets/00.Scenes/SampleScene.unity\")",
+      "Bash(awk '/m_GameObject: \\\\{fileID: 1513056230\\\\}/{print NR}' \"Assets/00.Scenes/SampleScene.unity\")",
+      "Bash(awk '/&1513056230 *$/{f=1} f&&/RectTransform|m_AnchorMin|m_AnchorMax|m_AnchoredPosition|m_SizeDelta|m_Pivot|m_Father/{print NR\": \"$0} f&&/m_Pivot/{exit}' \"Assets/00.Scenes/SampleScene.unity\")",
+      "Bash(awk '/&1513056230$/{f=1} f{print NR\": \"$0} f&&/m_Name:/{exit}' \"Assets/00.Scenes/SampleScene.unity\")",
+      "Bash(awk '/&1634609969$/{f=1} f{print NR\": \"$0} f&&/m_text:|m_Name:/{c++} c>=2&&f{exit}' \"Assets/00.Scenes/SampleScene.unity\")",
+      "Bash(awk 'NR>=10511 && NR<=10620' \"Assets/00.Scenes/SampleScene.unity\")",
+      "Bash(grep -nE \"m_Name:|m_text:|&[0-9]+ ?$\")",
+      "Bash(awk '/&8111068568779227165$/{f=1} f{print NR\": \"$0} f&&/m_GameObject/{exit}' Assets/04.Prefab/UI/Node.prefab)"
     ]
   }
 }

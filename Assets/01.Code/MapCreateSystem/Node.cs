@@ -76,6 +76,16 @@ namespace _01.Code.MapCreateSystem
         
         
 
+        private void Awake()
+        {
+            // 모든 노드가 배치 그리드를 갖도록 보장 → 트랩/건물이 셀에 분산된다(가운데 겹침 방지).
+            // 프리팹에 NodeTrapGrid가 없어 그동안 단일 슬롯(정중앙) 경로로만 설치되던 문제를 해소.
+            if (trapGrid == null)
+                trapGrid = GetComponent<NodeTrapGrid>();
+            if (trapGrid == null)
+                trapGrid = gameObject.AddComponent<NodeTrapGrid>();
+        }
+
         public void Initialize(DungeonNode data, float size)
         {
             Unlock(data, size);

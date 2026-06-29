@@ -76,6 +76,7 @@ namespace _01.Code.UI
         {
             dayManager ??= FindFirstObjectByType<DayManager>();
             ConfigureStaticTextLayout();
+            EnsurePanelPlacement(); // 씬 위치 덮어쓰기와 무관하게 시작부터 우측 정렬로 고정
 
             if (panelRoot != null)
                 panelRoot.SetActive(false);
@@ -192,6 +193,7 @@ namespace _01.Code.UI
 
             if (shouldShow)
             {
+                EnsurePanelPlacement();
                 SyncInventoryFromRoster();
                 RefreshHireEntries();
                 RefreshEntryInteractableStates();
@@ -208,6 +210,21 @@ namespace _01.Code.UI
         {
             if (panelRoot != null)
                 panelRoot.SetActive(false);
+        }
+
+        /// <summary>고용 패널(루트=토글버튼+패널 서랍)을 프리팹 의도대로 화면 우측에 붙인다.
+        /// 씬에서 루트 위치가 (-238,20) 등으로 어긋나게 덮어써져도 항상 우측 정렬로 복원한다.
+        /// (중앙/좌측 등 다른 배치를 원하면 anchor/pivot만 바꾸면 된다.)</summary>
+        private void EnsurePanelPlacement()
+        {
+            if (transform is not RectTransform rect)
+                return;
+
+            rect.anchorMin = new Vector2(1f, 0.5f);
+            rect.anchorMax = new Vector2(1f, 0.5f);
+            rect.pivot = new Vector2(1f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+            rect.localScale = Vector3.one;
         }
 
         private void HandleUnitUnlockChanged(UnitUnlockChangedEvent evt)

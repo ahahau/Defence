@@ -263,13 +263,8 @@ namespace _01.Code.UI
             {
                 ShowPreferredInstallPanel();
             }
-            else if (!TutorialInputGate.IsActive && IsManagementAllowed())
-            {
-                // The legacy SampleUiLayoutController overlay (with its own 설치 button)
-                // is retired, so open the install menu directly when an empty node is
-                // selected during standby.
-                ShowSelectedNodeInstallOptions();
-            }
+            // 일반 대기 단계에서는 노드 클릭만으로 자동으로 열지 않는다.
+            // 노드를 선택(_selectedNode 설정)만 하고, 설치 패널은 우하단 '설치' 버튼으로만 연다.
             RefreshDemolishButton();
             RefreshBuildingInstallButtons();
             RefreshTutorialHighlight();
@@ -610,7 +605,31 @@ namespace _01.Code.UI
                 _deployEntries.Add(entry);
             }
 
+            ConfigureUnitDeployGrid();
             ScrollViewContentSizer.ResizeToGridItemCount(unitContentRoot, _deployEntries.Count);
+        }
+
+        [SerializeField, Min(1), Tooltip("유닛 설치 카드 그리드 열 수.")] private int unitDeployColumns = 3;
+
+        /// <summary>유닛 설치 카드는 세로 카드(RosterDeployEntry: 아트/이름/배치버튼)다. 콘텐츠 그리드의 셀 크기를
+        /// 프리팹 실제 크기에 맞추고 여러 열 그리드로 배치해, 셀이 안 맞아 카드가 찌그러지는 것을 막는다.</summary>
+        private void ConfigureUnitDeployGrid()
+        {
+            if (unitContentRoot == null || deployEntryPrefab == null)
+                return;
+
+            var grid = unitContentRoot.GetComponent<GridLayoutGroup>();
+            if (grid == null || deployEntryPrefab.transform is not RectTransform entryRect)
+                return;
+
+            // ContentSizeFitter가 켜져 있으면 우리가 잡는 sizeDelta와 충돌하므로 끈다.
+            if (unitContentRoot.TryGetComponent<ContentSizeFitter>(out var fitter))
+                fitter.enabled = false;
+
+            grid.startAxis = GridLayoutGroup.Axis.Horizontal;
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = Mathf.Max(1, unitDeployColumns);
+            grid.cellSize = new Vector2(entryRect.sizeDelta.x, entryRect.sizeDelta.y);
         }
 
         private void ClearDeployEntries()
@@ -1286,15 +1305,16 @@ namespace _01.Code.UI
                 return;
             }
 
-            // 트랩 그리드 노드: 가장 가까운 빈 셀에 배치(여러 개 가능, HasInstallation 무시).
-            var trapGrid = node.TrapGrid;
-            if (trapGrid != null && buildingData.Prefab is Trap trapPrefab)
+            // 그리드 노드: 가장 가까운 빈 셀에 배치(여러 개 가능, HasInstallation 무시).
+            // 트랩뿐 아니라 비-Unique 일반 건물도 같은 방식으로 여러 개 설치. Unique(포탈)는 아래 단일 경로로.
+            var grid = node.TrapGrid;
+            if (grid != null && !buildingData.Unique)
             {
-                var placedTrap = trapGrid.PlaceNearestFreeCell(node.transform.position, trapPrefab);
-                if (placedTrap != null)
+                var placed = grid.PlaceNearestFreeCell(node.transform.position, buildingData.Prefab);
+                if (placed != null)
                 {
-                    placedTrap.Initialize(buildingData);
-                    node.IncreaseDanger(placedTrap.DangerRating);
+                    placed.Initialize(buildingData);
+                    node.IncreaseDanger(placed.DangerRating);
                     ConsumeOwnedBuilding(buildingData);
                     nodeEventChannel?.RaiseEvent(new BuildingInstalledEvent(node, buildingData));
                 }
@@ -1396,8 +1416,9 @@ namespace _01.Code.UI
             if (buildingData.Unique && buildingData.Prefab is Portal && hasInstalledPortal)
                 return false;
 
-            // 트랩 그리드가 가득 차면 더 못 놓음
-            if (buildingData.Prefab is Trap && _selectedNode.TrapGrid != null && !_selectedNode.TrapGrid.HasFreeCell)
+            // 그리드 경로(트랩 + 비-Unique 일반 건물): 빈 셀이 있어야 더 놓을 수 있음.
+            // 그리드 건물은 HasInstallation을 세우지 않으므로 위 검사를 통과해 셀이 찰 때까지 계속 설치된다.
+            if (_selectedNode.TrapGrid != null && !buildingData.Unique && !_selectedNode.TrapGrid.HasFreeCell)
                 return false;
 
             return _pendingBuildingNode == null;

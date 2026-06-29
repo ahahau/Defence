@@ -295,19 +295,34 @@ namespace _01.Code.Enemies
         private void ApplyPassBuildingEffect(Node node)
         {
             if (node == null) return;
-            var applied = false;
-            switch (node.AssignedBuilding)
+
+            // 단일 건물(기존) + 그리드에 배치된 건물 전부에 통과 효과 적용.
+            var applied = ApplyPassEffectFor(node.AssignedBuilding);
+
+            var grid = node.TrapGrid;
+            if (grid != null)
+            {
+                var placed = grid.PlacedBuildings;
+                for (var i = 0; i < placed.Count; i++)
+                    applied |= ApplyPassEffectFor(placed[i]);
+            }
+
+            if (applied) ApplyBuildingMoodChange();
+        }
+
+        private bool ApplyPassEffectFor(Building building)
+        {
+            switch (building)
             {
                 case Inn inn:
                     inn.ApplyPassEffect(combatant);
-                    applied = true;
-                    break;
+                    return true;
                 case Store store:
                     store.ApplyPassEffect(combatant);
-                    applied = true;
-                    break;
+                    return true;
+                default:
+                    return false;
             }
-            if (applied) ApplyBuildingMoodChange();
         }
 
         private bool TryStopOnUnit(Node node)
@@ -338,14 +353,16 @@ namespace _01.Code.Enemies
             if (node.AssignedBuilding is Trap trap)
                 TriggerSingleTrap(node, trap);
 
-            // 그리드에 배치된 트랩 전부 발동(신규)
+            // 그리드에 배치된 트랩 전부 발동(그리드는 일반 건물도 담으므로 트랩만 거른다)
             var grid = node.TrapGrid;
             if (grid != null)
             {
-                foreach (var gridTrap in grid.PlacedTraps)
+                var placed = grid.PlacedBuildings;
+                for (var i = 0; i < placed.Count; i++)
                 {
                     if (!combatant.IsAlive) break;
-                    TriggerSingleTrap(node, gridTrap);
+                    if (placed[i] is Trap gridTrap)
+                        TriggerSingleTrap(node, gridTrap);
                 }
             }
 
