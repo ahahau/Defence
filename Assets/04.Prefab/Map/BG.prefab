@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 619308821318538620}
+  - component: {fileID: 619308821318538621}
   m_Layer: 0
   m_Name: BG
   m_TagString: Untagged
@@ -32,6 +33,21 @@ Transform:
   - {fileID: 4276410066843994131}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &619308821318538621
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 867073358481535285}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5929c58b004947acb8115bc6885bcb80, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  targetCamera: {fileID: 0}
+  backgroundRenderer: {fileID: 3298365747477687189}
+  coverScale: 1.1
 --- !u!1 &8946015512435277617
 GameObject:
   m_ObjectHideFlags: 0
