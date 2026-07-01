@@ -11,8 +11,12 @@ namespace _01.Code.Audio
         WaveStart,
         WaveClear,
         Attack,
+        AttackBow,
+        AttackMagic,
         Hit,
         Dodge,
-        Trap
+        Trap,
+        SkillCast,
+        Explosion
     }
 }

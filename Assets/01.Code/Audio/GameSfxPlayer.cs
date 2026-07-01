@@ -32,9 +32,15 @@ namespace _01.Code.Audio
 
         [Header("Combat")]
         [SerializeField] private AudioClip[] attackClips;
+        [SerializeField, Tooltip("원거리(활) 공격음. 비면 attackClips로 폴백.")]
+        private AudioClip[] attackBowClips;
+        [SerializeField, Tooltip("지원/마법 공격음. 비면 attackClips로 폴백.")]
+        private AudioClip[] attackMagicClips;
         [SerializeField] private AudioClip[] hitClips;
         [SerializeField] private AudioClip[] dodgeClips;
         [SerializeField] private AudioClip[] trapClips;
+        [SerializeField] private AudioClip[] skillCastClips;
+        [SerializeField] private AudioClip[] explosionClips;
 
         [SerializeField, Range(0f, 1f)] private float volume = 0.85f;
         [SerializeField, Range(0.8f, 1.2f)] private float minPitch = 0.96f;
@@ -68,7 +74,11 @@ namespace _01.Code.Audio
             DontDestroyOnLoad(gameObject);
             audioSource = GetComponent<AudioSource>();
             if (audioSource == null)
-                audioSource = gameObject.AddComponent<AudioSource>();
+            {
+                Debug.LogError($"{nameof(GameSfxPlayer)} requires an {nameof(AudioSource)} on the same GameObject.", this);
+                enabled = false;
+                return;
+            }
 
             audioSource.playOnAwake = false;
             audioSource.loop = false;
@@ -156,16 +166,25 @@ namespace _01.Code.Audio
         private void HandleWaveStarted(WaveStartedEvent evt) => PlayInternal(GameSfxCue.WaveStart);
         private void HandleWaveEnded(WaveEndedEvent evt) => PlayInternal(GameSfxCue.WaveClear);
 
+        // 다대다 전투에서 같은 소리가 같은 순간 여러 번 겹쳐 뭉개지는 것을 막는 큐별 최소 간격.
+        private const float MinCueInterval = 0.07f;
+        private readonly Dictionary<GameSfxCue, float> lastCuePlayTime = new();
+
         private void PlayInternal(GameSfxCue cue)
         {
             var clips = ResolveClips(cue);
             if (clips == null || clips.Length == 0 || audioSource == null)
                 return;
 
+            if (lastCuePlayTime.TryGetValue(cue, out var lastTime)
+                && Time.unscaledTime - lastTime < MinCueInterval)
+                return;
+
             var clip = clips[UnityEngine.Random.Range(0, clips.Length)];
             if (clip == null)
                 return;
 
+            lastCuePlayTime[cue] = Time.unscaledTime;
             audioSource.pitch = UnityEngine.Random.Range(minPitch, maxPitch);
             audioSource.PlayOneShot(clip, volume);
         }
@@ -183,11 +202,18 @@ namespace _01.Code.Audio
                 GameSfxCue.WaveStart => waveStartClips,
                 GameSfxCue.WaveClear => waveClearClips,
                 GameSfxCue.Attack => attackClips,
+                GameSfxCue.AttackBow => FallbackIfEmpty(attackBowClips, attackClips),
+                GameSfxCue.AttackMagic => FallbackIfEmpty(attackMagicClips, attackClips),
                 GameSfxCue.Hit => hitClips,
                 GameSfxCue.Dodge => dodgeClips,
                 GameSfxCue.Trap => trapClips,
+                GameSfxCue.SkillCast => skillCastClips,
+                GameSfxCue.Explosion => explosionClips,
                 _ => null
             };
         }
+
+        private static AudioClip[] FallbackIfEmpty(AudioClip[] preferred, AudioClip[] fallback) =>
+            preferred != null && preferred.Length > 0 ? preferred : fallback;
     }
 }

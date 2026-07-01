@@ -55,11 +55,12 @@ namespace _01.Code.Editor
                 "Assets/Action_RPG_SFX/Effects/Level Up_Rise_Effect_02.wav",
                 "Assets/Action_RPG_SFX/Effects/Level Up_Rise_Effect_03.wav",
             });
+            // 건물 설치: UI 라이즈 대신 돌을 놓는 듯한 무게감 있는 소리.
             SetClips(serialized, "buildInstallClips", new[]
             {
-                "Assets/Action_RPG_SFX/UI/Stage Selected_Long_Rise_01.wav",
-                "Assets/Action_RPG_SFX/UI/Stage Selected_Long_Rise_02.wav",
-                "Assets/Action_RPG_SFX/UI/Stage Selected_Long_Rise_03.wav",
+                "Assets/Action_RPG_SFX/Interactive Object/Trigger_Stone_Quick_01.wav",
+                "Assets/Action_RPG_SFX/Interactive Object/Trigger_Stone_Quick_02.wav",
+                "Assets/Action_RPG_SFX/Interactive Object/Trigger_Stone_Quick_03.wav",
             });
             SetClips(serialized, "unitPlaceClips", new[]
             {
@@ -67,11 +68,12 @@ namespace _01.Code.Editor
                 "Assets/Action_RPG_SFX/UI/Select_UI_Bell_Bright_02.wav",
                 "Assets/Action_RPG_SFX/UI/Select_UI_Bell_Bright_03.wav",
             });
+            // 웨이브 시작: UI 선택음 대신 석문이 열리는 소리(포탈에서 침공 시작).
             SetClips(serialized, "waveStartClips", new[]
             {
-                "Assets/Action_RPG_SFX/UI/Stage Selected 1_Long_Ap_01.wav",
-                "Assets/Action_RPG_SFX/UI/Stage Selected 1_Long_Ap_02.wav",
-                "Assets/Action_RPG_SFX/UI/Stage Selected 1_Long_Ap_03.wav",
+                "Assets/Action_RPG_SFX/Interactive Object/Gate_Stone_Long_Open_01.wav",
+                "Assets/Action_RPG_SFX/Interactive Object/Gate_Stone_Long_Open_02.wav",
+                "Assets/Action_RPG_SFX/Interactive Object/Gate_Stone_Long_Open_03.wav",
             });
             SetClips(serialized, "waveClearClips", new[]
             {
@@ -79,11 +81,26 @@ namespace _01.Code.Editor
                 "Assets/Action_RPG_SFX/Effects/Level Up 1_Rise_Effect_02.wav",
                 "Assets/Action_RPG_SFX/Effects/Level Up 1_Rise_Effect_03.wav",
             });
+            // 근접/탱커: 단검 휘두르기 대신 묵직한 검격.
             SetClips(serialized, "attackClips", new[]
             {
-                "Assets/Action_RPG_SFX/Attack/Weapon Swing_Dagger_Assassin_01.wav",
-                "Assets/Action_RPG_SFX/Attack/Weapon Swing_Dagger_Assassin_02.wav",
-                "Assets/Action_RPG_SFX/Attack/Weapon Swing_Dagger_Assassin_03.wav",
+                "Assets/Action_RPG_SFX/Attack/Sword Swing_Knight_Hard_01.wav",
+                "Assets/Action_RPG_SFX/Attack/Sword Swing_Knight_Hard_02.wav",
+                "Assets/Action_RPG_SFX/Attack/Sword Swing_Knight_Hard_03.wav",
+            });
+            // 원거리: 활 사격음.
+            SetClips(serialized, "attackBowClips", new[]
+            {
+                "Assets/Action_RPG_SFX/Attack/Shooting_Archer_Arrow_Bow_01.wav",
+                "Assets/Action_RPG_SFX/Attack/Shooting_Archer_Arrow_Bow_02.wav",
+                "Assets/Action_RPG_SFX/Attack/Shooting_Archer_Arrow_Bow_03.wav",
+            });
+            // 지원(마법): 마법 화살.
+            SetClips(serialized, "attackMagicClips", new[]
+            {
+                "Assets/Action_RPG_SFX/Attack/Fire Arrow_Attack_Sorcerer_01.wav",
+                "Assets/Action_RPG_SFX/Attack/Fire Arrow_Attack_Sorcerer_02.wav",
+                "Assets/Action_RPG_SFX/Attack/Fire Arrow_Attack_Sorcerer_03.wav",
             });
             SetClips(serialized, "hitClips", new[]
             {
@@ -91,17 +108,33 @@ namespace _01.Code.Editor
                 "Assets/Action_RPG_SFX/Combat/Combat_Hit_Cut_02.wav",
                 "Assets/Action_RPG_SFX/Combat/Combat_Hit_Cut_03.wav",
             });
+            // 회피: 더 짧고 경쾌한 휘릭(다대다에서 소리 겹침 완화).
             SetClips(serialized, "dodgeClips", new[]
             {
-                "Assets/Action_RPG_SFX/Movement/Dodge_Movement_Whoosh_01.wav",
-                "Assets/Action_RPG_SFX/Movement/Dodge_Movement_Whoosh_02.wav",
-                "Assets/Action_RPG_SFX/Movement/Dodge_Movement_Whoosh_03.wav",
+                "Assets/Action_RPG_SFX/Movement/Dodge_Fast_Short_Whoosh_01.wav",
+                "Assets/Action_RPG_SFX/Movement/Dodge_Fast_Short_Whoosh_02.wav",
+                "Assets/Action_RPG_SFX/Movement/Dodge_Fast_Short_Whoosh_03.wav",
             });
+            // 트랩: 뼈 부러짐 대신 팩의 전용 가시 트랩 소리.
             SetClips(serialized, "trapClips", new[]
             {
-                "Assets/Action_RPG_SFX/Combat/Bone Break_Crack_Combat_01.wav",
-                "Assets/Action_RPG_SFX/Combat/Bone Break_Crack_Combat_02.wav",
-                "Assets/Action_RPG_SFX/Combat/Bone Break_Crack_Combat_03.wav",
+                "Assets/Action_RPG_SFX/Interactive Object/Trap_Sharp_Spike_01.wav",
+                "Assets/Action_RPG_SFX/Interactive Object/Trap_Sharp_Spike_02.wav",
+                "Assets/Action_RPG_SFX/Interactive Object/Trap_Sharp_Spike_03.wav",
+            });
+            // 스킬 시전: 무기 스킬 휘두름.
+            SetClips(serialized, "skillCastClips", new[]
+            {
+                "Assets/Action_RPG_SFX/Skill/Swirl Attack_Skill_Weapon_01.wav",
+                "Assets/Action_RPG_SFX/Skill/Swirl Attack_Skill_Weapon_02.wav",
+                "Assets/Action_RPG_SFX/Skill/Swirl Attack_Skill_Weapon_03.wav",
+            });
+            // 폭발(메테오 장판 등).
+            SetClips(serialized, "explosionClips", new[]
+            {
+                "Assets/Action_RPG_SFX/Effects/Explosive_Buff_Temple_Effect_01.wav",
+                "Assets/Action_RPG_SFX/Effects/Explosive_Buff_Temple_Effect_02.wav",
+                "Assets/Action_RPG_SFX/Effects/Explosive_Buff_Temple_Effect_03.wav",
             });
 
             serialized.ApplyModifiedPropertiesWithoutUndo();
