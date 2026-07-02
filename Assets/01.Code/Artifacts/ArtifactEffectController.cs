@@ -101,13 +101,7 @@ namespace _01.Code.Artifacts
 
         private Node ResolveUnitNode(Unit unit)
         {
-            foreach (var node in Node.ActiveNodes)
-            {
-                if (node.AssignedUnitInstance == unit)
-                    return node;
-            }
-
-            return null;
+            return Node.TryFindUnit(unit, out var node, out _) ? node : null;
         }
 
         private void RefreshEnemyList()

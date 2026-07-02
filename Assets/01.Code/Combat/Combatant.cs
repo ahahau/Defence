@@ -1,10 +1,10 @@
 using System;
 using System.Collections;
-using System.Reflection;
 using _01.Code.Audio;
 using _01.Code.Core;
 using _01.Code.Events;
 using _01.Code.StatusEffects;
+using MoreMountains.Feedbacks;
 using UnityEngine;
 
 namespace _01.Code.Combat
@@ -15,8 +15,14 @@ namespace _01.Code.Combat
         [SerializeField, Min(0)] private int defense;
         [SerializeField] private float attackInterval = 1f;
         [SerializeField, Range(0f, 1f)] private float evasionChance;
+        [Header("Critical")]
+        [SerializeField, Range(0f, 1f), Tooltip("평타 크리티컬 확률.")]
+        private float criticalChance = 0.12f;
+        [SerializeField, Min(1f), Tooltip("크리티컬 피해 배율.")]
+        private float criticalDamageMultiplier = 2f;
         [SerializeField] private CombatBarsView barsView;
-        [SerializeField] private MonoBehaviour attackFeelFeedbacks;
+        [SerializeField] private MMF_Player attackFeelFeedbacks;
+        [SerializeField] private bool enableFeelCombatFeedbacks = true;
         [SerializeField] private ParticleSystem attackHitParticles;
         [SerializeField] private Color attackParticleColor = new(1f, 0.82f, 0.35f, 1f);
         [SerializeField, Min(1)] private int attackParticleBurstCount = 14;
@@ -29,7 +35,6 @@ namespace _01.Code.Combat
 
         private Coroutine _attackRoutine;
         private Combatant _target;
-        private MethodInfo _playFeelFeedbacksAtPosition;
         private bool _isAttacking;
         private bool _isPaused;
         private float _attackTimer;
@@ -98,7 +103,7 @@ namespace _01.Code.Combat
         private void Awake()
         {
             enemyStatusController = GetComponent<EnemyStatusController>();
-            EnsureAttackFeedbacks();
+            EnsureFeelCombatFeedbacks();
             if (health != null)
                 health.Changed += RefreshHealthBar;
             RefreshBars(0f);
@@ -184,8 +189,8 @@ namespace _01.Code.Combat
                         }
 
                         PlayAttackFeedback(transform.position, target.transform.position);
-                        GameSfxPlayer.Play(GameSfxCue.Attack);
-                        target.Health.TakeDamage(ResolveAttackDamage(target));
+                        GameSfxPlayer.Play(ResolveAttackCue());
+                        target.Health.TakeDamage(ResolveAttackDamage(target, out var isCritical), isCritical);
                         GameSfxPlayer.Play(GameSfxCue.Hit);
                         TryApplyAttackStatusEffect(target);
                         AttackLanded?.Invoke();
@@ -213,7 +218,6 @@ namespace _01.Code.Combat
             RefreshBars(0f);
         }
 
-        // 회피: 이동 없이 확률만 적용(트윈 이동 제거). 새 전투에서 위치는 외부 이동 시스템이 관리.
         private bool TryDodgeAttack(Vector3 attackerPosition)
         {
             if (!IsAlive || evasionChance <= 0f || UnityEngine.Random.value >= evasionChance)
@@ -226,7 +230,39 @@ namespace _01.Code.Combat
                 RefreshAttackBar(0f);
             }
 
+            PlayDodgeReaction(attackerPosition);
             return true;
+        }
+
+        private _01.Code.BT.BattleAgent _cachedBattleAgent;
+
+        /// <summary>역할에 맞는 공격음 — 원거리는 활, 지원은 마법, 나머지는 검격.
+        /// 역할이 데이터로 늦게 적용될 수 있어 재생 시점에 조회한다.</summary>
+        private GameSfxCue ResolveAttackCue()
+        {
+            if (_cachedBattleAgent == null)
+                _cachedBattleAgent = GetComponent<_01.Code.BT.BattleAgent>();
+
+            if (_cachedBattleAgent == null)
+                return GameSfxCue.Attack;
+
+            return _cachedBattleAgent.Role switch
+            {
+                _01.Code.BT.BattleRole.Ranged => GameSfxCue.AttackBow,
+                _01.Code.BT.BattleRole.Support => GameSfxCue.AttackMagic,
+                _ => GameSfxCue.Attack
+            };
+        }
+
+        /// <summary>회피 성공 연출 — 사이드스텝 이동(BattleAgent) + MISS 텍스트(DamageFeedback).</summary>
+        private void PlayDodgeReaction(Vector3 attackerPosition)
+        {
+            var agent = GetComponent<_01.Code.BT.BattleAgent>();
+            if (agent != null)
+                agent.PlayDodgeSidestep(attackerPosition);
+
+            var feedback = damageFeedback != null ? damageFeedback : GetComponent<DamageFeedback>();
+            feedback?.ShowMissText();
         }
 
         private void RefreshBars(float attackRatio)
@@ -245,7 +281,7 @@ namespace _01.Code.Combat
             barsView?.SetAttackRatio(ratio);
         }
 
-        private int ResolveAttackDamage(Combatant target)
+        private int ResolveAttackDamage(Combatant target, out bool isCritical)
         {
             var modifiedDamage = (attackDamage + artifactAttackDamageBonus) * artifactAttackDamageMultiplier;
             var damage = Mathf.Max(1, Mathf.RoundToInt(modifiedDamage));
@@ -255,6 +291,11 @@ namespace _01.Code.Combat
                 artifactEventChannel.RaiseEvent(evt);
                 damage = evt.Damage;
             }
+
+            // 크리티컬은 방어 계산 전에 적용(원피해 증폭).
+            isCritical = criticalChance > 0f && UnityEngine.Random.value < criticalChance;
+            if (isCritical)
+                damage = Mathf.RoundToInt(damage * Mathf.Max(1f, criticalDamageMultiplier));
 
             return CalculateDamageAfterDefense(damage, target);
         }
@@ -306,11 +347,11 @@ namespace _01.Code.Combat
             return enemyStatusController;
         }
 
-        private void EnsureAttackFeedbacks()
+        // 화면 단위 타격감(셰이크/히트스톱)은 FeelCombatFeedbacks가 담당한다. 프리팹 수정 없이 자동 부착.
+        private void EnsureFeelCombatFeedbacks()
         {
-            _playFeelFeedbacksAtPosition = attackFeelFeedbacks != null
-                ? attackFeelFeedbacks.GetType().GetMethod("PlayFeedbacks", new[] { typeof(Vector3), typeof(float), typeof(bool) })
-                : null;
+            if (enableFeelCombatFeedbacks && GetComponent<FeelCombatFeedbacks>() == null)
+                gameObject.AddComponent<FeelCombatFeedbacks>();
         }
 
         private void PlayAttackFeedback(Vector3 attackerPosition, Vector3 targetPosition)
@@ -322,7 +363,8 @@ namespace _01.Code.Combat
                 direction = Vector3.right;
 
             var impactPosition = targetPosition - direction.normalized * attackImpactOffset;
-            _playFeelFeedbacksAtPosition?.Invoke(attackFeelFeedbacks, new object[] { impactPosition, 1f, false });
+            if (attackFeelFeedbacks != null)
+                attackFeelFeedbacks.PlayFeedbacks(impactPosition);
 
             if (attackHitParticles == null)
                 return;

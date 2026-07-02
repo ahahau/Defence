@@ -1,4 +1,5 @@
 using DG.Tweening;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -16,6 +17,21 @@ namespace _01.Code.Combat
         [SerializeField] private float textFloatDistance = 0.45f;
         [SerializeField] private float textDuration = 0.55f;
         [SerializeField] private int textSortingOrder = 60;
+        [Header("Critical")]
+        [SerializeField] private Color criticalTextColor = new(1f, 0.72f, 0.1f, 1f);
+        [SerializeField, Min(1f), Tooltip("크리티컬 데미지 텍스트 크기 배율.")]
+        private float criticalTextScale = 1.5f;
+        [SerializeField, Min(1f), Tooltip("크리티컬 시 임팩트 모션(흔들림/펀치) 배율.")]
+        private float criticalImpactScale = 1.6f;
+        [Header("Miss")]
+        [SerializeField] private Color missTextColor = new(0.85f, 0.85f, 0.85f, 1f);
+        [Header("Heal")]
+        [SerializeField] private Color healTextColor = new(0.42f, 1f, 0.45f, 1f);
+        [SerializeField] private Color healBloomColor = new(0.35f, 1f, 0.4f, 1f);
+        [SerializeField] private Color healParticleColor = new(0.4f, 1f, 0.5f, 1f);
+        [SerializeField, Min(1)] private int healParticleBurstCount = 10;
+        [SerializeField, Min(0f), Tooltip("잦은 소량 힐(자연회복 등)을 하나의 텍스트로 합산하는 시간 창.")]
+        private float healTextAggregateWindow = 0.4f;
         [SerializeField] private TextMesh damageTextPrefab;
         [SerializeField] private ParticleSystem hitParticles;
         [SerializeField] private Health health;
@@ -28,42 +44,92 @@ namespace _01.Code.Combat
         private Color[] _originalColors;
         private Sequence _bloomSequence;
         private Sequence _impactSequence;
+        private ParticleSystem _healParticles;
+        private int _pendingHealAmount;
+        private Coroutine _healTextRoutine;
         private void Awake()
         {
+            if (health == null)
+                health = GetComponent<Health>();
+
+            if (spriteRenderers == null || spriteRenderers.Length == 0)
+                spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
+
+            EnsureDefaultHitParticles();
+
             _originalColors = new Color[spriteRenderers.Length];
 
             for (var i = 0; i < spriteRenderers.Length; i++)
-                _originalColors[i] = spriteRenderers[i].color;
+                _originalColors[i] = spriteRenderers[i] != null ? spriteRenderers[i].color : Color.white;
         }
 
         private void OnEnable()
         {
             if (health != null)
-                health.Damaged += Play;
+            {
+                health.DamagedDetailed += Play;
+                health.Healed += PlayHeal;
+            }
         }
 
         private void OnDisable()
         {
             if (health != null)
-                health.Damaged -= Play;
+            {
+                health.DamagedDetailed -= Play;
+                health.Healed -= PlayHeal;
+            }
+
+            if (_healTextRoutine != null)
+            {
+                StopCoroutine(_healTextRoutine);
+                _healTextRoutine = null;
+                _pendingHealAmount = 0;
+            }
 
             _bloomSequence?.Kill();
             _impactSequence?.Complete();
             _impactSequence?.Kill();
         }
 
-        private void Play(int damage)
+        private void Play(int damage, bool isCritical)
         {
             if (damage <= 0)
                 return;
 
-            PlayBloom();
-            PlayImpactMotion();
+            PlayBloom(bloomColor);
+            PlayImpactMotion(isCritical ? criticalImpactScale : 1f);
             PlayHitParticles();
-            CreateDamageText(damage);
+            CreateDamageText(damage, isCritical);
         }
 
-        private void PlayBloom()
+        /// <summary>회복 연출 — 초록 블룸 + 상승 스파클. 텍스트는 잦은 소량 힐이 겹치지 않게 짧게 합산해 표시.</summary>
+        private void PlayHeal(int amount)
+        {
+            if (amount <= 0)
+                return;
+
+            PlayBloom(healBloomColor);
+            PlayHealParticles();
+
+            _pendingHealAmount += amount;
+            if (_healTextRoutine == null && isActiveAndEnabled)
+                _healTextRoutine = StartCoroutine(FlushHealText());
+        }
+
+        private IEnumerator FlushHealText()
+        {
+            yield return new WaitForSeconds(healTextAggregateWindow);
+
+            var total = _pendingHealAmount;
+            _pendingHealAmount = 0;
+            _healTextRoutine = null;
+
+            if (total > 0)
+                SpawnFloatingText($"+{total}", healTextColor, 0.9f);
+        }
+
+        private void PlayBloom(Color color)
         {
             _bloomSequence?.Kill();
             _bloomSequence = DOTween.Sequence();
@@ -75,12 +141,12 @@ namespace _01.Code.Combat
                     continue;
 
                 var originalColor = _originalColors[i];
-                _bloomSequence.Join(spriteRenderer.DOColor(bloomColor, bloomDuration));
+                _bloomSequence.Join(spriteRenderer.DOColor(color, bloomDuration));
                 _bloomSequence.Insert(bloomDuration, spriteRenderer.DOColor(originalColor, bloomDuration));
             }
         }
 
-        private void PlayImpactMotion()
+        private void PlayImpactMotion(float intensity = 1f)
         {
             if (impactDuration <= 0f)
                 return;
@@ -108,18 +174,18 @@ namespace _01.Code.Combat
                 if (impactShakeDistance > 0f)
                     rendererSequence.Join(target.DOShakePosition(
                         impactDuration,
-                        impactShakeDistance,
+                        impactShakeDistance * intensity,
                         12,
                         70f,
                         false,
                         true));
 
                 if (impactScaleAmount > 0f)
-                    rendererSequence.Join(target.DOPunchScale(Vector3.one * impactScaleAmount, impactDuration, 1, 0.4f));
+                    rendererSequence.Join(target.DOPunchScale(Vector3.one * (impactScaleAmount * intensity), impactDuration, 1, 0.4f));
 
                 if (impactRotationAngle > 0f)
                     rendererSequence.Join(target.DOPunchRotation(
-                        new Vector3(0f, 0f, impactRotationAngle * direction),
+                        new Vector3(0f, 0f, impactRotationAngle * intensity * direction),
                         impactDuration,
                         1,
                         0.35f));
@@ -143,18 +209,54 @@ namespace _01.Code.Combat
             hitParticles.Play(true);
         }
 
-        private void CreateDamageText(int damage)
+        private void PlayHealParticles()
         {
-            var textMesh = Instantiate(damageTextPrefab, transform.position + Vector3.up * 0.85f, Quaternion.identity);
-            textMesh.text = damage.ToString();
+            if (_healParticles == null)
+                _healParticles = CreateHealParticles();
+
+            _healParticles.transform.position = transform.position + Vector3.up * hitParticleYOffset;
+            _healParticles.Play(true);
+        }
+
+        private void CreateDamageText(int damage, bool isCritical)
+        {
+            var scale = isCritical ? criticalTextScale : 1f;
+            var color = isCritical ? criticalTextColor : Color.red;
+            var textMesh = SpawnFloatingText(damage.ToString(), color, scale);
+            if (textMesh == null)
+                return;
+
+            // 크리티컬은 커졌다 줄어드는 팝 연출로 강조.
+            if (isCritical)
+            {
+                var baseScale = textMesh.transform.localScale;
+                textMesh.transform.localScale = baseScale * 1.5f;
+                textMesh.transform.DOScale(baseScale, 0.16f).SetEase(Ease.OutBack).SetLink(textMesh.gameObject);
+            }
+        }
+
+        /// <summary>회피 성공 시 MISS 텍스트를 띄운다(Combatant가 호출).</summary>
+        public void ShowMissText()
+        {
+            SpawnFloatingText("MISS", missTextColor, 0.85f);
+        }
+
+        private TextMesh SpawnFloatingText(string text, Color color, float sizeScale)
+        {
+            var textMesh = damageTextPrefab != null
+                ? Instantiate(damageTextPrefab, transform.position + Vector3.up * 0.85f, Quaternion.identity)
+                : CreateRuntimeFloatingText(transform.position + Vector3.up * 0.85f);
+
+            textMesh.text = text;
             textMesh.anchor = TextAnchor.MiddleCenter;
             textMesh.alignment = TextAlignment.Center;
-            textMesh.characterSize = 0.18f;
+            textMesh.characterSize = 0.18f * sizeScale;
             textMesh.fontSize = 32;
-            textMesh.color = Color.red;
+            textMesh.color = color;
 
             var meshRenderer = textMesh.GetComponent<MeshRenderer>();
-            meshRenderer.sortingOrder = textSortingOrder;
+            if (meshRenderer != null)
+                meshRenderer.sortingOrder = textSortingOrder;
 
             var endPosition = textMesh.transform.position + Vector3.up * textFloatDistance;
             DOTween.Sequence()
@@ -163,13 +265,22 @@ namespace _01.Code.Combat
                     () => textMesh.color.a,
                     alpha =>
                     {
-                        var color = textMesh.color;
-                        color.a = alpha;
-                        textMesh.color = color;
+                        var textColor = textMesh.color;
+                        textColor.a = alpha;
+                        textMesh.color = textColor;
                     },
                     0f,
                     textDuration))
                 .OnComplete(() => Destroy(textMesh.gameObject));
+
+            return textMesh;
+        }
+
+        private TextMesh CreateRuntimeFloatingText(Vector3 position)
+        {
+            var textObject = new GameObject("DamageText");
+            textObject.transform.position = position;
+            return textObject.AddComponent<TextMesh>();
         }
 
         private void EnsureDefaultHitParticles()
@@ -185,6 +296,79 @@ namespace _01.Code.Combat
 
             hitParticles = particleObject.AddComponent<ParticleSystem>();
             ConfigureHitParticles(hitParticles);
+        }
+
+        // 회복용 상승 스파클 — 피격 파티클과 달리 천천히 떠오르며 사라진다.
+        private ParticleSystem CreateHealParticles()
+        {
+            var particleObject = new GameObject("HealParticles");
+            particleObject.transform.SetParent(transform);
+            particleObject.transform.localPosition = Vector3.up * hitParticleYOffset;
+            particleObject.transform.localRotation = Quaternion.identity;
+            particleObject.transform.localScale = Vector3.one;
+
+            var particles = particleObject.AddComponent<ParticleSystem>();
+            particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+            var main = particles.main;
+            main.playOnAwake = false;
+            main.loop = false;
+            main.duration = 0.4f;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.35f, 0.6f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.4f, 0.9f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.04f, 0.1f);
+            main.startColor = healParticleColor;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.maxParticles = 48;
+
+            var emission = particles.emission;
+            emission.enabled = true;
+            emission.rateOverTime = 0f;
+            emission.SetBursts(new[]
+            {
+                new ParticleSystem.Burst(0f, (short)healParticleBurstCount)
+            });
+
+            var shape = particles.shape;
+            shape.enabled = true;
+            shape.shapeType = ParticleSystemShapeType.Circle;
+            shape.radius = 0.22f;
+            shape.arc = 360f;
+
+            var velocityOverLifetime = particles.velocityOverLifetime;
+            velocityOverLifetime.enabled = true;
+            velocityOverLifetime.space = ParticleSystemSimulationSpace.Local;
+            velocityOverLifetime.x = new ParticleSystem.MinMaxCurve(-0.12f, 0.12f);
+            velocityOverLifetime.y = new ParticleSystem.MinMaxCurve(0.6f, 1.1f);
+            velocityOverLifetime.z = new ParticleSystem.MinMaxCurve(0f, 0f);
+
+            var colorOverLifetime = particles.colorOverLifetime;
+            colorOverLifetime.enabled = true;
+            var gradient = new Gradient();
+            gradient.SetKeys(
+                new[]
+                {
+                    new GradientColorKey(new Color(0.8f, 1f, 0.75f, 1f), 0f),
+                    new GradientColorKey(healParticleColor, 0.5f),
+                    new GradientColorKey(new Color(0.2f, 0.85f, 0.4f, 1f), 1f)
+                },
+                new[]
+                {
+                    new GradientAlphaKey(0.95f, 0f),
+                    new GradientAlphaKey(0.7f, 0.6f),
+                    new GradientAlphaKey(0f, 1f)
+                });
+            colorOverLifetime.color = gradient;
+
+            var sizeOverLifetime = particles.sizeOverLifetime;
+            sizeOverLifetime.enabled = true;
+            sizeOverLifetime.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.EaseInOut(0f, 1f, 1f, 0f));
+
+            var renderer = particles.GetComponent<ParticleSystemRenderer>();
+            renderer.renderMode = ParticleSystemRenderMode.Billboard;
+            renderer.sortingOrder = hitParticleSortingOrder;
+
+            return particles;
         }
 
         private void ConfigureHitParticles(ParticleSystem particles)

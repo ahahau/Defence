@@ -79,9 +79,10 @@ namespace _01.Code.StatusEffects
             if (statusController != null)
                 return statusController;
 
-            return target.TryGetComponent<Enemy>(out _)
-                ? target.gameObject.AddComponent<EnemyStatusController>()
-                : null;
+            if (target.TryGetComponent<Enemy>(out _))
+                Debug.LogError($"Enemy prefab {target.name} is missing {nameof(EnemyStatusController)}.", target);
+
+            return null;
         }
 
         private System.Collections.Generic.IEnumerable<StatusEffectSO> EnumerateEffects()
