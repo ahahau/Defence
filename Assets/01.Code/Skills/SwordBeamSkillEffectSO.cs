@@ -23,7 +23,7 @@ namespace _01.Code.Skills
                 : 0;
             var damage = flatDamage + bonus;
             if (damage > 0)
-                target.Combatant?.Health?.TakeDamage(damage);
+                target.TakeSkillDamage(damage);
         }
     }
 }

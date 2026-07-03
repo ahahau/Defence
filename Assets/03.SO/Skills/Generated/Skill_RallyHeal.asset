@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2c05617eccf4864aa5672963a8c7578, type: 3}
+  m_Name: Skill_RallyHeal
+  m_EditorClassIdentifier: 
+  <DisplayName>k__BackingField: Rally Heal
+  <Description>k__BackingField: Restore a nearby ally so support units do more than
+    basic attacking.
+  <Icon>k__BackingField: {fileID: 0}
+  <Cooldown>k__BackingField: 5
+  <IsUltimate>k__BackingField: 0
+  <Effects>k__BackingField:
+  - {fileID: 11400000, guid: fad1d8b701f4dcb6911d35867243d2c1, type: 2}

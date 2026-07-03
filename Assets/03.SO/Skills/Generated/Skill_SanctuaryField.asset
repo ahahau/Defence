@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2c05617eccf4864aa5672963a8c7578, type: 3}
+  m_Name: Skill_SanctuaryField
+  m_EditorClassIdentifier: 
+  <DisplayName>k__BackingField: Sanctuary Field
+  <Description>k__BackingField: Create a blessed zone that heals allies standing
+    inside and reduces damage they take.
+  <Icon>k__BackingField: {fileID: 0}
+  <Cooldown>k__BackingField: 7.5
+  <IsUltimate>k__BackingField: 0
+  <Effects>k__BackingField:
+  - {fileID: 11400000, guid: 4eff67ab00c9aa5a2caf523aa1594e26, type: 2}

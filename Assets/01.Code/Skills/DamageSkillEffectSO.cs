@@ -23,11 +23,11 @@ namespace _01.Code.Skills
             if (areaOfEffect)
             {
                 foreach (var enemy in context.EnemiesInField())
-                    enemy.Combatant?.Health?.TakeDamage(damage);
+                    enemy.TakeSkillDamage(damage);
             }
             else
             {
-                context.Target?.Combatant?.Health?.TakeDamage(damage);
+                context.Target?.TakeSkillDamage(damage);
             }
         }
     }
