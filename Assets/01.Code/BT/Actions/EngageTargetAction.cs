@@ -75,6 +75,15 @@ namespace _01.Code.BT.Actions
             // 사거리 안: 공격 루프는 항상 돌려둔다(쿨 충전 유지). 쿨 도는 동안만 기동을 섞어
             // 움직임을 주되, Attack()/CombatStrafe 모두 StopCombat을 부르지 않아 공격 타이밍은 그대로다.
             _agent.Attack();
+            if (_agent.InAttackRecovery)
+            {
+                if (_agent.UsesRangedKiting)
+                    _agent.CombatStrafe(dt, Random.value < 0.5f ? -1f : 1f);
+                else
+                    _agent.CombatBackStep(dt);
+                return Status.Running;
+            }
+
             if (VariedOn && !_agent.AttackReady)
                 PerformManeuver(dt);
 
