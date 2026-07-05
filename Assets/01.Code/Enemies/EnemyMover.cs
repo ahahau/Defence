@@ -32,6 +32,10 @@ namespace _01.Code.Enemies
         private BattleAgent _battleAgent;
 
         public Func<Node, bool> NodeArrived { get; set; }
+        /// <summary>라인(엣지)에 설치된 건물을 지나갈 때 호출 — 이동 구간 중간(라인 위 건물 위치)에서 발동.</summary>
+        public Action<_01.Code.Buildings.Building> EdgeBuildingPassed { get; set; }
+        /// <summary>파티(그룹) 스폰 시 멤버끼리 겹치지 않도록 노드 기준 위치에 더하는 대형 오프셋.</summary>
+        public Vector3 FormationOffset { get; set; }
         public Node CurrentNode => _currentNode;
         public bool IsMoving => _isTurning;
         public NodeBattlefield CurrentBattlefield => _battleAgent != null ? _battleAgent.Battlefield : null;
@@ -97,20 +101,25 @@ namespace _01.Code.Enemies
 
             _battleAgent?.BeginTraversal();
 
+            var previousNodeId = _currentNode.Data.Id;
             VacateNode(_currentNode.Data.Id);
             OccupyNode(nextNode.Data.Id);
 
             _currentNode = nextNode;
             _visitedNodes.Add(_currentNode.Data.Id);
 
-            yield return SmoothMove();
+            // 이 이동 구간의 라인(엣지)에 건물이 있으면 이동 중간에 통과 효과를 발동한다.
+            var edge = EdgeLine.FindBetween(previousNodeId, _currentNode.Data.Id);
+            var edgeBuilding = edge != null ? edge.InstalledBuilding : null;
+
+            yield return SmoothMove(edgeBuilding);
 
             _battleAgent?.EndTraversal();
             _isTurning = false;
             NodeArrived?.Invoke(_currentNode);
         }
 
-        private IEnumerator SmoothMove()
+        private IEnumerator SmoothMove(_01.Code.Buildings.Building edgeBuilding = null)
         {
             var targetPos = GetEnemyPosition(_currentNode);
             var distance = Vector3.Distance(transform.position, targetPos);
@@ -123,6 +132,13 @@ namespace _01.Code.Enemies
 
             var sequence = DOTween.Sequence();
             sequence.Join(transform.DOMove(targetPos, duration).SetEase(Ease.InOutQuad));
+
+            // 라인 위 건물(중점) 통과 시점(구간의 절반)에 효과 발동.
+            if (edgeBuilding != null)
+            {
+                var passedBuilding = edgeBuilding;
+                sequence.InsertCallback(duration * 0.5f, () => EdgeBuildingPassed?.Invoke(passedBuilding));
+            }
 
             if (visual != null && visualHopHeight > 0f)
             {
@@ -171,13 +187,23 @@ namespace _01.Code.Enemies
             if (_currentNode?.Data == null)
                 return null;
 
+            // 1순위: A*로 금고까지의 최단 경로를 따라간다(벽 회피).
+            var pathStep = SelectNextNodeByPathfinding(out var waitForPath);
+            if (pathStep != null)
+                return pathStep;
+
+            // 경로는 있는데 다음 칸이 붐빔(점유/정원 초과) → 딴 길로 새지 않고 이번 턴 대기(줄서기).
+            if (waitForPath)
+                return null;
+
+            // 폴백: 금고가 없거나 경로가 완전히 막힌 경우 기존 랜덤 배회(벽 노드는 제외).
             var unvisitedFree = new List<Node>();
             var visitedFree = new List<Node>();
 
             foreach (var id in _currentNode.Data.ConnectedNodeIds)
             {
                 var node = ResolveNodeByDataId(id);
-                if (node == null)
+                if (node == null || node.IsPassBlocked)
                     continue;
 
                 if (IsNodeOccupied(id))
@@ -200,6 +226,63 @@ namespace _01.Code.Enemies
                 return visitedFree[UnityEngine.Random.Range(0, visitedFree.Count)];
 
             return null;
+        }
+
+        /// <summary>A*: 가장 가까운 금고로 가는 최단 경로의 다음 노드.
+        /// 경로 자체가 없으면 null + shouldWait=false(랜덤 배회 폴백),
+        /// 경로는 있는데 다음 칸이 점유/정원 초과면 null + shouldWait=true(이번 턴 대기).</summary>
+        private Node SelectNextNodeByPathfinding(out bool shouldWait)
+        {
+            shouldWait = false;
+
+            var goal = FindNearestTreasury();
+            if (goal == null || goal == _currentNode)
+                return null;
+
+            var path = NodePathfinder.FindPath(_currentNode, goal, node => node.IsPassBlocked);
+            if (path == null || path.Count < 2)
+                return null;
+
+            var next = path[1];
+            if (next == null)
+                return null;
+
+            if (IsNodeOccupied(next.Data.Id))
+            {
+                shouldWait = true;
+                return null;
+            }
+
+            var battlefield = next.GetComponent<NodeBattlefield>();
+            if (battlefield != null && _battleAgent != null && !battlefield.CanEnter(_battleAgent.Team))
+            {
+                shouldWait = true;
+                return null;
+            }
+
+            return next;
+        }
+
+        private Node FindNearestTreasury()
+        {
+            Node best = null;
+            var bestDistance = float.MaxValue;
+            Vector2 self = transform.position;
+
+            foreach (var node in Node.ActiveNodes)
+            {
+                if (node == null || node.Data == null || node.Data.Type != DungeonNodeType.Treasury)
+                    continue;
+
+                var distance = ((Vector2)node.transform.position - self).sqrMagnitude;
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    best = node;
+                }
+            }
+
+            return best;
         }
 
         private Node ResolveNodeByDataId(string dataId)
@@ -243,9 +326,10 @@ namespace _01.Code.Enemies
 
         private Vector3 GetEnemyPosition(Node node)
         {
-            return node.EnemyPosition != null
+            var basePosition = node.EnemyPosition != null
                 ? node.EnemyPosition.position
                 : node.transform.position;
+            return basePosition + FormationOffset;
         }
 
         private void TryEnterBattlefield(Node node)

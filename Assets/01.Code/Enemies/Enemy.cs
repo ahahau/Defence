@@ -6,11 +6,13 @@ using _01.Code.Entities;
 using _01.Code.Events;
 using _01.Code.StatusEffects;
 using _01.Code.BT;
+using _01.Code.Units;
 using DG.Tweening;
 using UnityEngine;
 
 namespace _01.Code.Enemies
 {
+    [RequireComponent(typeof(EnemyClickTarget), typeof(EnemyStatusController))]
     public class Enemy : MonoBehaviour
     {
         public enum CombatState { Idle, Chase, Attack, Hit, Dead }
@@ -43,6 +45,7 @@ namespace _01.Code.Enemies
 
         private GameEventChannelSO _costEventChannel;
         private bool _isInCombat;
+        private Unit _engagedUnit;
         private bool _isReturning;
         private bool _isDead;
         private int _currentFear;
@@ -58,6 +61,13 @@ namespace _01.Code.Enemies
         private float _deadTimer;
         private bool _isInitialized;
         private bool _deathStarted;
+        private bool _isBoss;
+
+        /// <summary>사망 연출이 시작되는 순간(디졸브 시작 전) 발생. 보스 처치 시네마틱 등이 구독.</summary>
+        public event System.Action<Enemy> DeathStarted;
+        public event System.Action<Enemy> Removed;
+
+        public bool IsBoss => _isBoss;
         private bool _killRewardGranted;
         private BattleAgent _battleAgent;
 
@@ -85,7 +95,11 @@ namespace _01.Code.Enemies
             if (statusController == null)
                 statusController = GetComponent<EnemyStatusController>();
             if (statusController == null)
-                statusController = gameObject.AddComponent<EnemyStatusController>();
+            {
+                Debug.LogError($"{nameof(Enemy)} prefab requires {nameof(EnemyStatusController)}.", this);
+                enabled = false;
+                return;
+            }
 
             ApplyData(data);
             InitializeMoodStats();
@@ -107,6 +121,7 @@ namespace _01.Code.Enemies
         {
             UnsubscribeHealth();
             _returnTween?.Kill();
+            Removed?.Invoke(this);
         }
 
         // 적 이동 구동(과거 WaveManager 턴/BT가 하던 역할). 전투/귀환/사망 중엔 멈춘다.
@@ -155,6 +170,7 @@ namespace _01.Code.Enemies
             EnsureClickTarget(nodeEventChannel);
 
             mover.NodeArrived = HandleNodeArrived;
+            mover.EdgeBuildingPassed = HandleEdgeBuildingPassed;
             mover.Initialize(startNode);
 
             _isInitialized = true;
@@ -310,6 +326,16 @@ namespace _01.Code.Enemies
             if (applied) ApplyBuildingMoodChange();
         }
 
+        /// <summary>라인(엣지)에 설치된 건물을 지나갈 때 — 노드 통과 효과와 같은 방식으로 적용(상점/여관).</summary>
+        private void HandleEdgeBuildingPassed(Building building)
+        {
+            if (_isDead || _isReturning || building == null)
+                return;
+
+            if (ApplyPassEffectFor(building))
+                ApplyBuildingMoodChange();
+        }
+
         private bool ApplyPassEffectFor(Building building)
         {
             switch (building)
@@ -383,18 +409,19 @@ namespace _01.Code.Enemies
 
         private void HandleUnitEncounter(Node unitNode)
         {
-            var unit = unitNode.AssignedUnitInstance;
+            var unit = unitNode.FirstCombatReadyUnit;
             if (unit == null) return;
 
             var unitCombatant = unit.Combatant;
             if (unitCombatant == null) return;
 
-            unitNode.IncreaseDanger(unitNode.AssignedUnit != null
-                ? unitNode.AssignedUnit.DangerIncreaseOnCombat
+            unitNode.IncreaseDanger(unit.Data != null
+                ? unit.Data.DangerIncreaseOnCombat
                 : 1);
 
             IncreaseFear(fearGainOnCombat);
             _isInCombat = true;
+            _engagedUnit = unit;
             combatant.BeginCombat(unitCombatant, HandleUnitDefeated);
             unitCombatant.BeginCombat(combatant, HandleEnemyDefeated);
         }
@@ -420,6 +447,10 @@ namespace _01.Code.Enemies
 
         private bool TryReturn()
         {
+            // 보스는 공포로 도망가지 않는다 — 최종 보스가 회군하면 클리어 판정이 김빠진다.
+            if (_isBoss)
+                return false;
+
             if (_isInCombat || _isReturning || combatant != null && combatant.IsAttacking)
                 return false;
 
@@ -455,8 +486,7 @@ namespace _01.Code.Enemies
         {
             if (!_killRewardGranted)
             {
-                var node = mover?.CurrentNode;
-                var unit = node?.AssignedUnitInstance;
+                var unit = _engagedUnit;
                 unit?.Level?.AddKillExperience(killExperience);
                 unit?.Combatant?.StopCombat();
                 _killRewardGranted = true;
@@ -476,14 +506,16 @@ namespace _01.Code.Enemies
 
         private void HandleUnitDefeated(Combatant defeatedCombatant)
         {
-            var node = mover?.CurrentNode;
-            var defeatedUnit = node?.AssignedUnitInstance;
+            var defeatedUnit = defeatedCombatant != null
+                ? defeatedCombatant.GetComponent<Unit>()
+                : _engagedUnit;
             defeatedUnit?.Combatant?.StopCombat();
 
             if (defeatedUnit is _01.Code.Units.MainUnit)
                 return;
 
             _isInCombat = false;
+            _engagedUnit = null;
         }
 
         // ── Health ──────────────────────────────────────────────
@@ -525,18 +557,62 @@ namespace _01.Code.Enemies
             _deathStarted = true;
             _isDead = true;
             _isInCombat = false;
+            _engagedUnit = null;
             _isHitStunned = false;
             _deadTimer = deadDuration;
             combatant?.StopCombat();
             _battleAgent?.Battlefield?.Leave(_battleAgent);
             mover?.StopMoving();
             EnterState(CombatState.Dead);
+            DeathStarted?.Invoke(this);
+            PlayDeathDissolve();
 
             // 새 BattleAgent BT는 TickDead를 부르지 않으므로 여기서 직접 파괴를 예약한다(시체 제거).
             Destroy(gameObject, deadDuration);
         }
 
+        /// <summary>사망 연출 — 즉시 제거(팝 아웃) 대신 deadDuration 동안 가라앉으며 페이드 아웃.</summary>
+        private void PlayDeathDissolve()
+        {
+            var dissolve = DOTween.Sequence().SetLink(gameObject);
+            // 임팩트 셰이크(DamageFeedback)는 스프라이트 자식 트랜스폼을 흔들므로 루트만 움직여 충돌을 피한다.
+            dissolve.Join(transform.DOMoveY(transform.position.y - 0.12f, deadDuration).SetEase(Ease.InQuad));
+            dissolve.Join(transform.DOScale(transform.localScale * 0.88f, deadDuration).SetEase(Ease.InQuad));
+
+            foreach (var spriteRenderer in GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                // 전투 바 등 오버레이(sortingOrder 40+)는 즉시 숨기고 본체만 서서히 사라지게.
+                if (spriteRenderer.sortingOrder >= 40)
+                {
+                    spriteRenderer.enabled = false;
+                    continue;
+                }
+
+                dissolve.Join(spriteRenderer.DOFade(0f, deadDuration).SetEase(Ease.InQuad));
+            }
+        }
+
         // ── Helpers ─────────────────────────────────────────────
+
+        /// <summary>일반 적 데이터를 보스로 승격 — 스탯 배율 + 거대화. 전용 보스 에셋 없이도 보스 웨이브가 성립한다.
+        /// ApplyWaveLevel(일차 스케일링) 이후에 호출해 배율이 최종 스탯에 적용되게 한다.</summary>
+        public void PromoteToBoss(float healthMultiplier, float attackMultiplier, float visualScale)
+        {
+            _isBoss = true;
+            name = $"{name}_Boss";
+
+            if (health != null && healthMultiplier > 1f)
+                health.SetMaxHealth(Mathf.RoundToInt(health.MaxHealth * healthMultiplier), true);
+
+            if (combatant != null && attackMultiplier > 1f)
+                combatant.SetAttackDamage(Mathf.RoundToInt(combatant.AttackDamage * attackMultiplier));
+
+            if (visualScale > 1f)
+                transform.localScale *= visualScale;
+
+            // 쓰러질 때 슬로우 시네마틱이 담기도록 사망 디졸브를 길게.
+            deadDuration = Mathf.Max(deadDuration, 0.9f);
+        }
 
         private void ApplyData(EnemyDataSO enemyData)
         {
@@ -554,7 +630,11 @@ namespace _01.Code.Enemies
         {
             if (nodeEventChannel == null) return;
             if (!TryGetComponent<EnemyClickTarget>(out var clickTarget))
-                clickTarget = gameObject.AddComponent<EnemyClickTarget>();
+            {
+                Debug.LogError($"{nameof(Enemy)} prefab requires {nameof(EnemyClickTarget)}.", this);
+                enabled = false;
+                return;
+            }
             clickTarget.Initialize(this);
         }
 

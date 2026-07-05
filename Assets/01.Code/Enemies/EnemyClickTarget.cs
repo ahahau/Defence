@@ -11,7 +11,6 @@ namespace _01.Code.Enemies
         public void Initialize(Enemy targetEnemy)
         {
             enemy = targetEnemy;
-            EnsureCollider();
         }
 
         private void Awake()
@@ -19,18 +18,8 @@ namespace _01.Code.Enemies
             if (enemy == null)
                 enemy = GetComponent<Enemy>();
 
-            EnsureCollider();
-        }
-
-        private void EnsureCollider()
-        {
-            if (TryGetComponent<Collider2D>(out _))
-                return;
-
-            var boxCollider = gameObject.AddComponent<BoxCollider2D>();
-            boxCollider.size = new Vector2(0.8f, 0.8f);
-            boxCollider.offset = new Vector2(0f, 0.25f);
-            boxCollider.isTrigger = true;
+            if (!TryGetComponent<Collider2D>(out _))
+                Debug.LogError($"{nameof(EnemyClickTarget)} requires a Collider2D configured on the prefab.", this);
         }
     }
 }
