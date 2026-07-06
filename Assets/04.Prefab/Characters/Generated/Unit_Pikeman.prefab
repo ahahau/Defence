@@ -8,6 +8,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 8000000000000000001}
+  - component: {fileID: 8000000000000000002}
   - component: {fileID: 2306502474854140680}
   - component: {fileID: 8763816506036182599}
   - component: {fileID: 2709196990148380843}
@@ -18,6 +20,7 @@ GameObject:
   - component: {fileID: 7207056970666496707}
   - component: {fileID: 7434177959724280968}
   - component: {fileID: 2792814449201143200}
+  - component: {fileID: 33887107735193185}
   m_Layer: 0
   m_Name: Unit_Pikeman
   m_TagString: Untagged
@@ -25,6 +28,30 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &8000000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4328671716576560348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76e41c84f55b70544a63a9ea131bc8ba, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+--- !u!114 &8000000000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4328671716576560348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82511b4128875bc48ac3d8b6617b289d, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
 --- !u!4 &2306502474854140680
 Transform:
   m_ObjectHideFlags: 0
@@ -71,7 +98,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c096536eb2ddfa947b9d049685115dd9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Combat.Health
-  maxHealth: 14
+  maxHealth: 28
 --- !u!114 &3065682830328054744
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -84,7 +111,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 91d206f33eb5362418db8c3fe653f581, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Combat.DamageFeedback
-  bloomColor: {r: 1, g: 0.12, b: 0.08, a: 1}
+  bloomColor: {r: 1, g: 0, b: 0, a: 1}
   bloomDuration: 0.12
   impactDuration: 0.18
   impactShakeDistance: 0.08
@@ -93,6 +120,15 @@ MonoBehaviour:
   textFloatDistance: 0.45
   textDuration: 0.55
   textSortingOrder: 60
+  criticalTextColor: {r: 1, g: 0.72, b: 0.1, a: 1}
+  criticalTextScale: 1.5
+  criticalImpactScale: 1.6
+  missTextColor: {r: 0.85, g: 0.85, b: 0.85, a: 1}
+  healTextColor: {r: 0.42, g: 1, b: 0.45, a: 1}
+  healBloomColor: {r: 0.35, g: 1, b: 0.4, a: 1}
+  healParticleColor: {r: 0.4, g: 1, b: 0.5, a: 1}
+  healParticleBurstCount: 10
+  healTextAggregateWindow: 0.4
   damageTextPrefab: {fileID: 2763252915929347062, guid: 8c9f5ae6dfc45c64881eb2539d305043, type: 3}
   hitParticles: {fileID: 0}
   health: {fileID: 2709196990148380843}
@@ -118,8 +154,11 @@ MonoBehaviour:
   defense: 0
   attackInterval: 1.1
   evasionChance: 0
+  criticalChance: 0.12
+  criticalDamageMultiplier: 2
   barsView: {fileID: 4583688762365962377}
   attackFeelFeedbacks: {fileID: 0}
+  enableFeelCombatFeedbacks: 1
   attackHitParticles: {fileID: 0}
   attackParticleColor: {r: 1, g: 0.82, b: 0.35, a: 1}
   attackParticleBurstCount: 14
@@ -205,11 +244,25 @@ MonoBehaviour:
   attackLungeDuration: 0.16
   hitKnockbackDistance: 0.3
   weaveAfterHitTime: 0.3
+  dodgeSidestepDistance: 0.35
+  woundedHealthThreshold: 0.3
+  woundedMoveSpeedMultiplier: 0.85
   projectileSpeed: 12
   projectileSize: {x: 0.5, y: 0.15}
   projectileColor: {r: 1, g: 0.95, b: 0.55, a: 1}
   meleeAttackEffectPrefab: {fileID: 0}
   autoDrive: 0
+  personalSpaceRadius: 0.72
+  separationStrength: 4.5
+  autoDecisionInterval: 0.45
+  meleeFlankOffset: 0.65
+  targetReconsiderInterval: 1.15
+  targetSwitchScoreMargin: 1.4
+  enableNodeWander: 1
+  wanderSpeedMultiplier: 0.45
+  wanderBoundaryPadding: 0.6
+  wanderWaitRange: {x: 0.8, y: 2.2}
+  wanderArrivalDistance: 0.12
 --- !u!58 &7434177959724280968
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -275,6 +328,27 @@ MonoBehaviour:
           m_Value1: 0
         Name: Self
         m_Value: {fileID: 4328671716576560348}
+--- !u!114 &33887107735193185
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4328671716576560348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1156cb35ef27b94b882d6f5c3ccc6e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  agent: {fileID: 0}
+  combatant: {fileID: 0}
+  barsView: {fileID: 0}
+  skill: {fileID: 11400000, guid: 768b37679bde283468ea283efc1116a5, type: 2}
+  ultimate: {fileID: 0}
+  castFlashColor: {r: 0.55, g: 0.85, b: 1, a: 1}
+  ultimateFlashColor: {r: 1, g: 0.85, b: 0.35, a: 1}
+  castFlashDuration: 0.14
+  castPunchScale: 0.14
 --- !u!1 &7473952817250454834
 GameObject:
   m_ObjectHideFlags: 0
@@ -357,7 +431,7 @@ SpriteRenderer:
   m_SortingOrder: 20
   m_MaskInteraction: 0
   m_Sprite: {fileID: -9030365041162893800, guid: 28c61687a54f1e34fbd7d56883871257, type: 3}
-  m_Color: {r: 0.6980392, g: 0.1333333, b: 0.1333333, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0

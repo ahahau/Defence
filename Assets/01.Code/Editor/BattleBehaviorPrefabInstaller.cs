@@ -1,8 +1,10 @@
 using System;
 using System.IO;
 using _01.Code.BT;
+using _01.Code.Combat;
 using _01.Code.Enemies;
 using _01.Code.MapCreateSystem;
+using _01.Code.StatusEffects;
 using _01.Code.Units;
 using Unity.Behavior;
 using UnityEditor;
@@ -14,7 +16,7 @@ namespace _01.Code.Editor
     {
         private const string CharacterFolder = "Assets/04.Prefab/Characters";
         private const string NodePrefabPath = "Assets/04.Prefab/Map/Node.prefab";
-        private const string SessionSetupKey = "Defence.BT.PrefabSetup.20260623";
+        private const string SessionSetupKey = "Defence.BT.PrefabSetup.20260715.StructuralDependencies";
 
         [InitializeOnLoadMethod]
         private static void ScheduleInitialSetup()
@@ -33,9 +35,10 @@ namespace _01.Code.Editor
         [MenuItem("Defence/BT/Configure Battle Prefabs")]
         public static void ConfigureBattlePrefabs()
         {
-            // 유닛엔 UnitBT, 적엔 EnemyBT를 종류별로 할당. 못 찾으면 이름에 Battle/Combat 든 그래프로 폴백.
-            var unitGraph = FindGraphByName("UnitBT") ?? FindBattleGraph();
-            var enemyGraph = FindGraphByName("EnemyBT") ?? FindBattleGraph();
+            var unitGraph = FindGraphByName("UnitBT");
+            var enemyGraph = FindGraphByName("EnemyBT");
+            if (unitGraph == null || enemyGraph == null)
+                throw new InvalidOperationException("UnitBT and EnemyBT assets must both exist before configuring character prefabs.");
             var configured = 0;
 
             foreach (var guid in AssetDatabase.FindAssets("t:Prefab", new[] { CharacterFolder }))
@@ -89,6 +92,21 @@ namespace _01.Code.Editor
                     collider.radius = 0.4f;
                 }
 
+                if (owner.GetComponent<CombatStatusController>() == null)
+                    owner.AddComponent<CombatStatusController>();
+
+                if (enemy != null)
+                {
+                    if (owner.GetComponent<EnemyStatusController>() == null)
+                        owner.AddComponent<EnemyStatusController>();
+                    if (owner.GetComponent<EnemyClickTarget>() == null)
+                        owner.AddComponent<EnemyClickTarget>();
+                }
+                else if (owner.GetComponent<UnitClickTarget>() == null)
+                {
+                    owner.AddComponent<UnitClickTarget>();
+                }
+
                 var behaviorAgent = owner.GetComponent<BehaviorGraphAgent>();
                 if (behaviorAgent == null)
                     behaviorAgent = owner.AddComponent<BehaviorGraphAgent>();
@@ -127,6 +145,9 @@ namespace _01.Code.Editor
                 if (collider == null)
                     collider = node.gameObject.AddComponent<BoxCollider2D>();
                 collider.isTrigger = true;
+
+                if (node.GetComponent<NodeTrapGrid>() == null)
+                    node.gameObject.AddComponent<NodeTrapGrid>();
 
                 PrefabUtility.SaveAsPrefabAsset(root, NodePrefabPath);
             }
@@ -170,22 +191,5 @@ namespace _01.Code.Editor
             return null;
         }
 
-        private static BehaviorGraph FindBattleGraph()
-        {
-            foreach (var guid in AssetDatabase.FindAssets("t:BehaviorGraph"))
-            {
-                var path = AssetDatabase.GUIDToAssetPath(guid);
-                var name = Path.GetFileNameWithoutExtension(path);
-                if (!name.Contains("Battle", StringComparison.OrdinalIgnoreCase)
-                    && !name.Contains("Combat", StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                var graph = AssetDatabase.LoadAssetAtPath<BehaviorGraph>(path);
-                if (graph != null)
-                    return graph;
-            }
-
-            return null;
-        }
     }
 }
