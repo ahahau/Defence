@@ -28,6 +28,7 @@ namespace _01.Code.UI
         [SerializeField] private Graphic goldAmountText;
         [SerializeField] private Button goldRewardButton;
         [SerializeField] private Button closeButton;
+        [SerializeField] private TMP_Text resultSummaryText;
         [SerializeField] private GameObject warningPanel;
         [SerializeField] private Button warningCancelButton;
         [SerializeField] private Button warningCloseButton;
@@ -63,6 +64,7 @@ namespace _01.Code.UI
         private bool _hasPendingArtifactReward;
         private bool _hasPendingUnitReward;
         private bool _hasShownReward;
+        private bool _hasWaveResult;
 
         public event Action Closed;
         public bool IsShowingReward => _hasShownReward && gameObject.activeSelf;
@@ -115,6 +117,19 @@ namespace _01.Code.UI
 
         public void ShowGoldReward(int goldAmount, int day, bool includeArtifactReward = true)
         {
+            ShowWaveResult(goldAmount, day, 0, 0, 0, 0, 0, includeArtifactReward);
+        }
+
+        public void ShowWaveResult(
+            int goldAmount,
+            int day,
+            int enemyCount,
+            int killCount,
+            int damageDealt,
+            int damageTaken,
+            int criticalHitCount,
+            bool includeArtifactReward = true)
+        {
             gameObject.SetActive(true);
             _currentRewardDay = Mathf.Max(0, day);
             ConfigureModalLayout();
@@ -122,11 +137,12 @@ namespace _01.Code.UI
             PrepareSupplyChoices();
 
             _pendingGoldAmount = Mathf.Max(0, goldAmount);
+            _hasWaveResult = day > 0 || enemyCount > 0;
             _hasPendingGoldReward = _pendingGoldAmount > 0;
             _hasPendingArtifactReward = pendingArtifactChoices.Count > 0 && artifactRewardButton != null && artifactChoicePanel != null;
             _hasPendingUnitReward = HasPendingUnlockReward() && unitRewardButton != null && artifactChoicePanel != null;
 
-            if (!_hasPendingGoldReward && !_hasPendingArtifactReward && !_hasPendingUnitReward)
+            if (!_hasPendingGoldReward && !_hasPendingArtifactReward && !_hasPendingUnitReward && !_hasWaveResult)
             {
                 _hasShownReward = false;
                 Hide();
@@ -134,6 +150,8 @@ namespace _01.Code.UI
             }
 
             _hasShownReward = true;
+
+            RefreshResultSummary(enemyCount, killCount, damageDealt, damageTaken, criticalHitCount, goldAmount);
 
             if (iconImage != null)
                 iconImage.gameObject.SetActive(_hasPendingGoldReward);
@@ -148,6 +166,26 @@ namespace _01.Code.UI
             SetUnitRewardButtonState(_hasPendingUnitReward, _hasPendingUnitReward ? ResolveUnlockRewardLabel() : "선택 완료", _hasPendingUnitReward);
             HideWarning();
             HideArtifactChoices();
+        }
+
+        private void RefreshResultSummary(
+            int enemyCount,
+            int killCount,
+            int damageDealt,
+            int damageTaken,
+            int criticalHitCount,
+            int goldAmount)
+        {
+            if (resultSummaryText == null)
+                return;
+
+            resultSummaryText.text =
+                $"DAY {_currentRewardDay} CLEAR\n" +
+                $"처치한 적  {Mathf.Max(0, killCount)} / {Mathf.Max(0, enemyCount)}    " +
+                $"치명타  {Mathf.Max(0, criticalHitCount)}회\n" +
+                $"입힌 피해  {Mathf.Max(0, damageDealt):N0}    " +
+                $"받은 피해  {Mathf.Max(0, damageTaken):N0}    " +
+                $"보상  {Mathf.Max(0, goldAmount):N0}G";
         }
 
         private void ConfigureModalLayout()
@@ -192,6 +230,7 @@ namespace _01.Code.UI
         public void Hide()
         {
             var shouldNotifyClosed = _hasShownReward && gameObject.activeSelf;
+            _hasWaveResult = false;
             HideWarning();
             HideArtifactChoices();
             gameObject.SetActive(false);
