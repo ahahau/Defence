@@ -13,13 +13,18 @@ namespace _01.Code.Manager
 
         [SerializeField] private GameEventChannelSO costEventChannel;
         [SerializeField] private GameEventChannelSO nodeEventChannel;
+        [SerializeField] private GameEventChannelSO dayEventChannel;
         [SerializeField] private UnitDataSO[] unitCatalog;
         [SerializeField, Min(0)] private int startingCopiesOfFirstUnit = 1;
+        [Header("Recruitment")]
+        [SerializeField, Min(0)] private int candidatesPerDay = 2;
+        [SerializeField, Min(1)] private int maxCandidatesPerUnit = 2;
 
         private readonly List<UnitDataSO> _availableUnits = new();
         private readonly List<UnitDataSO> _unlockedUnits = new();
         private readonly List<BuildingDataSO> _unlockedBuildings = new();
         private readonly Dictionary<UnitDataSO, int> _ownedUnits = new();
+        private readonly Dictionary<UnitDataSO, int> _deployedUnits = new();
         private readonly Dictionary<BuildingDataSO, int> _ownedBuildings = new();
         private bool _hasInitializedUnlocks;
         public IReadOnlyList<UnitDataSO> AvailableUnits => _availableUnits;
@@ -34,7 +39,6 @@ namespace _01.Code.Manager
 
             InitializeUnlockedUnits();
             costEventChannel.AddListener<RosterHirePaidEvent>(HandleHirePaid);
-            costEventChannel.AddListener<RosterHireRequestedEvent>(HandleRosterHireRequested);
             costEventChannel.AddListener<UnitAcquiredEvent>(HandleUnitAcquired);
             costEventChannel.AddListener<BuildingAcquiredEvent>(HandleBuildingAcquired);
             costEventChannel.AddListener<BuildingConsumedEvent>(HandleBuildingConsumed);
@@ -42,6 +46,7 @@ namespace _01.Code.Manager
             costEventChannel.AddListener<BuildingUnlockRequestedEvent>(HandleBuildingUnlockRequested);
             nodeEventChannel.AddListener<UnitAssignedToNodeEvent>(HandleUnitDeployed);
             nodeEventChannel.AddListener<UnitReturnedFromNodeEvent>(HandleUnitReturned);
+            dayEventChannel?.AddListener<DayChangedEvent>(HandleDayChanged);
             RaiseUnlockChanged();
         }
 
@@ -51,7 +56,6 @@ namespace _01.Code.Manager
                 Current = null;
 
             costEventChannel.RemoveListener<RosterHirePaidEvent>(HandleHirePaid);
-            costEventChannel.RemoveListener<RosterHireRequestedEvent>(HandleRosterHireRequested);
             costEventChannel.RemoveListener<UnitAcquiredEvent>(HandleUnitAcquired);
             costEventChannel.RemoveListener<BuildingAcquiredEvent>(HandleBuildingAcquired);
             costEventChannel.RemoveListener<BuildingConsumedEvent>(HandleBuildingConsumed);
@@ -59,6 +63,7 @@ namespace _01.Code.Manager
             costEventChannel.RemoveListener<BuildingUnlockRequestedEvent>(HandleBuildingUnlockRequested);
             nodeEventChannel.RemoveListener<UnitAssignedToNodeEvent>(HandleUnitDeployed);
             nodeEventChannel.RemoveListener<UnitReturnedFromNodeEvent>(HandleUnitReturned);
+            dayEventChannel?.RemoveListener<DayChangedEvent>(HandleDayChanged);
         }
 
         public bool IsUnlocked(UnitDataSO unit)
@@ -71,26 +76,47 @@ namespace _01.Code.Manager
             return unit != null && _availableUnits.Contains(unit);
         }
 
-        private void HandleHirePaid(RosterHirePaidEvent evt)
-        {
-            _availableUnits.Add(evt.Unit);
-            costEventChannel.RaiseEvent(new RosterChangedEvent(_availableUnits));
-        }
+        public int GetCandidateCount(UnitDataSO unit) => GetOwnedUnitCount(unit);
 
-        private void HandleRosterHireRequested(RosterHireRequestedEvent evt)
+        public int GetAvailableUnitCount(UnitDataSO unit)
         {
-            if (evt.Unit == null)
-                return;
+            if (unit == null)
+                return 0;
 
-            var ownedCount = GetOwnedUnitCount(evt.Unit);
-            if (ownedCount <= 0)
+            var count = 0;
+            foreach (var availableUnit in _availableUnits)
             {
-                costEventChannel.RaiseEvent(new RosterHireRejectedEvent(evt.Unit, 1, 0));
-                return;
+                if (availableUnit == unit)
+                    count++;
             }
 
-            _ownedUnits[evt.Unit] = ownedCount - 1;
-            costEventChannel.RaiseEvent(new RosterHirePaidEvent(evt.Unit, 0, _ownedUnits[evt.Unit]));
+            return count;
+        }
+
+        public int GetDeployedUnitCount(UnitDataSO unit) =>
+            unit != null && _deployedUnits.TryGetValue(unit, out var count) ? count : 0;
+
+        public int TotalHiredCount
+        {
+            get
+            {
+                var deployedCount = 0;
+                foreach (var count in _deployedUnits.Values)
+                    deployedCount += Mathf.Max(0, count);
+
+                return _availableUnits.Count + deployedCount;
+            }
+        }
+
+        private void HandleHirePaid(RosterHirePaidEvent evt)
+        {
+            var candidateCount = GetOwnedUnitCount(evt.Unit);
+            if (evt.Unit == null || candidateCount <= 0)
+                return;
+
+            _ownedUnits[evt.Unit] = candidateCount - 1;
+            _availableUnits.Add(evt.Unit);
+            costEventChannel.RaiseEvent(new RosterChangedEvent(_availableUnits));
             RaiseUnlockChanged();
         }
 
@@ -101,6 +127,32 @@ namespace _01.Code.Manager
 
             _ownedUnits.TryGetValue(evt.Unit, out var current);
             _ownedUnits[evt.Unit] = current + evt.Amount;
+            RaiseUnlockChanged();
+        }
+
+        private void HandleDayChanged(DayChangedEvent evt)
+        {
+            if (evt.Day <= 0 || candidatesPerDay <= 0)
+                return;
+
+            var candidates = new List<UnitDataSO>();
+            foreach (var unit in _unlockedUnits)
+            {
+                if (unit != null && GetOwnedUnitCount(unit) < maxCandidatesPerUnit)
+                    candidates.Add(unit);
+            }
+
+            for (var i = 0; i < candidatesPerDay && candidates.Count > 0; i++)
+            {
+                var index = Random.Range(0, candidates.Count);
+                var unit = candidates[index];
+                var nextCount = GetOwnedUnitCount(unit) + 1;
+                _ownedUnits[unit] = nextCount;
+
+                if (nextCount >= maxCandidatesPerUnit)
+                    candidates.RemoveAt(index);
+            }
+
             RaiseUnlockChanged();
         }
 
@@ -135,11 +187,17 @@ namespace _01.Code.Manager
                 return;
             }
 
+            _deployedUnits.TryGetValue(evt.Unit, out var deployedCount);
+            _deployedUnits[evt.Unit] = deployedCount + 1;
+
             costEventChannel.RaiseEvent(new RosterChangedEvent(_availableUnits));
         }
 
         private void HandleUnitReturned(UnitReturnedFromNodeEvent evt)
         {
+            if (evt.Unit != null && _deployedUnits.TryGetValue(evt.Unit, out var deployedCount))
+                _deployedUnits[evt.Unit] = Mathf.Max(0, deployedCount - 1);
+
             AddAvailableUnit(evt.Unit);
         }
 

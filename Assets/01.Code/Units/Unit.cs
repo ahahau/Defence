@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace _01.Code.Units
 {
+    [RequireComponent(typeof(UnitClickTarget))]
     public class Unit : MonoBehaviour
     {
         [SerializeField] private SpriteRenderer spriteRenderer;
@@ -93,7 +94,11 @@ namespace _01.Code.Units
         private void EnsureClickTarget()
         {
             if (!TryGetComponent<UnitClickTarget>(out var clickTarget))
-                clickTarget = gameObject.AddComponent<UnitClickTarget>();
+            {
+                Debug.LogError($"{nameof(Unit)} prefab requires {nameof(UnitClickTarget)}.", this);
+                enabled = false;
+                return;
+            }
 
             clickTarget.Initialize(this);
         }

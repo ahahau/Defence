@@ -15,7 +15,12 @@ namespace _01.Code.UI
         public UnitDataSO Unit { get; private set; }
         private Action<UnitDataSO> _onDeploy;
 
-        public void Initialize(UnitDataSO unit, Action<UnitDataSO> onDeploy)
+        public void Initialize(
+            UnitDataSO unit,
+            Action<UnitDataSO> onDeploy,
+            string actionLabel = null,
+            string detail = null,
+            bool interactable = true)
         {
             Unit = unit;
             _onDeploy = onDeploy;
@@ -23,7 +28,8 @@ namespace _01.Code.UI
             if (unit != null)
             {
                 var displayName = !string.IsNullOrWhiteSpace(unit.Name) ? unit.Name : unit.name;
-                SetText(nameText, $"{displayName} / 마력 {unit.MagicCost}");
+                var suffix = string.IsNullOrWhiteSpace(detail) ? $"마력 {unit.MagicCost}" : detail;
+                SetText(nameText, $"{displayName}\n{suffix}");
                 ApplyBoard(unit.BoardSprite);
             }
 
@@ -31,7 +37,19 @@ namespace _01.Code.UI
             {
                 deployButton.onClick.RemoveListener(HandleDeployClicked);
                 deployButton.onClick.AddListener(HandleDeployClicked);
+                deployButton.interactable = interactable;
+                if (!string.IsNullOrWhiteSpace(actionLabel))
+                    SetText(ResolveButtonLabel(deployButton), actionLabel);
             }
+        }
+
+        private static Graphic ResolveButtonLabel(Button button)
+        {
+            if (button == null)
+                return null;
+
+            var tmpText = button.GetComponentInChildren<TMP_Text>(true);
+            return tmpText != null ? tmpText : button.GetComponentInChildren<Text>(true);
         }
 
         private void ApplyBoard(Sprite boardSprite)
@@ -55,7 +73,7 @@ namespace _01.Code.UI
             _onDeploy?.Invoke(Unit);
         }
 
-        private void SetText(Graphic target, string value)
+        private static void SetText(Graphic target, string value)
         {
             if (target is TMP_Text tmpText)
             {

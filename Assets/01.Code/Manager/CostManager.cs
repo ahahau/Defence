@@ -23,6 +23,7 @@ namespace _01.Code.Manager
         {
             costEventChannel.AddListener<BuildCostRequestedEvent>(HandleBuildCostRequested);
             costEventChannel.AddListener<HireUnitCostRequestedEvent>(HandleHireUnitCostRequested);
+            costEventChannel.AddListener<RosterHireRequestedEvent>(HandleRosterHireRequested);
             costEventChannel.AddListener<SalaryCostRequestedEvent>(HandleSalaryCostRequested);
             costEventChannel.AddListener<GoldEarnedEvent>(HandleGoldEarned);
             costEventChannel.AddListener<GoldLostEvent>(HandleGoldLost);
@@ -38,6 +39,7 @@ namespace _01.Code.Manager
         {
             costEventChannel.RemoveListener<BuildCostRequestedEvent>(HandleBuildCostRequested);
             costEventChannel.RemoveListener<HireUnitCostRequestedEvent>(HandleHireUnitCostRequested);
+            costEventChannel.RemoveListener<RosterHireRequestedEvent>(HandleRosterHireRequested);
             costEventChannel.RemoveListener<SalaryCostRequestedEvent>(HandleSalaryCostRequested);
             costEventChannel.RemoveListener<GoldEarnedEvent>(HandleGoldEarned);
             costEventChannel.RemoveListener<GoldLostEvent>(HandleGoldLost);
@@ -89,6 +91,24 @@ namespace _01.Code.Manager
 
             CurrentGold = Mathf.Max(0, CurrentGold - evt.GoldAmount);
             RaiseGoldChanged();
+        }
+
+        private void HandleRosterHireRequested(RosterHireRequestedEvent evt)
+        {
+            if (evt.Unit == null)
+                return;
+
+            var hireCost = Mathf.Max(0, evt.GoldAmount);
+            var roster = HiredUnitRoster.Current;
+            if (roster == null || roster.GetCandidateCount(evt.Unit) <= 0 || CurrentGold < hireCost)
+            {
+                costEventChannel.RaiseEvent(new RosterHireRejectedEvent(evt.Unit, hireCost, CurrentGold));
+                return;
+            }
+
+            CurrentGold -= hireCost;
+            RaiseGoldChanged();
+            costEventChannel.RaiseEvent(new RosterHirePaidEvent(evt.Unit, hireCost, CurrentGold));
         }
 
         private void HandleGoldEarned(GoldEarnedEvent evt)

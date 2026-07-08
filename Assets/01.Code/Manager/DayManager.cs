@@ -8,6 +8,8 @@ namespace _01.Code.Manager
 {
     public class DayManager : MonoBehaviour
     {
+        public static DayManager Current { get; private set; }
+
         [SerializeField] private GameEventChannelSO dayEventChannel;
         [SerializeField] private GameEventChannelSO nodeEventChannel;
         [SerializeField] private GameEventChannelSO costEventChannel;
@@ -23,6 +25,18 @@ namespace _01.Code.Manager
         public bool IsStandby => _isStandby;
         public int CurrentDay => currentDay;
         public int NextWaveDay => currentDay + 1;
+
+        private void Awake()
+        {
+            if (Current != null && Current != this)
+            {
+                Debug.LogError($"Duplicate {nameof(DayManager)} detected. Keep exactly one scene instance.", this);
+                enabled = false;
+                return;
+            }
+
+            Current = this;
+        }
 
         private void Start()
         {
@@ -51,6 +65,12 @@ namespace _01.Code.Manager
                 waveEventChannel.RemoveListener<WaveEndedEvent>(HandleWaveEnded);
             if (costEventChannel != null)
                 costEventChannel.RemoveListener<RosterHirePaidEvent>(HandleRosterHired);
+        }
+
+        private void OnDestroy()
+        {
+            if (Current == this)
+                Current = null;
         }
 
         public void StartWave()

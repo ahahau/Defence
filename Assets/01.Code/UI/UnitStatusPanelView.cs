@@ -75,7 +75,13 @@ namespace _01.Code.UI
         private void HandleUnitStatusRequested(UnitStatusRequestedEvent evt)
         {
             selectedNode = evt.Node;
-            selectedUnit = selectedNode != null ? selectedNode.AssignedUnitInstance : null;
+            selectedUnit = evt.Unit;
+
+            if (selectedUnit == null && selectedNode != null)
+                selectedUnit = selectedNode.AssignedUnitInstance;
+
+            if (selectedNode == null && selectedUnit != null)
+                Node.TryFindUnit(selectedUnit, out selectedNode, out _);
 
             if (selectedUnit == null)
                 return;

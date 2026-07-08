@@ -39,6 +39,7 @@ namespace _01.Code.UI
         private readonly List<UnitDeployEntryView> _entries = new();
         private readonly Dictionary<UnitDataSO, int> _ownedUnitCounts = new();
         private UnitDataSO selectedUnit;
+        private int _currentGold;
 
         public RectTransform ToggleButtonRect => toggleButton != null ? toggleButton.transform as RectTransform : null;
         public RectTransform FirstEntryRect => _entries.Count > 0 && _entries[0] != null ? _entries[0].transform as RectTransform : null;
@@ -74,7 +75,7 @@ namespace _01.Code.UI
 
         private void Awake()
         {
-            dayManager ??= FindFirstObjectByType<DayManager>();
+            dayManager ??= DayManager.Current;
             ConfigureStaticTextLayout();
             EnsurePanelPlacement(); // 씬 위치 덮어쓰기와 무관하게 시작부터 우측 정렬로 고정
 
@@ -105,6 +106,8 @@ namespace _01.Code.UI
             costEventChannel.AddListener<RosterHireRejectedEvent>(HandleHireRejected);
             costEventChannel.AddListener<UnitUnlockChangedEvent>(HandleUnitUnlockChanged);
             costEventChannel.AddListener<UnitInventoryChangedEvent>(HandleUnitInventoryChanged);
+            costEventChannel.AddListener<RosterChangedEvent>(HandleRosterChanged);
+            costEventChannel.AddListener<GoldChangedEvent>(HandleGoldChanged);
             SyncInventoryFromRoster();
         }
 
@@ -123,6 +126,8 @@ namespace _01.Code.UI
             costEventChannel.RemoveListener<RosterHireRejectedEvent>(HandleHireRejected);
             costEventChannel.RemoveListener<UnitUnlockChangedEvent>(HandleUnitUnlockChanged);
             costEventChannel.RemoveListener<UnitInventoryChangedEvent>(HandleUnitInventoryChanged);
+            costEventChannel.RemoveListener<RosterChangedEvent>(HandleRosterChanged);
+            costEventChannel.RemoveListener<GoldChangedEvent>(HandleGoldChanged);
         }
 
         private void InitHireableUnitsFromData()
@@ -146,6 +151,7 @@ namespace _01.Code.UI
 
         private void RefreshHireEntries()
         {
+            var previousSelection = selectedUnit;
             foreach (var e in _entries)
                 if (e != null) Destroy(e.gameObject);
             _entries.Clear();
@@ -155,7 +161,12 @@ namespace _01.Code.UI
             foreach (var unit in _hireableUnits)
             {
                 var entry = Instantiate(entryPrefab, contentRoot);
-                entry.Initialize(unit, HandleUnitSelected, GetOwnedUnitCount(unit));
+                entry.Initialize(
+                    unit,
+                    HandleUnitSelected,
+                    GetOwnedUnitCount(unit),
+                    GetAvailableUnitCount(unit),
+                    GetDeployedUnitCount(unit));
                 if (TutorialInputGate.IsActive && !TutorialInputGate.AllowsHireUnit(unit))
                     entry.SetInteractable(false);
                 _entries.Add(entry);
@@ -171,9 +182,12 @@ namespace _01.Code.UI
             }
             else
             {
-                selectedUnit = null;
-                SetDetailVisible(false);
-                UpdateHint(string.Empty);
+                selectedUnit = previousSelection != null && _hireableUnits.Contains(previousSelection)
+                    ? previousSelection
+                    : null;
+                SetEntrySelection(selectedUnit);
+                SetDetailVisible(selectedUnit != null);
+                UpdateHint(selectedUnit != null ? BuildUnitDetailText(selectedUnit) : string.Empty);
             }
         }
 
@@ -248,6 +262,18 @@ namespace _01.Code.UI
             RefreshHireEntries();
         }
 
+        private void HandleRosterChanged(RosterChangedEvent evt)
+        {
+            RefreshHireEntries();
+        }
+
+        private void HandleGoldChanged(GoldChangedEvent evt)
+        {
+            _currentGold = Mathf.Max(0, evt.CurrentGold);
+            if (selectedUnit != null)
+                UpdateHint(BuildUnitDetailText(selectedUnit));
+        }
+
         private void RefreshEntryInteractableStates()
         {
             foreach (var entry in _entries)
@@ -270,7 +296,7 @@ namespace _01.Code.UI
             if (GetOwnedUnitCount(unit) <= 0)
             {
                 SelectUnit(unit);
-                UpdateHint($"{BuildUnitDetailText(unit)}\n\n보유 수량이 없습니다. 웨이브 보상이나 원정으로 획득하세요.");
+                UpdateHint($"{BuildUnitDetailText(unit)}\n\n고용 가능한 후보가 없습니다. 웨이브 보상으로 후보 계약서를 획득하세요.");
                 return;
             }
 
@@ -288,24 +314,26 @@ namespace _01.Code.UI
             if (costEventChannel == null || unit == null)
                 return;
 
-            costEventChannel.RaiseEvent(new RosterHireRequestedEvent(unit, 0));
+            costEventChannel.RaiseEvent(new RosterHireRequestedEvent(unit, Mathf.Max(0, unit.Cost)));
         }
 
         private void HandleHirePaid(RosterHirePaidEvent evt)
         {
             RefreshHireEntries();
             var name = !string.IsNullOrWhiteSpace(evt.Unit.Name) ? evt.Unit.Name : evt.Unit.name;
+            selectedUnit = evt.Unit;
+            SetEntrySelection(selectedUnit);
             SetDetailVisible(true);
-            UpdateHint($"{BuildUnitDetailText(evt.Unit)}\n\n{name} 대기 로스터 합류!");
-
-            if (panelRoot != null)
-                panelRoot.SetActive(false);
+            UpdateHint($"{BuildUnitDetailText(evt.Unit)}\n\n{name} 고용 완료! 남은 골드 {evt.RemainingGold}G");
         }
 
         private void HandleHireRejected(RosterHireRejectedEvent evt)
         {
             SetDetailVisible(true);
-            UpdateHint($"{BuildUnitDetailText(evt.Unit)}\n\n보유 수량이 없습니다.");
+            var reason = GetOwnedUnitCount(evt.Unit) <= 0
+                ? "고용 가능한 후보가 없습니다."
+                : $"골드가 부족합니다. 필요 {evt.GoldAmount}G / 보유 {evt.CurrentGold}G";
+            UpdateHint($"{BuildUnitDetailText(evt.Unit)}\n\n{reason}");
         }
 
         private void UpdateHint(string message)
@@ -359,7 +387,11 @@ namespace _01.Code.UI
 
             return $"{displayName}\n" +
                    $"등급: {(int)unit.Grade}\n" +
-                   $"보유: {GetOwnedUnitCount(unit)}\n" +
+                   $"고용 후보: {GetOwnedUnitCount(unit)}\n" +
+                   $"대기 인원: {GetAvailableUnitCount(unit)}\n" +
+                   $"배치 중: {GetDeployedUnitCount(unit)}\n" +
+                   $"고용 비용: {unit.Cost}G (보유 {_currentGold}G)\n" +
+                   $"일일 급여: {Mathf.Max(1, Mathf.CeilToInt(unit.Cost / 5f))}G\n" +
                    $"마력: {unit.MagicCost}\n" +
                    $"공격력: {attackText}\n" +
                    $"방어력: {defense}\n" +
@@ -367,12 +399,24 @@ namespace _01.Code.UI
                    $"공격속도: {intervalText}\n" +
                    $"기본 위험도: {unit.BaseDanger}\n" +
                    $"전투 위험 증가: {unit.DangerIncreaseOnCombat}\n\n" +
-                   "선택된 유닛을 한 번 더 클릭하면 대기 로스터로 이동";
+                   "선택한 후보를 한 번 더 클릭하면 골드를 지불하고 고용";
         }
 
         private int GetOwnedUnitCount(UnitDataSO unit)
         {
             return unit != null && _ownedUnitCounts.TryGetValue(unit, out var count) ? count : 0;
+        }
+
+        private int GetAvailableUnitCount(UnitDataSO unit)
+        {
+            var roster = HiredUnitRoster.Current;
+            return roster != null ? roster.GetAvailableUnitCount(unit) : 0;
+        }
+
+        private int GetDeployedUnitCount(UnitDataSO unit)
+        {
+            var roster = HiredUnitRoster.Current;
+            return roster != null ? roster.GetDeployedUnitCount(unit) : 0;
         }
 
         private void SyncInventoryFromRoster()
@@ -449,8 +493,8 @@ namespace _01.Code.UI
 
         private bool IsManagementAllowed()
         {
-            dayManager ??= FindFirstObjectByType<DayManager>();
-            return dayManager == null || dayManager.IsStandby;
+            dayManager ??= DayManager.Current;
+            return dayManager != null && dayManager.IsStandby;
         }
     }
 }

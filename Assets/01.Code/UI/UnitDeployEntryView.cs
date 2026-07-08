@@ -25,6 +25,16 @@ namespace _01.Code.UI
 
         public void Initialize(UnitDataSO unit, Action<UnitDataSO> onSelected, int ownedCount)
         {
+            Initialize(unit, onSelected, ownedCount, 0);
+        }
+
+        public void Initialize(UnitDataSO unit, Action<UnitDataSO> onSelected, int candidateCount, int availableCount)
+        {
+            Initialize(unit, onSelected, candidateCount, availableCount, 0);
+        }
+
+        public void Initialize(UnitDataSO unit, Action<UnitDataSO> onSelected, int candidateCount, int availableCount, int deployedCount)
+        {
             Unit = unit;
             _onSelected = onSelected;
 
@@ -33,8 +43,8 @@ namespace _01.Code.UI
 
             var displayName = !string.IsNullOrWhiteSpace(unit.Name) ? unit.Name : unit.name;
             SetText(nameText, displayName);
-            var countText = ownedCount >= 0 ? $"보유 {ownedCount}" : "보유 -";
-            SetText(costText, $"{countText} / 배치 마력 {unit.MagicCost}");
+            var candidateText = candidateCount >= 0 ? $"후보 {candidateCount}" : "후보 -";
+            SetText(costText, $"{candidateText} / 대기 {availableCount} / 배치 {deployedCount} / 고용 {unit.Cost}G");
             if (unitIcon != null && unit.Sprite != null)
             {
                 unitIcon.sprite = unit.Sprite;
@@ -48,7 +58,7 @@ namespace _01.Code.UI
                 selectButton.onClick.AddListener(HandleSelectClicked);
             }
             SetSelected(false);
-            SetInteractable(ownedCount != 0);
+            SetInteractable(candidateCount != 0);
         }
 
         private void ApplyBoard(Sprite boardSprite)
