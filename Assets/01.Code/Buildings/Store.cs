@@ -1,6 +1,7 @@
 using _01.Code.Combat;
 using _01.Code.Core;
 using _01.Code.Events;
+using MoreMountains.Feedbacks;
 using UnityEngine;
 
 namespace _01.Code.Buildings
@@ -11,7 +12,7 @@ namespace _01.Code.Buildings
         [SerializeField] private int damageBonus = 1;
         [SerializeField] private int goldReward = 15;
         [Header("Feedback")]
-        [SerializeField] private MonoBehaviour buffFeelFeedback;
+        [SerializeField] private MMF_Player buffFeelFeedback;
         [SerializeField] private Color buffFlashColor = new(0.95f, 0.66f, 1f, 1f);
         [SerializeField, Min(0.01f)] private float buffFlashDuration = 0.28f;
 

@@ -10,6 +10,8 @@ namespace _01.Code.Buildings
         [field: SerializeField] public int Cost { get; private set; }
         [field: SerializeField] public Building Prefab { get; private set; }
         [field: SerializeField] public bool Unique { get; private set; }
+        [field: SerializeField, Tooltip("켜면 노드가 아니라 노드 사이 라인(엣지)에 설치된다. 적이 라인을 지나갈 때 통과 효과 발동(상점/여관용).")]
+        public bool InstallOnEdge { get; private set; }
         [field: SerializeField] public bool Locked { get; private set; } = true;
         [field: SerializeField, Min(0)] public int BaseDanger { get; private set; } = 1;
         [field: SerializeField] public InstallCategory Category { get; private set; } = InstallCategory.Building;

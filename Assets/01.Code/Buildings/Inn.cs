@@ -2,6 +2,7 @@ using _01.Code.Combat;
 using _01.Code.Core;
 using _01.Code.Events;
 using _01.Code.StatusEffects;
+using MoreMountains.Feedbacks;
 using UnityEngine;
 
 namespace _01.Code.Buildings
@@ -13,7 +14,7 @@ namespace _01.Code.Buildings
         [SerializeField] private int goldReward = 10;
         [SerializeField] private StatusEffectDataSO statusEffect;
         [Header("Feedback")]
-        [SerializeField] private MonoBehaviour healFeelFeedback;
+        [SerializeField] private MMF_Player healFeelFeedback;
         [SerializeField] private Color healFlashColor = Color.green;
         [SerializeField, Min(0.01f)] private float healFlashDuration = 0.28f;
 

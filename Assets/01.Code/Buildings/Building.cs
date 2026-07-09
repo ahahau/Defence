@@ -1,7 +1,6 @@
-using System;
 using System.Collections;
-using System.Reflection;
 using _01.Code.Combat;
+using MoreMountains.Feedbacks;
 using UnityEngine;
 
 namespace _01.Code.Buildings
@@ -18,36 +17,14 @@ namespace _01.Code.Buildings
             Combatant target,
             Color flashColor,
             float duration,
-            MonoBehaviour feelFeedback = null)
+            MMF_Player feelFeedback = null)
         {
             if (target == null)
                 return;
 
-            PlayFeelFeedback(feelFeedback, target.transform.position);
+            if (feelFeedback != null)
+                feelFeedback.PlayFeedbacks(target.transform.position);
             StartCoroutine(FlashTargetColor(target, flashColor, duration));
-        }
-
-        private void PlayFeelFeedback(MonoBehaviour feelFeedback, Vector3 position)
-        {
-            if (feelFeedback == null)
-                return;
-
-            var playAtPosition = feelFeedback.GetType().GetMethod(
-                "PlayFeedbacks",
-                new[] { typeof(Vector3), typeof(float), typeof(bool) });
-            if (playAtPosition != null)
-            {
-                playAtPosition.Invoke(feelFeedback, new object[] { position, 1f, false });
-                return;
-            }
-
-            var play = feelFeedback.GetType().GetMethod(
-                "PlayFeedbacks",
-                BindingFlags.Instance | BindingFlags.Public,
-                null,
-                Type.EmptyTypes,
-                null);
-            play?.Invoke(feelFeedback, null);
         }
 
         private IEnumerator FlashTargetColor(Combatant target, Color flashColor, float duration)
