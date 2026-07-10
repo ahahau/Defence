@@ -21,6 +21,12 @@ namespace _01.Code.MapCreateSystem
  
         public void CreateEdge(Vector2Int from, Vector2Int to)
         {
+            CreateEdge(from, to, null, null);
+        }
+
+        /// <summary>노드 ID까지 기록하는 버전 — 라인 건물 설치/통과 판정이 어느 노드 사이인지 알 수 있게.</summary>
+        public void CreateEdge(Vector2Int from, Vector2Int to, string fromId, string toId)
+        {
             if (edgeLinePrefab == null)
             {
                 Debug.LogError("DungeonEdgeManager requires an edge line prefab.", this);
@@ -35,7 +41,7 @@ namespace _01.Code.MapCreateSystem
             var direction = (end - start).normalized;
             var nodeRadius = nodeSize * 0.5f;
 
-            edgeLine.Initialize($"Edge_{from}_{to}", start + direction * nodeRadius, end - direction * nodeRadius);
+            edgeLine.Initialize($"Edge_{from}_{to}", start + direction * nodeRadius, end - direction * nodeRadius, fromId, toId);
         }
         private Vector3 ToWorld(Vector2Int gridPosition)
         {
