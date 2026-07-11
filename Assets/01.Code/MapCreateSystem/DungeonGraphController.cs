@@ -384,7 +384,7 @@ namespace _01.Code.MapCreateSystem
             if (!graph.Connect(fromNode, toNode))
                 return;
 
-            edgeManager.CreateEdge(fromNode.GridPosition, toNode.GridPosition);
+            edgeManager.CreateEdge(fromNode.GridPosition, toNode.GridPosition, fromNode.Id, toNode.Id);
         }
 
         private bool CanConnectNodes(DungeonNode a, DungeonNode b)
@@ -569,15 +569,12 @@ namespace _01.Code.MapCreateSystem
                 return;
 
             Vector2 worldPosition = inputDataSO.SceneToWorldPoint();
-            var clickedCollider = Physics2D.OverlapPoint(worldPosition, nodeClickMask);
+            var clickedCollider = ResolveNodeClickCollider(worldPosition);
 
             if (clickedCollider == null)
                 return;
 
             // 콜라이더(=전투필드 트리거 공유)는 크게 두고, 클릭 유효 범위만 중심부로 좁힌다.
-            if (!IsWithinClickArea(clickedCollider, worldPosition))
-                return;
-
             if (!lockedNodeByCollider.TryGetValue(clickedCollider, out var lockedNode))
             {
                 if (!unlockedNodeByCollider.TryGetValue(clickedCollider, out var unlockedNode))
@@ -586,12 +583,27 @@ namespace _01.Code.MapCreateSystem
                 if (!TutorialInputGate.AllowsUnlockedNode(unlockedNode))
                     return;
 
+                var unitGrid = unlockedNode.TrapGrid;
+                if (unitGrid != null
+                    && unitGrid.IsFocusedGridVisible
+                    && unitGrid.TrySelectCell(worldPosition, out var column, out var row))
+                {
+                    nodeEventChannel.RaiseEvent(new NodeGridCellSelectedEvent(unlockedNode, column, row));
+                    return;
+                }
+
+                if (!IsWithinClickArea(clickedCollider, worldPosition))
+                    return;
+
                 nodeEventChannel.RaiseEvent(new NodeCameraFocusStartedEvent(unlockedNode));
                 nodeEventChannel.RaiseEvent(new UnlockedNodeClickedEvent(unlockedNode));
                 return;
             }
 
             if (!TutorialInputGate.AllowsLockedNode(lockedNode))
+                return;
+
+            if (!IsWithinClickArea(clickedCollider, worldPosition))
                 return;
 
             TryBuildAt(lockedNode);
@@ -678,13 +690,25 @@ namespace _01.Code.MapCreateSystem
 
         private Node ResolveNodeForUnit(Unit unit)
         {
-            if (unit == null)
+            return Node.TryFindUnit(unit, out var node, out _) ? node : null;
+        }
+
+        private Collider2D ResolveNodeClickCollider(Vector2 worldPosition)
+        {
+            var hits = Physics2D.OverlapPointAll(worldPosition, nodeClickMask);
+            if (hits == null)
                 return null;
 
-            foreach (var node in Node.ActiveNodes)
+            foreach (var hit in hits)
             {
-                if (node != null && node.AssignedUnitInstance == unit)
-                    return node;
+                if (hit != null && unlockedNodeByCollider.ContainsKey(hit))
+                    return hit;
+            }
+
+            foreach (var hit in hits)
+            {
+                if (hit != null && lockedNodeByCollider.ContainsKey(hit))
+                    return hit;
             }
 
             return null;

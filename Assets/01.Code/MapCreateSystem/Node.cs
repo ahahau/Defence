@@ -1,4 +1,5 @@
 using _01.Code.Buildings;
+using _01.Code.BT;
 using _01.Code.Units;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,10 +8,13 @@ using UnityEngine;
 
 namespace _01.Code.MapCreateSystem
 {
+    [RequireComponent(typeof(NodeTrapGrid), typeof(NodeBattlefield))]
     public class Node : MonoBehaviour
     {
         private static readonly Dictionary<string, Node> nodesByDataId = new();
+        private static readonly HashSet<Node> allInstances = new();
         public static IEnumerable<Node> ActiveNodes => nodesByDataId.Values.Where(node => node != null);
+        public static IEnumerable<Node> AllInstances => allInstances.Where(node => node != null);
 
         [SerializeField]
         private SpriteRenderer spriteRenderer;
@@ -42,8 +46,46 @@ namespace _01.Code.MapCreateSystem
         [SerializeField]
         private NodeTrapGrid trapGrid;
 
+        [Header("Unit Capacity Label")]
+        [SerializeField] private TextMeshPro unitCapacityText;
+        [SerializeField] private string unitCapacityFormat = "{0}/{1}";
+        [SerializeField] private Color availableCapacityColor = new(0.78f, 0.96f, 1f, 1f);
+        [SerializeField] private Color fullCapacityColor = new(1f, 0.72f, 0.24f, 1f);
+
         /// <summary>트랩 노드 내부 격자(없으면 null). 여러 트랩을 셀에 자유 배치.</summary>
         public NodeTrapGrid TrapGrid => trapGrid != null ? trapGrid : (trapGrid = GetComponent<NodeTrapGrid>());
+
+        /// <summary>벽이 설치되어 적이 지나갈 수 없는 노드인지. A*와 랜덤 배회 모두 이 노드를 피한다.</summary>
+        public bool IsPassBlocked
+        {
+            get
+            {
+                if (AssignedBuilding is Wall)
+                    return true;
+
+                var grid = TrapGrid;
+                if (grid == null)
+                    return false;
+
+                var placed = grid.PlacedBuildings;
+                for (var i = 0; i < placed.Count; i++)
+                {
+                    if (placed[i] is Wall)
+                        return true;
+                }
+
+                return false;
+            }
+        }
+
+        /// <summary>데이터 ID로 활성 노드를 찾는다(경로 탐색용). 없으면 null.</summary>
+        public static Node FindByDataId(string dataId)
+        {
+            if (string.IsNullOrEmpty(dataId))
+                return null;
+
+            return nodesByDataId.TryGetValue(dataId, out var node) && node != null ? node : null;
+        }
 
         [field: SerializeField]
         public Collider2D ClickCollider { get; private set; }
@@ -59,6 +101,26 @@ namespace _01.Code.MapCreateSystem
 
         private Vector3 prefabScale = Vector3.one;
         private bool hasCapturedPrefabScale;
+        private NodeBattlefield battlefield;
+        private int lastDisplayedUnitCount = -1;
+        private int lastDisplayedUnitCapacity = -1;
+        private readonly List<UnitPlacement> unitPlacements = new();
+
+        public sealed class UnitPlacement
+        {
+            public UnitPlacement(UnitDataSO data, Unit instance, int column, int row)
+            {
+                Data = data;
+                Instance = instance;
+                Column = column;
+                Row = row;
+            }
+
+            public UnitDataSO Data { get; }
+            public Unit Instance { get; }
+            public int Column { get; set; }
+            public int Row { get; set; }
+        }
         
         public DungeonNode Data { get; private set; }
         public DungeonNode FromNode { get; private set; }
@@ -66,24 +128,73 @@ namespace _01.Code.MapCreateSystem
         public Vector2Int Direction { get; private set; }
         public UnitDataSO AssignedUnit { get; private set; }
         public Unit AssignedUnitInstance { get; private set; }
+        public IReadOnlyList<UnitPlacement> UnitPlacements => unitPlacements;
+        public int AssignedUnitCount => unitPlacements.Count;
         public Building AssignedBuilding { get; private set; }
         public Transform EnemyPosition => enemyPosition != null ? enemyPosition : transform;
         public bool HasAssignedUnit => AssignedUnit != null || AssignedUnitInstance != null;
-        public bool HasCombatReadyUnit => AssignedUnitInstance != null && AssignedUnitInstance.CanFight;
+        public bool HasCombatReadyUnit
+        {
+            get
+            {
+                for (var i = 0; i < unitPlacements.Count; i++)
+                {
+                    if (unitPlacements[i]?.Instance != null && unitPlacements[i].Instance.CanFight)
+                        return true;
+                }
+
+                return false;
+            }
+        }
+
+        public Unit FirstCombatReadyUnit
+        {
+            get
+            {
+                for (var i = 0; i < unitPlacements.Count; i++)
+                {
+                    if (unitPlacements[i]?.Instance != null && unitPlacements[i].Instance.CanFight)
+                        return unitPlacements[i].Instance;
+                }
+
+                return null;
+            }
+        }
         public bool HasAssignedBuilding => AssignedBuilding != null;
         public bool HasInstallation => HasAssignedUnit || HasAssignedBuilding;
+        public bool CanAcceptAdditionalUnit => AssignedUnitCount < UnitCapacity;
+        public int UnitCapacity => battlefield != null ? battlefield.MaxPerTeam : 1;
         public int DangerLevel { get; private set; }
         
         
 
         private void Awake()
         {
-            // 모든 노드가 배치 그리드를 갖도록 보장 → 트랩/건물이 셀에 분산된다(가운데 겹침 방지).
-            // 프리팹에 NodeTrapGrid가 없어 그동안 단일 슬롯(정중앙) 경로로만 설치되던 문제를 해소.
-            if (trapGrid == null)
-                trapGrid = GetComponent<NodeTrapGrid>();
-            if (trapGrid == null)
-                trapGrid = gameObject.AddComponent<NodeTrapGrid>();
+            trapGrid ??= GetComponent<NodeTrapGrid>();
+            battlefield = GetComponent<NodeBattlefield>();
+            if (trapGrid == null || battlefield == null)
+            {
+                Debug.LogError($"{nameof(Node)} prefab requires {nameof(NodeTrapGrid)} and {nameof(NodeBattlefield)} components.", this);
+                enabled = false;
+                return;
+            }
+
+            RefreshUnitCapacityLabel(true);
+        }
+
+        private void OnEnable()
+        {
+            allInstances.Add(this);
+        }
+
+        private void OnDisable()
+        {
+            allInstances.Remove(this);
+        }
+
+        private void Update()
+        {
+            RefreshUnitCapacityLabel();
         }
 
         public void Initialize(DungeonNode data, float size)
@@ -104,6 +215,8 @@ namespace _01.Code.MapCreateSystem
             SetVisualColor(unlockedVisualColor);
             SetLockedOverlayVisible(false);
             SetLockedCostVisible(false);
+            SetUnitCapacityVisible(true);
+            RefreshUnitCapacityLabel(true);
             nodesByDataId[data.Id] = this;
         }
 
@@ -124,6 +237,7 @@ namespace _01.Code.MapCreateSystem
             SetVisualColor(lockedVisualColor);
             SetLockedOverlayVisible(true);
             SetLockedCostVisible(false);
+            SetUnitCapacityVisible(false);
         }
 
         public void SetBuildCost(int goldCost)
@@ -149,6 +263,12 @@ namespace _01.Code.MapCreateSystem
 
         public void AssignUnit(UnitDataSO unit, Unit unitInstance)
         {
+            if (unitInstance != null && TryFindFirstFreeUnitCell(out var column, out var row))
+            {
+                TryAssignUnitToCell(unit, unitInstance, column, row);
+                return;
+            }
+
             AssignedUnit = unit;
             AssignedUnitInstance = unitInstance;
             IncreaseDanger(unit != null ? unit.BaseDanger : 0);
@@ -156,17 +276,173 @@ namespace _01.Code.MapCreateSystem
 
         public bool TryAssignUnit(UnitDataSO unit, Unit unitInstance)
         {
-            if (unit == null || unitInstance == null || HasInstallation)
+            if (unit == null || unitInstance == null || !TryFindFirstFreeUnitCell(out var column, out var row))
                 return false;
 
-            AssignUnit(unit, unitInstance);
+            return TryAssignUnitToCell(unit, unitInstance, column, row);
+        }
+
+        public bool TryAssignUnitToCell(UnitDataSO unit, Unit unitInstance, int column, int row)
+        {
+            if (unitInstance == null || !CanAcceptAdditionalUnit || !IsUnitCellAvailable(column, row))
+                return false;
+
+            unitPlacements.Add(new UnitPlacement(unit, unitInstance, column, row));
+            unitInstance.transform.position = TrapGrid.CellWorldPosition(column, row);
+            RefreshPrimaryUnit();
+            IncreaseDanger(unit != null ? unit.BaseDanger : 0);
             return true;
+        }
+
+        public bool IsUnitCellAvailable(int column, int row)
+        {
+            var grid = TrapGrid;
+            if (grid == null || !grid.IsValidCell(column, row))
+                return false;
+
+            for (var i = 0; i < unitPlacements.Count; i++)
+            {
+                var placement = unitPlacements[i];
+                if (placement != null && placement.Column == column && placement.Row == row && placement.Instance != null)
+                    return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 유닛 배치는 격자 입력을 요구하지 않는다. 노드가 내부적으로 사용할 빈 슬롯만 반환한다.
+        /// 건물/함정 셀 점유와는 독립적이며, 노드 정원과 기존 유닛만 검사한다.
+        /// </summary>
+        public bool TryGetFirstFreeUnitSlot(out int column, out int row)
+        {
+            return TryFindFirstFreeUnitCell(out column, out row);
+        }
+
+        public bool TryGetUnitAtCell(int column, int row, out UnitPlacement result)
+        {
+            for (var i = 0; i < unitPlacements.Count; i++)
+            {
+                var placement = unitPlacements[i];
+                if (placement != null && placement.Column == column && placement.Row == row && placement.Instance != null)
+                {
+                    result = placement;
+                    return true;
+                }
+            }
+
+            result = null;
+            return false;
+        }
+
+        public bool TryMoveUnitToCell(Unit unitInstance, int column, int row)
+        {
+            if (unitInstance == null || !IsUnitCellAvailable(column, row))
+                return false;
+
+            for (var i = 0; i < unitPlacements.Count; i++)
+            {
+                var placement = unitPlacements[i];
+                if (placement?.Instance != unitInstance)
+                    continue;
+
+                placement.Column = column;
+                placement.Row = row;
+                unitInstance.transform.position = TrapGrid.CellWorldPosition(column, row);
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool RemoveUnit(Unit unitInstance)
+        {
+            for (var i = unitPlacements.Count - 1; i >= 0; i--)
+            {
+                if (unitPlacements[i]?.Instance != unitInstance)
+                    continue;
+
+                unitPlacements.RemoveAt(i);
+                RefreshPrimaryUnit();
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool TryGetPlacement(Unit unitInstance, out UnitPlacement result)
+        {
+            for (var i = 0; i < unitPlacements.Count; i++)
+            {
+                var placement = unitPlacements[i];
+                if (placement?.Instance != unitInstance)
+                    continue;
+
+                result = placement;
+                return true;
+            }
+
+            result = null;
+            return false;
+        }
+
+        public static bool TryFindUnit(Unit unitInstance, out Node node, out UnitPlacement placement)
+        {
+            if (unitInstance != null)
+            {
+                foreach (var candidate in ActiveNodes)
+                {
+                    if (candidate != null && candidate.TryGetPlacement(unitInstance, out placement))
+                    {
+                        node = candidate;
+                        return true;
+                    }
+                }
+            }
+
+            node = null;
+            placement = null;
+            return false;
         }
 
         public void ClearUnit()
         {
+            if (AssignedUnitInstance != null && RemoveUnit(AssignedUnitInstance))
+                return;
+
             AssignedUnit = null;
             AssignedUnitInstance = null;
+        }
+
+        private bool TryFindFirstFreeUnitCell(out int column, out int row)
+        {
+            for (var r = 0; r < TrapGrid.Rows; r++)
+            for (var c = 0; c < TrapGrid.Columns; c++)
+            {
+                if (!IsUnitCellAvailable(c, r))
+                    continue;
+
+                column = c;
+                row = r;
+                return true;
+            }
+
+            column = -1;
+            row = -1;
+            return false;
+        }
+
+        private void RefreshPrimaryUnit()
+        {
+            for (var i = unitPlacements.Count - 1; i >= 0; i--)
+            {
+                if (unitPlacements[i]?.Instance == null)
+                    unitPlacements.RemoveAt(i);
+            }
+
+            var primary = unitPlacements.Count > 0 ? unitPlacements[0] : null;
+            AssignedUnit = primary?.Data;
+            AssignedUnitInstance = primary?.Instance;
         }
 
         public void AssignBuilding(Building building)
@@ -227,6 +503,29 @@ namespace _01.Code.MapCreateSystem
             lockedCostText.gameObject.SetActive(visible);
         }
 
+        private void SetUnitCapacityVisible(bool visible)
+        {
+            if (unitCapacityText != null)
+                unitCapacityText.gameObject.SetActive(visible);
+        }
+
+        private void RefreshUnitCapacityLabel(bool force = false)
+        {
+            if (unitCapacityText == null)
+                return;
+
+            battlefield ??= GetComponent<NodeBattlefield>();
+            var deployed = AssignedUnitCount;
+            var capacity = battlefield != null ? battlefield.MaxPerTeam : 1;
+            if (!force && deployed == lastDisplayedUnitCount && capacity == lastDisplayedUnitCapacity)
+                return;
+
+            lastDisplayedUnitCount = deployed;
+            lastDisplayedUnitCapacity = capacity;
+            unitCapacityText.text = string.Format(unitCapacityFormat, deployed, capacity);
+            unitCapacityText.color = deployed >= capacity ? fullCapacityColor : availableCapacityColor;
+        }
+
         private void SetLockedRootVisible(bool visible)
         {
             if (lockedRoot != null)
@@ -254,6 +553,7 @@ namespace _01.Code.MapCreateSystem
 
         private void OnDestroy()
         {
+            allInstances.Remove(this);
             if (Data != null)
                 nodesByDataId.Remove(Data.Id);
         }

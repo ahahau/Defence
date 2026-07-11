@@ -81,6 +81,20 @@ namespace _01.Code.Events
         public Node Node { get; }
     }
 
+    public class NodeGridCellSelectedEvent : GameEvent
+    {
+        public NodeGridCellSelectedEvent(Node node, int column, int row)
+        {
+            Node = node;
+            Column = column;
+            Row = row;
+        }
+
+        public Node Node { get; }
+        public int Column { get; }
+        public int Row { get; }
+    }
+
     public class BuildingInstalledEvent : GameEvent
     {
         public BuildingInstalledEvent(Node node, BuildingDataSO building)
