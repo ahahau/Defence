@@ -29,8 +29,11 @@ namespace _01.Code.UI
 
             foreach (var node in Node.ActiveNodes)
             {
-                if (node.AssignedUnit != null)
-                    unitDanger += node.AssignedUnit.BaseDanger;
+                foreach (var placement in node.UnitPlacements)
+                {
+                    if (placement?.Data != null)
+                        unitDanger += placement.Data.BaseDanger;
+                }
 
                 if (node.AssignedBuilding is Trap trap)
                     trapDanger += trap.DangerRating;
