@@ -40,13 +40,14 @@ namespace _01.Code.Dialogue
         private Node guidedTrapNode;
         private UnitDataSO guidedHiredUnit;
         private DialogueSequenceSO guidedRuntimeSequence;
-        private UnitDeployPanelView unitDeployPanelView;
-        private NodePanelView nodePanelView;
-        private WaveView waveView;
-        private BuildConfirmPanelView buildConfirmPanelView;
-        private WaveRewardPanelView waveRewardPanelView;
-        private PolicyChoicePanelView policyChoicePanelView;
-        private ManagementSettlementManager managementSettlementManager;
+        [Header("Guided Tutorial Dependencies")]
+        [SerializeField] private UnitDeployPanelView unitDeployPanelView;
+        [SerializeField] private NodePanelView nodePanelView;
+        [SerializeField] private WaveView waveView;
+        [SerializeField] private BuildConfirmPanelView buildConfirmPanelView;
+        [SerializeField] private WaveRewardPanelView waveRewardPanelView;
+        [SerializeField] private PolicyChoicePanelView policyChoicePanelView;
+        [SerializeField] private ManagementSettlementManager managementSettlementManager;
         private bool hasSeenPolicyChoicePanel;
 
         public event Action<DialogueSequenceSO> DialogueStarted;
@@ -483,10 +484,9 @@ namespace _01.Code.Dialogue
 
         private Node ResolvePreferredLockedNode()
         {
-            var nodes = FindObjectsByType<Node>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             Node fallback = null;
             Node centralPortalCandidate = null;
-            foreach (var node in nodes)
+            foreach (var node in Node.AllInstances)
             {
                 if (node == null || !node.name.StartsWith("LockedNode_", StringComparison.Ordinal))
                     continue;
@@ -515,7 +515,6 @@ namespace _01.Code.Dialogue
 
         private void HighlightBuildTarget()
         {
-            buildConfirmPanelView ??= FindFirstObjectByType<BuildConfirmPanelView>(FindObjectsInactive.Include);
             if (buildConfirmPanelView != null && buildConfirmPanelView.IsOpen)
             {
                 if (TryBuildRectTransformScreenRect(buildConfirmPanelView.ConfirmButtonRect, out var confirmRect))
@@ -545,7 +544,6 @@ namespace _01.Code.Dialogue
 
         private void HighlightUnitHireTarget()
         {
-            unitDeployPanelView ??= FindFirstObjectByType<UnitDeployPanelView>(FindObjectsInactive.Include);
             if (unitDeployPanelView == null)
             {
                 view?.HideSpotlight();
@@ -573,13 +571,11 @@ namespace _01.Code.Dialogue
 
         private UnitDataSO ResolveFirstHireUnit()
         {
-            unitDeployPanelView ??= FindFirstObjectByType<UnitDeployPanelView>(FindObjectsInactive.Include);
             return unitDeployPanelView != null ? unitDeployPanelView.FirstOwnedUnit : null;
         }
 
         private void HighlightUnitDeployTarget()
         {
-            nodePanelView ??= FindFirstObjectByType<NodePanelView>(FindObjectsInactive.Include);
             if (nodePanelView == null)
             {
                 HighlightNode(guidedBuiltNode);
@@ -606,7 +602,6 @@ namespace _01.Code.Dialogue
 
         private void HighlightPortalInstallTarget()
         {
-            nodePanelView ??= FindFirstObjectByType<NodePanelView>(FindObjectsInactive.Include);
             if (nodePanelView == null)
             {
                 HighlightNode(guidedPortalNode);
@@ -632,7 +627,6 @@ namespace _01.Code.Dialogue
 
         private void HighlightTrapInstallTarget()
         {
-            nodePanelView ??= FindFirstObjectByType<NodePanelView>(FindObjectsInactive.Include);
             if (nodePanelView == null)
             {
                 HighlightNode(guidedTrapNode);
@@ -658,7 +652,6 @@ namespace _01.Code.Dialogue
 
         private void HighlightUnlockRewardTarget(UnlockRewardKind rewardKind)
         {
-            waveRewardPanelView ??= FindFirstObjectByType<WaveRewardPanelView>(FindObjectsInactive.Include);
             if (waveRewardPanelView == null || !waveRewardPanelView.IsShowingReward)
             {
                 view?.HideSpotlight();
@@ -677,7 +670,6 @@ namespace _01.Code.Dialogue
 
         private void HighlightWaveStartButton()
         {
-            waveView ??= FindFirstObjectByType<WaveView>(FindObjectsInactive.Include);
             if (waveView == null || !TryBuildRectTransformScreenRect(waveView.StartButtonRect, out var rect))
             {
                 view?.HideSpotlight();
@@ -690,14 +682,12 @@ namespace _01.Code.Dialogue
 
         private void UpdatePolicyTutorial()
         {
-            policyChoicePanelView ??= FindFirstObjectByType<PolicyChoicePanelView>(FindObjectsInactive.Include);
             if (policyChoicePanelView == null)
             {
                 view?.HideSpotlight();
                 return;
             }
 
-            managementSettlementManager ??= FindFirstObjectByType<ManagementSettlementManager>(FindObjectsInactive.Include);
             if (managementSettlementManager != null && managementSettlementManager.IsPanelOpen)
                 managementSettlementManager.ForceHidePanel();
 
@@ -737,7 +727,6 @@ namespace _01.Code.Dialogue
 
         private void RestoreWaveStartVisuals()
         {
-            waveView ??= FindFirstObjectByType<WaveView>(FindObjectsInactive.Include);
             waveView?.ClearTutorialHighlight();
             view?.HideSpotlight();
         }
