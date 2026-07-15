@@ -40,6 +40,9 @@ namespace _01.Code.Combat
         private float _attackTimer;
         private int artifactAttackDamageBonus;
         private float artifactAttackDamageMultiplier = 1f;
+        private float conditionAttackDamageMultiplier = 1f;
+        private float conditionAttackIntervalMultiplier = 1f;
+        private float conditionCriticalChanceBonus;
         private GameEventChannelSO artifactEventChannel;
         private EnemyStatusController enemyStatusController;
         /// <summary>공격이 적중한 순간 발생(타격 연출/돌진용). BattleAgent가 구독해 lunge 모션을 낸다.</summary>
@@ -80,6 +83,17 @@ namespace _01.Code.Combat
         {
             artifactAttackDamageBonus = damageBonus;
             artifactAttackDamageMultiplier = Mathf.Max(0.05f, damageMultiplier);
+        }
+
+        public void SetConditionModifiers(float damageMultiplier, float attackIntervalMultiplier)
+        {
+            conditionAttackDamageMultiplier = Mathf.Max(0.05f, damageMultiplier);
+            conditionAttackIntervalMultiplier = Mathf.Max(0.05f, attackIntervalMultiplier);
+        }
+
+        public void SetConditionCriticalChanceBonus(float bonus)
+        {
+            conditionCriticalChanceBonus = Mathf.Clamp(bonus, -1f, 1f);
         }
 
         public void SetArtifactEventChannel(GameEventChannelSO eventChannel)
@@ -283,7 +297,9 @@ namespace _01.Code.Combat
 
         private int ResolveAttackDamage(Combatant target, out bool isCritical)
         {
-            var modifiedDamage = (attackDamage + artifactAttackDamageBonus) * artifactAttackDamageMultiplier;
+            var modifiedDamage = (attackDamage + artifactAttackDamageBonus)
+                                 * artifactAttackDamageMultiplier
+                                 * conditionAttackDamageMultiplier;
             var damage = Mathf.Max(1, Mathf.RoundToInt(modifiedDamage));
             if (artifactEventChannel != null)
             {
@@ -293,7 +309,8 @@ namespace _01.Code.Combat
             }
 
             // 크리티컬은 방어 계산 전에 적용(원피해 증폭).
-            isCritical = criticalChance > 0f && UnityEngine.Random.value < criticalChance;
+            var resolvedCriticalChance = Mathf.Clamp01(criticalChance + conditionCriticalChanceBonus);
+            isCritical = resolvedCriticalChance > 0f && UnityEngine.Random.value < resolvedCriticalChance;
             if (isCritical)
                 damage = Mathf.RoundToInt(damage * Mathf.Max(1f, criticalDamageMultiplier));
 
@@ -313,7 +330,9 @@ namespace _01.Code.Combat
 
         private int ResolveAttackDamagePreview()
         {
-            var modifiedDamage = (attackDamage + artifactAttackDamageBonus) * artifactAttackDamageMultiplier;
+            var modifiedDamage = (attackDamage + artifactAttackDamageBonus)
+                                 * artifactAttackDamageMultiplier
+                                 * conditionAttackDamageMultiplier;
             return Mathf.Max(1, Mathf.RoundToInt(modifiedDamage));
         }
 
@@ -336,7 +355,7 @@ namespace _01.Code.Combat
             var multiplier = statusController != null
                 ? statusController.GetAttackIntervalMultiplier()
                 : 1f;
-            return Mathf.Max(0.05f, attackInterval * multiplier);
+            return Mathf.Max(0.05f, attackInterval * multiplier * conditionAttackIntervalMultiplier);
         }
 
         private EnemyStatusController ResolveEnemyStatusController()

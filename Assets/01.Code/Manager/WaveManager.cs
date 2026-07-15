@@ -75,6 +75,7 @@ namespace _01.Code.Manager
         private int _waveDamageDealt;
         private int _waveDamageTaken;
         private int _waveCriticalHitCount;
+        private bool _unitConditionWearPending;
 
         private void Awake()
         {
@@ -160,6 +161,7 @@ namespace _01.Code.Manager
             ResetWaveResults(entry.enemyCount);
             _currentClearGoldReward = entry.clearGoldReward;
             _isWaveRunning = true;
+            _unitConditionWearPending = true;
             _isWaitingForRewardPanel = false;
             _activeEnemies.Clear();
             _isBossWave = waveConfig != null && waveConfig.IsBossDay(_currentDay);
@@ -574,7 +576,31 @@ namespace _01.Code.Manager
             if (_isDestroying || waveEventChannel == null)
                 return;
 
+            ApplyUnitConditionWear();
             waveEventChannel.RaiseEvent(new WaveEndedEvent(_currentDay, _currentClearGoldReward));
+        }
+
+        private void ApplyUnitConditionWear()
+        {
+            if (!_unitConditionWearPending)
+                return;
+
+            _unitConditionWearPending = false;
+            var processed = new HashSet<Unit>();
+            foreach (var node in Node.ActiveNodes)
+            {
+                if (node == null)
+                    continue;
+
+                foreach (var placement in node.UnitPlacements)
+                {
+                    var unit = placement?.Instance;
+                    if (unit == null || unit is MainUnit || !processed.Add(unit))
+                        continue;
+
+                    unit.CompleteWaveCondition();
+                }
+            }
         }
 
         private void ResetWaveResults(int enemyCount)

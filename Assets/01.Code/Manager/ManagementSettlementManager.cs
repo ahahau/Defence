@@ -21,7 +21,6 @@ namespace _01.Code.Manager
 
         [Header("Unit Upkeep")]
         [SerializeField, Min(1)] private int upkeepCostDivisor = 5;
-        [SerializeField, Min(0)] private int fatiguePerBattle = 1;
 
         [Header("Panel References")]
         [SerializeField] private GameObject panelRoot;
@@ -36,13 +35,12 @@ namespace _01.Code.Manager
         private readonly Dictionary<string, int> incomeByLabel = new();
         private readonly Dictionary<string, int> expenseByLabel = new();
         private readonly Dictionary<UnitDataSO, int> hiredUnitCount = new();
-        private readonly Dictionary<Node, UnitDataSO> deployedUnitByNode = new();
+        private readonly Dictionary<Node, Unit> deployedUnitByNode = new();
         private readonly Dictionary<string, int> fatigueByLabel = new();
         private readonly Dictionary<string, int> dailyFatigueByLabel = new();
         private int currentDay;
         private int totalIncome;
         private int totalExpense;
-        private int waveRewardIncome;
         private bool ledgerClosed;
 
         public bool IsPanelOpen => panelRoot != null && panelRoot.activeInHierarchy;
@@ -99,10 +97,6 @@ namespace _01.Code.Manager
             ApplyDailyUpkeep();
             ApplyBattleFatigue();
 
-            var missingWaveReward = Mathf.Max(0, evt.ClearGoldReward - waveRewardIncome);
-            if (missingWaveReward > 0)
-                RecordIncome(ResolveIncomeLabel(GoldChangeSource.WaveReward), missingWaveReward);
-
             if (!HasSettlementEntries() || !HasPanelReferences())
             {
                 HidePanel();
@@ -118,8 +112,6 @@ namespace _01.Code.Manager
         private void HandleGoldEarned(GoldEarnedEvent evt)
         {
             RecordIncome(ResolveIncomeLabel(evt.Source), evt.GoldAmount);
-            if (evt.Source == GoldChangeSource.WaveReward)
-                waveRewardIncome += Mathf.Max(0, evt.GoldAmount);
         }
 
         private void HandleGoldLost(GoldLostEvent evt)
@@ -150,10 +142,10 @@ namespace _01.Code.Manager
 
         private void HandleUnitAssigned(UnitAssignedToNodeEvent evt)
         {
-            if (evt.Node == null || evt.Unit == null)
+            if (evt.Node == null || evt.Instance == null)
                 return;
 
-            deployedUnitByNode[evt.Node] = evt.Unit;
+            deployedUnitByNode[evt.Node] = evt.Instance;
         }
 
         private void HandleUnitReturned(UnitReturnedFromNodeEvent evt)
@@ -195,14 +187,18 @@ namespace _01.Code.Manager
 
         private void ApplyBattleFatigue()
         {
-            if (fatiguePerBattle <= 0 || deployedUnitByNode.Count == 0)
+            if (deployedUnitByNode.Count == 0)
                 return;
 
             foreach (var unit in deployedUnitByNode.Values)
             {
+                if (unit == null)
+                    continue;
+
                 var label = ResolveUnitLabel(unit);
-                AddAmount(fatigueByLabel, label, fatiguePerBattle);
-                AddAmount(dailyFatigueByLabel, label, fatiguePerBattle);
+                var currentFatigue = Mathf.RoundToInt(unit.Fatigue);
+                fatigueByLabel[label] = currentFatigue;
+                dailyFatigueByLabel[label] = currentFatigue;
             }
         }
 
@@ -251,7 +247,6 @@ namespace _01.Code.Manager
             dailyFatigueByLabel.Clear();
             totalIncome = 0;
             totalExpense = 0;
-            waveRewardIncome = 0;
         }
 
         private void ShowPanel()
@@ -299,11 +294,10 @@ namespace _01.Code.Manager
 
             lines.AppendLine();
             lines.AppendLine();
-            lines.AppendLine("전투 피로도");
+            lines.AppendLine("유닛 상태");
             foreach (var pair in dailyFatigueByLabel)
             {
-                fatigueByLabel.TryGetValue(pair.Key, out var totalFatigue);
-                lines.AppendLine($"- {pair.Key}: +{pair.Value} (누적 {totalFatigue})");
+                lines.AppendLine($"- {pair.Key}: 피로 {pair.Value}/100");
             }
 
             return lines.ToString();
@@ -358,12 +352,13 @@ namespace _01.Code.Manager
             };
         }
 
-        private string ResolveUnitLabel(UnitDataSO unit)
+        private string ResolveUnitLabel(Unit unit)
         {
             if (unit == null)
                 return "알 수 없는 유닛";
 
-            return !string.IsNullOrWhiteSpace(unit.Name) ? unit.Name : unit.name;
+            var data = unit.Data;
+            return data != null && !string.IsNullOrWhiteSpace(data.Name) ? data.Name : unit.name;
         }
     }
 }

@@ -82,6 +82,12 @@ namespace _01.Code.Combat
             Changed?.Invoke(Ratio);
         }
 
+        public void SetCurrentRatio(float ratio)
+        {
+            currentHealth = Mathf.Clamp(Mathf.RoundToInt(maxHealth * Mathf.Clamp01(ratio)), 0, maxHealth);
+            Changed?.Invoke(Ratio);
+        }
+
         public void SetMaxHealth(int value, bool restoreToFull)
         {
             maxHealth = Mathf.Max(1, value);

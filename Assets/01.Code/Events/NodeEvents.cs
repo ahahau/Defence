@@ -19,26 +19,30 @@ namespace _01.Code.Events
 
     public class UnitAssignedToNodeEvent : GameEvent
     {
-        public UnitAssignedToNodeEvent(Node node, UnitDataSO unit)
+        public UnitAssignedToNodeEvent(Node node, UnitDataSO unit, Unit instance = null)
         {
             Node = node;
             Unit = unit;
+            Instance = instance;
         }
 
         public Node Node { get; }
         public UnitDataSO Unit { get; }
+        public Unit Instance { get; }
     }
 
     public class UnitReturnedFromNodeEvent : GameEvent
     {
-        public UnitReturnedFromNodeEvent(Node node, UnitDataSO unit)
+        public UnitReturnedFromNodeEvent(Node node, UnitDataSO unit, Unit instance = null)
         {
             Node = node;
             Unit = unit;
+            Instance = instance;
         }
 
         public Node Node { get; }
         public UnitDataSO Unit { get; }
+        public Unit Instance { get; }
     }
 
     public class NodeBuiltEvent : GameEvent

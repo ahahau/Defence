@@ -83,6 +83,16 @@ namespace _01.Code.Events
         public GoldChangeSource Source { get; }
     }
 
+    public class ConstructionDiscountGrantedEvent : GameEvent
+    {
+        public ConstructionDiscountGrantedEvent(float discountRate)
+        {
+            DiscountRate = UnityEngine.Mathf.Clamp(discountRate, 0f, 0.9f);
+        }
+
+        public float DiscountRate { get; }
+    }
+
     public class GoldLostEvent : GameEvent
     {
         public GoldLostEvent(int goldAmount)

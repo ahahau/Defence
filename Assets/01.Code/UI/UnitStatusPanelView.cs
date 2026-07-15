@@ -30,6 +30,7 @@ namespace _01.Code.UI
         [SerializeField] private bool keepInsideScreen = true;
         [SerializeField, Min(1f)] private float normalPanelHeight = 190f;
         [SerializeField, Min(1f)] private float recoveryPanelHeight = 220f;
+        [SerializeField, Min(0f)] private float traitDescriptionExtraHeight = 68f;
 
         private Node selectedNode;
         private Unit selectedUnit;
@@ -109,8 +110,8 @@ namespace _01.Code.UI
             if (evt.Unit != selectedUnit)
                 return;
 
-            selectedUnit.RecoverFromIncapacitated();
-            SetHint("회복 완료");
+            selectedUnit.RecoverCondition();
+            SetHint("치료와 휴식 완료");
             Refresh();
         }
 
@@ -149,14 +150,17 @@ namespace _01.Code.UI
 
             var level = selectedUnit.Level;
             SetText(titleText, $"{unitName} Lv {level.Level}");
-            SetTextVisible(statusText, selectedUnit.IsIncapacitated ? "전투 불능" : string.Empty);
+            var status = selectedUnit.IsIncapacitated
+                ? $"전투 불능 · {selectedUnit.ConditionSummary}"
+                : selectedUnit.ConditionSummary;
+            SetTextVisible(statusText, status);
 
             var health = selectedUnit.Health;
             SetText(hpText, $"HP {health.CurrentHealth}/{health.MaxHealth}");
             SetText(levelText, ResolveCombatText());
 
-            var shouldShowRecovery = selectedUnit.IsIncapacitated;
-            ApplyPanelHeight(shouldShowRecovery ? recoveryPanelHeight : normalPanelHeight);
+            var shouldShowRecovery = selectedUnit.NeedsRecovery;
+            ApplyPanelHeight((shouldShowRecovery ? recoveryPanelHeight : normalPanelHeight) + traitDescriptionExtraHeight);
             if (recoverButton != null)
             {
                 recoverButton.gameObject.SetActive(shouldShowRecovery);
@@ -165,8 +169,8 @@ namespace _01.Code.UI
 
             if (recoverButtonLabel != null)
             {
-                recoverButtonLabel.text = selectedUnit.IsIncapacitated
-                    ? $"회복 {selectedUnit.RecoveryCost} Gold"
+                recoverButtonLabel.text = shouldShowRecovery
+                    ? $"치료/휴식 {selectedUnit.RecoveryCost} Gold"
                     : "회복 불필요";
             }
 
@@ -194,12 +198,12 @@ namespace _01.Code.UI
                 : "ATK -  SPD -";
 
             var level = selectedUnit.Level;
-            return $"{combatText}\nEXP {level.Experience}/{level.ExperienceToNextLevel}";
+            return $"{combatText}\n특성: {selectedUnit.TraitDescription}\n성격: {selectedUnit.PersonalityDescription}\nEXP {level.Experience}/{level.ExperienceToNextLevel}";
         }
 
         private bool CanRecoverSelectedUnit()
         {
-            if (selectedUnit == null || !selectedUnit.IsIncapacitated)
+            if (selectedUnit == null || !selectedUnit.NeedsRecovery)
                 return false;
 
             return dayManager != null && dayManager.IsStandby;
@@ -209,9 +213,9 @@ namespace _01.Code.UI
         {
             if (selectedUnit == null)
                 return string.Empty;
-            if (!selectedUnit.IsIncapacitated)
+            if (!selectedUnit.NeedsRecovery)
                 return "이미 전투 가능";
-            if (!dayManager.IsStandby)
+            if (dayManager == null || !dayManager.IsStandby)
                 return "웨이브 중 회복 불가";
             return string.Empty;
         }

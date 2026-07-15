@@ -37,7 +37,6 @@ namespace _01.Code.UI
         [SerializeField] private Unit unitPrefab;
         [SerializeField] private Portal portalPrefab;
         [SerializeField] private BuildingDataSO[] installableBuildings;
-        [SerializeField, Min(0)] private int startingPortalCopies = 1;
         [SerializeField] private GameEventChannelSO nodeEventChannel;
         [SerializeField] private GameEventChannelSO uiEventChannel;
         [SerializeField] private GameEventChannelSO costEventChannel;
@@ -71,7 +70,6 @@ namespace _01.Code.UI
         private readonly List<Button> _categoryCards = new();
         private readonly List<GameObject> _categorySelectors = new();
         private readonly List<BuildingDataSO> _unlockedBuildings = new();
-        private readonly Dictionary<BuildingDataSO, int> _ownedBuildingCounts = new();
         private readonly Dictionary<Graphic, Color> _tutorialHighlightDefaults = new();
         private bool _isCategoryPanelOpen;
         private bool _tutorialHighlightActive;
@@ -198,7 +196,6 @@ namespace _01.Code.UI
             costEventChannel?.AddListener<BuildCostRejectedEvent>(HandleBuildCostRejected);
             costEventChannel?.AddListener<BuildingUnlockRequestedEvent>(HandleBuildingUnlockRequested);
             costEventChannel?.AddListener<BuildingUnlockChangedEvent>(HandleBuildingUnlockChanged);
-            costEventChannel?.AddListener<BuildingInventoryChangedEvent>(HandleBuildingInventoryChanged);
             closeButton?.onClick.AddListener(HandleCloseClicked);
             backButton?.onClick.AddListener(HandleBackClicked);
             installButton?.onClick.AddListener(HandleInstallClicked);
@@ -219,7 +216,6 @@ namespace _01.Code.UI
             costEventChannel?.RemoveListener<BuildCostRejectedEvent>(HandleBuildCostRejected);
             costEventChannel?.RemoveListener<BuildingUnlockRequestedEvent>(HandleBuildingUnlockRequested);
             costEventChannel?.RemoveListener<BuildingUnlockChangedEvent>(HandleBuildingUnlockChanged);
-            costEventChannel?.RemoveListener<BuildingInventoryChangedEvent>(HandleBuildingInventoryChanged);
             closeButton?.onClick.RemoveListener(HandleCloseClicked);
             backButton?.onClick.RemoveListener(HandleBackClicked);
             installButton?.onClick.RemoveListener(HandleInstallClicked);
@@ -380,7 +376,6 @@ namespace _01.Code.UI
             var unit = _selectedManagedUnit != null ? _selectedManagedUnit : _selectedNode.AssignedUnitInstance;
             return unit != null
                    && unit is not MainUnit
-                   && !unit.NeedsRecovery
                    && (unit.Combatant == null || unit.Combatant.Target == null);
         }
 
@@ -401,7 +396,7 @@ namespace _01.Code.UI
             battleAgent?.Battlefield?.Leave(battleAgent);
             node.RemoveUnit(unit);
             costEventChannel?.RaiseEvent(new UnitDeployMagicRefundRequestedEvent(unitData, unitData.MagicCost));
-            nodeEventChannel?.RaiseEvent(new UnitReturnedFromNodeEvent(node, unitData));
+            nodeEventChannel?.RaiseEvent(new UnitReturnedFromNodeEvent(node, unitData, unit));
             Destroy(unit.gameObject);
             _selectedManagedUnit = null;
             ShowUnitManagementPanel();
@@ -666,13 +661,14 @@ namespace _01.Code.UI
                 var managedUnit = placement.Instance;
                 var health = managedUnit.Health;
                 var healthText = health != null ? $" · HP {health.CurrentHealth}/{health.MaxHealth}" : string.Empty;
+                var conditionText = $" · {managedUnit.ConditionSummary}";
                 var isSelected = managedUnit == _selectedManagedUnit;
                 var entry = Instantiate(deployEntryPrefab, unitContentRoot);
                 entry.Initialize(
                     placement.Data,
                     _ => SelectManagedUnit(managedUnit),
                     isSelected ? "선택됨" : "선택",
-                    $"소속 유닛{healthText}",
+                    $"소속 유닛{healthText}{conditionText}",
                     true);
                 _deployEntries.Add(entry);
             }
@@ -681,12 +677,13 @@ namespace _01.Code.UI
             {
                 foreach (var unitData in EnumerateDeployableUnits())
                 {
+                    var condition = hiredUnitRoster.GetBestAvailableCondition(unitData);
                     var entry = Instantiate(deployEntryPrefab, unitContentRoot);
                     entry.Initialize(
                         unitData,
                         HandleDeployRequested,
                         canReceiveUnit ? "배치" : "정원 초과",
-                        "대기 인원",
+                        $"대기 · {condition.Summary}",
                         canReceiveUnit);
                     _deployEntries.Add(entry);
                 }
@@ -722,7 +719,6 @@ namespace _01.Code.UI
         {
             return unit != null
                    && unit is not MainUnit
-                   && !unit.NeedsRecovery
                    && (unit.Combatant == null || unit.Combatant.Target == null);
         }
 
@@ -892,11 +888,11 @@ namespace _01.Code.UI
                 return false;
             }
 
+            nodeEventChannel?.RaiseEvent(new UnitAssignedToNodeEvent(node, unitData, unitGo));
             var battleAgent = unitGo.GetComponent<BattleAgent>();
             node.GetComponent<NodeBattlefield>()?.TryEnter(battleAgent);
 
             artifactEventChannel?.RaiseEvent(new UnitArtifactApplyRequestedEvent(unitGo));
-            nodeEventChannel?.RaiseEvent(new UnitAssignedToNodeEvent(node, unitData));
             return true;
         }
 
@@ -904,7 +900,6 @@ namespace _01.Code.UI
         {
             if (unit == null
                 || unit is MainUnit
-                || unit.NeedsRecovery
                 || _selectedNode == null
                 || unit.Combatant != null && unit.Combatant.Target != null)
                 return;
@@ -1259,24 +1254,8 @@ namespace _01.Code.UI
                 if (buildingData != null && !_unlockedBuildings.Contains(buildingData))
                 {
                     _unlockedBuildings.Add(buildingData);
-                    if (!_ownedBuildingCounts.ContainsKey(buildingData))
-                        _ownedBuildingCounts[buildingData] = buildingData.Prefab is Portal ? startingPortalCopies : 0;
                 }
             }
-        }
-
-        private void HandleBuildingInventoryChanged(BuildingInventoryChangedEvent evt)
-        {
-            if (evt.OwnedBuildings != null)
-            {
-                foreach (var pair in evt.OwnedBuildings)
-                {
-                    if (pair.Key != null)
-                        _ownedBuildingCounts[pair.Key] = pair.Value;
-                }
-            }
-
-            RefreshAfterBuildingUnlock();
         }
 
         private IEnumerable<BuildingDataSO> EnumerateInstallableBuildingOptions()
@@ -1371,8 +1350,15 @@ namespace _01.Code.UI
                 ? buildingData.name
                 : buildingData.DisplayName;
 
-            var costText = buildingData.Cost > 0 ? $"{buildingData.Cost} Gold" : "무료";
-            var text = $"{displayName}\n보유: {GetOwnedBuildingCount(buildingData)}\n배치: 보유 1개\n위험도: {buildingData.BaseDanger}\n등급: {(int)buildingData.Grade}";
+            var discountedCost = CostManager.Current != null
+                ? CostManager.Current.GetDiscountedBuildCost(buildingData.Cost)
+                : buildingData.Cost;
+            var costText = buildingData.Cost <= 0
+                ? "무료"
+                : discountedCost < buildingData.Cost
+                    ? $"{buildingData.Cost} → {discountedCost} Gold"
+                    : $"{buildingData.Cost} Gold";
+            var text = $"{displayName}\n건설 비용: {costText}\n위험도: {buildingData.BaseDanger}\n등급: {(int)buildingData.Grade}";
 
             if (buildingData.Prefab is Trap trap)
             {
@@ -1497,7 +1483,7 @@ namespace _01.Code.UI
             _hasPendingCell = false;
             RefreshBuildingInstallButtons();
 
-            costEventChannel?.RaiseEvent(new BuildCostRequestedEvent(_pendingBuildingNode, 0));
+            costEventChannel?.RaiseEvent(new BuildCostRequestedEvent(_pendingBuildingNode, buildingData.Cost));
         }
 
         /// <summary>배치 모드가 끝난 뒤(확정/취소) 설치 패널을 원래 카테고리로 복원한다 — 연속 설치용.</summary>
@@ -1523,7 +1509,7 @@ namespace _01.Code.UI
             _hasPendingCell = false;
             RefreshBuildingInstallButtons();
 
-            costEventChannel?.RaiseEvent(new BuildCostRequestedEvent(_pendingBuildingNode, 0));
+            costEventChannel?.RaiseEvent(new BuildCostRequestedEvent(_pendingBuildingNode, buildingData.Cost));
         }
 
         /// <summary>배치 모드에서 칸을 클릭해 확정했을 때 — 선택한 칸을 기억하고 비용을 청구한다.</summary>
@@ -1539,7 +1525,7 @@ namespace _01.Code.UI
             _hasPendingCell = true;
             RefreshBuildingInstallButtons();
 
-            costEventChannel?.RaiseEvent(new BuildCostRequestedEvent(_pendingBuildingNode, 0));
+            costEventChannel?.RaiseEvent(new BuildCostRequestedEvent(_pendingBuildingNode, buildingData.Cost));
         }
 
         private void ShowBuildingInfoPanel(BuildingDataSO buildingData)
@@ -1608,7 +1594,6 @@ namespace _01.Code.UI
                 if (placedOnEdge != null)
                 {
                     placedOnEdge.Initialize(buildingData);
-                    ConsumeOwnedBuilding(buildingData);
                     nodeEventChannel?.RaiseEvent(new BuildingInstalledEvent(node, buildingData));
                 }
 
@@ -1632,7 +1617,6 @@ namespace _01.Code.UI
                 {
                     placed.Initialize(buildingData);
                     node.IncreaseDanger(placed.DangerRating);
-                    ConsumeOwnedBuilding(buildingData);
                     nodeEventChannel?.RaiseEvent(new BuildingInstalledEvent(node, buildingData));
                 }
 
@@ -1652,7 +1636,6 @@ namespace _01.Code.UI
 
             building.Initialize(buildingData);
             node.AssignBuilding(building);
-            ConsumeOwnedBuilding(buildingData);
             nodeEventChannel?.RaiseEvent(new BuildingInstalledEvent(node, buildingData));
 
             if (building is Portal portal)
@@ -1737,16 +1720,12 @@ namespace _01.Code.UI
 
             // 라인 건물: 노드 상태와 무관 — 보유 수량과 빈 라인만 있으면 설치 가능.
             if (buildingData.InstallOnEdge)
-                return GetOwnedBuildingCount(buildingData) > 0
-                       && EdgePlacementPreview.HasFreeEdge()
+                return EdgePlacementPreview.HasFreeEdge()
                        && _pendingBuildingNode == null;
 
             // 단일 슬롯이 차 있어도(유닛/포탈 등) 그리드가 있으면 일반 건물은 설치 가능.
             // Unique 건물은 단일 슬롯 경로를 쓰므로 기존대로 막는다.
             if (_selectedNode.HasInstallation && (buildingData.Unique || _selectedNode.TrapGrid == null))
-                return false;
-
-            if (GetOwnedBuildingCount(buildingData) <= 0)
                 return false;
 
             if (buildingData.Unique && buildingData.Prefab is Portal && hasInstalledPortal)
@@ -1758,23 +1737,6 @@ namespace _01.Code.UI
                 return false;
 
             return _pendingBuildingNode == null;
-        }
-
-        private int GetOwnedBuildingCount(BuildingDataSO buildingData)
-        {
-            return buildingData != null && _ownedBuildingCounts.TryGetValue(buildingData, out var count) ? count : 0;
-        }
-
-        private void ConsumeOwnedBuilding(BuildingDataSO buildingData)
-        {
-            if (buildingData == null)
-                return;
-
-            var count = GetOwnedBuildingCount(buildingData);
-            if (count > 0)
-                _ownedBuildingCounts[buildingData] = count - 1;
-
-            costEventChannel?.RaiseEvent(new BuildingConsumedEvent(buildingData));
         }
 
         private void RefreshInstallButtonState()

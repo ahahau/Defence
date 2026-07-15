@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using _01.Code.Artifacts;
-using _01.Code.Buildings;
 using _01.Code.Core;
 using _01.Code.Events;
-using _01.Code.Tutorial;
+using _01.Code.Manager;
+using _01.Code.MapCreateSystem;
 using _01.Code.Units;
 using TMPro;
 using UnityEngine;
@@ -22,8 +22,15 @@ namespace _01.Code.UI
 
     public class WaveRewardPanelView : MonoBehaviour
     {
+        private enum OperationRewardKind
+        {
+            Recruitment,
+            Construction
+        }
+
         public static WaveRewardPanelView Current { get; private set; }
 
+        [Header("Result")]
         [SerializeField] private Image iconImage;
         [SerializeField] private Graphic goldAmountText;
         [SerializeField] private Button goldRewardButton;
@@ -32,6 +39,7 @@ namespace _01.Code.UI
         [SerializeField] private GameObject warningPanel;
         [SerializeField] private Button warningCancelButton;
         [SerializeField] private Button warningCloseButton;
+
         [Header("Artifact Reward")]
         [SerializeField] private ArtifactInventorySO artifactInventory;
         [SerializeField] private GameEventChannelSO artifactEventChannel;
@@ -40,39 +48,45 @@ namespace _01.Code.UI
         [SerializeField] private Graphic artifactRewardText;
         [SerializeField] private ArtifactRewardChoicePanelView artifactChoicePanel;
         [SerializeField, Min(1)] private int artifactChoiceCount = 3;
-        [Header("Supply Reward")]
-        [SerializeField] private UnitDataSO[] unitRewardPool;
-        [SerializeField] private BuildingDataSO[] buildingRewardPool;
+
+        [Header("Operation Reward")]
         [SerializeField] private Button unitRewardButton;
         [SerializeField] private Graphic unitRewardText;
-        [SerializeField, Min(1)] private int unitChoiceCount = 3;
+        [SerializeField, Min(1)] private int recruitmentCandidateReward = 2;
+        [SerializeField, Range(0f, 0.9f)] private float constructionDiscountRate = 0.35f;
+
+        [Header("Medical Support")]
+        [SerializeField, Range(0f, 100f)] private float medicalFatigueRecovery = 35f;
+        [SerializeField, Range(0f, 1f)] private float medicalHealthRecoveryRatio = 0.3f;
 
         private readonly List<ArtifactDataSO> pendingArtifactChoices = new();
-        private readonly List<UnitDataSO> pendingUnitChoices = new();
-        private readonly List<BuildingDataSO> pendingBuildingChoices = new();
-        private readonly List<UnitDataSO> unlockedUnitRewards = new();
-        private readonly List<BuildingDataSO> unlockedBuildingRewards = new();
-        private int offeredUnitUnlockRewards;
-        private int offeredBuildingUnlockRewards;
-        private int offeredTrapUnlockRewards;
-        private UnlockRewardKind pendingUnlockRewardKind;
         private GameEventChannelSO _costEventChannel;
-        private Graphic _unitRewardTitleText;
+        private Graphic _operationTitleText;
         private int _pendingGoldAmount;
         private int _currentRewardDay;
+        private bool _secondaryIsArtifact;
         private bool _hasPendingGoldReward;
-        private bool _hasPendingArtifactReward;
-        private bool _hasPendingUnitReward;
+        private bool _hasPendingSecondaryReward;
+        private bool _hasPendingOperationReward;
         private bool _hasShownReward;
         private bool _hasWaveResult;
+        private OperationRewardKind _operationRewardKind;
 
         public event Action Closed;
         public bool IsShowingReward => _hasShownReward && gameObject.activeSelf;
-        public RectTransform UnlockRewardButtonRect => unitRewardButton != null ? unitRewardButton.transform as RectTransform : null;
-        public RectTransform UnlockChoiceRect => artifactChoicePanel != null ? artifactChoicePanel.FirstChoiceRect : null;
+        public RectTransform UnlockRewardButtonRect => unitRewardButton != null
+            ? unitRewardButton.transform as RectTransform
+            : null;
+        public RectTransform UnlockChoiceRect => artifactChoicePanel != null
+            ? artifactChoicePanel.FirstChoiceRect
+            : null;
         public RectTransform CurrentUnlockTutorialRect => artifactChoicePanel != null && artifactChoicePanel.IsShowingChoices
             ? artifactChoicePanel.FirstChoiceRect
             : UnlockRewardButtonRect;
+
+        private bool HasPendingPrimaryReward => _hasPendingGoldReward
+                                                || _hasPendingSecondaryReward
+                                                || _hasPendingOperationReward;
 
         private void Awake()
         {
@@ -83,10 +97,9 @@ namespace _01.Code.UI
         private void OnEnable()
         {
             Current = this;
-
             goldRewardButton?.onClick.AddListener(HandleGoldRewardClicked);
-            artifactRewardButton?.onClick.AddListener(HandleArtifactRewardClicked);
-            unitRewardButton?.onClick.AddListener(HandleUnitRewardClicked);
+            artifactRewardButton?.onClick.AddListener(HandleSecondaryRewardClicked);
+            unitRewardButton?.onClick.AddListener(HandleOperationRewardClicked);
             closeButton?.onClick.AddListener(HandleCloseClicked);
             warningCancelButton?.onClick.AddListener(HideWarning);
             warningCloseButton?.onClick.AddListener(ForceClose);
@@ -98,8 +111,8 @@ namespace _01.Code.UI
                 Current = null;
 
             goldRewardButton?.onClick.RemoveListener(HandleGoldRewardClicked);
-            artifactRewardButton?.onClick.RemoveListener(HandleArtifactRewardClicked);
-            unitRewardButton?.onClick.RemoveListener(HandleUnitRewardClicked);
+            artifactRewardButton?.onClick.RemoveListener(HandleSecondaryRewardClicked);
+            unitRewardButton?.onClick.RemoveListener(HandleOperationRewardClicked);
             closeButton?.onClick.RemoveListener(HandleCloseClicked);
             warningCancelButton?.onClick.RemoveListener(HideWarning);
             warningCloseButton?.onClick.RemoveListener(ForceClose);
@@ -132,17 +145,20 @@ namespace _01.Code.UI
         {
             gameObject.SetActive(true);
             _currentRewardDay = Mathf.Max(0, day);
+            _pendingGoldAmount = Mathf.Max(0, goldAmount);
+            _operationRewardKind = _currentRewardDay % 2 == 0
+                ? OperationRewardKind.Construction
+                : OperationRewardKind.Recruitment;
+
             ConfigureModalLayout();
             PrepareArtifactChoices(includeArtifactReward);
-            PrepareSupplyChoices();
-
-            _pendingGoldAmount = Mathf.Max(0, goldAmount);
+            _secondaryIsArtifact = pendingArtifactChoices.Count > 0;
             _hasWaveResult = day > 0 || enemyCount > 0;
-            _hasPendingGoldReward = _pendingGoldAmount > 0;
-            _hasPendingArtifactReward = pendingArtifactChoices.Count > 0 && artifactRewardButton != null && artifactChoicePanel != null;
-            _hasPendingUnitReward = HasPendingUnlockReward() && unitRewardButton != null && artifactChoicePanel != null;
+            _hasPendingGoldReward = _pendingGoldAmount > 0 && goldRewardButton != null;
+            _hasPendingSecondaryReward = artifactRewardButton != null;
+            _hasPendingOperationReward = unitRewardButton != null;
 
-            if (!_hasPendingGoldReward && !_hasPendingArtifactReward && !_hasPendingUnitReward && !_hasWaveResult)
+            if (!HasPendingPrimaryReward && !_hasWaveResult)
             {
                 _hasShownReward = false;
                 Hide();
@@ -150,22 +166,168 @@ namespace _01.Code.UI
             }
 
             _hasShownReward = true;
-
-            RefreshResultSummary(enemyCount, killCount, damageDealt, damageTaken, criticalHitCount, goldAmount);
-
-            if (iconImage != null)
-                iconImage.gameObject.SetActive(_hasPendingGoldReward);
-            SetLabelText(goldAmountText, _hasPendingGoldReward ? _pendingGoldAmount.ToString() : "골드 없음");
-            if (goldRewardButton != null)
-            {
-                goldRewardButton.gameObject.SetActive(_hasPendingGoldReward);
-                goldRewardButton.interactable = _hasPendingGoldReward;
-            }
-
-            SetArtifactRewardButtonState(_hasPendingArtifactReward, _hasPendingArtifactReward ? "아티팩트 선택" : "선택 완료", _hasPendingArtifactReward);
-            SetUnitRewardButtonState(_hasPendingUnitReward, _hasPendingUnitReward ? ResolveUnlockRewardLabel() : "선택 완료", _hasPendingUnitReward);
+            RefreshResultSummary(enemyCount, killCount, damageDealt, damageTaken, criticalHitCount);
+            RefreshRewardButtons();
             HideWarning();
             HideArtifactChoices();
+        }
+
+        public void Hide()
+        {
+            var shouldNotifyClosed = _hasShownReward && gameObject.activeSelf;
+            _hasWaveResult = false;
+            HideWarning();
+            HideArtifactChoices();
+            gameObject.SetActive(false);
+
+            if (!shouldNotifyClosed)
+                return;
+
+            _hasShownReward = false;
+            Closed?.Invoke();
+        }
+
+        private void HandleGoldRewardClicked()
+        {
+            if (!_hasPendingGoldReward || _pendingGoldAmount <= 0)
+                return;
+
+            _costEventChannel?.RaiseEvent(new GoldEarnedEvent(_pendingGoldAmount, GoldChangeSource.WaveReward));
+            CompletePrimaryReward("성과금 선택 완료");
+        }
+
+        private void HandleSecondaryRewardClicked()
+        {
+            if (!_hasPendingSecondaryReward)
+                return;
+
+            if (_secondaryIsArtifact)
+            {
+                if (artifactChoicePanel == null)
+                {
+                    Debug.LogError($"{nameof(WaveRewardPanelView)} requires an assigned artifact choice panel.", this);
+                    return;
+                }
+
+                artifactChoicePanel.Show(pendingArtifactChoices, ObtainArtifact);
+                return;
+            }
+
+            ApplyMedicalSupport();
+            CompletePrimaryReward("의료 지원 적용 완료");
+        }
+
+        private void HandleOperationRewardClicked()
+        {
+            if (!_hasPendingOperationReward)
+                return;
+
+            switch (_operationRewardKind)
+            {
+                case OperationRewardKind.Recruitment:
+                    HiredUnitRoster.Current?.AddRecruitmentCandidates(recruitmentCandidateReward);
+                    CompletePrimaryReward($"고용 후보 +{recruitmentCandidateReward}");
+                    break;
+                case OperationRewardKind.Construction:
+                    _costEventChannel?.RaiseEvent(new ConstructionDiscountGrantedEvent(constructionDiscountRate));
+                    CompletePrimaryReward($"다음 건설비 {Mathf.RoundToInt(constructionDiscountRate * 100f)}% 할인");
+                    break;
+            }
+        }
+
+        private void ObtainArtifact(ArtifactDataSO artifact)
+        {
+            if (artifact == null || artifactInventory == null)
+                return;
+
+            artifactInventory.Obtain(artifact, artifactEventChannel);
+            pendingArtifactChoices.Clear();
+            CompletePrimaryReward("유물 선택 완료");
+        }
+
+        private void ApplyMedicalSupport()
+        {
+            var processed = new HashSet<Unit>();
+            foreach (var node in Node.ActiveNodes)
+            {
+                if (node == null)
+                    continue;
+
+                foreach (var placement in node.UnitPlacements)
+                {
+                    var unit = placement?.Instance;
+                    if (unit == null || unit is MainUnit || !processed.Add(unit))
+                        continue;
+
+                    unit.ApplySupportRecovery(
+                        medicalFatigueRecovery,
+                        medicalHealthRecoveryRatio,
+                        true);
+                }
+            }
+
+            HiredUnitRoster.Current?.ApplyMedicalSupportToAvailableUnits(
+                medicalFatigueRecovery,
+                medicalHealthRecoveryRatio);
+        }
+
+        private void CompletePrimaryReward(string selectedLabel)
+        {
+            _hasPendingGoldReward = false;
+            _hasPendingSecondaryReward = false;
+            _hasPendingOperationReward = false;
+            _pendingGoldAmount = 0;
+            pendingArtifactChoices.Clear();
+            HideArtifactChoices();
+            HideWarning();
+
+            SetButtonState(goldRewardButton, false, false);
+            SetButtonState(artifactRewardButton, false, false);
+            SetUnitRewardButtonState(false, selectedLabel, true);
+            SetLabelText(_operationTitleText, "선택 완료");
+        }
+
+        private void HandleCloseClicked()
+        {
+            if (HasPendingPrimaryReward)
+            {
+                ShowWarning();
+                return;
+            }
+
+            Hide();
+        }
+
+        private void ForceClose()
+        {
+            _hasPendingGoldReward = false;
+            _hasPendingSecondaryReward = false;
+            _hasPendingOperationReward = false;
+            _pendingGoldAmount = 0;
+            pendingArtifactChoices.Clear();
+            HideArtifactChoices();
+            Hide();
+        }
+
+        private void PrepareArtifactChoices(bool includeArtifactReward)
+        {
+            pendingArtifactChoices.Clear();
+            if (!includeArtifactReward || artifactPool == null || artifactInventory == null)
+                return;
+
+            var candidates = new List<ArtifactDataSO>();
+            foreach (var artifact in artifactPool)
+            {
+                if (artifact != null && !artifactInventory.HasObtained(artifact))
+                    candidates.Add(artifact);
+            }
+
+            for (var i = 0; i < artifactChoiceCount && candidates.Count > 0; i++)
+            {
+                var index = UnityEngine.Random.Range(0, candidates.Count);
+                pendingArtifactChoices.Add(candidates[index]);
+                candidates.RemoveAt(index);
+            }
         }
 
         private void RefreshResultSummary(
@@ -173,19 +335,40 @@ namespace _01.Code.UI
             int killCount,
             int damageDealt,
             int damageTaken,
-            int criticalHitCount,
-            int goldAmount)
+            int criticalHitCount)
         {
             if (resultSummaryText == null)
                 return;
 
             resultSummaryText.text =
                 $"DAY {_currentRewardDay} CLEAR\n" +
-                $"처치한 적  {Mathf.Max(0, killCount)} / {Mathf.Max(0, enemyCount)}    " +
-                $"치명타  {Mathf.Max(0, criticalHitCount)}회\n" +
-                $"입힌 피해  {Mathf.Max(0, damageDealt):N0}    " +
-                $"받은 피해  {Mathf.Max(0, damageTaken):N0}    " +
-                $"보상  {Mathf.Max(0, goldAmount):N0}G";
+                $"처치 {Mathf.Max(0, killCount)} / {Mathf.Max(0, enemyCount)}    " +
+                $"치명타 {Mathf.Max(0, criticalHitCount)}회\n" +
+                $"입힌 피해 {Mathf.Max(0, damageDealt):N0}    " +
+                $"받은 피해 {Mathf.Max(0, damageTaken):N0}\n" +
+                "아래 보상 중 하나를 선택하세요";
+        }
+
+        private void RefreshRewardButtons()
+        {
+            if (iconImage != null)
+                iconImage.gameObject.SetActive(_hasPendingGoldReward);
+
+            SetLabelText(goldAmountText, _hasPendingGoldReward ? $"성과금 {_pendingGoldAmount:N0}G" : "성과금 없음");
+            SetButtonState(goldRewardButton, _hasPendingGoldReward, _hasPendingGoldReward);
+
+            var secondaryLabel = _secondaryIsArtifact
+                ? "희귀 유물 선택"
+                : $"피로 -{Mathf.RoundToInt(medicalFatigueRecovery)} · 부상 완화";
+            SetArtifactRewardButtonState(true, secondaryLabel, true);
+
+            var operationLabel = _operationRewardKind switch
+            {
+                OperationRewardKind.Recruitment => $"고용 후보 +{recruitmentCandidateReward}",
+                OperationRewardKind.Construction => $"다음 건설비 {Mathf.RoundToInt(constructionDiscountRate * 100f)}% 할인",
+                _ => "운영 지원"
+            };
+            SetUnitRewardButtonState(true, operationLabel, true);
         }
 
         private void ConfigureModalLayout()
@@ -227,358 +410,38 @@ namespace _01.Code.UI
             transform.SetAsLastSibling();
         }
 
-        public void Hide()
+        private void SetArtifactRewardButtonState(bool interactable, string label, bool visible)
         {
-            var shouldNotifyClosed = _hasShownReward && gameObject.activeSelf;
-            _hasWaveResult = false;
-            HideWarning();
-            HideArtifactChoices();
-            gameObject.SetActive(false);
-
-            if (!shouldNotifyClosed)
-                return;
-
-            _hasShownReward = false;
-            Closed?.Invoke();
-        }
-
-        private void HandleGoldRewardClicked()
-        {
-            if (!_hasPendingGoldReward || _pendingGoldAmount <= 0)
-                return;
-
-            _costEventChannel?.RaiseEvent(new GoldEarnedEvent(_pendingGoldAmount, GoldChangeSource.WaveReward));
-            _hasPendingGoldReward = false;
-            _pendingGoldAmount = 0;
-
-            if (goldRewardButton != null)
-                goldRewardButton.interactable = false;
-            SetLabelText(goldAmountText, "수령 완료");
-
-            HideWarning();
-        }
-
-        private void HandleArtifactRewardClicked()
-        {
-            if (!_hasPendingArtifactReward || pendingArtifactChoices.Count == 0)
-                return;
-
-            if (artifactChoicePanel == null)
-            {
-                Debug.LogError($"{nameof(WaveRewardPanelView)} requires an assigned artifact choice panel.", this);
-                return;
-            }
-
-            artifactChoicePanel.Show(pendingArtifactChoices, ObtainArtifact);
-        }
-
-        private void HandleUnitRewardClicked()
-        {
-            if (!_hasPendingUnitReward || !HasPendingUnlockReward())
-                return;
-
-            if (!TutorialInputGate.AllowsUnlockReward(pendingUnlockRewardKind))
-                return;
-
-            if (artifactChoicePanel == null)
-            {
-                Debug.LogError($"{nameof(WaveRewardPanelView)} requires an assigned reward choice panel.", this);
-                return;
-            }
-
-            artifactChoicePanel.ShowUnlocks(pendingUnitChoices, pendingBuildingChoices, AcquireUnit, AcquireBuilding);
-        }
-
-        private void ObtainArtifact(ArtifactDataSO artifact)
-        {
-            if (artifact == null || artifactInventory == null)
-                return;
-
-            artifactInventory.Obtain(artifact, artifactEventChannel);
-            _hasPendingArtifactReward = false;
-            pendingArtifactChoices.Clear();
-            SetArtifactRewardButtonState(false, "선택 완료");
-            HideArtifactChoices();
-            HideWarning();
-        }
-
-        private void AcquireUnit(UnitDataSO unit)
-        {
-            if (unit == null)
-                return;
-
-            if (!TutorialInputGate.AllowsUnlockReward(UnlockRewardKind.Unit))
-                return;
-
-            _costEventChannel?.RaiseEvent(new UnitAcquiredEvent(unit));
-            _hasPendingUnitReward = false;
-            pendingUnitChoices.Clear();
-            pendingBuildingChoices.Clear();
-            pendingUnlockRewardKind = UnlockRewardKind.None;
-            SetUnitRewardButtonState(false, "선택 완료");
-            HideArtifactChoices();
-            HideWarning();
-        }
-
-        private void AcquireBuilding(BuildingDataSO building)
-        {
-            if (building == null)
-                return;
-
-            var rewardKind = building.Category == InstallCategory.Trap
-                ? UnlockRewardKind.Trap
-                : UnlockRewardKind.Building;
-            if (!TutorialInputGate.AllowsUnlockReward(rewardKind))
-                return;
-
-            _costEventChannel?.RaiseEvent(new BuildingAcquiredEvent(building));
-            _hasPendingUnitReward = false;
-            pendingUnitChoices.Clear();
-            pendingBuildingChoices.Clear();
-            pendingUnlockRewardKind = UnlockRewardKind.None;
-            SetUnitRewardButtonState(false, "선택 완료");
-            HideArtifactChoices();
-            HideWarning();
-        }
-
-        private void HandleCloseClicked()
-        {
-            if (_hasPendingGoldReward || _hasPendingArtifactReward || _hasPendingUnitReward)
-            {
-                ShowWarning();
-                return;
-            }
-
-            Hide();
-        }
-
-        private void ShowWarning()
-        {
-            warningPanel?.SetActive(true);
-        }
-
-        private void HideWarning()
-        {
-            warningPanel?.SetActive(false);
-        }
-
-        private void ForceClose()
-        {
-            _hasPendingGoldReward = false;
-            _hasPendingArtifactReward = false;
-            _hasPendingUnitReward = false;
-            _pendingGoldAmount = 0;
-            pendingArtifactChoices.Clear();
-            pendingUnitChoices.Clear();
-            pendingBuildingChoices.Clear();
-            pendingUnlockRewardKind = UnlockRewardKind.None;
-            HideArtifactChoices();
-            Hide();
-        }
-
-        private void PrepareArtifactChoices(bool includeArtifactReward)
-        {
-            pendingArtifactChoices.Clear();
-
-            if (!includeArtifactReward)
-                return;
-
-            if (artifactPool == null || artifactPool.Length == 0 || artifactInventory == null)
-                return;
-
-            var candidates = new List<ArtifactDataSO>();
-            foreach (var artifact in artifactPool)
-            {
-                if (artifact != null && !artifactInventory.HasObtained(artifact))
-                    candidates.Add(artifact);
-            }
-
-            for (var i = 0; i < artifactChoiceCount && candidates.Count > 0; i++)
-            {
-                var index = UnityEngine.Random.Range(0, candidates.Count);
-                pendingArtifactChoices.Add(candidates[index]);
-                candidates.RemoveAt(index);
-            }
-        }
-
-        private void ClearUnlockChoices()
-        {
-            pendingUnitChoices.Clear();
-            pendingBuildingChoices.Clear();
-            pendingUnlockRewardKind = UnlockRewardKind.None;
-        }
-
-        private void PrepareSupplyChoices()
-        {
-            ClearUnlockChoices();
-
-            var unitCandidates = new List<UnitDataSO>();
-            if (unitRewardPool != null)
-            {
-                foreach (var unit in unitRewardPool)
-                {
-                    if (unit != null)
-                        unitCandidates.Add(unit);
-                }
-            }
-
-            var buildingCandidates = new List<BuildingDataSO>();
-            var trapCandidates = new List<BuildingDataSO>();
-            if (buildingRewardPool != null)
-            {
-                foreach (var building in buildingRewardPool)
-                {
-                    if (building == null)
-                        continue;
-
-                    if (building.Category == InstallCategory.Trap)
-                        trapCandidates.Add(building);
-                    else if (building.Category == InstallCategory.Building)
-                        buildingCandidates.Add(building);
-                }
-            }
-
-            pendingUnlockRewardKind = ChooseSupplyRewardKind(unitCandidates.Count, buildingCandidates.Count, trapCandidates.Count);
-            switch (pendingUnlockRewardKind)
-            {
-                case UnlockRewardKind.Unit:
-                    PickUnitChoices(unitCandidates);
-                    break;
-                case UnlockRewardKind.Building:
-                    PickBuildingChoices(buildingCandidates, unitChoiceCount);
-                    break;
-                case UnlockRewardKind.Trap:
-                    PickBuildingChoices(trapCandidates, _currentRewardDay == 1 ? 1 : unitChoiceCount);
-                    break;
-            }
-        }
-
-        private UnlockRewardKind ChooseSupplyRewardKind(int unitCandidateCount, int buildingCandidateCount, int trapCandidateCount)
-        {
-            if (_currentRewardDay == 1 && trapCandidateCount > 0)
-                return UnlockRewardKind.Trap;
-
-            var unitWeight = unitCandidateCount > 0 ? 0.45f : 0f;
-            var buildingWeight = buildingCandidateCount > 0 ? 0.3f : 0f;
-            var trapWeight = trapCandidateCount > 0 ? 0.25f : 0f;
-            var totalWeight = unitWeight + buildingWeight + trapWeight;
-
-            if (totalWeight <= 0f)
-                return UnlockRewardKind.None;
-
-            var roll = UnityEngine.Random.value * totalWeight;
-            if (roll < unitWeight)
-                return UnlockRewardKind.Unit;
-
-            roll -= unitWeight;
-            return roll < buildingWeight ? UnlockRewardKind.Building : UnlockRewardKind.Trap;
-        }
-
-        private bool HasPendingUnlockReward()
-        {
-            return pendingUnitChoices.Count > 0 || pendingBuildingChoices.Count > 0;
-        }
-
-        private UnlockRewardKind ChooseUnlockRewardKind(int unitCandidateCount, int buildingCandidateCount, int trapCandidateCount)
-        {
-            if (_currentRewardDay == 1 && trapCandidateCount > 0)
-                return UnlockRewardKind.Trap;
-
-            if (_currentRewardDay == 2 && buildingCandidateCount > 0)
-                return UnlockRewardKind.Building;
-
-            var unitWeight = ResolveUnlockWeight(unitCandidateCount, offeredUnitUnlockRewards, 0.65f);
-            var buildingWeight = ResolveUnlockWeight(buildingCandidateCount, offeredBuildingUnlockRewards, 0.45f);
-            var trapWeight = ResolveUnlockWeight(trapCandidateCount, offeredTrapUnlockRewards, 0.45f);
-            var totalWeight = unitWeight + buildingWeight + trapWeight;
-
-            if (totalWeight <= 0f)
-                return UnlockRewardKind.None;
-
-            var roll = UnityEngine.Random.value * totalWeight;
-            if (roll < unitWeight)
-                return UnlockRewardKind.Unit;
-
-            roll -= unitWeight;
-            if (roll < buildingWeight)
-                return UnlockRewardKind.Building;
-
-            return UnlockRewardKind.Trap;
-        }
-
-        private static float ResolveUnlockWeight(int candidateCount, int offeredCount, float penalty)
-        {
-            if (candidateCount <= 0)
-                return 0f;
-
-            return candidateCount / (1f + offeredCount * penalty);
-        }
-
-        private void PickUnitChoices(List<UnitDataSO> candidates)
-        {
-            for (var i = 0; i < unitChoiceCount && candidates.Count > 0; i++)
-            {
-                var index = UnityEngine.Random.Range(0, candidates.Count);
-                pendingUnitChoices.Add(candidates[index]);
-                candidates.RemoveAt(index);
-            }
-        }
-
-        private void PickBuildingChoices(List<BuildingDataSO> candidates, int maxChoices)
-        {
-            for (var i = 0; i < maxChoices && candidates.Count > 0; i++)
-            {
-                var index = UnityEngine.Random.Range(0, candidates.Count);
-                pendingBuildingChoices.Add(candidates[index]);
-                candidates.RemoveAt(index);
-            }
-        }
-
-        private string ResolveUnlockRewardLabel()
-        {
-            return pendingUnlockRewardKind switch
-            {
-                UnlockRewardKind.Unit => "유닛 보급",
-                UnlockRewardKind.Building => "건물 보급",
-                UnlockRewardKind.Trap => "트랩 보급",
-                _ => "보급 선택"
-            };
-        }
-
-        private void SetArtifactRewardButtonState(bool interactable, string label, bool visible = true)
-        {
-            if (artifactRewardButton == null)
-                return;
-
-            artifactRewardButton.gameObject.SetActive(visible);
-            artifactRewardButton.interactable = interactable;
-
+            SetButtonState(artifactRewardButton, interactable, visible);
             if (artifactRewardText == null)
                 artifactRewardText = ResolveLabelGraphic(artifactRewardButton);
             SetLabelText(artifactRewardText, label);
         }
 
-        private void SetUnitRewardButtonState(bool interactable, string label, bool visible = true)
+        private void SetUnitRewardButtonState(bool interactable, string label, bool visible)
         {
-            if (unitRewardButton == null)
-                return;
-
-            unitRewardButton.gameObject.SetActive(visible);
-            unitRewardButton.interactable = interactable;
-
-            if (_unitRewardTitleText == null)
-                _unitRewardTitleText = ResolveChildLabelGraphic(unitRewardButton, "Title");
-            SetLabelText(_unitRewardTitleText, visible ? ResolveUnlockRewardTitle() : "선택");
+            SetButtonState(unitRewardButton, interactable, visible);
+            if (_operationTitleText == null)
+                _operationTitleText = ResolveChildLabelGraphic(unitRewardButton, "Title");
+            SetLabelText(_operationTitleText, "운영 지원");
 
             if (unitRewardText == null)
                 unitRewardText = ResolveLabelGraphic(unitRewardButton);
             SetLabelText(unitRewardText, label);
         }
 
-        private void HideArtifactChoices()
+        private static void SetButtonState(Button button, bool interactable, bool visible)
         {
-            artifactChoicePanel?.Hide();
+            if (button == null)
+                return;
+
+            button.gameObject.SetActive(visible);
+            button.interactable = interactable;
         }
+
+        private void ShowWarning() => warningPanel?.SetActive(true);
+        private void HideWarning() => warningPanel?.SetActive(false);
+        private void HideArtifactChoices() => artifactChoicePanel?.Hide();
 
         private static Graphic ResolveLabelGraphic(Button button)
         {
@@ -586,10 +449,7 @@ namespace _01.Code.UI
                 return null;
 
             var tmpText = button.GetComponentInChildren<TMP_Text>(true);
-            if (tmpText != null)
-                return tmpText;
-
-            return button.GetComponentInChildren<Text>(true);
+            return tmpText != null ? tmpText : button.GetComponentInChildren<Text>(true);
         }
 
         private static Graphic ResolveChildLabelGraphic(Button button, string childName)
@@ -610,17 +470,6 @@ namespace _01.Code.UI
             }
 
             return null;
-        }
-
-        private string ResolveUnlockRewardTitle()
-        {
-            return pendingUnlockRewardKind switch
-            {
-                UnlockRewardKind.Unit => "유닛 보급",
-                UnlockRewardKind.Building => "건물 보급",
-                UnlockRewardKind.Trap => "트랩 보급",
-                _ => "보급"
-            };
         }
 
         private static void SetLabelText(Graphic labelGraphic, string value)

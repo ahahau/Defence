@@ -6,17 +6,45 @@ namespace _01.Code.Manager
 {
     public class CostManager : MonoBehaviour
     {
+        public static CostManager Current { get; private set; }
+
         [SerializeField] private GameEventChannelSO costEventChannel;
 
         [SerializeField]
         private int initialGold = 100;
 
+        [Header("Construction Support")]
+        [SerializeField, Range(0f, 0.9f)] private float nextBuildDiscountRate;
+
         public int CurrentGold { get; private set; }
+        public float CurrentBuildDiscountRate => nextBuildDiscountRate;
 
         private void Awake()
         {
+            if (Current != null && Current != this)
+            {
+                Debug.LogError($"Duplicate {nameof(CostManager)} detected. Keep exactly one scene instance.", this);
+                enabled = false;
+                return;
+            }
+
+            Current = this;
             CurrentGold = initialGold;
             
+        }
+
+        private void OnDestroy()
+        {
+            if (Current == this)
+                Current = null;
+        }
+
+        public int GetDiscountedBuildCost(int baseCost)
+        {
+            var normalizedCost = Mathf.Max(0, baseCost);
+            return normalizedCost > 0
+                ? Mathf.Max(0, Mathf.RoundToInt(normalizedCost * (1f - nextBuildDiscountRate)))
+                : 0;
         }
 
         private void OnEnable()
@@ -28,6 +56,7 @@ namespace _01.Code.Manager
             costEventChannel.AddListener<GoldEarnedEvent>(HandleGoldEarned);
             costEventChannel.AddListener<GoldLostEvent>(HandleGoldLost);
             costEventChannel.AddListener<UnitRecoveryCostRequestedEvent>(HandleUnitRecoveryCostRequested);
+            costEventChannel.AddListener<ConstructionDiscountGrantedEvent>(HandleConstructionDiscountGranted);
         }
 
         private void Start()
@@ -44,25 +73,37 @@ namespace _01.Code.Manager
             costEventChannel.RemoveListener<GoldEarnedEvent>(HandleGoldEarned);
             costEventChannel.RemoveListener<GoldLostEvent>(HandleGoldLost);
             costEventChannel.RemoveListener<UnitRecoveryCostRequestedEvent>(HandleUnitRecoveryCostRequested);
+            costEventChannel.RemoveListener<ConstructionDiscountGrantedEvent>(HandleConstructionDiscountGranted);
         }
 
         private void HandleBuildCostRequested(BuildCostRequestedEvent evt)
         {
-            if (evt.GoldAmount <= 0)
+            var originalCost = Mathf.Max(0, evt.GoldAmount);
+            var chargedCost = GetDiscountedBuildCost(originalCost);
+
+            if (chargedCost <= 0)
             {
-                costEventChannel.RaiseEvent(new BuildCostPaidEvent(evt.Node, evt.GoldAmount, CurrentGold));
+                if (originalCost > 0)
+                    nextBuildDiscountRate = 0f;
+                costEventChannel.RaiseEvent(new BuildCostPaidEvent(evt.Node, chargedCost, CurrentGold));
                 return;
             }
 
-            if (CurrentGold < evt.GoldAmount)
+            if (CurrentGold < chargedCost)
             {
-                costEventChannel.RaiseEvent(new BuildCostRejectedEvent(evt.Node, evt.GoldAmount, CurrentGold));
+                costEventChannel.RaiseEvent(new BuildCostRejectedEvent(evt.Node, chargedCost, CurrentGold));
                 return;
             }
 
-            CurrentGold -= evt.GoldAmount;
+            CurrentGold -= chargedCost;
+            nextBuildDiscountRate = 0f;
             RaiseGoldChanged();
-            costEventChannel.RaiseEvent(new BuildCostPaidEvent(evt.Node, evt.GoldAmount, CurrentGold));
+            costEventChannel.RaiseEvent(new BuildCostPaidEvent(evt.Node, chargedCost, CurrentGold));
+        }
+
+        private void HandleConstructionDiscountGranted(ConstructionDiscountGrantedEvent evt)
+        {
+            nextBuildDiscountRate = Mathf.Max(nextBuildDiscountRate, evt.DiscountRate);
         }
 
         private void HandleHireUnitCostRequested(HireUnitCostRequestedEvent evt)
