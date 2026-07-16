@@ -1,219 +1,32 @@
-using System;
-using System.Collections.Generic;
-using _01.Code.Core;
-using _01.Code.Events;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
 namespace _01.Code.Audio
 {
-    [RequireComponent(typeof(AudioSource))]
-    public class GameSfxPlayer : MonoBehaviour
+    /// <summary>
+    /// 이전 씬과 프리팹의 직렬화 호환성을 위한 무음 컴포넌트.
+    /// 프로젝트의 사운드 재생 경로는 제거되었으며 이 컴포넌트는 아무 동작도 하지 않는다.
+    /// </summary>
+    public sealed class GameSfxPlayer : MonoBehaviour
     {
-        private static GameSfxPlayer instance;
-
-        [Header("Channels")]
-        [SerializeField] private GameEventChannelSO nodeEventChannel;
-        [SerializeField] private GameEventChannelSO costEventChannel;
-        [SerializeField] private GameEventChannelSO waveEventChannel;
-
-        [Header("UI")]
-        [SerializeField] private AudioClip[] uiClickClips;
-        [SerializeField] private AudioClip[] uiConfirmClips;
-        [SerializeField] private AudioClip[] uiOpenClips;
-        [SerializeField] private AudioClip[] uiRewardClips;
-
-        [Header("Game")]
-        [SerializeField] private AudioClip[] buildInstallClips;
-        [SerializeField] private AudioClip[] unitPlaceClips;
-        [SerializeField] private AudioClip[] waveStartClips;
-        [SerializeField] private AudioClip[] waveClearClips;
-
-        [Header("Combat")]
-        [SerializeField] private AudioClip[] attackClips;
-        [SerializeField, Tooltip("원거리(활) 공격음. 비면 attackClips로 폴백.")]
-        private AudioClip[] attackBowClips;
-        [SerializeField, Tooltip("지원/마법 공격음. 비면 attackClips로 폴백.")]
-        private AudioClip[] attackMagicClips;
-        [SerializeField] private AudioClip[] hitClips;
-        [SerializeField] private AudioClip[] dodgeClips;
-        [SerializeField] private AudioClip[] trapClips;
-        [SerializeField] private AudioClip[] skillCastClips;
-        [SerializeField] private AudioClip[] explosionClips;
-
-        [SerializeField, Range(0f, 1f)] private float volume = 0.85f;
-        [SerializeField, Range(0.8f, 1.2f)] private float minPitch = 0.96f;
-        [SerializeField, Range(0.8f, 1.2f)] private float maxPitch = 1.04f;
-
         public static float Volume
         {
-            get => instance != null ? instance.volume : PlayerPrefs.GetFloat("Settings.SfxVolume", 0.85f);
-            set
-            {
-                var clamped = Mathf.Clamp01(value);
-                PlayerPrefs.SetFloat("Settings.SfxVolume", clamped);
-
-                if (instance != null)
-                    instance.volume = clamped;
-            }
+            get => 0f;
+            set { }
         }
 
-        private readonly HashSet<Button> boundButtons = new();
-        private AudioSource audioSource;
+        public static void Play(GameSfxCue cue) { }
 
         private void Awake()
         {
-            if (instance != null && instance != this)
+            if (TryGetComponent<AudioSource>(out var source))
             {
-                Destroy(gameObject);
-                return;
+                source.Stop();
+                source.mute = true;
+                source.playOnAwake = false;
+                Destroy(source);
             }
 
-            instance = this;
-            DontDestroyOnLoad(gameObject);
-            audioSource = GetComponent<AudioSource>();
-            if (audioSource == null)
-            {
-                Debug.LogError($"{nameof(GameSfxPlayer)} requires an {nameof(AudioSource)} on the same GameObject.", this);
-                enabled = false;
-                return;
-            }
-
-            audioSource.playOnAwake = false;
-            audioSource.loop = false;
-            audioSource.spatialBlend = 0f;
-            volume = PlayerPrefs.GetFloat("Settings.SfxVolume", volume);
+            enabled = false;
         }
-
-        private void OnEnable()
-        {
-            SceneManager.sceneLoaded += HandleSceneLoaded;
-            nodeEventChannel?.AddListener<UnitAssignedToNodeEvent>(HandleUnitAssigned);
-            nodeEventChannel?.AddListener<BuildingInstalledEvent>(HandleBuildingInstalled);
-            nodeEventChannel?.AddListener<PortalInstalledEvent>(HandlePortalInstalled);
-            costEventChannel?.AddListener<RosterHirePaidEvent>(HandleRosterHirePaid);
-            costEventChannel?.AddListener<BuildCostRejectedEvent>(HandleBuildCostRejected);
-            waveEventChannel?.AddListener<WaveStartedEvent>(HandleWaveStarted);
-            waveEventChannel?.AddListener<WaveEndedEvent>(HandleWaveEnded);
-            BindSceneButtons();
-        }
-
-        private void OnDisable()
-        {
-            SceneManager.sceneLoaded -= HandleSceneLoaded;
-            nodeEventChannel?.RemoveListener<UnitAssignedToNodeEvent>(HandleUnitAssigned);
-            nodeEventChannel?.RemoveListener<BuildingInstalledEvent>(HandleBuildingInstalled);
-            nodeEventChannel?.RemoveListener<PortalInstalledEvent>(HandlePortalInstalled);
-            costEventChannel?.RemoveListener<RosterHirePaidEvent>(HandleRosterHirePaid);
-            costEventChannel?.RemoveListener<BuildCostRejectedEvent>(HandleBuildCostRejected);
-            waveEventChannel?.RemoveListener<WaveStartedEvent>(HandleWaveStarted);
-            waveEventChannel?.RemoveListener<WaveEndedEvent>(HandleWaveEnded);
-        }
-
-        public static void Play(GameSfxCue cue)
-        {
-            if (instance == null)
-                return;
-
-            instance.PlayInternal(cue);
-        }
-
-        private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
-        {
-            BindSceneButtons();
-        }
-
-        private void BindSceneButtons()
-        {
-            var scene = SceneManager.GetActiveScene();
-            if (!scene.IsValid())
-                return;
-
-            var roots = scene.GetRootGameObjects();
-            foreach (var root in roots)
-            {
-                var buttons = root.GetComponentsInChildren<Button>(true);
-                foreach (var button in buttons)
-                    BindButton(button);
-            }
-        }
-
-        private void BindButton(Button button)
-        {
-            if (button == null || !boundButtons.Add(button))
-                return;
-
-            button.onClick.AddListener(() => PlayInternal(ResolveButtonCue(button)));
-        }
-
-        private static GameSfxCue ResolveButtonCue(Button button)
-        {
-            var name = button != null ? button.name : string.Empty;
-            return name.Contains("Confirm", StringComparison.OrdinalIgnoreCase)
-                   || name.Contains("Install", StringComparison.OrdinalIgnoreCase)
-                   || name.Contains("Recover", StringComparison.OrdinalIgnoreCase)
-                   || name.Contains("Reward", StringComparison.OrdinalIgnoreCase)
-                ? GameSfxCue.UiConfirm
-                : GameSfxCue.UiClick;
-        }
-
-        private void HandleUnitAssigned(UnitAssignedToNodeEvent evt) => PlayInternal(GameSfxCue.UnitPlace);
-        private void HandleBuildingInstalled(BuildingInstalledEvent evt) => PlayInternal(GameSfxCue.BuildInstall);
-        private void HandlePortalInstalled(PortalInstalledEvent evt) => PlayInternal(GameSfxCue.BuildInstall);
-        private void HandleRosterHirePaid(RosterHirePaidEvent evt) => PlayInternal(GameSfxCue.UiConfirm);
-        private void HandleBuildCostRejected(BuildCostRejectedEvent evt) => PlayInternal(GameSfxCue.UiClick);
-        private void HandleWaveStarted(WaveStartedEvent evt) => PlayInternal(GameSfxCue.WaveStart);
-        private void HandleWaveEnded(WaveEndedEvent evt) => PlayInternal(GameSfxCue.WaveClear);
-
-        // 다대다 전투에서 같은 소리가 같은 순간 여러 번 겹쳐 뭉개지는 것을 막는 큐별 최소 간격.
-        private const float MinCueInterval = 0.07f;
-        private readonly Dictionary<GameSfxCue, float> lastCuePlayTime = new();
-
-        private void PlayInternal(GameSfxCue cue)
-        {
-            var clips = ResolveClips(cue);
-            if (clips == null || clips.Length == 0 || audioSource == null)
-                return;
-
-            if (lastCuePlayTime.TryGetValue(cue, out var lastTime)
-                && Time.unscaledTime - lastTime < MinCueInterval)
-                return;
-
-            var clip = clips[UnityEngine.Random.Range(0, clips.Length)];
-            if (clip == null)
-                return;
-
-            lastCuePlayTime[cue] = Time.unscaledTime;
-            audioSource.pitch = UnityEngine.Random.Range(minPitch, maxPitch);
-            audioSource.PlayOneShot(clip, volume);
-        }
-
-        private AudioClip[] ResolveClips(GameSfxCue cue)
-        {
-            return cue switch
-            {
-                GameSfxCue.UiClick => uiClickClips,
-                GameSfxCue.UiConfirm => uiConfirmClips,
-                GameSfxCue.UiOpen => uiOpenClips,
-                GameSfxCue.UiReward => uiRewardClips,
-                GameSfxCue.BuildInstall => buildInstallClips,
-                GameSfxCue.UnitPlace => unitPlaceClips,
-                GameSfxCue.WaveStart => waveStartClips,
-                GameSfxCue.WaveClear => waveClearClips,
-                GameSfxCue.Attack => attackClips,
-                GameSfxCue.AttackBow => FallbackIfEmpty(attackBowClips, attackClips),
-                GameSfxCue.AttackMagic => FallbackIfEmpty(attackMagicClips, attackClips),
-                GameSfxCue.Hit => hitClips,
-                GameSfxCue.Dodge => dodgeClips,
-                GameSfxCue.Trap => trapClips,
-                GameSfxCue.SkillCast => skillCastClips,
-                GameSfxCue.Explosion => explosionClips,
-                _ => null
-            };
-        }
-
-        private static AudioClip[] FallbackIfEmpty(AudioClip[] preferred, AudioClip[] fallback) =>
-            preferred != null && preferred.Length > 0 ? preferred : fallback;
     }
 }
