@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -19,32 +18,20 @@ namespace _01.Code.UI
         private void Awake()
         {
             SetSettingsVisible(false);
+            if (settingsButton != null)
+                settingsButton.gameObject.SetActive(false);
         }
 
         private void OnEnable()
         {
             AddButtonListener(startButton, StartGame);
-            AddButtonListener(settingsButton, ShowSettings);
             AddButtonListener(quitButton, QuitGame);
-            AddButtonListener(closeSettingsButton, HideSettings);
-            AddButtonListener(resetSoundButton, ResetSoundSettings);
         }
 
         private void OnDisable()
         {
             RemoveButtonListener(startButton, StartGame);
-            RemoveButtonListener(settingsButton, ShowSettings);
             RemoveButtonListener(quitButton, QuitGame);
-            RemoveButtonListener(closeSettingsButton, HideSettings);
-            RemoveButtonListener(resetSoundButton, ResetSoundSettings);
-        }
-
-        private void Update()
-        {
-            if (Keyboard.current == null || !Keyboard.current.escapeKey.wasPressedThisFrame)
-                return;
-
-            SetSettingsVisible(settingsPanel == null || !settingsPanel.activeSelf);
         }
 
         public void StartGame()
@@ -68,11 +55,6 @@ namespace _01.Code.UI
             Application.Quit();
         }
 
-        private void ResetSoundSettings()
-        {
-            soundSettingsController?.ResetDefaults();
-        }
-
         private void AddButtonListener(Button button, UnityEngine.Events.UnityAction action)
         {
             if (button == null)
@@ -94,8 +76,6 @@ namespace _01.Code.UI
                 return;
 
             settingsPanel.SetActive(visible);
-            if (visible)
-                soundSettingsController?.Load();
         }
     }
 }

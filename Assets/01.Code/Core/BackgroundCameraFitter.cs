@@ -30,18 +30,18 @@ namespace _01.Code.Core
             if (cam == null || backgroundRenderer == null || backgroundRenderer.sprite == null)
                 return;
 
-            var camPosition = cam.transform.position;
+            var camPosition = cam.transform.position;   
             transform.position = new Vector3(camPosition.x, camPosition.y, _baseZ);
 
             if (!cam.orthographic)
                 return;
-
+            
             var viewHeight = cam.orthographicSize * 2f;
             var viewWidth = viewHeight * cam.aspect;
             var spriteSize = backgroundRenderer.sprite.bounds.size;
             if (spriteSize.x <= 0f || spriteSize.y <= 0f)
                 return;
-
+            
             // 종횡비를 유지한 채 가로/세로 모두 덮는 균일 스케일.
             var required = Mathf.Max(viewWidth / spriteSize.x, viewHeight / spriteSize.y) * coverScale;
             backgroundRenderer.transform.localScale = new Vector3(required, required, 1f);
