@@ -1,4 +1,3 @@
-using _01.Code.Audio;
 using _01.Code.BT;
 using _01.Code.Combat;
 using DG.Tweening;
@@ -105,7 +104,6 @@ namespace _01.Code.Skills
 
         private void Execute(SkillDataSO data)
         {
-            GameSfxPlayer.Play(GameSfxCue.SkillCast);
             PlayCastVisual(data != null && data.IsUltimate);
             var context = new SkillContext(agent, combatant, agent.CurrentTarget);
             data.Execute(context);

@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using _01.Code.Audio;
 using _01.Code.Core;
 using _01.Code.Events;
 using _01.Code.StatusEffects;
@@ -194,7 +193,6 @@ namespace _01.Code.Combat
                     {
                         if (target.TryDodgeAttack(transform.position))
                         {
-                            GameSfxPlayer.Play(GameSfxCue.Dodge);
                             _attackTimer = 0f;
                             RefreshAttackBar(0f);
                             _isAttacking = false;
@@ -203,9 +201,7 @@ namespace _01.Code.Combat
                         }
 
                         PlayAttackFeedback(transform.position, target.transform.position);
-                        GameSfxPlayer.Play(ResolveAttackCue());
                         target.Health.TakeDamage(ResolveAttackDamage(target, out var isCritical), isCritical);
-                        GameSfxPlayer.Play(GameSfxCue.Hit);
                         TryApplyAttackStatusEffect(target);
                         AttackLanded?.Invoke();
                     }
@@ -246,26 +242,6 @@ namespace _01.Code.Combat
 
             PlayDodgeReaction(attackerPosition);
             return true;
-        }
-
-        private _01.Code.BT.BattleAgent _cachedBattleAgent;
-
-        /// <summary>역할에 맞는 공격음 — 원거리는 활, 지원은 마법, 나머지는 검격.
-        /// 역할이 데이터로 늦게 적용될 수 있어 재생 시점에 조회한다.</summary>
-        private GameSfxCue ResolveAttackCue()
-        {
-            if (_cachedBattleAgent == null)
-                _cachedBattleAgent = GetComponent<_01.Code.BT.BattleAgent>();
-
-            if (_cachedBattleAgent == null)
-                return GameSfxCue.Attack;
-
-            return _cachedBattleAgent.Role switch
-            {
-                _01.Code.BT.BattleRole.Ranged => GameSfxCue.AttackBow,
-                _01.Code.BT.BattleRole.Support => GameSfxCue.AttackMagic,
-                _ => GameSfxCue.Attack
-            };
         }
 
         /// <summary>회피 성공 연출 — 사이드스텝 이동(BattleAgent) + MISS 텍스트(DamageFeedback).</summary>
