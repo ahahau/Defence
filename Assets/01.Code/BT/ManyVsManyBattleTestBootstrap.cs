@@ -259,7 +259,7 @@ namespace _01.Code.BT
             ring.loop = true;
             ring.widthMultiplier = 0.04f;
             ring.positionCount = 96;
-            ring.material = new Material(Shader.Find("Sprites/Default"));
+            ring.sharedMaterial = Resources.GetBuiltinResource<Material>("Default-Line.mat");
             ring.startColor = new Color(0.25f, 0.85f, 1f, 0.8f);
             ring.endColor = ring.startColor;
 

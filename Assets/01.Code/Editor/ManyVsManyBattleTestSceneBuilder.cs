@@ -127,7 +127,7 @@ namespace _01.Code.Editor
             ring.loop = true;
             ring.widthMultiplier = 0.04f;
             ring.positionCount = 96;
-            ring.material = new Material(Shader.Find("Sprites/Default"));
+            ring.sharedMaterial = AssetDatabase.GetBuiltinExtraResource<Material>("Default-Line.mat");
             ring.startColor = new Color(0.25f, 0.85f, 1f, 0.75f);
             ring.endColor = ring.startColor;
             for (var i = 0; i < ring.positionCount; i++)
