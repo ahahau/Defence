@@ -1,4 +1,5 @@
 using _01.Code.MapCreateSystem;
+using _01.Code.Buildings;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -271,7 +272,12 @@ namespace _01.Code.Enemies
 
             foreach (var node in Node.ActiveNodes)
             {
-                if (node == null || node.Data == null || node.Data.Type != DungeonNodeType.Treasury)
+                if (node == null)
+                    continue;
+
+                var hasStoredGold = node.AssignedBuilding is Treasury treasury && treasury.StoredGold > 0;
+                var isLegacyTreasury = node.Data != null && node.Data.Type == DungeonNodeType.Treasury;
+                if (!hasStoredGold && !isLegacyTreasury)
                     continue;
 
                 var distance = ((Vector2)node.transform.position - self).sqrMagnitude;

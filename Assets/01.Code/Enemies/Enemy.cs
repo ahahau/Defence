@@ -31,6 +31,7 @@ namespace _01.Code.Enemies
         [SerializeField, Min(0)] private int fearGainOnCombat = 4;
         [SerializeField, Min(0)] private int greedGainOnBuilding = 2;
         [SerializeField, Min(0)] private int fearReductionOnBuilding = 2;
+        [SerializeField, Min(0)] private int fearGainOnBuildingEncounter = 1;
         [SerializeField, Min(0f)] private float fearReturnChancePerPoint = 0.018f;
         [SerializeField, Min(0f)] private float greedReturnResistancePerPoint = 0.04f;
         [SerializeField, Min(0f)] private float returnChanceStartThreshold = 6f;
@@ -85,6 +86,18 @@ namespace _01.Code.Enemies
         public int Level { get; private set; } = 1;
         public int Fear => _currentFear;
         public int Greed => _currentGreed;
+        public float RetreatChance => CalculateRetreatChance();
+        public string InstinctState
+        {
+            get
+            {
+                if (_isBoss) return "지배 의지 · 철수하지 않음";
+                if (_currentGreed >= _currentFear + 4) return "탐욕 우세 · 더 깊이 탐색";
+                if (_currentFear >= _currentGreed + 6) return "경계 한계 · 철수 가능";
+                if (_currentFear > _currentGreed) return "경계 우세 · 진입을 망설임";
+                return "탐색 지속 · 금고를 추적";
+            }
+        }
         public Combatant Combatant => combatant;
         public EnemyMover Mover => mover;
         public Health Health => health;
@@ -292,6 +305,7 @@ namespace _01.Code.Enemies
             statusController?.TickNodeVisit();
 
             if (TryTriggerTrap(node)) return false;
+            TryDamageNodeBuilding(node);
             ApplyPassBuildingEffect(node);
             if (TryUseBattlefieldCombat(node)) return false;
             if (TryStopOnUnit(node)) return false;
@@ -302,7 +316,25 @@ namespace _01.Code.Enemies
 
         private bool TryLootTreasury(Node node)
         {
-            if (node.Data.Type != DungeonNodeType.Treasury) return false;
+            if (node == null)
+                return false;
+
+            if (node.AssignedBuilding is Treasury treasury)
+            {
+                // 보관 금화는 운영 자금과 분리되어 있으므로 GoldLostEvent를 발생시키지 않는다.
+                // 이 금고에서 실제로 약탈할 수 있는 금화가 있을 때만 침입자가 이탈한다.
+                var stolenGold = treasury.StealGold(_treasuryGoldLoss);
+                if (stolenGold <= 0)
+                    return false;
+
+                _costEventChannel?.RaiseEvent(new TreasuryRobbedEvent(stolenGold));
+                Destroy(gameObject);
+                return true;
+            }
+
+            if (node.Data == null || node.Data.Type != DungeonNodeType.Treasury)
+                return false;
+
             _costEventChannel.RaiseEvent(new GoldLostEvent(_treasuryGoldLoss, GoldChangeSource.TreasuryLoot));
             Destroy(gameObject);
             return true;
@@ -313,17 +345,24 @@ namespace _01.Code.Enemies
             if (node == null) return;
 
             // 단일 건물(기존) + 그리드에 배치된 건물 전부에 통과 효과 적용.
-            var applied = ApplyPassEffectFor(node.AssignedBuilding);
+            ApplyBuildingEncounter(node.AssignedBuilding);
 
             var grid = node.TrapGrid;
             if (grid != null)
             {
                 var placed = grid.PlacedBuildings;
                 for (var i = 0; i < placed.Count; i++)
-                    applied |= ApplyPassEffectFor(placed[i]);
+                    ApplyBuildingEncounter(placed[i]);
             }
+        }
 
-            if (applied) ApplyBuildingMoodChange();
+        private void TryDamageNodeBuilding(Node node)
+        {
+            if (node == null || combatant == null)
+                return;
+
+            if (node.DamageAssignedBuilding(combatant.AttackDamage))
+                IncreaseFear(fearGainOnCombat);
         }
 
         /// <summary>라인(엣지)에 설치된 건물을 지나갈 때 — 노드 통과 효과와 같은 방식으로 적용(상점/여관).</summary>
@@ -332,8 +371,20 @@ namespace _01.Code.Enemies
             if (_isDead || _isReturning || building == null)
                 return;
 
+            ApplyBuildingEncounter(building);
+        }
+
+        private bool ApplyBuildingEncounter(Building building)
+        {
+            if (building == null || building.IsDestroyed)
+                return false;
+
             if (ApplyPassEffectFor(building))
-                ApplyBuildingMoodChange();
+                ApplyTemptingBuildingMoodChange();
+            else
+                IncreaseFear(fearGainOnBuildingEncounter + Mathf.Max(0, building.DangerRating));
+
+            return true;
         }
 
         private bool ApplyPassEffectFor(Building building)
@@ -439,7 +490,7 @@ namespace _01.Code.Enemies
             if (amount > 0) _currentFear += amount;
         }
 
-        private void ApplyBuildingMoodChange()
+        private void ApplyTemptingBuildingMoodChange()
         {
             _currentGreed += Mathf.Max(0, greedGainOnBuilding);
             _currentFear = Mathf.Max(0, _currentFear - Mathf.Max(0, fearReductionOnBuilding));
@@ -454,14 +505,22 @@ namespace _01.Code.Enemies
             if (_isInCombat || _isReturning || combatant != null && combatant.IsAttacking)
                 return false;
 
-            var fearPressure = Mathf.Max(0f, _currentFear * fearReturnChancePerPoint);
-            fearPressure = Mathf.Max(0f, fearPressure - returnChanceStartThreshold * fearReturnChancePerPoint);
-            var greedResistance = 1f + Mathf.Max(0f, _currentGreed * greedReturnResistancePerPoint);
-            var returnChance = Mathf.Clamp01(fearPressure / greedResistance);
+            var returnChance = CalculateRetreatChance();
             if (Random.value > returnChance) return false;
 
             PlayReturnAnimation();
             return true;
+        }
+
+        private float CalculateRetreatChance()
+        {
+            if (_isBoss)
+                return 0f;
+
+            var fearPressure = Mathf.Max(0f, _currentFear - returnChanceStartThreshold)
+                               * fearReturnChancePerPoint;
+            var greedResistance = 1f + Mathf.Max(0f, _currentGreed * greedReturnResistancePerPoint);
+            return Mathf.Clamp01(fearPressure / greedResistance);
         }
 
         private void PlayReturnAnimation()
