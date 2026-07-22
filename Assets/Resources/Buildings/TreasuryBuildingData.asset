@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34c4dc0ecf9801d4aa0c5c4a452b0163, type: 3}
+  m_Name: TreasuryBuildingData
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Buildings.BuildingDataSO
+  <Grade>k__BackingField: 1
+  <BoardSprite>k__BackingField: {fileID: 0}
+  <Defense>k__BackingField: 0
+  <EvasionChance>k__BackingField: 0
+  <DisplayName>k__BackingField: "\uAE08\uACE0"
+  <Cost>k__BackingField: 35
+  <Prefab>k__BackingField: {fileID: 8089379026674961331, guid: 74d624f5b92d4084099b32bc76c07596, type: 3}
+  <Unique>k__BackingField: 0
+  <InstallOnEdge>k__BackingField: 0
+  <Locked>k__BackingField: 0
+  <BaseDanger>k__BackingField: 2
+  <Category>k__BackingField: 0
