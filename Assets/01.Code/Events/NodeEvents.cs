@@ -132,6 +132,18 @@ namespace _01.Code.Events
         public Vector2 ScreenPosition { get; }
     }
 
+    public class UnitManagementRequestedEvent : GameEvent
+    {
+        public UnitManagementRequestedEvent(Node node, Unit unit)
+        {
+            Node = node;
+            Unit = unit;
+        }
+
+        public Node Node { get; }
+        public Unit Unit { get; }
+    }
+
     public class EnemyStatusRequestedEvent : GameEvent
     {
         public EnemyStatusRequestedEvent(Enemy enemy, Vector2 screenPosition)

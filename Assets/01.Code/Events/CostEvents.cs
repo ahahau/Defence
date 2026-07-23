@@ -110,6 +110,20 @@ namespace _01.Code.Events
         public GoldChangeSource Source { get; }
     }
 
+    /// <summary>
+    /// 운영 금화와 분리된 금고 보관금을 침입자가 약탈했을 때 발생한다.
+    /// 실제 보유 골드를 다시 차감하지 않고, 일일 정산 장부에만 기록한다.
+    /// </summary>
+    public class TreasuryRobbedEvent : GameEvent
+    {
+        public TreasuryRobbedEvent(int goldAmount)
+        {
+            GoldAmount = goldAmount;
+        }
+
+        public int GoldAmount { get; }
+    }
+
     public class SalaryCostRequestedEvent : GameEvent
     {
         public SalaryCostRequestedEvent(int day, int goldAmount)

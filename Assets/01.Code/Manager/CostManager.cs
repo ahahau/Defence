@@ -47,6 +47,26 @@ namespace _01.Code.Manager
                 : 0;
         }
 
+        public bool TrySpendGold(int amount)
+        {
+            var normalizedAmount = Mathf.Max(0, amount);
+            if (normalizedAmount <= 0 || CurrentGold < normalizedAmount)
+                return false;
+
+            CurrentGold -= normalizedAmount;
+            RaiseGoldChanged();
+            return true;
+        }
+
+        public void AddGold(int amount)
+        {
+            if (amount <= 0)
+                return;
+
+            CurrentGold += amount;
+            RaiseGoldChanged();
+        }
+
         private void OnEnable()
         {
             costEventChannel.AddListener<BuildCostRequestedEvent>(HandleBuildCostRequested);
