@@ -30,6 +30,14 @@ namespace _01.Code.Units
         Sociable
     }
 
+    public enum UnitCommand
+    {
+        Standby,
+        Guard,
+        Assault,
+        Rest
+    }
+
     public static class UnitTraitUtility
     {
         public static string GetLabel(UnitTrait trait) => trait switch
@@ -76,6 +84,25 @@ namespace _01.Code.Units
         };
     }
 
+    public static class UnitCommandUtility
+    {
+        public static string GetLabel(UnitCommand command) => command switch
+        {
+            UnitCommand.Guard => "경계",
+            UnitCommand.Assault => "공격",
+            UnitCommand.Rest => "휴식",
+            _ => "대기"
+        };
+
+        public static string GetDescription(UnitCommand command) => command switch
+        {
+            UnitCommand.Guard => "방어를 우선해 버티지만 공격 속도가 조금 느려집니다.",
+            UnitCommand.Assault => "공격을 우선해 피해량과 속도가 오르지만 피로가 더 쌓입니다.",
+            UnitCommand.Rest => "피로 누적을 줄이고 회복을 우선하지만 전투 성능이 크게 낮아집니다.",
+            _ => "기본 행동입니다. 별도 보정 없이 노드 안에서 대기합니다."
+        };
+    }
+
     [Serializable]
     public struct UnitConditionState
     {
@@ -84,19 +111,22 @@ namespace _01.Code.Units
         [SerializeField, Range(0f, 1f)] private float healthRatio;
         [SerializeField] private UnitTrait trait;
         [SerializeField] private UnitPersonality personality;
+        [SerializeField] private UnitCommand command;
 
         public UnitConditionState(
             float fatigue,
             InjurySeverity injury,
             float healthRatio = 1f,
             UnitTrait trait = UnitTrait.None,
-            UnitPersonality personality = UnitPersonality.None)
+            UnitPersonality personality = UnitPersonality.None,
+            UnitCommand command = UnitCommand.Standby)
         {
             this.fatigue = Mathf.Clamp(fatigue, 0f, 100f);
             this.injury = injury;
             this.healthRatio = Mathf.Clamp01(healthRatio);
             this.trait = trait;
             this.personality = personality;
+            this.command = command;
         }
 
         public float Fatigue => fatigue;
@@ -104,6 +134,7 @@ namespace _01.Code.Units
         public float HealthRatio => healthRatio;
         public UnitTrait Trait => trait;
         public UnitPersonality Personality => personality;
+        public UnitCommand Command => command;
         public string TraitLabel => UnitTraitUtility.GetLabel(trait);
         public string PersonalityLabel => UnitPersonalityUtility.GetLabel(personality);
         public string Summary => $"{TraitLabel} · {PersonalityLabel} · 피로 {Mathf.RoundToInt(fatigue)}/100";
@@ -124,7 +155,8 @@ namespace _01.Code.Units
                 recoveredInjury,
                 healthRatio + Mathf.Max(0f, healthRecoveryRatio),
                 trait,
-                personality);
+                personality,
+                command);
         }
     }
 }

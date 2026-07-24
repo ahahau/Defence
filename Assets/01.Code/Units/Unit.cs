@@ -45,6 +45,18 @@ namespace _01.Code.Units
         [SerializeField, Min(0f)] private float perfectionistAttackIntervalMultiplier = 1.05f;
         [SerializeField, Range(0f, 1f)] private float sociableWaveFatigueReduction = 0.3f;
 
+        [Header("Command Balance")]
+        [SerializeField] private UnitCommand currentCommand = UnitCommand.Standby;
+        [SerializeField, Min(0)] private int commandGuardDefenseBonus = 15;
+        [SerializeField, Min(0f)] private float commandGuardDamageMultiplier = 0.92f;
+        [SerializeField, Min(0f)] private float commandGuardAttackIntervalMultiplier = 1.08f;
+        [SerializeField, Min(0f)] private float commandAssaultDamageMultiplier = 1.15f;
+        [SerializeField, Min(0f)] private float commandAssaultAttackIntervalMultiplier = 0.9f;
+        [SerializeField, Min(0f)] private float commandAssaultFatigueMultiplier = 1.25f;
+        [SerializeField, Min(0f)] private float commandRestDamageMultiplier = 0.7f;
+        [SerializeField, Min(0f)] private float commandRestAttackIntervalMultiplier = 1.3f;
+        [SerializeField, Min(0f)] private float commandRestFatigueMultiplier = 0.55f;
+
         public Combatant Combatant => combatant;
         public UnitDataSO Data { get; private set; }
         public Health Health => health;
@@ -64,6 +76,9 @@ namespace _01.Code.Units
         public UnitPersonality Personality => personality;
         public string PersonalityLabel => UnitPersonalityUtility.GetLabel(personality);
         public string PersonalityDescription => UnitPersonalityUtility.GetDescription(personality);
+        public UnitCommand CurrentCommand => currentCommand;
+        public string CommandLabel => UnitCommandUtility.GetLabel(currentCommand);
+        public string CommandDescription => UnitCommandUtility.GetDescription(currentCommand);
         public string InjuryLabel => injury switch
         {
             InjurySeverity.Minor => "경상",
@@ -94,6 +109,7 @@ namespace _01.Code.Units
             SubscribeCombat();
             EnsureClickTarget();
             EnsureBattleAgent();
+            EnsureDefaultPersonality();
             ApplyTraitBaseStats();
             ApplyConditionModifiers();
         }
@@ -120,8 +136,26 @@ namespace _01.Code.Units
             SubscribeHealth();
             SubscribeCombat();
             EnsureClickTarget();
+            EnsureDefaultPersonality();
             ApplyTraitBaseStats();
             ApplyConditionModifiers();
+        }
+
+        private void EnsureDefaultPersonality()
+        {
+            if (personality != UnitPersonality.None)
+                return;
+
+            var unitName = Data != null && !string.IsNullOrWhiteSpace(Data.Name)
+                ? Data.Name
+                : name;
+            unitName = unitName.ToLowerInvariant();
+            personality = unitName.Contains("guardian") ? UnitPersonality.Calm
+                : unitName.Contains("vanguard") ? UnitPersonality.HotBlooded
+                : unitName.Contains("scout") ? UnitPersonality.Timid
+                : unitName.Contains("arbalist") ? UnitPersonality.Perfectionist
+                : unitName.Contains("mage") ? UnitPersonality.Sociable
+                : UnitPersonality.Calm;
         }
 
         public void RecoverFromIncapacitated()
@@ -149,7 +183,8 @@ namespace _01.Code.Units
             injury,
             health != null ? health.CurrentRatio : 1f,
             trait,
-            personality);
+            personality,
+            currentCommand);
 
         public void ApplyConditionState(UnitConditionState state)
         {
@@ -157,6 +192,7 @@ namespace _01.Code.Units
             injury = state.Injury;
             trait = state.Trait;
             personality = state.Personality;
+            currentCommand = state.Command;
             health?.SetCurrentRatio(state.HealthRatio);
             IsIncapacitated = health != null && !health.IsAlive;
             ApplyTraitBaseStats();
@@ -202,6 +238,17 @@ namespace _01.Code.Units
                 };
             }
 
+            ApplyConditionModifiers();
+            ConditionChanged?.Invoke();
+        }
+
+        public void SetCommand(UnitCommand command)
+        {
+            if (currentCommand == command)
+                return;
+
+            currentCommand = command;
+            ApplyTraitBaseStats();
             ApplyConditionModifiers();
             ConditionChanged?.Invoke();
         }
@@ -256,7 +303,7 @@ namespace _01.Code.Units
                 _ => 1f
             };
             var next = Mathf.Clamp(
-                fatigue + amount * traitFatigueMultiplier * personalityFatigueMultiplier,
+                fatigue + amount * traitFatigueMultiplier * personalityFatigueMultiplier * ResolveCommandFatigueMultiplier(),
                 0f,
                 100f);
             if (Mathf.Approximately(next, fatigue))
@@ -321,12 +368,36 @@ namespace _01.Code.Units
             var personalityIntervalMultiplier = personality == UnitPersonality.Perfectionist
                 ? perfectionistAttackIntervalMultiplier
                 : 1f;
+            var commandDamageMultiplier = currentCommand switch
+            {
+                UnitCommand.Guard => commandGuardDamageMultiplier,
+                UnitCommand.Assault => commandAssaultDamageMultiplier,
+                UnitCommand.Rest => commandRestDamageMultiplier,
+                _ => 1f
+            };
+            var commandIntervalMultiplier = currentCommand switch
+            {
+                UnitCommand.Guard => commandGuardAttackIntervalMultiplier,
+                UnitCommand.Assault => commandAssaultAttackIntervalMultiplier,
+                UnitCommand.Rest => commandRestAttackIntervalMultiplier,
+                _ => 1f
+            };
 
             combatant.SetConditionModifiers(
-                fatigueDamageMultiplier * injuryDamageMultiplier * traitDamageMultiplier * personalityDamageMultiplier,
-                fatigueIntervalMultiplier * injuryIntervalMultiplier * traitIntervalMultiplier * personalityIntervalMultiplier);
+                fatigueDamageMultiplier * injuryDamageMultiplier * traitDamageMultiplier * personalityDamageMultiplier * commandDamageMultiplier,
+                fatigueIntervalMultiplier * injuryIntervalMultiplier * traitIntervalMultiplier * personalityIntervalMultiplier * commandIntervalMultiplier);
             combatant.SetConditionCriticalChanceBonus(
                 personality == UnitPersonality.Perfectionist ? perfectionistCriticalChanceBonus : 0f);
+        }
+
+        private float ResolveCommandFatigueMultiplier()
+        {
+            return currentCommand switch
+            {
+                UnitCommand.Assault => commandAssaultFatigueMultiplier,
+                UnitCommand.Rest => commandRestFatigueMultiplier,
+                _ => 1f
+            };
         }
 
         private void ApplyTraitBaseStats()
@@ -338,6 +409,8 @@ namespace _01.Code.Units
             var baseEvasion = Data.EvasionChance;
             if (trait == UnitTrait.Guardian)
                 baseDefense += guardianDefenseBonus;
+            if (currentCommand == UnitCommand.Guard)
+                baseDefense += commandGuardDefenseBonus;
             if (trait == UnitTrait.Cautious)
                 baseEvasion += cautiousEvasionBonus;
             if (personality == UnitPersonality.Timid)
