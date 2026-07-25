@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using _01.Code.Buildings;
 using _01.Code.Core;
 using _01.Code.Events;
+using _01.Code.Progression;
 using _01.Code.Units;
 using UnityEngine;
 
@@ -15,6 +16,7 @@ namespace _01.Code.Manager
         [SerializeField] private GameEventChannelSO nodeEventChannel;
         [SerializeField] private GameEventChannelSO dayEventChannel;
         [SerializeField] private UnitDataSO[] unitCatalog;
+        [SerializeField] private DungeonUnlockCatalogSO unlockCatalog;
         [SerializeField, Min(0)] private int startingCopiesOfFirstUnit = 1;
         [Header("Recruitment")]
         [SerializeField, Min(0)] private int candidatesPerDay = 2;
@@ -48,10 +50,14 @@ namespace _01.Code.Manager
         private readonly Dictionary<BuildingDataSO, int> _ownedBuildings = new();
         private bool _hasInitializedUnlocks;
         public IReadOnlyList<UnitDataSO> AvailableUnits => _availableUnits;
+        public IReadOnlyList<UnitDataSO> UnitCatalog => unitCatalog;
+        public DungeonUnlockCatalogSO UnlockCatalog => unlockCatalog;
         public IReadOnlyList<UnitDataSO> UnlockedUnits => _unlockedUnits;
         public IReadOnlyList<BuildingDataSO> UnlockedBuildings => _unlockedBuildings;
         public IReadOnlyDictionary<UnitDataSO, int> OwnedUnits => _ownedUnits;
         public IReadOnlyDictionary<BuildingDataSO, int> OwnedBuildings => _ownedBuildings;
+        public float StandbyFatigueRecoveryPerDay => standbyFatigueRecoveryPerDay;
+        public float StandbyHealthRecoveryPerDay => standbyHealthRecoveryPerDay;
 
         private void OnEnable()
         {
@@ -139,6 +145,27 @@ namespace _01.Code.Manager
 
         public int GetDeployedUnitCount(UnitDataSO unit) =>
             unit != null && _deployedUnits.TryGetValue(unit, out var count) ? count : 0;
+
+        public bool TryTakeAvailableUnit(UnitDataSO unit, out UnitConditionState condition)
+        {
+            var index = FindBestAvailableUnitIndex(unit);
+            if (index < 0)
+            {
+                condition = UnitConditionState.Fresh;
+                return false;
+            }
+
+            condition = _availableConditions[index];
+            _availableUnits.RemoveAt(index);
+            _availableConditions.RemoveAt(index);
+            costEventChannel?.RaiseEvent(new RosterChangedEvent(_availableUnits));
+            return true;
+        }
+
+        public void ReturnFromExpedition(UnitDataSO unit, UnitConditionState condition)
+        {
+            AddAvailableUnit(unit, condition);
+        }
 
         public int TotalHiredCount
         {
@@ -380,6 +407,22 @@ namespace _01.Code.Manager
 
             if (unitCatalog == null)
                 return;
+
+            if (unlockCatalog != null)
+            {
+                foreach (var entry in unlockCatalog.Entries)
+                {
+                    var unit = entry?.Unit;
+                    if (unit == null || !entry.StartsUnlocked || _unlockedUnits.Contains(unit))
+                        continue;
+
+                    _unlockedUnits.Add(unit);
+                    if (!_ownedUnits.ContainsKey(unit))
+                        _ownedUnits[unit] = _unlockedUnits.Count == 1 ? startingCopiesOfFirstUnit : 0;
+                }
+
+                return;
+            }
 
             for (var i = 0; i < unitCatalog.Length; i++)
             {
