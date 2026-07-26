@@ -1,0 +1,90 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 033109fdb405630408c6d1e7442b356d, type: 3}
+  m_Name: DungeonUnlockCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Progression.DungeonUnlockCatalogSO
+  entries:
+  - unit: {fileID: 11400000, guid: b6ce91f584084e0caa2a843d9c51c8df, type: 2}
+    building: {fileID: 0}
+    startsUnlocked: 1
+    unlockHint: "\uACE0\uC6A9 \uD328\uB110\uC5D0\uC11C \uACC4\uC57D\uD560 \uC218
+      \uC788\uC2B5\uB2C8\uB2E4."
+  - unit: {fileID: 11400000, guid: d54fce19d871431995a28dbcf64a2482, type: 2}
+    building: {fileID: 0}
+    startsUnlocked: 1
+    unlockHint: "\uACE0\uC6A9 \uD328\uB110\uC5D0\uC11C \uACC4\uC57D\uD560 \uC218
+      \uC788\uC2B5\uB2C8\uB2E4."
+  - unit: {fileID: 11400000, guid: f32955b7a7e548c0a75dc10419558c81, type: 2}
+    building: {fileID: 0}
+    startsUnlocked: 1
+    unlockHint: "\uACE0\uC6A9 \uD328\uB110\uC5D0\uC11C \uACC4\uC57D\uD560 \uC218
+      \uC788\uC2B5\uB2C8\uB2E4."
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: 42825de8a3367de46a6089d639890ae2, type: 2}
+    startsUnlocked: 1
+    unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
+      \uC788\uC2B5\uB2C8\uB2E4."
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: 3be975d9f7e84f2ca311f8d4f7a31e6a, type: 2}
+    startsUnlocked: 1
+    unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
+      \uC788\uC2B5\uB2C8\uB2E4."
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: 29e49c3215d74e87a2f48f1429a0246d, type: 2}
+    startsUnlocked: 1
+    unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
+      \uC788\uC2B5\uB2C8\uB2E4."
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: 63a68a01c1e746e49a3bc6917d59ab69, type: 2}
+    startsUnlocked: 1
+    unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
+      \uC788\uC2B5\uB2C8\uB2E4."
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: 6b7d4a8b65db4ce7ac9796c41147c597, type: 2}
+    startsUnlocked: 1
+    unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
+      \uC788\uC2B5\uB2C8\uB2E4."
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: 6120671860064b739c4fe040da4747f0, type: 2}
+    startsUnlocked: 1
+    unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
+      \uC788\uC2B5\uB2C8\uB2E4."
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: 4bc0888fea494b3da0e4c05d659baaf9, type: 2}
+    startsUnlocked: 1
+    unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
+      \uC788\uC2B5\uB2C8\uB2E4."
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: e54bdac488bf4a19b5cbcf504e34f6e8, type: 2}
+    startsUnlocked: 1
+    unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
+      \uC788\uC2B5\uB2C8\uB2E4."
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: b7e6ba90fa9242e7840b10a701686e97, type: 2}
+    startsUnlocked: 1
+    unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
+      \uC788\uC2B5\uB2C8\uB2E4."
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: 169a0159d9454abba7660ea48c46532c, type: 2}
+    startsUnlocked: 1
+    unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
+      \uC788\uC2B5\uB2C8\uB2E4."
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: 2f9619c18a6e4290b76a38e11290abd5, type: 2}
+    startsUnlocked: 1
+    unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
+      \uC788\uC2B5\uB2C8\uB2E4."
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: 9978d5ad46fa4c71bb0b0b6ab4d91d91, type: 2}
+    startsUnlocked: 1
+    unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
+      \uC788\uC2B5\uB2C8\uB2E4."
