@@ -28,7 +28,7 @@ namespace _01.Code.Dialogue
         [Header("Guided Start Tutorial")]
         [SerializeField] private bool useGuidedStartTutorial;
         [SerializeField] private GameEventChannelSO guidedNodeEventChannel;
-        [SerializeField] private string tutorialSpeakerName = "관리자";
+        [SerializeField] private string tutorialSpeakerName = "임프 참모";
 
         private readonly DialogueSequencePlayer player = new();
         private DialogueSequenceSO pendingScheduledEventSequence;
@@ -228,7 +228,7 @@ namespace _01.Code.Dialogue
 
             guidedStep = GuidedStartTutorialStep.BuildFirstRoom;
             PlayGuidedMessage(
-                "자물쇠 타일을 클릭한 뒤 확인을 눌러 첫 방을 확장하세요.\n\n직접 클릭을 완료하면 다음 안내로 넘어갑니다.");
+                "첫 지령 · 봉인된 타일을 열어 던전의 첫 방을 만드십시오.");
             guidedLockedNode = ResolvePreferredLockedNode();
             TutorialInputGate.OnlyLockedNode(guidedLockedNode);
             HighlightBuildTarget();
@@ -244,7 +244,7 @@ namespace _01.Code.Dialogue
                 guidedBuiltNode = evt.Node;
                 guidedStep = GuidedStartTutorialStep.HireUnit;
                 PlayGuidedMessage(
-                    "확장 완료. 다음은 유닛 고용입니다.\n\n유닛 고용 패널을 열고, 밝게 표시된 보유 유닛 카드를 두 번 클릭해 고용하세요.");
+                    "방이 준비됐습니다. 수비대 관리에서 첫 부하를 영입하십시오.");
                 guidedHiredUnit = ResolveFirstHireUnit();
                 TutorialInputGate.OnlyHireUnit(guidedHiredUnit);
                 HighlightUnitHireTarget();
@@ -256,7 +256,7 @@ namespace _01.Code.Dialogue
                 guidedPortalNode = evt.Node;
                 guidedStep = GuidedStartTutorialStep.SelectPortalRoom;
                 PlayGuidedMessage(
-                    "포탈을 놓을 빈 방이 생겼습니다.\n\n방금 확장한 타일을 클릭해서 설치 메뉴를 여세요.");
+                    "새 방을 선택해 입구 포탈을 준비하십시오.");
                 TutorialInputGate.OnlyUnlockedNode(guidedPortalNode);
                 HighlightNode(guidedPortalNode);
                 return;
@@ -267,7 +267,7 @@ namespace _01.Code.Dialogue
                 guidedTrapNode = evt.Node;
                 guidedStep = GuidedStartTutorialStep.SelectTrapRoom;
                 PlayGuidedMessage(
-                    "트랩을 놓을 빈 방이 생겼습니다.\n\n방금 확장한 타일을 클릭해서 설치 메뉴를 여세요.");
+                    "새 방을 선택해 함정실로 만드십시오.");
                 TutorialInputGate.OnlyUnlockedNode(guidedTrapNode);
                 HighlightNode(guidedTrapNode);
             }
@@ -281,7 +281,7 @@ namespace _01.Code.Dialogue
             guidedStep = GuidedStartTutorialStep.SelectBuiltRoom;
             guidedHiredUnit = evt.Unit;
             PlayGuidedMessage(
-                "유닛이 준비됐습니다.\n\n방금 확장한 빈 타일을 클릭해서 설치 메뉴를 여세요.");
+                "부하가 대기 중입니다. 첫 방을 선택하십시오.");
             TutorialInputGate.OnlyUnlockedNode(guidedBuiltNode);
             HighlightNode(guidedBuiltNode);
         }
@@ -300,13 +300,13 @@ namespace _01.Code.Dialogue
             if (guidedBuiltNode != null && evt.Node != guidedBuiltNode)
             {
                 PlayGuidedMessage(
-                    "이번에는 방금 확장한 빈 타일을 클릭해 주세요.\n\n그 타일에서 유닛 배치를 진행합니다.");
+                    "지정된 첫 방을 선택하십시오.");
                 return;
             }
 
             guidedStep = GuidedStartTutorialStep.DeployUnit;
             PlayGuidedMessage(
-                "설치 버튼을 누르고, 유닛 카테고리를 선택한 뒤 밝게 표시된 유닛 카드를 클릭하세요.\n\n배치가 완료되면 다음 단계로 넘어갑니다.");
+                "설치 · 유닛에서 영입한 부하를 배치하십시오.");
             TutorialInputGate.OnlyDeployUnit(guidedBuiltNode, guidedHiredUnit);
             HighlightUnitDeployTarget();
         }
@@ -319,14 +319,14 @@ namespace _01.Code.Dialogue
             if (guidedPortalNode != null && node != guidedPortalNode)
             {
                 PlayGuidedMessage(
-                    "이번에는 포탈을 놓을 방금 확장한 빈 타일을 클릭해 주세요.");
+                    "입구 포탈을 둘 새 방을 선택하십시오.");
                 HighlightNode(guidedPortalNode);
                 return;
             }
 
             guidedStep = GuidedStartTutorialStep.InstallPortal;
             PlayGuidedMessage(
-                "설치 버튼을 누르고, 빌딩 카테고리에서 포탈을 선택하세요.\n\n포탈이 설치되면 웨이브 시작으로 넘어갑니다.");
+                "설치 · 건물에서 입구 포탈을 세우십시오.");
             TutorialInputGate.OnlyInstallPortal(guidedPortalNode);
             HighlightPortalInstallTarget();
         }
@@ -339,14 +339,14 @@ namespace _01.Code.Dialogue
             if (guidedTrapNode != null && node != guidedTrapNode)
             {
                 PlayGuidedMessage(
-                    "이번에는 트랩을 놓을 방금 확장한 빈 타일을 클릭해 주세요.");
+                    "함정실로 만들 새 방을 선택하십시오.");
                 HighlightNode(guidedTrapNode);
                 return;
             }
 
             guidedStep = GuidedStartTutorialStep.InstallTrap;
             PlayGuidedMessage(
-                "설치 버튼을 누르고, 트랩 카테고리에서 밝게 표시된 트랩을 선택하세요.\n\n트랩이 설치되면 2일차 웨이브를 시작합니다.");
+                "설치 · 함정에서 표시된 장치를 배치하십시오.");
             TutorialInputGate.OnlyInstallTrap(guidedTrapNode);
             HighlightTrapInstallTarget();
         }
@@ -361,7 +361,7 @@ namespace _01.Code.Dialogue
 
             guidedStep = GuidedStartTutorialStep.BuildPortalRoom;
             PlayGuidedMessage(
-                "좋습니다. 유닛 배치까지 완료했습니다.\n\n이제 다른 자물쇠 타일을 클릭해 포탈을 놓을 빈 방을 하나 더 확장하세요.");
+                "수비대 배치 완료. 봉인된 타일을 하나 더 여십시오.");
             guidedLockedNode = ResolvePreferredLockedNode();
             TutorialInputGate.OnlyLockedNode(guidedLockedNode);
             HighlightBuildTarget();
@@ -374,7 +374,7 @@ namespace _01.Code.Dialogue
 
             guidedStep = GuidedStartTutorialStep.StartWave;
             PlayGuidedMessage(
-                "포탈 설치 완료.\n\n이제 웨이브 시작 버튼을 눌러 첫 전투를 시작하세요.");
+                "입구가 열렸습니다. 습격 개시로 모험가를 들이십시오.");
             TutorialInputGate.OnlyWaveStart();
             HighlightWaveStartButton();
         }
@@ -387,7 +387,7 @@ namespace _01.Code.Dialogue
             {
                 guidedStep = GuidedStartTutorialStep.FirstWaveRunning;
                 PlayGuidedMessage(
-                    "1일차 웨이브가 시작됐습니다.\n\n전투가 끝나면 보상을 받고, 다음 방어 준비에서 트랩을 직접 설치해 봅니다.");
+                    "습격 개시 · 모험가의 경계와 탐욕은 이동과 건물 조우마다 변합니다.");
                 TutorialInputGate.Clear();
                 view?.HideSpotlight();
                 return;
@@ -397,7 +397,7 @@ namespace _01.Code.Dialogue
             {
                 guidedStep = GuidedStartTutorialStep.SecondWaveRunning;
                 PlayGuidedMessage(
-                    "2일차 웨이브가 시작됐습니다.\n\n이번에는 유닛과 트랩이 함께 막아주는 흐름을 확인하세요.");
+                    "두 번째 습격 · 수비대와 함정이 모험가의 경계를 끌어올립니다.");
                 TutorialInputGate.Clear();
                 view?.HideSpotlight();
                 return;
@@ -408,7 +408,7 @@ namespace _01.Code.Dialogue
                 guidedStep = GuidedStartTutorialStep.ThirdWaveRunning;
                 TutorialInputGate.Clear();
                 PlayGuidedMessage(
-                    "3일차 웨이브가 시작됐습니다.\n\n클리어 후 원정/운영 선택까지 진행하면 튜토리얼이 완료됩니다.");
+                    "세 번째 습격 · 살아남아 던전 운영권을 증명하십시오.");
                 view?.HideSpotlight();
             }
         }
@@ -425,7 +425,7 @@ namespace _01.Code.Dialogue
 
                 guidedStep = GuidedStartTutorialStep.StartSecondWave;
                 PlayGuidedMessage(
-                    "트랩 설치 완료.\n\n이제 웨이브 시작 버튼을 눌러 2일차 전투를 시작하세요.");
+                    "함정실 준비 완료. 두 번째 습격을 개시하십시오.");
                 TutorialInputGate.OnlyWaveStart();
                 HighlightWaveStartButton();
             }
@@ -437,7 +437,7 @@ namespace _01.Code.Dialogue
             {
                 guidedStep = GuidedStartTutorialStep.BuildTrapRoom;
                 PlayGuidedMessage(
-                    "1일차 방어가 끝났습니다.\n\n이번에는 자물쇠 타일을 하나 더 확장하고, 새 방에 트랩을 설치해 보세요.");
+                    "첫 습격을 막았습니다. 새 방을 열어 함정실을 만드십시오.");
                 guidedLockedNode = ResolvePreferredLockedNode();
                 TutorialInputGate.OnlyLockedNode(guidedLockedNode);
                 HighlightBuildTarget();
@@ -448,7 +448,7 @@ namespace _01.Code.Dialogue
             {
                 guidedStep = GuidedStartTutorialStep.StartThirdWave;
                 PlayGuidedMessage(
-                    "2일차 방어가 끝났습니다.\n\n유닛, 포탈, 트랩은 이제 자유롭게 쓸 수 있습니다. 웨이브 시작 버튼을 눌러 3일차 전투를 시작하세요.");
+                    "방어선이 작동합니다. 세 번째 습격을 개시하십시오.");
                 TutorialInputGate.OnlyWaveStart();
                 HighlightWaveStartButton();
                 return;
@@ -459,7 +459,7 @@ namespace _01.Code.Dialogue
                 guidedStep = GuidedStartTutorialStep.ChoosePolicy;
                 hasSeenPolicyChoicePanel = false;
                 PlayGuidedMessage(
-                    "3일차 방어가 끝났습니다.\n\n이제 운영 선택을 진행합니다. 밝게 표시된 첫 선택지를 눌러 원정/운영 결정을 완료하세요.");
+                    "지하 왕국이 자리를 잡았습니다. 첫 운영 지침을 선택하십시오.");
                 TutorialInputGate.OnlyPolicyChoice();
                 UpdatePolicyTutorial();
             }
@@ -473,7 +473,7 @@ namespace _01.Code.Dialogue
         private void PlayGuidedMessage(string message, bool allowNextButton = false)
         {
             guidedRuntimeSequence ??= ScriptableObject.CreateInstance<DialogueSequenceSO>();
-            guidedRuntimeSequence.ConfigureTitle("튜토리얼");
+            guidedRuntimeSequence.ConfigureTitle("KEEPER'S ORDER");
             guidedRuntimeSequence.Configure(new DialogueLine(tutorialSpeakerName, message));
 
             Play(guidedRuntimeSequence);
@@ -720,7 +720,7 @@ namespace _01.Code.Dialogue
             guidedStep = GuidedStartTutorialStep.Complete;
             TutorialInputGate.Clear();
             PlayGuidedMessage(
-                "튜토리얼 완료.\n\n방 확장, 유닛 배치, 포탈 설치, 3일차 운영 선택까지 확인했습니다. 이제 자유롭게 방어선을 운영하세요.",
+                "임명 완료 · 이제 이 던전은 키퍼님의 것입니다.",
                 true);
             view?.HideSpotlight();
         }

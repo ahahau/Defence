@@ -17,6 +17,8 @@ namespace _01.Code.Dialogue
         [SerializeField] private Button closeButton;
         [SerializeField] private RectTransform choiceRoot;
         [SerializeField] private Button choiceButtonPrefab;
+        [SerializeField] private TutorialSpotlightView spotlightPrefab;
+        [SerializeField] private TutorialSpotlightView sceneSpotlightView;
         [SerializeField, Min(0f)] private float choiceSlideDuration = 0.22f;
         [SerializeField] private float choiceSlideOffset = 280f;
         [SerializeField, Min(0f)] private float choiceStaggerDelay = 0.045f;
@@ -353,17 +355,29 @@ namespace _01.Code.Dialogue
             if (spotlightRoot != null)
                 return;
 
-            var rootObject = new GameObject("TutorialSpotlight", typeof(RectTransform));
-            spotlightRoot = rootObject.GetComponent<RectTransform>();
-            spotlightRoot.SetParent(rootRect, false);
-            spotlightRoot.anchorMin = Vector2.zero;
-            spotlightRoot.anchorMax = Vector2.one;
-            spotlightRoot.offsetMin = Vector2.zero;
-            spotlightRoot.offsetMax = Vector2.zero;
-            spotlightRoot.pivot = new Vector2(0.5f, 0.5f);
+            if (rootRect == null)
+            {
+                Debug.LogError("Tutorial spotlight requires a dialogue root RectTransform.", this);
+                return;
+            }
 
+            var view = sceneSpotlightView;
+            if (view == null)
+            {
+                Debug.LogError("Tutorial spotlight requires a scene-placed TutorialSpotlightView.", this);
+                return;
+            }
+
+            view.gameObject.SetActive(true);
+            spotlightRoot = view.transform as RectTransform;
+            var panels = view.DimPanels;
             for (var i = 0; i < spotlightRects.Length; i++)
-                spotlightRects[i] = CreateSpotlightPanel($"Dim_{i}", spotlightRoot);
+            {
+                spotlightRects[i] = panels != null && i < panels.Length ? panels[i] : null;
+                var image = spotlightRects[i] != null ? spotlightRects[i].GetComponent<Image>() : null;
+                if (image != null)
+                    image.color = spotlightDimColor;
+            }
 
             spotlightRoot.gameObject.SetActive(false);
         }
@@ -405,18 +419,6 @@ namespace _01.Code.Dialogue
 
             CaptureRootGraphicColor();
             rootGraphic.raycastTarget = raycastTarget;
-        }
-
-        private RectTransform CreateSpotlightPanel(string panelName, Transform parent)
-        {
-            var panel = new GameObject(panelName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            panel.transform.SetParent(parent, false);
-
-            var image = panel.GetComponent<Image>();
-            image.color = spotlightDimColor;
-            image.raycastTarget = false;
-
-            return panel.GetComponent<RectTransform>();
         }
 
         private void SetSpotlightRect(RectTransform rect, float x, float y, float width, float height)
