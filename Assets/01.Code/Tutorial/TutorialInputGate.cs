@@ -151,37 +151,51 @@ namespace _01.Code.Tutorial
 
         public static bool AllowsUnlockedNode(Node node)
         {
-            return !IsActive || (AllowedUnlockedNode != null && node == AllowedUnlockedNode);
+            // "습격 개시" 안내 단계는 플레이어의 준비 시간을 막지 않는다.
+            // 포탈을 중앙 슬롯에 설치한 직후에도 다른 노드를 고르고,
+            // 유닛·함정을 배치한 뒤 원하는 때에 습격을 시작할 수 있어야 한다.
+            return !IsActive
+                   || AllowWaveStart
+                   || (AllowedUnlockedNode != null && node == AllowedUnlockedNode);
         }
 
         public static bool AllowsHirePanel()
         {
-            return !IsActive || AllowHirePanel;
+            // 포탈 설치 뒤 "습격 개시" 안내 단계에서도 전투 준비(고용·배치)를
+            // 제한하면 플레이어가 아무 행동도 할 수 없다.
+            return !IsActive || AllowWaveStart || AllowHirePanel;
         }
 
         public static bool AllowsHireUnit(UnitDataSO unit)
         {
-            return !IsActive || (AllowedHireUnit != null && unit == AllowedHireUnit);
+            return !IsActive
+                   || AllowWaveStart
+                   || (AllowedHireUnit != null && unit == AllowedHireUnit);
         }
 
         public static bool AllowsInstallMenu()
         {
-            return !IsActive || AllowInstallMenu;
+            return !IsActive || AllowWaveStart || AllowInstallMenu;
         }
 
         public static bool AllowsInstallCategory(InstallCategory category)
         {
-            return !IsActive || !AllowedInstallCategory.HasValue || category == AllowedInstallCategory.Value;
+            return !IsActive
+                   || AllowWaveStart
+                   || !AllowedInstallCategory.HasValue
+                   || category == AllowedInstallCategory.Value;
         }
 
         public static bool AllowsRosterDeployUnit(UnitDataSO unit)
         {
-            return !IsActive || (AllowedDeployUnit != null && unit == AllowedDeployUnit);
+            return !IsActive
+                   || AllowWaveStart
+                   || (AllowedDeployUnit != null && unit == AllowedDeployUnit);
         }
 
         public static bool AllowsBuildingInstall(BuildingDataSO building)
         {
-            if (!IsActive)
+            if (!IsActive || AllowWaveStart)
                 return true;
 
             if (!AllowedInstallCategory.HasValue)

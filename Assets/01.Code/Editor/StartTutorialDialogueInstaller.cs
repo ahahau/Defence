@@ -34,8 +34,8 @@ namespace _01.Code.Editor
             var panel = EnsureChild(overlay.transform, "DialoguePanel", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
             ConfigurePanel(panel);
 
-            var title = EnsureText(panel.transform, "Title", "튜토리얼", 22f, FontStyles.Bold, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(32f, -24f), new Vector2(220f, 34f), TextAlignmentOptions.Left);
-            var speaker = EnsureText(panel.transform, "Speaker", "관리자", 25f, FontStyles.Bold, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(32f, -70f), new Vector2(220f, 38f), TextAlignmentOptions.Left);
+            var title = EnsureText(panel.transform, "Title", "KEEPER'S ORDER", 22f, FontStyles.Bold, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(32f, -24f), new Vector2(240f, 34f), TextAlignmentOptions.Left);
+            var speaker = EnsureText(panel.transform, "Speaker", "임프 참모", 25f, FontStyles.Bold, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(32f, -70f), new Vector2(220f, 38f), TextAlignmentOptions.Left);
             var body = EnsureText(panel.transform, "Body", string.Empty, 28f, FontStyles.Normal, new Vector2(0f, 0f), new Vector2(1f, 1f), new Vector2(32f, 86f), new Vector2(-244f, -124f), TextAlignmentOptions.TopLeft);
             var progress = EnsureText(panel.transform, "Progress", "1/1", 19f, FontStyles.Normal, new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-180f, 30f), new Vector2(78f, 30f), TextAlignmentOptions.Center);
             var skipButton = EnsureButton(panel.transform, "SkipButton", "스킵", new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-134f, -24f), new Vector2(96f, 38f), true);
@@ -72,15 +72,15 @@ namespace _01.Code.Editor
             }
 
             var serializedSequence = new SerializedObject(sequence);
-            serializedSequence.FindProperty("displayTitle").stringValue = "튜토리얼";
+            serializedSequence.FindProperty("displayTitle").stringValue = "KEEPER'S ORDER";
             serializedSequence.ApplyModifiedPropertiesWithoutUndo();
 
             sequence.Configure(
-                new DialogueLine("관리자", "잠긴 노드를 클릭하고 확장 버튼을 눌러 첫 방을 만드세요."),
-                new DialogueLine("관리자", "유닛 패널을 열고 밝게 표시된 유닛을 획득하세요."),
-                new DialogueLine("관리자", "첫 방을 클릭한 뒤 유닛 설치 패널에서 획득한 유닛을 배치하세요."),
-                new DialogueLine("관리자", "중앙 줄의 잠긴 노드를 하나 더 확장하고 그 방에 포탈을 설치하세요."),
-                new DialogueLine("관리자", "포탈 설치가 끝나면 웨이브 시작 버튼을 눌러 첫 전투를 시작하세요.", new DialogueChoice("시작하기", -1)));
+                new DialogueLine("임프 참모", "봉인된 타일을 열어 첫 방을 만드십시오."),
+                new DialogueLine("임프 참모", "수비대 관리에서 첫 부하를 영입하십시오."),
+                new DialogueLine("임프 참모", "첫 방에 영입한 부하를 배치하십시오."),
+                new DialogueLine("임프 참모", "새 방을 열고 입구 포탈을 세우십시오."),
+                new DialogueLine("임프 참모", "준비가 끝났다면 첫 습격을 개시하십시오.", new DialogueChoice("지령 수행", -1)));
 
             EditorUtility.SetDirty(sequence);
             return sequence;
@@ -166,7 +166,7 @@ namespace _01.Code.Editor
             serializedRunner.FindProperty("useGuidedStartTutorial").boolValue = true;
             serializedRunner.FindProperty("guidedNodeEventChannel").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameEventChannelSO>(NodeChannelPath);
             serializedRunner.FindProperty("guidedWorldCamera").objectReferenceValue = GetComponentInScene<Camera>(runner.gameObject.scene);
-            serializedRunner.FindProperty("tutorialSpeakerName").stringValue = "관리자";
+            serializedRunner.FindProperty("tutorialSpeakerName").stringValue = "임프 참모";
             serializedRunner.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(runner);
         }
