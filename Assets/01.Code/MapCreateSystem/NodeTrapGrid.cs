@@ -20,13 +20,19 @@ namespace _01.Code.MapCreateSystem
         [SerializeField] private bool showGridWhenFocused = true;
         [SerializeField] private Color focusedGridColor = new(0.3f, 0.85f, 1f, 0.58f);
         [SerializeField, Min(0.005f)] private float focusedGridLineWidth = 0.03f;
-        [SerializeField] private int focusedGridSortingOrder = 35;
+        [SerializeField] private int focusedGridSortingOrder = 5;
         [SerializeField] private Color selectedFreeCellColor = new(0.25f, 1f, 0.48f, 0.38f);
         [SerializeField] private Color selectedOccupiedCellColor = new(1f, 0.62f, 0.2f, 0.42f);
+        [Header("Central Building Slot")]
+        [SerializeField] private bool reserveCentralBuildingSlot = true;
+        [SerializeField, Min(1)] private int centralBuildingSlotColumns = 2;
+        [SerializeField, Min(1)] private int centralBuildingSlotRows = 2;
+        [SerializeField] private Color centralBuildingSlotColor = new(0.25f, 0.95f, 1f, 0.55f);
 
         private Building[] _cells;
         private readonly List<Building> _placed = new();
         private GameObject _focusedGridRoot;
+        private SpriteRenderer _focusedGridSurface;
         private SpriteRenderer _selectedCellMarker;
         private static Material _focusedGridMaterial;
         private static Sprite _cellMarkerSprite;
@@ -36,9 +42,51 @@ namespace _01.Code.MapCreateSystem
         public int CellCount => columns * rows;
         /// <summary>셀 간격(월드 단위). 배치 미리보기가 하이라이트 크기를 맞출 때 사용.</summary>
         public float CellSize => cellSize;
+        public Vector2 CentralBuildingSlotWorldSize
+        {
+            get
+            {
+                var bounds = GetCentralSlotBounds();
+                return new Vector2(
+                    (bounds.maxColumn - bounds.minColumn + 1) * cellSize,
+                    (bounds.maxRow - bounds.minRow + 1) * cellSize);
+            }
+        }
         /// <summary>그리드에 배치된 모든 건물(트랩 발동·정리 등에서 순회. 트랩만 필요하면 is Trap으로 거른다).</summary>
         public IReadOnlyList<Building> PlacedBuildings => _placed;
         public bool IsFocusedGridVisible => _focusedGridRoot != null && _focusedGridRoot.activeSelf;
+
+        /// <summary>
+        /// 중앙 둥지 슬롯의 상하좌우 한 칸 고리에 배치된 살아 있는 건물 수.
+        /// 둥지 결속 시스템의 공간 투자량으로 사용한다.
+        /// </summary>
+        public int CountBuildingsAdjacentToCentralSlot()
+        {
+            if (!reserveCentralBuildingSlot)
+                return 0;
+
+            EnsureCells();
+            var bounds = GetCentralSlotBounds();
+            var count = 0;
+            for (var row = 0; row < rows; row++)
+            for (var column = 0; column < columns; column++)
+            {
+                var building = _cells[Index(column, row)];
+                if (building == null || building.IsDestroyed)
+                    continue;
+
+                var besideHorizontalEdge = (column == bounds.minColumn - 1 || column == bounds.maxColumn + 1)
+                                           && row >= bounds.minRow
+                                           && row <= bounds.maxRow;
+                var besideVerticalEdge = (row == bounds.minRow - 1 || row == bounds.maxRow + 1)
+                                         && column >= bounds.minColumn
+                                         && column <= bounds.maxColumn;
+                if (besideHorizontalEdge || besideVerticalEdge)
+                    count++;
+            }
+
+            return count;
+        }
 
         private void Awake()
         {
@@ -73,7 +121,9 @@ namespace _01.Code.MapCreateSystem
         public bool IsCellFree(int column, int row)
         {
             EnsureCells();
-            return IsValidCell(column, row) && _cells[Index(column, row)] == null;
+            return IsValidCell(column, row)
+                   && !IsCentralBuildingSlotCell(column, row)
+                   && _cells[Index(column, row)] == null;
         }
 
         /// <summary>현재 배치된 개수.</summary>
@@ -89,6 +139,26 @@ namespace _01.Code.MapCreateSystem
             var x = originOffset.x + column * cellSize - width * 0.5f;
             var y = originOffset.y + row * cellSize - height * 0.5f;
             return transform.position + new Vector3(x, y, 0f);
+        }
+
+        public Vector3 CentralBuildingWorldPosition()
+        {
+            var bounds = GetCentralSlotBounds();
+            var min = CellWorldPosition(bounds.minColumn, bounds.minRow);
+            var max = CellWorldPosition(bounds.maxColumn, bounds.maxRow);
+            return (min + max) * 0.5f;
+        }
+
+        public bool IsCentralBuildingSlotCell(int column, int row)
+        {
+            if (!reserveCentralBuildingSlot || !IsValidCell(column, row))
+                return false;
+
+            var bounds = GetCentralSlotBounds();
+            return column >= bounds.minColumn
+                   && column <= bounds.maxColumn
+                   && row >= bounds.minRow
+                   && row <= bounds.maxRow;
         }
 
         /// <summary>월드 좌표가 어느 셀인지(클릭 배치용). 격자 밖이면 false.</summary>
@@ -131,7 +201,13 @@ namespace _01.Code.MapCreateSystem
             {
                 EnsureCells();
                 for (var i = 0; i < _cells.Length; i++)
-                    if (_cells[i] == null) return true;
+                {
+                    var column = i % columns;
+                    var row = i / columns;
+                    if (IsCellFree(column, row))
+                        return true;
+                }
+
                 return false;
             }
         }
@@ -147,7 +223,7 @@ namespace _01.Code.MapCreateSystem
             for (var r = 0; r < rows; r++)
             for (var c = 0; c < columns; c++)
             {
-                if (_cells[Index(c, r)] != null) continue;
+                if (!IsCellFree(c, r)) continue;
                 var d = (CellWorldPosition(c, r) - worldPosition).sqrMagnitude;
                 if (d < bestDistance) { bestDistance = d; bestColumn = c; bestRow = r; }
             }
@@ -199,12 +275,16 @@ namespace _01.Code.MapCreateSystem
                 !TryGetCell(worldPosition, out column, out row))
                 return false;
 
-            EnsureSelectedCellMarker();
-            _selectedCellMarker.transform.position = CellWorldPosition(column, row) + Vector3.back * 0.02f;
-            _selectedCellMarker.color = IsCellFree(column, row)
-                ? selectedFreeCellColor
-                : selectedOccupiedCellColor;
-            _selectedCellMarker.enabled = true;
+            if (IsCentralBuildingSlotCell(column, row))
+            {
+                var centralBounds = GetCentralSlotBounds();
+                column = centralBounds.minColumn;
+                row = centralBounds.minRow;
+            }
+
+            // Grid cells are placement targets, not selectable UI controls.  Keep their
+            // visual state stable so clicks never repaint a small tile or imply ownership.
+            ClearCellSelection();
             return true;
         }
 
@@ -225,18 +305,46 @@ namespace _01.Code.MapCreateSystem
             var half = cellSize * 0.5f;
             var min = CellWorldPosition(0, 0) - new Vector3(half, half, 0f);
             var max = CellWorldPosition(columns - 1, rows - 1) + new Vector3(half, half, 0f);
+            var centralBounds = GetCentralSlotBounds();
 
-            for (var column = 0; column <= columns; column++)
-            {
-                var x = min.x + column * cellSize;
-                CreateFocusedGridLine(new Vector3(x, min.y, 0f), new Vector3(x, max.y, 0f));
-            }
+            CreateFocusedGridSurface(min, max, centralBounds);
+        }
 
-            for (var row = 0; row <= rows; row++)
-            {
-                var y = min.y + row * cellSize;
-                CreateFocusedGridLine(new Vector3(min.x, y, 0f), new Vector3(max.x, y, 0f));
-            }
+        private void CreateFocusedGridSurface(
+            Vector3 min,
+            Vector3 max,
+            (int minColumn, int maxColumn, int minRow, int maxRow) centralBounds)
+        {
+            var surfaceObject = new GameObject("FocusedGridSurface");
+            surfaceObject.transform.SetParent(_focusedGridRoot.transform, false);
+            surfaceObject.transform.position = (min + max) * 0.5f + Vector3.back * 0.015f;
+
+            _focusedGridSurface = surfaceObject.AddComponent<SpriteRenderer>();
+            _focusedGridSurface.sprite = CellMarkerSprite;
+            _focusedGridSurface.sharedMaterial = FocusedGridMaterial;
+            _focusedGridSurface.sortingOrder = focusedGridSortingOrder;
+
+            var worldSize = max - min;
+            var parentScale = transform.lossyScale;
+            surfaceObject.transform.localScale = new Vector3(
+                worldSize.x / Mathf.Max(0.0001f, Mathf.Abs(parentScale.x)),
+                worldSize.y / Mathf.Max(0.0001f, Mathf.Abs(parentScale.y)),
+                1f);
+
+            var properties = new MaterialPropertyBlock();
+            properties.SetVector("_GridSize", new Vector4(columns, rows, 0f, 0f));
+            properties.SetColor("_GridColor", focusedGridColor);
+            properties.SetColor("_CenterColor", centralBuildingSlotColor);
+            properties.SetFloat("_LineWidth", Mathf.Clamp(focusedGridLineWidth / cellSize * 0.62f, 0.008f, 0.04f));
+            properties.SetFloat("_GlowStrength", 0.09f);
+            properties.SetVector("_CentralRect", reserveCentralBuildingSlot
+                ? new Vector4(
+                    centralBounds.minColumn / (float)columns,
+                    centralBounds.minRow / (float)rows,
+                    (centralBounds.maxColumn + 1f) / columns,
+                    (centralBounds.maxRow + 1f) / rows)
+                : new Vector4(-1f, -1f, -1f, -1f));
+            _focusedGridSurface.SetPropertyBlock(properties);
         }
 
         private void EnsureSelectedCellMarker()
@@ -248,12 +356,17 @@ namespace _01.Code.MapCreateSystem
             markerObject.transform.SetParent(_focusedGridRoot.transform, false);
             _selectedCellMarker = markerObject.AddComponent<SpriteRenderer>();
             _selectedCellMarker.sprite = CellMarkerSprite;
-            _selectedCellMarker.sortingOrder = focusedGridSortingOrder - 1;
+            _selectedCellMarker.sortingOrder = focusedGridSortingOrder + 1;
+        }
 
+        private void SetSelectedCellMarker(Vector3 worldPosition, Vector2 worldSize, Color color)
+        {
+            _selectedCellMarker.transform.position = worldPosition + Vector3.back * 0.02f;
+            _selectedCellMarker.color = color;
             var parentScale = transform.lossyScale;
             _selectedCellMarker.transform.localScale = new Vector3(
-                cellSize * 0.9f / Mathf.Max(0.0001f, Mathf.Abs(parentScale.x)),
-                cellSize * 0.9f / Mathf.Max(0.0001f, Mathf.Abs(parentScale.y)),
+                worldSize.x * 0.9f / Mathf.Max(0.0001f, Mathf.Abs(parentScale.x)),
+                worldSize.y * 0.9f / Mathf.Max(0.0001f, Mathf.Abs(parentScale.y)),
                 1f);
         }
 
@@ -278,32 +391,40 @@ namespace _01.Code.MapCreateSystem
             }
         }
 
-        private void CreateFocusedGridLine(Vector3 start, Vector3 end)
-        {
-            var lineObject = new GameObject("GridLine");
-            lineObject.transform.SetParent(_focusedGridRoot.transform, false);
-
-            var line = lineObject.AddComponent<LineRenderer>();
-            line.useWorldSpace = true;
-            line.positionCount = 2;
-            line.SetPosition(0, start);
-            line.SetPosition(1, end);
-            line.startWidth = focusedGridLineWidth;
-            line.endWidth = focusedGridLineWidth;
-            line.material = FocusedGridMaterial;
-            line.startColor = focusedGridColor;
-            line.endColor = focusedGridColor;
-            line.sortingOrder = focusedGridSortingOrder;
-        }
-
         private static Material FocusedGridMaterial
         {
             get
             {
                 if (_focusedGridMaterial == null)
-                    _focusedGridMaterial = new Material(Shader.Find("Sprites/Default"));
+                {
+                    var template = Resources.Load<Material>("Materials/NestGridOverlay");
+                    if (template == null)
+                    {
+                        Debug.LogError("NestGridOverlay material is missing from Resources/Materials.");
+                        return null;
+                    }
+
+                    _focusedGridMaterial = new Material(template)
+                    {
+                        name = "Nest Grid Overlay (Runtime)",
+                        hideFlags = HideFlags.HideAndDontSave
+                    };
+                }
                 return _focusedGridMaterial;
             }
+        }
+
+        private (int minColumn, int maxColumn, int minRow, int maxRow) GetCentralSlotBounds()
+        {
+            var slotColumns = Mathf.Clamp(centralBuildingSlotColumns, 1, columns);
+            var slotRows = Mathf.Clamp(centralBuildingSlotRows, 1, rows);
+            var minColumn = Mathf.Clamp((columns - slotColumns) / 2, 0, columns - 1);
+            var minRow = Mathf.Clamp((rows - slotRows) / 2, 0, rows - 1);
+            return (
+                minColumn,
+                Mathf.Min(columns - 1, minColumn + slotColumns - 1),
+                minRow,
+                Mathf.Min(rows - 1, minRow + slotRows - 1));
         }
 
         public void ClearAll()
@@ -329,7 +450,17 @@ namespace _01.Code.MapCreateSystem
             Gizmos.color = new Color(0.3f, 0.8f, 1f, 0.5f);
             for (var r = 0; r < rows; r++)
             for (var c = 0; c < columns; c++)
+            {
+                if (IsCentralBuildingSlotCell(c, r))
+                    continue;
+
                 Gizmos.DrawWireCube(CellWorldPosition(c, r), new Vector3(cellSize * 0.9f, cellSize * 0.9f, 0.01f));
+            }
+
+            if (reserveCentralBuildingSlot)
+                Gizmos.DrawWireCube(
+                    CentralBuildingWorldPosition(),
+                    new Vector3(CentralBuildingSlotWorldSize.x * 0.9f, CentralBuildingSlotWorldSize.y * 0.9f, 0.01f));
         }
 #endif
     }
