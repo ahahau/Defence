@@ -22,17 +22,17 @@ namespace _01.Code.MapCreateSystem
         private NodeTrapGrid _grid;
         private Action<int, int> _onConfirm;
         private Action _onCancel;
-        private SpriteRenderer _hoverMarker;
         private SpriteRenderer _ghost;
-        private TextMeshPro _hintText;
+        private LineRenderer _hoverOutline;
         private Camera _camera;
+        private Vector3 _ghostBaseScale = Vector3.one;
         private int _hoverColumn = -1;
         private int _hoverRow = -1;
         private bool _hoverIsFree;
 
         private static readonly Color GridLineColor = new(1f, 1f, 1f, 0.35f);
-        private static readonly Color HoverFreeColor = new(0.35f, 1f, 0.45f, 0.45f);
-        private static readonly Color HoverBlockedColor = new(1f, 0.25f, 0.2f, 0.45f);
+        private static readonly Color HoverGhostColor = new(1f, 0.82f, 0.38f, 0.82f);
+        private static readonly Color HoverOutlineColor = new(1f, 0.74f, 0.28f, 0.95f);
         private const int MarkerSortingOrder = 40;
         private const float GridLineWidth = 0.035f;
 
@@ -70,9 +70,8 @@ namespace _01.Code.MapCreateSystem
             _camera = Camera.main;
 
             BuildGridLines();
-            BuildHoverMarker();
             BuildGhost(buildingData);
-            BuildHintText();
+            BuildHoverOutline();
             SetHoverVisible(false);
         }
 
@@ -133,21 +132,19 @@ namespace _01.Code.MapCreateSystem
             _hoverIsFree = _grid.IsCellFree(_hoverColumn, _hoverRow);
             var cellPosition = _grid.CellWorldPosition(_hoverColumn, _hoverRow);
 
-            _hoverMarker.transform.position = cellPosition;
-            _hoverMarker.color = _hoverIsFree ? HoverFreeColor : HoverBlockedColor;
-            _hoverMarker.enabled = true;
-
             if (_ghost != null)
             {
                 _ghost.transform.position = cellPosition;
                 _ghost.enabled = _hoverIsFree;
+                if (_hoverIsFree)
+                {
+                    _ghost.color = HoverGhostColor;
+                    var pulse = 1f + Mathf.Sin(Time.unscaledTime * 8f) * 0.035f;
+                    _ghost.transform.localScale = _ghostBaseScale * pulse;
+                }
             }
 
-            if (_hintText != null)
-            {
-                _hintText.transform.position = cellPosition + Vector3.up * (_grid.CellSize * 0.62f);
-                _hintText.gameObject.SetActive(_hoverIsFree);
-            }
+            UpdateHoverOutline(cellPosition, _hoverIsFree);
         }
 
         private void Confirm()
@@ -223,15 +220,22 @@ namespace _01.Code.MapCreateSystem
 
         private static Material GetLineMaterial()
         {
-            if (_lineMaterial == null)
-                _lineMaterial = new Material(Shader.Find("Sprites/Default"));
+            if (_lineMaterial != null)
+                return _lineMaterial;
+
+            // Unity 6에는 Default-Line.mat 내장 리소스가 없다. 이를 요청하면 작은 칸
+            // 설치 미리보기마다 재질 오류가 쌓이므로, 현재 렌더 파이프라인의 스프라이트
+            // 셰이더로 런타임 전용 라인 재질을 만든다.
+            var shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default")
+                         ?? Shader.Find("Sprites/Default")
+                         ?? Shader.Find("Unlit/Color");
+            if (shader != null)
+                _lineMaterial = new Material(shader)
+                {
+                    hideFlags = HideFlags.HideAndDontSave
+                };
 
             return _lineMaterial;
-        }
-
-        private void BuildHoverMarker()
-        {
-            _hoverMarker = CreateSquare("HoverCell", HoverFreeColor, MarkerSortingOrder + 1);
         }
 
         private void BuildGhost(BuildingDataSO buildingData)
@@ -254,6 +258,8 @@ namespace _01.Code.MapCreateSystem
                 if (prefabRenderer != null)
                     go.transform.localScale = prefabRenderer.transform.lossyScale;
             }
+
+            _ghostBaseScale = go.transform.localScale;
         }
 
         private static Sprite ResolveBuildingSprite(BuildingDataSO buildingData)
@@ -271,20 +277,35 @@ namespace _01.Code.MapCreateSystem
             return buildingData.BoardSprite;
         }
 
-        private void BuildHintText()
+        private void BuildHoverOutline()
         {
-            // 런타임 TextMesh는 한글 폰트가 없어 TMP(프로젝트 기본 한글 폰트)를 쓴다.
-            var go = new GameObject("HintText");
+            var go = new GameObject("HoverOutline");
             go.transform.SetParent(transform, false);
-            _hintText = go.AddComponent<TextMeshPro>();
-            _hintText.text = "여기에 설치";
-            _hintText.fontSize = 2.6f;
-            _hintText.alignment = TextAlignmentOptions.Center;
-            _hintText.color = new Color(0.75f, 1f, 0.8f, 0.95f);
+            _hoverOutline = go.AddComponent<LineRenderer>();
+            _hoverOutline.useWorldSpace = true;
+            _hoverOutline.loop = true;
+            _hoverOutline.positionCount = 4;
+            _hoverOutline.startWidth = 0.055f;
+            _hoverOutline.endWidth = 0.055f;
+            _hoverOutline.material = GetLineMaterial();
+            _hoverOutline.startColor = HoverOutlineColor;
+            _hoverOutline.endColor = HoverOutlineColor;
+            _hoverOutline.sortingOrder = MarkerSortingOrder + 3;
+            _hoverOutline.enabled = false;
+        }
 
-            var meshRenderer = go.GetComponent<MeshRenderer>();
-            if (meshRenderer != null)
-                meshRenderer.sortingOrder = MarkerSortingOrder + 3;
+        private void UpdateHoverOutline(Vector3 center, bool visible)
+        {
+            if (_hoverOutline == null) return;
+            var half = _grid.CellSize * 0.46f;
+            _hoverOutline.SetPositions(new[]
+            {
+                center + new Vector3(-half, -half, -0.02f),
+                center + new Vector3(-half, half, -0.02f),
+                center + new Vector3(half, half, -0.02f),
+                center + new Vector3(half, -half, -0.02f)
+            });
+            _hoverOutline.enabled = visible;
         }
 
         private SpriteRenderer CreateSquare(string squareName, Color color, int sortingOrder)
@@ -302,9 +323,8 @@ namespace _01.Code.MapCreateSystem
 
         private void SetHoverVisible(bool visible)
         {
-            if (_hoverMarker != null) _hoverMarker.enabled = visible;
             if (_ghost != null) _ghost.enabled = visible;
-            if (_hintText != null) _hintText.gameObject.SetActive(visible);
+            if (_hoverOutline != null) _hoverOutline.enabled = visible;
         }
 
         private static Sprite GetSquareSprite()

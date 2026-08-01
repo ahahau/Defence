@@ -300,6 +300,9 @@ namespace _01.Code.MapCreateSystem
             if (grid == null || !grid.IsValidCell(column, row))
                 return false;
 
+            if (grid.IsCentralBuildingSlotCell(column, row))
+                return false;
+
             for (var i = 0; i < unitPlacements.Count; i++)
             {
                 var placement = unitPlacements[i];
@@ -454,6 +457,19 @@ namespace _01.Code.MapCreateSystem
         public void ClearBuilding()
         {
             AssignedBuilding = null;
+        }
+
+        public bool DamageAssignedBuilding(int damage)
+        {
+            if (AssignedBuilding == null || !AssignedBuilding.IsDestructible)
+                return false;
+
+            var building = AssignedBuilding;
+            var destroyed = building.TakeBuildingDamage(damage);
+            if (destroyed && AssignedBuilding == building)
+                ClearBuilding();
+
+            return true;
         }
 
         public void IncreaseDanger(int amount)
