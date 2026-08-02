@@ -69,6 +69,40 @@ namespace _01.Code.MapCreateSystem
         {
             playerStatusHud = hud;
         }
+
+        /// <summary>
+        /// Stores the same opening dungeon layout that Play mode creates, allowing the
+        /// authored scene hierarchy to be inspected before pressing Play.
+        /// </summary>
+        public void EditorBakeInitialScenePreview()
+        {
+            if (Application.isPlaying || nodeManager == null || edgeManager == null || unitsRoot == null)
+                return;
+
+            graph = new DungeonGraph();
+            nodeManager.ClearAll();
+            edgeManager.ClearAll();
+            lockedNodeByCollider.Clear();
+            unlockedNodeByCollider.Clear();
+            ClearUnitsRoot();
+
+            var entrance = graph.AddNode(DungeonNodeType.Entrance, Vector2Int.zero);
+            var entranceView = nodeManager.CreateNode(entrance);
+            RegisterUnlockedNode(entranceView);
+
+            if (mainUnitPrefab != null)
+            {
+                var mainUnit = Instantiate(mainUnitPrefab, entranceView.UnitPosition.position, Quaternion.identity);
+                mainUnit.transform.SetParent(unitsRoot, true);
+                mainUnit.transform.position = entranceView.UnitPosition.position;
+                mainUnit.transform.localScale = Vector3.one;
+                mainUnit.name = "Player";
+                entranceView.AssignUnit(null, mainUnit);
+            }
+
+            HasLockedNodesVisible = true;
+            RefreshLockedNodes();
+        }
 #endif
 
         [SerializeField]
@@ -569,6 +603,9 @@ namespace _01.Code.MapCreateSystem
                 return;
 
             Vector2 worldPosition = inputDataSO.SceneToWorldPoint();
+            if (TryRaiseUnitManagementAt(worldPosition))
+                return;
+
             var clickedCollider = ResolveNodeClickCollider(worldPosition);
 
             if (clickedCollider == null)
@@ -595,8 +632,8 @@ namespace _01.Code.MapCreateSystem
                 if (!IsWithinClickArea(clickedCollider, worldPosition))
                     return;
 
-                nodeEventChannel.RaiseEvent(new NodeCameraFocusStartedEvent(unlockedNode));
                 nodeEventChannel.RaiseEvent(new UnlockedNodeClickedEvent(unlockedNode));
+                nodeEventChannel.RaiseEvent(new NodeCameraFocusStartedEvent(unlockedNode));
                 return;
             }
 
@@ -607,6 +644,38 @@ namespace _01.Code.MapCreateSystem
                 return;
 
             TryBuildAt(lockedNode);
+        }
+
+        private bool TryRaiseUnitManagementAt(Vector2 worldPosition)
+        {
+            var colliders = Physics2D.OverlapPointAll(worldPosition);
+            if (colliders == null || colliders.Length == 0)
+                return false;
+
+            Unit closestUnit = null;
+            var closestDistance = float.PositiveInfinity;
+            foreach (var hit in colliders)
+            {
+                if (hit == null)
+                    continue;
+
+                var unitTarget = hit.GetComponentInParent<UnitClickTarget>();
+                if (unitTarget == null || unitTarget.Target == null || unitTarget.Target is MainUnit)
+                    continue;
+
+                var distance = Vector2.SqrMagnitude((Vector2)hit.bounds.center - worldPosition);
+                if (distance >= closestDistance)
+                    continue;
+
+                closestDistance = distance;
+                closestUnit = unitTarget.Target;
+            }
+
+            if (closestUnit == null)
+                return false;
+
+            nodeEventChannel.RaiseEvent(new UnitManagementRequestedEvent(ResolveNodeForUnit(closestUnit), closestUnit));
+            return true;
         }
 
         private void ProcessRightMouseInput()
