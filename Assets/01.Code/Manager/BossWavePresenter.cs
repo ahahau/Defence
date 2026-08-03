@@ -1,6 +1,6 @@
 using System.Collections;
-using _01.Code.Audio;
 using _01.Code.Core;
+using _01.Code.UI;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -10,12 +10,16 @@ using UnityEngine.UI;
 namespace _01.Code.Manager
 {
     /// <summary>보스 웨이브 연출 담당 — 시작 배너, 처치 시 카메라 줌인+슬로모 시네마틱, 승리 패널.
-    /// UI는 런타임에 생성하므로 씬 배선이 필요 없다(TMP 기본 폰트가 한글 폰트로 설정되어 있음).
+    /// UI는 프리팹으로 구성하며 Resources/UI에 기본 프리팹을 둔다.
     /// WaveManager가 생성/호출한다.</summary>
     public class BossWavePresenter : MonoBehaviour
     {
         [Header("Banner")]
         [SerializeField] private Canvas uiCanvas;
+        [SerializeField] private BossWaveUiView bannerPrefab;
+        [SerializeField] private BossWaveUiView victoryPrefab;
+        [SerializeField] private BossWaveUiView bannerView;
+        [SerializeField] private BossWaveUiView victoryView;
         [SerializeField, Min(0.1f)] private float bannerHoldDuration = 1.6f;
         [SerializeField] private Color bossBannerColor = new(0.85f, 0.15f, 0.1f, 1f);
         [SerializeField] private Color finalBannerColor = new(1f, 0.78f, 0.2f, 1f);
@@ -46,20 +50,21 @@ namespace _01.Code.Manager
                 ? $"Day {day} — 이 습격만 막아내면 던전을 지켜낸다"
                 : $"Day {day} — 강력한 모험가가 쳐들어온다";
 
-            var root = CreateOverlayRect(uiCanvas.transform, "BossWaveBanner");
-            var rect = (RectTransform)root.transform;
-            rect.anchorMin = new Vector2(0f, 0.62f);
-            rect.anchorMax = new Vector2(1f, 0.62f);
-            rect.sizeDelta = new Vector2(0f, 130f);
+            var view = bannerView;
+            if (view == null)
+            {
+                Debug.LogError("BossWavePresenter requires a scene-assigned boss banner view.", this);
+                return;
+            }
 
-            var backdrop = root.AddComponent<Image>();
-            backdrop.color = new Color(0.03f, 0.02f, 0.02f, 0.82f);
-            backdrop.raycastTarget = false;
-
-            CreateText(rect, title, 52f, accent, new Vector2(0f, 18f));
-            CreateText(rect, subtitle, 22f, new Color(0.92f, 0.88f, 0.85f, 1f), new Vector2(0f, -32f));
-
-            var group = root.AddComponent<CanvasGroup>();
+            view.gameObject.SetActive(true);
+            view.transform.SetAsLastSibling();
+            view.Title.text = title;
+            view.Title.color = accent;
+            view.Subtitle.text = subtitle;
+            var root = view.gameObject;
+            var rect = (RectTransform)view.transform;
+            var group = view.CanvasGroup;
             group.alpha = 0f;
             group.blocksRaycasts = false;
 
@@ -68,9 +73,8 @@ namespace _01.Code.Manager
                 .Join(rect.DOAnchorPosX(0f, 0.35f).From(new Vector2(-80f, rect.anchoredPosition.y)).SetEase(Ease.OutCubic))
                 .AppendInterval(bannerHoldDuration)
                 .Append(group.DOFade(0f, 0.4f))
-                .OnComplete(() => Destroy(root));
+                .OnComplete(() => root.SetActive(false));
 
-            GameSfxPlayer.Play(GameSfxCue.WaveStart);
         }
 
         // ── Death Cinematic ─────────────────────────────────────
@@ -131,92 +135,31 @@ namespace _01.Code.Manager
                 return;
 
             Time.timeScale = 0f;
-            GameSfxPlayer.Play(GameSfxCue.UiReward);
 
-            var root = CreateOverlayRect(uiCanvas.transform, "VictoryPanel");
-            var rect = (RectTransform)root.transform;
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.sizeDelta = Vector2.zero;
+            var view = victoryView;
+            if (view == null)
+            {
+                Debug.LogError("BossWavePresenter requires a scene-assigned victory panel view.", this);
+                Time.timeScale = 1f;
+                return;
+            }
 
-            var backdrop = root.AddComponent<Image>();
-            backdrop.color = new Color(0.02f, 0.025f, 0.03f, 0.92f);
-
-            CreateText(rect, "던전 사수 성공!", 64f, finalBannerColor, new Vector2(0f, 90f));
-            CreateText(rect, $"{day}일간의 침공을 모두 막아냈습니다", 26f, new Color(0.9f, 0.88f, 0.82f, 1f), new Vector2(0f, 20f));
-
-            CreateButton(rect, "다시 도전하기", new Vector2(0f, -90f), () =>
+            view.gameObject.SetActive(true);
+            view.transform.SetAsLastSibling();
+            view.Title.text = "던전 사수 성공!";
+            view.Title.color = finalBannerColor;
+            view.Subtitle.text = $"{day}일간의 침공을 모두 막아냈습니다";
+            view.RetryButton.onClick.RemoveAllListeners();
+            view.RetryButton.onClick.AddListener(() =>
             {
                 Time.timeScale = 1f;
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
             });
 
-            var group = root.AddComponent<CanvasGroup>();
+            var root = view.gameObject;
+            var group = view.CanvasGroup;
             group.alpha = 0f;
             group.DOFade(1f, 0.5f).SetUpdate(true).SetLink(root);
-        }
-
-        // ── UI Helpers ──────────────────────────────────────────
-
-        private static GameObject CreateOverlayRect(Transform parent, string objectName)
-        {
-            var root = new GameObject(objectName, typeof(RectTransform));
-            var rect = (RectTransform)root.transform;
-            rect.SetParent(parent, false);
-            rect.SetAsLastSibling();
-            return root;
-        }
-
-        private static void CreateText(RectTransform parent, string text, float size, Color color, Vector2 offset)
-        {
-            var textObject = new GameObject("Text", typeof(RectTransform));
-            var rect = (RectTransform)textObject.transform;
-            rect.SetParent(parent, false);
-            rect.anchorMin = new Vector2(0f, 0.5f);
-            rect.anchorMax = new Vector2(1f, 0.5f);
-            rect.sizeDelta = new Vector2(0f, size + 16f);
-            rect.anchoredPosition = offset;
-
-            var tmp = textObject.AddComponent<TextMeshProUGUI>();
-            tmp.text = text;
-            tmp.fontSize = size;
-            tmp.color = color;
-            tmp.alignment = TextAlignmentOptions.Center;
-            tmp.fontStyle = FontStyles.Bold;
-            tmp.raycastTarget = false;
-        }
-
-        private static void CreateButton(RectTransform parent, string label, Vector2 offset, UnityEngine.Events.UnityAction onClick)
-        {
-            var buttonObject = new GameObject("RetryButton", typeof(RectTransform));
-            var rect = (RectTransform)buttonObject.transform;
-            rect.SetParent(parent, false);
-            rect.anchorMin = new Vector2(0.5f, 0.5f);
-            rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = new Vector2(280f, 64f);
-            rect.anchoredPosition = offset;
-
-            var image = buttonObject.AddComponent<Image>();
-            image.color = new Color(0.25f, 0.45f, 0.27f, 0.95f);
-
-            var button = buttonObject.AddComponent<Button>();
-            button.targetGraphic = image;
-            button.onClick.AddListener(onClick);
-
-            var labelObject = new GameObject("Label", typeof(RectTransform));
-            var labelRect = (RectTransform)labelObject.transform;
-            labelRect.SetParent(rect, false);
-            labelRect.anchorMin = Vector2.zero;
-            labelRect.anchorMax = Vector2.one;
-            labelRect.sizeDelta = Vector2.zero;
-
-            var tmp = labelObject.AddComponent<TextMeshProUGUI>();
-            tmp.text = label;
-            tmp.fontSize = 26f;
-            tmp.color = Color.white;
-            tmp.alignment = TextAlignmentOptions.Center;
-            tmp.fontStyle = FontStyles.Bold;
-            tmp.raycastTarget = false;
         }
     }
 }
