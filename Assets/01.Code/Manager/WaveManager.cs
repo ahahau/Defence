@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using _01.Code.Buildings;
 using _01.Code.Combat;
 using _01.Code.Core;
 using _01.Code.Enemies;
@@ -51,6 +52,22 @@ namespace _01.Code.Manager
 
         private Node _portalNode;
         public bool HasPortal => _portalNode != null;
+        public bool IsWaveRunning => _isWaveRunning;
+        public bool IsBossWave => _isBossWave;
+        public int TotalEnemyCount => Mathf.Max(0, _waveEnemyCount);
+        public int KillCount => Mathf.Max(0, _waveKillCount);
+        public int ActiveEnemyCount => _activeEnemies.Count;
+        public int PendingSpawnCount => Mathf.Max(0, _remainingSpawns);
+        public int RemainingThreatCount => ActiveEnemyCount + PendingSpawnCount;
+        public int FinalDay => waveConfig != null ? waveConfig.FinalDay : 0;
+
+        public int GetPreviewEnemyCount(int day)
+        {
+            var entry = waveConfig != null ? waveConfig.GetWaveForDay(day) : null;
+            return entry != null ? Mathf.Max(0, entry.enemyCount) : 0;
+        }
+
+        public bool IsBossDay(int day) => waveConfig != null && waveConfig.IsBossDay(day);
         private int _currentDay;
         private int _remainingSpawns;
         private int _currentClearGoldReward;
@@ -157,9 +174,10 @@ namespace _01.Code.Manager
 
         private IEnumerator RunWave(WaveConfigSO.WaveEntry entry)
         {
-            _remainingSpawns = Mathf.Max(0, entry.enemyCount);
-            ResetWaveResults(entry.enemyCount);
-            _currentClearGoldReward = entry.clearGoldReward;
+            var adjustedEnemyCount = Mathf.Max(0, entry.enemyCount);
+            _remainingSpawns = adjustedEnemyCount;
+            ResetWaveResults(adjustedEnemyCount);
+            _currentClearGoldReward = NestCohesionSystem.ScaleGoldReward(entry.clearGoldReward);
             _isWaveRunning = true;
             _unitConditionWearPending = true;
             _isWaitingForRewardPanel = false;
@@ -170,7 +188,7 @@ namespace _01.Code.Manager
             _bossSpawned = false;
             SetupPartyForWave();
 
-            waveEventChannel.RaiseEvent(new WaveStartedEvent(_currentDay, entry.enemyCount));
+            waveEventChannel.RaiseEvent(new WaveStartedEvent(_currentDay, adjustedEnemyCount));
 
             if (_isBossWave)
             {
@@ -600,6 +618,12 @@ namespace _01.Code.Manager
 
                     unit.CompleteWaveCondition();
                 }
+            }
+
+            foreach (var node in Node.ActiveNodes)
+            {
+                if (node?.AssignedBuilding is RecoveryFacility recoveryFacility)
+                    recoveryFacility.ApplyRecovery(node);
             }
         }
 

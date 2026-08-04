@@ -39,6 +39,7 @@ namespace _01.Code.Manager
         };
 
         public AdventurerPartySO BossParty => bossParty;
+        public int FinalDay => finalDay;
 
         /// <summary>보스 웨이브 날인지 — 주기(bossEveryNDays)와 막판 러시(dailyBossStartDay~finalDay) 둘 다 포함.</summary>
         public bool IsBossDay(int day)
