@@ -24,8 +24,7 @@ namespace _01.Code.UI
     {
         private enum OperationRewardKind
         {
-            Recruitment,
-            Construction
+            SupplyFunds
         }
 
         public static WaveRewardPanelView Current { get; private set; }
@@ -49,11 +48,10 @@ namespace _01.Code.UI
         [SerializeField] private ArtifactRewardChoicePanelView artifactChoicePanel;
         [SerializeField, Min(1)] private int artifactChoiceCount = 3;
 
-        [Header("Operation Reward")]
+        [Header("Supply Reward")]
         [SerializeField] private Button unitRewardButton;
         [SerializeField] private Graphic unitRewardText;
-        [SerializeField, Min(1)] private int recruitmentCandidateReward = 2;
-        [SerializeField, Range(0f, 0.9f)] private float constructionDiscountRate = 0.35f;
+        [SerializeField, Min(1)] private int supplyGoldReward = 24;
 
         [Header("Medical Support")]
         [SerializeField, Range(0f, 100f)] private float medicalFatigueRecovery = 35f;
@@ -146,9 +144,7 @@ namespace _01.Code.UI
             gameObject.SetActive(true);
             _currentRewardDay = Mathf.Max(0, day);
             _pendingGoldAmount = Mathf.Max(0, goldAmount);
-            _operationRewardKind = _currentRewardDay % 2 == 0
-                ? OperationRewardKind.Construction
-                : OperationRewardKind.Recruitment;
+            _operationRewardKind = OperationRewardKind.SupplyFunds;
 
             ConfigureModalLayout();
             PrepareArtifactChoices(includeArtifactReward);
@@ -193,7 +189,7 @@ namespace _01.Code.UI
                 return;
 
             _costEventChannel?.RaiseEvent(new GoldEarnedEvent(_pendingGoldAmount, GoldChangeSource.WaveReward));
-            CompletePrimaryReward("성과금 선택 완료");
+            CompletePrimaryReward("모험가에게서 회수한 금화를 금고에 보관했습니다");
         }
 
         private void HandleSecondaryRewardClicked()
@@ -224,13 +220,9 @@ namespace _01.Code.UI
 
             switch (_operationRewardKind)
             {
-                case OperationRewardKind.Recruitment:
-                    HiredUnitRoster.Current?.AddRecruitmentCandidates(recruitmentCandidateReward);
-                    CompletePrimaryReward($"고용 후보 +{recruitmentCandidateReward}");
-                    break;
-                case OperationRewardKind.Construction:
-                    _costEventChannel?.RaiseEvent(new ConstructionDiscountGrantedEvent(constructionDiscountRate));
-                    CompletePrimaryReward($"다음 건설비 {Mathf.RoundToInt(constructionDiscountRate * 100f)}% 할인");
+                case OperationRewardKind.SupplyFunds:
+                    _costEventChannel?.RaiseEvent(new GoldEarnedEvent(supplyGoldReward));
+                    CompletePrimaryReward($"운영 보급 +{supplyGoldReward}G");
                     break;
             }
         }
@@ -341,12 +333,12 @@ namespace _01.Code.UI
                 return;
 
             resultSummaryText.text =
-                $"DAY {_currentRewardDay} CLEAR\n" +
-                $"처치 {Mathf.Max(0, killCount)} / {Mathf.Max(0, enemyCount)}    " +
+                $"DAY {_currentRewardDay} · 습격 결산\n" +
+                $"격퇴 {Mathf.Max(0, killCount)} / {Mathf.Max(0, enemyCount)}    " +
                 $"치명타 {Mathf.Max(0, criticalHitCount)}회\n" +
                 $"입힌 피해 {Mathf.Max(0, damageDealt):N0}    " +
                 $"받은 피해 {Mathf.Max(0, damageTaken):N0}\n" +
-                "아래 보상 중 하나를 선택하세요";
+                "드래곤의 명령으로 전리품 하나를 선택하세요";
         }
 
         private void RefreshRewardButtons()
@@ -354,7 +346,7 @@ namespace _01.Code.UI
             if (iconImage != null)
                 iconImage.gameObject.SetActive(_hasPendingGoldReward);
 
-            SetLabelText(goldAmountText, _hasPendingGoldReward ? $"성과금 {_pendingGoldAmount:N0}G" : "성과금 없음");
+            SetLabelText(goldAmountText, _hasPendingGoldReward ? $"회수 금화 {_pendingGoldAmount:N0}G" : "회수 금화 없음");
             SetButtonState(goldRewardButton, _hasPendingGoldReward, _hasPendingGoldReward);
 
             var secondaryLabel = _secondaryIsArtifact
@@ -364,11 +356,13 @@ namespace _01.Code.UI
 
             var operationLabel = _operationRewardKind switch
             {
-                OperationRewardKind.Recruitment => $"고용 후보 +{recruitmentCandidateReward}",
-                OperationRewardKind.Construction => $"다음 건설비 {Mathf.RoundToInt(constructionDiscountRate * 100f)}% 할인",
-                _ => "운영 지원"
+                OperationRewardKind.SupplyFunds => $"운영 보급 +{supplyGoldReward}G",
+                _ => "던전 지원"
             };
             SetUnitRewardButtonState(true, operationLabel, true);
+            ApplyRewardCardStyle(goldRewardButton, new Color(0.38f, 0.22f, 0.055f, 0.98f));
+            ApplyRewardCardStyle(artifactRewardButton, new Color(0.24f, 0.075f, 0.3f, 0.98f));
+            ApplyRewardCardStyle(unitRewardButton, new Color(0.28f, 0.09f, 0.055f, 0.98f));
         }
 
         private void ConfigureModalLayout()
@@ -395,8 +389,14 @@ namespace _01.Code.UI
             var blocker = GetComponent<Image>();
             if (blocker != null)
             {
-                blocker.color = Color.black;
+                blocker.color = new Color(0.018f, 0.012f, 0.009f, 0.96f);
                 blocker.raycastTarget = true;
+            }
+
+            if (resultSummaryText != null)
+            {
+                resultSummaryText.color = new Color(0.96f, 0.87f, 0.66f, 1f);
+                resultSummaryText.fontStyle = FontStyles.Bold;
             }
 
             var canvasGroup = GetComponent<CanvasGroup>();
@@ -408,6 +408,35 @@ namespace _01.Code.UI
             }
 
             transform.SetAsLastSibling();
+        }
+
+        private static void ApplyRewardCardStyle(Button button, Color color)
+        {
+            if (button == null)
+                return;
+
+            var image = button.targetGraphic as Image ?? button.GetComponent<Image>();
+            if (image != null)
+            {
+                image.color = color;
+                button.targetGraphic = image;
+            }
+
+            var outline = button.GetComponent<Outline>();
+            if (outline != null)
+            {
+                outline.effectColor = new Color(0.82f, 0.58f, 0.22f, 0.96f);
+                outline.effectDistance = new Vector2(2f, -2f);
+            }
+
+            var colors = button.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(1f, 0.88f, 0.68f, 1f);
+            colors.pressedColor = new Color(0.72f, 0.68f, 0.62f, 1f);
+            colors.selectedColor = colors.highlightedColor;
+            colors.disabledColor = new Color(color.r, color.g, color.b, 0.42f);
+            colors.fadeDuration = 0.06f;
+            button.colors = colors;
         }
 
         private void SetArtifactRewardButtonState(bool interactable, string label, bool visible)
@@ -423,7 +452,7 @@ namespace _01.Code.UI
             SetButtonState(unitRewardButton, interactable, visible);
             if (_operationTitleText == null)
                 _operationTitleText = ResolveChildLabelGraphic(unitRewardButton, "Title");
-            SetLabelText(_operationTitleText, "운영 지원");
+            SetLabelText(_operationTitleText, "던전 운영 지원");
 
             if (unitRewardText == null)
                 unitRewardText = ResolveLabelGraphic(unitRewardButton);
