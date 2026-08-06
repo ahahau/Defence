@@ -3,6 +3,7 @@ using System.Text;
 using _01.Code.Core;
 using _01.Code.Events;
 using _01.Code.MapCreateSystem;
+using _01.Code.UI;
 using _01.Code.Units;
 using TMPro;
 using UnityEngine;
@@ -29,6 +30,7 @@ namespace _01.Code.Manager
         [SerializeField] private TMP_Text expenseText;
         [SerializeField] private TMP_Text netText;
         [SerializeField] private Button closeButton;
+        [SerializeField] private DungeonProgressReportView progressReportView;
 
         [SerializeField] private string titleFormat = "{0}일차 정산";
 
@@ -60,6 +62,7 @@ namespace _01.Code.Manager
             nodeEventChannel?.AddListener<UnitReturnedFromNodeEvent>(HandleUnitReturned);
             costEventChannel?.AddListener<GoldEarnedEvent>(HandleGoldEarned);
             costEventChannel?.AddListener<GoldLostEvent>(HandleGoldLost);
+            costEventChannel?.AddListener<TreasuryRobbedEvent>(HandleTreasuryRobbed);
             costEventChannel?.AddListener<SalaryCostRequestedEvent>(HandleSalaryCostRequested);
             costEventChannel?.AddListener<BuildCostPaidEvent>(HandleBuildCostPaid);
             costEventChannel?.AddListener<RosterHirePaidEvent>(HandleRosterHirePaid);
@@ -79,6 +82,7 @@ namespace _01.Code.Manager
             nodeEventChannel?.RemoveListener<UnitReturnedFromNodeEvent>(HandleUnitReturned);
             costEventChannel?.RemoveListener<GoldEarnedEvent>(HandleGoldEarned);
             costEventChannel?.RemoveListener<GoldLostEvent>(HandleGoldLost);
+            costEventChannel?.RemoveListener<TreasuryRobbedEvent>(HandleTreasuryRobbed);
             costEventChannel?.RemoveListener<SalaryCostRequestedEvent>(HandleSalaryCostRequested);
             costEventChannel?.RemoveListener<BuildCostPaidEvent>(HandleBuildCostPaid);
             costEventChannel?.RemoveListener<RosterHirePaidEvent>(HandleRosterHirePaid);
@@ -119,6 +123,11 @@ namespace _01.Code.Manager
             RecordExpense(ResolveExpenseLabel(evt.Source), evt.GoldAmount);
         }
 
+        private void HandleTreasuryRobbed(TreasuryRobbedEvent evt)
+        {
+            RecordExpense("금고 약탈", evt.GoldAmount);
+        }
+
         private void HandleSalaryCostRequested(SalaryCostRequestedEvent evt)
         {
             RecordExpense("유지비", evt.GoldAmount);
@@ -132,12 +141,12 @@ namespace _01.Code.Manager
         private void HandleRosterHirePaid(RosterHirePaidEvent evt)
         {
             AddHiredUnit(evt.Unit);
-            RecordExpense("유닛 고용", evt.GoldAmount);
+            RecordExpense("부하 영입", evt.GoldAmount);
         }
 
         private void HandleUnitRecoveryCostPaid(UnitRecoveryCostPaidEvent evt)
         {
-            RecordExpense("유닛 회복", evt.GoldAmount);
+            RecordExpense("치료·수리", evt.GoldAmount);
         }
 
         private void HandleUnitAssigned(UnitAssignedToNodeEvent evt)
@@ -264,43 +273,32 @@ namespace _01.Code.Manager
         private void RefreshPanel()
         {
             titleText.text = string.Format(titleFormat, Mathf.Max(0, currentDay));
-            incomeText.text = BuildLedgerText("수입", incomeByLabel, totalIncome);
+            incomeText.text = BuildLedgerText("획득 금화", incomeByLabel, totalIncome, '+');
             expenseText.text = BuildExpenseText();
+            progressReportView?.RefreshReport();
 
             var net = totalIncome - totalExpense;
-            netText.text = $"순이익: {FormatGold(net)}";
+            netText.text = $"오늘 순증 {FormatSignedGold(net)}\n획득 +{totalIncome}G  ·  지출 -{totalExpense}G";
             netText.color = net >= 0 ? new Color(0.45f, 0.95f, 0.55f) : new Color(1f, 0.45f, 0.4f);
         }
 
-        private string BuildLedgerText(string title, Dictionary<string, int> ledger, int total)
+        private string BuildLedgerText(string title, Dictionary<string, int> ledger, int total, char sign)
         {
             if (ledger.Count == 0)
-                return $"{title}\n- 없음\n합계: 0G";
+                return $"{title}\n· 없음\n합계 {sign}0G";
 
             var lines = new StringBuilder();
             lines.AppendLine(title);
             foreach (var pair in ledger)
-                lines.AppendLine($"- {pair.Key}: {pair.Value}G");
+                lines.AppendLine($"· {pair.Key}  {sign}{pair.Value}G");
 
-            lines.Append($"합계: {total}G");
+            lines.Append($"합계 {sign}{total}G");
             return lines.ToString();
         }
 
         private string BuildExpenseText()
         {
-            var lines = new StringBuilder(BuildLedgerText("비용", expenseByLabel, totalExpense));
-            if (dailyFatigueByLabel.Count == 0)
-                return lines.ToString();
-
-            lines.AppendLine();
-            lines.AppendLine();
-            lines.AppendLine("유닛 상태");
-            foreach (var pair in dailyFatigueByLabel)
-            {
-                lines.AppendLine($"- {pair.Key}: 피로 {pair.Value}/100");
-            }
-
-            return lines.ToString();
+            return BuildLedgerText("차감 내역", expenseByLabel, totalExpense, '-');
         }
 
         private bool HasSettlementEntries()
@@ -345,11 +343,16 @@ namespace _01.Code.Manager
         {
             return source switch
             {
-                GoldChangeSource.TreasuryLoot => "재무부 약탈",
+                GoldChangeSource.TreasuryLoot => "금고 약탈",
                 GoldChangeSource.Dialogue => "이벤트 비용",
                 GoldChangeSource.Policy => "정책 비용",
                 _ => "기타 비용"
             };
+        }
+
+        private string FormatSignedGold(int amount)
+        {
+            return amount > 0 ? $"+{amount}G" : FormatGold(amount);
         }
 
         private string ResolveUnitLabel(Unit unit)
