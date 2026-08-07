@@ -259,9 +259,18 @@ namespace _01.Code.UI
             var displayName = string.IsNullOrWhiteSpace(artifact.DisplayName)
                 ? artifact.name
                 : artifact.DisplayName;
-            var label = string.IsNullOrWhiteSpace(artifact.Description)
-                ? $"{displayName}\n아티팩트 획득"
-                : $"{displayName}\n{artifact.Description}";
+            var description = string.IsNullOrWhiteSpace(artifact.Description)
+                ? "아티팩트 획득"
+                : artifact.Description;
+
+            var cardView = button.GetComponent<ArtifactRewardChoiceCardView>();
+            if (cardView != null)
+            {
+                cardView.Initialize(displayName, artifact.Icon, artifact.IconColor, description);
+                return;
+            }
+
+            var label = $"{displayName}\n{description}";
 
             var tmpText = button.GetComponentInChildren<TMP_Text>();
             if (tmpText != null)
