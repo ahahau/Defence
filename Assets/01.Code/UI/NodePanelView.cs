@@ -1,10 +1,10 @@
-using _01.Code.Audio;
 using _01.Code.Artifacts;
 using _01.Code.Buildings;
 using _01.Code.Core;
 using _01.Code.Events;
 using _01.Code.Manager;
 using _01.Code.MapCreateSystem;
+using _01.Code.Progression;
 using _01.Code.Tutorial;
 using _01.Code.Units;
 using _01.Code.BT;
@@ -37,12 +37,14 @@ namespace _01.Code.UI
         [SerializeField] private Unit unitPrefab;
         [SerializeField] private Portal portalPrefab;
         [SerializeField] private BuildingDataSO[] installableBuildings;
+        [SerializeField] private DungeonUnlockCatalogSO unlockCatalog;
         [SerializeField] private GameEventChannelSO nodeEventChannel;
         [SerializeField] private GameEventChannelSO uiEventChannel;
         [SerializeField] private GameEventChannelSO costEventChannel;
         [SerializeField] private GameEventChannelSO artifactEventChannel;
         [SerializeField] private Transform unitContentRoot;
         [SerializeField] private Transform buildingContentRoot;
+        [SerializeField, Range(0.1f, 1f)] private float centralBuildingSlotFill = 0.92f;
 
         [Header("Roster Deploy")]
         [SerializeField] private RosterDeployEntryView deployEntryPrefab;
@@ -75,9 +77,11 @@ namespace _01.Code.UI
         private bool _tutorialHighlightActive;
         private InstallCategory? _currentInstallCategory;
         private Graphic _currentTutorialHighlight;
+        private UnitManagementSystem _unitManagementSystem;
         private readonly Color _tutorialHighlightColor = new(1f, 0.82f, 0.22f, 1f);
 
         public bool IsPanelOpen => panelRoot != null && panelRoot.activeInHierarchy;
+        public IReadOnlyList<BuildingDataSO> InstallableBuildings => installableBuildings;
         public RectTransform InstallButtonRect => installButton != null ? installButton.transform as RectTransform : null;
         public RectTransform FirstDeployEntryRect => _deployEntries.Count > 0 && _deployEntries[0] != null ? _deployEntries[0].transform as RectTransform : null;
 
@@ -118,17 +122,10 @@ namespace _01.Code.UI
             if (_selectedNode != null
                 && TutorialInputGate.AllowsInstallMenu()
                 && TutorialInputGate.AllowsUnlockedNode(_selectedNode)
-                && !_selectedNode.HasInstallation
                 && !IsPreferredInstallPanelOpen())
             {
                 ShowPreferredInstallPanel();
                 return;
-            }
-
-            if (_selectedNode != null && _selectedNode.HasInstallation)
-            {
-                HideInstallPanels();
-                panelRoot?.SetActive(false);
             }
 
             RefreshTutorialHighlight();
@@ -147,7 +144,6 @@ namespace _01.Code.UI
             if (_selectedNode != null
                 && TutorialInputGate.AllowsInstallMenu()
                 && TutorialInputGate.AllowsUnlockedNode(_selectedNode)
-                && !_selectedNode.HasInstallation
                 && !IsUnitPanelOpen())
             {
                 ShowPreferredInstallPanel();
@@ -170,6 +166,7 @@ namespace _01.Code.UI
         private void Awake()
         {
             dayManager ??= DayManager.Current;
+            _unitManagementSystem = new UnitManagementSystem(nodeEventChannel, costEventChannel, dayManager);
             LogMissingSerializedReferences();
             ConfigureStaticTextLayout();
             _installButtonDefaultLabel = GetButtonLabel(installButton);
@@ -188,6 +185,8 @@ namespace _01.Code.UI
 
             LogMissingSerializedReferences();
             nodeEventChannel?.AddListener<UnlockedNodeClickedEvent>(HandleNodeSelected);
+            nodeEventChannel?.AddListener<NodeGridCellSelectedEvent>(HandleNodeGridCellSelected);
+            nodeEventChannel?.AddListener<UnitManagementRequestedEvent>(HandleUnitManagementRequested);
             uiEventChannel?.AddListener<DeployModeChangedEvent>(HandleDeployModeChanged);
             costEventChannel?.AddListener<RosterChangedEvent>(HandleRosterChanged);
             costEventChannel?.AddListener<UnitDeployMagicPaidEvent>(HandleDeployMagicPaid);
@@ -208,6 +207,8 @@ namespace _01.Code.UI
                 Current = null;
 
             nodeEventChannel?.RemoveListener<UnlockedNodeClickedEvent>(HandleNodeSelected);
+            nodeEventChannel?.RemoveListener<NodeGridCellSelectedEvent>(HandleNodeGridCellSelected);
+            nodeEventChannel?.RemoveListener<UnitManagementRequestedEvent>(HandleUnitManagementRequested);
             uiEventChannel?.RemoveListener<DeployModeChangedEvent>(HandleDeployModeChanged);
             costEventChannel?.RemoveListener<RosterChangedEvent>(HandleRosterChanged);
             costEventChannel?.RemoveListener<UnitDeployMagicPaidEvent>(HandleDeployMagicPaid);
@@ -252,21 +253,26 @@ namespace _01.Code.UI
             if (!TutorialInputGate.AllowsUnlockedNode(evt.Node))
                 return;
 
-            _selectedNode = evt.Node;
-            _selectedManagedUnit = null;
-            SetTitle(string.Format(emptyNodeTitleFormat, evt.Node.Data.Type));
-            HideInstallPanels();
+            if (_selectedNode != evt.Node)
+                _selectedNode?.TrapGrid?.SetFocusedGridVisible(false);
 
-            // 단일 슬롯(유닛/Unique 건물)이 차 있어도 그리드에 빈 셀이 남았으면 설치 메뉴를 계속 쓸 수 있다.
-            if (_selectedNode.HasInstallation && !CanUseGridInstall(_selectedNode))
+            _selectedNode = evt.Node;
+            // 노드를 선택하면 작은 칸의 배치 범위를 먼저 보여 준다. 설치를 고르기 전에는
+            // 셀 채색이나 고스트를 만들지 않고, 선 그리드만 유지한다.
+            _selectedNode.TrapGrid?.ClearCellSelection();
+            _selectedNode.TrapGrid?.SetFocusedGridVisible(true);
+            _selectedManagedUnit = null;
+            if (evt.Node.AssignedBuilding is Treasury treasury)
             {
-                panelRoot?.SetActive(false);
-                SetActionButtonsActive(false);
                 HideInstallPanels();
-                HideBuildingInfoPanel();
-                ClearTutorialHighlight();
+                panelRoot?.SetActive(false);
+                TreasuryPanelView.ShowFor(treasury, GetComponentInParent<Canvas>(true));
                 return;
             }
+
+            TreasuryPanelView.HideCurrent();
+            SetTitle(string.Format(emptyNodeTitleFormat, evt.Node.Data.Type));
+            HideInstallPanels();
 
             panelRoot?.SetActive(false);
             if (TutorialInputGate.IsActive && ShouldOpenInstallPanelImmediately())
@@ -279,8 +285,36 @@ namespace _01.Code.UI
             RefreshBuildingInstallButtons();
             RefreshTutorialHighlight();
 
-            if (!TutorialInputGate.IsActive)
-                ShowUnitManagementPanel();
+            // 노드를 눌렀다고 빈 관리 창을 자동으로 열지 않는다.
+            // 클릭은 선택·카메라 포커스만 담당하고, 설치/유닛 관리는 명시적인
+            // HUD 행동을 통해 열어야 월드 화면을 가리거나 빈 패널이 뜨지 않는다.
+        }
+
+        private void HandleUnitManagementRequested(UnitManagementRequestedEvent evt)
+        {
+            if (evt == null
+                || evt.Unit == null
+                || evt.Unit is MainUnit
+                || !CanManageUnit(evt.Unit)
+                || !IsManagementAllowed())
+                return;
+
+            var node = evt.Node;
+            if (node == null && !Node.TryFindUnit(evt.Unit, out node, out _))
+                return;
+
+            if (node == null || !TutorialInputGate.AllowsUnlockedNode(node))
+                return;
+
+            _selectedNode = node;
+            _selectedManagedUnit = evt.Unit;
+            BuildingPlacementPreview.CancelActive();
+            EdgePlacementPreview.CancelActive();
+            UnitStatusPanelView.ActiveInstance?.HidePanel();
+            ShowUnitManagementPanel();
+            SetManagementTitle($"선택: {GetUnitDisplayName(evt.Unit.Data)} · 명령 선택");
+            RefreshDemolishButton();
+            ClearTutorialHighlight();
         }
 
         private void HandleInstallClicked()
@@ -307,13 +341,13 @@ namespace _01.Code.UI
             ClearCategoryEntries();
             ClearBuildingEntries();
             HideBuildingInfoPanel();
-            SetInstallButtonActive(false);
             SetBackButtonActive(true);
             SetPanelActive(unitViewRoot, true);
             SetPanelActive(buildingViewRoot, false);
             RefreshRosterEntries();
             SetManagementTitle();
             RefreshDemolishButton();
+            RefreshInstallButtonState();
         }
 
         private void SetManagementTitle(string state = null)
@@ -323,7 +357,7 @@ namespace _01.Code.UI
 
             var departmentName = _selectedNode.Data != null ? _selectedNode.Data.Type.ToString() : "Node";
             var suffix = string.IsNullOrWhiteSpace(state) ? "대기 인원을 배치하거나 소속 유닛을 선택하세요" : state;
-            SetTitle($"{departmentName} 인원 관리  {_selectedNode.AssignedUnitCount}/{_selectedNode.UnitCapacity}\n{suffix}");
+            SetTitle($"{departmentName} 수비대 관리  {_selectedNode.AssignedUnitCount}/{_selectedNode.UnitCapacity}\n{suffix}");
         }
 
         private static string GetUnitDisplayName(UnitDataSO unitData)
@@ -349,16 +383,8 @@ namespace _01.Code.UI
             if (_selectedNode == null || !IsManagementAllowed())
                 return;
 
-            if (_selectedNode.HasInstallation && !CanUseGridInstall(_selectedNode))
-                return;
-
             ShowCategoryPanel();
         }
-
-        /// <summary>그리드가 있는 노드는 단일 슬롯이 차 있어도(유닛/포탈) 빈 셀이 남는 한
-        /// 일반 건물을 계속 설치할 수 있다.</summary>
-        private static bool CanUseGridInstall(Node node) =>
-            node != null && node.TrapGrid != null && node.TrapGrid.HasFreeCell;
 
         public void DemolishSelectedBuilding()
         {
@@ -367,16 +393,12 @@ namespace _01.Code.UI
 
         public bool CanReturnSelectedUnit()
         {
-            if (!IsManagementAllowed()
-                || nodeEventChannel == null
-                || costEventChannel == null
-                || _selectedNode == null)
+            if (_selectedNode == null)
                 return false;
 
             var unit = _selectedManagedUnit != null ? _selectedManagedUnit : _selectedNode.AssignedUnitInstance;
-            return unit != null
-                   && unit is not MainUnit
-                   && (unit.Combatant == null || unit.Combatant.Target == null);
+            return _unitManagementSystem != null
+                   && _unitManagementSystem.CanRecall(_selectedNode, unit, out _);
         }
 
         public bool ReturnSelectedUnit()
@@ -384,22 +406,16 @@ namespace _01.Code.UI
             if (!CanReturnSelectedUnit())
                 return false;
 
-            var node = _selectedNode;
-            var unit = _selectedManagedUnit != null ? _selectedManagedUnit : node.AssignedUnitInstance;
-            if (!node.TryGetPlacement(unit, out var placement))
+            var unit = _selectedManagedUnit != null ? _selectedManagedUnit : _selectedNode.AssignedUnitInstance;
+            if (!_unitManagementSystem.TryRecall(_selectedNode, unit, out var result))
+            {
+                SetManagementTitle(result);
                 return false;
+            }
 
-            var unitData = placement.Data;
-
-            unit.Combatant?.StopCombat();
-            var battleAgent = unit.GetComponent<BattleAgent>();
-            battleAgent?.Battlefield?.Leave(battleAgent);
-            node.RemoveUnit(unit);
-            costEventChannel?.RaiseEvent(new UnitDeployMagicRefundRequestedEvent(unitData, unitData.MagicCost));
-            nodeEventChannel?.RaiseEvent(new UnitReturnedFromNodeEvent(node, unitData, unit));
-            Destroy(unit.gameObject);
             _selectedManagedUnit = null;
             ShowUnitManagementPanel();
+            SetManagementTitle(result);
             ClearTutorialHighlight();
             return true;
         }
@@ -597,6 +613,7 @@ namespace _01.Code.UI
             }
 
             ApplyCardSprite(entry, ResolveCategorySprite(category));
+            NestHudStyle.ApplyManagementCard(entry.gameObject, GetCategoryAccent(category));
             entry.onClick.RemoveAllListeners();
             entry.onClick.AddListener(() => ShowInstallCategory(category));
             _categoryCards.Add(entry);
@@ -661,7 +678,7 @@ namespace _01.Code.UI
                 var managedUnit = placement.Instance;
                 var health = managedUnit.Health;
                 var healthText = health != null ? $" · HP {health.CurrentHealth}/{health.MaxHealth}" : string.Empty;
-                var conditionText = $" · {managedUnit.ConditionSummary}";
+                var conditionText = $" · {managedUnit.ConditionSummary} · {managedUnit.CommandLabel}";
                 var isSelected = managedUnit == _selectedManagedUnit;
                 var entry = Instantiate(deployEntryPrefab, unitContentRoot);
                 entry.Initialize(
@@ -673,6 +690,9 @@ namespace _01.Code.UI
                 _deployEntries.Add(entry);
             }
 
+            BuildSelectedUnitCommandEntries();
+            BuildSelectedUnitMoveEntries();
+
             if (hiredUnitRoster != null)
             {
                 foreach (var unitData in EnumerateDeployableUnits())
@@ -683,7 +703,7 @@ namespace _01.Code.UI
                         unitData,
                         HandleDeployRequested,
                         canReceiveUnit ? "배치" : "정원 초과",
-                        $"대기 · {condition.Summary}",
+                        $"휴식 중 · {condition.Summary}\n다음 날 피로 -{Mathf.RoundToInt(hiredUnitRoster.StandbyFatigueRecoveryPerDay)}",
                         canReceiveUnit);
                     _deployEntries.Add(entry);
                 }
@@ -711,15 +731,13 @@ namespace _01.Code.UI
                 }
             }
 
-            ConfigureUnitDeployGrid();
             ScrollViewContentSizer.ResizeToGridItemCount(unitContentRoot, _deployEntries.Count);
         }
 
-        private static bool CanManageUnit(Unit unit)
+        private bool CanManageUnit(Unit unit)
         {
-            return unit != null
-                   && unit is not MainUnit
-                   && (unit.Combatant == null || unit.Combatant.Target == null);
+            return _unitManagementSystem != null
+                   && _unitManagementSystem.CanIssueCommand(unit, out _);
         }
 
         private void SelectManagedUnit(Unit unit)
@@ -730,27 +748,76 @@ namespace _01.Code.UI
             RefreshDemolishButton();
         }
 
-        [SerializeField, Min(1), Tooltip("유닛 설치 카드 그리드 열 수.")] private int unitDeployColumns = 3;
-
-        /// <summary>유닛 설치 카드는 세로 카드(RosterDeployEntry: 아트/이름/배치버튼)다. 콘텐츠 그리드의 셀 크기를
-        /// 프리팹 실제 크기에 맞추고 여러 열 그리드로 배치해, 셀이 안 맞아 카드가 찌그러지는 것을 막는다.</summary>
-        private void ConfigureUnitDeployGrid()
+        private void BuildSelectedUnitCommandEntries()
         {
-            if (unitContentRoot == null || deployEntryPrefab == null)
+            if (_selectedManagedUnit == null || deployEntryPrefab == null || unitContentRoot == null)
                 return;
 
-            var grid = unitContentRoot.GetComponent<GridLayoutGroup>();
-            if (grid == null || deployEntryPrefab.transform is not RectTransform entryRect)
+            AddCommandEntry(UnitCommand.Standby);
+            AddCommandEntry(UnitCommand.Guard);
+            AddCommandEntry(UnitCommand.Assault);
+            AddCommandEntry(UnitCommand.Rest);
+        }
+
+        private void AddCommandEntry(UnitCommand command)
+        {
+            var unit = _selectedManagedUnit;
+            if (unit == null)
                 return;
 
-            // ContentSizeFitter가 켜져 있으면 우리가 잡는 sizeDelta와 충돌하므로 끈다.
-            if (unitContentRoot.TryGetComponent<ContentSizeFitter>(out var fitter))
-                fitter.enabled = false;
+            var entry = Instantiate(deployEntryPrefab, unitContentRoot);
+            var isCurrent = unit.CurrentCommand == command;
+            entry.Initialize(
+                unit.Data,
+                _ => HandleCommandRequested(command),
+                isCurrent ? "적용중" : "명령",
+                $"{UnitCommandUtility.GetLabel(command)} · {UnitCommandUtility.GetDescription(command)}",
+                true);
+            _deployEntries.Add(entry);
+        }
 
-            grid.startAxis = GridLayoutGroup.Axis.Horizontal;
-            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            grid.constraintCount = Mathf.Max(1, unitDeployColumns);
-            grid.cellSize = new Vector2(entryRect.sizeDelta.x, entryRect.sizeDelta.y);
+        private void BuildSelectedUnitMoveEntries()
+        {
+            if (_selectedManagedUnit == null || deployEntryPrefab == null || unitContentRoot == null)
+                return;
+
+            if (!Node.TryFindUnit(_selectedManagedUnit, out var sourceNode, out _))
+                return;
+
+            foreach (var targetNode in Node.ActiveNodes)
+            {
+                if (targetNode == null || targetNode == sourceNode)
+                    continue;
+
+                var blockedReason = "유닛 관리 시스템을 사용할 수 없습니다";
+                var canMove = _unitManagementSystem != null
+                              && _unitManagementSystem.CanMove(_selectedManagedUnit, targetNode, out blockedReason);
+                var entry = Instantiate(deployEntryPrefab, unitContentRoot);
+                entry.Initialize(
+                    _selectedManagedUnit.Data,
+                    _ => HandleMoveSelectedUnitToNode(targetNode),
+                    canMove ? "이동" : "정원 초과",
+                    canMove
+                        ? $"이동 명령 · {targetNode.Data?.Type} {targetNode.AssignedUnitCount}/{targetNode.UnitCapacity}"
+                        : blockedReason,
+                    canMove);
+                _deployEntries.Add(entry);
+            }
+        }
+
+        private void HandleCommandRequested(UnitCommand command)
+        {
+            if (_selectedManagedUnit == null || _unitManagementSystem == null)
+                return;
+
+            if (!_unitManagementSystem.TryIssueCommand(_selectedManagedUnit, command, out var result))
+            {
+                SetManagementTitle(result);
+                return;
+            }
+
+            SetManagementTitle($"{GetUnitDisplayName(_selectedManagedUnit.Data)} · {result}");
+            RefreshRosterEntries();
         }
 
         private void ClearDeployEntries()
@@ -789,7 +856,7 @@ namespace _01.Code.UI
                 || !IsManagementAllowed())
                 return;
 
-            if (!_selectedNode.TryGetFirstFreeUnitSlot(out var column, out var row))
+            if (!_selectedNode.TryGetFirstFreeUnitSlot(out _, out _))
             {
                 SetManagementTitle("노드 정원이 가득 찼습니다");
                 RefreshRosterEntries();
@@ -812,13 +879,38 @@ namespace _01.Code.UI
 
             _pendingUnitNode = _selectedNode;
             _pendingUnitData = unitData;
-            _pendingUnitCellColumn = column;
-            _pendingUnitCellRow = row;
+            _pendingUnitCellColumn = -1;
+            _pendingUnitCellRow = -1;
 
-            costEventChannel.RaiseEvent(new UnitDeployMagicRequestedEvent(
+            // 유닛은 카드에서 선택한 뒤 실제 노드의 작은 칸을 클릭해 배치 위치를 정한다.
+            // 이전처럼 첫 빈 칸을 자동 선택하면 전술 배치가 불가능하고, 그리드 클릭도 무시된다.
+            var grid = _pendingUnitNode.TrapGrid;
+            grid?.ClearCellSelection();
+            grid?.SetFocusedGridVisible(true);
+            SetManagementTitle("배치할 빈 칸을 선택하세요");
+            panelRoot?.SetActive(false);
+        }
+
+        private void HandleNodeGridCellSelected(NodeGridCellSelectedEvent evt)
+        {
+            if (evt == null
+                || _pendingUnitNode == null
+                || _pendingUnitData == null
+                || evt.Node != _pendingUnitNode)
+                return;
+
+            if (!_pendingUnitNode.IsUnitCellAvailable(evt.Column, evt.Row))
+                return;
+
+            _pendingUnitCellColumn = evt.Column;
+            _pendingUnitCellRow = evt.Row;
+            _pendingUnitNode.TrapGrid?.ClearCellSelection();
+            _pendingUnitNode.TrapGrid?.SetFocusedGridVisible(false);
+
+            costEventChannel?.RaiseEvent(new UnitDeployMagicRequestedEvent(
                 _pendingUnitNode,
-                unitData,
-                unitData.MagicCost));
+                _pendingUnitData,
+                _pendingUnitData.MagicCost));
         }
 
         private void HandleDeployMagicPaid(UnitDeployMagicPaidEvent evt)
@@ -830,10 +922,7 @@ namespace _01.Code.UI
             var unitData = _pendingUnitData;
             var column = _pendingUnitCellColumn;
             var row = _pendingUnitCellRow;
-            _pendingUnitNode = null;
-            _pendingUnitData = null;
-            _pendingUnitCellColumn = -1;
-            _pendingUnitCellRow = -1;
+            ClearPendingUnitPlacement();
 
             hiredUnitRoster ??= HiredUnitRoster.Current;
             if (!IsManagementAllowed()
@@ -864,7 +953,19 @@ namespace _01.Code.UI
             _pendingUnitData = null;
             _pendingUnitCellColumn = -1;
             _pendingUnitCellRow = -1;
+            evt.Node?.TrapGrid?.SetFocusedGridVisible(false);
+            panelRoot?.SetActive(true);
             SetTitle($"마력 부족 ({evt.UsedMagic}/{evt.MaxMagic})");
+        }
+
+        private void ClearPendingUnitPlacement()
+        {
+            _pendingUnitNode?.TrapGrid?.ClearCellSelection();
+            _pendingUnitNode?.TrapGrid?.SetFocusedGridVisible(false);
+            _pendingUnitNode = null;
+            _pendingUnitData = null;
+            _pendingUnitCellColumn = -1;
+            _pendingUnitCellRow = -1;
         }
 
         private bool DeployUnit(Node node, UnitDataSO unitData, int column, int row)
@@ -898,64 +999,28 @@ namespace _01.Code.UI
 
         private void HandleMoveRequested(Unit unit)
         {
-            if (unit == null
-                || unit is MainUnit
-                || _selectedNode == null
-                || unit.Combatant != null && unit.Combatant.Target != null)
-                return;
-
-            Node sourceNode = null;
-            Node.UnitPlacement sourcePlacement = null;
-            foreach (var node in Node.ActiveNodes)
-            {
-                if (node == null)
-                    continue;
-
-                foreach (var placement in node.UnitPlacements)
-                {
-                    if (placement?.Instance != unit)
-                        continue;
-
-                    sourceNode = node;
-                    sourcePlacement = placement;
-                    break;
-                }
-
-                if (sourceNode != null)
-                    break;
-            }
-
-            if (sourceNode == null || sourcePlacement == null)
+            if (unit == null || _selectedNode == null || _unitManagementSystem == null)
                 return;
 
             var targetNode = _selectedNode;
-            if (sourceNode == targetNode || !targetNode.CanAcceptAdditionalUnit)
-                return;
-
-            if (!targetNode.TryGetFirstFreeUnitSlot(out var targetColumn, out var targetRow))
-                return;
-
-            var agent = unit.GetComponent<BattleAgent>();
-            var sourceBattlefield = agent != null ? agent.Battlefield : sourceNode.GetComponent<NodeBattlefield>();
-            sourceBattlefield?.Leave(agent);
-            sourceNode.RemoveUnit(unit);
-
-            if (!targetNode.TryAssignUnitToCell(sourcePlacement.Data, unit, targetColumn, targetRow))
+            if (!_unitManagementSystem.TryMove(unit, targetNode, out var result))
             {
-                sourceNode.TryAssignUnitToCell(
-                    sourcePlacement.Data,
-                    unit,
-                    sourcePlacement.Column,
-                    sourcePlacement.Row);
-                sourceBattlefield?.TryEnter(agent);
+                SetManagementTitle(result);
                 return;
             }
 
-            targetNode.GetComponent<NodeBattlefield>()?.TryEnter(agent);
-
             _selectedManagedUnit = unit;
             ShowUnitManagementPanel();
-            SetManagementTitle($"{GetUnitDisplayName(sourcePlacement.Data)} 전입 완료");
+            SetManagementTitle($"{GetUnitDisplayName(unit.Data)} · {result}");
+        }
+
+        private void HandleMoveSelectedUnitToNode(Node targetNode)
+        {
+            if (_selectedManagedUnit == null || targetNode == null)
+                return;
+
+            _selectedNode = targetNode;
+            HandleMoveRequested(_selectedManagedUnit);
         }
 
         private void RefundDeployMagic(UnitDataSO unitData, int magicAmount)
@@ -1023,7 +1088,8 @@ namespace _01.Code.UI
                 entry.gameObject.SetActive(true);
                 entry.name = $"{buildingData.name}InstallCard";
                 SetButtonLabel(entry, buildingData);
-                ApplyCardSprite(entry, ResolvePreviewSprite(buildingData));
+            ApplyCardSprite(entry, ResolvePreviewSprite(buildingData));
+            NestHudStyle.ApplyManagementCard(entry.gameObject, GetCategoryAccent(category));
                 entry.onClick.RemoveAllListeners();
                 entry.onClick.AddListener(() => RequestBuildingInstall(buildingData));
                 buildingInstallButtons.Add(entry);
@@ -1042,8 +1108,7 @@ namespace _01.Code.UI
             return TutorialInputGate.IsActive
                    && TutorialInputGate.AllowInstallMenu
                    && TutorialInputGate.AllowedInstallCategory.HasValue
-                   && _selectedNode != null
-                   && !_selectedNode.HasInstallation;
+                   && _selectedNode != null;
         }
 
         private void ShowPreferredInstallPanel()
@@ -1249,6 +1314,18 @@ namespace _01.Code.UI
             if (installableBuildings == null)
                 return;
 
+            if (unlockCatalog != null)
+            {
+                foreach (var entry in unlockCatalog.Entries)
+                {
+                    var building = entry?.Building;
+                    if (building != null && entry.StartsUnlocked && !_unlockedBuildings.Contains(building))
+                        _unlockedBuildings.Add(building);
+                }
+
+                return;
+            }
+
             foreach (var buildingData in installableBuildings)
             {
                 if (buildingData != null && !_unlockedBuildings.Contains(buildingData))
@@ -1280,6 +1357,10 @@ namespace _01.Code.UI
 
                 yield return buildingData;
             }
+
+            var treasuryData = Resources.Load<BuildingDataSO>("Buildings/TreasuryBuildingData");
+            if (treasuryData != null && yielded.Add(treasuryData))
+                yield return treasuryData;
         }
 
         private void RefreshAfterBuildingUnlock()
@@ -1356,9 +1437,9 @@ namespace _01.Code.UI
             var costText = buildingData.Cost <= 0
                 ? "무료"
                 : discountedCost < buildingData.Cost
-                    ? $"{buildingData.Cost} → {discountedCost} Gold"
-                    : $"{buildingData.Cost} Gold";
-            var text = $"{displayName}\n건설 비용: {costText}\n위험도: {buildingData.BaseDanger}\n등급: {(int)buildingData.Grade}";
+                    ? $"{buildingData.Cost} → {discountedCost}G"
+                    : $"{buildingData.Cost}G";
+            var text = $"{displayName}\n건설  {costText}   ·   경계 +{buildingData.BaseDanger}\n등급 {(int)buildingData.Grade}";
 
             if (buildingData.Prefab is Trap trap)
             {
@@ -1366,7 +1447,30 @@ namespace _01.Code.UI
                 text += $"\n발동: {FormatPercent(trap.TriggerChance)} / {FormatTrapStatus(trap)}";
             }
 
+            if (buildingData.Prefab is RecoveryFacility recoveryFacility)
+            {
+                text += $"\n회복: 피로 -{Mathf.RoundToInt(recoveryFacility.FatigueRecoveryPerWave)}";
+                if (recoveryFacility.HealthRecoveryRatioPerWave > 0f)
+                    text += $" / HP +{FormatPercent(recoveryFacility.HealthRecoveryRatioPerWave)}";
+                if (recoveryFacility.ImproveInjury)
+                    text += " / 부상 완화";
+            }
+
+            if (buildingData.Prefab.IsDestructible)
+                text += $"\n내구도: {buildingData.Prefab.MaxDurability}";
+
             return text;
+        }
+
+        private static Color GetCategoryAccent(InstallCategory category)
+        {
+            return category switch
+            {
+                InstallCategory.Unit => new Color(0.34f, 0.72f, 0.92f, 1f),
+                InstallCategory.Trap => new Color(0.9f, 0.28f, 0.14f, 1f),
+                InstallCategory.Decoration => new Color(0.48f, 0.74f, 0.42f, 1f),
+                _ => new Color(0.88f, 0.6f, 0.2f, 1f)
+            };
         }
 
         private string FormatTrapDamage(Trap trap)
@@ -1456,10 +1560,10 @@ namespace _01.Code.UI
                 return;
             }
 
-            // 그리드 노드 + 일반 건물: 바로 설치하지 않고 배치 모드로 — 마우스가 올라간 칸에
+            // 중앙 핵심 건물을 제외한 건물/함정은 작은 칸을 직접 골라 배치한다.
             // "여기에 설치" 미리보기를 띄우고, 클릭한 칸으로 확정한 뒤에 비용을 청구한다.
             var grid = _selectedNode != null ? _selectedNode.TrapGrid : null;
-            if (grid != null && !buildingData.Unique && grid.HasFreeCell)
+            if (UsesGridCellPlacement(buildingData) && grid != null && grid.HasFreeCell)
             {
                 var node = _selectedNode;
                 var restoreCategory = _currentInstallCategory;
@@ -1539,7 +1643,6 @@ namespace _01.Code.UI
             buildingInfoPanel.Show(buildingData);
             buildingInfoPanel.SetInstallInteractable(CanInstallBuilding(buildingData));
             buildingInfoPanel.SetInstallHandler(() => RequestBuildingInstall(buildingData));
-            GameSfxPlayer.Play(GameSfxCue.UiOpen);
             BringToFront();
             RefreshTutorialHighlight();
         }
@@ -1601,10 +1704,9 @@ namespace _01.Code.UI
                 return; // 패널 유지 → 연속 설치
             }
 
-            // 그리드 노드: 배치 모드에서 고른 칸에 설치. (칸 정보가 없거나 그새 차 있으면 가까운 빈 셀 폴백)
-            // 트랩뿐 아니라 비-Unique 일반 건물도 같은 방식으로 여러 개 설치. Unique(포탈)는 아래 단일 경로로.
+            // 작은 칸 건물: 배치 모드에서 고른 칸에 설치. (칸 정보가 없거나 그새 차 있으면 가까운 빈 셀 폴백)
             var grid = node.TrapGrid;
-            if (grid != null && !buildingData.Unique)
+            if (UsesGridCellPlacement(buildingData) && grid != null)
             {
                 var placed = hasChosenCell
                     ? grid.TryPlace(chosenColumn, chosenRow, buildingData.Prefab)
@@ -1624,13 +1726,13 @@ namespace _01.Code.UI
                 return; // 패널 유지 → 연속 설치
             }
 
-            if (node.HasInstallation)
+            if (node.HasAssignedBuilding)
             {
                 RefreshBuildingInstallButtons();
                 return;
             }
 
-            var building = CreateBuilding(node, buildingData.Prefab);
+            var building = CreateBuilding(node, buildingData);
             if (building == null)
                 return;
 
@@ -1647,6 +1749,9 @@ namespace _01.Code.UI
 
             RefreshBuildingInstallButtons();
             panelRoot?.SetActive(false);
+            // 중앙 건물 설치 직전에는 설치 메뉴가 열려 있어 설치 버튼이 숨겨진다.
+            // 메뉴를 닫은 뒤 다시 갱신해야 작은 칸 설치 버튼이 즉시 돌아온다.
+            RefreshInstallButtonState();
             ClearTutorialHighlight();
         }
 
@@ -1682,16 +1787,70 @@ namespace _01.Code.UI
             ClearTutorialHighlight();
         }
 
-        private Building CreateBuilding(Node targetNode, Building buildingPrefab)
+        private Building CreateBuilding(Node targetNode, BuildingDataSO buildingData)
         {
-            if (targetNode == null || buildingPrefab == null)
+            if (targetNode == null || buildingData == null || buildingData.Prefab == null)
                 return null;
 
-            var spawnPosition = targetNode.transform.position;
+            var grid = targetNode.TrapGrid;
+            var useCentralSlot = IsMainNodeBuilding(buildingData) && grid != null;
+            var spawnPosition = useCentralSlot
+                ? grid.CentralBuildingWorldPosition()
+                : targetNode.transform.position;
 
-            var building = Instantiate(buildingPrefab, spawnPosition, Quaternion.identity);
+            var building = Instantiate(buildingData.Prefab, spawnPosition, Quaternion.identity);
             building.transform.SetParent(targetNode.transform, true);
+            if (useCentralSlot && building is not Portal)
+                FitBuildingToCentralSlot(building, grid);
+
             return building;
+        }
+
+        private void FitBuildingToCentralSlot(Building building, NodeTrapGrid grid)
+        {
+            if (building == null || grid == null)
+                return;
+
+            var renderers = building.GetComponentsInChildren<SpriteRenderer>(true);
+            if (renderers == null || renderers.Length == 0)
+                return;
+
+            var hasBounds = false;
+            var visualBounds = new Bounds();
+            foreach (var spriteRenderer in renderers)
+            {
+                if (spriteRenderer == null || spriteRenderer.sprite == null)
+                    continue;
+
+                if (!hasBounds)
+                {
+                    visualBounds = spriteRenderer.bounds;
+                    hasBounds = true;
+                }
+                else
+                {
+                    visualBounds.Encapsulate(spriteRenderer.bounds);
+                }
+            }
+
+            if (!hasBounds || visualBounds.size.x <= Mathf.Epsilon || visualBounds.size.y <= Mathf.Epsilon)
+                return;
+
+            var slotSize = grid.CentralBuildingSlotWorldSize * centralBuildingSlotFill;
+            var scaleFactor = Mathf.Min(
+                slotSize.x / visualBounds.size.x,
+                slotSize.y / visualBounds.size.y);
+            if (scaleFactor <= 0f || float.IsNaN(scaleFactor) || float.IsInfinity(scaleFactor))
+                return;
+
+            building.transform.localScale *= scaleFactor;
+        }
+
+        private static bool IsMainNodeBuilding(BuildingDataSO buildingData)
+        {
+            return buildingData != null
+                   && buildingData.Category == InstallCategory.Building
+                   && !UsesGridCellPlacement(buildingData);
         }
 
         private void RefreshBuildingInstallButtons()
@@ -1723,27 +1882,32 @@ namespace _01.Code.UI
                 return EdgePlacementPreview.HasFreeEdge()
                        && _pendingBuildingNode == null;
 
-            // 단일 슬롯이 차 있어도(유닛/포탈 등) 그리드가 있으면 일반 건물은 설치 가능.
-            // Unique 건물은 단일 슬롯 경로를 쓰므로 기존대로 막는다.
-            if (_selectedNode.HasInstallation && (buildingData.Unique || _selectedNode.TrapGrid == null))
+            // 중앙 슬롯을 쓰는 고유 핵심 건물만 노드당 하나로 제한한다.
+            if (!UsesGridCellPlacement(buildingData) && _selectedNode.HasAssignedBuilding)
                 return false;
 
             if (buildingData.Unique && buildingData.Prefab is Portal && hasInstalledPortal)
                 return false;
 
-            // 그리드 경로(트랩 + 비-Unique 일반 건물): 빈 셀이 있어야 더 놓을 수 있음.
-            // 그리드 건물은 HasInstallation을 세우지 않으므로 위 검사를 통과해 셀이 찰 때까지 계속 설치된다.
-            if (_selectedNode.TrapGrid != null && !buildingData.Unique && !_selectedNode.TrapGrid.HasFreeCell)
+            // 일반 건물과 함정은 중앙 슬롯 바깥의 작은 칸에 함께 설치된다.
+            if (UsesGridCellPlacement(buildingData) && (_selectedNode.TrapGrid == null || !_selectedNode.TrapGrid.HasFreeCell))
                 return false;
 
             return _pendingBuildingNode == null;
+        }
+
+        private static bool UsesGridCellPlacement(BuildingDataSO buildingData)
+        {
+            return buildingData != null
+                   && !buildingData.Unique
+                   && !buildingData.InstallOnEdge;
         }
 
         private void RefreshInstallButtonState()
         {
             var installPanelOpen = panelRoot != null
                                    && panelRoot.activeSelf
-                                   && (IsCategoryPanelOpen() || IsUnitPanelOpen() || IsBuildingPanelOpen());
+                                   && (IsCategoryPanelOpen() || IsBuildingPanelOpen());
 
             if (installPanelOpen)
             {
@@ -1753,9 +1917,12 @@ namespace _01.Code.UI
 
             if (installButton != null)
             {
+                // 중앙 건물은 중앙 슬롯만 점유한다. 외곽 작은 칸에 설치할 수 있는
+                // 함정/장식이 남아 있다면 설치 메뉴를 계속 제공한다.
+                var hasGridInstallSpace = _selectedNode?.TrapGrid?.HasFreeCell == true;
                 var canOpenInstall = IsManagementAllowed()
                                      && _selectedNode != null
-                                     && !_selectedNode.HasInstallation;
+                                     && (!_selectedNode.HasAssignedBuilding || hasGridInstallSpace);
                 installButton.gameObject.SetActive(canOpenInstall);
                 installButton.interactable = canOpenInstall;
             }
@@ -1788,6 +1955,7 @@ namespace _01.Code.UI
             ClearBuildingEntries();
             HideInstallPanels();
             panelRoot?.SetActive(false);
+            ClearPendingUnitPlacement();
             _selectedManagedUnit = null;
         }
 
@@ -1812,7 +1980,7 @@ namespace _01.Code.UI
             ClearCategoryEntries();
             ClearBuildingEntries();
             SetBackButtonActive(false);
-            SetInstallButtonActive(_selectedNode != null && !_selectedNode.HasInstallation);
+            SetInstallButtonActive(_selectedNode != null && IsManagementAllowed());
             RestoreInstallButtonLabel();
         }
 
@@ -2041,6 +2209,8 @@ namespace _01.Code.UI
 
             text.enableWordWrapping = false;
             text.overflowMode = TextOverflowModes.Overflow;
+            text.rectTransform.localRotation = Quaternion.identity;
+            text.rectTransform.localScale = Vector3.one;
         }
     }
 }
