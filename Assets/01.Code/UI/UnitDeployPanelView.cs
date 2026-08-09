@@ -22,10 +22,6 @@ namespace _01.Code.UI
         [SerializeField] private Transform contentRoot;
         [SerializeField] private UnitDeployEntryView entryPrefab;
         [SerializeField] private TMP_Text hintText;
-        [SerializeField, Min(1)] private int gridColumns = 5;
-        [SerializeField, Min(120f)] private float minCardWidth = 150f;
-        [SerializeField, Min(120f)] private float maxCardWidth = 190f;
-        [SerializeField, Min(1f)] private float cardHeightRatio = 1.45f;
 
         [Header("Data")]
         [SerializeField] private UnitDataSO[] deployableUnits;
@@ -77,7 +73,7 @@ namespace _01.Code.UI
         {
             dayManager ??= DayManager.Current;
             ConfigureStaticTextLayout();
-            EnsurePanelPlacement(); // 씬 위치 덮어쓰기와 무관하게 시작부터 우측 정렬로 고정
+            NestHudStyle.ApplyManagementDrawer(panelRoot);
 
             if (panelRoot != null)
                 panelRoot.SetActive(false);
@@ -172,13 +168,12 @@ namespace _01.Code.UI
                 _entries.Add(entry);
             }
 
-            ConfigureHireGrid();
             ScrollViewContentSizer.ResizeToGridItemCount(contentRoot, _entries.Count);
             if (_hireableUnits.Count == 0)
             {
                 selectedUnit = null;
                 SetDetailVisible(true);
-                UpdateHint("고용 가능한 유닛 없음");
+                UpdateHint("영입 가능한 부하 없음");
             }
             else
             {
@@ -207,7 +202,6 @@ namespace _01.Code.UI
 
             if (shouldShow)
             {
-                EnsurePanelPlacement();
                 SyncInventoryFromRoster();
                 RefreshHireEntries();
                 RefreshEntryInteractableStates();
@@ -215,7 +209,6 @@ namespace _01.Code.UI
                 SetEntrySelection(null);
                 SetDetailVisible(false);
                 UpdateHint(string.Empty);
-                ConfigureHireGrid();
                 ScrollViewContentSizer.ResizeToGridItemCount(contentRoot, _entries.Count);
             }
         }
@@ -224,21 +217,6 @@ namespace _01.Code.UI
         {
             if (panelRoot != null)
                 panelRoot.SetActive(false);
-        }
-
-        /// <summary>고용 패널(루트=토글버튼+패널 서랍)을 프리팹 의도대로 화면 우측에 붙인다.
-        /// 씬에서 루트 위치가 (-238,20) 등으로 어긋나게 덮어써져도 항상 우측 정렬로 복원한다.
-        /// (중앙/좌측 등 다른 배치를 원하면 anchor/pivot만 바꾸면 된다.)</summary>
-        private void EnsurePanelPlacement()
-        {
-            if (transform is not RectTransform rect)
-                return;
-
-            rect.anchorMin = new Vector2(1f, 0.5f);
-            rect.anchorMax = new Vector2(1f, 0.5f);
-            rect.pivot = new Vector2(1f, 0.5f);
-            rect.anchoredPosition = Vector2.zero;
-            rect.localScale = Vector3.one;
         }
 
         private void HandleUnitUnlockChanged(UnitUnlockChangedEvent evt)
@@ -296,7 +274,7 @@ namespace _01.Code.UI
             if (GetOwnedUnitCount(unit) <= 0)
             {
                 SelectUnit(unit);
-                UpdateHint($"{BuildUnitDetailText(unit)}\n\n고용 가능한 후보가 없습니다. 웨이브 보상으로 후보 계약서를 획득하세요.");
+                UpdateHint($"{BuildUnitDetailText(unit)}\n\n영입 가능한 후보가 없습니다. 습격 보상으로 계약서를 획득하십시오.");
                 return;
             }
 
@@ -324,15 +302,15 @@ namespace _01.Code.UI
             selectedUnit = evt.Unit;
             SetEntrySelection(selectedUnit);
             SetDetailVisible(true);
-            UpdateHint($"{BuildUnitDetailText(evt.Unit)}\n\n{name} 고용 완료! 남은 골드 {evt.RemainingGold}G");
+            UpdateHint($"{BuildUnitDetailText(evt.Unit)}\n\n{name} 영입 완료 · 운영 자금 {evt.RemainingGold}G");
         }
 
         private void HandleHireRejected(RosterHireRejectedEvent evt)
         {
             SetDetailVisible(true);
             var reason = GetOwnedUnitCount(evt.Unit) <= 0
-                ? "고용 가능한 후보가 없습니다."
-                : $"골드가 부족합니다. 필요 {evt.GoldAmount}G / 보유 {evt.CurrentGold}G";
+                ? "영입 가능한 후보가 없습니다."
+                : $"운영 자금이 부족합니다. 필요 {evt.GoldAmount}G / 보유 {evt.CurrentGold}G";
             UpdateHint($"{BuildUnitDetailText(evt.Unit)}\n\n{reason}");
         }
 
@@ -344,7 +322,10 @@ namespace _01.Code.UI
         private void ConfigureStaticTextLayout()
         {
             if (toggleButton != null)
+            {
                 TmpTextLayoutUtility.KeepHorizontal(toggleButton.GetComponentInChildren<TMP_Text>(true), true);
+                NestHudStyle.ApplySideActionButton(toggleButton.gameObject);
+            }
 
             if (closeButton != null)
                 TmpTextLayoutUtility.KeepHorizontal(closeButton.GetComponentInChildren<TMP_Text>(true), true);
@@ -385,21 +366,14 @@ namespace _01.Code.UI
             var healthText = health != null ? health.MaxHealth.ToString() : "-";
             var intervalText = combatant != null ? $"{combatant.AttackInterval:0.##}초" : "-";
 
-            return $"{displayName}\n" +
-                   $"등급: {(int)unit.Grade}\n" +
-                   $"고용 후보: {GetOwnedUnitCount(unit)}\n" +
-                   $"대기 인원: {GetAvailableUnitCount(unit)}\n" +
-                   $"배치 중: {GetDeployedUnitCount(unit)}\n" +
-                   $"고용 비용: {unit.Cost}G (보유 {_currentGold}G)\n" +
-                   $"일일 급여: {Mathf.Max(1, Mathf.CeilToInt(unit.Cost / 5f))}G\n" +
-                   $"마력: {unit.MagicCost}\n" +
-                   $"공격력: {attackText}\n" +
-                   $"방어력: {defense}\n" +
-                   $"체력: {healthText}\n" +
-                   $"공격속도: {intervalText}\n" +
-                   $"기본 위험도: {unit.BaseDanger}\n" +
-                   $"전투 위험 증가: {unit.DangerIncreaseOnCombat}\n\n" +
-                   "선택한 후보를 한 번 더 클릭하면 골드를 지불하고 고용";
+            return $"{displayName}  ·  등급 {(int)unit.Grade}\n" +
+                   $"━━━━━━━━━━━━━━━━\n" +
+                   $"전투  공격 {attackText}  |  방어 {defense}  |  체력 {healthText}\n" +
+                   $"전투  공격 간격 {intervalText}  |  마력 {unit.MagicCost}\n" +
+                   $"운영  계약서 {GetOwnedUnitCount(unit)}  |  대기 {GetAvailableUnitCount(unit)}  |  배치 {GetDeployedUnitCount(unit)}\n" +
+                   $"비용  영입 {unit.Cost}G  |  일일 급여 {Mathf.Max(1, Mathf.CeilToInt(unit.Cost / 5f))}G  |  운영 자금 {_currentGold}G\n" +
+                   $"경계  기본 +{unit.BaseDanger}  |  전투 시 +{unit.DangerIncreaseOnCombat}\n\n" +
+                   "선택 후 같은 카드를 다시 누르면 영입합니다.";
         }
 
         private int GetOwnedUnitCount(UnitDataSO unit)
@@ -440,55 +414,6 @@ namespace _01.Code.UI
 
             var component = unit.Prefab.GetComponent<T>();
             return component != null ? component : unit.Prefab.GetComponentInChildren<T>(true);
-        }
-
-        private void ConfigureHireGrid()
-        {
-            if (contentRoot == null || contentRoot is not RectTransform contentRect)
-                return;
-
-            contentRect.anchorMin = new Vector2(0f, 1f);
-            contentRect.anchorMax = new Vector2(0f, 1f);
-            contentRect.pivot = new Vector2(0f, 1f);
-            contentRect.anchoredPosition = Vector2.zero;
-
-            if (contentRoot.TryGetComponent<ContentSizeFitter>(out var fitter))
-                fitter.enabled = false;
-
-            var grid = contentRoot.GetComponent<GridLayoutGroup>();
-            if (grid == null)
-                return;
-
-            grid.startCorner = GridLayoutGroup.Corner.UpperLeft;
-            grid.startAxis = GridLayoutGroup.Axis.Horizontal;
-            grid.childAlignment = TextAnchor.UpperLeft;
-
-            var viewportWidth = ResolveViewportWidth(contentRect);
-            var desiredWidth = Mathf.Clamp((minCardWidth + maxCardWidth) * 0.5f, minCardWidth, maxCardWidth);
-            var maxColumns = Mathf.Max(1, gridColumns);
-            var columnsByWidth = Mathf.FloorToInt((viewportWidth - grid.padding.left - grid.padding.right + grid.spacing.x)
-                                                  / (desiredWidth + grid.spacing.x));
-            var columns = Mathf.Clamp(columnsByWidth, 1, maxColumns);
-            var availableWidth = viewportWidth
-                                 - grid.padding.left
-                                 - grid.padding.right
-                                 - Mathf.Max(0, columns - 1) * grid.spacing.x;
-            var cardWidth = Mathf.Clamp(Mathf.Floor(availableWidth / columns), minCardWidth, maxCardWidth);
-            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            grid.constraintCount = columns;
-            grid.cellSize = new Vector2(cardWidth, Mathf.Round(cardWidth * cardHeightRatio));
-        }
-
-        private float ResolveViewportWidth(RectTransform contentRect)
-        {
-            if (contentRect.parent is RectTransform viewport)
-            {
-                LayoutRebuilder.ForceRebuildLayoutImmediate(viewport);
-                if (viewport.rect.width > 1f)
-                    return viewport.rect.width;
-            }
-
-            return maxCardWidth * Mathf.Max(1, gridColumns);
         }
 
         private bool IsManagementAllowed()

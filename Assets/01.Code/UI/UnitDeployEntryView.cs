@@ -43,8 +43,8 @@ namespace _01.Code.UI
 
             var displayName = !string.IsNullOrWhiteSpace(unit.Name) ? unit.Name : unit.name;
             SetText(nameText, displayName);
-            var candidateText = candidateCount >= 0 ? $"후보 {candidateCount}" : "후보 -";
-            SetText(costText, $"{candidateText} / 대기 {availableCount} / 배치 {deployedCount} / 고용 {unit.Cost}G");
+            var candidateText = candidateCount >= 0 ? $"계약서 {candidateCount}" : "계약서 -";
+            SetText(costText, $"{candidateText}  ·  대기 {availableCount}  ·  배치 {deployedCount}\n영입 비용  {unit.Cost}G");
             if (unitIcon != null && unit.Sprite != null)
             {
                 unitIcon.sprite = unit.Sprite;
@@ -59,6 +59,7 @@ namespace _01.Code.UI
             }
             SetSelected(false);
             SetInteractable(candidateCount != 0);
+            NestHudStyle.ApplyManagementCard(gameObject, new Color(0.34f, 0.72f, 0.92f, 1f));
         }
 
         private void ApplyBoard(Sprite boardSprite)
