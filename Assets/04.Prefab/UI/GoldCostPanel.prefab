@@ -204,8 +204,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 43d47f14eb822a44ca735bd655aa3325, type: 3}
-  m_Type: 1
+  m_Sprite: {fileID: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -228,4 +228,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Blade.Core.GoldCostView
   costEventChannel: {fileID: 11400000, guid: 734ca3593b5d2884dae267b0e3e601be, type: 2}
   goldText: {fileID: 3152318050649046555}
-  format: 'Gold: {0}'
+  format: "\uC6B4\uC601 \uC790\uAE08 {0}G"
