@@ -28,14 +28,17 @@ namespace _01.Code.UI
         [SerializeField] private Canvas panelCanvas;
         [SerializeField] private Vector2 screenOffset = new(24f, 24f);
         [SerializeField] private bool keepInsideScreen = true;
+        [SerializeField, Min(0.05f)] private float refreshInterval = 0.12f;
 
         private readonly List<TMP_Text> statusEntries = new();
         private Enemy selectedEnemy;
         private bool isSubscribed;
+        private float _nextRefreshAt;
 
         private void Awake()
         {
             ActiveInstance = this;
+            NestHudStyle.ApplyCombatStatusPanel(panelRoot, titleText, true);
             SetPanelVisible(false);
         }
 
@@ -80,6 +83,10 @@ namespace _01.Code.UI
             if (selectedEnemy == null || panelRoot == null || !panelRoot.activeSelf)
                 return;
 
+            if (Time.unscaledTime < _nextRefreshAt)
+                return;
+
+            _nextRefreshAt = Time.unscaledTime + refreshInterval;
             Refresh();
         }
 
@@ -90,6 +97,7 @@ namespace _01.Code.UI
                 return;
 
             UnitStatusPanelView.ActiveInstance?.HidePanel();
+            _nextRefreshAt = 0f;
             Refresh();
             MovePanelToScreenPosition(evt.ScreenPosition);
             SetPanelVisible(true);
@@ -127,7 +135,7 @@ namespace _01.Code.UI
             if (selectedEnemy.Health == null || !selectedEnemy.Health.IsAlive)
                 return "처치됨";
 
-            return string.Empty;
+            return selectedEnemy.InstinctState;
         }
 
         private string ResolveHpText()
@@ -145,7 +153,8 @@ namespace _01.Code.UI
                 ? $"ATK {combatant.AttackDamage}  SPD {combatant.AttackInterval:0.##}s"
                 : "ATK -  SPD -";
 
-            return $"{combatText}\n공포 {selectedEnemy.Fear}  욕심 {selectedEnemy.Greed}";
+            var retreatPercent = Mathf.RoundToInt(selectedEnemy.RetreatChance * 100f);
+            return $"{combatText}\n경계 {selectedEnemy.Fear}  ·  탐욕 {selectedEnemy.Greed}  ·  철수 {retreatPercent}%";
         }
 
         private void RefreshStatusEffects()
@@ -254,7 +263,7 @@ namespace _01.Code.UI
 
         private static void SetText(TMP_Text text, string value)
         {
-            if (text != null)
+            if (text != null && text.text != value)
                 text.text = value;
         }
 
@@ -263,8 +272,12 @@ namespace _01.Code.UI
             if (text == null)
                 return;
 
-            text.text = value;
-            text.gameObject.SetActive(!string.IsNullOrWhiteSpace(value));
+            if (text.text != value)
+                text.text = value;
+
+            var visible = !string.IsNullOrWhiteSpace(value);
+            if (text.gameObject.activeSelf != visible)
+                text.gameObject.SetActive(visible);
         }
     }
 }
