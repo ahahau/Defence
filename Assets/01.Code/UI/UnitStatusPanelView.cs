@@ -21,23 +21,35 @@ namespace _01.Code.UI
         [SerializeField] private TMP_Text statusText;
         [SerializeField] private TMP_Text hpText;
         [SerializeField] private TMP_Text levelText;
+        [SerializeField] private TMP_Text traitText;
+        [SerializeField] private TMP_Text personalityText;
         [SerializeField] private TMP_Text hintText;
         [SerializeField] private TMP_Text recoverButtonLabel;
         [SerializeField] private Button recoverButton;
+        [SerializeField] private TMP_Text fatigueText;
+        [SerializeField] private Image fatigueFill;
+        [SerializeField] private TMP_Text recallButtonLabel;
+        [SerializeField] private Button recallButton;
+        [SerializeField] private UnitFatigueManagementView fatigueManagementPrefab;
         [SerializeField] private Button closeButton;
         [SerializeField] private Canvas panelCanvas;
         [SerializeField] private Vector2 screenOffset = new(24f, 24f);
         [SerializeField] private bool keepInsideScreen = true;
-        [SerializeField, Min(1f)] private float normalPanelHeight = 190f;
-        [SerializeField, Min(1f)] private float recoveryPanelHeight = 220f;
-        [SerializeField, Min(0f)] private float traitDescriptionExtraHeight = 68f;
+        [SerializeField, Min(0.05f)] private float refreshInterval = 0.12f;
 
         private Node selectedNode;
         private Unit selectedUnit;
+        private UnitManagementSystem _unitManagementSystem;
+        private float _nextRefreshAt;
+
+        public Unit SelectedUnit => selectedUnit;
 
         private void Awake()
         {
             ActiveInstance = this;
+            _unitManagementSystem = new UnitManagementSystem(nodeEventChannel, costEventChannel, dayManager);
+            // 프리팹이 텍스트와 버튼의 최종 레이아웃을 소유한다. 여기서 공용 스타일을
+            // 재적용하면 줄바꿈과 자동 크기가 바뀌어 실행 중 배치가 어긋난다.
             SetPanelVisible(false);
         }
 
@@ -47,6 +59,7 @@ namespace _01.Code.UI
             costEventChannel?.AddListener<UnitRecoveryCostPaidEvent>(HandleRecoveryPaid);
             costEventChannel?.AddListener<UnitRecoveryCostRejectedEvent>(HandleRecoveryRejected);
             recoverButton?.onClick.AddListener(HandleRecoverClicked);
+            recallButton?.onClick.AddListener(HandleRecallClicked);
             closeButton?.onClick.AddListener(HandleCloseClicked);
         }
 
@@ -56,6 +69,7 @@ namespace _01.Code.UI
             costEventChannel?.RemoveListener<UnitRecoveryCostPaidEvent>(HandleRecoveryPaid);
             costEventChannel?.RemoveListener<UnitRecoveryCostRejectedEvent>(HandleRecoveryRejected);
             recoverButton?.onClick.RemoveListener(HandleRecoverClicked);
+            recallButton?.onClick.RemoveListener(HandleRecallClicked);
             closeButton?.onClick.RemoveListener(HandleCloseClicked);
         }
 
@@ -70,6 +84,10 @@ namespace _01.Code.UI
             if (selectedUnit == null || panelRoot == null || !panelRoot.activeSelf)
                 return;
 
+            if (Time.unscaledTime < _nextRefreshAt)
+                return;
+
+            _nextRefreshAt = Time.unscaledTime + refreshInterval;
             Refresh();
         }
 
@@ -89,6 +107,7 @@ namespace _01.Code.UI
 
             EnemyStatusPanelView.ActiveInstance?.HidePanel();
             SetHint(string.Empty);
+            _nextRefreshAt = 0f;
             Refresh();
             MovePanelToScreenPosition(evt.ScreenPosition);
             SetPanelVisible(true);
@@ -103,6 +122,27 @@ namespace _01.Code.UI
                 selectedNode,
                 selectedUnit,
                 selectedUnit.RecoveryCost));
+        }
+
+        private void HandleRecallClicked()
+        {
+            if (!CanRecallSelectedUnit())
+            {
+                SetHint(ResolveRecallBlockedReason());
+                Refresh();
+                return;
+            }
+
+            var result = "유닛 관리 시스템을 사용할 수 없습니다";
+            if (_unitManagementSystem == null
+                || !_unitManagementSystem.TryRecall(selectedNode, selectedUnit, out result))
+            {
+                SetHint(string.IsNullOrWhiteSpace(result) ? "회수 실패" : result);
+                Refresh();
+                return;
+            }
+
+            HidePanel();
         }
 
         private void HandleRecoveryPaid(UnitRecoveryCostPaidEvent evt)
@@ -158,9 +198,11 @@ namespace _01.Code.UI
             var health = selectedUnit.Health;
             SetText(hpText, $"HP {health.CurrentHealth}/{health.MaxHealth}");
             SetText(levelText, ResolveCombatText());
+            SetText(traitText, $"특성 : {selectedUnit.TraitLabel}");
+            SetText(personalityText, $"성격 : {selectedUnit.PersonalityLabel}");
+            RefreshFatigueUi();
 
             var shouldShowRecovery = selectedUnit.NeedsRecovery;
-            ApplyPanelHeight((shouldShowRecovery ? recoveryPanelHeight : normalPanelHeight) + traitDescriptionExtraHeight);
             if (recoverButton != null)
             {
                 recoverButton.gameObject.SetActive(shouldShowRecovery);
@@ -174,20 +216,17 @@ namespace _01.Code.UI
                     : "회복 불필요";
             }
 
+            if (recallButton != null)
+            {
+                recallButton.gameObject.SetActive(selectedUnit is not MainUnit);
+                recallButton.interactable = CanRecallSelectedUnit();
+            }
+
+            if (recallButtonLabel != null)
+                recallButtonLabel.text = CanRecallSelectedUnit() ? "회수 후 휴식" : ResolveRecallBlockedReason();
+
             if (string.IsNullOrWhiteSpace(hintText.text))
                 SetTextVisible(hintText, shouldShowRecovery && !CanRecoverSelectedUnit() ? ResolveRecoverBlockedReason() : string.Empty);
-        }
-
-        private void ApplyPanelHeight(float height)
-        {
-            if (panelRoot == null)
-                return;
-
-            var panelRect = panelRoot.transform as RectTransform;
-            if (panelRect == null)
-                return;
-
-            panelRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
         }
 
         private string ResolveCombatText()
@@ -196,10 +235,59 @@ namespace _01.Code.UI
             var combatText = combatant != null
                 ? $"ATK {combatant.AttackDamage}  SPD {combatant.AttackInterval:0.##}s"
                 : "ATK -  SPD -";
-
             var level = selectedUnit.Level;
-            return $"{combatText}\n특성: {selectedUnit.TraitDescription}\n성격: {selectedUnit.PersonalityDescription}\nEXP {level.Experience}/{level.ExperienceToNextLevel}";
+            return $"{combatText}  ·  EXP {level.Experience}/{level.ExperienceToNextLevel}\n명령 : {selectedUnit.CommandLabel}";
         }
+
+        private void RefreshFatigueUi()
+        {
+            if (selectedUnit == null)
+                return;
+
+            var fatigue = Mathf.Clamp(selectedUnit.Fatigue, 0f, 100f);
+            var fatigueRatio = fatigue / 100f;
+            var state = ResolveFatigueState(fatigue);
+            var attackPenalty = Mathf.RoundToInt(fatigueRatio * 30f);
+            var speedPenalty = Mathf.RoundToInt(fatigueRatio * 40f);
+            SetText(fatigueText,
+                $"피로 {Mathf.RoundToInt(fatigue)}/100 · {state}  ATK -{attackPenalty}% · 공속 -{speedPenalty}%");
+
+            if (fatigueFill == null)
+                return;
+
+            fatigueFill.fillAmount = fatigueRatio;
+            fatigueFill.color = fatigue switch
+            {
+                >= 85f => new Color(0.92f, 0.16f, 0.1f, 1f),
+                >= 60f => new Color(1f, 0.46f, 0.1f, 1f),
+                >= 30f => new Color(0.95f, 0.72f, 0.16f, 1f),
+                _ => new Color(0.28f, 0.78f, 0.42f, 1f)
+            };
+        }
+
+        private bool CanRecallSelectedUnit()
+        {
+            return _unitManagementSystem != null
+                   && _unitManagementSystem.CanRecall(selectedNode, selectedUnit, out _);
+        }
+
+        private string ResolveRecallBlockedReason()
+        {
+            if (_unitManagementSystem != null
+                && !_unitManagementSystem.CanRecall(selectedNode, selectedUnit, out var reason))
+                return reason;
+
+            return "회수 불가";
+        }
+
+        private static string ResolveFatigueState(float fatigue) => fatigue switch
+        {
+            >= 100f => "탈진",
+            >= 85f => "탈진 임박",
+            >= 60f => "과로",
+            >= 30f => "피로",
+            _ => "쾌조"
+        };
 
         private bool CanRecoverSelectedUnit()
         {
@@ -216,7 +304,7 @@ namespace _01.Code.UI
             if (!selectedUnit.NeedsRecovery)
                 return "이미 전투 가능";
             if (dayManager == null || !dayManager.IsStandby)
-                return "웨이브 중 회복 불가";
+                return "습격 중 회복 불가";
             return string.Empty;
         }
 
@@ -239,49 +327,35 @@ namespace _01.Code.UI
                 return;
 
             var panelRect = (RectTransform)panelRoot.transform;
-            panelRect.pivot = new Vector2(0f, 1f);
             var screenPosition = originScreenPosition + screenOffset;
-
             if (keepInsideScreen)
                 screenPosition = ClampToScreen(panelRect, screenPosition);
 
-            if (panelCanvas == null)
-                return;
-
-            if (panelCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
+            if (panelCanvas == null || panelCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
             {
                 panelRect.position = screenPosition;
                 return;
             }
 
             var canvasRect = (RectTransform)panelCanvas.transform;
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                canvasRect,
-                screenPosition,
-                panelCanvas.worldCamera,
-                out var localPosition);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPosition,
+                panelCanvas.worldCamera, out var localPosition);
             panelRect.anchoredPosition = localPosition;
-        }
-
-        private static void SetText(TMP_Text text, string value)
-        {
-            if (text != null)
-                text.text = value;
         }
 
         private static Vector2 ClampToScreen(RectTransform panelRect, Vector2 screenPosition)
         {
             var size = Vector2.Scale(panelRect.rect.size, panelRect.lossyScale);
             var pivot = panelRect.pivot;
-
-            var minX = size.x * pivot.x;
-            var maxX = Screen.width - size.x * (1f - pivot.x);
-            var minY = size.y * pivot.y;
-            var maxY = Screen.height - size.y * (1f - pivot.y);
-
-            screenPosition.x = Mathf.Clamp(screenPosition.x, minX, maxX);
-            screenPosition.y = Mathf.Clamp(screenPosition.y, minY, maxY);
+            screenPosition.x = Mathf.Clamp(screenPosition.x, size.x * pivot.x, Screen.width - size.x * (1f - pivot.x));
+            screenPosition.y = Mathf.Clamp(screenPosition.y, size.y * pivot.y, Screen.height - size.y * (1f - pivot.y));
             return screenPosition;
+        }
+
+        private static void SetText(TMP_Text text, string value)
+        {
+            if (text != null && text.text != value)
+                text.text = value;
         }
 
         private static void SetTextVisible(TMP_Text text, string value)
@@ -289,8 +363,12 @@ namespace _01.Code.UI
             if (text == null)
                 return;
 
-            text.text = value;
-            text.gameObject.SetActive(!string.IsNullOrWhiteSpace(value));
+            if (text.text != value)
+                text.text = value;
+
+            var visible = !string.IsNullOrWhiteSpace(value);
+            if (text.gameObject.activeSelf != visible)
+                text.gameObject.SetActive(visible);
         }
     }
 }
