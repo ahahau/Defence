@@ -301,11 +301,15 @@ MonoBehaviour:
   originOffset: {x: 0, y: 0}
   autoFitToArena: 1
   showGridWhenFocused: 1
-  focusedGridColor: {r: 0.3, g: 0.85, b: 1, a: 0.58}
+  focusedGridColor: {r: 0.62, g: 0.48, b: 0.88, a: 0.34}
   focusedGridLineWidth: 0.03
-  focusedGridSortingOrder: 35
+  focusedGridSortingOrder: 5
   selectedFreeCellColor: {r: 0.25, g: 1, b: 0.48, a: 0.38}
   selectedOccupiedCellColor: {r: 1, g: 0.62, b: 0.2, a: 0.42}
+  reserveCentralBuildingSlot: 1
+  centralBuildingSlotColumns: 2
+  centralBuildingSlotRows: 2
+  centralBuildingSlotColor: {r: 0.98, g: 0.44, b: 0.12, a: 0.34}
 --- !u!1 &5300513331299341621
 GameObject:
   m_ObjectHideFlags: 0
