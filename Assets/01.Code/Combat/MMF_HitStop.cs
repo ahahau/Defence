@@ -23,6 +23,11 @@ namespace _01.Code.Combat
         [Range(0f, 1f)] public float SlowTimeScale = 0.05f;
         /// timeScale이 이 값보다 낮으면(일시정지, 이미 히트스톱 중) 재생하지 않는다
         public float MinimumTimescaleThreshold = 0.1f;
+        /// 직전 히트스톱이 끝난 뒤 이 시간(실시간, 초)이 지나야 다시 멈춘다.
+        /// 여러 유닛이 동시에 싸울 때 멈춤이 연달아 걸려 화면이 계속 끊기는 것을 막는다.
+        public float GlobalCooldown = 0.12f;
+        /// 쿨다운을 무시하고 반드시 멈춘다. 치명타·사망처럼 드문 연출에 쓴다.
+        public bool IgnoreGlobalCooldown;
 
         public override float FeedbackDuration
         {
@@ -35,7 +40,8 @@ namespace _01.Code.Combat
             if (!Active || !FeedbackTypeAuthorized)
                 return;
 
-            HitStopRunner.Play(FeedbackDuration, SlowTimeScale, MinimumTimescaleThreshold);
+            HitStopRunner.Play(
+                FeedbackDuration, SlowTimeScale, MinimumTimescaleThreshold, GlobalCooldown, IgnoreGlobalCooldown);
         }
     }
 
@@ -47,10 +53,25 @@ namespace _01.Code.Combat
         private Coroutine _routine;
         private float _capturedTimeScale = 1f;
         private float _slowedTimeScale;
+        private float _nextAllowedRealtime;
 
-        public static void Play(float duration, float slowTimeScale, float minimumThreshold)
+        /// <param name="globalCooldown">이번 멈춤 이후 다음 멈춤까지 비워 둘 시간(실시간, 초).</param>
+        /// <param name="ignoreCooldown">
+        /// 쿨다운을 무시하고 반드시 멈춘다. 치명타·사망·스킬 폭발처럼
+        /// 드물게 일어나는 연출이 잦은 일반 타격에 묻히지 않게 할 때 쓴다.
+        /// </param>
+        public static void Play(
+            float duration,
+            float slowTimeScale,
+            float minimumThreshold,
+            float globalCooldown,
+            bool ignoreCooldown = false)
         {
             if (duration <= 0f || Time.timeScale < minimumThreshold)
+                return;
+
+            // 멈춤이 연달아 걸리면 전투가 계속 끊겨 보인다. 직전 멈춤 이후 쿨다운이 지나야 다시 건다.
+            if (!ignoreCooldown && _instance != null && Time.unscaledTime < _instance._nextAllowedRealtime)
                 return;
 
             if (_instance == null)
@@ -60,6 +81,7 @@ namespace _01.Code.Combat
                 _instance = runnerObject.AddComponent<HitStopRunner>();
             }
 
+            _instance._nextAllowedRealtime = Time.unscaledTime + duration + Mathf.Max(0f, globalCooldown);
             _instance.Run(duration, slowTimeScale);
         }
 

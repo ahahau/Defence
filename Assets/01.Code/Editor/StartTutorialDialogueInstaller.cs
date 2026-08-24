@@ -18,7 +18,7 @@ namespace _01.Code.Editor
         private const string ValueTablePath = "Assets/03.SO/Dialogue/ValueTables/Example.asset";
         private const string CostChannelPath = "Assets/03.SO/Event/CostGameEventChannel.asset";
         private const string NodeChannelPath = "Assets/03.SO/Event/NodeGameEventChannel.asset";
-        private const string ChoiceButtonPath = "Assets/04.Prefab/UI/Dialogue/Elements/DialogueChoiceButton.prefab";
+        private const string ChoiceButtonPath = "Assets/04.Prefab/UI/Dialogue/DialogueChoiceButton.prefab";
 
         [MenuItem("Tools/Defence/Install Start Tutorial Dialogue")]
         public static void Install()

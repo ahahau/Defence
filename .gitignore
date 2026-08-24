@@ -97,3 +97,23 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# --- 프로젝트 로컬 규칙 ---
+
+# 개발 중 캡처한 스크린샷/로그 이미지.
+# Assets 아래에 두면 Unity가 전부 텍스처로 임포트해 빌드와 임포트 시간을 잡아먹는다.
+/[Aa]ssets/[Ss]creenshots/
+/[Aa]ssets/[Ss]creenshots.meta
+/[Aa]ssets/[Ll]ogs/
+/[Aa]ssets/[Ll]ogs.meta
+/[Aa]ssets/[Tt]emp/
+/[Aa]ssets/[Tt]emp.meta
+/[Ss]creenshots/
+
+# IDE 로컬 파일
+*.slnx
+.vsconfig
+
+# Unity 크래시 복구 스냅샷
+/[Aa]ssets/_Recovery/
+/[Aa]ssets/_Recovery.meta

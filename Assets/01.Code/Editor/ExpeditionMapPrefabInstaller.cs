@@ -13,7 +13,7 @@ namespace _01.Code.Editor
 {
     public static class ExpeditionMapPrefabInstaller
     {
-        private const string PrefabPath = "Assets/04.Prefab/UI/ExpeditionMapPanel.prefab";
+        private const string PrefabPath = "Assets/04.Prefab/UI/Panels/ExpeditionMapPanel.prefab";
         private const string ScenePath = "Assets/00.Scenes/SampleScene.unity";
         private static readonly Color Panel = new(0.055f, 0.034f, 0.025f, 0.98f);
         private static readonly Color Card = new(0.15f, 0.085f, 0.045f, 1f);

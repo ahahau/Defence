@@ -190,7 +190,8 @@ namespace _01.Code.Skills
                 }
 
                 if (_hitStopDuration > 0f)
-                    HitStopRunner.Play(_hitStopDuration, 0.05f, 0.1f);
+                    // 스킬 폭발은 드문 연출이라 일반 타격 쿨다운에 묻히면 안 된다.
+                    HitStopRunner.Play(_hitStopDuration, 0.05f, 0.1f, 0.12f, true);
             }
         }
     }

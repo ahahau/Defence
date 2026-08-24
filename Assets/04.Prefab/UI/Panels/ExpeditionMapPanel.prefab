@@ -2088,6 +2088,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ddd429faba1ec784f9c896ea3fe9c340, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.UI.ExpeditionMapPanelView
+  villageCatalog: {fileID: 11400000, guid: c189538bf5e9dc249ae252548d3fbe00, type: 2}
   waveEventChannel: {fileID: 0}
   costEventChannel: {fileID: 0}
   panelRoot: {fileID: 8913001692131122078}
@@ -2106,6 +2107,10 @@ MonoBehaviour:
   detailText: {fileID: 462681641338989486}
   rosterText: {fileID: 724954576874741924}
   resultText: {fileID: 1913520856512158275}
+  resultPanel: {fileID: 0}
+  resultTitleText: {fileID: 0}
+  resultBodyText: {fileID: 0}
+  resultCloseButton: {fileID: 0}
 --- !u!1 &5947708136976115637
 GameObject:
   m_ObjectHideFlags: 0

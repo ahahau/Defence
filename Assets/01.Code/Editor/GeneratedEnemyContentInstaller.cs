@@ -14,8 +14,8 @@ namespace _01.Code.Editor
     /// </summary>
     public static class GeneratedEnemyContentInstaller
     {
-        private const string EnemyTemplatePath = "Assets/04.Prefab/Characters/Enemy.prefab";
-        private const string EnemyPrefabFolder = "Assets/04.Prefab/Characters/Generated";
+        private const string EnemyTemplatePath = "Assets/04.Prefab/Characters/Enemies/Enemy.prefab";
+        private const string EnemyPrefabFolder = "Assets/04.Prefab/Characters/Enemies/Generated";
         private const string EnemyDataFolder = "Assets/03.SO/Enemies";
 
         private readonly struct EnemySpec

@@ -13,7 +13,7 @@ namespace _01.Code.Editor
     public static class WaveStartButtonPrefabInstaller
     {
         private const string ScenePath = "Assets/00.Scenes/SampleScene.unity";
-        private const string PrefabPath = "Assets/04.Prefab/UI/WaveStartButton.prefab";
+        private const string PrefabPath = "Assets/04.Prefab/UI/Hud/WaveStartButton.prefab";
 
         public static void Install()
         {

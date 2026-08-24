@@ -16,14 +16,14 @@ namespace _01.Code.Editor
     public static class GeneratedCombatContentInstaller
     {
         private const string UnitFolder = "Assets/03.SO/Units/Generated";
-        private const string UnitPrefabFolder = "Assets/04.Prefab/Characters/Generated";
+        private const string UnitPrefabFolder = "Assets/04.Prefab/Characters/Units/Generated";
         private const string ArtifactFolder = "Assets/03.SO/Artifacts/GeneratedUnit";
         private const string StatusFolder = "Assets/03.SO/StatusEffects/Generated";
         private const string StatusEffectFolder = "Assets/03.SO/StatusEffects/Generated/Effects";
         private const string TrapPrefabFolder = "Assets/04.Prefab/Buildings/Traps/Generated";
         private const string BuildingFolder = "Assets/03.SO/Buildings/Generated";
 
-        private const string UnitTemplatePath = "Assets/04.Prefab/Characters/Unit.prefab";
+        private const string UnitTemplatePath = "Assets/04.Prefab/Characters/Units/Unit.prefab";
         private const string BladeTrapTemplatePath = "Assets/04.Prefab/Buildings/Traps/Trap_Blade.prefab";
         private const string SnareTrapTemplatePath = "Assets/04.Prefab/Buildings/Traps/Trap_Snare.prefab";
         private const string CrusherTrapTemplatePath = "Assets/04.Prefab/Buildings/Traps/Trap_Crusher.prefab";

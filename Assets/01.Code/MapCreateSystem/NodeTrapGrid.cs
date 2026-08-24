@@ -212,23 +212,38 @@ namespace _01.Code.MapCreateSystem
             }
         }
 
-        /// <summary>기준 위치에서 가장 가까운 '빈' 셀에 설치한다(클릭/중심 기준 자유 배치).</summary>
-        public Building PlaceNearestFreeCell(Vector3 worldPosition, Building buildingPrefab)
+        /// <summary>기준 위치에서 가장 가까운 '빈' 셀을 찾는다. 빈 셀이 없으면 false.</summary>
+        public bool TryGetNearestFreeCell(Vector3 worldPosition, out int column, out int row)
         {
             EnsureCells();
-            if (buildingPrefab == null) return null;
 
-            int bestColumn = -1, bestRow = -1;
+            column = -1;
+            row = -1;
             var bestDistance = float.MaxValue;
             for (var r = 0; r < rows; r++)
             for (var c = 0; c < columns; c++)
             {
                 if (!IsCellFree(c, r)) continue;
                 var d = (CellWorldPosition(c, r) - worldPosition).sqrMagnitude;
-                if (d < bestDistance) { bestDistance = d; bestColumn = c; bestRow = r; }
+                if (d >= bestDistance) continue;
+
+                bestDistance = d;
+                column = c;
+                row = r;
             }
 
-            return bestColumn >= 0 ? TryPlace(bestColumn, bestRow, buildingPrefab) : null;
+            return column >= 0;
+        }
+
+        /// <summary>기준 위치에서 가장 가까운 '빈' 셀에 설치한다(클릭/중심 기준 자유 배치).</summary>
+        public Building PlaceNearestFreeCell(Vector3 worldPosition, Building buildingPrefab)
+        {
+            if (buildingPrefab == null)
+                return null;
+
+            return TryGetNearestFreeCell(worldPosition, out var column, out var row)
+                ? TryPlace(column, row, buildingPrefab)
+                : null;
         }
 
         public bool Remove(int column, int row)

@@ -71,14 +71,11 @@ namespace _01.Code.UI
         private readonly List<RosterDeployEntryView> _deployEntries = new();
         private readonly List<Button> _categoryCards = new();
         private readonly List<GameObject> _categorySelectors = new();
-        private readonly List<BuildingDataSO> _unlockedBuildings = new();
-        private readonly Dictionary<Graphic, Color> _tutorialHighlightDefaults = new();
+        private readonly InstallableBuildingCatalog _buildingCatalog = new();
+        private readonly TutorialHighlighter _tutorialHighlighter = new();
         private bool _isCategoryPanelOpen;
-        private bool _tutorialHighlightActive;
         private InstallCategory? _currentInstallCategory;
-        private Graphic _currentTutorialHighlight;
         private UnitManagementSystem _unitManagementSystem;
-        private readonly Color _tutorialHighlightColor = new(1f, 0.82f, 0.22f, 1f);
 
         public bool IsPanelOpen => panelRoot != null && panelRoot.activeInHierarchy;
         public IReadOnlyList<BuildingDataSO> InstallableBuildings => installableBuildings;
@@ -117,7 +114,7 @@ namespace _01.Code.UI
 
         public void HighlightCurrentTutorialInstallTarget()
         {
-            _tutorialHighlightActive = true;
+            _tutorialHighlighter.Activate();
             EnsureSelectedTutorialNode();
             if (_selectedNode != null
                 && TutorialInputGate.AllowsInstallMenu()
@@ -133,13 +130,12 @@ namespace _01.Code.UI
 
         public void ClearTutorialHighlight()
         {
-            _tutorialHighlightActive = false;
-            RestoreTutorialHighlight();
+            _tutorialHighlighter.Deactivate();
         }
 
         public void HighlightCurrentTutorialUnitTarget()
         {
-            _tutorialHighlightActive = true;
+            _tutorialHighlighter.Activate();
             EnsureSelectedTutorialNode();
             if (_selectedNode != null
                 && TutorialInputGate.AllowsInstallMenu()
@@ -149,18 +145,7 @@ namespace _01.Code.UI
                 ShowPreferredInstallPanel();
             }
 
-            SetTutorialHighlight(ResolveCurrentTutorialUnitButton());
-        }
-
-        private void RestoreTutorialHighlight()
-        {
-            if (_currentTutorialHighlight != null
-                && _tutorialHighlightDefaults.TryGetValue(_currentTutorialHighlight, out var defaultColor))
-            {
-                _currentTutorialHighlight.color = defaultColor;
-            }
-
-            _currentTutorialHighlight = null;
+            _tutorialHighlighter.Highlight(ResolveCurrentTutorialUnitButton());
         }
 
         private void Awake()
@@ -169,8 +154,8 @@ namespace _01.Code.UI
             _unitManagementSystem = new UnitManagementSystem(nodeEventChannel, costEventChannel, dayManager);
             LogMissingSerializedReferences();
             ConfigureStaticTextLayout();
-            _installButtonDefaultLabel = GetButtonLabel(installButton);
-            InitializeUnlockedBuildings();
+            _installButtonDefaultLabel = InstallCardPresenter.GetButtonLabel(installButton);
+            _buildingCatalog.Initialize(installableBuildings, unlockCatalog);
             ConfigureCategorySelectors();
             panelRoot?.SetActive(false);
             SetActionButtonsActive(false);
@@ -187,6 +172,8 @@ namespace _01.Code.UI
             nodeEventChannel?.AddListener<UnlockedNodeClickedEvent>(HandleNodeSelected);
             nodeEventChannel?.AddListener<NodeGridCellSelectedEvent>(HandleNodeGridCellSelected);
             nodeEventChannel?.AddListener<UnitManagementRequestedEvent>(HandleUnitManagementRequested);
+            nodeEventChannel?.AddListener<PortalInstalledEvent>(HandlePortalInstalled);
+            nodeEventChannel?.AddListener<PortalRemovedEvent>(HandlePortalRemoved);
             uiEventChannel?.AddListener<DeployModeChangedEvent>(HandleDeployModeChanged);
             costEventChannel?.AddListener<RosterChangedEvent>(HandleRosterChanged);
             costEventChannel?.AddListener<UnitDeployMagicPaidEvent>(HandleDeployMagicPaid);
@@ -209,6 +196,8 @@ namespace _01.Code.UI
             nodeEventChannel?.RemoveListener<UnlockedNodeClickedEvent>(HandleNodeSelected);
             nodeEventChannel?.RemoveListener<NodeGridCellSelectedEvent>(HandleNodeGridCellSelected);
             nodeEventChannel?.RemoveListener<UnitManagementRequestedEvent>(HandleUnitManagementRequested);
+            nodeEventChannel?.RemoveListener<PortalInstalledEvent>(HandlePortalInstalled);
+            nodeEventChannel?.RemoveListener<PortalRemovedEvent>(HandlePortalRemoved);
             uiEventChannel?.RemoveListener<DeployModeChangedEvent>(HandleDeployModeChanged);
             costEventChannel?.RemoveListener<RosterChangedEvent>(HandleRosterChanged);
             costEventChannel?.RemoveListener<UnitDeployMagicPaidEvent>(HandleDeployMagicPaid);
@@ -228,6 +217,12 @@ namespace _01.Code.UI
             if (panelRoot != null && panelRoot.activeSelf && !IsManagementAllowed())
                 HandleCloseClicked();
         }
+
+        // 포탈 보유 여부는 이벤트로 따라간다. 플레이어가 직접 설치하지 않은 경우(세이브 복원)에도
+        // 중복 설치를 막으려면 설치 핸들러의 지역 플래그만으로는 부족하다.
+        private void HandlePortalInstalled(PortalInstalledEvent evt) => hasInstalledPortal = true;
+
+        private void HandlePortalRemoved(PortalRemovedEvent evt) => hasInstalledPortal = false;
 
         private void HandleDeployModeChanged(DeployModeChangedEvent evt)
         {
@@ -492,7 +487,7 @@ namespace _01.Code.UI
                 return;
             }
 
-            SetTitle(GetCategoryTitle(category));
+            SetTitle(InstallCardPresenter.GetCategoryTitle(category));
             SetPanelActive(unitViewRoot, false);
             SetPanelActive(buildingViewRoot, true);
             ClearDeployEntries();
@@ -501,16 +496,6 @@ namespace _01.Code.UI
             RefreshTutorialHighlight();
         }
 
-        private string GetCategoryTitle(InstallCategory category)
-        {
-            return category switch
-            {
-                InstallCategory.Building => "빌딩 설치",
-                InstallCategory.Trap => "트랩 설치",
-                InstallCategory.Decoration => "장식품 설치",
-                _ => "설치"
-            };
-        }
 
         private void ConfigureCategorySelectors()
         {
@@ -544,21 +529,10 @@ namespace _01.Code.UI
             if (text != null)
             {
                 TmpTextLayoutUtility.KeepHorizontal(text);
-                text.text = GetCategoryCardText(category);
+                text.text = InstallCardPresenter.GetCategoryCardText(category);
             }
         }
 
-        private string GetCategoryCardText(InstallCategory category)
-        {
-            return category switch
-            {
-                InstallCategory.Building => "빌딩\n건물 목록 보기",
-                InstallCategory.Unit => "유닛\n보유 유닛 배치",
-                InstallCategory.Trap => "트랩\n피해/상태이상 설치",
-                InstallCategory.Decoration => "장식품\n꾸미기 설치",
-                _ => "설치"
-            };
-        }
 
         private void SetCategorySelectorsActive(bool active)
         {
@@ -609,11 +583,11 @@ namespace _01.Code.UI
             if (text != null)
             {
                 TmpTextLayoutUtility.KeepHorizontal(text);
-                text.text = GetCategoryCardText(category);
+                text.text = InstallCardPresenter.GetCategoryCardText(category);
             }
 
-            ApplyCardSprite(entry, ResolveCategorySprite(category));
-            NestHudStyle.ApplyManagementCard(entry.gameObject, GetCategoryAccent(category));
+            InstallCardPresenter.ApplyCardSprite(entry, ResolveCategorySprite(category));
+            NestHudStyle.ApplyManagementCard(entry.gameObject, InstallCardPresenter.GetCategoryAccent(category));
             entry.onClick.RemoveAllListeners();
             entry.onClick.AddListener(() => ShowInstallCategory(category));
             _categoryCards.Add(entry);
@@ -645,7 +619,7 @@ namespace _01.Code.UI
                 return false;
             }
 
-            foreach (var buildingData in EnumerateInstallableBuildingOptions())
+            foreach (var buildingData in _buildingCatalog.EnumerateOptions())
             {
                 if (IsVisibleBuildingOption(buildingData, category))
                     return true;
@@ -970,31 +944,14 @@ namespace _01.Code.UI
 
         private bool DeployUnit(Node node, UnitDataSO unitData, int column, int row)
         {
-            if (node == null || unitData == null)
-                return false;
-
-            var resolvedUnitPrefab = unitData.Prefab != null ? unitData.Prefab : unitPrefab;
-            if (resolvedUnitPrefab == null)
-                return false;
-
-            var spawnPos = node.TrapGrid != null
-                ? node.TrapGrid.CellWorldPosition(column, row)
-                : node.transform.position;
-
-            var unitGo = Instantiate(resolvedUnitPrefab, spawnPos, Quaternion.identity);
-            unitGo.Initialize(unitData);
-            if (!node.TryAssignUnitToCell(unitData, unitGo, column, row))
-            {
-                Destroy(unitGo.gameObject);
-                return false;
-            }
-
-            nodeEventChannel?.RaiseEvent(new UnitAssignedToNodeEvent(node, unitData, unitGo));
-            var battleAgent = unitGo.GetComponent<BattleAgent>();
-            node.GetComponent<NodeBattlefield>()?.TryEnter(battleAgent);
-
-            artifactEventChannel?.RaiseEvent(new UnitArtifactApplyRequestedEvent(unitGo));
-            return true;
+            return UnitDeployment.Deploy(
+                node,
+                unitData,
+                column,
+                row,
+                unitPrefab,
+                nodeEventChannel,
+                artifactEventChannel) != null;
         }
 
         private void HandleMoveRequested(Unit unit)
@@ -1079,7 +1036,7 @@ namespace _01.Code.UI
 
             portalInstallButton.gameObject.SetActive(false);
 
-            foreach (var buildingData in EnumerateInstallableBuildingOptions())
+            foreach (var buildingData in _buildingCatalog.EnumerateOptions())
             {
                 if (!IsVisibleBuildingOption(buildingData, category))
                     continue;
@@ -1087,9 +1044,9 @@ namespace _01.Code.UI
                 var entry = Instantiate(portalInstallButton, contentRoot);
                 entry.gameObject.SetActive(true);
                 entry.name = $"{buildingData.name}InstallCard";
-                SetButtonLabel(entry, buildingData);
-            ApplyCardSprite(entry, ResolvePreviewSprite(buildingData));
-            NestHudStyle.ApplyManagementCard(entry.gameObject, GetCategoryAccent(category));
+                InstallCardPresenter.SetButtonLabel(entry, buildingData);
+            InstallCardPresenter.ApplyCardSprite(entry, InstallCardPresenter.ResolvePreviewSprite(buildingData));
+            NestHudStyle.ApplyManagementCard(entry.gameObject, InstallCardPresenter.GetCategoryAccent(category));
                 entry.onClick.RemoveAllListeners();
                 entry.onClick.AddListener(() => RequestBuildingInstall(buildingData));
                 buildingInstallButtons.Add(entry);
@@ -1181,63 +1138,18 @@ namespace _01.Code.UI
             ScrollViewContentSizer.ResizeToGridItemCount(buildingContentRoot, 0);
         }
 
-        private void SetButtonLabel(Button button, BuildingDataSO buildingData)
-        {
-            if (button == null || buildingData == null)
-                return;
-
-            var text = button.GetComponentInChildren<TMP_Text>();
-            if (text == null)
-                return;
-
-            TmpTextLayoutUtility.KeepHorizontal(text);
-            text.text = BuildCardText(buildingData);
-        }
-
-        private void ApplyCardSprite(Button button, Sprite sprite)
-        {
-            if (button == null)
-                return;
-
-            var image = ResolveCardIconImage(button);
-            if (image == null)
-                return;
-
-            image.sprite = sprite;
-            image.enabled = sprite != null;
-            image.preserveAspect = true;
-        }
-
-        private Image ResolveCardIconImage(Button button)
-        {
-            for (var i = 0; i < button.transform.childCount; i++)
-            {
-                var child = button.transform.GetChild(i);
-                if (child.name == "Icon" && child.TryGetComponent<Image>(out var iconImage))
-                    return iconImage;
-            }
-
-            var images = button.GetComponentsInChildren<Image>(true);
-            foreach (var image in images)
-            {
-                if (image != null && image != button.targetGraphic)
-                    return image;
-            }
-
-            return null;
-        }
 
         private Sprite ResolveCategorySprite(InstallCategory category)
         {
             if (category == InstallCategory.Unit)
                 return ResolveUnitCategorySprite();
 
-            foreach (var buildingData in EnumerateInstallableBuildingOptions())
+            foreach (var buildingData in _buildingCatalog.EnumerateOptions())
             {
                 if (!IsVisibleBuildingOption(buildingData, category))
                     continue;
 
-                var sprite = ResolvePreviewSprite(buildingData);
+                var sprite = InstallCardPresenter.ResolvePreviewSprite(buildingData);
                 if (sprite != null)
                     return sprite;
             }
@@ -1269,98 +1181,19 @@ namespace _01.Code.UI
             return null;
         }
 
-        private Sprite ResolvePreviewSprite(BuildingDataSO buildingData)
-        {
-            if (buildingData == null)
-                return null;
-
-            var prefabSprite = buildingData.Prefab != null
-                ? buildingData.Prefab.GetComponentInChildren<SpriteRenderer>(true)?.sprite
-                : null;
-
-            return prefabSprite != null ? prefabSprite : buildingData.BoardSprite;
-        }
-
         private void HandleBuildingUnlockRequested(BuildingUnlockRequestedEvent evt)
         {
-            if (evt.Building == null || _unlockedBuildings.Contains(evt.Building))
+            if (!_buildingCatalog.TryUnlock(evt.Building))
                 return;
 
-            _unlockedBuildings.Add(evt.Building);
-            costEventChannel?.RaiseEvent(new BuildingUnlockChangedEvent(_unlockedBuildings));
+            costEventChannel?.RaiseEvent(new BuildingUnlockChangedEvent(_buildingCatalog.Unlocked));
             RefreshAfterBuildingUnlock();
         }
 
         private void HandleBuildingUnlockChanged(BuildingUnlockChangedEvent evt)
         {
-            _unlockedBuildings.Clear();
-
-            if (evt.UnlockedBuildings != null)
-            {
-                foreach (var building in evt.UnlockedBuildings)
-                {
-                    if (building != null && !_unlockedBuildings.Contains(building))
-                        _unlockedBuildings.Add(building);
-                }
-            }
-
+            _buildingCatalog.ReplaceUnlocked(evt.UnlockedBuildings);
             RefreshAfterBuildingUnlock();
-        }
-
-        private void InitializeUnlockedBuildings()
-        {
-            _unlockedBuildings.Clear();
-
-            if (installableBuildings == null)
-                return;
-
-            if (unlockCatalog != null)
-            {
-                foreach (var entry in unlockCatalog.Entries)
-                {
-                    var building = entry?.Building;
-                    if (building != null && entry.StartsUnlocked && !_unlockedBuildings.Contains(building))
-                        _unlockedBuildings.Add(building);
-                }
-
-                return;
-            }
-
-            foreach (var buildingData in installableBuildings)
-            {
-                if (buildingData != null && !_unlockedBuildings.Contains(buildingData))
-                {
-                    _unlockedBuildings.Add(buildingData);
-                }
-            }
-        }
-
-        private IEnumerable<BuildingDataSO> EnumerateInstallableBuildingOptions()
-        {
-            var yielded = new HashSet<BuildingDataSO>();
-
-            if (installableBuildings != null)
-            {
-                foreach (var buildingData in installableBuildings)
-                {
-                    if (buildingData == null || !yielded.Add(buildingData))
-                        continue;
-
-                    yield return buildingData;
-                }
-            }
-
-            foreach (var buildingData in _unlockedBuildings)
-            {
-                if (buildingData == null || !yielded.Add(buildingData))
-                    continue;
-
-                yield return buildingData;
-            }
-
-            var treasuryData = Resources.Load<BuildingDataSO>("Buildings/TreasuryBuildingData");
-            if (treasuryData != null && yielded.Add(treasuryData))
-                yield return treasuryData;
         }
 
         private void RefreshAfterBuildingUnlock()
@@ -1425,107 +1258,15 @@ namespace _01.Code.UI
             return null;
         }
 
-        private string BuildCardText(BuildingDataSO buildingData)
-        {
-            var displayName = string.IsNullOrWhiteSpace(buildingData.DisplayName)
-                ? buildingData.name
-                : buildingData.DisplayName;
-
-            var discountedCost = CostManager.Current != null
-                ? CostManager.Current.GetDiscountedBuildCost(buildingData.Cost)
-                : buildingData.Cost;
-            var costText = buildingData.Cost <= 0
-                ? "무료"
-                : discountedCost < buildingData.Cost
-                    ? $"{buildingData.Cost} → {discountedCost}G"
-                    : $"{buildingData.Cost}G";
-            var text = $"{displayName}\n건설  {costText}   ·   경계 +{buildingData.BaseDanger}\n등급 {(int)buildingData.Grade}";
-
-            if (buildingData.Prefab is Trap trap)
-            {
-                text += $"\n피해: {FormatTrapDamage(trap)}";
-                text += $"\n발동: {FormatPercent(trap.TriggerChance)} / {FormatTrapStatus(trap)}";
-            }
-
-            if (buildingData.Prefab is RecoveryFacility recoveryFacility)
-            {
-                text += $"\n회복: 피로 -{Mathf.RoundToInt(recoveryFacility.FatigueRecoveryPerWave)}";
-                if (recoveryFacility.HealthRecoveryRatioPerWave > 0f)
-                    text += $" / HP +{FormatPercent(recoveryFacility.HealthRecoveryRatioPerWave)}";
-                if (recoveryFacility.ImproveInjury)
-                    text += " / 부상 완화";
-            }
-
-            if (buildingData.Prefab.IsDestructible)
-                text += $"\n내구도: {buildingData.Prefab.MaxDurability}";
-
-            return text;
-        }
-
-        private static Color GetCategoryAccent(InstallCategory category)
-        {
-            return category switch
-            {
-                InstallCategory.Unit => new Color(0.34f, 0.72f, 0.92f, 1f),
-                InstallCategory.Trap => new Color(0.9f, 0.28f, 0.14f, 1f),
-                InstallCategory.Decoration => new Color(0.48f, 0.74f, 0.42f, 1f),
-                _ => new Color(0.88f, 0.6f, 0.2f, 1f)
-            };
-        }
-
-        private string FormatTrapDamage(Trap trap)
-        {
-            if (trap.BonusDamage <= 0)
-                return trap.Damage.ToString();
-
-            return $"{trap.Damage}+{trap.BonusDamage}";
-        }
-
-        private string FormatTrapStatus(Trap trap)
-        {
-            if (trap.StatusEffect == null || trap.InjuryChance <= 0f)
-                return "상태이상 없음";
-
-            var displayName = string.IsNullOrWhiteSpace(trap.StatusEffect.DisplayName)
-                ? trap.StatusEffect.name
-                : trap.StatusEffect.DisplayName;
-            return $"{displayName}: {FormatPercent(trap.InjuryChance)}";
-        }
-
-        private string FormatPercent(float value)
-        {
-            return $"{Mathf.RoundToInt(Mathf.Clamp01(value) * 100f)}%";
-        }
-
-        private string GetButtonLabel(Button button)
-        {
-            if (button == null)
-                return string.Empty;
-
-            var text = button.GetComponentInChildren<TMP_Text>();
-            return text != null ? text.text : string.Empty;
-        }
 
         private void SetInstallButtonLabel(string value)
         {
             if (installButton == null)
                 return;
 
-            SetButtonText(installButton, value);
+            InstallCardPresenter.SetButtonText(installButton, value);
         }
 
-        private void SetButtonText(Button button, string value)
-        {
-            if (button == null)
-                return;
-
-            var text = button.GetComponentInChildren<TMP_Text>();
-            if (text != null)
-            {
-                TmpTextLayoutUtility.KeepHorizontal(text);
-                text.text = value;
-            }
-        }
 
         private void RestoreInstallButtonLabel()
         {
@@ -1563,7 +1304,7 @@ namespace _01.Code.UI
             // 중앙 핵심 건물을 제외한 건물/함정은 작은 칸을 직접 골라 배치한다.
             // "여기에 설치" 미리보기를 띄우고, 클릭한 칸으로 확정한 뒤에 비용을 청구한다.
             var grid = _selectedNode != null ? _selectedNode.TrapGrid : null;
-            if (UsesGridCellPlacement(buildingData) && grid != null && grid.HasFreeCell)
+            if (BuildingPlacement.UsesGridCell(buildingData) && grid != null && grid.HasFreeCell)
             {
                 var node = _selectedNode;
                 var restoreCategory = _currentInstallCategory;
@@ -1693,12 +1434,8 @@ namespace _01.Code.UI
             // 라인 건물: 선택한 엣지의 중점에 설치. 통과 효과는 적이 라인을 지날 때 발동.
             if (buildingData.InstallOnEdge && chosenEdge != null)
             {
-                var placedOnEdge = chosenEdge.TryInstall(buildingData.Prefab);
-                if (placedOnEdge != null)
-                {
-                    placedOnEdge.Initialize(buildingData);
+                if (BuildingPlacement.InstallOnEdge(chosenEdge, buildingData) != null)
                     nodeEventChannel?.RaiseEvent(new BuildingInstalledEvent(node, buildingData));
-                }
 
                 RefreshBuildingInstallButtons();
                 return; // 패널 유지 → 연속 설치
@@ -1706,21 +1443,23 @@ namespace _01.Code.UI
 
             // 작은 칸 건물: 배치 모드에서 고른 칸에 설치. (칸 정보가 없거나 그새 차 있으면 가까운 빈 셀 폴백)
             var grid = node.TrapGrid;
-            if (UsesGridCellPlacement(buildingData) && grid != null)
+            if (BuildingPlacement.UsesGridCell(buildingData) && grid != null)
             {
                 var placed = hasChosenCell
-                    ? grid.TryPlace(chosenColumn, chosenRow, buildingData.Prefab)
+                    ? BuildingPlacement.InstallOnCell(node, chosenColumn, chosenRow, buildingData)
                     : null;
                 if (placed == null)
-                    placed = grid.PlaceNearestFreeCell(
-                        hasChosenCell ? grid.CellWorldPosition(chosenColumn, chosenRow) : node.transform.position,
-                        buildingData.Prefab);
-                if (placed != null)
                 {
-                    placed.Initialize(buildingData);
-                    node.IncreaseDanger(placed.DangerRating);
-                    nodeEventChannel?.RaiseEvent(new BuildingInstalledEvent(node, buildingData));
+                    // 고른 칸이 없거나 그새 차 있으면 가장 가까운 빈 칸으로 넘긴다.
+                    var origin = hasChosenCell
+                        ? grid.CellWorldPosition(chosenColumn, chosenRow)
+                        : node.transform.position;
+                    if (grid.TryGetNearestFreeCell(origin, out var fallbackColumn, out var fallbackRow))
+                        placed = BuildingPlacement.InstallOnCell(node, fallbackColumn, fallbackRow, buildingData);
                 }
+
+                if (placed != null)
+                    nodeEventChannel?.RaiseEvent(new BuildingInstalledEvent(node, buildingData));
 
                 RefreshBuildingInstallButtons();
                 return; // 패널 유지 → 연속 설치
@@ -1732,17 +1471,14 @@ namespace _01.Code.UI
                 return;
             }
 
-            var building = CreateBuilding(node, buildingData);
+            var building = BuildingPlacement.InstallCentral(node, buildingData, centralBuildingSlotFill);
             if (building == null)
                 return;
 
-            building.Initialize(buildingData);
-            node.AssignBuilding(building);
             nodeEventChannel?.RaiseEvent(new BuildingInstalledEvent(node, buildingData));
 
-            if (building is Portal portal)
+            if (building is Portal)
             {
-                portal.Initialize(node);
                 hasInstalledPortal = true;
                 nodeEventChannel?.RaiseEvent(new PortalInstalledEvent(node));
             }
@@ -1787,72 +1523,6 @@ namespace _01.Code.UI
             ClearTutorialHighlight();
         }
 
-        private Building CreateBuilding(Node targetNode, BuildingDataSO buildingData)
-        {
-            if (targetNode == null || buildingData == null || buildingData.Prefab == null)
-                return null;
-
-            var grid = targetNode.TrapGrid;
-            var useCentralSlot = IsMainNodeBuilding(buildingData) && grid != null;
-            var spawnPosition = useCentralSlot
-                ? grid.CentralBuildingWorldPosition()
-                : targetNode.transform.position;
-
-            var building = Instantiate(buildingData.Prefab, spawnPosition, Quaternion.identity);
-            building.transform.SetParent(targetNode.transform, true);
-            if (useCentralSlot && building is not Portal)
-                FitBuildingToCentralSlot(building, grid);
-
-            return building;
-        }
-
-        private void FitBuildingToCentralSlot(Building building, NodeTrapGrid grid)
-        {
-            if (building == null || grid == null)
-                return;
-
-            var renderers = building.GetComponentsInChildren<SpriteRenderer>(true);
-            if (renderers == null || renderers.Length == 0)
-                return;
-
-            var hasBounds = false;
-            var visualBounds = new Bounds();
-            foreach (var spriteRenderer in renderers)
-            {
-                if (spriteRenderer == null || spriteRenderer.sprite == null)
-                    continue;
-
-                if (!hasBounds)
-                {
-                    visualBounds = spriteRenderer.bounds;
-                    hasBounds = true;
-                }
-                else
-                {
-                    visualBounds.Encapsulate(spriteRenderer.bounds);
-                }
-            }
-
-            if (!hasBounds || visualBounds.size.x <= Mathf.Epsilon || visualBounds.size.y <= Mathf.Epsilon)
-                return;
-
-            var slotSize = grid.CentralBuildingSlotWorldSize * centralBuildingSlotFill;
-            var scaleFactor = Mathf.Min(
-                slotSize.x / visualBounds.size.x,
-                slotSize.y / visualBounds.size.y);
-            if (scaleFactor <= 0f || float.IsNaN(scaleFactor) || float.IsInfinity(scaleFactor))
-                return;
-
-            building.transform.localScale *= scaleFactor;
-        }
-
-        private static bool IsMainNodeBuilding(BuildingDataSO buildingData)
-        {
-            return buildingData != null
-                   && buildingData.Category == InstallCategory.Building
-                   && !UsesGridCellPlacement(buildingData);
-        }
-
         private void RefreshBuildingInstallButtons()
         {
             RefreshDemolishButton();
@@ -1883,24 +1553,17 @@ namespace _01.Code.UI
                        && _pendingBuildingNode == null;
 
             // 중앙 슬롯을 쓰는 고유 핵심 건물만 노드당 하나로 제한한다.
-            if (!UsesGridCellPlacement(buildingData) && _selectedNode.HasAssignedBuilding)
+            if (!BuildingPlacement.UsesGridCell(buildingData) && _selectedNode.HasAssignedBuilding)
                 return false;
 
             if (buildingData.Unique && buildingData.Prefab is Portal && hasInstalledPortal)
                 return false;
 
             // 일반 건물과 함정은 중앙 슬롯 바깥의 작은 칸에 함께 설치된다.
-            if (UsesGridCellPlacement(buildingData) && (_selectedNode.TrapGrid == null || !_selectedNode.TrapGrid.HasFreeCell))
+            if (BuildingPlacement.UsesGridCell(buildingData) && (_selectedNode.TrapGrid == null || !_selectedNode.TrapGrid.HasFreeCell))
                 return false;
 
             return _pendingBuildingNode == null;
-        }
-
-        private static bool UsesGridCellPlacement(BuildingDataSO buildingData)
-        {
-            return buildingData != null
-                   && !buildingData.Unique
-                   && !buildingData.InstallOnEdge;
         }
 
         private void RefreshInstallButtonState()
@@ -1937,7 +1600,7 @@ namespace _01.Code.UI
                 demolishButton.interactable = managingUnit
                     ? CanReturnSelectedUnit()
                     : IsManagementAllowed() && _selectedNode != null && _selectedNode.HasAssignedBuilding;
-                SetButtonText(demolishButton, managingUnit ? "회수" : "철거");
+                InstallCardPresenter.SetButtonText(demolishButton, managingUnit ? "회수" : "철거");
             }
         }
 
@@ -1969,7 +1632,7 @@ namespace _01.Code.UI
 
         private void HideInstallPanels()
         {
-            RestoreTutorialHighlight();
+            _tutorialHighlighter.Restore();
             SetCategorySelectorsActive(false);
             _isCategoryPanelOpen = false;
             _currentInstallCategory = null;
@@ -1982,28 +1645,6 @@ namespace _01.Code.UI
             SetBackButtonActive(false);
             SetInstallButtonActive(_selectedNode != null && IsManagementAllowed());
             RestoreInstallButtonLabel();
-        }
-
-        private string BuildInstalledNodeTitle(Node node)
-        {
-            if (node == null)
-                return string.Empty;
-
-            if (node.HasAssignedUnit)
-            {
-                var unit = node.AssignedUnit;
-                var name = unit != null && !string.IsNullOrWhiteSpace(unit.Name) ? unit.Name : unit != null ? unit.name : "유닛";
-                return $"{name} 배치됨";
-            }
-
-            if (node.HasAssignedBuilding)
-            {
-                var building = node.AssignedBuilding;
-                var name = building != null ? building.name.Replace("(Clone)", string.Empty).Trim() : "건물";
-                return $"{name} 설치됨";
-            }
-
-            return string.Format(emptyNodeTitleFormat, node.Data.Type);
         }
 
         private void SetTitle(string value)
@@ -2087,7 +1728,7 @@ namespace _01.Code.UI
                 if (card == null)
                     continue;
 
-                var label = GetButtonLabel(card);
+                var label = InstallCardPresenter.GetButtonLabel(card);
                 if (targetCategory == InstallCategory.Trap && label.Contains("트랩"))
                     return card;
 
@@ -2121,7 +1762,7 @@ namespace _01.Code.UI
                 if (card == null)
                     continue;
 
-                var label = GetButtonLabel(card);
+                var label = InstallCardPresenter.GetButtonLabel(card);
                 if (label.Contains("유닛"))
                     return card;
             }
@@ -2136,7 +1777,7 @@ namespace _01.Code.UI
                 if (card == null)
                     continue;
 
-                var label = GetButtonLabel(card);
+                var label = InstallCardPresenter.GetButtonLabel(card);
                 if (label.Contains(labelText))
                     return card.transform as RectTransform;
             }
@@ -2144,33 +1785,16 @@ namespace _01.Code.UI
             return null;
         }
 
-        private void SetTutorialHighlight(Button button)
-        {
-            var graphic = button != null ? button.targetGraphic : null;
-            if (graphic == null)
-                return;
-
-            if (_currentTutorialHighlight == graphic)
-                return;
-
-            RestoreTutorialHighlight();
-
-            if (!_tutorialHighlightDefaults.ContainsKey(graphic))
-                _tutorialHighlightDefaults[graphic] = graphic.color;
-
-            graphic.color = _tutorialHighlightColor;
-            _currentTutorialHighlight = graphic;
-        }
 
         private void RefreshTutorialHighlight()
         {
-            if (!_tutorialHighlightActive)
+            if (!_tutorialHighlighter.IsActive)
                 return;
 
             if (TutorialInputGate.AllowedInstallCategory == InstallCategory.Unit)
-                SetTutorialHighlight(ResolveCurrentTutorialUnitButton());
+                _tutorialHighlighter.Highlight(ResolveCurrentTutorialUnitButton());
             else
-                SetTutorialHighlight(ResolveCurrentTutorialInstallButton());
+                _tutorialHighlighter.Highlight(ResolveCurrentTutorialInstallButton());
         }
 
         private void LogMissingSerializedReferences()
@@ -2194,23 +1818,6 @@ namespace _01.Code.UI
 
             if (closeButton != null)
                 TmpTextLayoutUtility.KeepHorizontal(closeButton.GetComponentInChildren<TMP_Text>(true), true);
-        }
-    }
-
-    internal static class TmpTextLayoutUtility
-    {
-        public static void KeepHorizontal(TMP_Text text, bool replaceLineBreaks = false)
-        {
-            if (text == null)
-                return;
-
-            if (replaceLineBreaks && !string.IsNullOrEmpty(text.text))
-                text.text = text.text.Replace('\n', ' ');
-
-            text.enableWordWrapping = false;
-            text.overflowMode = TextOverflowModes.Overflow;
-            text.rectTransform.localRotation = Quaternion.identity;
-            text.rectTransform.localScale = Vector3.one;
         }
     }
 }

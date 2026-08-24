@@ -8,7 +8,7 @@ namespace _01.Code.Editor
     public static class GeneratedSkillContentInstaller
     {
         private const string SkillFolder = "Assets/03.SO/Skills/Generated";
-        private const string UnitFolder = "Assets/04.Prefab/Characters/Generated";
+        private const string UnitFolder = "Assets/04.Prefab/Characters/Units/Generated";
 
         [MenuItem("Defence/Skills/Install Generated Skills")]
         public static void Install()

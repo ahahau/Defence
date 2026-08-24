@@ -11,7 +11,7 @@ namespace _01.Code.Editor
     public static class UnitStatusPanelSceneInstaller
     {
         private const string ScenePath = "Assets/00.Scenes/SampleScene.unity";
-        private const string PrefabPath = "Assets/04.Prefab/UI/UnitStatusPanel.prefab";
+        private const string PrefabPath = "Assets/04.Prefab/UI/Panels/UnitStatusPanel.prefab";
 
         public static void Install()
         {

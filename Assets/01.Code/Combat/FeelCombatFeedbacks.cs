@@ -10,6 +10,8 @@ namespace _01.Code.Combat
         [SerializeField, Min(0f)] private float hitShakeAmplitude = 0.05f;
         [SerializeField, Min(0f)] private float hitShakeFrequency = 25f;
         [SerializeField, Min(0f)] private float hitCooldown = 0.08f;
+        [SerializeField, Min(0f), Tooltip("일반 타격이 적중할 때 화면이 멈추는 시간(초). 0이면 멈추지 않는다.")]
+        private float hitStopDuration = 0.025f;
 
         [Header("Big Hit")]
         [Tooltip("Damage ratio of max health that should trigger a stronger feedback.")]
@@ -60,9 +62,10 @@ namespace _01.Code.Combat
 
             FeelCombatSceneSetup.EnsureCameraShaker();
 
-            _hitPlayer = BuildPlayer("Feel Hit", hitShakeDuration, hitShakeAmplitude, hitCooldown, 0f, hitFlashColor, hitPulseScale);
-            _bigHitPlayer = BuildPlayer("Feel Big Hit", bigHitShakeDuration, bigHitShakeAmplitude, bigHitCooldown, bigHitStopDuration, bigHitFlashColor, bigHitPulseScale);
-            _deathPlayer = BuildPlayer("Feel Death", deathShakeDuration, deathShakeAmplitude, 0f, deathHitStopDuration, deathFlashColor, deathPulseScale);
+            // 큰 타격과 사망은 드물게 일어나므로 쿨다운을 무시하고 항상 멈춘다.
+            _hitPlayer = BuildPlayer("Feel Hit", hitShakeDuration, hitShakeAmplitude, hitCooldown, hitStopDuration, hitFlashColor, hitPulseScale, false);
+            _bigHitPlayer = BuildPlayer("Feel Big Hit", bigHitShakeDuration, bigHitShakeAmplitude, bigHitCooldown, bigHitStopDuration, bigHitFlashColor, bigHitPulseScale, true);
+            _deathPlayer = BuildPlayer("Feel Death", deathShakeDuration, deathShakeAmplitude, 0f, deathHitStopDuration, deathFlashColor, deathPulseScale, true);
         }
 
         private void OnEnable()
@@ -101,7 +104,7 @@ namespace _01.Code.Combat
             _hitPlayer?.PlayFeedbacks(transform.position, Mathf.Clamp(0.6f + damageRatio * 2f, 0.6f, 1.2f));
         }
 
-        private MMF_Player BuildPlayer(string playerName, float shakeDuration, float shakeAmplitude, float cooldown, float hitStopDuration, Color flashColor, float pulseScale)
+        private MMF_Player BuildPlayer(string playerName, float shakeDuration, float shakeAmplitude, float cooldown, float hitStopDuration, Color flashColor, float pulseScale, bool hitStopIgnoresCooldown)
         {
             // MMF_Player는 [DisallowMultipleComponent]라 같은 GO에 여러 개 못 붙는다 → 전용 자식 GO에 하나씩.
             var host = new GameObject(playerName);
@@ -148,6 +151,7 @@ namespace _01.Code.Combat
                 if (hitStop != null)
                 {
                     hitStop.Duration = hitStopDuration;
+                    hitStop.IgnoreGlobalCooldown = hitStopIgnoresCooldown;
                     hitStop.Timing.CooldownDuration = cooldown;
                     hitStop.Timing.TimescaleMode = TimescaleModes.Unscaled;
                 }

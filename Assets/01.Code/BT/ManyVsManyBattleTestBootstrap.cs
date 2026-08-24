@@ -297,22 +297,22 @@ namespace _01.Code.BT
 #if UNITY_EDITOR
         private static readonly string[] PlayerPrefabPaths =
         {
-            "Assets/04.Prefab/Characters/Generated/Unit_Vanguard.prefab",
-            "Assets/04.Prefab/Characters/Generated/Unit_Guardian.prefab",
-            "Assets/04.Prefab/Characters/Generated/Unit_Pikeman.prefab",
-            "Assets/04.Prefab/Characters/Generated/Unit_Arbalist.prefab",
-            "Assets/04.Prefab/Characters/Generated/Unit_BattleMage.prefab",
-            "Assets/04.Prefab/Characters/Generated/Unit_Scout.prefab"
+            "Assets/04.Prefab/Characters/Units/Generated/Unit_Vanguard.prefab",
+            "Assets/04.Prefab/Characters/Units/Generated/Unit_Guardian.prefab",
+            "Assets/04.Prefab/Characters/Units/Generated/Unit_Pikeman.prefab",
+            "Assets/04.Prefab/Characters/Units/Generated/Unit_Arbalist.prefab",
+            "Assets/04.Prefab/Characters/Units/Generated/Unit_BattleMage.prefab",
+            "Assets/04.Prefab/Characters/Units/Generated/Unit_Scout.prefab"
         };
 
         private static readonly string[] EnemyPrefabPaths =
         {
-            "Assets/04.Prefab/Characters/Generated/Enemy_Sword.prefab",
-            "Assets/04.Prefab/Characters/Generated/Enemy_Archer.prefab",
-            "Assets/04.Prefab/Characters/Generated/Enemy_Scout.prefab",
-            "Assets/04.Prefab/Characters/Generated/Enemy_Healter.prefab",
-            "Assets/04.Prefab/Characters/Generated/Enemy_Sword.prefab",
-            "Assets/04.Prefab/Characters/Generated/Enemy_Archer.prefab"
+            "Assets/04.Prefab/Characters/Enemies/Generated/Enemy_Sword.prefab",
+            "Assets/04.Prefab/Characters/Enemies/Generated/Enemy_Archer.prefab",
+            "Assets/04.Prefab/Characters/Enemies/Generated/Enemy_Scout.prefab",
+            "Assets/04.Prefab/Characters/Enemies/Generated/Enemy_Healter.prefab",
+            "Assets/04.Prefab/Characters/Enemies/Generated/Enemy_Sword.prefab",
+            "Assets/04.Prefab/Characters/Enemies/Generated/Enemy_Archer.prefab"
         };
 
         private static GameObject[] LoadPrefabs(string[] paths)

@@ -14,10 +14,10 @@ namespace _01.Code.Editor
     /// </summary>
     public static class ManagementPanelPrefabInstaller
     {
-        private const string NodePrefabPath = "Assets/04.Prefab/UI/Node.prefab";
-        private const string RosterEntryPrefabPath = "Assets/04.Prefab/UI/RosterDeployEntry.prefab";
-        private const string UnitDeployPrefabPath = "Assets/04.Prefab/UI/UnitDeploy.prefab";
-        private const string UnitDeployEntryPrefabPath = "Assets/04.Prefab/UI/UnitDeployEntry.prefab";
+        private const string NodePrefabPath = "Assets/04.Prefab/UI/Panels/Node.prefab";
+        private const string RosterEntryPrefabPath = "Assets/04.Prefab/UI/Entries/RosterDeployEntry.prefab";
+        private const string UnitDeployPrefabPath = "Assets/04.Prefab/UI/Panels/UnitDeploy.prefab";
+        private const string UnitDeployEntryPrefabPath = "Assets/04.Prefab/UI/Entries/UnitDeployEntry.prefab";
         private const string SampleScenePath = "Assets/00.Scenes/SampleScene.unity";
 
         private static readonly Vector2 CardSize = new(176f, 230f);
