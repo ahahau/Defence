@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efdb756fdcee6c342af84ee6ae41e03c, type: 3}
+  m_Name: ArtifactShopCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Artifacts.ArtifactShopCatalogSO
+  stock:
+  - {fileID: 11400000, guid: 754b02fc92577d04f92b287df6d112c3, type: 2}
+  - {fileID: 11400000, guid: 3f0ac0b9c5e57194ebe20c16d43ff2db, type: 2}
+  - {fileID: 11400000, guid: c0f4fc4e97ccde34ba2379ab1598f434, type: 2}
+  - {fileID: 11400000, guid: a1ee05dcf8955de4198a70ff634d01d9, type: 2}
+  - {fileID: 11400000, guid: 6e0aa922425fda541b0761ffcb3aa380, type: 2}
+  - {fileID: 11400000, guid: 9c571ddd8ffc350419fc7b606bcc7c51, type: 2}
+  - {fileID: 11400000, guid: cefe93e23c5ca844f87af3a4b43fd70d, type: 2}
+  - {fileID: 11400000, guid: f14edc1fb89191e458128f9c6f1a8368, type: 2}
+  - {fileID: 11400000, guid: ddf810f3afd9aa44f9226a07e1d8a497, type: 2}
+  - {fileID: 11400000, guid: dabb9a0fb0c93e84d9cedb6577646512, type: 2}
+  - {fileID: 11400000, guid: 978ea6756bceca84e88ee8dc78d8e67b, type: 2}
+  - {fileID: 11400000, guid: b5f67e1ed5ec65c46b14e4b7fb2c9931, type: 2}
+  slotCount: 3
+  priceInflationPerDay: 0
+  firstVisitDay: 2
+  visitIntervalDays: 2
+  priceIncreasePerPurchase: 0.15
+  offerRandomArtifact: 1
+  randomArtifactPrice: 90
+  randomArtifactLabel: "\uC815\uCCB4\uBD88\uBA85\uC758 \uC720\uBB3C"

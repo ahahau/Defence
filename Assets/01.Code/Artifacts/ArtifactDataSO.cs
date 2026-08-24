@@ -19,6 +19,8 @@ namespace _01.Code.Artifacts
         [field: SerializeField] public Sprite Icon { get; private set; }
         [field: SerializeField] public Color IconColor { get; private set; } = Color.white;
         [field: SerializeField] public ArtifactTarget Target { get; private set; } = ArtifactTarget.AllUnits;
+        [field: SerializeField, Min(0), Tooltip("상인에게서 살 때의 가격. 0이면 상인이 취급하지 않는다.")]
+        public int Price { get; private set; } = 120;
         [field: SerializeField] public int AttackDamageBonus { get; private set; }
         [field: SerializeField] public float AttackDamageMultiplier { get; private set; } = 1f;
         [field: SerializeField] public int MaxHealthBonus { get; private set; }
