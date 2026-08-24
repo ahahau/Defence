@@ -18,7 +18,6 @@ namespace _01.Code.Tutorial
         public static bool AllowInstallMenu { get; private set; }
         public static bool AllowPolicyChoice { get; private set; }
         public static bool AllowWaveStart { get; private set; }
-        public static UnlockRewardKind? ForcedUnlockRewardKind { get; private set; }
 
         public static void Clear()
         {
@@ -33,7 +32,6 @@ namespace _01.Code.Tutorial
             AllowInstallMenu = false;
             AllowPolicyChoice = false;
             AllowWaveStart = false;
-            ForcedUnlockRewardKind = null;
         }
 
         public static void OnlyLockedNode(Node node)
@@ -130,13 +128,6 @@ namespace _01.Code.Tutorial
             AllowWaveStart = true;
         }
 
-        public static void OnlyUnlockReward(UnlockRewardKind rewardKind)
-        {
-            ClearAllowedTargets();
-            IsActive = true;
-            ForcedUnlockRewardKind = rewardKind;
-        }
-
         public static void OnlyPolicyChoice()
         {
             ClearAllowedTargets();
@@ -218,11 +209,6 @@ namespace _01.Code.Tutorial
             return !IsActive || AllowWaveStart;
         }
 
-        public static bool AllowsUnlockReward(UnlockRewardKind rewardKind)
-        {
-            return !IsActive || (ForcedUnlockRewardKind.HasValue && rewardKind == ForcedUnlockRewardKind.Value);
-        }
-
         public static bool AllowsPolicyChoice(int index)
         {
             return !IsActive || (AllowPolicyChoice && index == 0);
@@ -245,7 +231,6 @@ namespace _01.Code.Tutorial
             AllowInstallMenu = false;
             AllowPolicyChoice = false;
             AllowWaveStart = false;
-            ForcedUnlockRewardKind = null;
         }
     }
 }

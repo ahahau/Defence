@@ -46,9 +46,6 @@ namespace _01.Code.Manager
         private float bossAttackMultiplier = 2f;
         [SerializeField, Min(1f), Tooltip("보스 거대화 배율.")]
         private float bossVisualScale = 1.6f;
-        [Header("Reward")]
-        [SerializeField] private WaveRewardPanelView rewardPanelPrefab;
-        [SerializeField] private Transform rewardPanelParent;
 
         private Node _portalNode;
         public bool HasPortal => _portalNode != null;
@@ -73,13 +70,11 @@ namespace _01.Code.Manager
         private int _currentClearGoldReward;
         private bool _isWaveRunning;
         private Coroutine _waveCoroutine;
-        private WaveRewardPanelView _rewardPanel;
         private Coroutine _groupSpawnCoroutine;
         private float _currentGroupInterval;
         private readonly List<Enemy> _activeEnemies = new();
         private readonly List<EnemyDataSO> _partyQueue = new();
         private int _partyIndex;
-        private bool _isWaitingForRewardPanel;
         private bool _isDestroying;
         [SerializeField] private BossWavePresenter bossPresenter;
         private Enemy _bossEnemy;
@@ -120,7 +115,6 @@ namespace _01.Code.Manager
             nodeEventChannel.RemoveListener<PortalRemovedEvent>(HandlePortalRemoved);
             Health.AnyDamaged -= HandleAnyDamage;
             StopRunningWave();
-            UnsubscribeRewardPanel();
             ClearEnemyTrackers();
         }
 
@@ -128,7 +122,6 @@ namespace _01.Code.Manager
         {
             _isDestroying = true;
             StopRunningWave();
-            UnsubscribeRewardPanel();
             ClearEnemyTrackers();
         }
 
@@ -180,7 +173,6 @@ namespace _01.Code.Manager
             _currentClearGoldReward = NestCohesionSystem.ScaleGoldReward(entry.clearGoldReward);
             _isWaveRunning = true;
             _unitConditionWearPending = true;
-            _isWaitingForRewardPanel = false;
             _activeEnemies.Clear();
             _isBossWave = waveConfig != null && waveConfig.IsBossDay(_currentDay);
             _isFinalWave = waveConfig != null && waveConfig.IsFinalDay(_currentDay);
@@ -518,47 +510,11 @@ namespace _01.Code.Manager
                 return;
             }
 
-            var rewardPanel = EnsureRewardPanel();
-            if (rewardPanel != null)
-            {
-                _isWaitingForRewardPanel = true;
-                rewardPanel.Closed -= HandleRewardPanelClosed;
-                rewardPanel.Closed += HandleRewardPanelClosed;
-                rewardPanel.ShowWaveResult(
-                    _currentClearGoldReward,
-                    _currentDay,
-                    _waveEnemyCount,
-                    _waveKillCount,
-                    _waveDamageDealt,
-                    _waveDamageTaken,
-                    _waveCriticalHitCount,
-                    _currentDay > 0 && _currentDay % 3 == 0);
-                rewardPanel.transform.SetAsLastSibling();
-
-                if (rewardPanel.IsShowingReward)
-                    return;
-            
-                rewardPanel.Closed -= HandleRewardPanelClosed;
-                _isWaitingForRewardPanel = false;
-            }
-
+            // 보상 선택 없이 정산으로만 마무리한다.
+            // 여기서 발행한 수입은 CostManager가 바로 반영하지 않고 정산 장부에만 쌓인다.
             if (_currentClearGoldReward > 0)
                 costEventChannel?.RaiseEvent(new GoldEarnedEvent(_currentClearGoldReward, GoldChangeSource.WaveReward));
 
-            RaiseWaveEnded();
-        }
-
-        private void HandleRewardPanelClosed()
-        {
-            if (this == null || _isDestroying)
-                return;
-
-            UnsubscribeRewardPanel();
-            
-            if (!_isWaitingForRewardPanel)
-                return;
-
-            _isWaitingForRewardPanel = false;
             RaiseWaveEnded();
         }
 
@@ -662,53 +618,6 @@ namespace _01.Code.Manager
                 _waveDamageTaken += damage;
         }
 
-        private WaveRewardPanelView EnsureRewardPanel()
-        {
-            if (_rewardPanel != null)
-                return _rewardPanel;
-            
-            var parent = ResolveRewardPanelParent();
-            if (parent == null)
-                return null;
-
-            _rewardPanel = FindExistingRewardPanel(parent);
-            if (_rewardPanel != null)
-            {
-                _rewardPanel.Initialize(costEventChannel);
-                _rewardPanel.gameObject.SetActive(false);
-                return _rewardPanel;
-            }
-
-            if (rewardPanelPrefab == null)
-            {
-                Debug.LogError($"{nameof(WaveManager)} requires a reward panel prefab assigned.", this);
-                return null;
-            }
-
-            _rewardPanel = Instantiate(rewardPanelPrefab, parent);
-            _rewardPanel.name = rewardPanelPrefab.name;
-            _rewardPanel.Initialize(costEventChannel);
-            _rewardPanel.gameObject.SetActive(false);
-            return _rewardPanel;
-        }
-
-        private WaveRewardPanelView FindExistingRewardPanel(Transform parent)
-        {
-            if (parent == null)
-                return null;
-
-            var panels = parent.GetComponentsInChildren<WaveRewardPanelView>(true);
-            return panels.Length > 0 ? panels[0] : null;
-        }
-
-        private Transform ResolveRewardPanelParent()
-        {
-            if (rewardPanelParent != null)
-                return rewardPanelParent;
-
-            Debug.LogError($"{nameof(WaveManager)} requires an explicit reward panel parent.", this);
-            return null;
-        }
 
         private void StopRunningWave()
         {
@@ -725,13 +634,6 @@ namespace _01.Code.Manager
             }
 
             _isWaveRunning = false;
-            _isWaitingForRewardPanel = false;
-        }
-
-        private void UnsubscribeRewardPanel()
-        {
-            if (_rewardPanel != null)
-                _rewardPanel.Closed -= HandleRewardPanelClosed;
         }
 
         private void ClearEnemyTrackers()

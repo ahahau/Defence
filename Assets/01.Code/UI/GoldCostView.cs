@@ -19,6 +19,8 @@ namespace _01.Code.UI
 
         private int _lastGold;
         private bool _hasValue;
+        private int _pendingNet;
+        private int _debt;
         private Color _baseColor = Color.white;
         private Vector3 _baseScale = Vector3.one;
 
@@ -36,22 +38,63 @@ namespace _01.Code.UI
         private void OnEnable()
         {
             costEventChannel.AddListener<GoldChangedEvent>(HandleGoldChanged);
+            costEventChannel.AddListener<SettlementPreviewChangedEvent>(HandleSettlementPreview);
+            costEventChannel.AddListener<DebtChangedEvent>(HandleDebtChanged);
         }
 
         private void OnDisable()
         {
             costEventChannel.RemoveListener<GoldChangedEvent>(HandleGoldChanged);
+            costEventChannel.RemoveListener<SettlementPreviewChangedEvent>(HandleSettlementPreview);
+            costEventChannel.RemoveListener<DebtChangedEvent>(HandleDebtChanged);
             ResetVisual();
         }
-        
+
         private void HandleGoldChanged(GoldChangedEvent evt)
         {
-            goldText.text = string.Format(format, evt.CurrentGold);
-            if (_hasValue && evt.CurrentGold != _lastGold)
-                PlayChangeFeedback(evt.CurrentGold - _lastGold);
-
+            var delta = _hasValue ? evt.CurrentGold - _lastGold : 0;
             _lastGold = evt.CurrentGold;
             _hasValue = true;
+            RefreshText();
+
+            if (delta != 0)
+                PlayChangeFeedback(delta);
+        }
+
+        private void HandleSettlementPreview(SettlementPreviewChangedEvent evt)
+        {
+            _pendingNet = evt.PendingNet;
+            RefreshText();
+        }
+
+        private void HandleDebtChanged(DebtChangedEvent evt)
+        {
+            _debt = evt.CurrentDebt;
+            RefreshText();
+        }
+
+        /// <summary>
+        /// 보유 금화 아래에 정산 예정액과 빚을 덧붙인다.
+        /// 웨이브 중에는 금화가 고정이라 예정액이 유일하게 움직이는 숫자다.
+        /// </summary>
+        private void RefreshText()
+        {
+            if (goldText == null)
+                return;
+
+            var text = string.Format(format, _lastGold);
+
+            if (_pendingNet != 0)
+            {
+                var sign = _pendingNet > 0 ? "+" : "-";
+                var color = _pendingNet > 0 ? "#5CE08A" : "#FF7A6B";
+                text += $"\n<size=70%><color={color}>정산 예정 {sign}{Mathf.Abs(_pendingNet)}G</color></size>";
+            }
+
+            if (_debt > 0)
+                text += $"\n<size=70%><color=#FF7A6B>부채 {_debt}G</color></size>";
+
+            goldText.text = text;
         }
 
         private void PlayChangeFeedback(int delta)

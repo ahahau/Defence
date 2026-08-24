@@ -42,6 +42,9 @@ namespace _01.Code.Manager
         private readonly Dictionary<string, int> dailyFatigueByLabel = new();
         private int currentDay;
         private int totalIncome;
+        /// <summary>정산에서 실제로 금화를 옮길 몫. 즉시 결제된 건설·고용비는 제외한다.</summary>
+        private int settlementIncome;
+        private int settlementExpense;
         private int totalExpense;
         private bool ledgerClosed;
 
@@ -100,6 +103,7 @@ namespace _01.Code.Manager
             currentDay = evt.Day;
             ApplyDailyUpkeep();
             ApplyBattleFatigue();
+            ApplyNetToGold();
 
             if (!HasSettlementEntries() || !HasPanelReferences())
             {
@@ -111,6 +115,25 @@ namespace _01.Code.Manager
             RefreshPanel();
             ShowPanel();
             ledgerClosed = true;
+        }
+
+        /// <summary>
+        /// 장부의 순액을 실제 금화에 반영한다.
+        /// 웨이브 동안 수입·지출은 기록만 됐으므로 여기서 한 번만 옮겨야 이중 계산이 없다.
+        /// </summary>
+        private void ApplyNetToGold()
+        {
+            var costManager = CostManager.Current;
+            if (costManager == null)
+                return;
+
+            costManager.ApplySettlement(settlementIncome - settlementExpense);
+
+            // 이미 옮긴 돈이 '정산 예정'으로 계속 떠 있으면 안 된다.
+            // 표시용 전체 합계는 정산 패널이 써야 하므로 건드리지 않는다.
+            settlementIncome = 0;
+            settlementExpense = 0;
+            RaiseSettlementPreview();
         }
 
         private void HandleGoldEarned(GoldEarnedEvent evt)
@@ -135,18 +158,18 @@ namespace _01.Code.Manager
 
         private void HandleBuildCostPaid(BuildCostPaidEvent evt)
         {
-            RecordExpense("건설 투자", evt.GoldAmount);
+            RecordExpense("건설 투자", evt.GoldAmount, false);
         }
 
         private void HandleRosterHirePaid(RosterHirePaidEvent evt)
         {
             AddHiredUnit(evt.Unit);
-            RecordExpense("부하 영입", evt.GoldAmount);
+            RecordExpense("부하 영입", evt.GoldAmount, false);
         }
 
         private void HandleUnitRecoveryCostPaid(UnitRecoveryCostPaidEvent evt)
         {
-            RecordExpense("치료·수리", evt.GoldAmount);
+            RecordExpense("치료·수리", evt.GoldAmount, false);
         }
 
         private void HandleUnitAssigned(UnitAssignedToNodeEvent evt)
@@ -175,8 +198,11 @@ namespace _01.Code.Manager
         private void ApplyDailyUpkeep()
         {
             var upkeep = CalculateDailyUpkeep();
-            if (upkeep > 0)
-                costEventChannel?.RaiseEvent(new SalaryCostRequestedEvent(currentDay, upkeep));
+            if (upkeep <= 0)
+                return;
+
+            // 금화를 바로 빼지 않고 지출로만 적는다. 실제 이동은 정산 순액에서 한 번에 일어난다.
+            RecordExpense("유지비", upkeep);
         }
 
         private int CalculateDailyUpkeep()
@@ -211,7 +237,11 @@ namespace _01.Code.Manager
             }
         }
 
-        private void RecordIncome(string label, int amount)
+        /// <param name="affectsSettlement">
+        /// 정산에서 금화를 실제로 옮길 항목인지. 건설·고용처럼 그 자리에서 이미 빠져나간 돈은 false여야
+        /// 정산 순액에 다시 잡혀 두 번 차감되는 일이 없다.
+        /// </param>
+        private void RecordIncome(string label, int amount, bool affectsSettlement = true)
         {
             if (amount <= 0)
                 return;
@@ -219,9 +249,14 @@ namespace _01.Code.Manager
             EnsureLedgerOpen();
             AddAmount(incomeByLabel, label, amount);
             totalIncome += amount;
+            if (affectsSettlement)
+            {
+                settlementIncome += amount;
+                RaiseSettlementPreview();
+            }
         }
 
-        private void RecordExpense(string label, int amount)
+        private void RecordExpense(string label, int amount, bool affectsSettlement = true)
         {
             if (amount <= 0)
                 return;
@@ -229,6 +264,16 @@ namespace _01.Code.Manager
             EnsureLedgerOpen();
             AddAmount(expenseByLabel, label, amount);
             totalExpense += amount;
+            if (affectsSettlement)
+            {
+                settlementExpense += amount;
+                RaiseSettlementPreview();
+            }
+        }
+
+        private void RaiseSettlementPreview()
+        {
+            costEventChannel?.RaiseEvent(new SettlementPreviewChangedEvent(settlementIncome, settlementExpense));
         }
 
         private void EnsureLedgerOpen()
@@ -256,6 +301,9 @@ namespace _01.Code.Manager
             dailyFatigueByLabel.Clear();
             totalIncome = 0;
             totalExpense = 0;
+            settlementIncome = 0;
+            settlementExpense = 0;
+            RaiseSettlementPreview();
         }
 
         private void ShowPanel()
@@ -278,8 +326,19 @@ namespace _01.Code.Manager
             progressReportView?.RefreshReport();
 
             var net = totalIncome - totalExpense;
-            netText.text = $"오늘 순증 {FormatSignedGold(net)}\n획득 +{totalIncome}G  ·  지출 -{totalExpense}G";
+            netText.text = $"오늘 순증 {FormatSignedGold(net)}\n획득 +{totalIncome}G  ·  지출 -{totalExpense}G{BuildDebtText()}";
             netText.color = net >= 0 ? new Color(0.45f, 0.95f, 0.55f) : new Color(1f, 0.45f, 0.4f);
+        }
+
+        /// <summary>빚이 있을 때만 한 줄 덧붙인다. 한도가 얼마 안 남았는지가 핵심 정보다.</summary>
+        private static string BuildDebtText()
+        {
+            var costManager = CostManager.Current;
+            if (costManager == null || costManager.CurrentDebt <= 0)
+                return string.Empty;
+
+            return $"\n<color=#FF7A6B>부채 {costManager.CurrentDebt}G / 한도 {costManager.DebtLimit}G"
+                   + $"  ·  남은 한도 {costManager.RemainingCredit}G</color>";
         }
 
         private string BuildLedgerText(string title, Dictionary<string, int> ledger, int total, char sign)

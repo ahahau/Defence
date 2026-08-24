@@ -45,7 +45,6 @@ namespace _01.Code.Dialogue
         [SerializeField] private NodePanelView nodePanelView;
         [SerializeField] private WaveView waveView;
         [SerializeField] private BuildConfirmPanelView buildConfirmPanelView;
-        [SerializeField] private WaveRewardPanelView waveRewardPanelView;
         [SerializeField] private PolicyChoicePanelView policyChoicePanelView;
         [SerializeField] private ManagementSettlementManager managementSettlementManager;
         private bool hasSeenPolicyChoicePanel;
@@ -644,24 +643,6 @@ namespace _01.Code.Dialogue
             if (!TryBuildRectTransformScreenRect(target, out var rect))
             {
                 HighlightNode(guidedTrapNode);
-                return;
-            }
-
-            view?.SetSpotlightScreenRect(rect, 24f);
-        }
-
-        private void HighlightUnlockRewardTarget(UnlockRewardKind rewardKind)
-        {
-            if (waveRewardPanelView == null || !waveRewardPanelView.IsShowingReward)
-            {
-                view?.HideSpotlight();
-                return;
-            }
-
-            TutorialInputGate.OnlyUnlockReward(rewardKind);
-            if (!TryBuildRectTransformScreenRect(waveRewardPanelView.CurrentUnlockTutorialRect, out var rect))
-            {
-                view?.HideSpotlight();
                 return;
             }
 
