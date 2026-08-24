@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29f9f4ca288d49b4c992d891d8450439, type: 3}
+  m_Name: ExpeditionVillageCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Progression.ExpeditionVillageCatalogSO
+  villages:
+  - displayName: "\uD68C\uC0C9 \uAD50\uC5ED\uCD0C"
+    purpose: "\uBC00\uC218\uB2E8 \uC57D\uD0C8 \xB7 \uC6B4\uC601 \uC790\uAE08 \uD655\uBCF4"
+    reward: 70
+    difficulty: 1
+    startingConquest: 0
+  - displayName: "\uBD81\uBB38 \uAC10\uC2DC\uCD08\uC18C"
+    purpose: "\uC815\uCC30\uB9DD \uAD50\uB780 \xB7 \uB2E4\uC74C \uCE68\uC785 \uC815\uBCF4
+      \uD655\uBCF4"
+    reward: 45
+    difficulty: 2
+    startingConquest: 0
+  - displayName: "\uBD89\uC740 \uC6A9\uBCD1\uB2E8"
+    purpose: "\uC6A9\uBCD1\uB2E8 \uD3EC\uC12D \xB7 \uACC4\uC57D\uC11C \uC9C4\uCC99
+      \uD655\uBCF4"
+    reward: 95
+    difficulty: 3
+    startingConquest: 0

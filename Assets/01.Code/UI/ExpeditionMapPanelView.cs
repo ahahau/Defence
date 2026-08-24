@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using _01.Code.Core;
 using _01.Code.Events;
 using _01.Code.Manager;
+using _01.Code.Progression;
 using _01.Code.Units;
 using TMPro;
 using UnityEngine;
@@ -12,7 +13,7 @@ namespace _01.Code.UI
 {
     public sealed class ExpeditionMapPanelView : MonoBehaviour
     {
-        [System.Serializable]
+        /// <summary>카탈로그의 정의에 이번 판에서 변하는 장악도를 얹은 런타임 상태.</summary>
         public struct Village
         {
             public string Name;
@@ -21,6 +22,9 @@ namespace _01.Code.UI
             public int Difficulty;
             public int Conquest;
         }
+
+        [SerializeField, Tooltip("원정 대상 마을 목록. 비어 있으면 작전 지도를 열어도 고를 마을이 없다.")]
+        private ExpeditionVillageCatalogSO villageCatalog;
 
         [SerializeField] private GameEventChannelSO waveEventChannel;
         [SerializeField] private GameEventChannelSO costEventChannel;
@@ -64,22 +68,67 @@ namespace _01.Code.UI
             resultTitleText = title;
             resultBodyText = body;
             resultCloseButton = close;
-            resultPanel?.SetActive(false);
-            if (isWired)
-                resultCloseButton?.onClick.AddListener(HideResult);
+            SetPanelActive(resultPanel, false);
+            if (isWired && resultCloseButton != null)
+                resultCloseButton.onClick.AddListener(HideResult);
             Wire();
         }
 
         private void Awake()
         {
-            villages = new[]
+            villages = BuildVillagesFromCatalog();
+            SetPanelActive(panelRoot, false);
+            SetPanelActive(resultPanel, false);
+        }
+
+        /// <summary>카탈로그의 정의를 런타임 상태로 옮긴다. 장악도만 판마다 새로 시작한다.</summary>
+        private Village[] BuildVillagesFromCatalog()
+        {
+            if (villageCatalog == null || villageCatalog.Count == 0)
             {
-                new Village { Name = "회색 교역촌", Purpose = "밀수단 약탈 · 운영 자금 확보", Reward = 70, Difficulty = 1, Conquest = 0 },
-                new Village { Name = "북문 감시초소", Purpose = "정찰망 교란 · 다음 침입 정보 확보", Reward = 45, Difficulty = 2, Conquest = 0 },
-                new Village { Name = "붉은 용병단", Purpose = "용병단 포섭 · 계약서 진척 확보", Reward = 95, Difficulty = 3, Conquest = 0 }
-            };
-            panelRoot?.SetActive(false);
-            resultPanel?.SetActive(false);
+                Debug.LogWarning($"{nameof(ExpeditionMapPanelView)}에 원정 마을 카탈로그가 없습니다. 작전 지도에 고를 마을이 표시되지 않습니다.", this);
+                return System.Array.Empty<Village>();
+            }
+
+            var source = villageCatalog.Villages;
+            var result = new Village[source.Count];
+            for (var i = 0; i < source.Count; i++)
+            {
+                var entry = source[i];
+                result[i] = new Village
+                {
+                    Name = entry.DisplayName,
+                    Purpose = entry.Purpose,
+                    Reward = entry.Reward,
+                    Difficulty = entry.Difficulty,
+                    Conquest = entry.StartingConquest
+                };
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// 인스펙터에 연결되지 않은 오브젝트를 안전하게 걸러낸다.
+        /// null 조건 연산자(?.)는 UnityEngine.Object가 오버로딩한 ==를 건너뛰기 때문에
+        /// 미할당 참조를 통과시켜 UnassignedReferenceException을 던진다.
+        /// </summary>
+        private static void SetPanelActive(GameObject target, bool active)
+        {
+            if (target != null)
+                target.SetActive(active);
+        }
+
+        private static void AddClick(Button button, UnityAction action)
+        {
+            if (button != null)
+                button.onClick.AddListener(action);
+        }
+
+        private static void RemoveClick(Button button, UnityAction action)
+        {
+            if (button != null)
+                button.onClick.RemoveListener(action);
         }
 
         private void OnEnable()
@@ -93,37 +142,39 @@ namespace _01.Code.UI
                 return;
             if (isWired) return;
             isWired = true;
-            mapButton?.onClick.AddListener(Toggle);
-            closeButton?.onClick.AddListener(Hide);
-            departButton?.onClick.AddListener(Depart);
-            resultCloseButton?.onClick.AddListener(HideResult);
+            AddClick(mapButton, Toggle);
+            AddClick(closeButton, Hide);
+            AddClick(departButton, Depart);
+            AddClick(resultCloseButton, HideResult);
             for (var i = 0; i < villageButtons.Length; i++)
             {
                 var index = i;
                 UnityAction action = () => SelectVillage(index);
                 villageActions.Add(action);
-                villageButtons[i]?.onClick.AddListener(action);
+                AddClick(villageButtons[i], action);
             }
             for (var i = 0; i < unitButtons.Length; i++)
             {
                 var index = i;
                 UnityAction action = () => ToggleUnit(index);
                 unitActions.Add(action);
-                unitButtons[i]?.onClick.AddListener(action);
+                AddClick(unitButtons[i], action);
             }
-            waveEventChannel?.AddListener<WaveEndedEvent>(ResolveExpedition);
+            if (waveEventChannel != null)
+                waveEventChannel.AddListener<WaveEndedEvent>(ResolveExpedition);
         }
 
         private void OnDisable()
         {
             if (!isWired) return;
             isWired = false;
-            mapButton?.onClick.RemoveListener(Toggle); closeButton?.onClick.RemoveListener(Hide); departButton?.onClick.RemoveListener(Depart);
-            resultCloseButton?.onClick.RemoveListener(HideResult);
-            for (var i = 0; i < villageButtons.Length && i < villageActions.Count; i++) villageButtons[i]?.onClick.RemoveListener(villageActions[i]);
-            for (var i = 0; i < unitButtons.Length && i < unitActions.Count; i++) unitButtons[i]?.onClick.RemoveListener(unitActions[i]);
+            RemoveClick(mapButton, Toggle); RemoveClick(closeButton, Hide); RemoveClick(departButton, Depart);
+            RemoveClick(resultCloseButton, HideResult);
+            for (var i = 0; i < villageButtons.Length && i < villageActions.Count; i++) RemoveClick(villageButtons[i], villageActions[i]);
+            for (var i = 0; i < unitButtons.Length && i < unitActions.Count; i++) RemoveClick(unitButtons[i], unitActions[i]);
             villageActions.Clear(); unitActions.Clear();
-            waveEventChannel?.RemoveListener<WaveEndedEvent>(ResolveExpedition);
+            if (waveEventChannel != null)
+                waveEventChannel.RemoveListener<WaveEndedEvent>(ResolveExpedition);
         }
 
         private void OnDestroy()
@@ -171,6 +222,12 @@ namespace _01.Code.UI
         private void ResolveExpedition(WaveEndedEvent evt)
         {
             if (!hasActiveExpedition || HiredUnitRoster.Current == null) return;
+            if (villages == null || selectedVillage < 0 || selectedVillage >= villages.Length)
+            {
+                hasActiveExpedition = false;
+                return;
+            }
+
             var village = villages[selectedVillage];
             var power = deployedUnits.Count * 2;
             var success = power >= village.Difficulty || Random.value > 0.35f;
@@ -183,7 +240,8 @@ namespace _01.Code.UI
                     member.Condition.Trait, member.Condition.Personality, member.Condition.Command));
             }
             if (success) { village.Conquest = Mathf.Min(100, village.Conquest + 25); villages[selectedVillage] = village; }
-            costEventChannel?.RaiseEvent(new GoldEarnedEvent(reward, GoldChangeSource.General));
+            if (costEventChannel != null)
+                costEventChannel.RaiseEvent(new GoldEarnedEvent(reward, GoldChangeSource.General));
             var result = success
                 ? $"{village.Name} 작전 성공\n\n확보 자금  +{reward}G\n장악도  {village.Conquest}%\n\n귀환한 유닛은 피로도가 누적되었습니다."
                 : $"{village.Name} 작전 난항\n\n회수 자금  +{reward}G\n장악도 변화 없음\n\n귀환한 유닛의 피로도가 크게 누적되었습니다.";
