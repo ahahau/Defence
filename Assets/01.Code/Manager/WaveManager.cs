@@ -16,6 +16,8 @@ namespace _01.Code.Manager
     [RequireComponent(typeof(BossWavePresenter))]
     public class WaveManager : MonoBehaviour
     {
+        public static WaveManager Current { get; private set; }
+
         [SerializeField] private GameEventChannelSO dayEventChannel;
         [SerializeField] private GameEventChannelSO nodeEventChannel;
         [SerializeField] private GameEventChannelSO waveEventChannel;
@@ -54,6 +56,10 @@ namespace _01.Code.Manager
         public bool IsBossWave => _isBossWave;
         public int TotalEnemyCount => Mathf.Max(0, _waveEnemyCount);
         public int KillCount => Mathf.Max(0, _waveKillCount);
+        /// <summary>직전 웨이브 전과. 정산 보고서가 읽어 간다.</summary>
+        public int WaveDamageDealt => Mathf.Max(0, _waveDamageDealt);
+        public int WaveDamageTaken => Mathf.Max(0, _waveDamageTaken);
+        public int WaveCriticalHits => Mathf.Max(0, _waveCriticalHitCount);
         public int ActiveEnemyCount => _activeEnemies.Count;
         public int PendingSpawnCount => Mathf.Max(0, _remainingSpawns);
         public int RemainingThreatCount => ActiveEnemyCount + PendingSpawnCount;
@@ -92,6 +98,14 @@ namespace _01.Code.Manager
 
         private void Awake()
         {
+            if (Current != null && Current != this)
+            {
+                Debug.LogError($"Duplicate {nameof(WaveManager)} detected. Keep exactly one scene instance.", this);
+                enabled = false;
+                return;
+            }
+
+            Current = this;
             bossPresenter ??= GetComponent<BossWavePresenter>();
             if (bossPresenter == null)
             {
@@ -121,6 +135,9 @@ namespace _01.Code.Manager
 
         private void OnDestroy()
         {
+            if (Current == this)
+                Current = null;
+
             _isDestroying = true;
             StopRunningWave();
             ClearEnemyTrackers();

@@ -326,8 +326,24 @@ namespace _01.Code.Manager
             progressReportView?.RefreshReport();
 
             var net = totalIncome - totalExpense;
-            netText.text = $"오늘 순증 {FormatSignedGold(net)}\n획득 +{totalIncome}G  ·  지출 -{totalExpense}G{BuildDebtText()}";
+            netText.text = $"오늘 순증 {FormatSignedGold(net)}\n획득 +{totalIncome}G  ·  지출 -{totalExpense}G"
+                           + BuildBattleSummaryText() + BuildDebtText();
             netText.color = net >= 0 ? new Color(0.45f, 0.95f, 0.55f) : new Color(1f, 0.45f, 0.4f);
+        }
+
+        /// <summary>
+        /// 그날 방어전의 전과. 보상 패널을 없애면서 갈 곳을 잃은 정보라 정산에 붙인다.
+        /// </summary>
+        private static string BuildBattleSummaryText()
+        {
+            var wave = WaveManager.Current;
+            if (wave == null || wave.TotalEnemyCount <= 0)
+                return string.Empty;
+
+            return $"\n<size=85%>격퇴 {wave.KillCount}/{wave.TotalEnemyCount}"
+                   + $"  ·  가한 피해 {wave.WaveDamageDealt}"
+                   + $"  ·  받은 피해 {wave.WaveDamageTaken}"
+                   + $"  ·  치명타 {wave.WaveCriticalHits}</size>";
         }
 
         /// <summary>빚이 있을 때만 한 줄 덧붙인다. 한도가 얼마 안 남았는지가 핵심 정보다.</summary>
