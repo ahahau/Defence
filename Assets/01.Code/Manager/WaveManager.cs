@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using _01.Code.BT;
 using _01.Code.Buildings;
 using _01.Code.Combat;
 using _01.Code.Core;
@@ -205,6 +206,11 @@ namespace _01.Code.Manager
                 if (!_isWaveRunning)
                     break;
 
+                // 포탈 노드에서 전투가 붙어 있으면 스폰을 미룬다.
+                // 그대로 밀어 넣으면 스폰 지점에 적이 겹겹이 쌓여 싸움이 보이지 않는다.
+                if (IsPortalNodeInCombat())
+                    continue;
+
                 spawnTimer += Time.deltaTime;
 
                 if (spawnTimer >= (spawnAsGroup ? _currentGroupInterval : spawnInterval))
@@ -221,6 +227,16 @@ namespace _01.Code.Manager
             }
 
             CompleteWave(false);
+        }
+
+        /// <summary>포탈 노드에서 아군과 적이 맞붙어 있는 상태인가.</summary>
+        private bool IsPortalNodeInCombat()
+        {
+            if (_portalNode == null)
+                return false;
+
+            var battlefield = _portalNode.GetComponent<NodeBattlefield>();
+            return battlefield != null && battlefield.PlayerCount > 0 && battlefield.EnemyCount > 0;
         }
 
         private void SpawnNextEnemyIfNeeded(bool stopRunningCoroutine)
@@ -263,6 +279,10 @@ namespace _01.Code.Manager
             for (var i = 0; i < groupSize; i++)
             {
                 if (!_isWaveRunning || _portalNode == null)
+                    break;
+
+                // 그룹을 쏟는 도중에 전투가 붙으면 남은 인원은 다음 기회로 미룬다.
+                if (IsPortalNodeInCombat())
                     break;
 
                 if (!SpawnEnemy(FormationOffsetFor(i, groupSize)))

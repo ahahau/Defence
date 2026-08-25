@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 153c9d3d8c815aa469dba2fce10a71b7, type: 3}
+  m_Name: Party_Expedition
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Manager.AdventurerPartySO
+  <PartyName>k__BackingField: "\uC6D0\uC815\uB300"
+  <Members>k__BackingField:
+  - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+  - {fileID: 11400000, guid: 6031153906814462808020aadde25242, type: 2}
+  - {fileID: 11400000, guid: 6ee6e1b5213d40e8a931a3e0e4f4811a, type: 2}
+  - {fileID: 11400000, guid: 8af77e86c8ec4cb0a33b599cf083ed5a, type: 2}

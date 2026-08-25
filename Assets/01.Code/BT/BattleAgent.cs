@@ -60,6 +60,10 @@ namespace _01.Code.BT
         [SerializeField, Min(0f)] private float hitKnockbackDistance = 0.2f;
         [Tooltip("공격 적중 직후 '공격 불가'로 보고 뒤로 빠지는 시간(0이면 제자리 교전). 치고 빠지기 리듬.")]
         [SerializeField, Min(0f)] private float weaveAfterHitTime = 0.3f;
+        [SerializeField, Range(0.1f, 1f), Tooltip("후열이 물러날 때의 속도 배율. 1이면 추격자와 같은 속도라 근접이 영원히 못 따라잡는다.")]
+        private float kiteSpeedMultiplier = 0.55f;
+        [SerializeField, Tooltip("쏜 직후에는 물러나지 않고 제자리에 선다. 근접이 파고들 틈을 만든다.")]
+        private bool holdGroundAfterShot = true;
         [Tooltip("회피 성공 시 공격 방향과 수직으로 빠지는 사이드스텝 거리(0이면 끔).")]
         [SerializeField, Min(0f)] private float dodgeSidestepDistance = 0.35f;
         [Tooltip("체력이 이 비율 미만이면 이동속도가 느려진다(부상 페널티). 0이면 끔.")]
@@ -339,10 +343,17 @@ namespace _01.Code.BT
             Attack();
             if (InAttackRecovery)
             {
+                // 후열은 쏜 직후 제자리에 선다. 계속 선회하면 근접이 붙을 틈이 없다.
                 if (UsesRangedKiting)
-                    CombatStrafe(deltaTime, _autoStrafeDirection);
+                {
+                    if (!holdGroundAfterShot)
+                        CombatStrafe(deltaTime, _autoStrafeDirection);
+                }
                 else
+                {
                     CombatBackStep(deltaTime);
+                }
+
                 return;
             }
 
@@ -937,8 +948,20 @@ namespace _01.Code.BT
                 return false; // 충분히 멈 → Attack/Move가 처리
 
             Face(target.x - self.x);
+
+            // 쏜 직후에는 발을 묶는다. 계속 물러나면서 쏘면 근접이 절대 붙지 못한다.
+            if (holdGroundAfterShot && InAttackRecovery)
+            {
+                if (dist <= attackRange)
+                    Attack();
+
+                return true;
+            }
+
             // 벽에 막히면 둘레를 따라 도는 카이팅(코너에 안 갇힘).
-            transform.position = ClampToArena(RetreatStep(self, target, EffectiveMoveSpeed * deltaTime));
+            // 추격자보다 느리게 물러나야 근접이 거리를 좁힐 수 있다.
+            var kiteSpeed = EffectiveMoveSpeed * kiteSpeedMultiplier;
+            transform.position = ClampToArena(RetreatStep(self, target, kiteSpeed * deltaTime));
 
             // 사거리 안이면 물러나면서도 계속 사격(kite-shoot).
             if (dist <= attackRange)

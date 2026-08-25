@@ -1556,8 +1556,15 @@ namespace _01.Code.UI
             if (!BuildingPlacement.UsesGridCell(buildingData) && _selectedNode.HasAssignedBuilding)
                 return false;
 
-            if (buildingData.Unique && buildingData.Prefab is Portal && hasInstalledPortal)
-                return false;
+            if (buildingData.Prefab is Portal)
+            {
+                if (hasInstalledPortal)
+                    return false;
+
+                // 입구는 플레이어가 서 있는 자리다. 여기에 포탈을 두면 적이 코앞에서 쏟아진다.
+                if (_selectedNode.Data != null && _selectedNode.Data.Type == DungeonNodeType.Entrance)
+                    return false;
+            }
 
             // 일반 건물과 함정은 중앙 슬롯 바깥의 작은 칸에 함께 설치된다.
             if (BuildingPlacement.UsesGridCell(buildingData) && (_selectedNode.TrapGrid == null || !_selectedNode.TrapGrid.HasFreeCell))
