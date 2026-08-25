@@ -75,6 +75,7 @@ namespace _01.Code.Manager
             nodeEventChannel.AddListener<UnitReturnedFromNodeEvent>(HandleUnitReturned);
             dayEventChannel?.AddListener<DayChangedEvent>(HandleDayChanged);
             RaiseUnlockChanged();
+            RaiseBuildingUnlockChanged();
         }
 
         private void OnDisable()
@@ -397,6 +398,25 @@ namespace _01.Code.Manager
             return new UnitConditionState(0f, InjurySeverity.None, 1f, trait, personality);
         }
 
+        /// <summary>
+        /// 해금 카탈로그의 건물 항목으로 시작 상태를 채운다.
+        /// 이걸 하지 않으면 목록이 빈 채로 남아 정산 보고서가 "시설 해금 0/12"라고 잘못 알리고,
+        /// 이 빈 목록이 BuildingUnlockChangedEvent로 퍼지면 설치 메뉴까지 비워버린다.
+        /// </summary>
+        private void InitializeUnlockedBuildings()
+        {
+            _unlockedBuildings.Clear();
+            if (unlockCatalog == null)
+                return;
+
+            foreach (var entry in unlockCatalog.Entries)
+            {
+                var building = entry?.Building;
+                if (building != null && entry.StartsUnlocked && !_unlockedBuildings.Contains(building))
+                    _unlockedBuildings.Add(building);
+            }
+        }
+
         private void InitializeUnlockedUnits()
         {
             if (_hasInitializedUnlocks)
@@ -404,6 +424,7 @@ namespace _01.Code.Manager
 
             _hasInitializedUnlocks = true;
             _unlockedUnits.Clear();
+            InitializeUnlockedBuildings();
 
             if (unitCatalog == null)
                 return;
