@@ -288,6 +288,8 @@ MonoBehaviour:
   attackLungeDuration: 0.16
   hitKnockbackDistance: 0.3
   weaveAfterHitTime: 0.3
+  kiteSpeedMultiplier: 0.55
+  holdGroundAfterShot: 1
   dodgeSidestepDistance: 0.35
   woundedHealthThreshold: 0.3
   woundedMoveSpeedMultiplier: 0.85
