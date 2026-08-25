@@ -136,24 +136,39 @@ namespace _01.Code.Manager
             RaiseSettlementPreview();
         }
 
+        /// <summary>
+        /// 이 수입·지출을 정산 순액에도 넣어야 하는가.
+        /// CostManager가 그 자리에서 금화를 옮겼다면(대기 중 정책·이벤트 보상 등) 여기서 또 세면 두 번 반영된다.
+        /// 두 쪽이 같은 플래그를 보므로 이벤트 수신 순서가 어떻든 판단이 갈리지 않는다.
+        /// </summary>
+        private static bool MovesAtSettlement()
+        {
+            var costManager = CostManager.Current;
+            return costManager == null || costManager.IsSettlementDeferred;
+        }
+
         private void HandleGoldEarned(GoldEarnedEvent evt)
         {
-            RecordIncome(ResolveIncomeLabel(evt.Source), evt.GoldAmount);
+            RecordIncome(ResolveIncomeLabel(evt.Source), evt.GoldAmount, MovesAtSettlement());
         }
 
         private void HandleGoldLost(GoldLostEvent evt)
         {
-            RecordExpense(ResolveExpenseLabel(evt.Source), evt.GoldAmount);
+            RecordExpense(ResolveExpenseLabel(evt.Source), evt.GoldAmount, MovesAtSettlement());
         }
 
+        /// <summary>
+        /// 금고가 털린 건 보관 금화가 줄어든 것이라 운영 자금은 건드리지 않는다.
+        /// 정산에는 무슨 일이 있었는지 알리기 위해 내역으로만 남긴다.
+        /// </summary>
         private void HandleTreasuryRobbed(TreasuryRobbedEvent evt)
         {
-            RecordExpense("금고 약탈", evt.GoldAmount);
+            RecordExpense("금고 약탈", evt.GoldAmount, false);
         }
 
         private void HandleSalaryCostRequested(SalaryCostRequestedEvent evt)
         {
-            RecordExpense("유지비", evt.GoldAmount);
+            RecordExpense("유지비", evt.GoldAmount, MovesAtSettlement());
         }
 
         private void HandleBuildCostPaid(BuildCostPaidEvent evt)

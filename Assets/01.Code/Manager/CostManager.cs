@@ -37,6 +37,12 @@ namespace _01.Code.Manager
         /// <summary>웨이브가 도는 동안은 수입·지출을 장부에만 적고 금화는 정산에서 한 번에 옮긴다.</summary>
         private bool _isSettlementDeferred;
 
+        /// <summary>
+        /// 지금 들어오는 수입·지출이 정산까지 미뤄지는지.
+        /// 정산 장부도 같은 값을 보고 기록해야 '금화는 이미 옮겼는데 정산 순액에도 잡히는' 이중 계산이 없다.
+        /// </summary>
+        public bool IsSettlementDeferred => _isSettlementDeferred;
+
         private void Awake()
         {
             if (Current != null && Current != this)

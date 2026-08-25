@@ -256,5 +256,161 @@ namespace Tests.EditMode.Rules
                 UnityEngine.Object.DestroyImmediate(host);
             }
         }
+
+        // ── 정산 장부와 실제 금화 ────────────────────────────────────
+        // 금화를 옮기는 쪽(CostManager)과 장부에 적는 쪽(ManagementSettlementManager)이
+        // 같은 수입을 서로 다르게 판단하면 한 번 번 돈이 두 번 들어온다.
+
+        private const int LedgerStartingGold = 100;
+
+        private static object NewEvent(string fullName, params object[] args) =>
+            Activator.CreateInstance(Resolve(fullName), args);
+
+        private static void Raise(ScriptableObject channel, object gameEvent) =>
+            Call(channel, "RaiseEvent", gameEvent);
+
+        /// <summary>
+        /// 금화 담당과 장부 담당을 한 오브젝트에 올려 같은 채널을 듣게 한다.
+        /// 에디트 모드에서는 Awake·OnEnable이 저절로 돌지 않으므로 직접 불러 준다.
+        /// <paramref name="costManagerFirst"/>가 곧 채널 수신 순서다.
+        /// </summary>
+        private static GameObject BuildLedgerHost(
+            bool costManagerFirst,
+            out object costManager,
+            out ScriptableObject costChannel,
+            out ScriptableObject waveChannel)
+        {
+            costChannel = NewAsset("_01.Code.Core.GameEventChannelSO");
+            waveChannel = NewAsset("_01.Code.Core.GameEventChannelSO");
+
+            var host = new GameObject("LedgerTestHost");
+            var cost = host.AddComponent(Resolve("_01.Code.Manager.CostManager"));
+            var settlement = host.AddComponent(Resolve("_01.Code.Manager.ManagementSettlementManager"));
+
+            SetPrivate(cost, "costEventChannel", costChannel);
+            SetPrivate(cost, "waveEventChannel", waveChannel);
+            SetPrivate(cost, "initialGold", LedgerStartingGold);
+            SetPrivate(cost, "dailyDebtInterest", 0f);
+            SetPrivate(settlement, "costEventChannel", costChannel);
+            SetPrivate(settlement, "waveEventChannel", waveChannel);
+
+            Call(cost, "Awake");
+            if (costManagerFirst)
+            {
+                Call(cost, "OnEnable");
+                Call(settlement, "OnEnable");
+            }
+            else
+            {
+                Call(settlement, "OnEnable");
+                Call(cost, "OnEnable");
+            }
+
+            costManager = cost;
+            return host;
+        }
+
+        private static void DestroyLedgerHost(GameObject host, ScriptableObject costChannel, ScriptableObject waveChannel)
+        {
+            if (host != null)
+            {
+                foreach (var component in host.GetComponents<MonoBehaviour>())
+                {
+                    Call(component, "OnDisable");
+                    var onDestroy = component.GetType()
+                        .GetMethod("OnDestroy", BindingFlags.Instance | BindingFlags.NonPublic);
+                    onDestroy?.Invoke(component, null);
+                }
+
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+
+            if (costChannel != null)
+                UnityEngine.Object.DestroyImmediate(costChannel);
+            if (waveChannel != null)
+                UnityEngine.Object.DestroyImmediate(waveChannel);
+        }
+
+        [Test]
+        public void Ledger_StandbyIncomeIsPaidOnceNotAgainAtSettlement()
+        {
+            var host = BuildLedgerHost(true, out var cost, out var costChannel, out var waveChannel);
+            try
+            {
+                // 대기 중 정책·이벤트 보상은 그 자리에서 들어온다.
+                Raise(costChannel, NewEvent("_01.Code.Events.GoldEarnedEvent", 60));
+                Assert.That(Get(cost, "CurrentGold"), Is.EqualTo(LedgerStartingGold + 60),
+                    "대기 중 수입은 바로 지갑에 들어와야 합니다.");
+
+                Raise(waveChannel, NewEvent("_01.Code.Events.WaveEndedEvent", 1, 0));
+                Assert.That(Get(cost, "CurrentGold"), Is.EqualTo(LedgerStartingGold + 60),
+                    "이미 받은 돈이 정산 순액으로 또 들어오면 안 됩니다.");
+            }
+            finally
+            {
+                DestroyLedgerHost(host, costChannel, waveChannel);
+            }
+        }
+
+        [Test]
+        public void Ledger_StandbyIncomeIsPaidOnceRegardlessOfListenerOrder()
+        {
+            // 장부가 먼저 이벤트를 받아도 판단이 갈리면 안 된다.
+            var host = BuildLedgerHost(false, out var cost, out var costChannel, out var waveChannel);
+            try
+            {
+                Raise(costChannel, NewEvent("_01.Code.Events.GoldEarnedEvent", 60));
+                Raise(waveChannel, NewEvent("_01.Code.Events.WaveEndedEvent", 1, 0));
+
+                Assert.That(Get(cost, "CurrentGold"), Is.EqualTo(LedgerStartingGold + 60),
+                    "수신 순서가 바뀌어도 수입은 한 번만 반영돼야 합니다.");
+            }
+            finally
+            {
+                DestroyLedgerHost(host, costChannel, waveChannel);
+            }
+        }
+
+        [Test]
+        public void Ledger_WaveIncomeMovesOnlyAtSettlement()
+        {
+            var host = BuildLedgerHost(true, out var cost, out var costChannel, out var waveChannel);
+            try
+            {
+                Raise(waveChannel, NewEvent("_01.Code.Events.WaveStartedEvent", 1, 5));
+                Raise(costChannel, NewEvent("_01.Code.Events.GoldEarnedEvent", 60));
+
+                Assert.That(Get(cost, "CurrentGold"), Is.EqualTo(LedgerStartingGold),
+                    "웨이브 중 수입은 장부에만 쌓입니다.");
+
+                Raise(waveChannel, NewEvent("_01.Code.Events.WaveEndedEvent", 1, 0));
+                Assert.That(Get(cost, "CurrentGold"), Is.EqualTo(LedgerStartingGold + 60),
+                    "정산에서 한 번에 들어와야 합니다.");
+            }
+            finally
+            {
+                DestroyLedgerHost(host, costChannel, waveChannel);
+            }
+        }
+
+        [Test]
+        public void Ledger_TreasuryRobberyDoesNotTouchOperatingGold()
+        {
+            var host = BuildLedgerHost(true, out var cost, out var costChannel, out var waveChannel);
+            try
+            {
+                Raise(waveChannel, NewEvent("_01.Code.Events.WaveStartedEvent", 1, 5));
+                Raise(costChannel, NewEvent("_01.Code.Events.TreasuryRobbedEvent", 40));
+                Raise(waveChannel, NewEvent("_01.Code.Events.WaveEndedEvent", 1, 0));
+
+                Assert.That(Get(cost, "CurrentGold"), Is.EqualTo(LedgerStartingGold),
+                    "금고에서 털린 보관 금화를 운영 자금에서 또 빼면 안 됩니다.");
+                Assert.That(Get(cost, "CurrentDebt"), Is.EqualTo(0), "약탈만으로 빚이 생기지 않습니다.");
+            }
+            finally
+            {
+                DestroyLedgerHost(host, costChannel, waveChannel);
+            }
+        }
     }
 }
