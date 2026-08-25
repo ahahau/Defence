@@ -96,7 +96,6 @@ namespace _01.Code.Manager
             costEventChannel.AddListener<BuildCostRequestedEvent>(HandleBuildCostRequested);
             costEventChannel.AddListener<HireUnitCostRequestedEvent>(HandleHireUnitCostRequested);
             costEventChannel.AddListener<RosterHireRequestedEvent>(HandleRosterHireRequested);
-            costEventChannel.AddListener<SalaryCostRequestedEvent>(HandleSalaryCostRequested);
             costEventChannel.AddListener<GoldEarnedEvent>(HandleGoldEarned);
             costEventChannel.AddListener<GoldLostEvent>(HandleGoldLost);
             costEventChannel.AddListener<UnitRecoveryCostRequestedEvent>(HandleUnitRecoveryCostRequested);
@@ -116,7 +115,6 @@ namespace _01.Code.Manager
             costEventChannel.RemoveListener<BuildCostRequestedEvent>(HandleBuildCostRequested);
             costEventChannel.RemoveListener<HireUnitCostRequestedEvent>(HandleHireUnitCostRequested);
             costEventChannel.RemoveListener<RosterHireRequestedEvent>(HandleRosterHireRequested);
-            costEventChannel.RemoveListener<SalaryCostRequestedEvent>(HandleSalaryCostRequested);
             costEventChannel.RemoveListener<GoldEarnedEvent>(HandleGoldEarned);
             costEventChannel.RemoveListener<GoldLostEvent>(HandleGoldLost);
             costEventChannel.RemoveListener<UnitRecoveryCostRequestedEvent>(HandleUnitRecoveryCostRequested);
@@ -253,16 +251,6 @@ namespace _01.Code.Manager
             CurrentGold -= evt.GoldAmount;
             RaiseGoldChanged();
             costEventChannel.RaiseEvent(new HireUnitCostPaidEvent(evt.Node, evt.Unit, evt.GoldAmount, CurrentGold));
-        }
-
-        private void HandleSalaryCostRequested(SalaryCostRequestedEvent evt)
-        {
-            // 웨이브 사이클 비용은 정산 순액에 포함되므로 여기서 바로 빼지 않는다.
-            if (evt.GoldAmount <= 0 || _isSettlementDeferred)
-                return;
-
-            CurrentGold = Mathf.Max(0, CurrentGold - evt.GoldAmount);
-            RaiseGoldChanged();
         }
 
         private void HandleRosterHireRequested(RosterHireRequestedEvent evt)

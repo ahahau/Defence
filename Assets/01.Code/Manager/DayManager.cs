@@ -1,7 +1,5 @@
-using System.Collections.Generic;
 using _01.Code.Core;
 using _01.Code.Events;
-using _01.Code.MapCreateSystem;
 using UnityEngine;
 
 namespace _01.Code.Manager
@@ -12,13 +10,8 @@ namespace _01.Code.Manager
 
         [SerializeField] private GameEventChannelSO dayEventChannel;
         [SerializeField] private GameEventChannelSO nodeEventChannel;
-        [SerializeField] private GameEventChannelSO costEventChannel;
         [SerializeField] private GameEventChannelSO waveEventChannel;
 
-        [SerializeField, Min(0)] private int salaryIntervalDays;
-
-        private readonly Dictionary<Node, int> salaryByNode = new();
-        private int _rosterSalaryCost;
         private int currentDay;
         private bool _isStandby = true;
         private bool _hasPortal;
@@ -45,26 +38,18 @@ namespace _01.Code.Manager
 
         private void OnEnable()
         {
-            nodeEventChannel.AddListener<UnitAssignedToNodeEvent>(HandleUnitAssigned);
-            nodeEventChannel.AddListener<UnitReturnedFromNodeEvent>(HandleUnitReturned);
             nodeEventChannel.AddListener<PortalInstalledEvent>(HandlePortalInstalled);
             nodeEventChannel.AddListener<PortalRemovedEvent>(HandlePortalRemoved);
             if (waveEventChannel != null)
                 waveEventChannel.AddListener<WaveEndedEvent>(HandleWaveEnded);
-            if (costEventChannel != null)
-                costEventChannel.AddListener<RosterHirePaidEvent>(HandleRosterHired);
         }
 
         private void OnDisable()
         {
-            nodeEventChannel.RemoveListener<UnitAssignedToNodeEvent>(HandleUnitAssigned);
-            nodeEventChannel.RemoveListener<UnitReturnedFromNodeEvent>(HandleUnitReturned);
             nodeEventChannel.RemoveListener<PortalInstalledEvent>(HandlePortalInstalled);
             nodeEventChannel.RemoveListener<PortalRemovedEvent>(HandlePortalRemoved);
             if (waveEventChannel != null)
                 waveEventChannel.RemoveListener<WaveEndedEvent>(HandleWaveEnded);
-            if (costEventChannel != null)
-                costEventChannel.RemoveListener<RosterHirePaidEvent>(HandleRosterHired);
         }
 
         private void OnDestroy()
@@ -81,9 +66,6 @@ namespace _01.Code.Manager
             _isStandby = false;
             currentDay++;
             dayEventChannel.RaiseEvent(new DayChangedEvent(currentDay));
-
-            if (salaryIntervalDays > 0 && currentDay % salaryIntervalDays == 0)
-                costEventChannel.RaiseEvent(new SalaryCostRequestedEvent(currentDay, CalculateTotalSalary()));
         }
 
         public void SkipToNextDay() => StartWave();
@@ -109,39 +91,6 @@ namespace _01.Code.Manager
         private void HandlePortalRemoved(PortalRemovedEvent evt)
         {
             _hasPortal = false;
-        }
-
-        private void HandleRosterHired(RosterHirePaidEvent evt)
-        {
-            _rosterSalaryCost += evt.Unit.Cost;
-        }
-
-        private void HandleUnitAssigned(UnitAssignedToNodeEvent evt)
-        {
-            if (evt.Unit == null)
-                return;
-
-            salaryByNode[evt.Node] = evt.Unit.Cost;
-            _rosterSalaryCost = Mathf.Max(0, _rosterSalaryCost - evt.Unit.Cost);
-        }
-
-        private void HandleUnitReturned(UnitReturnedFromNodeEvent evt)
-        {
-            if (evt.Unit == null)
-                return;
-
-            if (evt.Node != null)
-                salaryByNode.Remove(evt.Node);
-
-            _rosterSalaryCost += evt.Unit.Cost;
-        }
-
-        private int CalculateTotalSalary()
-        {
-            var total = _rosterSalaryCost;
-            foreach (var salary in salaryByNode.Values)
-                total += salary;
-            return total;
         }
     }
 }

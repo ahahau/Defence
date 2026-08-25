@@ -125,18 +125,6 @@ namespace _01.Code.Events
         public int GoldAmount { get; }
     }
 
-    public class SalaryCostRequestedEvent : GameEvent
-    {
-        public SalaryCostRequestedEvent(int day, int goldAmount)
-        {
-            Day = day;
-            GoldAmount = goldAmount;
-        }
-
-        public int Day { get; }
-        public int GoldAmount { get; }
-    }
-
     public class HireUnitCostRequestedEvent : GameEvent
     {
         public HireUnitCostRequestedEvent(Node node, UnitDataSO unit, int goldAmount)

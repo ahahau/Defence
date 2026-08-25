@@ -23,6 +23,9 @@ namespace _01.Code.Manager
         [Header("Unit Upkeep")]
         [SerializeField, Min(1)] private int upkeepCostDivisor = 5;
 
+        /// <summary>이 피로부터는 정산에서 눈에 띄게 표시한다. 100이면 탈진.</summary>
+        private const int ExhaustionWarningFatigue = 70;
+
         [Header("Panel References")]
         [SerializeField] private GameObject panelRoot;
         [SerializeField] private TMP_Text titleText;
@@ -38,7 +41,6 @@ namespace _01.Code.Manager
         private readonly Dictionary<string, int> expenseByLabel = new();
         private readonly Dictionary<UnitDataSO, int> hiredUnitCount = new();
         private readonly Dictionary<Node, Unit> deployedUnitByNode = new();
-        private readonly Dictionary<string, int> fatigueByLabel = new();
         private readonly Dictionary<string, int> dailyFatigueByLabel = new();
         private int currentDay;
         private int totalIncome;
@@ -66,7 +68,6 @@ namespace _01.Code.Manager
             costEventChannel?.AddListener<GoldEarnedEvent>(HandleGoldEarned);
             costEventChannel?.AddListener<GoldLostEvent>(HandleGoldLost);
             costEventChannel?.AddListener<TreasuryRobbedEvent>(HandleTreasuryRobbed);
-            costEventChannel?.AddListener<SalaryCostRequestedEvent>(HandleSalaryCostRequested);
             costEventChannel?.AddListener<BuildCostPaidEvent>(HandleBuildCostPaid);
             costEventChannel?.AddListener<RosterHirePaidEvent>(HandleRosterHirePaid);
             costEventChannel?.AddListener<UnitRecoveryCostPaidEvent>(HandleUnitRecoveryCostPaid);
@@ -86,7 +87,6 @@ namespace _01.Code.Manager
             costEventChannel?.RemoveListener<GoldEarnedEvent>(HandleGoldEarned);
             costEventChannel?.RemoveListener<GoldLostEvent>(HandleGoldLost);
             costEventChannel?.RemoveListener<TreasuryRobbedEvent>(HandleTreasuryRobbed);
-            costEventChannel?.RemoveListener<SalaryCostRequestedEvent>(HandleSalaryCostRequested);
             costEventChannel?.RemoveListener<BuildCostPaidEvent>(HandleBuildCostPaid);
             costEventChannel?.RemoveListener<RosterHirePaidEvent>(HandleRosterHirePaid);
             costEventChannel?.RemoveListener<UnitRecoveryCostPaidEvent>(HandleUnitRecoveryCostPaid);
@@ -166,11 +166,6 @@ namespace _01.Code.Manager
             RecordExpense("금고 약탈", evt.GoldAmount, false);
         }
 
-        private void HandleSalaryCostRequested(SalaryCostRequestedEvent evt)
-        {
-            RecordExpense("유지비", evt.GoldAmount, MovesAtSettlement());
-        }
-
         private void HandleBuildCostPaid(BuildCostPaidEvent evt)
         {
             RecordExpense("건설 투자", evt.GoldAmount, false);
@@ -235,20 +230,18 @@ namespace _01.Code.Manager
             return total;
         }
 
+        /// <summary>오늘 배치했던 부하들의 피로를 정산 시점 값으로 찍어 둔다.</summary>
         private void ApplyBattleFatigue()
         {
-            if (deployedUnitByNode.Count == 0)
-                return;
+            // 어제 값이 그대로 남아 오늘 것처럼 보이면 안 되므로 장부부터 연다.
+            EnsureLedgerOpen();
 
             foreach (var unit in deployedUnitByNode.Values)
             {
                 if (unit == null)
                     continue;
 
-                var label = ResolveUnitLabel(unit);
-                var currentFatigue = Mathf.RoundToInt(unit.Fatigue);
-                fatigueByLabel[label] = currentFatigue;
-                dailyFatigueByLabel[label] = currentFatigue;
+                dailyFatigueByLabel[ResolveUnitLabel(unit)] = Mathf.RoundToInt(unit.Fatigue);
             }
         }
 
@@ -342,8 +335,39 @@ namespace _01.Code.Manager
 
             var net = totalIncome - totalExpense;
             netText.text = $"오늘 순증 {FormatSignedGold(net)}\n획득 +{totalIncome}G  ·  지출 -{totalExpense}G"
-                           + BuildBattleSummaryText() + BuildDebtText();
+                           + BuildBattleSummaryText() + BuildFatigueText() + BuildDebtText();
             netText.color = net >= 0 ? new Color(0.45f, 0.95f, 0.55f) : new Color(1f, 0.45f, 0.4f);
+        }
+
+        /// <summary>
+        /// 오늘 내보낸 부하가 얼마나 지쳤는지. 다음 날 그대로 또 세울지, 쉬게 할지 여기서 판단한다.
+        /// 지친 순으로 세워야 손봐야 할 부하가 맨 앞에 온다.
+        /// </summary>
+        private string BuildFatigueText()
+        {
+            if (dailyFatigueByLabel.Count == 0)
+                return string.Empty;
+
+            var sorted = new List<KeyValuePair<string, int>>(dailyFatigueByLabel);
+            sorted.Sort((left, right) => right.Value.CompareTo(left.Value));
+
+            var line = new StringBuilder("\n<size=85%>부하 피로");
+            foreach (var pair in sorted)
+                line.Append($"  ·  {pair.Key} {FormatFatigue(pair.Value)}");
+
+            line.Append("</size>");
+            return line.ToString();
+        }
+
+        /// <summary>탈진은 붉게, 지친 상태는 노랗게 — 숫자만으로는 눈에 안 들어온다.</summary>
+        private static string FormatFatigue(int fatigue)
+        {
+            if (fatigue >= 100)
+                return $"<color=#FF7A6B>탈진 {fatigue}</color>";
+
+            return fatigue >= ExhaustionWarningFatigue
+                ? $"<color=#FFC85A>{fatigue}</color>"
+                : fatigue.ToString();
         }
 
         /// <summary>
