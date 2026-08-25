@@ -280,6 +280,8 @@ MonoBehaviour:
   attackLungeDuration: 0.16
   hitKnockbackDistance: 0.3
   weaveAfterHitTime: 0.3
+  kiteSpeedMultiplier: 0.55
+  holdGroundAfterShot: 1
   dodgeSidestepDistance: 0.35
   woundedHealthThreshold: 0.3
   woundedMoveSpeedMultiplier: 0.85
@@ -380,7 +382,7 @@ MonoBehaviour:
   combatant: {fileID: 0}
   barsView: {fileID: 0}
   skill: {fileID: 11400000, guid: 72eb37629c5bf5dcfec7e8ec8a7e673b, type: 2}
-  ultimate: {fileID: 0}
+  ultimate: {fileID: 11400000, guid: 71dde731842d3e6b5efc978317f11d58, type: 2}
   castFlashColor: {r: 0.55, g: 0.85, b: 1, a: 1}
   ultimateFlashColor: {r: 1, g: 0.85, b: 0.35, a: 1}
   castFlashDuration: 0.14
