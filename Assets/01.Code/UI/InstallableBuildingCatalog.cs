@@ -65,18 +65,13 @@ namespace _01.Code.UI
         }
 
         /// <summary>설치 메뉴에 후보로 올릴 건물 전부. 중복은 걸러서 한 번씩만 나온다.</summary>
+        /// <summary>
+        /// 지금 지을 수 있는 건물만 돌려준다.
+        /// 인스펙터의 전체 목록을 그대로 내보내면 해금이 아무 제한도 걸지 못한다.
+        /// </summary>
         public IEnumerable<BuildingDataSO> EnumerateOptions()
         {
             var yielded = new HashSet<BuildingDataSO>();
-
-            if (_installable != null)
-            {
-                foreach (var buildingData in _installable)
-                {
-                    if (buildingData != null && yielded.Add(buildingData))
-                        yield return buildingData;
-                }
-            }
 
             foreach (var buildingData in _unlocked)
             {

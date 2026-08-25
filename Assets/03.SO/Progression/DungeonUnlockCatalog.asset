@@ -16,75 +16,85 @@ MonoBehaviour:
   - unit: {fileID: 11400000, guid: b6ce91f584084e0caa2a843d9c51c8df, type: 2}
     building: {fileID: 0}
     startsUnlocked: 1
+    unlockDay: 0
     unlockHint: "\uACE0\uC6A9 \uD328\uB110\uC5D0\uC11C \uACC4\uC57D\uD560 \uC218
       \uC788\uC2B5\uB2C8\uB2E4."
   - unit: {fileID: 11400000, guid: d54fce19d871431995a28dbcf64a2482, type: 2}
     building: {fileID: 0}
-    startsUnlocked: 1
-    unlockHint: "\uACE0\uC6A9 \uD328\uB110\uC5D0\uC11C \uACC4\uC57D\uD560 \uC218
-      \uC788\uC2B5\uB2C8\uB2E4."
+    startsUnlocked: 0
+    unlockDay: 7
+    unlockHint: "7\uC77C\uCC28 \xB7 \uB354 \uB2E8\uB2E8\uD55C \uAC1C\uCCB4\uAC00
+      \uBD80\uD654\uD55C\uB2E4"
   - unit: {fileID: 11400000, guid: f32955b7a7e548c0a75dc10419558c81, type: 2}
     building: {fileID: 0}
-    startsUnlocked: 1
-    unlockHint: "\uACE0\uC6A9 \uD328\uB110\uC5D0\uC11C \uACC4\uC57D\uD560 \uC218
-      \uC788\uC2B5\uB2C8\uB2E4."
+    startsUnlocked: 0
+    unlockDay: 13
+    unlockHint: "13\uC77C\uCC28 \xB7 \uBD89\uC740 \uAC1C\uCCB4\uAC00 \uAE68\uC5B4\uB09C\uB2E4"
   - unit: {fileID: 0}
     building: {fileID: 11400000, guid: 42825de8a3367de46a6089d639890ae2, type: 2}
     startsUnlocked: 1
+    unlockDay: 0
     unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
       \uC788\uC2B5\uB2C8\uB2E4."
   - unit: {fileID: 0}
     building: {fileID: 11400000, guid: 3be975d9f7e84f2ca311f8d4f7a31e6a, type: 2}
-    startsUnlocked: 1
-    unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
-      \uC788\uC2B5\uB2C8\uB2E4."
+    startsUnlocked: 0
+    unlockDay: 4
+    unlockHint: "4\uC77C\uCC28 \xB7 \uC5EC\uAD00\uC744 \uC138\uC6CC \uC9C0\uB098\uAC00\uB294
+      \uBAA8\uD5D8\uAC00\uB97C \uBD99\uC7A1\uB294\uB2E4"
   - unit: {fileID: 0}
     building: {fileID: 11400000, guid: 29e49c3215d74e87a2f48f1429a0246d, type: 2}
-    startsUnlocked: 1
-    unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
-      \uC788\uC2B5\uB2C8\uB2E4."
+    startsUnlocked: 0
+    unlockDay: 7
+    unlockHint: "7\uC77C\uCC28 \xB7 \uC0C1\uC810\uC774 \uBAA8\uD5D8\uAC00\uC758 \uC8FC\uBA38\uB2C8\uB97C
+      \uD134\uB2E4"
   - unit: {fileID: 0}
     building: {fileID: 11400000, guid: 63a68a01c1e746e49a3bc6917d59ab69, type: 2}
-    startsUnlocked: 1
-    unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
-      \uC788\uC2B5\uB2C8\uB2E4."
+    startsUnlocked: 0
+    unlockDay: 4
+    unlockHint: "4\uC77C\uCC28 \xB7 \uAC31\uB3C4\uB97C \uD30C\uBA74 \uB9E4\uC77C
+      \uAE08\uD654\uAC00 \uB098\uC628\uB2E4"
   - unit: {fileID: 0}
     building: {fileID: 11400000, guid: 6b7d4a8b65db4ce7ac9796c41147c597, type: 2}
-    startsUnlocked: 1
-    unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
-      \uC788\uC2B5\uB2C8\uB2E4."
+    startsUnlocked: 0
+    unlockDay: 13
+    unlockHint: "13\uC77C\uCC28 \xB7 \uB354 \uAE4A\uC740 \uAC31\uB3C4\uB97C \uC5F0\uB2E4"
   - unit: {fileID: 0}
     building: {fileID: 11400000, guid: 6120671860064b739c4fe040da4747f0, type: 2}
-    startsUnlocked: 1
-    unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
-      \uC788\uC2B5\uB2C8\uB2E4."
+    startsUnlocked: 0
+    unlockDay: 16
+    unlockHint: "16\uC77C\uCC28 \xB7 \uB300\uC5EC\uAD00\uC73C\uB85C \uD655\uC7A5\uD55C\uB2E4"
   - unit: {fileID: 0}
     building: {fileID: 11400000, guid: 4bc0888fea494b3da0e4c05d659baaf9, type: 2}
-    startsUnlocked: 1
-    unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
-      \uC788\uC2B5\uB2C8\uB2E4."
+    startsUnlocked: 0
+    unlockDay: 16
+    unlockHint: "16\uC77C\uCC28 \xB7 \uBB34\uAE30\uACE0 \uC0C1\uC810\uC744 \uC5F0\uB2E4"
   - unit: {fileID: 0}
     building: {fileID: 11400000, guid: e54bdac488bf4a19b5cbcf504e34f6e8, type: 2}
     startsUnlocked: 1
+    unlockDay: 0
     unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
       \uC788\uC2B5\uB2C8\uB2E4."
   - unit: {fileID: 0}
     building: {fileID: 11400000, guid: b7e6ba90fa9242e7840b10a701686e97, type: 2}
     startsUnlocked: 1
+    unlockDay: 0
     unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
       \uC788\uC2B5\uB2C8\uB2E4."
   - unit: {fileID: 0}
     building: {fileID: 11400000, guid: 169a0159d9454abba7660ea48c46532c, type: 2}
-    startsUnlocked: 1
-    unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
-      \uC788\uC2B5\uB2C8\uB2E4."
+    startsUnlocked: 0
+    unlockDay: 10
+    unlockHint: "10\uC77C\uCC28 \xB7 \uCE7C\uB0A0 \uD568\uC815 \uC124\uACC4\uB3C4\uB97C
+      \uC190\uC5D0 \uB123\uB294\uB2E4"
   - unit: {fileID: 0}
     building: {fileID: 11400000, guid: 2f9619c18a6e4290b76a38e11290abd5, type: 2}
-    startsUnlocked: 1
-    unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
-      \uC788\uC2B5\uB2C8\uB2E4."
+    startsUnlocked: 0
+    unlockDay: 16
+    unlockHint: "16\uC77C\uCC28 \xB7 \uC555\uC1C4 \uC7A5\uCE58\uB97C \uC644\uC131\uD55C\uB2E4"
   - unit: {fileID: 0}
     building: {fileID: 11400000, guid: 9978d5ad46fa4c71bb0b0b6ab4d91d91, type: 2}
-    startsUnlocked: 1
-    unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
-      \uC788\uC2B5\uB2C8\uB2E4."
+    startsUnlocked: 0
+    unlockDay: 10
+    unlockHint: "10\uC77C\uCC28 \xB7 \uD68C\uBCF5\uC2E4\uC5D0\uC11C \uBD80\uD558\uB97C
+      \uCE58\uB8CC\uD55C\uB2E4"

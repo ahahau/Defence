@@ -35,7 +35,16 @@ namespace _01.Code.Progression
         [SerializeField] private UnitDataSO unit;
         [SerializeField] private BuildingDataSO building;
         [SerializeField] private bool startsUnlocked = true;
+
+        [SerializeField, Min(0), Tooltip("이 일차가 되면 해금된다. 0이면 일차로는 열리지 않는다.")]
+        private int unlockDay;
+
         [SerializeField, TextArea] private string unlockHint = "던전 발전 조건을 충족하면 해금됩니다.";
+
+        public int UnlockDay => unlockDay;
+
+        /// <summary>그 일차에 이 항목이 열려야 하는가.</summary>
+        public bool IsUnlockedOn(int day) => startsUnlocked || (unlockDay > 0 && day >= unlockDay);
 
         public UnitDataSO Unit => unit;
         public BuildingDataSO Building => building;

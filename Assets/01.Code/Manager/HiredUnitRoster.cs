@@ -210,8 +210,50 @@ namespace _01.Code.Manager
             RestAvailableUnits();
 
             GenerateRecruitmentCandidates(candidatesPerDay);
+            UnlockScheduledEntries(evt.Day);
 
             RaiseUnlockChanged();
+        }
+
+        /// <summary>
+        /// 그 일차에 열리기로 된 유닛·건물을 해금한다.
+        /// 처음부터 전부 열려 있으면 며칠 만에 최적 조합이 굳어 남은 날이 똑같아지므로,
+        /// 카탈로그에 적힌 일차에 맞춰 조금씩 풀어 준다.
+        /// </summary>
+        private void UnlockScheduledEntries(int day)
+        {
+            if (unlockCatalog == null)
+                return;
+
+            var unlockedUnit = false;
+            var unlockedBuilding = false;
+
+            foreach (var entry in unlockCatalog.Entries)
+            {
+                if (entry == null || !entry.IsUnlockedOn(day))
+                    continue;
+
+                if (entry.Unit != null && !_unlockedUnits.Contains(entry.Unit))
+                {
+                    _unlockedUnits.Add(entry.Unit);
+                    _ownedUnits.TryAdd(entry.Unit, 0);
+                    unlockedUnit = true;
+                    Debug.Log($"{day}일차 · 새 부하 해금: {entry.Unit.Name}", this);
+                }
+
+                if (entry.Building != null && !_unlockedBuildings.Contains(entry.Building))
+                {
+                    _unlockedBuildings.Add(entry.Building);
+                    unlockedBuilding = true;
+                    Debug.Log($"{day}일차 · 새 시설 해금: {entry.Building.DisplayName}", this);
+                }
+            }
+
+            if (unlockedBuilding)
+                RaiseBuildingUnlockChanged();
+
+            if (unlockedUnit)
+                RaiseUnlockChanged();
         }
 
         private void GenerateRecruitmentCandidates(int amount)
@@ -412,7 +454,7 @@ namespace _01.Code.Manager
             foreach (var entry in unlockCatalog.Entries)
             {
                 var building = entry?.Building;
-                if (building != null && entry.StartsUnlocked && !_unlockedBuildings.Contains(building))
+                if (building != null && entry.IsUnlockedOn(0) && !_unlockedBuildings.Contains(building))
                     _unlockedBuildings.Add(building);
             }
         }
@@ -434,7 +476,7 @@ namespace _01.Code.Manager
                 foreach (var entry in unlockCatalog.Entries)
                 {
                     var unit = entry?.Unit;
-                    if (unit == null || !entry.StartsUnlocked || _unlockedUnits.Contains(unit))
+                    if (unit == null || !entry.IsUnlockedOn(0) || _unlockedUnits.Contains(unit))
                         continue;
 
                     _unlockedUnits.Add(unit);
