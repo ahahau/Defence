@@ -51,6 +51,8 @@ namespace _01.Code.Progression
         public bool StartsUnlocked => startsUnlocked;
         public string UnlockHint => unlockHint;
 
+        public DungeonUnlockEntry() { }
+
         public DungeonUnlockEntry(UnitDataSO value, bool unlocked, string hint)
         {
             unit = value;

@@ -332,7 +332,7 @@ namespace _01.Code.Manager
 
         private void RaiseGoldChanged()
         {
-            costEventChannel.RaiseEvent(new GoldChangedEvent(CurrentGold));
+            costEventChannel?.RaiseEvent(new GoldChangedEvent(CurrentGold));
         }
     }
 }
