@@ -88,6 +88,31 @@ MonoBehaviour:
     spawnInterval: 1.25
     enemyTurnInterval: 2.5
     clearGoldReward: 190
+  - targetDay: 16
+    enemyCount: 24
+    spawnInterval: 1.2
+    enemyTurnInterval: 2.5
+    clearGoldReward: 200
+  - targetDay: 17
+    enemyCount: 25
+    spawnInterval: 1.15
+    enemyTurnInterval: 2.5
+    clearGoldReward: 210
+  - targetDay: 18
+    enemyCount: 26
+    spawnInterval: 1.1
+    enemyTurnInterval: 2.5
+    clearGoldReward: 225
+  - targetDay: 19
+    enemyCount: 28
+    spawnInterval: 1.05
+    enemyTurnInterval: 2.5
+    clearGoldReward: 240
+  - targetDay: 20
+    enemyCount: 30
+    spawnInterval: 1
+    enemyTurnInterval: 2.5
+    clearGoldReward: 300
   defaultWave:
     targetDay: 0
     enemyCount: 24
@@ -96,8 +121,8 @@ MonoBehaviour:
     clearGoldReward: 195
   waveEveryNDays: 1
   bossEveryNDays: 9
-  finalDay: 50
-  dailyBossStartDay: 46
+  finalDay: 20
+  dailyBossStartDay: 20
   bossParty: {fileID: 0}
   bossWave:
     targetDay: 0

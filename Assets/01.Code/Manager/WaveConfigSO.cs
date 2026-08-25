@@ -59,14 +59,17 @@ namespace _01.Code.Manager
 
         public WaveEntry GetWaveForDay(int day)
         {
-            if (IsBossDay(day))
-                return bossWave;
-
+            // 그 날에 맞춘 수치가 있으면 보스날에도 그걸 쓴다.
+            // bossWave 하나로 모든 보스날을 덮어쓰면 후반 보스날이 전날보다 한산해진다.
+            // 보스 승격 자체는 WaveManager가 IsBossDay로 따로 판단하므로 여기서 놓치지 않는다.
             foreach (var wave in specificWaves)
             {
                 if (wave.targetDay == day)
                     return wave;
             }
+
+            if (IsBossDay(day))
+                return bossWave;
 
             if (waveEveryNDays > 0 && day % waveEveryNDays == 0)
                 return defaultWave;
