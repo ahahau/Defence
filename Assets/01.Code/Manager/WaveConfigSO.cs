@@ -16,6 +16,29 @@ namespace _01.Code.Manager
             [Min(0)] public int clearGoldReward = 30;
         }
 
+        /// <summary>
+        /// 한 보스날의 정의. 보스를 한 종류로 두면 9·18·20일이 전부 같은 덩치가 되어
+        /// 세 번의 고비가 서로 구분되지 않는다.
+        /// </summary>
+        [Serializable]
+        public class BossEntry
+        {
+            [Min(1)] public int targetDay;
+
+            [Tooltip("첫 멤버가 보스, 나머지는 호위. 비우면 공용 보스 파티를 쓴다.")]
+            public AdventurerPartySO party;
+
+            [Tooltip("배너 제목. 비우면 기본 문구.")]
+            public string title;
+
+            [TextArea, Tooltip("배너 부제. 비우면 기본 문구.")]
+            public string subtitle;
+
+            [Min(1f)] public float healthMultiplier = 6f;
+            [Min(1f)] public float attackMultiplier = 2f;
+            [Min(1f)] public float visualScale = 1.6f;
+        }
+
         [SerializeField] private WaveEntry[] specificWaves = Array.Empty<WaveEntry>();
         [SerializeField] private WaveEntry defaultWave = new WaveEntry();
         [SerializeField, Min(1)] private int waveEveryNDays = 1;
@@ -38,8 +61,30 @@ namespace _01.Code.Manager
             clearGoldReward = 90
         };
 
+        [SerializeField, Tooltip("일차별 보스 정의. 여기 없는 보스날은 아래 공용 보스 설정을 쓴다.")]
+        private BossEntry[] bossEntries = Array.Empty<BossEntry>();
+
         public AdventurerPartySO BossParty => bossParty;
         public int FinalDay => finalDay;
+
+        /// <summary>그 날 전용 보스 정의. 없으면 null이고, 호출한 쪽이 공용 설정으로 넘어간다.</summary>
+        public BossEntry GetBossForDay(int day)
+        {
+            foreach (var boss in bossEntries)
+            {
+                if (boss != null && boss.targetDay == day)
+                    return boss;
+            }
+
+            return null;
+        }
+
+        /// <summary>그 날 보스가 이끄는 파티. 전용 정의가 없으면 공용 보스 파티.</summary>
+        public AdventurerPartySO GetBossPartyForDay(int day)
+        {
+            var boss = GetBossForDay(day);
+            return boss != null && boss.party != null ? boss.party : bossParty;
+        }
 
         /// <summary>보스 웨이브 날인지 — 주기(bossEveryNDays)와 막판 러시(dailyBossStartDay~finalDay) 둘 다 포함.</summary>
         public bool IsBossDay(int day)

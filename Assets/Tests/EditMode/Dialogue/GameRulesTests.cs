@@ -510,6 +510,55 @@ namespace Tests.EditMode.Rules
             Assert.That(failed, Is.EqualTo(33), "실패하면 일부만 회수합니다.");
         }
 
+        // ── 보스 ─────────────────────────────────────────────────────
+        // 보스날이 셋인데 정의가 하나면 9·18·20일이 같은 덩치가 된다.
+
+        [Test]
+        public void Boss_EachBossDayCanHaveItsOwnFight()
+        {
+            var config = NewAsset("_01.Code.Manager.WaveConfigSO");
+            var ninth = NewAsset("_01.Code.Manager.AdventurerPartySO");
+            var final = NewAsset("_01.Code.Manager.AdventurerPartySO");
+
+            var entryType = Resolve("_01.Code.Manager.WaveConfigSO+BossEntry");
+            var entries = Array.CreateInstance(entryType, 2);
+            entries.SetValue(NewBossEntry(entryType, 9, ninth, 5f), 0);
+            entries.SetValue(NewBossEntry(entryType, 20, final, 6f), 1);
+            SetPrivate(config, "bossEntries", entries);
+
+            var ninthBoss = Call(config, "GetBossForDay", 9);
+            var finalBoss = Call(config, "GetBossForDay", 20);
+
+            Assert.That(ninthBoss, Is.Not.Null, "9일 보스 정의를 찾아야 합니다.");
+            Assert.That(finalBoss, Is.Not.Null, "20일 보스 정의를 찾아야 합니다.");
+            Assert.That(entryType.GetField("healthMultiplier").GetValue(ninthBoss), Is.EqualTo(5f));
+            Assert.That(entryType.GetField("healthMultiplier").GetValue(finalBoss), Is.EqualTo(6f),
+                "보스마다 다른 배율을 가져야 같은 덩치가 되지 않습니다.");
+            Assert.That(Call(config, "GetBossPartyForDay", 9), Is.SameAs(ninth),
+                "그 날 보스는 자기 파티를 이끌어야 합니다.");
+        }
+
+        [Test]
+        public void Boss_ADayWithoutItsOwnEntryFallsBackToTheSharedParty()
+        {
+            var config = NewAsset("_01.Code.Manager.WaveConfigSO");
+            var shared = NewAsset("_01.Code.Manager.AdventurerPartySO");
+            SetPrivate(config, "bossParty", shared);
+
+            Assert.That(Call(config, "GetBossForDay", 13), Is.Null, "정의하지 않은 날은 전용 보스가 없습니다.");
+            Assert.That(Call(config, "GetBossPartyForDay", 13), Is.SameAs(shared),
+                "전용 정의가 없으면 공용 보스 파티로 떨어져야 합니다.");
+        }
+
+        private static object NewBossEntry(Type entryType, int day, object party, float healthMultiplier)
+        {
+            var entry = Activator.CreateInstance(entryType);
+            entryType.GetField("targetDay").SetValue(entry, day);
+            entryType.GetField("party").SetValue(entry, party);
+            entryType.GetField("healthMultiplier").SetValue(entry, healthMultiplier);
+            return entry;
+        }
+
         // ── 장악도 ────────────────────────────────────────────────────
         // 장악은 금화가 아니라 방어로 돌아와야 원정이 돈벌이 버튼이 되지 않는다.
 

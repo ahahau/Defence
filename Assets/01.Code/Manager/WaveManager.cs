@@ -92,6 +92,8 @@ namespace _01.Code.Manager
         private bool _isDestroying;
         [SerializeField] private BossWavePresenter bossPresenter;
         private Enemy _bossEnemy;
+        /// <summary>이 날 전용 보스 정의. 없으면 공용 보스 설정으로 떨어진다.</summary>
+        private WaveConfigSO.BossEntry _currentBoss;
         private bool _isBossWave;
         private bool _isFinalWave;
         private bool _bossSpawned;
@@ -216,6 +218,8 @@ namespace _01.Code.Manager
             _activeEnemies.Clear();
             _isBossWave = waveConfig != null && waveConfig.IsBossDay(_currentDay);
             _isFinalWave = waveConfig != null && waveConfig.IsFinalDay(_currentDay);
+            // 이 날의 보스가 누구인지 웨이브가 도는 내내 같은 값을 봐야 호위·배율·배너가 어긋나지 않는다.
+            _currentBoss = waveConfig != null ? waveConfig.GetBossForDay(_currentDay) : null;
             _bossEnemy = null;
             _bossSpawned = false;
             SetupPartyForWave();
@@ -225,7 +229,8 @@ namespace _01.Code.Manager
             if (_isBossWave)
             {
                 waveEventChannel.RaiseEvent(new BossWaveStartedEvent(_currentDay, _isFinalWave));
-                EnsureBossPresenter().ShowBossBanner(_currentDay, _isFinalWave);
+                EnsureBossPresenter().ShowBossBanner(
+                    _currentDay, _isFinalWave, _currentBoss?.title, _currentBoss?.subtitle);
             }
 
             var spawnInterval = Mathf.Max(0.5f, entry.spawnInterval);
@@ -380,7 +385,10 @@ namespace _01.Code.Manager
             {
                 _bossSpawned = true;
                 _bossEnemy = enemy;
-                enemy.PromoteToBoss(bossHealthMultiplier, bossAttackMultiplier, bossVisualScale);
+                enemy.PromoteToBoss(
+                    _currentBoss != null ? _currentBoss.healthMultiplier : bossHealthMultiplier,
+                    _currentBoss != null ? _currentBoss.attackMultiplier : bossAttackMultiplier,
+                    _currentBoss != null ? _currentBoss.visualScale : bossVisualScale);
                 enemy.DeathStarted += HandleBossDeathStarted;
             }
 
@@ -420,14 +428,15 @@ namespace _01.Code.Manager
             _partyQueue.Clear();
             _partyIndex = 0;
 
-            // 보스 웨이브 첫 그룹은 보스 파티의 호위(첫 멤버=보스는 SpawnEnemy가 따로 처리) 구성으로.
-            if (_isBossWave && !_bossSpawned && waveConfig != null && waveConfig.BossParty != null
-                && waveConfig.BossParty.Members != null && waveConfig.BossParty.Members.Length > 1)
+            // 보스 웨이브 첫 그룹은 그 날 보스 파티의 호위(첫 멤버=보스는 SpawnEnemy가 따로 처리) 구성으로.
+            var bossParty = waveConfig != null ? waveConfig.GetBossPartyForDay(_currentDay) : null;
+            if (_isBossWave && !_bossSpawned && bossParty != null
+                && bossParty.Members != null && bossParty.Members.Length > 1)
             {
-                for (var i = 1; i < waveConfig.BossParty.Members.Length; i++)
+                for (var i = 1; i < bossParty.Members.Length; i++)
                 {
-                    if (waveConfig.BossParty.Members[i] != null)
-                        _partyQueue.Add(waveConfig.BossParty.Members[i]);
+                    if (bossParty.Members[i] != null)
+                        _partyQueue.Add(bossParty.Members[i]);
                 }
 
                 if (_partyQueue.Count > 0)
@@ -461,10 +470,10 @@ namespace _01.Code.Manager
             }
         }
 
-        /// <summary>보스 데이터 — 설정된 보스 파티의 첫 멤버, 없으면 풀에서 최대 체력 적(승격은 SpawnEnemy가).</summary>
+        /// <summary>보스 데이터 — 그 날 보스 파티의 첫 멤버, 없으면 풀에서 최대 체력 적(승격은 SpawnEnemy가).</summary>
         private EnemyDataSO ResolveBossData()
         {
-            var bossParty = waveConfig != null ? waveConfig.BossParty : null;
+            var bossParty = waveConfig != null ? waveConfig.GetBossPartyForDay(_currentDay) : null;
             if (bossParty != null && bossParty.Members != null && bossParty.Members.Length > 0
                 && bossParty.Members[0] != null)
                 return bossParty.Members[0];

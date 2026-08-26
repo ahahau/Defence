@@ -39,16 +39,22 @@ namespace _01.Code.Manager
 
         // ── Banner ──────────────────────────────────────────────
 
-        public void ShowBossBanner(int day, bool isFinal)
+        /// <param name="bossTitle">그 날 보스의 이름. 비어 있으면 기본 문구로 떨어진다.</param>
+        /// <param name="bossSubtitle">보스마다 다른 경고 문구. 무엇을 조심해야 하는지 알린다.</param>
+        public void ShowBossBanner(int day, bool isFinal, string bossTitle = null, string bossSubtitle = null)
         {
             if (uiCanvas == null)
                 return;
 
             var accent = isFinal ? finalBannerColor : bossBannerColor;
-            var title = isFinal ? "최후의 결전" : "보스 습격";
-            var subtitle = isFinal
-                ? $"Day {day} — 이 습격만 막아내면 던전을 지켜낸다"
-                : $"Day {day} — 강력한 모험가가 쳐들어온다";
+            var title = !string.IsNullOrWhiteSpace(bossTitle)
+                ? bossTitle
+                : isFinal ? "최후의 결전" : "보스 습격";
+            var subtitle = !string.IsNullOrWhiteSpace(bossSubtitle)
+                ? $"Day {day} — {bossSubtitle}"
+                : isFinal
+                    ? $"Day {day} — 이 습격만 막아내면 던전을 지켜낸다"
+                    : $"Day {day} — 강력한 모험가가 쳐들어온다";
 
             var view = bannerView;
             if (view == null)
