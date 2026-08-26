@@ -45,6 +45,77 @@ namespace _01.Code.Editor
             Debug.Log("Expedition map prefab and scene instance installed.");
         }
 
+        /// <summary>
+        /// 이미 설치된 프리팹의 마을 칸을 스크롤 목록으로 바꾼다.
+        /// Install()로 통째로 다시 만들면 씬 인스턴스가 새로 꽂혀 모달 정렬 설정이 날아가므로,
+        /// 프리팹 에셋만 제자리에서 고친다.
+        /// </summary>
+        public static void UpgradeVillageListToScrollView()
+        {
+            var contents = PrefabUtility.LoadPrefabContents(PrefabPath);
+            try
+            {
+                var mapArea = Child(contents.transform, "MapArea");
+                if (mapArea == null)
+                    throw new System.InvalidOperationException("MapArea를 찾지 못했습니다.");
+
+                if (Child(contents.transform, "VillageContent") != null)
+                {
+                    Debug.Log("Expedition village list is already a scroll view.");
+                    return;
+                }
+
+                var scroll = Ui("VillageScroll", mapArea, new Vector2(.04f, .05f), new Vector2(.96f, .82f), Vector2.zero, Vector2.zero);
+                var scrollRect = scroll.AddComponent<ScrollRect>();
+                scrollRect.horizontal = false;
+                scrollRect.vertical = true;
+                scrollRect.movementType = ScrollRect.MovementType.Clamped;
+                scrollRect.scrollSensitivity = 24f;
+
+                var viewport = Ui("Viewport", scroll.transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+                viewport.AddComponent<RectMask2D>();
+                var viewportRect = (RectTransform)viewport.transform;
+                viewportRect.pivot = new Vector2(0f, 1f);
+
+                // 위에서부터 쌓이도록 상단 고정 + 위쪽 피벗. 아래로 늘어나야 스크롤이 자연스럽다.
+                var content = Ui("VillageContent", viewport.transform, new Vector2(0f, 1f), new Vector2(1f, 1f), Vector2.zero, Vector2.zero);
+                var contentRect = (RectTransform)content.transform;
+                contentRect.pivot = new Vector2(.5f, 1f);
+                var grid = content.AddComponent<GridLayoutGroup>();
+                grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+                grid.constraintCount = 1;
+                grid.cellSize = new Vector2(470f, 56f);
+                grid.spacing = new Vector2(0f, 8f);
+                grid.padding = new RectOffset(8, 8, 8, 8);
+
+                scrollRect.viewport = viewportRect;
+                scrollRect.content = contentRect;
+
+                // Village0을 원본으로 남기고 나머지 고정 칸은 치운다. 실제 칸은 런타임에 복제된다.
+                var template = Child(contents.transform, "Village0");
+                template.SetParent(content.transform, false);
+                template.name = "VillageTemplate";
+                template.gameObject.SetActive(false);
+                foreach (var leftover in new[] { "Village1", "Village2" })
+                {
+                    var extra = Child(contents.transform, leftover);
+                    if (extra != null)
+                        Object.DestroyImmediate(extra.gameObject);
+                }
+
+                var view = contents.GetComponent<ExpeditionMapPanelView>();
+                view.ConfigureVillageList(contentRect, template.GetComponent<Button>());
+
+                PrefabUtility.SaveAsPrefabAsset(contents, PrefabPath);
+                AssetDatabase.SaveAssets();
+                Debug.Log("Expedition village list upgraded to a scroll view.");
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(contents);
+            }
+        }
+
         public static void Validate()
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);

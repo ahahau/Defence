@@ -474,7 +474,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 0}
+    m_TransformParent: {fileID: 22224697}
     m_Modifications:
     - target: {fileID: 247211595018646944, guid: d476882715e8c4a40aa8ecd2a9c7f14a, type: 3}
       propertyPath: m_TextStyleHashCode
@@ -9604,7 +9604,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.44}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 32, y: -13.367081}
+  m_AnchoredPosition: {x: 32, y: -13.439728}
   m_SizeDelta: {x: -244, y: -118}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &780624401
@@ -15492,7 +15492,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 0}
+    m_TransformParent: {fileID: 22224697}
     m_Modifications:
     - target: {fileID: 6556798862950578480, guid: 3e78667ebfbfc8f4d9686bf106819a24, type: 3}
       propertyPath: m_Pivot.x
@@ -20598,6 +20598,7 @@ MonoBehaviour:
   memberSpawnDelay: 0.15
   formationSpread: 0.35
   treasuryGoldLoss: 6
+  maxWaveReductionFromConquest: 0.4
   enemyHealthPerLevel: 1
   enemyAttackPerLevel: 0
   bossHealthMultiplier: 6
