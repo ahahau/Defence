@@ -412,5 +412,102 @@ namespace Tests.EditMode.Rules
                 DestroyLedgerHost(host, costChannel, waveChannel);
             }
         }
+
+        // ── 원정 ─────────────────────────────────────────────────────
+        // 편성이 결정이 되려면 누구를 보내는지가 결과를 바꿔야 한다.
+
+        private static object NewUnitData(int cost)
+        {
+            var unit = NewAsset("_01.Code.Units.UnitDataSO");
+            SetPrivate(unit, "<Cost>k__BackingField", cost);
+            return unit;
+        }
+
+        /// <summary>피로만 다르고 나머지는 기본값인 상태를 만든다.</summary>
+        private static object NewCondition(float fatigue)
+        {
+            var injury = Enum.ToObject(Resolve("_01.Code.Units.InjurySeverity"), 0);
+            var trait = Enum.ToObject(Resolve("_01.Code.Units.UnitTrait"), 0);
+            var personality = Enum.ToObject(Resolve("_01.Code.Units.UnitPersonality"), 0);
+            var command = Enum.ToObject(Resolve("_01.Code.Units.UnitCommand"), 0);
+            return Activator.CreateInstance(
+                Resolve("_01.Code.Units.UnitConditionState"),
+                fatigue, injury, 1f, trait, personality, command);
+        }
+
+        private static object NewVillage(string name, int reward, int difficulty) =>
+            Activator.CreateInstance(
+                Resolve("_01.Code.Progression.ExpeditionVillageEntry"), name, string.Empty, reward, difficulty, 0);
+
+        private static float SuccessChance(int power, int difficulty)
+        {
+            var method = Resolve("_01.Code.Progression.ExpeditionVillageCatalogSO")
+                .GetMethod("GetSuccessChance", BindingFlags.Static | BindingFlags.Public);
+            Assert.That(method, Is.Not.Null, "GetSuccessChance를 찾지 못했습니다.");
+            return (float)method.Invoke(null, new object[] { power, difficulty });
+        }
+
+        [Test]
+        public void Expedition_ValuableUnitsCarryMoreWeightThanHeadcount()
+        {
+            var catalog = NewAsset("_01.Code.Progression.ExpeditionVillageCatalogSO");
+            SetPrivate(catalog, "costPerPower", 10);
+            SetPrivate(catalog, "fatiguePowerPenalty", 0f);
+
+            var cheap = NewUnitData(14);
+            var expensive = NewUnitData(82);
+            var fresh = NewCondition(0f);
+
+            var cheapPower = (int)Call(catalog, "GetUnitPower", cheap, fresh);
+            var expensivePower = (int)Call(catalog, "GetUnitPower", expensive, fresh);
+
+            Assert.That(expensivePower, Is.GreaterThan(cheapPower),
+                "값어치가 큰 부하가 더 큰 전력이어야 편성이 결정이 됩니다.");
+            Assert.That(cheapPower, Is.GreaterThan(0), "가장 싼 부하도 전력 1은 냅니다.");
+        }
+
+        [Test]
+        public void Expedition_TiredUnitsBringLessPower()
+        {
+            var catalog = NewAsset("_01.Code.Progression.ExpeditionVillageCatalogSO");
+            SetPrivate(catalog, "costPerPower", 10);
+            SetPrivate(catalog, "fatiguePowerPenalty", 0.6f);
+
+            var unit = NewUnitData(80);
+            var rested = (int)Call(catalog, "GetUnitPower", unit, NewCondition(0f));
+            var worn = (int)Call(catalog, "GetUnitPower", unit, NewCondition(100f));
+
+            Assert.That(worn, Is.LessThan(rested), "지친 부하는 전력이 깎여야 합니다.");
+            Assert.That(worn, Is.EqualTo(Mathf.RoundToInt(rested * 0.4f)),
+                "피로 100이면 감쇠율만큼만 남습니다.");
+        }
+
+        [Test]
+        public void Expedition_OddsFallOffWhenThePartyIsTooWeak()
+        {
+            Assert.That(SuccessChance(8, 8), Is.EqualTo(1f), "난이도에 닿으면 확정 성공입니다.");
+            Assert.That(SuccessChance(20, 8), Is.EqualTo(1f), "넘겨도 100%를 넘지 않습니다.");
+            Assert.That(SuccessChance(4, 8), Is.EqualTo(0.5f).Within(0.001f), "절반 전력이면 절반 확률입니다.");
+            Assert.That(SuccessChance(0, 8), Is.EqualTo(0f), "전력이 없으면 성공하지 않습니다.");
+        }
+
+        [Test]
+        public void Expedition_RewardGrowsWithTheDayAndShrinksOnFailure()
+        {
+            var catalog = NewAsset("_01.Code.Progression.ExpeditionVillageCatalogSO");
+            SetPrivate(catalog, "rewardGrowthPerDay", 0.1f);
+            SetPrivate(catalog, "rewardBonusPerUnit", 0);
+            SetPrivate(catalog, "failureRewardRatio", 0.33f);
+
+            var village = NewVillage("시험 마을", 100, 4);
+
+            var firstDay = (int)Call(catalog, "GetReward", village, 1, 1, true);
+            var lastDay = (int)Call(catalog, "GetReward", village, 20, 1, true);
+            var failed = (int)Call(catalog, "GetReward", village, 1, 1, false);
+
+            Assert.That(firstDay, Is.EqualTo(100), "1일차는 기준 보상 그대로입니다.");
+            Assert.That(lastDay, Is.EqualTo(290), "20일차에는 성장률만큼 올라야 후반에도 의미가 남습니다.");
+            Assert.That(failed, Is.EqualTo(33), "실패하면 일부만 회수합니다.");
+        }
     }
 }

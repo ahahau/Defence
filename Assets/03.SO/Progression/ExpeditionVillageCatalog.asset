@@ -15,18 +15,27 @@ MonoBehaviour:
   villages:
   - displayName: "\uD68C\uC0C9 \uAD50\uC5ED\uCD0C"
     purpose: "\uBC00\uC218\uB2E8 \uC57D\uD0C8 \xB7 \uC6B4\uC601 \uC790\uAE08 \uD655\uBCF4"
-    reward: 70
-    difficulty: 1
+    reward: 28
+    difficulty: 4
     startingConquest: 0
   - displayName: "\uBD81\uBB38 \uAC10\uC2DC\uCD08\uC18C"
     purpose: "\uC815\uCC30\uB9DD \uAD50\uB780 \xB7 \uB2E4\uC74C \uCE68\uC785 \uC815\uBCF4
       \uD655\uBCF4"
-    reward: 45
-    difficulty: 2
+    reward: 40
+    difficulty: 8
     startingConquest: 0
   - displayName: "\uBD89\uC740 \uC6A9\uBCD1\uB2E8"
     purpose: "\uC6A9\uBCD1\uB2E8 \uD3EC\uC12D \xB7 \uACC4\uC57D\uC11C \uC9C4\uCC99
       \uD655\uBCF4"
-    reward: 95
-    difficulty: 3
+    reward: 70
+    difficulty: 14
     startingConquest: 0
+  costPerPower: 10
+  fatiguePowerPenalty: 0.6
+  maxPartySize: 3
+  rewardGrowthPerDay: 0.1
+  rewardBonusPerUnit: 8
+  failureRewardRatio: 0.33
+  successFatigue: 24
+  failureFatigue: 42
+  conquestPerSuccess: 25

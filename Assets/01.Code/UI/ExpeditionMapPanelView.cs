@@ -52,6 +52,8 @@ namespace _01.Code.UI
         private int selectedVillage;
         private bool hasActiveExpedition;
         private bool isWired;
+        /// <summary>출발 시점에 확정된 편성 전력. 귀환 피로가 섞이기 전 값이라 판정은 이걸로 한다.</summary>
+        private int departedPower;
 
         public void Configure(GameEventChannelSO wave, GameEventChannelSO cost, GameObject panel, Button map, Button close,
             Button depart, Button[] village, Button[] units, TMP_Text title, TMP_Text detail, TMP_Text roster, TMP_Text result)
@@ -199,13 +201,38 @@ namespace _01.Code.UI
             var roster = HiredUnitRoster.Current;
             if (roster == null || buttonIndex < 0 || buttonIndex >= roster.AvailableUnits.Count) return;
             if (selectedUnitSlots.Contains(buttonIndex)) selectedUnitSlots.Remove(buttonIndex);
-            else if (selectedUnitSlots.Count < 3) selectedUnitSlots.Add(buttonIndex);
+            else if (selectedUnitSlots.Count < MaxPartySize) selectedUnitSlots.Add(buttonIndex);
             Refresh();
         }
+
+        private int MaxPartySize => villageCatalog != null ? villageCatalog.MaxPartySize : 3;
+
+        /// <summary>지금 고른 편성의 전력. 부하의 값어치와 피로를 함께 본다.</summary>
+        private int CalculateSelectedPower()
+        {
+            var roster = HiredUnitRoster.Current;
+            if (roster == null || villageCatalog == null)
+                return 0;
+
+            var total = 0;
+            foreach (var slot in selectedUnitSlots)
+            {
+                if (slot < 0 || slot >= roster.AvailableUnits.Count)
+                    continue;
+
+                var unit = roster.AvailableUnits[slot];
+                total += villageCatalog.GetUnitPower(unit, roster.GetBestAvailableCondition(unit));
+            }
+
+            return total;
+        }
+
+        private static int CurrentDay => DayManager.Current != null ? DayManager.Current.CurrentDay : 0;
 
         private void Depart()
         {
             if (hasActiveExpedition || selectedUnitSlots.Count == 0 || HiredUnitRoster.Current == null) return;
+            var power = CalculateSelectedPower();
             var chosenUnits = new List<UnitDataSO>();
             foreach (var slot in selectedUnitSlots)
                 if (slot >= 0 && slot < HiredUnitRoster.Current.AvailableUnits.Count)
@@ -215,6 +242,7 @@ namespace _01.Code.UI
                 if (HiredUnitRoster.Current.TryTakeAvailableUnit(unit, out var condition)) deployedUnits.Add((unit, condition));
             if (deployedUnits.Count == 0) return;
             hasActiveExpedition = true;
+            departedPower = power;
             if (resultText != null) resultText.text = $"{villages[selectedVillage].Name}에 작전대를 보냈습니다. 방어전 종료 후 결과가 도착합니다.";
             selectedUnitSlots.Clear(); Hide();
         }
@@ -229,25 +257,39 @@ namespace _01.Code.UI
             }
 
             var village = villages[selectedVillage];
-            var power = deployedUnits.Count * 2;
-            var success = power >= village.Difficulty || Random.value > 0.35f;
-            var reward = success ? village.Reward + deployedUnits.Count * 15 : village.Reward / 3;
+            var entry = villageCatalog != null ? villageCatalog.Get(selectedVillage) : null;
+
+            // 전력은 출발할 때 확정된 값을 쓴다. 여기서 다시 재면 이미 귀환 피로가 섞인다.
+            var chance = ExpeditionVillageCatalogSO.GetSuccessChance(departedPower, village.Difficulty);
+            var success = Random.value < chance;
+            var reward = villageCatalog != null
+                ? villageCatalog.GetReward(entry, evt.Day, deployedUnits.Count, success)
+                : 0;
+
+            var gainedFatigue = villageCatalog != null
+                ? (success ? villageCatalog.SuccessFatigue : villageCatalog.FailureFatigue)
+                : 0f;
             foreach (var member in deployedUnits)
             {
-                var fatigue = member.Condition.Fatigue + (success ? 24f : 42f);
                 HiredUnitRoster.Current.ReturnFromExpedition(member.Unit, new UnitConditionState(
-                    fatigue, member.Condition.Injury, member.Condition.HealthRatio,
+                    member.Condition.Fatigue + gainedFatigue, member.Condition.Injury, member.Condition.HealthRatio,
                     member.Condition.Trait, member.Condition.Personality, member.Condition.Command));
             }
-            if (success) { village.Conquest = Mathf.Min(100, village.Conquest + 25); villages[selectedVillage] = village; }
+            if (success)
+            {
+                var gain = villageCatalog != null ? villageCatalog.ConquestPerSuccess : 25;
+                village.Conquest = Mathf.Min(100, village.Conquest + gain);
+                villages[selectedVillage] = village;
+            }
             if (costEventChannel != null)
                 costEventChannel.RaiseEvent(new GoldEarnedEvent(reward, GoldChangeSource.General));
+            var odds = Mathf.RoundToInt(chance * 100f);
             var result = success
-                ? $"{village.Name} 작전 성공\n\n확보 자금  +{reward}G\n장악도  {village.Conquest}%\n\n귀환한 유닛은 피로도가 누적되었습니다."
-                : $"{village.Name} 작전 난항\n\n회수 자금  +{reward}G\n장악도 변화 없음\n\n귀환한 유닛의 피로도가 크게 누적되었습니다.";
+                ? $"{village.Name} 작전 성공\n\n확보 자금  +{reward}G\n장악도  {village.Conquest}%\n\n전력 {departedPower} / 난이도 {village.Difficulty}  ·  성공 확률 {odds}%\n귀환한 유닛은 피로도가 누적되었습니다."
+                : $"{village.Name} 작전 난항\n\n회수 자금  +{reward}G\n장악도 변화 없음\n\n전력 {departedPower} / 난이도 {village.Difficulty}  ·  성공 확률 {odds}%\n귀환한 유닛의 피로도가 크게 누적되었습니다.";
             if (resultText != null) resultText.text = result;
             ShowResult(success ? "작전 성공" : "작전 결과", result);
-            deployedUnits.Clear(); hasActiveExpedition = false;
+            deployedUnits.Clear(); hasActiveExpedition = false; departedPower = 0;
         }
 
         private void ShowResult(string title, string body)
@@ -274,8 +316,18 @@ namespace _01.Code.UI
             if (villages == null || villages.Length == 0) return;
             var village = villages[selectedVillage];
             if (titleText != null) titleText.text = "작전 지도";
-            if (detailText != null) detailText.text = $"{village.Name}\n{village.Purpose}\n\n난이도 {village.Difficulty}  ·  예상 보상 {village.Reward}G\n장악도 {village.Conquest}%\n\n대기 유닛 최대 3명을 편성하세요.";
             var roster = HiredUnitRoster.Current;
+            var power = CalculateSelectedPower();
+            var entry = villageCatalog != null ? villageCatalog.Get(selectedVillage) : null;
+            var day = CurrentDay;
+            var odds = Mathf.RoundToInt(ExpeditionVillageCatalogSO.GetSuccessChance(power, village.Difficulty) * 100f);
+            var payout = villageCatalog != null ? villageCatalog.GetReward(entry, day, selectedUnitSlots.Count, true) : village.Reward;
+            var consolation = villageCatalog != null ? villageCatalog.GetReward(entry, day, selectedUnitSlots.Count, false) : 0;
+            if (detailText != null)
+                detailText.text = $"{village.Name}\n{village.Purpose}\n\n난이도 {village.Difficulty}  ·  장악도 {village.Conquest}%\n"
+                                  + $"편성 전력 {power}  ·  성공 확률 {odds}%\n"
+                                  + $"성공 {payout}G  ·  실패 {consolation}G\n\n"
+                                  + $"대기 유닛 최대 {MaxPartySize}명을 편성하세요. 지친 부하는 전력이 깎입니다.";
             var selectedNames = new List<string>();
             if (roster != null) foreach (var slot in selectedUnitSlots) if (slot >= 0 && slot < roster.AvailableUnits.Count) selectedNames.Add(roster.AvailableUnits[slot].Name);
             if (rosterText != null) rosterText.text = "편성: " + (selectedNames.Count == 0 ? "없음" : string.Join(", ", selectedNames));
@@ -285,7 +337,12 @@ namespace _01.Code.UI
                 var available = roster != null && i < roster.AvailableUnits.Count ? roster.AvailableUnits[i] : null;
                 if (unitButtons[i] == null) continue;
                 unitButtons[i].gameObject.SetActive(available != null);
-                if (available != null) SetButtonLabel(unitButtons[i], (selectedUnitSlots.Contains(i) ? "✓ " : string.Empty) + available.Name);
+                if (available == null) continue;
+                // 전력이 보여야 누구를 보낼지 고를 수 있다. 지친 부하는 여기서 이미 낮게 뜬다.
+                var unitPower = villageCatalog != null
+                    ? villageCatalog.GetUnitPower(available, roster.GetBestAvailableCondition(available))
+                    : 0;
+                SetButtonLabel(unitButtons[i], (selectedUnitSlots.Contains(i) ? "✓ " : string.Empty) + $"{available.Name}\n전력 {unitPower}");
             }
             if (departButton != null) departButton.interactable = selectedUnitSlots.Count > 0 && !hasActiveExpedition;
         }
