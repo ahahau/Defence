@@ -162,7 +162,16 @@ namespace _01.Code.MapCreateSystem
         }
         public bool HasAssignedBuilding => AssignedBuilding != null;
         public bool HasInstallation => HasAssignedUnit || HasAssignedBuilding;
-        public bool CanAcceptAdditionalUnit => AssignedUnitCount < UnitCapacity;
+        /// <summary>
+        /// 침입자가 쏟아져 나오는 방인가. 포탈이 선 노드가 곧 스폰 지점이다.
+        /// </summary>
+        public bool IsEnemySpawnNode => AssignedBuilding is Portal;
+
+        /// <summary>
+        /// 스폰 방에는 수비대를 세울 수 없다. 거기서 막아 세우면 적이 통로를 한 번도 지나지 않아
+        /// 통로 함정이 통째로 죽고, 함정을 지을 이유가 사라진다.
+        /// </summary>
+        public bool CanAcceptAdditionalUnit => !IsEnemySpawnNode && AssignedUnitCount < UnitCapacity;
         public int UnitCapacity => battlefield != null ? battlefield.MaxPerTeam : 1;
         public int DangerLevel { get; private set; }
         

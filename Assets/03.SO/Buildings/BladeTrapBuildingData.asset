@@ -14,10 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Buildings.BuildingDataSO
   <Grade>k__BackingField: 2
   <BoardSprite>k__BackingField: {fileID: -855298285791758126, guid: cb57f21d1c6c2b14f87fb1bae1e53de2, type: 3}
-  <DisplayName>k__BackingField: 칼날 트랩
+  <Defense>k__BackingField: 0
+  <EvasionChance>k__BackingField: 0
+  <DisplayName>k__BackingField: "\uCE7C\uB0A0 \uD2B8\uB7A9"
   <Cost>k__BackingField: 18
   <Prefab>k__BackingField: {fileID: 1428848070512300419, guid: 56b3e9da5f4d477ebb3e8fe12bc5b72e, type: 3}
   <Unique>k__BackingField: 0
+  <InstallOnEdge>k__BackingField: 1
   <Locked>k__BackingField: 0
   <BaseDanger>k__BackingField: 3
   <Category>k__BackingField: 2

@@ -71,6 +71,7 @@ namespace _01.Code.Enemies
         public bool IsBoss => _isBoss;
         private bool _killRewardGranted;
         private BattleAgent _battleAgent;
+        private EnemyStrengthOutline _strengthOutline;
 
         // ── BT-facing state queries ─────────────────────────────
         public CombatState State => _state;
@@ -118,6 +119,11 @@ namespace _01.Code.Enemies
             InitializeMoodStats();
             SubscribeHealth();
             _battleAgent = GetComponent<BattleAgent>();
+            _strengthOutline = GetComponent<EnemyStrengthOutline>();
+            if (_strengthOutline == null)
+                _strengthOutline = gameObject.AddComponent<EnemyStrengthOutline>();
+            _strengthOutline.Initialize(enemyRenderer);
+            RefreshStrengthOutline();
             ApplyRoleFromData();
             // Combat behaviour is driven by the Unity Behavior graph on the
             // BehaviorGraphAgent component (assign EnemyCombatBT in the prefab).
@@ -199,12 +205,14 @@ namespace _01.Code.Enemies
             data = enemyData;
             ApplyData(data);
             InitializeMoodStats();
+            RefreshStrengthOutline();
             ApplyRoleFromData();
         }
 
         public void ApplyWaveLevel(int level, int healthPerLevel, int attackPerLevel)
         {
             Level = Mathf.Max(1, level);
+            RefreshStrengthOutline();
             var bonusLevel = Level - 1;
             if (bonusLevel <= 0) return;
 
@@ -294,6 +302,8 @@ namespace _01.Code.Enemies
                     break;
                 // Hit: handled by DamageFeedback, keep current sprite
             }
+
+            _strengthOutline?.RefreshSprite();
         }
 
         // ── Node Handling ───────────────────────────────────────
@@ -365,11 +375,23 @@ namespace _01.Code.Enemies
                 IncreaseFear(fearGainOnCombat);
         }
 
-        /// <summary>라인(엣지)에 설치된 건물을 지나갈 때 — 노드 통과 효과와 같은 방식으로 적용(상점/여관).</summary>
+        /// <summary>라인(엣지)에 설치된 건물을 지나갈 때 — 노드 통과 효과와 같은 방식으로 적용(상점/여관/통로 함정).</summary>
         private void HandleEdgeBuildingPassed(Building building)
         {
             if (_isDead || _isReturning || building == null)
                 return;
+
+            // 통로 함정: 노드 칸은 수비대와 자리를 다투지만 통로는 함정 몫이다.
+            // 노드 도착 때와 같은 순서로 함정을 먼저 터뜨리고 통과 효과를 얹는다.
+            if (building is Trap edgeTrap)
+            {
+                TriggerSingleTrap(mover.CurrentNode, edgeTrap);
+                if (!combatant.IsAlive)
+                {
+                    BeginDeath();
+                    return;
+                }
+            }
 
             ApplyBuildingEncounter(building);
         }
@@ -453,8 +475,11 @@ namespace _01.Code.Enemies
             if (trap == null) return;
             if (trap.TryDamage(combatant.Health))
             {
-                node.IncreaseDanger(trap.DangerIncreaseOnTrigger);
+                // 통로 함정은 노드에 속하지 않으므로 위험도를 올릴 노드가 없을 수 있다.
+                node?.IncreaseDanger(trap.DangerIncreaseOnTrigger);
                 IncreaseFear(fearGainOnTrap);
+                // 함정이 한 일을 따로 세지 않으면 정산에서 유닛 피해와 뭉뚱그려져 보이지 않는다.
+                _01.Code.Manager.WaveManager.Current?.RecordTrapDamage(trap.LastTriggerDamage);
             }
         }
 
@@ -669,6 +694,8 @@ namespace _01.Code.Enemies
             if (visualScale > 1f)
                 transform.localScale *= visualScale;
 
+            RefreshStrengthOutline();
+
             // 쓰러질 때 슬로우 시네마틱이 담기도록 사망 디졸브를 길게.
             deadDuration = Mathf.Max(deadDuration, 0.9f);
         }
@@ -683,6 +710,15 @@ namespace _01.Code.Enemies
             combatant?.SetAttackInterval(enemyData.AttackInterval);
             health?.SetMaxHealth(enemyData.MaxHealth, true);
             enemyRenderer?.ConfigureSprites(enemyData.IdleSprite, enemyData.AttackSprite, enemyData.DefeatedSprite);
+            _strengthOutline?.RefreshSprite();
+        }
+
+        private void RefreshStrengthOutline()
+        {
+            if (_strengthOutline == null || data == null)
+                return;
+
+            _strengthOutline.ApplyStrength(data.Grade, Level, _isBoss);
         }
 
         private void EnsureClickTarget(GameEventChannelSO nodeEventChannel)
@@ -697,5 +733,98 @@ namespace _01.Code.Enemies
             clickTarget.Initialize(this);
         }
 
+    }
+
+    /// <summary>적의 기본 등급, 웨이브 레벨, 보스 여부를 색상 테두리로 표현한다.</summary>
+    [DisallowMultipleComponent]
+    public sealed class EnemyStrengthOutline : MonoBehaviour
+    {
+        private const string OutlineObjectName = "StrengthOutline";
+        private const float OutlineScale = 1.1f;
+
+        private SpriteRenderer _source;
+        private SpriteRenderer _outline;
+
+        public int CurrentTier { get; private set; } = 1;
+
+        public void Initialize(EntityRender entityRender)
+        {
+            _source = entityRender != null ? entityRender.SpriteRenderer : null;
+
+            if (_source == null)
+            {
+                enabled = false;
+                return;
+            }
+
+            EnsureOutline();
+            RefreshSprite();
+        }
+
+        public void ApplyStrength(EntityGrade grade, int level, bool isBoss)
+        {
+            CurrentTier = ResolveTier(grade, level, isBoss);
+            if (_outline != null)
+                _outline.color = GetTierColor(CurrentTier);
+        }
+
+        public void RefreshSprite()
+        {
+            if (_source == null || _outline == null)
+                return;
+
+            _outline.sprite = _source.sprite;
+            _outline.sharedMaterial = _source.sharedMaterial;
+            _outline.sortingLayerID = _source.sortingLayerID;
+            _outline.sortingOrder = _source.sortingOrder - 1;
+            _outline.flipX = _source.flipX;
+            _outline.flipY = _source.flipY;
+            _outline.drawMode = _source.drawMode;
+            _outline.size = _source.size;
+            _outline.spriteSortPoint = _source.spriteSortPoint;
+            _outline.maskInteraction = _source.maskInteraction;
+            _outline.enabled = _source.enabled && _source.sprite != null;
+        }
+
+        public static int ResolveTier(EntityGrade grade, int level, bool isBoss)
+        {
+            if (isBoss)
+                return 6;
+
+            var baseTier = Mathf.Clamp((int)grade, 1, 6);
+            var waveBonus = Mathf.Max(0, level - 1) / 4;
+            return Mathf.Clamp(baseTier + waveBonus, 1, 6);
+        }
+
+        public static Color GetTierColor(int tier)
+        {
+            return Mathf.Clamp(tier, 1, 6) switch
+            {
+                1 => new Color32(184, 193, 201, 235), // 회색: 보통
+                2 => new Color32(88, 214, 117, 242),  // 초록: 강화
+                3 => new Color32(70, 158, 255, 245),  // 파랑: 정예
+                4 => new Color32(181, 103, 255, 247), // 보라: 위험
+                5 => new Color32(255, 157, 57, 250),  // 주황: 매우 위험
+                _ => new Color32(255, 54, 78, 255),   // 빨강: 보스/최고 위험
+            };
+        }
+
+        private void EnsureOutline()
+        {
+            var existing = _source.transform.Find(OutlineObjectName);
+            if (existing != null)
+                _outline = existing.GetComponent<SpriteRenderer>();
+
+            if (_outline == null)
+            {
+                var outlineObject = new GameObject(OutlineObjectName);
+                outlineObject.transform.SetParent(_source.transform, false);
+                _outline = outlineObject.AddComponent<SpriteRenderer>();
+            }
+
+            _outline.transform.localPosition = Vector3.zero;
+            _outline.transform.localRotation = Quaternion.identity;
+            _outline.transform.localScale = Vector3.one * OutlineScale;
+        }
     }
 }

@@ -12,7 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 34c4dc0ecf9801d4aa0c5c4a452b0163, type: 3}
   m_Name: StoreBuildingData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Buildings.BuildingDataSO
-  <DisplayName>k__BackingField: Store
+  <Grade>k__BackingField: 1
+  <BoardSprite>k__BackingField: {fileID: 0}
+  <Defense>k__BackingField: 0
+  <EvasionChance>k__BackingField: 0
+  <DisplayName>k__BackingField: "\uC0C1\uC810"
   <Cost>k__BackingField: 15
   <Prefab>k__BackingField: {fileID: 7960331297190676439, guid: fecf1678d4256cf499fc8e392ac5647b, type: 3}
   <Unique>k__BackingField: 0

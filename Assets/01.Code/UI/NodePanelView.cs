@@ -290,8 +290,7 @@ namespace _01.Code.UI
             if (evt == null
                 || evt.Unit == null
                 || evt.Unit is MainUnit
-                || !CanManageUnit(evt.Unit)
-                || !IsManagementAllowed())
+                || !CanSelectUnit(evt.Unit))
                 return;
 
             var node = evt.Node;
@@ -643,6 +642,9 @@ namespace _01.Code.UI
             hiredUnitRoster ??= HiredUnitRoster.Current;
             var canReceiveUnit = _selectedNode.CanAcceptAdditionalUnit
                                  && _selectedNode.TryGetFirstFreeUnitSlot(out _, out _);
+            // 막힌 이유가 정원인지 스폰 방인지 구분해서 보여준다. 둘 다 "정원 초과"로 뜨면
+            // 칸이 비어 있는데 왜 안 되는지 알 길이 없다.
+            var blockedLabel = _selectedNode.IsEnemySpawnNode ? "포탈 방" : "정원 초과";
 
             foreach (var placement in _selectedNode.UnitPlacements)
             {
@@ -676,7 +678,7 @@ namespace _01.Code.UI
                     entry.Initialize(
                         unitData,
                         HandleDeployRequested,
-                        canReceiveUnit ? "배치" : "정원 초과",
+                        canReceiveUnit ? "배치" : blockedLabel,
                         $"휴식 중 · {condition.Summary}\n다음 날 피로 -{Mathf.RoundToInt(hiredUnitRoster.StandbyFatigueRecoveryPerDay)}",
                         canReceiveUnit);
                     _deployEntries.Add(entry);
@@ -698,7 +700,7 @@ namespace _01.Code.UI
                     entry.Initialize(
                         placement.Data,
                         _ => HandleMoveRequested(movableUnit),
-                        canReceiveUnit ? "전입" : "정원 초과",
+                        canReceiveUnit ? "전입" : blockedLabel,
                         $"타 부서 · {sourceNode.Data?.Type}",
                         canReceiveUnit);
                     _deployEntries.Add(entry);
@@ -712,6 +714,13 @@ namespace _01.Code.UI
         {
             return _unitManagementSystem != null
                    && _unitManagementSystem.CanIssueCommand(unit, out _);
+        }
+
+        /// <summary>패널을 열 수 있는지. 명령 쿨다운 중이어도 열려야 남은 시간을 볼 수 있다.</summary>
+        private bool CanSelectUnit(Unit unit)
+        {
+            return _unitManagementSystem != null
+                   && _unitManagementSystem.CanSelectUnit(unit, out _);
         }
 
         private void SelectManagedUnit(Unit unit)
@@ -741,12 +750,18 @@ namespace _01.Code.UI
 
             var entry = Instantiate(deployEntryPrefab, unitContentRoot);
             var isCurrent = unit.CurrentCommand == command;
+            // 웨이브 중에도 명령이 통하므로, 왜 지금 못 바꾸는지가 버튼에 보여야 한다.
+            var canIssue = _unitManagementSystem != null
+                           && _unitManagementSystem.CanIssueCommand(unit, out _);
+            var actionLabel = isCurrent
+                ? "적용중"
+                : canIssue ? "명령" : $"{unit.CommandCooldownRemaining:F1}초";
             entry.Initialize(
                 unit.Data,
                 _ => HandleCommandRequested(command),
-                isCurrent ? "적용중" : "명령",
+                actionLabel,
                 $"{UnitCommandUtility.GetLabel(command)} · {UnitCommandUtility.GetDescription(command)}",
-                true);
+                canIssue && !isCurrent);
             _deployEntries.Add(entry);
         }
 
@@ -825,9 +840,20 @@ namespace _01.Code.UI
         {
             if (_pendingUnitNode != null
                 || _selectedNode == null
-                || !_selectedNode.CanAcceptAdditionalUnit
                 || unitData == null
                 || !IsManagementAllowed())
+                return;
+
+            // 포탈이 선 방은 스폰 지점이다. 여기서 막아 세우면 적이 통로를 지나지 않아
+            // 통로 함정이 통째로 죽는다. 조용히 무시하면 왜 안 되는지 알 길이 없어 이유를 띄운다.
+            if (_selectedNode.IsEnemySpawnNode)
+            {
+                SetManagementTitle("포탈이 선 방에는 배치할 수 없습니다");
+                RefreshRosterEntries();
+                return;
+            }
+
+            if (!_selectedNode.CanAcceptAdditionalUnit)
                 return;
 
             if (!_selectedNode.TryGetFirstFreeUnitSlot(out _, out _))
@@ -1563,6 +1589,11 @@ namespace _01.Code.UI
 
                 // 입구는 플레이어가 서 있는 자리다. 여기에 포탈을 두면 적이 코앞에서 쏟아진다.
                 if (_selectedNode.Data != null && _selectedNode.Data.Type == DungeonNodeType.Entrance)
+                    return false;
+
+                // 포탈이 서는 순간 그 방은 스폰 지점이 되어 수비대를 둘 수 없다.
+                // 이미 서 있는 방에 세우게 두면 쫓아낼 곳부터 정해야 하니 아예 막는다.
+                if (_selectedNode.AssignedUnitCount > 0)
                     return false;
             }
 

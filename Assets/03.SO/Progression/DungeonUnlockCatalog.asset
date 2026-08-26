@@ -134,3 +134,27 @@ MonoBehaviour:
     unlockDay: 18
     unlockHint: "18\uC77C\uCC28 \xB7 \uC120\uBD09\uB300\uAC00 \uBC29\uD328\uB85C
       \uB545\uC744 \uAC00\uB978\uB2E4"
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: 53e387ff3992aec45bd53e95a365ce02, type: 2}
+    startsUnlocked: 0
+    unlockDay: 6
+    unlockHint: "6\uC77C\uCC28 \xB7 \uAE38\uBAA9\uC5D0 \uB9C8\uB984\uC1E0\uB97C \uBFCC\uB9AC\uB294
+      \uBC95\uC744 \uBC30\uC6B4\uB2E4"
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: c2d5ab8e4d8559242a6ab1fbaa9db62f, type: 2}
+    startsUnlocked: 0
+    unlockDay: 12
+    unlockHint: "12\uC77C\uCC28 \xB7 \uAE38\uBAA9\uC5D0 \uADF8\uBB3C\uC744 \uC228\uACA8
+      \uB450\uB294 \uC694\uB839\uC744 \uC775\uD78C\uB2E4"
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: 069dea4c2a349ed42a5e91ddd60b607f, type: 2}
+    startsUnlocked: 0
+    unlockDay: 13
+    unlockHint: "13\uC77C\uCC28 \xB7 \uAC11\uC637\uC744 \uBD80\uC218\uB294 \uC7A5\uCE58\uB97C
+      \uB4E4\uC5EC\uC628\uB2E4"
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: be8f9003124be0049832853e0de877af, type: 2}
+    startsUnlocked: 0
+    unlockDay: 18
+    unlockHint: "18\uC77C\uCC28 \xB7 \uCC98\uD615\uC6A9 \uD1B1\uB0A0\uC744 \uD1B5\uB85C
+      \uCC9C\uC7A5\uC5D0 \uB9E4\uB2E8\uB2E4"
