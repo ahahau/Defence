@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using _01.Code.Manager;
 using _01.Code.Units;
 using UnityEngine;
 
@@ -120,11 +121,15 @@ namespace _01.Code.Progression
         [SerializeField, Range(0, 100), Tooltip("판이 시작될 때의 장악도")]
         private int startingConquest;
 
+        [SerializeField, Tooltip("이 마을에서 나오는 습격 파티. 장악할수록 이 파티가 덜 온다.")]
+        private AdventurerPartySO originParty;
+
         public string DisplayName => displayName;
         public string Purpose => purpose;
         public int Reward => reward;
         public int Difficulty => difficulty;
         public int StartingConquest => startingConquest;
+        public AdventurerPartySO OriginParty => originParty;
 
         public ExpeditionVillageEntry() { }
 

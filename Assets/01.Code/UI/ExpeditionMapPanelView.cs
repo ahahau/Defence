@@ -32,6 +32,12 @@ namespace _01.Code.UI
         [SerializeField] private Button mapButton;
         [SerializeField] private Button closeButton;
         [SerializeField] private Button departButton;
+        [SerializeField, Tooltip("마을 버튼이 채워질 스크롤 목록의 Content. 비어 있으면 아래 고정 버튼 배열을 그대로 쓴다.")]
+        private RectTransform villageContentRoot;
+
+        [SerializeField, Tooltip("마을 한 칸의 원본. 카탈로그의 마을 수만큼 복제된다.")]
+        private Button villageButtonTemplate;
+
         [SerializeField] private Button[] villageButtons = System.Array.Empty<Button>();
         [SerializeField] private Button[] unitButtons = System.Array.Empty<Button>();
         [SerializeField] private TMP_Text titleText;
@@ -64,6 +70,13 @@ namespace _01.Code.UI
             Wire();
         }
 
+        /// <summary>마을 칸을 담을 스크롤 목록과 그 원본 버튼을 연결한다.</summary>
+        public void ConfigureVillageList(RectTransform contentRoot, Button template)
+        {
+            villageContentRoot = contentRoot;
+            villageButtonTemplate = template;
+        }
+
         public void ConfigureResultModal(GameObject panel, TMP_Text title, TMP_Text body, Button close)
         {
             resultPanel = panel;
@@ -79,8 +92,34 @@ namespace _01.Code.UI
         private void Awake()
         {
             villages = BuildVillagesFromCatalog();
+            BuildVillageButtons();
             SetPanelActive(panelRoot, false);
             SetPanelActive(resultPanel, false);
+        }
+
+        /// <summary>
+        /// 마을 칸을 카탈로그에 있는 수만큼 만들어 스크롤 목록에 채운다.
+        /// 버튼을 프리팹에 고정으로 박아 두면 마을을 하나 늘릴 때마다 프리팹을 손봐야 한다.
+        /// </summary>
+        private void BuildVillageButtons()
+        {
+            if (villageButtonTemplate == null || villageContentRoot == null)
+                return;
+
+            villageButtonTemplate.gameObject.SetActive(false);
+
+            var built = new List<Button>(villages.Length);
+            for (var i = 0; i < villages.Length; i++)
+            {
+                var button = Instantiate(villageButtonTemplate, villageContentRoot);
+                button.name = $"Village{i}";
+                button.gameObject.SetActive(true);
+                built.Add(button);
+            }
+
+            villageButtons = built.ToArray();
+            // 목록 높이는 만들 때 한 번만 맞춘다. 새로고침마다 부르면 스크롤이 위로 튕긴다.
+            ScrollViewContentSizer.ResizeToGridItemCount(villageContentRoot, villageButtons.Length);
         }
 
         /// <summary>카탈로그의 정의를 런타임 상태로 옮긴다. 장악도만 판마다 새로 시작한다.</summary>
@@ -94,6 +133,7 @@ namespace _01.Code.UI
 
             var source = villageCatalog.Villages;
             var result = new Village[source.Count];
+            VillageConquestState.Reset();
             for (var i = 0; i < source.Count; i++)
             {
                 var entry = source[i];
@@ -105,6 +145,9 @@ namespace _01.Code.UI
                     Difficulty = entry.Difficulty,
                     Conquest = entry.StartingConquest
                 };
+
+                // 웨이브 쪽이 읽을 수 있게 시작 장악도를 등록해 둔다.
+                VillageConquestState.Register(entry.OriginParty, entry.StartingConquest);
             }
 
             return result;
@@ -229,6 +272,26 @@ namespace _01.Code.UI
 
         private static int CurrentDay => DayManager.Current != null ? DayManager.Current.CurrentDay : 0;
 
+        /// <summary>
+        /// 장악이 방어에 무슨 도움이 되는지. 금화만 보이면 원정이 그냥 돈벌이 버튼이 된다.
+        /// </summary>
+        private static string BuildConquestEffectText(Village village)
+        {
+            var wave = WaveManager.Current;
+            if (wave == null)
+                return string.Empty;
+
+            var nextDay = DayManager.Current != null ? DayManager.Current.NextWaveDay : 0;
+            var incoming = wave.GetPreviewEnemyCount(nextDay);
+            if (incoming <= 0)
+                return string.Empty;
+
+            var line = $"\n다음 침입 {incoming}명";
+            return village.Conquest > 0
+                ? line + $"  ·  이 마을 습격대는 {village.Conquest}% 확률로 오지 않음"
+                : line;
+        }
+
         private void Depart()
         {
             if (hasActiveExpedition || selectedUnitSlots.Count == 0 || HiredUnitRoster.Current == null) return;
@@ -280,6 +343,8 @@ namespace _01.Code.UI
                 var gain = villageCatalog != null ? villageCatalog.ConquestPerSuccess : 25;
                 village.Conquest = Mathf.Min(100, village.Conquest + gain);
                 villages[selectedVillage] = village;
+                // 장악한 만큼 이 마을에서 오는 습격이 줄어든다. 웨이브가 이 값을 읽는다.
+                VillageConquestState.SetConquest(entry?.OriginParty, village.Conquest);
             }
             if (costEventChannel != null)
                 costEventChannel.RaiseEvent(new GoldEarnedEvent(reward, GoldChangeSource.General));
@@ -326,12 +391,19 @@ namespace _01.Code.UI
             if (detailText != null)
                 detailText.text = $"{village.Name}\n{village.Purpose}\n\n난이도 {village.Difficulty}  ·  장악도 {village.Conquest}%\n"
                                   + $"편성 전력 {power}  ·  성공 확률 {odds}%\n"
-                                  + $"성공 {payout}G  ·  실패 {consolation}G\n\n"
-                                  + $"대기 유닛 최대 {MaxPartySize}명을 편성하세요. 지친 부하는 전력이 깎입니다.";
+                                  + $"성공 {payout}G  ·  실패 {consolation}G\n"
+                                  + BuildConquestEffectText(village)
+                                  + $"\n대기 유닛 최대 {MaxPartySize}명을 편성하세요. 지친 부하는 전력이 깎입니다.";
             var selectedNames = new List<string>();
             if (roster != null) foreach (var slot in selectedUnitSlots) if (slot >= 0 && slot < roster.AvailableUnits.Count) selectedNames.Add(roster.AvailableUnits[slot].Name);
             if (rosterText != null) rosterText.text = "편성: " + (selectedNames.Count == 0 ? "없음" : string.Join(", ", selectedNames));
-            for (var i = 0; i < villageButtons.Length && i < villages.Length; i++) SetButtonLabel(villageButtons[i], villages[i].Name);
+            for (var i = 0; i < villageButtons.Length && i < villages.Length; i++)
+            {
+                // 목록에서 바로 비교할 수 있게 난이도와 장악도를 칸에 같이 적는다.
+                var listed = villages[i];
+                var marker = i == selectedVillage ? "▶ " : string.Empty;
+                SetButtonLabel(villageButtons[i], $"{marker}{listed.Name}\n<size=80%>난이도 {listed.Difficulty}  ·  장악 {listed.Conquest}%</size>");
+            }
             for (var i = 0; i < unitButtons.Length; i++)
             {
                 var available = roster != null && i < roster.AvailableUnits.Count ? roster.AvailableUnits[i] : null;

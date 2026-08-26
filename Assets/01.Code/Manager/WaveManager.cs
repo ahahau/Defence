@@ -7,6 +7,7 @@ using _01.Code.Core;
 using _01.Code.Enemies;
 using _01.Code.Events;
 using _01.Code.MapCreateSystem;
+using _01.Code.Progression;
 using _01.Code.UI;
 using _01.Code.Units;
 using UnityEngine;
@@ -39,6 +40,11 @@ namespace _01.Code.Manager
         [SerializeField, Min(0f), Tooltip("파티원이 서로 겹치지 않게 흩어지는 대형 반경")]
         private float formationSpread = 0.35f;
         [SerializeField, Min(0)] private int treasuryGoldLoss = 10;
+        [Header("Village Conquest")]
+        [SerializeField, Range(0f, 1f),
+         Tooltip("마을을 모두 장악했을 때 줄어드는 침입자 비율. 0.4면 습격이 40%까지 줄어든다.")]
+        private float maxWaveReductionFromConquest = 0.4f;
+
         [Header("Enemy Level Scaling")]
         [SerializeField, Min(0)] private int enemyHealthPerLevel = 2;
         [SerializeField, Min(0)] private int enemyAttackPerLevel = 1;
@@ -68,7 +74,8 @@ namespace _01.Code.Manager
         public int GetPreviewEnemyCount(int day)
         {
             var entry = waveConfig != null ? waveConfig.GetWaveForDay(day) : null;
-            return entry != null ? Mathf.Max(0, entry.enemyCount) : 0;
+            // 예고도 장악 보정을 거친 수를 보여야 실제로 오는 수와 어긋나지 않는다.
+            return entry != null ? GetConquestAdjustedEnemyCount(entry.enemyCount) : 0;
         }
 
         public bool IsBossDay(int day) => waveConfig != null && waveConfig.IsBossDay(day);
@@ -183,9 +190,24 @@ namespace _01.Code.Manager
             _waveCoroutine = StartCoroutine(RunWave(entry));
         }
 
+        /// <summary>
+        /// 장악한 마을은 사람을 덜 보낸다. 마릿수를 줄여야 실제로 방어가 편해진다 —
+        /// 파티 등장만 막으면 구성만 바뀌고 쳐들어오는 수는 그대로다.
+        /// </summary>
+        public int GetConquestAdjustedEnemyCount(int baseEnemyCount)
+        {
+            var normalized = Mathf.Max(0, baseEnemyCount);
+            if (normalized <= 0 || maxWaveReductionFromConquest <= 0f)
+                return normalized;
+
+            var reduction = VillageConquestState.AverageConquestRatio * maxWaveReductionFromConquest;
+            // 다 장악해도 습격이 아예 사라지지는 않는다. 최소 한 명은 온다.
+            return Mathf.Max(1, Mathf.RoundToInt(normalized * (1f - reduction)));
+        }
+
         private IEnumerator RunWave(WaveConfigSO.WaveEntry entry)
         {
-            var adjustedEnemyCount = Mathf.Max(0, entry.enemyCount);
+            var adjustedEnemyCount = GetConquestAdjustedEnemyCount(entry.enemyCount);
             _remainingSpawns = adjustedEnemyCount;
             ResetWaveResults(adjustedEnemyCount);
             _currentClearGoldReward = NestCohesionSystem.ScaleGoldReward(entry.clearGoldReward);
@@ -418,8 +440,14 @@ namespace _01.Code.Manager
             var validParties = new List<AdventurerPartySO>();
             foreach (var party in parties)
             {
-                if (party != null && party.Members != null && party.Members.Length > 0)
-                    validParties.Add(party);
+                if (party == null || party.Members == null || party.Members.Length == 0)
+                    continue;
+
+                // 장악한 마을에서 오는 파티는 그만큼 발길을 끊는다. 완전히 장악하면 더 이상 오지 않는다.
+                if (Random.value < VillageConquestState.GetSuppression(party))
+                    continue;
+
+                validParties.Add(party);
             }
 
             if (validParties.Count == 0)

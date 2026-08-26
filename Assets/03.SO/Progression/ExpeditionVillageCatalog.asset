@@ -18,18 +18,21 @@ MonoBehaviour:
     reward: 28
     difficulty: 4
     startingConquest: 0
+    originParty: {fileID: 11400000, guid: aeae01eada03a614e989083d8a29c9de, type: 2}
   - displayName: "\uBD81\uBB38 \uAC10\uC2DC\uCD08\uC18C"
     purpose: "\uC815\uCC30\uB9DD \uAD50\uB780 \xB7 \uB2E4\uC74C \uCE68\uC785 \uC815\uBCF4
       \uD655\uBCF4"
     reward: 40
     difficulty: 8
     startingConquest: 0
+    originParty: {fileID: 11400000, guid: caf0d2aa559304349aa6d4321cf7a200, type: 2}
   - displayName: "\uBD89\uC740 \uC6A9\uBCD1\uB2E8"
     purpose: "\uC6A9\uBCD1\uB2E8 \uD3EC\uC12D \xB7 \uACC4\uC57D\uC11C \uC9C4\uCC99
       \uD655\uBCF4"
     reward: 70
     difficulty: 14
     startingConquest: 0
+    originParty: {fileID: 11400000, guid: 7c9fd01dedb1d0a45a0915fc0ffa8d20, type: 2}
   costPerPower: 10
   fatiguePowerPenalty: 0.6
   maxPartySize: 3

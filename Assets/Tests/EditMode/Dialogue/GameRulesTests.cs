@@ -509,5 +509,100 @@ namespace Tests.EditMode.Rules
             Assert.That(lastDay, Is.EqualTo(290), "20일차에는 성장률만큼 올라야 후반에도 의미가 남습니다.");
             Assert.That(failed, Is.EqualTo(33), "실패하면 일부만 회수합니다.");
         }
+
+        // ── 장악도 ────────────────────────────────────────────────────
+        // 장악은 금화가 아니라 방어로 돌아와야 원정이 돈벌이 버튼이 되지 않는다.
+
+        private static Type ConquestState => Resolve("_01.Code.Progression.VillageConquestState");
+
+        private static void ConquestCall(string method, params object[] args)
+        {
+            var m = ConquestState.GetMethod(method, BindingFlags.Static | BindingFlags.Public);
+            Assert.That(m, Is.Not.Null, $"VillageConquestState.{method}를 찾지 못했습니다.");
+            m.Invoke(null, args);
+        }
+
+        private static float ConquestSuppression(object party)
+        {
+            var m = ConquestState.GetMethod("GetSuppression", BindingFlags.Static | BindingFlags.Public);
+            return (float)m.Invoke(null, new[] { party });
+        }
+
+        private static float AverageConquestRatio =>
+            (float)ConquestState.GetProperty("AverageConquestRatio", BindingFlags.Static | BindingFlags.Public)
+                .GetValue(null);
+
+        [Test]
+        public void Conquest_AConqueredVillageStopsSendingItsRaiders()
+        {
+            ConquestCall("Reset");
+            try
+            {
+                var patrol = NewAsset("_01.Code.Manager.AdventurerPartySO");
+                var hunters = NewAsset("_01.Code.Manager.AdventurerPartySO");
+                ConquestCall("Register", patrol, 0);
+
+                Assert.That(ConquestSuppression(patrol), Is.EqualTo(0f), "장악 전에는 그대로 쳐들어옵니다.");
+
+                ConquestCall("SetConquest", patrol, 100);
+                Assert.That(ConquestSuppression(patrol), Is.EqualTo(1f), "완전히 장악하면 더 이상 오지 않습니다.");
+                Assert.That(ConquestSuppression(hunters), Is.EqualTo(0f),
+                    "등록되지 않은 파티는 장악과 무관하게 계속 옵니다.");
+            }
+            finally
+            {
+                ConquestCall("Reset");
+            }
+        }
+
+        [Test]
+        public void Conquest_AveragesAcrossEveryVillageNotJustTheConqueredOne()
+        {
+            ConquestCall("Reset");
+            try
+            {
+                var first = NewAsset("_01.Code.Manager.AdventurerPartySO");
+                ConquestCall("Register", first, 0);
+                ConquestCall("Register", NewAsset("_01.Code.Manager.AdventurerPartySO"), 0);
+
+                ConquestCall("SetConquest", first, 100);
+
+                Assert.That(AverageConquestRatio, Is.EqualTo(0.5f).Within(0.001f),
+                    "마을 하나를 다 장악해도 전체로는 절반입니다.");
+            }
+            finally
+            {
+                ConquestCall("Reset");
+            }
+        }
+
+        [Test]
+        public void Conquest_ShrinksTheWaveButNeverToNothing()
+        {
+            ConquestCall("Reset");
+            var host = new GameObject("WaveManagerTestHost");
+            try
+            {
+                var wave = host.AddComponent(Resolve("_01.Code.Manager.WaveManager"));
+                SetPrivate(wave, "maxWaveReductionFromConquest", 0.4f);
+
+                var party = NewAsset("_01.Code.Manager.AdventurerPartySO");
+                ConquestCall("Register", party, 0);
+
+                Assert.That(Call(wave, "GetConquestAdjustedEnemyCount", 20), Is.EqualTo(20),
+                    "장악하지 않았으면 웨이브가 그대로입니다.");
+
+                ConquestCall("SetConquest", party, 100);
+                Assert.That(Call(wave, "GetConquestAdjustedEnemyCount", 20), Is.EqualTo(12),
+                    "전부 장악하면 최대 감소율만큼 줄어듭니다.");
+                Assert.That(Call(wave, "GetConquestAdjustedEnemyCount", 1), Is.EqualTo(1),
+                    "아무리 장악해도 습격이 0명이 되지는 않습니다.");
+            }
+            finally
+            {
+                ConquestCall("Reset");
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
     }
 }
