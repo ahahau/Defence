@@ -16,7 +16,7 @@ MonoBehaviour:
   <BoardSprite>k__BackingField: {fileID: -855298285791758126, guid: cb57f21d1c6c2b14f87fb1bae1e53de2, type: 3}
   <Defense>k__BackingField: 0
   <EvasionChance>k__BackingField: 0
-  <DisplayName>k__BackingField: "\uC555\uC1C4 \uD2B8\uB7A9"
+  <DisplayName>k__BackingField: "\uC555\uC1C4 \uD568\uC815"
   <Cost>k__BackingField: 30
   <Prefab>k__BackingField: {fileID: 1428848070512300419, guid: bae97138ace24616ad006c8abca640af, type: 3}
   <Unique>k__BackingField: 0

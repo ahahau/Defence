@@ -17,7 +17,8 @@ namespace _01.Code.UI
             return category switch
             {
                 InstallCategory.Building => "빌딩 설치",
-                InstallCategory.Trap => "트랩 설치",
+                InstallCategory.Unit => "유닛 배치",
+                InstallCategory.Trap => "함정 설치",
                 InstallCategory.Decoration => "장식품 설치",
                 _ => "설치"
             };
@@ -29,7 +30,7 @@ namespace _01.Code.UI
             {
                 InstallCategory.Building => "빌딩\n건물 목록 보기",
                 InstallCategory.Unit => "유닛\n보유 유닛 배치",
-                InstallCategory.Trap => "트랩\n피해/상태이상 설치",
+                InstallCategory.Trap => "함정\n피해/상태이상 설치",
                 InstallCategory.Decoration => "장식품\n꾸미기 설치",
                 _ => "설치"
             };

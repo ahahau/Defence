@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Buildings.BuildingDataSO
   <Grade>k__BackingField: 1
   <BoardSprite>k__BackingField: {fileID: -855298285791758126, guid: cb57f21d1c6c2b14f87fb1bae1e53de2, type: 3}
-  <DisplayName>k__BackingField: 가시 트랩
+  <DisplayName>k__BackingField: 가시 함정
   <Cost>k__BackingField: 10
   <Prefab>k__BackingField: {fileID: 1428848070512300419, guid: ee50f1807c5940f28987c12adb66c065, type: 3}
   <Unique>k__BackingField: 0

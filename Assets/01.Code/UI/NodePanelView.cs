@@ -70,6 +70,7 @@ namespace _01.Code.UI
         private readonly Dictionary<Button, BuildingDataSO> _buildingButtonData = new();
         private readonly List<RosterDeployEntryView> _deployEntries = new();
         private readonly List<Button> _categoryCards = new();
+        private readonly Dictionary<Button, InstallCategory> _categoryCardData = new();
         private readonly List<GameObject> _categorySelectors = new();
         private readonly InstallableBuildingCatalog _buildingCatalog = new();
         private readonly TutorialHighlighter _tutorialHighlighter = new();
@@ -86,11 +87,11 @@ namespace _01.Code.UI
         {
             get
             {
-                return ResolveCategoryCardRect("빌딩");
+                return ResolveCategoryCardRect(InstallCategory.Building);
             }
         }
 
-        public RectTransform UnitCategoryCardRect => ResolveCategoryCardRect("유닛");
+        public RectTransform UnitCategoryCardRect => ResolveCategoryCardRect(InstallCategory.Unit);
 
         public RectTransform PortalInstallCardRect
         {
@@ -257,14 +258,8 @@ namespace _01.Code.UI
             _selectedNode.TrapGrid?.ClearCellSelection();
             _selectedNode.TrapGrid?.SetFocusedGridVisible(true);
             _selectedManagedUnit = null;
-            if (evt.Node.AssignedBuilding is Treasury treasury)
-            {
-                HideInstallPanels();
-                panelRoot?.SetActive(false);
-                TreasuryPanelView.ShowFor(treasury, GetComponentInParent<Canvas>(true));
-                return;
-            }
-
+            // 금고는 칸 건물이라 한 노드에 여럿 선다. 어느 금고인지는 노드가 아니라
+            // 칸을 눌러서 정한다 — HandleNodeGridCellSelected 참고.
             TreasuryPanelView.HideCurrent();
             SetTitle(string.Format(emptyNodeTitleFormat, evt.Node.Data.Type));
             HideInstallPanels();
@@ -586,10 +581,11 @@ namespace _01.Code.UI
             }
 
             InstallCardPresenter.ApplyCardSprite(entry, ResolveCategorySprite(category));
-            NestHudStyle.ApplyManagementCard(entry.gameObject, InstallCardPresenter.GetCategoryAccent(category));
+            DungeonHudStyle.ApplyManagementCard(entry.gameObject, InstallCardPresenter.GetCategoryAccent(category));
             entry.onClick.RemoveAllListeners();
             entry.onClick.AddListener(() => ShowInstallCategory(category));
             _categoryCards.Add(entry);
+            _categoryCardData[entry] = category;
             RefreshTutorialHighlight();
         }
 
@@ -602,6 +598,7 @@ namespace _01.Code.UI
             }
 
             _categoryCards.Clear();
+            _categoryCardData.Clear();
             HideBuildingTemplate();
             ScrollViewContentSizer.ResizeToGridItemCount(buildingContentRoot, 0);
         }
@@ -893,8 +890,23 @@ namespace _01.Code.UI
 
         private void HandleNodeGridCellSelected(NodeGridCellSelectedEvent evt)
         {
-            if (evt == null
-                || _pendingUnitNode == null
+            if (evt == null)
+                return;
+
+            // 배치 중이 아니라면 칸을 누른 건 거기 선 것을 보겠다는 뜻이다.
+            // 금고는 한 노드에 여럿 설 수 있어서 노드 단위로는 어느 금고인지 정할 수 없다.
+            if (_pendingUnitNode == null
+                && evt.Node != null
+                && evt.Node.TrapGrid != null
+                && evt.Node.TrapGrid.BuildingAt(evt.Column, evt.Row) is Treasury cellTreasury)
+            {
+                HideInstallPanels();
+                panelRoot?.SetActive(false);
+                TreasuryPanelView.ShowFor(cellTreasury, GetComponentInParent<Canvas>(true));
+                return;
+            }
+
+            if (_pendingUnitNode == null
                 || _pendingUnitData == null
                 || evt.Node != _pendingUnitNode)
                 return;
@@ -1072,7 +1084,7 @@ namespace _01.Code.UI
                 entry.name = $"{buildingData.name}InstallCard";
                 InstallCardPresenter.SetButtonLabel(entry, buildingData);
             InstallCardPresenter.ApplyCardSprite(entry, InstallCardPresenter.ResolvePreviewSprite(buildingData));
-            NestHudStyle.ApplyManagementCard(entry.gameObject, InstallCardPresenter.GetCategoryAccent(category));
+            DungeonHudStyle.ApplyManagementCard(entry.gameObject, InstallCardPresenter.GetCategoryAccent(category));
                 entry.onClick.RemoveAllListeners();
                 entry.onClick.AddListener(() => RequestBuildingInstall(buildingData));
                 buildingInstallButtons.Add(entry);
@@ -1761,19 +1773,13 @@ namespace _01.Code.UI
                     return button;
             }
 
-            foreach (var card in _categoryCards)
+            var cardCategory = targetCategory ?? InstallCategory.Building;
+            if (cardCategory == InstallCategory.Trap
+                || cardCategory == InstallCategory.Unit
+                || cardCategory == InstallCategory.Building)
             {
-                if (card == null)
-                    continue;
-
-                var label = InstallCardPresenter.GetButtonLabel(card);
-                if (targetCategory == InstallCategory.Trap && label.Contains("트랩"))
-                    return card;
-
-                if (targetCategory == InstallCategory.Unit && label.Contains("유닛"))
-                    return card;
-
-                if ((targetCategory == InstallCategory.Building || !targetCategory.HasValue) && label.Contains("빌딩"))
+                var card = FindCategoryCard(cardCategory);
+                if (card != null)
                     return card;
             }
 
@@ -1795,32 +1801,34 @@ namespace _01.Code.UI
             if (_deployEntries.Count > 0 && _deployEntries[0] != null)
                 return _deployEntries[0].GetComponentInChildren<Button>(true);
 
-            foreach (var card in _categoryCards)
-            {
-                if (card == null)
-                    continue;
-
-                var label = InstallCardPresenter.GetButtonLabel(card);
-                if (label.Contains("유닛"))
-                    return card;
-            }
+            var unitCard = FindCategoryCard(InstallCategory.Unit);
+            if (unitCard != null)
+                return unitCard;
 
             return installButton;
         }
 
-        private RectTransform ResolveCategoryCardRect(string labelText)
+        /// <summary>
+        /// 카테고리 카드를 라벨 글자가 아니라 카테고리로 찾는다.
+        /// 글자로 훑으면 문구를 다듬는 순간 튜토리얼 스포트라이트가 조용히 빗나간다.
+        /// </summary>
+        private Button FindCategoryCard(InstallCategory category)
         {
             foreach (var card in _categoryCards)
             {
-                if (card == null)
-                    continue;
-
-                var label = InstallCardPresenter.GetButtonLabel(card);
-                if (label.Contains(labelText))
-                    return card.transform as RectTransform;
+                if (card != null
+                    && _categoryCardData.TryGetValue(card, out var cardCategory)
+                    && cardCategory == category)
+                    return card;
             }
 
             return null;
+        }
+
+        private RectTransform ResolveCategoryCardRect(InstallCategory category)
+        {
+            var matched = FindCategoryCard(category);
+            return matched != null ? matched.transform as RectTransform : null;
         }
 
 
