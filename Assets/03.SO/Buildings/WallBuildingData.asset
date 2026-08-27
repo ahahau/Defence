@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 34c4dc0ecf9801d4aa0c5c4a452b0163, type: 3}
   m_Name: WallBuildingData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Buildings.BuildingDataSO
-  <DisplayName>k__BackingField: Wall
+  <DisplayName>k__BackingField: 벽
   <Cost>k__BackingField: 8
   <Prefab>k__BackingField: {fileID: 7960331297190676439, guid: 653f6d06171263b4a8c3b0b0c2e5c649, type: 3}
   <Unique>k__BackingField: 0
