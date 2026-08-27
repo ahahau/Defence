@@ -21,6 +21,9 @@ namespace _01.Code.Manager
         [Header("Recruitment")]
         [SerializeField, Min(0)] private int candidatesPerDay = 2;
         [SerializeField, Min(1)] private int maxCandidatesPerUnit = 2;
+
+        [SerializeField, Min(0), Tooltip("지원자가 명단에 남아 있는 날 수. 0이면 떠나지 않는다.")]
+        private int applicantLifetimeDays = 3;
         [SerializeField] private UnitTrait[] recruitableTraits =
         {
             UnitTrait.Aggressive,
@@ -46,11 +49,51 @@ namespace _01.Code.Manager
         private readonly List<UnitDataSO> _unlockedUnits = new();
         private readonly List<BuildingDataSO> _unlockedBuildings = new();
         private readonly Dictionary<UnitDataSO, int> _ownedUnits = new();
+
+        /// <summary>
+        /// 명단에 줄 서 있는 지원자 한 명. 특성·성격을 고용 전에 확정해 두어야
+        /// "누구를 뽑을까"가 뽑기가 아니라 결정이 된다.
+        /// </summary>
+        private struct Applicant
+        {
+            public UnitConditionState Condition;
+
+            /// <summary>이 날짜가 지나면 떠난다. 무한정 기다려 주면 미루는 데 대가가 없다.</summary>
+            public int DaysLeft;
+        }
+
+        private readonly Dictionary<UnitDataSO, List<Applicant>> _applicantsByUnit = new();
         private readonly Dictionary<UnitDataSO, int> _deployedUnits = new();
         private readonly Dictionary<BuildingDataSO, int> _ownedBuildings = new();
         private bool _hasInitializedUnlocks;
         public IReadOnlyList<UnitDataSO> AvailableUnits => _availableUnits;
         public IReadOnlyList<UnitDataSO> UnitCatalog => unitCatalog;
+
+        /// <summary>
+        /// 이 판에서 열릴 수 있는 유닛 수. 해금 카탈로그가 정답이며 unitCatalog는 표시용 목록이라
+        /// 그쪽으로 세면 "1/3"처럼 실제보다 적은 총계가 나온다.
+        /// </summary>
+        public int UnlockableUnitCount => CountUnlockable(true);
+
+        public int UnlockableBuildingCount => CountUnlockable(false);
+
+        private int CountUnlockable(bool countUnits)
+        {
+            if (unlockCatalog == null)
+                return countUnits ? unitCatalog?.Length ?? 0 : _unlockedBuildings.Count;
+
+            var total = 0;
+            foreach (var entry in unlockCatalog.Entries)
+            {
+                if (entry == null)
+                    continue;
+
+                if (countUnits ? entry.Unit != null : entry.Building != null)
+                    total++;
+            }
+
+            return total;
+        }
         public DungeonUnlockCatalogSO UnlockCatalog => unlockCatalog;
         public IReadOnlyList<UnitDataSO> UnlockedUnits => _unlockedUnits;
         public IReadOnlyList<BuildingDataSO> UnlockedBuildings => _unlockedBuildings;
@@ -118,15 +161,6 @@ namespace _01.Code.Manager
             RaiseUnlockChanged();
         }
 
-        public void ApplyMedicalSupportToAvailableUnits(float fatigueRecovery, float healthRecoveryRatio)
-        {
-            EnsureAvailableConditionAlignment();
-            for (var i = 0; i < _availableConditions.Count; i++)
-                _availableConditions[i] = _availableConditions[i].Rest(fatigueRecovery, healthRecoveryRatio);
-
-            costEventChannel?.RaiseEvent(new RosterChangedEvent(_availableUnits));
-        }
-
         public int GetCandidateCount(UnitDataSO unit) => GetOwnedUnitCount(unit);
 
         public int GetAvailableUnitCount(UnitDataSO unit)
@@ -186,8 +220,11 @@ namespace _01.Code.Manager
             if (evt.Unit == null || candidateCount <= 0)
                 return;
 
+            // 특성·성격은 지원자가 명단에 오를 때 이미 정해져 있다.
+            // 여기서 새로 굴리면 플레이어가 보고 고른 사람과 실제로 온 사람이 달라진다.
+            var hired = TakeNextApplicant(evt.Unit);
             _ownedUnits[evt.Unit] = candidateCount - 1;
-            AddAvailableUnit(evt.Unit, CreateFreshHiredUnitCondition(), false);
+            AddAvailableUnit(evt.Unit, hired, false);
             costEventChannel.RaiseEvent(new RosterChangedEvent(_availableUnits));
             RaiseUnlockChanged();
         }
@@ -209,7 +246,13 @@ namespace _01.Code.Manager
 
             RestAvailableUnits();
 
-            GenerateRecruitmentCandidates(candidatesPerDay);
+            // 새 지원자를 받기 전에 기한이 다한 사람부터 내보낸다.
+            ExpireApplicants();
+
+            // 민심이 나쁘면 이 던전에서 일하겠다는 사람도 줄어든다.
+            var morale = MoralePolicyManager.Current;
+            var incoming = morale != null ? morale.AdjustRecruitCount(candidatesPerDay) : candidatesPerDay;
+            GenerateRecruitmentCandidates(incoming);
             UnlockScheduledEntries(evt.Day);
 
             RaiseUnlockChanged();
@@ -409,6 +452,98 @@ namespace _01.Code.Manager
                 _availableConditions.RemoveRange(_availableUnits.Count, _availableConditions.Count - _availableUnits.Count);
         }
 
+        /// <summary>
+        /// 이 부하 종류의 다음 지원자. 고용 화면이 뽑기 전에 누가 오는지 보여줄 때 읽는다.
+        /// 후보가 없으면 <see cref="UnitConditionState.Fresh"/>를 돌려준다.
+        /// </summary>
+        public UnitConditionState PeekApplicant(UnitDataSO unit)
+        {
+            var queue = EnsureApplicantQueue(unit);
+            return queue.Count > 0 ? queue[0].Condition : UnitConditionState.Fresh;
+        }
+
+        /// <summary>다음 지원자가 떠나기까지 남은 날. 후보가 없으면 0.</summary>
+        public int GetApplicantDaysLeft(UnitDataSO unit)
+        {
+            var queue = EnsureApplicantQueue(unit);
+            return queue.Count > 0 ? Mathf.Max(0, queue[0].DaysLeft) : 0;
+        }
+
+        /// <summary>명단 맨 앞 지원자를 데려간다.</summary>
+        private UnitConditionState TakeNextApplicant(UnitDataSO unit)
+        {
+            var queue = EnsureApplicantQueue(unit);
+            if (queue.Count == 0)
+                return CreateFreshHiredUnitCondition();
+
+            var applicant = queue[0];
+            queue.RemoveAt(0);
+            return applicant.Condition;
+        }
+
+        /// <summary>
+        /// 하루가 지나 지원자들의 기한을 깎고, 다 된 사람은 명단에서 지운다.
+        /// 계약서 수가 곧 명단 길이이므로 떠난 만큼 보유 수도 함께 줄여야
+        /// 명단을 다시 맞출 때 새 지원자가 그 자리를 메워버리지 않는다.
+        /// </summary>
+        private void ExpireApplicants()
+        {
+            if (applicantLifetimeDays <= 0)
+                return;
+
+            var departed = false;
+            foreach (var unit in new List<UnitDataSO>(_applicantsByUnit.Keys))
+            {
+                var queue = EnsureApplicantQueue(unit);
+                for (var i = queue.Count - 1; i >= 0; i--)
+                {
+                    var applicant = queue[i];
+                    applicant.DaysLeft--;
+                    if (applicant.DaysLeft > 0)
+                    {
+                        queue[i] = applicant;
+                        continue;
+                    }
+
+                    queue.RemoveAt(i);
+                    _ownedUnits[unit] = Mathf.Max(0, GetOwnedUnitCount(unit) - 1);
+                    departed = true;
+                }
+            }
+
+            if (departed)
+                costEventChannel?.RaiseEvent(new UnitInventoryChangedEvent(_ownedUnits));
+        }
+
+        /// <summary>
+        /// 지원자 명단을 보유 후보 수에 맞춘다.
+        /// 후보 수는 습격 보상이나 이벤트로도 늘어나므로, 그 경로마다 명단을 챙기는 대신
+        /// 읽을 때 한 번 맞춘다. 이미 뽑혀 있던 지원자는 그대로 두어 표시가 흔들리지 않는다.
+        /// </summary>
+        private List<Applicant> EnsureApplicantQueue(UnitDataSO unit)
+        {
+            if (unit == null)
+                return new List<Applicant>();
+
+            if (!_applicantsByUnit.TryGetValue(unit, out var queue))
+            {
+                queue = new List<Applicant>();
+                _applicantsByUnit[unit] = queue;
+            }
+
+            var wanted = GetOwnedUnitCount(unit);
+            while (queue.Count < wanted)
+                queue.Add(new Applicant
+                {
+                    Condition = CreateFreshHiredUnitCondition(),
+                    DaysLeft = Mathf.Max(1, applicantLifetimeDays)
+                });
+            if (queue.Count > wanted)
+                queue.RemoveRange(wanted, queue.Count - wanted);
+
+            return queue;
+        }
+
         private UnitConditionState CreateFreshHiredUnitCondition()
         {
             var validTraits = new List<UnitTrait>();
@@ -468,9 +603,8 @@ namespace _01.Code.Manager
             _unlockedUnits.Clear();
             InitializeUnlockedBuildings();
 
-            if (unitCatalog == null)
-                return;
-
+            // 해금 카탈로그가 있으면 그쪽이 정답이다. unitCatalog는 표시용 목록일 뿐이라
+            // 여기서 먼저 막으면 목록을 비우는 순간 해금이 통째로 죽는다.
             if (unlockCatalog != null)
             {
                 foreach (var entry in unlockCatalog.Entries)
@@ -486,6 +620,9 @@ namespace _01.Code.Manager
 
                 return;
             }
+
+            if (unitCatalog == null)
+                return;
 
             for (var i = 0; i < unitCatalog.Length; i++)
             {

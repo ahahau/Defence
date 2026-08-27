@@ -55,14 +55,64 @@ namespace _01.Code.MapCreateSystem
         /// <summary>트랩 노드 내부 격자(없으면 null). 여러 트랩을 셀에 자유 배치.</summary>
         public NodeTrapGrid TrapGrid => trapGrid != null ? trapGrid : (trapGrid = GetComponent<NodeTrapGrid>());
 
-        /// <summary>벽이 설치되어 적이 지나갈 수 없는 노드인지. A*와 랜덤 배회 모두 이 노드를 피한다.</summary>
-        public bool IsPassBlocked
+        /// <summary>
+        /// 이 노드에 선 금고를 훑는다. 금고는 칸 건물이라 한 노드에 여럿 설 수 있다 —
+        /// 정산·약탈·경로 판정이 저마다 중앙 슬롯만 보다가 금고 기능이 통째로 죽어 있었다.
+        /// </summary>
+        public IEnumerable<Treasury> EnumerateTreasuries()
+        {
+            var grid = TrapGrid;
+            if (grid == null)
+                yield break;
+
+            var placed = grid.PlacedBuildings;
+            for (var i = 0; i < placed.Count; i++)
+            {
+                if (placed[i] is Treasury treasury && !treasury.IsDestroyed)
+                    yield return treasury;
+            }
+        }
+
+        /// <summary>보관 금화가 남은 금고 하나. 경로 판정이 노드마다 부르므로 할당 없이 돈다.</summary>
+        public Treasury FindTreasuryWithGold()
+        {
+            var grid = TrapGrid;
+            if (grid == null)
+                return null;
+
+            var placed = grid.PlacedBuildings;
+            for (var i = 0; i < placed.Count; i++)
+            {
+                if (placed[i] is Treasury treasury && !treasury.IsDestroyed && treasury.StoredGold > 0)
+                    return treasury;
+            }
+
+            return null;
+        }
+
+        /// <summary>권능으로 걸린 한시적 봉쇄가 끝나는 시각. 타이머를 돌리지 않으려고 시각으로 들고 있다.</summary>
+        private float _blockedUntil;
+
+        /// <summary>권능으로 지금 막혀 있는가.</summary>
+        public bool IsTemporarilyBlocked => _blockedUntil > Time.time;
+
+        /// <summary>한시적 봉쇄가 풀리기까지 남은 시간(초).</summary>
+        public float BlockRemaining => Mathf.Max(0f, _blockedUntil - Time.time);
+
+        /// <summary>이 노드를 정해진 시간 동안 통행 불가로 만든다. 이미 걸려 있으면 더 긴 쪽이 남는다.</summary>
+        public void BlockTemporarily(float duration)
+        {
+            if (duration <= 0f)
+                return;
+
+            _blockedUntil = Mathf.Max(_blockedUntil, Time.time + duration);
+        }
+
+        /// <summary>벽이 세워져 있는가. 벽은 칸 건물이라 격자만 본다.</summary>
+        public bool HasWall
         {
             get
             {
-                if (AssignedBuilding is Wall)
-                    return true;
-
                 var grid = TrapGrid;
                 if (grid == null)
                     return false;
@@ -77,6 +127,10 @@ namespace _01.Code.MapCreateSystem
                 return false;
             }
         }
+
+        /// <summary>벽이 설치되었거나 권능으로 막혀 적이 지나갈 수 없는 노드인지.
+        /// A*와 랜덤 배회, 침입 경로 예측이 모두 이 값을 본다.</summary>
+        public bool IsPassBlocked => IsTemporarilyBlocked || HasWall;
 
         /// <summary>데이터 ID로 활성 노드를 찾는다(경로 탐색용). 없으면 null.</summary>
         public static Node FindByDataId(string dataId)
@@ -173,6 +227,7 @@ namespace _01.Code.MapCreateSystem
         /// </summary>
         public bool CanAcceptAdditionalUnit => !IsEnemySpawnNode && AssignedUnitCount < UnitCapacity;
         public int UnitCapacity => battlefield != null ? battlefield.MaxPerTeam : 1;
+        /// <summary>이 구역에서 벌어진 일로 쌓인 악명(전투·함정 발동). 설치물의 위험도는 포함하지 않는다.</summary>
         public int DangerLevel { get; private set; }
         
         
@@ -267,7 +322,6 @@ namespace _01.Code.MapCreateSystem
         public void AssignUnit(UnitDataSO unit)
         {
             AssignedUnit = unit;
-            IncreaseDanger(unit != null ? unit.BaseDanger : 0);
         }
 
         public void AssignUnit(UnitDataSO unit, Unit unitInstance)
@@ -280,7 +334,6 @@ namespace _01.Code.MapCreateSystem
 
             AssignedUnit = unit;
             AssignedUnitInstance = unitInstance;
-            IncreaseDanger(unit != null ? unit.BaseDanger : 0);
         }
 
         public bool TryAssignUnit(UnitDataSO unit, Unit unitInstance)
@@ -299,7 +352,6 @@ namespace _01.Code.MapCreateSystem
             unitPlacements.Add(new UnitPlacement(unit, unitInstance, column, row));
             unitInstance.transform.position = TrapGrid.CellWorldPosition(column, row);
             RefreshPrimaryUnit();
-            IncreaseDanger(unit != null ? unit.BaseDanger : 0);
             return true;
         }
 
@@ -460,7 +512,6 @@ namespace _01.Code.MapCreateSystem
         public void AssignBuilding(Building building)
         {
             AssignedBuilding = building;
-            IncreaseDanger(building != null ? building.DangerRating : 0);
         }
 
         public void ClearBuilding()
@@ -481,6 +532,11 @@ namespace _01.Code.MapCreateSystem
             return true;
         }
 
+        /// <summary>
+        /// 이 구역에서 실제로 벌어진 일로 악명을 쌓는다 — 함정이 터지고 부하가 맞붙을 때만 오른다.
+        /// 설치한 것들의 위험도는 악명 패널이 재고를 훑어 따로 세므로 여기에 더하면 이중 계산이 되고,
+        /// 유닛을 이 노드 저 노드로 옮기는 것만으로 악명을 불릴 수 있게 된다.
+        /// </summary>
         public void IncreaseDanger(int amount)
         {
             if (amount <= 0)

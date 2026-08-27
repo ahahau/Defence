@@ -329,7 +329,9 @@ namespace _01.Code.Enemies
             if (node == null)
                 return false;
 
-            if (node.AssignedBuilding is Treasury treasury)
+            // 금고는 칸 건물이라 한 노드에 여럿 설 수 있다. 보관 금화가 남은 금고를 턴다.
+            var treasury = node.FindTreasuryWithGold();
+            if (treasury != null)
             {
                 // 보관 금화는 운영 자금과 분리되어 있으므로 GoldLostEvent를 발생시키지 않는다.
                 // 이 금고에서 실제로 약탈할 수 있는 금화가 있을 때만 침입자가 이탈한다.
@@ -441,18 +443,26 @@ namespace _01.Code.Enemies
                 return false;
 
             battlefield.TryEnter(_battleAgent);
-            return battlefield.HasOpponents(_battleAgent.Team);
+            if (!battlefield.HasOpponents(_battleAgent.Team))
+                return false;
+
+            // 전투 악명은 여태 레거시 경로(TryStopOnUnit)에만 있었는데, 모든 노드가
+            // NodeBattlefield를 갖고 있어 여기서 먼저 끝나 버린다 — 그래서 유닛 카드가 약속하는
+            // "전투 시 +N"이 한 번도 적립되지 않았다.
+            var defender = node.FirstCombatReadyUnit;
+            node.IncreaseDanger(defender != null && defender.Data != null
+                ? defender.Data.DangerIncreaseOnCombat
+                : 1);
+
+            return true;
         }
 
         private bool TryTriggerTrap(Node node)
         {
             if (node == null) return false;
 
-            // 단일 건물 트랩(기존)
-            if (node.AssignedBuilding is Trap trap)
-                TriggerSingleTrap(node, trap);
-
-            // 그리드에 배치된 트랩 전부 발동(그리드는 일반 건물도 담으므로 트랩만 거른다)
+            // 함정은 분류가 Trap이라 중앙 슬롯에 서지 못한다. 격자 칸만 보면 된다
+            // (그리드는 일반 건물도 담으므로 트랩만 거른다).
             var grid = node.TrapGrid;
             if (grid != null)
             {

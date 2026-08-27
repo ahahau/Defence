@@ -17,8 +17,8 @@ namespace _01.Code.UI
 
         private void Awake()
         {
-            NestHudStyle.ApplyPanel(panelRoot != null ? panelRoot : gameObject);
-            NestHudStyle.ApplyTopRightCard(panelRoot != null ? panelRoot : gameObject, totalDangerText, 2,
+            DungeonHudStyle.ApplyPanel(panelRoot != null ? panelRoot : gameObject);
+            DungeonHudStyle.ApplyTopRightCard(panelRoot != null ? panelRoot : gameObject, totalDangerText, 2,
                 new Color(1f, 0.28f, 0.2f, 1f));
             if (totalDangerText != null)
             {
@@ -46,21 +46,42 @@ namespace _01.Code.UI
         private void Refresh()
         {
             var unitDanger = 0;
-            var trapDanger = 0;
+            var buildingDanger = 0;
+            var deedDanger = 0;
 
             foreach (var node in Node.ActiveNodes)
             {
+                if (node == null)
+                    continue;
+
+                // 설치물의 위험도(재고)와 별개로, 그 구역에서 실제로 벌어진 일이 악명을 남긴다.
+                // 유닛 카드가 "전투 시 +N"을 약속하고 함정에 발동당 위험도가 적혀 있는데
+                // 이걸 세지 않으면 그 숫자들이 어디에도 나타나지 않는다.
+                deedDanger += node.DangerLevel;
+
                 foreach (var placement in node.UnitPlacements)
                 {
                     if (placement?.Data != null)
                         unitDanger += placement.Data.BaseDanger;
                 }
 
-                if (node.AssignedBuilding is Trap trap)
-                    trapDanger += trap.DangerRating;
+                // 함정·금고·벽은 중앙 슬롯에 설 수 없다. 중앙만 보면 아무리 깔아도 악명이 꿈쩍하지 않는다.
+                buildingDanger += DangerOf(node.AssignedBuilding);
+
+                var grid = node.TrapGrid;
+                if (grid == null)
+                    continue;
+
+                var placed = grid.PlacedBuildings;
+                for (var i = 0; i < placed.Count; i++)
+                    buildingDanger += DangerOf(placed[i]);
             }
 
-            var totalDanger = unitDanger + trapDanger;
+            // 통로 건물은 어느 노드에도 속하지 않아 노드만 훑으면 통째로 빠진다.
+            foreach (var edge in EdgeLine.ActiveEdges)
+                buildingDanger += DangerOf(edge != null ? edge.InstalledBuilding : null);
+
+            var totalDanger = unitDanger + buildingDanger + deedDanger;
             if (totalDanger == _lastTotalDanger)
                 return;
 
@@ -73,6 +94,13 @@ namespace _01.Code.UI
                 if (previousDanger >= 0)
                     PlayDangerFeedback(totalDanger > previousDanger);
             }
+        }
+
+        /// <summary>설치 카드가 건물마다 "경계 +N"을 약속하므로 함정만이 아니라 건물 전부를 센다.
+        /// 부서진 건물은 더 이상 위협이 아니므로 빠진다.</summary>
+        private static int DangerOf(Building building)
+        {
+            return building != null && !building.IsDestroyed ? building.DangerRating : 0;
         }
 
         private void PlayDangerFeedback(bool increased)

@@ -62,7 +62,6 @@ namespace _01.Code.Buildings
                 return null;
 
             building.Initialize(buildingData);
-            node.IncreaseDanger(building.DangerRating);
             return building;
         }
 
