@@ -275,7 +275,7 @@ namespace _01.Code.Enemies
                 if (node == null)
                     continue;
 
-                var hasStoredGold = node.AssignedBuilding is Treasury treasury && treasury.StoredGold > 0;
+                var hasStoredGold = node.FindTreasuryWithGold() != null;
                 var isLegacyTreasury = node.Data != null && node.Data.Type == DungeonNodeType.Treasury;
                 if (!hasStoredGold && !isLegacyTreasury)
                     continue;

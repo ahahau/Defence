@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using _01.Code.Buildings;
 using _01.Code.Core;
 using _01.Code.Events;
 using _01.Code.MapCreateSystem;
@@ -49,6 +50,9 @@ namespace _01.Code.Manager
         private int settlementExpense;
         private int totalExpense;
         private bool ledgerClosed;
+
+        /// <summary>직전 정산에서 운영 자금이 실제로 움직인 액수. 표시용 합계와 구분해야 한다.</summary>
+        private int _lastSettlementNet;
 
         public bool IsPanelOpen => panelRoot != null && panelRoot.activeInHierarchy;
 
@@ -102,6 +106,7 @@ namespace _01.Code.Manager
         {
             currentDay = evt.Day;
             ApplyDailyUpkeep();
+            AccrueTreasuryInterest();
             ApplyBattleFatigue();
             ApplyNetToGold();
 
@@ -127,7 +132,10 @@ namespace _01.Code.Manager
             if (costManager == null)
                 return;
 
-            costManager.ApplySettlement(settlementIncome - settlementExpense);
+            // 실제로 운영 자금이 움직인 액수. 표시용 합계에는 이미 결제된 건설비나
+            // 금고에 쌓인 이자까지 섞여 있어, 그걸 순증이라고 보여주면 쓸 수 있는 돈을 오해하게 된다.
+            _lastSettlementNet = settlementIncome - settlementExpense;
+            costManager.ApplySettlement(_lastSettlementNet);
 
             // 이미 옮긴 돈이 '정산 예정'으로 계속 떠 있으면 안 된다.
             // 표시용 전체 합계는 정산 패널이 써야 하므로 건드리지 않는다.
@@ -205,6 +213,33 @@ namespace _01.Code.Manager
                 hiredUnitCount[unit]++;
         }
 
+        /// <summary>
+        /// 금고에 맡긴 금화에 이자를 붙인다.
+        /// 이자는 금고에 쌓이므로 운영 자금이 늘지는 않는다 — 그래서 정산에는 내역으로만 적는다.
+        /// 불어난 만큼 약탈당할 것도 많아지는 게 이 결정의 값이다.
+        /// </summary>
+        private void AccrueTreasuryInterest()
+        {
+            var total = 0;
+            foreach (var node in Node.ActiveNodes)
+            {
+                if (node == null)
+                    continue;
+
+                // 벽으로 길을 막아 침입자가 닿을 수 없는 금고는 위험이 0이다.
+                // 거기까지 이자를 주면 벽 하나로 무위험 복리를 만들 수 있다.
+                if (!IntrusionThreat.CanIntrudersReach(node))
+                    continue;
+
+                // 한 노드에 금고를 여럿 둘 수 있으므로 전부 이자를 붙인다.
+                foreach (var treasury in node.EnumerateTreasuries())
+                    total += treasury.AccrueInterest();
+            }
+
+            if (total > 0)
+                RecordIncome("금고 이자", total, false);
+        }
+
         private void ApplyDailyUpkeep()
         {
             var upkeep = CalculateDailyUpkeep();
@@ -212,7 +247,26 @@ namespace _01.Code.Manager
                 return;
 
             // 금화를 바로 빼지 않고 지출로만 적는다. 실제 이동은 정산 순액에서 한 번에 일어난다.
-            RecordExpense("유지비", upkeep);
+            RecordExpense(BuildUpkeepLabel(), upkeep);
+        }
+
+        /// <summary>
+        /// 민심이 유지비를 얼마나 밀어올렸는지 항목 이름에 적는다.
+        /// 액수만 바뀌면 왜 늘었는지 알 수 없어 민심을 관리할 이유가 보이지 않는다.
+        /// </summary>
+        private static string BuildUpkeepLabel()
+        {
+            var morale = MoralePolicyManager.Current;
+            if (morale == null)
+                return "유지비";
+
+            var multiplier = morale.UpkeepMultiplier;
+            if (Mathf.Approximately(multiplier, 1f))
+                return "유지비";
+
+            return multiplier > 1f
+                ? $"유지비 (민심 {morale.CurrentMorale} · +{Mathf.RoundToInt((multiplier - 1f) * 100f)}%)"
+                : $"유지비 (민심 {morale.CurrentMorale} · -{Mathf.RoundToInt((1f - multiplier) * 100f)}%)";
         }
 
         private int CalculateDailyUpkeep()
@@ -226,6 +280,11 @@ namespace _01.Code.Manager
                 var unitUpkeep = Mathf.Max(1, Mathf.CeilToInt(pair.Key.Cost / (float)upkeepCostDivisor));
                 total += unitUpkeep * pair.Value;
             }
+
+            // 민심이 낮으면 같은 부하를 붙잡아 두는 데 더 든다.
+            var morale = MoralePolicyManager.Current;
+            if (morale != null && total > 0)
+                total = Mathf.Max(1, Mathf.RoundToInt(total * morale.UpkeepMultiplier));
 
             return total;
         }
@@ -333,8 +392,13 @@ namespace _01.Code.Manager
             expenseText.text = BuildExpenseText();
             progressReportView?.RefreshReport();
 
-            var net = totalIncome - totalExpense;
-            netText.text = $"오늘 순증 {FormatSignedGold(net)}\n획득 +{totalIncome}G  ·  지출 -{totalExpense}G"
+            // 운영 자금이 실제로 얼마나 늘고 줄었는지를 앞세운다. 이게 내일 쓸 수 있는 돈이다.
+            var net = _lastSettlementNet;
+            var recorded = totalIncome - totalExpense;
+            netText.text = $"운영 자금 {FormatSignedGold(net)}\n획득 +{totalIncome}G  ·  지출 -{totalExpense}G"
+                           + (recorded != net
+                               ? $"\n<size=85%>이 중 {FormatSignedGold(recorded - net)}는 이미 치렀거나 금고에 쌓였습니다</size>"
+                               : string.Empty)
                            + BuildBattleSummaryText() + BuildFatigueText() + BuildDebtText();
             netText.color = net >= 0 ? new Color(0.45f, 0.95f, 0.55f) : new Color(1f, 0.45f, 0.4f);
         }
@@ -379,8 +443,14 @@ namespace _01.Code.Manager
             if (wave == null || wave.TotalEnemyCount <= 0)
                 return string.Empty;
 
+            // 함정 몫을 따로 적어야 함정에 쓴 돈이 일을 했는지 판단할 수 있다.
+            var trapShare = wave.WaveTrapDamage > 0
+                ? $"  ·  <color=#C79BFF>함정 {wave.WaveTrapDamage}</color>"
+                : string.Empty;
+
             return $"\n<size=85%>격퇴 {wave.KillCount}/{wave.TotalEnemyCount}"
                    + $"  ·  가한 피해 {wave.WaveDamageDealt}"
+                   + trapShare
                    + $"  ·  받은 피해 {wave.WaveDamageTaken}"
                    + $"  ·  치명타 {wave.WaveCriticalHits}</size>";
         }

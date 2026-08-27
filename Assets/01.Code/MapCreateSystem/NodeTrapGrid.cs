@@ -57,8 +57,8 @@ namespace _01.Code.MapCreateSystem
         public bool IsFocusedGridVisible => _focusedGridRoot != null && _focusedGridRoot.activeSelf;
 
         /// <summary>
-        /// 중앙 둥지 슬롯의 상하좌우 한 칸 고리에 배치된 살아 있는 건물 수.
-        /// 둥지 결속 시스템의 공간 투자량으로 사용한다.
+        /// 중앙 핵심부 슬롯의 상하좌우 한 칸 고리에 배치된 살아 있는 건물 수.
+        /// 핵심부 결속 시스템의 공간 투자량으로 사용한다.
         /// </summary>
         public int CountBuildingsAdjacentToCentralSlot()
         {
@@ -244,6 +244,13 @@ namespace _01.Code.MapCreateSystem
             return TryGetNearestFreeCell(worldPosition, out var column, out var row)
                 ? TryPlace(column, row, buildingPrefab)
                 : null;
+        }
+
+        /// <summary>그 칸에 선 건물. 비었거나 칸 범위를 벗어나면 null.</summary>
+        public Building BuildingAt(int column, int row)
+        {
+            EnsureCells();
+            return IsValidCell(column, row) ? _cells[Index(column, row)] : null;
         }
 
         public bool Remove(int column, int row)
