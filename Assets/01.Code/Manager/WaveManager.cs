@@ -66,6 +66,15 @@ namespace _01.Code.Manager
         public int WaveDamageDealt => Mathf.Max(0, _waveDamageDealt);
         public int WaveDamageTaken => Mathf.Max(0, _waveDamageTaken);
         public int WaveCriticalHits => Mathf.Max(0, _waveCriticalHitCount);
+
+        /// <summary>이번 웨이브에서 함정이 낸 피해. 유닛이 낸 몫과 나눠 보여야 함정 투자를 판단할 수 있다.</summary>
+        public int WaveTrapDamage => Mathf.Max(0, _waveTrapDamage);
+
+        public void RecordTrapDamage(int damage)
+        {
+            if (_isWaveRunning && damage > 0)
+                _waveTrapDamage += damage;
+        }
         public int ActiveEnemyCount => _activeEnemies.Count;
         public int PendingSpawnCount => Mathf.Max(0, _remainingSpawns);
         public int RemainingThreatCount => ActiveEnemyCount + PendingSpawnCount;
@@ -73,12 +82,25 @@ namespace _01.Code.Manager
 
         public int GetPreviewEnemyCount(int day)
         {
-            var entry = waveConfig != null ? waveConfig.GetWaveForDay(day) : null;
+            var baseEnemyCount = GetBasePreviewEnemyCount(day);
             // 예고도 장악 보정을 거친 수를 보여야 실제로 오는 수와 어긋나지 않는다.
-            return entry != null ? GetConquestAdjustedEnemyCount(entry.enemyCount) : 0;
+            return GetConquestAdjustedEnemyCount(baseEnemyCount);
+        }
+
+        /// <summary>마을 장악 보정을 적용하기 전의 원래 습격 인원.</summary>
+        public int GetBasePreviewEnemyCount(int day)
+        {
+            var entry = waveConfig != null ? waveConfig.GetWaveForDay(day) : null;
+            return entry != null ? Mathf.Max(0, entry.enemyCount) : 0;
         }
 
         public bool IsBossDay(int day) => waveConfig != null && waveConfig.IsBossDay(day);
+
+        /// <summary>결과 화면을 띄우는 연출 담당. 게임오버 쪽에서도 같은 패널을 쓴다.</summary>
+        public BossWavePresenter BossPresenter => bossPresenter;
+
+        /// <summary>침입자가 들어오는 구역. 어디까지 걸어올 수 있는지 재는 기준점이다.</summary>
+        public Node PortalNode => _portalNode;
         private int _currentDay;
         private int _remainingSpawns;
         private int _currentClearGoldReward;
@@ -103,6 +125,7 @@ namespace _01.Code.Manager
         private int _waveDamageDealt;
         private int _waveDamageTaken;
         private int _waveCriticalHitCount;
+        private int _waveTrapDamage;
         private bool _unitConditionWearPending;
 
         private void Awake()
@@ -202,7 +225,11 @@ namespace _01.Code.Manager
             if (normalized <= 0 || maxWaveReductionFromConquest <= 0f)
                 return normalized;
 
-            var reduction = VillageConquestState.AverageConquestRatio * maxWaveReductionFromConquest;
+            var conquest = VillageConquestSystem.Current;
+            if (conquest == null)
+                return normalized;
+
+            var reduction = conquest.AverageConquestRatio * maxWaveReductionFromConquest;
             // 다 장악해도 습격이 아예 사라지지는 않는다. 최소 한 명은 온다.
             return Mathf.Max(1, Mathf.RoundToInt(normalized * (1f - reduction)));
         }
@@ -212,7 +239,7 @@ namespace _01.Code.Manager
             var adjustedEnemyCount = GetConquestAdjustedEnemyCount(entry.enemyCount);
             _remainingSpawns = adjustedEnemyCount;
             ResetWaveResults(adjustedEnemyCount);
-            _currentClearGoldReward = NestCohesionSystem.ScaleGoldReward(entry.clearGoldReward);
+            _currentClearGoldReward = CoreCohesionSystem.ScaleGoldReward(entry.clearGoldReward);
             _isWaveRunning = true;
             _unitConditionWearPending = true;
             _activeEnemies.Clear();
@@ -453,7 +480,8 @@ namespace _01.Code.Manager
                     continue;
 
                 // 장악한 마을에서 오는 파티는 그만큼 발길을 끊는다. 완전히 장악하면 더 이상 오지 않는다.
-                if (Random.value < VillageConquestState.GetSuppression(party))
+                var conquest = VillageConquestSystem.Current;
+                if (conquest != null && Random.value < conquest.GetSuppression(party))
                     continue;
 
                 validParties.Add(party);
@@ -570,6 +598,9 @@ namespace _01.Code.Manager
                 _waveCoroutine = null;
             }
 
+            // 잡은 만큼만 받는다. 아래 지급처와 정산 표시가 같은 값을 봐야 하므로 여기서 한 번만 깎는다.
+            _currentClearGoldReward = ResolveClearGoldReward();
+
             // 최종 보스 웨이브 클리어 = 승리 — 보상 패널 대신 승리 패널(시네마틱이 끝난 뒤).
             if (_isFinalWave && !_isGameCleared)
             {
@@ -619,12 +650,32 @@ namespace _01.Code.Manager
             presenter.ShowVictoryPanel(_currentDay);
         }
 
+        /// <summary>
+        /// 클리어 보상 중 실제로 지급할 몫. 도망친 침입자는 전리품을 남기지 않는다.
+        /// 전액을 주면 쫓아내는 쪽이 잡는 쪽보다 싸게 먹혀서, 겁을 주거나 길을 막아
+        /// 아무도 죽이지 않고 매일 만액을 걷는 편이 최적해가 된다.
+        /// </summary>
+        private int ResolveClearGoldReward()
+        {
+            if (_currentClearGoldReward <= 0)
+                return 0;
+
+            var total = Mathf.Max(0, _waveEnemyCount);
+            if (total <= 0)
+                return _currentClearGoldReward;
+
+            var killed = Mathf.Clamp(_waveKillCount, 0, total);
+            return Mathf.RoundToInt(_currentClearGoldReward * (killed / (float)total));
+        }
+
         private void RaiseWaveEnded()
         {
             if (_isDestroying || waveEventChannel == null)
                 return;
 
             ApplyUnitConditionWear();
+            // 웨이브 집계는 다음 웨이브에서 초기화되므로, 판 전체 전과는 여기서 넘겨 둔다.
+            RunSummarySystem.Current?.RecordWave(_waveEnemyCount, _waveKillCount, _waveDamageDealt, _waveDamageTaken, _waveCriticalHitCount);
             waveEventChannel.RaiseEvent(new WaveEndedEvent(_currentDay, _currentClearGoldReward));
         }
 
@@ -664,6 +715,7 @@ namespace _01.Code.Manager
             _waveDamageDealt = 0;
             _waveDamageTaken = 0;
             _waveCriticalHitCount = 0;
+            _waveTrapDamage = 0;
         }
 
         private void HandleWaveEnemyDeathStarted(Enemy enemy)
@@ -671,8 +723,12 @@ namespace _01.Code.Manager
             if (enemy != null)
                 enemy.DeathStarted -= HandleWaveEnemyDeathStarted;
 
-            if (_isWaveRunning)
-                _waveKillCount++;
+            if (!_isWaveRunning)
+                return;
+
+            _waveKillCount++;
+            // 잘 막아낼수록 권능이 붙어 더 개입할 수 있다.
+            DungeonPowerSystem.Current?.RewardKill();
         }
 
         private void HandleAnyDamage(Health damagedHealth, int damage, bool isCritical)
