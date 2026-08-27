@@ -184,7 +184,9 @@ namespace _01.Code.Units
             health != null ? health.CurrentRatio : 1f,
             trait,
             personality,
-            currentCommand);
+            currentCommand,
+            level != null ? level.Level : 1,
+            level != null ? level.Experience : 0);
 
         public void ApplyConditionState(UnitConditionState state)
         {
@@ -193,6 +195,10 @@ namespace _01.Code.Units
             trait = state.Trait;
             personality = state.Personality;
             currentCommand = state.Command;
+
+            // 레벨이 최대 체력을 올리므로 비율보다 먼저 복원해야 한다.
+            // 순서를 뒤집으면 늘어난 최대치가 아니라 기본 최대치 기준으로 비율이 적용된다.
+            level?.Restore(state.Level, state.Experience);
             health?.SetCurrentRatio(state.HealthRatio);
             IsIncapacitated = health != null && !health.IsAlive;
             ApplyTraitBaseStats();
@@ -242,12 +248,26 @@ namespace _01.Code.Units
             ConditionChanged?.Invoke();
         }
 
+        /// <summary>
+        /// 명령을 바꾼 뒤 다시 바꿀 수 있을 때까지의 시간.
+        /// 웨이브 중에도 명령이 통하게 되면서, 매 순간 최적값으로 갈아타는 손놀림 싸움이 되지 않도록
+        /// 한 번의 판단에 잠시 묶어 둔다.
+        /// </summary>
+        [SerializeField, Min(0f), Tooltip("명령을 다시 내리기까지의 대기 시간(초).")]
+        private float commandCooldown = 3f;
+
+        private float _commandReadyTime;
+
+        public bool IsCommandReady => Time.time >= _commandReadyTime;
+        public float CommandCooldownRemaining => Mathf.Max(0f, _commandReadyTime - Time.time);
+
         public void SetCommand(UnitCommand command)
         {
             if (currentCommand == command)
                 return;
 
             currentCommand = command;
+            _commandReadyTime = Time.time + Mathf.Max(0f, commandCooldown);
             ApplyTraitBaseStats();
             ApplyConditionModifiers();
             ConditionChanged?.Invoke();

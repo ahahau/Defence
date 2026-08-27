@@ -113,13 +113,21 @@ namespace _01.Code.Units
         [SerializeField] private UnitPersonality personality;
         [SerializeField] private UnitCommand command;
 
+        // 회수는 유닛 오브젝트를 파괴하므로 레벨도 여기 실어 두지 않으면 사라진다.
+        // 그러면 다친 부하를 낫게 하려고 회수하는 순간 키워 둔 것이 날아가서,
+        // 레벨업과 회복이 서로를 무효화한다.
+        [SerializeField, Min(1)] private int level;
+        [SerializeField, Min(0)] private int experience;
+
         public UnitConditionState(
             float fatigue,
             InjurySeverity injury,
             float healthRatio = 1f,
             UnitTrait trait = UnitTrait.None,
             UnitPersonality personality = UnitPersonality.None,
-            UnitCommand command = UnitCommand.Standby)
+            UnitCommand command = UnitCommand.Standby,
+            int level = 1,
+            int experience = 0)
         {
             this.fatigue = Mathf.Clamp(fatigue, 0f, 100f);
             this.injury = injury;
@@ -127,6 +135,8 @@ namespace _01.Code.Units
             this.trait = trait;
             this.personality = personality;
             this.command = command;
+            this.level = Mathf.Max(1, level);
+            this.experience = Mathf.Max(0, experience);
         }
 
         public float Fatigue => fatigue;
@@ -135,6 +145,10 @@ namespace _01.Code.Units
         public UnitTrait Trait => trait;
         public UnitPersonality Personality => personality;
         public UnitCommand Command => command;
+
+        /// <summary>default(UnitConditionState)로 만들어진 값도 1레벨로 읽히게 한다.</summary>
+        public int Level => Mathf.Max(1, level);
+        public int Experience => Mathf.Max(0, experience);
         public string TraitLabel => UnitTraitUtility.GetLabel(trait);
         public string PersonalityLabel => UnitPersonalityUtility.GetLabel(personality);
         public string Summary => $"{TraitLabel} · {PersonalityLabel} · 피로 {Mathf.RoundToInt(fatigue)}/100";
@@ -156,7 +170,9 @@ namespace _01.Code.Units
                 healthRatio + Mathf.Max(0f, healthRecoveryRatio),
                 trait,
                 personality,
-                command);
+                command,
+                Level,
+                Experience);
         }
     }
 }
