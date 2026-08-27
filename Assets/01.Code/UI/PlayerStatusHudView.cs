@@ -30,8 +30,8 @@ namespace _01.Code.UI
 
         private void Awake()
         {
-            NestHudStyle.ApplyPanel(gameObject, true);
-            NestHudStyle.ApplyPlayerStatusLayout(gameObject);
+            DungeonHudStyle.ApplyPanel(gameObject, true);
+            DungeonHudStyle.ApplyPlayerStatusLayout(gameObject);
             if (healthText != null)
             {
                 _baseHealthTextColor = healthText.color;

@@ -52,6 +52,7 @@ namespace _01.Code.UI
         private bool hasRolled;
         private bool isWired;
         private bool _pendingWasRandom;
+        private bool? lastStandbyState;
 
         /// <summary>
         /// 이번 판에서 상인에게 산 횟수. 살 때마다 값이 올라 모든 가격이 영구히 비싸진다.
@@ -91,6 +92,13 @@ namespace _01.Code.UI
             }
         }
 
+        private void Update()
+        {
+            var isStandby = DayManager.Current != null && DayManager.Current.IsStandby;
+            if (lastStandbyState != isStandby)
+                RefreshVisitState();
+        }
+
         private void Wire()
         {
             if (isWired)
@@ -124,7 +132,9 @@ namespace _01.Code.UI
         }
 
         /// <summary>오늘 상인이 던전에 와 있는가.</summary>
-        public bool IsMerchantHere => shopCatalog != null && shopCatalog.IsVisitDay(currentDay);
+        public bool IsMerchantHere => CoreLoopFeatureUnlocks.IsArtifactUnlocked(currentDay)
+                                      && shopCatalog != null
+                                      && shopCatalog.IsVisitDay(currentDay);
 
         private void HandleDayChanged(DayChangedEvent evt)
         {
@@ -144,8 +154,16 @@ namespace _01.Code.UI
         /// <summary>상인이 없는 날에는 여는 버튼 자체를 감춘다.</summary>
         private void RefreshVisitState()
         {
+            var isStandby = DayManager.Current != null && DayManager.Current.IsStandby;
+            lastStandbyState = isStandby;
             if (openButton != null)
+            {
                 openButton.gameObject.SetActive(IsMerchantHere);
+                openButton.interactable = isStandby;
+            }
+
+            if (!isStandby)
+                Hide();
         }
 
         public void Toggle()
@@ -162,7 +180,7 @@ namespace _01.Code.UI
             if (DayManager.Current == null || !DayManager.Current.IsStandby)
                 return;
 
-            if (!IsMerchantHere)
+            if (!CoreLoopFeatureUnlocks.IsArtifactUnlocked(currentDay) || !IsMerchantHere)
                 return;
 
             EnsureRolled();

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using _01.Code.Artifacts;
 using _01.Code.Core;
 using _01.Code.Events;
+using _01.Code.Manager;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -21,14 +22,29 @@ namespace _01.Code.UI
         [SerializeField] private Vector2 tooltipOffset = new(18f, 18f);
 
         private readonly List<ArtifactEntryView> entries = new();
+        private CanvasGroup _visibilityGroup;
+        private int _lastVisibilityDay = int.MinValue;
 
         private void Awake()
         {
+            _visibilityGroup = GetComponent<CanvasGroup>();
+            if (_visibilityGroup == null)
+                _visibilityGroup = gameObject.AddComponent<CanvasGroup>();
+
             foreach (var text in GetComponentsInChildren<TMP_Text>(true))
             {
                 if (text.text == "아티팩트" || text.text == "Artifacts")
                     TmpTextLayoutUtility.KeepHorizontal(text, true);
             }
+
+            RefreshFeatureVisibility();
+        }
+
+        private void Update()
+        {
+            var day = DayManager.Current != null ? DayManager.Current.CurrentDay : 0;
+            if (day != _lastVisibilityDay)
+                RefreshFeatureVisibility();
         }
 
         private void OnEnable()
@@ -87,6 +103,17 @@ namespace _01.Code.UI
             }
 
             entries.Clear();
+        }
+
+        private void RefreshFeatureVisibility()
+        {
+            _lastVisibilityDay = DayManager.Current != null ? DayManager.Current.CurrentDay : 0;
+            var unlocked = CoreLoopFeatureUnlocks.IsArtifactUnlocked(_lastVisibilityDay);
+            _visibilityGroup.alpha = unlocked ? 1f : 0f;
+            _visibilityGroup.interactable = unlocked;
+            _visibilityGroup.blocksRaycasts = unlocked;
+            if (!unlocked)
+                HideTooltip();
         }
     }
 }

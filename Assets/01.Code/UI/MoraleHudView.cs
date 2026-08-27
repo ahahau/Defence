@@ -27,8 +27,8 @@ namespace _01.Code.UI
 
         private void Awake()
         {
-            NestHudStyle.ApplyPanel(gameObject);
-            NestHudStyle.ApplyTopRightCard(gameObject, moraleText, 3, new Color(0.3f, 0.9f, 0.62f, 1f));
+            DungeonHudStyle.ApplyPanel(gameObject);
+            DungeonHudStyle.ApplyTopRightCard(gameObject, moraleText, 3, new Color(0.3f, 0.9f, 0.62f, 1f));
             if (moraleText == null)
                 return;
             _baseMoraleColor = moraleText.color;
@@ -96,13 +96,34 @@ namespace _01.Code.UI
             if (detailText == null)
                 return;
 
+            var header = $"{detailTitle}\n민심: {currentMorale}{BuildEffectText()}";
+
             if (historyLines.Count == 0)
             {
-                detailText.text = $"{detailTitle}\n민심: {currentMorale}\n\n최근 변화 없음";
+                detailText.text = $"{header}\n\n최근 변화 없음";
                 return;
             }
 
-            detailText.text = $"{detailTitle}\n민심: {currentMorale}\n\n최근 변화\n{string.Join("\n", historyLines)}";
+            detailText.text = $"{header}\n\n최근 변화\n{string.Join("\n", historyLines)}";
+        }
+
+        /// <summary>
+        /// 민심이 지금 무엇을 하고 있는지. 숫자만 띄우면 올릴 이유도 내릴 이유도 보이지 않는다.
+        /// </summary>
+        private static string BuildEffectText()
+        {
+            var morale = _01.Code.Manager.MoralePolicyManager.Current;
+            if (morale == null)
+                return string.Empty;
+
+            var upkeep = morale.UpkeepMultiplier;
+            var upkeepLine = Mathf.Approximately(upkeep, 1f)
+                ? "유지비 평상시"
+                : upkeep > 1f
+                    ? $"<color=#FF7A6B>유지비 +{Mathf.RoundToInt((upkeep - 1f) * 100f)}%</color>"
+                    : $"<color=#7ADB8A>유지비 -{Mathf.RoundToInt((1f - upkeep) * 100f)}%</color>";
+
+            return $"\n<size=85%>{upkeepLine}  ·  지원자 {morale.AdjustRecruitCount(100)}%</size>";
         }
 
         private void PlayMoraleFeedback(int delta)

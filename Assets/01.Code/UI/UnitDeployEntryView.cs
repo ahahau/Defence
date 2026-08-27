@@ -59,7 +59,7 @@ namespace _01.Code.UI
             }
             SetSelected(false);
             SetInteractable(candidateCount != 0);
-            NestHudStyle.ApplyManagementCard(gameObject, new Color(0.34f, 0.72f, 0.92f, 1f));
+            DungeonHudStyle.ApplyManagementCard(gameObject, new Color(0.34f, 0.72f, 0.92f, 1f));
         }
 
         private void ApplyBoard(Sprite boardSprite)

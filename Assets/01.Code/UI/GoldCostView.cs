@@ -26,8 +26,8 @@ namespace _01.Code.UI
 
         private void Awake()
         {
-            NestHudStyle.ApplyPanel(gameObject);
-            NestHudStyle.ApplyTopRightCard(gameObject, goldText, 0, new Color(1f, 0.7f, 0.2f, 1f));
+            DungeonHudStyle.ApplyPanel(gameObject);
+            DungeonHudStyle.ApplyTopRightCard(gameObject, goldText, 0, new Color(1f, 0.7f, 0.2f, 1f));
             if (goldText == null)
                 return;
 

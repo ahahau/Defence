@@ -132,7 +132,20 @@ namespace _01.Code.UI
 
             var operatingFunds = CostManager.Current != null ? CostManager.Current.CurrentGold : 0;
             if (titleText != null) titleText.text = "금고 관리";
-            if (storageText != null) storageText.text = $"보관 금화  {target.StoredGold:N0} / {target.Capacity:N0}G";
+            if (storageText != null)
+            {
+                // 이자와 약탈 위험을 같이 적어야 맡길지 말지가 판단이 된다.
+                var interest = target.ProjectedInterest;
+                var reachable = _01.Code.Manager.IntrusionThreat.CanIntrudersReach(
+                    target.GetComponentInParent<_01.Code.MapCreateSystem.Node>());
+                storageText.text = $"보관 금화  {target.StoredGold:N0} / {target.Capacity:N0}G\n"
+                                   + (reachable
+                                       ? $"<size=85%>정산 이자 {target.InterestPerSettlement:P0}"
+                                         + (interest > 0 ? $"  ·  다음 정산 <color=#7ADB8A>+{interest}G</color>" : string.Empty)
+                                         + "  ·  <color=#FF7A6B>침입자가 노리는 곳</color></size>"
+                                       // 길이 막혀 안전한 금고는 이자도 없다. 왜 없는지 알려야 한다.
+                                       : "<size=85%><color=#9A9182>길이 막혀 안전함 · 이자 없음</color></size>");
+            }
             if (operatingFundsText != null) operatingFundsText.text = $"운영 자금  {operatingFunds:N0}G";
             if (hintText != null) hintText.text = "금고의 금화는 습격 목표가 될 수 있습니다.";
 

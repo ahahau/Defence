@@ -73,7 +73,7 @@ namespace _01.Code.UI
         {
             dayManager ??= DayManager.Current;
             ConfigureStaticTextLayout();
-            NestHudStyle.ApplyManagementDrawer(panelRoot);
+            DungeonHudStyle.ApplyManagementDrawer(panelRoot);
 
             if (panelRoot != null)
                 panelRoot.SetActive(false);
@@ -324,7 +324,7 @@ namespace _01.Code.UI
             if (toggleButton != null)
             {
                 TmpTextLayoutUtility.KeepHorizontal(toggleButton.GetComponentInChildren<TMP_Text>(true), true);
-                NestHudStyle.ApplySideActionButton(toggleButton.gameObject);
+                DungeonHudStyle.ApplySideActionButton(toggleButton.gameObject);
             }
 
             if (closeButton != null)
@@ -372,8 +372,33 @@ namespace _01.Code.UI
                    $"전투  공격 간격 {intervalText}  |  마력 {unit.MagicCost}\n" +
                    $"운영  계약서 {GetOwnedUnitCount(unit)}  |  대기 {GetAvailableUnitCount(unit)}  |  배치 {GetDeployedUnitCount(unit)}\n" +
                    $"비용  영입 {unit.Cost}G  |  일일 급여 {Mathf.Max(1, Mathf.CeilToInt(unit.Cost / 5f))}G  |  운영 자금 {_currentGold}G\n" +
-                   $"경계  기본 +{unit.BaseDanger}  |  전투 시 +{unit.DangerIncreaseOnCombat}\n\n" +
-                   "선택 후 같은 카드를 다시 누르면 영입합니다.";
+                   $"경계  기본 +{unit.BaseDanger}  |  전투 시 +{unit.DangerIncreaseOnCombat}\n" +
+                   BuildApplicantText(unit) +
+                   "\n선택 후 같은 카드를 다시 누르면 영입합니다.";
+        }
+
+        /// <summary>
+        /// 지금 뽑으면 누가 오는지. 특성과 성격이 스탯을 바꾸는데도 여태 고용한 뒤에야 알 수 있었다.
+        /// 미리 보여야 "무엇을 뽑을까"가 아니라 "누구를 뽑을까"가 된다.
+        /// </summary>
+        private string BuildApplicantText(UnitDataSO unit)
+        {
+            var roster = HiredUnitRoster.Current;
+            if (roster == null || GetOwnedUnitCount(unit) <= 0)
+                return "\n지원자  없음 — 계약서를 확보하십시오\n";
+
+            var applicant = roster.PeekApplicant(unit);
+            var daysLeft = roster.GetApplicantDaysLeft(unit);
+            // 기한이 하루 남으면 붉게. 미루는 데 대가가 있다는 걸 눈에 띄게 알린다.
+            var deadline = daysLeft <= 0
+                ? string.Empty
+                : daysLeft <= 1
+                    ? "  ·  <color=#FF7A6B>오늘까지</color>"
+                    : $"  ·  {daysLeft}일 남음";
+
+            return $"\n<color=#FFC85A>다음 지원자  {applicant.TraitLabel}  ·  {applicant.PersonalityLabel}</color>{deadline}\n" +
+                   $"<size=85%>{UnitTraitUtility.GetDescription(applicant.Trait)}\n" +
+                   $"{UnitPersonalityUtility.GetDescription(applicant.Personality)}</size>\n";
         }
 
         private int GetOwnedUnitCount(UnitDataSO unit)

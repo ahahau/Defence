@@ -58,6 +58,8 @@ namespace _01.Code.UI
         private int selectedVillage;
         private bool hasActiveExpedition;
         private bool isWired;
+        private int lastUnlockDay = int.MinValue;
+        private bool? lastStandbyState;
         /// <summary>출발 시점에 확정된 편성 전력. 귀환 피로가 섞이기 전 값이라 판정은 이걸로 한다.</summary>
         private int departedPower;
 
@@ -68,6 +70,7 @@ namespace _01.Code.UI
             departButton = depart; villageButtons = village; unitButtons = units; titleText = title; detailText = detail;
             rosterText = roster; resultText = result;
             Wire();
+            RefreshFeatureAvailability();
         }
 
         /// <summary>마을 칸을 담을 스크롤 목록과 그 원본 버튼을 연결한다.</summary>
@@ -95,6 +98,7 @@ namespace _01.Code.UI
             BuildVillageButtons();
             SetPanelActive(panelRoot, false);
             SetPanelActive(resultPanel, false);
+            RefreshFeatureAvailability();
         }
 
         /// <summary>
@@ -133,7 +137,6 @@ namespace _01.Code.UI
 
             var source = villageCatalog.Villages;
             var result = new Village[source.Count];
-            VillageConquestState.Reset();
             for (var i = 0; i < source.Count; i++)
             {
                 var entry = source[i];
@@ -145,12 +148,28 @@ namespace _01.Code.UI
                     Difficulty = entry.Difficulty,
                     Conquest = entry.StartingConquest
                 };
-
-                // 웨이브 쪽이 읽을 수 있게 시작 장악도를 등록해 둔다.
-                VillageConquestState.Register(entry.OriginParty, entry.StartingConquest);
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// 웨이브 쪽이 읽을 수 있게 시작 장악도를 등록한다.
+        /// Awake에서 하면 VillageConquestSystem이 아직 깨지 않았을 수 있어 등록이 조용히 새어나간다.
+        /// Start는 모든 Awake 뒤에 돌므로 순서를 걱정하지 않아도 된다.
+        /// </summary>
+        private void Start()
+        {
+            var conquest = VillageConquestSystem.Current;
+            if (conquest == null || villageCatalog == null)
+                return;
+
+            conquest.ResetConquest();
+            foreach (var entry in villageCatalog.Villages)
+            {
+                if (entry != null)
+                    conquest.Register(entry.OriginParty, entry.StartingConquest);
+            }
         }
 
         /// <summary>
@@ -179,6 +198,14 @@ namespace _01.Code.UI
         private void OnEnable()
         {
             Wire();
+            RefreshFeatureAvailability();
+        }
+
+        private void Update()
+        {
+            var isStandby = DayManager.Current != null && DayManager.Current.IsStandby;
+            if (CurrentDay != lastUnlockDay || lastStandbyState != isStandby)
+                RefreshFeatureAvailability();
         }
 
         private void Wire()
@@ -235,8 +262,35 @@ namespace _01.Code.UI
         }
 
         private void Toggle() { if (panelRoot != null && panelRoot.activeSelf) Hide(); else Show(); }
-        private void Show() { if (DayManager.Current == null || !DayManager.Current.IsStandby) return; panelRoot.SetActive(true); panelRoot.transform.SetAsLastSibling(); Refresh(); }
+        private void Show()
+        {
+            if (!CoreLoopFeatureUnlocks.IsExpeditionUnlocked(CurrentDay)
+                || DayManager.Current == null
+                || !DayManager.Current.IsStandby)
+                return;
+
+            panelRoot.SetActive(true);
+            panelRoot.transform.SetAsLastSibling();
+            Refresh();
+        }
+
         private void Hide() { if (panelRoot != null) panelRoot.SetActive(false); }
+
+        private void RefreshFeatureAvailability()
+        {
+            lastUnlockDay = CurrentDay;
+            var isStandby = DayManager.Current != null && DayManager.Current.IsStandby;
+            lastStandbyState = isStandby;
+            var unlocked = CoreLoopFeatureUnlocks.IsExpeditionUnlocked(lastUnlockDay);
+            if (mapButton != null)
+            {
+                mapButton.gameObject.SetActive(unlocked);
+                mapButton.interactable = isStandby;
+            }
+            if (!unlocked || !isStandby)
+                Hide();
+        }
+
         private void SelectVillage(int index) { if (index >= 0 && index < villages.Length) { selectedVillage = index; selectedUnitSlots.Clear(); Refresh(); } }
 
         private void ToggleUnit(int buttonIndex)
@@ -344,7 +398,7 @@ namespace _01.Code.UI
                 village.Conquest = Mathf.Min(100, village.Conquest + gain);
                 villages[selectedVillage] = village;
                 // 장악한 만큼 이 마을에서 오는 습격이 줄어든다. 웨이브가 이 값을 읽는다.
-                VillageConquestState.SetConquest(entry?.OriginParty, village.Conquest);
+                VillageConquestSystem.Current?.SetConquest(entry?.OriginParty, village.Conquest);
             }
             if (costEventChannel != null)
                 costEventChannel.RaiseEvent(new GoldEarnedEvent(reward, GoldChangeSource.General));

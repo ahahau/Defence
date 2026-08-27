@@ -38,7 +38,7 @@ namespace _01.Code.UI
         private void Awake()
         {
             ActiveInstance = this;
-            NestHudStyle.ApplyCombatStatusPanel(panelRoot, titleText, true);
+            DungeonHudStyle.ApplyCombatStatusPanel(panelRoot, titleText, true);
             SetPanelVisible(false);
         }
 

@@ -11,6 +11,33 @@ using UnityEngine.UI;
 
 namespace _01.Code.UI
 {
+    /// <summary>
+    /// 한 번에 모든 운영 기능을 노출하지 않고, 핵심 방어를 익힌 뒤 한 단계씩 연다.
+    /// 현재 일차만 사용하므로 저장 데이터나 씬 참조를 추가하지 않는다.
+    /// </summary>
+    public static class CoreLoopFeatureUnlocks
+    {
+        public const int ArtifactDay = 2;
+        public const int DungeonPowerDay = 3;
+        public const int ExpeditionDay = 4;
+
+        public static bool IsArtifactUnlocked(int day) => day >= ArtifactDay;
+        public static bool IsDungeonPowerUnlocked(int day) => day >= DungeonPowerDay;
+        public static bool IsExpeditionUnlocked(int day) => day >= ExpeditionDay;
+
+        public static string GetPreparationHint(int day)
+        {
+            return day switch
+            {
+                1 => $"첫 방어: 배치와 동선을 익히세요 · DAY {ArtifactDay} 유물 상점 해금",
+                ArtifactDay => "신규 해금 · 떠돌이 상인과 유물",
+                DungeonPowerDay => "신규 해금 · 전투 중 사용할 수 있는 던전 권능",
+                ExpeditionDay => "신규 해금 · 원정과 마을 장악",
+                _ => "마을 장악은 다음 습격 인원을 줄입니다"
+            };
+        }
+    }
+
     public class WaveView : MonoBehaviour
     {
         public static WaveView Current { get; private set; }
@@ -30,6 +57,7 @@ namespace _01.Code.UI
         private bool _hasTutorialHighlightDefaultColor;
         private readonly Color _tutorialHighlightColor = new(1f, 0.82f, 0.22f, 1f);
         private TMP_Text _startButtonLabel;
+        private CanvasGroup _startButtonVisibilityGroup;
         private WaveRuntimeHudView _runtimeHud;
         private bool _ownsRuntimeHud;
         private GameObject _waveBanner;
@@ -46,7 +74,7 @@ namespace _01.Code.UI
         {
             ResolveStartButtonLabel();
             EnsureRuntimeHud();
-            NestHudStyle.ApplyNamedSceneLayout();
+            DungeonHudStyle.ApplyNamedSceneLayout();
             ApplyStartButtonTheme();
             SetStartButtonVisible(true);
             RefreshStartButton();
@@ -149,6 +177,7 @@ namespace _01.Code.UI
             SetStartButtonVisible(true);
             HideWaveProgressHud();
             RefreshStartButton();
+            StartCoroutine(RefreshStartButtonAfterStateSync());
         }
 
         private void HandleGameOver(GameOverEvent evt)
@@ -164,18 +193,18 @@ namespace _01.Code.UI
             if (startButton != null)
                 startButton.transform.SetAsLastSibling();
             RefreshStartButton();
-            StartCoroutine(RefreshStartButtonAfterPortalStateSync());
+            StartCoroutine(RefreshStartButtonAfterStateSync());
         }
 
         private void HandlePortalRemoved(PortalRemovedEvent evt)
         {
             RefreshStartButton();
-            StartCoroutine(RefreshStartButtonAfterPortalStateSync());
+            StartCoroutine(RefreshStartButtonAfterStateSync());
         }
 
-        private IEnumerator RefreshStartButtonAfterPortalStateSync()
+        private IEnumerator RefreshStartButtonAfterStateSync()
         {
-            // Other portal listeners update the wave/day state during the same event dispatch.
+            // Other listeners update the wave/day state during the same event dispatch.
             // Refresh once more after the dispatch so the visible button uses the final state.
             yield return null;
             RefreshStartButton();
@@ -213,8 +242,24 @@ namespace _01.Code.UI
 
         private void SetStartButtonVisible(bool visible)
         {
-            if (startButton != null)
-                startButton.gameObject.SetActive(visible);
+            if (startButton == null)
+                return;
+
+            // Some scenes keep WaveView on the start button itself. Disabling that
+            // GameObject would unsubscribe WaveView before WaveEnded can show it again.
+            if (startButton.gameObject == gameObject)
+            {
+                _startButtonVisibilityGroup ??= startButton.GetComponent<CanvasGroup>();
+                if (_startButtonVisibilityGroup == null)
+                    _startButtonVisibilityGroup = startButton.gameObject.AddComponent<CanvasGroup>();
+
+                _startButtonVisibilityGroup.alpha = visible ? 1f : 0f;
+                _startButtonVisibilityGroup.interactable = visible;
+                _startButtonVisibilityGroup.blocksRaycasts = visible;
+                return;
+            }
+
+            startButton.gameObject.SetActive(visible);
         }
 
         private void ResolveStartButtonLabel()
@@ -263,9 +308,19 @@ namespace _01.Code.UI
             _runtimeHud.BannerGroup.alpha = 1f;
             _runtimeHud.BannerGroup.blocksRaycasts = false;
             _runtimeHud.BannerTitle.text = $"DAY {Mathf.Max(1, day)}  ·  습격 준비";
-            _runtimeHud.BannerSubtitle.text = hasPortal
-                ? $"침입 예정 모험가 {enemyCount}명 · 몬스터와 함정을 배치하세요"
-                : "입구 포털을 설치해 모험가를 유인하세요";
+            if (hasPortal)
+            {
+                var baseEnemyCount = waveManager != null ? waveManager.GetBasePreviewEnemyCount(day) : enemyCount;
+                var conquestReduction = Mathf.Max(0, baseEnemyCount - enemyCount);
+                var conquestText = conquestReduction > 0 ? $" · 마을 장악으로 -{conquestReduction}명" : string.Empty;
+                _runtimeHud.BannerSubtitle.text =
+                    $"침입 예정 {enemyCount}명{conquestText} · 몬스터와 함정을 배치하세요\n"
+                    + CoreLoopFeatureUnlocks.GetPreparationHint(day);
+            }
+            else
+            {
+                _runtimeHud.BannerSubtitle.text = "입구 포털을 설치해 모험가를 유인하세요";
+            }
             _waveBanner.SetActive(true);
             _waveBanner.transform.SetAsLastSibling();
         }
@@ -374,7 +429,13 @@ namespace _01.Code.UI
                 _waveProgressTitle.text = waveManager.IsBossWave ? "영웅 원정대 · 핵심부 결전" : "던전 심장 방어 중";
 
             if (_waveProgressStats != null)
-                _waveProgressStats.text = $"던전 내부 {waveManager.ActiveEnemyCount}  ·  진입 대기 {waveManager.PendingSpawnCount}  ·  처치 {waveManager.KillCount}";
+            {
+                // 머릿수만으로는 그들이 입구에 있는지 금고 앞인지 알 수 없다. 남은 거리를 같이 적는다.
+                var warning = IntrusionThreat.BuildWarning(IntrusionThreat.StepsToTreasury(out _));
+                _waveProgressStats.text =
+                    $"던전 내부 {waveManager.ActiveEnemyCount}  ·  진입 대기 {waveManager.PendingSpawnCount}  ·  처치 {waveManager.KillCount}"
+                    + (string.IsNullOrEmpty(warning) ? string.Empty : $"  ·  {warning}");
+            }
         }
 
         private void ApplyStartButtonTheme()
@@ -456,7 +517,7 @@ namespace _01.Code.UI
         }
     }
 
-    internal static class NestHudStyle
+    internal static class DungeonHudStyle
     {
         private static readonly Color PanelColor = new(0.065f, 0.043f, 0.03f, 0.95f);
         private static readonly Color StrongPanelColor = new(0.085f, 0.048f, 0.032f, 0.97f);
