@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e2c4909e6ff00a4ab13f445808009f9, type: 3}
+  m_Name: Effect_Unit_BattleMage_FlameFall
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Skills.DelayedBlastZoneSkillEffectSO
+  radius: 1.9
+  delay: 0.85
+  flatDamage: 8
+  attackDamageMultiplier: 0.7
+  knockbackDistance: 0.7
+  warningColor: {r: 1, g: 0.25, b: 0.15, a: 0.2}
+  fillColor: {r: 1, g: 0.42, b: 0.12, a: 0.4}
+  explosionColor: {r: 1, g: 0.72, b: 0.25, a: 0.85}
+  shakeDuration: 0.2
+  shakeAmplitude: 0.16
+  shakeFrequency: 25
+  hitStopDuration: 0.045

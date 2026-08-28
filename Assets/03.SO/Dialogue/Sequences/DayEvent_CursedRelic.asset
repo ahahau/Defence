@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47b6fbf626d84142a85744b0f9e1e3dc, type: 3}
+  m_Name: DayEvent_CursedRelic
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Dialogue.DialogueSequenceSO
+  displayTitle: "\uD30C\uBB3B\uD78C \uC720\uBB3C"
+  lines:
+  - speakerName: "\uBC1C\uAD74\uBC18"
+    text: "\uBD09\uC778\uB41C \uC720\uBB3C\uC744 \uD30C\uB0C8\uC2B5\uB2C8\uB2E4.
+      \uD314\uBA74 \uAC12\uC774 \uB098\uAC00\uC9C0\uB9CC, \uBD80\uD558\uB4E4\uC740
+      \uBD88\uAE38\uD558\uB2E4\uBA70 \uAEBC\uB9BD\uB2C8\uB2E4."
+    enterActions: []
+    choices:
+    - text: "\uC0C1\uC778\uC5D0\uAC8C \uB118\uAE34\uB2E4"
+      effectSummary: "\uACE8\uB4DC +70 / \uBBFC\uC2EC -10"
+      actions:
+      - {fileID: 11400000, guid: 90ea152d8d1bbd04984e8e540432cfd7, type: 2}
+      - {fileID: 11400000, guid: d3d4b6154371449f976ea6cf09b37fe9, type: 2}
+      nextSequence: {fileID: 0}
+      nextLineIndex: -1
+      routes: []
+    - text: "\uBD09\uC778\uD574 \uBB3B\uC5B4\uB454\uB2E4"
+      effectSummary: "\uACE8\uB4DC -15 / \uBBFC\uC2EC +8"
+      actions:
+      - {fileID: 11400000, guid: 6140ecac27ac83a4eb3076504304f26b, type: 2}
+      - {fileID: 11400000, guid: 6417ab2e2c004248958113df7cba4a78, type: 2}
+      nextSequence: {fileID: 0}
+      nextLineIndex: -1
+      routes: []

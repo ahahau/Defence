@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2c05617eccf4864aa5672963a8c7578, type: 3}
+  m_Name: Ultimate_Unit_Pikeman_PiercingFormation
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Skills.SkillDataSO
+  <DisplayName>k__BackingField: "\uAD00\uD1B5 \uC9C4\uD615"
+  <Description>k__BackingField: "\uBAA8\uB4E0 \uC801\uC744 \uAD00\uD1B5\uD558\uACE0
+    \uC774\uB3D9\uACFC \uBC29\uC5B4\uB97C \uBB34\uB108\uB728\uB9BD\uB2C8\uB2E4."
+  <Icon>k__BackingField: {fileID: 0}
+  <Cooldown>k__BackingField: 0
+  <IsUltimate>k__BackingField: 1
+  <Effects>k__BackingField:
+  - {fileID: 11400000, guid: 8098bb202db543c48a4557f4bbf0ce4c, type: 2}
+  - {fileID: 11400000, guid: e9d239b312e49614c99700d0e17e9870, type: 2}

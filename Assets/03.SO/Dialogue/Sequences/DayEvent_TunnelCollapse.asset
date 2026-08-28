@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47b6fbf626d84142a85744b0f9e1e3dc, type: 3}
+  m_Name: DayEvent_TunnelCollapse
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Dialogue.DialogueSequenceSO
+  displayTitle: "\uBB34\uB108\uC9C4 \uAC31\uB3C4"
+  lines:
+  - speakerName: "\uAD74\uCC29 \uB2F4\uB2F9"
+    text: "\uB358\uC804 \uC544\uB798 \uAC31\uB3C4\uAC00 \uB0B4\uB824\uC549\uC558\uC2B5\uB2C8\uB2E4.
+      \uBA54\uC6B0\uC790\uB2C8 \uC778\uB825\uC774 \uB4E4\uACE0, \uB450\uC790\uB2C8
+      \uCE68\uC785\uB85C\uAC00 \uD558\uB098 \uB298\uC5B4\uB0A9\uB2C8\uB2E4."
+    enterActions: []
+    choices:
+    - text: "\uC778\uBD80\uB97C \uBD99\uC5EC \uBA54\uC6B4\uB2E4"
+      effectSummary: "\uACE8\uB4DC -45 / \uBBFC\uC2EC +6"
+      actions:
+      - {fileID: 11400000, guid: 88faa2dcd5c82a74dbda6510914648ee, type: 2}
+      - {fileID: 11400000, guid: 31079dbbd8f2da548a935e323280294e, type: 2}
+      nextSequence: {fileID: 0}
+      nextLineIndex: -1
+      routes: []
+    - text: "\uADF8\uB300\uB85C \uB454\uB2E4"
+      effectSummary: "\uBBFC\uC2EC -8"
+      actions:
+      - {fileID: 11400000, guid: b017c5aea5b8b2b45ac011076d5f0daf, type: 2}
+      nextSequence: {fileID: 0}
+      nextLineIndex: -1
+      routes: []

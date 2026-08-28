@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2c05617eccf4864aa5672963a8c7578, type: 3}
+  m_Name: Ultimate_Enemy_Sword_KnightCharge
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Skills.SkillDataSO
+  <DisplayName>k__BackingField: "\uAE30\uC0AC\uC758 \uC9C4\uACA9"
+  <Description>k__BackingField: "\uAC15\uD55C \uCDA9\uACA9\uC73C\uB85C \uC218\uBE44\uB300
+    \uC9C4\uD615\uC744 \uD769\uB728\uB9BD\uB2C8\uB2E4."
+  <Icon>k__BackingField: {fileID: 0}
+  <Cooldown>k__BackingField: 0
+  <IsUltimate>k__BackingField: 1
+  <Effects>k__BackingField:
+  - {fileID: 11400000, guid: e034cc78441a2d9428c8155acf54afe9, type: 2}
