@@ -108,6 +108,10 @@ namespace _01.Code.Units
         // 명령만 바뀌었을 때 특성 보정까지 걷혔다 다시 붙는 일이 없어야 한다.
         private static readonly object TraitStatKey = new();
         private static readonly object CommandStatKey = new();
+        private static readonly object ArtifactStatKey = new();
+        private static readonly object FatigueStatKey = new();
+        private static readonly object InjuryStatKey = new();
+        private static readonly object PersonalityStatKey = new();
 
         protected override void Awake()
         {
@@ -283,8 +287,10 @@ namespace _01.Code.Units
 
         public void ApplyArtifactBonus(ArtifactStatBonus bonus)
         {
-            Combatant.SetArtifactAttackModifier(bonus.AttackDamage, bonus.AttackDamageMultiplier);
-            Combatant.MultiplyAttackInterval(bonus.AttackIntervalMultiplier / appliedArtifactBonus.AttackIntervalMultiplier);
+            // 공격 쪽은 유물 출처로 갈아 끼우면 그만이라 이전에 얼마를 걸었는지 몰라도 된다.
+            // 최대 체력만 Health가 아직 자기 값을 들고 있어 차액을 직접 계산한다.
+            Combatant.SetAttackModifier(ArtifactStatKey, bonus.AttackDamage, bonus.AttackDamageMultiplier);
+            Combatant.SetAttackIntervalModifier(ArtifactStatKey, bonus.AttackIntervalMultiplier);
             Health.AddMaxHealth(bonus.MaxHealth - appliedArtifactBonus.MaxHealth, true);
             appliedArtifactBonus = bonus;
         }
@@ -411,11 +417,21 @@ namespace _01.Code.Units
                 _ => 1f
             };
 
-            combatant.SetConditionModifiers(
-                fatigueDamageMultiplier * injuryDamageMultiplier * traitDamageMultiplier * personalityDamageMultiplier * commandDamageMultiplier,
-                fatigueIntervalMultiplier * injuryIntervalMultiplier * traitIntervalMultiplier * personalityIntervalMultiplier * commandIntervalMultiplier);
+            // 예전에는 다섯을 미리 곱해 하나의 숫자로 넘겼다. 그러면 어느 출처가 얼마를
+            // 기여했는지 알 수 없어, 화면에 이유를 보여 줄 수도 하나만 걷어낼 수도 없었다.
+            ApplyConditionMultiplier(FatigueStatKey, fatigueDamageMultiplier, fatigueIntervalMultiplier);
+            ApplyConditionMultiplier(InjuryStatKey, injuryDamageMultiplier, injuryIntervalMultiplier);
+            ApplyConditionMultiplier(TraitStatKey, traitDamageMultiplier, traitIntervalMultiplier);
+            ApplyConditionMultiplier(PersonalityStatKey, personalityDamageMultiplier, personalityIntervalMultiplier);
+            ApplyConditionMultiplier(CommandStatKey, commandDamageMultiplier, commandIntervalMultiplier);
             combatant.SetConditionCriticalChanceBonus(
                 personality == UnitPersonality.Perfectionist ? perfectionistCriticalChanceBonus : 0f);
+        }
+
+        private void ApplyConditionMultiplier(object key, float damageMultiplier, float attackIntervalMultiplier)
+        {
+            combatant.SetAttackModifier(key, 0f, damageMultiplier);
+            combatant.SetAttackIntervalModifier(key, attackIntervalMultiplier);
         }
 
         private float ResolveCommandFatigueMultiplier()

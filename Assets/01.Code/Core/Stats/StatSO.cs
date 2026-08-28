@@ -31,15 +31,35 @@ namespace _01.Code.Core.Stats
         [SerializeField] private float minValue;
         [SerializeField] private float maxValue = 9999f;
 
-        private readonly Dictionary<object, float> _modifierByKey = new();
-        private float _modifierTotal;
+        private readonly Dictionary<object, Modifier> _modifierByKey = new();
+        private float _additiveTotal;
+        private float _multiplierProduct = 1f;
+
+        /// <summary>한 출처가 이 스탯에 미치는 영향. 더하는 몫과 곱하는 몫을 같이 들고 있다.</summary>
+        private readonly struct Modifier
+        {
+            public readonly float Additive;
+            public readonly float Multiplier;
+
+            public Modifier(float additive, float multiplier)
+            {
+                Additive = additive;
+                Multiplier = multiplier;
+            }
+        }
 
         public string Description => description;
         public float MinValue => minValue;
         public float MaxValue => maxValue;
 
-        /// <summary>기본값에 모든 가감치를 더하고 상·하한으로 자른 최종값.</summary>
-        public float Value => Mathf.Clamp(baseValue + _modifierTotal, minValue, maxValue);
+        /// <summary>
+        /// 기본값에 가감치를 더한 뒤 배율을 곱하고 상·하한으로 자른 최종값.
+        ///
+        /// 순서가 (기본+가감치)×배율인 이유는 기존 전투 계산이 그 순서였기 때문이다 —
+        /// "(공격력 + 아티팩트 보너스) × 아티팩트 배율 × 컨디션 배율". 순서를 바꾸면
+        /// 수치가 전부 미세하게 틀어진다.
+        /// </summary>
+        public float Value => Mathf.Clamp((baseValue + _additiveTotal) * _multiplierProduct, minValue, maxValue);
 
         public int IntValue => Mathf.RoundToInt(Value);
 
@@ -55,25 +75,49 @@ namespace _01.Code.Core.Stats
         }
 
         /// <summary>같은 출처가 두 번 붙지 않는다. 중복 호출이 값을 두 배로 만들지 않게.</summary>
-        public void AddModifier(object key, float value)
+        public void AddModifier(object key, float value) => AddModifier(key, value, 1f);
+
+        /// <summary>
+        /// 곱하는 보정. 배율은 가감치로 옮겨 적을 수 없다 — 곱할 대상이
+        /// 다른 출처가 붙고 떨어질 때마다 바뀌기 때문에, 환산해 두면 그 시점 값에 못이 박힌다.
+        /// </summary>
+        public void AddMultiplier(object key, float multiplier) => AddModifier(key, 0f, multiplier);
+
+        public void AddModifier(object key, float additive, float multiplier)
         {
             if (key == null || _modifierByKey.ContainsKey(key))
                 return;
 
             var previous = Value;
-            _modifierByKey.Add(key, value);
-            _modifierTotal += value;
+            _modifierByKey.Add(key, new Modifier(additive, multiplier));
+            Recompute();
             RaiseIfChanged(Value, previous);
         }
 
+        /// <summary>
+        /// 이 출처의 보정을 최신값으로 갈아 끼운다. 피로·명령처럼 자주 다시 계산되는 쪽을 위한 창구다 —
+        /// 뗐다 붙이면 그 사이에 값이 한 번 튀어 ValueChanged가 두 번 나간다.
+        /// </summary>
+        public void SetModifier(object key, float additive, float multiplier)
+        {
+            if (key == null)
+                return;
+
+            var previous = Value;
+            _modifierByKey[key] = new Modifier(additive, multiplier);
+            Recompute();
+            RaiseIfChanged(Value, previous);
+        }
+
+        /// <summary>이 출처가 붙여 둔 것을 가감치·배율 가릴 것 없이 통째로 걷는다.</summary>
         public void RemoveModifier(object key)
         {
-            if (key == null || !_modifierByKey.TryGetValue(key, out var value))
+            if (key == null || !_modifierByKey.ContainsKey(key))
                 return;
 
             var previous = Value;
             _modifierByKey.Remove(key);
-            _modifierTotal -= value;
+            Recompute();
             RaiseIfChanged(Value, previous);
         }
 
@@ -86,8 +130,25 @@ namespace _01.Code.Core.Stats
 
             var previous = Value;
             _modifierByKey.Clear();
-            _modifierTotal = 0f;
+            Recompute();
             RaiseIfChanged(Value, previous);
+        }
+
+        /// <summary>
+        /// 총합을 통째로 다시 센다. 가감치는 ±로 누적해도 정확하지만 배율은 그렇지 않다 —
+        /// 뗄 때 나누면 부동소수 오차가 남아, 붙였다 떼길 반복하면 1로 돌아오지 않는다.
+        /// 출처가 많아야 대여섯이라 다시 세는 편이 싸고 정확하다.
+        /// </summary>
+        private void Recompute()
+        {
+            _additiveTotal = 0f;
+            _multiplierProduct = 1f;
+
+            foreach (var modifier in _modifierByKey.Values)
+            {
+                _additiveTotal += modifier.Additive;
+                _multiplierProduct *= modifier.Multiplier;
+            }
         }
 
         /// <summary>

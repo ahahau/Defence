@@ -42,10 +42,6 @@ namespace _01.Code.Combat
         private bool _isAttacking;
         private bool _isPaused;
         private float _attackTimer;
-        private int artifactAttackDamageBonus;
-        private float artifactAttackDamageMultiplier = 1f;
-        private float conditionAttackDamageMultiplier = 1f;
-        private float conditionAttackIntervalMultiplier = 1f;
         private float conditionCriticalChanceBonus;
         private GameEventChannelSO artifactEventChannel;
         private EnemyStatusController enemyStatusController;
@@ -95,18 +91,14 @@ namespace _01.Code.Combat
         /// </summary>
         public void SetDefenseAndEvasionBonus(object key, float defenseBonus, float evasionBonus)
         {
-            ApplyKeyedBonus(StatIndex.Defense, key, defenseBonus);
-            ApplyKeyedBonus(StatIndex.EvasionChance, key, evasionBonus);
+            SetKeyedModifier(StatIndex.Defense, key, defenseBonus, 1f);
+            SetKeyedModifier(StatIndex.EvasionChance, key, evasionBonus, 1f);
         }
 
-        private void ApplyKeyedBonus(int statIndex, object key, float value)
+        private void SetKeyedModifier(int statIndex, object key, float additive, float multiplier)
         {
-            if (key == null || !TryGetStat(statIndex, out var stat))
-                return;
-
-            stat.RemoveModifier(key);
-            if (!Mathf.Approximately(value, 0f))
-                stat.AddModifier(key, value);
+            if (key != null && TryGetStat(statIndex, out var stat))
+                stat.SetModifier(key, additive, multiplier);
         }
 
         public void AddAttackDamage(int amount)
@@ -147,16 +139,22 @@ namespace _01.Code.Combat
                 evasionChance = value;
         }
 
-        public void SetArtifactAttackModifier(int damageBonus, float damageMultiplier)
-        {
-            artifactAttackDamageBonus = damageBonus;
-            artifactAttackDamageMultiplier = Mathf.Max(0.05f, damageMultiplier);
-        }
+        /// <summary>
+        /// 출처별 공격력 보정. 더하는 몫과 곱하는 몫을 같이 넘긴다 —
+        /// 유물 하나가 "+2 그리고 x1.2"를 동시에 주므로, 둘을 한 출처로 묶어야 뗄 때도 같이 떨어진다.
+        /// </summary>
+        public void SetAttackModifier(object key, float damageBonus, float damageMultiplier) =>
+            SetKeyedModifier(StatIndex.AttackDamage, key, damageBonus, Mathf.Max(0.05f, damageMultiplier));
 
-        public void SetConditionModifiers(float damageMultiplier, float attackIntervalMultiplier)
+        /// <summary>출처별 공격 주기 배율. 1보다 크면 느려진다.</summary>
+        public void SetAttackIntervalModifier(object key, float multiplier) =>
+            SetKeyedModifier(StatIndex.AttackInterval, key, 0f, Mathf.Max(0.05f, multiplier));
+
+        /// <summary>이 출처가 붙여 둔 보정을 스탯에서 걷는다.</summary>
+        public void RemoveModifier(int statIndex, object key)
         {
-            conditionAttackDamageMultiplier = Mathf.Max(0.05f, damageMultiplier);
-            conditionAttackIntervalMultiplier = Mathf.Max(0.05f, attackIntervalMultiplier);
+            if (key != null && TryGetStat(statIndex, out var stat))
+                stat.RemoveModifier(key);
         }
 
         public void SetConditionCriticalChanceBonus(float bonus)
@@ -167,17 +165,6 @@ namespace _01.Code.Combat
         public void SetArtifactEventChannel(GameEventChannelSO eventChannel)
         {
             artifactEventChannel = eventChannel;
-        }
-
-        public void MultiplyAttackInterval(float multiplier)
-        {
-            if (multiplier <= 0f || Mathf.Approximately(multiplier, 1f))
-                return;
-
-            if (TryGetStat(StatIndex.AttackInterval, out var stat))
-                stat.BaseValue = Mathf.Max(0.05f, stat.BaseValue * multiplier);
-            else
-                attackInterval = Mathf.Max(0.05f, attackInterval * multiplier);
         }
 
         public void SetAttackInterval(float value)
@@ -350,10 +337,7 @@ namespace _01.Code.Combat
 
         private int ResolveAttackDamage(Combatant target, out bool isCritical)
         {
-            var modifiedDamage = (ReadStat(StatIndex.AttackDamage, attackDamage) + artifactAttackDamageBonus)
-                                 * artifactAttackDamageMultiplier
-                                 * conditionAttackDamageMultiplier;
-            var damage = Mathf.Max(1, Mathf.RoundToInt(modifiedDamage));
+            var damage = ResolveAttackDamagePreview();
             if (artifactEventChannel != null)
             {
                 var evt = new CombatDamageCalculatedEvent(this, target, damage);
@@ -381,13 +365,8 @@ namespace _01.Code.Combat
             attackStatusEffect.TryApplyTo(target);
         }
 
-        private int ResolveAttackDamagePreview()
-        {
-            var modifiedDamage = (ReadStat(StatIndex.AttackDamage, attackDamage) + artifactAttackDamageBonus)
-                                 * artifactAttackDamageMultiplier
-                                 * conditionAttackDamageMultiplier;
-            return Mathf.Max(1, Mathf.RoundToInt(modifiedDamage));
-        }
+        private int ResolveAttackDamagePreview() =>
+            Mathf.Max(1, Mathf.RoundToInt(ReadStat(StatIndex.AttackDamage, attackDamage)));
 
         private int CalculateDamageAfterDefense(int damage, Combatant target)
         {
@@ -408,8 +387,9 @@ namespace _01.Code.Combat
             var multiplier = statusController != null
                 ? statusController.GetAttackIntervalMultiplier()
                 : 1f;
-            var baseInterval = ReadStat(StatIndex.AttackInterval, attackInterval);
-            return Mathf.Max(0.05f, baseInterval * multiplier * conditionAttackIntervalMultiplier);
+            // 상태이상만 여기 남는다. 지속시간이 있어 만료 시점에 정확히 걷어내야 하는데
+            // 지금 상태이상 쪽에 그 훅이 없어, 매번 살아 있는 효과를 훑는 편이 안전하다.
+            return Mathf.Max(0.05f, ReadStat(StatIndex.AttackInterval, attackInterval) * multiplier);
         }
 
         private EnemyStatusController ResolveEnemyStatusController()
