@@ -545,6 +545,11 @@ namespace _01.Code.MapCreateSystem
             DangerLevel += amount;
         }
 
+        public void RestoreDanger(int amount)
+        {
+            DangerLevel = Mathf.Max(0, amount);
+        }
+
         private void SetVisualColor(Color color)
         {
             if (spriteRenderer == null)

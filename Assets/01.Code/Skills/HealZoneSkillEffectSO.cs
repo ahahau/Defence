@@ -25,11 +25,13 @@ namespace _01.Code.Skills
             SkillZoneVisual.AddPulse(renderer);
 
             var runtime = renderer.gameObject.AddComponent<HealZoneRuntime>();
-            runtime.Initialize(caster.Battlefield, caster.Team, radius, duration, tickInterval, tickHeal, damageTakenMultiplier);
+            runtime.Initialize(caster, caster.Battlefield, caster.Team, radius, duration, tickInterval, tickHeal, damageTakenMultiplier);
         }
 
         private class HealZoneRuntime : MonoBehaviour
         {
+            private const string OwnershipSlot = "HealZone";
+            private int _ownerId;
             private NodeBattlefield _battlefield;
             private BattleTeam _team;
             private float _radius;
@@ -40,6 +42,7 @@ namespace _01.Code.Skills
             private float _damageTakenMultiplier;
 
             public void Initialize(
+                BattleAgent caster,
                 NodeBattlefield battlefield,
                 BattleTeam team,
                 float radius,
@@ -56,7 +59,11 @@ namespace _01.Code.Skills
                 _tickTimer = 0f;
                 _tickHeal = tickHeal;
                 _damageTakenMultiplier = damageTakenMultiplier;
+                _ownerId = SkillZoneOwnership.Replace(caster, OwnershipSlot, gameObject);
             }
+
+            private void OnDestroy() =>
+                SkillZoneOwnership.Release(_ownerId, OwnershipSlot, gameObject);
 
             private void Update()
             {

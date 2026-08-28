@@ -1,9 +1,9 @@
-Shader "Unknow/Nest Grid Overlay"
+Shader "Unknow/Dungeon Grid Overlay"
 {
     Properties
     {
         _GridColor ("Grid Color", Color) = (0.62, 0.48, 0.88, 0.34)
-        _CenterColor ("Nest Slot Color", Color) = (0.98, 0.44, 0.12, 0.34)
+        _CenterColor ("Core Slot Color", Color) = (0.98, 0.44, 0.12, 0.34)
         _GridSize ("Grid Size", Vector) = (6, 6, 0, 0)
         _CentralRect ("Central Slot", Vector) = (0.3333, 0.3333, 0.6667, 0.6667)
         _LineWidth ("Line Width", Range(0.004, 0.12)) = 0.025
@@ -21,7 +21,7 @@ Shader "Unknow/Nest Grid Overlay"
 
         Pass
         {
-            Name "NestGridOverlay"
+            Name "DungeonGridOverlay"
             Tags { "LightMode" = "Universal2D" }
 
             Blend SrcAlpha OneMinusSrcAlpha
@@ -93,7 +93,7 @@ Shader "Unknow/Nest Grid Overlay"
                 float centerInside = RectMask(uv, _CentralRect) * hasCenter;
                 gridLine *= 1.0 - centerInside;
 
-                // Signed-distance outline around the reserved dragon nest slot.
+                // Signed-distance outline around the reserved dungeon core slot.
                 float2 center = (_CentralRect.xy + _CentralRect.zw) * 0.5;
                 float2 halfSize = max((_CentralRect.zw - _CentralRect.xy) * 0.5, 0.0001);
                 float2 q = abs(uv - center) - halfSize;

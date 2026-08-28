@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13a7129936dd488895088d04b1e793ac, type: 3}
   m_Name: SwordEnemy
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Enemies.EnemyDataSO
-  <Grade>k__BackingField: 1
+  <Grade>k__BackingField: 4
   <BoardSprite>k__BackingField: {fileID: 4723107735738678597, guid: ab745de3f39d5fb4cb696fb8e47b56d4, type: 3}
   <Defense>k__BackingField: 2
   <EvasionChance>k__BackingField: 0.05

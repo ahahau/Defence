@@ -419,16 +419,16 @@ namespace _01.Code.MapCreateSystem
             {
                 if (_focusedGridMaterial == null)
                 {
-                    var template = Resources.Load<Material>("Materials/NestGridOverlay");
+                    var template = Resources.Load<Material>("Materials/DungeonGridOverlay");
                     if (template == null)
                     {
-                        Debug.LogError("NestGridOverlay material is missing from Resources/Materials.");
+                        Debug.LogError("DungeonGridOverlay material is missing from Resources/Materials.");
                         return null;
                     }
 
                     _focusedGridMaterial = new Material(template)
                     {
-                        name = "Nest Grid Overlay (Runtime)",
+                        name = "Dungeon Grid Overlay (Runtime)",
                         hideFlags = HideFlags.HideAndDontSave
                     };
                 }

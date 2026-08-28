@@ -431,7 +431,8 @@ namespace _01.Code.UI
             if (_waveProgressStats != null)
             {
                 // 머릿수만으로는 그들이 입구에 있는지 금고 앞인지 알 수 없다. 남은 거리를 같이 적는다.
-                var warning = IntrusionThreat.BuildWarning(IntrusionThreat.StepsToTreasury(out _));
+                var steps = IntrusionThreat.StepsToObjective(out _, out var objectiveKind);
+                var warning = IntrusionThreat.BuildWarning(steps, objectiveKind);
                 _waveProgressStats.text =
                     $"던전 내부 {waveManager.ActiveEnemyCount}  ·  진입 대기 {waveManager.PendingSpawnCount}  ·  처치 {waveManager.KillCount}"
                     + (string.IsNullOrEmpty(warning) ? string.Empty : $"  ·  {warning}");
@@ -785,7 +786,7 @@ namespace _01.Code.UI
 
         private static void EnsureAccent(GameObject root, Color color, bool horizontal)
         {
-            const string accentName = "NestHudAccent";
+            const string accentName = "CoreHudAccent";
             var rect = SceneUiRegistry.GetDirectChild<RectTransform>(root.transform, accentName);
             if (rect == null)
                 return;

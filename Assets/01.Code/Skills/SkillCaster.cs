@@ -1,6 +1,6 @@
 using _01.Code.BT;
 using _01.Code.Combat;
-using DG.Tweening;
+using MoreMountains.Feedbacks;
 using UnityEngine;
 
 namespace _01.Code.Skills
@@ -21,16 +21,20 @@ namespace _01.Code.Skills
         [SerializeField] private Color ultimateFlashColor = new(1f, 0.85f, 0.35f, 1f);
         [SerializeField, Min(0f)] private float castFlashDuration = 0.14f;
         [SerializeField, Min(0f)] private float castPunchScale = 0.14f;
+        [SerializeField, Min(0f)] private float ultimateShakeDuration = 0.18f;
+        [SerializeField, Min(0f)] private float ultimateShakeAmplitude = 0.1f;
+        [SerializeField, Min(0f)] private float ultimateHitStopDuration = 0.035f;
 
         private float _cooldownTimer;
         private bool _ultimateUsed;
         private NodeBattlefield _lastBattlefield;
         private SpriteRenderer[] _spriteRenderers;
-        private Color[] _originalColors;
-        private Sequence _castFlashSequence;
+        private MMF_Player _skillCastPlayer;
+        private MMF_Player _ultimateCastPlayer;
 
         public bool HasReadySkill =>
-            (ultimate != null && !_ultimateUsed) || (skill != null && _cooldownTimer <= 0f);
+            _cooldownTimer <= 0f
+            && ((ultimate != null && !_ultimateUsed) || skill != null);
 
         /// <summary>스킬 충전 비율(0=방금 사용, 1=사용 가능). 스킬 바 표시용.</summary>
         public float SkillChargeRatio
@@ -51,14 +55,13 @@ namespace _01.Code.Skills
             if (barsView == null) barsView = GetComponentInChildren<CombatBarsView>();
 
             _spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
-            _originalColors = new Color[_spriteRenderers.Length];
-            for (var i = 0; i < _spriteRenderers.Length; i++)
-                _originalColors[i] = _spriteRenderers[i] != null ? _spriteRenderers[i].color : Color.white;
+            BuildFeelPlayers();
         }
 
         private void OnDisable()
         {
-            _castFlashSequence?.Kill();
+            _skillCastPlayer?.StopFeedbacks();
+            _ultimateCastPlayer?.StopFeedbacks();
         }
 
         private void Update()
@@ -82,17 +85,20 @@ namespace _01.Code.Skills
         /// <summary>준비된 스킬을 시전한다(궁극기 우선). 시전했으면 true.</summary>
         public bool TryCast()
         {
-            if (agent == null || !agent.IsAlive)
+            if (agent == null || !agent.IsAlive || _cooldownTimer > 0f)
                 return false;
 
             if (ultimate != null && !_ultimateUsed)
             {
                 Execute(ultimate);
                 _ultimateUsed = true;
+                // 궁극기 직후 일반 스킬이 다음 자동 검사에서 연달아 발동하지 않게
+                // 동일한 일반 스킬 주기를 공유한다.
+                _cooldownTimer = skill != null ? skill.Cooldown : 0f;
                 return true;
             }
 
-            if (skill != null && _cooldownTimer <= 0f)
+            if (skill != null)
             {
                 Execute(skill);
                 _cooldownTimer = skill.Cooldown;
@@ -112,35 +118,91 @@ namespace _01.Code.Skills
         /// <summary>시전 순간 캐스터 강조 — 색 플래시 + 스케일 팝. 궁극기는 금색으로 더 크게.</summary>
         private void PlayCastVisual(bool isUltimate)
         {
-            if (castFlashDuration <= 0f || _spriteRenderers == null)
+            var player = isUltimate ? _ultimateCastPlayer : _skillCastPlayer;
+            player?.PlayFeedbacks(transform.position);
+        }
+
+        private void BuildFeelPlayers()
+        {
+            if (_spriteRenderers == null || _spriteRenderers.Length == 0)
                 return;
 
-            var flashColor = isUltimate ? ultimateFlashColor : castFlashColor;
-            var punch = castPunchScale * (isUltimate ? 1.6f : 1f);
-
-            _castFlashSequence?.Kill();
-            _castFlashSequence = DOTween.Sequence().SetLink(gameObject);
-
-            var punchPlayed = false;
+            Transform feedbackTarget = transform;
             for (var i = 0; i < _spriteRenderers.Length; i++)
             {
-                var spriteRenderer = _spriteRenderers[i];
-                // 전투 바 등 오버레이(sortingOrder 40+)는 제외 — DamageFeedback과 같은 규약.
-                if (spriteRenderer == null || spriteRenderer.sortingOrder >= 40)
+                var candidate = _spriteRenderers[i];
+                if (candidate == null || candidate.sortingOrder >= 40)
                     continue;
 
-                var originalColor = _originalColors[i];
-                _castFlashSequence.Join(spriteRenderer.DOColor(flashColor, castFlashDuration));
-                _castFlashSequence.Insert(castFlashDuration, spriteRenderer.DOColor(originalColor, castFlashDuration));
+                feedbackTarget = candidate.transform;
+                break;
+            }
 
-                if (punch > 0f && !punchPlayed)
+            _skillCastPlayer = BuildFeelPlayer(
+                "Feel Skill Cast", feedbackTarget, castFlashColor, castFlashDuration,
+                castPunchScale, false);
+            _ultimateCastPlayer = BuildFeelPlayer(
+                "Feel Ultimate Cast", feedbackTarget, ultimateFlashColor, castFlashDuration * 1.6f,
+                castPunchScale * 1.75f, true);
+        }
+
+        private MMF_Player BuildFeelPlayer(
+            string playerName,
+            Transform feedbackTarget,
+            Color flashColor,
+            float duration,
+            float punchScale,
+            bool isUltimate)
+        {
+            var host = new GameObject(playerName);
+            host.transform.SetParent(transform, false);
+
+            var player = host.AddComponent<MMF_Player>();
+            player.InitializationMode = MMFeedbacks.InitializationModes.Script;
+            player.AutoPlayOnStart = false;
+            player.AutoPlayOnEnable = false;
+
+            var pulse = player.AddFeedback(typeof(MMF_DamagePulse)) as MMF_DamagePulse;
+            if (pulse != null)
+            {
+                pulse.Target = feedbackTarget;
+                pulse.SpriteRenderers = _spriteRenderers;
+                pulse.FlashColor = flashColor;
+                pulse.Duration = Mathf.Max(0.08f, duration);
+                pulse.ShakeDistance = isUltimate ? 0.055f : 0.018f;
+                pulse.PunchScale = punchScale;
+                pulse.RotationAngle = isUltimate ? 7f : 2.5f;
+                pulse.Timing.CooldownDuration = 0.05f;
+                pulse.Timing.TimescaleMode = TimescaleModes.Unscaled;
+            }
+
+            if (isUltimate)
+            {
+                FeelCombatSceneSetup.EnsureCameraShaker();
+
+                var shake = player.AddFeedback(typeof(MMF_CameraShake)) as MMF_CameraShake;
+                if (shake != null)
                 {
-                    punchPlayed = true;
-                    var target = spriteRenderer.transform;
-                    target.DOComplete();
-                    _castFlashSequence.Join(target.DOPunchScale(Vector3.one * punch, castFlashDuration * 2f, 1, 0.5f));
+                    shake.CameraShakeProperties = new MMCameraShakeProperties(
+                        ultimateShakeDuration, 0f, 24f,
+                        ultimateShakeAmplitude, ultimateShakeAmplitude, 0f);
+                    shake.Timing.TimescaleMode = TimescaleModes.Unscaled;
+                }
+
+                if (ultimateHitStopDuration > 0f)
+                {
+                    var hitStop = player.AddFeedback(typeof(MMF_HitStop)) as MMF_HitStop;
+                    if (hitStop != null)
+                    {
+                        hitStop.Duration = ultimateHitStopDuration;
+                        hitStop.IgnoreGlobalCooldown = true;
+                        hitStop.Timing.TimescaleMode = TimescaleModes.Unscaled;
+                    }
                 }
             }
+
+            player.Initialization();
+            return player;
         }
     }
 }

@@ -1,6 +1,5 @@
 using DG.Tweening;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace _01.Code.Combat
@@ -8,12 +7,6 @@ namespace _01.Code.Combat
     [RequireComponent(typeof(Health))]
     public class DamageFeedback : MonoBehaviour
     {
-        [SerializeField] private Color bloomColor = new(1f, 0.12f, 0.08f, 1f);
-        [SerializeField] private float bloomDuration = 0.12f;
-        [SerializeField, Min(0f)] private float impactDuration = 0.18f;
-        [SerializeField, Min(0f)] private float impactShakeDistance = 0.08f;
-        [SerializeField, Min(0f)] private float impactScaleAmount = 0.12f;
-        [SerializeField, Min(0f)] private float impactRotationAngle = 5f;
         [SerializeField] private float textFloatDistance = 0.45f;
         [SerializeField] private float textDuration = 0.55f;
         [SerializeField] private int textSortingOrder = 60;
@@ -21,13 +14,10 @@ namespace _01.Code.Combat
         [SerializeField] private Color criticalTextColor = new(1f, 0.72f, 0.1f, 1f);
         [SerializeField, Min(1f), Tooltip("크리티컬 데미지 텍스트 크기 배율.")]
         private float criticalTextScale = 1.5f;
-        [SerializeField, Min(1f), Tooltip("크리티컬 시 임팩트 모션(흔들림/펀치) 배율.")]
-        private float criticalImpactScale = 1.6f;
         [Header("Miss")]
         [SerializeField] private Color missTextColor = new(0.85f, 0.85f, 0.85f, 1f);
         [Header("Heal")]
         [SerializeField] private Color healTextColor = new(0.42f, 1f, 0.45f, 1f);
-        [SerializeField] private Color healBloomColor = new(0.35f, 1f, 0.4f, 1f);
         [SerializeField] private Color healParticleColor = new(0.4f, 1f, 0.5f, 1f);
         [SerializeField, Min(1)] private int healParticleBurstCount = 10;
         [SerializeField, Min(0f), Tooltip("잦은 소량 힐(자연회복 등)을 하나의 텍스트로 합산하는 시간 창.")]
@@ -35,15 +25,11 @@ namespace _01.Code.Combat
         [SerializeField] private TextMesh damageTextPrefab;
         [SerializeField] private ParticleSystem hitParticles;
         [SerializeField] private Health health;
-        [SerializeField] private SpriteRenderer[] spriteRenderers = new SpriteRenderer[0];
         [SerializeField] private Color hitParticleColor = new(1f, 0.18f, 0.06f, 1f);
         [SerializeField, Min(1)] private int hitParticleBurstCount = 18;
         [SerializeField, Min(0f)] private float hitParticleYOffset = 0.35f;
         [SerializeField] private int hitParticleSortingOrder = 80;
 
-        private Color[] _originalColors;
-        private Sequence _bloomSequence;
-        private Sequence _impactSequence;
         private ParticleSystem _healParticles;
         private int _pendingHealAmount;
         private Coroutine _healTextRoutine;
@@ -52,15 +38,7 @@ namespace _01.Code.Combat
             if (health == null)
                 health = GetComponent<Health>();
 
-            if (spriteRenderers == null || spriteRenderers.Length == 0)
-                spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
-
             EnsureDefaultHitParticles();
-
-            _originalColors = new Color[spriteRenderers.Length];
-
-            for (var i = 0; i < spriteRenderers.Length; i++)
-                _originalColors[i] = spriteRenderers[i] != null ? spriteRenderers[i].color : Color.white;
         }
 
         private void OnEnable()
@@ -87,9 +65,6 @@ namespace _01.Code.Combat
                 _pendingHealAmount = 0;
             }
 
-            _bloomSequence?.Kill();
-            _impactSequence?.Complete();
-            _impactSequence?.Kill();
         }
 
         private void Play(int damage, bool isCritical)
@@ -97,8 +72,6 @@ namespace _01.Code.Combat
             if (damage <= 0)
                 return;
 
-            PlayBloom(bloomColor);
-            PlayImpactMotion(isCritical ? criticalImpactScale : 1f);
             PlayHitParticles();
             CreateDamageText(damage, isCritical);
         }
@@ -109,7 +82,6 @@ namespace _01.Code.Combat
             if (amount <= 0)
                 return;
 
-            PlayBloom(healBloomColor);
             PlayHealParticles();
 
             _pendingHealAmount += amount;
@@ -127,77 +99,6 @@ namespace _01.Code.Combat
 
             if (total > 0)
                 SpawnFloatingText($"+{total}", healTextColor, 0.9f);
-        }
-
-        private void PlayBloom(Color color)
-        {
-            _bloomSequence?.Kill();
-            _bloomSequence = DOTween.Sequence();
-
-            for (var i = 0; i < spriteRenderers.Length; i++)
-            {
-                var spriteRenderer = spriteRenderers[i];
-                if (spriteRenderer == null || spriteRenderer.sortingOrder >= 40)
-                    continue;
-
-                var originalColor = _originalColors[i];
-                _bloomSequence.Join(spriteRenderer.DOColor(color, bloomDuration));
-                _bloomSequence.Insert(bloomDuration, spriteRenderer.DOColor(originalColor, bloomDuration));
-            }
-        }
-
-        private void PlayImpactMotion(float intensity = 1f)
-        {
-            if (impactDuration <= 0f)
-                return;
-
-            _impactSequence?.Complete();
-            _impactSequence?.Kill();
-            _impactSequence = DOTween.Sequence();
-
-            var animatedTargets = new HashSet<Transform>();
-            foreach (var spriteRenderer in spriteRenderers)
-            {
-                if (spriteRenderer == null || spriteRenderer.sortingOrder >= 40)
-                    continue;
-
-                var target = spriteRenderer.transform;
-                if (!animatedTargets.Add(target))
-                    continue;
-
-                var baseScale = target.localScale;
-                var basePosition = target.localPosition;
-                var baseRotation = target.localEulerAngles;
-                var direction = UnityEngine.Random.value < 0.5f ? -1f : 1f;
-
-                var rendererSequence = DOTween.Sequence();
-                if (impactShakeDistance > 0f)
-                    rendererSequence.Join(target.DOShakePosition(
-                        impactDuration,
-                        impactShakeDistance * intensity,
-                        12,
-                        70f,
-                        false,
-                        true));
-
-                if (impactScaleAmount > 0f)
-                    rendererSequence.Join(target.DOPunchScale(Vector3.one * (impactScaleAmount * intensity), impactDuration, 1, 0.4f));
-
-                if (impactRotationAngle > 0f)
-                    rendererSequence.Join(target.DOPunchRotation(
-                        new Vector3(0f, 0f, impactRotationAngle * intensity * direction),
-                        impactDuration,
-                        1,
-                        0.35f));
-
-                rendererSequence.OnComplete(() =>
-                {
-                    target.localPosition = basePosition;
-                    target.localScale = baseScale;
-                    target.localEulerAngles = baseRotation;
-                });
-                _impactSequence.Join(rendererSequence);
-            }
         }
 
         private void PlayHitParticles()

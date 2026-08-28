@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13a7129936dd488895088d04b1e793ac, type: 3}
   m_Name: HealterEnemy
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Enemies.EnemyDataSO
-  <Grade>k__BackingField: 1
+  <Grade>k__BackingField: 3
   <BoardSprite>k__BackingField: {fileID: 4723107735738678597, guid: 182b0ee12ea4a864fba362276291060c, type: 3}
   <Defense>k__BackingField: 1
   <EvasionChance>k__BackingField: 0.08

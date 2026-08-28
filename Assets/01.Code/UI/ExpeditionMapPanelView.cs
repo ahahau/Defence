@@ -172,6 +172,21 @@ namespace _01.Code.UI
             }
         }
 
+        public void SyncConquestFromSystem()
+        {
+            var conquest = VillageConquestSystem.Current;
+            if (conquest == null || villageCatalog == null || villages == null)
+                return;
+            var entries = villageCatalog.Villages;
+            for (var i = 0; i < villages.Length && i < entries.Count; i++)
+            {
+                var village = villages[i];
+                village.Conquest = conquest.GetConquest(entries[i]?.OriginParty);
+                villages[i] = village;
+            }
+            Refresh();
+        }
+
         /// <summary>
         /// 인스펙터에 연결되지 않은 오브젝트를 안전하게 걸러낸다.
         /// null 조건 연산자(?.)는 UnityEngine.Object가 오버로딩한 ==를 건너뛰기 때문에

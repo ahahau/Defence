@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13a7129936dd488895088d04b1e793ac, type: 3}
   m_Name: ArcherEnemy
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Enemies.EnemyDataSO
-  <Grade>k__BackingField: 1
+  <Grade>k__BackingField: 2
   <BoardSprite>k__BackingField: {fileID: 4723107735738678597, guid: fb84d3b2af781aa4bbc5268c9c1b36f7, type: 3}
   <Defense>k__BackingField: 0
   <EvasionChance>k__BackingField: 0.18

@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Serialization;
 
 namespace _01.Code.UI
 {
@@ -19,11 +20,11 @@ namespace _01.Code.UI
         [SerializeField] private TMP_Text progressStats;
         [SerializeField] private Image progressFill;
 
-        [Header("Nest Status")]
-        [SerializeField] private GameObject nestStatusRoot;
-        [SerializeField] private TMP_Text nestPhase;
-        [SerializeField] private TMP_Text nestGoal;
-        [SerializeField] private TMP_Text nestForecast;
+        [Header("Dungeon Core Status")]
+        [FormerlySerializedAs("nestStatusRoot"), SerializeField] private GameObject coreStatusRoot;
+        [FormerlySerializedAs("nestPhase"), SerializeField] private TMP_Text corePhase;
+        [FormerlySerializedAs("nestGoal"), SerializeField] private TMP_Text coreGoal;
+        [FormerlySerializedAs("nestForecast"), SerializeField] private TMP_Text coreForecast;
 
         public GameObject BannerRoot => bannerRoot;
         public CanvasGroup BannerGroup => bannerGroup;
@@ -34,9 +35,9 @@ namespace _01.Code.UI
         public TMP_Text ProgressTitle => progressTitle;
         public TMP_Text ProgressStats => progressStats;
         public Image ProgressFill => progressFill;
-        public GameObject NestStatusRoot => nestStatusRoot;
-        public TMP_Text NestPhase => nestPhase;
-        public TMP_Text NestGoal => nestGoal;
-        public TMP_Text NestForecast => nestForecast;
+        public GameObject CoreStatusRoot => coreStatusRoot;
+        public TMP_Text CorePhase => corePhase;
+        public TMP_Text CoreGoal => coreGoal;
+        public TMP_Text CoreForecast => coreForecast;
     }
 }

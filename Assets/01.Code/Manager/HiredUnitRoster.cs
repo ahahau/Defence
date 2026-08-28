@@ -4,6 +4,7 @@ using _01.Code.Core;
 using _01.Code.Events;
 using _01.Code.Progression;
 using _01.Code.Units;
+using _01.Code.Persistence;
 using UnityEngine;
 
 namespace _01.Code.Manager
@@ -656,6 +657,158 @@ namespace _01.Code.Manager
         {
             costEventChannel?.RaiseEvent(new BuildingUnlockChangedEvent(_unlockedBuildings));
             costEventChannel?.RaiseEvent(new BuildingInventoryChangedEvent(_ownedBuildings));
+        }
+
+        public void CaptureSaveState(SavedRoster target)
+        {
+            if (target == null)
+                return;
+
+            EnsureAvailableConditionAlignment();
+            target.availableUnits.Clear();
+            target.unitCandidates.Clear();
+            target.deployedUnits.Clear();
+            target.buildings.Clear();
+            target.unlockedUnits.Clear();
+            target.unlockedBuildings.Clear();
+            target.applicants.Clear();
+
+            for (var i = 0; i < _availableUnits.Count; i++)
+            {
+                if (_availableUnits[i] == null)
+                    continue;
+                target.availableUnits.Add(new SavedRosterUnit
+                {
+                    assetKey = AssetKey(_availableUnits[i]),
+                    condition = _availableConditions[i]
+                });
+            }
+
+            CaptureCounts(_ownedUnits, target.unitCandidates);
+            CaptureCounts(_deployedUnits, target.deployedUnits);
+            CaptureCounts(_ownedBuildings, target.buildings);
+            foreach (var unit in _unlockedUnits)
+                if (unit != null) target.unlockedUnits.Add(AssetKey(unit));
+            foreach (var building in _unlockedBuildings)
+                if (building != null) target.unlockedBuildings.Add(AssetKey(building));
+            foreach (var pair in _ownedUnits)
+            {
+                if (pair.Key == null || pair.Value <= 0)
+                    continue;
+                var queue = EnsureApplicantQueue(pair.Key);
+                var group = new SavedApplicantGroup { assetKey = AssetKey(pair.Key) };
+                foreach (var applicant in queue)
+                    group.applicants.Add(new SavedApplicant
+                    {
+                        condition = applicant.Condition,
+                        daysLeft = applicant.DaysLeft
+                    });
+                target.applicants.Add(group);
+            }
+        }
+
+        public void RestoreSaveState(SavedRoster source)
+        {
+            if (source == null)
+                return;
+
+            _availableUnits.Clear();
+            _availableConditions.Clear();
+            _ownedUnits.Clear();
+            _deployedUnits.Clear();
+            _ownedBuildings.Clear();
+            _unlockedUnits.Clear();
+            _unlockedBuildings.Clear();
+            _applicantsByUnit.Clear();
+            _hasInitializedUnlocks = true;
+
+            foreach (var saved in source.availableUnits ?? new List<SavedRosterUnit>())
+            {
+                var unit = ResolveUnit(saved.assetKey);
+                if (unit == null) continue;
+                _availableUnits.Add(unit);
+                _availableConditions.Add(saved.condition);
+            }
+
+            RestoreCounts(source.unitCandidates, _ownedUnits, ResolveUnit);
+            RestoreCounts(source.deployedUnits, _deployedUnits, ResolveUnit);
+            RestoreCounts(source.buildings, _ownedBuildings, ResolveBuilding);
+            foreach (var key in source.unlockedUnits ?? new List<string>())
+            {
+                var unit = ResolveUnit(key);
+                if (unit != null && !_unlockedUnits.Contains(unit)) _unlockedUnits.Add(unit);
+            }
+            foreach (var key in source.unlockedBuildings ?? new List<string>())
+            {
+                var building = ResolveBuilding(key);
+                if (building != null && !_unlockedBuildings.Contains(building)) _unlockedBuildings.Add(building);
+            }
+            foreach (var group in source.applicants ?? new List<SavedApplicantGroup>())
+            {
+                var unit = ResolveUnit(group.assetKey);
+                if (unit == null || group.applicants == null)
+                    continue;
+                var queue = new List<Applicant>();
+                foreach (var saved in group.applicants)
+                    queue.Add(new Applicant
+                    {
+                        Condition = saved.condition,
+                        DaysLeft = Mathf.Max(1, saved.daysLeft)
+                    });
+                _applicantsByUnit[unit] = queue;
+            }
+
+            costEventChannel?.RaiseEvent(new RosterChangedEvent(_availableUnits));
+            RaiseUnlockChanged();
+            RaiseBuildingUnlockChanged();
+        }
+
+        public UnitDataSO ResolveUnit(string key)
+        {
+            if (string.IsNullOrWhiteSpace(key)) return null;
+            if (unitCatalog != null)
+                foreach (var unit in unitCatalog)
+                    if (unit != null && AssetKey(unit) == key) return unit;
+            if (unlockCatalog != null)
+                foreach (var entry in unlockCatalog.Entries)
+                    if (entry?.Unit != null && AssetKey(entry.Unit) == key) return entry.Unit;
+            return null;
+        }
+
+        public BuildingDataSO ResolveBuilding(string key)
+        {
+            if (string.IsNullOrWhiteSpace(key)) return null;
+
+            if (unlockCatalog != null)
+                foreach (var entry in unlockCatalog.Entries)
+                    if (entry?.Building != null && AssetKey(entry.Building) == key) return entry.Building;
+
+            // 금고는 해금 카탈로그에 없다 — 설치 메뉴도 Resources에서 직접 집어 온다.
+            // 카탈로그만 뒤지면 저장된 금고가 복원 때 통째로 사라지고 보관 금화도 함께 날아간다.
+            return Resources.Load<BuildingDataSO>(ResourceBuildingFolder + key);
+        }
+
+        private const string ResourceBuildingFolder = "Buildings/";
+
+        public static string AssetKey(Object asset) => asset != null ? asset.name : string.Empty;
+
+        private static void CaptureCounts<T>(Dictionary<T, int> source, List<SavedCount> target) where T : Object
+        {
+            foreach (var pair in source)
+                if (pair.Key != null) target.Add(new SavedCount { assetKey = AssetKey(pair.Key), count = Mathf.Max(0, pair.Value) });
+        }
+
+        private static void RestoreCounts<T>(
+            List<SavedCount> source,
+            Dictionary<T, int> target,
+            System.Func<string, T> resolver) where T : Object
+        {
+            if (source == null) return;
+            foreach (var saved in source)
+            {
+                var asset = resolver(saved.assetKey);
+                if (asset != null) target[asset] = Mathf.Max(0, saved.count);
+            }
         }
     }
 }

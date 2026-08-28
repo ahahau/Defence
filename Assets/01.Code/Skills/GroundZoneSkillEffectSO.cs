@@ -30,7 +30,9 @@ namespace _01.Code.Skills
 
         private class GroundZoneRuntime : MonoBehaviour
         {
+            private const string OwnershipSlot = "GroundZone";
             private BT.BattleAgent _caster;
+            private int _ownerId;
             private float _radius;
             private float _remaining;
             private float _tickInterval;
@@ -47,7 +49,11 @@ namespace _01.Code.Skills
                 _tickTimer = 0f;
                 _tickDamage = tickDamage;
                 _moveSpeedMultiplier = moveSpeedMultiplier;
+                _ownerId = SkillZoneOwnership.Replace(caster, OwnershipSlot, gameObject);
             }
+
+            private void OnDestroy() =>
+                SkillZoneOwnership.Release(_ownerId, OwnershipSlot, gameObject);
 
             private void Update()
             {

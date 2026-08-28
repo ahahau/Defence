@@ -1,11 +1,15 @@
 using System.Collections.Generic;
 using _01.Code.Artifacts;
+using _01.Code.Buildings;
 using _01.Code.Core;
 using _01.Code.Enemies;
 using _01.Code.Events;
 using _01.Code.Tutorial;
 using _01.Code.UI;
 using _01.Code.Units;
+using _01.Code.Persistence;
+using _01.Code.Manager;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -189,6 +193,27 @@ namespace _01.Code.MapCreateSystem
 
             RebuildInitialGraph();
             ShowLockedNodes();
+        }
+
+        private IEnumerator Start()
+        {
+            if (!Application.isPlaying)
+                yield break;
+
+            // 모든 매니저의 Awake/Start가 기본 UI를 만든 다음 체크포인트 값으로 한 번 갱신한다.
+            yield return null;
+            RunSaveSystem.TryRestoreCurrentRun(this);
+        }
+
+        private void OnApplicationPause(bool paused)
+        {
+            if (paused)
+                RunSaveSystem.SaveCurrentRun();
+        }
+
+        private void OnApplicationQuit()
+        {
+            RunSaveSystem.SaveCurrentRun();
         }
 
         private void Update()
@@ -620,6 +645,12 @@ namespace _01.Code.MapCreateSystem
                 if (!TutorialInputGate.AllowsUnlockedNode(unlockedNode))
                     return;
 
+                // 권능을 겨눈 상태의 구역 클릭은 시전이다. 패널을 여는 것보다 먼저 처리해야
+                // 겨냥해 놓고 누른 순간 다른 창이 뜨는 일이 없다.
+                if (_01.Code.Manager.DungeonPowerSystem.Current != null
+                    && _01.Code.Manager.DungeonPowerSystem.Current.TryCastArmed(unlockedNode))
+                    return;
+
                 var unitGrid = unlockedNode.TrapGrid;
                 if (unitGrid != null
                     && unitGrid.IsFocusedGridVisible
@@ -819,6 +850,215 @@ namespace _01.Code.MapCreateSystem
                 nodePanelBlockRect,
                 inputDataSO.ReadScreenMousePosition(),
                 null);
+        }
+
+        public RunSaveData CaptureRunSave()
+        {
+            var save = new RunSaveData();
+            foreach (var node in Node.ActiveNodes)
+            {
+                if (node?.Data == null)
+                    continue;
+
+                var savedNode = new SavedNode
+                {
+                    type = node.Data.Type,
+                    x = node.GridPosition.x,
+                    y = node.GridPosition.y,
+                    danger = node.DangerLevel,
+                    centralBuilding = CaptureBuilding(node.AssignedBuilding)
+                };
+
+                var grid = node.TrapGrid;
+                if (grid != null)
+                {
+                    for (var row = 0; row < grid.Rows; row++)
+                    for (var column = 0; column < grid.Columns; column++)
+                    {
+                        var building = grid.BuildingAt(column, row);
+                        if (building == null)
+                            continue;
+                        var savedBuilding = CaptureBuilding(building);
+                        if (savedBuilding == null)
+                            continue;
+                        savedBuilding.column = column;
+                        savedBuilding.row = row;
+                        savedNode.cellBuildings.Add(savedBuilding);
+                    }
+                }
+
+                foreach (var placement in node.UnitPlacements)
+                {
+                    if (placement?.Instance == null)
+                        continue;
+                    savedNode.units.Add(new SavedUnit
+                    {
+                        assetKey = HiredUnitRoster.AssetKey(placement.Data),
+                        isMainUnit = placement.Instance is MainUnit,
+                        column = placement.Column,
+                        row = placement.Row,
+                        condition = placement.Instance.CaptureConditionState()
+                    });
+                }
+
+                save.nodes.Add(savedNode);
+            }
+
+            foreach (var edge in EdgeLine.ActiveEdges)
+            {
+                var from = Node.FindByDataId(edge?.FromId);
+                var to = Node.FindByDataId(edge?.ToId);
+                if (from == null || to == null)
+                    continue;
+                save.edges.Add(new SavedEdge
+                {
+                    fromX = from.GridPosition.x,
+                    fromY = from.GridPosition.y,
+                    toX = to.GridPosition.x,
+                    toY = to.GridPosition.y,
+                    building = CaptureBuilding(edge.InstalledBuilding)
+                });
+            }
+
+            return save;
+        }
+
+        public bool RestoreRunSave(RunSaveData save)
+        {
+            if (!ValidateSaveLayout(save))
+                return false;
+
+            graph = new DungeonGraph();
+            nodeManager.ClearAll();
+            edgeManager.ClearAll();
+            lockedNodeByCollider.Clear();
+            unlockedNodeByCollider.Clear();
+            ClearUnitsRoot();
+
+            var views = new Dictionary<Vector2Int, Node>();
+            foreach (var saved in save.nodes)
+            {
+                var position = new Vector2Int(saved.x, saved.y);
+                var data = graph.AddNode(saved.type, position);
+                var view = nodeManager.CreateNode(data);
+                view.RestoreDanger(saved.danger);
+                RegisterUnlockedNode(view);
+                views.Add(position, view);
+            }
+
+            foreach (var saved in save.edges)
+            {
+                var fromPosition = new Vector2Int(saved.fromX, saved.fromY);
+                var toPosition = new Vector2Int(saved.toX, saved.toY);
+                if (!views.TryGetValue(fromPosition, out var from) || !views.TryGetValue(toPosition, out var to))
+                    continue;
+                if (graph.Connect(from.Data, to.Data))
+                    edgeManager.CreateEdge(fromPosition, toPosition, from.Data.Id, to.Data.Id);
+            }
+
+            var roster = HiredUnitRoster.Current;
+            foreach (var saved in save.nodes)
+            {
+                var view = views[new Vector2Int(saved.x, saved.y)];
+                if (saved.type == DungeonNodeType.Entrance)
+                    CreateMainUnit(view);
+
+                RestoreBuilding(view, saved.centralBuilding, roster, false);
+                foreach (var building in saved.cellBuildings)
+                    RestoreBuilding(view, building, roster, true);
+                RestoreUnits(view, saved.units, roster);
+            }
+
+            foreach (var saved in save.edges)
+            {
+                if (saved.building == null)
+                    continue;
+                if (!views.TryGetValue(new Vector2Int(saved.fromX, saved.fromY), out var from)
+                    || !views.TryGetValue(new Vector2Int(saved.toX, saved.toY), out var to))
+                    continue;
+                var edge = EdgeLine.FindBetween(from.Data.Id, to.Data.Id);
+                var data = roster?.ResolveBuilding(saved.building.assetKey);
+                RestoreBuildingState(BuildingPlacement.InstallOnEdge(edge, data), saved.building);
+            }
+
+            HasLockedNodesVisible = true;
+            RefreshLockedNodes();
+            return true;
+        }
+
+        private static SavedBuilding CaptureBuilding(Building building)
+        {
+            if (building == null || building.Data == null)
+                return null;
+            return new SavedBuilding
+            {
+                assetKey = HiredUnitRoster.AssetKey(building.Data),
+                durability = building.CurrentDurability,
+                storedGold = building is Treasury treasury ? treasury.StoredGold : 0
+            };
+        }
+
+        private void RestoreBuilding(Node node, SavedBuilding saved, HiredUnitRoster roster, bool cell)
+        {
+            if (saved == null)
+                return;
+            var data = roster?.ResolveBuilding(saved.assetKey);
+            var building = cell
+                ? BuildingPlacement.InstallOnCell(node, saved.column, saved.row, data)
+                : BuildingPlacement.InstallCentral(node, data);
+            RestoreBuildingState(building, saved);
+            if (building is Portal)
+                nodeEventChannel?.RaiseEvent(new PortalInstalledEvent(node));
+        }
+
+        private static void RestoreBuildingState(Building building, SavedBuilding saved)
+        {
+            if (building == null || saved == null)
+                return;
+            building.RestoreDurability(saved.durability);
+            if (building is Treasury treasury)
+                treasury.RestoreStoredGold(saved.storedGold);
+        }
+
+        private void RestoreUnits(Node node, List<SavedUnit> units, HiredUnitRoster roster)
+        {
+            if (units == null)
+                return;
+            foreach (var saved in units)
+            {
+                if (saved.isMainUnit)
+                {
+                    var main = node.AssignedUnitInstance as MainUnit;
+                    main?.ApplyConditionState(saved.condition);
+                    continue;
+                }
+
+                var data = roster?.ResolveUnit(saved.assetKey);
+                if (data?.Prefab == null)
+                    continue;
+                var instance = Instantiate(data.Prefab, node.TrapGrid.CellWorldPosition(saved.column, saved.row), Quaternion.identity);
+                instance.transform.SetParent(unitsRoot, true);
+                instance.Initialize(data);
+                instance.ApplyConditionState(saved.condition);
+                node.TryAssignUnitToCell(data, instance, saved.column, saved.row);
+                artifactEventChannel?.RaiseEvent(new UnitArtifactApplyRequestedEvent(instance));
+            }
+        }
+
+        private static bool ValidateSaveLayout(RunSaveData save)
+        {
+            if (save?.nodes == null || save.nodes.Count == 0)
+                return false;
+            var positions = new HashSet<Vector2Int>();
+            var entrances = 0;
+            foreach (var node in save.nodes)
+            {
+                if (!positions.Add(new Vector2Int(node.x, node.y)))
+                    return false;
+                if (node.type == DungeonNodeType.Entrance)
+                    entrances++;
+            }
+            return entrances == 1;
         }
 
     }

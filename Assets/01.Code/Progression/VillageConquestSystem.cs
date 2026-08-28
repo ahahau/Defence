@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using _01.Code.Manager;
+using _01.Code.Persistence;
 using UnityEngine;
 
 namespace _01.Code.Progression
@@ -103,6 +104,35 @@ namespace _01.Code.Progression
                 return 0f;
 
             return Mathf.Clamp01(conquest / 100f);
+        }
+
+        public int GetConquest(AdventurerPartySO party) =>
+            party != null && _conquestByParty.TryGetValue(party, out var value) ? value : 0;
+
+        public void CaptureSaveState(List<SavedCount> target)
+        {
+            if (target == null) return;
+            target.Clear();
+            foreach (var pair in _conquestByParty)
+                if (pair.Key != null) target.Add(new SavedCount
+                {
+                    assetKey = pair.Key.name,
+                    count = Mathf.Clamp(pair.Value, 0, 100)
+                });
+        }
+
+        public void RestoreSaveState(IReadOnlyList<SavedCount> source)
+        {
+            if (source == null) return;
+            foreach (var saved in source)
+            foreach (var party in new List<AdventurerPartySO>(_conquestByParty.Keys))
+            {
+                if (party != null && party.name == saved.assetKey)
+                {
+                    SetConquest(party, saved.count);
+                    break;
+                }
+            }
         }
     }
 }

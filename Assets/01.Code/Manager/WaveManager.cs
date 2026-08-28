@@ -46,8 +46,14 @@ namespace _01.Code.Manager
         private float maxWaveReductionFromConquest = 0.4f;
 
         [Header("Enemy Level Scaling")]
-        [SerializeField, Min(0)] private int enemyHealthPerLevel = 2;
-        [SerializeField, Min(0)] private int enemyAttackPerLevel = 1;
+        [SerializeField, Min(0), Tooltip("일차마다 침입자에게 더해지는 최대 체력.")]
+        private int enemyHealthPerLevel = 1;
+
+        [SerializeField, Min(0),
+         Tooltip("일차마다 더해지는 공격력. 0을 권장한다 — 일차 수만큼 누적되므로 1만 넣어도 " +
+                 "18일차 침입자의 공격력이 4에서 18로 뛰어 수비대가 두세 대에 쓰러진다. " +
+                 "후반을 조이려면 일차별 보스 항목의 배율을 쓰는 편이 정밀하다.")]
+        private int enemyAttackPerLevel;
         [Header("Boss Wave")]
         [SerializeField, Min(1f), Tooltip("보스 승격 체력 배율(일차 스케일링 이후 적용).")]
         private float bossHealthMultiplier = 6f;

@@ -81,6 +81,21 @@ namespace _01.Code.Manager
         private void HandleWaveEnded(WaveEndedEvent evt)
         {
             _isStandby = true;
+            StartCoroutine(SaveAfterWave());
+        }
+
+        private System.Collections.IEnumerator SaveAfterWave()
+        {
+            yield return null;
+            _01.Code.Persistence.RunSaveSystem.SaveCurrentRun();
+        }
+
+        public void RestoreCheckpoint(int completedDay, bool hasPortal)
+        {
+            currentDay = Mathf.Max(0, completedDay);
+            _isStandby = true;
+            _hasPortal = hasPortal;
+            dayEventChannel?.RaiseEvent(new DayPreviewChangedEvent(NextWaveDay, 0f));
         }
 
         private void HandlePortalInstalled(PortalInstalledEvent evt)

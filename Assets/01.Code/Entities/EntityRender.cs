@@ -17,6 +17,8 @@ namespace _01.Code.Entities
         [SerializeField] private Sprite defeatedSprite;
         [SerializeField] private SpriteRenderer spriteRenderer;
 
+        public SpriteRenderer SpriteRenderer => spriteRenderer;
+
         public void ConfigureSprites(Sprite idle, Sprite attack, Sprite defeated)
         {
             if (idle != null)

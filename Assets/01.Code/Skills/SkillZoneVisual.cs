@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 
@@ -59,6 +60,62 @@ namespace _01.Code.Skills
                 .SetLoops(-1, LoopType.Yoyo)
                 .SetEase(Ease.InOutSine)
                 .SetLink(renderer.gameObject);
+        }
+    }
+
+    /// <summary>시전자별 장판 슬롯을 관리해 같은 종류의 장판이 중첩 생성되지 않게 한다.</summary>
+    internal static class SkillZoneOwnership
+    {
+        private readonly struct ZoneKey
+        {
+            public ZoneKey(int ownerId, string slot)
+            {
+                OwnerId = ownerId;
+                Slot = slot;
+            }
+
+            public int OwnerId { get; }
+            public string Slot { get; }
+
+            public override bool Equals(object obj) =>
+                obj is ZoneKey other && OwnerId == other.OwnerId && Slot == other.Slot;
+
+            public override int GetHashCode() =>
+                (OwnerId * 397) ^ (Slot != null ? Slot.GetHashCode() : 0);
+        }
+
+        private static readonly Dictionary<ZoneKey, GameObject> ActiveZones = new();
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void Reset() => ActiveZones.Clear();
+
+        public static int Replace(Object owner, string slot, GameObject zone)
+        {
+            if (owner == null || string.IsNullOrEmpty(slot) || zone == null)
+                return 0;
+
+            var ownerId = owner.GetInstanceID();
+            var key = new ZoneKey(ownerId, slot);
+            if (ActiveZones.TryGetValue(key, out var previous)
+                && previous != null
+                && previous != zone)
+            {
+                previous.SetActive(false);
+                Object.Destroy(previous);
+            }
+
+            ActiveZones[key] = zone;
+            return ownerId;
+        }
+
+        public static void Release(int ownerId, string slot, GameObject zone)
+        {
+            if (ownerId == 0 || string.IsNullOrEmpty(slot))
+                return;
+
+            var key = new ZoneKey(ownerId, slot);
+            if (ActiveZones.TryGetValue(key, out var current) && current == zone)
+                ActiveZones.Remove(key);
         }
     }
 }

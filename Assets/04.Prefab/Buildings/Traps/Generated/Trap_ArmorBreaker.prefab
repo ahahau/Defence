@@ -138,10 +138,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Buildings.Trap
   <DangerRating>k__BackingField: 0
-  triggerChance: 0.38
-  damage: 8
-  injuryChance: 0.45
-  bonusDamage: 1
+  destructible: 0
+  maxDurability: 20
+  damageAnimationTarget: {fileID: 0}
+  damageShakeDistance: 0.08
+  damageShakeDuration: 0.16
+  destroyDelay: 0.05
+  triggerChance: 0.55
+  damage: 11
+  injuryChance: 1
+  bonusDamage: 0
+  damagePerDay: 0.55
   injuryStatusEffect: {fileID: 11400000, guid: 993b02ab0be3f60498c0888974528397, type: 2}
   hitAnimationTarget: {fileID: 2787899817810343432}
   hitShakeDistance: 0.16

@@ -16,6 +16,7 @@ namespace _01.Code.Artifacts
 
         private readonly List<Unit> appliedUnits = new();
         private readonly List<EnemyMover> enemies = new();
+        public ArtifactInventorySO Inventory => artifactInventory;
 
         private void Awake()
         {

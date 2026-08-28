@@ -1,5 +1,6 @@
 using _01.Code.Events;
 using _01.Code.Core;
+using _01.Code.Progression;
 using UnityEngine;
 
 namespace _01.Code.Manager
@@ -169,6 +170,7 @@ namespace _01.Code.Manager
             }
 
             RaiseGoldChanged();
+            RunSummarySystem.Current?.RecordDebt(CurrentDebt);
             costEventChannel?.RaiseEvent(
                 new SettlementAppliedEvent(net, paidFromGold, borrowed, CurrentGold, CurrentDebt));
 
@@ -327,6 +329,16 @@ namespace _01.Code.Manager
         private void RaiseGoldChanged()
         {
             costEventChannel?.RaiseEvent(new GoldChangedEvent(CurrentGold));
+        }
+
+        public void RestoreCheckpoint(int gold, int debt, float buildDiscountRate)
+        {
+            CurrentGold = Mathf.Max(0, gold);
+            CurrentDebt = Mathf.Max(0, debt);
+            nextBuildDiscountRate = Mathf.Clamp(buildDiscountRate, 0f, 0.9f);
+            _isSettlementDeferred = false;
+            RaiseGoldChanged();
+            costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, debtLimit, 0));
         }
     }
 }

@@ -61,6 +61,27 @@ namespace _01.Code.UI
         private int purchaseCount;
 
         public bool IsPanelOpen => panelRoot != null && panelRoot.activeInHierarchy;
+        public int PurchaseCount => purchaseCount;
+
+        public void RestoreCheckpoint(IReadOnlyList<string> artifactKeys, int savedPurchaseCount, int day)
+        {
+            purchaseCount = Mathf.Max(0, savedPurchaseCount);
+            currentDay = Mathf.Max(0, day);
+            artifactInventory?.Clear(artifactEventChannel);
+            if (artifactKeys != null && shopCatalog != null && artifactInventory != null)
+            {
+                foreach (var key in artifactKeys)
+                foreach (var artifact in shopCatalog.Stock)
+                {
+                    if (artifact == null || artifact.name != key)
+                        continue;
+                    artifactInventory.Obtain(artifact, artifactEventChannel);
+                    break;
+                }
+            }
+            hasRolled = false;
+            RefreshVisitState();
+        }
 
         private void Awake()
         {

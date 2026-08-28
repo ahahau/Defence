@@ -1,5 +1,7 @@
 using System.Collections;
+using System.Text;
 using _01.Code.Core;
+using _01.Code.Progression;
 using _01.Code.UI;
 using DG.Tweening;
 using TMPro;
@@ -23,6 +25,8 @@ namespace _01.Code.Manager
         [SerializeField, Min(0.1f)] private float bannerHoldDuration = 1.6f;
         [SerializeField] private Color bossBannerColor = new(0.85f, 0.15f, 0.1f, 1f);
         [SerializeField] private Color finalBannerColor = new(1f, 0.78f, 0.2f, 1f);
+        [SerializeField, Tooltip("패배 결과 화면의 강조색.")]
+        private Color defeatPanelColor = new(0.9f, 0.3f, 0.25f, 1f);
 
         [Header("Death Cinematic")]
         [SerializeField, Range(0.05f, 0.5f), Tooltip("보스가 쓰러지는 동안의 슬로모 배율.")]
@@ -137,6 +141,27 @@ namespace _01.Code.Manager
         /// <summary>최종 보스 웨이브 클리어 — 승리 패널을 띄우고 게임을 멈춘다.</summary>
         public void ShowVictoryPanel(int day)
         {
+            ShowRunEndPanel("던전 사수 성공!", $"{day}일간의 침공을 모두 막아냈습니다", finalBannerColor, true);
+        }
+
+        /// <summary>
+        /// 패배로 판이 끝났을 때. 여태 결과 화면이 없어 게임이 멈춘 채로 남아 있었다.
+        /// </summary>
+        public void ShowDefeatPanel(string reason)
+        {
+            var day = DayManager.Current != null ? DayManager.Current.CurrentDay : 0;
+            var headline = string.IsNullOrWhiteSpace(reason)
+                ? $"{day}일차에 던전이 무너졌습니다"
+                : reason;
+            ShowRunEndPanel("던전 함락", headline, defeatPanelColor, false);
+        }
+
+        /// <summary>
+        /// 승리와 패배가 같은 패널을 쓴다. 둘이 동시에 뜰 일이 없고,
+        /// 무엇이 남았는지 돌아보는 화면이라는 점에서 내용도 같다.
+        /// </summary>
+        private void ShowRunEndPanel(string title, string headline, Color accent, bool clearSaveOnRetry)
+        {
             if (uiCanvas == null)
                 return;
 
@@ -152,12 +177,14 @@ namespace _01.Code.Manager
 
             view.gameObject.SetActive(true);
             view.transform.SetAsLastSibling();
-            view.Title.text = "던전 사수 성공!";
-            view.Title.color = finalBannerColor;
-            view.Subtitle.text = $"{day}일간의 침공을 모두 막아냈습니다";
+            view.Title.text = title;
+            view.Title.color = accent;
+            view.Subtitle.text = headline + BuildRunSummaryText();
             view.RetryButton.onClick.RemoveAllListeners();
             view.RetryButton.onClick.AddListener(() =>
             {
+                if (clearSaveOnRetry)
+                    _01.Code.Persistence.RunSaveSystem.DeleteSave();
                 Time.timeScale = 1f;
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
             });
@@ -166,6 +193,54 @@ namespace _01.Code.Manager
             var group = view.CanvasGroup;
             group.alpha = 0f;
             group.DOFade(1f, 0.5f).SetUpdate(true).SetLink(root);
+        }
+
+        /// <summary>
+        /// 한 판을 돌아보는 숫자들. 정산은 하루치만 보여주고 사라지므로
+        /// 판 전체가 어땠는지는 여기서만 볼 수 있다.
+        /// </summary>
+        private static string BuildRunSummaryText()
+        {
+            var lines = new StringBuilder();
+            lines.Append("\n<size=80%>");
+
+            var finalDay = WaveManager.Current != null ? WaveManager.Current.FinalDay : 0;
+            var survived = DayManager.Current != null ? DayManager.Current.CurrentDay : 0;
+            lines.Append(finalDay > 0
+                ? $"\n버틴 날  {survived} / {finalDay}일"
+                : $"\n버틴 날  {survived}일");
+
+            var run = RunSummarySystem.Current;
+            if (run != null && run.Invaders > 0)
+            {
+                lines.Append($"\n격퇴  {run.Kills} / {run.Invaders}명"
+                             + $"  ·  방어전 {run.WavesFought}회");
+                lines.Append($"\n가한 피해  {run.DamageDealt}"
+                             + $"  ·  받은 피해 {run.DamageTaken}"
+                             + $"  ·  치명타 {run.CriticalHits}");
+            }
+
+            var cost = CostManager.Current;
+            if (cost != null)
+            {
+                var peakDebt = run != null ? run.PeakDebt : 0;
+                lines.Append($"\n남은 금화  {cost.CurrentGold}G  ·  최대 부채 {peakDebt}G");
+            }
+
+            var roster = HiredUnitRoster.Current;
+            if (roster != null)
+            {
+                lines.Append($"\n부하  {roster.TotalHiredCount}명"
+                             + $"  ·  유닛 해금 {roster.UnlockedUnits.Count}/{roster.UnlockableUnitCount}"
+                             + $"  ·  시설 해금 {roster.UnlockedBuildings.Count}/{roster.UnlockableBuildingCount}");
+            }
+
+            var conquest = VillageConquestSystem.Current;
+            if (conquest != null && conquest.VillageCount > 0)
+                lines.Append($"\n장악한 마을  {conquest.FullyConqueredCount} / {conquest.VillageCount}곳");
+
+            lines.Append("</size>");
+            return lines.ToString();
         }
     }
 }

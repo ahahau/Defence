@@ -19,6 +19,10 @@ namespace _01.Code.Buildings
         [SerializeField, Min(0)]
         private int bonusDamage;
 
+        [SerializeField, Min(0f),
+         Tooltip("일차마다 더해지는 피해. 침입자 체력은 매일 늘어나므로 이게 없으면 초반에 지은 함정이 후반에 무의미해진다.")]
+        private float damagePerDay = 0.5f;
+
         [SerializeField]
         private StatusEffectDataSO injuryStatusEffect;
 
@@ -39,6 +43,24 @@ namespace _01.Code.Buildings
         public float InjuryChance => injuryChance;
         public int BonusDamage => bonusDamage;
         public StatusEffectDataSO StatusEffect => injuryStatusEffect;
+
+        /// <summary>직전 발동에서 실제로 준 피해. 정산이 함정의 몫을 집계할 때 읽는다.</summary>
+        public int LastTriggerDamage { get; private set; }
+
+        /// <summary>
+        /// 지금 일차 기준의 실제 피해.
+        /// 침입자는 매일 단단해지므로 고정 피해로 두면 3일차에 지은 함정이 18일차엔 긁는 수준이 된다.
+        /// </summary>
+        public int CurrentDamage
+        {
+            get
+            {
+                var day = _01.Code.Manager.DayManager.Current != null
+                    ? _01.Code.Manager.DayManager.Current.CurrentDay
+                    : 0;
+                return damage + bonusDamage + Mathf.FloorToInt(Mathf.Max(0, day) * damagePerDay);
+            }
+        }
 
         protected override void Awake()
         {
@@ -63,10 +85,11 @@ namespace _01.Code.Buildings
                 return false;
 
             Component targetComponent = target as Component;
-            var resolvedDamage = damage + bonusDamage;
+            var resolvedDamage = CurrentDamage;
             if (targetComponent != null && targetComponent.TryGetComponent<EnemyStatusController>(out var statusController))
                 resolvedDamage = statusController.ModifyTrapDamage(resolvedDamage);
-            
+
+            LastTriggerDamage = resolvedDamage;
             target.TakeDamage(resolvedDamage);
             PlayHitAnimation();
             TryApplyInjury(target, targetComponent);

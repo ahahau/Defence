@@ -36,16 +36,15 @@ namespace _01.Code.Manager
 
         private void HandleMainUnitDefeated(MainUnitDefeatedEvent evt)
         {
-            TriggerGameOver(evt.MainUnit);
+            TriggerGameOver(evt.MainUnit, "던전의 주인이 쓰러졌습니다");
         }
 
         private void HandleBankruptcy(BankruptcyEvent evt)
         {
-            Debug.Log($"부채 {evt.CurrentDebt}G가 한도 {evt.DebtLimit}G를 넘겨 파산했습니다.", this);
-            TriggerGameOver(null);
+            TriggerGameOver(null, $"부채 {evt.CurrentDebt}G가 한도 {evt.DebtLimit}G를 넘겨 파산했습니다");
         }
 
-        private void TriggerGameOver(MainUnit mainUnit)
+        private void TriggerGameOver(MainUnit mainUnit, string reason)
         {
             if (IsGameOver)
                 return;
@@ -53,7 +52,11 @@ namespace _01.Code.Manager
             IsGameOver = true;
             gameStateEventChannel.RaiseEvent(new GameOverEvent(mainUnit));
 
-            if (pauseOnGameOver)
+            // 여태 패배 화면이 없어 게임이 멈춘 채로 남았다. 승리와 같은 패널에 결과를 띄운다.
+            var presenter = WaveManager.Current != null ? WaveManager.Current.BossPresenter : null;
+            if (presenter != null)
+                presenter.ShowDefeatPanel(reason);
+            else if (pauseOnGameOver)
                 Time.timeScale = 0f;
         }
     }

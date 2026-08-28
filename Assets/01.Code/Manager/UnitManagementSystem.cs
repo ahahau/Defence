@@ -27,15 +27,36 @@ namespace _01.Code.Manager
             _dayManager = dayManager;
         }
 
+        /// <summary>
+        /// 명령은 웨이브 중에도, 싸우는 중에도 통해야 한다.
+        /// 전열이 무너지는 걸 보면서 손쓸 수단이 이것뿐인데 대기 중에만 열어 두면
+        /// 플레이어는 웨이브 내내 구경만 하게 된다. 이동·회수는 그대로 대기 전용이다.
+        /// </summary>
         public bool CanIssueCommand(Unit unit, out string reason)
         {
-            return CanManageUnit(unit, out reason);
+            if (!IsManageableUnit(unit, out reason))
+                return false;
+
+            if (!unit.IsCommandReady)
+            {
+                reason = $"명령을 다시 내리기까지 {unit.CommandCooldownRemaining:F1}초";
+                return false;
+            }
+
+            reason = string.Empty;
+            return true;
         }
 
         public bool TryIssueCommand(Unit unit, UnitCommand command, out string reason)
         {
             if (!CanIssueCommand(unit, out reason))
                 return false;
+
+            if (unit.CurrentCommand == command)
+            {
+                reason = $"이미 {unit.CommandLabel} 상태입니다";
+                return false;
+            }
 
             unit.SetCommand(command);
             reason = $"{unit.CommandLabel} 명령 적용";
@@ -135,6 +156,35 @@ namespace _01.Code.Manager
             _nodeEventChannel.RaiseEvent(new UnitReturnedFromNodeEvent(node, unitData, unit));
             Object.Destroy(unit.gameObject);
             reason = "회수 완료 · 대기 명단에서 휴식 시작";
+            return true;
+        }
+
+        /// <summary>
+        /// 이 유닛의 관리 패널을 열 수 있는지. 명령 쿨다운과는 무관하다 —
+        /// 쿨다운 때문에 패널조차 못 열면 남은 시간을 확인할 방법이 없다.
+        /// </summary>
+        public bool CanSelectUnit(Unit unit, out string reason) => IsManageableUnit(unit, out reason);
+
+        /// <summary>유닛 자체가 관리 대상인지만 본다. 웨이브·전투 상태는 보지 않는다.</summary>
+        private static bool IsManageableUnit(Unit unit, out string reason)
+        {
+            if (unit == null)
+            {
+                reason = "관리할 유닛이 없습니다";
+                return false;
+            }
+            if (unit is MainUnit)
+            {
+                reason = "주인공은 유닛 관리 대상이 아닙니다";
+                return false;
+            }
+            if (unit.Data == null)
+            {
+                reason = "유닛 데이터가 없어 관리할 수 없습니다";
+                return false;
+            }
+
+            reason = string.Empty;
             return true;
         }
 

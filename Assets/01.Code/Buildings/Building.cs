@@ -8,6 +8,7 @@ namespace _01.Code.Buildings
 {
     public class Building : MonoBehaviour
     {
+        public BuildingDataSO Data { get; private set; }
         [field: SerializeField, Min(0)] public int DangerRating { get; private set; }
 
         [Header("Durability")]
@@ -39,8 +40,15 @@ namespace _01.Code.Buildings
 
         public virtual void Initialize(BuildingDataSO data)
         {
+            Data = data;
             DangerRating = data.BaseDanger;
             currentDurability = Mathf.Max(1, maxDurability);
+            isDestroyed = false;
+        }
+
+        public void RestoreDurability(int durability)
+        {
+            currentDurability = Mathf.Clamp(durability, 1, Mathf.Max(1, maxDurability));
             isDestroyed = false;
         }
 

@@ -1,5 +1,6 @@
 using _01.Code.MapCreateSystem;
 using _01.Code.Buildings;
+using _01.Code.Manager;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -229,14 +230,14 @@ namespace _01.Code.Enemies
             return null;
         }
 
-        /// <summary>A*: 가장 가까운 금고로 가는 최단 경로의 다음 노드.
+        /// <summary>A*: 금고 우선, 없으면 핵심부로 가는 최단 경로의 다음 노드.
         /// 경로 자체가 없으면 null + shouldWait=false(랜덤 배회 폴백),
         /// 경로는 있는데 다음 칸이 점유/정원 초과면 null + shouldWait=true(이번 턴 대기).</summary>
         private Node SelectNextNodeByPathfinding(out bool shouldWait)
         {
             shouldWait = false;
 
-            var goal = FindNearestTreasury();
+            var goal = IntrusionThreat.FindPriorityTarget(transform.position, out _);
             if (goal == null || goal == _currentNode)
                 return null;
 
@@ -262,33 +263,6 @@ namespace _01.Code.Enemies
             }
 
             return next;
-        }
-
-        private Node FindNearestTreasury()
-        {
-            Node best = null;
-            var bestDistance = float.MaxValue;
-            Vector2 self = transform.position;
-
-            foreach (var node in Node.ActiveNodes)
-            {
-                if (node == null)
-                    continue;
-
-                var hasStoredGold = node.FindTreasuryWithGold() != null;
-                var isLegacyTreasury = node.Data != null && node.Data.Type == DungeonNodeType.Treasury;
-                if (!hasStoredGold && !isLegacyTreasury)
-                    continue;
-
-                var distance = ((Vector2)node.transform.position - self).sqrMagnitude;
-                if (distance < bestDistance)
-                {
-                    bestDistance = distance;
-                    best = node;
-                }
-            }
-
-            return best;
         }
 
         private Node ResolveNodeByDataId(string dataId)

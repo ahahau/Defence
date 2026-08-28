@@ -24,6 +24,9 @@ namespace _01.Code.Dialogue
         [SerializeField] private GameEventChannelSO scheduledWaveEventChannel;
         [SerializeField] private DialogueSequenceSO[] scheduledEventSequences;
         [SerializeField, Min(1)] private int scheduledEventIntervalDays = 5;
+
+        /// <summary>이번 판에서 아직 안 나온 이벤트들. 섞어 두고 하나씩 꺼내 같은 판에서 겹치지 않게 한다.</summary>
+        private readonly List<DialogueSequenceSO> _shuffledEventQueue = new();
         [SerializeField] private bool playScheduledEvents = true;
         [Header("Guided Start Tutorial")]
         [SerializeField] private bool useGuidedStartTutorial;
@@ -213,7 +216,7 @@ namespace _01.Code.Dialogue
                 return;
 
             lastScheduledEventDay = day;
-            pendingScheduledEventSequence = ResolveScheduledEventSequence(day);
+            pendingScheduledEventSequence = ResolveScheduledEventSequence();
             TryPlayPendingScheduledEvent();
         }
 
@@ -829,20 +832,44 @@ namespace _01.Code.Dialogue
                 action?.Execute(context);
         }
 
-        private DialogueSequenceSO ResolveScheduledEventSequence(int day)
+        /// <summary>
+        /// 이번에 띄울 정기 이벤트를 뽑는다.
+        /// 예전에는 일차로 첨자를 계산해서, 20일 한 판이면 목록 앞쪽 몇 개만 늘 같은 순서로 나왔다.
+        /// 섞은 뒤 하나씩 꺼내 쓰면 판마다 다른 조합을 보게 되고, 한 판 안에서는 겹치지 않는다.
+        /// </summary>
+        private DialogueSequenceSO ResolveScheduledEventSequence()
         {
             if (scheduledEventSequences == null || scheduledEventSequences.Length == 0)
                 return null;
 
-            var startIndex = Mathf.Max(0, day / scheduledEventIntervalDays - 1);
-            for (var i = 0; i < scheduledEventSequences.Length; i++)
+            if (_shuffledEventQueue.Count == 0)
+                RefillShuffledEventQueue();
+
+            while (_shuffledEventQueue.Count > 0)
             {
-                var index = (startIndex + i) % scheduledEventSequences.Length;
-                if (scheduledEventSequences[index] != null)
-                    return scheduledEventSequences[index];
+                var next = _shuffledEventQueue[0];
+                _shuffledEventQueue.RemoveAt(0);
+                if (next != null)
+                    return next;
             }
 
             return null;
+        }
+
+        private void RefillShuffledEventQueue()
+        {
+            _shuffledEventQueue.Clear();
+            foreach (var sequence in scheduledEventSequences)
+            {
+                if (sequence != null)
+                    _shuffledEventQueue.Add(sequence);
+            }
+
+            for (var i = _shuffledEventQueue.Count - 1; i > 0; i--)
+            {
+                var swap = UnityEngine.Random.Range(0, i + 1);
+                (_shuffledEventQueue[i], _shuffledEventQueue[swap]) = (_shuffledEventQueue[swap], _shuffledEventQueue[i]);
+            }
         }
 
         private void TryPlayPendingScheduledEvent()

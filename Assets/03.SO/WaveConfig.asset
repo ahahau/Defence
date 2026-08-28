@@ -136,22 +136,22 @@ MonoBehaviour:
     title: "\uD1A0\uBC8C\uB300\uC7A5"
     subtitle: "\uBC29\uD328 \uB4A4\uC758 \uC801\uC740 \uC5B4\uC124\uD508 \uACF5\uACA9\uC73C\uB85C\uB294
       \uD760\uC9D1\uB3C4 \uB098\uC9C0 \uC54A\uB294\uB2E4"
-    healthMultiplier: 5
-    attackMultiplier: 1.6
+    healthMultiplier: 6.56
+    attackMultiplier: 4
     visualScale: 1.7
   - targetDay: 18
     party: {fileID: 11400000, guid: abf3438af6a58214abfad019d41e7761, type: 2}
     title: "\uC0AC\uB0E5\uAFBC \uB450\uBAA9"
     subtitle: "\uC804\uC5F4\uC744 \uC138\uC6B0\uC9C0 \uC54A\uC73C\uBA74 \uB4A4\uC5D0\uC11C
       \uC3D8\uB294 \uC790\uB97C \uC7A1\uC744 \uC218 \uC5C6\uB2E4"
-    healthMultiplier: 3.5
-    attackMultiplier: 1.6
+    healthMultiplier: 5.65
+    attackMultiplier: 3
     visualScale: 1.45
   - targetDay: 20
     party: {fileID: 11400000, guid: d235fe14d8a856c489fae0c7784f0c81, type: 2}
     title: "\uC655\uAD6D \uAE30\uC0AC\uB2E8\uC7A5"
     subtitle: "\uC774 \uC2B5\uACA9\uB9CC \uB9C9\uC544\uB0B4\uBA74 \uB358\uC804\uC744
       \uC9C0\uCF1C\uB0B8\uB2E4"
-    healthMultiplier: 6
-    attackMultiplier: 2
+    healthMultiplier: 8.68
+    attackMultiplier: 3
     visualScale: 1.9

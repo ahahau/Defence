@@ -40,6 +40,13 @@ namespace _01.Code.UI
                 SceneManager.LoadScene(gameSceneName);
         }
 
+        /// <summary>별도 '새 게임' 버튼을 연결할 때 쓰는 진입점. 기본 시작 버튼은 저장이 있으면 이어한다.</summary>
+        public void StartNewGame()
+        {
+            _01.Code.Persistence.RunSaveSystem.DeleteSave();
+            StartGame();
+        }
+
         public void ShowSettings()
         {
             SetSettingsVisible(true);
