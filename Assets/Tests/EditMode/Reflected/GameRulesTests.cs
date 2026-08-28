@@ -35,6 +35,13 @@ namespace Tests.EditMode.Rules
             return m.Invoke(target, args);
         }
 
+        private static object CallStatic(Type type, string method, params object[] args)
+        {
+            var m = type.GetMethod(method, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            Assert.That(m, Is.Not.Null, $"{type.Name}.{method} 정적 메서드를 찾지 못했습니다.");
+            return m.Invoke(null, args);
+        }
+
         private static object Get(object target, string property)
         {
             var p = target.GetType().GetProperty(property, BindingFlags.Instance | BindingFlags.Public);
@@ -430,9 +437,11 @@ namespace Tests.EditMode.Rules
             var trait = Enum.ToObject(Resolve("_01.Code.Units.UnitTrait"), 0);
             var personality = Enum.ToObject(Resolve("_01.Code.Units.UnitPersonality"), 0);
             var command = Enum.ToObject(Resolve("_01.Code.Units.UnitCommand"), 0);
+            // 생성자는 레벨·경험치까지 받는다. Activator는 기본 인자를 채워 주지 않으므로
+            // 인자 수가 맞지 않으면 조용히 MissingMethodException으로 떨어진다.
             return Activator.CreateInstance(
                 Resolve("_01.Code.Units.UnitConditionState"),
-                fatigue, injury, 1f, trait, personality, command);
+                fatigue, injury, 1f, trait, personality, command, 1, 0);
         }
 
         private static object NewVillage(string name, int reward, int difficulty) =>
@@ -510,6 +519,395 @@ namespace Tests.EditMode.Rules
             Assert.That(failed, Is.EqualTo(33), "실패하면 일부만 회수합니다.");
         }
 
+        // ── 민심 ───────────────────────────────────────────────────────
+        // 민심은 오래도록 표시만 되는 숫자였다. 이제 유지비와 지원자에 걸리므로 곡선이 어긋나면 안 된다.
+
+        private static GameObject BuildMoraleHost(out object morale)
+        {
+            var host = new GameObject("MoraleTestHost");
+            var component = host.AddComponent(Resolve("_01.Code.Manager.MoralePolicyManager"));
+            SetPrivate(component, "upkeepAtZeroMorale", 1.5f);
+            SetPrivate(component, "upkeepAtFullMorale", 0.8f);
+            SetPrivate(component, "applicantsAtZeroMorale", 0.25f);
+            Call(component, "Awake");
+            morale = component;
+            return host;
+        }
+
+        private static void SetMorale(object morale, int value) =>
+            morale.GetType().GetProperty("CurrentMorale", BindingFlags.Instance | BindingFlags.Public)
+                .SetValue(morale, value);
+
+        [Test]
+        public void Morale_LowMoraleMakesKeepingMinionsMoreExpensive()
+        {
+            var host = BuildMoraleHost(out var morale);
+            try
+            {
+                SetMorale(morale, 0);
+                Assert.That((float)Get(morale, "UpkeepMultiplier"), Is.EqualTo(1.5f).Within(0.001f),
+                    "민심이 바닥이면 위험수당이 붙습니다.");
+
+                SetMorale(morale, 50);
+                Assert.That((float)Get(morale, "UpkeepMultiplier"), Is.EqualTo(1.15f).Within(0.001f));
+
+                SetMorale(morale, 100);
+                Assert.That((float)Get(morale, "UpkeepMultiplier"), Is.EqualTo(0.8f).Within(0.001f),
+                    "민심이 좋으면 같은 부하를 더 싸게 붙잡아 둡니다.");
+            }
+            finally
+            {
+                DestroyHost(host);
+            }
+        }
+
+        [Test]
+        public void Morale_LowMoraleThinsOutApplicants()
+        {
+            var host = BuildMoraleHost(out var morale);
+            try
+            {
+                SetMorale(morale, 100);
+                Assert.That(Call(morale, "AdjustRecruitCount", 4), Is.EqualTo(4), "민심이 좋으면 다 찾아옵니다.");
+
+                SetMorale(morale, 0);
+                Assert.That(Call(morale, "AdjustRecruitCount", 4), Is.EqualTo(1), "민심이 바닥이면 거의 오지 않습니다.");
+
+                Assert.That(Call(morale, "AdjustRecruitCount", 0), Is.EqualTo(0), "원래 0이면 0입니다.");
+            }
+            finally
+            {
+                DestroyHost(host);
+            }
+        }
+
+        // ── 금고 ───────────────────────────────────────────────────────
+        // 보관 금화는 약탈 대상이고 침입자를 끌어당기기까지 한다. 이자가 없으면 맡길 이유가 없다.
+
+        [Test]
+        public void Treasury_StoredGoldEarnsInterestButStaysAtRisk()
+        {
+            var host = new GameObject("TreasuryTestHost");
+            try
+            {
+                var treasury = host.AddComponent(Resolve("_01.Code.Buildings.Treasury"));
+                SetPrivate(treasury, "capacity", 1000);
+                SetPrivate(treasury, "storedGold", 200);
+                SetPrivate(treasury, "interestPerSettlement", 0.1f);
+
+                Assert.That(Get(treasury, "ProjectedInterest"), Is.EqualTo(20),
+                    "맡기기 전에 얼마가 붙는지 보여야 판단이 됩니다.");
+
+                Assert.That(Call(treasury, "AccrueInterest"), Is.EqualTo(20));
+                Assert.That(Get(treasury, "StoredGold"), Is.EqualTo(220), "이자도 금고에 쌓입니다.");
+
+                // 불어난 금화는 그대로 약탈 대상이다 — 그게 이 결정의 값이다.
+                Assert.That(Call(treasury, "StealGold", 50), Is.EqualTo(50));
+                Assert.That(Get(treasury, "StoredGold"), Is.EqualTo(170));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
+        public void Treasury_InterestNeverOverflowsCapacity()
+        {
+            var host = new GameObject("TreasuryTestHost");
+            try
+            {
+                var treasury = host.AddComponent(Resolve("_01.Code.Buildings.Treasury"));
+                SetPrivate(treasury, "capacity", 100);
+                SetPrivate(treasury, "storedGold", 98);
+                SetPrivate(treasury, "interestPerSettlement", 0.5f);
+
+                Assert.That(Call(treasury, "AccrueInterest"), Is.EqualTo(2), "한도까지만 채웁니다.");
+                Assert.That(Get(treasury, "StoredGold"), Is.EqualTo(100));
+                Assert.That(Call(treasury, "AccrueInterest"), Is.EqualTo(0), "가득 차면 더 붙지 않습니다.");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
+
+        // ── 지원자 ─────────────────────────────────────────────────────
+        // 특성과 성격이 스탯을 바꾸므로, 보고 고른 사람과 실제로 오는 사람이 같아야 한다.
+
+        [Test]
+        public void Applicant_StaysTheSamePersonUntilHired()
+        {
+            var host = new GameObject("RosterTestHost");
+            try
+            {
+                var roster = host.AddComponent(Resolve("_01.Code.Manager.HiredUnitRoster"));
+                var unit = NewAsset("_01.Code.Units.UnitDataSO");
+
+                // 후보 한 명을 세워 둔다. 명단은 읽을 때 이 수에 맞춰 채워진다.
+                var owned = roster.GetType()
+                    .GetField("_ownedUnits", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .GetValue(roster);
+                owned.GetType().GetMethod("set_Item").Invoke(owned, new object[] { unit, 1 });
+
+                var first = Call(roster, "PeekApplicant", unit);
+                var second = Call(roster, "PeekApplicant", unit);
+
+                Assert.That(second, Is.EqualTo(first),
+                    "화면을 다시 그릴 때마다 지원자가 바뀌면 보고 고를 수가 없습니다.");
+
+                var traitProperty = first.GetType().GetProperty("Trait", BindingFlags.Instance | BindingFlags.Public);
+                Assert.That(traitProperty, Is.Not.Null);
+                Assert.That(traitProperty.GetValue(first), Is.Not.Null, "지원자에게는 특성이 정해져 있어야 합니다.");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
+
+        // ── 침입 경고 ──────────────────────────────────────────────────
+
+        private static string IntrusionWarning(int steps)
+        {
+            // 목표 종류를 받는 오버로드가 생겨서 이름만으로는 모호하다. 인자 형태로 집어 준다.
+            var method = Resolve("_01.Code.Manager.IntrusionThreat")
+                .GetMethod(
+                    "BuildWarning",
+                    BindingFlags.Static | BindingFlags.Public,
+                    null,
+                    new[] { typeof(int) },
+                    null);
+            Assert.That(method, Is.Not.Null, "BuildWarning(int)을 찾지 못했습니다.");
+            return (string)method.Invoke(null, new object[] { steps });
+        }
+
+        [Test]
+        public void Intrusion_WarningSharpensAsTheTreasuryGetsCloser()
+        {
+            var noThreat = (int)Resolve("_01.Code.Manager.IntrusionThreat")
+                .GetField("NoThreat", BindingFlags.Static | BindingFlags.Public).GetValue(null);
+
+            Assert.That(IntrusionWarning(noThreat), Is.Empty, "닿을 수 있는 침입자가 없으면 경고도 없습니다.");
+            Assert.That(IntrusionWarning(0), Does.Contain("금고 침입"), "금고에 선 순간은 따로 알려야 합니다.");
+            Assert.That(IntrusionWarning(1), Does.Contain("1구역"));
+            Assert.That(IntrusionWarning(4), Does.Contain("4구역"));
+
+            // 가까울수록 붉어져야 눈에 먼저 들어온다.
+            Assert.That(IntrusionWarning(1), Does.Contain("FF5A4A"));
+            Assert.That(IntrusionWarning(2), Does.Contain("FFB03A"));
+            Assert.That(IntrusionWarning(5), Does.Contain("C9BFA8"));
+        }
+
+        // ── 던전 권능 ──────────────────────────────────────────────────
+        // 웨이브가 관전이 되지 않게 하는 유일한 개입 수단이므로, 자원 규칙이 어긋나면 안 된다.
+
+        private static GameObject BuildPowerHost(out object system, out ScriptableObject waveChannel, out object power)
+        {
+            waveChannel = NewAsset("_01.Code.Core.GameEventChannelSO");
+
+            power = NewAsset("_01.Code.Skills.DungeonPowerSO");
+            SetPrivate(power, "<Cost>k__BackingField", 25);
+            SetPrivate(power, "<Cooldown>k__BackingField", 7f);
+            SetPrivate(power, "<Damage>k__BackingField", 14);
+
+            var host = new GameObject("DungeonPowerTestHost");
+            var component = host.AddComponent(Resolve("_01.Code.Manager.DungeonPowerSystem"));
+            SetPrivate(component, "waveEventChannel", waveChannel);
+            SetPrivate(component, "maxPower", 100);
+            SetPrivate(component, "startingPower", 30f);
+            SetPrivate(component, "powerPerKill", 8f);
+            SetPrivate(component, "powerPerSecond", 0f);
+
+            var powers = Array.CreateInstance(Resolve("_01.Code.Skills.DungeonPowerSO"), 1);
+            powers.SetValue(power, 0);
+            SetPrivate(component, "powers", powers);
+
+            Call(component, "Awake");
+            Call(component, "OnEnable");
+            system = component;
+            return host;
+        }
+
+        private static void DestroyPowerHost(GameObject host, ScriptableObject waveChannel)
+        {
+            if (host != null)
+            {
+                foreach (var component in host.GetComponents<MonoBehaviour>())
+                {
+                    Call(component, "OnDisable");
+                    component.GetType().GetMethod("OnDestroy", BindingFlags.Instance | BindingFlags.NonPublic)
+                        ?.Invoke(component, null);
+                }
+
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+
+            if (waveChannel != null)
+                UnityEngine.Object.DestroyImmediate(waveChannel);
+        }
+
+        [Test]
+        public void Power_IsSpendableOnlyWhileTheWaveRuns()
+        {
+            var host = BuildPowerHost(out var system, out var waveChannel, out var power);
+            try
+            {
+                Assert.That(Get(system, "CurrentPower"), Is.EqualTo(0), "습격 전에는 쓸 권능이 없습니다.");
+
+                var args = new object[] { power, null, null };
+                var canCast = (bool)system.GetType()
+                    .GetMethod("CanCast", BindingFlags.Instance | BindingFlags.Public)
+                    .Invoke(system, args);
+                Assert.That(canCast, Is.False);
+                Assert.That(args[2], Is.EqualTo("습격 중에만 쓸 수 있습니다"));
+
+                Raise(waveChannel, NewEvent("_01.Code.Events.WaveStartedEvent", 1, 5));
+                Assert.That(Get(system, "CurrentPower"), Is.EqualTo(30), "습격이 시작되면 들고 가는 만큼 찹니다.");
+            }
+            finally
+            {
+                DestroyPowerHost(host, waveChannel);
+            }
+        }
+
+        [Test]
+        public void Power_KillsFeedTheGaugeUpToItsCap()
+        {
+            var host = BuildPowerHost(out var system, out var waveChannel, out _);
+            try
+            {
+                Raise(waveChannel, NewEvent("_01.Code.Events.WaveStartedEvent", 1, 5));
+
+                Call(system, "RewardKill");
+                Call(system, "RewardKill");
+                Assert.That(Get(system, "CurrentPower"), Is.EqualTo(46), "처치마다 권능이 붙어야 합니다.");
+
+                for (var i = 0; i < 20; i++)
+                    Call(system, "RewardKill");
+
+                Assert.That(Get(system, "CurrentPower"), Is.EqualTo(100), "최대치를 넘지 않습니다.");
+            }
+            finally
+            {
+                DestroyPowerHost(host, waveChannel);
+            }
+        }
+
+        [Test]
+        public void Power_DoesNotCarryOverBetweenWaves()
+        {
+            var host = BuildPowerHost(out var system, out var waveChannel, out _);
+            try
+            {
+                Raise(waveChannel, NewEvent("_01.Code.Events.WaveStartedEvent", 1, 5));
+                Call(system, "RewardKill");
+                Assert.That((int)Get(system, "CurrentPower"), Is.GreaterThan(0));
+
+                Raise(waveChannel, NewEvent("_01.Code.Events.WaveEndedEvent", 1, 0));
+
+                Assert.That(Get(system, "CurrentPower"), Is.EqualTo(0),
+                    "대기 중에 쟁여 두고 다음 습격에 쏟아붓지 못하게 합니다.");
+            }
+            finally
+            {
+                DestroyPowerHost(host, waveChannel);
+            }
+        }
+
+        [Test]
+        public void Power_ArmingTheSamePowerTwiceCancelsIt()
+        {
+            var host = BuildPowerHost(out var system, out var waveChannel, out var power);
+            try
+            {
+                Raise(waveChannel, NewEvent("_01.Code.Events.WaveStartedEvent", 1, 5));
+
+                Call(system, "Arm", power);
+                Assert.That(Get(system, "ArmedPower"), Is.SameAs(power), "고른 권능이 겨냥 상태가 됩니다.");
+
+                Call(system, "Arm", power);
+                Assert.That(Get(system, "ArmedPower"), Is.Null, "같은 권능을 다시 누르면 겨냥이 풀립니다.");
+
+                Call(system, "Arm", power);
+                Call(system, "Disarm");
+                Assert.That(Get(system, "ArmedPower"), Is.Null);
+            }
+            finally
+            {
+                DestroyPowerHost(host, waveChannel);
+            }
+        }
+
+        // ── 런 결과 ───────────────────────────────────────────────────
+        // 웨이브 집계는 매일 초기화되므로 판 전체 전과는 따로 누적해야 남는다.
+
+        private static GameObject BuildRunSummaryHost(out object summary)
+        {
+            var host = new GameObject("RunSummaryTestHost");
+            var component = host.AddComponent(Resolve("_01.Code.Progression.RunSummarySystem"));
+            Call(component, "Awake");
+            summary = component;
+            return host;
+        }
+
+        [Test]
+        public void RunSummary_AccumulatesAcrossEveryWave()
+        {
+            var host = BuildRunSummaryHost(out var summary);
+            try
+            {
+                Call(summary, "RecordWave", 10, 8, 200, 40, 3);
+                Call(summary, "RecordWave", 14, 14, 350, 25, 5);
+
+                Assert.That(Get(summary, "WavesFought"), Is.EqualTo(2));
+                Assert.That(Get(summary, "Invaders"), Is.EqualTo(24), "침입자는 판 전체로 쌓여야 합니다.");
+                Assert.That(Get(summary, "Kills"), Is.EqualTo(22));
+                Assert.That(Get(summary, "DamageDealt"), Is.EqualTo(550));
+                Assert.That(Get(summary, "DamageTaken"), Is.EqualTo(65));
+                Assert.That(Get(summary, "CriticalHits"), Is.EqualTo(8));
+            }
+            finally
+            {
+                DestroyHost(host);
+            }
+        }
+
+        [Test]
+        public void RunSummary_ADayWithoutAWaveIsNotCountedAsAFight()
+        {
+            var host = BuildRunSummaryHost(out var summary);
+            try
+            {
+                Call(summary, "RecordWave", 0, 0, 0, 0, 0);
+                Assert.That(Get(summary, "WavesFought"), Is.EqualTo(0),
+                    "포탈이 없어 웨이브가 서지 않은 날은 방어전이 아닙니다.");
+            }
+            finally
+            {
+                DestroyHost(host);
+            }
+        }
+
+        [Test]
+        public void RunSummary_DebtRemembersItsWorstMomentNotItsLast()
+        {
+            var host = BuildRunSummaryHost(out var summary);
+            try
+            {
+                Call(summary, "RecordDebt", 40);
+                Call(summary, "RecordDebt", 260);
+                Call(summary, "RecordDebt", 0);
+
+                Assert.That(Get(summary, "PeakDebt"), Is.EqualTo(260),
+                    "빚을 갚았어도 가장 위험했던 순간이 남아야 합니다.");
+            }
+            finally
+            {
+                DestroyHost(host);
+            }
+        }
+
         // ── 보스 ─────────────────────────────────────────────────────
         // 보스날이 셋인데 정의가 하나면 9·18·20일이 같은 덩치가 된다.
 
@@ -559,76 +957,97 @@ namespace Tests.EditMode.Rules
             return entry;
         }
 
+        // ── 핵심 루프 기능 해금 ───────────────────────────────────────
+
+        [Test]
+        public void CoreLoopFeatures_UnlockOneLayerAtATime()
+        {
+            var rules = Resolve("_01.Code.UI.CoreLoopFeatureUnlocks");
+
+            Assert.That(CallStatic(rules, "IsArtifactUnlocked", 1), Is.False);
+            Assert.That(CallStatic(rules, "IsArtifactUnlocked", 2), Is.True,
+                "첫 방어를 마친 뒤 유물 계층이 열려야 합니다.");
+            Assert.That(CallStatic(rules, "IsDungeonPowerUnlocked", 2), Is.False);
+            Assert.That(CallStatic(rules, "IsDungeonPowerUnlocked", 3), Is.True,
+                "권능은 유물보다 한 단계 뒤에 열려야 합니다.");
+            Assert.That(CallStatic(rules, "IsExpeditionUnlocked", 3), Is.False);
+            Assert.That(CallStatic(rules, "IsExpeditionUnlocked", 4), Is.True,
+                "원정은 핵심 전투 기능을 익힌 뒤 마지막으로 열려야 합니다.");
+        }
+
         // ── 장악도 ────────────────────────────────────────────────────
         // 장악은 금화가 아니라 방어로 돌아와야 원정이 돈벌이 버튼이 되지 않는다.
 
-        private static Type ConquestState => Resolve("_01.Code.Progression.VillageConquestState");
-
-        private static void ConquestCall(string method, params object[] args)
+        /// <summary>장악도는 이제 컴포넌트라 호스트를 세워야 Current가 잡힌다.</summary>
+        private static GameObject BuildConquestHost(out object conquest)
         {
-            var m = ConquestState.GetMethod(method, BindingFlags.Static | BindingFlags.Public);
-            Assert.That(m, Is.Not.Null, $"VillageConquestState.{method}를 찾지 못했습니다.");
-            m.Invoke(null, args);
+            var host = new GameObject("VillageConquestTestHost");
+            var component = host.AddComponent(Resolve("_01.Code.Progression.VillageConquestSystem"));
+            Call(component, "Awake");
+            conquest = component;
+            return host;
         }
 
-        private static float ConquestSuppression(object party)
+        private static void DestroyHost(GameObject host)
         {
-            var m = ConquestState.GetMethod("GetSuppression", BindingFlags.Static | BindingFlags.Public);
-            return (float)m.Invoke(null, new[] { party });
-        }
+            if (host == null)
+                return;
 
-        private static float AverageConquestRatio =>
-            (float)ConquestState.GetProperty("AverageConquestRatio", BindingFlags.Static | BindingFlags.Public)
-                .GetValue(null);
+            foreach (var component in host.GetComponents<MonoBehaviour>())
+                component.GetType().GetMethod("OnDestroy", BindingFlags.Instance | BindingFlags.NonPublic)
+                    ?.Invoke(component, null);
+
+            UnityEngine.Object.DestroyImmediate(host);
+        }
 
         [Test]
         public void Conquest_AConqueredVillageStopsSendingItsRaiders()
         {
-            ConquestCall("Reset");
+            var host = BuildConquestHost(out var conquest);
             try
             {
                 var patrol = NewAsset("_01.Code.Manager.AdventurerPartySO");
                 var hunters = NewAsset("_01.Code.Manager.AdventurerPartySO");
-                ConquestCall("Register", patrol, 0);
+                Call(conquest, "Register", patrol, 0);
 
-                Assert.That(ConquestSuppression(patrol), Is.EqualTo(0f), "장악 전에는 그대로 쳐들어옵니다.");
+                Assert.That(Call(conquest, "GetSuppression", patrol), Is.EqualTo(0f), "장악 전에는 그대로 쳐들어옵니다.");
 
-                ConquestCall("SetConquest", patrol, 100);
-                Assert.That(ConquestSuppression(patrol), Is.EqualTo(1f), "완전히 장악하면 더 이상 오지 않습니다.");
-                Assert.That(ConquestSuppression(hunters), Is.EqualTo(0f),
+                Call(conquest, "SetConquest", patrol, 100);
+                Assert.That(Call(conquest, "GetSuppression", patrol), Is.EqualTo(1f), "완전히 장악하면 더 이상 오지 않습니다.");
+                Assert.That(Call(conquest, "GetSuppression", hunters), Is.EqualTo(0f),
                     "등록되지 않은 파티는 장악과 무관하게 계속 옵니다.");
             }
             finally
             {
-                ConquestCall("Reset");
+                DestroyHost(host);
             }
         }
 
         [Test]
         public void Conquest_AveragesAcrossEveryVillageNotJustTheConqueredOne()
         {
-            ConquestCall("Reset");
+            var host = BuildConquestHost(out var conquest);
             try
             {
                 var first = NewAsset("_01.Code.Manager.AdventurerPartySO");
-                ConquestCall("Register", first, 0);
-                ConquestCall("Register", NewAsset("_01.Code.Manager.AdventurerPartySO"), 0);
+                Call(conquest, "Register", first, 0);
+                Call(conquest, "Register", NewAsset("_01.Code.Manager.AdventurerPartySO"), 0);
 
-                ConquestCall("SetConquest", first, 100);
+                Call(conquest, "SetConquest", first, 100);
 
-                Assert.That(AverageConquestRatio, Is.EqualTo(0.5f).Within(0.001f),
+                Assert.That((float)Get(conquest, "AverageConquestRatio"), Is.EqualTo(0.5f).Within(0.001f),
                     "마을 하나를 다 장악해도 전체로는 절반입니다.");
             }
             finally
             {
-                ConquestCall("Reset");
+                DestroyHost(host);
             }
         }
 
         [Test]
         public void Conquest_ShrinksTheWaveButNeverToNothing()
         {
-            ConquestCall("Reset");
+            var conquestHost = BuildConquestHost(out var conquest);
             var host = new GameObject("WaveManagerTestHost");
             try
             {
@@ -636,12 +1055,12 @@ namespace Tests.EditMode.Rules
                 SetPrivate(wave, "maxWaveReductionFromConquest", 0.4f);
 
                 var party = NewAsset("_01.Code.Manager.AdventurerPartySO");
-                ConquestCall("Register", party, 0);
+                Call(conquest, "Register", party, 0);
 
                 Assert.That(Call(wave, "GetConquestAdjustedEnemyCount", 20), Is.EqualTo(20),
                     "장악하지 않았으면 웨이브가 그대로입니다.");
 
-                ConquestCall("SetConquest", party, 100);
+                Call(conquest, "SetConquest", party, 100);
                 Assert.That(Call(wave, "GetConquestAdjustedEnemyCount", 20), Is.EqualTo(12),
                     "전부 장악하면 최대 감소율만큼 줄어듭니다.");
                 Assert.That(Call(wave, "GetConquestAdjustedEnemyCount", 1), Is.EqualTo(1),
@@ -649,8 +1068,8 @@ namespace Tests.EditMode.Rules
             }
             finally
             {
-                ConquestCall("Reset");
                 UnityEngine.Object.DestroyImmediate(host);
+                DestroyHost(conquestHost);
             }
         }
     }
