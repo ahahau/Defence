@@ -2,6 +2,8 @@ using _01.Code.MapCreateSystem;
 using _01.Code.Combat;
 using _01.Code.Buildings;
 using _01.Code.Core;
+using _01.Code.Core.Modules;
+using _01.Code.Core.Stats;
 using _01.Code.Entities;
 using _01.Code.Events;
 using _01.Code.StatusEffects;
@@ -13,7 +15,7 @@ using UnityEngine;
 namespace _01.Code.Enemies
 {
     [RequireComponent(typeof(EnemyClickTarget), typeof(EnemyStatusController))]
-    public class Enemy : MonoBehaviour
+    public class Enemy : Entity
     {
         public enum CombatState { Idle, Chase, Attack, Hit, Dead }
 
@@ -44,11 +46,14 @@ namespace _01.Code.Enemies
         [SerializeField, Min(0f)] private float hitStunDuration = 0.25f;
         [SerializeField, Min(0f)] private float deadDuration = 0.45f;
 
+        // 스탯 가감치를 붙일 때 쓰는 출처. 같은 출처는 한 번만 붙고, 떼면 원래 값으로 돌아온다.
+        private static readonly object WaveLevelStatKey = new();
+        private static readonly object BossStatKey = new();
+
         private GameEventChannelSO _costEventChannel;
         private bool _isInCombat;
         private Unit _engagedUnit;
         private bool _isReturning;
-        private bool _isDead;
         private int _currentFear;
         private int _currentGreed;
         private Tween _returnTween;
@@ -75,7 +80,6 @@ namespace _01.Code.Enemies
 
         // ── BT-facing state queries ─────────────────────────────
         public CombatState State => _state;
-        public bool IsDead => _isDead;
         public bool IsInCombat => _isInCombat;
         public bool IsHitStunned => _isHitStunned;
         public bool IsReturning => _isReturning;
@@ -104,8 +108,10 @@ namespace _01.Code.Enemies
         public Health Health => health;
         public EnemyStatusController StatusController => statusController;
 
-        private void Awake()
+        protected override void Awake()
         {
+            base.Awake();
+
             if (statusController == null)
                 statusController = GetComponent<EnemyStatusController>();
             if (statusController == null)
@@ -146,7 +152,7 @@ namespace _01.Code.Enemies
         // 적 이동 구동(과거 WaveManager 턴/BT가 하던 역할). 전투/귀환/사망 중엔 멈춘다.
         private void Update()
         {
-            if (!_isInitialized || _isDead || _isInCombat || _isReturning)
+            if (!_isInitialized || IsDead || _isInCombat || _isReturning)
                 return;
 
             if (_battleAgent != null
@@ -165,7 +171,7 @@ namespace _01.Code.Enemies
         /// <summary>BT의 Traverse Map 노드가 호출하는 한 스텝 순회(무드/귀환/함정/약탈 포함). 전투 중이면 멈춘다.</summary>
         public bool TickTraversal(float deltaTime)
         {
-            if (!_isInitialized || _isDead || _isInCombat || _isReturning)
+            if (!_isInitialized || IsDead || _isInCombat || _isReturning)
                 return false;
 
             if (_battleAgent != null
@@ -184,7 +190,11 @@ namespace _01.Code.Enemies
         {
             _costEventChannel = costEventChannel;
             _treasuryGoldLoss = treasuryGoldLoss;
-            ApplyData(data);
+
+            // 여기서 ApplyData를 다시 부르면 안 된다. 스폰 순서가
+            //   ConfigureData → ApplyWaveLevel → PromoteToBoss → Initialize
+            // 인데 ApplyData는 SetMaxHealth·SetAttackDamage로 값을 덮어쓰므로,
+            // 일차 배율도 보스 승격도 여기서 통째로 지워진다. 데이터는 ConfigureData가 이미 발랐다.
             SubscribeHealth();
             EnsureClickTarget(nodeEventChannel);
 
@@ -217,14 +227,16 @@ namespace _01.Code.Enemies
             if (bonusLevel <= 0) return;
 
             health?.AddMaxHealth(Mathf.Max(0, healthPerLevel) * bonusLevel, true);
-            combatant?.AddAttackDamage(Mathf.Max(0, attackPerLevel) * bonusLevel);
+
+            Stats?.AddModifier(StatIndex.MaxHealth, WaveLevelStatKey, Mathf.Max(0, healthPerLevel) * bonusLevel);
+            Stats?.AddModifier(StatIndex.AttackDamage, WaveLevelStatKey, Mathf.Max(0, attackPerLevel) * bonusLevel);
         }
 
         // legacy turn entry-point, no longer used (BT drives movement)
         public void TakeTurn() { }
 
         // ── BT node API ─────────────────────────────────────────
-
+            
         /// <summary>Enter a state and refresh the matching sprite. Called by BT action nodes.</summary>
         public void EnterState(CombatState newState)
         {
@@ -234,8 +246,9 @@ namespace _01.Code.Enemies
             if (_state == newState) return;
             _state = newState;
             UpdateSprite();
+            
         }
-
+        
         public bool TickIdle(float deltaTime)
         {
             if (_idleTimer <= 0f)
@@ -380,7 +393,7 @@ namespace _01.Code.Enemies
         /// <summary>라인(엣지)에 설치된 건물을 지나갈 때 — 노드 통과 효과와 같은 방식으로 적용(상점/여관/통로 함정).</summary>
         private void HandleEdgeBuildingPassed(Building building)
         {
-            if (_isDead || _isReturning || building == null)
+            if (IsDead || _isReturning || building == null)
                 return;
 
             // 통로 함정: 노드 칸은 수비대와 자리를 다투지만 통로는 함정 몫이다.
@@ -649,7 +662,7 @@ namespace _01.Code.Enemies
                 return;
 
             _deathStarted = true;
-            _isDead = true;
+            IsDead = true;
             _isInCombat = false;
             _engagedUnit = null;
             _isHitStunned = false;
@@ -698,8 +711,8 @@ namespace _01.Code.Enemies
             if (health != null && healthMultiplier > 1f)
                 health.SetMaxHealth(Mathf.RoundToInt(health.MaxHealth * healthMultiplier), true);
 
-            if (combatant != null && attackMultiplier > 1f)
-                combatant.SetAttackDamage(Mathf.RoundToInt(combatant.AttackDamage * attackMultiplier));
+            AddBossStatModifier(StatIndex.MaxHealth, healthMultiplier);
+            AddBossStatModifier(StatIndex.AttackDamage, attackMultiplier);
 
             if (visualScale > 1f)
                 transform.localScale *= visualScale;
@@ -714,13 +727,42 @@ namespace _01.Code.Enemies
         {
             if (enemyData == null) return;
             name = $"Enemy_{enemyData.Name}";
-            combatant?.SetDefense(enemyData.Defense);
-            combatant?.SetEvasionChance(enemyData.EvasionChance);
-            combatant?.SetAttackDamage(enemyData.AttackDamage);
-            combatant?.SetAttackInterval(enemyData.AttackInterval);
+            // 공격·방어 수치는 ApplyDataToStats가 스탯 표에 바르고 Combatant가 거기서 읽는다.
+            // 체력만 아직 Health가 따로 들고 있어 여기서 직접 발라 준다.
+            ApplyDataToStats(enemyData);
             health?.SetMaxHealth(enemyData.MaxHealth, true);
             enemyRenderer?.ConfigureSprites(enemyData.IdleSprite, enemyData.AttackSprite, enemyData.DefeatedSprite);
             _strengthOutline?.RefreshSprite();
+        }
+
+        /// <summary>데이터의 기본 수치를 스탯 표의 기본값으로 옮긴다.
+        /// 기본값만 갈아 끼우므로 이미 붙어 있는 일차·보스 가감치는 그대로 남는다.</summary>
+        private void ApplyDataToStats(EnemyDataSO enemyData)
+        {
+            SetStatBase(StatIndex.MaxHealth, enemyData.MaxHealth);
+            SetStatBase(StatIndex.AttackDamage, enemyData.AttackDamage);
+            SetStatBase(StatIndex.Defense, enemyData.Defense);
+            SetStatBase(StatIndex.AttackInterval, enemyData.AttackInterval);
+            SetStatBase(StatIndex.EvasionChance, enemyData.EvasionChance);
+        }
+
+        private void SetStatBase(int statIndex, float value)
+        {
+            if (Stats != null && Stats.TryGetStat(statIndex, out var stat))
+                stat.BaseValue = value;
+        }
+
+        /// <summary>배율을 현재 값 기준의 증가분으로 바꿔 붙인다 —
+        /// 곱해서 덮어쓰면 보스 승격을 되돌릴 수 없지만, 가감치는 떼면 그만이다.
+        /// 체력·공격력은 정수로 다뤄지므로 곱한 결과를 먼저 반올림한 뒤 차이만큼 얹는다.
+        /// 안 그러면 소수점이 남아 기존 경로(RoundToInt)와 1 미만으로 어긋난다.</summary>
+        private void AddBossStatModifier(int statIndex, float multiplier)
+        {
+            if (multiplier <= 1f || Stats == null || !Stats.TryGetStat(statIndex, out var stat))
+                return;
+
+            var current = stat.Value;
+            stat.AddModifier(BossStatKey, Mathf.Round(current * multiplier) - current);
         }
 
         private void RefreshStrengthOutline()

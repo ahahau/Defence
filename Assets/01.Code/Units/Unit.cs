@@ -1,5 +1,6 @@
 using _01.Code.Artifacts;
 using _01.Code.Combat;
+using _01.Code.Core.Modules;
 using _01.Code.MapCreateSystem;
 using System;
 using UnityEngine;
@@ -7,7 +8,7 @@ using UnityEngine;
 namespace _01.Code.Units
 {
     [RequireComponent(typeof(UnitClickTarget))]
-    public class Unit : MonoBehaviour
+    public class Unit : Entity
     {
         [SerializeField] private SpriteRenderer spriteRenderer;
         [SerializeField] private Combatant combatant;
@@ -103,8 +104,15 @@ namespace _01.Code.Units
         public event Action ConditionChanged;
         private ArtifactStatBonus appliedArtifactBonus = new(0, 1f, 0, 1f);
 
-        protected virtual void Awake()
+        // 특성과 명령은 서로 다른 이유로 붙는 보정이라 출처를 따로 둔다.
+        // 명령만 바뀌었을 때 특성 보정까지 걷혔다 다시 붙는 일이 없어야 한다.
+        private static readonly object TraitStatKey = new();
+        private static readonly object CommandStatKey = new();
+
+        protected override void Awake()
         {
+            base.Awake();
+
             SubscribeHealth();
             SubscribeCombat();
             EnsureClickTarget();
@@ -420,24 +428,34 @@ namespace _01.Code.Units
             };
         }
 
+        /// <summary>
+        /// 데이터의 기본 방어·회피를 깔고, 특성과 명령 보정을 각자 출처로 얹는다.
+        ///
+        /// 예전에는 부를 때마다 `SetDefense(기본+특성+명령)`으로 통째로 다시 썼다.
+        /// 그래서 명령을 바꾸는 것만으로 아티팩트가 붙여 둔 방어 보정이 조용히 사라졌다.
+        /// 출처별로 얹으면 이 함수가 몇 번 불리든 자기 몫만 갱신한다.
+        /// </summary>
         private void ApplyTraitBaseStats()
         {
             if (combatant == null || Data == null)
                 return;
 
-            var baseDefense = Data.Defense;
-            var baseEvasion = Data.EvasionChance;
-            if (trait == UnitTrait.Guardian)
-                baseDefense += guardianDefenseBonus;
-            if (currentCommand == UnitCommand.Guard)
-                baseDefense += commandGuardDefenseBonus;
-            if (trait == UnitTrait.Cautious)
-                baseEvasion += cautiousEvasionBonus;
-            if (personality == UnitPersonality.Timid)
-                baseEvasion += timidEvasionBonus;
+            combatant.SetDefense(Data.Defense);
+            combatant.SetEvasionChance(Data.EvasionChance);
 
-            combatant.SetDefense(baseDefense);
-            combatant.SetEvasionChance(baseEvasion);
+            var traitEvasion = trait == UnitTrait.Cautious ? cautiousEvasionBonus : 0f;
+            if (personality == UnitPersonality.Timid)
+                traitEvasion += timidEvasionBonus;
+
+            combatant.SetDefenseAndEvasionBonus(
+                TraitStatKey,
+                trait == UnitTrait.Guardian ? guardianDefenseBonus : 0f,
+                traitEvasion);
+
+            combatant.SetDefenseAndEvasionBonus(
+                CommandStatKey,
+                currentCommand == UnitCommand.Guard ? commandGuardDefenseBonus : 0f,
+                0f);
         }
 
         private void HandleHealthChanged(float ratio)

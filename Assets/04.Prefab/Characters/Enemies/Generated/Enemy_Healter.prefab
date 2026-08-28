@@ -23,6 +23,7 @@ GameObject:
   - component: {fileID: 2871377792837210728}
   - component: {fileID: 4933797280049562216}
   - component: {fileID: 17370200486737450}
+  - component: {fileID: 7889530107761068205}
   m_Layer: 0
   m_Name: Enemy_Healter
   m_TagString: Untagged
@@ -96,6 +97,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 20e614fa890c4018ac1965285a0faec6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Enemies.Enemy
+  isSuperArmor: 0
+  Hit:
+    m_PersistentCalls:
+      m_Calls: []
+  Died:
+    m_PersistentCalls:
+      m_Calls: []
   data: {fileID: 11400000, guid: 8af77e86c8ec4cb0a33b599cf083ed5a, type: 2}
   killExperience: 1
   enemyRenderer: {fileID: 7749111140017749111}
@@ -143,29 +151,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 91d206f33eb5362418db8c3fe653f581, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Combat.DamageFeedback
-  bloomColor: {r: 1, g: 0.12, b: 0.08, a: 1}
-  bloomDuration: 0.12
-  impactDuration: 0.18
-  impactShakeDistance: 0.08
-  impactScaleAmount: 0.12
-  impactRotationAngle: 5
   textFloatDistance: 0.45
   textDuration: 0.55
   textSortingOrder: 60
   criticalTextColor: {r: 1, g: 0.72, b: 0.1, a: 1}
   criticalTextScale: 1.5
-  criticalImpactScale: 1.6
   missTextColor: {r: 0.85, g: 0.85, b: 0.85, a: 1}
   healTextColor: {r: 0.42, g: 1, b: 0.45, a: 1}
-  healBloomColor: {r: 0.35, g: 1, b: 0.4, a: 1}
   healParticleColor: {r: 0.4, g: 1, b: 0.5, a: 1}
   healParticleBurstCount: 10
   healTextAggregateWindow: 0.4
   damageTextPrefab: {fileID: 2763252915929347062, guid: 8c9f5ae6dfc45c64881eb2539d305043, type: 3}
   hitParticles: {fileID: 0}
   health: {fileID: 2709196990148380843}
-  spriteRenderers:
-  - {fileID: 2624532001765305233}
   hitParticleColor: {r: 1, g: 0.18, b: 0.06, a: 1}
   hitParticleBurstCount: 18
   hitParticleYOffset: 0.35
@@ -389,12 +387,43 @@ MonoBehaviour:
   agent: {fileID: 0}
   combatant: {fileID: 0}
   barsView: {fileID: 0}
-  skill: {fileID: 11400000, guid: e5f7c0a187d67779d344a7782a98300f, type: 2}
-  ultimate: {fileID: 0}
+  skill: {fileID: 11400000, guid: 96313c01e076d1941897d4ed4c0ae6d7, type: 2}
+  ultimate: {fileID: 11400000, guid: e0b560fdd720739479eeb9d3e04d05d1, type: 2}
   castFlashColor: {r: 0.55, g: 0.85, b: 1, a: 1}
   ultimateFlashColor: {r: 1, g: 0.85, b: 0.35, a: 1}
   castFlashDuration: 0.14
   castPunchScale: 0.14
+  ultimateShakeDuration: 0.18
+  ultimateShakeAmplitude: 0.1
+  ultimateHitStopDuration: 0.035
+--- !u!114 &7889530107761068205
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4328671716576560348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 230d612086e9de94480bc2b22057e79b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Core.Stats.StatModule
+  statOverrides:
+  - <Stat>k__BackingField: {fileID: 11400000, guid: f8be54c3ab68759449b12d768a4e28f4, type: 2}
+    useOverride: 1
+    overrideBaseValue: 20
+  - <Stat>k__BackingField: {fileID: 11400000, guid: 8d3700266111476459f6170958747080, type: 2}
+    useOverride: 1
+    overrideBaseValue: 1
+  - <Stat>k__BackingField: {fileID: 11400000, guid: f8d169c65ede6d04e946f765d95ca3da, type: 2}
+    useOverride: 1
+    overrideBaseValue: 0
+  - <Stat>k__BackingField: {fileID: 11400000, guid: 5da205ca1a42bff46c587d627e7b4b77, type: 2}
+    useOverride: 1
+    overrideBaseValue: 1
+  - <Stat>k__BackingField: {fileID: 11400000, guid: 0b687bed520e6fe3e079d88cae99b502, type: 2}
+    useOverride: 1
+    overrideBaseValue: 0
 --- !u!1 &7473952817250454834
 GameObject:
   m_ObjectHideFlags: 0

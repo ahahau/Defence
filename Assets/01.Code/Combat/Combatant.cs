@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using _01.Code.Core;
+using _01.Code.Core.Stats;
 using _01.Code.Events;
 using _01.Code.StatusEffects;
 using MoreMountains.Feedbacks;
@@ -10,6 +11,8 @@ namespace _01.Code.Combat
 {
     public class Combatant : MonoBehaviour
     {
+        // 아래 네 값은 StatModule이 없는 상대(코드로 만든 테스트 요원 등)를 위한 폴백이다.
+        // 스탯 표가 붙어 있으면 그쪽이 진짜 값이고 이 필드는 읽히지 않는다.
         [SerializeField] private int attackDamage = 1;
         [SerializeField, Min(0)] private int defense;
         [SerializeField] private float attackInterval = 1f;
@@ -32,6 +35,8 @@ namespace _01.Code.Combat
         [SerializeField] private Health health;
         [SerializeField] private DamageFeedback damageFeedback;
 
+        private IStatModule _stats;
+        private bool _statsResolved;
         private Coroutine _attackRoutine;
         private Combatant _target;
         private bool _isAttacking;
@@ -53,29 +58,93 @@ namespace _01.Code.Combat
         public Combatant Target => _target;
         public Health Health => health;
         public int AttackDamage => ResolveAttackDamagePreview();
-        public int Defense => Mathf.Max(0, defense);
+        public int Defense => Mathf.Max(0, Mathf.RoundToInt(ReadStat(StatIndex.Defense, defense)));
         public float AttackInterval => ResolveAttackInterval();
-        public float EvasionChance => evasionChance;
+        public float EvasionChance => ReadStat(StatIndex.EvasionChance, evasionChance);
+
+        /// <summary>
+        /// 같은 오브젝트의 스탯 표. Awake 순서에 기대지 않고 처음 물어볼 때 찾는다 —
+        /// Combatant와 소유자(Entity) 중 누가 먼저 깨는지는 정해져 있지 않다.
+        /// </summary>
+        private IStatModule Stats
+        {
+            get
+            {
+                if (_statsResolved)
+                    return _stats;
+
+                _stats = GetComponent<IStatModule>();
+                _statsResolved = true;
+                return _stats;
+            }
+        }
+
+        private bool TryGetStat(int statIndex, out StatSO stat)
+        {
+            stat = null;
+            return Stats != null && Stats.TryGetStat(statIndex, out stat);
+        }
+
+        private float ReadStat(int statIndex, float fallback) =>
+            TryGetStat(statIndex, out var stat) ? stat.Value : fallback;
+
+        /// <summary>
+        /// 출처별 방어·회피 보정. 같은 출처로 다시 부르면 이전 값이 걷히고 새 값이 붙는다.
+        /// 특성·명령처럼 자주 다시 계산되는 보정을 통째로 덮어쓰지 않기 위한 창구다 —
+        /// 덮어쓰면 그사이 아티팩트나 상태이상이 붙여 둔 보정까지 같이 지워진다.
+        /// </summary>
+        public void SetDefenseAndEvasionBonus(object key, float defenseBonus, float evasionBonus)
+        {
+            ApplyKeyedBonus(StatIndex.Defense, key, defenseBonus);
+            ApplyKeyedBonus(StatIndex.EvasionChance, key, evasionBonus);
+        }
+
+        private void ApplyKeyedBonus(int statIndex, object key, float value)
+        {
+            if (key == null || !TryGetStat(statIndex, out var stat))
+                return;
+
+            stat.RemoveModifier(key);
+            if (!Mathf.Approximately(value, 0f))
+                stat.AddModifier(key, value);
+        }
 
         public void AddAttackDamage(int amount)
         {
-            if (amount > 0)
+            if (amount <= 0)
+                return;
+
+            if (TryGetStat(StatIndex.AttackDamage, out var stat))
+                stat.BaseValue += amount;
+            else
                 attackDamage += amount;
         }
 
         public void SetAttackDamage(int value)
         {
-            attackDamage = Mathf.Max(1, value);
+            value = Mathf.Max(1, value);
+            if (TryGetStat(StatIndex.AttackDamage, out var stat))
+                stat.BaseValue = value;
+            else
+                attackDamage = value;
         }
 
         public void SetDefense(int value)
         {
-            defense = Mathf.Max(0, value);
+            value = Mathf.Max(0, value);
+            if (TryGetStat(StatIndex.Defense, out var stat))
+                stat.BaseValue = value;
+            else
+                defense = value;
         }
 
         public void SetEvasionChance(float value)
         {
-            evasionChance = Mathf.Clamp01(value);
+            value = Mathf.Clamp01(value);
+            if (TryGetStat(StatIndex.EvasionChance, out var stat))
+                stat.BaseValue = value;
+            else
+                evasionChance = value;
         }
 
         public void SetArtifactAttackModifier(int damageBonus, float damageMultiplier)
@@ -105,12 +174,19 @@ namespace _01.Code.Combat
             if (multiplier <= 0f || Mathf.Approximately(multiplier, 1f))
                 return;
 
-            attackInterval = Mathf.Max(0.05f, attackInterval * multiplier);
+            if (TryGetStat(StatIndex.AttackInterval, out var stat))
+                stat.BaseValue = Mathf.Max(0.05f, stat.BaseValue * multiplier);
+            else
+                attackInterval = Mathf.Max(0.05f, attackInterval * multiplier);
         }
 
         public void SetAttackInterval(float value)
         {
-            attackInterval = Mathf.Max(0.05f, value);
+            value = Mathf.Max(0.05f, value);
+            if (TryGetStat(StatIndex.AttackInterval, out var stat))
+                stat.BaseValue = value;
+            else
+                attackInterval = value;
         }
 
         private void Awake()
@@ -230,7 +306,8 @@ namespace _01.Code.Combat
 
         private bool TryDodgeAttack(Vector3 attackerPosition)
         {
-            if (!IsAlive || evasionChance <= 0f || UnityEngine.Random.value >= evasionChance)
+            var evasion = EvasionChance;
+            if (!IsAlive || evasion <= 0f || UnityEngine.Random.value >= evasion)
                 return false;
 
             if (_isAttacking)
@@ -273,7 +350,7 @@ namespace _01.Code.Combat
 
         private int ResolveAttackDamage(Combatant target, out bool isCritical)
         {
-            var modifiedDamage = (attackDamage + artifactAttackDamageBonus)
+            var modifiedDamage = (ReadStat(StatIndex.AttackDamage, attackDamage) + artifactAttackDamageBonus)
                                  * artifactAttackDamageMultiplier
                                  * conditionAttackDamageMultiplier;
             var damage = Mathf.Max(1, Mathf.RoundToInt(modifiedDamage));
@@ -306,7 +383,7 @@ namespace _01.Code.Combat
 
         private int ResolveAttackDamagePreview()
         {
-            var modifiedDamage = (attackDamage + artifactAttackDamageBonus)
+            var modifiedDamage = (ReadStat(StatIndex.AttackDamage, attackDamage) + artifactAttackDamageBonus)
                                  * artifactAttackDamageMultiplier
                                  * conditionAttackDamageMultiplier;
             return Mathf.Max(1, Mathf.RoundToInt(modifiedDamage));
@@ -331,7 +408,8 @@ namespace _01.Code.Combat
             var multiplier = statusController != null
                 ? statusController.GetAttackIntervalMultiplier()
                 : 1f;
-            return Mathf.Max(0.05f, attackInterval * multiplier * conditionAttackIntervalMultiplier);
+            var baseInterval = ReadStat(StatIndex.AttackInterval, attackInterval);
+            return Mathf.Max(0.05f, baseInterval * multiplier * conditionAttackIntervalMultiplier);
         }
 
         private EnemyStatusController ResolveEnemyStatusController()
