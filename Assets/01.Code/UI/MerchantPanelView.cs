@@ -253,7 +253,11 @@ namespace _01.Code.UI
             if (evt.Artifact == null)
                 return;
 
-            artifactInventory?.Obtain(evt.Artifact, artifactEventChannel);
+            // 소모품은 소지품에 남기지 않는다. 산 자리에서 쓰고 끝난다.
+            if (evt.Artifact.IsConsumable)
+                _01.Code.Artifacts.ConsumableUse.Consume(evt.Artifact);
+            else
+                artifactInventory?.Obtain(evt.Artifact, artifactEventChannel);
 
             // 살 때마다 이후 모든 가격이 영구히 오른다.
             purchaseCount++;

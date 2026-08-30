@@ -27,6 +27,12 @@ namespace _01.Code.Artifacts
         [field: SerializeField] public float AttackIntervalMultiplier { get; private set; } = 1f;
         [field: SerializeField] public ArtifactEffectSO[] Effects { get; private set; }
 
+        [field: SerializeField, Tooltip("켜면 물약처럼 한 번 쓰고 사라진다. 소지품에 남지 않고 산 자리에서 효과만 낸다.")]
+        public bool IsConsumable { get; private set; }
+
+        [field: SerializeField, Range(0f, 1f), Tooltip("소모품일 때 최대 체력의 몇 할을 되돌릴지. 0이면 회복하지 않는다.")]
+        public float HealRatio { get; private set; }
+
         public ArtifactStatBonus BaseStatBonus => new(
             AttackDamageBonus,
             Mathf.Max(0.05f, AttackDamageMultiplier),

@@ -25,6 +25,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: dabb9a0fb0c93e84d9cedb6577646512, type: 2}
   - {fileID: 11400000, guid: 978ea6756bceca84e88ee8dc78d8e67b, type: 2}
   - {fileID: 11400000, guid: b5f67e1ed5ec65c46b14e4b7fb2c9931, type: 2}
+  - {fileID: 11400000, guid: 1ef0a869dcee3644c950394dac1b02df, type: 2}
+  - {fileID: 11400000, guid: af8bf33892d8298448a839fc5e61da76, type: 2}
+  - {fileID: 11400000, guid: da71efd5ec1905a41ac9e8ca5708ad62, type: 2}
   slotCount: 3
   priceInflationPerDay: 0
   firstVisitDay: 2
