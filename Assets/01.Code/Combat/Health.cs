@@ -1,13 +1,18 @@
 using System;
+using _01.Code.Core.Modules;
+using _01.Code.Core.Stats;
 using UnityEngine;
 
 namespace _01.Code.Combat
 {
-    public class Health : MonoBehaviour, IDamageable
+    public class Health : MonoBehaviour, IDamageable, IModule, IAfterInitModule
     {
         [SerializeField] private int maxHealth = 20;
 
         private int currentHealth;
+        private IStatModule stats;
+        private StatSO maxHealthStat;
+        private bool suppressStatCallback;
 
         public event Action<float> Changed;
         public event Action<int> Damaged;
@@ -25,6 +30,30 @@ namespace _01.Code.Combat
         {
             currentHealth = maxHealth;
             Changed?.Invoke(Ratio);
+        }
+
+        public void Initialize(ModuleOwner owner)
+        {
+            stats = owner.GetModule<IStatModule>();
+        }
+
+        public void AfterInitialize()
+        {
+            if (maxHealthStat != null)
+                maxHealthStat.ValueChanged -= HandleMaxHealthStatChanged;
+
+            maxHealthStat = null;
+            if (stats == null || !stats.TryGetStat(StatIndex.MaxHealth, out maxHealthStat))
+                return;
+
+            maxHealthStat.ValueChanged += HandleMaxHealthStatChanged;
+            ApplyMaximum(maxHealthStat.Value, true, true);
+        }
+
+        private void OnDestroy()
+        {
+            if (maxHealthStat != null)
+                maxHealthStat.ValueChanged -= HandleMaxHealthStatChanged;
         }
 
         public void TakeDamage(int damage)
@@ -90,22 +119,93 @@ namespace _01.Code.Combat
 
         public void SetMaxHealth(int value, bool restoreToFull)
         {
-            maxHealth = Mathf.Max(1, value);
-            currentHealth = restoreToFull ? maxHealth : Mathf.Min(currentHealth, maxHealth);
-            Changed?.Invoke(Ratio);
+            value = Mathf.Max(1, value);
+            if (maxHealthStat == null)
+            {
+                ApplyMaximum(value, false, restoreToFull);
+                return;
+            }
+
+            MutateMaxHealthStat(() => maxHealthStat.BaseValue = value, false, restoreToFull);
         }
 
         public void AddMaxHealth(int amount, bool healAddedHealth)
         {
-            if (amount <= 0)
+            if (amount == 0)
                 return;
 
-            maxHealth += amount;
-            // 사망(체력 0) 상태에선 최대치만 늘고 현재 체력은 회복되지 않는다(아티팩트로 부활 방지).
-            if (healAddedHealth && IsAlive)
-                currentHealth += amount;
+            if (maxHealthStat == null)
+            {
+                ApplyMaximum(maxHealth + amount, healAddedHealth, false);
+                return;
+            }
 
-            currentHealth = Mathf.Min(currentHealth, maxHealth);
+            MutateMaxHealthStat(() => maxHealthStat.BaseValue += amount, healAddedHealth, false);
+        }
+
+        /// <summary>
+        /// 최대 체력 보정을 출처별로 갱신한다. 같은 key로 다시 호출하면 이전 보정만 교체되고,
+        /// 다른 시스템이 붙인 웨이브·보스·유물 보정은 유지된다.
+        /// </summary>
+        public void SetMaxHealthModifier(
+            object key,
+            float additive,
+            float multiplier = 1f,
+            bool healAddedHealth = true)
+        {
+            if (key == null || maxHealthStat == null)
+                return;
+
+            MutateMaxHealthStat(
+                () => maxHealthStat.SetModifier(key, additive, Mathf.Max(0.05f, multiplier)),
+                healAddedHealth,
+                false);
+        }
+
+        public void RemoveMaxHealthModifier(object key)
+        {
+            if (key == null || maxHealthStat == null)
+                return;
+
+            MutateMaxHealthStat(() => maxHealthStat.RemoveModifier(key), false, false);
+        }
+
+        private void MutateMaxHealthStat(Action mutation, bool healAddedHealth, bool restoreToFull)
+        {
+            suppressStatCallback = true;
+            try
+            {
+                mutation();
+            }
+            finally
+            {
+                suppressStatCallback = false;
+            }
+
+            ApplyMaximum(maxHealthStat.Value, healAddedHealth, restoreToFull);
+        }
+
+        private void HandleMaxHealthStatChanged(StatSO stat, float current, float previous)
+        {
+            if (!suppressStatCallback)
+                ApplyMaximum(current, true, false);
+        }
+
+        private void ApplyMaximum(float value, bool healAddedHealth, bool restoreToFull)
+        {
+            var previousMaximum = maxHealth;
+            maxHealth = Mathf.Max(1, Mathf.RoundToInt(value));
+
+            if (restoreToFull)
+            {
+                currentHealth = maxHealth;
+            }
+            else if (healAddedHealth && IsAlive && maxHealth > previousMaximum)
+            {
+                currentHealth += maxHealth - previousMaximum;
+            }
+
+            currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
             Changed?.Invoke(Ratio);
         }
 

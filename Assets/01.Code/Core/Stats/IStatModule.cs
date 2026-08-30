@@ -10,6 +10,7 @@ namespace _01.Code.Core.Stats
         bool TryGetStat(int statIndex, out StatSO stat);
 
         void AddModifier(int statIndex, object key, float value);
+        void SetModifier(int statIndex, object key, float additive, float multiplier = 1f);
         void RemoveModifier(int statIndex, object key);
 
         /// <summary>

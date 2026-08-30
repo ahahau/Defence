@@ -70,6 +70,14 @@ namespace _01.Code.Core.Stats
                 Debug.LogWarning($"{name}: 번호 {statIndex} 스탯이 없어 가감치를 붙이지 못했습니다.", this);
         }
 
+        public void SetModifier(int statIndex, object key, float additive, float multiplier = 1f)
+        {
+            if (TryGetStat(statIndex, out var stat))
+                stat.SetModifier(key, additive, multiplier);
+            else
+                Debug.LogWarning($"{name}: 번호 {statIndex} 스탯이 없어 보정을 갱신하지 못했습니다.", this);
+        }
+
         public void RemoveModifier(int statIndex, object key)
         {
             if (TryGetStat(statIndex, out var stat))

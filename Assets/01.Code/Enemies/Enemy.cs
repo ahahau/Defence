@@ -3,7 +3,6 @@ using _01.Code.Combat;
 using _01.Code.Buildings;
 using _01.Code.Core;
 using _01.Code.Core.Modules;
-using _01.Code.Core.Stats;
 using _01.Code.Entities;
 using _01.Code.Events;
 using _01.Code.StatusEffects;
@@ -224,12 +223,11 @@ namespace _01.Code.Enemies
             Level = Mathf.Max(1, level);
             RefreshStrengthOutline();
             var bonusLevel = Level - 1;
-            if (bonusLevel <= 0) return;
+            var healthBonus = Mathf.Max(0, healthPerLevel) * bonusLevel;
+            var attackBonus = Mathf.Max(0, attackPerLevel) * bonusLevel;
 
-            health?.AddMaxHealth(Mathf.Max(0, healthPerLevel) * bonusLevel, true);
-
-            Stats?.AddModifier(StatIndex.MaxHealth, WaveLevelStatKey, Mathf.Max(0, healthPerLevel) * bonusLevel);
-            Stats?.AddModifier(StatIndex.AttackDamage, WaveLevelStatKey, Mathf.Max(0, attackPerLevel) * bonusLevel);
+            health?.SetMaxHealthModifier(WaveLevelStatKey, healthBonus);
+            combatant?.SetAttackModifier(WaveLevelStatKey, attackBonus, 1f);
         }
 
         // legacy turn entry-point, no longer used (BT drives movement)
@@ -705,14 +703,14 @@ namespace _01.Code.Enemies
         /// ApplyWaveLevel(일차 스케일링) 이후에 호출해 배율이 최종 스탯에 적용되게 한다.</summary>
         public void PromoteToBoss(float healthMultiplier, float attackMultiplier, float visualScale)
         {
+            if (_isBoss)
+                return;
+
             _isBoss = true;
             name = $"{name}_Boss";
 
-            if (health != null && healthMultiplier > 1f)
-                health.SetMaxHealth(Mathf.RoundToInt(health.MaxHealth * healthMultiplier), true);
-
-            AddBossStatModifier(StatIndex.MaxHealth, healthMultiplier);
-            AddBossStatModifier(StatIndex.AttackDamage, attackMultiplier);
+            health?.SetMaxHealthModifier(BossStatKey, 0f, healthMultiplier);
+            combatant?.SetAttackModifier(BossStatKey, 0f, attackMultiplier);
 
             if (visualScale > 1f)
                 transform.localScale *= visualScale;
@@ -727,42 +725,13 @@ namespace _01.Code.Enemies
         {
             if (enemyData == null) return;
             name = $"Enemy_{enemyData.Name}";
-            // 공격·방어 수치는 ApplyDataToStats가 스탯 표에 바르고 Combatant가 거기서 읽는다.
-            // 체력만 아직 Health가 따로 들고 있어 여기서 직접 발라 준다.
-            ApplyDataToStats(enemyData);
             health?.SetMaxHealth(enemyData.MaxHealth, true);
+            combatant?.SetAttackDamage(enemyData.AttackDamage);
+            combatant?.SetDefense(enemyData.Defense);
+            combatant?.SetAttackInterval(enemyData.AttackInterval);
+            combatant?.SetEvasionChance(enemyData.EvasionChance);
             enemyRenderer?.ConfigureSprites(enemyData.IdleSprite, enemyData.AttackSprite, enemyData.DefeatedSprite);
             _strengthOutline?.RefreshSprite();
-        }
-
-        /// <summary>데이터의 기본 수치를 스탯 표의 기본값으로 옮긴다.
-        /// 기본값만 갈아 끼우므로 이미 붙어 있는 일차·보스 가감치는 그대로 남는다.</summary>
-        private void ApplyDataToStats(EnemyDataSO enemyData)
-        {
-            SetStatBase(StatIndex.MaxHealth, enemyData.MaxHealth);
-            SetStatBase(StatIndex.AttackDamage, enemyData.AttackDamage);
-            SetStatBase(StatIndex.Defense, enemyData.Defense);
-            SetStatBase(StatIndex.AttackInterval, enemyData.AttackInterval);
-            SetStatBase(StatIndex.EvasionChance, enemyData.EvasionChance);
-        }
-
-        private void SetStatBase(int statIndex, float value)
-        {
-            if (Stats != null && Stats.TryGetStat(statIndex, out var stat))
-                stat.BaseValue = value;
-        }
-
-        /// <summary>배율을 현재 값 기준의 증가분으로 바꿔 붙인다 —
-        /// 곱해서 덮어쓰면 보스 승격을 되돌릴 수 없지만, 가감치는 떼면 그만이다.
-        /// 체력·공격력은 정수로 다뤄지므로 곱한 결과를 먼저 반올림한 뒤 차이만큼 얹는다.
-        /// 안 그러면 소수점이 남아 기존 경로(RoundToInt)와 1 미만으로 어긋난다.</summary>
-        private void AddBossStatModifier(int statIndex, float multiplier)
-        {
-            if (multiplier <= 1f || Stats == null || !Stats.TryGetStat(statIndex, out var stat))
-                return;
-
-            var current = stat.Value;
-            stat.AddModifier(BossStatKey, Mathf.Round(current * multiplier) - current);
         }
 
         private void RefreshStrengthOutline()

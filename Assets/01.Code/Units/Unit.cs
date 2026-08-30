@@ -102,8 +102,6 @@ namespace _01.Code.Units
             }
         }
         public event Action ConditionChanged;
-        private ArtifactStatBonus appliedArtifactBonus = new(0, 1f, 0, 1f);
-
         // 특성과 명령은 서로 다른 이유로 붙는 보정이라 출처를 따로 둔다.
         // 명령만 바뀌었을 때 특성 보정까지 걷혔다 다시 붙는 일이 없어야 한다.
         private static readonly object TraitStatKey = new();
@@ -287,12 +285,9 @@ namespace _01.Code.Units
 
         public void ApplyArtifactBonus(ArtifactStatBonus bonus)
         {
-            // 공격 쪽은 유물 출처로 갈아 끼우면 그만이라 이전에 얼마를 걸었는지 몰라도 된다.
-            // 최대 체력만 Health가 아직 자기 값을 들고 있어 차액을 직접 계산한다.
             Combatant.SetAttackModifier(ArtifactStatKey, bonus.AttackDamage, bonus.AttackDamageMultiplier);
             Combatant.SetAttackIntervalModifier(ArtifactStatKey, bonus.AttackIntervalMultiplier);
-            Health.AddMaxHealth(bonus.MaxHealth - appliedArtifactBonus.MaxHealth, true);
-            appliedArtifactBonus = bonus;
+            Health.SetMaxHealthModifier(ArtifactStatKey, bonus.MaxHealth);
         }
 
         private void SubscribeHealth()
