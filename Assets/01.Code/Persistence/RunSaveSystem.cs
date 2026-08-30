@@ -1,76 +1,76 @@
 using System;
 using System.IO;
 using _01.Code.Manager;
-using _01.Code.MapCreateSystem;
-using _01.Code.Artifacts;
-using _01.Code.Progression;
-using _01.Code.UI;
 using UnityEngine;
 
 namespace _01.Code.Persistence
 {
-    /// <summary>대기 구간의 한 판을 버전이 붙은 JSON 체크포인트로 저장한다.</summary>
+    /// <summary>
+    /// 대기 구간의 한 판을 조각 모음으로 저장하고 되돌린다.
+    ///
+    /// 시스템의 속을 여기서 알지 않는다. 명단(<see cref="SaveAgentRegistry"/>)에 적힌
+    /// 것들에게 각자 자기 몫을 물어 열쇠와 함께 담고, 되돌릴 때도 열쇠로 나눠 준다.
+    /// 시스템이 하나 늘어도 이 파일은 그대로다.
+    /// </summary>
     public static class RunSaveSystem
     {
-        private const string FileName = "defence-run-v1.json";
-        private const string BackupFileName = "defence-run-v1.backup.json";
+        private const string FileName = "defence-run-v2.json";
+        private const string BackupFileName = "defence-run-v2.backup.json";
 
         /// <summary>
-        /// 런 저장을 통째로 끈다. 되살릴 때는 이 값만 true로 돌리면 되고,
-        /// 저장·복원 코드는 그대로 남아 있다.
+        /// 복원이 도중에 실패한 판인가.
         ///
-        /// 지금 끈 이유: 복원이 일부 실패한 판을 다음 자동 저장이 그대로 덮어써서,
-        /// 되살릴 수 없는 상태로 세이브가 망가지는 일이 실제로 있었다(금고와 보관 금화가 사라짐).
-        /// 부분 실패를 감지해 저장을 막는 가드가 붙기 전까지는 켜 두지 않는 편이 안전하다.
+        /// 저장 기능을 꺼 두어야 했던 이유가 정확히 이것이었다 — 일부만 되돌아온 판을
+        /// 다음 자동 저장이 그대로 덮어써서, 되살릴 수 없는 세이브가 되었다.
+        /// 한 번 이 깃발이 서면 그 판에서는 다시 저장하지 않는다.
         /// </summary>
-        /// <remarks>const가 아니라 readonly인 이유는 const로 두면 컴파일러가 나머지를
-        /// 도달 불가 코드로 접어 경고를 쏟기 때문이다. 저장 코드는 살아 있어야 한다.</remarks>
-        public static readonly bool Enabled = false;
+        public static bool RestoreIncomplete { get; private set; }
 
         public static string SavePath => Path.Combine(Application.persistentDataPath, FileName);
-        public static bool HasSave => Enabled && File.Exists(SavePath);
+        private static string BackupPath => Path.Combine(Application.persistentDataPath, BackupFileName);
+
+        public static bool HasSave => File.Exists(SavePath);
 
         public static bool SaveCurrentRun()
         {
-            if (!Enabled)
+            var day = DayManager.Current;
+            var registry = SaveAgentRegistry.Current;
+            if (registry == null || day == null || !day.IsStandby)
                 return false;
 
-            var graph = DungeonGraphController.Current;
-            var day = DayManager.Current;
-            if (graph == null || day == null || !day.IsStandby)
+            // 반쪽짜리 판을 덮어쓰지 않는다. 망가진 세이브보다 오래된 세이브가 낫다.
+            if (RestoreIncomplete)
+            {
+                Debug.LogWarning("복원이 온전하지 않았던 판이라 저장을 건너뜁니다.");
                 return false;
+            }
+
+            var file = new RunSaveFile
+            {
+                savedAtUtc = DateTime.UtcNow.ToString("O"),
+                completedDay = day.CurrentDay
+            };
+
+            foreach (var agent in registry.Agents)
+            {
+                try
+                {
+                    var json = agent.GetSaveData();
+                    if (!string.IsNullOrWhiteSpace(json))
+                        file.entries.Add(new RunSaveEntry { key = agent.SaveKey, json = json });
+                }
+                catch (Exception exception)
+                {
+                    // 한 조각을 못 담았는데 나머지만 저장하면, 다음에 불러온 판은
+                    // 그 시스템만 초기 상태인 채로 조용히 굴러간다. 통째로 그만둔다.
+                    Debug.LogError($"'{agent.SaveKey}' 저장 실패로 이번 저장을 취소합니다: {exception.Message}");
+                    return false;
+                }
+            }
 
             try
             {
-                var data = graph.CaptureRunSave();
-                data.completedDay = day.CurrentDay;
-                data.savedAtUtc = DateTime.UtcNow.ToString("O");
-
-                var cost = CostManager.Current;
-                if (cost != null)
-                {
-                    data.gold = cost.CurrentGold;
-                    data.debt = cost.CurrentDebt;
-                    data.buildDiscountRate = cost.CurrentBuildDiscountRate;
-                }
-
-                var morale = MoralePolicyManager.Current;
-                if (morale != null)
-                {
-                    data.morale = morale.CurrentMorale;
-                    morale.CaptureSaveState(data.policies);
-                }
-
-                HiredUnitRoster.Current?.CaptureSaveState(data.roster);
-                var artifactController = UnityEngine.Object.FindAnyObjectByType<ArtifactEffectController>();
-                if (artifactController?.Inventory != null)
-                    foreach (var artifact in artifactController.Inventory.ObtainedArtifacts)
-                        if (artifact != null) data.artifacts.Add(artifact.name);
-                var merchant = UnityEngine.Object.FindAnyObjectByType<MerchantPanelView>();
-                if (merchant != null)
-                    data.merchantPurchaseCount = merchant.PurchaseCount;
-                VillageConquestSystem.Current?.CaptureSaveState(data.villageConquests);
-                WriteAtomically(JsonUtility.ToJson(data, true));
+                WriteAtomically(JsonUtility.ToJson(file, true));
                 return true;
             }
             catch (Exception exception)
@@ -80,75 +80,88 @@ namespace _01.Code.Persistence
             }
         }
 
-        public static bool TryRestoreCurrentRun(DungeonGraphController graph)
+        public static bool TryRestoreCurrentRun()
         {
-            if (!Enabled)
+            var registry = SaveAgentRegistry.Current;
+            if (registry == null || !TryLoad(out var file))
                 return false;
 
-            if (graph == null || !TryLoad(out var data))
-                return false;
+            var restoredAny = false;
 
-            try
+            foreach (var agent in registry.Agents)
             {
-                HiredUnitRoster.Current?.RestoreSaveState(data.roster);
-                var merchant = UnityEngine.Object.FindAnyObjectByType<MerchantPanelView>();
-                merchant?.RestoreCheckpoint(data.artifacts, data.merchantPurchaseCount, data.completedDay);
-                VillageConquestSystem.Current?.RestoreSaveState(data.villageConquests);
-                UnityEngine.Object.FindAnyObjectByType<ExpeditionMapPanelView>()?.SyncConquestFromSystem();
-                if (!graph.RestoreRunSave(data))
-                    return false;
+                var json = file.Find(agent.SaveKey);
+                if (string.IsNullOrWhiteSpace(json))
+                    continue;
 
-                CostManager.Current?.RestoreCheckpoint(data.gold, data.debt, data.buildDiscountRate);
-                MoralePolicyManager.Current?.RestoreCheckpoint(data.morale, data.completedDay, data.policies);
-                DayManager.Current?.RestoreCheckpoint(data.completedDay, WaveManager.Current?.PortalNode != null);
-                Debug.Log($"{data.completedDay}일차 체크포인트를 불러왔습니다. ({data.savedAtUtc})");
-                return true;
+                try
+                {
+                    agent.RestoreData(json);
+                    restoredAny = true;
+                }
+                catch (Exception exception)
+                {
+                    // 실패가 이 열쇠 하나에 갇힌다. 나머지는 계속 되돌리되,
+                    // 이 판은 더 이상 저장하지 않는다.
+                    RestoreIncomplete = true;
+                    Debug.LogError($"'{agent.SaveKey}' 복원 실패: {exception.Message}");
+                }
             }
-            catch (Exception exception)
-            {
-                Debug.LogError($"게임 불러오기 실패. 새 게임으로 시작합니다: {exception.Message}");
+
+            if (!restoredAny)
                 return false;
-            }
+
+            Debug.Log(RestoreIncomplete
+                ? $"{file.completedDay}일차 체크포인트를 일부만 불러왔습니다. 이 판은 저장되지 않습니다."
+                : $"{file.completedDay}일차 체크포인트를 불러왔습니다. ({file.savedAtUtc})");
+
+            return !RestoreIncomplete;
         }
 
-        public static bool TryLoad(out RunSaveData data)
+        public static bool TryLoad(out RunSaveFile file)
         {
-            data = null;
-            if (!Enabled || !File.Exists(SavePath))
+            file = null;
+            if (!File.Exists(SavePath))
                 return false;
 
             try
             {
-                var json = File.ReadAllText(SavePath);
-                data = JsonUtility.FromJson<RunSaveData>(json);
-                if (data == null || data.version != RunSaveData.CurrentVersion || data.nodes == null || data.nodes.Count == 0)
-                    throw new InvalidDataException("지원하지 않거나 비어 있는 저장 파일입니다.");
+                file = Parse(File.ReadAllText(SavePath));
                 return true;
             }
             catch (Exception exception)
             {
                 Debug.LogWarning($"저장 파일을 읽지 못했습니다. 백업을 확인합니다: {exception.Message}");
-                return TryLoadBackup(out data);
+                return TryLoadBackup(out file);
             }
         }
 
         public static void DeleteSave()
         {
+            RestoreIncomplete = false;
             TryDelete(SavePath);
-            TryDelete(Path.Combine(Application.persistentDataPath, BackupFileName));
+            TryDelete(BackupPath);
         }
 
-        private static bool TryLoadBackup(out RunSaveData data)
+        private static RunSaveFile Parse(string json)
         {
-            data = null;
-            var backupPath = Path.Combine(Application.persistentDataPath, BackupFileName);
-            if (!File.Exists(backupPath))
+            var parsed = JsonUtility.FromJson<RunSaveFile>(json);
+            if (parsed == null || parsed.version != RunSaveFile.CurrentVersion || parsed.entries == null || parsed.entries.Count == 0)
+                throw new InvalidDataException("지원하지 않거나 비어 있는 저장 파일입니다.");
+
+            return parsed;
+        }
+
+        private static bool TryLoadBackup(out RunSaveFile file)
+        {
+            file = null;
+            if (!File.Exists(BackupPath))
                 return false;
 
             try
             {
-                data = JsonUtility.FromJson<RunSaveData>(File.ReadAllText(backupPath));
-                return data != null && data.version == RunSaveData.CurrentVersion && data.nodes?.Count > 0;
+                file = Parse(File.ReadAllText(BackupPath));
+                return true;
             }
             catch (Exception exception)
             {
@@ -161,12 +174,11 @@ namespace _01.Code.Persistence
         {
             Directory.CreateDirectory(Application.persistentDataPath);
             var temporaryPath = SavePath + ".tmp";
-            var backupPath = Path.Combine(Application.persistentDataPath, BackupFileName);
             File.WriteAllText(temporaryPath, json);
 
             if (File.Exists(SavePath))
             {
-                File.Copy(SavePath, backupPath, true);
+                File.Copy(SavePath, BackupPath, true);
                 File.Delete(SavePath);
             }
 

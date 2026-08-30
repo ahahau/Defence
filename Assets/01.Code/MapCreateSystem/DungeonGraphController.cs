@@ -202,7 +202,7 @@ namespace _01.Code.MapCreateSystem
 
             // 모든 매니저의 Awake/Start가 기본 UI를 만든 다음 체크포인트 값으로 한 번 갱신한다.
             yield return null;
-            RunSaveSystem.TryRestoreCurrentRun(this);
+            RunSaveSystem.TryRestoreCurrentRun();
         }
 
         private void OnApplicationPause(bool paused)
