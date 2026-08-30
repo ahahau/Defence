@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Enemies.EnemyDataSO
   <Grade>k__BackingField: 3
   <BoardSprite>k__BackingField: {fileID: 4723107735738678597, guid: 182b0ee12ea4a864fba362276291060c, type: 3}
-  <Defense>k__BackingField: 1
+  <Defense>k__BackingField: 10
   <EvasionChance>k__BackingField: 0.08
   <Name>k__BackingField: Healter
   <Role>k__BackingField: 2

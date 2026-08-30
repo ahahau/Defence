@@ -368,6 +368,18 @@ namespace _01.Code.Combat
         private int ResolveAttackDamagePreview() =>
             Mathf.Max(1, Mathf.RoundToInt(ReadStat(StatIndex.AttackDamage, attackDamage)));
 
+        /// <summary>
+        /// 방어의 체감 기준점. 방어가 이 값과 같아지면 피해가 정확히 절반으로 줄고,
+        /// 그 위로는 완만해져 100%에 닿지 않는다.
+        ///
+        /// 이 숫자를 건드리기 전에 알아야 할 것: 방어 감소율은 방어값의 "자릿수"에 좌우된다.
+        /// 유닛 쪽은 수호자 특성 +20, 방어 명령 +15로 20~35를 쓰고 이 기준점에 맞춰져 있다
+        /// (35면 약 26% 감소). 그래서 기준점을 20으로 낮추면 적의 방어 5는 20%로 살아나지만
+        /// 같은 손으로 유닛의 방어 35가 64% 감소가 되어 거의 맞지 않는 몸이 된다.
+        /// 적의 방어가 약하게 느껴진다면 고칠 곳은 이 상수가 아니라 적의 방어값 자릿수다.
+        /// </summary>
+        private const float DefenseHalvingPoint = 100f;
+
         private int CalculateDamageAfterDefense(int damage, Combatant target)
         {
             if (target == null)
@@ -377,7 +389,7 @@ namespace _01.Code.Combat
             if (defense <= 0)
                 return Mathf.Max(1, damage);
 
-            var reducedDamage = damage - damage * (defense / (defense + 100f));
+            var reducedDamage = damage - damage * (defense / (defense + DefenseHalvingPoint));
             return Mathf.Max(1, Mathf.RoundToInt(reducedDamage));
         }
 
