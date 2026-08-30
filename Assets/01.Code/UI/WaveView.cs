@@ -546,6 +546,16 @@ namespace _01.Code.UI
         private const float CardHeight = 60f;
         private const float CardGap = 8f;
 
+        /// <summary>
+        /// 오른쪽 위에 쌓는 자원 카드의 칸 수. 카드를 늘리면 이 숫자도 같이 올려야 한다.
+        /// 카드가 넷에서 다섯으로 늘었을 때 이 값이 넷에 멈춰 있어, 아래에 놓이는
+        /// 시간 배속 조작이 마지막 카드(결속)를 44px 덮고 있었다.
+        /// </summary>
+        private const int TopRightCardCount = 5;
+
+        /// <summary>마지막 카드 바로 아래. 카드 밑에 무언가를 놓을 때는 이 값을 기준으로 한다.</summary>
+        private static float TopRightStackBottom => -24f - TopRightCardCount * (CardHeight + CardGap);
+
         public static void ApplyPanel(GameObject root, bool strong = false)
         {
             if (root == null)
@@ -780,8 +790,8 @@ namespace _01.Code.UI
                 switch (rect.name)
                 {
                     case "TimeSpeedControl":
-                        // 자원 4칸(24~288px) 아래로 내려 마지막 카드와 겹치지 않게 한다.
-                        SetTopRight(rect, new Vector2(218f, 52f), new Vector2(-RightMargin, -312f));
+                        // 자원 카드 전부 아래로 내린다. 칸 수는 TopRightCardCount가 들고 있다.
+                        SetTopRight(rect, new Vector2(218f, 52f), new Vector2(-RightMargin, TopRightStackBottom));
                         ApplyPanel(rect.gameObject);
                         break;
                     case "MoraleDetailPanel":
