@@ -47,6 +47,15 @@ namespace _01.Code.UI
                 panelRoot.transform.SetAsLastSibling();
         }
 
+        public void CloseForRunEnd()
+        {
+            if (panelRoot != null)
+                panelRoot.SetActive(false);
+
+            _previousTimeScale = 0f;
+            _isPausingGame = false;
+        }
+
         private void OnEnable()
         {
             Current = this;
@@ -83,7 +92,7 @@ namespace _01.Code.UI
             }
 
             if (titleText != null)
-                titleText.text = string.Format(titleFormat, evt.Day);
+                titleText.text = $"{string.Format(titleFormat, evt.Day)} · 전투 일시정지";
 
             RefreshPolicyButtons();
             Show();
@@ -197,7 +206,7 @@ namespace _01.Code.UI
             if (!_isPausingGame)
                 return;
 
-            Time.timeScale = Mathf.Approximately(_previousTimeScale, 0f) ? 1f : _previousTimeScale;
+            Time.timeScale = _previousTimeScale;
             _isPausingGame = false;
         }
 

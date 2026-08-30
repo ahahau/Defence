@@ -60,11 +60,13 @@ namespace _01.Code.Manager
 
         public void StartWave()
         {
-            if (!_isStandby || !_hasPortal)
+            var nextDay = NextWaveDay;
+            var waveManager = WaveManager.Current;
+            if (!_isStandby || !_hasPortal || waveManager == null || !waveManager.CanStartWave(nextDay))
                 return;
 
             _isStandby = false;
-            currentDay++;
+            currentDay = nextDay;
             dayEventChannel.RaiseEvent(new DayChangedEvent(currentDay));
         }
 

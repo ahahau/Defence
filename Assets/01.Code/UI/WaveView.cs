@@ -67,6 +67,8 @@ namespace _01.Code.UI
         private TMP_Text _waveProgressStats;
         private Image _waveProgressFill;
         private float _displayedProgress;
+        private const float WaveStatsRefreshInterval = 0.1f;
+        private float _nextWaveStatsRefreshTime;
 
         public RectTransform StartButtonRect => startButton != null ? startButton.transform as RectTransform : null;
 
@@ -82,7 +84,14 @@ namespace _01.Code.UI
 
         private void Update()
         {
-            RefreshWaveProgressHud();
+            if (_waveProgressHud == null || !_waveProgressHud.activeSelf)
+                return;
+
+            var refreshStats = Time.unscaledTime >= _nextWaveStatsRefreshTime;
+            if (refreshStats)
+                _nextWaveStatsRefreshTime = Time.unscaledTime + WaveStatsRefreshInterval;
+
+            RefreshWaveProgressHud(false, refreshStats);
         }
 
         private void OnEnable()
@@ -229,8 +238,10 @@ namespace _01.Code.UI
             {
                 if (waveManager == null || dayManager == null)
                     _startButtonLabel.text = "준비 중";
-                else if (!hasPortal)
-                    _startButtonLabel.text = "포털을 설치하세요";
+                else if (!dayManager.IsStandby)
+                    _startButtonLabel.text = "습격 진행 중";
+                else if (!waveManager.CanStartWave(nextDay))
+                    _startButtonLabel.text = waveManager.GetWaveStartBlockedReason(nextDay);
                 else
                     _startButtonLabel.text = waveManager.IsBossDay(nextDay)
                         ? $"대규모 습격 개시\nDAY {nextDay} · 영웅 {enemyCount}명"
@@ -387,7 +398,8 @@ namespace _01.Code.UI
             _waveProgressGroup.DOKill();
             _waveProgressGroup.alpha = 0f;
             _waveProgressGroup.DOFade(1f, 0.22f).SetUpdate(true).SetLink(_waveProgressHud);
-            RefreshWaveProgressHud(true);
+            _nextWaveStatsRefreshTime = Time.unscaledTime + WaveStatsRefreshInterval;
+            RefreshWaveProgressHud(true, true);
         }
 
         private void HideWaveProgressHud()
@@ -404,7 +416,7 @@ namespace _01.Code.UI
                 });
         }
 
-        private void RefreshWaveProgressHud(bool immediate = false)
+        private void RefreshWaveProgressHud(bool immediate = false, bool refreshStats = true)
         {
             if (_waveProgressHud == null || !_waveProgressHud.activeSelf || waveManager == null)
                 return;
@@ -420,10 +432,15 @@ namespace _01.Code.UI
             if (_waveProgressFill != null)
             {
                 _waveProgressFill.fillAmount = _displayedProgress;
+            }
+
+            if (!refreshStats)
+                return;
+
+            if (_waveProgressFill != null)
                 _waveProgressFill.color = waveManager.IsBossWave
                     ? new Color(0.98f, 0.62f, 0.12f, 1f)
                     : new Color(0.72f, 0.12f, 0.08f, 1f);
-            }
 
             if (_waveProgressTitle != null)
                 _waveProgressTitle.text = waveManager.IsBossWave ? "영웅 원정대 · 핵심부 결전" : "던전 심장 방어 중";
@@ -434,7 +451,7 @@ namespace _01.Code.UI
                 var steps = IntrusionThreat.StepsToObjective(out _, out var objectiveKind);
                 var warning = IntrusionThreat.BuildWarning(steps, objectiveKind);
                 _waveProgressStats.text =
-                    $"던전 내부 {waveManager.ActiveEnemyCount}  ·  진입 대기 {waveManager.PendingSpawnCount}  ·  처치 {waveManager.KillCount}"
+                    $"남은 위협 {remaining}/{total}  ·  던전 내부 {waveManager.ActiveEnemyCount}  ·  진입 대기 {waveManager.PendingSpawnCount}  ·  처치 {waveManager.KillCount}"
                     + (string.IsNullOrEmpty(warning) ? string.Empty : $"  ·  {warning}");
             }
         }

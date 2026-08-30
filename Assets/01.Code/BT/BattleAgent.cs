@@ -150,7 +150,7 @@ namespace _01.Code.BT
         public float AttackRange => attackRange;
         public bool IsAlive => combatant != null && combatant.IsAlive;
         public float HealthRatio => combatant != null && combatant.Health != null ? combatant.Health.CurrentRatio : 0f;
-        public BattleAgent CurrentTarget => _target != null && _target.IsAlive ? _target : null;
+        public BattleAgent CurrentTarget => IsValidTarget(_target) ? _target : null;
         public NodeBattlefield Battlefield => _battlefield;
         public bool IsTraversalLocked => _traversalLocked;
         /// <summary>현재 교전(또는 추격) 중인지 — 기존 이동/전투와 충돌 방지용.</summary>
@@ -363,7 +363,7 @@ namespace _01.Code.BT
 
         private void PickAutoIntent()
         {
-            if (HealthRatio < 0.28f && _battlefield != null && _battlefield.Allies(team).Count > 1)
+            if (HealthRatio < 0.28f && _battlefield != null && _battlefield.ActiveCount(team) > 1)
             {
                 _autoIntent = AutoBattleIntent.Retreat;
                 return;
@@ -460,7 +460,7 @@ namespace _01.Code.BT
             for (var i = 0; i < others.Count; i++)
             {
                 var other = others[i];
-                if (other == null || other == this || !other.IsAlive)
+                if (other == this || !IsActiveBattlefieldMember(other))
                     continue;
 
                 Vector2 away = self - (Vector2)other.transform.position;
@@ -527,7 +527,11 @@ namespace _01.Code.BT
 
         private void OnDisable()
         {
-            StopAttack();
+            if (_battlefield != null)
+                _battlefield.Leave(this);
+            else
+                StopAttack();
+
             var hp = combatant != null ? combatant.Health : null;
             if (hp != null) hp.Damaged -= OnDamaged;
             if (combatant != null) combatant.AttackLanded -= OnAttackLanded; 
@@ -645,7 +649,7 @@ namespace _01.Code.BT
 
             foreach (var a in _battlefield.Opponents(team))
             {
-                if (a == null || a == current || !a.IsAlive)
+                if (a == current || !IsValidTarget(a))
                     continue;
 
                 var d = ((Vector2)a.transform.position - pos).sqrMagnitude;
@@ -714,9 +718,14 @@ namespace _01.Code.BT
             Vector2 pos = transform.position;
             var focus = priority == TargetPriority.Focused ? _battlefield.GetFocusTarget(team) : null;
 
-            if (_target != null && _target.IsAlive && ShouldKeepCurrentTarget(priority, focus, pos))
+            if (_target != null && !IsValidTarget(_target))
+                ClearTarget();
+
+            if (_target != null && ShouldKeepCurrentTarget(priority, focus, pos))
                 return _target;
 
+            if (_target != null)
+                StopAttack();
             _target = null;
             BattleAgent best = null;
             var bestScore = float.MinValue;
@@ -724,7 +733,7 @@ namespace _01.Code.BT
 
             foreach (var a in _battlefield.Opponents(team))
             {
-                if (a == null || !a.IsAlive || a._traversalLocked)
+                if (!IsValidTarget(a))
                     continue;
 
                 var dist = ((Vector2)a.transform.position - pos).magnitude;
@@ -744,7 +753,7 @@ namespace _01.Code.BT
 
         private bool ShouldKeepCurrentTarget(TargetPriority priority, BattleAgent focus, Vector2 pos)
         {
-            if (_target == null || !_target.IsAlive || _target._traversalLocked)
+            if (!IsValidTarget(_target))
                 return false;
 
             if (priority == TargetPriority.Focused && focus != null && focus != _target)
@@ -759,7 +768,7 @@ namespace _01.Code.BT
 
             foreach (var a in _battlefield.Opponents(team))
             {
-                if (a == null || !a.IsAlive || a._traversalLocked)
+                if (!IsValidTarget(a))
                     continue;
 
                 var score = ScoreTarget(priority, a, pos, focus);
@@ -774,9 +783,24 @@ namespace _01.Code.BT
             if (best == _target || bestScore < currentScore + targetSwitchScoreMargin)
                 return true;
 
+            StopAttack();
             _target = best;
             return true;
         }
+
+        private bool IsValidTarget(BattleAgent candidate)
+        {
+            return IsActiveBattlefieldMember(candidate)
+                   && !candidate._traversalLocked
+                   && candidate.team != team;
+        }
+
+        private bool IsActiveBattlefieldMember(BattleAgent candidate) =>
+            candidate != null
+            && candidate.isActiveAndEnabled
+            && candidate.IsAlive
+            && _battlefield != null
+            && candidate._battlefield == _battlefield;
 
         private float ScoreTarget(TargetPriority priority, BattleAgent candidate, Vector2 pos, BattleAgent focus)
         {
@@ -1019,7 +1043,7 @@ namespace _01.Code.BT
             var candidates = new List<BattleAgent>();
             foreach (var a in _battlefield.Opponents(team))
             {
-                if (a == null || !a.IsAlive || a._traversalLocked || a == _target)
+                if (!IsValidTarget(a) || a == _target)
                     continue;
 
                 candidates.Add(a);
@@ -1134,7 +1158,7 @@ namespace _01.Code.BT
         /// <summary>현재 타깃을 팀 공유 포커스로 등록한다(집중공격). BT의 Find Target 노드가 호출.</summary>
         public void RegisterFocus()
         {
-            if (_battlefield != null && _target != null && _target.IsAlive)
+            if (IsValidTarget(_target))
                 _battlefield.SetFocusTarget(team, _target);
         }
 
@@ -1150,7 +1174,7 @@ namespace _01.Code.BT
 
             foreach (var a in _battlefield.Allies(team))
             {
-                if (a == null || !a.IsAlive || a.HealthRatio >= 1f)
+                if (!IsActiveBattlefieldMember(a) || a.Team != team || a.HealthRatio >= 1f)
                     continue;
                 if (((Vector2)a.transform.position - pos).magnitude > supportHealRange)
                     continue;
@@ -1171,7 +1195,7 @@ namespace _01.Code.BT
             Vector2 pos = transform.position;
             foreach (var a in _battlefield.Allies(team))
             {
-                if (a == null || !a.IsAlive)
+                if (!IsActiveBattlefieldMember(a) || a.Team != team)
                     continue;
                 if (woundedOnly && a.HealthRatio >= 1f)
                     continue;
@@ -1195,7 +1219,7 @@ namespace _01.Code.BT
             var count = 0;
             foreach (var a in _battlefield.Allies(team))
             {
-                if (a == null || a == this || !a.IsAlive || a.IsFrontline)
+                if (a == this || !IsActiveBattlefieldMember(a) || a.Team != team || a.IsFrontline)
                     continue;
                 backlineSum += (Vector2)a.transform.position;
                 count++;
@@ -1217,7 +1241,7 @@ namespace _01.Code.BT
             var count = 0;
             foreach (var a in _battlefield.Opponents(team))
             {
-                if (a == null || !a.IsAlive || a._traversalLocked)
+                if (!IsValidTarget(a))
                     continue;
                 center += (Vector2)a.transform.position;
                 count++;
@@ -1235,7 +1259,7 @@ namespace _01.Code.BT
             if (_battlefield == null) return false;
             foreach (var a in _battlefield.Allies(team))
             {
-                if (a == null || a == this || !a.IsAlive)
+                if (a == this || !IsActiveBattlefieldMember(a) || a.Team != team)
                     continue;
                 center += (Vector2)a.transform.position;
                 count++;
@@ -1257,7 +1281,7 @@ namespace _01.Code.BT
             Vector2 pos = transform.position;
             foreach (var a in _battlefield.Opponents(team))
             {
-                if (a == null || !a.IsAlive || a._traversalLocked)
+                if (!IsValidTarget(a))
                     continue;
                 if (((Vector2)a.transform.position - pos).magnitude <= range)
                     a._target = this;
@@ -1319,7 +1343,7 @@ namespace _01.Code.BT
             var worst = float.MaxValue;
             foreach (var a in _battlefield.Opponents(team))
             {
-                if (a == null || !a.IsAlive || a._traversalLocked)
+                if (!IsValidTarget(a))
                     continue;
                 if (a.HealthRatio < worst) { worst = a.HealthRatio; best = a; }
             }
@@ -1333,16 +1357,24 @@ namespace _01.Code.BT
         public bool IsOutnumbered()
         {
             if (_battlefield == null) return false;
-            return _battlefield.Opponents(team).Count > _battlefield.Allies(team).Count;
+            var allyCount = _battlefield.ActiveCount(team);
+            var opponentCount = _battlefield.ActiveCount(
+                team == BattleTeam.Player ? BattleTeam.Enemy : BattleTeam.Player);
+            return opponentCount > allyCount;
         }
 
         public void StopAttack()
         {
-            if (combatant != null && combatant.IsAttacking)
+            if (combatant != null
+                && (combatant.Target != null || combatant.IsAttacking || combatant.IsPaused))
                 combatant.StopCombat();
         }
 
-        public void ClearTarget() => _target = null;
+        public void ClearTarget()
+        {
+            StopAttack();
+            _target = null;
+        }
 
         public void Configure(BattleTeam configuredTeam, BattleRole configuredRole, bool useAutoDrive)
         {

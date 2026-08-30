@@ -50,6 +50,7 @@ namespace _01.Code.Manager
                 return;
 
             IsGameOver = true;
+            WaveManager.Current?.StopForRunEnd();
             gameStateEventChannel.RaiseEvent(new GameOverEvent(mainUnit));
 
             // 여태 패배 화면이 없어 게임이 멈춘 채로 남았다. 승리와 같은 패널에 결과를 띄운다.

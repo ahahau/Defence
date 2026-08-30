@@ -16,6 +16,7 @@ namespace _01.Code.UI
         [SerializeField] private float defaultSpeed = 1f;
 
         private float _currentSpeed = 1f;
+        private bool _interactionLocked;
 
         private void Awake()
         {
@@ -50,6 +51,18 @@ namespace _01.Code.UI
             ApplySpeed(Mathf.Clamp(speed, 0f, 2f));
         }
 
+        public void SetInteractionLocked(bool locked)
+        {
+            _interactionLocked = locked;
+            if (pauseButton != null)
+                pauseButton.interactable = !locked;
+            if (normalButton != null)
+                normalButton.interactable = !locked;
+            if (fastButton != null)
+                fastButton.interactable = !locked;
+            RefreshVisuals();
+        }
+
         private void SetPauseSpeed() => ApplySpeed(0f);
 
         private void SetNormalSpeed() => ApplySpeed(1f);
@@ -58,6 +71,9 @@ namespace _01.Code.UI
 
         private void ApplySpeed(float speed)
         {
+            if (_interactionLocked)
+                return;
+
             _currentSpeed = speed;
             Time.timeScale = speed;
             RefreshVisuals();

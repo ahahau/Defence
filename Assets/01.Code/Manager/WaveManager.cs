@@ -193,7 +193,21 @@ namespace _01.Code.Manager
 
         public bool CanStartWave(int day)
         {
-            return _portalNode != null && waveConfig != null && waveConfig.GetWaveForDay(day) != null;
+            return string.IsNullOrEmpty(GetWaveStartBlockedReason(day));
+        }
+
+        /// <summary>습격 시작 버튼이 잠긴 이유. 표시 계층이 게임 규칙을 다시 추측하지 않게 한다.</summary>
+        public string GetWaveStartBlockedReason(int day)
+        {
+            if (_portalNode == null)
+                return "포털을 설치하세요";
+
+            if (waveConfig == null)
+                return "습격 정보를 불러오는 중";
+
+            return waveConfig.GetWaveForDay(day) == null
+                ? "예정된 습격이 없습니다"
+                : string.Empty;
         }
 
         private void HandleDayChanged(DayChangedEvent evt)
@@ -450,7 +464,7 @@ namespace _01.Code.Manager
                 if (candidates.Count > 0)
                     return candidates[Random.Range(0, candidates.Count)];
             }
-
+            
             return enemyPrefab;
         }
 
@@ -460,7 +474,7 @@ namespace _01.Code.Manager
         {
             _partyQueue.Clear();
             _partyIndex = 0;
-
+                                
             // 보스 웨이브 첫 그룹은 그 날 보스 파티의 호위(첫 멤버=보스는 SpawnEnemy가 따로 처리) 구성으로.
             var bossParty = waveConfig != null ? waveConfig.GetBossPartyForDay(_currentDay) : null;
             if (_isBossWave && !_bossSpawned && bossParty != null
@@ -770,6 +784,18 @@ namespace _01.Code.Manager
             }
 
             _isWaveRunning = false;
+        }
+
+        /// <summary>승리·패배로 판이 끝날 때 진행 중인 습격만 정리한다.</summary>
+        public void StopForRunEnd()
+        {
+            StopRunningWave();
+            _remainingSpawns = 0;
+            _unitConditionWearPending = false;
+            _partyQueue.Clear();
+            _partyIndex = 0;
+            ClearEnemyTrackers();
+            _bossEnemy = null;
         }
 
         private void ClearEnemyTrackers()

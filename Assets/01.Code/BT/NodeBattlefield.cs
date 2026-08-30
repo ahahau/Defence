@@ -22,17 +22,23 @@ namespace _01.Code.BT
         private BattleAgent _enemyFocus;
 
         public int MaxPerTeam => maxPerTeam;
-        public int PlayerCount => _players.Count;
-        public int EnemyCount => _enemies.Count;
+        public int PlayerCount => CountActive(_players);
+        public int EnemyCount => CountActive(_enemies);
         /// <summary>전투 아레나 반지름(노드 내부 배치 그리드가 칸 간격을 맞출 때 참조).</summary>
         public float ArenaRadius => arenaRadius;
 
-        public bool IsFull(BattleTeam team) => Roster(team).Count >= maxPerTeam;
+        public bool IsFull(BattleTeam team) => ActiveCount(team) >= maxPerTeam;
 
         /// <summary>해당 팀이 더 들어올 수 있는지(정원 체크). 적 이동 AI가 진입 전에 확인.</summary>
-        public bool CanEnter(BattleTeam team) => Roster(team).Count < maxPerTeam;
+        public bool CanEnter(BattleTeam team) => ActiveCount(team) < maxPerTeam;
 
-        public bool HasOpponents(BattleTeam team) => Roster(Opposing(team)).Count > 0;
+        /// <summary>현재 이 필드에서 실제 전투 가능한 팀 인원.</summary>
+        public int ActiveCount(BattleTeam team) => CountActive(Roster(team));
+
+        public bool HasOpponents(BattleTeam team)
+        {
+            return ActiveCount(Opposing(team)) > 0;
+        }
 
         // 전역 static 대신 전투필드 단위로 탐색. foreach 무할당 위해 구체 List 반환(읽기 전용으로만 사용).
         public List<BattleAgent> Allies(BattleTeam team) => Roster(team);
@@ -45,7 +51,7 @@ namespace _01.Code.BT
             for (var i = 0; i < list.Count; i++)
             {
                 var a = list[i];
-                if (a != null && a.IsAlive && a.IsFrontline)
+                if (IsActiveMember(a) && a.IsFrontline)
                     return true;
             }
             return false;
@@ -55,7 +61,7 @@ namespace _01.Code.BT
         public BattleAgent GetFocusTarget(BattleTeam team)
         {
             var focus = team == BattleTeam.Player ? _playerFocus : _enemyFocus;
-            if (focus == null || focus.IsAlive && focus.Battlefield == this)
+            if (focus == null || IsActiveMember(focus) && focus.Team != team)
                 return focus;
 
             // 죽었거나 필드를 떠난 포커스 해제
@@ -68,7 +74,7 @@ namespace _01.Code.BT
         /// 한 대상을 끝까지 노린다. 적팀 소속이고 이 필드에 있을 때만.</summary>
         public void SetFocusTarget(BattleTeam team, BattleAgent target)
         {
-            if (target == null || !target.IsAlive || target.Battlefield != this || target.Team == team)
+            if (!IsActiveMember(target) || target.Team == team)
                 return;
 
             // 이미 살아있는 포커스가 있으면 그대로 둔다(타깃 사망 시 GetFocusTarget이 자동 해제).
@@ -82,7 +88,7 @@ namespace _01.Code.BT
         /// <summary>전투 필드에 등록하고 아레나를 설정한다. 정원 초과면 false.</summary>
         public bool TryEnter(BattleAgent agent)
         {
-            if (agent == null) return false;
+            if (agent == null || !agent.isActiveAndEnabled || !agent.IsAlive) return false;
 
             // 이미 다른 전투필드에 속해 있으면 새로 들어가지 않는다.
             // (노드 트리거가 겹칠 때 OnTriggerEnter가 _battlefield를 깜빡이게 만들어
@@ -91,8 +97,9 @@ namespace _01.Code.BT
                 return false;
 
             var list = Roster(agent.Team);
+            CleanUp(list);
             if (list.Contains(agent)) return true;
-            if (list.Count >= maxPerTeam) return false;
+            if (CountActive(list) >= maxPerTeam) return false;
 
             list.Add(agent);
             agent.SetArena(this, transform.position, arenaRadius);
@@ -112,6 +119,24 @@ namespace _01.Code.BT
 
         private static BattleTeam Opposing(BattleTeam team) =>
             team == BattleTeam.Player ? BattleTeam.Enemy : BattleTeam.Player;
+
+        private int CountActive(List<BattleAgent> list)
+        {
+            var count = 0;
+            for (var i = 0; i < list.Count; i++)
+            {
+                if (IsActiveMember(list[i]))
+                    count++;
+            }
+
+            return count;
+        }
+
+        private bool IsActiveMember(BattleAgent agent) =>
+            agent != null
+            && agent.isActiveAndEnabled
+            && agent.IsAlive
+            && agent.Battlefield == this;
 
         // ── 트리거 기반 자동 입장 (노드에 트리거 콜라이더 필요) ──
         private void OnTriggerEnter2D(Collider2D other)
@@ -141,7 +166,7 @@ namespace _01.Code.BT
         {
             for (var i = list.Count - 1; i >= 0; i--)
             {
-                if (list[i] == null || !list[i].IsAlive)
+                if (!IsActiveMember(list[i]))
                 {
                     list[i]?.ClearArena(this);
                     list.RemoveAt(i);

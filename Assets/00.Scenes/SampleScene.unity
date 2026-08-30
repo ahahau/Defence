@@ -9783,7 +9783,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.44}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 32, y: -13.575699}
+  m_AnchoredPosition: {x: 32, y: -13.577667}
   m_SizeDelta: {x: -244, y: -118}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &780624401
@@ -19114,6 +19114,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2bbd58c301e4c7f41ba6562c914ce69c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Units.MainUnit
+  isSuperArmor: 0
+  Hit:
+    m_PersistentCalls:
+      m_Calls: []
+  Died:
+    m_PersistentCalls:
+      m_Calls: []
   spriteRenderer: {fileID: 274381811}
   combatant: {fileID: 1718069030}
   health: {fileID: 1718069031}

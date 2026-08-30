@@ -162,16 +162,21 @@ namespace _01.Code.Manager
         /// </summary>
         private void ShowRunEndPanel(string title, string headline, Color accent, bool clearSaveOnRetry)
         {
-            if (uiCanvas == null)
-                return;
-
+            PolicyChoicePanelView.Current?.CloseForRunEnd();
             Time.timeScale = 0f;
+
+            if (uiCanvas == null)
+            {
+                Debug.LogError("BossWavePresenter requires a scene-assigned UI Canvas.", this);
+                return;
+            }
+
+            uiCanvas.GetComponentInChildren<TimeSpeedView>(true)?.SetInteractionLocked(true);
 
             var view = victoryView;
             if (view == null)
             {
                 Debug.LogError("BossWavePresenter requires a scene-assigned victory panel view.", this);
-                Time.timeScale = 1f;
                 return;
             }
 
@@ -191,7 +196,10 @@ namespace _01.Code.Manager
 
             var root = view.gameObject;
             var group = view.CanvasGroup;
+            group.DOKill();
             group.alpha = 0f;
+            group.interactable = true;
+            group.blocksRaycasts = true;
             group.DOFade(1f, 0.5f).SetUpdate(true).SetLink(root);
         }
 
