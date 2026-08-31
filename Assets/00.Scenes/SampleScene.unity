@@ -9783,7 +9783,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.44}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 32, y: -13.594406}
+  m_AnchoredPosition: {x: 32, y: -13.606186}
   m_SizeDelta: {x: -244, y: -118}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &780624401
@@ -13035,7 +13035,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Blade.Core.CostManager
   costEventChannel: {fileID: 11400000, guid: 734ca3593b5d2884dae267b0e3e601be, type: 2}
   waveEventChannel: {fileID: 11400000, guid: dd03e0a5a2140e441aba26879f409cee, type: 2}
-  initialGold: 130
+  initialGold: 200
   nextBuildDiscountRate: 0
   debtLimit: 300
   autoRepayRatio: 0.5
