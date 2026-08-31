@@ -22,13 +22,13 @@ MonoBehaviour:
   - unit: {fileID: 11400000, guid: d54fce19d871431995a28dbcf64a2482, type: 2}
     building: {fileID: 0}
     startsUnlocked: 0
-    unlockDay: 7
+    unlockDay: 4
     unlockHint: "7\uC77C\uCC28 \xB7 \uB354 \uB2E8\uB2E8\uD55C \uAC1C\uCCB4\uAC00
       \uBD80\uD654\uD55C\uB2E4"
   - unit: {fileID: 11400000, guid: f32955b7a7e548c0a75dc10419558c81, type: 2}
     building: {fileID: 0}
     startsUnlocked: 0
-    unlockDay: 13
+    unlockDay: 10
     unlockHint: "13\uC77C\uCC28 \xB7 \uBD89\uC740 \uAC1C\uCCB4\uAC00 \uAE68\uC5B4\uB09C\uB2E4"
   - unit: {fileID: 0}
     building: {fileID: 11400000, guid: 42825de8a3367de46a6089d639890ae2, type: 2}
@@ -101,37 +101,37 @@ MonoBehaviour:
   - unit: {fileID: 11400000, guid: fe77dcd6a0a75d0478adf6764b6c1fea, type: 2}
     building: {fileID: 0}
     startsUnlocked: 0
-    unlockDay: 5
+    unlockDay: 3
     unlockHint: "5\uC77C\uCC28 \xB7 \uC815\uCC30\uBCD1\uC774 \uADF8\uB9BC\uC790\uC5D0\uC11C
       \uC6C0\uC9C1\uC774\uB294 \uBC95\uC744 \uAC00\uB974\uCE5C\uB2E4"
   - unit: {fileID: 11400000, guid: e8c915306bdc6dc48b68d94f80f96e67, type: 2}
     building: {fileID: 0}
     startsUnlocked: 0
-    unlockDay: 9
+    unlockDay: 5
     unlockHint: "9\uC77C\uCC28 \xB7 \uCC3D\uBCD1\uC774 \uC57D\uC810\uC744 \uAFF0\uB6AB\uB294
       \uBC95\uC744 \uC775\uD78C\uB2E4"
   - unit: {fileID: 11400000, guid: c06b8869e135ed445904927bf3ad4d13, type: 2}
     building: {fileID: 0}
     startsUnlocked: 0
-    unlockDay: 11
+    unlockDay: 7
     unlockHint: "11\uC77C\uCC28 \xB7 \uC11D\uAD81\uBCD1\uC774 \uB3C5\uC744 \uB2E4\uB8E8\uAE30
       \uC2DC\uC791\uD55C\uB2E4"
   - unit: {fileID: 11400000, guid: 9785451f10274e549bb2f0f1448bee7a, type: 2}
     building: {fileID: 0}
     startsUnlocked: 0
-    unlockDay: 13
+    unlockDay: 9
     unlockHint: "13\uC77C\uCC28 \xB7 \uC218\uD638\uBCD1\uC774 \uC131\uC5ED\uC744
       \uD3BC\uCE5C\uB2E4"
   - unit: {fileID: 11400000, guid: e184f7c088dfb3741b3f6ce7a83c4c4e, type: 2}
     building: {fileID: 0}
     startsUnlocked: 0
-    unlockDay: 16
+    unlockDay: 12
     unlockHint: "16\uC77C\uCC28 \xB7 \uC804\uD22C \uB9C8\uB3C4\uC0AC\uAC00 \uD558\uB298\uC5D0\uC11C
       \uBD88\uC744 \uBD80\uB978\uB2E4"
   - unit: {fileID: 11400000, guid: 2e0126834afad1541981aab6d8b74ca9, type: 2}
     building: {fileID: 0}
     startsUnlocked: 0
-    unlockDay: 18
+    unlockDay: 15
     unlockHint: "18\uC77C\uCC28 \xB7 \uC120\uBD09\uB300\uAC00 \uBC29\uD328\uB85C
       \uB545\uC744 \uAC00\uB978\uB2E4"
   - unit: {fileID: 0}
@@ -162,4 +162,5 @@ MonoBehaviour:
     building: {fileID: 11400000, guid: d689d026e327f58949f1593e41847e1c, type: 2}
     startsUnlocked: 0
     unlockDay: 10
-    unlockHint: "10일차 · 벽을 세워 길을 끊는 법을 배운다"
+    unlockHint: "10\uC77C\uCC28 \xB7 \uBCBD\uC744 \uC138\uC6CC \uAE38\uC744 \uB04A\uB294
+      \uBC95\uC744 \uBC30\uC6B4\uB2E4"
