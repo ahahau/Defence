@@ -19,7 +19,7 @@ MonoBehaviour:
   <Icon>k__BackingField: {fileID: 0}
   <IconColor>k__BackingField: {r: 1, g: 1, b: 1, a: 1}
   <Target>k__BackingField: 0
-  <Price>k__BackingField: 60
+  <Price>k__BackingField: 30
   <AttackDamageBonus>k__BackingField: 0
   <AttackDamageMultiplier>k__BackingField: 1
   <MaxHealthBonus>k__BackingField: 0
