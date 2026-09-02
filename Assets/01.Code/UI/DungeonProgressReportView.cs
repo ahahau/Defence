@@ -22,7 +22,10 @@ namespace _01.Code.UI
         [SerializeField] private GameObject buildingContentRoot;
         [SerializeField] private TMP_Text buildingContentText;
 
-        private ReportCategory activeCategory;
+        // 초기화 안 된 enum이라 None(둘 다 접힘)으로 시작했다. 그러면 첫 정산에서
+        // 350px짜리 보고 영역이 통째로 비어 뜬다 — 해금 로드맵을 한 번도 안 본 사람에게
+        // 가장 필요한 화면인데. 한쪽을 열어 둔 채 시작한다. 누르면 그대로 접힌다.
+        private ReportCategory activeCategory = ReportCategory.Monsters;
 
         private void OnEnable()
         {
