@@ -483,7 +483,7 @@ namespace _01.Code.UI
                 var unitPower = villageCatalog != null
                     ? villageCatalog.GetUnitPower(available, roster.GetBestAvailableCondition(available))
                     : 0;
-                SetButtonLabel(unitButtons[i], (selectedUnitSlots.Contains(i) ? "✓ " : string.Empty) + $"{available.Name}\n전력 {unitPower}");
+                SetButtonLabel(unitButtons[i], (selectedUnitSlots.Contains(i) ? "● " : string.Empty) + $"{available.Name}\n전력 {unitPower}");
             }
             if (departButton != null) departButton.interactable = selectedUnitSlots.Count > 0 && !hasActiveExpedition;
         }
