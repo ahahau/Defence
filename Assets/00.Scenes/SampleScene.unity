@@ -9169,7 +9169,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.44}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 32, y: -13.66597}
+  m_AnchoredPosition: {x: 32, y: -13.687576}
   m_SizeDelta: {x: -244, y: -118}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &780624401
@@ -12837,7 +12837,7 @@ MonoBehaviour:
   maxPower: 100
   powerPerSecond: 2
   startingPower: 30
-  powerPerKill: 8
+  powerPerKill: 3
 --- !u!4 &1156679691
 Transform:
   m_ObjectHideFlags: 0

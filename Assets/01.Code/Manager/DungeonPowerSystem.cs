@@ -27,13 +27,13 @@ namespace _01.Code.Manager
         [SerializeField, Min(1)] private int maxPower = 100;
 
         [SerializeField, Min(0f), Tooltip("웨이브가 도는 동안 초당 차오르는 권능")]
-        private float powerPerSecond = 6f;
+        private float powerPerSecond = 2f;
 
         [SerializeField, Min(0f), Tooltip("웨이브를 시작할 때 들고 가는 권능")]
         private float startingPower = 30f;
 
         [SerializeField, Tooltip("침입자를 쓰러뜨릴 때마다 얻는 권능. 잘 막을수록 더 쓸 수 있다.")]
-        private float powerPerKill = 8f;
+        private float powerPerKill = 3f;
 
         private readonly Dictionary<DungeonPowerSO, float> _readyTimeByPower = new();
         private float _power;
