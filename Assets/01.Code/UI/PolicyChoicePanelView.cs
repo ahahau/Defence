@@ -236,12 +236,27 @@ namespace _01.Code.UI
             if (policy.DailyMoraleDelta != 0 && policy.DurationDays > 0)
                 parts.Add($"{policy.DurationDays}일간 민심 {FormatSigned(policy.DailyMoraleDelta)}/일");
 
+            if (!Mathf.Approximately(policy.UnitDamageMultiplier, 1f))
+                parts.Add($"{policy.DurationDays}일간 아군 공격 {FormatPercent(policy.UnitDamageMultiplier)}");
+
+            if (policy.UnitDefenseBonus != 0)
+                parts.Add($"{policy.DurationDays}일간 아군 방어 {FormatSigned(policy.UnitDefenseBonus)}");
+
+            if (!Mathf.Approximately(policy.DungeonPowerGainMultiplier, 1f))
+                parts.Add($"{policy.DurationDays}일간 권능 획득 {FormatPercent(policy.DungeonPowerGainMultiplier)}");
+
             return parts.Count > 0 ? string.Join(" / ", parts) : "효과 없음";
         }
 
         private string FormatSigned(int value)
         {
             return value > 0 ? $"+{value}" : value.ToString();
+        }
+
+        private static string FormatPercent(float multiplier)
+        {
+            var percent = Mathf.RoundToInt((multiplier - 1f) * 100f);
+            return percent > 0 ? $"+{percent}%" : $"{percent}%";
         }
     }
 }

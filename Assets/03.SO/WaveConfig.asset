@@ -18,107 +18,198 @@ MonoBehaviour:
     spawnInterval: 2.5
     enemyTurnInterval: 3.8
     clearGoldReward: 32
+    party: {fileID: 0}
+    threatTitle: 
+    counterHint: 
   - targetDay: 2
     enemyCount: 3
     spawnInterval: 2.4
     enemyTurnInterval: 3.8
     clearGoldReward: 36
+    party: {fileID: 0}
+    threatTitle: 
+    counterHint: 
   - targetDay: 3
     enemyCount: 5
     spawnInterval: 2.2
     enemyTurnInterval: 3.7
     clearGoldReward: 42
+    party: {fileID: 11400000, guid: 3cc41fab126efe841b8bb99c129931ce, type: 2}
+    threatTitle: "\uC911\uC7A5 \uC804\uC5F4"
+    counterHint: "\uACF5\uACA9 \uBA85\uB839\uC73C\uB85C \uBC29\uD328 \uB108\uBA38
+      \uD6C4\uC5F4\uC744 \uB178\uB9AC\uC138\uC694"
   - targetDay: 4
     enemyCount: 6
     spawnInterval: 2
     enemyTurnInterval: 3.6
     clearGoldReward: 48
+    party: {fileID: 11400000, guid: 1909b747b35d1a447bd1c91eeeab0965, type: 2}
+    threatTitle: "\uC815\uCC30\uBCD1 \uB3CC\uACA9"
+    counterHint: "\uACBD\uACC4 \uBA85\uB839\uC73C\uB85C \uC8FC\uC778\uACF5\uC5D0\uAC8C
+      \uB2EC\uB824\uB4DC\uB294 \uC801\uC744 \uBD99\uC7A1\uC73C\uC138\uC694"
   - targetDay: 5
     enemyCount: 8
     spawnInterval: 1.9
     enemyTurnInterval: 3.5
     clearGoldReward: 56
+    party: {fileID: 11400000, guid: 58bb4c3d5c1182d4ba81a6d4b0481527, type: 2}
+    threatTitle: "\uCE58\uC720\uC0AC \uD638\uC704"
+    counterHint: "\uACF5\uACA9 \uBA85\uB839 \uC720\uB2DB\uC73C\uB85C \uCE58\uC720\uC0AC\uB97C
+      \uBA3C\uC800 \uB04A\uC73C\uC138\uC694"
   - targetDay: 6
     enemyCount: 9
     spawnInterval: 1.8
     enemyTurnInterval: 3.4
     clearGoldReward: 64
+    party: {fileID: 11400000, guid: 8254088433eed644ab70ce29060ae6b3, type: 2}
+    threatTitle: "\uB2E4\uC218 \uACF5\uC138"
+    counterHint: "\uD568\uC815\uACFC \uB358\uC804 \uAD8C\uB2A5\uC73C\uB85C \uC218\uC801
+      \uC6B0\uC138\uB97C \uBA3C\uC800 \uC904\uC774\uC138\uC694"
   - targetDay: 7
     enemyCount: 11
     spawnInterval: 1.7
     enemyTurnInterval: 3.3
     clearGoldReward: 72
+    party: {fileID: 11400000, guid: b695539c74c8f3c42ac3d90b7d020973, type: 2}
+    threatTitle: "\uC6D0\uAC70\uB9AC \uC0AC\uACA9\uB300"
+    counterHint: "\uACBD\uACC4 \uBA85\uB839\uC73C\uB85C \uD6C4\uC5F4\uC744 \uC9C0\uD0A4\uACE0
+      \uACF5\uACA9 \uBA85\uB839\uC73C\uB85C \uAD81\uC218\uB97C \uC555\uBC15\uD558\uC138\uC694"
   - targetDay: 8
     enemyCount: 12
     spawnInterval: 1.6
     enemyTurnInterval: 3.2
     clearGoldReward: 82
+    party: {fileID: 11400000, guid: 513129d3f81cd1a49b2540acb82d0d01, type: 2}
+    threatTitle: "\uD63C\uC131 \uC6D0\uC815\uB300"
+    counterHint: "\uC801 \uC5ED\uD560\uC744 \uD655\uC778\uD574 \uACBD\uACC4\uC640
+      \uACF5\uACA9 \uBA85\uB839\uC744 \uB098\uB220 \uC4F0\uC138\uC694"
   - targetDay: 9
-    enemyCount: 14
+    enemyCount: 4
     spawnInterval: 1.55
     enemyTurnInterval: 3.1
     clearGoldReward: 94
+    party: {fileID: 0}
+    threatTitle: "\uD1A0\uBC8C\uB300\uC7A5\uACFC \uCE58\uC720 \uD638\uC704"
+    counterHint: "\uD638\uC704 3\uBA85\uC744 \uBA3C\uC800 \uC81C\uAC70\uD558\uBA74
+      \uBCF4\uC2A4\uAC00 \uBE68\uB77C\uC9C0\uB294 \uB300\uC2E0 \uBC29\uC5B4\uC758
+      \uBE48\uD2C8\uC774 \uB4DC\uB7EC\uB0A9\uB2C8\uB2E4"
   - targetDay: 10
     enemyCount: 15
     spawnInterval: 1.5
     enemyTurnInterval: 3
     clearGoldReward: 106
+    party: {fileID: 11400000, guid: 1365efc164da811429c0c3ac25e5241f, type: 2}
+    threatTitle: "\uC30D\uB465\uC774 \uCE58\uC720\uC9C4"
+    counterHint: "\uCE58\uC720\uC0AC\uAC00 \uB458\uC774\uB2E4 \u2014 \uD558\uB098\uB9CC
+      \uB04A\uC73C\uBA74 \uB098\uBA38\uC9C0\uAC00 \uACC4\uC18D \uC77C\uC73C\uCF1C
+      \uC138\uC6B4\uB2E4"
   - targetDay: 11
     enemyCount: 17
     spawnInterval: 1.45
     enemyTurnInterval: 2.9
     clearGoldReward: 120
+    party: {fileID: 11400000, guid: 8b16b513981fa29449332cb0d51daad1, type: 2}
+    threatTitle: "\uC77C\uC81C \uC0AC\uACA9\uB300"
+    counterHint: "\uAD81\uC218 \uC14B\uC774 \uB4A4\uC5D0\uC11C \uC3DC\uB2E4. \uC804\uC5F4\uC744
+      \uC138\uC6CC \uBD99\uC7A1\uACE0 \uACF5\uACA9 \uBA85\uB839\uC73C\uB85C \uD6C4\uC5F4\uC744
+      \uB6AB\uC73C\uC138\uC694"
   - targetDay: 12
     enemyCount: 18
     spawnInterval: 1.4
     enemyTurnInterval: 2.8
     clearGoldReward: 136
+    party: {fileID: 11400000, guid: 6bd3a450bb406f447a0ea0b2af9290f6, type: 2}
+    threatTitle: "\uAC15\uCCA0 \uBC29\uBCBD"
+    counterHint: "\uC804\uC6D0\uC774 \uBC29\uD328\uB2E4. \uC794\uACF5\uACA9\uC740
+      \uD295\uAE34\uB2E4 \u2014 \uD55C \uBC29\uC774 \uD070 \uC720\uB2DB\uC774\uB098
+      \uD568\uC815\uC73C\uB85C \uC5EC\uC138\uC694"
   - targetDay: 13
     enemyCount: 20
     spawnInterval: 1.35
     enemyTurnInterval: 2.7
     clearGoldReward: 152
+    party: {fileID: 11400000, guid: d568c805184aba347a437790e32a1a55, type: 2}
+    threatTitle: "\uAD50\uB780 \uB3CC\uACA9"
+    counterHint: "\uC815\uCC30\uBCD1\uC740 \uBE60\uB974\uACE0 \uC798 \uD53C\uD55C\uB2E4.
+      \uD070 \uD55C \uBC29\uBCF4\uB2E4 \uC790\uC8FC \uB54C\uB9AC\uB294 \uCABD\uC774
+      \uB9DE\uB294\uB2E4"
   - targetDay: 14
     enemyCount: 21
     spawnInterval: 1.3
     enemyTurnInterval: 2.6
     clearGoldReward: 170
+    party: {fileID: 11400000, guid: 80713fb0bf5b8eb47aae815dfe61e620, type: 2}
+    threatTitle: "\uCD95\uC131 \uBC29\uBCBD"
+    counterHint: "\uBC29\uD328 \uB4A4\uC5D0 \uCE58\uC720\uC0AC\uAC00 \uC228\uC5C8\uB2E4.
+      \uCE58\uC720\uC0AC\uB97C \uBA3C\uC800 \uB04A\uC9C0 \uC54A\uC73C\uBA74 \uBC29\uBCBD\uC774
+      \uC904\uC9C0 \uC54A\uB294\uB2E4"
   - targetDay: 15
     enemyCount: 23
     spawnInterval: 1.25
     enemyTurnInterval: 2.5
     clearGoldReward: 190
+    party: {fileID: 11400000, guid: d6638017d2d41d14584e64ed68c9a1d4, type: 2}
+    threatTitle: "\uC800\uACA9\uC870"
+    counterHint: "\uC804\uBD80 \uD6C4\uC5F4\uC774\uB2E4. \uBD99\uAE30 \uC804\uAE4C\uC9C0
+      \uC77C\uBC29\uC801\uC73C\uB85C \uB9DE\uB294\uB2E4 \u2014 \uBE60\uB978 \uC720\uB2DB\uC774\uB098
+      \uAD8C\uB2A5\uC73C\uB85C \uAC70\uB9AC\uB97C \uC9C0\uC6B0\uC138\uC694"
   - targetDay: 16
     enemyCount: 24
     spawnInterval: 1.2
     enemyTurnInterval: 2.5
     clearGoldReward: 200
+    party: {fileID: 11400000, guid: 79ceec12aeb2d7e499065b4ca98c29c5, type: 2}
+    threatTitle: "\uCD1D\uB825\uC804"
+    counterHint: "\uBC29\uD328\xB7\uAD81\uC218\xB7\uCE58\uC720\uC0AC\uAC00 \uBAA8\uB450
+      \uB458\uC529\uC774\uB2E4. \uBB34\uC5C7\uBD80\uD130 \uB04A\uC744\uC9C0 \uC815\uD558\uACE0
+      \uBA85\uB839\uC744 \uB098\uB220 \uC4F0\uC138\uC694"
   - targetDay: 17
     enemyCount: 25
     spawnInterval: 1.15
     enemyTurnInterval: 2.5
     clearGoldReward: 210
+    party: {fileID: 11400000, guid: 548ec25eb4ddbd649951df71d10f5105, type: 2}
+    threatTitle: "\uD30C\uC0C1 \uACF5\uC138"
+    counterHint: "\uC218\uB85C \uBC00\uC5B4\uBD99\uC778\uB2E4. \uD568\uC815\uACFC
+      \uAD8C\uB2A5\uC73C\uB85C \uBA38\uB9BF\uC218\uB97C \uBA3C\uC800 \uC904\uC774\uC138\uC694"
   - targetDay: 18
-    enemyCount: 26
+    enemyCount: 6
     spawnInterval: 1.1
     enemyTurnInterval: 2.5
     clearGoldReward: 225
+    party: {fileID: 0}
+    threatTitle: "\uB450 \uBC88\uC9F8 \uC0AC\uB0E5\uD638\uAC01"
+    counterHint: "\uB450\uBAA9\uC758 \uCCB4\uB825\uC774 \uC904\uBA74 \uD6C4\uC5F4
+      \uC0AC\uB0E5\uAFBC 3\uBA85\uC774 \uD569\uB958\uD569\uB2C8\uB2E4"
   - targetDay: 19
     enemyCount: 28
     spawnInterval: 1.05
     enemyTurnInterval: 2.5
     clearGoldReward: 240
+    party: {fileID: 11400000, guid: e27ba3d5bd519464baf69fb68af3cb6b, type: 2}
+    threatTitle: "\uCD1D\uB3D9\uC6D0\uB839"
+    counterHint: "\uC655\uAD6D\uC774 \uAC00\uC9C4 \uBAA8\uB4E0 \uC885\uB958\uB97C
+      \uD55C \uBC88\uC5D0 \uBCF4\uB0C8\uB2E4. \uB0A8\uC740 \uD568\uC815\uACFC \uAD8C\uB2A5\uC744
+      \uC5EC\uAE30\uC11C \uC544\uB07C\uC9C0 \uB9C8\uC138\uC694 \u2014 \uB0B4\uC77C\uC774
+      \uB9C8\uC9C0\uB9C9\uC774\uB2E4"
   - targetDay: 20
-    enemyCount: 30
+    enemyCount: 8
     spawnInterval: 1
     enemyTurnInterval: 2.5
     clearGoldReward: 300
+    party: {fileID: 0}
+    threatTitle: "\uC655\uAD6D \uAE30\uC0AC\uB2E8\uC7A5\uC758 \uCD5C\uD6C4 \uC2B5\uACA9"
+    counterHint: "\uD638\uC704\uB97C \uBA3C\uC800 \uAC77\uC5B4\uB0B4\uC57C \uB2E8\uC7A5\uC758
+      \uBC29\uC5B4\uAC00 \uC5F4\uB9BD\uB2C8\uB2E4"
   defaultWave:
     targetDay: 0
     enemyCount: 24
     spawnInterval: 1.2
     enemyTurnInterval: 2.5
     clearGoldReward: 195
+    party: {fileID: 0}
+    threatTitle: 
+    counterHint: 
   waveEveryNDays: 1
   bossEveryNDays: 9
   finalDay: 20
@@ -130,23 +221,46 @@ MonoBehaviour:
     spawnInterval: 1
     enemyTurnInterval: 3
     clearGoldReward: 90
+    party: {fileID: 0}
+    threatTitle: 
+    counterHint: 
   bossEntries:
   - targetDay: 9
     party: {fileID: 11400000, guid: 9411218d8bc02ef4e8cbe802a2086c02, type: 2}
     title: "\uD1A0\uBC8C\uB300\uC7A5"
     subtitle: "\uBC29\uD328 \uB4A4\uC758 \uC801\uC740 \uC5B4\uC124\uD508 \uACF5\uACA9\uC73C\uB85C\uB294
       \uD760\uC9D1\uB3C4 \uB098\uC9C0 \uC54A\uB294\uB2E4"
-    healthMultiplier: 6.56
-    attackMultiplier: 4
+    healthMultiplier: 3
+    attackMultiplier: 1.5
     visualScale: 1.7
+    enableFinalPhase: 1
+    phaseDefensePenalty: 8
+    phaseAttackIntervalMultiplier: 0.7
+    phaseSubtitle: "\uD638\uC704\uAC00 \uBB34\uB108\uC84C\uB2E4 \u2014 \uACF5\uACA9\uC740
+      \uBE68\uB77C\uC84C\uC9C0\uB9CC \uBC29\uD328\uC758 \uBE48\uD2C8\uC774 \uB4DC\uB7EC\uB0AC\uB2E4"
+    enableReinforcementPhase: 0
+    reinforcementHealthRatio: 0.5
+    reinforcementParty: {fileID: 0}
+    reinforcementCount: 0
+    reinforcementSubtitle: 
   - targetDay: 18
     party: {fileID: 11400000, guid: abf3438af6a58214abfad019d41e7761, type: 2}
     title: "\uC0AC\uB0E5\uAFBC \uB450\uBAA9"
     subtitle: "\uC804\uC5F4\uC744 \uC138\uC6B0\uC9C0 \uC54A\uC73C\uBA74 \uB4A4\uC5D0\uC11C
       \uC3D8\uB294 \uC790\uB97C \uC7A1\uC744 \uC218 \uC5C6\uB2E4"
-    healthMultiplier: 5.65
-    attackMultiplier: 3
+    healthMultiplier: 2.75
+    attackMultiplier: 1
     visualScale: 1.45
+    enableFinalPhase: 0
+    phaseDefensePenalty: 8
+    phaseAttackIntervalMultiplier: 0.75
+    phaseSubtitle: 
+    enableReinforcementPhase: 1
+    reinforcementHealthRatio: 0.55
+    reinforcementParty: {fileID: 11400000, guid: a2c2e38ddad73d649924b8da2aae4c20, type: 2}
+    reinforcementCount: 3
+    reinforcementSubtitle: "\uD638\uAC01 \uC18C\uB9AC\uAC00 \uC6B8\uB838\uB2E4 \u2014
+      \uD6C4\uC5F4 \uC0AC\uB0E5\uAFBC\uC744 \uBA3C\uC800 \uB04A\uC5B4\uB77C"
   - targetDay: 20
     party: {fileID: 11400000, guid: d235fe14d8a856c489fae0c7784f0c81, type: 2}
     title: "\uC655\uAD6D \uAE30\uC0AC\uB2E8\uC7A5"
@@ -155,3 +269,12 @@ MonoBehaviour:
     healthMultiplier: 8.68
     attackMultiplier: 3
     visualScale: 1.9
+    enableFinalPhase: 0
+    phaseDefensePenalty: 8
+    phaseAttackIntervalMultiplier: 0.75
+    phaseSubtitle: 
+    enableReinforcementPhase: 0
+    reinforcementHealthRatio: 0.5
+    reinforcementParty: {fileID: 0}
+    reinforcementCount: 0
+    reinforcementSubtitle: 

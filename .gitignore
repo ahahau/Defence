@@ -117,3 +117,6 @@ InitTestScene*.unity*
 # Unity 크래시 복구 스냅샷
 /[Aa]ssets/_Recovery/
 /[Aa]ssets/_Recovery.meta
+
+# Claude 스킬 초안 — 프로젝트 코드가 아니라 개인 작업 도구
+/plugin-drafts/

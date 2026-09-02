@@ -48,6 +48,7 @@ namespace _01.Code.Enemies
         // 스탯 가감치를 붙일 때 쓰는 출처. 같은 출처는 한 번만 붙고, 떼면 원래 값으로 돌아온다.
         private static readonly object WaveLevelStatKey = new();
         private static readonly object BossStatKey = new();
+        private static readonly object BossFinalPhaseStatKey = new();
 
         private GameEventChannelSO _costEventChannel;
         private bool _isInCombat;
@@ -55,6 +56,7 @@ namespace _01.Code.Enemies
         private bool _isReturning;
         private int _currentFear;
         private int _currentGreed;
+        private int _totalFacilityGold;
         private Tween _returnTween;
         private int _treasuryGoldLoss;
 
@@ -67,12 +69,16 @@ namespace _01.Code.Enemies
         private bool _isInitialized;
         private bool _deathStarted;
         private bool _isBoss;
+        private bool _bossFinalPhaseActive;
 
         /// <summary>사망 연출이 시작되는 순간(디졸브 시작 전) 발생. 보스 처치 시네마틱 등이 구독.</summary>
         public event System.Action<Enemy> DeathStarted;
         public event System.Action<Enemy> Removed;
+        public event System.Action<Enemy> MoodChanged;
+        public event System.Action<Enemy, int, GoldChangeSource> FacilityGoldSpent;
 
         public bool IsBoss => _isBoss;
+        public bool IsAlive => combatant != null && combatant.IsAlive;
         private bool _killRewardGranted;
         private BattleAgent _battleAgent;
         private EnemyStrengthOutline _strengthOutline;
@@ -90,6 +96,7 @@ namespace _01.Code.Enemies
         public int Level { get; private set; } = 1;
         public int Fear => _currentFear;
         public int Greed => _currentGreed;
+        public int TotalFacilityGold => _totalFacilityGold;
         public float RetreatChance => CalculateRetreatChance();
         public string InstinctState
         {
@@ -529,17 +536,36 @@ namespace _01.Code.Enemies
         {
             _currentFear = data != null ? Mathf.Max(0, data.Fear) : 0;
             _currentGreed = data != null ? Mathf.Max(0, data.Greed) : 0;
+            MoodChanged?.Invoke(this);
         }
 
         private void IncreaseFear(int amount)
         {
-            if (amount > 0) _currentFear += amount;
+            if (amount <= 0)
+                return;
+
+            _currentFear += amount;
+            MoodChanged?.Invoke(this);
         }
 
         private void ApplyTemptingBuildingMoodChange()
         {
             _currentGreed += Mathf.Max(0, greedGainOnBuilding);
             _currentFear = Mathf.Max(0, _currentFear - Mathf.Max(0, fearReductionOnBuilding));
+            MoodChanged?.Invoke(this);
+        }
+
+        /// <summary>
+        /// 이 적이 상점·여관에 지불한 금화를 적 단위로 기록한다.
+        /// 실제 골드 지급은 기존 GoldEarnedEvent가 맡고, 여기서는 착취 목표와 피드백만 알린다.
+        /// </summary>
+        public void RecordFacilitySpending(int amount, GoldChangeSource source)
+        {
+            if (amount <= 0 || source != GoldChangeSource.Store && source != GoldChangeSource.Inn)
+                return;
+
+            _totalFacilityGold += amount;
+            FacilityGoldSpent?.Invoke(this, amount, source);
         }
 
         private bool TryReturn()
@@ -719,6 +745,29 @@ namespace _01.Code.Enemies
 
             // 쓰러질 때 슬로우 시네마틱이 담기도록 사망 디졸브를 길게.
             deadDuration = Mathf.Max(deadDuration, 0.9f);
+        }
+
+        /// <summary>
+        /// 호위를 잃은 보스의 최종 단계. 공격은 빨라지지만 방어의 빈틈이 생겨
+        /// 플레이어가 버티기만 하는 대신 짧은 마무리 타이밍을 잡게 한다.
+        /// </summary>
+        public void ActivateBossFinalPhase(int defensePenalty, float attackIntervalMultiplier)
+        {
+            if (!_isBoss || _bossFinalPhaseActive || !IsAlive)
+                return;
+
+            _bossFinalPhaseActive = true;
+            combatant?.SetDefenseAndEvasionBonus(
+                BossFinalPhaseStatKey,
+                -Mathf.Max(0, defensePenalty),
+                0f);
+            combatant?.SetAttackIntervalModifier(
+                BossFinalPhaseStatKey,
+                Mathf.Clamp(attackIntervalMultiplier, 0.2f, 1f));
+
+            transform.DOKill(false);
+            transform.DOPunchScale(transform.localScale * 0.12f, 0.45f, 5, 0.55f)
+                .SetLink(gameObject);
         }
 
         private void ApplyData(EnemyDataSO enemyData)

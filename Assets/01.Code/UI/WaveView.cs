@@ -324,9 +324,14 @@ namespace _01.Code.UI
                 var baseEnemyCount = waveManager != null ? waveManager.GetBasePreviewEnemyCount(day) : enemyCount;
                 var conquestReduction = Mathf.Max(0, baseEnemyCount - enemyCount);
                 var conquestText = conquestReduction > 0 ? $" · 마을 장악으로 -{conquestReduction}명" : string.Empty;
+                var threat = waveManager != null ? waveManager.GetThreatPreview(day) : default;
+                var threatText = threat.IsEmpty
+                    ? string.Empty
+                    : $"\n<color=#FFCC66>{threat.Title}</color> · {threat.CounterHint}";
                 _runtimeHud.BannerSubtitle.text =
                     $"침입 예정 {enemyCount}명{conquestText} · 몬스터와 함정을 배치하세요\n"
-                    + CoreLoopFeatureUnlocks.GetPreparationHint(day);
+                    + CoreLoopFeatureUnlocks.GetPreparationHint(day)
+                    + threatText;
             }
             else
             {
@@ -452,7 +457,10 @@ namespace _01.Code.UI
                 var warning = IntrusionThreat.BuildWarning(steps, objectiveKind);
                 _waveProgressStats.text =
                     $"남은 위협 {remaining}/{total}  ·  던전 내부 {waveManager.ActiveEnemyCount}  ·  진입 대기 {waveManager.PendingSpawnCount}  ·  처치 {waveManager.KillCount}"
-                    + (string.IsNullOrEmpty(warning) ? string.Empty : $"  ·  {warning}");
+                    + (string.IsNullOrEmpty(warning) ? string.Empty : $"  ·  {warning}")
+                    + $"\n{(waveManager.IsExploitationObjectiveCompleted ? "<color=#FFD05A>착취 완료</color>" : "착취 작전")}"
+                    + $"  ·  시설 수익 {waveManager.WaveFacilityGold}/{waveManager.ExploitationTargetGold}G"
+                    + $"  ·  보너스 +{WaveManager.ExploitationBonusGold}G";
             }
         }
 

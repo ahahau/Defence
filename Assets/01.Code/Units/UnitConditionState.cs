@@ -1,4 +1,5 @@
 using System;
+using _01.Code.BT;
 using UnityEngine;
 
 namespace _01.Code.Units
@@ -96,11 +97,19 @@ namespace _01.Code.Units
 
         public static string GetDescription(UnitCommand command) => command switch
         {
-            UnitCommand.Guard => "방어를 우선해 버티지만 공격 속도가 조금 느려집니다.",
-            UnitCommand.Assault => "공격을 우선해 피해량과 속도가 오르지만 피로가 더 쌓입니다.",
+            UnitCommand.Guard => "같은 구역의 적을 도발해 아군 대신 버티지만 공격 속도가 조금 느려집니다.",
+            UnitCommand.Assault => "후열의 궁수·치유사를 우선 추적하고 빠르게 접근하지만 피로가 더 쌓입니다.",
             UnitCommand.Rest => "피로 누적을 줄이고 회복을 우선하지만 전투 성능이 크게 낮아집니다.",
             _ => "기본 행동입니다. 별도 보정 없이 노드 안에서 대기합니다."
         };
+
+        public static TargetPriority ResolveTargetPriority(UnitCommand command, TargetPriority requested) =>
+            command switch
+            {
+                UnitCommand.Guard => TargetPriority.Frontline,
+                UnitCommand.Assault => TargetPriority.Backline,
+                _ => requested
+            };
     }
 
     [Serializable]

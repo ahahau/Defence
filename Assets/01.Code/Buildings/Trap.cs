@@ -23,6 +23,12 @@ namespace _01.Code.Buildings
          Tooltip("일차마다 더해지는 피해. 침입자 체력은 매일 늘어나므로 이게 없으면 초반에 지은 함정이 후반에 무의미해진다.")]
         private float damagePerDay = 0.5f;
 
+        [SerializeField, Min(0),
+         Tooltip("한 번 발동할 때마다 닳는 내구도. 0이면 영구히 작동한다.\n" +
+                 "가격만으로는 후반을 못 잡는다 — 경제는 복리로 커지는데 가격은 고정이라\n" +
+                 "어떤 값도 결국 공짜가 된다. 발동 횟수 상한은 금화 규모와 무관하게 걸린다.")]
+        private int wearPerTrigger = 1;
+
         [SerializeField]
         private StatusEffectDataSO injuryStatusEffect;
 
@@ -78,7 +84,7 @@ namespace _01.Code.Buildings
 
         public bool TryDamage(IDamageable target)
         {
-            if (target == null || !target.IsAlive)
+            if (target == null || !target.IsAlive || IsDestroyed)
                 return false;
 
             if (Random.value > triggerChance)
@@ -93,6 +99,11 @@ namespace _01.Code.Buildings
             target.TakeDamage(resolvedDamage);
             PlayHitAnimation();
             TryApplyInjury(target, targetComponent);
+
+            // 발동한 만큼 닳는다. 다 닳으면 Building이 알아서 부서뜨린다.
+            if (wearPerTrigger > 0)
+                TakeBuildingDamage(wearPerTrigger);
+
             return true;
         }
         

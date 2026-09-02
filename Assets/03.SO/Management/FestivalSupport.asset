@@ -12,10 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6cec2de7cb574a51b3d26073c6d6ae0d, type: 3}
   m_Name: FestivalSupport
   m_EditorClassIdentifier: 
-  displayName: 축제 지원금
-  description: 금을 지출해 즉시 민심을 올린다.
+  displayName: "\uCD95\uC81C \uC9C0\uC6D0\uAE08"
+  description: "\uAE08\uC744 \uC9C0\uCD9C\uD574 \uBBFC\uC2EC\uC744 \uC62C\uB9AC\uACE0
+    \uBA70\uCE60\uAC04 \uAD8C\uB2A5 \uCDA9\uC804\uC744 \uBD81\uB3CB\uC6B4\uB2E4."
   moraleDeltaOnSelect: 14
   goldDeltaOnSelect: -60
   dailyMoraleDelta: 1
   durationDays: 2
   canRepeat: 1
+  unitDamageMultiplier: 1
+  unitDefenseBonus: 0
+  dungeonPowerGainMultiplier: 1.25

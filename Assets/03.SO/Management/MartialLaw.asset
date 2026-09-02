@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6cec2de7cb574a51b3d26073c6d6ae0d, type: 3}
+  m_Name: MartialLaw
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Manager.PolicyDataSO
+  displayName: "\uACC4\uC5C4\uB839"
+  description: "\uB358\uC804\uC744 \uC804\uC2DC \uCCB4\uC81C\uB85C \uB3CC\uB9B0\uB2E4.
+    \uBD80\uD558\uB4E4\uC740 \uD6E8\uC52C \uC0AC\uB0A9\uAC8C \uC2F8\uC6B0\uC9C0\uB9CC
+    \uC8FC\uBBFC\uB4E4\uC740 \uB4F1\uC744 \uB3CC\uB9B0\uB2E4. \uD55C \uBC88\uC758
+    \uD1B5\uCE58\uC5D0 \uD55C \uBC88\uBFD0\uC774\uB2E4."
+  moraleDeltaOnSelect: -20
+  goldDeltaOnSelect: 0
+  dailyMoraleDelta: -3
+  durationDays: 5
+  canRepeat: 0
+  unitDamageMultiplier: 1.35
+  unitDefenseBonus: 5
+  dungeonPowerGainMultiplier: 1

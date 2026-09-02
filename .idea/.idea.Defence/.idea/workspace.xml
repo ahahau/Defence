@@ -11,84 +11,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="60a71e54-2ed6-426f-84f0-8dc9ea69b70b" name="변경" comment="">
-      <change beforePath="$PROJECT_DIR$/.claude/settings.local.json" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/settings.local.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Defence/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Defence/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/00.Scenes/SampleScene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/00.Scenes/SampleScene.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/00.Scenes/Start.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/00.Scenes/Start.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Artifacts/ArtifactEffectController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Artifacts/ArtifactEffectController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Buildings/Building.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings/Building.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Buildings/Trap.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings/Trap.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Buildings/Treasury.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings/Treasury.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Combat/DamageFeedback.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Combat/DamageFeedback.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Dialogue/DialogueRunner.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Dialogue/DialogueRunner.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Editor/ExpeditionMapPrefabInstaller.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Editor/ExpeditionMapPrefabInstaller.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Editor/GeneratedSkillContentInstaller.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Editor/GeneratedSkillContentInstaller.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Enemies/Enemy.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Enemies/Enemy.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Enemies/EnemyMover.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Enemies/EnemyMover.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Entities/EntityRender.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Entities/EntityRender.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/BossWavePresenter.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/BossWavePresenter.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/CostManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/CostManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/DayManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/DayManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/GameOverManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/GameOverManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/HiredUnitRoster.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/HiredUnitRoster.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/IntrusionThreat.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/IntrusionThreat.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/MoralePolicyManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/MoralePolicyManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/NestCohesionSystem.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/NestCohesionSystem.cs.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/UnitManagementSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/UnitManagementSystem.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/WaveManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/WaveManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/DungeonGraphController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/DungeonGraphController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/Node.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/Node.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/NodeTrapGrid.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/NodeTrapGrid.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Progression/VillageConquestState.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Progression/VillageConquestState.cs.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Progression/VillageConquestSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Progression/VillageConquestSystem.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Skills/GroundZoneSkillEffectSO.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Skills/GroundZoneSkillEffectSO.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Skills/HealZoneSkillEffectSO.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Skills/HealZoneSkillEffectSO.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Skills/SkillCaster.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Skills/SkillCaster.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Skills/SkillZoneVisual.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Skills/SkillZoneVisual.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/ExpeditionMapPanelView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/ExpeditionMapPanelView.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/MerchantPanelView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/MerchantPanelView.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/StartMenuController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/StartMenuController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/WaveRuntimeHudView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/WaveRuntimeHudView.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/WaveView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/WaveView.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Enemies/ArcherEnemy.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/Enemies/ArcherEnemy.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Enemies/HealterEnemy.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/Enemies/HealterEnemy.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Enemies/SwordEnemy.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/Enemies/SwordEnemy.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/03.SO/WaveConfig.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/WaveConfig.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Generated/Trap_AmbushNet.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Generated/Trap_AmbushNet.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Generated/Trap_ArmorBreaker.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Generated/Trap_ArmorBreaker.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Generated/Trap_Caltrop.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Generated/Trap_Caltrop.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Generated/Trap_ExecutionSaw.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Generated/Trap_ExecutionSaw.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Trap_Blade.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Trap_Blade.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Trap_Crusher.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Trap_Crusher.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Trap_Snare.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Trap_Snare.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Trap_Spike.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Trap_Spike.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Enemies/Enemy.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Enemies/Enemy.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Enemies/Generated/Enemy_Archer.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Enemies/Generated/Enemy_Archer.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Enemies/Generated/Enemy_Healter.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Enemies/Generated/Enemy_Healter.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Enemies/Generated/Enemy_Scout.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Enemies/Generated/Enemy_Scout.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Enemies/Generated/Enemy_Sword.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Enemies/Generated/Enemy_Sword.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Player.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Player.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Generated/Unit_Arbalist.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Generated/Unit_Arbalist.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Generated/Unit_BattleMage.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Generated/Unit_BattleMage.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Generated/Unit_Guardian.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Generated/Unit_Guardian.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Generated/Unit_Pikeman.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Generated/Unit_Pikeman.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Generated/Unit_Scout.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Generated/Unit_Scout.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Generated/Unit_Vanguard.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Generated/Unit_Vanguard.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Slimes/Unit_SlimeBlue.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Slimes/Unit_SlimeBlue.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Slimes/Unit_SlimeGreen.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Slimes/Unit_SlimeGreen.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Slimes/Unit_SlimeRed.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Slimes/Unit_SlimeRed.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Unit.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Unit.prefab" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/08.Font/The Jamsil 5 Bold SDF.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/08.Font/The Jamsil 5 Bold SDF.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Resources/Materials/NestGridOverlay.mat" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Resources/Materials/NestGridOverlay.mat.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Shaders/NestGridOverlay.shader" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Shaders/NestGridOverlay.shader.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Tests/EditMode/Dialogue/Defence.EditMode.Tests.asmdef" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Tests/EditMode/Dialogue/GameRulesTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Tests/EditMode/Dialogue/GameRulesTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Packages/manifest.json" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/manifest.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Packages/packages-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/packages-lock.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -339,6 +263,8 @@
       <workItem from="1787724563503" duration="620000" />
       <workItem from="1787790894820" duration="2016000" />
       <workItem from="1787876325375" duration="1557000" />
+      <workItem from="1788096233603" duration="598000" />
+      <workItem from="1788142106652" duration="1311000" />
     </task>
     <servers />
   </component>

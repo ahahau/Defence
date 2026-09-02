@@ -13,5 +13,7 @@ namespace _01.Code.Core.Stats
         public const int Defense = 3;
         public const int AttackInterval = 4;
         public const int EvasionChance = 5;
+        public const int CriticalChance = 6;
+        public const int CriticalDamage = 7;
     }
 }

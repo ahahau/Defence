@@ -1,6 +1,7 @@
 using _01.Code.Artifacts;
 using _01.Code.Combat;
 using _01.Code.Core.Modules;
+using _01.Code.Manager;
 using _01.Code.MapCreateSystem;
 using System;
 using UnityEngine;
@@ -27,7 +28,7 @@ namespace _01.Code.Units
         [SerializeField] private UnitTrait trait;
         [SerializeField, Min(0f)] private float aggressiveDamageMultiplier = 1.2f;
         [SerializeField, Min(0f)] private float aggressiveFatigueMultiplier = 1.25f;
-        [SerializeField, Min(0)] private int guardianDefenseBonus = 20;
+        [SerializeField, Min(0)] private int guardianDefenseBonus = 6;
         [SerializeField, Min(0f)] private float guardianDamageMultiplier = 0.9f;
         [SerializeField, Range(0f, 1f)] private float cautiousEvasionBonus = 0.1f;
         [SerializeField, Min(0f)] private float cautiousAttackIntervalMultiplier = 1.1f;
@@ -48,7 +49,7 @@ namespace _01.Code.Units
 
         [Header("Command Balance")]
         [SerializeField] private UnitCommand currentCommand = UnitCommand.Standby;
-        [SerializeField, Min(0)] private int commandGuardDefenseBonus = 15;
+        [SerializeField, Min(0)] private int commandGuardDefenseBonus = 5;
         [SerializeField, Min(0f)] private float commandGuardDamageMultiplier = 0.92f;
         [SerializeField, Min(0f)] private float commandGuardAttackIntervalMultiplier = 1.08f;
         [SerializeField, Min(0f)] private float commandAssaultDamageMultiplier = 1.15f;
@@ -110,6 +111,9 @@ namespace _01.Code.Units
         private static readonly object FatigueStatKey = new();
         private static readonly object InjuryStatKey = new();
         private static readonly object PersonalityStatKey = new();
+        private static readonly object PolicyStatKey = new();
+
+        private MoralePolicyManager _policyManager;
 
         protected override void Awake()
         {
@@ -129,15 +133,38 @@ namespace _01.Code.Units
             // 역할은 프리팹/인스톨러가 정한 값을 유지하고, 팀(Player)·BT 제어만 보장한다.
             var battleAgent = GetComponent<_01.Code.BT.BattleAgent>();
             if (battleAgent != null)
+            {
                 battleAgent.EnsureTeam(_01.Code.BT.BattleTeam.Player, false);
+                battleAgent.ApplyUnitCommand(currentCommand);
+            }
         }
 
         protected virtual void OnDestroy()
         {
+            if (_policyManager != null)
+                _policyManager.CombatModifiersChanged -= HandlePolicyCombatModifiersChanged;
             if (health != null)
                 health.Changed -= HandleHealthChanged;
             if (combatant != null)
                 combatant.AttackLanded -= HandleAttackLanded;
+        }
+
+        private void Start()
+        {
+            _policyManager = MoralePolicyManager.Current;
+            if (_policyManager != null)
+            {
+                _policyManager.CombatModifiersChanged -= HandlePolicyCombatModifiersChanged;
+                _policyManager.CombatModifiersChanged += HandlePolicyCombatModifiersChanged;
+            }
+
+            HandlePolicyCombatModifiersChanged();
+        }
+
+        private void HandlePolicyCombatModifiersChanged()
+        {
+            ApplyTraitBaseStats();
+            ApplyConditionModifiers();
         }
 
         public void Initialize(UnitDataSO unitData)
@@ -205,6 +232,7 @@ namespace _01.Code.Units
             trait = state.Trait;
             personality = state.Personality;
             currentCommand = state.Command;
+            GetComponent<_01.Code.BT.BattleAgent>()?.ApplyUnitCommand(currentCommand);
 
             // 레벨이 최대 체력을 올리므로 비율보다 먼저 복원해야 한다.
             // 순서를 뒤집으면 늘어난 최대치가 아니라 기본 최대치 기준으로 비율이 적용된다.
@@ -277,6 +305,7 @@ namespace _01.Code.Units
                 return;
 
             currentCommand = command;
+            GetComponent<_01.Code.BT.BattleAgent>()?.ApplyUnitCommand(currentCommand);
             _commandReadyTime = Time.time + Mathf.Max(0f, commandCooldown);
             ApplyTraitBaseStats();
             ApplyConditionModifiers();
@@ -411,6 +440,9 @@ namespace _01.Code.Units
                 UnitCommand.Rest => commandRestAttackIntervalMultiplier,
                 _ => 1f
             };
+            var policyDamageMultiplier = _policyManager != null
+                ? _policyManager.UnitDamageMultiplier
+                : 1f;
 
             // 예전에는 다섯을 미리 곱해 하나의 숫자로 넘겼다. 그러면 어느 출처가 얼마를
             // 기여했는지 알 수 없어, 화면에 이유를 보여 줄 수도 하나만 걷어낼 수도 없었다.
@@ -419,7 +451,9 @@ namespace _01.Code.Units
             ApplyConditionMultiplier(TraitStatKey, traitDamageMultiplier, traitIntervalMultiplier);
             ApplyConditionMultiplier(PersonalityStatKey, personalityDamageMultiplier, personalityIntervalMultiplier);
             ApplyConditionMultiplier(CommandStatKey, commandDamageMultiplier, commandIntervalMultiplier);
-            combatant.SetConditionCriticalChanceBonus(
+            ApplyConditionMultiplier(PolicyStatKey, policyDamageMultiplier, 1f);
+            combatant.SetCriticalChanceBonus(
+                PersonalityStatKey,
                 personality == UnitPersonality.Perfectionist ? perfectionistCriticalChanceBonus : 0f);
         }
 
@@ -466,6 +500,11 @@ namespace _01.Code.Units
             combatant.SetDefenseAndEvasionBonus(
                 CommandStatKey,
                 currentCommand == UnitCommand.Guard ? commandGuardDefenseBonus : 0f,
+                0f);
+
+            combatant.SetDefenseAndEvasionBonus(
+                PolicyStatKey,
+                _policyManager != null ? _policyManager.UnitDefenseBonus : 0f,
                 0f);
         }
 

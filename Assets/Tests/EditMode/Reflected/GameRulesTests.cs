@@ -349,7 +349,7 @@ namespace Tests.EditMode.Rules
                 Assert.That(Get(cost, "CurrentGold"), Is.EqualTo(LedgerStartingGold + 60),
                     "대기 중 수입은 바로 지갑에 들어와야 합니다.");
 
-                Raise(waveChannel, NewEvent("_01.Code.Events.WaveEndedEvent", 1, 0));
+                Raise(waveChannel, NewEvent("_01.Code.Events.WaveEndedEvent", 1, 0, 0, 0));
                 Assert.That(Get(cost, "CurrentGold"), Is.EqualTo(LedgerStartingGold + 60),
                     "이미 받은 돈이 정산 순액으로 또 들어오면 안 됩니다.");
             }
@@ -367,7 +367,7 @@ namespace Tests.EditMode.Rules
             try
             {
                 Raise(costChannel, NewEvent("_01.Code.Events.GoldEarnedEvent", 60));
-                Raise(waveChannel, NewEvent("_01.Code.Events.WaveEndedEvent", 1, 0));
+                Raise(waveChannel, NewEvent("_01.Code.Events.WaveEndedEvent", 1, 0, 0, 0));
 
                 Assert.That(Get(cost, "CurrentGold"), Is.EqualTo(LedgerStartingGold + 60),
                     "수신 순서가 바뀌어도 수입은 한 번만 반영돼야 합니다.");
@@ -390,7 +390,7 @@ namespace Tests.EditMode.Rules
                 Assert.That(Get(cost, "CurrentGold"), Is.EqualTo(LedgerStartingGold),
                     "웨이브 중 수입은 장부에만 쌓입니다.");
 
-                Raise(waveChannel, NewEvent("_01.Code.Events.WaveEndedEvent", 1, 0));
+                Raise(waveChannel, NewEvent("_01.Code.Events.WaveEndedEvent", 1, 0, 0, 0));
                 Assert.That(Get(cost, "CurrentGold"), Is.EqualTo(LedgerStartingGold + 60),
                     "정산에서 한 번에 들어와야 합니다.");
             }
@@ -408,7 +408,7 @@ namespace Tests.EditMode.Rules
             {
                 Raise(waveChannel, NewEvent("_01.Code.Events.WaveStartedEvent", 1, 5));
                 Raise(costChannel, NewEvent("_01.Code.Events.TreasuryRobbedEvent", 40));
-                Raise(waveChannel, NewEvent("_01.Code.Events.WaveEndedEvent", 1, 0));
+                Raise(waveChannel, NewEvent("_01.Code.Events.WaveEndedEvent", 1, 0, 0, 0));
 
                 Assert.That(Get(cost, "CurrentGold"), Is.EqualTo(LedgerStartingGold),
                     "금고에서 털린 보관 금화를 운영 자금에서 또 빼면 안 됩니다.");
@@ -804,7 +804,7 @@ namespace Tests.EditMode.Rules
                 Call(system, "RewardKill");
                 Assert.That((int)Get(system, "CurrentPower"), Is.GreaterThan(0));
 
-                Raise(waveChannel, NewEvent("_01.Code.Events.WaveEndedEvent", 1, 0));
+                Raise(waveChannel, NewEvent("_01.Code.Events.WaveEndedEvent", 1, 0, 0, 0));
 
                 Assert.That(Get(system, "CurrentPower"), Is.EqualTo(0),
                     "대기 중에 쟁여 두고 다음 습격에 쏟아붓지 못하게 합니다.");
@@ -1070,6 +1070,86 @@ namespace Tests.EditMode.Rules
             {
                 UnityEngine.Object.DestroyImmediate(host);
                 DestroyHost(conquestHost);
+            }
+        }
+
+
+        [Test]
+        public void Morale_LowMoraleRaisesWaveRewardSoABadRunCanCatchUp()
+        {
+            // 민심은 오래도록 일방통행이었다 — 실패하면 유지비만 오르고 만회할 길이 없어서,
+            // 3일차 광산 하나 차이가 8일차에 유닛 한 명 차이로 굳었다(2026-09-01 실측).
+            // 보상 배율이 그 대칭축이다.
+            var host = BuildMoraleHost(out var morale);
+            try
+            {
+                SetPrivate(morale, "rewardAtZeroMorale", 1.4f);
+
+                SetMorale(morale, 100);
+                var atFull = (float)Get(morale, "WaveRewardMultiplier");
+                SetMorale(morale, 0);
+                var atZero = (float)Get(morale, "WaveRewardMultiplier");
+                SetMorale(morale, 50);
+                var atHalf = (float)Get(morale, "WaveRewardMultiplier");
+
+                Assert.That(atFull, Is.EqualTo(1f).Within(0.001f),
+                    "잘 굴러가는 판의 보상은 건드리지 않아야 합니다.");
+                Assert.That(atZero, Is.EqualTo(1.4f).Within(0.001f),
+                    "민심이 바닥이면 보상이 올라야 만회가 가능합니다.");
+                Assert.That(atHalf, Is.GreaterThan(atFull).And.LessThan(atZero),
+                    "중간 민심은 중간 보상이어야 합니다.");
+
+                // 유지비와 방향이 반대여야 대칭축이 성립한다.
+                SetMorale(morale, 0);
+                var upkeepAtZero = (float)Get(morale, "UpkeepMultiplier");
+                SetMorale(morale, 100);
+                var upkeepAtFull = (float)Get(morale, "UpkeepMultiplier");
+                Assert.That(upkeepAtZero, Is.GreaterThan(upkeepAtFull),
+                    "유지비는 민심이 낮을수록 비싸야 합니다(대칭 확인).");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
+        [Test]
+        public void Morale_FallsWhenTheWaveBreaksThrough()
+        {
+            // 예전에는 웨이브가 끝나기만 하면 격퇴율과 무관하게 "방어 성공" 보너스가 붙었다.
+            // 0/14로 전멸한 날에도 민심이 올랐고, 그래서 민심이 늘 100에 붙어 살았다.
+            var host = BuildMoraleHost(out var morale);
+            try
+            {
+                SetPrivate(morale, "waveClearMoraleDelta", 2);
+                SetPrivate(morale, "waveBreachMoraleDelta", -6);
+
+                var eventType = Resolve("_01.Code.Events.WaveEndedEvent");
+                var handler = morale.GetType().GetMethod(
+                    "HandleWaveEnded", BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(handler, Is.Not.Null, "HandleWaveEnded를 찾지 못했습니다.");
+
+                int MoraleAfter(int start, int enemies, int kills)
+                {
+                    SetMorale(morale, start);
+                    handler.Invoke(morale, new[]
+                    {
+                        Activator.CreateInstance(eventType, 5, 0, enemies, kills)
+                    });
+                    return (int)Get(morale, "CurrentMorale");
+                }
+
+                Assert.That(MoraleAfter(50, 10, 10), Is.EqualTo(52),
+                    "완전히 막아내면 예전과 같은 보너스여야 합니다.");
+                Assert.That(MoraleAfter(50, 10, 0), Is.EqualTo(44),
+                    "한 명도 못 막으면 민심이 떨어져야 합니다.");
+                Assert.That(MoraleAfter(50, 10, 5), Is.LessThan(50),
+                    "절반만 막아도 손해여야 합니다.");
+                Assert.That(MoraleAfter(50, 0, 0), Is.EqualTo(52),
+                    "적이 없던 날을 실패로 세면 안 됩니다.");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
             }
         }
     }

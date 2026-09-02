@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using _01.Code.Combat;
 using UnityEngine;
 
 namespace _01.Code.StatusEffects
@@ -7,6 +8,41 @@ namespace _01.Code.StatusEffects
     {
         private readonly List<ActiveStatusEffect> _activeEffects = new();
         private readonly List<ActiveStatusEffectSnapshot> _activeEffectSnapshots = new();
+
+        private Combatant _combatant;
+        private bool _combatantResolved;
+
+        /// <summary>같은 오브젝트의 전투 담당. 없을 수도 있으므로 처음 필요할 때 찾는다.</summary>
+        private Combatant Combatant
+        {
+            get
+            {
+                if (_combatantResolved)
+                    return _combatant;
+
+                _combatant = GetComponent<Combatant>();
+                _combatantResolved = true;
+                return _combatant;
+            }
+        }
+
+        /// <summary>
+        /// 공격 주기 배율을 스탯 표에 얹는다. 효과 자산 자체가 출처 열쇠다 —
+        /// 같은 효과가 다시 걸리면 갱신되고, 만료되면 그 열쇠만 걷힌다.
+        /// </summary>
+        private void PushAttackIntervalModifier(StatusEffectDataSO effect)
+        {
+            if (effect == null)
+                return;
+
+            Combatant?.SetAttackIntervalModifier(effect, effect.GetAttackIntervalMultiplier(CreateContext(effect)));
+        }
+
+        private void PullAttackIntervalModifier(StatusEffectDataSO effect)
+        {
+            if (effect != null)
+                Combatant?.RemoveModifier(_01.Code.Core.Stats.StatIndex.AttackInterval, effect);
+        }
 
         public void Apply(StatusEffectDataSO effect)
         {
@@ -21,11 +57,13 @@ namespace _01.Code.StatusEffects
 
                 _activeEffects[i] = new ActiveStatusEffect(effect, duration);
                 effect.OnRefreshed(CreateContext(effect));
+                PushAttackIntervalModifier(effect);
                 return;
             }
 
             _activeEffects.Add(new ActiveStatusEffect(effect, duration));
             effect.OnApplied(CreateContext(effect));
+            PushAttackIntervalModifier(effect);
         }
 
         public void TickNodeVisit()
@@ -38,6 +76,7 @@ namespace _01.Code.StatusEffects
                 if (activeEffect.RemainingNodeVisits <= 0)
                 {
                     activeEffect.Effect?.OnExpired(CreateContext(activeEffect.Effect));
+                    PullAttackIntervalModifier(activeEffect.Effect);
                     _activeEffects.RemoveAt(i);
                 }
                 else
@@ -53,7 +92,10 @@ namespace _01.Code.StatusEffects
             {
                 var effect = _activeEffects[i].Effect;
                 if (effect != null)
+                {
                     effect.OnExpired(CreateContext(effect));
+                    PullAttackIntervalModifier(effect);
+                }
             }
 
             _activeEffects.Clear();

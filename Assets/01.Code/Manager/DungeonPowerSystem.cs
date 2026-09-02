@@ -83,7 +83,7 @@ namespace _01.Code.Manager
         private void HandleWaveStarted(WaveStartedEvent evt)
         {
             _isWaveRunning = true;
-            _power = Mathf.Clamp(startingPower, 0f, maxPower);
+            _power = Mathf.Clamp(startingPower * ResolvePolicyGainMultiplier(), 0f, maxPower);
             _readyTimeByPower.Clear();
             RaiseChanged();
         }
@@ -102,7 +102,7 @@ namespace _01.Code.Manager
                 return;
 
             var before = CurrentPower;
-            _power = Mathf.Min(maxPower, _power + powerPerSecond * Time.deltaTime);
+            _power = Mathf.Min(maxPower, _power + powerPerSecond * ResolvePolicyGainMultiplier() * Time.deltaTime);
             if (CurrentPower != before)
                 RaiseChanged();
         }
@@ -113,9 +113,14 @@ namespace _01.Code.Manager
             if (!_isWaveRunning || powerPerKill <= 0f)
                 return;
 
-            _power = Mathf.Min(maxPower, _power + powerPerKill);
+            _power = Mathf.Min(maxPower, _power + powerPerKill * ResolvePolicyGainMultiplier());
             RaiseChanged();
         }
+
+        private static float ResolvePolicyGainMultiplier() =>
+            MoralePolicyManager.Current != null
+                ? MoralePolicyManager.Current.DungeonPowerGainMultiplier
+                : 1f;
 
         /// <summary>겨냥해 둔 권능. 이 상태에서 구역을 클릭하면 패널이 열리는 대신 시전된다.</summary>
         public DungeonPowerSO ArmedPower { get; private set; }

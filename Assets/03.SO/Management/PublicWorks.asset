@@ -12,10 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6cec2de7cb574a51b3d26073c6d6ae0d, type: 3}
   m_Name: PublicWorks
   m_EditorClassIdentifier: 
-  displayName: 공공 공사
-  description: 금을 투자해 다음 며칠간 민심을 꾸준히 회복한다.
+  displayName: "\uACF5\uACF5 \uACF5\uC0AC"
+  description: "\uAE08\uC744 \uD22C\uC790\uD574 \uBBFC\uC2EC\uC744 \uD68C\uBCF5\uD558\uACE0
+    \uBA70\uCE60\uAC04 \uBC29\uC5B4 \uC2DC\uC124\uACFC \uC8FC\uB454\uAD70\uC744 \uBCF4\uAC15\uD55C\uB2E4."
   moraleDeltaOnSelect: 4
   goldDeltaOnSelect: -40
   dailyMoraleDelta: 3
   durationDays: 3
   canRepeat: 1
+  unitDamageMultiplier: 1
+  unitDefenseBonus: 2
+  dungeonPowerGainMultiplier: 1

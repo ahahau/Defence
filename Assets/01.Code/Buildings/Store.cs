@@ -1,6 +1,7 @@
 using _01.Code.Combat;
 using _01.Code.Core;
 using _01.Code.Events;
+using _01.Code.Enemies;
 using MoreMountains.Feedbacks;
 using UnityEngine;
 
@@ -26,6 +27,7 @@ namespace _01.Code.Buildings
                 PlayPassEffectFeedback(enemy, buffFlashColor, buffFlashDuration, buffFeelFeedback);
 
             costEventChannel?.RaiseEvent(new GoldEarnedEvent(goldReward, GoldChangeSource.Store));
+            enemy.GetComponentInParent<Enemy>()?.RecordFacilitySpending(goldReward, GoldChangeSource.Store);
         }
     }
 }

@@ -12,6 +12,7 @@ namespace _01.Code.Events
         Mine,
         Inn,
         Store,
+        Exploitation,
         TreasuryLoot,
         Dialogue,
         Policy

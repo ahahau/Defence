@@ -33,6 +33,12 @@ namespace _01.Code.BT
         [SerializeField] private BattleRole role = BattleRole.Melee;
         [SerializeField] private Combatant combatant;
         [SerializeField] private Transform body;
+
+        /// <summary>연출이 끝난 뒤 돌아갈 몸통 자세. 크기의 x는 항상 양수로 들고 있고 부호는 Face가 얹는다.</summary>
+        private Vector3 _bodyBaseScale = Vector3.one;
+        private Vector3 _bodyBaseRotation;
+        private Vector3 _bodyBaseLocalPosition;
+
         [SerializeField, Min(0f)] private float senseRange = 6f;
         [SerializeField, Min(0f)] private float attackRange = 1.3f;
         [SerializeField, Min(0f)] private float moveSpeed = 3f;
@@ -90,6 +96,14 @@ namespace _01.Code.BT
         [SerializeField, Min(0.1f)] private float targetReconsiderInterval = 1.15f;
         [SerializeField, Min(0f)] private float targetSwitchScoreMargin = 1.4f;
 
+        [Header("Player Command Behaviour")]
+        [SerializeField, Min(0.1f), Tooltip("경계 명령 유닛이 같은 구역 적을 다시 도발하는 간격.")]
+        private float guardTauntInterval = 2.5f;
+        [SerializeField, Min(0.1f), Tooltip("경계 도발로 적의 타깃을 고정하는 시간.")]
+        private float guardTauntDuration = 1.25f;
+        [SerializeField, Min(1f), Tooltip("공격 명령 유닛이 후열을 추격할 때의 이동 속도 배율.")]
+        private float assaultMoveSpeedMultiplier = 1.15f;
+
         [Header("Node Idle Wander")]
         [Tooltip("적이 없는 노드에서 플레이어 유닛이 배회합니다.")]
         [SerializeField] private bool enableNodeWander = true;
@@ -115,7 +129,10 @@ namespace _01.Code.BT
         private float _nextAutoTauntTime;
         private float _nextAutoSkillCheckTime;
         private float _nextTargetReconsiderTime;
+        private float _forcedTargetUntil;
+        private float _nextCommandTauntTime;
         private float _autoStrafeDirection = 1f;
+        private UnitCommand _unitCommand = UnitCommand.Standby;
         private AutoBattleIntent _autoIntent = AutoBattleIntent.Engage;
         private CombatStatusController _combatStatus;
         private Vector2 _wanderDestination;
@@ -146,7 +163,18 @@ namespace _01.Code.BT
         /// <summary>거리를 두고 싸우는 후열(Ranged/Support) — 카이팅·사거리 판단용.</summary>
         public bool UsesRangedKiting => role == BattleRole.Ranged || role == BattleRole.Support;
         /// <summary>적이 이 에이전트에 거는 위협 가중치(전열일수록 큼). Tank는 Melee보다 강하게 끈다.</summary>
-        public float ThreatWeight => role == BattleRole.Tank ? threatWeight : role == BattleRole.Melee ? threatWeight * 0.5f : 0f;
+        public float ThreatWeight
+        {
+            get
+            {
+                var roleThreat = role == BattleRole.Tank ? threatWeight
+                    : role == BattleRole.Melee ? threatWeight * 0.5f
+                    : 0f;
+                return team == BattleTeam.Player && _unitCommand == UnitCommand.Guard
+                    ? roleThreat + threatWeight
+                    : roleThreat;
+            }
+        }
         public float AttackRange => attackRange;
         public bool IsAlive => combatant != null && combatant.IsAlive;
         public float HealthRatio => combatant != null && combatant.Health != null ? combatant.Health.CurrentRatio : 0f;
@@ -189,6 +217,13 @@ namespace _01.Code.BT
                 body = sr != null && sr.transform != transform ? sr.transform : transform;
             }
 
+            // 연출이 끝난 뒤 돌아갈 기준 자세. 트윈이 중간에 끊기면 크기·회전·위치가 어긋난 채 남고,
+            // 되돌릴 경로가 없으면 그대로 굳는다(가로로 눌린 몸통, 기울어진 채 굳은 회전 둘 다 이것).
+            _bodyBaseScale = body != null ? body.localScale : Vector3.one;
+            _bodyBaseScale.x = Mathf.Abs(_bodyBaseScale.x);
+            _bodyBaseRotation = body != null ? body.localEulerAngles : Vector3.zero;
+            _bodyBaseLocalPosition = body != null ? body.localPosition : Vector3.zero;
+
             // 트리거 감지에 필요한 Rigidbody2D를 Kinematic으로 강제(직접 이동하므로 물리 영향 X)
             var rb = GetComponent<Rigidbody2D>();
             rb.bodyType = RigidbodyType2D.Kinematic;
@@ -220,6 +255,7 @@ namespace _01.Code.BT
             TickOutOfCombatRegen(Time.deltaTime); // Tank/전열: 비전투 HP 재생
             TickSupportAura(Time.deltaTime);       // Support: 치유 오라
             TickNodeWander(Time.deltaTime);
+            TickUnitCommand();
 
             if (!autoDrive) return; // BT 그래프가 운전하면 나머지는 끔
             DriveAutoBattle(Time.deltaTime);
@@ -479,7 +515,26 @@ namespace _01.Code.BT
 
         private float EffectiveMoveSpeed => moveSpeed
             * (_combatStatus != null ? _combatStatus.MoveSpeedMultiplier : 1f)
-            * (woundedHealthThreshold > 0f && HealthRatio < woundedHealthThreshold ? woundedMoveSpeedMultiplier : 1f);
+            * (woundedHealthThreshold > 0f && HealthRatio < woundedHealthThreshold ? woundedMoveSpeedMultiplier : 1f)
+            * (team == BattleTeam.Player && _unitCommand == UnitCommand.Assault
+                ? assaultMoveSpeedMultiplier
+                : 1f);
+
+        /// <summary>
+        /// 경계는 같은 전투 구역의 적을 주기적으로 자신에게 묶는다.
+        /// 매 프레임 타깃을 덮으면 AI 판단이 사라지므로 짧은 고정 시간과 재사용 간격을 둔다.
+        /// </summary>
+        private void TickUnitCommand()
+        {
+            if (team != BattleTeam.Player || _unitCommand != UnitCommand.Guard
+                || _battlefield == null || Time.time < _nextCommandTauntTime)
+                return;
+
+            _nextCommandTauntTime = Time.time + Mathf.Max(0.1f, guardTauntInterval);
+            TauntNearbyEnemies(
+                Mathf.Max(senseRange, _arenaRadius * 2f + attackRange),
+                Mathf.Max(0.1f, guardTauntDuration));
+        }
 
         /// <summary>서포터 치유 오라: 일정 간격마다 사거리 내 최저 HP 아군을 자동 회복한다(패시브).</summary>
         private void TickSupportAura(float deltaTime)
@@ -697,7 +752,12 @@ namespace _01.Code.BT
 
             if (body != null && body != transform)
             {
+                // DOComplete가 피격 펀치를 중간에 끊을 수 있다. 기준 자세로 직접 돌려놓는다(방향은 유지).
                 body.DOComplete();
+                var facing = body.localScale.x < 0f ? -1f : 1f;
+                body.localScale = new Vector3(_bodyBaseScale.x * facing, _bodyBaseScale.y, _bodyBaseScale.z);
+                body.localEulerAngles = _bodyBaseRotation;
+                body.localPosition = _bodyBaseLocalPosition;
                 body.DOPunchPosition((Vector3)(tangent * 0.12f), 0.18f, 1, 0.5f).SetLink(gameObject);
             }
         }
@@ -715,11 +775,17 @@ namespace _01.Code.BT
             if (_traversalLocked || _battlefield == null)
                 return null;
 
+            if (team == BattleTeam.Player)
+                priority = UnitCommandUtility.ResolveTargetPriority(_unitCommand, priority);
+
             Vector2 pos = transform.position;
             var focus = priority == TargetPriority.Focused ? _battlefield.GetFocusTarget(team) : null;
 
             if (_target != null && !IsValidTarget(_target))
                 ClearTarget();
+
+            if (_target != null && Time.time < _forcedTargetUntil)
+                return _target;
 
             if (_target != null && ShouldKeepCurrentTarget(priority, focus, pos))
                 return _target;
@@ -1273,7 +1339,10 @@ namespace _01.Code.BT
         // ── 추가 전투 행동(BT 노드가 호출) ─────────────────────────
 
         /// <summary>도발: 사거리 내 적들이 잠시 나를 노리게 어그로를 끈다(탱커가 후열 보호).</summary>
-        public void TauntNearbyEnemies(float range)
+        public void TauntNearbyEnemies(float range) =>
+            TauntNearbyEnemies(range, Mathf.Max(0.1f, guardTauntDuration));
+
+        private void TauntNearbyEnemies(float range, float duration)
         {
             if (_traversalLocked || _battlefield == null)
                 return;
@@ -1284,8 +1353,21 @@ namespace _01.Code.BT
                 if (!IsValidTarget(a))
                     continue;
                 if (((Vector2)a.transform.position - pos).magnitude <= range)
-                    a._target = this;
+                    a.ForceTarget(this, duration);
             }
+        }
+
+        private void ForceTarget(BattleAgent target, float duration)
+        {
+            if (!IsValidTarget(target))
+                return;
+
+            if (_target != null && _target != target)
+                StopAttack();
+
+            _target = target;
+            _forcedTargetUntil = Time.time + Mathf.Max(0.1f, duration);
+            _nextTargetReconsiderTime = _forcedTargetUntil;
         }
 
         /// <summary>아군 무리 쪽으로 후퇴(저체력 도주/재집결). 아군이 없으면 현재 타깃 반대로 물러난다.</summary>
@@ -1391,6 +1473,18 @@ namespace _01.Code.BT
             autoDrive = useAutoDrive;
         }
 
+        /// <summary>Unit이 소유한 명령 상태를 전투 실행기에 전달한다. 런타임 상태라 프리팹 직렬화는 하지 않는다.</summary>
+        public void ApplyUnitCommand(UnitCommand command)
+        {
+            if (_unitCommand == command)
+                return;
+
+            _unitCommand = command;
+            _nextCommandTauntTime = 0f;
+            _forcedTargetUntil = 0f;
+            ClearTarget();
+        }
+
         /// <summary>데이터(SO) 기반으로 역할을 적용한다. 사거리도 역할에 맞춰 조정. 팀/오토드라이브는 유지.</summary>
         public void ApplyRole(BattleRole configuredRole)
         {
@@ -1410,11 +1504,32 @@ namespace _01.Code.BT
             _target = null;
         }
 
+        /// <summary>
+        /// 스프라이트를 진행 방향으로 돌린다.
+        ///
+        /// 예전에는 `Abs(현재 x) * 부호`로 크기를 그대로 물려썼다. 그래서 연출 트윈이 중간에 끊겨
+        /// 스케일이 한 번 어긋나면(회피의 `body.DOComplete()`가 피격 펀치를 끊는 경로가 있다)
+        /// 방향을 틀 때마다 그 값이 다시 기록되어 영구히 눌린 채로 남았다.
+        /// 기준 크기를 기억해 두고 거기에 부호만 얹으면 방향 전환이 곧 복구가 된다.
+        /// </summary>
         private void Face(float directionX)
         {
             if (body == null || Mathf.Abs(directionX) < 0.001f) return;
             var s = body.localScale;
-            s.x = Mathf.Abs(s.x) * (directionX < 0f ? -1f : 1f);
+            s.x = _bodyBaseScale.x * (directionX < 0f ? -1f : 1f);
+
+            // 연출이 돌고 있지 않을 때만 나머지도 맞춘다. 스쿼시나 흔들림 중에 끼어들면 연출을 끊어 버린다.
+            // 가로만 고치면 세로가 늘어난 채로, 회전이 기울어진 채로 남는다
+            // (실측: y가 1.088, 회전 z가 -14.63도에서 안 돌아왔다).
+            // 주인공은 회피율이 0이라 회피 쪽 복원 경로를 타지 않아 스스로 낫지 못한다.
+            if (!DOTween.IsTweening(body))
+            {
+                s.y = _bodyBaseScale.y;
+                s.z = _bodyBaseScale.z;
+                body.localEulerAngles = _bodyBaseRotation;
+                body.localPosition = _bodyBaseLocalPosition;
+            }
+
             body.localScale = s;
         }
     }

@@ -17,6 +17,7 @@ namespace _01.Code.Combat
         [SerializeField, Min(0)] private int defense;
         [SerializeField] private float attackInterval = 1f;
         [SerializeField, Range(0f, 1f)] private float evasionChance;
+        // 치명타 값도 스탯 표가 있으면 그쪽을 쓴다. 아래 둘은 표가 없는 상대를 위한 폴백이다.
         [Header("Critical")]
         [SerializeField, Range(0f, 1f), Tooltip("평타 크리티컬 확률.")]
         private float criticalChance = 0.12f;
@@ -26,10 +27,7 @@ namespace _01.Code.Combat
         [SerializeField] private MMF_Player attackFeelFeedbacks;
         [SerializeField] private bool enableFeelCombatFeedbacks = true;
         [SerializeField] private ParticleSystem attackHitParticles;
-        [SerializeField] private Color attackParticleColor = new(1f, 0.82f, 0.35f, 1f);
-        [SerializeField, Min(1)] private int attackParticleBurstCount = 14;
         [SerializeField, Min(0f)] private float attackImpactOffset = 0.08f;
-        [SerializeField] private int attackParticleSortingOrder = 75;
         [SerializeField] private StatusEffectDataSO attackStatusEffect;
         [SerializeField, Range(0f, 1f)] private float attackStatusEffectChance;
         [SerializeField] private Health health;
@@ -42,9 +40,7 @@ namespace _01.Code.Combat
         private bool _isAttacking;
         private bool _isPaused;
         private float _attackTimer;
-        private float conditionCriticalChanceBonus;
         private GameEventChannelSO artifactEventChannel;
-        private EnemyStatusController enemyStatusController;
         /// <summary>공격이 적중한 순간 발생(타격 연출/돌진용). BattleAgent가 구독해 lunge 모션을 낸다.</summary>
         public event Action AttackLanded;
 
@@ -157,10 +153,9 @@ namespace _01.Code.Combat
                 stat.RemoveModifier(key);
         }
 
-        public void SetConditionCriticalChanceBonus(float bonus)
-        {
-            conditionCriticalChanceBonus = Mathf.Clamp(bonus, -1f, 1f);
-        }
+        /// <summary>출처별 치명타 확률 보정. 같은 출처로 다시 부르면 이전 값이 걷힌다.</summary>
+        public void SetCriticalChanceBonus(object key, float bonus) =>
+            SetKeyedModifier(StatIndex.CriticalChance, key, Mathf.Clamp(bonus, -1f, 1f), 1f);
 
         public void SetArtifactEventChannel(GameEventChannelSO eventChannel)
         {
@@ -178,7 +173,6 @@ namespace _01.Code.Combat
 
         private void Awake()
         {
-            enemyStatusController = GetComponent<EnemyStatusController>();
             EnsureFeelCombatFeedbacks();
             if (health != null)
                 health.Changed += RefreshHealthBar;
@@ -346,10 +340,10 @@ namespace _01.Code.Combat
             }
 
             // 크리티컬은 방어 계산 전에 적용(원피해 증폭).
-            var resolvedCriticalChance = Mathf.Clamp01(criticalChance + conditionCriticalChanceBonus);
+            var resolvedCriticalChance = Mathf.Clamp01(ReadStat(StatIndex.CriticalChance, criticalChance));
             isCritical = resolvedCriticalChance > 0f && UnityEngine.Random.value < resolvedCriticalChance;
             if (isCritical)
-                damage = Mathf.RoundToInt(damage * Mathf.Max(1f, criticalDamageMultiplier));
+                damage = CombatFormula.ApplyCritical(damage, ReadStat(StatIndex.CriticalDamage, criticalDamageMultiplier));
 
             return CalculateDamageAfterDefense(damage, target);
         }
@@ -368,49 +362,19 @@ namespace _01.Code.Combat
         private int ResolveAttackDamagePreview() =>
             Mathf.Max(1, Mathf.RoundToInt(ReadStat(StatIndex.AttackDamage, attackDamage)));
 
-        /// <summary>
-        /// 방어의 체감 기준점. 방어가 이 값과 같아지면 피해가 정확히 절반으로 줄고,
-        /// 그 위로는 완만해져 100%에 닿지 않는다.
-        ///
-        /// 이 숫자를 건드리기 전에 알아야 할 것: 방어 감소율은 방어값의 "자릿수"에 좌우된다.
-        /// 유닛 쪽은 수호자 특성 +20, 방어 명령 +15로 20~35를 쓰고 이 기준점에 맞춰져 있다
-        /// (35면 약 26% 감소). 그래서 기준점을 20으로 낮추면 적의 방어 5는 20%로 살아나지만
-        /// 같은 손으로 유닛의 방어 35가 64% 감소가 되어 거의 맞지 않는 몸이 된다.
-        /// 적의 방어가 약하게 느껴진다면 고칠 곳은 이 상수가 아니라 적의 방어값 자릿수다.
-        /// </summary>
-        private const float DefenseHalvingPoint = 100f;
-
-        private int CalculateDamageAfterDefense(int damage, Combatant target)
-        {
-            if (target == null)
-                return Mathf.Max(1, damage);
-
-            var defense = target.Defense;
-            if (defense <= 0)
-                return Mathf.Max(1, damage);
-
-            var reducedDamage = damage - damage * (defense / (defense + DefenseHalvingPoint));
-            return Mathf.Max(1, Mathf.RoundToInt(reducedDamage));
-        }
+        /// <summary>피해 산정 규칙 자체는 CombatFormula에 있다. 여기서는 대상이 없는 경우만 걸러 낸다.</summary>
+        private int CalculateDamageAfterDefense(int damage, Combatant target) =>
+            target == null
+                ? Mathf.Max(1, damage)
+                : CombatFormula.ApplyDefense(damage, target.Defense);
 
         private float ResolveAttackInterval()
         {
-            var statusController = ResolveEnemyStatusController();
-            var multiplier = statusController != null
-                ? statusController.GetAttackIntervalMultiplier()
-                : 1f;
-            // 상태이상만 여기 남는다. 지속시간이 있어 만료 시점에 정확히 걷어내야 하는데
-            // 지금 상태이상 쪽에 그 훅이 없어, 매번 살아 있는 효과를 훑는 편이 안전하다.
-            return Mathf.Max(0.05f, ReadStat(StatIndex.AttackInterval, attackInterval) * multiplier);
+            // 상태이상도 이제 자기 열쇠로 스탯에 얹고 만료 때 걷어간다.
+            // 여기서 따로 훑을 것이 남아 있지 않다.
+            return Mathf.Max(0.05f, ReadStat(StatIndex.AttackInterval, attackInterval));
         }
 
-        private EnemyStatusController ResolveEnemyStatusController()
-        {
-            if (enemyStatusController == null)
-                enemyStatusController = GetComponent<EnemyStatusController>();
-
-            return enemyStatusController;
-        }
 
         // 화면 단위 타격감(셰이크/히트스톱)은 FeelCombatFeedbacks가 담당한다. 프리팹 수정 없이 자동 부착.
         private void EnsureFeelCombatFeedbacks()
@@ -437,75 +401,6 @@ namespace _01.Code.Combat
             attackHitParticles.transform.position = impactPosition;
             attackHitParticles.transform.right = direction.normalized;
             attackHitParticles.Play(true);
-        }
-
-        private void EnsureDefaultAttackParticles()
-        {
-            if (attackHitParticles != null)
-                return;
-
-            var particleObject = new GameObject("AttackHitParticles");
-            particleObject.transform.SetParent(transform);
-            particleObject.transform.localPosition = Vector3.zero;
-            particleObject.transform.localRotation = Quaternion.identity;
-            particleObject.transform.localScale = Vector3.one;
-
-            attackHitParticles = particleObject.AddComponent<ParticleSystem>();
-            ConfigureAttackParticles(attackHitParticles);
-        }
-
-        private void ConfigureAttackParticles(ParticleSystem particles)
-        {
-            particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-
-            var main = particles.main;
-            main.playOnAwake = false;
-            main.loop = false;
-            main.duration = 0.22f;
-            main.startLifetime = new ParticleSystem.MinMaxCurve(0.12f, 0.22f);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(1.2f, 2.6f);
-            main.startSize = new ParticleSystem.MinMaxCurve(0.04f, 0.11f);
-            main.startColor = attackParticleColor;
-            main.simulationSpace = ParticleSystemSimulationSpace.World;
-            main.maxParticles = 48;
-
-            var emission = particles.emission;
-            emission.enabled = true;
-            emission.rateOverTime = 0f;
-            emission.SetBursts(new[]
-            {
-                new ParticleSystem.Burst(0f, (short)attackParticleBurstCount)
-            });
-
-            var shape = particles.shape;
-            shape.enabled = true;
-            shape.shapeType = ParticleSystemShapeType.Cone;
-            shape.angle = 24f;
-            shape.radius = 0.03f;
-
-            var colorOverLifetime = particles.colorOverLifetime;
-            colorOverLifetime.enabled = true;
-            var gradient = new Gradient();
-            gradient.SetKeys(
-                new[]
-                {
-                    new GradientColorKey(attackParticleColor, 0f),
-                    new GradientColorKey(new Color(1f, 0.2f, 0.12f, 1f), 1f)
-                },
-                new[]
-                {
-                    new GradientAlphaKey(1f, 0f),
-                    new GradientAlphaKey(0f, 1f)
-                });
-            colorOverLifetime.color = gradient;
-
-            var sizeOverLifetime = particles.sizeOverLifetime;
-            sizeOverLifetime.enabled = true;
-            sizeOverLifetime.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.EaseInOut(0f, 1f, 1f, 0f));
-
-            var renderer = particles.GetComponent<ParticleSystemRenderer>();
-            renderer.renderMode = ParticleSystemRenderMode.Billboard;
-            renderer.sortingOrder = attackParticleSortingOrder;
         }
     }
 }

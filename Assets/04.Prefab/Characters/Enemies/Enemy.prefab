@@ -189,10 +189,7 @@ MonoBehaviour:
   attackFeelFeedbacks: {fileID: 0}
   enableFeelCombatFeedbacks: 1
   attackHitParticles: {fileID: 0}
-  attackParticleColor: {r: 1, g: 0.82, b: 0.35, a: 1}
-  attackParticleBurstCount: 14
   attackImpactOffset: 0.08
-  attackParticleSortingOrder: 75
   attackStatusEffect: {fileID: 0}
   attackStatusEffectChance: 0
   health: {fileID: 2709196990148380843}
@@ -301,6 +298,9 @@ MonoBehaviour:
   meleeFlankOffset: 0.65
   targetReconsiderInterval: 1.15
   targetSwitchScoreMargin: 1.4
+  guardTauntInterval: 2.5
+  guardTauntDuration: 1.25
+  assaultMoveSpeedMultiplier: 1.15
   enableNodeWander: 1
   wanderSpeedMultiplier: 0.45
   wanderBoundaryPadding: 0.6
@@ -399,6 +399,12 @@ MonoBehaviour:
   - <Stat>k__BackingField: {fileID: 11400000, guid: 0b687bed520e6fe3e079d88cae99b502, type: 2}
     useOverride: 1
     overrideBaseValue: 0
+  - <Stat>k__BackingField: {fileID: 11400000, guid: 3adcf772b28b27442bf3a30872c51add, type: 2}
+    useOverride: 1
+    overrideBaseValue: 0.12
+  - <Stat>k__BackingField: {fileID: 11400000, guid: ac8d97a0db055244b9284170db09f45a, type: 2}
+    useOverride: 1
+    overrideBaseValue: 2
 --- !u!1 &7473952817250454834
 GameObject:
   m_ObjectHideFlags: 0

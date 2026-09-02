@@ -1,6 +1,7 @@
 using _01.Code.Combat;
 using _01.Code.Core;
 using _01.Code.Events;
+using _01.Code.Enemies;
 using _01.Code.StatusEffects;
 using MoreMountains.Feedbacks;
 using UnityEngine;
@@ -31,6 +32,7 @@ namespace _01.Code.Buildings
                 PlayPassEffectFeedback(enemy, healFlashColor, healFlashDuration, healFeelFeedback);
 
             costEventChannel?.RaiseEvent(new GoldEarnedEvent(goldReward, GoldChangeSource.Inn));
+            enemy.GetComponentInParent<Enemy>()?.RecordFacilitySpending(goldReward, GoldChangeSource.Inn);
         }
     }
 }

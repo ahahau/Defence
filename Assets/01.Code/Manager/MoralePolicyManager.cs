@@ -15,7 +15,14 @@ namespace _01.Code.Manager
 
         [Header("Morale")]
         [SerializeField, Range(0, 100)] private int initialMorale = 50;
-        [SerializeField, Range(-20, 20)] private int waveClearMoraleDelta = 2;
+        [SerializeField, Range(-20, 20),
+         Tooltip("완전히 막아냈을 때의 민심 변화.")]
+        private int waveClearMoraleDelta = 2;
+
+        [SerializeField, Range(-20, 20),
+         Tooltip("한 명도 못 막았을 때의 민심 변화. 격퇴율에 따라 이 값과 완전 방어 값 사이를 오간다.\n" +
+                 "예전에는 이 축이 없어서, 0/14로 전멸한 날에도 '방어 성공' 보너스가 그대로 붙었다.")]
+        private int waveBreachMoraleDelta = -6;
         [SerializeField, Range(-20, 20)] private int dailyRecoveryDelta = 1;
 
         [Header("Morale Consequences")]
@@ -27,6 +34,11 @@ namespace _01.Code.Manager
 
         [SerializeField, Range(0f, 1f), Tooltip("민심이 바닥일 때 찾아오는 지원자 비율. 0이면 아무도 오지 않는다.")]
         private float applicantsAtZeroMorale = 0.25f;
+
+        [SerializeField, Min(1f),
+         Tooltip("민심이 바닥일 때의 웨이브 보상 배율. 뒤처진 판이 만회할 수 있는 유일한 통로다.\n" +
+                 "민심이 가득할 때는 1이라 잘 굴러가는 판의 균형은 건드리지 않는다.")]
+        private float rewardAtZeroMorale = 1.4f;
 
         [Header("Policies")]
         [SerializeField] private PolicyDataSO[] availablePolicies;
@@ -45,6 +57,11 @@ namespace _01.Code.Manager
 
         public int CurrentMorale { get; private set; }
         public IReadOnlyList<PolicyDataSO> CurrentChoices => currentChoices;
+        public event System.Action CombatModifiersChanged;
+
+        public float UnitDamageMultiplier => MultiplyActivePolicies(policy => policy.UnitDamageMultiplier);
+        public int UnitDefenseBonus => SumActivePolicies(policy => policy.UnitDefenseBonus);
+        public float DungeonPowerGainMultiplier => MultiplyActivePolicies(policy => policy.DungeonPowerGainMultiplier);
 
         /// <summary>민심 0~100을 0~1로. 곡선을 한 곳에 모아 두어 소비처마다 다르게 해석하지 않게 한다.</summary>
         private float MoraleRatio => Mathf.Clamp01(CurrentMorale / 100f);
@@ -55,6 +72,16 @@ namespace _01.Code.Manager
         /// </summary>
         public float UpkeepMultiplier =>
             Mathf.Lerp(Mathf.Max(1f, upkeepAtZeroMorale), Mathf.Clamp01(upkeepAtFullMorale), MoraleRatio);
+
+        /// <summary>
+        /// 웨이브 보상 배율. 유지비의 대칭축이다 — 민심이 낮으면 보상이 오른다.
+        ///
+        /// 이게 없으면 민심은 일방통행이 된다. 실패 → 민심↓ → 유지비↑ → 자금난 → 더 실패.
+        /// 실측에서 3일차 광산 하나 차이가 8일차 유닛 한 명 차이로 벌어지고 되돌릴 길이 없었다.
+        /// 뒤처진 판에만 걸리고 잘 굴러가는 판에는 1이라, 성공을 깎지 않고 실패만 눅인다.
+        /// </summary>
+        public float WaveRewardMultiplier =>
+            Mathf.Lerp(Mathf.Max(1f, rewardAtZeroMorale), 1f, MoraleRatio);
 
         /// <summary>민심이 나쁘면 찾아오는 지원자도 줄어든다.</summary>
         public int AdjustRecruitCount(int baseCount)
@@ -114,6 +141,7 @@ namespace _01.Code.Manager
 
             ApplyImmediatePolicyEffect(policy);
             AddActivePolicy(policy);
+            CombatModifiersChanged?.Invoke();
             managementEventChannel?.RaiseEvent(new PolicySelectedEvent(currentDay, policy));
         }
 
@@ -151,7 +179,15 @@ namespace _01.Code.Manager
         private void HandleWaveEnded(WaveEndedEvent evt)
         {
             currentDay = evt.Day;
-            ChangeMorale(waveClearMoraleDelta, "방어 성공");
+
+            // 격퇴율에 따라 완전 방어와 완전 돌파 사이를 오간다.
+            // 완전히 막으면 예전과 같은 값이라 잘 막던 판의 감각은 그대로다.
+            var clearRate = evt.ClearRate;
+            var delta = Mathf.RoundToInt(Mathf.Lerp(waveBreachMoraleDelta, waveClearMoraleDelta, clearRate));
+            var reason = clearRate >= 1f
+                ? "방어 성공"
+                : $"방어 실패 ({evt.KillCount}/{evt.EnemyCount})";
+            ChangeMorale(delta, reason);
 
             if (offerAfterWaveEnd && ShouldOfferPolicy())
                 OfferPolicies();
@@ -199,7 +235,7 @@ namespace _01.Code.Manager
 
         private void AddActivePolicy(PolicyDataSO policy)
         {
-            if (policy.DurationDays <= 0 || policy.DailyMoraleDelta == 0)
+            if (policy.DurationDays <= 0 || (policy.DailyMoraleDelta == 0 && !policy.HasCombatEffect))
                 return;
 
             activePolicies.Add(new ActivePolicy(policy, policy.DurationDays));
@@ -207,6 +243,7 @@ namespace _01.Code.Manager
 
         private void ApplyActivePolicyEffects()
         {
+            var changed = false;
             for (var i = activePolicies.Count - 1; i >= 0; i--)
             {
                 var activePolicy = activePolicies[i];
@@ -214,8 +251,38 @@ namespace _01.Code.Manager
                 activePolicy.RemainingDays--;
 
                 if (activePolicy.RemainingDays <= 0)
+                {
                     activePolicies.RemoveAt(i);
+                    changed = true;
+                }
             }
+
+            if (changed)
+                CombatModifiersChanged?.Invoke();
+        }
+
+        private float MultiplyActivePolicies(System.Func<PolicyDataSO, float> selector)
+        {
+            var value = 1f;
+            foreach (var activePolicy in activePolicies)
+            {
+                if (activePolicy?.Policy != null)
+                    value *= selector(activePolicy.Policy);
+            }
+
+            return Mathf.Max(0.1f, value);
+        }
+
+        private int SumActivePolicies(System.Func<PolicyDataSO, int> selector)
+        {
+            var value = 0;
+            foreach (var activePolicy in activePolicies)
+            {
+                if (activePolicy?.Policy != null)
+                    value += selector(activePolicy.Policy);
+            }
+
+            return value;
         }
 
         private void ChangeMorale(int delta, string reason)
@@ -273,6 +340,7 @@ namespace _01.Code.Manager
                     }
             }
             RaiseMoraleChanged(0, "저장 불러오기");
+            CombatModifiersChanged?.Invoke();
         }
 
         private PolicyDataSO ResolvePolicy(string key)

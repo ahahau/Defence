@@ -17,6 +17,8 @@ namespace _01.Code.Manager
     [RequireComponent(typeof(BossWavePresenter))]
     public class WaveManager : MonoBehaviour
     {
+        public const int ExploitationBonusGold = 20;
+
         public static WaveManager Current { get; private set; }
 
         [SerializeField] private GameEventChannelSO dayEventChannel;
@@ -93,6 +95,9 @@ namespace _01.Code.Manager
             return GetConquestAdjustedEnemyCount(baseEnemyCount);
         }
 
+        public WaveThreatPreview GetThreatPreview(int day) =>
+            waveConfig != null ? waveConfig.GetThreatPreview(day) : default;
+
         /// <summary>마을 장악 보정을 적용하기 전의 원래 습격 인원.</summary>
         public int GetBasePreviewEnemyCount(int day)
         {
@@ -113,6 +118,7 @@ namespace _01.Code.Manager
         private bool _isWaveRunning;
         private Coroutine _waveCoroutine;
         private Coroutine _groupSpawnCoroutine;
+        private Coroutine _reinforcementSpawnCoroutine;
         private float _currentGroupInterval;
         private readonly List<Enemy> _activeEnemies = new();
         private readonly List<EnemyDataSO> _partyQueue = new();
@@ -125,6 +131,9 @@ namespace _01.Code.Manager
         private bool _isBossWave;
         private bool _isFinalWave;
         private bool _bossSpawned;
+        private bool _bossFinalPhaseStarted;
+        private bool _bossReinforcementStarted;
+        private int _reservedReinforcementSpawns;
         private bool _isGameCleared;
         private int _waveEnemyCount;
         private int _waveKillCount;
@@ -132,7 +141,13 @@ namespace _01.Code.Manager
         private int _waveDamageTaken;
         private int _waveCriticalHitCount;
         private int _waveTrapDamage;
+        private readonly WaveExploitationProgress _exploitationProgress = new();
         private bool _unitConditionWearPending;
+
+        public int WaveFacilityGold => _exploitationProgress.FacilityGold;
+        public int ExploitationTargetGold => _exploitationProgress.TargetGold;
+        public bool IsExploitationObjectiveCompleted => _exploitationProgress.IsCompleted;
+        public float ExploitationProgress01 => _exploitationProgress.Progress01;
 
         private void Awake()
         {
@@ -257,9 +272,13 @@ namespace _01.Code.Manager
         private IEnumerator RunWave(WaveConfigSO.WaveEntry entry)
         {
             var adjustedEnemyCount = GetConquestAdjustedEnemyCount(entry.enemyCount);
-            _remainingSpawns = adjustedEnemyCount;
             ResetWaveResults(adjustedEnemyCount);
-            _currentClearGoldReward = CoreCohesionSystem.ScaleGoldReward(entry.clearGoldReward);
+            // 민심이 낮은 판은 보상이 오른다 — 뒤처졌을 때 만회할 유일한 통로다.
+            var moraleReward = MoralePolicyManager.Current != null
+                ? MoralePolicyManager.Current.WaveRewardMultiplier
+                : 1f;
+            _currentClearGoldReward = Mathf.RoundToInt(
+                CoreCohesionSystem.ScaleGoldReward(entry.clearGoldReward) * moraleReward);
             _isWaveRunning = true;
             _unitConditionWearPending = true;
             _activeEnemies.Clear();
@@ -267,8 +286,12 @@ namespace _01.Code.Manager
             _isFinalWave = waveConfig != null && waveConfig.IsFinalDay(_currentDay);
             // 이 날의 보스가 누구인지 웨이브가 도는 내내 같은 값을 봐야 호위·배율·배너가 어긋나지 않는다.
             _currentBoss = waveConfig != null ? waveConfig.GetBossForDay(_currentDay) : null;
+            _remainingSpawns = adjustedEnemyCount;
+            _reservedReinforcementSpawns = _currentBoss?.GetReservedReinforcementCount(adjustedEnemyCount) ?? 0;
             _bossEnemy = null;
             _bossSpawned = false;
+            _bossFinalPhaseStarted = false;
+            _bossReinforcementStarted = false;
             SetupPartyForWave();
 
             waveEventChannel.RaiseEvent(new WaveStartedEvent(_currentDay, adjustedEnemyCount));
@@ -332,7 +355,7 @@ namespace _01.Code.Manager
 
         private void SpawnNextEnemyIfNeeded(bool stopRunningCoroutine)
         {
-            if (_portalNode == null || _remainingSpawns <= 0)
+            if (_portalNode == null || !HasRegularSpawnsPending)
             {
                 CompleteWaveIfCleared(stopRunningCoroutine);
                 return;
@@ -345,7 +368,7 @@ namespace _01.Code.Manager
         /// <summary>파티 전체를 한 그룹으로 몰아서 스폰한다. 그룹 간 간격은 spawnInterval × 그룹 크기로 늘려 전체 스폰량을 유지한다.</summary>
         private void SpawnNextGroup(float spawnInterval)
         {
-            if (_portalNode == null || _remainingSpawns <= 0)
+            if (_portalNode == null || !HasRegularSpawnsPending)
             {
                 CompleteWaveIfCleared(false);
                 return;
@@ -357,7 +380,7 @@ namespace _01.Code.Manager
             // 보스는 파티 큐(호위) 밖에서 첫 스폰을 차지하므로 그룹에 한 자리 더.
             if (_isBossWave && !_bossSpawned)
                 groupSize += 1;
-            groupSize = Mathf.Min(groupSize, _remainingSpawns);
+            groupSize = Mathf.Min(groupSize, RegularSpawnCount);
             _currentGroupInterval = spawnInterval * groupSize;
 
             if (_groupSpawnCoroutine != null)
@@ -397,7 +420,10 @@ namespace _01.Code.Manager
             return new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * formationSpread;
         }
 
-        private bool SpawnEnemy(Vector3 formationOffset)
+        private int RegularSpawnCount => Mathf.Max(0, _remainingSpawns - _reservedReinforcementSpawns);
+        private bool HasRegularSpawnsPending => RegularSpawnCount > 0;
+
+        private bool SpawnEnemy(Vector3 formationOffset, EnemyDataSO forcedData = null)
         {
             if (_portalNode == null || _remainingSpawns <= 0)
                 return false;
@@ -410,7 +436,9 @@ namespace _01.Code.Manager
             // 없으면 기존 방식(공용 프리팹 풀)으로 폴백한다.
             // 보스 웨이브의 첫 스폰은 보스 — 전용 파티가 없어도 풀에서 가장 강한 적을 승격시킨다.
             var isBossSpawn = _isBossWave && !_bossSpawned;
-            var enemyData = isBossSpawn ? ResolveBossData() : ResolveEnemyData();
+            var enemyData = forcedData != null
+                ? forcedData
+                : isBossSpawn ? ResolveBossData() : ResolveEnemyData();
             var prefab = enemyData != null && enemyData.Prefab != null
                 ? enemyData.Prefab
                 : ResolveEnemyPrefab();
@@ -424,6 +452,7 @@ namespace _01.Code.Manager
             Enemy enemy = Instantiate(prefab, spawnPos, Quaternion.identity);
             enemy.DeathStarted += HandleWaveEnemyDeathStarted;
             enemy.Removed += HandleEnemyRemoved;
+            enemy.FacilityGoldSpent += HandleEnemyFacilityGoldSpent;
             enemy.ConfigureData(enemyData);
             enemy.ApplyWaveLevel(_currentDay, enemyHealthPerLevel, enemyAttackPerLevel);
             _remainingSpawns--;
@@ -437,6 +466,8 @@ namespace _01.Code.Manager
                     _currentBoss != null ? _currentBoss.attackMultiplier : bossAttackMultiplier,
                     _currentBoss != null ? _currentBoss.visualScale : bossVisualScale);
                 enemy.DeathStarted += HandleBossDeathStarted;
+                if (enemy.Health != null)
+                    enemy.Health.Changed += HandleBossHealthChanged;
             }
 
             // Initialize가 mover 위치를 노드 위치로 스냅하므로, 그 전에 대형 오프셋을 넣어야 한다
@@ -444,6 +475,7 @@ namespace _01.Code.Manager
                 enemy.Mover.FormationOffset = formationOffset;
 
             enemy.Initialize(_portalNode, costEventChannel, treasuryGoldLoss, nodeEventChannel);
+            EnemyMoodHud.Attach(enemy);
             if (enemy != null)
                 _activeEnemies.Add(enemy);
 
@@ -484,6 +516,19 @@ namespace _01.Code.Manager
                 {
                     if (bossParty.Members[i] != null)
                         _partyQueue.Add(bossParty.Members[i]);
+                }
+
+                if (_partyQueue.Count > 0)
+                    return;
+            }
+
+            var authoredParty = waveConfig != null ? waveConfig.GetWaveForDay(_currentDay)?.party : null;
+            if (authoredParty != null && authoredParty.Members != null)
+            {
+                foreach (var member in authoredParty.Members)
+                {
+                    if (member != null)
+                        _partyQueue.Add(member);
                 }
 
                 if (_partyQueue.Count > 0)
@@ -567,6 +612,9 @@ namespace _01.Code.Manager
 
         private void HandleEnemyRemoved(Enemy enemy)
         {
+            if (enemy != null)
+                enemy.FacilityGoldSpent -= HandleEnemyFacilityGoldSpent;
+
             if (this == null || _isDestroying)
                 return;
 
@@ -574,7 +622,102 @@ namespace _01.Code.Manager
                 return;
 
             _activeEnemies.Remove(enemy);
+            TryActivateBossFinalPhase();
             CompleteWaveIfCleared(false);
+        }
+
+        private void HandleEnemyFacilityGoldSpent(Enemy enemy, int amount, GoldChangeSource source)
+        {
+            if (!_isWaveRunning || enemy == null)
+                return;
+
+            if (_exploitationProgress.RecordFacilityGold(amount))
+                costEventChannel?.RaiseEvent(
+                    new GoldEarnedEvent(ExploitationBonusGold, GoldChangeSource.Exploitation));
+        }
+
+        private void HandleBossHealthChanged(float healthRatio)
+        {
+            if (!_isWaveRunning || _bossReinforcementStarted || _currentBoss == null
+                || !_currentBoss.enableReinforcementPhase
+                || healthRatio > Mathf.Clamp(_currentBoss.reinforcementHealthRatio, 0.1f, 0.9f))
+                return;
+
+            StartBossReinforcements();
+        }
+
+        private void StartBossReinforcements()
+        {
+            if (_bossReinforcementStarted || _reservedReinforcementSpawns <= 0)
+                return;
+
+            var party = _currentBoss?.reinforcementParty;
+            if (party == null || party.Members == null || party.Members.Length == 0)
+            {
+                _reservedReinforcementSpawns = 0;
+                return;
+            }
+
+            _bossReinforcementStarted = true;
+            EnsureBossPresenter().ShowBossBanner(
+                _currentDay,
+                false,
+                string.IsNullOrWhiteSpace(_currentBoss.title) ? "증원 도착" : $"{_currentBoss.title} · 증원",
+                string.IsNullOrWhiteSpace(_currentBoss.reinforcementSubtitle)
+                    ? "두목의 호각에 후열 사냥꾼이 전투에 합류했다"
+                    : _currentBoss.reinforcementSubtitle);
+
+            _reinforcementSpawnCoroutine = StartCoroutine(SpawnBossReinforcements(party));
+        }
+
+        private IEnumerator SpawnBossReinforcements(AdventurerPartySO party)
+        {
+            var count = _reservedReinforcementSpawns;
+            for (var i = 0; i < count; i++)
+            {
+                if (!_isWaveRunning || _portalNode == null)
+                    break;
+
+                var data = party.Members[i % party.Members.Length];
+                if (data != null && SpawnEnemy(FormationOffsetFor(i, count), data))
+                    _reservedReinforcementSpawns--;
+
+                if (memberSpawnDelay > 0f && i < count - 1)
+                    yield return new WaitForSeconds(memberSpawnDelay);
+            }
+
+            // 잘못 비어 있는 멤버가 있어도 보류 수 때문에 웨이브가 영원히 끝나지 않게 한다.
+            _reservedReinforcementSpawns = 0;
+            _reinforcementSpawnCoroutine = null;
+            CompleteWaveIfCleared(false);
+        }
+
+        private void TryActivateBossFinalPhase()
+        {
+            if (!_isBossWave || _bossFinalPhaseStarted || _currentBoss == null
+                || !_currentBoss.enableFinalPhase || _bossEnemy == null || !_bossEnemy.IsAlive
+                || _remainingSpawns > 0)
+                return;
+
+            RemoveMissingEnemies();
+            foreach (var enemy in _activeEnemies)
+            {
+                if (enemy != null && enemy != _bossEnemy && enemy.IsAlive)
+                    return;
+            }
+
+            _bossFinalPhaseStarted = true;
+            _bossEnemy.ActivateBossFinalPhase(
+                _currentBoss.phaseDefensePenalty,
+                _currentBoss.phaseAttackIntervalMultiplier);
+
+            EnsureBossPresenter().ShowBossBanner(
+                _currentDay,
+                false,
+                string.IsNullOrWhiteSpace(_currentBoss.title) ? "보스 격노" : $"{_currentBoss.title} · 격노",
+                string.IsNullOrWhiteSpace(_currentBoss.phaseSubtitle)
+                    ? "호위가 무너지자 공격이 거세지고 방어의 빈틈이 드러났다"
+                    : _currentBoss.phaseSubtitle);
         }
 
         private void RemoveMissingEnemies()
@@ -606,6 +749,7 @@ namespace _01.Code.Manager
             
             _isWaveRunning = false;
             _remainingSpawns = 0;
+            _reservedReinforcementSpawns = 0;
             _activeEnemies.Clear();
             
             if (stopRunningCoroutine && _waveCoroutine != null)
@@ -652,7 +796,11 @@ namespace _01.Code.Manager
         private void HandleBossDeathStarted(Enemy boss)
         {
             if (boss != null)
+            {
                 boss.DeathStarted -= HandleBossDeathStarted;
+                if (boss.Health != null)
+                    boss.Health.Changed -= HandleBossHealthChanged;
+            }
 
             if (this == null || _isDestroying || boss == null)
                 return;
@@ -696,7 +844,8 @@ namespace _01.Code.Manager
             ApplyUnitConditionWear();
             // 웨이브 집계는 다음 웨이브에서 초기화되므로, 판 전체 전과는 여기서 넘겨 둔다.
             RunSummarySystem.Current?.RecordWave(_waveEnemyCount, _waveKillCount, _waveDamageDealt, _waveDamageTaken, _waveCriticalHitCount);
-            waveEventChannel.RaiseEvent(new WaveEndedEvent(_currentDay, _currentClearGoldReward));
+            waveEventChannel.RaiseEvent(
+                new WaveEndedEvent(_currentDay, _currentClearGoldReward, _waveEnemyCount, _waveKillCount));
         }
 
         private void ApplyUnitConditionWear()
@@ -736,6 +885,7 @@ namespace _01.Code.Manager
             _waveDamageTaken = 0;
             _waveCriticalHitCount = 0;
             _waveTrapDamage = 0;
+            _exploitationProgress.Reset();
         }
 
         private void HandleWaveEnemyDeathStarted(Enemy enemy)
@@ -783,6 +933,13 @@ namespace _01.Code.Manager
                 _groupSpawnCoroutine = null;
             }
 
+
+            if (_reinforcementSpawnCoroutine != null)
+            {
+                StopCoroutine(_reinforcementSpawnCoroutine);
+                _reinforcementSpawnCoroutine = null;
+            }
+
             _isWaveRunning = false;
         }
 
@@ -791,6 +948,7 @@ namespace _01.Code.Manager
         {
             StopRunningWave();
             _remainingSpawns = 0;
+            _reservedReinforcementSpawns = 0;
             _unitConditionWearPending = false;
             _partyQueue.Clear();
             _partyIndex = 0;
@@ -801,7 +959,11 @@ namespace _01.Code.Manager
         private void ClearEnemyTrackers()
         {
             if (_bossEnemy != null)
+            {
                 _bossEnemy.DeathStarted -= HandleBossDeathStarted;
+                if (_bossEnemy.Health != null)
+                    _bossEnemy.Health.Changed -= HandleBossHealthChanged;
+            }
 
             foreach (var enemy in _activeEnemies)
             {
@@ -810,6 +972,7 @@ namespace _01.Code.Manager
 
                 enemy.DeathStarted -= HandleWaveEnemyDeathStarted;
                 enemy.Removed -= HandleEnemyRemoved;
+                enemy.FacilityGoldSpent -= HandleEnemyFacilityGoldSpent;
             }
 
             _activeEnemies.Clear();

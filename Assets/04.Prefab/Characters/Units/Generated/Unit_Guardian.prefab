@@ -22,6 +22,7 @@ GameObject:
   - component: {fileID: 6505219083861717860}
   - component: {fileID: 6670787628803708}
   - component: {fileID: 3490869977359020232}
+  - component: {fileID: 2713263344861378859}
   m_Layer: 0
   m_Name: Unit_Guardian
   m_TagString: Untagged
@@ -104,7 +105,7 @@ MonoBehaviour:
   trait: 0
   aggressiveDamageMultiplier: 1.2
   aggressiveFatigueMultiplier: 1.25
-  guardianDefenseBonus: 20
+  guardianDefenseBonus: 6
   guardianDamageMultiplier: 0.9
   cautiousEvasionBonus: 0.1
   cautiousAttackIntervalMultiplier: 1.1
@@ -121,7 +122,7 @@ MonoBehaviour:
   perfectionistAttackIntervalMultiplier: 1.05
   sociableWaveFatigueReduction: 0.3
   currentCommand: 0
-  commandGuardDefenseBonus: 15
+  commandGuardDefenseBonus: 5
   commandGuardDamageMultiplier: 0.92
   commandGuardAttackIntervalMultiplier: 1.08
   commandAssaultDamageMultiplier: 1.15
@@ -195,10 +196,7 @@ MonoBehaviour:
   attackFeelFeedbacks: {fileID: 0}
   enableFeelCombatFeedbacks: 1
   attackHitParticles: {fileID: 0}
-  attackParticleColor: {r: 1, g: 0.82, b: 0.35, a: 1}
-  attackParticleBurstCount: 14
   attackImpactOffset: 0.08
-  attackParticleSortingOrder: 75
   attackStatusEffect: {fileID: 0}
   attackStatusEffectChance: 0
   health: {fileID: 2709196990148380843}
@@ -296,6 +294,9 @@ MonoBehaviour:
   meleeFlankOffset: 0.65
   targetReconsiderInterval: 1.15
   targetSwitchScoreMargin: 1.4
+  guardTauntInterval: 2.5
+  guardTauntDuration: 1.25
+  assaultMoveSpeedMultiplier: 1.15
   enableNodeWander: 1
   wanderSpeedMultiplier: 0.45
   wanderBoundaryPadding: 0.6
@@ -418,6 +419,24 @@ MonoBehaviour:
   - <Stat>k__BackingField: {fileID: 11400000, guid: 0b687bed520e6fe3e079d88cae99b502, type: 2}
     useOverride: 1
     overrideBaseValue: 0
+  - <Stat>k__BackingField: {fileID: 11400000, guid: 3adcf772b28b27442bf3a30872c51add, type: 2}
+    useOverride: 1
+    overrideBaseValue: 0.12
+  - <Stat>k__BackingField: {fileID: 11400000, guid: ac8d97a0db055244b9284170db09f45a, type: 2}
+    useOverride: 1
+    overrideBaseValue: 2
+--- !u!114 &2713263344861378859
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4328671716576560348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9388dd33668649a38c1de28e312c9396, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.StatusEffects.EnemyStatusController
 --- !u!1 &7473952817250454834
 GameObject:
   m_ObjectHideFlags: 0

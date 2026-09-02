@@ -12,10 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6cec2de7cb574a51b3d26073c6d6ae0d, type: 3}
   m_Name: RationControl
   m_EditorClassIdentifier: 
-  displayName: 배급 통제
-  description: 즉시 비용을 줄이지만 민심 회복이 느려진다.
+  displayName: "\uBC30\uAE09 \uD1B5\uC81C"
+  description: "\uC989\uC2DC \uBE44\uC6A9\uC744 \uC904\uC774\uC9C0\uB9CC \uBBFC\uC2EC\uACFC
+    \uAD8C\uB2A5 \uD68C\uBCF5\uC774 \uB290\uB824\uC9C4\uB2E4."
   moraleDeltaOnSelect: -5
   goldDeltaOnSelect: 45
   dailyMoraleDelta: -1
   durationDays: 4
   canRepeat: 1
+  unitDamageMultiplier: 1
+  unitDefenseBonus: 0
+  dungeonPowerGainMultiplier: 0.8
