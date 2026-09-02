@@ -34,6 +34,9 @@ namespace _01.Code.Manager
         [SerializeField] private TMP_Text expenseText;
         [SerializeField] private TMP_Text netText;
         [SerializeField] private Button closeButton;
+
+        [SerializeField, Tooltip("쌓인 연속 방어를 금화로 바꾸는 버튼. 연속이 없으면 숨는다.")]
+        private Button streakCashOutButton;
         [SerializeField] private DungeonProgressReportView progressReportView;
 
         [SerializeField] private string titleFormat = "{0}일차 정산";
@@ -76,6 +79,7 @@ namespace _01.Code.Manager
             costEventChannel?.AddListener<RosterHirePaidEvent>(HandleRosterHirePaid);
             costEventChannel?.AddListener<UnitRecoveryCostPaidEvent>(HandleUnitRecoveryCostPaid);
             closeButton?.onClick.AddListener(HidePanel);
+            streakCashOutButton?.onClick.AddListener(HandleStreakCashOut);
             HidePanel();
         }
 
@@ -95,6 +99,7 @@ namespace _01.Code.Manager
             costEventChannel?.RemoveListener<RosterHirePaidEvent>(HandleRosterHirePaid);
             costEventChannel?.RemoveListener<UnitRecoveryCostPaidEvent>(HandleUnitRecoveryCostPaid);
             closeButton?.onClick.RemoveListener(HidePanel);
+            streakCashOutButton?.onClick.RemoveListener(HandleStreakCashOut);
         }
 
         private void HandleDayChanged(DayChangedEvent evt)
@@ -118,6 +123,7 @@ namespace _01.Code.Manager
             }
 
             RefreshPanel();
+            RefreshStreakCashOutButton();
             ShowPanel();
             ledgerClosed = true;
         }
@@ -377,6 +383,40 @@ namespace _01.Code.Manager
         {
             panelRoot.SetActive(true);
             panelRoot.transform.SetAsLastSibling();
+        }
+
+        /// <summary>
+        /// 연속 방어를 지금 금화로 거둔다.
+        ///
+        /// 그냥 두면 보상 배율이 계속 오르지만 습격 인원도 함께 늘고, 끊기는 순간이 곧 패배다.
+        /// 스스로 멈출 수 있어야 "더 밀어붙일까"가 도박이 된다.
+        /// </summary>
+        private void HandleStreakCashOut()
+        {
+            var streak = DefenseStreakSystem.Current;
+            if (streak == null || !streak.TryCashOut(out var gold))
+                return;
+
+            RecordIncome("연속 방어 청산", gold, false);
+            RefreshPanel();
+            RefreshStreakCashOutButton();
+        }
+
+        /// <summary>거둘 것이 없으면 버튼을 숨긴다. 눌러도 아무 일 없는 버튼은 없느니만 못하다.</summary>
+        private void RefreshStreakCashOutButton()
+        {
+            if (streakCashOutButton == null)
+                return;
+
+            var streak = DefenseStreakSystem.Current;
+            var value = streak != null ? streak.CashOutValue : 0;
+            streakCashOutButton.gameObject.SetActive(value > 0);
+            if (value <= 0)
+                return;
+
+            var label = streakCashOutButton.GetComponentInChildren<TMP_Text>(true);
+            if (label != null)
+                label.text = $"연속 {streak.CurrentStreak}일 청산  +{value}G";
         }
 
         private void HidePanel()

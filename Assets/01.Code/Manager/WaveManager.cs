@@ -91,8 +91,21 @@ namespace _01.Code.Manager
         public int GetPreviewEnemyCount(int day)
         {
             var baseEnemyCount = GetBasePreviewEnemyCount(day);
-            // 예고도 장악 보정을 거친 수를 보여야 실제로 오는 수와 어긋나지 않는다.
-            return GetConquestAdjustedEnemyCount(baseEnemyCount);
+            // 예고와 실제가 같은 계산을 타야 어긋나지 않는다. 한쪽만 고치면 화면이 거짓말을 한다.
+            return ResolveWaveEnemyCount(baseEnemyCount);
+        }
+
+        /// <summary>
+        /// 이 습격에 실제로 오는 인원. 마을 장악으로 줄고, 연속 방어로 늘어난다.
+        ///
+        /// 예고 화면과 실제 스폰이 반드시 이 하나를 거쳐야 한다.
+        /// 한쪽에만 보정을 더하면 "12명 온다"고 적어 놓고 15명을 보내게 된다.
+        /// </summary>
+        private int ResolveWaveEnemyCount(int baseEnemyCount)
+        {
+            var adjusted = GetConquestAdjustedEnemyCount(baseEnemyCount);
+            var streak = DefenseStreakSystem.Current;
+            return adjusted + (streak != null ? streak.ExtraEnemies : 0);
         }
 
         public WaveThreatPreview GetThreatPreview(int day) =>
@@ -319,7 +332,9 @@ namespace _01.Code.Manager
 
         private IEnumerator RunWave(WaveConfigSO.WaveEntry entry)
         {
-            var adjustedEnemyCount = GetConquestAdjustedEnemyCount(entry.enemyCount);
+            // 연속 방어는 다음 습격을 무겁게 만든다. 잘 막을수록 왕국이 더 크게 보낸다.
+            var adjustedEnemyCount = ResolveWaveEnemyCount(entry.enemyCount);
+
             PrepareObjectiveChoices(_currentDay);
             ResetWaveResults(adjustedEnemyCount);
             // 민심이 낮은 판은 보상이 오른다 — 뒤처졌을 때 만회할 유일한 통로다.
@@ -327,7 +342,8 @@ namespace _01.Code.Manager
                 ? MoralePolicyManager.Current.WaveRewardMultiplier
                 : 1f;
             _currentClearGoldReward = Mathf.RoundToInt(
-                CoreCohesionSystem.ScaleGoldReward(entry.clearGoldReward) * moraleReward);
+                CoreCohesionSystem.ScaleGoldReward(entry.clearGoldReward) * moraleReward
+                * (DefenseStreakSystem.Current != null ? DefenseStreakSystem.Current.RewardMultiplier : 1f));
             _isWaveRunning = true;
             _unitConditionWearPending = true;
             _activeEnemies.Clear();

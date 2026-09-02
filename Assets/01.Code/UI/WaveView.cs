@@ -331,7 +331,8 @@ namespace _01.Code.UI
                 _runtimeHud.BannerSubtitle.text =
                     $"침입 예정 {enemyCount}명{conquestText} · 몬스터와 함정을 배치하세요\n"
                     + CoreLoopFeatureUnlocks.GetPreparationHint(day)
-                    + threatText;
+                    + threatText
+                    + BuildStreakLine();
             }
             else
             {
@@ -339,6 +340,17 @@ namespace _01.Code.UI
             }
             _waveBanner.SetActive(true);
             _waveBanner.transform.SetAsLastSibling();
+        }
+
+        /// <summary>
+        /// 연속 방어가 걸려 있으면 준비 화면에 한 줄 붙인다.
+        /// 보상이 오른 것과 인원이 는 것을 함께 보여야, 계속 밀어붙일지가 판단이 된다.
+        /// </summary>
+        private static string BuildStreakLine()
+        {
+            var streak = DefenseStreakSystem.Current;
+            var line = streak != null ? streak.DescribeForPreparation() : string.Empty;
+            return string.IsNullOrEmpty(line) ? string.Empty : "\n" + line;
         }
 
         private void HidePreparationHud()
