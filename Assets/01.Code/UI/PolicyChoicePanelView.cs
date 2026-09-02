@@ -152,7 +152,12 @@ namespace _01.Code.UI
 
                 var policy = currentChoices[i];
                 SetText(policyNameTexts, i, policy.DisplayName);
-                SetText(policyDescriptionTexts, i, $"{policy.Description}\n\n{BuildEffectSummary(policy)}");
+                // 조합은 고르는 순간에 보여야 선택이 된다. 짝이 이미 돌고 있으면 그 사실도 함께.
+                var comboHint = MoralePolicyManager.Current != null
+                    ? MoralePolicyManager.Current.DescribeCombosFor(policy)
+                    : string.Empty;
+                SetText(policyDescriptionTexts, i, $"{policy.Description}\n\n{BuildEffectSummary(policy)}"
+                    + (string.IsNullOrEmpty(comboHint) ? string.Empty : $"\n{comboHint}"));
             }
         }
 

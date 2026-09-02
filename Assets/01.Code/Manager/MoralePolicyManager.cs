@@ -47,9 +47,14 @@ namespace _01.Code.Manager
         [SerializeField, Min(1)] private int offerIntervalDays = 3;
         [SerializeField] private bool offerAfterWaveEnd = true;
 
+        [SerializeField, Tooltip("두 정책이 동시에 살아 있을 때 따로 붙는 효과. 비어 있으면 조합이 없다.")]
+        private PolicyComboCatalogSO policyCombos;
+
         private readonly List<PolicyDataSO> currentChoices = new();
         private readonly List<PolicyDataSO> selectedPolicies = new();
         private readonly List<ActivePolicy> activePolicies = new();
+        private readonly List<PolicyDataSO> activePolicyBuffer = new();
+        private readonly List<PolicyCombo> activeCombos = new();
 
         private int currentDay;
 
@@ -59,9 +64,18 @@ namespace _01.Code.Manager
         public IReadOnlyList<PolicyDataSO> CurrentChoices => currentChoices;
         public event System.Action CombatModifiersChanged;
 
-        public float UnitDamageMultiplier => MultiplyActivePolicies(policy => policy.UnitDamageMultiplier);
-        public int UnitDefenseBonus => SumActivePolicies(policy => policy.UnitDefenseBonus);
-        public float DungeonPowerGainMultiplier => MultiplyActivePolicies(policy => policy.DungeonPowerGainMultiplier);
+        /// <summary>지금 성립한 조합. 화면에 무엇이 걸려 있는지 보여 주는 데 쓴다.</summary>
+        public IReadOnlyList<PolicyCombo> ActiveCombos
+        {
+            get { RefreshActiveCombos(); return activeCombos; }
+        }
+
+        public float UnitDamageMultiplier =>
+            Mathf.Max(0.1f, MultiplyActivePolicies(policy => policy.UnitDamageMultiplier) * MultiplyActiveCombos(combo => combo.UnitDamageMultiplier));
+        public int UnitDefenseBonus =>
+            SumActivePolicies(policy => policy.UnitDefenseBonus) + SumActiveCombos(combo => combo.UnitDefenseBonus);
+        public float DungeonPowerGainMultiplier =>
+            Mathf.Max(0.1f, MultiplyActivePolicies(policy => policy.DungeonPowerGainMultiplier) * MultiplyActiveCombos(combo => combo.DungeonPowerGainMultiplier));
 
         /// <summary>민심 0~100을 0~1로. 곡선을 한 곳에 모아 두어 소비처마다 다르게 해석하지 않게 한다.</summary>
         private float MoraleRatio => Mathf.Clamp01(CurrentMorale / 100f);
@@ -243,6 +257,11 @@ namespace _01.Code.Manager
 
         private void ApplyActivePolicyEffects()
         {
+            // 조합은 정책이 줄어들기 전에 센다. 오늘 하루는 두 정책이 함께 살아 있던 날이므로,
+            // 오늘 만료되는 정책의 조합도 오늘 몫은 받아야 한다.
+            RefreshActiveCombos();
+            var todaysCombos = new List<PolicyCombo>(activeCombos);
+
             var changed = false;
             for (var i = activePolicies.Count - 1; i >= 0; i--)
             {
@@ -257,8 +276,132 @@ namespace _01.Code.Manager
                 }
             }
 
+            foreach (var combo in todaysCombos)
+            {
+                if (combo != null && combo.DailyMoraleDelta != 0)
+                    ChangeMorale(combo.DailyMoraleDelta, combo.DisplayName);
+            }
+
             if (changed)
                 CombatModifiersChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// 지금 살아 있는 정책으로 성립하는 조합을 다시 센다.
+        /// 매 프레임 읽히는 값이라 할당 없이 버퍼를 재사용한다.
+        /// </summary>
+        private void RefreshActiveCombos()
+        {
+            activeCombos.Clear();
+            if (policyCombos == null || activePolicies.Count < 2)
+                return;
+
+            activePolicyBuffer.Clear();
+            foreach (var active in activePolicies)
+            {
+                if (active?.Policy != null)
+                    activePolicyBuffer.Add(active.Policy);
+            }
+
+            policyCombos.CollectActive(activePolicyBuffer, activeCombos);
+        }
+
+        /// <summary>
+        /// 이 정책이 참여하는 조합 안내. 짝이 지금 돌고 있으면 그렇다고 알려 준다.
+        ///
+        /// 이게 없으면 조합은 우연히 걸리는 보너스일 뿐 선택이 되지 않는다.
+        /// 무엇과 묶이는지 고르는 순간에 보여야 "어제 계엄령을 걸어 뒀으니 오늘은 철벽"이 성립한다.
+        /// </summary>
+        public string DescribeCombosFor(PolicyDataSO policy)
+        {
+            if (policy == null || policyCombos == null)
+                return string.Empty;
+
+            var lines = new List<string>();
+            foreach (var combo in policyCombos.Combos)
+            {
+                var partner = combo?.GetPartnerOf(policy);
+                if (partner == null)
+                    continue;
+
+                var partnerActive = false;
+                foreach (var active in activePolicies)
+                {
+                    if (active?.Policy == partner)
+                        partnerActive = true;
+                }
+
+                var effect = DescribeComboEffect(combo);
+                lines.Add(partnerActive
+                    ? $"<color=#7ADB8A>조합 성립 · {combo.DisplayName}</color>  {effect}"
+                    : $"<color=#9A8B78>조합 · {combo.DisplayName}  ({WithParticle(partner.DisplayName)} 겹칠 때)  {effect}</color>");
+            }
+
+            return lines.Count == 0 ? string.Empty : string.Join("\n", lines);
+        }
+
+        /// <summary>
+        /// 이름 뒤에 붙는 "와/과"를 고른다. 한글 음절의 받침 유무로 갈린다 —
+        /// 고정으로 "와"를 쓰면 "계엄령와"처럼 읽는 사람이 걸리는 문장이 나온다.
+        /// </summary>
+        private static string WithParticle(string noun)
+        {
+            if (string.IsNullOrEmpty(noun))
+                return noun;
+
+            var last = noun[noun.Length - 1];
+            if (last < 0xAC00 || last > 0xD7A3)
+                return noun + "와";
+
+            var hasFinalConsonant = (last - 0xAC00) % 28 != 0;
+            return noun + (hasFinalConsonant ? "과" : "와");
+        }
+
+        private static string DescribeComboEffect(PolicyCombo combo)
+        {
+            var parts = new List<string>();
+            if (!Mathf.Approximately(combo.UnitDamageMultiplier, 1f))
+                parts.Add($"공격 {FormatComboPercent(combo.UnitDamageMultiplier)}");
+            if (combo.UnitDefenseBonus != 0)
+                parts.Add($"방어 {(combo.UnitDefenseBonus > 0 ? "+" : string.Empty)}{combo.UnitDefenseBonus}");
+            if (!Mathf.Approximately(combo.DungeonPowerGainMultiplier, 1f))
+                parts.Add($"권능 {FormatComboPercent(combo.DungeonPowerGainMultiplier)}");
+            if (combo.DailyMoraleDelta != 0)
+                parts.Add($"민심 {(combo.DailyMoraleDelta > 0 ? "+" : string.Empty)}{combo.DailyMoraleDelta}/일");
+
+            return parts.Count > 0 ? string.Join(" · ", parts) : string.Empty;
+        }
+
+        private static string FormatComboPercent(float multiplier)
+        {
+            var percent = Mathf.RoundToInt((multiplier - 1f) * 100f);
+            return percent > 0 ? $"+{percent}%" : $"{percent}%";
+        }
+
+        private float MultiplyActiveCombos(System.Func<PolicyCombo, float> selector)
+        {
+            RefreshActiveCombos();
+            var value = 1f;
+            foreach (var combo in activeCombos)
+            {
+                if (combo != null)
+                    value *= selector(combo);
+            }
+
+            return value;
+        }
+
+        private int SumActiveCombos(System.Func<PolicyCombo, int> selector)
+        {
+            RefreshActiveCombos();
+            var value = 0;
+            foreach (var combo in activeCombos)
+            {
+                if (combo != null)
+                    value += selector(combo);
+            }
+
+            return value;
         }
 
         private float MultiplyActivePolicies(System.Func<PolicyDataSO, float> selector)
