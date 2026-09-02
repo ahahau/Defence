@@ -306,7 +306,64 @@ namespace _01.Code.UI
                 Hide();
         }
 
-        private void SelectVillage(int index) { if (index >= 0 && index < villages.Length) { selectedVillage = index; selectedUnitSlots.Clear(); Refresh(); } }
+        /// <summary>
+        /// 앞선 마을을 완전히 장악해야 열리는 마을인가. UnlockAfterVillage가 -1이면 처음부터 열려 있다.
+        /// 지도를 한 번에 다 열어 두면 제일 싼 곳만 되풀이해 치게 되고, 어디부터 칠지가 결정이 되지 않는다.
+        /// </summary>
+        private bool IsVillageUnlocked(int index)
+        {
+            var entry = villageCatalog != null ? villageCatalog.Get(index) : null;
+            if (entry == null) return true;
+            var required = entry.UnlockAfterVillage;
+            if (required < 0 || villages == null || required >= villages.Length) return true;
+            return villages[required].Conquest >= 100;
+        }
+
+        /// <summary>완전 장악 보상을 미리 보여준다. 무엇이 걸렸는지 알아야 순서가 선택이 된다.</summary>
+        private static string DescribeConquestReward(ExpeditionVillageEntry entry)
+        {
+            if (entry == null || entry.ConquestRewardAmount <= 0)
+                return string.Empty;
+
+            switch (entry.ConquestReward)
+            {
+                case VillageConquestReward.Gold:       return $"\n완전 장악  운영 자금 +{entry.ConquestRewardAmount}G";
+                case VillageConquestReward.Applicants: return $"\n완전 장악  고용 지원자 +{entry.ConquestRewardAmount}명";
+                case VillageConquestReward.Magic:      return $"\n완전 장악  주둔 마력 +{entry.ConquestRewardAmount}";
+                default: return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// 장악도가 100%에 닿은 순간 한 번만 준다.
+        /// 호출부가 "이번에 처음 100이 되었는가"를 판단하므로 여기서는 다시 검사하지 않는다.
+        /// </summary>
+        private string GrantConquestReward(ExpeditionVillageEntry entry)
+        {
+            if (entry == null || entry.ConquestRewardAmount <= 0)
+                return string.Empty;
+
+            var amount = entry.ConquestRewardAmount;
+            switch (entry.ConquestReward)
+            {
+                case VillageConquestReward.Gold:
+                    costEventChannel?.RaiseEvent(new GoldEarnedEvent(amount, GoldChangeSource.General));
+                    return $"운영 자금 +{amount}G";
+                case VillageConquestReward.Applicants:
+                    if (HiredUnitRoster.Current == null) return string.Empty;
+                    HiredUnitRoster.Current.AddRecruitmentCandidates(amount);
+                    return $"고용 지원자 +{amount}명";
+                case VillageConquestReward.Magic:
+                    var magic = FindAnyObjectByType<MagicManager>();
+                    if (magic == null) return string.Empty;
+                    magic.IncreaseMaxMagic(amount);
+                    return $"주둔 마력 +{amount}";
+                default:
+                    return string.Empty;
+            }
+        }
+
+        private void SelectVillage(int index) { if (index >= 0 && index < villages.Length && IsVillageUnlocked(index)) { selectedVillage = index; selectedUnitSlots.Clear(); Refresh(); } }
 
         private void ToggleUnit(int buttonIndex)
         {
@@ -364,6 +421,7 @@ namespace _01.Code.UI
         private void Depart()
         {
             if (hasActiveExpedition || selectedUnitSlots.Count == 0 || HiredUnitRoster.Current == null) return;
+            if (!IsVillageUnlocked(selectedVillage)) return;
             var power = CalculateSelectedPower();
             var chosenUnits = new List<UnitDataSO>();
             foreach (var slot in selectedUnitSlots)
@@ -407,19 +465,31 @@ namespace _01.Code.UI
                     member.Condition.Fatigue + gainedFatigue, member.Condition.Injury, member.Condition.HealthRatio,
                     member.Condition.Trait, member.Condition.Personality, member.Condition.Command));
             }
+            // 이번 성공으로 처음 100%에 닿았는가. 보상은 그 순간 한 번만 준다.
+            var rewardLine = string.Empty;
             if (success)
             {
+                var wasFullyHeld = village.Conquest >= 100;
                 var gain = villageCatalog != null ? villageCatalog.ConquestPerSuccess : 25;
                 village.Conquest = Mathf.Min(100, village.Conquest + gain);
                 villages[selectedVillage] = village;
                 // 장악한 만큼 이 마을에서 오는 습격이 줄어든다. 웨이브가 이 값을 읽는다.
                 VillageConquestSystem.Current?.SetConquest(entry?.OriginParty, village.Conquest);
+
+                if (!wasFullyHeld && village.Conquest >= 100)
+                {
+                    var granted = GrantConquestReward(entry);
+                    if (!string.IsNullOrEmpty(granted))
+                        rewardLine = $"\n\n<color=#7ADB8A>{village.Name} 완전 장악</color>\n{granted}";
+                    // 이 마을을 조건으로 잠겨 있던 곳이 이제 열린다.
+                    Refresh();
+                }
             }
             if (costEventChannel != null)
                 costEventChannel.RaiseEvent(new GoldEarnedEvent(reward, GoldChangeSource.General));
             var odds = Mathf.RoundToInt(chance * 100f);
             var result = success
-                ? $"{village.Name} 작전 성공\n\n확보 자금  +{reward}G\n장악도  {village.Conquest}%\n\n전력 {departedPower} / 난이도 {village.Difficulty}  ·  성공 확률 {odds}%\n귀환한 유닛은 피로도가 누적되었습니다."
+                ? $"{village.Name} 작전 성공\n\n확보 자금  +{reward}G\n장악도  {village.Conquest}%\n\n전력 {departedPower} / 난이도 {village.Difficulty}  ·  성공 확률 {odds}%\n귀환한 유닛은 피로도가 누적되었습니다." + rewardLine
                 : $"{village.Name} 작전 난항\n\n회수 자금  +{reward}G\n장악도 변화 없음\n\n전력 {departedPower} / 난이도 {village.Difficulty}  ·  성공 확률 {odds}%\n귀환한 유닛의 피로도가 크게 누적되었습니다.";
             if (resultText != null) resultText.text = result;
             ShowResult(success ? "작전 성공" : "작전 결과", result);
@@ -461,6 +531,7 @@ namespace _01.Code.UI
                 detailText.text = $"{village.Name}\n{village.Purpose}\n\n난이도 {village.Difficulty}  ·  장악도 {village.Conquest}%\n"
                                   + $"편성 전력 {power}  ·  성공 확률 {odds}%\n"
                                   + $"성공 {payout}G  ·  실패 {consolation}G\n"
+                                  + DescribeConquestReward(entry)
                                   + BuildConquestEffectText(village)
                                   + $"\n대기 유닛 최대 {MaxPartySize}명을 편성하세요. 지친 부하는 전력이 깎입니다.";
             var selectedNames = new List<string>();
@@ -470,8 +541,12 @@ namespace _01.Code.UI
             {
                 // 목록에서 바로 비교할 수 있게 난이도와 장악도를 칸에 같이 적는다.
                 var listed = villages[i];
-                var marker = i == selectedVillage ? "▶ " : string.Empty;
-                SetButtonLabel(villageButtons[i], $"{marker}{listed.Name}\n<size=80%>난이도 {listed.Difficulty}  ·  장악 {listed.Conquest}%</size>");
+                var open = IsVillageUnlocked(i);
+                var marker = !open ? "잠김  " : (i == selectedVillage ? "▶ " : string.Empty);
+                if (villageButtons[i] != null) villageButtons[i].interactable = open;
+                SetButtonLabel(villageButtons[i], open
+                    ? $"{marker}{listed.Name}\n<size=80%>난이도 {listed.Difficulty}  ·  장악 {listed.Conquest}%</size>"
+                    : $"{marker}{listed.Name}\n<size=80%>앞선 마을을 완전히 장악해야 열립니다</size>");
             }
             for (var i = 0; i < unitButtons.Length; i++)
             {

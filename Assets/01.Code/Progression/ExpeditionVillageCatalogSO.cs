@@ -103,6 +103,19 @@ namespace _01.Code.Progression
         }
     }
 
+
+    /// <summary>마을을 완전히 장악했을 때 한 번 주어지는 보상의 종류.</summary>
+    public enum VillageConquestReward
+    {
+        None,
+        /// <summary>금고가 아니라 운영 자금으로 바로 들어온다.</summary>
+        Gold,
+        /// <summary>고용 지원자가 그만큼 더 찾아온다.</summary>
+        Applicants,
+        /// <summary>주둔 마력 상한이 오른다 — 부하를 한 명 더 세울 수 있다.</summary>
+        Magic
+    }
+
     [Serializable]
     public sealed class ExpeditionVillageEntry
     {
@@ -129,6 +142,20 @@ namespace _01.Code.Progression
         public int Reward => reward;
         public int Difficulty => difficulty;
         public int StartingConquest => startingConquest;
+
+        [Header("장악 진행")]
+        [SerializeField, Tooltip("이 번호의 마을을 완전히 장악해야 열린다. -1이면 처음부터 열려 있다.")]
+        private int unlockAfterVillage = -1;
+
+        [SerializeField, Tooltip("완전히 장악했을 때 한 번 주는 보상. 마을마다 다르게 두면 어디부터 칠지가 판의 갈림길이 된다.")]
+        private VillageConquestReward conquestReward = VillageConquestReward.None;
+
+        [SerializeField, Min(0), Tooltip("보상의 크기. 금화면 G, 지원자면 명, 주둔 마력이면 칸 수.")]
+        private int conquestRewardAmount;
+
+        public int UnlockAfterVillage => unlockAfterVillage;
+        public VillageConquestReward ConquestReward => conquestReward;
+        public int ConquestRewardAmount => Mathf.Max(0, conquestRewardAmount);
         public AdventurerPartySO OriginParty => originParty;
 
         public ExpeditionVillageEntry() { }
