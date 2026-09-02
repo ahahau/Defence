@@ -58,8 +58,21 @@ namespace _01.Code.Manager
                 return false;
             }
 
+            // 웨이브가 도는 동안에는 진형을 바꾸는 데 값을 치른다.
+            // 준비 단계에서는 게이지가 비어 있으므로 TrySpendPower가 그냥 통과시킨다 —
+            // 계획은 자유롭게 짜되, 싸우는 중에 마음을 바꾸면 권능과 같은 주머니에서 나간다.
+            var cost = UnitCommandRules.GetPowerCost(command);
+            var power = DungeonPowerSystem.Current;
+            if (power != null && !power.TrySpendPower(cost, out var shortage))
+            {
+                reason = shortage;
+                return false;
+            }
+
             unit.SetCommand(command);
-            reason = $"{unit.CommandLabel} 명령 적용";
+            reason = power != null && power.IsWaveRunning && cost > 0
+                ? $"{unit.CommandLabel} 명령 적용  ·  권능 -{cost}"
+                : $"{unit.CommandLabel} 명령 적용";
             return true;
         }
 

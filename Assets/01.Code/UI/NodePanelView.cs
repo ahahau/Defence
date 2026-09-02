@@ -738,7 +738,6 @@ namespace _01.Code.UI
             AddCommandEntry(UnitCommand.Assault);
             AddCommandEntry(UnitCommand.Rest);
         }
-
         private void AddCommandEntry(UnitCommand command)
         {
             var unit = _selectedManagedUnit;
@@ -750,15 +749,27 @@ namespace _01.Code.UI
             // 웨이브 중에도 명령이 통하므로, 왜 지금 못 바꾸는지가 버튼에 보여야 한다.
             var canIssue = _unitManagementSystem != null
                            && _unitManagementSystem.CanIssueCommand(unit, out _);
-            var actionLabel = isCurrent
-                ? "적용중"
-                : canIssue ? "명령" : $"{unit.CommandCooldownRemaining:F1}초";
+
+            // 웨이브가 도는 동안에는 권능 게이지에서 값이 나간다.
+            // 누르고 나서 알면 늦으므로 버튼에 미리 적는다.
+            var power = DungeonPowerSystem.Current;
+            var cost = UnitCommandRules.GetPowerCost(command);
+            var waveRunning = power != null && power.IsWaveRunning;
+            var affordable = power == null || power.CanSpendPower(cost);
+
+            var actionLabel = isCurrent ? "적용중"
+                : !canIssue ? $"{unit.CommandCooldownRemaining:F1}초"
+                : !affordable ? "권능 부족"
+                : waveRunning && cost > 0 ? $"명령 {cost}"
+                : "명령";
+
             entry.Initialize(
                 unit.Data,
                 _ => HandleCommandRequested(command),
                 actionLabel,
-                $"{UnitCommandUtility.GetLabel(command)} · {UnitCommandUtility.GetDescription(command)}",
-                canIssue && !isCurrent);
+                $"{UnitCommandUtility.GetLabel(command)} · {UnitCommandUtility.GetDescription(command)}"
+                + $"\n<size=85%>{UnitCommandRules.DescribeCost(command, waveRunning)}</size>",
+                canIssue && !isCurrent && affordable);
             _deployEntries.Add(entry);
         }
 

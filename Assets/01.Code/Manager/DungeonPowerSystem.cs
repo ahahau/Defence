@@ -41,6 +41,31 @@ namespace _01.Code.Manager
 
         public IReadOnlyList<DungeonPowerSO> Powers => powers;
         public int CurrentPower => Mathf.FloorToInt(_power);
+
+        /// <summary>
+        /// 권능 말고도 게이지를 나눠 쓰는 개입이 있다. 지금은 웨이브 중 명령 재지시가 이 문을 쓴다.
+        /// 웨이브가 돌지 않으면 게이지가 비어 있으므로 값을 받지 않는다 —
+        /// 준비 단계는 자유롭게 진형을 짜라고 있는 시간이다.
+        /// </summary>
+        public bool TrySpendPower(int amount, out string reason)
+        {
+            reason = string.Empty;
+            if (amount <= 0 || !_isWaveRunning)
+                return true;
+
+            if (CurrentPower < amount)
+            {
+                reason = $"권능이 부족합니다  {CurrentPower} / {amount}";
+                return false;
+            }
+
+            _power -= amount;
+            RaiseChanged();
+            return true;
+        }
+
+        /// <summary>값을 치르지 않고 가능 여부만 묻는다. 버튼을 흐리게 하는 데 쓴다.</summary>
+        public bool CanSpendPower(int amount) => amount <= 0 || !_isWaveRunning || CurrentPower >= amount;
         public int MaxPower => maxPower;
         public bool IsWaveRunning => _isWaveRunning;
 

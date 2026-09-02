@@ -289,11 +289,8 @@ namespace _01.Code.Units
         /// <summary>
         /// 명령을 바꾼 뒤 다시 바꿀 수 있을 때까지의 시간.
         /// 웨이브 중에도 명령이 통하게 되면서, 매 순간 최적값으로 갈아타는 손놀림 싸움이 되지 않도록
-        /// 한 번의 판단에 잠시 묶어 둔다.
+        /// 한 번의 판단에 잠시 묶어 둔다. 길이는 명령마다 다르며 UnitCommandRules가 정한다.
         /// </summary>
-        [SerializeField, Min(0f), Tooltip("명령을 다시 내리기까지의 대기 시간(초).")]
-        private float commandCooldown = 3f;
-
         private float _commandReadyTime;
 
         public bool IsCommandReady => Time.time >= _commandReadyTime;
@@ -306,7 +303,8 @@ namespace _01.Code.Units
 
             currentCommand = command;
             GetComponent<_01.Code.BT.BattleAgent>()?.ApplyUnitCommand(currentCommand);
-            _commandReadyTime = Time.time + Mathf.Max(0f, commandCooldown);
+            // 명령마다 무게가 다르다. 되돌리기(대기)는 짧고, 전투에서 빼는 휴식은 가장 길다.
+            _commandReadyTime = Time.time + Mathf.Max(0f, UnitCommandRules.GetCooldown(command));
             ApplyTraitBaseStats();
             ApplyConditionModifiers();
             ConditionChanged?.Invoke();
