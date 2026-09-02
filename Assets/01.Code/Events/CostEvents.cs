@@ -15,7 +15,9 @@ namespace _01.Code.Events
         Exploitation,
         TreasuryLoot,
         Dialogue,
-        Policy
+        Policy,
+        Blacksmith,
+        WaveObjective
     }
 
     public class BuildCostRequestedEvent : GameEvent

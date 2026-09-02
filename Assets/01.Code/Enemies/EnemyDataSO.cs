@@ -13,6 +13,9 @@ namespace _01.Code.Enemies
         [field: SerializeField, Tooltip("전투 역할. 전열(Tank/Melee)/후열(Ranged)/지원(Support).")]
         public BattleRole Role { get; private set; } = BattleRole.Melee;
 
+        [field: SerializeField, Tooltip("시설 이용과 공포 반응을 바꾸는 개인 특성.")]
+        public AdventurerTrait Trait { get; private set; }
+
         [field: SerializeField, Tooltip("이 적 종류의 전용 프리팹. 비어 있으면 WaveManager의 기본 프리팹 사용.")]
         public Enemy Prefab { get; private set; }
 

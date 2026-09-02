@@ -10,6 +10,7 @@ using _01.Code.Units;
 using _01.Code.Persistence;
 using _01.Code.Manager;
 using System.Collections;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -72,6 +73,45 @@ namespace _01.Code.MapCreateSystem
         public void EditorSetPlayerStatusHud(PlayerStatusHudView hud)
         {
             playerStatusHud = hud;
+        }
+
+        /// <summary>
+        /// 웨이브 콘텐츠만 빠르게 검증할 때 쓰는 런타임 전용 2칸 전장.
+        /// 현재 Play Mode 오브젝트만 바꾸며 씬이나 세이브 에셋은 수정하지 않는다.
+        /// </summary>
+        public Node EditorPrepareWavePlaytestArena(BuildingDataSO portalData)
+        {
+            if (!Application.isPlaying || portalData == null)
+                return null;
+
+            RebuildInitialGraph();
+            var entranceData = graph?.Nodes.FirstOrDefault(node => node.Type == DungeonNodeType.Entrance);
+            var entranceView = entranceData != null ? Node.FindByDataId(entranceData.Id) : null;
+            if (entranceView == null)
+                return null;
+
+            var portalPosition = entranceData.GridPosition + Vector2Int.left;
+            var portalNodeData = graph.AddNode(DungeonNodeType.Corridor, portalPosition);
+            var portalNodeView = nodeManager.CreateNode(portalNodeData);
+            RegisterUnlockedNode(portalNodeView);
+
+            if (!graph.Connect(entranceData, portalNodeData))
+                return null;
+
+            edgeManager.CreateEdge(
+                entranceData.GridPosition,
+                portalNodeData.GridPosition,
+                entranceData.Id,
+                portalNodeData.Id);
+
+            var portal = BuildingPlacement.InstallCentral(portalNodeView, portalData);
+            if (portal is not Portal)
+                return null;
+
+            nodeEventChannel?.RaiseEvent(new PortalInstalledEvent(portalNodeView));
+            HasLockedNodesVisible = true;
+            RefreshLockedNodes();
+            return portalNodeView;
         }
 
         /// <summary>

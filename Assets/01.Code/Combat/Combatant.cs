@@ -108,6 +108,17 @@ namespace _01.Code.Combat
                 attackDamage += amount;
         }
 
+        public void AddDefense(int amount)
+        {
+            if (amount <= 0)
+                return;
+
+            if (TryGetStat(StatIndex.Defense, out var stat))
+                stat.BaseValue += amount;
+            else
+                defense += amount;
+        }
+
         public void SetAttackDamage(int value)
         {
             value = Mathf.Max(1, value);

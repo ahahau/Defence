@@ -150,6 +150,9 @@ namespace _01.Code.Manager
             if (day <= 0)
                 return false;
 
+            if (GetBossForDay(day) != null)
+                return true;
+
             if (bossEveryNDays > 0 && day % bossEveryNDays == 0)
                 return true;
 

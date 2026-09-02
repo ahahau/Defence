@@ -447,16 +447,16 @@ namespace _01.Code.Manager
             var trapShare = wave.WaveTrapDamage > 0
                 ? $"  ·  <color=#C79BFF>함정 {wave.WaveTrapDamage}</color>"
                 : string.Empty;
-            var exploitation = wave.IsExploitationObjectiveCompleted
-                ? $"\n<color=#FFD05A>착취 작전 완료 · 시설 수익 {wave.WaveFacilityGold}G</color>"
-                : $"\n착취 작전 {wave.WaveFacilityGold}/{wave.ExploitationTargetGold}G";
+            var objective = wave.LastObjectiveCompleted
+                ? $"\n<color=#FFD05A>{wave.LastObjectiveTitle} 완료 · 보너스 +{wave.LastObjectiveRewardGold}G</color>"
+                : $"\n{wave.LastObjectiveTitle} 실패";
 
             return $"\n<size=85%>격퇴 {wave.KillCount}/{wave.TotalEnemyCount}"
                    + $"  ·  가한 피해 {wave.WaveDamageDealt}"
                    + trapShare
                    + $"  ·  받은 피해 {wave.WaveDamageTaken}"
                    + $"  ·  치명타 {wave.WaveCriticalHits}"
-                   + exploitation + "</size>";
+                   + objective + "</size>";
         }
 
         /// <summary>빚이 있을 때만 한 줄 덧붙인다. 한도가 얼마 안 남았는지가 핵심 정보다.</summary>
@@ -521,7 +521,9 @@ namespace _01.Code.Manager
                 GoldChangeSource.Mine => "광산 수익",
                 GoldChangeSource.Inn => "여관 수익",
                 GoldChangeSource.Store => "상점 수익",
+                GoldChangeSource.Blacksmith => "대장간 수익",
                 GoldChangeSource.Exploitation => "착취 작전 보너스",
+                GoldChangeSource.WaveObjective => "선택 목표 보너스",
                 GoldChangeSource.Dialogue => "이벤트 수익",
                 GoldChangeSource.Policy => "정책 수입",
                 _ => "기타 수익"

@@ -57,6 +57,7 @@ namespace _01.Code.Enemies
         private int _currentFear;
         private int _currentGreed;
         private int _totalFacilityGold;
+        private int _bossFacilityAttackBonus;
         private Tween _returnTween;
         private int _treasuryGoldLoss;
 
@@ -97,6 +98,9 @@ namespace _01.Code.Enemies
         public int Fear => _currentFear;
         public int Greed => _currentGreed;
         public int TotalFacilityGold => _totalFacilityGold;
+        public AdventurerTrait Trait => data != null ? data.Trait : AdventurerTrait.None;
+        public string TraitLabel => AdventurerTraitRules.GetLabel(Trait);
+        public string TraitDescription => AdventurerTraitRules.GetDescription(Trait);
         public float RetreatChance => CalculateRetreatChance();
         public string InstinctState
         {
@@ -439,6 +443,9 @@ namespace _01.Code.Enemies
                 case Store store:
                     store.ApplyPassEffect(combatant);
                     return true;
+                case Blacksmith blacksmith:
+                    blacksmith.ApplyPassEffect(combatant);
+                    return true;
                 default:
                     return false;
             }
@@ -544,14 +551,26 @@ namespace _01.Code.Enemies
             if (amount <= 0)
                 return;
 
-            _currentFear += amount;
+            _currentFear += AdventurerTraitRules.ResolveFearGain(amount, Trait);
             MoodChanged?.Invoke(this);
         }
 
         private void ApplyTemptingBuildingMoodChange()
         {
-            _currentGreed += Mathf.Max(0, greedGainOnBuilding);
+            _currentGreed += AdventurerTraitRules.ResolveGreedGain(greedGainOnBuilding, Trait);
             _currentFear = Mathf.Max(0, _currentFear - Mathf.Max(0, fearReductionOnBuilding));
+            MoodChanged?.Invoke(this);
+        }
+
+        public int ResolveFacilitySpending(int baseAmount) =>
+            AdventurerTraitRules.ResolveFacilityGold(baseAmount, Trait);
+
+        public void ReduceFear(int amount)
+        {
+            if (amount <= 0 || _currentFear <= 0)
+                return;
+
+            _currentFear = Mathf.Max(0, _currentFear - amount);
             MoodChanged?.Invoke(this);
         }
 
@@ -561,10 +580,20 @@ namespace _01.Code.Enemies
         /// </summary>
         public void RecordFacilitySpending(int amount, GoldChangeSource source)
         {
-            if (amount <= 0 || source != GoldChangeSource.Store && source != GoldChangeSource.Inn)
+            if (amount <= 0 || source != GoldChangeSource.Store
+                && source != GoldChangeSource.Inn
+                && source != GoldChangeSource.Blacksmith)
                 return;
 
             _totalFacilityGold += amount;
+            if (_isBoss && Trait == AdventurerTrait.Shopaholic)
+            {
+                var nextBonus = AdventurerTraitRules.ResolveGreedKnightAttackBonus(_totalFacilityGold);
+                var delta = nextBonus - _bossFacilityAttackBonus;
+                if (delta > 0)
+                    combatant?.AddAttackDamage(delta);
+                _bossFacilityAttackBonus = nextBonus;
+            }
             FacilityGoldSpent?.Invoke(this, amount, source);
         }
 

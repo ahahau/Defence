@@ -135,7 +135,10 @@ namespace _01.Code.UI
             if (selectedEnemy.Health == null || !selectedEnemy.Health.IsAlive)
                 return "처치됨";
 
-            return selectedEnemy.InstinctState;
+            var trait = string.IsNullOrWhiteSpace(selectedEnemy.TraitLabel)
+                ? string.Empty
+                : $"{selectedEnemy.TraitLabel} · ";
+            return trait + selectedEnemy.InstinctState;
         }
 
         private string ResolveHpText()

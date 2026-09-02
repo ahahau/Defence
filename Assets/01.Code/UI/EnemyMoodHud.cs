@@ -108,7 +108,10 @@ namespace _01.Code.UI
             var retreat = Mathf.RoundToInt(_enemy.RetreatChance * 100f);
             var retreatText = retreat > 0 ? $"  철수 {retreat}%" : string.Empty;
             var spendingText = _enemy.TotalFacilityGold > 0 ? $"  <color=#FFD05A>{_enemy.TotalFacilityGold}G</color>" : string.Empty;
-            _label.text = $"경 {_enemy.Fear}  탐 {_enemy.Greed}{retreatText}{spendingText}";
+            var traitText = string.IsNullOrWhiteSpace(_enemy.TraitLabel)
+                ? string.Empty
+                : $"[{_enemy.TraitLabel}] ";
+            _label.text = $"{traitText}경 {_enemy.Fear}  탐 {_enemy.Greed}{retreatText}{spendingText}";
             _label.color = retreat >= 50
                 ? new Color(1f, 0.42f, 0.34f, 1f)
                 : new Color(1f, 0.91f, 0.7f, 1f);

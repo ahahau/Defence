@@ -12,10 +12,12 @@ namespace _01.Code.UI
     public sealed class InstallableBuildingCatalog
     {
         private const string TreasuryResourcePath = "Buildings/TreasuryBuildingData";
+        private const string BlacksmithResourcePath = "Buildings/BlacksmithBuildingData";
 
         private readonly List<BuildingDataSO> _unlocked = new();
         private IReadOnlyList<BuildingDataSO> _installable;
         private BuildingDataSO _treasuryData;
+        private BuildingDataSO _blacksmithData;
         private bool _hasLoadedTreasuryData;
 
         public IReadOnlyList<BuildingDataSO> Unlocked => _unlocked;
@@ -83,6 +85,10 @@ namespace _01.Code.UI
             var treasuryData = ResolveTreasuryData();
             if (treasuryData != null && yielded.Add(treasuryData))
                 yield return treasuryData;
+
+            _blacksmithData ??= Resources.Load<BuildingDataSO>(BlacksmithResourcePath);
+            if (_blacksmithData != null && yielded.Add(_blacksmithData))
+                yield return _blacksmithData;
         }
 
         private BuildingDataSO ResolveTreasuryData()

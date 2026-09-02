@@ -148,6 +148,54 @@ namespace _01.Code.Manager
         public int ExploitationTargetGold => _exploitationProgress.TargetGold;
         public bool IsExploitationObjectiveCompleted => _exploitationProgress.IsCompleted;
         public float ExploitationProgress01 => _exploitationProgress.Progress01;
+        public WaveObjectiveKind ObjectiveOptionA { get; private set; }
+        public WaveObjectiveKind ObjectiveOptionB { get; private set; }
+        public WaveObjectiveKind SelectedObjective { get; private set; }
+        public bool LastObjectiveCompleted { get; private set; }
+        public string LastObjectiveTitle { get; private set; } = string.Empty;
+        public int LastObjectiveRewardGold { get; private set; }
+        private int _objectiveDay;
+
+        public void PrepareObjectiveChoices(int day)
+        {
+            if (day <= 0 || _objectiveDay == day)
+                return;
+
+            _objectiveDay = day;
+            ObjectiveOptionA = WaveObjectiveRules.GetFirstOffer(day);
+            ObjectiveOptionB = WaveObjectiveRules.GetSecondOffer(day);
+            SelectedObjective = ObjectiveOptionA;
+        }
+
+        public bool SelectObjective(WaveObjectiveKind objective)
+        {
+            if (_isWaveRunning || (objective != ObjectiveOptionA && objective != ObjectiveOptionB))
+                return false;
+
+            SelectedObjective = objective;
+            return true;
+        }
+
+        public string GetSelectedObjectiveSummary(int enemyCount)
+        {
+            return $"{WaveObjectiveRules.GetTitle(SelectedObjective)} · "
+                   + WaveObjectiveRules.GetDescription(SelectedObjective, enemyCount)
+                   + $" · 성공 +{WaveObjectiveRules.GetRewardGold(SelectedObjective)}G";
+        }
+
+        public string GetSelectedObjectiveProgressText()
+        {
+            var target = WaveObjectiveRules.GetTarget(SelectedObjective, _waveEnemyCount);
+            var progress = WaveObjectiveRules.GetProgress(
+                SelectedObjective,
+                _waveEnemyCount,
+                _waveKillCount,
+                _exploitationProgress.FacilityGold,
+                _waveTrapDamage,
+                _waveCriticalHitCount);
+            return $"{WaveObjectiveRules.GetTitle(SelectedObjective)} {Mathf.Min(progress, target)}/{target}"
+                   + $" · 보너스 +{WaveObjectiveRules.GetRewardGold(SelectedObjective)}G";
+        }
 
         private void Awake()
         {
@@ -272,6 +320,7 @@ namespace _01.Code.Manager
         private IEnumerator RunWave(WaveConfigSO.WaveEntry entry)
         {
             var adjustedEnemyCount = GetConquestAdjustedEnemyCount(entry.enemyCount);
+            PrepareObjectiveChoices(_currentDay);
             ResetWaveResults(adjustedEnemyCount);
             // 민심이 낮은 판은 보상이 오른다 — 뒤처졌을 때 만회할 유일한 통로다.
             var moraleReward = MoralePolicyManager.Current != null
@@ -477,9 +526,41 @@ namespace _01.Code.Manager
             enemy.Initialize(_portalNode, costEventChannel, treasuryGoldLoss, nodeEventChannel);
             EnemyMoodHud.Attach(enemy);
             if (enemy != null)
+            {
                 _activeEnemies.Add(enemy);
+                ApplyPartyTraitSupport(enemy);
+            }
 
             return true;
+        }
+
+        private void ApplyPartyTraitSupport(Enemy spawnedEnemy)
+        {
+            if (spawnedEnemy == null)
+                return;
+
+            var newPriestCalm = AdventurerTraitRules.GetPartyCalmAmount(spawnedEnemy.Trait);
+            if (newPriestCalm > 0)
+            {
+                foreach (var ally in _activeEnemies)
+                {
+                    if (ally != null && ally != spawnedEnemy && ally.IsAlive)
+                        ally.ReduceFear(newPriestCalm);
+                }
+            }
+
+            foreach (var ally in _activeEnemies)
+            {
+                if (ally == null || ally == spawnedEnemy || !ally.IsAlive)
+                    continue;
+
+                var calm = AdventurerTraitRules.GetPartyCalmAmount(ally.Trait);
+                if (calm <= 0)
+                    continue;
+
+                spawnedEnemy.ReduceFear(calm);
+                break;
+            }
         }
 
         private Enemy ResolveEnemyPrefab()
@@ -631,9 +712,7 @@ namespace _01.Code.Manager
             if (!_isWaveRunning || enemy == null)
                 return;
 
-            if (_exploitationProgress.RecordFacilityGold(amount))
-                costEventChannel?.RaiseEvent(
-                    new GoldEarnedEvent(ExploitationBonusGold, GoldChangeSource.Exploitation));
+            _exploitationProgress.RecordFacilityGold(amount);
         }
 
         private void HandleBossHealthChanged(float healthRatio)
@@ -764,6 +843,7 @@ namespace _01.Code.Manager
 
             // 잡은 만큼만 받는다. 아래 지급처와 정산 표시가 같은 값을 봐야 하므로 여기서 한 번만 깎는다.
             _currentClearGoldReward = ResolveClearGoldReward();
+            ResolveObjectiveReward();
 
             // 최종 보스 웨이브 클리어 = 승리 — 보상 패널 대신 승리 패널(시네마틱이 끝난 뒤).
             if (_isFinalWave && !_isGameCleared)
@@ -785,6 +865,25 @@ namespace _01.Code.Manager
                 costEventChannel?.RaiseEvent(new GoldEarnedEvent(_currentClearGoldReward, GoldChangeSource.WaveReward));
 
             RaiseWaveEnded();
+        }
+
+        private void ResolveObjectiveReward()
+        {
+            LastObjectiveTitle = WaveObjectiveRules.GetTitle(SelectedObjective);
+            LastObjectiveCompleted = WaveObjectiveRules.IsCompleted(
+                SelectedObjective,
+                _waveEnemyCount,
+                _waveKillCount,
+                _exploitationProgress.FacilityGold,
+                _waveTrapDamage,
+                _waveCriticalHitCount);
+            LastObjectiveRewardGold = LastObjectiveCompleted
+                ? WaveObjectiveRules.GetRewardGold(SelectedObjective)
+                : 0;
+
+            if (LastObjectiveRewardGold > 0)
+                costEventChannel?.RaiseEvent(
+                    new GoldEarnedEvent(LastObjectiveRewardGold, GoldChangeSource.WaveObjective));
         }
 
         private BossWavePresenter EnsureBossPresenter()

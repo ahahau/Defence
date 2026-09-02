@@ -31,8 +31,10 @@ namespace _01.Code.Buildings
             if (enemy.Health != null && enemy.Health.CurrentHealth > previousHealth)
                 PlayPassEffectFeedback(enemy, healFlashColor, healFlashDuration, healFeelFeedback);
 
-            costEventChannel?.RaiseEvent(new GoldEarnedEvent(goldReward, GoldChangeSource.Inn));
-            enemy.GetComponentInParent<Enemy>()?.RecordFacilitySpending(goldReward, GoldChangeSource.Inn);
+            var adventurer = enemy.GetComponentInParent<Enemy>();
+            var paidGold = adventurer != null ? adventurer.ResolveFacilitySpending(goldReward) : goldReward;
+            costEventChannel?.RaiseEvent(new GoldEarnedEvent(paidGold, GoldChangeSource.Inn));
+            adventurer?.RecordFacilitySpending(paidGold, GoldChangeSource.Inn);
         }
     }
 }
