@@ -13,3 +13,4 @@ MonoBehaviour:
   m_Name: ObtainedArtifactInventory
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Artifacts.ArtifactInventorySO
   obtainedArtifacts: []
+  combos: {fileID: 11400000, guid: f0c86d742c2ec484fbc08ee5cc420956, type: 2}

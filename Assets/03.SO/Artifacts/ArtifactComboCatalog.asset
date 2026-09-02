@@ -1,0 +1,76 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2b09fa32611df649bd4f94f890814ef, type: 3}
+  m_Name: ArtifactComboCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Artifacts.ArtifactComboCatalogSO
+  combos:
+  - displayName: "\uBCBC\uB824\uB0B8 \uCE7C\uB0A0"
+    description: "\uC22B\uB3CC\uB85C \uC138\uC6B4 \uB0A0\uC744 \uC720\uB9AC \uB2E8\uAC80\uC5D0
+      \uBB3C\uB9B0\uB2E4. \uD55C \uBC88\uC5D0 \uBCA0\uC5B4 \uB118\uAE30\uB294 \uD798\uC774
+      \uBD99\uB294\uB2E4."
+    first: {fileID: 11400000, guid: f14edc1fb89191e458128f9c6f1a8368, type: 2}
+    second: {fileID: 11400000, guid: a1ee05dcf8955de4198a70ff634d01d9, type: 2}
+    target: 1
+    attackDamageBonus: 0
+    attackDamageMultiplier: 1.15
+    maxHealthBonus: 0
+    attackIntervalMultiplier: 1
+  - displayName: "\uBC84\uD2F0\uB294 \uB300\uC5F4"
+    description: "\uBC29\uD328 \uB4A4\uC5D0 \uAD70\uB7C9\uC774 \uC313\uC774\uBA74
+      \uB300\uC5F4\uC774 \uBB34\uB108\uC9C0\uC9C0 \uC54A\uB294\uB2E4."
+    first: {fileID: 11400000, guid: dabb9a0fb0c93e84d9cedb6577646512, type: 2}
+    second: {fileID: 11400000, guid: 6e0aa922425fda541b0761ffcb3aa380, type: 2}
+    target: 1
+    attackDamageBonus: 0
+    attackDamageMultiplier: 1
+    maxHealthBonus: 12
+    attackIntervalMultiplier: 1
+  - displayName: "\uADF8\uB9BC\uC790 \uC0AC\uB0E5"
+    description: "\uBE60\uB978 \uBC1C\uACFC \uACE0\uB9BD\uB41C \uD45C\uC801. \uBD99\uAE30
+      \uC804\uC5D0 \uC774\uBBF8 \uB05D\uB098 \uC788\uB2E4."
+    first: {fileID: 11400000, guid: ddf810f3afd9aa44f9226a07e1d8a497, type: 2}
+    second: {fileID: 11400000, guid: 9c571ddd8ffc350419fc7b606bcc7c51, type: 2}
+    target: 1
+    attackDamageBonus: 0
+    attackDamageMultiplier: 1.2
+    maxHealthBonus: 0
+    attackIntervalMultiplier: 1
+  - displayName: "\uC9C4\uAD70\uAC00"
+    description: "\uBD81\uC18C\uB9AC\uC5D0 \uAD70\uAE30\uAC00 \uB9DE\uBB3C\uB9AC\uBA74
+      \uB300\uC5F4 \uC804\uCCB4\uAC00 \uD55C \uBC15\uC790 \uBE68\uB77C\uC9C4\uB2E4."
+    first: {fileID: 11400000, guid: b5f67e1ed5ec65c46b14e4b7fb2c9931, type: 2}
+    second: {fileID: 11400000, guid: 978ea6756bceca84e88ee8dc78d8e67b, type: 2}
+    target: 0
+    attackDamageBonus: 2
+    attackDamageMultiplier: 1
+    maxHealthBonus: 0
+    attackIntervalMultiplier: 0.94
+  - displayName: "\uD53C\uC758 \uACC4\uC57D"
+    description: "\uC11C\uC57D\uACFC \uB2E8\uAC80. \uBAB0\uB9B4\uC218\uB85D \uC0AC\uB098\uC6CC\uC9C0\uC9C0\uB9CC
+      \uC624\uB798 \uBC84\uD2F0\uC9C0\uB294 \uBABB\uD55C\uB2E4."
+    first: {fileID: 11400000, guid: 3f0ac0b9c5e57194ebe20c16d43ff2db, type: 2}
+    second: {fileID: 11400000, guid: a1ee05dcf8955de4198a70ff634d01d9, type: 2}
+    target: 1
+    attackDamageBonus: 0
+    attackDamageMultiplier: 1.2
+    maxHealthBonus: -5
+    attackIntervalMultiplier: 1
+  - displayName: "\uC9C0\uD718 \uCCB4\uACC4"
+    description: "\uC778\uC7A5\uC774 \uBA85\uB839\uC744 \uB0B4\uB9AC\uACE0 \uC7A5\uBD80\uAC00
+      \uADF8\uAC83\uC744 \uAD74\uB9B0\uB2E4."
+    first: {fileID: 11400000, guid: 754b02fc92577d04f92b287df6d112c3, type: 2}
+    second: {fileID: 11400000, guid: cefe93e23c5ca844f87af3a4b43fd70d, type: 2}
+    target: 0
+    attackDamageBonus: 1
+    attackDamageMultiplier: 1
+    maxHealthBonus: 10
+    attackIntervalMultiplier: 1

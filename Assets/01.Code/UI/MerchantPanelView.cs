@@ -31,6 +31,8 @@ namespace _01.Code.UI
         [SerializeField] private TMP_Text titleText;
         [SerializeField] private TMP_Text detailText;
 
+        private readonly List<ArtifactCombo> comboBuffer = new();
+
         [SerializeField] private string titleFormat = "떠돌이 상인";
 
         /// <summary>진열 한 칸. 무작위 상품은 살 때가 되어서야 어떤 유물인지 정해진다.</summary>
@@ -324,7 +326,7 @@ namespace _01.Code.UI
 
                 var label = offer.IsRandom
                     ? $"{shopCatalog.RandomArtifactLabel}\n{price}G\n무엇이 나올지는 열어봐야 안다."
-                    : $"{ResolveName(offer.Artifact)}\n{price}G\n{offer.Artifact.Description}";
+                    : $"{ResolveName(offer.Artifact)}\n{price}G\n{offer.Artifact.Description}{BuildComboHint(offer.Artifact)}";
                 InstallCardPresenter.SetButtonText(button, label);
             }
 
@@ -341,6 +343,38 @@ namespace _01.Code.UI
             SetDetail(purchaseCount > 0
                 ? $"거래할수록 값을 올려 부릅니다. (누적 {purchaseCount}회)"
                 : "유물을 고르면 즉시 구매합니다.\n거래할 때마다 이후 가격이 오릅니다.");
+        }
+
+        /// <summary>
+        /// 이 유물이 어떤 유물과 맞물리는지. 이미 가진 짝이면 그렇다고 알려 준다.
+        ///
+        /// 유물은 좋은 유닛 두 명 값이다. 스탯만 보면 언제나 유닛이 낫고, 살 이유는 조합에 있다.
+        /// 그 조합이 사는 자리에서 보이지 않으면 없는 것과 같다.
+        /// </summary>
+        private string BuildComboHint(ArtifactDataSO artifact)
+        {
+            var catalog = artifactInventory != null ? artifactInventory.Combos : null;
+            if (catalog == null || artifact == null)
+                return string.Empty;
+
+            catalog.CollectCombosWith(artifact, comboBuffer);
+            if (comboBuffer.Count == 0)
+                return string.Empty;
+
+            var lines = new System.Text.StringBuilder();
+            foreach (var combo in comboBuffer)
+            {
+                var partner = combo.GetPartnerOf(artifact);
+                if (partner == null)
+                    continue;
+
+                var owned = artifactInventory.HasObtained(partner);
+                lines.Append(owned
+                    ? $"\n<color=#7ADB8A>조합 완성 · {combo.DisplayName}</color>"
+                    : $"\n<color=#9A8B78>조합 · {combo.DisplayName} ({partner.DisplayName} 필요)</color>");
+            }
+
+            return lines.ToString();
         }
 
         private void SetDetail(string value)

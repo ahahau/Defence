@@ -34,5 +34,5 @@ MonoBehaviour:
   visitIntervalDays: 2
   priceIncreasePerPurchase: 0.15
   offerRandomArtifact: 1
-  randomArtifactPrice: 90
+  randomArtifactPrice: 120
   randomArtifactLabel: "\uC815\uCCB4\uBD88\uBA85\uC758 \uC720\uBB3C"
