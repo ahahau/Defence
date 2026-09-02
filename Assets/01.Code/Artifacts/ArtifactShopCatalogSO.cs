@@ -92,26 +92,31 @@ namespace _01.Code.Artifacts
             return Mathf.Max(1, Mathf.RoundToInt(basePrice * dayScale * purchaseScale));
         }
 
-        /// <summary>무작위 상품이 실제로 내줄 유물. 아직 없는 것 중에서 하나 고른다.</summary>
+        /// <summary>
+        /// 무작위 상품이 실제로 내줄 유물. 아직 없는 것 중에서 하나 고른다.
+        /// 소모품은 제외한다 — 상자 값(<see cref="randomArtifactPrice"/>)은 유물 기준이라
+        /// 물약이 나오면 정가보다 비싸게 주고 산 꼴이 되고, 손에 남는 것도 없다.
+        /// </summary>
         public ArtifactDataSO PickRandomUnowned(ArtifactInventorySO inventory)
         {
-            var candidates = CollectAvailable(inventory);
+            var candidates = CollectAvailable(inventory, true);
             return candidates.Count == 0 ? null : candidates[Random.Range(0, candidates.Count)];
         }
 
-        /// <summary>무작위 상품으로 내줄 수 있는 유물이 아직 남아 있는가.</summary>
+        /// <summary>무작위 상품으로 내줄 수 있는 유물이 아직 남아 있는가. 소모품은 세지 않는다.</summary>
         public bool HasAvailableArtifact(ArtifactInventorySO inventory)
         {
-            return CollectAvailable(inventory).Count > 0;
+            return CollectAvailable(inventory, true).Count > 0;
         }
 
         /// <summary>
         /// 이번 진열 목록을 뽑는다. 이미 가진 유물과 가격이 없는 유물은 빼고 무작위로 고른다.
         /// 살 수 있는 게 칸 수보다 적으면 있는 만큼만 돌려준다.
+        /// 지정 진열에는 소모품도 함께 올린다 — 물약을 살 자리가 여기뿐이다.
         /// </summary>
         public List<ArtifactDataSO> RollDisplay(ArtifactInventorySO inventory)
         {
-            var candidates = CollectAvailable(inventory);
+            var candidates = CollectAvailable(inventory, false);
             var display = new List<ArtifactDataSO>();
             var take = Mathf.Min(SlotCount, candidates.Count);
             for (var i = 0; i < take; i++)
@@ -124,13 +129,20 @@ namespace _01.Code.Artifacts
             return display;
         }
 
-        /// <summary>아직 안 가졌고 가격이 매겨진 유물만 추린다.</summary>
-        private List<ArtifactDataSO> CollectAvailable(ArtifactInventorySO inventory)
+        /// <summary>
+        /// 아직 안 가졌고 가격이 매겨진 유물만 추린다.
+        /// 소모품은 소지품에 남지 않아 <c>HasObtained</c>로 걸러지지 않으므로,
+        /// 영구 유물만 필요한 자리에서는 <paramref name="permanentOnly"/>로 따로 뺀다.
+        /// </summary>
+        private List<ArtifactDataSO> CollectAvailable(ArtifactInventorySO inventory, bool permanentOnly)
         {
             var candidates = new List<ArtifactDataSO>();
             foreach (var artifact in stock)
             {
                 if (artifact == null || artifact.Price <= 0)
+                    continue;
+
+                if (permanentOnly && artifact.IsConsumable)
                     continue;
 
                 if (inventory != null && inventory.HasObtained(artifact))

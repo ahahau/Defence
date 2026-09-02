@@ -98,6 +98,33 @@ namespace Tests.EditMode.Rules
                 "가격이 0인 유물은 상인이 취급하지 않습니다.");
         }
 
+        [Test]
+        public void Merchant_MysteryBoxNeverDispensesAConsumable()
+        {
+            // 소모품은 사고 나도 소지품에 남지 않아 "이미 가졌다"로 걸러지지 않는다.
+            // 그래서 상자 후보에 계속 남아, 90G짜리 정체불명의 유물이 30G짜리 물약을
+            // 뱉을 수 있었다. 값도 손해고 손에 남는 것도 없다.
+            var shop = NewAsset("_01.Code.Artifacts.ArtifactShopCatalogSO");
+            var potion = NewAsset("_01.Code.Artifacts.ArtifactDataSO");
+            SetPrivate(potion, "<Price>k__BackingField", 30);
+            SetPrivate(potion, "<IsConsumable>k__BackingField", true);
+
+            var stock = (System.Collections.IList)Activator.CreateInstance(
+                typeof(System.Collections.Generic.List<>)
+                    .MakeGenericType(Resolve("_01.Code.Artifacts.ArtifactDataSO")));
+            stock.Add(potion);
+            Call(shop, "ReplaceStock", stock);
+
+            Assert.That(Call(shop, "PickRandomUnowned", new object[] { null }), Is.Null,
+                "상자에 내줄 영구 유물이 없으면 아무것도 나오지 않아야 합니다.");
+            Assert.That(Call(shop, "HasAvailableArtifact", new object[] { null }), Is.False,
+                "물약만 남았으면 상자 칸은 닫혀야 합니다.");
+
+            var display = (System.Collections.IList)Call(shop, "RollDisplay", new object[] { null });
+            Assert.That(display, Has.Count.EqualTo(1),
+                "물약은 지정 진열에는 계속 올라야 합니다 — 살 자리가 여기뿐입니다.");
+        }
+
         // ── 해금 ────────────────────────────────────────────────────
 
         [Test]
