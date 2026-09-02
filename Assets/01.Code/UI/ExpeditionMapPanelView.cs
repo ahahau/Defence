@@ -35,6 +35,10 @@ namespace _01.Code.UI
         [SerializeField, Tooltip("마을 버튼이 채워질 스크롤 목록의 Content. 비어 있으면 아래 고정 버튼 배열을 그대로 쓴다.")]
         private RectTransform villageContentRoot;
 
+        [Header("지도 뷰")]
+        [SerializeField, Tooltip("지도를 끌어 옮기는 뷰포트. 스크롤바는 붙이지 않는다 — 지도는 목록이 아니라 밀어 보는 그림이다.")]
+        private ScrollRect mapScroll;
+
         [SerializeField, Tooltip("마을 한 칸의 원본. 카탈로그의 마을 수만큼 복제된다.")]
         private Button villageButtonTemplate;
 
@@ -58,6 +62,17 @@ namespace _01.Code.UI
         private int selectedVillage;
         private bool hasActiveExpedition;
         private bool isWired;
+        private readonly List<RectTransform> mapLinks = new();
+
+        [SerializeField, Tooltip("마을을 잇는 선 색. 앞 마을을 쳐야 뒷 마을이 열린다는 관계를 그린다.")]
+        private Color mapLinkColor = new(0.55f, 0.42f, 0.28f, 0.85f);
+
+        [SerializeField, Tooltip("거미줄처럼 깔리는 잔길의 색. 해금 경로보다 흐리게 둔다.")]
+        private Color webLinkColor = new(0.42f, 0.33f, 0.22f, 0.45f);
+
+        [SerializeField, Range(0.1f, 1.5f), Tooltip("이 거리 안의 마을끼리 잔길을 잇는다. 크면 전부 이어져 그물이 뭉개진다.")]
+        private float webLinkRange = 0.62f;
+
         private int lastUnlockDay = int.MinValue;
         private bool? lastStandbyState;
         /// <summary>출발 시점에 확정된 편성 전력. 귀환 피로가 섞이기 전 값이라 판정은 이걸로 한다.</summary>
@@ -118,12 +133,145 @@ namespace _01.Code.UI
                 var button = Instantiate(villageButtonTemplate, villageContentRoot);
                 button.name = $"Village{i}";
                 button.gameObject.SetActive(true);
+                PlaceOnMap(button, i);
                 built.Add(button);
             }
 
             villageButtons = built.ToArray();
-            // 목록 높이는 만들 때 한 번만 맞춘다. 새로고침마다 부르면 스크롤이 위로 튕긴다.
-            ScrollViewContentSizer.ResizeToGridItemCount(villageContentRoot, villageButtons.Length);
+            BuildMapLinks();
+        }
+
+        /// <summary>
+        /// 마을을 지도 좌표에 놓는다. 목록으로 쌓으면 어디가 어디인지가 사라지고,
+        /// 앞 마을을 쳐야 뒷 마을이 열린다는 관계도 보이지 않는다.
+        /// 앵커로 잡아 두면 지도 크기가 달라져도 상대 위치가 유지된다.
+        /// </summary>
+        private void PlaceOnMap(Button button, int index)
+        {
+            var entry = villageCatalog != null ? villageCatalog.Get(index) : null;
+            if (button == null || entry == null)
+                return;
+
+            var rect = (RectTransform)button.transform;
+            var position = entry.MapPosition;
+            rect.anchorMin = position;
+            rect.anchorMax = position;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+        }
+        /// <summary>
+        /// 마을들을 길로 잇는다. 굵은 선은 해금 경로 — 앞 마을을 쳐야 뒤가 열린다는 관계다.
+        /// 가는 선은 그냥 길이다. 그게 없으면 핀 여섯 개가 허공에 떠 있고,
+        /// 있으면 비로소 한 장의 지도로 읽힌다.
+        /// </summary>
+        private void BuildMapLinks()
+        {
+            if (villageCatalog == null || villageContentRoot == null)
+                return;
+
+            foreach (var existing in mapLinks)
+            {
+                if (existing != null)
+                    Destroy(existing.gameObject);
+            }
+
+            mapLinks.Clear();
+            var count = villageCatalog.Count;
+
+            // 던전이 한가운데 있고 길은 거기서 뻗어나간다.
+            // 중심이 없으면 여섯 점이 그냥 흩어져 있고, 어디서 출발하는 이야기인지가 안 보인다.
+            mapLinks.Add(CreateCenterMarker());
+            for (var i = 0; i < count; i++)
+            {
+                var entry = villageCatalog.Get(i);
+                if (entry == null || entry.UnlockAfterVillage >= 0)
+                    continue;
+
+                mapLinks.Add(CreateLink(MapCenter, entry.MapPosition, $"Spoke{i}", mapLinkColor, 3.5f));
+            }
+
+            // 가는 길부터 깔고 그 위에 해금 경로를 얹는다. 순서가 곧 그려지는 순서다.
+            for (var a = 0; a < count; a++)
+            for (var b = a + 1; b < count; b++)
+            {
+                var from = villageCatalog.Get(a)?.MapPosition ?? Vector2.zero;
+                var to = villageCatalog.Get(b)?.MapPosition ?? Vector2.zero;
+                if (Vector2.Distance(from, to) > webLinkRange)
+                    continue;
+
+                if (IsUnlockPair(a, b))
+                    continue;
+
+                mapLinks.Add(CreateLink(from, to, $"Web{a}_{b}", webLinkColor, 1.5f));
+            }
+
+            for (var i = 0; i < count; i++)
+            {
+                var entry = villageCatalog.Get(i);
+                var required = entry != null ? entry.UnlockAfterVillage : -1;
+                if (required < 0 || required >= count)
+                    continue;
+
+                var from = villageCatalog.Get(required).MapPosition;
+                mapLinks.Add(CreateLink(from, entry.MapPosition, $"Link{required}_{i}", mapLinkColor, 3.5f));
+            }
+        }
+
+        /// <summary>둘이 해금 관계로 묶인 쌍인가. 굵은 선을 가는 선이 덧그리지 않게 가른다.</summary>
+        private bool IsUnlockPair(int a, int b)
+        {
+            var first = villageCatalog.Get(a);
+            var second = villageCatalog.Get(b);
+            return (first != null && first.UnlockAfterVillage == b)
+                   || (second != null && second.UnlockAfterVillage == a);
+        }
+
+        /// <summary>지도의 한가운데 — 이 던전. 길이 여기서 뻗어나간다.</summary>
+        private static Vector2 MapCenter => new(0.5f, 0.5f);
+
+        private RectTransform CreateCenterMarker()
+        {
+            var go = new GameObject("MapCenter", typeof(RectTransform), typeof(UnityEngine.UI.Image));
+            var rect = (RectTransform)go.transform;
+            rect.SetParent(villageContentRoot, false);
+            rect.SetAsFirstSibling();
+            rect.anchorMin = rect.anchorMax = MapCenter;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = new Vector2(26f, 26f);
+            // 마름모로 세워 마을 팻말과 한눈에 구분되게 한다.
+            rect.localEulerAngles = new Vector3(0f, 0f, 45f);
+
+            var image = go.GetComponent<UnityEngine.UI.Image>();
+            image.color = new Color(0.85f, 0.32f, 0.24f, 1f);
+            image.raycastTarget = false;
+            return rect;
+        }
+
+        private RectTransform CreateLink(Vector2 from, Vector2 to, string name, Color color, float thickness)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(UnityEngine.UI.Image));
+            var rect = (RectTransform)go.transform;
+            rect.SetParent(villageContentRoot, false);
+            // 선은 핀보다 뒤에 있어야 한다. 위에 그리면 이름을 가린다.
+            rect.SetAsFirstSibling();
+
+            var mid = (from + to) * 0.5f;
+            rect.anchorMin = mid;
+            rect.anchorMax = mid;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+
+            // 앵커가 정규 좌표라 길이는 실제 픽셀로 재야 한다.
+            var size = villageContentRoot.rect.size;
+            var delta = new Vector2((to.x - from.x) * size.x, (to.y - from.y) * size.y);
+            rect.sizeDelta = new Vector2(delta.magnitude, thickness);
+            rect.localEulerAngles = new Vector3(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
+
+            var image = go.GetComponent<UnityEngine.UI.Image>();
+            image.color = color;
+            image.raycastTarget = false;
+            return rect;
         }
 
         /// <summary>카탈로그의 정의를 런타임 상태로 옮긴다. 장악도만 판마다 새로 시작한다.</summary>
@@ -544,9 +692,14 @@ namespace _01.Code.UI
                 var open = IsVillageUnlocked(i);
                 var marker = !open ? "잠김  " : (i == selectedVillage ? "▶ " : string.Empty);
                 if (villageButtons[i] != null) villageButtons[i].interactable = open;
+                // 핀은 작다. 잠긴 이유를 문장으로 늘어놓으면 상자를 넘치므로,
+                // 어느 마을이 필요한지 이름으로만 알린다 — 어차피 그게 알고 싶은 전부다.
+                var gate = villageCatalog != null ? villageCatalog.Get(i) : null;
+                var required = gate != null ? gate.UnlockAfterVillage : -1;
+                var requiredName = required >= 0 && required < villages.Length ? villages[required].Name : "앞선 마을";
                 SetButtonLabel(villageButtons[i], open
                     ? $"{marker}{listed.Name}\n<size=80%>난이도 {listed.Difficulty}  ·  장악 {listed.Conquest}%</size>"
-                    : $"{marker}{listed.Name}\n<size=80%>앞선 마을을 완전히 장악해야 열립니다</size>");
+                    : $"{marker}{listed.Name}\n<size=80%>{requiredName} 장악 필요</size>");
             }
             for (var i = 0; i < unitButtons.Length; i++)
             {

@@ -153,6 +153,12 @@ namespace _01.Code.Progression
         [SerializeField, Min(0), Tooltip("보상의 크기. 금화면 G, 지원자면 명, 주둔 마력이면 칸 수.")]
         private int conquestRewardAmount;
 
+
+        [Header("지도 배치")]
+        [SerializeField, Tooltip("지도 안에서의 자리. 0~1 정규 좌표이며 (0,0)이 왼쪽 아래다. 목록이 아니라 지도로 보이게 하는 값이다.")]
+        private Vector2 mapPosition = new(0.5f, 0.5f);
+
+        public Vector2 MapPosition => new(Mathf.Clamp01(mapPosition.x), Mathf.Clamp01(mapPosition.y));
         public int UnlockAfterVillage => unlockAfterVillage;
         public VillageConquestReward ConquestReward => conquestReward;
         public int ConquestRewardAmount => Mathf.Max(0, conquestRewardAmount);
