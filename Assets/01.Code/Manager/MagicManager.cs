@@ -12,6 +12,31 @@ namespace _01.Code.Manager
         public int UsedMagic { get; private set; }
         public int MaxMagic => maxMagic;
 
+        /// <summary>
+        /// 주둔 마력 상한을 영구히 올린다. 마을을 완전히 장악한 보상으로 쓰인다.
+        /// 이미 배치한 부하는 건드리지 않으므로 늘어난 칸은 즉시 쓸 수 있다.
+        /// </summary>
+        public void IncreaseMaxMagic(int amount)
+        {
+            if (amount <= 0)
+                return;
+
+            maxMagic += amount;
+            RaiseMagicChanged();
+        }
+
+        /// <summary>
+        /// 저장에서 되돌린다. 상한과 사용량을 함께 받는다 —
+        /// 복원은 유닛을 직접 인스턴스화하므로 배치가 마력을 다시 청구하지 않는다.
+        /// 사용량을 되돌리지 않으면 불러올 때마다 마력이 공짜로 비워진다.
+        /// </summary>
+        public void RestoreState(int max, int used)
+        {
+            maxMagic = Mathf.Max(0, max);
+            UsedMagic = Mathf.Clamp(used, 0, maxMagic);
+            RaiseMagicChanged();
+        }
+
         private void Awake()
         {
             UsedMagic = 0;

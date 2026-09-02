@@ -9169,7 +9169,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.44}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 32, y: -13.705307}
+  m_AnchoredPosition: {x: 32, y: -13.710556}
   m_SizeDelta: {x: -244, y: -118}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &780624401
@@ -18377,6 +18377,7 @@ GameObject:
   - component: {fileID: 1764202679}
   - component: {fileID: 1764202678}
   - component: {fileID: 1764202677}
+  - component: {fileID: 1764202686}
   m_Layer: 0
   m_Name: RunSave
   m_TagString: Untagged
@@ -18499,6 +18500,7 @@ MonoBehaviour:
   - {fileID: 1764202679}
   - {fileID: 1764202678}
   - {fileID: 1764202677}
+  - {fileID: 1764202686}
 --- !u!4 &1764202685
 Transform:
   m_ObjectHideFlags: 0
@@ -18514,6 +18516,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1764202686
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1764202676}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30c15f3845f7d8a40a1cd296603c38a2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Persistence.Agents.MagicSaveAgent
+  saveKey: magic.state
+  magicManager: {fileID: 0}
 --- !u!1 &1772712445
 GameObject:
   m_ObjectHideFlags: 0
