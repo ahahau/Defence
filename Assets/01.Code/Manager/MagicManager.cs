@@ -7,7 +7,7 @@ namespace _01.Code.Manager
     public class MagicManager : MonoBehaviour
     {
         [SerializeField] private GameEventChannelSO costEventChannel;
-        [SerializeField, Min(0)] private int maxMagic = 5;
+        [SerializeField, Min(0)] private int maxMagic = 8;
 
         public int UsedMagic { get; private set; }
         public int MaxMagic => maxMagic;
