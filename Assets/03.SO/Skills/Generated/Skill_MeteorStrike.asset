@@ -12,9 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2c05617eccf4864aa5672963a8c7578, type: 3}
   m_Name: Skill_MeteorStrike
   m_EditorClassIdentifier: 
-  <DisplayName>k__BackingField: Meteor Strike
-  <Description>k__BackingField: Mark the target's ground, then blast the area for
-    heavy damage and knockback after a short delay.
+  <DisplayName>k__BackingField: "\uC6B4\uC11D \uB099\uD558"
+  <Description>k__BackingField: "\uC9C0\uBA74\uC744 \uD45C\uC2DC\uD55C \uB4A4 \uC7A0\uC2DC
+    \uD6C4 \uADF8 \uC790\uB9AC\uB97C \uAC15\uD0C0\uD574 \uD070 \uD53C\uD574\uC640
+    \uBC00\uCCD0\uB0C4\uC744 \uC90D\uB2C8\uB2E4."
   <Icon>k__BackingField: {fileID: 0}
   <Cooldown>k__BackingField: 8
   <IsUltimate>k__BackingField: 0

@@ -16,8 +16,9 @@ MonoBehaviour:
   <BoardSprite>k__BackingField: {fileID: 4723107735738678597, guid: ab745de3f39d5fb4cb696fb8e47b56d4, type: 3}
   <Defense>k__BackingField: 14
   <EvasionChance>k__BackingField: 0.05
-  <Name>k__BackingField: Sword
+  <Name>k__BackingField: "\uC6A9\uBCD1 \uAC80\uC0AC"
   <Role>k__BackingField: 3
+  <Trait>k__BackingField: 0
   <Prefab>k__BackingField: {fileID: 6453398018867074118, guid: 8130c1f18f0b8334eae8a599efde258c, type: 3}
   <Fear>k__BackingField: 1
   <Greed>k__BackingField: 3

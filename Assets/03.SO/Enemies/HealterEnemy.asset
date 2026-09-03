@@ -16,8 +16,9 @@ MonoBehaviour:
   <BoardSprite>k__BackingField: {fileID: 4723107735738678597, guid: 182b0ee12ea4a864fba362276291060c, type: 3}
   <Defense>k__BackingField: 10
   <EvasionChance>k__BackingField: 0.08
-  <Name>k__BackingField: Healter
+  <Name>k__BackingField: "\uC885\uAD70 \uC0AC\uC81C"
   <Role>k__BackingField: 2
+  <Trait>k__BackingField: 0
   <Prefab>k__BackingField: {fileID: 6453398018867074118, guid: dc606b17b232b0b40851cbd65e1fdc44, type: 3}
   <Fear>k__BackingField: 1
   <Greed>k__BackingField: 2

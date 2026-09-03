@@ -16,7 +16,7 @@ MonoBehaviour:
   <BoardSprite>k__BackingField: {fileID: 4723107735738678597, guid: fb84d3b2af781aa4bbc5268c9c1b36f7, type: 3}
   <Defense>k__BackingField: 0
   <EvasionChance>k__BackingField: 0
-  <Name>k__BackingField: Scout
+  <Name>k__BackingField: "\uB5A0\uB3CC\uC774 \uBAA8\uD5D8\uAC00"
   <Role>k__BackingField: 0
   <Trait>k__BackingField: 0
   <Prefab>k__BackingField: {fileID: 6453398018867074118, guid: a5af3a434bf432348801f90079a3ea66, type: 3}

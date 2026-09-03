@@ -12,9 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2c05617eccf4864aa5672963a8c7578, type: 3}
   m_Name: Skill_ExposeWeakness
   m_EditorClassIdentifier: 
-  <DisplayName>k__BackingField: Expose Weakness
-  <Description>k__BackingField: Mark nearby enemies so they briefly move slower and
-    take more follow-up damage.
+  <DisplayName>k__BackingField: "\uC57D\uC810 \uAC04\uD30C"
+  <Description>k__BackingField: "\uC8FC\uBCC0 \uC801\uC744 \uD45C\uC2DC\uD574 \uC7A0\uC2DC
+    \uB290\uB824\uC9C0\uACE0 \uB4A4\uC774\uC740 \uD53C\uD574\uB97C \uB354 \uBC1B\uAC8C
+    \uD569\uB2C8\uB2E4."
   <Icon>k__BackingField: {fileID: 0}
   <Cooldown>k__BackingField: 6
   <IsUltimate>k__BackingField: 0

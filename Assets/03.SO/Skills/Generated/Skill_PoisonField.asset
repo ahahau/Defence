@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2c05617eccf4864aa5672963a8c7578, type: 3}
   m_Name: Skill_PoisonField
   m_EditorClassIdentifier: 
-  <DisplayName>k__BackingField: Poison Field
-  <Description>k__BackingField: Create a toxic ground zone that slows enemies and
-    deals repeated damage.
+  <DisplayName>k__BackingField: "\uB3C5 \uC9C0\uB300"
+  <Description>k__BackingField: "\uB3C5\uC774 \uACE0\uC778 \uBC14\uB2E5\uC744 \uAE54\uC544
+    \uC801\uC744 \uB454\uD654\uC2DC\uD0A4\uACE0 \uC9C0\uC18D \uD53C\uD574\uB97C \uC90D\uB2C8\uB2E4."
   <Icon>k__BackingField: {fileID: 0}
   <Cooldown>k__BackingField: 6
   <IsUltimate>k__BackingField: 0

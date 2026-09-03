@@ -16,7 +16,7 @@ MonoBehaviour:
   <BoardSprite>k__BackingField: {fileID: 4723107735738678597, guid: fb84d3b2af781aa4bbc5268c9c1b36f7, type: 3}
   <Defense>k__BackingField: 0
   <EvasionChance>k__BackingField: 0.18
-  <Name>k__BackingField: Archer
+  <Name>k__BackingField: "\uAD81\uC218"
   <Role>k__BackingField: 1
   <Trait>k__BackingField: 0
   <Prefab>k__BackingField: {fileID: 6453398018867074118, guid: 2e3d13168afd6cf428bbf3cfab14e6f4, type: 3}

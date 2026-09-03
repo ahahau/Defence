@@ -12,9 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2c05617eccf4864aa5672963a8c7578, type: 3}
   m_Name: Skill_ShadowBackstab
   m_EditorClassIdentifier: 
-  <DisplayName>k__BackingField: Shadow Backstab
-  <Description>k__BackingField: Blink behind the target, deal bonus damage, then
-    make the target take more damage briefly.
+  <DisplayName>k__BackingField: "\uADF8\uB9BC\uC790 \uC77C\uACA9"
+  <Description>k__BackingField: "\uB300\uC0C1 \uB4A4\uB85C \uC21C\uAC04\uC774\uB3D9\uD574
+    \uCD94\uAC00 \uD53C\uD574\uB97C \uC8FC\uACE0 \uC7A0\uC2DC \uB354 \uCDE8\uC57D\uD558\uAC8C
+    \uB9CC\uB4ED\uB2C8\uB2E4."
   <Icon>k__BackingField: {fileID: 0}
   <Cooldown>k__BackingField: 4.5
   <IsUltimate>k__BackingField: 0

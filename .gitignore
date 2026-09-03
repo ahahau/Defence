@@ -120,3 +120,6 @@ InitTestScene*.unity*
 
 # Claude 스킬 초안 — 프로젝트 코드가 아니라 개인 작업 도구
 /plugin-drafts/
+
+# Player builds. 284MB per build and reproducible from the project.
+/Build/

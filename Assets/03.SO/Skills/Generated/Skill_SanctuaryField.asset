@@ -12,9 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2c05617eccf4864aa5672963a8c7578, type: 3}
   m_Name: Skill_SanctuaryField
   m_EditorClassIdentifier: 
-  <DisplayName>k__BackingField: Sanctuary Field
-  <Description>k__BackingField: Create a blessed zone that heals allies standing
-    inside and reduces damage they take.
+  <DisplayName>k__BackingField: "\uC131\uC5ED \uC9C0\uB300"
+  <Description>k__BackingField: "\uCD95\uBCF5\uBC1B\uC740 \uAD6C\uC5ED\uC744 \uD3BC\uCCD0
+    \uC548\uC5D0 \uC120 \uC544\uAD70\uC744 \uD68C\uBCF5\uD558\uACE0 \uBC1B\uB294
+    \uD53C\uD574\uB97C \uC904\uC785\uB2C8\uB2E4."
   <Icon>k__BackingField: {fileID: 0}
   <Cooldown>k__BackingField: 7.5
   <IsUltimate>k__BackingField: 0
