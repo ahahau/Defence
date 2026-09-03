@@ -177,6 +177,11 @@ namespace _01.Code.MapCreateSystem
         [SerializeField, Range(0.1f, 1f), Tooltip("노드 클릭 유효 범위(콜라이더 대비 비율). 작을수록 노드 중심 가까이서만 클릭이 먹는다. 콜라이더/전투 트리거는 안 건드림.")]
         private float nodeClickAreaScale = 0.55f;
 
+        [SerializeField, Min(0.1f),
+         Tooltip("우클릭으로 부하 정보를 열 수 있는 반경(월드 단위). " +
+                 "부하 콜라이더 지름이 0.8이므로 그보다 조금 넉넉하게 둔다.")]
+        private float unitInspectRadius = 1.2f;
+
         [Header("UI Blocking")]
         [SerializeField]
         private RectTransform nodePanelBlockRect;
@@ -771,6 +776,19 @@ namespace _01.Code.MapCreateSystem
                 return;
 
             if (!unlockedNode.HasAssignedUnit)
+                return;
+
+            // 노드 콜라이더는 방 하나(15x15)를 통째로 덮는데 카메라는 그보다 좁게 비춘다.
+            // 그래서 콜라이더에만 기대면 빈 바닥을 눌러도 부하 정보가 떠서, 화면 아무 데나
+            // 우클릭한 것처럼 보인다. 부하 근처를 눌렀을 때만 연다.
+            // 부하 콜라이더를 정확히 맞힌 경우는 위의 TryRaiseEntityStatusAt이 이미 처리했고,
+            // 여기 반경은 살짝 빗나간 클릭을 받아주는 여유분이다.
+            var assignedUnit = unlockedNode.AssignedUnitInstance;
+            if (assignedUnit == null)
+                return;
+
+            var offset = (Vector2)assignedUnit.transform.position - worldPosition;
+            if (offset.sqrMagnitude > unitInspectRadius * unitInspectRadius)
                 return;
 
             nodeEventChannel.RaiseEvent(new UnitStatusRequestedEvent(unlockedNode, screenPosition));
