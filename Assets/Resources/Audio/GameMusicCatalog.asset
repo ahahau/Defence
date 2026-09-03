@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8605fb2f32b1d12468d800d07300e328, type: 3}
+  m_Name: GameMusicCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Audio.GameMusicCatalogSO
+  entries:
+  - <Cue>k__BackingField: 0
+    <Clip>k__BackingField: {fileID: 8300000, guid: bf247238d65c68845ab6438ffb617046, type: 3}
+    <Volume>k__BackingField: 0.85
+  - <Cue>k__BackingField: 1
+    <Clip>k__BackingField: {fileID: 8300000, guid: dc92358efe03fe14f93571d90b0f992d, type: 3}
+    <Volume>k__BackingField: 1
+  - <Cue>k__BackingField: 2
+    <Clip>k__BackingField: {fileID: 8300000, guid: 2f973e687003ef449801dfa134477fba, type: 3}
+    <Volume>k__BackingField: 1
+  - <Cue>k__BackingField: 3
+    <Clip>k__BackingField: {fileID: 8300000, guid: 3f893021fddd0c146835d8ec40c7e758, type: 3}
+    <Volume>k__BackingField: 0.85
+  - <Cue>k__BackingField: 4
+    <Clip>k__BackingField: {fileID: 8300000, guid: ad2fe366e013ca0498fd420448fe2848, type: 3}
+    <Volume>k__BackingField: 0.8

@@ -40,6 +40,8 @@ namespace _01.Code.Audio
             {
                 volume = Mathf.Clamp01(value);
                 PlayerPrefs.SetFloat(VolumeKey, volume);
+                // 즉시 기록한다. Unity는 종료할 때 알아서 저장하지만, 그 전에 죽으면 설정이 날아간다.
+                PlayerPrefs.Save();
             }
         }
 

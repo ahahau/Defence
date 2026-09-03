@@ -385,6 +385,8 @@ namespace _01.Code.Manager
 
             GameSfxPlayer.Play(GameSfxCue.WaveStart);
 
+            GameMusicPlayer.Play(_isBossWave ? MusicCue.Boss : MusicCue.Wave);
+
             waveEventChannel.RaiseEvent(new WaveStartedEvent(_currentDay, adjustedEnemyCount));
 
             if (_isBossWave)
@@ -988,6 +990,8 @@ namespace _01.Code.Manager
             // 웨이브 집계는 다음 웨이브에서 초기화되므로, 판 전체 전과는 여기서 넘겨 둔다.
             RunSummarySystem.Current?.RecordWave(_waveEnemyCount, _waveKillCount, _waveDamageDealt, _waveDamageTaken, _waveCriticalHitCount);
             GameSfxPlayer.Play(GameSfxCue.WaveClear);
+            // 웨이브가 끝나면 다시 짓고 배치하는 시간으로 돌아간다.
+            GameMusicPlayer.Play(MusicCue.Management);
             waveEventChannel.RaiseEvent(
                 new WaveEndedEvent(_currentDay, _currentClearGoldReward, _waveEnemyCount, _waveKillCount));
         }

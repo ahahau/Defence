@@ -12,11 +12,14 @@ namespace _01.Code.UI
     /// 여기에 패널을 하나 더 얹으면 충돌하기 쉽고, 이 창은 게임 상태에 전혀 의존하지 않아서
     /// 코드만으로 세워도 잃는 게 없다.
     ///
-    /// 그림 에셋도 쓰지 않는다. UI 팩(Layer Lab)은 아직 저장소에 안 올라간 상태라
-    /// 거기에 기대면 다른 곳에서 받았을 때 창이 깨진다. 대신 게임이 쓰는 어두운 갈색 톤을 직접 칠한다.
+    /// 그림은 <see cref="UiSkinSO"/>를 통해 UI 팩에서 가져온다. 팩은 Resources 밖에 있어서
+    /// 실행 중에 직접 못 집기 때문에, Resources에 둔 그 에셋이 다리 역할을 한다.
+    /// 표가 없거나 비어 있으면 게임 톤에 맞춘 색으로 직접 칠해서 창이 비지 않게 한다.
     /// </summary>
     public sealed class SettingsPanelView : MonoBehaviour
     {
+        private const string SkinResourcePath = "UI/UiSkin";
+
         private static readonly Color PanelColor = new(0.055f, 0.034f, 0.025f, 0.98f);
         private static readonly Color EdgeColor = new(0.62f, 0.44f, 0.20f, 1f);
         private static readonly Color TrackColor = new(0.16f, 0.11f, 0.07f, 1f);
@@ -26,6 +29,9 @@ namespace _01.Code.UI
         private GameObject window;
         private Slider slider;
         private TMP_Text valueLabel;
+        private Slider musicSlider;
+        private UiSkinSO skin;
+        private TMP_Text musicValueLabel;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Install()
@@ -37,6 +43,7 @@ namespace _01.Code.UI
 
         private void Start()
         {
+            skin = Resources.Load<UiSkinSO>(SkinResourcePath);
             var canvas = BuildCanvas();
             BuildOpenButton(canvas.transform);
             BuildWindow(canvas.transform);
@@ -70,65 +77,80 @@ namespace _01.Code.UI
 
         private void BuildWindow(Transform parent)
         {
-            window = CreatePanel(parent, "Settings Window", new Vector2(440f, 210f), Vector2.zero);
+            window = CreatePanel(parent, "Settings Window", new Vector2(440f, 274f), Vector2.zero);
 
             CreateLabel(window.transform, "설정", 26, TextAlignmentOptions.Center,
-                new Vector2(0f, 1f), new Vector2(400f, 40f), new Vector2(0f, -34f));
+                new Vector2(0.5f, 1f), new Vector2(400f, 40f), new Vector2(0f, -34f));
 
-            CreateLabel(window.transform, "효과음", 19, TextAlignmentOptions.Left,
-                new Vector2(0f, 1f), new Vector2(120f, 30f), new Vector2(-140f, -92f));
+            slider = BuildRow(window.transform, "효과음", -92f, GameSfxPlayer.Volume,
+                out valueLabel, OnSfxVolumeChanged);
 
-            valueLabel = CreateLabel(window.transform, "50%", 19, TextAlignmentOptions.Right,
-                new Vector2(0f, 1f), new Vector2(80f, 30f), new Vector2(158f, -92f));
-
-            BuildSlider(window.transform);
+            musicSlider = BuildRow(window.transform, "배경음악", -168f, GameMusicPlayer.Volume,
+                out musicValueLabel, OnMusicVolumeChanged);
 
             var close = CreateButton(window.transform, "닫기", new Vector2(0.5f, 0f), new Vector2(120f, 38f), new Vector2(0f, 34f));
             close.onClick.AddListener(() => Toggle(false));
         }
 
-        private void BuildSlider(Transform parent)
+        /// <summary>이름표 · 슬라이더 · 퍼센트 한 줄을 만든다.</summary>
+        private Slider BuildRow(Transform parent, string label, float top, float initial,
+            out TMP_Text percentLabel, UnityEngine.Events.UnityAction<float> onChanged)
         {
-            var root = new GameObject("Volume Slider", typeof(RectTransform), typeof(Slider));
+            CreateLabel(parent, label, 19, TextAlignmentOptions.Left,
+                new Vector2(0.5f, 1f), new Vector2(140f, 30f), new Vector2(-130f, top));
+
+            percentLabel = CreateLabel(parent, "0%", 19, TextAlignmentOptions.Right,
+                new Vector2(0.5f, 1f), new Vector2(80f, 30f), new Vector2(158f, top));
+
+            var root = new GameObject(label + " Slider", typeof(RectTransform), typeof(Slider));
             root.transform.SetParent(parent, false);
             var rect = (RectTransform)root.transform;
             rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1f);
             rect.pivot = new Vector2(0.5f, 0.5f);
             rect.sizeDelta = new Vector2(340f, 18f);
-            rect.anchoredPosition = new Vector2(0f, -136f);
+            rect.anchoredPosition = new Vector2(0f, top - 44f);
 
-            var track = CreateImage(root.transform, "Track", TrackColor);
+            var track = CreateImage(root.transform, "Track", TrackColor,
+                skin != null ? skin.SliderTrack : null, rect.sizeDelta);
             Stretch(track.rectTransform);
 
             var fillArea = new GameObject("Fill Area", typeof(RectTransform));
             fillArea.transform.SetParent(root.transform, false);
             Stretch((RectTransform)fillArea.transform);
 
-            var fill = CreateImage(fillArea.transform, "Fill", FillColor);
+            var fill = CreateImage(fillArea.transform, "Fill", FillColor,
+                skin != null ? skin.SliderFill : null, rect.sizeDelta);
             Stretch(fill.rectTransform);
 
-            slider = root.GetComponent<Slider>();
-            slider.fillRect = fill.rectTransform;
-            slider.targetGraphic = track;
-            slider.minValue = 0f;
-            slider.maxValue = 1f;
-            slider.wholeNumbers = false;
-            slider.value = GameSfxPlayer.Volume;
-            slider.onValueChanged.AddListener(OnVolumeChanged);
+            var built = root.GetComponent<Slider>();
+            built.fillRect = fill.rectTransform;
+            built.targetGraphic = track;
+            built.minValue = 0f;
+            built.maxValue = 1f;
+            built.wholeNumbers = false;
+            built.SetValueWithoutNotify(initial);
+            built.onValueChanged.AddListener(onChanged);
 
-            Refresh(slider.value);
+            percentLabel.text = Percent(initial);
+            return built;
         }
 
-        private void OnVolumeChanged(float value)
+        private void OnSfxVolumeChanged(float value)
         {
             GameSfxPlayer.Volume = value;
-            Refresh(value);
+            valueLabel.text = Percent(value);
             // 방금 정한 크기로 바로 들려줘야 몇 퍼센트가 적당한지 알 수 있다.
             GameSfxPlayer.Play(GameSfxCue.UiClick);
         }
 
-        private void Refresh(float value) =>
-            valueLabel.text = Mathf.RoundToInt(value * 100f) + "%";
+        private void OnMusicVolumeChanged(float value)
+        {
+            // 음악은 계속 흐르고 있으므로 따로 들려줄 필요가 없다.
+            GameMusicPlayer.Volume = value;
+            musicValueLabel.text = Percent(value);
+        }
+
+        private static string Percent(float value) => Mathf.RoundToInt(value * 100f) + "%";
 
         private void Toggle(bool open)
         {
@@ -136,7 +158,9 @@ namespace _01.Code.UI
             if (open)
             {
                 slider.SetValueWithoutNotify(GameSfxPlayer.Volume);
-                Refresh(slider.value);
+                valueLabel.text = Percent(slider.value);
+                musicSlider.SetValueWithoutNotify(GameMusicPlayer.Volume);
+                musicValueLabel.text = Percent(musicSlider.value);
             }
 
             GameSfxPlayer.Play(open ? GameSfxCue.UiOpen : GameSfxCue.UiClose);
@@ -144,32 +168,58 @@ namespace _01.Code.UI
 
         // ---- 조각 만들기 ----
 
-        private static GameObject CreatePanel(Transform parent, string name, Vector2 size, Vector2 position)
+        private GameObject CreatePanel(Transform parent, string name, Vector2 size, Vector2 position)
         {
-            var edge = CreateImage(parent, name, EdgeColor);
-            var rect = edge.rectTransform;
+            var frame = skin != null ? skin.WindowFrame : null;
+
+            // 팩 프레임이 있으면 그것 한 장으로 끝난다. 없을 때만 테두리색 + 안쪽색 두 겹으로 흉내 낸다.
+            var root = CreateImage(parent, name, frame != null ? PanelColor : EdgeColor, frame, size);
+            var rect = root.rectTransform;
             rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.sizeDelta = size;
             rect.anchoredPosition = position;
 
-            var inner = CreateImage(edge.transform, "Inner", PanelColor);
+            if (frame != null)
+                return root.gameObject;
+
+            var inner = CreateImage(root.transform, "Inner", PanelColor);
             var innerRect = inner.rectTransform;
             innerRect.anchorMin = Vector2.zero;
             innerRect.anchorMax = Vector2.one;
-            // 테두리 두께. 스프라이트 없이 프레임처럼 보이게 하는 가장 단순한 방법이다.
             innerRect.offsetMin = new Vector2(2f, 2f);
             innerRect.offsetMax = new Vector2(-2f, -2f);
 
-            return edge.gameObject;
+            return root.gameObject;
         }
 
-        private static Image CreateImage(Transform parent, string name, Color color)
+        private static Image CreateImage(Transform parent, string name, Color color,
+            Sprite sprite = null, Vector2 size = default)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(Image));
             go.transform.SetParent(parent, false);
             var image = go.GetComponent<Image>();
             image.color = color;
+
+            if (sprite == null)
+                return image;
+
+            image.sprite = sprite;
+            image.type = Image.Type.Sliced;
+            // 9-슬라이스 경계가 대상보다 크면 모서리가 서로 겹쳐 뭉갠다. 요소 크기에 맞춰 줄인다.
+            image.pixelsPerUnitMultiplier = ResolveBorderScale(sprite, size);
             return image;
+        }
+
+        /// <summary>경계 합이 대상 크기를 넘지 않도록 하는 배수. 여유를 조금 둬서 가운데가 눌리지 않게 한다.</summary>
+        private static float ResolveBorderScale(Sprite sprite, Vector2 size)
+        {
+            if (size.x <= 0f || size.y <= 0f)
+                return 1f;
+
+            var border = sprite.border;
+            var needX = (border.x + border.z) / size.x;
+            var needY = (border.y + border.w) / size.y;
+            return Mathf.Max(1f, Mathf.Max(needX, needY) * 1.35f);
         }
 
         private static void Stretch(RectTransform rect)
@@ -204,9 +254,10 @@ namespace _01.Code.UI
             return label;
         }
 
-        private static Button CreateButton(Transform parent, string text, Vector2 anchor, Vector2 size, Vector2 position)
+        private Button CreateButton(Transform parent, string text, Vector2 anchor, Vector2 size, Vector2 position)
         {
-            var image = CreateImage(parent, "Button " + text, PanelColor);
+            var image = CreateImage(parent, "Button " + text, PanelColor,
+                skin != null ? skin.ButtonFrame : null, size);
             var rect = image.rectTransform;
             rect.anchorMin = rect.anchorMax = anchor;
             rect.pivot = new Vector2(0.5f, 0.5f);
