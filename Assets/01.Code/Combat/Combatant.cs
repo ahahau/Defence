@@ -185,9 +185,13 @@ namespace _01.Code.Combat
                 attackInterval = value;
         }
 
+        /// <summary>공격 포즈 교체를 맡는다. 없으면 스프라이트는 그대로 둔다.</summary>
+        private CharacterPoseView poseView;
+
         private void Awake()
         {
             EnsureFeelCombatFeedbacks();
+            poseView = GetComponent<CharacterPoseView>();
             if (health != null)
                 health.Changed += RefreshHealthBar;
             RefreshBars(0f);
@@ -414,6 +418,9 @@ namespace _01.Code.Combat
             var impactPosition = targetPosition - direction.normalized * attackImpactOffset;
 
             _01.Code.Audio.GameSfxPlayer.Play(attackSfx, impactPosition);
+
+            if (poseView != null)
+                poseView.PlayAttackPose();
 
             if (attackFeelFeedbacks != null)
                 attackFeelFeedbacks.PlayFeedbacks(impactPosition);

@@ -22,6 +22,7 @@ GameObject:
   - component: {fileID: 1572547863924019375}
   - component: {fileID: 3991221465135581731}
   - component: {fileID: 6283911125975360593}
+  - component: {fileID: 4509615638295571279}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -417,6 +418,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9388dd33668649a38c1de28e312c9396, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.StatusEffects.EnemyStatusController
+--- !u!114 &4509615638295571279
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3359944052817299180}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ec510b2bef1f784687a05c44781f995, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Combat.CharacterPoseView
+  entityRender: {fileID: 9208969084259638768}
+  attackPoseDuration: 0.18
 --- !u!1 &8357328393588773581
 GameObject:
   m_ObjectHideFlags: 0
@@ -523,8 +538,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Entities.EntityRender
   gameStateEventChannel: {fileID: 11400000, guid: 959e35f08825cd94a8b68a1c032d7836, type: 2}
   idleSprite: {fileID: -4208413977036319912, guid: 04e1c700f9787eb4f987e965f729bc19, type: 3}
-  attackSprite: {fileID: -9030365041162893800, guid: 28c61687a54f1e34fbd7d56883871257, type: 3}
-  defeatedSprite: {fileID: 1617423343354356677, guid: 43367cb7fa3eb2b4683122335baad020, type: 3}
+  attackSprite: {fileID: 8442247372213805325, guid: 103c98c3a4c345640ab6aff8e2b701b7, type: 3}
+  defeatedSprite: {fileID: -9030365041162893800, guid: 28c61687a54f1e34fbd7d56883871257, type: 3}
   spriteRenderer: {fileID: 1816607769188706741}
 --- !u!1001 &451816566819884658
 PrefabInstance:

@@ -22,6 +22,7 @@ GameObject:
   - component: {fileID: 3472994747429740811}
   - component: {fileID: 8675766333766392546}
   - component: {fileID: 8697242750164101895}
+  - component: {fileID: 2631129633724791826}
   m_Layer: 0
   m_Name: Unit_SlimeGreen
   m_TagString: Untagged
@@ -414,6 +415,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9388dd33668649a38c1de28e312c9396, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.StatusEffects.EnemyStatusController
+--- !u!114 &2631129633724791826
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4328671716576560348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ec510b2bef1f784687a05c44781f995, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Combat.CharacterPoseView
+  entityRender: {fileID: 5152221481353906157}
+  attackPoseDuration: 0.18
 --- !u!1 &7473952817250454834
 GameObject:
   m_ObjectHideFlags: 0
@@ -424,6 +439,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2787899817810343432}
   - component: {fileID: 2624532001765305233}
+  - component: {fileID: 5152221481353906157}
   m_Layer: 0
   m_Name: Visual
   m_TagString: Untagged
@@ -505,6 +521,23 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &5152221481353906157
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7473952817250454834}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b3b415ae8554c33b54e3f910e4dbbaa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Entities.EntityRender
+  gameStateEventChannel: {fileID: 0}
+  idleSprite: {fileID: 4723107735738678597, guid: 566d59dea2136f540ab3350aa1c31392, type: 3}
+  attackSprite: {fileID: -7008412969330441016, guid: c7259a894c84ba24da5456217d764f94, type: 3}
+  defeatedSprite: {fileID: 2649847697073447219, guid: 66298c9015bb0374cb4b7b2ef623b979, type: 3}
+  spriteRenderer: {fileID: 2624532001765305233}
 --- !u!1001 &154025233384582239
 PrefabInstance:
   m_ObjectHideFlags: 0

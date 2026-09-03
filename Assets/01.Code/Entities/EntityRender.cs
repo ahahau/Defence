@@ -38,15 +38,25 @@ namespace _01.Code.Entities
             switch (state)
             {
                 case EntityState.Defeated:
-                    spriteRenderer.sprite = defeatedSprite;
+                    Apply(defeatedSprite);
                     break;
                 case EntityState.Attack:
-                    spriteRenderer.sprite = attackSprite;
+                    Apply(attackSprite);
                     break;
                 case EntityState.Idle:
-                    spriteRenderer.sprite = idleSprite;
+                    Apply(idleSprite);
                     break;
             }
+        }
+
+        /// <summary>
+        /// 비어 있는 포즈로는 갈아끼우지 않는다. 그대로 대입하면 스프라이트가 null이 되어
+        /// 캐릭터가 화면에서 사라진다 — 포즈 그림이 아직 없는 쪽은 있던 모습을 유지하는 편이 낫다.
+        /// </summary>
+        private void Apply(Sprite sprite)
+        {
+            if (spriteRenderer != null && sprite != null)
+                spriteRenderer.sprite = sprite;
         }
     }
 }
