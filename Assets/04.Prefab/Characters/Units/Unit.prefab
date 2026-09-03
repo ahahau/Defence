@@ -130,7 +130,6 @@ MonoBehaviour:
   commandRestDamageMultiplier: 0.7
   commandRestAttackIntervalMultiplier: 1.3
   commandRestFatigueMultiplier: 0.55
-  commandCooldown: 3
 --- !u!114 &2709196990148380843
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -166,6 +165,7 @@ MonoBehaviour:
   healParticleColor: {r: 0.4, g: 1, b: 0.5, a: 1}
   healParticleBurstCount: 10
   healTextAggregateWindow: 0.4
+  counterplayTextAggregateWindow: 0.35
   damageTextPrefab: {fileID: 2763252915929347062, guid: 8c9f5ae6dfc45c64881eb2539d305043, type: 3}
   hitParticles: {fileID: 0}
   health: {fileID: 2709196990148380843}

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using _01.Code.Audio;
 using _01.Code.BT;
 using _01.Code.Buildings;
 using _01.Code.Combat;
@@ -77,12 +78,31 @@ namespace _01.Code.Manager
 
         /// <summary>이번 웨이브에서 함정이 낸 피해. 유닛이 낸 몫과 나눠 보여야 함정 투자를 판단할 수 있다.</summary>
         public int WaveTrapDamage => Mathf.Max(0, _waveTrapDamage);
-
+        public int WaveCowardTrapTriggers => Mathf.Max(0, _waveCowardTrapTriggers);
+        public int WaveCowardBonusFear => Mathf.Max(0, _waveCowardBonusFear);
+        public int WavePriestHealingPrevented => Mathf.Max(0, _wavePriestHealingPrevented);
+        public int WaveShopaholicBonusGold => Mathf.Max(0, _waveShopaholicBonusGold);
         public void RecordTrapDamage(int damage)
         {
             if (_isWaveRunning && damage > 0)
                 _waveTrapDamage += damage;
         }
+
+        public void RecordCowardTrapPressure(int bonusFear)
+        {
+            if (!_isWaveRunning || bonusFear <= 0)
+                return;
+
+            _waveCowardTrapTriggers++;
+            _waveCowardBonusFear += bonusFear;
+        }
+
+        public void RecordPriestHealingPrevented(int preventedHealing)
+        {
+            if (_isWaveRunning && preventedHealing > 0)
+                _wavePriestHealingPrevented += preventedHealing;
+        }
+
         public int ActiveEnemyCount => _activeEnemies.Count;
         public int PendingSpawnCount => Mathf.Max(0, _remainingSpawns);
         public int RemainingThreatCount => ActiveEnemyCount + PendingSpawnCount;
@@ -154,6 +174,10 @@ namespace _01.Code.Manager
         private int _waveDamageTaken;
         private int _waveCriticalHitCount;
         private int _waveTrapDamage;
+        private int _waveCowardTrapTriggers;
+        private int _waveCowardBonusFear;
+        private int _wavePriestHealingPrevented;
+        private int _waveShopaholicBonusGold;
         private readonly WaveExploitationProgress _exploitationProgress = new();
         private bool _unitConditionWearPending;
 
@@ -358,6 +382,8 @@ namespace _01.Code.Manager
             _bossFinalPhaseStarted = false;
             _bossReinforcementStarted = false;
             SetupPartyForWave();
+
+            GameSfxPlayer.Play(GameSfxCue.WaveStart);
 
             waveEventChannel.RaiseEvent(new WaveStartedEvent(_currentDay, adjustedEnemyCount));
 
@@ -723,12 +749,14 @@ namespace _01.Code.Manager
             CompleteWaveIfCleared(false);
         }
 
-        private void HandleEnemyFacilityGoldSpent(Enemy enemy, int amount, GoldChangeSource source)
+        private void HandleEnemyFacilityGoldSpent(Enemy enemy, int amount, int baseAmount, GoldChangeSource source)
         {
             if (!_isWaveRunning || enemy == null)
                 return;
 
             _exploitationProgress.RecordFacilityGold(amount);
+            if (enemy.Trait == AdventurerTrait.Shopaholic)
+                _waveShopaholicBonusGold += Mathf.Max(0, amount - baseAmount);
         }
 
         private void HandleBossHealthChanged(float healthRatio)
@@ -959,6 +987,7 @@ namespace _01.Code.Manager
             ApplyUnitConditionWear();
             // 웨이브 집계는 다음 웨이브에서 초기화되므로, 판 전체 전과는 여기서 넘겨 둔다.
             RunSummarySystem.Current?.RecordWave(_waveEnemyCount, _waveKillCount, _waveDamageDealt, _waveDamageTaken, _waveCriticalHitCount);
+            GameSfxPlayer.Play(GameSfxCue.WaveClear);
             waveEventChannel.RaiseEvent(
                 new WaveEndedEvent(_currentDay, _currentClearGoldReward, _waveEnemyCount, _waveKillCount));
         }
@@ -1000,6 +1029,10 @@ namespace _01.Code.Manager
             _waveDamageTaken = 0;
             _waveCriticalHitCount = 0;
             _waveTrapDamage = 0;
+            _waveCowardTrapTriggers = 0;
+            _waveCowardBonusFear = 0;
+            _wavePriestHealingPrevented = 0;
+            _waveShopaholicBonusGold = 0;
             _exploitationProgress.Reset();
         }
 

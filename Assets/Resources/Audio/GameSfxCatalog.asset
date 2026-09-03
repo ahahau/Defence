@@ -1,0 +1,175 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97882a727eb2aa64bad8c8fe433eaefd, type: 3}
+  m_Name: GameSfxCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Audio.GameSfxCatalogSO
+  entries:
+  - <Cue>k__BackingField: 0
+    <Variants>k__BackingField:
+    - {fileID: 8300000, guid: 540c27a9d1c75734f9295f9a822aabe9, type: 3}
+    - {fileID: 8300000, guid: cc526dd7e1b74d64ab55d93ca232fd9c, type: 3}
+    - {fileID: 8300000, guid: fc0caad539660374c962d7d98a17fc69, type: 3}
+    <Volume>k__BackingField: 0.45
+    <MinInterval>k__BackingField: 0.03
+    <PitchJitter>k__BackingField: 0.05
+  - <Cue>k__BackingField: 1
+    <Variants>k__BackingField:
+    - {fileID: 8300000, guid: d6df363c1683d644e9c14e4567a6cdbe, type: 3}
+    - {fileID: 8300000, guid: 83aaa86a8d7fb6e40b2544e02356d6b4, type: 3}
+    - {fileID: 8300000, guid: a5cc70c51320350419e26834463eaeb4, type: 3}
+    <Volume>k__BackingField: 0.55
+    <MinInterval>k__BackingField: 0.05
+    <PitchJitter>k__BackingField: 0.04
+  - <Cue>k__BackingField: 2
+    <Variants>k__BackingField:
+    - {fileID: 8300000, guid: d176f56357b85044a9a784d05e5a090c, type: 3}
+    - {fileID: 8300000, guid: 1cbad69025d22e64385ec624187a37ad, type: 3}
+    - {fileID: 8300000, guid: a31309a43e3ba02429b2bfcb6113b63a, type: 3}
+    <Volume>k__BackingField: 0.5
+    <MinInterval>k__BackingField: 0.05
+    <PitchJitter>k__BackingField: 0.04
+  - <Cue>k__BackingField: 3
+    <Variants>k__BackingField:
+    - {fileID: 8300000, guid: a655b674d8f023a4ca1565a398b38b9d, type: 3}
+    - {fileID: 8300000, guid: 9d11368a591bd4c43b1ea64dd1afa43c, type: 3}
+    - {fileID: 8300000, guid: 05ab76f57e453814b9f942b5d16f48e5, type: 3}
+    <Volume>k__BackingField: 0.65
+    <MinInterval>k__BackingField: 0.05
+    <PitchJitter>k__BackingField: 0.06
+  - <Cue>k__BackingField: 4
+    <Variants>k__BackingField:
+    - {fileID: 8300000, guid: bad801f363f5a6246aa20f000a8a611c, type: 3}
+    - {fileID: 8300000, guid: 7beb96bbfa95e914dac038e011e7c823, type: 3}
+    - {fileID: 8300000, guid: 844f21f3967a05847818e9c995496401, type: 3}
+    <Volume>k__BackingField: 0.65
+    <MinInterval>k__BackingField: 0.05
+    <PitchJitter>k__BackingField: 0.05
+  - <Cue>k__BackingField: 5
+    <Variants>k__BackingField:
+    - {fileID: 8300000, guid: 26c6842862aa99e49a498662bec469ac, type: 3}
+    - {fileID: 8300000, guid: b08d0fcc812e06e43a9adf74a8ab1208, type: 3}
+    - {fileID: 8300000, guid: 366b32d073663ee4080d3d7cdea0862b, type: 3}
+    <Volume>k__BackingField: 0.55
+    <MinInterval>k__BackingField: 0.05
+    <PitchJitter>k__BackingField: 0.05
+  - <Cue>k__BackingField: 6
+    <Variants>k__BackingField:
+    - {fileID: 8300000, guid: b025531f9cebaf345aa6995fb700713c, type: 3}
+    - {fileID: 8300000, guid: 980216befcac0594885d53808312ebbf, type: 3}
+    - {fileID: 8300000, guid: 199679d4fc6256846936d5f41ec187ed, type: 3}
+    <Volume>k__BackingField: 0.8
+    <MinInterval>k__BackingField: 0.5
+    <PitchJitter>k__BackingField: 0
+  - <Cue>k__BackingField: 7
+    <Variants>k__BackingField:
+    - {fileID: 8300000, guid: 150314dbb8c511e4683f2e567d954ad6, type: 3}
+    - {fileID: 8300000, guid: b32d4835dcb729e49a7b31a37b665488, type: 3}
+    - {fileID: 8300000, guid: aae797d62e209a94c97a550998b74c4a, type: 3}
+    <Volume>k__BackingField: 0.8
+    <MinInterval>k__BackingField: 0.5
+    <PitchJitter>k__BackingField: 0
+  - <Cue>k__BackingField: 8
+    <Variants>k__BackingField:
+    - {fileID: 8300000, guid: 771c25c2c22e0f94d8076207b919308e, type: 3}
+    - {fileID: 8300000, guid: 46dfcdc17fd1a774abf164843d8142b0, type: 3}
+    - {fileID: 8300000, guid: 806882763f03f6444bee061388a7dbc9, type: 3}
+    <Volume>k__BackingField: 0.4
+    <MinInterval>k__BackingField: 0.07
+    <PitchJitter>k__BackingField: 0.1
+  - <Cue>k__BackingField: 9
+    <Variants>k__BackingField:
+    - {fileID: 8300000, guid: 5f0088ca080065042b22764bdbdb2cf5, type: 3}
+    - {fileID: 8300000, guid: 11d8edf664b5018419784300abe60e74, type: 3}
+    - {fileID: 8300000, guid: e0dce3a3055dc6049a05b18bcb38173b, type: 3}
+    <Volume>k__BackingField: 0.4
+    <MinInterval>k__BackingField: 0.07
+    <PitchJitter>k__BackingField: 0.1
+  - <Cue>k__BackingField: 10
+    <Variants>k__BackingField:
+    - {fileID: 8300000, guid: caace26a228112a4497fa12ab90adf3f, type: 3}
+    - {fileID: 8300000, guid: bcc84ae99ad0176438c3262416f37dd1, type: 3}
+    - {fileID: 8300000, guid: 5d3e9527cc3647e4294cc9c6147bc14d, type: 3}
+    <Volume>k__BackingField: 0.4
+    <MinInterval>k__BackingField: 0.07
+    <PitchJitter>k__BackingField: 0.1
+  - <Cue>k__BackingField: 11
+    <Variants>k__BackingField:
+    - {fileID: 8300000, guid: 0675418fad33b754e9dcccb4cbdcc2ed, type: 3}
+    - {fileID: 8300000, guid: a96354575fd6fa44dab3348bbe6faacf, type: 3}
+    - {fileID: 8300000, guid: abe40b13b0d86a044a357cf037bcade0, type: 3}
+    <Volume>k__BackingField: 0.45
+    <MinInterval>k__BackingField: 0.06
+    <PitchJitter>k__BackingField: 0.12
+  - <Cue>k__BackingField: 12
+    <Variants>k__BackingField:
+    - {fileID: 8300000, guid: 9fb5e8e26f6bba54a97bfc633a8d7d1e, type: 3}
+    - {fileID: 8300000, guid: bed8cd0fe98b2214c909c7f8c0ac611a, type: 3}
+    - {fileID: 8300000, guid: b69841f69a0855746a56d0538efdf175, type: 3}
+    <Volume>k__BackingField: 0.45
+    <MinInterval>k__BackingField: 0.06
+    <PitchJitter>k__BackingField: 0.1
+  - <Cue>k__BackingField: 13
+    <Variants>k__BackingField:
+    - {fileID: 8300000, guid: cd24cdac2831552408020d94262726f9, type: 3}
+    - {fileID: 8300000, guid: c82548e3bf29154488952ffd5837ca05, type: 3}
+    - {fileID: 8300000, guid: a4d9ff0ceb9ea084ab34b139e9d16f16, type: 3}
+    <Volume>k__BackingField: 0.65
+    <MinInterval>k__BackingField: 0.08
+    <PitchJitter>k__BackingField: 0.08
+  - <Cue>k__BackingField: 14
+    <Variants>k__BackingField:
+    - {fileID: 8300000, guid: 577be994e58b7fb4897b03c0122af3e3, type: 3}
+    - {fileID: 8300000, guid: e475116c96b02cd4cb5e449c808febd7, type: 3}
+    - {fileID: 8300000, guid: a25a11a4f5140d54587f5defbc0cc337, type: 3}
+    <Volume>k__BackingField: 0.65
+    <MinInterval>k__BackingField: 0.1
+    <PitchJitter>k__BackingField: 0.05
+  - <Cue>k__BackingField: 15
+    <Variants>k__BackingField:
+    - {fileID: 8300000, guid: ed7a9b1ff44cb6a4686f37036a8dcab6, type: 3}
+    - {fileID: 8300000, guid: 5aa7a93d75e80c4428473841687ad977, type: 3}
+    - {fileID: 8300000, guid: 1cb8637015cd1dd448475788f6c6ed35, type: 3}
+    <Volume>k__BackingField: 0.7
+    <MinInterval>k__BackingField: 0.1
+    <PitchJitter>k__BackingField: 0.06
+  - <Cue>k__BackingField: 16
+    <Variants>k__BackingField:
+    - {fileID: 8300000, guid: c013371484d187849935e7da6b6ce999, type: 3}
+    - {fileID: 8300000, guid: bb68f82716561c94383c49538528cb26, type: 3}
+    - {fileID: 8300000, guid: 22e980b3bbb679248aee3c61fae2a722, type: 3}
+    <Volume>k__BackingField: 0.55
+    <MinInterval>k__BackingField: 0.06
+    <PitchJitter>k__BackingField: 0.12
+  - <Cue>k__BackingField: 17
+    <Variants>k__BackingField:
+    - {fileID: 8300000, guid: 591fef4e056b00449845c28a4174b081, type: 3}
+    - {fileID: 8300000, guid: 1b784f7ea0e1d21459ee6024be269420, type: 3}
+    - {fileID: 8300000, guid: c83fda7038ac84946832aadd2fc42241, type: 3}
+    <Volume>k__BackingField: 0.6
+    <MinInterval>k__BackingField: 0.1
+    <PitchJitter>k__BackingField: 0.05
+  - <Cue>k__BackingField: 18
+    <Variants>k__BackingField:
+    - {fileID: 8300000, guid: 9586af0fd759ed2449bdf06d4e52f729, type: 3}
+    - {fileID: 8300000, guid: dfe940463bb021b4b8ebadf02b2352a7, type: 3}
+    - {fileID: 8300000, guid: 0504ea4c910632a4eac2fd5a4d212b77, type: 3}
+    <Volume>k__BackingField: 0.55
+    <MinInterval>k__BackingField: 0.1
+    <PitchJitter>k__BackingField: 0.04
+  - <Cue>k__BackingField: 19
+    <Variants>k__BackingField:
+    - {fileID: 8300000, guid: 72ee1b396048cc94ead11120f30e9206, type: 3}
+    - {fileID: 8300000, guid: e4677ef5bef5e4743a5d41a80a893d0f, type: 3}
+    - {fileID: 8300000, guid: e5af3d8d08585814c98a475f64012f11, type: 3}
+    <Volume>k__BackingField: 0.45
+    <MinInterval>k__BackingField: 0.08
+    <PitchJitter>k__BackingField: 0.05

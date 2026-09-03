@@ -1,3 +1,4 @@
+using _01.Code.Audio;
 using _01.Code.Core;
 using DG.Tweening;
 using UnityEngine;
@@ -31,12 +32,24 @@ namespace _01.Code.Skills
             else
                 PlayBurst(center, power.FlashColor, radius, power.Damage > 0);
 
+            GameSfxPlayer.Play(ResolveCue(power), center);
             DungeonPowerFeedbacks.Play(center, power.ShakeStrength);
+        }
+
+        /// <summary>때리는 권능과 도와주는 권능은 소리부터 달라야 무슨 일이 났는지 안다.</summary>
+        private static GameSfxCue ResolveCue(DungeonPowerSO power)
+        {
+            if (power.Heal > 0)
+                return GameSfxCue.Heal;
+
+            return power.Damage > 0 ? GameSfxCue.Explosion : GameSfxCue.SkillCast;
         }
 
         private static void SpawnEffect(DungeonPowerSO power, Vector3 center)
         {
             var instance = Object.Instantiate(power.ImpactEffect, center, Quaternion.identity);
+            // 팩이 물고 온 소리는 걷어낸다. 우리 음량 설정 밖에서 울리면 어떤 건 줄고 어떤 건 안 준다.
+            GameSfxPlayer.StripEmbeddedAudio(instance);
             instance.transform.localScale = Vector3.one * Mathf.Max(0.1f, power.EffectScale);
 
             var lifetime = 0f;

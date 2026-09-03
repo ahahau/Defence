@@ -197,6 +197,7 @@ MonoBehaviour:
   enableFeelCombatFeedbacks: 1
   attackHitParticles: {fileID: 1830825200522415764}
   attackImpactOffset: 0.08
+  attackSfx: 8
   attackStatusEffect: {fileID: 11400000, guid: e70d9291c81c47e98d34cdcf308513e9, type: 2}
   attackStatusEffectChance: 0.45
   health: {fileID: 2709196990148380843}

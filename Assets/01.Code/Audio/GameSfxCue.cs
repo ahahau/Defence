@@ -17,6 +17,18 @@ namespace _01.Code.Audio
         Dodge,
         Trap,
         SkillCast,
-        Explosion
+        Explosion,
+
+        /// <summary>전투원이 쓰러질 때. 타격음과 겹치지 않게 별도로 둔다.</summary>
+        Death,
+
+        /// <summary>회복 권능처럼 아군에게 좋은 일이 일어날 때.</summary>
+        Heal,
+
+        /// <summary>돈이나 마력이 모자라 눌러도 안 될 때. 아무 반응이 없으면 버그로 읽힌다.</summary>
+        UiFail,
+
+        /// <summary>패널을 닫을 때. 여는 소리와 달라야 방향이 느껴진다.</summary>
+        UiClose,
     }
 }

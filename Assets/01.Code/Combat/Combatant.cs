@@ -28,6 +28,9 @@ namespace _01.Code.Combat
         [SerializeField] private bool enableFeelCombatFeedbacks = true;
         [SerializeField] private ParticleSystem attackHitParticles;
         [SerializeField, Min(0f)] private float attackImpactOffset = 0.08f;
+
+        [SerializeField, Tooltip("이 전투원이 때릴 때 나는 소리. 활잡이와 마도사는 바꿔줘야 구분된다.")]
+        private _01.Code.Audio.GameSfxCue attackSfx = _01.Code.Audio.GameSfxCue.Attack;
         [SerializeField] private StatusEffectDataSO attackStatusEffect;
         [SerializeField, Range(0f, 1f)] private float attackStatusEffectChance;
         [SerializeField] private Health health;
@@ -313,6 +316,12 @@ namespace _01.Code.Combat
             return true;
         }
 
+        public void ShowCounterplayFeedback(string label, int amount, bool showAsGain, Color color)
+        {
+            damageFeedback ??= GetComponent<DamageFeedback>();
+            damageFeedback?.ShowCounterplayText(label, amount, showAsGain, color);
+        }
+
         /// <summary>회피 성공 연출 — 사이드스텝 이동(BattleAgent) + MISS 텍스트(DamageFeedback).</summary>
         private void PlayDodgeReaction(Vector3 attackerPosition)
         {
@@ -403,6 +412,9 @@ namespace _01.Code.Combat
                 direction = Vector3.right;
 
             var impactPosition = targetPosition - direction.normalized * attackImpactOffset;
+
+            _01.Code.Audio.GameSfxPlayer.Play(attackSfx, impactPosition);
+
             if (attackFeelFeedbacks != null)
                 attackFeelFeedbacks.PlayFeedbacks(impactPosition);
 

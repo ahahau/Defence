@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d6c5b459e532d74d94bf7afe8f4e823, type: 3}
+  m_Name: SfxEventBridge
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Audio.SfxEventBridgeSO
+  <Channels>k__BackingField:
+  - {fileID: 11400000, guid: cc88dffc4f05ec147bf3370d40b143c7, type: 2}
+  - {fileID: 11400000, guid: 734ca3593b5d2884dae267b0e3e601be, type: 2}
+  - {fileID: 11400000, guid: f16b75998f67eed45be9a7061ca817f7, type: 2}
+  - {fileID: 11400000, guid: 9cf58ff4e820521428d2366e9900b251, type: 2}
+  - {fileID: 11400000, guid: 959e35f08825cd94a8b68a1c032d7836, type: 2}
+  - {fileID: 11400000, guid: 6d6cfd45cca10904dbe593bccfbe9c9b, type: 2}
+  - {fileID: 11400000, guid: f1b1e574478592a46b08a62e4c3db082, type: 2}
+  - {fileID: 11400000, guid: 1094f1f431d6c7f4c9bcc9e7ad8ac246, type: 2}
+  - {fileID: 11400000, guid: dd03e0a5a2140e441aba26879f409cee, type: 2}
