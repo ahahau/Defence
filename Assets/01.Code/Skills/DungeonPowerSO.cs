@@ -54,6 +54,16 @@ namespace _01.Code.Skills
         [field: SerializeField]
         public Color FlashColor { get; private set; } = new(0.6f, 0.4f, 1f, 1f);
 
+        [field: SerializeField, Tooltip("시전 순간 구역에 터뜨릴 파티클 프리팹. 비우면 FlashColor 원형 파동으로 대체한다.")]
+        public GameObject ImpactEffect { get; private set; }
+
+        [field: SerializeField, Min(0.1f), Tooltip("ImpactEffect의 배율. 권능은 구역 전체를 덮으므로 타격 이펙트보다 크다.")]
+        public float EffectScale { get; private set; } = 2.5f;
+
+        [field: SerializeField, Range(0f, 1f),
+                Tooltip("시전 시 화면이 흔들리는 세기. 0이면 흔들지 않는다. 회복·보조는 낮게 두는 편이 읽기 좋다.")]
+        public float ShakeStrength { get; private set; } = 0.35f;
+
         /// <summary>이 권능이 실제로 무언가를 하는가. 전부 0이면 눌러도 아무 일이 없다.</summary>
         public bool HasEffect => Damage > 0 || Heal > 0 || StatusEffect != null || BlockDuration > 0f;
 

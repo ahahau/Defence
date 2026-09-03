@@ -257,11 +257,7 @@ namespace _01.Code.Manager
             if (power.Cooldown > 0f)
                 _readyTimeByPower[power] = Time.time + power.Cooldown;
 
-            DungeonPowerVisual.PlayBurst(
-                node.transform.position,
-                power.FlashColor,
-                battlefield.ArenaRadius,
-                power.Damage > 0);
+            DungeonPowerVisual.Play(power, node.transform.position, battlefield.ArenaRadius);
 
             RaiseChanged();
             reason = $"{power.DisplayName} · {affected}명에게 적중";
@@ -290,11 +286,10 @@ namespace _01.Code.Manager
                 _readyTimeByPower[power] = Time.time + power.Cooldown;
 
             var battlefield = node.GetComponent<NodeBattlefield>();
-            DungeonPowerVisual.PlayBurst(
+            DungeonPowerVisual.Play(
+                power,
                 node.transform.position,
-                power.FlashColor,
-                battlefield != null ? battlefield.ArenaRadius : 1f,
-                true);
+                battlefield != null ? battlefield.ArenaRadius : 1f);
 
             RaiseChanged();
             reason = $"{power.DisplayName} · {power.BlockDuration:0.#}초 동안 길이 끊겼습니다";

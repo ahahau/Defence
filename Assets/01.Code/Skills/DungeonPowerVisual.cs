@@ -11,6 +11,56 @@ namespace _01.Code.Skills
     /// </summary>
     public static class DungeonPowerVisual
     {
+        /// <summary>유닛 스프라이트(20) 위에 그린다. 아래로 두면 파티클이 전투원 뒤에 깔린다.</summary>
+        private const int ParticleSortingOrder = 30;
+
+        /// <summary>파티클 길이를 못 읽었을 때 쓰는 정리 시간. 남겨두면 씬에 계속 쌓인다.</summary>
+        private const float FallbackLifetime = 2f;
+
+        /// <summary>
+        /// 권능 하나를 구역에 터뜨린다.
+        /// 고유 파티클이 지정돼 있으면 그것을, 없으면 색만 다른 원형 파동을 쓴다.
+        /// </summary>
+        public static void Play(DungeonPowerSO power, Vector3 center, float radius)
+        {
+            if (power == null)
+                return;
+
+            if (power.ImpactEffect != null)
+                SpawnEffect(power, center);
+            else
+                PlayBurst(center, power.FlashColor, radius, power.Damage > 0);
+
+            DungeonPowerFeedbacks.Play(center, power.ShakeStrength);
+        }
+
+        private static void SpawnEffect(DungeonPowerSO power, Vector3 center)
+        {
+            var instance = Object.Instantiate(power.ImpactEffect, center, Quaternion.identity);
+            instance.transform.localScale = Vector3.one * Mathf.Max(0.1f, power.EffectScale);
+
+            var lifetime = 0f;
+            foreach (var system in instance.GetComponentsInChildren<ParticleSystem>(true))
+            {
+                var main = system.main;
+                // 루프가 걸린 프리팹을 그대로 두면 영원히 남는다.
+                main.loop = false;
+                lifetime = Mathf.Max(lifetime, main.duration + main.startLifetime.constantMax);
+            }
+
+            foreach (var renderer in instance.GetComponentsInChildren<ParticleSystemRenderer>(true))
+            {
+                renderer.sortingLayerName = "Default";
+                renderer.sortingOrder = ParticleSortingOrder;
+            }
+
+            var root = instance.GetComponent<ParticleSystem>();
+            if (root != null)
+                root.Play(true);
+
+            Object.Destroy(instance, lifetime > 0f ? lifetime : FallbackLifetime);
+        }
+
         /// <summary>구역에 원형 파동을 터뜨린다. 퍼지면서 옅어진 뒤 스스로 사라진다.</summary>
         public static void PlayBurst(Vector3 center, Color color, float radius, bool shakeScreen)
         {

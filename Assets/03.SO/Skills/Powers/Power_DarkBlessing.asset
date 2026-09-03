@@ -21,4 +21,8 @@ MonoBehaviour:
   <Damage>k__BackingField: 0
   <Heal>k__BackingField: 18
   <StatusEffect>k__BackingField: {fileID: 0}
+  <BlockDuration>k__BackingField: 0
   <FlashColor>k__BackingField: {r: 0.6, g: 0.4, b: 1, a: 1}
+  <ImpactEffect>k__BackingField: {fileID: 187180, guid: 1ed56f4c486ff6141a344e5e5714e1b9, type: 3}
+  <EffectScale>k__BackingField: 2
+  <ShakeStrength>k__BackingField: 0.15

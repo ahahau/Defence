@@ -25,3 +25,6 @@ MonoBehaviour:
   <StatusEffect>k__BackingField: {fileID: 0}
   <BlockDuration>k__BackingField: 6
   <FlashColor>k__BackingField: {r: 0.72, g: 0.58, b: 0.36, a: 1}
+  <ImpactEffect>k__BackingField: {fileID: 125726, guid: 28237332098b6a54a92d770e23648a92, type: 3}
+  <EffectScale>k__BackingField: 2.2
+  <ShakeStrength>k__BackingField: 0.75
