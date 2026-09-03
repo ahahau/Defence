@@ -5,6 +5,9 @@ TextureImporter:
   - first:
       213: -3124414793415215421
     second: Attacj_0
+  - first:
+      213: -7008412969330441016
+    second: Attack_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,7 +103,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Attacj_0
+      name: Attack_0
       rect:
         serializedVersion: 2
         x: 0
@@ -115,8 +118,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 3c6b28b9c49d3a4d0800000000000000
-      internalID: -3124414793415215421
+      spriteID: 8c481db598d1dbe90800000000000000
+      internalID: -7008412969330441016
       vertices: []
       indices: 
       edges: []
@@ -136,6 +139,7 @@ TextureImporter:
       entries: []
     nameFileIdTable:
       Attacj_0: -3124414793415215421
+      Attack_0: -7008412969330441016
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

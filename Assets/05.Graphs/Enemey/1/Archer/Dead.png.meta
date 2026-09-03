@@ -5,6 +5,9 @@ TextureImporter:
   - first:
       213: 4457663794195168306
     second: Hit_0
+  - first:
+      213: 2649847697073447219
+    second: Dead_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,7 +103,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Hit_0
+      name: Dead_0
       rect:
         serializedVersion: 2
         x: 0
@@ -115,8 +118,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 23c7f156a9dccdd30800000000000000
-      internalID: 4457663794195168306
+      spriteID: 33123f4e07626c420800000000000000
+      internalID: 2649847697073447219
       vertices: []
       indices: 
       edges: []
@@ -135,6 +138,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
+      Dead_0: 2649847697073447219
       Hit_0: 4457663794195168306
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
