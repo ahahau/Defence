@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: ArbalistUnitData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Units.UnitDataSO
   <Grade>k__BackingField: 3
-  <BoardSprite>k__BackingField: {fileID: -9030365041162893800, guid: 28c61687a54f1e34fbd7d56883871257, type: 3}
-  <Sprite>k__BackingField: {fileID: -9030365041162893800, guid: 28c61687a54f1e34fbd7d56883871257, type: 3}
+  <BoardSprite>k__BackingField: {fileID: 8721858494094029363, guid: 74319dad35ecee047bb087ddc0238c8e, type: 3}
+  <Sprite>k__BackingField: {fileID: 8721858494094029363, guid: 74319dad35ecee047bb087ddc0238c8e, type: 3}
   <Prefab>k__BackingField: {fileID: 8763816506036182599, guid: a4304527d5c33294e85b542d48edfd90, type: 3}
   <Name>k__BackingField: "\uC11D\uAD81\uBCD1"
   <Cost>k__BackingField: 42

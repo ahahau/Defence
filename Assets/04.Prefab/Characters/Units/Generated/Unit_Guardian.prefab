@@ -23,6 +23,7 @@ GameObject:
   - component: {fileID: 6670787628803708}
   - component: {fileID: 3490869977359020232}
   - component: {fileID: 2713263344861378859}
+  - component: {fileID: 7894530784803589000}
   m_Layer: 0
   m_Name: Unit_Guardian
   m_TagString: Untagged
@@ -449,6 +450,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2787899817810343432}
   - component: {fileID: 2624532001765305233}
+  - component: {fileID: 7780208279812104000}
   m_Layer: 0
   m_Name: Visual
   m_TagString: Untagged
@@ -520,7 +522,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 20
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -9030365041162893800, guid: 28c61687a54f1e34fbd7d56883871257, type: 3}
+  m_Sprite: {fileID: -7857973495667275250, guid: 1df51299caf1e954887fc8928517aa69, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -871,3 +873,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df04191b2a9b8e6449f06938b5038486, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Combat.CombatBarsView
+--- !u!114 &7780208279812104000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7473952817250454834}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b3b415ae8554c33b54e3f910e4dbbaa, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  gameStateEventChannel: {fileID: 0}
+  idleSprite: {fileID: -7857973495667275250, guid: 1df51299caf1e954887fc8928517aa69, type: 3}
+  attackSprite: {fileID: 8102541918518187562, guid: 926aeaf5f4d0f1d4eb94abd2f9017121, type: 3}
+  defeatedSprite: {fileID: 1773055512662163702, guid: 3347ca78efdc6a543804851e2c8ea6bd, type: 3}
+  spriteRenderer: {fileID: 2624532001765305233}
+--- !u!114 &7894530784803589000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4328671716576560348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ec510b2bef1f784687a05c44781f995, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  entityRender: {fileID: 7780208279812104000}
+  attackPoseDuration: 0.18

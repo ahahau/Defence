@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: VanguardUnitData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Units.UnitDataSO
   <Grade>k__BackingField: 5
-  <BoardSprite>k__BackingField: {fileID: -9030365041162893800, guid: 28c61687a54f1e34fbd7d56883871257, type: 3}
-  <Sprite>k__BackingField: {fileID: -9030365041162893800, guid: 28c61687a54f1e34fbd7d56883871257, type: 3}
+  <BoardSprite>k__BackingField: {fileID: -4669235113563824110, guid: 2b0597aa2e0e7bf4e95b706849f13681, type: 3}
+  <Sprite>k__BackingField: {fileID: -4669235113563824110, guid: 2b0597aa2e0e7bf4e95b706849f13681, type: 3}
   <Prefab>k__BackingField: {fileID: 8763816506036182599, guid: 682fd7edaefb52144b196ab1f18fe48f, type: 3}
   <Name>k__BackingField: "\uC120\uBD09\uB300"
   <Cost>k__BackingField: 82

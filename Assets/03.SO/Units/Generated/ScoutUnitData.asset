@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: ScoutUnitData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Units.UnitDataSO
   <Grade>k__BackingField: 1
-  <BoardSprite>k__BackingField: {fileID: -9030365041162893800, guid: 28c61687a54f1e34fbd7d56883871257, type: 3}
-  <Sprite>k__BackingField: {fileID: -9030365041162893800, guid: 28c61687a54f1e34fbd7d56883871257, type: 3}
+  <BoardSprite>k__BackingField: {fileID: 7692873641569869456, guid: 6f9837c9269f9cb488936d08c33de660, type: 3}
+  <Sprite>k__BackingField: {fileID: 7692873641569869456, guid: 6f9837c9269f9cb488936d08c33de660, type: 3}
   <Prefab>k__BackingField: {fileID: 8763816506036182599, guid: b45f239e724b68c4cb7d521e84b8c6b3, type: 3}
   <Name>k__BackingField: "\uC815\uCC30\uBCD1"
   <Cost>k__BackingField: 18

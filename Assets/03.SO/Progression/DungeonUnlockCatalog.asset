@@ -13,6 +13,26 @@ MonoBehaviour:
   m_Name: DungeonUnlockCatalog
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Progression.DungeonUnlockCatalogSO
   entries:
+  - unit: {fileID: 11400000, guid: 09ffde85ae48bac38cfe448e868def54, type: 2}
+    building: {fileID: 0}
+    startsUnlocked: 0
+    unlockDay: 5
+    unlockHint: "5\uC77C\uCC28 \u00B7 \uC11C\uC11C \uC544\uAD70\uC744 \uACC4\uC18D \uD68C\uBCF5\uC2DC\uD0A8\uB2E4"
+  - unit: {fileID: 11400000, guid: 18ccd4035190be1e4a2fd9a2a466b873, type: 2}
+    building: {fileID: 0}
+    startsUnlocked: 0
+    unlockDay: 6
+    unlockHint: "6\uC77C\uCC28 \u00B7 \uAC70\uBBF8\uC904\uB85C \uCE68\uC785\uC790\uB97C \uC55E\uC904\uC5D0 \uBB36\uB294\uB2E4"
+  - unit: {fileID: 11400000, guid: 87f47b479049307a49aea727ee3389ec, type: 2}
+    building: {fileID: 0}
+    startsUnlocked: 0
+    unlockDay: 8
+    unlockHint: "8\uC77C\uCC28 \u00B7 \uC6B8\uBD80\uC9D6\uC5B4 \uC8FC\uBCC0 \uCE68\uC785\uC790\uB97C \uCDE8\uC57D\uD558\uAC8C \uB9CC\uB4E0\uB2E4"
+  - unit: {fileID: 11400000, guid: 379b349ef8bb457292ab66141feaae13, type: 2}
+    building: {fileID: 0}
+    startsUnlocked: 0
+    unlockDay: 11
+    unlockHint: "11\uC77C\uCC28 \u00B7 \uB4B7\uC904\uB85C \uD30C\uACE0\uB4E4\uC5B4 \uB4F1 \uB4A4\uB97C \uCC0C\uB978\uB2E4"
   - unit: {fileID: 11400000, guid: b6ce91f584084e0caa2a843d9c51c8df, type: 2}
     building: {fileID: 0}
     startsUnlocked: 1

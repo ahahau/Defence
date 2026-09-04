@@ -23,6 +23,7 @@ GameObject:
   - component: {fileID: 8675766333766392546}
   - component: {fileID: 8697242750164101895}
   - component: {fileID: 2631129633724791826}
+  - component: {fileID: 7537031156251709000}
   m_Layer: 0
   m_Name: Unit_SlimeGreen
   m_TagString: Untagged
@@ -429,6 +430,30 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Combat.CharacterPoseView
   entityRender: {fileID: 5152221481353906157}
   attackPoseDuration: 0.18
+--- !u!114 &7537031156251709000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4328671716576560348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1156cb35ef27b94b882d6f5c3ccc6e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  agent: {fileID: 0}
+  combatant: {fileID: 0}
+  barsView: {fileID: 0}
+  skill: {fileID: 11400000, guid: ec5c6d78478b3e64b4fc762040eb9f06, type: 2}
+  ultimate: {fileID: 0}
+  castFlashColor: {r: 0.55, g: 0.85, b: 1, a: 1}
+  ultimateFlashColor: {r: 1, g: 0.85, b: 0.35, a: 1}
+  castFlashDuration: 0.14
+  castPunchScale: 0.14
+  ultimateShakeDuration: 0.18
+  ultimateShakeAmplitude: 0.1
+  ultimateHitStopDuration: 0.035
 --- !u!1 &7473952817250454834
 GameObject:
   m_ObjectHideFlags: 0

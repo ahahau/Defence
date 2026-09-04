@@ -23,6 +23,7 @@ GameObject:
   - component: {fileID: 57314754088470061}
   - component: {fileID: 4836454732083853811}
   - component: {fileID: 6714813956394852699}
+  - component: {fileID: 7637231586234817000}
   m_Layer: 0
   m_Name: Unit_Vanguard
   m_TagString: Untagged
@@ -449,6 +450,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2787899817810343432}
   - component: {fileID: 2624532001765305233}
+  - component: {fileID: 7896755577429785000}
   m_Layer: 0
   m_Name: Visual
   m_TagString: Untagged
@@ -520,7 +522,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 20
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -9030365041162893800, guid: 28c61687a54f1e34fbd7d56883871257, type: 3}
+  m_Sprite: {fileID: -4669235113563824110, guid: 2b0597aa2e0e7bf4e95b706849f13681, type: 3}
   m_Color: {r: 0.6980392, g: 0.1333333, b: 0.1333333, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -871,3 +873,34 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 468322, guid: 77aff4f1c9d07704bafd856e02a46ac9, type: 3}
   m_PrefabInstance: {fileID: 5830475120370890622}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &7896755577429785000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7473952817250454834}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b3b415ae8554c33b54e3f910e4dbbaa, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  gameStateEventChannel: {fileID: 0}
+  idleSprite: {fileID: -4669235113563824110, guid: 2b0597aa2e0e7bf4e95b706849f13681, type: 3}
+  attackSprite: {fileID: -1975519954842515521, guid: 6b7c7fab48cb6094083e73028f6a6c4f, type: 3}
+  defeatedSprite: {fileID: 3870693840895197719, guid: 20da7a64c7b28c240b80d255568b0e3b, type: 3}
+  spriteRenderer: {fileID: 2624532001765305233}
+--- !u!114 &7637231586234817000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4328671716576560348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ec510b2bef1f784687a05c44781f995, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  entityRender: {fileID: 7896755577429785000}
+  attackPoseDuration: 0.18

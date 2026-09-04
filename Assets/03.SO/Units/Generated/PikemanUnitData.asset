@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: PikemanUnitData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Units.UnitDataSO
   <Grade>k__BackingField: 2
-  <BoardSprite>k__BackingField: {fileID: -9030365041162893800, guid: 28c61687a54f1e34fbd7d56883871257, type: 3}
-  <Sprite>k__BackingField: {fileID: -9030365041162893800, guid: 28c61687a54f1e34fbd7d56883871257, type: 3}
+  <BoardSprite>k__BackingField: {fileID: -3616704844093011961, guid: ac20b057fdbd8fa44b433f63b9f7a95a, type: 3}
+  <Sprite>k__BackingField: {fileID: -3616704844093011961, guid: ac20b057fdbd8fa44b433f63b9f7a95a, type: 3}
   <Prefab>k__BackingField: {fileID: 8763816506036182599, guid: 1337ab5a143a6fc44b6c9a3ff53fb093, type: 3}
   <Name>k__BackingField: "\uCC3D\uBCD1"
   <Cost>k__BackingField: 28
