@@ -30,5 +30,8 @@ namespace _01.Code.Audio
 
         /// <summary>패널을 닫을 때. 여는 소리와 달라야 방향이 느껴진다.</summary>
         UiClose,
+
+        /// <summary>발톱과 이빨. 슬라임·거미·늑대·박쥐에 쇠붙이 소리는 어울리지 않는다.</summary>
+        AttackClaw,
     }
 }

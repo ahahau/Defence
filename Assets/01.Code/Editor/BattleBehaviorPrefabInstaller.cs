@@ -166,11 +166,17 @@ namespace _01.Code.Editor
                 || name.Contains("Vanguard", StringComparison.OrdinalIgnoreCase))
                 return BattleRole.Tank;
 
-            // 후열 원거리 딜러.
+            // 후열 원거리 딜러. 그림자 암살귀는 뒷줄로 파고들어야 해서 여기 속한다.
             if (name.Contains("Arbalist", StringComparison.OrdinalIgnoreCase)
                 || name.Contains("BattleMage", StringComparison.OrdinalIgnoreCase)
-                || name.Contains("Scout", StringComparison.OrdinalIgnoreCase))
+                || name.Contains("Scout", StringComparison.OrdinalIgnoreCase)
+                || name.Contains("Shade", StringComparison.OrdinalIgnoreCase))
                 return BattleRole.Ranged;
+
+            // 지원. 이 역할이라야 BattleAgent가 아군을 회복시킨다 —
+            // 포자 버섯은 서서 주변을 낫게 하는 것이 존재 이유다.
+            if (name.Contains("Shroom", StringComparison.OrdinalIgnoreCase))
+                return BattleRole.Support;
 
             return BattleRole.Melee;
         }

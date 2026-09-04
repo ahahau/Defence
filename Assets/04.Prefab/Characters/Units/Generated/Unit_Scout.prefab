@@ -199,7 +199,7 @@ MonoBehaviour:
   enableFeelCombatFeedbacks: 1
   attackHitParticles: {fileID: 5806884912299001461}
   attackImpactOffset: 0.08
-  attackSfx: 9
+  attackSfx: 20
   attackStatusEffect: {fileID: 0}
   attackStatusEffectChance: 0
   health: {fileID: 2709196990148380843}
@@ -440,6 +440,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9388dd33668649a38c1de28e312c9396, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.StatusEffects.EnemyStatusController
+--- !u!114 &7216101064577480000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4328671716576560348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ec510b2bef1f784687a05c44781f995, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  entityRender: {fileID: 7814869448026288000}
+  attackPoseDuration: 0.18
 --- !u!1 &7473952817250454834
 GameObject:
   m_ObjectHideFlags: 0
@@ -532,6 +546,23 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &7814869448026288000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7473952817250454834}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b3b415ae8554c33b54e3f910e4dbbaa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gameStateEventChannel: {fileID: 0}
+  idleSprite: {fileID: 7692873641569869456, guid: 6f9837c9269f9cb488936d08c33de660, type: 3}
+  attackSprite: {fileID: 5862133903455910337, guid: ed4bc04033e72a34e8e4bb8cd0b96378, type: 3}
+  defeatedSprite: {fileID: -6845443714650893491, guid: 4b411059a1df9ea4ca5a7a9d9ab47371, type: 3}
+  spriteRenderer: {fileID: 2624532001765305233}
 --- !u!1001 &1660696363140019140
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -873,34 +904,3 @@ ParticleSystem:
   m_CorrespondingSourceObject: {fileID: 19824692, guid: d02459bf4a092d144baeb3ac2591eb3b, type: 3}
   m_PrefabInstance: {fileID: 5806884912280028737}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &7814869448026288000
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7473952817250454834}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8b3b415ae8554c33b54e3f910e4dbbaa, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  gameStateEventChannel: {fileID: 0}
-  idleSprite: {fileID: 7692873641569869456, guid: 6f9837c9269f9cb488936d08c33de660, type: 3}
-  attackSprite: {fileID: 5862133903455910337, guid: ed4bc04033e72a34e8e4bb8cd0b96378, type: 3}
-  defeatedSprite: {fileID: -6845443714650893491, guid: 4b411059a1df9ea4ca5a7a9d9ab47371, type: 3}
-  spriteRenderer: {fileID: 2624532001765305233}
---- !u!114 &7216101064577480000
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4328671716576560348}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0ec510b2bef1f784687a05c44781f995, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  entityRender: {fileID: 7814869448026288000}
-  attackPoseDuration: 0.18

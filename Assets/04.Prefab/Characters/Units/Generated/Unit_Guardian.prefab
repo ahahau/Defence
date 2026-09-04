@@ -440,6 +440,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9388dd33668649a38c1de28e312c9396, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.StatusEffects.EnemyStatusController
+--- !u!114 &7894530784803589000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4328671716576560348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ec510b2bef1f784687a05c44781f995, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  entityRender: {fileID: 7780208279812104000}
+  attackPoseDuration: 0.18
 --- !u!1 &7473952817250454834
 GameObject:
   m_ObjectHideFlags: 0
@@ -532,6 +546,23 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &7780208279812104000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7473952817250454834}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b3b415ae8554c33b54e3f910e4dbbaa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gameStateEventChannel: {fileID: 0}
+  idleSprite: {fileID: -7857973495667275250, guid: 1df51299caf1e954887fc8928517aa69, type: 3}
+  attackSprite: {fileID: 8102541918518187562, guid: 926aeaf5f4d0f1d4eb94abd2f9017121, type: 3}
+  defeatedSprite: {fileID: 1773055512662163702, guid: 3347ca78efdc6a543804851e2c8ea6bd, type: 3}
+  spriteRenderer: {fileID: 2624532001765305233}
 --- !u!1001 &1018061515237488435
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -873,34 +904,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df04191b2a9b8e6449f06938b5038486, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Combat.CombatBarsView
---- !u!114 &7780208279812104000
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7473952817250454834}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8b3b415ae8554c33b54e3f910e4dbbaa, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  gameStateEventChannel: {fileID: 0}
-  idleSprite: {fileID: -7857973495667275250, guid: 1df51299caf1e954887fc8928517aa69, type: 3}
-  attackSprite: {fileID: 8102541918518187562, guid: 926aeaf5f4d0f1d4eb94abd2f9017121, type: 3}
-  defeatedSprite: {fileID: 1773055512662163702, guid: 3347ca78efdc6a543804851e2c8ea6bd, type: 3}
-  spriteRenderer: {fileID: 2624532001765305233}
---- !u!114 &7894530784803589000
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4328671716576560348}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0ec510b2bef1f784687a05c44781f995, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  entityRender: {fileID: 7780208279812104000}
-  attackPoseDuration: 0.18

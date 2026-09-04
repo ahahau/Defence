@@ -173,3 +173,11 @@ MonoBehaviour:
     <Volume>k__BackingField: 0.45
     <MinInterval>k__BackingField: 0.08
     <PitchJitter>k__BackingField: 0.05
+  - <Cue>k__BackingField: 20
+    <Variants>k__BackingField:
+    - {fileID: 8300000, guid: 696ab8f1e0d8b53428bc57114dc6165f, type: 3}
+    - {fileID: 8300000, guid: 807788d4fc99a344186306f45ce20b84, type: 3}
+    - {fileID: 8300000, guid: 8414fd0764e689f41a5f68685779fee3, type: 3}
+    <Volume>k__BackingField: 0.4
+    <MinInterval>k__BackingField: 0.07
+    <PitchJitter>k__BackingField: 0.12
