@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Boss_Subjugator
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Enemies.EnemyDataSO
   <Grade>k__BackingField: 1
-  <BoardSprite>k__BackingField: {fileID: 0}
+  <BoardSprite>k__BackingField: {fileID: -4365962473229112361, guid: bb073b873b9b2ca4a933209815676ba9, type: 3}
   <Defense>k__BackingField: 25
   <EvasionChance>k__BackingField: 0.02
   <Name>k__BackingField: "\uD1A0\uBC8C\uB300\uC7A5"
@@ -24,6 +24,6 @@ MonoBehaviour:
   <MaxHealth>k__BackingField: 24
   <AttackDamage>k__BackingField: 2
   <AttackInterval>k__BackingField: 1.5
-  <IdleSprite>k__BackingField: {fileID: 4723107735738678597, guid: ab745de3f39d5fb4cb696fb8e47b56d4, type: 3}
-  <AttackSprite>k__BackingField: {fileID: -7008412969330441016, guid: b5c6f44582be74046ac521c20fb566ed, type: 3}
-  <DefeatedSprite>k__BackingField: {fileID: 2649847697073447219, guid: 1afc32cd2b9e92845a244dba5793e7d5, type: 3}
+  <IdleSprite>k__BackingField: {fileID: -4365962473229112361, guid: bb073b873b9b2ca4a933209815676ba9, type: 3}
+  <AttackSprite>k__BackingField: {fileID: 5072219743064285326, guid: d7eb2bdaf8d189e4988898ed810cd248, type: 3}
+  <DefeatedSprite>k__BackingField: {fileID: 1404392631555203816, guid: 0fc293e69eb97a64daaa2bd24210f8b6, type: 3}
