@@ -197,7 +197,7 @@ namespace _01.Code.Combat
         private void Awake()
         {
             EnsureFeelCombatFeedbacks();
-            poseView = GetComponent<CharacterPoseView>();
+            EnsurePoseView();
             if (health != null)
                 health.Changed += RefreshHealthBar;
             RefreshBars(0f);
@@ -407,6 +407,26 @@ namespace _01.Code.Combat
 
 
         // 화면 단위 타격감(셰이크/히트스톱)은 FeelCombatFeedbacks가 담당한다. 프리팹 수정 없이 자동 부착.
+        /// <summary>
+        /// 공격 포즈를 갈아 끼울 부품을 챙긴다.
+        ///
+        /// 부하 프리팹에는 처음부터 붙여 뒀지만 침입자 쪽 다섯에는 없었다. 침입자는 자기 상태 기계가
+        /// 포즈를 바꾼다고 봤는데, 실제로 EnterState(Attack)를 부르는 곳이 없어서 때려도 서 있는
+        /// 그림 그대로였다. 모험가 열다섯의 Attack 그림이 통째로 놀고 있었다.
+        /// </summary>
+        private void EnsurePoseView()
+        {
+            poseView = GetComponent<CharacterPoseView>();
+            if (poseView != null)
+                return;
+
+            // 갈아 끼울 그림을 들고 있는 쪽이 없으면 붙여도 할 일이 없다.
+            if (GetComponentInChildren<_01.Code.Entities.EntityRender>(true) == null)
+                return;
+
+            poseView = gameObject.AddComponent<CharacterPoseView>();
+        }
+
         private void EnsureFeelCombatFeedbacks()
         {
             if (enableFeelCombatFeedbacks && GetComponent<FeelCombatFeedbacks>() == null)

@@ -9,9 +9,11 @@ namespace _01.Code.Combat
     /// 포즈 그림 자체는 <see cref="EntityRender"/>가 들고 있다 — 침입자 쪽은 이미 그 방식으로 돌고 있어서
     /// 같은 부품을 쓴다. 여기서 하는 일은 "언제 바꿀지"뿐이다.
     ///
-    /// 침입자는 <c>Enemy</c>가 자기 상태 기계 안에서 직접 전환하는데, 부하에는 그런 상태 기계가 없고
-    /// <c>MainUnit</c>은 Idle과 Defeated만 오갈 뿐 공격 포즈를 한 번도 쓰지 않았다.
-    /// 그래서 부하는 때려도 서 있는 그림 그대로였다.
+    /// 부하에는 상태 기계가 없고 <c>MainUnit</c>은 Idle과 Defeated만 오갈 뿐 공격 포즈를 쓰지 않았다.
+    /// 침입자는 <c>Enemy</c>가 상태 기계로 전환하지만 EnterState(Attack)를 부르는 곳이 없어
+    /// 결국 Idle과 Defeated만 오갔다. 셋 다 때려도 서 있는 그림 그대로였다.
+    ///
+    /// 그래서 <see cref="Combatant"/>가 없으면 직접 붙인다 — 프리팹에 일일이 얹지 않는다.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CharacterPoseView : MonoBehaviour
