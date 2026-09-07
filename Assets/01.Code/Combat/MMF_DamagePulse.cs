@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DG.Tweening;
 using MoreMountains.Feedbacks;
 using UnityEngine;
@@ -114,6 +115,28 @@ namespace _01.Code.Combat
             Target.localEulerAngles = _baseRotation;
         }
 
+        // 자세와 같은 이유로 색도 처음 한 번만 기억한다. 다만 이쪽은 인스턴스별로는 부족하다.
+        //
+        // 예전에는 점멸을 시작할 때마다 그 순간의 색을 "원래 색"으로 삼았다. 그래서 앞선 점멸이
+        // 아직 붉은 구간에 있을 때 또 맞으면 붉은색이 원래 색으로 기억되고, 그 값으로 되돌아가
+        // 영영 붉게 남았다. 맞을수록 더 붉어진다.
+        //
+        // 게다가 한 유닛의 SpriteRenderer 하나를 여러 DamagePulse가 나눠 쓴다.
+        // FeelCombatFeedbacks만 해도 일반 피격·강타·사망 셋이고, SkillCaster의 시전·궁극기까지
+        // 같은 배열을 넘겨받는다. 그래서 원래 색과 돌고 있는 점멸은 인스턴스가 아니라
+        // SpriteRenderer별로 기억해야 한다 — 강타가 일반 피격의 붉은 중간색을 물려받으면 똑같이 남는다.
+        private static readonly Dictionary<SpriteRenderer, Color> BaseColors = new();
+        private static readonly Dictionary<SpriteRenderer, Sequence> RunningFlashes = new();
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetRegistries()
+        {
+            // 도메인 리로드를 꺼 둔 프로젝트에서는 static이 플레이 모드를 넘어 살아남는다.
+            // 지난 판의 죽은 렌더러가 남아 있으면 다음 판의 원래 색을 엉뚱하게 잡는다.
+            BaseColors.Clear();
+            RunningFlashes.Clear();
+        }
+
         private void PlaySpriteFlash(float duration)
         {
             if (SpriteRenderers == null)
@@ -124,13 +147,60 @@ namespace _01.Code.Combat
                 if (spriteRenderer == null || spriteRenderer.sortingOrder >= 40)
                     continue;
 
-                var originalColor = spriteRenderer.color;
-                DOTween.Sequence()
+                if (!BaseColors.TryGetValue(spriteRenderer, out var baseColor))
+                {
+                    baseColor = spriteRenderer.color;
+                    PruneDeadEntries();
+                    BaseColors[spriteRenderer] = baseColor;
+                }
+
+                // 돌고 있던 점멸만 끊는다. spriteRenderer.DOKill()로 싹 끊으면
+                // 사망 연출의 페이드까지 같이 끊긴다.
+                if (RunningFlashes.TryGetValue(spriteRenderer, out var running))
+                    running?.Kill();
+
+                var renderer = spriteRenderer;
+                RunningFlashes[renderer] = DOTween.Sequence()
                     .SetUpdate(true)
-                    .Append(spriteRenderer.DOColor(FlashColor, duration * 0.35f))
-                    .Append(spriteRenderer.DOColor(originalColor, duration * 0.65f))
-                    .SetLink(spriteRenderer.gameObject);
+                    .Append(renderer.DOColor(WithAlphaOf(FlashColor, renderer), duration * 0.35f))
+                    .Append(renderer.DOColor(WithAlphaOf(baseColor, renderer), duration * 0.65f))
+                    // 자세 복원과 같이 OnKill이다. 다음 피격이 끊고 들어오든 오브젝트가 사라지든
+                    // 색은 반드시 제자리로 돌아간다.
+                    .OnKill(() =>
+                    {
+                        RunningFlashes.Remove(renderer);
+                        if (renderer == null)
+                            return;
+
+                        // 알파는 건드리지 않는다. 사망 페이드가 그쪽을 쓰고 있을 수 있다.
+                        renderer.color = WithAlphaOf(baseColor, renderer);
+                    })
+                    .SetLink(renderer.gameObject);
             }
+        }
+
+        /// <summary>파괴된 렌더러가 표에 쌓이지 않게 가끔 걷어낸다. 웨이브마다 유닛이 죽고 사라진다.</summary>
+        private static void PruneDeadEntries()
+        {
+            if (BaseColors.Count < 256)
+                return;
+
+            var dead = new List<SpriteRenderer>();
+            foreach (var key in BaseColors.Keys)
+                if (key == null)
+                    dead.Add(key);
+
+            foreach (var key in dead)
+            {
+                BaseColors.Remove(key);
+                RunningFlashes.Remove(key);
+            }
+        }
+
+        private static Color WithAlphaOf(Color color, SpriteRenderer spriteRenderer)
+        {
+            color.a = spriteRenderer.color.a;
+            return color;
         }
     }
 }
