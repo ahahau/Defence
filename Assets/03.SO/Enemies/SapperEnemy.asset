@@ -29,3 +29,4 @@ MonoBehaviour:
   <AttackSprite>k__BackingField: {fileID: 5869871767912270346, guid: 9dbee3a777d2d594b8d13868a2fb19ca, type: 3}
   <DefeatedSprite>k__BackingField: {fileID: -2537384902717814631, guid: a481d897a6cbd4e489868c4345ffc022, type: 3}
   <AttackSfx>k__BackingField: 8
+  <DisarmsTraps>k__BackingField: 1

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Manager.AdventurerPartySO
   <PartyName>k__BackingField: "\uAD50\uB780 \uB3CC\uACA9"
   <Members>k__BackingField:
-  - {fileID: 11400000, guid: 846d66d0edba53c43977ab571e0fae2f, type: 2}
+  - {fileID: 11400000, guid: d68d85cb6a080c9f9cd6e61e90fc5ee7, type: 2}
   - {fileID: 11400000, guid: 846d66d0edba53c43977ab571e0fae2f, type: 2}
   - {fileID: 11400000, guid: 6031153906814462808020aadde25242, type: 2}
   - {fileID: 11400000, guid: 6031153906814462808020aadde25242, type: 2}

@@ -46,5 +46,9 @@ namespace _01.Code.Enemies
         [field: SerializeField, Tooltip("이 적이 때릴 때 나는 소리. 열두 종이 프리팹 넷을 나눠 쓰기 때문에" +
             " 프리팹에만 두면 관광객도 검을 휘두르는 소리를 낸다.")]
         public _01.Code.Audio.GameSfxCue AttackSfx { get; private set; } = _01.Code.Audio.GameSfxCue.Attack;
+
+        [field: SerializeField, Tooltip("밟는 대신 함정을 뜯어낸다. 공병이 이걸로 산다 —" +
+            " 함정을 깔아 둔 길이 그냥 뚫리므로 도착하기 전에 잡아야 한다.")]
+        public bool DisarmsTraps { get; private set; }
     }
 }

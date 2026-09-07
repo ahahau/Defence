@@ -91,6 +91,11 @@ namespace _01.Code.Buildings
                 return false;
 
             Component targetComponent = target as Component;
+
+            // 공병은 밟지 않고 뜯어낸다. 피해 판정보다 먼저 본다.
+            if (TryDisarm(targetComponent))
+                return false;
+
             var resolvedDamage = CurrentDamage;
             if (targetComponent != null && targetComponent.TryGetComponent<EnemyStatusController>(out var statusController))
                 resolvedDamage = statusController.ModifyTrapDamage(resolvedDamage);
@@ -109,6 +114,34 @@ namespace _01.Code.Buildings
             return true;
         }
         
+        /// <summary>
+        /// 함정을 해체할 줄 아는 상대면 피해 대신 함정이 부서진다.
+        ///
+        /// 확률을 두지 않았다. 공병이 지나가면 반드시 하나가 사라져야 플레이어가
+        /// "저건 먼저 잡아야 한다"고 읽는다. 확률이면 운이 나빠서 뚫린 것처럼 보인다.
+        /// </summary>
+        private bool TryDisarm(Component targetComponent)
+        {
+            if (targetComponent == null)
+                return false;
+
+            var enemy = targetComponent.GetComponentInParent<_01.Code.Enemies.Enemy>();
+            if (enemy == null || enemy.Data == null || !enemy.Data.DisarmsTraps)
+                return false;
+
+            LastTriggerDamage = 0;
+            PlayHitAnimation();
+            _01.Code.Audio.GameSfxPlayer.Play(_01.Code.Audio.GameSfxCue.Trap, transform.position);
+
+            // 함정이 조용히 사라지면 무슨 일이 났는지 모른다. 해체한 쪽에 글자를 띄운다.
+            var combatant = enemy.GetComponent<Combatant>();
+            if (combatant != null)
+                combatant.ShowCounterplayFeedback("함정 해체", 0, false, new Color(0.65f, 0.72f, 0.85f));
+
+            BreakBuilding();
+            return true;
+        }
+
         private void PlayHitAnimation()
         {
             if (hitAnimationTarget == null || hitShakeDistance <= 0f)
