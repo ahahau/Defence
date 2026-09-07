@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DeepMineBuildingData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Buildings.BuildingDataSO
   <Grade>k__BackingField: 2
-  <BoardSprite>k__BackingField: {fileID: -855298285791758126, guid: cb57f21d1c6c2b14f87fb1bae1e53de2, type: 3}
+  <BoardSprite>k__BackingField: {fileID: -3149527408922921897, guid: f585e413da0cb3c409e8f51d91d75e26, type: 3}
   <DisplayName>k__BackingField: 깊은 광산
   <Cost>k__BackingField: 35
   <Prefab>k__BackingField: {fileID: 5714187832109640901, guid: d7fef82de47f6a14193dee71a9dbe181, type: 3}

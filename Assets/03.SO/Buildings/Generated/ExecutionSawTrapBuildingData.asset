@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ExecutionSawTrapBuildingData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Buildings.BuildingDataSO
   <Grade>k__BackingField: 4
-  <BoardSprite>k__BackingField: {fileID: 21300000, guid: 9d2b7a3e6051ea94286df9f353dffb9f, type: 3}
+  <BoardSprite>k__BackingField: {fileID: 6613619057406191019, guid: e084e233e2a086d42826252133a64775, type: 3}
   <Defense>k__BackingField: 0
   <EvasionChance>k__BackingField: 0
   <DisplayName>k__BackingField: "\uCC98\uD615 \uD1B1\uB0A0"

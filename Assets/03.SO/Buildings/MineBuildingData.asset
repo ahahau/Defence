@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: MineBuildingData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Buildings.BuildingDataSO
   <Grade>k__BackingField: 1
-  <BoardSprite>k__BackingField: {fileID: -855298285791758126, guid: cb57f21d1c6c2b14f87fb1bae1e53de2, type: 3}
+  <BoardSprite>k__BackingField: {fileID: -6822275129016779544, guid: f6424fde25026dd4d8cb1e18d7005ee7, type: 3}
   <DisplayName>k__BackingField: 광산
   <Cost>k__BackingField: 20
   <Prefab>k__BackingField: {fileID: 5714187832109640901, guid: d7fef82de47f6a14193dee71a9dbe181, type: 3}

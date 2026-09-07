@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: SpikeTrapBuildingData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Buildings.BuildingDataSO
   <Grade>k__BackingField: 1
-  <BoardSprite>k__BackingField: {fileID: -855298285791758126, guid: cb57f21d1c6c2b14f87fb1bae1e53de2, type: 3}
+  <BoardSprite>k__BackingField: {fileID: -2972884127975362549, guid: cb18dcab2c0d2b34898a8921e1b4ef03, type: 3}
   <Defense>k__BackingField: 0
   <EvasionChance>k__BackingField: 0
   <DisplayName>k__BackingField: "\uAC00\uC2DC \uD568\uC815"

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ArmoryStoreBuildingData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Buildings.BuildingDataSO
   <Grade>k__BackingField: 2
-  <BoardSprite>k__BackingField: {fileID: -855298285791758126, guid: cb57f21d1c6c2b14f87fb1bae1e53de2, type: 3}
+  <BoardSprite>k__BackingField: {fileID: -3218559310315506095, guid: 3958f6faf86d4c14bb1ac2d14effe12f, type: 3}
   <DisplayName>k__BackingField: 무기 상점
   <Cost>k__BackingField: 30
   <Prefab>k__BackingField: {fileID: 7960331297190676439, guid: fecf1678d4256cf499fc8e392ac5647b, type: 3}

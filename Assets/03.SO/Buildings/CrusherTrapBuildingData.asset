@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: CrusherTrapBuildingData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Buildings.BuildingDataSO
   <Grade>k__BackingField: 3
-  <BoardSprite>k__BackingField: {fileID: -855298285791758126, guid: cb57f21d1c6c2b14f87fb1bae1e53de2, type: 3}
+  <BoardSprite>k__BackingField: {fileID: 5490437170853508298, guid: 2065d8f656d70b148987753bd8d7e0b7, type: 3}
   <Defense>k__BackingField: 0
   <EvasionChance>k__BackingField: 0
   <DisplayName>k__BackingField: "\uC555\uC1C4 \uD568\uC815"

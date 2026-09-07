@@ -59,8 +59,19 @@ namespace _01.Code.Buildings
             if (data == null || data.BoardSprite == null)
                 return;
 
-            // 체력바처럼 위에 얹힌 것들은 건드리지 않는다. 몸통 하나만 갈아 끼운다.
-            var body = GetComponent<SpriteRenderer>();
+            // 프리팹에는 SpriteRenderer가 둘이다 — 몸통 Visual 과 테두리 Border.
+            // 이름으로 몸통을 집는다. 아무거나 집으면 테두리에 건물 그림이 들어간다.
+            SpriteRenderer body = null;
+            foreach (var renderer in GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                if (renderer.gameObject.name != "Visual")
+                    continue;
+
+                body = renderer;
+                break;
+            }
+
+            // 이름이 다른 프리팹이 섞여 있어도 아무것도 안 나오는 것보다는 낫다.
             if (body == null)
                 body = GetComponentInChildren<SpriteRenderer>(true);
 

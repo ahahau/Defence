@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ArmorBreakerTrapBuildingData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Buildings.BuildingDataSO
   <Grade>k__BackingField: 3
-  <BoardSprite>k__BackingField: {fileID: 21300000, guid: 9d2b7a3e6051ea94286df9f353dffb9f, type: 3}
+  <BoardSprite>k__BackingField: {fileID: 7827735915732503094, guid: 1ac78739f8d953540a67e0e8bb0fb850, type: 3}
   <Defense>k__BackingField: 0
   <EvasionChance>k__BackingField: 0
   <DisplayName>k__BackingField: "\uAC11\uC637\uBD84\uC1C4 \uD568\uC815"
