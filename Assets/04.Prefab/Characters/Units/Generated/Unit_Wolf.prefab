@@ -145,7 +145,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c096536eb2ddfa947b9d049685115dd9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Combat.Health
-  maxHealth: 28
+  maxHealth: 20
 --- !u!114 &3065682830328054744
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -190,7 +190,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Combat.Combatant
   attackDamage: 3
   defense: 0
-  attackInterval: 1.1
+  attackInterval: 0.8
   evasionChance: 0
   criticalChance: 0.12
   criticalDamageMultiplier: 2
