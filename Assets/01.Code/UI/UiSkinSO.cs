@@ -23,5 +23,21 @@ namespace _01.Code.UI
 
         [field: SerializeField, Tooltip("슬라이더 채움.")]
         public Sprite SliderFill { get; private set; }
+
+        [field: SerializeField, Tooltip("오른쪽 위 상태 카드에 붙는 표식. 카드마다 하나씩." +
+            " 그림 폴더는 Resources 밖이라 이 표가 다리 노릇을 한다.")]
+        public Sprite GoldIcon { get; private set; }
+
+        [field: SerializeField] public Sprite MagicIcon { get; private set; }
+
+        [field: SerializeField] public Sprite DangerIcon { get; private set; }
+
+        [field: SerializeField] public Sprite MoraleIcon { get; private set; }
+
+        [field: SerializeField] public Sprite CohesionIcon { get; private set; }
+
+        [field: SerializeField] public Sprite DayIcon { get; private set; }
+
+        [field: SerializeField] public Sprite TreasuryIcon { get; private set; }
     }
 }

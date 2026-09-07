@@ -16,3 +16,10 @@ MonoBehaviour:
   <ButtonFrame>k__BackingField: {fileID: 21300000, guid: 9f50362e3fa90440b8caef63181d40de, type: 3}
   <SliderTrack>k__BackingField: {fileID: 21300000, guid: c408723e5b65f418fb6e6638f44eb182, type: 3}
   <SliderFill>k__BackingField: {fileID: 21300000, guid: 0bed112586cec49ba8fcc1dd5aa8a0fa, type: 3}
+  <GoldIcon>k__BackingField: {fileID: 8430588136127814639, guid: 14fead26ee6bef24ca46397bb3f95e42, type: 3}
+  <MagicIcon>k__BackingField: {fileID: 6065064321389643259, guid: 8e2038b99f73ad048a2299301455a3cd, type: 3}
+  <DangerIcon>k__BackingField: {fileID: -3916993829553880143, guid: 1c12bda12cb8df64395c15e383d51e85, type: 3}
+  <MoraleIcon>k__BackingField: {fileID: 0}
+  <CohesionIcon>k__BackingField: {fileID: 0}
+  <DayIcon>k__BackingField: {fileID: 0}
+  <TreasuryIcon>k__BackingField: {fileID: 0}

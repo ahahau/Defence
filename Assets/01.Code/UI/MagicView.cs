@@ -23,6 +23,7 @@ namespace _01.Code.UI
             DungeonHudStyle.ApplyPanel(panelRoot != null ? panelRoot : gameObject);
             DungeonHudStyle.ApplyTopRightCard(panelRoot != null ? panelRoot : gameObject, magicText, 1,
                 new Color(0.48f, 0.4f, 1f, 1f));
+            DungeonHudIcon.Attach(panelRoot != null ? panelRoot : gameObject, magicText, DungeonHudIcon.Skin != null ? DungeonHudIcon.Skin.MagicIcon : null);
             if (magicText == null)
                 return;
             _baseColor = magicText.color;

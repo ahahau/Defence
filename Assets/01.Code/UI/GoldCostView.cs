@@ -28,6 +28,7 @@ namespace _01.Code.UI
         {
             DungeonHudStyle.ApplyPanel(gameObject);
             DungeonHudStyle.ApplyTopRightCard(gameObject, goldText, 0, new Color(1f, 0.7f, 0.2f, 1f));
+            DungeonHudIcon.Attach(gameObject, goldText, DungeonHudIcon.Skin != null ? DungeonHudIcon.Skin.GoldIcon : null);
             if (goldText == null)
                 return;
 

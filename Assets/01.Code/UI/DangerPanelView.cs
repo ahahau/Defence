@@ -20,6 +20,7 @@ namespace _01.Code.UI
             DungeonHudStyle.ApplyPanel(panelRoot != null ? panelRoot : gameObject);
             DungeonHudStyle.ApplyTopRightCard(panelRoot != null ? panelRoot : gameObject, totalDangerText, 2,
                 new Color(1f, 0.28f, 0.2f, 1f));
+            DungeonHudIcon.Attach(panelRoot != null ? panelRoot : gameObject, totalDangerText, DungeonHudIcon.Skin != null ? DungeonHudIcon.Skin.DangerIcon : null);
             if (totalDangerText != null)
             {
                 _baseColor = totalDangerText.color;
