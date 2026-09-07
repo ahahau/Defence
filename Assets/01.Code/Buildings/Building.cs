@@ -44,6 +44,28 @@ namespace _01.Code.Buildings
             DangerRating = data.BaseDanger;
             currentDurability = Mathf.Max(1, maxDurability);
             isDestroyed = false;
+            ApplyBoardSprite(data);
+        }
+
+        /// <summary>
+        /// 데이터가 들고 있는 그림을 실제로 보드에 올린다.
+        ///
+        /// 종류 열하나가 프리팹 여덟을 나눠 쓴다 — 주점과 큰 주점이 Inn 하나를, 광산과 깊은 광산이
+        /// Mine 하나를, 상점과 무기 상점이 Store 하나를 쓴다. 프리팹에만 그림을 두면 승급해도
+        /// 화면이 그대로라 무엇이 지어졌는지 알 수 없다. 침입자 쪽이 이미 같은 방식으로 돌고 있다.
+        /// </summary>
+        private void ApplyBoardSprite(BuildingDataSO data)
+        {
+            if (data == null || data.BoardSprite == null)
+                return;
+
+            // 체력바처럼 위에 얹힌 것들은 건드리지 않는다. 몸통 하나만 갈아 끼운다.
+            var body = GetComponent<SpriteRenderer>();
+            if (body == null)
+                body = GetComponentInChildren<SpriteRenderer>(true);
+
+            if (body != null)
+                body.sprite = data.BoardSprite;
         }
 
         public void RestoreDurability(int durability)
