@@ -437,7 +437,7 @@ namespace _01.Code.Manager
             var recorded = totalIncome - totalExpense;
             netText.text = $"운영 자금 {FormatSignedGold(net)}\n획득 +{totalIncome}G  ·  지출 -{totalExpense}G"
                            + (recorded != net
-                               ? $"\n<size=85%>이 중 {FormatSignedGold(recorded - net)}는 이미 치렀거나 금고에 쌓였습니다</size>"
+                               ? $"\n<size=85%>그중 {FormatSignedGold(recorded - net)}는 금고·선지출</size>"
                                : string.Empty)
                            + BuildBattleSummaryText() + BuildFatigueText() + BuildDebtText();
             netText.color = net >= 0 ? new Color(0.45f, 0.95f, 0.55f) : new Color(1f, 0.45f, 0.4f);
@@ -491,11 +491,11 @@ namespace _01.Code.Manager
                 ? $"\n<color=#FFD05A>{wave.LastObjectiveTitle} 완료 · 보너스 +{wave.LastObjectiveRewardGold}G</color>"
                 : $"\n{wave.LastObjectiveTitle} 실패";
 
+            // 한 줄에 다섯 숫자를 늘어놓으면 아무것도 안 읽힌다. 방어가 어땠는지는
+            // 격퇴와 받은 피해 둘이면 판단이 선다. 가한 피해와 치명타는 진단용이라 뺐다.
             return $"\n<size=85%>격퇴 {wave.KillCount}/{wave.TotalEnemyCount}"
-                   + $"  ·  가한 피해 {wave.WaveDamageDealt}"
                    + trapShare
                    + $"  ·  받은 피해 {wave.WaveDamageTaken}"
-                   + $"  ·  치명타 {wave.WaveCriticalHits}"
                    + objective + "</size>";
         }
 
