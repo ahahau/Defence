@@ -515,7 +515,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 20
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 0d978ab7d273ba9449a4ab01920beb3a, type: 3}
+  m_Sprite: {fileID: 4723107735738678597, guid: 182b0ee12ea4a864fba362276291060c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -538,9 +538,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Entities.EntityRender
   gameStateEventChannel: {fileID: 11400000, guid: 959e35f08825cd94a8b68a1c032d7836, type: 2}
-  idleSprite: {fileID: 21300000, guid: 0d978ab7d273ba9449a4ab01920beb3a, type: 3}
-  attackSprite: {fileID: 21300000, guid: 251c1bad2088f7545b598dd41a312f36, type: 3}
-  defeatedSprite: {fileID: 21300000, guid: 11ea87e96aa1d5346ac82b87cdb016bf, type: 3}
+  idleSprite: {fileID: 4723107735738678597, guid: 182b0ee12ea4a864fba362276291060c, type: 3}
+  attackSprite: {fileID: -7008412969330441016, guid: 962f971193e765b47913e59ee23756ad, type: 3}
+  defeatedSprite: {fileID: 2649847697073447219, guid: 6a8e74ed35bbaf343be4fbfbf794ac0f, type: 3}
   spriteRenderer: {fileID: 2624532001765305233}
 --- !u!1001 &3128229183145668905
 PrefabInstance:
