@@ -103,10 +103,10 @@ TextureImporter:
       name: Inn_0
       rect:
         serializedVersion: 2
-        x: 15
-        y: 29
-        width: 1230
-        height: 1212
+        x: 0
+        y: 0
+        width: 1254
+        height: 1254
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 71dde98cbfda67f47b045209745ca1e9
     internalID: 0
     vertices: []
     indices: 

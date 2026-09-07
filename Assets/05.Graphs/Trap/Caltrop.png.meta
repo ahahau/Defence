@@ -103,10 +103,10 @@ TextureImporter:
       name: Caltrop_0
       rect:
         serializedVersion: 2
-        x: 25
-        y: 95
-        width: 1212
-        height: 1073
+        x: 0
+        y: 0
+        width: 1254
+        height: 1254
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 87b92085a916949489b01c3f8f74c4d1
     internalID: 0
     vertices: []
     indices: 

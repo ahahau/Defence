@@ -103,10 +103,10 @@ TextureImporter:
       name: Snare_0
       rect:
         serializedVersion: 2
-        x: 48
-        y: 55
-        width: 1158
-        height: 1179
+        x: 0
+        y: 0
+        width: 1254
+        height: 1254
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 27f6e3121a5f55d4b9a5c46a659fcbe2
     internalID: 0
     vertices: []
     indices: 

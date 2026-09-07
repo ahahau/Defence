@@ -106,10 +106,10 @@ TextureImporter:
       name: Mine_0
       rect:
         serializedVersion: 2
-        x: 16
-        y: 78
-        width: 1222
-        height: 1126
+        x: 0
+        y: 0
+        width: 1254
+        height: 1254
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -150,7 +150,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 8e5a20f1877db2449b561a735592054a
     internalID: 0
     vertices: []
     indices: 
@@ -160,8 +160,8 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Mine_0: -6822275129016779544
       0f57a93e-3b30-4a0f-baba-785723a99453_1: 5628434342730064078
+      Mine_0: -6822275129016779544
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

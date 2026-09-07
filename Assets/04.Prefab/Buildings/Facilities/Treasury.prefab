@@ -55,6 +55,7 @@ MonoBehaviour:
   destroyDelay: 0.05
   capacity: 500
   storedGold: 0
+  interestPerSettlement: 0.08
 --- !u!1 &4875080732837152811
 GameObject:
   m_ObjectHideFlags: 0
@@ -136,8 +137,8 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 20
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: b584fd5c8a733404ea557722150d9b0c, type: 3}
-  m_Color: {r: 1, g: 0.72, b: 0.22, a: 1}
+  m_Sprite: {fileID: 8932690522560248020, guid: c5b44f2f40b7e5842be673d507a9bf65, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0

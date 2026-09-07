@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: TreasuryBuildingData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Buildings.BuildingDataSO
   <Grade>k__BackingField: 1
-  <BoardSprite>k__BackingField: {fileID: 0}
+  <BoardSprite>k__BackingField: {fileID: 8932690522560248020, guid: c5b44f2f40b7e5842be673d507a9bf65, type: 3}
   <Defense>k__BackingField: 0
   <EvasionChance>k__BackingField: 0
   <DisplayName>k__BackingField: "\uAE08\uACE0"

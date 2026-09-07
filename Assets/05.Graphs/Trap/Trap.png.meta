@@ -106,10 +106,10 @@ TextureImporter:
       name: Trap_0
       rect:
         serializedVersion: 2
-        x: 23
+        x: 0
         y: 0
-        width: 1057
-        height: 1134
+        width: 1254
+        height: 1254
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -150,7 +150,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 469d80a3dde8a8948ae3f64ff6ba5533
     internalID: 0
     vertices: []
     indices: 
@@ -160,8 +160,8 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Trap_0: -3330077106955431519
       0a047539-1763-4789-bbbd-9e37661e8972_1: -6741471226689238736
+      Trap_0: -3330077106955431519
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

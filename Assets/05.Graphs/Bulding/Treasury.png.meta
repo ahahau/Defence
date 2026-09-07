@@ -1,10 +1,13 @@
 fileFormatVersion: 2
-guid: 2065d8f656d70b148987753bd8d7e0b7
+guid: c5b44f2f40b7e5842be673d507a9bf65
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 5490437170853508298
-    second: Crusher_0
+      213: -5533157275441643580
+    second: 3dd0529d-2825-422c-b521-1d7401e67a7f_0
+  - first:
+      213: 8932690522560248020
+    second: Treasury_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -34,7 +37,7 @@ TextureImporter:
   cubemapConvolution: 0
   seamlessCubemap: 0
   textureFormat: 1
-  maxTextureSize: 512
+  maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
     filterMode: 1
@@ -85,7 +88,7 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 4
     buildTarget: Standalone
-    maxTextureSize: 512
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 1
@@ -100,7 +103,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Crusher_0
+      name: Treasury_0
       rect:
         serializedVersion: 2
         x: 0
@@ -115,8 +118,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: ac4f25e6483f13c40800000000000000
-      internalID: 5490437170853508298
+      spriteID: 4d8b3bde3ba47fb70800000000000000
+      internalID: 8932690522560248020
       vertices: []
       indices: 
       edges: []
@@ -125,7 +128,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 05a32ccc953f5194296e674a00082cc6
+    spriteID: d285ed10421b5664ea48ff3e815efb52
     internalID: 0
     vertices: []
     indices: 
@@ -135,7 +138,8 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Crusher_0: 5490437170853508298
+      3dd0529d-2825-422c-b521-1d7401e67a7f_0: -5533157275441643580
+      Treasury_0: 8932690522560248020
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

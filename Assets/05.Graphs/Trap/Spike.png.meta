@@ -103,10 +103,10 @@ TextureImporter:
       name: Spike_0
       rect:
         serializedVersion: 2
-        x: 88
-        y: 47
-        width: 1055
-        height: 1187
+        x: 0
+        y: 0
+        width: 1254
+        height: 1254
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 370019aa53fc2f04999a7e39807b11b6
     internalID: 0
     vertices: []
     indices: 

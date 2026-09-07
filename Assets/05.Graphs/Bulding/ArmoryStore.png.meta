@@ -103,10 +103,10 @@ TextureImporter:
       name: ArmoryStore_0
       rect:
         serializedVersion: 2
-        x: 11
-        y: 47
-        width: 1243
-        height: 1197
+        x: 0
+        y: 0
+        width: 1254
+        height: 1254
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 31aa5681719a0494da94815db9c4759b
     internalID: 0
     vertices: []
     indices: 
