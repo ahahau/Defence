@@ -19,7 +19,7 @@ namespace _01.Code.Artifacts
                 return 0;
 
             var healed = 0;
-            foreach (var unit in Object.FindObjectsByType<Unit>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var unit in Object.FindObjectsByType<Unit>(FindObjectsInactive.Include))
             {
                 if (unit == null || !consumable.AppliesTo(unit))
                     continue;

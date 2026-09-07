@@ -17,7 +17,7 @@ namespace _01.Code.UI
             if (replaceLineBreaks && !string.IsNullOrEmpty(text.text))
                 text.text = text.text.Replace('\n', ' ');
 
-            text.enableWordWrapping = false;
+            text.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
             text.overflowMode = TextOverflowModes.Overflow;
             text.rectTransform.localRotation = Quaternion.identity;
             text.rectTransform.localScale = Vector3.one;

@@ -17,8 +17,8 @@ namespace _01.Code.Audio
     {
         private const float ScanInterval = 0.5f;
 
-        private readonly HashSet<int> bound = new();
-        private readonly Dictionary<int, bool> panelVisible = new();
+        private readonly HashSet<Button> bound = new();
+        private readonly Dictionary<Transform, bool> panelVisible = new();
         private readonly List<Transform> panels = new();
         private float nextScanTime;
         private bool panelsCollected;
@@ -53,12 +53,12 @@ namespace _01.Code.Audio
             if (!panelsCollected)
             {
                 panelsCollected = true;
-                foreach (var canvas in FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                foreach (var canvas in FindObjectsByType<Canvas>(FindObjectsInactive.Include))
                 foreach (var child in canvas.GetComponentsInChildren<Transform>(true))
                     if (child != canvas.transform && child.name.Contains("Panel"))
                     {
                         panels.Add(child);
-                        panelVisible[child.GetInstanceID()] = child.gameObject.activeInHierarchy;
+                        panelVisible[child] = child.gameObject.activeInHierarchy;
                     }
             }
 
@@ -67,15 +67,14 @@ namespace _01.Code.Audio
                 if (panel == null)
                     continue;
 
-                var id = panel.GetInstanceID();
                 var visible = panel.gameObject.activeInHierarchy;
-                if (!panelVisible.TryGetValue(id, out var was) || was == visible)
+                if (!panelVisible.TryGetValue(panel, out var was) || was == visible)
                 {
-                    panelVisible[id] = visible;
+                    panelVisible[panel] = visible;
                     continue;
                 }
 
-                panelVisible[id] = visible;
+                panelVisible[panel] = visible;
                 GameSfxPlayer.Play(visible ? GameSfxCue.UiOpen : GameSfxCue.UiClose);
             }
         }
@@ -88,14 +87,13 @@ namespace _01.Code.Audio
                 if (selectable is not Button button)
                     continue;
 
-                var id = button.GetInstanceID();
-                if (!bound.Add(id))
+                if (!bound.Add(button))
                     continue;
 
                 button.onClick.AddListener(() => GameSfxPlayer.Play(GameSfxCue.UiClick));
             }
 
-            // 파괴된 버튼의 id가 계속 쌓이지 않게 가끔 비운다.
+            // 파괴된 버튼이 계속 쌓이지 않게 가끔 비운다.
             // 다시 스캔하면 살아 있는 것만 도로 채워진다.
             if (bound.Count > 512)
                 bound.Clear();

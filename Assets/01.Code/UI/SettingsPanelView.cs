@@ -293,7 +293,7 @@ namespace _01.Code.UI
             if (cachedFont != null)
                 return cachedFont;
 
-            foreach (var text in FindObjectsByType<TMP_Text>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var text in FindObjectsByType<TMP_Text>(FindObjectsInactive.Include))
                 if (text.font != null)
                 {
                     cachedFont = text.font;

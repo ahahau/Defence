@@ -38,7 +38,7 @@ namespace _01.Code.UI
             dayText.enableAutoSizing = true;
             dayText.fontSizeMin = 16f;
             dayText.fontSizeMax = 28f;
-            dayText.enableWordWrapping = false;
+            dayText.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
             dayText.overflowMode = TextOverflowModes.Ellipsis;
             dayText.raycastTarget = false;
         }
