@@ -27,3 +27,4 @@ MonoBehaviour:
   <IdleSprite>k__BackingField: {fileID: -4365962473229112361, guid: bb073b873b9b2ca4a933209815676ba9, type: 3}
   <AttackSprite>k__BackingField: {fileID: 5072219743064285326, guid: d7eb2bdaf8d189e4988898ed810cd248, type: 3}
   <DefeatedSprite>k__BackingField: {fileID: 1404392631555203816, guid: 0fc293e69eb97a64daaa2bd24210f8b6, type: 3}
+  <AttackSfx>k__BackingField: 8

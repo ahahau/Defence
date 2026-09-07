@@ -42,5 +42,9 @@ namespace _01.Code.Enemies
 
         [field: SerializeField]
         public Sprite DefeatedSprite { get; private set; }
+
+        [field: SerializeField, Tooltip("이 적이 때릴 때 나는 소리. 열두 종이 프리팹 넷을 나눠 쓰기 때문에" +
+            " 프리팹에만 두면 관광객도 검을 휘두르는 소리를 낸다.")]
+        public _01.Code.Audio.GameSfxCue AttackSfx { get; private set; } = _01.Code.Audio.GameSfxCue.Attack;
     }
 }

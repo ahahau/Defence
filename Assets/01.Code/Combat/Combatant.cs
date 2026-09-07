@@ -176,6 +176,12 @@ namespace _01.Code.Combat
             artifactEventChannel = eventChannel;
         }
 
+        /// <summary>때릴 때 나는 소리를 데이터에서 갈아 끼운다.</summary>
+        public void SetAttackSfx(_01.Code.Audio.GameSfxCue cue)
+        {
+            attackSfx = cue;
+        }
+
         public void SetAttackInterval(float value)
         {
             value = Mathf.Max(0.05f, value);

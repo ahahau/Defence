@@ -808,6 +808,7 @@ namespace _01.Code.Enemies
             combatant?.SetDefense(enemyData.Defense);
             combatant?.SetAttackInterval(enemyData.AttackInterval);
             combatant?.SetEvasionChance(enemyData.EvasionChance);
+            combatant?.SetAttackSfx(enemyData.AttackSfx);
             enemyRenderer?.ConfigureSprites(enemyData.IdleSprite, enemyData.AttackSprite, enemyData.DefeatedSprite);
             _strengthOutline?.RefreshSprite();
         }
