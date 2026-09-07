@@ -98,6 +98,8 @@ namespace _01.Code.Buildings
             LastTriggerDamage = resolvedDamage;
             target.TakeDamage(resolvedDamage);
             PlayHitAnimation();
+            // 함정은 플레이어가 깔아 두고 잊는 물건이라, 언제 걸렸는지 소리로 짚어 줘야 한다.
+            _01.Code.Audio.GameSfxPlayer.Play(_01.Code.Audio.GameSfxCue.Trap, transform.position);
             TryApplyInjury(target, targetComponent);
 
             // 발동한 만큼 닳는다. 다 닳으면 Building이 알아서 부서뜨린다.

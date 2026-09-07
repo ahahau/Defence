@@ -341,6 +341,9 @@ namespace _01.Code.Combat
 
             var feedback = damageFeedback != null ? damageFeedback : GetComponent<DamageFeedback>();
             feedback?.ShowMissText();
+
+            // 빗나간 것도 소리로 알려 준다. 피해가 0으로 뜨는 것과 헷갈리지 않게.
+            _01.Code.Audio.GameSfxPlayer.Play(_01.Code.Audio.GameSfxCue.Dodge, transform.position);
         }
 
         private void RefreshBars(float attackRatio)
