@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Skills.DungeonPowerSO
   <DisplayName>k__BackingField: "\uC5B4\uB460\uC758 \uCD95\uBCF5"
   <Description>k__BackingField: "\uAD6C\uC5ED\uC758 \uBD80\uD558\uB97C \uD68C\uBCF5\uC2DC\uD0A8\uB2E4."
-  <Icon>k__BackingField: {fileID: 0}
+  <Icon>k__BackingField: {fileID: -5304142224875703734, guid: e496fbc63ac270d46b9a24bf09534cb7, type: 3}
   <Cost>k__BackingField: 30
   <Cooldown>k__BackingField: 12
   <Target>k__BackingField: 1
