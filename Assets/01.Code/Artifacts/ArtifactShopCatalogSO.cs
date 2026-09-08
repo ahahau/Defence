@@ -16,6 +16,9 @@ namespace _01.Code.Artifacts
         [SerializeField, Min(1), Tooltip("한 번에 진열할 칸 수")]
         private int slotCount = 3;
 
+        [SerializeField, Min(0), Tooltip("한 진열에 올릴 소모품 최대 개수. 물약은 사도 목록에서 빠지지 않아, 제한이 없으면 영구 유물이 팔려 나갈수록 매대가 물약으로 뒤덮인다.")]
+        private int maxConsumableSlots = 1;
+
         [SerializeField, Range(0f, 1f), Tooltip("일차가 오를수록 붙는 가격 상승률. 0이면 정가 고정.")]
         private float priceInflationPerDay;
 
@@ -114,19 +117,65 @@ namespace _01.Code.Artifacts
         /// 살 수 있는 게 칸 수보다 적으면 있는 만큼만 돌려준다.
         /// 지정 진열에는 소모품도 함께 올린다 — 물약을 살 자리가 여기뿐이다.
         /// </summary>
-        public List<ArtifactDataSO> RollDisplay(ArtifactInventorySO inventory)
+        /// <param name="previousDisplay">
+        /// 지난번에 깔았던 목록. 여기 있던 것은 뒤로 미뤄, 상인이 다시 왔을 때 같은 매대를 보지 않게 한다.
+        /// 상태를 이 에셋에 담지 않고 밖에서 받는 이유는 <see cref="GetPrice"/>와 같다 —
+        /// 스크립터블 오브젝트에 적어 두면 플레이할 때마다 에디터 에셋이 바뀐다.
+        /// </param>
+        public List<ArtifactDataSO> RollDisplay(ArtifactInventorySO inventory,
+            IReadOnlyList<ArtifactDataSO> previousDisplay = null)
         {
-            var candidates = CollectAvailable(inventory, false);
-            var display = new List<ArtifactDataSO>();
-            var take = Mathf.Min(SlotCount, candidates.Count);
-            for (var i = 0; i < take; i++)
+            // 새 물건을 먼저 깔고, 모자랄 때만 지난번 것을 다시 꺼낸다.
+            // 후보가 칸 수보다 적은 날에도 매대를 비우지 않기 위해서다.
+            var fresh = new List<ArtifactDataSO>();
+            var repeats = new List<ArtifactDataSO>();
+            foreach (var artifact in CollectAvailable(inventory, false))
             {
-                var index = Random.Range(0, candidates.Count);
-                display.Add(candidates[index]);
-                candidates.RemoveAt(index);
+                if (WasDisplayed(previousDisplay, artifact))
+                    repeats.Add(artifact);
+                else
+                    fresh.Add(artifact);
             }
 
+            var display = new List<ArtifactDataSO>();
+            var consumables = 0;
+            DrawInto(display, fresh, ref consumables);
+            DrawInto(display, repeats, ref consumables);
             return display;
+        }
+
+        /// <summary>IReadOnlyList 에는 Contains 가 없어 직접 훑는다. 목록이 서너 칸이라 이걸로 충분하다.</summary>
+        private static bool WasDisplayed(IReadOnlyList<ArtifactDataSO> previousDisplay, ArtifactDataSO artifact)
+        {
+            if (previousDisplay == null)
+                return false;
+
+            for (var i = 0; i < previousDisplay.Count; i++)
+                if (previousDisplay[i] == artifact)
+                    return true;
+
+            return false;
+        }
+
+        /// <summary>후보 더미에서 칸이 찰 때까지 뽑아 담는다. 소모품은 정해진 몫까지만 올린다.</summary>
+        private void DrawInto(List<ArtifactDataSO> display, List<ArtifactDataSO> pool, ref int consumables)
+        {
+            while (display.Count < SlotCount && pool.Count > 0)
+            {
+                var index = Random.Range(0, pool.Count);
+                var artifact = pool[index];
+                pool.RemoveAt(index);
+
+                if (artifact.IsConsumable)
+                {
+                    if (consumables >= maxConsumableSlots)
+                        continue;
+
+                    consumables++;
+                }
+
+                display.Add(artifact);
+            }
         }
 
         /// <summary>

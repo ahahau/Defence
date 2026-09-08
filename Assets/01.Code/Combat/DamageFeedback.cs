@@ -11,9 +11,11 @@ namespace _01.Code.Combat
         [SerializeField] private float textDuration = 0.55f;
         [SerializeField] private int textSortingOrder = 60;
         [Header("Critical")]
-        [SerializeField] private Color criticalTextColor = new(1f, 0.72f, 0.1f, 1f);
-        [SerializeField, Min(1f), Tooltip("크리티컬 데미지 텍스트 크기 배율.")]
-        private float criticalTextScale = 1.5f;
+        [SerializeField, Tooltip("치명타 숫자 색. 평타는 붉은색이므로 여기는 확실히 다른 색이어야 한다 — " +
+                                 "붉은 계열끼리 두면 난전에서 치명타가 났는지 알 수 없다.")]
+        private Color criticalTextColor = new(1f, 0.9f, 0.35f, 1f);
+        [SerializeField, Min(1f), Tooltip("치명타 숫자 크기 배율. 색만으로는 부족해 크기로도 갈라 준다.")]
+        private float criticalTextScale = 2f;
         [Header("Miss")]
         [SerializeField] private Color missTextColor = new(0.85f, 0.85f, 0.85f, 1f);
         [Header("Heal")]
@@ -22,6 +24,9 @@ namespace _01.Code.Combat
         [SerializeField, Min(1)] private int healParticleBurstCount = 10;
         [SerializeField, Min(0f), Tooltip("잦은 소량 힐(자연회복 등)을 하나의 텍스트로 합산하는 시간 창.")]
         private float healTextAggregateWindow = 0.4f;
+        [Header("Counterplay")]
+        [SerializeField, Min(0f), Tooltip("같은 적에게 연달아 발생한 상성 효과를 한 줄로 합산하는 시간 창.")]
+        private float counterplayTextAggregateWindow = 0.35f;
         [SerializeField] private TextMesh damageTextPrefab;
         [SerializeField] private ParticleSystem hitParticles;
         [SerializeField] private Health health;
@@ -33,6 +38,11 @@ namespace _01.Code.Combat
         private ParticleSystem _healParticles;
         private int _pendingHealAmount;
         private Coroutine _healTextRoutine;
+        private string _pendingCounterplayLabel;
+        private int _pendingCounterplayAmount;
+        private bool _pendingCounterplayShowsGain;
+        private Color _pendingCounterplayColor;
+        private Coroutine _counterplayTextRoutine;
         private void Awake()
         {
             if (health == null)
@@ -64,6 +74,15 @@ namespace _01.Code.Combat
                 _healTextRoutine = null;
                 _pendingHealAmount = 0;
             }
+
+            if (_counterplayTextRoutine != null)
+            {
+                StopCoroutine(_counterplayTextRoutine);
+                _counterplayTextRoutine = null;
+            }
+
+            _pendingCounterplayLabel = string.Empty;
+            _pendingCounterplayAmount = 0;
 
         }
 
@@ -140,6 +159,48 @@ namespace _01.Code.Combat
         public void ShowMissText()
         {
             SpawnFloatingText("MISS", missTextColor, 0.85f);
+        }
+
+        /// <summary>짧은 시간 안에 반복된 같은 상성 효과는 합쳐서 화면 과밀을 막는다.</summary>
+        public void ShowCounterplayText(string label, int amount, bool showAsGain, Color color)
+        {
+            if (string.IsNullOrWhiteSpace(label) || amount <= 0 || !isActiveAndEnabled)
+                return;
+
+            var isDifferentNotice = _pendingCounterplayAmount > 0
+                                    && (_pendingCounterplayLabel != label
+                                        || _pendingCounterplayShowsGain != showAsGain);
+            if (isDifferentNotice)
+                FlushCounterplayTextNow();
+
+            _pendingCounterplayLabel = label;
+            _pendingCounterplayAmount += amount;
+            _pendingCounterplayShowsGain = showAsGain;
+            _pendingCounterplayColor = color;
+
+            if (_counterplayTextRoutine == null)
+                _counterplayTextRoutine = StartCoroutine(FlushCounterplayText());
+        }
+
+        private IEnumerator FlushCounterplayText()
+        {
+            yield return new WaitForSecondsRealtime(counterplayTextAggregateWindow);
+            _counterplayTextRoutine = null;
+            FlushCounterplayTextNow();
+        }
+
+        private void FlushCounterplayTextNow()
+        {
+            if (_pendingCounterplayAmount <= 0 || string.IsNullOrWhiteSpace(_pendingCounterplayLabel))
+                return;
+
+            var sign = _pendingCounterplayShowsGain ? "+" : "-";
+            SpawnFloatingText(
+                $"{_pendingCounterplayLabel} {sign}{_pendingCounterplayAmount}",
+                _pendingCounterplayColor,
+                0.92f);
+            _pendingCounterplayLabel = string.Empty;
+            _pendingCounterplayAmount = 0;
         }
 
         private TextMesh SpawnFloatingText(string text, Color color, float sizeScale)

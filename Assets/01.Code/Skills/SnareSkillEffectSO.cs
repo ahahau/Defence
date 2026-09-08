@@ -9,6 +9,9 @@ namespace _01.Code.Skills
         [SerializeField, Min(0f)] private float radius = 3f;
         [SerializeField, Min(0f)] private float duration = 2f;
 
+        /// <summary>발을 묶는 기술은 차가운 청색.</summary>
+        public override Color SignatureColor => new(0.45f, 0.72f, 1f, 1f);
+
         public override void Execute(SkillContext context)
         {
             if (context.Caster == null || duration <= 0f) return;

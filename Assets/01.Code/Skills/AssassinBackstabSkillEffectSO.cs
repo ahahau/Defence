@@ -11,6 +11,9 @@ namespace _01.Code.Skills
         [SerializeField, Min(1f)] private float vulnerableDamageMultiplier = 1.35f;
         [SerializeField, Min(0f)] private float vulnerableDuration = 2f;
 
+        /// <summary>그림자 계열은 자주색.</summary>
+        public override Color SignatureColor => new(0.72f, 0.5f, 1f, 1f);
+
         public override void Execute(SkillContext context)
         {
             var caster = context.Caster;

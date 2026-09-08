@@ -16,6 +16,9 @@ namespace _01.Code.Skills
         private float damageTakenMultiplier = 1f;
         [SerializeField] private Color zoneColor = new(0.35f, 0.95f, 0.55f, 0.26f);
 
+        /// <summary>지대에 깔리는 색을 그대로 쓴다. 시전 고리와 바닥이 따로 놀면 같은 기술로 안 보인다.</summary>
+        public override Color SignatureColor => new(zoneColor.r, zoneColor.g, zoneColor.b, 1f);
+
         public override void Execute(SkillContext context)
         {
             var caster = context.Caster;

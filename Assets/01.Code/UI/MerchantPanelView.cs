@@ -49,6 +49,8 @@ namespace _01.Code.UI
         }
 
         private readonly List<ShopOffer> display = new();
+        /// <summary>직전 방문에 깔았던 유물. 다음 진열에서 뒤로 미루는 데만 쓴다.</summary>
+        private readonly List<ArtifactDataSO> lastDisplay = new();
         private readonly List<UnityEngine.Events.UnityAction> slotActions = new();
         private int currentDay;
         private bool hasRolled;
@@ -220,8 +222,14 @@ namespace _01.Code.UI
             if (hasRolled || shopCatalog == null)
                 return;
 
+            // 지난 매대를 기억해 두고 넘긴다. 같은 물건이 연달아 깔리면 상인이 온 보람이 없다.
+            lastDisplay.Clear();
+            foreach (var offer in display)
+                if (!offer.IsRandom && offer.Artifact != null)
+                    lastDisplay.Add(offer.Artifact);
+
             display.Clear();
-            foreach (var artifact in shopCatalog.RollDisplay(artifactInventory))
+            foreach (var artifact in shopCatalog.RollDisplay(artifactInventory, lastDisplay))
                 display.Add(new ShopOffer(artifact, false));
 
             // 무작위 상품은 내줄 유물이 남아 있을 때만 진열한다.

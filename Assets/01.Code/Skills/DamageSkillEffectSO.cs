@@ -12,6 +12,9 @@ namespace _01.Code.Skills
         [SerializeField, Tooltip("켜면 전투필드의 모든 적에게(광역), 끄면 현재 타깃만.")]
         private bool areaOfEffect;
 
+        /// <summary>직접 때리는 기술은 붉은 계열.</summary>
+        public override Color SignatureColor => new(1f, 0.45f, 0.3f, 1f);
+
         public override void Execute(SkillContext context)
         {
             var bonus = context.CasterCombatant != null

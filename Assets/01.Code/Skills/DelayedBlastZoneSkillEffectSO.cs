@@ -33,6 +33,9 @@ namespace _01.Code.Skills
         [SerializeField, Min(0f)] private float shakeFrequency = 25f;
         [SerializeField, Min(0f)] private float hitStopDuration = 0.045f;
 
+        /// <summary>예고선이 아니라 터질 때의 색을 쓴다. 시전 순간에 알려야 할 것은 결과다.</summary>
+        public override Color SignatureColor => new(explosionColor.r, explosionColor.g, explosionColor.b, 1f);
+
         public override void Execute(SkillContext context)
         {
             var caster = context.Caster;

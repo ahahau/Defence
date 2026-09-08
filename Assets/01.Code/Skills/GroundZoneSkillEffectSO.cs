@@ -13,6 +13,9 @@ namespace _01.Code.Skills
         [SerializeField, Min(0.05f)] private float moveSpeedMultiplier = 0.45f;
         [SerializeField] private Color zoneColor = new(0.45f, 0.9f, 0.25f, 0.28f);
 
+        /// <summary>지대에 깔리는 색을 그대로 쓴다. 시전 고리와 바닥이 따로 놀면 같은 기술로 안 보인다.</summary>
+        public override Color SignatureColor => new(zoneColor.r, zoneColor.g, zoneColor.b, 1f);
+
         public override void Execute(SkillContext context)
         {
             if (context.Caster == null) return;

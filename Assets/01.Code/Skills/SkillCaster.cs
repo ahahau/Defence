@@ -110,7 +110,13 @@ namespace _01.Code.Skills
 
         private void Execute(SkillDataSO data)
         {
-            PlayCastVisual(data != null && data.IsUltimate);
+            var isUltimate = data != null && data.IsUltimate;
+            PlayCastVisual(isUltimate);
+
+            // 몸에 색만 입히면 스물여덟 기술이 다 같아 보인다. 판 위에도 한 겹 남긴다.
+            if (data != null)
+                SkillCastBurst.Play(transform.position, data.CastColor, isUltimate);
+
             var context = new SkillContext(agent, combatant, agent.CurrentTarget);
             data.Execute(context);
         }
