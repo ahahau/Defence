@@ -473,6 +473,7 @@ namespace _01.Code.Editor
         int lastManagedDay = -1;
         int settleFrames = 0;
         int startRetries = 0;
+        int traceTick = 0;
         var runDeadline = System.DateTime.UtcNow;
         var batchDeadline = System.DateTime.UtcNow.AddMinutes(150);
 
@@ -540,6 +541,13 @@ namespace _01.Code.Editor
 
                 // ── 한 판 진행 ──
                 if (dm == null || wm == null) return;
+
+                // 보스날은 파형을 남긴다. 하루치 요약만으로는 "적이 안 죽었다"와
+                // "싸울 틈이 없었다"가 구분되지 않는다 — 12일차에 실제로 그 둘을 못 갈랐다.
+                if (wm.IsWaveRunning && wm.IsBossWave && ++traceTick % 30 == 0)
+                    Say("  ~ " + dm.CurrentDay + "일 활성" + wm.ActiveEnemyCount
+                        + " 대기" + wm.PendingSpawnCount + " 격퇴" + wm.KillCount
+                        + " 가한" + wm.WaveDamageDealt + " 받은" + wm.WaveDamageTaken);
 
                 System.Action<string> EndRun = why =>
                 {
