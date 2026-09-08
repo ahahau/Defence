@@ -40,6 +40,8 @@ namespace _01.Code.Manager
         private int fallbackGroupSize = 3;
         [SerializeField, Min(0f), Tooltip("그룹 내 멤버 간 스폰 간격(초). 우르르 들어오는 연출용")]
         private float memberSpawnDelay = 0.15f;
+        [SerializeField, Min(0f), Tooltip("포탈에서 전투가 붙어 스폰을 미룰 수 있는 최대 시간(초). 넘기면 전투 중이어도 내보낸다 — 안 죽는 선두가 웨이브를 영구히 막는 것을 막는다.")]
+        private float maxSpawnHoldSeconds = 6f;
         [SerializeField, Min(0f), Tooltip("파티원이 서로 겹치지 않게 흩어지는 대형 반경")]
         private float formationSpread = 0.35f;
         [SerializeField, Min(0)] private int treasuryGoldLoss = 10;
@@ -405,6 +407,7 @@ namespace _01.Code.Manager
                 SpawnNextEnemyIfNeeded(false);
 
             var spawnTimer = 0f;
+            var holdTimer = 0f;
 
             while (_isWaveRunning)
             {
@@ -415,14 +418,31 @@ namespace _01.Code.Manager
 
                 // 포탈 노드에서 전투가 붙어 있으면 스폰을 미룬다.
                 // 그대로 밀어 넣으면 스폰 지점에 적이 겹겹이 쌓여 싸움이 보이지 않는다.
+                //
+                // 다만 무한정 미루면 안 된다. 선두가 좀처럼 안 죽는 적이면 그 전투가 끝나지 않아
+                // 웨이브 전체가 영구히 멈추고, 그동안 선두는 코어를 깬다. 실측에서 12일·20일 보스가
+                // 정확히 그렇게 끝냈다 — 열세 마리가 스폰도 못 한 채 활성1로 굳었다.
+                // 쌓임을 막는 데는 잠깐 미루는 것으로 충분하므로 상한을 둔다.
                 if (IsPortalNodeInCombat())
-                    continue;
+                {
+                    holdTimer += Time.deltaTime;
+                    if (holdTimer < maxSpawnHoldSeconds)
+                        continue;
+                }
+                else
+                {
+                    holdTimer = 0f;
+                }
 
                 spawnTimer += Time.deltaTime;
+
+                if (_isBossWave && Time.frameCount % 120 == 0)
 
                 if (spawnTimer >= (spawnAsGroup ? _currentGroupInterval : spawnInterval))
                 {
                     spawnTimer = 0f;
+                    // 한 번 내보냈으니 미룰 여유를 다시 준다. 교착일 때는 (간격 + 상한) 속도로 흘러간다.
+                    holdTimer = 0f;
                     if (spawnAsGroup)
                         SpawnNextGroup(spawnInterval);
                     else
@@ -488,8 +508,10 @@ namespace _01.Code.Manager
                 if (!_isWaveRunning || _portalNode == null)
                     break;
 
-                // 그룹을 쏟는 도중에 전투가 붙으면 남은 인원은 다음 기회로 미룬다.
-                if (IsPortalNodeInCombat())
+                // 그룹을 쏟는 "도중에" 전투가 붙으면 남은 인원은 다음 기회로 미룬다.
+                // 첫 마리까지 막으면 안 된다 — 여기까지 왔다는 건 바깥 루프가 내보내기로 정한
+                // 것이고, i == 0 에서 되돌아가면 한 마리도 안 나가 웨이브가 그대로 굳는다.
+                if (i > 0 && IsPortalNodeInCombat())
                     break;
 
                 if (!SpawnEnemy(FormationOffsetFor(i, groupSize)))
