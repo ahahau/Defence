@@ -33,6 +33,54 @@ namespace _01.Code.Editor
             Install();
         }
 
+        /// <summary>
+        /// 사람 손 없이 도는 입구. <c>-batchmode -executeMethod _01.Code.Editor.BalanceRunner.RunBatch</c>.
+        ///
+        /// 재생을 켜면 도메인이 다시 올라가면서 <c>EditorApplication.update</c>에 걸어 둔 것이 전부 떨어진다.
+        /// 그래서 켜기 전에 표식만 남기고, 다시 올라온 쪽에서 이어 붙인다 —
+        /// <see cref="SessionState"/>는 도메인 리로드를 넘겨도 남는 몇 안 되는 저장소다.
+        ///
+        /// -nographics 로는 부르지 말 것. 화면 장치가 없으면 캔버스가 서지 않아 정책 창을 못 닫고,
+        /// 그 창이 timeScale을 0으로 묶어 실측이 0일차에서 멈춘다.
+        /// </summary>
+        public static void RunBatch()
+        {
+            SessionState.SetBool(BatchFlagKey, true);
+            EditorApplication.EnterPlaymode();
+        }
+
+        /// <summary>도메인이 다시 올라온 뒤 배치 실측을 이어 붙인다.</summary>
+        [InitializeOnLoadMethod]
+        private static void ResumeBatchAfterReload()
+        {
+            if (SessionState.GetBool(BatchFlagKey, false))
+                EditorApplication.update += WaitForPlayMode;
+        }
+
+        private static void WaitForPlayMode()
+        {
+            if (!EditorApplication.isPlaying)
+                return;
+
+            EditorApplication.update -= WaitForPlayMode;
+            Install();
+        }
+
+        /// <summary>
+        /// 실측이 끝난 자리. 손으로 돌렸으면 재생 상태를 그대로 두고 결과를 보게 두고,
+        /// 배치로 돌렸으면 에디터가 안 닫히면 실행이 영영 안 끝나므로 여기서 닫는다.
+        /// </summary>
+        private static void Finish()
+        {
+            if (!SessionState.GetBool(BatchFlagKey, false))
+                return;
+
+            SessionState.EraseBool(BatchFlagKey);
+            EditorApplication.Exit(0);
+        }
+
+        private const string BatchFlagKey = "Defence.BalanceRunner.Batch";
+
         private static void Install()
         {
         // 20일 완주 자동 드라이버. EditorApplication.update에 붙어 스스로 굴러간다.
@@ -437,7 +485,7 @@ namespace _01.Code.Editor
             {
                 if (System.IO.File.Exists(stopFlag) || !UnityEngine.Application.isPlaying
                     || System.DateTime.UtcNow > batchDeadline)
-                { Say("BATCH_HALT"); UnityEditor.EditorApplication.update -= step; return; }
+                { Say("BATCH_HALT"); UnityEditor.EditorApplication.update -= step; Finish(); return; }
 
                 if (UnityEngine.Time.timeScale < 7.9f) UnityEngine.Time.timeScale = 8f;
 
@@ -462,13 +510,21 @@ namespace _01.Code.Editor
                     if (framesInPhase < 30) return;
                     WipeSaves();
                     seedIndex++;
+                    // 중괄호가 빠져 있어서 집계가 시드마다 찍히고, 마지막 시드 뒤에도 씬을 또 올려
+                    // seeds[seedIndex]가 범위를 넘기는 예외로만 멈췄다. 끝은 끝으로 처리한다.
                     if (seedIndex >= seeds.Length)
-                    Say("=== 참여 집계 (배치 전체 누적) ===");
-                    Say("권능 시전: " + Dump(powerCasts));
-                    Say("정책 후보: " + Dump(policyOffers));
-                    Say("정책 선택: " + Dump(policyPicks));
-                    Say("적 조우:   " + Dump(enemySeen));
-                    Say("BATCH_DONE");
+                    {
+                        Say("=== 참여 집계 (배치 전체 누적) ===");
+                        Say("권능 시전: " + Dump(powerCasts));
+                        Say("정책 후보: " + Dump(policyOffers));
+                        Say("정책 선택: " + Dump(policyPicks));
+                        Say("적 조우:   " + Dump(enemySeen));
+                        Say("BATCH_DONE");
+                        UnityEditor.EditorApplication.update -= step;
+                        Finish();
+                        return;
+                    }
+
                     UnityEngine.SceneManagement.SceneManager.LoadScene(
                         UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
                     phase = "load"; framesInPhase = 0;
