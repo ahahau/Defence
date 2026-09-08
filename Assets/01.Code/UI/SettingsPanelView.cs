@@ -30,6 +30,10 @@ namespace _01.Code.UI
 
         private GameObject window;
         private GameObject confirmWindow;
+        private GameObject restartButton;
+        private GameObject titleButton;
+        private GameObject closeButton;
+        private GameObject openButton;
         private Slider slider;
         private TMP_Text valueLabel;
         private Slider musicSlider;
@@ -49,11 +53,34 @@ namespace _01.Code.UI
             current = this;
             skin = Resources.Load<UiSkinSO>(SkinResourcePath);
             var canvas = BuildCanvas();
-            // 타이틀에는 제 메뉴에 설정 버튼이 있다. 구석 버튼까지 띄우면 같은 것이 둘이 된다.
-            if (IsInGame)
-                BuildOpenButton(canvas.transform);
+            BuildOpenButton(canvas.transform);
             BuildWindow(canvas.transform);
             window.SetActive(false);
+            FitToScene();
+        }
+
+        private void OnEnable()
+        {
+            // 이 창은 씬을 넘어가도 살아남는다. 씬이 바뀌면 구성을 다시 맞춰야
+            // 좌상단 버튼이 판 위에서 제때 나타난다 — 창을 열 때만 맞추면
+            // 버튼이 없어서 창을 못 여는 자리가 생긴다.
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += HandleSceneLoaded;
+        }
+
+        private void OnDisable()
+        {
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= HandleSceneLoaded;
+        }
+
+        private void HandleSceneLoaded(UnityEngine.SceneManagement.Scene scene,
+            UnityEngine.SceneManagement.LoadSceneMode mode)
+        {
+            if (window == null)
+                return;
+
+            Toggle(false);
+            SetConfirmVisible(false);
+            FitToScene();
         }
 
         /// <summary>타이틀 메뉴처럼 바깥에서 설정을 열 때 쓴다.</summary>
@@ -118,13 +145,16 @@ namespace _01.Code.UI
             // 좌측 상단 구석. 보드도 HUD도 거기까지는 오지 않는다.
             var button = CreateButton(parent, "설정", new Vector2(0f, 1f), new Vector2(76f, 34f), new Vector2(52f, -26f));
             button.onClick.AddListener(() => Toggle(true));
+            openButton = button.gameObject;
+            openButton.SetActive(IsInGame);
         }
 
         private void BuildWindow(Transform parent)
         {
-            // 타이틀에서는 음량 둘만 있으면 되고, 판 위에서는 판을 떠나는 길이 더 필요하다.
-            var height = IsInGame ? 386f : 274f;
-            window = CreatePanel(parent, "Settings Window", new Vector2(440f, height), Vector2.zero);
+            // 이 창은 DontDestroyOnLoad 라 씬을 넘어가도 다시 만들어지지 않는다. 그래서
+            // 만들 때의 씬으로 구성을 정하면 안 된다 — 타이틀에서 만들어진 창이 판 위로
+            // 따라와 "타이틀로 나가기"가 없는 채로 열렸다. 항상 다 만들어 두고 열 때 가린다.
+            window = CreatePanel(parent, "Settings Window", new Vector2(440f, 386f), Vector2.zero);
 
             CreateLabel(window.transform, "설정", 26, TextAlignmentOptions.Center,
                 new Vector2(0.5f, 1f), new Vector2(400f, 40f), new Vector2(0f, -34f));
@@ -135,22 +165,43 @@ namespace _01.Code.UI
             musicSlider = BuildRow(window.transform, "배경음악", -168f, GameMusicPlayer.Volume,
                 out musicValueLabel, OnMusicVolumeChanged);
 
-            if (IsInGame)
-            {
-                var restart = CreateButton(window.transform, "다시하기", new Vector2(0.5f, 1f),
-                    new Vector2(180f, 40f), new Vector2(-98f, -252f));
-                restart.onClick.AddListener(() => SetConfirmVisible(true));
+            var restart = CreateButton(window.transform, "다시하기", new Vector2(0.5f, 1f),
+                new Vector2(180f, 40f), new Vector2(-98f, -252f));
+            restart.onClick.AddListener(() => SetConfirmVisible(true));
+            restartButton = restart.gameObject;
 
-                var toTitle = CreateButton(window.transform, "타이틀로 나가기", new Vector2(0.5f, 1f),
-                    new Vector2(180f, 40f), new Vector2(98f, -252f));
-                toTitle.onClick.AddListener(GoToTitle);
-            }
+            var toTitle = CreateButton(window.transform, "타이틀로 나가기", new Vector2(0.5f, 1f),
+                new Vector2(180f, 40f), new Vector2(98f, -252f));
+            toTitle.onClick.AddListener(GoToTitle);
+            titleButton = toTitle.gameObject;
 
             var close = CreateButton(window.transform, "닫기", new Vector2(0.5f, 0f), new Vector2(120f, 38f), new Vector2(0f, 34f));
             close.onClick.AddListener(() => Toggle(false));
+            closeButton = close.gameObject;
 
-            if (IsInGame)
-                BuildConfirm(parent);
+            BuildConfirm(parent);
+        }
+
+        /// <summary>
+        /// 지금 씬에 맞게 창을 고쳐 놓는다. 타이틀에서는 판을 떠나는 두 버튼이 뜻이 없으므로
+        /// 감추고 창도 그만큼 줄인다. 열 때마다 보므로 씬을 오간 뒤에도 어긋나지 않는다.
+        /// </summary>
+        private void FitToScene()
+        {
+            var inGame = IsInGame;
+
+            if (restartButton != null)
+                restartButton.SetActive(inGame);
+            if (titleButton != null)
+                titleButton.SetActive(inGame);
+
+            if (window != null && window.transform is RectTransform rect)
+                rect.sizeDelta = new Vector2(440f, inGame ? 386f : 274f);
+
+            // 좌상단 설정 버튼도 같은 이유로 항상 만들어 두고 여기서 가린다.
+            // 타이틀에는 제 메뉴에 설정이 있어 띄우면 같은 것이 둘이 된다.
+            if (openButton != null)
+                openButton.SetActive(inGame);
         }
 
         /// <summary>
@@ -259,10 +310,10 @@ namespace _01.Code.UI
 
         private void OnSfxVolumeChanged(float value)
         {
+            // 정한 크기를 바로 들려주려 했는데, 슬라이더는 끄는 동안 값이 수십 번 바뀐다.
+            // 한 번 만질 때마다 딸깍 소리가 연달아 터져서 오히려 크기를 가늠할 수 없었다.
             GameSfxPlayer.Volume = value;
             valueLabel.text = Percent(value);
-            // 방금 정한 크기로 바로 들려줘야 몇 퍼센트가 적당한지 알 수 있다.
-            GameSfxPlayer.Play(GameSfxCue.UiClick);
         }
 
         private void OnMusicVolumeChanged(float value)
@@ -276,6 +327,9 @@ namespace _01.Code.UI
 
         private void Toggle(bool open)
         {
+            if (open)
+                FitToScene();
+
             window.SetActive(open);
             if (open)
             {
