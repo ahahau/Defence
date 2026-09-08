@@ -69,6 +69,7 @@ namespace _01.Code.UI
         {
             instance = this;
             panelRoot ??= gameObject;
+            DungeonHudIcon.AttachToLabel(titleText, DungeonHudIcon.Skin != null ? DungeonHudIcon.Skin.TreasuryIcon : null);
             depositButton?.onClick.AddListener(DepositQuick);
             depositAllButton?.onClick.AddListener(DepositAll);
             withdrawButton?.onClick.AddListener(WithdrawQuick);

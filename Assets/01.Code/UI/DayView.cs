@@ -41,6 +41,7 @@ namespace _01.Code.UI
             dayText.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
             dayText.overflowMode = TextOverflowModes.Ellipsis;
             dayText.raycastTarget = false;
+            DungeonHudIcon.AttachToLabel(dayText, DungeonHudIcon.Skin != null ? DungeonHudIcon.Skin.DayIcon : null);
         }
 
         private void OnEnable()

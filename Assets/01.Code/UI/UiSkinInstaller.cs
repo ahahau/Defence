@@ -97,10 +97,6 @@ namespace _01.Code.UI
                 seen.Clear();
         }
 
-        /// <summary>
-        /// 오른쪽 위 상태 카드인지 본다. 이름이 아니라 자리로 가린다 —
-        /// DungeonHudStyle.ApplyTopRightCard 가 우상단 고정에 350x60 으로 못박는다.
-        /// </summary>
         /// <summary>캔버스를 거의 다 덮으면 창이 아니라 가림막으로 본다.</summary>
         private static bool CoversWholeScreen(Graphic graphic)
         {
@@ -116,6 +112,10 @@ namespace _01.Code.UI
             return size.x >= full.x * 0.85f && size.y >= full.y * 0.85f;
         }
 
+        /// <summary>
+        /// 오른쪽 위 상태 카드인지 본다. 이름이 아니라 자리로 가린다 —
+        /// DungeonHudStyle.ApplyTopRightCard 가 우상단 고정에 350x60 으로 못박는다.
+        /// </summary>
         private static bool IsTopRightCard(Graphic graphic)
         {
             if (graphic.rectTransform is not { } rect)

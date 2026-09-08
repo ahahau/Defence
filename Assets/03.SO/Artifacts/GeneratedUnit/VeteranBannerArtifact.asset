@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Artifacts.ArtifactDataSO
   <DisplayName>k__BackingField: "\uBCA0\uD14C\uB791 \uAD70\uAE30"
   <Description>k__BackingField: "\uACE0\uC6A9 \uC720\uB2DB \uACF5\uACA9\uB825 +2"
-  <Icon>k__BackingField: {fileID: 0}
+  <Icon>k__BackingField: {fileID: 9076474904960728637, guid: aca6fdb8e491ea94cb2fa929862f3867, type: 3}
   <IconColor>k__BackingField: {r: 0.95, g: 0.42, b: 0.32, a: 1}
   <Target>k__BackingField: 1
   <Price>k__BackingField: 130

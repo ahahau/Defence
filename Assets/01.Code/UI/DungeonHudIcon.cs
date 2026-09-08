@@ -64,6 +64,18 @@ namespace _01.Code.UI
             return go.GetComponent<Image>();
         }
 
+        /// <summary>독립된 제목·날짜 표시에는 텍스트 영역 안에 아이콘 여백을 확보한다.</summary>
+        public static void AttachToLabel(TMP_Text label, Sprite icon)
+        {
+            if (label == null || icon == null)
+                return;
+
+            Attach(label.gameObject, null, icon);
+            var margin = label.margin;
+            margin.x = Mathf.Max(margin.x, LeftPad + IconSize + TextGap);
+            label.margin = margin;
+        }
+
         /// <summary>Resources 의 UI 표를 한 번만 읽어 둔다. 카드마다 다시 읽을 이유가 없다.</summary>
         public static UiSkinSO Skin
         {

@@ -23,7 +23,7 @@ namespace Tests.EditMode.Gameplay
         private const BindingFlags Instance = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
         /// <summary>아직 그림이 없기로 되어 있는 건물. 그림이 들어오면 여기서 빼면 된다.</summary>
-        private static readonly string[] ArtPendingBuildings = { "PortalBuildingData", "TreasuryBuildingData" };
+        private static readonly string[] ArtPendingBuildings = System.Array.Empty<string>();
 
         [Test]
         public void EveryAdventurer_HasAllThreePosesAndPrefab()
@@ -121,6 +121,22 @@ namespace Tests.EditMode.Gameplay
 
             Assert.That(missing, Is.Empty,
                 "포즈 그림이 비었거나 끊긴 프리팹:\n  " + string.Join("\n  ", missing));
+        }
+
+        /// <summary>
+        /// 유물은 목록에서 그림으로 구분된다. 하나라도 비면 그 칸만 빈 상자로 나온다.
+        /// </summary>
+        [Test]
+        public void EveryArtifact_HasIcon()
+        {
+            var missing = new List<string>();
+
+            foreach (var (asset, _) in LoadAll("_01.Code.Artifacts.ArtifactDataSO"))
+                if (ReadProperty(asset, "Icon") == null)
+                    missing.Add(asset.name);
+
+            Assert.That(missing, Is.Empty,
+                "그림이 비었거나 끊긴 유물:\n  " + string.Join("\n  ", missing));
         }
 
         // ── 도구 ───────────────────────────────────────────────

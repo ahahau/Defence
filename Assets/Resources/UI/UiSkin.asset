@@ -19,7 +19,7 @@ MonoBehaviour:
   <GoldIcon>k__BackingField: {fileID: 8430588136127814639, guid: 14fead26ee6bef24ca46397bb3f95e42, type: 3}
   <MagicIcon>k__BackingField: {fileID: 6065064321389643259, guid: 8e2038b99f73ad048a2299301455a3cd, type: 3}
   <DangerIcon>k__BackingField: {fileID: -3916993829553880143, guid: 1c12bda12cb8df64395c15e383d51e85, type: 3}
-  <MoraleIcon>k__BackingField: {fileID: 0}
-  <CohesionIcon>k__BackingField: {fileID: 0}
-  <DayIcon>k__BackingField: {fileID: 0}
-  <TreasuryIcon>k__BackingField: {fileID: 0}
+  <MoraleIcon>k__BackingField: {fileID: 6498988422400440233, guid: c9e06a93ff7669947b53cb95f32a2e5e, type: 3}
+  <CohesionIcon>k__BackingField: {fileID: 2390737011172253284, guid: 7af674b71265a6e4a957d11202993cc6, type: 3}
+  <DayIcon>k__BackingField: {fileID: -1352980225708016469, guid: 59437daa99c04ac428db75bb433d9d18, type: 3}
+  <TreasuryIcon>k__BackingField: {fileID: 9003087067174904191, guid: 00c891ffd64956b428d5a0f480f315da, type: 3}

@@ -25,6 +25,7 @@ namespace _01.Code.UI
             DungeonHudStyle.ApplyPanel(panelRoot != null ? panelRoot : gameObject);
             DungeonHudStyle.ApplyTopRightCard(panelRoot != null ? panelRoot : gameObject, cohesionText, 4,
                 new Color(0.62f, 0.78f, 1f, 1f));
+            DungeonHudIcon.Attach(panelRoot != null ? panelRoot : gameObject, cohesionText, DungeonHudIcon.Skin != null ? DungeonHudIcon.Skin.CohesionIcon : null);
             Refresh(true);
         }
 

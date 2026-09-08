@@ -123,3 +123,6 @@ InitTestScene*.unity*
 
 # Player builds. 284MB per build and reproducible from the project.
 /Build/
+
+# 밸런스 자동 실측 기록 (세션마다 쌓인다)
+BalanceRuns/

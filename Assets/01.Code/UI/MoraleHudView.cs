@@ -29,6 +29,7 @@ namespace _01.Code.UI
         {
             DungeonHudStyle.ApplyPanel(gameObject);
             DungeonHudStyle.ApplyTopRightCard(gameObject, moraleText, 3, new Color(0.3f, 0.9f, 0.62f, 1f));
+            DungeonHudIcon.Attach(gameObject, moraleText, DungeonHudIcon.Skin != null ? DungeonHudIcon.Skin.MoraleIcon : null);
             if (moraleText == null)
                 return;
             _baseMoraleColor = moraleText.color;
