@@ -15,7 +15,7 @@ MonoBehaviour:
   <AssetIndex>k__BackingField: 3
   <StatName>k__BackingField: Stat_Defense
   <DisplayName>k__BackingField: "\uBC29\uC5B4"
-  <Icon>k__BackingField: {fileID: 0}
+  <Icon>k__BackingField: {fileID: -8083957135152548163, guid: 5de5e966e1c41c94f95c29ded870929a, type: 3}
   <IsPercent>k__BackingField: 0
   description: 
   baseValue: 0

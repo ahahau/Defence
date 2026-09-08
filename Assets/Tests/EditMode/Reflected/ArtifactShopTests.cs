@@ -107,8 +107,9 @@ namespace Tests.EditMode.Rules
                 var first = Roll(catalog, null);
                 var second = Roll(catalog, first);
 
+                // Does.Not.Contain 은 문자열 오버로드로 잡혀 컴파일이 안 된다. 컬렉션에는 Member 를 쓴다.
                 foreach (var entry in second)
-                    Assert.That(first, Does.Not.Contain(entry),
+                    Assert.That(first, Has.No.Member(entry),
                         "지난번에 깔았던 물건이 또 나왔습니다: " + attempt + "번째 시도");
             }
         }

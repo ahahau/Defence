@@ -15,7 +15,7 @@ MonoBehaviour:
   <AssetIndex>k__BackingField: 1
   <StatName>k__BackingField: Stat_MaxHealth
   <DisplayName>k__BackingField: "\uCD5C\uB300 \uCCB4\uB825"
-  <Icon>k__BackingField: {fileID: 0}
+  <Icon>k__BackingField: {fileID: 740492848645767952, guid: c6204f6a9d81d3c4e8585b1dc04c8408, type: 3}
   <IsPercent>k__BackingField: 0
   description: 
   baseValue: 30

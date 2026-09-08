@@ -15,7 +15,7 @@ MonoBehaviour:
   <AssetIndex>k__BackingField: 6
   <StatName>k__BackingField: Stat_CriticalChance
   <DisplayName>k__BackingField: "\uCE58\uBA85\uD0C0 \uD655\uB960"
-  <Icon>k__BackingField: {fileID: 0}
+  <Icon>k__BackingField: {fileID: 535329970975199230, guid: 73a95615e74d6d447a37351c55fabba1, type: 3}
   <IsPercent>k__BackingField: 1
   description: "\uD3C9\uD0C0\uAC00 \uCE58\uBA85\uD0C0\uB85C \uD130\uC9C8 \uD655\uB960."
   baseValue: 0.12

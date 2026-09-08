@@ -120,7 +120,8 @@ namespace Tests.EditMode.Rules
             Assert.That(Call(shop, "HasAvailableArtifact", new object[] { null }), Is.False,
                 "물약만 남았으면 상자 칸은 닫혀야 합니다.");
 
-            var display = (System.Collections.IList)Call(shop, "RollDisplay", new object[] { null });
+            // 두 번째 인자는 직전 진열. 리플렉션 호출은 선택 매개변수도 반드시 채워야 한다.
+            var display = (System.Collections.IList)Call(shop, "RollDisplay", new object[] { null, null });
             Assert.That(display, Has.Count.EqualTo(1),
                 "물약은 지정 진열에는 계속 올라야 합니다 — 살 자리가 여기뿐입니다.");
         }

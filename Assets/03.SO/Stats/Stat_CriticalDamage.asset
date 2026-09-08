@@ -15,7 +15,7 @@ MonoBehaviour:
   <AssetIndex>k__BackingField: 7
   <StatName>k__BackingField: Stat_CriticalDamage
   <DisplayName>k__BackingField: "\uCE58\uBA85\uD0C0 \uBC30\uC728"
-  <Icon>k__BackingField: {fileID: 0}
+  <Icon>k__BackingField: {fileID: 8373030854442548799, guid: 67ca05865ec18e34a9cd30324789573f, type: 3}
   <IsPercent>k__BackingField: 0
   description: "\uCE58\uBA85\uD0C0\uC77C \uB54C \uC6D0\uD53C\uD574\uC5D0 \uACF1\uD558\uB294
     \uAC12. \uBC29\uC5B4 \uACC4\uC0B0 \uC804\uC5D0 \uC5B9\uB294\uB2E4."

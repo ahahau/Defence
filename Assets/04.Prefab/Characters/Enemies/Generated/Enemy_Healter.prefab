@@ -155,8 +155,8 @@ MonoBehaviour:
   textFloatDistance: 0.45
   textDuration: 0.55
   textSortingOrder: 60
-  criticalTextColor: {r: 1, g: 0.72, b: 0.1, a: 1}
-  criticalTextScale: 1.5
+  criticalTextColor: {r: 1, g: 0.9, b: 0.35, a: 1}
+  criticalTextScale: 2
   missTextColor: {r: 0.85, g: 0.85, b: 0.85, a: 1}
   healTextColor: {r: 0.42, g: 1, b: 0.45, a: 1}
   healParticleColor: {r: 0.4, g: 1, b: 0.5, a: 1}

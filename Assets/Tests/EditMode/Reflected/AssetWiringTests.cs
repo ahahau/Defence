@@ -139,6 +139,23 @@ namespace Tests.EditMode.Gameplay
                 "그림이 비었거나 끊긴 유물:\n  " + string.Join("\n  ", missing));
         }
 
+        /// <summary>
+        /// 스탯 표식은 유닛 정보창에서 수치 옆에 붙는다. 하나가 비면 그 줄만 표식 없이 나와
+        /// 줄이 어긋나는데, 화면을 열어 보기 전까지 아무도 모른다.
+        /// </summary>
+        [Test]
+        public void EveryStat_HasIcon()
+        {
+            var missing = new List<string>();
+
+            foreach (var (asset, _) in LoadAll("_01.Code.Core.Stats.StatSO"))
+                if (ReadProperty(asset, "Icon") == null)
+                    missing.Add(asset.name);
+
+            Assert.That(missing, Is.Empty,
+                "그림이 비었거나 끊긴 스탯:\n  " + string.Join("\n  ", missing));
+        }
+
         // ── 도구 ───────────────────────────────────────────────
 
         private static IEnumerable<(ScriptableObject asset, string path)> LoadAll(string typeName)
