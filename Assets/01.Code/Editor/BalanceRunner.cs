@@ -45,9 +45,16 @@ namespace _01.Code.Editor
         /// </summary>
         public static void RunBatch()
         {
+            // 무대를 먼저 정한다. 배치로 들어오면 마지막에 열려 있던 씬의 백업본이 올라오는데,
+            // 그 씬에 DayManager 가 없으면 드라이버는 매니저를 기다리며 영원히 서 있는다.
+            // 사람이 메뉴로 돌릴 때는 이미 판 위에서 재생을 누르므로 문제가 드러나지 않았다.
+            UnityEditor.SceneManagement.EditorSceneManager.OpenScene(GameplayScenePath);
             SessionState.SetBool(BatchFlagKey, true);
             EditorApplication.EnterPlaymode();
         }
+
+        /// <summary>DayManager·WaveManager 가 있는 판. 시드를 넘길 때 다시 올리는 것도 이 씬이다.</summary>
+        private const string GameplayScenePath = "Assets/00.Scenes/SampleScene.unity";
 
         /// <summary>도메인이 다시 올라온 뒤 배치 실측을 이어 붙인다.</summary>
         [InitializeOnLoadMethod]
