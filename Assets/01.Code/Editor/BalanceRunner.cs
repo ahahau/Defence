@@ -4,7 +4,7 @@ using UnityEngine;
 namespace _01.Code.Editor
 {
     /// <summary>
-    /// 20일 한 판을 시드 넷으로 자동 완주시키고 일차별 기록을 남긴다.
+    /// 20일 한 판을 여러 시드로 자동 완주시키고 일차별 기록을 남긴다.
     ///
     /// 밸런스를 눈이 아니라 숫자로 보려고 만든 것이다. 사람이 스무 날을 손으로 돌리면
     /// 표본이 하나뿐이고 그마저 조작 실력에 흔들린다.
@@ -20,7 +20,7 @@ namespace _01.Code.Editor
     /// </summary>
     public static class BalanceRunner
     {
-        [MenuItem("Tools/Defence/밸런스/20일 실측 시작 (시드 4개)", priority = 240)]
+        [MenuItem("Tools/Defence/밸런스/20일 실측 시작 (시드 12개)", priority = 240)]
         public static void Run()
         {
             if (!EditorApplication.isPlaying)
@@ -444,7 +444,12 @@ namespace _01.Code.Editor
         //
         // 앞의 두 시드를 일부러 같은 값으로 뒀다 — 시드 고정만으로 재현이 되는지부터 보려는 것이다.
         // 공격 타이머가 Time.deltaTime으로 도니 완전히 같기를 기대하진 않는다.
-        int[] seeds = { 1, 1, 2, 3 };
+        //
+        // 답은 "재현되지 않는다"였고, 그래서 넷으로는 아무것도 판정할 수 없다.
+        // 2026-09-08에 같은 코드로 두 번 돌려 12/18/10/18 과 12/12/12/12 를 얻었다 —
+        // 수정 전후가 노이즈에 묻혀 구분되지 않았다. 한 판이 5분이니 열둘이면 15분이고,
+        // 그제서야 "며칠에 몇 판이 죽었나"라는 분포로 이야기할 수 있다.
+        int[] seeds = { 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
         int seedIndex = 0;
         string phase = "load";
         int framesInPhase = 0;
@@ -507,7 +512,10 @@ namespace _01.Code.Editor
                     if (dm == null || wm == null || framesInPhase < 60) return;
                     UnityEngine.Random.InitState(seeds[seedIndex]);
                     lastRecordedDay = 0; lastManagedDay = -1; settleFrames = 0; startRetries = 0;
-                    runDeadline = System.DateTime.UtcNow.AddMinutes(30);
+                    // 건강한 한 판은 1분이 안 걸린다. 30분을 주면 웨이브가 멈춰 선 판 하나가
+                    // 배치 전체를 반나절로 늘린다 — 실제로 2일차에 굳은 채 63분에 두 판만 돈 적이 있다.
+                    // 넉넉하되 멈춤을 빨리 드러내는 쪽으로 잡는다.
+                    runDeadline = System.DateTime.UtcNow.AddMinutes(6);
                     Say("=== SEED " + seeds[seedIndex] + " (" + (seedIndex + 1) + "/" + seeds.Length + ") ===");
                     phase = "run"; framesInPhase = 0;
                     return;

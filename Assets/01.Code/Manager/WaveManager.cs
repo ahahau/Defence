@@ -436,8 +436,6 @@ namespace _01.Code.Manager
 
                 spawnTimer += Time.deltaTime;
 
-                if (_isBossWave && Time.frameCount % 120 == 0)
-
                 if (spawnTimer >= (spawnAsGroup ? _currentGroupInterval : spawnInterval))
                 {
                     spawnTimer = 0f;

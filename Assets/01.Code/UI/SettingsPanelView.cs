@@ -26,7 +26,10 @@ namespace _01.Code.UI
         private static readonly Color FillColor = new(0.78f, 0.56f, 0.24f, 1f);
         private static readonly Color TextColor = new(0.94f, 0.90f, 0.82f, 1f);
 
+        private static SettingsPanelView current;
+
         private GameObject window;
+        private GameObject confirmWindow;
         private Slider slider;
         private TMP_Text valueLabel;
         private Slider musicSlider;
@@ -43,11 +46,36 @@ namespace _01.Code.UI
 
         private void Start()
         {
+            current = this;
             skin = Resources.Load<UiSkinSO>(SkinResourcePath);
             var canvas = BuildCanvas();
-            BuildOpenButton(canvas.transform);
+            // 타이틀에는 제 메뉴에 설정 버튼이 있다. 구석 버튼까지 띄우면 같은 것이 둘이 된다.
+            if (IsInGame)
+                BuildOpenButton(canvas.transform);
             BuildWindow(canvas.transform);
             window.SetActive(false);
+        }
+
+        /// <summary>타이틀 메뉴처럼 바깥에서 설정을 열 때 쓴다.</summary>
+        public static void Open()
+        {
+            if (current != null && current.window != null)
+                current.Toggle(true);
+        }
+
+        private void Update()
+        {
+            if (!Input.GetKeyDown(KeyCode.Escape))
+                return;
+
+            // 확인 창이 떠 있으면 그것부터 닫는다. 한 번에 둘을 닫으면 취소한 줄 모르고 지나간다.
+            if (confirmWindow != null && confirmWindow.activeSelf)
+            {
+                SetConfirmVisible(false);
+                return;
+            }
+
+            Toggle(!window.activeSelf);
         }
 
         private Canvas BuildCanvas()
@@ -77,7 +105,9 @@ namespace _01.Code.UI
 
         private void BuildWindow(Transform parent)
         {
-            window = CreatePanel(parent, "Settings Window", new Vector2(440f, 274f), Vector2.zero);
+            // 타이틀에서는 음량 둘만 있으면 되고, 판 위에서는 판을 떠나는 길이 더 필요하다.
+            var height = IsInGame ? 386f : 274f;
+            window = CreatePanel(parent, "Settings Window", new Vector2(440f, height), Vector2.zero);
 
             CreateLabel(window.transform, "설정", 26, TextAlignmentOptions.Center,
                 new Vector2(0.5f, 1f), new Vector2(400f, 40f), new Vector2(0f, -34f));
@@ -88,8 +118,83 @@ namespace _01.Code.UI
             musicSlider = BuildRow(window.transform, "배경음악", -168f, GameMusicPlayer.Volume,
                 out musicValueLabel, OnMusicVolumeChanged);
 
+            if (IsInGame)
+            {
+                var restart = CreateButton(window.transform, "다시하기", new Vector2(0.5f, 1f),
+                    new Vector2(180f, 40f), new Vector2(-98f, -252f));
+                restart.onClick.AddListener(() => SetConfirmVisible(true));
+
+                var toTitle = CreateButton(window.transform, "타이틀로 나가기", new Vector2(0.5f, 1f),
+                    new Vector2(180f, 40f), new Vector2(98f, -252f));
+                toTitle.onClick.AddListener(GoToTitle);
+            }
+
             var close = CreateButton(window.transform, "닫기", new Vector2(0.5f, 0f), new Vector2(120f, 38f), new Vector2(0f, 34f));
             close.onClick.AddListener(() => Toggle(false));
+
+            if (IsInGame)
+                BuildConfirm(parent);
+        }
+
+        /// <summary>
+        /// 다시하기 확인 창. 되돌릴 수 없는 일이라 한 번 더 묻는다 — 눌리는 순간
+        /// 저장이 지워지고 판이 처음으로 돌아간다.
+        /// </summary>
+        private void BuildConfirm(Transform parent)
+        {
+            confirmWindow = CreatePanel(parent, "Restart Confirm", new Vector2(460f, 220f), Vector2.zero);
+
+            CreateLabel(confirmWindow.transform, "지금까지의 진행이 모두 사라집니다", 21, TextAlignmentOptions.Center,
+                new Vector2(0.5f, 1f), new Vector2(420f, 34f), new Vector2(0f, -52f));
+            CreateLabel(confirmWindow.transform, "부하도 건물도 금화도 처음으로 돌아갑니다", 17, TextAlignmentOptions.Center,
+                new Vector2(0.5f, 1f), new Vector2(420f, 30f), new Vector2(0f, -88f));
+
+            var cancel = CreateButton(confirmWindow.transform, "취소", new Vector2(0.5f, 0f),
+                new Vector2(150f, 40f), new Vector2(-82f, 40f));
+            cancel.onClick.AddListener(() => SetConfirmVisible(false));
+
+            var confirm = CreateButton(confirmWindow.transform, "초기화", new Vector2(0.5f, 0f),
+                new Vector2(150f, 40f), new Vector2(82f, 40f));
+            confirm.onClick.AddListener(RestartRun);
+
+            confirmWindow.SetActive(false);
+        }
+
+        /// <summary>판 위인가. 타이틀 씬에서는 나가기·다시하기가 뜻이 없다.</summary>
+        private static bool IsInGame =>
+            UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != TitleScreenView.TitleSceneName;
+
+        private void SetConfirmVisible(bool visible)
+        {
+            if (confirmWindow == null)
+                return;
+
+            confirmWindow.SetActive(visible);
+            GameSfxPlayer.Play(visible ? GameSfxCue.UiOpen : GameSfxCue.UiClose);
+        }
+
+        /// <summary>저장을 지우고 판을 처음부터 다시 올린다.</summary>
+        private void RestartRun()
+        {
+            _01.Code.Persistence.RunSaveSystem.DeleteSave();
+            LeaveTo(TitleScreenView.GameSceneName);
+        }
+
+        private void GoToTitle()
+        {
+            LeaveTo(TitleScreenView.TitleSceneName);
+        }
+
+        /// <summary>
+        /// 창을 정리하고 씬을 바꾼다. 시간 배속을 되돌리는 게 핵심이다 —
+        /// 정산이나 모달이 timeScale 을 0 으로 잡아 둔 채 나가면 다음 판이 멈춘 채로 시작한다.
+        /// </summary>
+        private void LeaveTo(string sceneName)
+        {
+            SetConfirmVisible(false);
+            Toggle(false);
+            Time.timeScale = 1f;
+            UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
         }
 
         /// <summary>이름표 · 슬라이더 · 퍼센트 한 줄을 만든다.</summary>
