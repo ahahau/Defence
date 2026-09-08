@@ -20,7 +20,7 @@ namespace _01.Code.Editor
     /// </summary>
     public static class BalanceRunner
     {
-        [MenuItem("Tools/Defence/밸런스/20일 실측 시작 (시드 12개)", priority = 240)]
+        [MenuItem("Tools/Defence/밸런스/20일 실측 시작 (시드 24개)", priority = 240)]
         public static void Run()
         {
             if (!EditorApplication.isPlaying)
@@ -449,7 +449,8 @@ namespace _01.Code.Editor
         // 2026-09-08에 같은 코드로 두 번 돌려 12/18/10/18 과 12/12/12/12 를 얻었다 —
         // 수정 전후가 노이즈에 묻혀 구분되지 않았다. 한 판이 5분이니 열둘이면 15분이고,
         // 그제서야 "며칠에 몇 판이 죽었나"라는 분포로 이야기할 수 있다.
-        int[] seeds = { 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
+        int[] seeds = { 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+                        12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 };
         int seedIndex = 0;
         string phase = "load";
         int framesInPhase = 0;
