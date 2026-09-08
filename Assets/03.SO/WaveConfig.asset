@@ -283,7 +283,7 @@ MonoBehaviour:
     title: "\uD0D0\uC695\uC758 \uAE30\uC0AC"
     subtitle: "\uB3C8\uC744 \uC4F8\uC218\uB85D \uAC15\uD574\uC9C4\uB2E4 \u2014 \uC5B4\uB514\uAE4C\uC9C0
       \uB72F\uACE0 \uC2F8\uC6B8\uC9C0 \uACB0\uC815\uD558\uC138\uC694"
-    healthMultiplier: 3.5
+    healthMultiplier: 2.5
     attackMultiplier: 1.4
     visualScale: 1.65
     enableFinalPhase: 1
