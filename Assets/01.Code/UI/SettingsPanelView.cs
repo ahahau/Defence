@@ -65,7 +65,7 @@ namespace _01.Code.UI
 
         private void Update()
         {
-            if (!Input.GetKeyDown(KeyCode.Escape))
+            if (!EscapePressedThisFrame())
                 return;
 
             // 확인 창이 떠 있으면 그것부터 닫는다. 한 번에 둘을 닫으면 취소한 줄 모르고 지나간다.
@@ -76,6 +76,23 @@ namespace _01.Code.UI
             }
 
             Toggle(!window.activeSelf);
+        }
+
+        /// <summary>
+        /// 이번 프레임에 ESC 를 눌렀는가.
+        ///
+        /// 이 프로젝트는 입력 처리가 Input System 패키지로 넘어가 있어서(activeInputHandler 1)
+        /// 옛 UnityEngine.Input 을 부르면 그 자리에서 예외가 난다. 두 방식 다 켜 둔 프로젝트도
+        /// 있으므로 컴파일 기호로 갈라 둔다.
+        /// </summary>
+        private static bool EscapePressedThisFrame()
+        {
+#if ENABLE_INPUT_SYSTEM
+            var keyboard = UnityEngine.InputSystem.Keyboard.current;
+            return keyboard != null && keyboard.escapeKey.wasPressedThisFrame;
+#else
+            return Input.GetKeyDown(KeyCode.Escape);
+#endif
         }
 
         private Canvas BuildCanvas()

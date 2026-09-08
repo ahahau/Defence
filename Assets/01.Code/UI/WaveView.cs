@@ -58,6 +58,8 @@ namespace _01.Code.UI
         private readonly Color _tutorialHighlightColor = new(1f, 0.82f, 0.22f, 1f);
         private TMP_Text _startButtonLabel;
         private CanvasGroup _startButtonVisibilityGroup;
+        private Button _objectiveToggleButton;
+        private TMP_Text _objectiveToggleLabel;
         private WaveRuntimeHudView _runtimeHud;
         private bool _ownsRuntimeHud;
         private GameObject _waveBanner;
@@ -68,6 +70,8 @@ namespace _01.Code.UI
         private Image _waveProgressFill;
         private float _displayedProgress;
         private const float WaveStatsRefreshInterval = 0.1f;
+        private const float DefaultBannerHeight = 104f;
+        private const float PreparationBannerHeight = 176f;
         private float _nextWaveStatsRefreshTime;
 
         public RectTransform StartButtonRect => startButton != null ? startButton.transform as RectTransform : null;
@@ -75,6 +79,7 @@ namespace _01.Code.UI
         private void Start()
         {
             ResolveStartButtonLabel();
+            EnsureObjectiveToggle();
             EnsureRuntimeHud();
             DungeonHudStyle.ApplyNamedSceneLayout();
             ApplyStartButtonTheme();
@@ -120,6 +125,13 @@ namespace _01.Code.UI
             nodeEventChannel?.RemoveListener<PortalRemovedEvent>(HandlePortalRemoved);
             if (handleStartButtonClick)
                 startButton?.onClick.RemoveListener(HandleStartClicked);
+            if (_objectiveToggleButton != null)
+            {
+                _objectiveToggleButton.onClick.RemoveListener(HandleObjectiveToggleClicked);
+                Destroy(_objectiveToggleButton.gameObject);
+            }
+            _objectiveToggleButton = null;
+            _objectiveToggleLabel = null;
             if (_runtimeHud != null && _ownsRuntimeHud)
                 Destroy(_runtimeHud.gameObject);
             _runtimeHud = null;
@@ -177,6 +189,7 @@ namespace _01.Code.UI
         {
             ClearTutorialHighlight();
             SetStartButtonVisible(false);
+            SetObjectiveToggleVisible(false);
             ShowWaveBanner(evt.Day, evt.EnemyCount);
             ShowWaveProgressHud();
         }
@@ -192,6 +205,7 @@ namespace _01.Code.UI
         private void HandleGameOver(GameOverEvent evt)
         {
             SetStartButtonVisible(false);
+            SetObjectiveToggleVisible(false);
             HideWaveProgressHud();
             HidePreparationHud();
         }
@@ -233,6 +247,7 @@ namespace _01.Code.UI
             var nextDay = dayManager != null ? dayManager.NextWaveDay : 0;
             var enemyCount = waveManager != null ? Mathf.Max(0, waveManager.GetPreviewEnemyCount(nextDay)) : 0;
             var hasPortal = waveManager != null && waveManager.HasPortal;
+            waveManager?.PrepareObjectiveChoices(nextDay);
 
             if (_startButtonLabel != null)
             {
@@ -248,6 +263,7 @@ namespace _01.Code.UI
                         : $"습격 개시\nDAY {nextDay} · 모험가 {enemyCount}명";
             }
 
+            RefreshObjectiveToggle(nextDay, hasPortal);
             ShowPreparationHud(nextDay, enemyCount, hasPortal);
         }
 
@@ -286,6 +302,7 @@ namespace _01.Code.UI
                 return;
 
             var rect = (RectTransform)_waveBanner.transform;
+            ApplyBannerLayout(false);
             rect.SetAsLastSibling();
             _runtimeHud.BannerTitle.text = $"DAY {day}  ·  모험가 습격";
             _runtimeHud.BannerSubtitle.text = $"금고를 노리는 모험가 {Mathf.Max(0, enemyCount)}명 진입";
@@ -328,18 +345,48 @@ namespace _01.Code.UI
                 var threatText = threat.IsEmpty
                     ? string.Empty
                     : $"\n<color=#FFCC66>{threat.Title}</color> · {threat.CounterHint}";
+                var traitText = threat.HasTraitInfo
+                    ? $"\n<color=#E6AEFF>{threat.TraitSummary}</color>"
+                      + $"\n<color=#9FE6B8>추천 · {threat.TraitCounterHint}</color>"
+                    : string.Empty;
+                ApplyBannerLayout(threat.HasTraitInfo);
                 _runtimeHud.BannerSubtitle.text =
                     $"침입 예정 {enemyCount}명{conquestText} · 몬스터와 함정을 배치하세요\n"
                     + CoreLoopFeatureUnlocks.GetPreparationHint(day)
                     + threatText
-                    + BuildStreakLine();
+                    + traitText
+                    + BuildStreakLine()
+                    + (waveManager != null
+                        ? $"\n<color=#8FD6FF>선택 목표 · {waveManager.GetSelectedObjectiveSummary(enemyCount)}</color>"
+                        : string.Empty);
             }
             else
             {
+                ApplyBannerLayout(false);
                 _runtimeHud.BannerSubtitle.text = "입구 포털을 설치해 모험가를 유인하세요";
             }
             _waveBanner.SetActive(true);
             _waveBanner.transform.SetAsLastSibling();
+        }
+
+        private void ApplyBannerLayout(bool expanded)
+        {
+            if (_waveBanner == null || _runtimeHud == null || _runtimeHud.BannerSubtitle == null)
+                return;
+
+            if (_waveBanner.transform is RectTransform bannerRect)
+            {
+                var size = bannerRect.sizeDelta;
+                size.y = expanded ? PreparationBannerHeight : DefaultBannerHeight;
+                bannerRect.sizeDelta = size;
+            }
+
+            var subtitle = _runtimeHud.BannerSubtitle;
+            subtitle.enableAutoSizing = expanded;
+            subtitle.fontSizeMin = 12f;
+            subtitle.fontSizeMax = 20f;
+            if (!expanded)
+                subtitle.fontSize = 20f;
         }
 
         /// <summary>
@@ -470,10 +517,115 @@ namespace _01.Code.UI
                 _waveProgressStats.text =
                     $"남은 위협 {remaining}/{total}  ·  던전 내부 {waveManager.ActiveEnemyCount}  ·  진입 대기 {waveManager.PendingSpawnCount}  ·  처치 {waveManager.KillCount}"
                     + (string.IsNullOrEmpty(warning) ? string.Empty : $"  ·  {warning}")
-                    + $"\n{(waveManager.IsExploitationObjectiveCompleted ? "<color=#FFD05A>착취 완료</color>" : "착취 작전")}"
-                    + $"  ·  시설 수익 {waveManager.WaveFacilityGold}/{waveManager.ExploitationTargetGold}G"
-                    + $"  ·  보너스 +{WaveManager.ExploitationBonusGold}G";
+                    + $"\n<color=#8FD6FF>{waveManager.GetSelectedObjectiveProgressText()}</color>";
             }
+        }
+
+        private void EnsureObjectiveToggle()
+        {
+            if (_objectiveToggleButton != null || startButton == null)
+                return;
+
+            var startRect = startButton.transform as RectTransform;
+            var parent = startRect != null ? startRect.parent : null;
+            if (startRect == null || parent == null)
+                return;
+
+            var root = new GameObject(
+                "WaveObjectiveToggle",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(Image),
+                typeof(Button));
+            root.layer = startButton.gameObject.layer;
+            var rect = root.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = startRect.anchorMin;
+            rect.anchorMax = startRect.anchorMax;
+            rect.pivot = startRect.pivot;
+            rect.sizeDelta = new Vector2(startRect.sizeDelta.x, 52f);
+            rect.anchoredPosition = startRect.anchoredPosition + new Vector2(0f, startRect.rect.height + 8f);
+            rect.SetSiblingIndex(startRect.GetSiblingIndex());
+
+            var sourceImage = startButton.targetGraphic as Image ?? startButton.GetComponent<Image>();
+            var image = root.GetComponent<Image>();
+            if (sourceImage != null)
+            {
+                image.sprite = sourceImage.sprite;
+                image.type = sourceImage.type;
+                image.material = sourceImage.material;
+            }
+            image.color = new Color(0.08f, 0.19f, 0.25f, 0.97f);
+
+            _objectiveToggleButton = root.GetComponent<Button>();
+            _objectiveToggleButton.targetGraphic = image;
+            _objectiveToggleButton.colors = startButton.colors;
+            _objectiveToggleButton.onClick.AddListener(HandleObjectiveToggleClicked);
+            var outline = root.AddComponent<Outline>();
+            outline.effectColor = new Color(0.32f, 0.75f, 0.95f, 0.9f);
+            outline.effectDistance = new Vector2(2f, -2f);
+            root.AddComponent<UiButtonJuice>();
+
+            var labelObject = new GameObject(
+                "Label",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(TextMeshProUGUI));
+            labelObject.layer = root.layer;
+            var labelRect = labelObject.GetComponent<RectTransform>();
+            labelRect.SetParent(rect, false);
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = new Vector2(8f, 4f);
+            labelRect.offsetMax = new Vector2(-8f, -4f);
+
+            _objectiveToggleLabel = labelObject.GetComponent<TextMeshProUGUI>();
+            _objectiveToggleLabel.alignment = TextAlignmentOptions.Center;
+            _objectiveToggleLabel.enableAutoSizing = true;
+            _objectiveToggleLabel.fontSizeMin = 12f;
+            _objectiveToggleLabel.fontSizeMax = 18f;
+            _objectiveToggleLabel.fontStyle = FontStyles.Bold;
+            _objectiveToggleLabel.color = new Color(0.76f, 0.93f, 1f, 1f);
+            _objectiveToggleLabel.raycastTarget = false;
+            if (_startButtonLabel != null)
+                _objectiveToggleLabel.font = _startButtonLabel.font;
+        }
+
+        private void HandleObjectiveToggleClicked()
+        {
+            if (waveManager == null || dayManager == null || !dayManager.IsStandby)
+                return;
+
+            var next = waveManager.SelectedObjective == waveManager.ObjectiveOptionA
+                ? waveManager.ObjectiveOptionB
+                : waveManager.ObjectiveOptionA;
+            if (waveManager.SelectObjective(next))
+                RefreshStartButton();
+        }
+
+        private void RefreshObjectiveToggle(int day, bool hasPortal)
+        {
+            EnsureObjectiveToggle();
+            if (_objectiveToggleButton == null || waveManager == null || dayManager == null)
+                return;
+
+            var visible = hasPortal && dayManager.IsStandby && waveManager.CanStartWave(day);
+            SetObjectiveToggleVisible(visible);
+            if (!visible || _objectiveToggleLabel == null)
+                return;
+
+            var selected = waveManager.SelectedObjective;
+            var other = selected == waveManager.ObjectiveOptionA
+                ? waveManager.ObjectiveOptionB
+                : waveManager.ObjectiveOptionA;
+            _objectiveToggleLabel.text =
+                $"목표: {WaveObjectiveRules.GetTitle(selected)}  ·  클릭: {WaveObjectiveRules.GetTitle(other)} 선택";
+        }
+
+        private void SetObjectiveToggleVisible(bool visible)
+        {
+            if (_objectiveToggleButton != null)
+                _objectiveToggleButton.gameObject.SetActive(visible);
         }
 
         private void ApplyStartButtonTheme()

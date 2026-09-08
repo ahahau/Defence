@@ -66,6 +66,8 @@ namespace _01.Code.UI
                     ? $"{buildingData.Cost} → {discountedCost}G"
                     : $"{buildingData.Cost}G";
             var text = $"{displayName}\n건설  {costText}   ·   경계 +{buildingData.BaseDanger}\n등급 {(int)buildingData.Grade}";
+            text += buildingData.InstallOnEdge ? "\n통로 설치"
+                : BuildingPlacement.UsesGridCell(buildingData) ? "\n개별 칸 설치" : "\n중앙 전용 · 방당 1개";
 
             if (buildingData.Prefab == null)
                 return text;
@@ -169,7 +171,38 @@ namespace _01.Code.UI
 
             image.sprite = sprite;
             image.enabled = sprite != null;
+            image.type = Image.Type.Simple;
             image.preserveAspect = true;
+        }
+
+        public static void EnlargeCard(Button button)
+        {
+            var icon = ResolveCardIconImage(button);
+            if (icon != null)
+            {
+                var rect = icon.rectTransform;
+                rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1f);
+                rect.pivot = new Vector2(0.5f, 1f);
+                rect.anchoredPosition = new Vector2(0f, -20f);
+                rect.sizeDelta = new Vector2(230f, 230f);
+                rect.localScale = Vector3.one;
+                icon.type = Image.Type.Simple;
+                icon.preserveAspect = true;
+                icon.raycastTarget = false;
+            }
+            var text = button.GetComponentInChildren<TMP_Text>(true);
+            if (text == null) return;
+            var textRect = text.rectTransform;
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.offsetMin = new Vector2(20f, 18f);
+            textRect.offsetMax = new Vector2(-20f, -265f);
+            textRect.localScale = Vector3.one;
+            text.margin = Vector4.zero;
+            text.enableAutoSizing = true;
+            text.fontSizeMin = 17f;
+            text.fontSizeMax = 24f;
+            text.alignment = TextAlignmentOptions.Top;
         }
 
         /// <summary>카드의 아이콘 이미지. "Icon"이라는 이름의 자식을 먼저 찾고, 없으면 배경이 아닌 첫 이미지를 쓴다.</summary>

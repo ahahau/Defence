@@ -65,6 +65,13 @@ namespace _01.Code.UI
             foreach (var canvas in FindObjectsByType<Canvas>(FindObjectsInactive.Include))
             foreach (var image in canvas.GetComponentsInChildren<Image>(true))
             {
+                if (image.type != Image.Type.Filled &&
+                    (image.name.Contains("Icon", System.StringComparison.OrdinalIgnoreCase)
+                     || image.name.Contains("Portrait", System.StringComparison.OrdinalIgnoreCase)))
+                {
+                    image.type = Image.Type.Simple;
+                    image.preserveAspect = true;
+                }
                 if (!seen.Add(image))
                     continue;
 

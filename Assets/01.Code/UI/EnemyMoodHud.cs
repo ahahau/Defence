@@ -78,7 +78,7 @@ namespace _01.Code.UI
                 Refresh();
         }
 
-        private void HandleFacilityGoldSpent(Enemy enemy, int amount, GoldChangeSource source)
+        private void HandleFacilityGoldSpent(Enemy enemy, int amount, int baseAmount, GoldChangeSource source)
         {
             if (enemy != _enemy)
                 return;

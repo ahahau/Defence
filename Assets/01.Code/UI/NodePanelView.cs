@@ -553,6 +553,7 @@ namespace _01.Code.UI
             TryCreateCategoryCard(contentRoot, InstallCategory.Unit);
             TryCreateCategoryCard(contentRoot, InstallCategory.Trap);
             TryCreateCategoryCard(contentRoot, InstallCategory.Decoration);
+            ScrollViewContentSizer.ConfigureHorizontalCards(contentRoot);
             ScrollViewContentSizer.ResizeToGridItemCount(contentRoot, _categoryCards.Count);
         }
 
@@ -582,6 +583,7 @@ namespace _01.Code.UI
 
             InstallCardPresenter.ApplyCardSprite(entry, ResolveCategorySprite(category));
             DungeonHudStyle.ApplyManagementCard(entry.gameObject, InstallCardPresenter.GetCategoryAccent(category));
+            InstallCardPresenter.EnlargeCard(entry);
             entry.onClick.RemoveAllListeners();
             entry.onClick.AddListener(() => ShowInstallCategory(category));
             _categoryCards.Add(entry);
@@ -1094,8 +1096,9 @@ namespace _01.Code.UI
                 entry.gameObject.SetActive(true);
                 entry.name = $"{buildingData.name}InstallCard";
                 InstallCardPresenter.SetButtonLabel(entry, buildingData);
-            InstallCardPresenter.ApplyCardSprite(entry, InstallCardPresenter.ResolvePreviewSprite(buildingData));
-            DungeonHudStyle.ApplyManagementCard(entry.gameObject, InstallCardPresenter.GetCategoryAccent(category));
+                InstallCardPresenter.ApplyCardSprite(entry, InstallCardPresenter.ResolvePreviewSprite(buildingData));
+                DungeonHudStyle.ApplyManagementCard(entry.gameObject, InstallCardPresenter.GetCategoryAccent(category));
+                InstallCardPresenter.EnlargeCard(entry);
                 entry.onClick.RemoveAllListeners();
                 entry.onClick.AddListener(() => RequestBuildingInstall(buildingData));
                 buildingInstallButtons.Add(entry);
@@ -1103,6 +1106,7 @@ namespace _01.Code.UI
                 RefreshTutorialHighlight();
             }
 
+            ScrollViewContentSizer.ConfigureHorizontalCards(contentRoot);
             ScrollViewContentSizer.ResizeToGridItemCount(contentRoot, buildingInstallButtons.Count);
         }
 
