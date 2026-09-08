@@ -162,7 +162,7 @@ namespace _01.Code.UI
 
         /// <summary>판 위인가. 타이틀 씬에서는 나가기·다시하기가 뜻이 없다.</summary>
         private static bool IsInGame =>
-            UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != TitleScreenView.TitleSceneName;
+            UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != TitleMenuActions.TitleSceneName;
 
         private void SetConfirmVisible(bool visible)
         {
@@ -177,12 +177,12 @@ namespace _01.Code.UI
         private void RestartRun()
         {
             _01.Code.Persistence.RunSaveSystem.DeleteSave();
-            LeaveTo(TitleScreenView.GameSceneName);
+            LeaveTo(TitleMenuActions.GameSceneName);
         }
 
         private void GoToTitle()
         {
-            LeaveTo(TitleScreenView.TitleSceneName);
+            LeaveTo(TitleMenuActions.TitleSceneName);
         }
 
         /// <summary>
