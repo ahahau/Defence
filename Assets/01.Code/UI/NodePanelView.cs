@@ -250,7 +250,10 @@ namespace _01.Code.UI
                 return;
 
             if (_selectedNode != evt.Node)
+            {
+                _selectedNode?.ClearUnitPlacementHints();
                 _selectedNode?.TrapGrid?.SetFocusedGridVisible(false);
+            }
 
             _selectedNode = evt.Node;
             // 노드를 선택하면 작은 칸의 배치 범위를 먼저 보여 준다. 설치를 고르기 전에는
@@ -897,6 +900,8 @@ namespace _01.Code.UI
             var grid = _pendingUnitNode.TrapGrid;
             grid?.ClearCellSelection();
             grid?.SetFocusedGridVisible(true);
+            // 놓을 수 있는 칸을 칠해 준다. 격자만으로는 어디가 비었는지 안 보인다.
+            _pendingUnitNode.ShowUnitPlacementHints();
             SetManagementTitle("배치할 빈 칸을 선택하세요");
             panelRoot?.SetActive(false);
         }
@@ -929,6 +934,7 @@ namespace _01.Code.UI
 
             _pendingUnitCellColumn = evt.Column;
             _pendingUnitCellRow = evt.Row;
+            _pendingUnitNode.ClearUnitPlacementHints();
             _pendingUnitNode.TrapGrid?.ClearCellSelection();
             _pendingUnitNode.TrapGrid?.SetFocusedGridVisible(false);
 
@@ -978,6 +984,7 @@ namespace _01.Code.UI
             _pendingUnitData = null;
             _pendingUnitCellColumn = -1;
             _pendingUnitCellRow = -1;
+            evt.Node?.ClearUnitPlacementHints();
             evt.Node?.TrapGrid?.SetFocusedGridVisible(false);
             panelRoot?.SetActive(true);
             SetTitle($"마력 부족 ({evt.UsedMagic}/{evt.MaxMagic})");
@@ -985,6 +992,7 @@ namespace _01.Code.UI
 
         private void ClearPendingUnitPlacement()
         {
+            _pendingUnitNode?.ClearUnitPlacementHints();
             _pendingUnitNode?.TrapGrid?.ClearCellSelection();
             _pendingUnitNode?.TrapGrid?.SetFocusedGridVisible(false);
             _pendingUnitNode = null;

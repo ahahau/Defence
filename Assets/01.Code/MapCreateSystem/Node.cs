@@ -355,6 +355,36 @@ namespace _01.Code.MapCreateSystem
             return true;
         }
 
+        /// <summary>
+        /// 유닛을 놓을 수 있는 칸을 격자에 칠해 준다.
+        ///
+        /// 격자는 선만 그려서 "칸이 있다"까지만 알려 준다. 어디가 비었는지는 유닛 배치를
+        /// 들고 있는 이쪽만 알기 때문에, 좌표를 모아 격자에 넘긴다.
+        /// </summary>
+        public void ShowUnitPlacementHints()
+        {
+            var grid = TrapGrid;
+            if (grid == null)
+                return;
+
+            placementHintCells.Clear();
+            for (var row = 0; row < grid.Rows; row++)
+            for (var column = 0; column < grid.Columns; column++)
+            {
+                if (IsUnitCellAvailable(column, row))
+                    placementHintCells.Add(new Vector2Int(column, row));
+            }
+
+            grid.ShowPlacementHints(placementHintCells);
+        }
+
+        public void ClearUnitPlacementHints()
+        {
+            TrapGrid?.ClearPlacementHints();
+        }
+
+        private readonly List<Vector2Int> placementHintCells = new();
+
         public bool IsUnitCellAvailable(int column, int row)
         {
             var grid = TrapGrid;

@@ -22827,14 +22827,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32379b9549dff594ebfffcc4123a5854, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Core.ScenePostProcessing
-  bloomIntensity: 0.7
-  bloomThreshold: 0.85
-  bloomScatter: 0.7
-  vignetteIntensity: 0.27
-  vignetteSmoothness: 0.42
-  contrast: 8
-  saturation: 6
-  chromaticAberration: 0.05
+  bloomIntensity: 0.55
+  bloomThreshold: 1.08
+  bloomScatter: 0.62
+  vignetteIntensity: 0.34
+  vignetteSmoothness: 0.45
+  contrast: 11
+  saturation: 2
+  chromaticAberration: 0.04
 --- !u!114 &2122532265
 MonoBehaviour:
   m_ObjectHideFlags: 0

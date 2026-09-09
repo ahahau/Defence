@@ -21,8 +21,11 @@ namespace _01.Code.MapCreateSystem
 
         private const float Radius = 2.6f;
         private const float InnerRadius = 0.35f;
-        private const float UnlockedIntensity = 0.85f;
-        private const float LockedIntensity = 0.3f;
+
+        // 처음 0.85 는 셌다. 전역광 위에 얹히는 값이라 둘을 더하면 건물이 흰색으로 날아가고,
+        // 블룸까지 물려서 번졌다. 방을 구분해 주는 정도면 충분하다.
+        private const float UnlockedIntensity = 0.5f;
+        private const float LockedIntensity = 0.2f;
 
         private Light2D light2D;
 

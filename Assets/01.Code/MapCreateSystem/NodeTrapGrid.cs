@@ -316,6 +316,79 @@ namespace _01.Code.MapCreateSystem
                 _selectedCellMarker.enabled = false;
         }
 
+        /// <summary>
+        /// 놓을 수 있는 칸을 칠해 보여 준다.
+        ///
+        /// 격자는 선만 그려서 "칸이 있다"까지만 알려 준다. 정작 어디가 비었는지는 보이지 않아
+        /// 어디에 놓이는지 알기 어려웠다. 빈 칸만 옅게 칠하면 물어볼 것이 없어진다.
+        ///
+        /// 어느 칸이 비었는지는 <see cref="Node"/>가 안다(유닛 배치를 들고 있는 쪽이다).
+        /// 여기는 좌표를 받아 그리기만 한다.
+        /// </summary>
+        public void ShowPlacementHints(IReadOnlyList<Vector2Int> cells)
+        {
+            EnsurePlacementHintRoot();
+
+            var needed = cells != null ? cells.Count : 0;
+            while (_placementHints.Count < needed)
+                _placementHints.Add(CreatePlacementHint());
+
+            for (var i = 0; i < _placementHints.Count; i++)
+            {
+                var marker = _placementHints[i];
+                if (marker == null)
+                    continue;
+
+                if (i >= needed)
+                {
+                    marker.enabled = false;
+                    continue;
+                }
+
+                marker.transform.position = CellWorldPosition(cells[i].x, cells[i].y) + Vector3.back * 0.02f;
+                marker.enabled = true;
+            }
+
+            _placementHintRoot.SetActive(needed > 0);
+        }
+
+        public void ClearPlacementHints()
+        {
+            if (_placementHintRoot != null)
+                _placementHintRoot.SetActive(false);
+        }
+
+        private void EnsurePlacementHintRoot()
+        {
+            if (_placementHintRoot != null)
+                return;
+
+            _placementHintRoot = new GameObject("PlacementHints");
+            _placementHintRoot.transform.SetParent(transform, false);
+        }
+
+        private SpriteRenderer CreatePlacementHint()
+        {
+            var go = new GameObject("PlacementHint");
+            go.transform.SetParent(_placementHintRoot.transform, false);
+
+            var marker = go.AddComponent<SpriteRenderer>();
+            marker.sprite = CellMarkerSprite;
+            marker.color = PlacementHintColor;
+            marker.sortingOrder = focusedGridSortingOrder + 2;
+
+            // 부모 배율을 그대로 받으면 노드 크기에 따라 표시가 커졌다 작아진다.
+            // 한 칸을 조금 안쪽으로 채우도록 월드 크기로 맞춘다.
+            var parentScale = transform.lossyScale;
+            var side = cellSize * 0.78f;
+            go.transform.localScale = new Vector3(
+                side / Mathf.Max(0.0001f, Mathf.Abs(parentScale.x)),
+                side / Mathf.Max(0.0001f, Mathf.Abs(parentScale.y)),
+                1f);
+
+            return marker;
+        }
+
         private void EnsureFocusedGridVisual()
         {
             if (_focusedGridRoot != null)
@@ -391,6 +464,12 @@ namespace _01.Code.MapCreateSystem
                 worldSize.y * 0.9f / Mathf.Max(0.0001f, Mathf.Abs(parentScale.y)),
                 1f);
         }
+
+        /// <summary>놓을 수 있는 칸 표시. 초록은 "여기 된다"로 읽히는 몇 안 되는 색이다.</summary>
+        private static readonly Color PlacementHintColor = new(0.42f, 0.92f, 0.55f, 0.3f);
+
+        private GameObject _placementHintRoot;
+        private readonly List<SpriteRenderer> _placementHints = new();
 
         private static Sprite CellMarkerSprite
         {
