@@ -26,7 +26,7 @@ namespace _01.Code.Dialogue
         [SerializeField, Min(0f)] private float choiceSidePadding = 14f;
         [SerializeField, Min(1f)] private float choiceButtonHeight = 54f;
         [SerializeField, Min(0f)] private float choiceButtonSpacing = 10f;
-        [SerializeField] private string choiceLeadText = "현장의 보고를 검토한 뒤, 어떤 방식으로 대응할지 결정해야 합니다.";
+        [SerializeField] private string choiceLeadText = string.Empty;
         [SerializeField] private Color spotlightDimColor = new(0f, 0f, 0f, 0.62f);
         
         private DialogueRunner runner;
@@ -115,7 +115,7 @@ namespace _01.Code.Dialogue
                 speakerText.text = data.SpeakerName;
 
             if (bodyText != null)
-                bodyText.text = BuildBodyText(data);
+                RevealBody(BuildBodyText(data));
 
             if (progressText != null)
                 progressText.text = data.Progress;
@@ -166,6 +166,9 @@ namespace _01.Code.Dialogue
             if (root == null)
                 return;
 
+            // 흘러나오던 것을 멈추지 않으면 revealRoutine 이 남아, 다음에 열었을 때
+            // 첫 클릭이 "넘기기"가 아니라 "마저 보여 주기"로 먹힌다.
+            StopReveal();
             ClearChoices();
             root.SetActive(false);
             HideSpotlight();
@@ -173,7 +176,81 @@ namespace _01.Code.Dialogue
 
         private void HandleNextClicked()
         {
+            // 아직 흘러나오는 중이면 먼저 끝까지 보여 준다. 읽던 문장이 사라지고 다음 줄로
+            // 넘어가면 놓친 사람이 되돌릴 방법이 없다. 한 번 더 눌러야 넘어간다.
+            if (IsRevealing)
+            {
+                CompleteReveal();
+                return;
+            }
+
             runner?.Next();
+        }
+
+        // ── 본문 타자 효과 ──────────────────────────────────────────────
+
+        /// <summary>초당 글자 수. 한국어는 한 글자가 크므로 영문 기준보다 느리게 잡는다.</summary>
+        [SerializeField, Min(1f)] private float revealCharsPerSecond = 45f;
+
+        private Coroutine revealRoutine;
+
+        private bool IsRevealing => revealRoutine != null;
+
+        /// <summary>
+        /// 본문을 한 글자씩 드러낸다. 글자를 잘라 넣지 않고 <c>maxVisibleCharacters</c>만 움직인다 —
+        /// 문자열을 매 프레임 다시 만들면 줄바꿈이 계속 다시 잡혀 글이 출렁인다.
+        /// </summary>
+        private void RevealBody(string content)
+        {
+            if (bodyText == null)
+                return;
+
+            StopReveal();
+            bodyText.text = content;
+            bodyText.maxVisibleCharacters = 0;
+
+            if (!isActiveAndEnabled || string.IsNullOrEmpty(content))
+            {
+                bodyText.maxVisibleCharacters = int.MaxValue;
+                return;
+            }
+
+            revealRoutine = StartCoroutine(RevealRoutine());
+        }
+
+        private System.Collections.IEnumerator RevealRoutine()
+        {
+            // 글자 수는 태그를 뺀 값이라 TMP가 계산해 줄 때까지 기다린다.
+            bodyText.ForceMeshUpdate();
+            var total = bodyText.textInfo.characterCount;
+            var shown = 0f;
+
+            while (shown < total)
+            {
+                // 대화는 배속·일시정지와 무관하게 같은 속도로 읽혀야 한다.
+                shown += revealCharsPerSecond * Time.unscaledDeltaTime;
+                bodyText.maxVisibleCharacters = Mathf.Clamp(Mathf.FloorToInt(shown), 0, total);
+                yield return null;
+            }
+
+            bodyText.maxVisibleCharacters = int.MaxValue;
+            revealRoutine = null;
+        }
+
+        private void CompleteReveal()
+        {
+            StopReveal();
+            if (bodyText != null)
+                bodyText.maxVisibleCharacters = int.MaxValue;
+        }
+
+        private void StopReveal()
+        {
+            if (revealRoutine == null)
+                return;
+
+            StopCoroutine(revealRoutine);
+            revealRoutine = null;
         }
 
         public void SetSpotlightScreenRect(Rect screenRect, float padding = 32f)
