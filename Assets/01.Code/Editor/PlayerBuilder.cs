@@ -13,7 +13,7 @@ namespace _01.Code.Editor
     /// </summary>
     public static class PlayerBuilder
     {
-        private const string OutputPath = "Build/Defence.exe";
+        private const string OutputPath = "Build/DungeonKeeper.exe";
 
         [MenuItem("Tools/Defence/윈도우 빌드", priority = 300)]
         public static void BuildWindows()

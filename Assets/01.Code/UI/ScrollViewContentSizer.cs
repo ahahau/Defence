@@ -52,6 +52,39 @@ namespace _01.Code.UI
                 Object.DestroyImmediate(existing.gameObject);
         }
 
+        /// <summary>
+        /// 카드만 키운다. 격자의 방향과 구조는 손대지 않는다.
+        ///
+        /// 한때 유닛 목록에 <see cref="ConfigureHorizontalCards"/>를 걸어 카드를 키웠는데,
+        /// 그 함수는 격자를 가로 한 줄로 바꿔 버린다. 유닛 패널은 원래 5열짜리 세로 격자라
+        /// 배치가 통째로 달라졌다. 크기를 키우는 것과 방향을 바꾸는 것은 다른 일이다.
+        ///
+        /// 열 수는 넓이에 맞춰 다시 센다. 칸만 키우고 열 수를 그대로 두면 마지막 열이 넘친다.
+        /// </summary>
+        public static void EnlargeCards(Transform contentRoot, float width, float height)
+        {
+            if (contentRoot is not RectTransform rect)
+                return;
+
+            var grid = contentRoot.GetComponent<GridLayoutGroup>();
+            if (grid == null)
+                return;
+
+            grid.cellSize = new Vector2(width, height);
+
+            if (grid.constraint != GridLayoutGroup.Constraint.FixedColumnCount)
+                return;
+
+            var viewport = contentRoot.parent as RectTransform;
+            var usable = viewport != null ? viewport.rect.width : rect.rect.width;
+            usable -= grid.padding.left + grid.padding.right;
+            if (usable <= 0f)
+                return;
+
+            var step = width + grid.spacing.x;
+            grid.constraintCount = Mathf.Max(1, Mathf.FloorToInt((usable + grid.spacing.x) / Mathf.Max(1f, step)));
+        }
+
         public static void ResizeToGridItemCount(Transform contentRoot, int itemCount)
         {
             if (contentRoot == null || contentRoot is not RectTransform rectTransform)

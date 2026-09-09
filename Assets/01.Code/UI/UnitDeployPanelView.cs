@@ -167,8 +167,8 @@ namespace _01.Code.UI
                 _entries.Add(entry);
             }
 
-            // 영입 카드도 건물 카드와 같은 크기로. 프리팹 값 176x230 은 나란히 두면 눈에 띄게 작다.
-            ScrollViewContentSizer.ConfigureHorizontalCards(contentRoot);
+            // 카드만 키운다. 격자 방향은 프리팹이 정한 대로 둔다.
+            ScrollViewContentSizer.EnlargeCards(contentRoot, 250f, 320f);
             ScrollViewContentSizer.ResizeToGridItemCount(contentRoot, _entries.Count);
             if (_hireableUnits.Count == 0)
             {

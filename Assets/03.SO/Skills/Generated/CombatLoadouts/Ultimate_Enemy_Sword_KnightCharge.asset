@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Ultimate_Enemy_Sword_KnightCharge
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Skills.SkillDataSO
   <DisplayName>k__BackingField: "\uAE30\uC0AC\uC758 \uC9C4\uACA9"
-  <Description>k__BackingField: "\uAC15\uD55C \uCDA9\uACA9\uC73C\uB85C \uC218\uBE44\uB300
+  <Description>k__BackingField: "\uAC15\uD55C \uCDA9\uACA9\uC73C\uB85C \uC720\uB2DB
     \uC9C4\uD615\uC744 \uD769\uB728\uB9BD\uB2C8\uB2E4."
   <Icon>k__BackingField: {fileID: 0}
   <Cooldown>k__BackingField: 0

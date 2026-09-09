@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Ultimate_Enemy_Scout_SmokePoison
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Skills.SkillDataSO
   <DisplayName>k__BackingField: "\uC5F0\uB9C9 \uB3C5\uBB34"
-  <Description>k__BackingField: "\uB3C5 \uC5F0\uB9C9\uC73C\uB85C \uC218\uBE44\uB300\uC758
+  <Description>k__BackingField: "\uB3C5 \uC5F0\uB9C9\uC73C\uB85C \uC720\uB2DB\uC758
     \uC774\uB3D9\uC744 \uBC29\uD574\uD569\uB2C8\uB2E4."
   <Icon>k__BackingField: {fileID: 0}
   <Cooldown>k__BackingField: 0

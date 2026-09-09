@@ -712,9 +712,9 @@ namespace _01.Code.UI
                 }
             }
 
-            // 유닛 카드도 건물 카드와 같은 크기로 눕힌다. 여태 유닛 쪽만 이 설정이 빠져
-            // 176x230 으로 남아 있어서, 같은 화면에서 건물 카드(320x460)보다 작았다.
-            ScrollViewContentSizer.ConfigureHorizontalCards(unitContentRoot);
+            // 카드만 키운다. 가로 한 줄로 바꾸는 ConfigureHorizontalCards 를 쓰면
+            // 원래 세로 격자이던 배치가 통째로 달라진다.
+            ScrollViewContentSizer.EnlargeCards(unitContentRoot, 250f, 320f);
             ScrollViewContentSizer.ResizeToGridItemCount(unitContentRoot, _deployEntries.Count);
         }
 

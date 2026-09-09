@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Ultimate_Enemy_Archer_AdventurerVolley
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Skills.SkillDataSO
   <DisplayName>k__BackingField: "\uBAA8\uD5D8\uAC00 \uC77C\uC81C\uC0AC\uACA9"
-  <Description>k__BackingField: "\uC218\uBE44\uB300 \uC804\uCCB4\uC5D0 \uD654\uC0B4\uC744
+  <Description>k__BackingField: "\uC720\uB2DB \uC804\uCCB4\uC5D0 \uD654\uC0B4\uC744
     \uD37C\uBD93\uC2B5\uB2C8\uB2E4."
   <Icon>k__BackingField: {fileID: 0}
   <Cooldown>k__BackingField: 0
