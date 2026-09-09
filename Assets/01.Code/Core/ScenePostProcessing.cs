@@ -28,6 +28,13 @@ namespace _01.Code.Core
         [SerializeField, Range(-100f, 100f)] private float contrast = 8f;
         [SerializeField, Range(-100f, 100f)] private float saturation = 6f;
 
+        [Header("Exposure & Tint")]
+        [SerializeField, Range(-2f, 2f), Tooltip("화면 전체 밝기(EV). 조명을 키우는 것과 달리 어두운 곳도 함께 올라온다.")]
+        private float postExposure = 0.35f;
+
+        [SerializeField, Tooltip("화면 전체에 옅게 까는 색. 흰색에서 살짝만 기울인다.")]
+        private Color colorFilter = new(1f, 0.985f, 0.955f, 1f);
+
         [Header("Chromatic Aberration")]
         [SerializeField, Range(0f, 1f)] private float chromaticAberration = 0.05f;
 
@@ -77,9 +84,23 @@ namespace _01.Code.Core
             _vignette.smoothness.Override(vignetteSmoothness);
             _vignette.color.Override(Color.black);
 
+            // 톤매핑이 없으면 밝은 값이 그냥 1.0 에서 잘린다. 조명을 조금만 올려도 건물이
+            // 흰 덩어리가 되던 이유다. Neutral 은 색을 비틀지 않고 위쪽만 완만하게 눕힌다 —
+            // 덕분에 노출을 올려도 하얗게 타지 않는다. (URP 에 HDR 이 켜져 있어야 일한다.)
+            var tonemapping = profile.Add<Tonemapping>();
+            tonemapping.mode.Override(TonemappingMode.Neutral);
+
             var colorAdjustments = profile.Add<ColorAdjustments>();
             colorAdjustments.contrast.Override(contrast);
             colorAdjustments.saturation.Override(saturation);
+
+            // 밝기는 조명이 아니라 여기서 올린다. 조명을 키우면 밝은 곳만 먼저 타지만,
+            // 노출은 화면 전체를 같은 비율로 들어 올려 어두운 구석이 같이 살아난다.
+            colorAdjustments.postExposure.Override(postExposure);
+
+            // 던전의 불빛이 따뜻하니 화면 전체에도 아주 옅게 그 색을 깐다. 세게 넣으면
+            // 갈색 일색이 되므로 흰색에서 살짝만 기울인다.
+            colorAdjustments.colorFilter.Override(colorFilter);
 
             if (chromaticAberration > 0f)
             {

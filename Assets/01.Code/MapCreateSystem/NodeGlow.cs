@@ -22,10 +22,10 @@ namespace _01.Code.MapCreateSystem
         private const float Radius = 2.6f;
         private const float InnerRadius = 0.35f;
 
-        // 처음 0.85 는 셌다. 전역광 위에 얹히는 값이라 둘을 더하면 건물이 흰색으로 날아가고,
-        // 블룸까지 물려서 번졌다. 방을 구분해 주는 정도면 충분하다.
-        private const float UnlockedIntensity = 0.5f;
-        private const float LockedIntensity = 0.2f;
+        // 0.85 는 건물이 날아갈 만큼 셌고 0.5 는 판이 어두웠다. 블룸 임계값을 1.08 로
+        // 올려 둔 덕에 이 정도는 번지지 않으면서 방 경계는 살아난다.
+        private const float UnlockedIntensity = 0.62f;
+        private const float LockedIntensity = 0.26f;
 
         private Light2D light2D;
 

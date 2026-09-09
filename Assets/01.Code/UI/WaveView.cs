@@ -927,7 +927,16 @@ namespace _01.Code.UI
             foreach (var text in root.GetComponentsInChildren<TMP_Text>(true))
             {
                 text.color = TextColor;
-                text.enableWordWrapping = true;
+
+                // 자동 줄바꿈을 끈다. 한 줄이면 되는 글이 조금 넘쳤다고 두 줄로 접히면서
+                // 카드가 들쭉날쭉해졌다. 일부러 넣은 \n 은 NoWrap 이어도 그대로 줄을 바꾸므로,
+                // 두 줄로 짠 것은 두 줄로 남고 의도치 않은 접힘만 사라진다.
+                text.textWrappingMode = TextWrappingModes.NoWrap;
+
+                // 대신 넘칠 때는 글자를 줄여 맞춘다. 잘라내면 이름 끝이 사라진다.
+                text.enableAutoSizing = true;
+                text.fontSizeMax = text.fontSize;
+                text.fontSizeMin = Mathf.Max(8f, text.fontSize * 0.72f);
                 text.overflowMode = TextOverflowModes.Ellipsis;
                 text.raycastTarget = false;
             }
