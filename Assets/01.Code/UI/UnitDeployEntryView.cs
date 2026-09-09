@@ -43,8 +43,17 @@ namespace _01.Code.UI
 
             var displayName = !string.IsNullOrWhiteSpace(unit.Name) ? unit.Name : unit.name;
             SetText(nameText, displayName);
-            var candidateText = candidateCount >= 0 ? $"계약서 {candidateCount}" : "계약서 -";
-            SetText(costText, $"{candidateText}  ·  대기 {availableCount}  ·  배치 {deployedCount}\n영입 비용  {unit.Cost}G");
+            // 카드에서 가장 먼저 읽혀야 하는 것은 값이다. 재고 셋은 그다음에 확인하는 값이라
+            // 한 단계 작게 내린다. 예전에는 넷이 같은 크기로 붙어 있어 셋 다 늦게 읽혔다.
+            var candidateText = candidateCount >= 0 ? candidateCount.ToString() : "-";
+            var soldOut = candidateCount == 0;
+            var costLine = soldOut
+                ? "<color=#8A8079>계약서 없음</color>"
+                : $"<color=#FFD05A>{unit.Cost}G</color>";
+
+            SetText(costText,
+                $"<size=120%>{costLine}</size>\n" +
+                $"<size=82%><color=#B9AFA4>계약서 {candidateText} · 대기 {availableCount} · 배치 {deployedCount}</color></size>");
             if (unitIcon != null && unit.Sprite != null)
             {
                 unitIcon.sprite = unit.Sprite;

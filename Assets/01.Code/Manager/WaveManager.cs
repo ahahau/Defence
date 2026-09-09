@@ -56,7 +56,7 @@ namespace _01.Code.Manager
 
         [SerializeField, Min(0),
          Tooltip("일차마다 더해지는 공격력. 0을 권장한다 — 일차 수만큼 누적되므로 1만 넣어도 " +
-                 "18일차 침입자의 공격력이 4에서 18로 뛰어 수비대가 두세 대에 쓰러진다. " +
+                 "18일차 침입자의 공격력이 4에서 18로 뛰어 유닛이 두세 대에 쓰러진다. " +
                  "후반을 조이려면 일차별 보스 항목의 배율을 쓰는 편이 정밀하다.")]
         private int enemyAttackPerLevel;
         [Header("Boss Wave")]

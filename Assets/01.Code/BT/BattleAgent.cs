@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using _01.Code.Combat;
 using _01.Code.Enemies;
+using _01.Code.Manager;
 using _01.Code.Skills;
 using _01.Code.Units;
 using DG.Tweening;
@@ -135,6 +136,7 @@ namespace _01.Code.BT
         private UnitCommand _unitCommand = UnitCommand.Standby;
         private AutoBattleIntent _autoIntent = AutoBattleIntent.Engage;
         private CombatStatusController _combatStatus;
+        private Enemy _enemy;
         private Vector2 _wanderDestination;
         private float _nextWanderTime;
         private bool _hasWanderDestination;
@@ -203,6 +205,7 @@ namespace _01.Code.BT
         private void Awake()
         {
             if (combatant == null) combatant = GetComponent<Combatant>();
+            _enemy = GetComponent<Enemy>();
             if (_combatStatus == null) _combatStatus = GetComponent<CombatStatusController>();
             if (_combatStatus == null)
             {
@@ -238,7 +241,7 @@ namespace _01.Code.BT
             }
 
             // 팀 자동 판별(기존 Enemy/Unit 컴포넌트 기준)
-            if (GetComponent<Enemy>() != null) team = BattleTeam.Enemy;
+            if (_enemy != null) team = BattleTeam.Enemy;
             else if (GetComponent<Unit>() != null) team = BattleTeam.Player;
         }
 
@@ -1249,7 +1252,35 @@ namespace _01.Code.BT
 
             if (wounded == null) return false;
 
-            wounded.combatant?.Health?.Heal(supportHealAmount);
+            var health = wounded.combatant != null ? wounded.combatant.Health : null;
+            if (health == null)
+                return false;
+
+            var trait = _enemy != null ? _enemy.Trait : AdventurerTrait.None;
+            var isPriestSuppressed = _enemy != null
+                                     && trait == AdventurerTrait.Priest
+                                     && _enemy.StatusController != null
+                                     && _enemy.StatusController.HasActiveEffects;
+            var resolvedHeal = AdventurerTraitRules.ResolveSupportHeal(
+                supportHealAmount,
+                trait,
+                isPriestSuppressed);
+
+            if (isPriestSuppressed)
+            {
+                var normalHeal = AdventurerTraitRules.ResolveSupportHeal(supportHealAmount, trait, false);
+                var missingHealth = Mathf.Max(0, health.MaxHealth - health.CurrentHealth);
+                var preventedHealing = Mathf.Max(0,
+                    Mathf.Min(missingHealth, normalHeal) - Mathf.Min(missingHealth, resolvedHeal));
+                WaveManager.Current?.RecordPriestHealingPrevented(preventedHealing);
+                combatant.ShowCounterplayFeedback(
+                    "치유 억제",
+                    preventedHealing,
+                    false,
+                    new Color(0.45f, 0.85f, 1f));
+            }
+
+            health.Heal(resolvedHeal);
             return true;
         }
 

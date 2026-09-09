@@ -76,7 +76,7 @@ namespace _01.Code.Enemies
         public event System.Action<Enemy> DeathStarted;
         public event System.Action<Enemy> Removed;
         public event System.Action<Enemy> MoodChanged;
-        public event System.Action<Enemy, int, GoldChangeSource> FacilityGoldSpent;
+        public event System.Action<Enemy, int, int, GoldChangeSource> FacilityGoldSpent;
 
         public bool IsBoss => _isBoss;
         public bool IsAlive => combatant != null && combatant.IsAlive;
@@ -108,7 +108,7 @@ namespace _01.Code.Enemies
             {
                 if (_isBoss) return "지배 의지 · 철수하지 않음";
                 if (_currentGreed >= _currentFear + 4) return "탐욕 우세 · 더 깊이 탐색";
-                if (_currentFear >= _currentGreed + 6) return "경계 한계 · 철수 가능";
+                if (CalculateRetreatChance() > 0f) return "경계 한계 · 철수 가능";
                 if (_currentFear > _currentGreed) return "경계 우세 · 진입을 망설임";
                 return "탐색 지속 · 금고를 추적";
             }
@@ -405,7 +405,7 @@ namespace _01.Code.Enemies
             if (IsDead || _isReturning || building == null)
                 return;
 
-            // 통로 함정: 노드 칸은 수비대와 자리를 다투지만 통로는 함정 몫이다.
+            // 통로 함정: 노드 칸은 유닛과 자리를 다투지만 통로는 함정 몫이다.
             // 노드 도착 때와 같은 순서로 함정을 먼저 터뜨리고 통과 효과를 얹는다.
             if (building is Trap edgeTrap)
             {
@@ -512,7 +512,18 @@ namespace _01.Code.Enemies
             {
                 // 통로 함정은 노드에 속하지 않으므로 위험도를 올릴 노드가 없을 수 있다.
                 node?.IncreaseDanger(trap.DangerIncreaseOnTrigger);
-                IncreaseFear(fearGainOnTrap);
+                var fearGained = IncreaseFear(fearGainOnTrap, true);
+                if (Trait == AdventurerTrait.Coward)
+                {
+                    var normalFear = AdventurerTraitRules.ResolveFearGain(fearGainOnTrap, AdventurerTrait.None);
+                    var bonusFear = Mathf.Max(0, fearGained - normalFear);
+                    _01.Code.Manager.WaveManager.Current?.RecordCowardTrapPressure(bonusFear);
+                    combatant?.ShowCounterplayFeedback(
+                        "약점 적중! 경계",
+                        bonusFear,
+                        true,
+                        new Color(0.78f, 0.61f, 1f));
+                }
                 // 함정이 한 일을 따로 세지 않으면 정산에서 유닛 피해와 뭉뚱그려져 보이지 않는다.
                 _01.Code.Manager.WaveManager.Current?.RecordTrapDamage(trap.LastTriggerDamage);
             }
@@ -546,13 +557,17 @@ namespace _01.Code.Enemies
             MoodChanged?.Invoke(this);
         }
 
-        private void IncreaseFear(int amount)
+        private int IncreaseFear(int amount, bool fromTrap = false)
         {
             if (amount <= 0)
-                return;
+                return 0;
 
-            _currentFear += AdventurerTraitRules.ResolveFearGain(amount, Trait);
+            var gained = fromTrap
+                ? AdventurerTraitRules.ResolveTrapFearGain(amount, Trait)
+                : AdventurerTraitRules.ResolveFearGain(amount, Trait);
+            _currentFear += gained;
             MoodChanged?.Invoke(this);
+            return gained;
         }
 
         private void ApplyTemptingBuildingMoodChange()
@@ -564,6 +579,9 @@ namespace _01.Code.Enemies
 
         public int ResolveFacilitySpending(int baseAmount) =>
             AdventurerTraitRules.ResolveFacilityGold(baseAmount, Trait);
+
+        public int ResolveStoreSpending(int baseAmount) =>
+            AdventurerTraitRules.ResolveStoreGold(baseAmount, Trait);
 
         public void ReduceFear(int amount)
         {
@@ -578,7 +596,7 @@ namespace _01.Code.Enemies
         /// 이 적이 상점·여관에 지불한 금화를 적 단위로 기록한다.
         /// 실제 골드 지급은 기존 GoldEarnedEvent가 맡고, 여기서는 착취 목표와 피드백만 알린다.
         /// </summary>
-        public void RecordFacilitySpending(int amount, GoldChangeSource source)
+        public void RecordFacilitySpending(int amount, int baseAmount, GoldChangeSource source)
         {
             if (amount <= 0 || source != GoldChangeSource.Store
                 && source != GoldChangeSource.Inn
@@ -586,6 +604,18 @@ namespace _01.Code.Enemies
                 return;
 
             _totalFacilityGold += amount;
+            var bonusGold = Trait == AdventurerTrait.Shopaholic
+                ? Mathf.Max(0, amount - baseAmount)
+                : 0;
+            if (bonusGold > 0)
+            {
+                combatant?.ShowCounterplayFeedback(
+                    "특성 수익",
+                    bonusGold,
+                    true,
+                    new Color(1f, 0.82f, 0.35f));
+            }
+
             if (_isBoss && Trait == AdventurerTrait.Shopaholic)
             {
                 var nextBonus = AdventurerTraitRules.ResolveGreedKnightAttackBonus(_totalFacilityGold);
@@ -594,7 +624,7 @@ namespace _01.Code.Enemies
                     combatant?.AddAttackDamage(delta);
                 _bossFacilityAttackBonus = nextBonus;
             }
-            FacilityGoldSpent?.Invoke(this, amount, source);
+            FacilityGoldSpent?.Invoke(this, amount, Mathf.Max(0, baseAmount), source);
         }
 
         private bool TryReturn()
@@ -618,7 +648,10 @@ namespace _01.Code.Enemies
             if (_isBoss)
                 return 0f;
 
-            var fearPressure = Mathf.Max(0f, _currentFear - returnChanceStartThreshold)
+            var traitThreshold = AdventurerTraitRules.GetRetreatFearThreshold(
+                returnChanceStartThreshold,
+                Trait);
+            var fearPressure = Mathf.Max(0f, _currentFear - traitThreshold)
                                * fearReturnChancePerPoint;
             var greedResistance = 1f + Mathf.Max(0f, _currentGreed * greedReturnResistancePerPoint);
             return Mathf.Clamp01(fearPressure / greedResistance);

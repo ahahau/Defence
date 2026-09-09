@@ -31,21 +31,8 @@ namespace _01.Code.Persistence
 
         public static bool HasSave => File.Exists(SavePath);
 
-#if UNITY_EDITOR
-        /// <summary>
-        /// 에디터 플레이테스트가 실제 체크포인트를 덮어쓰지 않게 하는 임시 안전장치.
-        /// 빌드에는 포함되지 않으며 플레이테스트 메뉴가 Play Mode 동안만 켠다.
-        /// </summary>
-        public static bool EditorSuppressWrites { get; set; }
-#endif
-
         public static bool SaveCurrentRun()
         {
-#if UNITY_EDITOR
-            if (EditorSuppressWrites)
-                return false;
-#endif
-
             var day = DayManager.Current;
             var registry = SaveAgentRegistry.Current;
             if (registry == null || day == null || !day.IsStandby)

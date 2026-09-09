@@ -27,9 +27,9 @@ namespace _01.Code.Buildings
                 PlayPassEffectFeedback(enemy, buffFlashColor, buffFlashDuration, buffFeelFeedback);
 
             var adventurer = enemy.GetComponentInParent<Enemy>();
-            var paidGold = adventurer != null ? adventurer.ResolveFacilitySpending(goldReward) : goldReward;
+            var paidGold = adventurer != null ? adventurer.ResolveStoreSpending(goldReward) : goldReward;
             costEventChannel?.RaiseEvent(new GoldEarnedEvent(paidGold, GoldChangeSource.Store));
-            adventurer?.RecordFacilitySpending(paidGold, GoldChangeSource.Store);
+            adventurer?.RecordFacilitySpending(paidGold, goldReward, GoldChangeSource.Store);
         }
     }
 }

@@ -904,9 +904,17 @@ namespace _01.Code.UI
             var image = root.GetComponent<Image>();
             if (image != null)
             {
-                image.sprite = null;
-                image.type = Image.Type.Simple;
-                image.color = new Color(0.13f, 0.075f, 0.045f, 0.98f);
+                // 스프라이트를 비우면 평평한 사각형이 된다 — 카드가 기본 UI처럼 보이던 이유다.
+                // 팩의 버튼틀을 쓴다. 카드는 누르는 것이므로 창틀보다 버튼틀이 맞고,
+                // 9분할 테두리를 고친 뒤로는 늘려도 모서리가 뭉개지지 않는다.
+                var frame = DungeonHudIcon.Skin != null ? DungeonHudIcon.Skin.ButtonFrame : null;
+                image.sprite = frame;
+                image.type = frame != null && frame.border != Vector4.zero
+                    ? Image.Type.Sliced
+                    : Image.Type.Simple;
+                image.color = frame != null
+                    ? new Color(0.72f, 0.66f, 0.6f, 1f)
+                    : new Color(0.13f, 0.075f, 0.045f, 0.98f);
             }
 
             var outline = root.GetComponent<Outline>();

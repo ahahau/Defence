@@ -10,7 +10,9 @@ namespace _01.Code.Buildings
         [field: SerializeField] public int Cost { get; private set; }
         [field: SerializeField] public Building Prefab { get; private set; }
         [field: SerializeField] public bool Unique { get; private set; }
-        [field: SerializeField, Tooltip("켜면 노드가 아니라 노드 사이 라인(엣지)에 설치된다. 적이 라인을 지나갈 때 발동 — 상점/여관은 통과 효과, 함정은 피해. 노드 칸은 수비대와 자리를 다투므로 함정에 자기 자리를 주는 용도이기도 하다.")]
+        [field: SerializeField, Tooltip("중요 시설을 방 중앙 슬롯에만 설치한다.")]
+        public bool CentralOnly { get; private set; }
+        [field: SerializeField, Tooltip("켜면 노드가 아니라 노드 사이 라인(엣지)에 설치된다. 적이 라인을 지나갈 때 발동 — 상점/여관은 통과 효과, 함정은 피해. 노드 칸은 유닛과 자리를 다투므로 함정에 자기 자리를 주는 용도이기도 하다.")]
         public bool InstallOnEdge { get; private set; }
         [field: SerializeField] public bool Locked { get; private set; } = true;
         [field: SerializeField, Min(0)] public int BaseDanger { get; private set; } = 1;

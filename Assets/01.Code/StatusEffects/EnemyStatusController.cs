@@ -11,6 +11,7 @@ namespace _01.Code.StatusEffects
 
         private Combatant _combatant;
         private bool _combatantResolved;
+        public bool HasActiveEffects => _activeEffects.Count > 0;
 
         /// <summary>같은 오브젝트의 전투 담당. 없을 수도 있으므로 처음 필요할 때 찾는다.</summary>
         private Combatant Combatant

@@ -246,7 +246,7 @@ namespace _01.Code.Dialogue
                 guidedBuiltNode = evt.Node;
                 guidedStep = GuidedStartTutorialStep.HireUnit;
                 PlayGuidedMessage(
-                    "방이 준비됐습니다. 수비대 관리에서 첫 부하를 영입하십시오.");
+                    "방이 준비됐습니다. 유닛 관리에서 첫 부하를 영입하십시오.");
                 guidedHiredUnit = ResolveFirstHireUnit();
                 TutorialInputGate.OnlyHireUnit(guidedHiredUnit);
                 HighlightUnitHireTarget();
@@ -363,7 +363,7 @@ namespace _01.Code.Dialogue
 
             guidedStep = GuidedStartTutorialStep.BuildPortalRoom;
             PlayGuidedMessage(
-                "수비대 배치 완료. 봉인된 타일을 하나 더 여십시오.");
+                "유닛 배치 완료. 봉인된 타일을 하나 더 여십시오.");
             guidedLockedNode = ResolvePreferredLockedNode();
             TutorialInputGate.OnlyLockedNode(guidedLockedNode);
             HighlightBuildTarget();
@@ -399,7 +399,7 @@ namespace _01.Code.Dialogue
             {
                 guidedStep = GuidedStartTutorialStep.SecondWaveRunning;
                 PlayGuidedMessage(
-                    "두 번째 습격 · 수비대와 함정이 모험가의 경계를 끌어올립니다.");
+                    "두 번째 습격 · 유닛과 함정이 모험가의 경계를 끌어올립니다.");
                 TutorialInputGate.Clear();
                 view?.HideSpotlight();
                 return;

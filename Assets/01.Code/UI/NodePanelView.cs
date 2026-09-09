@@ -346,7 +346,7 @@ namespace _01.Code.UI
 
             var departmentName = _selectedNode.Data != null ? _selectedNode.Data.Type.ToString() : "Node";
             var suffix = string.IsNullOrWhiteSpace(state) ? "대기 인원을 배치하거나 소속 유닛을 선택하세요" : state;
-            SetTitle($"{departmentName} 수비대 관리  {_selectedNode.AssignedUnitCount}/{_selectedNode.UnitCapacity}\n{suffix}");
+            SetTitle($"{departmentName} 유닛 관리  {_selectedNode.AssignedUnitCount}/{_selectedNode.UnitCapacity}\n{suffix}");
         }
 
         private static string GetUnitDisplayName(UnitDataSO unitData)
@@ -1618,7 +1618,7 @@ namespace _01.Code.UI
                 if (_selectedNode.Data != null && _selectedNode.Data.Type == DungeonNodeType.Entrance)
                     return false;
 
-                // 포탈이 서는 순간 그 방은 스폰 지점이 되어 수비대를 둘 수 없다.
+                // 포탈이 서는 순간 그 방은 스폰 지점이 되어 유닛을 둘 수 없다.
                 // 이미 서 있는 방에 세우게 두면 쫓아낼 곳부터 정해야 하니 아예 막는다.
                 if (_selectedNode.AssignedUnitCount > 0)
                     return false;

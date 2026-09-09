@@ -222,7 +222,7 @@ namespace _01.Code.MapCreateSystem
         public bool IsEnemySpawnNode => AssignedBuilding is Portal;
 
         /// <summary>
-        /// 스폰 방에는 수비대를 세울 수 없다. 거기서 막아 세우면 적이 통로를 한 번도 지나지 않아
+        /// 스폰 방에는 유닛을 세울 수 없다. 거기서 막아 세우면 적이 통로를 한 번도 지나지 않아
         /// 통로 함정이 통째로 죽고, 함정을 지을 이유가 사라진다.
         /// </summary>
         public bool CanAcceptAdditionalUnit => !IsEnemySpawnNode && AssignedUnitCount < UnitCapacity;

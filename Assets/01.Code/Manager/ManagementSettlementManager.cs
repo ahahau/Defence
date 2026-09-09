@@ -44,8 +44,8 @@ namespace _01.Code.Manager
         private readonly Dictionary<string, int> incomeByLabel = new();
         private readonly Dictionary<string, int> expenseByLabel = new();
         private readonly Dictionary<UnitDataSO, int> hiredUnitCount = new();
-        private readonly Dictionary<Node, Unit> deployedUnitByNode = new();
-        private readonly Dictionary<string, int> dailyFatigueByLabel = new();
+        private readonly HashSet<Unit> deployedUnits = new();
+        private readonly List<KeyValuePair<string, int>> dailyFatigueByLabel = new();
         private int currentDay;
         private int totalIncome;
         /// <summary>정산에서 실제로 금화를 옮길 몫. 즉시 결제된 건설·고용비는 제외한다.</summary>
@@ -201,13 +201,13 @@ namespace _01.Code.Manager
             if (evt.Node == null || evt.Instance == null)
                 return;
 
-            deployedUnitByNode[evt.Node] = evt.Instance;
+            deployedUnits.Add(evt.Instance);
         }
 
         private void HandleUnitReturned(UnitReturnedFromNodeEvent evt)
         {
-            if (evt.Node != null)
-                deployedUnitByNode.Remove(evt.Node);
+            if (evt.Instance != null)
+                deployedUnits.Remove(evt.Instance);
         }
 
         private void AddHiredUnit(UnitDataSO unit)
@@ -277,6 +277,8 @@ namespace _01.Code.Manager
 
         private int CalculateDailyUpkeep()
         {
+            // 이어하기는 고용 이벤트를 다시 발행하지 않는다. 복원된 명단을 기준으로 계산한다.
+            HiredUnitRoster.Current?.CopyHiredUnitCounts(hiredUnitCount);
             var total = 0;
             foreach (var pair in hiredUnitCount)
             {
@@ -301,12 +303,20 @@ namespace _01.Code.Manager
             // 어제 값이 그대로 남아 오늘 것처럼 보이면 안 되므로 장부부터 연다.
             EnsureLedgerOpen();
 
-            foreach (var unit in deployedUnitByNode.Values)
+            dailyFatigueByLabel.Clear();
+            // 이어하기는 고용 명단을 소비하는 배치 이벤트 없이 노드에 직접 복원한다.
+            foreach (var node in Node.ActiveNodes)
+                foreach (var placement in node.UnitPlacements)
+                    if (placement?.Instance != null && placement.Instance is not MainUnit)
+                        deployedUnits.Add(placement.Instance);
+            deployedUnits.RemoveWhere(unit => unit == null);
+            foreach (var unit in deployedUnits)
             {
                 if (unit == null)
                     continue;
 
-                dailyFatigueByLabel[ResolveUnitLabel(unit)] = Mathf.RoundToInt(unit.Fatigue);
+                dailyFatigueByLabel.Add(new KeyValuePair<string, int>(
+                    ResolveUnitLabel(unit), Mathf.RoundToInt(unit.Fatigue)));
             }
         }
 
@@ -439,7 +449,8 @@ namespace _01.Code.Manager
                            + (recorded != net
                                ? $"\n<size=85%>그중 {FormatSignedGold(recorded - net)}는 금고·선지출</size>"
                                : string.Empty)
-                           + BuildBattleSummaryText() + BuildFatigueText() + BuildDebtText();
+                           + BuildBattleSummaryText() + BuildCounterplaySummaryText()
+                           + BuildFatigueText() + BuildDebtText();
             netText.color = net >= 0 ? new Color(0.45f, 0.95f, 0.55f) : new Color(1f, 0.45f, 0.4f);
         }
 
@@ -494,9 +505,35 @@ namespace _01.Code.Manager
             // 한 줄에 다섯 숫자를 늘어놓으면 아무것도 안 읽힌다. 방어가 어땠는지는
             // 격퇴와 받은 피해 둘이면 판단이 선다. 가한 피해와 치명타는 진단용이라 뺐다.
             return $"\n<size=85%>격퇴 {wave.KillCount}/{wave.TotalEnemyCount}"
-                   + trapShare
                    + $"  ·  받은 피해 {wave.WaveDamageTaken}"
+                   + trapShare
                    + objective + "</size>";
+        }
+
+        /// <summary>이번 방어에서 적 특성을 실제로 역이용한 성과만 보여 준다.</summary>
+        private static string BuildCounterplaySummaryText()
+        {
+            var wave = WaveManager.Current;
+            if (wave == null)
+                return string.Empty;
+
+            var entries = new List<string>();
+            if (wave.WaveCowardTrapTriggers > 0)
+            {
+                entries.Add($"겁쟁이 함정 압박 {wave.WaveCowardTrapTriggers}회"
+                            + $" <color=#C79BFF>(경계 +{wave.WaveCowardBonusFear})</color>");
+            }
+
+            if (wave.WavePriestHealingPrevented > 0)
+                entries.Add($"성직자 치유 <color=#73D8FF>{wave.WavePriestHealingPrevented} 차단</color>");
+
+            if (wave.WaveShopaholicBonusGold > 0)
+                entries.Add($"쇼핑광 추가 수익 <color=#FFD05A>+{wave.WaveShopaholicBonusGold}G</color>");
+
+            return entries.Count > 0
+                ? "\n<size=85%><color=#9FE6B8>상성 활용</color>  ·  "
+                  + string.Join("  ·  ", entries) + "</size>"
+                : string.Empty;
         }
 
         /// <summary>빚이 있을 때만 한 줄 덧붙인다. 한도가 얼마 안 남았는지가 핵심 정보다.</summary>

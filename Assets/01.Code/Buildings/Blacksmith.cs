@@ -32,7 +32,7 @@ namespace _01.Code.Buildings
             var adventurer = enemy.GetComponentInParent<Enemy>();
             var paidGold = adventurer != null ? adventurer.ResolveFacilitySpending(goldReward) : goldReward;
             costEventChannel?.RaiseEvent(new GoldEarnedEvent(paidGold, GoldChangeSource.Blacksmith));
-            adventurer?.RecordFacilitySpending(paidGold, GoldChangeSource.Blacksmith);
+            adventurer?.RecordFacilitySpending(paidGold, goldReward, GoldChangeSource.Blacksmith);
         }
     }
 }

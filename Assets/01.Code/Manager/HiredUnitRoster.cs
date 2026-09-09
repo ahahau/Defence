@@ -182,6 +182,29 @@ namespace _01.Code.Manager
         public int GetDeployedUnitCount(UnitDataSO unit) =>
             unit != null && _deployedUnits.TryGetValue(unit, out var count) ? count : 0;
 
+        /// <summary>현재 고용 중인 부하만 집계한다. 아직 고용하지 않은 지원자는 제외한다.</summary>
+        public void CopyHiredUnitCounts(Dictionary<UnitDataSO, int> target)
+        {
+            target.Clear();
+            foreach (var unit in _availableUnits)
+            {
+                if (unit == null)
+                    continue;
+
+                target.TryGetValue(unit, out var count);
+                target[unit] = count + 1;
+            }
+
+            foreach (var pair in _deployedUnits)
+            {
+                if (pair.Key == null || pair.Value <= 0)
+                    continue;
+
+                target.TryGetValue(pair.Key, out var count);
+                target[pair.Key] = count + pair.Value;
+            }
+        }
+
         public bool TryTakeAvailableUnit(UnitDataSO unit, out UnitConditionState condition)
         {
             var index = FindBestAvailableUnitIndex(unit);

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using _01.Code.BT;
 using _01.Code.Enemies;
 
@@ -7,14 +8,30 @@ namespace _01.Code.Manager
     public readonly struct WaveThreatPreview
     {
         public WaveThreatPreview(string title, string counterHint)
+            : this(title, counterHint, string.Empty, string.Empty)
+        {
+        }
+
+        public WaveThreatPreview(
+            string title,
+            string counterHint,
+            string traitSummary,
+            string traitCounterHint)
         {
             Title = title ?? string.Empty;
             CounterHint = counterHint ?? string.Empty;
+            TraitSummary = traitSummary ?? string.Empty;
+            TraitCounterHint = traitCounterHint ?? string.Empty;
         }
 
         public string Title { get; }
         public string CounterHint { get; }
-        public bool IsEmpty => string.IsNullOrWhiteSpace(Title) && string.IsNullOrWhiteSpace(CounterHint);
+        public string TraitSummary { get; }
+        public string TraitCounterHint { get; }
+        public bool HasTraitInfo => !string.IsNullOrWhiteSpace(TraitSummary);
+        public bool IsEmpty => string.IsNullOrWhiteSpace(Title)
+                               && string.IsNullOrWhiteSpace(CounterHint)
+                               && !HasTraitInfo;
     }
 
     /// <summary>
@@ -32,6 +49,9 @@ namespace _01.Code.Manager
             var ranged = 0;
             var support = 0;
             var tank = 0;
+            var shopaholic = 0;
+            var coward = 0;
+            var priest = 0;
 
             if (party?.Members != null)
             {
@@ -47,10 +67,28 @@ namespace _01.Code.Manager
                         case BattleRole.Tank: tank++; break;
                         default: melee++; break;
                     }
+
+                    switch (member.Trait)
+                    {
+                        case AdventurerTrait.Shopaholic: shopaholic++; break;
+                        case AdventurerTrait.Coward: coward++; break;
+                        case AdventurerTrait.Priest: priest++; break;
+                    }
                 }
             }
 
-            return BuildForRoleCounts(authoredTitle, authoredCounterHint, melee, ranged, support, tank);
+            var rolePreview = BuildForRoleCounts(
+                authoredTitle,
+                authoredCounterHint,
+                melee,
+                ranged,
+                support,
+                tank);
+            return new WaveThreatPreview(
+                rolePreview.Title,
+                rolePreview.CounterHint,
+                BuildTraitSummary(shopaholic, coward, priest),
+                BuildTraitCounterHint(shopaholic, coward, priest));
         }
 
         public static WaveThreatPreview BuildForRoleCounts(
@@ -84,6 +122,36 @@ namespace _01.Code.Manager
             }
 
             return new WaveThreatPreview(title, hint);
+        }
+
+        private static string BuildTraitSummary(int shopaholic, int coward, int priest)
+        {
+            var parts = new List<string>(3);
+            AddTraitCount(parts, "쇼핑광", shopaholic);
+            AddTraitCount(parts, "겁쟁이", coward);
+            AddTraitCount(parts, "성직자", priest);
+            return parts.Count > 0 ? $"특성 · {string.Join(" · ", parts)}" : string.Empty;
+        }
+
+        private static string BuildTraitCounterHint(int shopaholic, int coward, int priest)
+        {
+            var parts = new List<string>(3);
+            if (priest > 0)
+                parts.Add($"상태이상 함정으로 성직자 치유 {FormatMultiplier(AdventurerTraitRules.PriestSuppressedHealMultiplier)}배");
+            if (coward > 0)
+                parts.Add($"함정으로 겁쟁이 경계 {FormatMultiplier(AdventurerTraitRules.CowardTrapFearMultiplier)}배");
+            if (shopaholic > 0)
+                parts.Add($"상점 배치 시 쇼핑광 수익 {FormatMultiplier(AdventurerTraitRules.ShopaholicStoreGoldMultiplier)}배");
+
+            return string.Join(" · ", parts);
+        }
+
+        private static string FormatMultiplier(float multiplier) => multiplier.ToString("0.#");
+
+        private static void AddTraitCount(List<string> parts, string label, int count)
+        {
+            if (count > 0)
+                parts.Add($"{label}×{count}");
         }
     }
 }
