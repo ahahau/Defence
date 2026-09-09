@@ -655,15 +655,17 @@ namespace _01.Code.UI
 
                 var managedUnit = placement.Instance;
                 var health = managedUnit.Health;
-                var healthText = health != null ? $" · HP {health.CurrentHealth}/{health.MaxHealth}" : string.Empty;
-                var conditionText = $" · {managedUnit.ConditionSummary} · {managedUnit.CommandLabel}";
+                // "소속 유닛"은 이 목록이 이미 이 방의 유닛이라 아무것도 더하지 않는다.
+                // 행마다 붙어서 정작 뒤의 상태를 밀어내고 있었다.
+                var healthText = health != null ? $"HP {health.CurrentHealth}/{health.MaxHealth} · " : string.Empty;
+                var conditionText = $"{healthText}{managedUnit.ConditionSummary} · {managedUnit.CommandLabel}";
                 var isSelected = managedUnit == _selectedManagedUnit;
                 var entry = Instantiate(deployEntryPrefab, unitContentRoot);
                 entry.Initialize(
                     placement.Data,
                     _ => SelectManagedUnit(managedUnit),
                     isSelected ? "선택됨" : "선택",
-                    $"소속 유닛{healthText}{conditionText}",
+                    conditionText,
                     true);
                 _deployEntries.Add(entry);
             }
@@ -681,7 +683,8 @@ namespace _01.Code.UI
                         unitData,
                         HandleDeployRequested,
                         canReceiveUnit ? "배치" : blockedLabel,
-                        $"휴식 중 · {condition.Summary}\n다음 날 피로 -{Mathf.RoundToInt(hiredUnitRoster.StandbyFatigueRecoveryPerDay)}",
+                        // 피로 회복량은 유닛마다 같은 값이라, 행마다 적으면 목록만 두 줄로 늘어난다.
+                        $"대기 중 · {condition.Summary}",
                         canReceiveUnit);
                     _deployEntries.Add(entry);
                 }
