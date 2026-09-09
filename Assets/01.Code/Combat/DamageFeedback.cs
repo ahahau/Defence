@@ -222,6 +222,9 @@ namespace _01.Code.Combat
 
             var endPosition = textMesh.transform.position + Vector3.up * textFloatDistance;
             DOTween.Sequence()
+                // 뜬 숫자는 웨이브가 끝나거나 씬이 바뀌면 함께 사라진다. 묶어 두지 않으면
+                // 그 뒤에도 트윈이 돌며 없어진 Transform 을 건드린다.
+                .SetLink(textMesh.gameObject)
                 .Append(textMesh.transform.DOMove(endPosition, textDuration).SetEase(Ease.OutQuad))
                 .Join(DOTween.To(
                     () => textMesh.color.a,

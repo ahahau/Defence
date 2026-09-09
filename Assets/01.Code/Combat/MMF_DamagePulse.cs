@@ -68,7 +68,8 @@ namespace _01.Code.Combat
             var baseRotation = _baseRotation;
             var direction = Random.value < 0.5f ? -1f : 1f;
 
-            var sequence = DOTween.Sequence().SetUpdate(true);
+            // Target 이 사라져도 트윈이 남으면 파괴된 Transform 을 흔들려 한다.
+            var sequence = DOTween.Sequence().SetUpdate(true).SetLink(Target.gameObject);
             if (ShakeDistance > 0f)
             {
                 sequence.Join(Target.DOShakePosition(
@@ -162,6 +163,9 @@ namespace _01.Code.Combat
                 var renderer = spriteRenderer;
                 RunningFlashes[renderer] = DOTween.Sequence()
                     .SetUpdate(true)
+                    // 렌더러가 사라지면 점멸도 함께 끝나야 한다. OnKill 이 색을 되돌리므로
+                    // 묶어 두면 정리까지 알아서 이뤄진다.
+                    .SetLink(renderer.gameObject)
                     .Append(renderer.DOColor(WithAlphaOf(FlashColor, renderer), duration * 0.35f))
                     .Append(renderer.DOColor(WithAlphaOf(baseColor, renderer), duration * 0.65f))
                     // 자세 복원과 같이 OnKill이다. 다음 피격이 끊고 들어오든 오브젝트가 사라지든

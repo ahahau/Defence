@@ -132,7 +132,9 @@ namespace _01.Code.Enemies
             _moveTween?.Kill();
             ResetVisualPose();
 
-            var sequence = DOTween.Sequence();
+            // 이동 중에 죽는 적이 흔하다. 시퀀스를 오브젝트에 묶지 않으면 파괴된 뒤에도
+            // 트윈이 계속 돌며 사라진 Transform 의 position 을 건드려 예외가 난다.
+            var sequence = DOTween.Sequence().SetLink(gameObject);
             sequence.Join(transform.DOMove(targetPos, duration).SetEase(Ease.InOutQuad));
 
             // 라인 위 건물(중점) 통과 시점(구간의 절반)에 효과 발동.

@@ -42,6 +42,9 @@ namespace _01.Code.Skills
 
             // 커지면서 사라진다. 두 트윈을 한 시퀀스에 묶어야 중간에 끊겨도 함께 정리된다.
             DOTween.Sequence()
+                // 웨이브가 끝나거나 씬이 바뀌면 고리도 함께 사라진다. 묶어 두지 않으면
+                // 그 뒤에도 트윈이 돌며 없어진 Transform 을 건드려 예외가 난다.
+                .SetLink(renderer.gameObject)
                 .Append(ring.DOScale(end, Duration).SetEase(Ease.OutCubic))
                 .Join(renderer.DOFade(0f, Duration).SetEase(Ease.InQuad))
                 .SetTarget(renderer)
