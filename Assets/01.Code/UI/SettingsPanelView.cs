@@ -229,6 +229,8 @@ namespace _01.Code.UI
         /// <summary>저장을 지우고 판을 처음부터 다시 올린다.</summary>
         private void RestartRun()
         {
+            // 되돌릴 수 없는 동작이라 둘러보는 클릭과 다른 소리를 낸다.
+            GameSfxPlayer.Play(GameSfxCue.UiConfirm);
             _01.Code.Persistence.RunSaveSystem.DeleteSave();
             LeaveTo(TitleMenuActions.GameSceneName);
         }

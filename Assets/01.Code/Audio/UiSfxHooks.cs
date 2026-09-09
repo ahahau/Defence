@@ -43,6 +43,7 @@ namespace _01.Code.Audio
                 channel.AddListener<BuildingInstalledEvent>(OnBuildingInstalled);
                 channel.AddListener<UnitDeployMagicPaidEvent>(OnUnitDeployed);
                 channel.AddListener<UnitDeployMagicRejectedEvent>(OnDeployRejected);
+                channel.AddListener<RosterHirePaidEvent>(OnUnitHired);
             }
         }
 
@@ -53,5 +54,11 @@ namespace _01.Code.Audio
         private static void OnUnitDeployed(UnitDeployMagicPaidEvent evt) => GameSfxPlayer.Play(GameSfxCue.UnitPlace);
 
         private static void OnDeployRejected(UnitDeployMagicRejectedEvent evt) => GameSfxPlayer.Play(GameSfxCue.UiFail);
+
+        /// <summary>
+        /// 영입은 돈이 나가는 확정 동작인데 소리가 없었다. 표에 준비돼 있으면서 부르는 곳이
+        /// 한 군데도 없던 큐가 UiConfirm 이라, 둘을 맞붙인다 — 둘러보는 클릭과 갈려야 한다.
+        /// </summary>
+        private static void OnUnitHired(RosterHirePaidEvent evt) => GameSfxPlayer.Play(GameSfxCue.UiConfirm);
     }
 }
