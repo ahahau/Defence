@@ -636,9 +636,12 @@ namespace _01.Code.UI
             if (costEventChannel != null)
                 costEventChannel.RaiseEvent(new GoldEarnedEvent(reward, GoldChangeSource.General));
             var odds = Mathf.RoundToInt(chance * 100f);
+            // 결과 창은 제목을 따로 띄운다. 본문에 마을 이름과 성패를 또 적으면 같은 말이 두 번 나온다.
+            // 확률과 전력은 떠나기 전에 이미 보고 결정한 값이라 결과에는 남기지 않는다.
+            // 피로도는 유닛 카드에 그대로 보이므로 문장으로 설명하지 않는다.
             var result = success
-                ? $"{village.Name} 작전 성공\n\n확보 자금  +{reward}G\n장악도  {village.Conquest}%\n\n전력 {departedPower} / 난이도 {village.Difficulty}  ·  성공 확률 {odds}%\n귀환한 유닛은 피로도가 누적되었습니다." + rewardLine
-                : $"{village.Name} 작전 난항\n\n회수 자금  +{reward}G\n장악도 변화 없음\n\n전력 {departedPower} / 난이도 {village.Difficulty}  ·  성공 확률 {odds}%\n귀환한 유닛의 피로도가 크게 누적되었습니다.";
+                ? $"확보 자금  +{reward}G\n장악도  {village.Conquest}%" + rewardLine
+                : $"회수 자금  +{reward}G\n장악도  변화 없음";
             if (resultText != null) resultText.text = result;
             ShowResult(success ? "작전 성공" : "작전 결과", result);
             deployedUnits.Clear(); hasActiveExpedition = false; departedPower = 0;

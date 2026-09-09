@@ -33,7 +33,6 @@ namespace _01.Code.UI
         private GameObject restartButton;
         private GameObject titleButton;
         private GameObject closeButton;
-        private GameObject openButton;
         private Slider slider;
         private TMP_Text valueLabel;
         private Slider musicSlider;
@@ -53,7 +52,6 @@ namespace _01.Code.UI
             current = this;
             skin = Resources.Load<UiSkinSO>(SkinResourcePath);
             var canvas = BuildCanvas();
-            BuildOpenButton(canvas.transform);
             BuildWindow(canvas.transform);
             window.SetActive(false);
             FitToScene();
@@ -62,8 +60,8 @@ namespace _01.Code.UI
         private void OnEnable()
         {
             // 이 창은 씬을 넘어가도 살아남는다. 씬이 바뀌면 구성을 다시 맞춰야
-            // 좌상단 버튼이 판 위에서 제때 나타난다 — 창을 열 때만 맞추면
-            // 버튼이 없어서 창을 못 여는 자리가 생긴다.
+            // 판을 떠나는 두 버튼이 제자리를 찾는다 — 타이틀에서 만들어진 창이
+            // 그대로 판 위로 따라오기 때문이다.
             UnityEngine.SceneManagement.SceneManager.sceneLoaded += HandleSceneLoaded;
         }
 
@@ -140,15 +138,6 @@ namespace _01.Code.UI
             return canvas;
         }
 
-        private void BuildOpenButton(Transform parent)
-        {
-            // 좌측 상단 구석. 보드도 HUD도 거기까지는 오지 않는다.
-            var button = CreateButton(parent, "설정", new Vector2(0f, 1f), new Vector2(76f, 34f), new Vector2(52f, -26f));
-            button.onClick.AddListener(() => Toggle(true));
-            openButton = button.gameObject;
-            openButton.SetActive(IsInGame);
-        }
-
         private void BuildWindow(Transform parent)
         {
             // 이 창은 DontDestroyOnLoad 라 씬을 넘어가도 다시 만들어지지 않는다. 그래서
@@ -198,10 +187,6 @@ namespace _01.Code.UI
             if (window != null && window.transform is RectTransform rect)
                 rect.sizeDelta = new Vector2(440f, inGame ? 386f : 274f);
 
-            // 좌상단 설정 버튼도 같은 이유로 항상 만들어 두고 여기서 가린다.
-            // 타이틀에는 제 메뉴에 설정이 있어 띄우면 같은 것이 둘이 된다.
-            if (openButton != null)
-                openButton.SetActive(inGame);
         }
 
         /// <summary>

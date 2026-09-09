@@ -35,7 +35,6 @@ namespace _01.Code.UI
         private readonly List<UnitDeployEntryView> _entries = new();
         private readonly Dictionary<UnitDataSO, int> _ownedUnitCounts = new();
         private UnitDataSO selectedUnit;
-        private int _currentGold;
 
         public RectTransform ToggleButtonRect => toggleButton != null ? toggleButton.transform as RectTransform : null;
         public RectTransform FirstEntryRect => _entries.Count > 0 && _entries[0] != null ? _entries[0].transform as RectTransform : null;
@@ -247,7 +246,7 @@ namespace _01.Code.UI
 
         private void HandleGoldChanged(GoldChangedEvent evt)
         {
-            _currentGold = Mathf.Max(0, evt.CurrentGold);
+            // 카드에서 운영 자금 줄을 뺐지만, 영입 가능 여부 안내는 금화에 따라 달라진다.
             if (selectedUnit != null)
                 UpdateHint(BuildUnitDetailText(selectedUnit));
         }
@@ -366,15 +365,15 @@ namespace _01.Code.UI
             var healthText = health != null ? health.MaxHealth.ToString() : "-";
             var intervalText = combatant != null ? $"{combatant.AttackInterval:0.##}초" : "-";
 
+            // 여섯 줄이 빽빽해서 정작 고를 때 보는 값이 묻혔다. 판단에 쓰는 것만 남긴다.
+            // 뺀 것: 경계 수치(부차적), 운영 자금(상단 카드에 이미 있다), 전투 줄의 분리.
             return $"{displayName}  ·  등급 {(int)unit.Grade}\n" +
                    $"━━━━━━━━━━━━━━━━\n" +
-                   $"전투  공격 {attackText}  |  방어 {defense}  |  체력 {healthText}\n" +
-                   $"전투  공격 간격 {intervalText}  |  마력 {unit.MagicCost}\n" +
-                   $"운영  계약서 {GetOwnedUnitCount(unit)}  |  대기 {GetAvailableUnitCount(unit)}  |  배치 {GetDeployedUnitCount(unit)}\n" +
-                   $"비용  영입 {unit.Cost}G  |  일일 급여 {Mathf.Max(1, Mathf.CeilToInt(unit.Cost / 5f))}G  |  운영 자금 {_currentGold}G\n" +
-                   $"경계  기본 +{unit.BaseDanger}  |  전투 시 +{unit.DangerIncreaseOnCombat}\n" +
+                   $"공격 {attackText}  ·  방어 {defense}  ·  체력 {healthText}  ·  간격 {intervalText}  ·  마력 {unit.MagicCost}\n" +
+                   $"계약서 {GetOwnedUnitCount(unit)}  ·  대기 {GetAvailableUnitCount(unit)}  ·  배치 {GetDeployedUnitCount(unit)}\n" +
+                   $"영입 {unit.Cost}G  ·  급여 {Mathf.Max(1, Mathf.CeilToInt(unit.Cost / 5f))}G\n" +
                    BuildApplicantText(unit) +
-                   "\n선택 후 같은 카드를 다시 누르면 영입합니다.";
+                   "\n다시 누르면 영입";
         }
 
         /// <summary>

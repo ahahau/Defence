@@ -514,8 +514,10 @@ namespace _01.Code.UI
                 // 머릿수만으로는 그들이 입구에 있는지 금고 앞인지 알 수 없다. 남은 거리를 같이 적는다.
                 var steps = IntrusionThreat.StepsToObjective(out _, out var objectiveKind);
                 var warning = IntrusionThreat.BuildWarning(steps, objectiveKind);
+                // 넷을 늘어놓으면 아무것도 안 읽힌다. 남은 수와 처치 수는 remaining/total 한 쌍이면
+                // 알 수 있고, 던전 내부와 진입 대기의 구분은 화면을 보면 그대로 보인다.
                 _waveProgressStats.text =
-                    $"남은 위협 {remaining}/{total}  ·  던전 내부 {waveManager.ActiveEnemyCount}  ·  진입 대기 {waveManager.PendingSpawnCount}  ·  처치 {waveManager.KillCount}"
+                    $"남은 위협 {remaining}/{total}"
                     + (string.IsNullOrEmpty(warning) ? string.Empty : $"  ·  {warning}")
                     + $"\n<color=#8FD6FF>{waveManager.GetSelectedObjectiveProgressText()}</color>";
             }
