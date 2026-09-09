@@ -490,7 +490,7 @@ namespace _01.Code.MapCreateSystem
                 row = r;
                 return true;
             }
-
+            
             column = -1;
             row = -1;
             return false;
@@ -570,9 +570,30 @@ namespace _01.Code.MapCreateSystem
                 spriteRenderer.transform.localScale = scale;
         }
 
+        private NodeGlow glow;
+
+        /// <summary>
+        /// 방 불빛을 챙긴다. 노드는 실행 중에 생성되므로 프리팹을 고치는 대신 여기서 붙인다.
+        /// </summary>
+        private NodeGlow EnsureGlow()
+        {
+            if (glow != null)
+                return glow;
+
+            glow = GetComponent<NodeGlow>();
+            if (glow == null)
+                glow = gameObject.AddComponent<NodeGlow>();
+
+            return glow;
+        }
+
         private void SetLockedOverlayVisible(bool visible)
         {
             SetLockedRootVisible(visible);
+
+            // 방마다 있는 불빛도 같이 따라간다. 잠긴 곳은 차갑고 어둡게 두면
+            // 열 수 있는 방과 아닌 방이 밝기만으로 갈린다.
+            EnsureGlow()?.SetUnlocked(!visible);
 
             if (lockedOverlayRenderer == null)
                 return;

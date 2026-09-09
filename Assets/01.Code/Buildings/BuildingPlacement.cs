@@ -10,13 +10,18 @@ namespace _01.Code.Buildings
     /// </summary>
     public static class BuildingPlacement
     {
-        public const float DefaultCentralSlotFill = 0.92f;
+        /// <summary>
+        /// 건물이 중앙 슬롯을 채우는 비율. 슬롯을 넘지 않게 줄이는 값이지 여백을 두려는 값이 아니다.
+        /// 0.92 는 방 안에서 건물이 작아 보였다 — 그림 자체에 이미 여백이 있어 두 번 줄어든 셈이다.
+        /// </summary>
+        public const float DefaultCentralSlotFill = 1.12f;
 
         /// <summary>중앙 슬롯 바깥의 작은 칸에 여러 개 놓이는 건물인가.</summary>
         public static bool UsesGridCell(BuildingDataSO buildingData)
         {
             return buildingData != null
                    && !buildingData.Unique
+                   && !buildingData.CentralOnly
                    && !buildingData.InstallOnEdge;
         }
 

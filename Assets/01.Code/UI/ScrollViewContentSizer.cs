@@ -24,45 +24,32 @@ namespace _01.Code.UI
             if (fitter != null) fitter.enabled = false;
             scroll.horizontal = true;
             scroll.vertical = false;
-            scroll.movementType = ScrollRect.MovementType.Clamped;
+            // 손으로 끌어 넘긴다. 관성과 살짝의 탄성이 있어야 끌었다는 느낌이 남는다 —
+            // Clamped 는 끝에서 딱 멈춰 버려 더 없는 것인지 걸린 것인지 구분되지 않는다.
+            scroll.movementType = ScrollRect.MovementType.Elastic;
+            scroll.elasticity = 0.08f;
+            scroll.inertia = true;
+            scroll.decelerationRate = 0.12f;
             scroll.scrollSensitivity = 45f;
             if (scroll.verticalScrollbar != null)
                 scroll.verticalScrollbar.gameObject.SetActive(false);
-            AddPageButton(scroll, "Previous Cards", "<", -1f);
-            AddPageButton(scroll, "Next Cards", ">", 1f);
+
+            // 넘기기 버튼은 걷어낸다. 끌어서 넘기는 자리에 화살표까지 두면 카드를 가린다.
+            RemovePageButton(scroll, "Previous Cards");
+            RemovePageButton(scroll, "Next Cards");
         }
 
-        private static void AddPageButton(ScrollRect scroll, string name, string label, float direction)
+        /// <summary>예전에 붙여 두던 넘기기 버튼을 걷는다. 이미 만들어진 씬에도 남아 있다.</summary>
+        private static void RemovePageButton(ScrollRect scroll, string name)
         {
-            if (scroll.transform.Find(name) != null) return;
-            var root = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
-            root.transform.SetParent(scroll.transform, false);
-            var rect = (RectTransform)root.transform;
-            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0f);
-            rect.pivot = new Vector2(0.5f, 0f);
-            rect.anchoredPosition = new Vector2(direction * 48f, 8f);
-            rect.sizeDelta = new Vector2(80f, 44f);
-            root.GetComponent<Image>().color = new Color(0.25f, 0.16f, 0.08f, 1f);
-            var textRoot = new GameObject("Label", typeof(RectTransform), typeof(TMPro.TextMeshProUGUI));
-            textRoot.transform.SetParent(root.transform, false);
-            var text = textRoot.GetComponent<TMPro.TextMeshProUGUI>();
-            text.text = label;
-            text.fontSize = 28f;
-            text.alignment = TMPro.TextAlignmentOptions.Center;
-            text.raycastTarget = false;
-            text.rectTransform.anchorMin = Vector2.zero;
-            text.rectTransform.anchorMax = Vector2.one;
-            text.rectTransform.offsetMin = text.rectTransform.offsetMax = Vector2.zero;
-            root.GetComponent<Button>().onClick.AddListener(() =>
-            {
-                Canvas.ForceUpdateCanvases();
-                var viewport = scroll.viewport != null ? scroll.viewport : (RectTransform)scroll.transform;
-                var overflow = scroll.content.rect.width - viewport.rect.width;
-                if (overflow <= 0f) return;
-                scroll.StopMovement();
-                scroll.horizontalNormalizedPosition = Mathf.Clamp01(scroll.horizontalNormalizedPosition
-                    + direction * 344f / overflow);
-            });
+            var existing = scroll.transform.Find(name);
+            if (existing == null)
+                return;
+
+            if (Application.isPlaying)
+                Object.Destroy(existing.gameObject);
+            else
+                Object.DestroyImmediate(existing.gameObject);
         }
 
         public static void ResizeToGridItemCount(Transform contentRoot, int itemCount)
