@@ -496,11 +496,13 @@ namespace _01.Code.Manager
 
             if (_groupSpawnCoroutine != null)
                 StopCoroutine(_groupSpawnCoroutine);
-            _groupSpawnCoroutine = StartCoroutine(SpawnGroupRoutine(groupSize));
+            _groupSpawnCoroutine = StartCoroutine(SpawnGroupRoutine(groupSize, spawnInterval));
         }
 
-        private IEnumerator SpawnGroupRoutine(int groupSize)
+        private IEnumerator SpawnGroupRoutine(int groupSize, float spawnInterval)
         {
+            var spawned = 0;
+
             for (var i = 0; i < groupSize; i++)
             {
                 if (!_isWaveRunning || _portalNode == null)
@@ -515,9 +517,19 @@ namespace _01.Code.Manager
                 if (!SpawnEnemy(FormationOffsetFor(i, groupSize)))
                     break;
 
+                spawned++;
+
                 if (memberSpawnDelay > 0f && i < groupSize - 1)
                     yield return new WaitForSeconds(memberSpawnDelay);
             }
+
+            // 다음 그룹까지의 간격은 "실제로 내보낸 수"에 맞춘다.
+            //
+            // 간격은 그룹 정원(spawnInterval × groupSize)으로 잡아 두는데, 위에서 전투 때문에
+            // 중간에 끊기면 정원이 아니라 한 마리만 나간다. 그대로 두면 여섯 자리 시간을 기다리고
+            // 한 마리를 내보내게 되어 웨이브가 정원 배수만큼 느려진다. 실측에서 16일차가 그랬다 —
+            // 6인 파티가 전투에 물려 30마리를 29번에 나눠 내보내며 336초를 썼다(이웃한 날은 40초).
+            _currentGroupInterval = spawnInterval * Mathf.Max(1, spawned);
 
             _groupSpawnCoroutine = null;
             CompleteWaveIfCleared(false);
