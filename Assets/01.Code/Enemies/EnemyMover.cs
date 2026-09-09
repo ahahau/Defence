@@ -84,6 +84,10 @@ namespace _01.Code.Enemies
         {
             _isTurning = true;
 
+            // 다음 방으로 넘어가기 전에 지금 방을 한 번 어슬렁거린다. 곧장 옆으로 직진하면
+            // 침입자가 아니라 레일 위를 도는 말처럼 보인다.
+            yield return WanderInsideNode();
+
             var nextNode = SelectNextNode();
             if (nextNode == null)
             {
@@ -119,6 +123,53 @@ namespace _01.Code.Enemies
             _battleAgent?.EndTraversal();
             _isTurning = false;
             NodeArrived?.Invoke(_currentNode);
+        }
+
+        [Header("Node Wander")]
+        [SerializeField, Range(0f, 1f), Tooltip("다음 방으로 가기 전 방 안을 둘러볼 확률.")]
+        private float wanderChance = 0.55f;
+
+        [SerializeField, Min(0f), Tooltip("둘러보는 거리(월드 단위). 아레나 반지름 안으로 잘린다.")]
+        private float wanderDistance = 1.1f;
+
+        [SerializeField, Min(0.05f), Tooltip("둘러보는 데 걸리는 시간(초).")]
+        private float wanderDuration = 0.45f;
+
+        /// <summary>
+        /// 방 안에서 한 걸음 어슬렁거린다.
+        ///
+        /// 턴 간격 안에서 끝나야 한다 — 이동보다 오래 끌면 침입 속도가 느려져 밸런스가 바뀐다.
+        /// 그래서 짧고, 늘 하지도 않는다.
+        ///
+        /// 싸움이 붙은 방에서는 건너뛴다. 전투 중에 배회하면 전투 연출과 겹쳐 어지럽고,
+        /// 어차피 그 자리에 붙들려 있어야 맞다.
+        /// </summary>
+        private IEnumerator WanderInsideNode()
+        {
+            if (_currentNode == null || wanderChance <= 0f || UnityEngine.Random.value > wanderChance)
+                yield break;
+
+            var battlefield = CurrentBattlefield;
+            if (battlefield != null && battlefield.PlayerCount > 0)
+                yield break;
+
+            var anchor = GetEnemyPosition(_currentNode);
+            var radius = battlefield != null && battlefield.ArenaRadius > 0f
+                ? battlefield.ArenaRadius * 0.6f
+                : wanderDistance;
+
+            var offset = UnityEngine.Random.insideUnitCircle.normalized * Mathf.Min(wanderDistance, radius);
+            var target = anchor + new Vector3(offset.x, offset.y, 0f);
+
+            FaceMoveDirection(target - transform.position);
+
+            _moveTween?.Kill();
+            _moveTween = transform.DOMove(target, wanderDuration)
+                .SetEase(Ease.InOutSine)
+                .SetLink(gameObject);
+
+            yield return _moveTween.WaitForCompletion();
+            _moveTween = null;
         }
 
         private IEnumerator SmoothMove(_01.Code.Buildings.Building edgeBuilding = null)

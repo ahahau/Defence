@@ -447,7 +447,7 @@ namespace _01.Code.UI
         /// 열 간격을 고정값으로 두면 값이 넷일 때 마지막이 78%에서 시작해 오른쪽으로 넘친다.
         /// 남은 폭을 값 개수로 나눠, 몇 개가 오든 마지막 열이 화면 안에 들어오게 한다.
         /// </summary>
-        private const float LabelColumnPercent = 12f;
+        private const float LabelColumnPercent = 20f;
 
         private static string Row(string label, params string[] values)
         {
@@ -485,10 +485,10 @@ namespace _01.Code.UI
 
             // 지원자는 위의 수치 표와 성격이 다른 정보라 한 칸 띄우고 색으로 갈라 놓는다.
             // 특성·성격 설명 두 줄은 표와 같은 열에 맞춰 붙여, 읽는 눈이 왼쪽으로 돌아오게 한다.
-            return $"\n<color=#FFC85A>지원자</color><pos=12%><color=#FFC85A>{applicant.TraitLabel}</color>" +
-                   $"<pos=40%><color=#FFC85A>{applicant.PersonalityLabel}</color>{deadline}\n" +
-                   $"<size=85%><color=#A79C92><pos=12%>{UnitTraitUtility.GetDescription(applicant.Trait)}\n" +
-                   $"<pos=12%>{UnitPersonalityUtility.GetDescription(applicant.Personality)}</color></size>\n";
+            return $"\n<color=#FFC85A>지원자</color><pos=20%><color=#FFC85A>{applicant.TraitLabel}</color>" +
+                   $"<pos=46%><color=#FFC85A>{applicant.PersonalityLabel}</color>{deadline}\n" +
+                   $"<size=85%><color=#A79C92><pos=20%>{UnitTraitUtility.GetDescription(applicant.Trait)}\n" +
+                   $"<pos=20%>{UnitPersonalityUtility.GetDescription(applicant.Personality)}</color></size>\n";
         }
 
         private int GetOwnedUnitCount(UnitDataSO unit)
