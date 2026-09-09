@@ -167,6 +167,8 @@ namespace _01.Code.UI
                 _entries.Add(entry);
             }
 
+            // 영입 카드도 건물 카드와 같은 크기로. 프리팹 값 176x230 은 나란히 두면 눈에 띄게 작다.
+            ScrollViewContentSizer.ConfigureHorizontalCards(contentRoot);
             ScrollViewContentSizer.ResizeToGridItemCount(contentRoot, _entries.Count);
             if (_hireableUnits.Count == 0)
             {
@@ -273,7 +275,8 @@ namespace _01.Code.UI
             if (GetOwnedUnitCount(unit) <= 0)
             {
                 SelectUnit(unit);
-                UpdateHint($"{BuildUnitDetailText(unit)}\n\n영입 가능한 후보가 없습니다. 습격 보상으로 계약서를 획득하십시오.");
+                UpdateHint(BuildUnitDetailText(unit));
+                SetStatus("계약서가 없습니다  ·  습격 보상으로 얻습니다", StatusWarn);
                 return;
             }
 
@@ -301,21 +304,78 @@ namespace _01.Code.UI
             selectedUnit = evt.Unit;
             SetEntrySelection(selectedUnit);
             SetDetailVisible(true);
-            UpdateHint($"{BuildUnitDetailText(evt.Unit)}\n\n{name} 영입 완료 · 운영 자금 {evt.RemainingGold}G");
+            UpdateHint(BuildUnitDetailText(evt.Unit));
+            SetStatus($"{name} 영입  ·  남은 자금 {evt.RemainingGold}G", StatusGood);
         }
 
         private void HandleHireRejected(RosterHireRejectedEvent evt)
         {
             SetDetailVisible(true);
             var reason = GetOwnedUnitCount(evt.Unit) <= 0
-                ? "영입 가능한 후보가 없습니다."
-                : $"운영 자금이 부족합니다. 필요 {evt.GoldAmount}G / 보유 {evt.CurrentGold}G";
-            UpdateHint($"{BuildUnitDetailText(evt.Unit)}\n\n{reason}");
+                ? "계약서가 없습니다"
+                : $"자금 부족  ·  필요 {evt.GoldAmount}G / 보유 {evt.CurrentGold}G";
+            UpdateHint(BuildUnitDetailText(evt.Unit));
+            SetStatus(reason, StatusWarn);
         }
 
         private void UpdateHint(string message)
         {
             if (hintText != null) hintText.text = message;
+
+            // 유닛을 새로 고르면 앞선 결과 알림은 지운다. 남겨 두면 다른 유닛의 결과가
+            // 이 유닛의 설명인 것처럼 붙어 보인다.
+            if (statusText != null && string.IsNullOrEmpty(message))
+                SetStatus(string.Empty, StatusGood);
+        }
+
+        private static readonly Color StatusGood = new(0.55f, 0.92f, 0.62f, 1f);
+        private static readonly Color StatusWarn = new(1f, 0.72f, 0.42f, 1f);
+
+        private TMP_Text statusText;
+
+        /// <summary>
+        /// 결과 알림을 설명과 갈라 놓는다.
+        ///
+        /// 예전에는 "영입 완료", "자금 부족" 같은 말을 유닛 설명 뒤에 이어 붙였다.
+        /// 그러면 한 덩어리가 되어 어디까지가 이 유닛의 값이고 어디부터가 방금 벌어진 일인지
+        /// 구분되지 않는다. 자리를 따로 두고 색으로 성패를 구분한다.
+        /// </summary>
+        private void SetStatus(string message, Color color)
+        {
+            EnsureStatusText();
+            if (statusText == null)
+                return;
+
+            statusText.text = message;
+            statusText.color = color;
+            statusText.gameObject.SetActive(!string.IsNullOrEmpty(message));
+        }
+
+        private void EnsureStatusText()
+        {
+            if (statusText != null || hintText == null)
+                return;
+
+            var go = new GameObject("Status", typeof(RectTransform));
+            go.transform.SetParent(hintText.transform.parent, false);
+            go.transform.SetSiblingIndex(hintText.transform.GetSiblingIndex() + 1);
+
+            statusText = go.AddComponent<TextMeshProUGUI>();
+            statusText.fontSize = Mathf.Max(12f, hintText.fontSize * 0.95f);
+            statusText.alignment = TextAlignmentOptions.TopLeft;
+            statusText.textWrappingMode = TextWrappingModes.NoWrap;
+            statusText.overflowMode = TextOverflowModes.Ellipsis;
+            statusText.raycastTarget = false;
+
+            // 설명 바로 아래에 한 줄로 눕힌다. 설명 칸을 침범하지 않게 아래쪽에 붙인다.
+            var rect = (RectTransform)go.transform;
+            rect.anchorMin = new Vector2(0f, 0f);
+            rect.anchorMax = new Vector2(1f, 0f);
+            rect.pivot = new Vector2(0.5f, 0f);
+            rect.offsetMin = new Vector2(0f, 6f);
+            rect.offsetMax = new Vector2(0f, 34f);
+
+            go.SetActive(false);
         }
 
         private void ConfigureStaticTextLayout()
@@ -367,13 +427,28 @@ namespace _01.Code.UI
 
             // 여섯 줄이 빽빽해서 정작 고를 때 보는 값이 묻혔다. 판단에 쓰는 것만 남긴다.
             // 뺀 것: 경계 수치(부차적), 운영 자금(상단 카드에 이미 있다), 전투 줄의 분리.
-            return $"{displayName}  ·  등급 {(int)unit.Grade}\n" +
-                   $"━━━━━━━━━━━━━━━━\n" +
-                   $"공격 {attackText}  ·  방어 {defense}  ·  체력 {healthText}  ·  간격 {intervalText}  ·  마력 {unit.MagicCost}\n" +
-                   $"계약서 {GetOwnedUnitCount(unit)}  ·  대기 {GetAvailableUnitCount(unit)}  ·  배치 {GetDeployedUnitCount(unit)}\n" +
-                   $"영입 {unit.Cost}G  ·  급여 {Mathf.Max(1, Mathf.CeilToInt(unit.Cost / 5f))}G\n" +
-                   BuildApplicantText(unit) +
-                   "\n다시 누르면 영입";
+            // 값을 가운뎃점으로 이어 붙이면 줄줄이 나열돼 읽는 데 눈이 오래 걸린다.
+            // 왼쪽에 분류를 세우고 값을 같은 자리에 맞춰 세로줄을 만들면 표처럼 훑힌다.
+            // <pos=%>는 칸 너비 기준이라 패널 크기가 달라져도 열이 유지된다.
+            var upkeep = Mathf.Max(1, Mathf.CeilToInt(unit.Cost / 5f));
+
+            return $"<size=115%>{displayName}</size>  <color=#9C9088>등급 {(int)unit.Grade}</color>\n" +
+                   $"<color=#5A4E45>────────────────</color>\n" +
+                   Row("전투", $"공격 {attackText}", $"방어 {defense}", $"체력 {healthText}", $"간격 {intervalText}") +
+                   Row("자원", $"마력 {unit.MagicCost}", $"영입 {unit.Cost}G", $"급여 {upkeep}G") +
+                   Row("보유", $"계약서 {GetOwnedUnitCount(unit)}", $"대기 {GetAvailableUnitCount(unit)}",
+                       $"배치 {GetDeployedUnitCount(unit)}") +
+                   BuildApplicantText(unit);
+        }
+
+        /// <summary>분류 하나와 값들을 한 줄에 세로 맞춰 늘어놓는다.</summary>
+        private static string Row(string label, params string[] values)
+        {
+            var line = $"<color=#9C9088>{label}</color>";
+            for (var i = 0; i < values.Length; i++)
+                line += $"<pos={18 + i * 20}%>{values[i]}";
+
+            return line + "\n";
         }
 
         /// <summary>
@@ -383,8 +458,10 @@ namespace _01.Code.UI
         private string BuildApplicantText(UnitDataSO unit)
         {
             var roster = HiredUnitRoster.Current;
+            // 계약서가 없다는 사실은 아래 상태 줄이 색까지 붙여 알린다. 여기서 또 적으면
+            // 같은 말이 한 화면에 두 번 나온다.
             if (roster == null || GetOwnedUnitCount(unit) <= 0)
-                return "\n지원자  없음 — 계약서를 확보하십시오\n";
+                return string.Empty;
 
             var applicant = roster.PeekApplicant(unit);
             var daysLeft = roster.GetApplicantDaysLeft(unit);
@@ -395,9 +472,12 @@ namespace _01.Code.UI
                     ? "  ·  <color=#FF7A6B>오늘까지</color>"
                     : $"  ·  {daysLeft}일 남음";
 
-            return $"\n<color=#FFC85A>다음 지원자  {applicant.TraitLabel}  ·  {applicant.PersonalityLabel}</color>{deadline}\n" +
-                   $"<size=85%>{UnitTraitUtility.GetDescription(applicant.Trait)}\n" +
-                   $"{UnitPersonalityUtility.GetDescription(applicant.Personality)}</size>\n";
+            // 지원자는 위의 수치 표와 성격이 다른 정보라 한 칸 띄우고 색으로 갈라 놓는다.
+            // 특성·성격 설명 두 줄은 표와 같은 열에 맞춰 붙여, 읽는 눈이 왼쪽으로 돌아오게 한다.
+            return $"\n<color=#FFC85A>지원자</color><pos=18%><color=#FFC85A>{applicant.TraitLabel}</color>" +
+                   $"<pos=38%><color=#FFC85A>{applicant.PersonalityLabel}</color>{deadline}\n" +
+                   $"<size=85%><color=#A79C92><pos=18%>{UnitTraitUtility.GetDescription(applicant.Trait)}\n" +
+                   $"<pos=18%>{UnitPersonalityUtility.GetDescription(applicant.Personality)}</color></size>\n";
         }
 
         private int GetOwnedUnitCount(UnitDataSO unit)
