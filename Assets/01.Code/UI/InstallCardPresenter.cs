@@ -151,6 +151,36 @@ namespace _01.Code.UI
             text.text = value;
         }
 
+        /// <summary>
+        /// 카드 글을 상자 안에서 접히게 채운다.
+        ///
+        /// <see cref="SetButtonText"/>는 <see cref="TmpTextLayoutUtility.KeepHorizontal"/>로
+        /// 줄바꿈을 막는다. 건물 카드처럼 짧은 이름표가 두 줄로 접히는 걸 막으려던 것인데,
+        /// 유물처럼 설명이 붙는 카드에 쓰면 한 줄로 끝없이 뻗어 카드 밖으로 새어 나간다.
+        /// 상인 화면에서 설명이 패널 반대편까지 넘어간 것이 그것이다.
+        ///
+        /// 길이를 미리 알 수 없으므로 글자 크기도 상자에 맞춰 줄어들게 둔다.
+        /// </summary>
+        public static void SetWrappedButtonText(Button button, string value)
+        {
+            if (button == null)
+                return;
+
+            var text = button.GetComponentInChildren<TMP_Text>();
+            if (text == null)
+                return;
+
+            text.rectTransform.localRotation = Quaternion.identity;
+            text.rectTransform.localScale = Vector3.one;
+            text.textWrappingMode = TextWrappingModes.Normal;
+            text.overflowMode = TextOverflowModes.Truncate;
+            text.alignment = TextAlignmentOptions.Top;
+            text.enableAutoSizing = true;
+            text.fontSizeMin = 14f;
+            text.fontSizeMax = 22f;
+            text.text = value;
+        }
+
         public static string GetButtonLabel(Button button)
         {
             if (button == null)

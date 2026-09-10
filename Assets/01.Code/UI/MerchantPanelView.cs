@@ -335,7 +335,11 @@ namespace _01.Code.UI
                 var label = offer.IsRandom
                     ? $"{shopCatalog.RandomArtifactLabel}\n{price}G\n무엇이 나올지는 열어봐야 안다."
                     : $"{ResolveName(offer.Artifact)}\n{price}G\n{offer.Artifact.Description}{BuildComboHint(offer.Artifact)}";
-                InstallCardPresenter.SetButtonText(button, label);
+                InstallCardPresenter.SetWrappedButtonText(button, label);
+
+                // 무엇을 사는지 그림으로 먼저 알아보게 한다. 정체불명 유물은 보여 줄 그림이 없으니
+                // 비워 두면 ApplyCardSprite 가 이미지를 꺼 준다.
+                InstallCardPresenter.ApplyCardSprite(button, offer.IsRandom ? null : offer.Artifact.Icon);
             }
 
             if (!resetDetail)
