@@ -81,6 +81,9 @@ namespace _01.Code.UI
         [SerializeField, Min(0f), Tooltip("카메라가 다음 자리로 옮겨가는 데 걸리는 시간(초).")]
         private float cameraGlideSeconds = 0.7f;
 
+        [SerializeField, Tooltip("방을 볼 때 카메라가 겨누는 지점의 어긋남. 싸움이 방 아래에서 벌어져 아래로 내려 잡는다.")]
+        private Vector2 cameraFocusOffset = new(0f, -1.6f);
+
         [SerializeField, Min(0.1f), Tooltip("WASD 칸을 넘기려면 화면을 이만큼 밀어야 한다(월드 단위).")]
         private float moveLessonDistance = 3.5f;
 
@@ -88,7 +91,6 @@ namespace _01.Code.UI
         private float holeGlideSeconds = 0.28f;
 
         private Node _cameraTargetNode;
-        private bool _dayChecked;
         private Vector3 _moveStartPosition;
         private Tween _cameraTween;
         private Rect _hole;
@@ -105,7 +107,6 @@ namespace _01.Code.UI
             _stepAge = 0f;
             _released = false;
             _hasHole = false;
-            _dayChecked = false;
             _cameraTargetNode = null;
             var camera = Camera.main;
             if (camera != null)
@@ -135,17 +136,17 @@ namespace _01.Code.UI
             {
                 _timer = pollInterval;
 
-                // 첫날 처음부터 시작한 판에서만 가르친다. 이어하기로 5일차에 들어왔는데
-                // "첫 방을 파세요"가 뜨면 안내가 아니라 방해다.
-                if (!_dayChecked)
+                // 첫날에만 가르친다. 하루가 넘어갔다면 무슨 일이 있었든 안내는 끝이다.
+                //
+                // 이 검사를 처음 한 번만 했다가 판을 멈춰 세운 적이 있다. 1일차에 시작해서
+                // 안내가 끝나지 않은 채 2일차로 넘어가면, 덮개가 화면을 덮고 조작이 잠긴 채로
+                // 그대로 남아 아무것도 못 하는 판이 됐다. 안내가 끝나는 조건을 습격 하나에만
+                // 걸어 둔 것이 잘못이었다 — 날짜는 무슨 일이 있어도 넘어간다.
+                var day = DayManager.Current != null ? DayManager.Current.CurrentDay : 1;
+                if (day > 1)
                 {
-                    _dayChecked = true;
-                    var day = DayManager.Current != null ? DayManager.Current.CurrentDay : 1;
-                    if (day > 1)
-                    {
-                        EnterStep(Step.Done);
-                        return;
-                    }
+                    EnterStep(Step.Done);
+                    return;
                 }
 
                 // 한 칸을 최소한 이만큼은 보여 준다. 판을 시작할 때 이미 조건이 맞아 있는 칸이
@@ -238,7 +239,13 @@ namespace _01.Code.UI
                 return;
 
             var from = camera.transform.position;
-            var to = new Vector3(node.transform.position.x, node.transform.position.y, from.z);
+
+            // 방 한가운데가 아니라 조금 아래를 본다. 싸움은 방 아래쪽에서 벌어지므로,
+            // 정가운데에 맞추면 정작 봐야 할 곳이 화면 아래로 밀린다.
+            var to = new Vector3(
+                node.transform.position.x + cameraFocusOffset.x,
+                node.transform.position.y + cameraFocusOffset.y,
+                from.z);
 
             _cameraTween?.Kill();
             _cameraTween = camera.transform
