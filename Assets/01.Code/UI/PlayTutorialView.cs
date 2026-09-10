@@ -57,6 +57,8 @@ namespace _01.Code.UI
         [SerializeField, Min(0f), Tooltip("구멍 둘레에 더 두는 여유(화면 픽셀).")]
         private float spotlightPadding = 28f;
 
+        [SerializeField, Tooltip("마지막 칸에서 겨눌 습격 시작 버튼을 들고 있는 화면.")]
+        private WaveView waveView;
         [SerializeField, Min(0.1f), Tooltip("방 하나를 덮을 월드 반지름. 구멍 크기를 재는 기준.")]
         private float spotlightWorldRadius = 2.4f;
 
@@ -137,14 +139,29 @@ namespace _01.Code.UI
                 return;
             }
 
-            var target = ResolveTargetNode();
-            if (target == null || !TryBuildScreenRect(target, out var rect))
+            if (!TryResolveHole(out var rect))
             {
                 HideSpotlight();
                 return;
             }
 
             ShowSpotlight(rect);
+        }
+
+        /// <summary>
+        /// 이 칸에서 뚫어 둘 구멍. 못 정하면 아무것도 덮지 않는다.
+        ///
+        /// 앞의 세 칸은 지도 위의 방을 가리키고 마지막 칸만 화면의 버튼을 가리킨다.
+        /// 둘은 좌표를 구하는 방법이 달라서 따로 잰다.
+        /// </summary>
+        private bool TryResolveHole(out Rect rect)
+        {
+            if (_step == Step.SurviveWave)
+                return TryBuildButtonRect(out rect);
+
+            rect = default;
+            var node = ResolveTargetNode();
+            return node != null && TryBuildNodeRect(node, out rect);
         }
 
         /// <summary>이 칸에서 눌러야 할 방. 못 고르면 아무것도 덮지 않는다.</summary>
@@ -158,8 +175,49 @@ namespace _01.Code.UI
             _ => null,
         };
 
+        /// <summary>
+        /// 습격 시작 버튼을 화면 네모로 잰다.
+        ///
+        /// 버튼은 이미 화면 위의 것이라 방처럼 투영할 필요가 없다. 다만 캔버스가 화면에 직접
+        /// 그리는지 카메라를 거치는지에 따라 모서리를 화면 좌표로 옮기는 방법이 달라진다.
+        /// </summary>
+        private bool TryBuildButtonRect(out Rect rect)
+        {
+            rect = default;
+
+            // 습격 화면은 씬이 아니라 프리팹 안에 있어서 미리 물려 둘 수가 없다. 한 번 찾아
+            // 들고 있는다 — 판이 도는 동안 이 화면이 갈리지는 않는다.
+            if (waveView == null)
+                waveView = FindAnyObjectByType<WaveView>();
+
+            var target = waveView != null ? waveView.StartButtonRect : null;
+            if (target == null || !target.gameObject.activeInHierarchy)
+                return false;
+
+            var canvas = target.GetComponentInParent<Canvas>();
+            if (canvas == null)
+                return false;
+
+            var camera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+
+            var corners = new Vector3[4];
+            target.GetWorldCorners(corners);
+
+            var min = new Vector2(float.MaxValue, float.MaxValue);
+            var max = new Vector2(float.MinValue, float.MinValue);
+            for (var i = 0; i < corners.Length; i++)
+            {
+                var screen = RectTransformUtility.WorldToScreenPoint(camera, corners[i]);
+                min = Vector2.Min(min, screen);
+                max = Vector2.Max(max, screen);
+            }
+
+            rect = new Rect(min, max - min);
+            return rect.width > 1f && rect.height > 1f;
+        }
+
         /// <summary>방을 화면 좌표의 네모로 바꾼다. 카메라가 없거나 뒤에 있으면 실패로 둔다.</summary>
-        private bool TryBuildScreenRect(Node node, out Rect rect)
+        private bool TryBuildNodeRect(Node node, out Rect rect)
         {
             rect = default;
 
@@ -186,17 +244,22 @@ namespace _01.Code.UI
             if (dimPanels == null || dimPanels.Length < 4)
                 return;
 
-            var canvas = dimPanels[0] != null ? dimPanels[0].parent as RectTransform : null;
-            if (canvas == null)
+            var canvasRect = dimPanels[0] != null ? dimPanels[0].parent as RectTransform : null;
+            if (canvasRect == null)
                 return;
 
-            var size = canvas.rect.size;
-            var pad = spotlightPadding;
+            // 구멍은 화면 픽셀로 재 왔고 덮개는 캔버스 단위로 놓인다. 캔버스 배율이 1이 아니면
+            // (해상도에 맞춰 늘리는 설정이면 늘 1이 아니다) 두 값의 단위가 달라 구멍이 어긋난다.
+            var canvas = canvasRect.GetComponentInParent<Canvas>();
+            var scale = canvas != null && canvas.scaleFactor > 0f ? canvas.scaleFactor : 1f;
 
-            var left = Mathf.Clamp(hole.xMin - pad, 0f, size.x);
-            var right = Mathf.Clamp(hole.xMax + pad, 0f, size.x);
-            var bottom = Mathf.Clamp(hole.yMin - pad, 0f, size.y);
-            var top = Mathf.Clamp(hole.yMax + pad, 0f, size.y);
+            var size = canvasRect.rect.size;
+            var pad = spotlightPadding / scale;
+
+            var left = Mathf.Clamp(hole.xMin / scale - pad, 0f, size.x);
+            var right = Mathf.Clamp(hole.xMax / scale + pad, 0f, size.x);
+            var bottom = Mathf.Clamp(hole.yMin / scale - pad, 0f, size.y);
+            var top = Mathf.Clamp(hole.yMax / scale + pad, 0f, size.y);
 
             Place(dimPanels[0], 0f, top, size.x, size.y - top);       // 위
             Place(dimPanels[1], 0f, 0f, size.x, bottom);              // 아래
