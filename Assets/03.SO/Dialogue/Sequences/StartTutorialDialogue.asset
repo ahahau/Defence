@@ -19,19 +19,23 @@ MonoBehaviour:
     enterActions: []
     choices: []
   - speakerName: 임프 참모
-    text: 첫 방에 부하를 배치해 방어선을 만드십시오.
+    text: 유닛을 고용해 방에 배치하십시오. 유닛이 선 방이 곧 방어선입니다.
     enterActions: []
     choices: []
   - speakerName: 임프 참모
-    text: 입구 포탈을 세우면 모험가 습격을 시작할 수 있습니다.
+    text: 입구에 포탈을 세우십시오. 모험가는 그곳으로 나와 안쪽으로 파고듭니다.
     enterActions: []
     choices: []
   - speakerName: 임프 참모
-    text: 모험가를 막고 금화와 운영 보상을 회수하십시오.
+    text: 습격을 막아내면 금화가 들어오고, 못 막으면 빚이 남습니다.
     enterActions: []
     choices: []
   - speakerName: 임프 참모
-    text: 모험가의 경계와 탐욕은 이동과 건물 조우마다 달라집니다.
+    text: DAY 2에 떠돌이 상인과 유물이, DAY 3에 던전 권능이 열립니다.
+    enterActions: []
+    choices: []
+  - speakerName: 임프 참모
+    text: 권능은 습격 도중 직접 쓰는 힘입니다. 아이콘을 누르고 구역을 지정하십시오.
     enterActions: []
     choices:
     - text: 지령 수행

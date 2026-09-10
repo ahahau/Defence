@@ -7026,11 +7026,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Core.InputSystemCameraMover
   inputData: {fileID: 11400000, guid: 59016cf6aa98b7640810e5f7fca83b82, type: 2}
-  moveSpeed: 5
+  moveSpeed: 10
   targetCamera: {fileID: 519420031}
-  zoomSpeed: 0.5
+  zoomSpeed: 2
   minOrthographicSize: 3
-  maxOrthographicSize: 18
+  maxOrthographicSize: 30
   useUnscaledTime: 1
 --- !u!114 &519420034
 MonoBehaviour:
@@ -7869,7 +7869,7 @@ MonoBehaviour:
   valueTable: {fileID: 11400000, guid: 25ce477c3f4a4b0ebf6af4a2c8f0e67b, type: 2}
   costEventChannel: {fileID: 11400000, guid: 734ca3593b5d2884dae267b0e3e601be, type: 2}
   view: {fileID: 739031303}
-  playOnStart: 0
+  playOnStart: 1
   scheduledDayEventChannel: {fileID: 11400000, guid: f16b75998f67eed45be9a7061ca817f7, type: 2}
   scheduledWaveEventChannel: {fileID: 11400000, guid: dd03e0a5a2140e441aba26879f409cee, type: 2}
   scheduledEventSequences:

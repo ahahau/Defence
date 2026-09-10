@@ -343,6 +343,18 @@ namespace _01.Code.Dialogue
             if (layoutGroup != null)
                 layoutGroup.enabled = false;
 
+            // 선택지 묶음을 상자 아래쪽에 붙인다.
+            //
+            // 버튼은 상자 위에서부터 쌓는데 상자 높이는 씬에 고정(168)이라, 선택지가 하나뿐이면
+            // 아래로 80이 비어 버튼이 대사 상자 한가운데 떠 있는 것처럼 보였다. 튜토리얼의 마지막
+            // 줄이 정확히 그 경우다.
+            //
+            // 상자를 키우는 방법은 쓸 수 없다 — 아래를 기준으로 자라 올라가는데 본문 글상자 밑단이
+            // 9밖에 안 떨어져 있어 곧장 글을 덮는다. 그래서 상자는 두고 남는 만큼 통째로 내린다.
+            var contentHeight = choices.Count * choiceButtonHeight
+                                + Mathf.Max(0, choices.Count - 1) * choiceButtonSpacing;
+            var slack = Mathf.Max(0f, choiceRoot.rect.height - contentHeight - choiceTopPadding);
+
             for (var i = 0; i < choices.Count; i++)
             {
                 var choice = choices[i];
@@ -351,7 +363,7 @@ namespace _01.Code.Dialogue
                 var choiceButtonView = button.GetComponent<DialogueChoiceButtonView>();
                 var canSelect = runner == null || runner.CanSelect(choice);
                 var buttonRect = button.transform as RectTransform;
-                var targetPosition = new Vector2(0f, -choiceTopPadding - i * (choiceButtonHeight + choiceButtonSpacing));
+                var targetPosition = new Vector2(0f, -slack - i * (choiceButtonHeight + choiceButtonSpacing));
 
                 if (buttonRect != null)
                 {
