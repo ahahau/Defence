@@ -24,6 +24,10 @@ namespace _01.Code.UI
         [SerializeField] private TMP_Text traitText;
         [SerializeField] private TMP_Text personalityText;
         [SerializeField] private TMP_Text hintText;
+        [SerializeField, Tooltip("유닛 그림이 들어가는 칸. 프리팹의 Portrait/PortraitIcon.")]
+        private Image portraitImage;
+        [SerializeField, Tooltip("체력 막대의 채움. 프리팹의 HpBar/HpFill.")]
+        private Image hpFill;
         [SerializeField] private TMP_Text recoverButtonLabel;
         [SerializeField] private Button recoverButton;
         [SerializeField] private TMP_Text fatigueText;
@@ -197,6 +201,8 @@ namespace _01.Code.UI
 
             var health = selectedUnit.Health;
             SetText(hpText, $"HP {health.CurrentHealth}/{health.MaxHealth}");
+            RefreshPortrait();
+            RefreshHealthBar(health.CurrentHealth, health.MaxHealth);
             SetText(levelText, ResolveCombatText());
             SetText(traitText, $"특성 : {selectedUnit.TraitLabel}");
             SetText(personalityText, $"성격 : {selectedUnit.PersonalityLabel}");
@@ -211,8 +217,9 @@ namespace _01.Code.UI
 
             if (recoverButtonLabel != null)
             {
+                // 버튼 한 칸에 들어가야 하는 글이다. 길어지면 돌 버튼의 끝장식을 넘어간다.
                 recoverButtonLabel.text = shouldShowRecovery
-                    ? $"치료/휴식 {selectedUnit.RecoveryCost} Gold"
+                    ? $"치료·휴식 {selectedUnit.RecoveryCost}G"
                     : "회복 불필요";
             }
 
@@ -237,6 +244,43 @@ namespace _01.Code.UI
                 : "ATK -  SPD -";
             var level = selectedUnit.Level;
             return $"{combatText}  ·  EXP {level.Experience}/{level.ExperienceToNextLevel}\n명령 : {selectedUnit.CommandLabel}";
+        }
+
+        /// <summary>
+        /// 얼굴칸에 이 유닛의 그림을 건다.
+        ///
+        /// 칸은 정사각인데 그림은 아니라서 프리팹에서 비율을 지키게 해 뒀다. 여기서는 무엇을 걸지만
+        /// 정한다. 그림이 없는 유닛이면 칸을 비워야 앞 유닛의 얼굴이 남아 있지 않는다.
+        /// </summary>
+        private void RefreshPortrait()
+        {
+            if (portraitImage == null)
+                return;
+
+            var sprite = selectedUnit != null && selectedUnit.Data != null
+                ? selectedUnit.Data.Sprite
+                : null;
+
+            if (portraitImage.sprite != sprite)
+                portraitImage.sprite = sprite;
+
+            // 그림이 없을 때 흰 네모가 남지 않게 칸째로 감춘다.
+            if (portraitImage.enabled != (sprite != null))
+                portraitImage.enabled = sprite != null;
+        }
+
+        /// <summary>
+        /// 체력 막대를 채운다.
+        ///
+        /// 숫자는 이미 위에 적히지만, 얼마나 남았는지는 길이로 봐야 한 눈에 들어온다.
+        /// 색은 그림에 들어 있으므로 여기서는 길이만 만진다.
+        /// </summary>
+        private void RefreshHealthBar(float current, float max)
+        {
+            if (hpFill == null)
+                return;
+
+            hpFill.fillAmount = max > 0f ? Mathf.Clamp01(current / max) : 0f;
         }
 
         private void RefreshFatigueUi()
