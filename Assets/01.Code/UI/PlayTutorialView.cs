@@ -1,6 +1,5 @@
 using _01.Code.Buildings;
 using _01.Code.MapCreateSystem;
-using _01.Code.Tutorial;
 using _01.Code.Manager;
 using _01.Code.Units;
 using TMPro;
@@ -20,13 +19,11 @@ namespace _01.Code.UI
     /// 자동 실측기가 그렇다 — 에서는 아무것도 안 짚였고, 튜토리얼이 첫 칸에 멈춘 채로 있었다.
     /// 무엇을 눌렀는지가 아니라 무엇이 생겼는지를 봐야 경로와 무관해진다.
     ///
-    /// 지금 칸에서 할 일 말고는 누르지 못하게 막는다. 첫 판에 무엇부터 눌러야 하는지 모르는
-    /// 사람에게는 글보다 이쪽이 확실하다. 잠그는 일 자체는 <see cref="TutorialInputGate"/>가
-    /// 이미 하고 있고 화면들이 그것을 지키므로, 여기서는 칸마다 어디를 열어 둘지만 정한다.
+    /// 눌러야 하는 곳만 남기고 화면을 덮는다. 어두워진 쪽은 덮개가 클릭을 받아 삼키므로,
+    /// 밝은 구멍만 눌린다. 첫 판에 무엇부터 눌러야 하는지 모르는 사람에게는 글보다 이쪽이 확실하다.
     ///
-    /// 잠그는 쪽은 잘못 짚었을 때의 대가가 크다 — 아무것도 못 누르는 판이 된다. 그래서 겨눌 곳을
-    /// 못 찾으면 잠그지 않고, 한 칸에서 오래 막혀 있으면 스스로 풀어 준다. 안내가 틀리는 것보다
-    /// 판이 멈추는 것이 훨씬 나쁘다.
+    /// 덮개를 못 펴면 아무것도 안 덮는다. 한 칸에서 오래 막혀 있어도 스스로 걷는다.
+    /// 안내가 틀리는 것보다 판이 멈추는 것이 훨씬 나쁘다.
     /// </summary>
     public sealed class PlayTutorialView : MonoBehaviour
     {
@@ -46,12 +43,22 @@ namespace _01.Code.UI
         [SerializeField, Min(0.05f), Tooltip("판을 다시 살펴보는 간격(초).")]
         private float pollInterval = 0.25f;
 
-        [SerializeField, Tooltip("지금 칸에서 할 일 말고는 누르지 못하게 막는다.")]
+        [SerializeField, Tooltip("눌러야 하는 곳만 남기고 화면을 덮는다.")]
         private bool forceStepOrder = true;
 
         [SerializeField, Min(5f),
-         Tooltip("한 칸에서 이만큼 막혀 있으면 잠금을 푼다. 안내가 길을 잘못 짚어도 판이 멈추지 않게 하는 안전장치.")]
+         Tooltip("한 칸에서 이만큼 진행이 없으면 덮개를 걷는다. 안내가 길을 잘못 짚어도 판이 멈추지 않게 하는 안전장치.")]
         private float stuckReleaseSeconds = 40f;
+
+        [Header("Spotlight")]
+        [SerializeField, Tooltip("겨눈 곳만 남기고 화면을 덮는 네 장(위·아래·왼쪽·오른쪽).")]
+        private RectTransform[] dimPanels = new RectTransform[4];
+
+        [SerializeField, Min(0f), Tooltip("구멍 둘레에 더 두는 여유(화면 픽셀).")]
+        private float spotlightPadding = 28f;
+
+        [SerializeField, Min(0.1f), Tooltip("방 하나를 덮을 월드 반지름. 구멍 크기를 재는 기준.")]
+        private float spotlightWorldRadius = 2.4f;
 
         private Step _step = Step.BuildRoom;
         private float _timer;
@@ -68,7 +75,7 @@ namespace _01.Code.UI
 
         private void OnDisable()
         {
-            TutorialInputGate.Clear();
+            HideSpotlight();
         }
 
         private void Update()
@@ -95,7 +102,7 @@ namespace _01.Code.UI
 
                 if (_step == Step.Done)
                 {
-                    TutorialInputGate.Clear();
+                    HideSpotlight();
                     return;
                 }
             }
@@ -104,63 +111,124 @@ namespace _01.Code.UI
         }
 
         /// <summary>
-        /// 지금 칸에서 할 일만 누를 수 있게 잠근다.
+        /// 눌러야 하는 곳만 남기고 화면을 덮는다.
         ///
-        /// 잘못 짚으면 아무것도 못 누르는 판이 된다. 그래서 겨눌 곳을 못 찾으면 잠그지 않고,
-        /// 한 칸에서 <see cref="stuckReleaseSeconds"/>만큼 막혀 있으면 스스로 잠금을 푼다.
-        /// 안내가 틀리는 것보다 판이 멈추는 것이 훨씬 나쁘다.
+        /// 잠그는 방식을 먼저 썼다가 걷어냈다. 누를 수 있는 것을 코드로 하나하나 열어 주는
+        /// 방식이라, 열어 줄 곳을 잘못 짚으면 아무것도 못 누르는 판이 되고 무엇이 왜 안 눌리는지도
+        /// 보이지 않는다.
+        ///
+        /// 지금은 겨눌 곳을 빼고 네 장으로 화면을 덮는다. 어두워진 쪽은 판이 클릭을 받아 삼키고
+        /// 밝은 구멍만 눌린다. 결과는 같은데 눈에 보이고, 덮개를 못 펴면 그냥 아무것도 안 덮여
+        /// 판이 멀쩡히 굴러간다 — 틀렸을 때 잃는 것이 훨씬 적다.
         /// </summary>
         private void ApplyGate()
         {
             if (!forceStepOrder || _released)
+            {
+                HideSpotlight();
                 return;
+            }
 
             if (_stepAge >= stuckReleaseSeconds)
             {
                 _released = true;
-                TutorialInputGate.Clear();
-                Debug.LogWarning($"[튜토리얼] {_step} 에서 {stuckReleaseSeconds:0}초 동안 진행이 없어 잠금을 풉니다.");
+                HideSpotlight();
+                Debug.LogWarning($"[튜토리얼] {_step} 에서 {stuckReleaseSeconds:0}초 동안 진행이 없어 덮개를 걷습니다.");
                 return;
             }
 
-            switch (_step)
+            var target = ResolveTargetNode();
+            if (target == null || !TryBuildScreenRect(target, out var rect))
             {
-                case Step.BuildRoom:
-                    // 봉인을 여는 것과 그 방에 짓는 것이 한 칸 안에 함께 있다. 지금 무엇을 할 수
-                    // 있는 상태인지 보고 자물쇠를 옮겨야 중간에서 막히지 않는다.
-                    var buildable = FindUnlockedEmptyNode();
-                    if (buildable != null)
-                        TutorialInputGate.OnlyUnlockedNode(buildable);
-                    else if (FindLockedNode() is { } locked)
-                        TutorialInputGate.OnlyLockedNode(locked);
-                    else
-                        TutorialInputGate.Clear();
-                    break;
+                HideSpotlight();
+                return;
+            }
 
-                case Step.DeployUnit:
-                    // 고용과 배치 모두 이 칸이다. 겨눌 방을 못 고르면 잠그지 않는다.
-                    var host = FindUnlockedBuiltNode();
-                    if (host != null)
-                        TutorialInputGate.OnlyDeployUnit(host, null);
-                    else
-                        TutorialInputGate.Clear();
-                    break;
+            ShowSpotlight(rect);
+        }
 
-                case Step.BuildPortal:
-                    var entrance = FindUnlockedEmptyNode();
-                    if (entrance != null)
-                        TutorialInputGate.OnlyInstallPortal(entrance);
-                    else
-                        TutorialInputGate.Clear();
-                    break;
+        /// <summary>이 칸에서 눌러야 할 방. 못 고르면 아무것도 덮지 않는다.</summary>
+        private Node ResolveTargetNode() => _step switch
+        {
+            // 봉인을 여는 것과 그 방에 짓는 것이 한 칸 안에 함께 있다. 열린 빈 방이 있으면
+            // 지을 차례이고, 없으면 아직 봉인을 열 차례다.
+            Step.BuildRoom => FindUnlockedEmptyNode() ?? FindLockedNode(),
+            Step.DeployUnit => FindUnlockedBuiltNode(),
+            Step.BuildPortal => FindUnlockedEmptyNode(),
+            _ => null,
+        };
 
-                case Step.SurviveWave:
-                    TutorialInputGate.OnlyWaveStart();
-                    break;
+        /// <summary>방을 화면 좌표의 네모로 바꾼다. 카메라가 없거나 뒤에 있으면 실패로 둔다.</summary>
+        private bool TryBuildScreenRect(Node node, out Rect rect)
+        {
+            rect = default;
 
-                default:
-                    TutorialInputGate.Clear();
-                    break;
+            var camera = Camera.main;
+            if (camera == null || node == null)
+                return false;
+
+            var center = camera.WorldToScreenPoint(node.transform.position);
+            if (center.z <= 0f)
+                return false;
+
+            // 방 하나가 화면에서 차지하는 크기는 줌에 따라 달라진다. 월드 반지름을 화면으로
+            // 한 번 더 투영해서 재야 멀리서 봐도 구멍이 방에 맞는다.
+            var edge = camera.WorldToScreenPoint(node.transform.position + Vector3.right * spotlightWorldRadius);
+            var radius = Mathf.Max(48f, Mathf.Abs(edge.x - center.x));
+
+            rect = new Rect(center.x - radius, center.y - radius, radius * 2f, radius * 2f);
+            return true;
+        }
+
+        /// <summary>겨눈 네모만 남기고 네 장으로 화면을 덮는다.</summary>
+        private void ShowSpotlight(Rect hole)
+        {
+            if (dimPanels == null || dimPanels.Length < 4)
+                return;
+
+            var canvas = dimPanels[0] != null ? dimPanels[0].parent as RectTransform : null;
+            if (canvas == null)
+                return;
+
+            var size = canvas.rect.size;
+            var pad = spotlightPadding;
+
+            var left = Mathf.Clamp(hole.xMin - pad, 0f, size.x);
+            var right = Mathf.Clamp(hole.xMax + pad, 0f, size.x);
+            var bottom = Mathf.Clamp(hole.yMin - pad, 0f, size.y);
+            var top = Mathf.Clamp(hole.yMax + pad, 0f, size.y);
+
+            Place(dimPanels[0], 0f, top, size.x, size.y - top);       // 위
+            Place(dimPanels[1], 0f, 0f, size.x, bottom);              // 아래
+            Place(dimPanels[2], 0f, bottom, left, top - bottom);      // 왼쪽
+            Place(dimPanels[3], right, bottom, size.x - right, top - bottom); // 오른쪽
+
+            SetSpotlightVisible(true);
+        }
+
+        private static void Place(RectTransform panel, float x, float y, float width, float height)
+        {
+            if (panel == null)
+                return;
+
+            panel.anchorMin = Vector2.zero;
+            panel.anchorMax = Vector2.zero;
+            panel.pivot = Vector2.zero;
+            panel.anchoredPosition = new Vector2(x, y);
+            panel.sizeDelta = new Vector2(Mathf.Max(0f, width), Mathf.Max(0f, height));
+        }
+
+        private void HideSpotlight() => SetSpotlightVisible(false);
+
+        private void SetSpotlightVisible(bool visible)
+        {
+            if (dimPanels == null)
+                return;
+
+            for (var i = 0; i < dimPanels.Length; i++)
+            {
+                if (dimPanels[i] != null && dimPanels[i].gameObject.activeSelf != visible)
+                    dimPanels[i].gameObject.SetActive(visible);
             }
         }
 

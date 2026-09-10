@@ -148,7 +148,6 @@ namespace _01.Code.Enemies
             if (_backPlate == null)
                 _backPlate = gameObject.AddComponent<_01.Code.Entities.CharacterBackPlate>();
             _backPlate.Initialize(enemyRenderer != null ? enemyRenderer.SpriteRenderer : null);
-            _strengthOutline.HideSilhouette();
             RefreshStrengthOutline();
             ApplyRoleFromData();
             // Combat behaviour is driven by the Unity Behavior graph on the
@@ -906,10 +905,14 @@ namespace _01.Code.Enemies
 
             _strengthOutline.ApplyStrength(data.Grade, Level, _isBoss);
 
-            // 등급 색은 발밑 받침 바깥을 두르는 링이 맡는다. 예전에는 캐릭터 실루엣을 한 겹
-            // 키워 뒤에 깔았는데, 받침이 생기면서 그 자리가 받침에 덮여 보이지 않게 됐다.
+            // 등급 색은 캐릭터를 두르는 테두리가 말한다. 받침 바깥 링까지 같은 색으로 물들이면
+            // 한 침입자가 두 군데서 빛나 어느 쪽이 뜻을 가진 빛인지 흐려지므로, 링은 옅게 깔고
+            // 등급에 따라 진하기만 달리한다.
             if (_backPlate != null)
-                _backPlate.SetGlowColor(EnemyStrengthOutline.GetTierColor(_strengthOutline.CurrentTier));
+            {
+                var tint = EnemyStrengthOutline.GetTierColor(_strengthOutline.CurrentTier);
+                _backPlate.SetGlowColor(new Color(tint.r, tint.g, tint.b, 0.28f));
+            }
         }
 
         private void EnsureClickTarget(GameEventChannelSO nodeEventChannel)
@@ -959,17 +962,6 @@ namespace _01.Code.Enemies
                 _outline.color = GetTierColor(CurrentTier);
         }
 
-        /// <summary>
-        /// 캐릭터를 한 겹 키워 뒤에 깔던 실루엣을 끈다.
-        ///
-        /// 등급 색은 이제 발밑 받침 바깥을 두르는 링이 말한다. 실루엣까지 같이 두면 한 캐릭터가
-        /// 두 군데서 빛나 어느 쪽이 뜻을 가진 빛인지 흐려진다.
-        /// </summary>
-        public void HideSilhouette()
-        {
-            if (_outline != null)
-                _outline.enabled = false;
-        }
         public void RefreshSprite()
         {
             if (_source == null || _outline == null)

@@ -31,9 +31,9 @@ Material:
     m_Floats:
     - _CenterSize: 0.55
     - _EdgeSoftness: 0.75
-    - _FlickerDepth: 0.22
+    - _FlickerDepth: 0.12
     - _FlickerSpeed: 2.3
-    - _Strength: 0.5
+    - _Strength: 0.22
     m_Colors:
     - _GlowColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
