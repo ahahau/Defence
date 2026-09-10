@@ -279,12 +279,14 @@ namespace _01.Code.UI
                 if (shopCatalog != null && !shopCatalog.HasAvailableArtifact(artifactInventory))
                     display.RemoveAll(o => o.IsRandom);
 
-                SetDetail($"상자에서 {ResolveName(evt.Artifact)}!\n남은 금화 {evt.RemainingGold}G");
+                SetDetail($"<color=#8FE3A0>상자에서 <b>{ResolveName(evt.Artifact)}</b>!</color>"
+                          + $"\n<size=90%><color=#B3A492>남은 금화 {evt.RemainingGold}G</color></size>");
             }
             else
             {
                 display.RemoveAll(o => !o.IsRandom && o.Artifact == evt.Artifact);
-                SetDetail($"{ResolveName(evt.Artifact)} 구입 완료\n남은 금화 {evt.RemainingGold}G");
+                SetDetail($"<color=#8FE3A0><b>{ResolveName(evt.Artifact)}</b> 구입 완료</color>"
+                          + $"\n<size=90%><color=#B3A492>남은 금화 {evt.RemainingGold}G</color></size>");
             }
 
             _pendingWasRandom = false;
@@ -303,7 +305,8 @@ namespace _01.Code.UI
 
         private void HandlePurchaseRejected(ArtifactPurchaseRejectedEvent evt)
         {
-            SetDetail($"금화가 부족합니다.\n필요 {evt.GoldAmount}G · 보유 {evt.CurrentGold}G");
+            SetDetail($"<color=#E08A6E><b>금화가 부족합니다.</b></color>"
+                      + $"\n<size=90%><color=#B3A492>필요 {evt.GoldAmount}G · 보유 {evt.CurrentGold}G</color></size>");
         }
 
         private void Refresh(bool resetDetail = true)
@@ -312,7 +315,11 @@ namespace _01.Code.UI
             {
                 // 언제 다시 오는지가 살지 말지를 정하는 정보라 제목에 같이 적는다.
                 var nextVisit = shopCatalog != null ? shopCatalog.GetNextVisitDay(currentDay + 1) : 0;
-                titleText.text = $"{titleFormat}  ·  {currentDay}일차  ·  다음 방문 {nextVisit}일차";
+                // 상인 이름과 날짜가 같은 무게로 붙어 있으면 한 줄이 통째로 흘러간다.
+                // 이름만 세우고 날짜는 한 단계 죽여, 무엇을 보는 창인지 먼저 읽히게 한다.
+                titleText.text = $"<b>{titleFormat}</b>"
+                                 + $"<color=#8A7F71>  ·  </color>"
+                                 + $"<size=88%><color=#B3A492>{currentDay}일차  ·  다음 방문 {nextVisit}일차</color></size>";
             }
 
             for (var i = 0; i < slotButtons.Length; i++)
@@ -329,13 +336,11 @@ namespace _01.Code.UI
 
                 var offer = display[i];
                 var price = GetOfferPrice(offer);
+                var affordable = CostManager.Current != null && CostManager.Current.CurrentGold >= price;
                 button.gameObject.SetActive(true);
-                button.interactable = CostManager.Current != null && CostManager.Current.CurrentGold >= price;
+                button.interactable = affordable;
 
-                var label = offer.IsRandom
-                    ? $"{shopCatalog.RandomArtifactLabel}\n{price}G\n무엇이 나올지는 열어봐야 안다."
-                    : $"{ResolveName(offer.Artifact)}\n{price}G\n{offer.Artifact.Description}{BuildComboHint(offer.Artifact)}";
-                InstallCardPresenter.SetWrappedButtonText(button, label);
+                InstallCardPresenter.SetWrappedButtonText(button, BuildOfferLabel(offer, price, affordable));
 
                 // 무엇을 사는지 그림으로 먼저 알아보게 한다. 정체불명 유물은 보여 줄 그림이 없으니
                 // 비워 두면 ApplyCardSprite 가 이미지를 꺼 준다.
@@ -363,6 +368,30 @@ namespace _01.Code.UI
         /// 유물은 좋은 유닛 두 명 값이다. 스탯만 보면 언제나 유닛이 낫고, 살 이유는 조합에 있다.
         /// 그 조합이 사는 자리에서 보이지 않으면 없는 것과 같다.
         /// </summary>
+        /// <summary>
+        /// 카드 한 장의 글. 이름·값·설명이 서로 다른 무게로 읽히게 한다.
+        ///
+        /// 셋을 같은 크기 같은 색으로 늘어놓으면 어느 것이 이름이고 어느 것이 값인지 한눈에
+        /// 갈리지 않아, 카드 넉 장이 글자 덩어리 넷으로 보인다. 이름은 키우고, 값에는 금화 색을
+        /// 주고, 설명은 한 단계 죽인다.
+        ///
+        /// 값이 모자랄 때는 그 자리에서 이유를 말한다. 버튼이 회색으로 죽어 있기만 하면
+        /// 안 팔린 것인지 못 사는 것인지 구분되지 않는다.
+        /// </summary>
+        private string BuildOfferLabel(ShopOffer offer, int price, bool affordable)
+        {
+            var name = offer.IsRandom ? shopCatalog.RandomArtifactLabel : ResolveName(offer.Artifact);
+            var body = offer.IsRandom
+                ? "무엇이 나올지는 열어봐야 안다."
+                : $"{offer.Artifact.Description}{BuildComboHint(offer.Artifact)}";
+
+            var priceLine = affordable
+                ? $"<color=#F0C860><b>{price}</b> G</color>"
+                : $"<color=#C4705E><b>{price}</b> G · 금화 부족</color>";
+
+            return $"<size=112%><b>{name}</b></size>\n{priceLine}\n<size=90%><color=#B3A492>{body}</color></size>";
+        }
+
         private string BuildComboHint(ArtifactDataSO artifact)
         {
             var catalog = artifactInventory != null ? artifactInventory.Combos : null;

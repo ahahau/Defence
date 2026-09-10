@@ -135,6 +135,10 @@ namespace _01.Code.Enemies
         [SerializeField, Min(0.05f), Tooltip("둘러보는 데 걸리는 시간(초).")]
         private float wanderDuration = 0.45f;
 
+        [SerializeField, Min(0),
+         Tooltip("최단 경로보다 이만큼까지 돌아가는 길도 후보로 삼는다. 0이면 늘 최단 경로만 탄다.")]
+        private int detourTolerance = 2;
+
         /// <summary>
         /// 방 안에서 한 걸음 어슬렁거린다.
         ///
@@ -298,25 +302,63 @@ namespace _01.Code.Enemies
             if (path == null || path.Count < 2)
                 return null;
 
-            var next = path[1];
-            if (next == null)
-                return null;
-
-            if (IsNodeOccupied(next.Data.Id))
+            var candidates = CollectRouteCandidates(goal, path.Count);
+            if (candidates.Count == 0)
             {
+                // 길은 있는데 갈 수 있는 다음 칸이 없다 → 딴 길로 새지 않고 이번 턴은 줄을 선다.
                 shouldWait = true;
                 return null;
             }
 
-            var battlefield = next.GetComponent<NodeBattlefield>();
-            if (battlefield != null && _battleAgent != null && !battlefield.CanEnter(_battleAgent.Team))
-            {
-                shouldWait = true;
-                return null;
-            }
-
-            return next;
+            return candidates[UnityEngine.Random.Range(0, candidates.Count)];
         }
+
+        /// <summary>
+        /// 갈 만한 다음 칸을 모은다. 최단만 고집하지 않고 조금 돌아가는 길까지 넣는다.
+        ///
+        /// 예전에는 A*가 내놓은 경로의 두 번째 칸을 그대로 썼다. 최단 경로는 하나로 정해지므로
+        /// 모든 침입자가 같은 줄을 따라 지도 한가운데로만 내려왔다. 비슷한 길이의 길을 모아 두고
+        /// 그중 하나를 고르면, 목적지는 그대로면서 지나는 길이 판마다 달라진다.
+        ///
+        /// <see cref="detourTolerance"/>만큼만 봐준다. 이걸 크게 열면 헤매는 것이 아니라
+        /// 길을 잃은 것처럼 보이고, 금고에 닿는 시간이 들쭉날쭉해져 밸런스가 흔들린다.
+        /// </summary>
+        private List<Node> CollectRouteCandidates(Node goal, int bestPathLength)
+        {
+            _routeCandidates.Clear();
+            if (_currentNode?.Data == null)
+                return _routeCandidates;
+
+            foreach (var id in _currentNode.Data.ConnectedNodeIds)
+            {
+                var node = ResolveNodeByDataId(id);
+                if (node == null || node.IsPassBlocked || IsNodeOccupied(id))
+                    continue;
+
+                var battlefield = node.GetComponent<NodeBattlefield>();
+                if (battlefield != null && _battleAgent != null && !battlefield.CanEnter(_battleAgent.Team))
+                    continue;
+
+                if (node == goal)
+                {
+                    _routeCandidates.Add(node);
+                    continue;
+                }
+
+                var rest = NodePathfinder.FindPath(node, goal, n => n.IsPassBlocked);
+                if (rest == null || rest.Count < 1)
+                    continue;
+
+                if (1 + rest.Count > bestPathLength + detourTolerance)
+                    continue;
+
+                _routeCandidates.Add(node);
+            }
+
+            return _routeCandidates;
+        }
+
+        private readonly List<Node> _routeCandidates = new();
 
         private Node ResolveNodeByDataId(string dataId)
         {
@@ -329,11 +371,22 @@ namespace _01.Code.Enemies
             return null;
         }
 
+        /// <summary>
+        /// 방 하나에 들어갈 수 있는 침입자 수.
+        ///
+        /// 예전에는 한 마리라도 있으면 다음 침입자가 들어가지 못하고 줄을 섰다. 그래서 스무 마리가
+        /// 오는 날에도 화면에는 한 마리씩 줄줄이 지나갈 뿐, 무리가 몰려오는 그림이 나오지 않았다.
+        ///
+        /// <see cref="NodeBattlefield"/>가 이미 팀당 정원을 들고 있으므로 같은 값으로 맞춘다.
+        /// 두 곳에서 다른 수를 세면 전투에는 못 끼는데 자리는 차지하는 침입자가 생긴다.
+        /// </summary>
+        private const int MaxEnemiesPerNode = 3;
+
         private static bool IsNodeOccupied(string nodeId)
         {
             return !string.IsNullOrEmpty(nodeId)
                    && _occupiedNodeCounts.TryGetValue(nodeId, out var count)
-                   && count > 0;
+                   && count >= MaxEnemiesPerNode;
         }
 
         private static void OccupyNode(string nodeId)
@@ -362,8 +415,41 @@ namespace _01.Code.Enemies
             var basePosition = node.EnemyPosition != null
                 ? node.EnemyPosition.position
                 : node.transform.position;
-            return basePosition + FormationOffset;
+            return basePosition + FormationOffset + ResolveNodeScatter(node);
         }
+
+        /// <summary>
+        /// 이 침입자가 이 방에서 설 자리. 방마다 다르게, 그러나 같은 방 안에서는 늘 같게.
+        ///
+        /// <see cref="FormationOffset"/>은 스폰할 때 한 번 정해지고 죽을 때까지 바뀌지 않는다.
+        /// 그래서 모든 침입자가 방마다 똑같은 상대 위치에 서고, 결과적으로 지도 한가운데를
+        /// 일렬로 지나가는 것처럼 보였다. 방이 바뀔 때마다 자리를 새로 뽑아 흩어 놓는다.
+        ///
+        /// 매번 새로 뽑으면 안 된다 — 이동 목표를 정할 때와 도착한 뒤에 다른 자리가 나오면
+        /// 침입자가 제자리에서 떠는 것처럼 보인다. 그래서 방이 바뀔 때만 다시 뽑아 들고 있는다.
+        /// </summary>
+        private Vector3 ResolveNodeScatter(Node node)
+        {
+            var nodeId = node != null && node.Data != null ? node.Data.Id : null;
+            if (string.IsNullOrEmpty(nodeId))
+                return Vector3.zero;
+
+            if (nodeId == _scatterNodeId)
+                return _nodeScatter;
+
+            var battlefield = node.GetComponent<NodeBattlefield>();
+            var radius = battlefield != null && battlefield.ArenaRadius > 0f
+                ? battlefield.ArenaRadius * 0.55f
+                : wanderDistance;
+
+            var offset = UnityEngine.Random.insideUnitCircle * radius;
+            _nodeScatter = new Vector3(offset.x, offset.y, 0f);
+            _scatterNodeId = nodeId;
+            return _nodeScatter;
+        }
+
+        private string _scatterNodeId;
+        private Vector3 _nodeScatter;
 
         private void TryEnterBattlefield(Node node)
         {

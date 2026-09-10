@@ -144,7 +144,7 @@ MonoBehaviour:
   damageShakeDistance: 0.08
   damageShakeDuration: 0.16
   destroyDelay: 0.05
-  triggerChance: 0.55
+  triggerChance: 1
   damage: 12
   injuryChance: 1
   bonusDamage: 0

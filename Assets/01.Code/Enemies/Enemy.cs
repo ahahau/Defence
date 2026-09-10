@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using _01.Code.MapCreateSystem;
 using _01.Code.Combat;
 using _01.Code.Buildings;
@@ -29,6 +30,9 @@ namespace _01.Code.Enemies
         [Header("Return Mood")]
         [SerializeField, Min(0)] private int fearGainPerTurn = 1;
         [SerializeField, Min(0)] private int fearGainOnTrap = 3;
+        [SerializeField, Range(0.1f, 1.5f),
+         Tooltip("함정을 밟았다고 볼 거리(격자 칸 크기의 배수). 크게 두면 스쳐도 터지고, 작게 두면 정확히 밟아야 터진다.")]
+        private float trapContactCellRatio = 0.4f;
         [SerializeField, Min(0)] private int fearGainOnCombat = 4;
         [SerializeField, Min(0)] private int greedGainOnBuilding = 2;
         [SerializeField, Min(0)] private int fearReductionOnBuilding = 2;
@@ -162,7 +166,14 @@ namespace _01.Code.Enemies
         // 적 이동 구동(과거 WaveManager 턴/BT가 하던 역할). 전투/귀환/사망 중엔 멈춘다.
         private void Update()
         {
-            if (!_isInitialized || IsDead || _isInCombat || _isReturning)
+            if (!_isInitialized || IsDead)
+                return;
+
+            // 걸어 다니다 밟는 함정도 잡아야 하므로 순회 판정보다 앞에서 본다. 싸우는 중이라도
+            // 발밑은 발밑이다 — 전투에 붙들린 침입자를 함정 위로 몰아넣는 것도 수단이 된다.
+            TickTrapContact();
+
+            if (_isInCombat || _isReturning)
                 return;
 
             if (_battleAgent != null
@@ -482,28 +493,64 @@ namespace _01.Code.Enemies
             return true;
         }
 
+        /// <summary>
+        /// 방에 들어섰다. 이 방에서 밟은 함정 기록을 새로 시작하고 곧바로 한 번 살펴본다.
+        ///
+        /// 예전에는 방에 발을 들이는 것만으로 그 방의 함정이 전부 발동했다. 방 반대편 구석에
+        /// 깔아 둔 함정이 문간에 선 침입자를 때렸으니, 플레이어가 어디에 놓든 결과가 같았다.
+        /// 이제는 실제로 그 칸을 지나갈 때만 터진다 — 어디에 까느냐가 판단거리가 된다.
+        /// </summary>
         private bool TryTriggerTrap(Node node)
         {
+            _trapsTouchedThisVisit.Clear();
             if (node == null) return false;
 
-            // 함정은 분류가 Trap이라 중앙 슬롯에 서지 못한다. 격자 칸만 보면 된다
-            // (그리드는 일반 건물도 담으므로 트랩만 거른다).
-            var grid = node.TrapGrid;
-            if (grid != null)
-            {
-                var placed = grid.PlacedBuildings;
-                for (var i = 0; i < placed.Count; i++)
-                {
-                    if (!combatant.IsAlive) break;
-                    if (placed[i] is Trap gridTrap)
-                        TriggerSingleTrap(node, gridTrap);
-                }
-            }
+            TickTrapContact();
 
             if (combatant.IsAlive) return false;
             BeginDeath();
             return true;
         }
+
+        /// <summary>
+        /// 지금 서 있는 자리에 닿은 함정을 터뜨린다.
+        ///
+        /// 방에 머무는 동안 계속 본다. 침입자는 들어온 자리에 가만히 있지 않고 방 안을
+        /// 돌아다니므로, 도착한 순간만 보면 걸어가다 밟은 함정을 놓친다.
+        ///
+        /// 방문 한 번에 함정 하나는 한 번만 터진다. 매 프레임 보는 판정이라 이 기록이 없으면
+        /// 같은 함정 위에 서 있는 것만으로 순식간에 갈려 나간다.
+        /// </summary>
+        private void TickTrapContact()
+        {
+            var node = mover != null ? mover.CurrentNode : null;
+            var grid = node != null ? node.TrapGrid : null;
+            if (grid == null || combatant == null || !combatant.IsAlive)
+                return;
+
+            var radius = Mathf.Max(0.01f, grid.CellSize * trapContactCellRatio);
+            var radiusSquared = radius * radius;
+
+            var placed = grid.PlacedBuildings;
+            for (var i = 0; i < placed.Count; i++)
+            {
+                if (!combatant.IsAlive)
+                    return;
+
+                if (placed[i] is not Trap trap || trap == null || _trapsTouchedThisVisit.Contains(trap))
+                    continue;
+
+                var delta = trap.transform.position - transform.position;
+                delta.z = 0f;
+                if (delta.sqrMagnitude > radiusSquared)
+                    continue;
+
+                _trapsTouchedThisVisit.Add(trap);
+                TriggerSingleTrap(node, trap);
+            }
+        }
+
+        private readonly HashSet<Trap> _trapsTouchedThisVisit = new();
 
         private void TriggerSingleTrap(Node node, Trap trap)
         {

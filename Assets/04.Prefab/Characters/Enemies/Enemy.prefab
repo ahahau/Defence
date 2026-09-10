@@ -113,6 +113,7 @@ MonoBehaviour:
   statusController: {fileID: 0}
   fearGainPerTurn: 1
   fearGainOnTrap: 3
+  trapContactCellRatio: 0.4
   fearGainOnCombat: 4
   greedGainOnBuilding: 2
   fearReductionOnBuilding: 2
@@ -216,6 +217,10 @@ MonoBehaviour:
   visualSquashAmount: 0.08
   visualLeanAngle: 7
   visual: {fileID: 2787899817810343432}
+  wanderChance: 0.55
+  wanderDistance: 1.1
+  wanderDuration: 0.45
+  detourTolerance: 2
 --- !u!114 &2211442224303028780
 MonoBehaviour:
   m_ObjectHideFlags: 0
