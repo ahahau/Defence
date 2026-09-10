@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6e9a4df8b17b0a2d3e456789012345a, type: 3}
+  m_Name: CharacterPlateSkin
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Entities.CharacterPlateSkinSO
+  <Plate>k__BackingField: {fileID: 21300000, guid: a8fccef2c0e4aad4a8ec27c19cb4f4ac, type: 3}
+  <PlateColor>k__BackingField: {r: 0.16, g: 0.13, b: 0.15, a: 0.72}
+  <PlateWidthFactor>k__BackingField: 1.35
+  <PlateFlatten>k__BackingField: 0.42
+  <GlowScale>k__BackingField: 1.28

@@ -126,8 +126,23 @@ namespace _01.Code.Units
             EnsureDefaultPersonality();
             ApplyTraitBaseStats();
             ApplyConditionModifiers();
+            EnsureBackPlate();
         }
 
+        /// <summary>발밑 받침을 깐다. 부하도 침입자와 같은 바닥 위에 서므로 같은 받침을 쓴다.</summary>
+        private void EnsureBackPlate()
+        {
+            if (spriteRenderer == null)
+                return;
+
+            var plate = GetComponent<_01.Code.Entities.CharacterBackPlate>();
+            if (plate == null)
+                plate = gameObject.AddComponent<_01.Code.Entities.CharacterBackPlate>();
+
+            plate.Initialize(spriteRenderer);
+            // 부하는 등급 링이 없다. 침입자와 헷갈리지 않게 받침만 두고 빛은 죽여 둔다.
+            plate.SetGlowColor(new Color(0.45f, 0.62f, 0.85f, 0.5f));
+        }
         private void EnsureBattleAgent()
         {
             // 역할은 프리팹/인스톨러가 정한 값을 유지하고, 팀(Player)·BT 제어만 보장한다.
