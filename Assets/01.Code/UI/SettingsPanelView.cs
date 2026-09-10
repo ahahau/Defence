@@ -22,6 +22,8 @@ namespace _01.Code.UI
 
         private static readonly Color PanelColor = new(0.055f, 0.034f, 0.025f, 0.98f);
         private static readonly Color EdgeColor = new(0.62f, 0.44f, 0.20f, 1f);
+        /// <summary>창 뒤를 덮는 막. 완전히 가리지 않고 판이 비치게 두어 어디로 돌아가는지 보이게 한다.</summary>
+        private static readonly Color BackdropColor = new(0f, 0f, 0f, 0.66f);
         private static readonly Color TrackColor = new(0.16f, 0.11f, 0.07f, 1f);
         private static readonly Color FillColor = new(0.78f, 0.56f, 0.24f, 1f);
         private static readonly Color TextColor = new(0.94f, 0.90f, 0.82f, 1f);
@@ -29,6 +31,7 @@ namespace _01.Code.UI
         private static SettingsPanelView current;
 
         private GameObject window;
+        private GameObject backdrop;
         private GameObject confirmWindow;
         private GameObject restartButton;
         private GameObject titleButton;
@@ -138,8 +141,32 @@ namespace _01.Code.UI
             return canvas;
         }
 
+        /// <summary>
+        /// 창 뒤를 화면 끝까지 덮어 클릭을 받아 삼킨다.
+        ///
+        /// 설정 창은 440x386짜리 판 하나뿐이라 그 바깥을 누르면 그대로 지도로 내려갔다.
+        /// 설정을 열어 둔 채 방을 짓거나 유닛을 옮길 수 있었다는 뜻이다.
+        ///
+        /// 창보다 먼저 만들어야 형제 순서상 뒤에 깔린다.
+        /// </summary>
+        private void BuildBackdrop(Transform parent)
+        {
+            var image = CreateImage(parent, "Backdrop", BackdropColor);
+            var rect = image.rectTransform;
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            image.raycastTarget = true;
+
+            backdrop = image.gameObject;
+            backdrop.SetActive(false);
+        }
+
         private void BuildWindow(Transform parent)
         {
+            BuildBackdrop(parent);
+
             // 이 창은 DontDestroyOnLoad 라 씬을 넘어가도 다시 만들어지지 않는다. 그래서
             // 만들 때의 씬으로 구성을 정하면 안 된다 — 타이틀에서 만들어진 창이 판 위로
             // 따라와 "타이틀로 나가기"가 없는 채로 열렸다. 항상 다 만들어 두고 열 때 가린다.
@@ -317,6 +344,8 @@ namespace _01.Code.UI
             if (open)
                 FitToScene();
 
+            if (backdrop != null)
+                backdrop.SetActive(open);
             window.SetActive(open);
             if (open)
             {

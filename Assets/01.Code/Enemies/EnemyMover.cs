@@ -380,7 +380,7 @@ namespace _01.Code.Enemies
         /// <see cref="NodeBattlefield"/>가 이미 팀당 정원을 들고 있으므로 같은 값으로 맞춘다.
         /// 두 곳에서 다른 수를 세면 전투에는 못 끼는데 자리는 차지하는 침입자가 생긴다.
         /// </summary>
-        private const int MaxEnemiesPerNode = 3;
+        private const int MaxEnemiesPerNode = 2;
 
         private static bool IsNodeOccupied(string nodeId)
         {
