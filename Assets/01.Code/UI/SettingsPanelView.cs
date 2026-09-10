@@ -19,6 +19,7 @@ namespace _01.Code.UI
     public sealed class SettingsPanelView : MonoBehaviour
     {
         private const string SkinResourcePath = "UI/UiSkin";
+        private const string WindowPrefabResourcePath = "UI/SettingsWindow";
 
         private static readonly Color PanelColor = new(0.055f, 0.034f, 0.025f, 0.98f);
         private static readonly Color EdgeColor = new(0.62f, 0.44f, 0.20f, 1f);
@@ -55,8 +56,11 @@ namespace _01.Code.UI
             current = this;
             skin = Resources.Load<UiSkinSO>(SkinResourcePath);
             var canvas = BuildCanvas();
-            BuildWindow(canvas.transform);
+            Bind(ResolveWindow(canvas.transform));
+
             window.SetActive(false);
+            if (backdrop != null)
+                backdrop.SetActive(false);
             FitToScene();
         }
 
@@ -123,6 +127,32 @@ namespace _01.Code.UI
 #endif
         }
 
+        /// <summary>
+        /// 창을 구해 온다. 프리팹이 있으면 그것을 꺼내 쓰고, 없으면 코드로 세운다.
+        ///
+        /// 프리팹을 두는 이유는 에디터에서 눈으로 보고 고칠 수 있어야 하기 때문이다. 코드로만
+        /// 세우면 실행하기 전에는 창이 어떻게 생겼는지 아무도 모른다.
+        ///
+        /// 코드 경로를 지우지 않은 것은 일부러다. 프리팹이 빠지거나 참조 표가 끊긴 채로
+        /// 배포되면 설정 창이 통째로 사라지는데, 그때 소리 없이 없어지는 것보다
+        /// 모양이 조금 달라도 뜨는 편이 낫다. 무슨 일이 있었는지는 경고로 남긴다.
+        /// </summary>
+        private SettingsWindowRefs ResolveWindow(Transform parent)
+        {
+            var prefab = Resources.Load<GameObject>(WindowPrefabResourcePath);
+            if (prefab == null)
+                return BuildWindow(parent);
+
+            var instance = Instantiate(prefab, parent, false);
+            var refs = instance.GetComponent<SettingsWindowRefs>();
+            if (refs != null && refs.IsComplete)
+                return refs;
+
+            Debug.LogWarning($"{WindowPrefabResourcePath} 의 참조 표가 비어 있어 설정 창을 코드로 세웁니다.", instance);
+            Destroy(instance);
+            return BuildWindow(parent);
+        }
+
         private Canvas BuildCanvas()
         {
             var go = new GameObject("Settings Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
@@ -163,39 +193,81 @@ namespace _01.Code.UI
             backdrop.SetActive(false);
         }
 
-        private void BuildWindow(Transform parent)
+        /// <summary>
+        /// 창을 세우고, 조각들을 가리키는 표를 채워 돌려준다.
+        ///
+        /// 누르는 동작은 붙이지 않는다 — 이 결과를 프리팹으로 굽기 때문이다. 동작은
+        /// <see cref="Bind"/>가 붙이므로, 프리팹에서 꺼내 온 창과 여기서 세운 창이 똑같이 움직인다.
+        /// </summary>
+        private SettingsWindowRefs BuildWindow(Transform parent)
         {
-            BuildBackdrop(parent);
+            var rootGo = new GameObject("Settings Window Root",
+                typeof(RectTransform), typeof(SettingsWindowRefs));
+            rootGo.transform.SetParent(parent, false);
+            Stretch((RectTransform)rootGo.transform);
+            var refs = rootGo.GetComponent<SettingsWindowRefs>();
+            var root = rootGo.transform;
+
+            BuildBackdrop(root);
+            refs.backdrop = backdrop;
 
             // 이 창은 DontDestroyOnLoad 라 씬을 넘어가도 다시 만들어지지 않는다. 그래서
             // 만들 때의 씬으로 구성을 정하면 안 된다 — 타이틀에서 만들어진 창이 판 위로
             // 따라와 "타이틀로 나가기"가 없는 채로 열렸다. 항상 다 만들어 두고 열 때 가린다.
-            window = CreatePanel(parent, "Settings Window", new Vector2(440f, 386f), Vector2.zero);
+            refs.window = CreatePanel(root, "Settings Window", new Vector2(440f, 386f), Vector2.zero);
 
-            CreateLabel(window.transform, "설정", 26, TextAlignmentOptions.Center,
+            CreateLabel(refs.window.transform, "설정", 26, TextAlignmentOptions.Center,
                 new Vector2(0.5f, 1f), new Vector2(400f, 40f), new Vector2(0f, -34f));
 
-            slider = BuildRow(window.transform, "효과음", -92f, GameSfxPlayer.Volume,
-                out valueLabel, OnSfxVolumeChanged);
+            refs.sfxSlider = BuildRow(refs.window.transform, "효과음", -92f, GameSfxPlayer.Volume,
+                out var sfxLabel);
+            refs.sfxValueLabel = sfxLabel;
 
-            musicSlider = BuildRow(window.transform, "배경음악", -168f, GameMusicPlayer.Volume,
-                out musicValueLabel, OnMusicVolumeChanged);
+            refs.musicSlider = BuildRow(refs.window.transform, "배경음악", -168f, GameMusicPlayer.Volume,
+                out var musicLabel);
+            refs.musicValueLabel = musicLabel;
 
-            var restart = CreateButton(window.transform, "다시하기", new Vector2(0.5f, 1f),
+            refs.restartButton = CreateButton(refs.window.transform, "다시하기", new Vector2(0.5f, 1f),
                 new Vector2(180f, 40f), new Vector2(-98f, -252f));
-            restart.onClick.AddListener(() => SetConfirmVisible(true));
-            restartButton = restart.gameObject;
 
-            var toTitle = CreateButton(window.transform, "타이틀로 나가기", new Vector2(0.5f, 1f),
+            refs.titleButton = CreateButton(refs.window.transform, "타이틀로 나가기", new Vector2(0.5f, 1f),
                 new Vector2(180f, 40f), new Vector2(98f, -252f));
-            toTitle.onClick.AddListener(GoToTitle);
-            titleButton = toTitle.gameObject;
 
-            var close = CreateButton(window.transform, "닫기", new Vector2(0.5f, 0f), new Vector2(120f, 38f), new Vector2(0f, 34f));
-            close.onClick.AddListener(() => Toggle(false));
-            closeButton = close.gameObject;
+            refs.closeButton = CreateButton(refs.window.transform, "닫기", new Vector2(0.5f, 0f),
+                new Vector2(120f, 38f), new Vector2(0f, 34f));
 
-            BuildConfirm(parent);
+            BuildConfirm(root, refs);
+            return refs;
+        }
+
+        /// <summary>프리팹에서 꺼냈든 코드로 세웠든, 창이 실제로 움직이게 만드는 한 자리.</summary>
+        private void Bind(SettingsWindowRefs refs)
+        {
+            backdrop = refs.backdrop;
+            window = refs.window;
+            confirmWindow = refs.confirmWindow;
+            restartButton = refs.restartButton.gameObject;
+            titleButton = refs.titleButton.gameObject;
+            closeButton = refs.closeButton.gameObject;
+
+            slider = refs.sfxSlider;
+            valueLabel = refs.sfxValueLabel;
+            musicSlider = refs.musicSlider;
+            musicValueLabel = refs.musicValueLabel;
+
+            slider.SetValueWithoutNotify(GameSfxPlayer.Volume);
+            valueLabel.text = Percent(slider.value);
+            slider.onValueChanged.AddListener(OnSfxVolumeChanged);
+
+            musicSlider.SetValueWithoutNotify(GameMusicPlayer.Volume);
+            musicValueLabel.text = Percent(musicSlider.value);
+            musicSlider.onValueChanged.AddListener(OnMusicVolumeChanged);
+
+            refs.restartButton.onClick.AddListener(() => SetConfirmVisible(true));
+            refs.titleButton.onClick.AddListener(GoToTitle);
+            refs.closeButton.onClick.AddListener(() => Toggle(false));
+            refs.confirmCancelButton.onClick.AddListener(() => SetConfirmVisible(false));
+            refs.confirmAcceptButton.onClick.AddListener(RestartRun);
         }
 
         /// <summary>
@@ -220,24 +292,23 @@ namespace _01.Code.UI
         /// 다시하기 확인 창. 되돌릴 수 없는 일이라 한 번 더 묻는다 — 눌리는 순간
         /// 저장이 지워지고 판이 처음으로 돌아간다.
         /// </summary>
-        private void BuildConfirm(Transform parent)
+        private void BuildConfirm(Transform parent, SettingsWindowRefs refs)
         {
-            confirmWindow = CreatePanel(parent, "Restart Confirm", new Vector2(460f, 220f), Vector2.zero);
+            refs.confirmWindow = CreatePanel(parent, "Restart Confirm", new Vector2(460f, 220f), Vector2.zero);
+            var confirmRoot = refs.confirmWindow.transform;
 
-            CreateLabel(confirmWindow.transform, "지금까지의 진행이 모두 사라집니다", 21, TextAlignmentOptions.Center,
+            CreateLabel(confirmRoot, "지금까지의 진행이 모두 사라집니다", 21, TextAlignmentOptions.Center,
                 new Vector2(0.5f, 1f), new Vector2(420f, 34f), new Vector2(0f, -52f));
-            CreateLabel(confirmWindow.transform, "부하도 건물도 금화도 처음으로 돌아갑니다", 17, TextAlignmentOptions.Center,
+            CreateLabel(confirmRoot, "부하도 건물도 금화도 처음으로 돌아갑니다", 17, TextAlignmentOptions.Center,
                 new Vector2(0.5f, 1f), new Vector2(420f, 30f), new Vector2(0f, -88f));
 
-            var cancel = CreateButton(confirmWindow.transform, "취소", new Vector2(0.5f, 0f),
+            refs.confirmCancelButton = CreateButton(confirmRoot, "취소", new Vector2(0.5f, 0f),
                 new Vector2(150f, 40f), new Vector2(-82f, 40f));
-            cancel.onClick.AddListener(() => SetConfirmVisible(false));
 
-            var confirm = CreateButton(confirmWindow.transform, "초기화", new Vector2(0.5f, 0f),
+            refs.confirmAcceptButton = CreateButton(confirmRoot, "초기화", new Vector2(0.5f, 0f),
                 new Vector2(150f, 40f), new Vector2(82f, 40f));
-            confirm.onClick.AddListener(RestartRun);
 
-            confirmWindow.SetActive(false);
+            refs.confirmWindow.SetActive(false);
         }
 
         /// <summary>판 위인가. 타이틀 씬에서는 나가기·다시하기가 뜻이 없다.</summary>
@@ -280,8 +351,15 @@ namespace _01.Code.UI
         }
 
         /// <summary>이름표 · 슬라이더 · 퍼센트 한 줄을 만든다.</summary>
+        /// <summary>
+        /// 음량 한 줄(이름·값·슬라이더)을 세운다.
+        ///
+        /// 값이 바뀔 때 무엇을 할지는 여기서 붙이지 않는다. 이 창은 프리팹으로 구워 두고 실행 때
+        /// 꺼내 쓰는데, 프리팹은 코드 조각을 담지 못하므로 어느 경로로 왔든 <see cref="Bind"/>가
+        /// 한자리에서 붙여야 둘이 어긋나지 않는다.
+        /// </summary>
         private Slider BuildRow(Transform parent, string label, float top, float initial,
-            out TMP_Text percentLabel, UnityEngine.Events.UnityAction<float> onChanged)
+            out TMP_Text percentLabel)
         {
             CreateLabel(parent, label, 19, TextAlignmentOptions.Left,
                 new Vector2(0.5f, 1f), new Vector2(140f, 30f), new Vector2(-130f, top));
@@ -316,7 +394,6 @@ namespace _01.Code.UI
             built.maxValue = 1f;
             built.wholeNumbers = false;
             built.SetValueWithoutNotify(initial);
-            built.onValueChanged.AddListener(onChanged);
 
             percentLabel.text = Percent(initial);
             return built;
