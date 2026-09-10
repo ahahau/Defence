@@ -25,6 +25,52 @@ namespace _01.Code.UI
     {
         private static readonly List<ExclusiveWindow> Open = new();
 
+        [SerializeField,
+         Tooltip("켜질 때 다른 창을 내린다. 옆에 같이 떠 있어야 하는 패널은 꺼 둔다 — " +
+                 "꺼도 ESC 로 닫히는 것은 그대로다.")]
+        private bool lowersOthers = true;
+
+        /// <summary>지금 떠 있는 창이 하나라도 있는가.</summary>
+        public static bool AnyOpen
+        {
+            get
+            {
+                for (var i = Open.Count - 1; i >= 0; i--)
+                {
+                    if (Open[i] != null)
+                        return true;
+
+                    Open.RemoveAt(i);
+                }
+
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 가장 나중에 열린 창 하나를 닫는다. 닫았으면 true.
+        ///
+        /// ESC 는 "지금 보고 있는 것"을 닫는 열쇠다. 여러 개가 떠 있어도 한 번에 하나씩
+        /// 닫혀야 뒤로 물러나는 느낌이 나고, 실수로 눌렀을 때 되돌릴 여지가 남는다.
+        /// </summary>
+        public static bool CloseTopmost()
+        {
+            for (var i = Open.Count - 1; i >= 0; i--)
+            {
+                var window = Open[i];
+                if (window == null)
+                {
+                    Open.RemoveAt(i);
+                    continue;
+                }
+
+                window.gameObject.SetActive(false);
+                return true;
+            }
+
+            return false;
+        }
+
         private void OnEnable()
         {
             for (var i = Open.Count - 1; i >= 0; i--)
@@ -36,7 +82,7 @@ namespace _01.Code.UI
                     continue;
                 }
 
-                if (other == this)
+                if (other == this || !lowersOthers)
                     continue;
 
                 other.gameObject.SetActive(false);

@@ -107,7 +107,22 @@ namespace _01.Code.UI
                 return;
             }
 
-            Toggle(!window.activeSelf);
+            // ESC 는 "지금 보고 있는 것"을 닫는 열쇠다. 설정이 떠 있으면 설정을 닫는다.
+            if (window != null && window.activeSelf)
+            {
+                Toggle(false);
+                return;
+            }
+
+            // 다른 창이 떠 있는데 설정을 새로 열면, 닫으려고 누른 키가 창을 하나 더 얹는다.
+            // 그 경우에는 떠 있는 창을 대신 닫아 준다.
+            if (ExclusiveWindow.CloseTopmost())
+            {
+                GameSfxPlayer.Play(GameSfxCue.UiClose);
+                return;
+            }
+
+            Toggle(true);
         }
 
         /// <summary>
