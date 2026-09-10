@@ -230,7 +230,7 @@ namespace _01.Code.Dialogue
 
             guidedStep = GuidedStartTutorialStep.BuildFirstRoom;
             PlayGuidedMessage(
-                "첫 지령 · 봉인된 타일을 열어 던전의 첫 방을 만드십시오.");
+                "밝은 타일을 눌러 던전의 첫 방을 파세요.");
             guidedLockedNode = ResolvePreferredLockedNode();
             TutorialInputGate.OnlyLockedNode(guidedLockedNode);
             HighlightBuildTarget();

@@ -42,6 +42,9 @@ namespace _01.Code.Core
         {
             HandleZoom();
 
+            if (MoveLocked)
+                return;
+
             var moveInput = inputData != null ? inputData.MovementKey : _directMoveInput;
             if (moveInput.sqrMagnitude <= Mathf.Epsilon)
                 return;
@@ -66,6 +69,15 @@ namespace _01.Code.Core
         /// 화면을 고정해 두는 편이 처음 하는 사람에게도 덜 헷갈린다.
         /// </summary>
         public static bool ZoomLocked { get; set; }
+
+        /// <summary>
+        /// 화면 이동을 잠근다.
+        ///
+        /// 튜토리얼은 누르는 것 하나만 가르치는 동안 나머지를 다 잠가 둔다. 처음 하는 사람이
+        /// 화면을 밀어 놓고 길을 잃으면, 무엇을 하라는 안내보다 "여기가 어디지"가 먼저 온다.
+        /// 움직이는 법은 다른 것을 다 해 본 뒤에 따로 가르친다.
+        /// </summary>
+        public static bool MoveLocked { get; set; }
 
         private void HandleZoom()
         {

@@ -2,6 +2,7 @@ using _01.Code.Buildings;
 using _01.Code.MapCreateSystem;
 using _01.Code.Manager;
 using _01.Code.Units;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 
@@ -22,6 +23,13 @@ namespace _01.Code.UI
     /// 눌러야 하는 곳만 남기고 화면을 덮는다. 어두워진 쪽은 덮개가 클릭을 받아 삼키므로,
     /// 밝은 구멍만 눌린다. 첫 판에 무엇부터 눌러야 하는지 모르는 사람에게는 글보다 이쪽이 확실하다.
     ///
+    /// 그동안 누르는 것 말고는 다 잠근다 — 화면을 밀 수도 줌을 바꿀 수도 없다. 처음 하는
+    /// 사람이 지도를 밀어 놓고 길을 잃으면, 무엇을 하라는 안내보다 "여기가 어디지"가 먼저 온다.
+    /// 움직이는 법은 나머지를 다 해 본 뒤에 한 칸을 따로 내어 가르친다.
+    ///
+    /// 칸이 바뀔 때 화면도 그쪽으로 미끄러진다. 지도 반대편을 가리키면 덮개만 옮겨서는
+    /// 무엇을 가리키는지 못 찾는다.
+    ///
     /// 덮개를 못 펴면 아무것도 안 덮는다. 한 칸에서 오래 막혀 있어도 스스로 걷는다.
     /// 안내가 틀리는 것보다 판이 멈추는 것이 훨씬 나쁘다.
     /// </summary>
@@ -32,6 +40,7 @@ namespace _01.Code.UI
             BuildRoom,
             DeployUnit,
             BuildPortal,
+            LearnMove,
             SurviveWave,
             Done,
         }
@@ -62,9 +71,21 @@ namespace _01.Code.UI
         [SerializeField, Min(0.1f), Tooltip("방 하나를 덮을 월드 반지름. 구멍 크기를 재는 기준.")]
         private float spotlightWorldRadius = 2.4f;
 
+        [Header("Pacing")]
+        [SerializeField, Min(0f), Tooltip("한 칸을 최소 이만큼은 보여 준다. 조건이 이미 맞아도 여러 칸을 한꺼번에 건너뛰지 않게.")]
+        private float minStepSeconds = 1.6f;
+
+        [SerializeField, Min(0f), Tooltip("카메라가 다음 자리로 옮겨가는 데 걸리는 시간(초).")]
+        private float cameraGlideSeconds = 0.7f;
+
+        [SerializeField, Min(0.1f), Tooltip("WASD 칸을 넘기려면 화면을 이만큼 밀어야 한다(월드 단위).")]
+        private float moveLessonDistance = 3.5f;
+
         [SerializeField, Min(0.01f), Tooltip("구멍이 다음 자리로 옮겨가는 데 걸리는 시간(초). 툭 튀지 않게 한다.")]
         private float holeGlideSeconds = 0.28f;
 
+        private Vector3 _moveStartPosition;
+        private Tween _cameraTween;
         private Rect _hole;
         private Rect _holeTarget;
         private bool _hasHole;
@@ -79,12 +100,16 @@ namespace _01.Code.UI
             _stepAge = 0f;
             _released = false;
             _hasHole = false;
+            var camera = Camera.main;
+            if (camera != null)
+                _moveStartPosition = camera.transform.position;
             Render();
         }
 
         private void OnDisable()
         {
-            Core.InputSystemCameraMover.ZoomLocked = false;
+            ReleaseControlLocks();
+            _cameraTween?.Kill();
             HideSpotlight();
         }
 
@@ -95,8 +120,7 @@ namespace _01.Code.UI
 
             _stepAge += Time.unscaledDeltaTime;
 
-            // 안내가 지도의 한 곳을 비추는 동안 줌이 바뀌면 비추던 자리가 어긋난다.
-            Core.InputSystemCameraMover.ZoomLocked = forceStepOrder && !_released;
+            ApplyControlLocks();
 
             // 판을 살피는 건 0.25초마다면 충분하다. 사람이 방을 짓는 속도에 견주면 즉시다.
             _timer -= Time.unscaledDeltaTime;
@@ -104,21 +128,18 @@ namespace _01.Code.UI
             {
                 _timer = pollInterval;
 
-                var next = Resolve(_step);
-                if (next != _step)
+                // 한 칸을 최소한 이만큼은 보여 준다. 판을 시작할 때 이미 조건이 맞아 있는 칸이
+                // 있으면(예: 방이 하나 지어진 채로 불러온 판) 안내가 여러 칸을 한 프레임에
+                // 지나가 버려, 읽을 새도 없이 마지막 줄만 남는다.
+                if (_stepAge >= minStepSeconds)
                 {
-                    _step = next;
-                    _stepAge = 0f;
-                    _released = false;
-                    Render();
-
-                    if (_step == Step.Done)
-                    {
-                        Core.InputSystemCameraMover.ZoomLocked = false;
-                        HideSpotlight();
-                        return;
-                    }
+                    var next = Resolve(_step);
+                    if (next != _step)
+                        EnterStep(next);
                 }
+
+                if (_step == Step.Done)
+                    return;
 
                 ApplyGate();
             }
@@ -126,6 +147,82 @@ namespace _01.Code.UI
             // 구멍을 옮기는 건 매 프레임이다. 살피는 박자에 맞춰 움직이면 초당 네 번씩
             // 툭툭 건너뛰어, 안내가 따라오는 게 아니라 깜빡이는 것처럼 보인다.
             GlideHole();
+        }
+
+        /// <summary>
+        /// 다음 칸으로 넘어간다.
+        ///
+        /// 넘어가는 순간에만 할 일이 몇 가지 있다 — 화면을 그쪽으로 옮기고, 시계를 되돌리고,
+        /// WASD 칸이면 이동을 풀어 주고 기준 위치를 잡는다.
+        /// </summary>
+        private void EnterStep(Step next)
+        {
+            _step = next;
+            _stepAge = 0f;
+            _released = false;
+            Render();
+
+            if (_step == Step.Done)
+            {
+                ReleaseControlLocks();
+                HideSpotlight();
+                return;
+            }
+
+            // 앞 칸의 화면 이동을 먼저 끊는다. 살아 있는 채로 기준 위치를 잡으면, WASD 칸이
+            // 손도 대기 전에 "움직였다"고 판단해 저절로 넘어간다.
+            _cameraTween?.Kill();
+
+            var camera = Camera.main;
+            if (camera != null)
+                _moveStartPosition = camera.transform.position;
+
+            GlideCameraTo(ResolveTargetNode());
+        }
+
+        /// <summary>
+        /// 화면을 다음 목표 쪽으로 옮긴다.
+        ///
+        /// 안내가 지도 반대편을 가리키면, 덮개만 옮겨서는 무엇을 가리키는지 못 찾는다.
+        /// 화면이 따라가 줘야 "저기구나"가 된다. 툭 순간이동하면 어디서 어디로 갔는지 모르므로
+        /// 미끄러뜨린다 — 그 사이가 지금 어디를 보고 있었는지 알려 주는 유일한 단서다.
+        /// </summary>
+        private void GlideCameraTo(Node node)
+        {
+            var camera = Camera.main;
+            if (camera == null || node == null)
+                return;
+
+            var from = camera.transform.position;
+            var to = new Vector3(node.transform.position.x, node.transform.position.y, from.z);
+
+            _cameraTween?.Kill();
+            _cameraTween = camera.transform
+                .DOMove(to, cameraGlideSeconds)
+                .SetEase(Ease.InOutSine)
+                .SetUpdate(true)
+                .SetLink(gameObject);
+        }
+
+        /// <summary>
+        /// 지금 칸에 맞게 조작을 잠근다.
+        ///
+        /// 누르는 것 하나만 가르치는 동안에는 화면 이동도 줌도 잠근다. 처음 하는 사람이 화면을
+        /// 밀어 놓고 길을 잃으면, 무엇을 하라는 안내보다 "여기가 어디지"가 먼저 온다.
+        ///
+        /// WASD 칸에서만 이동을 풀어 준다. 그 칸의 배울 거리가 바로 그것이다.
+        /// </summary>
+        private void ApplyControlLocks()
+        {
+            var guiding = forceStepOrder && !_released;
+            Core.InputSystemCameraMover.ZoomLocked = guiding;
+            Core.InputSystemCameraMover.MoveLocked = guiding && _step != Step.LearnMove;
+        }
+
+        private static void ReleaseControlLocks()
+        {
+            Core.InputSystemCameraMover.ZoomLocked = false;
+            Core.InputSystemCameraMover.MoveLocked = false;
         }
 
         /// <summary>구멍을 목표 자리로 조금씩 옮긴다. 칸이 바뀔 때 다음 자리로 미끄러져 간다.</summary>
@@ -195,6 +292,13 @@ namespace _01.Code.UI
         /// </summary>
         private bool TryResolveHole(out Rect rect)
         {
+            if (_step == Step.LearnMove)
+            {
+                // 배울 것이 화면을 미는 일이라 가릴 자리가 없다. 덮개를 걷고 글만 남긴다.
+                rect = default;
+                return false;
+            }
+
             if (_step == Step.SurviveWave)
                 return TryBuildButtonRect(out rect);
 
@@ -376,14 +480,33 @@ namespace _01.Code.UI
         }
 
         /// <summary>이 칸이 끝났는가. 끝났으면 다음 칸을, 아니면 그대로 돌려준다.</summary>
-        private static Step Resolve(Step step) => step switch
+        private Step Resolve(Step step) => step switch
         {
             Step.BuildRoom => HasNonPortalBuilding ? Step.DeployUnit : step,
             Step.DeployUnit => HasDeployedUnit ? Step.BuildPortal : step,
-            Step.BuildPortal => HasPortal ? Step.SurviveWave : step,
+            Step.BuildPortal => HasPortal ? Step.LearnMove : step,
+            Step.LearnMove => HasCameraMoved ? Step.SurviveWave : step,
             Step.SurviveWave => IsWaveRunning ? Step.Done : step,
             _ => Step.Done,
         };
+
+        /// <summary>
+        /// 화면을 직접 밀어 봤는가.
+        ///
+        /// 이 칸만은 무엇을 지었는지가 아니라 손을 써 봤는지를 본다. 움직이는 법은 결과가
+        /// 판에 남지 않으므로, 카메라가 처음 자리에서 얼마나 떠났는지로 판단할 수밖에 없다.
+        /// </summary>
+        private bool HasCameraMoved
+        {
+            get
+            {
+                var camera = Camera.main;
+                if (camera == null)
+                    return true;
+
+                return Vector2.Distance(camera.transform.position, _moveStartPosition) >= moveLessonDistance;
+            }
+        }
 
         /// <summary>포탈 말고 지어 둔 것이 있는가. 포탈은 따로 짚어야 하므로 여기서 뺀다.</summary>
         private static bool HasNonPortalBuilding
@@ -424,10 +547,11 @@ namespace _01.Code.UI
 
         private static string HintFor(Step step) => step switch
         {
-            Step.BuildRoom => "봉인된 타일을 눌러 첫 방을 만드십시오",
-            Step.DeployUnit => "유닛을 고용해 방에 배치하십시오  ·  유닛이 선 방이 방어선입니다",
-            Step.BuildPortal => "입구에 포탈을 세우십시오  ·  모험가는 그곳으로 들어옵니다",
-            Step.SurviveWave => "습격을 막아내면 금화가, 못 막으면 빚이 남습니다",
+            Step.BuildRoom => "밝은 타일을 눌러 첫 방을 파세요",
+            Step.DeployUnit => "유닛을 고용해 방에 세우세요  ·  유닛이 선 방이 방어선이 됩니다",
+            Step.BuildPortal => "입구에 포탈을 세우세요  ·  모험가는 그곳으로 들어옵니다",
+            Step.LearnMove => "W A S D 로 던전을 둘러보세요",
+            Step.SurviveWave => "준비됐다면 습격을 시작하세요  ·  막아내면 금화가, 뚫리면 빚이 남습니다",
             _ => string.Empty,
         };
     }
