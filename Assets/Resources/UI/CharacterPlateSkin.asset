@@ -12,8 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c6e9a4df8b17b0a2d3e456789012345a, type: 3}
   m_Name: CharacterPlateSkin
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Entities.CharacterPlateSkinSO
-  <Plate>k__BackingField: {fileID: 21300000, guid: a8fccef2c0e4aad4a8ec27c19cb4f4ac, type: 3}
-  <PlateColor>k__BackingField: {r: 0.16, g: 0.13, b: 0.15, a: 0.72}
-  <PlateWidthFactor>k__BackingField: 1.35
-  <PlateFlatten>k__BackingField: 0.42
-  <GlowScale>k__BackingField: 1.28
+  <Frame>k__BackingField: {fileID: 21300000, guid: c554fdfbdaf25784d9c4eb83c40c40b1, type: 3}
+  <FrameColor>k__BackingField: {r: 0.82, g: 0.76, b: 0.66, a: 0.55}
+  <FramePadding>k__BackingField: 1.18

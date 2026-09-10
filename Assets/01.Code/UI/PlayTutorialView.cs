@@ -62,6 +62,12 @@ namespace _01.Code.UI
         [SerializeField, Min(0.1f), Tooltip("방 하나를 덮을 월드 반지름. 구멍 크기를 재는 기준.")]
         private float spotlightWorldRadius = 2.4f;
 
+        [SerializeField, Min(0.01f), Tooltip("구멍이 다음 자리로 옮겨가는 데 걸리는 시간(초). 툭 튀지 않게 한다.")]
+        private float holeGlideSeconds = 0.28f;
+
+        private Rect _hole;
+        private Rect _holeTarget;
+        private bool _hasHole;
         private Step _step = Step.BuildRoom;
         private float _timer;
         private float _stepAge;
@@ -72,11 +78,13 @@ namespace _01.Code.UI
             _timer = 0f;
             _stepAge = 0f;
             _released = false;
+            _hasHole = false;
             Render();
         }
 
         private void OnDisable()
         {
+            Core.InputSystemCameraMover.ZoomLocked = false;
             HideSpotlight();
         }
 
@@ -87,29 +95,53 @@ namespace _01.Code.UI
 
             _stepAge += Time.unscaledDeltaTime;
 
-            // 매 프레임 씬을 뒤질 일은 아니다. 사람이 방을 짓는 속도에 견주면 0.25초도 즉시다.
+            // 안내가 지도의 한 곳을 비추는 동안 줌이 바뀌면 비추던 자리가 어긋난다.
+            Core.InputSystemCameraMover.ZoomLocked = forceStepOrder && !_released;
+
+            // 판을 살피는 건 0.25초마다면 충분하다. 사람이 방을 짓는 속도에 견주면 즉시다.
             _timer -= Time.unscaledDeltaTime;
-            if (_timer > 0f)
-                return;
-
-            _timer = pollInterval;
-
-            var next = Resolve(_step);
-            if (next != _step)
+            if (_timer <= 0f)
             {
-                _step = next;
-                _stepAge = 0f;
-                _released = false;
-                Render();
+                _timer = pollInterval;
 
-                if (_step == Step.Done)
+                var next = Resolve(_step);
+                if (next != _step)
                 {
-                    HideSpotlight();
-                    return;
+                    _step = next;
+                    _stepAge = 0f;
+                    _released = false;
+                    Render();
+
+                    if (_step == Step.Done)
+                    {
+                        Core.InputSystemCameraMover.ZoomLocked = false;
+                        HideSpotlight();
+                        return;
+                    }
                 }
+
+                ApplyGate();
             }
 
-            ApplyGate();
+            // 구멍을 옮기는 건 매 프레임이다. 살피는 박자에 맞춰 움직이면 초당 네 번씩
+            // 툭툭 건너뛰어, 안내가 따라오는 게 아니라 깜빡이는 것처럼 보인다.
+            GlideHole();
+        }
+
+        /// <summary>구멍을 목표 자리로 조금씩 옮긴다. 칸이 바뀔 때 다음 자리로 미끄러져 간다.</summary>
+        private void GlideHole()
+        {
+            if (!_hasHole)
+                return;
+
+            var t = Mathf.Clamp01(Time.unscaledDeltaTime / Mathf.Max(0.01f, holeGlideSeconds));
+            _hole = new Rect(
+                Mathf.Lerp(_hole.x, _holeTarget.x, t),
+                Mathf.Lerp(_hole.y, _holeTarget.y, t),
+                Mathf.Lerp(_hole.width, _holeTarget.width, t),
+                Mathf.Lerp(_hole.height, _holeTarget.height, t));
+
+            ShowSpotlight(_hole);
         }
 
         /// <summary>
@@ -145,7 +177,14 @@ namespace _01.Code.UI
                 return;
             }
 
-            ShowSpotlight(rect);
+            _holeTarget = rect;
+
+            // 첫 구멍은 미끄러져 올 곳이 없으므로 그 자리에서 시작한다.
+            if (!_hasHole)
+            {
+                _hole = rect;
+                _hasHole = true;
+            }
         }
 
         /// <summary>
@@ -281,7 +320,11 @@ namespace _01.Code.UI
             panel.sizeDelta = new Vector2(Mathf.Max(0f, width), Mathf.Max(0f, height));
         }
 
-        private void HideSpotlight() => SetSpotlightVisible(false);
+        private void HideSpotlight()
+        {
+            _hasHole = false;
+            SetSpotlightVisible(false);
+        }
 
         private void SetSpotlightVisible(bool visible)
         {

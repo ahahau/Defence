@@ -59,8 +59,19 @@ namespace _01.Code.Core
             _directMoveInput = context.ReadValue<Vector2>();
         }
 
+        /// <summary>
+        /// 휠 줌을 잠근다. 튜토리얼이 화면을 붙잡아 두어야 할 때 쓴다.
+        ///
+        /// 안내가 지도 위의 한 곳을 비추는 동안 줌이 바뀌면 비추던 자리가 어긋난다.
+        /// 화면을 고정해 두는 편이 처음 하는 사람에게도 덜 헷갈린다.
+        /// </summary>
+        public static bool ZoomLocked { get; set; }
+
         private void HandleZoom()
         {
+            if (ZoomLocked)
+                return;
+
             if (Mouse.current == null)
                 return;
 

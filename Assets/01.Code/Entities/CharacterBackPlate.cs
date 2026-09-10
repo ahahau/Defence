@@ -3,64 +3,57 @@ using UnityEngine;
 namespace _01.Code.Entities
 {
     /// <summary>
-    /// 캐릭터 발밑에 까는 받침과, 그 바깥을 두르는 발광 링.
+    /// 캐릭터를 두르는 네모 테두리.
     ///
-    /// 유닛과 적이 바닥 그림 위에 그냥 얹혀 있어서 어디에 서 있는 것인지 읽히지 않았다.
-    /// 발밑에 받침을 하나 깔면 바닥에 붙어 선 것으로 보인다.
+    /// 유닛과 침입자가 바닥 그림 위에 그냥 얹혀 있어서 어디까지가 한 명인지 읽히지 않았다.
+    /// 네모로 한 번 둘러 주면 각자가 하나의 말로 보인다.
     ///
-    /// 그리는 순서가 이 컴포넌트의 전부다:
+    /// 처음에는 발밑에 타원 받침을 깔았는데 그건 요청과 다른 물건이었다. 받침은 걷어냈고,
+    /// 지금 남은 것은 테두리 하나뿐이다.
     ///
-    ///   발광 링 (등급 색, 받침보다 크게)  ← 받침 뒤. 크기 차이만큼 바깥으로 삐져나온다
-    ///   받침
-    ///   캐릭터
-    ///
-    /// 발광을 받침보다 앞에 두면 받침을 덮어 버리고, 같은 크기로 두면 받침에 완전히 가려
-    /// 없는 것과 같다. 뒤에 두되 더 크게 만드는 것이 빛이 테두리로만 보이는 유일한 배치다.
+    /// 9슬라이스로 늘린다. 그냥 늘리면 모서리 장식이 캐릭터 비율만큼 찌그러진다. 다만 경계
+    /// 합보다 작게 그리면 가운데가 없어져 모서리끼리 겹치므로, 최소 크기를 경계 합 위로 잡는다.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CharacterBackPlate : MonoBehaviour
     {
         private const string SkinResourcePath = "UI/CharacterPlateSkin";
-        private const string PlateObjectName = "BackPlate";
-        private const string GlowObjectName = "PlateGlow";
+        private const string FrameObjectName = "CharacterFrame";
 
         private static CharacterPlateSkinSO _skin;
         private static bool _skinLoaded;
 
         private SpriteRenderer _source;
-        private SpriteRenderer _plate;
-        private SpriteRenderer _glow;
+        private SpriteRenderer _frame;
 
-        /// <summary>발광 링의 색. 등급이 정해지면 적 쪽에서 넣어 준다.</summary>
+        /// <summary>테두리 색. 등급이 정해지면 침입자 쪽에서 넣어 준다.</summary>
         public void SetGlowColor(Color color)
         {
-            if (_glow != null)
-                _glow.color = color;
+            if (_frame != null)
+                _frame.color = color;
         }
 
-        /// <summary>받침을 세운다. 캐릭터 그림이 정해진 뒤에 불러야 크기를 잴 수 있다.</summary>
+        /// <summary>테두리를 세운다. 캐릭터 그림이 정해진 뒤에 불러야 크기를 잴 수 있다.</summary>
         public void Initialize(SpriteRenderer source)
         {
             _source = source;
             var skin = ResolveSkin();
 
-            if (_source == null || skin == null || skin.Plate == null)
+            if (_source == null || skin == null || skin.Frame == null)
             {
                 enabled = false;
                 return;
             }
 
-            _glow = EnsureChild(GlowObjectName, ref _glow);
-            _plate = EnsureChild(PlateObjectName, ref _plate);
-
-            _glow.sprite = skin.Plate;
-            _plate.sprite = skin.Plate;
-            _plate.color = skin.PlateColor;
+            _frame = EnsureFrame();
+            _frame.sprite = skin.Frame;
+            _frame.color = skin.FrameColor;
+            _frame.drawMode = SpriteDrawMode.Sliced;
 
             Layout(skin);
         }
 
-        /// <summary>캐릭터 그림이 바뀌면 받침 크기도 다시 잡는다.</summary>
+        /// <summary>캐릭터 그림이 바뀌면 테두리 크기도 다시 잡는다.</summary>
         public void Refresh()
         {
             var skin = ResolveSkin();
@@ -72,53 +65,46 @@ namespace _01.Code.Entities
         {
             if (_source.sprite == null)
             {
-                SetVisible(false);
+                if (_frame != null)
+                    _frame.enabled = false;
                 return;
             }
 
-            SetVisible(true);
+            _frame.enabled = true;
 
-            // 받침은 캐릭터 그림의 밑변에 맞춘다. 가운데에 두면 공중에 뜬 고리가 된다.
             var bounds = _source.sprite.bounds;
-            var width = bounds.size.x * skin.PlateWidthFactor;
-            var plateSprite = _plate.sprite.bounds.size;
-            var scaleX = plateSprite.x > 0f ? width / plateSprite.x : 1f;
-            var scale = new Vector3(scaleX, scaleX * skin.PlateFlatten, 1f);
-            var footY = bounds.min.y;
+            var size = new Vector2(bounds.size.x, bounds.size.y) * skin.FramePadding;
 
-            _plate.transform.localScale = scale;
-            _plate.transform.localPosition = new Vector3(0f, footY, 0f);
+            // 9슬라이스는 경계 합보다 작게 그릴 수 없다. 작게 주면 가운데가 사라지고 모서리가
+            // 서로 겹쳐 뭉개진다. 스프라이트가 정한 최소치 아래로는 내려가지 않게 잡는다.
+            var border = skin.Frame.border;
+            var ppu = skin.Frame.pixelsPerUnit;
+            var minWidth = (border.x + border.z) / ppu;
+            var minHeight = (border.y + border.w) / ppu;
+            size.x = Mathf.Max(size.x, minWidth * 1.05f);
+            size.y = Mathf.Max(size.y, minHeight * 1.05f);
 
-            _glow.transform.localScale = scale * skin.GlowScale;
-            _glow.transform.localPosition = _plate.transform.localPosition;
+            _frame.size = size;
+            _frame.transform.localPosition = bounds.center;
+            _frame.transform.localScale = Vector3.one;
 
-            // 발광 → 받침 → 캐릭터 순으로 뒤에서부터 쌓는다.
-            _glow.sortingLayerID = _source.sortingLayerID;
-            _plate.sortingLayerID = _source.sortingLayerID;
-            _glow.sortingOrder = _source.sortingOrder - 3;
-            _plate.sortingOrder = _source.sortingOrder - 2;
+            // 캐릭터 바로 뒤에 둔다. 앞에 두면 테두리 안쪽 여백이 얼굴을 덮는다.
+            _frame.sortingLayerID = _source.sortingLayerID;
+            _frame.sortingOrder = _source.sortingOrder - 1;
         }
 
-        private void SetVisible(bool visible)
+        private SpriteRenderer EnsureFrame()
         {
-            if (_plate != null) _plate.enabled = visible;
-            if (_glow != null) _glow.enabled = visible;
-        }
+            if (_frame != null)
+                return _frame;
 
-        private SpriteRenderer EnsureChild(string childName, ref SpriteRenderer cached)
-        {
-            if (cached != null)
-                return cached;
-
-            var existing = _source.transform.Find(childName);
+            var existing = _source.transform.Find(FrameObjectName);
             if (existing != null && existing.TryGetComponent<SpriteRenderer>(out var found))
                 return found;
 
-            var created = new GameObject(childName);
+            var created = new GameObject(FrameObjectName);
             created.transform.SetParent(_source.transform, false);
-            var renderer = created.AddComponent<SpriteRenderer>();
-            renderer.color = Color.white;
-            return renderer;
+            return created.AddComponent<SpriteRenderer>();
         }
 
         private static CharacterPlateSkinSO ResolveSkin()
@@ -129,7 +115,7 @@ namespace _01.Code.Entities
             _skinLoaded = true;
             _skin = Resources.Load<CharacterPlateSkinSO>(SkinResourcePath);
             if (_skin == null)
-                Debug.LogWarning($"{SkinResourcePath} 을 못 찾아 캐릭터 받침을 건너뜁니다.");
+                Debug.LogWarning($"{SkinResourcePath} 을 못 찾아 캐릭터 테두리를 건너뜁니다.");
 
             return _skin;
         }
