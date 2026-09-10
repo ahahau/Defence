@@ -30,6 +30,9 @@ namespace _01.Code.UI
     /// 칸이 바뀔 때 화면도 그쪽으로 미끄러진다. 지도 반대편을 가리키면 덮개만 옮겨서는
     /// 무엇을 가리키는지 못 찾는다.
     ///
+    /// 첫날 처음부터 시작한 판에서만 뜬다. 이어하기로 중간에 들어온 사람에게 "첫 방을 파세요"는
+    /// 안내가 아니라 방해다.
+    ///
     /// 덮개를 못 펴면 아무것도 안 덮는다. 한 칸에서 오래 막혀 있어도 스스로 걷는다.
     /// 안내가 틀리는 것보다 판이 멈추는 것이 훨씬 나쁘다.
     /// </summary>
@@ -84,6 +87,8 @@ namespace _01.Code.UI
         [SerializeField, Min(0.01f), Tooltip("구멍이 다음 자리로 옮겨가는 데 걸리는 시간(초). 툭 튀지 않게 한다.")]
         private float holeGlideSeconds = 0.28f;
 
+        private Node _cameraTargetNode;
+        private bool _dayChecked;
         private Vector3 _moveStartPosition;
         private Tween _cameraTween;
         private Rect _hole;
@@ -100,6 +105,8 @@ namespace _01.Code.UI
             _stepAge = 0f;
             _released = false;
             _hasHole = false;
+            _dayChecked = false;
+            _cameraTargetNode = null;
             var camera = Camera.main;
             if (camera != null)
                 _moveStartPosition = camera.transform.position;
@@ -128,6 +135,19 @@ namespace _01.Code.UI
             {
                 _timer = pollInterval;
 
+                // 첫날 처음부터 시작한 판에서만 가르친다. 이어하기로 5일차에 들어왔는데
+                // "첫 방을 파세요"가 뜨면 안내가 아니라 방해다.
+                if (!_dayChecked)
+                {
+                    _dayChecked = true;
+                    var day = DayManager.Current != null ? DayManager.Current.CurrentDay : 1;
+                    if (day > 1)
+                    {
+                        EnterStep(Step.Done);
+                        return;
+                    }
+                }
+
                 // 한 칸을 최소한 이만큼은 보여 준다. 판을 시작할 때 이미 조건이 맞아 있는 칸이
                 // 있으면(예: 방이 하나 지어진 채로 불러온 판) 안내가 여러 칸을 한 프레임에
                 // 지나가 버려, 읽을 새도 없이 마지막 줄만 남는다.
@@ -142,6 +162,10 @@ namespace _01.Code.UI
                     return;
 
                 ApplyGate();
+
+                // 한 칸 안에서도 겨눌 방이 옮겨간다 — 봉인을 열면 그 다음은 그 방에 짓는 일이다.
+                // 칸이 바뀔 때만 화면을 옮기면 그 사이를 못 따라가므로, 목표가 갈릴 때마다 옮긴다.
+                FollowTargetNode();
             }
 
             // 구멍을 옮기는 건 매 프레임이다. 살피는 박자에 맞춰 움직이면 초당 네 번씩
@@ -177,7 +201,27 @@ namespace _01.Code.UI
             if (camera != null)
                 _moveStartPosition = camera.transform.position;
 
-            GlideCameraTo(ResolveTargetNode());
+            _cameraTargetNode = ResolveTargetNode();
+            GlideCameraTo(_cameraTargetNode);
+        }
+
+        /// <summary>
+        /// 겨눈 방이 갈리면 화면도 따라 옮긴다.
+        ///
+        /// WASD 칸에서는 하지 않는다. 그 칸은 사람이 직접 미는 것을 배우는 자리라,
+        /// 화면이 저 혼자 움직이면 자기가 민 것인지 안내가 민 것인지 구분되지 않는다.
+        /// </summary>
+        private void FollowTargetNode()
+        {
+            if (_step == Step.LearnMove)
+                return;
+
+            var target = ResolveTargetNode();
+            if (target == _cameraTargetNode)
+                return;
+
+            _cameraTargetNode = target;
+            GlideCameraTo(target);
         }
 
         /// <summary>
@@ -314,9 +358,43 @@ namespace _01.Code.UI
             // 지을 차례이고, 없으면 아직 봉인을 열 차례다.
             Step.BuildRoom => FindUnlockedEmptyNode() ?? FindLockedNode(),
             Step.DeployUnit => FindUnlockedBuiltNode(),
-            Step.BuildPortal => FindUnlockedEmptyNode(),
+            Step.BuildPortal => FindEntranceCandidate(),
             _ => null,
         };
+
+        /// <summary>
+        /// 포탈을 세울 자리. 지도 바깥쪽 — 침입자가 들어오는 쪽 — 을 고른다.
+        ///
+        /// 그냥 "빈 방 아무거나"로 두면 첫 방 옆이 아니라 지도 반대편이 잡히기도 한다.
+        /// 포탈은 입구니까 가장자리에 서야 말이 되고, 안내도 옆 칸을 가리켜야 따라가기 쉽다.
+        ///
+        /// 아직 열린 빈 방이 없으면 봉인된 것 중에서 같은 기준으로 고른다. 그래야 "옆 칸을
+        /// 열고 → 거기에 포탈을 세운다"가 한 방향으로 이어진다.
+        /// </summary>
+        private static Node FindEntranceCandidate()
+        {
+            return PickOutermost(node => !IsLocked(node) && !node.HasAssignedBuilding)
+                   ?? PickOutermost(IsLocked);
+        }
+
+        /// <summary>가장 바깥(격자 x가 가장 작은) 방을 고른다.</summary>
+        private static Node PickOutermost(System.Func<Node, bool> accept)
+        {
+            Node best = null;
+            foreach (var node in Node.AllInstances)
+            {
+                if (node == null || !accept(node))
+                    continue;
+
+                if (best == null || node.GridPosition.x < best.GridPosition.x)
+                    best = node;
+            }
+
+            return best;
+        }
+
+        private static bool IsLocked(Node node) =>
+            node != null && node.name.StartsWith("LockedNode_", System.StringComparison.Ordinal);
 
         /// <summary>
         /// 습격 시작 버튼을 화면 네모로 잰다.
