@@ -64,6 +64,12 @@ namespace _01.Code.UI
         /// </summary>
         private int purchaseCount;
 
+        /// <summary>상인을 여는 버튼. 튜토리얼이 여기를 비춘다.</summary>
+        public RectTransform OpenButtonRect =>
+            openButton != null && openButton.gameObject.activeInHierarchy
+                ? openButton.transform as RectTransform
+                : null;
+
         public bool IsPanelOpen => panelRoot != null && panelRoot.activeInHierarchy;
         public int PurchaseCount => purchaseCount;
 

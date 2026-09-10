@@ -40,13 +40,25 @@ namespace _01.Code.UI
     {
         private enum Step
         {
+            // 첫날 — 조작을 잠그고 순서대로 이끈다.
             BuildRoom,
             DeployUnit,
             BuildPortal,
             LearnMove,
             SurviveWave,
+
+            // 첫날이 끝난 뒤. 새 기능이 열릴 날을 기다리며 아무것도 하지 않는다.
+            Idle,
+
+            // 뒷날 수업 — 비추기만 하고 잠그지는 않는다. 이미 판을 할 줄 아는 사람이다.
+            LearnMerchant,
+            LearnPower,
+
             Done,
         }
+
+        /// <summary>첫날의 이끄는 칸인가. 조작을 잠그는 것은 이 칸들뿐이다.</summary>
+        private bool IsFirstDayStep => _step <= Step.SurviveWave;
 
         [Header("UI")]
         [SerializeField] private GameObject root;
@@ -87,9 +99,17 @@ namespace _01.Code.UI
         [SerializeField, Min(0.1f), Tooltip("WASD 칸을 넘기려면 화면을 이만큼 밀어야 한다(월드 단위).")]
         private float moveLessonDistance = 3.5f;
 
+        [SerializeField, Min(1f), Tooltip("뒷날 수업 한 편을 띄워 두는 시간(초). 안 눌러도 이만큼 지나면 걷는다.")]
+        private float lessonSeconds = 10f;
+
         [SerializeField, Min(0.01f), Tooltip("구멍이 다음 자리로 옮겨가는 데 걸리는 시간(초). 툭 튀지 않게 한다.")]
         private float holeGlideSeconds = 0.28f;
 
+        private const int MerchantLessonDay = 2;
+        private const int PowerLessonDay = 3;
+
+        private bool _merchantTaught;
+        private bool _powerTaught;
         private Node _cameraTargetNode;
         private Vector3 _moveStartPosition;
         private Tween _cameraTween;
@@ -142,10 +162,9 @@ namespace _01.Code.UI
                 // 안내가 끝나지 않은 채 2일차로 넘어가면, 덮개가 화면을 덮고 조작이 잠긴 채로
                 // 그대로 남아 아무것도 못 하는 판이 됐다. 안내가 끝나는 조건을 습격 하나에만
                 // 걸어 둔 것이 잘못이었다 — 날짜는 무슨 일이 있어도 넘어간다.
-                var day = DayManager.Current != null ? DayManager.Current.CurrentDay : 1;
-                if (day > 1)
+                if (IsFirstDayStep && CurrentDay > 1)
                 {
-                    EnterStep(Step.Done);
+                    EnterStep(Step.Idle);
                     return;
                 }
 
@@ -185,6 +204,14 @@ namespace _01.Code.UI
             _step = next;
             _stepAge = 0f;
             _released = false;
+
+            // 한 번 꺼낸 수업은 다시 꺼내지 않는다. 들어서는 순간 기록해야, 중간에 어떻게
+            // 끝나든(눌렀든 시간이 지났든) 두 번 뜨지 않는다.
+            if (_step == Step.LearnMerchant)
+                _merchantTaught = true;
+            else if (_step == Step.LearnPower)
+                _powerTaught = true;
+
             Render();
 
             if (_step == Step.Done)
@@ -265,7 +292,7 @@ namespace _01.Code.UI
         /// </summary>
         private void ApplyControlLocks()
         {
-            var guiding = forceStepOrder && !_released;
+            var guiding = forceStepOrder && !_released && IsFirstDayStep;
             Core.InputSystemCameraMover.ZoomLocked = guiding;
             Core.InputSystemCameraMover.MoveLocked = guiding && _step != Step.LearnMove;
         }
@@ -343,19 +370,36 @@ namespace _01.Code.UI
         /// </summary>
         private bool TryResolveHole(out Rect rect)
         {
-            if (_step == Step.LearnMove)
+            rect = default;
+
+            switch (_step)
             {
                 // 배울 것이 화면을 미는 일이라 가릴 자리가 없다. 덮개를 걷고 글만 남긴다.
-                rect = default;
-                return false;
+                case Step.LearnMove:
+                case Step.Idle:
+                    return false;
+
+                case Step.SurviveWave:
+                    return TryBuildRect(waveView != null ? waveView.StartButtonRect : ResolveWaveButton(), out rect);
+
+                case Step.LearnMerchant:
+                    return TryBuildRect(MerchantButton, out rect);
+
+                case Step.LearnPower:
+                    return TryBuildRect(PowerButtons, out rect);
+
+                default:
+                    var node = ResolveTargetNode();
+                    return node != null && TryBuildNodeRect(node, out rect);
             }
+        }
 
-            if (_step == Step.SurviveWave)
-                return TryBuildButtonRect(out rect);
-
-            rect = default;
-            var node = ResolveTargetNode();
-            return node != null && TryBuildNodeRect(node, out rect);
+        private RectTransform ResolveWaveButton()
+        {
+            // 습격 화면은 씬이 아니라 프리팹 안에 있어서 미리 물려 둘 수가 없다. 한 번 찾아
+            // 들고 있는다 — 판이 도는 동안 이 화면이 갈리지는 않는다.
+            waveView = FindAnyObjectByType<WaveView>();
+            return waveView != null ? waveView.StartButtonRect : null;
         }
 
         /// <summary>이 칸에서 눌러야 할 방. 못 고르면 아무것도 덮지 않는다.</summary>
@@ -409,16 +453,10 @@ namespace _01.Code.UI
         /// 버튼은 이미 화면 위의 것이라 방처럼 투영할 필요가 없다. 다만 캔버스가 화면에 직접
         /// 그리는지 카메라를 거치는지에 따라 모서리를 화면 좌표로 옮기는 방법이 달라진다.
         /// </summary>
-        private bool TryBuildButtonRect(out Rect rect)
+        private static bool TryBuildRect(RectTransform target, out Rect rect)
         {
             rect = default;
 
-            // 습격 화면은 씬이 아니라 프리팹 안에 있어서 미리 물려 둘 수가 없다. 한 번 찾아
-            // 들고 있는다 — 판이 도는 동안 이 화면이 갈리지는 않는다.
-            if (waveView == null)
-                waveView = FindAnyObjectByType<WaveView>();
-
-            var target = waveView != null ? waveView.StartButtonRect : null;
             if (target == null || !target.gameObject.activeInHierarchy)
                 return false;
 
@@ -571,9 +609,68 @@ namespace _01.Code.UI
             Step.DeployUnit => HasDeployedUnit ? Step.BuildPortal : step,
             Step.BuildPortal => HasPortal ? Step.LearnMove : step,
             Step.LearnMove => HasCameraMoved ? Step.SurviveWave : step,
-            Step.SurviveWave => IsWaveRunning ? Step.Done : step,
+            Step.SurviveWave => IsWaveRunning ? Step.Idle : step,
+            Step.Idle => ResolveIdle(),
+
+            // 뒷날 수업은 그 기능을 실제로 열어 보면 끝난다. 안 열어도 시간이 지나면 걷는다 —
+            // 이미 아는 사람을 붙잡아 둘 이유가 없다.
+            Step.LearnMerchant => MerchantOpened || _stepAge >= lessonSeconds ? Step.Idle : step,
+            Step.LearnPower => _stepAge >= lessonSeconds ? Step.Idle : step,
             _ => Step.Done,
         };
+
+        /// <summary>
+        /// 쉬는 동안 새로 열린 기능이 있는지 본다.
+        ///
+        /// 해금은 날짜로 정해져 있으므로 그 날이 오면 한 번씩 짚어 준다. 한 번 가르친 것은
+        /// 다시 꺼내지 않는다 — 매일 같은 걸 알려 주면 안내가 아니라 잔소리다.
+        /// </summary>
+        private Step ResolveIdle()
+        {
+            // 가르칠 것이 더 없으면 아주 끝낸다. 안 그러면 판이 끝날 때까지 0.25초마다
+            // 씬을 뒤지며 이미 다 가르친 것을 다시 찾는다.
+            if (_merchantTaught && _powerTaught)
+                return Step.Done;
+
+            var day = CurrentDay;
+
+            if (!_merchantTaught && day >= MerchantLessonDay && MerchantButton != null)
+                return Step.LearnMerchant;
+
+            if (!_powerTaught && day >= PowerLessonDay && PowerButtons != null)
+                return Step.LearnPower;
+
+            return Step.Idle;
+        }
+
+        private static int CurrentDay => DayManager.Current != null ? DayManager.Current.CurrentDay : 1;
+
+        private static bool MerchantOpened
+        {
+            get
+            {
+                var merchant = FindAnyObjectByType<MerchantPanelView>();
+                return merchant != null && merchant.IsPanelOpen;
+            }
+        }
+
+        private static RectTransform MerchantButton
+        {
+            get
+            {
+                var merchant = FindAnyObjectByType<MerchantPanelView>();
+                return merchant != null ? merchant.OpenButtonRect : null;
+            }
+        }
+
+        private static RectTransform PowerButtons
+        {
+            get
+            {
+                var hud = FindAnyObjectByType<DungeonPowerHudView>();
+                return hud != null ? hud.PowerButtonsRect : null;
+            }
+        }
 
         /// <summary>
         /// 화면을 직접 밀어 봤는가.
@@ -637,6 +734,8 @@ namespace _01.Code.UI
             Step.BuildPortal => "입구에 포탈을 세우세요  ·  모험가는 그곳으로 들어옵니다",
             Step.LearnMove => "W A S D 로 던전을 둘러보세요",
             Step.SurviveWave => "준비됐다면 습격을 시작하세요  ·  막아내면 금화가, 뚫리면 빚이 남습니다",
+            Step.LearnMerchant => "떠돌이 상인이 왔습니다  ·  유물은 유닛보다 비싸지만 조합이 붙습니다",
+            Step.LearnPower => "던전의 권능이 열렸습니다  ·  습격 중에 눌러 구역을 지정하세요",
             _ => string.Empty,
         };
     }

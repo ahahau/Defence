@@ -24,6 +24,12 @@ namespace _01.Code.UI
 
         [SerializeField] private Transform powerButtonRoot;
 
+        /// <summary>권능 버튼들이 늘어선 줄. 튜토리얼이 여기를 비춘다.</summary>
+        public RectTransform PowerButtonsRect =>
+            powerButtonRoot != null && powerButtonRoot.gameObject.activeInHierarchy
+                ? powerButtonRoot as RectTransform
+                : null;
+
         [SerializeField] private Color armedColor = new(0.85f, 0.65f, 0.25f, 1f);
         [SerializeField] private Color readyColor = new(0.20f, 0.13f, 0.07f, 1f);
         [SerializeField] private Color blockedColor = new(0.12f, 0.10f, 0.10f, 1f);
