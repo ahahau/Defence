@@ -23641,14 +23641,6 @@ PrefabInstance:
       propertyPath: m_sharedMaterial
       value: 
       objectReference: {fileID: -2807434534843203937, guid: 3f8032d827a35ae408110e189f3a4ca7, type: 2}
-    - target: {fileID: 5359579821339085824, guid: 01596db6d5c622249bef4a2de0e84cff, type: 3}
-      propertyPath: m_Type
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5359579821339085824, guid: 01596db6d5c622249bef4a2de0e84cff, type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: 21300000, guid: c408723e5b65f418fb6e6638f44eb182, type: 3}
     - target: {fileID: 5548167907848670440, guid: 01596db6d5c622249bef4a2de0e84cff, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -23725,34 +23717,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7768245985868598965, guid: 01596db6d5c622249bef4a2de0e84cff, type: 3}
-      propertyPath: m_Type
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7768245985868598965, guid: 01596db6d5c622249bef4a2de0e84cff, type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: 21300000, guid: 7e973ef21f5f84dd189ef4488ffe684d, type: 3}
     - target: {fileID: 7782385228538577769, guid: 01596db6d5c622249bef4a2de0e84cff, type: 3}
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7968547056537418474, guid: 01596db6d5c622249bef4a2de0e84cff, type: 3}
-      propertyPath: m_Type
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7968547056537418474, guid: 01596db6d5c622249bef4a2de0e84cff, type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: 21300000, guid: c408723e5b65f418fb6e6638f44eb182, type: 3}
-    - target: {fileID: 8096343362534647650, guid: 01596db6d5c622249bef4a2de0e84cff, type: 3}
-      propertyPath: m_Type
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8096343362534647650, guid: 01596db6d5c622249bef4a2de0e84cff, type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: 21300000, guid: c408723e5b65f418fb6e6638f44eb182, type: 3}
     - target: {fileID: 8216158852955065554, guid: 01596db6d5c622249bef4a2de0e84cff, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -23785,14 +23753,6 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8293080374994775040, guid: 01596db6d5c622249bef4a2de0e84cff, type: 3}
-      propertyPath: m_Type
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8293080374994775040, guid: 01596db6d5c622249bef4a2de0e84cff, type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: 21300000, guid: c408723e5b65f418fb6e6638f44eb182, type: 3}
     - target: {fileID: 8577933860524415318, guid: 01596db6d5c622249bef4a2de0e84cff, type: 3}
       propertyPath: installButton
       value: 
@@ -24893,7 +24853,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -34}
+  m_AnchoredPosition: {x: 0, y: -108}
   m_SizeDelta: {x: 860, y: 56}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &7700000000003003

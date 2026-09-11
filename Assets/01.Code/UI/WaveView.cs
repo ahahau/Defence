@@ -76,6 +76,49 @@ namespace _01.Code.UI
 
         public RectTransform StartButtonRect => startButton != null ? startButton.transform as RectTransform : null;
 
+        /// <summary>안내가 시작 버튼을 붙잡고 있는가.</summary>
+        private bool _startHeldByTutorial;
+
+        /// <summary>
+        /// <see cref="Start"/> 가 끝났는가.
+        ///
+        /// 안내는 이 화면보다 먼저 깨어나서 버튼을 붙잡는다. 그 자리에서 바로 버튼을 꺼 버리면
+        /// <see cref="EnsureObjectiveToggle"/> 가 꺼진 사각형의 높이를 재게 되고, 목표 전환 버튼이
+        /// 엉뚱한 자리에 선다. 그래서 붙잡는 것은 기록만 하고 반영은 여기서 한다.
+        /// </summary>
+        private bool _started;
+
+        /// <summary>
+        /// 안내가 습격 시작 버튼을 붙잡거나 놓는다.
+        ///
+        /// WASD 를 가르치는 칸에서는 화면을 덮지 않는다 — 배울 거리가 화면을 미는 일이라 가릴
+        /// 자리가 없다. 그래서 덮개로는 시작 버튼을 막을 수 없고, 눌러 버리면 배울 것을 건너뛴 채
+        /// 습격이 시작된다. 버튼을 쥐고 있는 이쪽에서 막아야 한다.
+        ///
+        /// 잠그는 대신 감춘다. 눌리지 않는 버튼이 놓여 있으면 왜 안 되는지 알 길이 없지만,
+        /// 없다가 나타나면 그것이 다음에 할 일이라는 뜻이 된다.
+        /// </summary>
+        public void SetStartButtonHeld(bool held)
+        {
+            if (_startHeldByTutorial == held)
+                return;
+
+            _startHeldByTutorial = held;
+
+            // 아직 준비 전이면 기록만 한다. Start 가 마무리하면서 반영한다.
+            if (!_started)
+                return;
+
+            if (held)
+            {
+                SetStartButtonVisible(false);
+                return;
+            }
+
+            SetStartButtonVisible(true);
+            RefreshStartButton();
+        }
+
         private void Start()
         {
             ResolveStartButtonLabel();
@@ -83,7 +126,8 @@ namespace _01.Code.UI
             EnsureRuntimeHud();
             DungeonHudStyle.ApplyNamedSceneLayout();
             ApplyStartButtonTheme();
-            SetStartButtonVisible(true);
+            _started = true;
+            SetStartButtonVisible(!_startHeldByTutorial);
             RefreshStartButton();
         }
 
@@ -238,7 +282,8 @@ namespace _01.Code.UI
             if (startButton == null)
                 return;
 
-            startButton.interactable = waveManager != null
+            startButton.interactable = !_startHeldByTutorial
+                                       && waveManager != null
                                        && dayManager != null
                                        && dayManager.IsStandby
                                        && waveManager.CanStartWave(dayManager.NextWaveDay);
@@ -270,6 +315,11 @@ namespace _01.Code.UI
         private void SetStartButtonVisible(bool visible)
         {
             if (startButton == null)
+                return;
+
+            // 안내가 붙잡고 있는 동안에는 다시 띄우지 않는다. 포탈을 세우면 이 함수가 곧바로
+            // 불려서, 안내가 감춘 버튼이 WASD 칸 한복판에 다시 튀어나온다.
+            if (visible && _startHeldByTutorial)
                 return;
 
             // Some scenes keep WaveView on the start button itself. Disabling that
@@ -902,11 +952,17 @@ namespace _01.Code.UI
                 return;
 
             var image = root.GetComponent<Image>();
-            if (image != null)
+
+            // 프리팹이 이미 그림을 들고 있으면 건드리지 않는다.
+            //
+            // 여기서 무조건 덮어쓰고 있었다. 그래서 카드 프리팹을 아무리 꾸며도 실행하는
+            // 순간 팩의 버튼틀로 되돌아갔고, 프리팹에서 고치라는 말이 통하지 않는 자리가 됐다.
+            // 겉모습은 프리팹이 정하고 코드는 상태(강조색·글자 규칙)만 칠하는 편이 맞다.
+            //
+            // 비어 있을 때만 채우는 건 남겨 둔다. 그림 없는 카드가 평평한 사각형으로 뜨던
+            // 문제를 막으려고 넣은 것이라, 꾸며 둔 카드에만 손을 떼면 둘 다 지켜진다.
+            if (image != null && image.sprite == null)
             {
-                // 스프라이트를 비우면 평평한 사각형이 된다 — 카드가 기본 UI처럼 보이던 이유다.
-                // 팩의 버튼틀을 쓴다. 카드는 누르는 것이므로 창틀보다 버튼틀이 맞고,
-                // 9분할 테두리를 고친 뒤로는 늘려도 모서리가 뭉개지지 않는다.
                 var frame = DungeonHudIcon.Skin != null ? DungeonHudIcon.Skin.ButtonFrame : null;
                 image.sprite = frame;
                 image.type = frame != null && frame.border != Vector4.zero

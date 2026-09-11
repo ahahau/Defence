@@ -79,6 +79,10 @@ namespace _01.Code.UI
         private UnitManagementSystem _unitManagementSystem;
 
         public bool IsPanelOpen => panelRoot != null && panelRoot.activeInHierarchy;
+
+        /// <summary>지금 고른 방. 안내가 "방은 골랐으니 다음은 설치 버튼"을 알아내는 데 쓴다.</summary>
+        public Node SelectedNode => _selectedNode;
+
         public IReadOnlyList<BuildingDataSO> InstallableBuildings => installableBuildings;
         public RectTransform InstallButtonRect => installButton != null ? installButton.transform as RectTransform : null;
         public RectTransform FirstDeployEntryRect => _deployEntries.Count > 0 && _deployEntries[0] != null ? _deployEntries[0].transform as RectTransform : null;

@@ -205,29 +205,52 @@ namespace _01.Code.UI
             image.preserveAspect = true;
         }
 
+        /// <summary>
+        /// 카드 속을 보기 좋은 크기로 맞춘다.
+        ///
+        /// 예전에는 아이콘과 글의 사각형을 직접 230x230, 위에서 265픽셀 같은 숫자로 박아 넣었다.
+        /// 그런데 이 카드에는 세로 배치(VerticalLayoutGroup)가 붙어 있어서, 다음 배치 계산이
+        /// 그 숫자를 전부 덮어쓴다. 두 주인이 같은 사각형을 서로 다르게 잡고 있었던 셈이고
+        /// 결과는 그때그때 달랐다 — 카드가 "안 맞아" 보이던 이유다.
+        ///
+        /// 배치가 붙어 있으면 자리는 배치에 맡기고, 여기서는 배치가 손대지 않는 것만 정한다 —
+        /// 비율 유지, 클릭 통과, 글자 자동 축소.
+        /// </summary>
         public static void EnlargeCard(Button button)
         {
+            var layoutDriven = button != null && button.GetComponent<LayoutGroup>() != null;
+
             var icon = ResolveCardIconImage(button);
             if (icon != null)
             {
-                var rect = icon.rectTransform;
-                rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1f);
-                rect.pivot = new Vector2(0.5f, 1f);
-                rect.anchoredPosition = new Vector2(0f, -20f);
-                rect.sizeDelta = new Vector2(230f, 230f);
-                rect.localScale = Vector3.one;
+                if (!layoutDriven)
+                {
+                    var rect = icon.rectTransform;
+                    rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1f);
+                    rect.pivot = new Vector2(0.5f, 1f);
+                    rect.anchoredPosition = new Vector2(0f, -20f);
+                    rect.sizeDelta = new Vector2(230f, 230f);
+                    rect.localScale = Vector3.one;
+                }
+
                 icon.type = Image.Type.Simple;
                 icon.preserveAspect = true;
                 icon.raycastTarget = false;
             }
+
             var text = button.GetComponentInChildren<TMP_Text>(true);
             if (text == null) return;
-            var textRect = text.rectTransform;
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.offsetMin = new Vector2(20f, 18f);
-            textRect.offsetMax = new Vector2(-20f, -265f);
-            textRect.localScale = Vector3.one;
+
+            if (!layoutDriven)
+            {
+                var textRect = text.rectTransform;
+                textRect.anchorMin = Vector2.zero;
+                textRect.anchorMax = Vector2.one;
+                textRect.offsetMin = new Vector2(20f, 18f);
+                textRect.offsetMax = new Vector2(-20f, -265f);
+                textRect.localScale = Vector3.one;
+            }
+
             text.margin = Vector4.zero;
             text.enableAutoSizing = true;
             text.fontSizeMin = 17f;

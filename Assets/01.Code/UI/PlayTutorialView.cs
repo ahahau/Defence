@@ -108,6 +108,10 @@ namespace _01.Code.UI
         private const int MerchantLessonDay = 2;
         private const int PowerLessonDay = 3;
 
+        /// <summary>덮개가 설 정렬 자리. 관리 창(200대)보다 위, 설정 창(5000)보다 아래.</summary>
+        private const int DimSortingOrder = 900;
+
+
         private bool _merchantTaught;
         private bool _powerTaught;
         private Node _cameraTargetNode;
@@ -132,11 +136,17 @@ namespace _01.Code.UI
             if (camera != null)
                 _moveStartPosition = camera.transform.position;
             Render();
+
+            EnsureDimOnTop();
+
+            // 첫 살피기(0.25초 뒤)까지 기다리면 그 사이에 버튼이 한 번 깜빡인다.
+            ApplyStartButtonHold();
         }
 
         private void OnDisable()
         {
             ReleaseControlLocks();
+            ReleaseStartButton();
             _cameraTween?.Kill();
             HideSpotlight();
         }
@@ -149,6 +159,7 @@ namespace _01.Code.UI
             _stepAge += Time.unscaledDeltaTime;
 
             ApplyControlLocks();
+            ApplyStartButtonHold();
 
             // 판을 살피는 건 0.25초마다면 충분하다. 사람이 방을 짓는 속도에 견주면 즉시다.
             _timer -= Time.unscaledDeltaTime;
@@ -217,6 +228,7 @@ namespace _01.Code.UI
             if (_step == Step.Done)
             {
                 ReleaseControlLocks();
+                ReleaseStartButton();
                 HideSpotlight();
                 return;
             }
@@ -301,6 +313,46 @@ namespace _01.Code.UI
         {
             Core.InputSystemCameraMover.ZoomLocked = false;
             Core.InputSystemCameraMover.MoveLocked = false;
+        }
+
+        /// <summary>
+        /// 습격 시작 버튼은 WASD 를 배운 뒤에야 나타난다.
+        ///
+        /// 그 앞 칸들은 덮개가 막아 주지만 WASD 칸에는 덮개가 없다 — 배울 거리가 화면을 미는
+        /// 일이라 가릴 자리가 없다. 포탈만 세우면 버튼이 켜지므로, 막지 않으면 화면을 밀어 볼
+        /// 생각도 하기 전에 습격이 시작된다.
+        ///
+        /// 순서를 강제하지 않기로 했거나(<see cref="forceStepOrder"/>) 한 칸에 너무 오래 막혀
+        /// 덮개를 걷은 뒤에는 붙잡지 않는다. 안내가 틀렸을 때 판이 멈추는 쪽이 훨씬 나쁘다.
+        /// </summary>
+        private void ApplyStartButtonHold()
+        {
+            var view = ResolveWaveView();
+            if (view == null)
+                return;
+
+            view.SetStartButtonHeld(forceStepOrder && !_released && _step < Step.SurviveWave);
+        }
+
+        private void ReleaseStartButton()
+        {
+            var view = ResolveWaveView();
+            if (view != null)
+                view.SetStartButtonHeld(false);
+        }
+
+        /// <summary>
+        /// 습격 화면을 구해 온다.
+        ///
+        /// 씬이 아니라 프리팹 안에 있어서 인스펙터에 미리 물려 두지 못할 수 있다. 한 번 찾으면
+        /// 들고 있는다 — 판이 도는 동안 이 화면이 갈리지는 않는다.
+        /// </summary>
+        private WaveView ResolveWaveView()
+        {
+            if (waveView == null)
+                waveView = FindAnyObjectByType<WaveView>();
+
+            return waveView;
         }
 
         /// <summary>구멍을 목표 자리로 조금씩 옮긴다. 칸이 바뀔 때 다음 자리로 미끄러져 간다.</summary>
@@ -389,17 +441,110 @@ namespace _01.Code.UI
                     return TryBuildRect(PowerButtons, out rect);
 
                 default:
-                    var node = ResolveTargetNode();
-                    return node != null && TryBuildNodeRect(node, out rect);
+                    return TryResolveBuildHole(out rect);
             }
+        }
+
+        /// <summary>
+        /// 방·유닛·포탈 칸의 구멍. 지도에서 시작해 관리 창 안까지 따라간다.
+        ///
+        /// 예전에는 지도 위의 방만 가리켰다. 덮개가 UI를 못 막던 동안에는 그래도 굴러갔지만,
+        /// 덮개를 창 위로 올린 뒤에는 그러면 안 된다 — 방만 뚫어 두면 그 다음에 눌러야 할
+        /// 설치 버튼이 덮개에 막혀 아무 데도 못 간다.
+        ///
+        /// 그래서 눌러야 할 것을 차례로 따라간다. 방을 고르고 → 설치를 누르고 → 갈래를 고르고
+        /// → 카드를 누른다. 어느 단계인지는 관리 창에게 묻는다. 그쪽이 그 상태를 들고 있다.
+        /// </summary>
+        private bool TryResolveBuildHole(out Rect rect)
+        {
+            rect = default;
+            var panel = NodePanelView.Current;
+
+            // 창이 열려 있으면 창 안의 다음 차례를 가리킨다.
+            if (panel != null && panel.IsPanelOpen)
+            {
+                var inside = ResolvePanelTarget(panel);
+                return inside != null && TryBuildRect(inside, out rect);
+            }
+
+            var node = ResolveTargetNode();
+
+            // 방을 이미 골라 뒀다면 다음은 설치 버튼이다. 봉인된 방은 예외 —
+            // 그건 눌러서 여는 것이 곧 할 일이라 지도를 계속 가리켜야 한다.
+            if (panel != null
+                && node != null
+                && panel.SelectedNode == node
+                && !IsLocked(node)
+                && panel.InstallButtonRect != null)
+                return TryBuildRect(panel.InstallButtonRect, out rect);
+
+            return node != null && TryBuildNodeRect(node, out rect);
+        }
+
+        /// <summary>관리 창이 열려 있을 때, 이 칸에서 눌러야 할 곳.</summary>
+        private RectTransform ResolvePanelTarget(NodePanelView panel) => _step switch
+        {
+            // 갈래를 고르기 전이면 갈래 카드가, 고른 뒤면 그 안의 카드가 잡힌다.
+            // 안 잡히는 쪽은 null 을 주므로 앞의 것부터 차례로 걸린다.
+            Step.BuildRoom => panel.BuildingCategoryCardRect ?? panel.FirstTrapInstallCardRect,
+            Step.DeployUnit => panel.UnitCategoryCardRect ?? panel.FirstDeployEntryRect,
+            Step.BuildPortal => panel.BuildingCategoryCardRect ?? panel.PortalInstallCardRect,
+            _ => null,
+        };
+
+        /// <summary>
+        /// 덮개를 화면 맨 위로 올린다.
+        ///
+        /// 덮개는 주 캔버스(정렬 50)의 자식인데, 설치 HUD 는 110, 관리 창은 200 이상으로
+        /// 스스로 정렬을 덮어쓴다. 그래서 덮개가 그 아래에 깔려 어둡게도 못 하고 클릭도 못
+        /// 막았다 — 안내가 지도 한 곳을 가리키는 동안 창의 모든 버튼이 그대로 눌렸다.
+        ///
+        /// 설정 창(5000)보다는 아래에 둔다. 안내 중에도 나가는 길은 열려 있어야 한다.
+        /// </summary>
+        /// 한 번만 하지 않고 덮개를 펼 때마다 다시 건다. overrideSorting 은 꺼져 있는 개체에
+        /// 걸면 조용히 false 로 남기 때문이다 — 덮개는 평소 꺼져 있으므로 처음 한 번은 늘 헛일이 된다.
+        /// 실제로 그렇게 한 번 놓쳤고, 값은 들어갔는데 화면은 그대로였다.
+        private void EnsureDimOnTop()
+        {
+
+            foreach (var panel in dimPanels)
+            {
+                if (panel == null)
+                    continue;
+
+                if (!panel.TryGetComponent<Canvas>(out var canvas))
+                    canvas = panel.gameObject.AddComponent<Canvas>();
+
+                if (!canvas.overrideSorting)
+                    canvas.overrideSorting = true;
+
+                if (canvas.sortingOrder != DimSortingOrder)
+                    canvas.sortingOrder = DimSortingOrder;
+
+                // 자기 캔버스가 된 판은 자기 레이캐스터가 있어야 클릭을 받아 삼킨다.
+                if (!panel.TryGetComponent<UnityEngine.UI.GraphicRaycaster>(out _))
+                    panel.gameObject.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+            }
+
+            // 안내 글은 덮개보다 위에 둔다. 무엇을 하라는 문장까지 같이 어두워지면
+            // 정작 읽어야 할 한 줄이 가장 안 보인다.
+            if (root == null)
+                return;
+
+            if (!root.TryGetComponent<Canvas>(out var hintCanvas))
+                hintCanvas = root.AddComponent<Canvas>();
+
+            if (!hintCanvas.overrideSorting)
+                hintCanvas.overrideSorting = true;
+
+            if (hintCanvas.sortingOrder != DimSortingOrder + 1)
+                hintCanvas.sortingOrder = DimSortingOrder + 1;
         }
 
         private RectTransform ResolveWaveButton()
         {
-            // 습격 화면은 씬이 아니라 프리팹 안에 있어서 미리 물려 둘 수가 없다. 한 번 찾아
-            // 들고 있는다 — 판이 도는 동안 이 화면이 갈리지는 않는다.
-            waveView = FindAnyObjectByType<WaveView>();
-            return waveView != null ? waveView.StartButtonRect : null;
+            var view = ResolveWaveView();
+            return view != null ? view.StartButtonRect : null;
         }
 
         /// <summary>이 칸에서 눌러야 할 방. 못 고르면 아무것도 덮지 않는다.</summary>
@@ -533,6 +678,7 @@ namespace _01.Code.UI
             Place(dimPanels[3], right, bottom, size.x - right, top - bottom); // 오른쪽
 
             SetSpotlightVisible(true);
+            EnsureDimOnTop();
         }
 
         private static void Place(RectTransform panel, float x, float y, float width, float height)
