@@ -115,6 +115,10 @@ namespace _01.Code.UI
         }
 
         public RectTransform FirstTrapInstallCardRect => ResolveFirstBuildingCardRect(InstallCategory.Trap);
+
+        /// <summary>건물 갈래의 첫 카드. 안내가 "지을 방을 고르세요"에서 가리킨다.</summary>
+        public RectTransform FirstBuildingInstallCardRect => ResolveFirstBuildingCardRect(InstallCategory.Building);
+
         public BuildingDataSO FirstTrapInstallData => ResolveFirstBuildingData(InstallCategory.Trap);
 
         public void HighlightCurrentTutorialInstallTarget()

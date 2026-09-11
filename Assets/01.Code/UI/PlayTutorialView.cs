@@ -57,6 +57,20 @@ namespace _01.Code.UI
             Done,
         }
 
+        /// <summary>
+        /// 방·유닛·포탈 칸 안의 잔걸음.
+        ///
+        /// 한 칸이 클릭 한 번으로 끝나지 않는다 — 방을 고르고, 설치를 누르고, 갈래를 고르고,
+        /// 카드를 누른다. 구멍과 안내 글이 같은 걸음을 보게 하려고 이름을 붙여 둔다.
+        /// </summary>
+        private enum BuildStage
+        {
+            PickNode,
+            OpenInstall,
+            PickCategory,
+            PickCard,
+        }
+
         /// <summary>첫날의 이끄는 칸인가. 조작을 잠그는 것은 이 칸들뿐이다.</summary>
         private bool IsFirstDayStep => _step <= Step.SurviveWave;
 
@@ -121,6 +135,9 @@ namespace _01.Code.UI
         private Rect _holeTarget;
         private bool _hasHole;
         private Step _step = Step.BuildRoom;
+        private BuildStage _buildStage = BuildStage.PickNode;
+        private RectTransform _buildUiTarget;
+        private Node _buildNodeTarget;
         private float _timer;
         private float _stepAge;
         private bool _released;
@@ -192,6 +209,9 @@ namespace _01.Code.UI
                 if (_step == Step.Done)
                     return;
 
+                // 구멍을 정하기 전에 잔걸음부터 다시 잰다. 순서가 뒤집히면 한 박자 늦은
+                // 자리를 비추게 된다.
+                RefreshBuildStage();
                 ApplyGate();
 
                 // 한 칸 안에서도 겨눌 방이 옮겨간다 — 봉인을 열면 그 다음은 그 방에 짓는 일이다.
@@ -222,6 +242,11 @@ namespace _01.Code.UI
                 _merchantTaught = true;
             else if (_step == Step.LearnPower)
                 _powerTaught = true;
+
+            // 잔걸음을 먼저 잰다. 칸에 들어서자마자 그리면 앞 칸의 걸음으로 한 줄이 스쳐 지나간다.
+            _buildStage = IsBuildStep(_step)
+                ? ResolveBuildStage(out _buildUiTarget, out _buildNodeTarget)
+                : BuildStage.PickNode;
 
             Render();
 
@@ -458,39 +483,90 @@ namespace _01.Code.UI
         private bool TryResolveBuildHole(out Rect rect)
         {
             rect = default;
+
+            if (_buildUiTarget != null)
+                return TryBuildRect(_buildUiTarget, out rect);
+
+            return _buildNodeTarget != null && TryBuildNodeRect(_buildNodeTarget, out rect);
+        }
+
+        /// <summary>
+        /// 첫날 칸 안의 잔걸음을 가려내고, 그 걸음에서 눌러야 할 곳을 함께 내놓는다.
+        ///
+        /// 구멍과 안내 글이 같은 곳에서 나와야 한다. 한동안 구멍만 창 안으로 따라 들어가고
+        /// 글은 "밝은 타일을 눌러 첫 방을 파세요"에 머물러 있었다 — 빛나는 곳과 읽히는 문장이
+        /// 서로 다른 것을 가리키면, 둘 다 못 믿게 된다.
+        /// </summary>
+        private BuildStage ResolveBuildStage(out RectTransform uiTarget, out Node nodeTarget)
+        {
+            uiTarget = null;
+            nodeTarget = null;
+
             var panel = NodePanelView.Current;
 
-            // 창이 열려 있으면 창 안의 다음 차례를 가리킨다.
             if (panel != null && panel.IsPanelOpen)
             {
-                var inside = ResolvePanelTarget(panel);
-                return inside != null && TryBuildRect(inside, out rect);
+                // 갈래를 고르기 전이면 갈래 카드가 잡히고, 고른 뒤에는 비어서 그 안의 카드로 넘어간다.
+                var category = ResolveCategoryCard(panel);
+                if (category != null)
+                {
+                    uiTarget = category;
+                    return BuildStage.PickCategory;
+                }
+
+                uiTarget = ResolveInstallCard(panel);
+                return BuildStage.PickCard;
             }
 
-            var node = ResolveTargetNode();
+            nodeTarget = ResolveTargetNode();
 
             // 방을 이미 골라 뒀다면 다음은 설치 버튼이다. 봉인된 방은 예외 —
             // 그건 눌러서 여는 것이 곧 할 일이라 지도를 계속 가리켜야 한다.
             if (panel != null
-                && node != null
-                && panel.SelectedNode == node
-                && !IsLocked(node)
+                && nodeTarget != null
+                && panel.SelectedNode == nodeTarget
+                && !IsLocked(nodeTarget)
                 && panel.InstallButtonRect != null)
-                return TryBuildRect(panel.InstallButtonRect, out rect);
+            {
+                uiTarget = panel.InstallButtonRect;
+                return BuildStage.OpenInstall;
+            }
 
-            return node != null && TryBuildNodeRect(node, out rect);
+            return BuildStage.PickNode;
         }
 
-        /// <summary>관리 창이 열려 있을 때, 이 칸에서 눌러야 할 곳.</summary>
-        private RectTransform ResolvePanelTarget(NodePanelView panel) => _step switch
+        private RectTransform ResolveCategoryCard(NodePanelView panel) => _step == Step.DeployUnit
+            ? panel.UnitCategoryCardRect
+            : panel.BuildingCategoryCardRect;
+
+        private RectTransform ResolveInstallCard(NodePanelView panel) => _step switch
         {
-            // 갈래를 고르기 전이면 갈래 카드가, 고른 뒤면 그 안의 카드가 잡힌다.
-            // 안 잡히는 쪽은 null 을 주므로 앞의 것부터 차례로 걸린다.
-            Step.BuildRoom => panel.BuildingCategoryCardRect ?? panel.FirstTrapInstallCardRect,
-            Step.DeployUnit => panel.UnitCategoryCardRect ?? panel.FirstDeployEntryRect,
-            Step.BuildPortal => panel.BuildingCategoryCardRect ?? panel.PortalInstallCardRect,
+            Step.BuildRoom => panel.FirstBuildingInstallCardRect,
+            Step.DeployUnit => panel.FirstDeployEntryRect,
+            Step.BuildPortal => panel.PortalInstallCardRect,
             _ => null,
         };
+
+        /// <summary>잔걸음을 다시 재고, 달라졌으면 안내 글도 그 걸음으로 바꾼다.</summary>
+        private void RefreshBuildStage()
+        {
+            if (!IsBuildStep(_step))
+            {
+                _buildUiTarget = null;
+                _buildNodeTarget = null;
+                return;
+            }
+
+            var stage = ResolveBuildStage(out _buildUiTarget, out _buildNodeTarget);
+            if (stage == _buildStage)
+                return;
+
+            _buildStage = stage;
+            Render();
+        }
+
+        private static bool IsBuildStep(Step step) =>
+            step == Step.BuildRoom || step == Step.DeployUnit || step == Step.BuildPortal;
 
         /// <summary>
         /// 덮개를 화면 맨 위로 올린다.
@@ -873,15 +949,48 @@ namespace _01.Code.UI
                 hintText.text = text;
         }
 
-        private static string HintFor(Step step) => step switch
+        private string HintFor(Step step) => step switch
         {
-            Step.BuildRoom => "밝은 타일을 눌러 첫 방을 파세요",
-            Step.DeployUnit => "유닛을 고용해 방에 세우세요  ·  유닛이 선 방이 방어선이 됩니다",
-            Step.BuildPortal => "입구에 포탈을 세우세요  ·  모험가는 그곳으로 들어옵니다",
+            Step.BuildRoom or Step.DeployUnit or Step.BuildPortal => BuildHint(step, _buildStage),
             Step.LearnMove => "W A S D 로 던전을 둘러보세요",
             Step.SurviveWave => "준비됐다면 습격을 시작하세요  ·  막아내면 금화가, 뚫리면 빚이 남습니다",
             Step.LearnMerchant => "떠돌이 상인이 왔습니다  ·  유물은 유닛보다 비싸지만 조합이 붙습니다",
             Step.LearnPower => "던전의 권능이 열렸습니다  ·  습격 중에 눌러 구역을 지정하세요",
+            _ => string.Empty,
+        };
+
+        /// <summary>
+        /// 첫날 세 칸의 한 줄. 잔걸음마다 갈아 끼운다.
+        ///
+        /// 왜 하는지는 첫 걸음에만 붙인다. 창을 열고 갈래를 고르는 동안까지 같은 이유를 다시
+        /// 읽히면, 정작 지금 눌러야 할 것이 문장 끝으로 밀린다.
+        /// </summary>
+        private static string BuildHint(Step step, BuildStage stage) => step switch
+        {
+            Step.BuildRoom => stage switch
+            {
+                BuildStage.PickNode => "밝은 타일을 눌러 첫 방을 파세요",
+                BuildStage.OpenInstall => "설치를 눌러 무엇을 지을지 고르세요",
+                BuildStage.PickCategory => "빌딩을 고르세요",
+                _ => "지을 방을 고르세요",
+            },
+
+            Step.DeployUnit => stage switch
+            {
+                BuildStage.PickNode => "유닛을 세울 방을 고르세요  ·  유닛이 선 방이 방어선이 됩니다",
+                BuildStage.OpenInstall => "설치를 누르세요",
+                BuildStage.PickCategory => "유닛을 고르세요",
+                _ => "이 방에 세울 유닛을 고르세요",
+            },
+
+            Step.BuildPortal => stage switch
+            {
+                BuildStage.PickNode => "입구가 될 바깥쪽 방을 고르세요  ·  모험가는 그곳으로 들어옵니다",
+                BuildStage.OpenInstall => "설치를 누르세요",
+                BuildStage.PickCategory => "빌딩을 고르세요",
+                _ => "포탈을 고르세요",
+            },
+
             _ => string.Empty,
         };
     }
