@@ -6877,6 +6877,55 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
+--- !u!1 &518893446
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 518893447}
+  - component: {fileID: 518893448}
+  m_Layer: 0
+  m_Name: UnitRevivalSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &518893447
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 518893446}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.09425, y: -0.02649, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 627129457}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &518893448
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 518893446}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62903a61be9d0eb4a8aa93b340110f47, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Manager.UnitRevivalSystem
+  costEventChannel: {fileID: 11400000, guid: 734ca3593b5d2884dae267b0e3e601be, type: 2}
+  revivalSeconds: 20
+  baseRevivalCost: 15
+  costPerLevel: 8
+  scanInterval: 0.5
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -8250,6 +8299,7 @@ Transform:
   - {fileID: 2122532261}
   - {fileID: 327625555}
   - {fileID: 1189769715}
+  - {fileID: 518893447}
   m_Father: {fileID: 735401960}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &679456720
@@ -9344,7 +9394,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.44}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 32, y: -14.370621}
+  m_AnchoredPosition: {x: 32, y: -14.371033}
   m_SizeDelta: {x: -244, y: -118}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &780624401
@@ -13024,9 +13074,7 @@ MonoBehaviour:
   waveEventChannel: {fileID: 11400000, guid: dd03e0a5a2140e441aba26879f409cee, type: 2}
   initialGold: 200
   nextBuildDiscountRate: 0
-  debtLimit: 300
-  autoRepayRatio: 0.5
-  dailyDebtInterest: 0.1
+  weeklyDebtInterest: 0.1
 --- !u!4 &1097297362
 Transform:
   m_ObjectHideFlags: 0

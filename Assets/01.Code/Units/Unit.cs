@@ -215,6 +215,23 @@ namespace _01.Code.Units
             RecoverCondition();
         }
 
+        /// <summary>
+        /// 쓰러진 부하를 다시 세운다. 체력만 채우고 피로와 부상은 그대로 둔다.
+        ///
+        /// 전부 지워 주면 다친 채로 버티는 것보다 한 번 쓰러지는 편이 이득이 되어,
+        /// 되살리는 값을 치르고도 상태가 나아진다.
+        /// </summary>
+        public void Revive()
+        {
+            if (!IsIncapacitated)
+                return;
+
+            health?.RestoreToFull();
+            IsIncapacitated = false;
+            ApplyConditionModifiers();
+            ConditionChanged?.Invoke();
+        }
+
         public void RecoverToFull()
         {
             RecoverCondition();

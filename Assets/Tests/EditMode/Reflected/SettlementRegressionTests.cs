@@ -183,5 +183,69 @@ namespace Tests.EditMode.Rules
             Assert.That(settlement.GetType().GetField("totalExpense", PrivateInstance).GetValue(settlement), Is.EqualTo(20));
             Assert.That(settlement.GetType().GetField("totalIncome", PrivateInstance).GetValue(settlement), Is.EqualTo(20));
         }
+
+        // ── 되살리기 ────────────────────────────────────────────────
+
+        [Test]
+        public void Revival_TakesGoldFirstAndBorrowsTheRest()
+        {
+            var cost = Component("_01.Code.Manager.CostManager", "Revival cost");
+            Set(cost, "initialGold", 30);
+            Set(cost, "weeklyDebtInterest", 0.1f);
+            Call(cost, "Awake");
+
+            var borrowed = cost.GetType().GetMethod("ChargeOrBorrow").Invoke(cost, new object[] { 50 });
+
+            Assert.That(borrowed, Is.EqualTo(20), "모자란 만큼만 빚이 됩니다.");
+            Assert.That(cost.GetType().GetProperty("CurrentGold").GetValue(cost), Is.Zero, "가진 금화를 먼저 씁니다.");
+            Assert.That(cost.GetType().GetProperty("CurrentDebt").GetValue(cost), Is.EqualTo(20));
+        }
+
+        [Test]
+        public void Revival_IsNeverRefusedForLackOfGold()
+        {
+            var cost = Component("_01.Code.Manager.CostManager", "Revival cost");
+            Set(cost, "initialGold", 0);
+            Call(cost, "Awake");
+
+            // 돈이 없을 때가 되살릴 이유가 가장 큰 때다. 여기서 막으면 밀린 판이 돌아오지 못한다.
+            var borrowed = cost.GetType().GetMethod("ChargeOrBorrow").Invoke(cost, new object[] { 40 });
+
+            Assert.That(borrowed, Is.EqualTo(40));
+            Assert.That(cost.GetType().GetProperty("CurrentDebt").GetValue(cost), Is.EqualTo(40));
+        }
+
+        [Test]
+        public void Revival_CostsMoreForAUnitYouRaised()
+        {
+            var system = Component("_01.Code.Manager.UnitRevivalSystem", "Revival system");
+            Set(system, "baseRevivalCost", 15);
+            Set(system, "costPerLevel", 8);
+
+            var getCost = system.GetType().GetMethod("GetRevivalCost");
+            var data = UnitData("veteran", 40);
+            var unit = Unit(data, 0f);
+
+            // 레벨 컴포넌트가 없으면 1레벨로 본다. 기본값만 나와야 한다.
+            Assert.That(getCost.Invoke(system, new object[] { unit }), Is.EqualTo(15));
+            Assert.That(getCost.Invoke(system, new object[] { null }), Is.EqualTo(15),
+                "부하가 사라진 뒤에도 값을 물어볼 수 있어야 합니다.");
+        }
+
+        [Test]
+        public void Revival_KeepsFatigueAndInjurySoDyingIsNotAShortcut()
+        {
+            var data = UnitData("tired", 40);
+            var unit = Unit(data, 70f);
+            Set(unit, "injury", Enum.Parse(Resolve("_01.Code.Units.InjurySeverity"), "Severe"));
+            Set(unit, "<IsIncapacitated>k__BackingField", true);
+
+            unit.GetType().GetMethod("Revive").Invoke(unit, null);
+
+            Assert.That(unit.GetType().GetField("fatigue", PrivateInstance).GetValue(unit), Is.EqualTo(70f),
+                "되살아나도 피로는 남습니다.");
+            Assert.That(unit.GetType().GetField("injury", PrivateInstance).GetValue(unit).ToString(),
+                Is.EqualTo("Severe"), "되살아나도 부상은 남습니다.");
+        }
     }
 }

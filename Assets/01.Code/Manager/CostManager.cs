@@ -75,6 +75,34 @@ namespace _01.Code.Manager
             return normalizedAmount > 0 && TryChargeImmediate(normalizedAmount);
         }
 
+        /// <summary>
+        /// 금화로 먼저 내고 모자란 만큼은 빚으로 넘긴다. 거절하지 않는다.
+        ///
+        /// 되살리기처럼 미룰 수 없는 지출에 쓴다. 돈이 없다고 막아 버리면 형편이
+        /// 나쁠수록 더 나빠지기만 해서 되돌아올 길이 없어진다. 빚은 청산일에 청구된다.
+        /// </summary>
+        /// <returns>빚으로 넘어간 금액.</returns>
+        public int ChargeOrBorrow(int amount)
+        {
+            var owed = Mathf.Max(0, amount);
+            if (owed == 0)
+                return 0;
+
+            var paidFromGold = Mathf.Min(CurrentGold, owed);
+            CurrentGold -= paidFromGold;
+
+            var borrowed = owed - paidFromGold;
+            if (borrowed > 0)
+            {
+                CurrentDebt += borrowed;
+                costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, borrowed));
+                RunSummarySystem.Current?.RecordDebt(CurrentDebt);
+            }
+
+            RaiseGoldChanged();
+            return borrowed;
+        }
+
         /// <summary>즉시 결제의 단일 경로. 호출자가 가격 검증과 결제 결과 이벤트를 맡는다.</summary>
         private bool TryChargeImmediate(int amount, bool notifyWhenFree = false)
         {

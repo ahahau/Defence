@@ -148,4 +148,36 @@ namespace _01.Code.Events
 
         public IReadOnlyList<BuildingDataSO> UnlockedBuildings { get; }
     }
+
+    /// <summary>배치된 부하가 쓰러져 되살리기를 기다리기 시작했을 때.</summary>
+    public class UnitDownedEvent : GameEvent
+    {
+        public UnitDownedEvent(Unit unit, float revivalSeconds, int revivalCost)
+        {
+            Unit = unit;
+            RevivalSeconds = revivalSeconds;
+            RevivalCost = revivalCost;
+        }
+
+        public Unit Unit { get; }
+        public float RevivalSeconds { get; }
+        public int RevivalCost { get; }
+    }
+
+    /// <summary>쓰러졌던 부하가 값을 치르고 다시 섰을 때.</summary>
+    public class UnitRevivedEvent : GameEvent
+    {
+        public UnitRevivedEvent(Unit unit, int goldCost, int borrowed)
+        {
+            Unit = unit;
+            GoldCost = goldCost;
+            Borrowed = borrowed;
+        }
+
+        public Unit Unit { get; }
+        public int GoldCost { get; }
+
+        /// <summary>금화가 모자라 빚으로 넘어간 금액. 0이면 그 자리에서 다 냈다.</summary>
+        public int Borrowed { get; }
+    }
 }
