@@ -126,3 +126,9 @@ InitTestScene*.unity*
 
 # 밸런스 자동 실측 기록 (세션마다 쌓인다)
 BalanceRuns/
+
+# 빌드 압축본 — 한 개에 72MB이고 /Build/ 에서 다시 만들 수 있다
+[Bb]uild*.zip
+
+# 검사·측정 산출물 (빌드 사본, 감사 로그, 리포트)
+/output/
