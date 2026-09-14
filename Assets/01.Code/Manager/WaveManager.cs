@@ -1002,15 +1002,7 @@ namespace _01.Code.Manager
         /// </summary>
         private int ResolveClearGoldReward()
         {
-            if (_currentClearGoldReward <= 0)
-                return 0;
-
-            var total = Mathf.Max(0, _waveEnemyCount);
-            if (total <= 0)
-                return _currentClearGoldReward;
-
-            var killed = Mathf.Clamp(_waveKillCount, 0, total);
-            return Mathf.RoundToInt(_currentClearGoldReward * (killed / (float)total));
+            return WaveRewardRules.ResolveClearGold(_currentClearGoldReward, _waveEnemyCount, _waveKillCount);
         }
 
         private void RaiseWaveEnded()
