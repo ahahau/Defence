@@ -18,8 +18,6 @@ namespace _01.Code.Manager
         private float unitDamageMultiplier = 1f;
         [SerializeField, Tooltip("정책이 유지되는 동안 모든 아군에게 더하는 방어.")]
         private int unitDefenseBonus;
-        [SerializeField, Min(0.1f), Tooltip("정책이 유지되는 동안 시작·시간·처치 권능 획득 배율.")]
-        private float dungeonPowerGainMultiplier = 1f;
 
         public string DisplayName => displayName;
         public string Description => description;
@@ -30,10 +28,8 @@ namespace _01.Code.Manager
         public bool CanRepeat => canRepeat;
         public float UnitDamageMultiplier => Mathf.Max(0.1f, unitDamageMultiplier);
         public int UnitDefenseBonus => unitDefenseBonus;
-        public float DungeonPowerGainMultiplier => Mathf.Max(0.1f, dungeonPowerGainMultiplier);
         public bool HasCombatEffect =>
             !Mathf.Approximately(UnitDamageMultiplier, 1f)
-            || UnitDefenseBonus != 0
-            || !Mathf.Approximately(DungeonPowerGainMultiplier, 1f);
+            || UnitDefenseBonus != 0;
     }
 }

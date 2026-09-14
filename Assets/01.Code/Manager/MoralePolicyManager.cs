@@ -74,8 +74,6 @@ namespace _01.Code.Manager
             Mathf.Max(0.1f, MultiplyActivePolicies(policy => policy.UnitDamageMultiplier) * MultiplyActiveCombos(combo => combo.UnitDamageMultiplier));
         public int UnitDefenseBonus =>
             SumActivePolicies(policy => policy.UnitDefenseBonus) + SumActiveCombos(combo => combo.UnitDefenseBonus);
-        public float DungeonPowerGainMultiplier =>
-            Mathf.Max(0.1f, MultiplyActivePolicies(policy => policy.DungeonPowerGainMultiplier) * MultiplyActiveCombos(combo => combo.DungeonPowerGainMultiplier));
 
         /// <summary>민심 0~100을 0~1로. 곡선을 한 곳에 모아 두어 소비처마다 다르게 해석하지 않게 한다.</summary>
         private float MoraleRatio => Mathf.Clamp01(CurrentMorale / 100f);
@@ -364,8 +362,6 @@ namespace _01.Code.Manager
                 parts.Add($"공격 {FormatComboPercent(combo.UnitDamageMultiplier)}");
             if (combo.UnitDefenseBonus != 0)
                 parts.Add($"방어 {(combo.UnitDefenseBonus > 0 ? "+" : string.Empty)}{combo.UnitDefenseBonus}");
-            if (!Mathf.Approximately(combo.DungeonPowerGainMultiplier, 1f))
-                parts.Add($"권능 {FormatComboPercent(combo.DungeonPowerGainMultiplier)}");
             if (combo.DailyMoraleDelta != 0)
                 parts.Add($"민심 {(combo.DailyMoraleDelta > 0 ? "+" : string.Empty)}{combo.DailyMoraleDelta}/일");
 

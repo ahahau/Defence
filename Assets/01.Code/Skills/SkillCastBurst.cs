@@ -55,7 +55,7 @@ namespace _01.Code.Skills
                 });
 
             if (isUltimate)
-                DungeonPowerFeedbacks.Play(position, UltimateShakeStrength);
+                CombatShakeFeedbacks.Play(position, UltimateShakeStrength);
         }
 
         private static Color WithAlpha(Color color, float alpha) => new(color.r, color.g, color.b, alpha);

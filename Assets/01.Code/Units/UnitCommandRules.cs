@@ -27,16 +27,6 @@ namespace _01.Code.Units
             _ => 3f
         };
 
-        /// <summary>웨이브가 도는 동안 이 명령을 내리는 데 드는 던전 권능.</summary>
-        public static int GetPowerCost(UnitCommand command) => command switch
-        {
-            UnitCommand.Standby => 0,
-            UnitCommand.Guard => 4,
-            UnitCommand.Assault => 6,
-            UnitCommand.Rest => 3,
-            _ => 0
-        };
-
         public static string GetLabel(UnitCommand command) => command switch
         {
             UnitCommand.Standby => "대기",
@@ -46,14 +36,8 @@ namespace _01.Code.Units
             _ => "명령"
         };
 
-        /// <summary>버튼에 붙일 대가 표시. 웨이브가 돌지 않으면 값이 없으므로 비운다.</summary>
-        public static string DescribeCost(UnitCommand command, bool waveRunning)
-        {
-            var cost = GetPowerCost(command);
-            if (!waveRunning || cost <= 0)
-                return $"재사용 {GetCooldown(command):0.#}초";
-
-            return $"권능 {cost}  ·  재사용 {GetCooldown(command):0.#}초";
-        }
+        /// <summary>버튼에 붙일 대가 표시. 명령을 막는 것은 재사용 대기뿐이다.</summary>
+        public static string DescribeCost(UnitCommand command) =>
+            $"재사용 {GetCooldown(command):0.#}초";
     }
 }

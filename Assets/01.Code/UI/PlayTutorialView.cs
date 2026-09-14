@@ -57,7 +57,6 @@ namespace _01.Code.UI
 
             // 뒷날 수업 — 비추기만 하고 잠그지는 않는다. 이미 판을 할 줄 아는 사람이다.
             LearnMerchant,
-            LearnPower,
 
             Done,
         }
@@ -134,14 +133,12 @@ namespace _01.Code.UI
         private float holeGlideSeconds = 0.28f;
 
         private const int MerchantLessonDay = 2;
-        private const int PowerLessonDay = 3;
 
         /// <summary>덮개가 설 정렬 자리. 관리 창(200대)보다 위, 설정 창(5000)보다 아래.</summary>
         private const int DimSortingOrder = 900;
 
 
         private bool _merchantTaught;
-        private bool _powerTaught;
         private bool _settlementWasOpen;
         private Node _cameraTargetNode;
         private Vector3 _moveStartPosition;
@@ -287,8 +284,6 @@ namespace _01.Code.UI
             // 끝나든(눌렀든 시간이 지났든) 두 번 뜨지 않는다.
             if (_step == Step.LearnMerchant)
                 _merchantTaught = true;
-            else if (_step == Step.LearnPower)
-                _powerTaught = true;
             else if (_step == Step.ReviewSettlement)
                 _settlementWasOpen = ManagementSettlementManager.Current != null &&
                                      ManagementSettlementManager.Current.IsPanelOpen;
@@ -512,8 +507,6 @@ namespace _01.Code.UI
                 case Step.LearnMerchant:
                     return TryBuildRect(MerchantButton, out rect);
 
-                case Step.LearnPower:
-                    return TryBuildRect(PowerButtons, out rect);
 
                 default:
                     return TryResolveBuildHole(out rect);
@@ -896,7 +889,6 @@ namespace _01.Code.UI
             // 뒷날 수업은 그 기능을 실제로 열어 보면 끝난다. 안 열어도 시간이 지나면 걷는다 —
             // 이미 아는 사람을 붙잡아 둘 이유가 없다.
             Step.LearnMerchant => MerchantOpened || _stepAge >= lessonSeconds ? Step.Idle : step,
-            Step.LearnPower => _stepAge >= lessonSeconds ? Step.Idle : step,
             _ => Step.Done,
         };
 
@@ -929,16 +921,13 @@ namespace _01.Code.UI
         {
             // 가르칠 것이 더 없으면 아주 끝낸다. 안 그러면 판이 끝날 때까지 0.25초마다
             // 씬을 뒤지며 이미 다 가르친 것을 다시 찾는다.
-            if (_merchantTaught && _powerTaught)
+            if (_merchantTaught)
                 return Step.Done;
 
             var day = CurrentDay;
 
             if (!_merchantTaught && day >= MerchantLessonDay && MerchantButton != null)
                 return Step.LearnMerchant;
-
-            if (!_powerTaught && day >= PowerLessonDay && PowerButtons != null)
-                return Step.LearnPower;
 
             return Step.Idle;
         }
@@ -960,15 +949,6 @@ namespace _01.Code.UI
             {
                 var merchant = FindAnyObjectByType<MerchantPanelView>();
                 return merchant != null ? merchant.OpenButtonRect : null;
-            }
-        }
-
-        private static RectTransform PowerButtons
-        {
-            get
-            {
-                var hud = FindAnyObjectByType<DungeonPowerHudView>();
-                return hud != null ? hud.PowerButtonsRect : null;
             }
         }
 
@@ -1038,7 +1018,6 @@ namespace _01.Code.UI
             Step.ReviewSettlement => "첫 습격 · 정산 읽기",
             Step.PrepareNextDay => "다음 날 준비",
             Step.LearnMerchant => "새 기능 · 떠돌이 상인",
-            Step.LearnPower => "새 기능 · 던전의 권능",
             _ => "던전 안내",
         };
 
@@ -1101,7 +1080,6 @@ namespace _01.Code.UI
             Step.ReviewSettlement => "정산표에서 보상·시설 수입과 유지비·이자를 확인하세요  ·  확인을 누르면 다음 날이 시작됩니다",
             Step.PrepareNextDay => "부하를 눌러 체력과 피로를 확인하세요  ·  지친 부하는 회수해 쉬게 하고 방어선을 보강하세요",
             Step.LearnMerchant => "떠돌이 상인이 왔습니다  ·  유물은 유닛보다 비싸지만 조합이 붙습니다",
-            Step.LearnPower => "던전의 권능이 열렸습니다  ·  습격 중에 눌러 구역을 지정하세요",
             _ => string.Empty,
         };
 

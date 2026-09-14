@@ -13,7 +13,7 @@ namespace _01.Code.Skills
     /// 세기만 넘길 수 있고 피드백 구성은 못 바꾸는데, 회복이나 보조까지 화면을 멈추면
     /// 무슨 일이 났는지 구분이 안 되기 때문이다.
     /// </summary>
-    public static class DungeonPowerFeedbacks
+    public static class CombatShakeFeedbacks
     {
         /// <summary>이 세기 이상이면 화면을 잠깐 멈춘다. 낙반이나 범람 같은 한 방짜리만 해당한다.</summary>
         private const float HitStopThreshold = 0.6f;
@@ -26,7 +26,7 @@ namespace _01.Code.Skills
         private static MMF_Player lightPlayer;
         private static MMF_Player heavyPlayer;
 
-        /// <param name="strength">0이면 흔들지 않는다. <see cref="DungeonPowerSO.ShakeStrength"/>가 그대로 들어온다.</param>
+        /// <param name="strength">0이면 흔들지 않는다. 호출부가 정하는 흔들림 세기다.</param>
         public static void Play(Vector3 position, float strength)
         {
             strength = Mathf.Clamp01(strength);
@@ -59,7 +59,7 @@ namespace _01.Code.Skills
             }
             else
             {
-                Debug.LogWarning($"{nameof(DungeonPowerFeedbacks)}가 {nameof(MMF_CameraShake)}를 만들지 못했습니다. 권능 시전이 화면을 흔들지 않습니다.");
+                Debug.LogWarning($"{nameof(CombatShakeFeedbacks)}가 {nameof(MMF_CameraShake)}를 만들지 못했습니다. 시전이 화면을 흔들지 않습니다.");
             }
 
             if (withHitStop)

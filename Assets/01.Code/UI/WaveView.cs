@@ -18,11 +18,9 @@ namespace _01.Code.UI
     public static class CoreLoopFeatureUnlocks
     {
         public const int ArtifactDay = 2;
-        public const int DungeonPowerDay = 3;
         public const int ExpeditionDay = 4;
 
         public static bool IsArtifactUnlocked(int day) => day >= ArtifactDay;
-        public static bool IsDungeonPowerUnlocked(int day) => day >= DungeonPowerDay;
         public static bool IsExpeditionUnlocked(int day) => day >= ExpeditionDay;
 
         public static string GetPreparationHint(int day)
@@ -31,7 +29,6 @@ namespace _01.Code.UI
             {
                 1 => $"첫 방어: 배치와 동선을 익히세요 · DAY {ArtifactDay} 유물 상점 해금",
                 ArtifactDay => "신규 해금 · 떠돌이 상인과 유물",
-                DungeonPowerDay => "신규 해금 · 전투 중 사용할 수 있는 던전 권능",
                 ExpeditionDay => "신규 해금 · 원정과 마을 장악",
                 _ => "마을 장악은 다음 습격 인원을 줄입니다"
             };

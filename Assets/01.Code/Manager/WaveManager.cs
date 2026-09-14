@@ -1085,8 +1085,6 @@ namespace _01.Code.Manager
                 return;
 
             _waveKillCount++;
-            // 잘 막아낼수록 권능이 붙어 더 개입할 수 있다.
-            DungeonPowerSystem.Current?.RewardKill();
         }
 
         private void HandleAnyDamage(Health damagedHealth, int damage, bool isCritical)

@@ -600,12 +600,6 @@ namespace _01.Code.MapCreateSystem
                 if (!TutorialInputGate.AllowsUnlockedNode(unlockedNode))
                     return;
 
-                // 권능을 겨눈 상태의 구역 클릭은 시전이다. 패널을 여는 것보다 먼저 처리해야
-                // 겨냥해 놓고 누른 순간 다른 창이 뜨는 일이 없다.
-                if (_01.Code.Manager.DungeonPowerSystem.Current != null
-                    && _01.Code.Manager.DungeonPowerSystem.Current.TryCastArmed(unlockedNode))
-                    return;
-
                 var unitGrid = unlockedNode.TrapGrid;
                 if (unitGrid != null
                     && unitGrid.IsFocusedGridVisible

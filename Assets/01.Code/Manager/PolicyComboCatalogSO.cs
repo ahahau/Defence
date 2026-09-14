@@ -53,7 +53,6 @@ namespace _01.Code.Manager
         [Header("추가 효과")]
         [SerializeField, Min(0.1f)] private float unitDamageMultiplier = 1f;
         [SerializeField] private int unitDefenseBonus;
-        [SerializeField, Min(0.1f)] private float dungeonPowerGainMultiplier = 1f;
         [SerializeField, Range(-20, 20)] private int dailyMoraleDelta;
 
         public string DisplayName => displayName;
@@ -62,7 +61,6 @@ namespace _01.Code.Manager
         public PolicyDataSO Second => second;
         public float UnitDamageMultiplier => Mathf.Max(0.1f, unitDamageMultiplier);
         public int UnitDefenseBonus => unitDefenseBonus;
-        public float DungeonPowerGainMultiplier => Mathf.Max(0.1f, dungeonPowerGainMultiplier);
         public int DailyMoraleDelta => dailyMoraleDelta;
 
         /// <summary>짝의 다른 한쪽. 정책 하나만 알 때 "무엇과 묶이는지" 안내에 쓴다.</summary>

@@ -262,8 +262,6 @@ namespace _01.Code.UI
             if (policy.UnitDefenseBonus != 0)
                 parts.Add($"{policy.DurationDays}일간 아군 방어 {FormatSigned(policy.UnitDefenseBonus)}");
 
-            if (!Mathf.Approximately(policy.DungeonPowerGainMultiplier, 1f))
-                parts.Add($"{policy.DurationDays}일간 권능 획득 {FormatPercent(policy.DungeonPowerGainMultiplier)}");
 
             return parts.Count > 0 ? string.Join(" / ", parts) : "효과 없음";
         }

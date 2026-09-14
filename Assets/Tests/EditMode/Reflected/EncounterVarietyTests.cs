@@ -74,7 +74,6 @@ namespace Tests.EditMode.Gameplay
             {
                 Assert.That(ReadProperty<float>(policy, "UnitDamageMultiplier"), Is.EqualTo(1f));
                 Assert.That(ReadProperty<int>(policy, "UnitDefenseBonus"), Is.EqualTo(0));
-                Assert.That(ReadProperty<float>(policy, "DungeonPowerGainMultiplier"), Is.EqualTo(1f));
             }
             finally
             {
