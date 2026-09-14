@@ -909,7 +909,7 @@ namespace Tests.EditMode.Rules
             {
                 Call(summary, "RecordWave", 0, 0, 0, 0, 0);
                 Assert.That(Get(summary, "WavesFought"), Is.EqualTo(0),
-                    "포탈이 없어 웨이브가 서지 않은 날은 방어전이 아닙니다.");
+                    "침입자가 없는 날은 방어전으로 세지 않습니다.");
             }
             finally
             {

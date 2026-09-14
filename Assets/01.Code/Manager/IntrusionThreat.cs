@@ -99,7 +99,7 @@ namespace _01.Code.Manager
             if (target == null)
                 return false;
 
-            var portal = WaveManager.Current != null ? WaveManager.Current.PortalNode : null;
+            var portal = WaveManager.Current != null ? WaveManager.Current.EntryNode : null;
             if (portal == null)
                 return false;
 
@@ -125,7 +125,7 @@ namespace _01.Code.Manager
 
         /// <summary>
         /// 침입자의 공통 목표 규칙. 돈이 든 금고를 먼저 노리고, 없으면 금고형 노드,
-        /// 그것도 없으면 입구 핵심부를 향한다.
+        /// 그것도 없으면 가장 안쪽 방을 향한다.
         /// </summary>
         public static Node FindPriorityTarget(Vector2 from, out ObjectiveKind kind)
         {
@@ -145,12 +145,28 @@ namespace _01.Code.Manager
                 return treasury;
             }
 
-            var core = FindNearest(
-                from,
-                node => node.Data != null && node.Data.Type == DungeonNodeType.Entrance);
+            // 침입은 오른쪽 시작 방에서 시작하므로 금고가 없을 때는 가장 안쪽 방을 향한다.
+            var core = FindDeepestRoom();
 
             kind = core != null ? ObjectiveKind.DungeonCore : ObjectiveKind.None;
             return core;
+        }
+
+        private static Node FindDeepestRoom()
+        {
+            Node deepest = null;
+            foreach (var node in Node.ActiveNodes)
+            {
+                if (node == null || node.Data == null)
+                    continue;
+
+                if (deepest == null || node.GridPosition.x < deepest.GridPosition.x ||
+                    node.GridPosition.x == deepest.GridPosition.x &&
+                    Mathf.Abs(node.GridPosition.y) < Mathf.Abs(deepest.GridPosition.y))
+                    deepest = node;
+            }
+
+            return deepest;
         }
 
         private static Node FindNearest(Vector2 from, System.Func<Node, bool> predicate)

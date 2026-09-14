@@ -38,6 +38,7 @@ namespace _01.Code.Enemies
         public Action<_01.Code.Buildings.Building> EdgeBuildingPassed { get; set; }
         /// <summary>파티(그룹) 스폰 시 멤버끼리 겹치지 않도록 노드 기준 위치에 더하는 대형 오프셋.</summary>
         public Vector3 FormationOffset { get; set; }
+        public Vector3? InitialSpawnPosition { get; set; }
         public Node CurrentNode => _currentNode;
         public bool IsMoving => _isTurning;
         public NodeBattlefield CurrentBattlefield => _battleAgent != null ? _battleAgent.Battlefield : null;
@@ -58,7 +59,8 @@ namespace _01.Code.Enemies
 
             _visitedNodes.Add(_currentNode.Data.Id);
             OccupyNode(_currentNode.Data.Id);
-            transform.position = GetEnemyPosition(_currentNode);
+            transform.position = InitialSpawnPosition ?? GetEnemyPosition(_currentNode);
+            InitialSpawnPosition = null;
             TryEnterBattlefield(_currentNode);
         }
 

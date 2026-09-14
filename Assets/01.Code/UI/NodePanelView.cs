@@ -91,7 +91,6 @@ namespace _01.Code.UI
             public static PendingBuildingInstall OnEdge(Node node, BuildingDataSO data, EdgeLine edge) =>
                 new(node, data, false, -1, -1, edge);
         }
-        private bool hasInstalledPortal;
         private bool _isDeployModeActive;
         private string _installButtonDefaultLabel;
         private readonly List<Button> buildingInstallButtons = new();
@@ -210,8 +209,6 @@ namespace _01.Code.UI
             nodeEventChannel?.AddListener<UnlockedNodeClickedEvent>(HandleNodeSelected);
             nodeEventChannel?.AddListener<NodeGridCellSelectedEvent>(HandleNodeGridCellSelected);
             nodeEventChannel?.AddListener<UnitManagementRequestedEvent>(HandleUnitManagementRequested);
-            nodeEventChannel?.AddListener<PortalInstalledEvent>(HandlePortalInstalled);
-            nodeEventChannel?.AddListener<PortalRemovedEvent>(HandlePortalRemoved);
             uiEventChannel?.AddListener<DeployModeChangedEvent>(HandleDeployModeChanged);
             costEventChannel?.AddListener<RosterChangedEvent>(HandleRosterChanged);
             costEventChannel?.AddListener<UnitDeployMagicPaidEvent>(HandleDeployMagicPaid);
@@ -234,8 +231,6 @@ namespace _01.Code.UI
             nodeEventChannel?.RemoveListener<UnlockedNodeClickedEvent>(HandleNodeSelected);
             nodeEventChannel?.RemoveListener<NodeGridCellSelectedEvent>(HandleNodeGridCellSelected);
             nodeEventChannel?.RemoveListener<UnitManagementRequestedEvent>(HandleUnitManagementRequested);
-            nodeEventChannel?.RemoveListener<PortalInstalledEvent>(HandlePortalInstalled);
-            nodeEventChannel?.RemoveListener<PortalRemovedEvent>(HandlePortalRemoved);
             uiEventChannel?.RemoveListener<DeployModeChangedEvent>(HandleDeployModeChanged);
             costEventChannel?.RemoveListener<RosterChangedEvent>(HandleRosterChanged);
             costEventChannel?.RemoveListener<UnitDeployMagicPaidEvent>(HandleDeployMagicPaid);
@@ -255,12 +250,6 @@ namespace _01.Code.UI
             if (panelRoot != null && panelRoot.activeSelf && !IsManagementAllowed())
                 HandleCloseClicked();
         }
-
-        // 포탈 보유 여부는 이벤트로 따라간다. 플레이어가 직접 설치하지 않은 경우(세이브 복원)에도
-        // 중복 설치를 막으려면 설치 핸들러의 지역 플래그만으로는 부족하다.
-        private void HandlePortalInstalled(PortalInstalledEvent evt) => hasInstalledPortal = true;
-
-        private void HandlePortalRemoved(PortalRemovedEvent evt) => hasInstalledPortal = false;
 
         private void HandleDeployModeChanged(DeployModeChangedEvent evt)
         {
@@ -683,7 +672,7 @@ namespace _01.Code.UI
                                  && _selectedNode.TryGetFirstFreeUnitSlot(out _, out _);
             // 막힌 이유가 정원인지 스폰 방인지 구분해서 보여준다. 둘 다 "정원 초과"로 뜨면
             // 칸이 비어 있는데 왜 안 되는지 알 길이 없다.
-            var blockedLabel = _selectedNode.IsEnemySpawnNode ? "포탈 방" : "정원 초과";
+            var blockedLabel = _selectedNode.IsEnemySpawnNode ? "입구 방" : "정원 초과";
 
             foreach (var placement in _selectedNode.UnitPlacements)
             {
@@ -904,7 +893,7 @@ namespace _01.Code.UI
             // 통로 함정이 통째로 죽는다. 조용히 무시하면 왜 안 되는지 알 길이 없어 이유를 띄운다.
             if (_selectedNode.IsEnemySpawnNode)
             {
-                SetManagementTitle("포탈이 선 방에는 배치할 수 없습니다");
+                SetManagementTitle("침입 입구 방에는 배치할 수 없습니다");
                 RefreshRosterEntries();
                 return;
             }
@@ -1586,12 +1575,6 @@ namespace _01.Code.UI
 
             nodeEventChannel?.RaiseEvent(new BuildingInstalledEvent(node, buildingData));
 
-            if (building is Portal)
-            {
-                hasInstalledPortal = true;
-                nodeEventChannel?.RaiseEvent(new PortalInstalledEvent(node));
-            }
-
             RefreshBuildingInstallButtons();
             panelRoot?.SetActive(false);
             // 중앙 건물 설치 직전에는 설치 메뉴가 열려 있어 설치 버튼이 숨겨진다.
@@ -1616,11 +1599,6 @@ namespace _01.Code.UI
                 return;
 
             var building = _selectedNode.AssignedBuilding;
-            if (building is Portal)
-            {
-                hasInstalledPortal = false;
-                nodeEventChannel?.RaiseEvent(new PortalRemovedEvent());
-            }
 
             _selectedNode.ClearBuilding();
 
@@ -1654,6 +1632,7 @@ namespace _01.Code.UI
         {
             if (!IsManagementAllowed()
                 || buildingData == null
+                || buildingData.Prefab is Portal
                 || _selectedNode == null)
                 return false;
 
@@ -1665,21 +1644,6 @@ namespace _01.Code.UI
             // 중앙 슬롯을 쓰는 고유 핵심 건물만 노드당 하나로 제한한다.
             if (!BuildingPlacement.UsesGridCell(buildingData) && _selectedNode.HasAssignedBuilding)
                 return false;
-
-            if (buildingData.Prefab is Portal)
-            {
-                if (hasInstalledPortal)
-                    return false;
-
-                // 입구는 던전 핵심부다. 여기에 포탈을 두면 적이 핵심부에서 바로 생성된다.
-                if (_selectedNode.Data != null && _selectedNode.Data.Type == DungeonNodeType.Entrance)
-                    return false;
-
-                // 포탈이 서는 순간 그 방은 스폰 지점이 되어 유닛을 둘 수 없다.
-                // 이미 서 있는 방에 세우게 두면 쫓아낼 곳부터 정해야 하니 아예 막는다.
-                if (_selectedNode.AssignedUnitCount > 0)
-                    return false;
-            }
 
             // 일반 건물과 함정은 중앙 슬롯 바깥의 작은 칸에 함께 설치된다.
             if (BuildingPlacement.UsesGridCell(buildingData) && (_selectedNode.TrapGrid == null || !_selectedNode.TrapGrid.HasFreeCell))

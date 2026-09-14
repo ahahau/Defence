@@ -7871,7 +7871,7 @@ MonoBehaviour:
   valueTable: {fileID: 11400000, guid: 25ce477c3f4a4b0ebf6af4a2c8f0e67b, type: 2}
   costEventChannel: {fileID: 11400000, guid: 734ca3593b5d2884dae267b0e3e601be, type: 2}
   view: {fileID: 739031303}
-  playOnStart: 1
+  playOnStart: 0
   scheduledDayEventChannel: {fileID: 11400000, guid: f16b75998f67eed45be9a7061ca817f7, type: 2}
   scheduledWaveEventChannel: {fileID: 11400000, guid: dd03e0a5a2140e441aba26879f409cee, type: 2}
   scheduledEventSequences:
@@ -24831,7 +24831,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &7700000000003002
 RectTransform:
   m_ObjectHideFlags: 0

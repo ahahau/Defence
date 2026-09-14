@@ -19,6 +19,8 @@ namespace _01.Code.MapCreateSystem
         [SerializeField]
         private float nodeSize = 1f;
 
+        public float GridSpacing => gridSpacing;
+
         public void ClearAll()
         {
             ClearRootChildren(transform);

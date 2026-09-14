@@ -46,6 +46,10 @@ namespace _01.Code.MapCreateSystem
         [SerializeField]
         private NodeTrapGrid trapGrid;
 
+        [SerializeField] private Transform entryDoorSpawnPoint;
+        [SerializeField] private GameObject roomDoorsRoot;
+        public Transform EntryDoorSpawnPoint => entryDoorSpawnPoint;
+
         [Header("Unit Capacity Label")]
         [SerializeField] private TextMeshPro unitCapacityText;
         [SerializeField] private string unitCapacityFormat = "{0}/{1}";
@@ -56,11 +60,13 @@ namespace _01.Code.MapCreateSystem
         public NodeTrapGrid TrapGrid => trapGrid != null ? trapGrid : (trapGrid = GetComponent<NodeTrapGrid>());
 
         /// <summary>
-        /// 이 노드에 선 금고를 훑는다. 금고는 칸 건물이라 한 노드에 여럿 설 수 있다 —
-        /// 정산·약탈·경로 판정이 저마다 중앙 슬롯만 보다가 금고 기능이 통째로 죽어 있었다.
+        /// 이 노드의 중앙과 개별 칸에 있는 금고를 모두 훑는다.
         /// </summary>
         public IEnumerable<Treasury> EnumerateTreasuries()
         {
+            if (AssignedBuilding is Treasury central && !central.IsDestroyed)
+                yield return central;
+
             var grid = TrapGrid;
             if (grid == null)
                 yield break;
@@ -76,6 +82,9 @@ namespace _01.Code.MapCreateSystem
         /// <summary>보관 금화가 남은 금고 하나. 경로 판정이 노드마다 부르므로 할당 없이 돈다.</summary>
         public Treasury FindTreasuryWithGold()
         {
+            if (AssignedBuilding is Treasury central && !central.IsDestroyed && central.StoredGold > 0)
+                return central;
+
             var grid = TrapGrid;
             if (grid == null)
                 return null;
@@ -217,9 +226,9 @@ namespace _01.Code.MapCreateSystem
         public bool HasAssignedBuilding => AssignedBuilding != null;
         public bool HasInstallation => HasAssignedUnit || HasAssignedBuilding;
         /// <summary>
-        /// 침입자가 쏟아져 나오는 방인가. 포탈이 선 노드가 곧 스폰 지점이다.
+        /// 오른쪽 바깥문을 통해 침입자가 들어오는 시작 방인가.
         /// </summary>
-        public bool IsEnemySpawnNode => AssignedBuilding is Portal;
+        public bool IsEnemySpawnNode => Data != null && Data.Type == DungeonNodeType.Entrance;
 
         /// <summary>
         /// 스폰 방에는 유닛을 세울 수 없다. 거기서 막아 세우면 적이 통로를 한 번도 지나지 않아
@@ -279,6 +288,8 @@ namespace _01.Code.MapCreateSystem
             SetVisualColor(unlockedVisualColor);
             SetLockedOverlayVisible(false);
             SetLockedCostVisible(false);
+            if (roomDoorsRoot != null)
+                roomDoorsRoot.SetActive(true);
             SetUnitCapacityVisible(true);
             RefreshUnitCapacityLabel(true);
             nodesByDataId[data.Id] = this;
@@ -304,6 +315,8 @@ namespace _01.Code.MapCreateSystem
             SetVisualColor(lockedVisualColor);
             SetLockedOverlayVisible(true);
             SetLockedCostVisible(false);
+            if (roomDoorsRoot != null)
+                roomDoorsRoot.SetActive(false);
             SetUnitCapacityVisible(false);
         }
 

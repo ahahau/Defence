@@ -67,7 +67,7 @@ namespace Tests.EditMode.Intrusion
         }
 
         [Test]
-        public void 금고가_없으면_던전_핵심부를_노린다()
+        public void 금고가_없으면_가장_안쪽_방을_노린다()
         {
             var entrance = CreateNode("Entrance", "Entrance", Vector2Int.zero);
             var other = CreateNode("Other", "Corridor", Vector2Int.left);
@@ -76,7 +76,7 @@ namespace Tests.EditMode.Intrusion
                 var (target, kind) = FindPriorityTarget(other.transform.position);
 
                 Assert.That(target, Is.Not.Null, "노릴 곳을 하나도 찾지 못했습니다.");
-                Assert.That(target.gameObject, Is.SameAs(entrance));
+                Assert.That(target.gameObject, Is.SameAs(other));
                 Assert.That(kind, Is.EqualTo("DungeonCore"));
             }
             finally

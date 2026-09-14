@@ -51,12 +51,6 @@ MonoBehaviour:
     unlockDay: 10
     unlockHint: "13\uC77C\uCC28 \xB7 \uBD89\uC740 \uAC1C\uCCB4\uAC00 \uAE68\uC5B4\uB09C\uB2E4"
   - unit: {fileID: 0}
-    building: {fileID: 11400000, guid: 42825de8a3367de46a6089d639890ae2, type: 2}
-    startsUnlocked: 1
-    unlockDay: 0
-    unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218
-      \uC788\uC2B5\uB2C8\uB2E4."
-  - unit: {fileID: 0}
     building: {fileID: 11400000, guid: 3be975d9f7e84f2ca311f8d4f7a31e6a, type: 2}
     startsUnlocked: 0
     unlockDay: 4

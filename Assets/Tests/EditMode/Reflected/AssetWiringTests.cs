@@ -4,7 +4,9 @@ using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Tests.EditMode.Gameplay
 {
@@ -154,6 +156,192 @@ namespace Tests.EditMode.Gameplay
 
             Assert.That(missing, Is.Empty,
                 "그림이 비었거나 끊긴 스탯:\n  " + string.Join("\n  ", missing));
+        }
+
+        [Test]
+        public void ServiceBuildings_UseCentralRoomSlot()
+        {
+            var paths = new[]
+            {
+                "Assets/Resources/Buildings/BlacksmithBuildingData.asset",
+                "Assets/03.SO/Buildings/StoreBuildingData.asset",
+                "Assets/03.SO/Buildings/ArmoryStoreBuildingData.asset",
+                "Assets/03.SO/Buildings/InnBuildingData.asset",
+                "Assets/03.SO/Buildings/GrandInnBuildingData.asset"
+            };
+
+            foreach (var path in paths)
+            {
+                var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);
+                Assert.That(asset, Is.Not.Null, path);
+                Assert.That((bool)asset.GetType().GetProperty("CentralOnly", Instance).GetValue(asset), Is.True, path);
+                Assert.That((bool)asset.GetType().GetProperty("InstallOnEdge", Instance).GetValue(asset), Is.False, path);
+            }
+        }
+
+        [Test]
+        public void OpeningScene_HasNoPlayerAndBlacksmithInstallsAtCentre()
+        {
+            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            try
+            {
+                var controllerType = RequireType("_01.Code.MapCreateSystem.DungeonGraphController");
+                Component controller = null;
+                foreach (var root in scene.GetRootGameObjects())
+                {
+                    controller = root.GetComponentInChildren(controllerType, true);
+                    if (controller != null)
+                        break;
+                }
+
+                Assert.That(controller, Is.Not.Null);
+                controllerType.GetMethod("EditorBakeInitialScenePreview").Invoke(controller, null);
+
+                var unitsRoot = (Transform)controllerType.GetField("unitsRoot", Instance).GetValue(controller);
+                Assert.That(unitsRoot.childCount, Is.Zero, "시작 배치에 플레이어가 생성되었습니다.");
+
+                var nodeManager = (Component)controllerType.GetField("nodeManager", Instance).GetValue(controller);
+                var nodeType = RequireType("_01.Code.MapCreateSystem.Node");
+                var entrance = nodeManager.GetComponentInChildren(nodeType, true);
+                Assert.That(entrance, Is.Not.Null);
+
+                var data = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
+                    "Assets/Resources/Buildings/BlacksmithBuildingData.asset");
+                var placementType = RequireType("_01.Code.Buildings.BuildingPlacement");
+                var install = placementType.GetMethod("InstallCentral", BindingFlags.Public | BindingFlags.Static);
+                var building = (Component)install.Invoke(null, new object[] { entrance, data, 0.92f });
+                Assert.That(building, Is.Not.Null);
+
+                var grid = nodeType.GetProperty("TrapGrid", Instance).GetValue(entrance);
+                var centre = (Vector3)grid.GetType().GetMethod("CentralBuildingWorldPosition").Invoke(grid, null);
+                Assert.That(Vector3.Distance(building.transform.position, centre), Is.LessThan(0.01f));
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
+            }
+        }
+
+        [Test]
+        public void OpeningScene_DoesNotLaunchTutorial()
+        {
+            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            try
+            {
+                var dialogueType = RequireType("_01.Code.Dialogue.DialogueRunner");
+                var tutorialType = RequireType("_01.Code.UI.PlayTutorialView");
+                Component dialogue = null;
+                Component tutorial = null;
+                foreach (var root in scene.GetRootGameObjects())
+                {
+                    dialogue ??= root.GetComponentInChildren(dialogueType, true);
+                    tutorial ??= root.GetComponentInChildren(tutorialType, true);
+                }
+
+                Assert.That(dialogue, Is.Not.Null);
+                Assert.That(tutorial, Is.Not.Null);
+                Assert.That(new SerializedObject(dialogue).FindProperty("playOnStart").boolValue, Is.False);
+                Assert.That(new SerializedObject(dialogue).FindProperty("useGuidedStartTutorial").boolValue, Is.False);
+                Assert.That(tutorial.gameObject.activeSelf, Is.False);
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
+            }
+        }
+
+        [Test]
+        public void OpeningRoom_HasFourDoorsAndUsesEastDoorForIntruders()
+        {
+            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            try
+            {
+                var controllerType = RequireType("_01.Code.MapCreateSystem.DungeonGraphController");
+                var nodeType = RequireType("_01.Code.MapCreateSystem.Node");
+                Component controller = null;
+                foreach (var root in scene.GetRootGameObjects())
+                    controller ??= root.GetComponentInChildren(controllerType, true);
+                Assert.That(controller, Is.Not.Null);
+                controllerType.GetMethod("EditorBakeInitialScenePreview").Invoke(controller, null);
+
+                var manager = (Component)controllerType.GetField("nodeManager", Instance).GetValue(controller);
+                var entrance = manager.GetComponentInChildren(nodeType, true);
+                Assert.That(entrance, Is.Not.Null);
+                Assert.That((bool)nodeType.GetProperty("IsEnemySpawnNode").GetValue(entrance), Is.True);
+
+                var doors = entrance.transform.Find("Room Doors");
+                Assert.That(doors, Is.Not.Null);
+                Assert.That(doors.childCount, Is.EqualTo(4));
+                foreach (var side in new[] { "North", "South", "East", "West" })
+                    Assert.That(doors.Find(side), Is.Not.Null, side);
+
+                var marker = doors.Find("East/EntrySpawn");
+                Assert.That(marker, Is.Not.Null);
+                Assert.That(nodeType.GetProperty("EntryDoorSpawnPoint").GetValue(entrance), Is.SameAs(marker));
+                Assert.That(marker.position.x, Is.GreaterThan(entrance.transform.position.x + 5f));
+                Assert.That(marker.position.y, Is.EqualTo(entrance.transform.position.y).Within(0.01f));
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
+            }
+        }
+
+        [Test]
+        public void AdjacentOperatingFacilities_IncreaseIncomeAndAddUpkeep()
+        {
+            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            try
+            {
+                var nodeManagerType = RequireType("_01.Code.MapCreateSystem.DungeonNodeManager");
+                var graphType = RequireType("_01.Code.MapCreateSystem.DungeonGraph");
+                var nodeKindType = RequireType("_01.Code.MapCreateSystem.DungeonNodeType");
+                var placementType = RequireType("_01.Code.Buildings.BuildingPlacement");
+                var economyType = RequireType("_01.Code.Manager.FacilityEconomyRules");
+                Component manager = null;
+                foreach (var root in scene.GetRootGameObjects())
+                    manager ??= root.GetComponentInChildren(nodeManagerType, true);
+                Assert.That(manager, Is.Not.Null);
+
+                var graph = Activator.CreateInstance(graphType);
+                var kind = Enum.Parse(nodeKindType, "Corridor");
+                var addNode = graphType.GetMethod("AddNode");
+                var createNode = nodeManagerType.GetMethod("CreateNode");
+                var leftModel = addNode.Invoke(graph, new object[] { kind, new Vector2Int(1000, 0) });
+                var rightModel = addNode.Invoke(graph, new object[] { kind, new Vector2Int(1001, 0) });
+                var treasuryModel = addNode.Invoke(graph, new object[] { kind, new Vector2Int(1002, 0) });
+                var left = (Component)createNode.Invoke(manager, new[] { leftModel });
+                var right = (Component)createNode.Invoke(manager, new[] { rightModel });
+                var treasuryNode = (Component)createNode.Invoke(manager, new[] { treasuryModel });
+
+                var blacksmith = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
+                    "Assets/Resources/Buildings/BlacksmithBuildingData.asset");
+                var mine = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
+                    "Assets/03.SO/Buildings/MineBuildingData.asset");
+                var treasuryData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
+                    "Assets/Resources/Buildings/TreasuryBuildingData.asset");
+                var install = placementType.GetMethod("InstallCentral", BindingFlags.Public | BindingFlags.Static);
+                var upkeepBefore = (int)economyType.GetMethod("CalculateDailyUpkeep").Invoke(null, null);
+                var forge = install.Invoke(null, new object[] { left, blacksmith, 0.92f });
+                var mineBuilding = install.Invoke(null, new object[] { right, mine, 0.92f });
+                var treasury = install.Invoke(null, new object[] { treasuryNode, treasuryData, 0.92f });
+                Assert.That(forge, Is.Not.Null);
+                Assert.That(mineBuilding, Is.Not.Null);
+                Assert.That(treasury, Is.Not.Null);
+                treasury.GetType().GetMethod("RestoreStoredGold").Invoke(treasury, new object[] { 100 });
+
+                Assert.That((int)economyType.GetMethod("CountAdjacentFacilities").Invoke(null, new[] { forge }), Is.EqualTo(1));
+                Assert.That((int)economyType.GetMethod("ScaleIncome").Invoke(null, new[] { forge, (object)20 }), Is.EqualTo(24));
+                Assert.That((int)treasury.GetType().GetProperty("ProjectedInterest").GetValue(treasury), Is.EqualTo(10));
+                Assert.That((int)economyType.GetMethod("CalculateDailyUpkeep").Invoke(null, null) - upkeepBefore,
+                    Is.EqualTo(6));
+
+                nodeManagerType.GetMethod("ClearAll").Invoke(manager, null);
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
+            }
         }
 
         // ── 도구 ───────────────────────────────────────────────

@@ -103,7 +103,7 @@ namespace _01.Code.UI
 
         private bool AddUnlocked(BuildingDataSO buildingData)
         {
-            if (buildingData == null || _unlocked.Contains(buildingData))
+            if (buildingData == null || buildingData.Prefab is Portal || _unlocked.Contains(buildingData))
                 return false;
 
             _unlocked.Add(buildingData);

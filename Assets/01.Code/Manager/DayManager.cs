@@ -9,12 +9,10 @@ namespace _01.Code.Manager
         public static DayManager Current { get; private set; }
 
         [SerializeField] private GameEventChannelSO dayEventChannel;
-        [SerializeField] private GameEventChannelSO nodeEventChannel;
         [SerializeField] private GameEventChannelSO waveEventChannel;
 
         private int currentDay;
         private bool _isStandby = true;
-        private bool _hasPortal;
         public bool IsStandby => _isStandby;
         public int CurrentDay => currentDay;
         public int NextWaveDay => currentDay + 1;
@@ -38,16 +36,12 @@ namespace _01.Code.Manager
 
         private void OnEnable()
         {
-            nodeEventChannel.AddListener<PortalInstalledEvent>(HandlePortalInstalled);
-            nodeEventChannel.AddListener<PortalRemovedEvent>(HandlePortalRemoved);
             if (waveEventChannel != null)
                 waveEventChannel.AddListener<WaveEndedEvent>(HandleWaveEnded);
         }
 
         private void OnDisable()
         {
-            nodeEventChannel.RemoveListener<PortalInstalledEvent>(HandlePortalInstalled);
-            nodeEventChannel.RemoveListener<PortalRemovedEvent>(HandlePortalRemoved);
             if (waveEventChannel != null)
                 waveEventChannel.RemoveListener<WaveEndedEvent>(HandleWaveEnded);
         }
@@ -62,7 +56,7 @@ namespace _01.Code.Manager
         {
             var nextDay = NextWaveDay;
             var waveManager = WaveManager.Current;
-            if (!_isStandby || !_hasPortal || waveManager == null || !waveManager.CanStartWave(nextDay))
+            if (!_isStandby || waveManager == null || !waveManager.CanStartWave(nextDay))
                 return;
 
             _isStandby = false;
@@ -92,22 +86,11 @@ namespace _01.Code.Manager
             _01.Code.Persistence.RunSaveSystem.SaveCurrentRun();
         }
 
-        public void RestoreCheckpoint(int completedDay, bool hasPortal)
+        public void RestoreCheckpoint(int completedDay)
         {
             currentDay = Mathf.Max(0, completedDay);
             _isStandby = true;
-            _hasPortal = hasPortal;
             dayEventChannel?.RaiseEvent(new DayPreviewChangedEvent(NextWaveDay, 0f));
-        }
-
-        private void HandlePortalInstalled(PortalInstalledEvent evt)
-        {
-            _hasPortal = evt.Node != null;
-        }
-
-        private void HandlePortalRemoved(PortalRemovedEvent evt)
-        {
-            _hasPortal = false;
         }
     }
 }

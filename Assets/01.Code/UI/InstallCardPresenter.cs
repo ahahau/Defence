@@ -68,6 +68,8 @@ namespace _01.Code.UI
             var text = $"{displayName}\n건설  {costText}   ·   경계 +{buildingData.BaseDanger}\n등급 {(int)buildingData.Grade}";
             text += buildingData.InstallOnEdge ? "\n방 사이 설치"
                 : BuildingPlacement.UsesGridCell(buildingData) ? "\n개별 칸 설치" : "\n중앙 전용 · 방당 1개";
+            if (buildingData.DailyUpkeep > 0)
+                text += $"\n운영비 {buildingData.DailyUpkeep}G/일 · 인접 수익 최대 +40%";
 
             if (buildingData.Prefab == null)
                 return text;

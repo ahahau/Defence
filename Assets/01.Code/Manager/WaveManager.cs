@@ -40,7 +40,7 @@ namespace _01.Code.Manager
         private int fallbackGroupSize = 3;
         [SerializeField, Min(0f), Tooltip("그룹 내 멤버 간 스폰 간격(초). 우르르 들어오는 연출용")]
         private float memberSpawnDelay = 0.15f;
-        [SerializeField, Min(0f), Tooltip("포탈에서 전투가 붙어 스폰을 미룰 수 있는 최대 시간(초). 넘기면 전투 중이어도 내보낸다 — 안 죽는 선두가 웨이브를 영구히 막는 것을 막는다.")]
+        [SerializeField, Min(0f), Tooltip("입구에서 전투가 붙어 스폰을 미룰 수 있는 최대 시간(초). 넘기면 전투 중이어도 내보낸다 — 안 죽는 선두가 웨이브를 영구히 막는 것을 막는다.")]
         private float maxSpawnHoldSeconds = 6f;
         [SerializeField, Min(0f), Tooltip("파티원이 서로 겹치지 않게 흩어지는 대형 반경")]
         private float formationSpread = 0.35f;
@@ -67,8 +67,20 @@ namespace _01.Code.Manager
         [SerializeField, Min(1f), Tooltip("보스 거대화 배율.")]
         private float bossVisualScale = 1.6f;
 
-        private Node _portalNode;
-        public bool HasPortal => _portalNode != null;
+        private Node _entryNode
+        {
+            get
+            {
+                foreach (var node in Node.ActiveNodes)
+                    if (node != null && node.Data != null && node.Data.Type == DungeonNodeType.Entrance)
+                        return node;
+                return null;
+            }
+        }
+
+        public Node EntryNode => _entryNode;
+        public bool HasEntryDoor => EntryNode != null;
+        public bool HasPortal => HasEntryDoor; // 비활성 튜토리얼과 기존 호출부의 호환 이름
         public bool IsWaveRunning => _isWaveRunning;
         public bool IsBossWave => _isBossWave;
         public int TotalEnemyCount => Mathf.Max(0, _waveEnemyCount);
@@ -145,8 +157,6 @@ namespace _01.Code.Manager
         /// <summary>결과 화면을 띄우는 연출 담당. 게임오버 쪽에서도 같은 패널을 쓴다.</summary>
         public BossWavePresenter BossPresenter => bossPresenter;
 
-        /// <summary>침입자가 들어오는 구역. 어디까지 걸어올 수 있는지 재는 기준점이다.</summary>
-        public Node PortalNode => _portalNode;
         private int _currentDay;
         private int _remainingSpawns;
         private int _currentClearGoldReward;
@@ -258,16 +268,12 @@ namespace _01.Code.Manager
         {
             _isDestroying = false;
             dayEventChannel.AddListener<DayChangedEvent>(HandleDayChanged);
-            nodeEventChannel.AddListener<PortalInstalledEvent>(HandlePortalInstalled);
-            nodeEventChannel.AddListener<PortalRemovedEvent>(HandlePortalRemoved);
             Health.AnyDamaged += HandleAnyDamage;
         }
 
         private void OnDisable()
         {
             dayEventChannel.RemoveListener<DayChangedEvent>(HandleDayChanged);
-            nodeEventChannel.RemoveListener<PortalInstalledEvent>(HandlePortalInstalled);
-            nodeEventChannel.RemoveListener<PortalRemovedEvent>(HandlePortalRemoved);
             Health.AnyDamaged -= HandleAnyDamage;
             StopRunningWave();
             ClearEnemyTrackers();
@@ -283,16 +289,6 @@ namespace _01.Code.Manager
             ClearEnemyTrackers();
         }
 
-        private void HandlePortalInstalled(PortalInstalledEvent evt)
-        {
-            _portalNode = evt.Node;
-        }
-
-        private void HandlePortalRemoved(PortalRemovedEvent evt)
-        {
-            _portalNode = null;
-        }
-
         public bool CanStartWave(int day)
         {
             return string.IsNullOrEmpty(GetWaveStartBlockedReason(day));
@@ -301,8 +297,20 @@ namespace _01.Code.Manager
         /// <summary>습격 시작 버튼이 잠긴 이유. 표시 계층이 게임 규칙을 다시 추측하지 않게 한다.</summary>
         public string GetWaveStartBlockedReason(int day)
         {
-            if (_portalNode == null)
-                return "포털을 설치하세요";
+            var entryNode = EntryNode;
+            if (entryNode == null)
+                return "입구 문을 불러오는 중";
+
+            var hasInteriorRoom = false;
+            foreach (var node in Node.ActiveNodes)
+            {
+                if (node == null || node == entryNode || node.Data == null)
+                    continue;
+                hasInteriorRoom = true;
+                break;
+            }
+            if (!hasInteriorRoom)
+                return "방을 하나 확장하세요";
 
             if (waveConfig == null)
                 return "습격 정보를 불러오는 중";
@@ -316,7 +324,7 @@ namespace _01.Code.Manager
         {
             _currentDay = evt.Day;
 
-            if (_portalNode == null || waveConfig == null)
+            if (_entryNode == null || waveConfig == null)
             {
                 _currentClearGoldReward = 0;
                 RaiseWaveEnded();
@@ -416,14 +424,14 @@ namespace _01.Code.Manager
                 if (!_isWaveRunning)
                     break;
 
-                // 포탈 노드에서 전투가 붙어 있으면 스폰을 미룬다.
+                // 입구 방에서 전투가 붙어 있으면 스폰을 미룬다.
                 // 그대로 밀어 넣으면 스폰 지점에 적이 겹겹이 쌓여 싸움이 보이지 않는다.
                 //
                 // 다만 무한정 미루면 안 된다. 선두가 좀처럼 안 죽는 적이면 그 전투가 끝나지 않아
                 // 웨이브 전체가 영구히 멈추고, 그동안 선두는 코어를 깬다. 실측에서 12일·20일 보스가
                 // 정확히 그렇게 끝냈다 — 열세 마리가 스폰도 못 한 채 활성1로 굳었다.
                 // 쌓임을 막는 데는 잠깐 미루는 것으로 충분하므로 상한을 둔다.
-                if (IsPortalNodeInCombat())
+                if (IsEntryNodeInCombat())
                 {
                     holdTimer += Time.deltaTime;
                     if (holdTimer < maxSpawnHoldSeconds)
@@ -454,19 +462,19 @@ namespace _01.Code.Manager
             CompleteWave(false);
         }
 
-        /// <summary>포탈 노드에서 아군과 적이 맞붙어 있는 상태인가.</summary>
-        private bool IsPortalNodeInCombat()
+        /// <summary>입구 방에서 아군과 적이 맞붙어 있는 상태인가.</summary>
+        private bool IsEntryNodeInCombat()
         {
-            if (_portalNode == null)
+            if (_entryNode == null)
                 return false;
 
-            var battlefield = _portalNode.GetComponent<NodeBattlefield>();
+            var battlefield = _entryNode.GetComponent<NodeBattlefield>();
             return battlefield != null && battlefield.PlayerCount > 0 && battlefield.EnemyCount > 0;
         }
 
         private void SpawnNextEnemyIfNeeded(bool stopRunningCoroutine)
         {
-            if (_portalNode == null || !HasRegularSpawnsPending)
+            if (_entryNode == null || !HasRegularSpawnsPending)
             {
                 CompleteWaveIfCleared(stopRunningCoroutine);
                 return;
@@ -479,7 +487,7 @@ namespace _01.Code.Manager
         /// <summary>파티 전체를 한 그룹으로 몰아서 스폰한다. 그룹 간 간격은 spawnInterval × 그룹 크기로 늘려 전체 스폰량을 유지한다.</summary>
         private void SpawnNextGroup(float spawnInterval)
         {
-            if (_portalNode == null || !HasRegularSpawnsPending)
+            if (_entryNode == null || !HasRegularSpawnsPending)
             {
                 CompleteWaveIfCleared(false);
                 return;
@@ -505,13 +513,13 @@ namespace _01.Code.Manager
 
             for (var i = 0; i < groupSize; i++)
             {
-                if (!_isWaveRunning || _portalNode == null)
+                if (!_isWaveRunning || _entryNode == null)
                     break;
 
                 // 그룹을 쏟는 "도중에" 전투가 붙으면 남은 인원은 다음 기회로 미룬다.
                 // 첫 마리까지 막으면 안 된다 — 여기까지 왔다는 건 바깥 루프가 내보내기로 정한
                 // 것이고, i == 0 에서 되돌아가면 한 마리도 안 나가 웨이브가 그대로 굳는다.
-                if (i > 0 && IsPortalNodeInCombat())
+                if (i > 0 && IsEntryNodeInCombat())
                     break;
 
                 if (!SpawnEnemy(FormationOffsetFor(i, groupSize)))
@@ -535,7 +543,7 @@ namespace _01.Code.Manager
             CompleteWaveIfCleared(false);
         }
 
-        /// <summary>멤버를 포탈 주위에 원형으로 흩어 배치해 같은 노드에서도 겹쳐 보이지 않게 한다.</summary>
+        /// <summary>멤버를 입구 문 주위에 원형으로 흩어 배치해 같은 노드에서도 겹쳐 보이지 않게 한다.</summary>
         private Vector3 FormationOffsetFor(int index, int groupSize)
         {
             if (groupSize <= 1 || formationSpread <= 0f)
@@ -550,12 +558,13 @@ namespace _01.Code.Manager
 
         private bool SpawnEnemy(Vector3 formationOffset, EnemyDataSO forcedData = null)
         {
-            if (_portalNode == null || _remainingSpawns <= 0)
+            if (_entryNode == null || _remainingSpawns <= 0)
                 return false;
 
-            var spawnPos = (_portalNode.EnemyPosition != null
-                ? _portalNode.EnemyPosition.position
-                : _portalNode.transform.position) + formationOffset;
+            var entryPoint = _entryNode.EntryDoorSpawnPoint != null
+                ? _entryNode.EntryDoorSpawnPoint.position
+                : _entryNode.EnemyPosition.position;
+            var spawnPos = entryPoint + formationOffset;
 
             // 데이터를 먼저 뽑고, 그 데이터 전용 프리팹이 있으면 그것을 스폰(종류↔프리팹 짝 보장).
             // 없으면 기존 방식(공용 프리팹 풀)으로 폴백한다.
@@ -597,9 +606,12 @@ namespace _01.Code.Manager
 
             // Initialize가 mover 위치를 노드 위치로 스냅하므로, 그 전에 대형 오프셋을 넣어야 한다
             if (enemy.Mover != null)
+            {
                 enemy.Mover.FormationOffset = formationOffset;
+                enemy.Mover.InitialSpawnPosition = spawnPos;
+            }
 
-            enemy.Initialize(_portalNode, costEventChannel, treasuryGoldLoss, nodeEventChannel);
+            enemy.Initialize(_entryNode, costEventChannel, treasuryGoldLoss, nodeEventChannel);
             EnemyMoodHud.Attach(enemy);
             if (enemy != null)
             {
@@ -832,7 +844,7 @@ namespace _01.Code.Manager
             var count = _reservedReinforcementSpawns;
             for (var i = 0; i < count; i++)
             {
-                if (!_isWaveRunning || _portalNode == null)
+                if (!_isWaveRunning || _entryNode == null)
                     break;
 
                 var data = party.Members[i % party.Members.Length];

@@ -172,6 +172,7 @@ namespace _01.Code.MapCreateSystem
             if (!Application.isPlaying)
                 return;
 
+            TutorialInputGate.Clear();
             RebuildInitialGraph();
             ShowLockedNodes();
         }
@@ -951,7 +952,7 @@ namespace _01.Code.MapCreateSystem
 
         private static SavedBuilding CaptureBuilding(Building building)
         {
-            if (building == null || building.Data == null)
+            if (building == null || building is Portal || building.Data == null)
                 return null;
             return new SavedBuilding
             {
@@ -966,12 +967,13 @@ namespace _01.Code.MapCreateSystem
             if (saved == null)
                 return;
             var data = roster?.ResolveBuilding(saved.assetKey);
+            // 이전 저장의 포탈은 문 입구로 대체되었으므로 중앙 슬롯을 비워 둔다.
+            if (data != null && data.Prefab is Portal)
+                return;
             var building = cell
                 ? BuildingPlacement.InstallOnCell(node, saved.column, saved.row, data)
                 : BuildingPlacement.InstallCentral(node, data);
             RestoreBuildingState(building, saved);
-            if (building is Portal)
-                nodeEventChannel?.RaiseEvent(new PortalInstalledEvent(node));
         }
 
         private static void RestoreBuildingState(Building building, SavedBuilding saved)

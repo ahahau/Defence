@@ -18,7 +18,6 @@ namespace _01.Code.UI
     /// </summary>
     public sealed class IntrusionRoutePreview : MonoBehaviour
     {
-        [SerializeField] private GameEventChannelSO nodeEventChannel;
         [SerializeField] private GameEventChannelSO waveEventChannel;
         [SerializeField] private GameEventChannelSO dayEventChannel;
 
@@ -33,7 +32,6 @@ namespace _01.Code.UI
         private readonly List<Node> _route = new();
         private readonly List<Vector3> _points = new();
         private LineRenderer _line;
-        private Node _portalNode;
         private bool _isWaveRunning;
         private float _nextRefreshTime;
 
@@ -45,12 +43,6 @@ namespace _01.Code.UI
 
         private void OnEnable()
         {
-            if (nodeEventChannel != null)
-            {
-                nodeEventChannel.AddListener<PortalInstalledEvent>(HandlePortalInstalled);
-                nodeEventChannel.AddListener<PortalRemovedEvent>(HandlePortalRemoved);
-            }
-
             if (waveEventChannel != null)
             {
                 waveEventChannel.AddListener<WaveStartedEvent>(HandleWaveStarted);
@@ -62,12 +54,6 @@ namespace _01.Code.UI
 
         private void OnDisable()
         {
-            if (nodeEventChannel != null)
-            {
-                nodeEventChannel.RemoveListener<PortalInstalledEvent>(HandlePortalInstalled);
-                nodeEventChannel.RemoveListener<PortalRemovedEvent>(HandlePortalRemoved);
-            }
-
             if (waveEventChannel != null)
             {
                 waveEventChannel.RemoveListener<WaveStartedEvent>(HandleWaveStarted);
@@ -77,15 +63,13 @@ namespace _01.Code.UI
             dayEventChannel?.RemoveListener<DayChangedEvent>(HandleDayChanged);
         }
 
-        private void HandlePortalInstalled(PortalInstalledEvent evt) => _portalNode = evt.Node;
-        private void HandlePortalRemoved(PortalRemovedEvent evt) => _portalNode = null;
         private void HandleWaveStarted(WaveStartedEvent evt) => _isWaveRunning = true;
         private void HandleWaveEnded(WaveEndedEvent evt) => _isWaveRunning = false;
         private void HandleDayChanged(DayChangedEvent evt) => _nextRefreshTime = 0f;
 
         private void Update()
         {
-            if (_isWaveRunning || _portalNode == null)
+            if (_isWaveRunning || WaveManager.Current == null || !WaveManager.Current.HasEntryDoor)
             {
                 SetVisible(false);
                 return;
@@ -101,7 +85,7 @@ namespace _01.Code.UI
         private void RefreshRoute()
         {
             _route.Clear();
-            if (!IntrusionThreat.TryGetPredictedRoute(_portalNode, out var route) || route.Count < 2)
+            if (!IntrusionThreat.TryGetPredictedRoute(WaveManager.Current.EntryNode, out var route) || route.Count < 2)
             {
                 // 금고가 없으면 적은 배회한다. 없는 경로를 그리면 거짓말이 된다.
                 SetVisible(false);
