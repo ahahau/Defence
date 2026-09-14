@@ -2,147 +2,58 @@
 
 <!-- unity-onboarding:generated:start -->
 
-## Project Summary
+## Project summary
+- Root: `C:\Fork\Defence`; analyzed 2026-09-07 (Asia/Seoul).
+- Commit: `b8222be06d518a4504fdd2fd6113a1587af44b56`; findings describe the dirty working tree, including existing gameplay edits and deleted tests. Preserve these changes.
+- Confirmed: 2D dungeon management and automated combat. Prepare a node-based dungeon, hire/deploy units and facilities, start adventurer waves, intervene with commands/powers, settle income/upkeep, then expand.
+- Distinctive tradeoff: Store increases enemy attack, Inn heals enemies, and Blacksmith increases enemy attack/defense in exchange for facility income. Adventurer traits affect spending, fear, retreat and support healing.
+- Current scene starts with 200 gold and a 300 debt limit. The scene-linked WaveConfig specifies bosses every 9 days and the final day at 20 (boss days 9, 12, 18, 20; day 12 is the explicit Greed Knight boss entry). Do not confuse these serialized values with C# defaults (100 starting gold, final day 50).
+- Final-wave completion with a defeated boss triggers victory; main-unit defeat or bankruptcy triggers game over.
 
-- Project root: `C:\Fork\Defence`
-- Product: `Defence`, a 2D dungeon-management and automated-combat game. The core loop is dungeon expansion, unit/building placement, adventurer waves, settlement/rewards, and further expansion.
-- Last analyzed: 2026-09-01 (Asia/Seoul)
-- Last analyzed commit: `258a4c931b63afb6f712470f87edd12d4b289373` (`test: make the intrusion and save tests actually run`)
-- Snapshot note: the working tree was dirty at analysis time (58 tracked changes and 38 untracked entries). Findings describe the working tree, not only the commit above.
+## Environment and frameworks
+- Confirmed Unity 6000.4.6f1, revision 0b051c2e5d54.
+- URP 17.4.0, Renderer2D: all quality levels reference UniversalRP.asset, which references Renderer2D.asset. Global GraphicsSettings pipeline is null, but quality overrides establish URP.
+- New Input System 1.19.0 only (`activeInputHandler: 1`).
+- Unity Behavior 1.0.16; Behavior graph actions call BattleAgent. Character prefabs inspected serialize `autoDrive: 0`; code also supports an automatic fallback driver.
+- uGUI/TextMesh Pro, DOTween and Feel/MMFeedbacks are present. Test Framework 1.6.0.
+- No first-party Netcode/Mirror/Photon API use found; Multiplayer Center is not evidence of multiplayer gameplay.
+- Windows Build Profile exists; supported shipping platforms remain undocumented.
 
-## Confirmed Environment
+## Directory and assembly boundaries
+- `Assets/00.Scenes`: Start, SampleScene, BattleTest, DialogueTestScene.
+- `Assets/01.Code`: 270 C# files including Editor tools; features include Manager, MapCreateSystem, BT, Combat, Units, Enemies, Buildings, Skills, StatusEffects, Progression, Artifacts, Persistence, Dialogue and UI.
+- `Assets/03.SO`: gameplay definitions; `04.Prefab`: gameplay/UI prefabs; `05.Graphs`: behavior graphs; `Settings`: render/build assets.
+- Imported assets live in Feel, Plugins, csiimnida, vHierarchy and other vendor folders. Generated Library/Temp/Logs/obj content is not authoritative source.
+- No first-party production asmdef: runtime code uses implicit Assembly-CSharp and Editor-folder code uses Assembly-CSharp-Editor. Vendor assemblies are separate.
+- Defence.EditMode.Tests is Editor-only and uses reflection to access production code, with Unity test runners and NUnit references.
 
-- Unity version: **6000.4.6f1**, revision `0b051c2e5d54` (Unity 6.4).
-- Render pipeline: **URP 17.4.0 with a 2D Renderer**. Every quality level references `Assets/Settings/UniversalRP.asset`, which uses `Renderer2D.asset`.
-- Input system: **new Input System only** (`com.unity.inputsystem` 1.19.0, `activeInputHandler: 1`, generated `Controls.cs`).
-- Primary target evidence: a Windows standalone Build Profile exists. Android/iOS settings are present in generic Player Settings, but supported release targets are not documented.
-- Networking: no first-party networking API usage was found. `Multiplayer Center` is installed as tooling only; this is not currently evidenced as a multiplayer game.
+## Startup and gameplay flow
+- Enabled build order: Start.unity -> SampleScene.unity; other first-party scenes are development scenes.
+- StartMenuController.StartGame loads SampleScene. StartNewGame deletes the checkpoint before loading; normal startup can resume a saved run.
+- DungeonGraphController.Awake builds the initial graph; Start waits one frame before TryRestoreCurrentRun.
+- DayManager permits a new wave only while in standby, with a portal and WaveManager approval. DayChangedEvent drives spawning; WaveEndedEvent returns to standby and schedules checkpoint saving one frame later.
+- WaveManager handles party composition, threat preview, groups, boss phases/reinforcements, objectives and rewards. Objectives: annihilation, facility income, trap damage, critical hits.
+- CostManager and ManagementSettlementManager separate immediate construction/hiring payments from deferred wave income/expenses, with upkeep, debt, interest and repayment. This distinction prevents double accounting.
+- Unit condition includes fatigue, injuries, traits, personalities and commands. Commands can be issued during combat and share the power resource; movement/recall have separate restrictions.
+- DungeonPowerSystem allows targeted intervention. Morale/policies affect upkeep, rewards, combat and recruitment. VillageConquestSystem connects expedition results to future raid suppression. Core links grant reward bonuses; artifacts provide additional progression.
 
-## Important Packages And Frameworks
+## Architecture and conventions
+- Confirmed: MonoBehaviour scene composition with serialized references, ScriptableObject definitions, typed GameEventChannelSO events, numerous static Current accessors, coroutine sequencing, and ordered save-agent composition.
+- Most namespaces follow `_01.Code.<Feature>`, with Allman braces, private SerializeField fields, mixed camelCase/_camelCase, and frequent Korean intent comments.
+- RunSaveSystem writes versioned JSON checkpoints and a backup under persistentDataPath. Save agents capture independent sections. Incomplete restoration blocks subsequent saves to avoid overwriting recoverable state.
+- Likely change-sensitive areas: WaveManager, DungeonGraphController, BattleAgent, scene wiring, event ordering during settlement, and restoration order. These are review priorities, not validated defects.
 
-| Area | Finding | Confidence | Evidence |
-| --- | --- | --- | --- |
-| Rendering | URP 17.4.0, Renderer2D | Confirmed | `Packages/manifest.json`, `ProjectSettings/QualitySettings.asset`, `Assets/Settings/UniversalRP.asset` |
-| Input | Input System 1.19.0 and generated controls wrapper | Confirmed | `Packages/manifest.json`, `ProjectSettings/ProjectSettings.asset`, `Assets/01.Code/Core/Input/Controls.cs` |
-| Combat AI | Unity Behavior 1.0.16; graphs decide behavior and `BattleAgent` executes it | Confirmed | `Packages/manifest.json`, `Assets/01.Code/BT/BattleAgent.cs`, `Assets/05.Graphs/` |
-| Feedback/animation | DOTween Pro and More Mountains Feel/MMFeedbacks | Confirmed | `Assets/Plugins/Demigiant/`, `Assets/Feel/`, first-party combat/UI usage |
-| UI | uGUI + TextMesh Pro; scene-bound view/controller classes | Confirmed | `Packages/manifest.json`, `Assets/01.Code/UI/`, build scenes |
-| Persistence | Versioned JSON checkpoints, backup file, registry of `ISaveable` agents | Confirmed | `Assets/01.Code/Persistence/` |
-| Tests | Unity Test Framework 1.6.0 and NUnit EditMode tests | Confirmed | package manifest and `Assets/Tests/EditMode/Reflected/` |
-| Editor tooling | Unity AI Assistant and experimental `com.unity.pipeline` MCP bridge | Confirmed | package manifest/lock, successful MCP console query |
+## Testing and tooling
+- Eight current EditMode C# test files cover combat formulas, rules, encounter variety, dialogue, building serialization, asset wiring, intrusion/save and exploitation progress. Source contains 66 [Test] annotations plus parameterized cases; this is not a discovered test-run count.
+- PlayMode test assembly and smoke runner are deleted in the current working tree. Do not infer test availability from stale generated csproj files.
+- No builds, tests or Play Mode were run for this analysis; current compilation, runtime behavior, performance and balance remain unverified.
+- Unity MCP tools are exposed (console, command execution, captures); manifest contains AI Assistant and com.unity.pipeline. Live connectivity was not tested this turn. Previous context's successful console query is historical, not a current baseline.
+- Repository inspection provides settings, scenes, packages and asset evidence without requiring Editor mutation.
 
-## Directory Structure
-
-| Path | Purpose | Confidence | Evidence |
-| --- | --- | --- | --- |
-| `Assets/00.Scenes/` | Start, main gameplay, and development/test scenes | Confirmed | Four `.unity` files; two enabled in Build Settings |
-| `Assets/01.Code/` | 244 first-party C# files grouped by feature/system | Confirmed | source inventory |
-| `Assets/02.Art/` | First-party visual assets | Likely | folder and asset names |
-| `Assets/03.SO/` | ScriptableObject game data: units, enemies, buildings, waves, policies, skills, stats | Confirmed | 229 non-meta assets and corresponding SO types |
-| `Assets/04.Prefab/` | Gameplay, UI, character, building, and map prefabs | Confirmed | 54 non-meta assets |
-| `Assets/05.Graphs/` | Unity Behavior graph assets | Confirmed | graph assets and `Unity.Behavior` code usage |
-| `Assets/Settings/` | URP/Renderer2D and Windows Build Profile | Confirmed | settings assets |
-| `Assets/Tests/` | Reflection-oriented EditMode tests | Confirmed | test assembly and six test files |
-| `Assets/Feel/`, `Assets/Plugins/`, `Assets/csiimnida/`, `Assets/vHierarchy/` | Imported/vendor runtime and editor tooling | Confirmed | package/vendor assemblies and source |
-
-## Assembly Boundaries
-
-| Assembly | Responsibility | Key references | Notes |
-| --- | --- | --- | --- |
-| `Assembly-CSharp` (implicit) | All 244 first-party runtime scripts | Unity packages and auto-referenced vendor assemblies | No first-party runtime `.asmdef`; most production code compiles as one monolith. |
-| `Assembly-CSharp-Editor` (implicit) | `Assets/01.Code/Editor/` tools and inspectors | Production code, UnityEditor | Editor separation relies on Unity's reserved folder behavior. |
-| `Defence.EditMode.Tests` | 58 NUnit EditMode tests across six files | Test runners and `nunit.framework.dll` | Does not reference a first-party runtime assembly; tests under `Reflected` reach production code via reflection. |
-| Vendor assemblies | More Mountains, Nice Vibrations, SoundManager, vHierarchy | Package-specific | Third-party boundaries exist but do not partition first-party gameplay code. |
-
-The principal structural risk is the missing first-party runtime assembly boundary: feature dependencies are unchecked, compilation scope is broad, and tests lack compile-time references to production types.
-
-## Scenes And Startup Flow
-
-- Enabled build scenes, in order:
-  1. `Assets/00.Scenes/Start.unity`
-  2. `Assets/00.Scenes/SampleScene.unity`
-- `Start.unity` hosts the start/settings UI. `StartMenuController` loads `SampleScene` by name.
-- In `SampleScene`, `DungeonGraphController.Awake()` creates the initial graph and locked nodes. After one frame its `Start()` asks `RunSaveSystem` to restore a checkpoint, allowing other managers/UI to initialize first.
-- Day/wave flow is event-driven: `DayManager` advances the day, `WaveManager` executes spawning/combat/reward flow, and a wave-end event returns the game to standby and triggers saving.
-- Development-only scenes excluded from builds: `BattleTest.unity` and `DialogueTestScene.unity` (plus imported demo scenes elsewhere under `Assets`).
-- `SampleScene.unity` is a large composition root: about 22,310 serialized lines and 176 named objects at analysis time.
-
-## Architecture
-
-| Pattern | Finding | Confidence | Evidence |
-| --- | --- | --- | --- |
-| Scene composition | MonoBehaviours and serialized references wire most systems in `SampleScene` | Confirmed | scene YAML and serialized fields across managers/views |
-| ScriptableObject data | Units, enemies, buildings, policies, skills, stats, waves, dialogue, and artifacts are data-driven | Confirmed | 40 `CreateAssetMenu` declarations and `Assets/03.SO/` |
-| Typed event bus | `GameEventChannelSO` dispatches typed `GameEvent` objects; feature-specific event classes decouple many UI/gameplay reactions | Confirmed | `Core/GameEventChannelSO.cs`, `Events/`, 42 referencing files |
-| Service locator/singletons | Numerous managers and some views expose static `Current` accessors | Confirmed | 21 matching declarations/usages across first-party code |
-| Entity/module composition | `ModuleOwner` discovers child `IModule`s; `Entity` exposes common sensing/stats/health signals | Confirmed | `Core/Modules/` |
-| Behavior trees | Unity Behavior chooses combat actions; `BattleAgent` is the execution adapter | Confirmed | `BT/`, `Assets/05.Graphs/` |
-| Save-agent registry | Save/restore delegates to ordered `ISaveable` agents and writes versioned JSON with a backup | Confirmed | `Persistence/` |
-| Async model | Frame/timing work uses coroutines; no task/UniTask convention is present | Confirmed | coroutine usage and no async framework usage |
-
-Important maintainability hotspots are `WaveManager` (about 956 lines), `DungeonGraphController` (about 1,065 lines), the large gameplay scene, and broad use of static `Current` access. These make initialization order and cross-feature changes harder to reason about even though event channels reduce some direct coupling.
-
-## Coding Conventions
-
-- Namespaces: feature-based `_01.Code.<Feature>` namespaces; persistence agents use `_01.Code.Persistence.Agents`.
-- Layout: Allman braces and generally one public type per file.
-- Serialized fields: private `[SerializeField]`; field naming is mixed between `camelCase` and `_camelCase`.
-- Documentation: Korean XML summaries and intent-focused comments are common in newer/core code, but not universal.
-- Nullability: nullable reference types are not enabled; defensive Unity-null checks are common.
-- Async: coroutines for sequencing and timing; no `async`/`UniTask` usage found.
-- Build configuration suppresses CS0618 and treats MSB3277 as a message via `Directory.Build.targets`.
-
-## Testing And Validation
-
-- EditMode: **58 `[Test]` cases** across combat formulas, game rules, encounter variety, dialogue, serialization, intrusion, and saves.
-- PlayMode: no PlayMode test assembly or `[UnityTest]` cases found.
-- CI: no repository CI workflow or automated Unity test command was found.
-- Current baseline: no tests/build were run during onboarding. The connected Editor console reported **0 errors and 2 warnings** (automation-mode warning and Unity AI account API timeout); this is not equivalent to a clean build/test run.
-- Historical evidence only: `Docs/작업정리.txt` records a successful `dotnet build Defence.sln --no-restore` on 2026-07-15 at commit `939b81ba`, not for the current working tree.
-
-## Available Unity Tooling
-
-| Capability | Status | Evidence |
-| --- | --- | --- |
-| `unity.connection.status` | available | MCP console request succeeded against the open Editor |
-| `unity.editor.version` | available from repository; dedicated API unverified | `ProjectVersion.txt` |
-| `unity.console.read` | available | MCP returned current warnings/errors |
-| `unity.scene.list` | available from serialized settings; dedicated API unverified | `EditorBuildSettings.asset` |
-| `unity.scene.inspect` | unverified | no read-only hierarchy API exposed/used |
-| `unity.buildsettings.read` | available from repository; dedicated API unverified | `EditorBuildSettings.asset`, Build Profile asset |
-| `unity.gameobject.inspect` | unverified | no dedicated inspection call used |
-| `unity.asset.search` | available through repository search; dedicated API unverified | filesystem/`rg` |
-| `unity.package.read` | available through repository files; dedicated API unverified | package manifest/lock |
-| `unity.tests.list` | unverified | test files inspected from repository |
-| `unity.tests.run` | unverified | not invoked during onboarding |
-| `unity.playmode.read` | unverified | not invoked; Play Mode was not entered |
-| `unity.profiler.read` | unverified | not exposed/used |
-
-## Important Constraints
-
-- Preserve the user's dirty working tree; many gameplay, prefab, ScriptableObject, scene, and test changes are uncommitted.
-- Treat `Library/`, `Temp/`, `Logs/`, and `obj/` as generated.
-- Scene and prefab wiring is architecturally significant; script changes often require validation of serialized references.
-- Save-agent order is a dependency contract: world/layout restoration must precede dependent state such as units/buildings.
-- Do not infer multiplayer support from the Multiplayer Center package.
-
-## Unknowns And Confidence
-
-- Supported shipping platforms and release/build procedure are undocumented; only a Windows profile is confirmed.
-- Current compile, EditMode test, player-build, and runtime baselines remain unknown because onboarding intentionally did not trigger builds/tests/Play Mode.
-- Performance characteristics are unknown; no profiler capture was performed.
-- The exact intended long-term assembly/layer boundaries are undocumented.
-- The large dirty change set means architecture and test counts may change before the next commit.
-
-## Source Files Inspected
-
-- `ProjectSettings/ProjectVersion.txt`, `ProjectSettings/EditorBuildSettings.asset`, `ProjectSettings/ProjectSettings.asset`, `ProjectSettings/GraphicsSettings.asset`, `ProjectSettings/QualitySettings.asset`
-- `Packages/manifest.json`, `Packages/packages-lock.json`
-- `Assets/Settings/UniversalRP.asset`, `Assets/Settings/Renderer2D.asset`, `Assets/Settings/Build Profiles/Windows.asset`
-- `Assets/00.Scenes/Start.unity`, `Assets/00.Scenes/SampleScene.unity`
-- Representative code under `Assets/01.Code/Core/`, `Manager/`, `MapCreateSystem/`, `BT/`, `Persistence/`, `UI/`, and `Events/`
-- `Assets/Tests/EditMode/Reflected/Defence.EditMode.Tests.asmdef` and all six EditMode test files
-- `Docs/작업정리.txt`, `Docs/발표대본.md`, `Directory.Build.targets`
-- Git status, current commit, source/asset inventories, and current Unity Editor console
+## Evidence and constraints
+- Inspected: ProjectVersion, manifest, EditorBuildSettings, Player/Graphics/Quality settings, UniversalRP/Renderer2D assets, SampleScene configuration, WaveConfig and its GUID.
+- Representative source: DayManager, WaveManager, WaveConfigSO, WaveObjective, WaveExploitationProgress, CostManager, ManagementSettlementManager, GameOverManager, UnitManagementSystem, DungeonPowerSystem, MoralePolicyManager, CoreCohesionSystem, VillageConquestSystem, DungeonGraphController, BattleAgent, AdventurerTrait, UnitConditionState, Store/Inn/Blacksmith, RunSaveSystem, StartMenuController and GameEventChannelSO; character prefab autoDrive fields and test assembly/inventory.
+- Analysis is static. Player-facing clarity, difficulty, pacing and actual scene behavior require runtime observation. No gameplay assets or code were changed by onboarding.
 
 <!-- unity-onboarding:generated:end -->
+
