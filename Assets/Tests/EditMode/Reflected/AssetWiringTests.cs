@@ -96,6 +96,51 @@ namespace Tests.EditMode.Gameplay
         }
 
         [Test]
+        public void WaveConfig_RunsForeverWithFourWeeksOfAuthoredDays()
+        {
+            var configType = RequireType("_01.Code.Manager.WaveConfigSO");
+            var config = AssetDatabase.LoadAssetAtPath<ScriptableObject>("Assets/03.SO/WaveConfig.asset");
+            Assert.That(config, Is.Not.Null, "WaveConfig 에셋을 찾지 못했습니다.");
+
+            var finalDay = configType.GetProperty("FinalDay").GetValue(config);
+            Assert.That(finalDay, Is.Zero, "끝나는 날이 있으면 무한 진행이 아닙니다.");
+
+            // 4주치는 손으로 짠 날이어야 한다. 없으면 defaultWave 하나로 매일이 같아진다.
+            var getWave = configType.GetMethod("GetWaveForDay");
+            var entryType = RequireType("_01.Code.Manager.WaveConfigSO+WaveEntry");
+            var targetDayField = entryType.GetField("targetDay");
+            var unauthored = new List<int>();
+
+            for (var day = 1; day <= 28; day++)
+            {
+                var entry = getWave.Invoke(config, new object[] { day });
+                if (entry == null || (int)targetDayField.GetValue(entry) != day)
+                    unauthored.Add(day);
+            }
+
+            Assert.That(unauthored, Is.Empty,
+                "일차별 수치가 없는 날: " + string.Join(", ", unauthored));
+        }
+
+        [TestCase(7)]
+        [TestCase(14)]
+        [TestCase(21)]
+        [TestCase(28)]
+        public void WaveConfig_PutsABossOnEverySettlementDay(int day)
+        {
+            var configType = RequireType("_01.Code.Manager.WaveConfigSO");
+            var config = AssetDatabase.LoadAssetAtPath<ScriptableObject>("Assets/03.SO/WaveConfig.asset");
+            Assert.That(config, Is.Not.Null, "WaveConfig 에셋을 찾지 못했습니다.");
+
+            // 보스와 청산이 같은 날이라 한 주가 하나의 고비로 끝난다.
+            // 둘이 어긋나면 주의 리듬이 사라지고 보스날은 그냥 힘든 날이 된다.
+            Assert.That(configType.GetMethod("IsBossDay").Invoke(config, new object[] { day }), Is.True,
+                $"{day}일은 청산일인데 보스가 없습니다.");
+            Assert.That(configType.GetMethod("GetBossForDay").Invoke(config, new object[] { day }), Is.Not.Null,
+                $"{day}일 보스는 전용 정의가 있어야 공용 보스와 구분됩니다.");
+        }
+
+        [Test]
         public void GoldPanel_ListensToBothTheCostAndTheDayChannel()
         {
             var viewType = RequireType("_01.Code.UI.GoldCostView");
