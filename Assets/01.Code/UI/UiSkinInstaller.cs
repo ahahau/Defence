@@ -39,8 +39,15 @@ namespace _01.Code.UI
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Install()
         {
-            var host = new GameObject("UI Skin Installer");
-            host.AddComponent<UiSkinInstaller>();
+            if (FindAnyObjectByType<UiSkinInstaller>() != null)
+                return;
+            var prefab = Resources.Load<UiSkinInstaller>("UI/UiSkinInstaller");
+            if (prefab == null)
+            {
+                Debug.LogError("Missing UI prefab: UI/UiSkinInstaller");
+                return;
+            }
+            var host = Instantiate(prefab).gameObject;
             DontDestroyOnLoad(host);
         }
 

@@ -1,8 +1,6 @@
 using _01.Code.Manager;
-using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 using UnityEngine.InputSystem;
 
 namespace _01.Code.UI
@@ -21,6 +19,7 @@ namespace _01.Code.UI
     /// </summary>
     public sealed class IdleReturnToTitle : MonoBehaviour
     {
+        private const string HostPrefabResourcePath = "UI/IdleReturnHost";
         private const string NoticePrefabResourcePath = "UI/IdleReturnNotice";
 
         /// <summary>이만큼 아무것도 안 하면 나간다.</summary>
@@ -37,9 +36,6 @@ namespace _01.Code.UI
         /// </summary>
         private const float MouseMoveThreshold = 4f;
 
-        private static readonly Color NoticeColor = new(0.055f, 0.034f, 0.025f, 0.95f);
-        private static readonly Color TextColor = new(0.96f, 0.88f, 0.72f, 1f);
-
         private IdleReturnNoticeRefs notice;
         private float _idleSeconds;
         private int _shownRemaining = -1;
@@ -47,14 +43,27 @@ namespace _01.Code.UI
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Install()
         {
-            var host = new GameObject("Idle Return To Title");
-            host.AddComponent<IdleReturnToTitle>();
+            if (FindAnyObjectByType<IdleReturnToTitle>() != null)
+                return;
+            var prefab = Resources.Load<IdleReturnToTitle>(HostPrefabResourcePath);
+            if (prefab == null)
+            {
+                Debug.LogError($"Missing UI prefab: {HostPrefabResourcePath}");
+                return;
+            }
+            var host = Instantiate(prefab).gameObject;
             DontDestroyOnLoad(host);
         }
 
         private void Start()
         {
-            notice = ResolveNotice(BuildCanvas().transform);
+            notice = ResolveNotice(transform);
+            if (notice == null || !notice.IsComplete)
+            {
+                Debug.LogError($"Incomplete UI prefab: {NoticePrefabResourcePath}", this);
+                enabled = false;
+                return;
+            }
             SetNoticeVisible(false);
         }
 
@@ -181,83 +190,10 @@ namespace _01.Code.UI
                 notice.window.SetActive(visible);
         }
 
-        /// <summary>
-        /// 알림을 구해 온다. 프리팹이 있으면 그것을, 없으면 코드로 세운다.
-        ///
-        /// <see cref="SettingsPanelView"/>와 같은 이유로 코드 경로를 남겨 둔다. 프리팹이 빠진 채
-        /// 배포되면 예고 없이 화면이 바뀌는데, 모양이 조금 달라도 뜨는 편이 훨씬 낫다.
-        /// </summary>
         private IdleReturnNoticeRefs ResolveNotice(Transform parent)
         {
-            var prefab = Resources.Load<GameObject>(NoticePrefabResourcePath);
-            if (prefab == null)
-                return BuildNotice(parent);
-
-            var instance = Instantiate(prefab, parent, false);
-            var refs = instance.GetComponent<IdleReturnNoticeRefs>();
-            if (refs != null && refs.IsComplete)
-                return refs;
-
-            Debug.LogWarning($"{NoticePrefabResourcePath} 의 참조 표가 비어 있어 알림을 코드로 세웁니다.", instance);
-            Destroy(instance);
-            return BuildNotice(parent);
-        }
-
-        private Canvas BuildCanvas()
-        {
-            var go = new GameObject("Idle Notice Canvas",
-                typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-            go.transform.SetParent(transform, false);
-
-            var canvas = go.GetComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            // 설정 창보다도 위에 뜬다. 무엇을 열어 두었든 나간다는 말은 보여야 한다.
-            canvas.sortingOrder = 6000;
-
-            var scaler = go.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920f, 1080f);
-            scaler.matchWidthOrHeight = 0.5f;
-
-            return canvas;
-        }
-
-        private static IdleReturnNoticeRefs BuildNotice(Transform parent)
-        {
-            var window = new GameObject("Idle Notice", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            window.transform.SetParent(parent, false);
-
-            var rect = (RectTransform)window.transform;
-            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = new Vector2(560f, 150f);
-            rect.anchoredPosition = Vector2.zero;
-
-            var background = window.GetComponent<Image>();
-            background.color = NoticeColor;
-            // 알림은 읽으라고 띄우는 것이지 누르라고 띄우는 게 아니다. 클릭을 삼키면
-            // 계속하려고 누른 손가락이 게임에 닿지 않는다.
-            background.raycastTarget = false;
-
-            var label = new GameObject("Countdown", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
-            label.transform.SetParent(window.transform, false);
-
-            var labelRect = (RectTransform)label.transform;
-            labelRect.anchorMin = Vector2.zero;
-            labelRect.anchorMax = Vector2.one;
-            labelRect.offsetMin = new Vector2(24f, 20f);
-            labelRect.offsetMax = new Vector2(-24f, -20f);
-
-            var text = label.GetComponent<TextMeshProUGUI>();
-            text.color = TextColor;
-            text.fontSize = 30f;
-            text.alignment = TextAlignmentOptions.Center;
-            text.raycastTarget = false;
-
-            var refs = window.AddComponent<IdleReturnNoticeRefs>();
-            refs.window = window;
-            refs.countdownText = text;
-            return refs;
+            var prefab = Resources.Load<IdleReturnNoticeRefs>(NoticePrefabResourcePath);
+            return prefab != null ? Instantiate(prefab, parent, false) : null;
         }
     }
 }

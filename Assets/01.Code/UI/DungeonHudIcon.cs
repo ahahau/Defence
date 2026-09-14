@@ -31,6 +31,8 @@ namespace _01.Code.UI
                 return;
 
             var image = FindOrCreate(card.transform);
+            if (image == null)
+                return;
             image.sprite = icon;
             image.preserveAspect = true;
             image.raycastTarget = false;
@@ -59,9 +61,16 @@ namespace _01.Code.UI
             if (existing != null && existing.TryGetComponent<Image>(out var found))
                 return found;
 
-            var go = new GameObject(ChildName, typeof(RectTransform), typeof(Image));
-            go.transform.SetParent(card, false);
-            return go.GetComponent<Image>();
+            var prefab = Resources.Load<Image>("UI/HudIcon");
+            if (prefab == null)
+            {
+                Debug.LogError("UI/HudIcon prefab is missing.");
+                return null;
+            }
+
+            var image = Object.Instantiate(prefab, card, false);
+            image.gameObject.name = ChildName;
+            return image;
         }
 
         /// <summary>독립된 제목·날짜 표시에는 텍스트 영역 안에 아이콘 여백을 확보한다.</summary>

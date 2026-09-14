@@ -2360,7 +2360,6 @@ MonoBehaviour:
   unitPrefab: {fileID: 8763816506036182599, guid: 3fd3e8355402864469408219b7a7eecb, type: 3}
   portalPrefab: {fileID: 6750984763358774362, guid: 6eaa4d203b053694b965f2b5b22059a7, type: 3}
   installableBuildings:
-  - {fileID: 11400000, guid: 42825de8a3367de46a6089d639890ae2, type: 2}
   - {fileID: 11400000, guid: 3be975d9f7e84f2ca311f8d4f7a31e6a, type: 2}
   - {fileID: 11400000, guid: 29e49c3215d74e87a2f48f1429a0246d, type: 2}
   - {fileID: 11400000, guid: 63a68a01c1e746e49a3bc6917d59ab69, type: 2}

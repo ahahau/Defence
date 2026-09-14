@@ -1069,28 +1069,15 @@ namespace _01.Code.UI
             hintText.rectTransform.offsetMax = new Vector2(-126f, -4f);
             if (target.transform.Find("Skip Tutorial") == null)
             {
-                var buttonObject = new GameObject("Skip Tutorial", typeof(RectTransform), typeof(UnityEngine.UI.Image), typeof(UnityEngine.UI.Button));
-                buttonObject.transform.SetParent(target.transform, false);
-                var buttonRect = (RectTransform)buttonObject.transform;
-                buttonRect.anchorMin = buttonRect.anchorMax = new Vector2(1f, 0.5f);
-                buttonRect.pivot = new Vector2(1f, 0.5f);
-                buttonRect.anchoredPosition = new Vector2(-14f, 0f);
-                buttonRect.sizeDelta = new Vector2(104f, 42f);
-                buttonObject.GetComponent<UnityEngine.UI.Image>().color = new Color(0.25f, 0.18f, 0.1f, 1f);
-                buttonObject.GetComponent<UnityEngine.UI.Button>().onClick.AddListener(SkipTutorial);
-                var label = new GameObject("Label", typeof(RectTransform)).AddComponent<TextMeshProUGUI>();
-                label.transform.SetParent(buttonObject.transform, false);
-                label.rectTransform.anchorMin = Vector2.zero;
-                label.rectTransform.anchorMax = Vector2.one;
-                label.rectTransform.offsetMin = label.rectTransform.offsetMax = Vector2.zero;
-                label.font = hintText.font;
-                label.fontSize = 18;
-                label.alignment = TextAlignmentOptions.Center;
-                label.text = "안내 건너뛰기";
-                label.raycastTarget = false;
-                label.enableAutoSizing = true;
-                label.fontSizeMin = 14;
-                label.fontSizeMax = 18;
+                var prefab = Resources.Load<UnityEngine.UI.Button>("UI/TutorialSkipButton");
+                if (prefab != null)
+                {
+                    var button = Instantiate(prefab, target.transform, false);
+                    button.gameObject.name = "Skip Tutorial";
+                    button.onClick.AddListener(SkipTutorial);
+                }
+                else
+                    Debug.LogError("Missing UI prefab: UI/TutorialSkipButton", this);
             }
             if (target.GetComponent<UnityEngine.UI.GraphicRaycaster>() == null)
                 target.AddComponent<UnityEngine.UI.GraphicRaycaster>();

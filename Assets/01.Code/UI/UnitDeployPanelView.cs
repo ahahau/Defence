@@ -332,7 +332,7 @@ namespace _01.Code.UI
         private static readonly Color StatusGood = new(0.55f, 0.92f, 0.62f, 1f);
         private static readonly Color StatusWarn = new(1f, 0.72f, 0.42f, 1f);
 
-        private TMP_Text statusText;
+        [SerializeField] private TMP_Text statusText;
 
         /// <summary>
         /// 결과 알림을 설명과 갈라 놓는다.
@@ -343,40 +343,12 @@ namespace _01.Code.UI
         /// </summary>
         private void SetStatus(string message, Color color)
         {
-            EnsureStatusText();
             if (statusText == null)
                 return;
 
             statusText.text = message;
             statusText.color = color;
             statusText.gameObject.SetActive(!string.IsNullOrEmpty(message));
-        }
-
-        private void EnsureStatusText()
-        {
-            if (statusText != null || hintText == null)
-                return;
-
-            var go = new GameObject("Status", typeof(RectTransform));
-            go.transform.SetParent(hintText.transform.parent, false);
-            go.transform.SetSiblingIndex(hintText.transform.GetSiblingIndex() + 1);
-
-            statusText = go.AddComponent<TextMeshProUGUI>();
-            statusText.fontSize = Mathf.Max(12f, hintText.fontSize * 0.95f);
-            statusText.alignment = TextAlignmentOptions.TopLeft;
-            statusText.textWrappingMode = TextWrappingModes.NoWrap;
-            statusText.overflowMode = TextOverflowModes.Ellipsis;
-            statusText.raycastTarget = false;
-
-            // 설명 바로 아래에 한 줄로 눕힌다. 설명 칸을 침범하지 않게 아래쪽에 붙인다.
-            var rect = (RectTransform)go.transform;
-            rect.anchorMin = new Vector2(0f, 0f);
-            rect.anchorMax = new Vector2(1f, 0f);
-            rect.pivot = new Vector2(0.5f, 0f);
-            rect.offsetMin = new Vector2(0f, 6f);
-            rect.offsetMax = new Vector2(0f, 34f);
-
-            go.SetActive(false);
         }
 
         private void ConfigureStaticTextLayout()

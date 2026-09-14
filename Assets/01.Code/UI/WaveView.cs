@@ -58,8 +58,8 @@ namespace _01.Code.UI
         private readonly Color _tutorialHighlightColor = new(1f, 0.82f, 0.22f, 1f);
         private TMP_Text _startButtonLabel;
         private CanvasGroup _startButtonVisibilityGroup;
-        private Button _objectiveToggleButton;
-        private TMP_Text _objectiveToggleLabel;
+        [SerializeField] private Button _objectiveToggleButton;
+        [SerializeField] private TMP_Text _objectiveToggleLabel;
         private WaveRuntimeHudView _runtimeHud;
         private bool _ownsRuntimeHud;
         private GameObject _waveBanner;
@@ -83,8 +83,7 @@ namespace _01.Code.UI
         /// <see cref="Start"/> 가 끝났는가.
         ///
         /// 안내는 이 화면보다 먼저 깨어나서 버튼을 붙잡는다. 그 자리에서 바로 버튼을 꺼 버리면
-        /// <see cref="EnsureObjectiveToggle"/> 가 꺼진 사각형의 높이를 재게 되고, 목표 전환 버튼이
-        /// 엉뚱한 자리에 선다. 그래서 붙잡는 것은 기록만 하고 반영은 여기서 한다.
+        /// 프리팹의 버튼을 준비하기 전에 비활성화하지 않도록 붙잡는 상태만 기록한다.
         /// </summary>
         private bool _started;
 
@@ -122,7 +121,6 @@ namespace _01.Code.UI
         private void Start()
         {
             ResolveStartButtonLabel();
-            EnsureObjectiveToggle();
             EnsureRuntimeHud();
             DungeonHudStyle.ApplyNamedSceneLayout();
             ApplyStartButtonTheme();
@@ -151,10 +149,10 @@ namespace _01.Code.UI
             waveEventChannel?.AddListener<WaveStartedEvent>(HandleWaveStarted);
             waveEventChannel?.AddListener<WaveEndedEvent>(HandleWaveEnded);
             gameStateEventChannel?.AddListener<GameOverEvent>(HandleGameOver);
-            nodeEventChannel?.AddListener<PortalInstalledEvent>(HandlePortalInstalled);
-            nodeEventChannel?.AddListener<PortalRemovedEvent>(HandlePortalRemoved);
+            nodeEventChannel?.AddListener<NodeBuiltEvent>(HandleNodeBuilt);
             if (handleStartButtonClick)
                 startButton?.onClick.AddListener(HandleStartClicked);
+            _objectiveToggleButton?.onClick.AddListener(HandleObjectiveToggleClicked);
         }
 
         private void OnDisable()
@@ -165,17 +163,10 @@ namespace _01.Code.UI
             waveEventChannel?.RemoveListener<WaveStartedEvent>(HandleWaveStarted);
             waveEventChannel?.RemoveListener<WaveEndedEvent>(HandleWaveEnded);
             gameStateEventChannel?.RemoveListener<GameOverEvent>(HandleGameOver);
-            nodeEventChannel?.RemoveListener<PortalInstalledEvent>(HandlePortalInstalled);
-            nodeEventChannel?.RemoveListener<PortalRemovedEvent>(HandlePortalRemoved);
+            nodeEventChannel?.RemoveListener<NodeBuiltEvent>(HandleNodeBuilt);
             if (handleStartButtonClick)
                 startButton?.onClick.RemoveListener(HandleStartClicked);
-            if (_objectiveToggleButton != null)
-            {
-                _objectiveToggleButton.onClick.RemoveListener(HandleObjectiveToggleClicked);
-                Destroy(_objectiveToggleButton.gameObject);
-            }
-            _objectiveToggleButton = null;
-            _objectiveToggleLabel = null;
+            _objectiveToggleButton?.onClick.RemoveListener(HandleObjectiveToggleClicked);
             if (_runtimeHud != null && _ownsRuntimeHud)
                 Destroy(_runtimeHud.gameObject);
             _runtimeHud = null;
@@ -254,25 +245,10 @@ namespace _01.Code.UI
             HidePreparationHud();
         }
 
-        private void HandlePortalInstalled(PortalInstalledEvent evt)
-        {
-            SetStartButtonVisible(true);
-            if (startButton != null)
-                startButton.transform.SetAsLastSibling();
-            RefreshStartButton();
-            StartCoroutine(RefreshStartButtonAfterStateSync());
-        }
-
-        private void HandlePortalRemoved(PortalRemovedEvent evt)
-        {
-            RefreshStartButton();
-            StartCoroutine(RefreshStartButtonAfterStateSync());
-        }
+        private void HandleNodeBuilt(NodeBuiltEvent evt) => RefreshStartButton();
 
         private IEnumerator RefreshStartButtonAfterStateSync()
         {
-            // Other listeners update the wave/day state during the same event dispatch.
-            // Refresh once more after the dispatch so the visible button uses the final state.
             yield return null;
             RefreshStartButton();
         }
@@ -291,7 +267,7 @@ namespace _01.Code.UI
             ResolveStartButtonLabel();
             var nextDay = dayManager != null ? dayManager.NextWaveDay : 0;
             var enemyCount = waveManager != null ? Mathf.Max(0, waveManager.GetPreviewEnemyCount(nextDay)) : 0;
-            var hasPortal = waveManager != null && waveManager.HasPortal;
+            var hasEntryDoor = waveManager != null && waveManager.HasEntryDoor;
             waveManager?.PrepareObjectiveChoices(nextDay);
 
             if (_startButtonLabel != null)
@@ -308,8 +284,8 @@ namespace _01.Code.UI
                         : $"습격 개시\nDAY {nextDay} · 모험가 {enemyCount}명";
             }
 
-            RefreshObjectiveToggle(nextDay, hasPortal);
-            ShowPreparationHud(nextDay, enemyCount, hasPortal);
+            RefreshObjectiveToggle(nextDay, hasEntryDoor);
+            ShowPreparationHud(nextDay, enemyCount, hasEntryDoor);
         }
 
         private void SetStartButtonVisible(bool visible)
@@ -317,8 +293,7 @@ namespace _01.Code.UI
             if (startButton == null)
                 return;
 
-            // 안내가 붙잡고 있는 동안에는 다시 띄우지 않는다. 포탈을 세우면 이 함수가 곧바로
-            // 불려서, 안내가 감춘 버튼이 WASD 칸 한복판에 다시 튀어나온다.
+            // 안내가 붙잡고 있는 동안에는 다시 띄우지 않는다.
             if (visible && _startHeldByTutorial)
                 return;
 
@@ -376,7 +351,7 @@ namespace _01.Code.UI
                 });
         }
 
-        private void ShowPreparationHud(int day, int enemyCount, bool hasPortal)
+        private void ShowPreparationHud(int day, int enemyCount, bool hasEntryDoor)
         {
             EnsureRuntimeHud();
             if (_waveBanner == null || _runtimeHud == null || _runtimeHud.BannerGroup == null)
@@ -386,7 +361,7 @@ namespace _01.Code.UI
             _runtimeHud.BannerGroup.alpha = 1f;
             _runtimeHud.BannerGroup.blocksRaycasts = false;
             _runtimeHud.BannerTitle.text = $"DAY {Mathf.Max(1, day)}  ·  습격 준비";
-            if (hasPortal)
+            if (hasEntryDoor)
             {
                 var baseEnemyCount = waveManager != null ? waveManager.GetBasePreviewEnemyCount(day) : enemyCount;
                 var conquestReduction = Mathf.Max(0, baseEnemyCount - enemyCount);
@@ -413,7 +388,7 @@ namespace _01.Code.UI
             else
             {
                 ApplyBannerLayout(false);
-                _runtimeHud.BannerSubtitle.text = "입구 포털을 설치해 모험가를 유인하세요";
+                _runtimeHud.BannerSubtitle.text = "던전 입구 문을 준비하는 중입니다";
             }
             _waveBanner.SetActive(true);
             _waveBanner.transform.SetAsLastSibling();
@@ -573,76 +548,6 @@ namespace _01.Code.UI
             }
         }
 
-        private void EnsureObjectiveToggle()
-        {
-            if (_objectiveToggleButton != null || startButton == null)
-                return;
-
-            var startRect = startButton.transform as RectTransform;
-            var parent = startRect != null ? startRect.parent : null;
-            if (startRect == null || parent == null)
-                return;
-
-            var root = new GameObject(
-                "WaveObjectiveToggle",
-                typeof(RectTransform),
-                typeof(CanvasRenderer),
-                typeof(Image),
-                typeof(Button));
-            root.layer = startButton.gameObject.layer;
-            var rect = root.GetComponent<RectTransform>();
-            rect.SetParent(parent, false);
-            rect.anchorMin = startRect.anchorMin;
-            rect.anchorMax = startRect.anchorMax;
-            rect.pivot = startRect.pivot;
-            rect.sizeDelta = new Vector2(startRect.sizeDelta.x, 52f);
-            rect.anchoredPosition = startRect.anchoredPosition + new Vector2(0f, startRect.rect.height + 8f);
-            rect.SetSiblingIndex(startRect.GetSiblingIndex());
-
-            var sourceImage = startButton.targetGraphic as Image ?? startButton.GetComponent<Image>();
-            var image = root.GetComponent<Image>();
-            if (sourceImage != null)
-            {
-                image.sprite = sourceImage.sprite;
-                image.type = sourceImage.type;
-                image.material = sourceImage.material;
-            }
-            image.color = new Color(0.08f, 0.19f, 0.25f, 0.97f);
-
-            _objectiveToggleButton = root.GetComponent<Button>();
-            _objectiveToggleButton.targetGraphic = image;
-            _objectiveToggleButton.colors = startButton.colors;
-            _objectiveToggleButton.onClick.AddListener(HandleObjectiveToggleClicked);
-            var outline = root.AddComponent<Outline>();
-            outline.effectColor = new Color(0.32f, 0.75f, 0.95f, 0.9f);
-            outline.effectDistance = new Vector2(2f, -2f);
-            root.AddComponent<UiButtonJuice>();
-
-            var labelObject = new GameObject(
-                "Label",
-                typeof(RectTransform),
-                typeof(CanvasRenderer),
-                typeof(TextMeshProUGUI));
-            labelObject.layer = root.layer;
-            var labelRect = labelObject.GetComponent<RectTransform>();
-            labelRect.SetParent(rect, false);
-            labelRect.anchorMin = Vector2.zero;
-            labelRect.anchorMax = Vector2.one;
-            labelRect.offsetMin = new Vector2(8f, 4f);
-            labelRect.offsetMax = new Vector2(-8f, -4f);
-
-            _objectiveToggleLabel = labelObject.GetComponent<TextMeshProUGUI>();
-            _objectiveToggleLabel.alignment = TextAlignmentOptions.Center;
-            _objectiveToggleLabel.enableAutoSizing = true;
-            _objectiveToggleLabel.fontSizeMin = 12f;
-            _objectiveToggleLabel.fontSizeMax = 18f;
-            _objectiveToggleLabel.fontStyle = FontStyles.Bold;
-            _objectiveToggleLabel.color = new Color(0.76f, 0.93f, 1f, 1f);
-            _objectiveToggleLabel.raycastTarget = false;
-            if (_startButtonLabel != null)
-                _objectiveToggleLabel.font = _startButtonLabel.font;
-        }
-
         private void HandleObjectiveToggleClicked()
         {
             if (waveManager == null || dayManager == null || !dayManager.IsStandby)
@@ -655,13 +560,12 @@ namespace _01.Code.UI
                 RefreshStartButton();
         }
 
-        private void RefreshObjectiveToggle(int day, bool hasPortal)
+        private void RefreshObjectiveToggle(int day, bool hasEntryDoor)
         {
-            EnsureObjectiveToggle();
             if (_objectiveToggleButton == null || waveManager == null || dayManager == null)
                 return;
 
-            var visible = hasPortal && dayManager.IsStandby && waveManager.CanStartWave(day);
+            var visible = hasEntryDoor && dayManager.IsStandby && waveManager.CanStartWave(day);
             SetObjectiveToggleVisible(visible);
             if (!visible || _objectiveToggleLabel == null)
                 return;

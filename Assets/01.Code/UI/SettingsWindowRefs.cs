@@ -29,6 +29,11 @@ namespace _01.Code.UI
         public Button restartButton;
         public Button titleButton;
         public Button closeButton;
+        public Button guideButton;
+
+        [Header("Game Guide")]
+        public GameObject gameGuideWindow;
+        public Button guideCloseButton;
 
         [Header("Restart Confirm")]
         public Button confirmCancelButton;
@@ -40,6 +45,7 @@ namespace _01.Code.UI
             && sfxSlider != null && sfxValueLabel != null
             && musicSlider != null && musicValueLabel != null
             && restartButton != null && titleButton != null && closeButton != null
+            && guideButton != null && gameGuideWindow != null && guideCloseButton != null
             && confirmCancelButton != null && confirmAcceptButton != null;
     }
 }

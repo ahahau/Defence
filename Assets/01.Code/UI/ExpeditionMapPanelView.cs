@@ -63,6 +63,8 @@ namespace _01.Code.UI
         private bool hasActiveExpedition;
         private bool isWired;
         private readonly List<RectTransform> mapLinks = new();
+        private static RectTransform centerMarkerPrefab;
+        private static RectTransform mapLinkPrefab;
 
         [SerializeField, Tooltip("마을을 잇는 선 색. 앞 마을을 쳐야 뒷 마을이 열린다는 관계를 그린다.")]
         private Color mapLinkColor = new(0.55f, 0.42f, 0.28f, 0.85f);
@@ -231,28 +233,29 @@ namespace _01.Code.UI
 
         private RectTransform CreateCenterMarker()
         {
-            var go = new GameObject("MapCenter", typeof(RectTransform), typeof(UnityEngine.UI.Image));
-            var rect = (RectTransform)go.transform;
-            rect.SetParent(villageContentRoot, false);
+            centerMarkerPrefab ??= Resources.Load<RectTransform>("UI/ExpeditionMapCenter");
+            if (centerMarkerPrefab == null)
+            {
+                Debug.LogError("Missing UI prefab: UI/ExpeditionMapCenter", this);
+                return null;
+            }
+            var rect = Instantiate(centerMarkerPrefab, villageContentRoot, false);
             rect.SetAsFirstSibling();
             rect.anchorMin = rect.anchorMax = MapCenter;
-            rect.pivot = new Vector2(0.5f, 0.5f);
             rect.anchoredPosition = Vector2.zero;
-            rect.sizeDelta = new Vector2(26f, 26f);
-            // 마름모로 세워 마을 팻말과 한눈에 구분되게 한다.
-            rect.localEulerAngles = new Vector3(0f, 0f, 45f);
-
-            var image = go.GetComponent<UnityEngine.UI.Image>();
-            image.color = new Color(0.85f, 0.32f, 0.24f, 1f);
-            image.raycastTarget = false;
             return rect;
         }
 
         private RectTransform CreateLink(Vector2 from, Vector2 to, string name, Color color, float thickness)
         {
-            var go = new GameObject(name, typeof(RectTransform), typeof(UnityEngine.UI.Image));
-            var rect = (RectTransform)go.transform;
-            rect.SetParent(villageContentRoot, false);
+            mapLinkPrefab ??= Resources.Load<RectTransform>("UI/ExpeditionMapLink");
+            if (mapLinkPrefab == null)
+            {
+                Debug.LogError("Missing UI prefab: UI/ExpeditionMapLink", this);
+                return null;
+            }
+            var rect = Instantiate(mapLinkPrefab, villageContentRoot, false);
+            rect.name = name;
             // 선은 핀보다 뒤에 있어야 한다. 위에 그리면 이름을 가린다.
             rect.SetAsFirstSibling();
 
@@ -268,9 +271,8 @@ namespace _01.Code.UI
             rect.sizeDelta = new Vector2(delta.magnitude, thickness);
             rect.localEulerAngles = new Vector3(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
 
-            var image = go.GetComponent<UnityEngine.UI.Image>();
+            var image = rect.GetComponent<UnityEngine.UI.Image>();
             image.color = color;
-            image.raycastTarget = false;
             return rect;
         }
 

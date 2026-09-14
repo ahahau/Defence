@@ -358,16 +358,14 @@ namespace _01.Code.UI
                     var placeholder = icon.transform.Find("Placeholder")?.GetComponent<TMP_Text>();
                     if (placeholder == null && sprite == null)
                     {
-                        placeholder = new GameObject("Placeholder", typeof(RectTransform)).AddComponent<TextMeshProUGUI>();
-                        placeholder.transform.SetParent(icon.transform, false);
-                        placeholder.rectTransform.anchorMin = Vector2.zero;
-                        placeholder.rectTransform.anchorMax = Vector2.one;
-                        placeholder.rectTransform.offsetMin = placeholder.rectTransform.offsetMax = Vector2.zero;
-                        placeholder.font = button.GetComponentInChildren<TMP_Text>().font;
-                        placeholder.fontSize = 42f;
-                        placeholder.alignment = TextAlignmentOptions.Center;
-                        placeholder.color = new Color(0.84f, 0.68f, 0.4f, 1f);
-                        placeholder.raycastTarget = false;
+                        var prefab = Resources.Load<TextMeshProUGUI>("UI/OfferPlaceholder");
+                        if (prefab != null)
+                        {
+                            placeholder = Instantiate(prefab, icon.transform, false);
+                            placeholder.gameObject.name = "Placeholder";
+                        }
+                        else
+                            Debug.LogError("Missing UI prefab: UI/OfferPlaceholder", this);
                     }
                     if (placeholder != null)
                     {
