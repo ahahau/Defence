@@ -295,7 +295,10 @@ namespace _01.Code.MapCreateSystem
             Direction = direction;
 
             name = $"LockedNode_{gridPosition.x}_{gridPosition.y}";
-            transform.localScale = ResolvePrefabScale() * size * lockedVisualScale;
+            // 잠긴 후보도 방 타일은 이웃과 맞닿게 두고, 자물쇠 장식만 기존 크기로 유지한다.
+            transform.localScale = ResolvePrefabScale() * size;
+            if (lockedRoot != null)
+                lockedRoot.transform.localScale = Vector3.one * lockedVisualScale;
             SetSprite(unlockedSprite);
             SetSpriteScale(unlockedSpriteScale);
             SetVisualColor(lockedVisualColor);

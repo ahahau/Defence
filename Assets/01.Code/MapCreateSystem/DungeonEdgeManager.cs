@@ -8,10 +8,7 @@ namespace _01.Code.MapCreateSystem
         private EdgeLine edgeLinePrefab;
 
         [SerializeField]
-        private float gridSpacing = 2.4f;
-
-        [SerializeField]
-        private float nodeSize = 1f;
+        private float gridSpacing = 15f;
 
         
         public void ClearAll()
@@ -38,10 +35,9 @@ namespace _01.Code.MapCreateSystem
 
             var start = ToWorld(from);
             var end = ToWorld(to);
-            var direction = (end - start).normalized;
-            var nodeRadius = nodeSize * 0.5f;
-
-            edgeLine.Initialize($"Edge_{from}_{to}", start + direction * nodeRadius, end - direction * nodeRadius, fromId, toId);
+            // 맞닿은 방의 경계가 건물 슬롯이자 통과 판정 지점이다.
+            var boundary = (start + end) * 0.5f;
+            edgeLine.Initialize($"Edge_{from}_{to}", boundary, boundary, fromId, toId);
         }
         private Vector3 ToWorld(Vector2Int gridPosition)
         {

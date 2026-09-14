@@ -18221,8 +18221,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.MapCreateSystem.DungeonEdgeManager
   edgeLinePrefab: {fileID: 6739963740108835962, guid: e05f910d178d2e14c9d05aae4ebc3489, type: 3}
-  gridSpacing: 20
-  nodeSize: 1.5
+  gridSpacing: 15
 --- !u!1 &1648083628
 GameObject:
   m_ObjectHideFlags: 0
@@ -18350,7 +18349,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1658569387
 RectTransform:
   m_ObjectHideFlags: 0
@@ -18465,9 +18464,6 @@ MonoBehaviour:
   unitsRoot: {fileID: 1900000001}
   selectedType: 1
   buildGoldCost: 8
-  mainUnitPrefab: {fileID: 4689645077024247560, guid: 23ad94a930f431845aa42680d7eae071, type: 3}
-  playerStatusHud: {fileID: 1658569388}
-  gameStateEventChannel: {fileID: 11400000, guid: 959e35f08825cd94a8b68a1c032d7836, type: 2}
   artifactEventChannel: {fileID: 11400000, guid: cc88dffc4f05ec147bf3370d40b143c7, type: 2}
   costEventChannel: {fileID: 11400000, guid: 734ca3593b5d2884dae267b0e3e601be, type: 2}
   nodeEventChannel: {fileID: 11400000, guid: f1b1e574478592a46b08a62e4c3db082, type: 2}
@@ -20114,7 +20110,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.MapCreateSystem.DungeonNodeManager
   nodePrefab: {fileID: 4683472917447393176, guid: 82ab6852156a5f14fbe4df6d48002c3d, type: 3}
   lockedNodeRoot: {fileID: 540453750}
-  gridSpacing: 20
+  gridSpacing: 15
   nodeSize: 1.5
 --- !u!114 &1775345820 stripped
 MonoBehaviour:

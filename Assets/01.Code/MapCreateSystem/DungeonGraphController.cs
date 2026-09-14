@@ -62,19 +62,7 @@ namespace _01.Code.MapCreateSystem
         [SerializeField]
         private int buildGoldCost = 10;
 
-        [Header("Main Unit")]
-        [SerializeField]
-        private MainUnit mainUnitPrefab;
-
-        [SerializeField]
-        private PlayerStatusHudView playerStatusHud;
-
 #if UNITY_EDITOR
-        public void EditorSetPlayerStatusHud(PlayerStatusHudView hud)
-        {
-            playerStatusHud = hud;
-        }
-
         /// <summary>
         /// Stores the same opening dungeon layout that Play mode creates, allowing the
         /// authored scene hierarchy to be inspected before pressing Play.
@@ -95,23 +83,10 @@ namespace _01.Code.MapCreateSystem
             var entranceView = nodeManager.CreateNode(entrance);
             RegisterUnlockedNode(entranceView);
 
-            if (mainUnitPrefab != null)
-            {
-                var mainUnit = Instantiate(mainUnitPrefab, entranceView.UnitPosition.position, Quaternion.identity);
-                mainUnit.transform.SetParent(unitsRoot, true);
-                mainUnit.transform.position = entranceView.UnitPosition.position;
-                mainUnit.transform.localScale = Vector3.one;
-                mainUnit.name = "Player";
-                entranceView.AssignUnit(null, mainUnit);
-            }
-
             HasLockedNodesVisible = true;
             RefreshLockedNodes();
         }
 #endif
-
-        [SerializeField]
-        private GameEventChannelSO gameStateEventChannel;
 
         [SerializeField]
         private GameEventChannelSO artifactEventChannel;
@@ -276,34 +251,7 @@ namespace _01.Code.MapCreateSystem
             var entrance = graph.AddNode(DungeonNodeType.Entrance, Vector2Int.zero);
             var entranceView = nodeManager.CreateNode(entrance);
             RegisterUnlockedNode(entranceView);
-            CreateMainUnit(entranceView);
-
             HasLockedNodesVisible = false;
-        }
-
-        private void CreateMainUnit(Node entranceNode)
-        {
-            if (!Application.isPlaying)
-                return;
-
-            var spawnPosition = entranceNode.UnitPosition.position;
-            if (unitsRoot == null)
-            {
-                Debug.LogError("DungeonGraphController requires a preconfigured Units root before play starts.", this);
-                return;
-            }
-
-            MainUnit mainUnit = Instantiate(mainUnitPrefab, spawnPosition, Quaternion.identity);
-            mainUnit.transform.SetParent(unitsRoot, true);
-            mainUnit.transform.position = spawnPosition;
-            mainUnit.transform.localScale = Vector3.one;
-            mainUnit.name = "Player";
-            mainUnit.Initialize(null);
-            mainUnit.InitializeMainUnit(gameStateEventChannel);
-
-            entranceNode.AssignUnit(null, mainUnit);
-            playerStatusHud?.SetTarget(mainUnit);
-            artifactEventChannel.RaiseEvent(new UnitArtifactApplyRequestedEvent(mainUnit));
         }
 
         private void ClearUnitsRoot()
@@ -908,12 +856,11 @@ namespace _01.Code.MapCreateSystem
 
                 foreach (var placement in node.UnitPlacements)
                 {
-                    if (placement?.Instance == null)
+                    if (placement?.Instance == null || placement.Instance is MainUnit)
                         continue;
                     savedNode.units.Add(new SavedUnit
                     {
                         assetKey = HiredUnitRoster.AssetKey(placement.Data),
-                        isMainUnit = placement.Instance is MainUnit,
                         column = placement.Column,
                         row = placement.Row,
                         condition = placement.Instance.CaptureConditionState()
@@ -979,9 +926,6 @@ namespace _01.Code.MapCreateSystem
             foreach (var saved in save.nodes)
             {
                 var view = views[new Vector2Int(saved.x, saved.y)];
-                if (saved.type == DungeonNodeType.Entrance)
-                    CreateMainUnit(view);
-
                 RestoreBuilding(view, saved.centralBuilding, roster, false);
                 foreach (var building in saved.cellBuildings)
                     RestoreBuilding(view, building, roster, true);
@@ -1045,12 +989,9 @@ namespace _01.Code.MapCreateSystem
                 return;
             foreach (var saved in units)
             {
+                // 이전 저장 파일의 플레이어 캐릭터는 새 규칙에서 복원하지 않는다.
                 if (saved.isMainUnit)
-                {
-                    var main = node.AssignedUnitInstance as MainUnit;
-                    main?.ApplyConditionState(saved.condition);
                     continue;
-                }
 
                 var data = roster?.ResolveUnit(saved.assetKey);
                 if (data?.Prefab == null)

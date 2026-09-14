@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using _01.Code.Buildings;
 using _01.Code.Enemies;
 using _01.Code.MapCreateSystem;
-using _01.Code.Units;
 using UnityEngine;
 
 namespace _01.Code.Manager
@@ -126,7 +125,7 @@ namespace _01.Code.Manager
 
         /// <summary>
         /// 침입자의 공통 목표 규칙. 돈이 든 금고를 먼저 노리고, 없으면 금고형 노드,
-        /// 그것도 없으면 주인공이 지키는 핵심부(마지막으로 입구)를 향한다.
+        /// 그것도 없으면 입구 핵심부를 향한다.
         /// </summary>
         public static Node FindPriorityTarget(Vector2 from, out ObjectiveKind kind)
         {
@@ -146,13 +145,9 @@ namespace _01.Code.Manager
                 return treasury;
             }
 
-            var core = FindNearest(from, HasMainUnit);
-            if (core == null)
-            {
-                core = FindNearest(
-                    from,
-                    node => node.Data != null && node.Data.Type == DungeonNodeType.Entrance);
-            }
+            var core = FindNearest(
+                from,
+                node => node.Data != null && node.Data.Type == DungeonNodeType.Entrance);
 
             kind = core != null ? ObjectiveKind.DungeonCore : ObjectiveKind.None;
             return core;
@@ -177,18 +172,6 @@ namespace _01.Code.Manager
             }
 
             return best;
-        }
-
-        private static bool HasMainUnit(Node node)
-        {
-            var placements = node.UnitPlacements;
-            for (var i = 0; i < placements.Count; i++)
-            {
-                if (placements[i]?.Instance is MainUnit)
-                    return true;
-            }
-
-            return node.AssignedUnitInstance is MainUnit;
         }
 
         /// <summary>남은 구역 수를 한 줄 경고로. 가까울수록 붉어진다.</summary>

@@ -4,8 +4,7 @@ using UnityEngine;
 
 namespace _01.Code.MapCreateSystem
 {
-    /// <summary>노드 사이 연결 라인. 비주얼(LineRenderer)에 더해 건물 설치 슬롯 하나를 가진다 —
-    /// 상점/여관 같은 통과형 건물을 라인 위(중점)에 설치하면 적이 이 라인을 지나갈 때 효과가 발동한다.</summary>
+    /// <summary>서로 맞닿은 방의 경계에 있는 건물 설치 및 통과 판정 슬롯.</summary>
     public class EdgeLine : MonoBehaviour
     {
         [SerializeField]
@@ -36,62 +35,10 @@ namespace _01.Code.MapCreateSystem
             FromId = fromId;
             ToId = toId;
 
-            if (lineRenderer == null)
-            {
-                Debug.LogError($"{nameof(EdgeLine)} requires a line renderer.", this);
-                return;
-            }
-
-            lineRenderer.positionCount = 2;
-            lineRenderer.SetPosition(0, start);
-            lineRenderer.SetPosition(1, end);
-            ApplyLineStyle();
+            // 연결 정보는 유지하되 방 사이에 상시 표시되는 선은 그리지 않는다.
+            if (lineRenderer != null)
+                lineRenderer.enabled = false;
         }
-
-        /// <summary>
-        /// 통로에 전용 머티리얼을 입힌다.
-        ///
-        /// 기본 머티리얼은 납작한 띠 하나라 지도가 도형 연결선처럼 보였다. 전용 셰이더는
-        /// 가장자리를 흐리고 가운데에 심지를 남기며, 빛이 길이 방향으로 흘러 통로로 읽힌다.
-        ///
-        /// 끝을 둥글게 깎는 것도 여기서 한다 — 각진 끝이 방 그림 위로 튀어나와 있었다.
-        /// </summary>
-        private void ApplyLineStyle()
-        {
-            var material = LineMaterial;
-            if (material != null)
-                lineRenderer.sharedMaterial = material;
-
-            lineRenderer.numCapVertices = 4;
-            lineRenderer.numCornerVertices = 4;
-            lineRenderer.textureMode = LineTextureMode.Stretch;
-            lineRenderer.alignment = LineAlignment.View;
-
-            // 그림자를 받거나 드리우지 않는다. 2D 판에서는 계산만 늘고 보이지도 않는다.
-            lineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            lineRenderer.receiveShadows = false;
-        }
-
-        /// <summary>
-        /// 통로 머티리얼. 선마다 인스턴스를 만들면 드로우 콜이 선 수만큼 늘어나므로
-        /// 하나를 공유한다. 흐르는 빛은 시간으로만 도니 개별 상태가 필요 없다.
-        /// </summary>
-        private static Material LineMaterial
-        {
-            get
-            {
-                if (_lineMaterial != null)
-                    return _lineMaterial;
-
-                _lineMaterial = Resources.Load<Material>("Materials/DungeonEdgeLine");
-                if (_lineMaterial == null)
-                    Debug.LogWarning("Resources/Materials/DungeonEdgeLine 을 찾지 못해 통로가 기본 머티리얼로 그려집니다.");
-
-                return _lineMaterial;
-            }
-        }
-
-        private static Material _lineMaterial;
 
         private void OnEnable()
         {

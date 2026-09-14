@@ -14,7 +14,7 @@ namespace _01.Code.MapCreateSystem
         private Transform lockedNodeRoot;
 
         [SerializeField]
-        private float gridSpacing = 2.4f;
+        private float gridSpacing = 15f;
 
         [SerializeField]
         private float nodeSize = 1f;

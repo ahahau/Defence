@@ -114,8 +114,7 @@ namespace _01.Code.UI
         }
 
         /// <summary>
-        /// 노드 중심만 이으면 선이 방 벽을 뚫고 지나가 실제로 걷는 길과 달라 보인다.
-        /// 두 방을 잇는 통로가 있으면 그 통로의 양 끝을 거쳐 가도록 점을 끼워 넣는다.
+        /// 경로 예고선은 서로 맞닿은 방의 경계를 지나간다.
         /// </summary>
         private void BuildLinePoints()
         {
@@ -139,11 +138,7 @@ namespace _01.Code.UI
                 if (edge == null)
                     continue;
 
-                // 통로가 어느 방향으로 그려졌는지 모르므로 가까운 끝부터 지난다.
-                var startFirst = (edge.StartPoint - node.transform.position).sqrMagnitude
-                                 <= (edge.EndPoint - node.transform.position).sqrMagnitude;
-                AddPoint(startFirst ? edge.StartPoint : edge.EndPoint);
-                AddPoint(startFirst ? edge.EndPoint : edge.StartPoint);
+                AddPoint(edge.Midpoint);
             }
 
             _line.positionCount = _points.Count;

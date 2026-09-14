@@ -67,7 +67,7 @@ namespace _01.Code.UI
 
             confirmAction = onConfirm;
             if (titleText != null)
-                titleText.text = "확장 경고";
+                titleText.text = "방 확장";
 
             if (messageText != null)
                 messageText.text = $"이 위치를 확장합니다.\n비용: {goldCost}G";
