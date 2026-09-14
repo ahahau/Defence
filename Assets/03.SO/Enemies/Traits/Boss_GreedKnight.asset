@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Boss_GreedKnight
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Enemies.EnemyDataSO
   <Grade>k__BackingField: 1
-  <BoardSprite>k__BackingField: {fileID: -5975384938119745717, guid: 8403a65c31fb04b4587b75a110e4a0d7, type: 3}
+  <BoardSprite>k__BackingField: {fileID: -2543779474431259190, guid: 018fbc18f5f2ea64280d8bc64413aa77, type: 3}
   <Defense>k__BackingField: 22
   <EvasionChance>k__BackingField: 0.08
   <Name>k__BackingField: "\uD0D0\uC695\uC758 \uAE30\uC0AC"
@@ -25,7 +25,7 @@ MonoBehaviour:
   <MaxHealth>k__BackingField: 30
   <AttackDamage>k__BackingField: 4
   <AttackInterval>k__BackingField: 0.9
-  <IdleSprite>k__BackingField: {fileID: -5975384938119745717, guid: 8403a65c31fb04b4587b75a110e4a0d7, type: 3}
+  <IdleSprite>k__BackingField: {fileID: -2543779474431259190, guid: 018fbc18f5f2ea64280d8bc64413aa77, type: 3}
   <AttackSprite>k__BackingField: {fileID: -2191360859904118667, guid: 55b695ebd7d7bbc4f8016ca6a9b78d0f, type: 3}
   <DefeatedSprite>k__BackingField: {fileID: 5963979026316687201, guid: 75a461093b708b74ea9d7a9a6aef7e11, type: 3}
   <AttackSfx>k__BackingField: 8
