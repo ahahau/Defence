@@ -5,6 +5,7 @@ using _01.Code.Core;
 using _01.Code.Events;
 using _01.Code.Manager;
 using _01.Code.MapCreateSystem;
+using _01.Code.Persistence;
 using _01.Code.Tutorial;
 using _01.Code.UI;
 using _01.Code.Units;
@@ -123,7 +124,9 @@ namespace _01.Code.Dialogue
                 return;
             }
 
-            if (playOnStart && initialSequence != null)
+            // 이어하기에서는 첫날 설명을 되풀이하지 않는다. 새 게임은 시작 전에 저장을 지우므로
+            // 이 시점의 저장 유무가 새 판과 이어하기를 가장 정확하게 가른다.
+            if (playOnStart && initialSequence != null && !RunSaveSystem.HasSave)
                 Play(initialSequence);
             else
                 view?.Hide();

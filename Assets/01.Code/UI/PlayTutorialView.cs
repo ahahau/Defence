@@ -47,6 +47,11 @@ namespace _01.Code.UI
             LearnMove,
             SurviveWave,
 
+            // 첫 습격 뒤 — 실제 전투와 정산까지 보고 나서 첫 수업을 마친다.
+            ObserveCombat,
+            ReviewSettlement,
+            PrepareNextDay,
+
             // 첫날이 끝난 뒤. 새 기능이 열릴 날을 기다리며 아무것도 하지 않는다.
             Idle,
 
@@ -69,10 +74,19 @@ namespace _01.Code.UI
             OpenInstall,
             PickCategory,
             PickCard,
+            ConfirmRoom,
+            OpenRoster,
+            HireUnit,
+            CloseRoster,
+            PickCell,
         }
 
         /// <summary>첫날의 이끄는 칸인가. 조작을 잠그는 것은 이 칸들뿐이다.</summary>
-        private bool IsFirstDayStep => _step <= Step.SurviveWave;
+        private bool IsFirstDayStep => _step is Step.BuildRoom or Step.DeployUnit or
+            Step.BuildPortal or Step.LearnMove or Step.SurviveWave;
+
+        private bool IsBeforeFirstWave => _step is Step.BuildRoom or Step.DeployUnit or
+            Step.BuildPortal or Step.LearnMove;
 
         [Header("UI")]
         [SerializeField] private GameObject root;
@@ -128,6 +142,7 @@ namespace _01.Code.UI
 
         private bool _merchantTaught;
         private bool _powerTaught;
+        private bool _settlementWasOpen;
         private Node _cameraTargetNode;
         private Vector3 _moveStartPosition;
         private Tween _cameraTween;
@@ -141,6 +156,14 @@ namespace _01.Code.UI
         private float _timer;
         private float _stepAge;
         private bool _released;
+        private CanvasGroup _hintGroup;
+        private bool _waitingForDialogue;
+        private _01.Code.Dialogue.DialogueRunner _dialogue;
+
+        public void SkipTutorial()
+        {
+            EnterStep(Step.Done);
+        }
 
         private void OnEnable()
         {
@@ -149,6 +172,8 @@ namespace _01.Code.UI
             _released = false;
             _hasHole = false;
             _cameraTargetNode = null;
+            ConfigureHint();
+            _dialogue = FindAnyObjectByType<_01.Code.Dialogue.DialogueRunner>();
             var camera = Camera.main;
             if (camera != null)
                 _moveStartPosition = camera.transform.position;
@@ -173,6 +198,22 @@ namespace _01.Code.UI
             if (_step == Step.Done)
                 return;
 
+            if ((_dialogue != null && _dialogue.IsPlaying) || SettingsPanelView.IsOpen)
+            {
+                _waitingForDialogue = true;
+                HideSpotlight();
+                ReleaseControlLocks();
+                _cameraTween?.Kill();
+                SetHintVisible(false);
+                return;
+            }
+            if (_waitingForDialogue)
+            {
+                _waitingForDialogue = false;
+                _stepAge = 0f;
+                Render();
+            }
+
             _stepAge += Time.unscaledDeltaTime;
 
             ApplyControlLocks();
@@ -190,7 +231,8 @@ namespace _01.Code.UI
                 // 안내가 끝나지 않은 채 2일차로 넘어가면, 덮개가 화면을 덮고 조작이 잠긴 채로
                 // 그대로 남아 아무것도 못 하는 판이 됐다. 안내가 끝나는 조건을 습격 하나에만
                 // 걸어 둔 것이 잘못이었다 — 날짜는 무슨 일이 있어도 넘어간다.
-                if (IsFirstDayStep && CurrentDay > 1)
+                if (IsFirstDayStep && (CurrentDay > 1 ||
+                    (CurrentDay == 1 && DayManager.Current != null && DayManager.Current.IsStandby)))
                 {
                     EnterStep(Step.Idle);
                     return;
@@ -208,6 +250,11 @@ namespace _01.Code.UI
 
                 if (_step == Step.Done)
                     return;
+
+                // 전투 안내는 같은 단계 안에서 내용이 바뀐다. 단계 진입 때만 그리면
+                // 첫 문장만 남으므로 살피는 박자에 맞춰 갱신한다.
+                if (_step == Step.ObserveCombat)
+                    Render();
 
                 // 구멍을 정하기 전에 잔걸음부터 다시 잰다. 순서가 뒤집히면 한 박자 늦은
                 // 자리를 비추게 된다.
@@ -242,6 +289,9 @@ namespace _01.Code.UI
                 _merchantTaught = true;
             else if (_step == Step.LearnPower)
                 _powerTaught = true;
+            else if (_step == Step.ReviewSettlement)
+                _settlementWasOpen = ManagementSettlementManager.Current != null &&
+                                     ManagementSettlementManager.Current.IsPanelOpen;
 
             // 잔걸음을 먼저 잰다. 칸에 들어서자마자 그리면 앞 칸의 걸음으로 한 줄이 스쳐 지나간다.
             _buildStage = IsBuildStep(_step)
@@ -356,7 +406,7 @@ namespace _01.Code.UI
             if (view == null)
                 return;
 
-            view.SetStartButtonHeld(forceStepOrder && !_released && _step < Step.SurviveWave);
+            view.SetStartButtonHeld(forceStepOrder && !_released && IsBeforeFirstWave);
         }
 
         private void ReleaseStartButton()
@@ -504,6 +554,34 @@ namespace _01.Code.UI
 
             var panel = NodePanelView.Current;
 
+            var confirm = BuildConfirmPanelView.Current;
+            if (confirm != null && confirm.IsOpen)
+            {
+                uiTarget = confirm.ConfirmButtonRect;
+                return BuildStage.ConfirmRoom;
+            }
+            if (_step == Step.DeployUnit)
+            {
+                var rosterPanel = UnitDeployPanelView.Current;
+                var roster = HiredUnitRoster.Current;
+                if (roster != null && roster.TotalHiredCount == 0 && rosterPanel != null)
+                {
+                    uiTarget = rosterPanel.IsPanelOpen
+                        ? rosterPanel.GetEntryRect(rosterPanel.FirstOwnedUnit) : rosterPanel.ToggleButtonRect;
+                    return rosterPanel.IsPanelOpen ? BuildStage.HireUnit : BuildStage.OpenRoster;
+                }
+                if (rosterPanel != null && rosterPanel.IsPanelOpen)
+                {
+                    uiTarget = rosterPanel.CloseButtonRect;
+                    return BuildStage.CloseRoster;
+                }
+                if (panel != null && panel.IsChoosingUnitCell)
+                {
+                    nodeTarget = panel.SelectedNode;
+                    return BuildStage.PickCell;
+                }
+            }
+
             if (panel != null && panel.IsPanelOpen)
             {
                 // 갈래를 고르기 전이면 갈래 카드가 잡히고, 고른 뒤에는 비어서 그 안의 카드로 넘어간다.
@@ -562,6 +640,8 @@ namespace _01.Code.UI
                 return;
 
             _buildStage = stage;
+            _stepAge = 0f;
+            _released = false;
             Render();
         }
 
@@ -628,8 +708,8 @@ namespace _01.Code.UI
         {
             // 봉인을 여는 것과 그 방에 짓는 것이 한 칸 안에 함께 있다. 열린 빈 방이 있으면
             // 지을 차례이고, 없으면 아직 봉인을 열 차례다.
-            Step.BuildRoom => FindUnlockedEmptyNode() ?? FindLockedNode(),
-            Step.DeployUnit => FindUnlockedBuiltNode(),
+            Step.BuildRoom => FindLockedNode(),
+            Step.DeployUnit => FindDefenseRoom(),
             Step.BuildPortal => FindEntranceCandidate(),
             _ => null,
         };
@@ -645,7 +725,9 @@ namespace _01.Code.UI
         /// </summary>
         private static Node FindEntranceCandidate()
         {
-            return PickOutermost(node => !IsLocked(node) && !node.HasAssignedBuilding)
+            return PickOutermost(node => !IsLocked(node) && !node.HasAssignedBuilding
+                    && node.AssignedUnitCount == 0 && node.Data != null
+                    && node.Data.Type != DungeonNodeType.Entrance)
                    ?? PickOutermost(IsLocked);
         }
 
@@ -798,40 +880,17 @@ namespace _01.Code.UI
             return null;
         }
 
-        /// <summary>열려 있고 아직 비어 있는 방. 지을 자리를 겨눌 때 쓴다.</summary>
-        private static Node FindUnlockedEmptyNode()
-        {
-            foreach (var node in Node.AllInstances)
-            {
-                if (node != null
-                    && !node.name.StartsWith("LockedNode_", System.StringComparison.Ordinal)
-                    && !node.HasAssignedBuilding)
-                    return node;
-            }
-
-            return null;
-        }
-
-        /// <summary>이미 무언가 지어 둔 방. 유닛을 세울 자리를 겨눌 때 쓴다.</summary>
-        private static Node FindUnlockedBuiltNode()
-        {
-            foreach (var node in Node.AllInstances)
-            {
-                if (node != null && node.HasAssignedBuilding && node.AssignedBuilding is not Portal)
-                    return node;
-            }
-
-            return null;
-        }
-
         /// <summary>이 칸이 끝났는가. 끝났으면 다음 칸을, 아니면 그대로 돌려준다.</summary>
         private Step Resolve(Step step) => step switch
         {
-            Step.BuildRoom => HasNonPortalBuilding ? Step.DeployUnit : step,
+            Step.BuildRoom => FindDefenseRoom() != null ? Step.DeployUnit : step,
             Step.DeployUnit => HasDeployedUnit ? Step.BuildPortal : step,
             Step.BuildPortal => HasPortal ? Step.LearnMove : step,
             Step.LearnMove => HasCameraMoved ? Step.SurviveWave : step,
-            Step.SurviveWave => IsWaveRunning ? Step.Idle : step,
+            Step.SurviveWave => IsWaveRunning ? Step.ObserveCombat : step,
+            Step.ObserveCombat => !IsWaveRunning ? Step.ReviewSettlement : step,
+            Step.ReviewSettlement => ResolveSettlementLesson(),
+            Step.PrepareNextDay => _stepAge >= lessonSeconds ? Step.Idle : step,
             Step.Idle => ResolveIdle(),
 
             // 뒷날 수업은 그 기능을 실제로 열어 보면 끝난다. 안 열어도 시간이 지나면 걷는다 —
@@ -840,6 +899,25 @@ namespace _01.Code.UI
             Step.LearnPower => _stepAge >= lessonSeconds ? Step.Idle : step,
             _ => Step.Done,
         };
+
+        /// <summary>
+        /// 정산표가 실제로 한 번 열린 뒤 닫힐 때까지 기다린다.
+        /// 표가 없는 특수 전투에서도 안내가 영원히 남지 않도록 시간을 안전장치로 둔다.
+        /// </summary>
+        private Step ResolveSettlementLesson()
+        {
+            var settlement = ManagementSettlementManager.Current;
+            if (settlement != null && settlement.IsPanelOpen)
+            {
+                _settlementWasOpen = true;
+                return Step.ReviewSettlement;
+            }
+
+            if (_settlementWasOpen || _stepAge >= lessonSeconds)
+                return Step.PrepareNextDay;
+
+            return Step.ReviewSettlement;
+        }
 
         /// <summary>
         /// 쉬는 동안 새로 열린 기능이 있는지 본다.
@@ -912,24 +990,21 @@ namespace _01.Code.UI
             }
         }
 
-        /// <summary>포탈 말고 지어 둔 것이 있는가. 포탈은 따로 짚어야 하므로 여기서 뺀다.</summary>
-        private static bool HasNonPortalBuilding
+        private static bool HasDeployedUnit
         {
             get
             {
-                var buildings = FindObjectsByType<Building>(FindObjectsSortMode.None);
-                for (var i = 0; i < buildings.Length; i++)
-                {
-                    if (buildings[i] != null && buildings[i] is not Portal)
-                        return true;
-                }
-
+                foreach (var node in Node.ActiveNodes)
+                    foreach (var placement in node.UnitPlacements)
+                        if (placement?.Instance != null && placement.Instance is not MainUnit)
+                            return true;
                 return false;
             }
         }
 
-        private static bool HasDeployedUnit =>
-            FindObjectsByType<Unit>(FindObjectsSortMode.None).Length > 0;
+        private static Node FindDefenseRoom() => PickOutermost(node => !IsLocked(node)
+            && node.Data != null && node.Data.Type != DungeonNodeType.Entrance
+            && node.AssignedBuilding is not Portal);
 
         private static bool HasPortal =>
             WaveManager.Current != null && WaveManager.Current.HasPortal;
@@ -942,21 +1017,112 @@ namespace _01.Code.UI
             var text = HintFor(_step);
             var show = !string.IsNullOrEmpty(text);
 
-            if (root != null)
-                root.SetActive(show);
+            SetHintVisible(show);
 
             if (show && hintText != null)
-                hintText.text = text;
+            {
+                var formatted = $"<color=#E7BB6B>{HeaderFor(_step)}</color>\n{text}";
+                if (hintText.text != formatted)
+                    hintText.text = formatted;
+            }
+        }
+
+        private static string HeaderFor(Step step) => step switch
+        {
+            Step.BuildRoom => "처음 시작하기 · 1/5",
+            Step.DeployUnit => "처음 시작하기 · 2/5",
+            Step.BuildPortal => "처음 시작하기 · 3/5",
+            Step.LearnMove => "처음 시작하기 · 4/5",
+            Step.SurviveWave => "처음 시작하기 · 5/5",
+            Step.ObserveCombat => "첫 습격 · 전투 읽기",
+            Step.ReviewSettlement => "첫 습격 · 정산 읽기",
+            Step.PrepareNextDay => "다음 날 준비",
+            Step.LearnMerchant => "새 기능 · 떠돌이 상인",
+            Step.LearnPower => "새 기능 · 던전의 권능",
+            _ => "던전 안내",
+        };
+
+        private void ConfigureHint()
+        {
+            var target = root != null ? root : gameObject;
+            _hintGroup = target.GetComponent<CanvasGroup>();
+            if (_hintGroup == null)
+                _hintGroup = target.AddComponent<CanvasGroup>();
+            if (hintText == null)
+                return;
+            hintText.enableAutoSizing = true;
+            hintText.fontSizeMin = 16f;
+            hintText.fontSizeMax = 23f;
+            hintText.raycastTarget = false;
+            hintText.alignment = TextAlignmentOptions.Center;
+            hintText.margin = new Vector4(16f, 6f, 16f, 6f);
+            if (target.transform is RectTransform rect)
+            {
+                rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1f);
+                rect.pivot = new Vector2(0.5f, 1f);
+                rect.anchoredPosition = new Vector2(0f, -18f);
+                rect.sizeDelta = new Vector2(860f, 80f);
+            }
+            hintText.rectTransform.anchorMin = Vector2.zero;
+            hintText.rectTransform.anchorMax = Vector2.one;
+            hintText.rectTransform.offsetMin = new Vector2(8f, 4f);
+            hintText.rectTransform.offsetMax = new Vector2(-126f, -4f);
+            if (target.transform.Find("Skip Tutorial") == null)
+            {
+                var buttonObject = new GameObject("Skip Tutorial", typeof(RectTransform), typeof(UnityEngine.UI.Image), typeof(UnityEngine.UI.Button));
+                buttonObject.transform.SetParent(target.transform, false);
+                var buttonRect = (RectTransform)buttonObject.transform;
+                buttonRect.anchorMin = buttonRect.anchorMax = new Vector2(1f, 0.5f);
+                buttonRect.pivot = new Vector2(1f, 0.5f);
+                buttonRect.anchoredPosition = new Vector2(-14f, 0f);
+                buttonRect.sizeDelta = new Vector2(104f, 42f);
+                buttonObject.GetComponent<UnityEngine.UI.Image>().color = new Color(0.25f, 0.18f, 0.1f, 1f);
+                buttonObject.GetComponent<UnityEngine.UI.Button>().onClick.AddListener(SkipTutorial);
+                var label = new GameObject("Label", typeof(RectTransform)).AddComponent<TextMeshProUGUI>();
+                label.transform.SetParent(buttonObject.transform, false);
+                label.rectTransform.anchorMin = Vector2.zero;
+                label.rectTransform.anchorMax = Vector2.one;
+                label.rectTransform.offsetMin = label.rectTransform.offsetMax = Vector2.zero;
+                label.font = hintText.font;
+                label.fontSize = 18;
+                label.alignment = TextAlignmentOptions.Center;
+                label.text = "안내 건너뛰기";
+                label.raycastTarget = false;
+                label.enableAutoSizing = true;
+                label.fontSizeMin = 14;
+                label.fontSizeMax = 18;
+            }
+            if (target.GetComponent<UnityEngine.UI.GraphicRaycaster>() == null)
+                target.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+        }
+
+        private void SetHintVisible(bool visible)
+        {
+            if (_hintGroup == null)
+                ConfigureHint();
+            _hintGroup.alpha = visible ? 1f : 0f;
+            _hintGroup.interactable = visible;
+            _hintGroup.blocksRaycasts = visible;
         }
 
         private string HintFor(Step step) => step switch
         {
             Step.BuildRoom or Step.DeployUnit or Step.BuildPortal => BuildHint(step, _buildStage),
-            Step.LearnMove => "W A S D 로 던전을 둘러보세요",
-            Step.SurviveWave => "준비됐다면 습격을 시작하세요  ·  막아내면 금화가, 뚫리면 빚이 남습니다",
+            Step.LearnMove => "W A S D 로 던전을 둘러보세요  ·  마우스 휠로 화면을 확대할 수 있습니다",
+            Step.SurviveWave => "준비됐다면 습격을 시작하세요  ·  포탈에서 들어온 적이 던전의 주인에게 닿기 전에 막아야 합니다",
+            Step.ObserveCombat => CombatHint,
+            Step.ReviewSettlement => "정산표에서 보상·시설 수입과 유지비·이자를 확인하세요  ·  확인을 누르면 다음 날이 시작됩니다",
+            Step.PrepareNextDay => "부하를 눌러 체력과 피로를 확인하세요  ·  지친 부하는 회수해 쉬게 하고 방어선을 보강하세요",
             Step.LearnMerchant => "떠돌이 상인이 왔습니다  ·  유물은 유닛보다 비싸지만 조합이 붙습니다",
             Step.LearnPower => "던전의 권능이 열렸습니다  ·  습격 중에 눌러 구역을 지정하세요",
             _ => string.Empty,
+        };
+
+        private string CombatHint => _stepAge switch
+        {
+            < 5f => "전투는 자동으로 진행됩니다  ·  적의 길과 던전 주인의 체력을 지켜보세요",
+            < 10f => "유닛이나 적을 누르면 체력·공격력·특성을 확인할 수 있습니다",
+            _ => "우측 시간 버튼으로 전투 속도를 조절하세요  ·  전투가 끝나면 정산표가 열립니다",
         };
 
         /// <summary>
@@ -969,14 +1135,20 @@ namespace _01.Code.UI
         {
             Step.BuildRoom => stage switch
             {
+                BuildStage.ConfirmRoom => "확장을 눌러 첫 방을 만드세요",
                 BuildStage.PickNode => "밝은 타일을 눌러 첫 방을 파세요",
                 BuildStage.OpenInstall => "설치를 눌러 무엇을 지을지 고르세요",
-                BuildStage.PickCategory => "빌딩을 고르세요",
+                BuildStage.PickCategory => "건물을 고르세요",
                 _ => "지을 방을 고르세요",
             },
 
             Step.DeployUnit => stage switch
             {
+                BuildStage.OpenRoster => "유닛 관리를 열어 첫 수비병을 고용하세요",
+                BuildStage.HireUnit => "지원자 카드를 눌러 확인하고, 한 번 더 눌러 고용하세요",
+                BuildStage.CloseRoster => "닫기를 눌러 던전으로 돌아오세요",
+                BuildStage.PickCell => "방 안의 밝은 칸을 눌러 수비병을 배치하세요",
+                BuildStage.ConfirmRoom => "확장을 눌러 수비병을 배치할 방을 만드세요",
                 BuildStage.PickNode => "유닛을 세울 방을 고르세요  ·  유닛이 선 방이 방어선이 됩니다",
                 BuildStage.OpenInstall => "설치를 누르세요",
                 BuildStage.PickCategory => "유닛을 고르세요",
@@ -985,6 +1157,7 @@ namespace _01.Code.UI
 
             Step.BuildPortal => stage switch
             {
+                BuildStage.ConfirmRoom => "확장을 눌러 포탈을 설치할 방을 만드세요",
                 BuildStage.PickNode => "입구가 될 바깥쪽 방을 고르세요  ·  모험가는 그곳으로 들어옵니다",
                 BuildStage.OpenInstall => "설치를 누르세요",
                 BuildStage.PickCategory => "빌딩을 고르세요",

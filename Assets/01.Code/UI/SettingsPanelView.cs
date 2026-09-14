@@ -30,10 +30,12 @@ namespace _01.Code.UI
         private static readonly Color TextColor = new(0.94f, 0.90f, 0.82f, 1f);
 
         private static SettingsPanelView current;
+        public static bool IsOpen => current != null && current.window != null && current.window.activeInHierarchy;
 
         private GameObject window;
         private GameObject backdrop;
         private GameObject confirmWindow;
+        private GameObject gameGuideWindow;
         private GameObject restartButton;
         private GameObject titleButton;
         private GameObject closeButton;
@@ -46,6 +48,11 @@ namespace _01.Code.UI
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Install()
         {
+            // 씬에 패널이 이미 있거나 Domain Reload 없이 Play Mode를 다시 시작한 경우
+            // DontDestroyOnLoad 패널을 중복 생성하지 않는다.
+            if (current != null || FindAnyObjectByType<SettingsPanelView>() != null)
+                return;
+
             var host = new GameObject("Settings Panel");
             host.AddComponent<SettingsPanelView>();
             DontDestroyOnLoad(host);
@@ -57,8 +64,10 @@ namespace _01.Code.UI
             skin = Resources.Load<UiSkinSO>(SkinResourcePath);
             var canvas = BuildCanvas();
             Bind(ResolveWindow(canvas.transform));
+            BuildGameGuide(window.transform.parent);
 
             window.SetActive(false);
+            gameGuideWindow.SetActive(false);
             if (backdrop != null)
                 backdrop.SetActive(false);
             FitToScene();
@@ -75,6 +84,12 @@ namespace _01.Code.UI
         private void OnDisable()
         {
             UnityEngine.SceneManagement.SceneManager.sceneLoaded -= HandleSceneLoaded;
+        }
+
+        private void OnDestroy()
+        {
+            if (current == this)
+                current = null;
         }
 
         private void HandleSceneLoaded(UnityEngine.SceneManagement.Scene scene,
@@ -99,6 +114,12 @@ namespace _01.Code.UI
         {
             if (!EscapePressedThisFrame())
                 return;
+
+            if (gameGuideWindow != null && gameGuideWindow.activeSelf)
+            {
+                SetGameGuideVisible(false);
+                return;
+            }
 
             // 확인 창이 떠 있으면 그것부터 닫는다. 한 번에 둘을 닫으면 취소한 줄 모르고 지나간다.
             if (confirmWindow != null && confirmWindow.activeSelf)
@@ -286,6 +307,67 @@ namespace _01.Code.UI
         }
 
         /// <summary>
+        /// 튜토리얼을 건너뛴 뒤에도 핵심 규칙을 다시 볼 수 있는 도움말.
+        /// 설정 프리팹에 종속시키지 않고 실행 때 붙여, 타이틀과 게임 씬 양쪽에서 같은 내용을 쓴다.
+        /// </summary>
+        private void BuildGameGuide(Transform parent)
+        {
+            var guideButton = CreateButton(window.transform, "게임 안내", new Vector2(0.5f, 0f),
+                new Vector2(132f, 38f), new Vector2(-72f, 34f));
+            guideButton.onClick.AddListener(() => SetGameGuideVisible(true));
+
+            if (closeButton != null && closeButton.transform is RectTransform closeRect)
+            {
+                closeRect.sizeDelta = new Vector2(132f, 38f);
+                closeRect.anchoredPosition = new Vector2(72f, 34f);
+            }
+
+            gameGuideWindow = CreatePanel(parent, "Game Guide Window", new Vector2(780f, 620f), Vector2.zero);
+            var guideRoot = gameGuideWindow.transform;
+
+            CreateLabel(guideRoot, "게임 안내", 28f, TextAlignmentOptions.Center,
+                new Vector2(0.5f, 1f), new Vector2(720f, 42f), new Vector2(0f, -38f));
+
+            var body = CreateLabel(guideRoot,
+                "<color=#E7BB6B>목표</color>\n" +
+                "20일 동안 던전의 주인을 지키세요. 주인이 쓰러지거나 부채 한도를 넘으면 패배합니다.\n\n" +
+                "<color=#E7BB6B>준비</color>\n" +
+                "방을 확장하고 부하·함정·시설을 배치하세요. 포탈이 있어야 습격을 시작할 수 있습니다. 포탈과 핵심 시설은 방 중앙에 설치됩니다.\n\n" +
+                "<color=#E7BB6B>전투</color>\n" +
+                "전투는 자동으로 진행됩니다. 유닛이나 적을 눌러 체력과 특성을 확인하고, 시간 버튼으로 속도를 조절하세요. 권능은 전투 중 대상 구역을 지정해 사용합니다.\n\n" +
+                "<color=#E7BB6B>운영</color>\n" +
+                "습격 뒤 보상·시설 수입에서 유지비와 이자가 정산됩니다. 부하는 피로가 쌓이므로 지친 부하는 회수해 쉬게 하세요. 상인과 새 권능은 날짜가 지나며 열립니다.\n\n" +
+                "<color=#E7BB6B>조작</color>\n" +
+                "W A S D 이동  ·  마우스 휠 확대/축소  ·  ESC 설정/닫기",
+                19f, TextAlignmentOptions.TopLeft,
+                new Vector2(0.5f, 1f), new Vector2(690f, 470f), new Vector2(0f, -300f));
+            body.textWrappingMode = TextWrappingModes.Normal;
+            body.enableAutoSizing = true;
+            body.fontSizeMin = 15f;
+            body.fontSizeMax = 19f;
+            body.lineSpacing = 5f;
+            body.margin = new Vector4(10f, 4f, 10f, 4f);
+
+            var guideClose = CreateButton(guideRoot, "돌아가기", new Vector2(0.5f, 0f),
+                new Vector2(150f, 40f), new Vector2(0f, 34f));
+            guideClose.onClick.AddListener(() => SetGameGuideVisible(false));
+            gameGuideWindow.SetActive(false);
+        }
+
+        private void SetGameGuideVisible(bool visible)
+        {
+            if (gameGuideWindow == null)
+                return;
+            if (gameGuideWindow.activeSelf == visible)
+                return;
+
+            gameGuideWindow.SetActive(visible);
+            if (visible)
+                gameGuideWindow.transform.SetAsLastSibling();
+            GameSfxPlayer.Play(visible ? GameSfxCue.UiOpen : GameSfxCue.UiClose);
+        }
+
+        /// <summary>
         /// 지금 씬에 맞게 창을 고쳐 놓는다. 타이틀에서는 판을 떠나는 두 버튼이 뜻이 없으므로
         /// 감추고 창도 그만큼 줄인다. 열 때마다 보므로 씬을 오간 뒤에도 어긋나지 않는다.
         /// </summary>
@@ -435,6 +517,8 @@ namespace _01.Code.UI
         {
             if (open)
                 FitToScene();
+            else
+                SetGameGuideVisible(false);
 
             if (backdrop != null)
                 backdrop.SetActive(open);
