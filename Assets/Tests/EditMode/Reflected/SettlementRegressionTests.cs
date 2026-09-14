@@ -12,6 +12,8 @@ namespace Tests.EditMode.Rules
         private const BindingFlags PrivateInstance = BindingFlags.Instance | BindingFlags.NonPublic;
         private readonly List<UnityEngine.Object> created = new();
         private object previousRoster;
+        private object previousCost;
+        private object previousSettlement;
 
         private static Type Resolve(string name) => Type.GetType(name + ", Assembly-CSharp", true);
         private static object Call(object target, string name, params object[] args) =>
@@ -55,6 +57,8 @@ namespace Tests.EditMode.Rules
         public void SetUp()
         {
             previousRoster = Resolve("_01.Code.Manager.HiredUnitRoster").GetProperty("Current").GetValue(null);
+            previousCost = Resolve("_01.Code.Manager.CostManager").GetProperty("Current").GetValue(null);
+            previousSettlement = Resolve("_01.Code.Manager.ManagementSettlementManager").GetProperty("Current").GetValue(null);
         }
 
         [TearDown]
@@ -64,6 +68,8 @@ namespace Tests.EditMode.Rules
                 UnityEngine.Object.DestroyImmediate(obj);
             created.Clear();
             Resolve("_01.Code.Manager.HiredUnitRoster").GetProperty("Current").SetValue(null, previousRoster);
+            Resolve("_01.Code.Manager.CostManager").GetProperty("Current").SetValue(null, previousCost);
+            Resolve("_01.Code.Manager.ManagementSettlementManager").GetProperty("Current").SetValue(null, previousSettlement);
         }
 
         [Test]
@@ -136,6 +142,46 @@ namespace Tests.EditMode.Rules
             var report = (string)Call(manager, "BuildFatigueText");
             Assert.That(report, Does.Contain("80"));
             Assert.That(report, Does.Not.Contain("20"));
+        }
+
+        [Test]
+        public void FailedConstruction_RefundsChargedGoldAndRestoresConsumedDiscount()
+        {
+            var channel = ScriptableObject.CreateInstance(Resolve("_01.Code.Core.GameEventChannelSO"));
+            created.Add(channel);
+            var cost = Component("_01.Code.Manager.CostManager", "Construction cost");
+            var settlement = Component("_01.Code.Manager.ManagementSettlementManager", "Construction ledger");
+            var panel = Component("_01.Code.UI.NodePanelView", "Construction panel");
+            var node = Component("_01.Code.MapCreateSystem.Node", "Construction room");
+            var buildingData = ScriptableObject.CreateInstance(Resolve("_01.Code.Buildings.BuildingDataSO"));
+            created.Add(buildingData);
+
+            Set(cost, "costEventChannel", channel);
+            Set(settlement, "costEventChannel", channel);
+            Set(panel, "costEventChannel", channel);
+            cost.gameObject.SetActive(true);
+            settlement.gameObject.SetActive(true);
+            // EditMode는 비활성 객체의 런타임 생명주기를 자동 실행하지 않는다.
+            Call(cost, "Awake");
+            Call(cost, "OnEnable");
+            Call(settlement, "OnEnable");
+
+            var pendingType = panel.GetType().GetNestedType("PendingBuildingInstall", BindingFlags.NonPublic);
+            var central = pendingType.GetMethod("Central", BindingFlags.Public | BindingFlags.Static);
+            Set(panel, "_pendingBuilding", central.Invoke(null, new object[] { node, buildingData }));
+
+            channel.GetType().GetMethod("RaiseEvent").Invoke(channel,
+                new[] { Event("ConstructionDiscountGrantedEvent", 0.5f) });
+            channel.GetType().GetMethod("RaiseEvent").Invoke(channel,
+                new[] { Event("BuildCostRequestedEvent", node, 40) });
+
+            Assert.That(cost.GetType().GetProperty("CurrentGold").GetValue(cost), Is.EqualTo(80));
+            Call(panel, "HandleBuildCostPaid", Event("BuildCostPaidEvent", node, 20, 80, 0.5f));
+
+            Assert.That(cost.GetType().GetProperty("CurrentGold").GetValue(cost), Is.EqualTo(100));
+            Assert.That(cost.GetType().GetProperty("CurrentBuildDiscountRate").GetValue(cost), Is.EqualTo(0.5f));
+            Assert.That(settlement.GetType().GetField("totalExpense", PrivateInstance).GetValue(settlement), Is.EqualTo(20));
+            Assert.That(settlement.GetType().GetField("totalIncome", PrivateInstance).GetValue(settlement), Is.EqualTo(20));
         }
     }
 }

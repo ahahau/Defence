@@ -57,12 +57,40 @@ namespace _01.Code.UI
         private Unit _selectedManagedUnit;
         private int _pendingUnitCellColumn = -1;
         private int _pendingUnitCellRow = -1;
-        private Node _pendingBuildingNode;
-        private BuildingDataSO _pendingBuildingData;
-        private int _pendingCellColumn = -1;
-        private int _pendingCellRow = -1;
-        private bool _hasPendingCell;
-        private EdgeLine _pendingEdge;
+        // 설치 방식마다 필요한 값을 하나의 요청으로 보관한다. 셀/엣지/중앙 설치가
+        // 서로 다른 필드를 남겨 다음 요청에 섞이는 일을 막는다.
+        private PendingBuildingInstall _pendingBuilding;
+
+        private readonly struct PendingBuildingInstall
+        {
+            private PendingBuildingInstall(Node node, BuildingDataSO data, bool hasCell,
+                int column, int row, EdgeLine edge)
+            {
+                Node = node;
+                Data = data;
+                HasCell = hasCell;
+                Column = column;
+                Row = row;
+                Edge = edge;
+            }
+
+            public Node Node { get; }
+            public BuildingDataSO Data { get; }
+            public bool HasCell { get; }
+            public int Column { get; }
+            public int Row { get; }
+            public EdgeLine Edge { get; }
+            public bool IsPending => Node != null && Data != null;
+
+            public static PendingBuildingInstall Central(Node node, BuildingDataSO data) =>
+                new(node, data, false, -1, -1, null);
+
+            public static PendingBuildingInstall Cell(Node node, BuildingDataSO data, int column, int row) =>
+                new(node, data, true, column, row, null);
+
+            public static PendingBuildingInstall OnEdge(Node node, BuildingDataSO data, EdgeLine edge) =>
+                new(node, data, false, -1, -1, edge);
+        }
         private bool hasInstalledPortal;
         private bool _isDeployModeActive;
         private string _installButtonDefaultLabel;
@@ -82,6 +110,7 @@ namespace _01.Code.UI
 
         /// <summary>지금 고른 방. 안내가 "방은 골랐으니 다음은 설치 버튼"을 알아내는 데 쓴다.</summary>
         public Node SelectedNode => _selectedNode;
+        public bool IsChoosingUnitCell => _pendingUnitNode != null && _pendingUnitData != null;
 
         public IReadOnlyList<BuildingDataSO> InstallableBuildings => installableBuildings;
         public RectTransform InstallButtonRect => installButton != null ? installButton.transform as RectTransform : null;
@@ -1398,12 +1427,10 @@ namespace _01.Code.UI
                 return;
             }
 
-            _pendingBuildingNode = _selectedNode;
-            _pendingBuildingData = buildingData;
-            _hasPendingCell = false;
+            _pendingBuilding = PendingBuildingInstall.Central(_selectedNode, buildingData);
             RefreshBuildingInstallButtons();
 
-            costEventChannel?.RaiseEvent(new BuildCostRequestedEvent(_pendingBuildingNode, buildingData.Cost));
+            costEventChannel?.RaiseEvent(new BuildCostRequestedEvent(_pendingBuilding.Node, buildingData.Cost));
         }
 
         /// <summary>배치 모드가 끝난 뒤(확정/취소) 설치 패널을 원래 카테고리로 복원한다 — 연속 설치용.</summary>
@@ -1423,13 +1450,10 @@ namespace _01.Code.UI
             if (!IsManagementAllowed() || node == null || buildingData == null || edge == null || edge.HasBuilding)
                 return;
 
-            _pendingBuildingNode = node;
-            _pendingBuildingData = buildingData;
-            _pendingEdge = edge;
-            _hasPendingCell = false;
+            _pendingBuilding = PendingBuildingInstall.OnEdge(node, buildingData, edge);
             RefreshBuildingInstallButtons();
 
-            costEventChannel?.RaiseEvent(new BuildCostRequestedEvent(_pendingBuildingNode, buildingData.Cost));
+            costEventChannel?.RaiseEvent(new BuildCostRequestedEvent(_pendingBuilding.Node, buildingData.Cost));
         }
 
         /// <summary>배치 모드에서 칸을 클릭해 확정했을 때 — 선택한 칸을 기억하고 비용을 청구한다.</summary>
@@ -1438,14 +1462,10 @@ namespace _01.Code.UI
             if (!IsManagementAllowed() || node == null || buildingData == null)
                 return;
 
-            _pendingBuildingNode = node;
-            _pendingBuildingData = buildingData;
-            _pendingCellColumn = column;
-            _pendingCellRow = row;
-            _hasPendingCell = true;
+            _pendingBuilding = PendingBuildingInstall.Cell(node, buildingData, column, row);
             RefreshBuildingInstallButtons();
 
-            costEventChannel?.RaiseEvent(new BuildCostRequestedEvent(_pendingBuildingNode, buildingData.Cost));
+            costEventChannel?.RaiseEvent(new BuildCostRequestedEvent(_pendingBuilding.Node, buildingData.Cost));
         }
 
         private void ShowBuildingInfoPanel(BuildingDataSO buildingData)
@@ -1465,37 +1485,39 @@ namespace _01.Code.UI
 
         private void HandleBuildCostPaid(BuildCostPaidEvent evt)
         {
-            if (_pendingBuildingNode == null || _pendingBuildingData == null || evt.Node != _pendingBuildingNode)
+            if (!_pendingBuilding.IsPending || evt.Node != _pendingBuilding.Node)
                 return;
 
-            InstallPendingBuilding();
+            if (InstallPendingBuilding())
+                return;
+
+            // 결제 시점과 실제 배치 사이에 자리가 막혔거나 참조가 사라진 경우.
+            // 금화뿐 아니라 이번 결제에서 소모된 할인도 돌려줘야 다시 시도할 수 있다.
+            costEventChannel?.RaiseEvent(new BuildCostRefundedEvent(
+                evt.Node, evt.GoldAmount, evt.ConsumedDiscountRate));
+            SetTitle("설치할 수 없어 비용을 돌려드렸습니다");
         }
 
         private void HandleBuildCostRejected(BuildCostRejectedEvent evt)
         {
-            if (_pendingBuildingNode == null || evt.Node != _pendingBuildingNode)
+            if (!_pendingBuilding.IsPending || evt.Node != _pendingBuilding.Node)
                 return;
 
             SetTitle($"골드 부족 ({evt.CurrentGold}/{evt.GoldAmount})");
-            _pendingBuildingNode = null;
-            _pendingBuildingData = null;
-            _hasPendingCell = false;
-            _pendingEdge = null;
+            _pendingBuilding = default;
             RefreshBuildingInstallButtons();
         }
 
-        private void InstallPendingBuilding()
+        private bool InstallPendingBuilding()
         {
-            var node = _pendingBuildingNode;
-            var buildingData = _pendingBuildingData;
-            var hasChosenCell = _hasPendingCell;
-            var chosenColumn = _pendingCellColumn;
-            var chosenRow = _pendingCellRow;
-            var chosenEdge = _pendingEdge;
-            _pendingBuildingNode = null;
-            _pendingBuildingData = null;
-            _hasPendingCell = false;
-            _pendingEdge = null;
+            var pending = _pendingBuilding;
+            var node = pending.Node;
+            var buildingData = pending.Data;
+            var hasChosenCell = pending.HasCell;
+            var chosenColumn = pending.Column;
+            var chosenRow = pending.Row;
+            var chosenEdge = pending.Edge;
+            _pendingBuilding = default;
 
             if (!IsManagementAllowed()
                 || node == null
@@ -1503,23 +1525,32 @@ namespace _01.Code.UI
                 || buildingData.Prefab == null)
             {
                 RefreshBuildingInstallButtons();
-                return;
+                return false;
             }
 
             // 라인 건물: 선택한 엣지의 중점에 설치. 통과 효과는 적이 라인을 지날 때 발동.
-            if (buildingData.InstallOnEdge && chosenEdge != null)
+            if (buildingData.InstallOnEdge)
             {
-                if (BuildingPlacement.InstallOnEdge(chosenEdge, buildingData) != null)
+                var placed = chosenEdge != null
+                    ? BuildingPlacement.InstallOnEdge(chosenEdge, buildingData)
+                    : null;
+                if (placed != null)
                     nodeEventChannel?.RaiseEvent(new BuildingInstalledEvent(node, buildingData));
 
                 RefreshBuildingInstallButtons();
-                return; // 패널 유지 → 연속 설치
+                return placed != null; // 패널 유지 → 연속 설치
             }
 
             // 작은 칸 건물: 배치 모드에서 고른 칸에 설치. (칸 정보가 없거나 그새 차 있으면 가까운 빈 셀 폴백)
             var grid = node.TrapGrid;
-            if (BuildingPlacement.UsesGridCell(buildingData) && grid != null)
+            if (BuildingPlacement.UsesGridCell(buildingData))
             {
+                if (grid == null)
+                {
+                    RefreshBuildingInstallButtons();
+                    return false;
+                }
+
                 var placed = hasChosenCell
                     ? BuildingPlacement.InstallOnCell(node, chosenColumn, chosenRow, buildingData)
                     : null;
@@ -1537,18 +1568,21 @@ namespace _01.Code.UI
                     nodeEventChannel?.RaiseEvent(new BuildingInstalledEvent(node, buildingData));
 
                 RefreshBuildingInstallButtons();
-                return; // 패널 유지 → 연속 설치
+                return placed != null; // 패널 유지 → 연속 설치
             }
 
             if (node.HasAssignedBuilding)
             {
                 RefreshBuildingInstallButtons();
-                return;
+                return false;
             }
 
             var building = BuildingPlacement.InstallCentral(node, buildingData, centralBuildingSlotFill);
             if (building == null)
-                return;
+            {
+                RefreshBuildingInstallButtons();
+                return false;
+            }
 
             nodeEventChannel?.RaiseEvent(new BuildingInstalledEvent(node, buildingData));
 
@@ -1564,6 +1598,7 @@ namespace _01.Code.UI
             // 메뉴를 닫은 뒤 다시 갱신해야 작은 칸 설치 버튼이 즉시 돌아온다.
             RefreshInstallButtonState();
             ClearTutorialHighlight();
+            return true;
         }
 
         private void HandleDemolishClicked()
@@ -1625,7 +1660,7 @@ namespace _01.Code.UI
             // 라인 건물: 노드 상태와 무관 — 보유 수량과 빈 라인만 있으면 설치 가능.
             if (buildingData.InstallOnEdge)
                 return EdgePlacementPreview.HasFreeEdge()
-                       && _pendingBuildingNode == null;
+                       && !_pendingBuilding.IsPending;
 
             // 중앙 슬롯을 쓰는 고유 핵심 건물만 노드당 하나로 제한한다.
             if (!BuildingPlacement.UsesGridCell(buildingData) && _selectedNode.HasAssignedBuilding)
@@ -1636,7 +1671,7 @@ namespace _01.Code.UI
                 if (hasInstalledPortal)
                     return false;
 
-                // 입구는 플레이어가 서 있는 자리다. 여기에 포탈을 두면 적이 코앞에서 쏟아진다.
+                // 입구는 던전 핵심부다. 여기에 포탈을 두면 적이 핵심부에서 바로 생성된다.
                 if (_selectedNode.Data != null && _selectedNode.Data.Type == DungeonNodeType.Entrance)
                     return false;
 
@@ -1650,7 +1685,7 @@ namespace _01.Code.UI
             if (BuildingPlacement.UsesGridCell(buildingData) && (_selectedNode.TrapGrid == null || !_selectedNode.TrapGrid.HasFreeCell))
                 return false;
 
-            return _pendingBuildingNode == null;
+            return !_pendingBuilding.IsPending;
         }
 
         private void RefreshInstallButtonState()

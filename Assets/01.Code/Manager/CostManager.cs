@@ -75,11 +75,18 @@ namespace _01.Code.Manager
         public bool TrySpendGold(int amount)
         {
             var normalizedAmount = Mathf.Max(0, amount);
-            if (normalizedAmount <= 0 || CurrentGold < normalizedAmount)
+            return normalizedAmount > 0 && TryChargeImmediate(normalizedAmount);
+        }
+
+        /// <summary>즉시 결제의 단일 경로. 호출자가 가격 검증과 결제 결과 이벤트를 맡는다.</summary>
+        private bool TryChargeImmediate(int amount, bool notifyWhenFree = false)
+        {
+            if (amount < 0 || CurrentGold < amount)
                 return false;
 
-            CurrentGold -= normalizedAmount;
-            RaiseGoldChanged();
+            CurrentGold -= amount;
+            if (amount > 0 || notifyWhenFree)
+                RaiseGoldChanged();
             return true;
         }
 
@@ -95,6 +102,7 @@ namespace _01.Code.Manager
         private void OnEnable()
         {
             costEventChannel.AddListener<BuildCostRequestedEvent>(HandleBuildCostRequested);
+            costEventChannel.AddListener<BuildCostRefundedEvent>(HandleBuildCostRefunded);
             costEventChannel.AddListener<HireUnitCostRequestedEvent>(HandleHireUnitCostRequested);
             costEventChannel.AddListener<RosterHireRequestedEvent>(HandleRosterHireRequested);
             costEventChannel.AddListener<GoldEarnedEvent>(HandleGoldEarned);
@@ -114,6 +122,7 @@ namespace _01.Code.Manager
         private void OnDisable()
         {
             costEventChannel.RemoveListener<BuildCostRequestedEvent>(HandleBuildCostRequested);
+            costEventChannel.RemoveListener<BuildCostRefundedEvent>(HandleBuildCostRefunded);
             costEventChannel.RemoveListener<HireUnitCostRequestedEvent>(HandleHireUnitCostRequested);
             costEventChannel.RemoveListener<RosterHireRequestedEvent>(HandleRosterHireRequested);
             costEventChannel.RemoveListener<GoldEarnedEvent>(HandleGoldEarned);
@@ -209,26 +218,31 @@ namespace _01.Code.Manager
         private void HandleBuildCostRequested(BuildCostRequestedEvent evt)
         {
             var originalCost = Mathf.Max(0, evt.GoldAmount);
+            var consumedDiscountRate = originalCost > 0 ? nextBuildDiscountRate : 0f;
             var chargedCost = GetDiscountedBuildCost(originalCost);
 
             if (chargedCost <= 0)
             {
                 if (originalCost > 0)
                     nextBuildDiscountRate = 0f;
-                costEventChannel.RaiseEvent(new BuildCostPaidEvent(evt.Node, chargedCost, CurrentGold));
+                costEventChannel.RaiseEvent(new BuildCostPaidEvent(evt.Node, chargedCost, CurrentGold, consumedDiscountRate));
                 return;
             }
 
-            if (CurrentGold < chargedCost)
+            if (!TryChargeImmediate(chargedCost))
             {
                 costEventChannel.RaiseEvent(new BuildCostRejectedEvent(evt.Node, chargedCost, CurrentGold));
                 return;
             }
 
-            CurrentGold -= chargedCost;
             nextBuildDiscountRate = 0f;
-            RaiseGoldChanged();
-            costEventChannel.RaiseEvent(new BuildCostPaidEvent(evt.Node, chargedCost, CurrentGold));
+            costEventChannel.RaiseEvent(new BuildCostPaidEvent(evt.Node, chargedCost, CurrentGold, consumedDiscountRate));
+        }
+
+        private void HandleBuildCostRefunded(BuildCostRefundedEvent evt)
+        {
+            AddGold(evt.GoldAmount);
+            nextBuildDiscountRate = Mathf.Max(nextBuildDiscountRate, evt.RestoredDiscountRate);
         }
 
         private void HandleConstructionDiscountGranted(ConstructionDiscountGrantedEvent evt)
@@ -244,14 +258,12 @@ namespace _01.Code.Manager
                 return;
             }
 
-            if (CurrentGold < evt.GoldAmount)
+            if (!TryChargeImmediate(evt.GoldAmount))
             {
                 costEventChannel.RaiseEvent(new HireUnitCostRejectedEvent(evt.Node, evt.Unit, evt.GoldAmount, CurrentGold));
                 return;
             }
 
-            CurrentGold -= evt.GoldAmount;
-            RaiseGoldChanged();
             costEventChannel.RaiseEvent(new HireUnitCostPaidEvent(evt.Node, evt.Unit, evt.GoldAmount, CurrentGold));
         }
 
@@ -262,14 +274,13 @@ namespace _01.Code.Manager
 
             var hireCost = Mathf.Max(0, evt.GoldAmount);
             var roster = HiredUnitRoster.Current;
-            if (roster == null || roster.GetCandidateCount(evt.Unit) <= 0 || CurrentGold < hireCost)
+            if (roster == null || roster.GetCandidateCount(evt.Unit) <= 0 ||
+                !TryChargeImmediate(hireCost, notifyWhenFree: true))
             {
                 costEventChannel.RaiseEvent(new RosterHireRejectedEvent(evt.Unit, hireCost, CurrentGold));
                 return;
             }
 
-            CurrentGold -= hireCost;
-            RaiseGoldChanged();
             costEventChannel.RaiseEvent(new RosterHirePaidEvent(evt.Unit, hireCost, CurrentGold));
         }
 
@@ -300,14 +311,12 @@ namespace _01.Code.Manager
                 return;
             }
 
-            if (CurrentGold < evt.GoldAmount)
+            if (!TryChargeImmediate(evt.GoldAmount))
             {
                 costEventChannel.RaiseEvent(new UnitRecoveryCostRejectedEvent(evt.Node, evt.Unit, evt.GoldAmount, CurrentGold));
                 return;
             }
 
-            CurrentGold -= evt.GoldAmount;
-            RaiseGoldChanged();
             costEventChannel.RaiseEvent(new UnitRecoveryCostPaidEvent(evt.Node, evt.Unit, evt.GoldAmount, CurrentGold));
         }
 
@@ -315,14 +324,12 @@ namespace _01.Code.Manager
         private void HandleArtifactPurchaseRequested(ArtifactPurchaseRequestedEvent evt)
         {
             var price = Mathf.Max(0, evt.GoldAmount);
-            if (evt.Artifact == null || CurrentGold < price)
+            if (evt.Artifact == null || !TryChargeImmediate(price, notifyWhenFree: true))
             {
                 costEventChannel.RaiseEvent(new ArtifactPurchaseRejectedEvent(evt.Artifact, price, CurrentGold));
                 return;
             }
 
-            CurrentGold -= price;
-            RaiseGoldChanged();
             costEventChannel.RaiseEvent(new ArtifactPurchasePaidEvent(evt.Artifact, price, CurrentGold));
         }
 

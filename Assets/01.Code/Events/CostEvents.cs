@@ -34,16 +34,33 @@ namespace _01.Code.Events
 
     public class BuildCostPaidEvent : GameEvent
     {
-        public BuildCostPaidEvent(Node node, int goldAmount, int remainingGold)
+        public BuildCostPaidEvent(Node node, int goldAmount, int remainingGold, float consumedDiscountRate = 0f)
         {
             Node = node;
             GoldAmount = goldAmount;
             RemainingGold = remainingGold;
+            ConsumedDiscountRate = consumedDiscountRate;
         }
 
         public Node Node { get; }
         public int GoldAmount { get; }
         public int RemainingGold { get; }
+        public float ConsumedDiscountRate { get; }
+    }
+
+    /// <summary>결제 후 설치가 실패했을 때만 발생한다. 금화와 이번 건설 할인을 함께 되돌린다.</summary>
+    public class BuildCostRefundedEvent : GameEvent
+    {
+        public BuildCostRefundedEvent(Node node, int goldAmount, float restoredDiscountRate)
+        {
+            Node = node;
+            GoldAmount = goldAmount;
+            RestoredDiscountRate = restoredDiscountRate;
+        }
+
+        public Node Node { get; }
+        public int GoldAmount { get; }
+        public float RestoredDiscountRate { get; }
     }
 
     public class BuildCostRejectedEvent : GameEvent

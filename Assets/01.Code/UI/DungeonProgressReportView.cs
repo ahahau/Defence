@@ -41,6 +41,13 @@ namespace _01.Code.UI
 
         public void RefreshReport()
         {
+            foreach (var content in new[] { monsterContentRoot, buildingContentRoot })
+                if (content != null && content.transform is RectTransform rect)
+                {
+                    rect.pivot = new Vector2(0.5f, 1f);
+                    rect.anchoredPosition = new Vector2(0f, -78f);
+                    rect.sizeDelta = new Vector2(760f, 166f);
+                }
             var roster = HiredUnitRoster.Current;
             RefreshMonsters(roster);
             RefreshBuildings(roster);

@@ -47,6 +47,9 @@ namespace _01.Code.Buildings
                 return null;
 
             building.Initialize(buildingData);
+            // Initialize가 등급별 BoardSprite를 교체하므로 최종 그림 기준으로 중앙 크기를 다시 맞춘다.
+            if (building is not Portal && IsCentralBuilding(buildingData))
+                FitToCentralSlot(building, node.TrapGrid, centralSlotFill);
             node.AssignBuilding(building);
 
             if (building is Portal portal)

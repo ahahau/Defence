@@ -76,6 +76,7 @@ namespace _01.Code.Manager
             costEventChannel?.AddListener<GoldLostEvent>(HandleGoldLost);
             costEventChannel?.AddListener<TreasuryRobbedEvent>(HandleTreasuryRobbed);
             costEventChannel?.AddListener<BuildCostPaidEvent>(HandleBuildCostPaid);
+            costEventChannel?.AddListener<BuildCostRefundedEvent>(HandleBuildCostRefunded);
             costEventChannel?.AddListener<RosterHirePaidEvent>(HandleRosterHirePaid);
             costEventChannel?.AddListener<UnitRecoveryCostPaidEvent>(HandleUnitRecoveryCostPaid);
             closeButton?.onClick.AddListener(HidePanel);
@@ -96,6 +97,7 @@ namespace _01.Code.Manager
             costEventChannel?.RemoveListener<GoldLostEvent>(HandleGoldLost);
             costEventChannel?.RemoveListener<TreasuryRobbedEvent>(HandleTreasuryRobbed);
             costEventChannel?.RemoveListener<BuildCostPaidEvent>(HandleBuildCostPaid);
+            costEventChannel?.RemoveListener<BuildCostRefundedEvent>(HandleBuildCostRefunded);
             costEventChannel?.RemoveListener<RosterHirePaidEvent>(HandleRosterHirePaid);
             costEventChannel?.RemoveListener<UnitRecoveryCostPaidEvent>(HandleUnitRecoveryCostPaid);
             closeButton?.onClick.RemoveListener(HidePanel);
@@ -183,6 +185,11 @@ namespace _01.Code.Manager
         private void HandleBuildCostPaid(BuildCostPaidEvent evt)
         {
             RecordExpense("건설 투자", evt.GoldAmount, false);
+        }
+
+        private void HandleBuildCostRefunded(BuildCostRefundedEvent evt)
+        {
+            RecordIncome("건설 취소 환불", evt.GoldAmount, false);
         }
 
         private void HandleRosterHirePaid(RosterHirePaidEvent evt)
@@ -391,6 +398,25 @@ namespace _01.Code.Manager
 
         private void ShowPanel()
         {
+            if (progressReportView != null && progressReportView.transform is RectTransform report)
+            {
+                report.sizeDelta = new Vector2(760f, 260f);
+                report.anchoredPosition = new Vector2(0f, -425f);
+            }
+            if (netText != null)
+            {
+                netText.rectTransform.sizeDelta = new Vector2(700f, 170f);
+                netText.rectTransform.anchoredPosition = new Vector2(0f, -645f);
+                netText.enableAutoSizing = true;
+                netText.fontSizeMin = 14f;
+                netText.fontSizeMax = 20f;
+                netText.alignment = TextAlignmentOptions.Top;
+                netText.textWrappingMode = TextWrappingModes.Normal;
+                netText.margin = new Vector4(0f, 6f, 0f, 6f);
+                var divider = netText.transform.parent.Find("ProgressDivider") as RectTransform;
+                if (divider != null)
+                    divider.anchoredPosition = new Vector2(divider.anchoredPosition.x, -552f);
+            }
             panelRoot.SetActive(true);
             panelRoot.transform.SetAsLastSibling();
         }
