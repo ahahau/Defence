@@ -41,7 +41,7 @@ namespace _01.Code.Manager
 
         private void HandleBankruptcy(BankruptcyEvent evt)
         {
-            TriggerGameOver(null, $"부채 {evt.CurrentDebt}G가 한도 {evt.DebtLimit}G를 넘겨 파산했습니다");
+            TriggerGameOver(null, $"청산일에 {evt.Owed}G를 내야 했지만 {evt.Gold}G뿐이라 파산했습니다");
         }
 
         private void TriggerGameOver(MainUnit mainUnit, string reason)

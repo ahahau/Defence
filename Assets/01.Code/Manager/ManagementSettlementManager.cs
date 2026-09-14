@@ -57,6 +57,10 @@ namespace _01.Code.Manager
         /// <summary>직전 정산에서 운영 자금이 실제로 움직인 액수. 표시용 합계와 구분해야 한다.</summary>
         private int _lastSettlementNet;
 
+        /// <summary>직전 청산일에 내야 했던 금액과 실제로 낸 금액. 둘이 다르면 갚지 못한 것이다.</summary>
+        private int _weeklySettlementOwed;
+        private int _weeklySettlementPaid;
+
         public bool IsPanelOpen => panelRoot != null && panelRoot.activeInHierarchy;
 
         public void ForceHidePanel()
@@ -117,6 +121,7 @@ namespace _01.Code.Manager
             AccrueTreasuryInterest();
             ApplyBattleFatigue();
             ApplyNetToGold();
+            SettleWeekIfDue();
 
             if (!HasSettlementEntries() || !HasPanelReferences())
             {
@@ -151,6 +156,30 @@ namespace _01.Code.Manager
             settlementIncome = 0;
             settlementExpense = 0;
             RaiseSettlementPreview();
+        }
+
+        /// <summary>
+        /// 청산일이면 그 주에 쌓인 빚을 이자까지 한 번에 갚는다.
+        ///
+        /// 하루 정산이 끝난 뒤에 부른다. 그날 번 돈까지 청산에 쓸 수 있어야
+        /// 마지막 날 방어를 잘해 빚을 막는 길이 열린다.
+        /// </summary>
+        private void SettleWeekIfDue()
+        {
+            if (!DayManager.IsSettlementDay(currentDay))
+                return;
+
+            var costManager = CostManager.Current;
+            if (costManager == null)
+                return;
+
+            var owed = costManager.WeeklyDue;
+            if (owed <= 0)
+                return;
+
+            // 갚지 못하면 CostManager가 파산을 알린다. 보고서에는 시도한 금액을 남긴다.
+            _weeklySettlementPaid = costManager.SettleWeek() ? owed : 0;
+            _weeklySettlementOwed = owed;
         }
 
         /// <summary>
@@ -570,15 +599,24 @@ namespace _01.Code.Manager
                 : string.Empty;
         }
 
-        /// <summary>빚이 있을 때만 한 줄 덧붙인다. 한도가 얼마 안 남았는지가 핵심 정보다.</summary>
-        private static string BuildDebtText()
+        /// <summary>
+        /// 빚 한 줄. 청산일에는 방금 갚은 금액을, 평소에는 며칠 뒤 얼마를 내야 하는지 보여준다.
+        /// 청산일이 닥쳐서야 알면 손쓸 수 없으므로 남은 날과 금액을 항상 같이 적는다.
+        /// </summary>
+        private string BuildDebtText()
         {
+            if (_weeklySettlementPaid > 0)
+                return $"\n<color=#8FD9A0>빚 {_weeklySettlementPaid}G를 청산했습니다</color>";
+
             var costManager = CostManager.Current;
             if (costManager == null || costManager.CurrentDebt <= 0)
                 return string.Empty;
 
-            return $"\n<color=#FF7A6B>부채 {costManager.CurrentDebt}G / 한도 {costManager.DebtLimit}G"
-                   + $"  ·  남은 한도 {costManager.RemainingCredit}G</color>";
+            var daysLeft = DayManager.WeekLength - (currentDay <= 0 ? 0 : (currentDay - 1) % DayManager.WeekLength + 1);
+            var due = costManager.WeeklyDue;
+            return daysLeft > 0
+                ? $"\n<color=#FF7A6B>빚 {costManager.CurrentDebt}G  ·  {daysLeft}일 뒤 이자 포함 {due}G를 내야 합니다</color>"
+                : $"\n<color=#FF7A6B>빚 {costManager.CurrentDebt}G  ·  오늘 {due}G를 내야 합니다</color>";
         }
 
         private string BuildLedgerText(string title, Dictionary<string, int> ledger, int total, char sign)

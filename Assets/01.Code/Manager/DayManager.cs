@@ -11,11 +11,22 @@ namespace _01.Code.Manager
         [SerializeField] private GameEventChannelSO dayEventChannel;
         [SerializeField] private GameEventChannelSO waveEventChannel;
 
+        /// <summary>한 주의 길이. 이 날짜의 배수마다 빚을 청산한다.</summary>
+        public const int WeekLength = 7;
+
         private int currentDay;
         private bool _isStandby = true;
         public bool IsStandby => _isStandby;
         public int CurrentDay => currentDay;
         public int NextWaveDay => currentDay + 1;
+
+        /// <summary>이번 주의 몇째 날인가. 1부터 <see cref="WeekLength"/>까지.</summary>
+        public int DayOfWeek => currentDay <= 0 ? 0 : (currentDay - 1) % WeekLength + 1;
+
+        /// <summary>청산일까지 남은 날. 청산일 당일이면 0.</summary>
+        public int DaysUntilSettlement => currentDay <= 0 ? WeekLength : WeekLength - DayOfWeek;
+
+        public static bool IsSettlementDay(int day) => day > 0 && day % WeekLength == 0;
 
         private void Awake()
         {

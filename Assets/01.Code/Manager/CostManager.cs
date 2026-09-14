@@ -20,20 +20,17 @@ namespace _01.Code.Manager
         [SerializeField, Range(0f, 0.9f)] private float nextBuildDiscountRate;
 
         [Header("Debt")]
-        [SerializeField, Min(0), Tooltip("정산에서 금화가 모자라면 이 한도까지 빚을 진다. 넘기면 파산.")]
-        private int debtLimit = 300;
-        [SerializeField, Range(0f, 1f), Tooltip("흑자 정산일 때 순액 중 빚을 갚는 데 먼저 쓰는 비율. 1이면 전액 상환.")]
-        private float autoRepayRatio = 0.5f;
-        [SerializeField, Range(0f, 0.5f), Tooltip("정산마다 남은 빚에 붙는 이자. 0이면 이자 없음.")]
-        private float dailyDebtInterest = 0.1f;
+        [SerializeField, Range(0f, 0.5f), Tooltip("청산일에 쌓인 빚 위에 얹히는 이자. 0이면 이자 없음.")]
+        private float weeklyDebtInterest = 0.1f;
 
         public int CurrentGold { get; private set; }
         public float CurrentBuildDiscountRate => nextBuildDiscountRate;
 
-        /// <summary>정산에서 갚지 못해 쌓인 빚.</summary>
+        /// <summary>하루 정산에서 금화로 메우지 못해 쌓인 빚. 청산일 전에는 갚을 수 없다.</summary>
         public int CurrentDebt { get; private set; }
-        public int DebtLimit => debtLimit;
-        public int RemainingCredit => Mathf.Max(0, debtLimit - CurrentDebt);
+
+        /// <summary>청산일에 실제로 내야 하는 금액. 원금에 이자를 더한 값이다.</summary>
+        public int WeeklyDue => CurrentDebt > 0 ? CurrentDebt + InterestOn(CurrentDebt) : 0;
 
         /// <summary>웨이브가 도는 동안은 수입·지출을 장부에만 적고 금화는 정산에서 한 번에 옮긴다.</summary>
         private bool _isSettlementDeferred;
@@ -140,8 +137,9 @@ namespace _01.Code.Manager
         }
 
         /// <summary>
-        /// 정산 순액을 실제 금화에 반영한다. 양수면 그만큼 벌고, 음수면 지불한다.
-        /// 보유 금화로 다 못 내면 모자란 만큼 빚으로 넘기고, 한도를 넘으면 파산을 알린다.
+        /// 하루 정산의 순액을 금화에 반영한다. 양수면 그만큼 벌고, 음수면 지불한다.
+        /// 보유 금화로 다 못 내면 모자란 만큼 빚으로 넘긴다. 빚은 여기서 갚지 못하고
+        /// 이자도 붙지 않는다 — 둘 다 청산일(<see cref="SettleWeek"/>)에만 일어난다.
         /// </summary>
         public void ApplySettlement(int net)
         {
@@ -150,19 +148,9 @@ namespace _01.Code.Manager
             var paidFromGold = 0;
             var borrowed = 0;
 
-            AccrueDebtInterest();
-
             if (net > 0)
             {
-                // 흑자면 빚부터 일부 갚는다. 전액을 다 갚아버리면 운영할 돈이 안 남으므로 비율로 나눈다.
-                var repaid = Mathf.Min(CurrentDebt, Mathf.FloorToInt(net * autoRepayRatio));
-                if (repaid > 0)
-                {
-                    CurrentDebt -= repaid;
-                    costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, debtLimit, -repaid));
-                }
-
-                CurrentGold += net - repaid;
+                CurrentGold += net;
             }
             else if (net < 0)
             {
@@ -174,7 +162,7 @@ namespace _01.Code.Manager
                 if (borrowed > 0)
                 {
                     CurrentDebt += borrowed;
-                    costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, debtLimit, borrowed));
+                    costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, borrowed));
                 }
             }
 
@@ -182,38 +170,40 @@ namespace _01.Code.Manager
             RunSummarySystem.Current?.RecordDebt(CurrentDebt);
             costEventChannel?.RaiseEvent(
                 new SettlementAppliedEvent(net, paidFromGold, borrowed, CurrentGold, CurrentDebt));
-
-            if (CurrentDebt > debtLimit)
-                costEventChannel?.RaiseEvent(new BankruptcyEvent(CurrentDebt, debtLimit));
         }
 
         /// <summary>
-        /// 정산마다 남은 빚에 이자를 붙인다.
-        /// 빚을 오래 끌수록 불어나야 갚을 동기가 생긴다. 최소 1G는 붙여서 1~9G 구간이 공짜가 되지 않게 한다.
+        /// 청산일. 쌓인 빚에 이자를 얹어 한 번에 갚는다.
+        ///
+        /// 주중에는 갚을 수단이 없으므로 빚은 불어나기만 하고, 이 자리에서 전액을 내거나 파산한다.
+        /// 부분 상환을 허용하면 갚을 수 있는 만큼만 내고 계속 끌 수 있어 결정이 사라진다.
         /// </summary>
-        private void AccrueDebtInterest()
+        /// <returns>청산했으면 true, 금화가 모자라 파산했으면 false.</returns>
+        public bool SettleWeek()
         {
-            if (CurrentDebt <= 0 || dailyDebtInterest <= 0f)
-                return;
+            var owed = WeeklyDue;
+            if (owed <= 0)
+                return true;
 
-            var interest = Mathf.Max(1, Mathf.CeilToInt(CurrentDebt * dailyDebtInterest));
-            CurrentDebt += interest;
-            costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, debtLimit, interest));
-        }
+            if (CurrentGold < owed)
+            {
+                costEventChannel?.RaiseEvent(new BankruptcyEvent(owed, CurrentGold));
+                return false;
+            }
 
-        /// <summary>빚을 갚는다. 실제로 갚은 금액을 돌려준다.</summary>
-        public int RepayDebt(int amount)
-        {
-            var repaid = Mathf.Clamp(amount, 0, Mathf.Min(CurrentGold, CurrentDebt));
-            if (repaid <= 0)
-                return 0;
-
-            CurrentGold -= repaid;
-            CurrentDebt -= repaid;
+            CurrentGold -= owed;
+            CurrentDebt = 0;
             RaiseGoldChanged();
-            costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, debtLimit, -repaid));
-            return repaid;
+            RunSummarySystem.Current?.RecordDebt(0);
+            costEventChannel?.RaiseEvent(new DebtChangedEvent(0, 0, -owed));
+            return true;
         }
+
+        /// <summary>
+        /// 빚에 붙는 이자. 최소 1G는 붙여서 1~9G 구간이 공짜가 되지 않게 한다.
+        /// </summary>
+        private int InterestOn(int debt) =>
+            weeklyDebtInterest > 0f ? Mathf.Max(1, Mathf.CeilToInt(debt * weeklyDebtInterest)) : 0;
 
         private void HandleBuildCostRequested(BuildCostRequestedEvent evt)
         {
@@ -345,7 +335,7 @@ namespace _01.Code.Manager
             nextBuildDiscountRate = Mathf.Clamp(buildDiscountRate, 0f, 0.9f);
             _isSettlementDeferred = false;
             RaiseGoldChanged();
-            costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, debtLimit, 0));
+            costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, 0));
         }
     }
 }

@@ -193,22 +193,27 @@ namespace Tests.EditMode.Rules
 
         // ── 정산과 부채 ──────────────────────────────────────────────
 
+        /// <summary>이자율만 정해 둔 빈 CostManager. 금화와 빚은 각 테스트가 정산으로 만든다.</summary>
+        private static object NewCostManager(GameObject host, float weeklyInterest = 0.1f)
+        {
+            var manager = host.AddComponent(Resolve("_01.Code.Manager.CostManager"));
+            SetPrivate(manager, "weeklyDebtInterest", weeklyInterest);
+            return manager;
+        }
+
         [Test]
         public void Settlement_SurplusIsGained()
         {
             var host = new GameObject("CostManagerTestHost");
             try
             {
-                var manager = host.AddComponent(Resolve("_01.Code.Manager.CostManager"));
-                SetPrivate(manager, "debtLimit", 300);
-                SetPrivate(manager, "autoRepayRatio", 0.5f);
-                SetPrivate(manager, "dailyDebtInterest", 0.1f);
+                var manager = NewCostManager(host);
 
                 var before = (int)Get(manager, "CurrentGold");
                 Call(manager, "ApplySettlement", 120);
 
                 Assert.That(Get(manager, "CurrentGold"), Is.EqualTo(before + 120));
-                Assert.That(Get(manager, "CurrentDebt"), Is.EqualTo(0), "빚이 없으면 상환할 것도 없습니다.");
+                Assert.That(Get(manager, "CurrentDebt"), Is.EqualTo(0), "빚이 없으면 생길 것도 없습니다.");
             }
             finally
             {
@@ -217,15 +222,12 @@ namespace Tests.EditMode.Rules
         }
 
         [Test]
-        public void Settlement_ShortfallBecomesDebtAndSurplusRepaysIt()
+        public void Settlement_ShortfallBecomesDebtThatTheWeekCannotRepay()
         {
             var host = new GameObject("CostManagerTestHost");
             try
             {
-                var manager = host.AddComponent(Resolve("_01.Code.Manager.CostManager"));
-                SetPrivate(manager, "debtLimit", 1000);
-                SetPrivate(manager, "autoRepayRatio", 0.5f);
-                SetPrivate(manager, "dailyDebtInterest", 0f);
+                var manager = NewCostManager(host);
 
                 var gold = (int)Get(manager, "CurrentGold");
                 Call(manager, "ApplySettlement", -(gold + 80));
@@ -233,9 +235,10 @@ namespace Tests.EditMode.Rules
                 Assert.That(Get(manager, "CurrentGold"), Is.EqualTo(0), "가진 금화를 먼저 씁니다.");
                 Assert.That(Get(manager, "CurrentDebt"), Is.EqualTo(80), "못 낸 만큼만 빚이 됩니다.");
 
+                // 흑자가 나도 주중에는 빚이 줄지 않는다. 갚는 자리는 청산일 하나뿐이다.
                 Call(manager, "ApplySettlement", 40);
-                Assert.That(Get(manager, "CurrentDebt"), Is.EqualTo(60), "흑자의 절반으로 빚을 먼저 갚습니다.");
-                Assert.That(Get(manager, "CurrentGold"), Is.EqualTo(20), "나머지는 운영 자금으로 남습니다.");
+                Assert.That(Get(manager, "CurrentDebt"), Is.EqualTo(80), "주중에는 빚을 갚을 수 없습니다.");
+                Assert.That(Get(manager, "CurrentGold"), Is.EqualTo(40), "번 돈은 그대로 운영 자금이 됩니다.");
             }
             finally
             {
@@ -244,23 +247,22 @@ namespace Tests.EditMode.Rules
         }
 
         [Test]
-        public void Settlement_DebtGrowsWithInterest()
+        public void Settlement_DebtDoesNotGrowUntilTheSettlementDay()
         {
             var host = new GameObject("CostManagerTestHost");
             try
             {
-                var manager = host.AddComponent(Resolve("_01.Code.Manager.CostManager"));
-                SetPrivate(manager, "debtLimit", 1000);
-                SetPrivate(manager, "autoRepayRatio", 0f);
-                SetPrivate(manager, "dailyDebtInterest", 0.1f);
+                var manager = NewCostManager(host);
 
                 var gold = (int)Get(manager, "CurrentGold");
                 Call(manager, "ApplySettlement", -(gold + 100));
                 Assert.That(Get(manager, "CurrentDebt"), Is.EqualTo(100));
 
-                // 다음 정산에서 남은 빚에 이자가 붙는다.
                 Call(manager, "ApplySettlement", 0);
-                Assert.That(Get(manager, "CurrentDebt"), Is.EqualTo(110), "10% 이자가 붙어야 합니다.");
+                Assert.That(Get(manager, "CurrentDebt"), Is.EqualTo(100),
+                    "이자는 하루마다가 아니라 청산일에 한 번 붙습니다.");
+                Assert.That(Get(manager, "WeeklyDue"), Is.EqualTo(110),
+                    "내야 할 금액에는 10% 이자가 미리 보여야 합니다.");
             }
             finally
             {
@@ -269,27 +271,80 @@ namespace Tests.EditMode.Rules
         }
 
         [Test]
-        public void Settlement_DebtPastTheLimitIsBankruptcy()
+        public void SettleWeek_PaysThePrincipalAndInterestAtOnce()
         {
             var host = new GameObject("CostManagerTestHost");
             try
             {
-                var manager = host.AddComponent(Resolve("_01.Code.Manager.CostManager"));
-                SetPrivate(manager, "debtLimit", 100);
-                SetPrivate(manager, "autoRepayRatio", 0f);
-                SetPrivate(manager, "dailyDebtInterest", 0f);
+                var manager = NewCostManager(host);
 
                 var gold = (int)Get(manager, "CurrentGold");
-                Call(manager, "ApplySettlement", -(gold + 150));
+                Call(manager, "ApplySettlement", -(gold + 100));
+                Call(manager, "ApplySettlement", 200);
 
-                Assert.That((int)Get(manager, "CurrentDebt"), Is.GreaterThan(100),
-                    "한도를 넘긴 부채는 파산 조건입니다.");
-                Assert.That(Get(manager, "RemainingCredit"), Is.EqualTo(0), "남은 한도는 음수가 되지 않습니다.");
+                Assert.That(Call(manager, "SettleWeek"), Is.True);
+                Assert.That(Get(manager, "CurrentDebt"), Is.Zero, "청산하면 빚이 남지 않습니다.");
+                Assert.That(Get(manager, "CurrentGold"), Is.EqualTo(90), "200G에서 이자 포함 110G가 빠집니다.");
             }
             finally
             {
                 UnityEngine.Object.DestroyImmediate(host);
             }
+        }
+
+        [Test]
+        public void SettleWeek_ShortOfTheFullAmountIsBankruptcy()
+        {
+            var host = new GameObject("CostManagerTestHost");
+            try
+            {
+                var manager = NewCostManager(host);
+
+                var gold = (int)Get(manager, "CurrentGold");
+                Call(manager, "ApplySettlement", -(gold + 100));
+                Call(manager, "ApplySettlement", 109); // 이자 포함 110G에 1G 모자란다.
+
+                Assert.That(Call(manager, "SettleWeek"), Is.False);
+                Assert.That(Get(manager, "CurrentDebt"), Is.EqualTo(100),
+                    "부분 상환은 없습니다. 빚은 그대로 남습니다.");
+                Assert.That(Get(manager, "CurrentGold"), Is.EqualTo(109), "갚지 못했으니 금화도 그대로입니다.");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
+        public void SettleWeek_WithoutDebtPassesAndCostsNothing()
+        {
+            var host = new GameObject("CostManagerTestHost");
+            try
+            {
+                var manager = NewCostManager(host);
+                var gold = (int)Get(manager, "CurrentGold");
+
+                Assert.That(Call(manager, "SettleWeek"), Is.True);
+                Assert.That(Get(manager, "CurrentGold"), Is.EqualTo(gold), "빚이 없으면 낼 것도 없습니다.");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
+
+        [TestCase(1, false)]
+        [TestCase(6, false)]
+        [TestCase(7, true)]
+        [TestCase(8, false)]
+        [TestCase(14, true)]
+        [TestCase(28, true)]
+        public void SettlementDay_FallsOnEverySeventhDay(int day, bool expected)
+        {
+            var dayManager = Resolve("_01.Code.Manager.DayManager");
+            var isSettlementDay = dayManager.GetMethod("IsSettlementDay");
+
+            Assert.That(isSettlementDay.Invoke(null, new object[] { day }), Is.EqualTo(expected));
         }
 
         // ── 정산 장부와 실제 금화 ────────────────────────────────────
@@ -325,7 +380,7 @@ namespace Tests.EditMode.Rules
             SetPrivate(cost, "costEventChannel", costChannel);
             SetPrivate(cost, "waveEventChannel", waveChannel);
             SetPrivate(cost, "initialGold", LedgerStartingGold);
-            SetPrivate(cost, "dailyDebtInterest", 0f);
+            SetPrivate(cost, "weeklyDebtInterest", 0f);
             SetPrivate(settlement, "costEventChannel", costChannel);
             SetPrivate(settlement, "waveEventChannel", waveChannel);
 

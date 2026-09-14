@@ -295,33 +295,37 @@ namespace _01.Code.Events
         public int PendingNet => PendingIncome - PendingExpense;
     }
 
-    /// <summary>정산에서 갚지 못한 금액이 부채로 넘어갔을 때. 표시 갱신용.</summary>
+    /// <summary>빚이 늘거나 줄었을 때. 표시 갱신용.</summary>
     public class DebtChangedEvent : GameEvent
     {
-        public DebtChangedEvent(int currentDebt, int debtLimit, int delta)
+        public DebtChangedEvent(int currentDebt, int weeklyDue, int delta)
         {
             CurrentDebt = currentDebt;
-            DebtLimit = debtLimit;
+            WeeklyDue = weeklyDue;
             Delta = delta;
         }
 
         public int CurrentDebt { get; }
-        public int DebtLimit { get; }
+
+        /// <summary>청산일에 실제로 내야 하는 금액. 원금에 이자를 더한 값이다.</summary>
+        public int WeeklyDue { get; }
         public int Delta { get; }
-        public int RemainingCredit => Mathf.Max(0, DebtLimit - CurrentDebt);
     }
 
-    /// <summary>부채가 한도를 넘겨 더는 운영할 수 없을 때. 게임오버로 이어진다.</summary>
+    /// <summary>청산일에 빚을 다 갚지 못했을 때. 게임오버로 이어진다.</summary>
     public class BankruptcyEvent : GameEvent
     {
-        public BankruptcyEvent(int currentDebt, int debtLimit)
+        public BankruptcyEvent(int owed, int gold)
         {
-            CurrentDebt = currentDebt;
-            DebtLimit = debtLimit;
+            Owed = owed;
+            Gold = gold;
         }
 
-        public int CurrentDebt { get; }
-        public int DebtLimit { get; }
+        /// <summary>내야 했던 금액. 원금에 이자를 더한 값이다.</summary>
+        public int Owed { get; }
+
+        /// <summary>청산을 시도한 시점에 가지고 있던 금화.</summary>
+        public int Gold { get; }
     }
 
     /// <summary>정산이 끝나 순액이 실제로 반영됐을 때. 정산 패널 표시용.</summary>
