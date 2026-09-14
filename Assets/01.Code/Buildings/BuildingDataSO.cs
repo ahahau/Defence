@@ -8,6 +8,8 @@ namespace _01.Code.Buildings
     {
         [field: SerializeField] public string DisplayName { get; private set; }
         [field: SerializeField] public int Cost { get; private set; }
+        [field: SerializeField, Min(0), Tooltip("매일 정산에서 지불하는 시설 운영비. 0이면 운영비와 인접 수익 보너스가 없는 시설이다.")]
+        public int DailyUpkeep { get; private set; }
         [field: SerializeField] public Building Prefab { get; private set; }
         [field: SerializeField] public bool Unique { get; private set; }
         [field: SerializeField, Tooltip("중요 시설을 방 중앙 슬롯에만 설치한다.")]

@@ -2,6 +2,7 @@ using _01.Code.Combat;
 using _01.Code.Core;
 using _01.Code.Enemies;
 using _01.Code.Events;
+using _01.Code.Manager;
 using MoreMountains.Feedbacks;
 using UnityEngine;
 
@@ -30,9 +31,10 @@ namespace _01.Code.Buildings
                 PlayPassEffectFeedback(enemy, upgradeFlashColor, upgradeFlashDuration, upgradeFeelFeedback);
 
             var adventurer = enemy.GetComponentInParent<Enemy>();
-            var paidGold = adventurer != null ? adventurer.ResolveFacilitySpending(goldReward) : goldReward;
+            var quotedGold = FacilityEconomyRules.ScaleIncome(this, goldReward);
+            var paidGold = adventurer != null ? adventurer.ResolveFacilitySpending(quotedGold) : quotedGold;
             costEventChannel?.RaiseEvent(new GoldEarnedEvent(paidGold, GoldChangeSource.Blacksmith));
-            adventurer?.RecordFacilitySpending(paidGold, goldReward, GoldChangeSource.Blacksmith);
+            adventurer?.RecordFacilitySpending(paidGold, quotedGold, GoldChangeSource.Blacksmith);
         }
     }
 }

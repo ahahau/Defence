@@ -40,7 +40,8 @@ namespace _01.Code.Buildings
             if (StoredGold <= 0 || interestPerSettlement <= 0f)
                 return 0;
 
-            var interest = Mathf.FloorToInt(StoredGold * interestPerSettlement);
+            var interest = FacilityEconomyRules.ScaleIncome(this,
+                Mathf.FloorToInt(StoredGold * interestPerSettlement));
             return Mathf.Min(Mathf.Max(0, interest), FreeSpace);
         }
 

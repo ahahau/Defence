@@ -113,6 +113,7 @@ namespace _01.Code.Manager
         {
             currentDay = evt.Day;
             ApplyDailyUpkeep();
+            ApplyFacilityUpkeep();
             AccrueTreasuryInterest();
             ApplyBattleFatigue();
             ApplyNetToGold();
@@ -261,6 +262,13 @@ namespace _01.Code.Manager
 
             // 금화를 바로 빼지 않고 지출로만 적는다. 실제 이동은 정산 순액에서 한 번에 일어난다.
             RecordExpense(BuildUpkeepLabel(), upkeep);
+        }
+
+        private void ApplyFacilityUpkeep()
+        {
+            var upkeep = FacilityEconomyRules.CalculateDailyUpkeep();
+            if (upkeep > 0)
+                RecordExpense("시설 운영비", upkeep);
         }
 
         /// <summary>

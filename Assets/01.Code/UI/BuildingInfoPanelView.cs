@@ -46,7 +46,10 @@ namespace _01.Code.UI
             SetText(nameText, string.IsNullOrWhiteSpace(buildingData.DisplayName)
                 ? buildingData.name
                 : buildingData.DisplayName);
-            SetText(costText, buildingData.Cost > 0 ? $"비용: {buildingData.Cost} Gold" : "비용: 무료");
+            var price = buildingData.Cost > 0 ? $"건설 {buildingData.Cost}G" : "건설 무료";
+            if (buildingData.DailyUpkeep > 0)
+                price += $" · 운영비 {buildingData.DailyUpkeep}G/일";
+            SetText(costText, price);
             SetText(dangerText, $"위험도: {buildingData.BaseDanger}");
             SetText(gradeText, $"등급: {(int)buildingData.Grade}");
             ApplyIcon(buildingData);

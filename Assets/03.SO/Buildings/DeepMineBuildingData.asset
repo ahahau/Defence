@@ -16,6 +16,7 @@ MonoBehaviour:
   <BoardSprite>k__BackingField: {fileID: -3149527408922921897, guid: f585e413da0cb3c409e8f51d91d75e26, type: 3}
   <DisplayName>k__BackingField: 깊은 광산
   <Cost>k__BackingField: 35
+  <DailyUpkeep>k__BackingField: 4
   <Prefab>k__BackingField: {fileID: 5714187832109640901, guid: d7fef82de47f6a14193dee71a9dbe181, type: 3}
   <Unique>k__BackingField: 0
   <CentralOnly>k__BackingField: 1

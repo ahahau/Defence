@@ -1,5 +1,6 @@
 using _01.Code.Core;
 using _01.Code.Events;
+using _01.Code.Manager;
 using UnityEngine;
 
 namespace _01.Code.Buildings
@@ -25,7 +26,8 @@ namespace _01.Code.Buildings
             if (goldPerDay <= 0)
                 return;
 
-            costEventChannel?.RaiseEvent(new GoldEarnedEvent(goldPerDay, GoldChangeSource.Mine));
+            costEventChannel?.RaiseEvent(new GoldEarnedEvent(
+                FacilityEconomyRules.ScaleIncome(this, goldPerDay), GoldChangeSource.Mine));
         }
     }
 }
