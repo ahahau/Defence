@@ -20,7 +20,8 @@ MonoBehaviour:
   <Cost>k__BackingField: 25
   <Prefab>k__BackingField: {fileID: 5269904321173266923, guid: c68068101ce8c35468a61dee5f8d161b, type: 3}
   <Unique>k__BackingField: 0
-  <InstallOnEdge>k__BackingField: 1
+  <CentralOnly>k__BackingField: 1
+  <InstallOnEdge>k__BackingField: 0
   <Locked>k__BackingField: 0
   <BaseDanger>k__BackingField: 2
   <Category>k__BackingField: 0
