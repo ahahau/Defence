@@ -1,0 +1,6 @@
+# 에셋스토어 팩의 대용량 바이너리만 LFS로 보낸다. 프리팹·머티리얼·셰이더·스크립트는
+# 병합과 diff가 가능해야 하므로 일반 추적으로 둔다.
+"Assets/Soundtrack Packs/**/*.wav" filter=lfs diff=lfs merge=lfs -text
+"Assets/GothicUI/**/*.png" filter=lfs diff=lfs merge=lfs -text
+"Assets/GothicUI/**/*.pdf" filter=lfs diff=lfs merge=lfs -text
+"Assets/Sprite Shaders Ultimate/**/*.png" filter=lfs diff=lfs merge=lfs -text
