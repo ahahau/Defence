@@ -39,7 +39,29 @@ namespace _01.Code.UI
         {
             ActiveInstance = this;
             DungeonHudStyle.ApplyCombatStatusPanel(panelRoot, titleText, true);
+            ConfigureReadableLayout();
             SetPanelVisible(false);
+        }
+
+        private void ConfigureReadableLayout()
+        {
+            if (panelRoot == null) return;
+            var panelRect = (RectTransform)panelRoot.transform;
+            panelRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 400f);
+            foreach (var text in panelRoot.GetComponentsInChildren<TMP_Text>(true))
+            {
+                text.fontSize = text == titleText ? 22f : 17f;
+                text.fontSizeMax = text.fontSize;
+                text.fontSizeMin = 16f;
+                text.textWrappingMode = TextWrappingModes.Normal;
+            }
+            if (closeButton != null)
+            {
+                var layout = closeButton.GetComponent<LayoutElement>()
+                             ?? closeButton.gameObject.AddComponent<LayoutElement>();
+                layout.minWidth = layout.preferredWidth = 36f;
+                layout.minHeight = layout.preferredHeight = 36f;
+            }
         }
 
         private void OnEnable()
@@ -99,8 +121,9 @@ namespace _01.Code.UI
             UnitStatusPanelView.ActiveInstance?.HidePanel();
             _nextRefreshAt = 0f;
             Refresh();
-            MovePanelToScreenPosition(evt.ScreenPosition);
             SetPanelVisible(true);
+            LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)panelRoot.transform);
+            MovePanelToScreenPosition(evt.ScreenPosition);
         }
 
         private void HandleCloseClicked()

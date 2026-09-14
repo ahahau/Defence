@@ -52,8 +52,7 @@ namespace _01.Code.UI
                 : $"<color=#FFD05A>{unit.Cost}G</color>";
 
             SetText(costText,
-                $"<size=120%>{costLine}</size>\n" +
-                $"<size=82%><color=#B9AFA4>계약서 {candidateText} · 대기 {availableCount} · 배치 {deployedCount}</color></size>");
+                $"{costLine}\n<color=#B9AFA4>계약서 {candidateText} · 대기 {availableCount} · 배치 {deployedCount}</color>");
             if (unitIcon != null && unit.Sprite != null)
             {
                 unitIcon.sprite = unit.Sprite;
@@ -69,12 +68,28 @@ namespace _01.Code.UI
             SetSelected(false);
             SetInteractable(candidateCount != 0);
             DungeonHudStyle.ApplyManagementCard(gameObject, new Color(0.34f, 0.72f, 0.92f, 1f));
+            InstallCardPresenter.PlaceCardGraphic(unitIcon, 18f, 142f, 142f);
+            InstallCardPresenter.PlaceCardGraphic(nameText, 168f, 222f, 32f);
+            InstallCardPresenter.PlaceCardGraphic(costText, 205f, 226f, 58f);
+            InstallCardPresenter.StyleCardText(nameText, 20);
+            InstallCardPresenter.StyleCardText(costText, 17);
         }
 
         private void ApplyBoard(Sprite boardSprite)
         {
             if (boardImage == null)
                 return;
+
+            // The root is the clickable card frame, not a second character portrait.
+            if (boardImage.gameObject == gameObject)
+            {
+                boardImage.enabled = true;
+                boardImage.sprite = DungeonHudIcon.Skin != null ? DungeonHudIcon.Skin.ButtonFrame : null;
+                boardImage.type = Image.Type.Sliced;
+                boardImage.preserveAspect = false;
+                boardImage.color = new Color(0.32f, 0.28f, 0.23f, 1f);
+                return;
+            }
 
             boardImage.enabled = boardSprite != null;
             boardImage.sprite = boardSprite;

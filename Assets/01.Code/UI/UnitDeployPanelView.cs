@@ -53,6 +53,7 @@ namespace _01.Code.UI
             }
         }
         public bool IsPanelOpen => panelRoot != null && panelRoot.activeInHierarchy;
+        public RectTransform CloseButtonRect => closeButton != null ? closeButton.transform as RectTransform : null;
 
         public RectTransform GetEntryRect(UnitDataSO unit)
         {
@@ -380,6 +381,16 @@ namespace _01.Code.UI
 
         private void ConfigureStaticTextLayout()
         {
+            if (hintText != null)
+            {
+                hintText.fontSize = 19f;
+                hintText.enableAutoSizing = true;
+                hintText.fontSizeMin = 16f;
+                hintText.fontSizeMax = 19f;
+                hintText.textWrappingMode = TextWrappingModes.Normal;
+                hintText.margin = new Vector4(12f, 14f, 16f, 40f);
+                hintText.alignment = TextAlignmentOptions.TopLeft;
+            }
             if (toggleButton != null)
             {
                 TmpTextLayoutUtility.KeepHorizontal(toggleButton.GetComponentInChildren<TMP_Text>(true), true);
@@ -387,7 +398,14 @@ namespace _01.Code.UI
             }
 
             if (closeButton != null)
+            {
                 TmpTextLayoutUtility.KeepHorizontal(closeButton.GetComponentInChildren<TMP_Text>(true), true);
+                var rect = (RectTransform)closeButton.transform;
+                rect.anchorMin = rect.anchorMax = Vector2.one;
+                rect.pivot = Vector2.one;
+                rect.anchoredPosition = new Vector2(-12f, -10f);
+                rect.sizeDelta = new Vector2(44f, 44f);
+            }
         }
 
         private void SelectUnit(UnitDataSO unit)
@@ -434,7 +452,8 @@ namespace _01.Code.UI
 
             return $"<size=115%>{displayName}</size>  <color=#9C9088>등급 {(int)unit.Grade}</color>\n" +
                    $"<color=#5A4E45>────────────────</color>\n" +
-                   Row("전투", $"공격 {attackText}", $"방어 {defense}", $"체력 {healthText}", $"간격 {intervalText}") +
+                   Row("전투", $"공격 {attackText}", $"방어 {defense}") +
+                   Row("", $"체력 {healthText}", $"간격 {intervalText}") +
                    Row("자원", $"마력 {unit.MagicCost}", $"영입 {unit.Cost}G", $"급여 {upkeep}G") +
                    Row("보유", $"계약서 {GetOwnedUnitCount(unit)}", $"대기 {GetAvailableUnitCount(unit)}",
                        $"배치 {GetDeployedUnitCount(unit)}") +
@@ -447,19 +466,9 @@ namespace _01.Code.UI
         /// 열 간격을 고정값으로 두면 값이 넷일 때 마지막이 78%에서 시작해 오른쪽으로 넘친다.
         /// 남은 폭을 값 개수로 나눠, 몇 개가 오든 마지막 열이 화면 안에 들어오게 한다.
         /// </summary>
-        private const float LabelColumnPercent = 20f;
-
         private static string Row(string label, params string[] values)
         {
-            var line = $"<color=#9C9088>{label}</color>";
-            if (values.Length == 0)
-                return line + "\n";
-
-            var step = (100f - LabelColumnPercent) / values.Length;
-            for (var i = 0; i < values.Length; i++)
-                line += $"<pos={LabelColumnPercent + i * step:0.#}%>{values[i]}";
-
-            return line + "\n";
+            return $"<color=#9C9088>{label}</color>  {string.Join(" · ", values)}\n";
         }
 
         /// <summary>
@@ -485,10 +494,9 @@ namespace _01.Code.UI
 
             // 지원자는 위의 수치 표와 성격이 다른 정보라 한 칸 띄우고 색으로 갈라 놓는다.
             // 특성·성격 설명 두 줄은 표와 같은 열에 맞춰 붙여, 읽는 눈이 왼쪽으로 돌아오게 한다.
-            return $"\n<color=#FFC85A>지원자</color><pos=20%><color=#FFC85A>{applicant.TraitLabel}</color>" +
-                   $"<pos=46%><color=#FFC85A>{applicant.PersonalityLabel}</color>{deadline}\n" +
-                   $"<size=85%><color=#A79C92><pos=20%>{UnitTraitUtility.GetDescription(applicant.Trait)}\n" +
-                   $"<pos=20%>{UnitPersonalityUtility.GetDescription(applicant.Personality)}</color></size>\n";
+            return $"\n<color=#FFC85A>지원자 · {applicant.TraitLabel} · {applicant.PersonalityLabel}</color>{deadline}\n\n" +
+                   $"<size=90%><color=#C7BAB0>{UnitTraitUtility.GetDescription(applicant.Trait)}\n\n" +
+                   $"{UnitPersonalityUtility.GetDescription(applicant.Personality)}</color></size>\n";
         }
 
         private int GetOwnedUnitCount(UnitDataSO unit)

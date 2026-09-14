@@ -399,7 +399,7 @@ namespace _01.Code.UI
                     ? $"\n<color=#E6AEFF>{threat.TraitSummary}</color>"
                       + $"\n<color=#9FE6B8>추천 · {threat.TraitCounterHint}</color>"
                     : string.Empty;
-                ApplyBannerLayout(threat.HasTraitInfo);
+                ApplyBannerLayout(true);
                 _runtimeHud.BannerSubtitle.text =
                     $"침입 예정 {enemyCount}명{conquestText} · 몬스터와 함정을 배치하세요\n"
                     + CoreLoopFeatureUnlocks.GetPreparationHint(day)
@@ -854,7 +854,7 @@ namespace _01.Code.UI
             primaryText.enableAutoSizing = true;
             primaryText.fontSizeMin = 15f;
             primaryText.fontSizeMax = 23f;
-            primaryText.enableWordWrapping = false;
+            primaryText.textWrappingMode = TextWrappingModes.NoWrap;
             primaryText.overflowMode = TextOverflowModes.Ellipsis;
             primaryText.fontStyle |= FontStyles.Bold;
             primaryText.raycastTarget = false;
@@ -912,7 +912,7 @@ namespace _01.Code.UI
                 text.enableAutoSizing = true;
                 text.fontSizeMin = 14f;
                 text.fontSizeMax = 21f;
-                text.enableWordWrapping = false;
+                text.textWrappingMode = TextWrappingModes.NoWrap;
                 text.alignment = TextAlignmentOptions.Center;
             }
         }
@@ -1023,7 +1023,7 @@ namespace _01.Code.UI
             title.enableAutoSizing = true;
             title.fontSizeMin = 16f;
             title.fontSizeMax = 22f;
-            title.enableWordWrapping = false;
+            title.textWrappingMode = TextWrappingModes.NoWrap;
             title.overflowMode = TextOverflowModes.Ellipsis;
         }
 

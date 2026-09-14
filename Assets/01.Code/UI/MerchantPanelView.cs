@@ -350,7 +350,31 @@ namespace _01.Code.UI
 
                 // 무엇을 사는지 그림으로 먼저 알아보게 한다. 정체불명 유물은 보여 줄 그림이 없으니
                 // 비워 두면 ApplyCardSprite 가 이미지를 꺼 준다.
-                InstallCardPresenter.ApplyCardSprite(button, offer.IsRandom ? null : offer.Artifact.Icon);
+                var sprite = offer.IsRandom ? null : offer.Artifact.Icon;
+                InstallCardPresenter.ApplyCardSprite(button, sprite);
+                var icon = InstallCardPresenter.ResolveCardIconImage(button);
+                if (icon != null)
+                {
+                    var placeholder = icon.transform.Find("Placeholder")?.GetComponent<TMP_Text>();
+                    if (placeholder == null && sprite == null)
+                    {
+                        placeholder = new GameObject("Placeholder", typeof(RectTransform)).AddComponent<TextMeshProUGUI>();
+                        placeholder.transform.SetParent(icon.transform, false);
+                        placeholder.rectTransform.anchorMin = Vector2.zero;
+                        placeholder.rectTransform.anchorMax = Vector2.one;
+                        placeholder.rectTransform.offsetMin = placeholder.rectTransform.offsetMax = Vector2.zero;
+                        placeholder.font = button.GetComponentInChildren<TMP_Text>().font;
+                        placeholder.fontSize = 42f;
+                        placeholder.alignment = TextAlignmentOptions.Center;
+                        placeholder.color = new Color(0.84f, 0.68f, 0.4f, 1f);
+                        placeholder.raycastTarget = false;
+                    }
+                    if (placeholder != null)
+                    {
+                        placeholder.gameObject.SetActive(sprite == null);
+                        placeholder.text = offer.IsRandom ? "?" : "유물";
+                    }
+                }
             }
 
             if (!resetDetail)

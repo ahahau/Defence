@@ -41,6 +41,18 @@ namespace _01.Code.UI
                 if (!string.IsNullOrWhiteSpace(actionLabel))
                     SetText(ResolveButtonLabel(deployButton), actionLabel);
             }
+            InstallCardPresenter.ConfigureCardFrame(gameObject);
+            InstallCardPresenter.PlaceCardGraphic(boardImage, 16f, 142f, 142f);
+            InstallCardPresenter.PlaceCardGraphic(nameText, 166f, 224f, 98f);
+            InstallCardPresenter.StyleCardText(nameText, 19);
+            if (deployButton != null)
+            {
+                var rect = (RectTransform)deployButton.transform;
+                rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0f);
+                rect.pivot = new Vector2(0.5f, 0f);
+                rect.anchoredPosition = new Vector2(0f, 12f);
+                rect.sizeDelta = new Vector2(220f, 38f);
+            }
         }
 
         private static Graphic ResolveButtonLabel(Button button)

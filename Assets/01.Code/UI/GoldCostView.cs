@@ -111,8 +111,6 @@ namespace _01.Code.UI
             goldText.color = accent;
             goldText.DOColor(_baseColor, 0.55f).SetUpdate(true).SetLink(goldText.gameObject);
             goldText.transform.localScale = _baseScale;
-            goldText.transform.DOPunchScale(Vector3.one * 0.16f, 0.32f, 7, 0.7f)
-                .SetUpdate(true).SetLink(goldText.gameObject);
         }
 
         private void ResetVisual()

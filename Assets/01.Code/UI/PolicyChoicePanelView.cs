@@ -158,6 +158,21 @@ namespace _01.Code.UI
                     : string.Empty;
                 SetText(policyDescriptionTexts, i, $"{policy.Description}\n\n{BuildEffectSummary(policy)}"
                     + (string.IsNullOrEmpty(comboHint) ? string.Empty : $"\n{comboHint}"));
+                if (policyNameTexts != null && i < policyNameTexts.Length)
+                {
+                    InstallCardPresenter.PlaceCardGraphic(policyNameTexts[i], 26f, 220f, 40f);
+                    InstallCardPresenter.StyleCardText(policyNameTexts[i], 21);
+                }
+                if (policyDescriptionTexts != null && i < policyDescriptionTexts.Length && policyDescriptionTexts[i] != null)
+                {
+                    var description = policyDescriptionTexts[i];
+                    InstallCardPresenter.PlaceCardGraphic(description, 76f, 220f, 164f);
+                    description.enableAutoSizing = true;
+                    description.fontSizeMin = 13f;
+                    description.fontSizeMax = 17f;
+                    description.textWrappingMode = TextWrappingModes.Normal;
+                    description.alignment = TextAlignmentOptions.TopLeft;
+                }
             }
         }
 

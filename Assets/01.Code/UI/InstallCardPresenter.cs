@@ -66,7 +66,7 @@ namespace _01.Code.UI
                     ? $"{buildingData.Cost} → {discountedCost}G"
                     : $"{buildingData.Cost}G";
             var text = $"{displayName}\n건설  {costText}   ·   경계 +{buildingData.BaseDanger}\n등급 {(int)buildingData.Grade}";
-            text += buildingData.InstallOnEdge ? "\n통로 설치"
+            text += buildingData.InstallOnEdge ? "\n방 사이 설치"
                 : BuildingPlacement.UsesGridCell(buildingData) ? "\n개별 칸 설치" : "\n중앙 전용 · 방당 1개";
 
             if (buildingData.Prefab == null)
@@ -218,7 +218,17 @@ namespace _01.Code.UI
         /// </summary>
         public static void EnlargeCard(Button button)
         {
+            if (button != null) ConfigureCardFrame(button.gameObject);
             var layoutDriven = button != null && button.GetComponent<LayoutGroup>() != null;
+            if (button != null && button.TryGetComponent<VerticalLayoutGroup>(out var vertical))
+            {
+                vertical.padding = new RectOffset(18, 18, 18, 18);
+                vertical.spacing = 12f;
+                vertical.childControlHeight = true;
+                vertical.childControlWidth = true;
+                vertical.childForceExpandHeight = false;
+                vertical.childForceExpandWidth = true;
+            }
 
             var icon = ResolveCardIconImage(button);
             if (icon != null)
@@ -236,6 +246,12 @@ namespace _01.Code.UI
                 icon.type = Image.Type.Simple;
                 icon.preserveAspect = true;
                 icon.raycastTarget = false;
+                if (layoutDriven)
+                {
+                    var element = icon.GetComponent<LayoutElement>() ?? icon.gameObject.AddComponent<LayoutElement>();
+                    element.minHeight = element.preferredHeight = 230f;
+                    element.flexibleHeight = 0f;
+                }
             }
 
             var text = button.GetComponentInChildren<TMP_Text>(true);
@@ -256,6 +272,62 @@ namespace _01.Code.UI
             text.fontSizeMin = 17f;
             text.fontSizeMax = 24f;
             text.alignment = TextAlignmentOptions.Top;
+            text.textWrappingMode = TextWrappingModes.Normal;
+            text.overflowMode = TextOverflowModes.Truncate;
+            if (layoutDriven)
+            {
+                var element = text.GetComponent<LayoutElement>() ?? text.gameObject.AddComponent<LayoutElement>();
+                element.minHeight = element.preferredHeight = 180f;
+                element.flexibleHeight = 1f;
+            }
+        }
+
+        internal static void PlaceCardGraphic(Graphic graphic, float top, float width, float height)
+        {
+            if (graphic == null) return;
+            var rect = graphic.rectTransform;
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.anchoredPosition = new Vector2(0f, -top);
+            rect.sizeDelta = new Vector2(width, height);
+            rect.localScale = Vector3.one;
+            graphic.raycastTarget = false;
+        }
+
+        internal static void ConfigureCardFrame(GameObject card)
+        {
+            // A separate square frame crosses the portrait and description on tall cards.
+            var overlay = card.transform.Find("Frame");
+            if (overlay != null) overlay.gameObject.SetActive(false);
+            if (card.TryGetComponent<Image>(out var background))
+            {
+                background.sprite = DungeonHudIcon.Skin != null ? DungeonHudIcon.Skin.ButtonFrame : null;
+                background.type = Image.Type.Sliced;
+                background.preserveAspect = false;
+                background.color = new Color(0.32f, 0.28f, 0.23f, 1f);
+            }
+        }
+
+        internal static void StyleCardText(Graphic graphic, int size)
+        {
+            if (graphic is Text legacy)
+            {
+                legacy.fontSize = size;
+                legacy.resizeTextForBestFit = true;
+                legacy.resizeTextMinSize = 14;
+                legacy.resizeTextMaxSize = size;
+                legacy.alignment = TextAnchor.MiddleCenter;
+                legacy.horizontalOverflow = HorizontalWrapMode.Wrap;
+                legacy.verticalOverflow = VerticalWrapMode.Truncate;
+            }
+            else if (graphic is TMP_Text text)
+            {
+                text.enableAutoSizing = true;
+                text.fontSizeMin = 14;
+                text.fontSizeMax = size;
+                text.alignment = TextAlignmentOptions.Center;
+                text.textWrappingMode = TextWrappingModes.Normal;
+            }
         }
 
         /// <summary>카드의 아이콘 이미지. "Icon"이라는 이름의 자식을 먼저 찾고, 없으면 배경이 아닌 첫 이미지를 쓴다.</summary>

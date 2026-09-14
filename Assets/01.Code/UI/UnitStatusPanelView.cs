@@ -52,6 +52,15 @@ namespace _01.Code.UI
         {
             ActiveInstance = this;
             _unitManagementSystem = new UnitManagementSystem(nodeEventChannel, costEventChannel, dayManager);
+            DungeonHudStyle.ApplyManagementDrawer(panelRoot);
+            InstallCardPresenter.StyleCardText(recoverButtonLabel, 17);
+            InstallCardPresenter.StyleCardText(recallButtonLabel, 17);
+            if (recallButton != null && recallButton.image != null)
+            {
+                recallButton.image.sprite = DungeonHudIcon.Skin != null ? DungeonHudIcon.Skin.ButtonFrame : null;
+                recallButton.image.type = Image.Type.Sliced;
+                recallButton.image.color = new Color(0.32f, 0.28f, 0.23f, 1f);
+            }
             // 프리팹이 텍스트와 버튼의 최종 레이아웃을 소유한다. 여기서 공용 스타일을
             // 재적용하면 줄바꿈과 자동 크기가 바뀌어 실행 중 배치가 어긋난다.
             SetPanelVisible(false);
