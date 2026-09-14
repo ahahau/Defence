@@ -106,7 +106,6 @@ namespace _01.Code.Manager
         {
             _cinematicRunning = true;
 
-            var previousTimeScale = Time.timeScale;
             Time.timeScale = cinematicTimeScale;
 
             var camTransform = cam.transform;
@@ -129,9 +128,9 @@ namespace _01.Code.Manager
 
             yield return new WaitForSecondsRealtime(cinematicZoomDuration);
 
-            // 시네마틱 도중 외부(일시정지/게임오버)에서 timeScale을 건드렸다면 복원하지 않는다(HitStopRunner와 같은 규약).
+            // 연출 도중 플레이어가 배속을 바꿨거나 모달이 열렸으면 그쪽 뜻을 따른다(HitStopRunner와 같은 규약).
             if (Mathf.Approximately(Time.timeScale, cinematicTimeScale))
-                Time.timeScale = previousTimeScale;
+                Time.timeScale = GameSpeedController.RestoreTarget;
 
             _cinematicRunning = false;
         }
@@ -163,7 +162,11 @@ namespace _01.Code.Manager
         private void ShowRunEndPanel(string title, string headline, Color accent, bool clearSaveOnRetry)
         {
             PolicyChoicePanelView.Current?.CloseForRunEnd();
-            Time.timeScale = 0f;
+            // 판이 끝난 화면이라 푸는 쪽이 없다. 재시작할 때 씬이 새로 뜨며 정상으로 돌아간다.
+            if (GameSpeedController.Current != null)
+                GameSpeedController.Current.Suspend(this);
+            else
+                Time.timeScale = 0f;
 
             if (uiCanvas == null)
             {
@@ -190,7 +193,7 @@ namespace _01.Code.Manager
             {
                 if (clearSaveOnRetry)
                     _01.Code.Persistence.RunSaveSystem.DeleteSave();
-                Time.timeScale = 1f;
+                GameSpeedController.Current?.ResetToNormal();
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
             });
 

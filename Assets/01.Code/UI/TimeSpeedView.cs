@@ -75,7 +75,14 @@ namespace _01.Code.UI
                 return;
 
             _currentSpeed = speed;
-            Time.timeScale = speed;
+
+            // 실제로 시간을 건드리는 것은 컨트롤러 하나다. 여기서 직접 쓰면 모달이 닫힐 때
+            // 컨트롤러가 되돌리는 값과 어긋난다.
+            if (_01.Code.Manager.GameSpeedController.Current != null)
+                _01.Code.Manager.GameSpeedController.Current.SetSetting(speed);
+            else
+                Time.timeScale = speed;
+
             RefreshVisuals();
         }
 

@@ -32,7 +32,6 @@ namespace _01.Code.UI
         private readonly List<PolicyDataSO> currentChoices = new();
         private readonly List<UnityAction> policyButtonActions = new();
         private bool _isPausingGame;
-        private float _previousTimeScale = 1f;
 
         public bool IsPanelOpen => panelRoot != null && panelRoot.activeInHierarchy;
         public RectTransform FirstPolicyButtonRect => policyButtons != null
@@ -52,7 +51,6 @@ namespace _01.Code.UI
             if (panelRoot != null)
                 panelRoot.SetActive(false);
 
-            _previousTimeScale = 0f;
             _isPausingGame = false;
         }
 
@@ -216,8 +214,12 @@ namespace _01.Code.UI
             if (_isPausingGame)
                 return;
 
-            _previousTimeScale = Time.timeScale;
-            Time.timeScale = 0f;
+            // 배속을 기억했다가 되돌리지 않는다. 창이 떠 있는 동안 플레이어가 배속을 바꿀 수도 있고,
+            // 그때는 기억해 둔 옛 값이 아니라 새로 고른 값으로 돌아가야 한다.
+            if (GameSpeedController.Current != null)
+                GameSpeedController.Current.Suspend(this);
+            else
+                Time.timeScale = 0f;
             _isPausingGame = true;
         }
 
@@ -226,7 +228,10 @@ namespace _01.Code.UI
             if (!_isPausingGame)
                 return;
 
-            Time.timeScale = _previousTimeScale;
+            if (GameSpeedController.Current != null)
+                GameSpeedController.Current.Release(this);
+            else
+                Time.timeScale = GameSpeedController.NormalSpeed;
             _isPausingGame = false;
         }
 

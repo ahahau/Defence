@@ -14,6 +14,7 @@ namespace Tests.EditMode.Rules
         private object previousRoster;
         private object previousCost;
         private object previousSettlement;
+        private float previousTimeScale = 1f;
 
         private static Type Resolve(string name) => Type.GetType(name + ", Assembly-CSharp", true);
         private static object Call(object target, string name, params object[] args) =>
@@ -59,6 +60,7 @@ namespace Tests.EditMode.Rules
             previousRoster = Resolve("_01.Code.Manager.HiredUnitRoster").GetProperty("Current").GetValue(null);
             previousCost = Resolve("_01.Code.Manager.CostManager").GetProperty("Current").GetValue(null);
             previousSettlement = Resolve("_01.Code.Manager.ManagementSettlementManager").GetProperty("Current").GetValue(null);
+            previousTimeScale = Time.timeScale;
         }
 
         [TearDown]
@@ -70,6 +72,9 @@ namespace Tests.EditMode.Rules
             Resolve("_01.Code.Manager.HiredUnitRoster").GetProperty("Current").SetValue(null, previousRoster);
             Resolve("_01.Code.Manager.CostManager").GetProperty("Current").SetValue(null, previousCost);
             Resolve("_01.Code.Manager.ManagementSettlementManager").GetProperty("Current").SetValue(null, previousSettlement);
+
+            // 배속 테스트는 전역 시간을 건드린다. 되돌리지 않으면 뒤따르는 테스트가 멈춘 채로 돈다.
+            Time.timeScale = previousTimeScale;
         }
 
         [Test]
@@ -246,6 +251,90 @@ namespace Tests.EditMode.Rules
                 "되살아나도 피로는 남습니다.");
             Assert.That(unit.GetType().GetField("injury", PrivateInstance).GetValue(unit).ToString(),
                 Is.EqualTo("Severe"), "되살아나도 부상은 남습니다.");
+        }
+
+        // ── 멈춤과 배속 ─────────────────────────────────────────────
+
+        private Component SpeedController()
+        {
+            var controller = Component("_01.Code.Manager.GameSpeedController", "Game speed");
+            Call(controller, "Awake");
+            return controller;
+        }
+
+        private static float Setting(object controller) =>
+            (float)controller.GetType().GetProperty("Setting").GetValue(controller);
+
+        [Test]
+        public void Speed_ModalReleaseReturnsToTheSpeedThePlayerChose()
+        {
+            var controller = SpeedController();
+            var modal = new GameObject("Modal");
+            created.Add(modal);
+
+            controller.GetType().GetMethod("SetSetting").Invoke(controller, new object[] { 2f });
+            controller.GetType().GetMethod("Suspend").Invoke(controller, new object[] { modal });
+            Assert.That(Time.timeScale, Is.Zero, "창이 떠 있는 동안에는 멈춥니다.");
+
+            // 창이 떠 있는 동안 배속을 바꿔도, 닫히면 옛 값이 아니라 새로 고른 값으로 돌아가야 한다.
+            controller.GetType().GetMethod("SetSetting").Invoke(controller, new object[] { 1f });
+            controller.GetType().GetMethod("Release").Invoke(controller, new object[] { modal });
+
+            Assert.That(Time.timeScale, Is.EqualTo(1f));
+            Assert.That(Setting(controller), Is.EqualTo(1f));
+        }
+
+        [Test]
+        public void Speed_TwoModalsBothHaveToClose()
+        {
+            var controller = SpeedController();
+            var first = new GameObject("First modal");
+            var second = new GameObject("Second modal");
+            created.Add(first);
+            created.Add(second);
+
+            var suspend = controller.GetType().GetMethod("Suspend");
+            var release = controller.GetType().GetMethod("Release");
+
+            suspend.Invoke(controller, new object[] { first });
+            suspend.Invoke(controller, new object[] { second });
+            release.Invoke(controller, new object[] { first });
+
+            Assert.That(Time.timeScale, Is.Zero, "하나가 남아 있으면 아직 멈춰 있어야 합니다.");
+
+            release.Invoke(controller, new object[] { second });
+            Assert.That(Time.timeScale, Is.EqualTo(1f));
+        }
+
+        [Test]
+        public void Speed_PauseSurvivesAnEffectThatFinishes()
+        {
+            var controller = SpeedController();
+            controller.GetType().GetMethod("TogglePause").Invoke(controller, null);
+
+            Assert.That(Setting(controller), Is.Zero);
+
+            // 히트스톱이나 보스 연출이 끝나면 여기를 보고 되돌린다. 멈춤이 풀리면 안 된다.
+            var restoreTarget = (float)controller.GetType()
+                .GetProperty("RestoreTarget", BindingFlags.Static | BindingFlags.Public)
+                .GetValue(null);
+
+            Assert.That(restoreTarget, Is.Zero, "연출이 끝나도 멈춘 상태로 돌아와야 합니다.");
+        }
+
+        [Test]
+        public void Speed_ResetToNormalClearsEveryHold()
+        {
+            var controller = SpeedController();
+            var modal = new GameObject("Modal");
+            created.Add(modal);
+
+            controller.GetType().GetMethod("Suspend").Invoke(controller, new object[] { modal });
+            controller.GetType().GetMethod("ResetToNormal").Invoke(controller, null);
+
+            // 씬을 떠나는 경로다. 잡고 있던 것이 정리될 틈 없이 사라져도 다음 판은 멀쩡해야 한다.
+            Assert.That(Time.timeScale, Is.EqualTo(1f));
+            Assert.That(Setting(controller), Is.EqualTo(1f));
         }
     }
 }

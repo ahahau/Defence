@@ -163,7 +163,7 @@ namespace _01.Code.UI
         {
             ResetTimer();
             _01.Code.Persistence.RunSaveSystem.SaveCurrentRun();
-            Time.timeScale = 1f;
+            _01.Code.Manager.GameSpeedController.Current?.ResetToNormal();
             SceneManager.LoadScene(TitleMenuActions.TitleSceneName);
         }
 

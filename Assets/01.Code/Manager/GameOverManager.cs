@@ -17,7 +17,8 @@ namespace _01.Code.Manager
         private void Awake()
         {
             IsGameOver = false;
-            Time.timeScale = 1f;
+            // 이전 판이 멈춘 채로 씬을 떠났을 수 있다. 컨트롤러보다 먼저 깨어날 수 있어 직접 푼다.
+            Time.timeScale = GameSpeedController.NormalSpeed;
         }
 
         private void OnEnable()
@@ -58,7 +59,13 @@ namespace _01.Code.Manager
             if (presenter != null)
                 presenter.ShowDefeatPanel(reason);
             else if (pauseOnGameOver)
-                Time.timeScale = 0f;
+            {
+                // 결과 화면 없이 멈추는 경로다. 푸는 쪽이 없으므로 씬을 새로 띄워야 풀린다.
+                if (GameSpeedController.Current != null)
+                    GameSpeedController.Current.Suspend(this);
+                else
+                    Time.timeScale = 0f;
+            }
         }
     }
 }

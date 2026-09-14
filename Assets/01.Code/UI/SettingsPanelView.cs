@@ -264,7 +264,7 @@ namespace _01.Code.UI
         {
             SetConfirmVisible(false);
             Toggle(false);
-            Time.timeScale = 1f;
+            _01.Code.Manager.GameSpeedController.Current?.ResetToNormal();
             UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
         }
 

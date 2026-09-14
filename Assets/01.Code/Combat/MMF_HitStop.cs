@@ -51,7 +51,6 @@ namespace _01.Code.Combat
         private static HitStopRunner _instance;
 
         private Coroutine _routine;
-        private float _capturedTimeScale = 1f;
         private float _slowedTimeScale;
         private float _nextAllowedRealtime;
 
@@ -89,8 +88,6 @@ namespace _01.Code.Combat
         {
             if (_routine != null)
                 StopCoroutine(_routine);
-            else
-                _capturedTimeScale = Time.timeScale;
 
             _routine = StartCoroutine(HitStopRoutine(duration, slowTimeScale));
         }
@@ -105,11 +102,12 @@ namespace _01.Code.Combat
             _routine = null;
         }
 
-        // 히트스톱 도중 외부(일시정지/배속 변경/게임오버)에서 timeScale을 건드렸다면 복원하지 않는다
+        // 히트스톱 도중 플레이어가 배속을 바꿨거나 모달이 열렸으면, 그쪽 뜻을 따른다.
+        // 쓰기 전 값을 기억했다가 되돌리면 바뀐 배속을 덮어써 버린다.
         private void RestoreTimeScale()
         {
             if (Mathf.Approximately(Time.timeScale, _slowedTimeScale))
-                Time.timeScale = _capturedTimeScale;
+                Time.timeScale = _01.Code.Manager.GameSpeedController.RestoreTarget;
         }
 
         private void OnDestroy()
