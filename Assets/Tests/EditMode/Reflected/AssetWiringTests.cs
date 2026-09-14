@@ -96,6 +96,26 @@ namespace Tests.EditMode.Gameplay
         }
 
         [Test]
+        public void GoldPanel_ListensToBothTheCostAndTheDayChannel()
+        {
+            var viewType = RequireType("_01.Code.UI.GoldCostView");
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/04.Prefab/UI/Hud/GoldCostPanel.prefab");
+            Assert.That(prefab, Is.Not.Null, "금화 패널 프리팹을 찾지 못했습니다.");
+
+            var view = prefab.GetComponentInChildren(viewType, true);
+            Assert.That(view, Is.Not.Null, "금화 패널에 GoldCostView가 없습니다.");
+
+            // 날짜 채널이 끊기면 빚은 보이는데 청산일까지 며칠인지가 멈춘다.
+            // 화면은 멀쩡해 보이므로 플레이로는 잡기 어렵다.
+            foreach (var field in new[] { "costEventChannel", "dayEventChannel" })
+            {
+                var info = viewType.GetField(field, Instance);
+                Assert.That(info, Is.Not.Null, field + " 필드를 찾지 못했습니다.");
+                Assert.That(info.GetValue(view), Is.Not.Null, field + "이 비어 있습니다.");
+            }
+        }
+
+        [Test]
         public void EveryCharacterPrefab_HasAllThreePoses()
         {
             var renderType = RequireType("_01.Code.Entities.EntityRender");

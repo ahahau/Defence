@@ -612,7 +612,7 @@ namespace _01.Code.Manager
             if (costManager == null || costManager.CurrentDebt <= 0)
                 return string.Empty;
 
-            var daysLeft = DayManager.WeekLength - (currentDay <= 0 ? 0 : (currentDay - 1) % DayManager.WeekLength + 1);
+            var daysLeft = DayManager.DaysUntilSettlementFrom(currentDay);
             var due = costManager.WeeklyDue;
             return daysLeft > 0
                 ? $"\n<color=#FF7A6B>빚 {costManager.CurrentDebt}G  ·  {daysLeft}일 뒤 이자 포함 {due}G를 내야 합니다</color>"

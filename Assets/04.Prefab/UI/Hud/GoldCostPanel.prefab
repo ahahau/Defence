@@ -227,5 +227,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Blade.Core.GoldCostView
   costEventChannel: {fileID: 11400000, guid: 734ca3593b5d2884dae267b0e3e601be, type: 2}
+  dayEventChannel: {fileID: 11400000, guid: f16b75998f67eed45be9a7061ca817f7, type: 2}
   goldText: {fileID: 3152318050649046555}
   format: "\uC6B4\uC601 \uC790\uAE08 {0}G"

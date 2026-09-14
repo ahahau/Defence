@@ -20,13 +20,22 @@ namespace _01.Code.Manager
         public int CurrentDay => currentDay;
         public int NextWaveDay => currentDay + 1;
 
-        /// <summary>이번 주의 몇째 날인가. 1부터 <see cref="WeekLength"/>까지.</summary>
-        public int DayOfWeek => currentDay <= 0 ? 0 : (currentDay - 1) % WeekLength + 1;
+        /// <summary>이번 주의 몇째 날인가. 1부터 <see cref="WeekLength"/>까지. 시작 전이면 0.</summary>
+        public int DayOfWeek => DayOfWeekOf(currentDay);
 
         /// <summary>청산일까지 남은 날. 청산일 당일이면 0.</summary>
-        public int DaysUntilSettlement => currentDay <= 0 ? WeekLength : WeekLength - DayOfWeek;
+        public int DaysUntilSettlement => DaysUntilSettlementFrom(currentDay);
 
         public static bool IsSettlementDay(int day) => day > 0 && day % WeekLength == 0;
+
+        public static int DayOfWeekOf(int day) => day <= 0 ? 0 : (day - 1) % WeekLength + 1;
+
+        /// <summary>
+        /// 그날로부터 청산일까지 남은 날. 청산일 당일이면 0이고, 아직 시작 전이면 한 주를 통째로 본다.
+        /// 빚을 보여주는 쪽이 저마다 세면 화면마다 다른 날짜가 뜨므로 여기 하나만 둔다.
+        /// </summary>
+        public static int DaysUntilSettlementFrom(int day) =>
+            day <= 0 ? WeekLength : WeekLength - DayOfWeekOf(day);
 
         private void Awake()
         {

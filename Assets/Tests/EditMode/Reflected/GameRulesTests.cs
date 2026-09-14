@@ -347,6 +347,22 @@ namespace Tests.EditMode.Rules
             Assert.That(isSettlementDay.Invoke(null, new object[] { day }), Is.EqualTo(expected));
         }
 
+        [TestCase(0, 7)]
+        [TestCase(1, 6)]
+        [TestCase(6, 1)]
+        [TestCase(7, 0)]
+        [TestCase(8, 6)]
+        [TestCase(13, 1)]
+        [TestCase(14, 0)]
+        public void SettlementCountdown_ReachesZeroOnTheDeadlineAndResetsAfter(int day, int expected)
+        {
+            var dayManager = Resolve("_01.Code.Manager.DayManager");
+            var daysUntil = dayManager.GetMethod("DaysUntilSettlementFrom");
+
+            Assert.That(daysUntil.Invoke(null, new object[] { day }), Is.EqualTo(expected),
+                "빚을 보여주는 화면이 여럿이라 남은 날은 한 곳에서만 세야 합니다.");
+        }
+
         // ── 정산 장부와 실제 금화 ────────────────────────────────────
         // 금화를 옮기는 쪽(CostManager)과 장부에 적는 쪽(ManagementSettlementManager)이
         // 같은 수입을 서로 다르게 판단하면 한 번 번 돈이 두 번 들어온다.
