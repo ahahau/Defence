@@ -1014,8 +1014,8 @@ namespace _01.Code.UI
             Step.BuildPortal => "처음 시작하기 · 3/5",
             Step.LearnMove => "처음 시작하기 · 4/5",
             Step.SurviveWave => "처음 시작하기 · 5/5",
-            Step.ObserveCombat => "첫 습격 · 전투 읽기",
-            Step.ReviewSettlement => "첫 습격 · 정산 읽기",
+            Step.ObserveCombat => "첫 영업 · 방문객 관찰",
+            Step.ReviewSettlement => "첫 영업 · 정산 읽기",
             Step.PrepareNextDay => "다음 날 준비",
             Step.LearnMerchant => "새 기능 · 떠돌이 상인",
             _ => "던전 안내",
@@ -1075,10 +1075,10 @@ namespace _01.Code.UI
         {
             Step.BuildRoom or Step.DeployUnit or Step.BuildPortal => BuildHint(step, _buildStage),
             Step.LearnMove => "W A S D 로 던전을 둘러보세요  ·  마우스 휠로 화면을 확대할 수 있습니다",
-            Step.SurviveWave => "준비됐다면 습격을 시작하세요  ·  포탈에서 들어온 적이 던전의 주인에게 닿기 전에 막아야 합니다",
+            Step.SurviveWave => "준비됐다면 던전 영업을 시작하세요  ·  모험가는 오른쪽 문으로 들어와 시설을 이용하고 금고를 노립니다",
             Step.ObserveCombat => CombatHint,
             Step.ReviewSettlement => "정산표에서 보상·시설 수입과 유지비·이자를 확인하세요  ·  확인을 누르면 다음 날이 시작됩니다",
-            Step.PrepareNextDay => "부하를 눌러 체력과 피로를 확인하세요  ·  지친 부하는 회수해 쉬게 하고 방어선을 보강하세요",
+            Step.PrepareNextDay => "매출과 유지비를 확인하세요  ·  시설 동선과 몬스터 배치를 고쳐 다음 영업을 준비하세요",
             Step.LearnMerchant => "떠돌이 상인이 왔습니다  ·  유물은 유닛보다 비싸지만 조합이 붙습니다",
             _ => string.Empty,
         };
@@ -1087,7 +1087,7 @@ namespace _01.Code.UI
         {
             < 5f => "전투는 자동으로 진행됩니다  ·  적의 길과 던전 주인의 체력을 지켜보세요",
             < 10f => "유닛이나 적을 누르면 체력·공격력·특성을 확인할 수 있습니다",
-            _ => "우측 시간 버튼으로 전투 속도를 조절하세요  ·  전투가 끝나면 정산표가 열립니다",
+            _ => "모험가가 어느 시설에서 돈을 쓰는지 지켜보세요  ·  영업이 끝나면 정산표가 열립니다",
         };
 
         /// <summary>

@@ -1,4 +1,5 @@
 using _01.Code.Buildings;
+using _01.Code.Manager;
 using _01.Code.MapCreateSystem;
 using DG.Tweening;
 using TMPro;
@@ -12,6 +13,8 @@ namespace _01.Code.UI
         [SerializeField] private TMP_Text totalDangerText;
 
         private int _lastTotalDanger = -1;
+        private int _lastAppeal = -1;
+        private int _lastReputation = -1;
         private Color _baseColor = Color.white;
         private Vector3 _baseScale = Vector3.one;
 
@@ -23,6 +26,9 @@ namespace _01.Code.UI
             DungeonHudIcon.Attach(panelRoot != null ? panelRoot : gameObject, totalDangerText, DungeonHudIcon.Skin != null ? DungeonHudIcon.Skin.DangerIcon : null);
             if (totalDangerText != null)
             {
+                // 매력·평판·위험 세 값을 한 카드에 보여 주므로 공용 카드의 23pt 상한으로는 잘린다.
+                totalDangerText.fontSizeMin = 13f;
+                totalDangerText.fontSizeMax = 20f;
                 _baseColor = totalDangerText.color;
                 _baseScale = totalDangerText.transform.localScale;
             }
@@ -83,17 +89,24 @@ namespace _01.Code.UI
                 buildingDanger += DangerOf(edge != null ? edge.InstalledBuilding : null);
 
             var totalDanger = unitDanger + buildingDanger + deedDanger;
-            if (totalDanger == _lastTotalDanger)
+            var appeal = DungeonFameRules.CalculateAppeal();
+            var reputation = DungeonReputationManager.Current != null
+                ? DungeonReputationManager.Current.Reputation
+                : DungeonReputationManager.DefaultReputation;
+            if (totalDanger == _lastTotalDanger && appeal == _lastAppeal && reputation == _lastReputation)
                 return;
 
             var previousDanger = _lastTotalDanger;
+            var previousAppeal = _lastAppeal;
             _lastTotalDanger = totalDanger;
+            _lastAppeal = appeal;
+            _lastReputation = reputation;
 
             if (totalDangerText != null)
             {
-                totalDangerText.text = $"던전 악명 {totalDanger}";
-                if (previousDanger >= 0)
-                    PlayDangerFeedback(totalDanger > previousDanger);
+                totalDangerText.text = $"매력 {appeal}  ·  평판 {reputation}  ·  위험 {totalDanger}";
+                if (previousDanger >= 0 && previousAppeal >= 0)
+                    PlayDangerFeedback(appeal > previousAppeal || totalDanger > previousDanger);
             }
         }
 

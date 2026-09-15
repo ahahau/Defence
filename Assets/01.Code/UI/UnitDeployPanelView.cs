@@ -277,7 +277,7 @@ namespace _01.Code.UI
             {
                 SelectUnit(unit);
                 UpdateHint(BuildUnitDetailText(unit));
-                SetStatus("계약서가 없습니다  ·  습격 보상으로 얻습니다", StatusWarn);
+                SetStatus("계약서가 없습니다  ·  던전 영업과 이벤트로 얻습니다", StatusWarn);
                 return;
             }
 

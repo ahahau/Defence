@@ -117,7 +117,8 @@ namespace _01.Code.UI
             var traitText = string.IsNullOrWhiteSpace(_enemy.TraitLabel)
                 ? string.Empty
                 : $"[{_enemy.TraitLabel}] ";
-            _label.text = $"{traitText}경 {_enemy.Fear}  탐 {_enemy.Greed}{retreatText}{spendingText}";
+            var visitText = $"{_enemy.VisitPurposeLabel} {_enemy.RemainingBudget}G · 만족 {_enemy.Satisfaction}";
+            _label.text = $"{traitText}{visitText}  ·  경 {_enemy.Fear}  탐 {_enemy.Greed}{retreatText}{spendingText}";
             _label.color = retreat >= 50
                 ? new Color(1f, 0.42f, 0.34f, 1f)
                 : new Color(1f, 0.91f, 0.7f, 1f);

@@ -530,7 +530,7 @@ namespace _01.Code.Manager
         }
 
         /// <summary>
-        /// 그날 방어전의 전과. 보상 패널을 없애면서 갈 곳을 잃은 정보라 정산에 붙인다.
+        /// 그날 영업 결과. 방문객 처리와 시설 성과를 정산에 붙인다.
         /// </summary>
         private static string BuildBattleSummaryText()
         {
@@ -546,12 +546,16 @@ namespace _01.Code.Manager
                 ? $"\n<color=#FFD05A>{wave.LastObjectiveTitle} 완료 · 보너스 +{wave.LastObjectiveRewardGold}G</color>"
                 : $"\n{wave.LastObjectiveTitle} 실패";
 
-            // 한 줄에 다섯 숫자를 늘어놓으면 아무것도 안 읽힌다. 방어가 어땠는지는
-            // 격퇴와 받은 피해 둘이면 판단이 선다. 가한 피해와 치명타는 진단용이라 뺐다.
-            return $"\n<size=85%>격퇴 {wave.KillCount}/{wave.TotalEnemyCount}"
+            var reputation = DungeonReputationManager.Current;
+            var review = reputation != null && reputation.LastReviewCount > 0
+                ? $"\n후기 {reputation.LastReviewCount}개  ·  평균 만족 {reputation.LastAverageSatisfaction}"
+                  + $"  ·  평판 {FormatSigned(reputation.LastReputationDelta)} → {reputation.Reputation} ({DungeonReputationRules.GetGrade(reputation.Reputation)})"
+                : "\n후기 없음  ·  귀환한 방문객이 없습니다";
+
+            return $"\n<size=85%>방문객 {wave.TotalEnemyCount}명  ·  제압 {wave.KillCount}명"
                    + $"  ·  받은 피해 {wave.WaveDamageTaken}"
                    + trapShare
-                   + objective + "</size>";
+                   + review + objective + "</size>";
         }
 
         /// <summary>이번 방어에서 적 특성을 실제로 역이용한 성과만 보여 준다.</summary>
@@ -668,6 +672,7 @@ namespace _01.Code.Manager
             return source switch
             {
                 GoldChangeSource.WaveReward => "웨이브 보상",
+                GoldChangeSource.Admission => "던전 입장료",
                 GoldChangeSource.Mine => "광산 수익",
                 GoldChangeSource.Inn => "여관 수익",
                 GoldChangeSource.Store => "상점 수익",
@@ -695,6 +700,8 @@ namespace _01.Code.Manager
         {
             return amount > 0 ? $"+{amount}G" : FormatGold(amount);
         }
+
+        private static string FormatSigned(int amount) => amount > 0 ? $"+{amount}" : amount.ToString();
 
         private string ResolveUnitLabel(Unit unit)
         {

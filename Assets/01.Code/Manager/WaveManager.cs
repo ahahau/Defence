@@ -133,7 +133,10 @@ namespace _01.Code.Manager
         /// </summary>
         private int ResolveWaveEnemyCount(int baseEnemyCount)
         {
-            return Mathf.Max(0, baseEnemyCount);
+            var reputation = DungeonReputationManager.Current != null
+                ? DungeonReputationManager.Current.Reputation
+                : DungeonReputationManager.DefaultReputation;
+            return DungeonReputationRules.ResolveVisitorCount(baseEnemyCount, reputation);
         }
 
         public WaveThreatPreview GetThreatPreview(int day) =>
@@ -147,7 +150,7 @@ namespace _01.Code.Manager
         /// </summary>
         public int GetBasePreviewEnemyCount(int day)
         {
-            return DungeonFameRules.ResolveEnemyCount(DungeonFameRules.CalculateFame());
+            return DungeonFameRules.ResolveVisitorCount(DungeonFameRules.CalculateAppeal());
         }
 
         public bool IsBossDay(int day) => waveConfig != null && waveConfig.IsBossDay(day);
@@ -295,7 +298,7 @@ namespace _01.Code.Manager
             return string.IsNullOrEmpty(GetWaveStartBlockedReason(day));
         }
 
-        /// <summary>습격 시작 버튼이 잠긴 이유. 표시 계층이 게임 규칙을 다시 추측하지 않게 한다.</summary>
+        /// <summary>영업 시작 버튼이 잠긴 이유.</summary>
         public string GetWaveStartBlockedReason(int day)
         {
             var entryNode = EntryNode;
@@ -314,10 +317,10 @@ namespace _01.Code.Manager
                 return "방을 하나 확장하세요";
 
             if (waveConfig == null)
-                return "습격 정보를 불러오는 중";
+                return "오늘 방문객 정보를 불러오는 중";
 
             return waveConfig.GetWaveForDay(day) == null
-                ? "예정된 습격이 없습니다"
+                ? "오늘은 예약된 방문객이 없습니다"
                 : string.Empty;
         }
 
@@ -348,18 +351,16 @@ namespace _01.Code.Manager
 
         private IEnumerator RunWave(WaveConfigSO.WaveEntry entry)
         {
-            // 이 습격의 크기는 던전의 명성이 정한다. 웨이브가 시작할 때 한 번 재고,
-            // 도는 동안 금고가 털려 명성이 흔들려도 인원과 보상은 그대로 간다.
-            _currentFame = DungeonFameRules.CalculateFame();
+            // 오늘 방문객 수는 영업 시작 시점의 매력도로 확정한다.
+            _currentFame = DungeonFameRules.CalculateAppeal();
 
             var adjustedEnemyCount = ResolveWaveEnemyCount(
-                DungeonFameRules.ResolveEnemyCount(_currentFame));
+                DungeonFameRules.ResolveVisitorCount(_currentFame));
 
             PrepareObjectiveChoices(_currentDay);
             ResetWaveResults(adjustedEnemyCount);
-            // 보상은 명성 하나가 정한다. 위험을 만든 것과 값을 치르는 것이 같아야
-            // 플레이어가 "얼마나 키울까"를 계산할 수 있다.
-            _currentClearGoldReward = DungeonFameRules.ResolveClearGold(_currentFame);
+            // 방문객은 입장할 때 요금을 낸다. 시설에서 쓰는 돈은 이동 중 별도로 장부에 쌓인다.
+            _currentClearGoldReward = DungeonFameRules.ResolveAdmissionIncome(adjustedEnemyCount);
             _isWaveRunning = true;
             _unitConditionWearPending = true;
             _activeEnemies.Clear();
@@ -569,11 +570,25 @@ namespace _01.Code.Manager
             enemy.DeathStarted += HandleWaveEnemyDeathStarted;
             enemy.Removed += HandleEnemyRemoved;
             enemy.FacilityGoldSpent += HandleEnemyFacilityGoldSpent;
+            enemy.VisitCompleted += HandleVisitorCompleted;
             enemy.ConfigureData(enemyData);
             // 날짜가 아니라 명성이 적의 성장 단계를 정한다. 웅크린 던전에는 오래 버텨도
             // 약한 모험가가 오고, 크게 키운 던전에는 이틀 만에도 강한 자가 온다.
-            enemy.ApplyWaveLevel(
-                DungeonFameRules.ResolveEnemyLevel(_currentFame), enemyHealthPerLevel, enemyAttackPerLevel);
+            var reputation = DungeonReputationManager.Current != null
+                ? DungeonReputationManager.Current.Reputation
+                : DungeonReputationManager.DefaultReputation;
+            var visitorLevel = DungeonReputationRules.ResolveVisitorLevel(
+                DungeonFameRules.ResolveEnemyLevel(_currentFame), reputation);
+            enemy.ApplyWaveLevel(visitorLevel, enemyHealthPerLevel, enemyAttackPerLevel);
+            var visitorIndex = Mathf.Max(0, _waveEnemyCount - _remainingSpawns);
+            var purpose = isBossSpawn
+                ? AdventurerVisitPurpose.TreasureHunt
+                : AdventurerVisitRules.ResolvePurpose(enemy.Trait, visitorIndex);
+            var baseBudget = AdventurerVisitRules.ResolveBudget(
+                _currentFame, visitorLevel, purpose, enemy.Trait);
+            enemy.ConfigureVisitProfile(
+                purpose,
+                DungeonReputationRules.ResolveBudget(baseBudget, reputation));
             _remainingSpawns--;
 
             if (isBossSpawn)
@@ -762,7 +777,10 @@ namespace _01.Code.Manager
         private void HandleEnemyRemoved(Enemy enemy)
         {
             if (enemy != null)
+            {
                 enemy.FacilityGoldSpent -= HandleEnemyFacilityGoldSpent;
+                enemy.VisitCompleted -= HandleVisitorCompleted;
+            }
 
             if (this == null || _isDestroying)
                 return;
@@ -773,6 +791,12 @@ namespace _01.Code.Manager
             _activeEnemies.Remove(enemy);
             TryActivateBossFinalPhase();
             CompleteWaveIfCleared(false);
+        }
+
+        private void HandleVisitorCompleted(Enemy enemy, int satisfaction)
+        {
+            if (_isWaveRunning)
+                DungeonReputationManager.Current?.RecordReview(satisfaction);
         }
 
         private void HandleEnemyFacilityGoldSpent(Enemy enemy, int amount, int baseAmount, GoldChangeSource source)
@@ -911,8 +935,6 @@ namespace _01.Code.Manager
                 _waveCoroutine = null;
             }
 
-            // 잡은 만큼만 받는다. 아래 지급처와 정산 표시가 같은 값을 봐야 하므로 여기서 한 번만 깎는다.
-            _currentClearGoldReward = ResolveClearGoldReward();
             ResolveObjectiveReward();
 
             // 최종 보스 웨이브 클리어 = 승리 — 보상 패널 대신 승리 패널(시네마틱이 끝난 뒤).
@@ -921,7 +943,7 @@ namespace _01.Code.Manager
                 _isGameCleared = true;
 
                 if (_currentClearGoldReward > 0)
-                    costEventChannel?.RaiseEvent(new GoldEarnedEvent(_currentClearGoldReward, GoldChangeSource.WaveReward));
+                    costEventChannel?.RaiseEvent(new GoldEarnedEvent(_currentClearGoldReward, GoldChangeSource.Admission));
 
                 waveEventChannel?.RaiseEvent(new GameClearedEvent(_currentDay));
                 StartCoroutine(ShowVictoryAfterCinematic());
@@ -932,7 +954,7 @@ namespace _01.Code.Manager
             // 보상 선택 없이 정산으로만 마무리한다.
             // 여기서 발행한 수입은 CostManager가 바로 반영하지 않고 정산 장부에만 쌓인다.
             if (_currentClearGoldReward > 0)
-                costEventChannel?.RaiseEvent(new GoldEarnedEvent(_currentClearGoldReward, GoldChangeSource.WaveReward));
+                costEventChannel?.RaiseEvent(new GoldEarnedEvent(_currentClearGoldReward, GoldChangeSource.Admission));
 
             RaiseWaveEnded();
         }
@@ -987,21 +1009,12 @@ namespace _01.Code.Manager
             presenter.ShowVictoryPanel(_currentDay);
         }
 
-        /// <summary>
-        /// 클리어 보상 중 실제로 지급할 몫. 도망친 침입자는 전리품을 남기지 않는다.
-        /// 전액을 주면 쫓아내는 쪽이 잡는 쪽보다 싸게 먹혀서, 겁을 주거나 길을 막아
-        /// 아무도 죽이지 않고 매일 만액을 걷는 편이 최적해가 된다.
-        /// </summary>
-        private int ResolveClearGoldReward()
-        {
-            return WaveRewardRules.ResolveClearGold(_currentClearGoldReward, _waveEnemyCount, _waveKillCount);
-        }
-
         private void RaiseWaveEnded()
         {
             if (_isDestroying || waveEventChannel == null)
                 return;
 
+            DungeonReputationManager.Current?.FinalizeBusinessDay();
             ApplyUnitConditionWear();
             // 웨이브 집계는 다음 웨이브에서 초기화되므로, 판 전체 전과는 여기서 넘겨 둔다.
             RunSummarySystem.Current?.RecordWave(_waveEnemyCount, _waveKillCount, _waveDamageDealt, _waveDamageTaken, _waveCriticalHitCount);
@@ -1043,6 +1056,7 @@ namespace _01.Code.Manager
 
         private void ResetWaveResults(int enemyCount)
         {
+            DungeonReputationManager.Current?.BeginBusinessDay();
             _waveEnemyCount = Mathf.Max(0, enemyCount);
             _waveKillCount = 0;
             _waveDamageDealt = 0;
@@ -1139,6 +1153,7 @@ namespace _01.Code.Manager
                 enemy.DeathStarted -= HandleWaveEnemyDeathStarted;
                 enemy.Removed -= HandleEnemyRemoved;
                 enemy.FacilityGoldSpent -= HandleEnemyFacilityGoldSpent;
+                enemy.VisitCompleted -= HandleVisitorCompleted;
             }
 
             _activeEnemies.Clear();

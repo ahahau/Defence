@@ -25,9 +25,9 @@ namespace _01.Code.UI
         {
             return day switch
             {
-                1 => $"첫 방어: 배치와 동선을 익히세요 · DAY {ArtifactDay} 유물 상점 해금",
+                1 => $"첫 영업: 방문객 동선과 시설 매출을 확인하세요 · DAY {ArtifactDay} 유물 상점 해금",
                 ArtifactDay => "신규 해금 · 떠돌이 상인과 유물",
-                _ => "금고를 채울수록 더 많은 모험가가 소문을 듣고 옵니다"
+                _ => "시설과 금고로 매력도를 높이고, 감당할 수 있는 만큼 방문객을 부르세요"
             };
         }
     }
@@ -269,13 +269,13 @@ namespace _01.Code.UI
                 if (waveManager == null || dayManager == null)
                     _startButtonLabel.text = "준비 중";
                 else if (!dayManager.IsStandby)
-                    _startButtonLabel.text = "습격 진행 중";
+                    _startButtonLabel.text = "던전 영업 중";
                 else if (!waveManager.CanStartWave(nextDay))
                     _startButtonLabel.text = waveManager.GetWaveStartBlockedReason(nextDay);
                 else
                     _startButtonLabel.text = waveManager.IsBossDay(nextDay)
-                        ? $"대규모 습격 개시\nDAY {nextDay} · 영웅 {enemyCount}명"
-                        : $"습격 개시\nDAY {nextDay} · 모험가 {enemyCount}명";
+                        ? $"특별 영업 시작\nDAY {nextDay} · 영웅 파티 {enemyCount}명"
+                        : $"던전 영업 시작\nDAY {nextDay} · 방문객 {enemyCount}명";
             }
 
             RefreshObjectiveToggle(nextDay, hasEntryDoor);
@@ -323,8 +323,8 @@ namespace _01.Code.UI
             var rect = (RectTransform)_waveBanner.transform;
             ApplyBannerLayout(false);
             rect.SetAsLastSibling();
-            _runtimeHud.BannerTitle.text = $"DAY {day}  ·  모험가 습격";
-            _runtimeHud.BannerSubtitle.text = $"금고를 노리는 모험가 {Mathf.Max(0, enemyCount)}명 진입";
+            _runtimeHud.BannerTitle.text = $"DAY {day}  ·  던전 영업 시작";
+            _runtimeHud.BannerSubtitle.text = $"오늘의 모험가 {Mathf.Max(0, enemyCount)}명이 오른쪽 입구로 들어옵니다";
             var group = _runtimeHud.BannerGroup;
             _waveBanner.SetActive(true);
             DOTween.Kill(_waveBanner);
@@ -354,7 +354,7 @@ namespace _01.Code.UI
             _runtimeHud.BannerGroup.DOKill();
             _runtimeHud.BannerGroup.alpha = 1f;
             _runtimeHud.BannerGroup.blocksRaycasts = false;
-            _runtimeHud.BannerTitle.text = $"DAY {Mathf.Max(1, day)}  ·  습격 준비";
+            _runtimeHud.BannerTitle.text = $"DAY {Mathf.Max(1, day)}  ·  영업 준비";
             if (hasEntryDoor)
             {
                 var baseEnemyCount = waveManager != null ? waveManager.GetBasePreviewEnemyCount(day) : enemyCount;
@@ -370,7 +370,7 @@ namespace _01.Code.UI
                     : string.Empty;
                 ApplyBannerLayout(true);
                 _runtimeHud.BannerSubtitle.text =
-                    $"침입 예정 {enemyCount}명{conquestText} · 몬스터와 함정을 배치하세요\n"
+                    $"방문 예정 {enemyCount}명{conquestText} · 시설과 몬스터를 배치하세요\n"
                     + BuildFameLine()
                     + CoreLoopFeatureUnlocks.GetPreparationHint(day)
                     + threatText
@@ -420,11 +420,11 @@ namespace _01.Code.UI
             var fromFacilities = DungeonFameRules.FameFromFacilities();
             var total = fromGold + fromFacilities;
             if (total <= 0)
-                return "<color=#9FB0C0>아직 소문이 나지 않았습니다</color>\n";
+                return "<color=#9FB0C0>매력도 0 · 아직 알려지지 않은 던전입니다</color>\n";
 
-            return $"<color=#FFCC66>명성 {total}</color>"
+            return $"<color=#FFCC66>던전 매력도 {total}</color>"
                    + $" <size=85%>(금고 {fromGold} · 시설 {fromFacilities})</size>"
-                   + " · 높을수록 더 많고 강한 모험가가 옵니다\n";
+                   + $" · 예상 입장료 {DungeonFameRules.ResolveAdmissionIncome(DungeonFameRules.ResolveVisitorCount(total))}G\n";
         }
 
         private void HidePreparationHud()
@@ -534,7 +534,7 @@ namespace _01.Code.UI
                     : new Color(0.72f, 0.12f, 0.08f, 1f);
 
             if (_waveProgressTitle != null)
-                _waveProgressTitle.text = waveManager.IsBossWave ? "영웅 원정대 · 핵심부 결전" : "던전 심장 방어 중";
+                _waveProgressTitle.text = waveManager.IsBossWave ? "영웅 파티 특별 영업" : "던전 영업 중";
 
             if (_waveProgressStats != null)
             {
@@ -544,7 +544,7 @@ namespace _01.Code.UI
                 // 넷을 늘어놓으면 아무것도 안 읽힌다. 남은 수와 처치 수는 remaining/total 한 쌍이면
                 // 알 수 있고, 던전 내부와 진입 대기의 구분은 화면을 보면 그대로 보인다.
                 _waveProgressStats.text =
-                    $"남은 위협 {remaining}/{total}"
+                    $"남은 방문객 {remaining}/{total}"
                     + (string.IsNullOrEmpty(warning) ? string.Empty : $"  ·  {warning}")
                     + $"\n<color=#8FD6FF>{waveManager.GetSelectedObjectiveProgressText()}</color>";
             }

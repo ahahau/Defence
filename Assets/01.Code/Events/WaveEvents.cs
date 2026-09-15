@@ -16,16 +16,17 @@ namespace _01.Code.Events
 
     public class WaveEndedEvent : GameEvent
     {
-        public WaveEndedEvent(int day, int clearGoldReward, int enemyCount, int killCount)
+        public WaveEndedEvent(int day, int admissionIncome, int enemyCount, int killCount)
         {
             Day = day;
-            ClearGoldReward = clearGoldReward;
+            ClearGoldReward = admissionIncome;
             EnemyCount = enemyCount;
             KillCount = killCount;
         }
 
         public int Day { get; }
         public int ClearGoldReward { get; }
+        public int AdmissionIncome => ClearGoldReward;
 
         /// <summary>그날 웨이브의 총 침입자 수.</summary>
         public int EnemyCount { get; }

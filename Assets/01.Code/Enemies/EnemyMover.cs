@@ -85,6 +85,51 @@ namespace _01.Code.Enemies
             ResetVisualPose();
         }
 
+        /// <summary>
+        /// 방문을 마친 모험가를 현재 방에서 입구 방까지 되짚어 보낸 뒤 실제 출입문으로 이동시킨다.
+        /// 돌아가는 동안에는 시설·함정·전투를 다시 처리하지 않는다.
+        /// </summary>
+        public void ReturnToExit(Node exitNode, Vector3 exitPosition, Action onComplete)
+        {
+            StopMoving();
+            StartCoroutine(ReturnToExitRoutine(exitNode, exitPosition, onComplete));
+        }
+
+        private IEnumerator ReturnToExitRoutine(Node exitNode, Vector3 exitPosition, Action onComplete)
+        {
+            _isTurning = true;
+            CurrentBattlefield?.Leave(_battleAgent);
+
+            while (_currentNode != null && exitNode != null && _currentNode != exitNode)
+            {
+                var path = NodePathfinder.FindPath(_currentNode, exitNode, node => node.IsPassBlocked);
+                if (path == null || path.Count < 2)
+                    break;
+
+                var nextNode = path[1];
+                if (_currentNode.Data != null)
+                    VacateNode(_currentNode.Data.Id);
+                if (nextNode.Data != null)
+                    OccupyNode(nextNode.Data.Id);
+                _currentNode = nextNode;
+                yield return SmoothMove();
+            }
+
+            if (_currentNode?.Data != null)
+                VacateNode(_currentNode.Data.Id);
+            _currentNode = null;
+
+            var distance = Vector3.Distance(transform.position, exitPosition);
+            var duration = Mathf.Clamp(distance / Mathf.Max(moveSpeed, 0.1f), minMoveDuration, maxMoveDuration);
+            _moveTween = transform.DOMove(exitPosition, duration)
+                .SetEase(Ease.InQuad)
+                .SetLink(gameObject);
+            yield return _moveTween.WaitForCompletion();
+            _moveTween = null;
+            _isTurning = false;
+            onComplete?.Invoke();
+        }
+
         private IEnumerator DoTurn()
         {
             _isTurning = true;

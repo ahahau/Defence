@@ -5,34 +5,36 @@ using UnityEngine;
 namespace _01.Code.Manager
 {
     /// <summary>
-    /// 던전의 명성 — 바깥에서 볼 때 얼마나 털 만해 보이는가.
+    /// 던전의 매력도 — 모험가가 일부러 찾아올 이유가 얼마나 많은가.
     ///
-    /// 금고에 쌓인 금화와 지어 둔 시설이 소문을 만든다. 명성이 오르면 더 많이, 더 센
-    /// 모험가가 온다. 그래서 압력은 날짜가 아니라 플레이어가 지은 것에서 나온다.
-    /// 빨리 키우면 빨리 위험해지고, 웅크리면 벌이가 없다.
+    /// 금고의 보물과 영업 중인 시설이 소문을 만든다. 매력도가 오르면 방문객과 입장료가
+    /// 늘지만 더 숙련된 파티도 찾아온다. 성장과 위험이 플레이어의 배치에서 함께 나온다.
     /// </summary>
     public static class DungeonFameRules
     {
-        /// <summary>금고에 이만큼 쌓일 때마다 명성 1. 금고는 눈에 띄는 만큼 가중치가 크다.</summary>
+        /// <summary>금고에 이만큼 쌓일 때마다 매력도 1.</summary>
         public const int GoldPerFamePoint = 40;
 
-        /// <summary>명성이 0이어도 오는 인원. 아무것도 없는 던전에도 길 잃은 모험가는 온다.</summary>
+        /// <summary>매력도가 0이어도 찾아오는 방문객 수.</summary>
         public const int BaseEnemyCount = 3;
 
-        /// <summary>명성 1점마다 늘어나는 인원.</summary>
+        /// <summary>매력도 1점마다 늘어나는 방문객 수.</summary>
         public const float EnemiesPerFame = 0.9f;
 
-        /// <summary>명성 몇 점마다 적의 성장 단계가 한 칸 오르는가.</summary>
+        /// <summary>매력도 몇 점마다 방문 파티의 숙련 단계가 한 칸 오르는가.</summary>
         public const int FamePerEnemyLevel = 3;
 
         /// <summary>
-        /// 지금 던전의 명성. 금고에 쌓인 돈과 지어 둔 시설을 합친다.
+        /// 지금 던전의 매력도. 금고에 쌓인 돈과 지어 둔 시설을 합친다.
         /// 운영을 멈춘 시설은 소문을 만들지 않으므로 세지 않는다.
         /// </summary>
         public static int CalculateFame()
         {
             return FameFromStoredGold() + FameFromFacilities();
         }
+
+        /// <summary>경영 화면에서 사용하는 이름. 기존 저장·호출부 호환을 위해 CalculateFame도 유지한다.</summary>
+        public static int CalculateAppeal() => CalculateFame();
 
         /// <summary>금고에 쌓인 금화가 만드는 명성. 운영 자금은 보이지 않으니 세지 않는다.</summary>
         public static int FameFromStoredGold()
@@ -84,6 +86,8 @@ namespace _01.Code.Manager
             return BaseEnemyCount + Mathf.RoundToInt(safeFame * EnemiesPerFame);
         }
 
+        public static int ResolveVisitorCount(int appeal) => ResolveEnemyCount(appeal);
+
         /// <summary>이 명성에서 적이 서 있는 성장 단계. 1부터 시작한다.</summary>
         public static int ResolveEnemyLevel(int fame)
         {
@@ -91,23 +95,20 @@ namespace _01.Code.Manager
             return 1 + safeFame / FamePerEnemyLevel;
         }
 
-        /// <summary>명성이 0일 때의 습격 보상.</summary>
-        public const int BaseClearGold = 20;
-
-        /// <summary>명성 1점마다 늘어나는 보상.</summary>
-        public const int GoldPerFame = 9;
+        /// <summary>방문객 한 명이 입장할 때 내는 기본 요금.</summary>
+        public const int AdmissionFeePerVisitor = 5;
 
         /// <summary>
-        /// 이 명성에서 습격을 막아내고 받는 금화.
-        ///
-        /// 명성이 올려 놓은 위험만큼 벌이도 올라야 키울 이유가 생긴다. 위험만 오르면
-        /// 웅크리는 것이 언제나 최선이 되어 플레이어가 아무것도 짓지 않는다.
+        /// 오늘 영업에서 확정되는 입장료 수입. 처치 수와 무관하며, 시설 소비는 별도 매출이다.
         /// </summary>
-        public static int ResolveClearGold(int fame)
+        public static int ResolveAdmissionIncome(int visitorCount)
         {
-            var safeFame = Mathf.Max(0, fame);
-            return BaseClearGold + safeFame * GoldPerFame;
+            return Mathf.Max(0, visitorCount) * AdmissionFeePerVisitor;
         }
+
+        /// <summary>이전 호출부 호환용 예상 영업 수입.</summary>
+        public static int ResolveClearGold(int fame) =>
+            ResolveAdmissionIncome(ResolveVisitorCount(fame));
 
         /// <summary>닫아 둔 시설은 소문을 내지 않는다. 명성을 내리는 유일한 방법이 여기다.</summary>
         private static int FameOf(Building building) =>

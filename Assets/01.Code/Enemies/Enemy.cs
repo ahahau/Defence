@@ -42,7 +42,6 @@ namespace _01.Code.Enemies
         [SerializeField, Min(0f)] private float greedReturnResistancePerPoint = 0.04f;
         [SerializeField, Min(0f)] private float returnChanceStartThreshold = 6f;
         [SerializeField, Min(0.01f)] private float returnAnimationDuration = 0.42f;
-        [SerializeField, Min(0f)] private float returnShakeDistance = 0.08f;
 
         [Header("BT State Settings")]
         [SerializeField, Min(0f)] private float idleDuration = 0.2f;
@@ -56,6 +55,7 @@ namespace _01.Code.Enemies
         private static readonly object BossFinalPhaseStatKey = new();
 
         private GameEventChannelSO _costEventChannel;
+        private Node _entryNode;
         private bool _isInCombat;
         private Unit _engagedUnit;
         private bool _isReturning;
@@ -82,6 +82,7 @@ namespace _01.Code.Enemies
         public event System.Action<Enemy> Removed;
         public event System.Action<Enemy> MoodChanged;
         public event System.Action<Enemy, int, int, GoldChangeSource> FacilityGoldSpent;
+        public event System.Action<Enemy, int> VisitCompleted;
 
         public bool IsBoss => _isBoss;
         public bool IsAlive => combatant != null && combatant.IsAlive;
@@ -104,6 +105,15 @@ namespace _01.Code.Enemies
         public int Fear => _currentFear;
         public int Greed => _currentGreed;
         public int TotalFacilityGold => _totalFacilityGold;
+        public AdventurerVisitPurpose VisitPurpose { get; private set; } = AdventurerVisitPurpose.TreasureHunt;
+        public string VisitPurposeLabel => AdventurerVisitRules.GetLabel(VisitPurpose);
+        public string VisitPurposeDescription => AdventurerVisitRules.GetDescription(VisitPurpose);
+        public int InitialBudget { get; private set; }
+        public int RemainingBudget { get; private set; }
+        public int Satisfaction { get; private set; } = AdventurerVisitRules.StartingSatisfaction;
+        public int FinalSatisfaction => AdventurerVisitRules.ResolveFinalSatisfaction(Satisfaction, HasFulfilledPurpose);
+        public string SatisfactionLabel => AdventurerVisitRules.GetSatisfactionLabel(Satisfaction);
+        public bool HasFulfilledPurpose { get; private set; }
         public AdventurerTrait Trait => data != null ? data.Trait : AdventurerTrait.None;
         public string TraitLabel => AdventurerTraitRules.GetLabel(Trait);
         public string TraitDescription => AdventurerTraitRules.GetDescription(Trait);
@@ -215,6 +225,7 @@ namespace _01.Code.Enemies
             int treasuryGoldLoss,
             GameEventChannelSO nodeEventChannel = null)
         {
+            _entryNode = startNode;
             _costEventChannel = costEventChannel;
             _treasuryGoldLoss = treasuryGoldLoss;
 
@@ -244,6 +255,17 @@ namespace _01.Code.Enemies
             InitializeMoodStats();
             RefreshStrengthOutline();
             ApplyRoleFromData();
+        }
+
+        /// <summary>오늘 방문 목적과 시설에서 쓸 수 있는 개인 예산을 스폰 시 한 번 정한다.</summary>
+        public void ConfigureVisitProfile(AdventurerVisitPurpose purpose, int budget)
+        {
+            VisitPurpose = purpose;
+            InitialBudget = Mathf.Max(0, budget);
+            RemainingBudget = InitialBudget;
+            Satisfaction = AdventurerVisitRules.StartingSatisfaction;
+            HasFulfilledPurpose = false;
+            MoodChanged?.Invoke(this);
         }
 
         public void ApplyWaveLevel(int level, int healthPerLevel, int attackPerLevel)
@@ -385,7 +407,8 @@ namespace _01.Code.Enemies
                     return false;
 
                 _costEventChannel?.RaiseEvent(new TreasuryRobbedEvent(stolenGold));
-                Destroy(gameObject);
+                FulfillPurpose(AdventurerVisitRules.TreasureFoundBonus);
+                BeginReturn();
                 return true;
             }
 
@@ -393,7 +416,8 @@ namespace _01.Code.Enemies
                 return false;
 
             _costEventChannel.RaiseEvent(new GoldLostEvent(_treasuryGoldLoss, GoldChangeSource.TreasuryLoot));
-            Destroy(gameObject);
+            FulfillPurpose(AdventurerVisitRules.TreasureFoundBonus);
+            BeginReturn();
             return true;
         }
 
@@ -670,7 +694,8 @@ namespace _01.Code.Enemies
                 return false;
 
             var facility = node.AssignedBuilding;
-            if (facility == null || !facility.AcceptsDwell || _visitedFacilities.Contains(facility))
+            if (facility == null || !facility.AcceptsDwell || _visitedFacilities.Contains(facility)
+                || RemainingBudget <= 0 || !MatchesVisitPurpose(facility))
                 return false;
 
             _visitedFacilities.Add(facility);
@@ -680,6 +705,15 @@ namespace _01.Code.Enemies
             _dwellGoldCarry = 0f;
             return true;
         }
+
+        private bool MatchesVisitPurpose(Building facility) => VisitPurpose switch
+        {
+            AdventurerVisitPurpose.Rest => facility is Inn,
+            AdventurerVisitPurpose.Shopping => facility is Store,
+            AdventurerVisitPurpose.EquipmentUpgrade => facility is Blacksmith,
+            AdventurerVisitPurpose.TreasureHunt => false,
+            _ => false
+        };
 
         /// <summary>머무는 동안 흐르는 시간. 아직 머물고 있으면 true.</summary>
         private bool TickDwell(float deltaTime)
@@ -691,7 +725,7 @@ namespace _01.Code.Enemies
             // 머무는 중에 문을 닫거나 부서지면 그 자리에서 일어선다.
             if (!facility.IsOperating)
             {
-                EndDwell();
+                EndDwell(false);
                 return false;
             }
 
@@ -710,8 +744,12 @@ namespace _01.Code.Enemies
                     var paid = source == GoldChangeSource.Store
                         ? ResolveStoreSpending(payable)
                         : ResolveFacilitySpending(payable);
-                    facility.ReportDwellIncome(paid);
-                    RecordFacilitySpending(paid, payable, source);
+                    paid = AdventurerVisitRules.ClampPayment(paid, RemainingBudget);
+                    if (paid > 0)
+                    {
+                        facility.ReportDwellIncome(paid);
+                        RecordFacilitySpending(paid, payable, source);
+                    }
                 }
             }
 
@@ -721,15 +759,27 @@ namespace _01.Code.Enemies
             if (_dwellRemaining > 0f)
                 return true;
 
-            EndDwell();
+            EndDwell(true);
             return false;
         }
 
-        private void EndDwell()
+        private void EndDwell(bool completed)
         {
+            if (completed)
+                FulfillPurpose(AdventurerVisitRules.PurposeFulfilledBonus);
             _dwellFacility = null;
             _dwellRemaining = 0f;
             _dwellGoldCarry = 0f;
+        }
+
+        private void FulfillPurpose(int satisfactionBonus)
+        {
+            if (HasFulfilledPurpose)
+                return;
+
+            HasFulfilledPurpose = true;
+            Satisfaction = AdventurerVisitRules.ClampSatisfaction(Satisfaction + Mathf.Max(0, satisfactionBonus));
+            MoodChanged?.Invoke(this);
         }
 
         /// <summary>피로를 지금 스탯에 반영한다. 같은 키로 덮어써 겹쳐 쌓이지 않는다.</summary>
@@ -766,6 +816,7 @@ namespace _01.Code.Enemies
                 return;
 
             _totalFacilityGold += amount;
+            RemainingBudget = Mathf.Max(0, RemainingBudget - amount);
             var bonusGold = Trait == AdventurerTrait.Shopaholic
                 ? Mathf.Max(0, amount - baseAmount)
                 : 0;
@@ -798,10 +849,15 @@ namespace _01.Code.Enemies
             if (_isInCombat || _isReturning || combatant != null && combatant.IsAttacking)
                 return false;
 
-            var returnChance = CalculateRetreatChance();
-            if (Random.value > returnChance) return false;
+            var visitComplete = HasFulfilledPurpose
+                                && (RemainingBudget <= 0 || Satisfaction >= 70);
+            if (!visitComplete)
+            {
+                var returnChance = CalculateRetreatChance();
+                if (Random.value > returnChance) return false;
+            }
 
-            PlayReturnAnimation();
+            BeginReturn();
             return true;
         }
 
@@ -819,18 +875,34 @@ namespace _01.Code.Enemies
             return Mathf.Clamp01(fearPressure / greedResistance);
         }
 
-        private void PlayReturnAnimation()
+        private void BeginReturn()
         {
             if (_isReturning) return;
             _isReturning = true;
-            mover.enabled = false;
             combatant?.StopCombat();
-
-            var target = enemyRenderer != null ? enemyRenderer.transform : transform;
             _returnTween?.Kill();
-            _returnTween = DOTween.Sequence()
-                .Join(target.DOShakePosition(returnAnimationDuration * 0.55f, returnShakeDistance, 10, 70f, false, true))
-                .Join(target.DOScale(Vector3.zero, returnAnimationDuration).SetEase(Ease.InBack))
+            if (mover != null && _entryNode != null)
+            {
+                var exitPosition = _entryNode.EntryDoorSpawnPoint != null
+                    ? _entryNode.EntryDoorSpawnPoint.position
+                    : _entryNode.transform.position;
+                mover.ReturnToExit(_entryNode, exitPosition, CompleteReturn);
+                return;
+            }
+
+            CompleteReturn();
+        }
+
+        private void CompleteReturn()
+        {
+            if (this == null)
+                return;
+
+            var finalSatisfaction = FinalSatisfaction;
+            VisitCompleted?.Invoke(this, finalSatisfaction);
+            var target = enemyRenderer != null ? enemyRenderer.transform : transform;
+            _returnTween = target.DOScale(Vector3.zero, returnAnimationDuration)
+                .SetEase(Ease.InBack)
                 .OnComplete(() => Destroy(gameObject))
                 .SetLink(gameObject);
         }
@@ -900,6 +972,9 @@ namespace _01.Code.Enemies
         private void HandleDamaged(int amount)
         {
             if (!health.IsAlive) return;
+            Satisfaction = AdventurerVisitRules.ClampSatisfaction(
+                Satisfaction - AdventurerVisitRules.ResolveDamagePenalty(amount, health.MaxHealth));
+            MoodChanged?.Invoke(this);
             _isHitStunned = true;
             _hitStunTimer = hitStunDuration;
         }
