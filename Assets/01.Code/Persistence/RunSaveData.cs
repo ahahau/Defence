@@ -56,6 +56,7 @@ namespace _01.Code.Persistence
         public int row = -1;
         public int durability;
         public int storedGold;
+        public int wear;
         public bool closed;
 
         /// <summary>다시 열리기로 예약된 날. 0이면 닫힌 채로 예약하지 않았다.</summary>

@@ -73,6 +73,57 @@ namespace _01.Code.Manager
         }
 
         /// <summary>
+        /// 쌓인 마모를 전부 고치고 든 값을 돌려준다. 청산일에 한 번 부른다.
+        ///
+        /// 손님이 다녀간 만큼 닳으므로 잘 버는 시설일수록 수리비가 크다. 벌이와 지출이
+        /// 같은 원인에서 나와야 "이 시설이 남는 장사인가"가 계산이 된다.
+        /// </summary>
+        public static int RepairAll()
+        {
+            var total = 0;
+            foreach (var node in Node.ActiveNodes)
+            {
+                if (node == null)
+                    continue;
+
+                total += RepairOne(node.AssignedBuilding);
+
+                var grid = node.TrapGrid;
+                if (grid == null)
+                    continue;
+
+                foreach (var building in grid.PlacedBuildings)
+                    total += RepairOne(building);
+            }
+
+            return total;
+        }
+
+        /// <summary>청산일 전에 미리 보여줄 수리비. 아직 고치지는 않는다.</summary>
+        public static int PendingRepairCost()
+        {
+            var total = 0;
+            foreach (var node in Node.ActiveNodes)
+            {
+                if (node == null)
+                    continue;
+
+                total += node.AssignedBuilding != null ? node.AssignedBuilding.RepairCost : 0;
+
+                var grid = node.TrapGrid;
+                if (grid == null)
+                    continue;
+
+                foreach (var building in grid.PlacedBuildings)
+                    total += building != null ? building.RepairCost : 0;
+            }
+
+            return total;
+        }
+
+        private static int RepairOne(Building building) => building != null ? building.Repair() : 0;
+
+        /// <summary>
         /// 지금 돌아가는 시설인가. 닫아 둔 시설은 벌지도 않고 운영비도 먹지 않으며
         /// 옆방의 시너지도 만들지 않는다 — 쉬는 동안은 없는 것과 같다.
         /// </summary>

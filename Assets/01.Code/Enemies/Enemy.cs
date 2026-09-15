@@ -674,6 +674,7 @@ namespace _01.Code.Enemies
                 return false;
 
             _visitedFacilities.Add(facility);
+            facility.RecordVisitWear();
             _dwellFacility = facility;
             _dwellRemaining = facility.DwellSeconds;
             _dwellGoldCarry = 0f;

@@ -118,6 +118,7 @@ namespace _01.Code.Manager
             currentDay = evt.Day;
             ApplyDailyUpkeep();
             ApplyFacilityUpkeep();
+            ApplyWeeklyRepair();
             AccrueTreasuryInterest();
             ApplyBattleFatigue();
             ApplyNetToGold();
@@ -298,6 +299,25 @@ namespace _01.Code.Manager
             var upkeep = FacilityEconomyRules.CalculateDailyUpkeep();
             if (upkeep > 0)
                 RecordExpense("시설 운영비", upkeep);
+        }
+
+        /// <summary>
+        /// 청산일에만 쌓인 마모를 한꺼번에 고친다.
+        ///
+        /// 하루치 정산에 섞어 넣어야 이번 주 장부에 잡힌다 — 빚을 청산하는 자리에서 적으면
+        /// 그날은 이미 금화가 옮겨간 뒤라 수리비가 다음 날로 밀린다.
+        ///
+        /// 손님이 다녀간 만큼 닳으므로 잘 버는 시설일수록 수리비가 크다. 벌이와 지출이
+        /// 같은 원인에서 나와야 어느 시설이 남는 장사인지가 계산된다.
+        /// </summary>
+        private void ApplyWeeklyRepair()
+        {
+            if (!DayManager.IsSettlementDay(currentDay))
+                return;
+
+            var repair = FacilityEconomyRules.RepairAll();
+            if (repair > 0)
+                RecordExpense("시설 수리비", repair);
         }
 
         /// <summary>
@@ -605,18 +625,38 @@ namespace _01.Code.Manager
         /// </summary>
         private string BuildDebtText()
         {
+            var line = BuildRepairForecastText();
+
             if (_weeklySettlementPaid > 0)
-                return $"\n<color=#8FD9A0>빚 {_weeklySettlementPaid}G를 청산했습니다</color>";
+                return line + $"\n<color=#8FD9A0>빚 {_weeklySettlementPaid}G를 청산했습니다</color>";
 
             var costManager = CostManager.Current;
             if (costManager == null || costManager.CurrentDebt <= 0)
-                return string.Empty;
+                return line;
 
             var daysLeft = DayManager.DaysUntilSettlementFrom(currentDay);
             var due = costManager.WeeklyDue;
-            return daysLeft > 0
+            return line + (daysLeft > 0
                 ? $"\n<color=#FF7A6B>빚 {costManager.CurrentDebt}G  ·  {daysLeft}일 뒤 이자 포함 {due}G를 내야 합니다</color>"
-                : $"\n<color=#FF7A6B>빚 {costManager.CurrentDebt}G  ·  오늘 {due}G를 내야 합니다</color>";
+                : $"\n<color=#FF7A6B>빚 {costManager.CurrentDebt}G  ·  오늘 {due}G를 내야 합니다</color>");
+        }
+
+        /// <summary>
+        /// 쌓인 수리비를 청산일 전에 미리 알린다.
+        ///
+        /// 마모는 손님이 다녀갈 때마다 조용히 쌓이므로, 청산일에 처음 보면 손쓸 수가 없다.
+        /// 며칠 남았는지와 함께 보여야 이번 주에 시설을 더 돌릴지 판단이 된다.
+        /// </summary>
+        private string BuildRepairForecastText()
+        {
+            var pending = FacilityEconomyRules.PendingRepairCost();
+            if (pending <= 0)
+                return string.Empty;
+
+            var daysLeft = DayManager.DaysUntilSettlementFrom(currentDay);
+            return daysLeft > 0
+                ? $"\n<color=#E0B070>시설 마모 {pending}G  ·  {daysLeft}일 뒤 수리합니다</color>"
+                : $"\n<color=#E0B070>시설 마모 {pending}G  ·  오늘 수리합니다</color>";
         }
 
         private string BuildLedgerText(string title, Dictionary<string, int> ledger, int total, char sign)

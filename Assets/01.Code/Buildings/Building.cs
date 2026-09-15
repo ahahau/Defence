@@ -79,6 +79,43 @@ namespace _01.Code.Buildings
         /// <summary>머물던 모험가가 낸 금화를 장부에 올린다. 채널이 시설마다 따로라 시설이 직접 쏜다.</summary>
         public virtual void ReportDwellIncome(int gold) { }
 
+        [Header("Wear")]
+        [SerializeField, Min(0), Tooltip("손님 한 명이 남기는 마모. 청산일에 이만큼씩 수리비가 붙는다.")]
+        private int wearPerVisit = 1;
+        [SerializeField, Min(0), Tooltip("마모 한 점을 고치는 데 드는 금화.")]
+        private int repairCostPerWear = 4;
+
+        private int wear;
+
+        /// <summary>쌓인 마모. 청산일에 고치면 0으로 돌아간다.</summary>
+        public int Wear => wear;
+
+        /// <summary>지금 고친다면 드는 금화.</summary>
+        public int RepairCost => wear * Mathf.Max(0, repairCostPerWear);
+
+        /// <summary>
+        /// 손님이 다녀갔다. 쓰이는 만큼 닳고, 그 값은 주말에 한꺼번에 청구된다.
+        /// 벌이와 수리비가 같은 원인에서 나오므로 "이 시설이 남는 장사인가"가 계산이 된다.
+        /// </summary>
+        public void RecordVisitWear()
+        {
+            if (isDestroyed)
+                return;
+
+            wear += Mathf.Max(0, wearPerVisit);
+        }
+
+        /// <summary>수리해서 마모를 지운다. 실제로 고친 값을 돌려준다.</summary>
+        public int Repair()
+        {
+            var cost = RepairCost;
+            wear = 0;
+            return cost;
+        }
+
+        /// <summary>저장에서 되돌릴 때.</summary>
+        public void RestoreWear(int savedWear) => wear = Mathf.Max(0, savedWear);
+
         protected virtual void Awake()
         {
             if (damageAnimationTarget == null)

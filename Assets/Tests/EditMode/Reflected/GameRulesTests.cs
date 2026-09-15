@@ -297,6 +297,73 @@ namespace Tests.EditMode.Rules
             }
         }
 
+        // ── 시설 마모 ────────────────────────────────────────────────
+        // 손님이 다녀간 만큼 닳고, 그 값이 청산일에 한꺼번에 청구된다.
+
+        [Test]
+        public void Wear_AccumulatesPerVisitAndClearsOnRepair()
+        {
+            var building = NewBuilding(out var host);
+            try
+            {
+                SetPrivate(building, "wearPerVisit", 2);
+                SetPrivate(building, "repairCostPerWear", 5);
+
+                Assert.That(Get(building, "RepairCost"), Is.Zero, "다녀간 손님이 없으면 고칠 것도 없습니다.");
+
+                Call(building, "RecordVisitWear");
+                Call(building, "RecordVisitWear");
+                Assert.That(Get(building, "Wear"), Is.EqualTo(4));
+                Assert.That(Get(building, "RepairCost"), Is.EqualTo(20), "잘 버는 시설일수록 수리비가 큽니다.");
+
+                Assert.That(Call(building, "Repair"), Is.EqualTo(20));
+                Assert.That(Get(building, "Wear"), Is.Zero, "고치고 나면 마모가 남지 않습니다.");
+                Assert.That(Get(building, "RepairCost"), Is.Zero);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
+        public void Wear_DoesNotBuildUpOnARuinedFacility()
+        {
+            var building = NewBuilding(out var host);
+            try
+            {
+                SetPrivate(building, "wearPerVisit", 3);
+                SetPrivate(building, "isDestroyed", true);
+
+                // 부서진 시설에 수리비가 붙으면 이미 잃은 것에 두 번 값을 치른다.
+                Call(building, "RecordVisitWear");
+                Assert.That(Get(building, "Wear"), Is.Zero);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
+        public void Wear_SurvivesASaveAndLoad()
+        {
+            var building = NewBuilding(out var host);
+            try
+            {
+                SetPrivate(building, "repairCostPerWear", 4);
+                Call(building, "RestoreWear", 6);
+
+                Assert.That(Get(building, "Wear"), Is.EqualTo(6));
+                Assert.That(Get(building, "RepairCost"), Is.EqualTo(24),
+                    "이어하기가 마모를 잊으면 한 주 치 수리비가 사라집니다.");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
+
         // ── 해금 ────────────────────────────────────────────────────
 
         [Test]
