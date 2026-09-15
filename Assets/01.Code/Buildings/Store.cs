@@ -20,7 +20,8 @@ namespace _01.Code.Buildings
 
         public void ApplyPassEffect(Combatant enemy)
         {
-            if (enemy == null || !enemy.IsAlive)
+            // 닫아 둔 시설은 지나가도 아무 일이 없다. 손님도 받지 않고 효과도 주지 않는다.
+            if (enemy == null || !enemy.IsAlive || !IsOperating)
                 return;
 
             enemy.AddAttackDamage(damageBonus);

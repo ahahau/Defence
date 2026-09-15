@@ -25,6 +25,8 @@ namespace _01.Code.UI
         [SerializeField] private Button backButton;
         [SerializeField] private Button installButton;
         [SerializeField] private Button demolishButton;
+        [SerializeField, Tooltip("방 중앙 시설의 문을 닫거나 다시 여는 버튼. 비우면 휴업 기능이 화면에 없다.")]
+        private Button closureButton;
         [SerializeField] private Button portalInstallButton;
         [SerializeField] private GameObject unitViewSelector;
         [SerializeField] private GameObject buildingViewSelector;
@@ -221,6 +223,7 @@ namespace _01.Code.UI
             backButton?.onClick.AddListener(HandleBackClicked);
             installButton?.onClick.AddListener(HandleInstallClicked);
             demolishButton?.onClick.AddListener(HandleDemolishClicked);
+            closureButton?.onClick.AddListener(HandleClosureClicked);
         }
 
         private void OnDisable()
@@ -243,6 +246,7 @@ namespace _01.Code.UI
             backButton?.onClick.RemoveListener(HandleBackClicked);
             installButton?.onClick.RemoveListener(HandleInstallClicked);
             demolishButton?.onClick.RemoveListener(HandleDemolishClicked);
+            closureButton?.onClick.RemoveListener(HandleClosureClicked);
         }
 
         private void Update()
@@ -1679,6 +1683,62 @@ namespace _01.Code.UI
                     : IsManagementAllowed() && _selectedNode != null && _selectedNode.HasAssignedBuilding;
                 InstallCardPresenter.SetButtonText(demolishButton, managingUnit ? "회수" : "철거");
             }
+
+            RefreshClosureButton();
+        }
+
+        /// <summary>
+        /// 휴업 버튼. 닫는 것은 공짜이므로 값을 적지 않고, 여는 쪽에만 금화와 날을 적는다.
+        /// 재개를 기다리는 동안에는 남은 날을 보여주고 누를 수 없게 둔다.
+        /// </summary>
+        private void RefreshClosureButton()
+        {
+            if (closureButton == null)
+                return;
+
+            var building = _selectedManagedUnit == null && _selectedNode != null
+                ? _selectedNode.AssignedBuilding
+                : null;
+
+            // 운영비가 없는 시설은 닫아도 아낄 것이 없고 소문도 내지 않는다.
+            var closable = building != null && !building.IsDestroyed
+                           && building.Data != null && building.Data.DailyUpkeep > 0;
+            closureButton.gameObject.SetActive(closable);
+            if (!closable)
+                return;
+
+            var currentDay = DayManager.Current != null ? DayManager.Current.CurrentDay : 0;
+            if (building.IsReopening)
+            {
+                closureButton.interactable = false;
+                InstallCardPresenter.SetButtonText(
+                    closureButton, $"개장 {building.ReopenDaysRemaining(currentDay)}일 남음");
+                return;
+            }
+
+            closureButton.interactable = IsManagementAllowed();
+            InstallCardPresenter.SetButtonText(
+                closureButton,
+                building.IsClosed ? $"다시 열기 {building.ReopenCost}G" : "문 닫기");
+        }
+
+        private void HandleClosureClicked()
+        {
+            if (!IsManagementAllowed() || _selectedNode == null || _selectedManagedUnit != null)
+                return;
+
+            var building = _selectedNode.AssignedBuilding;
+            var closure = FacilityClosureSystem.Current;
+            if (building == null || closure == null)
+                return;
+
+            if (building.IsClosed)
+                closure.TryBeginReopen(building, out _);
+            else
+                closure.TryClose(building);
+
+            RefreshClosureButton();
+            RefreshBuildingInstallButtons();
         }
 
         private bool IsManagementAllowed()

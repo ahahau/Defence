@@ -24,10 +24,42 @@ namespace _01.Code.Buildings
         private Vector3 damageAnimationBaseLocalPosition;
         private Tween damageTween;
 
+        [Header("Closure")]
+        [SerializeField, Min(0), Tooltip("닫아 둔 시설을 다시 여는 데 드는 금화. 닫는 것은 공짜다.")]
+        private int reopenCost = 25;
+        [SerializeField, Min(1), Tooltip("다시 열기로 한 뒤 실제로 문을 열기까지 걸리는 날.")]
+        private int reopenDays = 2;
+
+        private bool isClosed;
+
+        /// <summary>다시 열기로 한 뒤, 실제로 열리는 날. 0이면 재개를 예약하지 않았다.</summary>
+        private int reopenOnDay;
+
         public bool IsDestructible => destructible;
         public bool IsDestroyed => isDestroyed;
         public int CurrentDurability => currentDurability;
         public int MaxDurability => maxDurability;
+
+        /// <summary>
+        /// 문을 닫아 둔 시설인가. 닫힌 시설은 벌지도, 운영비를 먹지도, 소문을 내지도 않는다.
+        ///
+        /// 명성이 오르기만 하는 구조라 감당이 안 될 때 물러설 곳이 필요했다. 다만 공짜로
+        /// 물러설 수 있으면 힘들 때마다 전부 닫아 두는 것이 정답이 되므로, 여는 데 값을 치른다.
+        /// </summary>
+        public bool IsClosed => isClosed;
+
+        /// <summary>다시 열기를 예약해 두고 날짜를 기다리는 중인가.</summary>
+        public bool IsReopening => isClosed && reopenOnDay > 0;
+
+        public int ReopenCost => Mathf.Max(0, reopenCost);
+        public int ReopenDays => Mathf.Max(1, reopenDays);
+
+        /// <summary>다시 열리기까지 남은 날. 예약하지 않았으면 0.</summary>
+        public int ReopenDaysRemaining(int currentDay) =>
+            IsReopening ? Mathf.Max(0, reopenOnDay - currentDay) : 0;
+
+        /// <summary>운영 중인 시설인가. 부서졌거나 닫혀 있으면 아니다.</summary>
+        public bool IsOperating => !isDestroyed && !isClosed;
 
         protected virtual void Awake()
         {
@@ -83,6 +115,66 @@ namespace _01.Code.Buildings
         {
             currentDurability = Mathf.Clamp(durability, 1, Mathf.Max(1, maxDurability));
             isDestroyed = false;
+        }
+
+        /// <summary>문을 닫는다. 값은 들지 않지만 그날부터 벌이도 소문도 멈춘다.</summary>
+        public void Close()
+        {
+            if (isDestroyed || isClosed)
+                return;
+
+            isClosed = true;
+            reopenOnDay = 0;
+            ApplyClosedLook();
+        }
+
+        /// <summary>
+        /// 다시 열기로 하고 날짜를 잡는다. 금화는 부르는 쪽이 이미 치렀다.
+        /// 예약만 해두고 그날이 와야 실제로 열린다 — 청산 직전에 급히 열어 막을 수는 없다.
+        /// </summary>
+        public void BeginReopen(int currentDay)
+        {
+            if (isDestroyed || !isClosed || IsReopening)
+                return;
+
+            reopenOnDay = Mathf.Max(1, currentDay) + ReopenDays;
+        }
+
+        /// <summary>예약한 날이 됐으면 실제로 연다. 열렸으면 true.</summary>
+        public bool TryCompleteReopen(int currentDay)
+        {
+            if (!IsReopening || currentDay < reopenOnDay)
+                return false;
+
+            isClosed = false;
+            reopenOnDay = 0;
+            ApplyClosedLook();
+            return true;
+        }
+
+        /// <summary>저장에서 되돌릴 때. 날짜 계산 없이 상태를 그대로 세운다.</summary>
+        public void RestoreClosure(bool closed, int reopenDay)
+        {
+            isClosed = closed;
+            reopenOnDay = closed ? Mathf.Max(0, reopenDay) : 0;
+            ApplyClosedLook();
+        }
+
+        /// <summary>저장용 재개 예정일. 예약하지 않았으면 0.</summary>
+        public int ReopenOnDay => IsReopening ? reopenOnDay : 0;
+
+        /// <summary>닫힌 시설은 흐릿하게 둔다. 지도만 보고도 무엇이 쉬고 있는지 알아야 한다.</summary>
+        private void ApplyClosedLook()
+        {
+            foreach (var renderer in GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                if (renderer == null)
+                    continue;
+
+                var color = renderer.color;
+                color.a = isClosed ? 0.4f : 1f;
+                renderer.color = color;
+            }
         }
 
         public bool TakeBuildingDamage(int damage)

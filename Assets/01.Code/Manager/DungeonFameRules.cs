@@ -109,8 +109,9 @@ namespace _01.Code.Manager
             return BaseClearGold + safeFame * GoldPerFame;
         }
 
+        /// <summary>닫아 둔 시설은 소문을 내지 않는다. 명성을 내리는 유일한 방법이 여기다.</summary>
         private static int FameOf(Building building) =>
-            building != null && !building.IsDestroyed && building.Data != null
+            building != null && building.IsOperating && building.Data != null
                 ? Mathf.Max(0, building.Data.Fame)
                 : 0;
     }

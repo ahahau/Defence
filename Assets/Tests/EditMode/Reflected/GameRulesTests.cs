@@ -182,6 +182,101 @@ namespace Tests.EditMode.Rules
             Assert.That((int)CallStatic(rules, "ResolveClearGold", -5), Is.GreaterThanOrEqualTo(0));
         }
 
+        // ── 시설 휴업 ────────────────────────────────────────────────
+        // 명성은 지은 것이 만들고 오르기만 한다. 닫는 것이 유일하게 물러설 곳이다.
+
+        private static Component NewBuilding(out GameObject host)
+        {
+            host = new GameObject("Facility");
+            host.SetActive(false);
+            return host.AddComponent(Resolve("_01.Code.Buildings.Building"));
+        }
+
+        [Test]
+        public void Closure_ClosedFacilityStopsOperating()
+        {
+            var building = NewBuilding(out var host);
+            try
+            {
+                Assert.That(Get(building, "IsOperating"), Is.True);
+
+                Call(building, "Close");
+                Assert.That(Get(building, "IsClosed"), Is.True);
+                Assert.That(Get(building, "IsOperating"), Is.False,
+                    "닫힌 시설은 벌지도 운영비를 먹지도 소문을 내지도 않습니다.");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
+        public void Closure_ReopeningWaitsForTheDayItWasBookedFor()
+        {
+            var building = NewBuilding(out var host);
+            try
+            {
+                SetPrivate(building, "reopenDays", 2);
+                Call(building, "Close");
+                Call(building, "BeginReopen", 5);
+
+                Assert.That(Get(building, "IsReopening"), Is.True);
+                Assert.That(Call(building, "ReopenDaysRemaining", 5), Is.EqualTo(2));
+
+                // 청산 직전에 급히 열어 막을 수는 없어야 한다.
+                Assert.That(Call(building, "TryCompleteReopen", 6), Is.False);
+                Assert.That(Get(building, "IsClosed"), Is.True);
+
+                Assert.That(Call(building, "TryCompleteReopen", 7), Is.True);
+                Assert.That(Get(building, "IsClosed"), Is.False);
+                Assert.That(Get(building, "IsOperating"), Is.True);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
+        public void Closure_BookingTwiceDoesNotShortenTheWait()
+        {
+            var building = NewBuilding(out var host);
+            try
+            {
+                SetPrivate(building, "reopenDays", 3);
+                Call(building, "Close");
+                Call(building, "BeginReopen", 1);
+                Call(building, "BeginReopen", 4);
+
+                // 두 번 눌러 날짜를 다시 잡을 수 있으면 기다림이 의미를 잃는다.
+                Assert.That(Call(building, "ReopenDaysRemaining", 1), Is.EqualTo(3));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
+        public void Closure_SurvivesASaveAndLoad()
+        {
+            var building = NewBuilding(out var host);
+            try
+            {
+                Call(building, "RestoreClosure", true, 9);
+
+                Assert.That(Get(building, "IsClosed"), Is.True);
+                Assert.That(Get(building, "IsReopening"), Is.True);
+                Assert.That(Get(building, "ReopenOnDay"), Is.EqualTo(9),
+                    "이어하기가 재개 예약을 잊으면 낸 금화가 사라집니다.");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
+
         // ── 해금 ────────────────────────────────────────────────────
 
         [Test]
