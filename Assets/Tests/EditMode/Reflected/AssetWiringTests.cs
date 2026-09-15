@@ -409,6 +409,63 @@ namespace Tests.EditMode.Gameplay
             }
         }
 
+        [Test]
+        public void Fame_CountsTheGoldInTheVaultAndTheFacilitiesAroundIt()
+        {
+            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            try
+            {
+                var nodeManagerType = RequireType("_01.Code.MapCreateSystem.DungeonNodeManager");
+                var graphType = RequireType("_01.Code.MapCreateSystem.DungeonGraph");
+                var nodeKindType = RequireType("_01.Code.MapCreateSystem.DungeonNodeType");
+                var placementType = RequireType("_01.Code.Buildings.BuildingPlacement");
+                var fameType = RequireType("_01.Code.Manager.DungeonFameRules");
+                Component manager = null;
+                foreach (var root in scene.GetRootGameObjects())
+                    manager ??= root.GetComponentInChildren(nodeManagerType, true);
+                Assert.That(manager, Is.Not.Null);
+
+                var graph = Activator.CreateInstance(graphType);
+                var kind = Enum.Parse(nodeKindType, "Corridor");
+                var addNode = graphType.GetMethod("AddNode");
+                var createNode = nodeManagerType.GetMethod("CreateNode");
+                var storeModel = addNode.Invoke(graph, new object[] { kind, new Vector2Int(1100, 0) });
+                var vaultModel = addNode.Invoke(graph, new object[] { kind, new Vector2Int(1101, 0) });
+                var storeNode = (Component)createNode.Invoke(manager, new[] { storeModel });
+                var vaultNode = (Component)createNode.Invoke(manager, new[] { vaultModel });
+
+                var storeData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
+                    "Assets/03.SO/Buildings/StoreBuildingData.asset");
+                var treasuryData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
+                    "Assets/Resources/Buildings/TreasuryBuildingData.asset");
+                var install = placementType.GetMethod("InstallCentral", BindingFlags.Public | BindingFlags.Static);
+
+                var facilityFame = fameType.GetMethod("FameFromFacilities");
+                var goldFame = fameType.GetMethod("FameFromStoredGold");
+                var facilitiesBefore = (int)facilityFame.Invoke(null, null);
+                var goldBefore = (int)goldFame.Invoke(null, null);
+
+                install.Invoke(null, new object[] { storeNode, storeData, 0.92f });
+                var treasury = install.Invoke(null, new object[] { vaultNode, treasuryData, 0.92f });
+                Assert.That(treasury, Is.Not.Null);
+
+                // 상점 2 + 금고 건물 4.
+                Assert.That((int)facilityFame.Invoke(null, null) - facilitiesBefore, Is.EqualTo(6),
+                    "지어 둔 시설이 소문을 만듭니다.");
+
+                // 금고에 넣어 둔 돈만 보인다. 40G마다 1점.
+                treasury.GetType().GetMethod("RestoreStoredGold").Invoke(treasury, new object[] { 120 });
+                Assert.That((int)goldFame.Invoke(null, null) - goldBefore, Is.EqualTo(3),
+                    "금고에 쌓을수록 털 만해 보입니다.");
+
+                nodeManagerType.GetMethod("ClearAll").Invoke(manager, null);
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
+            }
+        }
+
         // ── 도구 ───────────────────────────────────────────────
 
         private static IEnumerable<(ScriptableObject asset, string path)> LoadAll(string typeName)

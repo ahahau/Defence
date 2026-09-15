@@ -126,6 +126,62 @@ namespace Tests.EditMode.Rules
                 "물약은 지정 진열에는 계속 올라야 합니다 — 살 자리가 여기뿐입니다.");
         }
 
+        // ── 던전 명성 ────────────────────────────────────────────────
+        // 압력이 날짜가 아니라 플레이어가 지은 것에서 나온다. 이 계산이 곧 난이도 곡선이다.
+
+        [Test]
+        public void Fame_RaisesHeadcountAndStrengthTogether()
+        {
+            var rules = Resolve("_01.Code.Manager.DungeonFameRules");
+
+            var quiet = (int)CallStatic(rules, "ResolveEnemyCount", 0);
+            var busy = (int)CallStatic(rules, "ResolveEnemyCount", 10);
+            Assert.That(busy, Is.GreaterThan(quiet), "명성이 오르면 더 많이 옵니다.");
+            Assert.That(quiet, Is.GreaterThan(0), "아무것도 없어도 길 잃은 모험가는 옵니다.");
+
+            Assert.That(CallStatic(rules, "ResolveEnemyLevel", 0), Is.EqualTo(1));
+            Assert.That((int)CallStatic(rules, "ResolveEnemyLevel", 10),
+                Is.GreaterThan((int)CallStatic(rules, "ResolveEnemyLevel", 0)),
+                "명성이 오르면 더 센 모험가가 옵니다.");
+        }
+
+        [Test]
+        public void Fame_PaysBackWhatItPutsAtRisk()
+        {
+            var rules = Resolve("_01.Code.Manager.DungeonFameRules");
+
+            // 위험만 오르고 벌이가 그대로면 웅크리는 것이 언제나 최선이 되어,
+            // 플레이어가 아무것도 짓지 않는 것이 정답인 게임이 된다.
+            var quiet = (int)CallStatic(rules, "ResolveClearGold", 0);
+            var busy = (int)CallStatic(rules, "ResolveClearGold", 10);
+            Assert.That(busy, Is.GreaterThan(quiet));
+        }
+
+        [TestCase(0, 1)]
+        [TestCase(1, 2)]
+        [TestCase(2, 3)]
+        [TestCase(5, 6)]
+        public void Fame_MovesWithoutSteps(int lower, int higher)
+        {
+            var rules = Resolve("_01.Code.Manager.DungeonFameRules");
+
+            // 시설 하나를 더 지었을 때 딱 그만큼만 늘어나야, 무엇 때문에 힘들어졌는지 짚을 수 있다.
+            var atLower = (int)CallStatic(rules, "ResolveEnemyCount", lower);
+            var atHigher = (int)CallStatic(rules, "ResolveEnemyCount", higher);
+            Assert.That(atHigher, Is.GreaterThan(atLower),
+                $"명성 {lower}→{higher}에서 인원이 그대로면 단을 밟는 곡선입니다.");
+        }
+
+        [Test]
+        public void Fame_IsNeverNegativeEvenIfTheDungeonIsEmptied()
+        {
+            var rules = Resolve("_01.Code.Manager.DungeonFameRules");
+
+            Assert.That((int)CallStatic(rules, "ResolveEnemyCount", -5), Is.GreaterThan(0));
+            Assert.That(CallStatic(rules, "ResolveEnemyLevel", -5), Is.EqualTo(1));
+            Assert.That((int)CallStatic(rules, "ResolveClearGold", -5), Is.GreaterThanOrEqualTo(0));
+        }
+
         // ── 해금 ────────────────────────────────────────────────────
 
         [Test]

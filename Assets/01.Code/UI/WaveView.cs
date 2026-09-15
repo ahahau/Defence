@@ -374,6 +374,7 @@ namespace _01.Code.UI
                 ApplyBannerLayout(true);
                 _runtimeHud.BannerSubtitle.text =
                     $"침입 예정 {enemyCount}명{conquestText} · 몬스터와 함정을 배치하세요\n"
+                    + BuildFameLine()
                     + CoreLoopFeatureUnlocks.GetPreparationHint(day)
                     + threatText
                     + traitText
@@ -409,6 +410,25 @@ namespace _01.Code.UI
             subtitle.fontSizeMax = 20f;
             if (!expanded)
                 subtitle.fontSize = 20f;
+        }
+
+        /// <summary>
+        /// 던전의 명성 한 줄. 무엇이 소문을 냈는지를 금고와 시설로 나눠 보여준다.
+        ///
+        /// 명성이 인원과 적의 강함을 모두 정하므로, 숫자만 보여주면 왜 갑자기 힘들어졌는지
+        /// 알 수 없다. 금고에 쌓은 돈 때문인지 시설을 늘린 탓인지가 함께 읽혀야 한다.
+        /// </summary>
+        private static string BuildFameLine()
+        {
+            var fromGold = DungeonFameRules.FameFromStoredGold();
+            var fromFacilities = DungeonFameRules.FameFromFacilities();
+            var total = fromGold + fromFacilities;
+            if (total <= 0)
+                return "<color=#9FB0C0>아직 소문이 나지 않았습니다</color>\n";
+
+            return $"<color=#FFCC66>명성 {total}</color>"
+                   + $" <size=85%>(금고 {fromGold} · 시설 {fromFacilities})</size>"
+                   + " · 높을수록 더 많고 강한 모험가가 옵니다\n";
         }
 
         /// <summary>

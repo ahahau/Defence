@@ -145,11 +145,15 @@ namespace _01.Code.Manager
         public WaveThreatPreview GetThreatPreview(int day) =>
             waveConfig != null ? waveConfig.GetThreatPreview(day) : default;
 
-        /// <summary>마을 장악 보정을 적용하기 전의 원래 습격 인원.</summary>
+        /// <summary>
+        /// 마을 장악 보정을 적용하기 전의 원래 습격 인원.
+        ///
+        /// 날짜가 아니라 던전의 명성이 정한다. 금고에 쌓은 돈과 지어 둔 시설이 소문을
+        /// 만들고, 그 소문이 몇 명을 부르는지 결정한다. 일차는 이제 날짜를 셀 뿐이다.
+        /// </summary>
         public int GetBasePreviewEnemyCount(int day)
         {
-            var entry = waveConfig != null ? waveConfig.GetWaveForDay(day) : null;
-            return entry != null ? Mathf.Max(0, entry.enemyCount) : 0;
+            return DungeonFameRules.ResolveEnemyCount(DungeonFameRules.CalculateFame());
         }
 
         public bool IsBossDay(int day) => waveConfig != null && waveConfig.IsBossDay(day);
@@ -158,6 +162,9 @@ namespace _01.Code.Manager
         public BossWavePresenter BossPresenter => bossPresenter;
 
         private int _currentDay;
+
+        /// <summary>이 습격을 시작할 때 잰 명성. 인원·보상·적 성장 단계가 모두 이 값을 본다.</summary>
+        private int _currentFame;
         private int _remainingSpawns;
         private int _currentClearGoldReward;
         private bool _isWaveRunning;
@@ -366,8 +373,13 @@ namespace _01.Code.Manager
 
         private IEnumerator RunWave(WaveConfigSO.WaveEntry entry)
         {
+            // 이 습격의 크기는 던전의 명성이 정한다. 웨이브가 시작할 때 한 번 재고,
+            // 도는 동안 금고가 털려 명성이 흔들려도 인원과 보상은 그대로 간다.
+            _currentFame = DungeonFameRules.CalculateFame();
+
             // 연속 방어는 다음 습격을 무겁게 만든다. 잘 막을수록 왕국이 더 크게 보낸다.
-            var adjustedEnemyCount = ResolveWaveEnemyCount(entry.enemyCount);
+            var adjustedEnemyCount = ResolveWaveEnemyCount(
+                DungeonFameRules.ResolveEnemyCount(_currentFame));
 
             PrepareObjectiveChoices(_currentDay);
             ResetWaveResults(adjustedEnemyCount);
@@ -376,7 +388,7 @@ namespace _01.Code.Manager
                 ? MoralePolicyManager.Current.WaveRewardMultiplier
                 : 1f;
             _currentClearGoldReward = Mathf.RoundToInt(
-                CoreCohesionSystem.ScaleGoldReward(entry.clearGoldReward) * moraleReward
+                CoreCohesionSystem.ScaleGoldReward(DungeonFameRules.ResolveClearGold(_currentFame)) * moraleReward
                 * (DefenseStreakSystem.Current != null ? DefenseStreakSystem.Current.RewardMultiplier : 1f));
             _isWaveRunning = true;
             _unitConditionWearPending = true;
@@ -588,7 +600,10 @@ namespace _01.Code.Manager
             enemy.Removed += HandleEnemyRemoved;
             enemy.FacilityGoldSpent += HandleEnemyFacilityGoldSpent;
             enemy.ConfigureData(enemyData);
-            enemy.ApplyWaveLevel(_currentDay, enemyHealthPerLevel, enemyAttackPerLevel);
+            // 날짜가 아니라 명성이 적의 성장 단계를 정한다. 웅크린 던전에는 오래 버텨도
+            // 약한 모험가가 오고, 크게 키운 던전에는 이틀 만에도 강한 자가 온다.
+            enemy.ApplyWaveLevel(
+                DungeonFameRules.ResolveEnemyLevel(_currentFame), enemyHealthPerLevel, enemyAttackPerLevel);
             _remainingSpawns--;
 
             if (isBossSpawn)

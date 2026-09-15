@@ -10,6 +10,8 @@ namespace _01.Code.Buildings
         [field: SerializeField] public int Cost { get; private set; }
         [field: SerializeField, Min(0), Tooltip("매일 정산에서 지불하는 시설 운영비. 0이면 운영비와 인접 수익 보너스가 없는 시설이다.")]
         public int DailyUpkeep { get; private set; }
+        [field: SerializeField, Min(0), Tooltip("이 시설이 던전 소문에 더하는 무게. 클수록 더 많고 센 모험가를 부른다. 0이면 밖에서 보이지 않는 시설이다.")]
+        public int Fame { get; private set; }
         [field: SerializeField] public Building Prefab { get; private set; }
         [field: SerializeField] public bool Unique { get; private set; }
         [field: SerializeField, Tooltip("중요 시설을 방 중앙 슬롯에만 설치한다.")]
