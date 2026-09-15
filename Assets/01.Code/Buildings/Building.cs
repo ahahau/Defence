@@ -137,7 +137,9 @@ namespace _01.Code.Buildings
             if (isDestroyed || !isClosed || IsReopening)
                 return;
 
-            reopenOnDay = Mathf.Max(1, currentDay) + ReopenDays;
+            // 오늘 날짜에 그대로 더한다. 준비 단계(0일차)에 바닥을 1로 올리면
+            // 첫날 닫은 시설만 하루 더 기다리게 된다.
+            reopenOnDay = Mathf.Max(0, currentDay) + ReopenDays;
         }
 
         /// <summary>예약한 날이 됐으면 실제로 연다. 열렸으면 true.</summary>

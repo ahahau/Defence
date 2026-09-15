@@ -239,6 +239,26 @@ namespace Tests.EditMode.Rules
         }
 
         [Test]
+        public void Closure_WaitsTheSameNumberOfDaysBeforeTheFirstDayStarts()
+        {
+            var building = NewBuilding(out var host);
+            try
+            {
+                SetPrivate(building, "reopenDays", 2);
+                Call(building, "Close");
+
+                // 준비 단계는 0일차다. 여기서 닫은 시설만 하루 더 기다리면 안 된다.
+                Call(building, "BeginReopen", 0);
+                Assert.That(Call(building, "ReopenDaysRemaining", 0), Is.EqualTo(2));
+                Assert.That(Call(building, "TryCompleteReopen", 2), Is.True);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
         public void Closure_BookingTwiceDoesNotShortenTheWait()
         {
             var building = NewBuilding(out var host);
