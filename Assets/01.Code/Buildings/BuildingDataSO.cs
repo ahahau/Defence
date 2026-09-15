@@ -12,6 +12,8 @@ namespace _01.Code.Buildings
         public int DailyUpkeep { get; private set; }
         [field: SerializeField, Min(0), Tooltip("이 시설이 던전 소문에 더하는 무게. 클수록 더 많고 센 모험가를 부른다. 0이면 밖에서 보이지 않는 시설이다.")]
         public int Fame { get; private set; }
+        [field: SerializeField, Min(0f), Tooltip("모험가가 이 시설에 머무는 시간(초). 머무는 동안 돈을 쓰고 지친다. 0이면 그냥 지나간다.")]
+        public float DwellSeconds { get; private set; }
         [field: SerializeField] public Building Prefab { get; private set; }
         [field: SerializeField] public bool Unique { get; private set; }
         [field: SerializeField, Tooltip("중요 시설을 방 중앙 슬롯에만 설치한다.")]

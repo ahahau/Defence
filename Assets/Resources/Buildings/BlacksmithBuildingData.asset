@@ -20,6 +20,7 @@ MonoBehaviour:
   <Cost>k__BackingField: 25
   <DailyUpkeep>k__BackingField: 3
   <Fame>k__BackingField: 2
+  <DwellSeconds>k__BackingField: 3
   <Prefab>k__BackingField: {fileID: 5269904321173266923, guid: c68068101ce8c35468a61dee5f8d161b, type: 3}
   <Unique>k__BackingField: 0
   <CentralOnly>k__BackingField: 1

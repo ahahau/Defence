@@ -18,6 +18,14 @@ namespace _01.Code.Buildings
         [SerializeField] private Color buffFlashColor = new(0.95f, 0.66f, 1f, 1f);
         [SerializeField, Min(0.01f)] private float buffFlashDuration = 0.28f;
 
+        /// <summary>머무는 동안 흘려 받을 총액. 인접 시너지를 여기서 한 번만 반영한다.</summary>
+        public override int DwellGoldTotal => FacilityEconomyRules.ScaleIncome(this, goldReward);
+
+        public override GoldChangeSource DwellGoldSource => GoldChangeSource.Store;
+
+        public override void ReportDwellIncome(int gold) =>
+            costEventChannel?.RaiseEvent(new GoldEarnedEvent(gold, GoldChangeSource.Store));
+
         public void ApplyPassEffect(Combatant enemy)
         {
             // 닫아 둔 시설은 지나가도 아무 일이 없다. 손님도 받지 않고 효과도 주지 않는다.
@@ -28,11 +36,6 @@ namespace _01.Code.Buildings
             if (damageBonus > 0)
                 PlayPassEffectFeedback(enemy, buffFlashColor, buffFlashDuration, buffFeelFeedback);
 
-            var adventurer = enemy.GetComponentInParent<Enemy>();
-            var quotedGold = FacilityEconomyRules.ScaleIncome(this, goldReward);
-            var paidGold = adventurer != null ? adventurer.ResolveStoreSpending(quotedGold) : quotedGold;
-            costEventChannel?.RaiseEvent(new GoldEarnedEvent(paidGold, GoldChangeSource.Store));
-            adventurer?.RecordFacilitySpending(paidGold, quotedGold, GoldChangeSource.Store);
         }
     }
 }

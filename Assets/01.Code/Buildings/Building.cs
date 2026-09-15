@@ -61,6 +61,24 @@ namespace _01.Code.Buildings
         /// <summary>운영 중인 시설인가. 부서졌거나 닫혀 있으면 아니다.</summary>
         public bool IsOperating => !isDestroyed && !isClosed;
 
+        /// <summary>모험가가 여기 머무는 시간(초). 데이터가 정한다.</summary>
+        public float DwellSeconds => Data != null ? Mathf.Max(0f, Data.DwellSeconds) : 0f;
+
+        /// <summary>머무를 수 있는 시설인가.</summary>
+        public bool AcceptsDwell => IsOperating && DwellSeconds > 0f;
+
+        /// <summary>
+        /// 한 번 머무는 동안 모험가가 여기서 쓰는 총액. 시설이 정하고, 머무는 쪽이 시간에 나눠 낸다.
+        /// 0이면 돈을 받지 않는 시설이다.
+        /// </summary>
+        public virtual int DwellGoldTotal => 0;
+
+        /// <summary>이 시설의 수입이 장부에 적히는 줄.</summary>
+        public virtual Events.GoldChangeSource DwellGoldSource => Events.GoldChangeSource.Store;
+
+        /// <summary>머물던 모험가가 낸 금화를 장부에 올린다. 채널이 시설마다 따로라 시설이 직접 쏜다.</summary>
+        public virtual void ReportDwellIncome(int gold) { }
+
         protected virtual void Awake()
         {
             if (damageAnimationTarget == null)

@@ -6,6 +6,7 @@ using _01.Code.Core;
 using _01.Code.Core.Modules;
 using _01.Code.Entities;
 using _01.Code.Events;
+using _01.Code.Manager;
 using _01.Code.StatusEffects;
 using _01.Code.BT;
 using _01.Code.Units;
@@ -288,6 +289,10 @@ namespace _01.Code.Enemies
         {
             if (mover == null) return false;
 
+            // 머무는 동안은 다음 방으로 가지 않는다. 시간이 흐르고 돈이 들어온다.
+            if (TickDwell(deltaTime))
+                return true;
+
             _chaseTimer -= deltaTime;
             if (_chaseTimer > 0f) return true;
 
@@ -358,6 +363,8 @@ namespace _01.Code.Enemies
             if (TryUseBattlefieldCombat(node)) return false;
             if (TryStopOnUnit(node)) return false;
             if (TryLootTreasury(node)) return false;
+            // 싸울 상대도 털 것도 없으면 시설에 눌러앉는다. 머무는 동안이 버는 동안이다.
+            if (TryBeginDwell(node)) return false;
 
             return true;
         }
@@ -634,6 +641,108 @@ namespace _01.Code.Enemies
 
         public int ResolveStoreSpending(int baseAmount) =>
             AdventurerTraitRules.ResolveStoreGold(baseAmount, Trait);
+
+        // ── 시설 체류 ────────────────────────────────────────────────
+
+        private Building _dwellFacility;
+        private float _dwellRemaining;
+
+        /// <summary>낼 금화의 소수점 나머지. 초당 액수가 1 미만이어도 모여서 결국 지불된다.</summary>
+        private float _dwellGoldCarry;
+
+        /// <summary>머물며 쌓인 피로. 지칠수록 약하게 때리고 느리게 걷는다.</summary>
+        public float Fatigue { get; private set; }
+
+        public bool IsDwelling => _dwellFacility != null && _dwellRemaining > 0f;
+
+        /// <summary>지금 머무는 시설. 없으면 null.</summary>
+        public Building DwellFacility => _dwellFacility;
+
+        /// <summary>
+        /// 이 방의 시설에 눌러앉는다. 머물기 시작했으면 true — 부르는 쪽이 이동을 멈춘다.
+        ///
+        /// 한 시설에 한 번만 머문다. 방을 오갈 때마다 다시 눌러앉으면 상점 앞을 왕복하는
+        /// 것만으로 무한히 벌 수 있다.
+        /// </summary>
+        private bool TryBeginDwell(Node node)
+        {
+            if (IsDwelling || node == null || _isReturning || IsDead)
+                return false;
+
+            var facility = node.AssignedBuilding;
+            if (facility == null || !facility.AcceptsDwell || _visitedFacilities.Contains(facility))
+                return false;
+
+            _visitedFacilities.Add(facility);
+            _dwellFacility = facility;
+            _dwellRemaining = facility.DwellSeconds;
+            _dwellGoldCarry = 0f;
+            return true;
+        }
+
+        /// <summary>머무는 동안 흐르는 시간. 아직 머물고 있으면 true.</summary>
+        private bool TickDwell(float deltaTime)
+        {
+            if (!IsDwelling)
+                return false;
+
+            var facility = _dwellFacility;
+            // 머무는 중에 문을 닫거나 부서지면 그 자리에서 일어선다.
+            if (!facility.IsOperating)
+            {
+                EndDwell();
+                return false;
+            }
+
+            var step = Mathf.Min(deltaTime, _dwellRemaining);
+            _dwellRemaining -= step;
+
+            var perSecond = FacilityDwellRules.GoldPerSecond(facility.DwellGoldTotal, facility.DwellSeconds);
+            if (perSecond > 0f)
+            {
+                _dwellGoldCarry += perSecond * step;
+                var payable = Mathf.FloorToInt(_dwellGoldCarry);
+                if (payable > 0)
+                {
+                    _dwellGoldCarry -= payable;
+                    var source = facility.DwellGoldSource;
+                    var paid = source == GoldChangeSource.Store
+                        ? ResolveStoreSpending(payable)
+                        : ResolveFacilitySpending(payable);
+                    facility.ReportDwellIncome(paid);
+                    RecordFacilitySpending(paid, payable, source);
+                }
+            }
+
+            Fatigue = FacilityDwellRules.AccumulateFatigue(Fatigue, step);
+            ApplyFatigueModifiers();
+
+            if (_dwellRemaining > 0f)
+                return true;
+
+            EndDwell();
+            return false;
+        }
+
+        private void EndDwell()
+        {
+            _dwellFacility = null;
+            _dwellRemaining = 0f;
+            _dwellGoldCarry = 0f;
+        }
+
+        /// <summary>피로를 지금 스탯에 반영한다. 같은 키로 덮어써 겹쳐 쌓이지 않는다.</summary>
+        private void ApplyFatigueModifiers()
+        {
+            combatant?.SetAttackModifier(FatigueStatKey, 0f, FacilityDwellRules.AttackMultiplierFor(Fatigue));
+            if (mover != null)
+                mover.FatigueSpeedMultiplier = FacilityDwellRules.MoveMultiplierFor(Fatigue);
+        }
+
+        private static readonly object FatigueStatKey = new();
+
+        /// <summary>이미 머물렀던 시설. 같은 곳에 두 번 눌러앉지 않는다.</summary>
+        private readonly HashSet<Building> _visitedFacilities = new();
 
         public void ReduceFear(int amount)
         {

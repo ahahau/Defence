@@ -13,6 +13,9 @@ namespace _01.Code.Enemies
     public class EnemyMover : MonoBehaviour
     {
         [SerializeField] private float moveSpeed = 5f;
+
+        /// <summary>피로로 느려지는 배율. 1이면 평소 속도다. 시설에 머문 모험가가 낮춘다.</summary>
+        public float FatigueSpeedMultiplier { get; set; } = 1f;
         [SerializeField, Min(0.01f)] private float minMoveDuration = 0.28f;
         [SerializeField, Min(0.01f)] private float maxMoveDuration = 0.75f;
         [SerializeField, Min(0f)] private float visualHopHeight = 0.12f;
@@ -182,7 +185,8 @@ namespace _01.Code.Enemies
         {
             var targetPos = GetEnemyPosition(_currentNode);
             var distance = Vector3.Distance(transform.position, targetPos);
-            var duration = Mathf.Clamp(distance / Mathf.Max(moveSpeed, 0.1f), minMoveDuration, maxMoveDuration);
+            var effectiveSpeed = moveSpeed * Mathf.Clamp(FatigueSpeedMultiplier, 0.1f, 1f);
+            var duration = Mathf.Clamp(distance / Mathf.Max(effectiveSpeed, 0.1f), minMoveDuration, maxMoveDuration);
             var direction = targetPos - transform.position;
             FaceMoveDirection(direction);
 
