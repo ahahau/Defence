@@ -357,12 +357,9 @@ namespace _01.Code.Manager
 
             PrepareObjectiveChoices(_currentDay);
             ResetWaveResults(adjustedEnemyCount);
-            // 민심이 낮은 판은 보상이 오른다 — 뒤처졌을 때 만회할 유일한 통로다.
-            var moraleReward = MoralePolicyManager.Current != null
-                ? MoralePolicyManager.Current.WaveRewardMultiplier
-                : 1f;
-            _currentClearGoldReward = Mathf.RoundToInt(
-                DungeonFameRules.ResolveClearGold(_currentFame) * moraleReward);
+            // 보상은 명성 하나가 정한다. 위험을 만든 것과 값을 치르는 것이 같아야
+            // 플레이어가 "얼마나 키울까"를 계산할 수 있다.
+            _currentClearGoldReward = DungeonFameRules.ResolveClearGold(_currentFame);
             _isWaveRunning = true;
             _unitConditionWearPending = true;
             _activeEnemies.Clear();

@@ -35,11 +35,6 @@ namespace _01.Code.Manager
         [SerializeField, Range(0f, 1f), Tooltip("민심이 바닥일 때 찾아오는 지원자 비율. 0이면 아무도 오지 않는다.")]
         private float applicantsAtZeroMorale = 0.25f;
 
-        [SerializeField, Min(1f),
-         Tooltip("민심이 바닥일 때의 웨이브 보상 배율. 뒤처진 판이 만회할 수 있는 유일한 통로다.\n" +
-                 "민심이 가득할 때는 1이라 잘 굴러가는 판의 균형은 건드리지 않는다.")]
-        private float rewardAtZeroMorale = 1.4f;
-
         [Header("Policies")]
         [SerializeField] private PolicyDataSO[] availablePolicies;
         [SerializeField, Min(1)] private int offeredPolicyCount = 3;
@@ -84,16 +79,6 @@ namespace _01.Code.Manager
         /// </summary>
         public float UpkeepMultiplier =>
             Mathf.Lerp(Mathf.Max(1f, upkeepAtZeroMorale), Mathf.Clamp01(upkeepAtFullMorale), MoraleRatio);
-
-        /// <summary>
-        /// 웨이브 보상 배율. 유지비의 대칭축이다 — 민심이 낮으면 보상이 오른다.
-        ///
-        /// 이게 없으면 민심은 일방통행이 된다. 실패 → 민심↓ → 유지비↑ → 자금난 → 더 실패.
-        /// 실측에서 3일차 광산 하나 차이가 8일차 유닛 한 명 차이로 벌어지고 되돌릴 길이 없었다.
-        /// 뒤처진 판에만 걸리고 잘 굴러가는 판에는 1이라, 성공을 깎지 않고 실패만 눅인다.
-        /// </summary>
-        public float WaveRewardMultiplier =>
-            Mathf.Lerp(Mathf.Max(1f, rewardAtZeroMorale), 1f, MoraleRatio);
 
         /// <summary>민심이 나쁘면 찾아오는 지원자도 줄어든다.</summary>
         public int AdjustRecruitCount(int baseCount)
