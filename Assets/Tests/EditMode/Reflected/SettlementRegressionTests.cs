@@ -328,6 +328,26 @@ namespace Tests.EditMode.Rules
             }
         }
 
+        /// <summary>
+        /// 전투 필드는 입장 경로가 여럿이라(순회·초기화·트리거 자동 입장·유닛 배치) 부르는 쪽마다
+        /// 막으면 하나를 빠뜨린다. 실제로 트리거 하나가 남아, 나머지를 다 막은 뒤에도 실측에서
+        /// 손님이 전투 필드 안에 서 있었다. 문 앞의 판정 자체를 못 박아 둔다.
+        /// </summary>
+        [TestCase("TreasureHunt", true)]
+        [TestCase("Shopping", false)]
+        [TestCase("Rest", false)]
+        public void Battlefield_TurnsAwayAnyoneWhoDidNotComeForTheVault(string purposeName, bool accepted)
+        {
+            var visitor = Visitor(purposeName);
+            var agent = visitor.gameObject.AddComponent(Resolve("_01.Code.BT.BattleAgent"));
+            var accepts = Resolve("_01.Code.BT.NodeBattlefield")
+                .GetMethod("AcceptsAgent", BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.That(accepts, Is.Not.Null, "AcceptsAgent를 찾지 못했습니다.");
+
+            Assert.That(accepts.Invoke(null, new object[] { agent }), Is.EqualTo(accepted),
+                $"{purposeName}으로 온 모험가의 입장 판정이 어긋납니다.");
+        }
+
         [Test]
         public void Trespass_ReconfiguringTheErrandChangesWhoGetsStopped()
         {

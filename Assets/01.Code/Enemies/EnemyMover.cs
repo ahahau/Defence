@@ -64,7 +64,7 @@ namespace _01.Code.Enemies
         {
             get
             {
-                _owner ??= GetComponentInParent<Enemy>();
+                _owner ??= GetComponentInParent<Enemy>(true);
                 return _owner == null || _owner.IsTrespasser;
             }
         }
@@ -73,7 +73,7 @@ namespace _01.Code.Enemies
         {
             CacheVisualPose();
             _battleAgent ??= GetComponent<BattleAgent>();
-            _owner ??= GetComponentInParent<Enemy>();
+            _owner ??= GetComponentInParent<Enemy>(true);
 
             if (_currentNode?.Data != null)
                 VacateNode(_currentNode.Data.Id);

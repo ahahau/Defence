@@ -89,6 +89,7 @@ namespace _01.Code.BT
         public bool TryEnter(BattleAgent agent)
         {
             if (agent == null || !agent.isActiveAndEnabled || !agent.IsAlive) return false;
+            if (!AcceptsAgent(agent)) return false;
 
             // 이미 다른 전투필드에 속해 있으면 새로 들어가지 않는다.
             // (노드 트리거가 겹칠 때 OnTriggerEnter가 _battlefield를 깜빡이게 만들어
@@ -104,6 +105,20 @@ namespace _01.Code.BT
             list.Add(agent);
             agent.SetArena(this, transform.position, arenaRadius);
             return true;
+        }
+
+        /// <summary>
+        /// 이 자리에 들일 상대인가. 볼일이 있어 온 모험가는 들이지 않는다 —
+        /// 들이는 순간 몬스터의 사정거리에 놓이고, 맞은 모험가는 나쁜 후기를 남긴다.
+        ///
+        /// 입장 경로가 여럿이라(순회·초기화·트리거·유닛 배치) 부르는 쪽마다 막으면 반드시
+        /// 하나를 빠뜨린다. 실제로 트리거 자동 입장 하나가 남아, 나머지를 다 막은 뒤에도
+        /// 손님이 전투 필드 안에 서 있었다. 문 앞에서 한 번만 본다.
+        /// </summary>
+        private static bool AcceptsAgent(BattleAgent agent)
+        {
+            var visitor = agent.GetComponentInParent<_01.Code.Enemies.Enemy>(true);
+            return visitor == null || visitor.IsTrespasser;
         }
 
         public void Leave(BattleAgent agent)
