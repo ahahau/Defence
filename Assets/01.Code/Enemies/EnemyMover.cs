@@ -507,6 +507,11 @@ namespace _01.Code.Enemies
             if (node == null || _battleAgent == null)
                 return;
 
+            // 손님은 전투 필드에 들이지 않는다. 들어가는 순간 몬스터의 사정거리에 놓인다.
+            var visitor = GetComponentInParent<Enemy>();
+            if (visitor != null && !visitor.IsTrespasser)
+                return;
+
             node.GetComponent<NodeBattlefield>()?.TryEnter(_battleAgent);
         }
 

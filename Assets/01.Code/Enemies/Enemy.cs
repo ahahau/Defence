@@ -454,7 +454,7 @@ namespace _01.Code.Enemies
 
             // 통로 함정: 노드 칸은 유닛과 자리를 다투지만 통로는 함정 몫이다.
             // 노드 도착 때와 같은 순서로 함정을 먼저 터뜨리고 통과 효과를 얹는다.
-            if (building is Trap edgeTrap)
+            if (building is Trap edgeTrap && IsTrespasser)
             {
                 TriggerSingleTrap(mover.CurrentNode, edgeTrap);
                 if (!combatant.IsAlive)
@@ -500,7 +500,8 @@ namespace _01.Code.Enemies
 
         private bool TryStopOnUnit(Node node)
         {
-            if (node == null || !node.HasCombatReadyUnit) return false;
+            // 손님은 몬스터를 지나쳐 간다. 막아세우는 것은 금고를 노린 자뿐이다.
+            if (node == null || !node.HasCombatReadyUnit || !IsTrespasser) return false;
             HandleUnitEncounter(node);
             return true;
         }
@@ -513,6 +514,14 @@ namespace _01.Code.Enemies
             var battlefield = node.GetComponent<NodeBattlefield>();
             if (battlefield == null)
                 return false;
+
+            // 모든 방이 전투 필드를 갖고 있어 손님도 여기로 끌려 들어간다.
+            // 막아야 할 상대가 아니면 아예 들이지 않는다 — 들여보내면 몬스터가 손님을 때린다.
+            if (!IsTrespasser)
+            {
+                battlefield.Leave(_battleAgent);
+                return false;
+            }
 
             battlefield.TryEnter(_battleAgent);
             if (!battlefield.HasOpponents(_battleAgent.Team))
@@ -562,6 +571,10 @@ namespace _01.Code.Enemies
             var node = mover != null ? mover.CurrentNode : null;
             var grid = node != null ? node.TrapGrid : null;
             if (grid == null || combatant == null || !combatant.IsAlive)
+                return;
+
+            // 돈 내러 온 손님 위에서는 터지지 않는다. 경비 장치이지 살상 장치가 아니다.
+            if (!IsTrespasser)
                 return;
 
             var radius = Mathf.Max(0.01f, grid.CellSize * trapContactCellRatio);
@@ -678,6 +691,15 @@ namespace _01.Code.Enemies
         public float Fatigue { get; private set; }
 
         public bool IsDwelling => _dwellFacility != null && _dwellRemaining > 0f;
+
+        /// <summary>
+        /// 막아야 할 상대인가. 금고를 노리고 온 자만 해당한다.
+        ///
+        /// 나머지는 손님이다. 손님을 때리면 만족도가 깎이고 그 후기가 평판을 끌어내려
+        /// 다음 날 벌이가 준다. 그래서 몬스터와 함정은 무기가 아니라 경비다 —
+        /// 누구를 막고 누구를 들일지가 배치의 질문이 된다.
+        /// </summary>
+        public bool IsTrespasser => VisitPurpose == AdventurerVisitPurpose.TreasureHunt;
 
         /// <summary>지금 머무는 시설. 없으면 null.</summary>
         public Building DwellFacility => _dwellFacility;

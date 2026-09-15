@@ -262,6 +262,44 @@ namespace Tests.EditMode.Rules
             return controller;
         }
 
+        // ── 경비 판정 ────────────────────────────────────────────────
+        // 손님을 때리면 만족도가 깎이고 후기가 평판을 끌어내린다. 그래서 몬스터와 함정은
+        // 무기가 아니라 경비다 — 금고를 노린 자만 막고 나머지는 들여보내야 한다.
+
+        private Component Visitor(string purposeName)
+        {
+            var enemy = Component("_01.Code.Enemies.Enemy", "Visitor " + purposeName);
+            var purpose = Enum.Parse(Resolve("_01.Code.Enemies.AdventurerVisitPurpose"), purposeName);
+            enemy.GetType().GetMethod("ConfigureVisitProfile").Invoke(enemy, new[] { purpose, (object)50 });
+            return enemy;
+        }
+
+        [TestCase("TreasureHunt", true)]
+        [TestCase("Shopping", false)]
+        [TestCase("Rest", false)]
+        [TestCase("EquipmentUpgrade", false)]
+        public void Trespass_OnlyTheOnesAfterTheVaultCountAsIntruders(string purposeName, bool expected)
+        {
+            var visitor = Visitor(purposeName);
+
+            Assert.That(Flag(visitor, "IsTrespasser"), Is.EqualTo(expected),
+                $"{purposeName}으로 온 방문객의 경비 판정이 어긋납니다.");
+        }
+
+        [Test]
+        public void Trespass_ReconfiguringTheErrandChangesWhoGetsStopped()
+        {
+            var visitor = Visitor("Shopping");
+            Assert.That(Flag(visitor, "IsTrespasser"), Is.False);
+
+            // 같은 손님이라도 온 이유가 바뀌면 경비 대상이 바뀐다.
+            var configure = visitor.GetType().GetMethod("ConfigureVisitProfile");
+            var hunt = Enum.Parse(Resolve("_01.Code.Enemies.AdventurerVisitPurpose"), "TreasureHunt");
+            configure.Invoke(visitor, new[] { hunt, (object)50 });
+
+            Assert.That(Flag(visitor, "IsTrespasser"), Is.True);
+        }
+
         private static float Setting(object controller) =>
             (float)controller.GetType().GetProperty("Setting").GetValue(controller);
 
