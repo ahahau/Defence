@@ -466,6 +466,87 @@ namespace Tests.EditMode.Gameplay
             }
         }
 
+        /// <summary>
+        /// 온 목적이 갈 길을 가르는지 본다.
+        ///
+        /// 예전에는 누구든 금고로 직진했다. 그러면 경비를 어디에 세우든 모두가 그 앞을 지나서,
+        /// 길을 막으면 손님이 막히고 열면 도둑이 지나갔다 — 배치에 고를 것이 없었다.
+        /// 보물을 노린 자만 금고로 가고 나머지는 볼일 보러 시설로 가야 선택이 생긴다.
+        /// </summary>
+        [Test]
+        public void RouteGoal_ErrandsLeadToFacilitiesAndOnlyHuntersHeadForTheVault()
+        {
+            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            GameObject visitorObject = null;
+            try
+            {
+                var nodeManagerType = RequireType("_01.Code.MapCreateSystem.DungeonNodeManager");
+                var graphType = RequireType("_01.Code.MapCreateSystem.DungeonGraph");
+                var nodeKindType = RequireType("_01.Code.MapCreateSystem.DungeonNodeType");
+                var placementType = RequireType("_01.Code.Buildings.BuildingPlacement");
+                var enemyType = RequireType("_01.Code.Enemies.Enemy");
+                var purposeType = RequireType("_01.Code.Enemies.AdventurerVisitPurpose");
+                Component manager = null;
+                foreach (var root in scene.GetRootGameObjects())
+                    manager ??= root.GetComponentInChildren(nodeManagerType, true);
+                Assert.That(manager, Is.Not.Null);
+
+                var graph = Activator.CreateInstance(graphType);
+                var kind = Enum.Parse(nodeKindType, "Corridor");
+                var addNode = graphType.GetMethod("AddNode");
+                var createNode = nodeManagerType.GetMethod("CreateNode");
+                var storeModel = addNode.Invoke(graph, new object[] { kind, new Vector2Int(1200, 0) });
+                var vaultModel = addNode.Invoke(graph, new object[] { kind, new Vector2Int(1201, 0) });
+                var storeNode = (Component)createNode.Invoke(manager, new[] { storeModel });
+                var vaultNode = (Component)createNode.Invoke(manager, new[] { vaultModel });
+
+                var storeData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
+                    "Assets/03.SO/Buildings/StoreBuildingData.asset");
+                var treasuryData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
+                    "Assets/Resources/Buildings/TreasuryBuildingData.asset");
+                var install = placementType.GetMethod("InstallCentral", BindingFlags.Public | BindingFlags.Static);
+                var store = install.Invoke(null, new object[] { storeNode, storeData, 0.92f });
+                var treasury = install.Invoke(null, new object[] { vaultNode, treasuryData, 0.92f });
+                Assert.That(store, Is.Not.Null);
+                Assert.That(treasury, Is.Not.Null);
+                treasury.GetType().GetMethod("RestoreStoredGold").Invoke(treasury, new object[] { 100 });
+
+                // 비활성 상태로 만들어 Awake를 재운다. 프리팹이 아니라 부품만 필요하다.
+                visitorObject = new GameObject("Route visitor");
+                visitorObject.SetActive(false);
+                visitorObject.transform.position = storeNode.transform.position;
+                var visitor = visitorObject.AddComponent(enemyType);
+                var configure = enemyType.GetMethod("ConfigureVisitProfile");
+                var resolveGoal = enemyType.GetMethod("ResolveRouteGoal");
+
+                configure.Invoke(visitor, new[] { Enum.Parse(purposeType, "Shopping"), (object)50 });
+                Assert.That(resolveGoal.Invoke(visitor, null), Is.SameAs(storeNode),
+                    "쇼핑하러 온 모험가는 상점으로 향해야 합니다.");
+
+                configure.Invoke(visitor, new[] { Enum.Parse(purposeType, "TreasureHunt"), (object)50 });
+                Assert.That(resolveGoal.Invoke(visitor, null), Is.SameAs(vaultNode),
+                    "보물을 노리고 온 자만 금고로 직진합니다.");
+
+                // 대장간이 없으니 갈 곳이 없다. 그래도 금고로 새면 안 된다.
+                configure.Invoke(visitor, new[] { Enum.Parse(purposeType, "EquipmentUpgrade"), (object)50 });
+                Assert.That(resolveGoal.Invoke(visitor, null), Is.Not.SameAs(vaultNode),
+                    "볼일 볼 곳이 없다고 금고로 향하면 길이 갈라지지 않습니다.");
+
+                // 예산을 다 쓰면 더 들를 이유가 없다.
+                configure.Invoke(visitor, new[] { Enum.Parse(purposeType, "Shopping"), (object)0 });
+                Assert.That(resolveGoal.Invoke(visitor, null), Is.Null,
+                    "쓸 돈이 없는 모험가는 목적지 없이 돌아다니다 나가야 합니다.");
+
+                nodeManagerType.GetMethod("ClearAll").Invoke(manager, null);
+            }
+            finally
+            {
+                if (visitorObject != null)
+                    UnityEngine.Object.DestroyImmediate(visitorObject);
+                EditorSceneManager.CloseScene(scene, true);
+            }
+        }
+
         // ── 도구 ───────────────────────────────────────────────
 
         private static IEnumerable<(ScriptableObject asset, string path)> LoadAll(string typeName)

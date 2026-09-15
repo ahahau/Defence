@@ -35,8 +35,15 @@ namespace _01.Code.Enemies
         private Vector3 _visualStartLocalEulerAngles;
         private bool _isTurning;
         private BattleAgent _battleAgent;
+        private Enemy _owner;
 
         public Func<Node, bool> NodeArrived { get; set; }
+        /// <summary>
+        /// 다음에 향할 곳을 정한다. null을 돌려주면 목적지 없이 배회한다.
+        ///
+        /// 비워 두면 예전처럼 금고를 향한다 — 목적을 모르는 이동체(보스·테스트)는 침입자로 본다.
+        /// </summary>
+        public Func<Node> RouteGoalResolver { get; set; }
         /// <summary>라인(엣지)에 설치된 건물을 지나갈 때 호출 — 이동 구간 중간(라인 위 건물 위치)에서 발동.</summary>
         public Action<_01.Code.Buildings.Building> EdgeBuildingPassed { get; set; }
         /// <summary>파티(그룹) 스폰 시 멤버끼리 겹치지 않도록 노드 기준 위치에 더하는 대형 오프셋.</summary>
@@ -46,10 +53,27 @@ namespace _01.Code.Enemies
         public bool IsMoving => _isTurning;
         public NodeBattlefield CurrentBattlefield => _battleAgent != null ? _battleAgent.Battlefield : null;
 
+        /// <summary>
+        /// 전투 필드에 등록할 상대인가. 볼일이 있어 온 모험가는 등록하지 않는다 —
+        /// 등록하는 순간 몬스터의 사정거리에 들어가고, 맞은 모험가는 나쁜 후기를 남긴다.
+        ///
+        /// 들어갈 생각이 없으면 정원이 찼는지도 따지지 않는다. 따지면 몬스터로 꽉 찬 방이
+        /// 손님에게도 막혀, 갈 곳 없는 모험가가 복도에 굳는다.
+        /// </summary>
+        private bool JoinsBattlefields
+        {
+            get
+            {
+                _owner ??= GetComponentInParent<Enemy>();
+                return _owner == null || _owner.IsTrespasser;
+            }
+        }
+
         public void Initialize(Node startNode)
         {
             CacheVisualPose();
             _battleAgent ??= GetComponent<BattleAgent>();
+            _owner ??= GetComponentInParent<Enemy>();
 
             if (_currentNode?.Data != null)
                 VacateNode(_currentNode.Data.Id);
@@ -146,7 +170,7 @@ namespace _01.Code.Enemies
             }
 
             var previousBattlefield = CurrentBattlefield;
-            var nextBattlefield = nextNode.GetComponent<NodeBattlefield>();
+            var nextBattlefield = JoinsBattlefields ? nextNode.GetComponent<NodeBattlefield>() : null;
             previousBattlefield?.Leave(_battleAgent);
             if (nextBattlefield != null && _battleAgent != null && !nextBattlefield.TryEnter(_battleAgent))
             {
@@ -297,7 +321,8 @@ namespace _01.Code.Enemies
             if (_currentNode?.Data == null)
                 return null;
 
-            // 1순위: A*로 금고까지의 최단 경로를 따라간다(벽 회피).
+            // 1순위: A*로 목적지까지의 최단 경로를 따라간다(벽 회피).
+            // 목적지는 저마다 다르다 — 보물을 노린 자는 금고로, 볼일이 있는 모험가는 그 시설로.
             var pathStep = SelectNextNodeByPathfinding(out var waitForPath);
             if (pathStep != null)
                 return pathStep;
@@ -306,7 +331,7 @@ namespace _01.Code.Enemies
             if (waitForPath)
                 return null;
 
-            // 폴백: 금고가 없거나 경로가 완전히 막힌 경우 기존 랜덤 배회(벽 노드는 제외).
+            // 폴백: 목적지가 없거나(볼일을 마친 모험가) 경로가 완전히 막힌 경우 랜덤 배회(벽 노드는 제외).
             var unvisitedFree = new List<Node>();
             var visitedFree = new List<Node>();
 
@@ -319,9 +344,12 @@ namespace _01.Code.Enemies
                 if (IsNodeOccupied(id))
                     continue;
 
-                var battlefield = node.GetComponent<NodeBattlefield>();
-                if (battlefield != null && _battleAgent != null && !battlefield.CanEnter(_battleAgent.Team))
-                    continue;
+                if (JoinsBattlefields)
+                {
+                    var battlefield = node.GetComponent<NodeBattlefield>();
+                    if (battlefield != null && _battleAgent != null && !battlefield.CanEnter(_battleAgent.Team))
+                        continue;
+                }
 
                 if (!_visitedNodes.Contains(id))
                     unvisitedFree.Add(node);
@@ -338,14 +366,16 @@ namespace _01.Code.Enemies
             return null;
         }
 
-        /// <summary>A*: 금고 우선, 없으면 핵심부로 가는 최단 경로의 다음 노드.
+        /// <summary>A*: <see cref="RouteGoalResolver"/>가 정한 목적지로 가는 최단 경로의 다음 노드.
         /// 경로 자체가 없으면 null + shouldWait=false(랜덤 배회 폴백),
         /// 경로는 있는데 다음 칸이 점유/정원 초과면 null + shouldWait=true(이번 턴 대기).</summary>
         private Node SelectNextNodeByPathfinding(out bool shouldWait)
         {
             shouldWait = false;
 
-            var goal = IntrusionThreat.FindPriorityTarget(transform.position, out _);
+            var goal = RouteGoalResolver != null
+                ? RouteGoalResolver()
+                : IntrusionThreat.FindPriorityTarget(transform.position, out _);
             if (goal == null || goal == _currentNode)
                 return null;
 
@@ -386,9 +416,12 @@ namespace _01.Code.Enemies
                 if (node == null || node.IsPassBlocked || IsNodeOccupied(id))
                     continue;
 
-                var battlefield = node.GetComponent<NodeBattlefield>();
-                if (battlefield != null && _battleAgent != null && !battlefield.CanEnter(_battleAgent.Team))
-                    continue;
+                if (JoinsBattlefields)
+                {
+                    var battlefield = node.GetComponent<NodeBattlefield>();
+                    if (battlefield != null && _battleAgent != null && !battlefield.CanEnter(_battleAgent.Team))
+                        continue;
+                }
 
                 if (node == goal)
                 {
@@ -507,9 +540,7 @@ namespace _01.Code.Enemies
             if (node == null || _battleAgent == null)
                 return;
 
-            // 손님은 전투 필드에 들이지 않는다. 들어가는 순간 몬스터의 사정거리에 놓인다.
-            var visitor = GetComponentInParent<Enemy>();
-            if (visitor != null && !visitor.IsTrespasser)
+            if (!JoinsBattlefields)
                 return;
 
             node.GetComponent<NodeBattlefield>()?.TryEnter(_battleAgent);

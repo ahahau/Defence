@@ -238,6 +238,7 @@ namespace _01.Code.Enemies
 
             mover.NodeArrived = HandleNodeArrived;
             mover.EdgeBuildingPassed = HandleEdgeBuildingPassed;
+            mover.RouteGoalResolver = ResolveRouteGoal;
             mover.Initialize(startNode);
 
             _isInitialized = true;
@@ -394,6 +395,11 @@ namespace _01.Code.Enemies
         private bool TryLootTreasury(Node node)
         {
             if (node == null)
+                return false;
+
+            // 금고를 노리고 온 자만 턴다. 볼일을 보러 온 모험가는 금고를 지나가도 손대지 않는다 —
+            // 손대면 경비를 세울 이유가 목적과 무관해지고, 길을 가르는 의미가 사라진다.
+            if (!IsTrespasser)
                 return false;
 
             // 금고는 칸 건물이라 한 노드에 여럿 설 수 있다. 보관 금화가 남은 금고를 턴다.
@@ -703,6 +709,58 @@ namespace _01.Code.Enemies
 
         /// <summary>지금 머무는 시설. 없으면 null.</summary>
         public Building DwellFacility => _dwellFacility;
+
+        /// <summary>
+        /// 오늘 향할 곳. 보물을 노리고 온 자만 금고로 직진하고, 나머지는 볼일이 있는 시설로 간다.
+        ///
+        /// 목적이 경로를 가르는 것이 요점이다. 예전에는 누구든 금고로 직진했으므로 경비를 어디에
+        /// 두든 그 앞을 모두가 지났다 — 길을 막으면 손님이 막히고 열면 도둑이 지나가, 배치에
+        /// 고를 것이 없었다. 길이 갈라져야 시설로 가는 길은 열어 두고 금고로 가는 길만
+        /// 잠그는 선택이 생긴다.
+        /// </summary>
+        public Node ResolveRouteGoal()
+        {
+            if (IsTrespasser)
+                return IntrusionThreat.FindPriorityTarget(transform.position, out _);
+
+            return FindErrandNode();
+        }
+
+        /// <summary>
+        /// 볼일을 볼 수 있는 가장 가까운 시설. 없으면 null — 목적지 없이 배회하다 돌아간다.
+        ///
+        /// 이미 들른 시설과 문 닫은 시설은 뺀다. 빼지 않으면 같은 상점 앞을 왕복하는 것이
+        /// 목적지가 되어, 들어가지도 못할 문 앞에서 하루를 보낸다.
+        /// </summary>
+        private Node FindErrandNode()
+        {
+            if (_isReturning || RemainingBudget <= 0 || HasFulfilledPurpose)
+                return null;
+
+            Node best = null;
+            var bestDistance = float.MaxValue;
+            var from = (Vector2)transform.position;
+
+            foreach (var node in Node.ActiveNodes)
+            {
+                if (node == null || node.IsPassBlocked)
+                    continue;
+
+                var facility = node.AssignedBuilding;
+                if (facility == null || !facility.AcceptsDwell
+                    || _visitedFacilities.Contains(facility) || !MatchesVisitPurpose(facility))
+                    continue;
+
+                var distance = ((Vector2)node.transform.position - from).sqrMagnitude;
+                if (distance >= bestDistance)
+                    continue;
+
+                bestDistance = distance;
+                best = node;
+            }
+
+            return best;
+        }
 
         /// <summary>
         /// 이 방의 시설에 눌러앉는다. 머물기 시작했으면 true — 부르는 쪽이 이동을 멈춘다.
