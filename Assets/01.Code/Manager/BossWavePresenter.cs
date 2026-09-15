@@ -118,8 +118,6 @@ namespace _01.Code.Manager
             cam.DOKill();
             camTransform.DOMove(focusPosition, cinematicZoomDuration).SetEase(Ease.InOutQuad).SetUpdate(true);
             cam.DOOrthoSize(zoomSize, cinematicZoomDuration).SetEase(Ease.InOutQuad).SetUpdate(true);
-            // 시네마틱 동안 화면 가장자리를 조여 시선을 보스에 모은다.
-            ScenePostProcessing.PulseVignette(0.18f, cinematicZoomDuration * 2f + cinematicHoldDuration);
 
             yield return new WaitForSecondsRealtime(cinematicZoomDuration + cinematicHoldDuration);
 
