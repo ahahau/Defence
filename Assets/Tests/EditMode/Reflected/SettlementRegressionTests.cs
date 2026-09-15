@@ -265,6 +265,9 @@ namespace Tests.EditMode.Rules
         private static float Setting(object controller) =>
             (float)controller.GetType().GetProperty("Setting").GetValue(controller);
 
+        private static bool Flag(object target, string property) =>
+            (bool)target.GetType().GetProperty(property).GetValue(target);
+
         [Test]
         public void Speed_ModalReleaseReturnsToTheSpeedThePlayerChose()
         {
@@ -304,6 +307,45 @@ namespace Tests.EditMode.Rules
 
             release.Invoke(controller, new object[] { second });
             Assert.That(Time.timeScale, Is.EqualTo(1f));
+        }
+
+        [Test]
+        public void Speed_ReportsItIsStoppedWhileAWindowHoldsTheClock()
+        {
+            var controller = SpeedController();
+            var modal = new GameObject("Modal");
+            created.Add(modal);
+
+            Assert.That(Flag(controller, "IsPaused"), Is.False);
+
+            controller.GetType().GetMethod("Suspend").Invoke(controller, new object[] { modal });
+
+            // 창이 시간을 세워 둔 동안 "안 멈췄다"고 답하면, 아무도 움직이지 않는 화면을
+            // 정상으로 읽게 된다. 이걸 믿고 디버깅하다 실제로 한참 헤맸다.
+            Assert.That(Time.timeScale, Is.Zero);
+            Assert.That(Flag(controller, "IsPaused"), Is.True,
+                "창이 세운 것도 멈춘 것입니다.");
+            Assert.That(Flag(controller, "IsPausedByPlayer"), Is.False,
+                "플레이어가 세운 것은 아닙니다.");
+        }
+
+        [Test]
+        public void Speed_SpaceDoesNotResumeWhatAWindowStopped()
+        {
+            var controller = SpeedController();
+            var modal = new GameObject("Modal");
+            created.Add(modal);
+
+            var toggle = controller.GetType().GetMethod("TogglePause");
+            controller.GetType().GetMethod("Suspend").Invoke(controller, new object[] { modal });
+
+            // 창이 떠 있는 동안 토글이 "재개"로 동작하면, 창을 닫는 순간
+            // 플레이어가 고른 적 없는 배속이 남는다.
+            toggle.Invoke(controller, null);
+            Assert.That(Setting(controller), Is.Zero, "토글은 플레이어 배속을 0으로 내립니다.");
+
+            controller.GetType().GetMethod("Release").Invoke(controller, new object[] { modal });
+            Assert.That(Time.timeScale, Is.Zero, "창이 닫혀도 플레이어가 세운 멈춤은 남습니다.");
         }
 
         [Test]

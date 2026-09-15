@@ -27,10 +27,24 @@ namespace _01.Code.Manager
         /// <summary>플레이어가 고른 배속. 연출이 끝나면 언제나 이 값으로 돌아온다.</summary>
         public float Setting { get; private set; } = NormalSpeed;
 
-        public bool IsPaused => Setting <= 0f;
-
         /// <summary>지금 시간을 멈춰 둔 것들. 모달 두 개가 겹쳐도 둘 다 닫혀야 풀린다.</summary>
         private readonly HashSet<Object> _suspenders = new();
+
+        /// <summary>
+        /// 지금 세상이 멈춰 있는가. 플레이어가 세웠든 창이 세웠든 멈춘 것은 멈춘 것이다.
+        ///
+        /// 전에는 플레이어가 고른 배속만 봤다. 그래서 정책 창이 시간을 세워 둔 동안에도
+        /// "안 멈췄다"고 답했고, 적이 한 발도 움직이지 않는 화면을 정상으로 읽게 만들었다.
+        /// </summary>
+        public bool IsPaused => Setting <= 0f || _suspenders.Count > 0;
+
+        /// <summary>
+        /// 플레이어가 직접 세워 둔 상태인가. 창이 세운 것은 여기 포함되지 않는다.
+        ///
+        /// 멈춤 버튼과 스페이스가 이 값을 본다. 창이 떠 있다고 해서 스페이스가 "재개"로
+        /// 바뀌면, 창을 닫는 순간 플레이어가 고른 적 없는 배속으로 돌아간다.
+        /// </summary>
+        public bool IsPausedByPlayer => Setting <= 0f;
 
         /// <summary>배속이 바뀌었을 때. 버튼 표시를 맞추는 쪽이 듣는다.</summary>
         public event System.Action<float> SettingChanged;
@@ -93,7 +107,7 @@ namespace _01.Code.Manager
             SettingChanged?.Invoke(Setting);
         }
 
-        public void TogglePause() => SetSetting(IsPaused ? NormalSpeed : PausedSpeed);
+        public void TogglePause() => SetSetting(IsPausedByPlayer ? NormalSpeed : PausedSpeed);
 
         /// <summary>
         /// 모달이나 연출이 시간을 멈춘다. 같은 주인이 여러 번 불러도 한 번으로 센다.
@@ -140,6 +154,6 @@ namespace _01.Code.Manager
             Current != null ? (Current._suspenders.Count > 0 ? PausedSpeed : Current.Setting) : NormalSpeed;
 
         /// <summary>지금 연출을 재생해도 되는가. 멈춰 있으면 화면이 굳으므로 건너뛴다.</summary>
-        public static bool AllowsTransientEffects => Current == null || (!Current.IsPaused && Current._suspenders.Count == 0);
+        public static bool AllowsTransientEffects => Current == null || !Current.IsPaused;
     }
 }
