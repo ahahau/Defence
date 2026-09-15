@@ -378,7 +378,6 @@ namespace _01.Code.UI
                     + CoreLoopFeatureUnlocks.GetPreparationHint(day)
                     + threatText
                     + traitText
-                    + BuildStreakLine()
                     + (waveManager != null
                         ? $"\n<color=#8FD6FF>선택 목표 · {waveManager.GetSelectedObjectiveSummary(enemyCount)}</color>"
                         : string.Empty);
@@ -429,17 +428,6 @@ namespace _01.Code.UI
             return $"<color=#FFCC66>명성 {total}</color>"
                    + $" <size=85%>(금고 {fromGold} · 시설 {fromFacilities})</size>"
                    + " · 높을수록 더 많고 강한 모험가가 옵니다\n";
-        }
-
-        /// <summary>
-        /// 연속 방어가 걸려 있으면 준비 화면에 한 줄 붙인다.
-        /// 보상이 오른 것과 인원이 는 것을 함께 보여야, 계속 밀어붙일지가 판단이 된다.
-        /// </summary>
-        private static string BuildStreakLine()
-        {
-            var streak = DefenseStreakSystem.Current;
-            var line = streak != null ? streak.DescribeForPreparation() : string.Empty;
-            return string.IsNullOrEmpty(line) ? string.Empty : "\n" + line;
         }
 
         private void HidePreparationHud()

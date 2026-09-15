@@ -137,9 +137,7 @@ namespace _01.Code.Manager
         /// </summary>
         private int ResolveWaveEnemyCount(int baseEnemyCount)
         {
-            var adjusted = GetConquestAdjustedEnemyCount(baseEnemyCount);
-            var streak = DefenseStreakSystem.Current;
-            return adjusted + (streak != null ? streak.ExtraEnemies : 0);
+            return GetConquestAdjustedEnemyCount(baseEnemyCount);
         }
 
         public WaveThreatPreview GetThreatPreview(int day) =>
@@ -388,8 +386,7 @@ namespace _01.Code.Manager
                 ? MoralePolicyManager.Current.WaveRewardMultiplier
                 : 1f;
             _currentClearGoldReward = Mathf.RoundToInt(
-                CoreCohesionSystem.ScaleGoldReward(DungeonFameRules.ResolveClearGold(_currentFame)) * moraleReward
-                * (DefenseStreakSystem.Current != null ? DefenseStreakSystem.Current.RewardMultiplier : 1f));
+                DungeonFameRules.ResolveClearGold(_currentFame) * moraleReward);
             _isWaveRunning = true;
             _unitConditionWearPending = true;
             _activeEnemies.Clear();
