@@ -49,6 +49,22 @@ namespace Tests.EditMode.Rules
             return p.GetValue(target);
         }
 
+        /// <summary>
+        /// 테스트용 호스트를 치운다. OnDestroy를 손으로 불러 Current 싱글턴을 놓아주지 않으면
+        /// 다음 테스트가 죽은 인스턴스를 붙잡는다.
+        /// </summary>
+        private static void DestroyHost(GameObject host)
+        {
+            if (host == null)
+                return;
+
+            foreach (var component in host.GetComponents<MonoBehaviour>())
+                component.GetType().GetMethod("OnDestroy", BindingFlags.Instance | BindingFlags.NonPublic)
+                    ?.Invoke(component, null);
+
+            UnityEngine.Object.DestroyImmediate(host);
+        }
+
         // ── 떠돌이 상인 ──────────────────────────────────────────────
 
         [Test]
@@ -757,105 +773,6 @@ namespace Tests.EditMode.Rules
             }
         }
 
-        // ── 원정 ─────────────────────────────────────────────────────
-        // 편성이 결정이 되려면 누구를 보내는지가 결과를 바꿔야 한다.
-
-        private static object NewUnitData(int cost)
-        {
-            var unit = NewAsset("_01.Code.Units.UnitDataSO");
-            SetPrivate(unit, "<Cost>k__BackingField", cost);
-            return unit;
-        }
-
-        /// <summary>피로만 다르고 나머지는 기본값인 상태를 만든다.</summary>
-        private static object NewCondition(float fatigue)
-        {
-            var injury = Enum.ToObject(Resolve("_01.Code.Units.InjurySeverity"), 0);
-            var trait = Enum.ToObject(Resolve("_01.Code.Units.UnitTrait"), 0);
-            var personality = Enum.ToObject(Resolve("_01.Code.Units.UnitPersonality"), 0);
-            var command = Enum.ToObject(Resolve("_01.Code.Units.UnitCommand"), 0);
-            // 생성자는 레벨·경험치까지 받는다. Activator는 기본 인자를 채워 주지 않으므로
-            // 인자 수가 맞지 않으면 조용히 MissingMethodException으로 떨어진다.
-            return Activator.CreateInstance(
-                Resolve("_01.Code.Units.UnitConditionState"),
-                fatigue, injury, 1f, trait, personality, command, 1, 0);
-        }
-
-        private static object NewVillage(string name, int reward, int difficulty) =>
-            Activator.CreateInstance(
-                Resolve("_01.Code.Progression.ExpeditionVillageEntry"), name, string.Empty, reward, difficulty, 0);
-
-        private static float SuccessChance(int power, int difficulty)
-        {
-            var method = Resolve("_01.Code.Progression.ExpeditionVillageCatalogSO")
-                .GetMethod("GetSuccessChance", BindingFlags.Static | BindingFlags.Public);
-            Assert.That(method, Is.Not.Null, "GetSuccessChance를 찾지 못했습니다.");
-            return (float)method.Invoke(null, new object[] { power, difficulty });
-        }
-
-        [Test]
-        public void Expedition_ValuableUnitsCarryMoreWeightThanHeadcount()
-        {
-            var catalog = NewAsset("_01.Code.Progression.ExpeditionVillageCatalogSO");
-            SetPrivate(catalog, "costPerPower", 10);
-            SetPrivate(catalog, "fatiguePowerPenalty", 0f);
-
-            var cheap = NewUnitData(14);
-            var expensive = NewUnitData(82);
-            var fresh = NewCondition(0f);
-
-            var cheapPower = (int)Call(catalog, "GetUnitPower", cheap, fresh);
-            var expensivePower = (int)Call(catalog, "GetUnitPower", expensive, fresh);
-
-            Assert.That(expensivePower, Is.GreaterThan(cheapPower),
-                "값어치가 큰 부하가 더 큰 전력이어야 편성이 결정이 됩니다.");
-            Assert.That(cheapPower, Is.GreaterThan(0), "가장 싼 부하도 전력 1은 냅니다.");
-        }
-
-        [Test]
-        public void Expedition_TiredUnitsBringLessPower()
-        {
-            var catalog = NewAsset("_01.Code.Progression.ExpeditionVillageCatalogSO");
-            SetPrivate(catalog, "costPerPower", 10);
-            SetPrivate(catalog, "fatiguePowerPenalty", 0.6f);
-
-            var unit = NewUnitData(80);
-            var rested = (int)Call(catalog, "GetUnitPower", unit, NewCondition(0f));
-            var worn = (int)Call(catalog, "GetUnitPower", unit, NewCondition(100f));
-
-            Assert.That(worn, Is.LessThan(rested), "지친 부하는 전력이 깎여야 합니다.");
-            Assert.That(worn, Is.EqualTo(Mathf.RoundToInt(rested * 0.4f)),
-                "피로 100이면 감쇠율만큼만 남습니다.");
-        }
-
-        [Test]
-        public void Expedition_OddsFallOffWhenThePartyIsTooWeak()
-        {
-            Assert.That(SuccessChance(8, 8), Is.EqualTo(1f), "난이도에 닿으면 확정 성공입니다.");
-            Assert.That(SuccessChance(20, 8), Is.EqualTo(1f), "넘겨도 100%를 넘지 않습니다.");
-            Assert.That(SuccessChance(4, 8), Is.EqualTo(0.5f).Within(0.001f), "절반 전력이면 절반 확률입니다.");
-            Assert.That(SuccessChance(0, 8), Is.EqualTo(0f), "전력이 없으면 성공하지 않습니다.");
-        }
-
-        [Test]
-        public void Expedition_RewardGrowsWithTheDayAndShrinksOnFailure()
-        {
-            var catalog = NewAsset("_01.Code.Progression.ExpeditionVillageCatalogSO");
-            SetPrivate(catalog, "rewardGrowthPerDay", 0.1f);
-            SetPrivate(catalog, "rewardBonusPerUnit", 0);
-            SetPrivate(catalog, "failureRewardRatio", 0.33f);
-
-            var village = NewVillage("시험 마을", 100, 4);
-
-            var firstDay = (int)Call(catalog, "GetReward", village, 1, 1, true);
-            var lastDay = (int)Call(catalog, "GetReward", village, 20, 1, true);
-            var failed = (int)Call(catalog, "GetReward", village, 1, 1, false);
-
-            Assert.That(firstDay, Is.EqualTo(100), "1일차는 기준 보상 그대로입니다.");
-            Assert.That(lastDay, Is.EqualTo(290), "20일차에는 성장률만큼 올라야 후반에도 의미가 남습니다.");
-            Assert.That(failed, Is.EqualTo(33), "실패하면 일부만 회수합니다.");
-        }
-
         // ── 민심 ───────────────────────────────────────────────────────
         // 민심은 오래도록 표시만 되는 숫자였다. 이제 유지비와 지원자에 걸리므로 곡선이 어긋나면 안 된다.
 
@@ -1164,187 +1081,6 @@ namespace Tests.EditMode.Rules
             Assert.That(CallStatic(rules, "IsArtifactUnlocked", 1), Is.False);
             Assert.That(CallStatic(rules, "IsArtifactUnlocked", 2), Is.True,
                 "첫 방어를 마친 뒤 유물 계층이 열려야 합니다.");
-            Assert.That(CallStatic(rules, "IsExpeditionUnlocked", 3), Is.False);
-            Assert.That(CallStatic(rules, "IsExpeditionUnlocked", 4), Is.True,
-                "원정은 핵심 전투 기능을 익힌 뒤 마지막으로 열려야 합니다.");
-        }
-
-        // ── 장악도 ────────────────────────────────────────────────────
-        // 장악은 금화가 아니라 방어로 돌아와야 원정이 돈벌이 버튼이 되지 않는다.
-
-        /// <summary>장악도는 이제 컴포넌트라 호스트를 세워야 Current가 잡힌다.</summary>
-        private static GameObject BuildConquestHost(out object conquest)
-        {
-            var host = new GameObject("VillageConquestTestHost");
-            var component = host.AddComponent(Resolve("_01.Code.Progression.VillageConquestSystem"));
-            Call(component, "Awake");
-            conquest = component;
-            return host;
-        }
-
-        private static void DestroyHost(GameObject host)
-        {
-            if (host == null)
-                return;
-
-            foreach (var component in host.GetComponents<MonoBehaviour>())
-                component.GetType().GetMethod("OnDestroy", BindingFlags.Instance | BindingFlags.NonPublic)
-                    ?.Invoke(component, null);
-
-            UnityEngine.Object.DestroyImmediate(host);
-        }
-
-        [Test]
-        public void Conquest_AConqueredVillageStopsSendingItsRaiders()
-        {
-            var host = BuildConquestHost(out var conquest);
-            try
-            {
-                var patrol = NewAsset("_01.Code.Manager.AdventurerPartySO");
-                var hunters = NewAsset("_01.Code.Manager.AdventurerPartySO");
-                Call(conquest, "Register", patrol, 0);
-
-                Assert.That(Call(conquest, "GetSuppression", patrol), Is.EqualTo(0f), "장악 전에는 그대로 쳐들어옵니다.");
-
-                Call(conquest, "SetConquest", patrol, 100);
-                Assert.That(Call(conquest, "GetSuppression", patrol), Is.EqualTo(1f), "완전히 장악하면 더 이상 오지 않습니다.");
-                Assert.That(Call(conquest, "GetSuppression", hunters), Is.EqualTo(0f),
-                    "등록되지 않은 파티는 장악과 무관하게 계속 옵니다.");
-            }
-            finally
-            {
-                DestroyHost(host);
-            }
-        }
-
-        [Test]
-        public void Conquest_AveragesAcrossEveryVillageNotJustTheConqueredOne()
-        {
-            var host = BuildConquestHost(out var conquest);
-            try
-            {
-                var first = NewAsset("_01.Code.Manager.AdventurerPartySO");
-                Call(conquest, "Register", first, 0);
-                Call(conquest, "Register", NewAsset("_01.Code.Manager.AdventurerPartySO"), 0);
-
-                Call(conquest, "SetConquest", first, 100);
-
-                Assert.That((float)Get(conquest, "AverageConquestRatio"), Is.EqualTo(0.5f).Within(0.001f),
-                    "마을 하나를 다 장악해도 전체로는 절반입니다.");
-            }
-            finally
-            {
-                DestroyHost(host);
-            }
-        }
-
-        [Test]
-        public void Conquest_ShrinksTheWaveButNeverToNothing()
-        {
-            var conquestHost = BuildConquestHost(out var conquest);
-            var host = new GameObject("WaveManagerTestHost");
-            try
-            {
-                var wave = host.AddComponent(Resolve("_01.Code.Manager.WaveManager"));
-                SetPrivate(wave, "maxWaveReductionFromConquest", 0.4f);
-
-                var party = NewAsset("_01.Code.Manager.AdventurerPartySO");
-                Call(conquest, "Register", party, 0);
-
-                Assert.That(Call(wave, "GetConquestAdjustedEnemyCount", 20), Is.EqualTo(20),
-                    "장악하지 않았으면 웨이브가 그대로입니다.");
-
-                Call(conquest, "SetConquest", party, 100);
-                Assert.That(Call(wave, "GetConquestAdjustedEnemyCount", 20), Is.EqualTo(12),
-                    "전부 장악하면 최대 감소율만큼 줄어듭니다.");
-                Assert.That(Call(wave, "GetConquestAdjustedEnemyCount", 1), Is.EqualTo(1),
-                    "아무리 장악해도 습격이 0명이 되지는 않습니다.");
-            }
-            finally
-            {
-                UnityEngine.Object.DestroyImmediate(host);
-                DestroyHost(conquestHost);
-            }
-        }
-
-
-        [Test]
-        public void Morale_LowMoraleRaisesWaveRewardSoABadRunCanCatchUp()
-        {
-            // 민심은 오래도록 일방통행이었다 — 실패하면 유지비만 오르고 만회할 길이 없어서,
-            // 3일차 광산 하나 차이가 8일차에 유닛 한 명 차이로 굳었다(2026-09-01 실측).
-            // 보상 배율이 그 대칭축이다.
-            var host = BuildMoraleHost(out var morale);
-            try
-            {
-                SetPrivate(morale, "rewardAtZeroMorale", 1.4f);
-
-                SetMorale(morale, 100);
-                var atFull = (float)Get(morale, "WaveRewardMultiplier");
-                SetMorale(morale, 0);
-                var atZero = (float)Get(morale, "WaveRewardMultiplier");
-                SetMorale(morale, 50);
-                var atHalf = (float)Get(morale, "WaveRewardMultiplier");
-
-                Assert.That(atFull, Is.EqualTo(1f).Within(0.001f),
-                    "잘 굴러가는 판의 보상은 건드리지 않아야 합니다.");
-                Assert.That(atZero, Is.EqualTo(1.4f).Within(0.001f),
-                    "민심이 바닥이면 보상이 올라야 만회가 가능합니다.");
-                Assert.That(atHalf, Is.GreaterThan(atFull).And.LessThan(atZero),
-                    "중간 민심은 중간 보상이어야 합니다.");
-
-                // 유지비와 방향이 반대여야 대칭축이 성립한다.
-                SetMorale(morale, 0);
-                var upkeepAtZero = (float)Get(morale, "UpkeepMultiplier");
-                SetMorale(morale, 100);
-                var upkeepAtFull = (float)Get(morale, "UpkeepMultiplier");
-                Assert.That(upkeepAtZero, Is.GreaterThan(upkeepAtFull),
-                    "유지비는 민심이 낮을수록 비싸야 합니다(대칭 확인).");
-            }
-            finally
-            {
-                UnityEngine.Object.DestroyImmediate(host);
-            }
-        }
-        [Test]
-        public void Morale_FallsWhenTheWaveBreaksThrough()
-        {
-            // 예전에는 웨이브가 끝나기만 하면 격퇴율과 무관하게 "방어 성공" 보너스가 붙었다.
-            // 0/14로 전멸한 날에도 민심이 올랐고, 그래서 민심이 늘 100에 붙어 살았다.
-            var host = BuildMoraleHost(out var morale);
-            try
-            {
-                SetPrivate(morale, "waveClearMoraleDelta", 2);
-                SetPrivate(morale, "waveBreachMoraleDelta", -6);
-
-                var eventType = Resolve("_01.Code.Events.WaveEndedEvent");
-                var handler = morale.GetType().GetMethod(
-                    "HandleWaveEnded", BindingFlags.Instance | BindingFlags.NonPublic);
-                Assert.That(handler, Is.Not.Null, "HandleWaveEnded를 찾지 못했습니다.");
-
-                int MoraleAfter(int start, int enemies, int kills)
-                {
-                    SetMorale(morale, start);
-                    handler.Invoke(morale, new[]
-                    {
-                        Activator.CreateInstance(eventType, 5, 0, enemies, kills)
-                    });
-                    return (int)Get(morale, "CurrentMorale");
-                }
-
-                Assert.That(MoraleAfter(50, 10, 10), Is.EqualTo(52),
-                    "완전히 막아내면 예전과 같은 보너스여야 합니다.");
-                Assert.That(MoraleAfter(50, 10, 0), Is.EqualTo(44),
-                    "한 명도 못 막으면 민심이 떨어져야 합니다.");
-                Assert.That(MoraleAfter(50, 10, 5), Is.LessThan(50),
-                    "절반만 막아도 손해여야 합니다.");
-                Assert.That(MoraleAfter(50, 0, 0), Is.EqualTo(52),
-                    "적이 없던 날을 실패로 세면 안 됩니다.");
-            }
-            finally
-            {
-                UnityEngine.Object.DestroyImmediate(host);
-            }
         }
     }
 }

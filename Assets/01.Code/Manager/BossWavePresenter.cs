@@ -246,9 +246,6 @@ namespace _01.Code.Manager
                              + $"  ·  시설 해금 {roster.UnlockedBuildings.Count}/{roster.UnlockableBuildingCount}");
             }
 
-            var conquest = VillageConquestSystem.Current;
-            if (conquest != null && conquest.VillageCount > 0)
-                lines.Append($"\n장악한 마을  {conquest.FullyConqueredCount} / {conquest.VillageCount}곳");
 
             lines.Append("</size>");
             return lines.ToString();

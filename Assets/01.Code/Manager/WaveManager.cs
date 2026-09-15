@@ -45,10 +45,6 @@ namespace _01.Code.Manager
         [SerializeField, Min(0f), Tooltip("파티원이 서로 겹치지 않게 흩어지는 대형 반경")]
         private float formationSpread = 0.35f;
         [SerializeField, Min(0)] private int treasuryGoldLoss = 10;
-        [Header("Village Conquest")]
-        [SerializeField, Range(0f, 1f),
-         Tooltip("마을을 모두 장악했을 때 줄어드는 침입자 비율. 0.4면 습격이 40%까지 줄어든다.")]
-        private float maxWaveReductionFromConquest = 0.4f;
 
         [Header("Enemy Level Scaling")]
         [SerializeField, Min(0), Tooltip("일차마다 침입자에게 더해지는 최대 체력.")]
@@ -137,7 +133,7 @@ namespace _01.Code.Manager
         /// </summary>
         private int ResolveWaveEnemyCount(int baseEnemyCount)
         {
-            return GetConquestAdjustedEnemyCount(baseEnemyCount);
+            return Mathf.Max(0, baseEnemyCount);
         }
 
         public WaveThreatPreview GetThreatPreview(int day) =>
@@ -350,32 +346,12 @@ namespace _01.Code.Manager
             _waveCoroutine = StartCoroutine(RunWave(entry));
         }
 
-        /// <summary>
-        /// 장악한 마을은 사람을 덜 보낸다. 마릿수를 줄여야 실제로 방어가 편해진다 —
-        /// 파티 등장만 막으면 구성만 바뀌고 쳐들어오는 수는 그대로다.
-        /// </summary>
-        public int GetConquestAdjustedEnemyCount(int baseEnemyCount)
-        {
-            var normalized = Mathf.Max(0, baseEnemyCount);
-            if (normalized <= 0 || maxWaveReductionFromConquest <= 0f)
-                return normalized;
-
-            var conquest = VillageConquestSystem.Current;
-            if (conquest == null)
-                return normalized;
-
-            var reduction = conquest.AverageConquestRatio * maxWaveReductionFromConquest;
-            // 다 장악해도 습격이 아예 사라지지는 않는다. 최소 한 명은 온다.
-            return Mathf.Max(1, Mathf.RoundToInt(normalized * (1f - reduction)));
-        }
-
         private IEnumerator RunWave(WaveConfigSO.WaveEntry entry)
         {
             // 이 습격의 크기는 던전의 명성이 정한다. 웨이브가 시작할 때 한 번 재고,
             // 도는 동안 금고가 털려 명성이 흔들려도 인원과 보상은 그대로 간다.
             _currentFame = DungeonFameRules.CalculateFame();
 
-            // 연속 방어는 다음 습격을 무겁게 만든다. 잘 막을수록 왕국이 더 크게 보낸다.
             var adjustedEnemyCount = ResolveWaveEnemyCount(
                 DungeonFameRules.ResolveEnemyCount(_currentFame));
 
@@ -723,11 +699,6 @@ namespace _01.Code.Manager
             foreach (var party in parties)
             {
                 if (party == null || party.Members == null || party.Members.Length == 0)
-                    continue;
-
-                // 장악한 마을에서 오는 파티는 그만큼 발길을 끊는다. 완전히 장악하면 더 이상 오지 않는다.
-                var conquest = VillageConquestSystem.Current;
-                if (conquest != null && Random.value < conquest.GetSuppression(party))
                     continue;
 
                 validParties.Add(party);
