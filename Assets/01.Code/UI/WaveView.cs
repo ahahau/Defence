@@ -1,5 +1,6 @@
 using System.Collections;
 using _01.Code.Core;
+using _01.Code.Enemies;
 using _01.Code.Events;
 using _01.Code.Manager;
 using _01.Code.Tutorial;
@@ -371,6 +372,7 @@ namespace _01.Code.UI
                 ApplyBannerLayout(true);
                 _runtimeHud.BannerSubtitle.text =
                     $"방문 예정 {enemyCount}명{conquestText} · 시설과 몬스터를 배치하세요\n"
+                    + BuildVisitorMixLine(enemyCount)
                     + BuildFameLine()
                     + CoreLoopFeatureUnlocks.GetPreparationHint(day)
                     + threatText
@@ -406,6 +408,37 @@ namespace _01.Code.UI
             subtitle.fontSizeMax = 20f;
             if (!expanded)
                 subtitle.fontSize = 20f;
+        }
+
+        /// <summary>
+        /// 오늘 누가 무슨 목적으로 오는지. 경비를 얼마나 세울지가 여기서 정해진다.
+        ///
+        /// 보물 탐색꾼만 몬스터와 함정에 걸리고 나머지는 그냥 지나간다. 그래서 몇 명이
+        /// 금고를 노리는지 모르면 언제나 최대로 지키는 것이 정답이 되고, 배치가 결정이 아니게 된다.
+        /// </summary>
+        private static string BuildVisitorMixLine(int visitorCount)
+        {
+            if (visitorCount <= 0)
+                return string.Empty;
+
+            var parts = new System.Text.StringBuilder();
+            foreach (AdventurerVisitPurpose purpose in System.Enum.GetValues(typeof(AdventurerVisitPurpose)))
+            {
+                var count = AdventurerVisitRules.ForecastCount(purpose, visitorCount);
+                if (count <= 0)
+                    continue;
+
+                if (parts.Length > 0)
+                    parts.Append("  ·  ");
+
+                // 금고를 노리는 쪽만 색으로 떼어 낸다. 경비를 세울지 말지가 이 숫자 하나에 걸린다.
+                var label = $"{AdventurerVisitRules.GetLabel(purpose)} {count}";
+                parts.Append(purpose == AdventurerVisitPurpose.TreasureHunt
+                    ? $"<color=#FF9B6B>{label}</color>"
+                    : label);
+            }
+
+            return $"<size=90%>{parts}</size>\n";
         }
 
         /// <summary>

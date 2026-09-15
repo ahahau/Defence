@@ -286,6 +286,48 @@ namespace Tests.EditMode.Rules
                 $"{purposeName}으로 온 방문객의 경비 판정이 어긋납니다.");
         }
 
+        [TestCase(0, 0)]
+        [TestCase(3, 0)]
+        [TestCase(4, 1)]
+        [TestCase(13, 3)]
+        [TestCase(20, 5)]
+        public void Forecast_TellsHowManyAreComingForTheVault(int visitors, int expectedHunters)
+        {
+            var rules = Resolve("_01.Code.Enemies.AdventurerVisitRules");
+            var hunt = Enum.Parse(Resolve("_01.Code.Enemies.AdventurerVisitPurpose"), "TreasureHunt");
+            var forecast = rules.GetMethod("ForecastCount");
+
+            Assert.That(forecast.Invoke(null, new[] { hunt, (object)visitors }), Is.EqualTo(expectedHunters),
+                "예보가 실제 배분과 어긋나면 경비를 세울 근거가 거짓말이 됩니다.");
+        }
+
+        [Test]
+        public void Forecast_MatchesHowSpawningActuallyAssignsErrands()
+        {
+            var rules = Resolve("_01.Code.Enemies.AdventurerVisitRules");
+            var purposeType = Resolve("_01.Code.Enemies.AdventurerVisitPurpose");
+            var resolve = rules.GetMethod("ResolvePurpose");
+            var forecast = rules.GetMethod("ForecastCount");
+            var none = Enum.Parse(Resolve("_01.Code.Enemies.AdventurerTrait"), "None");
+
+            // 예보는 스폰이 실제로 나눠주는 방식과 같은 답을 내야 한다.
+            // 특성이 없는 방문객만 세면 둘이 정확히 맞아야 한다.
+            const int visitors = 14;
+            var actual = new Dictionary<object, int>();
+            for (var i = 0; i < visitors; i++)
+            {
+                var purpose = resolve.Invoke(null, new[] { none, (object)i });
+                actual[purpose] = actual.TryGetValue(purpose, out var n) ? n + 1 : 1;
+            }
+
+            foreach (var value in Enum.GetValues(purposeType))
+            {
+                var expected = actual.TryGetValue(value, out var n) ? n : 0;
+                Assert.That(forecast.Invoke(null, new[] { value, (object)visitors }), Is.EqualTo(expected),
+                    $"{value} 예보가 스폰 배분과 다릅니다.");
+            }
+        }
+
         [Test]
         public void Trespass_ReconfiguringTheErrandChangesWhoGetsStopped()
         {

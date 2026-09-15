@@ -85,6 +85,26 @@ namespace _01.Code.Enemies
             return "매우 불만";
         }
 
+        /// <summary>
+        /// 오늘 이만큼 올 때 각 목적이 몇 명인지. 준비 화면이 경비를 정하는 근거로 쓴다.
+        ///
+        /// 목적은 방문 순서로 정해지므로 인원만 알면 미리 셀 수 있다. 다만 특성이 일부를
+        /// 쇼핑이나 휴식으로 덮으므로 보물 탐색은 <b>최대치</b>다 — 실제로는 이보다 적거나 같다.
+        /// 최대치를 보여주는 편이 낫다. 적게 보여주면 대비하지 않은 밤에 금고가 비고,
+        /// 그것은 플레이어가 고른 결과가 아니라 화면이 속인 결과가 된다.
+        /// </summary>
+        public static int ForecastCount(AdventurerVisitPurpose purpose, int visitorCount)
+        {
+            var total = Mathf.Max(0, visitorCount);
+            if (total <= 0)
+                return 0;
+
+            var slot = (int)purpose;
+            var full = total / 4;
+            var remainder = total % 4;
+            return full + (slot < remainder ? 1 : 0);
+        }
+
         public static string GetLabel(AdventurerVisitPurpose purpose) => purpose switch
         {
             AdventurerVisitPurpose.Rest => "휴식",
