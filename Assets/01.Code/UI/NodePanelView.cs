@@ -893,10 +893,10 @@ namespace _01.Code.UI
                 return;
             }
 
-            // 상점 한복판에서 칼을 뽑으면 장사가 되지 않는다. 방 하나는 벌이든 경비든 하나만 한다.
-            if (_selectedNode.HasDwellFacility)
+            // 방 하나는 건물이 쓰거나 경비가 쓰거나 둘 중 하나다. 함정은 예외로 같이 둘 수 있다.
+            if (_selectedNode.HasInstalledBuilding)
             {
-                SetManagementTitle("시설이 있는 방에는 배치할 수 없습니다");
+                SetManagementTitle("건물이 있는 방에는 배치할 수 없습니다");
                 RefreshRosterEntries();
                 return;
             }

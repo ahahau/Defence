@@ -33,9 +33,13 @@ namespace _01.Code.Buildings
                    && !UsesGridCell(buildingData);
         }
 
-        /// <summary>모험가가 눌러앉는 시설인가. 이런 방에는 유닛을 세우지 못한다.</summary>
-        public static bool IsDwellFacility(BuildingDataSO buildingData) =>
-            buildingData != null && buildingData.DwellSeconds > 0f;
+        /// <summary>
+        /// 유닛과 자리를 다투는 건물인가. 함정은 아니고(같이 둘 수 있다), 금고도 아니다
+        /// (지켜야 할 곳이라 유닛을 세울 수 있어야 한다).
+        /// </summary>
+        public static bool IsRoomBuilding(BuildingDataSO buildingData) =>
+            buildingData != null && buildingData.Category == InstallCategory.Building
+            && buildingData.Prefab is not Treasury;
 
         /// <summary>중앙 슬롯에 건물을 세우고 노드에 등록한다. 이미 차 있으면 null.</summary>
         public static Building InstallCentral(
@@ -48,7 +52,7 @@ namespace _01.Code.Buildings
 
             // 유닛이 선 방은 경비 몫이다. 같은 규칙을 반대편에서도 지켜야 방 하나가
             // 벌이와 경비를 겸하지 못한다 — 한쪽만 막으면 순서만 바꿔 둘 다 놓을 수 있다.
-            if (node.HasAssignedUnit && IsDwellFacility(buildingData))
+            if (node.HasAssignedUnit && IsRoomBuilding(buildingData))
                 return null;
 
             var building = CreateCentral(node, buildingData, centralSlotFill);
@@ -72,6 +76,10 @@ namespace _01.Code.Buildings
         {
             var grid = node != null ? node.TrapGrid : null;
             if (grid == null || buildingData == null || buildingData.Prefab == null)
+                return null;
+
+            // 금고처럼 칸에 서는 건물도 같은 규칙을 지킨다. 함정만 유닛과 자리를 나눠 쓴다.
+            if (node.HasAssignedUnit && IsRoomBuilding(buildingData))
                 return null;
 
             var building = grid.TryPlace(column, row, buildingData.Prefab);

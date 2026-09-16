@@ -234,19 +234,25 @@ namespace _01.Code.MapCreateSystem
         /// 스폰 방에는 유닛을 세울 수 없다. 거기서 막아 세우면 적이 통로를 한 번도 지나지 않아
         /// 통로 함정이 통째로 죽고, 함정을 지을 이유가 사라진다.
         ///
-        /// 모험가가 머무는 시설이 있는 방에도 세울 수 없다. 상점 한복판에서 칼을 뽑으면
-        /// 장사가 되지 않는다. 이것이 경영의 선택이다 — 방 하나를 벌이에 쓰면 그만큼
-        /// 지킬 자리가 줄고, 그 시설이 매력도를 올려 다음 날 더 많이 온다.
+        /// 건물이 있는 방에도 세울 수 없다. 방 하나는 건물이 쓰거나 경비가 쓰거나 둘 중 하나다 —
+        /// 이것이 경영의 선택이다. 상점을 지으면 그 방은 지킬 수 없게 되고, 그 상점이
+        /// 매력도를 올려 다음 날 더 많이 온다. 벌수록 막을 자리가 줄어든다.
+        ///
+        /// 함정은 건물이 아니다. 유닛과 한 방을 나눠 쓴다 — 그래야 건물로 채운 방도
+        /// 함정으로는 지킬 수 있고, 유닛을 세운 방도 함정으로 두텁게 할 수 있다.
+        ///
+        /// 금고도 예외다. 금고는 벌어들이는 곳이 아니라 지켜야 할 곳이라, 거기에 유닛을
+        /// 못 세우면 지킬 방법 자체가 없어진다.
         /// </summary>
         public bool CanAcceptAdditionalUnit =>
-            !IsEnemySpawnNode && !HasDwellFacility && AssignedUnitCount < UnitCapacity;
+            !IsEnemySpawnNode && !HasInstalledBuilding && AssignedUnitCount < UnitCapacity;
 
-        /// <summary>모험가가 눌러앉는 시설이 이 방에 있는가. 문을 닫아 두어도 자리는 시설의 것이다.</summary>
-        public bool HasDwellFacility
+        /// <summary>함정이 아닌 건물이 이 방에 있는가. 중앙 슬롯과 격자 칸을 모두 본다.</summary>
+        public bool HasInstalledBuilding
         {
             get
             {
-                if (IsDwellFacility(AssignedBuilding))
+                if (IsRoomBuilding(AssignedBuilding))
                     return true;
 
                 var grid = TrapGrid;
@@ -255,7 +261,7 @@ namespace _01.Code.MapCreateSystem
 
                 var placed = grid.PlacedBuildings;
                 for (var i = 0; i < placed.Count; i++)
-                    if (IsDwellFacility(placed[i]))
+                    if (IsRoomBuilding(placed[i]))
                         return true;
 
                 return false;
@@ -264,8 +270,9 @@ namespace _01.Code.MapCreateSystem
 
         // 영업 여부로 판단하지 않는다. 그러면 문 닫은 상점 자리에 유닛을 세워 두고
         // 다시 열 수 있어, 한 방이 벌이와 경비를 동시에 하게 된다.
-        private static bool IsDwellFacility(Building building) =>
-            building != null && !building.IsDestroyed && building.Data != null && building.Data.DwellSeconds > 0f;
+        private static bool IsRoomBuilding(Building building) =>
+            building != null && !building.IsDestroyed && building is not Treasury && building.Data != null
+            && building.Data.Category == InstallCategory.Building;
         public int UnitCapacity => battlefield != null ? battlefield.MaxPerTeam : 1;
         /// <summary>이 구역에서 벌어진 일로 쌓인 악명(전투·함정 발동). 설치물의 위험도는 포함하지 않는다.</summary>
         public int DangerLevel { get; private set; }

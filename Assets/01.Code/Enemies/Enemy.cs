@@ -383,18 +383,27 @@ namespace _01.Code.Enemies
             if (TryTriggerTrap(node)) return false;
             TryDamageNodeBuilding(node);
             ApplyPassBuildingEffect(node);
+            // 금고를 전투보다 먼저 본다. 살아만 있고 못 싸우는 유닛도 전투 필드에서는
+            // 여전히 상대로 세어져, 지쳐 쓰러진 경비 뒤에서 금고가 안전해져 버린다.
+            if (TryLootTreasury(node)) return false;
             if (TryUseBattlefieldCombat(node)) return false;
             if (TryStopOnUnit(node)) return false;
-            if (TryLootTreasury(node)) return false;
             // 싸울 상대도 털 것도 없으면 시설에 눌러앉는다. 머무는 동안이 버는 동안이다.
             if (TryBeginDwell(node)) return false;
 
             return true;
         }
 
+        /// <summary>
+        /// 금고를 턴다. 싸울 수 있는 유닛이 이 방에 서 있으면 손도 못 댄다.
+        ///
+        /// 금고 방은 유닛을 세울 수 있는 유일한 건물 방이다. 그래서 경비가 곧 자물쇠다 —
+        /// 그 경비가 죽거나 지쳐 쓰러지는 순간 금고가 열린다. 피로를 방치하면
+        /// 싸움에 지지 않아도 털린다.
+        /// </summary>
         private bool TryLootTreasury(Node node)
         {
-            if (node == null)
+            if (node == null || node.HasCombatReadyUnit)
                 return false;
 
             // 금고는 칸 건물이라 한 노드에 여럿 설 수 있다. 보관 금화가 남은 금고를 턴다.

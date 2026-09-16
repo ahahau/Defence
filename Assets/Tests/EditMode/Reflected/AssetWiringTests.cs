@@ -548,11 +548,13 @@ namespace Tests.EditMode.Gameplay
         }
 
         /// <summary>
-        /// 방 하나는 벌이든 경비든 하나만 한다.
+        /// 방 하나는 건물이 쓰거나 경비가 쓰거나 둘 중 하나다. 함정만 유닛과 자리를 나눠 쓴다.
         ///
-        /// 경영의 선택이 여기서 나온다. 상점을 지으면 그 방은 지킬 수 없게 되고, 게다가
-        /// 그 상점이 매력도를 올려 다음 날 더 많은 모험가를 부른다 — 벌수록 막을 자리가
-        /// 줄어든다. 금고와 광산은 사람이 머무는 곳이 아니라 그대로 지킬 수 있다.
+        /// 경영의 선택이 여기서 나온다. 상점을 지으면 그 방은 유닛으로 지킬 수 없게 되고,
+        /// 게다가 그 상점이 등급을 올려 다음 날 더 많은 모험가를 부른다 — 벌수록 막을
+        /// 자리가 줄어든다. 건물로 채운 방에 남는 수단은 함정뿐이다.
+        ///
+        /// 금고만 예외다. 금고는 벌이가 아니라 지켜야 할 것이라, 경비가 곧 자물쇠다.
         /// </summary>
         [Test]
         public void Room_EarnsOrDefendsButNotBoth()
@@ -592,10 +594,21 @@ namespace Tests.EditMode.Gameplay
                 Assert.That((bool)canAccept.GetValue(storeNode), Is.False,
                     "상점이 선 방에는 유닛을 세울 수 없어야 합니다.");
 
-                // 금고는 모험가가 머무는 곳이 아니다. 지킬 수 없으면 지킬 것이 없어진다.
+                // 금고는 예외다. 지켜야 할 곳이라 유닛을 못 세우면 지킬 방법이 없어진다.
                 Assert.That(install.Invoke(null, new object[] { vaultNode, treasuryData, 0.92f }), Is.Not.Null);
                 Assert.That((bool)canAccept.GetValue(vaultNode), Is.True,
-                    "금고 방은 그대로 지킬 수 있어야 합니다.");
+                    "금고 방에는 경비를 세울 수 있어야 합니다.");
+
+                // 함정은 건물이 아니다. 유닛과 한 방을 나눠 쓴다.
+                var trapModel = addNode.Invoke(graph, new object[] { kind, new Vector2Int(1302, 0) });
+                var trapNode = (Component)createNode.Invoke(manager, new[] { trapModel });
+                var trapData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
+                    "Assets/03.SO/Buildings/SpikeTrapBuildingData.asset");
+                Assert.That(trapData, Is.Not.Null, "함정 데이터를 찾지 못했습니다.");
+                var installCell = placementType.GetMethod("InstallOnCell", BindingFlags.Public | BindingFlags.Static);
+                Assert.That(installCell.Invoke(null, new object[] { trapNode, 0, 0, trapData }), Is.Not.Null);
+                Assert.That((bool)canAccept.GetValue(trapNode), Is.True,
+                    "함정이 있다고 유닛을 막으면 함정과 경비를 겹쳐 둘 수 없습니다.");
 
                 nodeManagerType.GetMethod("ClearAll").Invoke(manager, null);
             }
