@@ -13,8 +13,10 @@ MonoBehaviour:
   m_Name: WolfUnitData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Units.UnitDataSO
   <Grade>k__BackingField: 2
-  <BoardSprite>k__BackingField: {fileID: -7354740319487497543, guid: ffcb41d5b8a635845816791ac33c985b, type: 3}
-  <Sprite>k__BackingField: {fileID: -7354740319487497543, guid: ffcb41d5b8a635845816791ac33c985b, type: 3}
+  <BoardSprite>k__BackingField: {fileID: -6620443678240376230, guid: e87236f48560e4940955075b58eab9c8, type: 3}
+  <Defense>k__BackingField: 0
+  <EvasionChance>k__BackingField: 0
+  <Sprite>k__BackingField: {fileID: -6620443678240376230, guid: e87236f48560e4940955075b58eab9c8, type: 3}
   <Prefab>k__BackingField: {fileID: 8763816506036182599, guid: 4ea41fbb5383d2da5f3ee77a2d3dc686, type: 3}
   <Name>k__BackingField: "\uAD11\uD3EC\uD55C \uB291\uB300"
   <Cost>k__BackingField: 40

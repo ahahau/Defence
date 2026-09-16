@@ -13,8 +13,10 @@ MonoBehaviour:
   m_Name: GrandInnBuildingData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Buildings.BuildingDataSO
   <Grade>k__BackingField: 2
-  <BoardSprite>k__BackingField: {fileID: 8137869205478695710, guid: 8a671fffabc0e784aa024fd057bc6312, type: 3}
-  <DisplayName>k__BackingField: 큰 주점
+  <BoardSprite>k__BackingField: {fileID: -1370150288747598966, guid: 4fd6a78c5ebc20a48a7ccb57ab2c23b5, type: 3}
+  <Defense>k__BackingField: 0
+  <EvasionChance>k__BackingField: 0
+  <DisplayName>k__BackingField: "\uD070 \uC8FC\uC810"
   <Cost>k__BackingField: 25
   <DailyUpkeep>k__BackingField: 3
   <Fame>k__BackingField: 4

@@ -46,10 +46,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Buildings.Inn
   <DangerRating>k__BackingField: 0
+  destructible: 0
+  maxDurability: 20
+  damageAnimationTarget: {fileID: 0}
+  damageShakeDistance: 0.08
+  damageShakeDuration: 0.16
+  destroyDelay: 0.05
+  reopenCost: 25
+  reopenDays: 2
+  wearPerVisit: 1
+  repairCostPerWear: 4
   costEventChannel: {fileID: 11400000, guid: 734ca3593b5d2884dae267b0e3e601be, type: 2}
   healAmount: 2
   goldReward: 10
   statusEffect: {fileID: 11400000, guid: 46137902b7a64ee2917a54169713ec5a, type: 2}
+  healFeelFeedback: {fileID: 0}
+  healFlashColor: {r: 0, g: 1, b: 0, a: 1}
+  healFlashDuration: 0.28
 --- !u!1 &7473952817250454834
 GameObject:
   m_ObjectHideFlags: 0
@@ -131,7 +144,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 20
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 3947714349283756673, guid: 99f54d569e1db984093d2e7f00d671d6, type: 3}
+  m_Sprite: {fileID: -1370150288747598966, guid: 4fd6a78c5ebc20a48a7ccb57ab2c23b5, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0

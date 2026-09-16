@@ -13,13 +13,14 @@ MonoBehaviour:
   m_Name: TreasuryBuildingData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Buildings.BuildingDataSO
   <Grade>k__BackingField: 1
-  <BoardSprite>k__BackingField: {fileID: 8932690522560248020, guid: c5b44f2f40b7e5842be673d507a9bf65, type: 3}
+  <BoardSprite>k__BackingField: {fileID: -1370150288747598966, guid: 4fd6a78c5ebc20a48a7ccb57ab2c23b5, type: 3}
   <Defense>k__BackingField: 0
   <EvasionChance>k__BackingField: 0
   <DisplayName>k__BackingField: "\uAE08\uACE0"
   <Cost>k__BackingField: 35
   <DailyUpkeep>k__BackingField: 1
   <Fame>k__BackingField: 4
+  <DwellSeconds>k__BackingField: 0
   <Prefab>k__BackingField: {fileID: 8089379026674961331, guid: 74d624f5b92d4084099b32bc76c07596, type: 3}
   <Unique>k__BackingField: 0
   <CentralOnly>k__BackingField: 1

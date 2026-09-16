@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Boss_Houndmaster
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Enemies.EnemyDataSO
   <Grade>k__BackingField: 1
-  <BoardSprite>k__BackingField: {fileID: 8009727003488271963, guid: ddc1019f9845d3e4bb0609c68ed4e443, type: 3}
+  <BoardSprite>k__BackingField: {fileID: -6248741079362886434, guid: 6880c24d52401f247ade63d0cd317469, type: 3}
   <Defense>k__BackingField: 10
   <EvasionChance>k__BackingField: 0.25
   <Name>k__BackingField: "\uC0AC\uB0E5\uAFBC \uB450\uBAA9"
@@ -25,7 +25,8 @@ MonoBehaviour:
   <MaxHealth>k__BackingField: 14
   <AttackDamage>k__BackingField: 4
   <AttackInterval>k__BackingField: 0.8
-  <IdleSprite>k__BackingField: {fileID: 8009727003488271963, guid: ddc1019f9845d3e4bb0609c68ed4e443, type: 3}
-  <AttackSprite>k__BackingField: {fileID: 6015509083026384484, guid: ba1cd67d58ba52a43beb956824db90c7, type: 3}
-  <DefeatedSprite>k__BackingField: {fileID: 25878051424407460, guid: 6a6c688bd8f0843478985e457ab1946e, type: 3}
+  <IdleSprite>k__BackingField: {fileID: -6248741079362886434, guid: 6880c24d52401f247ade63d0cd317469, type: 3}
+  <AttackSprite>k__BackingField: {fileID: -6248741079362886434, guid: 6880c24d52401f247ade63d0cd317469, type: 3}
+  <DefeatedSprite>k__BackingField: {fileID: -6248741079362886434, guid: 6880c24d52401f247ade63d0cd317469, type: 3}
   <AttackSfx>k__BackingField: 9
+  <DisarmsTraps>k__BackingField: 0

@@ -13,8 +13,10 @@ MonoBehaviour:
   m_Name: SpiderUnitData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Units.UnitDataSO
   <Grade>k__BackingField: 2
-  <BoardSprite>k__BackingField: {fileID: -579119987983206910, guid: b5bd156626298db4c80aac9fc6f81131, type: 3}
-  <Sprite>k__BackingField: {fileID: -579119987983206910, guid: b5bd156626298db4c80aac9fc6f81131, type: 3}
+  <BoardSprite>k__BackingField: {fileID: -6620443678240376230, guid: e87236f48560e4940955075b58eab9c8, type: 3}
+  <Defense>k__BackingField: 0
+  <EvasionChance>k__BackingField: 0
+  <Sprite>k__BackingField: {fileID: -6620443678240376230, guid: e87236f48560e4940955075b58eab9c8, type: 3}
   <Prefab>k__BackingField: {fileID: 8763816506036182599, guid: 4bb09eeb089ac7b972485467115ecc21, type: 3}
   <Name>k__BackingField: "\uB3D9\uAD74 \uAC70\uBBF8"
   <Cost>k__BackingField: 36

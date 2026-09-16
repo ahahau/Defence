@@ -15,7 +15,7 @@ MonoBehaviour:
   <AssetIndex>k__BackingField: 5
   <StatName>k__BackingField: Stat_EvasionChance
   <DisplayName>k__BackingField: "\uD68C\uD53C\uC728"
-  <Icon>k__BackingField: {fileID: 6116742405372871471, guid: f432309c7f7db9b4e8cc4d9a50f6bafc, type: 3}
+  <Icon>k__BackingField: {fileID: -2278566297644842510, guid: 3d1a3fa18cf47504cbc71399b9b92c1e, type: 3}
   <IsPercent>k__BackingField: 1
   description: "\uACF5\uACA9\uC744 \uD1B5\uC9F8\uB85C \uD758\uB824\uBCF4\uB0BC \uD655\uB960."
   baseValue: 0

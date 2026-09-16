@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: SlimeBlueUnitData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Units.UnitDataSO
   <Grade>k__BackingField: 1
-  <BoardSprite>k__BackingField: {fileID: 4723107735738678597, guid: 2e94315739cfb2a4aaef66130d3b7be8, type: 3}
+  <BoardSprite>k__BackingField: {fileID: -6620443678240376230, guid: e87236f48560e4940955075b58eab9c8, type: 3}
   <Defense>k__BackingField: 0
   <EvasionChance>k__BackingField: 0.08
-  <Sprite>k__BackingField: {fileID: 4723107735738678597, guid: 2e94315739cfb2a4aaef66130d3b7be8, type: 3}
+  <Sprite>k__BackingField: {fileID: -6620443678240376230, guid: e87236f48560e4940955075b58eab9c8, type: 3}
   <Prefab>k__BackingField: {fileID: 8763816506036182599, guid: e164f66bc23e4a3d87f1241488ba7801, type: 3}
   <Name>k__BackingField: "\uBE14\uB8E8 \uC2AC\uB77C\uC784"
   <Cost>k__BackingField: 14

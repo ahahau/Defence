@@ -13,11 +13,14 @@ MonoBehaviour:
   m_Name: PortalBuildingData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Buildings.BuildingDataSO
   <Grade>k__BackingField: 1
-  <BoardSprite>k__BackingField: {fileID: 2189510010676529607, guid: 336a0be0aced6bb4a97056cd960dc900, type: 3}
+  <BoardSprite>k__BackingField: {fileID: -1370150288747598966, guid: 4fd6a78c5ebc20a48a7ccb57ab2c23b5, type: 3}
   <Defense>k__BackingField: 0
   <EvasionChance>k__BackingField: 0
   <DisplayName>k__BackingField: "\uD3EC\uD0C8"
   <Cost>k__BackingField: 0
+  <DailyUpkeep>k__BackingField: 0
+  <Fame>k__BackingField: 0
+  <DwellSeconds>k__BackingField: 0
   <Prefab>k__BackingField: {fileID: 6750984763358774362, guid: 6eaa4d203b053694b965f2b5b22059a7, type: 3}
   <Unique>k__BackingField: 1
   <CentralOnly>k__BackingField: 1

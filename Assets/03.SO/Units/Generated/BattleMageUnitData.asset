@@ -13,8 +13,10 @@ MonoBehaviour:
   m_Name: BattleMageUnitData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Units.UnitDataSO
   <Grade>k__BackingField: 4
-  <BoardSprite>k__BackingField: {fileID: 2863979781096625317, guid: 4e09708fa0254684d842bd41ba73d64a, type: 3}
-  <Sprite>k__BackingField: {fileID: 2863979781096625317, guid: 4e09708fa0254684d842bd41ba73d64a, type: 3}
+  <BoardSprite>k__BackingField: {fileID: -6620443678240376230, guid: e87236f48560e4940955075b58eab9c8, type: 3}
+  <Defense>k__BackingField: 0
+  <EvasionChance>k__BackingField: 0
+  <Sprite>k__BackingField: {fileID: -6620443678240376230, guid: e87236f48560e4940955075b58eab9c8, type: 3}
   <Prefab>k__BackingField: {fileID: 8763816506036182599, guid: c8446ded4f48d8048bcd0ee70266969b, type: 3}
   <Name>k__BackingField: "\uC8FC\uC220 \uC784\uD504"
   <Cost>k__BackingField: 64

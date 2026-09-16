@@ -13,8 +13,10 @@ MonoBehaviour:
   m_Name: ShadeUnitData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Units.UnitDataSO
   <Grade>k__BackingField: 4
-  <BoardSprite>k__BackingField: {fileID: -276564860286704120, guid: d5f96c9399e0866459f0a02ab4cb59ff, type: 3}
-  <Sprite>k__BackingField: {fileID: -276564860286704120, guid: d5f96c9399e0866459f0a02ab4cb59ff, type: 3}
+  <BoardSprite>k__BackingField: {fileID: -6620443678240376230, guid: e87236f48560e4940955075b58eab9c8, type: 3}
+  <Defense>k__BackingField: 0
+  <EvasionChance>k__BackingField: 0
+  <Sprite>k__BackingField: {fileID: -6620443678240376230, guid: e87236f48560e4940955075b58eab9c8, type: 3}
   <Prefab>k__BackingField: {fileID: 8763816506036182599, guid: acaa185cc53d08e58dad4159c2fe013e, type: 3}
   <Name>k__BackingField: "\uADF8\uB9BC\uC790 \uC554\uC0B4\uADC0"
   <Cost>k__BackingField: 70

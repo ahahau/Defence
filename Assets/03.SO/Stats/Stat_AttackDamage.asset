@@ -15,7 +15,7 @@ MonoBehaviour:
   <AssetIndex>k__BackingField: 2
   <StatName>k__BackingField: Stat_AttackDamage
   <DisplayName>k__BackingField: "\uACF5\uACA9\uB825"
-  <Icon>k__BackingField: {fileID: 1917424935620078563, guid: 3752a77a51f2a33429a48b87b34c2ad2, type: 3}
+  <Icon>k__BackingField: {fileID: -2278566297644842510, guid: 3d1a3fa18cf47504cbc71399b9b92c1e, type: 3}
   <IsPercent>k__BackingField: 0
   description: 
   baseValue: 2

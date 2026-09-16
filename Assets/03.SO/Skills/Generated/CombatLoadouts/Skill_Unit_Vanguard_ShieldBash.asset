@@ -15,7 +15,7 @@ MonoBehaviour:
   <DisplayName>k__BackingField: "\uBC29\uD328 \uAC15\uD0C0"
   <Description>k__BackingField: "\uC8FC\uBCC0 \uC801\uC5D0\uAC8C \uD53C\uD574\uB97C
     \uC8FC\uACE0 \uBC00\uCCD0\uB0C5\uB2C8\uB2E4."
-  <Icon>k__BackingField: {fileID: 0}
+  <Icon>k__BackingField: {fileID: -6620443678240376230, guid: e87236f48560e4940955075b58eab9c8, type: 3}
   <Cooldown>k__BackingField: 1.4
   <IsUltimate>k__BackingField: 0
   <Effects>k__BackingField:

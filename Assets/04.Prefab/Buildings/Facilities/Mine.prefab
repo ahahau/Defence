@@ -47,6 +47,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Buildings.Mine
   <DangerRating>k__BackingField: 0
+  destructible: 0
+  maxDurability: 20
+  damageAnimationTarget: {fileID: 0}
+  damageShakeDistance: 0.08
+  damageShakeDuration: 0.16
+  destroyDelay: 0.05
+  reopenCost: 25
+  reopenDays: 2
+  wearPerVisit: 1
+  repairCostPerWear: 4
   dayEventChannel: {fileID: 11400000, guid: f16b75998f67eed45be9a7061ca817f7, type: 2}
   costEventChannel: {fileID: 11400000, guid: 734ca3593b5d2884dae267b0e3e601be, type: 2}
   goldPerDay: 10
@@ -131,7 +141,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 20
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -6822275129016779544, guid: f6424fde25026dd4d8cb1e18d7005ee7, type: 3}
+  m_Sprite: {fileID: -1370150288747598966, guid: 4fd6a78c5ebc20a48a7ccb57ab2c23b5, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -222,7 +232,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 19
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: -1370150288747598966, guid: 4fd6a78c5ebc20a48a7ccb57ab2c23b5, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -230,5 +240,5 @@ SpriteRenderer:
   m_Size: {x: 1, y: 1}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 0
+  m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0

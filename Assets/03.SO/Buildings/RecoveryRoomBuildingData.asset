@@ -12,9 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 34c4dc0ecf9801d4aa0c5c4a452b0163, type: 3}
   m_Name: RecoveryRoomBuildingData
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Buildings.BuildingDataSO
-  <BoardSprite>k__BackingField: {fileID: -1556725213094308870, guid: db4f21f37209a51499a4e1e1ddafe7b7, type: 3}
+  <Grade>k__BackingField: 1
+  <BoardSprite>k__BackingField: {fileID: -1370150288747598966, guid: 4fd6a78c5ebc20a48a7ccb57ab2c23b5, type: 3}
+  <Defense>k__BackingField: 0
+  <EvasionChance>k__BackingField: 0
   <DisplayName>k__BackingField: "\uD734\uAC8C\uC2E4"
   <Cost>k__BackingField: 22
+  <DailyUpkeep>k__BackingField: 0
+  <Fame>k__BackingField: 0
+  <DwellSeconds>k__BackingField: 0
   <Prefab>k__BackingField: {fileID: 5357522602231984186, guid: a46eb74d65a0440a929ef4c078db6ce1, type: 3}
   <Unique>k__BackingField: 1
   <CentralOnly>k__BackingField: 1

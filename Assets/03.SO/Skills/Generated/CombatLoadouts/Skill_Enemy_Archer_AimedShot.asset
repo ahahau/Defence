@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Skills.SkillDataSO
   <DisplayName>k__BackingField: "\uC870\uC900 \uC0AC\uACA9"
   <Description>k__BackingField: "\uD604\uC7AC \uD45C\uC801\uC744 \uC815\uBC00 \uC0AC\uACA9\uD569\uB2C8\uB2E4."
-  <Icon>k__BackingField: {fileID: 0}
+  <Icon>k__BackingField: {fileID: -7336558010007070346, guid: 2ecc19377939ed44eb89dd458fb90f5e, type: 3}
   <Cooldown>k__BackingField: 1.8
   <IsUltimate>k__BackingField: 0
   <Effects>k__BackingField:

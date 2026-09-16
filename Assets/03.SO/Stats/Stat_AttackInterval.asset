@@ -15,9 +15,10 @@ MonoBehaviour:
   <AssetIndex>k__BackingField: 4
   <StatName>k__BackingField: Stat_AttackInterval
   <DisplayName>k__BackingField: "\uACF5\uACA9 \uC8FC\uAE30"
-  <Icon>k__BackingField: {fileID: -664630323190920823, guid: cf9d18e5b84f1d64a9377b86c43ad0c0, type: 3}
+  <Icon>k__BackingField: {fileID: -2278566297644842510, guid: 3d1a3fa18cf47504cbc71399b9b92c1e, type: 3}
   <IsPercent>k__BackingField: 0
-  description: "\uD55C \uBC88 \uCE58\uACE0 \uB2E4\uC74C \uBC88\uAE4C\uC9C0\uC758 \uCD08. \uC791\uC744\uC218\uB85D \uBE60\uB974\uB2E4."
+  description: "\uD55C \uBC88 \uCE58\uACE0 \uB2E4\uC74C \uBC88\uAE4C\uC9C0\uC758
+    \uCD08. \uC791\uC744\uC218\uB85D \uBE60\uB974\uB2E4."
   baseValue: 1
   minValue: 0.05
   maxValue: 10

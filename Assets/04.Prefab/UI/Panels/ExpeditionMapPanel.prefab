@@ -1708,7 +1708,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4997996268032010613}
-  - component: {fileID: 4178220762715559523}
   m_Layer: 0
   m_Name: ExpeditionMapPanel
   m_TagString: Untagged
@@ -1737,43 +1736,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &4178220762715559523
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5565488122472354152}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ddd429faba1ec784f9c896ea3fe9c340, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.UI.ExpeditionMapPanelView
-  villageCatalog: {fileID: 11400000, guid: c189538bf5e9dc249ae252548d3fbe00, type: 2}
-  waveEventChannel: {fileID: 0}
-  costEventChannel: {fileID: 0}
-  panelRoot: {fileID: 8913001692131122078}
-  mapButton: {fileID: 3321561172709051893}
-  closeButton: {fileID: 4167907863607281709}
-  departButton: {fileID: 7041469282491885948}
-  villageContentRoot: {fileID: 5820662514822227891}
-  villageButtonTemplate: {fileID: 8265904932586572987}
-  villageButtons:
-  - {fileID: 8265904932586572987}
-  - {fileID: 0}
-  - {fileID: 0}
-  unitButtons:
-  - {fileID: 5769297124407450921}
-  - {fileID: 2287118320216742294}
-  - {fileID: 2437291624974375004}
-  titleText: {fileID: 4952689215305703156}
-  detailText: {fileID: 462681641338989486}
-  rosterText: {fileID: 724954576874741924}
-  resultText: {fileID: 1913520856512158275}
-  resultPanel: {fileID: 0}
-  resultTitleText: {fileID: 0}
-  resultBodyText: {fileID: 0}
-  resultCloseButton: {fileID: 0}
 --- !u!1 &5947708136976115637
 GameObject:
   m_ObjectHideFlags: 0
@@ -2666,6 +2628,19 @@ MonoBehaviour:
   m_EffectColor: {r: 0.75, g: 0.48, b: 0.18, a: 1}
   m_EffectDistance: {x: 2, y: -2}
   m_UseGraphicAlpha: 1
+--- !u!114 &7700000000002002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8913001692131122078}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7c1e4b90d3f4e2a8b6c5d7e9f012345, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.UI.ExclusiveWindow
+  lowersOthers: 1
 --- !u!1 &9001850457650623355
 GameObject:
   m_ObjectHideFlags: 0
@@ -2924,15 +2899,3 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!114 &7700000000002002
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8913001692131122078}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a7c1e4b90d3f4e2a8b6c5d7e9f012345, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.UI.ExclusiveWindow

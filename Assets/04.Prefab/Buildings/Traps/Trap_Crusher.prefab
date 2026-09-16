@@ -81,7 +81,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 30
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 2099055159055310883, guid: 64c64edff0c2b5747855664eceaab8c5, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -89,7 +89,7 @@ SpriteRenderer:
   m_Size: {x: 1, y: 1}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 0
+  m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
 --- !u!1 &4328671716576560348
 GameObject:
@@ -144,6 +144,10 @@ MonoBehaviour:
   damageShakeDistance: 0.08
   damageShakeDuration: 0.16
   destroyDelay: 0.05
+  reopenCost: 25
+  reopenDays: 2
+  wearPerVisit: 1
+  repairCostPerWear: 4
   triggerChance: 1
   damage: 20
   injuryChance: 1
@@ -237,7 +241,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 20
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 5490437170853508298, guid: 2065d8f656d70b148987753bd8d7e0b7, type: 3}
+  m_Sprite: {fileID: 2099055159055310883, guid: 64c64edff0c2b5747855664eceaab8c5, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
