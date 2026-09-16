@@ -547,6 +547,64 @@ namespace Tests.EditMode.Gameplay
             }
         }
 
+        /// <summary>
+        /// 방 하나는 벌이든 경비든 하나만 한다.
+        ///
+        /// 경영의 선택이 여기서 나온다. 상점을 지으면 그 방은 지킬 수 없게 되고, 게다가
+        /// 그 상점이 매력도를 올려 다음 날 더 많은 모험가를 부른다 — 벌수록 막을 자리가
+        /// 줄어든다. 금고와 광산은 사람이 머무는 곳이 아니라 그대로 지킬 수 있다.
+        /// </summary>
+        [Test]
+        public void Room_EarnsOrDefendsButNotBoth()
+        {
+            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            try
+            {
+                var nodeManagerType = RequireType("_01.Code.MapCreateSystem.DungeonNodeManager");
+                var graphType = RequireType("_01.Code.MapCreateSystem.DungeonGraph");
+                var nodeKindType = RequireType("_01.Code.MapCreateSystem.DungeonNodeType");
+                var placementType = RequireType("_01.Code.Buildings.BuildingPlacement");
+                var nodeType = RequireType("_01.Code.MapCreateSystem.Node");
+                Component manager = null;
+                foreach (var root in scene.GetRootGameObjects())
+                    manager ??= root.GetComponentInChildren(nodeManagerType, true);
+                Assert.That(manager, Is.Not.Null);
+
+                var graph = Activator.CreateInstance(graphType);
+                var kind = Enum.Parse(nodeKindType, "Corridor");
+                var addNode = graphType.GetMethod("AddNode");
+                var createNode = nodeManagerType.GetMethod("CreateNode");
+                var storeModel = addNode.Invoke(graph, new object[] { kind, new Vector2Int(1300, 0) });
+                var vaultModel = addNode.Invoke(graph, new object[] { kind, new Vector2Int(1301, 0) });
+                var storeNode = (Component)createNode.Invoke(manager, new[] { storeModel });
+                var vaultNode = (Component)createNode.Invoke(manager, new[] { vaultModel });
+
+                var canAccept = nodeType.GetProperty("CanAcceptAdditionalUnit");
+                Assert.That((bool)canAccept.GetValue(storeNode), Is.True, "빈 방은 유닛을 받아야 합니다.");
+
+                var storeData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
+                    "Assets/03.SO/Buildings/StoreBuildingData.asset");
+                var treasuryData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
+                    "Assets/Resources/Buildings/TreasuryBuildingData.asset");
+                var install = placementType.GetMethod("InstallCentral", BindingFlags.Public | BindingFlags.Static);
+
+                Assert.That(install.Invoke(null, new object[] { storeNode, storeData, 0.92f }), Is.Not.Null);
+                Assert.That((bool)canAccept.GetValue(storeNode), Is.False,
+                    "상점이 선 방에는 유닛을 세울 수 없어야 합니다.");
+
+                // 금고는 모험가가 머무는 곳이 아니다. 지킬 수 없으면 지킬 것이 없어진다.
+                Assert.That(install.Invoke(null, new object[] { vaultNode, treasuryData, 0.92f }), Is.Not.Null);
+                Assert.That((bool)canAccept.GetValue(vaultNode), Is.True,
+                    "금고 방은 그대로 지킬 수 있어야 합니다.");
+
+                nodeManagerType.GetMethod("ClearAll").Invoke(manager, null);
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
+            }
+        }
+
         // ── 도구 ───────────────────────────────────────────────
 
         private static IEnumerable<(ScriptableObject asset, string path)> LoadAll(string typeName)

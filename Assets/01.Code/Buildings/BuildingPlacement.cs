@@ -33,6 +33,10 @@ namespace _01.Code.Buildings
                    && !UsesGridCell(buildingData);
         }
 
+        /// <summary>모험가가 눌러앉는 시설인가. 이런 방에는 유닛을 세우지 못한다.</summary>
+        public static bool IsDwellFacility(BuildingDataSO buildingData) =>
+            buildingData != null && buildingData.DwellSeconds > 0f;
+
         /// <summary>중앙 슬롯에 건물을 세우고 노드에 등록한다. 이미 차 있으면 null.</summary>
         public static Building InstallCentral(
             Node node,
@@ -40,6 +44,11 @@ namespace _01.Code.Buildings
             float centralSlotFill = DefaultCentralSlotFill)
         {
             if (node == null || node.HasAssignedBuilding)
+                return null;
+
+            // 유닛이 선 방은 경비 몫이다. 같은 규칙을 반대편에서도 지켜야 방 하나가
+            // 벌이와 경비를 겸하지 못한다 — 한쪽만 막으면 순서만 바꿔 둘 다 놓을 수 있다.
+            if (node.HasAssignedUnit && IsDwellFacility(buildingData))
                 return null;
 
             var building = CreateCentral(node, buildingData, centralSlotFill);

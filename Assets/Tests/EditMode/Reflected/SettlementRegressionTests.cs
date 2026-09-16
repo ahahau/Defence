@@ -262,9 +262,10 @@ namespace Tests.EditMode.Rules
             return controller;
         }
 
-        // ── 경비 판정 ────────────────────────────────────────────────
-        // 손님을 때리면 만족도가 깎이고 후기가 평판을 끌어내린다. 그래서 몬스터와 함정은
-        // 무기가 아니라 경비다 — 금고를 노린 자만 막고 나머지는 들여보내야 한다.
+        // ── 방문 목적 ────────────────────────────────────────────────
+        // 목적은 어디로 걸을지만 가른다. 보물을 노린 자는 금고로 직진하고 나머지는 시설을 돈다.
+        // 싸움은 누구와도 붙는다 — 전투까지 목적으로 가르면 경비가 순수 이득이 되어
+        // 배치에 고를 것이 없어진다.
 
         private Component Visitor(string purposeName)
         {
@@ -326,26 +327,6 @@ namespace Tests.EditMode.Rules
                 Assert.That(forecast.Invoke(null, new[] { value, (object)visitors }), Is.EqualTo(expected),
                     $"{value} 예보가 스폰 배분과 다릅니다.");
             }
-        }
-
-        /// <summary>
-        /// 전투 필드는 입장 경로가 여럿이라(순회·초기화·트리거 자동 입장·유닛 배치) 부르는 쪽마다
-        /// 막으면 하나를 빠뜨린다. 실제로 트리거 하나가 남아, 나머지를 다 막은 뒤에도 실측에서
-        /// 손님이 전투 필드 안에 서 있었다. 문 앞의 판정 자체를 못 박아 둔다.
-        /// </summary>
-        [TestCase("TreasureHunt", true)]
-        [TestCase("Shopping", false)]
-        [TestCase("Rest", false)]
-        public void Battlefield_TurnsAwayAnyoneWhoDidNotComeForTheVault(string purposeName, bool accepted)
-        {
-            var visitor = Visitor(purposeName);
-            var agent = visitor.gameObject.AddComponent(Resolve("_01.Code.BT.BattleAgent"));
-            var accepts = Resolve("_01.Code.BT.NodeBattlefield")
-                .GetMethod("AcceptsAgent", BindingFlags.Static | BindingFlags.NonPublic);
-            Assert.That(accepts, Is.Not.Null, "AcceptsAgent를 찾지 못했습니다.");
-
-            Assert.That(accepts.Invoke(null, new object[] { agent }), Is.EqualTo(accepted),
-                $"{purposeName}으로 온 모험가의 입장 판정이 어긋납니다.");
         }
 
         [Test]

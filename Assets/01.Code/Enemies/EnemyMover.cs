@@ -35,7 +35,6 @@ namespace _01.Code.Enemies
         private Vector3 _visualStartLocalEulerAngles;
         private bool _isTurning;
         private BattleAgent _battleAgent;
-        private Enemy _owner;
 
         public Func<Node, bool> NodeArrived { get; set; }
         /// <summary>
@@ -53,27 +52,10 @@ namespace _01.Code.Enemies
         public bool IsMoving => _isTurning;
         public NodeBattlefield CurrentBattlefield => _battleAgent != null ? _battleAgent.Battlefield : null;
 
-        /// <summary>
-        /// 전투 필드에 등록할 상대인가. 볼일이 있어 온 모험가는 등록하지 않는다 —
-        /// 등록하는 순간 몬스터의 사정거리에 들어가고, 맞은 모험가는 나쁜 후기를 남긴다.
-        ///
-        /// 들어갈 생각이 없으면 정원이 찼는지도 따지지 않는다. 따지면 몬스터로 꽉 찬 방이
-        /// 손님에게도 막혀, 갈 곳 없는 모험가가 복도에 굳는다.
-        /// </summary>
-        private bool JoinsBattlefields
-        {
-            get
-            {
-                _owner ??= GetComponentInParent<Enemy>(true);
-                return _owner == null || _owner.IsTrespasser;
-            }
-        }
-
         public void Initialize(Node startNode)
         {
             CacheVisualPose();
             _battleAgent ??= GetComponent<BattleAgent>();
-            _owner ??= GetComponentInParent<Enemy>(true);
 
             if (_currentNode?.Data != null)
                 VacateNode(_currentNode.Data.Id);
@@ -170,7 +152,7 @@ namespace _01.Code.Enemies
             }
 
             var previousBattlefield = CurrentBattlefield;
-            var nextBattlefield = JoinsBattlefields ? nextNode.GetComponent<NodeBattlefield>() : null;
+            var nextBattlefield = nextNode.GetComponent<NodeBattlefield>();
             previousBattlefield?.Leave(_battleAgent);
             if (nextBattlefield != null && _battleAgent != null && !nextBattlefield.TryEnter(_battleAgent))
             {
@@ -344,12 +326,9 @@ namespace _01.Code.Enemies
                 if (IsNodeOccupied(id))
                     continue;
 
-                if (JoinsBattlefields)
-                {
-                    var battlefield = node.GetComponent<NodeBattlefield>();
-                    if (battlefield != null && _battleAgent != null && !battlefield.CanEnter(_battleAgent.Team))
-                        continue;
-                }
+                var battlefield = node.GetComponent<NodeBattlefield>();
+                if (battlefield != null && _battleAgent != null && !battlefield.CanEnter(_battleAgent.Team))
+                    continue;
 
                 if (!_visitedNodes.Contains(id))
                     unvisitedFree.Add(node);
@@ -416,12 +395,9 @@ namespace _01.Code.Enemies
                 if (node == null || node.IsPassBlocked || IsNodeOccupied(id))
                     continue;
 
-                if (JoinsBattlefields)
-                {
-                    var battlefield = node.GetComponent<NodeBattlefield>();
-                    if (battlefield != null && _battleAgent != null && !battlefield.CanEnter(_battleAgent.Team))
-                        continue;
-                }
+                var battlefield = node.GetComponent<NodeBattlefield>();
+                if (battlefield != null && _battleAgent != null && !battlefield.CanEnter(_battleAgent.Team))
+                    continue;
 
                 if (node == goal)
                 {
@@ -538,9 +514,6 @@ namespace _01.Code.Enemies
         private void TryEnterBattlefield(Node node)
         {
             if (node == null || _battleAgent == null)
-                return;
-
-            if (!JoinsBattlefields)
                 return;
 
             node.GetComponent<NodeBattlefield>()?.TryEnter(_battleAgent);

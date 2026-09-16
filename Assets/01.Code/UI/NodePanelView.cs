@@ -893,6 +893,14 @@ namespace _01.Code.UI
                 return;
             }
 
+            // 상점 한복판에서 칼을 뽑으면 장사가 되지 않는다. 방 하나는 벌이든 경비든 하나만 한다.
+            if (_selectedNode.HasDwellFacility)
+            {
+                SetManagementTitle("시설이 있는 방에는 배치할 수 없습니다");
+                RefreshRosterEntries();
+                return;
+            }
+
             if (!_selectedNode.CanAcceptAdditionalUnit)
                 return;
 

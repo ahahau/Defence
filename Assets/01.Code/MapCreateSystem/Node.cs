@@ -233,8 +233,39 @@ namespace _01.Code.MapCreateSystem
         /// <summary>
         /// 스폰 방에는 유닛을 세울 수 없다. 거기서 막아 세우면 적이 통로를 한 번도 지나지 않아
         /// 통로 함정이 통째로 죽고, 함정을 지을 이유가 사라진다.
+        ///
+        /// 모험가가 머무는 시설이 있는 방에도 세울 수 없다. 상점 한복판에서 칼을 뽑으면
+        /// 장사가 되지 않는다. 이것이 경영의 선택이다 — 방 하나를 벌이에 쓰면 그만큼
+        /// 지킬 자리가 줄고, 그 시설이 매력도를 올려 다음 날 더 많이 온다.
         /// </summary>
-        public bool CanAcceptAdditionalUnit => !IsEnemySpawnNode && AssignedUnitCount < UnitCapacity;
+        public bool CanAcceptAdditionalUnit =>
+            !IsEnemySpawnNode && !HasDwellFacility && AssignedUnitCount < UnitCapacity;
+
+        /// <summary>모험가가 눌러앉는 시설이 이 방에 있는가. 문을 닫아 두어도 자리는 시설의 것이다.</summary>
+        public bool HasDwellFacility
+        {
+            get
+            {
+                if (IsDwellFacility(AssignedBuilding))
+                    return true;
+
+                var grid = TrapGrid;
+                if (grid == null)
+                    return false;
+
+                var placed = grid.PlacedBuildings;
+                for (var i = 0; i < placed.Count; i++)
+                    if (IsDwellFacility(placed[i]))
+                        return true;
+
+                return false;
+            }
+        }
+
+        // 영업 여부로 판단하지 않는다. 그러면 문 닫은 상점 자리에 유닛을 세워 두고
+        // 다시 열 수 있어, 한 방이 벌이와 경비를 동시에 하게 된다.
+        private static bool IsDwellFacility(Building building) =>
+            building != null && !building.IsDestroyed && building.Data != null && building.Data.DwellSeconds > 0f;
         public int UnitCapacity => battlefield != null ? battlefield.MaxPerTeam : 1;
         /// <summary>이 구역에서 벌어진 일로 쌓인 악명(전투·함정 발동). 설치물의 위험도는 포함하지 않는다.</summary>
         public int DangerLevel { get; private set; }
