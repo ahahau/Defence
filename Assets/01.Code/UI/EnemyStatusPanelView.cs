@@ -181,7 +181,6 @@ namespace _01.Code.UI
 
             var retreatPercent = Mathf.RoundToInt(selectedEnemy.RetreatChance * 100f);
             return $"{combatText}\n목적 {selectedEnemy.VisitPurposeLabel}  ·  예산 {selectedEnemy.RemainingBudget}/{selectedEnemy.InitialBudget}G"
-                   + $"\n만족도 {selectedEnemy.Satisfaction}/100 ({selectedEnemy.SatisfactionLabel})"
                    + $"\n경계 {selectedEnemy.Fear}  ·  탐욕 {selectedEnemy.Greed}  ·  철수 {retreatPercent}%";
         }
 

@@ -449,15 +449,15 @@ namespace _01.Code.UI
         /// </summary>
         private static string BuildFameLine()
         {
-            var fromGold = DungeonFameRules.FameFromStoredGold();
-            var fromFacilities = DungeonFameRules.FameFromFacilities();
-            var total = fromGold + fromFacilities;
+            var fromGold = DungeonGradeRules.GradeFromStoredGold();
+            var fromFacilities = DungeonGradeRules.GradeFromFacilities();
+            var fromKills = DungeonGradeRules.GradeFromKills();
+            var total = fromGold + fromFacilities + fromKills;
             if (total <= 0)
-                return "<color=#9FB0C0>매력도 0 · 아직 알려지지 않은 던전입니다</color>\n";
+                return "<color=#9FB0C0>등급 0 · 아직 아무도 모르는 굴입니다</color>\n";
 
-            return $"<color=#FFCC66>던전 매력도 {total}</color>"
-                   + $" <size=85%>(금고 {fromGold} · 시설 {fromFacilities})</size>"
-                   + $" · 예상 입장료 {DungeonFameRules.ResolveAdmissionIncome(DungeonFameRules.ResolveVisitorCount(total))}G\n";
+            return $"<color=#FFCC66>던전 등급 {total} ({DungeonGradeRules.GetGradeLabel(total)})</color>"
+                   + $" <size=85%>(처치 {fromKills} · 금고 {fromGold} · 건물 {fromFacilities})</size>\n";
         }
 
         private void HidePreparationHud()

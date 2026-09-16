@@ -19,10 +19,6 @@ namespace _01.Code.Enemies
         public const int BaseBudget = 12;
         public const int BudgetPerAppeal = 2;
         public const int BudgetPerLevel = 4;
-        public const int StartingSatisfaction = 50;
-        public const int PurposeFulfilledBonus = 25;
-        public const int PurposeUnfulfilledPenalty = 20;
-        public const int TreasureFoundBonus = 20;
 
         /// <summary>
         /// 특성이 강하게 암시하는 목적은 고정하고, 나머지는 방문 순서대로 고르게 섞는다.
@@ -62,28 +58,6 @@ namespace _01.Code.Enemies
 
         public static int ClampPayment(int requestedGold, int remainingBudget) =>
             Mathf.Min(Mathf.Max(0, requestedGold), Mathf.Max(0, remainingBudget));
-
-        public static int ClampSatisfaction(int satisfaction) => Mathf.Clamp(satisfaction, 0, 100);
-
-        public static int ResolveDamagePenalty(int damage, int maximumHealth)
-        {
-            if (damage <= 0 || maximumHealth <= 0)
-                return 0;
-            return Mathf.Max(1, Mathf.CeilToInt(damage / (float)maximumHealth * 40f));
-        }
-
-        public static int ResolveFinalSatisfaction(int currentSatisfaction, bool fulfilledPurpose) =>
-            ClampSatisfaction(currentSatisfaction - (fulfilledPurpose ? 0 : PurposeUnfulfilledPenalty));
-
-        public static string GetSatisfactionLabel(int satisfaction)
-        {
-            var safe = ClampSatisfaction(satisfaction);
-            if (safe >= 80) return "매우 만족";
-            if (safe >= 60) return "만족";
-            if (safe >= 40) return "보통";
-            if (safe >= 20) return "불만";
-            return "매우 불만";
-        }
 
         /// <summary>
         /// 오늘 이만큼 올 때 각 목적이 몇 명인지. 준비 화면이 경비를 정하는 근거로 쓴다.

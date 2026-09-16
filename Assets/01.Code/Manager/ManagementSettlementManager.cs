@@ -546,11 +546,11 @@ namespace _01.Code.Manager
                 ? $"\n<color=#FFD05A>{wave.LastObjectiveTitle} 완료 · 보너스 +{wave.LastObjectiveRewardGold}G</color>"
                 : $"\n{wave.LastObjectiveTitle} 실패";
 
-            var reputation = DungeonReputationManager.Current;
-            var review = reputation != null && reputation.LastReviewCount > 0
-                ? $"\n후기 {reputation.LastReviewCount}개  ·  평균 만족 {reputation.LastAverageSatisfaction}"
-                  + $"  ·  평판 {FormatSigned(reputation.LastReputationDelta)} → {reputation.Reputation} ({DungeonReputationRules.GetGrade(reputation.Reputation)})"
-                : "\n후기 없음  ·  귀환한 방문객이 없습니다";
+            var grade = DungeonGradeManager.Current;
+            var review = grade != null
+                ? $"\n던전 등급 {FormatSigned(grade.LastGradeDelta)} → {grade.Grade} ({grade.GradeLabel})"
+                  + $"  ·  누적 처치 {grade.TotalKills}"
+                : string.Empty;
 
             return $"\n<size=85%>방문객 {wave.TotalEnemyCount}명  ·  제압 {wave.KillCount}명"
                    + $"  ·  받은 피해 {wave.WaveDamageTaken}"

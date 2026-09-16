@@ -89,10 +89,8 @@ namespace _01.Code.UI
                 buildingDanger += DangerOf(edge != null ? edge.InstalledBuilding : null);
 
             var totalDanger = unitDanger + buildingDanger + deedDanger;
-            var appeal = DungeonFameRules.CalculateAppeal();
-            var reputation = DungeonReputationManager.Current != null
-                ? DungeonReputationManager.Current.Reputation
-                : DungeonReputationManager.DefaultReputation;
+            var appeal = DungeonGradeRules.CalculateGrade();
+            var reputation = DungeonGradeManager.Current != null ? DungeonGradeManager.Current.TotalKills : 0;
             if (totalDanger == _lastTotalDanger && appeal == _lastAppeal && reputation == _lastReputation)
                 return;
 
@@ -104,7 +102,8 @@ namespace _01.Code.UI
 
             if (totalDangerText != null)
             {
-                totalDangerText.text = $"매력 {appeal}  ·  평판 {reputation}  ·  위험 {totalDanger}";
+                totalDangerText.text =
+                    $"등급 {appeal} ({DungeonGradeRules.GetGradeLabel(appeal)})  ·  처치 {reputation}  ·  위험 {totalDanger}";
                 if (previousDanger >= 0 && previousAppeal >= 0)
                     PlayDangerFeedback(appeal > previousAppeal || totalDanger > previousDanger);
             }

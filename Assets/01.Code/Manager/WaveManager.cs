@@ -131,13 +131,7 @@ namespace _01.Code.Manager
         /// 예고 화면과 실제 스폰이 반드시 이 하나를 거쳐야 한다.
         /// 한쪽에만 보정을 더하면 "12명 온다"고 적어 놓고 15명을 보내게 된다.
         /// </summary>
-        private int ResolveWaveEnemyCount(int baseEnemyCount)
-        {
-            var reputation = DungeonReputationManager.Current != null
-                ? DungeonReputationManager.Current.Reputation
-                : DungeonReputationManager.DefaultReputation;
-            return DungeonReputationRules.ResolveVisitorCount(baseEnemyCount, reputation);
-        }
+        private int ResolveWaveEnemyCount(int baseEnemyCount) => Mathf.Max(0, baseEnemyCount);
 
         public WaveThreatPreview GetThreatPreview(int day) =>
             waveConfig != null ? waveConfig.GetThreatPreview(day) : default;
@@ -150,7 +144,7 @@ namespace _01.Code.Manager
         /// </summary>
         public int GetBasePreviewEnemyCount(int day)
         {
-            return DungeonFameRules.ResolveVisitorCount(DungeonFameRules.CalculateAppeal());
+            return DungeonGradeRules.ResolveVisitorCount(DungeonGradeRules.CalculateAppeal());
         }
 
         public bool IsBossDay(int day) => waveConfig != null && waveConfig.IsBossDay(day);
@@ -351,16 +345,18 @@ namespace _01.Code.Manager
 
         private IEnumerator RunWave(WaveConfigSO.WaveEntry entry)
         {
-            // 오늘 방문객 수는 영업 시작 시점의 매력도로 확정한다.
-            _currentFame = DungeonFameRules.CalculateAppeal();
+            // 오늘 오는 인원은 영업 시작 시점의 등급으로 확정한다.
+            _currentFame = DungeonGradeRules.CalculateGrade();
 
             var adjustedEnemyCount = ResolveWaveEnemyCount(
-                DungeonFameRules.ResolveVisitorCount(_currentFame));
+                DungeonGradeRules.ResolveVisitorCount(_currentFame));
 
             PrepareObjectiveChoices(_currentDay);
             ResetWaveResults(adjustedEnemyCount);
-            // 방문객은 입장할 때 요금을 낸다. 시설에서 쓰는 돈은 이동 중 별도로 장부에 쌓인다.
-            _currentClearGoldReward = DungeonFameRules.ResolveAdmissionIncome(adjustedEnemyCount);
+            // 벌이는 막아낸 만큼이다. 하나 쓰러뜨릴 때마다 전리품이 쌓인다 —
+            // 그냥 들여보내면 시설에서 쓰고 간 푼돈만 남는다.
+            _currentClearGoldReward = 0;
+            DungeonGradeManager.Current?.BeginBusinessDay();
             _isWaveRunning = true;
             _unitConditionWearPending = true;
             _activeEnemies.Clear();
@@ -570,25 +566,18 @@ namespace _01.Code.Manager
             enemy.DeathStarted += HandleWaveEnemyDeathStarted;
             enemy.Removed += HandleEnemyRemoved;
             enemy.FacilityGoldSpent += HandleEnemyFacilityGoldSpent;
-            enemy.VisitCompleted += HandleVisitorCompleted;
             enemy.ConfigureData(enemyData);
-            // 날짜가 아니라 명성이 적의 성장 단계를 정한다. 웅크린 던전에는 오래 버텨도
+            // 날짜가 아니라 등급이 모험가의 성장 단계를 정한다. 웅크린 던전에는 오래 버텨도
             // 약한 모험가가 오고, 크게 키운 던전에는 이틀 만에도 강한 자가 온다.
-            var reputation = DungeonReputationManager.Current != null
-                ? DungeonReputationManager.Current.Reputation
-                : DungeonReputationManager.DefaultReputation;
-            var visitorLevel = DungeonReputationRules.ResolveVisitorLevel(
-                DungeonFameRules.ResolveEnemyLevel(_currentFame), reputation);
+            var visitorLevel = DungeonGradeRules.ResolveVisitorLevel(_currentFame);
             enemy.ApplyWaveLevel(visitorLevel, enemyHealthPerLevel, enemyAttackPerLevel);
             var visitorIndex = Mathf.Max(0, _waveEnemyCount - _remainingSpawns);
             var purpose = isBossSpawn
                 ? AdventurerVisitPurpose.TreasureHunt
                 : AdventurerVisitRules.ResolvePurpose(enemy.Trait, visitorIndex);
-            var baseBudget = AdventurerVisitRules.ResolveBudget(
-                _currentFame, visitorLevel, purpose, enemy.Trait);
             enemy.ConfigureVisitProfile(
                 purpose,
-                DungeonReputationRules.ResolveBudget(baseBudget, reputation));
+                AdventurerVisitRules.ResolveBudget(_currentFame, visitorLevel, purpose, enemy.Trait));
             _remainingSpawns--;
 
             if (isBossSpawn)
@@ -777,10 +766,7 @@ namespace _01.Code.Manager
         private void HandleEnemyRemoved(Enemy enemy)
         {
             if (enemy != null)
-            {
                 enemy.FacilityGoldSpent -= HandleEnemyFacilityGoldSpent;
-                enemy.VisitCompleted -= HandleVisitorCompleted;
-            }
 
             if (this == null || _isDestroying)
                 return;
@@ -791,12 +777,6 @@ namespace _01.Code.Manager
             _activeEnemies.Remove(enemy);
             TryActivateBossFinalPhase();
             CompleteWaveIfCleared(false);
-        }
-
-        private void HandleVisitorCompleted(Enemy enemy, int satisfaction)
-        {
-            if (_isWaveRunning)
-                DungeonReputationManager.Current?.RecordReview(satisfaction);
         }
 
         private void HandleEnemyFacilityGoldSpent(Enemy enemy, int amount, int baseAmount, GoldChangeSource source)
@@ -1014,7 +994,7 @@ namespace _01.Code.Manager
             if (_isDestroying || waveEventChannel == null)
                 return;
 
-            DungeonReputationManager.Current?.FinalizeBusinessDay();
+            DungeonGradeManager.Current?.FinalizeBusinessDay();
             ApplyUnitConditionWear();
             // 웨이브 집계는 다음 웨이브에서 초기화되므로, 판 전체 전과는 여기서 넘겨 둔다.
             RunSummarySystem.Current?.RecordWave(_waveEnemyCount, _waveKillCount, _waveDamageDealt, _waveDamageTaken, _waveCriticalHitCount);
@@ -1056,7 +1036,7 @@ namespace _01.Code.Manager
 
         private void ResetWaveResults(int enemyCount)
         {
-            DungeonReputationManager.Current?.BeginBusinessDay();
+            DungeonGradeManager.Current?.BeginBusinessDay();
             _waveEnemyCount = Mathf.Max(0, enemyCount);
             _waveKillCount = 0;
             _waveDamageDealt = 0;
@@ -1079,6 +1059,12 @@ namespace _01.Code.Manager
                 return;
 
             _waveKillCount++;
+
+            // 막아낸 하나가 전리품이 되고, 동시에 이 던전이 위험하다는 소문이 된다.
+            // 벌이와 난이도가 같은 행동에서 나온다 — 잘 막을수록 더 센 자들이 찾아온다.
+            var level = enemy != null ? enemy.Level : 1;
+            _currentClearGoldReward += DungeonGradeRules.ResolveBounty(level);
+            DungeonGradeManager.Current?.RecordKill();
         }
 
         private void HandleAnyDamage(Health damagedHealth, int damage, bool isCritical)
@@ -1153,7 +1139,6 @@ namespace _01.Code.Manager
                 enemy.DeathStarted -= HandleWaveEnemyDeathStarted;
                 enemy.Removed -= HandleEnemyRemoved;
                 enemy.FacilityGoldSpent -= HandleEnemyFacilityGoldSpent;
-                enemy.VisitCompleted -= HandleVisitorCompleted;
             }
 
             _activeEnemies.Clear();

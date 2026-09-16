@@ -148,7 +148,7 @@ namespace Tests.EditMode.Rules
         [Test]
         public void Fame_RaisesHeadcountAndStrengthTogether()
         {
-            var rules = Resolve("_01.Code.Manager.DungeonFameRules");
+            var rules = Resolve("_01.Code.Manager.DungeonGradeRules");
 
             var quiet = (int)CallStatic(rules, "ResolveEnemyCount", 0);
             var busy = (int)CallStatic(rules, "ResolveEnemyCount", 10);
@@ -164,13 +164,22 @@ namespace Tests.EditMode.Rules
         [Test]
         public void Fame_PaysBackWhatItPutsAtRisk()
         {
-            var rules = Resolve("_01.Code.Manager.DungeonFameRules");
+            var rules = Resolve("_01.Code.Manager.DungeonGradeRules");
 
             // 위험만 오르고 벌이가 그대로면 웅크리는 것이 언제나 최선이 되어,
             // 플레이어가 아무것도 짓지 않는 것이 정답인 게임이 된다.
-            var quiet = (int)CallStatic(rules, "ResolveClearGold", 0);
-            var busy = (int)CallStatic(rules, "ResolveClearGold", 10);
+            // 등급이 오르면 인원도 수준도 오르니 다 막아냈을 때의 전리품도 커져야 한다.
+            var quiet = DayTakeAt(rules, 0);
+            var busy = DayTakeAt(rules, 10);
             Assert.That(busy, Is.GreaterThan(quiet));
+        }
+
+        /// <summary>이 등급에서 온 인원을 전부 막았을 때 하루 전리품.</summary>
+        private static int DayTakeAt(Type rules, int grade)
+        {
+            var visitors = (int)CallStatic(rules, "ResolveVisitorCount", grade);
+            var level = (int)CallStatic(rules, "ResolveVisitorLevel", grade);
+            return visitors * (int)CallStatic(rules, "ResolveBounty", level);
         }
 
         [TestCase(0, 1)]
@@ -179,7 +188,7 @@ namespace Tests.EditMode.Rules
         [TestCase(5, 6)]
         public void Fame_MovesWithoutSteps(int lower, int higher)
         {
-            var rules = Resolve("_01.Code.Manager.DungeonFameRules");
+            var rules = Resolve("_01.Code.Manager.DungeonGradeRules");
 
             // 시설 하나를 더 지었을 때 딱 그만큼만 늘어나야, 무엇 때문에 힘들어졌는지 짚을 수 있다.
             var atLower = (int)CallStatic(rules, "ResolveEnemyCount", lower);
@@ -191,11 +200,11 @@ namespace Tests.EditMode.Rules
         [Test]
         public void Fame_IsNeverNegativeEvenIfTheDungeonIsEmptied()
         {
-            var rules = Resolve("_01.Code.Manager.DungeonFameRules");
+            var rules = Resolve("_01.Code.Manager.DungeonGradeRules");
 
             Assert.That((int)CallStatic(rules, "ResolveEnemyCount", -5), Is.GreaterThan(0));
             Assert.That(CallStatic(rules, "ResolveEnemyLevel", -5), Is.EqualTo(1));
-            Assert.That((int)CallStatic(rules, "ResolveClearGold", -5), Is.GreaterThanOrEqualTo(0));
+            Assert.That(DayTakeAt(rules, -5), Is.GreaterThanOrEqualTo(0));
         }
 
         // ── 시설 휴업 ────────────────────────────────────────────────

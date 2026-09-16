@@ -419,7 +419,7 @@ namespace Tests.EditMode.Gameplay
                 var graphType = RequireType("_01.Code.MapCreateSystem.DungeonGraph");
                 var nodeKindType = RequireType("_01.Code.MapCreateSystem.DungeonNodeType");
                 var placementType = RequireType("_01.Code.Buildings.BuildingPlacement");
-                var fameType = RequireType("_01.Code.Manager.DungeonFameRules");
+                var fameType = RequireType("_01.Code.Manager.DungeonGradeRules");
                 Component manager = null;
                 foreach (var root in scene.GetRootGameObjects())
                     manager ??= root.GetComponentInChildren(nodeManagerType, true);
