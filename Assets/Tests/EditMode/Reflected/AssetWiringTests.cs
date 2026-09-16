@@ -68,6 +68,10 @@ namespace Tests.EditMode.Gameplay
 
         /// <summary>
         /// 함정 아홉이 서로 다른 그림을 써야 한다. 하나를 돌려 쓰면 무엇이 터졌는지 구분이 안 된다.
+        ///
+        /// 임시 그림은 예외다. 진짜 도트가 오기 전까지는 함정 전부가 같은 노란 사각형을
+        /// 쓰는 것이 정상이고, 그걸 실패로 치면 아트 교체가 끝날 때까지 이 테스트를 꺼 둬야
+        /// 한다. 꺼 두면 그사이 진짜 아트끼리 겹치는 것도 못 잡는다.
         /// </summary>
         [Test]
         public void Traps_DoNotShareTheSameArt()
@@ -80,7 +84,7 @@ namespace Tests.EditMode.Gameplay
                     continue;
 
                 var art = ReadProperty(asset, "BoardSprite");
-                if (art == null)
+                if (art == null || IsPlaceholder(art))
                     continue;
 
                 if (!byArt.TryGetValue(art, out var users))
@@ -618,7 +622,68 @@ namespace Tests.EditMode.Gameplay
             }
         }
 
+        /// <summary>
+        /// 진짜 도트가 오기 전까지 자리를 지키는 임시 그림이 성하게 있는지 본다.
+        ///
+        /// 아트를 전부 걷어낸 뒤로 이 아홉 장이 화면의 거의 전부다. 여기가 깨지면 게임이
+        /// 흰 사각형 무더기가 되어 배치도 밸런스도 눈으로 볼 수 없다. 필터까지 보는 것은
+        /// Point가 아니면 도트가 뭉개져 임시 그림으로도 못 쓰기 때문이다.
+        ///
+        /// 남은 숙제는 실패로 만들지 않고 적어만 둔다. 임시 그림을 쓰는 것 자체는 지금
+        /// 잘못이 아니라 예정된 상태이고, 이 숫자가 줄어드는 것이 아트 작업의 진척이다.
+        /// </summary>
+        [Test]
+        public void PlaceholderArt_StandsInUntilTheRealPixelArtArrives()
+        {
+            foreach (var kind in new[]
+                     {
+                         "Adventurer", "Unit", "Boss", "Building",
+                         "Trap", "Node", "Icon", "Ui", "Background"
+                     })
+            {
+                var path = $"{PlaceholderRoot}/{kind}.png";
+                Assert.That(AssetDatabase.LoadAssetAtPath<Sprite>(path), Is.Not.Null,
+                    $"{path} 임시 그림이 없습니다. Defence/Art/Generate Placeholder Art로 다시 만들 수 있습니다.");
+
+                var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+                Assert.That(importer, Is.Not.Null, path + " 임포터를 찾지 못했습니다.");
+                Assert.That(importer.textureType, Is.EqualTo(TextureImporterType.Sprite),
+                    kind + ": 스프라이트가 아니면 붙일 수 없습니다.");
+                Assert.That(importer.filterMode, Is.EqualTo(FilterMode.Point),
+                    kind + ": 필터가 Point가 아니면 도트가 뭉개집니다.");
+            }
+
+            var pending = new List<string>();
+            foreach (var (asset, path) in LoadAll("_01.Code.Buildings.BuildingDataSO"))
+                if (UsesPlaceholder(path))
+                    pending.Add(asset.name);
+            foreach (var (asset, path) in LoadAll("_01.Code.Enemies.EnemyDataSO"))
+                if (UsesPlaceholder(path))
+                    pending.Add(asset.name);
+
+            // Debug.Log로 남긴다. TestContext.WriteLine은 러너 UI에만 들어가서
+            // 이 프로젝트가 결과를 읽는 경로(unity cmd console)로는 올라오지 않는다.
+            Debug.Log(pending.Count == 0
+                ? "[임시 아트] 임시 그림을 쓰는 건물·모험가가 없습니다. 아트 교체가 끝났습니다."
+                : $"[임시 아트] 아직 진짜 도트를 기다리는 자산 {pending.Count}개:\n  "
+                  + string.Join("\n  ", pending));
+        }
+
         // ── 도구 ───────────────────────────────────────────────
+
+        private const string PlaceholderRoot = "Assets/02.Art/Placeholder";
+
+        /// <summary>이 그림이 자리만 지키는 임시 그림인가.</summary>
+        private static bool IsPlaceholder(UnityEngine.Object sprite) =>
+            sprite != null && AssetDatabase.GetAssetPath(sprite).StartsWith(PlaceholderRoot);
+
+        private static bool UsesPlaceholder(string assetPath)
+        {
+            foreach (var dependency in AssetDatabase.GetDependencies(assetPath, true))
+                if (dependency.StartsWith(PlaceholderRoot))
+                    return true;
+            return false;
+        }
 
         private static IEnumerable<(ScriptableObject asset, string path)> LoadAll(string typeName)
         {
