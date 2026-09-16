@@ -514,7 +514,7 @@ namespace _01.Code.UI
         private bool IsManagementAllowed()
         {
             dayManager ??= DayManager.Current;
-            return dayManager != null && dayManager.IsStandby;
+            return DayManager.IsManagementWindow;
         }
     }
 }

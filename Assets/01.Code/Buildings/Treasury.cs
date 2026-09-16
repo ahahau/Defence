@@ -55,8 +55,24 @@ namespace _01.Code.Buildings
             return amount;
         }
 
+        /// <summary>
+        /// 오늘 금고를 헐 수 있는가. 청산일에만 열린다.
+        ///
+        /// 넣고 빼는 것이 자유로우면 금고는 이자 붙는 저금통일 뿐이다. 방을 뺏지도 않고
+        /// 경비까지 세울 수 있으니, 그러면 금고만 짓는 것이 언제나 정답이 되어 다른 건물을
+        /// 지을 이유가 사라진다. 묶여 있어야 "이번 주 운영 자금을 포기한다"는 값을 치른다.
+        ///
+        /// 푸는 날을 청산일로 맞춘 것은 그날이 돈이 필요한 날이기 때문이다 — 빚을 갚으려
+        /// 금고를 헐면 등급이 떨어지고, 등급을 지키려 두면 빚을 못 갚는다.
+        /// </summary>
+        public static bool CanWithdrawToday =>
+            DayManager.Current != null && DayManager.IsSettlementDay(DayManager.Current.CurrentDay);
+
         public int WithdrawToOperatingFunds(int requestedAmount)
         {
+            if (!CanWithdrawToday)
+                return 0;
+
             var amount = Mathf.Clamp(requestedAmount, 0, StoredGold);
             if (amount <= 0 || CostManager.Current == null)
                 return 0;

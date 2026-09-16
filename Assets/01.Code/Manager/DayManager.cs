@@ -17,6 +17,34 @@ namespace _01.Code.Manager
         private int currentDay;
         private bool _isStandby = true;
         public bool IsStandby => _isStandby;
+
+        /// <summary>
+        /// 지금 던전에 손을 댈 수 있는 시간인가. 대기 중이거나, 영업 중이라도 시계를 멈춰 둔 동안.
+        ///
+        /// 멈추는 기능이 보기만 하는 것이면 멈출 이유가 없다. 밀려드는 것을 보고 그 자리에서
+        /// 경비를 옮길 수 있어야 멈춤이 수단이 된다.
+        ///
+        /// 모달이 붙들어 둔 시간은 세지 않는다(<see cref="GameSpeedController.IsPausedByPlayer"/>).
+        /// 그건 플레이어가 고른 멈춤이 아니라 창이 떠 있는 것뿐이라, 보고서를 읽는 동안
+        /// 뒤에서 던전을 고칠 수 있게 된다.
+        ///
+        /// 회복은 여기에 딸리지 않는다. 멈춘 채로 치료가 되면 전투 중 무한 회복이 되어
+        /// 피로와 부상이 하루 단위 자원이기를 그만둔다.
+        /// </summary>
+        public static bool IsManagementWindow
+        {
+            get
+            {
+                if (Current == null)
+                    return false;
+                if (Current.IsStandby)
+                    return true;
+
+                var speed = GameSpeedController.Current;
+                return speed != null && speed.IsPausedByPlayer;
+            }
+        }
+
         public int CurrentDay => currentDay;
         public int NextWaveDay => currentDay + 1;
 

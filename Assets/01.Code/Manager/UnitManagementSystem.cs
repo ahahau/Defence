@@ -207,10 +207,11 @@ namespace _01.Code.Manager
                 return false;
             }
 
-            var dayManager = _dayManager != null ? _dayManager : DayManager.Current;
-            if (dayManager == null || !dayManager.IsStandby)
+            // 멈춰 둔 동안에는 영업 중이라도 경비를 옮길 수 있다. 바로 아래에서 전투 중인
+            // 유닛을 걸러 내므로, 맞기 직전에 빼는 것은 여전히 안 된다.
+            if (!DayManager.IsManagementWindow)
             {
-                reason = "웨이브 중에는 유닛을 관리할 수 없습니다";
+                reason = "영업 중에는 멈춘 동안에만 유닛을 옮길 수 있습니다";
                 return false;
             }
             if (unit.Combatant != null && unit.Combatant.Target != null)

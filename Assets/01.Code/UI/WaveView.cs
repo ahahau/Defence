@@ -558,6 +558,16 @@ namespace _01.Code.UI
                 _waveProgressFill.fillAmount = _displayedProgress;
             }
 
+            // 제목은 통계 갱신 주기를 기다리지 않는다. 멈춘 순간 손댈 수 있다고 알려 줘야 하는데
+            // 반 박자 늦게 뜨면 플레이어는 이미 다른 곳을 누르고 있다.
+            if (_waveProgressTitle != null)
+            {
+                var speed = GameSpeedController.Current;
+                _waveProgressTitle.text = speed != null && speed.IsPausedByPlayer
+                    ? "<color=#8FD6FF>멈춤 · 지금 배치할 수 있습니다</color>"
+                    : waveManager.IsBossWave ? "영웅 파티 특별 영업" : "던전 영업 중";
+            }
+
             if (!refreshStats)
                 return;
 
@@ -565,9 +575,6 @@ namespace _01.Code.UI
                 _waveProgressFill.color = waveManager.IsBossWave
                     ? new Color(0.98f, 0.62f, 0.12f, 1f)
                     : new Color(0.72f, 0.12f, 0.08f, 1f);
-
-            if (_waveProgressTitle != null)
-                _waveProgressTitle.text = waveManager.IsBossWave ? "영웅 파티 특별 영업" : "던전 영업 중";
 
             if (_waveProgressStats != null)
             {

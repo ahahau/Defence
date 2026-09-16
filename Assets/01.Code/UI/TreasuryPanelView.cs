@@ -116,6 +116,11 @@ namespace _01.Code.UI
             Refresh();
         }
 
+        private static int DaysUntilSettlement() =>
+            _01.Code.Manager.DayManager.Current != null
+                ? _01.Code.Manager.DayManager.Current.DaysUntilSettlement
+                : _01.Code.Manager.DayManager.WeekLength;
+
         private void Hide()
         {
             if (panelRoot != null)
@@ -148,12 +153,19 @@ namespace _01.Code.UI
                                        : "<size=85%><color=#9A9182>길이 막혀 안전함 · 이자 없음</color></size>");
             }
             if (operatingFundsText != null) operatingFundsText.text = $"운영 자금  {operatingFunds:N0}G";
-            if (hintText != null) hintText.text = "금고의 금화는 습격 목표가 될 수 있습니다.";
+
+            // 맡기면 청산일까지 묶인다는 것을 넣기 전에 알아야 한다. 넣고 나서 알면
+            // 그건 플레이어가 고른 결과가 아니라 화면이 숨긴 결과가 된다.
+            var canWithdraw = _01.Code.Buildings.Treasury.CanWithdrawToday;
+            if (hintText != null)
+                hintText.text = canWithdraw
+                    ? "청산일입니다. 오늘은 금고를 헐 수 있습니다."
+                    : $"맡긴 금화는 청산일에만 꺼낼 수 있습니다. (남은 {DaysUntilSettlement()}일)";
 
             if (depositButton != null) depositButton.interactable = operatingFunds > 0 && target.FreeSpace > 0;
             if (depositAllButton != null) depositAllButton.interactable = operatingFunds > 0 && target.FreeSpace > 0;
-            if (withdrawButton != null) withdrawButton.interactable = target.StoredGold > 0;
-            if (withdrawAllButton != null) withdrawAllButton.interactable = target.StoredGold > 0;
+            if (withdrawButton != null) withdrawButton.interactable = canWithdraw && target.StoredGold > 0;
+            if (withdrawAllButton != null) withdrawAllButton.interactable = canWithdraw && target.StoredGold > 0;
         }
     }
 }

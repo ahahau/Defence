@@ -46,6 +46,28 @@ namespace _01.Code.UI
                 fastButton.onClick.RemoveListener(SetFastSpeed);
         }
 
+        /// <summary>
+        /// 컨트롤러가 정한 속도를 따라간다.
+        ///
+        /// 여기 버튼만 속도를 바꾸는 것이 아니다 — 스페이스와 1·2 키도 바꾸고, 모달이 닫히면
+        /// 되돌아온다. 자기 복사본만 보고 있으면 키로 멈춘 뒤에도 버튼은 1배속에 켜져 있다.
+        /// 멈춤은 이제 배치할 수 있는 상태이기도 해서, 표시가 어긋나면 손댈 수 있는지를
+        /// 화면이 거짓으로 알려 주게 된다.
+        /// </summary>
+        private void Update()
+        {
+            var controller = _01.Code.Manager.GameSpeedController.Current;
+            if (controller == null)
+                return;
+
+            var setting = controller.Setting;
+            if (Mathf.Approximately(setting, _currentSpeed))
+                return;
+
+            _currentSpeed = setting;
+            RefreshVisuals();
+        }
+
         public void SetTimeSpeed(float speed)
         {
             ApplySpeed(Mathf.Clamp(speed, 0f, 2f));
