@@ -17,7 +17,7 @@ namespace _01.Code.Enemies
     public static class AdventurerVisitRules
     {
         public const int BaseBudget = 12;
-        public const int BudgetPerAppeal = 2;
+        public const int BudgetPerGrade = 2;
         public const int BudgetPerLevel = 4;
 
         /// <summary>
@@ -36,13 +36,13 @@ namespace _01.Code.Enemies
         }
 
         public static int ResolveBudget(
-            int appeal,
+            int grade,
             int level,
             AdventurerVisitPurpose purpose,
             AdventurerTrait trait)
         {
             var budget = BaseBudget
-                         + Mathf.Max(0, appeal) * BudgetPerAppeal
+                         + Mathf.Max(0, grade) * BudgetPerGrade
                          + Mathf.Max(0, level - 1) * BudgetPerLevel;
 
             var purposeMultiplier = purpose switch

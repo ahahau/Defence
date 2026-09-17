@@ -672,7 +672,7 @@ namespace _01.Code.Manager
             return source switch
             {
                 GoldChangeSource.WaveReward => "웨이브 보상",
-                GoldChangeSource.Admission => "던전 입장료",
+                GoldChangeSource.Bounty => "모험가 처치",
                 GoldChangeSource.Mine => "광산 수익",
                 GoldChangeSource.Inn => "여관 수익",
                 GoldChangeSource.Store => "상점 수익",

@@ -31,10 +31,10 @@ namespace _01.Code.Manager
         public const int BaseEnemyCount = 3;
 
         /// <summary>등급 1점마다 늘어나는 모험가 수.</summary>
-        public const float EnemiesPerFame = 0.9f;
+        public const float EnemiesPerGrade = 0.9f;
 
         /// <summary>등급 몇 점마다 찾아오는 파티의 숙련 단계가 한 칸 오르는가.</summary>
-        public const int FamePerEnemyLevel = 3;
+        public const int GradePerEnemyLevel = 3;
 
         /// <summary>모험가 하나를 막았을 때 받는 기본 전리품.</summary>
         public const int BaseBounty = 6;
@@ -45,14 +45,8 @@ namespace _01.Code.Manager
         /// <summary>지금 던전의 등급.</summary>
         public static int CalculateGrade()
         {
-            return GradeFromStoredGold() + GradeFromFacilities() + GradeFromKills();
+            return GradeFromStoredGold() + GradeFromBuildings() + GradeFromKills();
         }
-
-        /// <summary>기존 호출부 호환용 이름.</summary>
-        public static int CalculateFame() => CalculateGrade();
-
-        /// <summary>경영 화면에서 쓰던 이름. 호환을 위해 남긴다.</summary>
-        public static int CalculateAppeal() => CalculateGrade();
 
         /// <summary>금고에 쌓인 금화가 만드는 등급. 운영 자금은 밖에서 보이지 않으니 세지 않는다.</summary>
         public static int GradeFromStoredGold()
@@ -72,7 +66,7 @@ namespace _01.Code.Manager
         }
 
         /// <summary>지어 둔 건물이 만드는 등급. 건물마다 정해 둔 무게를 더한다.</summary>
-        public static int GradeFromFacilities()
+        public static int GradeFromBuildings()
         {
             var total = 0;
             foreach (var node in Node.ActiveNodes)
@@ -80,14 +74,14 @@ namespace _01.Code.Manager
                 if (node == null)
                     continue;
 
-                total += FameOf(node.AssignedBuilding);
+                total += GradeWeightOf(node.AssignedBuilding);
 
                 var grid = node.TrapGrid;
                 if (grid == null)
                     continue;
 
                 foreach (var building in grid.PlacedBuildings)
-                    total += FameOf(building);
+                    total += GradeWeightOf(building);
             }
 
             return total;
@@ -104,12 +98,6 @@ namespace _01.Code.Manager
         public static int GradeFromKills(int totalKills) =>
             Mathf.Max(0, totalKills) / KillsPerGradePoint;
 
-        /// <summary>기존 호출부 호환용 이름.</summary>
-        public static int FameFromStoredGold() => GradeFromStoredGold();
-
-        /// <summary>기존 호출부 호환용 이름.</summary>
-        public static int FameFromFacilities() => GradeFromFacilities();
-
         /// <summary>
         /// 이 등급에서 하루에 오는 인원.
         /// 단을 밟지 않고 이어지도록 등급에 그대로 비례시킨다 — 건물 하나를 더 지었을 때
@@ -118,7 +106,7 @@ namespace _01.Code.Manager
         public static int ResolveEnemyCount(int grade)
         {
             var safeGrade = Mathf.Max(0, grade);
-            return BaseEnemyCount + Mathf.RoundToInt(safeGrade * EnemiesPerFame);
+            return BaseEnemyCount + Mathf.RoundToInt(safeGrade * EnemiesPerGrade);
         }
 
         public static int ResolveVisitorCount(int grade) => ResolveEnemyCount(grade);
@@ -127,7 +115,7 @@ namespace _01.Code.Manager
         public static int ResolveEnemyLevel(int grade)
         {
             var safeGrade = Mathf.Max(0, grade);
-            return 1 + safeGrade / FamePerEnemyLevel;
+            return 1 + safeGrade / GradePerEnemyLevel;
         }
 
         public static int ResolveVisitorLevel(int grade) => ResolveEnemyLevel(grade);
@@ -154,9 +142,9 @@ namespace _01.Code.Manager
         }
 
         /// <summary>문을 닫은 건물은 소문을 내지 않는다. 등급을 내리는 방법이 여기다.</summary>
-        private static int FameOf(Building building) =>
+        private static int GradeWeightOf(Building building) =>
             building != null && building.IsOperating && building.Data != null
-                ? Mathf.Max(0, building.Data.Fame)
+                ? Mathf.Max(0, building.Data.GradeWeight)
                 : 0;
     }
 }

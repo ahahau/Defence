@@ -26,7 +26,7 @@ namespace _01.Code.Events
 
         public int Day { get; }
         public int ClearGoldReward { get; }
-        public int AdmissionIncome => ClearGoldReward;
+        public int BountyIncome => ClearGoldReward;
 
         /// <summary>그날 웨이브의 총 침입자 수.</summary>
         public int EnemyCount { get; }

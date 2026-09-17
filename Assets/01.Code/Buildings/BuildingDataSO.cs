@@ -10,8 +10,12 @@ namespace _01.Code.Buildings
         [field: SerializeField] public int Cost { get; private set; }
         [field: SerializeField, Min(0), Tooltip("매일 정산에서 지불하는 시설 운영비. 0이면 운영비와 인접 수익 보너스가 없는 시설이다.")]
         public int DailyUpkeep { get; private set; }
-        [field: SerializeField, Min(0), Tooltip("이 시설이 던전 소문에 더하는 무게. 클수록 더 많고 센 모험가를 부른다. 0이면 밖에서 보이지 않는 시설이다.")]
-        public int Fame { get; private set; }
+        // 예전 이름은 Fame이었다. 직렬화 이름이 바뀌면 지어 둔 건물 스무 개의 값이 조용히
+        // 0이 되고, 그러면 등급이 통째로 주저앉는데 에러는 하나도 나지 않는다.
+        [field: SerializeField, Min(0),
+                UnityEngine.Serialization.FormerlySerializedAs("<Fame>k__BackingField"),
+                Tooltip("이 건물이 던전 등급에 더하는 무게. 클수록 더 많고 센 모험가를 부른다. 0이면 밖에서 보이지 않는 건물이다.")]
+        public int GradeWeight { get; private set; }
         [field: SerializeField, Min(0f), Tooltip("모험가가 이 시설에 머무는 시간(초). 머무는 동안 돈을 쓰고 지친다. 0이면 그냥 지나간다.")]
         public float DwellSeconds { get; private set; }
         [field: SerializeField] public Building Prefab { get; private set; }

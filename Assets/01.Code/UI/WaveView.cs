@@ -26,9 +26,9 @@ namespace _01.Code.UI
         {
             return day switch
             {
-                1 => $"첫 영업: 방문객 동선과 시설 매출을 확인하세요 · DAY {ArtifactDay} 유물 상점 해금",
+                1 => $"첫 영업: 모험가 동선과 시설 매출을 확인하세요 · DAY {ArtifactDay} 유물 상점 해금",
                 ArtifactDay => "신규 해금 · 떠돌이 상인과 유물",
-                _ => "시설과 금고로 매력도를 높이고, 감당할 수 있는 만큼 방문객을 부르세요"
+                _ => "막아낸 수와 금고와 건물이 등급을 올립니다. 감당할 만큼만 부르세요"
             };
         }
     }
@@ -373,7 +373,7 @@ namespace _01.Code.UI
                 _runtimeHud.BannerSubtitle.text =
                     $"방문 예정 {enemyCount}명{conquestText} · 시설과 몬스터를 배치하세요\n"
                     + BuildVisitorMixLine(enemyCount)
-                    + BuildFameLine()
+                    + BuildGradeLine()
                     + CoreLoopFeatureUnlocks.GetPreparationHint(day)
                     + threatText
                     + traitText
@@ -442,15 +442,15 @@ namespace _01.Code.UI
         }
 
         /// <summary>
-        /// 던전의 명성 한 줄. 무엇이 소문을 냈는지를 금고와 시설로 나눠 보여준다.
+        /// 던전 등급 한 줄. 무엇이 소문을 냈는지를 처치·금고·건물로 나눠 보여준다.
         ///
-        /// 명성이 인원과 적의 강함을 모두 정하므로, 숫자만 보여주면 왜 갑자기 힘들어졌는지
+        /// 등급이 인원과 모험가의 강함을 모두 정하므로, 숫자만 보여주면 왜 갑자기 힘들어졌는지
         /// 알 수 없다. 금고에 쌓은 돈 때문인지 시설을 늘린 탓인지가 함께 읽혀야 한다.
         /// </summary>
-        private static string BuildFameLine()
+        private static string BuildGradeLine()
         {
             var fromGold = DungeonGradeRules.GradeFromStoredGold();
-            var fromFacilities = DungeonGradeRules.GradeFromFacilities();
+            var fromFacilities = DungeonGradeRules.GradeFromBuildings();
             var fromKills = DungeonGradeRules.GradeFromKills();
             var total = fromGold + fromFacilities + fromKills;
             if (total <= 0)

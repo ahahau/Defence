@@ -139,12 +139,12 @@ namespace _01.Code.Manager
         /// <summary>
         /// 마을 장악 보정을 적용하기 전의 원래 습격 인원.
         ///
-        /// 날짜가 아니라 던전의 명성이 정한다. 금고에 쌓은 돈과 지어 둔 시설이 소문을
-        /// 만들고, 그 소문이 몇 명을 부르는지 결정한다. 일차는 이제 날짜를 셀 뿐이다.
+        /// 날짜가 아니라 던전 등급이 정한다. 여기서 죽어 나간 수와 금고에 쌓은 돈과 지어 둔
+        /// 건물이 소문을 만들고, 그 소문이 몇 명을 부르는지 결정한다. 일차는 날짜를 셀 뿐이다.
         /// </summary>
         public int GetBasePreviewEnemyCount(int day)
         {
-            return DungeonGradeRules.ResolveVisitorCount(DungeonGradeRules.CalculateAppeal());
+            return DungeonGradeRules.ResolveVisitorCount(DungeonGradeRules.CalculateGrade());
         }
 
         public bool IsBossDay(int day) => waveConfig != null && waveConfig.IsBossDay(day);
@@ -154,8 +154,8 @@ namespace _01.Code.Manager
 
         private int _currentDay;
 
-        /// <summary>이 습격을 시작할 때 잰 명성. 인원·보상·적 성장 단계가 모두 이 값을 본다.</summary>
-        private int _currentFame;
+        /// <summary>이 습격을 시작할 때 잰 던전 등급. 인원과 모험가의 숙련 단계가 이 값을 본다.</summary>
+        private int _currentGrade;
         private int _remainingSpawns;
         private int _currentClearGoldReward;
         private bool _isWaveRunning;
@@ -346,10 +346,10 @@ namespace _01.Code.Manager
         private IEnumerator RunWave(WaveConfigSO.WaveEntry entry)
         {
             // 오늘 오는 인원은 영업 시작 시점의 등급으로 확정한다.
-            _currentFame = DungeonGradeRules.CalculateGrade();
+            _currentGrade = DungeonGradeRules.CalculateGrade();
 
             var adjustedEnemyCount = ResolveWaveEnemyCount(
-                DungeonGradeRules.ResolveVisitorCount(_currentFame));
+                DungeonGradeRules.ResolveVisitorCount(_currentGrade));
 
             PrepareObjectiveChoices(_currentDay);
             ResetWaveResults(adjustedEnemyCount);
@@ -569,7 +569,7 @@ namespace _01.Code.Manager
             enemy.ConfigureData(enemyData);
             // 날짜가 아니라 등급이 모험가의 성장 단계를 정한다. 웅크린 던전에는 오래 버텨도
             // 약한 모험가가 오고, 크게 키운 던전에는 이틀 만에도 강한 자가 온다.
-            var visitorLevel = DungeonGradeRules.ResolveVisitorLevel(_currentFame);
+            var visitorLevel = DungeonGradeRules.ResolveVisitorLevel(_currentGrade);
             enemy.ApplyWaveLevel(visitorLevel, enemyHealthPerLevel, enemyAttackPerLevel);
             var visitorIndex = Mathf.Max(0, _waveEnemyCount - _remainingSpawns);
             var purpose = isBossSpawn
@@ -577,7 +577,7 @@ namespace _01.Code.Manager
                 : AdventurerVisitRules.ResolvePurpose(enemy.Trait, visitorIndex);
             enemy.ConfigureVisitProfile(
                 purpose,
-                AdventurerVisitRules.ResolveBudget(_currentFame, visitorLevel, purpose, enemy.Trait));
+                AdventurerVisitRules.ResolveBudget(_currentGrade, visitorLevel, purpose, enemy.Trait));
             _remainingSpawns--;
 
             if (isBossSpawn)
@@ -923,7 +923,7 @@ namespace _01.Code.Manager
                 _isGameCleared = true;
 
                 if (_currentClearGoldReward > 0)
-                    costEventChannel?.RaiseEvent(new GoldEarnedEvent(_currentClearGoldReward, GoldChangeSource.Admission));
+                    costEventChannel?.RaiseEvent(new GoldEarnedEvent(_currentClearGoldReward, GoldChangeSource.Bounty));
 
                 waveEventChannel?.RaiseEvent(new GameClearedEvent(_currentDay));
                 StartCoroutine(ShowVictoryAfterCinematic());
@@ -934,7 +934,7 @@ namespace _01.Code.Manager
             // 보상 선택 없이 정산으로만 마무리한다.
             // 여기서 발행한 수입은 CostManager가 바로 반영하지 않고 정산 장부에만 쌓인다.
             if (_currentClearGoldReward > 0)
-                costEventChannel?.RaiseEvent(new GoldEarnedEvent(_currentClearGoldReward, GoldChangeSource.Admission));
+                costEventChannel?.RaiseEvent(new GoldEarnedEvent(_currentClearGoldReward, GoldChangeSource.Bounty));
 
             RaiseWaveEnded();
         }

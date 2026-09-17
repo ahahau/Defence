@@ -414,7 +414,7 @@ namespace Tests.EditMode.Gameplay
         }
 
         [Test]
-        public void Fame_CountsTheGoldInTheVaultAndTheFacilitiesAroundIt()
+        public void Grade_CountsTheGoldInTheVaultAndTheBuildingsAroundIt()
         {
             var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
             try
@@ -423,7 +423,7 @@ namespace Tests.EditMode.Gameplay
                 var graphType = RequireType("_01.Code.MapCreateSystem.DungeonGraph");
                 var nodeKindType = RequireType("_01.Code.MapCreateSystem.DungeonNodeType");
                 var placementType = RequireType("_01.Code.Buildings.BuildingPlacement");
-                var fameType = RequireType("_01.Code.Manager.DungeonGradeRules");
+                var gradeType = RequireType("_01.Code.Manager.DungeonGradeRules");
                 Component manager = null;
                 foreach (var root in scene.GetRootGameObjects())
                     manager ??= root.GetComponentInChildren(nodeManagerType, true);
@@ -444,22 +444,22 @@ namespace Tests.EditMode.Gameplay
                     "Assets/Resources/Buildings/TreasuryBuildingData.asset");
                 var install = placementType.GetMethod("InstallCentral", BindingFlags.Public | BindingFlags.Static);
 
-                var facilityFame = fameType.GetMethod("FameFromFacilities");
-                var goldFame = fameType.GetMethod("FameFromStoredGold");
-                var facilitiesBefore = (int)facilityFame.Invoke(null, null);
-                var goldBefore = (int)goldFame.Invoke(null, null);
+                var buildingGrade = gradeType.GetMethod("GradeFromBuildings");
+                var goldGrade = gradeType.GetMethod("GradeFromStoredGold");
+                var facilitiesBefore = (int)buildingGrade.Invoke(null, null);
+                var goldBefore = (int)goldGrade.Invoke(null, null);
 
                 install.Invoke(null, new object[] { storeNode, storeData, 0.92f });
                 var treasury = install.Invoke(null, new object[] { vaultNode, treasuryData, 0.92f });
                 Assert.That(treasury, Is.Not.Null);
 
                 // 상점 2 + 금고 건물 4.
-                Assert.That((int)facilityFame.Invoke(null, null) - facilitiesBefore, Is.EqualTo(6),
+                Assert.That((int)buildingGrade.Invoke(null, null) - facilitiesBefore, Is.EqualTo(6),
                     "지어 둔 시설이 소문을 만듭니다.");
 
                 // 금고에 넣어 둔 돈만 보인다. 40G마다 1점.
                 treasury.GetType().GetMethod("RestoreStoredGold").Invoke(treasury, new object[] { 120 });
-                Assert.That((int)goldFame.Invoke(null, null) - goldBefore, Is.EqualTo(3),
+                Assert.That((int)goldGrade.Invoke(null, null) - goldBefore, Is.EqualTo(3),
                     "금고에 쌓을수록 털 만해 보입니다.");
 
                 nodeManagerType.GetMethod("ClearAll").Invoke(manager, null);

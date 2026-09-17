@@ -142,27 +142,27 @@ namespace Tests.EditMode.Rules
                 "물약은 지정 진열에는 계속 올라야 합니다 — 살 자리가 여기뿐입니다.");
         }
 
-        // ── 던전 명성 ────────────────────────────────────────────────
+        // ── 던전 등급 ────────────────────────────────────────────────
         // 압력이 날짜가 아니라 플레이어가 지은 것에서 나온다. 이 계산이 곧 난이도 곡선이다.
 
         [Test]
-        public void Fame_RaisesHeadcountAndStrengthTogether()
+        public void Grade_RaisesHeadcountAndStrengthTogether()
         {
             var rules = Resolve("_01.Code.Manager.DungeonGradeRules");
 
             var quiet = (int)CallStatic(rules, "ResolveEnemyCount", 0);
             var busy = (int)CallStatic(rules, "ResolveEnemyCount", 10);
-            Assert.That(busy, Is.GreaterThan(quiet), "명성이 오르면 더 많이 옵니다.");
+            Assert.That(busy, Is.GreaterThan(quiet), "등급이 오르면 더 많이 옵니다.");
             Assert.That(quiet, Is.GreaterThan(0), "아무것도 없어도 길 잃은 모험가는 옵니다.");
 
             Assert.That(CallStatic(rules, "ResolveEnemyLevel", 0), Is.EqualTo(1));
             Assert.That((int)CallStatic(rules, "ResolveEnemyLevel", 10),
                 Is.GreaterThan((int)CallStatic(rules, "ResolveEnemyLevel", 0)),
-                "명성이 오르면 더 센 모험가가 옵니다.");
+                "등급이 오르면 더 센 모험가가 옵니다.");
         }
 
         [Test]
-        public void Fame_PaysBackWhatItPutsAtRisk()
+        public void Grade_PaysBackWhatItPutsAtRisk()
         {
             var rules = Resolve("_01.Code.Manager.DungeonGradeRules");
 
@@ -186,7 +186,7 @@ namespace Tests.EditMode.Rules
         [TestCase(1, 2)]
         [TestCase(2, 3)]
         [TestCase(5, 6)]
-        public void Fame_MovesWithoutSteps(int lower, int higher)
+        public void Grade_MovesWithoutSteps(int lower, int higher)
         {
             var rules = Resolve("_01.Code.Manager.DungeonGradeRules");
 
@@ -194,11 +194,11 @@ namespace Tests.EditMode.Rules
             var atLower = (int)CallStatic(rules, "ResolveEnemyCount", lower);
             var atHigher = (int)CallStatic(rules, "ResolveEnemyCount", higher);
             Assert.That(atHigher, Is.GreaterThan(atLower),
-                $"명성 {lower}→{higher}에서 인원이 그대로면 단을 밟는 곡선입니다.");
+                $"등급 {lower}→{higher}에서 인원이 그대로면 단을 밟는 곡선입니다.");
         }
 
         [Test]
-        public void Fame_IsNeverNegativeEvenIfTheDungeonIsEmptied()
+        public void Grade_IsNeverNegativeEvenIfTheDungeonIsEmptied()
         {
             var rules = Resolve("_01.Code.Manager.DungeonGradeRules");
 
@@ -208,7 +208,7 @@ namespace Tests.EditMode.Rules
         }
 
         // ── 시설 휴업 ────────────────────────────────────────────────
-        // 명성은 지은 것이 만들고 오르기만 한다. 닫는 것이 유일하게 물러설 곳이다.
+        // 등급은 지은 것과 막아낸 수가 만든다. 닫는 것이 건물 쪽에서 물러설 유일한 길이다.
 
         private static Component NewBuilding(out GameObject host)
         {

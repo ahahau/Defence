@@ -18,7 +18,7 @@ namespace _01.Code.Events
         Policy,
         Blacksmith,
         WaveObjective,
-        Admission
+        Bounty
     }
 
     public class BuildCostRequestedEvent : GameEvent

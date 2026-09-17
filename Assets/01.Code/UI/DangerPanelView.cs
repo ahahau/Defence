@@ -13,8 +13,8 @@ namespace _01.Code.UI
         [SerializeField] private TMP_Text totalDangerText;
 
         private int _lastTotalDanger = -1;
-        private int _lastAppeal = -1;
-        private int _lastReputation = -1;
+        private int _lastGrade = -1;
+        private int _lastKills = -1;
         private Color _baseColor = Color.white;
         private Vector3 _baseScale = Vector3.one;
 
@@ -26,7 +26,7 @@ namespace _01.Code.UI
             DungeonHudIcon.Attach(panelRoot != null ? panelRoot : gameObject, totalDangerText, DungeonHudIcon.Skin != null ? DungeonHudIcon.Skin.DangerIcon : null);
             if (totalDangerText != null)
             {
-                // 매력·평판·위험 세 값을 한 카드에 보여 주므로 공용 카드의 23pt 상한으로는 잘린다.
+                // 등급·처치·위험 세 값을 한 카드에 보여 주므로 공용 카드의 23pt 상한으로는 잘린다.
                 totalDangerText.fontSizeMin = 13f;
                 totalDangerText.fontSizeMax = 20f;
                 _baseColor = totalDangerText.color;
@@ -89,23 +89,23 @@ namespace _01.Code.UI
                 buildingDanger += DangerOf(edge != null ? edge.InstalledBuilding : null);
 
             var totalDanger = unitDanger + buildingDanger + deedDanger;
-            var appeal = DungeonGradeRules.CalculateGrade();
-            var reputation = DungeonGradeManager.Current != null ? DungeonGradeManager.Current.TotalKills : 0;
-            if (totalDanger == _lastTotalDanger && appeal == _lastAppeal && reputation == _lastReputation)
+            var grade = DungeonGradeRules.CalculateGrade();
+            var kills = DungeonGradeManager.Current != null ? DungeonGradeManager.Current.TotalKills : 0;
+            if (totalDanger == _lastTotalDanger && grade == _lastGrade && kills == _lastKills)
                 return;
 
             var previousDanger = _lastTotalDanger;
-            var previousAppeal = _lastAppeal;
+            var previousGrade = _lastGrade;
             _lastTotalDanger = totalDanger;
-            _lastAppeal = appeal;
-            _lastReputation = reputation;
+            _lastGrade = grade;
+            _lastKills = kills;
 
             if (totalDangerText != null)
             {
                 totalDangerText.text =
-                    $"등급 {appeal} ({DungeonGradeRules.GetGradeLabel(appeal)})  ·  처치 {reputation}  ·  위험 {totalDanger}";
-                if (previousDanger >= 0 && previousAppeal >= 0)
-                    PlayDangerFeedback(appeal > previousAppeal || totalDanger > previousDanger);
+                    $"등급 {grade} ({DungeonGradeRules.GetGradeLabel(grade)})  ·  처치 {kills}  ·  위험 {totalDanger}";
+                if (previousDanger >= 0 && previousGrade >= 0)
+                    PlayDangerFeedback(grade > previousGrade || totalDanger > previousDanger);
             }
         }
 
