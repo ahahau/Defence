@@ -1,16 +1,18 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
-using _01.Code.Buildings;
-using _01.Code.Core;
-using _01.Code.Events;
-using _01.Code.MapCreateSystem;
-using _01.Code.UI;
-using _01.Code.Units;
+using Code.Core;
+using Code.Events;
+using Code.Manager;
+using Code.MapCreateSystem;
+using Code.Progression;
+using Code.UI;
+using Code.Units;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace _01.Code.Manager
+namespace Code.Manager
 {
     public class ManagementSettlementManager : MonoBehaviour
     {
@@ -23,9 +25,6 @@ namespace _01.Code.Manager
 
         [Header("Unit Upkeep")]
         [SerializeField, Min(1)] private int upkeepCostDivisor = 5;
-
-        /// <summary>이 피로부터는 정산에서 눈에 띄게 표시한다. 100이면 탈진.</summary>
-        private const int ExhaustionWarningFatigue = 70;
 
         [Header("Panel References")]
         [SerializeField] private GameObject panelRoot;
@@ -51,6 +50,10 @@ namespace _01.Code.Manager
         private int settlementExpense;
         private int totalExpense;
         private bool ledgerClosed;
+        private bool _panelOpen;
+
+        /// <summary>UI Toolkit 화면이 정산표를 맡았는지. 참이면 옛 UGUI 패널은 건드리지 않는다.</summary>
+        private bool _legacyPanelSuppressed;
 
         /// <summary>직전 정산에서 운영 자금이 실제로 움직인 액수. 표시용 합계와 구분해야 한다.</summary>
         private int _lastSettlementNet;
@@ -59,7 +62,28 @@ namespace _01.Code.Manager
         private int _weeklySettlementOwed;
         private int _weeklySettlementPaid;
 
-        public bool IsPanelOpen => panelRoot != null && panelRoot.activeInHierarchy;
+        /// <summary>정산표가 열려 있는지. 어느 화면이 그리고 있든 대화·튜토리얼은 이 값만 본다.</summary>
+        public bool IsPanelOpen => _panelOpen || (panelRoot != null && panelRoot.activeInHierarchy);
+
+        /// <summary>방금 만든 정산 보고서. 늦게 붙은 화면도 이걸 읽어 같은 하루를 그린다.</summary>
+        public SettlementReport LatestReport { get; private set; }
+
+        /// <summary>정산표를 열었다. 보고서를 그릴 화면이 구독한다.</summary>
+        public event Action<SettlementReport> ReportOpened;
+
+        /// <summary>정산표를 닫았다.</summary>
+        public event Action ReportClosed;
+
+        /// <summary>
+        /// UI Toolkit 정산 화면이 붙었다. 이제부터 옛 UGUI 패널은 띄우지 않는다.
+        /// 보고서와 열림 상태는 그대로 살아 있어 대화·튜토리얼 쪽 판단은 달라지지 않는다.
+        /// </summary>
+        public void UseToolkitPanel()
+        {
+            _legacyPanelSuppressed = true;
+            if (panelRoot != null)
+                panelRoot.SetActive(false);
+        }
 
         public void ForceHidePanel()
         {
@@ -69,7 +93,20 @@ namespace _01.Code.Manager
         private void OnEnable()
         {
             Current = this;
+            RegisterListeners();
+            HidePanel();
+        }
 
+        private void OnDisable()
+        {
+            if (Current == this)
+                Current = null;
+
+            UnregisterListeners();
+        }
+
+        private void RegisterListeners()
+        {
             dayEventChannel?.AddListener<DayChangedEvent>(HandleDayChanged);
             waveEventChannel?.AddListener<WaveEndedEvent>(HandleWaveEnded);
             nodeEventChannel?.AddListener<UnitAssignedToNodeEvent>(HandleUnitAssigned);
@@ -82,14 +119,10 @@ namespace _01.Code.Manager
             costEventChannel?.AddListener<RosterHirePaidEvent>(HandleRosterHirePaid);
             costEventChannel?.AddListener<UnitRecoveryCostPaidEvent>(HandleUnitRecoveryCostPaid);
             closeButton?.onClick.AddListener(HidePanel);
-            HidePanel();
         }
 
-        private void OnDisable()
+        private void UnregisterListeners()
         {
-            if (Current == this)
-                Current = null;
-
             dayEventChannel?.RemoveListener<DayChangedEvent>(HandleDayChanged);
             waveEventChannel?.RemoveListener<WaveEndedEvent>(HandleWaveEnded);
             nodeEventChannel?.RemoveListener<UnitAssignedToNodeEvent>(HandleUnitAssigned);
@@ -173,7 +206,7 @@ namespace _01.Code.Manager
             if (owed <= 0)
                 return;
 
-            // 갚지 못하면 CostManager가 파산을 알린다. 보고서에는 시도한 금액을 남긴다.
+            // 갚지 못하면 CostManager가 파산을 알린다. 보고서에는 최소 상환액을 남긴다.
             _weeklySettlementPaid = costManager.SettleWeek() ? owed : 0;
             _weeklySettlementOwed = owed;
         }
@@ -450,6 +483,12 @@ namespace _01.Code.Manager
 
         private void ShowPanel()
         {
+            _panelOpen = true;
+            ReportOpened?.Invoke(LatestReport);
+
+            if (_legacyPanelSuppressed)
+                return;
+
             if (progressReportView != null && progressReportView.transform is RectTransform report)
             {
                 report.sizeDelta = new Vector2(760f, 260f);
@@ -477,133 +516,250 @@ namespace _01.Code.Manager
         {
             if (panelRoot != null)
                 panelRoot.SetActive(false);
+
+            if (!_panelOpen)
+                return;
+
+            _panelOpen = false;
+            ReportClosed?.Invoke();
         }
 
         private void RefreshPanel()
         {
-            titleText.text = string.Format(titleFormat, Mathf.Max(0, currentDay));
-            incomeText.text = BuildLedgerText("획득 금화", incomeByLabel, totalIncome, '+');
-            expenseText.text = BuildExpenseText();
-            progressReportView?.RefreshReport();
+            LatestReport = BuildReport();
+            if (_legacyPanelSuppressed)
+                return;
+
+            RenderLegacyPanel(LatestReport);
+        }
+
+        /// <summary>
+        /// 오늘의 장부를 화면이 읽을 보고서로 옮긴다.
+        ///
+        /// 문구를 여기서 한 번만 정해야 UGUI와 UI Toolkit이 같은 하루를 같은 말로 설명한다.
+        /// 색은 정하지 않는다 — 리치 텍스트와 USS가 색을 다루는 방식이 달라 각자 칠해야 한다.
+        /// </summary>
+        private SettlementReport BuildReport()
+        {
+            var income = new List<SettlementLedgerLine>(incomeByLabel.Count);
+            foreach (var pair in incomeByLabel)
+                income.Add(new SettlementLedgerLine(pair.Key, pair.Value));
+
+            var expense = new List<SettlementLedgerLine>(expenseByLabel.Count);
+            foreach (var pair in expenseByLabel)
+                expense.Add(new SettlementLedgerLine(pair.Key, pair.Value));
+
+            var fatigue = new List<SettlementFatigueLine>(dailyFatigueByLabel.Count);
+            foreach (var pair in dailyFatigueByLabel)
+                fatigue.Add(new SettlementFatigueLine(pair.Key, pair.Value));
+            // 지친 순으로 세워야 손봐야 할 부하가 맨 앞에 온다.
+            fatigue.Sort((left, right) => right.Fatigue.CompareTo(left.Fatigue));
+
+            var notes = new List<SettlementNote>();
+            AppendBattleNotes(notes);
+            AppendCounterplayNotes(notes);
+            AppendRepairForecastNote(notes);
+            AppendDebtNote(notes);
+
+            return new SettlementReport(
+                Mathf.Max(0, currentDay),
+                income,
+                expense,
+                totalIncome,
+                totalExpense,
+                _lastSettlementNet,
+                fatigue,
+                notes,
+                BuildUnlockSection(true),
+                BuildUnlockSection(false));
+        }
+
+        /// <summary>
+        /// 해금 로드맵 한 묶음을 만든다.
+        ///
+        /// 줄과 총계가 같은 곳에서 나와야 한다 — 표시용 목록으로 만들면 "1/9" 밑에 세 줄만 서고
+        /// 해금 예정인 항목이 통째로 안 보인다. 카탈로그 순서는 작성 순서라 일차가 뒤섞여 있어
+        /// 해금 일차 순으로 다시 세운다.
+        /// </summary>
+        private static SettlementUnlockSection BuildUnlockSection(bool forUnits)
+        {
+            var roster = HiredUnitRoster.Current;
+            var lines = new List<SettlementUnlockLine>();
+            var catalog = roster?.UnlockCatalog?.Entries;
+            if (catalog != null)
+            {
+                var entries = new List<DungeonUnlockEntry>(catalog.Count);
+                foreach (var entry in catalog)
+                {
+                    if (entry == null || (forUnits ? entry.Unit == null : entry.Building == null))
+                        continue;
+
+                    entries.Add(entry);
+                }
+
+                entries.Sort((left, right) => UnlockOrder(left).CompareTo(UnlockOrder(right)));
+                foreach (var entry in entries)
+                {
+                    var isUnlocked = forUnits
+                        ? roster.IsUnlocked(entry.Unit)
+                        : Contains(roster.UnlockedBuildings, entry.Building);
+                    lines.Add(new SettlementUnlockLine(
+                        forUnits ? entry.Unit.Name : entry.Building.DisplayName,
+                        isUnlocked,
+                        isUnlocked ? string.Empty : ResolveUnlockHint(entry.UnlockHint)));
+                }
+            }
+
+            var unlockedCount = forUnits
+                ? roster?.UnlockedUnits?.Count ?? 0
+                : roster?.UnlockedBuildings?.Count ?? 0;
+            var totalCount = roster != null
+                ? forUnits ? roster.UnlockableUnitCount : roster.UnlockableBuildingCount
+                : 0;
+
+            return new SettlementUnlockSection(
+                forUnits ? "몬스터 해금" : "시설 해금",
+                forUnits ? "고용 가능" : "설치 가능",
+                unlockedCount,
+                totalCount,
+                lines);
+        }
+
+        /// <summary>처음부터 열려 있는 항목이 맨 위, 나머지는 해금 일차 순.</summary>
+        private static int UnlockOrder(DungeonUnlockEntry entry)
+        {
+            return entry.StartsUnlocked ? 0 : Mathf.Max(1, entry.UnlockDay);
+        }
+
+        private static string ResolveUnlockHint(string hint)
+        {
+            return string.IsNullOrWhiteSpace(hint) ? "던전 발전 조건을 충족하면 해금" : hint;
+        }
+
+        private static bool Contains<T>(IReadOnlyList<T> entries, T value) where T : class
+        {
+            if (entries == null || value == null)
+                return false;
+
+            for (var i = 0; i < entries.Count; i++)
+            {
+                if (entries[i] == value)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private void RenderLegacyPanel(SettlementReport report)
+        {
+            titleText.text = string.Format(titleFormat, report.Day);
+            incomeText.text = BuildLedgerText("획득 금화", report.Income, report.TotalIncome, '+');
+            expenseText.text = BuildLedgerText("차감 내역", report.Expense, report.TotalExpense, '-');
+            progressReportView?.RefreshReport(report);
 
             // 운영 자금이 실제로 얼마나 늘고 줄었는지를 앞세운다. 이게 내일 쓸 수 있는 돈이다.
-            var net = _lastSettlementNet;
-            var recorded = totalIncome - totalExpense;
-            netText.text = $"운영 자금 {FormatSignedGold(net)}\n획득 +{totalIncome}G  ·  지출 -{totalExpense}G"
-                           + (recorded != net
-                               ? $"\n<size=85%>그중 {FormatSignedGold(recorded - net)}는 금고·선지출</size>"
-                               : string.Empty)
-                           + BuildBattleSummaryText() + BuildCounterplaySummaryText()
-                           + BuildFatigueText() + BuildDebtText();
-            netText.color = net >= 0 ? new Color(0.45f, 0.95f, 0.55f) : new Color(1f, 0.45f, 0.4f);
+            var summary = new StringBuilder($"운영 자금 {FormatSignedGold(report.Net)}");
+            summary.Append($"\n획득 +{report.TotalIncome}G  ·  지출 -{report.TotalExpense}G");
+            if (report.DeferredDelta != 0)
+                summary.Append($"\n<size=85%>그중 {FormatSignedGold(report.DeferredDelta)}는 금고·선지출</size>");
+
+            foreach (var note in report.Notes)
+                summary.Append($"\n<size=85%>{WrapLegacyColor(note.Text, note.Tone)}</size>");
+
+            AppendLegacyFatigueLine(summary, report.Fatigue);
+
+            netText.text = summary.ToString();
+            netText.color = report.Net >= 0 ? new Color(0.45f, 0.95f, 0.55f) : new Color(1f, 0.45f, 0.4f);
         }
 
         /// <summary>
         /// 오늘 내보낸 부하가 얼마나 지쳤는지. 다음 날 그대로 또 세울지, 쉬게 할지 여기서 판단한다.
-        /// 지친 순으로 세워야 손봐야 할 부하가 맨 앞에 온다.
         /// </summary>
-        private string BuildFatigueText()
+        private static void AppendLegacyFatigueLine(StringBuilder summary, IReadOnlyList<SettlementFatigueLine> fatigue)
         {
-            if (dailyFatigueByLabel.Count == 0)
-                return string.Empty;
+            if (fatigue.Count == 0)
+                return;
 
-            var sorted = new List<KeyValuePair<string, int>>(dailyFatigueByLabel);
-            sorted.Sort((left, right) => right.Value.CompareTo(left.Value));
-
-            var line = new StringBuilder("\n<size=85%>부하 피로");
-            foreach (var pair in sorted)
-                line.Append($"  ·  {pair.Key} {FormatFatigue(pair.Value)}");
-
-            line.Append("</size>");
-            return line.ToString();
+            summary.Append("\n<size=85%>부하 피로");
+            foreach (var line in fatigue)
+                summary.Append($"  ·  {line.Label} {FormatLegacyFatigue(line)}");
+            summary.Append("</size>");
         }
 
         /// <summary>탈진은 붉게, 지친 상태는 노랗게 — 숫자만으로는 눈에 안 들어온다.</summary>
-        private static string FormatFatigue(int fatigue)
+        private static string FormatLegacyFatigue(SettlementFatigueLine line)
         {
-            if (fatigue >= 100)
-                return $"<color=#FF7A6B>탈진 {fatigue}</color>";
+            if (line.IsExhausted)
+                return $"<color=#FF7A6B>탈진 {line.Fatigue}</color>";
 
-            return fatigue >= ExhaustionWarningFatigue
-                ? $"<color=#FFC85A>{fatigue}</color>"
-                : fatigue.ToString();
+            return line.IsTired ? $"<color=#FFC85A>{line.Fatigue}</color>" : line.Fatigue.ToString();
         }
 
-        /// <summary>
-        /// 그날 영업 결과. 방문객 처리와 시설 성과를 정산에 붙인다.
-        /// </summary>
-        private static string BuildBattleSummaryText()
+        private static string WrapLegacyColor(string text, SettlementNoteTone tone)
+        {
+            return tone switch
+            {
+                SettlementNoteTone.Good => $"<color=#8FD9A0>{text}</color>",
+                SettlementNoteTone.Caution => $"<color=#E0B070>{text}</color>",
+                SettlementNoteTone.Danger => $"<color=#FF7A6B>{text}</color>",
+                SettlementNoteTone.Accent => $"<color=#9FE6B8>{text}</color>",
+                _ => text
+            };
+        }
+
+        /// <summary>그날 영업 결과. 방문객 처리와 시설 성과를 정산에 붙인다.</summary>
+        private static void AppendBattleNotes(List<SettlementNote> notes)
         {
             var wave = WaveManager.Current;
             if (wave == null || wave.TotalEnemyCount <= 0)
-                return string.Empty;
+                return;
 
+            var battle = new StringBuilder(
+                $"방문객 {wave.TotalEnemyCount}명  ·  제압 {wave.KillCount}명  ·  받은 피해 {wave.WaveDamageTaken}");
             // 함정 몫을 따로 적어야 함정에 쓴 돈이 일을 했는지 판단할 수 있다.
-            var trapShare = wave.WaveTrapDamage > 0
-                ? $"  ·  <color=#C79BFF>함정 {wave.WaveTrapDamage}</color>"
-                : string.Empty;
-            var objective = wave.LastObjectiveCompleted
-                ? $"\n<color=#FFD05A>{wave.LastObjectiveTitle} 완료 · 보너스 +{wave.LastObjectiveRewardGold}G</color>"
-                : $"\n{wave.LastObjectiveTitle} 실패";
+            if (wave.WaveTrapDamage > 0)
+                battle.Append($"  ·  함정 {wave.WaveTrapDamage}");
+            notes.Add(new SettlementNote(battle.ToString()));
 
             var grade = DungeonGradeManager.Current;
-            var review = grade != null
-                ? $"\n던전 등급 {FormatSigned(grade.LastGradeDelta)} → {grade.Grade} ({grade.GradeLabel})"
-                  + $"  ·  누적 처치 {grade.TotalKills}"
-                : string.Empty;
+            if (grade != null)
+            {
+                notes.Add(new SettlementNote(
+                    $"던전 등급 {FormatSigned(grade.LastGradeDelta)} → {grade.Grade} ({grade.GradeLabel})"
+                    + $"  ·  누적 처치 {grade.TotalKills}"));
+            }
 
-            return $"\n<size=85%>방문객 {wave.TotalEnemyCount}명  ·  제압 {wave.KillCount}명"
-                   + $"  ·  받은 피해 {wave.WaveDamageTaken}"
-                   + trapShare
-                   + review + objective + "</size>";
+            notes.Add(wave.LastObjectiveCompleted
+                ? new SettlementNote(
+                    $"{wave.LastObjectiveTitle} 완료 · 보너스 +{wave.LastObjectiveRewardGold}G",
+                    SettlementNoteTone.Good)
+                : new SettlementNote($"{wave.LastObjectiveTitle} 실패", SettlementNoteTone.Caution));
         }
 
         /// <summary>이번 방어에서 적 특성을 실제로 역이용한 성과만 보여 준다.</summary>
-        private static string BuildCounterplaySummaryText()
+        private static void AppendCounterplayNotes(List<SettlementNote> notes)
         {
             var wave = WaveManager.Current;
             if (wave == null)
-                return string.Empty;
+                return;
 
-            var entries = new List<string>();
+            var line = new StringBuilder();
             if (wave.WaveCowardTrapTriggers > 0)
-            {
-                entries.Add($"겁쟁이 함정 압박 {wave.WaveCowardTrapTriggers}회"
-                            + $" <color=#C79BFF>(경계 +{wave.WaveCowardBonusFear})</color>");
-            }
-
+                AppendCounterplayEntry(line, $"겁쟁이 함정 압박 {wave.WaveCowardTrapTriggers}회 (경계 +{wave.WaveCowardBonusFear})");
             if (wave.WavePriestHealingPrevented > 0)
-                entries.Add($"성직자 치유 <color=#73D8FF>{wave.WavePriestHealingPrevented} 차단</color>");
-
+                AppendCounterplayEntry(line, $"성직자 치유 {wave.WavePriestHealingPrevented} 차단");
             if (wave.WaveShopaholicBonusGold > 0)
-                entries.Add($"쇼핑광 추가 수익 <color=#FFD05A>+{wave.WaveShopaholicBonusGold}G</color>");
+                AppendCounterplayEntry(line, $"쇼핑광 추가 수익 +{wave.WaveShopaholicBonusGold}G");
 
-            return entries.Count > 0
-                ? "\n<size=85%><color=#9FE6B8>상성 활용</color>  ·  "
-                  + string.Join("  ·  ", entries) + "</size>"
-                : string.Empty;
+            if (line.Length > 0)
+                notes.Add(new SettlementNote($"상성 활용  ·  {line}", SettlementNoteTone.Accent));
         }
 
-        /// <summary>
-        /// 빚 한 줄. 청산일에는 방금 갚은 금액을, 평소에는 며칠 뒤 얼마를 내야 하는지 보여준다.
-        /// 청산일이 닥쳐서야 알면 손쓸 수 없으므로 남은 날과 금액을 항상 같이 적는다.
-        /// </summary>
-        private string BuildDebtText()
+        private static void AppendCounterplayEntry(StringBuilder line, string entry)
         {
-            var line = BuildRepairForecastText();
-
-            if (_weeklySettlementPaid > 0)
-                return line + $"\n<color=#8FD9A0>빚 {_weeklySettlementPaid}G를 청산했습니다</color>";
-
-            var costManager = CostManager.Current;
-            if (costManager == null || costManager.CurrentDebt <= 0)
-                return line;
-
-            var daysLeft = DayManager.DaysUntilSettlementFrom(currentDay);
-            var due = costManager.WeeklyDue;
-            return line + (daysLeft > 0
-                ? $"\n<color=#FF7A6B>빚 {costManager.CurrentDebt}G  ·  {daysLeft}일 뒤 이자 포함 {due}G를 내야 합니다</color>"
-                : $"\n<color=#FF7A6B>빚 {costManager.CurrentDebt}G  ·  오늘 {due}G를 내야 합니다</color>");
+            if (line.Length > 0)
+                line.Append("  ·  ");
+            line.Append(entry);
         }
 
         /// <summary>
@@ -612,35 +768,57 @@ namespace _01.Code.Manager
         /// 마모는 손님이 다녀갈 때마다 조용히 쌓이므로, 청산일에 처음 보면 손쓸 수가 없다.
         /// 며칠 남았는지와 함께 보여야 이번 주에 시설을 더 돌릴지 판단이 된다.
         /// </summary>
-        private string BuildRepairForecastText()
+        private void AppendRepairForecastNote(List<SettlementNote> notes)
         {
             var pending = FacilityEconomyRules.PendingRepairCost();
             if (pending <= 0)
-                return string.Empty;
+                return;
 
             var daysLeft = DayManager.DaysUntilSettlementFrom(currentDay);
-            return daysLeft > 0
-                ? $"\n<color=#E0B070>시설 마모 {pending}G  ·  {daysLeft}일 뒤 수리합니다</color>"
-                : $"\n<color=#E0B070>시설 마모 {pending}G  ·  오늘 수리합니다</color>";
+            notes.Add(new SettlementNote(
+                daysLeft > 0
+                    ? $"시설 마모 {pending}G  ·  {daysLeft}일 뒤 수리합니다"
+                    : $"시설 마모 {pending}G  ·  오늘 수리합니다",
+                SettlementNoteTone.Caution));
         }
 
-        private string BuildLedgerText(string title, Dictionary<string, int> ledger, int total, char sign)
+        /// <summary>
+        /// 빚 한 줄. 청산일에는 방금 갚은 금액을, 평소에는 며칠 뒤 얼마를 내야 하는지 보여준다.
+        /// 청산일이 닥쳐서야 알면 손쓸 수 없으므로 남은 날과 금액을 항상 같이 적는다.
+        /// </summary>
+        private void AppendDebtNote(List<SettlementNote> notes)
         {
-            if (ledger.Count == 0)
+            if (_weeklySettlementPaid > 0)
+            {
+                notes.Add(new SettlementNote($"빚 {_weeklySettlementPaid}G를 청산했습니다", SettlementNoteTone.Good));
+                return;
+            }
+
+            var costManager = CostManager.Current;
+            if (costManager == null || costManager.CurrentDebt <= 0)
+                return;
+
+            var daysLeft = DayManager.DaysUntilSettlementFrom(currentDay);
+            var due = costManager.WeeklyDue;
+            notes.Add(new SettlementNote(
+                daysLeft > 0
+                    ? $"빚 {costManager.CurrentDebt}G  ·  {daysLeft}일 뒤 최소 {due}G를 내야 합니다"
+                    : $"빚 {costManager.CurrentDebt}G  ·  오늘 최소 {due}G를 내야 합니다",
+                SettlementNoteTone.Danger));
+        }
+
+        private static string BuildLedgerText(string title, IReadOnlyList<SettlementLedgerLine> lines, int total, char sign)
+        {
+            if (lines.Count == 0)
                 return $"{title}\n· 없음\n합계 {sign}0G";
 
-            var lines = new StringBuilder();
-            lines.AppendLine(title);
-            foreach (var pair in ledger)
-                lines.AppendLine($"· {pair.Key}  {sign}{pair.Value}G");
+            var text = new StringBuilder();
+            text.AppendLine(title);
+            foreach (var line in lines)
+                text.AppendLine($"· {line.Label}  {sign}{line.Amount}G");
 
-            lines.Append($"합계 {sign}{total}G");
-            return lines.ToString();
-        }
-
-        private string BuildExpenseText()
-        {
-            return BuildLedgerText("차감 내역", expenseByLabel, totalExpense, '-');
+            text.Append($"합계 {sign}{total}G");
+            return text.ToString();
         }
 
         private bool HasSettlementEntries()
@@ -653,9 +831,11 @@ namespace _01.Code.Manager
                    || dailyFatigueByLabel.Count > 0);
         }
 
+        /// <summary>정산표를 그릴 화면이 있는가. UI Toolkit이 맡았다면 UGUI 참조는 없어도 된다.</summary>
         private bool HasPanelReferences()
         {
-            return panelRoot != null
+            return _legacyPanelSuppressed
+                   || panelRoot != null
                    && titleText != null
                    && incomeText != null
                    && expenseText != null

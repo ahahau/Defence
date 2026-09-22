@@ -1,0 +1,16 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="Theme.uss" />
+    <Style src="GameplayHud.uss" />
+    <ui:VisualElement class="ui-theme hud-root">
+        <ui:VisualElement class="economy-card">
+            <ui:Label name="gold-label" class="gold-label" text="운영 자금 0G" />
+            <ui:Label name="debt-label" class="debt-label" text="빚 없음" />
+            <ui:Label name="day-label" class="day-label" text="DAY 0 · 영업 준비" />
+        </ui:VisualElement>
+        <ui:VisualElement class="speed-card">
+            <ui:Button name="pause-button" text="Ⅱ" class="speed-button" />
+            <ui:Button name="normal-button" text="1×" class="speed-button" />
+            <ui:Button name="fast-button" text="2×" class="speed-button" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,56 @@
+.hud-root {
+    flex-grow: 1;
+    padding-top: 22px;
+    padding-left: 22px;
+    padding-right: 22px;
+    justify-content: space-between;
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.economy-card, .speed-card {
+    background-color: var(--surface);
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-color: var(--edge-soft);
+    border-right-color: var(--edge-soft);
+    border-bottom-color: var(--edge-soft);
+    border-left-color: var(--edge-soft);
+    padding: 12px 15px;
+}
+
+.economy-card { width: 310px; }
+.gold-label { color: var(--accent); font-size: 20px; -unity-font-style: bold; }
+.debt-label { color: var(--loss); font-size: 13px; margin-top: 5px; }
+.day-label { color: var(--text-dim); font-size: 13px; margin-top: 3px; }
+
+.speed-card {
+    flex-direction: row;
+    padding: 5px;
+}
+
+.speed-button {
+    width: 54px;
+    height: 38px;
+    color: var(--text-body);
+    background-color: var(--surface-control);
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-color: var(--edge-quiet);
+    border-right-color: var(--edge-quiet);
+    border-bottom-color: var(--edge-quiet);
+    border-left-color: var(--edge-quiet);
+}
+
+.speed-button.is-selected {
+    color: var(--accent);
+    background-color: var(--confirm);
+    border-top-color: var(--edge);
+    border-right-color: var(--edge);
+    border-bottom-color: var(--edge);
+    border-left-color: var(--edge);
+}

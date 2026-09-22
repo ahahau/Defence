@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Text;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -16,7 +17,7 @@ namespace Tests.EditMode.Rules
         private object previousSettlement;
         private float previousTimeScale = 1f;
 
-        private static Type Resolve(string name) => Type.GetType(name + ", Assembly-CSharp", true);
+        private static Type Resolve(string name) => Type.GetType(name + ", DungeonKeeper.Runtime", true);
         private static object Call(object target, string name, params object[] args) =>
             target.GetType().GetMethod(name, PrivateInstance).Invoke(target, args);
         private static void Set(object target, string field, object value) =>
@@ -27,7 +28,7 @@ namespace Tests.EditMode.Rules
             var go = new GameObject(name);
             go.SetActive(false);
             created.Add(go);
-            if (typeName == "_01.Code.MapCreateSystem.Node")
+            if (typeName == "Code.MapCreateSystem.Node")
                 go.AddComponent<BoxCollider2D>();
             var component = go.AddComponent(Resolve(typeName));
             Assert.That(component, Is.Not.Null);
@@ -36,7 +37,7 @@ namespace Tests.EditMode.Rules
 
         private ScriptableObject UnitData(string name, int cost)
         {
-            var data = ScriptableObject.CreateInstance(Resolve("_01.Code.Units.UnitDataSO"));
+            var data = ScriptableObject.CreateInstance(Resolve("Code.Units.UnitDataSO"));
             created.Add(data);
             Set(data, "<Name>k__BackingField", name);
             Set(data, "<Cost>k__BackingField", cost);
@@ -45,21 +46,39 @@ namespace Tests.EditMode.Rules
 
         private Component Unit(ScriptableObject data, float fatigue)
         {
-            var unit = Component("_01.Code.Units.Unit", data.name);
+            var unit = Component("Code.Units.Unit", data.name);
             Set(unit, "<Data>k__BackingField", data);
             Set(unit, "fatigue", fatigue);
             return unit;
         }
 
         private static object Event(string name, params object[] args) =>
-            Activator.CreateInstance(Resolve("_01.Code.Events." + name), args);
+            Activator.CreateInstance(Resolve("Code.Events." + name), args);
+
+        /// <summary>정산 보고서의 피로 줄을 한 줄로 모은다. 화면이 아니라 보고서가 무엇을 담았는지를 본다.</summary>
+        private static string FatigueSummary(object manager)
+        {
+            var report = Call(manager, "BuildReport");
+            var lines = (IEnumerable)report.GetType().GetProperty("Fatigue").GetValue(report);
+            var text = new StringBuilder();
+            foreach (var line in lines)
+            {
+                var type = line.GetType();
+                text.Append(type.GetProperty("Label").GetValue(line));
+                text.Append(' ');
+                text.Append(type.GetProperty("Fatigue").GetValue(line));
+                text.Append("  ");
+            }
+
+            return text.ToString();
+        }
 
         [SetUp]
         public void SetUp()
         {
-            previousRoster = Resolve("_01.Code.Manager.HiredUnitRoster").GetProperty("Current").GetValue(null);
-            previousCost = Resolve("_01.Code.Manager.CostManager").GetProperty("Current").GetValue(null);
-            previousSettlement = Resolve("_01.Code.Manager.ManagementSettlementManager").GetProperty("Current").GetValue(null);
+            previousRoster = Resolve("Code.Manager.HiredUnitRoster").GetProperty("Current").GetValue(null);
+            previousCost = Resolve("Code.Manager.CostManager").GetProperty("Current").GetValue(null);
+            previousSettlement = Resolve("Code.Manager.ManagementSettlementManager").GetProperty("Current").GetValue(null);
             previousTimeScale = Time.timeScale;
         }
 
@@ -69,9 +88,9 @@ namespace Tests.EditMode.Rules
             foreach (var obj in created)
                 UnityEngine.Object.DestroyImmediate(obj);
             created.Clear();
-            Resolve("_01.Code.Manager.HiredUnitRoster").GetProperty("Current").SetValue(null, previousRoster);
-            Resolve("_01.Code.Manager.CostManager").GetProperty("Current").SetValue(null, previousCost);
-            Resolve("_01.Code.Manager.ManagementSettlementManager").GetProperty("Current").SetValue(null, previousSettlement);
+            Resolve("Code.Manager.HiredUnitRoster").GetProperty("Current").SetValue(null, previousRoster);
+            Resolve("Code.Manager.CostManager").GetProperty("Current").SetValue(null, previousCost);
+            Resolve("Code.Manager.ManagementSettlementManager").GetProperty("Current").SetValue(null, previousSettlement);
 
             // 배속 테스트는 전역 시간을 건드린다. 되돌리지 않으면 뒤따르는 테스트가 멈춘 채로 돈다.
             Time.timeScale = previousTimeScale;
@@ -80,10 +99,10 @@ namespace Tests.EditMode.Rules
         [Test]
         public void Upkeep_AfterRosterRestore_ChargesAvailableAndDeployedUnitsButNotApplicants()
         {
-            var roster = Component("_01.Code.Manager.HiredUnitRoster", "Roster");
-            var manager = Component("_01.Code.Manager.ManagementSettlementManager", "Settlement");
+            var roster = Component("Code.Manager.HiredUnitRoster", "Roster");
+            var manager = Component("Code.Manager.ManagementSettlementManager", "Settlement");
             var unit = UnitData("Restored unit", 14);
-            Resolve("_01.Code.Manager.HiredUnitRoster").GetProperty("Current").SetValue(null, roster);
+            Resolve("Code.Manager.HiredUnitRoster").GetProperty("Current").SetValue(null, roster);
             // Equivalent to the restored roster: one reserve, two deployed, five unhired candidates.
             ((IList)roster.GetType().GetField("_availableUnits", PrivateInstance).GetValue(roster)).Add(unit);
             ((IDictionary)roster.GetType().GetField("_deployedUnits", PrivateInstance).GetValue(roster)).Add(unit, 2);
@@ -95,14 +114,14 @@ namespace Tests.EditMode.Rules
         [Test]
         public void Fatigue_RestoredPlacementWithoutDeployEvent_IsReported()
         {
-            var manager = Component("_01.Code.Manager.ManagementSettlementManager", "Settlement");
-            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/04.Prefab/Map/Node.prefab");
+            var manager = Component("Code.Manager.ManagementSettlementManager", "Settlement");
+            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/GameModules/Prefabs/Map/Node.prefab");
             var go = UnityEngine.Object.Instantiate(prefab);
             created.Add(go);
-            var node = go.GetComponent(Resolve("_01.Code.MapCreateSystem.Node"));
-            var modelType = Resolve("_01.Code.MapCreateSystem.DungeonNode");
+            var node = go.GetComponent(Resolve("Code.MapCreateSystem.Node"));
+            var modelType = Resolve("Code.MapCreateSystem.DungeonNode");
             var model = Activator.CreateInstance(modelType,
-                Enum.Parse(Resolve("_01.Code.MapCreateSystem.DungeonNodeType"), "Corridor"),
+                Enum.Parse(Resolve("Code.MapCreateSystem.DungeonNodeType"), "Corridor"),
                 new Vector2Int(900, 900), 4);
             node.GetType().GetMethod("Initialize", new[] { modelType, typeof(float) })
                 .Invoke(node, new[] { model, (object)1f });
@@ -113,21 +132,21 @@ namespace Tests.EditMode.Rules
                 .Invoke(node, new object[] { data, unit, 0, 0 });
             Assert.That(assigned, Is.EqualTo(true));
             Call(manager, "ApplyBattleFatigue");
-            Assert.That((string)Call(manager, "BuildFatigueText"), Does.Contain("73"));
+            Assert.That(FatigueSummary(manager), Does.Contain("73"));
         }
 
         [Test]
         public void Fatigue_SameRoom_ReportsEveryUnitIncludingSameType()
         {
-            var manager = Component("_01.Code.Manager.ManagementSettlementManager", "Settlement");
-            var node = Component("_01.Code.MapCreateSystem.Node", "Room");
+            var manager = Component("Code.Manager.ManagementSettlementManager", "Settlement");
+            var node = Component("Code.MapCreateSystem.Node", "Room");
             var data = UnitData("Slime", 14);
             var tired = Unit(data, 80);
             var fresh = Unit(data, 20);
             Call(manager, "HandleUnitAssigned", Event("UnitAssignedToNodeEvent", node, data, tired));
             Call(manager, "HandleUnitAssigned", Event("UnitAssignedToNodeEvent", node, data, fresh));
             Call(manager, "ApplyBattleFatigue");
-            var report = (string)Call(manager, "BuildFatigueText");
+            var report = FatigueSummary(manager);
             Assert.That(report, Does.Contain("80"));
             Assert.That(report, Does.Contain("20"));
         }
@@ -135,8 +154,8 @@ namespace Tests.EditMode.Rules
         [Test]
         public void Fatigue_ReturningOneUnit_DoesNotRemoveItsRoommate()
         {
-            var manager = Component("_01.Code.Manager.ManagementSettlementManager", "Settlement");
-            var node = Component("_01.Code.MapCreateSystem.Node", "Room");
+            var manager = Component("Code.Manager.ManagementSettlementManager", "Settlement");
+            var node = Component("Code.MapCreateSystem.Node", "Room");
             var data = UnitData("Slime", 14);
             var remaining = Unit(data, 80);
             var returning = Unit(data, 20);
@@ -144,7 +163,7 @@ namespace Tests.EditMode.Rules
             Call(manager, "HandleUnitAssigned", Event("UnitAssignedToNodeEvent", node, data, returning));
             Call(manager, "HandleUnitReturned", Event("UnitReturnedFromNodeEvent", node, data, returning));
             Call(manager, "ApplyBattleFatigue");
-            var report = (string)Call(manager, "BuildFatigueText");
+            var report = FatigueSummary(manager);
             Assert.That(report, Does.Contain("80"));
             Assert.That(report, Does.Not.Contain("20"));
         }
@@ -152,13 +171,13 @@ namespace Tests.EditMode.Rules
         [Test]
         public void FailedConstruction_RefundsChargedGoldAndRestoresConsumedDiscount()
         {
-            var channel = ScriptableObject.CreateInstance(Resolve("_01.Code.Core.GameEventChannelSO"));
+            var channel = ScriptableObject.CreateInstance(Resolve("Code.Core.GameEventChannelSO"));
             created.Add(channel);
-            var cost = Component("_01.Code.Manager.CostManager", "Construction cost");
-            var settlement = Component("_01.Code.Manager.ManagementSettlementManager", "Construction ledger");
-            var panel = Component("_01.Code.UI.NodePanelView", "Construction panel");
-            var node = Component("_01.Code.MapCreateSystem.Node", "Construction room");
-            var buildingData = ScriptableObject.CreateInstance(Resolve("_01.Code.Buildings.BuildingDataSO"));
+            var cost = Component("Code.Manager.CostManager", "Construction cost");
+            var settlement = Component("Code.Manager.ManagementSettlementManager", "Construction ledger");
+            var panel = Component("Code.UI.NodePanelView", "Construction panel");
+            var node = Component("Code.MapCreateSystem.Node", "Construction room");
+            var buildingData = ScriptableObject.CreateInstance(Resolve("Code.Buildings.BuildingDataSO"));
             created.Add(buildingData);
 
             Set(cost, "costEventChannel", channel);
@@ -194,7 +213,7 @@ namespace Tests.EditMode.Rules
         [Test]
         public void Revival_TakesGoldFirstAndBorrowsTheRest()
         {
-            var cost = Component("_01.Code.Manager.CostManager", "Revival cost");
+            var cost = Component("Code.Manager.CostManager", "Revival cost");
             Set(cost, "initialGold", 30);
             Set(cost, "weeklyDebtInterest", 0.1f);
             Call(cost, "Awake");
@@ -207,9 +226,48 @@ namespace Tests.EditMode.Rules
         }
 
         [Test]
+        public void LoanOptions_WithoutConfiguredProducts_ShowTheActiveConditions()
+        {
+            var cost = Component("Code.Manager.CostManager", "Loan desk");
+            Set(cost, "weeklyLoanCreditLimit", 4200);
+            Call(cost, "Awake");
+
+            var options = (IEnumerable)cost.GetType().GetMethod("GetLoanProductOptions").Invoke(cost, null);
+            var count = 0;
+            foreach (var option in options)
+            {
+                count++;
+                Assert.That(option.GetType().GetProperty("CreditLimit").GetValue(option), Is.EqualTo(4200));
+            }
+
+            // 목록이 비면 대출 조건이 없는 것처럼 보인다. 적용 중인 조건은 항상 한 줄 남아야 한다.
+            Assert.That(count, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void LoanAdjustment_OutsideSettlementDay_IsClosed()
+        {
+            var dayManager = Resolve("Code.Manager.DayManager").GetProperty("Current");
+            var previousDay = dayManager.GetValue(null);
+            dayManager.SetValue(null, null);
+            try
+            {
+                var cost = Component("Code.Manager.CostManager", "Loan desk");
+                Call(cost, "Awake");
+
+                // 청산일이 아니면 상환도 상품 변경도 거절된다. 화면은 이 값으로 버튼을 잠근다.
+                Assert.That(cost.GetType().GetProperty("CanAdjustLoanToday").GetValue(cost), Is.False);
+            }
+            finally
+            {
+                dayManager.SetValue(null, previousDay);
+            }
+        }
+
+        [Test]
         public void Revival_IsNeverRefusedForLackOfGold()
         {
-            var cost = Component("_01.Code.Manager.CostManager", "Revival cost");
+            var cost = Component("Code.Manager.CostManager", "Revival cost");
             Set(cost, "initialGold", 0);
             Call(cost, "Awake");
 
@@ -223,7 +281,7 @@ namespace Tests.EditMode.Rules
         [Test]
         public void Revival_CostsMoreForAUnitYouRaised()
         {
-            var system = Component("_01.Code.Manager.UnitRevivalSystem", "Revival system");
+            var system = Component("Code.Manager.UnitRevivalSystem", "Revival system");
             Set(system, "baseRevivalCost", 15);
             Set(system, "costPerLevel", 8);
 
@@ -242,7 +300,7 @@ namespace Tests.EditMode.Rules
         {
             var data = UnitData("tired", 40);
             var unit = Unit(data, 70f);
-            Set(unit, "injury", Enum.Parse(Resolve("_01.Code.Units.InjurySeverity"), "Severe"));
+            Set(unit, "injury", Enum.Parse(Resolve("Code.Units.InjurySeverity"), "Severe"));
             Set(unit, "<IsIncapacitated>k__BackingField", true);
 
             unit.GetType().GetMethod("Revive").Invoke(unit, null);
@@ -257,7 +315,7 @@ namespace Tests.EditMode.Rules
 
         private Component SpeedController()
         {
-            var controller = Component("_01.Code.Manager.GameSpeedController", "Game speed");
+            var controller = Component("Code.Manager.GameSpeedController", "Game speed");
             Call(controller, "Awake");
             return controller;
         }
@@ -269,8 +327,8 @@ namespace Tests.EditMode.Rules
 
         private Component Visitor(string purposeName)
         {
-            var enemy = Component("_01.Code.Enemies.Enemy", "Visitor " + purposeName);
-            var purpose = Enum.Parse(Resolve("_01.Code.Enemies.AdventurerVisitPurpose"), purposeName);
+            var enemy = Component("Code.Enemies.Enemy", "Visitor " + purposeName);
+            var purpose = Enum.Parse(Resolve("Code.Enemies.AdventurerVisitPurpose"), purposeName);
             enemy.GetType().GetMethod("ConfigureVisitProfile").Invoke(enemy, new[] { purpose, (object)50 });
             return enemy;
         }
@@ -294,8 +352,8 @@ namespace Tests.EditMode.Rules
         [TestCase(20, 5)]
         public void Forecast_TellsHowManyAreComingForTheVault(int visitors, int expectedHunters)
         {
-            var rules = Resolve("_01.Code.Enemies.AdventurerVisitRules");
-            var hunt = Enum.Parse(Resolve("_01.Code.Enemies.AdventurerVisitPurpose"), "TreasureHunt");
+            var rules = Resolve("Code.Enemies.AdventurerVisitRules");
+            var hunt = Enum.Parse(Resolve("Code.Enemies.AdventurerVisitPurpose"), "TreasureHunt");
             var forecast = rules.GetMethod("ForecastCount");
 
             Assert.That(forecast.Invoke(null, new[] { hunt, (object)visitors }), Is.EqualTo(expectedHunters),
@@ -305,11 +363,11 @@ namespace Tests.EditMode.Rules
         [Test]
         public void Forecast_MatchesHowSpawningActuallyAssignsErrands()
         {
-            var rules = Resolve("_01.Code.Enemies.AdventurerVisitRules");
-            var purposeType = Resolve("_01.Code.Enemies.AdventurerVisitPurpose");
+            var rules = Resolve("Code.Enemies.AdventurerVisitRules");
+            var purposeType = Resolve("Code.Enemies.AdventurerVisitPurpose");
             var resolve = rules.GetMethod("ResolvePurpose");
             var forecast = rules.GetMethod("ForecastCount");
-            var none = Enum.Parse(Resolve("_01.Code.Enemies.AdventurerTrait"), "None");
+            var none = Enum.Parse(Resolve("Code.Enemies.AdventurerTrait"), "None");
 
             // 예보는 스폰이 실제로 나눠주는 방식과 같은 답을 내야 한다.
             // 특성이 없는 방문객만 세면 둘이 정확히 맞아야 한다.
@@ -337,7 +395,7 @@ namespace Tests.EditMode.Rules
 
             // 같은 손님이라도 온 이유가 바뀌면 경비 대상이 바뀐다.
             var configure = visitor.GetType().GetMethod("ConfigureVisitProfile");
-            var hunt = Enum.Parse(Resolve("_01.Code.Enemies.AdventurerVisitPurpose"), "TreasureHunt");
+            var hunt = Enum.Parse(Resolve("Code.Enemies.AdventurerVisitPurpose"), "TreasureHunt");
             configure.Invoke(visitor, new[] { hunt, (object)50 });
 
             Assert.That(Flag(visitor, "IsTrespasser"), Is.True);

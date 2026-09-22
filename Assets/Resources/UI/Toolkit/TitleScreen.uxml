@@ -1,0 +1,26 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <Style src="Theme.uss" />
+    <Style src="TitleScreen.uss" />
+    <ui:VisualElement name="title-root" class="ui-theme title-root">
+        <ui:VisualElement class="title-card">
+            <ui:Label text="DUNGEON KEEPER" class="title-logo" />
+            <ui:Label text="던전 운영 기록" class="title-subtitle" />
+            <ui:Button name="new-run-button" text="새 게임" class="menu-button primary-button" />
+            <ui:Button name="continue-button" text="이어하기" class="menu-button" />
+            <ui:Button name="settings-button" text="설정" class="menu-button" />
+            <ui:Button name="quit-button" text="게임 종료" class="menu-button quiet-button" />
+        </ui:VisualElement>
+        <ui:VisualElement name="settings-panel" class="settings-overlay">
+            <ui:VisualElement class="settings-card">
+                <ui:Label text="설정" class="settings-title" />
+                <ui:Label text="효과음" class="setting-label" />
+                <ui:Slider name="sfx-slider" low-value="0" high-value="1" value="1" />
+                <ui:Label name="sfx-value" class="setting-value" />
+                <ui:Label text="음악" class="setting-label" />
+                <ui:Slider name="music-slider" low-value="0" high-value="1" value="1" />
+                <ui:Label name="music-value" class="setting-value" />
+                <ui:Button name="close-settings-button" text="닫기" class="menu-button primary-button" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

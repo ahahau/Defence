@@ -1,0 +1,61 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="Theme.uss" />
+    <Style src="SettlementPanel.uss" />
+    <ui:VisualElement name="settlement-root" class="ui-theme settlement-root">
+        <ui:VisualElement class="settlement-card">
+            <ui:Label name="settlement-title" text="정산" class="settlement-title" />
+            <ui:VisualElement class="settlement-columns">
+                <ui:ScrollView name="ledger-scroll" class="ledger-scroll" horizontal-scroller-visibility="Hidden">
+                    <ui:VisualElement class="ledger-pair">
+                        <ui:VisualElement class="ledger-column">
+                            <ui:Label text="획득 금화" class="ledger-heading" />
+                            <ui:VisualElement name="income-list" class="ledger-list is-gain" />
+                            <ui:Label name="income-total" class="ledger-total income-total" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="ledger-column">
+                            <ui:Label text="차감 내역" class="ledger-heading" />
+                            <ui:VisualElement name="expense-list" class="ledger-list is-loss" />
+                            <ui:Label name="expense-total" class="ledger-total expense-total" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="summary-block">
+                        <ui:Label name="net-label" class="net-label" />
+                        <ui:Label name="deferred-label" class="deferred-label" />
+                        <ui:VisualElement name="note-list" class="note-list" />
+                        <ui:VisualElement name="fatigue-section" class="fatigue-section">
+                            <ui:Label text="부하 피로" class="section-heading" />
+                            <ui:VisualElement name="fatigue-list" class="fatigue-list" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="unlock-section">
+                        <ui:VisualElement class="unlock-headers">
+                            <ui:Button name="unit-unlock-header" class="unlock-header" />
+                            <ui:Button name="building-unlock-header" class="unlock-header" />
+                        </ui:VisualElement>
+                        <ui:ScrollView name="unit-unlock-list" class="unlock-list" horizontal-scroller-visibility="Hidden" />
+                        <ui:ScrollView name="building-unlock-list" class="unlock-list" horizontal-scroller-visibility="Hidden" />
+                    </ui:VisualElement>
+                </ui:ScrollView>
+                <ui:ScrollView name="loan-pane" class="loan-pane" horizontal-scroller-visibility="Hidden">
+                    <ui:Label text="대출" class="section-heading" />
+                    <ui:Label name="loan-debt" class="loan-debt" />
+                    <ui:Label name="loan-due" class="loan-line" />
+                    <ui:Label name="loan-terms" class="loan-line loan-terms" />
+                    <ui:Label name="loan-wallet" class="loan-line" />
+                    <ui:Label name="loan-window" class="loan-window" />
+                    <ui:Label text="대출 상품" class="loan-subheading" />
+                    <ui:VisualElement name="loan-product-list" class="loan-product-list" />
+                    <ui:Label text="대출 실행" class="loan-subheading" />
+                    <ui:Label name="borrow-amount-label" class="loan-line" />
+                    <ui:SliderInt name="borrow-slider" low-value="0" high-value="100" value="0" />
+                    <ui:Button name="borrow-button" text="빌리기" class="loan-button" />
+                    <ui:Label text="상환" class="loan-subheading" />
+                    <ui:Button name="repay-minimum-button" class="loan-button" />
+                    <ui:Button name="repay-full-button" class="loan-button" />
+                    <ui:Label name="loan-feedback" class="loan-feedback" />
+                </ui:ScrollView>
+            </ui:VisualElement>
+            <ui:Button name="close-button" text="정산 완료" class="close-button" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
