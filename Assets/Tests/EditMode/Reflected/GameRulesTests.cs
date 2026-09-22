@@ -7,13 +7,13 @@ namespace Tests.EditMode.Rules
 {
     /// <summary>
     /// 이번에 손댄 진행 규칙들이 어긋나지 않는지 지킨다.
-    /// 테스트 어셈블리는 Assembly-CSharp를 참조할 수 없어 리플렉션으로 접근한다.
+    /// 테스트 어셈블리는 DungeonKeeper.Runtime를 참조할 수 없어 리플렉션으로 접근한다.
     /// </summary>
     public class GameRulesTests
     {
         private static Type Resolve(string fullName)
         {
-            var type = Type.GetType($"{fullName}, Assembly-CSharp");
+            var type = Type.GetType($"{fullName}, DungeonKeeper.Runtime");
             Assert.That(type, Is.Not.Null, $"{fullName} 타입을 찾지 못했습니다.");
             return type;
         }
@@ -70,7 +70,7 @@ namespace Tests.EditMode.Rules
         [Test]
         public void Merchant_VisitsOnScheduleOnly()
         {
-            var shop = NewAsset("_01.Code.Artifacts.ArtifactShopCatalogSO");
+            var shop = NewAsset("Code.Artifacts.ArtifactShopCatalogSO");
             SetPrivate(shop, "firstVisitDay", 2);
             SetPrivate(shop, "visitIntervalDays", 2);
 
@@ -88,7 +88,7 @@ namespace Tests.EditMode.Rules
         [Test]
         public void Merchant_PriceRisesWithEveryPurchase()
         {
-            var shop = NewAsset("_01.Code.Artifacts.ArtifactShopCatalogSO");
+            var shop = NewAsset("Code.Artifacts.ArtifactShopCatalogSO");
             SetPrivate(shop, "priceIncreasePerPurchase", 0.15f);
             SetPrivate(shop, "priceInflationPerDay", 0f);
             SetPrivate(shop, "randomArtifactPrice", 100);
@@ -106,8 +106,8 @@ namespace Tests.EditMode.Rules
         [Test]
         public void Merchant_UnpricedArtifactIsNotSold()
         {
-            var shop = NewAsset("_01.Code.Artifacts.ArtifactShopCatalogSO");
-            var artifact = NewAsset("_01.Code.Artifacts.ArtifactDataSO");
+            var shop = NewAsset("Code.Artifacts.ArtifactShopCatalogSO");
+            var artifact = NewAsset("Code.Artifacts.ArtifactDataSO");
             SetPrivate(artifact, "<Price>k__BackingField", 0);
 
             Assert.That(Call(shop, "GetPrice", artifact, 0, 0), Is.EqualTo(0),
@@ -120,14 +120,14 @@ namespace Tests.EditMode.Rules
             // 소모품은 사고 나도 소지품에 남지 않아 "이미 가졌다"로 걸러지지 않는다.
             // 그래서 상자 후보에 계속 남아, 90G짜리 정체불명의 유물이 30G짜리 물약을
             // 뱉을 수 있었다. 값도 손해고 손에 남는 것도 없다.
-            var shop = NewAsset("_01.Code.Artifacts.ArtifactShopCatalogSO");
-            var potion = NewAsset("_01.Code.Artifacts.ArtifactDataSO");
+            var shop = NewAsset("Code.Artifacts.ArtifactShopCatalogSO");
+            var potion = NewAsset("Code.Artifacts.ArtifactDataSO");
             SetPrivate(potion, "<Price>k__BackingField", 30);
             SetPrivate(potion, "<IsConsumable>k__BackingField", true);
 
             var stock = (System.Collections.IList)Activator.CreateInstance(
                 typeof(System.Collections.Generic.List<>)
-                    .MakeGenericType(Resolve("_01.Code.Artifacts.ArtifactDataSO")));
+                    .MakeGenericType(Resolve("Code.Artifacts.ArtifactDataSO")));
             stock.Add(potion);
             Call(shop, "ReplaceStock", stock);
 
@@ -148,7 +148,7 @@ namespace Tests.EditMode.Rules
         [Test]
         public void Grade_RaisesHeadcountAndStrengthTogether()
         {
-            var rules = Resolve("_01.Code.Manager.DungeonGradeRules");
+            var rules = Resolve("Code.Manager.DungeonGradeRules");
 
             var quiet = (int)CallStatic(rules, "ResolveEnemyCount", 0);
             var busy = (int)CallStatic(rules, "ResolveEnemyCount", 10);
@@ -164,7 +164,7 @@ namespace Tests.EditMode.Rules
         [Test]
         public void Grade_PaysBackWhatItPutsAtRisk()
         {
-            var rules = Resolve("_01.Code.Manager.DungeonGradeRules");
+            var rules = Resolve("Code.Manager.DungeonGradeRules");
 
             // 위험만 오르고 벌이가 그대로면 웅크리는 것이 언제나 최선이 되어,
             // 플레이어가 아무것도 짓지 않는 것이 정답인 게임이 된다.
@@ -188,7 +188,7 @@ namespace Tests.EditMode.Rules
         [TestCase(5, 6)]
         public void Grade_MovesWithoutSteps(int lower, int higher)
         {
-            var rules = Resolve("_01.Code.Manager.DungeonGradeRules");
+            var rules = Resolve("Code.Manager.DungeonGradeRules");
 
             // 시설 하나를 더 지었을 때 딱 그만큼만 늘어나야, 무엇 때문에 힘들어졌는지 짚을 수 있다.
             var atLower = (int)CallStatic(rules, "ResolveEnemyCount", lower);
@@ -200,7 +200,7 @@ namespace Tests.EditMode.Rules
         [Test]
         public void Grade_IsNeverNegativeEvenIfTheDungeonIsEmptied()
         {
-            var rules = Resolve("_01.Code.Manager.DungeonGradeRules");
+            var rules = Resolve("Code.Manager.DungeonGradeRules");
 
             Assert.That((int)CallStatic(rules, "ResolveEnemyCount", -5), Is.GreaterThan(0));
             Assert.That(CallStatic(rules, "ResolveEnemyLevel", -5), Is.EqualTo(1));
@@ -214,7 +214,7 @@ namespace Tests.EditMode.Rules
         {
             host = new GameObject("Facility");
             host.SetActive(false);
-            return host.AddComponent(Resolve("_01.Code.Buildings.Building"));
+            return host.AddComponent(Resolve("Code.Buildings.Building"));
         }
 
         [Test]
@@ -394,7 +394,7 @@ namespace Tests.EditMode.Rules
         [Test]
         public void Unlock_OpensOnItsDayAndStaysOpen()
         {
-            var entryType = Resolve("_01.Code.Progression.DungeonUnlockEntry");
+            var entryType = Resolve("Code.Progression.DungeonUnlockEntry");
             var entry = Activator.CreateInstance(entryType);
             SetPrivate(entry, "startsUnlocked", false);
             SetPrivate(entry, "unlockDay", 7);
@@ -407,7 +407,7 @@ namespace Tests.EditMode.Rules
         [Test]
         public void Unlock_StartingEntryIsOpenFromDayZero()
         {
-            var entry = Activator.CreateInstance(Resolve("_01.Code.Progression.DungeonUnlockEntry"));
+            var entry = Activator.CreateInstance(Resolve("Code.Progression.DungeonUnlockEntry"));
             SetPrivate(entry, "startsUnlocked", true);
             SetPrivate(entry, "unlockDay", 0);
 
@@ -419,8 +419,8 @@ namespace Tests.EditMode.Rules
         [Test]
         public void BossDay_UsesThatDaysNumbersNotTheSharedBossWave()
         {
-            var config = NewAsset("_01.Code.Manager.WaveConfigSO");
-            var entryType = Resolve("_01.Code.Manager.WaveConfigSO+WaveEntry");
+            var config = NewAsset("Code.Manager.WaveConfigSO");
+            var entryType = Resolve("Code.Manager.WaveConfigSO+WaveEntry");
 
             var specific = Array.CreateInstance(entryType, 1);
             var day9 = Activator.CreateInstance(entryType);
@@ -446,7 +446,7 @@ namespace Tests.EditMode.Rules
         [Test]
         public void FinalDay_IsTheLastDayOfTheRun()
         {
-            var config = NewAsset("_01.Code.Manager.WaveConfigSO");
+            var config = NewAsset("Code.Manager.WaveConfigSO");
             SetPrivate(config, "finalDay", 20);
 
             Assert.That(Call(config, "IsFinalDay", 20), Is.True);
@@ -459,7 +459,7 @@ namespace Tests.EditMode.Rules
         /// <summary>이자율만 정해 둔 빈 CostManager. 금화와 빚은 각 테스트가 정산으로 만든다.</summary>
         private static object NewCostManager(GameObject host, float weeklyInterest = 0.1f)
         {
-            var manager = host.AddComponent(Resolve("_01.Code.Manager.CostManager"));
+            var manager = host.AddComponent(Resolve("Code.Manager.CostManager"));
             SetPrivate(manager, "weeklyDebtInterest", weeklyInterest);
             return manager;
         }
@@ -524,8 +524,8 @@ namespace Tests.EditMode.Rules
                 Call(manager, "ApplySettlement", 0);
                 Assert.That(Get(manager, "CurrentDebt"), Is.EqualTo(100),
                     "이자는 하루마다가 아니라 청산일에 한 번 붙습니다.");
-                Assert.That(Get(manager, "WeeklyDue"), Is.EqualTo(110),
-                    "내야 할 금액에는 10% 이자가 미리 보여야 합니다.");
+                Assert.That(Get(manager, "WeeklyDue"), Is.EqualTo(30),
+                    "최소 상환액은 이자 10G와 원금 20G를 포함해야 합니다.");
             }
             finally
             {
@@ -546,8 +546,8 @@ namespace Tests.EditMode.Rules
                 Call(manager, "ApplySettlement", 200);
 
                 Assert.That(Call(manager, "SettleWeek"), Is.True);
-                Assert.That(Get(manager, "CurrentDebt"), Is.Zero, "청산하면 빚이 남지 않습니다.");
-                Assert.That(Get(manager, "CurrentGold"), Is.EqualTo(90), "200G에서 이자 포함 110G가 빠집니다.");
+                Assert.That(Get(manager, "CurrentDebt"), Is.EqualTo(80), "최소 상환 뒤 원금 일부는 다음 주로 넘어갑니다.");
+                Assert.That(Get(manager, "CurrentGold"), Is.EqualTo(170), "200G에서 이자 10G와 원금 20G가 빠집니다.");
             }
             finally
             {
@@ -565,12 +565,12 @@ namespace Tests.EditMode.Rules
 
                 var gold = (int)Get(manager, "CurrentGold");
                 Call(manager, "ApplySettlement", -(gold + 100));
-                Call(manager, "ApplySettlement", 109); // 이자 포함 110G에 1G 모자란다.
+                Call(manager, "ApplySettlement", 29); // 최소 상환 30G에 1G 모자란다.
 
                 Assert.That(Call(manager, "SettleWeek"), Is.False);
                 Assert.That(Get(manager, "CurrentDebt"), Is.EqualTo(100),
                     "부분 상환은 없습니다. 빚은 그대로 남습니다.");
-                Assert.That(Get(manager, "CurrentGold"), Is.EqualTo(109), "갚지 못했으니 금화도 그대로입니다.");
+                Assert.That(Get(manager, "CurrentGold"), Is.EqualTo(29), "갚지 못했으니 금화도 그대로입니다.");
             }
             finally
             {
@@ -604,7 +604,7 @@ namespace Tests.EditMode.Rules
         [TestCase(28, true)]
         public void SettlementDay_FallsOnEverySeventhDay(int day, bool expected)
         {
-            var dayManager = Resolve("_01.Code.Manager.DayManager");
+            var dayManager = Resolve("Code.Manager.DayManager");
             var isSettlementDay = dayManager.GetMethod("IsSettlementDay");
 
             Assert.That(isSettlementDay.Invoke(null, new object[] { day }), Is.EqualTo(expected));
@@ -619,7 +619,7 @@ namespace Tests.EditMode.Rules
         [TestCase(14, 0)]
         public void SettlementCountdown_ReachesZeroOnTheDeadlineAndResetsAfter(int day, int expected)
         {
-            var dayManager = Resolve("_01.Code.Manager.DayManager");
+            var dayManager = Resolve("Code.Manager.DayManager");
             var daysUntil = dayManager.GetMethod("DaysUntilSettlementFrom");
 
             Assert.That(daysUntil.Invoke(null, new object[] { day }), Is.EqualTo(expected),
@@ -649,12 +649,12 @@ namespace Tests.EditMode.Rules
             out ScriptableObject costChannel,
             out ScriptableObject waveChannel)
         {
-            costChannel = NewAsset("_01.Code.Core.GameEventChannelSO");
-            waveChannel = NewAsset("_01.Code.Core.GameEventChannelSO");
+            costChannel = NewAsset("Code.Core.GameEventChannelSO");
+            waveChannel = NewAsset("Code.Core.GameEventChannelSO");
 
             var host = new GameObject("LedgerTestHost");
-            var cost = host.AddComponent(Resolve("_01.Code.Manager.CostManager"));
-            var settlement = host.AddComponent(Resolve("_01.Code.Manager.ManagementSettlementManager"));
+            var cost = host.AddComponent(Resolve("Code.Manager.CostManager"));
+            var settlement = host.AddComponent(Resolve("Code.Manager.ManagementSettlementManager"));
 
             SetPrivate(cost, "costEventChannel", costChannel);
             SetPrivate(cost, "waveEventChannel", waveChannel);
@@ -707,11 +707,11 @@ namespace Tests.EditMode.Rules
             try
             {
                 // 대기 중 정책·이벤트 보상은 그 자리에서 들어온다.
-                Raise(costChannel, NewEvent("_01.Code.Events.GoldEarnedEvent", 60));
+                Raise(costChannel, NewEvent("Code.Events.GoldEarnedEvent", 60));
                 Assert.That(Get(cost, "CurrentGold"), Is.EqualTo(LedgerStartingGold + 60),
                     "대기 중 수입은 바로 지갑에 들어와야 합니다.");
 
-                Raise(waveChannel, NewEvent("_01.Code.Events.WaveEndedEvent", 1, 0, 0, 0));
+                Raise(waveChannel, NewEvent("Code.Events.WaveEndedEvent", 1, 0, 0, 0));
                 Assert.That(Get(cost, "CurrentGold"), Is.EqualTo(LedgerStartingGold + 60),
                     "이미 받은 돈이 정산 순액으로 또 들어오면 안 됩니다.");
             }
@@ -728,8 +728,8 @@ namespace Tests.EditMode.Rules
             var host = BuildLedgerHost(false, out var cost, out var costChannel, out var waveChannel);
             try
             {
-                Raise(costChannel, NewEvent("_01.Code.Events.GoldEarnedEvent", 60));
-                Raise(waveChannel, NewEvent("_01.Code.Events.WaveEndedEvent", 1, 0, 0, 0));
+                Raise(costChannel, NewEvent("Code.Events.GoldEarnedEvent", 60));
+                Raise(waveChannel, NewEvent("Code.Events.WaveEndedEvent", 1, 0, 0, 0));
 
                 Assert.That(Get(cost, "CurrentGold"), Is.EqualTo(LedgerStartingGold + 60),
                     "수신 순서가 바뀌어도 수입은 한 번만 반영돼야 합니다.");
@@ -746,13 +746,13 @@ namespace Tests.EditMode.Rules
             var host = BuildLedgerHost(true, out var cost, out var costChannel, out var waveChannel);
             try
             {
-                Raise(waveChannel, NewEvent("_01.Code.Events.WaveStartedEvent", 1, 5));
-                Raise(costChannel, NewEvent("_01.Code.Events.GoldEarnedEvent", 60));
+                Raise(waveChannel, NewEvent("Code.Events.WaveStartedEvent", 1, 5));
+                Raise(costChannel, NewEvent("Code.Events.GoldEarnedEvent", 60));
 
                 Assert.That(Get(cost, "CurrentGold"), Is.EqualTo(LedgerStartingGold),
                     "웨이브 중 수입은 장부에만 쌓입니다.");
 
-                Raise(waveChannel, NewEvent("_01.Code.Events.WaveEndedEvent", 1, 0, 0, 0));
+                Raise(waveChannel, NewEvent("Code.Events.WaveEndedEvent", 1, 0, 0, 0));
                 Assert.That(Get(cost, "CurrentGold"), Is.EqualTo(LedgerStartingGold + 60),
                     "정산에서 한 번에 들어와야 합니다.");
             }
@@ -768,9 +768,9 @@ namespace Tests.EditMode.Rules
             var host = BuildLedgerHost(true, out var cost, out var costChannel, out var waveChannel);
             try
             {
-                Raise(waveChannel, NewEvent("_01.Code.Events.WaveStartedEvent", 1, 5));
-                Raise(costChannel, NewEvent("_01.Code.Events.TreasuryRobbedEvent", 40));
-                Raise(waveChannel, NewEvent("_01.Code.Events.WaveEndedEvent", 1, 0, 0, 0));
+                Raise(waveChannel, NewEvent("Code.Events.WaveStartedEvent", 1, 5));
+                Raise(costChannel, NewEvent("Code.Events.TreasuryRobbedEvent", 40));
+                Raise(waveChannel, NewEvent("Code.Events.WaveEndedEvent", 1, 0, 0, 0));
 
                 Assert.That(Get(cost, "CurrentGold"), Is.EqualTo(LedgerStartingGold),
                     "금고에서 털린 보관 금화를 운영 자금에서 또 빼면 안 됩니다.");
@@ -788,7 +788,7 @@ namespace Tests.EditMode.Rules
         private static GameObject BuildMoraleHost(out object morale)
         {
             var host = new GameObject("MoraleTestHost");
-            var component = host.AddComponent(Resolve("_01.Code.Manager.MoralePolicyManager"));
+            var component = host.AddComponent(Resolve("Code.Manager.MoralePolicyManager"));
             SetPrivate(component, "upkeepAtZeroMorale", 1.5f);
             SetPrivate(component, "upkeepAtFullMorale", 0.8f);
             SetPrivate(component, "applicantsAtZeroMorale", 0.25f);
@@ -853,7 +853,7 @@ namespace Tests.EditMode.Rules
             var host = new GameObject("TreasuryTestHost");
             try
             {
-                var treasury = host.AddComponent(Resolve("_01.Code.Buildings.Treasury"));
+                var treasury = host.AddComponent(Resolve("Code.Buildings.Treasury"));
                 SetPrivate(treasury, "capacity", 1000);
                 SetPrivate(treasury, "storedGold", 200);
                 SetPrivate(treasury, "interestPerSettlement", 0.1f);
@@ -880,7 +880,7 @@ namespace Tests.EditMode.Rules
             var host = new GameObject("TreasuryTestHost");
             try
             {
-                var treasury = host.AddComponent(Resolve("_01.Code.Buildings.Treasury"));
+                var treasury = host.AddComponent(Resolve("Code.Buildings.Treasury"));
                 SetPrivate(treasury, "capacity", 100);
                 SetPrivate(treasury, "storedGold", 98);
                 SetPrivate(treasury, "interestPerSettlement", 0.5f);
@@ -904,8 +904,8 @@ namespace Tests.EditMode.Rules
             var host = new GameObject("RosterTestHost");
             try
             {
-                var roster = host.AddComponent(Resolve("_01.Code.Manager.HiredUnitRoster"));
-                var unit = NewAsset("_01.Code.Units.UnitDataSO");
+                var roster = host.AddComponent(Resolve("Code.Manager.HiredUnitRoster"));
+                var unit = NewAsset("Code.Units.UnitDataSO");
 
                 // 후보 한 명을 세워 둔다. 명단은 읽을 때 이 수에 맞춰 채워진다.
                 var owned = roster.GetType()
@@ -934,7 +934,7 @@ namespace Tests.EditMode.Rules
         private static string IntrusionWarning(int steps)
         {
             // 목표 종류를 받는 오버로드가 생겨서 이름만으로는 모호하다. 인자 형태로 집어 준다.
-            var method = Resolve("_01.Code.Manager.IntrusionThreat")
+            var method = Resolve("Code.Manager.IntrusionThreat")
                 .GetMethod(
                     "BuildWarning",
                     BindingFlags.Static | BindingFlags.Public,
@@ -948,7 +948,7 @@ namespace Tests.EditMode.Rules
         [Test]
         public void Intrusion_WarningSharpensAsTheTreasuryGetsCloser()
         {
-            var noThreat = (int)Resolve("_01.Code.Manager.IntrusionThreat")
+            var noThreat = (int)Resolve("Code.Manager.IntrusionThreat")
                 .GetField("NoThreat", BindingFlags.Static | BindingFlags.Public).GetValue(null);
 
             Assert.That(IntrusionWarning(noThreat), Is.Empty, "닿을 수 있는 침입자가 없으면 경고도 없습니다.");
@@ -968,7 +968,7 @@ namespace Tests.EditMode.Rules
         private static GameObject BuildRunSummaryHost(out object summary)
         {
             var host = new GameObject("RunSummaryTestHost");
-            var component = host.AddComponent(Resolve("_01.Code.Progression.RunSummarySystem"));
+            var component = host.AddComponent(Resolve("Code.Progression.RunSummarySystem"));
             Call(component, "Awake");
             summary = component;
             return host;
@@ -1037,11 +1037,11 @@ namespace Tests.EditMode.Rules
         [Test]
         public void Boss_EachBossDayCanHaveItsOwnFight()
         {
-            var config = NewAsset("_01.Code.Manager.WaveConfigSO");
-            var ninth = NewAsset("_01.Code.Manager.AdventurerPartySO");
-            var final = NewAsset("_01.Code.Manager.AdventurerPartySO");
+            var config = NewAsset("Code.Manager.WaveConfigSO");
+            var ninth = NewAsset("Code.Manager.AdventurerPartySO");
+            var final = NewAsset("Code.Manager.AdventurerPartySO");
 
-            var entryType = Resolve("_01.Code.Manager.WaveConfigSO+BossEntry");
+            var entryType = Resolve("Code.Manager.WaveConfigSO+BossEntry");
             var entries = Array.CreateInstance(entryType, 2);
             entries.SetValue(NewBossEntry(entryType, 9, ninth, 5f), 0);
             entries.SetValue(NewBossEntry(entryType, 20, final, 6f), 1);
@@ -1062,8 +1062,8 @@ namespace Tests.EditMode.Rules
         [Test]
         public void Boss_ADayWithoutItsOwnEntryFallsBackToTheSharedParty()
         {
-            var config = NewAsset("_01.Code.Manager.WaveConfigSO");
-            var shared = NewAsset("_01.Code.Manager.AdventurerPartySO");
+            var config = NewAsset("Code.Manager.WaveConfigSO");
+            var shared = NewAsset("Code.Manager.AdventurerPartySO");
             SetPrivate(config, "bossParty", shared);
 
             Assert.That(Call(config, "GetBossForDay", 13), Is.Null, "정의하지 않은 날은 전용 보스가 없습니다.");
@@ -1085,7 +1085,7 @@ namespace Tests.EditMode.Rules
         [Test]
         public void CoreLoopFeatures_UnlockOneLayerAtATime()
         {
-            var rules = Resolve("_01.Code.UI.CoreLoopFeatureUnlocks");
+            var rules = Resolve("Code.UI.CoreLoopFeatureUnlocks");
 
             Assert.That(CallStatic(rules, "IsArtifactUnlocked", 1), Is.False);
             Assert.That(CallStatic(rules, "IsArtifactUnlocked", 2), Is.True,

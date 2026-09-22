@@ -17,7 +17,7 @@ namespace Tests.EditMode.Intrusion
     {
         private static Type Resolve(string fullName)
         {
-            var type = Type.GetType($"{fullName}, Assembly-CSharp");
+            var type = Type.GetType($"{fullName}, DungeonKeeper.Runtime");
             Assert.That(type, Is.Not.Null, $"{fullName} 타입을 찾지 못했습니다.");
             return type;
         }
@@ -32,21 +32,21 @@ namespace Tests.EditMode.Intrusion
         /// <summary>노드 프리팹을 하나 세우고 지정한 종류로 연다.</summary>
         private static GameObject CreateNode(string name, string nodeTypeName, Vector2Int position)
         {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/04.Prefab/Map/Node.prefab");
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/GameModules/Prefabs/Map/Node.prefab");
             Assert.That(prefab, Is.Not.Null, "Node 프리팹을 찾지 못했습니다.");
 
             var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
             instance.name = name;
 
-            var nodeType = Resolve("_01.Code.MapCreateSystem.DungeonNodeType");
-            var dungeonNode = Resolve("_01.Code.MapCreateSystem.DungeonNode");
+            var nodeType = Resolve("Code.MapCreateSystem.DungeonNodeType");
+            var dungeonNode = Resolve("Code.MapCreateSystem.DungeonNode");
             var data = Activator.CreateInstance(
                 dungeonNode,
                 Enum.Parse(nodeType, nodeTypeName),
                 position,
                 4);
 
-            var view = instance.GetComponent(Resolve("_01.Code.MapCreateSystem.Node"));
+            var view = instance.GetComponent(Resolve("Code.MapCreateSystem.Node"));
             var initialize = view.GetType().GetMethod("Initialize", new[] { dungeonNode, typeof(float) });
             Assert.That(initialize, Is.Not.Null, "Node.Initialize를 찾지 못했습니다.");
             initialize.Invoke(view, new[] { data, (object)1f });
@@ -57,7 +57,7 @@ namespace Tests.EditMode.Intrusion
         /// <summary>FindPriorityTarget(from, out kind)을 부르고 (노드, 종류 이름)을 돌려준다.</summary>
         private static (Component target, string kind) FindPriorityTarget(Vector2 from)
         {
-            var threat = Resolve("_01.Code.Manager.IntrusionThreat");
+            var threat = Resolve("Code.Manager.IntrusionThreat");
             var method = threat.GetMethod("FindPriorityTarget", BindingFlags.Static | BindingFlags.Public);
             Assert.That(method, Is.Not.Null, "IntrusionThreat.FindPriorityTarget을 찾지 못했습니다.");
 
@@ -109,8 +109,8 @@ namespace Tests.EditMode.Intrusion
         [Test]
         public void 저장_파일은_조각을_열쇠로_찾아_되돌린다()
         {
-            var fileType = Resolve("_01.Code.Persistence.RunSaveFile");
-            var entryType = Resolve("_01.Code.Persistence.RunSaveEntry");
+            var fileType = Resolve("Code.Persistence.RunSaveFile");
+            var entryType = Resolve("Code.Persistence.RunSaveEntry");
 
             var file = Activator.CreateInstance(fileType);
             fileType.GetField("completedDay").SetValue(file, 20);

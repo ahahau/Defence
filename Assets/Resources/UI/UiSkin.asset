@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b247b6d68e367af41a17b48f7afd1a3f, type: 3}
   m_Name: UiSkin
-  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.UI.UiSkinSO
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.UI.UiSkinSO
   <WindowFrame>k__BackingField: {fileID: -907767961651953922, guid: 95df10558cf324f44834a04b3668f435, type: 3}
   <ButtonFrame>k__BackingField: {fileID: -907767961651953922, guid: 95df10558cf324f44834a04b3668f435, type: 3}
   <SliderTrack>k__BackingField: {fileID: -907767961651953922, guid: 95df10558cf324f44834a04b3668f435, type: 3}

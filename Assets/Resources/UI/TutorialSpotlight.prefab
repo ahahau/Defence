@@ -276,7 +276,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e9385c1efbceeea49a4975fd6893bb22, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Dialogue.TutorialSpotlightView
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Dialogue.TutorialSpotlightView
   dimPanels:
   - {fileID: 7265802532791367945}
   - {fileID: 5480595774264663702}

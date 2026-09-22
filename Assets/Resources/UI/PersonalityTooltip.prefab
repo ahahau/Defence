@@ -242,7 +242,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 94f758a074d9eeb47829fa4e7eeb04c6, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.UI.PersonalityTooltipView
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.UI.PersonalityTooltipView
   panelRoot: {fileID: 7143806679027332860}
   titleText: {fileID: 5953222741764924968}
   descriptionText: {fileID: 8766341629296004765}

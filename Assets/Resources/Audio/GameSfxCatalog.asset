@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 97882a727eb2aa64bad8c8fe433eaefd, type: 3}
   m_Name: GameSfxCatalog
-  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Audio.GameSfxCatalogSO
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Audio.GameSfxCatalogSO
   entries:
   - <Cue>k__BackingField: 0
     <Variants>k__BackingField:

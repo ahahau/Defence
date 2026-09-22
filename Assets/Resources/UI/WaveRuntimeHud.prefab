@@ -810,7 +810,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 71e31c3359c3751448a1e5dcc4fa5fed, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.UI.WaveRuntimeHudView
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.UI.WaveRuntimeHudView
   bannerRoot: {fileID: 6858425770793495853}
   bannerGroup: {fileID: 7184397763244742455}
   bannerTitle: {fileID: 1186365955056768503}

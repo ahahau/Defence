@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6cec2de7cb574a51b3d26073c6d6ae0d, type: 3}
+  m_Name: TruceTalks
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Manager.PolicyDataSO
+  displayName: "\uD734\uC804 \uD611\uC0C1"
+  description: "\uC0AC\uC808\uC744 \uBCF4\uB0B4 \uC228\uC744 \uACE0\uB978\uB2E4.
+    \uBBFC\uC2EC\uC740 \uBE60\uB974\uAC8C \uD68C\uBCF5\uB418\uC9C0\uB9CC \uBD80\uD558\uB4E4\uC758
+    \uCE7C\uB05D\uC774 \uBB34\uB38C\uC9C4\uB2E4."
+  moraleDeltaOnSelect: 20
+  goldDeltaOnSelect: -30
+  dailyMoraleDelta: 2
+  durationDays: 3
+  canRepeat: 1
+  unitDamageMultiplier: 0.8
+  unitDefenseBonus: 0
+  dungeonPowerGainMultiplier: 1

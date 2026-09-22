@@ -13,7 +13,7 @@ namespace Tests.EditMode.Gameplay
         [Test]
         public void ThreatPreview_AuthoredTextOverridesRoleInference()
         {
-            var profile = RequireType("_01.Code.Manager.WaveThreatProfile");
+            var profile = RequireType("Code.Manager.WaveThreatProfile");
             var build = profile.GetMethod("BuildForRoleCounts", StaticFlags);
             Assert.That(build, Is.Not.Null);
 
@@ -29,7 +29,7 @@ namespace Tests.EditMode.Gameplay
         [Test]
         public void ThreatPreview_InfersHealerAndRangedCounters()
         {
-            var profile = RequireType("_01.Code.Manager.WaveThreatProfile");
+            var profile = RequireType("Code.Manager.WaveThreatProfile");
             var build = profile.GetMethod("BuildForRoleCounts", StaticFlags);
 
             var healer = build.Invoke(null, new object[] { null, null, 1, 0, 1, 1 });
@@ -50,9 +50,9 @@ namespace Tests.EditMode.Gameplay
             string requestedName,
             string expectedName)
         {
-            var utility = RequireType("_01.Code.Units.UnitCommandUtility");
-            var commandType = RequireType("_01.Code.Units.UnitCommand");
-            var priorityType = RequireType("_01.Code.BT.TargetPriority");
+            var utility = RequireType("Code.Units.UnitCommandUtility");
+            var commandType = RequireType("Code.Units.UnitCommand");
+            var priorityType = RequireType("Code.BT.TargetPriority");
             var resolve = utility.GetMethod("ResolveTargetPriority", StaticFlags);
             Assert.That(resolve, Is.Not.Null);
 
@@ -68,7 +68,7 @@ namespace Tests.EditMode.Gameplay
         [Test]
         public void PolicyCombatTradeoffs_HaveNeutralSafeDefaults()
         {
-            var policyType = RequireType("_01.Code.Manager.PolicyDataSO");
+            var policyType = RequireType("Code.Manager.PolicyDataSO");
             var policy = ScriptableObject.CreateInstance(policyType);
             try
             {
@@ -84,9 +84,9 @@ namespace Tests.EditMode.Gameplay
         [Test]
         public void BossReinforcement_ReservesConfiguredEnemiesButKeepsBossInOpeningGroup()
         {
-            var bossEntryType = RequireType("_01.Code.Manager.WaveConfigSO+BossEntry");
-            var partyType = RequireType("_01.Code.Manager.AdventurerPartySO");
-            var enemyDataType = RequireType("_01.Code.Enemies.EnemyDataSO");
+            var bossEntryType = RequireType("Code.Manager.WaveConfigSO+BossEntry");
+            var partyType = RequireType("Code.Manager.AdventurerPartySO");
+            var enemyDataType = RequireType("Code.Enemies.EnemyDataSO");
             var entry = Activator.CreateInstance(bossEntryType);
             var party = ScriptableObject.CreateInstance(partyType);
             var enemy = ScriptableObject.CreateInstance(enemyDataType);
@@ -111,7 +111,7 @@ namespace Tests.EditMode.Gameplay
 
         private static Type RequireType(string fullName)
         {
-            var type = Type.GetType(fullName + ", Assembly-CSharp");
+            var type = Type.GetType(fullName + ", DungeonKeeper.Runtime");
             Assert.That(type, Is.Not.Null, fullName + " 타입을 찾지 못했습니다.");
             return type;
         }

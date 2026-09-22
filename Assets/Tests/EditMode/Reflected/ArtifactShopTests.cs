@@ -17,7 +17,7 @@ namespace Tests.EditMode.Rules
         private const BindingFlags PrivateInstance = BindingFlags.Instance | BindingFlags.NonPublic;
         private readonly List<UnityEngine.Object> created = new();
 
-        private static Type Resolve(string name) => Type.GetType(name + ", Assembly-CSharp", true);
+        private static Type Resolve(string name) => Type.GetType(name + ", DungeonKeeper.Runtime", true);
 
         [TearDown]
         public void TearDown()
@@ -29,7 +29,7 @@ namespace Tests.EditMode.Rules
 
         private ScriptableObject Artifact(string name, int price, bool consumable)
         {
-            var artifact = ScriptableObject.CreateInstance(Resolve("_01.Code.Artifacts.ArtifactDataSO"));
+            var artifact = ScriptableObject.CreateInstance(Resolve("Code.Artifacts.ArtifactDataSO"));
             artifact.name = name;
             created.Add(artifact);
             Set(artifact, "<DisplayName>k__BackingField", name);
@@ -48,7 +48,7 @@ namespace Tests.EditMode.Rules
         /// </summary>
         private ScriptableObject Catalog()
         {
-            var catalog = ScriptableObject.CreateInstance(Resolve("_01.Code.Artifacts.ArtifactShopCatalogSO"));
+            var catalog = ScriptableObject.CreateInstance(Resolve("Code.Artifacts.ArtifactShopCatalogSO"));
             created.Add(catalog);
 
             var stock = new List<object>();
@@ -57,7 +57,7 @@ namespace Tests.EditMode.Rules
             for (var i = 0; i < 3; i++)
                 stock.Add(Artifact("물약" + i, 30, true));
 
-            var listType = typeof(List<>).MakeGenericType(Resolve("_01.Code.Artifacts.ArtifactDataSO"));
+            var listType = typeof(List<>).MakeGenericType(Resolve("Code.Artifacts.ArtifactDataSO"));
             var typed = (System.Collections.IList)Activator.CreateInstance(listType);
             foreach (var item in stock)
                 typed.Add(item);

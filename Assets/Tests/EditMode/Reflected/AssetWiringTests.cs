@@ -32,7 +32,7 @@ namespace Tests.EditMode.Gameplay
         {
             var missing = new List<string>();
 
-            foreach (var (asset, path) in LoadAll("_01.Code.Enemies.EnemyDataSO"))
+            foreach (var (asset, path) in LoadAll("Code.Enemies.EnemyDataSO"))
             {
                 foreach (var field in new[] { "IdleSprite", "AttackSprite", "DefeatedSprite", "BoardSprite" })
                     if (ReadProperty(asset, field) == null)
@@ -53,7 +53,7 @@ namespace Tests.EditMode.Gameplay
         {
             var missing = new List<string>();
 
-            foreach (var (asset, _) in LoadAll("_01.Code.Buildings.BuildingDataSO"))
+            foreach (var (asset, _) in LoadAll("Code.Buildings.BuildingDataSO"))
             {
                 if (ArtPendingBuildings.Contains(asset.name))
                     continue;
@@ -78,7 +78,7 @@ namespace Tests.EditMode.Gameplay
         {
             var byArt = new Dictionary<UnityEngine.Object, List<string>>();
 
-            foreach (var (asset, _) in LoadAll("_01.Code.Buildings.BuildingDataSO"))
+            foreach (var (asset, _) in LoadAll("Code.Buildings.BuildingDataSO"))
             {
                 if (!asset.name.Contains("Trap"))
                     continue;
@@ -102,8 +102,8 @@ namespace Tests.EditMode.Gameplay
         [Test]
         public void WaveConfig_RunsForeverWithFourWeeksOfAuthoredDays()
         {
-            var configType = RequireType("_01.Code.Manager.WaveConfigSO");
-            var config = AssetDatabase.LoadAssetAtPath<ScriptableObject>("Assets/03.SO/WaveConfig.asset");
+            var configType = RequireType("Code.Manager.WaveConfigSO");
+            var config = AssetDatabase.LoadAssetAtPath<ScriptableObject>("Assets/GameModules/Data/WaveConfig.asset");
             Assert.That(config, Is.Not.Null, "WaveConfig 에셋을 찾지 못했습니다.");
 
             var finalDay = configType.GetProperty("FinalDay").GetValue(config);
@@ -111,7 +111,7 @@ namespace Tests.EditMode.Gameplay
 
             // 4주치는 손으로 짠 날이어야 한다. 없으면 defaultWave 하나로 매일이 같아진다.
             var getWave = configType.GetMethod("GetWaveForDay");
-            var entryType = RequireType("_01.Code.Manager.WaveConfigSO+WaveEntry");
+            var entryType = RequireType("Code.Manager.WaveConfigSO+WaveEntry");
             var targetDayField = entryType.GetField("targetDay");
             var unauthored = new List<int>();
 
@@ -132,8 +132,8 @@ namespace Tests.EditMode.Gameplay
         [TestCase(28)]
         public void WaveConfig_PutsABossOnEverySettlementDay(int day)
         {
-            var configType = RequireType("_01.Code.Manager.WaveConfigSO");
-            var config = AssetDatabase.LoadAssetAtPath<ScriptableObject>("Assets/03.SO/WaveConfig.asset");
+            var configType = RequireType("Code.Manager.WaveConfigSO");
+            var config = AssetDatabase.LoadAssetAtPath<ScriptableObject>("Assets/GameModules/Data/WaveConfig.asset");
             Assert.That(config, Is.Not.Null, "WaveConfig 에셋을 찾지 못했습니다.");
 
             // 보스와 청산이 같은 날이라 한 주가 하나의 고비로 끝난다.
@@ -147,8 +147,8 @@ namespace Tests.EditMode.Gameplay
         [Test]
         public void GoldPanel_ListensToBothTheCostAndTheDayChannel()
         {
-            var viewType = RequireType("_01.Code.UI.GoldCostView");
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/04.Prefab/UI/Hud/GoldCostPanel.prefab");
+            var viewType = RequireType("Code.UI.GoldCostView");
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/GameModules/Prefabs/UI/Hud/GoldCostPanel.prefab");
             Assert.That(prefab, Is.Not.Null, "금화 패널 프리팹을 찾지 못했습니다.");
 
             var view = prefab.GetComponentInChildren(viewType, true);
@@ -167,10 +167,10 @@ namespace Tests.EditMode.Gameplay
         [Test]
         public void EveryCharacterPrefab_HasAllThreePoses()
         {
-            var renderType = RequireType("_01.Code.Entities.EntityRender");
+            var renderType = RequireType("Code.Entities.EntityRender");
             var missing = new List<string>();
 
-            foreach (var guid in AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/04.Prefab/Characters" }))
+            foreach (var guid in AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/GameModules/Prefabs/Characters" }))
             {
                 var path = AssetDatabase.GUIDToAssetPath(guid);
                 var root = AssetDatabase.LoadAssetAtPath<GameObject>(path);
@@ -202,7 +202,7 @@ namespace Tests.EditMode.Gameplay
         {
             var missing = new List<string>();
 
-            foreach (var (asset, _) in LoadAll("_01.Code.Artifacts.ArtifactDataSO"))
+            foreach (var (asset, _) in LoadAll("Code.Artifacts.ArtifactDataSO"))
                 if (ReadProperty(asset, "Icon") == null)
                     missing.Add(asset.name);
 
@@ -219,7 +219,7 @@ namespace Tests.EditMode.Gameplay
         {
             var missing = new List<string>();
 
-            foreach (var (asset, _) in LoadAll("_01.Code.Core.Stats.StatSO"))
+            foreach (var (asset, _) in LoadAll("GameLib.Entity.Stats.StatSO"))
                 if (ReadProperty(asset, "Icon") == null)
                     missing.Add(asset.name);
 
@@ -233,10 +233,10 @@ namespace Tests.EditMode.Gameplay
             var paths = new[]
             {
                 "Assets/Resources/Buildings/BlacksmithBuildingData.asset",
-                "Assets/03.SO/Buildings/StoreBuildingData.asset",
-                "Assets/03.SO/Buildings/ArmoryStoreBuildingData.asset",
-                "Assets/03.SO/Buildings/InnBuildingData.asset",
-                "Assets/03.SO/Buildings/GrandInnBuildingData.asset"
+                "Assets/GameModules/Data/Buildings/StoreBuildingData.asset",
+                "Assets/GameModules/Data/Buildings/ArmoryStoreBuildingData.asset",
+                "Assets/GameModules/Data/Buildings/InnBuildingData.asset",
+                "Assets/GameModules/Data/Buildings/GrandInnBuildingData.asset"
             };
 
             foreach (var path in paths)
@@ -251,10 +251,10 @@ namespace Tests.EditMode.Gameplay
         [Test]
         public void OpeningScene_HasNoPlayerAndBlacksmithInstallsAtCentre()
         {
-            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            var scene = EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity", OpenSceneMode.Additive);
             try
             {
-                var controllerType = RequireType("_01.Code.MapCreateSystem.DungeonGraphController");
+                var controllerType = RequireType("Code.MapCreateSystem.DungeonGraphController");
                 Component controller = null;
                 foreach (var root in scene.GetRootGameObjects())
                 {
@@ -270,13 +270,13 @@ namespace Tests.EditMode.Gameplay
                 Assert.That(unitsRoot.childCount, Is.Zero, "시작 배치에 플레이어가 생성되었습니다.");
 
                 var nodeManager = (Component)controllerType.GetField("nodeManager", Instance).GetValue(controller);
-                var nodeType = RequireType("_01.Code.MapCreateSystem.Node");
+                var nodeType = RequireType("Code.MapCreateSystem.Node");
                 var entrance = nodeManager.GetComponentInChildren(nodeType, true);
                 Assert.That(entrance, Is.Not.Null);
 
                 var data = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
                     "Assets/Resources/Buildings/BlacksmithBuildingData.asset");
-                var placementType = RequireType("_01.Code.Buildings.BuildingPlacement");
+                var placementType = RequireType("Code.Buildings.BuildingPlacement");
                 var install = placementType.GetMethod("InstallCentral", BindingFlags.Public | BindingFlags.Static);
                 var building = (Component)install.Invoke(null, new object[] { entrance, data, 0.92f });
                 Assert.That(building, Is.Not.Null);
@@ -294,11 +294,11 @@ namespace Tests.EditMode.Gameplay
         [Test]
         public void OpeningScene_DoesNotLaunchTutorial()
         {
-            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            var scene = EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity", OpenSceneMode.Additive);
             try
             {
-                var dialogueType = RequireType("_01.Code.Dialogue.DialogueRunner");
-                var tutorialType = RequireType("_01.Code.UI.PlayTutorialView");
+                var dialogueType = RequireType("Code.Dialogue.DialogueRunner");
+                var tutorialType = RequireType("Code.UI.PlayTutorialView");
                 Component dialogue = null;
                 Component tutorial = null;
                 foreach (var root in scene.GetRootGameObjects())
@@ -322,11 +322,11 @@ namespace Tests.EditMode.Gameplay
         [Test]
         public void OpeningRoom_HasFourDoorsAndUsesEastDoorForIntruders()
         {
-            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            var scene = EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity", OpenSceneMode.Additive);
             try
             {
-                var controllerType = RequireType("_01.Code.MapCreateSystem.DungeonGraphController");
-                var nodeType = RequireType("_01.Code.MapCreateSystem.Node");
+                var controllerType = RequireType("Code.MapCreateSystem.DungeonGraphController");
+                var nodeType = RequireType("Code.MapCreateSystem.Node");
                 Component controller = null;
                 foreach (var root in scene.GetRootGameObjects())
                     controller ??= root.GetComponentInChildren(controllerType, true);
@@ -359,14 +359,14 @@ namespace Tests.EditMode.Gameplay
         [Test]
         public void AdjacentOperatingFacilities_IncreaseIncomeAndAddUpkeep()
         {
-            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            var scene = EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity", OpenSceneMode.Additive);
             try
             {
-                var nodeManagerType = RequireType("_01.Code.MapCreateSystem.DungeonNodeManager");
-                var graphType = RequireType("_01.Code.MapCreateSystem.DungeonGraph");
-                var nodeKindType = RequireType("_01.Code.MapCreateSystem.DungeonNodeType");
-                var placementType = RequireType("_01.Code.Buildings.BuildingPlacement");
-                var economyType = RequireType("_01.Code.Manager.FacilityEconomyRules");
+                var nodeManagerType = RequireType("Code.MapCreateSystem.DungeonNodeManager");
+                var graphType = RequireType("Code.MapCreateSystem.DungeonGraph");
+                var nodeKindType = RequireType("Code.MapCreateSystem.DungeonNodeType");
+                var placementType = RequireType("Code.Buildings.BuildingPlacement");
+                var economyType = RequireType("Code.Manager.FacilityEconomyRules");
                 Component manager = null;
                 foreach (var root in scene.GetRootGameObjects())
                     manager ??= root.GetComponentInChildren(nodeManagerType, true);
@@ -386,7 +386,7 @@ namespace Tests.EditMode.Gameplay
                 var blacksmith = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
                     "Assets/Resources/Buildings/BlacksmithBuildingData.asset");
                 var mine = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
-                    "Assets/03.SO/Buildings/MineBuildingData.asset");
+                    "Assets/GameModules/Data/Buildings/MineBuildingData.asset");
                 var treasuryData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
                     "Assets/Resources/Buildings/TreasuryBuildingData.asset");
                 var install = placementType.GetMethod("InstallCentral", BindingFlags.Public | BindingFlags.Static);
@@ -416,14 +416,14 @@ namespace Tests.EditMode.Gameplay
         [Test]
         public void Grade_CountsTheGoldInTheVaultAndTheBuildingsAroundIt()
         {
-            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            var scene = EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity", OpenSceneMode.Additive);
             try
             {
-                var nodeManagerType = RequireType("_01.Code.MapCreateSystem.DungeonNodeManager");
-                var graphType = RequireType("_01.Code.MapCreateSystem.DungeonGraph");
-                var nodeKindType = RequireType("_01.Code.MapCreateSystem.DungeonNodeType");
-                var placementType = RequireType("_01.Code.Buildings.BuildingPlacement");
-                var gradeType = RequireType("_01.Code.Manager.DungeonGradeRules");
+                var nodeManagerType = RequireType("Code.MapCreateSystem.DungeonNodeManager");
+                var graphType = RequireType("Code.MapCreateSystem.DungeonGraph");
+                var nodeKindType = RequireType("Code.MapCreateSystem.DungeonNodeType");
+                var placementType = RequireType("Code.Buildings.BuildingPlacement");
+                var gradeType = RequireType("Code.Manager.DungeonGradeRules");
                 Component manager = null;
                 foreach (var root in scene.GetRootGameObjects())
                     manager ??= root.GetComponentInChildren(nodeManagerType, true);
@@ -439,7 +439,7 @@ namespace Tests.EditMode.Gameplay
                 var vaultNode = (Component)createNode.Invoke(manager, new[] { vaultModel });
 
                 var storeData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
-                    "Assets/03.SO/Buildings/StoreBuildingData.asset");
+                    "Assets/GameModules/Data/Buildings/StoreBuildingData.asset");
                 var treasuryData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
                     "Assets/Resources/Buildings/TreasuryBuildingData.asset");
                 var install = placementType.GetMethod("InstallCentral", BindingFlags.Public | BindingFlags.Static);
@@ -480,16 +480,16 @@ namespace Tests.EditMode.Gameplay
         [Test]
         public void RouteGoal_ErrandsLeadToFacilitiesAndOnlyHuntersHeadForTheVault()
         {
-            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            var scene = EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity", OpenSceneMode.Additive);
             GameObject visitorObject = null;
             try
             {
-                var nodeManagerType = RequireType("_01.Code.MapCreateSystem.DungeonNodeManager");
-                var graphType = RequireType("_01.Code.MapCreateSystem.DungeonGraph");
-                var nodeKindType = RequireType("_01.Code.MapCreateSystem.DungeonNodeType");
-                var placementType = RequireType("_01.Code.Buildings.BuildingPlacement");
-                var enemyType = RequireType("_01.Code.Enemies.Enemy");
-                var purposeType = RequireType("_01.Code.Enemies.AdventurerVisitPurpose");
+                var nodeManagerType = RequireType("Code.MapCreateSystem.DungeonNodeManager");
+                var graphType = RequireType("Code.MapCreateSystem.DungeonGraph");
+                var nodeKindType = RequireType("Code.MapCreateSystem.DungeonNodeType");
+                var placementType = RequireType("Code.Buildings.BuildingPlacement");
+                var enemyType = RequireType("Code.Enemies.Enemy");
+                var purposeType = RequireType("Code.Enemies.AdventurerVisitPurpose");
                 Component manager = null;
                 foreach (var root in scene.GetRootGameObjects())
                     manager ??= root.GetComponentInChildren(nodeManagerType, true);
@@ -505,7 +505,7 @@ namespace Tests.EditMode.Gameplay
                 var vaultNode = (Component)createNode.Invoke(manager, new[] { vaultModel });
 
                 var storeData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
-                    "Assets/03.SO/Buildings/StoreBuildingData.asset");
+                    "Assets/GameModules/Data/Buildings/StoreBuildingData.asset");
                 var treasuryData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
                     "Assets/Resources/Buildings/TreasuryBuildingData.asset");
                 var install = placementType.GetMethod("InstallCentral", BindingFlags.Public | BindingFlags.Static);
@@ -563,14 +563,14 @@ namespace Tests.EditMode.Gameplay
         [Test]
         public void Room_EarnsOrDefendsButNotBoth()
         {
-            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            var scene = EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity", OpenSceneMode.Additive);
             try
             {
-                var nodeManagerType = RequireType("_01.Code.MapCreateSystem.DungeonNodeManager");
-                var graphType = RequireType("_01.Code.MapCreateSystem.DungeonGraph");
-                var nodeKindType = RequireType("_01.Code.MapCreateSystem.DungeonNodeType");
-                var placementType = RequireType("_01.Code.Buildings.BuildingPlacement");
-                var nodeType = RequireType("_01.Code.MapCreateSystem.Node");
+                var nodeManagerType = RequireType("Code.MapCreateSystem.DungeonNodeManager");
+                var graphType = RequireType("Code.MapCreateSystem.DungeonGraph");
+                var nodeKindType = RequireType("Code.MapCreateSystem.DungeonNodeType");
+                var placementType = RequireType("Code.Buildings.BuildingPlacement");
+                var nodeType = RequireType("Code.MapCreateSystem.Node");
                 Component manager = null;
                 foreach (var root in scene.GetRootGameObjects())
                     manager ??= root.GetComponentInChildren(nodeManagerType, true);
@@ -589,7 +589,7 @@ namespace Tests.EditMode.Gameplay
                 Assert.That((bool)canAccept.GetValue(storeNode), Is.True, "빈 방은 유닛을 받아야 합니다.");
 
                 var storeData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
-                    "Assets/03.SO/Buildings/StoreBuildingData.asset");
+                    "Assets/GameModules/Data/Buildings/StoreBuildingData.asset");
                 var treasuryData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
                     "Assets/Resources/Buildings/TreasuryBuildingData.asset");
                 var install = placementType.GetMethod("InstallCentral", BindingFlags.Public | BindingFlags.Static);
@@ -607,7 +607,7 @@ namespace Tests.EditMode.Gameplay
                 var trapModel = addNode.Invoke(graph, new object[] { kind, new Vector2Int(1302, 0) });
                 var trapNode = (Component)createNode.Invoke(manager, new[] { trapModel });
                 var trapData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
-                    "Assets/03.SO/Buildings/SpikeTrapBuildingData.asset");
+                    "Assets/GameModules/Data/Buildings/SpikeTrapBuildingData.asset");
                 Assert.That(trapData, Is.Not.Null, "함정 데이터를 찾지 못했습니다.");
                 var installCell = placementType.GetMethod("InstallOnCell", BindingFlags.Public | BindingFlags.Static);
                 Assert.That(installCell.Invoke(null, new object[] { trapNode, 0, 0, trapData }), Is.Not.Null);
@@ -654,10 +654,10 @@ namespace Tests.EditMode.Gameplay
             }
 
             var pending = new List<string>();
-            foreach (var (asset, path) in LoadAll("_01.Code.Buildings.BuildingDataSO"))
+            foreach (var (asset, path) in LoadAll("Code.Buildings.BuildingDataSO"))
                 if (UsesPlaceholder(path))
                     pending.Add(asset.name);
-            foreach (var (asset, path) in LoadAll("_01.Code.Enemies.EnemyDataSO"))
+            foreach (var (asset, path) in LoadAll("Code.Enemies.EnemyDataSO"))
                 if (UsesPlaceholder(path))
                     pending.Add(asset.name);
 
@@ -671,7 +671,7 @@ namespace Tests.EditMode.Gameplay
 
         // ── 도구 ───────────────────────────────────────────────
 
-        private const string PlaceholderRoot = "Assets/02.Art/Placeholder";
+        private const string PlaceholderRoot = "Assets/_Graphics/Placeholder";
 
         /// <summary>이 그림이 자리만 지키는 임시 그림인가.</summary>
         private static bool IsPlaceholder(UnityEngine.Object sprite) =>
@@ -693,7 +693,7 @@ namespace Tests.EditMode.Gameplay
             foreach (var guid in AssetDatabase.FindAssets("t:ScriptableObject"))
             {
                 var path = AssetDatabase.GUIDToAssetPath(guid);
-                if (!path.StartsWith("Assets/03.SO") && !path.StartsWith("Assets/Resources"))
+                if (!path.StartsWith("Assets/GameModules/Data") && !path.StartsWith("Assets/Resources"))
                     continue;
 
                 var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);
@@ -716,7 +716,7 @@ namespace Tests.EditMode.Gameplay
 
         private static Type RequireType(string fullName)
         {
-            var type = Type.GetType(fullName + ", Assembly-CSharp");
+            var type = Type.GetType(fullName + ", DungeonKeeper.Runtime");
             Assert.That(type, Is.Not.Null, fullName + " 타입을 찾지 못했습니다.");
             return type;
         }

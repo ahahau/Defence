@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2d6c5b459e532d74d94bf7afe8f4e823, type: 3}
   m_Name: SfxEventBridge
-  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Audio.SfxEventBridgeSO
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Audio.SfxEventBridgeSO
   <Channels>k__BackingField:
   - {fileID: 11400000, guid: cc88dffc4f05ec147bf3370d40b143c7, type: 2}
   - {fileID: 11400000, guid: 734ca3593b5d2884dae267b0e3e601be, type: 2}

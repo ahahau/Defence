@@ -102,7 +102,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5c6b1e2128c06ce4e8ce46d6e09e5fe5, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.UI.BossWaveUiView
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.UI.BossWaveUiView
   canvasGroup: {fileID: 1718288018813192686}
   title: {fileID: 3574092693147291075}
   subtitle: {fileID: 2914709644782778413}

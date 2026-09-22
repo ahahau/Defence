@@ -114,4 +114,4 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8c4b8e14831fccc4a8b2596659aa52a1, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.UI.SettingsPanelView
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.UI.SettingsPanelView

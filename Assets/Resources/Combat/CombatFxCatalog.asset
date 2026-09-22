@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0f17680b14fe3ef43a7060e3ab0be7a3, type: 3}
   m_Name: CombatFxCatalog
-  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.Combat.CombatFxCatalogSO
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Combat.CombatFxCatalogSO
   <MinionDeathEffect>k__BackingField: {fileID: 136450, guid: 75f06efdf4dffb64196a8a771986c0b8, type: 3}
   <IntruderDeathEffect>k__BackingField: {fileID: 119968, guid: e73000b12fb76244cbffd6abbf8bb6e4, type: 3}
   <DeathEffectScale>k__BackingField: 1

@@ -48,7 +48,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d924125573345dd4fbbd256162f31219, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::_01.Code.UI.EnemyMoodHud
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.UI.EnemyMoodHud
   _visualRoot: {fileID: 7062026325815703020}
   _fearFill: {fileID: 3179567696502492197}
   _greedFill: {fileID: 1675135825576516714}

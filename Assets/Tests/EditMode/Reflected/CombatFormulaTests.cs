@@ -8,7 +8,7 @@ namespace Tests.EditMode.Combat
     /// 피해 산정 규칙을 지킨다. 방어 기준점을 100에서 30으로 내리면서
     /// "유닛 체감은 그대로, 방패 든 적만 단단해진다"를 성립시킨 것이 핵심이라
     /// 그 두 축을 각각 못 박아 둔다.
-    /// 테스트 어셈블리는 Assembly-CSharp를 참조할 수 없어 리플렉션으로 접근한다.
+    /// 테스트 어셈블리는 DungeonKeeper.Runtime를 참조할 수 없어 리플렉션으로 접근한다.
     /// </summary>
     public class CombatFormulaTests
     {
@@ -16,7 +16,7 @@ namespace Tests.EditMode.Combat
         {
             get
             {
-                var type = Type.GetType("_01.Code.Combat.CombatFormula, Assembly-CSharp");
+                var type = Type.GetType("Code.Combat.CombatFormula, DungeonKeeper.Runtime");
                 Assert.That(type, Is.Not.Null, "CombatFormula 타입을 찾지 못했습니다.");
                 return type;
             }

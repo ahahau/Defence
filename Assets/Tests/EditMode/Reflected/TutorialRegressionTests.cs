@@ -11,7 +11,7 @@ namespace Tests.EditMode.UI
     {
         private const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
         private readonly List<Object> created = new();
-        private static Type Tutorial => Type.GetType("_01.Code.UI.PlayTutorialView, Assembly-CSharp", true);
+        private static Type Tutorial => Type.GetType("Code.UI.PlayTutorialView, DungeonKeeper.Runtime", true);
         private static Type Step => Tutorial.GetNestedType("Step", BindingFlags.NonPublic);
 
         private Component CreateTutorial()
@@ -31,7 +31,7 @@ namespace Tests.EditMode.UI
             {
                 if (obj is GameObject go)
                 {
-                    var nodeType = Type.GetType("_01.Code.MapCreateSystem.Node, Assembly-CSharp", true);
+                    var nodeType = Type.GetType("Code.MapCreateSystem.Node, DungeonKeeper.Runtime", true);
                     var node = go.GetComponent(nodeType);
                     if (node != null) nodeType.GetMethod("OnDisable", Private).Invoke(node, null);
                 }
@@ -67,14 +67,14 @@ namespace Tests.EditMode.UI
         [Test]
         public void BuiltEmptyRoom_AdvancesToHireWithoutRequiringAnotherBuilding()
         {
-            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/04.Prefab/Map/Node.prefab");
+            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/GameModules/Prefabs/Map/Node.prefab");
             var go = Object.Instantiate(prefab);
             created.Add(go);
-            var nodeType = Type.GetType("_01.Code.MapCreateSystem.Node, Assembly-CSharp", true);
+            var nodeType = Type.GetType("Code.MapCreateSystem.Node, DungeonKeeper.Runtime", true);
             // EditMode does not run the runtime registration lifecycle automatically.
             nodeType.GetMethod("OnEnable", Private).Invoke(go.GetComponent(nodeType), null);
-            var modelType = Type.GetType("_01.Code.MapCreateSystem.DungeonNode, Assembly-CSharp", true);
-            var kind = Type.GetType("_01.Code.MapCreateSystem.DungeonNodeType, Assembly-CSharp", true);
+            var modelType = Type.GetType("Code.MapCreateSystem.DungeonNode, DungeonKeeper.Runtime", true);
+            var kind = Type.GetType("Code.MapCreateSystem.DungeonNodeType, DungeonKeeper.Runtime", true);
             var model = Activator.CreateInstance(modelType, Enum.Parse(kind, "Corridor"), new Vector2Int(999, 999), 4);
             nodeType.GetMethod("Initialize", new[] { modelType, typeof(float) })
                 .Invoke(go.GetComponent(nodeType), new[] { model, (object)1f });
@@ -86,7 +86,7 @@ namespace Tests.EditMode.UI
         [Test]
         public void SettlementLesson_WaitsUntilTheReportHasBeenSeenAndClosed()
         {
-            var managerType = Type.GetType("_01.Code.Manager.ManagementSettlementManager, Assembly-CSharp", true);
+            var managerType = Type.GetType("Code.Manager.ManagementSettlementManager, DungeonKeeper.Runtime", true);
             var managerObject = new GameObject("Settlement tutorial regression");
             created.Add(managerObject);
             var panel = new GameObject("Settlement panel");

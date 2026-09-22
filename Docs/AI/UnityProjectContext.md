@@ -20,12 +20,13 @@
 - Windows Build Profile exists; supported shipping platforms remain undocumented.
 
 ## Directory and assembly boundaries
-- `Assets/00.Scenes`: Start, SampleScene, BattleTest, DialogueTestScene.
-- `Assets/01.Code`: 270 C# files including Editor tools; features include Manager, MapCreateSystem, BT, Combat, Units, Enemies, Buildings, Skills, StatusEffects, Progression, Artifacts, Persistence, Dialogue and UI.
-- `Assets/03.SO`: gameplay definitions; `04.Prefab`: gameplay/UI prefabs; `05.Graphs`: behavior graphs; `Settings`: render/build assets.
+- `Assets/Scenes`: Start and SampleScene are the current scene assets; Build Settings enables them in that order.
+- `Assets/Code`: gameplay runtime code; features include Manager, MapCreateSystem, BT, Combat, Units, Enemies, Buildings, Skills, StatusEffects, Progression, Artifacts, Persistence, Dialogue and UI.
+- `Assets/GameModules/Data`: gameplay definitions; `Assets/GameModules/Prefabs`: gameplay/UI prefabs; `Settings`: render/build assets. `Assets/Scenes` contains the game scenes and `Assets/_Graphics` contains art and fonts.
+- `Assets/GameLib/Entity`: reusable module owner, stats and sensing primitives. It deliberately has no dependency on gameplay code.
 - Imported assets live in Feel, Plugins, csiimnida, vHierarchy and other vendor folders. Generated Library/Temp/Logs/obj content is not authoritative source.
-- No first-party production asmdef: runtime code uses implicit Assembly-CSharp and Editor-folder code uses Assembly-CSharp-Editor. Vendor assemblies are separate.
-- Defence.EditMode.Tests is Editor-only and uses reflection to access production code, with Unity test runners and NUnit references.
+- `DungeonKeeper.GameLib` owns reusable entity primitives; `DungeonKeeper.Runtime` owns gameplay code and depends on GameLib. Vendor assemblies remain separate.
+- Defence.EditMode.Tests is Editor-only, references `DungeonKeeper.Runtime`, and uses reflection with Unity test runners and NUnit references.
 
 ## Startup and gameplay flow
 - Enabled build order: Start.unity -> SampleScene.unity; other first-party scenes are development scenes.
@@ -39,7 +40,8 @@
 
 ## Architecture and conventions
 - Confirmed: MonoBehaviour scene composition with serialized references, ScriptableObject definitions, typed GameEventChannelSO events, numerous static Current accessors, coroutine sequencing, and ordered save-agent composition.
-- Most namespaces follow `_01.Code.<Feature>`, with Allman braces, private SerializeField fields, mixed camelCase/_camelCase, and frequent Korean intent comments.
+- Gameplay namespaces follow `Code.<Feature>` and reusable primitives follow `GameLib.Entity[.*]`, with Allman braces, private SerializeField fields, mixed camelCase/_camelCase, and Korean intent comments. Follow the reference-project style: place brief Korean comments directly above non-obvious branches or inline with a field/value, and use XML summaries for reusable public APIs; explain constraints and ownership rather than restating syntax.
+- Repository-wide C# formatting and naming rules are in `.editorconfig`; the practical migration guide is `Docs/AI/CodingStyle.md`. Preserve serialized camelCase fields while using `_camelCase` for new runtime-only private state.
 - RunSaveSystem writes versioned JSON checkpoints and a backup under persistentDataPath. Save agents capture independent sections. Incomplete restoration blocks subsequent saves to avoid overwriting recoverable state.
 - Likely change-sensitive areas: WaveManager, DungeonGraphController, BattleAgent, scene wiring, event ordering during settlement, and restoration order. These are review priorities, not validated defects.
 

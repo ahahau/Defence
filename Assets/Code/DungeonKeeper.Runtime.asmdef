@@ -1,0 +1,22 @@
+{
+  "name": "DungeonKeeper.Runtime",
+  "rootNamespace": "Code",
+  "references": [
+    "DungeonKeeper.GameLib",
+    "DungeonKeeper.DOTweenModules",
+    "MoreMountains.Tools",
+    "Unity.Behavior",
+    "Unity.InputSystem",
+    "Unity.RenderPipelines.Universal.2D.Runtime",
+    "Unity.TextMeshPro"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

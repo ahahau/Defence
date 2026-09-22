@@ -9,20 +9,20 @@ namespace Tests.EditMode.Buildings
     public class BuildingSerializationTests
     {
         private static readonly Type BuildingType =
-            Type.GetType("_01.Code.Buildings.Building, Assembly-CSharp");
+            Type.GetType("Code.Buildings.Building, DungeonKeeper.Runtime");
 
         [Test]
         public void CentralOnlyBuildings_UseCentralSlots_WhileTrapsKeepCells()
         {
-            var placement = Type.GetType("_01.Code.Buildings.BuildingPlacement, Assembly-CSharp", true);
+            var placement = Type.GetType("Code.Buildings.BuildingPlacement, DungeonKeeper.Runtime", true);
             var usesCell = placement.GetMethod("UsesGridCell");
             var isCentral = placement.GetMethod("IsCentralBuilding");
             foreach (var path in new[]
             {
-                "Assets/03.SO/Buildings/PortalBuildingData.asset",
-                "Assets/03.SO/Buildings/RecoveryRoomBuildingData.asset",
-                "Assets/03.SO/Buildings/MineBuildingData.asset",
-                "Assets/03.SO/Buildings/DeepMineBuildingData.asset",
+                "Assets/GameModules/Data/Buildings/PortalBuildingData.asset",
+                "Assets/GameModules/Data/Buildings/RecoveryRoomBuildingData.asset",
+                "Assets/GameModules/Data/Buildings/MineBuildingData.asset",
+                "Assets/GameModules/Data/Buildings/DeepMineBuildingData.asset",
                 "Assets/Resources/Buildings/TreasuryBuildingData.asset"
             })
             {
@@ -32,7 +32,7 @@ namespace Tests.EditMode.Buildings
                 Assert.That(isCentral.Invoke(null, new object[] { data }), Is.True, path);
             }
             var trap = UnityEditor.AssetDatabase.LoadAssetAtPath<ScriptableObject>(
-                "Assets/03.SO/Buildings/SpikeTrapBuildingData.asset");
+                "Assets/GameModules/Data/Buildings/SpikeTrapBuildingData.asset");
             Assert.That(usesCell.Invoke(null, new object[] { trap }), Is.True);
         }
 

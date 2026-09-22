@@ -2,6 +2,7 @@
     "name": "Defence.EditMode.Tests",
     "rootNamespace": "",
     "references": [
+        "DungeonKeeper.Runtime",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

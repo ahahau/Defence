@@ -1,0 +1,548 @@
+using System.Collections.Generic;
+using Code.Buildings;
+using Code.BT;
+using UnityEngine;
+
+namespace Code.MapCreateSystem
+{
+    /// <summary>노드 내부의 격자. 셀 단위로 건물(트랩 포함)을 자유 배치하고 점유를 관리한다.
+    /// 셀 좌표는 노드 중심 기준 '월드 단위'로 계산해 노드의 큰 스케일 영향을 받지 않는다.
+    /// (클래스명은 직렬화 참조 호환을 위해 유지하되, 트랩 외 일반 건물도 여러 개 배치할 수 있다.)</summary>
+    public class NodeTrapGrid : MonoBehaviour
+    {
+        [SerializeField, Min(1)] private int columns = 6;
+        [SerializeField, Min(1)] private int rows = 6;
+        [SerializeField, Min(0.1f), Tooltip("셀 간격(월드 단위). 노드에 NodeBattlefield가 있으면 아레나에 맞게 자동 조정된다.")] private float cellSize = 2f;
+        [SerializeField, Tooltip("노드 중심에서 격자 중심까지의 오프셋(월드 단위).")] private Vector2 originOffset;
+        [SerializeField, Tooltip("아레나 반지름에 맞춰 셀 간격 자동 조정(켜두면 노드 크기에 맞게 퍼진다).")] private bool autoFitToArena = true;
+
+        [Header("Focused Grid Visual")]
+        [SerializeField] private bool showGridWhenFocused = true;
+        [SerializeField] private Color focusedGridColor = new(0.3f, 0.85f, 1f, 0.58f);
+        [SerializeField, Min(0.005f)] private float focusedGridLineWidth = 0.03f;
+        [SerializeField] private int focusedGridSortingOrder = 5;
+        [SerializeField] private Color selectedFreeCellColor = new(0.25f, 1f, 0.48f, 0.38f);
+        [SerializeField] private Color selectedOccupiedCellColor = new(1f, 0.62f, 0.2f, 0.42f);
+        [Header("Central Building Slot")]
+        [SerializeField] private bool reserveCentralBuildingSlot = true;
+        [SerializeField, Min(1)] private int centralBuildingSlotColumns = 2;
+        [SerializeField, Min(1)] private int centralBuildingSlotRows = 2;
+        [SerializeField] private Color centralBuildingSlotColor = new(0.25f, 0.95f, 1f, 0.55f);
+
+        private Building[] _cells;
+        private readonly List<Building> _placed = new();
+        private GameObject _focusedGridRoot;
+        private SpriteRenderer _focusedGridSurface;
+        private SpriteRenderer _selectedCellMarker;
+        private static Material _focusedGridMaterial;
+        private static Sprite _cellMarkerSprite;
+
+        public int Columns => columns;
+        public int Rows => rows;
+        public int CellCount => columns * rows;
+        /// <summary>셀 간격(월드 단위). 배치 미리보기가 하이라이트 크기를 맞출 때 사용.</summary>
+        public float CellSize => cellSize;
+        public Vector2 CentralBuildingSlotWorldSize
+        {
+            get
+            {
+                var bounds = GetCentralSlotBounds();
+                return new Vector2(
+                    (bounds.maxColumn - bounds.minColumn + 1) * cellSize,
+                    (bounds.maxRow - bounds.minRow + 1) * cellSize);
+            }
+        }
+        /// <summary>그리드에 배치된 모든 건물(트랩 발동·정리 등에서 순회. 트랩만 필요하면 is Trap으로 거른다).</summary>
+        public IReadOnlyList<Building> PlacedBuildings => _placed;
+        public bool IsFocusedGridVisible => _focusedGridRoot != null && _focusedGridRoot.activeSelf;
+
+        /// <summary>
+        /// 중앙 핵심부 슬롯의 상하좌우 한 칸 고리에 배치된 살아 있는 건물 수.
+        /// 핵심부 결속 시스템의 공간 투자량으로 사용한다.
+        /// </summary>
+        public int CountBuildingsAdjacentToCentralSlot()
+        {
+            if (!reserveCentralBuildingSlot)
+                return 0;
+
+            EnsureCells();
+            var bounds = GetCentralSlotBounds();
+            var count = 0;
+            for (var row = 0; row < rows; row++)
+            for (var column = 0; column < columns; column++)
+            {
+                var building = _cells[Index(column, row)];
+                if (building == null || building.IsDestroyed)
+                    continue;
+
+                var besideHorizontalEdge = (column == bounds.minColumn - 1 || column == bounds.maxColumn + 1)
+                                           && row >= bounds.minRow
+                                           && row <= bounds.maxRow;
+                var besideVerticalEdge = (row == bounds.minRow - 1 || row == bounds.maxRow + 1)
+                                         && column >= bounds.minColumn
+                                         && column <= bounds.maxColumn;
+                if (besideHorizontalEdge || besideVerticalEdge)
+                    count++;
+            }
+
+            return count;
+        }
+
+        private void Awake()
+        {
+            EnsureCells();
+            FitToArena();
+        }
+
+        /// <summary>같은 노드의 전투 아레나 반지름에 맞춰 셀 간격을 키운다 → 격자가 노드 전체에 퍼져
+        /// 트랩/건물이 가운데에 몰리지 않는다(여백 80%). 아레나가 없으면 인스펙터 값 유지.</summary>
+        private void FitToArena()
+        {
+            if (!autoFitToArena) return;
+
+            var battlefield = GetComponent<NodeBattlefield>();
+            if (battlefield == null || battlefield.ArenaRadius <= 0f) return;
+
+            var usable = battlefield.ArenaRadius * 2f * 0.8f;
+            var span = Mathf.Max(columns, rows) - 1;
+            if (span > 0)
+                cellSize = usable / span;
+        }
+
+        private void EnsureCells()
+        {
+            if (_cells == null || _cells.Length != CellCount)
+                _cells = new Building[CellCount];
+        }
+
+        public bool IsValidCell(int column, int row) =>
+            column >= 0 && column < columns && row >= 0 && row < rows;
+
+        public bool IsCellFree(int column, int row)
+        {
+            EnsureCells();
+            return IsValidCell(column, row)
+                   && !IsCentralBuildingSlotCell(column, row)
+                   && _cells[Index(column, row)] == null;
+        }
+
+        /// <summary>현재 배치된 개수.</summary>
+        public int PlacedCount => _placed.Count;
+
+        private int Index(int column, int row) => row * columns + column;
+
+        /// <summary>셀의 월드 좌표(노드 중심 기준, 격자를 중앙 정렬).</summary>
+        public Vector3 CellWorldPosition(int column, int row)
+        {
+            var width = (columns - 1) * cellSize;
+            var height = (rows - 1) * cellSize;
+            var x = originOffset.x + column * cellSize - width * 0.5f;
+            var y = originOffset.y + row * cellSize - height * 0.5f;
+            return transform.position + new Vector3(x, y, 0f);
+        }
+
+        public Vector3 CentralBuildingWorldPosition()
+        {
+            var bounds = GetCentralSlotBounds();
+            var min = CellWorldPosition(bounds.minColumn, bounds.minRow);
+            var max = CellWorldPosition(bounds.maxColumn, bounds.maxRow);
+            return (min + max) * 0.5f;
+        }
+
+        public bool IsCentralBuildingSlotCell(int column, int row)
+        {
+            if (!reserveCentralBuildingSlot || !IsValidCell(column, row))
+                return false;
+
+            var bounds = GetCentralSlotBounds();
+            return column >= bounds.minColumn
+                   && column <= bounds.maxColumn
+                   && row >= bounds.minRow
+                   && row <= bounds.maxRow;
+        }
+
+        /// <summary>월드 좌표가 어느 셀인지(클릭 배치용). 격자 밖이면 false.</summary>
+        public bool TryGetCell(Vector3 worldPosition, out int column, out int row)
+        {
+            var local = worldPosition - transform.position;
+            var width = (columns - 1) * cellSize;
+            var height = (rows - 1) * cellSize;
+            column = Mathf.RoundToInt((local.x - originOffset.x + width * 0.5f) / cellSize);
+            row = Mathf.RoundToInt((local.y - originOffset.y + height * 0.5f) / cellSize);
+            return IsValidCell(column, row);
+        }
+
+        /// <summary>지정 셀에 건물 프리팹을 설치한다(빈 셀일 때만). 성공 시 인스턴스 반환.</summary>
+        public Building TryPlace(int column, int row, Building buildingPrefab)
+        {
+            EnsureCells();
+            if (buildingPrefab == null || !IsCellFree(column, row))
+                return null;
+
+            var building = Instantiate(buildingPrefab, CellWorldPosition(column, row), Quaternion.identity);
+            building.transform.SetParent(transform, true); // worldPositionStays=true → 노드 스케일에 안 끌려감
+
+            _cells[Index(column, row)] = building;
+            _placed.Add(building);
+            return building;
+        }
+
+        /// <summary>월드 클릭 위치에서 가장 가까운 셀에 설치(클릭 배치용 진입점).</summary>
+        public Building TryPlaceAtWorld(Vector3 worldPosition, Building buildingPrefab)
+        {
+            return TryGetCell(worldPosition, out var column, out var row)
+                ? TryPlace(column, row, buildingPrefab)
+                : null;
+        }
+
+        public bool HasFreeCell
+        {
+            get
+            {
+                EnsureCells();
+                for (var i = 0; i < _cells.Length; i++)
+                {
+                    var column = i % columns;
+                    var row = i / columns;
+                    if (IsCellFree(column, row))
+                        return true;
+                }
+
+                return false;
+            }
+        }
+
+        /// <summary>기준 위치에서 가장 가까운 '빈' 셀을 찾는다. 빈 셀이 없으면 false.</summary>
+        public bool TryGetNearestFreeCell(Vector3 worldPosition, out int column, out int row)
+        {
+            EnsureCells();
+
+            column = -1;
+            row = -1;
+            var bestDistance = float.MaxValue;
+            for (var r = 0; r < rows; r++)
+            for (var c = 0; c < columns; c++)
+            {
+                if (!IsCellFree(c, r)) continue;
+                var d = (CellWorldPosition(c, r) - worldPosition).sqrMagnitude;
+                if (d >= bestDistance) continue;
+
+                bestDistance = d;
+                column = c;
+                row = r;
+            }
+
+            return column >= 0;
+        }
+
+        /// <summary>기준 위치에서 가장 가까운 '빈' 셀에 설치한다(클릭/중심 기준 자유 배치).</summary>
+        public Building PlaceNearestFreeCell(Vector3 worldPosition, Building buildingPrefab)
+        {
+            if (buildingPrefab == null)
+                return null;
+
+            return TryGetNearestFreeCell(worldPosition, out var column, out var row)
+                ? TryPlace(column, row, buildingPrefab)
+                : null;
+        }
+
+        /// <summary>그 칸에 선 건물. 비었거나 칸 범위를 벗어나면 null.</summary>
+        public Building BuildingAt(int column, int row)
+        {
+            EnsureCells();
+            return IsValidCell(column, row) ? _cells[Index(column, row)] : null;
+        }
+
+        public bool Remove(int column, int row)
+        {
+            EnsureCells();
+            if (!IsValidCell(column, row)) return false;
+
+            var building = _cells[Index(column, row)];
+            if (building == null) return false;
+
+            _cells[Index(column, row)] = null;
+            _placed.Remove(building);
+            Destroy(building.gameObject);
+            return true;
+        }
+
+        /// <summary>노드 확대 선택 상태에서 실제 배치 좌표와 일치하는 격자선을 표시한다.</summary>
+        public void SetFocusedGridVisible(bool visible)
+        {
+            if (!visible || !showGridWhenFocused)
+            {
+                ClearCellSelection();
+                if (_focusedGridRoot != null)
+                    _focusedGridRoot.SetActive(false);
+                return;
+            }
+
+            EnsureFocusedGridVisual();
+            _focusedGridRoot.SetActive(true);
+        }
+
+        public bool TrySelectCell(Vector3 worldPosition, out int column, out int row)
+        {
+            column = -1;
+            row = -1;
+            if (!IsFocusedGridVisible)
+                return false;
+
+            var half = cellSize * 0.5f;
+            var min = CellWorldPosition(0, 0) - new Vector3(half, half, 0f);
+            var max = CellWorldPosition(columns - 1, rows - 1) + new Vector3(half, half, 0f);
+            if (worldPosition.x < min.x || worldPosition.x > max.x ||
+                worldPosition.y < min.y || worldPosition.y > max.y ||
+                !TryGetCell(worldPosition, out column, out row))
+                return false;
+
+            if (IsCentralBuildingSlotCell(column, row))
+            {
+                var centralBounds = GetCentralSlotBounds();
+                column = centralBounds.minColumn;
+                row = centralBounds.minRow;
+            }
+
+            // Grid cells are placement targets, not selectable UI controls.  Keep their
+            // visual state stable so clicks never repaint a small tile or imply ownership.
+            ClearCellSelection();
+            return true;
+        }
+
+        public void ClearCellSelection()
+        {
+            if (_selectedCellMarker != null)
+                _selectedCellMarker.enabled = false;
+        }
+
+        /// <summary>
+        /// 놓을 수 있는 칸을 칠해 보여 준다.
+        ///
+        /// 격자는 선만 그려서 "칸이 있다"까지만 알려 준다. 정작 어디가 비었는지는 보이지 않아
+        /// 어디에 놓이는지 알기 어려웠다. 빈 칸만 옅게 칠하면 물어볼 것이 없어진다.
+        ///
+        /// 어느 칸이 비었는지는 <see cref="Node"/>가 안다(유닛 배치를 들고 있는 쪽이다).
+        /// 여기는 좌표를 받아 그리기만 한다.
+        /// </summary>
+        public void ShowPlacementHints(IReadOnlyList<Vector2Int> cells)
+        {
+            EnsurePlacementHintRoot();
+
+            var needed = cells != null ? cells.Count : 0;
+            while (_placementHints.Count < needed)
+                _placementHints.Add(CreatePlacementHint());
+
+            for (var i = 0; i < _placementHints.Count; i++)
+            {
+                var marker = _placementHints[i];
+                if (marker == null)
+                    continue;
+
+                if (i >= needed)
+                {
+                    marker.enabled = false;
+                    continue;
+                }
+
+                marker.transform.position = CellWorldPosition(cells[i].x, cells[i].y) + Vector3.back * 0.02f;
+                marker.enabled = true;
+            }
+
+            _placementHintRoot.SetActive(needed > 0);
+        }
+
+        public void ClearPlacementHints()
+        {
+            if (_placementHintRoot != null)
+                _placementHintRoot.SetActive(false);
+        }
+
+        private void EnsurePlacementHintRoot()
+        {
+            if (_placementHintRoot != null)
+                return;
+
+            _placementHintRoot = new GameObject("PlacementHints");
+            _placementHintRoot.transform.SetParent(transform, false);
+        }
+
+        private SpriteRenderer CreatePlacementHint()
+        {
+            var go = new GameObject("PlacementHint");
+            go.transform.SetParent(_placementHintRoot.transform, false);
+
+            var marker = go.AddComponent<SpriteRenderer>();
+            marker.sprite = CellMarkerSprite;
+            marker.color = PlacementHintColor;
+            marker.sortingOrder = focusedGridSortingOrder + 2;
+
+            // 부모 배율을 그대로 받으면 노드 크기에 따라 표시가 커졌다 작아진다.
+            // 한 칸을 조금 안쪽으로 채우도록 월드 크기로 맞춘다.
+            var parentScale = transform.lossyScale;
+            var side = cellSize * 0.78f;
+            go.transform.localScale = new Vector3(
+                side / Mathf.Max(0.0001f, Mathf.Abs(parentScale.x)),
+                side / Mathf.Max(0.0001f, Mathf.Abs(parentScale.y)),
+                1f);
+
+            return marker;
+        }
+
+        private void EnsureFocusedGridVisual()
+        {
+            if (_focusedGridRoot != null)
+                return;
+
+            _focusedGridRoot = new GameObject("FocusedGridLines");
+            _focusedGridRoot.transform.SetParent(transform, false);
+
+            var half = cellSize * 0.5f;
+            var min = CellWorldPosition(0, 0) - new Vector3(half, half, 0f);
+            var max = CellWorldPosition(columns - 1, rows - 1) + new Vector3(half, half, 0f);
+            var centralBounds = GetCentralSlotBounds();
+
+            CreateFocusedGridSurface(min, max, centralBounds);
+        }
+
+        private void CreateFocusedGridSurface(
+            Vector3 min,
+            Vector3 max,
+            (int minColumn, int maxColumn, int minRow, int maxRow) centralBounds)
+        {
+            var surfaceObject = new GameObject("FocusedGridSurface");
+            surfaceObject.transform.SetParent(_focusedGridRoot.transform, false);
+            surfaceObject.transform.position = (min + max) * 0.5f + Vector3.back * 0.015f;
+
+            _focusedGridSurface = surfaceObject.AddComponent<SpriteRenderer>();
+            _focusedGridSurface.sprite = CellMarkerSprite;
+            _focusedGridSurface.sharedMaterial = FocusedGridMaterial;
+            _focusedGridSurface.sortingOrder = focusedGridSortingOrder;
+
+            var worldSize = max - min;
+            var parentScale = transform.lossyScale;
+            surfaceObject.transform.localScale = new Vector3(
+                worldSize.x / Mathf.Max(0.0001f, Mathf.Abs(parentScale.x)),
+                worldSize.y / Mathf.Max(0.0001f, Mathf.Abs(parentScale.y)),
+                1f);
+
+            var properties = new MaterialPropertyBlock();
+            properties.SetVector("_GridSize", new Vector4(columns, rows, 0f, 0f));
+            properties.SetColor("_GridColor", focusedGridColor);
+            properties.SetColor("_CenterColor", centralBuildingSlotColor);
+            properties.SetFloat("_LineWidth", Mathf.Clamp(focusedGridLineWidth / cellSize * 0.62f, 0.008f, 0.04f));
+            properties.SetFloat("_GlowStrength", 0.09f);
+            properties.SetVector("_CentralRect", reserveCentralBuildingSlot
+                ? new Vector4(
+                    centralBounds.minColumn / (float)columns,
+                    centralBounds.minRow / (float)rows,
+                    (centralBounds.maxColumn + 1f) / columns,
+                    (centralBounds.maxRow + 1f) / rows)
+                : new Vector4(-1f, -1f, -1f, -1f));
+            _focusedGridSurface.SetPropertyBlock(properties);
+        }
+
+        private void EnsureSelectedCellMarker()
+        {
+            if (_selectedCellMarker != null)
+                return;
+
+            var markerObject = new GameObject("SelectedCell");
+            markerObject.transform.SetParent(_focusedGridRoot.transform, false);
+            _selectedCellMarker = markerObject.AddComponent<SpriteRenderer>();
+            _selectedCellMarker.sprite = CellMarkerSprite;
+            _selectedCellMarker.sortingOrder = focusedGridSortingOrder + 1;
+        }
+
+        private void SetSelectedCellMarker(Vector3 worldPosition, Vector2 worldSize, Color color)
+        {
+            _selectedCellMarker.transform.position = worldPosition + Vector3.back * 0.02f;
+            _selectedCellMarker.color = color;
+            var parentScale = transform.lossyScale;
+            _selectedCellMarker.transform.localScale = new Vector3(
+                worldSize.x * 0.9f / Mathf.Max(0.0001f, Mathf.Abs(parentScale.x)),
+                worldSize.y * 0.9f / Mathf.Max(0.0001f, Mathf.Abs(parentScale.y)),
+                1f);
+        }
+
+        /// <summary>놓을 수 있는 칸 표시. 초록은 "여기 된다"로 읽히는 몇 안 되는 색이다.</summary>
+        private static readonly Color PlacementHintColor = new(0.42f, 0.92f, 0.55f, 0.3f);
+
+        private GameObject _placementHintRoot;
+        private readonly List<SpriteRenderer> _placementHints = new();
+
+        private static Sprite CellMarkerSprite
+        {
+            get
+            {
+                if (_cellMarkerSprite != null)
+                    return _cellMarkerSprite;
+
+                var texture = new Texture2D(1, 1, TextureFormat.RGBA32, false)
+                {
+                    name = "NodeGridCellMarker",
+                    filterMode = FilterMode.Point,
+                    hideFlags = HideFlags.HideAndDontSave
+                };
+                texture.SetPixel(0, 0, Color.white);
+                texture.Apply();
+                _cellMarkerSprite = Sprite.Create(texture, new Rect(0f, 0f, 1f, 1f), new Vector2(0.5f, 0.5f), 1f);
+                _cellMarkerSprite.name = "NodeGridCellMarker";
+                return _cellMarkerSprite;
+            }
+        }
+
+        private static Material FocusedGridMaterial
+        {
+            get
+            {
+                if (_focusedGridMaterial == null)
+                {
+                    var template = Resources.Load<Material>("Materials/DungeonGridOverlay");
+                    if (template == null)
+                    {
+                        Debug.LogError("DungeonGridOverlay material is missing from Resources/Materials.");
+                        return null;
+                    }
+
+                    _focusedGridMaterial = new Material(template)
+                    {
+                        name = "Dungeon Grid Overlay (Runtime)",
+                        hideFlags = HideFlags.HideAndDontSave
+                    };
+                }
+                return _focusedGridMaterial;
+            }
+        }
+
+        private (int minColumn, int maxColumn, int minRow, int maxRow) GetCentralSlotBounds()
+        {
+            var slotColumns = Mathf.Clamp(centralBuildingSlotColumns, 1, columns);
+            var slotRows = Mathf.Clamp(centralBuildingSlotRows, 1, rows);
+            var minColumn = Mathf.Clamp((columns - slotColumns) / 2, 0, columns - 1);
+            var minRow = Mathf.Clamp((rows - slotRows) / 2, 0, rows - 1);
+            return (
+                minColumn,
+                Mathf.Min(columns - 1, minColumn + slotColumns - 1),
+                minRow,
+                Mathf.Min(rows - 1, minRow + slotRows - 1));
+        }
+
+        public void ClearAll()
+        {
+            if (_cells != null)
+            {
+                for (var i = 0; i < _cells.Length; i++)
+                    _cells[i] = null;
+            }
+
+            foreach (var building in _placed)
+            {
+                if (building != null)
+                    Destroy(building.gameObject);
+            }
+            _placed.Clear();
+        }
+
+    }
+}
