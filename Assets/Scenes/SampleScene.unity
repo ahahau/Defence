@@ -2936,6 +2936,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.UI.MagicView
   magicManager: {fileID: 0}
   panelRoot: {fileID: 276944971}
+  iconImage: {fileID: 0}
   magicText: {fileID: 1126734066}
   format: "\uC8FC\uB454 \uB9C8\uB825 {0}/{1}"
 --- !u!1 &296323771
@@ -9066,7 +9067,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.44}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 32, y: -14.440002}
+  m_AnchoredPosition: {x: 32, y: -14.440353}
   m_SizeDelta: {x: -244, y: -118}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &780624401
@@ -12662,6 +12663,25 @@ MonoBehaviour:
   initialGold: 200
   nextBuildDiscountRate: 0
   weeklyDebtInterest: 0.1
+  weeklyMinimumPrincipalRate: 0.2
+  weeklyLoanCreditLimit: 10000
+  loanProducts:
+  - id: street
+    displayName: "\uB4B7\uACE8\uBAA9 \uC0AC\uCC44"
+    creditLimit: 6000
+    weeklyInterestRate: 0.18
+    minimumPrincipalRate: 0.1
+  - id: default
+    displayName: "\uAE30\uBCF8 \uB300\uCD9C"
+    creditLimit: 10000
+    weeklyInterestRate: 0.1
+    minimumPrincipalRate: 0.2
+  - id: guild
+    displayName: "\uC0C1\uC778 \uAE38\uB4DC \uC735\uC790"
+    creditLimit: 25000
+    weeklyInterestRate: 0.05
+    minimumPrincipalRate: 0.4
+  defaultLoanProductId: default
 --- !u!4 &1097297362
 Transform:
   m_ObjectHideFlags: 0
@@ -15199,6 +15219,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.UI.MoraleHudView
   moralePolicyManager: {fileID: 0}
   moraleText: {fileID: 162889299}
+  iconImage: {fileID: 0}
   openButton: {fileID: 1353413536}
   detailRoot: {fileID: 922589870}
   detailText: {fileID: 323925896}

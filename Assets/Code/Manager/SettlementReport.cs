@@ -1,7 +1,22 @@
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace Code.Manager
 {
+    /// <summary>
+    /// 금액 표기를 한 곳에서 정한다.
+    ///
+    /// 네 자리가 넘어가면 자릿수를 세어야 읽히므로 천 단위를 끊는다. 화면마다 표기가 다르면
+    /// 같은 돈이 다른 금액처럼 보이기 때문에 정산표·HUD·대출 창구가 모두 여기를 쓴다.
+    /// </summary>
+    public static class GoldText
+    {
+        public static string Amount(int gold) => gold.ToString("N0", CultureInfo.InvariantCulture) + "G";
+
+        /// <summary>늘었는지 줄었는지를 부호로 먼저 보여 준다.</summary>
+        public static string Signed(int gold) => gold > 0 ? "+" + Amount(gold) : Amount(gold);
+    }
+
     /// <summary>정산표의 한 줄. 어떤 화면이 그리든 이름과 금액만 갖는다.</summary>
     public readonly struct SettlementLedgerLine
     {

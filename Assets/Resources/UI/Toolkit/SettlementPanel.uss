@@ -19,6 +19,14 @@
     border-right-color: var(--edge);
     border-bottom-color: var(--edge);
     border-left-color: var(--edge);
+    transition-property: opacity, translate;
+    transition-duration: 130ms, 130ms;
+}
+
+/* 등장 시작 상태. 기본 상태로 돌아가며 전환되므로, 연출이 걸리지 않아도 카드는 보인다. */
+.settlement-card.is-entering {
+    opacity: 0;
+    translate: 0 14px;
 }
 
 .settlement-title {

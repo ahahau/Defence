@@ -40,10 +40,11 @@ namespace Code.UI.Toolkit
         private Label _borrowAmountLabel;
         private SliderInt _borrowSlider;
         private Button _borrowButton;
-        private Button _repayMinimumButton;
-        private Button _repayFullButton;
         private Label _loanFeedback;
         private Button _closeButton;
+
+        /// <summary>등장 연출의 시작 상태. USS가 여기서 기본 상태로 되돌아가며 전환된다.</summary>
+        private const string EnteringClass = "is-entering";
 
         private ManagementSettlementManager _settlement;
         private CostManager _costManager;
@@ -65,10 +66,6 @@ namespace Code.UI.Toolkit
                 _buildingUnlockHeader.clicked += ToggleBuildingUnlocks;
             if (_borrowButton != null)
                 _borrowButton.clicked += Borrow;
-            if (_repayMinimumButton != null)
-                _repayMinimumButton.clicked += RepayMinimum;
-            if (_repayFullButton != null)
-                _repayFullButton.clicked += RepayFull;
             if (_borrowSlider != null)
                 _borrowSlider.RegisterValueChangedCallback(HandleBorrowAmountChanged);
 
@@ -91,10 +88,6 @@ namespace Code.UI.Toolkit
                 _buildingUnlockHeader.clicked -= ToggleBuildingUnlocks;
             if (_borrowButton != null)
                 _borrowButton.clicked -= Borrow;
-            if (_repayMinimumButton != null)
-                _repayMinimumButton.clicked -= RepayMinimum;
-            if (_repayFullButton != null)
-                _repayFullButton.clicked -= RepayFull;
             if (_borrowSlider != null)
                 _borrowSlider.UnregisterValueChangedCallback(HandleBorrowAmountChanged);
 
@@ -126,8 +119,6 @@ namespace Code.UI.Toolkit
             _borrowAmountLabel = _root.Q<Label>("borrow-amount-label");
             _borrowSlider = _root.Q<SliderInt>("borrow-slider");
             _borrowButton = _root.Q<Button>("borrow-button");
-            _repayMinimumButton = _root.Q<Button>("repay-minimum-button");
-            _repayFullButton = _root.Q<Button>("repay-full-button");
             _loanFeedback = _root.Q<Label>("loan-feedback");
             _closeButton = _root.Q<Button>("close-button");
         }
@@ -169,6 +160,8 @@ namespace Code.UI.Toolkit
             _report = report;
             SetVisible(true);
             GameSfxPlayer.Play(GameSfxCue.UiOpen);
+            RewindScrolls();
+            PlayEntrance();
 
             if (_titleLabel != null)
                 _titleLabel.text = $"{report.Day}일차 정산";
@@ -176,9 +169,9 @@ namespace Code.UI.Toolkit
             FillLedger(_incomeList, report.Income, '+');
             FillLedger(_expenseList, report.Expense, '-');
             if (_incomeTotal != null)
-                _incomeTotal.text = $"합계 +{report.TotalIncome}G";
+                _incomeTotal.text = $"합계 +{GoldText.Amount(report.TotalIncome)}";
             if (_expenseTotal != null)
-                _expenseTotal.text = $"합계 -{report.TotalExpense}G";
+                _expenseTotal.text = $"합계 -{GoldText.Amount(report.TotalExpense)}";
 
             FillSummary(report);
             FillNotes(report.Notes);
@@ -193,7 +186,7 @@ namespace Code.UI.Toolkit
             if (_netLabel != null)
             {
                 // 운영 자금이 실제로 얼마나 늘고 줄었는지를 앞세운다. 이게 내일 쓸 수 있는 돈이다.
-                _netLabel.text = $"운영 자금 {FormatSignedGold(report.Net)}";
+                _netLabel.text = $"운영 자금 {GoldText.Signed(report.Net)}";
                 _netLabel.EnableInClassList("is-positive", report.Net >= 0);
                 _netLabel.EnableInClassList("is-negative", report.Net < 0);
             }
@@ -203,7 +196,7 @@ namespace Code.UI.Toolkit
 
             var hasDeferred = report.DeferredDelta != 0;
             _deferredLabel.text = hasDeferred
-                ? $"그중 {FormatSignedGold(report.DeferredDelta)}는 금고·선지출"
+                ? $"그중 {GoldText.Signed(report.DeferredDelta)}는 금고·선지출"
                 : string.Empty;
             SetDisplayed(_deferredLabel, hasDeferred);
         }
@@ -231,7 +224,7 @@ namespace Code.UI.Toolkit
                 label.AddToClassList("ledger-row-label");
                 row.Add(label);
 
-                var amount = new Label($"{sign}{line.Amount}G");
+                var amount = new Label($"{sign}{GoldText.Amount(line.Amount)}");
                 amount.AddToClassList("ledger-row-amount");
                 row.Add(amount);
 
@@ -362,17 +355,20 @@ namespace Code.UI.Toolkit
                 return;
 
             var debt = _costManager.CurrentDebt;
-            var canAdjust = _costManager.CanAdjustLoanToday;
+            var canChangeProduct = _costManager.CanChangeLoanProductToday;
             var headroom = _costManager.LoanHeadroom;
             var gold = _costManager.CurrentGold;
 
             if (_loanDebt != null)
-                _loanDebt.text = debt > 0 ? $"빚 {debt}G" : "빚 없음";
+                _loanDebt.text = debt > 0 ? $"빚 {GoldText.Amount(debt)}" : "빚 없음";
 
+            // 상환은 청산일에 자동으로 처리된다. 플레이어가 누를 버튼이 아니라 다가오는 청구서라서
+            // 금액만 미리 알린다 — 이자까지 더한 총액을 같이 적어야 이번 주에 얼마가 나갈지 보인다.
             if (_loanDue != null)
             {
                 _loanDue.text = debt > 0
-                    ? $"이번 주 최소 상환 {_costManager.WeeklyDue}G  ·  전액 상환 {_costManager.WeeklyFullPayoff}G"
+                    ? $"이번 주 청구 {GoldText.Amount(_costManager.WeeklyDue)}"
+                      + $"  ·  이자 포함 잔액 {GoldText.Amount(_costManager.WeeklyFullPayoff)}"
                     : "이번 주 갚을 금액 없음";
             }
 
@@ -381,28 +377,27 @@ namespace Code.UI.Toolkit
             {
                 // 상품 이름은 아래 목록에서 선택 표시로 이미 보인다. 여기 또 적으면 줄이 넘쳐
                 // 한글이 단어 중간에서 끊긴다.
-                _loanTerms.text = $"한도 {product.CreditLimit}G"
+                _loanTerms.text = $"한도 {GoldText.Amount(product.CreditLimit)}"
                                   + $"  ·  주 이자 {FormatPercent(product.WeeklyInterestRate)}"
                                   + $"  ·  최소 원금 {FormatPercent(product.MinimumPrincipalRate)}";
             }
 
             // 지금 쓸 수 있는 돈과 더 빌릴 수 있는 돈은 상품 조건과 성격이 달라 줄을 나눈다.
             if (_loanWallet != null)
-                _loanWallet.text = $"남은 한도 {headroom}G  ·  운영 자금 {gold}G";
+                _loanWallet.text = $"남은 한도 {GoldText.Amount(headroom)}  ·  운영 자금 {GoldText.Amount(gold)}";
 
             if (_loanWindow != null)
             {
-                _loanWindow.text = canAdjust
-                    ? "오늘은 청산일입니다. 상품을 바꾸거나 미리 갚을 수 있습니다."
-                    : "상환과 상품 변경은 청산일에만 할 수 있습니다.";
+                _loanWindow.text = canChangeProduct
+                    ? "오늘은 청산일입니다. 다음 주에 적용할 상품을 고를 수 있습니다."
+                    : "상품 변경은 청산일에만 할 수 있습니다. 대출 실행은 언제든 됩니다.";
             }
 
-            RefreshLoanProducts(product, canAdjust);
+            RefreshLoanProducts(product, canChangeProduct);
             RefreshBorrowControls(headroom);
-            RefreshRepayButtons(debt, canAdjust, gold);
         }
 
-        private void RefreshLoanProducts(WeeklyLoanProduct active, bool canAdjust)
+        private void RefreshLoanProducts(WeeklyLoanProduct active, bool canChangeProduct)
         {
             if (_loanProductList == null)
                 return;
@@ -412,12 +407,12 @@ namespace Code.UI.Toolkit
             {
                 var isActive = option.Id == active.Id;
                 // 지금 빚을 감당 못 하는 한도로는 갈아탈 수 없다. 눌러도 거절될 버튼은 미리 잠근다.
-                var selectable = canAdjust && !isActive && option.CreditLimit >= _costManager.CurrentDebt;
+                var selectable = canChangeProduct && !isActive && option.CreditLimit >= _costManager.CurrentDebt;
                 var productId = option.Id;
 
                 var button = new Button(() => ChangeProduct(productId))
                 {
-                    text = $"{option.DisplayName}\n한도 {option.CreditLimit}G  ·  주 이자 {FormatPercent(option.WeeklyInterestRate)}"
+                    text = $"{option.DisplayName}\n한도 {GoldText.Amount(option.CreditLimit)}  ·  주 이자 {FormatPercent(option.WeeklyInterestRate)}"
                            + $"  ·  최소 원금 {FormatPercent(option.MinimumPrincipalRate)}"
                 };
                 button.AddToClassList("loan-product-button");
@@ -442,32 +437,14 @@ namespace Code.UI.Toolkit
             if (_borrowAmountLabel != null)
             {
                 _borrowAmountLabel.text = headroom > 0
-                    ? $"빌릴 금액 {amount}G"
+                    ? $"빌릴 금액 {GoldText.Amount(amount)}"
                     : "더 빌릴 수 있는 한도가 없습니다";
             }
 
             if (_borrowButton != null)
             {
-                _borrowButton.text = amount > 0 ? $"{amount}G 빌리기" : "빌리기";
+                _borrowButton.text = amount > 0 ? $"{GoldText.Amount(amount)} 빌리기" : "빌리기";
                 _borrowButton.SetEnabled(amount > 0);
-            }
-        }
-
-        private void RefreshRepayButtons(int debt, bool canAdjust, int gold)
-        {
-            var minimum = debt > 0 ? _costManager.WeeklyDue : 0;
-            var full = debt > 0 ? _costManager.WeeklyFullPayoff : 0;
-
-            if (_repayMinimumButton != null)
-            {
-                _repayMinimumButton.text = $"최소 상환 {minimum}G";
-                _repayMinimumButton.SetEnabled(canAdjust && minimum > 0 && gold >= minimum);
-            }
-
-            if (_repayFullButton != null)
-            {
-                _repayFullButton.text = $"전액 상환 {full}G";
-                _repayFullButton.SetEnabled(canAdjust && full > 0 && gold >= full);
             }
         }
 
@@ -476,10 +453,10 @@ namespace Code.UI.Toolkit
         private void HandleBorrowAmountChanged(ChangeEvent<int> evt)
         {
             if (_borrowAmountLabel != null)
-                _borrowAmountLabel.text = $"빌릴 금액 {evt.newValue}G";
+                _borrowAmountLabel.text = $"빌릴 금액 {GoldText.Amount(evt.newValue)}";
             if (_borrowButton != null)
             {
-                _borrowButton.text = evt.newValue > 0 ? $"{evt.newValue}G 빌리기" : "빌리기";
+                _borrowButton.text = evt.newValue > 0 ? $"{GoldText.Amount(evt.newValue)} 빌리기" : "빌리기";
                 _borrowButton.SetEnabled(evt.newValue > 0);
             }
         }
@@ -512,35 +489,12 @@ namespace Code.UI.Toolkit
             if (_costManager.TryBorrowGold(amount))
             {
                 GameSfxPlayer.Play(GameSfxCue.UiConfirm);
-                SetFeedback($"{amount}G를 빌렸습니다. 청산일에 이자와 함께 청구됩니다.");
+                SetFeedback($"{GoldText.Amount(amount)}를 빌렸습니다. 청산일에 이자와 함께 청구됩니다.");
             }
             else
             {
                 GameSfxPlayer.Play(GameSfxCue.UiFail);
                 SetFeedback("한도를 넘는 금액은 빌릴 수 없습니다.");
-            }
-
-            RefreshLoanPane();
-        }
-
-        private void RepayMinimum() => Repay(_costManager != null ? _costManager.WeeklyDue : 0);
-
-        private void RepayFull() => Repay(_costManager != null ? _costManager.WeeklyFullPayoff : 0);
-
-        private void Repay(int payment)
-        {
-            if (_costManager == null)
-                return;
-
-            if (_costManager.TryMakeEarlyLoanPayment(payment))
-            {
-                GameSfxPlayer.Play(GameSfxCue.UiConfirm);
-                SetFeedback($"{payment}G를 갚았습니다.");
-            }
-            else
-            {
-                GameSfxPlayer.Play(GameSfxCue.UiFail);
-                SetFeedback("지금은 갚을 수 없습니다. 운영 자금과 청산일을 확인하세요.");
             }
 
             RefreshLoanPane();
@@ -564,7 +518,53 @@ namespace Code.UI.Toolkit
                 SetVisible(false);
         }
 
+        /// <summary>
+        /// 어제 보던 자리에서 시작하면 안 된다. 어느 날이든 정산표는 맨 위, 오늘 번 돈부터 읽힌다.
+        /// </summary>
+        private void RewindScrolls()
+        {
+            foreach (var scroll in _root.Query<ScrollView>().ToList())
+                scroll.scrollOffset = Vector2.zero;
+        }
+
+        /// <summary>
+        /// 카드가 툭 나타나지 않게 한 번 띄워 올린다.
+        /// 표시로 바뀐 프레임에는 전환이 걸리지 않으므로 다음 프레임에 시작 상태를 벗긴다.
+        /// </summary>
+        private void PlayEntrance()
+        {
+            var card = _root.Q<VisualElement>(className: "settlement-card");
+            if (card == null)
+                return;
+
+            card.AddToClassList(EnteringClass);
+            card.schedule.Execute(() => card.RemoveFromClassList(EnteringClass)).ExecuteLater(0);
+        }
+
         private void HandleReportClosed() => SetVisible(false);
+
+        /// <summary>
+        /// 정산표는 게임을 멈춰 세우는 화면이라 ESC로도 닫혀야 한다.
+        /// 다른 창들과 같은 방식으로 읽는다 — 이 프로젝트는 입력이 Input System으로 넘어가 있다.
+        /// </summary>
+        private void Update()
+        {
+            if (_settlement == null || !_settlement.IsPanelOpen)
+                return;
+
+            if (EscapePressedThisFrame())
+                Close();
+        }
+
+        private static bool EscapePressedThisFrame()
+        {
+#if ENABLE_INPUT_SYSTEM
+            var keyboard = UnityEngine.InputSystem.Keyboard.current;
+            return keyboard != null && keyboard.escapeKey.wasPressedThisFrame;
+#else
+            return Input.GetKeyDown(KeyCode.Escape);
+#endif
+        }
 
         private void SetVisible(bool visible) => SetDisplayed(_root, visible);
 
@@ -573,8 +573,6 @@ namespace Code.UI.Toolkit
             if (element != null)
                 element.style.display = displayed ? DisplayStyle.Flex : DisplayStyle.None;
         }
-
-        private static string FormatSignedGold(int amount) => amount > 0 ? $"+{amount}G" : $"{amount}G";
 
         private static string FormatPercent(float rate) => $"{Mathf.RoundToInt(rate * 100f)}%";
 

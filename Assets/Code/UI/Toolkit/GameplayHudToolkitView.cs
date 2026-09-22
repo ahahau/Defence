@@ -91,7 +91,7 @@ namespace Code.UI.Toolkit
             _speedController ??= GameSpeedController.Current;
 
             if (_goldLabel != null)
-                _goldLabel.text = $"운영 자금 {_costManager?.CurrentGold ?? 0}G";
+                _goldLabel.text = $"운영 자금 {GoldText.Amount(_costManager?.CurrentGold ?? 0)}";
 
             if (_debtLabel != null)
                 _debtLabel.text = BuildDebtText();
@@ -115,8 +115,8 @@ namespace Code.UI.Toolkit
             var daysLeft = DayManager.DaysUntilSettlementFrom(day);
             var due = _costManager.WeeklyDue;
             return daysLeft <= 0
-                ? $"빚 {_costManager.CurrentDebt}G · 오늘 최소 {due}G"
-                : $"빚 {_costManager.CurrentDebt}G · {daysLeft}일 뒤 최소 {due}G";
+                ? $"빚 {GoldText.Amount(_costManager.CurrentDebt)} · 오늘 최소 {GoldText.Amount(due)}"
+                : $"빚 {GoldText.Amount(_costManager.CurrentDebt)} · {daysLeft}일 뒤 최소 {GoldText.Amount(due)}";
         }
 
         private void RefreshSpeedButtons()

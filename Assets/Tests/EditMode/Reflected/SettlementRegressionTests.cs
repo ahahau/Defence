@@ -245,7 +245,7 @@ namespace Tests.EditMode.Rules
         }
 
         [Test]
-        public void LoanAdjustment_OutsideSettlementDay_IsClosed()
+        public void LoanProductChange_OutsideSettlementDay_IsClosed()
         {
             var dayManager = Resolve("Code.Manager.DayManager").GetProperty("Current");
             var previousDay = dayManager.GetValue(null);
@@ -255,8 +255,8 @@ namespace Tests.EditMode.Rules
                 var cost = Component("Code.Manager.CostManager", "Loan desk");
                 Call(cost, "Awake");
 
-                // 청산일이 아니면 상환도 상품 변경도 거절된다. 화면은 이 값으로 버튼을 잠근다.
-                Assert.That(cost.GetType().GetProperty("CanAdjustLoanToday").GetValue(cost), Is.False);
+                // 청산일이 아니면 상품 변경이 거절된다. 화면은 이 값으로 버튼을 잠근다.
+                Assert.That(cost.GetType().GetProperty("CanChangeLoanProductToday").GetValue(cost), Is.False);
             }
             finally
             {

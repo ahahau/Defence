@@ -68,10 +68,13 @@ namespace Code.Manager
         public int LoanHeadroom => Mathf.Max(0, ResolveActiveLoanProduct().CreditLimit - CurrentDebt);
 
         /// <summary>
-        /// 오늘 대출 조건을 바꾸거나 미리 갚을 수 있는가.
-        /// 청산일이 아니거나 그 주의 청산이 이미 끝났으면 닫힌다 — 버튼을 회색으로 둘 근거다.
+        /// 오늘 대출 상품을 갈아탈 수 있는가. 상품 변경은 매주 청산일에 한 번 열린다.
+        ///
+        /// 그 주의 청산이 끝났는지는 보지 않는다. 청산은 정산표가 열리기 전에 처리되므로,
+        /// 그걸 조건에 넣으면 빚이 있는 주에는 창구가 한 번도 열리지 않는다.
+        /// 상품 변경은 돈을 옮기지 않고 다음 주 조건만 바꾸므로 이미 낸 상환과 충돌하지 않는다.
         /// </summary>
-        public bool CanAdjustLoanToday => CanAdjustLoanOn(ResolveSettlementDay());
+        public bool CanChangeLoanProductToday => DayManager.IsSettlementDay(ResolveSettlementDay());
 
         /// <summary>웨이브가 도는 동안은 수입·지출을 장부에만 적고 금화는 정산에서 한 번에 옮긴다.</summary>
         private bool _isSettlementDeferred;
@@ -283,36 +286,13 @@ namespace Code.Manager
             return true;
         }
 
-        /// <summary>정산 화면에서 여유 자금으로 최소 상환액보다 더 갚을 때 쓴다.</summary>
-        public bool TryMakeEarlyLoanPayment(int payment)
-        {
-            var settlementDay = ResolveSettlementDay();
-            if (!CanAdjustLoanOn(settlementDay))
-                return false;
-
-            var loan = CreateLoanLedger();
-            var quote = loan.GetWeeklyQuote();
-            var paymentToApply = Mathf.Min(payment, quote.FullPayoff);
-            if (paymentToApply <= 0 || paymentToApply < quote.MinimumPayment || !_ledger.TrySpend(paymentToApply))
-                return false;
-
-            loan.TryApplyWeeklyPayment(paymentToApply);
-
-            _ledger.SetDebt(loan.Principal);
-            _lastLoanSettlementDay = settlementDay;
-            RaiseGoldChanged();
-            RunSummarySystem.Current?.RecordDebt(CurrentDebt);
-            costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, -paymentToApply));
-            return true;
-        }
-
         /// <summary>
         /// 정산을 확정하기 전 대출 상품을 바꾼다. 기존 원금을 감당하지 못하는 상품은 고를 수 없다.
         /// 실제 버튼 UI는 이 메서드의 결과만 보고 선택 상태를 갱신한다.
         /// </summary>
         public bool TryChangeLoanProduct(string productId)
         {
-            if (!CanAdjustLoanOn(ResolveSettlementDay()))
+            if (!CanChangeLoanProductToday)
                 return false;
 
             if (!TryFindConfiguredLoanProduct(productId, out var nextProduct))
@@ -352,9 +332,6 @@ namespace Code.Manager
         }
 
         private int ResolveSettlementDay() => DayManager.Current != null ? DayManager.Current.CurrentDay : -1;
-
-        private bool CanAdjustLoanOn(int settlementDay) =>
-            DayManager.IsSettlementDay(settlementDay) && _lastLoanSettlementDay != settlementDay;
 
         private WeeklyLoanLedger CreateLoanLedger()
         {

@@ -49,9 +49,6 @@
                     <ui:Label name="borrow-amount-label" class="loan-line" />
                     <ui:SliderInt name="borrow-slider" low-value="0" high-value="100" value="0" />
                     <ui:Button name="borrow-button" text="빌리기" class="loan-button" />
-                    <ui:Label text="상환" class="loan-subheading" />
-                    <ui:Button name="repay-minimum-button" class="loan-button" />
-                    <ui:Button name="repay-full-button" class="loan-button" />
                     <ui:Label name="loan-feedback" class="loan-feedback" />
                 </ui:ScrollView>
             </ui:VisualElement>

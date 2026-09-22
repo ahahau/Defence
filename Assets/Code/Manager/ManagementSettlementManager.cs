@@ -484,6 +484,10 @@ namespace Code.Manager
         private void ShowPanel()
         {
             _panelOpen = true;
+
+            // 정산 중에는 시간이 완전히 멈춘다. 어느 화면이 정산표를 그리든 같아야 하므로
+            // 장부를 쥔 여기서 멈춘다 — 표를 읽는 동안 다음 영업이 돌기 시작하면 안 된다.
+            GameSpeedController.Current?.Suspend(this);
             ReportOpened?.Invoke(LatestReport);
 
             if (_legacyPanelSuppressed)
@@ -521,6 +525,7 @@ namespace Code.Manager
                 return;
 
             _panelOpen = false;
+            GameSpeedController.Current?.Release(this);
             ReportClosed?.Invoke();
         }
 
@@ -659,7 +664,7 @@ namespace Code.Manager
 
             // 운영 자금이 실제로 얼마나 늘고 줄었는지를 앞세운다. 이게 내일 쓸 수 있는 돈이다.
             var summary = new StringBuilder($"운영 자금 {FormatSignedGold(report.Net)}");
-            summary.Append($"\n획득 +{report.TotalIncome}G  ·  지출 -{report.TotalExpense}G");
+            summary.Append($"\n획득 {GoldText.Signed(report.TotalIncome)}  ·  지출 -{GoldText.Amount(report.TotalExpense)}");
             if (report.DeferredDelta != 0)
                 summary.Append($"\n<size=85%>그중 {FormatSignedGold(report.DeferredDelta)}는 금고·선지출</size>");
 
@@ -731,7 +736,7 @@ namespace Code.Manager
 
             notes.Add(wave.LastObjectiveCompleted
                 ? new SettlementNote(
-                    $"{wave.LastObjectiveTitle} 완료 · 보너스 +{wave.LastObjectiveRewardGold}G",
+                    $"{wave.LastObjectiveTitle} 완료 · 보너스 {GoldText.Signed(wave.LastObjectiveRewardGold)}",
                     SettlementNoteTone.Good)
                 : new SettlementNote($"{wave.LastObjectiveTitle} 실패", SettlementNoteTone.Caution));
         }
@@ -749,7 +754,7 @@ namespace Code.Manager
             if (wave.WavePriestHealingPrevented > 0)
                 AppendCounterplayEntry(line, $"성직자 치유 {wave.WavePriestHealingPrevented} 차단");
             if (wave.WaveShopaholicBonusGold > 0)
-                AppendCounterplayEntry(line, $"쇼핑광 추가 수익 +{wave.WaveShopaholicBonusGold}G");
+                AppendCounterplayEntry(line, $"쇼핑광 추가 수익 {GoldText.Signed(wave.WaveShopaholicBonusGold)}");
 
             if (line.Length > 0)
                 notes.Add(new SettlementNote($"상성 활용  ·  {line}", SettlementNoteTone.Accent));
@@ -777,8 +782,8 @@ namespace Code.Manager
             var daysLeft = DayManager.DaysUntilSettlementFrom(currentDay);
             notes.Add(new SettlementNote(
                 daysLeft > 0
-                    ? $"시설 마모 {pending}G  ·  {daysLeft}일 뒤 수리합니다"
-                    : $"시설 마모 {pending}G  ·  오늘 수리합니다",
+                    ? $"시설 마모 {GoldText.Amount(pending)}  ·  {daysLeft}일 뒤 수리합니다"
+                    : $"시설 마모 {GoldText.Amount(pending)}  ·  오늘 수리합니다",
                 SettlementNoteTone.Caution));
         }
 
@@ -790,7 +795,8 @@ namespace Code.Manager
         {
             if (_weeklySettlementPaid > 0)
             {
-                notes.Add(new SettlementNote($"빚 {_weeklySettlementPaid}G를 청산했습니다", SettlementNoteTone.Good));
+                notes.Add(new SettlementNote(
+                    $"빚 {GoldText.Amount(_weeklySettlementPaid)}를 청산했습니다", SettlementNoteTone.Good));
                 return;
             }
 
@@ -802,22 +808,22 @@ namespace Code.Manager
             var due = costManager.WeeklyDue;
             notes.Add(new SettlementNote(
                 daysLeft > 0
-                    ? $"빚 {costManager.CurrentDebt}G  ·  {daysLeft}일 뒤 최소 {due}G를 내야 합니다"
-                    : $"빚 {costManager.CurrentDebt}G  ·  오늘 최소 {due}G를 내야 합니다",
+                    ? $"빚 {GoldText.Amount(costManager.CurrentDebt)}  ·  {daysLeft}일 뒤 최소 {GoldText.Amount(due)}를 내야 합니다"
+                    : $"빚 {GoldText.Amount(costManager.CurrentDebt)}  ·  오늘 최소 {GoldText.Amount(due)}를 내야 합니다",
                 SettlementNoteTone.Danger));
         }
 
         private static string BuildLedgerText(string title, IReadOnlyList<SettlementLedgerLine> lines, int total, char sign)
         {
             if (lines.Count == 0)
-                return $"{title}\n· 없음\n합계 {sign}0G";
+                return $"{title}\n· 없음\n합계 {sign}{GoldText.Amount(0)}";
 
             var text = new StringBuilder();
             text.AppendLine(title);
             foreach (var line in lines)
-                text.AppendLine($"· {line.Label}  {sign}{line.Amount}G");
+                text.AppendLine($"· {line.Label}  {sign}{GoldText.Amount(line.Amount)}");
 
-            text.Append($"합계 {sign}{total}G");
+            text.Append($"합계 {sign}{GoldText.Amount(total)}");
             return text.ToString();
         }
 
@@ -842,9 +848,9 @@ namespace Code.Manager
                    && netText != null;
         }
 
-        private string FormatGold(int amount)
+        private static string FormatGold(int amount)
         {
-            return amount >= 0 ? $"{amount}G" : $"-{Mathf.Abs(amount)}G";
+            return GoldText.Amount(amount);
         }
 
         private string ResolveIncomeLabel(GoldChangeSource source)
@@ -876,9 +882,9 @@ namespace Code.Manager
             };
         }
 
-        private string FormatSignedGold(int amount)
+        private static string FormatSignedGold(int amount)
         {
-            return amount > 0 ? $"+{amount}G" : FormatGold(amount);
+            return GoldText.Signed(amount);
         }
 
         private static string FormatSigned(int amount) => amount > 0 ? $"+{amount}" : amount.ToString();
