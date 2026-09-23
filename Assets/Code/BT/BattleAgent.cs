@@ -979,7 +979,7 @@ namespace Code.BT
 
         private float FlankSide()
         {
-            var seed = GetInstanceID();
+            var seed = GetEntityId().GetHashCode();
             return (seed & 1) == 0 ? 1f : -1f;
         }
 

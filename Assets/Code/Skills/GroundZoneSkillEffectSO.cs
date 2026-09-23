@@ -35,7 +35,7 @@ namespace Code.Skills
         {
             private const string OwnershipSlot = "GroundZone";
             private BT.BattleAgent _caster;
-            private int _ownerId;
+            private EntityId _ownerId;
             private float _radius;
             private float _remaining;
             private float _tickInterval;

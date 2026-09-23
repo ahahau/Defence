@@ -68,20 +68,20 @@ namespace Code.Skills
     {
         private readonly struct ZoneKey
         {
-            public ZoneKey(int ownerId, string slot)
+            public ZoneKey(EntityId ownerId, string slot)
             {
                 OwnerId = ownerId;
                 Slot = slot;
             }
 
-            public int OwnerId { get; }
+            public EntityId OwnerId { get; }
             public string Slot { get; }
 
             public override bool Equals(object obj) =>
                 obj is ZoneKey other && OwnerId == other.OwnerId && Slot == other.Slot;
 
             public override int GetHashCode() =>
-                (OwnerId * 397) ^ (Slot != null ? Slot.GetHashCode() : 0);
+                (OwnerId.GetHashCode() * 397) ^ (Slot != null ? Slot.GetHashCode() : 0);
         }
 
         private static readonly Dictionary<ZoneKey, GameObject> ActiveZones = new();
@@ -89,12 +89,12 @@ namespace Code.Skills
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void Reset() => ActiveZones.Clear();
 
-        public static int Replace(Object owner, string slot, GameObject zone)
+        public static EntityId Replace(Object owner, string slot, GameObject zone)
         {
             if (owner == null || string.IsNullOrEmpty(slot) || zone == null)
-                return 0;
+                return EntityId.None;
 
-            var ownerId = owner.GetInstanceID();
+            var ownerId = owner.GetEntityId();
             var key = new ZoneKey(ownerId, slot);
             if (ActiveZones.TryGetValue(key, out var previous)
                 && previous != null
@@ -108,9 +108,9 @@ namespace Code.Skills
             return ownerId;
         }
 
-        public static void Release(int ownerId, string slot, GameObject zone)
+        public static void Release(EntityId ownerId, string slot, GameObject zone)
         {
-            if (ownerId == 0 || string.IsNullOrEmpty(slot))
+            if (!ownerId.IsValid() || string.IsNullOrEmpty(slot))
                 return;
 
             var key = new ZoneKey(ownerId, slot);

@@ -27,7 +27,7 @@ namespace Code.UI.Toolkit
         /// </summary>
         private static void HideLegacyCanvases()
         {
-            foreach (var canvas in Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var canvas in Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include))
                 canvas.gameObject.SetActive(false);
         }
     }

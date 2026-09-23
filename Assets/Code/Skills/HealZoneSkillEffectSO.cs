@@ -34,7 +34,7 @@ namespace Code.Skills
         private class HealZoneRuntime : MonoBehaviour
         {
             private const string OwnershipSlot = "HealZone";
-            private int _ownerId;
+            private EntityId _ownerId;
             private NodeBattlefield _battlefield;
             private BattleTeam _team;
             private float _radius;
