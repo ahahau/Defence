@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Object = UnityEngine.Object;
 
 namespace Code.Manager
 {
@@ -47,7 +49,7 @@ namespace Code.Manager
         public bool IsPausedByPlayer => Setting <= 0f;
 
         /// <summary>배속이 바뀌었을 때. 버튼 표시를 맞추는 쪽이 듣는다.</summary>
-        public event System.Action<float> SettingChanged;
+        public event Action<float> SettingChanged;
 
         private void Awake()
         {
@@ -106,7 +108,7 @@ namespace Code.Manager
             Apply();
             SettingChanged?.Invoke(Setting);
         }
-
+        
         public void TogglePause() => SetSetting(IsPausedByPlayer ? NormalSpeed : PausedSpeed);
 
         /// <summary>
@@ -141,10 +143,7 @@ namespace Code.Manager
             SettingChanged?.Invoke(Setting);
         }
 
-        private void Apply()
-        {
-            Time.timeScale = _suspenders.Count > 0 ? PausedSpeed : Setting;
-        }
+        private void Apply() => Time.timeScale = _suspenders.Count > 0 ? PausedSpeed : Setting;
 
         /// <summary>이 컨트롤러가 소유한 현재 복귀 속도.</summary>
         public float RestoreTimeScale => _suspenders.Count > 0 ? PausedSpeed : Setting;
@@ -155,8 +154,5 @@ namespace Code.Manager
         /// </summary>
         public static float RestoreTarget =>
             Current != null ? Current.RestoreTimeScale : NormalSpeed;
-
-        /// <summary>지금 연출을 재생해도 되는가. 멈춰 있으면 화면이 굳으므로 건너뛴다.</summary>
-        public static bool AllowsTransientEffects => Current == null || !Current.IsPaused;
     }
 }
