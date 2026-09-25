@@ -1,5 +1,7 @@
 using System.Collections;
+using System.Collections.Generic;
 using Code.Combat;
+using Code.Enemies;
 using MoreMountains.Feedbacks;
 using DG.Tweening;
 using UnityEngine;
@@ -66,6 +68,98 @@ namespace Code.Buildings
 
         /// <summary>머무를 수 있는 시설인가.</summary>
         public bool AcceptsDwell => IsOperating && DwellSeconds > 0f;
+
+        [Header("Visitor Queue")]
+        [SerializeField, Min(1), Tooltip("한 번에 시설을 이용할 수 있는 모험가 수. 초과 인원은 도착 순서대로 기다린다.")]
+        private int maxConcurrentVisitors = 1;
+
+        private readonly Queue<Enemy> waitingVisitors = new();
+        private readonly HashSet<Enemy> visitingEnemies = new();
+
+        public int MaxConcurrentVisitors => Mathf.Max(1, maxConcurrentVisitors);
+        public int CurrentVisitorCount
+        {
+            get
+            {
+                RemoveMissingVisitors();
+                return visitingEnemies.Count;
+            }
+        }
+
+        public int WaitingVisitorCount
+        {
+            get
+            {
+                RemoveMissingVisitors();
+                return waitingVisitors.Count;
+            }
+        }
+
+        /// <summary>
+        /// 시설 이용을 시작할 수 있으면 자리를 잡는다. 자리가 없으면 도착 순서대로 줄에 세운다.
+        ///
+        /// 시설 노드는 잠그지 않는다. 같은 시설을 쓰려는 손님은 방 안에서 기다리고,
+        /// 다음 손님은 먼저 온 손님을 건너뛰지 않는다.
+        /// </summary>
+        public bool TryStartVisit(Enemy visitor)
+        {
+            if (visitor == null || !AcceptsDwell)
+                return false;
+
+            RemoveMissingVisitors();
+            if (visitingEnemies.Contains(visitor))
+                return true;
+
+            if (!waitingVisitors.Contains(visitor))
+                waitingVisitors.Enqueue(visitor);
+
+            if (visitingEnemies.Count >= MaxConcurrentVisitors || waitingVisitors.Peek() != visitor)
+                return false;
+
+            waitingVisitors.Dequeue();
+            visitingEnemies.Add(visitor);
+            return true;
+        }
+
+        /// <summary>대기 또는 이용을 끝낸 손님을 제거해 다음 손님에게 자리를 넘긴다.</summary>
+        public void CancelVisit(Enemy visitor)
+        {
+            if (visitor == null)
+                return;
+
+            visitingEnemies.Remove(visitor);
+            if (!waitingVisitors.Contains(visitor))
+                return;
+
+            var retained = new Queue<Enemy>();
+            while (waitingVisitors.Count > 0)
+            {
+                var queued = waitingVisitors.Dequeue();
+                if (queued != null && queued != visitor)
+                    retained.Enqueue(queued);
+            }
+
+            while (retained.Count > 0)
+                waitingVisitors.Enqueue(retained.Dequeue());
+        }
+
+        private void RemoveMissingVisitors()
+        {
+            visitingEnemies.RemoveWhere(visitor => visitor == null || visitor.IsDead);
+            if (waitingVisitors.Count == 0)
+                return;
+
+            var retained = new Queue<Enemy>();
+            while (waitingVisitors.Count > 0)
+            {
+                var queued = waitingVisitors.Dequeue();
+                if (queued != null && !queued.IsDead)
+                    retained.Enqueue(queued);
+            }
+
+            while (retained.Count > 0)
+                waitingVisitors.Enqueue(retained.Dequeue());
+        }
 
         /// <summary>
         /// 한 번 머무는 동안 모험가가 여기서 쓰는 총액. 시설이 정하고, 머무는 쪽이 시간에 나눠 낸다.

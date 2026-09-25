@@ -171,6 +171,8 @@ namespace Code.Enemies
         private void OnDestroy()
         {
             UnsubscribeHealth();
+            _waitingFacility?.CancelVisit(this);
+            _dwellFacility?.CancelVisit(this);
             _returnTween?.Kill();
             Removed?.Invoke(this);
         }
@@ -235,6 +237,8 @@ namespace Code.Enemies
             mover.NodeArrived = HandleNodeArrived;
             mover.EdgeBuildingPassed = HandleEdgeBuildingPassed;
             mover.RouteGoalResolver = ResolveRouteGoal;
+            mover.ConfigureBlockedNodeWaitTurns(
+                AdventurerTraitRules.ResolveBlockedNodeWaitTurns(Trait, VisitPurpose, InitialBudget));
             mover.Initialize(startNode);
 
             _isInitialized = true;
@@ -309,6 +313,10 @@ namespace Code.Enemies
 
             // 머무는 동안은 다음 방으로 가지 않는다. 시간이 흐르고 돈이 들어온다.
             if (TickDwell(deltaTime))
+                return true;
+
+            // 시설별 줄은 방을 막지 않는다. 자리가 날 때까지 이 손님만 기다린다.
+            if (TickFacilityQueue())
                 return true;
 
             _chaseTimer -= deltaTime;
@@ -674,6 +682,7 @@ namespace Code.Enemies
         // ── 시설 체류 ────────────────────────────────────────────────
 
         private Building _dwellFacility;
+        private Building _waitingFacility;
         private float _dwellRemaining;
 
         /// <summary>낼 금화의 소수점 나머지. 초당 액수가 1 미만이어도 모여서 결국 지불된다.</summary>
@@ -695,6 +704,9 @@ namespace Code.Enemies
 
         /// <summary>지금 머무는 시설. 없으면 null.</summary>
         public Building DwellFacility => _dwellFacility;
+
+        /// <summary>자리가 날 때까지 기다리는 시설. 없으면 줄을 서지 않는다.</summary>
+        public Building WaitingFacility => _waitingFacility;
 
         /// <summary>
         /// 오늘 향할 곳. 보물을 노리고 온 자만 금고로 직진하고, 나머지는 볼일이 있는 시설로 간다.
@@ -764,12 +776,45 @@ namespace Code.Enemies
                 || RemainingBudget <= 0 || !MatchesVisitPurpose(facility))
                 return false;
 
+            if (!facility.TryStartVisit(this))
+            {
+                _waitingFacility = facility;
+                return true;
+            }
+
+            BeginDwell(facility);
+            return true;
+        }
+
+        /// <summary>줄 맨 앞이 되어 자리가 난 손님만 실제 이용을 시작한다.</summary>
+        private bool TickFacilityQueue()
+        {
+            if (_waitingFacility == null)
+                return false;
+
+            if (!_waitingFacility.AcceptsDwell)
+            {
+                _waitingFacility.CancelVisit(this);
+                _waitingFacility = null;
+                return false;
+            }
+
+            if (!_waitingFacility.TryStartVisit(this))
+                return true;
+
+            var facility = _waitingFacility;
+            _waitingFacility = null;
+            BeginDwell(facility);
+            return true;
+        }
+
+        private void BeginDwell(Building facility)
+        {
             _visitedFacilities.Add(facility);
             facility.RecordVisitWear();
             _dwellFacility = facility;
             _dwellRemaining = facility.DwellSeconds;
             _dwellGoldCarry = 0f;
-            return true;
         }
 
         private bool MatchesVisitPurpose(Building facility) => VisitPurpose switch
@@ -833,6 +878,7 @@ namespace Code.Enemies
         {
             if (completed)
                 FulfillPurpose();
+            _dwellFacility?.CancelVisit(this);
             _dwellFacility = null;
             _dwellRemaining = 0f;
             _dwellGoldCarry = 0f;
@@ -1050,6 +1096,10 @@ namespace Code.Enemies
             _engagedUnit = null;
             _isHitStunned = false;
             _deadTimer = deadDuration;
+            _waitingFacility?.CancelVisit(this);
+            _waitingFacility = null;
+            _dwellFacility?.CancelVisit(this);
+            _dwellFacility = null;
             combatant?.StopCombat();
             _battleAgent?.Battlefield?.Leave(_battleAgent);
             mover?.StopMoving();

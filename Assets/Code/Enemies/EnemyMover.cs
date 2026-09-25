@@ -23,7 +23,10 @@ namespace Code.Enemies
         [SerializeField, Min(0f)] private float visualLeanAngle = 7f;
         [SerializeField] private Transform visual;
 
-        private static readonly Dictionary<string, int> _occupiedNodeCounts = new();
+        // 일반 방은 파티 단위로만 점유한다. 같은 파티의 멤버 수는 따로 세야 마지막 멤버가
+        // 떠날 때까지 뒤 파티를 막을 수 있다.
+        private static readonly Dictionary<string, Dictionary<int, int>> _occupiedNodeCounts = new();
+        private static int _nextPartyOccupancyId;
         private static readonly List<EnemyMover> _activeEnemies = new();
         public static IReadOnlyList<EnemyMover> ActiveEnemies => _activeEnemies;
 
@@ -35,6 +38,9 @@ namespace Code.Enemies
         private Vector3 _visualStartLocalEulerAngles;
         private bool _isTurning;
         private BattleAgent _battleAgent;
+        private int _partyOccupancyId;
+        private int _blockedNodeWaitTurns = 2;
+        private int _blockedNodeWaitCount;
 
         public Func<Node, bool> NodeArrived { get; set; }
         /// <summary>
@@ -52,22 +58,43 @@ namespace Code.Enemies
         public bool IsMoving => _isTurning;
         public NodeBattlefield CurrentBattlefield => _battleAgent != null ? _battleAgent.Battlefield : null;
 
+        /// <summary>새 스폰 그룹에 붙일, 실행 중 유일한 파티 점유 식별자를 만든다.</summary>
+        public static int CreatePartyOccupancyId()
+        {
+            return ++_nextPartyOccupancyId;
+        }
+
+        /// <summary>같은 그룹의 멤버가 일반 노드를 함께 점유하도록 식별자를 설정한다.</summary>
+        public void ConfigurePartyOccupancy(int partyOccupancyId)
+        {
+            _partyOccupancyId = partyOccupancyId > 0
+                ? partyOccupancyId
+                : CreatePartyOccupancyId();
+        }
+
+        /// <summary>막힌 일반 노드 앞에서 우회 탐색 전까지 기다릴 이동 턴 수를 설정한다.</summary>
+        public void ConfigureBlockedNodeWaitTurns(int turns)
+        {
+            _blockedNodeWaitTurns = Mathf.Max(1, turns);
+        }
+
         public void Initialize(Node startNode)
         {
             CacheVisualPose();
             _battleAgent ??= GetComponent<BattleAgent>();
 
             if (_currentNode?.Data != null)
-                VacateNode(_currentNode.Data.Id);
+                VacateNode(_currentNode, PartyOccupancyId);
 
             _currentNode = startNode;
             _visitedNodes.Clear();
+            _blockedNodeWaitCount = 0;
 
             if (_currentNode == null)
                 return;
 
             _visitedNodes.Add(_currentNode.Data.Id);
-            OccupyNode(_currentNode.Data.Id);
+            OccupyNode(_currentNode, PartyOccupancyId);
             transform.position = InitialSpawnPosition ?? GetEnemyPosition(_currentNode);
             InitialSpawnPosition = null;
             TryEnterBattlefield(_currentNode);
@@ -114,15 +141,15 @@ namespace Code.Enemies
 
                 var nextNode = path[1];
                 if (_currentNode.Data != null)
-                    VacateNode(_currentNode.Data.Id);
+                    VacateNode(_currentNode, PartyOccupancyId);
                 if (nextNode.Data != null)
-                    OccupyNode(nextNode.Data.Id);
+                    OccupyNode(nextNode, PartyOccupancyId);
                 _currentNode = nextNode;
                 yield return SmoothMove();
             }
 
             if (_currentNode?.Data != null)
-                VacateNode(_currentNode.Data.Id);
+                VacateNode(_currentNode, PartyOccupancyId);
             _currentNode = null;
 
             var distance = Vector3.Distance(transform.position, exitPosition);
@@ -164,8 +191,8 @@ namespace Code.Enemies
             _battleAgent?.BeginTraversal();
 
             var previousNodeId = _currentNode.Data.Id;
-            VacateNode(_currentNode.Data.Id);
-            OccupyNode(nextNode.Data.Id);
+            VacateNode(_currentNode, PartyOccupancyId);
+            OccupyNode(nextNode, PartyOccupancyId);
 
             _currentNode = nextNode;
             _visitedNodes.Add(_currentNode.Data.Id);
@@ -307,11 +334,25 @@ namespace Code.Enemies
             // 목적지는 저마다 다르다 — 보물을 노린 자는 금고로, 볼일이 있는 모험가는 그 시설로.
             var pathStep = SelectNextNodeByPathfinding(out var waitForPath);
             if (pathStep != null)
+            {
+                _blockedNodeWaitCount = 0;
                 return pathStep;
+            }
 
-            // 경로는 있는데 다음 칸이 붐빔(점유/정원 초과) → 딴 길로 새지 않고 이번 턴 대기(줄서기).
+            // 경로는 있는데 다음 칸이 붐비면 먼저 줄을 선다. 성격·예산별 한도를 넘기면
+            // 아래의 랜덤 배회 폴백으로 넘어가 다른 열린 길을 찾는다.
             if (waitForPath)
-                return null;
+            {
+                _blockedNodeWaitCount++;
+                if (_blockedNodeWaitCount <= _blockedNodeWaitTurns)
+                    return null;
+
+                _blockedNodeWaitCount = 0;
+            }
+            else
+            {
+                _blockedNodeWaitCount = 0;
+            }
 
             // 폴백: 목적지가 없거나(볼일을 마친 모험가) 경로가 완전히 막힌 경우 랜덤 배회(벽 노드는 제외).
             var unvisitedFree = new List<Node>();
@@ -323,7 +364,7 @@ namespace Code.Enemies
                 if (node == null || node.IsPassBlocked)
                     continue;
 
-                if (IsNodeOccupied(id))
+                if (IsNodeOccupied(node, PartyOccupancyId))
                     continue;
 
                 var battlefield = node.GetComponent<NodeBattlefield>();
@@ -392,7 +433,7 @@ namespace Code.Enemies
             foreach (var id in _currentNode.Data.ConnectedNodeIds)
             {
                 var node = ResolveNodeByDataId(id);
-                if (node == null || node.IsPassBlocked || IsNodeOccupied(id))
+                if (node == null || node.IsPassBlocked || IsNodeOccupied(node, PartyOccupancyId))
                     continue;
 
                 var battlefield = node.GetComponent<NodeBattlefield>();
@@ -431,43 +472,79 @@ namespace Code.Enemies
             return null;
         }
 
-        /// <summary>
-        /// 방 하나에 들어갈 수 있는 침입자 수.
-        ///
-        /// 예전에는 한 마리라도 있으면 다음 침입자가 들어가지 못하고 줄을 섰다. 그래서 스무 마리가
-        /// 오는 날에도 화면에는 한 마리씩 줄줄이 지나갈 뿐, 무리가 몰려오는 그림이 나오지 않았다.
-        ///
-        /// <see cref="NodeBattlefield"/>가 이미 팀당 정원을 들고 있으므로 같은 값으로 맞춘다.
-        /// 두 곳에서 다른 수를 세면 전투에는 못 끼는데 자리는 차지하는 침입자가 생긴다.
-        /// </summary>
-        private const int MaxEnemiesPerNode = 2;
+        private int PartyOccupancyId
+        {
+            get
+            {
+                if (_partyOccupancyId <= 0)
+                    _partyOccupancyId = CreatePartyOccupancyId();
 
-        private static bool IsNodeOccupied(string nodeId)
+                return _partyOccupancyId;
+            }
+        }
+
+        private static bool IsNodeOccupied(Node node, int partyOccupancyId)
+        {
+            if (node == null || node.HasInstalledBuilding || node.Data == null)
+                return false;
+
+            return IsNodeOccupied(node.Data.Id, partyOccupancyId);
+        }
+
+        private static bool IsNodeOccupied(string nodeId, int partyOccupancyId)
         {
             return !string.IsNullOrEmpty(nodeId)
-                   && _occupiedNodeCounts.TryGetValue(nodeId, out var count)
-                   && count >= MaxEnemiesPerNode;
+                   && _occupiedNodeCounts.TryGetValue(nodeId, out var parties)
+                   && parties.Count > 0
+                   && !parties.ContainsKey(partyOccupancyId);
         }
 
-        private static void OccupyNode(string nodeId)
+        private static void OccupyNode(string nodeId, int partyOccupancyId)
         {
-            if (string.IsNullOrEmpty(nodeId))
+            if (string.IsNullOrEmpty(nodeId) || partyOccupancyId <= 0)
                 return;
 
-            _occupiedNodeCounts.TryGetValue(nodeId, out var count);
-            _occupiedNodeCounts[nodeId] = count + 1;
+            if (!_occupiedNodeCounts.TryGetValue(nodeId, out var parties))
+            {
+                parties = new Dictionary<int, int>();
+                _occupiedNodeCounts.Add(nodeId, parties);
+            }
+
+            parties.TryGetValue(partyOccupancyId, out var memberCount);
+            parties[partyOccupancyId] = memberCount + 1;
         }
 
-        private static void VacateNode(string nodeId)
+        private static void OccupyNode(Node node, int partyOccupancyId)
+        {
+            if (node == null || node.HasInstalledBuilding || node.Data == null)
+                return;
+
+            OccupyNode(node.Data.Id, partyOccupancyId);
+        }
+
+        private static void VacateNode(string nodeId, int partyOccupancyId)
         {
             if (string.IsNullOrEmpty(nodeId)
-                || !_occupiedNodeCounts.TryGetValue(nodeId, out var count))
+                || partyOccupancyId <= 0
+                || !_occupiedNodeCounts.TryGetValue(nodeId, out var parties)
+                || !parties.TryGetValue(partyOccupancyId, out var memberCount))
                 return;
 
-            if (count <= 1)
-                _occupiedNodeCounts.Remove(nodeId);
+            if (memberCount <= 1)
+                parties.Remove(partyOccupancyId);
             else
-                _occupiedNodeCounts[nodeId] = count - 1;
+                parties[partyOccupancyId] = memberCount - 1;
+
+            if (parties.Count == 0)
+                _occupiedNodeCounts.Remove(nodeId);
+        }
+
+        private static void VacateNode(Node node, int partyOccupancyId)
+        {
+            if (node == null || node.HasInstalledBuilding || node.Data == null)
+                return;
+
+            VacateNode(node.Data.Id, partyOccupancyId);
         }
 
         private Vector3 GetEnemyPosition(Node node)
@@ -555,7 +632,7 @@ namespace Code.Enemies
             _activeEnemies.Remove(this);
 
             if (_currentNode?.Data != null)
-                VacateNode(_currentNode.Data.Id);
+                VacateNode(_currentNode, PartyOccupancyId);
 
             CurrentBattlefield?.Leave(_battleAgent);
 

@@ -123,5 +123,33 @@ namespace Code.Enemies
 
         public static int ResolveGreedKnightAttackBonus(int totalFacilityGold) =>
             Mathf.Max(0, totalFacilityGold) / 20;
+
+        /// <summary>
+        /// 더 큰 보상을 기대하는 방문객일수록 오래 기다리고, 겁쟁이는 빠르게 다른 길을 찾는다.
+        /// 이동 턴 기준이라 프레임 속도나 이동 연출 시간에 영향을 받지 않는다.
+        /// </summary>
+        public static int ResolveBlockedNodeWaitTurns(
+            AdventurerTrait trait,
+            AdventurerVisitPurpose purpose,
+            int expectedReward)
+        {
+            var turns = 2;
+            turns += purpose switch
+            {
+                AdventurerVisitPurpose.Shopping => 1,
+                AdventurerVisitPurpose.EquipmentUpgrade => 1,
+                AdventurerVisitPurpose.TreasureHunt => 2,
+                _ => 0
+            };
+            turns += Mathf.Clamp(expectedReward / 20, 0, 2);
+            turns += trait switch
+            {
+                AdventurerTrait.Coward => -1,
+                AdventurerTrait.Priest => 1,
+                _ => 0
+            };
+
+            return Mathf.Clamp(turns, 1, 6);
+        }
     }
 }
