@@ -8,10 +8,10 @@ using UnityEngine;
 namespace Code.Manager
 {
     /// <summary>
-    /// 쓰러진 부하를 시간이 지나면 다시 세운다. 되살릴 때 값을 치르고, 금화가 모자라면 빚이 된다.
+    /// 쓰러진 부하를 시간이 지나면 다시 세운다. 부활 마력이 모자라면 먼저 쓰러진 순서로 기다린다.
     ///
     /// 부하를 영영 잃게 두면 한 번 밀린 판이 돌아올 수 없다. 반대로 공짜로 돌려주면
-    /// 쓰러지는 것이 아무 일도 아니게 된다. 그래서 손실을 없애는 대신 청산일로 미룬다.
+    /// 쓰러지는 것이 아무 일도 아니게 된다. 그래서 손실을 없애는 대신 회복될 마력을 기다리게 한다.
     /// </summary>
     public class UnitRevivalSystem : MonoBehaviour
     {
@@ -28,19 +28,33 @@ namespace Code.Manager
         [SerializeField, Min(0), Tooltip("레벨 한 칸마다 더 붙는 비용. 아껴 키운 부하일수록 비싸게 돌아온다.")]
         private int costPerLevel = 8;
 
+        [Header("Revival Mana")]
+        [SerializeField, Min(1), Tooltip("부활에만 쓰는 마력의 최대량. 배치 슬롯 마력과 별개다.")]
+        private int maxRevivalMana = 30;
+
+        [SerializeField, Min(0f), Tooltip("초당 자연 회복하는 부활 마력.")]
+        private float revivalManaRegenPerSecond = 1f;
+
         [SerializeField, Min(0.1f), Tooltip("쓰러진 부하를 찾는 주기(초). 매 프레임 뒤질 이유가 없다.")]
         private float scanInterval = 0.5f;
 
         /// <summary>되살리기를 기다리는 부하와 남은 시간.</summary>
         private readonly Dictionary<Unit, float> _pending = new();
 
+        /// <summary>먼저 쓰러진 부하부터 부활 마력을 받도록 지키는 FIFO 순서.</summary>
+        private readonly List<Unit> _revivalOrder = new();
+
         /// <summary>훑는 동안 사전을 고치지 않으려고 쓰는 임시 목록. 매번 새로 만들지 않는다.</summary>
-        private readonly List<Unit> _finished = new();
         private readonly List<Unit> _lost = new();
+        private readonly List<Unit> _pendingUnits = new();
 
         private float _scanTimer;
+        private float _currentRevivalMana;
+        private int _lastPublishedRevivalMana = -1;
 
         public int PendingCount => _pending.Count;
+        public int CurrentRevivalMana => Mathf.FloorToInt(_currentRevivalMana);
+        public int MaxRevivalMana => maxRevivalMana;
 
         /// <summary>그 부하를 되살리는 데 드는 값. 상태창이 같은 숫자를 보여줘야 한다.</summary>
         public int GetRevivalCost(Unit unit)
@@ -66,6 +80,8 @@ namespace Code.Manager
             }
 
             Current = this;
+            _currentRevivalMana = maxRevivalMana;
+            RaiseRevivalManaChanged();
         }
 
         private void OnDestroy()
@@ -76,6 +92,7 @@ namespace Code.Manager
 
         private void Update()
         {
+            RegenerateRevivalMana(Time.deltaTime);
             TickPending(Time.deltaTime);
 
             _scanTimer -= Time.deltaTime;
@@ -91,12 +108,15 @@ namespace Code.Manager
             if (_pending.Count == 0)
                 return;
 
-            _finished.Clear();
             _lost.Clear();
+            _pendingUnits.Clear();
 
             foreach (var entry in _pending)
+                _pendingUnits.Add(entry.Key);
+
+            for (var i = 0; i < _pendingUnits.Count; i++)
             {
-                var unit = entry.Key;
+                var unit = _pendingUnits[i];
                 if (unit == null)
                 {
                     _lost.Add(unit);
@@ -110,30 +130,65 @@ namespace Code.Manager
                     continue;
                 }
 
-                var remaining = entry.Value - deltaTime;
-                if (remaining <= 0f)
-                    _finished.Add(unit);
-                else
-                    _pending[unit] = remaining;
+                _pending[unit] = Mathf.Max(0f, _pending[unit] - deltaTime);
             }
 
             foreach (var unit in _lost)
-                _pending.Remove(unit);
-
-            foreach (var unit in _finished)
             {
                 _pending.Remove(unit);
-                Revive(unit);
+                _revivalOrder.Remove(unit);
+            }
+
+            TryReviveReadyUnits();
+        }
+
+        private void TryReviveReadyUnits()
+        {
+            while (_revivalOrder.Count > 0)
+            {
+                var unit = _revivalOrder[0];
+                if (unit == null || !unit.IsIncapacitated || !_pending.TryGetValue(unit, out var remaining))
+                {
+                    _pending.Remove(unit);
+                    _revivalOrder.RemoveAt(0);
+                    continue;
+                }
+
+                if (remaining > 0f)
+                    return;
+
+                var cost = GetRevivalCost(unit);
+                if (CurrentRevivalMana < cost)
+                    return;
+
+                _currentRevivalMana -= cost;
+                _pending.Remove(unit);
+                _revivalOrder.RemoveAt(0);
+                unit.Revive();
+                RaiseRevivalManaChanged();
+                costEventChannel?.RaiseEvent(new UnitRevivedEvent(unit, cost, CurrentRevivalMana));
             }
         }
 
-        private void Revive(Unit unit)
+        private void RegenerateRevivalMana(float deltaTime)
         {
-            var cost = GetRevivalCost(unit);
-            var borrowed = CostManager.Current != null ? CostManager.Current.ChargeOrBorrow(cost) : 0;
+            if (_currentRevivalMana >= maxRevivalMana || revivalManaRegenPerSecond <= 0f)
+                return;
 
-            unit.Revive();
-            costEventChannel?.RaiseEvent(new UnitRevivedEvent(unit, cost, borrowed));
+            _currentRevivalMana = Mathf.Min(
+                maxRevivalMana,
+                _currentRevivalMana + revivalManaRegenPerSecond * deltaTime);
+            RaiseRevivalManaChanged();
+        }
+
+        private void RaiseRevivalManaChanged()
+        {
+            var roundedMana = CurrentRevivalMana;
+            if (_lastPublishedRevivalMana == roundedMana)
+                return;
+
+            _lastPublishedRevivalMana = roundedMana;
+            costEventChannel?.RaiseEvent(new RevivalManaChangedEvent(roundedMana, maxRevivalMana));
         }
 
         /// <summary>
@@ -155,6 +210,7 @@ namespace Code.Manager
                         continue;
 
                     _pending.Add(unit, revivalSeconds);
+                    _revivalOrder.Add(unit);
                     costEventChannel?.RaiseEvent(new UnitDownedEvent(unit, revivalSeconds, GetRevivalCost(unit)));
                 }
             }

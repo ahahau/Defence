@@ -164,20 +164,31 @@ namespace Code.Events
         public int RevivalCost { get; }
     }
 
-    /// <summary>쓰러졌던 부하가 값을 치르고 다시 섰을 때.</summary>
+    /// <summary>쓰러졌던 부하가 부활 마력을 소비하고 다시 섰을 때.</summary>
     public class UnitRevivedEvent : GameEvent
     {
-        public UnitRevivedEvent(Unit unit, int goldCost, int borrowed)
+        public UnitRevivedEvent(Unit unit, int manaCost, int remainingMana)
         {
             Unit = unit;
-            GoldCost = goldCost;
-            Borrowed = borrowed;
+            ManaCost = manaCost;
+            RemainingMana = remainingMana;
         }
 
         public Unit Unit { get; }
-        public int GoldCost { get; }
+        public int ManaCost { get; }
+        public int RemainingMana { get; }
+    }
 
-        /// <summary>금화가 모자라 빚으로 넘어간 금액. 0이면 그 자리에서 다 냈다.</summary>
-        public int Borrowed { get; }
+    /// <summary>부활용 마력의 현재량 또는 최대량이 바뀌었을 때.</summary>
+    public class RevivalManaChangedEvent : GameEvent
+    {
+        public RevivalManaChangedEvent(int currentMana, int maxMana)
+        {
+            CurrentMana = currentMana;
+            MaxMana = maxMana;
+        }
+
+        public int CurrentMana { get; }
+        public int MaxMana { get; }
     }
 }
