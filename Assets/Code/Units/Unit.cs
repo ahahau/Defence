@@ -114,6 +114,7 @@ namespace Code.Units
         private static readonly object PolicyStatKey = new();
 
         private MoralePolicyManager _policyManager;
+        private float _nightRecoveryTimer;
 
         protected override void Awake()
         {
@@ -174,6 +175,25 @@ namespace Code.Units
             }
 
             HandlePolicyCombatModifiersChanged();
+        }
+
+        private void Update()
+        {
+            // 밤에는 싸우지 않는 부하만 천천히 회복한다. 대상이 남아 있으면 전투 중으로 보고
+            // 회복을 멈춰, 맞으면서 버티는 무한 회복이 되지 않게 한다.
+            if (DayManager.Current == null || DayManager.Current.Phase != DayManager.OperationPhase.Night
+                || health == null || !health.IsAlive || combatant == null || combatant.Target != null)
+            {
+                _nightRecoveryTimer = 0f;
+                return;
+            }
+
+            _nightRecoveryTimer += Time.deltaTime;
+            if (_nightRecoveryTimer < 1f)
+                return;
+
+            _nightRecoveryTimer = 0f;
+            health.Heal(Mathf.Max(1, Mathf.CeilToInt(health.MaxHealth * 0.02f)));
         }
 
         private void HandlePolicyCombatModifiersChanged()

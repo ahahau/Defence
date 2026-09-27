@@ -7,6 +7,7 @@ namespace Code.Manager
 {
     public class DayManager : MonoBehaviour
     {
+        public enum OperationPhase { Standby, Day, Night }
         public static DayManager Current { get; private set; }
 
         [SerializeField] private GameEventChannelSO dayEventChannel;
@@ -17,7 +18,9 @@ namespace Code.Manager
 
         private int currentDay;
         private bool _isStandby = true;
+        private OperationPhase _phase = OperationPhase.Standby;
         public bool IsStandby => _isStandby;
+        public OperationPhase Phase => _phase;
 
         /// <summary>
         /// 지금 던전에 손을 댈 수 있는 시간인가. 대기 중이거나, 영업 중이라도 시계를 멈춰 둔 동안.
@@ -50,6 +53,7 @@ namespace Code.Manager
         public int NextWaveDay => currentDay + 1;
         public event Action<int> DayChanged;
         public event Action<int> DayPreviewChanged;
+        public event Action<OperationPhase> PhaseChanged;
 
         /// <summary>이번 주의 몇째 날인가. 1부터 <see cref="WeekLength"/>까지. 시작 전이면 0.</summary>
         public int DayOfWeek => DayOfWeekOf(currentDay);
@@ -112,6 +116,7 @@ namespace Code.Manager
                 return;
 
             _isStandby = false;
+            SetPhase(OperationPhase.Day);
             currentDay = nextDay;
             dayEventChannel.RaiseEvent(new DayChangedEvent(currentDay));
             DayChanged?.Invoke(currentDay);
@@ -131,6 +136,7 @@ namespace Code.Manager
         private void HandleWaveEnded(WaveEndedEvent evt)
         {
             _isStandby = true;
+            SetPhase(OperationPhase.Standby);
             StartCoroutine(SaveAfterWave());
         }
 
@@ -144,7 +150,17 @@ namespace Code.Manager
         {
             currentDay = Mathf.Max(0, completedDay);
             _isStandby = true;
+            SetPhase(OperationPhase.Standby);
             dayEventChannel?.RaiseEvent(new DayPreviewChangedEvent(NextWaveDay, 0f));
+        }
+
+        /// <summary>웨이브 진행기가 하루 중 어느 구간인지 알린다. 시간대 규칙은 이 상태를 기준으로만 읽는다.</summary>
+        public void SetPhase(OperationPhase phase)
+        {
+            if (_phase == phase)
+                return;
+            _phase = phase;
+            PhaseChanged?.Invoke(_phase);
         }
     }
 }

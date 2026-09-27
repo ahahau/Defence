@@ -3,7 +3,9 @@ using System.Collections;
 using Code.Core;
 using GameLib.Entity.Stats;
 using Code.Events;
+using Code.Manager;
 using Code.StatusEffects;
+using Code.Units;
 using MoreMountains.Feedbacks;
 using UnityEngine;
 
@@ -282,7 +284,8 @@ namespace Code.Combat
                         }
 
                         PlayAttackFeedback(transform.position, target.transform.position);
-                        target.Health.TakeDamage(ResolveAttackDamage(target, out var isCritical), isCritical);
+                        var damage = ResolveAttackDamage(target, out var isCritical);
+                        target.Health.TakeDamage(ApplyNightUnitMitigation(target, damage), isCritical);
                         TryApplyAttackStatusEffect(target);
                         AttackLanded?.Invoke();
                     }
@@ -400,6 +403,15 @@ namespace Code.Combat
             target == null
                 ? Mathf.Max(1, damage)
                 : CombatFormula.ApplyDefense(damage, target.Defense);
+
+        private static int ApplyNightUnitMitigation(Combatant target, int damage)
+        {
+            if (damage <= 0 || target == null || target.GetComponent<Unit>() == null
+                || DayManager.Current == null || DayManager.Current.Phase != DayManager.OperationPhase.Night)
+                return damage;
+
+            return Mathf.Max(1, Mathf.CeilToInt(damage * 0.9f));
+        }
 
         private float ResolveAttackInterval()
         {

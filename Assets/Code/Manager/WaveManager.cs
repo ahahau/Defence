@@ -44,6 +44,11 @@ namespace Code.Manager
         private float maxSpawnHoldSeconds = 6f;
         [SerializeField, Min(0f), Tooltip("파티원이 서로 겹치지 않게 흩어지는 대형 반경")]
         private float formationSpread = 0.35f;
+        [Header("Day / Night Pace")]
+        [SerializeField, Range(0.1f, 0.9f), Tooltip("하루 방문객 중 낮에 들어오는 비율. 나머지는 밤에 들어온다.")]
+        private float daytimeSpawnShare = 0.7f;
+        [SerializeField, Min(1f), Tooltip("밤 스폰 간격 배율. 밤에는 적은 파티가 더 느슨하게 들어온다.")]
+        private float nightSpawnIntervalMultiplier = 1.6f;
         [SerializeField, Min(0)] private int treasuryGoldLoss = 10;
 
         [Header("Enemy Level Scaling")]
@@ -395,6 +400,9 @@ namespace Code.Manager
 
             var spawnTimer = 0f;
             var holdTimer = 0f;
+            // 하루 방문객의 앞 절반은 낮, 뒤 절반은 밤으로 본다. 실제 시간 대신 스폰 진행도를
+            // 기준으로 잡아 입구 전투 때문에 스폰이 잠시 밀려도 밤 전환이 엉뚱하게 앞서지 않는다.
+            var nightAtRemainingSpawns = Mathf.CeilToInt(adjustedEnemyCount * (1f - daytimeSpawnShare));
 
             while (_isWaveRunning)
             {
@@ -423,18 +431,23 @@ namespace Code.Manager
 
                 spawnTimer += Time.deltaTime;
 
-                if (spawnTimer >= (spawnAsGroup ? _currentGroupInterval : spawnInterval))
+                var isNight = DayManager.Current != null && DayManager.Current.Phase == DayManager.OperationPhase.Night;
+                var activeSpawnInterval = spawnInterval * (isNight ? nightSpawnIntervalMultiplier : 1f);
+                if (spawnTimer >= activeSpawnInterval)
                 {
                     spawnTimer = 0f;
                     // 한 번 내보냈으니 미룰 여유를 다시 준다. 교착일 때는 (간격 + 상한) 속도로 흘러간다.
                     holdTimer = 0f;
                     if (spawnAsGroup)
-                        SpawnNextGroup(spawnInterval);
+                        SpawnNextGroup(activeSpawnInterval);
                     else
                         SpawnNextEnemyIfNeeded(false);
                 }
 
                 RemoveMissingEnemies();
+                if (DayManager.Current != null && DayManager.Current.Phase == DayManager.OperationPhase.Day
+                    && _remainingSpawns <= nightAtRemainingSpawns)
+                    DayManager.Current.SetPhase(DayManager.OperationPhase.Night);
                 CompleteWaveIfCleared(false);
             }
 
@@ -489,6 +502,7 @@ namespace Code.Manager
         private IEnumerator SpawnGroupRoutine(int groupSize, float spawnInterval)
         {
             var spawned = 0;
+            var partyOccupancyId = EnemyMover.CreatePartyOccupancyId();
 
             for (var i = 0; i < groupSize; i++)
             {
@@ -501,7 +515,7 @@ namespace Code.Manager
                 if (i > 0 && IsEntryNodeInCombat())
                     break;
 
-                if (!SpawnEnemy(FormationOffsetFor(i, groupSize)))
+                if (!SpawnEnemy(FormationOffsetFor(i, groupSize), null, partyOccupancyId))
                     break;
 
                 spawned++;
@@ -535,7 +549,10 @@ namespace Code.Manager
         private int RegularSpawnCount => Mathf.Max(0, _remainingSpawns - _reservedReinforcementSpawns);
         private bool HasRegularSpawnsPending => RegularSpawnCount > 0;
 
-        private bool SpawnEnemy(Vector3 formationOffset, EnemyDataSO forcedData = null)
+        private bool SpawnEnemy(
+            Vector3 formationOffset,
+            EnemyDataSO forcedData = null,
+            int partyOccupancyId = 0)
         {
             if (_entryNode == null || _remainingSpawns <= 0)
                 return false;
@@ -598,6 +615,8 @@ namespace Code.Manager
             {
                 enemy.Mover.FormationOffset = formationOffset;
                 enemy.Mover.InitialSpawnPosition = spawnPos;
+                if (partyOccupancyId > 0)
+                    enemy.Mover.ConfigurePartyOccupancy(partyOccupancyId);
             }
 
             enemy.Initialize(_entryNode, costEventChannel, treasuryGoldLoss, nodeEventChannel);
@@ -826,13 +845,14 @@ namespace Code.Manager
         private IEnumerator SpawnBossReinforcements(AdventurerPartySO party)
         {
             var count = _reservedReinforcementSpawns;
+            var partyOccupancyId = EnemyMover.CreatePartyOccupancyId();
             for (var i = 0; i < count; i++)
             {
                 if (!_isWaveRunning || _entryNode == null)
                     break;
 
                 var data = party.Members[i % party.Members.Length];
-                if (data != null && SpawnEnemy(FormationOffsetFor(i, count), data))
+                if (data != null && SpawnEnemy(FormationOffsetFor(i, count), data, partyOccupancyId))
                     _reservedReinforcementSpawns--;
 
                 if (memberSpawnDelay > 0f && i < count - 1)
