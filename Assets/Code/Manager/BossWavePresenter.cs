@@ -3,6 +3,7 @@ using System.Text;
 using Code.Core;
 using Code.Progression;
 using Code.UI;
+using Code.UI.Toolkit;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -154,7 +155,7 @@ namespace Code.Manager
         /// <summary>최종 보스 웨이브 클리어 — 승리 패널을 띄우고 게임을 멈춘다.</summary>
         public void ShowVictoryPanel(int day)
         {
-            ShowRunEndPanel("던전 사수 성공!", $"{day}일간의 침공을 모두 막아냈습니다", finalBannerColor, true);
+            ShowRunEndPanel("던전 사수 성공!", $"{day}일간의 침공을 모두 막아냈습니다", finalBannerColor);
         }
 
         /// <summary>
@@ -166,21 +167,27 @@ namespace Code.Manager
             var headline = string.IsNullOrWhiteSpace(reason)
                 ? $"{day}일차에 던전이 무너졌습니다"
                 : reason;
-            ShowRunEndPanel("던전 함락", headline, defeatPanelColor, false);
+            ShowRunEndPanel("던전 함락", headline, defeatPanelColor);
         }
 
         /// <summary>
         /// 승리와 패배가 같은 패널을 쓴다. 둘이 동시에 뜰 일이 없고,
         /// 무엇이 남았는지 돌아보는 화면이라는 점에서 내용도 같다.
         /// </summary>
-        private void ShowRunEndPanel(string title, string headline, Color accent, bool clearSaveOnRetry)
+        private void ShowRunEndPanel(string title, string headline, Color accent)
         {
             policyChoicePanel?.CloseForRunEnd();
+            // 런 종료 뒤의 이어하기는 끝난 판을 되살릴 수 없다. 재시작 버튼을 누를 때까지
+            // 저장을 남기면 타이틀에서 끝난 런을 이어하는 모순이 생긴다.
+            Code.Persistence.RunSaveSystem.DeleteSave();
             // 판이 끝난 화면이라 푸는 쪽이 없다. 재시작할 때 씬이 새로 뜨며 정상으로 돌아간다.
             if (gameSpeedController != null)
                 gameSpeedController.Suspend(this);
             else
                 Time.timeScale = 0f;
+
+            if (RunEndToolkitView.TryShow(title, headline))
+                return;
 
             if (uiCanvas == null)
             {
@@ -205,8 +212,6 @@ namespace Code.Manager
             view.RetryButton.onClick.RemoveAllListeners();
             view.RetryButton.onClick.AddListener(() =>
             {
-                if (clearSaveOnRetry)
-                    Code.Persistence.RunSaveSystem.DeleteSave();
                 gameSpeedController?.ResetToNormal();
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
             });
@@ -218,6 +223,7 @@ namespace Code.Manager
             group.interactable = true;
             group.blocksRaycasts = true;
             group.DOFade(1f, 0.5f).SetUpdate(true).SetLink(root);
+            
         }
 
         /// <summary>

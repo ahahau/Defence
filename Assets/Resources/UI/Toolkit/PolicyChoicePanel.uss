@@ -1,0 +1,8 @@
+.policy-root { display: none; position: absolute; left: 0; top: 0; right: 0; bottom: 0; align-items: center; justify-content: center; background-color: var(--scrim); }
+.policy-card { width: 760px; max-width: 92%; padding: 26px; background-color: var(--surface); border-width: 2px; border-color: var(--edge); }
+.policy-title { color: var(--accent); font-size: 25px; -unity-font-style: bold; -unity-text-align: middle-center; }
+.policy-morale { color: var(--warn); font-size: 14px; -unity-text-align: middle-center; margin-top: 7px; }
+.policy-hint { color: var(--text-dim); font-size: 12px; -unity-text-align: middle-center; margin-top: 4px; margin-bottom: 16px; }
+.policy-list { flex-direction: row; justify-content: center; }
+.policy-choice { flex-grow: 1; flex-basis: 0; min-height: 170px; margin-left: 5px; margin-right: 5px; padding: 14px; color: var(--text-body); background-color: var(--surface-control); border-width: 1px; border-color: var(--edge-quiet); white-space: normal; -unity-text-align: upper-left; }
+.policy-choice:hover { color: var(--accent-soft); border-color: var(--edge); }

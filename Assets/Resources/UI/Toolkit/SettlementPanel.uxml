@@ -4,21 +4,28 @@
     <ui:VisualElement name="settlement-root" class="ui-theme settlement-root">
         <ui:VisualElement class="settlement-card">
             <ui:Label name="settlement-title" text="정산" class="settlement-title" />
+            <ui:VisualElement class="settlement-tabs">
+                <ui:Button name="summary-tab" text="이번 주 요약" class="settlement-tab" />
+                <ui:Button name="income-tab" text="수입 상세" class="settlement-tab" />
+                <ui:Button name="expense-tab" text="지출 상세" class="settlement-tab" />
+                <ui:Button name="loan-tab" text="계약 / 부채" class="settlement-tab" />
+                <ui:Button name="shop-tab" text="유닛 상점" class="settlement-tab" />
+            </ui:VisualElement>
             <ui:VisualElement class="settlement-columns">
                 <ui:ScrollView name="ledger-scroll" class="ledger-scroll" horizontal-scroller-visibility="Hidden">
-                    <ui:VisualElement class="ledger-pair">
-                        <ui:VisualElement class="ledger-column">
+                    <ui:VisualElement name="ledger-pair" class="ledger-pair">
+                        <ui:VisualElement name="income-column" class="ledger-column">
                             <ui:Label text="획득 금화" class="ledger-heading" />
                             <ui:VisualElement name="income-list" class="ledger-list is-gain" />
                             <ui:Label name="income-total" class="ledger-total income-total" />
                         </ui:VisualElement>
-                        <ui:VisualElement class="ledger-column">
+                        <ui:VisualElement name="expense-column" class="ledger-column">
                             <ui:Label text="차감 내역" class="ledger-heading" />
                             <ui:VisualElement name="expense-list" class="ledger-list is-loss" />
                             <ui:Label name="expense-total" class="ledger-total expense-total" />
                         </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:VisualElement class="summary-block">
+                    <ui:VisualElement name="summary-block" class="summary-block">
                         <ui:Label name="net-label" class="net-label" />
                         <ui:Label name="deferred-label" class="deferred-label" />
                         <ui:VisualElement name="note-list" class="note-list" />
@@ -27,13 +34,19 @@
                             <ui:VisualElement name="fatigue-list" class="fatigue-list" />
                         </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:VisualElement class="unlock-section">
+                    <ui:VisualElement name="unlock-section" class="unlock-section">
                         <ui:VisualElement class="unlock-headers">
                             <ui:Button name="unit-unlock-header" class="unlock-header" />
                             <ui:Button name="building-unlock-header" class="unlock-header" />
                         </ui:VisualElement>
                         <ui:ScrollView name="unit-unlock-list" class="unlock-list" horizontal-scroller-visibility="Hidden" />
                         <ui:ScrollView name="building-unlock-list" class="unlock-list" horizontal-scroller-visibility="Hidden" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="shop-section" class="unlock-section">
+                        <ui:Label text="이번 주 지원자" class="section-heading" />
+                        <ui:Label name="shop-status" class="shop-status" />
+                        <ui:VisualElement name="shop-list" class="loan-product-list" />
+                        <ui:Label name="shop-feedback" class="shop-feedback" />
                     </ui:VisualElement>
                 </ui:ScrollView>
                 <ui:ScrollView name="loan-pane" class="loan-pane" horizontal-scroller-visibility="Hidden">

@@ -1,0 +1,7 @@
+.run-end-root { display:none; position:absolute; left:0; top:0; right:0; bottom:0; align-items:center; justify-content:center; background-color:var(--scrim); }
+.run-end-card { width:520px; padding:30px; background-color:var(--surface); border-width:2px; border-color:var(--edge); align-items:center; }
+.run-end-title { color:var(--accent); font-size:28px; -unity-font-style:bold; -unity-text-align:middle-center; }
+.run-end-headline { color:var(--text-body); font-size:14px; white-space:normal; -unity-text-align:middle-center; margin-top:10px; }
+.run-end-divider { height:1px; align-self:stretch; background-color:var(--edge-quiet); margin-top:18px; margin-bottom:14px; }
+.run-end-summary { color:var(--text-dim); font-size:13px; white-space:normal; -unity-text-align:middle-center; }
+.run-end-retry { width:260px; height:42px; margin-top:22px; color:var(--text); background-color:var(--confirm); border-width:1px; border-color:var(--confirm-edge); }

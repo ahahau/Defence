@@ -1,16 +1,102 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
     <Style src="Theme.uss" />
     <Style src="GameplayHud.uss" />
-    <ui:VisualElement class="ui-theme hud-root">
-        <ui:VisualElement class="economy-card">
-            <ui:Label name="gold-label" class="gold-label" text="운영 자금 0G" />
-            <ui:Label name="debt-label" class="debt-label" text="빚 없음" />
-            <ui:Label name="day-label" class="day-label" text="DAY 0 · 영업 준비" />
+    <ui:VisualElement name="gameplay-root" class="ui-theme gameplay-root">
+        <ui:VisualElement class="top-bar">
+            <ui:VisualElement class="brand-block">
+                <ui:Label text="겨울 던전" class="brand-title" />
+                <ui:Label name="day-label" text="영업 준비" class="brand-subtitle" />
+            </ui:VisualElement>
+            <ui:VisualElement class="status-strip">
+                <ui:VisualElement class="status-chip is-gold"><ui:Label text="운영 자금" class="chip-title" /><ui:Label name="gold-label" text="0G" class="chip-value" /></ui:VisualElement>
+                <ui:VisualElement name="debt-chip" class="status-chip is-debt"><ui:Label text="부채 / 정산" class="chip-title" /><ui:Label name="debt-label" text="빚 없음" class="chip-value" /></ui:VisualElement>
+                <ui:VisualElement class="status-chip is-magic"><ui:Label text="마력" class="chip-title" /><ui:Label name="magic-label" text="0 / 0" class="chip-value" /></ui:VisualElement>
+                <ui:VisualElement class="status-chip is-grade"><ui:Label text="던전 등급" class="chip-title" /><ui:Label name="grade-label" text="등급 0" class="chip-value" /></ui:VisualElement>
+                <ui:VisualElement class="status-chip is-threat"><ui:Label text="침입 위협" class="chip-title" /><ui:Label name="threat-label" text="대기 중" class="chip-value" /></ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement class="speed-card">
+                <ui:Button name="pause-button" text="일시정지" class="speed-button" />
+                <ui:Button name="normal-button" text="1×" class="speed-button" />
+                <ui:Button name="fast-button" text="2×" class="speed-button" />
+            </ui:VisualElement>
         </ui:VisualElement>
-        <ui:VisualElement class="speed-card">
-            <ui:Button name="pause-button" text="Ⅱ" class="speed-button" />
-            <ui:Button name="normal-button" text="1×" class="speed-button" />
-            <ui:Button name="fast-button" text="2×" class="speed-button" />
+        <ui:VisualElement class="map-overlay">
+            <ui:VisualElement name="selection-popover" class="selection-popover">
+                <ui:Label name="selection-title" text="방을 선택하면 현재 상태를 빠르게 확인합니다" class="selection-title" />
+                <ui:Button name="selection-detail-button" text="상세 보기" class="quiet-button" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="node-detail-panel" class="node-detail-panel">
+            <ui:VisualElement class="detail-heading"><ui:Label name="node-detail-title" text="방 상세" class="detail-title" /><ui:Button name="node-detail-close" text="닫기" class="quiet-button" /></ui:VisualElement>
+            <ui:Label name="node-detail-state" text="방을 선택하세요" class="detail-state" />
+            <ui:VisualElement class="detail-divider" />
+            <ui:Label text="배치 현황" class="detail-section-title" />
+            <ui:Label name="node-detail-units" text="유닛 0 / 0" class="detail-line" />
+            <ui:Label name="node-detail-facility" text="시설 없음" class="detail-line" />
+            <ui:Label name="node-detail-traps" text="함정 없음" class="detail-line" />
+            <ui:VisualElement class="detail-divider" />
+            <ui:Label name="node-detail-hint" text="관리 모드에서 배치와 설치를 할 수 있습니다." class="detail-hint" />
+        </ui:VisualElement>
+        <ui:VisualElement name="installation-panel" class="installation-panel">
+            <ui:VisualElement class="detail-heading"><ui:Label name="installation-title" text="설치" class="detail-title" /><ui:Button name="installation-close" text="닫기" class="quiet-button" /></ui:VisualElement>
+            <ui:Label name="installation-hint" text="설치할 항목을 고르세요" class="detail-hint" />
+            <ui:ScrollView name="installation-list" class="installation-list" horizontal-scroller-visibility="Hidden" />
+        </ui:VisualElement>
+        <ui:VisualElement class="right-rail">
+            <ui:VisualElement class="rail-heading"><ui:Label text="침입 파티" class="rail-title" /><ui:Label name="party-summary-label" text="현재 0개" class="rail-count" /></ui:VisualElement>
+            <ui:ScrollView name="party-list" class="party-list" horizontal-scroller-visibility="Hidden" />
+            <ui:VisualElement class="rail-divider" />
+            <ui:Label text="최근 기록" class="rail-title log-title" />
+            <ui:ScrollView name="activity-log" class="activity-log" horizontal-scroller-visibility="Hidden" />
+        </ui:VisualElement>
+        <ui:VisualElement class="bottom-area">
+            <ui:VisualElement class="management-banner"><ui:Label name="management-label" text="영업 중 · 배치와 회수는 일시정지에서 가능합니다" class="management-label" /></ui:VisualElement>
+            <ui:VisualElement class="bottom-bar">
+                <ui:VisualElement class="action-group"><ui:Label text="던전 관리" class="action-group-title" /><ui:VisualElement class="action-buttons"><ui:Button name="build-action" text="건설" class="action-button" /><ui:Button name="unit-action" text="유닛 배치" class="action-button" /><ui:Button name="trap-action" text="함정" class="action-button" /><ui:Button name="facility-action" text="시설" class="action-button" /></ui:VisualElement></ui:VisualElement>
+                <ui:VisualElement class="unit-drawer"><ui:VisualElement class="drawer-heading"><ui:Label text="보유 유닛" class="action-group-title" /><ui:Button name="roster-button" text="목록 열기" class="quiet-button" /></ui:VisualElement><ui:Label name="roster-summary-label" text="보유 유닛을 불러오는 중" class="drawer-summary" /><ui:VisualElement name="unit-detail" class="unit-detail"><ui:Label name="unit-detail-name" text="유닛을 선택하세요" class="unit-detail-name" /><ui:Label name="unit-detail-state" text="" class="unit-detail-state" /></ui:VisualElement><ui:ScrollView name="roster-list" class="roster-list" horizontal-scroller-visibility="Hidden" /></ui:VisualElement>
+                <ui:VisualElement class="action-group time-actions"><ui:Label text="운영" class="action-group-title" /><ui:VisualElement class="action-buttons"><ui:Button name="settlement-action" text="정산 정보" class="action-button" /><ui:Button name="pause-menu-button" text="메뉴" class="action-button" /></ui:VisualElement></ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="toast-host" class="toast-host" />
+        <ui:VisualElement name="pause-menu-overlay" class="pause-menu-overlay">
+            <ui:VisualElement class="pause-menu-card">
+                <ui:Label text="운영 일시정지" class="pause-menu-title" />
+                <ui:Label name="pause-menu-status" text="운영을 재개하거나 설정을 조정할 수 있습니다." class="pause-menu-status" />
+                <ui:Label name="pause-run-summary" text="현재 런 정보를 불러오는 중입니다." class="pause-run-summary" />
+                <ui:Button name="resume-button" text="운영 재개" class="pause-menu-button pause-menu-primary" />
+                <ui:Button name="pause-help-button" text="운영 도움말" class="pause-menu-button" />
+                <ui:Button name="pause-settings-button" text="음량 설정" class="pause-menu-button" />
+                <ui:Button name="restart-run-button" text="이번 런 다시 시작" class="pause-menu-button" />
+                <ui:Button name="save-exit-button" text="저장 후 나가기" class="pause-menu-button pause-menu-danger" />
+            </ui:VisualElement>
+            <ui:VisualElement name="pause-settings-panel" class="pause-settings-card">
+                <ui:VisualElement class="detail-heading"><ui:Label text="음량 설정" class="detail-title" /><ui:Button name="close-pause-settings-button" text="닫기" class="quiet-button" /></ui:VisualElement>
+                <ui:Label text="효과음" class="pause-setting-label" />
+                <ui:Slider name="pause-sfx-slider" low-value="0" high-value="1" value="1" />
+                <ui:Label name="pause-sfx-value" class="pause-setting-value" />
+                <ui:Label text="음악" class="pause-setting-label" />
+                <ui:Slider name="pause-music-slider" low-value="0" high-value="1" value="1" />
+                <ui:Label name="pause-music-value" class="pause-setting-value" />
+            </ui:VisualElement>
+            <ui:VisualElement name="pause-help-panel" class="pause-help-card">
+                <ui:VisualElement class="detail-heading"><ui:Label text="운영 도움말" class="detail-title" /><ui:Button name="close-pause-help-button" text="닫기" class="quiet-button" /></ui:VisualElement>
+                <ui:VisualElement class="pause-help-tabs">
+                    <ui:Button name="help-basic-button" text="기본" class="pause-help-tab" />
+                    <ui:Button name="help-economy-button" text="경제" class="pause-help-tab" />
+                    <ui:Button name="help-party-button" text="파티" class="pause-help-tab" />
+                    <ui:Button name="help-build-button" text="건설" class="pause-help-tab" />
+                </ui:VisualElement>
+                <ui:Label name="pause-help-title" text="기본 조작" class="pause-help-title" />
+                <ui:Label name="pause-help-body" text="" class="pause-help-body" />
+            </ui:VisualElement>
+            <ui:VisualElement name="restart-confirm-panel" class="restart-confirm-card">
+                <ui:Label text="이번 런을 다시 시작할까요?" class="pause-help-title" />
+                <ui:Label text="현재 저장과 진행 중인 운영 기록이 삭제됩니다." class="pause-help-body" />
+                <ui:VisualElement class="restart-confirm-actions">
+                    <ui:Button name="cancel-restart-button" text="취소" class="pause-menu-button" />
+                    <ui:Button name="confirm-restart-button" text="삭제 후 재시작" class="pause-menu-button pause-menu-danger" />
+                </ui:VisualElement>
+            </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

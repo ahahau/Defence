@@ -1,0 +1,12 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="Theme.uss" />
+    <Style src="PolicyChoicePanel.uss" />
+    <ui:VisualElement name="policy-root" class="ui-theme policy-root">
+        <ui:VisualElement class="policy-card">
+            <ui:Label name="policy-title" text="운영 방침 선택" class="policy-title" />
+            <ui:Label name="policy-morale" text="민심 0" class="policy-morale" />
+            <ui:Label text="하나를 고르면 즉시 적용됩니다." class="policy-hint" />
+            <ui:VisualElement name="policy-list" class="policy-list" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -27,7 +27,7 @@ namespace Blade.Core
             _baseColor = goldText.color;
             _baseScale = goldText.transform.localScale;
         }
-
+        
         private void OnDisable()
         {
             ResetVisual();
@@ -46,12 +46,12 @@ namespace Blade.Core
                 var color = state.PendingNet > 0 ? "#5CE08A" : "#FF7A6B";
                 text += $"\n<size=70%><color={color}>정산 예정 {sign}{Mathf.Abs(state.PendingNet)}G</color></size>";
             }
-
+            
             if (state.Debt > 0)
                 text += $"\n<size=70%><color={ResolveDebtColor(state.DaysUntilSettlement)}>{BuildDebtLine(state)}</color></size>";
 
             goldText.text = text;
-
+            
             var delta = _hasValue ? state.Gold - _lastGold : 0;
             _lastGold = state.Gold;
             _hasValue = true;
@@ -85,7 +85,7 @@ namespace Blade.Core
         {
             if (goldText == null)
                 return;
-
+            
             var accent = delta > 0
                 ? new Color(0.36f, 1f, 0.52f, 1f)
                 : new Color(1f, 0.32f, 0.28f, 1f);

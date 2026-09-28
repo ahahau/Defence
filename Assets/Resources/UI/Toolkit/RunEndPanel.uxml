@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+ <Style src="Theme.uss" /><Style src="RunEndPanel.uss" />
+ <ui:VisualElement name="run-end-root" class="ui-theme run-end-root"><ui:VisualElement class="run-end-card">
+  <ui:Label name="run-end-title" class="run-end-title" /><ui:Label name="run-end-headline" class="run-end-headline" />
+  <ui:VisualElement class="run-end-divider" /><ui:Label name="run-end-summary" class="run-end-summary" />
+  <ui:Button name="run-end-retry" text="새 런 시작" class="run-end-retry" />
+ </ui:VisualElement></ui:VisualElement>
+</ui:UXML>

@@ -62,6 +62,8 @@ namespace Code.UI
         // 설치 방식마다 필요한 값을 하나의 요청으로 보관한다. 셀/엣지/중앙 설치가
         // 서로 다른 필드를 남겨 다음 요청에 섞이는 일을 막는다.
         private PendingBuildingInstall _pendingBuilding;
+        private bool _toolkitPlacementActive;
+        private bool _toolkitPlacementUsesPreview;
 
         private readonly struct PendingBuildingInstall
         {
@@ -409,6 +411,18 @@ namespace Code.UI
             ShowInstallCategory(InstallCategory.Unit);
         }
 
+        /// <summary>
+        /// UI Toolkit의 보유 유닛 목록이 선택한 유닛을 배치 대기 상태로 넘긴다.
+        /// 실제 배치·마력 결제·격자 클릭은 기존 도메인 경로를 그대로 써서 두 UI가 서로 다른
+        /// 유닛을 만들거나 로스터를 중복 차감하지 않게 한다.
+        /// </summary>
+        public bool TryBeginUnitPlacement(UnitDataSO unitData)
+        {
+            var wasChoosingCell = IsChoosingUnitCell;
+            HandleDeployRequested(unitData);
+            return !wasChoosingCell && IsChoosingUnitCell;
+        }
+
         public void ShowBuildingPanel()
         {
             ShowInstallCategory(InstallCategory.Building);
@@ -459,6 +473,38 @@ namespace Code.UI
         public void ShowTrapPanel()
         {
             ShowInstallCategory(InstallCategory.Trap);
+        }
+
+        /// <summary>
+        /// Toolkit 설치 목록이 사용할 수 있는 현재 노드의 항목만 내보낸다.
+        /// 카탈로그, 해금, 노드 수용량 검사는 기존 패널과 반드시 같아야 한다.
+        /// </summary>
+        public IEnumerable<BuildingDataSO> EnumerateToolkitInstallOptions(InstallCategory category)
+        {
+            if (_buildingCatalog == null)
+                yield break;
+
+            foreach (var buildingData in _buildingCatalog.EnumerateOptions())
+            {
+                if (IsVisibleBuildingOption(buildingData, category) && CanInstallBuilding(buildingData))
+                    yield return buildingData;
+            }
+        }
+
+        /// <summary>
+        /// Toolkit 카드에서 시작한 설치도 기존 미리보기·비용 결제 경로로 보낸다.
+        /// </summary>
+        public bool TryBeginBuildingPlacement(BuildingDataSO buildingData)
+        {
+            if (!IsManagementAllowed() || !CanInstallBuilding(buildingData))
+                return false;
+
+            _toolkitPlacementActive = true;
+            _toolkitPlacementUsesPreview = buildingData.InstallOnEdge
+                                           || BuildingPlacement.UsesGridCell(buildingData)
+                                           && _selectedNode?.TrapGrid?.HasFreeCell == true;
+            RequestBuildingInstall(buildingData);
+            return true;
         }
 
         public void ShowDecorationPanel()
@@ -1426,6 +1472,15 @@ namespace Code.UI
         /// <summary>배치 모드가 끝난 뒤(확정/취소) 설치 패널을 원래 카테고리로 복원한다 — 연속 설치용.</summary>
         private void RestoreInstallPanel(InstallCategory? category)
         {
+            if (_toolkitPlacementActive)
+            {
+                _toolkitPlacementActive = false;
+                _toolkitPlacementUsesPreview = false;
+                HideInstallPanels();
+                panelRoot?.SetActive(false);
+                return;
+            }
+
             RefreshBuildingInstallButtons();
 
             if (category.HasValue)
@@ -1496,6 +1551,7 @@ namespace Code.UI
             SetTitle($"골드 부족 ({evt.CurrentGold}/{evt.GoldAmount})");
             _pendingBuilding = default;
             RefreshBuildingInstallButtons();
+            FinishToolkitCentralPlacement();
         }
 
         private bool InstallPendingBuilding()
@@ -1515,6 +1571,7 @@ namespace Code.UI
                 || buildingData.Prefab == null)
             {
                 RefreshBuildingInstallButtons();
+                FinishToolkitCentralPlacement();
                 return false;
             }
 
@@ -1538,6 +1595,7 @@ namespace Code.UI
                 if (grid == null)
                 {
                     RefreshBuildingInstallButtons();
+                    FinishToolkitCentralPlacement();
                     return false;
                 }
 
@@ -1564,6 +1622,7 @@ namespace Code.UI
             if (node.HasAssignedBuilding)
             {
                 RefreshBuildingInstallButtons();
+                FinishToolkitCentralPlacement();
                 return false;
             }
 
@@ -1571,6 +1630,7 @@ namespace Code.UI
             if (building == null)
             {
                 RefreshBuildingInstallButtons();
+                FinishToolkitCentralPlacement();
                 return false;
             }
 
@@ -1582,7 +1642,17 @@ namespace Code.UI
             // 메뉴를 닫은 뒤 다시 갱신해야 작은 칸 설치 버튼이 즉시 돌아온다.
             RefreshInstallButtonState();
             ClearTutorialHighlight();
+            FinishToolkitCentralPlacement();
             return true;
+        }
+
+        private void FinishToolkitCentralPlacement()
+        {
+            if (!_toolkitPlacementActive || _toolkitPlacementUsesPreview)
+                return;
+
+            _toolkitPlacementActive = false;
+            _toolkitPlacementUsesPreview = false;
         }
 
         private void HandleDemolishClicked()

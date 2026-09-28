@@ -1,4 +1,5 @@
 using Blade.Core;
+using Code.UI;
 using UnityEngine;
 
 namespace Code.UI.Toolkit
@@ -18,15 +19,17 @@ namespace Code.UI.Toolkit
         }
 
         /// <summary>
-        /// 이번 전환 범위는 운영 자금 HUD와 배속 버튼뿐이다.
-        /// 나머지 UGUI 패널과 전투 조작은 계속 살아 있어 다음 단계에서 하나씩 옮길 수 있다.
+        /// HUD·배속·일시정지 메뉴는 Toolkit 문서가 소유한다.
+        /// 같은 ESC 입력을 받는 옛 설정 창은 꺼 두고, 전투와 노드 UGUI만 단계적으로 남긴다.
         /// </summary>
         private static void HideReplacedViews()
         {
-            foreach (var view in Object.FindObjectsByType<GoldCostView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            foreach (var view in Object.FindObjectsByType<GoldCostView>(FindObjectsInactive.Exclude))
                 view.gameObject.SetActive(false);
-            foreach (var view in Object.FindObjectsByType<TimeSpeedView>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            foreach (var view in Object.FindObjectsByType<TimeSpeedView>(FindObjectsInactive.Exclude))
                 view.gameObject.SetActive(false);
+            foreach (var view in Object.FindObjectsByType<SettingsPanelView>(FindObjectsInactive.Exclude))
+                view.enabled = false;
         }
     }
 }

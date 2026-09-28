@@ -42,6 +42,21 @@ namespace Code.UI.Toolkit
         private Button _borrowButton;
         private Label _loanFeedback;
         private Button _closeButton;
+        private Button _summaryTab;
+        private Button _incomeTab;
+        private Button _expenseTab;
+        private Button _loanTab;
+        private Button _shopTab;
+        private VisualElement _ledgerPair;
+        private VisualElement _incomeColumn;
+        private VisualElement _expenseColumn;
+        private VisualElement _summaryBlock;
+        private VisualElement _unlockSection;
+        private VisualElement _loanPane;
+        private VisualElement _shopSection;
+        private VisualElement _shopList;
+        private Label _shopStatus;
+        private Label _shopFeedback;
 
         /// <summary>등장 연출의 시작 상태. USS가 여기서 기본 상태로 되돌아가며 전환된다.</summary>
         private const string EnteringClass = "is-entering";
@@ -60,6 +75,7 @@ namespace Code.UI.Toolkit
 
             if (_closeButton != null)
                 _closeButton.clicked += Close;
+            RegisterTabs();
             if (_unitUnlockHeader != null)
                 _unitUnlockHeader.clicked += ToggleUnitUnlocks;
             if (_buildingUnlockHeader != null)
@@ -82,6 +98,7 @@ namespace Code.UI.Toolkit
         {
             if (_closeButton != null)
                 _closeButton.clicked -= Close;
+            UnregisterTabs();
             if (_unitUnlockHeader != null)
                 _unitUnlockHeader.clicked -= ToggleUnitUnlocks;
             if (_buildingUnlockHeader != null)
@@ -121,6 +138,21 @@ namespace Code.UI.Toolkit
             _borrowButton = _root.Q<Button>("borrow-button");
             _loanFeedback = _root.Q<Label>("loan-feedback");
             _closeButton = _root.Q<Button>("close-button");
+            _summaryTab = _root.Q<Button>("summary-tab");
+            _incomeTab = _root.Q<Button>("income-tab");
+            _expenseTab = _root.Q<Button>("expense-tab");
+            _loanTab = _root.Q<Button>("loan-tab");
+            _shopTab = _root.Q<Button>("shop-tab");
+            _ledgerPair = _root.Q<VisualElement>("ledger-pair");
+            _incomeColumn = _root.Q<VisualElement>("income-column");
+            _expenseColumn = _root.Q<VisualElement>("expense-column");
+            _summaryBlock = _root.Q<VisualElement>("summary-block");
+            _unlockSection = _root.Q<VisualElement>("unlock-section");
+            _loanPane = _root.Q<VisualElement>("loan-pane");
+            _shopSection = _root.Q<VisualElement>("shop-section");
+            _shopList = _root.Q<VisualElement>("shop-list");
+            _shopStatus = _root.Q<Label>("shop-status");
+            _shopFeedback = _root.Q<Label>("shop-feedback");
         }
 
         private void BindManagers()
@@ -177,7 +209,10 @@ namespace Code.UI.Toolkit
             FillNotes(report.Notes);
             FillFatigue(report.Fatigue);
             FillUnlocks();
+            FillShop();
+            SelectTab(SettlementTab.Summary);
             SetFeedback(string.Empty);
+            SetShopFeedback(string.Empty);
             RefreshLoanPane();
         }
 
@@ -518,6 +553,115 @@ namespace Code.UI.Toolkit
                 SetVisible(false);
         }
 
+        private void RegisterTabs()
+        {
+            if (_summaryTab != null) _summaryTab.clicked += ShowSummaryTab;
+            if (_incomeTab != null) _incomeTab.clicked += ShowIncomeTab;
+            if (_expenseTab != null) _expenseTab.clicked += ShowExpenseTab;
+            if (_loanTab != null) _loanTab.clicked += ShowLoanTab;
+            if (_shopTab != null) _shopTab.clicked += ShowShopTab;
+        }
+
+        private void UnregisterTabs()
+        {
+            if (_summaryTab != null) _summaryTab.clicked -= ShowSummaryTab;
+            if (_incomeTab != null) _incomeTab.clicked -= ShowIncomeTab;
+            if (_expenseTab != null) _expenseTab.clicked -= ShowExpenseTab;
+            if (_loanTab != null) _loanTab.clicked -= ShowLoanTab;
+            if (_shopTab != null) _shopTab.clicked -= ShowShopTab;
+        }
+
+        private void ShowSummaryTab() => SelectTab(SettlementTab.Summary);
+        private void ShowIncomeTab() => SelectTab(SettlementTab.Income);
+        private void ShowExpenseTab() => SelectTab(SettlementTab.Expense);
+        private void ShowLoanTab() => SelectTab(SettlementTab.Loan);
+        private void ShowShopTab() => SelectTab(SettlementTab.Shop);
+
+        private void SelectTab(SettlementTab tab)
+        {
+            SetDisplayed(_ledgerPair, tab == SettlementTab.Income || tab == SettlementTab.Expense);
+            SetDisplayed(_incomeColumn, tab == SettlementTab.Income);
+            SetDisplayed(_expenseColumn, tab == SettlementTab.Expense);
+            SetDisplayed(_summaryBlock, tab == SettlementTab.Summary);
+            SetDisplayed(_unlockSection, tab == SettlementTab.Summary);
+            SetDisplayed(_shopSection, tab == SettlementTab.Shop);
+            SetDisplayed(_loanPane, tab == SettlementTab.Loan);
+            SetTabSelected(_summaryTab, tab == SettlementTab.Summary);
+            SetTabSelected(_incomeTab, tab == SettlementTab.Income);
+            SetTabSelected(_expenseTab, tab == SettlementTab.Expense);
+            SetTabSelected(_loanTab, tab == SettlementTab.Loan);
+            SetTabSelected(_shopTab, tab == SettlementTab.Shop);
+        }
+
+        private static void SetTabSelected(Button button, bool selected) => button?.EnableInClassList("is-selected", selected);
+
+        private void FillShop()
+        {
+            if (_shopList == null)
+                return;
+
+            _shopList.Clear();
+            var roster = HiredUnitRoster.Current;
+            if (roster == null)
+            {
+                SetShopStatus("고용 명단을 불러오지 못했습니다.");
+                return;
+            }
+
+            SetShopStatus($"고용 중인 부하 {roster.TotalHiredCount}명 · 이번 정산에서만 계약할 수 있습니다.");
+            var hasCandidate = false;
+
+            foreach (var unit in roster.UnitCatalog)
+            {
+                if (unit == null || roster.GetCandidateCount(unit) <= 0)
+                    continue;
+
+                hasCandidate = true;
+                var candidate = unit;
+                var applicant = roster.PeekApplicant(candidate);
+                var daysLeft = roster.GetApplicantDaysLeft(candidate);
+                var button = new Button(() =>
+                {
+                    var hired = roster.TryRequestHire(candidate);
+                    SetShopFeedback(hired
+                        ? $"{candidate.Name}을(를) 고용했습니다. 배치 화면에서 사용할 수 있습니다."
+                        : "고용하지 못했습니다. 지원자 수와 운영 자금을 확인하세요.");
+                    GameSfxPlayer.Play(hired ? GameSfxCue.UiConfirm : GameSfxCue.UiFail);
+                    FillShop();
+                    RefreshLoanPane();
+                })
+                {
+                    text = $"{candidate.Name} · 고용 {GoldText.Amount(candidate.Cost)} · 마력 {candidate.MagicCost}\n"
+                           + $"{applicant.TraitLabel} · {applicant.PersonalityLabel}"
+                           + (daysLeft > 0 ? $" · {daysLeft}일 후 떠남" : string.Empty)
+                };
+                button.AddToClassList("loan-product-button");
+                _shopList.Add(button);
+            }
+
+            if (!hasCandidate)
+            {
+                var empty = new Label("이번 주에는 새 지원자가 없습니다.");
+                empty.AddToClassList("ledger-empty");
+                _shopList.Add(empty);
+            }
+        }
+
+        private void SetShopStatus(string message)
+        {
+            if (_shopStatus != null)
+                _shopStatus.text = message;
+        }
+
+        private void SetShopFeedback(string message)
+        {
+            if (_shopFeedback == null)
+                return;
+
+            _shopFeedback.text = message;
+            SetDisplayed(_shopFeedback, !string.IsNullOrEmpty(message));
+        }
+
         /// <summary>
         /// 어제 보던 자리에서 시작하면 안 된다. 어느 날이든 정산표는 맨 위, 오늘 번 돈부터 읽힌다.
         /// </summary>
@@ -582,5 +726,7 @@ namespace Code.UI.Toolkit
             Units,
             Buildings
         }
+
+        private enum SettlementTab { Summary, Income, Expense, Loan, Shop }
     }
 }

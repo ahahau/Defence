@@ -174,6 +174,19 @@ namespace Code.Manager
 
         public int GetCandidateCount(UnitDataSO unit) => GetOwnedUnitCount(unit);
 
+        /// <summary>정산 상점이 현재 지원자 한 명의 고용을 요청한다.</summary>
+        public bool TryRequestHire(UnitDataSO unit)
+        {
+            if (unit == null || GetCandidateCount(unit) <= 0 || costEventChannel == null)
+                return false;
+
+            if (CostManager.Current == null || CostManager.Current.CurrentGold < Mathf.Max(0, unit.Cost))
+                return false;
+
+            costEventChannel.RaiseEvent(new RosterHireRequestedEvent(unit, Mathf.Max(0, unit.Cost)));
+            return true;
+        }
+
         public int GetAvailableUnitCount(UnitDataSO unit)
         {
             if (unit == null)
