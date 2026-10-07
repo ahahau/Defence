@@ -20,9 +20,14 @@ description: Unity CLI로 플레이 모드를 돌려 게임 동작·밸런스·�
 - 새 판이 필요하면 플레이 진입 **전에** 지운다. 사용자의 진행 중인 런은 먼저 복사해 둔다.
 
 ## 웨이브를 코드로 띄우기
-1. 입구 노드에 `BuildingPlacement.InstallCentral(node, PortalBuildingData)`(`Assets/GameModules/Data/Buildings/PortalBuildingData.asset`).
-2. `DungeonGraphController`의 private `nodeEventChannel`을 리플렉션으로 꺼내 `PortalInstalledEvent(node)`를 발생시킨다.
-3. `DayManager.StartWave()`. 특정 일차는 private `currentDay`를 (목표일−1)로 맞춘 뒤 호출한다. `SkipToNextDay()`는 한 eval에서 하루만 넘어간다.
+포탈은 없어졌다(던전에 정문이 있다). 대신 **입구 말고 내부 방이 하나 이상** 있어야 웨이브가 시작된다(`WaveManager.GetWaveStartBlockedReason`이 "방을 하나 확장하세요"를 돌려준다).
+1. 잠긴 노드를 하나 골라 `DungeonGraphController.TryBuildAt(node)` → 방 확장 팝업이 뜬다. `PopupController`의 private `HandleButton(1)`을 리플렉션으로 불러 확장한다. 잠긴 노드 목록은 private `lockedNodeByCollider`(비어 있으면 `ShowLockedNodes()`).
+2. `DayManager.StartWave()`. 특정 일차는 private `currentDay`를 (목표일−1)로 맞춘 뒤 호출한다. 보스날은 7·14·21·28일.
+3. `SkipToNextDay()`는 한 eval에서 하루만 넘어간다.
+
+## 플레이 직후 첫 eval
+- `editor_play` 뒤 몇 초 안의 첫 `eval`/`eval_file`은 `result`가 비어 돌아올 수 있다(콘솔에 `Main thread operation timed out after 5000ms`가 남는다 — 게임 오류가 아니다). 실행이 됐는지 안 됐는지 알 수 없으므로, 상태를 바꾸는 스크립트는 결과를 확인하고, 비어 있으면 상태(일차·단계)를 먼저 읽은 뒤 다시 실행한다. 그대로 두 번 실행하면 웨이브가 두 번 시작될 수 있다.
+- 짧은 순간(전환 정지 등)을 재려면 바깥에서 폴링하지 말고, 이벤트(`DayManager.PhaseChanged` 등)에 기록 장치를 붙여 `EditorApplication.update`에서 `Time.realtimeSinceStartupAsDouble`과 함께 남긴다. 결과는 `AppDomain.CurrentDomain.SetData`로 다음 eval에 넘긴다.
 
 ## 판독 함정
 - 모달(정책 선택 등)이 `Time.timeScale`을 0으로 잡는다. 표본마다 timeScale을 기록하고 0이면 버린다. 모달은 `PolicyChoicePanelView`의 `policyButtons[0].onClick.Invoke()`로 닫는다.

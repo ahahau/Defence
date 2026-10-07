@@ -445,9 +445,14 @@ namespace Code.Manager
                 }
 
                 RemoveMissingEnemies();
+                RefreshPauseLock();
                 if (DayManager.Current != null && DayManager.Current.Phase == DayManager.OperationPhase.Day
                     && _remainingSpawns <= nightAtRemainingSpawns)
+                {
                     DayManager.Current.SetPhase(DayManager.OperationPhase.Night);
+                    // 전환을 알아챌 틈을 준다. 주요 사건 창은 따로 시간을 세우므로 여기서는 1초만.
+                    GameSpeedController.Current?.PauseForTransition(PauseLockRules.DayNightTransitionPauseSeconds);
+                }
                 CompleteWaveIfCleared(false);
             }
 
@@ -893,6 +898,34 @@ namespace Code.Manager
                     : _currentBoss.phaseSubtitle);
         }
 
+        /// <summary>엘리트·보스가 던전에 남아 있는 동안 플레이어 일시정지를 잠근다.</summary>
+        private void RefreshPauseLock()
+        {
+            var speed = GameSpeedController.Current;
+            if (speed == null)
+                return;
+
+            var lockingBoss = false;
+            var lockingElite = false;
+            foreach (var enemy in _activeEnemies)
+            {
+                if (!PauseLockRules.LocksPause(enemy))
+                    continue;
+
+                if (enemy.IsBoss)
+                    lockingBoss = true;
+                else
+                    lockingElite = true;
+            }
+
+            if (lockingBoss || lockingElite)
+                speed.SetPauseLock(this, true, lockingBoss ? PauseLockRules.BossLockReason : PauseLockRules.EliteLockReason);
+            else
+                speed.SetPauseLock(this, false, null);
+        }
+
+        private void ReleasePauseLock() => GameSpeedController.Current?.SetPauseLock(this, false, null);
+
         private void RemoveMissingEnemies()
         {
             for (var i = _activeEnemies.Count - 1; i >= 0; i--)
@@ -924,7 +957,8 @@ namespace Code.Manager
             _remainingSpawns = 0;
             _reservedReinforcementSpawns = 0;
             _activeEnemies.Clear();
-            
+            ReleasePauseLock();
+
             if (stopRunningCoroutine && _waveCoroutine != null)
             {
                 StopCoroutine(_waveCoroutine);
@@ -1150,6 +1184,7 @@ namespace Code.Manager
             }
 
             _activeEnemies.Clear();
+            ReleasePauseLock();
         }
 
         /// <summary>

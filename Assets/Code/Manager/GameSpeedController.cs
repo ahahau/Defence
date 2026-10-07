@@ -51,6 +51,23 @@ namespace Code.Manager
         /// <summary>배속이 바뀌었을 때. 버튼 표시를 맞추는 쪽이 듣는다.</summary>
         public event Action<float> SettingChanged;
 
+        /// <summary>플레이어 일시정지를 막고 있는 것들. 엘리트·보스가 던전에 있으면 웨이브가 건다.</summary>
+        private readonly HashSet<Object> _pauseLocks = new();
+
+        /// <summary>마지막으로 돌던 배속. 잠금이 걸려 자동 재개할 때 이 배속으로 돌아간다.</summary>
+        private float _lastRunningSetting = NormalSpeed;
+
+        private Coroutine _transitionPause;
+
+        /// <summary>플레이어가 지금 일시정지할 수 없는가.</summary>
+        public bool IsPauseLocked => _pauseLocks.Count > 0;
+
+        /// <summary>일시정지가 잠긴 이유. 잠기지 않았으면 빈 문자열.</summary>
+        public string PauseLockReason { get; private set; } = string.Empty;
+
+        /// <summary>일시정지 잠금이 걸리거나 풀렸을 때.</summary>
+        public event Action PauseLockChanged;
+
         private void Awake()
         {
             if (Current != null && Current != this)
@@ -104,9 +121,66 @@ namespace Code.Manager
             if (Mathf.Approximately(clamped, Setting))
                 return;
 
+            // 잠긴 동안에는 멈추지 못한다. 배속 1·2 사이의 전환은 그대로 받는다.
+            if (IsPauseLocked && clamped <= PausedSpeed)
+                return;
+
             Setting = clamped;
+            if (Setting > PausedSpeed)
+                _lastRunningSetting = Setting;
             Apply();
             SettingChanged?.Invoke(Setting);
+        }
+
+        /// <summary>
+        /// 주인별로 일시정지 잠금을 건다/푼다. 잠기는 순간 플레이어가 멈춰 두었다면 마지막 배속으로 재개한다.
+        /// 창·연출이 거는 <see cref="Suspend"/>는 잠금과 무관하다 — 강제 선택 창은 여전히 시간을 세운다.
+        /// </summary>
+        public void SetPauseLock(Object owner, bool locked, string reason)
+        {
+            if (owner == null)
+                return;
+
+            var changed = locked ? _pauseLocks.Add(owner) : _pauseLocks.Remove(owner);
+            if (locked)
+                PauseLockReason = reason ?? string.Empty;
+            else if (!IsPauseLocked)
+                PauseLockReason = string.Empty;
+
+            if (!changed)
+                return;
+
+            if (locked && IsPausedByPlayer)
+            {
+                Setting = _lastRunningSetting > PausedSpeed ? _lastRunningSetting : NormalSpeed;
+                Apply();
+                SettingChanged?.Invoke(Setting);
+            }
+
+            PauseLockChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// 낮·밤 전환처럼 잠깐 숨을 고르는 정지. 실제 시간으로 <paramref name="seconds"/>초 뒤 풀린다.
+        /// 이미 걸려 있으면 다시 센다.
+        /// </summary>
+        public void PauseForTransition(float seconds)
+        {
+            if (seconds <= 0f)
+                return;
+
+            if (_transitionPause != null)
+                StopCoroutine(_transitionPause);
+
+            Suspend(this);
+            _transitionPause = StartCoroutine(ReleaseTransitionAfter(seconds));
+        }
+
+        private System.Collections.IEnumerator ReleaseTransitionAfter(float seconds)
+        {
+            yield return new WaitForSecondsRealtime(seconds);
+            _transitionPause = null;
+            Release(this);
         }
         
         public void TogglePause() => SetSetting(IsPausedByPlayer ? NormalSpeed : PausedSpeed);
@@ -137,7 +211,15 @@ namespace Code.Manager
         /// </summary>
         public void ResetToNormal()
         {
+            if (_transitionPause != null)
+            {
+                StopCoroutine(_transitionPause);
+                _transitionPause = null;
+            }
+
             _suspenders.Clear();
+            _pauseLocks.Clear();
+            PauseLockReason = string.Empty;
             Setting = NormalSpeed;
             Apply();
             SettingChanged?.Invoke(Setting);

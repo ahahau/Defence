@@ -220,6 +220,16 @@ namespace Code.Manager
                 return false;
             }
 
+            // 아직 맞붙기 전이라도 같은 방에 적이 들어와 있으면 빼거나 옮기지 못한다.
+            // 그러지 않으면 멈춰 두고 적 바로 앞의 경비를 빼돌리는 것이 정답이 된다.
+            if (Node.TryFindUnit(unit, out var node, out _)
+                && node.TryGetComponent<NodeBattlefield>(out var battlefield)
+                && battlefield.EnemyCount > 0)
+            {
+                reason = "같은 방에 적이 있어 회수·이동할 수 없습니다";
+                return false;
+            }
+
             reason = string.Empty;
             return true;
         }

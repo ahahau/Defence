@@ -84,6 +84,10 @@ namespace Code.Enemies
         public event System.Action<Enemy, int, int, GoldChangeSource> FacilityGoldSpent;
 
         public bool IsBoss => _isBoss;
+
+        /// <summary>강함 단계(1~6). 테두리 색과 같은 계산이다. 보스는 항상 6.</summary>
+        public int StrengthTier => EnemyStrengthOutline.ResolveTier(
+            data != null ? data.Grade : EntityGrade.Grade1, Level, _isBoss);
         public bool IsAlive => combatant != null && combatant.IsAlive;
         private bool _killRewardGranted;
         private BattleAgent _battleAgent;

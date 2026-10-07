@@ -702,10 +702,20 @@ namespace Code.UI.Toolkit
         private void RefreshManagementActions()
         {
             var isManagementWindow = DayManager.IsManagementWindow;
+            // 엘리트·보스가 있으면 멈출 수 없다. 관리 안내와 같은 자리에 잠긴 이유를 보여 준다.
+            var pauseLocked = _speedController != null && _speedController.IsPauseLocked;
             if (_managementLabel != null)
             {
-                _managementLabel.text = isManagementWindow ? "관리 중 · 방을 선택해 건설·배치·함정을 관리하세요" : "영업 중 · 배치와 회수는 일시정지에서 가능합니다";
+                _managementLabel.text = pauseLocked
+                    ? $"일시정지 잠김 · {_speedController.PauseLockReason}"
+                    : isManagementWindow ? "관리 중 · 방을 선택해 건설·배치·함정을 관리하세요" : "영업 중 · 배치와 회수는 일시정지에서 가능합니다";
                 _managementLabel.EnableInClassList("is-management", isManagementWindow);
+                _managementLabel.EnableInClassList("is-pause-locked", pauseLocked);
+            }
+            if (_pauseButton != null)
+            {
+                _pauseButton.SetEnabled(!pauseLocked);
+                _pauseButton.tooltip = pauseLocked ? _speedController.PauseLockReason : string.Empty;
             }
             var canManageSelectedNode = isManagementWindow && _selectedNode != null;
             SetActionEnabled(_buildAction, canManageSelectedNode);

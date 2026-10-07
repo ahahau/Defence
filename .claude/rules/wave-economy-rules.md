@@ -15,6 +15,8 @@ paths:
 - `WaveManager`는 편성·위협 미리보기·보스 단계/증원·목표·보상을 다 가진 가장 민감한 클래스다. 분리하려면 편성 규칙부터 추출하고, 기존 EditMode 테스트를 유지한다.
 - WaveConfig에는 `specificWaves`(1~28일 일차별)와 `bossEntries`(7·14·21·28일) 두 목록이 있다. 보스를 두 번 세지 말고, 배율은 보스 쪽에만 곱한다.
 - 판은 끝나지 않는다(`finalDay = 0`, `bossEveryNDays = 7`). 청산일과 보스날이 같아야 한 주가 하나의 고비로 끝난다. `AssetWiringTests`가 이것을 검사한다.
+- 일시정지 잠금: 웨이브 루프가 매 프레임 `PauseLockRules.LocksPause`(살아 있는 보스 또는 강함 4단계 이상)를 보고 `GameSpeedController.SetPauseLock`을 건다. 웨이브 종료·정리 때 반드시 푼다. 잠긴 동안 플레이어는 멈출 수 없지만, 강제 선택 창의 `Suspend`는 그대로 시간을 세운다.
+- 낮→밤 전환 때 `GameSpeedController.PauseForTransition(1초)`로 실제 시간 1초 멈춘다.
 
 ## 경제
 - **매일 정산:** 웨이브 중 수입·지출은 장부에만 쌓이고, 금화는 정산 때 움직인다.
