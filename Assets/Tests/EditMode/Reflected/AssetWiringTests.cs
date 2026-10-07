@@ -147,20 +147,28 @@ namespace Tests.EditMode.Gameplay
         [Test]
         public void GoldPanel_ListensToBothTheCostAndTheDayChannel()
         {
-            var viewType = RequireType("Code.UI.GoldCostView");
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/GameModules/Prefabs/UI/Hud/GoldCostPanel.prefab");
-            Assert.That(prefab, Is.Not.Null, "금화 패널 프리팹을 찾지 못했습니다.");
-
-            var view = prefab.GetComponentInChildren(viewType, true);
-            Assert.That(view, Is.Not.Null, "금화 패널에 GoldCostView가 없습니다.");
-
-            // 날짜 채널이 끊기면 빚은 보이는데 청산일까지 며칠인지가 멈춘다.
-            // 화면은 멀쩡해 보이므로 플레이로는 잡기 어렵다.
-            foreach (var field in new[] { "costEventChannel", "dayEventChannel" })
+            // 구독은 표시(GoldCostView)가 아니라 씬의 GoldHudPresenter가 맡는다.
+            var presenterType = RequireType("Code.UI.GoldHudPresenter");
+            var scene = EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            try
             {
-                var info = viewType.GetField(field, Instance);
-                Assert.That(info, Is.Not.Null, field + " 필드를 찾지 못했습니다.");
-                Assert.That(info.GetValue(view), Is.Not.Null, field + "이 비어 있습니다.");
+                Component presenter = null;
+                foreach (var root in scene.GetRootGameObjects())
+                    presenter ??= root.GetComponentInChildren(presenterType, true);
+                Assert.That(presenter, Is.Not.Null, "씬에 GoldHudPresenter가 없습니다.");
+
+                // 날짜 채널이 끊기면 빚은 보이는데 청산일까지 며칠인지가 멈춘다.
+                // 화면은 멀쩡해 보이므로 플레이로는 잡기 어렵다.
+                foreach (var field in new[] { "costEventChannel", "dayEventChannel", "view" })
+                {
+                    var info = presenterType.GetField(field, Instance);
+                    Assert.That(info, Is.Not.Null, field + " 필드를 찾지 못했습니다.");
+                    Assert.That(info.GetValue(presenter) as UnityEngine.Object, Is.Not.Null, field + "이 비어 있습니다.");
+                }
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
             }
         }
 
@@ -714,9 +722,11 @@ namespace Tests.EditMode.Gameplay
             return property.GetValue(target) as UnityEngine.Object;
         }
 
+        // 게임 코드는 Runtime, 스탯·모듈 같은 재사용 기반은 GameLib 어셈블리에 있다. 둘 다 찾아본다.
         private static Type RequireType(string fullName)
         {
-            var type = Type.GetType(fullName + ", DungeonKeeper.Runtime");
+            var type = Type.GetType(fullName + ", DungeonKeeper.Runtime")
+                       ?? Type.GetType(fullName + ", DungeonKeeper.GameLib");
             Assert.That(type, Is.Not.Null, fullName + " 타입을 찾지 못했습니다.");
             return type;
         }

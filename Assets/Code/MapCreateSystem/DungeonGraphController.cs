@@ -209,13 +209,36 @@ namespace Code.MapCreateSystem
             if (!Application.isPlaying)
                 return;
 
-            graph = new DungeonGraph();
             if (nodeManager == null || edgeManager == null)
             {
+                graph = new DungeonGraph();
                 Debug.LogError("DungeonGraphController requires preconfigured node and edge managers before play starts.", this);
                 return;
             }
 
+            BuildInitialGraph();
+            HasLockedNodesVisible = false;
+        }
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// 플레이 시작 때와 같은 첫 던전 배치를 에디터에서 씬에 펼친다. 플레이 없이 씬 구성을
+        /// 확인하는 용도이고, 오프닝 방 검사 테스트(AssetWiringTests)가 이걸로 첫 방을 만든다.
+        /// </summary>
+        public void EditorBakeInitialScenePreview()
+        {
+            if (Application.isPlaying || nodeManager == null || edgeManager == null || unitsRoot == null)
+                return;
+
+            BuildInitialGraph();
+            HasLockedNodesVisible = true;
+            RefreshLockedNodes();
+        }
+#endif
+
+        private void BuildInitialGraph()
+        {
+            graph = new DungeonGraph();
             nodeManager.ClearAll();
             edgeManager.ClearAll();
             lockedNodeByCollider.Clear();
@@ -225,7 +248,6 @@ namespace Code.MapCreateSystem
             var entrance = graph.AddNode(DungeonNodeType.Entrance, Vector2Int.zero);
             var entranceView = nodeManager.CreateNode(entrance);
             RegisterUnlockedNode(entranceView);
-            HasLockedNodesVisible = false;
         }
 
         private void ClearUnitsRoot()

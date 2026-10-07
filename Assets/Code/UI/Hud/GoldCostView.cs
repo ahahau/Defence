@@ -1,9 +1,8 @@
-using Code.UI;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
 
-namespace Blade.Core
+namespace Code.UI
 {
     public class GoldCostView : MonoBehaviour
     {

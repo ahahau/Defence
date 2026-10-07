@@ -8,7 +8,8 @@ paths:
    * PlayMode 테스트 어셈블리는 없다. 플레이 동작은 `/playtest`로 실측한다.
    * 실행: `unity cmd run_tests --mode EditMode [--filter <이름>]`. 에디터가 열려 있으면 배치모드 실행이 막힌다.
 2. 게임 타입은 Runtime asmdef를 참조해서 직접 써도 된다. 다만 기존 테스트 다수는 리플렉션을 쓴다.
-   * 리플렉션 헬퍼 패턴: `Type.GetType("<전체이름>, DungeonKeeper.Runtime")`, `BindingFlags.Instance | Public | NonPublic`.
+   * 리플렉션 헬퍼 패턴: `Type.GetType("<전체이름>, DungeonKeeper.Runtime")`, `BindingFlags.Instance | Public | NonPublic`. GameLib 타입(`GameLib.Entity.*`, 예: `StatSO`)은 `, DungeonKeeper.GameLib`로 찾는다.
+   * 테스트가 부르는 에디터 전용 진입점(예: `DungeonGraphController.EditorBakeInitialScenePreview`)은 리팩터링 때 지우지 않는다. 호출처가 테스트뿐이라 지워도 컴파일은 되고 테스트만 NRE로 깨진다.
    * 멤버를 못 찾으면 `Assert.That(member, Is.Not.Null, "<타입>.<멤버> 를 찾지 못했습니다.")`로 이유를 남긴다. 이름 변경 때 조용히 깨지지 않게 하기 위해서다.
    * 새 테스트는 가능하면 직접 참조를 쓴다. 비공개 멤버를 억지로 부르기보다 테스트 가능한 작은 공개 API(규칙 클래스)를 먼저 분리한다.
 3. 테스트 파일은 영역별로 둔다. 새 테스트는 먼저 기존 파일에 추가한다.

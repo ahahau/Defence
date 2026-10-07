@@ -1,7 +1,6 @@
 using Code.Core;
 using Code.Events;
 using Code.Manager;
-using Blade.Core;
 using UnityEngine;
 
 namespace Code.UI
