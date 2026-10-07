@@ -1,0 +1,20 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="project://database/Assets/GameModules/UI/UxmlAndUss/Common/DesignToken.uss" />
+    <Style src="project://database/Assets/GameModules/UI/UxmlAndUss/Common/Components.uss" />
+    <Style src="project://database/Assets/GameModules/UI/UxmlAndUss/Shared/Popup/Popup.uss" />
+    <ui:VisualElement name="popup-root" class="ui-theme scrim popup-root">
+        <ui:VisualElement name="popup-card" class="panel popup-card">
+            <ui:VisualElement class="popup-header">
+                <ui:Label name="popup-title" text="제목" class="text-title text-ellipsis popup-title" />
+            </ui:VisualElement>
+            <ui:VisualElement class="popup-body">
+                <ui:Label name="popup-message" text="본문" class="text-body popup-message" />
+            </ui:VisualElement>
+            <ui:VisualElement class="popup-cost-row">
+                <ui:Label name="popup-cost" text="0 G" class="text-body popup-cost" />
+                <ui:Label name="popup-warning" text="0 G 부족" class="text-loss popup-warning" />
+            </ui:VisualElement>
+            <ui:VisualElement name="popup-actions" class="popup-actions" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

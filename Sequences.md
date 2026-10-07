@@ -66,3 +66,21 @@
 - CLAUDE.md의 Unity 버전을 6000.6.3f1로 고침(워킹트리가 업그레이드돼 있었음).
 - 스테이징돼 있던 워킹트리 전체를 작업 단위로 나눠 커밋(사용자 요청: 전부, 제외 없이).
   - Unity 6000.6 업그레이드 / 게임 속도 정리 / 모험가 이동(시설 대기열·파티 노드 점유) / 부활 마력 / 낮·밤 구간 / UI Toolkit 화면 / Docs 정리 / 에이전트 문서 / IDE 설정 / tmp
+
+## 2026-10-07
+
+- 범용 팝업 라이브러리 추가(9월 30일 설계안 기준).
+  - 공통 스타일 신설: `Assets/GameModules/UI/UxmlAndUss/Common/DesignToken.uss`(Theme.uss 팔레트 → 원시값/의미값 2단계), `Components.uss`(btn·panel·scrim·text 클래스).
+  - `Shared/Popup/Popup.uxml`·`Popup.uss`: 고정 크기 카드(480×280), 비용·경고 줄은 visibility로 자리 유지, 버튼 고정 폭 136px.
+  - `Assets/Code/UI/Popup/`: `PopupController`(대기열·일시정지 옵션·ESC·사운드, 씬 전환 시 대기열 폐기), `PopupRequest`(Notice/Confirm/Cost/Choice), `PopupView`, `PopupButtonSpec`, `PopupButtonStyle`, `PopupUiNames`, `PopupSettingsSO`.
+  - 테스트: `PopupRequestTests` 6개(금화 부족 잠금·부족액 문구, 확인/취소 순서, 선택지 강제, 버튼 수 제한, 일시정지 기본값).
+  - 검증: 임시 csproj로 런타임+테스트 컴파일 오류 0. Unity CLI 서버가 꺼져 있어 meta 생성, PopupSettings 에셋 생성, 테스트 실행, 화면 확인은 못 함.
+  - ui-rules 9번에 사용법 반영.
+- Unity를 켠 뒤 이어서 진행.
+  - `Assets/Resources/UI/PopupSettings.asset` 생성(Template = Popup.uxml).
+  - 버그 수정: 팝업이 uGUI 메인 캔버스(정렬 50)와 DAY 배너 아래에 깔림. UI Toolkit 문서는 모두 공용 RuntimePanelSettings(정렬 0)를 공유하기 때문. 팝업 전용 `Assets/GameModules/UI/PopupPanelSettings.asset`(정렬 1000)을 만들고 `PopupSettingsSO.panelSettings`로 연결.
+  - 테스트: `PopupRequestTests` 6/6 통과. 전체 EditMode 150/154. 실패 4개는 팝업과 무관한 기존 문제(`AssetWiringTests`: GoldCostView 네임스페이스가 `Blade.Core`, StatSO가 GameLib 어셈블리라 타입 조회 실패, 오프닝 씬 검사 2개 NRE).
+  - 플레이 실측: 비용(금화 부족 → 경고·구매 잠김) → 확인(위험) → 알림(일시정지 timeScale 0 → 닫으면 1) → 선택(긴 문구 말줄임) 순으로 대기열 처리. 네 상태 모두 카드 (720,400,480×280)·버튼 줄 (744,608,432×52) 경계 동일. 콘솔 오류 0. 세이브는 백업 후 복원.
+  - ui-rules 9번에 패널 정렬 규칙 추가.
+- 10월 2일에 나눠 만든 커밋 10개의 날짜를 9월 23일~10월 2일로 하루씩 다시 씀(사용자 요청). 내용(tree)은 동일, 해시는 바뀜. 원래 커밋은 `backup/pre-redate-20261007` 브랜치에 보존. 원격에는 아직 옛 커밋이 있어 반영하려면 강제 푸시가 필요함.
+- 팝업 라이브러리 커밋.

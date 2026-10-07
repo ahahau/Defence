@@ -49,7 +49,14 @@ Assets/GameModules/UI/UxmlAndUss/
 8. USS selector는 문자열을 그대로 하드코딩하지 말고 변수화해서 관리한다.
    * 클래스 이름, Element 이름 등은 `const string` 상수로 모아 두고 `Q<T>(ElementName)` 형태로 쓴다.
 9. 범용 팝업은 `Code/UI/Popup`의 `PopupController`로 띄운다.
-   * 아직 구현 전이다. 첫 팝업이 필요해지면 설계를 사용자에게 확인받고 먼저 만든다.
+   * 사용법: `PopupController.Show(PopupRequest.Confirm("제목", "본문", onConfirm));`
+     * 역할별 생성 함수: `Notice`(확인 하나), `Confirm`(확인/취소, `destructive`면 위험 색), `Cost`(비용·금화 부족 경고·확인 잠금), `Choice`(선택지 최대 3개, 취소 콜백이 없으면 반드시 골라야 함).
+     * 게임을 멈춰야 하면 `.PauseGame()`을 붙인다. 기본은 멈추지 않는다.
+     * 한 번에 하나만 뜨고 나머지는 대기열에 선다. 콜백은 팝업이 닫힌 뒤 불린다.
+     * 팝업은 금화를 만지지 않는다. 결제는 확인 콜백에서 기존 결제 경로로 한다.
+   * 에셋: `Shared/Popup/Popup.uxml`·`Popup.uss`. `Assets/Resources/UI/PopupSettings.asset`(`PopupSettingsSO`)이 UXML과 전용 패널 `Assets/GameModules/UI/PopupPanelSettings.asset`(Sort Order 1000)을 참조한다.
+   * **uGUI와의 앞뒤는 문서의 `sortingOrder`가 아니라 PanelSettings의 Sort Order로 정해진다.** 공용 `RuntimePanelSettings`는 0이라 메인 uGUI 캔버스(50) 아래에 깔린다. uGUI 위에 떠야 하는 화면은 전용 PanelSettings를 쓴다. 하루 전환 연출(30000)보다는 아래에 둔다.
+   * ESC를 쓰는 다른 화면은 `PopupController.IsOpen`이 참이면 입력을 양보한다.
    * 일반적인 팝업(확인/취소, 알림, 비용 확인)은 반드시 이 라이브러리를 사용한다.
    * 특수한 팝업이 필요하면 사용자에게 사전 설계를 묻는다.
    * 가능하고 그것이 더 효율적이라면, 팝업 라이브러리를 개선해서 특수 팝업을 띄운다.

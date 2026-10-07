@@ -1,0 +1,56 @@
+/*
+ * 색 토큰. 다른 USS는 여기 정의된 의미값(semantic)만 var()로 참조한다.
+ *
+ * 1단계 원시값(팔레트)은 기존 Theme.uss의 값을 그대로 옮겼다. 옛 화면과 새 화면이
+ * 한동안 같이 뜨므로 팔레트가 같아야 한 게임처럼 보인다.
+ *
+ * 변수는 상속되므로 문서의 가장 바깥 요소에 `ui-theme` 클래스를 붙인다.
+ * 여러 UIDocument가 한 패널을 공유해 루트가 문서마다 달라서 :root에 의존하지 않는다.
+ */
+.ui-theme {
+    /* ── 1단계: 팔레트 ── */
+    --color-umber-950-a86: rgba(9, 6, 5, 0.86);
+    --color-umber-950-a94: rgba(9, 6, 5, 0.94);
+    --color-umber-900-a98: rgba(14, 9, 6, 0.98);
+    --color-umber-800: rgb(31, 19, 14);
+    --color-umber-700: rgb(41, 28, 18);
+    --color-bronze-700: rgb(92, 68, 38);
+    --color-bronze-500-a75: rgba(184, 122, 48, 0.75);
+    --color-gold-600: rgb(199, 143, 61);
+    --color-gold-500: rgb(238, 164, 76);
+    --color-gold-400: rgb(255, 194, 79);
+    --color-gold-200: rgb(242, 212, 148);
+    --color-parchment-100: rgb(240, 224, 189);
+    --color-parchment-200: rgb(230, 209, 166);
+    --color-parchment-500: rgb(166, 143, 100);
+    --color-green-300: rgb(138, 230, 145);
+    --color-salmon-300: rgb(255, 161, 138);
+    --color-amber-400: rgb(224, 176, 112);
+    --color-red-600: rgb(230, 71, 41);
+    --color-wine-800: rgb(121, 48, 39);
+
+    /* ── 2단계: 의미값 ── */
+    --color-scrim: var(--color-umber-950-a86);
+    --color-surface: var(--color-umber-900-a98);
+    --color-surface-inset: var(--color-umber-950-a94);
+    --color-control: var(--color-umber-700);
+    --color-control-pressed: var(--color-umber-800);
+
+    --color-border: var(--color-gold-600);
+    --color-border-soft: var(--color-bronze-500-a75);
+    --color-border-quiet: var(--color-bronze-700);
+
+    --color-text: var(--color-parchment-100);
+    --color-text-body: var(--color-parchment-200);
+    --color-text-dim: var(--color-parchment-500);
+    --color-accent: var(--color-gold-400);
+    --color-accent-soft: var(--color-gold-200);
+
+    --color-gain: var(--color-green-300);
+    --color-loss: var(--color-salmon-300);
+    --color-warn: var(--color-amber-400);
+    --color-danger: var(--color-red-600);
+
+    --color-primary: var(--color-wine-800);
+    --color-primary-border: var(--color-gold-500);
+}

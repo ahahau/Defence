@@ -1,0 +1,66 @@
+/*
+ * 반복되는 룩앤필. 화면 USS에는 배치만 두고, 모양은 여기 클래스를 조합해서 쓴다.
+ * 예: <ui:Button class="btn btn--primary btn--md" />
+ * 색은 DesignToken.uss의 의미값만 쓴다.
+ */
+
+/* ── 버튼 ── */
+.btn {
+    margin: 0;
+    padding: 0 10px;
+    border-width: 1px;
+    border-radius: 0;
+    border-color: var(--color-border-quiet);
+    background-color: var(--color-control);
+    color: var(--color-text-body);
+    font-size: 14px;
+    -unity-text-align: middle-center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.btn:enabled:hover { border-color: var(--color-border); color: var(--color-accent-soft); }
+.btn:enabled:active { background-color: var(--color-control-pressed); }
+.btn:disabled { opacity: 0.45; }
+
+.btn--primary { background-color: var(--color-primary); border-color: var(--color-primary-border); color: var(--color-text); -unity-font-style: bold; }
+.btn--secondary { background-color: var(--color-control); }
+.btn--danger { border-color: var(--color-danger); color: var(--color-loss); }
+
+/* 크기는 가장 긴 문구 기준 고정 폭이다. 문구가 바뀌어도 줄이 흔들리지 않는다. */
+.btn--md { width: 136px; height: 36px; flex-shrink: 0; }
+.btn--lg { width: 200px; height: 44px; flex-shrink: 0; font-size: 16px; }
+
+/* ── 패널 ── */
+.panel {
+    background-color: var(--color-surface);
+    border-width: 2px;
+    border-color: var(--color-border);
+}
+
+.panel--inset {
+    background-color: var(--color-surface-inset);
+    border-width: 1px;
+    border-color: var(--color-border-quiet);
+}
+
+/* 화면 전체를 덮는 모달 바탕. 아래 UI 클릭을 막는다. */
+.scrim {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    background-color: var(--color-scrim);
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── 글자 ── */
+.text-title { color: var(--color-accent); font-size: 20px; -unity-font-style: bold; }
+.text-body { color: var(--color-text-body); font-size: 14px; white-space: normal; }
+.text-dim { color: var(--color-text-dim); font-size: 12px; }
+.text-warn { color: var(--color-warn); }
+.text-loss { color: var(--color-loss); }
+.text-gain { color: var(--color-gain); }
+
+/* 한 줄을 넘으면 자른다. 전체 문구는 툴팁으로 보여 준다. */
+.text-ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

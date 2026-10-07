@@ -1,0 +1,26 @@
+/*
+ * 팝업 배치. 크기는 내용과 무관하게 고정이다(ui-rules 10번).
+ * 고정 영역: 헤더 44 · 비용 줄 28 · 버튼 줄 52. 남는 높이는 본문 하나만 쓴다.
+ */
+.popup-root { display: none; }
+
+.popup-card {
+    width: 480px;
+    height: 280px;
+    padding: 18px 22px;
+}
+
+.popup-header { height: 44px; flex-shrink: 0; justify-content: center; }
+.popup-title { -unity-text-align: middle-left; }
+
+/* 본문은 최대 4줄 높이다. 넘치면 잘리므로 긴 설명은 팝업이 아니라 상세 영역에 둔다. */
+.popup-body { flex-grow: 1; min-height: 0; overflow: hidden; padding-top: 6px; }
+.popup-message { -unity-text-align: upper-left; }
+
+/* 비용 줄은 비용이 없는 팝업에서도 자리를 지킨다(visibility로만 숨긴다). */
+.popup-cost-row { height: 28px; flex-shrink: 0; flex-direction: row; align-items: center; justify-content: space-between; }
+.popup-cost { width: 200px; -unity-text-align: middle-left; }
+.popup-warning { width: 200px; -unity-text-align: middle-right; }
+
+.popup-actions { height: 52px; flex-shrink: 0; flex-direction: row; justify-content: flex-end; align-items: flex-end; }
+.popup-actions > .btn { margin-left: 8px; }

@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 057c937acff35674ea389756f71d2a95, type: 3}
+  m_Name: PopupSettings
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.UI.Popup.PopupSettingsSO
+  template: {fileID: 9197481963319205126, guid: 63f6073f2ff2b7d4e90379095a0a00f9, type: 3}
+  panelSettings: {fileID: 11400000, guid: 689f5ebe4f92cb84a81ec0b592660d46, type: 2}
+  sortingOrder: 900
