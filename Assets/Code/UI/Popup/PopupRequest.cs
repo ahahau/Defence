@@ -16,7 +16,7 @@ namespace Code.UI.Popup
 
         private readonly List<PopupButtonSpec> _buttons;
 
-        private PopupRequest(string title, string message, List<PopupButtonSpec> buttons, Action onCancel, bool canCancel)
+        private PopupRequest(string title, string message, List<PopupButtonSpec> buttons, Action onCancel, bool canCancel, int confirmButtonIndex)
         {
             if (buttons == null || buttons.Count == 0)
                 throw new ArgumentException("팝업에는 버튼이 하나 이상 있어야 합니다.", nameof(buttons));
@@ -28,6 +28,7 @@ namespace Code.UI.Popup
             _buttons = buttons;
             OnCancel = onCancel;
             CanCancel = canCancel;
+            ConfirmButtonIndex = confirmButtonIndex;
         }
 
         public string Title { get; }
@@ -47,6 +48,12 @@ namespace Code.UI.Popup
         /// <summary>떠 있는 동안 게임 시간을 멈추는가. 기본은 멈추지 않는다.</summary>
         public bool PausesGame { get; private set; }
 
+        /// <summary>확인 역할 버튼의 순서. 선택 팝업처럼 확인 버튼이 없으면 -1.</summary>
+        public int ConfirmButtonIndex { get; }
+
+        /// <summary>어떤 팝업인지 가리키는 이름. 튜토리얼처럼 특정 팝업을 기다리는 쪽이 읽는다.</summary>
+        public string Tag { get; private set; }
+
         /// <summary>떠 있는 동안 게임을 멈춘다. 닫히면 원래 배속으로 돌아간다.</summary>
         public PopupRequest PauseGame()
         {
@@ -54,11 +61,18 @@ namespace Code.UI.Popup
             return this;
         }
 
+        /// <summary>이 팝업에 이름을 붙인다(<see cref="PopupController.IsShowing"/>로 확인).</summary>
+        public PopupRequest WithTag(string tag)
+        {
+            Tag = tag;
+            return this;
+        }
+
         /// <summary>확인 버튼 하나뿐인 알림. ESC로도 닫힌다.</summary>
         public static PopupRequest Notice(string title, string message, Action onConfirm = null, string confirmLabel = "확인")
         {
             var buttons = new List<PopupButtonSpec> { new(confirmLabel, PopupButtonStyle.Primary, onConfirm) };
-            return new PopupRequest(title, message, buttons, onConfirm, true);
+            return new PopupRequest(title, message, buttons, onConfirm, true, 0);
         }
 
         /// <summary>확인/취소. <paramref name="destructive"/>면 확인 버튼을 위험 색으로 칠한다.</summary>
@@ -77,7 +91,7 @@ namespace Code.UI.Popup
                 new(cancelLabel, PopupButtonStyle.Secondary, onCancel),
                 new(confirmLabel, confirmStyle, onConfirm)
             };
-            return new PopupRequest(title, message, buttons, onCancel, true);
+            return new PopupRequest(title, message, buttons, onCancel, true, 1);
         }
 
         /// <summary>
@@ -103,7 +117,7 @@ namespace Code.UI.Popup
                 new(confirmLabel, PopupButtonStyle.Primary, onConfirm, affordable)
             };
 
-            return new PopupRequest(title, message, buttons, onCancel, true)
+            return new PopupRequest(title, message, buttons, onCancel, true, 1)
             {
                 CostText = $"비용 {safeCost:N0} G",
                 WarningText = affordable ? null : $"{shortfall:N0} G 부족"
@@ -116,7 +130,7 @@ namespace Code.UI.Popup
         public static PopupRequest Choice(string title, string message, IReadOnlyList<PopupButtonSpec> options, Action onCancel = null)
         {
             var buttons = options != null ? new List<PopupButtonSpec>(options) : new List<PopupButtonSpec>();
-            return new PopupRequest(title, message, buttons, onCancel, onCancel != null);
+            return new PopupRequest(title, message, buttons, onCancel, onCancel != null, -1);
         }
     }
 }

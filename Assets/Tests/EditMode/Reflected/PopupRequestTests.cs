@@ -62,6 +62,25 @@ namespace Tests.EditMode.Gameplay
         }
 
         [Test]
+        public void ConfirmButtonIndex_PointsAtTheConfirmRole()
+        {
+            Assert.That(PopupRequest.Notice("알림", "본문").ConfirmButtonIndex, Is.EqualTo(0));
+            Assert.That(PopupRequest.Confirm("확인", "본문", () => { }).ConfirmButtonIndex, Is.EqualTo(1));
+            Assert.That(PopupRequest.Cost("건설", "본문", 10, 0, () => { }).ConfirmButtonIndex, Is.EqualTo(1));
+
+            var options = new[] { new PopupButtonSpec("A", PopupButtonStyle.Primary, null) };
+            Assert.That(PopupRequest.Choice("선택", "본문", options).ConfirmButtonIndex, Is.EqualTo(-1));
+        }
+
+        [Test]
+        public void WithTag_NamesThePopupForTutorials()
+        {
+            var request = PopupRequest.Cost("방 확장", "본문", 100, 100, () => { }).WithTag("build.expand-room");
+
+            Assert.That(request.Tag, Is.EqualTo("build.expand-room"));
+        }
+
+        [Test]
         public void Notice_DoesNotPauseUnlessAsked()
         {
             Assert.That(PopupRequest.Notice("알림", "본문").PausesGame, Is.False);

@@ -13,8 +13,9 @@ namespace Code.UI.Popup
         [SerializeField, Tooltip("Assets/GameModules/UI/UxmlAndUss/Shared/Popup/Popup.uxml")]
         private VisualTreeAsset template;
 
-        [SerializeField, Tooltip("팝업 전용 패널. uGUI 캔버스와의 앞뒤는 문서 순서가 아니라 패널의 Sort Order로 정해지므로, " +
-                                 "공용 RuntimePanelSettings(0)를 쓰면 메인 캔버스(50) 아래에 깔린다. 비우면 공용 패널을 쓴다.")]
+        [SerializeField, Tooltip("팝업 전용 패널(Sort Order 10000). uGUI 캔버스와의 앞뒤는 문서 순서가 아니라 패널의 Sort Order로 " +
+                                 "정해지므로, 공용 RuntimePanelSettings(0)를 쓰면 메인 캔버스(50)·설정창(5000) 아래에 깔린다. " +
+                                 "하루 전환 연출(30000)보다는 아래에 둔다. 비우면 공용 패널을 쓴다.")]
         private PanelSettings panelSettings;
 
         [SerializeField, Tooltip("같은 패널 안에서의 문서 순서.")]

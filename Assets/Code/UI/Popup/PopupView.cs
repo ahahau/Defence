@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Code.UI.Popup
@@ -52,6 +53,28 @@ namespace Code.UI.Popup
             }
 
             _root.style.display = DisplayStyle.Flex;
+        }
+
+        /// <summary>
+        /// 버튼 하나의 화면 좌표(픽셀, 왼쪽 아래 원점 — uGUI의 RectTransformUtility와 같은 계)를 구한다.
+        /// 레이아웃이 아직 계산되지 않았으면(띄운 첫 프레임) false.
+        /// </summary>
+        public bool TryGetButtonScreenRect(int index, out Rect rect)
+        {
+            rect = default;
+            if (_root == null || index < 0 || index >= _actions.childCount)
+                return false;
+
+            Rect panel = _root.panel.visualTree.worldBound;
+            Rect bound = _actions[index].worldBound;
+            if (panel.width <= 1f || panel.height <= 1f || float.IsNaN(bound.width) || bound.width <= 1f)
+                return false;
+
+            // 패널 좌표는 왼쪽 위 원점이고 화면 크기에 맞춰 늘어난다. 비율로 화면 픽셀에 옮긴다.
+            float scaleX = Screen.width / panel.width;
+            float scaleY = Screen.height / panel.height;
+            rect = new Rect(bound.x * scaleX, Screen.height - bound.yMax * scaleY, bound.width * scaleX, bound.height * scaleY);
+            return true;
         }
 
         public void Hide()

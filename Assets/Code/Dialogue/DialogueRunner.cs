@@ -9,6 +9,7 @@ using Code.Persistence;
 using Code.Tutorial;
 using Code.UI;
 using Code.Units;
+using Code.UI.Popup;
 using UnityEngine;
 
 namespace Code.Dialogue
@@ -48,7 +49,6 @@ namespace Code.Dialogue
         [SerializeField] private UnitDeployPanelView unitDeployPanelView;
         [SerializeField] private NodePanelView nodePanelView;
         [SerializeField] private WaveView waveView;
-        [SerializeField] private BuildConfirmPanelView buildConfirmPanelView;
         [SerializeField] private PolicyChoicePanelView policyChoicePanelView;
         [SerializeField] private ManagementSettlementManager managementSettlementManager;
         private bool hasSeenPolicyChoicePanel;
@@ -530,13 +530,11 @@ namespace Code.Dialogue
 
         private void HighlightBuildTarget()
         {
-            if (buildConfirmPanelView != null && buildConfirmPanelView.IsOpen)
+            if (PopupController.IsShowing(DungeonGraphController.ExpandRoomPopupTag)
+                && PopupController.TryGetConfirmButtonScreenRect(out var confirmRect))
             {
-                if (TryBuildRectTransformScreenRect(buildConfirmPanelView.ConfirmButtonRect, out var confirmRect))
-                {
-                    view?.SetSpotlightScreenRect(confirmRect, 24f);
-                    return;
-                }
+                view?.SetSpotlightScreenRect(confirmRect, 24f);
+                return;
             }
 
             if (guidedLockedNode == null)

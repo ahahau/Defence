@@ -702,6 +702,9 @@ namespace Code.UI.Toolkit
 
         private static bool EscapePressedThisFrame()
         {
+            // 팝업이 떠 있으면 ESC는 팝업을 닫는 데 쓰인다.
+            if (Code.UI.Popup.PopupController.BlocksEscape)
+                return false;
 #if ENABLE_INPUT_SYSTEM
             var keyboard = UnityEngine.InputSystem.Keyboard.current;
             return keyboard != null && keyboard.escapeKey.wasPressedThisFrame;

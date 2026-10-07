@@ -83,4 +83,17 @@
   - 플레이 실측: 비용(금화 부족 → 경고·구매 잠김) → 확인(위험) → 알림(일시정지 timeScale 0 → 닫으면 1) → 선택(긴 문구 말줄임) 순으로 대기열 처리. 네 상태 모두 카드 (720,400,480×280)·버튼 줄 (744,608,432×52) 경계 동일. 콘솔 오류 0. 세이브는 백업 후 복원.
   - ui-rules 9번에 패널 정렬 규칙 추가.
 - 10월 2일에 나눠 만든 커밋 10개의 날짜를 9월 23일~10월 2일로 하루씩 다시 씀(사용자 요청). 내용(tree)은 동일, 해시는 바뀜. 원래 커밋은 `backup/pre-redate-20261007` 브랜치에 보존. 원격에는 아직 옛 커밋이 있어 반영하려면 강제 푸시가 필요함.
-- 팝업 라이브러리 커밋.
+- 팝업 라이브러리 커밋(`bf07e4db`).
+- 강제 푸시(`--force-with-lease`, 원격이 1bf2b3f4일 때만): 원격 `feat/combat-refactor-balance-content`이 날짜를 바꾼 커밋 + 팝업 커밋으로 교체됨.
+- 기존 팝업을 범용 팝업 라이브러리로 교체(사용자 선택: 튜토리얼까지 함께, 재시작 확인 두 곳 모두).
+  - 팝업 라이브러리 보강: `PopupRequest.WithTag`/`Tag`, `ConfirmButtonIndex`; `PopupController.IsShowing(tag)`, `TryGetConfirmButtonScreenRect`(uGUI와 같은 왼쪽 아래 원점 픽셀), `BlocksEscape`(팝업이 ESC를 쓴 프레임 포함); `PopupView.TryGetButtonScreenRect`.
+  - 방 확장(`DungeonGraphController`): 옛 `BuildConfirmPanelView`(클릭 위치 옆 uGUI 창 + 별도 "골드 부족" 창) → 비용 팝업 하나. 표시 비용을 실제 청구액(건설 할인 반영)으로 맞춤. 금화 부족이면 부족액 경고 + 확장 잠김. 확인 후 결제 시점에 거절되면 알림 팝업. 직렬화 필드 `buildConfirmPanel`과 클릭 위치 저장 필드 제거.
+  - 튜토리얼: `PlayTutorialView`·`DialogueRunner`가 `BuildConfirmPanelView` 대신 팝업 태그와 버튼 화면 좌표를 읽음. `DialogueRunner.buildConfirmPanelView` 필드 제거.
+  - 재시작 확인: `SettingsPanelView`(옛 confirmWindow → 위험 확인 팝업, 프리팹의 옛 창은 남기고 숨김)와 `GameplayHudToolkitView`(인라인 `restart-confirm-panel` 삭제, UXML·USS 조각 제거) 모두 위험 확인 팝업으로.
+  - ESC 양보: `SettingsPanelView`, `SettlementToolkitView`, `BuildingPlacementPreview`, `EdgePlacementPreview`.
+  - 제외: `IdleReturnToTitle`(실시간 카운트다운 안내라 버튼 팝업과 맞지 않음), 정책 선택(설명이 긴 강제 선택 화면이라 특수 화면). `BuildConfirmPanelView` 클래스와 씬 오브젝트는 남김(코드 참조 0).
+  - 팝업 패널 정렬 1000 → 10000: 설정창 캔버스가 5000이라 그 아래에 깔릴 수 있었음. 하루 전환 연출(30000)보다는 아래.
+  - 테스트: `PopupRequestTests` 8개(태그·확인 버튼 순서 추가). 전체 EditMode 152/156, 실패 4개는 기존 AssetWiringTests 문제 그대로.
+  - 플레이 실측: 방 확장 팝업(비용 8 G, 보유 192 G) → 확장 → 금화 184·노드 2→3. 금화 0에서 "8 G 부족"·확장 잠김, 잠긴 버튼은 무반응, 취소 시 건설 없음. 튜토리얼 판정 `ConfirmRoom` + 강조 영역이 확장 버튼 화면 좌표(1040,420,136×36)와 일치(튜토리얼 뷰는 이 판에서 비활성이라 판정 함수를 직접 호출해 확인). HUD·설정창 재시작 팝업 표시 후 취소. 콘솔 오류 0. 세이브 백업 후 복원.
+  - 확인 못 한 것: 설정창이 실제로 열린 상태에서 팝업이 위에 뜨는 화면(`Open()`이 이 테스트에서 창을 열지 않음). 정렬 값으로는 위.
+  - 커밋: 내 변경만 골라 담음. `GameplayHudToolkitView.cs`·`GameplayHud.uxml`·`GameplayHud.uss`는 다른 세션의 미커밋 수정(부활 마력 칩·시설 이용 줄 등)과 섞여 있어, HEAD에 재시작 확인 교체만 다시 적용한 내용을 인덱스에 넣음. 작업 트리의 다른 세션 변경은 그대로 남김.

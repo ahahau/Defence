@@ -4,6 +4,7 @@ using Code.Manager;
 using Code.MapCreateSystem;
 using Code.Persistence;
 using Code.UI;
+using Code.UI.Popup;
 using Code.Units;
 using Code.Buildings;
 using UnityEngine;
@@ -66,8 +67,6 @@ namespace Code.UI.Toolkit
         private Button _pauseHelpButton;
         private Button _closePauseHelpButton;
         private Button _restartRunButton;
-        private Button _cancelRestartButton;
-        private Button _confirmRestartButton;
         private Button _saveExitButton;
         private Button _helpBasicButton;
         private Button _helpEconomyButton;
@@ -76,7 +75,6 @@ namespace Code.UI.Toolkit
         private VisualElement _pauseMenuOverlay;
         private VisualElement _pauseSettingsPanel;
         private VisualElement _pauseHelpPanel;
-        private VisualElement _restartConfirmPanel;
         private Label _pauseMenuStatus;
         private Label _pauseRunSummary;
         private Slider _pauseSfxSlider;
@@ -173,8 +171,6 @@ namespace Code.UI.Toolkit
             _pauseHelpButton = root.Q<Button>("pause-help-button");
             _closePauseHelpButton = root.Q<Button>("close-pause-help-button");
             _restartRunButton = root.Q<Button>("restart-run-button");
-            _cancelRestartButton = root.Q<Button>("cancel-restart-button");
-            _confirmRestartButton = root.Q<Button>("confirm-restart-button");
             _saveExitButton = root.Q<Button>("save-exit-button");
             _helpBasicButton = root.Q<Button>("help-basic-button");
             _helpEconomyButton = root.Q<Button>("help-economy-button");
@@ -183,7 +179,6 @@ namespace Code.UI.Toolkit
             _pauseMenuOverlay = root.Q<VisualElement>("pause-menu-overlay");
             _pauseSettingsPanel = root.Q<VisualElement>("pause-settings-panel");
             _pauseHelpPanel = root.Q<VisualElement>("pause-help-panel");
-            _restartConfirmPanel = root.Q<VisualElement>("restart-confirm-panel");
             _pauseMenuStatus = root.Q<Label>("pause-menu-status");
             _pauseRunSummary = root.Q<Label>("pause-run-summary");
             _pauseSfxSlider = root.Q<Slider>("pause-sfx-slider");
@@ -213,8 +208,6 @@ namespace Code.UI.Toolkit
             if (_pauseHelpButton != null) _pauseHelpButton.clicked += ShowPauseHelp;
             if (_closePauseHelpButton != null) _closePauseHelpButton.clicked += HidePauseHelp;
             if (_restartRunButton != null) _restartRunButton.clicked += ShowRestartConfirmation;
-            if (_cancelRestartButton != null) _cancelRestartButton.clicked += HideRestartConfirmation;
-            if (_confirmRestartButton != null) _confirmRestartButton.clicked += RestartRun;
             if (_pauseSettingsButton != null) _pauseSettingsButton.clicked += ShowPauseSettings;
             if (_closePauseSettingsButton != null) _closePauseSettingsButton.clicked += HidePauseSettings;
             if (_saveExitButton != null) _saveExitButton.clicked += SaveAndReturnToTitle;
@@ -245,8 +238,6 @@ namespace Code.UI.Toolkit
             if (_pauseHelpButton != null) _pauseHelpButton.clicked -= ShowPauseHelp;
             if (_closePauseHelpButton != null) _closePauseHelpButton.clicked -= HidePauseHelp;
             if (_restartRunButton != null) _restartRunButton.clicked -= ShowRestartConfirmation;
-            if (_cancelRestartButton != null) _cancelRestartButton.clicked -= HideRestartConfirmation;
-            if (_confirmRestartButton != null) _confirmRestartButton.clicked -= RestartRun;
             if (_pauseSettingsButton != null) _pauseSettingsButton.clicked -= ShowPauseSettings;
             if (_closePauseSettingsButton != null) _closePauseSettingsButton.clicked -= HidePauseSettings;
             if (_saveExitButton != null) _saveExitButton.clicked -= SaveAndReturnToTitle;
@@ -647,7 +638,6 @@ namespace Code.UI.Toolkit
             _pauseMenuOverlay.style.display = DisplayStyle.Flex;
             HidePauseSettings();
             HidePauseHelp();
-            HideRestartConfirmation();
             RefreshPauseMenu();
             GameSfxPlayer.Play(GameSfxCue.UiOpen);
         }
@@ -660,7 +650,6 @@ namespace Code.UI.Toolkit
             _pauseMenuOverlay.style.display = DisplayStyle.None;
             HidePauseSettings();
             HidePauseHelp();
-            HideRestartConfirmation();
             if (_restoreSpeedAfterPauseMenu)
                 _speedController?.SetSetting(_speedBeforePauseMenu);
             _restoreSpeedAfterPauseMenu = false;
@@ -674,7 +663,6 @@ namespace Code.UI.Toolkit
 
             _pauseSettingsPanel.style.display = DisplayStyle.Flex;
             HidePauseHelp();
-            HideRestartConfirmation();
             RefreshPauseMenu();
             GameSfxPlayer.Play(GameSfxCue.UiOpen);
         }
@@ -692,7 +680,6 @@ namespace Code.UI.Toolkit
 
             _pauseHelpPanel.style.display = DisplayStyle.Flex;
             HidePauseSettings();
-            HideRestartConfirmation();
             SetHelpTopic(PauseHelpTopic.Basic);
             GameSfxPlayer.Play(GameSfxCue.UiOpen);
         }
@@ -705,19 +692,14 @@ namespace Code.UI.Toolkit
 
         private void ShowRestartConfirmation()
         {
-            if (_restartConfirmPanel == null)
-                return;
-
-            _restartConfirmPanel.style.display = DisplayStyle.Flex;
             HidePauseSettings();
             HidePauseHelp();
-            GameSfxPlayer.Play(GameSfxCue.UiOpen);
-        }
-
-        private void HideRestartConfirmation()
-        {
-            if (_restartConfirmPanel != null)
-                _restartConfirmPanel.style.display = DisplayStyle.None;
+            PopupController.Show(PopupRequest.Confirm(
+                "이번 런을 다시 시작할까요?",
+                "현재 저장과 진행 중인 운영 기록이 삭제됩니다.",
+                RestartRun,
+                confirmLabel: "삭제 후 재시작",
+                destructive: true));
         }
 
         private void RefreshPauseMenu()
@@ -777,9 +759,9 @@ namespace Code.UI.Toolkit
             SceneManager.LoadScene(TitleMenuActions.TitleSceneName);
         }
 
+        // 확인음은 팝업이 낸다.
         private void RestartRun()
         {
-            GameSfxPlayer.Play(GameSfxCue.UiConfirm);
             RunSaveSystem.DeleteSave();
             _speedController?.ResetToNormal();
             SceneManager.LoadScene(TitleMenuActions.GameSceneName);

@@ -3,6 +3,7 @@ using Code.Manager;
 using Code.Dialogue;
 using Code.MapCreateSystem;
 using Code.Units;
+using Code.UI.Popup;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -150,6 +151,9 @@ namespace Code.UI
         private Step _step = Step.BuildRoom;
         private BuildStage _buildStage = BuildStage.PickNode;
         private RectTransform _buildUiTarget;
+
+        // 방 확장 확인은 UI Toolkit 팝업이라 RectTransform이 없다. 이때는 팝업에게 버튼 위치를 묻는다.
+        private bool _buildTargetIsPopup;
         private Node _buildNodeTarget;
         private float _timer;
         private float _stepAge;
@@ -528,6 +532,9 @@ namespace Code.UI
         {
             rect = default;
 
+            if (_buildTargetIsPopup)
+                return PopupController.TryGetConfirmButtonScreenRect(out rect);
+
             if (_buildUiTarget != null)
                 return TryBuildRect(_buildUiTarget, out rect);
 
@@ -545,13 +552,13 @@ namespace Code.UI
         {
             uiTarget = null;
             nodeTarget = null;
+            _buildTargetIsPopup = false;
 
             var panel = NodePanelView.Current;
 
-            var confirm = BuildConfirmPanelView.Current;
-            if (confirm != null && confirm.IsOpen)
+            if (PopupController.IsShowing(DungeonGraphController.ExpandRoomPopupTag))
             {
-                uiTarget = confirm.ConfirmButtonRect;
+                _buildTargetIsPopup = true;
                 return BuildStage.ConfirmRoom;
             }
             if (_step == Step.DeployUnit)
@@ -626,6 +633,7 @@ namespace Code.UI
             {
                 _buildUiTarget = null;
                 _buildNodeTarget = null;
+                _buildTargetIsPopup = false;
                 return;
             }
 

@@ -104,6 +104,10 @@ namespace Code.MapCreateSystem
 
         private static bool WasCancelPressed()
         {
+            // 팝업 위에서 누른 취소는 팝업 몫이다.
+            if (Code.UI.Popup.PopupController.BlocksEscape)
+                return false;
+
             var rightClick = Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame;
             var escape = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
             return rightClick || escape;

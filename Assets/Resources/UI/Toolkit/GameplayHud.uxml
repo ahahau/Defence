@@ -89,14 +89,6 @@
                 <ui:Label name="pause-help-title" text="기본 조작" class="pause-help-title" />
                 <ui:Label name="pause-help-body" text="" class="pause-help-body" />
             </ui:VisualElement>
-            <ui:VisualElement name="restart-confirm-panel" class="restart-confirm-card">
-                <ui:Label text="이번 런을 다시 시작할까요?" class="pause-help-title" />
-                <ui:Label text="현재 저장과 진행 중인 운영 기록이 삭제됩니다." class="pause-help-body" />
-                <ui:VisualElement class="restart-confirm-actions">
-                    <ui:Button name="cancel-restart-button" text="취소" class="pause-menu-button" />
-                    <ui:Button name="confirm-restart-button" text="삭제 후 재시작" class="pause-menu-button pause-menu-danger" />
-                </ui:VisualElement>
-            </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

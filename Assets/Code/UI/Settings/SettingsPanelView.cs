@@ -1,4 +1,5 @@
 using Code.Audio;
+using Code.UI.Popup;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -19,7 +20,6 @@ namespace Code.UI
 
         private GameObject window;
         private GameObject backdrop;
-        private GameObject confirmWindow;
         private GameObject gameGuideWindow;
         private GameObject restartButton;
         private GameObject titleButton;
@@ -74,7 +74,6 @@ namespace Code.UI
                 return;
 
             Toggle(false);
-            SetConfirmVisible(false);
             FitToScene();
         }
 
@@ -87,19 +86,13 @@ namespace Code.UI
 
         private void Update()
         {
-            if (!EscapePressedThisFrame())
+            // 팝업이 떠 있으면 ESC는 팝업 몫이다. 한 번에 둘을 닫으면 취소한 줄 모르고 지나간다.
+            if (!EscapePressedThisFrame() || PopupController.BlocksEscape)
                 return;
 
             if (gameGuideWindow != null && gameGuideWindow.activeSelf)
             {
                 SetGameGuideVisible(false);
-                return;
-            }
-
-            // 확인 창이 떠 있으면 그것부터 닫는다. 한 번에 둘을 닫으면 취소한 줄 모르고 지나간다.
-            if (confirmWindow != null && confirmWindow.activeSelf)
-            {
-                SetConfirmVisible(false);
                 return;
             }
 
@@ -146,8 +139,10 @@ namespace Code.UI
         {
             backdrop = refs.backdrop;
             window = refs.window;
-            confirmWindow = refs.confirmWindow;
             gameGuideWindow = refs.gameGuideWindow;
+
+            // 재시작 확인은 범용 팝업으로 옮겼다. 프리팹의 옛 확인 창은 남아 있지만 띄우지 않는다.
+            refs.confirmWindow.SetActive(false);
             restartButton = refs.restartButton.gameObject;
             titleButton = refs.titleButton.gameObject;
             closeButton = refs.closeButton.gameObject;
@@ -165,11 +160,9 @@ namespace Code.UI
             musicValueLabel.text = Percent(musicSlider.value);
             musicSlider.onValueChanged.AddListener(OnMusicVolumeChanged);
 
-            refs.restartButton.onClick.AddListener(() => SetConfirmVisible(true));
+            refs.restartButton.onClick.AddListener(ShowRestartConfirm);
             refs.titleButton.onClick.AddListener(GoToTitle);
             refs.closeButton.onClick.AddListener(() => Toggle(false));
-            refs.confirmCancelButton.onClick.AddListener(() => SetConfirmVisible(false));
-            refs.confirmAcceptButton.onClick.AddListener(RestartRun);
             refs.guideButton.onClick.AddListener(() => SetGameGuideVisible(true));
             refs.guideCloseButton.onClick.AddListener(() => SetGameGuideVisible(false));
         }
@@ -209,20 +202,19 @@ namespace Code.UI
         private static bool IsInGame =>
             UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != TitleMenuActions.TitleSceneName;
 
-        private void SetConfirmVisible(bool visible)
+        private void ShowRestartConfirm()
         {
-            if (confirmWindow == null)
-                return;
-
-            confirmWindow.SetActive(visible);
-            GameSfxPlayer.Play(visible ? GameSfxCue.UiOpen : GameSfxCue.UiClose);
+            PopupController.Show(PopupRequest.Confirm(
+                "이번 런을 다시 시작할까요?",
+                "현재 저장과 진행 중인 운영 기록이 삭제됩니다.",
+                RestartRun,
+                confirmLabel: "삭제 후 재시작",
+                destructive: true));
         }
 
         /// <summary>저장을 지우고 판을 처음부터 다시 올린다.</summary>
         private void RestartRun()
         {
-            // 되돌릴 수 없는 동작이라 둘러보는 클릭과 다른 소리를 낸다.
-            GameSfxPlayer.Play(GameSfxCue.UiConfirm);
             Code.Persistence.RunSaveSystem.DeleteSave();
             LeaveTo(TitleMenuActions.GameSceneName);
         }
@@ -238,7 +230,6 @@ namespace Code.UI
         /// </summary>
         private void LeaveTo(string sceneName)
         {
-            SetConfirmVisible(false);
             Toggle(false);
             Manager.GameSpeedController.Current?.ResetToNormal();
             UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);

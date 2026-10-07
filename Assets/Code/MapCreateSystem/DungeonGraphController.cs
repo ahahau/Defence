@@ -6,6 +6,7 @@ using Code.Enemies;
 using Code.Events;
 using Code.Tutorial;
 using Code.UI;
+using Code.UI.Popup;
 using Code.Units;
 using Code.Persistence;
 using Code.Manager;
@@ -20,6 +21,9 @@ namespace Code.MapCreateSystem
 {
     public class DungeonGraphController : MonoBehaviour
     {
+        /// <summary>방 확장 비용 팝업의 이름. 튜토리얼이 이 팝업의 확장 버튼을 강조할 때 쓴다.</summary>
+        public const string ExpandRoomPopupTag = "build.expand-room";
+
         public static DungeonGraphController Current { get; private set; }
 
         private readonly Vector2Int[] directions =
@@ -70,10 +74,6 @@ namespace Code.MapCreateSystem
 
         [SerializeField] private GameEventChannelSO nodeEventChannel;
 
-        [Header("Build Warning")]
-        [SerializeField]
-        private BuildConfirmPanelView buildConfirmPanel;
-
         [Header("Input")]
         [SerializeField]
         private InputDataSO inputDataSO;
@@ -102,7 +102,6 @@ namespace Code.MapCreateSystem
         private readonly List<DungeonNode> buildParentCandidates = new();
         private readonly List<RaycastResult> uiRaycastResults = new();
         private Node lastBuiltNodeView;
-        private Vector2 lastBuildClickScreenPosition;
         private int lastBuiltFrame = -1;
         private bool hasPendingMouseInput;
         private bool hasPendingRightMouseInput;
@@ -282,7 +281,7 @@ namespace Code.MapCreateSystem
             if (graph.IsOccupied(lockedNode.GridPosition) || lockedNode.FromNode.FreePorts <= 0)
                 return;
 
-            ShowBuildConfirmPanel(lockedNode, inputDataSO.ReadScreenMousePosition());
+            ShowBuildConfirmPopup(lockedNode);
         }
 
         private void RequestBuildCost(Node lockedNode)
@@ -327,10 +326,9 @@ namespace Code.MapCreateSystem
             if (evt.Node == null || graph.IsOccupied(evt.Node.GridPosition))
                 return;
 
-            if (buildConfirmPanel == null)
-                return;
-
-            buildConfirmPanel.ShowNotEnoughGoldAt(evt.GoldAmount, evt.CurrentGold, lastBuildClickScreenPosition);
+            // 팝업을 띄울 때는 금화가 충분했지만 확인을 누르기 전에 줄어든 경우다.
+            PopupController.Show(PopupRequest.Notice("골드 부족",
+                $"확장 비용이 부족합니다.\n보유: {evt.CurrentGold:N0}G / 필요: {evt.GoldAmount:N0}G"));
         }
 
         public void SelectBuildType(DungeonNodeType type)
@@ -464,16 +462,16 @@ namespace Code.MapCreateSystem
             }
         }
 
-        private void ShowBuildConfirmPanel(Node lockedNode, Vector2 screenPosition)
+        // 표시 비용은 실제 청구액(건설 할인 반영)과 같아야 한다. 금화가 모자라면 팝업이 확장 버튼을 잠근다.
+        private void ShowBuildConfirmPopup(Node lockedNode)
         {
-            lastBuildClickScreenPosition = screenPosition;
-            if (buildConfirmPanel != null)
-            {
-                buildConfirmPanel.ShowAt(buildGoldCost, screenPosition, () => RequestBuildCost(lockedNode));
-                return;
-            }
+            var costManager = CostManager.Current;
+            int cost = costManager != null ? costManager.GetDiscountedBuildCost(buildGoldCost) : buildGoldCost;
+            int gold = costManager != null ? costManager.CurrentGold : 0;
 
-            Debug.LogError("DungeonGraphController needs an existing BuildConfirmPanelView assigned in the inspector.", this);
+            PopupController.Show(PopupRequest
+                .Cost("방 확장", "이 위치를 확장합니다.", cost, gold, () => RequestBuildCost(lockedNode), confirmLabel: "확장")
+                .WithTag(ExpandRoomPopupTag));
         }
 
         private Vector2Int[] ResolveBuildCandidateOffsets(DungeonNode node)
@@ -550,7 +548,7 @@ namespace Code.MapCreateSystem
 
         private void ProcessMouseInput()
         {
-            if (buildConfirmPanel != null && buildConfirmPanel.IsOpen)
+            if (PopupController.IsOpen)
                 return;
 
             if (IsPointerOverUi() || IsPointerOverNodePanel())
@@ -634,7 +632,7 @@ namespace Code.MapCreateSystem
 
         private void ProcessRightMouseInput()
         {
-            if (buildConfirmPanel != null && buildConfirmPanel.IsOpen)
+            if (PopupController.IsOpen)
                 return;
 
             if (IsPointerOverUi())

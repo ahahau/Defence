@@ -27,9 +27,29 @@ namespace Code.UI.Popup
         private PopupView _view;
         private PopupRequest _current;
         private bool _pausedGame;
+        private static int _escapeHandledFrame = -1;
 
-        /// <summary>팝업이 떠 있는가. ESC를 쓰는 다른 화면은 이 값이 참이면 입력을 양보한다.</summary>
+        /// <summary>팝업이 떠 있는가.</summary>
         public static bool IsOpen => _instance != null && _instance._current != null;
+
+        /// <summary>
+        /// 이번 프레임의 ESC를 팝업이 가져가는가. ESC를 읽는 다른 화면은 이 값이 참이면 양보한다.
+        /// 팝업이 같은 프레임에 ESC로 먼저 닫혔어도 참이다 — 그러지 않으면 Update 순서에 따라
+        /// 팝업을 닫은 같은 키가 뒤의 창까지 닫는다.
+        /// </summary>
+        public static bool BlocksEscape => IsOpen || _escapeHandledFrame == Time.frameCount;
+
+        /// <summary>지금 떠 있는 팝업이 이 이름(<see cref="PopupRequest.WithTag"/>)인가.</summary>
+        public static bool IsShowing(string tag) =>
+            IsOpen && !string.IsNullOrEmpty(tag) && _instance._current.Tag == tag;
+
+        /// <summary>떠 있는 팝업의 확인 버튼 화면 좌표(픽셀, 왼쪽 아래 원점). 튜토리얼 강조용.</summary>
+        public static bool TryGetConfirmButtonScreenRect(out Rect rect)
+        {
+            rect = default;
+            return IsOpen && _instance._current.ConfirmButtonIndex >= 0
+                          && _instance._view.TryGetButtonScreenRect(_instance._current.ConfirmButtonIndex, out rect);
+        }
 
         /// <summary>팝업을 띄운다. 이미 떠 있으면 대기열 뒤에 선다. 만들 수 없으면 false.</summary>
         public static bool Show(PopupRequest request)
@@ -66,7 +86,11 @@ namespace Code.UI.Popup
 
         private void Update()
         {
-            if (_current != null && _current.CanCancel && WasCancelPressed())
+            if (_current == null || !WasCancelPressed())
+                return;
+
+            _escapeHandledFrame = Time.frameCount;
+            if (_current.CanCancel)
                 Close(_current.OnCancel, GameSfxCue.UiClose);
         }
 

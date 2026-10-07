@@ -54,9 +54,10 @@ Assets/GameModules/UI/UxmlAndUss/
      * 게임을 멈춰야 하면 `.PauseGame()`을 붙인다. 기본은 멈추지 않는다.
      * 한 번에 하나만 뜨고 나머지는 대기열에 선다. 콜백은 팝업이 닫힌 뒤 불린다.
      * 팝업은 금화를 만지지 않는다. 결제는 확인 콜백에서 기존 결제 경로로 한다.
-   * 에셋: `Shared/Popup/Popup.uxml`·`Popup.uss`. `Assets/Resources/UI/PopupSettings.asset`(`PopupSettingsSO`)이 UXML과 전용 패널 `Assets/GameModules/UI/PopupPanelSettings.asset`(Sort Order 1000)을 참조한다.
-   * **uGUI와의 앞뒤는 문서의 `sortingOrder`가 아니라 PanelSettings의 Sort Order로 정해진다.** 공용 `RuntimePanelSettings`는 0이라 메인 uGUI 캔버스(50) 아래에 깔린다. uGUI 위에 떠야 하는 화면은 전용 PanelSettings를 쓴다. 하루 전환 연출(30000)보다는 아래에 둔다.
-   * ESC를 쓰는 다른 화면은 `PopupController.IsOpen`이 참이면 입력을 양보한다.
+   * 에셋: `Shared/Popup/Popup.uxml`·`Popup.uss`. `Assets/Resources/UI/PopupSettings.asset`(`PopupSettingsSO`)이 UXML과 전용 패널 `Assets/GameModules/UI/PopupPanelSettings.asset`(Sort Order 10000)을 참조한다.
+   * **uGUI와의 앞뒤는 문서의 `sortingOrder`가 아니라 PanelSettings의 Sort Order로 정해진다.** 공용 `RuntimePanelSettings`는 0이라 메인 uGUI 캔버스(50) 아래에 깔린다. uGUI 위에 떠야 하는 화면은 전용 PanelSettings를 쓴다. 현재 캔버스 정렬: 메인 50, 설정창 5000, 하루 전환 연출 30000~30002.
+   * 튜토리얼처럼 특정 팝업을 기다리는 코드는 `PopupRequest.WithTag(...)` + `PopupController.IsShowing(tag)`로 확인하고, 강조할 버튼 위치는 `PopupController.TryGetConfirmButtonScreenRect`(왼쪽 아래 원점 픽셀)로 얻는다. 예: 방 확장 팝업 `DungeonGraphController.ExpandRoomPopupTag`.
+   * ESC를 읽는 화면은 `PopupController.BlocksEscape`가 참이면 양보한다. 팝업이 같은 프레임에 ESC로 먼저 닫혀도 참이다.
    * 일반적인 팝업(확인/취소, 알림, 비용 확인)은 반드시 이 라이브러리를 사용한다.
    * 특수한 팝업이 필요하면 사용자에게 사전 설계를 묻는다.
    * 가능하고 그것이 더 효율적이라면, 팝업 라이브러리를 개선해서 특수 팝업을 띄운다.

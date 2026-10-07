@@ -35,7 +35,7 @@
 .pause-menu-button { height: 42px; margin-top: 6px; color: var(--text-body); background-color: var(--surface-control); border-width: 1px; border-color: var(--edge-quiet); }
 .pause-menu-primary { color: var(--text); background-color: var(--confirm); border-color: var(--confirm-edge); }
 .pause-menu-danger { color: var(--loss); margin-top: 18px; }
-.pause-settings-card, .pause-help-card, .restart-confirm-card { display: none; position: absolute; width: 310px; margin-left: 420px; }
+.pause-settings-card, .pause-help-card { display: none; position: absolute; width: 310px; margin-left: 420px; }
 .pause-setting-label { color: var(--text-body); font-size: 12px; margin-top: 14px; }
 .pause-setting-value { color: var(--accent); font-size: 12px; -unity-text-align: middle-right; margin-top: 3px; }
 .pause-help-tabs { flex-direction: row; margin-top: 13px; }
@@ -43,5 +43,3 @@
 .pause-help-tab.is-selected { color: var(--accent); background-color: var(--surface-control); border-color: var(--edge); }
 .pause-help-title { color: var(--accent-soft); font-size: 14px; -unity-font-style: bold; margin-top: 16px; }
 .pause-help-body { color: var(--text-body); font-size: 12px; white-space: normal; margin-top: 8px; }
-.restart-confirm-actions { flex-direction: row; margin-top: 14px; }
-.restart-confirm-actions .pause-menu-button { flex-grow: 1; margin-right: 4px; }
