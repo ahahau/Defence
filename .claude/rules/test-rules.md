@@ -4,7 +4,7 @@ paths:
 ---
 # 테스트 규칙
 
-1. 테스트는 EditMode 하나뿐이다. `Assets/Tests/EditMode/Reflected/`(asmdef `Defence.EditMode.Tests`, Runtime 참조).
+1. 테스트는 EditMode 하나뿐이다. `Assets/Tests/EditMode/Reflected/`(asmdef `Defence.EditMode.Tests`, Runtime·GameLib 참조).
    * PlayMode 테스트 어셈블리는 없다. 플레이 동작은 `/playtest`로 실측한다.
    * 실행: `unity cmd run_tests --mode EditMode [--filter <이름>]`. 에디터가 열려 있으면 배치모드 실행이 막힌다.
 2. 게임 타입은 Runtime asmdef를 참조해서 직접 써도 된다. 다만 기존 테스트 다수는 리플렉션을 쓴다.
@@ -19,6 +19,8 @@ paths:
 | `GameRulesTests` | 게임 규칙 전반 (가장 큼) |
 | `SettlementRegressionTests` | 정산·장부 회귀 |
 | `WeeklyLoanLedgerTests` | 대출·청산일 |
+| `FacilityQueueTests` | 시설 대기열 FIFO·동시 이용 수·대기 만족도 감액 |
+| `PopupRequestTests` | 범용 팝업 요청 규칙 |
 | `AssetWiringTests` | 에셋 연결 (그림·프리팹·아이콘·WaveConfig·씬 배선) |
 | `CombatFormulaTests` | 전투 공식 |
 | `EncounterVarietyTests` | 웨이브 편성 다양성 |

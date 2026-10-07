@@ -95,3 +95,8 @@
   - `EveryStat_HasIcon`: 테스트의 `RequireType`이 Runtime 어셈블리만 찾아 GameLib의 `StatSO`를 못 찾음 → GameLib도 찾도록 수정.
   - `GoldPanel_ListensToBothTheCostAndTheDayChannel`: `GoldCostView` 네임스페이스가 `Blade.Core`(규칙 위반) → `Code.UI`로 변경, `GoldHudPresenter`·`GameplayHudToolkitBootstrap`의 `using Blade.Core` 제거. 또 채널 구독은 표시/구독 분리 이후 씬의 `GoldHudPresenter`가 맡는데 테스트는 프리팹의 `GoldCostView`를 보고 있었음 → 씬의 프레젠터가 비용·날짜 채널과 view를 모두 가졌는지 검사하도록 수정. (프리팹의 `GoldCostView`에 남은 채널 값은 옛 직렬화 데이터)
   - `OpeningScene_HasNoPlayerAndBlacksmithInstallsAtCentre`, `OpeningRoom_HasFourDoorsAndUsesEastDoorForIntruders`: 9월 22일 폴더 이동 리팩터링 때 에디터 전용 `DungeonGraphController.EditorBakeInitialScenePreview`가 지워져 NRE → `#if UNITY_EDITOR`로 복원. 플레이 모드 `RebuildInitialGraph`와 같은 본문은 `BuildInitialGraph()`로 묶음.
+- 10월 5~6일에 남아 있던 시설 대기 만족도·부활 마력 등급 보정 작업을 기획서와 대조해 검증·마무리.
+  - 대조 결과 기획서와 일치: 대기 1초당 수입 5%p 감액(최대 50%, 최소 1G), 상점 특성 보정은 감액된 금액에 적용, 10초부터 1초마다 같은 목적·도달 가능한 대체 시설 탐색, 포기한 시설 재방문 안 함, 대체 시설이 없으면 계속 대기. 방 상세 두 줄(이용 수/정원·대기 인원, 최장 대기·최대 감액). 부활 마력 등급 1점당 최대 +3·회복 +0.1/초, HUD 칩(현재/최대·대기 인원)과 부활 대기 순서 줄.
+  - 빠져 있던 테스트 추가: `FacilityQueueTests` 8개(감액 0/4/10/30초, 최소 1G, FIFO 순서, 동시 이용 수, 대기 취소 뒤 다음 손님 진입). 테스트 asmdef에 `DungeonKeeper.GameLib` 참조 추가(GameLib `Entity`를 상속한 `Enemy`를 직접 쓰기 위해).
+  - 전체 EditMode 164/164 통과, 플레이 모드 HUD 부활 마력 표시(등급 0 → 30/30·회복 1/초) 확인.
+  - 기획서 구현 현황 갱신: 시설 대기열·만족도와 부활 마력 HUD·등급 보정을 구현됨으로 반영.

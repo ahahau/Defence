@@ -23,6 +23,8 @@ namespace Code.UI.Toolkit
         private Label _debtLabel;
         private Label _dayLabel;
         private Label _magicLabel;
+        private Label _revivalManaLabel;
+        private Label _revivalQueueLabel;
         private Label _gradeLabel;
         private Label _threatLabel;
         private Label _partySummaryLabel;
@@ -33,6 +35,8 @@ namespace Code.UI.Toolkit
         private Label _nodeDetailState;
         private Label _nodeDetailUnits;
         private Label _nodeDetailFacility;
+        private Label _nodeDetailFacilityUsage;
+        private Label _nodeDetailDurability;
         private Label _nodeDetailTraps;
         private Label _nodeDetailHint;
         private Label _unitDetailName;
@@ -86,6 +90,7 @@ namespace Code.UI.Toolkit
         private CostManager _costManager;
         private DayManager _dayManager;
         private MagicManager _magicManager;
+        private UnitRevivalSystem _revivalSystem;
         private GameSpeedController _speedController;
         private float _nextPollAt;
         private int _lastActiveThreat = -1;
@@ -127,6 +132,8 @@ namespace Code.UI.Toolkit
             _debtLabel = root.Q<Label>("debt-label");
             _dayLabel = root.Q<Label>("day-label");
             _magicLabel = root.Q<Label>("magic-label");
+            _revivalManaLabel = root.Q<Label>("revival-mana-label");
+            _revivalQueueLabel = root.Q<Label>("revival-queue-label");
             _gradeLabel = root.Q<Label>("grade-label");
             _threatLabel = root.Q<Label>("threat-label");
             _partySummaryLabel = root.Q<Label>("party-summary-label");
@@ -137,6 +144,8 @@ namespace Code.UI.Toolkit
             _nodeDetailState = root.Q<Label>("node-detail-state");
             _nodeDetailUnits = root.Q<Label>("node-detail-units");
             _nodeDetailFacility = root.Q<Label>("node-detail-facility");
+            _nodeDetailFacilityUsage = root.Q<Label>("node-detail-facility-usage");
+            _nodeDetailDurability = root.Q<Label>("node-detail-durability");
             _nodeDetailTraps = root.Q<Label>("node-detail-traps");
             _nodeDetailHint = root.Q<Label>("node-detail-hint");
             _unitDetailName = root.Q<Label>("unit-detail-name");
@@ -255,6 +264,7 @@ namespace Code.UI.Toolkit
             _dayManager = DayManager.Current;
             _magicManager = FindAnyObjectByType<MagicManager>(FindObjectsInactive.Include);
             _speedController = GameSpeedController.Current;
+            BindRevivalSystem();
             if (_costManager != null) _costManager.StateChanged += Refresh;
             if (_dayManager != null)
             {
@@ -276,7 +286,23 @@ namespace Code.UI.Toolkit
                 _dayManager.PhaseChanged -= HandlePhaseChanged;
             }
             if (_magicManager != null) _magicManager.MagicChanged -= HandleMagicChanged;
+            if (_revivalSystem != null) _revivalSystem.StateChanged -= HandleRevivalStateChanged;
             if (_speedController != null) _speedController.SettingChanged -= HandleSpeedChanged;
+            _revivalSystem = null;
+        }
+
+        private void BindRevivalSystem()
+        {
+            var current = UnitRevivalSystem.Current;
+            if (_revivalSystem == current)
+                return;
+
+            if (_revivalSystem != null)
+                _revivalSystem.StateChanged -= HandleRevivalStateChanged;
+
+            _revivalSystem = current;
+            if (_revivalSystem != null)
+                _revivalSystem.StateChanged += HandleRevivalStateChanged;
         }
 
         private void HandleDayChanged(int _) => Refresh();
@@ -290,6 +316,7 @@ namespace Code.UI.Toolkit
             Refresh();
         }
         private void HandleMagicChanged(int _, int __) => Refresh();
+        private void HandleRevivalStateChanged() => RefreshRevivalMana();
         private void HandleSpeedChanged(float _) => RefreshSpeedButtons();
 
         private void Refresh()
@@ -298,6 +325,7 @@ namespace Code.UI.Toolkit
             _dayManager ??= DayManager.Current;
             _magicManager ??= FindAnyObjectByType<MagicManager>(FindObjectsInactive.Include);
             _speedController ??= GameSpeedController.Current;
+            BindRevivalSystem();
             RefreshEconomy();
             RefreshWorldState();
             RefreshRoster();
@@ -323,8 +351,58 @@ namespace Code.UI.Toolkit
                 var maximum = _magicManager?.MaxMagic ?? 0;
                 _magicLabel.text = $"{Mathf.Max(0, maximum - used)} / {maximum}";
             }
+            RefreshRevivalMana();
             var grade = DungeonGradeManager.Current;
             if (_gradeLabel != null) _gradeLabel.text = grade == null ? "등급 준비 중" : $"{grade.Grade} · {grade.GradeLabel}";
+        }
+
+        private void RefreshRevivalMana()
+        {
+            if (_revivalSystem == null)
+            {
+                if (_revivalManaLabel != null)
+                    _revivalManaLabel.text = "준비 중";
+                SetRevivalQueueText("부활 대기열 준비 중");
+                return;
+            }
+
+            if (_revivalManaLabel != null)
+                _revivalManaLabel.text = $"{_revivalSystem.CurrentRevivalMana} / {_revivalSystem.MaxRevivalMana} · 대기 {_revivalSystem.PendingCount}명";
+
+            if (_revivalSystem.PendingCount == 0)
+            {
+                SetRevivalQueueText("부활 대기열 없음");
+                return;
+            }
+
+            var entries = new List<string>();
+            foreach (var unit in _revivalSystem.PendingUnits)
+            {
+                if (unit == null)
+                    continue;
+
+                var unitName = unit.Data != null && !string.IsNullOrWhiteSpace(unit.Data.Name)
+                    ? unit.Data.Name
+                    : "유닛";
+                var remaining = Mathf.CeilToInt(_revivalSystem.GetRemainingSeconds(unit));
+                var waitState = remaining > 0
+                    ? $"{remaining}초"
+                    : $"마력 {_revivalSystem.GetRevivalCost(unit)}";
+                entries.Add($"{unitName} {waitState}");
+            }
+
+            SetRevivalQueueText(entries.Count > 0
+                ? $"부활 대기: {string.Join(" → ", entries)}"
+                : "부활 대기열 없음");
+        }
+
+        private void SetRevivalQueueText(string text)
+        {
+            if (_revivalQueueLabel == null)
+                return;
+
+            _revivalQueueLabel.text = text;
+            _revivalQueueLabel.tooltip = text;
         }
 
         private string BuildDebtText()
@@ -575,15 +653,50 @@ namespace Code.UI.Toolkit
                 _nodeDetailState.text = _selectedNode.IsEnemySpawnNode ? "침입 입구 · 유닛 배치 불가" : "일반 방";
             if (_nodeDetailUnits != null)
                 _nodeDetailUnits.text = $"유닛 {_selectedNode.AssignedUnitCount} / {_selectedNode.UnitCapacity}";
+            var building = _selectedNode.AssignedBuilding;
             if (_nodeDetailFacility != null)
-            {
-                var building = _selectedNode.AssignedBuilding;
                 _nodeDetailFacility.text = building?.Data != null ? $"시설 {building.Data.DisplayName}" : "시설 없음";
-            }
+            if (_nodeDetailFacilityUsage != null)
+                _nodeDetailFacilityUsage.text = BuildFacilityUsage(building);
+            if (_nodeDetailDurability != null)
+                _nodeDetailDurability.text = BuildFacilityStatus(building);
             if (_nodeDetailTraps != null)
                 _nodeDetailTraps.text = $"설치물 {_selectedNode.TrapGrid?.PlacedBuildings.Count ?? 0}개";
             if (_nodeDetailHint != null)
                 _nodeDetailHint.text = DayManager.IsManagementWindow ? "하단에서 배치·함정·시설을 관리할 수 있습니다." : "일시정지하면 배치와 설치를 관리할 수 있습니다.";
+        }
+
+        private static string BuildFacilityUsage(Building building)
+        {
+            if (building == null)
+                return "시설 이용: 대상 없음";
+
+            if (building.IsDestroyed)
+                return "시설 이용: 중단";
+
+            if (building.DwellSeconds <= 0f)
+                return "시설 이용: 손님 체류 없음";
+
+            int waitSeconds = Mathf.FloorToInt(building.LongestVisitorWaitSeconds);
+            int maxPenalty = Mathf.RoundToInt(FacilityDwellRules.MaxQueueIncomePenalty * 100f);
+            return $"시설 이용 {building.CurrentVisitorCount}/{building.MaxConcurrentVisitors} · 대기 {building.WaitingVisitorCount}명\n최장 대기 {waitSeconds}초 · 대기 수입 최대 -{maxPenalty}%";
+        }
+
+        private string BuildFacilityStatus(Building building)
+        {
+            if (building == null)
+                return "시설 내구도: 대상 없음";
+
+            if (building.IsDestroyed)
+                return "시설 상태: 파괴됨";
+
+            var operation = building.IsReopening
+                ? $"{building.ReopenDaysRemaining(_dayManager?.CurrentDay ?? 0)}일 뒤 재개"
+                : building.IsClosed ? "폐쇄" : "운영 중";
+            var durability = building.IsDestructible
+                ? $"내구도 {building.CurrentDurability}/{building.MaxDurability}"
+                : "내구도 고정";
+            return $"{durability} · 수리 {GoldText.Amount(building.RepairCost)} · {operation}";
         }
 
         private void RefreshManagementActions()

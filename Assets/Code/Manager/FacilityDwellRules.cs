@@ -23,6 +23,12 @@ namespace Code.Manager
         /// <summary>완전히 지쳤을 때 남는 이동 속도 비율.</summary>
         public const float MinMoveMultiplier = 0.6f;
 
+        /// <summary>시설 줄에서 기다린 1초마다 줄어드는 이용 수입 비율.</summary>
+        public const float QueueIncomePenaltyPerSecond = 0.05f;
+
+        /// <summary>대기 때문에 줄어들 수 있는 이용 수입의 최대 비율.</summary>
+        public const float MaxQueueIncomePenalty = 0.5f;
+
         /// <summary>
         /// 이 시설에서 1초 머물 때 쓰는 금화.
         ///
@@ -36,6 +42,21 @@ namespace Code.Manager
                 return 0f;
 
             return totalGold / dwellSeconds;
+        }
+
+        /// <summary>
+        /// 대기 만족도를 이용 총액에 반영한다. 대기가 길어도 최소 절반은 지불하므로
+        /// 대기열이 시설 방문 자체를 완전히 무의미하게 만들지는 않는다.
+        /// </summary>
+        public static int ApplyQueueSatisfaction(int totalGold, float waitSeconds)
+        {
+            if (totalGold <= 0)
+                return 0;
+
+            var penalty = Mathf.Min(
+                MaxQueueIncomePenalty,
+                Mathf.Max(0f, waitSeconds) * QueueIncomePenaltyPerSecond);
+            return Mathf.Max(1, Mathf.CeilToInt(totalGold * (1f - penalty)));
         }
 
         /// <summary>피로 0~100을 공격력 배율로. 지칠수록 약해진다.</summary>

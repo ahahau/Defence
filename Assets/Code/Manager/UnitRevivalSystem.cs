@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Code.Core;
 using Code.Events;
@@ -35,6 +36,12 @@ namespace Code.Manager
         [SerializeField, Min(0f), Tooltip("초당 자연 회복하는 부활 마력.")]
         private float revivalManaRegenPerSecond = 1f;
 
+        [SerializeField, Min(0), Tooltip("던전 등급 1점마다 늘어나는 부활 마력 최대치.")]
+        private int maxManaPerDungeonGrade = 3;
+
+        [SerializeField, Min(0f), Tooltip("던전 등급 1점마다 늘어나는 초당 부활 마력 회복량.")]
+        private float manaRegenPerDungeonGrade = 0.1f;
+
         [SerializeField, Min(0.1f), Tooltip("쓰러진 부하를 찾는 주기(초). 매 프레임 뒤질 이유가 없다.")]
         private float scanInterval = 0.5f;
 
@@ -51,10 +58,17 @@ namespace Code.Manager
         private float _scanTimer;
         private float _currentRevivalMana;
         private int _lastPublishedRevivalMana = -1;
+        private int _lastPublishedMaxRevivalMana = -1;
 
         public int PendingCount => _pending.Count;
+        /// <summary>먼저 쓰러진 유닛부터 부활 마력을 받는 대기열이다.</summary>
+        public IReadOnlyList<Unit> PendingUnits => _revivalOrder;
         public int CurrentRevivalMana => Mathf.FloorToInt(_currentRevivalMana);
-        public int MaxRevivalMana => maxRevivalMana;
+        public int MaxRevivalMana => maxRevivalMana + DungeonGrade * maxManaPerDungeonGrade;
+        public float RevivalManaRegenPerSecond => revivalManaRegenPerSecond + DungeonGrade * manaRegenPerDungeonGrade;
+
+        /// <summary>부활 마력 또는 부활 대기열이 바뀌었을 때 HUD가 즉시 갱신한다.</summary>
+        public event Action StateChanged;
 
         /// <summary>그 부하를 되살리는 데 드는 값. 상태창이 같은 숫자를 보여줘야 한다.</summary>
         public int GetRevivalCost(Unit unit)
@@ -80,8 +94,9 @@ namespace Code.Manager
             }
 
             Current = this;
-            _currentRevivalMana = maxRevivalMana;
+            _currentRevivalMana = MaxRevivalMana;
             RaiseRevivalManaChanged();
+            RaiseStateChanged();
         }
 
         private void OnDestroy()
@@ -133,10 +148,15 @@ namespace Code.Manager
                 _pending[unit] = Mathf.Max(0f, _pending[unit] - deltaTime);
             }
 
-            foreach (var unit in _lost)
+            if (_lost.Count > 0)
             {
-                _pending.Remove(unit);
-                _revivalOrder.Remove(unit);
+                foreach (var unit in _lost)
+                {
+                    _pending.Remove(unit);
+                    _revivalOrder.Remove(unit);
+                }
+
+                RaiseStateChanged();
             }
 
             TryReviveReadyUnits();
@@ -166,29 +186,51 @@ namespace Code.Manager
                 _revivalOrder.RemoveAt(0);
                 unit.Revive();
                 RaiseRevivalManaChanged();
+                RaiseStateChanged();
                 costEventChannel?.RaiseEvent(new UnitRevivedEvent(unit, cost, CurrentRevivalMana));
             }
         }
 
         private void RegenerateRevivalMana(float deltaTime)
         {
-            if (_currentRevivalMana >= maxRevivalMana || revivalManaRegenPerSecond <= 0f)
+            var maximum = MaxRevivalMana;
+            if (_currentRevivalMana > maximum)
+                _currentRevivalMana = maximum;
+
+            var regeneration = RevivalManaRegenPerSecond;
+            if (_currentRevivalMana >= maximum || regeneration <= 0f)
+            {
+                if (RaiseRevivalManaChanged())
+                    RaiseStateChanged();
                 return;
+            }
 
             _currentRevivalMana = Mathf.Min(
-                maxRevivalMana,
-                _currentRevivalMana + revivalManaRegenPerSecond * deltaTime);
-            RaiseRevivalManaChanged();
+                maximum,
+                _currentRevivalMana + regeneration * deltaTime);
+            if (RaiseRevivalManaChanged())
+                RaiseStateChanged();
         }
 
-        private void RaiseRevivalManaChanged()
+        private bool RaiseRevivalManaChanged()
         {
             var roundedMana = CurrentRevivalMana;
-            if (_lastPublishedRevivalMana == roundedMana)
-                return;
+            var maximum = MaxRevivalMana;
+            if (_lastPublishedRevivalMana == roundedMana
+                && _lastPublishedMaxRevivalMana == maximum)
+                return false;
 
             _lastPublishedRevivalMana = roundedMana;
-            costEventChannel?.RaiseEvent(new RevivalManaChangedEvent(roundedMana, maxRevivalMana));
+            _lastPublishedMaxRevivalMana = maximum;
+            costEventChannel?.RaiseEvent(new RevivalManaChangedEvent(roundedMana, maximum));
+            return true;
+        }
+
+        private int DungeonGrade => DungeonGradeManager.Current != null ? DungeonGradeManager.Current.Grade : 0;
+
+        private void RaiseStateChanged()
+        {
+            StateChanged?.Invoke();
         }
 
         /// <summary>
@@ -197,6 +239,7 @@ namespace Code.Manager
         /// </summary>
         private void CollectNewlyDowned()
         {
+            var addedPendingUnit = false;
             foreach (var node in Node.ActiveNodes)
             {
                 if (node == null)
@@ -211,9 +254,13 @@ namespace Code.Manager
 
                     _pending.Add(unit, revivalSeconds);
                     _revivalOrder.Add(unit);
+                    addedPendingUnit = true;
                     costEventChannel?.RaiseEvent(new UnitDownedEvent(unit, revivalSeconds, GetRevivalCost(unit)));
                 }
             }
+
+            if (addedPendingUnit)
+                RaiseStateChanged();
         }
     }
 }

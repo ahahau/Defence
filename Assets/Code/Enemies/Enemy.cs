@@ -316,7 +316,7 @@ namespace Code.Enemies
                 return true;
 
             // 시설별 줄은 방을 막지 않는다. 자리가 날 때까지 이 손님만 기다린다.
-            if (TickFacilityQueue())
+            if (TickFacilityQueue(deltaTime))
                 return true;
 
             _chaseTimer -= deltaTime;
@@ -684,6 +684,10 @@ namespace Code.Enemies
         private Building _dwellFacility;
         private Building _waitingFacility;
         private float _dwellRemaining;
+        private int _dwellGoldTotal;
+        private float _facilityWaitSeconds;
+        private float _nextFacilityAlternativeCheck;
+        private readonly HashSet<Building> _abandonedFacilities = new();
 
         /// <summary>낼 금화의 소수점 나머지. 초당 액수가 1 미만이어도 모여서 결국 지불된다.</summary>
         private float _dwellGoldCarry;
@@ -707,6 +711,9 @@ namespace Code.Enemies
 
         /// <summary>자리가 날 때까지 기다리는 시설. 없으면 줄을 서지 않는다.</summary>
         public Building WaitingFacility => _waitingFacility;
+
+        /// <summary>현재 시설의 대기열에서 보낸 게임 시간.</summary>
+        public float FacilityWaitSeconds => _waitingFacility != null ? _facilityWaitSeconds : 0f;
 
         /// <summary>
         /// 오늘 향할 곳. 보물을 노리고 온 자만 금고로 직진하고, 나머지는 볼일이 있는 시설로 간다.
@@ -732,7 +739,13 @@ namespace Code.Enemies
         /// </summary>
         private Node FindErrandNode()
         {
-            if (_isReturning || RemainingBudget <= 0 || HasFulfilledPurpose)
+            return FindErrandNodeExcept(null, _abandonedFacilities.Count > 0);
+        }
+
+        private Node FindErrandNodeExcept(Building excludedFacility, bool requireReachable)
+        {
+            if (_isReturning || RemainingBudget <= 0 || HasFulfilledPurpose
+                || (requireReachable && (mover == null || mover.CurrentNode == null)))
                 return null;
 
             Node best = null;
@@ -746,12 +759,20 @@ namespace Code.Enemies
 
                 var facility = node.AssignedBuilding;
                 if (facility == null || !facility.AcceptsDwell
+                    || facility == excludedFacility || _abandonedFacilities.Contains(facility)
                     || _visitedFacilities.Contains(facility) || !MatchesVisitPurpose(facility))
                     continue;
 
                 var distance = ((Vector2)node.transform.position - from).sqrMagnitude;
                 if (distance >= bestDistance)
                     continue;
+
+                if (requireReachable)
+                {
+                    List<Node> path = NodePathfinder.FindPath(mover.CurrentNode, node, candidate => candidate.IsPassBlocked);
+                    if (path == null || path.Count < 2)
+                        continue;
+                }
 
                 bestDistance = distance;
                 best = node;
@@ -773,21 +794,26 @@ namespace Code.Enemies
 
             var facility = node.AssignedBuilding;
             if (facility == null || !facility.AcceptsDwell || _visitedFacilities.Contains(facility)
+                || _abandonedFacilities.Contains(facility)
                 || RemainingBudget <= 0 || !MatchesVisitPurpose(facility))
                 return false;
 
             if (!facility.TryStartVisit(this))
             {
                 _waitingFacility = facility;
+                _facilityWaitSeconds = 0f;
+                _nextFacilityAlternativeCheck = FacilityDwellRules.MaxQueueIncomePenalty
+                    / FacilityDwellRules.QueueIncomePenaltyPerSecond;
                 return true;
             }
 
+            _facilityWaitSeconds = 0f;
             BeginDwell(facility);
             return true;
         }
 
         /// <summary>줄 맨 앞이 되어 자리가 난 손님만 실제 이용을 시작한다.</summary>
-        private bool TickFacilityQueue()
+        private bool TickFacilityQueue(float deltaTime)
         {
             if (_waitingFacility == null)
                 return false;
@@ -796,11 +822,28 @@ namespace Code.Enemies
             {
                 _waitingFacility.CancelVisit(this);
                 _waitingFacility = null;
+                _facilityWaitSeconds = 0f;
                 return false;
             }
 
+            _facilityWaitSeconds += Mathf.Max(0f, deltaTime);
             if (!_waitingFacility.TryStartVisit(this))
+            {
+                if (_facilityWaitSeconds >= _nextFacilityAlternativeCheck)
+                {
+                    _nextFacilityAlternativeCheck = _facilityWaitSeconds + 1f;
+                    if (FindErrandNodeExcept(_waitingFacility, true) != null)
+                    {
+                        _abandonedFacilities.Add(_waitingFacility);
+                        _waitingFacility.CancelVisit(this);
+                        _waitingFacility = null;
+                        _facilityWaitSeconds = 0f;
+                        MoodChanged?.Invoke(this);
+                        return false;
+                    }
+                }
                 return true;
+            }
 
             var facility = _waitingFacility;
             _waitingFacility = null;
@@ -814,6 +857,10 @@ namespace Code.Enemies
             facility.RecordVisitWear();
             _dwellFacility = facility;
             _dwellRemaining = facility.DwellSeconds;
+            _dwellGoldTotal = FacilityDwellRules.ApplyQueueSatisfaction(
+                facility.DwellGoldTotal,
+                _facilityWaitSeconds);
+            _facilityWaitSeconds = 0f;
             _dwellGoldCarry = 0f;
         }
 
@@ -843,7 +890,7 @@ namespace Code.Enemies
             var step = Mathf.Min(deltaTime, _dwellRemaining);
             _dwellRemaining -= step;
 
-            var perSecond = FacilityDwellRules.GoldPerSecond(facility.DwellGoldTotal, facility.DwellSeconds);
+            var perSecond = FacilityDwellRules.GoldPerSecond(_dwellGoldTotal, facility.DwellSeconds);
             if (perSecond > 0f)
             {
                 _dwellGoldCarry += perSecond * step;
@@ -881,6 +928,7 @@ namespace Code.Enemies
             _dwellFacility?.CancelVisit(this);
             _dwellFacility = null;
             _dwellRemaining = 0f;
+            _dwellGoldTotal = 0;
             _dwellGoldCarry = 0f;
         }
 

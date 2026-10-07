@@ -3,6 +3,7 @@
     "rootNamespace": "",
     "references": [
         "DungeonKeeper.Runtime",
+        "DungeonKeeper.GameLib",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

@@ -95,6 +95,21 @@ namespace Code.Buildings
             }
         }
 
+        /// <summary>현재 대기열에서 가장 오래 기다린 모험가의 게임 시간.</summary>
+        public float LongestVisitorWaitSeconds
+        {
+            get
+            {
+                float longest = 0f;
+                foreach (Enemy visitor in waitingVisitors)
+                {
+                    if (visitor != null && !visitor.IsDead && visitor.WaitingFacility == this)
+                        longest = Mathf.Max(longest, visitor.FacilityWaitSeconds);
+                }
+                return longest;
+            }
+        }
+
         /// <summary>
         /// 시설 이용을 시작할 수 있으면 자리를 잡는다. 자리가 없으면 도착 순서대로 줄에 세운다.
         ///
