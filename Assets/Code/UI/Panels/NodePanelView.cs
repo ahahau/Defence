@@ -6,6 +6,7 @@ using Code.Manager;
 using Code.MapCreateSystem;
 using Code.Progression;
 using Code.Tutorial;
+using Code.UI.Popup;
 using Code.Units;
 using Code.BT;
 using System.Collections.Generic;
@@ -27,6 +28,8 @@ namespace Code.UI
         [SerializeField] private Button demolishButton;
         [SerializeField, Tooltip("방 중앙 시설의 문을 닫거나 다시 여는 버튼. 비우면 휴업 기능이 화면에 없다.")]
         private Button closureButton;
+        [SerializeField, Tooltip("수익 시설 수리 버튼. 비우면 휴업 버튼을 복제해 바로 옆에 둔다.")]
+        private Button repairButton;
         [SerializeField] private Button portalInstallButton;
         [SerializeField] private GameObject unitViewSelector;
         [SerializeField] private GameObject buildingViewSelector;
@@ -58,6 +61,8 @@ namespace Code.UI
         private UnitDataSO _pendingUnitData;
         private Unit _selectedManagedUnit;
         private int _pendingUnitCellColumn = -1;
+        /// <summary>수리 버튼에 마지막으로 적은 남은 초. 수리 중이 아니면 -1.</summary>
+        private int _shownRepairSeconds = -1;
         private int _pendingUnitCellRow = -1;
         // 설치 방식마다 필요한 값을 하나의 요청으로 보관한다. 셀/엣지/중앙 설치가
         // 서로 다른 필드를 남겨 다음 요청에 섞이는 일을 막는다.
@@ -194,6 +199,7 @@ namespace Code.UI
         {
             dayManager ??= DayManager.Current;
             _unitManagementSystem = new UnitManagementSystem(nodeEventChannel, costEventChannel, dayManager);
+            EnsureRepairButton();
             LogMissingSerializedReferences();
             _installButtonDefaultLabel = _cardPresenter.GetButtonLabel(installButton);
             _buildingCatalog.Initialize(installableBuildings, unlockCatalog);
@@ -243,6 +249,7 @@ namespace Code.UI
             installButton?.onClick.AddListener(HandleInstallClicked);
             demolishButton?.onClick.AddListener(HandleDemolishClicked);
             closureButton?.onClick.AddListener(HandleClosureClicked);
+            repairButton?.onClick.AddListener(HandleRepairClicked);
         }
 
         private void UnregisterListeners()
@@ -263,12 +270,15 @@ namespace Code.UI
             installButton?.onClick.RemoveListener(HandleInstallClicked);
             demolishButton?.onClick.RemoveListener(HandleDemolishClicked);
             closureButton?.onClick.RemoveListener(HandleClosureClicked);
+            repairButton?.onClick.RemoveListener(HandleRepairClicked);
         }
 
         private void Update()
         {
             if (panelRoot != null && panelRoot.activeSelf && !IsManagementAllowed())
                 HandleCloseClicked();
+
+            RefreshRepairCountdown();
         }
 
         private void HandleDeployModeChanged(DeployModeChangedEvent evt)
@@ -1669,12 +1679,35 @@ namespace Code.UI
             if (!_selectedNode.HasAssignedBuilding)
                 return;
 
-            var building = _selectedNode.AssignedBuilding;
+            var node = _selectedNode;
+            var building = node.AssignedBuilding;
+            var refund = FacilityClosureSystem.DemolishRefundOf(building);
+            var cleanup = Mathf.CeilToInt(FacilityDurabilityRules.DemolishCleanupSeconds);
+            var facilityName = building.Data != null ? building.Data.DisplayName : "시설";
+            PopupController.Show(PopupRequest.Confirm(
+                "시설 철거",
+                $"{facilityName}을(를) 허뭅니다.\n건설비의 일부 {GoldText.Amount(refund)}을 돌려받고, 정리 {cleanup}초 뒤에 새 시설을 지을 수 있습니다.",
+                () => DemolishBuilding(node),
+                confirmLabel: "철거",
+                destructive: true));
+        }
 
-            _selectedNode.ClearBuilding();
+        private void DemolishBuilding(Node node)
+        {
+            if (node == null || !node.HasAssignedBuilding)
+                return;
 
-            if (building != null)
+            var closure = FacilityClosureSystem.Current;
+            if (closure != null)
+            {
+                closure.Demolish(node);
+            }
+            else
+            {
+                var building = node.AssignedBuilding;
+                node.ClearBuilding();
                 Destroy(building.gameObject);
+            }
 
             RefreshDemolishButton();
             RefreshBuildingInstallButtons();
@@ -1712,8 +1745,9 @@ namespace Code.UI
                 return EdgePlacementPreview.HasFreeEdge()
                        && !_pendingBuilding.IsPending;
 
-            // 중앙 슬롯을 쓰는 고유 핵심 건물만 노드당 하나로 제한한다.
-            if (!BuildingPlacement.UsesGridCell(buildingData) && _selectedNode.HasAssignedBuilding)
+            // 중앙 슬롯을 쓰는 고유 핵심 건물만 노드당 하나로 제한한다. 철거 뒤 정리 중에도 비어 있지 않다.
+            if (!BuildingPlacement.UsesGridCell(buildingData)
+                && (_selectedNode.HasAssignedBuilding || _selectedNode.IsClearingRubble))
                 return false;
 
             // 일반 건물과 함정은 중앙 슬롯 바깥의 작은 칸에 함께 설치된다.
@@ -1761,6 +1795,7 @@ namespace Code.UI
             }
 
             RefreshClosureButton();
+            RefreshRepairButton();
         }
 
         /// <summary>
@@ -1815,6 +1850,111 @@ namespace Code.UI
 
             RefreshClosureButton();
             RefreshBuildingInstallButtons();
+        }
+
+        /// <summary>
+        /// 수리 버튼은 따로 배선하지 않아도 되게 휴업 버튼을 복제해 만든다. 씬 YAML을 건드리지 않기 위해서다.
+        /// </summary>
+        private void EnsureRepairButton()
+        {
+            if (repairButton != null || closureButton == null)
+                return;
+
+            repairButton = Instantiate(closureButton, closureButton.transform.parent);
+            repairButton.name = "RepairButton";
+            repairButton.onClick.RemoveAllListeners();
+            repairButton.transform.SetSiblingIndex(closureButton.transform.GetSiblingIndex() + 1);
+
+            // 행동 버튼은 레이아웃 그룹 없이 아래에서부터 같은 간격으로 쌓여 있다(철거 → 휴업).
+            // 같은 간격으로 휴업 버튼 한 칸 위에 둔다.
+            var closureRect = (RectTransform)closureButton.transform;
+            var step = 52f;
+            if (demolishButton != null)
+                step = closureRect.anchoredPosition.y - ((RectTransform)demolishButton.transform).anchoredPosition.y;
+            if (step < 1f)
+                step = 52f;
+            ((RectTransform)repairButton.transform).anchoredPosition = closureRect.anchoredPosition + new Vector2(0f, step);
+            repairButton.gameObject.SetActive(false);
+        }
+
+        private Building ResolveSelectedFacility() =>
+            _selectedManagedUnit == null && _selectedNode != null ? _selectedNode.AssignedBuilding : null;
+
+        /// <summary>
+        /// 수리 버튼. 수익 시설에만 보인다. 수리 중이면 남은 시간을, 아니면 값과 내구도를 적는다.
+        /// </summary>
+        private void RefreshRepairButton()
+        {
+            if (repairButton == null)
+                return;
+
+            var building = ResolveSelectedFacility();
+            var visible = building != null && !building.IsDestroyed && building.UsesServiceDurability;
+            repairButton.gameObject.SetActive(visible);
+            if (!visible)
+                return;
+
+            if (building.IsRepairing)
+            {
+                _shownRepairSeconds = Mathf.CeilToInt(building.RepairRemaining);
+                repairButton.interactable = false;
+                _cardPresenter.SetButtonText(repairButton, $"수리 중 {_shownRepairSeconds}초");
+                return;
+            }
+
+            _shownRepairSeconds = -1;
+            repairButton.interactable = IsManagementAllowed() && building.CanRepair;
+            _cardPresenter.SetButtonText(
+                repairButton,
+                building.CanRepair
+                    ? $"수리 {building.RepairCost}G ({building.CurrentDurability}/{building.MaxDurability})"
+                    : $"내구도 {building.CurrentDurability}/{building.MaxDurability}");
+        }
+
+        /// <summary>수리 중일 때만 남은 초가 바뀌는 순간 버튼을 다시 그린다.</summary>
+        private void RefreshRepairCountdown()
+        {
+            // 행동 버튼은 설치 패널(panelRoot) 밖에 있다. 버튼이 보이는지로 판단한다.
+            if (repairButton == null || !repairButton.gameObject.activeInHierarchy)
+                return;
+
+            var building = ResolveSelectedFacility();
+            if (building == null)
+                return;
+
+            var seconds = building.IsRepairing ? Mathf.CeilToInt(building.RepairRemaining) : -1;
+            if (seconds != _shownRepairSeconds)
+                RefreshRepairButton();
+        }
+
+        private void HandleRepairClicked()
+        {
+            if (!IsManagementAllowed())
+                return;
+
+            var building = ResolveSelectedFacility();
+            if (building == null || !building.CanRepair)
+                return;
+
+            var gold = CostManager.Current != null ? CostManager.Current.CurrentGold : 0;
+            var seconds = Mathf.CeilToInt(building.RepairSeconds);
+            PopupController.Show(PopupRequest.Cost(
+                "시설 수리",
+                $"내구도 {building.CurrentDurability}/{building.MaxDurability}를 가득 채웁니다.\n수리 {seconds}초 동안은 손님을 받지 않습니다. 고칠수록 다음 수리비가 오릅니다.",
+                building.RepairCost,
+                gold,
+                () => BeginRepair(building),
+                confirmLabel: "수리"));
+        }
+
+        private void BeginRepair(Building building)
+        {
+            var closure = FacilityClosureSystem.Current;
+            if (building == null || closure == null)
+                return;
+
+            closure.TryBeginRepair(building, out _);
+            RefreshRepairButton();
         }
 
         private bool IsManagementAllowed()

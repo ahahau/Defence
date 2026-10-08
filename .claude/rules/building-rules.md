@@ -26,7 +26,10 @@ paths:
    * 위 두 항목은 `AssetWiringTests`가 검사한다.
 4. 수익 시설은 번 만큼 닳는다.
    * 머무는 모험가가 `DwellGoldTotal`을 시간에 나눠 내고, 그 수입은 장부(`DwellGoldSource`)에 쌓였다가 정산 때 반영된다.
-   * 손님마다 마모(`wear`)가 쌓이고, 청산일에 수리비(`repairCostPerWear`)로 청구된다.
+   * 손님마다 내구도가 `wearPerVisit`만큼 깎인다(부서지지 않고 손님이 머무는 시설 = `Building.UsesServiceDurability`). 수입은 내구도에 비례해 50~100%이고, 0이면 영업을 멈춘다. 수치는 `FacilityDurabilityRules`에만 둔다.
+   * 수리는 플레이어가 고른다(`FacilityClosureSystem.TryBeginRepair`). 금화와 게임 시간이 들고, 수리 중에는 손님을 받지 않으며, 고칠수록 다음 수리비가 오른다. 청산일 자동 수리는 없다.
+   * 철거(`FacilityClosureSystem.Demolish`)는 건설비 × 50% × 내구도 비율을 돌려주고, 정리 3초 동안 그 방에 중앙 시설을 못 짓는다.
+   * 함정·회복실처럼 `destructible`인 건물은 맞아서 깎이고 0이면 파괴된다. 손님 마모 규칙을 따르지 않는다.
    * 시설은 닫을 수 있다(닫으면 무료, 다시 열 때 `reopenCost`와 `reopenDays`). 닫힌 시설은 벌지도, 운영비를 먹지도 않는다.
    * 수익 시설은 대가로 모험가를 강화한다(Store → 공격력, Inn → 회복, Blacksmith → 공격·방어). 새 수익 시설에도 대가를 정한다.
 5. 함정(`Trap`)은 발동 확률·피해·추가 피해·부상 확률과 상태이상(`StatusEffectDataSO`)으로 정의한다.

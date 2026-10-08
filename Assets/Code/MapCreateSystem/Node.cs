@@ -202,6 +202,30 @@ namespace Code.MapCreateSystem
             SetLockedCostVisible(true);
         }
 
+        private float _cleanupRemaining;
+
+        /// <summary>
+        /// 시설을 허문 뒤 정리 중인가. 정리가 끝나야 중앙 시설을 새로 지을 수 있다.
+        /// 허물고 바로 다른 시설을 올리면 철거 환불이 사실상 공짜 교체가 된다.
+        /// </summary>
+        public bool IsClearingRubble => _cleanupRemaining > 0f;
+
+        /// <summary>정리가 끝날 때까지 남은 게임 시간(초).</summary>
+        public float CleanupRemaining => _cleanupRemaining;
+
+        /// <summary>철거 뒤 정리를 시작한다. 게임 시간으로 흐른다.</summary>
+        public void BeginRubbleCleanup(float seconds)
+        {
+            if (seconds > 0f)
+                _cleanupRemaining = seconds;
+        }
+
+        private void TickCleanup()
+        {
+            if (_cleanupRemaining > 0f)
+                _cleanupRemaining = Mathf.Max(0f, _cleanupRemaining - Time.deltaTime);
+        }
+
         /// <summary>데이터 ID로 활성 노드를 찾는다(경로 탐색용). 없으면 null.</summary>
         public static Node FindByDataId(string dataId)
         {
@@ -367,6 +391,7 @@ namespace Code.MapCreateSystem
         private void Update()
         {
             TickConstruction();
+            TickCleanup();
             if (!IsUnderConstruction)
                 RefreshUnitCapacityLabel();
         }

@@ -20,6 +20,7 @@ paths:
 | `SettlementRegressionTests` | 정산·장부 회귀 |
 | `WeeklyLoanLedgerTests` | 대출·청산일 |
 | `FacilityQueueTests` | 시설 대기열 FIFO·동시 이용 수·대기 만족도 감액 |
+| `FacilityDurabilityTests` | 수익 시설 내구도·수입 배율·수리·철거 환불·저장 |
 | `PauseLockTests` | 엘리트·보스 일시정지 잠금 규칙과 배속 컨트롤러 잠금 동작 |
 | `RedeployPreparationTests` | 재배치 준비 시간·준비 중 피해 절반 |
 | `RoomConstructionTests` | 그래프 노드 제거(연결·자리 정리), 공사 중 노드의 막힌 길·배치 불가 |
@@ -41,6 +42,7 @@ paths:
    * WaveConfig: 무한 진행, 1~28일 직접 짠 웨이브, 청산일(7·14·21·28) 전용 보스
    * 씬 배선: 오프닝 방 구성, 금화 패널 채널 구독
    * 아트가 아직 없어서 예외로 둘 때는 테스트의 예외 목록(예: `ArtPendingBuildings`)에 넣는다. 테스트 자체를 끄지 않는다.
+   * EditMode에서는 `Awake`가 돌지 않는다. `Building`처럼 `Awake`에서 값을 채우는 컴포넌트는 `Initialize(data)` 같은 실제 초기화 경로를 불러서 만든다.
    * `RequireComponent`가 걸린 컴포넌트(예: `Node`)는 빈 GameObject에 `AddComponent`하면 null이 된다. 실제 프리팹을 `AssetDatabase.LoadAssetAtPath` → `Object.Instantiate`해서 쓴다.
    * 새 테스트 파일을 Unity가 컴파일하는 도중에 만들면 임포트가 꼬여 테스트 목록에서 빠질 수 있다(`CompilationPipeline` 소스 목록에 없음). 그때는 파일과 meta를 지우고, 에디터가 쉬는 상태에서 새 이름으로 다시 만든다.
 5. 테스트 이름은 `대상_기대결과` 형식의 영어 문장으로 짓는다(예: `Room_EarnsOrDefendsButNotBoth`).

@@ -108,7 +108,8 @@ namespace Tests.EditMode.Rules
             var host = new GameObject("Facility");
             _created.Add(host);
             var building = host.AddComponent<Building>();
-            typeof(Building).GetProperty(nameof(Building.Data), Instance).SetValue(building, data);
+            // EditMode에서는 Awake가 돌지 않으므로 Initialize로 내구도까지 채운다.
+            building.Initialize(data);
             typeof(Building).GetField("maxConcurrentVisitors", Instance).SetValue(building, maxConcurrentVisitors);
 
             Assert.That(building.AcceptsDwell, Is.True, "시험용 시설이 손님을 받지 않습니다.");

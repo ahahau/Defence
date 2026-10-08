@@ -1,7 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Code.Combat;
 using Code.Enemies;
+using Code.Manager;
 using MoreMountains.Feedbacks;
 using DG.Tweening;
 using UnityEngine;
@@ -66,8 +68,8 @@ namespace Code.Buildings
         /// <summary>모험가가 여기 머무는 시간(초). 데이터가 정한다.</summary>
         public float DwellSeconds => Data != null ? Mathf.Max(0f, Data.DwellSeconds) : 0f;
 
-        /// <summary>머무를 수 있는 시설인가.</summary>
-        public bool AcceptsDwell => IsOperating && DwellSeconds > 0f;
+        /// <summary>머무를 수 있는 시설인가. 다 닳았거나 수리 중이면 손님을 받지 않는다.</summary>
+        public bool AcceptsDwell => IsOperating && DwellSeconds > 0f && !IsWornOut && !IsRepairing;
 
         [Header("Visitor Queue")]
         [SerializeField, Min(1), Tooltip("한 번에 시설을 이용할 수 있는 모험가 수. 초과 인원은 도착 순서대로 기다린다.")]
@@ -189,41 +191,107 @@ namespace Code.Buildings
         public virtual void ReportDwellIncome(int gold) { }
 
         [Header("Wear")]
-        [SerializeField, Min(0), Tooltip("손님 한 명이 남기는 마모. 청산일에 이만큼씩 수리비가 붙는다.")]
+        [SerializeField, Min(0), Tooltip("손님 한 명이 깎는 내구도. 수익 시설에만 쓴다.")]
         private int wearPerVisit = 1;
-        [SerializeField, Min(0), Tooltip("마모 한 점을 고치는 데 드는 금화.")]
+        [SerializeField, Min(0), Tooltip("깎인 내구도 한 점을 고치는 데 드는 기본 금화.")]
         private int repairCostPerWear = 4;
 
-        private int wear;
+        private int repairCount;
+        private float repairRemaining;
 
-        /// <summary>쌓인 마모. 청산일에 고치면 0으로 돌아간다.</summary>
-        public int Wear => wear;
-
-        /// <summary>지금 고친다면 드는 금화.</summary>
-        public int RepairCost => wear * Mathf.Max(0, repairCostPerWear);
+        /// <summary>수리가 끝났을 때. 화면이 게이지를 다시 그린다.</summary>
+        public event Action<Building> RepairCompleted;
 
         /// <summary>
-        /// 손님이 다녀갔다. 쓰이는 만큼 닳고, 그 값은 주말에 한꺼번에 청구된다.
+        /// 손님이 닳게 하는 수익 시설인가. 부서지는 건물(함정·회복실)은 맞아서 깎이고 0이면 사라지므로
+        /// 이 규칙을 따르지 않는다.
+        /// </summary>
+        public bool UsesServiceDurability => !destructible && DwellSeconds > 0f;
+
+        public int MissingDurability => Mathf.Max(0, MaxDurability - currentDurability);
+
+        /// <summary>다 닳아 영업을 멈춘 수익 시설인가. 수리만 할 수 있다.</summary>
+        public bool IsWornOut => UsesServiceDurability && currentDurability <= 0;
+
+        public bool IsRepairing => repairRemaining > 0f;
+        public float RepairRemaining => repairRemaining;
+        public int RepairCount => repairCount;
+
+        /// <summary>지금 고친다면 드는 금화.</summary>
+        public int RepairCost => UsesServiceDurability
+            ? FacilityDurabilityRules.RepairCost(MissingDurability, repairCostPerWear, repairCount)
+            : 0;
+
+        /// <summary>지금 고친다면 걸리는 게임 시간(초).</summary>
+        public float RepairSeconds => FacilityDurabilityRules.RepairSeconds(MissingDurability);
+
+        public bool CanRepair => UsesServiceDurability && !isDestroyed && !IsRepairing && MissingDurability > 0;
+
+        /// <summary>내구도에 따른 수입 배율. 수익 시설이 아니면 깎지 않는다.</summary>
+        public float DurabilityIncomeMultiplier => UsesServiceDurability
+            ? FacilityDurabilityRules.IncomeMultiplier(currentDurability, MaxDurability)
+            : 1f;
+
+        /// <summary>
+        /// 손님이 다녀갔다. 쓰이는 만큼 내구도가 깎인다.
         /// 벌이와 수리비가 같은 원인에서 나오므로 "이 시설이 남는 장사인가"가 계산이 된다.
         /// </summary>
         public void RecordVisitWear()
         {
-            if (isDestroyed)
+            if (isDestroyed || !UsesServiceDurability)
                 return;
 
-            wear += Mathf.Max(0, wearPerVisit);
+            currentDurability = Mathf.Max(0, currentDurability - Mathf.Max(0, wearPerVisit));
         }
 
-        /// <summary>수리해서 마모를 지운다. 실제로 고친 값을 돌려준다.</summary>
-        public int Repair()
+        /// <summary>
+        /// 수리를 시작한다. 금화는 부르는 쪽이 <see cref="RepairCost"/>를 먼저 치렀다.
+        /// 끝날 때까지 손님을 받지 않고, 끝나면 내구도가 가득 찬다.
+        /// </summary>
+        public bool BeginRepair()
         {
-            var cost = RepairCost;
-            wear = 0;
-            return cost;
+            if (!CanRepair)
+                return false;
+
+            repairRemaining = Mathf.Max(0.01f, RepairSeconds);
+            repairCount++;
+            return true;
         }
 
-        /// <summary>저장에서 되돌릴 때.</summary>
-        public void RestoreWear(int savedWear) => wear = Mathf.Max(0, savedWear);
+        /// <summary>저장에서 되돌릴 때. 남은 수리 시간이 있으면 이어서 고친다.</summary>
+        public void RestoreRepair(float remaining, int count)
+        {
+            repairCount = Mathf.Max(0, count);
+            repairRemaining = UsesServiceDurability ? Mathf.Max(0f, remaining) : 0f;
+        }
+
+        /// <summary>
+        /// 옛 저장의 마모를 내구도로 옮긴다. 예전에는 내구도는 그대로 두고 마모만 쌓았다.
+        /// </summary>
+        public void RestoreWear(int savedWear)
+        {
+            if (savedWear <= 0 || !UsesServiceDurability)
+                return;
+
+            currentDurability = Mathf.Max(0, currentDurability - savedWear);
+        }
+
+        private void Update() => TickRepair(Time.deltaTime);
+
+        /// <summary>수리 시간을 흘린다. 다 고치면 내구도를 채우고 알린다.</summary>
+        public void TickRepair(float deltaTime)
+        {
+            if (repairRemaining <= 0f)
+                return;
+
+            repairRemaining -= Mathf.Max(0f, deltaTime);
+            if (repairRemaining > 0f)
+                return;
+
+            repairRemaining = 0f;
+            currentDurability = MaxDurability;
+            RepairCompleted?.Invoke(this);
+        }
 
         protected virtual void Awake()
         {
@@ -277,7 +345,9 @@ namespace Code.Buildings
 
         public void RestoreDurability(int durability)
         {
-            currentDurability = Mathf.Clamp(durability, 1, Mathf.Max(1, maxDurability));
+            // 수익 시설은 0(영업 정지)으로 저장될 수 있다. 부서지는 건물은 0이면 이미 사라졌다.
+            var min = UsesServiceDurability ? 0 : 1;
+            currentDurability = Mathf.Clamp(durability, min, Mathf.Max(1, maxDurability));
             isDestroyed = false;
         }
 

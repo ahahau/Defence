@@ -90,4 +90,32 @@ namespace Code.Events
 
         public global::Code.Buildings.Building Building { get; }
     }
+
+    /// <summary>수리비를 치르고 수리를 시작했을 때. 금화는 이미 빠져나갔다.</summary>
+    public class FacilityRepairStartedEvent : GameEvent
+    {
+        public FacilityRepairStartedEvent(global::Code.Buildings.Building building, int goldCost, float seconds)
+        {
+            Building = building;
+            GoldCost = goldCost;
+            Seconds = seconds;
+        }
+
+        public global::Code.Buildings.Building Building { get; }
+        public int GoldCost { get; }
+        public float Seconds { get; }
+    }
+
+    /// <summary>시설을 허물고 환불을 받았을 때. 금화는 이미 들어왔다.</summary>
+    public class FacilityDemolishedEvent : GameEvent
+    {
+        public FacilityDemolishedEvent(global::Code.MapCreateSystem.Node node, int refund)
+        {
+            Node = node;
+            Refund = refund;
+        }
+
+        public global::Code.MapCreateSystem.Node Node { get; }
+        public int Refund { get; }
+    }
 }

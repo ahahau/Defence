@@ -61,8 +61,16 @@ namespace Code.Persistence
         public int row = -1;
         public int durability;
         public int storedGold;
+
+        /// <summary>옛 저장의 마모. 지금은 내구도에 바로 깎이므로 새로 쓰지 않는다.</summary>
         public int wear;
         public bool closed;
+
+        /// <summary>남은 수리 시간(게임 초). 0이면 수리 중이 아니다.</summary>
+        public float repairRemaining;
+
+        /// <summary>누적 수리 횟수. 다음 수리비 할증의 기준이다.</summary>
+        public int repairCount;
 
         /// <summary>다시 열리기로 예약된 날. 0이면 닫힌 채로 예약하지 않았다.</summary>
         public int reopenOnDay;

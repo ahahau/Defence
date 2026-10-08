@@ -1036,9 +1036,10 @@ namespace Code.MapCreateSystem
                 assetKey = HiredUnitRoster.AssetKey(building.Data),
                 durability = building.CurrentDurability,
                 storedGold = building is Treasury treasury ? treasury.StoredGold : 0,
-                wear = building.Wear,
                 closed = building.IsClosed,
-                reopenOnDay = building.ReopenOnDay
+                reopenOnDay = building.ReopenOnDay,
+                repairRemaining = building.RepairRemaining,
+                repairCount = building.RepairCount
             };
         }
 
@@ -1063,6 +1064,7 @@ namespace Code.MapCreateSystem
             building.RestoreDurability(saved.durability);
             building.RestoreClosure(saved.closed, saved.reopenOnDay);
             building.RestoreWear(saved.wear);
+            building.RestoreRepair(saved.repairRemaining, saved.repairCount);
             if (building is Treasury treasury)
                 treasury.RestoreStoredGold(saved.storedGold);
         }

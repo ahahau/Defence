@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Code.Manager
 {
     /// <summary>
-    /// 시설의 휴업과 재개를 맡는다.
+    /// 시설의 휴업·재개, 수리, 철거를 맡는다.
     ///
     /// 등급은 지은 것과 막아낸 수가 만들어 계속 오르므로, 감당이 안 될 때 물러설 곳이 필요했다.
     /// 닫는 것은 공짜지만 여는 데 금화와 날이 들어, 힘들 때마다 전부 닫아 두는 것이
@@ -85,6 +85,63 @@ namespace Code.Manager
             costEventChannel?.RaiseEvent(new FacilityReopenScheduledEvent(
                 building, cost, building.ReopenDaysRemaining(currentDay)));
             return true;
+        }
+
+        /// <summary>
+        /// 수리비를 받고 수리를 시작한다. 휴업 재개와 같은 이유로 빚으로 넘기지 않는다.
+        /// </summary>
+        public bool TryBeginRepair(Building building, out string reason)
+        {
+            reason = string.Empty;
+            if (building == null || !building.CanRepair)
+            {
+                reason = "고칠 곳이 없습니다";
+                return false;
+            }
+
+            var cost = building.RepairCost;
+            var seconds = building.RepairSeconds;
+            var costManager = CostManager.Current;
+            if (cost > 0 && (costManager == null || !costManager.TrySpendGold(cost)))
+            {
+                reason = $"금화 {cost}G가 필요합니다";
+                return false;
+            }
+
+            building.BeginRepair();
+            costEventChannel?.RaiseEvent(new FacilityRepairStartedEvent(building, cost, seconds));
+            return true;
+        }
+
+        /// <summary>
+        /// 방 중앙 시설을 허물고 남은 내구도만큼 일부를 돌려준다. 정리 시간이 끝나야 새로 지을 수 있다.
+        /// </summary>
+        /// <returns>돌려준 금화.</returns>
+        public int Demolish(Node node)
+        {
+            var building = node != null ? node.AssignedBuilding : null;
+            if (building == null)
+                return 0;
+
+            var refund = DemolishRefundOf(building);
+            node.ClearBuilding();
+            Destroy(building.gameObject);
+            node.BeginRubbleCleanup(FacilityDurabilityRules.DemolishCleanupSeconds);
+
+            if (refund > 0)
+                CostManager.Current?.AddGold(refund);
+            costEventChannel?.RaiseEvent(new FacilityDemolishedEvent(node, refund));
+            return refund;
+        }
+
+        /// <summary>지금 허물면 돌려받을 금화. 확인 창에 미리 보여준다.</summary>
+        public static int DemolishRefundOf(Building building)
+        {
+            if (building == null || building.Data == null || building is Portal)
+                return 0;
+
+            return FacilityDurabilityRules.DemolishRefund(
+                building.Data.Cost, building.CurrentDurability, building.MaxDurability);
         }
 
         /// <summary>날이 바뀌면 예약한 날이 된 시설을 연다.</summary>

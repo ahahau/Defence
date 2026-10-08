@@ -692,11 +692,19 @@ namespace Code.UI.Toolkit
 
             var operation = building.IsReopening
                 ? $"{building.ReopenDaysRemaining(_dayManager?.CurrentDay ?? 0)}일 뒤 재개"
-                : building.IsClosed ? "폐쇄" : "운영 중";
-            var durability = building.IsDestructible
-                ? $"내구도 {building.CurrentDurability}/{building.MaxDurability}"
-                : "내구도 고정";
-            return $"{durability} · 수리 {GoldText.Amount(building.RepairCost)} · {operation}";
+                : building.IsClosed ? "폐쇄"
+                : building.IsRepairing ? $"수리 중 {Mathf.CeilToInt(building.RepairRemaining)}초"
+                : building.IsWornOut ? "영업 정지(수리 필요)"
+                : "운영 중";
+            if (!building.IsDestructible && !building.UsesServiceDurability)
+                return $"내구도 고정 · {operation}";
+
+            var durability = $"내구도 {building.CurrentDurability}/{building.MaxDurability}";
+            if (!building.UsesServiceDurability)
+                return $"{durability} · {operation}";
+
+            var income = Mathf.RoundToInt(building.DurabilityIncomeMultiplier * 100f);
+            return $"{durability} · 수입 {income}% · 수리 {GoldText.Amount(building.RepairCost)} · {operation}";
         }
 
         private void RefreshManagementActions()

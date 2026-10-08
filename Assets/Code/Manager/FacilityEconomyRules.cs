@@ -16,7 +16,9 @@ namespace Code.Manager
                 return 0;
 
             var neighbors = CountAdjacentFacilities(building);
-            return baseGold + Mathf.RoundToInt(baseGold * neighbors * IncomeBonusPerNeighborPercent / 100f);
+            var withSynergy = baseGold + Mathf.RoundToInt(baseGold * neighbors * IncomeBonusPerNeighborPercent / 100f);
+            var durability = building != null ? building.DurabilityIncomeMultiplier : 1f;
+            return Mathf.RoundToInt(withSynergy * durability);
         }
 
         public static int CountAdjacentFacilities(Building building)
@@ -72,56 +74,19 @@ namespace Code.Manager
             return total;
         }
 
-        /// <summary>
-        /// 쌓인 마모를 전부 고치고 든 값을 돌려준다. 청산일에 한 번 부른다.
-        ///
-        /// 손님이 다녀간 만큼 닳으므로 잘 버는 시설일수록 수리비가 크다. 벌이와 지출이
-        /// 같은 원인에서 나와야 "이 시설이 남는 장사인가"가 계산이 된다.
-        /// </summary>
-        public static int RepairAll()
+        /// <summary>다 닳아 영업을 멈춘 수익 시설 수. 정산 화면이 수리를 재촉하는 데 쓴다.</summary>
+        public static int CountWornOutFacilities()
         {
-            var total = 0;
+            var count = 0;
             foreach (var node in Node.ActiveNodes)
             {
-                if (node == null)
-                    continue;
-
-                total += RepairOne(node.AssignedBuilding);
-
-                var grid = node.TrapGrid;
-                if (grid == null)
-                    continue;
-
-                foreach (var building in grid.PlacedBuildings)
-                    total += RepairOne(building);
+                var building = node != null ? node.AssignedBuilding : null;
+                if (building != null && building.IsWornOut && !building.IsRepairing)
+                    count++;
             }
 
-            return total;
+            return count;
         }
-
-        /// <summary>청산일 전에 미리 보여줄 수리비. 아직 고치지는 않는다.</summary>
-        public static int PendingRepairCost()
-        {
-            var total = 0;
-            foreach (var node in Node.ActiveNodes)
-            {
-                if (node == null)
-                    continue;
-
-                total += node.AssignedBuilding != null ? node.AssignedBuilding.RepairCost : 0;
-
-                var grid = node.TrapGrid;
-                if (grid == null)
-                    continue;
-
-                foreach (var building in grid.PlacedBuildings)
-                    total += building != null ? building.RepairCost : 0;
-            }
-
-            return total;
-        }
-
-        private static int RepairOne(Building building) => building != null ? building.Repair() : 0;
 
         /// <summary>
         /// 지금 돌아가는 시설인가. 닫아 둔 시설은 벌지도 않고 운영비도 먹지 않으며

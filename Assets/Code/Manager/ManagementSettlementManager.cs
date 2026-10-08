@@ -116,6 +116,8 @@ namespace Code.Manager
             costEventChannel?.AddListener<TreasuryRobbedEvent>(HandleTreasuryRobbed);
             costEventChannel?.AddListener<BuildCostPaidEvent>(HandleBuildCostPaid);
             costEventChannel?.AddListener<BuildCostRefundedEvent>(HandleBuildCostRefunded);
+            costEventChannel?.AddListener<FacilityRepairStartedEvent>(HandleFacilityRepairStarted);
+            costEventChannel?.AddListener<FacilityDemolishedEvent>(HandleFacilityDemolished);
             costEventChannel?.AddListener<RosterHirePaidEvent>(HandleRosterHirePaid);
             costEventChannel?.AddListener<UnitRecoveryCostPaidEvent>(HandleUnitRecoveryCostPaid);
             closeButton?.onClick.AddListener(HidePanel);
@@ -132,6 +134,8 @@ namespace Code.Manager
             costEventChannel?.RemoveListener<TreasuryRobbedEvent>(HandleTreasuryRobbed);
             costEventChannel?.RemoveListener<BuildCostPaidEvent>(HandleBuildCostPaid);
             costEventChannel?.RemoveListener<BuildCostRefundedEvent>(HandleBuildCostRefunded);
+            costEventChannel?.RemoveListener<FacilityRepairStartedEvent>(HandleFacilityRepairStarted);
+            costEventChannel?.RemoveListener<FacilityDemolishedEvent>(HandleFacilityDemolished);
             costEventChannel?.RemoveListener<RosterHirePaidEvent>(HandleRosterHirePaid);
             costEventChannel?.RemoveListener<UnitRecoveryCostPaidEvent>(HandleUnitRecoveryCostPaid);
             closeButton?.onClick.RemoveListener(HidePanel);
@@ -147,7 +151,6 @@ namespace Code.Manager
             currentDay = evt.Day;
             ApplyDailyUpkeep();
             ApplyFacilityUpkeep();
-            ApplyWeeklyRepair();
             AccrueTreasuryInterest();
             ApplyBattleFatigue();
             ApplyNetToGold();
@@ -251,6 +254,16 @@ namespace Code.Manager
             RecordIncome("건설 취소 환불", evt.GoldAmount, false);
         }
 
+        private void HandleFacilityRepairStarted(FacilityRepairStartedEvent evt)
+        {
+            RecordExpense("시설 수리비", evt.GoldCost, false);
+        }
+
+        private void HandleFacilityDemolished(FacilityDemolishedEvent evt)
+        {
+            RecordIncome("철거 환불", evt.Refund, false);
+        }
+
         private void HandleRosterHirePaid(RosterHirePaidEvent evt)
         {
             AddHiredUnit(evt.Unit);
@@ -327,25 +340,6 @@ namespace Code.Manager
             var upkeep = FacilityEconomyRules.CalculateDailyUpkeep();
             if (upkeep > 0)
                 RecordExpense("시설 운영비", upkeep);
-        }
-
-        /// <summary>
-        /// 청산일에만 쌓인 마모를 한꺼번에 고친다.
-        ///
-        /// 하루치 정산에 섞어 넣어야 이번 주 장부에 잡힌다 — 빚을 청산하는 자리에서 적으면
-        /// 그날은 이미 금화가 옮겨간 뒤라 수리비가 다음 날로 밀린다.
-        ///
-        /// 손님이 다녀간 만큼 닳으므로 잘 버는 시설일수록 수리비가 크다. 벌이와 지출이
-        /// 같은 원인에서 나와야 어느 시설이 남는 장사인지가 계산된다.
-        /// </summary>
-        private void ApplyWeeklyRepair()
-        {
-            if (!DayManager.IsSettlementDay(currentDay))
-                return;
-
-            var repair = FacilityEconomyRules.RepairAll();
-            if (repair > 0)
-                RecordExpense("시설 수리비", repair);
         }
 
         /// <summary>
@@ -768,22 +762,17 @@ namespace Code.Manager
         }
 
         /// <summary>
-        /// 쌓인 수리비를 청산일 전에 미리 알린다.
-        ///
-        /// 마모는 손님이 다녀갈 때마다 조용히 쌓이므로, 청산일에 처음 보면 손쓸 수가 없다.
-        /// 며칠 남았는지와 함께 보여야 이번 주에 시설을 더 돌릴지 판단이 된다.
+        /// 다 닳아 문을 닫은 시설을 알린다. 운영비는 계속 나가는데 벌이가 없으므로
+        /// 고치든 허물든 정해야 한다.
         /// </summary>
         private void AppendRepairForecastNote(List<SettlementNote> notes)
         {
-            var pending = FacilityEconomyRules.PendingRepairCost();
-            if (pending <= 0)
+            var wornOut = FacilityEconomyRules.CountWornOutFacilities();
+            if (wornOut <= 0)
                 return;
 
-            var daysLeft = DayManager.DaysUntilSettlementFrom(currentDay);
             notes.Add(new SettlementNote(
-                daysLeft > 0
-                    ? $"시설 마모 {GoldText.Amount(pending)}  ·  {daysLeft}일 뒤 수리합니다"
-                    : $"시설 마모 {GoldText.Amount(pending)}  ·  오늘 수리합니다",
+                $"내구도가 바닥난 시설 {wornOut}곳  ·  수리하기 전까지 손님을 받지 않습니다",
                 SettlementNoteTone.Caution));
         }
 

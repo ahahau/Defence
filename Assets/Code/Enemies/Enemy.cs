@@ -858,12 +858,13 @@ namespace Code.Enemies
         private void BeginDwell(Building facility)
         {
             _visitedFacilities.Add(facility);
-            facility.RecordVisitWear();
             _dwellFacility = facility;
             _dwellRemaining = facility.DwellSeconds;
+            // 값을 먼저 매기고 닳게 한다. 마지막 손님이 내구도를 0으로 만들어도 자기 몫은 낸다.
             _dwellGoldTotal = FacilityDwellRules.ApplyQueueSatisfaction(
                 facility.DwellGoldTotal,
                 _facilityWaitSeconds);
+            facility.RecordVisitWear();
             _facilityWaitSeconds = 0f;
             _dwellGoldCarry = 0f;
         }
