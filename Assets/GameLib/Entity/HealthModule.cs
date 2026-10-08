@@ -72,6 +72,12 @@ namespace GameLib.Entity
         {
         }
 
+        /// <summary>
+        /// 들어온 피해를 실제로 깎기 전에 고친다. 피해는 평타·스킬·함정 모두 여기를 지나므로,
+        /// "지금은 덜 아프다" 같은 상태를 파생 클래스가 한 곳에서 걸 수 있다.
+        /// </summary>
+        protected virtual int ModifyIncomingDamage(int damage) => damage;
+
         public void TakeDamage(int damage)
         {
             TakeDamage(damage, false);
@@ -80,6 +86,10 @@ namespace GameLib.Entity
         public void TakeDamage(int damage, bool isCritical)
         {
             if (!IsAlive || damage <= 0)
+                return;
+
+            damage = ModifyIncomingDamage(damage);
+            if (damage <= 0)
                 return;
 
             var appliedDamage = Mathf.Min(currentHealth, damage);

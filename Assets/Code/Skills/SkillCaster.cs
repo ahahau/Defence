@@ -1,5 +1,6 @@
 using Code.BT;
 using Code.Combat;
+using Code.Units;
 using MoreMountains.Feedbacks;
 using UnityEngine;
 
@@ -31,6 +32,7 @@ namespace Code.Skills
         private SpriteRenderer[] _spriteRenderers;
         private MMF_Player _skillCastPlayer;
         private MMF_Player _ultimateCastPlayer;
+        private Unit _ownerUnit;
 
         public bool HasReadySkill =>
             _cooldownTimer <= 0f
@@ -53,6 +55,7 @@ namespace Code.Skills
             if (agent == null) agent = GetComponent<BattleAgent>();
             if (combatant == null) combatant = GetComponent<Combatant>();
             if (barsView == null) barsView = GetComponentInChildren<CombatBarsView>();
+            _ownerUnit = GetComponent<Unit>();
 
             _spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
             BuildFeelPlayers();
@@ -86,6 +89,10 @@ namespace Code.Skills
         public bool TryCast()
         {
             if (agent == null || !agent.IsAlive || _cooldownTimer > 0f)
+                return false;
+
+            // 재배치 준비 중에는 스킬·궁극기도 쓰지 못한다. 옮기자마자 궁극기를 터뜨리는 수를 막는다.
+            if (_ownerUnit != null && _ownerUnit.IsPreparingRedeploy)
                 return false;
 
             if (ultimate != null && !_ultimateUsed)

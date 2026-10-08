@@ -64,6 +64,12 @@ namespace Code.Units
         public Health Health => health;
         public UnitLevel Level => level;
         public bool IsIncapacitated { get; private set; }
+
+        /// <summary>재배치 뒤 자리를 잡는 중인가. 이 동안 공격·스킬을 못 쓰고 받는 피해가 줄어든다.</summary>
+        public bool IsPreparingRedeploy => _redeployPreparationRemaining > 0f;
+
+        /// <summary>재배치 준비가 끝나기까지 남은 게임 시간(초).</summary>
+        public float RedeployPreparationRemaining => _redeployPreparationRemaining;
         public bool CanFight => !IsIncapacitated && !IsExhausted && Combatant != null && Combatant.IsAlive;
         public bool NeedsRecovery => (Health != null && Health.CurrentHealth < Health.MaxHealth)
                                      || fatigue > 0.01f
@@ -115,6 +121,7 @@ namespace Code.Units
 
         private MoralePolicyManager _policyManager;
         private float _nightRecoveryTimer;
+        private float _redeployPreparationRemaining;
 
         protected override void Awake()
         {
@@ -177,8 +184,16 @@ namespace Code.Units
             HandlePolicyCombatModifiersChanged();
         }
 
+        /// <summary>재배치 준비를 시작한다. 이미 준비 중이면 더 긴 쪽을 남긴다.</summary>
+        public void BeginRedeployPreparation(float seconds) =>
+            _redeployPreparationRemaining = Mathf.Max(_redeployPreparationRemaining, seconds);
+
         private void Update()
         {
+            // 준비 시간은 게임 시간으로 흐른다. 일시정지 중에는 줄지 않는다.
+            if (_redeployPreparationRemaining > 0f)
+                _redeployPreparationRemaining = Mathf.Max(0f, _redeployPreparationRemaining - Time.deltaTime);
+
             // 밤에는 싸우지 않는 부하만 천천히 회복한다. 대상이 남아 있으면 전투 중으로 보고
             // 회복을 멈춰, 맞으면서 버티는 무한 회복이 되지 않게 한다.
             if (DayManager.Current == null || DayManager.Current.Phase != DayManager.OperationPhase.Night

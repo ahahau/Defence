@@ -45,6 +45,7 @@ namespace Code.Combat
         private bool _isAttacking;
         private bool _isPaused;
         private float _attackTimer;
+        private Unit _ownerUnit;
         private GameEventChannelSO artifactEventChannel;
         /// <summary>공격이 적중한 순간 발생(타격 연출/돌진용). BattleAgent가 구독해 lunge 모션을 낸다.</summary>
         public event Action AttackLanded;
@@ -198,6 +199,7 @@ namespace Code.Combat
 
         private void Awake()
         {
+            _ownerUnit = GetComponent<Unit>();
             EnsureFeelCombatFeedbacks();
             EnsurePoseView();
             if (health != null)
@@ -259,6 +261,13 @@ namespace Code.Combat
             while (target != null && target.IsAlive && IsAlive)
             {
                 if (_isPaused)
+                {
+                    yield return null;
+                    continue;
+                }
+
+                // 재배치 준비 중에는 공격 게이지를 채우지 않는다. 준비가 끝나면 이어서 찬다.
+                if (_ownerUnit != null && _ownerUnit.IsPreparingRedeploy)
                 {
                     yield return null;
                     continue;

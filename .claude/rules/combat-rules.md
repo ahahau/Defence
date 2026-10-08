@@ -16,6 +16,10 @@ paths:
 - 모듈 초기화는 `Initialize` → `AfterInitialize`(`IAfterInitModule`) 2단계다. 다른 모듈을 참조하는 배선은 `AfterInitialize`에서 한다.
 - 캐릭터는 Unity Behavior 그래프 액션(`BT/Actions`, `BT/Conditions`)이 `BattleAgent`를 호출해 움직인다.
 
+## 피해 보정
+- 모든 피해(평타·스킬·함정)는 `HealthModule.TakeDamage`를 지난다. "지금은 덜/더 아프다" 같은 상태는 `Health.ModifyIncomingDamage`(GameLib의 가상 메서드)에 건다. 피해를 주는 쪽마다 따로 보정하지 않는다.
+- 재배치 준비(`Unit.IsPreparingRedeploy`, `RedeployRules`): 이동한 방 수 × 1초(게임 시간). 준비 중 `Combatant` 공격 게이지가 멈추고 `SkillCaster.TryCast`가 거절되며, 받는 피해는 절반(최소 1).
+
 ## 스탯
 - 값을 **덮어쓰지 말고** 출처 key별 가감치로 얹는다(`WaveLevelStatKey`, `BossStatKey` 등). 덮어쓰면 `ApplyData`가 재실행될 때 일차·보스 배율이 지워진다.
 - 적의 기본값은 `EnemyDataSO`가 정답이다(프리팹의 `StatOverride`는 시드일 뿐). 유닛은 프리팹 `StatOverride`가 정답이다.
