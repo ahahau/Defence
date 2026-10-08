@@ -163,3 +163,7 @@
   - 확인 못 한 것: 실제 웨이브를 끝까지 돌려 맞은 영업 종료(정산 함수를 직접 호출), 등급·자산에 따른 한도 보너스(미구현).
   - 남은 문제: 패배 화면이 공용 PanelSettings(정렬 0)를 써서 메인 uGUI 캔버스(50)의 오른쪽 패널이 위로 비쳐 보임.
   - 기획서 구현 현황, wave-economy·test 규칙 갱신.
+- 패배·승리 화면을 uGUI 위로 올림.
+  - `Assets/Resources/UI/Toolkit/RunEndPanelSettings.asset`(공용 설정 복사, Sort Order 9000 — 설정창 캔버스 5000보다 위, 팝업 10000보다 아래).
+  - `ToolkitDocumentSpawner.Install`에 문서별 `panelSettingsPath` 선택 인자 추가(비우면 공용). `RunEndToolkitBootstrap`이 새 설정을 씀.
+  - 실측: 게임오버 시 패널 `RunEndPanelSettings`(9000), 오른쪽 uGUI 패널까지 어두운 배경 아래로 깔리고 "던전 함락" 카드가 맨 위에 뜸.

@@ -25,15 +25,22 @@ namespace Code.UI.Toolkit
         /// <paramref name="onCreated"/>는 문서가 실제로 만들어진 뒤에만 불린다 — 옛 UGUI를 끄는 일은
         /// 새 화면이 확실히 뜬 다음에 해야 둘 다 없는 상태가 생기지 않는다.
         /// </summary>
+        /// <param name="panelSettingsPath">
+        /// 이 문서만 쓸 PanelSettings의 Resources 경로. 비우면 공용 설정(Sort Order 0)을 쓴다.
+        /// uGUI 캔버스 위에 떠야 하는 화면은 Sort Order가 높은 전용 설정을 준다.
+        /// </param>
         public static void Install<TView>(
             string sceneName,
             string documentPath,
             string rootName,
             int sortingOrder,
-            Action onCreated = null)
+            Action onCreated = null,
+            string panelSettingsPath = null)
             where TView : Component
         {
-            var registration = new Registration(sceneName, documentPath, rootName, sortingOrder, typeof(TView), onCreated);
+            var registration = new Registration(
+                sceneName, documentPath, rootName, sortingOrder, typeof(TView), onCreated,
+                string.IsNullOrEmpty(panelSettingsPath) ? PanelSettingsPath : panelSettingsPath);
 
             // 도메인 리로드를 끈 설정에서는 진입점이 다시 불려도 static이 살아 있다. 같은 화면을 두 번 세우지 않는다.
             Registrations.RemoveAll(entry => entry.RootName == rootName);
@@ -60,7 +67,7 @@ namespace Code.UI.Toolkit
 
         private static void Create(Registration registration)
         {
-            var panelSettings = Resources.Load<PanelSettings>(PanelSettingsPath);
+            var panelSettings = Resources.Load<PanelSettings>(registration.PanelSettingsPath);
             var documentAsset = Resources.Load<VisualTreeAsset>(registration.DocumentPath);
             if (panelSettings == null || documentAsset == null)
             {
@@ -86,7 +93,8 @@ namespace Code.UI.Toolkit
                 string rootName,
                 int sortingOrder,
                 Type viewType,
-                Action onCreated)
+                Action onCreated,
+                string panelSettingsPath)
             {
                 SceneName = sceneName;
                 DocumentPath = documentPath;
@@ -94,6 +102,7 @@ namespace Code.UI.Toolkit
                 SortingOrder = sortingOrder;
                 ViewType = viewType;
                 OnCreated = onCreated;
+                PanelSettingsPath = panelSettingsPath;
             }
 
             public string SceneName { get; }
@@ -102,6 +111,7 @@ namespace Code.UI.Toolkit
             public int SortingOrder { get; }
             public Type ViewType { get; }
             public Action OnCreated { get; }
+            public string PanelSettingsPath { get; }
         }
     }
 }
