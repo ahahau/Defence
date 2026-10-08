@@ -30,6 +30,15 @@ namespace Code.MapCreateSystem
         private int _hoverRow = -1;
         private bool _hoverIsFree;
 
+        /// <summary>놓을 건물이 차지하는 칸 수. 마우스가 가리킨 칸을 가운데로 둔다.</summary>
+        private Vector2Int _footprint = Vector2Int.one;
+
+        /// <summary>실제로 놓일 왼쪽 아래 칸. 확정 때 이 칸을 넘긴다.</summary>
+        private Vector2Int _anchor;
+
+        /// <summary>테두리 꼭짓점. 매 프레임 새 배열을 만들지 않는다.</summary>
+        private readonly Vector3[] _hoverOutlineCorners = new Vector3[4];
+
         private static readonly Color GridLineColor = new(1f, 1f, 1f, 0.35f);
         private static readonly Color HoverGhostColor = new(1f, 0.82f, 0.38f, 0.82f);
         private static readonly Color HoverOutlineColor = new(1f, 0.74f, 0.28f, 0.95f);
@@ -68,6 +77,9 @@ namespace Code.MapCreateSystem
             _onConfirm = onConfirm;
             _onCancel = onCancel;
             _camera = Camera.main;
+            _footprint = buildingData != null && buildingData.Prefab != null
+                ? buildingData.Prefab.Footprint
+                : Vector2Int.one;
 
             BuildGridLines();
             BuildGhost(buildingData);
@@ -133,8 +145,9 @@ namespace Code.MapCreateSystem
                 return;
             }
 
-            _hoverIsFree = _grid.IsCellFree(_hoverColumn, _hoverRow);
-            var cellPosition = _grid.CellWorldPosition(_hoverColumn, _hoverRow);
+            _anchor = TrapRules.AnchorForHover(_hoverColumn, _hoverRow, _footprint);
+            _hoverIsFree = _grid.CanPlace(_anchor.x, _anchor.y, _footprint);
+            var cellPosition = _grid.FootprintWorldCenter(_anchor.x, _anchor.y, _footprint);
 
             if (_ghost != null)
             {
@@ -154,8 +167,8 @@ namespace Code.MapCreateSystem
         private void Confirm()
         {
             var onConfirm = _onConfirm;
-            var column = _hoverColumn;
-            var row = _hoverRow;
+            var column = _anchor.x;
+            var row = _anchor.y;
             Close();
             onConfirm?.Invoke(column, row);
         }
@@ -263,6 +276,10 @@ namespace Code.MapCreateSystem
                     go.transform.localScale = prefabRenderer.transform.lossyScale;
             }
 
+            // 설치될 때처럼 덮을 칸만큼 늘려 보여 준다.
+            var stretched = go.transform.localScale;
+            go.transform.localScale = new Vector3(stretched.x * _footprint.x, stretched.y * _footprint.y, stretched.z);
+
             _ghostBaseScale = go.transform.localScale;
         }
 
@@ -301,14 +318,14 @@ namespace Code.MapCreateSystem
         private void UpdateHoverOutline(Vector3 center, bool visible)
         {
             if (_hoverOutline == null) return;
-            var half = _grid.CellSize * 0.46f;
-            _hoverOutline.SetPositions(new[]
-            {
-                center + new Vector3(-half, -half, -0.02f),
-                center + new Vector3(-half, half, -0.02f),
-                center + new Vector3(half, half, -0.02f),
-                center + new Vector3(half, -half, -0.02f)
-            });
+            // 여러 칸 함정은 덮을 칸 전체를 감싼다.
+            var halfX = _grid.CellSize * (_footprint.x * 0.5f - 0.04f);
+            var halfY = _grid.CellSize * (_footprint.y * 0.5f - 0.04f);
+            _hoverOutlineCorners[0] = center + new Vector3(-halfX, -halfY, -0.02f);
+            _hoverOutlineCorners[1] = center + new Vector3(-halfX, halfY, -0.02f);
+            _hoverOutlineCorners[2] = center + new Vector3(halfX, halfY, -0.02f);
+            _hoverOutlineCorners[3] = center + new Vector3(halfX, -halfY, -0.02f);
+            _hoverOutline.SetPositions(_hoverOutlineCorners);
             _hoverOutline.enabled = visible;
         }
 

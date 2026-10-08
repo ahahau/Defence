@@ -1,0 +1,167 @@
+using System.Collections.Generic;
+using System.Reflection;
+using Code.Buildings;
+using Code.MapCreateSystem;
+using NUnit.Framework;
+using UnityEditor;
+using UnityEngine;
+
+namespace Tests.EditMode.Rules
+{
+    /// <summary>
+    /// 함정의 칸 수·발동 방식·재사용 시간·시설 방 금지.
+    ///
+    /// 예전 함정은 모두 한 칸·한 명·방문당 한 번이라 종류가 피해량 차이일 뿐이었다. 여러 칸 함정이
+    /// 격자를 제대로 점유·철거·저장하는지, 범위·지속 판정과 재사용 대기가 맞는지, 손님이 머무는
+    /// 시설과 함정이 한 방에 겹치지 않는지를 지킨다.
+    /// </summary>
+    public class TrapTileTests
+    {
+        private readonly List<Object> _created = new();
+
+        [TearDown]
+        public void TearDown()
+        {
+            foreach (var created in _created)
+            {
+                if (created != null)
+                    Object.DestroyImmediate(created);
+            }
+
+            _created.Clear();
+        }
+
+        private NodeTrapGrid NewGrid()
+        {
+            var host = new GameObject("TrapGridHost");
+            _created.Add(host);
+            return host.AddComponent<NodeTrapGrid>();
+        }
+
+        private static Trap LoadTrapPrefab(string name)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/GameModules/Prefabs/Buildings/Traps/{name}.prefab");
+            Assert.That(prefab, Is.Not.Null, $"{name}.prefab 을 찾지 못했습니다.");
+            return prefab.GetComponent<Trap>();
+        }
+
+        [Test]
+        public void PersistentDamage_IsSplitAcrossTicks()
+        {
+            Assert.That(TrapRules.PersistentTickCount(3f), Is.EqualTo(3));
+            Assert.That(TrapRules.PersistentTickDamage(12, 3f), Is.EqualTo(4));
+            Assert.That(TrapRules.PersistentTickDamage(10, 3f), Is.EqualTo(4), "나눠 떨어지지 않으면 올림해 총량이 줄지 않습니다.");
+            Assert.That(TrapRules.PersistentTickDamage(1, 3f), Is.EqualTo(1), "한 번 피해는 최소 1입니다.");
+        }
+
+        [Test]
+        public void Footprint_CoversAllTilesButNotBeyond()
+        {
+            var center = Vector2.zero;
+            var twoByOne = new Vector2Int(2, 1);
+
+            Assert.That(TrapRules.CoversFootprint(center, twoByOne, 2f, 0.8f, new Vector2(1.5f, 0f)), Is.True,
+                "두 칸짜리는 옆 칸 위에서도 밟힙니다.");
+            Assert.That(TrapRules.CoversFootprint(center, twoByOne, 2f, 0.8f, new Vector2(2.5f, 0f)), Is.False);
+            Assert.That(TrapRules.CoversFootprint(center, Vector2Int.one, 2f, 0.8f, new Vector2(0.7f, 0f)), Is.True);
+            Assert.That(TrapRules.CoversFootprint(center, Vector2Int.one, 2f, 0.8f, new Vector2(0.9f, 0f)), Is.False,
+                "한 칸짜리는 예전처럼 중심 근처만 밟힙니다.");
+        }
+
+        [Test]
+        public void Area_ReachesOneCellAroundTheFootprint()
+        {
+            var footprint = new Vector2Int(2, 2);
+            Assert.That(TrapRules.InArea(Vector2.zero, footprint, 2f, 1f, new Vector2(3.9f, 0f)), Is.True);
+            Assert.That(TrapRules.InArea(Vector2.zero, footprint, 2f, 1f, new Vector2(4.1f, 0f)), Is.False);
+        }
+
+        [Test]
+        public void HoverAnchor_CentersTheFootprintOnTheCursor()
+        {
+            Assert.That(TrapRules.AnchorForHover(3, 3, Vector2Int.one), Is.EqualTo(new Vector2Int(3, 3)));
+            Assert.That(TrapRules.AnchorForHover(3, 3, new Vector2Int(2, 2)), Is.EqualTo(new Vector2Int(3, 3)));
+            Assert.That(TrapRules.AnchorForHover(3, 3, new Vector2Int(3, 1)), Is.EqualTo(new Vector2Int(2, 3)));
+        }
+
+        [Test]
+        public void Grid_PlacesMultiTileTrapOnEveryCoveredCellAndRemovesItWhole()
+        {
+            var grid = NewGrid();
+            var crusher = LoadTrapPrefab("Trap_Crusher");
+            Assert.That(crusher.Footprint, Is.EqualTo(new Vector2Int(2, 2)));
+
+            var placed = grid.TryPlace(0, 0, crusher);
+            _created.Add(placed != null ? placed.gameObject : null);
+            Assert.That(placed, Is.Not.Null);
+            Assert.That(grid.BuildingAt(1, 1), Is.SameAs(placed), "덮은 칸 모두에서 같은 함정이 보여야 합니다.");
+            Assert.That(grid.CanPlace(1, 0, Vector2Int.one), Is.False);
+            Assert.That(grid.TryGetAnchor(placed, out var column, out var row), Is.True);
+            Assert.That(new Vector2Int(column, row), Is.EqualTo(Vector2Int.zero));
+            Assert.That(grid.PlacedCount, Is.EqualTo(1), "여러 칸이어도 함정은 하나입니다.");
+
+            grid.Remove(1, 1);
+            Assert.That(grid.IsCellFree(0, 0) && grid.IsCellFree(1, 0) && grid.IsCellFree(0, 1), Is.True,
+                "어느 칸으로 철거하든 덮은 칸이 모두 비어야 합니다.");
+        }
+
+        [Test]
+        public void Grid_RejectsFootprintThatHitsEdgeOrCentralSlotOrAnotherTrap()
+        {
+            var grid = NewGrid();
+            var crusher = LoadTrapPrefab("Trap_Crusher");
+
+            Assert.That(grid.CanPlace(5, 0, crusher.Footprint), Is.False, "격자 밖으로 삐져나가면 안 됩니다.");
+            Assert.That(grid.CanPlace(1, 1, crusher.Footprint), Is.False, "중앙 시설 자리를 덮으면 안 됩니다.");
+
+            var first = grid.TryPlace(0, 4, crusher);
+            _created.Add(first.gameObject);
+            Assert.That(grid.TryPlace(1, 4, crusher), Is.Null, "다른 함정과 한 칸이라도 겹치면 안 됩니다.");
+            Assert.That(grid.TryGetNearestFreeCell(grid.CellWorldPosition(0, 4), crusher.Footprint, out var c, out var r), Is.True);
+            Assert.That(grid.CanPlace(c, r, crusher.Footprint), Is.True);
+        }
+
+        [Test]
+        public void Cooldown_BlocksRetriggerUntilItRunsOut()
+        {
+            var host = new GameObject("TrapHost");
+            _created.Add(host);
+            host.SetActive(false);
+            var trap = host.AddComponent<Trap>();
+            typeof(Trap).GetField("cooldownSeconds", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(trap, 3f);
+            typeof(Trap).GetField("_cooldownRemaining", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(trap, 3f);
+
+            Assert.That(trap.IsReady, Is.False);
+            trap.TickTrap(2.9f);
+            Assert.That(trap.IsReady, Is.False);
+            trap.TickTrap(0.2f);
+            Assert.That(trap.IsReady, Is.True, "재사용 시간이 지나면 다시 밟힙니다.");
+        }
+
+        [Test]
+        public void FacilityAndTrap_NeverShareARoom()
+        {
+            var trapData = ScriptableObject.CreateInstance<BuildingDataSO>();
+            var innData = ScriptableObject.CreateInstance<BuildingDataSO>();
+            var vaultData = ScriptableObject.CreateInstance<BuildingDataSO>();
+            _created.Add(trapData);
+            _created.Add(innData);
+            _created.Add(vaultData);
+            typeof(BuildingDataSO).GetField("<Category>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(trapData, InstallCategory.Trap);
+            typeof(BuildingDataSO).GetField("<DwellSeconds>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(innData, 3f);
+
+            var innHost = new GameObject("Inn");
+            _created.Add(innHost);
+            innHost.SetActive(false);
+            var inn = innHost.AddComponent<Building>();
+            inn.Initialize(innData);
+
+            Assert.That(TrapRules.ConflictsWithFacility(trapData, inn, false), Is.True, "손님이 머무는 방에는 함정을 못 깝니다.");
+            Assert.That(TrapRules.ConflictsWithFacility(innData, null, true), Is.True, "함정이 있는 방에는 그 시설을 못 짓습니다.");
+            Assert.That(TrapRules.ConflictsWithFacility(vaultData, null, true), Is.False, "머물지 않는 시설은 상관없습니다.");
+            Assert.That(TrapRules.ConflictsWithFacility(trapData, null, false), Is.False);
+        }
+    }
+}

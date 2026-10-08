@@ -40,6 +40,14 @@ namespace Code.UI
             return $"{name}: {FormatPercent(trap.InjuryChance)}";
         }
 
+        /// <summary>발동 방식 한 줄. 범위·지속은 아군도 맞는다는 것을 반드시 적는다.</summary>
+        public string FormatTrapMode(Trap trap) => trap.TriggerMode switch
+        {
+            TrapTriggerMode.Area => $"범위(주변 {trap.AreaRadiusCells:0.#}칸, 아군 포함)",
+            TrapTriggerMode.Persistent => $"지속({trap.PersistentSeconds:0.#}초, 아군 포함)",
+            _ => "밟기(한 명)"
+        };
+
         public string BuildCardText(BuildingDataSO buildingData, int discountedCost)
         {
             if (buildingData == null)
@@ -54,7 +62,10 @@ namespace Code.UI
             if (buildingData.DailyUpkeep > 0) text += $"\n운영비 {buildingData.DailyUpkeep}G/일 · 인접 수익 최대 +40%";
             if (buildingData.Prefab == null) return text;
             if (buildingData.Prefab is Trap trap)
+            {
                 text += $"\n피해: {FormatTrapDamage(trap)}\n발동: {FormatPercent(trap.TriggerChance)} / {FormatTrapStatus(trap)}";
+                text += $"\n{FormatTrapMode(trap)} · {trap.Footprint.x}×{trap.Footprint.y}칸 · 재사용 {trap.CooldownSeconds:0.#}초";
+            }
             if (buildingData.Prefab is RecoveryFacility recovery)
             {
                 text += $"\n회복: 피로 -{Mathf.RoundToInt(recovery.FatigueRecoveryPerWave)}";

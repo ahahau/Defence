@@ -31,6 +31,12 @@ namespace Code.MapCreateSystem
 
         private Building[] _cells;
         private readonly List<Building> _placed = new();
+
+        /// <summary>여러 칸을 차지하는 건물의 기준 칸(왼쪽 아래). 저장과 철거가 이 칸으로 건물을 찾는다.</summary>
+        private readonly Dictionary<Building, Vector2Int> _anchors = new();
+
+        /// <summary>여러 칸 건물을 한 번만 세려고 쓰는 임시 집합. 매번 새로 만들지 않는다.</summary>
+        private readonly HashSet<Building> _countBuffer = new();
         private GameObject _focusedGridRoot;
         private SpriteRenderer _focusedGridSurface;
         private SpriteRenderer _selectedCellMarker;
@@ -68,11 +74,12 @@ namespace Code.MapCreateSystem
             EnsureCells();
             var bounds = GetCentralSlotBounds();
             var count = 0;
+            _countBuffer.Clear();
             for (var row = 0; row < rows; row++)
             for (var column = 0; column < columns; column++)
             {
                 var building = _cells[Index(column, row)];
-                if (building == null || building.IsDestroyed)
+                if (building == null || building.IsDestroyed || _countBuffer.Contains(building))
                     continue;
 
                 var besideHorizontalEdge = (column == bounds.minColumn - 1 || column == bounds.maxColumn + 1)
@@ -82,7 +89,10 @@ namespace Code.MapCreateSystem
                                          && column >= bounds.minColumn
                                          && column <= bounds.maxColumn;
                 if (besideHorizontalEdge || besideVerticalEdge)
+                {
+                    _countBuffer.Add(building);
                     count++;
+                }
             }
 
             return count;
@@ -129,6 +139,21 @@ namespace Code.MapCreateSystem
         /// <summary>현재 배치된 개수.</summary>
         public int PlacedCount => _placed.Count;
 
+        /// <summary>살아 있는 함정이 하나라도 있는가. 손님이 머무는 시설과 한 방에 두지 않기 위해 본다.</summary>
+        public bool HasLiveTrap
+        {
+            get
+            {
+                foreach (var building in _placed)
+                {
+                    if (building is Trap trap && trap != null && !trap.IsDestroyed)
+                        return true;
+                }
+
+                return false;
+            }
+        }
+
         private int Index(int column, int row) => row * columns + column;
 
         /// <summary>셀의 월드 좌표(노드 중심 기준, 격자를 중앙 정렬).</summary>
@@ -172,19 +197,88 @@ namespace Code.MapCreateSystem
             return IsValidCell(column, row);
         }
 
-        /// <summary>지정 셀에 건물 프리팹을 설치한다(빈 셀일 때만). 성공 시 인스턴스 반환.</summary>
+        /// <summary>
+        /// (column, row)를 왼쪽 아래로 하는 <paramref name="footprint"/> 칸이 모두 비어 있는가.
+        /// 하나라도 격자 밖·중앙 슬롯·다른 건물이면 놓을 수 없다.
+        /// </summary>
+        public bool CanPlace(int column, int row, Vector2Int footprint)
+        {
+            var width = Mathf.Max(1, footprint.x);
+            var height = Mathf.Max(1, footprint.y);
+            for (var dy = 0; dy < height; dy++)
+            for (var dx = 0; dx < width; dx++)
+            {
+                if (!IsCellFree(column + dx, row + dy))
+                    return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>그 크기의 건물을 놓을 자리가 하나라도 있는가.</summary>
+        public bool HasRoomFor(Vector2Int footprint)
+        {
+            for (var r = 0; r < rows; r++)
+            for (var c = 0; c < columns; c++)
+            {
+                if (CanPlace(c, r, footprint))
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>덮은 칸들의 가운데 월드 좌표.</summary>
+        public Vector3 FootprintWorldCenter(int column, int row, Vector2Int footprint)
+        {
+            var min = CellWorldPosition(column, row);
+            var max = CellWorldPosition(column + Mathf.Max(1, footprint.x) - 1, row + Mathf.Max(1, footprint.y) - 1);
+            return (min + max) * 0.5f;
+        }
+
+        /// <summary>
+        /// 지정 칸을 왼쪽 아래로 하여 건물 프리팹을 설치한다. 프리팹이 여러 칸짜리면 덮는 칸이 모두 비어야 한다.
+        /// </summary>
         public Building TryPlace(int column, int row, Building buildingPrefab)
         {
             EnsureCells();
-            if (buildingPrefab == null || !IsCellFree(column, row))
+            if (buildingPrefab == null)
                 return null;
 
-            var building = Instantiate(buildingPrefab, CellWorldPosition(column, row), Quaternion.identity);
+            var footprint = buildingPrefab.Footprint;
+            if (!CanPlace(column, row, footprint))
+                return null;
+
+            var building = Instantiate(buildingPrefab, FootprintWorldCenter(column, row, footprint), Quaternion.identity);
             building.transform.SetParent(transform, true); // worldPositionStays=true → 노드 스케일에 안 끌려감
 
-            _cells[Index(column, row)] = building;
+            // 그림이 한 칸 크기 그대로면 두 칸을 막고 있다는 것이 보이지 않는다. 덮은 칸만큼 늘린다.
+            if (footprint.x > 1 || footprint.y > 1)
+            {
+                var scale = building.transform.localScale;
+                building.transform.localScale = new Vector3(scale.x * footprint.x, scale.y * footprint.y, scale.z);
+            }
+
+            for (var dy = 0; dy < footprint.y; dy++)
+            for (var dx = 0; dx < footprint.x; dx++)
+                _cells[Index(column + dx, row + dy)] = building;
+
+            _anchors[building] = new Vector2Int(column, row);
             _placed.Add(building);
             return building;
+        }
+
+        /// <summary>건물의 기준 칸(왼쪽 아래). 이 격자에 없으면 false.</summary>
+        public bool TryGetAnchor(Building building, out int column, out int row)
+        {
+            column = -1;
+            row = -1;
+            if (building == null || !_anchors.TryGetValue(building, out var anchor))
+                return false;
+
+            column = anchor.x;
+            row = anchor.y;
+            return true;
         }
 
         /// <summary>월드 클릭 위치에서 가장 가까운 셀에 설치(클릭 배치용 진입점).</summary>
@@ -213,7 +307,13 @@ namespace Code.MapCreateSystem
         }
 
         /// <summary>기준 위치에서 가장 가까운 '빈' 셀을 찾는다. 빈 셀이 없으면 false.</summary>
-        public bool TryGetNearestFreeCell(Vector3 worldPosition, out int column, out int row)
+        public bool TryGetNearestFreeCell(Vector3 worldPosition, out int column, out int row) =>
+            TryGetNearestFreeCell(worldPosition, Vector2Int.one, out column, out row);
+
+        /// <summary>
+        /// 그 크기의 건물이 들어갈 자리 중 가운데가 기준 위치에서 가장 가까운 기준 칸(왼쪽 아래)을 찾는다.
+        /// </summary>
+        public bool TryGetNearestFreeCell(Vector3 worldPosition, Vector2Int footprint, out int column, out int row)
         {
             EnsureCells();
 
@@ -223,8 +323,8 @@ namespace Code.MapCreateSystem
             for (var r = 0; r < rows; r++)
             for (var c = 0; c < columns; c++)
             {
-                if (!IsCellFree(c, r)) continue;
-                var d = (CellWorldPosition(c, r) - worldPosition).sqrMagnitude;
+                if (!CanPlace(c, r, footprint)) continue;
+                var d = (FootprintWorldCenter(c, r, footprint) - worldPosition).sqrMagnitude;
                 if (d >= bestDistance) continue;
 
                 bestDistance = d;
@@ -261,9 +361,20 @@ namespace Code.MapCreateSystem
             var building = _cells[Index(column, row)];
             if (building == null) return false;
 
-            _cells[Index(column, row)] = null;
+            // 여러 칸 건물은 덮은 칸을 모두 비운다.
+            for (var i = 0; i < _cells.Length; i++)
+            {
+                if (_cells[i] == building)
+                    _cells[i] = null;
+            }
+
+            _anchors.Remove(building);
             _placed.Remove(building);
-            Destroy(building.gameObject);
+            // EditMode 테스트에서도 같은 경로를 탄다. 런타임 Destroy는 에디트 모드에서 경고를 남긴다.
+            if (Application.isPlaying)
+                Destroy(building.gameObject);
+            else
+                DestroyImmediate(building.gameObject);
             return true;
         }
 
@@ -542,6 +653,7 @@ namespace Code.MapCreateSystem
                     Destroy(building.gameObject);
             }
             _placed.Clear();
+            _anchors.Clear();
         }
 
     }

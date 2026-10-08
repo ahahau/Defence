@@ -34,7 +34,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &8899001003
 SpriteRenderer:
-  serializedVersion: 2
+  serializedVersion: 3
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -91,6 +91,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
 --- !u!1 &4328671716576560348
 GameObject:
   m_ObjectHideFlags: 0
@@ -146,6 +147,7 @@ MonoBehaviour:
   destroyDelay: 0.05
   reopenCost: 25
   reopenDays: 2
+  maxConcurrentVisitors: 1
   wearPerVisit: 1
   repairCostPerWear: 4
   triggerChance: 1
@@ -155,6 +157,11 @@ MonoBehaviour:
   damagePerDay: 0.8
   wearPerTrigger: 1
   injuryStatusEffect: {fileID: 11400000, guid: dc5dd323c2a0441d8e0abf01d7ab6deb, type: 2}
+  triggerMode: 1
+  footprint: {x: 2, y: 2}
+  cooldownSeconds: 8
+  areaRadiusCells: 1
+  persistentSeconds: 3
   hitAnimationTarget: {fileID: 2787899817810343432}
   hitShakeDistance: 0.16
   hitShakeDuration: 0.18
@@ -194,7 +201,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &2624532001765305233
 SpriteRenderer:
-  serializedVersion: 2
+  serializedVersion: 3
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -251,3 +258,4 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []

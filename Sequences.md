@@ -167,3 +167,16 @@
   - `Assets/Resources/UI/Toolkit/RunEndPanelSettings.asset`(공용 설정 복사, Sort Order 9000 — 설정창 캔버스 5000보다 위, 팝업 10000보다 아래).
   - `ToolkitDocumentSpawner.Install`에 문서별 `panelSettingsPath` 선택 인자 추가(비우면 공용). `RunEndToolkitBootstrap`이 새 설정을 씀.
   - 실측: 게임오버 시 패널 `RunEndPanelSettings`(9000), 오른쪽 uGUI 패널까지 어두운 배경 아래로 깔리고 "던전 함락" 카드가 맨 위에 뜸.
+- 함정 타일 조건 구현(기획서 "함정"). 재사용 시간, 발동 방식(밟기·범위·지속)과 아군 피해, 시설 방 금지, 여러 칸 함정 전부(사용자 선택). 분류는 이름 따라, 재사용은 함정별 3~8초(사용자 선택). 칸 수는 내가 정함.
+  - `TrapRules`(새 파일): `TrapTriggerMode`, 지속 피해 나누기(1초마다, 올림·최소 1), 여러 칸 밟기 판정, 범위(덮은 칸에서 사방 N칸), 마우스 칸을 가운데로 두는 기준 칸, 시설·함정 겹침.
+  - `Trap`: `triggerMode`·`footprint`·`cooldownSeconds`·`areaRadiusCells`·`persistentSeconds` 추가. `TriggerBy(enemy)`가 방식별로 처리(밟기=한 명, 범위=주변 적·아군 모두, 지속=3초 동안 1초마다 올라선 적·아군). 재사용 시간·지속 작동은 게임 시간(`TickTrap`). 통로 위 함정은 항상 밟기. 지속형은 작동 한 번에 내구도 한 번만 닳음.
+  - `Enemy`: "방문당 한 번" 기록을 없애고 `Trap.IsReady`·`Covers`로 판정. 함정 피해 뒤처리(공포·위험도·겁쟁이·함정 피해 집계)를 공개 `HandleTrapHit`로 빼서 범위·지속에 휘말린 적도 같은 처리를 받음.
+  - `NodeTrapGrid`: 여러 칸 점유(`CanPlace`·`HasRoomFor`·`FootprintWorldCenter`·`TryGetAnchor`), 덮은 칸 전체 철거, 그림을 칸 수만큼 늘림, `HasLiveTrap`. 핵심부 인접 건물 수는 여러 칸 건물을 한 번만 셈.
+  - `BuildingPlacementPreview`: 마우스 칸을 가운데로 칸 수만큼 테두리·유령 그림. `NodePanelView`: 그만한 빈자리가 있어야 설치 가능, 시설·함정 겹침이면 설치 불가, 대체 칸도 칸 수 기준.
+  - `BuildingPlacement`: `ViolatesFacilityTrapRule` — 손님이 머무는 시설 방에는 함정 불가, 함정이 있는 방에는 그 시설 불가. 저장 복원은 `RestoreCentral`/`RestoreOnCell`로 이 규칙을 건너뜀(규칙 전 저장에서 건물이 사라지지 않게). 기존 테스트가 리플렉션으로 부르는 `InstallCentral`/`InstallOnCell` 시그니처는 그대로 둠.
+  - 저장: 여러 칸 함정은 기준 칸에서 한 번만 저장. 옛 저장의 1칸 함정이 2칸이 되어 그 자리에 안 들어가면 가까운 빈자리로 옮겨 복원.
+  - 설치 카드: "범위(주변 1칸, 아군 포함) · 2×2칸 · 재사용 8초" 줄 추가.
+  - 프리팹 값(에디터 스크립트로 설정): 밟기 — 기본·가시 1×1 5초, 올가미 1×1 3초, 갑옷분쇄 1×1 5초 / 범위 — 압쇄 2×2 8초, 매복 그물 2×1 5초 / 지속 — 칼날 2×1 5초, 마름쇠 1×1 3초, 처형 톱날 2×1 8초.
+  - 테스트: `TrapTileTests` 8개. 전체 EditMode 206/206 통과. (EditMode에서 `NodeTrapGrid.Remove`가 런타임 `Destroy`를 불러 경고가 나서, 에디트 모드에서는 `DestroyImmediate`를 쓰게 함)
+  - 플레이 실측(1일차, 방 2개에 함정 12개씩): 압쇄가 (0,0)~(1,1) 네 칸 모두 차지, 시설·함정 겹침으로 상점 설치 거절. 웨이브 중 칼날(지속 2×1) 4씩 3.00초 작동 뒤 재사용 5초, 압쇄(범위 2×2) 20 피해 뒤 재사용 8초, 마름쇠(지속) 2씩 3.01초 작동 뒤 3초. 정산 "함정 26". 저장·복원 뒤 함정 12개·압쇄 기준 칸 (0,0) 그대로. 콘솔 오류 0.
+  - 확인 못 한 것: 아군 피해(보유 유닛 0명인 판), 배치 미리보기의 실제 마우스 조작, 설치 카드에 한 줄 늘어난 뒤의 카드 레이아웃.

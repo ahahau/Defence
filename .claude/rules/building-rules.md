@@ -33,6 +33,10 @@ paths:
    * 시설은 닫을 수 있다(닫으면 무료, 다시 열 때 `reopenCost`와 `reopenDays`). 닫힌 시설은 벌지도, 운영비를 먹지도 않는다.
    * 수익 시설은 대가로 모험가를 강화한다(Store → 공격력, Inn → 회복, Blacksmith → 공격·방어). 새 수익 시설에도 대가를 정한다.
 5. 함정(`Trap`)은 발동 확률·피해·추가 피해·부상 확률과 상태이상(`StatusEffectDataSO`)으로 정의한다.
+   * 칸·방식·재사용도 반드시 정한다: `footprint`(1×1·2×1·2×2 등), `triggerMode`(밟기=한 명 / 범위=주변 `areaRadiusCells`칸의 적·아군 / 지속=`persistentSeconds` 동안 1초마다 나눠서 올라선 적·아군), `cooldownSeconds`(게임 시간). 계산은 `TrapRules`에만 둔다.
+   * 범위·지속은 아군도 맞는다. 설치 카드에 "아군 포함"이 나간다.
+   * 손님이 머무는 시설(`DwellSeconds > 0`)이 있는 방에는 함정을 못 깔고, 함정이 있는 방에는 그 시설을 못 짓는다(`BuildingPlacement.ViolatesFacilityTrapRule`). 저장 복원은 `RestoreCentral`/`RestoreOnCell`로 이 규칙을 건너뛴다.
+   * 여러 칸 함정은 `NodeTrapGrid`가 덮은 칸 전부에 같은 건물을 넣고 기준 칸(왼쪽 아래)을 기억한다. 칸을 직접 돌며 건물을 세면 중복되니 `TryGetAnchor`로 기준 칸만 센다.
    * 상태이상은 `skill-rules.md`의 상태이상 절차로 만든다.
    * 함정 피해는 정산에서 함정의 몫으로 집계된다(`LastTriggerDamage`). 웨이브 목표 "함정 피해"와 연결된다.
    * 공병(`DisarmsTraps`)은 함정을 밟지 않고 해체한다. 강한 함정을 만들 때는 이 카운터를 고려한다.

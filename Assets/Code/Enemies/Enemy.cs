@@ -473,7 +473,7 @@ namespace Code.Enemies
             // 노드 도착 때와 같은 순서로 함정을 먼저 터뜨리고 통과 효과를 얹는다.
             if (building is Trap edgeTrap)
             {
-                TriggerSingleTrap(mover.CurrentNode, edgeTrap);
+                edgeTrap.TriggerBy(this);
                 if (!combatant.IsAlive)
                 {
                     BeginDeath();
@@ -555,7 +555,6 @@ namespace Code.Enemies
         /// </summary>
         private bool TryTriggerTrap(Node node)
         {
-            _trapsTouchedThisVisit.Clear();
             if (node == null) return false;
 
             TickTrapContact();
@@ -571,8 +570,8 @@ namespace Code.Enemies
         /// 방에 머무는 동안 계속 본다. 침입자는 들어온 자리에 가만히 있지 않고 방 안을
         /// 돌아다니므로, 도착한 순간만 보면 걸어가다 밟은 함정을 놓친다.
         ///
-        /// 방문 한 번에 함정 하나는 한 번만 터진다. 매 프레임 보는 판정이라 이 기록이 없으면
-        /// 같은 함정 위에 서 있는 것만으로 순식간에 갈려 나간다.
+        /// 한 번 터진 함정은 재사용 시간(<see cref="Trap.IsReady"/>)이 지나야 다시 터진다. 매 프레임 보는
+        /// 판정이라 이것이 없으면 같은 함정 위에 서 있는 것만으로 순식간에 갈려 나간다.
         /// </summary>
         private void TickTrapContact()
         {
@@ -582,51 +581,46 @@ namespace Code.Enemies
                 return;
 
             var radius = Mathf.Max(0.01f, grid.CellSize * trapContactCellRatio);
-            var radiusSquared = radius * radius;
-
             var placed = grid.PlacedBuildings;
             for (var i = 0; i < placed.Count; i++)
             {
                 if (!combatant.IsAlive)
                     return;
 
-                if (placed[i] is not Trap trap || trap == null || _trapsTouchedThisVisit.Contains(trap))
+                if (placed[i] is not Trap trap || trap == null || !trap.IsReady)
                     continue;
 
-                var delta = trap.transform.position - transform.position;
-                delta.z = 0f;
-                if (delta.sqrMagnitude > radiusSquared)
+                if (!trap.Covers(transform.position, radius))
                     continue;
 
-                _trapsTouchedThisVisit.Add(trap);
-                TriggerSingleTrap(node, trap);
+                trap.TriggerBy(this);
             }
         }
 
-        private readonly HashSet<Trap> _trapsTouchedThisVisit = new();
-
-        private void TriggerSingleTrap(Node node, Trap trap)
+        /// <summary>
+        /// 함정에 맞았다. 밟은 본인뿐 아니라 범위·지속 함정에 휘말린 침입자도 여기로 온다.
+        /// </summary>
+        public void HandleTrapHit(Trap trap, int damageTaken)
         {
-            if (trap == null) return;
-            if (trap.TryDamage(combatant.Health))
+            if (trap == null)
+                return;
+
+            // 통로 함정은 노드에 속하지 않으므로 위험도를 올릴 노드가 없을 수 있다.
+            mover?.CurrentNode?.IncreaseDanger(trap.DangerIncreaseOnTrigger);
+            var fearGained = IncreaseFear(fearGainOnTrap, true);
+            if (Trait == AdventurerTrait.Coward)
             {
-                // 통로 함정은 노드에 속하지 않으므로 위험도를 올릴 노드가 없을 수 있다.
-                node?.IncreaseDanger(trap.DangerIncreaseOnTrigger);
-                var fearGained = IncreaseFear(fearGainOnTrap, true);
-                if (Trait == AdventurerTrait.Coward)
-                {
-                    var normalFear = AdventurerTraitRules.ResolveFearGain(fearGainOnTrap, AdventurerTrait.None);
-                    var bonusFear = Mathf.Max(0, fearGained - normalFear);
-                    Code.Manager.WaveManager.Current?.RecordCowardTrapPressure(bonusFear);
-                    combatant?.ShowCounterplayFeedback(
-                        "약점 적중! 경계",
-                        bonusFear,
-                        true,
-                        new Color(0.78f, 0.61f, 1f));
-                }
-                // 함정이 한 일을 따로 세지 않으면 정산에서 유닛 피해와 뭉뚱그려져 보이지 않는다.
-                Code.Manager.WaveManager.Current?.RecordTrapDamage(trap.LastTriggerDamage);
+                var normalFear = AdventurerTraitRules.ResolveFearGain(fearGainOnTrap, AdventurerTrait.None);
+                var bonusFear = Mathf.Max(0, fearGained - normalFear);
+                Code.Manager.WaveManager.Current?.RecordCowardTrapPressure(bonusFear);
+                combatant?.ShowCounterplayFeedback(
+                    "약점 적중! 경계",
+                    bonusFear,
+                    true,
+                    new Color(0.78f, 0.61f, 1f));
             }
+            // 함정이 한 일을 따로 세지 않으면 정산에서 유닛 피해와 뭉뚱그려져 보이지 않는다.
+            Code.Manager.WaveManager.Current?.RecordTrapDamage(damageTaken);
         }
 
         private void HandleUnitEncounter(Node unitNode)

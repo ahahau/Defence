@@ -276,7 +276,10 @@ namespace Code.Buildings
             currentDurability = Mathf.Max(0, currentDurability - savedWear);
         }
 
-        private void Update() => TickRepair(Time.deltaTime);
+        protected virtual void Update() => TickRepair(Time.deltaTime);
+
+        /// <summary>방 칸 격자에서 차지하는 칸 수(가로×세로). 함정만 여러 칸을 쓴다.</summary>
+        public virtual Vector2Int Footprint => Vector2Int.one;
 
         /// <summary>수리 시간을 흘린다. 다 고치면 내구도를 채우고 알린다.</summary>
         public void TickRepair(float deltaTime)

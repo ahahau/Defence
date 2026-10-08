@@ -1,4 +1,7 @@
+using System.Collections.Generic;
 using Code.Combat;
+using Code.Enemies;
+using Code.MapCreateSystem;
 using Code.StatusEffects;
 using DG.Tweening;
 using UnityEngine;
@@ -32,6 +35,22 @@ namespace Code.Buildings
         [SerializeField]
         private StatusEffectDataSO injuryStatusEffect;
 
+        [Header("Tiles & Trigger")]
+        [SerializeField, Tooltip("밟기: 밟은 한 명. 범위: 주변 칸의 적·아군 모두. 지속: 잠시 작동하며 올라선 적·아군에게 나눠 준다.")]
+        private TrapTriggerMode triggerMode = TrapTriggerMode.Step;
+
+        [SerializeField, Tooltip("방 칸 격자에서 차지하는 칸 수(가로×세로).")]
+        private Vector2Int footprint = Vector2Int.one;
+
+        [SerializeField, Min(0f), Tooltip("한 번 터진 뒤 다시 터질 때까지의 게임 시간(초). 지속형은 작동이 끝난 뒤부터 센다.")]
+        private float cooldownSeconds = 5f;
+
+        [SerializeField, Min(0f), Tooltip("범위형: 함정 칸에서 사방으로 몇 칸까지 닿는가.")]
+        private float areaRadiusCells = 1f;
+
+        [SerializeField, Min(0.1f), Tooltip("지속형: 한 번 밟히면 작동하는 게임 시간(초). 피해를 1초마다 나눠 준다.")]
+        private float persistentSeconds = 3f;
+
         [Header("Hit Animation")]
         [SerializeField] private Transform hitAnimationTarget;
         [SerializeField, Min(0f)] private float hitShakeDistance = 0.16f;
@@ -44,11 +63,32 @@ namespace Code.Buildings
         private Vector3 _hitAnimationBaseLocalPosition;
         private Tween _hitAnimationTween;
 
+        private float _cooldownRemaining;
+        private float _activeRemaining;
+        private float _tickTimer;
+        private int _tickDamage;
+        private Node _node;
+        private NodeTrapGrid _grid;
+
+        /// <summary>범위·지속 판정 때 매번 새로 만들지 않는 임시 목록.</summary>
+        private readonly List<EnemyMover> _enemyBuffer = new();
+
         public float TriggerChance => triggerChance;
         public int Damage => damage;
         public float InjuryChance => injuryChance;
         public int BonusDamage => bonusDamage;
         public StatusEffectDataSO StatusEffect => injuryStatusEffect;
+        public TrapTriggerMode TriggerMode => triggerMode;
+        public float CooldownSeconds => Mathf.Max(0f, cooldownSeconds);
+        public float CooldownRemaining => _cooldownRemaining;
+        public float AreaRadiusCells => areaRadiusCells;
+        public float PersistentSeconds => persistentSeconds;
+        public bool IsActive => _activeRemaining > 0f;
+
+        public override Vector2Int Footprint => new(Mathf.Max(1, footprint.x), Mathf.Max(1, footprint.y));
+
+        /// <summary>지금 밟히면 터지는가. 재사용 대기 중이거나 지속 작동 중이면 아니다.</summary>
+        public bool IsReady => !IsDestroyed && _cooldownRemaining <= 0f && _activeRemaining <= 0f;
 
         /// <summary>직전 발동에서 실제로 준 피해. 정산이 함정의 몫을 집계할 때 읽는다.</summary>
         public int LastTriggerDamage { get; private set; }
@@ -82,50 +122,187 @@ namespace Code.Buildings
             StopHitAnimation(true);
         }
 
-        public bool TryDamage(IDamageable target)
+        protected override void Update()
         {
-            if (target == null || !target.IsAlive || IsDestroyed)
+            base.Update();
+            TickTrap(Time.deltaTime);
+        }
+
+        /// <summary>재사용 시간과 지속 작동을 흘린다. 게임 시간이라 일시정지 중에는 멈춘다.</summary>
+        public void TickTrap(float deltaTime)
+        {
+            var dt = Mathf.Max(0f, deltaTime);
+            if (_activeRemaining > 0f)
+            {
+                _tickTimer -= dt;
+                if (_tickTimer <= 0f)
+                {
+                    _tickTimer += TrapRules.PersistentTickSeconds;
+                    HitEveryoneOnTiles(_tickDamage, false);
+                }
+
+                _activeRemaining -= dt;
+                if (_activeRemaining <= 0f)
+                {
+                    _activeRemaining = 0f;
+                    _cooldownRemaining = CooldownSeconds;
+                }
+
+                return;
+            }
+
+            if (_cooldownRemaining > 0f)
+                _cooldownRemaining = Mathf.Max(0f, _cooldownRemaining - dt);
+        }
+
+        /// <summary>
+        /// 그 자리가 이 함정을 밟은 것인가. 칸 하나짜리는 중심에서 <paramref name="contactRadius"/> 안이다.
+        /// </summary>
+        public bool Covers(Vector3 worldPosition, float contactRadius)
+        {
+            return TrapRules.CoversFootprint(
+                transform.position, Footprint, ResolveCellSize(), contactRadius, worldPosition);
+        }
+
+        /// <summary>
+        /// 침입자가 밟았다. 방식에 따라 한 명·주변 모두·지속 작동으로 나뉜다.
+        /// 통로 위 함정처럼 방 격자가 없으면 항상 밟기로 동작한다.
+        /// </summary>
+        /// <returns>실제로 발동했으면 true(해체 포함하지 않음).</returns>
+        public bool TriggerBy(Enemy stepper)
+        {
+            if (stepper == null || stepper.IsDead || !IsReady)
                 return false;
 
             if (Random.value > triggerChance)
                 return false;
 
-            Component targetComponent = target as Component;
-
             // 공병은 밟지 않고 뜯어낸다. 피해 판정보다 먼저 본다.
-            if (TryDisarm(targetComponent))
+            if (TryDisarm(stepper))
                 return false;
 
-            var resolvedDamage = CurrentDamage;
-            if (targetComponent != null && targetComponent.TryGetComponent<EnemyStatusController>(out var statusController))
-                resolvedDamage = statusController.ModifyTrapDamage(resolvedDamage);
+            var mode = ResolveGrid() != null ? triggerMode : TrapTriggerMode.Step;
+            switch (mode)
+            {
+                case TrapTriggerMode.Area:
+                    HitEveryoneInArea(CurrentDamage);
+                    _cooldownRemaining = CooldownSeconds;
+                    break;
+                case TrapTriggerMode.Persistent:
+                    _tickDamage = TrapRules.PersistentTickDamage(CurrentDamage, persistentSeconds);
+                    _activeRemaining = persistentSeconds;
+                    _tickTimer = 0f;
+                    // 밟은 순간 첫 피해가 들어가야 무엇이 터졌는지 보인다.
+                    TickTrap(0f);
+                    break;
+                default:
+                    HitEnemy(stepper, CurrentDamage, true);
+                    _cooldownRemaining = CooldownSeconds;
+                    break;
+            }
 
-            LastTriggerDamage = resolvedDamage;
-            target.TakeDamage(resolvedDamage);
             PlayHitAnimation();
             // 함정은 플레이어가 깔아 두고 잊는 물건이라, 언제 걸렸는지 소리로 짚어 줘야 한다.
             Code.Audio.GameSfxPlayer.Play(Code.Audio.GameSfxCue.Trap, transform.position);
-            TryApplyInjury(target, targetComponent);
 
-            // 발동한 만큼 닳는다. 다 닳으면 Building이 알아서 부서뜨린다.
+            // 발동한 만큼 닳는다. 지속형은 작동 한 번에 한 번만 닳는다. 다 닳으면 Building이 부서뜨린다.
             if (wearPerTrigger > 0)
                 TakeBuildingDamage(wearPerTrigger);
 
             return true;
         }
-        
+
+        private void HitEveryoneInArea(int amount)
+        {
+            var center = (Vector2)transform.position;
+            var cellSize = ResolveCellSize();
+            CollectEnemiesInNode();
+            foreach (var mover in _enemyBuffer)
+            {
+                if (TrapRules.InArea(center, Footprint, cellSize, areaRadiusCells, mover.transform.position))
+                    HitEnemy(mover.GetComponent<Enemy>(), amount, true);
+            }
+
+            HitUnits(amount, position => TrapRules.InArea(center, Footprint, cellSize, areaRadiusCells, position));
+        }
+
+        private void HitEveryoneOnTiles(int amount, bool allowInjury)
+        {
+            var contact = ResolveCellSize() * 0.5f;
+            CollectEnemiesInNode();
+            foreach (var mover in _enemyBuffer)
+            {
+                if (Covers(mover.transform.position, contact))
+                    HitEnemy(mover.GetComponent<Enemy>(), amount, allowInjury);
+            }
+
+            HitUnits(amount, position => Covers(position, contact));
+        }
+
+        /// <summary>같은 방에 있는 살아 있는 침입자를 모은다. 통로를 걷는 중인 적은 방에 없다.</summary>
+        private void CollectEnemiesInNode()
+        {
+            _enemyBuffer.Clear();
+            var node = ResolveNode();
+            if (node == null)
+                return;
+
+            foreach (var mover in EnemyMover.ActiveEnemies)
+            {
+                if (mover != null && mover.CurrentNode == node)
+                    _enemyBuffer.Add(mover);
+            }
+        }
+
+        private void HitEnemy(Enemy enemy, int amount, bool allowInjury)
+        {
+            if (enemy == null || enemy.IsDead || amount <= 0)
+                return;
+
+            var target = enemy.GetComponent<Combatant>()?.Health;
+            if (target == null || !target.IsAlive)
+                return;
+
+            var resolved = amount;
+            if (enemy.TryGetComponent<EnemyStatusController>(out var statusController))
+                resolved = statusController.ModifyTrapDamage(resolved);
+
+            LastTriggerDamage = resolved;
+            target.TakeDamage(resolved);
+            if (allowInjury)
+                TryApplyInjury(target, target as Component ?? enemy);
+            enemy.HandleTrapHit(this, resolved);
+        }
+
+        /// <summary>
+        /// 범위·지속 함정은 가리지 않는다. 아군이 그 칸에 서 있으면 아군도 맞는다 — 함정을 전투 칸에
+        /// 깔면 세게 먹히지만 그만큼 부하도 다친다.
+        /// </summary>
+        private void HitUnits(int amount, System.Func<Vector2, bool> inRange)
+        {
+            var node = ResolveNode();
+            if (node == null || amount <= 0)
+                return;
+
+            foreach (var placement in node.UnitPlacements)
+            {
+                var unit = placement?.Instance;
+                if (unit == null || unit.Health == null || !unit.Health.IsAlive)
+                    continue;
+
+                if (inRange(unit.transform.position))
+                    unit.Health.TakeDamage(amount);
+            }
+        }
+
         /// <summary>
         /// 함정을 해체할 줄 아는 상대면 피해 대신 함정이 부서진다.
         ///
         /// 확률을 두지 않았다. 공병이 지나가면 반드시 하나가 사라져야 플레이어가
         /// "저건 먼저 잡아야 한다"고 읽는다. 확률이면 운이 나빠서 뚫린 것처럼 보인다.
         /// </summary>
-        private bool TryDisarm(Component targetComponent)
+        private bool TryDisarm(Enemy enemy)
         {
-            if (targetComponent == null)
-                return false;
-
-            var enemy = targetComponent.GetComponentInParent<Code.Enemies.Enemy>();
             if (enemy == null || enemy.Data == null || !enemy.Data.DisarmsTraps)
                 return false;
 
@@ -142,13 +319,33 @@ namespace Code.Buildings
             return true;
         }
 
+        private Node ResolveNode()
+        {
+            if (_node == null)
+                _node = GetComponentInParent<Node>();
+            return _node;
+        }
+
+        private NodeTrapGrid ResolveGrid()
+        {
+            if (_grid == null)
+                _grid = GetComponentInParent<NodeTrapGrid>();
+            return _grid;
+        }
+
+        private float ResolveCellSize()
+        {
+            var grid = ResolveGrid();
+            return grid != null ? grid.CellSize : 1f;
+        }
+
         private void PlayHitAnimation()
         {
             if (hitAnimationTarget == null || hitShakeDistance <= 0f)
                 return;
-            
+
             StopHitAnimation(false);
-            
+
             hitAnimationTarget.localPosition = _hitAnimationBaseLocalPosition;
             _hitAnimationTween = hitAnimationTarget
                 .DOLocalMoveX(_hitAnimationBaseLocalPosition.x + hitShakeDistance, hitShakeDuration / hitShakeSteps)
@@ -166,9 +363,9 @@ namespace Code.Buildings
                 else
                     _hitAnimationTween.Kill();
             }
-            
+
             _hitAnimationTween = null;
-            
+
             if (hitAnimationTarget != null)
                 hitAnimationTarget.localPosition = _hitAnimationBaseLocalPosition;
         }

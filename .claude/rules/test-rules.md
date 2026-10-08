@@ -22,6 +22,7 @@ paths:
 | `CreditWarningTests` | 부채 한도·긴급 상환·신용 경고·파산 판정 |
 | `FacilityQueueTests` | 시설 대기열 FIFO·동시 이용 수·대기 만족도 감액 |
 | `FacilityDurabilityTests` | 수익 시설 내구도·수입 배율·수리·철거 환불·저장 |
+| `TrapTileTests` | 함정 여러 칸 점유·철거, 범위·지속 판정, 재사용 시간, 시설·함정 겹침 |
 | `PauseLockTests` | 엘리트·보스 일시정지 잠금 규칙과 배속 컨트롤러 잠금 동작 |
 | `RedeployPreparationTests` | 재배치 준비 시간·준비 중 피해 절반 |
 | `RoomConstructionTests` | 그래프 노드 제거(연결·자리 정리), 공사 중 노드의 막힌 길·배치 불가 |

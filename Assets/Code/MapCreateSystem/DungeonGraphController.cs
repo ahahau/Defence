@@ -918,6 +918,10 @@ namespace Code.MapCreateSystem
                         var building = grid.BuildingAt(column, row);
                         if (building == null)
                             continue;
+                        // 여러 칸 함정은 덮은 칸마다 나온다. 기준 칸(왼쪽 아래)에서 한 번만 저장한다.
+                        if (grid.TryGetAnchor(building, out var anchorColumn, out var anchorRow)
+                            && (anchorColumn != column || anchorRow != row))
+                            continue;
                         var savedBuilding = CaptureBuilding(building);
                         if (savedBuilding == null)
                             continue;
@@ -1052,9 +1056,29 @@ namespace Code.MapCreateSystem
             if (data != null && data.Prefab is Portal)
                 return;
             var building = cell
-                ? BuildingPlacement.InstallOnCell(node, saved.column, saved.row, data)
-                : BuildingPlacement.InstallCentral(node, data);
+                ? RestoreOnCell(node, saved, data)
+                : BuildingPlacement.RestoreCentral(node, data);
             RestoreBuildingState(building, saved);
+        }
+
+        /// <summary>
+        /// 저장된 칸에 다시 세운다. 칸 하나짜리였던 함정이 여러 칸이 되어 그 자리에 안 들어가면
+        /// 가장 가까운 빈자리로 옮긴다 — 옛 저장에서 함정이 조용히 사라지면 낸 금화가 날아간다.
+        /// </summary>
+        private static Building RestoreOnCell(Node node, SavedBuilding saved, BuildingDataSO data)
+        {
+            var building = BuildingPlacement.RestoreOnCell(node, saved.column, saved.row, data);
+            var grid = node != null ? node.TrapGrid : null;
+            if (building != null || grid == null || data == null || data.Prefab == null)
+                return building;
+
+            var footprint = data.Prefab.Footprint;
+            var origin = grid.IsValidCell(saved.column, saved.row)
+                ? grid.CellWorldPosition(saved.column, saved.row)
+                : node.transform.position;
+            return grid.TryGetNearestFreeCell(origin, footprint, out var column, out var row)
+                ? BuildingPlacement.RestoreOnCell(node, column, row, data)
+                : null;
         }
 
         private static void RestoreBuildingState(Building building, SavedBuilding saved)

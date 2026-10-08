@@ -1618,7 +1618,7 @@ namespace Code.UI
                     var origin = hasChosenCell
                         ? grid.CellWorldPosition(chosenColumn, chosenRow)
                         : node.transform.position;
-                    if (grid.TryGetNearestFreeCell(origin, out var fallbackColumn, out var fallbackRow))
+                    if (grid.TryGetNearestFreeCell(origin, buildingData.Prefab.Footprint, out var fallbackColumn, out var fallbackRow))
                         placed = BuildingPlacement.InstallOnCell(node, fallbackColumn, fallbackRow, buildingData);
                 }
 
@@ -1750,8 +1750,15 @@ namespace Code.UI
                 && (_selectedNode.HasAssignedBuilding || _selectedNode.IsClearingRubble))
                 return false;
 
-            // 일반 건물과 함정은 중앙 슬롯 바깥의 작은 칸에 함께 설치된다.
-            if (BuildingPlacement.UsesGridCell(buildingData) && (_selectedNode.TrapGrid == null || !_selectedNode.TrapGrid.HasFreeCell))
+            // 일반 건물과 함정은 중앙 슬롯 바깥의 작은 칸에 함께 설치된다. 여러 칸 함정은 그만한 빈자리가 있어야 한다.
+            if (BuildingPlacement.UsesGridCell(buildingData)
+                && (_selectedNode.TrapGrid == null
+                    || buildingData.Prefab == null
+                    || !_selectedNode.TrapGrid.HasRoomFor(buildingData.Prefab.Footprint)))
+                return false;
+
+            // 손님이 머무는 시설과 함정은 한 방에 두지 않는다.
+            if (BuildingPlacement.ViolatesFacilityTrapRule(_selectedNode, buildingData))
                 return false;
 
             return !_pendingBuilding.IsPending;
