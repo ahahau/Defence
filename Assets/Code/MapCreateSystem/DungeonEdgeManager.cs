@@ -39,6 +39,20 @@ namespace Code.MapCreateSystem
             var boundary = (start + end) * 0.5f;
             edgeLine.Initialize($"Edge_{from}_{to}", boundary, boundary, fromId, toId);
         }
+        /// <summary>이 노드에 닿은 라인을 모두 없앤다. 공사를 취소한 방의 라인을 정리할 때 쓴다.</summary>
+        public void RemoveEdgesFor(string nodeId)
+        {
+            if (string.IsNullOrEmpty(nodeId))
+                return;
+
+            for (var i = transform.childCount - 1; i >= 0; i--)
+            {
+                var edge = transform.GetChild(i).GetComponent<EdgeLine>();
+                if (edge != null && (edge.FromId == nodeId || edge.ToId == nodeId))
+                    HideAndDestroy(edge.gameObject);
+            }
+        }
+
         private Vector3 ToWorld(Vector2Int gridPosition)
         {
             return new Vector3(gridPosition.x * gridSpacing, gridPosition.y * gridSpacing, 0f);

@@ -36,6 +36,12 @@ paths:
 - 새 시설의 `DwellSeconds`는 곧 "이 방은 경비를 못 세운다"는 선언이다.
 - Store는 적 공격력을, Inn은 적 회복을, Blacksmith는 적 공격·방어를 올리는 대신 수입을 준다.
 
+## 방 확장 공사
+- 결제가 끝나면 노드를 바로 만들되 `Node.BeginConstruction`으로 공사 중이 된다(`DungeonGraphController.roomConstructionSeconds`, 기본 4초, 게임 시간). 완공 때 `NodeBuiltEvent`를 낸다 — 튜토리얼·영업 시작 조건은 완공된 방만 본다.
+- 공사 중인 방은 `IsPassBlocked`(적 길찾기 우회), `CanAcceptAdditionalUnit = false`(배치·이동 불가). 공사 중인 방에서는 다음 확장 후보를 뻗지 않고, 그 방에 닿은 라인에는 라인 건물을 놓지 못한다(`EdgeLine.IsAvailableForInstall`).
+- 공사 중인 방을 누르면 취소 확인 팝업. 취소하면 낸 금화의 `constructionCancelRefundRate`(50%)를 `BuildCostRefundedEvent`로 돌려주고(장부: 건설 취소 환불), `DungeonGraph.RemoveNode`·`DungeonEdgeManager.RemoveEdgesFor`로 노드와 라인을 지운 뒤 잠긴 칸을 다시 깐다.
+- 저장: `SavedNode.constructionRemaining`·`constructionPaidGold`. 옛 저장은 0(완공)으로 읽힌다.
+
 ## 던전 그래프
 - `DungeonGraphController.Awake`가 그래프를 만들고, `Start`는 한 프레임 뒤 `TryRestoreCurrentRun`을 호출한다.
 - 방을 지으면 새 갈래가 생겨 `LockedNode`가 늘어난다. 열린 방은 이름이 `LockedNode`로 시작하지 않는 노드로 센다.

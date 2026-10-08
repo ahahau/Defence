@@ -128,3 +128,13 @@
   - 테스트: `RedeployPreparationTests` 10개. 전체 EditMode 183/183 통과.
   - 플레이 실측: 1칸 이동 "전입 완료 · 준비 1초", 준비 중 피해 10 → 5(20→15), 일시정지 중 남은 시간 1.00 유지. 준비 8초 동안 적과 교전 중에도 공격 게이지 0.00·적 체력 14 그대로. 준비 2.5초로 다시 돌리자 끝난 직후 게이지가 차고 적 체력 14→12→10, 받는 피해도 준비 뒤 6씩 그대로. 게임 오류 0.
   - 기획서 구현 현황, combat·test 규칙 갱신.
+- 방 확장 공사 구현(기획서 "확장 노드"). 공사 시간 4초, 취소 환불 50%, 취소까지 포함(사용자 선택).
+  - `Node`: `BeginConstruction`·`IsUnderConstruction`·`ConstructionRemaining`·`ConstructionPaidGold`·`ConstructionCompleted`. 게임 시간으로 줄고 일시정지 중 멈춤. 공사 중에는 흐린 색 + "공사 중 N초" 표시, `IsPassBlocked`·배치 불가.
+  - `DungeonGraphController`: 결제 후 노드를 만들고 공사 시작, 완공 때 `NodeBuiltEvent`. 공사 중인 방 클릭 → 취소 확인 팝업 → 50% 환불(`BuildCostRefundedEvent`), 노드·라인 제거, 잠긴 칸 복원. 공사 중인 방에서는 확장 후보를 뻗지 않음. 저장·복원에 남은 공사 시간 포함.
+  - `DungeonGraph.RemoveNode`, `DungeonNode.Disconnect`, `DungeonEdgeManager.RemoveEdgesFor` 추가. `EdgeLine.IsAvailableForInstall`(공사 중인 방에 닿은 라인 제외)을 라인 건물 배치 3곳에 적용.
+  - `RunSaveData.SavedNode`에 `constructionRemaining`·`constructionPaidGold`(옛 저장은 0으로 읽힘, 버전 유지).
+  - `WaveManager`: 영업 시작 조건은 완공된 방만 센다. 공사 중뿐이면 "첫 방 공사가 끝나면 영업을 시작할 수 있습니다". `UnitManagementSystem`: 공사 중인 방으로 이동 시 "공사 중인 구역으로는 옮길 수 없습니다".
+  - 테스트: `RoomConstructionTests` 4개. 전체 EditMode 187/187 통과. (처음 만든 `ConstructionTests.cs`는 컴파일 도중 생성돼 임포트가 꼬여 목록에서 빠짐 → 지우고 `RoomConstructionTests.cs`로 다시 만듦)
+  - 플레이 실측: 확장 시 금화 192→184, 공사 중·"공사 중 4초"·막힌 길·배치 불가 → 완공. 일시정지 중 남은 시간 4.00 그대로, 재개 후 완공. 공사 취소 팝업 "낸 비용 8G 중 4G" → 금화 176→180, 그래프에서 제거, 그 자리에 잠긴 칸 복원. 공사 중 저장(남은 2.44초·8G)·복원 → 공사 이어지다 완공. 콘솔 오류 0.
+  - 확인 못 한 것: 공사 중인 방을 실제로 클릭했을 때의 팝업(팝업 함수를 직접 호출), 적 파티의 실제 우회 경로(길찾기는 기존 `IsPassBlocked`를 그대로 씀).
+  - 기획서 구현 현황, wave-economy·test 규칙 갱신.

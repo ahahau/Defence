@@ -1,6 +1,7 @@
 using Code.Buildings;
 using Code.BT;
 using Code.Units;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
@@ -137,9 +138,69 @@ namespace Code.MapCreateSystem
             }
         }
 
-        /// <summary>벽이 설치되었거나 권능으로 막혀 적이 지나갈 수 없는 노드인지.
+        /// <summary>벽이 설치되었거나 권능으로 막혔거나 공사 중이라 적이 지나갈 수 없는 노드인지.
         /// A*와 랜덤 배회, 침입 경로 예측이 모두 이 값을 본다.</summary>
-        public bool IsPassBlocked => IsTemporarilyBlocked || HasWall;
+        public bool IsPassBlocked => IsTemporarilyBlocked || HasWall || IsUnderConstruction;
+
+        private float _constructionRemaining;
+
+        /// <summary>
+        /// 공사 중인가. 공사 중인 방은 없는 길처럼 다룬다 — 아군도 파티도 지나가지 못하고,
+        /// 유닛·건물을 둘 수 없다. 파티는 기존 길찾기(<see cref="IsPassBlocked"/>)로 돌아간다.
+        /// </summary>
+        public bool IsUnderConstruction => _constructionRemaining > 0f;
+
+        /// <summary>완공까지 남은 게임 시간(초).</summary>
+        public float ConstructionRemaining => _constructionRemaining;
+
+        /// <summary>이 공사에 실제로 낸 금화. 취소 환불의 기준이다.</summary>
+        public int ConstructionPaidGold { get; private set; }
+
+        /// <summary>공사가 끝나 방을 쓸 수 있게 되었을 때.</summary>
+        public event Action<Node> ConstructionCompleted;
+
+        /// <summary>공사를 시작한다. 게임 시간으로 흐르므로 일시정지 중에는 멈춘다.</summary>
+        public void BeginConstruction(float seconds, int paidGold)
+        {
+            if (seconds <= 0f)
+                return;
+
+            _constructionRemaining = seconds;
+            ConstructionPaidGold = Mathf.Max(0, paidGold);
+            SetVisualColor(lockedVisualColor);
+            SetUnitCapacityVisible(false);
+            RefreshConstructionLabel();
+        }
+
+        private void TickConstruction()
+        {
+            if (_constructionRemaining <= 0f)
+                return;
+
+            _constructionRemaining = Mathf.Max(0f, _constructionRemaining - Time.deltaTime);
+            if (_constructionRemaining > 0f)
+            {
+                RefreshConstructionLabel();
+                return;
+            }
+
+            ConstructionPaidGold = 0;
+            SetVisualColor(unlockedVisualColor);
+            SetLockedCostVisible(false);
+            SetUnitCapacityVisible(true);
+            RefreshUnitCapacityLabel(true);
+            ConstructionCompleted?.Invoke(this);
+        }
+
+        private void RefreshConstructionLabel()
+        {
+            var label = ResolveLockedCostText();
+            if (label == null)
+                return;
+
+            label.text = $"공사 중 {Mathf.CeilToInt(_constructionRemaining)}초";
+            SetLockedCostVisible(true);
+        }
 
         /// <summary>데이터 ID로 활성 노드를 찾는다(경로 탐색용). 없으면 null.</summary>
         public static Node FindByDataId(string dataId)
@@ -245,7 +306,7 @@ namespace Code.MapCreateSystem
         /// 못 세우면 지킬 방법 자체가 없어진다.
         /// </summary>
         public bool CanAcceptAdditionalUnit =>
-            !IsEnemySpawnNode && !HasInstalledBuilding && AssignedUnitCount < UnitCapacity;
+            !IsEnemySpawnNode && !IsUnderConstruction && !HasInstalledBuilding && AssignedUnitCount < UnitCapacity;
 
         /// <summary>함정이 아닌 건물이 이 방에 있는가. 중앙 슬롯과 격자 칸을 모두 본다.</summary>
         public bool HasInstalledBuilding
@@ -305,7 +366,9 @@ namespace Code.MapCreateSystem
 
         private void Update()
         {
-            RefreshUnitCapacityLabel();
+            TickConstruction();
+            if (!IsUnderConstruction)
+                RefreshUnitCapacityLabel();
         }
 
         public void Initialize(DungeonNode data, float size)

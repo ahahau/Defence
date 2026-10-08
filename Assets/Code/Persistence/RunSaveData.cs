@@ -33,6 +33,11 @@ namespace Code.Persistence
         public int x;
         public int y;
         public int danger;
+
+        // 공사 중이던 방. 옛 저장에는 없어서 0(완공)으로 읽힌다.
+        public float constructionRemaining;
+        public int constructionPaidGold;
+
         public SavedBuilding centralBuilding;
         public List<SavedBuilding> cellBuildings = new();
         public List<SavedUnit> units = new();

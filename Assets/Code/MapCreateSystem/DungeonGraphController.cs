@@ -66,6 +66,12 @@ namespace Code.MapCreateSystem
         [SerializeField]
         private int buildGoldCost = 10;
 
+        [SerializeField, Min(0f), Tooltip("방 하나를 확장하는 공사 시간(게임 시간 초). 공사 중인 방은 막힌 길이다.")]
+        private float roomConstructionSeconds = 4f;
+
+        [SerializeField, Range(0f, 1f), Tooltip("공사를 취소할 때 돌려받는 비율(실제로 낸 금화 기준).")]
+        private float constructionCancelRefundRate = 0.5f;
+
         [SerializeField]
         private GameEventChannelSO artifactEventChannel;
 
@@ -337,10 +343,77 @@ namespace Code.MapCreateSystem
             lastBuiltFrame = Time.frameCount;
             RegisterUnlockedNode(nodeView);
             ConnectAdjacentNodes(node, buildParent);
-            nodeEventChannel?.RaiseEvent(new NodeBuiltEvent(nodeView));
+
+            // 방은 바로 생기지만 공사가 끝나야 쓸 수 있다. 방이 생겼다는 알림(튜토리얼·영업 시작 조건)은 완공 때 낸다.
+            if (roomConstructionSeconds > 0f)
+            {
+                nodeView.ConstructionCompleted += HandleConstructionCompleted;
+                nodeView.BeginConstruction(roomConstructionSeconds, evt.GoldAmount);
+            }
+            else
+            {
+                nodeEventChannel?.RaiseEvent(new NodeBuiltEvent(nodeView));
+            }
 
             if (HasLockedNodesVisible)
                 RefreshLockedNodes();
+        }
+
+        private void HandleConstructionCompleted(Node nodeView)
+        {
+            nodeView.ConstructionCompleted -= HandleConstructionCompleted;
+            nodeEventChannel?.RaiseEvent(new NodeBuiltEvent(nodeView));
+
+            // 공사 중인 방에서는 다음 확장을 뻗지 않았으므로, 완공되면 후보를 다시 깐다.
+            if (HasLockedNodesVisible)
+                RefreshLockedNodes();
+        }
+
+        private void ShowCancelConstructionPopup(Node nodeView)
+        {
+            var refund = ResolveConstructionRefund(nodeView);
+            PopupController.Show(PopupRequest.Confirm(
+                "공사 취소",
+                $"공사를 멈추고 이 방을 되돌립니다.\n낸 비용 {nodeView.ConstructionPaidGold:N0}G 중 {refund:N0}G를 돌려받습니다.",
+                () => CancelConstruction(nodeView),
+                confirmLabel: "공사 취소",
+                cancelLabel: "계속 짓기",
+                destructive: true));
+        }
+
+        private int ResolveConstructionRefund(Node nodeView) =>
+            Mathf.FloorToInt(nodeView.ConstructionPaidGold * constructionCancelRefundRate);
+
+        /// <summary>
+        /// 공사 중인 방을 없애고 잠긴 칸으로 되돌린다. 공사 중인 방에는 유닛·건물을 둘 수 없으므로
+        /// 정리할 것은 그래프·라인·노드 표시뿐이다.
+        /// </summary>
+        private void CancelConstruction(Node nodeView)
+        {
+            if (nodeView == null || !nodeView.IsUnderConstruction || nodeView.Data == null)
+                return;
+
+            var refund = ResolveConstructionRefund(nodeView);
+            nodeView.ConstructionCompleted -= HandleConstructionCompleted;
+
+            // 장부에는 "건설 취소 환불"로 남는다. 노드가 사라지기 전에 알린다.
+            if (refund > 0)
+                costEventChannel?.RaiseEvent(new BuildCostRefundedEvent(nodeView, refund, 0f));
+
+            edgeManager.RemoveEdgesFor(nodeView.Data.Id);
+            graph.RemoveNode(nodeView.Data);
+            unlockedNodeByCollider.Remove(nodeView.ClickCollider);
+            nodeView.gameObject.SetActive(false);
+            Destroy(nodeView.gameObject);
+
+            if (HasLockedNodesVisible)
+                RefreshLockedNodes();
+        }
+
+        private static bool IsUnderConstruction(DungeonNode node)
+        {
+            var view = node != null ? Node.FindByDataId(node.Id) : null;
+            return view != null && view.IsUnderConstruction;
         }
 
         private void HandleBuildCostRejected(BuildCostRejectedEvent evt)
@@ -526,7 +599,8 @@ namespace Code.MapCreateSystem
         {
             parentNode = null;
 
-            if (preferredParent != null && preferredParent.FreePorts > 0)
+            // 공사 중인 방에서는 다음 확장을 뻗지 않는다. 취소되면 붙일 곳이 사라진다.
+            if (preferredParent != null && preferredParent.FreePorts > 0 && !IsUnderConstruction(preferredParent))
                 parentNode = preferredParent;
 
             foreach (var direction in directions)
@@ -535,7 +609,7 @@ namespace Code.MapCreateSystem
                 if (!graph.TryGetNodeAt(adjacentPosition, out var adjacentNode))
                     continue;
 
-                if (adjacentNode.FreePorts <= 0)
+                if (adjacentNode.FreePorts <= 0 || IsUnderConstruction(adjacentNode))
                     continue;
 
                 if (parentNode == null || adjacentNode.FreePorts > parentNode.FreePorts)
@@ -593,6 +667,14 @@ namespace Code.MapCreateSystem
 
                 if (!TutorialInputGate.AllowsUnlockedNode(unlockedNode))
                     return;
+
+                // 공사 중인 방은 관리할 것이 없다. 누르면 취소할지만 묻는다.
+                if (unlockedNode.IsUnderConstruction)
+                {
+                    if (IsWithinClickArea(clickedCollider, worldPosition))
+                        ShowCancelConstructionPopup(unlockedNode);
+                    return;
+                }
 
                 var unitGrid = unlockedNode.TrapGrid;
                 if (unitGrid != null
@@ -822,6 +904,8 @@ namespace Code.MapCreateSystem
                     x = node.GridPosition.x,
                     y = node.GridPosition.y,
                     danger = node.DangerLevel,
+                    constructionRemaining = node.ConstructionRemaining,
+                    constructionPaidGold = node.ConstructionPaidGold,
                     centralBuilding = CaptureBuilding(node.AssignedBuilding)
                 };
 
@@ -898,6 +982,11 @@ namespace Code.MapCreateSystem
                 var view = nodeManager.CreateNode(data);
                 view.RestoreDanger(saved.danger);
                 RegisterUnlockedNode(view);
+                if (saved.constructionRemaining > 0f)
+                {
+                    view.ConstructionCompleted += HandleConstructionCompleted;
+                    view.BeginConstruction(saved.constructionRemaining, saved.constructionPaidGold);
+                }
                 views.Add(position, view);
             }
 

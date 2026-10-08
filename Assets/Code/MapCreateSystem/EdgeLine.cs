@@ -22,6 +22,19 @@ namespace Code.MapCreateSystem
         public Building InstalledBuilding { get; private set; }
         public bool HasBuilding => InstalledBuilding != null;
 
+        /// <summary>
+        /// 라인 건물을 새로 놓을 수 있는가. 비어 있어도 공사 중인 방에 닿은 라인은 안 된다 —
+        /// 공사를 취소하면 라인째 사라지기 때문이다.
+        /// </summary>
+        public bool IsAvailableForInstall =>
+            !HasBuilding && !IsTouchingConstruction(FromId) && !IsTouchingConstruction(ToId);
+
+        private static bool IsTouchingConstruction(string nodeId)
+        {
+            var node = Node.FindByDataId(nodeId);
+            return node != null && node.IsUnderConstruction;
+        }
+
         public void Initialize(string objectName, Vector3 start, Vector3 end)
         {
             Initialize(objectName, start, end, null, null);

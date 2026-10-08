@@ -307,13 +307,13 @@ namespace Code.Manager
             var hasInteriorRoom = false;
             foreach (var node in Node.ActiveNodes)
             {
-                if (node == null || node == entryNode || node.Data == null)
+                if (node == null || node == entryNode || node.Data == null || node.IsUnderConstruction)
                     continue;
                 hasInteriorRoom = true;
                 break;
             }
             if (!hasInteriorRoom)
-                return "방을 하나 확장하세요";
+                return HasRoomUnderConstruction() ? "첫 방 공사가 끝나면 영업을 시작할 수 있습니다" : "방을 하나 확장하세요";
 
             if (waveConfig == null)
                 return "오늘 방문객 정보를 불러오는 중";
@@ -896,6 +896,17 @@ namespace Code.Manager
                 string.IsNullOrWhiteSpace(_currentBoss.phaseSubtitle)
                     ? "호위가 무너지자 공격이 거세지고 방어의 빈틈이 드러났다"
                     : _currentBoss.phaseSubtitle);
+        }
+
+        private static bool HasRoomUnderConstruction()
+        {
+            foreach (var node in Node.ActiveNodes)
+            {
+                if (node != null && node.IsUnderConstruction)
+                    return true;
+            }
+
+            return false;
         }
 
         /// <summary>엘리트·보스가 던전에 남아 있는 동안 플레이어 일시정지를 잠근다.</summary>

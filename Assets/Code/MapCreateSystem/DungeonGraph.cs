@@ -33,6 +33,28 @@ namespace Code.MapCreateSystem
             return connectedA && connectedB;
         }
 
+        /// <summary>
+        /// 노드를 그래프에서 뺀다. 이웃의 연결도 함께 끊는다. 공사 취소처럼 아직 아무도
+        /// 쓰지 않은 방을 되돌릴 때만 쓴다 — 유닛·건물이 있는 방을 지우는 경로가 아니다.
+        /// </summary>
+        public bool RemoveNode(DungeonNode node)
+        {
+            if (node == null || !nodesById.ContainsKey(node.Id))
+                return false;
+
+            foreach (var neighborId in node.ConnectedNodeIds)
+            {
+                if (nodesById.TryGetValue(neighborId, out var neighbor))
+                    neighbor.Disconnect(node.Id);
+            }
+
+            node.ConnectedNodeIds.Clear();
+            nodes.Remove(node);
+            nodesById.Remove(node.Id);
+            nodesByPosition.Remove(node.GridPosition);
+            return true;
+        }
+
         public DungeonNode GetNode(string id)
         {
             nodesById.TryGetValue(id, out var node);

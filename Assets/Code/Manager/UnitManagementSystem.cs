@@ -83,6 +83,11 @@ namespace Code.Manager
                 reason = "이미 이 구역에 배치되어 있습니다";
                 return false;
             }
+            if (targetNode.IsUnderConstruction)
+            {
+                reason = "공사 중인 구역으로는 옮길 수 없습니다";
+                return false;
+            }
             if (!targetNode.CanAcceptAdditionalUnit || !targetNode.TryGetFirstFreeUnitSlot(out _, out _))
             {
                 reason = "이동할 구역의 정원이 가득 찼습니다";

@@ -54,7 +54,7 @@ namespace Code.MapCreateSystem
         {
             foreach (var edge in EdgeLine.ActiveEdges)
             {
-                if (edge != null && !edge.HasBuilding)
+                if (edge != null && edge.IsAvailableForInstall)
                     return true;
             }
 
@@ -157,7 +157,7 @@ namespace Code.MapCreateSystem
 
             foreach (var edge in EdgeLine.ActiveEdges)
             {
-                if (edge == null || edge.HasBuilding)
+                if (edge == null || !edge.IsAvailableForInstall)
                     continue;
 
                 var distance = edge.DistanceTo(worldPosition);
@@ -207,7 +207,7 @@ namespace Code.MapCreateSystem
         {
             foreach (var edge in EdgeLine.ActiveEdges)
             {
-                if (edge == null || edge.HasBuilding)
+                if (edge == null || !edge.IsAvailableForInstall)
                     continue;
 
                 var marker = CreateSquare("EdgeSlot", SlotColor, MarkerSortingOrder);
