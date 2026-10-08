@@ -313,20 +313,52 @@ namespace Code.Events
         public int Delta { get; }
     }
 
-    /// <summary>청산일에 빚을 다 갚지 못했을 때. 게임오버로 이어진다.</summary>
+    /// <summary>청산일에 빚을 다 갚지 못했거나 부채 한도를 넘어 파산했을 때. 게임오버로 이어진다.</summary>
     public class BankruptcyEvent : GameEvent
     {
-        public BankruptcyEvent(int owed, int gold)
+        public BankruptcyEvent(int owed, int gold, string reason = null)
         {
             Owed = owed;
             Gold = gold;
+            Reason = reason;
         }
 
-        /// <summary>내지 못해 파산을 부른 최소 상환액.</summary>
+        /// <summary>내지 못해 파산을 부른 금액(최소 상환액 또는 한도 초과분).</summary>
         public int Owed { get; }
 
-        /// <summary>청산을 시도한 시점에 가지고 있던 금화.</summary>
+        /// <summary>파산 시점에 가지고 있던 금화.</summary>
         public int Gold { get; }
+
+        /// <summary>패배 화면에 적을 이유. 비어 있으면 청산일 미납으로 본다.</summary>
+        public string Reason { get; }
+    }
+
+    /// <summary>영업 종료 때 부채 한도와 신용 경고를 판정했을 때.</summary>
+    public class CreditStatusChangedEvent : GameEvent
+    {
+        public CreditStatusChangedEvent(
+            global::Code.Manager.Economy.CreditDayEndOutcome outcome,
+            int emergencyRepaid,
+            int warnings,
+            int currentDebt,
+            int creditLimit)
+        {
+            Outcome = outcome;
+            EmergencyRepaid = emergencyRepaid;
+            Warnings = warnings;
+            CurrentDebt = currentDebt;
+            CreditLimit = creditLimit;
+        }
+
+        public global::Code.Manager.Economy.CreditDayEndOutcome Outcome { get; }
+
+        /// <summary>한도 초과분을 금화로 메운 액수.</summary>
+        public int EmergencyRepaid { get; }
+
+        /// <summary>판정 뒤의 신용 경고 단계(0~5).</summary>
+        public int Warnings { get; }
+        public int CurrentDebt { get; }
+        public int CreditLimit { get; }
     }
 
     /// <summary>정산이 끝나 순액이 실제로 반영됐을 때. 정산 패널 표시용.</summary>

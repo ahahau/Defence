@@ -42,6 +42,10 @@ namespace Code.Manager
         private readonly List<WeeklyLoanProduct> _loanProductOptions = new();
         private int _lastLoanSettlementDay = -1;
         private string _activeLoanProductId;
+        private int _creditWarnings;
+
+        /// <summary>오늘 영업 중 한 번이라도 빚이 한도를 넘었는가. 영업 종료 판정 뒤 지운다.</summary>
+        private bool _exceededLimitToday;
 
         public int CurrentGold => _ledger.Gold;
         public float CurrentBuildDiscountRate => nextBuildDiscountRate;
@@ -66,6 +70,59 @@ namespace Code.Manager
 
         /// <summary>지금 상품에서 더 빌릴 수 있는 금액.</summary>
         public int LoanHeadroom => Mathf.Max(0, ResolveActiveLoanProduct().CreditLimit - CurrentDebt);
+
+        /// <summary>
+        /// 지금 상품의 원래 부채 한도. 빚이 넘쳐도 늘어나지 않는다 — 대출 화면용
+        /// <see cref="ActiveLoanProduct"/>는 이미 있는 빚을 지우지 않으려고 한도를 빚만큼 올려 둔다.
+        /// </summary>
+        public int CreditLimit => ResolveBaseCreditLimit();
+
+        /// <summary>쌓인 신용 경고(0~5). 다음 주 이자와 최소 상환을 키운다.</summary>
+        public int CreditWarnings => _creditWarnings;
+
+        /// <summary>지금 빚이 한도를 넘었는가. 영업 종료까지 내려오지 않으면 파산한다.</summary>
+        public bool IsOverCreditLimit => CurrentDebt > CreditLimit;
+
+        /// <summary>
+        /// 영업 종료 정산 맨 끝에 부른다. 한도를 넘은 만큼 금화로 긴급 상환하고, 그래도 넘으면 파산,
+        /// 오늘 한 번이라도 넘었으면 신용 경고를 한 단계 올린다(5단계였으면 파산).
+        /// </summary>
+        /// <param name="repaid">긴급 상환으로 금화에서 빚으로 옮긴 액수.</param>
+        public CreditDayEndOutcome ResolveDayEndCredit(out int repaid)
+        {
+            var limit = CreditLimit;
+            var exceeded = _exceededLimitToday || _ledger.Debt > limit;
+
+            repaid = CreditWarningRules.EmergencyRepayment(_ledger.Debt, limit, _ledger.Gold);
+            if (repaid > 0)
+            {
+                _ledger.TrySpend(repaid);
+                _ledger.SetDebt(_ledger.Debt - repaid);
+                RaiseGoldChanged();
+                RunSummarySystem.Current?.RecordDebt(CurrentDebt);
+                costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, -repaid));
+            }
+
+            var warningsBefore = _creditWarnings;
+            var outcome = CreditWarningRules.EvaluateDayEnd(_ledger.Debt, limit, _creditWarnings, exceeded);
+            _creditWarnings = CreditWarningRules.NextWarnings(_creditWarnings, outcome, _ledger.Debt);
+            _exceededLimitToday = false;
+
+            costEventChannel?.RaiseEvent(new CreditStatusChangedEvent(outcome, repaid, _creditWarnings, CurrentDebt, limit));
+            if (_creditWarnings != warningsBefore)
+                costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, 0));
+            StateChanged?.Invoke();
+
+            if (outcome == CreditDayEndOutcome.Bankrupt)
+            {
+                var reason = _ledger.Debt > limit
+                    ? $"영업이 끝날 때까지 빚 {GoldText.Amount(CurrentDebt)}이 한도 {GoldText.Amount(limit)}를 넘어 파산했습니다"
+                    : $"신용 경고 {CreditWarningRules.MaxWarnings}단계에서 또 한도를 넘어 파산했습니다";
+                costEventChannel?.RaiseEvent(new BankruptcyEvent(Mathf.Max(0, CurrentDebt - limit), CurrentGold, reason));
+            }
+
+            return outcome;
+        }
 
         /// <summary>
         /// 오늘 대출 상품을 갈아탈 수 있는가. 상품 변경은 매주 청산일에 한 번 열린다.
@@ -136,6 +193,7 @@ namespace Code.Manager
             var borrowed = _ledger.ChargeOrBorrow(owed);
             if (borrowed > 0)
             {
+                NoteCreditLimit();
                 costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, borrowed));
                 RunSummarySystem.Current?.RecordDebt(CurrentDebt);
             }
@@ -248,7 +306,10 @@ namespace Code.Manager
             var paidFromGold = settlement.PaidFromGold;
             var borrowed = settlement.Borrowed;
             if (borrowed > 0)
+            {
+                NoteCreditLimit();
                 costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, borrowed));
+            }
 
             RaiseGoldChanged();
             RunSummarySystem.Current?.RecordDebt(CurrentDebt);
@@ -279,6 +340,9 @@ namespace Code.Manager
 
             loan.TryApplyWeeklyPayment(quote.MinimumPayment);
             _ledger.SetDebt(loan.Principal);
+            // 빚을 다 갚아야 신용 경고가 처음으로 돌아간다.
+            if (_ledger.Debt <= 0)
+                _creditWarnings = 0;
             _lastLoanSettlementDay = settlementDay;
             RaiseGoldChanged();
             RunSummarySystem.Current?.RecordDebt(CurrentDebt);
@@ -333,6 +397,24 @@ namespace Code.Manager
 
         private int ResolveSettlementDay() => DayManager.Current != null ? DayManager.Current.CurrentDay : -1;
 
+        /// <summary>빚이 늘어난 직후 부른다. 한도를 넘었으면 오늘 넘었다는 사실을 남긴다.</summary>
+        private void NoteCreditLimit()
+        {
+            if (_ledger.Debt > CreditLimit)
+                _exceededLimitToday = true;
+        }
+
+        private int ResolveBaseCreditLimit()
+        {
+            if (TryFindConfiguredLoanProduct(_activeLoanProductId, out var product))
+                return product.CreditLimit;
+
+            if (TryFindConfiguredLoanProduct(defaultLoanProductId, out product))
+                return product.CreditLimit;
+
+            return Mathf.Max(0, weeklyLoanCreditLimit);
+        }
+
         private WeeklyLoanLedger CreateLoanLedger()
         {
             var product = ResolveActiveLoanProduct();
@@ -349,15 +431,22 @@ namespace Code.Manager
             if (TryFindConfiguredLoanProduct(defaultLoanProductId, out product))
                 return CreateDebtSafeProduct(product);
 
-            return new WeeklyLoanProduct(
+            return CreditWarningRules.ApplyWarnings(new WeeklyLoanProduct(
                 "default",
                 Mathf.Max(weeklyLoanCreditLimit, _ledger.Debt),
                 weeklyDebtInterest,
                 weeklyMinimumPrincipalRate,
-                "기본 대출");
+                "기본 대출"), _creditWarnings);
         }
 
-        private WeeklyLoanProduct CreateDebtSafeProduct(WeeklyLoanProduct product)
+        /// <summary>
+        /// 이미 있는 빚을 지우지 않도록 한도를 빚만큼 올리고, 신용 경고만큼 조건을 무겁게 한다.
+        /// 경고는 어느 기관에서나 같이 따라온다.
+        /// </summary>
+        private WeeklyLoanProduct CreateDebtSafeProduct(WeeklyLoanProduct product) =>
+            CreditWarningRules.ApplyWarnings(RaiseLimitToDebt(product), _creditWarnings);
+
+        private WeeklyLoanProduct RaiseLimitToDebt(WeeklyLoanProduct product)
         {
             if (_ledger.Debt <= product.CreditLimit)
                 return product;
@@ -525,7 +614,15 @@ namespace Code.Manager
 
         public void RestoreCheckpoint(int gold, int debt, float buildDiscountRate, string activeLoanProductId)
         {
+            RestoreCheckpoint(gold, debt, buildDiscountRate, activeLoanProductId, 0);
+        }
+
+        public void RestoreCheckpoint(
+            int gold, int debt, float buildDiscountRate, string activeLoanProductId, int creditWarnings)
+        {
             _ledger.Reset(gold, debt);
+            _creditWarnings = debt > 0 ? CreditWarningRules.Clamp(creditWarnings) : 0;
+            _exceededLimitToday = false;
             nextBuildDiscountRate = Mathf.Clamp(buildDiscountRate, 0f, 0.9f);
             _isSettlementDeferred = false;
             _lastLoanSettlementDay = -1;

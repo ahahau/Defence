@@ -46,7 +46,9 @@ namespace Code.Manager
 
         private void HandleBankruptcy(BankruptcyEvent evt)
         {
-            TriggerGameOver(null, $"청산일에 {evt.Owed}G를 내야 했지만 {evt.Gold}G뿐이라 파산했습니다");
+            TriggerGameOver(null, string.IsNullOrEmpty(evt.Reason)
+                ? $"청산일에 {evt.Owed}G를 내야 했지만 {evt.Gold}G뿐이라 파산했습니다"
+                : evt.Reason);
         }
 
         private void TriggerGameOver(MainUnit mainUnit, string reason)
@@ -55,6 +57,7 @@ namespace Code.Manager
                 return;
 
             IsGameOver = true;
+            ResolveDependencies();
             waveManager?.StopForRunEnd();
             gameStateEventChannel.RaiseEvent(new GameOverEvent(mainUnit));
 
@@ -71,11 +74,20 @@ namespace Code.Manager
             }
         }
 
+        /// <summary>
+        /// 씬에서 연결이 빠져 있어도 패배 화면이 뜨게 한다. 연결이 비면 시간만 멈추고 화면이 없어
+        /// 파산·메인 유닛 사망이 그냥 멈춘 게임처럼 보였다. 게임오버 순간에만 찾으므로 비용은 한 번이다.
+        /// </summary>
         private void ResolveDependencies()
         {
-            bossWavePresenter ??= waveManager != null
-                ? waveManager.BossPresenter
-                : null;
+            if (waveManager == null)
+                waveManager = WaveManager.Current;
+            if (bossWavePresenter == null && waveManager != null)
+                bossWavePresenter = waveManager.BossPresenter;
+            if (bossWavePresenter == null)
+                bossWavePresenter = FindAnyObjectByType<BossWavePresenter>();
+            if (gameSpeedController == null)
+                gameSpeedController = GameSpeedController.Current;
         }
     }
 }

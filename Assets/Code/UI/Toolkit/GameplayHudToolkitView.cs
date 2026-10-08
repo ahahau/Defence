@@ -337,7 +337,11 @@ namespace Code.UI.Toolkit
         private void RefreshEconomy()
         {
             if (_goldLabel != null) _goldLabel.text = GoldText.Amount(_costManager?.CurrentGold ?? 0);
-            if (_debtLabel != null) _debtLabel.text = BuildDebtText();
+            if (_debtLabel != null)
+            {
+                _debtLabel.text = BuildDebtText();
+                _debtLabel.tooltip = BuildCreditTooltip();
+            }
             if (_dayLabel != null)
             {
                 var day = _dayManager?.CurrentDay ?? 0;
@@ -408,8 +412,32 @@ namespace Code.UI.Toolkit
         private string BuildDebtText()
         {
             if (_costManager == null || _costManager.CurrentDebt <= 0) return "빚 없음";
+            // 한도를 넘으면 영업이 끝날 때 파산이 걸려 있다. 다른 정보보다 먼저 보여 준다.
+            if (_costManager.IsOverCreditLimit)
+                return $"한도 초과 {GoldText.Amount(_costManager.CurrentDebt - _costManager.CreditLimit)}";
+
             var daysLeft = DayManager.DaysUntilSettlementFrom(_dayManager?.CurrentDay ?? 0);
-            return $"{GoldText.Amount(_costManager.CurrentDebt)} · {daysLeft}일 뒤 최소 {GoldText.Amount(_costManager.WeeklyDue)}";
+            var text = $"{GoldText.Amount(_costManager.CurrentDebt)} · {daysLeft}일 뒤 최소 {GoldText.Amount(_costManager.WeeklyDue)}";
+            return _costManager.CreditWarnings > 0
+                ? $"{text} · 경고 {_costManager.CreditWarnings}"
+                : text;
+        }
+
+        /// <summary>부채 칸 툴팁. 한도·경고 단계와 그 의미를 줄여 쓰지 않고 적는다.</summary>
+        private string BuildCreditTooltip()
+        {
+            if (_costManager == null)
+                return string.Empty;
+
+            var max = Code.Manager.Economy.CreditWarningRules.MaxWarnings;
+            var interest = Mathf.RoundToInt(Code.Manager.Economy.CreditWarningRules.InterestPerWarning * 100f);
+            var minimum = Mathf.RoundToInt(Code.Manager.Economy.CreditWarningRules.MinimumPrincipalPerWarning * 100f);
+            var limit = $"빚 {GoldText.Amount(_costManager.CurrentDebt)} / 한도 {GoldText.Amount(_costManager.CreditLimit)}";
+            var warnings = $"신용 경고 {_costManager.CreditWarnings}/{max} (단계마다 이자 +{interest}%p, 최소 상환 +{minimum}%p · 빚을 다 갚으면 초기화)";
+            var rule = _costManager.IsOverCreditLimit
+                ? "한도를 넘었습니다. 영업이 끝날 때 금화로 초과분을 긴급 상환하고, 그래도 넘으면 파산합니다."
+                : $"한도를 넘었다가 영업 종료 전에 돌아오면 경고가 쌓이고, 경고 {max}단계에서 또 넘으면 파산합니다.";
+            return $"{limit}\n{warnings}\n{rule}";
         }
 
         private void RefreshWorldState()

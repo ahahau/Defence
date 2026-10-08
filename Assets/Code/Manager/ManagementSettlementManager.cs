@@ -4,6 +4,7 @@ using System.Text;
 using Code.Core;
 using Code.Events;
 using Code.Manager;
+using Code.Manager.Economy;
 using Code.MapCreateSystem;
 using Code.Progression;
 using Code.UI;
@@ -61,6 +62,13 @@ namespace Code.Manager
         /// <summary>직전 청산일에 내야 했던 금액과 실제로 낸 금액. 둘이 다르면 갚지 못한 것이다.</summary>
         private int _weeklySettlementOwed;
         private int _weeklySettlementPaid;
+
+        /// <summary>오늘 청산일 미납으로 이미 파산했는가. 부채 한도 판정이 두 번 알리지 않게 한다.</summary>
+        private bool _weeklyBankrupt;
+
+        /// <summary>오늘 영업 종료의 부채 한도 판정과 긴급 상환액. 정산 메모가 읽는다.</summary>
+        private CreditDayEndOutcome _lastCreditOutcome;
+        private int _lastEmergencyRepaid;
 
         /// <summary>정산표가 열려 있는지. 어느 화면이 그리고 있든 대화·튜토리얼은 이 값만 본다.</summary>
         public bool IsPanelOpen => _panelOpen || (panelRoot != null && panelRoot.activeInHierarchy);
@@ -155,6 +163,7 @@ namespace Code.Manager
             ApplyBattleFatigue();
             ApplyNetToGold();
             SettleWeekIfDue();
+            ResolveCreditLimit();
 
             if (!HasSettlementEntries() || !HasPanelReferences())
             {
@@ -198,6 +207,10 @@ namespace Code.Manager
         /// </summary>
         private void SettleWeekIfDue()
         {
+            // 지난 청산의 값이 남으면 평일에도 "빚을 청산했습니다"가 뜨고 빚 안내가 가려진다.
+            _weeklyBankrupt = false;
+            _weeklySettlementPaid = 0;
+            _weeklySettlementOwed = 0;
             if (!DayManager.IsSettlementDay(currentDay))
                 return;
 
@@ -212,6 +225,26 @@ namespace Code.Manager
             // 갚지 못하면 CostManager가 파산을 알린다. 보고서에는 최소 상환액을 남긴다.
             _weeklySettlementPaid = costManager.SettleWeek() ? owed : 0;
             _weeklySettlementOwed = owed;
+            _weeklyBankrupt = _weeklySettlementPaid <= 0;
+        }
+
+        /// <summary>
+        /// 청산까지 끝난 뒤 부채 한도를 본다. 청산일 상환으로 한도 아래로 내려왔으면 그것까지 쳐준다.
+        /// 청산일 미납으로 이미 파산했으면 두 번 알리지 않는다.
+        /// </summary>
+        private void ResolveCreditLimit()
+        {
+            _lastCreditOutcome = CreditDayEndOutcome.WithinLimit;
+            _lastEmergencyRepaid = 0;
+
+            var costManager = CostManager.Current;
+            if (costManager == null)
+                return;
+
+            if (_weeklyBankrupt)
+                return;
+
+            _lastCreditOutcome = costManager.ResolveDayEndCredit(out _lastEmergencyRepaid);
         }
 
         /// <summary>
@@ -782,6 +815,8 @@ namespace Code.Manager
         /// </summary>
         private void AppendDebtNote(List<SettlementNote> notes)
         {
+            AppendCreditNote(notes);
+
             if (_weeklySettlementPaid > 0)
             {
                 notes.Add(new SettlementNote(
@@ -800,6 +835,46 @@ namespace Code.Manager
                     ? $"빚 {GoldText.Amount(costManager.CurrentDebt)}  ·  {daysLeft}일 뒤 최소 {GoldText.Amount(due)}를 내야 합니다"
                     : $"빚 {GoldText.Amount(costManager.CurrentDebt)}  ·  오늘 최소 {GoldText.Amount(due)}를 내야 합니다",
                 SettlementNoteTone.Danger));
+        }
+
+        /// <summary>
+        /// 부채 한도 판정 결과. 한도를 넘었다는 사실과 경고가 다음 주에 얼마나 무거워지는지를 같이 적는다.
+        /// </summary>
+        private void AppendCreditNote(List<SettlementNote> notes)
+        {
+            var costManager = CostManager.Current;
+            if (costManager == null)
+                return;
+
+            if (_lastEmergencyRepaid > 0)
+                notes.Add(new SettlementNote(
+                    $"한도를 넘은 빚 {GoldText.Amount(_lastEmergencyRepaid)}를 금화로 긴급 상환했습니다",
+                    SettlementNoteTone.Caution));
+
+            var warnings = costManager.CreditWarnings;
+            if (_lastCreditOutcome == CreditDayEndOutcome.Bankrupt)
+            {
+                notes.Add(new SettlementNote("부채 한도를 지키지 못해 파산했습니다", SettlementNoteTone.Danger));
+                return;
+            }
+
+            if (_lastCreditOutcome == CreditDayEndOutcome.Warned)
+            {
+                var interest = Mathf.RoundToInt(CreditWarningRules.InterestPerWarning * warnings * 100f);
+                var minimum = Mathf.RoundToInt(CreditWarningRules.MinimumPrincipalPerWarning * warnings * 100f);
+                var last = warnings >= CreditWarningRules.MaxWarnings
+                    ? "  ·  한 번 더 넘으면 파산합니다"
+                    : string.Empty;
+                notes.Add(new SettlementNote(
+                    $"신용 경고 {warnings}/{CreditWarningRules.MaxWarnings}  ·  이자 +{interest}%p, 최소 상환 +{minimum}%p{last}",
+                    SettlementNoteTone.Danger));
+            }
+            else if (warnings > 0)
+            {
+                notes.Add(new SettlementNote(
+                    $"신용 경고 {warnings}/{CreditWarningRules.MaxWarnings}  ·  빚을 다 갚으면 지워집니다",
+                    SettlementNoteTone.Caution));
+            }
         }
 
         private static string BuildLedgerText(string title, IReadOnlyList<SettlementLedgerLine> lines, int total, char sign)

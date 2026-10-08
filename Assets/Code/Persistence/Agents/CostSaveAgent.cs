@@ -11,6 +11,9 @@ namespace Code.Persistence.Agents
         public int debt;
         public float buildDiscountRate;
         public string activeLoanProductId;
+
+        /// <summary>신용 경고 단계. 옛 저장은 0으로 읽힌다.</summary>
+        public int creditWarnings;
     }
 
     /// <summary>운영 자금과 부채.</summary>
@@ -31,7 +34,8 @@ namespace Code.Persistence.Agents
                 gold = cost.CurrentGold,
                 debt = cost.CurrentDebt,
                 buildDiscountRate = cost.CurrentBuildDiscountRate,
-                activeLoanProductId = cost.ActiveLoanProductId
+                activeLoanProductId = cost.ActiveLoanProductId,
+                creditWarnings = cost.CreditWarnings
             });
         }
 
@@ -45,7 +49,8 @@ namespace Code.Persistence.Agents
                 state.gold,
                 state.debt,
                 state.buildDiscountRate,
-                state.activeLoanProductId);
+                state.activeLoanProductId,
+                state.creditWarnings);
         }
     }
 }
