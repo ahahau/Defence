@@ -18,7 +18,13 @@ namespace Code.Events
         Policy,
         Blacksmith,
         WaveObjective,
-        Bounty
+        Bounty,
+
+        /// <summary>쓰러진 모험가가 떨어뜨린 파티 공동 자금.</summary>
+        PartyDrop,
+
+        /// <summary>전멸한 파티가 남긴 공동 자금 전부.</summary>
+        PartyWipe
     }
 
     public class BuildCostRequestedEvent : GameEvent

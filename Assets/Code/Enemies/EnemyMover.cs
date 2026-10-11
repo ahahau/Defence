@@ -472,6 +472,9 @@ namespace Code.Enemies
             return null;
         }
 
+        /// <summary>같은 파티를 묶는 번호. 방 점유와 파티 공동 자금이 같은 번호를 쓴다.</summary>
+        public int PartyId => PartyOccupancyId;
+
         private int PartyOccupancyId
         {
             get

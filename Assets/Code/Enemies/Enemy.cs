@@ -112,7 +112,19 @@ namespace Code.Enemies
         public string VisitPurposeLabel => AdventurerVisitRules.GetLabel(VisitPurpose);
         public string VisitPurposeDescription => AdventurerVisitRules.GetDescription(VisitPurpose);
         public int InitialBudget { get; private set; }
+
+        /// <summary>이 모험가가 아직 더 쓸 마음이 있는 금액. 실제 돈은 파티 공동 자금에서 나간다.</summary>
         public int RemainingBudget { get; private set; }
+
+        /// <summary>파티 공동 자금이 시작보다 줄었는지 늘었는지. 정확한 금액은 보여 주지 않는다.</summary>
+        public PartyFundTier PartyFundTier => PartyFundLedger.Active.TierOf(PartyId);
+
+        private int PartyId => mover != null ? mover.PartyId : 0;
+
+        private bool _joinedPartyFund;
+
+        /// <summary>죽음·탈출로 공동 자금 몫을 이미 정리했는가. 두 번 떨어뜨리지 않는다.</summary>
+        private bool _partyFundSettled;
         public bool HasFulfilledPurpose { get; private set; }
         public AdventurerTrait Trait => data != null ? data.Trait : AdventurerTrait.None;
         public string TraitLabel => AdventurerTraitRules.GetLabel(Trait);
@@ -244,6 +256,13 @@ namespace Code.Enemies
             mover.ConfigureBlockedNodeWaitTurns(
                 AdventurerTraitRules.ResolveBlockedNodeWaitTurns(Trait, VisitPurpose, InitialBudget));
             mover.Initialize(startNode);
+
+            // 예산을 파티 공동 지갑에 넣는다. 시설 결제·약탈·사망·탈출이 모두 이 지갑을 본다.
+            if (!_joinedPartyFund)
+            {
+                _joinedPartyFund = true;
+                PartyFundLedger.Active.Join(PartyId, InitialBudget);
+            }
 
             _isInitialized = true;
             _idleTimer = idleDuration;
@@ -424,6 +443,8 @@ namespace Code.Enemies
                     return false;
 
                 _costEventChannel?.RaiseEvent(new TreasuryRobbedEvent(stolenGold));
+                // 훔친 돈은 파티가 들고 다닌다. 잡으면 되찾고 놓치면 잃는다.
+                PartyFundLedger.Active.AddLoot(PartyId, stolenGold);
                 FulfillPurpose();
                 BeginReturn();
                 return true;
@@ -433,6 +454,7 @@ namespace Code.Enemies
                 return false;
 
             _costEventChannel.RaiseEvent(new GoldLostEvent(_treasuryGoldLoss, GoldChangeSource.TreasuryLoot));
+            PartyFundLedger.Active.AddLoot(PartyId, _treasuryGoldLoss);
             FulfillPurpose();
             BeginReturn();
             return true;
@@ -902,6 +924,8 @@ namespace Code.Enemies
                         ? ResolveStoreSpending(payable)
                         : ResolveFacilitySpending(payable);
                     paid = AdventurerVisitRules.ClampPayment(paid, RemainingBudget);
+                    // 쓸 마음이 있어도 지갑이 비면 못 낸다.
+                    paid = PartyFundLedger.Active.Spend(PartyId, paid);
                     if (paid > 0)
                     {
                         facility.ReportDwellIncome(paid);
@@ -1056,6 +1080,13 @@ namespace Code.Enemies
             if (this == null)
                 return;
 
+            // 살아서 나간다. 들고 있던 몫은 던전 밖으로 사라진다.
+            if (_joinedPartyFund && !_partyFundSettled)
+            {
+                _partyFundSettled = true;
+                PartyFundLedger.Active.MemberEscaped(PartyId);
+            }
+
             var target = enemyRenderer != null ? enemyRenderer.transform : transform;
             _returnTween = target.DOScale(Vector3.zero, returnAnimationDuration)
                 .SetEase(Ease.InBack)
@@ -1151,11 +1182,32 @@ namespace Code.Enemies
             _battleAgent?.Battlefield?.Leave(_battleAgent);
             mover?.StopMoving();
             EnterState(CombatState.Dead);
+            DropPartyFund();
             DeathStarted?.Invoke(this);
             PlayDeathDissolve();
 
             // 새 BattleAgent BT는 TickDead를 부르지 않으므로 여기서 직접 파괴를 예약한다(시체 제거).
             Destroy(gameObject, deadDuration);
+        }
+
+        /// <summary>
+        /// 쓰러지며 공동 자금을 떨어뜨린다. 마지막 한 명이면 파티가 남긴 돈을 전부 줍는다.
+        /// 금화는 다른 수입처럼 정산 장부로 간다.
+        /// </summary>
+        private void DropPartyFund()
+        {
+            if (!_joinedPartyFund || _partyFundSettled)
+                return;
+
+            _partyFundSettled = true;
+            var gold = PartyFundLedger.Active.MemberDied(PartyId, out var wiped);
+            if (gold <= 0)
+                return;
+
+            _costEventChannel?.RaiseEvent(new GoldEarnedEvent(
+                gold, wiped ? GoldChangeSource.PartyWipe : GoldChangeSource.PartyDrop));
+            combatant?.ShowCounterplayFeedback(
+                wiped ? "파티 자금 회수" : "낙전", gold, true, new Color(1f, 0.82f, 0.35f));
         }
 
         /// <summary>사망 연출 — 즉시 제거(팝 아웃) 대신 deadDuration 동안 가라앉으며 페이드 아웃.</summary>

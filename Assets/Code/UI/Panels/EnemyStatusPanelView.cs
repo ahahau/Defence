@@ -157,7 +157,9 @@ namespace Code.UI
                 : "ATK -  SPD -";
 
             var retreatPercent = Mathf.RoundToInt(selectedEnemy.RetreatChance * 100f);
+            // 예산은 이 모험가가 쓸 마음이 있는 금액, 파티 자금은 실제 지갑이다. 지갑은 단계로만 보여 준다.
             return $"{combatText}\n목적 {selectedEnemy.VisitPurposeLabel}  ·  예산 {selectedEnemy.RemainingBudget}/{selectedEnemy.InitialBudget}G"
+                   + $"  ·  파티 자금 {Code.Enemies.PartyFundLedger.TierLabel(selectedEnemy.PartyFundTier)}"
                    + $"\n경계 {selectedEnemy.Fear}  ·  탐욕 {selectedEnemy.Greed}  ·  철수 {retreatPercent}%";
         }
 

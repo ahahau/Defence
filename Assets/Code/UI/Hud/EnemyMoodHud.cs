@@ -117,7 +117,8 @@ namespace Code.UI
             var traitText = string.IsNullOrWhiteSpace(_enemy.TraitLabel)
                 ? string.Empty
                 : $"[{_enemy.TraitLabel}] ";
-            var visitText = $"{_enemy.VisitPurposeLabel} {_enemy.RemainingBudget}G";
+            // 파티 자금은 정확한 금액 대신 단계로만 보여 준다(기획서).
+            var visitText = $"{_enemy.VisitPurposeLabel} · 자금 {PartyFundLedger.TierLabel(_enemy.PartyFundTier)}";
             _label.text = $"{traitText}{visitText}  ·  경 {_enemy.Fear}  탐 {_enemy.Greed}{retreatText}{spendingText}";
             _label.color = retreat >= 50
                 ? new Color(1f, 0.42f, 0.34f, 1f)

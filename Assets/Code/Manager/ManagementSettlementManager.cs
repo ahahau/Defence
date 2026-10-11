@@ -602,6 +602,7 @@ namespace Code.Manager
             var notes = new List<SettlementNote>();
             AppendBattleNotes(notes);
             AppendCounterplayNotes(notes);
+            AppendPartyFundNote(notes);
             AppendRepairForecastNote(notes);
             AppendDebtNote(notes);
 
@@ -781,6 +782,20 @@ namespace Code.Manager
         }
 
         /// <summary>이번 방어에서 적 특성을 실제로 역이용한 성과만 보여 준다.</summary>
+        /// <summary>
+        /// 모험가가 살아 나가며 들고 간 공동 자금. 놓친 파티가 얼마를 가져갔는지 보여야 끝까지 잡을 이유가 보인다.
+        /// </summary>
+        private static void AppendPartyFundNote(List<SettlementNote> notes)
+        {
+            var escaped = Code.Enemies.PartyFundLedger.Active.EscapedTotal;
+            if (escaped <= 0)
+                return;
+
+            notes.Add(new SettlementNote(
+                $"살아 나간 모험가가 공동 자금 {GoldText.Amount(escaped)}를 들고 갔습니다",
+                SettlementNoteTone.Caution));
+        }
+
         private static void AppendCounterplayNotes(List<SettlementNote> notes)
         {
             var wave = WaveManager.Current;
@@ -935,6 +950,8 @@ namespace Code.Manager
             {
                 GoldChangeSource.WaveReward => "웨이브 보상",
                 GoldChangeSource.Bounty => "모험가 처치",
+                GoldChangeSource.PartyDrop => "모험가 낙전",
+                GoldChangeSource.PartyWipe => "파티 전멸 회수",
                 GoldChangeSource.Mine => "광산 수익",
                 GoldChangeSource.Inn => "여관 수익",
                 GoldChangeSource.Store => "상점 수익",

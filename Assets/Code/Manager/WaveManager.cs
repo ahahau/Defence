@@ -365,6 +365,8 @@ namespace Code.Manager
             _isWaveRunning = true;
             _unitConditionWearPending = true;
             _activeEnemies.Clear();
+            // 어제 파티의 지갑이 남아 있으면 같은 번호를 다시 쓰는 파티가 그 돈을 이어받는다.
+            PartyFundLedger.Active.Clear();
             _isBossWave = waveConfig != null && waveConfig.IsBossDay(_currentDay);
             _isFinalWave = waveConfig != null && waveConfig.IsFinalDay(_currentDay);
             // 이 날의 보스가 누구인지 웨이브가 도는 내내 같은 값을 봐야 호위·배율·배너가 어긋나지 않는다.
