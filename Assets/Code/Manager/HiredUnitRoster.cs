@@ -61,6 +61,9 @@ namespace Code.Manager
 
             /// <summary>이 날짜가 지나면 떠난다. 무한정 기다려 주면 미루는 데 대가가 없다.</summary>
             public int DaysLeft;
+
+            /// <summary>정가에 곱하는 시세(0.75~1.25). 명단에 오를 때 정해져 화면과 결제가 같은 값을 본다.</summary>
+            public float PriceMultiplier;
         }
 
         private readonly Dictionary<UnitDataSO, List<Applicant>> _applicantsByUnit = new();
@@ -180,11 +183,30 @@ namespace Code.Manager
             if (unit == null || GetCandidateCount(unit) <= 0 || costEventChannel == null)
                 return false;
 
-            if (CostManager.Current == null || CostManager.Current.CurrentGold < Mathf.Max(0, unit.Cost))
+            var price = GetApplicantPrice(unit);
+            if (CostManager.Current == null || CostManager.Current.CurrentGold < price)
                 return false;
 
-            costEventChannel.RaiseEvent(new RosterHireRequestedEvent(unit, Mathf.Max(0, unit.Cost)));
+            costEventChannel.RaiseEvent(new RosterHireRequestedEvent(unit, price));
             return true;
+        }
+
+        /// <summary>다음 지원자를 데려오는 값. 정가에 그 지원자의 시세를 곱한다.</summary>
+        public int GetApplicantPrice(UnitDataSO unit)
+        {
+            if (unit == null)
+                return 0;
+
+            var queue = EnsureApplicantQueue(unit);
+            var multiplier = queue.Count > 0 ? queue[0].PriceMultiplier : 1f;
+            return UnitMarketRules.Price(unit.Cost, multiplier);
+        }
+
+        /// <summary>다음 지원자의 시세가 싼지 비싼지.</summary>
+        public UnitPriceTier GetApplicantPriceTier(UnitDataSO unit)
+        {
+            var queue = EnsureApplicantQueue(unit);
+            return queue.Count > 0 ? UnitMarketRules.Tier(queue[0].PriceMultiplier) : UnitPriceTier.Normal;
         }
 
         public int GetAvailableUnitCount(UnitDataSO unit)
@@ -583,7 +605,8 @@ namespace Code.Manager
                 queue.Add(new Applicant
                 {
                     Condition = CreateFreshHiredUnitCondition(),
-                    DaysLeft = Mathf.Max(1, applicantLifetimeDays)
+                    DaysLeft = Mathf.Max(1, applicantLifetimeDays),
+                    PriceMultiplier = UnitMarketRules.PriceMultiplierFromRoll(Random.value)
                 });
             if (queue.Count > wanted)
                 queue.RemoveRange(wanted, queue.Count - wanted);
@@ -747,7 +770,8 @@ namespace Code.Manager
                     group.applicants.Add(new SavedApplicant
                     {
                         condition = applicant.Condition,
-                        daysLeft = applicant.DaysLeft
+                        daysLeft = applicant.DaysLeft,
+                        priceMultiplier = applicant.PriceMultiplier
                     });
                 target.applicants.Add(group);
             }
@@ -799,7 +823,9 @@ namespace Code.Manager
                     queue.Add(new Applicant
                     {
                         Condition = saved.condition,
-                        DaysLeft = Mathf.Max(1, saved.daysLeft)
+                        DaysLeft = Mathf.Max(1, saved.daysLeft),
+                        // 옛 저장은 0으로 읽힌다. 정가(1)로 본다.
+                        PriceMultiplier = saved.priceMultiplier > 0f ? saved.priceMultiplier : 1f
                     });
                 _applicantsByUnit[unit] = queue;
             }

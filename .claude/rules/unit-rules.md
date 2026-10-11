@@ -18,6 +18,7 @@ paths:
    * 템플릿을 고치면 모든 유닛이 바뀐다. 템플릿 수정은 사전 승인을 받는다.
 3. 데이터는 `Assets/GameModules/Data/Units/<이름>UnitData.asset`(`UnitDataSO`)로 만든다.
    * 필수 값: `Prefab`, `Name`, `Sprite`, `Cost`(고용 금화), `MagicCost`, `BaseDanger`, `DangerIncreaseOnCombat`
+   * `Cost`는 정가다. 주간 지원자는 정가에 시세(0.75~1.25, `UnitMarketRules`)를 곱한 값에 고용되고, 하루 유지비는 시세와 무관하게 정가 ÷ `upkeepCostDivisor`(올림·최소 1)다.
 4. 스탯은 프리팹의 `StatModule` + `StatOverride`가 정답이다.
    * 새 스탯이 필요하면 `StatSO` 에셋을 추가하고 `StatIndex` 상수로 참조한다. 스탯에는 아이콘이 있어야 한다.
    * 캐릭터 프리팹에는 세 포즈(`idleSprite`/`attackSprite`/`defeatedSprite`)가 모두 있어야 한다.

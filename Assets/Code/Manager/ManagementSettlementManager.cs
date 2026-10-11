@@ -394,6 +394,19 @@ namespace Code.Manager
                 : $"유지비 (민심 {morale.CurrentMorale} · -{Mathf.RoundToInt((1f - multiplier) * 100f)}%)";
         }
 
+        /// <summary>
+        /// 이 부하 한 명을 데리고 있으면 하루에 드는 유지비(지금 민심 기준). 고용 화면이 계약 전에 보여 준다.
+        /// </summary>
+        public int EstimateUnitUpkeep(UnitDataSO unit)
+        {
+            if (unit == null)
+                return 0;
+
+            var upkeep = UnitMarketRules.DailyUpkeep(unit.Cost, upkeepCostDivisor);
+            var morale = MoralePolicyManager.Current;
+            return morale != null ? Mathf.Max(1, Mathf.RoundToInt(upkeep * morale.UpkeepMultiplier)) : upkeep;
+        }
+
         private int CalculateDailyUpkeep()
         {
             // 이어하기는 고용 이벤트를 다시 발행하지 않는다. 복원된 명단을 기준으로 계산한다.
@@ -404,8 +417,7 @@ namespace Code.Manager
                 if (pair.Key == null || pair.Value <= 0)
                     continue;
 
-                var unitUpkeep = Mathf.Max(1, Mathf.CeilToInt(pair.Key.Cost / (float)upkeepCostDivisor));
-                total += unitUpkeep * pair.Value;
+                total += UnitMarketRules.DailyUpkeep(pair.Key.Cost, upkeepCostDivisor) * pair.Value;
             }
 
             // 민심이 낮으면 같은 부하를 붙잡아 두는 데 더 든다.

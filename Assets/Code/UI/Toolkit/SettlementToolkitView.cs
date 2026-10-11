@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Code.Audio;
 using Code.Manager;
 using Code.Manager.Economy;
+using Code.Units;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -620,22 +621,28 @@ namespace Code.UI.Toolkit
                 var candidate = unit;
                 var applicant = roster.PeekApplicant(candidate);
                 var daysLeft = roster.GetApplicantDaysLeft(candidate);
+                var price = roster.GetApplicantPrice(candidate);
+                var tier = roster.GetApplicantPriceTier(candidate);
+                var upkeep = ManagementSettlementManager.Current != null
+                    ? ManagementSettlementManager.Current.EstimateUnitUpkeep(candidate)
+                    : 0;
                 var button = new Button(() =>
                 {
                     var hired = roster.TryRequestHire(candidate);
                     SetShopFeedback(hired
-                        ? $"{candidate.Name}을(를) 고용했습니다. 배치 화면에서 사용할 수 있습니다."
+                        ? $"{candidate.Name}을(를) {GoldText.Amount(price)}에 고용했습니다. 배치 화면에서 사용할 수 있습니다."
                         : "고용하지 못했습니다. 지원자 수와 운영 자금을 확인하세요.");
                     GameSfxPlayer.Play(hired ? GameSfxCue.UiConfirm : GameSfxCue.UiFail);
                     FillShop();
                     RefreshLoanPane();
-                })
-                {
-                    text = $"{candidate.Name} · 고용 {GoldText.Amount(candidate.Cost)} · 마력 {candidate.MagicCost}\n"
-                           + $"{applicant.TraitLabel} · {applicant.PersonalityLabel}"
-                           + (daysLeft > 0 ? $" · {daysLeft}일 후 떠남" : string.Empty)
-                };
+                });
                 button.AddToClassList("loan-product-button");
+                button.Add(BuildShopPriceLine(candidate, price, tier, upkeep));
+                button.Add(BuildShopLine(
+                    $"{applicant.TraitLabel} · {applicant.PersonalityLabel}"
+                    + (daysLeft > 0 ? $" · {daysLeft}일 후 떠남" : string.Empty),
+                    ShopDetailLineClass));
+                button.SetEnabled(CostManager.Current != null && CostManager.Current.CurrentGold >= price);
                 _shopList.Add(button);
             }
 
@@ -645,6 +652,33 @@ namespace Code.UI.Toolkit
                 empty.AddToClassList("ledger-empty");
                 _shopList.Add(empty);
             }
+        }
+
+        private const string ShopPriceLineClass = "shop-price-line";
+        private const string ShopDetailLineClass = "shop-detail-line";
+        private const string ShopCheapClass = "is-cheap";
+        private const string ShopExpensiveClass = "is-expensive";
+
+        /// <summary>
+        /// 가격 줄. 시세가 싸면 초록, 비싸면 붉게 칠한다. 유지비는 정가 기준이라 시세와 따로 적는다.
+        /// </summary>
+        private static Label BuildShopPriceLine(UnitDataSO unit, int price, UnitPriceTier tier, int upkeep)
+        {
+            var label = BuildShopLine(
+                $"{unit.Name} · 고용 {GoldText.Amount(price)} ({UnitMarketRules.TierLabel(tier)})"
+                + $" · 유지비 {GoldText.Amount(upkeep)}/일 · 마력 {unit.MagicCost}",
+                ShopPriceLineClass);
+            label.EnableInClassList(ShopCheapClass, tier == UnitPriceTier.Cheap);
+            label.EnableInClassList(ShopExpensiveClass, tier == UnitPriceTier.Expensive);
+            label.tooltip = $"정가 {GoldText.Amount(unit.Cost)} · 이번 주 시세 {GoldText.Amount(price)}";
+            return label;
+        }
+
+        private static Label BuildShopLine(string text, string className)
+        {
+            var label = new Label(text) { pickingMode = PickingMode.Ignore };
+            label.AddToClassList(className);
+            return label;
         }
 
         private void SetShopStatus(string message)

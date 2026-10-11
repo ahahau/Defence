@@ -349,6 +349,32 @@
     border-left-color: var(--edge-soft);
 }
 
+.shop-price-line, .shop-detail-line {
+    margin: 0;
+    padding: 0;
+}
+
+.shop-price-line {
+    color: var(--text-body);
+    font-size: 12px;
+    height: 17px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.shop-price-line.is-cheap { color: var(--gain); }
+.shop-price-line.is-expensive { color: var(--loss); }
+
+.shop-detail-line {
+    color: var(--text-dim);
+    font-size: 11px;
+    height: 16px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .loan-button:disabled { opacity: 0.45; }
 .loan-product-button:disabled { opacity: 0.45; }
 

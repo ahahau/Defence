@@ -124,6 +124,9 @@ namespace Code.Persistence
     {
         public UnitConditionState condition;
         public int daysLeft;
+
+        /// <summary>정가에 곱하는 시세. 옛 저장은 0으로 읽혀 정가로 본다.</summary>
+        public float priceMultiplier;
     }
 
     [Serializable]

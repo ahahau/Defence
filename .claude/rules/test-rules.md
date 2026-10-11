@@ -19,6 +19,7 @@ paths:
 | `GameRulesTests` | 게임 규칙 전반 (가장 큼) |
 | `SettlementRegressionTests` | 정산·장부 회귀 |
 | `WeeklyLoanLedgerTests` | 대출·청산일 |
+| `UnitMarketTests` | 주간 지원자 수·시세·유지비, 보인 값과 결제 값 일치 |
 | `CreditWarningTests` | 부채 한도·긴급 상환·신용 경고·파산 판정 |
 | `FacilityQueueTests` | 시설 대기열 FIFO·동시 이용 수·대기 만족도 감액 |
 | `FacilityDurabilityTests` | 수익 시설 내구도·수입 배율·수리·철거 환불·저장 |
