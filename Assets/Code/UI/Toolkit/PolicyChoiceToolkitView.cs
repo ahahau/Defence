@@ -105,15 +105,31 @@ namespace Code.UI.Toolkit
                 _root.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
-        private static string BuildEffectSummary(PolicyDataSO policy)
+        /// <summary>
+        /// 효과 요약. 즉시 효과(민심·금화)는 늘 보이고, 지속 효과(일별 민심·공격·방어)는 한 번 골라 본
+        /// 방침만 보인다. 처음 고를 때는 "? 지속 효과"로만 알린다(기획서: 처음 보는 선택지는 결과 일부를 숨김).
+        /// </summary>
+        private string BuildEffectSummary(PolicyDataSO policy)
         {
+            var known = _manager != null && _manager.Events.HasChosen(RunEventLedger.PolicyKey(policy));
             var effects = new List<string>();
             if (policy.MoraleDeltaOnSelect != 0) effects.Add($"민심 {FormatSigned(policy.MoraleDeltaOnSelect)}");
             if (policy.GoldDeltaOnSelect != 0) effects.Add($"금화 {FormatSigned(policy.GoldDeltaOnSelect)}");
-            if (policy.DurationDays > 0 && policy.DailyMoraleDelta != 0) effects.Add($"{policy.DurationDays}일간 민심 {FormatSigned(policy.DailyMoraleDelta)}/일");
-            if (!Mathf.Approximately(policy.UnitDamageMultiplier, 1f)) effects.Add($"공격 {FormatPercent(policy.UnitDamageMultiplier)}");
-            if (policy.UnitDefenseBonus != 0) effects.Add($"방어 {FormatSigned(policy.UnitDefenseBonus)}");
-            return effects.Count > 0 ? string.Join(" · ", effects) : "즉시 효과 없음";
+
+            var hasOngoing = policy.DurationDays > 0 && policy.DailyMoraleDelta != 0 || policy.HasCombatEffect;
+            if (hasOngoing && !known)
+            {
+                effects.Add("? 지속 효과");
+            }
+            else
+            {
+                if (policy.DurationDays > 0 && policy.DailyMoraleDelta != 0) effects.Add($"{policy.DurationDays}일간 민심 {FormatSigned(policy.DailyMoraleDelta)}/일");
+                if (!Mathf.Approximately(policy.UnitDamageMultiplier, 1f)) effects.Add($"공격 {FormatPercent(policy.UnitDamageMultiplier)}");
+                if (policy.UnitDefenseBonus != 0) effects.Add($"방어 {FormatSigned(policy.UnitDefenseBonus)}");
+            }
+
+            var summary = effects.Count > 0 ? string.Join(" · ", effects) : "즉시 효과 없음";
+            return known ? summary + " · 확인함" : summary;
         }
 
         private static string FormatSigned(int value) => value > 0 ? $"+{value}" : value.ToString();

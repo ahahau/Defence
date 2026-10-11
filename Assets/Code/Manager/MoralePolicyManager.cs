@@ -58,6 +58,9 @@ namespace Code.Manager
         public static MoralePolicyManager Current { get; private set; }
 
         public int CurrentMorale { get; private set; }
+
+        /// <summary>이 판의 사건 순서(쉬는 시간)와 고른 선택지 기록. 운영 방침과 일차 대화가 함께 쓴다.</summary>
+        public RunEventLedger Events { get; } = new();
         public event Action<int, int, string> MoraleChanged;
         public IReadOnlyList<PolicyDataSO> CurrentChoices => currentChoices;
         public event System.Action CombatModifiersChanged;
@@ -148,6 +151,8 @@ namespace Code.Manager
 
             selectedPolicies.Add(policy);
             currentChoices.Clear();
+            // 고른 방침은 다음에 다시 만나면 지속 효과까지 보여 준다.
+            Events.MarkChosen(RunEventLedger.PolicyKey(policy));
 
             ApplyImmediatePolicyEffect(policy);
             AddActivePolicy(policy);
@@ -199,8 +204,21 @@ namespace Code.Manager
                 : $"방어 실패 ({evt.KillCount}/{evt.EnemyCount})";
             ChangeMorale(delta, reason);
 
+            // 이 전환의 사건 순서를 먼저 정한다. 대화 이벤트 쪽이 먼저 물어도 같은 판정을 받는다.
+            TryGrantNormalEvent(evt.Day);
+
             if (offerAfterWaveEnd && ShouldOfferPolicy())
                 OfferPolicies();
+        }
+
+        /// <summary>
+        /// 이 영업 종료(전환)에 일반 사건(일차 대화)을 띄워도 되는가. 운영 방침이 뜨는 전환이면 미룬다.
+        /// 한 전환에 한 번만 판정하고, 같은 날 다시 물으면 같은 답을 준다.
+        /// </summary>
+        public bool TryGrantNormalEvent(int day)
+        {
+            var major = offerAfterWaveEnd && ShouldOfferPolicyOn(day);
+            return Events.ResolveTransition(day, major, Random.value);
         }
 
         private void HandleMoraleChangeRequested(MoraleChangeRequestedEvent evt)
@@ -208,12 +226,15 @@ namespace Code.Manager
             ChangeMorale(evt.Delta, evt.Reason);
         }
 
-        private bool ShouldOfferPolicy()
+        private bool ShouldOfferPolicy() => ShouldOfferPolicyOn(currentDay);
+
+        /// <summary>그날이 운영 방침(주요 사건)이 뜨는 날인가.</summary>
+        private bool ShouldOfferPolicyOn(int day)
         {
-            if (!autoOfferPolicies)
+            if (!autoOfferPolicies || availablePolicies == null || availablePolicies.Length == 0)
                 return false;
 
-            return offerIntervalDays <= 1 || currentDay % offerIntervalDays == 0;
+            return offerIntervalDays <= 1 || day % offerIntervalDays == 0;
         }
 
         private List<PolicyDataSO> BuildCandidatePolicies()
@@ -444,6 +465,9 @@ namespace Code.Manager
                 return;
             target.selected.Clear();
             target.active.Clear();
+            target.hasEventLedger = true;
+            target.normalEventCooldown = Events.NormalCooldown;
+            target.chosenEventKeys = new List<string>(Events.ChosenKeys);
             foreach (var policy in selectedPolicies)
                 if (policy != null) target.selected.Add(policy.name);
             foreach (var policy in activePolicies)
@@ -476,6 +500,11 @@ namespace Code.Manager
                         if (policy != null && saved.remainingDays > 0)
                             activePolicies.Add(new ActivePolicy(policy, saved.remainingDays));
                     }
+                Events.Restore(savedPolicies.chosenEventKeys, savedPolicies.normalEventCooldown, savedPolicies.hasEventLedger);
+            }
+            else
+            {
+                Events.Restore(null, 0, false);
             }
             RaiseMoraleChanged(0, "저장 불러오기");
             CombatModifiersChanged?.Invoke();

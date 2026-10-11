@@ -134,6 +134,15 @@ namespace Code.Persistence
     {
         public List<string> selected = new();
         public List<SavedActivePolicy> active = new();
+
+        /// <summary>사건 기록을 담은 저장인가. 옛 저장은 false로 읽혀 사건 순서를 처음부터 센다.</summary>
+        public bool hasEventLedger;
+
+        /// <summary>한 번 고른 사건 선택지(방침·대화). 다시 만나면 결과를 보여 준다.</summary>
+        public List<string> chosenEventKeys = new();
+
+        /// <summary>다음 일반 사건까지 남은 전환 수.</summary>
+        public int normalEventCooldown;
     }
 
     [Serializable]

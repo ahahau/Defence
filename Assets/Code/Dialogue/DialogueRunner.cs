@@ -38,6 +38,16 @@ namespace Code.Dialogue
         private readonly DialogueSequencePlayer player = new();
         private DialogueSequenceSO pendingScheduledEventSequence;
         private int lastScheduledEventDay;
+
+        /// <summary>
+        /// 지금 도는 대화가 일반 사건(정기 이벤트)인가. 일반 사건에만 "아무것도 하지 않음"을 붙이고,
+        /// 처음 보는 선택지의 결과를 가리고 고른 결과를 기록한다. 튜토리얼 대화는 손대지 않는다.
+        /// </summary>
+        private bool _playingNormalEvent;
+
+        private const string SkipChoiceText = "아무것도 하지 않음";
+        private const string HiddenResultText = "결과는 골라 봐야 안다";
+        private const string KnownResultSuffix = "  · 확인함";
         private GuidedStartTutorialStep guidedStep;
         private Node guidedLockedNode;
         private Node guidedBuiltNode;
@@ -186,8 +196,14 @@ namespace Code.Dialogue
             }
         }
 
-        public void Play(DialogueSequenceSO sequence)
+        public void Play(DialogueSequenceSO sequence) => PlaySequence(sequence, false);
+
+        /// <summary>
+        /// 대화를 시작한다. 일반 사건이면 첫 줄부터 결과 가림·"아무것도 하지 않음"을 입혀 그린다.
+        /// </summary>
+        private void PlaySequence(DialogueSequenceSO sequence, bool normalEvent)
         {
+            _playingNormalEvent = normalEvent;
             view?.SetBackgroundRaycastBlocking(true);
             view?.SetNextButtonVisible(true);
             view?.SetCloseButtonVisible(true);
@@ -222,11 +238,21 @@ namespace Code.Dialogue
 
         private void ScheduleEventForDay(int day)
         {
-            if (!playScheduledEvents || scheduledEventIntervalDays <= 0)
+            if (!playScheduledEvents || day <= 0 || day == lastScheduledEventDay)
                 return;
 
-            if (day <= 0 || day % scheduledEventIntervalDays != 0 || day == lastScheduledEventDay)
+            // 한 전환에는 사건 하나만. 운영 방침이 뜨는 날이면 미루고, 일반 사건 뒤에는 4~6회 쉰다.
+            // 사건 관리자가 없으면(테스트 씬 등) 예전처럼 일정 간격으로 띄운다.
+            var events = MoralePolicyManager.Current;
+            if (events != null)
+            {
+                if (!events.TryGrantNormalEvent(day))
+                    return;
+            }
+            else if (scheduledEventIntervalDays <= 0 || day % scheduledEventIntervalDays != 0)
+            {
                 return;
+            }
 
             lastScheduledEventDay = day;
             pendingScheduledEventSequence = ResolveScheduledEventSequence();
@@ -796,11 +822,24 @@ namespace Code.Dialogue
 
             var sequence = player.CurrentSequence;
             var lineIndex = player.CurrentLineIndex;
+
+            // 일반 사건의 마지막 칸은 "아무것도 하지 않음"이다. 아무 효과 없이 사건을 닫는다.
+            if (_playingNormalEvent && sequence != null && sequence.TryGetLine(lineIndex, out var currentLine)
+                && currentLine.HasChoices && choiceIndex == currentLine.ChoiceCount)
+            {
+                Stop();
+                return;
+            }
+
             if (!player.SelectChoice(choiceIndex, out var choice, out var matchedRoute, out var ended, out var displayData))
             {
                 Stop();
                 return;
             }
+
+            if (_playingNormalEvent && sequence != null)
+                MoralePolicyManager.Current?.Events.MarkChosen(
+                    RunEventLedger.DialogueChoiceKey(sequence.name, lineIndex, choiceIndex));
 
             ChoiceSelected?.Invoke(sequence, lineIndex, choice);
             ExecuteActions(choice.Actions);
@@ -818,6 +857,7 @@ namespace Code.Dialogue
 
         public void Stop()
         {
+            _playingNormalEvent = false;
             var endedSequence = player.Stop();
             view?.Hide();
 
@@ -829,6 +869,7 @@ namespace Code.Dialogue
 
         private void Show(DialogueDisplayData displayData)
         {
+            displayData = DecorateNormalEventChoices(displayData);
             view?.Show(displayData);
             LineChanged?.Invoke(player.CurrentSequence, player.CurrentLineIndex, displayData);
         }
@@ -890,7 +931,33 @@ namespace Code.Dialogue
 
             var sequence = pendingScheduledEventSequence;
             pendingScheduledEventSequence = null;
-            Play(sequence);
+            PlaySequence(sequence, true);
+        }
+
+        /// <summary>
+        /// 일반 사건의 선택지를 꾸민다. 처음 보는 선택지는 결과를 가리고, 고른 적 있는 선택지는
+        /// "확인함"을 붙이며, 맨 끝에 "아무것도 하지 않음"을 더한다(기획서: 일반 사건은 안 할 수 있다).
+        /// </summary>
+        private DialogueDisplayData DecorateNormalEventChoices(DialogueDisplayData data)
+        {
+            var sequence = player.CurrentSequence;
+            if (!_playingNormalEvent || !data.HasChoices || sequence == null)
+                return data;
+
+            var events = MoralePolicyManager.Current?.Events;
+            var choices = new DialogueChoice[data.ChoiceCount + 1];
+            for (var i = 0; i < data.ChoiceCount; i++)
+            {
+                var choice = data.Choices[i];
+                var key = RunEventLedger.DialogueChoiceKey(sequence.name, player.CurrentLineIndex, i);
+                var summary = choice.EffectSummary;
+                if (!string.IsNullOrWhiteSpace(summary))
+                    summary = events != null && events.HasChosen(key) ? summary + KnownResultSuffix : HiddenResultText;
+                choices[i] = choice.WithEffectSummary(summary);
+            }
+
+            choices[data.ChoiceCount] = new DialogueChoice(SkipChoiceText);
+            return new DialogueDisplayData(data.Title, data.SpeakerName, data.Text, data.Progress, data.EnterActions, choices);
         }
 
         private enum GuidedStartTutorialStep

@@ -21,7 +21,9 @@ paths:
    * 값 테이블: `Dialogue/ValueTables/`
    * `ExampleTRPGDialogueSequence`, `TestDia`, `ValueTables/Example`은 예제·테스트용이다. 게임 이벤트로 연결하지 않는다.
 4. 일차 이벤트를 등장시키려면 씬의 `DialogueRunner.scheduledEventSequences`에 넣는다.
-   * 씬 설정상 `scheduledEventIntervalDays = 4`일마다 하나씩 나온다. 한 판 안에서는 섞은 뒤 겹치지 않게 꺼낸다(13개면 약 52일분).
+   * 일차 이벤트는 "일반 사건"이다. 영업 종료(전환)마다 `MoralePolicyManager.TryGrantNormalEvent`가 판정한다 — 일반 사건 뒤 4~6회 쉬고, 운영 방침(주요 사건)이 뜨는 전환이면 다음 전환으로 미룬다(`RunEventLedger`). `scheduledEventIntervalDays`는 사건 관리자가 없는 씬에서만 쓰는 예비 간격이다. 한 판 안에서는 섞은 뒤 겹치지 않게 꺼낸다.
+   * 일반 사건에는 "아무것도 하지 않음"이 자동으로 붙는다. 선택지를 셋 넘게 만들면 대사 상자에 들어가는지 확인한다(넘치면 두 줄짜리 선택지가 줄어든다).
+   * 처음 보는 선택지는 `effectSummary`가 "결과는 골라 봐야 안다"로 가려지고, 한 번 고른 선택지는 요약 + "확인함"으로 보인다. 그래서 `effectSummary`는 고른 뒤에 보여도 정확해야 한다.
    * 이벤트 하나의 무게(금화·사기 변동 폭)는 경제 규모에 맞춘다. 금화 변동은 기존 이벤트 범위(±10~85)를 기준으로 삼는다. 청산일(7의 배수) 직전에 큰 지출이 몰리지 않는지도 본다.
    * 씬 배선이므로 Unity CLI로 처리하거나 사용자에게 요청한다.
 5. 시작 튜토리얼(`StartTutorialDialogue`, 가이드 튜토리얼 단계)은 노드·건설·배치 패널 흐름에 묶여 있다. 해당 UI를 바꾸면 튜토리얼 단계가 여전히 진행되는지 확인한다.

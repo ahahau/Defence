@@ -351,19 +351,24 @@ namespace Code.Dialogue
             //
             // 상자를 키우는 방법은 쓸 수 없다 — 아래를 기준으로 자라 올라가는데 본문 글상자 밑단이
             // 9밖에 안 떨어져 있어 곧장 글을 덮는다. 그래서 상자는 두고 남는 만큼 통째로 내린다.
-            var contentHeight = choices.Count * choiceButtonHeight
-                                + Mathf.Max(0, choices.Count - 1) * choiceButtonSpacing;
+            ResolveChoiceHeights(choices);
+            var contentHeight = Mathf.Max(0, choices.Count - 1) * choiceButtonSpacing;
+            for (var i = 0; i < choices.Count; i++)
+                contentHeight += _choiceHeights[i];
             var slack = Mathf.Max(0f, choiceRoot.rect.height - contentHeight - choiceTopPadding);
 
+            var offset = slack;
             for (var i = 0; i < choices.Count; i++)
             {
                 var choice = choices[i];
                 var index = i;
+                var height = _choiceHeights[i];
                 var button = Instantiate(choiceButtonPrefab, choiceRoot);
                 var choiceButtonView = button.GetComponent<DialogueChoiceButtonView>();
                 var canSelect = runner == null || runner.CanSelect(choice);
                 var buttonRect = button.transform as RectTransform;
-                var targetPosition = new Vector2(0f, -slack - i * (choiceButtonHeight + choiceButtonSpacing));
+                var targetPosition = new Vector2(0f, -offset);
+                offset += height + choiceButtonSpacing;
 
                 if (buttonRect != null)
                 {
@@ -371,7 +376,7 @@ namespace Code.Dialogue
                     buttonRect.anchorMax = new Vector2(1f, 1f);
                     buttonRect.pivot = new Vector2(0.5f, 1f);
                     buttonRect.anchoredPosition = targetPosition;
-                    buttonRect.sizeDelta = new Vector2(-choiceSidePadding * 2f, choiceButtonHeight);
+                    buttonRect.sizeDelta = new Vector2(-choiceSidePadding * 2f, height);
                 }
 
                 choiceButtonView?.SetRestPosition(targetPosition);
@@ -520,6 +525,67 @@ namespace Code.Dialogue
             rect.pivot = Vector2.zero;
             rect.anchoredPosition = new Vector2(x, y);
             rect.sizeDelta = new Vector2(Mathf.Max(0f, width), Mathf.Max(0f, height));
+        }
+
+        /// <summary>결과 요약 없이 한 줄만 쓰는 선택지의 높이("아무것도 하지 않음" 등).</summary>
+        private const float CompactChoiceHeight = 34f;
+
+        /// <summary>선택지마다의 높이. 매번 새 목록을 만들지 않는다.</summary>
+        private readonly List<float> _choiceHeights = new();
+
+        /// <summary>
+        /// 선택지 높이를 정한다. 상자 높이는 씬에 고정이라 선택지가 셋이면 마지막 칸이 상자 밖으로
+        /// 빠졌다(일반 사건에 "아무것도 하지 않음"을 붙이면서 생김). 넘치면 한 줄짜리 선택지부터 줄이고,
+        /// 그래도 넘치면 전부 같은 비율로 줄인다.
+        /// </summary>
+        private void ResolveChoiceHeights(IReadOnlyList<DialogueChoice> choices)
+        {
+            _choiceHeights.Clear();
+            var available = choiceRoot.rect.height - choiceTopPadding - Mathf.Max(0, choices.Count - 1) * choiceButtonSpacing;
+            var total = 0f;
+            for (var i = 0; i < choices.Count; i++)
+            {
+                _choiceHeights.Add(choiceButtonHeight);
+                total += choiceButtonHeight;
+            }
+
+            if (available <= 0f || total <= available)
+                return;
+
+            var compactTotal = 0f;
+            var fullTotal = 0f;
+            for (var i = 0; i < choices.Count; i++)
+            {
+                if (string.IsNullOrWhiteSpace(choices[i].EffectSummary))
+                {
+                    _choiceHeights[i] = Mathf.Min(choiceButtonHeight, CompactChoiceHeight);
+                    compactTotal += _choiceHeights[i];
+                }
+                else
+                {
+                    fullTotal += _choiceHeights[i];
+                }
+            }
+
+            if (compactTotal + fullTotal <= available)
+                return;
+
+            // 한 줄짜리는 더 줄이면 글이 잘린다. 두 줄짜리만 남는 자리에 맞춰 줄이고,
+            // 그래도 모자라면(한 줄짜리만으로 넘칠 때) 전부 같은 비율로 줄인다.
+            var room = available - compactTotal;
+            var fullScale = fullTotal > 0f && room > 0f ? room / fullTotal : 0f;
+            for (var i = 0; i < _choiceHeights.Count; i++)
+            {
+                if (!string.IsNullOrWhiteSpace(choices[i].EffectSummary))
+                    _choiceHeights[i] *= fullScale;
+            }
+
+            if (fullScale > 0f)
+                return;
+
+            var scale = compactTotal > 0f ? available / compactTotal : 1f;
+            for (var i = 0; i < _choiceHeights.Count; i++)
+                _choiceHeights[i] *= scale;
         }
 
         private IEnumerator SlideChoiceIn(Button choiceButton, RectTransform choiceRect, float delay)

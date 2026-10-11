@@ -26,6 +26,14 @@ namespace Code.Dialogue
 
         public string Text => text;
         public string EffectSummary => effectSummary;
+
+        /// <summary>결과 요약만 바꾼 사본. 처음 보는 선택지의 결과를 가리거나 "확인함"을 붙일 때 쓴다.</summary>
+        public DialogueChoice WithEffectSummary(string summary)
+        {
+            var copy = this;
+            copy.effectSummary = summary ?? string.Empty;
+            return copy;
+        }
         public IReadOnlyList<DialogueActionSO> Actions => actions;
         public DialogueSequenceSO NextSequence => nextSequence;
         public int NextLineIndex => nextLineIndex;

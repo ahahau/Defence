@@ -19,6 +19,7 @@ paths:
 | `GameRulesTests` | 게임 규칙 전반 (가장 큼) |
 | `SettlementRegressionTests` | 정산·장부 회귀 |
 | `WeeklyLoanLedgerTests` | 대출·청산일 |
+| `RunEventLedgerTests` | 사건 순서(한 전환 한 사건·일반 사건 4~6회 쿨다운·주요 사건 우선)·선택 기록 |
 | `BossDefeatTests` | 보스별 패배 조건 판정·예고 문구, 청산일 보스마다 조건 존재 |
 | `ChurchRevivalTests` | 교회 부활비·부활 체력, 관 추적·정리, 교회 데이터 시설 규칙 |
 | `PartyFundTests` | 파티 공동 자금(합류·결제·낙전·전멸·탈출·약탈·단계) |
