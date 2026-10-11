@@ -43,9 +43,28 @@ namespace Code.UI.Toolkit
             var day = DayManager.Current?.CurrentDay ?? 0;
             var cost = CostManager.Current;
             var roster = HiredUnitRoster.Current;
-            _summary.text = $"버틴 날 {day}일\n남은 금화 {cost?.CurrentGold ?? 0}G · 부채 {cost?.CurrentDebt ?? 0}G\n부하 {roster?.TotalHiredCount ?? 0}명";
+            _summary.text = $"버틴 날 {day}일\n남은 금화 {cost?.CurrentGold ?? 0}G · 부채 {cost?.CurrentDebt ?? 0}G\n부하 {roster?.TotalHiredCount ?? 0}명"
+                            + BuildMetaLine();
             _panel.style.display = DisplayStyle.Flex;
         }
+        /// <summary>
+        /// 이번 판이 남긴 진행도. 패배가 무엇을 남겼는지 보여야 다음 판을 시작할 이유가 생긴다.
+        /// </summary>
+        private static string BuildMetaLine()
+        {
+            var result = Code.Progression.MetaProfileStore.LastResult;
+            if (!result.HasValue)
+                return string.Empty;
+
+            var r = result.Value;
+            var line = $"\n\n진행도 +{r.PointsEarned} (누적 {r.TotalProgress})";
+            if (r.NewBestDay)
+                line += " · 최고 기록!";
+            if (r.SlotsAfter > r.SlotsBefore)
+                line += $"\n시작 보정 칸이 {r.SlotsAfter}칸으로 늘었습니다";
+            return line;
+        }
+
         private void Restart() { GameSpeedController.Current?.ResetToNormal(); SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); }
     }
 }

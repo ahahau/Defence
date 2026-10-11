@@ -5,6 +5,11 @@
         <ui:VisualElement class="title-card">
             <ui:Label text="DUNGEON KEEPER" class="title-logo" />
             <ui:Label text="던전 운영 기록" class="title-subtitle" />
+            <ui:VisualElement name="meta-panel" class="meta-panel">
+                <ui:Label name="meta-record" class="meta-record" />
+                <ui:Label name="meta-slots" class="meta-slots" />
+                <ui:VisualElement name="meta-modifier-list" class="meta-modifier-list" />
+            </ui:VisualElement>
             <ui:Button name="new-run-button" text="새 게임" class="menu-button primary-button" />
             <ui:Button name="continue-button" text="이어하기" class="menu-button" />
             <ui:Button name="settings-button" text="설정" class="menu-button" />

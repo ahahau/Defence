@@ -1,5 +1,6 @@
 using Code.Audio;
 using Code.Persistence;
+using Code.Progression;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
@@ -20,10 +21,19 @@ namespace Code.UI.Toolkit
         private Slider _musicSlider;
         private Label _sfxValue;
         private Label _musicValue;
+        private Label _metaRecord;
+        private Label _metaSlots;
+        private VisualElement _metaModifierList;
+
+        private const string MetaModifierClass = "meta-modifier";
+        private const string MetaEquippedClass = "is-equipped";
 
         private void OnEnable()
         {
             var root = GetComponent<UIDocument>().rootVisualElement;
+            _metaRecord = root.Q<Label>("meta-record");
+            _metaSlots = root.Q<Label>("meta-slots");
+            _metaModifierList = root.Q<VisualElement>("meta-modifier-list");
             _newRunButton = root.Q<Button>("new-run-button");
             _continueButton = root.Q<Button>("continue-button");
             _settingsButton = root.Q<Button>("settings-button");
@@ -82,6 +92,50 @@ namespace Code.UI.Toolkit
             if (_musicSlider != null)
                 _musicSlider.SetValueWithoutNotify(GameMusicPlayer.Volume);
             RefreshVolumeLabels();
+            RefreshMeta();
+        }
+
+        /// <summary>
+        /// 최고 기록과 시작 보정 칸. 보정은 다음 "새 게임"에만 걸린다(이어하기는 시작할 때 고른 것을 그대로 쓴다).
+        /// </summary>
+        private void RefreshMeta()
+        {
+            var profile = MetaProfileStore.Profile;
+            var slots = MetaProgressRules.SlotCount(profile.progress);
+            if (_metaRecord != null)
+                _metaRecord.text = profile.runsPlayed > 0
+                    ? $"최고 {profile.bestDay}일 · 최고 등급 {profile.bestGrade} · 보스 {profile.totalBossesDefeated}명\n진행도 {profile.progress} · {profile.runsPlayed}판"
+                    : "아직 끝낸 판이 없습니다\n버틴 날과 잡은 보스가 진행도로 쌓입니다";
+            if (_metaSlots != null)
+                _metaSlots.text = $"새 게임 시작 보정 {profile.equipped.Count}/{slots}칸";
+
+            if (_metaModifierList == null)
+                return;
+
+            _metaModifierList.Clear();
+            foreach (var modifier in MetaProgressRules.AllModifiers)
+            {
+                var unlocked = MetaProgressRules.IsUnlocked(modifier, profile.progress);
+                var equipped = MetaProfileStore.IsEquipped(modifier);
+                var target = modifier;
+                var button = new Button(() => ToggleModifier(target))
+                {
+                    text = unlocked
+                        ? $"{(equipped ? "[장착] " : string.Empty)}{MetaProgressRules.Label(modifier)} · {MetaProgressRules.Describe(modifier)}"
+                        : $"{MetaProgressRules.Label(modifier)} · 진행도 {MetaProgressRules.UnlockAt(modifier)}에 열림"
+                };
+                button.AddToClassList(MetaModifierClass);
+                button.EnableInClassList(MetaEquippedClass, equipped);
+                button.SetEnabled(unlocked && (equipped || profile.equipped.Count < slots));
+                _metaModifierList.Add(button);
+            }
+        }
+
+        private void ToggleModifier(MetaModifier modifier)
+        {
+            var changed = MetaProfileStore.ToggleEquip(modifier);
+            GameSfxPlayer.Play(changed ? GameSfxCue.UiConfirm : GameSfxCue.UiFail);
+            RefreshMeta();
         }
 
         private void StartNewRun()

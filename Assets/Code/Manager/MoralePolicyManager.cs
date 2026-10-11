@@ -443,6 +443,9 @@ namespace Code.Manager
             return value;
         }
 
+        /// <summary>바깥(시작 보정 등)에서 민심을 바꾼다. 0~100을 넘지 않는다.</summary>
+        public void ApplyBonusMorale(int delta, string reason) => ChangeMorale(delta, reason);
+
         private void ChangeMorale(int delta, string reason)
         {
             if (delta == 0)

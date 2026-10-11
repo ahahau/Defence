@@ -1177,6 +1177,7 @@ namespace Code.Manager
             if (this == null || _isDestroying || boss == null)
                 return;
 
+            MetaProfileStore.RecordBossDefeat();
             EnsureBossPresenter().PlayBossDeathCinematic(boss.transform.position);
         }
 
@@ -1199,6 +1200,8 @@ namespace Code.Manager
             ApplyUnitConditionWear();
             // 웨이브 집계는 다음 웨이브에서 초기화되므로, 판 전체 전과는 여기서 넘겨 둔다.
             RunSummarySystem.Current?.RecordWave(_stats.EnemyCount, _stats.KillCount, _stats.DamageDealt, _stats.DamageTaken, _stats.CriticalHitCount);
+            // 판이 끝나도 남는 기록은 이어하기를 거쳐도 쌓이도록 메타 프로필에 바로 적는다.
+            MetaProfileStore.RecordWaveEnd(_stats.KillCount, DungeonGradeRules.CalculateGrade());
             GameSfxPlayer.Play(GameSfxCue.WaveClear);
             // 웨이브가 끝나면 다시 짓고 배치하는 시간으로 돌아간다.
             GameMusicPlayer.Play(MusicCue.Management);

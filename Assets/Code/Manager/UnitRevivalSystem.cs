@@ -64,7 +64,22 @@ namespace Code.Manager
         /// <summary>먼저 쓰러진 유닛부터 부활 마력을 받는 대기열이다.</summary>
         public IReadOnlyList<Unit> PendingUnits => _revivalOrder;
         public int CurrentRevivalMana => Mathf.FloorToInt(_currentRevivalMana);
-        public int MaxRevivalMana => maxRevivalMana + DungeonGrade * maxManaPerDungeonGrade;
+        public int MaxRevivalMana => maxRevivalMana + _bonusMaxMana + DungeonGrade * maxManaPerDungeonGrade;
+
+        /// <summary>시작 보정 등으로 더해진 부활 마력 최대치. 판 내내 유지된다.</summary>
+        private int _bonusMaxMana;
+
+        /// <summary>부활 마력 최대치를 늘리고 늘어난 만큼 바로 채운다.</summary>
+        public void AddMaxManaBonus(int amount)
+        {
+            if (amount <= 0)
+                return;
+
+            _bonusMaxMana += amount;
+            _currentRevivalMana = Mathf.Min(MaxRevivalMana, _currentRevivalMana + amount);
+            RaiseRevivalManaChanged();
+            RaiseStateChanged();
+        }
         public float RevivalManaRegenPerSecond => revivalManaRegenPerSecond + DungeonGrade * manaRegenPerDungeonGrade;
 
         /// <summary>부활 마력 또는 부활 대기열이 바뀌었을 때 HUD가 즉시 갱신한다.</summary>

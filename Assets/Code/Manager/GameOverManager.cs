@@ -61,6 +61,10 @@ namespace Code.Manager
 
             IsGameOver = true;
             ResolveDependencies();
+            // 끝없는 판에서 패배가 곧 엔딩이다. 결과 화면이 읽기 전에 메타 진행을 정산한다.
+            Code.Progression.MetaProfileStore.RecordRunEnd(
+                DayManager.Current != null ? DayManager.Current.CurrentDay : 0,
+                DungeonGradeManager.Current != null ? DungeonGradeManager.Current.Grade : 0);
             waveManager?.StopForRunEnd();
             gameStateEventChannel.RaiseEvent(new GameOverEvent(mainUnit));
 
