@@ -367,6 +367,7 @@ namespace Code.Manager
             _activeEnemies.Clear();
             // 어제 파티의 지갑이 남아 있으면 같은 번호를 다시 쓰는 파티가 그 돈을 이어받는다.
             PartyFundLedger.Active.Clear();
+            PartyCoffin.ClearAll();
             _isBossWave = waveConfig != null && waveConfig.IsBossDay(_currentDay);
             _isFinalWave = waveConfig != null && waveConfig.IsFinalDay(_currentDay);
             // 이 날의 보스가 누구인지 웨이브가 도는 내내 같은 값을 봐야 호위·배율·배너가 어긋나지 않는다.
@@ -635,6 +636,43 @@ namespace Code.Manager
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// 교회에서 관을 되살린다. 같은 파티 번호·레벨·목적으로 그 방에 다시 세우고 체력을 비율만큼 둔다.
+        /// 예산은 0이다 — 돈은 이미 파티 공동 자금에 있다. 다시 쓰러지면 처치로 한 번 더 센다.
+        /// </summary>
+        public Enemy ReviveFromCoffin(
+            EnemyDataSO data, int level, int partyId, AdventurerVisitPurpose purpose, Node atNode, float healthRatio)
+        {
+            if (!_isWaveRunning || data == null || atNode == null)
+                return null;
+
+            var prefab = data.Prefab != null ? data.Prefab : ResolveEnemyPrefab();
+            if (prefab == null)
+                return null;
+
+            var spawnPos = atNode.EnemyPosition != null ? atNode.EnemyPosition.position : atNode.transform.position;
+            Enemy enemy = Instantiate(prefab, spawnPos, Quaternion.identity);
+            enemy.DeathStarted += HandleWaveEnemyDeathStarted;
+            enemy.Removed += HandleEnemyRemoved;
+            enemy.FacilityGoldSpent += HandleEnemyFacilityGoldSpent;
+            enemy.ConfigureData(data);
+            enemy.ApplyWaveLevel(level, enemyHealthPerLevel, enemyAttackPerLevel);
+            enemy.ConfigureVisitProfile(purpose, 0);
+
+            if (enemy.Mover != null)
+            {
+                enemy.Mover.InitialSpawnPosition = spawnPos;
+                enemy.Mover.ConfigurePartyOccupancy(partyId);
+            }
+
+            enemy.Initialize(atNode, costEventChannel, treasuryGoldLoss, nodeEventChannel);
+            enemy.Health?.SetCurrentRatio(healthRatio);
+            EnemyMoodHud.Attach(enemy);
+            _activeEnemies.Add(enemy);
+            _stats.RecordRevival();
+            return enemy;
         }
 
         private void ApplyPartyTraitSupport(Enemy spawnedEnemy)
@@ -1197,6 +1235,8 @@ namespace Code.Manager
             }
 
             _activeEnemies.Clear();
+            // 영업이 끝나면 남은 관도 치운다. 다음 날까지 끌고 다닐 파티가 없다.
+            PartyCoffin.ClearAll();
             ReleasePauseLock();
         }
 
@@ -1222,6 +1262,7 @@ namespace Code.Manager
             {
                 EnemyCount = Mathf.Max(0, enemyCount);
                 KillCount = 0;
+                Revivals = 0;
                 DamageDealt = 0;
                 DamageTaken = 0;
                 CriticalHitCount = 0;
@@ -1234,6 +1275,15 @@ namespace Code.Manager
             }
 
             public void RecordKill() => KillCount++;
+
+            /// <summary>교회에서 되살아난 모험가는 새 방문객으로 센다. 다시 쓰러지면 처치도 한 번 더 센다.</summary>
+            public void RecordRevival()
+            {
+                EnemyCount++;
+                Revivals++;
+            }
+
+            public int Revivals { get; private set; }
 
             public void RecordDamageDealt(int damage, bool isCritical)
             {

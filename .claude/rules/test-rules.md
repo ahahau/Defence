@@ -19,6 +19,7 @@ paths:
 | `GameRulesTests` | 게임 규칙 전반 (가장 큼) |
 | `SettlementRegressionTests` | 정산·장부 회귀 |
 | `WeeklyLoanLedgerTests` | 대출·청산일 |
+| `ChurchRevivalTests` | 교회 부활비·부활 체력, 관 추적·정리, 교회 데이터 시설 규칙 |
 | `PartyFundTests` | 파티 공동 자금(합류·결제·낙전·전멸·탈출·약탈·단계) |
 | `UnitMarketTests` | 주간 지원자 수·시세·유지비, 보인 값과 결제 값 일치 |
 | `CreditWarningTests` | 부채 한도·긴급 상환·신용 경고·파산 판정 |

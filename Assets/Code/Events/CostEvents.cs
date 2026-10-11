@@ -24,7 +24,10 @@ namespace Code.Events
         PartyDrop,
 
         /// <summary>전멸한 파티가 남긴 공동 자금 전부.</summary>
-        PartyWipe
+        PartyWipe,
+
+        /// <summary>교회에서 관을 되살리며 받은 부활비.</summary>
+        Church
     }
 
     public class BuildCostRequestedEvent : GameEvent

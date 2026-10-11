@@ -8,7 +8,7 @@ paths:
 1. 건물은 **데이터 중심**으로 만든다. 새 건물은 먼저 `BuildingDataSO` 하나로 표현하고, 기존 프리팹을 공유한다.
    * 종류 11개가 프리팹 8개를 나눠 쓴다(주점·큰 주점 → `Inn`, 광산·깊은 광산 → `Mine`, 상점·무기 상점 → `Store`).
    * 외형은 `BuildingDataSO.BoardSprite`로 바꾼다. 승급형 시설은 새 프리팹을 만들지 않고 데이터만 추가한다.
-   * 동작이 기존 클래스(`Store`, `Inn`, `Blacksmith`, `Mine`, `Treasury`, `RecoveryFacility`, `Wall`, `Portal`, `Trap`)로 안 될 때만, `Building` 파생 클래스와 새 프리팹을 만든다. 이때는 사전에 설계를 확인받는다.
+   * 동작이 기존 클래스(`Store`, `Inn`, `Blacksmith`, `Mine`, `Treasury`, `RecoveryFacility`, `Wall`, `Portal`, `Trap`, `Church`)로 안 될 때만, `Building` 파생 클래스와 새 프리팹을 만든다. 이때는 사전에 설계를 확인받는다.
 2. 위치와 이름.
    * 데이터: `Assets/GameModules/Data/Buildings/<이름>BuildingData.asset` (함정은 `<이름>TrapBuildingData`)
    * 예외: `BlacksmithBuildingData`, `TreasuryBuildingData`는 코드가 `Resources.Load`로 읽어서 `Assets/Resources/Buildings/`에 있다. 옮기지 않는다.

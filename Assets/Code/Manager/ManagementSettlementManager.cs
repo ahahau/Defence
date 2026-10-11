@@ -952,6 +952,7 @@ namespace Code.Manager
                 GoldChangeSource.Bounty => "모험가 처치",
                 GoldChangeSource.PartyDrop => "모험가 낙전",
                 GoldChangeSource.PartyWipe => "파티 전멸 회수",
+                GoldChangeSource.Church => "교회 부활비",
                 GoldChangeSource.Mine => "광산 수익",
                 GoldChangeSource.Inn => "여관 수익",
                 GoldChangeSource.Store => "상점 수익",

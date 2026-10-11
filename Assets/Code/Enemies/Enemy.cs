@@ -406,6 +406,10 @@ namespace Code.Enemies
 
             statusController?.TickNodeVisit();
 
+            // 관을 끌고 교회에 들어왔으면 공동 자금으로 동료를 되살린다.
+            if (node.AssignedBuilding is Church church && PartyCoffin.CountFor(PartyId) > 0)
+                church.ReviveParty(PartyId, node);
+
             if (TryTriggerTrap(node)) return false;
             TryDamageNodeBuilding(node);
             ApplyPassBuildingEffect(node);
@@ -745,10 +749,40 @@ namespace Code.Enemies
         /// </summary>
         public Node ResolveRouteGoal()
         {
+            // 동료의 관을 끌고 있으면 무엇보다 교회가 먼저다.
+            if (!_isReturning && PartyCoffin.CountFor(PartyId) > 0)
+            {
+                var church = FindChurchNode();
+                if (church != null)
+                    return church;
+            }
+
             if (IsTrespasser)
                 return IntrusionThreat.FindPriorityTarget(transform.position, out _);
 
             return FindErrandNode();
+        }
+
+        /// <summary>가장 가까운 문 연 교회가 있는 방. 없으면 null.</summary>
+        private Node FindChurchNode()
+        {
+            Node best = null;
+            var bestDistance = float.MaxValue;
+            var from = (Vector2)transform.position;
+            foreach (var node in Node.ActiveNodes)
+            {
+                if (node == null || node.AssignedBuilding is not Church church || !church.IsOperating)
+                    continue;
+
+                var distance = ((Vector2)node.transform.position - from).sqrMagnitude;
+                if (distance >= bestDistance)
+                    continue;
+
+                best = node;
+                bestDistance = distance;
+            }
+
+            return best;
         }
 
         /// <summary>
@@ -1085,6 +1119,9 @@ namespace Code.Enemies
             {
                 _partyFundSettled = true;
                 PartyFundLedger.Active.MemberEscaped(PartyId);
+                // 마지막 한 명이 나가면 끌고 다니던 관도 함께 나간다.
+                if (PartyFundLedger.Active.AliveMembersOf(PartyId) == 0)
+                    PartyCoffin.ClearParty(PartyId);
             }
 
             var target = enemyRenderer != null ? enemyRenderer.transform : transform;
@@ -1201,6 +1238,15 @@ namespace Code.Enemies
 
             _partyFundSettled = true;
             var gold = PartyFundLedger.Active.MemberDied(PartyId, out var wiped);
+
+            // 동료가 남아 있으면 관이 되어 따라간다. 전멸하면 끌고 다니던 관도 함께 사라진다.
+            // 보스는 관이 되지 않는다 — 보스가 교회에서 다시 일어나면 보스전의 끝이 흐려진다.
+            if (wiped)
+                PartyCoffin.ClearParty(PartyId);
+            else if (!_isBoss && data != null)
+                PartyCoffin.Spawn(PartyId, data, Level, VisitPurpose,
+                    enemyRenderer != null ? enemyRenderer.SpriteRenderer : null, transform.position);
+
             if (gold <= 0)
                 return;
 
