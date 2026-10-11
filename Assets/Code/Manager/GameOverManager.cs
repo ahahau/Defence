@@ -51,6 +51,9 @@ namespace Code.Manager
                 : evt.Reason);
         }
 
+        /// <summary>보스 패배 조건처럼 유닛·금화가 아닌 이유로 판이 끝날 때.</summary>
+        public void TriggerRunDefeat(string reason) => TriggerGameOver(null, reason);
+
         private void TriggerGameOver(MainUnit mainUnit, string reason)
         {
             if (IsGameOver)

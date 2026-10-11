@@ -603,6 +603,7 @@ namespace Code.Manager
             AppendBattleNotes(notes);
             AppendCounterplayNotes(notes);
             AppendPartyFundNote(notes);
+            AppendBossForecastNote(notes);
             AppendRepairForecastNote(notes);
             AppendDebtNote(notes);
 
@@ -794,6 +795,20 @@ namespace Code.Manager
             notes.Add(new SettlementNote(
                 $"살아 나간 모험가가 공동 자금 {GoldText.Amount(escaped)}를 들고 갔습니다",
                 SettlementNoteTone.Caution));
+        }
+
+        /// <summary>
+        /// 내일이 보스 날이면 보스와 패배 조건을 미리 알린다. 하루 전에 알아야 배치를 바꿀 수 있다.
+        /// </summary>
+        private void AppendBossForecastNote(List<SettlementNote> notes)
+        {
+            var wave = WaveManager.Current;
+            if (wave == null || !wave.TryGetBossPreview(currentDay + 1, out var title, out var conditions))
+                return;
+
+            notes.Add(new SettlementNote(
+                string.IsNullOrEmpty(conditions) ? $"내일 보스: {title}" : $"내일 보스: {title}  ·  {conditions}",
+                SettlementNoteTone.Danger));
         }
 
         private static void AppendCounterplayNotes(List<SettlementNote> notes)

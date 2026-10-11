@@ -273,12 +273,14 @@ namespace Code.Manager
         private void RegisterListeners()
         {
             dayEventChannel?.AddListener<DayChangedEvent>(HandleDayChanged);
+            costEventChannel?.AddListener<UnitDownedEvent>(HandleUnitDowned);
             Health.AnyDamaged += HandleAnyDamage;
         }
 
         private void UnregisterListeners()
         {
             dayEventChannel?.RemoveListener<DayChangedEvent>(HandleDayChanged);
+            costEventChannel?.RemoveListener<UnitDownedEvent>(HandleUnitDowned);
             Health.AnyDamaged -= HandleAnyDamage;
         }
 
@@ -378,6 +380,10 @@ namespace Code.Manager
             _bossSpawned = false;
             _bossFinalPhaseStarted = false;
             _bossReinforcementStarted = false;
+            _bossElapsed = 0f;
+            _bossTreasuryBreached = false;
+            _bossUnitsDowned = 0;
+            _bossDefeatRaised = false;
             SetupPartyForWave();
 
             GameSfxPlayer.Play(GameSfxCue.WaveStart);
@@ -449,6 +455,7 @@ namespace Code.Manager
 
                 RemoveMissingEnemies();
                 RefreshPauseLock();
+                TickBossDefeatConditions(Time.deltaTime);
                 if (DayManager.Current != null && DayManager.Current.Phase == DayManager.OperationPhase.Day
                     && _remainingSpawns <= nightAtRemainingSpawns)
                 {
@@ -947,6 +954,95 @@ namespace Code.Manager
             }
 
             return false;
+        }
+
+        /// <summary>보스가 들어온 뒤 흐른 게임 시간. 제한 시간 판정과 HUD가 본다.</summary>
+        private float _bossElapsed;
+        private bool _bossTreasuryBreached;
+        private int _bossUnitsDowned;
+        private bool _bossDefeatRaised;
+        private GameOverManager _gameOverManager;
+
+        /// <summary>오늘이 보스 날이고 보스가 살아 있으면 HUD에 적을 패배 조건 진행. 아니면 빈 문자열.</summary>
+        public string BossDefeatProgressText => _isBossWave && _currentBoss != null && _bossSpawned && IsBossAlive
+            ? BossDefeatRules.DescribeProgress(
+                _bossElapsed, _currentBoss.timeLimitSeconds, _currentBoss.loseOnTreasuryBreach,
+                _bossUnitsDowned, _currentBoss.loseAfterUnitsDowned)
+            : string.Empty;
+
+        private bool IsBossAlive => _bossEnemy != null && _bossEnemy.IsAlive;
+
+        /// <summary>
+        /// 그날의 보스와 패배 조건. 전날 정산의 예고와 보스 날 준비 화면이 읽는다. 보스 날이 아니면 false.
+        /// </summary>
+        public bool TryGetBossPreview(int day, out string title, out string conditions)
+        {
+            title = string.Empty;
+            conditions = string.Empty;
+            var boss = waveConfig != null && waveConfig.IsBossDay(day) ? waveConfig.GetBossForDay(day) : null;
+            if (boss == null)
+                return false;
+
+            title = string.IsNullOrWhiteSpace(boss.title) ? "보스" : boss.title;
+            conditions = BossDefeatRules.Describe(boss.timeLimitSeconds, boss.loseOnTreasuryBreach, boss.loseAfterUnitsDowned);
+            return true;
+        }
+
+        /// <summary>보스가 방에 들어왔다. 금고가 있는 방이면 침입으로 본다.</summary>
+        public void ReportBossEnteredRoom(Node node)
+        {
+            if (!_isWaveRunning || node == null || _bossTreasuryBreached)
+                return;
+
+            var hasTreasury = node.Data != null && node.Data.Type == DungeonNodeType.Treasury;
+            foreach (var _ in node.EnumerateTreasuries())
+            {
+                hasTreasury = true;
+                break;
+            }
+
+            if (!hasTreasury)
+                return;
+
+            _bossTreasuryBreached = true;
+            TickBossDefeatConditions(0f);
+        }
+
+        /// <summary>보스가 살아 있는 동안 쓰러진 부하를 센다.</summary>
+        private void HandleUnitDowned(UnitDownedEvent evt)
+        {
+            if (!_isWaveRunning || !_isBossWave || !IsBossAlive)
+                return;
+
+            _bossUnitsDowned++;
+            TickBossDefeatConditions(0f);
+        }
+
+        /// <summary>
+        /// 보스가 살아 있는 동안 시간을 흘리고 패배 조건을 본다. 조건을 채우면 판이 끝난다.
+        /// 게임오버 화면은 다른 패배와 같은 경로(<see cref="GameOverManager"/>)로 띄운다.
+        /// </summary>
+        private void TickBossDefeatConditions(float deltaTime)
+        {
+            if (_bossDefeatRaised || !_isWaveRunning || !_isBossWave || _currentBoss == null || !IsBossAlive)
+                return;
+
+            _bossElapsed += Mathf.Max(0f, deltaTime);
+            var reason = BossDefeatRules.Check(
+                _currentBoss.title,
+                _bossElapsed,
+                _currentBoss.timeLimitSeconds,
+                _bossTreasuryBreached,
+                _currentBoss.loseOnTreasuryBreach,
+                _bossUnitsDowned,
+                _currentBoss.loseAfterUnitsDowned);
+            if (reason == null)
+                return;
+
+            _bossDefeatRaised = true;
+            if (_gameOverManager == null)
+                _gameOverManager = FindAnyObjectByType<GameOverManager>();
+            _gameOverManager?.TriggerRunDefeat(reason);
         }
 
         /// <summary>엘리트·보스가 던전에 남아 있는 동안 플레이어 일시정지를 잠근다.</summary>

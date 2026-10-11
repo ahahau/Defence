@@ -45,3 +45,5 @@
 .pause-help-title { color: var(--accent-soft); font-size: 14px; -unity-font-style: bold; margin-top: 16px; }
 .pause-help-body { color: var(--text-body); font-size: 12px; white-space: normal; margin-top: 8px; }
 .detail-facility-queue { height: 40px; flex-shrink: 0; white-space: normal; overflow: hidden; }
+.party-name { flex-shrink: 0; margin-right: 8px; }
+.party-risk { flex-shrink: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; -unity-text-align: middle-right; }

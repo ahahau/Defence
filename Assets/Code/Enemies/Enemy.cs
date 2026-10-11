@@ -406,6 +406,10 @@ namespace Code.Enemies
 
             statusController?.TickNodeVisit();
 
+            // 보스는 금고 방에 들어서는 것만으로 패배 조건이 될 수 있다.
+            if (_isBoss)
+                Code.Manager.WaveManager.Current?.ReportBossEnteredRoom(node);
+
             // 관을 끌고 교회에 들어왔으면 공동 자금으로 동료를 되살린다.
             if (node.AssignedBuilding is Church church && PartyCoffin.CountFor(PartyId) > 0)
                 church.ReviveParty(PartyId, node);

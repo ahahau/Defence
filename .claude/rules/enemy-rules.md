@@ -46,7 +46,7 @@ paths:
    * 파티는 `AdventurerPartySO`이고, `Members`는 등장 순서다(보통 전열 → 딜러 → 지원).
    * 일차 고정 파티: `Data/Waves/Designed/Party_DayNN_<컨셉>.asset`을 만들고, WaveConfig `specificWaves`의 해당 일차 `party`에 연결한다. 대기 화면용 `threatTitle`/`counterHint`도 채운다.
    * 무작위 풀 파티: `Data/Waves/Party_*.asset`을 만들어 `WaveManager.parties`에 넣는다.
-   * 보스: `Data/Waves/Bosses/BossParty_DayNN.asset`(첫 멤버가 보스, 나머지는 호위)을 만들어 WaveConfig `bossEntries`에 연결한다. 보스날은 청산일(7의 배수)이어야 한다. 1~28일의 청산일마다 전용 보스 정의가 있어야 한다(`AssetWiringTests`). 필요하면 최종 단계(`enableFinalPhase`)나 증원 단계(`enableReinforcementPhase`)를 쓴다.
+   * 보스: `Data/Waves/Bosses/BossParty_DayNN.asset`(첫 멤버가 보스, 나머지는 호위)을 만들어 WaveConfig `bossEntries`에 연결한다. 패배 조건(`timeLimitSeconds`·`loseOnTreasuryBreach`·`loseAfterUnitsDowned`)을 하나 이상 반드시 준다(`BossDefeatTests`가 검사). 조건은 전날 정산과 보스 날 HUD에 자동으로 예고된다. 보스날은 청산일(7의 배수)이어야 한다. 1~28일의 청산일마다 전용 보스 정의가 있어야 한다(`AssetWiringTests`). 필요하면 최종 단계(`enableFinalPhase`)나 증원 단계(`enableReinforcementPhase`)를 쓴다.
    * WaveConfig·WaveManager는 에셋·씬 배선이다. Unity CLI로 처리하거나 사용자에게 순서대로 요청한다.
 6. 설계 제약을 지킨다.
    * 모험가는 유닛과 **전투**한다. 방문 목적(`IsTrespasser`)으로 전투 여부를 가르지 않는다. 이 값은 경로 판정(금고 직행 vs 시설 방문)에만 쓴다.

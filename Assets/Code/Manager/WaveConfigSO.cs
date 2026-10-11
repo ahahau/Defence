@@ -68,6 +68,14 @@ namespace Code.Manager
             [TextArea, Tooltip("증원이 시작될 때 표시할 대응 문구.")]
             public string reinforcementSubtitle;
 
+            [Header("Defeat Conditions")]
+            [Min(0f), Tooltip("보스가 입장한 뒤 이 시간(게임 초) 안에 쓰러뜨리지 못하면 패배. 0이면 제한 없음.")]
+            public float timeLimitSeconds;
+            [Tooltip("보스가 금고가 있는 방에 들어가면 패배.")]
+            public bool loseOnTreasuryBreach;
+            [Min(0), Tooltip("보스가 있는 동안 부하가 이만큼 쓰러지면 패배. 0이면 제한 없음.")]
+            public int loseAfterUnitsDowned;
+
             public int GetReservedReinforcementCount(int totalEnemyCount)
             {
                 if (!enableReinforcementPhase || reinforcementParty == null

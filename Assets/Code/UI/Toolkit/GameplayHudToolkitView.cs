@@ -465,10 +465,19 @@ namespace Code.UI.Toolkit
             if (wave == null || !wave.IsWaveRunning)
             {
                 AddPartyRow("들어온 파티 없음", "대기");
+                // 보스 날 준비 중에는 오늘 올 보스와 패배 조건을 계속 띄워 둔다.
+                var nextDay = _dayManager != null ? _dayManager.NextWaveDay : 0;
+                if (wave != null && wave.TryGetBossPreview(nextDay, out var bossTitle, out var conditions))
+                    AddPartyRow($"오늘 보스 · {bossTitle}", string.IsNullOrEmpty(conditions) ? "조건 없음" : conditions);
                 return;
             }
             AddPartyRow(wave.IsBossWave ? "보스 파티" : "침입 파티", $"{danger} · {active}명");
             if (pending > 0) AddPartyRow("다음 파티", $"접근 · {pending}명");
+
+            // 보스가 있는 동안은 남은 시간·부하 손실 같은 패배 조건 진행을 보여 준다.
+            var bossProgress = wave.BossDefeatProgressText;
+            if (!string.IsNullOrEmpty(bossProgress))
+                AddPartyRow("보스 패배 조건", bossProgress);
         }
 
         private void AddPartyRow(string name, string risk)
@@ -477,7 +486,8 @@ namespace Code.UI.Toolkit
             row.AddToClassList("party-row");
             var nameLabel = new Label(name);
             nameLabel.AddToClassList("party-name");
-            var riskLabel = new Label(risk);
+            // 패배 조건처럼 긴 문구는 잘릴 수 있으니 전체를 툴팁으로 남긴다.
+            var riskLabel = new Label(risk) { tooltip = risk };
             riskLabel.AddToClassList("party-risk");
             row.Add(nameLabel);
             row.Add(riskLabel);
