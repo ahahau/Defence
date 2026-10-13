@@ -92,7 +92,7 @@ Assets/GameModules/UI/UxmlAndUss/
    * uGUI 위에 떠야 하면 `PopupPanelSettings`(Sort Order 10000)를 쓰고 문서 순서는 팝업(900)보다 낮게(예: 500) 둔다.
    * 지도 위에 뜨는 패널은 카드 요소를 `ToolkitPointerBlockers.Register`로 등록한다. 지도 입력(`DungeonGraphController.IsPointerOverUi`)이 uGUI만 걸러서, 등록하지 않으면 버튼을 누를 때 아래 방까지 눌린다. 화면 전체를 덮는 루트는 등록하지 않는다.
    * 씬에 배선된 채널을 듣는 옛 uGUI 컴포넌트는 씬을 고치지 않고 다리로 남긴다: 이벤트를 받아 Toolkit 화면의 `Show`로 넘기고 자기 패널은 숨긴다(예: `EnemyStatusPanelView` → `EnemyStatusToolkitView`).
-   * 옮겨 온 화면: 금고 관리(`TreasuryToolkitView`, `Management/Treasury`), 모험가 상태(`EnemyStatusToolkitView`, `Battle/EnemyStatus`). 옛 uGUI `TreasuryPanelView`·`Resources/UI/TreasuryPanel.prefab`은 SampleScene에 인스턴스가 있어 씬을 정리할 때 함께 지운다(지금은 쓰이지 않음).
+   * 옮겨 온 화면: 금고 관리(`TreasuryToolkitView`, `Management/Treasury`), 모험가 상태(`EnemyStatusToolkitView`, `Battle/EnemyStatus`), 유물 줄(`ArtifactToolkitView`, `Battle/Artifacts`, 다리 `ArtifactPanelView`). 옛 uGUI `TreasuryPanelView`·`Resources/UI/TreasuryPanel.prefab`은 SampleScene에 인스턴스가 있어 씬을 정리할 때 함께 지운다(지금은 쓰이지 않음).
 11. Unity CLI로 검증할 때 주의한다.
    * `simulate_pointer`는 UI Toolkit에 먹히지 않는다. 뷰의 private 핸들러를 리플렉션으로 호출해 검증한다.
    * `eval`에서 `Q<T>()`는 `UnityEngine.UIElements.UQueryExtensions.Q<T>(root, "name")`로 쓴다.

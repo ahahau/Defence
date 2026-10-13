@@ -1,0 +1,44 @@
+/*
+ * 가진 유물 줄. 상단바(약 96px) 아래 왼쪽에 붙는다. 아이콘은 36px 고정, 최대 10개까지 한 줄로 늘어난다.
+ * 설명은 아이콘에 마우스를 올리면 고정 크기 툴팁으로 보여 준다(ui-rules 10번).
+ */
+.artifact-root {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+}
+
+.artifact-bar {
+    position: absolute;
+    left: 16px;
+    top: 104px;
+    height: 48px;
+    padding: 0 8px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.artifact-bar-label { width: 36px; flex-shrink: 0; margin: 0; -unity-text-align: middle-left; }
+.artifact-icons { flex-direction: row; align-items: center; height: 40px; }
+
+.artifact-icon {
+    width: 36px;
+    height: 36px;
+    margin-left: 4px;
+    flex-shrink: 0;
+    border-width: 1px;
+    border-color: var(--color-border-quiet);
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.artifact-icon:hover { border-color: var(--color-border); }
+
+.artifact-tooltip {
+    position: absolute;
+    width: 300px;
+    height: 112px;
+    padding: 10px 12px;
+    visibility: hidden;
+}
+
+.artifact-tooltip-name { height: 26px; flex-shrink: 0; margin: 0; -unity-text-align: middle-left; font-size: 16px; }
+.artifact-tooltip-description { flex-grow: 1; min-height: 0; overflow: hidden; margin: 4px 0 0 0; -unity-text-align: upper-left; }

@@ -66,19 +66,12 @@ namespace Code.UI
                 Refresh();
         }
 
+        // 화면은 UI Toolkit(ArtifactToolkitView)이 그린다. 이 컴포넌트는 씬에 배선된 인벤토리·채널을 듣고 넘겨주기만 한다.
+        // 옛 uGUI 줄은 씬을 정리할 때 함께 지운다.
         private void Refresh()
         {
             ClearEntries();
-
-            foreach (var artifact in artifactInventory.ObtainedArtifacts)
-            {
-                if (artifact == null)
-                    continue;
-
-                var entry = Instantiate(entryPrefab, contentRoot);
-                entry.Initialize(artifact, this);
-                entries.Add(entry);
-            }
+            Code.UI.Toolkit.ArtifactToolkitView.Ensure()?.SetArtifacts(artifactInventory.ObtainedArtifacts);
         }
 
         public void ShowTooltip(ArtifactDataSO artifact, Vector2 screenPosition)
@@ -109,11 +102,12 @@ namespace Code.UI
         {
             _lastVisibilityDay = DayManager.Current != null ? DayManager.Current.CurrentDay : 0;
             var unlocked = CoreLoopFeatureUnlocks.IsArtifactUnlocked(_lastVisibilityDay);
-            _visibilityGroup.alpha = unlocked ? 1f : 0f;
-            _visibilityGroup.interactable = unlocked;
-            _visibilityGroup.blocksRaycasts = unlocked;
-            if (!unlocked)
-                HideTooltip();
+            // 옛 uGUI 줄은 늘 숨기고, 보이는 것은 Toolkit 줄이다.
+            _visibilityGroup.alpha = 0f;
+            _visibilityGroup.interactable = false;
+            _visibilityGroup.blocksRaycasts = false;
+            HideTooltip();
+            Code.UI.Toolkit.ArtifactToolkitView.Ensure()?.SetUnlocked(unlocked);
         }
     }
 }
