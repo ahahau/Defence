@@ -289,8 +289,8 @@ namespace Tests.EditMode.Rules
             var data = UnitData("veteran", 40);
             var unit = Unit(data, 0f);
 
-            // 레벨 컴포넌트가 없으면 1레벨로 본다. 기본값만 나와야 한다.
-            Assert.That(getCost.Invoke(system, new object[] { unit }), Is.EqualTo(15));
+            // 레벨 컴포넌트가 없으면 1레벨로 본다. 기본값에 정가 10G당 1(40G → +4)만 붙는다.
+            Assert.That(getCost.Invoke(system, new object[] { unit }), Is.EqualTo(19));
             Assert.That(getCost.Invoke(system, new object[] { null }), Is.EqualTo(15),
                 "부하가 사라진 뒤에도 값을 물어볼 수 있어야 합니다.");
         }

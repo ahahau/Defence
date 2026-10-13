@@ -42,7 +42,9 @@ namespace Code.Combat
                 return damage;
 
             if (_unit.IsPreparingRedeploy)
-                damage = RedeployRules.ApplyPreparationDamage(damage);
+                damage = RedeployRules.ApplyPreparationDamage(damage, _unit.Trait);
+            if (damage <= 0)
+                return 0;
 
             var battlefield = _battleAgent != null ? _battleAgent.Battlefield : null;
             return battlefield != null && battlefield.TryGetComponent<Code.MapCreateSystem.Node>(out var node)

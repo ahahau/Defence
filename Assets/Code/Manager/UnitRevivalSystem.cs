@@ -94,7 +94,8 @@ namespace Code.Manager
                 return baseRevivalCost;
 
             var level = unit.Level != null ? unit.Level.Level : 1;
-            return baseRevivalCost + costPerLevel * Mathf.Max(0, level - 1);
+            return RevivalManaCostRules.Cost(
+                baseRevivalCost, costPerLevel, level, unit.Data != null ? unit.Data.Cost : 0, unit.Trait);
         }
 
         /// <summary>그 부하가 다시 설 때까지 남은 시간. 기다리는 중이 아니면 0.</summary>

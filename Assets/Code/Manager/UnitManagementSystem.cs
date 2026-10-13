@@ -128,10 +128,27 @@ namespace Code.Manager
             // 옮긴 방 수만큼 자리 잡는 시간이 붙는다. 길을 못 찾으면 한 방으로 센다.
             var path = NodePathfinder.FindPath(sourceNode, targetNode);
             var roomsMoved = path != null && path.Count >= 2 ? path.Count - 1 : 1;
-            var preparation = RedeployRules.SecondsFor(roomsMoved);
+            var preparation = RedeployRules.SecondsFor(roomsMoved, unit.Trait);
             unit.BeginRedeployPreparation(preparation);
-            reason = $"전입 완료 · 준비 {preparation:0}초";
+            if (unit.Trait == UnitTrait.FieldMedic)
+                HealRoomOnArrival(targetNode);
+
+            var reaction = RedeployRules.DescribeReaction(unit.Trait);
+            reason = string.IsNullOrEmpty(reaction)
+                ? $"전입 완료 · 준비 {preparation:0.#}초"
+                : $"전입 완료 · 준비 {preparation:0.#}초 · {reaction}";
             return true;
+        }
+
+        /// <summary>야전 의무병이 도착한 방의 아군(자신 포함)을 조금씩 치료한다.</summary>
+        private static void HealRoomOnArrival(Node node)
+        {
+            foreach (var placement in node.UnitPlacements)
+            {
+                var health = placement?.Instance != null ? placement.Instance.Health : null;
+                if (health != null && health.IsAlive)
+                    health.Heal(RedeployRules.FieldMedicHeal(health.MaxHealth));
+            }
         }
 
         public bool CanRecall(Node node, Unit unit, out string reason)

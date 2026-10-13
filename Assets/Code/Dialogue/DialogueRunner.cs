@@ -29,6 +29,9 @@ namespace Code.Dialogue
 
         /// <summary>이번 판에서 아직 안 나온 이벤트들. 섞어 두고 하나씩 꺼내 같은 판에서 겹치지 않게 한다.</summary>
         private readonly List<DialogueSequenceSO> _shuffledEventQueue = new();
+
+        /// <summary>사건을 띄우며 시간을 세워 두었는가. 대화가 끝나면 푼다.</summary>
+        private bool _suspendedForEvent;
         [SerializeField] private bool playScheduledEvents = true;
         [Header("Guided Start Tutorial")]
         [SerializeField] private bool useGuidedStartTutorial;
@@ -92,6 +95,7 @@ namespace Code.Dialogue
         private void OnDisable()
         {
             UnregisterListeners();
+            ReleaseEventSuspend();
 
             if (useGuidedStartTutorial)
                 TutorialInputGate.Clear();
@@ -886,6 +890,7 @@ namespace Code.Dialogue
             _playingNormalEvent = false;
             var endedSequence = player.Stop();
             view?.Hide();
+            ReleaseEventSuspend();
 
             if (endedSequence != null)
             {
@@ -971,6 +976,7 @@ namespace Code.Dialogue
                 var built = SituationEventFactory.Build(situation, costEventChannel);
                 if (built != null)
                 {
+                    SuspendForEvent();
                     PlaySequence(built, false);
                     return;
                 }
@@ -981,7 +987,30 @@ namespace Code.Dialogue
 
             var sequence = pendingScheduledEventSequence;
             pendingScheduledEventSequence = null;
+            SuspendForEvent();
             PlaySequence(sequence, true);
+        }
+
+        /// <summary>
+        /// 사건(일반·상황)은 고를 때까지 시간을 세운다(기획서: 주요 이벤트가 있으면 선택 종료까지 정지).
+        /// 튜토리얼 말풍선은 세우지 않는다 — 배치·건설을 직접 해 보라는 안내라 시간이 흘러야 한다.
+        /// </summary>
+        private void SuspendForEvent()
+        {
+            if (_suspendedForEvent || GameSpeedController.Current == null)
+                return;
+
+            _suspendedForEvent = true;
+            GameSpeedController.Current.Suspend(this);
+        }
+
+        private void ReleaseEventSuspend()
+        {
+            if (!_suspendedForEvent)
+                return;
+
+            _suspendedForEvent = false;
+            GameSpeedController.Current?.Release(this);
         }
 
         /// <summary>

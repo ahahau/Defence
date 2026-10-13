@@ -20,6 +20,7 @@ paths:
 - 모든 피해(평타·스킬·함정)는 `HealthModule.TakeDamage`를 지난다. "지금은 덜/더 아프다" 같은 상태는 `Health.ModifyIncomingDamage`(GameLib의 가상 메서드)에 건다. 피해를 주는 쪽마다 따로 보정하지 않는다.
 - 요새 방(`RoomFeature.Fortress`)에 선 부하는 받는 피해 -20%(최소 1). `Health.ModifyIncomingDamage`가 부하의 `BattleAgent.Battlefield` → `Node.Feature`를 보고 재배치 준비 감소 뒤에 곱한다.
 - 재배치 준비(`Unit.IsPreparingRedeploy`, `RedeployRules`): 이동한 방 수 × 1초(게임 시간). 준비 중 `Combatant` 공격 게이지가 멈추고 `SkillCaster.TryCast`가 거절되며, 받는 피해는 절반(최소 1).
+  - 특성별 추가 반응(수치는 `RedeployRules`에만): 강인함 준비 시간 ×0.5, 신중함 ×1.5·준비 중 피해 0, 수호자 준비 중 피해 25%(최소 1), 공격적 준비 뒤 첫 평타 +50%(`Unit.ConsumeRedeployFirstStrike`), 야전 의무병 도착한 방 아군 최대 체력 10% 회복(`UnitManagementSystem.TryMove`). 새 특성을 만들면 반응도 정한다.
 
 ## 스탯
 - 값을 **덮어쓰지 말고** 출처 key별 가감치로 얹는다(`WaveLevelStatKey`, `BossStatKey` 등). 덮어쓰면 `ApplyData`가 재실행될 때 일차·보스 배율이 지워진다.

@@ -19,7 +19,23 @@ namespace Code.UI.Toolkit
         private Label _title;
         private Label _headline;
         private Label _summary;
+        private Label _meta;
+        private VisualElement _actions;
         private Button _retry;
+        private Button _toTitle;
+
+        private const string MetaName = "run-end-meta";
+        private const string ActionsName = "run-end-actions";
+        private const string ToTitleName = "run-end-to-title";
+        private const string StageClass = "run-end-stage";
+        private const string StageShownClass = "run-end-stage--shown";
+        private const int TitleSceneBuildIndex = 0;
+
+        // 끝난 판을 한 번에 쏟아 놓지 않고 제목 → 통계 → 진행도 → 버튼 순서로 보여 준다(실제 시간 ms).
+        private const long HeadlineDelayMs = 200;
+        private const long SummaryDelayMs = 900;
+        private const long MetaDelayMs = 1600;
+        private const long ActionsDelayMs = 2300;
 
         private void OnEnable()
         {
@@ -27,11 +43,19 @@ namespace Code.UI.Toolkit
             _root = GetComponent<UIDocument>().rootVisualElement;
             _title = _root.Q<Label>("run-end-title"); _headline = _root.Q<Label>("run-end-headline");
             _summary = _root.Q<Label>("run-end-summary"); _retry = _root.Q<Button>("run-end-retry");
+            _meta = _root.Q<Label>(MetaName); _actions = _root.Q<VisualElement>(ActionsName);
+            _toTitle = _root.Q<Button>(ToTitleName);
             if (_retry != null) _retry.clicked += Restart;
+            if (_toTitle != null) _toTitle.clicked += ReturnToTitle;
             _panel = _root.Q<VisualElement>(PanelName) ?? _root;
             _panel.style.display = DisplayStyle.None;
         }
-        private void OnDisable() { if (_retry != null) _retry.clicked -= Restart; if (Current == this) Current = null; }
+        private void OnDisable()
+        {
+            if (_retry != null) _retry.clicked -= Restart;
+            if (_toTitle != null) _toTitle.clicked -= ReturnToTitle;
+            if (Current == this) Current = null;
+        }
         public static bool TryShow(string title, string headline)
         {
             if (Current == null) return false;
@@ -43,9 +67,44 @@ namespace Code.UI.Toolkit
             var day = DayManager.Current?.CurrentDay ?? 0;
             var cost = CostManager.Current;
             var roster = HiredUnitRoster.Current;
-            _summary.text = $"버틴 날 {day}일\n남은 금화 {cost?.CurrentGold ?? 0}G · 부채 {cost?.CurrentDebt ?? 0}G\n부하 {roster?.TotalHiredCount ?? 0}명"
-                            + BuildMetaLine();
+            var stats = $"버틴 날 {day}일\n남은 금화 {cost?.CurrentGold ?? 0}G · 부채 {cost?.CurrentDebt ?? 0}G\n부하 {roster?.TotalHiredCount ?? 0}명";
+            var metaLine = BuildMetaLine().TrimStart('\n');
+            if (_meta != null)
+            {
+                _summary.text = stats;
+                _meta.text = metaLine;
+            }
+            else
+            {
+                _summary.text = metaLine.Length > 0 ? $"{stats}\n\n{metaLine}" : stats;
+            }
+
             _panel.style.display = DisplayStyle.Flex;
+            PlayReveal();
+        }
+
+        /// <summary>단계마다 하나씩 드러낸다. 시간이 멈춘 뒤라 패널 스케줄러(실제 시간)를 쓴다.</summary>
+        private void PlayReveal()
+        {
+            foreach (var stage in _panel.Query(className: StageClass).ToList())
+                stage.RemoveFromClassList(StageShownClass);
+            _actions?.SetEnabled(false);
+
+            Reveal(_title, 0);
+            Reveal(_headline, HeadlineDelayMs);
+            Reveal(_summary, SummaryDelayMs);
+            Reveal(_meta, MetaDelayMs);
+            Reveal(_actions, ActionsDelayMs);
+            if (_actions != null)
+                _panel.schedule.Execute(() => _actions.SetEnabled(true)).StartingIn(ActionsDelayMs);
+        }
+
+        private void Reveal(VisualElement element, long delayMs)
+        {
+            if (element == null)
+                return;
+
+            _panel.schedule.Execute(() => element.AddToClassList(StageShownClass)).StartingIn(delayMs);
         }
         /// <summary>
         /// 이번 판이 남긴 진행도. 패배가 무엇을 남겼는지 보여야 다음 판을 시작할 이유가 생긴다.
@@ -83,7 +142,7 @@ namespace Code.UI.Toolkit
                 }
             }
 
-            var runner = Object.FindFirstObjectByType<Code.Dialogue.DialogueRunner>();
+            var runner = Object.FindAnyObjectByType<Code.Dialogue.DialogueRunner>();
             if (runner != null)
             {
                 foreach (var sequence in runner.ScheduledEventSequences)
@@ -97,5 +156,8 @@ namespace Code.UI.Toolkit
         }
 
         private void Restart() { GameSpeedController.Current?.ResetToNormal(); SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); }
+
+        /// <summary>타이틀로 돌아간다. 판 저장은 판이 끝날 때 이미 지워졌다.</summary>
+        private void ReturnToTitle() { GameSpeedController.Current?.ResetToNormal(); SceneManager.LoadScene(TitleSceneBuildIndex); }
     }
 }

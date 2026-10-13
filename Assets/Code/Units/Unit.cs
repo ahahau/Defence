@@ -122,6 +122,7 @@ namespace Code.Units
         private MoralePolicyManager _policyManager;
         private float _nightRecoveryTimer;
         private float _redeployPreparationRemaining;
+        private bool _redeployFirstStrikePending;
 
         protected override void Awake()
         {
@@ -185,8 +186,23 @@ namespace Code.Units
         }
 
         /// <summary>재배치 준비를 시작한다. 이미 준비 중이면 더 긴 쪽을 남긴다.</summary>
-        public void BeginRedeployPreparation(float seconds) =>
+        public void BeginRedeployPreparation(float seconds)
+        {
             _redeployPreparationRemaining = Mathf.Max(_redeployPreparationRemaining, seconds);
+            // 공격적인 부하는 자리를 잡고 나서 첫 공격을 세게 친다.
+            if (trait == UnitTrait.Aggressive)
+                _redeployFirstStrikePending = true;
+        }
+
+        /// <summary>준비가 끝난 공격적인 부하의 첫 공격이면 true를 돌려주고 소모한다.</summary>
+        public bool ConsumeRedeployFirstStrike()
+        {
+            if (!_redeployFirstStrikePending || IsPreparingRedeploy)
+                return false;
+
+            _redeployFirstStrikePending = false;
+            return true;
+        }
 
         private void Update()
         {

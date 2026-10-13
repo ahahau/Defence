@@ -30,7 +30,7 @@ paths:
 | `FacilityDurabilityTests` | 수익 시설 내구도·수입 배율·수리·철거 환불·저장, 손님별 마모 배율·소수 마모 누적·이용 시간 지연·효과 약화, 시설 등급별 최대 내구도·전투/사건 마모·승급 등급과 사건 마모 에셋 |
 | `TrapTileTests` | 함정 여러 칸 점유·철거, 범위·지속 판정, 재사용 시간, 시설·함정 겹침 |
 | `PauseLockTests` | 엘리트·보스 일시정지 잠금 규칙과 배속 컨트롤러 잠금 동작 |
-| `RedeployPreparationTests` | 재배치 준비 시간·준비 중 피해 절반 |
+| `RedeployPreparationTests` | 재배치 준비 시간·준비 중 피해 절반, 특성별 재배치 반응, 부활 마력 비용(정가·특성) |
 | `RoomConstructionTests` | 그래프 노드 제거(연결·자리 정리), 공사 중 노드의 막힌 길·배치 불가, 방 크기별 비용·시간·정원·환불·등급·후보 확률·소형 시설 금지, 특수 효과 확률·대가·효과, 연결 방향 예측, 열린 방의 효과 표시 |
 | `PopupRequestTests` | 범용 팝업 요청 규칙 |
 | `AssetWiringTests` | 에셋 연결 (그림·프리팹·아이콘·WaveConfig·씬 배선) |

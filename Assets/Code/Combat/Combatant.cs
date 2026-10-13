@@ -322,6 +322,8 @@ namespace Code.Combat
 
                         PlayAttackFeedback(transform.position, target.transform.position);
                         var damage = ResolveAttackDamage(target, out var isCritical);
+                        if (_ownerUnit != null && _ownerUnit.ConsumeRedeployFirstStrike())
+                            damage = Code.Units.RedeployRules.ApplyFirstStrike(damage);
                         target.NoteAttacker(this);
                         target.Health.TakeDamage(ApplyNightUnitMitigation(target, damage), isCritical);
                         TryApplyAttackStatusEffect(target);
