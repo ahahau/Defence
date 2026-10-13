@@ -33,7 +33,7 @@ paths:
 | `RedeployPreparationTests` | 재배치 준비 시간·준비 중 피해 절반, 특성별 재배치 반응, 부활 마력 비용(정가·특성) |
 | `RoomConstructionTests` | 그래프 노드 제거(연결·자리 정리), 공사 중 노드의 막힌 길·배치 불가, 방 크기별 비용·시간·정원·환불·등급·후보 확률·소형 시설 금지, 특수 효과 확률·대가·효과, 연결 방향 예측, 열린 방의 효과 표시 |
 | `PopupRequestTests` | 범용 팝업 요청 규칙 |
-| `AssetWiringTests` | 에셋 연결 (그림·프리팹·아이콘·WaveConfig·씬 배선·Toolkit 화면 설정) |
+| `AssetWiringTests` | 에셋 연결 (그림·프리팹·아이콘·WaveConfig·씬 배선·Toolkit 화면 설정·운영 방침 창 구조) |
 | `CombatFormulaTests` | 전투 공식 |
 | `EncounterVarietyTests` | 웨이브 편성 다양성, 파티 인원 변동(리더 유지·밤·등급), 리더 동기 대기 |
 | `WaveExploitationProgressTests` | 웨이브 목표 진행 |

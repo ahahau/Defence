@@ -6,6 +6,10 @@ using UnityEngine.UI;
 
 namespace Code.UI
 {
+    /// <summary>
+    /// 옛 uGUI 방 확장 확인 창. 이제 방 확장은 범용 팝업(<c>PopupController</c>, UI Toolkit)으로 묻고, 이 창을 부르는
+    /// 곳은 없다. 씬에 오브젝트가 남아 있어 씬을 정리할 때 함께 지운다.
+    /// </summary>
     public class BuildConfirmPanelView : MonoBehaviour
     {
         public static BuildConfirmPanelView Current { get; private set; }

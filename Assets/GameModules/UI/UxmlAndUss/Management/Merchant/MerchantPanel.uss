@@ -1,0 +1,52 @@
+/*
+ * 떠돌이 상인. 화면 가운데의 고정 크기 창(1040×460)에 상품 카드가 최대 5장 가로로 놓인다(ui-rules 10번).
+ * 카드: 그림 64 · 이름 24 · 값 22 · 설명 3줄 60 · 조합 2줄 36. 빈 자리는 카드가 없어도 줄 크기가 그대로다.
+ */
+.merchant-root { display: none; }
+
+.merchant-card {
+    width: 1040px;
+    height: 460px;
+    padding: 16px 20px;
+}
+
+.merchant-header { height: 44px; flex-shrink: 0; flex-direction: row; align-items: center; }
+.merchant-title { flex-shrink: 0; margin: 0 16px 0 0; -unity-text-align: middle-left; }
+.merchant-visit { flex-grow: 1; min-width: 0; margin: 0; -unity-text-align: middle-left; }
+.merchant-close { width: 72px; height: 30px; flex-shrink: 0; }
+
+.merchant-offers { height: 300px; flex-shrink: 0; flex-direction: row; justify-content: flex-start; margin-top: 12px; }
+
+.merchant-offer {
+    width: 192px;
+    height: 300px;
+    flex-shrink: 0;
+    margin-right: 8px;
+    padding: 10px;
+    align-items: stretch;
+    justify-content: flex-start;
+    white-space: normal;
+}
+
+.merchant-offer:disabled { opacity: 0.6; }
+
+.merchant-offer-icon {
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    align-self: center;
+    -unity-background-scale-mode: scale-to-fit;
+    -unity-text-align: middle-center;
+    font-size: 28px;
+    color: var(--color-text-dim);
+}
+
+.merchant-offer-name { height: 24px; flex-shrink: 0; margin: 8px 0 0 0; font-size: 16px; -unity-font-style: bold; color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.merchant-offer-price { height: 22px; flex-shrink: 0; margin: 2px 0 0 0; color: var(--color-accent); -unity-font-style: bold; }
+.merchant-offer-price--short { color: var(--color-loss); }
+/* 버튼(.btn)의 한 줄·가운데 정렬을 물려받지 않게 설명·조합은 줄바꿈·왼쪽 위 정렬로 되돌린다. */
+.merchant-offer-body { height: 60px; flex-shrink: 0; margin: 4px 0 0 0; overflow: hidden; white-space: normal; text-overflow: clip; -unity-text-align: upper-left; }
+.merchant-offer-combo { height: 36px; flex-shrink: 0; margin: 6px 0 0 0; overflow: hidden; white-space: normal; text-overflow: clip; -unity-text-align: upper-left; font-size: 12px; }
+
+/* 결과 줄은 두 줄 높이로 고정. 결과 색은 코드가 클래스로 바꾼다. */
+.merchant-detail { height: 52px; flex-shrink: 0; margin-top: 16px; -unity-text-align: middle-left; overflow: hidden; }
