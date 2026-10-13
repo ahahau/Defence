@@ -374,3 +374,10 @@
   - Toolkit판에 튜토리얼·패배 연결을 옮김: `Current`, `IsOpen`, `TryGetFirstChoiceScreenRect`(튜토리얼 강조), `CloseForRunEnd`, 선택 때 `TutorialInputGate.AllowsPolicyChoice` 검사. `DialogueRunner.UpdatePolicyTutorial`과 `BossWavePresenter`가 옛 uGUI 창 대신 이것을 봄(두 컴포넌트의 옛 직렬화 필드는 뺌). 옛 `PolicyChoicePanelView`는 씬 정리 때 지움.
   - 테스트: `AssetWiringTests.PolicyChoicePanel_KeepsItsPartsInsideTheToggledRoot`(창이 켜고 끄는 policy-root 안에 제목·민심·목록이 있고, USS가 그 루트를 기본으로 숨긴다는 전제). 고친 뒤에 추가해 실패를 먼저 보지는 못함. 전체 EditMode 283/283 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
   - 플레이 실측(판 저장 백업 뒤, 끝나고 복원): 방침 셋을 띄우자 처음엔 창이 안 보이고 timeScale 0(버그 재현) → 고친 뒤 창이 화면 가운데에 보이고 하루 안내 배너보다 위. 첫 선택지 화면 사각형을 얻음(튜토리얼 강조용). 튜토리얼 제한 중 둘째 선택은 막히고 첫째는 적용(선택지 0개, timeScale 1로 복귀). 패배 시 닫기로 창이 닫히고 timeScale 1. 콘솔 오류 0.
+
+- UI Toolkit 교체 여섯 번째: 보스 습격 배너.
+  - 새 파일 `BossBannerToolkitView`(제목·부제, 보스는 위험 색·최종전은 강조 색 클래스, 한 프레임 뒤 클래스를 붙여 USS 전환으로 미끄러져 나타났다가 머문 뒤 사라짐, 패널 스케줄러라 시간이 멈춰도 흐름, 클릭은 막지 않음). UXML/USS `Battle/BossBanner/BossBanner.uxml/.uss`(고정 720×104), 설정 `Resources/UI/BossBannerScreen.asset`(순서 400).
+  - `BossWavePresenter.ShowBossBanner`가 Toolkit 배너를 부르게 고치고 옛 uGUI 배너 코드·필드(배너 프리팹·뷰·보스 색)를 뺌. 결과 화면 uGUI 대체 경로(`victoryView`)는 Toolkit 결과 화면을 못 띄울 때만 쓰여 남김.
+  - 테스트: `AssetWiringTests` 화면 설정 검사에 BossBannerScreen 추가. 전체 EditMode 284/284 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측(판 저장 백업 뒤, 끝나고 복원): 배너를 8초 머무르게 띄우자 1초 뒤 보임(투명도 1, 화면 위쪽 가운데 720×104, 제목 "갈대 기사단장" 빨강·부제 "Day 7 — 금고 방에 들어오면 패배"), 10초 뒤 사라짐(표시 없음). 콘솔 오류 0.
+  - 확인 못 한 것: 실제 보스 날(7일차) 영업 시작 때 뜨는 장면, 최종전 색.

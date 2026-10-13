@@ -27,12 +27,9 @@ namespace Code.Manager
 
         [Header("Banner")]
         [SerializeField] private Canvas uiCanvas;
-        [SerializeField] private BossWaveUiView bannerPrefab;
-        [SerializeField] private BossWaveUiView victoryPrefab;
-        [SerializeField] private BossWaveUiView bannerView;
-        [SerializeField] private BossWaveUiView victoryView;
+        [SerializeField, Tooltip("결과 화면을 UI Toolkit으로 못 띄웠을 때만 쓰는 옛 uGUI 패널.")]
+        private BossWaveUiView victoryView;
         [SerializeField, Min(0.1f)] private float bannerHoldDuration = 1.6f;
-        [SerializeField] private Color bossBannerColor = new(0.85f, 0.15f, 0.1f, 1f);
         [SerializeField] private Color finalBannerColor = new(1f, 0.78f, 0.2f, 1f);
         [SerializeField, Tooltip("패배 결과 화면의 강조색.")]
         private Color defeatPanelColor = new(0.9f, 0.3f, 0.25f, 1f);
@@ -61,10 +58,6 @@ namespace Code.Manager
         /// <param name="bossSubtitle">보스마다 다른 경고 문구. 무엇을 조심해야 하는지 알린다.</param>
         public void ShowBossBanner(int day, bool isFinal, string bossTitle = null, string bossSubtitle = null)
         {
-            if (uiCanvas == null)
-                return;
-
-            var accent = isFinal ? finalBannerColor : bossBannerColor;
             var title = !string.IsNullOrWhiteSpace(bossTitle)
                 ? bossTitle
                 : isFinal ? "최후의 결전" : "보스 습격";
@@ -74,31 +67,8 @@ namespace Code.Manager
                     ? $"Day {day} — 이 습격만 막아내면 던전을 지켜낸다"
                     : $"Day {day} — 강력한 모험가가 쳐들어온다";
 
-            var view = bannerView;
-            if (view == null)
-            {
-                Debug.LogError("BossWavePresenter requires a scene-assigned boss banner view.", this);
-                return;
-            }
-
-            view.gameObject.SetActive(true);
-            view.transform.SetAsLastSibling();
-            view.Title.text = title;
-            view.Title.color = accent;
-            view.Subtitle.text = subtitle;
-            var root = view.gameObject;
-            var rect = (RectTransform)view.transform;
-            var group = view.CanvasGroup;
-            group.alpha = 0f;
-            group.blocksRaycasts = false;
-
-            DOTween.Sequence().SetUpdate(true).SetLink(root)
-                .Append(group.DOFade(1f, 0.25f))
-                .Join(rect.DOAnchorPosX(0f, 0.35f).From(new Vector2(-80f, rect.anchoredPosition.y)).SetEase(Ease.OutCubic))
-                .AppendInterval(bannerHoldDuration)
-                .Append(group.DOFade(0f, 0.4f))
-                .OnComplete(() => root.SetActive(false));
-
+            // 배너는 UI Toolkit이 그린다. 보스는 빨강, 최종전은 금색(토큰 색 클래스).
+            BossBannerToolkitView.Show(title, subtitle, isFinal, bannerHoldDuration);
         }
 
         // ── Death Cinematic ─────────────────────────────────────

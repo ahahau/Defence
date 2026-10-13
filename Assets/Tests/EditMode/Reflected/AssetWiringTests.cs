@@ -81,6 +81,7 @@ namespace Tests.EditMode.Gameplay
         [TestCase("UI/EnemyStatusScreen")]
         [TestCase("UI/ArtifactBarScreen")]
         [TestCase("UI/UnitStatusScreen")]
+        [TestCase("UI/BossBannerScreen")]
         public void ToolkitScreens_PointToTheirDocumentAndOverlayPanel(string resourcePath)
         {
             var screen = Resources.Load<Code.UI.Toolkit.ToolkitScreenSO>(resourcePath);
