@@ -27,11 +27,12 @@ namespace Tests.EditMode.Rules
                 Object.DestroyImmediate(_data);
         }
 
-        private Building NewServiceFacility(int maxDurability = 20, int wearPerVisit = 1)
+        private Building NewServiceFacility(int maxDurability = 20, int wearPerVisit = 1, int tier = 1)
         {
             _data = ScriptableObject.CreateInstance<BuildingDataSO>();
             SetField(_data, "<DwellSeconds>k__BackingField", 3f);
             SetField(_data, "<Cost>k__BackingField", 100);
+            SetField(_data, "<FacilityTier>k__BackingField", tier);
 
             _host = new GameObject("Facility");
             _host.SetActive(false);
@@ -203,5 +204,86 @@ namespace Tests.EditMode.Rules
             Assert.That(FacilityDurabilityRules.ScaleEffect(1, 1, 20), Is.EqualTo(1), "1점짜리 효과는 사라지지 않습니다.");
             Assert.That(FacilityDurabilityRules.ScaleEffect(4, 10, 20), Is.EqualTo(3));
         }
+
+        /// <summary>
+        /// 시설 등급이 내구도에 반영된다(사용자 결정: 승급 시설은 튼튼하게). 예전에는 큰 주점도 주점과
+        /// 똑같이 20이라 비싸게 승급해도 관리 부담이 그대로였다.
+        /// </summary>
+        [Test]
+        public void UpgradedFacility_HasMoreDurability()
+        {
+            Assert.That(FacilityDurabilityRules.MaxDurability(20, 1), Is.EqualTo(20));
+            Assert.That(FacilityDurabilityRules.MaxDurability(20, 2), Is.EqualTo(30));
+
+            var building = NewServiceFacility(maxDurability: 20, tier: 2);
+            Assert.That(building.MaxDurability, Is.EqualTo(30));
+            Assert.That(building.CurrentDurability, Is.EqualTo(30), "지을 때 늘어난 최대치로 가득 차야 합니다.");
+
+            building.RestoreDurability(30);
+            Assert.That(building.CurrentDurability, Is.EqualTo(30), "복원이 기본 최대치 20으로 잘리면 안 됩니다.");
+        }
+
+        /// <summary>
+        /// 시설 방 전투·사건은 손님과 상관없이 수익 시설만 깎는다. 함정·회복실은 맞아서 깎이는 규칙을 따른다.
+        /// </summary>
+        [Test]
+        public void CombatAndEventWear_CutsOnlyServiceFacilities()
+        {
+            var building = NewServiceFacility(maxDurability: 20);
+            Assert.That(building.ApplyWear(FacilityDurabilityRules.CombatDeathWear), Is.EqualTo(2));
+            Assert.That(building.CurrentDurability, Is.EqualTo(18));
+
+            Assert.That(building.ApplyWear(50), Is.EqualTo(18), "남은 만큼만 깎였다고 알려야 합니다.");
+            Assert.That(building.IsWornOut, Is.True);
+            Assert.That(building.IsDestroyed, Is.False);
+
+            Object.DestroyImmediate(_host);
+            building = NewServiceFacility(maxDurability: 20);
+            SetField(building, "destructible", true);
+            Assert.That(building.ApplyWear(5), Is.Zero);
+            Assert.That(building.CurrentDurability, Is.EqualTo(20));
+        }
+
+#if UNITY_EDITOR
+        /// <summary>승급 시설 데이터는 2등급이고, 화재·붕괴 사건의 한 선택지는 시설 내구도를 깎는다(요약과 값 일치).</summary>
+        [Test]
+        public void Assets_UpgradeTiersAndEventWearAreWired()
+        {
+            foreach (var (name, tier) in new[]
+                     {
+                         ("Store", 1), ("Inn", 1), ("Mine", 1),
+                         ("ArmoryStore", 2), ("GrandInn", 2), ("DeepMine", 2),
+                     })
+            {
+                var data = UnityEditor.AssetDatabase.LoadAssetAtPath<BuildingDataSO>(
+                    $"Assets/GameModules/Data/Buildings/{name}BuildingData.asset");
+                Assert.That(data, Is.Not.Null, name);
+                Assert.That(data.FacilityTier, Is.EqualTo(tier), name);
+            }
+
+            foreach (var name in new[] { "MarketFire", "MineCollapse", "TunnelCollapse" })
+            {
+                var sequence = UnityEditor.AssetDatabase.LoadAssetAtPath<Code.Dialogue.DialogueSequenceSO>(
+                    $"Assets/GameModules/Data/Dialogue/Sequences/DayEvent_{name}.asset");
+                Assert.That(sequence, Is.Not.Null, name);
+
+                var wired = false;
+                for (var i = 0; sequence.TryGetLine(i, out var line); i++)
+                foreach (var choice in line.Choices)
+                {
+                    foreach (var action in choice.Actions)
+                    {
+                        if (action is not Code.Dialogue.FacilityWearDialogueActionSO wear)
+                            continue;
+
+                        wired = true;
+                        Assert.That(choice.EffectSummary, Does.Contain($"시설 내구도 -{wear.Amount}"), name);
+                    }
+                }
+
+                Assert.That(wired, Is.True, $"{name} 사건에 시설 마모 행동이 없습니다.");
+            }
+        }
+#endif
     }
 }

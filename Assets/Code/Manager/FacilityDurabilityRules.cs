@@ -51,6 +51,21 @@ namespace Code.Manager
         /// <summary>내구도가 바닥에 가까울 때 머무는 시간 배율.</summary>
         public const float MaxDwellTimeMultiplier = 1.5f;
 
+        /// <summary>시설 등급이 1 오를 때마다 늘어나는 최대 내구도 비율. 승급 시설(2등급)은 1.5배다.</summary>
+        public const float DurabilityPerTier = 0.5f;
+
+        /// <summary>시설 방에서 아군이든 모험가든 한 명이 쓰러질 때 깎이는 내구도.</summary>
+        public const int CombatDeathWear = 2;
+
+        /// <summary>
+        /// 등급을 반영한 최대 내구도. 비싼 승급 시설일수록 오래 버텨야 승급할 이유가 하나 더 생긴다.
+        /// </summary>
+        public static int MaxDurability(int baseMaxDurability, int tier)
+        {
+            var scaled = baseMaxDurability * (1f + DurabilityPerTier * Mathf.Max(0, tier - 1));
+            return Mathf.Max(1, Mathf.RoundToInt(scaled));
+        }
+
         /// <summary>손님 한 명이 깎는 내구도 배율. 레벨·쇼핑광·엘리트(보스)가 곱으로 겹친다.</summary>
         public static float WearMultiplier(int visitorLevel, bool shopaholic, bool eliteOrBoss)
         {

@@ -1228,6 +1228,7 @@ namespace Code.Enemies
             combatant?.StopCombat();
             _battleAgent?.Battlefield?.Leave(_battleAgent);
             mover?.StopMoving();
+            Code.Manager.FacilityEconomyRules.ApplyCombatDeathWear(mover != null ? mover.CurrentNode : null);
             EnterState(CombatState.Dead);
             DropPartyFund();
             DeathStarted?.Invoke(this);

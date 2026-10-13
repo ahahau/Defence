@@ -10,8 +10,8 @@ paths:
    * 선택지는 결과 요약(`effectSummary`), 실행할 액션(`actions`), 다음 시퀀스·줄 이동을 가진다.
    * 조건 분기는 `routes`로 한다. `DialogueValueTableSO`의 bool 키(`valueKey`)가 기대값과 같을 때 그 경로로 간다.
 2. 게임에 영향을 주는 결과는 **액션 SO**로 만든다.
-   * 기존 액션: 금화 증감(`GoldChangeDialogueActionSO`), 사기 증감(`MoraleChangeDialogueActionSO`).
-   * 값마다 에셋을 하나씩 둔다: `Dialogue/Actions/<Gold|Morale><Plus|Minus><값>DialogueAction.asset`. 같은 값이 있으면 재사용한다.
+   * 기존 액션: 금화 증감(`GoldChangeDialogueActionSO`), 사기 증감(`MoraleChangeDialogueActionSO`), 모든 수익 시설 내구도 감소(`FacilityWearDialogueActionSO`, 요약 "시설 내구도 -N" — 시장 화재·광산 붕괴·무너진 갱도의 두 번째 선택지에 -3).
+   * 값마다 에셋을 하나씩 둔다: `Dialogue/Actions/<Gold|Morale|FacilityWear><Plus|Minus><값>DialogueAction.asset`. 같은 값이 있으면 재사용한다.
    * 새 종류의 결과(유닛 부상, 건물 파손 등)가 필요하면 `DialogueActionSO`를 상속한 새 액션을 만든다. 사전에 설계를 확인받는다.
    * 금화 변화는 `CostEventChannel`을 거쳐 장부에 올라간다. 금화를 직접 바꾸지 않는다.
    * 선택지의 `effectSummary`는 실제 액션 값과 반드시 일치시킨다(예: "금화 -30, 사기 +6").

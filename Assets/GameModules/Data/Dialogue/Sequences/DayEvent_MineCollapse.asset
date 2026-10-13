@@ -27,10 +27,11 @@ MonoBehaviour:
       nextLineIndex: -1
       routes: []
     - text: "\uB0A8\uC740 \uAD11\uC11D\uC744 \uD68C\uC218\uD55C\uB2E4"
-      effectSummary: "\uACE8\uB4DC +35 / \uBBFC\uC2EC -6"
+      effectSummary: "\uACE8\uB4DC +35 / \uBBFC\uC2EC -6 / \uC2DC\uC124 \uB0B4\uAD6C\uB3C4 -3"
       actions:
       - {fileID: 11400000, guid: ea088b6deb1d40de90a45f47cd653610, type: 2}
       - {fileID: 11400000, guid: f06c646309c14f4d83a7a36263779306, type: 2}
+      - {fileID: 11400000, guid: bfa0ae4d6ac34dc46829b001a9f4fb83, type: 2}
       nextSequence: {fileID: 0}
       nextLineIndex: -1
       routes: []

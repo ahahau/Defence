@@ -18,6 +18,8 @@ namespace Code.Buildings
         public int GradeWeight { get; private set; }
         [field: SerializeField, Min(0f), Tooltip("모험가가 이 시설에 머무는 시간(초). 머무는 동안 돈을 쓰고 지친다. 0이면 그냥 지나간다.")]
         public float DwellSeconds { get; private set; }
+        [field: SerializeField, Min(1), Tooltip("시설 등급. 승급 시설(큰 주점·무기 상점·깊은 광산)은 2. 등급이 오를수록 최대 내구도가 늘어난다.")]
+        public int FacilityTier { get; private set; } = 1;
         [field: SerializeField] public Building Prefab { get; private set; }
         [field: SerializeField] public bool Unique { get; private set; }
         [field: SerializeField, Tooltip("중요 시설을 방 중앙 슬롯에만 설치한다.")]

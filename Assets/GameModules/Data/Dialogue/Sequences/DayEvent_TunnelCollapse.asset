@@ -15,9 +15,7 @@ MonoBehaviour:
   displayTitle: "\uBB34\uB108\uC9C4 \uAC31\uB3C4"
   lines:
   - speakerName: "\uAD74\uCC29 \uB2F4\uB2F9"
-    text: "\uB358\uC804 \uC544\uB798 \uAC31\uB3C4\uAC00 \uB0B4\uB824\uC549\uC558\uC2B5\uB2C8\uB2E4.
-      \uBA54\uC6B0\uC790\uB2C8 \uC778\uB825\uC774 \uB4E4\uACE0, \uB450\uC790\uB2C8
-      \uCE68\uC785\uB85C\uAC00 \uD558\uB098 \uB298\uC5B4\uB0A9\uB2C8\uB2E4."
+    text: "\uB358\uC804 \uC544\uB798 \uAC31\uB3C4\uAC00 \uB0B4\uB824\uC549\uC558\uC2B5\uB2C8\uB2E4. \uBA54\uC6B0\uC790\uB2C8 \uC778\uB825\uC774 \uB4E4\uACE0, \uB450\uC790\uB2C8 \uCE68\uC785\uB85C\uAC00 \uD558\uB098 \uB298\uC5B4\uB0A9\uB2C8\uB2E4."
     enterActions: []
     choices:
     - text: "\uC778\uBD80\uB97C \uBD99\uC5EC \uBA54\uC6B4\uB2E4"
@@ -29,9 +27,10 @@ MonoBehaviour:
       nextLineIndex: -1
       routes: []
     - text: "\uADF8\uB300\uB85C \uB454\uB2E4"
-      effectSummary: "\uBBFC\uC2EC -8"
+      effectSummary: "\uBBFC\uC2EC -8 / \uC2DC\uC124 \uB0B4\uAD6C\uB3C4 -3"
       actions:
       - {fileID: 11400000, guid: b017c5aea5b8b2b45ac011076d5f0daf, type: 2}
+      - {fileID: 11400000, guid: bfa0ae4d6ac34dc46829b001a9f4fb83, type: 2}
       nextSequence: {fileID: 0}
       nextLineIndex: -1
       routes: []

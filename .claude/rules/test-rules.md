@@ -27,7 +27,7 @@ paths:
 | `UnitMarketTests` | 주간 지원자 수·시세·유지비, 보인 값과 결제 값 일치 |
 | `CreditWarningTests` | 부채 한도·긴급 상환·신용 경고·파산 판정 |
 | `FacilityQueueTests` | 시설 대기열 FIFO·동시 이용 수·대기 만족도 감액 |
-| `FacilityDurabilityTests` | 수익 시설 내구도·수입 배율·수리·철거 환불·저장, 손님별 마모 배율·소수 마모 누적·이용 시간 지연·효과 약화 |
+| `FacilityDurabilityTests` | 수익 시설 내구도·수입 배율·수리·철거 환불·저장, 손님별 마모 배율·소수 마모 누적·이용 시간 지연·효과 약화, 시설 등급별 최대 내구도·전투/사건 마모·승급 등급과 사건 마모 에셋 |
 | `TrapTileTests` | 함정 여러 칸 점유·철거, 범위·지속 판정, 재사용 시간, 시설·함정 겹침 |
 | `PauseLockTests` | 엘리트·보스 일시정지 잠금 규칙과 배속 컨트롤러 잠금 동작 |
 | `RedeployPreparationTests` | 재배치 준비 시간·준비 중 피해 절반 |

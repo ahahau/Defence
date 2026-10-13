@@ -74,6 +74,32 @@ namespace Code.Manager
             return total;
         }
 
+        /// <summary>
+        /// 그 방에서 누군가 쓰러졌다. 싸움이 시설 방까지 밀려오면 시설도 상한다.
+        /// 아군·모험가 모두 같은 값이고, 수익 시설이 아니면 아무 일도 없다.
+        /// </summary>
+        public static void ApplyCombatDeathWear(Node node)
+        {
+            if (node == null || node.AssignedBuilding == null)
+                return;
+
+            node.AssignedBuilding.ApplyWear(FacilityDurabilityRules.CombatDeathWear);
+        }
+
+        /// <summary>사건이 모든 수익 시설의 내구도를 깎는다. 실제로 깎인 시설 수를 돌려준다.</summary>
+        public static int WearAllFacilities(int amount)
+        {
+            var count = 0;
+            foreach (var node in Node.ActiveNodes)
+            {
+                var building = node != null ? node.AssignedBuilding : null;
+                if (building != null && building.ApplyWear(amount) > 0)
+                    count++;
+            }
+
+            return count;
+        }
+
         /// <summary>다 닳아 영업을 멈춘 수익 시설 수. 정산 화면이 수리를 재촉하는 데 쓴다.</summary>
         public static int CountWornOutFacilities()
         {

@@ -42,7 +42,8 @@ namespace Code.Buildings
         public bool IsDestructible => destructible;
         public bool IsDestroyed => isDestroyed;
         public int CurrentDurability => currentDurability;
-        public int MaxDurability => maxDurability;
+        public int MaxDurability => FacilityDurabilityRules.MaxDurability(
+            maxDurability, Data != null ? Data.FacilityTier : 1);
 
         /// <summary>
         /// 문을 닫아 둔 시설인가. 닫힌 시설은 벌지도, 운영비를 먹지도, 소문을 내지도 않는다.
@@ -251,6 +252,20 @@ namespace Code.Buildings
             currentDurability = Mathf.Max(0, currentDurability - wear);
         }
 
+        /// <summary>
+        /// 손님이 아닌 이유(시설 방 전투·사건)로 내구도를 깎는다. 수익 시설에만 쓰고, 부서지는 건물은
+        /// 맞아서 깎이는 규칙을 따른다. 실제로 깎인 양을 돌려준다.
+        /// </summary>
+        public int ApplyWear(int amount)
+        {
+            if (isDestroyed || !UsesServiceDurability || amount <= 0)
+                return 0;
+
+            var before = currentDurability;
+            currentDurability = Mathf.Max(0, currentDurability - amount);
+            return before - currentDurability;
+        }
+
         /// <summary>손님이 실제로 머무는 시간. 내구도가 절반 아래면 늘어난다(대기열 지연).</summary>
         public float EffectiveDwellSeconds => UsesServiceDurability
             ? DwellSeconds * FacilityDurabilityRules.DwellTimeMultiplier(currentDurability, MaxDurability)
@@ -319,14 +334,14 @@ namespace Code.Buildings
                 damageAnimationTarget = transform;
 
             damageAnimationBaseLocalPosition = damageAnimationTarget.localPosition;
-            currentDurability = Mathf.Max(1, maxDurability);
+            currentDurability = MaxDurability;
         }
 
         public virtual void Initialize(BuildingDataSO data)
         {
             Data = data;
             DangerRating = data.BaseDanger;
-            currentDurability = Mathf.Max(1, maxDurability);
+            currentDurability = MaxDurability;
             isDestroyed = false;
             ApplyBoardSprite(data);
         }
@@ -367,7 +382,7 @@ namespace Code.Buildings
         {
             // 수익 시설은 0(영업 정지)으로 저장될 수 있다. 부서지는 건물은 0이면 이미 사라졌다.
             var min = UsesServiceDurability ? 0 : 1;
-            currentDurability = Mathf.Clamp(durability, min, Mathf.Max(1, maxDurability));
+            currentDurability = Mathf.Clamp(durability, min, MaxDurability);
             isDestroyed = false;
         }
 

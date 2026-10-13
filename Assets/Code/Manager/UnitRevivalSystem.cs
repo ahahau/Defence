@@ -273,6 +273,7 @@ namespace Code.Manager
                     _revivalOrder.Add(unit);
                     addedPendingUnit = true;
                     ChargeRevivalGold(unit, node);
+                    FacilityEconomyRules.ApplyCombatDeathWear(node);
                     costEventChannel?.RaiseEvent(new UnitDownedEvent(unit, revivalSeconds, GetRevivalCost(unit)));
                 }
             }
