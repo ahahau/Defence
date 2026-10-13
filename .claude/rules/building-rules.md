@@ -37,7 +37,7 @@ paths:
    * 소형 방에는 시설(금고 제외 `Category = Building`)을 못 짓는다(`BuildingPlacement.ViolatesRoomSizeRule`). 저장 복원은 이 규칙을 건너뛴다.
    * 수익 시설은 대가로 모험가를 강화한다(Store → 공격력, Inn → 회복, Blacksmith → 공격·방어). 새 수익 시설에도 대가를 정한다.
 5. 함정(`Trap`)은 발동 확률·피해·추가 피해·부상 확률과 상태이상(`StatusEffectDataSO`)으로 정의한다.
-   * 칸·방식·재사용도 반드시 정한다: `footprint`(1×1·2×1·2×2 등), `triggerMode`(밟기=한 명 / 범위=주변 `areaRadiusCells`칸의 적·아군 / 지속=`persistentSeconds` 동안 1초마다 나눠서 올라선 적·아군), `cooldownSeconds`(게임 시간). 계산은 `TrapRules`에만 둔다.
+   * 칸·방식·재사용도 반드시 정한다: `footprint`(1×1·2×1·2×2 등), `triggerMode`(밟기=한 명 / 범위=주변 `areaRadiusCells`칸의 적·아군 / 지속=`persistentSeconds` 동안 1초마다 나눠서 올라선 적·아군 / 투사체=그 가로줄 서쪽 끝에서 화살이 날아가 줄 위 가장 서쪽 모험가 한 명, 아군 제외 — 화살 함정, 10일차 해금, 그림은 임시), `cooldownSeconds`(게임 시간). 계산은 `TrapRules`에만 둔다.
    * 범위·지속은 아군도 맞는다. 설치 카드에 "아군 포함"이 나간다.
    * 손님이 머무는 시설(`DwellSeconds > 0`)이 있는 방에는 함정을 못 깔고, 함정이 있는 방에는 그 시설을 못 짓는다(`BuildingPlacement.ViolatesFacilityTrapRule`). 저장 복원은 `RestoreCentral`/`RestoreOnCell`로 이 규칙을 건너뛴다.
    * 여러 칸 함정은 `NodeTrapGrid`가 덮은 칸 전부에 같은 건물을 넣고 기준 칸(왼쪽 아래)을 기억한다. 칸을 직접 돌며 건물을 세면 중복되니 `TryGetAnchor`로 기준 칸만 센다.

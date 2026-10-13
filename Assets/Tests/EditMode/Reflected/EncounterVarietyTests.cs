@@ -109,6 +109,45 @@ namespace Tests.EditMode.Gameplay
             }
         }
 
+        /// <summary>
+        /// 파티 인원 변동(사용자 결정: 짠 파티에 인원 변동). 리더는 늘 오고, 밤에는 더 잘 빠지며,
+        /// 등급·시설이 클수록 한 명이 더 붙는다. 같은 난수면 같은 결과다(판 시드로 불러와도 같다).
+        /// </summary>
+        [Test]
+        public void PartyComposition_KeepsTheLeaderAndVariesTheRest()
+        {
+            Assert.That(Code.Manager.PartyCompositionRules.DropChance(false), Is.EqualTo(0.15f).Within(0.001f));
+            Assert.That(Code.Manager.PartyCompositionRules.DropChance(true), Is.EqualTo(0.25f).Within(0.001f));
+            Assert.That(Code.Manager.PartyCompositionRules.ExtraChance(0, 0), Is.EqualTo(0.05f).Within(0.001f));
+            Assert.That(Code.Manager.PartyCompositionRules.ExtraChance(3, 2), Is.EqualTo(0.18f).Within(0.001f));
+            Assert.That(Code.Manager.PartyCompositionRules.ExtraChance(20, 20), Is.EqualTo(0.4f).Within(0.001f));
+
+            var everyoneDrops = new System.Collections.Generic.List<string> { "leader", "a", "b" };
+            Code.Manager.PartyCompositionRules.Vary(everyoneDrops, new System.Random(1), 1f, 0f);
+            Assert.That(everyoneDrops, Is.EqualTo(new[] { "leader" }), "리더는 빠지지 않습니다.");
+
+            var extra = new System.Collections.Generic.List<string> { "leader", "a" };
+            Code.Manager.PartyCompositionRules.Vary(extra, new System.Random(1), 0f, 1f);
+            Assert.That(extra, Is.EqualTo(new[] { "leader", "a", "a" }), "더 오는 한 명은 리더가 아닌 파티원입니다.");
+
+            var first = new System.Collections.Generic.List<int> { 0, 1, 2, 3, 4 };
+            var second = new System.Collections.Generic.List<int> { 0, 1, 2, 3, 4 };
+            Code.Manager.PartyCompositionRules.Vary(first, new System.Random(42), 0.4f, 0.4f);
+            Code.Manager.PartyCompositionRules.Vary(second, new System.Random(42), 0.4f, 0.4f);
+            Assert.That(first, Is.EqualTo(second));
+        }
+
+        /// <summary>
+        /// 리더 동기 이동: 리더보다 한 방 넘게 앞서려는 파티원은 기다리되, 5초가 넘으면 혼자 간다(파티가 굳지 않게).
+        /// </summary>
+        [Test]
+        public void PartyCohesion_WaitsForTheLeaderButNotForever()
+        {
+            Assert.That(Code.Enemies.PartyCohesionRules.ShouldWaitForLeader(1, 0f), Is.False, "리더 옆방까지는 그냥 갑니다.");
+            Assert.That(Code.Enemies.PartyCohesionRules.ShouldWaitForLeader(2, 0f), Is.True);
+            Assert.That(Code.Enemies.PartyCohesionRules.ShouldWaitForLeader(2, 5f), Is.False, "오래 기다리면 혼자 갑니다.");
+        }
+
         private static Type RequireType(string fullName)
         {
             var type = Type.GetType(fullName + ", DungeonKeeper.Runtime");

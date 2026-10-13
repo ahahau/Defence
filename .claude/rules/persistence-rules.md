@@ -11,4 +11,5 @@ paths:
 - 복원이 불완전하면 그 판의 이후 저장을 **막는다**. 복구 가능한 세이브를 덮어쓰지 않기 위해서다. 이 안전장치를 우회하지 않는다.
 - 파일 형식을 바꾸면 `RunSaveFile.CurrentVersion`을 올린다. 버전이 다른 파일은 로드에서 버려지므로, 기존 세이브가 무효화된다는 점을 사용자에게 알린다.
 - 저장은 `WaveEndedEvent` 한 프레임 뒤에 예약된다. 정산 이벤트 순서를 바꿀 때 저장 시점도 함께 확인한다.
+- 판 시드(`RunRandom`)와 이미 뽑은 확장 후보(`SavedCandidate`)는 지형 조각(`DungeonGraphSaveState.runSeed`·`candidates`)에 둔다. 지형이 가장 먼저 복원되므로 시드를 지형보다 먼저 되돌린다. 새 판은 `DungeonGraphController.RebuildInitialGraph`가 시드를 새로 뽑는다. 저장을 다시 불러도 결과가 같아야 하는 난수는 전역 `Random` 대신 `RunRandom`(시드 + 줄기 + 자리·일차)으로 뽑는다.
 - 메타 기록(`MetaProfileStore`, `defence-meta.json`)은 판 저장과 다른 파일이고 판이 끝나도 지우지 않는다. 판 저장이 없을 때 게임 씬이 열리면 새 판으로 보고 시작 보정을 건다(`MetaRunStarter`). 실측 때는 판 저장과 함께 메타 기록도 백업·복원한다.

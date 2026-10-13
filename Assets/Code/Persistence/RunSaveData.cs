@@ -26,6 +26,19 @@ namespace Code.Persistence
         public SavedRoster roster = new();
     }
 
+    /// <summary>
+    /// 확장 후보 자리에 이미 뽑아 둔 크기·특수 효과. 처음 방들은 중형으로 고정해 뽑으므로, 시드만으로는
+    /// 불러온 뒤 같은 후보를 다시 만들 수 없다.
+    /// </summary>
+    [Serializable]
+    public sealed class SavedCandidate
+    {
+        public int x;
+        public int y;
+        public int roomSize;
+        public int roomFeature;
+    }
+
     [Serializable]
     public sealed class SavedNode
     {

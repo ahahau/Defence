@@ -30,6 +30,9 @@ namespace Code.Dialogue
         /// <summary>이번 판에서 아직 안 나온 이벤트들. 섞어 두고 하나씩 꺼내 같은 판에서 겹치지 않게 한다.</summary>
         private readonly List<DialogueSequenceSO> _shuffledEventQueue = new();
 
+        /// <summary>이번 판에서 사건 목록을 섞은 횟수. 섞을 때마다 다른 순서가 나오게 시드에 섞는다.</summary>
+        private int _eventShuffleCount;
+
         /// <summary>사건을 띄우며 시간을 세워 두었는가. 대화가 끝나면 푼다.</summary>
         private bool _suspendedForEvent;
         [SerializeField] private bool playScheduledEvents = true;
@@ -956,9 +959,11 @@ namespace Code.Dialogue
                     _shuffledEventQueue.Add(sequence);
             }
 
+            // 판 시드로 섞는다. 불러와도 사건 순서가 다시 뽑히지 않는다.
+            var random = RunRandom.Create(RunRandomStream.Events, _eventShuffleCount++);
             for (var i = _shuffledEventQueue.Count - 1; i > 0; i--)
             {
-                var swap = UnityEngine.Random.Range(0, i + 1);
+                var swap = random.Next(0, i + 1);
                 (_shuffledEventQueue[i], _shuffledEventQueue[swap]) = (_shuffledEventQueue[swap], _shuffledEventQueue[i]);
             }
         }

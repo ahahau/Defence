@@ -171,6 +171,9 @@ namespace Code.Manager
         private readonly List<Enemy> _activeEnemies = new();
         private readonly List<EnemyDataSO> _partyQueue = new();
         private int _partyIndex;
+
+        /// <summary>이 날 웨이브의 난수. 판 시드와 일차로 정해져 불러와도 같은 파티가 같은 순서로 온다.</summary>
+        private System.Random _waveRandom = new();
         private bool _isDestroying;
         [SerializeField] private BossWavePresenter bossPresenter;
         private Enemy _bossEnemy;
@@ -354,6 +357,7 @@ namespace Code.Manager
         {
             // 오늘 오는 인원은 영업 시작 시점의 등급으로 확정한다.
             _currentGrade = DungeonGradeRules.CalculateGrade();
+            _waveRandom = RunRandom.Create(RunRandomStream.Wave, _currentDay);
 
             var adjustedEnemyCount = ResolveWaveEnemyCount(
                 DungeonGradeRules.ResolveVisitorCount(_currentGrade));
@@ -723,7 +727,7 @@ namespace Code.Manager
                 }
 
                 if (candidates.Count > 0)
-                    return candidates[Random.Range(0, candidates.Count)];
+                    return candidates[_waveRandom.Next(0, candidates.Count)];
             }
             
             return enemyPrefab;
@@ -761,7 +765,10 @@ namespace Code.Manager
                 }
 
                 if (_partyQueue.Count > 0)
+                {
+                    VaryPartyComposition();
                     return;
+                }
             }
 
             if (parties == null || parties.Length == 0)
@@ -779,12 +786,39 @@ namespace Code.Manager
             if (validParties.Count == 0)
                 return;
 
-            var chosen = validParties[Random.Range(0, validParties.Count)];
+            var chosen = validParties[_waveRandom.Next(0, validParties.Count)];
             foreach (var member in chosen.Members)
             {
                 if (member != null)
                     _partyQueue.Add(member);
             }
+
+            VaryPartyComposition();
+        }
+
+        /// <summary>
+        /// 이번 파티의 인원을 굴린다. 리더는 늘 오고, 나머지는 빠지거나 한 명이 더 붙는다(보스 호위는 그대로).
+        /// </summary>
+        private void VaryPartyComposition()
+        {
+            var isNight = DayManager.Current != null && DayManager.Current.Phase == DayManager.OperationPhase.Night;
+            PartyCompositionRules.Vary(
+                _partyQueue,
+                _waveRandom,
+                PartyCompositionRules.DropChance(isNight),
+                PartyCompositionRules.ExtraChance(_currentGrade, CountOperatingFacilities()));
+        }
+
+        private static int CountOperatingFacilities()
+        {
+            var count = 0;
+            foreach (var node in Node.ActiveNodes)
+            {
+                if (node != null && FacilityEconomyRules.IsOperatingFacility(node.AssignedBuilding))
+                    count++;
+            }
+
+            return count;
         }
 
         /// <summary>보스 데이터 — 그 날 보스 파티의 첫 멤버, 없으면 풀에서 최대 체력 적(승격은 SpawnEnemy가).</summary>
@@ -831,7 +865,7 @@ namespace Code.Manager
                     candidates.Add(enemyData);
             }
 
-            return candidates.Count > 0 ? candidates[Random.Range(0, candidates.Count)] : null;
+            return candidates.Count > 0 ? candidates[_waveRandom.Next(0, candidates.Count)] : null;
         }
 
         private void HandleEnemyRemoved(Enemy enemy)

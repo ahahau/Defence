@@ -137,5 +137,39 @@ namespace Tests.EditMode.Intrusion
             var missing = fileType.GetMethod("Find").Invoke(restored, new object[] { "없는열쇠" });
             Assert.That(missing, Is.Empty, "없는 열쇠에 빈 문자열이 아닌 것이 돌아왔습니다.");
         }
+
+        /// <summary>
+        /// 판 시드(사용자 결정: 판 시드 + 시스템별 난수). 같은 시드·같은 자리면 같은 값이라 불러와도 방 후보·사건
+        /// 순서·파티가 다시 뽑히지 않는다. 옛 저장(시드 0)은 새로 뽑는다.
+        /// </summary>
+        [Test]
+        public void RunSeed_GivesTheSameRollsForTheSameRun()
+        {
+            var previous = Code.Manager.RunRandom.Seed;
+            try
+            {
+                Code.Manager.RunRandom.Restore(12345);
+                var a = Code.Manager.RunRandom.Value(Code.Manager.RunRandomStream.RoomSize, -2, 1);
+                var waveFirst = Code.Manager.RunRandom.Create(Code.Manager.RunRandomStream.Wave, 9).Next();
+
+                Code.Manager.RunRandom.BeginNewRun(999);
+                Assert.That(Code.Manager.RunRandom.Value(Code.Manager.RunRandomStream.RoomSize, -2, 1), Is.Not.EqualTo(a),
+                    "다른 판이면 다른 값이 나와야 합니다.");
+
+                Code.Manager.RunRandom.Restore(12345);
+                Assert.That(Code.Manager.RunRandom.Value(Code.Manager.RunRandomStream.RoomSize, -2, 1), Is.EqualTo(a));
+                Assert.That(Code.Manager.RunRandom.Create(Code.Manager.RunRandomStream.Wave, 9).Next(), Is.EqualTo(waveFirst));
+                Assert.That(Code.Manager.RunRandom.Value(Code.Manager.RunRandomStream.RoomSize, -2, 2), Is.Not.EqualTo(a),
+                    "자리가 다르면 다른 값입니다.");
+                Assert.That(a, Is.GreaterThanOrEqualTo(0f).And.LessThan(1f));
+
+                Code.Manager.RunRandom.Restore(0);
+                Assert.That(Code.Manager.RunRandom.Seed, Is.Not.Zero, "옛 저장은 새 시드를 받습니다.");
+            }
+            finally
+            {
+                Code.Manager.RunRandom.Restore(previous);
+            }
+        }
     }
 }

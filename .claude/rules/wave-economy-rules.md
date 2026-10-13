@@ -17,6 +17,8 @@ paths:
 - 판은 끝나지 않는다(`finalDay = 0`, `bossEveryNDays = 7`). 청산일과 보스날이 같아야 한 주가 하나의 고비로 끝난다. `AssetWiringTests`가 이것을 검사한다.
 - 일시정지 잠금: 웨이브 루프가 매 프레임 `PauseLockRules.LocksPause`(살아 있는 보스 또는 강함 4단계 이상)를 보고 `GameSpeedController.SetPauseLock`을 건다. 웨이브 종료·정리 때 반드시 푼다. 잠긴 동안 플레이어는 멈출 수 없지만, 강제 선택 창의 `Suspend`는 그대로 시간을 세운다.
 - 낮→밤 전환 때 `GameSpeedController.PauseForTransition(1초)`로 실제 시간 1초 멈춘다.
+- 웨이브 난수는 `WaveManager._waveRandom`(판 시드 + 일차)으로 뽑는다(무작위 파티·풀 적·프리팹). 전역 `Random`을 새로 쓰지 않는다.
+- 파티 인원 변동(`PartyCompositionRules`): 파티가 올 때마다 리더(첫 멤버)는 반드시, 나머지는 15%(밤 25%)로 빠지고, 5% + 등급당 3%p + 운영 시설당 2%p(최대 40%)로 리더 아닌 파티원 한 명이 더 붙는다. 보스 호위는 그대로. 웨이브 총인원(`_remainingSpawns`)은 바뀌지 않고 그룹 크기만 달라진다.
 - 사건(일반·상황 사건) 대화는 고를 때까지 시간을 세운다(`DialogueRunner`가 `Suspend`, `Stop`에서 `Release`). 운영 방침 창도 세운다. 튜토리얼 말풍선은 세우지 않는다.
 - 부활 마력 비용(`RevivalManaCostRules`): (기본 15 + 레벨당 8 + 고용 정가 10G당 1) × 특성(수호자 1.2·공격적 1.1·강인함 0.9·야전 의무병 0.8), 반올림.
 

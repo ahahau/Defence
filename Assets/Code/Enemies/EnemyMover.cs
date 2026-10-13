@@ -70,6 +70,53 @@ namespace Code.Enemies
             _partyOccupancyId = partyOccupancyId > 0
                 ? partyOccupancyId
                 : CreatePartyOccupancyId();
+
+            // 파티에 처음 붙은(살아 있는) 멤버가 리더다. 리더가 쓰러지면 다음에 붙는 멤버가 이어받는다.
+            if (!_partyLeaders.TryGetValue(_partyOccupancyId, out var leader) || !IsLeaderAvailable(leader))
+                _partyLeaders[_partyOccupancyId] = this;
+        }
+
+        /// <summary>이 파티원이 파티 리더인가.</summary>
+        public bool IsPartyLeader =>
+            _partyOccupancyId > 0 && _partyLeaders.TryGetValue(_partyOccupancyId, out var leader) && leader == this;
+
+        // 파티 번호별 리더. 파티원이 리더보다 너무 앞서지 않게 기다리는 데 쓴다.
+        private static readonly Dictionary<int, EnemyMover> _partyLeaders = new();
+        private float _leaderWaitStartedAt = -1f;
+        private Enemy _ownerEnemy;
+
+        private static bool IsLeaderAvailable(EnemyMover leader)
+        {
+            if (leader == null || leader._currentNode == null)
+                return false;
+
+            leader._ownerEnemy ??= leader.GetComponent<Enemy>();
+            return leader._ownerEnemy == null || !leader._ownerEnemy.IsDead;
+        }
+
+        /// <summary>
+        /// 다음 방으로 가면 리더와 한 방 넘게 떨어지는가. 그렇다면 리더를 잠깐 기다린다(최대 5초).
+        /// </summary>
+        private bool ShouldWaitForLeader(Node nextNode)
+        {
+            if (_partyOccupancyId <= 0 || nextNode == null
+                || !_partyLeaders.TryGetValue(_partyOccupancyId, out var leader)
+                || leader == this || !IsLeaderAvailable(leader))
+            {
+                _leaderWaitStartedAt = -1f;
+                return false;
+            }
+
+            var path = NodePathfinder.FindPath(nextNode, leader._currentNode);
+            var rooms = path != null && path.Count > 0 ? path.Count - 1 : 0;
+            if (_leaderWaitStartedAt < 0f)
+                _leaderWaitStartedAt = Time.time;
+
+            if (PartyCohesionRules.ShouldWaitForLeader(rooms, Time.time - _leaderWaitStartedAt))
+                return true;
+
+            _leaderWaitStartedAt = -1f;
+            return false;
         }
 
         /// <summary>막힌 일반 노드 앞에서 우회 탐색 전까지 기다릴 이동 턴 수를 설정한다.</summary>
@@ -172,7 +219,7 @@ namespace Code.Enemies
             yield return WanderInsideNode();
 
             var nextNode = SelectNextNode();
-            if (nextNode == null)
+            if (nextNode == null || ShouldWaitForLeader(nextNode))
             {
                 _isTurning = false;
                 yield break;
@@ -633,6 +680,8 @@ namespace Code.Enemies
         private void OnDestroy()
         {
             _activeEnemies.Remove(this);
+            if (_partyOccupancyId > 0 && _partyLeaders.TryGetValue(_partyOccupancyId, out var leader) && leader == this)
+                _partyLeaders.Remove(_partyOccupancyId);
 
             if (_currentNode?.Data != null)
                 VacateNode(_currentNode, PartyOccupancyId);

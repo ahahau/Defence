@@ -231,6 +231,8 @@ namespace Code.MapCreateSystem
                 return;
             }
 
+            // 새 판의 시드. 이어하기면 곧 저장 복원이 시드를 되돌린다.
+            RunRandom.BeginNewRun();
             BuildInitialGraph();
             HasLockedNodesVisible = false;
         }
@@ -686,7 +688,9 @@ namespace Code.MapCreateSystem
 
             feature = graph.Nodes.Count <= OpeningMediumRoomCount
                 ? RoomFeature.None
-                : RoomFeatureRules.Roll(Random.value, Random.value);
+                : RoomFeatureRules.Roll(
+                    RunRandom.Value(RunRandomStream.RoomFeatureChance, position.x, position.y),
+                    RunRandom.Value(RunRandomStream.RoomFeatureKind, position.x, position.y));
             _candidateFeatures[position] = feature;
             return feature;
         }
@@ -702,7 +706,7 @@ namespace Code.MapCreateSystem
 
             size = graph.Nodes.Count <= OpeningMediumRoomCount
                 ? RoomSize.Medium
-                : RoomSizeRules.Roll(Random.value, CurrentDungeonGrade);
+                : RoomSizeRules.Roll(RunRandom.Value(RunRandomStream.RoomSize, position.x, position.y), CurrentDungeonGrade);
             _candidateSizes[position] = size;
             return size;
         }
@@ -1119,6 +1123,46 @@ namespace Code.MapCreateSystem
             }
 
             return save;
+        }
+
+        /// <summary>뽑아 둔 확장 후보의 크기·특수 효과. 판 저장에 넣는다.</summary>
+        public List<SavedCandidate> CaptureCandidateRolls()
+        {
+            var list = new List<SavedCandidate>();
+            foreach (var pair in _candidateSizes)
+            {
+                _candidateFeatures.TryGetValue(pair.Key, out var feature);
+                list.Add(new SavedCandidate
+                {
+                    x = pair.Key.x, y = pair.Key.y, roomSize = (int)pair.Value, roomFeature = (int)feature
+                });
+            }
+
+            return list;
+        }
+
+        /// <summary>저장해 둔 후보를 되돌리고 후보를 다시 그린다. 없으면(옛 저장) 자리마다 시드로 뽑는다.</summary>
+        public void RestoreCandidateRolls(List<SavedCandidate> candidates)
+        {
+            if (candidates == null || candidates.Count == 0)
+                return;
+
+            foreach (var saved in candidates)
+            {
+                var position = new Vector2Int(saved.x, saved.y);
+                if (graph != null && graph.IsOccupied(position))
+                    continue;
+
+                _candidateSizes[position] = System.Enum.IsDefined(typeof(RoomSize), saved.roomSize)
+                    ? (RoomSize)saved.roomSize
+                    : RoomSize.Medium;
+                _candidateFeatures[position] = System.Enum.IsDefined(typeof(RoomFeature), saved.roomFeature)
+                    ? (RoomFeature)saved.roomFeature
+                    : RoomFeature.None;
+            }
+
+            if (HasLockedNodesVisible)
+                RefreshLockedNodes();
         }
 
         public bool RestoreRunSave(RunSaveData save)

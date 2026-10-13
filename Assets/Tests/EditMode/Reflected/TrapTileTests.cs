@@ -163,5 +163,28 @@ namespace Tests.EditMode.Rules
             Assert.That(TrapRules.ConflictsWithFacility(vaultData, null, true), Is.False, "머물지 않는 시설은 상관없습니다.");
             Assert.That(TrapRules.ConflictsWithFacility(trapData, null, false), Is.False);
         }
+
+        /// <summary>
+        /// 투사체(화살) 함정: 같은 가로줄(위아래 반 칸 안)에 선 모험가 중 서쪽 끝에서 날아온 화살에 가장 먼저 닿는,
+        /// 가장 서쪽 대상을 맞힌다(사용자 결정). 줄 판정이 넓으면 다른 줄의 모험가가 맞는다.
+        /// </summary>
+        [Test]
+        public void ProjectileTrap_HitsTheFirstAdventurerAlongItsRow()
+        {
+            var trap = new Vector2(0f, 0f);
+            Assert.That(TrapRules.OnSameRow(trap, 1f, new Vector2(3f, 0.4f)), Is.True);
+            Assert.That(TrapRules.OnSameRow(trap, 1f, new Vector2(-2f, -0.5f)), Is.True);
+            Assert.That(TrapRules.OnSameRow(trap, 1f, new Vector2(0f, 0.6f)), Is.False, "위 줄은 맞지 않습니다.");
+
+            Assert.That(TrapRules.FirstHitFromWest(new List<float> { 2f, -1f, 0.5f }), Is.EqualTo(1));
+            Assert.That(TrapRules.FirstHitFromWest(new List<float>()), Is.EqualTo(-1));
+
+            var data = AssetDatabase.LoadAssetAtPath<BuildingDataSO>("Assets/GameModules/Data/Buildings/ArrowTrapBuildingData.asset");
+            Assert.That(data, Is.Not.Null, "화살 함정 데이터를 찾지 못했습니다.");
+            Assert.That(data.Category, Is.EqualTo(InstallCategory.Trap));
+            var arrow = data.Prefab as Trap;
+            Assert.That(arrow, Is.Not.Null, "화살 함정 프리팹이 Trap이어야 합니다.");
+            Assert.That(arrow.TriggerMode, Is.EqualTo(TrapTriggerMode.Projectile));
+        }
     }
 }

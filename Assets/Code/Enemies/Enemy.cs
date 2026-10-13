@@ -899,6 +899,18 @@ namespace Code.Enemies
                         MoodChanged?.Invoke(this);
                         return false;
                     }
+
+                    // 갈 곳도 없이 참을성이 바닥나면 들고 있던 돈과 함께 던전을 떠난다.
+                    if (!_isBoss && _facilityWaitSeconds >= AdventurerTraitRules.GetEscapeWaitSeconds(Trait))
+                    {
+                        _waitingFacility.CancelVisit(this);
+                        _waitingFacility = null;
+                        _facilityWaitSeconds = 0f;
+                        combatant?.ShowCounterplayFeedback("불만 탈출", 0, false, new Color(0.85f, 0.55f, 0.45f));
+                        MoodChanged?.Invoke(this);
+                        BeginReturn();
+                        return false;
+                    }
                 }
                 return true;
             }

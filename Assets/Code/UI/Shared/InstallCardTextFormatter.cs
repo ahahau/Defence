@@ -45,6 +45,7 @@ namespace Code.UI
         {
             TrapTriggerMode.Area => $"범위(주변 {trap.AreaRadiusCells:0.#}칸, 아군 포함)",
             TrapTriggerMode.Persistent => $"지속({trap.PersistentSeconds:0.#}초, 아군 포함)",
+            TrapTriggerMode.Projectile => "투사체(같은 줄 첫 모험가)",
             _ => "밟기(한 명)"
         };
 

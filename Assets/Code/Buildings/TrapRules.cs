@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Code.Buildings
@@ -12,7 +13,10 @@ namespace Code.Buildings
         Area,
 
         /// <summary>밟으면 잠시 작동하며 그 위에 선 적·아군에게 일정 간격으로 피해를 나눠 준다.</summary>
-        Persistent
+        Persistent,
+
+        /// <summary>밟으면 그 가로줄 서쪽 끝에서 화살이 날아가 줄 위의 첫 모험가를 맞힌다. 아군은 맞지 않는다.</summary>
+        Projectile
     }
 
     /// <summary>
@@ -65,6 +69,25 @@ namespace Code.Buildings
             var halfY = (Mathf.Max(1, footprint.y) * 0.5f + Mathf.Max(0f, radiusCells)) * cellSize;
             var delta = point - center;
             return Mathf.Abs(delta.x) <= halfX && Mathf.Abs(delta.y) <= halfY;
+        }
+
+        /// <summary>투사체 함정과 같은 가로줄에 선 자리인가(위아래로 반 칸 안).</summary>
+        public static bool OnSameRow(Vector2 trapCenter, float cellSize, Vector2 point) =>
+            Mathf.Abs(point.y - trapCenter.y) <= Mathf.Max(0.01f, cellSize) * 0.5f;
+
+        /// <summary>
+        /// 화살이 맞히는 대상. 줄 서쪽 끝에서 날아가므로 가장 서쪽(x가 가장 작은) 대상이다. 없으면 -1.
+        /// </summary>
+        public static int FirstHitFromWest(IReadOnlyList<float> xPositions)
+        {
+            var index = -1;
+            for (var i = 0; i < xPositions.Count; i++)
+            {
+                if (index < 0 || xPositions[i] < xPositions[index])
+                    index = i;
+            }
+
+            return index;
         }
 
         /// <summary>

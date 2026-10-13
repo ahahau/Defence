@@ -99,6 +99,23 @@ namespace Tests.EditMode.Rules
             Assert.That(shop.TryStartVisit(next), Is.True);
         }
 
+        /// <summary>
+        /// 만족도 임계점(사용자 결정): 줄에서 참을성이 바닥나고 갈 곳도 없으면 던전을 떠난다. 성격마다 참을성이
+        /// 다르고, 모두 대체 시설을 찾기 시작하는 10초보다 길어야 먼저 다른 시설을 찾아본다.
+        /// </summary>
+        [Test]
+        public void EscapeWait_DependsOnTraitAndComesAfterTheAlternativeSearch()
+        {
+            var alternativeSearch = FacilityDwellRules.MaxQueueIncomePenalty / FacilityDwellRules.QueueIncomePenaltyPerSecond;
+            foreach (AdventurerTrait trait in System.Enum.GetValues(typeof(AdventurerTrait)))
+                Assert.That(AdventurerTraitRules.GetEscapeWaitSeconds(trait), Is.GreaterThan(alternativeSearch), trait.ToString());
+
+            Assert.That(AdventurerTraitRules.GetEscapeWaitSeconds(AdventurerTrait.Coward),
+                Is.LessThan(AdventurerTraitRules.GetEscapeWaitSeconds(AdventurerTrait.None)));
+            Assert.That(AdventurerTraitRules.GetEscapeWaitSeconds(AdventurerTrait.Shopaholic),
+                Is.GreaterThan(AdventurerTraitRules.GetEscapeWaitSeconds(AdventurerTrait.None)));
+        }
+
         private Building CreateFacility(int maxConcurrentVisitors)
         {
             var data = ScriptableObject.CreateInstance<BuildingDataSO>();

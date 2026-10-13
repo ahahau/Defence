@@ -73,6 +73,14 @@ namespace Code.Buildings
         /// <summary>범위·지속 판정 때 매번 새로 만들지 않는 임시 목록.</summary>
         private readonly List<EnemyMover> _enemyBuffer = new();
 
+        /// <summary>투사체 판정 때 쓰는 임시 목록.</summary>
+        private readonly List<Enemy> _rowTargets = new();
+        private readonly List<float> _rowTargetX = new();
+
+        private const float ArrowTrailSeconds = 0.18f;
+        private LineRenderer _arrowLine;
+        private Coroutine _arrowRoutine;
+
         public float TriggerChance => triggerChance;
         public int Damage => damage;
         public float InjuryChance => injuryChance;
@@ -123,6 +131,9 @@ namespace Code.Buildings
         private void OnDisable()
         {
             StopHitAnimation(true);
+            if (_arrowLine != null)
+                _arrowLine.enabled = false;
+            _arrowRoutine = null;
         }
 
         protected override void Update()
@@ -191,6 +202,10 @@ namespace Code.Buildings
                     HitEveryoneInArea(CurrentDamage);
                     _cooldownRemaining = CooldownSeconds;
                     break;
+                case TrapTriggerMode.Projectile:
+                    FireAlongRow(stepper, CurrentDamage);
+                    _cooldownRemaining = CooldownSeconds;
+                    break;
                 case TrapTriggerMode.Persistent:
                     _tickDamage = TrapRules.PersistentTickDamage(CurrentDamage, persistentSeconds);
                     _activeRemaining = persistentSeconds;
@@ -240,6 +255,86 @@ namespace Code.Buildings
             }
 
             HitUnits(amount, position => Covers(position, contact));
+        }
+
+        /// <summary>
+        /// 투사체: 이 함정의 가로줄 서쪽 끝에서 화살이 날아가 줄 위의 첫 모험가를 맞힌다.
+        /// 밟은 자리와 쏘는 자리가 떨어져 있어, 줄 앞쪽에 선 다른 모험가가 대신 맞을 수 있다. 아군은 맞지 않는다.
+        /// </summary>
+        private void FireAlongRow(Enemy stepper, int amount)
+        {
+            var cellSize = ResolveCellSize();
+            var center = (Vector2)transform.position;
+            CollectEnemiesInNode();
+            _rowTargets.Clear();
+            _rowTargetX.Clear();
+            foreach (var mover in _enemyBuffer)
+            {
+                var enemy = mover.GetComponent<Enemy>();
+                if (enemy == null || enemy.IsDead || !TrapRules.OnSameRow(center, cellSize, mover.transform.position))
+                    continue;
+
+                _rowTargets.Add(enemy);
+                _rowTargetX.Add(mover.transform.position.x);
+            }
+
+            var index = TrapRules.FirstHitFromWest(_rowTargetX);
+            var target = index >= 0 ? _rowTargets[index] : stepper;
+            if (target == null)
+                return;
+
+            // 문가처럼 격자 밖에 선 대상도 있어, 화살은 늘 대상보다 서쪽에서 출발하게 한다.
+            var start = ResolveRowStart(cellSize);
+            start.x = Mathf.Min(start.x, target.transform.position.x - cellSize * 0.5f);
+            ShowArrow(start, target.transform.position);
+            HitEnemy(target, amount, true);
+        }
+
+        /// <summary>화살이 출발하는 자리: 방 격자에서 이 함정 줄의 서쪽 끝. 격자가 없으면 한 칸 서쪽.</summary>
+        private Vector3 ResolveRowStart(float cellSize)
+        {
+            var grid = ResolveGrid();
+            if (grid != null && grid.TryGetAnchor(this, out _, out var row))
+            {
+                var west = grid.CellWorldPosition(0, row);
+                return new Vector3(west.x - cellSize * 0.5f, transform.position.y, transform.position.z);
+            }
+
+            return transform.position + Vector3.left * cellSize;
+        }
+
+        /// <summary>날아간 화살을 잠깐 선으로 보여 준다. 무엇이 어디서 맞았는지 보여야 줄 배치를 읽는다.</summary>
+        private void ShowArrow(Vector3 from, Vector3 to)
+        {
+            if (_arrowLine == null)
+            {
+                var arrow = new GameObject("ArrowTrail");
+                arrow.transform.SetParent(transform, false);
+                _arrowLine = arrow.AddComponent<LineRenderer>();
+                _arrowLine.material = new Material(Shader.Find("Sprites/Default"));
+                _arrowLine.startWidth = 0.06f;
+                _arrowLine.endWidth = 0.03f;
+                _arrowLine.startColor = new Color(0.95f, 0.85f, 0.55f, 0.9f);
+                _arrowLine.endColor = new Color(1f, 0.95f, 0.8f, 1f);
+                _arrowLine.positionCount = 2;
+                _arrowLine.useWorldSpace = true;
+                _arrowLine.sortingOrder = 50;
+            }
+
+            _arrowLine.SetPosition(0, from);
+            _arrowLine.SetPosition(1, to);
+            _arrowLine.enabled = true;
+            if (_arrowRoutine != null)
+                StopCoroutine(_arrowRoutine);
+            _arrowRoutine = StartCoroutine(HideArrowAfter(ArrowTrailSeconds));
+        }
+
+        private System.Collections.IEnumerator HideArrowAfter(float seconds)
+        {
+            yield return new WaitForSeconds(seconds);
+            if (_arrowLine != null)
+                _arrowLine.enabled = false;
+            _arrowRoutine = null;
         }
 
         /// <summary>같은 방에 있는 살아 있는 침입자를 모은다. 통로를 걷는 중인 적은 방에 없다.</summary>

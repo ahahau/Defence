@@ -10,6 +10,12 @@ namespace Code.Persistence.Agents
     {
         public List<SavedNode> nodes;
         public List<SavedEdge> edges;
+
+        // 판 시드(RunRandom). 지형이 가장 먼저 복원되므로 여기 둔다. 옛 저장은 0이라 새로 뽑는다.
+        public int runSeed;
+
+        // 이미 뽑아 둔 확장 후보. 옛 저장에는 없어서 자리마다 다시 뽑는다.
+        public List<SavedCandidate> candidates;
     }
 
     /// <summary>
@@ -36,7 +42,9 @@ namespace Code.Persistence.Agents
             return JsonUtility.ToJson(new DungeonGraphSaveState
             {
                 nodes = captured.nodes,
-                edges = captured.edges
+                edges = captured.edges,
+                runSeed = Code.Manager.RunRandom.Seed,
+                candidates = controller.CaptureCandidateRolls()
             });
         }
 
@@ -50,11 +58,16 @@ namespace Code.Persistence.Agents
             if (state.nodes == null || state.nodes.Count == 0)
                 throw new InvalidOperationException("저장된 던전에 방이 하나도 없습니다.");
 
+            // 방 후보 크기·특수 효과가 시드로 뽑히므로 지형을 세우기 전에 시드부터 되돌린다.
+            Code.Manager.RunRandom.Restore(state.runSeed);
+
             // 컨트롤러는 여전히 RunSaveData를 받는다. 지형 복원 한 곳만 쓰는 형식이라
             // 여기서 맞춰 넘기고, 900줄짜리 컨트롤러는 건드리지 않는다.
             var payload = new RunSaveData { nodes = state.nodes, edges = state.edges ?? new List<SavedEdge>() };
             if (!controller.RestoreRunSave(payload))
                 throw new InvalidOperationException("저장된 던전 지형을 되돌리지 못했습니다.");
+
+            controller.RestoreCandidateRolls(state.candidates);
         }
 
         private DungeonGraphController Resolve() =>

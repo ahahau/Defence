@@ -94,6 +94,18 @@ namespace Code.Enemies
                 : (healingSuppressed ? PriestSuppressedHealMultiplier : PriestSupportHealMultiplier);
 
         /// <summary>겁쟁이는 작은 압박에도 돌아가고, 성직자는 더 오래 버틴다.</summary>
+        /// <summary>
+        /// 시설 줄에서 이만큼 기다리고도 차례가 안 오고 갈 곳도 없으면 불만이 넘쳐 던전을 떠난다(극단적 탈출).
+        /// 성격마다 참을성이 다르다: 겁쟁이는 금방, 쇼핑광은 오래 버틴다.
+        /// </summary>
+        public static float GetEscapeWaitSeconds(AdventurerTrait trait) => trait switch
+        {
+            AdventurerTrait.Coward => 12f,
+            AdventurerTrait.Shopaholic => 28f,
+            AdventurerTrait.Priest => 22f,
+            _ => 18f
+        };
+
         public static float GetRetreatFearThreshold(float baseThreshold, AdventurerTrait trait)
         {
             var thresholdOffset = trait switch

@@ -120,7 +120,7 @@ namespace Code.Manager
         /// 지금 돌아가는 시설인가. 닫아 둔 시설은 벌지도 않고 운영비도 먹지 않으며
         /// 옆방의 시너지도 만들지 않는다 — 쉬는 동안은 없는 것과 같다.
         /// </summary>
-        private static bool IsOperatingFacility(Building building) =>
+        public static bool IsOperatingFacility(Building building) =>
             building != null && building.IsOperating && building.Data != null && building.Data.DailyUpkeep > 0;
 
         private static int UpkeepOf(Building building) =>

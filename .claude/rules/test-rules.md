@@ -26,22 +26,22 @@ paths:
 | `PartyFundTests` | 파티 공동 자금(합류·결제·낙전·전멸·탈출·약탈·단계), 아군 부활비 금액·받는 파티·스킬 공격자 기록 |
 | `UnitMarketTests` | 주간 지원자 수·시세·유지비, 보인 값과 결제 값 일치 |
 | `CreditWarningTests` | 부채 한도·긴급 상환·신용 경고·파산 판정 |
-| `FacilityQueueTests` | 시설 대기열 FIFO·동시 이용 수·대기 만족도 감액 |
+| `FacilityQueueTests` | 시설 대기열 FIFO·동시 이용 수·대기 만족도 감액, 성격별 불만 탈출 시간 |
 | `FacilityDurabilityTests` | 수익 시설 내구도·수입 배율·수리·철거 환불·저장, 손님별 마모 배율·소수 마모 누적·이용 시간 지연·효과 약화, 시설 등급별 최대 내구도·전투/사건 마모·승급 등급과 사건 마모 에셋 |
-| `TrapTileTests` | 함정 여러 칸 점유·철거, 범위·지속 판정, 재사용 시간, 시설·함정 겹침 |
+| `TrapTileTests` | 함정 여러 칸 점유·철거, 범위·지속 판정, 재사용 시간, 시설·함정 겹침, 투사체 줄 판정·화살 함정 데이터 |
 | `PauseLockTests` | 엘리트·보스 일시정지 잠금 규칙과 배속 컨트롤러 잠금 동작 |
 | `RedeployPreparationTests` | 재배치 준비 시간·준비 중 피해 절반, 특성별 재배치 반응, 부활 마력 비용(정가·특성) |
 | `RoomConstructionTests` | 그래프 노드 제거(연결·자리 정리), 공사 중 노드의 막힌 길·배치 불가, 방 크기별 비용·시간·정원·환불·등급·후보 확률·소형 시설 금지, 특수 효과 확률·대가·효과, 연결 방향 예측, 열린 방의 효과 표시 |
 | `PopupRequestTests` | 범용 팝업 요청 규칙 |
 | `AssetWiringTests` | 에셋 연결 (그림·프리팹·아이콘·WaveConfig·씬 배선) |
 | `CombatFormulaTests` | 전투 공식 |
-| `EncounterVarietyTests` | 웨이브 편성 다양성 |
+| `EncounterVarietyTests` | 웨이브 편성 다양성, 파티 인원 변동(리더 유지·밤·등급), 리더 동기 대기 |
 | `WaveExploitationProgressTests` | 웨이브 목표 진행 |
 | `DialogueSequencePlayerTests` | 대화 진행 |
 | `TutorialRegressionTests` | 튜토리얼 단계 |
 | `ArtifactShopTests` | 상인·유물 |
 | `BuildingSerializationTests` | 건물 저장 |
-| `IntrusionAndSaveTests` | 침입·저장 |
+| `IntrusionAndSaveTests` | 침입·저장, 판 시드 난수 고정 |
 
 4. **`AssetWiringTests`는 데이터를 만들 때마다 깨질 수 있다.** 새 SO나 프리팹을 만들면 반드시 돌린다. 이 테스트가 검사하는 것:
    * 적: 포즈 3종 + `BoardSprite` + `Prefab`
