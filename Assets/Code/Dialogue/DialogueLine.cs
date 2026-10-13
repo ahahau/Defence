@@ -14,6 +14,9 @@ namespace Code.Dialogue
         [SerializeField] private int nextLineIndex;
         [SerializeField] private DialogueChoiceRoute[] routes;
 
+        /// <summary>코드로 만든 사건에서 지금 고를 수 없는 선택지(금화 부족 등). 에셋에는 저장하지 않는다.</summary>
+        [NonSerialized] private bool locked;
+
         public DialogueChoice(string text, int nextLineIndex = -1)
         {
             this.text = text;
@@ -22,7 +25,19 @@ namespace Code.Dialogue
             this.nextSequence = null;
             this.nextLineIndex = nextLineIndex;
             this.routes = Array.Empty<DialogueChoiceRoute>();
+            this.locked = false;
         }
+
+        /// <summary>코드로 만드는 사건의 선택지. 결과 요약과 실행할 액션을 함께 받는다.</summary>
+        public DialogueChoice(string text, string effectSummary, bool locked, params DialogueActionSO[] actions)
+            : this(text)
+        {
+            this.effectSummary = effectSummary ?? string.Empty;
+            this.actions = actions ?? Array.Empty<DialogueActionSO>();
+            this.locked = locked;
+        }
+
+        public bool IsLocked => locked;
 
         public string Text => text;
         public string EffectSummary => effectSummary;
@@ -42,6 +57,9 @@ namespace Code.Dialogue
 
         public bool CanSelect(DialogueValueTableSO valueTable)
         {
+            if (locked)
+                return false;
+
             if (!HasConditions)
                 return true;
 

@@ -23,6 +23,7 @@ namespace Code.Manager
 
         /// <summary>날이 바뀔 때 다시 열린 시설을 모아 두는 임시 목록. 매번 새로 만들지 않는다.</summary>
         private readonly List<Building> _reopened = new();
+        private readonly List<Building> _repairing = new();
 
         private void Awake()
         {
@@ -111,6 +112,62 @@ namespace Code.Manager
             building.BeginRepair();
             costEventChannel?.RaiseEvent(new FacilityRepairStartedEvent(building, cost, seconds));
             return true;
+        }
+
+        /// <summary>
+        /// 영업을 멈춘(내구도 0) 시설을 한꺼번에 즉시 고친다. 상황 사건의 긴급 수리·일꾼 징발에서 쓴다.
+        /// 정상 수리비에 <paramref name="costRate"/>를 곱한 금화를 먼저 받고, 모자라면 아무것도 하지 않는다.
+        /// 고친 횟수는 정상 수리처럼 늘어 다음 수리비가 오른다.
+        /// </summary>
+        /// <returns>고친 시설 수.</returns>
+        public int RepairWornOutNow(float costRate, out int paid)
+        {
+            paid = WornOutRepairCost(costRate);
+            var costManager = CostManager.Current;
+            if (paid > 0 && (costManager == null || !costManager.TrySpendGold(paid)))
+            {
+                paid = 0;
+                return 0;
+            }
+
+            // 고치는 동안 완료 알림이 노드 목록을 건드려도 안전하게 먼저 모아 둔다.
+            _repairing.Clear();
+            _repairing.AddRange(EnumerateWornOut());
+
+            var repaired = 0;
+            foreach (var building in _repairing)
+            {
+                var cost = SituationEventRules.ScaledRepairCost(building.RepairCost, costRate);
+                if (!building.BeginRepair())
+                    continue;
+
+                building.TickRepair(float.MaxValue);
+                costEventChannel?.RaiseEvent(new FacilityRepairStartedEvent(building, cost, 0f));
+                repaired++;
+            }
+
+            _repairing.Clear();
+            return repaired;
+        }
+
+        /// <summary>영업을 멈춘 시설을 모두 고치는 값. 시설마다 올림해서 더하므로 실제 결제와 같다.</summary>
+        public static int WornOutRepairCost(float costRate)
+        {
+            var total = 0;
+            foreach (var building in EnumerateWornOut())
+                total += SituationEventRules.ScaledRepairCost(building.RepairCost, costRate);
+
+            return total;
+        }
+
+        private static IEnumerable<Building> EnumerateWornOut()
+        {
+            foreach (var node in Node.ActiveNodes)
+            {
+                var building = node != null ? node.AssignedBuilding : null;
+                if (building != null && building.IsWornOut && building.CanRepair)
+                    yield return building;
+            }
         }
 
         /// <summary>

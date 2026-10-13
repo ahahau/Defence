@@ -20,7 +20,7 @@ paths:
 | `SettlementRegressionTests` | 정산·장부 회귀 |
 | `WeeklyLoanLedgerTests` | 대출·청산일 |
 | `MetaProgressTests` | 메타 진행도·최고 기록·시작 보정 장착/칸·새 판 보정·파일 저장(임시 경로) |
-| `RunEventLedgerTests` | 사건 순서(한 전환 한 사건·일반 사건 4~6회 쿨다운·주요 사건 우선)·선택 기록 |
+| `RunEventLedgerTests` | 사건 순서(한 전환 한 사건·일반 사건 4~6회 쿨다운·주요 사건 우선·청산 위기 우선과 방침 미룸·상황 사건 쿨다운 공유)·선택 기록, 상황 사건 판정·급전/조기 상환 금액·잠긴 선택지 |
 | `BossDefeatTests` | 보스별 패배 조건 판정·예고 문구, 청산일 보스마다 조건 존재 |
 | `ChurchRevivalTests` | 교회 부활비·부활 체력, 관 추적·정리, 교회 데이터 시설 규칙 |
 | `PartyFundTests` | 파티 공동 자금(합류·결제·낙전·전멸·탈출·약탈·단계) |

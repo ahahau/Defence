@@ -20,10 +20,13 @@ namespace Code.Manager
 
         private readonly HashSet<string> _chosenKeys = new();
         private int _resolvedDay = -1;
-        private bool _normalGrantedForResolvedDay;
+        private TransitionEventKind _resolvedKind;
 
-        /// <summary>다음 일반 사건까지 남은 전환 수. 0 이하면 다음 전환에 나올 수 있다.</summary>
+        /// <summary>다음 일반·상황 사건까지 남은 전환 수. 0 이하면 다음 전환에 나올 수 있다.</summary>
         public int NormalCooldown { get; private set; } = MinNormalCooldown;
+
+        /// <summary>긴급 사건에 밀린 운영 방침이 다음 전환을 기다리는가.</summary>
+        public bool PolicyDeferred { get; private set; }
 
         public IReadOnlyCollection<string> ChosenKeys => _chosenKeys;
 
@@ -33,18 +36,45 @@ namespace Code.Manager
         /// 일반 사건이 나오면 쉬는 시간을 4~6 중 하나로 다시 건다.
         /// </summary>
         /// <param name="roll01">쉬는 시간을 고를 0~1 난수. 테스트가 값을 정할 수 있게 밖에서 받는다.</param>
-        public bool ResolveTransition(int day, bool majorEventThisTransition, float roll01)
+        public bool ResolveTransition(int day, bool majorEventThisTransition, float roll01) =>
+            ResolveTransition(day, false, majorEventThisTransition, false, roll01) == TransitionEventKind.Normal;
+
+        /// <summary>
+        /// 이 전환에 띄울 사건 하나를 고른다. 같은 날을 여러 번 물어도 처음 판정을 그대로 돌려준다.
+        /// 순서: 긴급(청산 위기) → 주요(운영 방침, 긴급에 밀렸으면 다음 전환에) → 상황 → 일반.
+        /// 긴급 사건은 쉬는 시간과 무관하고, 상황 사건은 일반 사건과 쉬는 시간을 함께 쓴다.
+        /// </summary>
+        public TransitionEventKind ResolveTransition(
+            int day, bool urgentSituation, bool majorEventThisTransition, bool situationAvailable, float roll01)
         {
             if (day == _resolvedDay)
-                return _normalGrantedForResolvedDay;
+                return _resolvedKind;
 
             _resolvedDay = day;
             NormalCooldown--;
-            _normalGrantedForResolvedDay = !majorEventThisTransition && NormalCooldown <= 0;
-            if (_normalGrantedForResolvedDay)
-                NormalCooldown = RollCooldown(roll01);
+            var major = majorEventThisTransition || PolicyDeferred;
 
-            return _normalGrantedForResolvedDay;
+            if (urgentSituation)
+            {
+                PolicyDeferred = major;
+                _resolvedKind = TransitionEventKind.Urgent;
+            }
+            else if (major)
+            {
+                PolicyDeferred = false;
+                _resolvedKind = TransitionEventKind.Major;
+            }
+            else if (NormalCooldown <= 0)
+            {
+                NormalCooldown = RollCooldown(roll01);
+                _resolvedKind = situationAvailable ? TransitionEventKind.Situation : TransitionEventKind.Normal;
+            }
+            else
+            {
+                _resolvedKind = TransitionEventKind.None;
+            }
+
+            return _resolvedKind;
         }
 
         public bool HasChosen(string key) => !string.IsNullOrEmpty(key) && _chosenKeys.Contains(key);
@@ -56,7 +86,7 @@ namespace Code.Manager
         }
 
         /// <summary>저장에서 되돌린다. 사건 기록이 없던 옛 저장(<paramref name="hasState"/> false)은 처음 상태로 시작한다.</summary>
-        public void Restore(IEnumerable<string> chosenKeys, int normalCooldown, bool hasState)
+        public void Restore(IEnumerable<string> chosenKeys, int normalCooldown, bool hasState, bool policyDeferred = false)
         {
             _chosenKeys.Clear();
             if (chosenKeys != null)
@@ -66,8 +96,9 @@ namespace Code.Manager
             }
 
             NormalCooldown = hasState ? normalCooldown : MinNormalCooldown;
+            PolicyDeferred = hasState && policyDeferred;
             _resolvedDay = -1;
-            _normalGrantedForResolvedDay = false;
+            _resolvedKind = TransitionEventKind.None;
         }
 
         public static int RollCooldown(float roll01) =>

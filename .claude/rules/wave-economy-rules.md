@@ -22,7 +22,7 @@ paths:
 - **매일 정산:** 웨이브 중 수입·지출은 장부에만 쌓이고, 금화는 정산 때 움직인다.
 - **즉시 결제와 정산을 섞지 않는다.** `CostManager`(건설·고용·회복·상인의 즉시 결제)와 `ManagementSettlementManager`(웨이브 후 정산)는 따로다. 이중 차감 사고가 있었다.
 - 즉시 결제는 하나의 내부 경로로 모여 있다. 결제 후 배치에 실패하면 금화·건설 할인을 복원하고 장부에 환불을 남긴다.
-- **빚:** 하루 정산에서 금화로 메우지 못한 적자는 빚으로 쌓인다. 빚은 청산일 전에는 갚을 수 없다.
+- **빚:** 하루 정산에서 금화로 메우지 못한 적자는 빚으로 쌓인다. 빚은 청산일 전에는 갚을 수 없다. 예외는 상황 사건뿐이다: 조기 상환(`CostManager.TryRepayEarly`, 수수료 10%), 급전(`TakeEventLoan`, 받은 금화의 130%를 빚으로·한도 무시·`NoteCreditLimit`), 기관 접대(`TryReduceCreditWarning`).
 - **청산일(7일마다, `DayManager.IsSettlementDay`):** 빚에 주간 이자를 얹고 최소 상환액을 낸다. 못 내면 `BankruptcyEvent`로 게임오버다.
 - **부채 한도·신용 경고**(`CreditWarningRules`, `CostManager.ResolveDayEndCredit`): 영업 종료 정산 맨 끝(청산 뒤)에 판정한다.
   - 한도는 `CostManager.CreditLimit`(상품 원래 한도)를 본다. `ActiveLoanProduct.CreditLimit`은 이미 있는 빚을 지우지 않으려고 빚만큼 올라가 있으니 판정에 쓰지 않는다.

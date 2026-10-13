@@ -143,6 +143,9 @@ namespace Code.Persistence
 
         /// <summary>다음 일반 사건까지 남은 전환 수.</summary>
         public int normalEventCooldown;
+
+        /// <summary>청산 위기에 밀린 운영 방침이 다음 전환을 기다리는가.</summary>
+        public bool policyDeferred;
     }
 
     [Serializable]

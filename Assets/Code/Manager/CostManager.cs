@@ -220,6 +220,70 @@ namespace Code.Manager
             return true;
         }
 
+        /// <summary>
+        /// 상황 사건(청산 위기)의 급전. 상품 한도와 상관없이 금화를 받고 그보다 큰 빚을 진다.
+        /// 한도를 넘기면 오늘 넘은 것으로 기록돼 다음 영업 종료 때 신용 경고 판정을 받는다.
+        /// </summary>
+        public void TakeEventLoan(int cash, int debtAdded)
+        {
+            cash = Mathf.Max(0, cash);
+            debtAdded = Mathf.Max(0, debtAdded);
+            if (cash == 0 && debtAdded == 0)
+                return;
+
+            _ledger.SetDebt(_ledger.Debt + debtAdded);
+            _ledger.Add(cash);
+            NoteCreditLimit();
+            RaiseGoldChanged();
+            RunSummarySystem.Current?.RecordDebt(CurrentDebt);
+            costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, debtAdded));
+        }
+
+        /// <summary>빚이 <paramref name="extraDebt"/>만큼 늘었을 때의 최소 상환액. 급전이 늘어난 청구액까지 메우는지 미리 잰다.</summary>
+        public int PreviewWeeklyDue(int extraDebt)
+        {
+            var product = ResolveActiveLoanProduct();
+            var principal = Mathf.Max(0, _ledger.Debt + extraDebt);
+            var preview = new WeeklyLoanProduct(
+                product.Id,
+                Mathf.Max(product.CreditLimit, principal),
+                product.WeeklyInterestRate,
+                product.MinimumPrincipalRate,
+                product.DisplayName);
+            var loan = new WeeklyLoanLedger(preview);
+            loan.RestorePrincipal(principal);
+            return loan.GetWeeklyQuote().MinimumPayment;
+        }
+
+        /// <summary>
+        /// 상황 사건(부채 한도 위험)의 조기 상환. 청산일이 아니어도 원금을 금화로 갚는다.
+        /// 수수료는 부르는 쪽이 장부에 남도록 따로 낸다.
+        /// </summary>
+        public bool TryRepayEarly(int principal)
+        {
+            principal = Mathf.Min(Mathf.Max(0, principal), CurrentDebt);
+            if (principal <= 0 || !_ledger.TrySpend(principal))
+                return false;
+
+            _ledger.SetDebt(_ledger.Debt - principal);
+            RaiseGoldChanged();
+            RunSummarySystem.Current?.RecordDebt(CurrentDebt);
+            costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, -principal));
+            return true;
+        }
+
+        /// <summary>상황 사건(기관 접대)으로 신용 경고를 한 단계 내린다. 접대비는 부르는 쪽이 낸다.</summary>
+        public bool TryReduceCreditWarning()
+        {
+            if (_creditWarnings <= 0)
+                return false;
+
+            _creditWarnings--;
+            costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, 0));
+            StateChanged?.Invoke();
+            return true;
+        }
+
         /// <summary>즉시 결제의 단일 경로. 호출자가 가격 검증과 결제 결과 이벤트를 맡는다.</summary>
         private bool TryChargeImmediate(int amount, bool notifyWhenFree = false)
         {

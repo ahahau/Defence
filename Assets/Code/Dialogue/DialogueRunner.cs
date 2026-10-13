@@ -39,6 +39,9 @@ namespace Code.Dialogue
         private DialogueSequenceSO pendingScheduledEventSequence;
         private int lastScheduledEventDay;
 
+        /// <summary>띄울 차례를 기다리는 상황 사건. 내용은 띄우는 순간의 수치로 만든다.</summary>
+        private SituationKind _pendingSituation;
+
         /// <summary>
         /// 지금 도는 대화가 일반 사건(정기 이벤트)인가. 일반 사건에만 "아무것도 하지 않음"을 붙이고,
         /// 처음 보는 선택지의 결과를 가리고 고른 결과를 기록한다. 튜토리얼 대화는 손대지 않는다.
@@ -104,6 +107,7 @@ namespace Code.Dialogue
             guidedNodeEventChannel?.AddListener<PortalInstalledEvent>(HandleGuidedPortalInstalled);
             guidedNodeEventChannel?.AddListener<BuildingInstalledEvent>(HandleGuidedBuildingInstalled);
             costEventChannel?.AddListener<RosterHirePaidEvent>(HandleGuidedRosterHirePaid);
+            costEventChannel?.AddListener<CreditStatusChangedEvent>(HandleDayLedgerClosed);
             scheduledWaveEventChannel?.AddListener<WaveStartedEvent>(HandleGuidedWaveStarted);
         }
 
@@ -117,6 +121,7 @@ namespace Code.Dialogue
             guidedNodeEventChannel?.RemoveListener<PortalInstalledEvent>(HandleGuidedPortalInstalled);
             guidedNodeEventChannel?.RemoveListener<BuildingInstalledEvent>(HandleGuidedBuildingInstalled);
             costEventChannel?.RemoveListener<RosterHirePaidEvent>(HandleGuidedRosterHirePaid);
+            costEventChannel?.RemoveListener<CreditStatusChangedEvent>(HandleDayLedgerClosed);
             scheduledWaveEventChannel?.RemoveListener<WaveStartedEvent>(HandleGuidedWaveStarted);
         }
 
@@ -233,7 +238,19 @@ namespace Code.Dialogue
         private void HandleWaveEnded(WaveEndedEvent evt)
         {
             HandleGuidedWaveEnded(evt);
-            ScheduleEventForDay(evt.Day);
+
+            // 상황 사건은 정산이 끝난 금화·빚을 봐야 하므로 비용 채널이 있으면 정산 마지막 신호에서 고른다.
+            if (costEventChannel == null)
+                ScheduleEventForDay(evt.Day);
+        }
+
+        /// <summary>영업 종료 정산의 맨 끝(청산·부채 한도 판정 뒤). 이 전환의 사건을 띄운다.</summary>
+        private void HandleDayLedgerClosed(CreditStatusChangedEvent evt)
+        {
+            if (scheduledWaveEventChannel == null || evt.Outcome == Manager.Economy.CreditDayEndOutcome.Bankrupt)
+                return;
+
+            ScheduleEventForDay(DayManager.Current != null ? DayManager.Current.CurrentDay : 0);
         }
 
         private void ScheduleEventForDay(int day)
@@ -241,12 +258,21 @@ namespace Code.Dialogue
             if (!playScheduledEvents || day <= 0 || day == lastScheduledEventDay)
                 return;
 
-            // 한 전환에는 사건 하나만. 운영 방침이 뜨는 날이면 미루고, 일반 사건 뒤에는 4~6회 쉰다.
-            // 사건 관리자가 없으면(테스트 씬 등) 예전처럼 일정 간격으로 띄운다.
+            // 한 전환에는 사건 하나만. 청산 위기 → 운영 방침 → 상황 사건 → 일반 사건 순이고,
+            // 일반·상황 사건 뒤에는 4~6회 쉰다. 사건 관리자가 없으면(테스트 씬 등) 예전처럼 일정 간격으로 띄운다.
             var events = MoralePolicyManager.Current;
             if (events != null)
             {
-                if (!events.TryGrantNormalEvent(day))
+                var kind = events.ResolveTransitionEvent(day);
+                if (kind == TransitionEventKind.Urgent || kind == TransitionEventKind.Situation)
+                {
+                    lastScheduledEventDay = day;
+                    _pendingSituation = events.CurrentSituation;
+                    TryPlayPendingScheduledEvent();
+                    return;
+                }
+
+                if (kind != TransitionEventKind.Normal)
                     return;
             }
             else if (scheduledEventIntervalDays <= 0 || day % scheduledEventIntervalDays != 0)
@@ -862,7 +888,10 @@ namespace Code.Dialogue
             view?.Hide();
 
             if (endedSequence != null)
+            {
                 DialogueEnded?.Invoke(endedSequence);
+                SituationEventFactory.Release(endedSequence);
+            }
 
             TryPlayPendingScheduledEvent();
         }
@@ -926,7 +955,23 @@ namespace Code.Dialogue
 
         private void TryPlayPendingScheduledEvent()
         {
-            if (!playScheduledEvents || IsPlaying || pendingScheduledEventSequence == null)
+            if (!playScheduledEvents || IsPlaying)
+                return;
+
+            // 상황 사건은 띄우는 순간의 금화로 금액을 정한다(앞선 대화가 금화를 바꿨을 수 있음).
+            if (_pendingSituation != SituationKind.None)
+            {
+                var situation = _pendingSituation;
+                _pendingSituation = SituationKind.None;
+                var built = SituationEventFactory.Build(situation, costEventChannel);
+                if (built != null)
+                {
+                    PlaySequence(built, false);
+                    return;
+                }
+            }
+
+            if (pendingScheduledEventSequence == null)
                 return;
 
             var sequence = pendingScheduledEventSequence;

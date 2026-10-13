@@ -54,8 +54,13 @@ namespace Code.Manager
         private readonly List<PolicyCombo> activeCombos = new();
 
         private int currentDay;
+        private int _situationDay = -1;
+        private SituationKind _situation;
 
         public static MoralePolicyManager Current { get; private set; }
+
+        /// <summary>이번 전환에 판정한 상황 사건. 대화 실행기가 사건 내용을 만들 때 읽는다.</summary>
+        public SituationKind CurrentSituation => _situation;
 
         public int CurrentMorale { get; private set; }
 
@@ -130,6 +135,7 @@ namespace Code.Manager
             dayEventChannel?.AddListener<DayChangedEvent>(HandleDayChanged);
             waveEventChannel?.AddListener<WaveEndedEvent>(HandleWaveEnded);
             managementEventChannel?.AddListener<MoraleChangeRequestedEvent>(HandleMoraleChangeRequested);
+            costEventChannel?.AddListener<CreditStatusChangedEvent>(HandleDayLedgerClosed);
         }
 
         private void Start()
@@ -142,6 +148,7 @@ namespace Code.Manager
             dayEventChannel?.RemoveListener<DayChangedEvent>(HandleDayChanged);
             waveEventChannel?.RemoveListener<WaveEndedEvent>(HandleWaveEnded);
             managementEventChannel?.RemoveListener<MoraleChangeRequestedEvent>(HandleMoraleChangeRequested);
+            costEventChannel?.RemoveListener<CreditStatusChangedEvent>(HandleDayLedgerClosed);
         }
 
         public void SelectPolicy(PolicyDataSO policy)
@@ -204,21 +211,67 @@ namespace Code.Manager
                 : $"방어 실패 ({evt.KillCount}/{evt.EnemyCount})";
             ChangeMorale(delta, reason);
 
-            // 이 전환의 사건 순서를 먼저 정한다. 대화 이벤트 쪽이 먼저 물어도 같은 판정을 받는다.
-            TryGrantNormalEvent(evt.Day);
+            // 상황 사건은 정산이 끝난 금화·빚을 봐야 해서, 비용 채널이 있으면 정산 마지막 신호
+            // (부채 한도 판정)에서 사건을 고른다. 없으면(테스트 씬 등) 여기서 바로 고른다.
+            if (costEventChannel == null)
+                ResolveTransitionAndOffer(evt.Day);
+        }
 
-            if (offerAfterWaveEnd && ShouldOfferPolicy())
+        /// <summary>영업 종료 정산의 맨 끝(청산·부채 한도 판정 뒤). 이 전환의 사건을 고른다.</summary>
+        private void HandleDayLedgerClosed(CreditStatusChangedEvent evt)
+        {
+            if (evt.Outcome == Economy.CreditDayEndOutcome.Bankrupt)
+                return;
+
+            ResolveTransitionAndOffer(currentDay);
+        }
+
+        private void ResolveTransitionAndOffer(int day)
+        {
+            // 이 전환의 사건 순서를 먼저 정한다. 대화 이벤트 쪽이 먼저 물어도 같은 판정을 받는다.
+            if (ResolveTransitionEvent(day) == TransitionEventKind.Major)
                 OfferPolicies();
         }
 
         /// <summary>
-        /// 이 영업 종료(전환)에 일반 사건(일차 대화)을 띄워도 되는가. 운영 방침이 뜨는 전환이면 미룬다.
+        /// 이 영업 종료(전환)에 일반 사건(일차 대화)을 띄워도 되는가. 운영 방침이나 상황 사건이 뜨는 전환이면 미룬다.
         /// 한 전환에 한 번만 판정하고, 같은 날 다시 물으면 같은 답을 준다.
         /// </summary>
-        public bool TryGrantNormalEvent(int day)
+        public bool TryGrantNormalEvent(int day) => ResolveTransitionEvent(day) == TransitionEventKind.Normal;
+
+        /// <summary>
+        /// 이 전환에 띄울 사건 하나. 청산 위기 → 운영 방침 → 상황 사건 → 일반 사건 순이다.
+        /// 한 전환에 한 번만 판정하고(상황도 그때 정해 둠), 같은 날 다시 물으면 같은 답을 준다.
+        /// </summary>
+        public TransitionEventKind ResolveTransitionEvent(int day)
         {
+            if (day != _situationDay)
+            {
+                _situationDay = day;
+                _situation = SituationEventRules.Detect(CaptureSituation(day));
+            }
+
+            var urgent = SituationEventRules.IsUrgent(_situation);
             var major = offerAfterWaveEnd && ShouldOfferPolicyOn(day);
-            return Events.ResolveTransition(day, major, Random.value);
+            var situation = _situation != SituationKind.None && !urgent;
+            return Events.ResolveTransition(day, urgent, major, situation, Random.value);
+        }
+
+        private static SituationSnapshot CaptureSituation(int day)
+        {
+            var cost = CostManager.Current;
+            if (cost == null)
+                return default;
+
+            return new SituationSnapshot(
+                DayManager.IsSettlementDay(day + 1),
+                cost.CurrentGold,
+                cost.WeeklyDue,
+                cost.CurrentDebt,
+                cost.CreditLimit,
+                cost.CreditWarnings,
+                FacilityEconomyRules.CountWornOutFacilities(),
+                FacilityClosureSystem.WornOutRepairCost(1f));
         }
 
         private void HandleMoraleChangeRequested(MoraleChangeRequestedEvent evt)
@@ -470,6 +523,7 @@ namespace Code.Manager
             target.active.Clear();
             target.hasEventLedger = true;
             target.normalEventCooldown = Events.NormalCooldown;
+            target.policyDeferred = Events.PolicyDeferred;
             target.chosenEventKeys = new List<string>(Events.ChosenKeys);
             foreach (var policy in selectedPolicies)
                 if (policy != null) target.selected.Add(policy.name);
@@ -485,6 +539,8 @@ namespace Code.Manager
         {
             CurrentMorale = Mathf.Clamp(morale, 0, 100);
             currentDay = Mathf.Max(0, day);
+            _situationDay = -1;
+            _situation = SituationKind.None;
             currentChoices.Clear();
             selectedPolicies.Clear();
             activePolicies.Clear();
@@ -503,7 +559,11 @@ namespace Code.Manager
                         if (policy != null && saved.remainingDays > 0)
                             activePolicies.Add(new ActivePolicy(policy, saved.remainingDays));
                     }
-                Events.Restore(savedPolicies.chosenEventKeys, savedPolicies.normalEventCooldown, savedPolicies.hasEventLedger);
+                Events.Restore(
+                    savedPolicies.chosenEventKeys,
+                    savedPolicies.normalEventCooldown,
+                    savedPolicies.hasEventLedger,
+                    savedPolicies.policyDeferred);
             }
             else
             {
