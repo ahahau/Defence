@@ -1,0 +1,27 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="project://database/Assets/GameModules/UI/UxmlAndUss/Common/DesignToken.uss" />
+    <Style src="project://database/Assets/GameModules/UI/UxmlAndUss/Common/Components.uss" />
+    <Style src="project://database/Assets/GameModules/UI/UxmlAndUss/Battle/EnemyStatus/EnemyStatusPanel.uss" />
+    <ui:VisualElement name="enemy-status-root" class="ui-theme enemy-status-root" picking-mode="Ignore">
+        <ui:VisualElement name="enemy-status-card" class="panel enemy-status-card">
+            <ui:VisualElement class="enemy-status-header">
+                <ui:Label name="enemy-status-title" text="모험가 Lv 1" class="text-title text-ellipsis enemy-status-title" />
+                <ui:Button name="enemy-status-close" text="닫기" class="btn btn--secondary enemy-status-close" />
+            </ui:VisualElement>
+            <ui:Label name="enemy-status-state" text="상태" class="text-dim enemy-status-line" />
+            <ui:VisualElement class="panel--inset enemy-status-stats">
+                <ui:Label name="enemy-status-hp" text="HP 0/0" class="text-body enemy-status-line" />
+                <ui:Label name="enemy-status-attack" text="ATK 0  SPD 0s" class="text-body enemy-status-line" />
+                <ui:Label name="enemy-status-purpose" text="목적" class="text-body enemy-status-line" />
+                <ui:Label name="enemy-status-mood" text="경계 0" class="text-body enemy-status-line" />
+            </ui:VisualElement>
+            <ui:Label name="enemy-status-effects-title" text="상태이상" class="text-dim enemy-status-line" />
+            <ui:VisualElement name="enemy-status-effects" class="enemy-status-effects">
+                <ui:Label name="enemy-status-effect-0" class="text-warn enemy-status-line" />
+                <ui:Label name="enemy-status-effect-1" class="text-warn enemy-status-line" />
+                <ui:Label name="enemy-status-effect-2" class="text-warn enemy-status-line" />
+                <ui:Label name="enemy-status-effect-3" class="text-warn enemy-status-line" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

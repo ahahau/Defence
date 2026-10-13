@@ -89,18 +89,17 @@ namespace Code.UI
             Refresh();
         }
 
+        // 화면은 UI Toolkit(EnemyStatusToolkitView)이 그린다. 이 컴포넌트는 씬에 배선된 채널을 듣고 넘겨주기만 한다.
+        // 옛 uGUI 패널은 씬을 정리할 때 함께 지운다.
         private void HandleEnemyStatusRequested(EnemyStatusRequestedEvent evt)
         {
-            selectedEnemy = evt.Enemy;
-            if (selectedEnemy == null)
+            if (evt.Enemy == null)
                 return;
 
             UnitStatusPanelView.ActiveInstance?.HidePanel();
-            _nextRefreshAt = 0f;
-            Refresh();
-            SetPanelVisible(true);
-            LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)panelRoot.transform);
-            MovePanelToScreenPosition(evt.ScreenPosition);
+            selectedEnemy = null;
+            SetPanelVisible(false);
+            Code.UI.Toolkit.EnemyStatusToolkitView.Show(evt.Enemy, evt.ScreenPosition);
         }
 
         private void HandleCloseClicked()
@@ -112,6 +111,7 @@ namespace Code.UI
         {
             SetPanelVisible(false);
             selectedEnemy = null;
+            Code.UI.Toolkit.EnemyStatusToolkitView.HideCurrent();
         }
 
         private void Refresh()

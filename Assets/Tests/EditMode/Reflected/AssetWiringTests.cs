@@ -78,6 +78,7 @@ namespace Tests.EditMode.Gameplay
         /// 비면 금고 칸을 눌러도 아무것도 뜨지 않고 오류 한 줄만 남는다.
         /// </summary>
         [TestCase("UI/TreasuryScreen")]
+        [TestCase("UI/EnemyStatusScreen")]
         public void ToolkitScreens_PointToTheirDocumentAndOverlayPanel(string resourcePath)
         {
             var screen = Resources.Load<Code.UI.Toolkit.ToolkitScreenSO>(resourcePath);
