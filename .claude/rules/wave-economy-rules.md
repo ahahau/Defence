@@ -47,6 +47,10 @@ paths:
 - 공사 중인 방은 `IsPassBlocked`(적 길찾기 우회), `CanAcceptAdditionalUnit = false`(배치·이동 불가). 공사 중인 방에서는 다음 확장 후보를 뻗지 않고, 그 방에 닿은 라인에는 라인 건물을 놓지 못한다(`EdgeLine.IsAvailableForInstall`).
 - 공사 중인 방을 누르면 취소 확인 팝업. 취소하면 낸 금화의 `constructionCancelRefundRate`(50%)를 `BuildCostRefundedEvent`로 돌려주고(장부: 건설 취소 환불), `DungeonGraph.RemoveNode`·`DungeonEdgeManager.RemoveEdgesFor`로 노드와 라인을 지운 뒤 잠긴 칸을 다시 깐다.
 - 저장: `SavedNode.constructionRemaining`·`constructionPaidGold`. 옛 저장은 0(완공)으로 읽힌다.
+- 방 크기(`RoomSize`, 수치는 `RoomSizeRules`에만): 소형 확장비 ×0.5·공사 3초·팀당 2명·시설 불가·취소 환불 70%, 중형 기본값(8G·4초·3명·50%), 대형 ×2·8초·4명·환불 30%·던전 등급 2 이상. 격자는 모두 6×6. 팀당 정원은 모험가에게도 같이 걸린다(`NodeBattlefield.SetMaxPerTeam`).
+  - 후보 크기는 자리마다 처음 그릴 때 한 번 뽑아 둔다(`_candidateSizes`, 등급 0: 소 40·중 50·대 10%, 등급마다 대 +5%p·소 -3%p). 다시 그려도, 공사를 취소해도 같은 크기다. 판 저장에는 넣지 않아 불러오면 후보 크기는 다시 뽑힌다.
+  - 그래프 방이 3개 이하일 때 뻗는 후보는 중형으로 고정한다(입구 옆 첫 확장·튜토리얼이 막히지 않게).
+  - 저장: `SavedNode.roomSize`(0 = 중형이라 옛 저장은 중형).
 
 ## 던전 그래프
 - `DungeonGraphController.Awake`가 그래프를 만들고, `Start`는 한 프레임 뒤 `TryRestoreCurrentRun`을 호출한다.

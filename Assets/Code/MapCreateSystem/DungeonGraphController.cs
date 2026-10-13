@@ -72,6 +72,12 @@ namespace Code.MapCreateSystem
         [SerializeField, Range(0f, 1f), Tooltip("공사를 취소할 때 돌려받는 비율(실제로 낸 금화 기준).")]
         private float constructionCancelRefundRate = 0.5f;
 
+        /// <summary>그래프 방이 이 수 이하일 때 뻗는 후보는 중형으로 고정한다(입구·첫 확장).</summary>
+        private const int OpeningMediumRoomCount = 3;
+
+        /// <summary>자리마다 정해 둔 후보 크기. 다시 그려도 같은 크기를 보여 준다. 판 저장에는 넣지 않는다.</summary>
+        private readonly Dictionary<Vector2Int, RoomSize> _candidateSizes = new();
+
         [SerializeField]
         private GameEventChannelSO artifactEventChannel;
 
@@ -245,6 +251,7 @@ namespace Code.MapCreateSystem
         private void BuildInitialGraph()
         {
             graph = new DungeonGraph();
+            _candidateSizes.Clear();
             nodeManager.ClearAll();
             edgeManager.ClearAll();
             lockedNodeByCollider.Clear();
@@ -309,6 +316,15 @@ namespace Code.MapCreateSystem
             if (graph.IsOccupied(lockedNode.GridPosition) || lockedNode.FromNode.FreePorts <= 0)
                 return;
 
+            // 대형 방은 던전 등급이 모자라면 열 수 없다. 후보 위에도 "등급 N 필요"로 이미 보인다.
+            if (!RoomSizeRules.MeetsGrade(lockedNode.Size, CurrentDungeonGrade))
+            {
+                PopupController.Show(PopupRequest.Notice("등급 부족",
+                    $"{RoomSizeRules.Label(lockedNode.Size)} 방은 던전 등급 {RoomSizeRules.RequiredGrade(lockedNode.Size)} 이상에서 열 수 있습니다.\n" +
+                    $"지금 등급: {CurrentDungeonGrade}"));
+                return;
+            }
+
             ShowBuildConfirmPopup(lockedNode);
         }
 
@@ -320,7 +336,7 @@ namespace Code.MapCreateSystem
             if (graph.IsOccupied(lockedNode.GridPosition) || lockedNode.FromNode.FreePorts <= 0)
                 return;
 
-            costEventChannel.RaiseEvent(new BuildCostRequestedEvent(lockedNode, buildGoldCost));
+            costEventChannel.RaiseEvent(new BuildCostRequestedEvent(lockedNode, BaseBuildCost(lockedNode.Size)));
         }
 
         private void HandleBuildCostPaid(BuildCostPaidEvent evt)
@@ -332,12 +348,15 @@ namespace Code.MapCreateSystem
             var buildPosition = lockedNode.GridPosition;
             var buildParent = lockedNode.FromNode;
             var type = ResolveBuildType(lockedNode);
+            var size = lockedNode.Size;
 
             HideLockedNodeView(lockedNode);
             nodeManager.ClearLockedNodeAt(buildPosition);
 
             var node = graph.AddNode(type, buildPosition);
             var nodeView = nodeManager.CreateNode(node);
+            nodeView.SetRoomSize(size);
+            _candidateSizes.Remove(buildPosition);
 
             lastBuiltNodeView = nodeView;
             lastBuiltFrame = Time.frameCount;
@@ -345,10 +364,11 @@ namespace Code.MapCreateSystem
             ConnectAdjacentNodes(node, buildParent);
 
             // 방은 바로 생기지만 공사가 끝나야 쓸 수 있다. 방이 생겼다는 알림(튜토리얼·영업 시작 조건)은 완공 때 낸다.
-            if (roomConstructionSeconds > 0f)
+            var constructionSeconds = RoomSizeRules.ConstructionSeconds(size, roomConstructionSeconds);
+            if (constructionSeconds > 0f)
             {
                 nodeView.ConstructionCompleted += HandleConstructionCompleted;
-                nodeView.BeginConstruction(roomConstructionSeconds, evt.GoldAmount);
+                nodeView.BeginConstruction(constructionSeconds, evt.GoldAmount);
             }
             else
             {
@@ -381,8 +401,16 @@ namespace Code.MapCreateSystem
                 destructive: true));
         }
 
-        private int ResolveConstructionRefund(Node nodeView) =>
-            Mathf.FloorToInt(nodeView.ConstructionPaidGold * constructionCancelRefundRate);
+        /// <summary>
+        /// 취소 환불. 크기마다 비율이 다르고(소 70%·중 50%·대 30%), 중형은 씬에 둔 기본 비율을 쓴다.
+        /// </summary>
+        private int ResolveConstructionRefund(Node nodeView)
+        {
+            var rate = nodeView.Size == RoomSize.Medium
+                ? constructionCancelRefundRate
+                : RoomSizeRules.CancelRefundRate(nodeView.Size);
+            return Mathf.FloorToInt(nodeView.ConstructionPaidGold * rate);
+        }
 
         /// <summary>
         /// 공사 중인 방을 없애고 잠긴 칸으로 되돌린다. 공사 중인 방에는 유닛·건물을 둘 수 없으므로
@@ -400,6 +428,8 @@ namespace Code.MapCreateSystem
             if (refund > 0)
                 costEventChannel?.RaiseEvent(new BuildCostRefundedEvent(nodeView, refund, 0f));
 
+            // 되돌린 자리는 같은 크기의 후보로 다시 보인다. 취소로 크기를 다시 뽑을 수 없게 한다.
+            _candidateSizes[nodeView.GridPosition] = nodeView.Size;
             edgeManager.RemoveEdgesFor(nodeView.Data.Id);
             graph.RemoveNode(nodeView.Data);
             unlockedNodeByCollider.Remove(nodeView.ClickCollider);
@@ -551,7 +581,13 @@ namespace Code.MapCreateSystem
                         continue;
 
                     var lockedNode = nodeManager.CreateLockedNode(parentNode, position, position - parentNode.GridPosition);
-                    lockedNode.SetBuildCost(buildGoldCost);
+                    var size = ResolveCandidateSize(position);
+                    lockedNode.SetRoomSize(size);
+                    lockedNode.SetBuildCandidateLabel(RoomSizeRules.CandidateLabel(
+                        size,
+                        DiscountedBuildCost(size),
+                        RoomSizeRules.ConstructionSeconds(size, roomConstructionSeconds),
+                        CurrentDungeonGrade));
                     RegisterLockedNode(lockedNode);
                 }
             }
@@ -561,13 +597,42 @@ namespace Code.MapCreateSystem
         private void ShowBuildConfirmPopup(Node lockedNode)
         {
             var costManager = CostManager.Current;
-            int cost = costManager != null ? costManager.GetDiscountedBuildCost(buildGoldCost) : buildGoldCost;
+            var size = lockedNode.Size;
+            int cost = DiscountedBuildCost(size);
             int gold = costManager != null ? costManager.CurrentGold : 0;
+            var seconds = RoomSizeRules.ConstructionSeconds(size, roomConstructionSeconds);
 
             PopupController.Show(PopupRequest
-                .Cost("방 확장", "이 위치를 확장합니다.", cost, gold, () => RequestBuildCost(lockedNode), confirmLabel: "확장")
+                .Cost("방 확장", RoomSizeRules.Describe(size, seconds), cost, gold, () => RequestBuildCost(lockedNode), confirmLabel: "확장")
                 .WithTag(ExpandRoomPopupTag));
         }
+
+        /// <summary>
+        /// 이 자리 후보의 크기. 한 번 정하면 다시 그려도 같다(열기 전에 공개한 정보가 바뀌면 안 된다).
+        /// 처음 몇 방(입구 옆 첫 확장들)은 튜토리얼과 시작 흐름을 막지 않게 중형으로 둔다.
+        /// </summary>
+        private RoomSize ResolveCandidateSize(Vector2Int position)
+        {
+            if (_candidateSizes.TryGetValue(position, out var size))
+                return size;
+
+            size = graph.Nodes.Count <= OpeningMediumRoomCount
+                ? RoomSize.Medium
+                : RoomSizeRules.Roll(Random.value, CurrentDungeonGrade);
+            _candidateSizes[position] = size;
+            return size;
+        }
+
+        private int BaseBuildCost(RoomSize size) => RoomSizeRules.BuildCost(buildGoldCost, size);
+
+        private int DiscountedBuildCost(RoomSize size)
+        {
+            var costManager = CostManager.Current;
+            var baseCost = BaseBuildCost(size);
+            return costManager != null ? costManager.GetDiscountedBuildCost(baseCost) : baseCost;
+        }
+
+        private static int CurrentDungeonGrade => DungeonGradeManager.Current != null ? DungeonGradeManager.Current.Grade : 0;
 
         private Vector2Int[] ResolveBuildCandidateOffsets(DungeonNode node)
         {
@@ -906,6 +971,7 @@ namespace Code.MapCreateSystem
                     danger = node.DangerLevel,
                     constructionRemaining = node.ConstructionRemaining,
                     constructionPaidGold = node.ConstructionPaidGold,
+                    roomSize = (int)node.Size,
                     centralBuilding = CaptureBuilding(node.AssignedBuilding)
                 };
 
@@ -972,6 +1038,7 @@ namespace Code.MapCreateSystem
                 return false;
 
             graph = new DungeonGraph();
+            _candidateSizes.Clear();
             nodeManager.ClearAll();
             edgeManager.ClearAll();
             lockedNodeByCollider.Clear();
@@ -985,6 +1052,9 @@ namespace Code.MapCreateSystem
                 var data = graph.AddNode(saved.type, position);
                 var view = nodeManager.CreateNode(data);
                 view.RestoreDanger(saved.danger);
+                view.SetRoomSize(System.Enum.IsDefined(typeof(RoomSize), saved.roomSize)
+                    ? (RoomSize)saved.roomSize
+                    : RoomSize.Medium);
                 RegisterUnlockedNode(view);
                 if (saved.constructionRemaining > 0f)
                 {

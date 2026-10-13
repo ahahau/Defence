@@ -38,6 +38,9 @@ namespace Code.Persistence
         public float constructionRemaining;
         public int constructionPaidGold;
 
+        // 방 크기(RoomSize). 옛 저장에는 없어서 0(중형)으로 읽힌다.
+        public int roomSize;
+
         public SavedBuilding centralBuilding;
         public List<SavedBuilding> cellBuildings = new();
         public List<SavedUnit> units = new();

@@ -448,12 +448,31 @@ namespace Code.MapCreateSystem
 
         public void SetBuildCost(int goldCost)
         {
+            SetBuildCandidateLabel($"{goldCost}G");
+        }
+
+        /// <summary>잠긴 후보 위에 크기·비용·공사 시간(또는 필요한 등급)을 적는다.</summary>
+        public void SetBuildCandidateLabel(string text)
+        {
             var costText = ResolveLockedCostText();
             if (costText == null)
                 return;
 
-            costText.text = $"{goldCost}G";
+            costText.text = text;
             SetLockedCostVisible(true);
+        }
+
+        /// <summary>방 크기. 확장 후보에는 열었을 때의 크기, 열린 방에는 실제 크기. 처음 방들은 중형이다.</summary>
+        public RoomSize Size { get; private set; } = RoomSize.Medium;
+
+        /// <summary>크기를 정한다. 열린 방이면 팀당 정원도 크기에 맞춘다.</summary>
+        public void SetRoomSize(RoomSize size)
+        {
+            Size = size;
+            battlefield ??= GetComponent<NodeBattlefield>();
+            if (battlefield != null)
+                battlefield.SetMaxPerTeam(RoomSizeRules.TeamCapacity(size));
+            RefreshUnitCapacityLabel(true);
         }
 
         public void ShowClickFeedback()

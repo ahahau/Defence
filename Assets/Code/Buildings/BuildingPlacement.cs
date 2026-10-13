@@ -53,6 +53,13 @@ namespace Code.Buildings
             return TrapRules.ConflictsWithFacility(buildingData, node.AssignedBuilding, grid != null && grid.HasLiveTrap);
         }
 
+        /// <summary>
+        /// 이 방 크기에 지을 수 없는 시설인가. 소형 방은 시설을 못 짓는다(유닛·함정·금고는 된다).
+        /// </summary>
+        public static bool ViolatesRoomSizeRule(Node node, BuildingDataSO buildingData) =>
+            node != null && IsRoomBuilding(buildingData) && buildingData.Prefab is not Portal
+            && !RoomSizeRules.AllowsFacility(node.Size);
+
         /// <summary>중앙 슬롯에 건물을 세우고 노드에 등록한다. 이미 차 있으면 null.</summary>
         public static Building InstallCentral(
             Node node,
@@ -80,7 +87,8 @@ namespace Code.Buildings
             if (node.HasAssignedUnit && IsRoomBuilding(buildingData))
                 return null;
 
-            if (enforceFacilityTrapRule && ViolatesFacilityTrapRule(node, buildingData))
+            if (enforceFacilityTrapRule
+                && (ViolatesFacilityTrapRule(node, buildingData) || ViolatesRoomSizeRule(node, buildingData)))
                 return null;
 
             var building = CreateCentral(node, buildingData, centralSlotFill);
@@ -120,7 +128,8 @@ namespace Code.Buildings
             if (node.HasAssignedUnit && IsRoomBuilding(buildingData))
                 return null;
 
-            if (enforceFacilityTrapRule && ViolatesFacilityTrapRule(node, buildingData))
+            if (enforceFacilityTrapRule
+                && (ViolatesFacilityTrapRule(node, buildingData) || ViolatesRoomSizeRule(node, buildingData)))
                 return null;
 
             var building = grid.TryPlace(column, row, buildingData.Prefab);

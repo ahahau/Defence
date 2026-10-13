@@ -1761,6 +1761,10 @@ namespace Code.UI
             if (BuildingPlacement.ViolatesFacilityTrapRule(_selectedNode, buildingData))
                 return false;
 
+            // 소형 방에는 시설을 짓지 않는다.
+            if (BuildingPlacement.ViolatesRoomSizeRule(_selectedNode, buildingData))
+                return false;
+
             return !_pendingBuilding.IsPending;
         }
 
