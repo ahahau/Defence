@@ -76,6 +76,10 @@ namespace Code.Manager
             [Min(0), Tooltip("보스가 있는 동안 부하가 이만큼 쓰러지면 패배. 0이면 제한 없음.")]
             public int loseAfterUnitsDowned;
 
+            [Header("Church")]
+            [Tooltip("이 보스 날에 모험가가 교회에서 동료를 되살릴 수 있는가. 끄면 쓰러진 파티원이 관이 되지 않는다.")]
+            public bool allowChurchRevival = true;
+
             public int GetReservedReinforcementCount(int totalEnemyCount)
             {
                 if (!enableReinforcementPhase || reinforcementParty == null

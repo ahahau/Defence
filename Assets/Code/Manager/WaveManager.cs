@@ -984,9 +984,17 @@ namespace Code.Manager
                 return false;
 
             title = string.IsNullOrWhiteSpace(boss.title) ? "보스" : boss.title;
-            conditions = BossDefeatRules.Describe(boss.timeLimitSeconds, boss.loseOnTreasuryBreach, boss.loseAfterUnitsDowned);
+            conditions = BossDefeatRules.DescribePreview(
+                boss.timeLimitSeconds, boss.loseOnTreasuryBreach, boss.loseAfterUnitsDowned, boss.allowChurchRevival);
             return true;
         }
+
+        /// <summary>
+        /// 오늘 교회 부활이 막혔는가. 교회 부활을 끈 보스의 날에는 쓰러진 파티원이 관이 되지 않는다
+        /// (기획서: 교회 부활 가능 여부는 보스 종류별로 다르다).
+        /// </summary>
+        public bool IsChurchRevivalBlocked =>
+            _isWaveRunning && _isBossWave && _currentBoss != null && !_currentBoss.allowChurchRevival;
 
         /// <summary>보스가 방에 들어왔다. 금고가 있는 방이면 침입으로 본다.</summary>
         public void ReportBossEnteredRoom(Node node)

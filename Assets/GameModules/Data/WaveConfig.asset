@@ -280,6 +280,7 @@ MonoBehaviour:
     timeLimitSeconds: 150
     loseOnTreasuryBreach: 0
     loseAfterUnitsDowned: 0
+    allowChurchRevival: 0
   - targetDay: 21
     party: {fileID: 11400000, guid: abf3438af6a58214abfad019d41e7761, type: 2}
     title: "\uC0AC\uB0E5\uAFBC \uB450\uBAA9"
@@ -299,6 +300,7 @@ MonoBehaviour:
     timeLimitSeconds: 0
     loseOnTreasuryBreach: 0
     loseAfterUnitsDowned: 3
+    allowChurchRevival: 0
   - targetDay: 28
     party: {fileID: 11400000, guid: d235fe14d8a856c489fae0c7784f0c81, type: 2}
     title: "\uC655\uAD6D \uAE30\uC0AC\uB2E8\uC7A5"
@@ -318,6 +320,7 @@ MonoBehaviour:
     timeLimitSeconds: 180
     loseOnTreasuryBreach: 1
     loseAfterUnitsDowned: 0
+    allowChurchRevival: 1
   - targetDay: 14
     party: {fileID: 11400000, guid: bf972384a4ade4f42a6aac5cb9f78282, type: 2}
     title: "\uD0D0\uC695\uC758 \uAE30\uC0AC"
@@ -337,3 +340,4 @@ MonoBehaviour:
     timeLimitSeconds: 0
     loseOnTreasuryBreach: 1
     loseAfterUnitsDowned: 0
+    allowChurchRevival: 1

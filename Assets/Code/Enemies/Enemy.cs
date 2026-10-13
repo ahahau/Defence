@@ -1245,9 +1245,10 @@ namespace Code.Enemies
 
             // 동료가 남아 있으면 관이 되어 따라간다. 전멸하면 끌고 다니던 관도 함께 사라진다.
             // 보스는 관이 되지 않는다 — 보스가 교회에서 다시 일어나면 보스전의 끝이 흐려진다.
+            // 교회 부활을 막는 보스의 날에는 호위도 관이 되지 않는다.
             if (wiped)
                 PartyCoffin.ClearParty(PartyId);
-            else if (!_isBoss && data != null)
+            else if (!_isBoss && data != null && Code.Manager.WaveManager.Current?.IsChurchRevivalBlocked != true)
                 PartyCoffin.Spawn(PartyId, data, Level, VisitPurpose,
                     enemyRenderer != null ? enemyRenderer.SpriteRenderer : null, transform.position);
 

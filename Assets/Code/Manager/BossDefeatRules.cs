@@ -44,6 +44,15 @@ namespace Code.Manager
             return text;
         }
 
+        /// <summary>보스 날 교회 부활 여부. 예고에 패배 조건과 함께 붙는다.</summary>
+        public static string DescribeChurch(bool allowChurchRevival) =>
+            allowChurchRevival ? "교회 부활 가능" : "교회 부활 불가";
+
+        /// <summary>예고 한 줄: 패배 조건 뒤에 교회 부활 여부를 붙인다.</summary>
+        public static string DescribePreview(
+            float timeLimitSeconds, bool loseOnTreasuryBreach, int loseAfterUnitsDowned, bool allowChurchRevival) =>
+            Join(Describe(timeLimitSeconds, loseOnTreasuryBreach, loseAfterUnitsDowned), DescribeChurch(allowChurchRevival));
+
         /// <summary>보스 날 HUD에 적을 진행 상황. 남은 시간과 쓰러진 부하 수를 같이 보여 준다.</summary>
         public static string DescribeProgress(
             float elapsedSeconds, float timeLimitSeconds, bool loseOnTreasuryBreach, int unitsDowned, int loseAfterUnitsDowned)

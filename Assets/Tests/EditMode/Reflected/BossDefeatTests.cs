@@ -59,5 +59,28 @@ namespace Tests.EditMode.Rules
                 Assert.That(hasCondition, Is.True, $"{day}일 보스({boss.title})에 패배 조건이 없습니다.");
             }
         }
+
+        [Test]
+        public void Preview_EndsWithTheChurchRule()
+        {
+            Assert.That(BossDefeatRules.DescribePreview(150f, false, 0, false), Is.EqualTo("150초 안에 처치 · 교회 부활 불가"));
+            Assert.That(BossDefeatRules.DescribePreview(0f, true, 0, true), Is.EqualTo("금고 방 침입 시 패배 · 교회 부활 가능"));
+        }
+
+        /// <summary>
+        /// 교회 부활 여부는 보스 성격대로 정했다(사용자 결정): 시간에 쫓기는 토벌대장·사냥꾼 두목은 불가,
+        /// 돈으로 되살리는 탐욕의 기사와 교단이 뒤를 봐주는 기사단장은 가능. 값이 조용히 바뀌지 않게 지킨다.
+        /// </summary>
+        [Test]
+        public void ChurchRevival_FollowsEachBossCharacter()
+        {
+            var config = AssetDatabase.LoadAssetAtPath<WaveConfigSO>("Assets/GameModules/Data/WaveConfig.asset");
+            Assert.That(config, Is.Not.Null, "WaveConfig.asset 을 찾지 못했습니다.");
+
+            Assert.That(config.GetBossForDay(7).allowChurchRevival, Is.False, "7일 토벌대장");
+            Assert.That(config.GetBossForDay(14).allowChurchRevival, Is.True, "14일 탐욕의 기사");
+            Assert.That(config.GetBossForDay(21).allowChurchRevival, Is.False, "21일 사냥꾼 두목");
+            Assert.That(config.GetBossForDay(28).allowChurchRevival, Is.True, "28일 왕국 기사단장");
+        }
     }
 }
