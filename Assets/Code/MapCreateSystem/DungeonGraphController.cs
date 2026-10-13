@@ -1014,6 +1014,10 @@ namespace Code.MapCreateSystem
             if (EventSystem.current == null || Mouse.current == null)
                 return false;
 
+            // 지도 위에 뜬 UI Toolkit 패널(금고 등)도 클릭을 가로막는다. uGUI 레이캐스트로는 보이지 않는다.
+            if (Code.UI.Toolkit.ToolkitPointerBlockers.IsPointerOver(Mouse.current.position.ReadValue()))
+                return true;
+
             uiRaycastResults.Clear();
             var pointerData = new PointerEventData(EventSystem.current)
             {

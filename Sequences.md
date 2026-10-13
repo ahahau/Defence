@@ -337,3 +337,12 @@
   - 테스트: `SettlementRegressionTests`의 유지비 회귀 테스트를 새 규칙으로(대기 1·배치 2 → 9G가 아니라 6G, 이름 `Upkeep_AfterRosterRestore_ChargesDeployedUnitsButNotReserveOrApplicants`). 전체 EditMode 278/278 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
   - 플레이 실측(판 저장 백업 뒤, 끝나고 복원): 대기 명단에 피로 60·경상인 부하를 넣고 하루를 넘기자 피로 60·경상 그대로, 그때 유지비 0. 같은 부하를 하나 배치하자 유지비 3G(정가 14G). 콘솔 오류 0.
   - 전투 중 이동 제한은 이미 있었음(전투 중·같은 방에 적이 있으면 회수·이동 불가, 버튼에 이유, 보스가 있는 동안 일시정지 잠금) — 기획서 현황만 고침.
+
+- UI Toolkit 교체 — 작은 패널부터 하나씩(사용자 선택). 첫 번째: 금고 관리 패널.
+  - 새 파일 `ToolkitScreenSO`(필요할 때 띄우는 화면 설정: UXML·패널 설정·문서 순서, `Spawn<TView>`), `ToolkitPointerBlockers`(지도 위 Toolkit 패널 카드를 등록하면 지도 클릭이 뚫고 가지 않음), `TreasuryToolkitView`(금고 관리: 보관·이자·약탈 위험·운영 자금·청산일 안내, 25G/전부 맡기기·꺼내기, 0.25초마다 갱신, 아이콘은 HUD 스킨 금고 아이콘).
+  - UXML/USS `Assets/GameModules/UI/UxmlAndUss/Management/Treasury/TreasuryPanel.uxml/.uss`(고정 크기 380×316, 색은 토큰·컴포넌트 클래스만, 이자 줄은 text-gain, 위험 줄은 text-loss). 설정 `Assets/Resources/UI/TreasuryScreen.asset`(PopupPanelSettings, 순서 500, 에디터 스크립트로 생성).
+  - `NodePanelView`가 금고 칸을 누르면 새 패널을 연다(`TreasuryToolkitView.ShowFor`/`HideCurrent`). `DungeonGraphController.IsPointerOverUi`가 `ToolkitPointerBlockers`도 본다.
+  - 옛 uGUI `TreasuryPanelView`·`Resources/UI/TreasuryPanel.prefab`은 SampleScene에 인스턴스가 있고, 그 씬에 다른 작업의 미커밋 변경이 있어 이번엔 지우지 않음(쓰이지 않음).
+  - 테스트: `AssetWiringTests` +1(화면 설정이 GameModules UXML과 uGUI 위 패널을 가리킴). 전체 EditMode 279/279 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측(판 저장 백업 뒤, 끝나고 복원): 빈 칸에 금고를 두고 열자 오른쪽 위에 패널, 25G 맡기기로 운영 자금 192 → 167·보관 25/500G, "정산 이자 8 % · 다음 정산 +2G"(초록)·"침입자가 노리는 곳"(빨강)·"남은 7일", 꺼내기 버튼 잠김. 처음 캡처에서 넷째 줄(운영 자금)이 상태 상자 밖으로 밀려 줄 여백을 0으로 고침 → 상자 안. 카드 가운데는 지도 클릭을 막고 화면 구석은 막지 않음, 닫으면 막지 않음. 콘솔 오류 0.
+  - 확인 못 한 것: 실제 마우스로 금고 칸을 눌러 여는 장면(코드 경로는 같은 `ShowFor`), 청산일에 꺼내기.

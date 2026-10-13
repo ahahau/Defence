@@ -1,0 +1,29 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="project://database/Assets/GameModules/UI/UxmlAndUss/Common/DesignToken.uss" />
+    <Style src="project://database/Assets/GameModules/UI/UxmlAndUss/Common/Components.uss" />
+    <Style src="project://database/Assets/GameModules/UI/UxmlAndUss/Management/Treasury/TreasuryPanel.uss" />
+    <ui:VisualElement name="treasury-root" class="ui-theme treasury-root" picking-mode="Ignore">
+        <ui:VisualElement name="treasury-card" class="panel treasury-card">
+            <ui:VisualElement class="treasury-header">
+                <ui:VisualElement name="treasury-icon" class="treasury-icon" />
+                <ui:Label name="treasury-title" text="금고 관리" class="text-title text-ellipsis treasury-title" />
+                <ui:Button name="treasury-close" text="닫기" class="btn btn--secondary treasury-close" />
+            </ui:VisualElement>
+            <ui:VisualElement class="panel--inset treasury-status">
+                <ui:Label name="treasury-storage" text="보관 금화 0 / 0G" class="text-body treasury-line" />
+                <ui:Label name="treasury-interest" text="정산 이자 0%" class="text-dim treasury-line" />
+                <ui:Label name="treasury-risk" text="침입자가 노리는 곳" class="text-dim treasury-line" />
+                <ui:Label name="treasury-funds" text="운영 자금 0G" class="text-body treasury-line" />
+            </ui:VisualElement>
+            <ui:Label name="treasury-hint" text="맡긴 금화는 청산일에만 꺼낼 수 있습니다." class="text-dim treasury-hint" />
+            <ui:VisualElement class="treasury-actions">
+                <ui:Button name="treasury-deposit" text="25G 맡기기" class="btn btn--primary treasury-action" />
+                <ui:Button name="treasury-deposit-all" text="전부 맡기기" class="btn btn--secondary treasury-action" />
+            </ui:VisualElement>
+            <ui:VisualElement class="treasury-actions">
+                <ui:Button name="treasury-withdraw" text="25G 꺼내기" class="btn btn--secondary treasury-action" />
+                <ui:Button name="treasury-withdraw-all" text="전부 꺼내기" class="btn btn--secondary treasury-action" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

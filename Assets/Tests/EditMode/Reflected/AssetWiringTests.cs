@@ -73,6 +73,22 @@ namespace Tests.EditMode.Gameplay
         /// 쓰는 것이 정상이고, 그걸 실패로 치면 아트 교체가 끝날 때까지 이 테스트를 꺼 둬야
         /// 한다. 꺼 두면 그사이 진짜 아트끼리 겹치는 것도 못 잡는다.
         /// </summary>
+        /// <summary>
+        /// 필요할 때 띄우는 UI Toolkit 화면(금고 관리 등)은 Resources의 설정이 UXML과 uGUI 위 패널을 가리켜야 한다.
+        /// 비면 금고 칸을 눌러도 아무것도 뜨지 않고 오류 한 줄만 남는다.
+        /// </summary>
+        [TestCase("UI/TreasuryScreen")]
+        public void ToolkitScreens_PointToTheirDocumentAndOverlayPanel(string resourcePath)
+        {
+            var screen = Resources.Load<Code.UI.Toolkit.ToolkitScreenSO>(resourcePath);
+            Assert.That(screen, Is.Not.Null, $"Resources/{resourcePath} 화면 설정이 없습니다.");
+            Assert.That(screen.Template, Is.Not.Null, "UXML이 연결되지 않았습니다.");
+            Assert.That(AssetDatabase.GetAssetPath(screen.Template), Does.StartWith("Assets/GameModules/UI/UxmlAndUss/"),
+                "새 화면 UXML은 GameModules/UI/UxmlAndUss 아래에 둡니다(ui-rules).");
+            Assert.That(screen.PanelSettings, Is.Not.Null, "패널 설정이 없습니다.");
+            Assert.That(screen.PanelSettings.sortingOrder, Is.GreaterThan(50f), "메인 uGUI 캔버스(50) 위에 떠야 합니다.");
+        }
+
         [Test]
         public void Traps_DoNotShareTheSameArt()
         {

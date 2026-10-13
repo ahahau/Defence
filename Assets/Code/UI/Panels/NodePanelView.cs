@@ -319,7 +319,7 @@ namespace Code.UI
             _selectedManagedUnit = null;
             // 금고는 칸 건물이라 한 노드에 여럿 선다. 어느 금고인지는 노드가 아니라
             // 칸을 눌러서 정한다 — HandleNodeGridCellSelected 참고.
-            TreasuryPanelView.HideCurrent();
+            Code.UI.Toolkit.TreasuryToolkitView.HideCurrent();
             SetTitle(string.Format(emptyNodeTitleFormat, evt.Node.Data.Type));
             HideInstallPanels();
 
@@ -1014,7 +1014,7 @@ namespace Code.UI
             {
                 HideInstallPanels();
                 panelRoot?.SetActive(false);
-                TreasuryPanelView.ShowFor(cellTreasury, GetComponentInParent<Canvas>(true));
+                Code.UI.Toolkit.TreasuryToolkitView.ShowFor(cellTreasury);
                 return;
             }
 

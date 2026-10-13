@@ -1,0 +1,31 @@
+/*
+ * 금고 관리 패널 배치. 지도를 가리지 않게 화면 오른쪽 위에 붙는 고정 크기 카드다(ui-rules 10번).
+ * 고정 영역: 헤더 40 · 상태 4줄 96 · 안내 36 · 버튼 줄 2개 × 44. 문구 길이와 상관없이 경계가 움직이지 않는다.
+ */
+.treasury-root {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    align-items: flex-end;
+    justify-content: flex-start;
+    padding: 96px 24px 0 0;
+}
+
+.treasury-card {
+    width: 380px;
+    height: 316px;
+    padding: 14px 16px;
+}
+
+.treasury-header { height: 40px; flex-shrink: 0; flex-direction: row; align-items: center; }
+.treasury-icon { width: 24px; height: 24px; margin-right: 8px; flex-shrink: 0; -unity-background-scale-mode: scale-to-fit; }
+.treasury-title { flex-grow: 1; min-width: 0; -unity-text-align: middle-left; }
+.treasury-close { width: 64px; height: 30px; flex-shrink: 0; }
+
+.treasury-status { height: 96px; flex-shrink: 0; padding: 6px 10px; margin-top: 6px; justify-content: space-between; }
+.treasury-line { height: 20px; flex-shrink: 0; margin: 0; padding: 0; -unity-text-align: middle-left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* 안내는 두 줄까지. 넘치면 잘린다. */
+.treasury-hint { height: 36px; flex-shrink: 0; margin-top: 6px; white-space: normal; overflow: hidden; -unity-text-align: middle-left; }
+
+.treasury-actions { height: 44px; flex-shrink: 0; flex-direction: row; justify-content: space-between; align-items: center; }
+.treasury-action { width: 168px; height: 36px; flex-shrink: 0; }

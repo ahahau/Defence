@@ -87,8 +87,15 @@ Assets/GameModules/UI/UxmlAndUss/
       * 가장 짧은 / 가장 긴 텍스트
       * 조건부 요소 on / off
       * 버튼 상태 전부
+10-1. 필요할 때 띄우는 화면(패널)은 `ToolkitScreenSO`로 세운다.
+   * UXML은 `Assets/GameModules/UI/UxmlAndUss/<역할>/<이름>/`에 두고, `Assets/Resources/UI/<이름>Screen.asset`(`ToolkitScreenSO`)이 UXML·패널 설정·문서 순서를 참조한다. 화면은 `ToolkitScreenSO.Spawn<TView>(경로, 루트 이름)`으로 처음 열 때 지금 씬에 세우고, 정적 참조는 `OnDestroy`에서 비운다.
+   * uGUI 위에 떠야 하면 `PopupPanelSettings`(Sort Order 10000)를 쓰고 문서 순서는 팝업(900)보다 낮게(예: 500) 둔다.
+   * 지도 위에 뜨는 패널은 카드 요소를 `ToolkitPointerBlockers.Register`로 등록한다. 지도 입력(`DungeonGraphController.IsPointerOverUi`)이 uGUI만 걸러서, 등록하지 않으면 버튼을 누를 때 아래 방까지 눌린다. 화면 전체를 덮는 루트는 등록하지 않는다.
+   * 옮겨 온 화면: 금고 관리(`TreasuryToolkitView`, `Management/Treasury`). 옛 uGUI `TreasuryPanelView`·`Resources/UI/TreasuryPanel.prefab`은 SampleScene에 인스턴스가 있어 씬을 정리할 때 함께 지운다(지금은 쓰이지 않음).
 11. Unity CLI로 검증할 때 주의한다.
    * `simulate_pointer`는 UI Toolkit에 먹히지 않는다. 뷰의 private 핸들러를 리플렉션으로 호출해 검증한다.
    * `eval`에서 `Q<T>()`는 `UnityEngine.UIElements.UQueryExtensions.Q<T>(root, "name")`로 쓴다.
    * 캔버스를 전부 끄면 EventSystem도 꺼져 UI Toolkit 입력까지 죽는다.
+   * 화면 캡처는 `capture_game_view --save_path`다(`--path` 아님). 경로는 `Assets/` 아래로 저장되니 확인 뒤 `AssetDatabase.DeleteAsset`으로 지운다.
+   * `eval` 인자에 한글을 직접 넣지 않는다(깨져서 조용히 실패한다). 한글이 든 코드는 `eval_file`로 돌린다.
    * 수정한 `.uxml`/`.uss`는 플레이를 멈춘 뒤 `AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate)`로 다시 읽힌다.
