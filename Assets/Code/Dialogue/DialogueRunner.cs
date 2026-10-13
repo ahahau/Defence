@@ -68,7 +68,6 @@ namespace Code.Dialogue
         [SerializeField] private UnitDeployPanelView unitDeployPanelView;
         [SerializeField] private NodePanelView nodePanelView;
         [SerializeField] private WaveView waveView;
-        [SerializeField] private PolicyChoicePanelView policyChoicePanelView;
         [SerializeField] private ManagementSettlementManager managementSettlementManager;
         private bool hasSeenPolicyChoicePanel;
 
@@ -736,7 +735,9 @@ namespace Code.Dialogue
 
         private void UpdatePolicyTutorial()
         {
-            if (policyChoicePanelView == null)
+            // 운영 방침 창은 UI Toolkit판이다. 옛 uGUI 창은 실행 중 꺼져 있어 열린 적이 없다.
+            var policyView = Code.UI.Toolkit.PolicyChoiceToolkitView.Current;
+            if (policyView == null)
             {
                 view?.HideSpotlight();
                 return;
@@ -745,7 +746,7 @@ namespace Code.Dialogue
             if (managementSettlementManager != null && managementSettlementManager.IsPanelOpen)
                 managementSettlementManager.ForceHidePanel();
 
-            if (!policyChoicePanelView.IsPanelOpen)
+            if (!policyView.IsOpen)
             {
                 view?.HideSpotlight();
                 if (hasSeenPolicyChoicePanel)
@@ -755,9 +756,8 @@ namespace Code.Dialogue
 
             hasSeenPolicyChoicePanel = true;
             TutorialInputGate.OnlyPolicyChoice();
-            policyChoicePanelView.BringToFront();
 
-            if (!TryBuildRectTransformScreenRect(policyChoicePanelView.FirstPolicyButtonRect, out var rect))
+            if (!policyView.TryGetFirstChoiceScreenRect(out var rect))
             {
                 view?.HideSpotlight();
                 return;

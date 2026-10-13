@@ -92,6 +92,27 @@ namespace Tests.EditMode.Gameplay
             Assert.That(screen.PanelSettings.sortingOrder, Is.GreaterThan(50f), "메인 uGUI 캔버스(50) 위에 떠야 합니다.");
         }
 
+        /// <summary>
+        /// 운영 방침 창은 policy-root를 켜고 끈다. 예전에는 문서 루트를 켜서, USS가 숨겨 둔 policy-root가 그대로
+        /// 숨은 채 시간만 멈춰 판이 굳었다. 창이 기대하는 요소가 policy-root 안에 있는지 지킨다.
+        /// </summary>
+        [Test]
+        public void PolicyChoicePanel_KeepsItsPartsInsideTheToggledRoot()
+        {
+            var tree = Resources.Load<UnityEngine.UIElements.VisualTreeAsset>("UI/Toolkit/PolicyChoicePanel");
+            Assert.That(tree, Is.Not.Null, "운영 방침 UXML을 찾지 못했습니다.");
+
+            var root = tree.CloneTree();
+            var policyRoot = UnityEngine.UIElements.UQueryExtensions.Q(root, "policy-root");
+            Assert.That(policyRoot, Is.Not.Null, "policy-root가 없습니다.");
+            foreach (var name in new[] { "policy-title", "policy-morale", "policy-list" })
+                Assert.That(UnityEngine.UIElements.UQueryExtensions.Q(policyRoot, name), Is.Not.Null, $"{name}이 policy-root 밖에 있거나 없습니다.");
+
+            var uss = System.IO.File.ReadAllText("Assets/Resources/UI/Toolkit/PolicyChoicePanel.uss");
+            Assert.That(uss, Does.Contain(".policy-root { display: none"),
+                "policy-root가 기본으로 숨겨져 있다는 전제가 바뀌면 PolicyChoiceToolkitView의 토글도 다시 봐야 합니다.");
+        }
+
         [Test]
         public void Traps_DoNotShareTheSameArt()
         {

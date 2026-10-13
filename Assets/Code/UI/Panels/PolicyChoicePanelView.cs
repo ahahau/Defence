@@ -10,6 +10,11 @@ using UnityEngine.UI;
 
 namespace Code.UI
 {
+    /// <summary>
+    /// 옛 uGUI 운영 방침 창. 실행 중에는 <c>PolicyChoiceToolkitBootstrap</c>이 꺼 두고 Toolkit판
+    /// (<see cref="Code.UI.Toolkit.PolicyChoiceToolkitView"/>)이 대신한다. 튜토리얼·패배 화면도 Toolkit판을 본다.
+    /// 씬에 오브젝트가 남아 있어 씬을 정리할 때 함께 지운다.
+    /// </summary>
     public class PolicyChoicePanelView : MonoBehaviour
     {
         public static PolicyChoicePanelView Current { get; private set; }

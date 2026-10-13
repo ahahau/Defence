@@ -10,6 +10,40 @@ namespace Code.UI.Toolkit
     [RequireComponent(typeof(UIDocument))]
     public sealed class PolicyChoiceToolkitView : MonoBehaviour
     {
+        /// <summary>지금 씬의 운영 방침 창. 튜토리얼·패배 화면이 찾는다.</summary>
+        public static PolicyChoiceToolkitView Current { get; private set; }
+
+        /// <summary>선택지가 떠 있는가.</summary>
+        public bool IsOpen => _root != null && _root.style.display == DisplayStyle.Flex;
+
+        /// <summary>
+        /// 첫 선택지 버튼의 화면 사각형(왼쪽 아래 원점 픽셀). 튜토리얼이 강조할 곳이다. 아직 배치 전이면 false.
+        /// </summary>
+        public bool TryGetFirstChoiceScreenRect(out Rect rect)
+        {
+            rect = default;
+            if (!IsOpen || _list == null || _list.childCount == 0 || _root.panel == null)
+                return false;
+
+            var panel = _root.panel.visualTree.worldBound;
+            var bound = _list[0].worldBound;
+            if (panel.width <= 1f || panel.height <= 1f || float.IsNaN(bound.width) || bound.width <= 1f)
+                return false;
+
+            // 패널 좌표는 왼쪽 위 원점이고 화면 크기에 맞춰 늘어난다. 비율로 화면 픽셀에 옮긴다(팝업과 같은 방식).
+            var scaleX = Screen.width / panel.width;
+            var scaleY = Screen.height / panel.height;
+            rect = new Rect(bound.x * scaleX, Screen.height - bound.yMax * scaleY, bound.width * scaleX, bound.height * scaleY);
+            return true;
+        }
+
+        /// <summary>판이 끝나면 선택지를 치우고 멈춘 시간을 푼다.</summary>
+        public void CloseForRunEnd()
+        {
+            SetVisible(false);
+            ReleasePause();
+        }
+
         private VisualElement _root;
         private Label _title;
         private Label _morale;
@@ -21,7 +55,11 @@ namespace Code.UI.Toolkit
 
         private void OnEnable()
         {
-            _root = GetComponent<UIDocument>().rootVisualElement;
+            Current = this;
+            // USS가 policy-root를 기본으로 숨겨 둔다. 문서 루트를 켜도 창은 보이지 않고 시간만 멈춰
+            // 판이 굳었다. 실제로 켜고 끄는 것은 policy-root다.
+            var tree = GetComponent<UIDocument>().rootVisualElement;
+            _root = tree.Q<VisualElement>("policy-root") ?? tree;
             _title = _root.Q<Label>("policy-title");
             _morale = _root.Q<Label>("policy-morale");
             _list = _root.Q<VisualElement>("policy-list");
@@ -30,6 +68,8 @@ namespace Code.UI.Toolkit
 
         private void OnDisable()
         {
+            if (Current == this)
+                Current = null;
             ReleasePause();
         }
 
@@ -87,6 +127,11 @@ namespace Code.UI.Toolkit
 
         private void Select(PolicyDataSO policy)
         {
+            // 튜토리얼이 정한 선택지만 고를 수 있다(옛 uGUI 창과 같은 규칙).
+            var index = _manager != null && _manager.CurrentChoices != null ? IndexOf(_manager.CurrentChoices, policy) : -1;
+            if (!Code.Tutorial.TutorialInputGate.AllowsPolicyChoice(index))
+                return;
+
             _manager?.SelectPolicy(policy);
             GameSfxPlayer.Play(GameSfxCue.UiConfirm);
         }
@@ -130,6 +175,17 @@ namespace Code.UI.Toolkit
 
             var summary = effects.Count > 0 ? string.Join(" · ", effects) : "즉시 효과 없음";
             return known ? summary + " · 확인함" : summary;
+        }
+
+        private static int IndexOf(IReadOnlyList<PolicyDataSO> choices, PolicyDataSO policy)
+        {
+            for (var i = 0; i < choices.Count; i++)
+            {
+                if (choices[i] == policy)
+                    return i;
+            }
+
+            return -1;
         }
 
         private static string FormatSigned(int value) => value > 0 ? $"+{value}" : value.ToString();

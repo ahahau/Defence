@@ -367,3 +367,10 @@
   - 테스트: `AssetWiringTests` 화면 설정 검사에 UnitStatusScreen 추가. 전체 EditMode 282/282 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
   - 플레이 실측(판 저장 백업 뒤, 끝나고 복원): 파란 슬라임을 배치하고 체력을 15/20으로 깎아 상태를 열자 패널에 이름·상태·HP 막대(75%)·공격·명령·특성·피로가 그려지고, 특성 툴팁 "특성 없음: … / 침착함: 피로가 천천히 누적됩니다." 표시. 치료 버튼 "치료·휴식 7G"를 누르자 금화 192 → 185·HP 20/20·안내 "치료와 휴식 완료". 회수 버튼으로 회수하자 패널이 닫힘. 콘솔 오류 0.
   - 확인 못 한 것: 실제 마우스 클릭으로 열기·툴팁 호버, 영업 중 "습격 중 회복 불가"·같은 방 적으로 회수 불가 문구가 버튼에 보이는 장면(판단 코드는 그대로).
+
+- UI Toolkit 교체 다섯 번째: 운영 방침 창 정리 + 버그 수정.
+  - 버그: Toolkit 운영 방침 창(`PolicyChoiceToolkitView`)이 문서 루트만 켜서, USS가 기본으로 숨긴 `policy-root`가 그대로 숨은 채 시간만 멈춤(선택지가 안 보여 판이 굳음). 옛 uGUI 창은 실행 중 꺼져 있어 대신 뜨지도 않았음. → `policy-root`를 켜고 끄게 고침.
+  - 공용 패널(Sort Order 0)이라 하루 안내 배너 등 uGUI가 위를 덮음 → 패배 화면과 같은 `RunEndPanelSettings`(9000, 문서 순서 240 < 패배 260)로 옮김.
+  - Toolkit판에 튜토리얼·패배 연결을 옮김: `Current`, `IsOpen`, `TryGetFirstChoiceScreenRect`(튜토리얼 강조), `CloseForRunEnd`, 선택 때 `TutorialInputGate.AllowsPolicyChoice` 검사. `DialogueRunner.UpdatePolicyTutorial`과 `BossWavePresenter`가 옛 uGUI 창 대신 이것을 봄(두 컴포넌트의 옛 직렬화 필드는 뺌). 옛 `PolicyChoicePanelView`는 씬 정리 때 지움.
+  - 테스트: `AssetWiringTests.PolicyChoicePanel_KeepsItsPartsInsideTheToggledRoot`(창이 켜고 끄는 policy-root 안에 제목·민심·목록이 있고, USS가 그 루트를 기본으로 숨긴다는 전제). 고친 뒤에 추가해 실패를 먼저 보지는 못함. 전체 EditMode 283/283 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측(판 저장 백업 뒤, 끝나고 복원): 방침 셋을 띄우자 처음엔 창이 안 보이고 timeScale 0(버그 재현) → 고친 뒤 창이 화면 가운데에 보이고 하루 안내 배너보다 위. 첫 선택지 화면 사각형을 얻음(튜토리얼 강조용). 튜토리얼 제한 중 둘째 선택은 막히고 첫째는 적용(선택지 0개, timeScale 1로 복귀). 패배 시 닫기로 창이 닫히고 timeScale 1. 콘솔 오류 0.

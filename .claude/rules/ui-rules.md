@@ -55,7 +55,7 @@ Assets/GameModules/UI/UxmlAndUss/
      * 한 번에 하나만 뜨고 나머지는 대기열에 선다. 콜백은 팝업이 닫힌 뒤 불린다.
      * 팝업은 금화를 만지지 않는다. 결제는 확인 콜백에서 기존 결제 경로로 한다.
    * 에셋: `Shared/Popup/Popup.uxml`·`Popup.uss`. `Assets/Resources/UI/PopupSettings.asset`(`PopupSettingsSO`)이 UXML과 전용 패널 `Assets/GameModules/UI/PopupPanelSettings.asset`(Sort Order 10000)을 참조한다.
-   * **uGUI와의 앞뒤는 문서의 `sortingOrder`가 아니라 PanelSettings의 Sort Order로 정해진다.** 공용 `RuntimePanelSettings`는 0이라 메인 uGUI 캔버스(50) 아래에 깔린다. uGUI 위에 떠야 하는 화면은 전용 PanelSettings를 쓴다. 현재 캔버스 정렬: 메인 50, 설정창 5000, 하루 전환 연출 30000~30002. Toolkit 쪽: 공용 0, 패배·승리 화면 9000(`RunEndPanelSettings`), 팝업 10000. `ToolkitDocumentSpawner.Install`의 `panelSettingsPath`로 문서마다 설정을 고른다.
+   * **uGUI와의 앞뒤는 문서의 `sortingOrder`가 아니라 PanelSettings의 Sort Order로 정해진다.** 공용 `RuntimePanelSettings`는 0이라 메인 uGUI 캔버스(50) 아래에 깔린다. uGUI 위에 떠야 하는 화면은 전용 PanelSettings를 쓴다. 현재 캔버스 정렬: 메인 50, 설정창 5000, 하루 전환 연출 30000~30002. Toolkit 쪽: 공용 0, 운영 방침·패배·승리 화면 9000(`RunEndPanelSettings`, 문서 순서 방침 240 < 패배 260), 팝업 10000(금고·상태 패널·유물 줄도 이 패널, 문서 순서 300~500). `ToolkitDocumentSpawner.Install`의 `panelSettingsPath`로 문서마다 설정을 고른다.
    * 튜토리얼처럼 특정 팝업을 기다리는 코드는 `PopupRequest.WithTag(...)` + `PopupController.IsShowing(tag)`로 확인하고, 강조할 버튼 위치는 `PopupController.TryGetConfirmButtonScreenRect`(왼쪽 아래 원점 픽셀)로 얻는다. 예: 방 확장 팝업 `DungeonGraphController.ExpandRoomPopupTag`.
    * ESC를 읽는 화면은 `PopupController.BlocksEscape`가 참이면 양보한다. 팝업이 같은 프레임에 ESC로 먼저 닫혀도 참이다.
    * 일반적인 팝업(확인/취소, 알림, 비용 확인)은 반드시 이 라이브러리를 사용한다.
@@ -93,6 +93,8 @@ Assets/GameModules/UI/UxmlAndUss/
    * 지도 위에 뜨는 패널은 카드 요소를 `ToolkitPointerBlockers.Register`로 등록한다. 지도 입력(`DungeonGraphController.IsPointerOverUi`)이 uGUI만 걸러서, 등록하지 않으면 버튼을 누를 때 아래 방까지 눌린다. 화면 전체를 덮는 루트는 등록하지 않는다.
    * 씬에 배선된 채널을 듣는 옛 uGUI 컴포넌트는 씬을 고치지 않고 다리로 남긴다: 이벤트를 받아 Toolkit 화면의 `Show`로 넘기고 자기 패널은 숨긴다(예: `EnemyStatusPanelView` → `EnemyStatusToolkitView`).
    * 옮겨 온 화면: 금고 관리(`TreasuryToolkitView`, `Management/Treasury`), 모험가 상태(`EnemyStatusToolkitView`, `Battle/EnemyStatus`), 유물 줄(`ArtifactToolkitView`, `Battle/Artifacts`, 다리 `ArtifactPanelView`), 부하 상태(`UnitStatusToolkitView` + `UnitStatusViewModel`, `Battle/UnitStatus`, 판단은 `UnitStatusPanelView`).
+   * 운영 방침은 Toolkit판(`PolicyChoiceToolkitView.Current`)만 쓴다. 튜토리얼 강조(`TryGetFirstChoiceScreenRect`)·패배 시 닫기(`CloseForRunEnd`)·튜토리얼 선택 제한(`TutorialInputGate.AllowsPolicyChoice`)도 여기 있다. 옛 uGUI `PolicyChoicePanelView`는 실행 중 꺼 두며 씬 정리 때 지운다.
+   * USS가 기본으로 숨기는 패널 루트(`display: none`)가 있으면 그 요소를 켜고 끈다. 문서 루트만 켜면 아무것도 안 보인다(운영 방침 창이 이렇게 시간만 멈추고 굳었었다).
    * 판단이 있는 패널은 씬 컴포넌트가 판단을 맡고 뷰 모델(struct)을 만들어 `Render`로 넘기며, Toolkit 뷰는 버튼 콜백(event)만 올려 보낸다. 런타임 Toolkit은 `tooltip` 속성을 띄우지 않으므로 설명은 직접 만든 툴팁 요소로 보여 준다. 누른 자리 옆에 뜨는 카드는 `ToolkitPlacement.PlaceNear`로 놓는다. 옛 uGUI `TreasuryPanelView`·`Resources/UI/TreasuryPanel.prefab`은 SampleScene에 인스턴스가 있어 씬을 정리할 때 함께 지운다(지금은 쓰이지 않음).
 11. Unity CLI로 검증할 때 주의한다.
    * `simulate_pointer`는 UI Toolkit에 먹히지 않는다. 뷰의 private 핸들러를 리플렉션으로 호출해 검증한다.

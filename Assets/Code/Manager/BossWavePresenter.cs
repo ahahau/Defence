@@ -24,7 +24,6 @@ namespace Code.Manager
         [SerializeField] private CostManager costManager;
         [SerializeField] private HiredUnitRoster hiredUnitRoster;
         [SerializeField] private GameSpeedController gameSpeedController;
-        [SerializeField] private PolicyChoicePanelView policyChoicePanel;
 
         [Header("Banner")]
         [SerializeField] private Canvas uiCanvas;
@@ -176,7 +175,7 @@ namespace Code.Manager
         /// </summary>
         private void ShowRunEndPanel(string title, string headline, Color accent)
         {
-            policyChoicePanel?.CloseForRunEnd();
+            Code.UI.Toolkit.PolicyChoiceToolkitView.Current?.CloseForRunEnd();
             // 런 종료 뒤의 이어하기는 끝난 판을 되살릴 수 없다. 재시작 버튼을 누를 때까지
             // 저장을 남기면 타이틀에서 끝난 런을 이어하는 모순이 생긴다.
             Code.Persistence.RunSaveSystem.DeleteSave();
