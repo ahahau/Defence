@@ -148,21 +148,8 @@ namespace Code.UI.Toolkit
         /// <summary>누른 자리의 오른쪽 위에 카드를 놓고, 화면 밖으로 나가면 안으로 밀어 넣는다.</summary>
         private void Place()
         {
-            if (_card == null || _card.panel == null)
-                return;
-
-            var panelSize = _card.panel.visualTree.layout.size;
-            var cardSize = _card.layout.size;
-            if (float.IsNaN(cardSize.x) || float.IsNaN(panelSize.x) || panelSize.x <= 0f)
-                return;
-
-            var origin = RuntimePanelUtils.ScreenToPanel(_card.panel,
-                new Vector2(_screenPosition.x + ScreenOffset.x, Screen.height - _screenPosition.y - ScreenOffset.y));
-            var left = Mathf.Clamp(origin.x, 0f, Mathf.Max(0f, panelSize.x - cardSize.x));
-            var top = Mathf.Clamp(origin.y - cardSize.y, 0f, Mathf.Max(0f, panelSize.y - cardSize.y));
-            _card.style.left = left;
-            _card.style.top = top;
-            _needsPlacement = false;
+            if (ToolkitPlacement.PlaceNear(_card, _screenPosition, ScreenOffset))
+                _needsPlacement = false;
         }
 
         private void Refresh()

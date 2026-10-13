@@ -2,13 +2,17 @@ using Code.Core;
 using Code.Events;
 using Code.Manager;
 using Code.MapCreateSystem;
+using Code.UI.Toolkit;
 using Code.Units;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Code.UI
 {
+    /// <summary>
+    /// 부하 상태 패널의 판단을 맡는다: 어느 부하를 보여 줄지, 치료·회수를 할 수 있는지, 버튼을 누르면 무엇을 할지.
+    /// 그리기는 UI Toolkit(<see cref="UnitStatusToolkitView"/>)이 한다. 씬에 배선된 채널·하루 관리자를 쓰므로
+    /// 컴포넌트는 씬에 남기고, 옛 uGUI 패널(<c>panelRoot</c>)은 늘 숨긴다. 옛 오브젝트는 씬 정리 때 지운다.
+    /// </summary>
     public class UnitStatusPanelView : MonoBehaviour
     {
         public static UnitStatusPanelView ActiveInstance { get; private set; }
@@ -16,34 +20,14 @@ namespace Code.UI
         [SerializeField] private GameEventChannelSO nodeEventChannel;
         [SerializeField] private GameEventChannelSO costEventChannel;
         [SerializeField] private DayManager dayManager;
-        [SerializeField] private GameObject panelRoot;
-        [SerializeField] private TMP_Text titleText;
-        [SerializeField] private TMP_Text statusText;
-        [SerializeField] private TMP_Text hpText;
-        [SerializeField] private TMP_Text levelText;
-        [SerializeField] private TMP_Text traitText;
-        [SerializeField] private TMP_Text personalityText;
-        [SerializeField] private TMP_Text hintText;
-        [SerializeField, Tooltip("유닛 그림이 들어가는 칸. 프리팹의 Portrait/PortraitIcon.")]
-        private Image portraitImage;
-        [SerializeField, Tooltip("체력 막대의 채움. 프리팹의 HpBar/HpFill.")]
-        private Image hpFill;
-        [SerializeField] private TMP_Text recoverButtonLabel;
-        [SerializeField] private Button recoverButton;
-        [SerializeField] private TMP_Text fatigueText;
-        [SerializeField] private Image fatigueFill;
-        [SerializeField] private TMP_Text recallButtonLabel;
-        [SerializeField] private Button recallButton;
-        [SerializeField] private UnitFatigueManagementView fatigueManagementPrefab;
-        [SerializeField] private Button closeButton;
-        [SerializeField] private Canvas panelCanvas;
-        [SerializeField] private Vector2 screenOffset = new(24f, 24f);
-        [SerializeField] private bool keepInsideScreen = true;
+        [SerializeField, Tooltip("옛 uGUI 패널. 늘 숨긴다.")] private GameObject panelRoot;
         [SerializeField, Min(0.05f)] private float refreshInterval = 0.12f;
 
         private Node selectedNode;
         private Unit selectedUnit;
         private UnitManagementSystem _unitManagementSystem;
+        private UnitStatusToolkitView _view;
+        private string _hint = string.Empty;
         private float _nextRefreshAt;
 
         public Unit SelectedUnit => selectedUnit;
@@ -52,9 +36,7 @@ namespace Code.UI
         {
             ActiveInstance = this;
             _unitManagementSystem = new UnitManagementSystem(nodeEventChannel, costEventChannel, dayManager);
-            // 프리팹이 텍스트와 버튼의 최종 레이아웃을 소유한다. 여기서 공용 스타일을
-            // 재적용하면 줄바꿈과 자동 크기가 바뀌어 실행 중 배치가 어긋난다.
-            SetPanelVisible(false);
+            panelRoot?.SetActive(false);
         }
 
         private void OnEnable()
@@ -62,9 +44,6 @@ namespace Code.UI
             nodeEventChannel?.AddListener<UnitStatusRequestedEvent>(HandleUnitStatusRequested);
             costEventChannel?.AddListener<UnitRecoveryCostPaidEvent>(HandleRecoveryPaid);
             costEventChannel?.AddListener<UnitRecoveryCostRejectedEvent>(HandleRecoveryRejected);
-            recoverButton?.onClick.AddListener(HandleRecoverClicked);
-            recallButton?.onClick.AddListener(HandleRecallClicked);
-            closeButton?.onClick.AddListener(HandleCloseClicked);
         }
 
         private void OnDisable()
@@ -72,9 +51,7 @@ namespace Code.UI
             nodeEventChannel?.RemoveListener<UnitStatusRequestedEvent>(HandleUnitStatusRequested);
             costEventChannel?.RemoveListener<UnitRecoveryCostPaidEvent>(HandleRecoveryPaid);
             costEventChannel?.RemoveListener<UnitRecoveryCostRejectedEvent>(HandleRecoveryRejected);
-            recoverButton?.onClick.RemoveListener(HandleRecoverClicked);
-            recallButton?.onClick.RemoveListener(HandleRecallClicked);
-            closeButton?.onClick.RemoveListener(HandleCloseClicked);
+            DetachView();
         }
 
         private void OnDestroy()
@@ -85,7 +62,7 @@ namespace Code.UI
 
         private void Update()
         {
-            if (selectedUnit == null || panelRoot == null || !panelRoot.activeSelf)
+            if (selectedUnit == null || _view == null || !_view.IsVisible)
                 return;
 
             if (Time.unscaledTime < _nextRefreshAt)
@@ -110,11 +87,39 @@ namespace Code.UI
                 return;
 
             EnemyStatusPanelView.ActiveInstance?.HidePanel();
-            SetHint(string.Empty);
+            _hint = string.Empty;
             _nextRefreshAt = 0f;
+            if (!AttachView())
+                return;
+
             Refresh();
-            MovePanelToScreenPosition(evt.ScreenPosition);
-            SetPanelVisible(true);
+            _view.Open(evt.ScreenPosition);
+        }
+
+        private bool AttachView()
+        {
+            if (_view != null)
+                return true;
+
+            _view = UnitStatusToolkitView.Ensure();
+            if (_view == null)
+                return false;
+
+            _view.CloseRequested += HidePanel;
+            _view.RecoverRequested += HandleRecoverClicked;
+            _view.RecallRequested += HandleRecallClicked;
+            return true;
+        }
+
+        private void DetachView()
+        {
+            if (_view == null)
+                return;
+
+            _view.CloseRequested -= HidePanel;
+            _view.RecoverRequested -= HandleRecoverClicked;
+            _view.RecallRequested -= HandleRecallClicked;
+            _view = null;
         }
 
         private void HandleRecoverClicked()
@@ -132,7 +137,7 @@ namespace Code.UI
         {
             if (!CanRecallSelectedUnit())
             {
-                SetHint(ResolveRecallBlockedReason());
+                _hint = ResolveRecallBlockedReason();
                 Refresh();
                 return;
             }
@@ -141,7 +146,7 @@ namespace Code.UI
             if (_unitManagementSystem == null
                 || !_unitManagementSystem.TryRecall(selectedNode, selectedUnit, out result))
             {
-                SetHint(string.IsNullOrWhiteSpace(result) ? "회수 실패" : result);
+                _hint = string.IsNullOrWhiteSpace(result) ? "회수 실패" : result;
                 Refresh();
                 return;
             }
@@ -155,7 +160,7 @@ namespace Code.UI
                 return;
 
             selectedUnit.RecoverCondition();
-            SetHint("치료와 휴식 완료");
+            _hint = "치료와 휴식 완료";
             Refresh();
         }
 
@@ -164,18 +169,13 @@ namespace Code.UI
             if (evt.Unit != selectedUnit)
                 return;
 
-            SetHint($"골드 부족 ({evt.CurrentGold}/{evt.GoldAmount})");
+            _hint = $"골드 부족 ({evt.CurrentGold}/{evt.GoldAmount})";
             Refresh();
-        }
-
-        private void HandleCloseClicked()
-        {
-            HidePanel();
         }
 
         public void HidePanel()
         {
-            SetPanelVisible(false);
+            _view?.Close();
             selectedNode = null;
             selectedUnit = null;
         }
@@ -184,129 +184,56 @@ namespace Code.UI
         {
             if (selectedUnit == null)
             {
-                SetPanelVisible(false);
+                _view?.Close();
                 return;
             }
+
+            if (_view == null)
+                return;
 
             var unitName = selectedUnit.Data != null && !string.IsNullOrWhiteSpace(selectedUnit.Data.Name)
                 ? selectedUnit.Data.Name
                 : selectedUnit.name;
-
             var level = selectedUnit.Level;
-            SetText(titleText, $"{unitName} Lv {level.Level}");
-            var status = selectedUnit.IsIncapacitated
-                ? $"전투 불능 · {selectedUnit.ConditionSummary}"
-                : selectedUnit.ConditionSummary;
-            SetTextVisible(statusText, status);
-
             var health = selectedUnit.Health;
-            SetText(hpText, $"HP {health.CurrentHealth}/{health.MaxHealth}");
-            RefreshPortrait();
-            RefreshHealthBar(health.CurrentHealth, health.MaxHealth);
-            SetText(levelText, ResolveCombatText());
-            SetText(traitText, $"특성 : {selectedUnit.TraitLabel}");
-            SetText(personalityText, $"성격 : {selectedUnit.PersonalityLabel}");
-            RefreshFatigueUi();
-
-            var shouldShowRecovery = selectedUnit.NeedsRecovery;
-            if (recoverButton != null)
-            {
-                recoverButton.gameObject.SetActive(shouldShowRecovery);
-                recoverButton.interactable = CanRecoverSelectedUnit();
-            }
-
-            if (recoverButtonLabel != null)
-            {
-                // 버튼 한 칸에 들어가야 하는 글이다. 길어지면 돌 버튼의 끝장식을 넘어간다.
-                recoverButtonLabel.text = shouldShowRecovery
-                    ? $"치료·휴식 {selectedUnit.RecoveryCost}G"
-                    : "회복 불필요";
-            }
-
-            if (recallButton != null)
-            {
-                recallButton.gameObject.SetActive(selectedUnit is not MainUnit);
-                recallButton.interactable = CanRecallSelectedUnit();
-            }
-
-            if (recallButtonLabel != null)
-                recallButtonLabel.text = CanRecallSelectedUnit() ? "회수(대기 명단)" : ResolveRecallBlockedReason();
-
-            if (string.IsNullOrWhiteSpace(hintText.text))
-                SetTextVisible(hintText, shouldShowRecovery && !CanRecoverSelectedUnit() ? ResolveRecoverBlockedReason() : string.Empty);
-        }
-
-        private string ResolveCombatText()
-        {
             var combatant = selectedUnit.Combatant;
-            var combatText = combatant != null
-                ? $"ATK {combatant.AttackDamage}  SPD {combatant.AttackInterval:0.##}s"
-                : "ATK -  SPD -";
-            var level = selectedUnit.Level;
-            return $"{combatText}  ·  EXP {level.Experience}/{level.ExperienceToNextLevel}\n명령 : {selectedUnit.CommandLabel}";
-        }
-
-        /// <summary>
-        /// 얼굴칸에 이 유닛의 그림을 건다.
-        ///
-        /// 칸은 정사각인데 그림은 아니라서 프리팹에서 비율을 지키게 해 뒀다. 여기서는 무엇을 걸지만
-        /// 정한다. 그림이 없는 유닛이면 칸을 비워야 앞 유닛의 얼굴이 남아 있지 않는다.
-        /// </summary>
-        private void RefreshPortrait()
-        {
-            if (portraitImage == null)
-                return;
-
-            var sprite = selectedUnit != null && selectedUnit.Data != null
-                ? selectedUnit.Data.Sprite
-                : null;
-
-            if (portraitImage.sprite != sprite)
-                portraitImage.sprite = sprite;
-
-            // 그림이 없을 때 흰 네모가 남지 않게 칸째로 감춘다.
-            if (portraitImage.enabled != (sprite != null))
-                portraitImage.enabled = sprite != null;
-        }
-
-        /// <summary>
-        /// 체력 막대를 채운다.
-        ///
-        /// 숫자는 이미 위에 적히지만, 얼마나 남았는지는 길이로 봐야 한 눈에 들어온다.
-        /// 색은 그림에 들어 있으므로 여기서는 길이만 만진다.
-        /// </summary>
-        private void RefreshHealthBar(float current, float max)
-        {
-            if (hpFill == null)
-                return;
-
-            hpFill.fillAmount = max > 0f ? Mathf.Clamp01(current / max) : 0f;
-        }
-
-        private void RefreshFatigueUi()
-        {
-            if (selectedUnit == null)
-                return;
-
             var fatigue = Mathf.Clamp(selectedUnit.Fatigue, 0f, 100f);
             var fatigueRatio = fatigue / 100f;
-            var state = ResolveFatigueState(fatigue);
-            var attackPenalty = Mathf.RoundToInt(fatigueRatio * 30f);
-            var speedPenalty = Mathf.RoundToInt(fatigueRatio * 40f);
-            SetText(fatigueText,
-                $"피로 {Mathf.RoundToInt(fatigue)}/100 · {state}  ATK -{attackPenalty}% · 공속 -{speedPenalty}%");
+            var needsRecovery = selectedUnit.NeedsRecovery;
+            var canRecall = CanRecallSelectedUnit();
 
-            if (fatigueFill == null)
-                return;
+            var hint = _hint;
+            if (string.IsNullOrWhiteSpace(hint) && needsRecovery && !CanRecoverSelectedUnit())
+                hint = ResolveRecoverBlockedReason();
 
-            fatigueFill.fillAmount = fatigueRatio;
-            fatigueFill.color = fatigue switch
+            _view.Render(new UnitStatusViewModel
             {
-                >= 85f => new Color(0.92f, 0.16f, 0.1f, 1f),
-                >= 60f => new Color(1f, 0.46f, 0.1f, 1f),
-                >= 30f => new Color(0.95f, 0.72f, 0.16f, 1f),
-                _ => new Color(0.28f, 0.78f, 0.42f, 1f)
-            };
+                Title = $"{unitName} Lv {level.Level}",
+                State = selectedUnit.IsIncapacitated
+                    ? $"전투 불능 · {selectedUnit.ConditionSummary}"
+                    : selectedUnit.ConditionSummary,
+                Hp = $"HP {health.CurrentHealth}/{health.MaxHealth}",
+                HpRatio = health.MaxHealth > 0 ? (float)health.CurrentHealth / health.MaxHealth : 0f,
+                Combat = (combatant != null
+                             ? $"ATK {combatant.AttackDamage}  SPD {combatant.AttackInterval:0.##}s"
+                             : "ATK -  SPD -")
+                         + $"  ·  EXP {level.Experience}/{level.ExperienceToNextLevel}",
+                Command = $"명령 : {selectedUnit.CommandLabel}",
+                Traits = $"특성 : {selectedUnit.TraitLabel}  ·  성격 : {selectedUnit.PersonalityLabel}",
+                TraitsTooltip = $"{selectedUnit.TraitLabel}: {selectedUnit.TraitDescription}\n"
+                                + $"{selectedUnit.PersonalityLabel}: {selectedUnit.PersonalityDescription}",
+                Fatigue = $"피로 {Mathf.RoundToInt(fatigue)}/100 · {ResolveFatigueState(fatigue)}  "
+                          + $"ATK -{Mathf.RoundToInt(fatigueRatio * 30f)}% · 공속 -{Mathf.RoundToInt(fatigueRatio * 40f)}%",
+                FatigueRatio = fatigueRatio,
+                Portrait = selectedUnit.Data != null ? selectedUnit.Data.Sprite : null,
+                Hint = hint,
+                ShowRecover = needsRecovery,
+                RecoverEnabled = CanRecoverSelectedUnit(),
+                RecoverLabel = needsRecovery ? $"치료·휴식 {selectedUnit.RecoveryCost}G" : "회복 불필요",
+                ShowRecall = selectedUnit is not MainUnit,
+                RecallEnabled = canRecall,
+                RecallLabel = canRecall ? "회수(대기 명단)" : ResolveRecallBlockedReason()
+            });
         }
 
         private bool CanRecallSelectedUnit()
@@ -350,69 +277,6 @@ namespace Code.UI
             if (dayManager == null || !dayManager.IsStandby)
                 return "습격 중 회복 불가";
             return string.Empty;
-        }
-
-        private void SetHint(string message)
-        {
-            SetTextVisible(hintText, message);
-        }
-
-        private void SetPanelVisible(bool visible)
-        {
-            if (visible)
-                transform.SetAsLastSibling();
-
-            panelRoot?.SetActive(visible);
-        }
-
-        private void MovePanelToScreenPosition(Vector2 originScreenPosition)
-        {
-            if (panelRoot == null)
-                return;
-
-            var panelRect = (RectTransform)panelRoot.transform;
-            var screenPosition = originScreenPosition + screenOffset;
-            if (keepInsideScreen)
-                screenPosition = ClampToScreen(panelRect, screenPosition);
-
-            if (panelCanvas == null || panelCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
-            {
-                panelRect.position = screenPosition;
-                return;
-            }
-
-            var canvasRect = (RectTransform)panelCanvas.transform;
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPosition,
-                panelCanvas.worldCamera, out var localPosition);
-            panelRect.anchoredPosition = localPosition;
-        }
-
-        private static Vector2 ClampToScreen(RectTransform panelRect, Vector2 screenPosition)
-        {
-            var size = Vector2.Scale(panelRect.rect.size, panelRect.lossyScale);
-            var pivot = panelRect.pivot;
-            screenPosition.x = Mathf.Clamp(screenPosition.x, size.x * pivot.x, Screen.width - size.x * (1f - pivot.x));
-            screenPosition.y = Mathf.Clamp(screenPosition.y, size.y * pivot.y, Screen.height - size.y * (1f - pivot.y));
-            return screenPosition;
-        }
-
-        private static void SetText(TMP_Text text, string value)
-        {
-            if (text != null && text.text != value)
-                text.text = value;
-        }
-
-        private static void SetTextVisible(TMP_Text text, string value)
-        {
-            if (text == null)
-                return;
-
-            if (text.text != value)
-                text.text = value;
-
-            var visible = !string.IsNullOrWhiteSpace(value);
-            if (text.gameObject.activeSelf != visible)
-                text.gameObject.SetActive(visible);
         }
     }
 }

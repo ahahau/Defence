@@ -1,0 +1,53 @@
+/*
+ * 부하 상태 패널 배치. 누른 자리 옆에 뜨는 고정 크기 카드다(ui-rules 10번).
+ * 고정 영역: 헤더 36 · 상태 20 · 얼굴+수치 80 · 특성 20 · 피로 20+8 · 안내 20 · 버튼 44.
+ * 버튼·안내는 조건에 따라 보이지 않아도 자리를 지킨다(visibility로만 숨긴다).
+ */
+.unit-status-root {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+}
+
+.unit-status-card {
+    position: absolute;
+    width: 440px;
+    height: 330px;
+    padding: 12px 14px;
+}
+
+.unit-status-header { height: 36px; flex-shrink: 0; flex-direction: row; align-items: center; }
+.unit-status-title { flex-grow: 1; min-width: 0; -unity-text-align: middle-left; }
+.unit-status-close { width: 64px; height: 28px; flex-shrink: 0; }
+
+.unit-status-line {
+    height: 20px;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+    -unity-text-align: middle-left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.unit-status-body { height: 80px; flex-shrink: 0; flex-direction: row; margin: 4px 0; }
+.unit-status-portrait { width: 72px; height: 72px; flex-shrink: 0; margin-right: 10px; -unity-background-scale-mode: scale-to-fit; }
+.unit-status-stats { flex-grow: 1; min-width: 0; justify-content: space-between; }
+
+.unit-status-bar { height: 8px; flex-shrink: 0; margin: 2px 0 4px 0; background-color: var(--color-surface-inset); border-width: 1px; border-color: var(--color-border-quiet); }
+.unit-status-bar-fill { height: 100%; width: 0; }
+.unit-status-bar-fill--hp { background-color: var(--color-gain); }
+
+/* 피로 단계별 색. 단계는 코드가 클래스로 바꾼다. */
+.fatigue--ok { background-color: var(--color-gain); }
+.fatigue--tired { background-color: var(--color-warn); }
+.fatigue--overwork { background-color: var(--color-loss); }
+.fatigue--critical { background-color: var(--color-danger); }
+
+.unit-status-hint { margin-top: 2px; }
+
+/* 특성·성격 줄에 마우스를 올리면 설명을 보여 준다. 고정 크기. */
+.unit-status-tooltip { position: absolute; width: 360px; height: 72px; padding: 8px 10px; visibility: hidden; }
+.unit-status-tooltip-text { flex-grow: 1; margin: 0; white-space: normal; overflow: hidden; -unity-text-align: upper-left; }
+.unit-status-actions { height: 44px; flex-shrink: 0; flex-direction: row; justify-content: space-between; align-items: flex-end; }
+.unit-status-action { width: 200px; height: 36px; flex-shrink: 0; }
