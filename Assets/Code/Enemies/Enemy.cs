@@ -913,12 +913,15 @@ namespace Code.Enemies
         {
             _visitedFacilities.Add(facility);
             _dwellFacility = facility;
-            _dwellRemaining = facility.DwellSeconds;
+            // 낡은 시설은 오래 붙잡아 둔다. 값은 같은 총액을 늘어난 시간에 나눠 낸다.
+            _dwellDuration = facility.EffectiveDwellSeconds;
+            _dwellRemaining = _dwellDuration;
             // 값을 먼저 매기고 닳게 한다. 마지막 손님이 내구도를 0으로 만들어도 자기 몫은 낸다.
             _dwellGoldTotal = FacilityDwellRules.ApplyQueueSatisfaction(
                 facility.DwellGoldTotal,
                 _facilityWaitSeconds);
-            facility.RecordVisitWear();
+            facility.RecordVisitWear(FacilityDurabilityRules.WearMultiplier(
+                Level, Trait == AdventurerTrait.Shopaholic, PauseLockRules.LocksPause(this)));
             _facilityWaitSeconds = 0f;
             _dwellGoldCarry = 0f;
         }
@@ -949,7 +952,7 @@ namespace Code.Enemies
             var step = Mathf.Min(deltaTime, _dwellRemaining);
             _dwellRemaining -= step;
 
-            var perSecond = FacilityDwellRules.GoldPerSecond(_dwellGoldTotal, facility.DwellSeconds);
+            var perSecond = FacilityDwellRules.GoldPerSecond(_dwellGoldTotal, _dwellDuration);
             if (perSecond > 0f)
             {
                 _dwellGoldCarry += perSecond * step;
@@ -1012,6 +1015,9 @@ namespace Code.Enemies
         }
 
         private static readonly object FatigueStatKey = new();
+
+        /// <summary>이번에 머무는 총 시간. 내구도에 따라 늘어난 시간이라 시설의 기본값과 다를 수 있다.</summary>
+        private float _dwellDuration;
 
         /// <summary>이미 머물렀던 시설. 같은 곳에 두 번 눌러앉지 않는다.</summary>
         private readonly HashSet<Building> _visitedFacilities = new();

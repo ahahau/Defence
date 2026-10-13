@@ -32,8 +32,10 @@ namespace Code.Buildings
             if (enemy == null || !enemy.IsAlive || !IsOperating)
                 return;
 
-            enemy.AddAttackDamage(damageBonus);
-            if (damageBonus > 0)
+            // 낡은 상점은 손님에게 주는 효과도 수입과 같은 비율로 약하다.
+            var bonus = ScaleServiceEffect(damageBonus);
+            enemy.AddAttackDamage(bonus);
+            if (bonus > 0)
                 PlayPassEffectFeedback(enemy, buffFlashColor, buffFlashDuration, buffFeelFeedback);
 
         }

@@ -26,7 +26,8 @@ paths:
    * 위 두 항목은 `AssetWiringTests`가 검사한다.
 4. 수익 시설은 번 만큼 닳는다.
    * 머무는 모험가가 `DwellGoldTotal`을 시간에 나눠 내고, 그 수입은 장부(`DwellGoldSource`)에 쌓였다가 정산 때 반영된다.
-   * 손님마다 내구도가 `wearPerVisit`만큼 깎인다(부서지지 않고 손님이 머무는 시설 = `Building.UsesServiceDurability`). 수입은 내구도에 비례해 50~100%이고, 0이면 영업을 멈춘다. 수치는 `FacilityDurabilityRules`에만 둔다.
+   * 손님마다 내구도가 `wearPerVisit` × 손님 배율만큼 깎인다(부서지지 않고 손님이 머무는 시설 = `Building.UsesServiceDurability`). 손님 배율: 레벨 1 위로 레벨당 +25%, 쇼핑광 ×2, 엘리트(강함 4단계 이상)·보스 ×3, 곱으로 겹치고 소수는 쌓았다가 깎는다. 수입은 내구도에 비례해 50~100%이고, 0이면 영업을 멈춘다. 수치는 `FacilityDurabilityRules`에만 둔다.
+   * 내구도 절반 아래부터 머무는 시간이 늘어 바닥 근처에서 1.5배가 된다(`EffectiveDwellSeconds`, 같은 총액을 늘어난 시간에 나눠 냄). 시설이 손님에게 주는 효과(상점 공격·여관 회복·대장간 공격/방어)도 수입과 같은 비율로 줄인다(`ScaleServiceEffect`, 0.5 올림이라 1점 효과는 남음). 새 수익 시설의 효과도 `ScaleServiceEffect`를 거친다.
    * 수리는 플레이어가 고른다(`FacilityClosureSystem.TryBeginRepair`). 금화와 게임 시간이 들고, 수리 중에는 손님을 받지 않으며, 고칠수록 다음 수리비가 오른다. 청산일 자동 수리는 없다.
    * 철거(`FacilityClosureSystem.Demolish`)는 건설비 × 50% × 내구도 비율을 돌려주고, 정리 3초 동안 그 방에 중앙 시설을 못 짓는다.
    * 함정·회복실처럼 `destructible`인 건물은 맞아서 깎이고 0이면 파괴된다. 손님 마모 규칙을 따르지 않는다.

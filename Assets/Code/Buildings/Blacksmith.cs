@@ -34,9 +34,12 @@ namespace Code.Buildings
             if (enemy == null || !enemy.IsAlive || !IsOperating)
                 return;
 
-            enemy.AddAttackDamage(attackBonus);
-            enemy.AddDefense(defenseBonus);
-            if (attackBonus > 0 || defenseBonus > 0)
+            // 낡은 대장간은 장비도 덜 손본다(수입과 같은 비율).
+            var attack = ScaleServiceEffect(attackBonus);
+            var defense = ScaleServiceEffect(defenseBonus);
+            enemy.AddAttackDamage(attack);
+            enemy.AddDefense(defense);
+            if (attack > 0 || defense > 0)
                 PlayPassEffectFeedback(enemy, upgradeFlashColor, upgradeFlashDuration, upgradeFeelFeedback);
 
         }

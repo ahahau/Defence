@@ -155,5 +155,53 @@ namespace Tests.EditMode.Rules
             Assert.That(building.RepairRemaining, Is.EqualTo(2.5f).Within(0.001f));
             Assert.That(building.RepairCount, Is.EqualTo(3));
         }
+
+        /// <summary>
+        /// 누가 쓰느냐에 따라 닳는 양이 다르다(사용자 결정): 레벨 1 위로 레벨당 +25%, 쇼핑광 2배, 엘리트·보스 3배, 곱으로 겹침.
+        /// 예전에는 손님 누구나 똑같이 1씩 닳아 등급이 올라도 시설 관리가 그대로였다.
+        /// </summary>
+        [Test]
+        public void Wear_GrowsWithLevelShopaholicAndElite()
+        {
+            Assert.That(FacilityDurabilityRules.WearMultiplier(1, false, false), Is.EqualTo(1f).Within(0.001f));
+            Assert.That(FacilityDurabilityRules.WearMultiplier(3, false, false), Is.EqualTo(1.5f).Within(0.001f));
+            Assert.That(FacilityDurabilityRules.WearMultiplier(1, true, false), Is.EqualTo(2f).Within(0.001f));
+            Assert.That(FacilityDurabilityRules.WearMultiplier(3, true, true), Is.EqualTo(9f).Within(0.001f));
+        }
+
+        /// <summary>1.25배처럼 소수 마모도 쌓였다가 1이 되면 깎인다. 버리면 레벨 2 손님이 레벨 1과 같아진다.</summary>
+        [Test]
+        public void FractionalWear_AccumulatesAcrossVisits()
+        {
+            var building = NewServiceFacility(maxDurability: 20, wearPerVisit: 1);
+            for (var i = 0; i < 4; i++)
+                building.RecordVisitWear(1.25f);
+
+            Assert.That(building.CurrentDurability, Is.EqualTo(15), "1.25 × 4 = 5만큼 닳아야 합니다.");
+        }
+
+        /// <summary>낮은 내구도는 대기열을 밀리게 한다: 절반까지는 그대로, 바닥에 가까울수록 최대 1.5배.</summary>
+        [Test]
+        public void LowDurability_SlowsTheVisit()
+        {
+            Assert.That(FacilityDurabilityRules.DwellTimeMultiplier(20, 20), Is.EqualTo(1f).Within(0.001f));
+            Assert.That(FacilityDurabilityRules.DwellTimeMultiplier(10, 20), Is.EqualTo(1f).Within(0.001f));
+            Assert.That(FacilityDurabilityRules.DwellTimeMultiplier(5, 20), Is.EqualTo(1.25f).Within(0.001f));
+            Assert.That(FacilityDurabilityRules.DwellTimeMultiplier(0, 20), Is.EqualTo(1.5f).Within(0.001f));
+
+            var building = NewServiceFacility(maxDurability: 20, wearPerVisit: 15);
+            building.RecordVisitWear();
+            Assert.That(building.EffectiveDwellSeconds, Is.EqualTo(3f * 1.25f).Within(0.001f), "내구도 5/20이면 3초가 3.75초가 됩니다.");
+        }
+
+        /// <summary>시설이 손님에게 주는 효과도 수입과 같은 비율로 약해진다. 1점짜리는 남고 2점부터 준다.</summary>
+        [Test]
+        public void LowDurability_WeakensTheServiceEffect()
+        {
+            Assert.That(FacilityDurabilityRules.ScaleEffect(2, 20, 20), Is.EqualTo(2));
+            Assert.That(FacilityDurabilityRules.ScaleEffect(2, 4, 20), Is.EqualTo(1), "내구도 20%면 2점 효과가 1점이 됩니다.");
+            Assert.That(FacilityDurabilityRules.ScaleEffect(1, 1, 20), Is.EqualTo(1), "1점짜리 효과는 사라지지 않습니다.");
+            Assert.That(FacilityDurabilityRules.ScaleEffect(4, 10, 20), Is.EqualTo(3));
+        }
     }
 }

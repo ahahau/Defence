@@ -199,6 +199,9 @@ namespace Code.Buildings
         private int repairCount;
         private float repairRemaining;
 
+        /// <summary>정수로 깎기 전에 쌓아 둔 마모. 레벨 2 손님(1.25배)처럼 소수 마모도 버리지 않는다.</summary>
+        private float _wearCarry;
+
         /// <summary>수리가 끝났을 때. 화면이 게이지를 다시 그린다.</summary>
         public event Action<Building> RepairCompleted;
 
@@ -236,13 +239,27 @@ namespace Code.Buildings
         /// 손님이 다녀갔다. 쓰이는 만큼 내구도가 깎인다.
         /// 벌이와 수리비가 같은 원인에서 나오므로 "이 시설이 남는 장사인가"가 계산이 된다.
         /// </summary>
-        public void RecordVisitWear()
+        /// <param name="multiplier">손님에 따른 마모 배율(<see cref="FacilityDurabilityRules.WearMultiplier"/>).</param>
+        public void RecordVisitWear(float multiplier = 1f)
         {
             if (isDestroyed || !UsesServiceDurability)
                 return;
 
-            currentDurability = Mathf.Max(0, currentDurability - Mathf.Max(0, wearPerVisit));
+            _wearCarry += Mathf.Max(0, wearPerVisit) * Mathf.Max(0f, multiplier);
+            var wear = Mathf.FloorToInt(_wearCarry + 0.0001f);
+            _wearCarry = Mathf.Max(0f, _wearCarry - wear);
+            currentDurability = Mathf.Max(0, currentDurability - wear);
         }
+
+        /// <summary>손님이 실제로 머무는 시간. 내구도가 절반 아래면 늘어난다(대기열 지연).</summary>
+        public float EffectiveDwellSeconds => UsesServiceDurability
+            ? DwellSeconds * FacilityDurabilityRules.DwellTimeMultiplier(currentDurability, MaxDurability)
+            : DwellSeconds;
+
+        /// <summary>시설이 손님에게 주는 효과를 내구도에 맞춰 줄인다. 수익 시설이 아니면 그대로.</summary>
+        protected int ScaleServiceEffect(int amount) => UsesServiceDurability
+            ? FacilityDurabilityRules.ScaleEffect(amount, currentDurability, MaxDurability)
+            : amount;
 
         /// <summary>
         /// 수리를 시작한다. 금화는 부르는 쪽이 <see cref="RepairCost"/>를 먼저 치렀다.

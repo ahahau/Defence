@@ -35,7 +35,8 @@ namespace Code.Buildings
                 return;
 
             var previousHealth = enemy.Health != null ? enemy.Health.CurrentHealth : 0;
-            enemy.Health?.Heal(healAmount);
+            // 낡은 여관은 덜 회복시킨다(수입과 같은 비율). 상태이상은 그대로 건다.
+            enemy.Health?.Heal(ScaleServiceEffect(healAmount));
             statusEffect?.TryApplyTo(enemy);
 
             if (enemy.Health != null && enemy.Health.CurrentHealth > previousHealth)
