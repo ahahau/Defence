@@ -230,7 +230,7 @@ namespace Code.UI
             }
 
             if (recallButtonLabel != null)
-                recallButtonLabel.text = CanRecallSelectedUnit() ? "회수 후 휴식" : ResolveRecallBlockedReason();
+                recallButtonLabel.text = CanRecallSelectedUnit() ? "회수(대기 명단)" : ResolveRecallBlockedReason();
 
             if (string.IsNullOrWhiteSpace(hintText.text))
                 SetTextVisible(hintText, shouldShowRecovery && !CanRecoverSelectedUnit() ? ResolveRecoverBlockedReason() : string.Empty);

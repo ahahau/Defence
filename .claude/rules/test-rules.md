@@ -17,7 +17,7 @@ paths:
 | 파일 | 대상 |
 |---|---|
 | `GameRulesTests` | 게임 규칙 전반 (가장 큼) |
-| `SettlementRegressionTests` | 정산·장부 회귀 |
+| `SettlementRegressionTests` | 정산·장부 회귀(유지비는 배치한 부하만) |
 | `WeeklyLoanLedgerTests` | 대출·청산일 |
 | `MetaProgressTests` | 메타 진행도·최고 기록·시작 보정 장착/칸·새 판 보정·파일 저장(임시 경로), 진행도로 잠근 콘텐츠·단계 값·사건 잠금 에셋 |
 | `RunEventLedgerTests` | 사건 순서(한 전환 한 사건·일반 사건 4~6회 쿨다운·주요 사건 우선·청산 위기 우선과 방침 미룸·상황 사건 쿨다운 공유)·선택 기록, 상황 사건 판정·급전/조기 상환 금액·잠긴 선택지 |

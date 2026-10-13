@@ -184,7 +184,7 @@ namespace Code.Manager
             _costEventChannel.RaiseEvent(new UnitDeployMagicRefundRequestedEvent(unitData, unitData.MagicCost));
             _nodeEventChannel.RaiseEvent(new UnitReturnedFromNodeEvent(node, unitData, unit));
             Object.Destroy(unit.gameObject);
-            reason = "회수 완료 · 대기 명단에서 휴식 시작";
+            reason = "회수 완료 · 대기 명단에 상태 그대로 보관";
             return true;
         }
 

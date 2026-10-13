@@ -20,6 +20,7 @@ paths:
 - 웨이브 난수는 `WaveManager._waveRandom`(판 시드 + 일차)으로 뽑는다(무작위 파티·풀 적·프리팹). 전역 `Random`을 새로 쓰지 않는다.
 - 파티 인원 변동(`PartyCompositionRules`): 파티가 올 때마다 리더(첫 멤버)는 반드시, 나머지는 15%(밤 25%)로 빠지고, 5% + 등급당 3%p + 운영 시설당 2%p(최대 40%)로 리더 아닌 파티원 한 명이 더 붙는다. 보스 호위는 그대로. 웨이브 총인원(`_remainingSpawns`)은 바뀌지 않고 그룹 크기만 달라진다.
 - 사건(일반·상황 사건) 대화는 고를 때까지 시간을 세운다(`DialogueRunner`가 `Suspend`, `Stop`에서 `Release`). 운영 방침 창도 세운다. 튜토리얼 말풍선은 세우지 않는다.
+- 대기 명단(고용했지만 배치하지 않은 부하)은 유지비를 내지 않고 피로·부상·체력이 변하지 않는다. 유지비는 배치한 부하만(`ManagementSettlementManager.CalculateDailyUpkeep`이 `GetDeployedUnitCount`로 셈), 대기 중 자연 회복은 없다(회복은 치료비·회복실로).
 - 부활 마력 비용(`RevivalManaCostRules`): (기본 15 + 레벨당 8 + 고용 정가 10G당 1) × 특성(수호자 1.2·공격적 1.1·강인함 0.9·야전 의무병 0.8), 반올림.
 
 ## 경제

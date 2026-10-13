@@ -97,7 +97,7 @@ namespace Tests.EditMode.Rules
         }
 
         [Test]
-        public void Upkeep_AfterRosterRestore_ChargesAvailableAndDeployedUnitsButNotApplicants()
+        public void Upkeep_AfterRosterRestore_ChargesDeployedUnitsButNotReserveOrApplicants()
         {
             var roster = Component("Code.Manager.HiredUnitRoster", "Roster");
             var manager = Component("Code.Manager.ManagementSettlementManager", "Settlement");
@@ -107,8 +107,9 @@ namespace Tests.EditMode.Rules
             ((IList)roster.GetType().GetField("_availableUnits", PrivateInstance).GetValue(roster)).Add(unit);
             ((IDictionary)roster.GetType().GetField("_deployedUnits", PrivateInstance).GetValue(roster)).Add(unit, 2);
             ((IDictionary)roster.GetType().GetField("_ownedUnits", PrivateInstance).GetValue(roster)).Add(unit, 5);
-            Assert.That(Call(manager, "CalculateDailyUpkeep"), Is.EqualTo(9),
-                "Restoring a run must not make the wages of already hired units disappear.");
+            // 대기 명단의 부하는 유지비가 없다(기획서). 배치한 둘만 낸다.
+            Assert.That(Call(manager, "CalculateDailyUpkeep"), Is.EqualTo(6),
+                "Restoring a run must not make the wages of deployed units disappear, and reserve units are free.");
         }
 
         [Test]

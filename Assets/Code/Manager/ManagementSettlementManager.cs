@@ -410,14 +410,17 @@ namespace Code.Manager
         private int CalculateDailyUpkeep()
         {
             // 이어하기는 고용 이벤트를 다시 발행하지 않는다. 복원된 명단을 기준으로 계산한다.
-            HiredUnitRoster.Current?.CopyHiredUnitCounts(hiredUnitCount);
+            var roster = HiredUnitRoster.Current;
+            roster?.CopyHiredUnitCounts(hiredUnitCount);
             var total = 0;
             foreach (var pair in hiredUnitCount)
             {
                 if (pair.Key == null || pair.Value <= 0)
                     continue;
 
-                total += UnitMarketRules.DailyUpkeep(pair.Key.Cost, upkeepCostDivisor) * pair.Value;
+                // 유지비는 배치한 부하만 낸다. 대기 명단의 부하는 유지비·상태 변화가 없다(기획서).
+                var deployed = roster != null ? Mathf.Min(pair.Value, roster.GetDeployedUnitCount(pair.Key)) : pair.Value;
+                total += UnitMarketRules.DailyUpkeep(pair.Key.Cost, upkeepCostDivisor) * deployed;
             }
 
             // 민심이 낮으면 같은 부하를 붙잡아 두는 데 더 든다.

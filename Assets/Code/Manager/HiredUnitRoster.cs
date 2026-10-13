@@ -313,7 +313,8 @@ namespace Code.Manager
             if (evt.Day <= 0)
                 return;
 
-            RestAvailableUnits();
+            // 대기 명단의 부하는 상태가 그대로다(기획서: 대기 유닛은 유지비·체력·피로·부상 변화 없음).
+            // 쉬게 두면 회수만으로 공짜 회복이 되어 치료비가 의미를 잃는다.
 
             // 새 지원자를 받기 전에 기한이 다한 사람부터 내보낸다.
             ExpireApplicants();
