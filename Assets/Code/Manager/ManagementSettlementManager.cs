@@ -987,6 +987,7 @@ namespace Code.Manager
                 GoldChangeSource.TreasuryLoot => "금고 약탈",
                 GoldChangeSource.Dialogue => "이벤트 비용",
                 GoldChangeSource.Policy => "정책 비용",
+                GoldChangeSource.UnitRevival => "부하 부활비 (모험가 지갑으로)",
                 _ => "기타 비용"
             };
         }

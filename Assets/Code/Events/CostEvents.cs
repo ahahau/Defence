@@ -27,7 +27,10 @@ namespace Code.Events
         PartyWipe,
 
         /// <summary>교회에서 관을 되살리며 받은 부활비.</summary>
-        Church
+        Church,
+
+        /// <summary>쓰러진 부하의 부활비. 쓰러뜨린 모험가 파티의 지갑으로 들어간다.</summary>
+        UnitRevival
     }
 
     public class BuildCostRequestedEvent : GameEvent

@@ -46,7 +46,34 @@ namespace Code.Combat
         private bool _isPaused;
         private float _attackTimer;
         private Unit _ownerUnit;
+        private Code.Enemies.Enemy _ownerEnemy;
         private GameEventChannelSO artifactEventChannel;
+
+        /// <summary>마지막으로 이 전투원을 때린 모험가의 파티 번호. 없으면 -1. 아군 부활비가 그 파티 지갑으로 간다.</summary>
+        public int LastAttackerPartyId { get; private set; } = -1;
+
+        /// <summary>그 공격을 받은 게임 시각.</summary>
+        public float LastAttackedTime { get; private set; } = float.NegativeInfinity;
+
+        /// <summary>이 전투원이 모험가면 그 파티 번호, 아니면 -1.</summary>
+        public int OwnerPartyId => _ownerEnemy != null && _ownerEnemy.Mover != null ? _ownerEnemy.Mover.PartyId : -1;
+
+        /// <summary>맞았다. 때린 쪽이 모험가면 그 파티를 기억한다.</summary>
+        public void NoteAttacker(Combatant attacker)
+        {
+            var partyId = attacker != null ? attacker.OwnerPartyId : -1;
+            if (partyId < 0)
+                return;
+
+            LastAttackerPartyId = partyId;
+            LastAttackedTime = Time.time;
+        }
+
+        public void ClearAttacker()
+        {
+            LastAttackerPartyId = -1;
+            LastAttackedTime = float.NegativeInfinity;
+        }
         /// <summary>공격이 적중한 순간 발생(타격 연출/돌진용). BattleAgent가 구독해 lunge 모션을 낸다.</summary>
         public event Action AttackLanded;
 
@@ -200,6 +227,7 @@ namespace Code.Combat
         private void Awake()
         {
             _ownerUnit = GetComponent<Unit>();
+            _ownerEnemy = GetComponent<Code.Enemies.Enemy>();
             EnsureFeelCombatFeedbacks();
             EnsurePoseView();
             if (health != null)
@@ -294,6 +322,7 @@ namespace Code.Combat
 
                         PlayAttackFeedback(transform.position, target.transform.position);
                         var damage = ResolveAttackDamage(target, out var isCritical);
+                        target.NoteAttacker(this);
                         target.Health.TakeDamage(ApplyNightUnitMitigation(target, damage), isCritical);
                         TryApplyAttackStatusEffect(target);
                         AttackLanded?.Invoke();

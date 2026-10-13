@@ -125,7 +125,8 @@ namespace Code.Skills
                 SkillCastBurst.Play(transform.position, data.CastColor, isUltimate);
 
             var context = new SkillContext(agent, combatant, agent.CurrentTarget);
-            data.Execute(context);
+            using (Code.Combat.HitAttribution.Begin(combatant))
+                data.Execute(context);
         }
 
         /// <summary>시전 순간 캐스터 강조 — 색 플래시 + 스케일 팝. 궁극기는 금색으로 더 크게.</summary>

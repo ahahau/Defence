@@ -93,5 +93,67 @@ namespace Tests.EditMode.Rules
             Assert.That(ledger.EscapedTotal, Is.Zero);
             Assert.That(ledger.RecoveredTotal, Is.Zero);
         }
+
+        /// <summary>아군 부활비 = 고용 정가 50%(올림) + 레벨 1 위로 레벨당 5G(사용자 결정).</summary>
+        [Test]
+        public void UnitRevivalGold_IsHalfTheHirePricePlusLevels()
+        {
+            Assert.That(Code.Manager.UnitRevivalGoldRules.GoldCost(14, 1), Is.EqualTo(7));
+            Assert.That(Code.Manager.UnitRevivalGoldRules.GoldCost(82, 3), Is.EqualTo(51));
+            Assert.That(Code.Manager.UnitRevivalGoldRules.GoldCost(55, 1), Is.EqualTo(28), "홀수 정가는 올림합니다.");
+            Assert.That(Code.Manager.UnitRevivalGoldRules.GoldCost(0, 1), Is.Zero);
+        }
+
+        /// <summary>
+        /// 부활비는 마지막으로 때린 파티가 받는다. 그 파티가 이미 없으면 같은 방에서 가장 큰 파티가,
+        /// 아무도 없으면(아군 함정 등) 아무도 받지 않아 금화를 내지 않는다.
+        /// </summary>
+        [Test]
+        public void UnitRevivalGold_GoesToTheAttackerOrTheBiggestPartyInTheRoom()
+        {
+            var alive = new System.Collections.Generic.HashSet<int> { 1, 2, 3 };
+            System.Func<int, bool> isAlive = alive.Contains;
+            var room = new[] { 2, 3, 3 };
+
+            Assert.That(Code.Manager.UnitRevivalGoldRules.ResolveReceivingParty(1, room, isAlive), Is.EqualTo(1),
+                "마지막으로 때린 파티가 받습니다.");
+            Assert.That(Code.Manager.UnitRevivalGoldRules.ResolveReceivingParty(-1, room, isAlive), Is.EqualTo(3),
+                "때린 기록이 없으면 방에서 인원이 가장 많은 파티가 받습니다.");
+
+            alive.Remove(1);
+            Assert.That(Code.Manager.UnitRevivalGoldRules.ResolveReceivingParty(1, room, isAlive), Is.EqualTo(3),
+                "때린 파티가 이미 없으면 방 기준으로 정합니다.");
+
+            Assert.That(Code.Manager.UnitRevivalGoldRules.ResolveReceivingParty(-1, new int[0], isAlive), Is.EqualTo(-1),
+                "아무도 없으면 받을 파티가 없습니다.");
+        }
+
+        /// <summary>스킬 피해는 시전자를 넘기지 않아서, 시전하는 동안만 공격자를 걸어 둔다. 끝나면 반드시 원래대로 돌아와야 한다.</summary>
+        [Test]
+        public void HitAttribution_RestoresThePreviousAttacker()
+        {
+            var outerObject = new UnityEngine.GameObject("Outer");
+            var innerObject = new UnityEngine.GameObject("Inner");
+            try
+            {
+                var outer = outerObject.AddComponent<Code.Combat.Combatant>();
+                var inner = innerObject.AddComponent<Code.Combat.Combatant>();
+                Assert.That(Code.Combat.HitAttribution.Current, Is.Null);
+                using (Code.Combat.HitAttribution.Begin(outer))
+                {
+                    using (Code.Combat.HitAttribution.Begin(inner))
+                        Assert.That(Code.Combat.HitAttribution.Current, Is.SameAs(inner));
+
+                    Assert.That(Code.Combat.HitAttribution.Current, Is.SameAs(outer), "안쪽 시전이 끝나면 바깥 시전자로 돌아옵니다.");
+                }
+
+                Assert.That(Code.Combat.HitAttribution.Current, Is.Null);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(outerObject);
+                UnityEngine.Object.DestroyImmediate(innerObject);
+            }
+        }
     }
 }

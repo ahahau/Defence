@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Code.Core;
+using Code.Enemies;
 using Code.Events;
 using Code.MapCreateSystem;
 using Code.Units;
@@ -54,6 +55,7 @@ namespace Code.Manager
         /// <summary>훑는 동안 사전을 고치지 않으려고 쓰는 임시 목록. 매번 새로 만들지 않는다.</summary>
         private readonly List<Unit> _lost = new();
         private readonly List<Unit> _pendingUnits = new();
+        private readonly List<int> _roomParties = new();
 
         private float _scanTimer;
         private float _currentRevivalMana;
@@ -270,12 +272,54 @@ namespace Code.Manager
                     _pending.Add(unit, revivalSeconds);
                     _revivalOrder.Add(unit);
                     addedPendingUnit = true;
+                    ChargeRevivalGold(unit, node);
                     costEventChannel?.RaiseEvent(new UnitDownedEvent(unit, revivalSeconds, GetRevivalCost(unit)));
                 }
             }
 
             if (addedPendingUnit)
                 RaiseStateChanged();
+        }
+
+        /// <summary>그 부하가 쓰러질 때 내는 부활비 금화. 마력 부활비와 별개다.</summary>
+        public static int GetRevivalGold(Unit unit)
+        {
+            if (unit == null)
+                return 0;
+
+            var level = unit.Level != null ? unit.Level.Level : 1;
+            return UnitRevivalGoldRules.GoldCost(unit.Data != null ? unit.Data.Cost : 0, level);
+        }
+
+        /// <summary>
+        /// 쓰러진 부하의 부활비 금화를 쓰러뜨린 파티의 지갑으로 옮긴다. 금화는 웨이브 중 다른 지출처럼
+        /// 정산에서 빠지고, 모자라면 정산 적자로 빚이 된다. 받을 파티가 없으면(아군 함정 등) 내지 않는다.
+        /// </summary>
+        private void ChargeRevivalGold(Unit unit, Node node)
+        {
+            var combatant = unit.Combatant;
+            var recentAttacker = combatant != null
+                                 && Time.time - combatant.LastAttackedTime <= UnitRevivalGoldRules.AttributionSeconds
+                ? combatant.LastAttackerPartyId
+                : -1;
+            combatant?.ClearAttacker();
+
+            _roomParties.Clear();
+            foreach (var mover in EnemyMover.ActiveEnemies)
+            {
+                if (mover != null && mover.CurrentNode == node)
+                    _roomParties.Add(mover.PartyId);
+            }
+
+            var funds = PartyFundLedger.Active;
+            var party = UnitRevivalGoldRules.ResolveReceivingParty(
+                recentAttacker, _roomParties, id => funds.AliveMembersOf(id) > 0);
+            var gold = GetRevivalGold(unit);
+            if (party < 0 || gold <= 0)
+                return;
+
+            funds.AddLoot(party, gold);
+            costEventChannel?.RaiseEvent(new GoldLostEvent(gold, GoldChangeSource.UnitRevival));
         }
     }
 }

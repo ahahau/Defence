@@ -691,6 +691,7 @@ namespace Code.BT
                 var splash = Mathf.RoundToInt(dmg * rangedSplashRatio);
                 if (splash <= 0) return;
                 var second = FindSecondNearestEnemy();
+                second?.combatant?.NoteAttacker(combatant);
                 second?.combatant?.Health?.TakeDamage(splash);
             }
         }
@@ -1215,6 +1216,7 @@ namespace Code.BT
                 return;
 
             var multiplier = _combatStatus != null ? _combatStatus.DamageTakenMultiplier : 1f;
+            combatant.NoteAttacker(Code.Combat.HitAttribution.Current);
             combatant.Health.TakeDamage(Mathf.Max(1, Mathf.RoundToInt(damage * multiplier)));
         }
 
