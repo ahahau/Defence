@@ -98,13 +98,20 @@ namespace Code.UI.Toolkit
         /// <summary>
         /// 최고 기록과 시작 보정 칸. 보정은 다음 "새 게임"에만 걸린다(이어하기는 시작할 때 고른 것을 그대로 쓴다).
         /// </summary>
+        /// <summary>다음 콘텐츠(유닛·함정·시설·사건)가 열리는 진행도.</summary>
+        private static string DescribeNextContentUnlock(int progress)
+        {
+            var next = MetaUnlockRules.NextTier(progress);
+            return next > 0 ? $"새 콘텐츠 {next}에 열림" : "콘텐츠 모두 열림";
+        }
+
         private void RefreshMeta()
         {
             var profile = MetaProfileStore.Profile;
             var slots = MetaProgressRules.SlotCount(profile.progress);
             if (_metaRecord != null)
                 _metaRecord.text = profile.runsPlayed > 0
-                    ? $"최고 {profile.bestDay}일 · 최고 등급 {profile.bestGrade} · 보스 {profile.totalBossesDefeated}명\n진행도 {profile.progress} · {profile.runsPlayed}판"
+                    ? $"최고 {profile.bestDay}일 · 최고 등급 {profile.bestGrade} · 보스 {profile.totalBossesDefeated}명\n진행도 {profile.progress} · {profile.runsPlayed}판 · {DescribeNextContentUnlock(profile.progress)}"
                     : "아직 끝낸 판이 없습니다\n버틴 날과 잡은 보스가 진행도로 쌓입니다";
             if (_metaSlots != null)
                 _metaSlots.text = $"새 게임 시작 보정 {profile.equipped.Count}/{slots}칸";

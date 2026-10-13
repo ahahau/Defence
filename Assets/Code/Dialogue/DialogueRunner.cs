@@ -918,6 +918,10 @@ namespace Code.Dialogue
         /// 예전에는 일차로 첨자를 계산해서, 20일 한 판이면 목록 앞쪽 몇 개만 늘 같은 순서로 나왔다.
         /// 섞은 뒤 하나씩 꺼내 쓰면 판마다 다른 조합을 보게 되고, 한 판 안에서는 겹치지 않는다.
         /// </summary>
+        /// <summary>씬에 걸린 일반 사건 전부(메타 잠금 포함). 결과 화면이 새로 열린 사건을 셀 때 읽는다.</summary>
+        public IReadOnlyList<DialogueSequenceSO> ScheduledEventSequences =>
+            scheduledEventSequences ?? System.Array.Empty<DialogueSequenceSO>();
+
         private DialogueSequenceSO ResolveScheduledEventSequence()
         {
             if (scheduledEventSequences == null || scheduledEventSequences.Length == 0)
@@ -940,9 +944,10 @@ namespace Code.Dialogue
         private void RefillShuffledEventQueue()
         {
             _shuffledEventQueue.Clear();
+            // 메타 진행도가 모자란 사건은 이번 판 후보에서 뺀다.
             foreach (var sequence in scheduledEventSequences)
             {
-                if (sequence != null)
+                if (sequence != null && Code.Progression.MetaUnlockRules.IsMet(sequence.MetaProgressRequired))
                     _shuffledEventQueue.Add(sequence);
             }
 

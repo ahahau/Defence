@@ -45,7 +45,8 @@ paths:
    * 함정 피해는 정산에서 함정의 몫으로 집계된다(`LastTriggerDamage`). 웨이브 목표 "함정 피해"와 연결된다.
    * 공병(`DisarmsTraps`)은 함정을 밟지 않고 해체한다. 강한 함정을 만들 때는 이 카운터를 고려한다.
 6. 만든 건물을 게임에 등록한다.
-   * 씬의 `NodePanelView.installableBuildings` 배열에 넣고, `Data/Progression/DungeonUnlockCatalog.asset`에 해금일과 함께 등록한다.
+   * 씬의 `NodePanelView.installableBuildings` 배열에 넣고, `Data/Progression/DungeonUnlockCatalog.asset`에 해금일과 함께 등록한다. 후반 시설·함정은 `metaProgressRequired`(메타 진행도 10·25·50)로 새 판 후보에 늦게 넣을 수 있다.
+   * 방 특수 효과가 건물 수치를 바꾼다: 풍요 방 수입 +25%(`FacilityEconomyRules.ScaleIncome`), 함정 지대 함정 피해 +50%(`Trap.CurrentDamage`). 수입·함정 피해를 새 경로로 계산하면 이 둘을 거친다.
    * 씬 배선이므로 Unity CLI로 처리하거나 사용자에게 순서대로 요청한다.
 7. 검증한다.
    * `/playtest`로 설치 → 웨이브 → 정산까지 돌려 수입·운영비·마모·함정 피해가 장부에 한 번씩만 반영되는지 확인한다(이중 차감 사고가 있었다).

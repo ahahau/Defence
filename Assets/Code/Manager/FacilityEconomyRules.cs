@@ -18,7 +18,9 @@ namespace Code.Manager
             var neighbors = CountAdjacentFacilities(building);
             var withSynergy = baseGold + Mathf.RoundToInt(baseGold * neighbors * IncomeBonusPerNeighborPercent / 100f);
             var durability = building != null ? building.DurabilityIncomeMultiplier : 1f;
-            return Mathf.RoundToInt(withSynergy * durability);
+            var node = building != null ? building.GetComponentInParent<Node>() : null;
+            return RoomFeatureRules.ScaleIncome(
+                Mathf.RoundToInt(withSynergy * durability), node != null ? node.Feature : RoomFeature.None);
         }
 
         public static int CountAdjacentFacilities(Building building)

@@ -18,6 +18,7 @@ paths:
 
 ## 피해 보정
 - 모든 피해(평타·스킬·함정)는 `HealthModule.TakeDamage`를 지난다. "지금은 덜/더 아프다" 같은 상태는 `Health.ModifyIncomingDamage`(GameLib의 가상 메서드)에 건다. 피해를 주는 쪽마다 따로 보정하지 않는다.
+- 요새 방(`RoomFeature.Fortress`)에 선 부하는 받는 피해 -20%(최소 1). `Health.ModifyIncomingDamage`가 부하의 `BattleAgent.Battlefield` → `Node.Feature`를 보고 재배치 준비 감소 뒤에 곱한다.
 - 재배치 준비(`Unit.IsPreparingRedeploy`, `RedeployRules`): 이동한 방 수 × 1초(게임 시간). 준비 중 `Combatant` 공격 게이지가 멈추고 `SkillCaster.TryCast`가 거절되며, 받는 피해는 절반(최소 1).
 
 ## 스탯

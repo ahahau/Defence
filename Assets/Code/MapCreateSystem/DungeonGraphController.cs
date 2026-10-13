@@ -78,6 +78,9 @@ namespace Code.MapCreateSystem
         /// <summary>자리마다 정해 둔 후보 크기. 다시 그려도 같은 크기를 보여 준다. 판 저장에는 넣지 않는다.</summary>
         private readonly Dictionary<Vector2Int, RoomSize> _candidateSizes = new();
 
+        /// <summary>자리마다 정해 둔 후보 특수 효과. 크기와 같이 한 번 뽑으면 유지한다.</summary>
+        private readonly Dictionary<Vector2Int, RoomFeature> _candidateFeatures = new();
+
         [SerializeField]
         private GameEventChannelSO artifactEventChannel;
 
@@ -252,6 +255,7 @@ namespace Code.MapCreateSystem
         {
             graph = new DungeonGraph();
             _candidateSizes.Clear();
+            _candidateFeatures.Clear();
             nodeManager.ClearAll();
             edgeManager.ClearAll();
             lockedNodeByCollider.Clear();
@@ -336,7 +340,7 @@ namespace Code.MapCreateSystem
             if (graph.IsOccupied(lockedNode.GridPosition) || lockedNode.FromNode.FreePorts <= 0)
                 return;
 
-            costEventChannel.RaiseEvent(new BuildCostRequestedEvent(lockedNode, BaseBuildCost(lockedNode.Size)));
+            costEventChannel.RaiseEvent(new BuildCostRequestedEvent(lockedNode, BaseBuildCost(lockedNode.Size, lockedNode.Feature)));
         }
 
         private void HandleBuildCostPaid(BuildCostPaidEvent evt)
@@ -349,6 +353,7 @@ namespace Code.MapCreateSystem
             var buildParent = lockedNode.FromNode;
             var type = ResolveBuildType(lockedNode);
             var size = lockedNode.Size;
+            var feature = lockedNode.Feature;
 
             HideLockedNodeView(lockedNode);
             nodeManager.ClearLockedNodeAt(buildPosition);
@@ -356,7 +361,9 @@ namespace Code.MapCreateSystem
             var node = graph.AddNode(type, buildPosition);
             var nodeView = nodeManager.CreateNode(node);
             nodeView.SetRoomSize(size);
+            nodeView.SetRoomFeature(feature);
             _candidateSizes.Remove(buildPosition);
+            _candidateFeatures.Remove(buildPosition);
 
             lastBuiltNodeView = nodeView;
             lastBuiltFrame = Time.frameCount;
@@ -364,7 +371,7 @@ namespace Code.MapCreateSystem
             ConnectAdjacentNodes(node, buildParent);
 
             // 방은 바로 생기지만 공사가 끝나야 쓸 수 있다. 방이 생겼다는 알림(튜토리얼·영업 시작 조건)은 완공 때 낸다.
-            var constructionSeconds = RoomSizeRules.ConstructionSeconds(size, roomConstructionSeconds);
+            var constructionSeconds = ConstructionSecondsFor(size, feature);
             if (constructionSeconds > 0f)
             {
                 nodeView.ConstructionCompleted += HandleConstructionCompleted;
@@ -403,12 +410,14 @@ namespace Code.MapCreateSystem
 
         /// <summary>
         /// 취소 환불. 크기마다 비율이 다르고(소 70%·중 50%·대 30%), 중형은 씬에 둔 기본 비율을 쓴다.
+        /// 특수 효과 방은 20%p 덜 돌려준다.
         /// </summary>
         private int ResolveConstructionRefund(Node nodeView)
         {
             var rate = nodeView.Size == RoomSize.Medium
                 ? constructionCancelRefundRate
                 : RoomSizeRules.CancelRefundRate(nodeView.Size);
+            rate = RoomFeatureRules.CancelRefundRate(rate, nodeView.Feature);
             return Mathf.FloorToInt(nodeView.ConstructionPaidGold * rate);
         }
 
@@ -430,6 +439,7 @@ namespace Code.MapCreateSystem
 
             // 되돌린 자리는 같은 크기의 후보로 다시 보인다. 취소로 크기를 다시 뽑을 수 없게 한다.
             _candidateSizes[nodeView.GridPosition] = nodeView.Size;
+            _candidateFeatures[nodeView.GridPosition] = nodeView.Feature;
             edgeManager.RemoveEdgesFor(nodeView.Data.Id);
             graph.RemoveNode(nodeView.Data);
             unlockedNodeByCollider.Remove(nodeView.ClickCollider);
@@ -582,12 +592,10 @@ namespace Code.MapCreateSystem
 
                     var lockedNode = nodeManager.CreateLockedNode(parentNode, position, position - parentNode.GridPosition);
                     var size = ResolveCandidateSize(position);
+                    var feature = ResolveCandidateFeature(position);
                     lockedNode.SetRoomSize(size);
-                    lockedNode.SetBuildCandidateLabel(RoomSizeRules.CandidateLabel(
-                        size,
-                        DiscountedBuildCost(size),
-                        RoomSizeRules.ConstructionSeconds(size, roomConstructionSeconds),
-                        CurrentDungeonGrade));
+                    lockedNode.SetRoomFeature(feature);
+                    lockedNode.SetBuildCandidateLabel(BuildCandidateLabel(lockedNode));
                     RegisterLockedNode(lockedNode);
                 }
             }
@@ -598,13 +606,89 @@ namespace Code.MapCreateSystem
         {
             var costManager = CostManager.Current;
             var size = lockedNode.Size;
-            int cost = DiscountedBuildCost(size);
+            var feature = lockedNode.Feature;
+            int cost = DiscountedBuildCost(size, feature);
             int gold = costManager != null ? costManager.CurrentGold : 0;
-            var seconds = RoomSizeRules.ConstructionSeconds(size, roomConstructionSeconds);
+            var seconds = ConstructionSecondsFor(size, feature);
+
+            var description = RoomSizeRules.Describe(size, seconds);
+            if (feature != RoomFeature.None)
+            {
+                var refund = RoomFeatureRules.CancelRefundRate(
+                    size == RoomSize.Medium ? constructionCancelRefundRate : RoomSizeRules.CancelRefundRate(size), feature);
+                description += $"\n특수 효과 {RoomFeatureRules.Label(feature)}: {RoomFeatureRules.Describe(feature)}" +
+                               $" (취소 환불 {Mathf.RoundToInt(refund * 100f)}%)";
+            }
+
+            description += $"\n{RoomFeatureRules.ConnectionLabel(PredictConnections(lockedNode))}";
 
             PopupController.Show(PopupRequest
-                .Cost("방 확장", RoomSizeRules.Describe(size, seconds), cost, gold, () => RequestBuildCost(lockedNode), confirmLabel: "확장")
+                .Cost("방 확장", description, cost, gold, () => RequestBuildCost(lockedNode), confirmLabel: "확장")
                 .WithTag(ExpandRoomPopupTag));
+        }
+
+        /// <summary>
+        /// 잠긴 후보 위의 안내: 크기(·특수 효과) / 비용·공사 시간(또는 필요 등급) / 연결 방향.
+        /// </summary>
+        private string BuildCandidateLabel(Node lockedNode)
+        {
+            var size = lockedNode.Size;
+            var feature = lockedNode.Feature;
+            var label = RoomSizeRules.CandidateLabel(
+                size, DiscountedBuildCost(size, feature), ConstructionSecondsFor(size, feature), CurrentDungeonGrade);
+            if (feature != RoomFeature.None)
+            {
+                var lineBreak = label.IndexOf('\n');
+                label = lineBreak < 0
+                    ? $"{label} · {RoomFeatureRules.Label(feature)}"
+                    : $"{label.Substring(0, lineBreak)} · {RoomFeatureRules.Label(feature)}{label.Substring(lineBreak)}";
+            }
+
+            return $"{label}\n{RoomFeatureRules.ConnectionLabel(PredictConnections(lockedNode))}";
+        }
+
+        /// <summary>그 후보를 열면 이어질 방향. 실제 연결(<see cref="ConnectAdjacentNodes"/>)과 같은 규칙을 쓴다.</summary>
+        private List<Vector2Int> PredictConnections(Node lockedNode)
+        {
+            var position = lockedNode.GridPosition;
+            var neighborPorts = new Dictionary<Vector2Int, int>();
+            var parent = lockedNode.FromNode;
+            var parentDirection = parent != null ? parent.GridPosition - position : Vector2Int.zero;
+            if (parent != null && CanConnectNodesAt(parent, position))
+                neighborPorts[parentDirection] = parent.FreePorts;
+
+            foreach (var direction in directions)
+            {
+                if (graph.TryGetNodeAt(position + direction, out var adjacent) && adjacent != parent)
+                    neighborPorts[direction] = adjacent.FreePorts;
+            }
+
+            return RoomFeatureRules.PredictConnections(
+                parentDirection, neighborPorts, graph.GetMaxConnections(ResolveBuildType(lockedNode)));
+        }
+
+        private bool CanConnectNodesAt(DungeonNode node, Vector2Int position)
+        {
+            var delta = node.GridPosition - position;
+            if (Mathf.Abs(delta.x) + Mathf.Abs(delta.y) == 1)
+                return true;
+
+            return node.Type == DungeonNodeType.Entrance && IsInitialEntranceCandidatePosition(node.GridPosition, position);
+        }
+
+        /// <summary>
+        /// 이 자리 후보의 특수 효과. 한 번 정하면 유지하고, 처음 몇 방은 효과 없이 둔다(시작 흐름을 흔들지 않게).
+        /// </summary>
+        private RoomFeature ResolveCandidateFeature(Vector2Int position)
+        {
+            if (_candidateFeatures.TryGetValue(position, out var feature))
+                return feature;
+
+            feature = graph.Nodes.Count <= OpeningMediumRoomCount
+                ? RoomFeature.None
+                : RoomFeatureRules.Roll(Random.value, Random.value);
+            _candidateFeatures[position] = feature;
+            return feature;
         }
 
         /// <summary>
@@ -623,12 +707,16 @@ namespace Code.MapCreateSystem
             return size;
         }
 
-        private int BaseBuildCost(RoomSize size) => RoomSizeRules.BuildCost(buildGoldCost, size);
+        private int BaseBuildCost(RoomSize size, RoomFeature feature) =>
+            RoomFeatureRules.BuildCost(RoomSizeRules.BuildCost(buildGoldCost, size), feature);
 
-        private int DiscountedBuildCost(RoomSize size)
+        private float ConstructionSecondsFor(RoomSize size, RoomFeature feature) =>
+            RoomFeatureRules.ConstructionSeconds(RoomSizeRules.ConstructionSeconds(size, roomConstructionSeconds), feature);
+
+        private int DiscountedBuildCost(RoomSize size, RoomFeature feature)
         {
             var costManager = CostManager.Current;
-            var baseCost = BaseBuildCost(size);
+            var baseCost = BaseBuildCost(size, feature);
             return costManager != null ? costManager.GetDiscountedBuildCost(baseCost) : baseCost;
         }
 
@@ -972,6 +1060,7 @@ namespace Code.MapCreateSystem
                     constructionRemaining = node.ConstructionRemaining,
                     constructionPaidGold = node.ConstructionPaidGold,
                     roomSize = (int)node.Size,
+                    roomFeature = (int)node.Feature,
                     centralBuilding = CaptureBuilding(node.AssignedBuilding)
                 };
 
@@ -1039,6 +1128,7 @@ namespace Code.MapCreateSystem
 
             graph = new DungeonGraph();
             _candidateSizes.Clear();
+            _candidateFeatures.Clear();
             nodeManager.ClearAll();
             edgeManager.ClearAll();
             lockedNodeByCollider.Clear();
@@ -1055,6 +1145,9 @@ namespace Code.MapCreateSystem
                 view.SetRoomSize(System.Enum.IsDefined(typeof(RoomSize), saved.roomSize)
                     ? (RoomSize)saved.roomSize
                     : RoomSize.Medium);
+                view.SetRoomFeature(System.Enum.IsDefined(typeof(RoomFeature), saved.roomFeature)
+                    ? (RoomFeature)saved.roomFeature
+                    : RoomFeature.None);
                 RegisterUnlockedNode(view);
                 if (saved.constructionRemaining > 0f)
                 {

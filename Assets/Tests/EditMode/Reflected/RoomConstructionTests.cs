@@ -144,6 +144,77 @@ namespace Tests.EditMode.Rules
             Assert.That(Code.Buildings.BuildingPlacement.ViolatesRoomSizeRule(node, store), Is.False);
         }
 
+        /// <summary>
+        /// 특수 효과 방(사용자 결정: 풍요·요새·함정 지대, 드물고 느리게). 15% 확률, 확장비 ×1.5, 공사 +2초,
+        /// 취소 환불 -20%p. 효과 수치가 이 규칙에만 있어야 화면과 실제 값이 갈리지 않는다.
+        /// </summary>
+        [Test]
+        public void RoomFeature_IsRareCostlyAndAppliesItsEffect()
+        {
+            Assert.That(RoomFeatureRules.Roll(0.15f, 0f), Is.EqualTo(RoomFeature.None));
+            Assert.That(RoomFeatureRules.Roll(0.1f, 0.1f), Is.EqualTo(RoomFeature.Bounty));
+            Assert.That(RoomFeatureRules.Roll(0.1f, 0.5f), Is.EqualTo(RoomFeature.Fortress));
+            Assert.That(RoomFeatureRules.Roll(0.1f, 1f), Is.EqualTo(RoomFeature.TrapGround));
+
+            Assert.That(RoomFeatureRules.BuildCost(8, RoomFeature.None), Is.EqualTo(8));
+            Assert.That(RoomFeatureRules.BuildCost(8, RoomFeature.Bounty), Is.EqualTo(12));
+            Assert.That(RoomFeatureRules.ConstructionSeconds(4f, RoomFeature.Fortress), Is.EqualTo(6f).Within(0.001f));
+            Assert.That(RoomFeatureRules.CancelRefundRate(0.5f, RoomFeature.TrapGround), Is.EqualTo(0.3f).Within(0.001f));
+            Assert.That(RoomFeatureRules.CancelRefundRate(0.3f, RoomFeature.None), Is.EqualTo(0.3f).Within(0.001f));
+
+            Assert.That(RoomFeatureRules.ScaleIncome(20, RoomFeature.Bounty), Is.EqualTo(25));
+            Assert.That(RoomFeatureRules.ScaleIncome(20, RoomFeature.Fortress), Is.EqualTo(20), "다른 효과는 수입을 건드리지 않습니다.");
+            Assert.That(RoomFeatureRules.ScaleUnitDamage(5, RoomFeature.Fortress), Is.EqualTo(4));
+            Assert.That(RoomFeatureRules.ScaleUnitDamage(1, RoomFeature.Fortress), Is.EqualTo(1), "1 피해는 0이 되지 않습니다.");
+            Assert.That(RoomFeatureRules.ScaleTrapDamage(4, RoomFeature.TrapGround), Is.EqualTo(6));
+        }
+
+        /// <summary>
+        /// 열기 전에 연결 방향을 보여 준다. 예측이 실제 연결(부모 먼저, 위·오른쪽·아래·왼쪽 순, 양쪽 남은 연결 수)과
+        /// 다르면 "보여 준 길"과 "생긴 길"이 갈린다.
+        /// </summary>
+        [Test]
+        public void ConnectionPreview_MatchesTheConnectionRule()
+        {
+            var ports = new System.Collections.Generic.Dictionary<Vector2Int, int>
+            {
+                { Vector2Int.right, 2 },
+                { Vector2Int.up, 1 },
+                { Vector2Int.down, 0 },
+            };
+
+            var connections = RoomFeatureRules.PredictConnections(Vector2Int.right, ports, 4);
+            Assert.That(connections, Is.EqualTo(new[] { Vector2Int.right, Vector2Int.up }), "남은 연결 수가 0인 방과는 이어지지 않습니다.");
+            Assert.That(RoomFeatureRules.ConnectionLabel(connections), Is.EqualTo("연결 ↑→"));
+
+            Assert.That(RoomFeatureRules.PredictConnections(Vector2Int.right, ports, 1), Is.EqualTo(new[] { Vector2Int.right }),
+                "새 방의 연결 수가 차면 더 잇지 않습니다.");
+
+            var entrance = new System.Collections.Generic.Dictionary<Vector2Int, int> { { new Vector2Int(1, -1), 4 } };
+            Assert.That(RoomFeatureRules.ConnectionLabel(RoomFeatureRules.PredictConnections(new Vector2Int(1, -1), entrance, 4)),
+                Is.EqualTo("연결 ↘"), "입구 옆 첫 후보는 입구와 대각선으로 이어집니다.");
+        }
+
+        /// <summary>특수 효과는 열린 방에 남고 정원 표시 앞에 이름이 붙는다.</summary>
+        [Test]
+        public void RoomFeature_StaysOnTheBuiltRoom()
+        {
+            var node = CreateNode();
+            Assert.That(node.Feature, Is.EqualTo(RoomFeature.None), "처음 방과 옛 저장의 방은 효과가 없습니다.");
+            node.SetRoomSize(RoomSize.Medium);
+            node.SetRoomFeature(RoomFeature.Fortress);
+            Assert.That(node.Feature, Is.EqualTo(RoomFeature.Fortress));
+
+            // 테스트 어셈블리는 TextMeshPro를 참조하지 않아 글자는 리플렉션으로 읽는다.
+            var field = typeof(Node).GetField("unitCapacityText",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, "Node.unitCapacityText 를 찾지 못했습니다.");
+            var label = field.GetValue(node);
+            Assert.That(label, Is.Not.Null, "노드 프리팹에 정원 글자가 연결돼 있어야 합니다.");
+            var text = (string)label.GetType().GetProperty("text").GetValue(label);
+            Assert.That(text, Does.StartWith("요새 "), "열린 방 정원 표시에 효과 이름이 붙어야 합니다.");
+        }
+
         // Node는 격자·전장 컴포넌트를 필수로 요구하고 표시용 글자도 프리팹에 연결돼 있어, 실제 프리팹을 쓴다.
         private Node CreateNode()
         {

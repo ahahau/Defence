@@ -62,7 +62,38 @@ namespace Code.UI.Toolkit
                 line += " · 최고 기록!";
             if (r.SlotsAfter > r.SlotsBefore)
                 line += $"\n시작 보정 칸이 {r.SlotsAfter}칸으로 늘었습니다";
+
+            var unlocked = CollectNewlyUnlocked(r.TotalProgress - r.PointsEarned, r.TotalProgress);
+            if (unlocked.Count > 0)
+                line += $"\n다음 판부터 새로 나옴: {string.Join(", ", unlocked)}";
             return line;
+        }
+
+        /// <summary>이번 판으로 진행도 조건을 채운 유닛·함정·시설·사건 이름.</summary>
+        private static System.Collections.Generic.List<string> CollectNewlyUnlocked(int before, int after)
+        {
+            var names = new System.Collections.Generic.List<string>();
+            var catalog = HiredUnitRoster.Current != null ? HiredUnitRoster.Current.UnlockCatalog : null;
+            if (catalog != null)
+            {
+                foreach (var entry in catalog.Entries)
+                {
+                    if (entry != null && Code.Progression.MetaUnlockRules.BecameUnlocked(entry.MetaProgressRequired, before, after))
+                        names.Add(entry.DisplayName);
+                }
+            }
+
+            var runner = Object.FindFirstObjectByType<Code.Dialogue.DialogueRunner>();
+            if (runner != null)
+            {
+                foreach (var sequence in runner.ScheduledEventSequences)
+                {
+                    if (sequence != null && Code.Progression.MetaUnlockRules.BecameUnlocked(sequence.MetaProgressRequired, before, after))
+                        names.Add($"사건 '{sequence.DisplayTitle}'");
+                }
+            }
+
+            return names;
         }
 
         private void Restart() { GameSpeedController.Current?.ResetToNormal(); SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); }

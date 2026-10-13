@@ -475,6 +475,16 @@ namespace Code.MapCreateSystem
             RefreshUnitCapacityLabel(true);
         }
 
+        /// <summary>방 특수 효과. 후보에는 열었을 때의 효과, 열린 방에는 실제 효과.</summary>
+        public RoomFeature Feature { get; private set; } = RoomFeature.None;
+
+        /// <summary>특수 효과를 정한다. 열린 방이면 정원 표시 앞에 효과 이름을 붙인다.</summary>
+        public void SetRoomFeature(RoomFeature feature)
+        {
+            Feature = feature;
+            RefreshUnitCapacityLabel(true);
+        }
+
         public void ShowClickFeedback()
         {
             
@@ -820,7 +830,10 @@ namespace Code.MapCreateSystem
 
             lastDisplayedUnitCount = deployed;
             lastDisplayedUnitCapacity = capacity;
-            unitCapacityText.text = string.Format(unitCapacityFormat, deployed, capacity);
+            var capacityText = string.Format(unitCapacityFormat, deployed, capacity);
+            unitCapacityText.text = Feature == RoomFeature.None
+                ? capacityText
+                : $"{RoomFeatureRules.Label(Feature)} {capacityText}";
             unitCapacityText.color = deployed >= capacity ? fullCapacityColor : availableCapacityColor;
         }
 

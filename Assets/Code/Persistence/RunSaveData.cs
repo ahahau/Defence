@@ -41,6 +41,9 @@ namespace Code.Persistence
         // 방 크기(RoomSize). 옛 저장에는 없어서 0(중형)으로 읽힌다.
         public int roomSize;
 
+        // 방 특수 효과(RoomFeature). 옛 저장에는 없어서 0(없음)으로 읽힌다.
+        public int roomFeature;
+
         public SavedBuilding centralBuilding;
         public List<SavedBuilding> cellBuildings = new();
         public List<SavedUnit> units = new();

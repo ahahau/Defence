@@ -104,7 +104,10 @@ namespace Code.Buildings
                 var day = Code.Manager.DayManager.Current != null
                     ? Code.Manager.DayManager.Current.CurrentDay
                     : 0;
-                return damage + bonusDamage + Mathf.FloorToInt(Mathf.Max(0, day) * damagePerDay);
+                var baseDamage = damage + bonusDamage + Mathf.FloorToInt(Mathf.Max(0, day) * damagePerDay);
+                // 함정 지대 방의 함정은 더 아프다.
+                var node = ResolveNode();
+                return RoomFeatureRules.ScaleTrapDamage(baseDamage, node != null ? node.Feature : RoomFeature.None);
             }
         }
 

@@ -19,7 +19,7 @@ paths:
 | `GameRulesTests` | 게임 규칙 전반 (가장 큼) |
 | `SettlementRegressionTests` | 정산·장부 회귀 |
 | `WeeklyLoanLedgerTests` | 대출·청산일 |
-| `MetaProgressTests` | 메타 진행도·최고 기록·시작 보정 장착/칸·새 판 보정·파일 저장(임시 경로) |
+| `MetaProgressTests` | 메타 진행도·최고 기록·시작 보정 장착/칸·새 판 보정·파일 저장(임시 경로), 진행도로 잠근 콘텐츠·단계 값·사건 잠금 에셋 |
 | `RunEventLedgerTests` | 사건 순서(한 전환 한 사건·일반 사건 4~6회 쿨다운·주요 사건 우선·청산 위기 우선과 방침 미룸·상황 사건 쿨다운 공유)·선택 기록, 상황 사건 판정·급전/조기 상환 금액·잠긴 선택지 |
 | `BossDefeatTests` | 보스별 패배 조건 판정·예고 문구(교회 부활 여부 포함), 청산일 보스마다 조건 존재, 보스별 교회 부활 값 |
 | `ChurchRevivalTests` | 교회 부활비·부활 체력, 관 추적·정리, 교회 데이터 시설 규칙 |
@@ -31,7 +31,7 @@ paths:
 | `TrapTileTests` | 함정 여러 칸 점유·철거, 범위·지속 판정, 재사용 시간, 시설·함정 겹침 |
 | `PauseLockTests` | 엘리트·보스 일시정지 잠금 규칙과 배속 컨트롤러 잠금 동작 |
 | `RedeployPreparationTests` | 재배치 준비 시간·준비 중 피해 절반 |
-| `RoomConstructionTests` | 그래프 노드 제거(연결·자리 정리), 공사 중 노드의 막힌 길·배치 불가, 방 크기별 비용·시간·정원·환불·등급·후보 확률·소형 시설 금지 |
+| `RoomConstructionTests` | 그래프 노드 제거(연결·자리 정리), 공사 중 노드의 막힌 길·배치 불가, 방 크기별 비용·시간·정원·환불·등급·후보 확률·소형 시설 금지, 특수 효과 확률·대가·효과, 연결 방향 예측, 열린 방의 효과 표시 |
 | `PopupRequestTests` | 범용 팝업 요청 규칙 |
 | `AssetWiringTests` | 에셋 연결 (그림·프리팹·아이콘·WaveConfig·씬 배선) |
 | `CombatFormulaTests` | 전투 공식 |

@@ -38,7 +38,7 @@ namespace Code.UI
             {
                 foreach (var entry in unlockCatalog.Entries)
                 {
-                    if (entry?.Building != null && entry.StartsUnlocked)
+                    if (entry?.Building != null && entry.StartsUnlocked && entry.IsMetaUnlocked)
                         AddUnlocked(entry.Building);
                 }
 

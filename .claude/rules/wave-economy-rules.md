@@ -51,8 +51,11 @@ paths:
   - 후보 크기는 자리마다 처음 그릴 때 한 번 뽑아 둔다(`_candidateSizes`, 등급 0: 소 40·중 50·대 10%, 등급마다 대 +5%p·소 -3%p). 다시 그려도, 공사를 취소해도 같은 크기다. 판 저장에는 넣지 않아 불러오면 후보 크기는 다시 뽑힌다.
   - 그래프 방이 3개 이하일 때 뻗는 후보는 중형으로 고정한다(입구 옆 첫 확장·튜토리얼이 막히지 않게).
   - 저장: `SavedNode.roomSize`(0 = 중형이라 옛 저장은 중형).
+- 방 특수 효과(`RoomFeature`, 수치는 `RoomFeatureRules`에만): 후보의 15%(그래프 방 3개 이하일 때는 없음)에 풍요(그 방 수익 시설 수입 +25%, `FacilityEconomyRules.ScaleIncome`)·요새(그 방 부하가 받는 피해 -20%, 최소 1, `Health.ModifyIncomingDamage`)·함정 지대(그 방 함정 피해 +50%, `Trap.CurrentDamage`) 중 하나. 확장비 ×1.5(크기 배율 위), 공사 +2초, 취소 환불 -20%p. 크기처럼 자리마다 한 번 뽑아 유지(`_candidateFeatures`), 열린 방에 남고 정원 표시 앞에 이름이 붙는다. 저장: `SavedNode.roomFeature`(0 = 없음).
+- 연결 방향 공개: 후보 라벨 셋째 줄과 확장 창에 열면 이어질 방향을 화살표로 적는다(`RoomFeatureRules.PredictConnections`·`ConnectionLabel`). 실제 연결(`ConnectAdjacentNodes`: 부모 먼저, 위·오른쪽·아래·왼쪽, 양쪽 남은 연결 수)과 같은 규칙이라, 연결 규칙을 바꾸면 예측도 같이 바꾼다. 입구 옆 첫 후보는 입구와 대각선(↗↘)으로 이어진다.
 
 ## 던전 그래프
 - `DungeonGraphController.Awake`가 그래프를 만들고, `Start`는 한 프레임 뒤 `TryRestoreCurrentRun`을 호출한다.
 - 방을 지으면 새 갈래가 생겨 `LockedNode`가 늘어난다. 열린 방은 이름이 `LockedNode`로 시작하지 않는 노드로 센다.
 - 해금은 `Data/Progression/DungeonUnlockCatalog.asset`의 `unlockDay`로 관리한다.
+- 메타 콘텐츠 해금: 카탈로그 항목의 `metaProgressRequired`(진행도 단계 10·25·50, `MetaUnlockRules.Tiers`)를 채우지 못하면 해금일이 와도 그 판에는 열리지 않는다(`DungeonUnlockEntry.IsUnlockedOn`, 안내 앞에 "진행도 N 필요"). 지금 10: 그림자 암살귀·깊은 광산·갑옷분쇄 함정, 25: 주술 임프·큰 주점·무기 상점·압쇄 함정, 50: 레드 슬라임·오우거·처형 톱날. 처음부터 열린 기본 콘텐츠는 잠그지 않는다. 결과 화면이 이번 판으로 새로 열린 것을, 타이틀이 다음 단계를 보여 준다.

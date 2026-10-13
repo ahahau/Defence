@@ -29,6 +29,6 @@ paths:
    * 투사체 프리팹을 쓰려면 `BattleAgent`를 고쳐야 하므로, 첫 투사체는 설계부터 확인받는다.
 7. 게임에 등록한다. 두 곳 모두 해야 고용 목록에 나온다.
    * 씬의 `HiredUnitRoster.unitCatalog` 배열
-   * `Data/Progression/DungeonUnlockCatalog.asset` (`unlockDay` 포함)
+   * `Data/Progression/DungeonUnlockCatalog.asset` (`unlockDay` 포함. 후반 유닛은 `metaProgressRequired`로 메타 진행도 단계 10·25·50 중 하나를 걸 수 있다)
    * 씬 배선이므로 Unity CLI로 처리하거나 사용자에게 요청한다.
 8. 검증한다. `dotnet build` 후 `/playtest`로 고용 → 배치 → 전투(스폰·공격·스킬·사망)를 확인하고, 결과를 `Sequences.md`에 남긴다.

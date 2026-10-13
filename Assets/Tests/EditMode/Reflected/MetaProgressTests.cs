@@ -115,5 +115,68 @@ namespace Tests.EditMode.Rules
             Assert.That(profile.runsPlayed, Is.EqualTo(1));
             Assert.That(MetaProfileStore.IsEquipped(MetaModifier.EmergencyFund), Is.True);
         }
+
+        /// <summary>
+        /// 진행도로 콘텐츠가 새 판 후보에 들어온다(사용자 결정: 유닛·함정·시설 + 사건). 진행도가 모자라면
+        /// 해금일이 와도 열리지 않고, 안내에 필요한 진행도가 붙는다.
+        /// </summary>
+        [Test]
+        public void MetaGatedContent_OpensOnlyWithEnoughProgress()
+        {
+            var entry = new DungeonUnlockEntry((Code.Units.UnitDataSO)null, false, "16일차 · 시험");
+            typeof(DungeonUnlockEntry)
+                .GetField("unlockDay", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                .SetValue(entry, 3);
+            typeof(DungeonUnlockEntry)
+                .GetField("metaProgressRequired", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                .SetValue(entry, 25);
+
+            Assert.That(entry.IsUnlockedOn(20), Is.False, "진행도 0이면 해금일이 지나도 이번 판에는 나오지 않습니다.");
+            Assert.That(entry.UnlockHint, Does.StartWith("진행도 25 필요"));
+
+            MetaProfileStore.Profile.progress = 25;
+            Assert.That(entry.IsUnlockedOn(2), Is.False, "진행도를 채워도 해금일 규칙은 그대로입니다.");
+            Assert.That(entry.IsUnlockedOn(3), Is.True);
+            Assert.That(entry.UnlockHint, Is.EqualTo("16일차 · 시험"));
+
+            Assert.That(MetaUnlockRules.BecameUnlocked(25, 20, 30), Is.True);
+            Assert.That(MetaUnlockRules.BecameUnlocked(25, 25, 30), Is.False, "이미 열린 것은 새로 열린 것이 아닙니다.");
+            Assert.That(MetaUnlockRules.BecameUnlocked(0, 0, 30), Is.False);
+            Assert.That(MetaUnlockRules.NextTier(0), Is.EqualTo(10));
+            Assert.That(MetaUnlockRules.NextTier(25), Is.EqualTo(50));
+            Assert.That(MetaUnlockRules.NextTier(50), Is.Zero);
+        }
+
+#if UNITY_EDITOR
+        /// <summary>잠근 콘텐츠의 필요 진행도는 정해 둔 단계 값이어야 하고, 단계마다 무언가 열린다.</summary>
+        [Test]
+        public void MetaGatedAssets_UseTheDefinedTiers()
+        {
+            var catalog = UnityEditor.AssetDatabase.LoadAssetAtPath<DungeonUnlockCatalogSO>(
+                "Assets/GameModules/Data/Progression/DungeonUnlockCatalog.asset");
+            Assert.That(catalog, Is.Not.Null);
+
+            var opened = new System.Collections.Generic.HashSet<int>();
+            foreach (var item in catalog.Entries)
+            {
+                if (item == null || item.MetaProgressRequired <= 0)
+                    continue;
+
+                Assert.That(MetaUnlockRules.Tiers, Does.Contain(item.MetaProgressRequired), item.DisplayName);
+                Assert.That(item.StartsUnlocked, Is.False, $"{item.DisplayName}: 처음부터 열린 기본 콘텐츠는 잠그지 않습니다.");
+                opened.Add(item.MetaProgressRequired);
+            }
+
+            Assert.That(opened, Is.EquivalentTo(MetaUnlockRules.Tiers), "단계마다 새로 열리는 콘텐츠가 있어야 합니다.");
+
+            foreach (var (name, tier) in new[] { ("CursedRelic", 10), ("BlackMarket", 25), ("RivalWarlord", 50) })
+            {
+                var sequence = UnityEditor.AssetDatabase.LoadAssetAtPath<Code.Dialogue.DialogueSequenceSO>(
+                    $"Assets/GameModules/Data/Dialogue/Sequences/DayEvent_{name}.asset");
+                Assert.That(sequence, Is.Not.Null, name);
+                Assert.That(sequence.MetaProgressRequired, Is.EqualTo(tier), name);
+            }
+        }
+#endif
     }
 }

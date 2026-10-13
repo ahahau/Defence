@@ -22,22 +22,31 @@ namespace Code.Combat
         public static event Action<Health, int, bool> AnyDamaged;
 
         private Unit _unit;
+        private Code.BT.BattleAgent _battleAgent;
         private bool _unitResolved;
 
         protected override void OnDamageApplied(int appliedDamage, bool isCritical) =>
             AnyDamaged?.Invoke(this, appliedDamage, isCritical);
 
-        // 재배치 준비 중인 부하는 받는 피해가 줄어든다.
+        // 재배치 준비 중인 부하는 받는 피해가 줄어들고, 요새 방에 선 부하도 덜 아프다.
         protected override int ModifyIncomingDamage(int damage)
         {
             if (!_unitResolved)
             {
                 _unit = GetComponentInParent<Unit>();
+                _battleAgent = _unit != null ? _unit.GetComponent<Code.BT.BattleAgent>() : null;
                 _unitResolved = true;
             }
 
-            return _unit != null && _unit.IsPreparingRedeploy
-                ? RedeployRules.ApplyPreparationDamage(damage)
+            if (_unit == null)
+                return damage;
+
+            if (_unit.IsPreparingRedeploy)
+                damage = RedeployRules.ApplyPreparationDamage(damage);
+
+            var battlefield = _battleAgent != null ? _battleAgent.Battlefield : null;
+            return battlefield != null && battlefield.TryGetComponent<Code.MapCreateSystem.Node>(out var node)
+                ? Code.MapCreateSystem.RoomFeatureRules.ScaleUnitDamage(damage, node.Feature)
                 : damage;
         }
     }

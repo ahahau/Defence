@@ -15,9 +15,7 @@ MonoBehaviour:
   displayTitle: "\uD30C\uBB3B\uD78C \uC720\uBB3C"
   lines:
   - speakerName: "\uBC1C\uAD74\uBC18"
-    text: "\uBD09\uC778\uB41C \uC720\uBB3C\uC744 \uD30C\uB0C8\uC2B5\uB2C8\uB2E4.
-      \uD314\uBA74 \uAC12\uC774 \uB098\uAC00\uC9C0\uB9CC, \uBD80\uD558\uB4E4\uC740
-      \uBD88\uAE38\uD558\uB2E4\uBA70 \uAEBC\uB9BD\uB2C8\uB2E4."
+    text: "\uBD09\uC778\uB41C \uC720\uBB3C\uC744 \uD30C\uB0C8\uC2B5\uB2C8\uB2E4. \uD314\uBA74 \uAC12\uC774 \uB098\uAC00\uC9C0\uB9CC, \uBD80\uD558\uB4E4\uC740 \uBD88\uAE38\uD558\uB2E4\uBA70 \uAEBC\uB9BD\uB2C8\uB2E4."
     enterActions: []
     choices:
     - text: "\uC0C1\uC778\uC5D0\uAC8C \uB118\uAE34\uB2E4"
@@ -36,3 +34,4 @@ MonoBehaviour:
       nextSequence: {fileID: 0}
       nextLineIndex: -1
       routes: []
+  metaProgressRequired: 10

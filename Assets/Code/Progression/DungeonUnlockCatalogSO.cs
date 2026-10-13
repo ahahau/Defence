@@ -41,15 +41,30 @@ namespace Code.Progression
 
         [SerializeField, TextArea] private string unlockHint = "던전 발전 조건을 충족하면 해금됩니다.";
 
-        public int UnlockDay => unlockDay;
+        [SerializeField, Min(0), Tooltip("메타 진행도가 이만큼 쌓여야 새 판 후보에 들어온다. 0이면 처음부터 후보다.")]
+        private int metaProgressRequired;
 
-        /// <summary>그 일차에 이 항목이 열려야 하는가.</summary>
-        public bool IsUnlockedOn(int day) => startsUnlocked || (unlockDay > 0 && day >= unlockDay);
+        public int UnlockDay => unlockDay;
+        public int MetaProgressRequired => metaProgressRequired;
+
+        /// <summary>메타 진행도 조건을 채워 이번 판 후보에 들어왔는가.</summary>
+        public bool IsMetaUnlocked => MetaUnlockRules.IsMet(metaProgressRequired);
+
+        /// <summary>그 일차에 이 항목이 열려야 하는가. 메타 진행도가 모자라면 이번 판에는 열리지 않는다.</summary>
+        public bool IsUnlockedOn(int day) =>
+            IsMetaUnlocked && (startsUnlocked || (unlockDay > 0 && day >= unlockDay));
 
         public UnitDataSO Unit => unit;
         public BuildingDataSO Building => building;
         public bool StartsUnlocked => startsUnlocked;
-        public string UnlockHint => unlockHint;
+
+        /// <summary>해금 안내. 메타 진행도가 모자라면 필요한 진행도를 앞에 붙인다.</summary>
+        public string UnlockHint => IsMetaUnlocked
+            ? unlockHint
+            : $"{MetaUnlockRules.LockPrefix(metaProgressRequired)} · {unlockHint}";
+
+        /// <summary>표시 이름(유닛 이름 또는 건물 이름).</summary>
+        public string DisplayName => unit != null ? unit.Name : building != null ? building.DisplayName : string.Empty;
 
         public DungeonUnlockEntry() { }
 
