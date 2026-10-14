@@ -3,19 +3,18 @@
 <!-- unity-onboarding:generated:start -->
 
 ## Project summary
-- Root: `C:\Fork\Defence`; analyzed 2026-09-07 (Asia/Seoul).
-- Commit: `b8222be06d518a4504fdd2fd6113a1587af44b56`; findings describe the dirty working tree, including existing gameplay edits and deleted tests. Preserve these changes.
+- Root: `C:\Fork\Defence`; first analyzed 2026-09-07, facts corrected 2026-10-14 (Asia/Seoul). `CLAUDE.md` is authoritative when this file disagrees.
 - Confirmed: 2D dungeon management and automated combat. Prepare a node-based dungeon, hire/deploy units and facilities, start adventurer waves, intervene with commands/powers, settle income/upkeep, then expand.
-- Distinctive tradeoff: Store increases enemy attack, Inn heals enemies, and Blacksmith increases enemy attack/defense in exchange for facility income. Adventurer traits affect spending, fear, retreat and support healing.
-- Current scene starts with 200 gold and a 300 debt limit. The scene-linked WaveConfig specifies bosses every 9 days and the final day at 20 (boss days 9, 12, 18, 20; day 12 is the explicit Greed Knight boss entry). Do not confuse these serialized values with C# defaults (100 starting gold, final day 50).
-- Final-wave completion with a defeated boss triggers victory; main-unit defeat or bankruptcy triggers game over.
+- Distinctive tradeoff: Store increases enemy attack, Inn heals enemies, and Blacksmith increases enemy attack/defense in exchange for facility income. Adventurer traits affect spending, fear, retreat and support healing. A room either earns (facility where adventurers dwell) or guards (units), never both.
+- Current scene starts with 200 gold. Debt runs through three weekly loan products (back-alley loan, basic loan, merchant guild loan) chosen on settlement days. The scene-linked `WaveConfig.asset` is endless (`finalDay: 0`, `bossEveryNDays: 7`): days 1–28 are hand-authored waves and bosses arrive on days 7, 14, 21, 28. Do not confuse these serialized values with C# defaults (100 starting gold, final day 50).
+- Every 7th day is a settlement day: weekly interest and a minimum repayment are due. Missing it (or exceeding the credit limit at warning level 5) triggers bankruptcy; main-unit defeat triggers game over. The victory path (`WaveManager` final-wave clear) only runs when `finalDay > 0`, so the current run has no victory.
 
 ## Environment and frameworks
-- Confirmed Unity 6000.4.6f1, revision 0b051c2e5d54.
-- URP 17.4.0, Renderer2D: all quality levels reference UniversalRP.asset, which references Renderer2D.asset. Global GraphicsSettings pipeline is null, but quality overrides establish URP.
-- New Input System 1.19.0 only (`activeInputHandler: 1`).
+- Confirmed Unity 6000.6.3f1, revision 45d8eee7de74.
+- URP 17.6.0, Renderer2D: all quality levels reference UniversalRP.asset, which references Renderer2D.asset. Global GraphicsSettings pipeline is null, but quality overrides establish URP.
+- New Input System 1.20.0 only (`activeInputHandler: 1`).
 - Unity Behavior 1.0.16; Behavior graph actions call BattleAgent. Character prefabs inspected serialize `autoDrive: 0`; code also supports an automatic fallback driver.
-- uGUI/TextMesh Pro, DOTween and Feel/MMFeedbacks are present. Test Framework 1.6.0.
+- uGUI/TextMesh Pro, UI Toolkit, DOTween and Feel/MMFeedbacks are present. Test Framework 1.8.0.
 - No first-party Netcode/Mirror/Photon API use found; Multiplayer Center is not evidence of multiplayer gameplay.
 - Windows Build Profile exists; supported shipping platforms remain undocumented.
 
@@ -46,8 +45,8 @@
 - Likely change-sensitive areas: WaveManager, DungeonGraphController, BattleAgent, scene wiring, event ordering during settlement, and restoration order. These are review priorities, not validated defects.
 
 ## Testing and tooling
-- Eight current EditMode C# test files cover combat formulas, rules, encounter variety, dialogue, building serialization, asset wiring, intrusion/save and exploitation progress. Source contains 66 [Test] annotations plus parameterized cases; this is not a discovered test-run count.
-- PlayMode test assembly and smoke runner are deleted in the current working tree. Do not infer test availability from stale generated csproj files.
+- 26 EditMode C# test files in `Assets/Tests/EditMode/Reflected` cover combat formulas, rules, encounter variety, dialogue, building serialization, asset wiring, intrusion/save and exploitation progress, among others. Source contains 229 [Test] annotations plus parameterized cases (counted 2026-10-14); this is not a discovered test-run count.
+- There is no PlayMode test assembly. Do not infer test availability from the stale generated `Defence.PlayMode.Tests.csproj`.
 - No builds, tests or Play Mode were run for this analysis; current compilation, runtime behavior, performance and balance remain unverified.
 - Unity MCP tools are exposed (console, command execution, captures); manifest contains AI Assistant and com.unity.pipeline. Live connectivity was not tested this turn. Previous context's successful console query is historical, not a current baseline.
 - Repository inspection provides settings, scenes, packages and asset evidence without requiring Editor mutation.

@@ -35,6 +35,8 @@ Unity 6000.6.3f1 · URP 2D · New Input System · Unity Behavior · Feel · DOTw
 | 하루 사이클·경제·던전 그래프 (`Manager`, `MapCreateSystem`) | `wave-economy-rules.md` |
 | 저장·복원 (`Persistence`) | `persistence-rules.md` |
 
+규칙 파일은 `paths:` 머리말에 적힌 경로를 건드릴 때만 자동으로 읽힌다. 경로 밖에서 같은 시스템을 다루면(예: UI에서 정산 호출) 표를 보고 직접 읽는다.
+
 프로젝트 스킬:
 - `/playtest`: Unity CLI로 플레이 모드를 실측한다.
 - `/cs-review`: 커밋 전 C# 변경을 규칙에 맞춰 리뷰한다.
@@ -46,6 +48,14 @@ Unity 6000.6.3f1 · URP 2D · New Input System · Unity Behavior · Feel · DOTw
 - **패배 조건.** 청산일에 최소 상환액을 못 내면 파산, 메인 유닛이 쓰러지면 게임오버다.
 - **씬·에셋 값이 정답이다.** 시작 금화 200, 대출 상품 3종(뒷골목 사채·기본 대출·상인 길드 융자). C# 필드 기본값(금화 100, finalDay 50)을 근거로 판단하지 않는다.
 - **경영의 축은 공간이다.** 방 하나는 벌이(모험가가 머무는 시설)든 경비(유닛)든 하나만 한다. 모험가를 손님으로 보는 방향은 기각됐다.
+
+## 아키텍처 큰 그림
+
+- **구성:** 씬에 놓인 MonoBehaviour를 직렬화 참조로 잇는다. 매니저는 정적 `Current`로 접근하고, 시스템 사이는 `GameEventChannelSO` 이벤트(`Code/Events`)로 잇는다. 데이터는 SO, 진행 중 변하는 값은 런타임 상태에 둔다.
+- **엔티티:** `Unit`/`Enemy`는 GameLib `Entity`(`ModuleOwner`)를 상속하고, 모듈은 `Initialize` → `AfterInitialize` 순으로 깨어난다. Unity Behavior 그래프 액션이 `BattleAgent`를 호출해 움직이고, 모든 피해는 `HealthModule.TakeDamage`를 지난다.
+- **한 판의 흐름:** Start 씬 → SampleScene. `DungeonGraphController.Awake`가 그래프를 만들고 한 프레임 뒤 `TryRestoreCurrentRun`으로 복원한다. 대기 상태 + 포탈 + `WaveManager` 승인이면 `DayManager`가 웨이브를 연다. `DayChangedEvent` → 스폰 → `WaveEndedEvent` → 정산 → 한 프레임 뒤 체크포인트 저장.
+- **돈의 두 경로:** 즉시 결제(`CostManager`: 건설·고용·회복·상인)와 웨이브 후 정산(`ManagementSettlementManager`)을 섞지 않는다. 이중 차감 사고가 있었다.
+- **저장:** `SaveAgentRegistry` 인스펙터 배열 순서가 곧 복원 순서다. 복원이 불완전하면 그 판의 이후 저장을 막는다. 다시 불러도 같아야 하는 난수는 전역 `Random` 대신 `RunRandom`으로 뽑는다.
 
 ## 폴더 구조
 
@@ -75,6 +85,13 @@ unity cmd console --level error --tail 50
 - 경고 수백 개는 정상이다. **오류 0**이 기준이다.
 - 새 .cs 파일은 리프레시 전까지 csproj에 없어서 CS0103/CS0246이 난다. `recompile`을 먼저 돌린다.
 - 루트의 `Assembly-CSharp.csproj`, `Defence.PlayMode.Tests.csproj`는 잔재다. 쓰지 않는다.
+- 테스트 이름은 `Feature_Behavior` 형식이다. asmdef 경계를 넘는 검증은 기존 리플렉션 패턴을 따른다.
+- `Docs/AI/UnityProjectContext.md`는 정적 분석 요약이다. CLAUDE.md와 어긋나면 CLAUDE.md가 맞다.
+
+## 커밋·PR
+
+- 커밋 접두사: `feat:` / `fix:` / `refactor:` / `test:` / `chore:`
+- PR에는 목적, 핵심 변경, 실행한 검증과 결과를 적고, UI·씬 변경에는 스크린샷을 붙인다. 민감 영역(아래)은 영향 범위와 회귀 위험을 적는다.
 
 ## 하지 말 것
 

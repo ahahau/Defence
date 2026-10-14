@@ -2,6 +2,11 @@
 
 작업 변경 내역을 날짜순으로 누적한다.
 
+## 2026-10-14
+
+- `CLAUDE.md` 보완: 아키텍처 큰 그림(씬 구성·`Current`·이벤트 채널, 엔티티 모듈, 한 판의 흐름, 즉시 결제와 정산 분리, 저장 순서) 섹션 추가. `AGENTS.md`에만 있던 커밋 접두사·PR 기재 사항·테스트 명명(`Feature_Behavior`, 리플렉션 패턴)을 옮김. 규칙 파일이 `paths:` 경로에서만 자동 로드된다는 안내와 `UnityProjectContext.md`보다 CLAUDE.md가 우선이라는 문구 추가.
+- `Docs/AI/UnityProjectContext.md` 사실 정정: Unity 6000.6.3f1(45d8eee7de74), URP 17.6.0, Input System 1.20.0, Test Framework 1.8.0. 9일 보스·20일 종료·부채 한도 300을 무한 진행(`finalDay: 0`)·7일 청산일=보스날(7·14·21·28일)·주간 대출 3종으로 교체. 승리 경로는 `finalDay > 0`일 때만 돈다고 명시. 테스트 현황을 26개 파일·`[Test]` 229개로 갱신, 옛 커밋 해시·dirty 작업 트리 문구 제거.
+
 ## 2026-10-01
 
 - `Docs/DungeonEconomyDesign.md`에 기획 전체 기준 `구현됨 / 일부 구현됨 / 미구현` 현황을 추가. 기존 런·정산·노드·전투·저장·UI 기반과 새 Toolkit/낮밤 작업을 구분하고, 기획과 다른 세부 규칙은 일부 구현 또는 미구현으로 명시.
