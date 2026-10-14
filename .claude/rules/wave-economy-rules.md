@@ -18,6 +18,7 @@ paths:
 - 일시정지 잠금: 웨이브 루프가 매 프레임 `PauseLockRules.LocksPause`(살아 있는 보스 또는 강함 4단계 이상)를 보고 `GameSpeedController.SetPauseLock`을 건다. 웨이브 종료·정리 때 반드시 푼다. 잠긴 동안 플레이어는 멈출 수 없지만, 강제 선택 창의 `Suspend`는 그대로 시간을 세운다.
 - 낮→밤 전환 때 `GameSpeedController.PauseForTransition(1초)`로 실제 시간 1초 멈춘다.
 - 웨이브 난수는 `WaveManager._waveRandom`(판 시드 + 일차)으로 뽑는다(무작위 파티·풀 적·프리팹). 전역 `Random`을 새로 쓰지 않는다.
+- 입장 박자(`SpawnPacingRules`, `Docs/Design/AdventurerArrivalPacingDesign.md`): 하루 인원은 등급이 정하고, 파티 간격 = 기본 간격 × 실제로 내보낸 인원(그룹 스폰, `_currentGroupInterval`) × 배율 0.5~1.5 × 밤 1.6. 배율은 `_pacingRandom`(줄기 `WavePacing`)으로 뽑아 편성 난수 순서를 건드리지 않는다. 밤에 들어오는 모험가는 레벨 -1(최소 1, 보스 제외). 루프 조건을 바꿀 때 그룹 간격을 다시 기본 간격으로 되돌리지 않는다(그룹 크기만큼 빨라졌던 회귀가 있었다).
 - 파티 인원 변동(`PartyCompositionRules`): 파티가 올 때마다 리더(첫 멤버)는 반드시, 나머지는 15%(밤 25%)로 빠지고, 5% + 등급당 3%p + 운영 시설당 2%p(최대 40%)로 리더 아닌 파티원 한 명이 더 붙는다. 보스 호위는 그대로. 웨이브 총인원(`_remainingSpawns`)은 바뀌지 않고 그룹 크기만 달라진다.
 - 사건(일반·상황 사건) 대화는 고를 때까지 시간을 세운다(`DialogueRunner`가 `Suspend`, `Stop`에서 `Release`). 운영 방침 창도 세운다. 튜토리얼 말풍선은 세우지 않는다.
 - 대기 명단(고용했지만 배치하지 않은 부하)은 유지비를 내지 않고 피로·부상·체력이 변하지 않는다. 유지비는 배치한 부하만(`ManagementSettlementManager.CalculateDailyUpkeep`이 `GetDeployedUnitCount`로 셈), 대기 중 자연 회복은 없다(회복은 치료비·회복실로).

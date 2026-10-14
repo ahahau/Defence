@@ -37,6 +37,7 @@
     /* 경고 */
     --warn: rgb(224, 176, 112);
     --danger: rgb(230, 71, 41);
+    --surface-danger: rgb(96, 30, 22);
 
     /* 확정 버튼 */
     --confirm: rgb(121, 48, 39);

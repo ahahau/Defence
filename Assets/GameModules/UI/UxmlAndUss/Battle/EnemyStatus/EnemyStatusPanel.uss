@@ -1,6 +1,6 @@
 /*
  * 모험가 상태 패널 배치. 누른 자리 옆에 뜨는 고정 크기 카드다(ui-rules 10번).
- * 고정 영역: 헤더 36 · 상태 20 · 수치 4줄 96 · 상태이상 제목 20 · 상태이상 4줄 80.
+ * 고정 영역: 헤더 36 · 상태 20 · 수치 6줄 144 · 상태이상 제목 20 · 상태이상 4줄 80.
  * 상태이상이 없어도 자리를 지킨다(visibility로만 숨긴다).
  */
 .enemy-status-root {
@@ -11,7 +11,7 @@
 .enemy-status-card {
     position: absolute;
     width: 400px;
-    height: 312px;
+    height: 360px;
     padding: 12px 14px;
 }
 
@@ -30,5 +30,5 @@
     text-overflow: ellipsis;
 }
 
-.enemy-status-stats { height: 96px; flex-shrink: 0; padding: 6px 10px; margin: 4px 0; justify-content: space-between; }
+.enemy-status-stats { height: 144px; flex-shrink: 0; padding: 6px 10px; margin: 4px 0; justify-content: space-between; }
 .enemy-status-effects { height: 80px; flex-shrink: 0; }

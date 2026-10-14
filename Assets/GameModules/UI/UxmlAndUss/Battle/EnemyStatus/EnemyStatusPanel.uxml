@@ -13,7 +13,9 @@
                 <ui:Label name="enemy-status-hp" text="HP 0/0" class="text-body enemy-status-line" />
                 <ui:Label name="enemy-status-attack" text="ATK 0  SPD 0s" class="text-body enemy-status-line" />
                 <ui:Label name="enemy-status-purpose" text="목적" class="text-body enemy-status-line" />
+                <ui:Label name="enemy-status-party" text="파티" class="text-body enemy-status-line" />
                 <ui:Label name="enemy-status-mood" text="경계 0" class="text-body enemy-status-line" />
+                <ui:Label name="enemy-status-satisfaction" text="시설 대기 없음" class="text-body enemy-status-line" />
             </ui:VisualElement>
             <ui:Label name="enemy-status-effects-title" text="상태이상" class="text-dim enemy-status-line" />
             <ui:VisualElement name="enemy-status-effects" class="enemy-status-effects">

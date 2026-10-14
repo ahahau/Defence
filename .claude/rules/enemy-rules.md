@@ -51,7 +51,7 @@ paths:
    * WaveConfig·WaveManager는 에셋·씬 배선이다. Unity CLI로 처리하거나 사용자에게 순서대로 요청한다.
    * 파티는 리더를 중심으로 다닌다(`PartyCohesionRules`): 파티에 처음 붙은 살아 있는 멤버가 리더(`EnemyMover.IsPartyLeader`), 리더보다 한 방 넘게 앞서려는 파티원은 최대 5초 기다린다. 리더가 쓰러지면 다음에 붙는 멤버가 이어받는다.
    * 길 고르기는 소문을 본다(`Docs/Design/AdventurerRouteRiskDesign.md`). 모험가가 방에서 겪은 함정·쓰러짐·후퇴는 파티 견문(`AdventurerRumorLedger.Active`)에 쌓이고, 살아 나갈 때 방 소문(`Node.Rumor`)이 된다. 전멸하면 견문이 사라지고, 공동 자금 "많음"으로 나가면 던전 소문을 지운다. 보스 파티는 남기지 않고, 소문은 영업 시작마다 절반. 다음 방은 `EnemyMover`의 기존 후보 안에서 `RouteRiskRules` 가중치(남은 길 위험 × 특성별 회피, 쇼핑광 시설·보물 탐색 금고 선호, 엘리트·보스 무시)로 뽑는다. 수치는 `RouteRiskRules`에만 둔다. 새 특성을 만들면 회피 값도 정한다.
-   * 시설 줄에서 참을성(`AdventurerTraitRules.GetEscapeWaitSeconds`: 기본 18초, 겁쟁이 12, 쇼핑광 28, 성직자 22)을 넘기고 갈 대체 시설도 없으면 "불만 탈출"로 돈을 들고 던전을 떠난다(보스 제외). 대체 시설 탐색(10초)보다 늘 길어야 한다.
+   * 시설 줄에서 참을성(`AdventurerTraitRules.GetEscapeWaitSeconds`: 기본 18초, 겁쟁이 12, 쇼핑광 28, 성직자 22)을 넘기고 갈 대체 시설도 없으면 "불만 탈출"로 돈을 들고 던전을 떠난다(보스 제외). 대기 만족도는 시설 기준값(주점 3·대장간 4·상점과 그 밖 5%p/초) × 성격 배율(겁쟁이 1.5·성직자 0.8·쇼핑광 0.6)로 깎이고, 바닥(감액 50%)에 닿으면 대체 시설을 찾는다. 불만 탈출은 그 탐색 시작 + 2초보다 이르지 않다(`FacilityDwellRules.EscapeWaitSeconds`). 수치는 `FacilityDwellRules`에만 둔다.
 6. 설계 제약을 지킨다.
    * 모험가는 유닛과 **전투**한다. 방문 목적(`IsTrespasser`)으로 전투 여부를 가르지 않는다. 이 값은 경로 판정(금고 직행 vs 시설 방문)에만 쓴다.
    * 새 적은 "어떤 배치를 무력화하는가"가 분명해야 한다(예: 공병 → 함정 길, 도둑 → 금고, 궁수 → 전열만 세운 방).

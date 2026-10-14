@@ -119,7 +119,11 @@ namespace Code.Enemies
         /// <summary>파티 공동 자금이 시작보다 줄었는지 늘었는지. 정확한 금액은 보여 주지 않는다.</summary>
         public PartyFundTier PartyFundTier => PartyFundLedger.Active.TierOf(PartyId);
 
-        private int PartyId => mover != null ? mover.PartyId : 0;
+        /// <summary>같은 파티를 묶는 번호(<see cref="EnemyMover.PartyId"/>).</summary>
+        public int PartyId => mover != null ? mover.PartyId : 0;
+
+        /// <summary>이 모험가가 파티 리더인가.</summary>
+        public bool IsPartyLeader => mover != null && mover.IsPartyLeader;
 
         private bool _joinedPartyFund;
 
@@ -722,7 +726,25 @@ namespace Code.Enemies
         private int _dwellGoldTotal;
         private float _facilityWaitSeconds;
         private float _nextFacilityAlternativeCheck;
+        private float _queuePenaltyRate = FacilityDwellRules.QueueIncomePenaltyPerSecond;
+        private float _lastVisitSatisfaction = -1f;
         private readonly HashSet<Building> _abandonedFacilities = new();
+
+        /// <summary>지금 줄에서의 만족도(0.5~1). 줄 서 있지 않으면 1.</summary>
+        public float QueueSatisfaction => _waitingFacility != null
+            ? FacilityDwellRules.QueueSatisfaction(_facilityWaitSeconds, _queuePenaltyRate)
+            : 1f;
+
+        /// <summary>마지막으로 이용을 시작한 시설에서의 만족도. 아직 이용한 적이 없으면 음수.</summary>
+        public float LastVisitSatisfaction => _lastVisitSatisfaction;
+
+        /// <summary>이 줄에서 다른 시설을 찾기 시작하는 대기 시간.</summary>
+        public float AlternativeSearchSeconds => FacilityDwellRules.AlternativeSearchSeconds(_queuePenaltyRate);
+
+        /// <summary>이 줄에서 갈 곳 없이 기다리다 떠나는 대기 시간. 보스는 떠나지 않는다.</summary>
+        public float EscapeWaitSeconds => _isBoss
+            ? float.MaxValue
+            : FacilityDwellRules.EscapeWaitSeconds(Trait, _queuePenaltyRate);
 
         /// <summary>낼 금화의 소수점 나머지. 초당 액수가 1 미만이어도 모여서 결국 지불된다.</summary>
         private float _dwellGoldCarry;
@@ -887,8 +909,9 @@ namespace Code.Enemies
             {
                 _waitingFacility = facility;
                 _facilityWaitSeconds = 0f;
-                _nextFacilityAlternativeCheck = FacilityDwellRules.MaxQueueIncomePenalty
-                    / FacilityDwellRules.QueueIncomePenaltyPerSecond;
+                // 만족도가 바닥에 닿는 때가 곧 다른 시설을 찾기 시작하는 때다. 시설·성격마다 다르다.
+                _queuePenaltyRate = FacilityDwellRules.QueuePenaltyPerSecond(facility, Trait);
+                _nextFacilityAlternativeCheck = AlternativeSearchSeconds;
                 return true;
             }
 
@@ -928,7 +951,7 @@ namespace Code.Enemies
                     }
 
                     // 갈 곳도 없이 참을성이 바닥나면 들고 있던 돈과 함께 던전을 떠난다.
-                    if (!_isBoss && _facilityWaitSeconds >= AdventurerTraitRules.GetEscapeWaitSeconds(Trait))
+                    if (_facilityWaitSeconds >= EscapeWaitSeconds)
                     {
                         _waitingFacility.CancelVisit(this);
                         _waitingFacility = null;
@@ -956,9 +979,12 @@ namespace Code.Enemies
             _dwellDuration = facility.EffectiveDwellSeconds;
             _dwellRemaining = _dwellDuration;
             // 값을 먼저 매기고 닳게 한다. 마지막 손님이 내구도를 0으로 만들어도 자기 몫은 낸다.
+            var penaltyRate = FacilityDwellRules.QueuePenaltyPerSecond(facility, Trait);
+            _lastVisitSatisfaction = FacilityDwellRules.QueueSatisfaction(_facilityWaitSeconds, penaltyRate);
             _dwellGoldTotal = FacilityDwellRules.ApplyQueueSatisfaction(
                 facility.DwellGoldTotal,
-                _facilityWaitSeconds);
+                _facilityWaitSeconds,
+                penaltyRate);
             facility.RecordVisitWear(FacilityDurabilityRules.WearMultiplier(
                 Level, Trait == AdventurerTrait.Shopaholic, PauseLockRules.LocksPause(this)));
             _facilityWaitSeconds = 0f;

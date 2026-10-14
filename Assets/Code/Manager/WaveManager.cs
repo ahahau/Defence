@@ -119,6 +119,9 @@ namespace Code.Manager
         }
 
         public int ActiveEnemyCount => _activeEnemies.Count;
+
+        /// <summary>지금 던전에 있는 모험가. HUD 파티 목록이 읽는다.</summary>
+        public IReadOnlyList<Enemy> ActiveEnemies => _activeEnemies;
         public int PendingSpawnCount => Mathf.Max(0, _remainingSpawns);
         public int RemainingThreatCount => ActiveEnemyCount + PendingSpawnCount;
         public int FinalDay => waveConfig != null ? waveConfig.FinalDay : 0;
@@ -174,6 +177,12 @@ namespace Code.Manager
 
         /// <summary>이 날 웨이브의 난수. 판 시드와 일차로 정해져 불러와도 같은 파티가 같은 순서로 온다.</summary>
         private System.Random _waveRandom = new();
+
+        /// <summary>파티 간격 난수. 편성 난수(<see cref="_waveRandom"/>)와 줄기를 나눠 간격이 편성 순서를 흔들지 않게 한다.</summary>
+        private System.Random _pacingRandom = new();
+
+        /// <summary>지금 기다리는 파티 간격의 배율. 파티를 내보낼 때마다 새로 뽑는다.</summary>
+        private float _spawnGapJitter = 1f;
         private bool _isDestroying;
         [SerializeField] private BossWavePresenter bossPresenter;
         private Enemy _bossEnemy;
@@ -358,6 +367,7 @@ namespace Code.Manager
             // 오늘 오는 인원은 영업 시작 시점의 등급으로 확정한다.
             _currentGrade = DungeonGradeRules.CalculateGrade();
             _waveRandom = RunRandom.Create(RunRandomStream.Wave, _currentDay);
+            _pacingRandom = RunRandom.Create(RunRandomStream.WavePacing, _currentDay);
 
             var adjustedEnemyCount = ResolveWaveEnemyCount(
                 DungeonGradeRules.ResolveVisitorCount(_currentGrade));
@@ -412,6 +422,7 @@ namespace Code.Manager
                 SpawnNextGroup(spawnInterval);
             else
                 SpawnNextEnemyIfNeeded(false);
+            _spawnGapJitter = SpawnPacingRules.GapJitter(_pacingRandom.NextDouble());
 
             var spawnTimer = 0f;
             var holdTimer = 0f;
@@ -446,17 +457,21 @@ namespace Code.Manager
 
                 spawnTimer += Time.deltaTime;
 
-                var isNight = DayManager.Current != null && DayManager.Current.Phase == DayManager.OperationPhase.Night;
-                var activeSpawnInterval = spawnInterval * (isNight ? nightSpawnIntervalMultiplier : 1f);
+                // 그룹이면 파티 간격은 (기본 간격 × 실제로 내보낸 인원)이다. 낮·밤 단계를 넣을 때 이것이
+                // 기본 간격으로 바뀌어, 한 파티가 한 사람 몫의 시간마다 들어와 하루가 그룹 크기만큼 빨라졌었다.
+                var baseGap = spawnAsGroup ? _currentGroupInterval : spawnInterval;
+                var activeSpawnInterval = SpawnPacingRules.GapSeconds(
+                    baseGap, _spawnGapJitter, IsNight, nightSpawnIntervalMultiplier);
                 if (spawnTimer >= activeSpawnInterval)
                 {
                     spawnTimer = 0f;
                     // 한 번 내보냈으니 미룰 여유를 다시 준다. 교착일 때는 (간격 + 상한) 속도로 흘러간다.
                     holdTimer = 0f;
                     if (spawnAsGroup)
-                        SpawnNextGroup(activeSpawnInterval);
+                        SpawnNextGroup(spawnInterval);
                     else
                         SpawnNextEnemyIfNeeded(false);
+                    _spawnGapJitter = SpawnPacingRules.GapJitter(_pacingRandom.NextDouble());
                 }
 
                 RemoveMissingEnemies();
@@ -474,6 +489,9 @@ namespace Code.Manager
 
             CompleteWave(false);
         }
+
+        private static bool IsNight =>
+            DayManager.Current != null && DayManager.Current.Phase == DayManager.OperationPhase.Night;
 
         /// <summary>입구 방에서 아군과 적이 맞붙어 있는 상태인가.</summary>
         private bool IsEntryNodeInCombat()
@@ -607,7 +625,9 @@ namespace Code.Manager
             enemy.ConfigureData(enemyData);
             // 날짜가 아니라 등급이 모험가의 성장 단계를 정한다. 웅크린 던전에는 오래 버텨도
             // 약한 모험가가 오고, 크게 키운 던전에는 이틀 만에도 강한 자가 온다.
-            var visitorLevel = DungeonGradeRules.ResolveVisitorLevel(_currentGrade);
+            // 밤 손님은 같은 종류의 약한 파티다(레벨 -1, 보스 제외).
+            var visitorLevel = SpawnPacingRules.VisitorLevel(
+                DungeonGradeRules.ResolveVisitorLevel(_currentGrade), IsNight, isBossSpawn);
             enemy.ApplyWaveLevel(visitorLevel, enemyHealthPerLevel, enemyAttackPerLevel);
             var visitorIndex = Mathf.Max(0, _stats.EnemyCount - _remainingSpawns);
             var purpose = isBossSpawn

@@ -18,6 +18,28 @@
   - 방 상세: 설치물 아래 `room-rumor` 한 줄("소문 함정 N · 쓰러짐 N · 후퇴 N — 겁쟁이가 피합니다" / "소문 없음").
   - `enemy-rules.md`에 소문 규칙 추가.
   - 검증: Unity CLI `recompile` 완료(`compilationFailed: false`, 현재 콘솔 오류 0 — 05:41의 CS1061 3건은 파일 저장 도중 임포트된 지난 기록), `dotnet build DungeonKeeper.Runtime.csproj`·`Defence.EditMode.Tests.csproj` 오류 0. EditMode 테스트·플레이 실측은 사용자 요청으로 아직 하지 않음.
+- 시설 대기 만족도 2단계(`FacilitySatisfactionDesign.md` 2단계 절, 사용자 선택: 시설 × 성격 · 모험가 상태 패널).
+  - `FacilityDwellRules`: 감소 속도 = 시설 기준값(주점 3·대장간 4·상점과 그 밖 5%p/초) × 성격 배율(겁쟁이 1.5·성직자 0.8·쇼핑광 0.6). `QueueSatisfaction`·`AlternativeSearchSeconds`(만족도 바닥 = 대체 시설 탐색 시작)·`EscapeWaitSeconds`(성격 참을성, 단 탐색 시작 + 2초 이후) 추가. 기존 2인자 `ApplyQueueSatisfaction`은 상점 기준값으로 유지.
+  - `Enemy`: 줄을 설 때 시설·성격별 속도를 잡아 탐색·탈출 시점에 쓰고, 이용 시작 때 마지막 만족도를 기억. 상태 패널용 `QueueSatisfaction`·`LastVisitSatisfaction`·`AlternativeSearchSeconds`·`EscapeWaitSeconds` 공개.
+  - 모험가 상태 패널: 수치 칸에 만족도 줄 추가(카드 312 → 336, 수치 칸 96 → 120).
+  - `enemy-rules.md`, `DungeonEconomyDesign.md` 구현 현황(만족도·소문 경로) 갱신.
+  - 검증: Unity CLI `recompile` 완료(오류 0), `dotnet build` Runtime·EditMode.Tests 오류 0. 처음 컴파일에서 `Enemy`에 이미 있던 `WaitingFacility`·`DwellFacility`·`FacilityWaitSeconds`와 이름이 겹쳐(CS0102) 중복 정의를 지우고 기존 것을 씀. 테스트·실측은 사용자 요청으로 보류.
+- 모험가 입장 박자(`Docs/Design/AdventurerArrivalPacingDesign.md`, 사용자 선택: 회귀 수정 + 난이도 실측 · 방문객 수 고정 + 간격 난수 · 밤 레벨 -1).
+  - 회귀 수정: 낮·밤 단계 커밋(`307c1f1d`)에서 그룹 스폰 루프가 `_currentGroupInterval`(기본 간격 × 내보낸 인원) 대신 기본 간격을 써서 파티가 그룹 크기만큼 빨리 들어오던 것을 되돌림. 그 커밋 이후 밸런스 실측은 빠른 속도 기준이었음.
+  - 새 `SpawnPacingRules`: 간격 배율 0.5~1.5(평균 1), `GapSeconds`(기본 × 배율 × 밤 배율), 밤 손님 레벨 -1(최소 1, 보스 제외).
+  - `RunRandomStream.WavePacing`(=6) 추가, `WaveManager._pacingRandom`(시드 + 일차)으로 간격 배율을 뽑아 편성 난수 순서는 그대로.
+  - `WaveManager`: 스폰 루프 간격 계산과 방문객 레벨 계산 두 곳, `SpawnNextGroup`에는 밤 배율을 뺀 기본 간격을 넘김(전에는 밤 배율이 그룹 간격에 섞여 들어갔음).
+  - `wave-economy-rules.md`에 입장 박자 규칙 추가.
+  - 검증: Unity CLI `recompile` 완료(오류 0), `dotnet build` Runtime·EditMode.Tests 오류 0. 난이도 실측·테스트는 아직(허락 받고 진행).
+- HUD 우측 파티 목록·최근 기록·부채 파산 경고(기획서 "인게임 기본 화면", 사용자 선택: 리더 상태 패널 + 구성 한 줄 · 한도 초과 또는 파산 위험 때 점멸).
+  - 파티 목록: `PartyRailPresenter`가 `WaveManager.ActiveEnemies`(새 읽기 전용 접근자)를 `Enemy.PartyId`(공개로 바꿈)로 묶어 "리더 파티 · N명 · 관 N / 강함 N(엘리트·보스) · 자금 단계" 줄을 만들고, `PartyRailView`가 미리 만든 줄 8개에 글만 바꿔 그림. 파티 줄을 누르면 리더 상태 패널. 보스 준비·다음 파티·보스 패배 조건 줄은 그대로.
+  - 최근 기록: `HudActivityLog`(최대 8줄, 같은 알림 연속이면 "×N"). 예전 5줄 큐 대체.
+  - 부채 칸: `BankruptcyRiskRules`/`BankruptcyRisk`(한도 초과·신용 경고 5단계·오늘/내일 청산인데 운영 자금 < 최소 상환액) → `DebtAlertView`가 붉게 깜박이고, 누르면 사유·신용 규칙 팝업. 런타임에 뜨지 않던 tooltip 설명을 팝업으로 옮김.
+  - 모험가 상태 패널: 파티 줄 추가("파티 N명 · 리더/파티원/보스 · 관 N", 카드 336 → 360, 수치 칸 120 → 144). `Enemy.IsPartyLeader` 공개.
+  - USS: `Theme.uss`에 `--surface-danger` 토큰, `GameplayHud.uss`에 파티 줄 hover·경고색과 부채 칸 점멸 스타일.
+  - `GameplayHudToolkitView`에서 파티 줄·기록·부채 설명 코드를 걷어 내고 새 뷰에 위임.
+  - `ui-rules.md`, `DungeonEconomyDesign.md` 구현 현황 갱신.
+  - 검증: Unity CLI 컴파일 실패 없음(`compilationFailed: false`, 콘솔 오류 0), `dotnet build` Runtime·EditMode.Tests 오류 0. 화면 실측은 아직.
 
 ## 2026-10-01
 

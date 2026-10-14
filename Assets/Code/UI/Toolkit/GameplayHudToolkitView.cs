@@ -81,7 +81,11 @@ namespace Code.UI.Toolkit
         private bool _isRosterOpen;
         private bool _restoreSpeedAfterPauseMenu;
         private float _speedBeforePauseMenu = GameSpeedController.NormalSpeed;
-        private readonly Queue<string> _recentMessages = new();
+        private PartyRailView _partyRail;
+        private HudActivityLog _activityLogView;
+        private DebtAlertView _debtAlert;
+        private readonly PartyRailPresenter _partyRailPresenter = new();
+        private readonly List<PartyRailRowViewModel> _partyRows = new();
 
         public static GameplayHudToolkitView Current { get; private set; }
 
@@ -115,6 +119,8 @@ namespace Code.UI.Toolkit
                 Current = null;
             UnregisterButtons();
             UnbindManagers();
+            _partyRail?.Dispose();
+            _debtAlert?.Dispose();
         }
 
         private void Update()
@@ -178,6 +184,10 @@ namespace Code.UI.Toolkit
             _pauseMusicValue = root.Q<Label>("pause-music-value");
             _pauseHelpTitle = root.Q<Label>("pause-help-title");
             _pauseHelpBody = root.Q<Label>("pause-help-body");
+
+            _partyRail = new PartyRailView(_partyList);
+            _activityLogView = new HudActivityLog(_activityLog);
+            _debtAlert = new DebtAlertView(root.Q<VisualElement>("debt-chip"));
         }
 
         private void RegisterButtons()
@@ -316,10 +326,8 @@ namespace Code.UI.Toolkit
         {
             if (_goldLabel != null) _goldLabel.text = GoldText.Amount(_costManager?.CurrentGold ?? 0);
             if (_debtLabel != null)
-            {
                 _debtLabel.text = BuildDebtText();
-                _debtLabel.tooltip = BuildCreditTooltip();
-            }
+            _debtAlert?.Refresh(_costManager, _dayManager?.CurrentDay ?? 0);
             if (_dayLabel != null)
             {
                 var day = _dayManager?.CurrentDay ?? 0;
@@ -401,23 +409,6 @@ namespace Code.UI.Toolkit
                 : text;
         }
 
-        /// <summary>부채 칸 툴팁. 한도·경고 단계와 그 의미를 줄여 쓰지 않고 적는다.</summary>
-        private string BuildCreditTooltip()
-        {
-            if (_costManager == null)
-                return string.Empty;
-
-            var max = Code.Manager.Economy.CreditWarningRules.MaxWarnings;
-            var interest = Mathf.RoundToInt(Code.Manager.Economy.CreditWarningRules.InterestPerWarning * 100f);
-            var minimum = Mathf.RoundToInt(Code.Manager.Economy.CreditWarningRules.MinimumPrincipalPerWarning * 100f);
-            var limit = $"빚 {GoldText.Amount(_costManager.CurrentDebt)} / 한도 {GoldText.Amount(_costManager.CreditLimit)}";
-            var warnings = $"신용 경고 {_costManager.CreditWarnings}/{max} (단계마다 이자 +{interest}%p, 최소 상환 +{minimum}%p · 빚을 다 갚으면 초기화)";
-            var rule = _costManager.IsOverCreditLimit
-                ? "한도를 넘었습니다. 영업이 끝날 때 금화로 초과분을 긴급 상환하고, 그래도 넘으면 파산합니다."
-                : $"한도를 넘었다가 영업 종료 전에 돌아오면 경고가 쌓이고, 경고 {max}단계에서 또 넘으면 파산합니다.";
-            return $"{limit}\n{warnings}\n{rule}";
-        }
-
         private void RefreshWorldState()
         {
             var wave = WaveManager.Current;
@@ -427,49 +418,14 @@ namespace Code.UI.Toolkit
             var danger = wave != null && wave.IsBossWave ? "보스" : active > 0 ? "경계" : pending > 0 ? "접근" : "대기";
             if (_threatLabel != null) _threatLabel.text = $"{danger} · {total}명";
             if (_partySummaryLabel != null) _partySummaryLabel.text = wave != null && wave.IsWaveRunning ? $"현재 {active} · 접근 {pending}" : "현재 0개";
-            RefreshPartyList(wave, active, pending, danger);
+            _partyRailPresenter.Build(wave, _dayManager != null ? _dayManager.NextWaveDay : 0, _partyRows);
+            _partyRail?.Render(_partyRows);
             if (_lastActiveThreat != active)
             {
                 if (_lastActiveThreat >= 0 && active > _lastActiveThreat) AddMessage($"침입자가 늘었습니다. 현재 {active}명", true);
                 else if (_lastActiveThreat > 0 && active == 0) AddMessage("현재 전투가 종료되었습니다.", false);
                 _lastActiveThreat = active;
             }
-        }
-
-        private void RefreshPartyList(WaveManager wave, int active, int pending, string danger)
-        {
-            if (_partyList == null) return;
-            _partyList.Clear();
-            if (wave == null || !wave.IsWaveRunning)
-            {
-                AddPartyRow("들어온 파티 없음", "대기");
-                // 보스 날 준비 중에는 오늘 올 보스와 패배 조건을 계속 띄워 둔다.
-                var nextDay = _dayManager != null ? _dayManager.NextWaveDay : 0;
-                if (wave != null && wave.TryGetBossPreview(nextDay, out var bossTitle, out var conditions))
-                    AddPartyRow($"오늘 보스 · {bossTitle}", string.IsNullOrEmpty(conditions) ? "조건 없음" : conditions);
-                return;
-            }
-            AddPartyRow(wave.IsBossWave ? "보스 파티" : "침입 파티", $"{danger} · {active}명");
-            if (pending > 0) AddPartyRow("다음 파티", $"접근 · {pending}명");
-
-            // 보스가 있는 동안은 남은 시간·부하 손실 같은 패배 조건 진행을 보여 준다.
-            var bossProgress = wave.BossDefeatProgressText;
-            if (!string.IsNullOrEmpty(bossProgress))
-                AddPartyRow("보스 패배 조건", bossProgress);
-        }
-
-        private void AddPartyRow(string name, string risk)
-        {
-            var row = new VisualElement();
-            row.AddToClassList("party-row");
-            var nameLabel = new Label(name);
-            nameLabel.AddToClassList("party-name");
-            // 패배 조건처럼 긴 문구는 잘릴 수 있으니 전체를 툴팁으로 남긴다.
-            var riskLabel = new Label(risk) { tooltip = risk };
-            riskLabel.AddToClassList("party-risk");
-            row.Add(nameLabel);
-            row.Add(riskLabel);
-            _partyList.Add(row);
         }
 
         private void RefreshRoster()
@@ -793,27 +749,7 @@ namespace Code.UI.Toolkit
         private void SetNormal() => _speedController?.SetSetting(GameSpeedController.NormalSpeed);
         private void SetFast() => _speedController?.SetSetting(GameSpeedController.FastSpeed);
 
-        private void AddMessage(string message, bool alert)
-        {
-            if (_recentMessages.Count >= 5) _recentMessages.Dequeue();
-            _recentMessages.Enqueue(message);
-            RefreshActivityLog(alert);
-        }
-
-        private void RefreshActivityLog(bool latestAlert)
-        {
-            if (_activityLog == null) return;
-            _activityLog.Clear();
-            var index = 0;
-            foreach (var message in _recentMessages)
-            {
-                var line = new Label(message);
-                line.AddToClassList("log-line");
-                if (latestAlert && index == _recentMessages.Count - 1) line.AddToClassList("is-alert");
-                _activityLog.Add(line);
-                index++;
-            }
-        }
+        private void AddMessage(string message, bool alert) => _activityLogView?.Add(message, alert);
 
         private void AddToast(string message, bool alert)
         {

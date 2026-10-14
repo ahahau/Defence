@@ -9,7 +9,8 @@ namespace Code.Manager
         RoomFeatureChance = 2,
         RoomFeatureKind = 3,
         Events = 4,
-        Wave = 5
+        Wave = 5,
+        WavePacing = 6
     }
 
     /// <summary>

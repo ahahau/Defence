@@ -7,7 +7,7 @@ namespace Code.UI.Toolkit
 {
     /// <summary>
     /// 모험가 상태 패널(UI Toolkit). 모험가를 누르면 그 자리 옆에 뜬다. 체력·공격·목적·예산·파티 자금·경계·탐욕·
-    /// 철수 확률과 상태이상을 보여 준다. 이벤트 구독은 씬의 <see cref="EnemyStatusPanelView"/>가 맡고 여기로 넘긴다.
+    /// 철수 확률, 시설 대기 만족도와 상태이상을 보여 준다. 이벤트 구독은 씬의 <see cref="EnemyStatusPanelView"/>가 맡고 여기로 넘긴다.
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
     public sealed class EnemyStatusToolkitView : MonoBehaviour
@@ -25,7 +25,9 @@ namespace Code.UI.Toolkit
         private const string HpLabel = "enemy-status-hp";
         private const string AttackLabel = "enemy-status-attack";
         private const string PurposeLabel = "enemy-status-purpose";
+        private const string PartyLabel = "enemy-status-party";
         private const string MoodLabel = "enemy-status-mood";
+        private const string SatisfactionLabel = "enemy-status-satisfaction";
         private const string EffectsTitleLabel = "enemy-status-effects-title";
         private const string EffectLabelPrefix = "enemy-status-effect-";
         private const string CloseButton = "enemy-status-close";
@@ -39,7 +41,9 @@ namespace Code.UI.Toolkit
         private Label _hp;
         private Label _attack;
         private Label _purpose;
+        private Label _party;
         private Label _mood;
+        private Label _satisfaction;
         private Label _effectsTitle;
         private readonly Label[] _effects = new Label[MaxEffectLines];
         private Button _close;
@@ -86,7 +90,9 @@ namespace Code.UI.Toolkit
             _hp = tree.Q<Label>(HpLabel);
             _attack = tree.Q<Label>(AttackLabel);
             _purpose = tree.Q<Label>(PurposeLabel);
+            _party = tree.Q<Label>(PartyLabel);
             _mood = tree.Q<Label>(MoodLabel);
+            _satisfaction = tree.Q<Label>(SatisfactionLabel);
             _effectsTitle = tree.Q<Label>(EffectsTitleLabel);
             for (var i = 0; i < MaxEffectLines; i++)
                 _effects[i] = tree.Q<Label>(EffectLabelPrefix + i);
@@ -177,10 +183,59 @@ namespace Code.UI.Toolkit
             // 예산은 이 모험가가 쓸 마음이 있는 금액, 파티 자금은 실제 지갑이다. 지갑은 단계로만 보여 준다.
             SetText(_purpose, $"목적 {_target.VisitPurposeLabel}  ·  예산 {_target.RemainingBudget}/{_target.InitialBudget}G"
                               + $"  ·  파티 자금 {PartyFundLedger.TierLabel(_target.PartyFundTier)}");
+            SetText(_party, ResolvePartyText());
             SetText(_mood, $"경계 {_target.Fear}  ·  탐욕 {_target.Greed}  ·  철수 {Mathf.RoundToInt(_target.RetreatChance * 100f)}%");
+            SetText(_satisfaction, ResolveSatisfactionText());
 
             RefreshStatusEffects();
         }
+
+        /// <summary>
+        /// 시설 줄에서의 만족도와 다음에 일어날 일. 줄에 서 있지 않으면 지금 이용 중이거나
+        /// 마지막으로 이용한 시설의 만족도를 보여 준다.
+        /// </summary>
+        private string ResolveSatisfactionText()
+        {
+            var waiting = _target.WaitingFacility;
+            if (waiting != null)
+            {
+                var wait = _target.FacilityWaitSeconds;
+                var head = $"만족도 {Percent(_target.QueueSatisfaction)}  ·  {FacilityName(waiting)} 대기 {Mathf.FloorToInt(wait)}초";
+                if (wait < _target.AlternativeSearchSeconds)
+                    return $"{head}  ·  {Mathf.CeilToInt(_target.AlternativeSearchSeconds - wait)}초 뒤 딴 곳 찾음";
+
+                // 대체 시설을 찾는 중인데 아직 줄에 있다면 갈 곳이 없다는 뜻이다.
+                return _target.EscapeWaitSeconds < float.MaxValue
+                    ? $"{head}  ·  {Mathf.CeilToInt(Mathf.Max(0f, _target.EscapeWaitSeconds - wait))}초 뒤 떠남"
+                    : $"{head}  ·  계속 기다림";
+            }
+
+            var dwelling = _target.DwellFacility;
+            if (dwelling != null)
+                return $"만족도 {Percent(_target.LastVisitSatisfaction)}  ·  {FacilityName(dwelling)} 이용 중";
+
+            return _target.LastVisitSatisfaction >= 0f
+                ? $"마지막 이용 만족도 {Percent(_target.LastVisitSatisfaction)}"
+                : "시설 대기 없음";
+        }
+
+        /// <summary>함께 다니는 파티. 남은 인원·끌고 다니는 관·리더 여부.</summary>
+        private string ResolvePartyText()
+        {
+            var partyId = _target.PartyId;
+            var alive = PartyFundLedger.Active.AliveMembersOf(partyId);
+            var coffins = PartyCoffin.CountFor(partyId);
+            var role = _target.IsBoss ? "보스" : _target.IsPartyLeader ? "리더" : "파티원";
+            var line = $"파티 {Mathf.Max(1, alive)}명  ·  {role}";
+            return coffins > 0 ? $"{line}  ·  관 {coffins}" : line;
+        }
+
+        private static string Percent(float ratio) => $"{Mathf.RoundToInt(Mathf.Clamp01(ratio) * 100f)}%";
+
+        private static string FacilityName(Code.Buildings.Building building) =>
+            building.Data != null && !string.IsNullOrWhiteSpace(building.Data.DisplayName)
+                ? building.Data.DisplayName
+                : building.name;
 
         private string ResolveStateText()
         {
