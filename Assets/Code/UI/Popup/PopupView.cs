@@ -65,16 +65,7 @@ namespace Code.UI.Popup
             if (_root == null || index < 0 || index >= _actions.childCount)
                 return false;
 
-            Rect panel = _root.panel.visualTree.worldBound;
-            Rect bound = _actions[index].worldBound;
-            if (panel.width <= 1f || panel.height <= 1f || float.IsNaN(bound.width) || bound.width <= 1f)
-                return false;
-
-            // 패널 좌표는 왼쪽 위 원점이고 화면 크기에 맞춰 늘어난다. 비율로 화면 픽셀에 옮긴다.
-            float scaleX = Screen.width / panel.width;
-            float scaleY = Screen.height / panel.height;
-            rect = new Rect(bound.x * scaleX, Screen.height - bound.yMax * scaleY, bound.width * scaleX, bound.height * scaleY);
-            return true;
+            return Code.UI.Toolkit.ToolkitScreenRect.TryGet(_actions[index], out rect);
         }
 
         public void Hide()

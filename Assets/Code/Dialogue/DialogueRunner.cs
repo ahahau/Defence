@@ -66,7 +66,6 @@ namespace Code.Dialogue
         private DialogueSequenceSO guidedRuntimeSequence;
         [Header("Guided Tutorial Dependencies")]
         [SerializeField] private UnitDeployPanelView unitDeployPanelView;
-        [SerializeField] private NodePanelView nodePanelView;
         [SerializeField] private WaveView waveView;
         [SerializeField] private ManagementSettlementManager managementSettlementManager;
         private bool hasSeenPolicyChoicePanel;
@@ -647,74 +646,31 @@ namespace Code.Dialogue
 
         private void HighlightUnitDeployTarget()
         {
-            if (nodePanelView == null)
-            {
-                HighlightNode(guidedBuiltNode);
-                return;
-            }
-
             TutorialInputGate.OnlyDeployUnit(guidedBuiltNode, guidedHiredUnit);
-            nodePanelView.HighlightCurrentTutorialUnitTarget();
-
-            var target = nodePanelView.FirstDeployEntryRect != null
-                ? nodePanelView.FirstDeployEntryRect
-                : nodePanelView.UnitCategoryCardRect != null
-                    ? nodePanelView.UnitCategoryCardRect
-                    : nodePanelView.InstallButtonRect;
-
-            if (!TryBuildRectTransformScreenRect(target, out var rect))
-            {
-                HighlightNode(guidedBuiltNode);
-                return;
-            }
-
-            view?.SetSpotlightScreenRect(rect, 24f);
+            HighlightInstallTarget(Code.UI.RoomManagement.RoomInstallKind.Unit, guidedBuiltNode);
         }
 
         private void HighlightPortalInstallTarget()
         {
-            if (nodePanelView == null)
-            {
-                HighlightNode(guidedPortalNode);
-                return;
-            }
-
-            nodePanelView.HighlightCurrentTutorialInstallTarget();
-
-            var target = nodePanelView.PortalInstallCardRect != null
-                ? nodePanelView.PortalInstallCardRect
-                : nodePanelView.BuildingCategoryCardRect != null
-                    ? nodePanelView.BuildingCategoryCardRect
-                    : nodePanelView.InstallButtonRect;
-
-            if (!TryBuildRectTransformScreenRect(target, out var rect))
-            {
-                HighlightNode(guidedPortalNode);
-                return;
-            }
-
-            view?.SetSpotlightScreenRect(rect, 24f);
+            HighlightInstallTarget(Code.UI.RoomManagement.RoomInstallKind.Building, guidedPortalNode);
         }
 
         private void HighlightTrapInstallTarget()
         {
-            if (nodePanelView == null)
+            TutorialInputGate.OnlyInstallTrap(guidedTrapNode);
+            HighlightInstallTarget(Code.UI.RoomManagement.RoomInstallKind.Trap, guidedTrapNode);
+        }
+
+        /// <summary>
+        /// 방 관리 화면의 설치 흐름(하단 갈래 버튼 → 카드 → 설치)을 비춘다. 화면이 없거나 방을 아직
+        /// 고르지 않았으면 그 방을 비춘다.
+        /// </summary>
+        private void HighlightInstallTarget(Code.UI.RoomManagement.RoomInstallKind kind, Node fallbackNode)
+        {
+            var controller = Code.UI.RoomManagement.RoomManagementController.Current;
+            if (controller == null || !controller.TryGetTutorialTarget(kind, out _, out var rect))
             {
-                HighlightNode(guidedTrapNode);
-                return;
-            }
-
-            var trapData = nodePanelView.FirstTrapInstallData;
-            TutorialInputGate.OnlyInstallTrap(guidedTrapNode, trapData);
-            nodePanelView.HighlightCurrentTutorialInstallTarget();
-
-            var target = nodePanelView.FirstTrapInstallCardRect != null
-                ? nodePanelView.FirstTrapInstallCardRect
-                : nodePanelView.InstallButtonRect;
-
-            if (!TryBuildRectTransformScreenRect(target, out var rect))
-            {
-                HighlightNode(guidedTrapNode);
+                HighlightNode(fallbackNode);
                 return;
             }
 

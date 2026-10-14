@@ -395,3 +395,13 @@
   - 조사: 같은 일을 하는 화면이 둘 — Toolkit HUD(선택 말풍선·방 상세·한 줄 설치 목록·보유 유닛 배치)와 uGUI 노드 패널(갈래 카드 → 항목 카드 → 건물 정보 + 설치, 철거·휴업·수리, 유닛 명령·이동). 철거·휴업·수리와 유닛 명령·이동은 uGUI에만 있고, 살아 있는 튜토리얼(`PlayTutorialView`)이 노드 패널의 RectTransform 8곳을 비춤. `DialogueRunner` 옛 안내 튜토리얼은 씬에서 꺼져 있음.
   - 결정(사용자 선택): HUD로 통합(`NodePanelView`는 화면 없는 방 관리 로직으로 남김), 설치 목록은 카드 + 상세 + 설치, 시설 관리·유닛 명령/이동/회수는 방 상세에 모음, 튜토리얼은 Toolkit 화면 사각형으로 비춤(꺼진 옛 안내 튜토리얼은 옮기지 않고 정리).
   - 문서 내용: 지금 상태 표, 방 상세(400×640: 시설 줄·유닛 줄·설치물)와 설치 창(760×360: 카드·상세·설치, 유닛 배치 갈래) 배치, 튜토리얼 잔걸음 대응표(OpenInstall 없앰·PressInstall 추가), 코드 구조(`RoomManagementController`·`RoomDetailView`·`InstallPanelView`·`ToolkitScreenRect`, HUD는 더 키우지 않음), `NodePanelView`에 더할 조회 API, 진행 순서 6단계, 검증 계획, 범위 밖(유닛 영입 패널·씬 정리·HUD 문서 이전).
+
+- 방 관리 화면 통합 구현(노드 패널 → UI Toolkit, `Docs/Design/RoomManagementUiDesign.md` 1~5단계). 테스트·실측은 사용자 요청으로 하지 않음(컴파일만 확인: Unity 재컴파일·dotnet build 오류 0).
+  - `NodePanelView`를 화면 없는 방 관리 로직으로 다시 씀(2,167줄 → 약 800줄). 설치 미리보기·결제·설치, 유닛 칸 선택·마력 결제, 시설 수리·휴업·철거, 유닛 명령·이동(지도에서 방을 눌러 고름)·회수를 공개 API로 내고, 이벤트 `SelectionChanged`·`StateChanged`·`MessageRaised`·`PlacementEnded`로 화면에 알림. uGUI 그리기·갈래 카드·튜토리얼 강조 코드 제거, 옛 uGUI 패널·바깥 버튼은 실행 중 숨기기만 함(씬 정리 때 지움).
+  - 새 판정 `InstallAvailabilityRules`(건물·함정·유닛을 놓을 수 없는 이유). 실제 설치가 거절하던 "유닛이 선 방의 건물"을 미리 막음(전에는 결제 뒤 환불). 버튼 상태 `RoomActionRules`·`RoomActionState`(숨기지 않고 잠그며 짧은 글 + 이유).
+  - 새 화면 `Code.UI.RoomManagement`: `RoomManagementController`(조립·ESC·튜토리얼 조회), 뷰 `RoomDetailView`(오른쪽 400×640: 시설 줄 내구도 막대·수리/휴업/철거, 유닛 줄 최대 4명 → 명령 4개·이동·회수, 설치물, 안내 줄)·`InstallPanelView`(하단 위 760×360: 카드 136×150 한 쪽 5장·상세·설치, 위치를 고르는 동안 접힘 + 취소), 프레젠터 `RoomDetailPresenter`·`InstallPanelPresenter`, 뷰 모델들. UXML/USS `Battle/RoomManagement/RoomManagement.uxml/.uss`, 설정 `Resources/UI/RoomManagementScreen.asset`(공용 패널, 문서 순서 150 — uGUI 튜토리얼 덮개 아래라 덮개가 버튼을 가림).
+  - 설치 창은 막힌 항목도 카드로 보이고 이유를 적음. 건설·시설·함정·유닛 배치 네 갈래(하단 행동 바 버튼). 고른 카드는 데이터로 기억해 연속 설치가 됨. 설치 문구는 `InstallCardTextFormatter`(요약·효과·카드 한 줄)로 정리, 안 쓰던 `InstallCardPresenter`·`TutorialHighlighter` 삭제.
+  - HUD: 옛 방 상세·한 줄 설치 목록 제거(UXML·USS·코드), 하단 버튼 → `ToggleInstall`, '상세 보기' → `ShowDetail`, 보유 유닛 서랍은 목록 보기만, 일시정지 메뉴를 열면 방 관리 화면을 치움. `GameplayHudToolkitView.Current`·`TryGetActionScreenRect` 추가.
+  - 튜토리얼: `PlayTutorialView` 잔걸음 OpenInstall 없애고 PressInstall 추가, 하단 갈래 버튼 → 카드 → 설치 버튼을 화면 사각형으로 비춤. 꺼져 있는 `DialogueRunner` 가이드 튜토리얼의 노드 패널 참조를 같은 조회로 바꿈. 화면 사각형 환산 `ToolkitScreenRect`(팝업·운영 방침도 이것을 씀).
+  - 문서: 설계 문서에 구현하며 바뀐 점(패널·카드 크기·구조), ui-rules·dialogue-rules 갱신.
+  - 아직 확인 못 한 것: 전부(플레이 실측·EditMode 테스트 미실행). 특히 첫날 튜토리얼 진행, uGUI 덮개와 Toolkit 클릭 순서, 미리보기 중 Toolkit 버튼 클릭.

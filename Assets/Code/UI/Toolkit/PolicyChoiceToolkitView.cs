@@ -25,16 +25,7 @@ namespace Code.UI.Toolkit
             if (!IsOpen || _list == null || _list.childCount == 0 || _root.panel == null)
                 return false;
 
-            var panel = _root.panel.visualTree.worldBound;
-            var bound = _list[0].worldBound;
-            if (panel.width <= 1f || panel.height <= 1f || float.IsNaN(bound.width) || bound.width <= 1f)
-                return false;
-
-            // 패널 좌표는 왼쪽 위 원점이고 화면 크기에 맞춰 늘어난다. 비율로 화면 픽셀에 옮긴다(팝업과 같은 방식).
-            var scaleX = Screen.width / panel.width;
-            var scaleY = Screen.height / panel.height;
-            rect = new Rect(bound.x * scaleX, Screen.height - bound.yMax * scaleY, bound.width * scaleX, bound.height * scaleY);
-            return true;
+            return ToolkitScreenRect.TryGet(_list[0], out rect);
         }
 
         /// <summary>판이 끝나면 선택지를 치우고 멈춘 시간을 푼다.</summary>

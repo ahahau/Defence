@@ -4,6 +4,7 @@ using Code.Dialogue;
 using Code.MapCreateSystem;
 using Code.Units;
 using Code.UI.Popup;
+using Code.UI.RoomManagement;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -66,15 +67,15 @@ namespace Code.UI
         /// <summary>
         /// 방·유닛·포탈 칸 안의 잔걸음.
         ///
-        /// 한 칸이 클릭 한 번으로 끝나지 않는다 — 방을 고르고, 설치를 누르고, 갈래를 고르고,
-        /// 카드를 누른다. 구멍과 안내 글이 같은 걸음을 보게 하려고 이름을 붙여 둔다.
+        /// 한 칸이 클릭 한 번으로 끝나지 않는다 — 방을 고르고, 하단 갈래 버튼을 누르고, 카드를 고르고,
+        /// 설치를 누른다. 구멍과 안내 글이 같은 걸음을 보게 하려고 이름을 붙여 둔다.
         /// </summary>
         private enum BuildStage
         {
             PickNode,
-            OpenInstall,
             PickCategory,
             PickCard,
+            PressInstall,
             ConfirmRoom,
             OpenRoster,
             HireUnit,
@@ -154,6 +155,10 @@ namespace Code.UI
 
         // 방 확장 확인은 UI Toolkit 팝업이라 RectTransform이 없다. 이때는 팝업에게 버튼 위치를 묻는다.
         private bool _buildTargetIsPopup;
+
+        // 방 관리 화면(설치 창·하단 갈래 버튼)도 UI Toolkit이라, 잔걸음을 잴 때 화면 사각형을 받아 둔다.
+        private bool _hasBuildScreenRect;
+        private Rect _buildScreenRect;
         private Node _buildNodeTarget;
         private float _timer;
         private float _stepAge;
@@ -525,8 +530,8 @@ namespace Code.UI
         /// 덮개를 창 위로 올린 뒤에는 그러면 안 된다 — 방만 뚫어 두면 그 다음에 눌러야 할
         /// 설치 버튼이 덮개에 막혀 아무 데도 못 간다.
         ///
-        /// 그래서 눌러야 할 것을 차례로 따라간다. 방을 고르고 → 설치를 누르고 → 갈래를 고르고
-        /// → 카드를 누른다. 어느 단계인지는 관리 창에게 묻는다. 그쪽이 그 상태를 들고 있다.
+        /// 그래서 눌러야 할 것을 차례로 따라간다. 방을 고르고 → 하단 갈래 버튼을 누르고 → 카드를 고르고
+        /// → 설치를 누른다. 어느 단계인지는 방 관리 화면에게 묻는다. 그쪽이 그 상태를 들고 있다.
         /// </summary>
         private bool TryResolveBuildHole(out Rect rect)
         {
@@ -534,6 +539,12 @@ namespace Code.UI
 
             if (_buildTargetIsPopup)
                 return PopupController.TryGetConfirmButtonScreenRect(out rect);
+
+            if (_hasBuildScreenRect)
+            {
+                rect = _buildScreenRect;
+                return true;
+            }
 
             if (_buildUiTarget != null)
                 return TryBuildRect(_buildUiTarget, out rect);
@@ -553,6 +564,7 @@ namespace Code.UI
             uiTarget = null;
             nodeTarget = null;
             _buildTargetIsPopup = false;
+            _hasBuildScreenRect = false;
 
             var panel = NodePanelView.Current;
 
@@ -583,48 +595,34 @@ namespace Code.UI
                 }
             }
 
-            if (panel != null && panel.IsPanelOpen)
-            {
-                // 갈래를 고르기 전이면 갈래 카드가 잡히고, 고른 뒤에는 비어서 그 안의 카드로 넘어간다.
-                var category = ResolveCategoryCard(panel);
-                if (category != null)
-                {
-                    uiTarget = category;
-                    return BuildStage.PickCategory;
-                }
-
-                uiTarget = ResolveInstallCard(panel);
-                return BuildStage.PickCard;
-            }
-
             nodeTarget = ResolveTargetNode();
 
-            // 방을 이미 골라 뒀다면 다음은 설치 버튼이다. 봉인된 방은 예외 —
-            // 그건 눌러서 여는 것이 곧 할 일이라 지도를 계속 가리켜야 한다.
+            // 방을 이미 골라 뒀다면 다음은 방 관리 화면 차례다 — 하단 갈래 버튼 → 카드 → 설치.
+            // 봉인된 방은 예외다. 그건 눌러서 여는 것이 곧 할 일이라 지도를 계속 가리켜야 한다.
+            var controller = RoomManagementController.Current;
             if (panel != null
+                && controller != null
                 && nodeTarget != null
                 && panel.SelectedNode == nodeTarget
-                && !IsLocked(nodeTarget)
-                && panel.InstallButtonRect != null)
+                && !IsLocked(nodeTarget))
             {
-                uiTarget = panel.InstallButtonRect;
-                return BuildStage.OpenInstall;
+                var kind = _step == Step.DeployUnit ? RoomInstallKind.Unit : RoomInstallKind.Building;
+                _hasBuildScreenRect = controller.TryGetTutorialTarget(kind, out var stage, out _buildScreenRect);
+                switch (stage)
+                {
+                    case RoomTutorialStage.PickCategory:
+                        return BuildStage.PickCategory;
+                    case RoomTutorialStage.PickCard:
+                        return BuildStage.PickCard;
+                    case RoomTutorialStage.PressInstall:
+                        return BuildStage.PressInstall;
+                }
+
+                _hasBuildScreenRect = false;
             }
 
             return BuildStage.PickNode;
         }
-
-        private RectTransform ResolveCategoryCard(NodePanelView panel) => _step == Step.DeployUnit
-            ? panel.UnitCategoryCardRect
-            : panel.BuildingCategoryCardRect;
-
-        private RectTransform ResolveInstallCard(NodePanelView panel) => _step switch
-        {
-            Step.BuildRoom => panel.FirstBuildingInstallCardRect,
-            Step.DeployUnit => panel.FirstDeployEntryRect,
-            Step.BuildPortal => panel.PortalInstallCardRect,
-            _ => null,
-        };
 
         /// <summary>잔걸음을 다시 재고, 달라졌으면 안내 글도 그 걸음으로 바꾼다.</summary>
         private void RefreshBuildStage()
@@ -634,6 +632,7 @@ namespace Code.UI
                 _buildUiTarget = null;
                 _buildNodeTarget = null;
                 _buildTargetIsPopup = false;
+                _hasBuildScreenRect = false;
                 return;
             }
 
@@ -1111,9 +1110,9 @@ namespace Code.UI
             {
                 BuildStage.ConfirmRoom => "확장을 눌러 첫 방을 만드세요",
                 BuildStage.PickNode => "밝은 타일을 눌러 첫 방을 파세요",
-                BuildStage.OpenInstall => "설치를 눌러 무엇을 지을지 고르세요",
-                BuildStage.PickCategory => "건물을 고르세요",
-                _ => "지을 방을 고르세요",
+                BuildStage.PickCategory => "하단의 건설을 눌러 무엇을 지을지 고르세요",
+                BuildStage.PressInstall => "설치를 누르고 지도에서 자리를 고르세요",
+                _ => "지을 건물 카드를 고르세요",
             },
 
             Step.DeployUnit => stage switch
@@ -1124,17 +1123,17 @@ namespace Code.UI
                 BuildStage.PickCell => "방 안의 밝은 칸을 눌러 수비병을 배치하세요",
                 BuildStage.ConfirmRoom => "확장을 눌러 수비병을 배치할 방을 만드세요",
                 BuildStage.PickNode => "유닛을 세울 방을 고르세요  ·  유닛이 선 방이 방어선이 됩니다",
-                BuildStage.OpenInstall => "설치를 누르세요",
-                BuildStage.PickCategory => "유닛을 고르세요",
-                _ => "이 방에 세울 유닛을 고르세요",
+                BuildStage.PickCategory => "하단의 유닛 배치를 누르세요",
+                BuildStage.PressInstall => "배치를 누르세요",
+                _ => "이 방에 세울 유닛 카드를 고르세요",
             },
 
             Step.BuildPortal => stage switch
             {
                 BuildStage.ConfirmRoom => "확장을 눌러 포탈을 설치할 방을 만드세요",
                 BuildStage.PickNode => "입구가 될 바깥쪽 방을 고르세요  ·  모험가는 그곳으로 들어옵니다",
-                BuildStage.OpenInstall => "설치를 누르세요",
-                BuildStage.PickCategory => "빌딩을 고르세요",
+                BuildStage.PickCategory => "하단의 건설을 누르세요",
+                BuildStage.PressInstall => "설치를 누르세요",
                 _ => "포탈을 고르세요",
             },
 

@@ -5,8 +5,8 @@ using Code.MapCreateSystem;
 using Code.Persistence;
 using Code.UI;
 using Code.UI.Popup;
+using Code.UI.RoomManagement;
 using Code.Units;
-using Code.Buildings;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
@@ -31,27 +31,11 @@ namespace Code.UI.Toolkit
         private Label _rosterSummaryLabel;
         private Label _managementLabel;
         private Label _selectionTitle;
-        private Label _nodeDetailTitle;
-        private Label _nodeDetailState;
-        private Label _nodeDetailUnits;
-        private Label _nodeDetailFacility;
-        private Label _nodeDetailFacilityUsage;
-        private Label _nodeDetailDurability;
-        private Label _nodeDetailTraps;
-        private Label _nodeDetailHint;
-        private Label _unitDetailName;
-        private Label _unitDetailState;
-        private Label _installationTitle;
-        private Label _installationHint;
         private VisualElement _partyList;
         private VisualElement _activityLog;
         private VisualElement _toastHost;
         private VisualElement _selectionPopover;
         private VisualElement _rosterList;
-        private VisualElement _nodeDetailPanel;
-        private VisualElement _unitDetail;
-        private VisualElement _installationPanel;
-        private VisualElement _installationList;
         private Button _pauseButton;
         private Button _normalButton;
         private Button _fastButton;
@@ -63,8 +47,6 @@ namespace Code.UI.Toolkit
         private Button _settlementAction;
         private Button _pauseMenuButton;
         private Button _selectionDetailButton;
-        private Button _nodeDetailCloseButton;
-        private Button _installationCloseButton;
         private Button _resumeButton;
         private Button _pauseSettingsButton;
         private Button _closePauseSettingsButton;
@@ -96,23 +78,41 @@ namespace Code.UI.Toolkit
         private int _lastActiveThreat = -1;
         private bool _lastManagementWindow;
         private Node _selectedNode;
-        private UnitDataSO _selectedRosterUnit;
         private bool _isRosterOpen;
         private bool _restoreSpeedAfterPauseMenu;
         private float _speedBeforePauseMenu = GameSpeedController.NormalSpeed;
         private readonly Queue<string> _recentMessages = new();
 
+        public static GameplayHudToolkitView Current { get; private set; }
+
+        /// <summary>하단 행동 바의 갈래 버튼 화면 사각형(왼쪽 아래 원점 픽셀). 튜토리얼이 비춘다.</summary>
+        public bool TryGetActionScreenRect(RoomInstallKind kind, out Rect rect)
+        {
+            var button = kind switch
+            {
+                RoomInstallKind.Facility => _facilityAction,
+                RoomInstallKind.Trap => _trapAction,
+                RoomInstallKind.Unit => _unitAction,
+                _ => _buildAction,
+            };
+            return ToolkitScreenRect.TryGet(button, out rect);
+        }
+
         private void OnEnable()
         {
+            Current = this;
             QueryElements(GetComponent<UIDocument>().rootVisualElement);
             RegisterButtons();
             BindManagers();
             AddMessage("운영 화면을 준비했습니다.", false);
+            RoomManagementController.Ensure();
             Refresh();
         }
 
         private void OnDisable()
         {
+            if (Current == this)
+                Current = null;
             UnregisterButtons();
             UnbindManagers();
         }
@@ -140,27 +140,11 @@ namespace Code.UI.Toolkit
             _rosterSummaryLabel = root.Q<Label>("roster-summary-label");
             _managementLabel = root.Q<Label>("management-label");
             _selectionTitle = root.Q<Label>("selection-title");
-            _nodeDetailTitle = root.Q<Label>("node-detail-title");
-            _nodeDetailState = root.Q<Label>("node-detail-state");
-            _nodeDetailUnits = root.Q<Label>("node-detail-units");
-            _nodeDetailFacility = root.Q<Label>("node-detail-facility");
-            _nodeDetailFacilityUsage = root.Q<Label>("node-detail-facility-usage");
-            _nodeDetailDurability = root.Q<Label>("node-detail-durability");
-            _nodeDetailTraps = root.Q<Label>("node-detail-traps");
-            _nodeDetailHint = root.Q<Label>("node-detail-hint");
-            _unitDetailName = root.Q<Label>("unit-detail-name");
-            _unitDetailState = root.Q<Label>("unit-detail-state");
-            _installationTitle = root.Q<Label>("installation-title");
-            _installationHint = root.Q<Label>("installation-hint");
             _partyList = root.Q<VisualElement>("party-list");
             _activityLog = root.Q<VisualElement>("activity-log");
             _toastHost = root.Q<VisualElement>("toast-host");
             _selectionPopover = root.Q<VisualElement>("selection-popover");
             _rosterList = root.Q<VisualElement>("roster-list");
-            _nodeDetailPanel = root.Q<VisualElement>("node-detail-panel");
-            _unitDetail = root.Q<VisualElement>("unit-detail");
-            _installationPanel = root.Q<VisualElement>("installation-panel");
-            _installationList = root.Q<VisualElement>("installation-list");
             _pauseButton = root.Q<Button>("pause-button");
             _normalButton = root.Q<Button>("normal-button");
             _fastButton = root.Q<Button>("fast-button");
@@ -172,8 +156,6 @@ namespace Code.UI.Toolkit
             _settlementAction = root.Q<Button>("settlement-action");
             _pauseMenuButton = root.Q<Button>("pause-menu-button");
             _selectionDetailButton = root.Q<Button>("selection-detail-button");
-            _nodeDetailCloseButton = root.Q<Button>("node-detail-close");
-            _installationCloseButton = root.Q<Button>("installation-close");
             _resumeButton = root.Q<Button>("resume-button");
             _pauseSettingsButton = root.Q<Button>("pause-settings-button");
             _closePauseSettingsButton = root.Q<Button>("close-pause-settings-button");
@@ -204,15 +186,13 @@ namespace Code.UI.Toolkit
             if (_normalButton != null) _normalButton.clicked += SetNormal;
             if (_fastButton != null) _fastButton.clicked += SetFast;
             if (_buildAction != null) _buildAction.clicked += ShowBuildOptions;
-            if (_unitAction != null) _unitAction.clicked += BeginSelectedUnitPlacement;
+            if (_unitAction != null) _unitAction.clicked += ShowUnitOptions;
             if (_trapAction != null) _trapAction.clicked += ShowTrapOptions;
             if (_facilityAction != null) _facilityAction.clicked += ShowFacilityOptions;
             if (_rosterButton != null) _rosterButton.clicked += ToggleRoster;
             if (_settlementAction != null) _settlementAction.clicked += ExplainSettlement;
             if (_pauseMenuButton != null) _pauseMenuButton.clicked += ExplainPauseMenuPending;
-            if (_selectionDetailButton != null) _selectionDetailButton.clicked += ExplainSelectionDetailPending;
-            if (_nodeDetailCloseButton != null) _nodeDetailCloseButton.clicked += HideNodeDetails;
-            if (_installationCloseButton != null) _installationCloseButton.clicked += HideInstallationOptions;
+            if (_selectionDetailButton != null) _selectionDetailButton.clicked += ShowSelectionDetail;
             if (_resumeButton != null) _resumeButton.clicked += ClosePauseMenu;
             if (_pauseHelpButton != null) _pauseHelpButton.clicked += ShowPauseHelp;
             if (_closePauseHelpButton != null) _closePauseHelpButton.clicked += HidePauseHelp;
@@ -234,15 +214,13 @@ namespace Code.UI.Toolkit
             if (_normalButton != null) _normalButton.clicked -= SetNormal;
             if (_fastButton != null) _fastButton.clicked -= SetFast;
             if (_buildAction != null) _buildAction.clicked -= ShowBuildOptions;
-            if (_unitAction != null) _unitAction.clicked -= BeginSelectedUnitPlacement;
+            if (_unitAction != null) _unitAction.clicked -= ShowUnitOptions;
             if (_trapAction != null) _trapAction.clicked -= ShowTrapOptions;
             if (_facilityAction != null) _facilityAction.clicked -= ShowFacilityOptions;
             if (_rosterButton != null) _rosterButton.clicked -= ToggleRoster;
             if (_settlementAction != null) _settlementAction.clicked -= ExplainSettlement;
             if (_pauseMenuButton != null) _pauseMenuButton.clicked -= ExplainPauseMenuPending;
-            if (_selectionDetailButton != null) _selectionDetailButton.clicked -= ExplainSelectionDetailPending;
-            if (_nodeDetailCloseButton != null) _nodeDetailCloseButton.clicked -= HideNodeDetails;
-            if (_installationCloseButton != null) _installationCloseButton.clicked -= HideInstallationOptions;
+            if (_selectionDetailButton != null) _selectionDetailButton.clicked -= ShowSelectionDetail;
             if (_resumeButton != null) _resumeButton.clicked -= ClosePauseMenu;
             if (_pauseHelpButton != null) _pauseHelpButton.clicked -= ShowPauseHelp;
             if (_closePauseHelpButton != null) _closePauseHelpButton.clicked -= HidePauseHelp;
@@ -510,8 +488,6 @@ namespace Code.UI.Toolkit
                 _rosterButton.text = _isRosterOpen ? "목록 닫기" : "목록 열기";
             if (_rosterList != null)
                 _rosterList.style.display = _isRosterOpen ? DisplayStyle.Flex : DisplayStyle.None;
-            if (_unitDetail != null)
-                _unitDetail.style.display = _isRosterOpen && _selectedRosterUnit != null ? DisplayStyle.Flex : DisplayStyle.None;
             if (_isRosterOpen)
                 RefreshRosterList(HiredUnitRoster.Current);
         }
@@ -537,124 +513,27 @@ namespace Code.UI.Toolkit
                 counts[unit] = count + 1;
             }
 
-            var canStartPlacement = DayManager.IsManagementWindow && _selectedNode != null;
+            // 목록은 보기만 한다. 배치는 방을 고른 뒤 '유닛 배치' 설치 창에서 한다.
             foreach (var pair in counts)
             {
                 var unit = pair.Key;
-                var button = new Button(() => SelectRosterUnit(unit))
-                {
-                    text = $"{ResolveUnitName(unit)} ×{pair.Value} · 마력 {unit.MagicCost}"
-                };
-                button.AddToClassList("unit-row");
-                button.EnableInClassList("is-selected", unit == _selectedRosterUnit);
-                button.SetEnabled(canStartPlacement);
-                _rosterList.Add(button);
+                var condition = roster.GetBestAvailableCondition(unit);
+                var row = new Label($"{ResolveUnitName(unit)} ×{pair.Value} · Lv{condition.Level} · 마력 {unit.MagicCost}");
+                row.AddToClassList("unit-row");
+                _rosterList.Add(row);
             }
         }
 
-        private void SelectRosterUnit(UnitDataSO unit)
+        private void ShowBuildOptions() => ShowInstallationOptions(RoomInstallKind.Building);
+        private void ShowTrapOptions() => ShowInstallationOptions(RoomInstallKind.Trap);
+        private void ShowFacilityOptions() => ShowInstallationOptions(RoomInstallKind.Facility);
+        private void ShowUnitOptions() => ShowInstallationOptions(RoomInstallKind.Unit);
+
+        private void ShowInstallationOptions(RoomInstallKind kind)
         {
-            _selectedRosterUnit = unit;
-            var roster = HiredUnitRoster.Current;
-            var condition = roster != null ? roster.GetBestAvailableCondition(unit) : UnitConditionState.Fresh;
-            if (_unitDetailName != null)
-                _unitDetailName.text = $"{ResolveUnitName(unit)} · Lv.{condition.Level}";
-            if (_unitDetailState != null)
-                _unitDetailState.text = $"{condition.TraitLabel} · {condition.PersonalityLabel} · 마력 {unit.MagicCost}";
-            if (_unitDetail != null)
-                _unitDetail.style.display = DisplayStyle.Flex;
-            RefreshRosterList(roster);
-        }
-
-        private void BeginSelectedUnitPlacement()
-        {
-            if (_selectedRosterUnit == null)
-            {
-                ToggleRoster();
-                AddToast("배치할 유닛을 선택하세요.", false);
-                return;
-            }
-
-            BeginUnitPlacement(_selectedRosterUnit);
-        }
-
-        private void ShowBuildOptions() => ShowInstallationOptions("건설", InstallCategory.Building, false);
-        private void ShowTrapOptions() => ShowInstallationOptions("함정 설치", InstallCategory.Trap, false);
-        private void ShowFacilityOptions() => ShowInstallationOptions("시설 건설", InstallCategory.Building, true);
-
-        private void ShowInstallationOptions(string title, InstallCategory category, bool facilitiesOnly)
-        {
-            var nodePanel = NodePanelView.Current;
-            if (_selectedNode == null || nodePanel == null || _installationPanel == null || _installationList == null)
-            {
+            var controller = RoomManagementController.Ensure();
+            if (controller == null || !controller.ToggleInstall(kind))
                 AddToast("먼저 관리할 방을 선택하세요.", false);
-                return;
-            }
-
-            _installationPanel.style.display = DisplayStyle.Flex;
-            if (_installationTitle != null)
-                _installationTitle.text = title;
-            if (_installationHint != null)
-                _installationHint.text = "항목을 고르면 방 또는 통로에서 설치 위치를 선택합니다.";
-            _installationList.Clear();
-
-            var count = 0;
-            foreach (var building in nodePanel.EnumerateToolkitInstallOptions(category))
-            {
-                var isFacility = building.DailyUpkeep > 0 || building.DwellSeconds > 0f;
-                if (facilitiesOnly != isFacility)
-                    continue;
-
-                var option = building;
-                var button = new Button(() => BeginBuildingPlacement(option))
-                {
-                    text = $"{ResolveBuildingName(option)}  ·  {GoldText.Amount(option.Cost)}"
-                };
-                button.AddToClassList("installation-row");
-                _installationList.Add(button);
-                count++;
-            }
-
-            if (count == 0)
-            {
-                var empty = new Label("이 방에는 지금 설치할 수 있는 항목이 없습니다.");
-                empty.AddToClassList("detail-state");
-                _installationList.Add(empty);
-            }
-        }
-
-        private void BeginBuildingPlacement(BuildingDataSO building)
-        {
-            if (NodePanelView.Current != null && NodePanelView.Current.TryBeginBuildingPlacement(building))
-            {
-                HideInstallationOptions();
-                AddToast($"{ResolveBuildingName(building)}: 설치 위치를 선택하세요.", false);
-                return;
-            }
-
-            AddToast("이 방에는 지금 설치할 수 없습니다.", true);
-        }
-
-        private void HideInstallationOptions()
-        {
-            if (_installationPanel != null)
-                _installationPanel.style.display = DisplayStyle.None;
-        }
-
-        private static string ResolveBuildingName(BuildingDataSO building) =>
-            building == null || string.IsNullOrWhiteSpace(building.DisplayName) ? "시설" : building.DisplayName;
-
-        private void BeginUnitPlacement(UnitDataSO unit)
-        {
-            if (NodePanelView.Current != null && NodePanelView.Current.TryBeginUnitPlacement(unit))
-            {
-                ToggleRoster();
-                _selectedRosterUnit = null;
-                AddToast($"{ResolveUnitName(unit)}: 방 안의 빈 칸을 선택하세요.", false);
-                return;
-            }
-
-            AddToast("이 방에는 지금 유닛을 배치할 수 없습니다.", true);
         }
 
         private static string ResolveUnitName(UnitDataSO unit) =>
@@ -677,72 +556,6 @@ namespace Code.UI.Toolkit
 
             var facility = _selectedNode.HasAssignedBuilding ? "시설 있음" : "일반 방";
             _selectionTitle.text = $"{_selectedNode.Data.Type} · {facility} · 유닛 {_selectedNode.AssignedUnitCount}/{_selectedNode.UnitCapacity}";
-            RefreshNodeDetails();
-        }
-
-        private void RefreshNodeDetails()
-        {
-            if (_selectedNode == null || _selectedNode.Data == null)
-                return;
-
-            if (_nodeDetailTitle != null)
-                _nodeDetailTitle.text = $"{_selectedNode.Data.Type} 상세";
-            if (_nodeDetailState != null)
-                _nodeDetailState.text = _selectedNode.IsEnemySpawnNode ? "침입 입구 · 유닛 배치 불가" : "일반 방";
-            if (_nodeDetailUnits != null)
-                _nodeDetailUnits.text = $"유닛 {_selectedNode.AssignedUnitCount} / {_selectedNode.UnitCapacity}";
-            var building = _selectedNode.AssignedBuilding;
-            if (_nodeDetailFacility != null)
-                _nodeDetailFacility.text = building?.Data != null ? $"시설 {building.Data.DisplayName}" : "시설 없음";
-            if (_nodeDetailFacilityUsage != null)
-                _nodeDetailFacilityUsage.text = BuildFacilityUsage(building);
-            if (_nodeDetailDurability != null)
-                _nodeDetailDurability.text = BuildFacilityStatus(building);
-            if (_nodeDetailTraps != null)
-                _nodeDetailTraps.text = $"설치물 {_selectedNode.TrapGrid?.PlacedBuildings.Count ?? 0}개";
-            if (_nodeDetailHint != null)
-                _nodeDetailHint.text = DayManager.IsManagementWindow ? "하단에서 배치·함정·시설을 관리할 수 있습니다." : "일시정지하면 배치와 설치를 관리할 수 있습니다.";
-        }
-
-        private static string BuildFacilityUsage(Building building)
-        {
-            if (building == null)
-                return "시설 이용: 대상 없음";
-
-            if (building.IsDestroyed)
-                return "시설 이용: 중단";
-
-            if (building.DwellSeconds <= 0f)
-                return "시설 이용: 손님 체류 없음";
-
-            int waitSeconds = Mathf.FloorToInt(building.LongestVisitorWaitSeconds);
-            int maxPenalty = Mathf.RoundToInt(FacilityDwellRules.MaxQueueIncomePenalty * 100f);
-            return $"시설 이용 {building.CurrentVisitorCount}/{building.MaxConcurrentVisitors} · 대기 {building.WaitingVisitorCount}명\n최장 대기 {waitSeconds}초 · 대기 수입 최대 -{maxPenalty}%";
-        }
-
-        private string BuildFacilityStatus(Building building)
-        {
-            if (building == null)
-                return "시설 내구도: 대상 없음";
-
-            if (building.IsDestroyed)
-                return "시설 상태: 파괴됨";
-
-            var operation = building.IsReopening
-                ? $"{building.ReopenDaysRemaining(_dayManager?.CurrentDay ?? 0)}일 뒤 재개"
-                : building.IsClosed ? "폐쇄"
-                : building.IsRepairing ? $"수리 중 {Mathf.CeilToInt(building.RepairRemaining)}초"
-                : building.IsWornOut ? "영업 정지(수리 필요)"
-                : "운영 중";
-            if (!building.IsDestructible && !building.UsesServiceDurability)
-                return $"내구도 고정 · {operation}";
-
-            var durability = $"내구도 {building.CurrentDurability}/{building.MaxDurability}";
-            if (!building.UsesServiceDurability)
-                return $"{durability} · {operation}";
-
-            var income = Mathf.RoundToInt(building.DurabilityIncomeMultiplier * 100f);
-            return $"{durability} · 수입 {income}% · 수리 {GoldText.Amount(building.RepairCost)} · {operation}";
         }
 
         private void RefreshManagementActions()
@@ -804,6 +617,8 @@ namespace Code.UI.Toolkit
             if (_restoreSpeedAfterPauseMenu)
                 _speedController?.SetSetting(GameSpeedController.PausedSpeed);
 
+            // 방 관리 화면은 HUD 위 문서라 메뉴를 가린다. 메뉴를 여는 동안 치운다.
+            RoomManagementController.Current?.HideAll();
             _pauseMenuOverlay.style.display = DisplayStyle.Flex;
             HidePauseSettings();
             HidePauseHelp();
@@ -968,16 +783,11 @@ namespace Code.UI.Toolkit
             Party,
             Build
         }
-        private void ExplainSelectionDetailPending()
+        private void ShowSelectionDetail()
         {
-            RefreshNodeDetails();
-            if (_nodeDetailPanel != null)
-                _nodeDetailPanel.style.display = DisplayStyle.Flex;
-        }
-        private void HideNodeDetails()
-        {
-            if (_nodeDetailPanel != null)
-                _nodeDetailPanel.style.display = DisplayStyle.None;
+            var controller = RoomManagementController.Ensure();
+            if (controller == null || !controller.ShowDetail())
+                AddToast("먼저 관리할 방을 선택하세요.", false);
         }
         private void SetPaused() => _speedController?.SetSetting(GameSpeedController.PausedSpeed);
         private void SetNormal() => _speedController?.SetSetting(GameSpeedController.NormalSpeed);
