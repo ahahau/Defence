@@ -139,5 +139,51 @@ namespace Tests.EditMode.Rules
             _created.Add(host);
             return host.AddComponent<Enemy>();
         }
+
+        /// <summary>
+        /// 만족도 2단계: 감소 속도 = 시설 기준값(주점 3·대장간 4·상점 5%p) × 성격(겁쟁이 1.5·성직자 0.8·쇼핑광 0.6).
+        /// 대체 시설 탐색은 만족도가 바닥(50%)에 닿는 때다. 성격이 같은 속도로 기다리면 성격 선택이 의미가 없다.
+        /// </summary>
+        [Test]
+        public void QueuePenalty_DependsOnFacilityAndTrait()
+        {
+            var inn = NewFacilityOf<Inn>();
+            var smith = NewFacilityOf<Blacksmith>();
+            var store = NewFacilityOf<Store>();
+
+            Assert.That(FacilityDwellRules.QueuePenaltyPerSecond(inn, AdventurerTrait.None), Is.EqualTo(0.03f).Within(0.0001f));
+            Assert.That(FacilityDwellRules.QueuePenaltyPerSecond(smith, AdventurerTrait.None), Is.EqualTo(0.04f).Within(0.0001f));
+            Assert.That(FacilityDwellRules.QueuePenaltyPerSecond(store, AdventurerTrait.None), Is.EqualTo(0.05f).Within(0.0001f));
+            Assert.That(FacilityDwellRules.QueuePenaltyPerSecond(store, AdventurerTrait.Coward), Is.EqualTo(0.075f).Within(0.0001f));
+            Assert.That(FacilityDwellRules.QueuePenaltyPerSecond(store, AdventurerTrait.Shopaholic), Is.EqualTo(0.03f).Within(0.0001f));
+
+            Assert.That(FacilityDwellRules.AlternativeSearchSeconds(0.05f), Is.EqualTo(10f).Within(0.001f), "상점 일반 손님은 1단계와 같은 10초.");
+            Assert.That(FacilityDwellRules.AlternativeSearchSeconds(0.075f), Is.LessThan(10f), "겁쟁이는 더 빨리 다른 곳을 찾습니다.");
+            Assert.That(FacilityDwellRules.QueueSatisfaction(100f, 0.05f), Is.EqualTo(0.5f).Within(0.0001f), "만족도는 절반 아래로 떨어지지 않습니다.");
+            Assert.That(FacilityDwellRules.ApplyQueueSatisfaction(100, 4f, FacilityDwellRules.QueueIncomePenaltyPerSecond),
+                Is.EqualTo(FacilityDwellRules.ApplyQueueSatisfaction(100, 4f)), "기존 두 인자 판은 상점 기준값과 같습니다.");
+        }
+
+        /// <summary>불만 탈출은 성격 참을성을 따르되, 대체 시설 탐색 시작 + 2초보다 이르지 않다.</summary>
+        [Test]
+        public void EscapeWait_NeverBeforeAlternativeSearch()
+        {
+            foreach (AdventurerTrait trait in System.Enum.GetValues(typeof(AdventurerTrait)))
+            foreach (var rate in new[] { 0.018f, 0.03f, 0.05f, 0.075f })
+            {
+                var escape = FacilityDwellRules.EscapeWaitSeconds(trait, rate);
+                Assert.That(escape, Is.GreaterThanOrEqualTo(FacilityDwellRules.AlternativeSearchSeconds(rate) + FacilityDwellRules.EscapeMarginSeconds),
+                    $"{trait} · {rate}");
+                Assert.That(escape, Is.GreaterThanOrEqualTo(AdventurerTraitRules.GetEscapeWaitSeconds(trait)));
+            }
+        }
+
+        private T NewFacilityOf<T>() where T : Building
+        {
+            var host = new GameObject(typeof(T).Name);
+            host.SetActive(false);
+            _created.Add(host);
+            return host.AddComponent<T>();
+        }
     }
 }

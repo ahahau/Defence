@@ -162,5 +162,32 @@ namespace Tests.EditMode.Gameplay
             Assert.That(property, Is.Not.Null, propertyName + " 프로퍼티를 찾지 못했습니다.");
             return (T)property.GetValue(target);
         }
+
+        /// <summary>
+        /// 입장 박자(Docs/Design/AdventurerArrivalPacingDesign.md). 그룹 간격은 기본 간격 × 내보낸 인원 × 배율 × 밤 배율.
+        /// 낮·밤 단계를 넣으며 그룹 간격이 기본 간격으로 바뀌어 파티가 그룹 크기만큼 빨리 들어온 회귀가 있었다.
+        /// </summary>
+        [Test]
+        public void SpawnPacing_GapScalesWithGroupJitterAndNight()
+        {
+            Assert.That(Code.Manager.SpawnPacingRules.GapJitter(0d), Is.EqualTo(Code.Manager.SpawnPacingRules.MinGapJitter).Within(0.0001f));
+            Assert.That(Code.Manager.SpawnPacingRules.GapJitter(0.5d), Is.EqualTo(1f).Within(0.0001f), "배율 평균이 1이라 하루 길이는 그대로입니다.");
+            Assert.That(Code.Manager.SpawnPacingRules.GapJitter(0.9999d), Is.LessThanOrEqualTo(Code.Manager.SpawnPacingRules.MaxGapJitter));
+
+            // 4인 파티, 기본 2.5초: 낮 10초, 밤 16초. 한 사람 몫(2.5초)으로 줄면 회귀다.
+            Assert.That(Code.Manager.SpawnPacingRules.GapSeconds(2.5f * 4, 1f, false, 1.6f), Is.EqualTo(10f).Within(0.001f));
+            Assert.That(Code.Manager.SpawnPacingRules.GapSeconds(2.5f * 4, 1f, true, 1.6f), Is.EqualTo(16f).Within(0.001f));
+            Assert.That(Code.Manager.SpawnPacingRules.GapSeconds(10f, 0.5f, false, 1.6f), Is.EqualTo(5f).Within(0.001f));
+        }
+
+        /// <summary>밤 손님은 레벨 -1(최소 1), 보스는 밤에도 그대로.</summary>
+        [Test]
+        public void SpawnPacing_NightVisitorsAreOneLevelLower()
+        {
+            Assert.That(Code.Manager.SpawnPacingRules.VisitorLevel(4, false, false), Is.EqualTo(4));
+            Assert.That(Code.Manager.SpawnPacingRules.VisitorLevel(4, true, false), Is.EqualTo(3));
+            Assert.That(Code.Manager.SpawnPacingRules.VisitorLevel(1, true, false), Is.EqualTo(1), "레벨은 1 아래로 내려가지 않습니다.");
+            Assert.That(Code.Manager.SpawnPacingRules.VisitorLevel(4, true, true), Is.EqualTo(4), "보스는 밤에도 약해지지 않습니다.");
+        }
     }
 }

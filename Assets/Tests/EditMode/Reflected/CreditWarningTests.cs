@@ -130,5 +130,29 @@ namespace Tests.EditMode.Rules
             cost.RestoreCheckpoint(0, 0, 0f, string.Empty, 3);
             Assert.That(cost.CreditWarnings, Is.Zero, "빚이 없으면 경고도 없습니다.");
         }
+
+        /// <summary>
+        /// HUD 부채 칸을 깜박일 사유. 실제 파산 경로(한도 초과·마지막 경고·청산일 미납)를 미리 본다.
+        /// 사유가 빠지면 파산 직전에도 칸이 조용하고, 넘치면 늘 깜박여 경고가 무시된다.
+        /// </summary>
+        [Test]
+        public void BankruptcyRisk_FlagsOnlyRealPaths()
+        {
+            Assert.That(BankruptcyRiskRules.Evaluate(0, 100, false, 0, 3, 50), Is.EqualTo(BankruptcyRisk.None), "빚이 없으면 위험이 없습니다.");
+            Assert.That(BankruptcyRiskRules.Evaluate(500, 100, false, 2, 3, 50), Is.EqualTo(BankruptcyRisk.None), "청산이 멀고 한도 안이면 조용합니다.");
+
+            Assert.That(BankruptcyRiskRules.Evaluate(500, 100, true, 0, 3, 50), Is.EqualTo(BankruptcyRisk.OverCreditLimit));
+            Assert.That(BankruptcyRiskRules.Evaluate(500, 100, false, CreditWarningRules.MaxWarnings, 3, 50),
+                Is.EqualTo(BankruptcyRisk.FinalWarning));
+
+            Assert.That(BankruptcyRiskRules.Evaluate(500, 40, false, 0, 1, 50), Is.EqualTo(BankruptcyRisk.SettlementShortfall), "내일 청산인데 모자랍니다.");
+            Assert.That(BankruptcyRiskRules.Evaluate(500, 40, false, 0, 0, 50), Is.EqualTo(BankruptcyRisk.SettlementShortfall), "오늘 청산인데 모자랍니다.");
+            Assert.That(BankruptcyRiskRules.Evaluate(500, 40, false, 0, 2, 50), Is.EqualTo(BankruptcyRisk.None), "모레는 아직 벌 시간이 있습니다.");
+            Assert.That(BankruptcyRiskRules.Evaluate(500, 60, false, 0, 1, 50), Is.EqualTo(BankruptcyRisk.None), "낼 돈이 있으면 위험이 아닙니다.");
+
+            Assert.That(BankruptcyRiskRules.Evaluate(500, 40, true, CreditWarningRules.MaxWarnings, 1, 50),
+                Is.EqualTo(BankruptcyRisk.OverCreditLimit | BankruptcyRisk.FinalWarning | BankruptcyRisk.SettlementShortfall),
+                "사유는 겹쳐 모두 보입니다.");
+        }
     }
 }

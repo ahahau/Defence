@@ -425,7 +425,7 @@ namespace Code.UI.Toolkit
             _partyRail?.Render(_partyRows);
             if (_lastActiveThreat != active)
             {
-                if (_lastActiveThreat >= 0 && active > _lastActiveThreat) AddMessage($"침입자가 늘었습니다. 현재 {active}명", true);
+                if (_lastActiveThreat >= 0 && active > _lastActiveThreat) AddMessage($"침입자가 늘었습니다. 현재 {active}명", true, IntruderCountLogKey);
                 else if (_lastActiveThreat > 0 && active == 0) AddMessage("현재 전투가 종료되었습니다.", false);
                 _lastActiveThreat = active;
             }
@@ -752,7 +752,10 @@ namespace Code.UI.Toolkit
         private void SetNormal() => _speedController?.SetSetting(GameSpeedController.NormalSpeed);
         private void SetFast() => _speedController?.SetSetting(GameSpeedController.FastSpeed);
 
-        private void AddMessage(string message, bool alert) => _activityLogView?.Add(message, alert);
+        private const string IntruderCountLogKey = "intruder-count";
+
+        private void AddMessage(string message, bool alert, string groupKey = null) =>
+            _activityLogView?.Add(message, alert, groupKey);
 
         private void AddToast(string message, bool alert)
         {

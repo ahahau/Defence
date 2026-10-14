@@ -67,6 +67,19 @@
   - `NodePanelView`·`DialogueRunner`의 휴업 시스템 폴백을 `GameScope.Resolve`로 통일.
   - 네 매니저 `Current` 사용처 46 → 19. 남은 곳: 다른 세션 파일 13(`CostManager`·`HiredUnitRoster`·`ManagementSettlementManager`), `MetaRunStarter` 2(부트스트랩), HUD·운영 방침 Toolkit·`Unit` 4(실행 중 생성) — `GameScope`가 씬에 놓인 뒤 주입.
   - 검증: Unity CLI `recompile` 완료, `dotnet build` Runtime·EditMode.Tests 오류 0. PowerShell 일괄 치환한 `WaveManager`·`DialogueRunner`는 diff로 의도한 줄만 바뀐 것 확인(한글·줄 끝 유지).
+- 오늘 작업 테스트·실측(사용자 요청).
+  - 기존 EditMode 285/285 통과(오늘 변경으로 깨진 테스트 없음).
+  - 새 테스트 18개: `RoomManagementTests`(5 — 화면 사각형, 막힘 이유, 설치 판정 ↔ 실제 설치 전수 일치, 배치 막힘, 시설 버튼), `RouteRiskTests`(8 — 소문·위험·회피·꼬리말·견문 탈출/전멸/보스/큰 보상·보상 길), `FacilityQueueTests`(+2 — 시설 × 성격 속도, 탈출 ≥ 탐색 + 2초), `CreditWarningTests`(+1 — 파산 위험 사유), `EncounterVarietyTests`(+2 — 그룹 간격·밤 레벨). 전체 303/303 통과. `test-rules.md` 표 갱신.
+  - 플레이 실측(Unity CLI, 커밋 `502af2bc` + 다른 세션 미커밋 6파일, 세이브 백업 → 새 판 → 복원):
+    - 시작 직후 콘솔 오류 0. `GameScope` 폴백 경고 5건(컴포넌트당 한 번, 캐시 정상), 기존 플러그인 meta 경고 6건.
+    - 입장 간격: 5일차(기본 1.9초) 2인 파티 → 다음 파티 5.27초(밤). 회귀 상태였다면 3.04초 고정, 고친 식의 범위 3.04~9.12초 안. 등급 0이라 하루 3명이어서 표본은 간격 하나뿐.
+    - 낮→밤 전환 실제 시간 약 1초 정지 확인.
+    - HUD 파티 목록: 파티별 줄("용병 검사 파티 · 1명 | 엘리트 · 강함 4 · 자금 보통", 엘리트 경고 표시), 줄 클릭 → 리더 상태 패널(새 줄 "파티 2명 · 리더", "시설 대기 없음").
+    - 부채 칸: 한도 초과(빚 10,500/10,000)에서 `is-danger` + 0.3초 표본마다 `is-blink` 번갈아 바뀜, 클릭 → "파산 위험" 팝업(사유·신용 규칙).
+    - 끝날 때 콘솔 오류 0.
+  - 실측에서 찾은 것: 최근 기록이 "침입자가 늘었습니다. 현재 1명/2명/3명"처럼 숫자만 다른 알림을 묶지 못함(같은 문구만 묶음).
+    - 수정(사용자 선택): `HudActivityLog.Add(message, alert, groupKey)` — 같은 종류 키가 이어지면 최신 문구 한 줄로 바꾸고 "· N회"를 붙임(키 없는 알림은 문구가 같을 때만). HUD의 침입자 수 알림에 키 부여. 새 `HudToolkitTests` 3개, 전체 306/306 통과.
+  - 못 잰 것: 소문이 실제 길 선택을 바꾸는지(등급 0·3명이라 갈림길 표본 없음), 방 상세 소문 줄 화면, 첫날 튜토리얼 흐름, 화면 문구 잘림(캡처 없음).
 
 ## 2026-10-01
 
