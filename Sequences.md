@@ -40,6 +40,33 @@
   - `GameplayHudToolkitView`에서 파티 줄·기록·부채 설명 코드를 걷어 내고 새 뷰에 위임.
   - `ui-rules.md`, `DungeonEconomyDesign.md` 구현 현황 갱신.
   - 검증: Unity CLI 컴파일 실패 없음(`compilationFailed: false`, 콘솔 오류 0), `dotnet build` Runtime·EditMode.Tests 오류 0. 화면 실측은 아직.
+- static·Find 제거 1단계 A(사용자 결정: 단계적, 씬 배선은 코드 먼저 — `Docs/AI/RefactoringRoadmap.md`에 단계·배선 목록).
+  - 새 `SceneReferenceFallback`(Code.Core): 씬에 아직 연결하지 않은 참조를 찾는 유일한 통로. `Find`는 경고를 남기고, `FindForRuntimeObject`는 실행 중 생기는 Toolkit 화면용(2단계에서 주입으로 대체).
+  - `GameOverManager`: `FindAnyObjectByType<BossWavePresenter>` 삭제(`WaveManager.BossPresenter`로 해결, 없으면 게임오버 때 경고).
+  - `WaveManager`: 내부 필드를 `[SerializeField] gameOverManager`로, 비면 폴백.
+  - `MagicSaveAgent`·`MerchantSaveAgent`: 직렬화 필드 우선은 그대로, 폴백만 경고 경로로.
+  - `PlayTutorialView`: `dialogueRunner`·`merchantPanel` 직렬화 필드 추가(상인 판정은 매 프레임 `Find`하던 것을 한 번 구해 들고 있음), 습격 화면은 `WaveView.Current`, 건너뛰기 버튼은 이름으로 찾지 않고 만든 버튼을 필드로.
+  - `GameplayHudToolkitView`·`RunEndToolkitView`(실행 중 생성): `FindForRuntimeObject`.
+  - `ConsumableUse`: 물약 대상 `FindObjectsByType<Unit>` → 방 배치(`Node.UnitPlacements`, 주인공 포함)를 훑음.
+  - `Shader.Find` 5건(함정 화살선·설치 미리보기·침입 경로선) → 새 공용 재질 `Assets/Resources/Materials/RuntimeLineMaterial.mat`(URP 2D Sprite-Unlit, Unity CLI `eval_file`로 생성) + `RuntimeMaterials.LoadLine()`. `BuildingPlacementPreview`의 정적 재질 캐시도 지움.
+  - 남긴 것: 부트스트랩 4개·`UiSfxInstaller`(옛 uGUI 정리 때), `ManagementSettlementManager`(다른 세션 작업 뒤). 직접 `Find` 호출 26 → 7.
+  - `csharp-style.md`에 Find·새 static 금지 규칙 추가.
+  - 검증: Unity CLI `recompile` 완료, `dotnet build` Runtime·EditMode.Tests 오류 0. 실측 아직 — 씬 배선 전이라 플레이하면 폴백 경고가 콘솔에 뜨는 것이 정상.
+- static 제거 2단계 설계 + 시범(사용자 선택: 조립 루트 GameScope · 설계서 + 시범 하나 · 정적 레지스트리는 소유자로).
+  - `Docs/AI/GameScopeDesign.md`: 구조(씬 컴포넌트는 `GameScope` 하나를 직렬화로, 실행 중 생성물은 만드는 쪽이 넘김, 정적 함수는 인자), 정적 상태의 새 주인, 전환 규칙, 매니저 순서.
+  - 새 `GameScope`(Code.Manager, static 접근자 없음) — 지금은 `FacilityClosure` 하나.
+  - 시범 `FacilityClosureSystem`: `NodePanelView`(3곳)·`DialogueRunner`가 `[SerializeField] GameScope scope`로 받고(비면 `SceneReferenceFallback` 경고 폴백), `SituationEventFactory.Build`는 인자로 받음. 사용처가 0이 되어 `FacilityClosureSystem.Current`와 중복 검사용 `Awake`/`OnDestroy`를 지움.
+  - `RefactoringRoadmap.md` 단계·배선 목록(GameScope 오브젝트, `NodePanelView.scope`, `DialogueRunner.scope`), `csharp-style.md` 갱신.
+  - 검증: Unity CLI `recompile` 완료, `dotnet build` Runtime·EditMode.Tests 오류 0. `Current` 사용처 0(에디터 스크립트 포함).
+- static 제거 2단계 — 등급·민심·판 요약·부활 매니저(`GameScopeDesign.md` "진행" 표).
+  - `GameScope`에 `unitRevival`·`runSummary`·`dungeonGrade`·`moralePolicy` 필드와 상태 없는 `Resolve`(루트가 비면 `SceneReferenceFallback` 경고 폴백), `FieldTooltip` 상수 추가.
+  - `DungeonGradeRules.CalculateGrade()`·`GradeFromKills()`가 숨어서 읽던 `DungeonGradeManager.Current`를 없애고 처치 수를 인자로 받게 함(`DungeonGradeManager.Grade`가 자기 처치 수를 넘김). 테스트가 쓰는 `GradeFromKills(int)`는 그대로.
+  - `scope` 필드로 옮김: `WaveManager`(등급 계산·영업 시작/마감·처치 기록·판 요약), `GameOverManager`, `UnitRevivalSystem`, `DungeonGraphController`(대형 방 등급 판정), `GradeSaveAgent`·`MoraleSaveAgent`(찾는 경로만, 복원 순서·형식 그대로), `DangerPanelView`, `WaveView`, `DialogueRunner`(민심 3곳).
+  - `SituationEventFactory.Build`가 민심 관리자도 인자로 받음(상납금·일꾼 징발).
+  - `MoraleHudView`·`PolicyChoicePanelView`는 이미 가진 직렬화 필드를 씀(`MoraleHudView`는 비면 경고 폴백 — 씬 필드 하나가 비어 있음).
+  - `NodePanelView`·`DialogueRunner`의 휴업 시스템 폴백을 `GameScope.Resolve`로 통일.
+  - 네 매니저 `Current` 사용처 46 → 19. 남은 곳: 다른 세션 파일 13(`CostManager`·`HiredUnitRoster`·`ManagementSettlementManager`), `MetaRunStarter` 2(부트스트랩), HUD·운영 방침 Toolkit·`Unit` 4(실행 중 생성) — `GameScope`가 씬에 놓인 뒤 주입.
+  - 검증: Unity CLI `recompile` 완료, `dotnet build` Runtime·EditMode.Tests 오류 0. PowerShell 일괄 치환한 `WaveManager`·`DialogueRunner`는 diff로 의도한 줄만 바뀐 것 확인(한글·줄 끝 유지).
 
 ## 2026-10-01
 

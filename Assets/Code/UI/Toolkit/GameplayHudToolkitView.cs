@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Code.Audio;
+using Code.Core;
 using Code.Manager;
 using Code.MapCreateSystem;
 using Code.Persistence;
@@ -250,7 +251,7 @@ namespace Code.UI.Toolkit
         {
             _costManager = CostManager.Current;
             _dayManager = DayManager.Current;
-            _magicManager = FindAnyObjectByType<MagicManager>(FindObjectsInactive.Include);
+            _magicManager = SceneReferenceFallback.FindForRuntimeObject<MagicManager>();
             _speedController = GameSpeedController.Current;
             BindRevivalSystem();
             if (_costManager != null) _costManager.StateChanged += Refresh;
@@ -311,7 +312,9 @@ namespace Code.UI.Toolkit
         {
             _costManager ??= CostManager.Current;
             _dayManager ??= DayManager.Current;
-            _magicManager ??= FindAnyObjectByType<MagicManager>(FindObjectsInactive.Include);
+            // Unity 객체는 ??=가 파괴된 객체를 null로 보지 않는다. 명시적으로 비교한다.
+            if (_magicManager == null)
+                _magicManager = SceneReferenceFallback.FindForRuntimeObject<MagicManager>();
             _speedController ??= GameSpeedController.Current;
             BindRevivalSystem();
             RefreshEconomy();

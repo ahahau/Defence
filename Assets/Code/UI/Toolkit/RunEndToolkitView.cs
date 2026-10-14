@@ -142,7 +142,7 @@ namespace Code.UI.Toolkit
                 }
             }
 
-            var runner = Object.FindAnyObjectByType<Code.Dialogue.DialogueRunner>();
+            var runner = Code.Core.SceneReferenceFallback.FindForRuntimeObject<Code.Dialogue.DialogueRunner>();
             if (runner != null)
             {
                 foreach (var sequence in runner.ScheduledEventSequences)

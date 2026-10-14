@@ -152,7 +152,7 @@ namespace Code.Manager
         /// </summary>
         public int GetBasePreviewEnemyCount(int day)
         {
-            return DungeonGradeRules.ResolveVisitorCount(DungeonGradeRules.CalculateGrade());
+            return DungeonGradeRules.ResolveVisitorCount(CurrentGrade);
         }
 
         public bool IsBossDay(int day) => waveConfig != null && waveConfig.IsBossDay(day);
@@ -185,6 +185,20 @@ namespace Code.Manager
         private float _spawnGapJitter = 1f;
         private bool _isDestroying;
         [SerializeField] private BossWavePresenter bossPresenter;
+        [SerializeField, Tooltip("보스 패배 조건을 채우면 판을 끝낸다. 비어 있으면 씬에서 찾고 경고한다(배선 뒤 폴백 제거).")]
+        private GameOverManager gameOverManager;
+        [SerializeField, Tooltip(GameScope.FieldTooltip)] private GameScope scope;
+        private DungeonGradeManager _dungeonGrade;
+        private RunSummarySystem _runSummary;
+
+        private DungeonGradeManager DungeonGrade =>
+            _dungeonGrade != null ? _dungeonGrade : _dungeonGrade = GameScope.Resolve(scope, s => s.DungeonGrade, this, nameof(scope));
+
+        private RunSummarySystem RunSummary =>
+            _runSummary != null ? _runSummary : _runSummary = GameScope.Resolve(scope, s => s.RunSummary, this, nameof(scope));
+
+        /// <summary>지금 던전 등급. 처치 수는 등급 매니저가 기억한다.</summary>
+        private int CurrentGrade => DungeonGradeRules.CalculateGrade(DungeonGrade != null ? DungeonGrade.TotalKills : 0);
         private Enemy _bossEnemy;
         /// <summary>이 날 전용 보스 정의. 없으면 공용 보스 설정으로 떨어진다.</summary>
         private WaveConfigSO.BossEntry _currentBoss;
@@ -365,7 +379,7 @@ namespace Code.Manager
         private IEnumerator RunWave(WaveConfigSO.WaveEntry entry)
         {
             // 오늘 오는 인원은 영업 시작 시점의 등급으로 확정한다.
-            _currentGrade = DungeonGradeRules.CalculateGrade();
+            _currentGrade = CurrentGrade;
             _waveRandom = RunRandom.Create(RunRandomStream.Wave, _currentDay);
             _pacingRandom = RunRandom.Create(RunRandomStream.WavePacing, _currentDay);
 
@@ -377,7 +391,7 @@ namespace Code.Manager
             // 벌이는 막아낸 만큼이다. 하나 쓰러뜨릴 때마다 전리품이 쌓인다 —
             // 그냥 들여보내면 시설에서 쓰고 간 푼돈만 남는다.
             _currentClearGoldReward = 0;
-            DungeonGradeManager.Current?.BeginBusinessDay();
+            DungeonGrade?.BeginBusinessDay();
             _isWaveRunning = true;
             _unitConditionWearPending = true;
             _activeEnemies.Clear();
@@ -1017,7 +1031,6 @@ namespace Code.Manager
         private bool _bossTreasuryBreached;
         private int _bossUnitsDowned;
         private bool _bossDefeatRaised;
-        private GameOverManager _gameOverManager;
 
         /// <summary>오늘이 보스 날이고 보스가 살아 있으면 HUD에 적을 패배 조건 진행. 아니면 빈 문자열.</summary>
         public string BossDefeatProgressText => _isBossWave && _currentBoss != null && _bossSpawned && IsBossAlive
@@ -1104,9 +1117,9 @@ namespace Code.Manager
                 return;
 
             _bossDefeatRaised = true;
-            if (_gameOverManager == null)
-                _gameOverManager = FindAnyObjectByType<GameOverManager>();
-            _gameOverManager?.TriggerRunDefeat(reason);
+            if (gameOverManager == null)
+                gameOverManager = SceneReferenceFallback.Find<GameOverManager>(this, nameof(gameOverManager));
+            gameOverManager?.TriggerRunDefeat(reason);
         }
 
         /// <summary>엘리트·보스가 던전에 남아 있는 동안 플레이어 일시정지를 잠근다.</summary>
@@ -1260,12 +1273,12 @@ namespace Code.Manager
             if (_isDestroying || waveEventChannel == null)
                 return;
 
-            DungeonGradeManager.Current?.FinalizeBusinessDay();
+            DungeonGrade?.FinalizeBusinessDay();
             ApplyUnitConditionWear();
             // 웨이브 집계는 다음 웨이브에서 초기화되므로, 판 전체 전과는 여기서 넘겨 둔다.
-            RunSummarySystem.Current?.RecordWave(_stats.EnemyCount, _stats.KillCount, _stats.DamageDealt, _stats.DamageTaken, _stats.CriticalHitCount);
+            RunSummary?.RecordWave(_stats.EnemyCount, _stats.KillCount, _stats.DamageDealt, _stats.DamageTaken, _stats.CriticalHitCount);
             // 판이 끝나도 남는 기록은 이어하기를 거쳐도 쌓이도록 메타 프로필에 바로 적는다.
-            MetaProfileStore.RecordWaveEnd(_stats.KillCount, DungeonGradeRules.CalculateGrade());
+            MetaProfileStore.RecordWaveEnd(_stats.KillCount, CurrentGrade);
             GameSfxPlayer.Play(GameSfxCue.WaveClear);
             // 웨이브가 끝나면 다시 짓고 배치하는 시간으로 돌아간다.
             GameMusicPlayer.Play(MusicCue.Management);
@@ -1304,7 +1317,7 @@ namespace Code.Manager
 
         private void ResetWaveResults(int enemyCount)
         {
-            DungeonGradeManager.Current?.BeginBusinessDay();
+            DungeonGrade?.BeginBusinessDay();
             _stats.Reset(enemyCount);
         }
 
@@ -1322,7 +1335,7 @@ namespace Code.Manager
             // 벌이와 난이도가 같은 행동에서 나온다 — 잘 막을수록 더 센 자들이 찾아온다.
             var level = enemy != null ? enemy.Level : 1;
             _currentClearGoldReward += DungeonGradeRules.ResolveBounty(level);
-            DungeonGradeManager.Current?.RecordKill();
+            DungeonGrade?.RecordKill();
         }
 
         private void HandleAnyDamage(Health damagedHealth, int damage, bool isCritical)

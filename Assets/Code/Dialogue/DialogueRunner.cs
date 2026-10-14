@@ -68,6 +68,10 @@ namespace Code.Dialogue
         [SerializeField] private UnitDeployPanelView unitDeployPanelView;
         [SerializeField] private WaveView waveView;
         [SerializeField] private ManagementSettlementManager managementSettlementManager;
+        [Header("Scope")]
+        [SerializeField, Tooltip(GameScope.FieldTooltip)] private GameScope scope;
+        private FacilityClosureSystem _closure;
+        private MoralePolicyManager _moralePolicy;
         private bool hasSeenPolicyChoicePanel;
 
         public event Action<DialogueSequenceSO> DialogueStarted;
@@ -265,7 +269,7 @@ namespace Code.Dialogue
 
             // 한 전환에는 사건 하나만. 청산 위기 → 운영 방침 → 상황 사건 → 일반 사건 순이고,
             // 일반·상황 사건 뒤에는 4~6회 쉰다. 사건 관리자가 없으면(테스트 씬 등) 예전처럼 일정 간격으로 띄운다.
-            var events = MoralePolicyManager.Current;
+            var events = MoralePolicy;
             if (events != null)
             {
                 var kind = events.ResolveTransitionEvent(day);
@@ -827,7 +831,7 @@ namespace Code.Dialogue
             }
 
             if (_playingNormalEvent && sequence != null)
-                MoralePolicyManager.Current?.Events.MarkChosen(
+                MoralePolicy?.Events.MarkChosen(
                     RunEventLedger.DialogueChoiceKey(sequence.name, lineIndex, choiceIndex));
 
             ChoiceSelected?.Invoke(sequence, lineIndex, choice);
@@ -924,6 +928,14 @@ namespace Code.Dialogue
             }
         }
 
+        /// <summary>휴업·수리 시스템. 조립 루트에서 받는다.</summary>
+        private FacilityClosureSystem ResolveClosure() =>
+            _closure != null ? _closure : _closure = GameScope.Resolve(scope, s => s.FacilityClosure, this, nameof(scope));
+
+        /// <summary>민심·운영 방침과 사건 순서를 맡는 관리자. 조립 루트에서 받는다.</summary>
+        private MoralePolicyManager MoralePolicy =>
+            _moralePolicy != null ? _moralePolicy : _moralePolicy = GameScope.Resolve(scope, s => s.MoralePolicy, this, nameof(scope));
+
         private void TryPlayPendingScheduledEvent()
         {
             if (!playScheduledEvents || IsPlaying)
@@ -934,7 +946,7 @@ namespace Code.Dialogue
             {
                 var situation = _pendingSituation;
                 _pendingSituation = SituationKind.None;
-                var built = SituationEventFactory.Build(situation, costEventChannel);
+                var built = SituationEventFactory.Build(situation, costEventChannel, ResolveClosure(), MoralePolicy);
                 if (built != null)
                 {
                     SuspendForEvent();
@@ -984,7 +996,7 @@ namespace Code.Dialogue
             if (!_playingNormalEvent || !data.HasChoices || sequence == null)
                 return data;
 
-            var events = MoralePolicyManager.Current?.Events;
+            var events = MoralePolicy?.Events;
             var choices = new DialogueChoice[data.ChoiceCount + 1];
             for (var i = 0; i < data.ChoiceCount; i++)
             {

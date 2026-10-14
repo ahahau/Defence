@@ -41,6 +41,7 @@ namespace Code.UI
         [SerializeField] private Button startButton;
         [SerializeField] private DayManager dayManager;
         [SerializeField] private WaveManager waveManager;
+        [SerializeField, Tooltip(GameScope.FieldTooltip)] private GameScope scope;
         [SerializeField] private GameEventChannelSO nodeEventChannel;
         [SerializeField] private GameEventChannelSO gameStateEventChannel;
         [SerializeField] private bool handleStartButtonClick = true;
@@ -446,11 +447,14 @@ namespace Code.UI
         /// 등급이 인원과 모험가의 강함을 모두 정하므로, 숫자만 보여주면 왜 갑자기 힘들어졌는지
         /// 알 수 없다. 금고에 쌓은 돈 때문인지 시설을 늘린 탓인지가 함께 읽혀야 한다.
         /// </summary>
-        private static string BuildGradeLine()
+        private string BuildGradeLine()
         {
+            if (_dungeonGrade == null)
+                _dungeonGrade = GameScope.Resolve(scope, s => s.DungeonGrade, this, nameof(scope));
+
             var fromGold = DungeonGradeRules.GradeFromStoredGold();
             var fromFacilities = DungeonGradeRules.GradeFromBuildings();
-            var fromKills = DungeonGradeRules.GradeFromKills();
+            var fromKills = DungeonGradeRules.GradeFromKills(_dungeonGrade != null ? _dungeonGrade.TotalKills : 0);
             var total = fromGold + fromFacilities + fromKills;
             if (total <= 0)
                 return "<color=#9FB0C0>등급 0 · 아직 아무도 모르는 굴입니다</color>\n";
@@ -458,6 +462,8 @@ namespace Code.UI
             return $"<color=#FFCC66>던전 등급 {total} ({DungeonGradeRules.GetGradeLabel(total)})</color>"
                    + $" <size=85%>(처치 {fromKills} · 금고 {fromGold} · 건물 {fromFacilities})</size>\n";
         }
+
+        private DungeonGradeManager _dungeonGrade;
 
         private void HidePreparationHud()
         {

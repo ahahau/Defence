@@ -46,7 +46,6 @@ namespace Code.MapCreateSystem
         private const float GridLineWidth = 0.035f;
 
         private static Sprite _squareSprite;
-        private static Material _lineMaterial;
 
         /// <summary>배치 모드 시작. 이미 열려 있던 미리보기는 취소된다.</summary>
         public static void Begin(NodeTrapGrid grid, BuildingDataSO buildingData, Action<int, int> onConfirm, Action onCancel)
@@ -229,31 +228,15 @@ namespace Code.MapCreateSystem
             line.SetPosition(1, end);
             line.startWidth = GridLineWidth;
             line.endWidth = GridLineWidth;
-            line.material = GetLineMaterial();
+            line.sharedMaterial = GetLineMaterial();
             line.startColor = GridLineColor;
             line.endColor = GridLineColor;
             line.sortingOrder = MarkerSortingOrder;
         }
 
-        private static Material GetLineMaterial()
-        {
-            if (_lineMaterial != null)
-                return _lineMaterial;
-
-            // Unity 6에는 Default-Line.mat 내장 리소스가 없다. 이를 요청하면 작은 칸
-            // 설치 미리보기마다 재질 오류가 쌓이므로, 현재 렌더 파이프라인의 스프라이트
-            // 셰이더로 런타임 전용 라인 재질을 만든다.
-            var shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default")
-                         ?? Shader.Find("Sprites/Default")
-                         ?? Shader.Find("Unlit/Color");
-            if (shader != null)
-                _lineMaterial = new Material(shader)
-                {
-                    hideFlags = HideFlags.HideAndDontSave
-                };
-
-            return _lineMaterial;
-        }
+        // Unity 6에는 Default-Line.mat 내장 리소스가 없다. 이를 요청하면 작은 칸
+        // 설치 미리보기마다 재질 오류가 쌓이므로 공용 선 재질 에셋을 쓴다.
+        private static Material GetLineMaterial() => Code.Core.RuntimeMaterials.LoadLine();
 
         private void BuildGhost(BuildingDataSO buildingData)
         {
@@ -308,7 +291,7 @@ namespace Code.MapCreateSystem
             _hoverOutline.positionCount = 4;
             _hoverOutline.startWidth = 0.055f;
             _hoverOutline.endWidth = 0.055f;
-            _hoverOutline.material = GetLineMaterial();
+            _hoverOutline.sharedMaterial = GetLineMaterial();
             _hoverOutline.startColor = HoverOutlineColor;
             _hoverOutline.endColor = HoverOutlineColor;
             _hoverOutline.sortingOrder = MarkerSortingOrder + 3;

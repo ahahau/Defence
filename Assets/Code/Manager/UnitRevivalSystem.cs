@@ -46,6 +46,9 @@ namespace Code.Manager
         [SerializeField, Min(0.1f), Tooltip("쓰러진 부하를 찾는 주기(초). 매 프레임 뒤질 이유가 없다.")]
         private float scanInterval = 0.5f;
 
+        [SerializeField, Tooltip(GameScope.FieldTooltip)] private GameScope scope;
+        private DungeonGradeManager _dungeonGrade;
+
         /// <summary>되살리기를 기다리는 부하와 남은 시간.</summary>
         private readonly Dictionary<Unit, float> _pending = new();
 
@@ -244,7 +247,15 @@ namespace Code.Manager
             return true;
         }
 
-        private int DungeonGrade => DungeonGradeManager.Current != null ? DungeonGradeManager.Current.Grade : 0;
+        private int DungeonGrade
+        {
+            get
+            {
+                if (_dungeonGrade == null)
+                    _dungeonGrade = GameScope.Resolve(scope, s => s.DungeonGrade, this, nameof(scope));
+                return _dungeonGrade != null ? _dungeonGrade.Grade : 0;
+            }
+        }
 
         private void RaiseStateChanged()
         {

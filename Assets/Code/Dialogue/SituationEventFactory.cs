@@ -19,7 +19,10 @@ namespace Code.Dialogue
         private const string ShortOfGold = " · 금화 부족";
         private const string SequenceNamePrefix = "Situation_";
 
-        public static DialogueSequenceSO Build(SituationKind kind, GameEventChannelSO costChannel)
+        /// <param name="closure">멈춘 시설 사건의 수리를 맡는 시스템. 부르는 쪽이 조립 루트에서 받아 넘긴다.</param>
+        /// <param name="morale">민심을 깎는 선택지가 쓰는 관리자. 없으면 민심 변화 없이 진행한다.</param>
+        public static DialogueSequenceSO Build(
+            SituationKind kind, GameEventChannelSO costChannel, FacilityClosureSystem closure, MoralePolicyManager morale)
         {
             var cost = CostManager.Current;
             if (cost == null)
@@ -27,9 +30,9 @@ namespace Code.Dialogue
 
             return kind switch
             {
-                SituationKind.SettlementCrisis => BuildSettlementCrisis(cost, costChannel),
+                SituationKind.SettlementCrisis => BuildSettlementCrisis(cost, costChannel, morale),
                 SituationKind.CreditDanger => BuildCreditDanger(cost, costChannel),
-                SituationKind.BrokenFacilities => BuildBrokenFacilities(cost),
+                SituationKind.BrokenFacilities => BuildBrokenFacilities(cost, closure, morale),
                 _ => null
             };
         }
@@ -63,7 +66,8 @@ namespace Code.Dialogue
             DestroyObject(sequence);
         }
 
-        private static DialogueSequenceSO BuildSettlementCrisis(CostManager cost, GameEventChannelSO costChannel)
+        private static DialogueSequenceSO BuildSettlementCrisis(
+            CostManager cost, GameEventChannelSO costChannel, MoralePolicyManager morale)
         {
             var gold = cost.CurrentGold;
             var due = cost.WeeklyDue;
@@ -90,7 +94,8 @@ namespace Code.Dialogue
                     RuntimeDialogueActionSO.Create(() =>
                     {
                         EarnGold(cost, costChannel, tribute);
-                        MoralePolicyManager.Current?.ApplyBonusMorale(-moralePenalty, "상납금");
+                        if (morale != null)
+                            morale.ApplyBonusMorale(-moralePenalty, "상납금");
                     })),
                 new DialogueChoice("내일 벌이를 믿고 버틴다", "변화 없음 · 못 채우면 파산", false));
         }
@@ -139,9 +144,9 @@ namespace Code.Dialogue
                 new DialogueChoice("그냥 버틴다", "변화 없음", false));
         }
 
-        private static DialogueSequenceSO BuildBrokenFacilities(CostManager cost)
+        private static DialogueSequenceSO BuildBrokenFacilities(
+            CostManager cost, FacilityClosureSystem closure, MoralePolicyManager morale)
         {
-            var closure = FacilityClosureSystem.Current;
             var gold = cost.CurrentGold;
             var count = FacilityEconomyRules.CountWornOutFacilities();
             var normal = FacilityClosureSystem.WornOutRepairCost(1f);
@@ -165,8 +170,8 @@ namespace Code.Dialogue
                     closure == null || gold < conscript,
                     RuntimeDialogueActionSO.Create(() =>
                     {
-                        if (closure.RepairWornOutNow(SituationEventRules.ConscriptRepairCostRate, out _) > 0)
-                            MoralePolicyManager.Current?.ApplyBonusMorale(-moralePenalty, "일꾼 징발");
+                        if (closure.RepairWornOutNow(SituationEventRules.ConscriptRepairCostRate, out _) > 0 && morale != null)
+                            morale.ApplyBonusMorale(-moralePenalty, "일꾼 징발");
                     })),
                 new DialogueChoice("그냥 둔다", "변화 없음 · 방에서 하나씩 고칠 수 있음", false));
         }

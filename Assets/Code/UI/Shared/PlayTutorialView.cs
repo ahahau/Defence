@@ -1,4 +1,5 @@
 using Code.Buildings;
+using Code.Core;
 using Code.Manager;
 using Code.Dialogue;
 using Code.MapCreateSystem;
@@ -113,6 +114,10 @@ namespace Code.UI
 
         [SerializeField, Tooltip("마지막 칸에서 겨눌 습격 시작 버튼을 들고 있는 화면.")]
         private WaveView waveView;
+        [SerializeField, Tooltip("대화가 도는 동안 안내를 멈춘다. 비어 있으면 찾으며 경고한다(배선 뒤 폴백 제거).")]
+        private DialogueRunner dialogueRunner;
+        [SerializeField, Tooltip("상인 수업이 비출 상인 창. 비어 있으면 찾으며 경고한다(배선 뒤 폴백 제거).")]
+        private MerchantPanelView merchantPanel;
         [SerializeField, Min(0.1f), Tooltip("방 하나를 덮을 월드 반지름. 구멍 크기를 재는 기준.")]
         private float spotlightWorldRadius = 2.4f;
 
@@ -166,6 +171,7 @@ namespace Code.UI
         private CanvasGroup _hintGroup;
         private bool _waitingForDialogue;
         private DialogueRunner _dialogue;
+        private UnityEngine.UI.Button _skipButton;
 
         public void SkipTutorial()
         {
@@ -180,7 +186,9 @@ namespace Code.UI
             _hasHole = false;
             _cameraTargetNode = null;
             ConfigureHint();
-            _dialogue = FindAnyObjectByType<DialogueRunner>();
+            if (dialogueRunner == null)
+                dialogueRunner = SceneReferenceFallback.Find<DialogueRunner>(this, nameof(dialogueRunner));
+            _dialogue = dialogueRunner;
             var camera = Camera.main;
             if (camera != null)
                 _moveStartPosition = camera.transform.position;
@@ -429,8 +437,9 @@ namespace Code.UI
         /// </summary>
         private WaveView ResolveWaveView()
         {
+            // 습격 화면은 스스로 Current에 올라온다. 씬을 훑지 않고 그것을 쓴다.
             if (waveView == null)
-                waveView = FindAnyObjectByType<WaveView>();
+                waveView = WaveView.Current;
 
             return waveView;
         }
@@ -942,22 +951,30 @@ namespace Code.UI
 
         private static int CurrentDay => DayManager.Current != null ? DayManager.Current.CurrentDay : 1;
 
-        private static bool MerchantOpened
+        private bool MerchantOpened
         {
             get
             {
-                var merchant = FindAnyObjectByType<MerchantPanelView>();
+                var merchant = ResolveMerchant();
                 return merchant != null && merchant.IsPanelOpen;
             }
         }
 
-        private static RectTransform MerchantButton
+        private RectTransform MerchantButton
         {
             get
             {
-                var merchant = FindAnyObjectByType<MerchantPanelView>();
+                var merchant = ResolveMerchant();
                 return merchant != null ? merchant.OpenButtonRect : null;
             }
+        }
+
+        // 매 프레임 판정이 부르므로 한 번 구하면 들고 있는다.
+        private MerchantPanelView ResolveMerchant()
+        {
+            if (merchantPanel == null)
+                merchantPanel = SceneReferenceFallback.Find<MerchantPanelView>(this, nameof(merchantPanel));
+            return merchantPanel;
         }
 
         /// <summary>
@@ -1054,14 +1071,15 @@ namespace Code.UI
             hintText.rectTransform.anchorMax = Vector2.one;
             hintText.rectTransform.offsetMin = new Vector2(8f, 4f);
             hintText.rectTransform.offsetMax = new Vector2(-126f, -4f);
-            if (target.transform.Find("Skip Tutorial") == null)
+            // 이름으로 자식을 찾지 않고 만든 버튼을 들고 있는다.
+            if (_skipButton == null)
             {
                 var prefab = Resources.Load<UnityEngine.UI.Button>("UI/TutorialSkipButton");
                 if (prefab != null)
                 {
-                    var button = Instantiate(prefab, target.transform, false);
-                    button.gameObject.name = "Skip Tutorial";
-                    button.onClick.AddListener(SkipTutorial);
+                    _skipButton = Instantiate(prefab, target.transform, false);
+                    _skipButton.gameObject.name = "Skip Tutorial";
+                    _skipButton.onClick.AddListener(SkipTutorial);
                 }
                 else
                     Debug.LogError("Missing UI prefab: UI/TutorialSkipButton", this);

@@ -15,6 +15,12 @@ paths:
 
 ## 성능·설계
 - `Update()`/`FixedUpdate()` 안에서 `GetComponent`/`Find`를 호출하지 않는다. `Awake()`에서 캐싱한다.
+- `FindAnyObjectByType`·`FindObjectsByType`·`GameObject.Find`·`transform.Find("이름")`·`Shader.Find`를 새로 쓰지 않는다(static·Find 제거 작업 중, `Docs/AI/RefactoringRoadmap.md`).
+  - 씬 객체는 `[SerializeField]`로 받는다. 씬을 아직 배선하지 못했으면 `SceneReferenceFallback.Find`(경고를 남김)만 쓴다. 실행 중에 생기는 Toolkit 화면은 `FindForRuntimeObject`(2단계에서 주입으로 대체).
+  - 코드가 그리는 선의 재질은 `RuntimeMaterials.LoadLine()`(공용 에셋 `Resources/Materials/RuntimeLineMaterial`).
+  - 만든 자식은 이름으로 다시 찾지 말고 필드로 들고 있는다.
+- 새 정적 가변 상태(`static` 필드에 담는 장부·목록·캐시)와 새 `Current` 싱글턴을 만들지 않는다. 상태 없는 규칙 함수(`static class ...Rules`)는 그대로 쓴다.
+  - 매니저는 조립 루트 `GameScope`로 받는다(`Docs/AI/GameScopeDesign.md`). 씬 컴포넌트는 `[SerializeField] GameScope scope`, 실행 중 생성물은 만드는 쪽이 넘기고, 정적 함수는 인자로 받는다. 씬 컴포넌트는 `GameScope.Resolve(scope, s => s.X, this, nameof(scope))`로 받아 필드에 들고 있는다. `GameScope`에 있는 매니저(`FacilityClosureSystem`·`UnitRevivalSystem`·`RunSummarySystem`·`DungeonGradeManager`·`MoralePolicyManager`)의 `Current`를 새로 쓰지 않는다. `FacilityClosureSystem`은 `Current`가 없다.
 - 매 프레임 class를 `new`로 할당하지 않는다. 꼭 필요하면 사전 승인을 받는다.
 - 한 파일에 public class 하나. 예외: `Code/Events/*Events.cs`는 기능별 이벤트 타입을 한 파일에 모은다. God class 금지. 서로 다른 시스템 간 결합은 인터페이스나 이벤트 채널로 한다.
 

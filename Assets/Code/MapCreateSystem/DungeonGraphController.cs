@@ -69,6 +69,9 @@ namespace Code.MapCreateSystem
         [SerializeField, Min(0f), Tooltip("방 하나를 확장하는 공사 시간(게임 시간 초). 공사 중인 방은 막힌 길이다.")]
         private float roomConstructionSeconds = 4f;
 
+        [SerializeField, Tooltip(GameScope.FieldTooltip)] private GameScope scope;
+        private DungeonGradeManager _dungeonGrade;
+
         [SerializeField, Range(0f, 1f), Tooltip("공사를 취소할 때 돌려받는 비율(실제로 낸 금화 기준).")]
         private float constructionCancelRefundRate = 0.5f;
 
@@ -724,7 +727,15 @@ namespace Code.MapCreateSystem
             return costManager != null ? costManager.GetDiscountedBuildCost(baseCost) : baseCost;
         }
 
-        private static int CurrentDungeonGrade => DungeonGradeManager.Current != null ? DungeonGradeManager.Current.Grade : 0;
+        private int CurrentDungeonGrade
+        {
+            get
+            {
+                if (_dungeonGrade == null)
+                    _dungeonGrade = GameScope.Resolve(scope, s => s.DungeonGrade, this, nameof(scope));
+                return _dungeonGrade != null ? _dungeonGrade.Grade : 0;
+            }
+        }
 
         private Vector2Int[] ResolveBuildCandidateOffsets(DungeonNode node)
         {

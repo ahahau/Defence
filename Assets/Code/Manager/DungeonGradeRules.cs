@@ -42,10 +42,10 @@ namespace Code.Manager
         /// <summary>모험가의 숙련 단계 한 칸마다 늘어나는 전리품.</summary>
         public const int BountyPerLevel = 4;
 
-        /// <summary>지금 던전의 등급.</summary>
-        public static int CalculateGrade()
+        /// <summary>지금 던전의 등급. 처치 수는 그것을 기억하는 <see cref="DungeonGradeManager"/>가 넘긴다.</summary>
+        public static int CalculateGrade(int totalKills)
         {
-            return GradeFromStoredGold() + GradeFromBuildings() + GradeFromKills();
+            return GradeFromStoredGold() + GradeFromBuildings() + GradeFromKills(totalKills);
         }
 
         /// <summary>금고에 쌓인 금화가 만드는 등급. 운영 자금은 밖에서 보이지 않으니 세지 않는다.</summary>
@@ -88,13 +88,6 @@ namespace Code.Manager
         }
 
         /// <summary>여기서 죽어 나간 모험가가 만드는 등급. 위험하다는 소문이 사람을 부른다.</summary>
-        public static int GradeFromKills()
-        {
-            var kills = DungeonGradeManager.Current != null ? DungeonGradeManager.Current.TotalKills : 0;
-            return GradeFromKills(kills);
-        }
-
-        /// <summary>계산만. 화면과 테스트가 같은 식을 쓰도록 나눠 둔다.</summary>
         public static int GradeFromKills(int totalKills) =>
             Mathf.Max(0, totalKills) / KillsPerGradePoint;
 

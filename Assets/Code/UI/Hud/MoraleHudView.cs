@@ -118,9 +118,12 @@ namespace Code.UI
         /// <summary>
         /// 민심이 지금 무엇을 하고 있는지. 숫자만 띄우면 올릴 이유도 내릴 이유도 보이지 않는다.
         /// </summary>
-        private static string BuildEffectText()
+        private string BuildEffectText()
         {
-            var morale = Code.Manager.MoralePolicyManager.Current;
+            // 이미 인스펙터로 받은 관리자를 쓴다. 비어 있으면 경고하고 찾는다(배선 뒤 폴백 제거).
+            if (moralePolicyManager == null)
+                moralePolicyManager = Code.Core.SceneReferenceFallback.Find<MoralePolicyManager>(this, nameof(moralePolicyManager));
+            var morale = moralePolicyManager;
             if (morale == null)
                 return string.Empty;
 

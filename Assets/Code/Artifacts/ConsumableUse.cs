@@ -1,3 +1,4 @@
+using Code.MapCreateSystem;
 using Code.Units;
 using UnityEngine;
 
@@ -19,28 +20,41 @@ namespace Code.Artifacts
                 return 0;
 
             var healed = 0;
-            foreach (var unit in Object.FindObjectsByType<Unit>(FindObjectsInactive.Include))
+            // 살아 있는 유닛은 모두 방에 서 있다(주인공 포함). 씬 전체를 훑지 않고 방 배치만 본다.
+            foreach (var node in Node.ActiveNodes)
             {
-                if (unit == null || !consumable.AppliesTo(unit))
+                if (node == null)
                     continue;
 
-                var health = unit.Health;
-                if (health == null)
-                    continue;
-
-                // 쓰러진 유닛은 물약으로 일으키지 않는다. 부활은 명시적인 회복 수단만 할 수 있다.
-                if (!health.IsAlive)
-                    continue;
-
-                var amount = Mathf.CeilToInt(health.MaxHealth * consumable.HealRatio);
-                if (amount <= 0 || health.CurrentHealth >= health.MaxHealth)
-                    continue;
-
-                health.Heal(amount);
-                healed++;
+                foreach (var placement in node.UnitPlacements)
+                {
+                    if (TryHeal(placement?.Instance, consumable))
+                        healed++;
+                }
             }
 
             return healed;
+        }
+
+        private static bool TryHeal(Unit unit, ArtifactDataSO consumable)
+        {
+            if (unit == null || !consumable.AppliesTo(unit))
+                return false;
+
+            var health = unit.Health;
+            if (health == null)
+                return false;
+
+            // 쓰러진 유닛은 물약으로 일으키지 않는다. 부활은 명시적인 회복 수단만 할 수 있다.
+            if (!health.IsAlive)
+                return false;
+
+            var amount = Mathf.CeilToInt(health.MaxHealth * consumable.HealRatio);
+            if (amount <= 0 || health.CurrentHealth >= health.MaxHealth)
+                return false;
+
+            health.Heal(amount);
+            return true;
         }
     }
 }

@@ -14,6 +14,7 @@ namespace Code.Manager
         [SerializeField] private BossWavePresenter bossWavePresenter;
         [SerializeField] private GameSpeedController gameSpeedController;
         [SerializeField] private bool pauseOnGameOver = true;
+        [SerializeField, Tooltip(GameScope.FieldTooltip)] private GameScope scope;
 
         public bool IsGameOver { get; private set; }
 
@@ -62,9 +63,10 @@ namespace Code.Manager
             IsGameOver = true;
             ResolveDependencies();
             // 끝없는 판에서 패배가 곧 엔딩이다. 결과 화면이 읽기 전에 메타 진행을 정산한다.
+            var dungeonGrade = GameScope.Resolve(scope, s => s.DungeonGrade, this, nameof(scope));
             Code.Progression.MetaProfileStore.RecordRunEnd(
                 DayManager.Current != null ? DayManager.Current.CurrentDay : 0,
-                DungeonGradeManager.Current != null ? DungeonGradeManager.Current.Grade : 0);
+                dungeonGrade != null ? dungeonGrade.Grade : 0);
             waveManager?.StopForRunEnd();
             gameStateEventChannel.RaiseEvent(new GameOverEvent(mainUnit));
 
@@ -83,7 +85,7 @@ namespace Code.Manager
 
         /// <summary>
         /// 씬에서 연결이 빠져 있어도 패배 화면이 뜨게 한다. 연결이 비면 시간만 멈추고 화면이 없어
-        /// 파산·메인 유닛 사망이 그냥 멈춘 게임처럼 보였다. 게임오버 순간에만 찾으므로 비용은 한 번이다.
+        /// 파산·메인 유닛 사망이 그냥 멈춘 게임처럼 보였다. 패배 화면은 웨이브 매니저가 들고 있는 것을 쓴다.
         /// </summary>
         private void ResolveDependencies()
         {
@@ -91,8 +93,8 @@ namespace Code.Manager
                 waveManager = WaveManager.Current;
             if (bossWavePresenter == null && waveManager != null)
                 bossWavePresenter = waveManager.BossPresenter;
-            if (bossWavePresenter == null)
-                bossWavePresenter = FindAnyObjectByType<BossWavePresenter>();
+            if (bossWavePresenter == null && IsGameOver)
+                Debug.LogWarning($"{nameof(GameOverManager)}: 패배 화면({nameof(BossWavePresenter)})이 연결되지 않아 시간만 멈춥니다.", this);
             if (gameSpeedController == null)
                 gameSpeedController = GameSpeedController.Current;
         }

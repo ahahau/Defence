@@ -311,7 +311,7 @@ namespace Code.Buildings
                 var arrow = new GameObject("ArrowTrail");
                 arrow.transform.SetParent(transform, false);
                 _arrowLine = arrow.AddComponent<LineRenderer>();
-                _arrowLine.material = new Material(Shader.Find("Sprites/Default"));
+                _arrowLine.sharedMaterial = Code.Core.RuntimeMaterials.LoadLine();
                 _arrowLine.startWidth = 0.06f;
                 _arrowLine.endWidth = 0.03f;
                 _arrowLine.startColor = new Color(0.95f, 0.85f, 0.55f, 0.9f);

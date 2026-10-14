@@ -11,7 +11,9 @@ namespace Code.UI
     {
         [SerializeField] private GameObject panelRoot;
         [SerializeField] private TMP_Text totalDangerText;
+        [SerializeField, Tooltip(GameScope.FieldTooltip)] private GameScope scope;
 
+        private DungeonGradeManager _dungeonGrade;
         private int _lastTotalDanger = -1;
         private int _lastGrade = -1;
         private int _lastKills = -1;
@@ -86,8 +88,10 @@ namespace Code.UI
                 buildingDanger += DangerOf(edge != null ? edge.InstalledBuilding : null);
 
             var totalDanger = unitDanger + buildingDanger + deedDanger;
-            var grade = DungeonGradeRules.CalculateGrade();
-            var kills = DungeonGradeManager.Current != null ? DungeonGradeManager.Current.TotalKills : 0;
+            if (_dungeonGrade == null)
+                _dungeonGrade = GameScope.Resolve(scope, s => s.DungeonGrade, this, nameof(scope));
+            var kills = _dungeonGrade != null ? _dungeonGrade.TotalKills : 0;
+            var grade = DungeonGradeRules.CalculateGrade(kills);
             if (totalDanger == _lastTotalDanger && grade == _lastGrade && kills == _lastKills)
                 return;
 

@@ -14,34 +14,15 @@ namespace Code.Manager
     /// 닫는 것은 공짜지만 여는 데 금화와 날이 들어, 힘들 때마다 전부 닫아 두는 것이
     /// 정답이 되지는 않는다. 닫아 둔 동안은 벌이도 운영비도 소문도 없다.
     /// </summary>
+    /// <remarks>static 접근자는 없다. 쓰는 쪽은 <see cref="GameScope.FacilityClosure"/>로 받는다.</remarks>
     public class FacilityClosureSystem : MonoBehaviour
     {
-        public static FacilityClosureSystem Current { get; private set; }
-
         [SerializeField] private GameEventChannelSO dayEventChannel;
         [SerializeField] private GameEventChannelSO costEventChannel;
 
         /// <summary>날이 바뀔 때 다시 열린 시설을 모아 두는 임시 목록. 매번 새로 만들지 않는다.</summary>
         private readonly List<Building> _reopened = new();
         private readonly List<Building> _repairing = new();
-
-        private void Awake()
-        {
-            if (Current != null && Current != this)
-            {
-                Debug.LogError($"Duplicate {nameof(FacilityClosureSystem)} detected. Keep exactly one scene instance.", this);
-                enabled = false;
-                return;
-            }
-
-            Current = this;
-        }
-
-        private void OnDestroy()
-        {
-            if (Current == this)
-                Current = null;
-        }
 
         private void OnEnable() => dayEventChannel?.AddListener<DayChangedEvent>(HandleDayChanged);
 

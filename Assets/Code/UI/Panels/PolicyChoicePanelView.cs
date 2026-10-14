@@ -156,8 +156,9 @@ namespace Code.UI
                 var policy = currentChoices[i];
                 SetText(policyNameTexts, i, policy.DisplayName);
                 // 조합은 고르는 순간에 보여야 선택이 된다. 짝이 이미 돌고 있으면 그 사실도 함께.
-                var comboHint = MoralePolicyManager.Current != null
-                    ? MoralePolicyManager.Current.DescribeCombosFor(policy)
+                // 인스펙터로 받은 관리자를 쓴다(옛 uGUI 창이라 실행 중에는 꺼져 있다).
+                var comboHint = moralePolicyManager != null
+                    ? moralePolicyManager.DescribeCombosFor(policy)
                     : string.Empty;
                 SetText(policyDescriptionTexts, i, $"{policy.Description}\n\n{BuildEffectSummary(policy)}"
                     + (string.IsNullOrEmpty(comboHint) ? string.Empty : $"\n{comboHint}"));

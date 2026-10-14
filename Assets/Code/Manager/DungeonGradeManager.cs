@@ -19,7 +19,7 @@ namespace Code.Manager
         public int TotalKills => Mathf.Max(0, totalKills);
 
         /// <summary>지금 등급. 처치·금고·건물을 합친 값이다.</summary>
-        public int Grade => DungeonGradeRules.CalculateGrade();
+        public int Grade => DungeonGradeRules.CalculateGrade(TotalKills);
 
         /// <summary>등급을 한 낱말로.</summary>
         public string GradeLabel => DungeonGradeRules.GetGradeLabel(Grade);

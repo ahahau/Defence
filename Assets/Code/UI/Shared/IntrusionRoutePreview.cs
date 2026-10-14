@@ -150,8 +150,7 @@ namespace Code.UI
             line.endColor = routeColor;
             line.sortingOrder = sortingOrder;
             line.textureMode = LineTextureMode.Tile;
-            // 런타임에서 만들어 쓰는 단순 언릿 재질. 프리팹에 재질을 물려 둘 필요가 없다.
-            line.material = new Material(Shader.Find("Sprites/Default"));
+            line.sharedMaterial = RuntimeMaterials.LoadLine();
             return line;
         }
 

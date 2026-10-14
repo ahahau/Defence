@@ -1,5 +1,32 @@
 # 단계적 리팩터링 기록
 
+## static·Find 제거 (2026-10-14~)
+
+사용자 결정: 단계적으로, 씬 배선은 코드 먼저(다른 세션이 SampleScene을 고치는 중). 상태 없는 규칙 함수(`static class ...Rules`, 65개)는 남긴다.
+
+| 단계 | 내용 | 상태 |
+|---|---|---|
+| 1A | `Find` 제거. 씬 객체는 `[SerializeField]`, 비면 `SceneReferenceFallback.Find`(경고). `Shader.Find`는 공용 재질 에셋(`RuntimeMaterials`). 이름으로 자식 찾기는 필드로 | 코드 완료 |
+| 1A-배선 | 아래 필드를 SampleScene에 연결하고 `SceneReferenceFallback.Find` 호출을 지운다 | 다른 세션 씬 커밋 대기 |
+| 1A-남김 | 부트스트랩 4개·`UiSfxInstaller`의 `FindObjectsByType`(옛 uGUI 숨김·캔버스 효과음) — 옛 uGUI를 씬에서 지울 때 함께 제거. `ManagementSettlementManager`의 `transform.Find("ProgressDivider")` — 다른 세션 작업 뒤 | 보류 |
+| 2 | 씬 조립 루트 `GameScope`를 두고 `Current` 싱글턴 25개(사용처 271곳)·정적 가변 상태(장부·점유표·레지스트리)를 주입으로 바꾼다. 실행 중 생기는 Toolkit 화면(`FindForRuntimeObject`)도 이때 주입. 설계 `Docs/AI/GameScopeDesign.md` | `FacilityClosureSystem` 완료(`Current` 삭제). 등급·민심·판 요약·부활: 옮길 수 있는 사용처 완료(46 → 19곳), 나머지는 다른 세션 파일·부트스트랩·실행 중 생성물 대기 — `GameScopeDesign.md` "진행" |
+
+1A-배선 목록(SampleScene, Unity CLI로):
+- `WaveManager.gameOverManager` → GameOverManager
+- `MagicSaveAgent.magicManager` → MagicManager
+- `MerchantSaveAgent.merchant` → MerchantPanelView, `.artifacts` → ArtifactEffectController
+- `PlayTutorialView.dialogueRunner` → DialogueRunner, `.merchantPanel` → MerchantPanelView
+- (선택) `GameOverManager.bossWavePresenter` → BossWavePresenter. 비어 있어도 `WaveManager.BossPresenter`로 해결된다.
+- 새 GameObject `GameScope`(컴포넌트 `Code.Manager.GameScope`)를 씬에 두고 `facilityClosure`·`unitRevival`·`runSummary`·`dungeonGrade`·`moralePolicy` → 각 매니저
+- `scope` 필드 → GameScope: `NodePanelView`, `DialogueRunner`, `WaveManager`, `GameOverManager`, `UnitRevivalSystem`, `DungeonGraphController`, `GradeSaveAgent`, `MoraleSaveAgent`, `DangerPanelView`, `WaveView`
+- (확인) `MoraleHudView.moralePolicyManager` — 씬의 `moralePolicyManager` 필드 둘 중 하나가 비어 있다. 비었으면 연결
+
+모두 연결한 뒤 `SceneReferenceFallback.Find`를 지우면 남은 호출처가 컴파일 오류로 드러난다.
+
+---
+
+이하 2026-09-14 기록(옛 경로 `Assets/01.Code`, Unity 6000.4.6f1 기준). asmdef 분리는 이후 끝났다.
+
 기준: 2026-09-14, Unity 6000.4.6f1. 대상은 `Assets/01.Code`의 자체 코드이며 외부 에셋·생성 코드는 제외한다. 현재 작업 트리에는 이전 게임/UI 변경이 많이 남아 있으므로 파일 이동과 직렬화 필드 이름 변경은 단계별 검증 전까지 피한다.
 
 ## 완료한 첫 단계

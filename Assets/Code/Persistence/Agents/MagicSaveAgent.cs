@@ -1,4 +1,5 @@
 using System;
+using Code.Core;
 using Code.Manager;
 using UnityEngine;
 
@@ -21,7 +22,7 @@ namespace Code.Persistence.Agents
     public sealed class MagicSaveAgent : MonoBehaviour, ISaveable
     {
         [SerializeField] private string saveKey = "magic.state";
-        [SerializeField, Tooltip("비우면 씬에서 찾는다.")] private MagicManager magicManager;
+        [SerializeField, Tooltip("씬의 마력 매니저. 비어 있으면 찾으며 경고한다(배선 뒤 폴백 제거).")] private MagicManager magicManager;
 
         public string SaveKey => saveKey;
 
@@ -52,6 +53,6 @@ namespace Code.Persistence.Agents
         }
 
         private MagicManager Resolve() =>
-            magicManager != null ? magicManager : magicManager = FindAnyObjectByType<MagicManager>(FindObjectsInactive.Include);
+            magicManager != null ? magicManager : magicManager = SceneReferenceFallback.Find<MagicManager>(this, nameof(magicManager));
     }
 }

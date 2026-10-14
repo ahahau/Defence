@@ -50,6 +50,9 @@ namespace Code.UI
         [SerializeField] private HiredUnitRoster hiredUnitRoster;
         [SerializeField] private DayManager dayManager;
 
+        [Header("Scope")]
+        [SerializeField, Tooltip(GameScope.FieldTooltip)] private GameScope scope;
+
         private Node _selectedNode;
         private Unit _selectedManagedUnit;
         private Unit _movingUnit;
@@ -374,7 +377,7 @@ namespace Code.UI
         public void RequestToggleClosure()
         {
             var building = SelectedFacility;
-            var closure = FacilityClosureSystem.Current;
+            var closure = Closure;
             if (!IsManagementAllowed || building == null || closure == null || building.IsReopening)
                 return;
 
@@ -920,7 +923,7 @@ namespace Code.UI
             if (node == null || !node.HasAssignedBuilding)
                 return;
 
-            var closure = FacilityClosureSystem.Current;
+            var closure = Closure;
             if (closure != null)
             {
                 var refund = closure.Demolish(node);
@@ -938,7 +941,7 @@ namespace Code.UI
 
         private void BeginRepair(Building building)
         {
-            var closure = FacilityClosureSystem.Current;
+            var closure = Closure;
             if (building == null || closure == null)
                 return;
 
@@ -946,6 +949,12 @@ namespace Code.UI
                 Notify(reason);
             StateChanged?.Invoke();
         }
+
+        /// <summary>휴업·수리·철거를 맡는 시스템. 조립 루트에서 받는다.</summary>
+        private FacilityClosureSystem Closure =>
+            _closure != null ? _closure : _closure = GameScope.Resolve(scope, s => s.FacilityClosure, this, nameof(scope));
+
+        private FacilityClosureSystem _closure;
 
         /// <summary>옛 uGUI 노드 패널과 바깥 행동 버튼을 숨긴다. 씬에서 지울 때까지 남아 있다.</summary>
         private void HideLegacyPanel()
