@@ -373,6 +373,8 @@ namespace Code.Manager
             _activeEnemies.Clear();
             // 어제 파티의 지갑이 남아 있으면 같은 번호를 다시 쓰는 파티가 그 돈을 이어받는다.
             PartyFundLedger.Active.Clear();
+            // 하루가 지났다. 어제 파티의 견문은 비우고 던전 소문은 절반만 남긴다.
+            AdventurerRumorLedger.Active.BeginBusinessDay();
             PartyCoffin.ClearAll();
             _isBossWave = waveConfig != null && waveConfig.IsBossDay(_currentDay);
             _isFinalWave = waveConfig != null && waveConfig.IsFinalDay(_currentDay);

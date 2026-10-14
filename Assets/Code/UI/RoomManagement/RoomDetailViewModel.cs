@@ -28,6 +28,8 @@ namespace Code.UI.RoomManagement
         public RoomActionState Recall;
 
         public string Installations;
+        /// <summary>모험가 사이의 소문 한 줄과 누가 이 방을 피하는지.</summary>
+        public string Rumor;
         public string Hint;
     }
 }

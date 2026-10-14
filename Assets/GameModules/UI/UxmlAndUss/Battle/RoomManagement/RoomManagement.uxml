@@ -36,6 +36,7 @@
             <ui:VisualElement class="room-divider" />
             <ui:Label text="설치물" class="room-section-title" />
             <ui:Label name="room-installations" text="없음" class="text-body room-line" />
+            <ui:Label name="room-rumor" text="소문 없음" class="text-body room-line" />
             <ui:Label name="room-hint" text="일시정지하면 관리할 수 있습니다." class="text-warn room-hint" />
         </ui:VisualElement>
         <ui:VisualElement name="install-card" class="panel install-card">

@@ -361,7 +361,10 @@ namespace Code.MapCreateSystem
         public int UnitCapacity => battlefield != null ? battlefield.MaxPerTeam : 1;
         /// <summary>이 구역에서 벌어진 일로 쌓인 악명(전투·함정 발동). 설치물의 위험도는 포함하지 않는다.</summary>
         public int DangerLevel { get; private set; }
-        
+
+        /// <summary>모험가 사이에 도는 이 방의 소문. 길 판단에 쓴다(<see cref="RoomRumor"/>).</summary>
+        public RoomRumor Rumor { get; private set; }
+
         
 
         private void Awake()
@@ -409,6 +412,7 @@ namespace Code.MapCreateSystem
             name = $"Node_{data.Type}_{data.GridPosition.x}_{data.GridPosition.y}";
             transform.localScale = ResolvePrefabScale() * size;
             DangerLevel = 0;
+            Rumor = default;
             SetSprite(unlockedSprite);
             SetSpriteScale(unlockedSpriteScale);
             SetVisualColor(unlockedVisualColor);
@@ -749,6 +753,23 @@ namespace Code.MapCreateSystem
         public void RestoreDanger(int amount)
         {
             DangerLevel = Mathf.Max(0, amount);
+        }
+
+        /// <summary>살아 나간 모험가가 옮긴 견문을 소문에 더한다.</summary>
+        public void AddRumor(in RoomRumor rumor)
+        {
+            Rumor = Rumor.Add(rumor);
+        }
+
+        /// <summary>하루가 지나 소문이 절반으로 사그라든다.</summary>
+        public void HalveRumor()
+        {
+            Rumor = Rumor.Halved();
+        }
+
+        public void RestoreRumor(in RoomRumor rumor)
+        {
+            Rumor = rumor;
         }
 
         private void SetVisualColor(Color color)

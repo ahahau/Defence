@@ -49,6 +49,12 @@ namespace Code.Enemies
         /// 비워 두면 예전처럼 금고를 향한다 — 목적을 모르는 이동체(보스·테스트)는 침입자로 본다.
         /// </summary>
         public Func<Node> RouteGoalResolver { get; set; }
+
+        /// <summary>
+        /// 다음 방 후보(첫 인자)를 목적지(둘째 인자)까지 갈 때 얼마나 고를 만한가. 0보다 큰 값.
+        /// 비워 두면 후보를 고르게 무작위로 뽑는다.
+        /// </summary>
+        public Func<Node, Node, float> RouteWeightResolver { get; set; }
         /// <summary>라인(엣지)에 설치된 건물을 지나갈 때 호출 — 이동 구간 중간(라인 위 건물 위치)에서 발동.</summary>
         public Action<global::Code.Buildings.Building> EdgeBuildingPassed { get; set; }
         /// <summary>파티(그룹) 스폰 시 멤버끼리 겹치지 않도록 노드 기준 위치에 더하는 대형 오프셋.</summary>
@@ -458,8 +464,42 @@ namespace Code.Enemies
                 return null;
             }
 
-            return candidates[UnityEngine.Random.Range(0, candidates.Count)];
+            return PickRouteCandidate(candidates, goal);
         }
+
+        /// <summary>
+        /// 후보 하나를 고른다. 가중치가 있으면 소문·보상에 따라 기울여 뽑고, 없으면 고르게 뽑는다.
+        /// 후보가 하나면 따질 것이 없다.
+        /// </summary>
+        private Node PickRouteCandidate(List<Node> candidates, Node goal)
+        {
+            if (candidates.Count == 1 || RouteWeightResolver == null)
+                return candidates[UnityEngine.Random.Range(0, candidates.Count)];
+
+            _routeWeights.Clear();
+            var total = 0f;
+            foreach (var candidate in candidates)
+            {
+                var weight = Mathf.Max(0f, RouteWeightResolver(candidate, goal));
+                _routeWeights.Add(weight);
+                total += weight;
+            }
+
+            if (total <= 0f)
+                return candidates[UnityEngine.Random.Range(0, candidates.Count)];
+
+            var roll = UnityEngine.Random.value * total;
+            for (var i = 0; i < candidates.Count; i++)
+            {
+                roll -= _routeWeights[i];
+                if (roll <= 0f)
+                    return candidates[i];
+            }
+
+            return candidates[candidates.Count - 1];
+        }
+
+        private readonly List<float> _routeWeights = new();
 
         /// <summary>
         /// 갈 만한 다음 칸을 모은다. 최단만 고집하지 않고 조금 돌아가는 길까지 넣는다.

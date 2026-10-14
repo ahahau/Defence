@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Code.Buildings;
+using Code.Enemies;
 using Code.MapCreateSystem;
 using Code.Units;
 using UnityEngine;
@@ -55,6 +56,7 @@ namespace Code.UI.RoomManagement
                     ? new RoomActionState(true, false, "배치", deployReason)
                     : new RoomActionState(true, true, "배치", "대기 명단의 유닛을 이 방에 세웁니다"),
                 Installations = BuildInstallations(node),
+                Rumor = BuildRumor(node),
             };
 
             CollectUnits(panel, node);
@@ -217,6 +219,17 @@ namespace Code.UI.RoomManagement
             }
 
             return _builder.Length > 0 ? _builder.ToString() : "없음";
+        }
+
+        private static string BuildRumor(Node node)
+        {
+            if (node == null || node.Rumor.IsEmpty)
+                return "소문 없음";
+
+            var rumor = node.Rumor;
+            var line = $"소문 함정 {rumor.Traps} · 쓰러짐 {rumor.Downs} · 후퇴 {rumor.Retreats}";
+            var note = RouteRiskRules.AvoidanceNote(RouteRiskRules.RoomRisk(node));
+            return string.IsNullOrEmpty(note) ? line : $"{line} — {note}";
         }
 
         private string BuildHint(NodePanelView panel, in RoomDetailViewModel model)

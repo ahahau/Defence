@@ -32,6 +32,7 @@ namespace Code.UI.RoomManagement
         private const string MoveButton = "room-unit-move";
         private const string RecallButton = "room-unit-recall";
         private const string InstallationsLabel = "room-installations";
+        private const string RumorLabel = "room-rumor";
         private const string HintLabel = "room-hint";
 
         private const string ButtonClass = "btn";
@@ -58,6 +59,7 @@ namespace Code.UI.RoomManagement
         private readonly Button _move;
         private readonly Button _recall;
         private readonly Label _installations;
+        private readonly Label _rumor;
         private readonly Label _hint;
         private readonly Button _close;
         private readonly Button[] _unitRows = new Button[MaxUnitRows];
@@ -92,6 +94,7 @@ namespace Code.UI.RoomManagement
             _move = root.Q<Button>(MoveButton);
             _recall = root.Q<Button>(RecallButton);
             _installations = root.Q<Label>(InstallationsLabel);
+            _rumor = root.Q<Label>(RumorLabel);
             _hint = root.Q<Label>(HintLabel);
 
             Bind(_close, () => CloseRequested?.Invoke());
@@ -177,6 +180,7 @@ namespace Code.UI.RoomManagement
             Apply(_recall, model.Recall);
 
             SetText(_installations, model.Installations);
+            SetText(_rumor, model.Rumor);
             SetText(_hint, model.Hint);
         }
 

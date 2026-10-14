@@ -1069,6 +1069,9 @@ namespace Code.MapCreateSystem
                     constructionPaidGold = node.ConstructionPaidGold,
                     roomSize = (int)node.Size,
                     roomFeature = (int)node.Feature,
+                    rumorTraps = node.Rumor.Traps,
+                    rumorDowns = node.Rumor.Downs,
+                    rumorRetreats = node.Rumor.Retreats,
                     centralBuilding = CaptureBuilding(node.AssignedBuilding)
                 };
 
@@ -1190,6 +1193,7 @@ namespace Code.MapCreateSystem
                 var data = graph.AddNode(saved.type, position);
                 var view = nodeManager.CreateNode(data);
                 view.RestoreDanger(saved.danger);
+                view.RestoreRumor(new RoomRumor(saved.rumorTraps, saved.rumorDowns, saved.rumorRetreats));
                 view.SetRoomSize(System.Enum.IsDefined(typeof(RoomSize), saved.roomSize)
                     ? (RoomSize)saved.roomSize
                     : RoomSize.Medium);

@@ -253,6 +253,7 @@ namespace Code.Enemies
             mover.NodeArrived = HandleNodeArrived;
             mover.EdgeBuildingPassed = HandleEdgeBuildingPassed;
             mover.RouteGoalResolver = ResolveRouteGoal;
+            mover.RouteWeightResolver = ResolveRouteWeight;
             mover.ConfigureBlockedNodeWaitTurns(
                 AdventurerTraitRules.ResolveBlockedNodeWaitTurns(Trait, VisitPurpose, InitialBudget));
             mover.Initialize(startNode);
@@ -263,6 +264,11 @@ namespace Code.Enemies
                 _joinedPartyFund = true;
                 PartyFundLedger.Active.Join(PartyId, InitialBudget);
             }
+
+            // 보스와 함께 온 파티의 견문은 소문이 되지 않는다. 호위는 보스보다 먼저 세워질 수 있어
+            // 파티 번호로 막아 둔다.
+            if (_isBoss)
+                AdventurerRumorLedger.Active.Silence(PartyId);
 
             _isInitialized = true;
             _idleTimer = idleDuration;
@@ -637,6 +643,7 @@ namespace Code.Enemies
 
             // 통로 함정은 노드에 속하지 않으므로 위험도를 올릴 노드가 없을 수 있다.
             mover?.CurrentNode?.IncreaseDanger(trap.DangerIncreaseOnTrigger);
+            AdventurerRumorLedger.Active.Note(PartyId, mover != null ? mover.CurrentNode : null, RumorKind.Trap);
             var fearGained = IncreaseFear(fearGainOnTrap, true);
             if (Trait == AdventurerTrait.Coward)
             {
@@ -766,6 +773,26 @@ namespace Code.Enemies
 
             return FindErrandNode();
         }
+
+        /// <summary>
+        /// 다음 방 후보의 가중치. 그 방부터 목적지까지 남은 길의 소문·방어를 성향만큼 꺼리고,
+        /// 노리는 것(쇼핑광 → 수익 시설, 보물 탐색 → 금고)이 길에 있으면 끌린다.
+        /// </summary>
+        private float ResolveRouteWeight(Node candidate, Node goal)
+        {
+            var aversion = RouteRiskRules.Aversion(Trait, StrengthTier, _isBoss);
+            var path = NodePathfinder.FindPath(candidate, goal, node => node.IsPassBlocked);
+            if (path == null || path.Count == 0)
+            {
+                _singleRoute[0] = candidate;
+                path = _singleRoute;
+            }
+
+            var hasReward = RouteRiskRules.PathHasReward(path, Trait, VisitPurpose);
+            return RouteRiskRules.Weight(RouteRiskRules.PathRisk(path), aversion, hasReward);
+        }
+
+        private readonly List<Node> _singleRoute = new() { null };
 
         /// <summary>가장 가까운 문 연 교회가 있는 방. 없으면 null.</summary>
         private Node FindChurchNode()
@@ -1093,6 +1120,9 @@ namespace Code.Enemies
             {
                 var returnChance = CalculateRetreatChance();
                 if (Random.value > returnChance) return false;
+
+                // 볼일을 다 봐서 나가는 것은 후퇴가 아니다. 겁먹고 돌아선 방만 소문에 남는다.
+                AdventurerRumorLedger.Active.Note(PartyId, mover != null ? mover.CurrentNode : null, RumorKind.Retreat);
             }
 
             BeginReturn();
@@ -1140,6 +1170,9 @@ namespace Code.Enemies
             if (_joinedPartyFund && !_partyFundSettled)
             {
                 _partyFundSettled = true;
+                // 나가면서 공동 자금 몫을 떼어 가므로 큰돈을 들고 나가는지는 그 전에 본다.
+                var bigReward = PartyFundLedger.Active.TierOf(PartyId) == PartyFundTier.High;
+                AdventurerRumorLedger.Active.Report(PartyId, bigReward);
                 PartyFundLedger.Active.MemberEscaped(PartyId);
                 // 마지막 한 명이 나가면 끌고 다니던 관도 함께 나간다.
                 if (PartyFundLedger.Active.AliveMembersOf(PartyId) == 0)
@@ -1260,7 +1293,11 @@ namespace Code.Enemies
                 return;
 
             _partyFundSettled = true;
+            AdventurerRumorLedger.Active.Note(PartyId, mover != null ? mover.CurrentNode : null, RumorKind.Down);
             var gold = PartyFundLedger.Active.MemberDied(PartyId, out var wiped);
+            // 아무도 돌아가 말하지 못한다. 다 잡으면 소문이 나지 않는다.
+            if (wiped)
+                AdventurerRumorLedger.Active.Discard(PartyId);
 
             // 동료가 남아 있으면 관이 되어 따라간다. 전멸하면 끌고 다니던 관도 함께 사라진다.
             // 보스는 관이 되지 않는다 — 보스가 교회에서 다시 일어나면 보스전의 끝이 흐려진다.

@@ -6,6 +6,18 @@
 
 - `CLAUDE.md` 보완: 아키텍처 큰 그림(씬 구성·`Current`·이벤트 채널, 엔티티 모듈, 한 판의 흐름, 즉시 결제와 정산 분리, 저장 순서) 섹션 추가. `AGENTS.md`에만 있던 커밋 접두사·PR 기재 사항·테스트 명명(`Feature_Behavior`, 리플렉션 패턴)을 옮김. 규칙 파일이 `paths:` 경로에서만 자동 로드된다는 안내와 `UnityProjectContext.md`보다 CLAUDE.md가 우선이라는 문구 추가.
 - `Docs/AI/UnityProjectContext.md` 사실 정정: Unity 6000.6.3f1(45d8eee7de74), URP 17.6.0, Input System 1.20.0, Test Framework 1.8.0. 9일 보스·20일 종료·부채 한도 300을 무한 진행(`finalDay: 0`)·7일 청산일=보스날(7·14·21·28일)·주간 대출 3종으로 교체. 승리 경로는 `finalDay > 0`일 때만 돈다고 명시. 테스트 현황을 26개 파일·`[Test]` 229개로 갱신, 옛 커밋 해시·dirty 작업 트리 문구 제거.
+- `Docs/Design/AdventurerRouteRiskDesign.md` 추가(설계 초안, 코드 변경 없음): 모험가 경로 위험 판단. 사용자 선택에 따라 방마다 새 '소문'(함정 발동·쓰러짐·후퇴)을 쌓고, 살아 나간 파티만 견문을 퍼뜨리며 전멸하면 사라지고 큰 보상 탈출은 소문을 지운다. 하루마다 절반. 다음 방은 기존 후보(최단+2칸 우회) 안에서 위험·보상 가중치로 뽑고, 특성별 회피(겁쟁이 강함·엘리트/보스 무시)와 보상 선호(쇼핑광 시설·보물 탐색 금고)를 둔다. 방 상세에 소문 한 줄. 기존 악명(`Node.DangerLevel`)은 줄지 않아 길 판단에 쓰지 않는다.
+- 방 관리 화면 EditMode 테스트·실측은 사용자 요청으로 보류.
+- 모험가 경로 위험 판단(소문) 구현(`AdventurerRouteRiskDesign.md`, 확인 항목은 초안대로 확정).
+  - 새 파일: `RoomRumor`·`RumorKind`(`Code.MapCreateSystem`), `AdventurerRumorLedger`·`RouteRiskRules`(`Code.Enemies`).
+  - `Node`: `Rumor`와 `AddRumor`·`HalveRumor`·`RestoreRumor`. 방을 열 때 비운다.
+  - `Enemy`: 함정 피격·쓰러짐·겁먹은 후퇴를 파티 견문에 기록하고, 살아 나갈 때 소문으로 옮긴다(공동 자금 "많음"이면 던전 소문 삭제). 전멸하면 견문을 버리고, 보스 파티는 기록하지 않는다. 다음 방 가중치 `ResolveRouteWeight`를 `EnemyMover`에 연결.
+  - `EnemyMover`: `RouteWeightResolver`가 있으면 기존 후보(최단+2칸 우회) 안에서 가중 뽑기, 없으면 지금처럼 무작위.
+  - `WaveManager`: 영업 시작 때 공동 자금 초기화 옆에서 `AdventurerRumorLedger.Active.BeginBusinessDay()`(견문 비우기·소문 절반) 한 줄.
+  - 저장: `SavedNode.rumorTraps`·`rumorDowns`·`rumorRetreats`(옛 저장은 0), `DungeonGraphController` 저장·복원.
+  - 방 상세: 설치물 아래 `room-rumor` 한 줄("소문 함정 N · 쓰러짐 N · 후퇴 N — 겁쟁이가 피합니다" / "소문 없음").
+  - `enemy-rules.md`에 소문 규칙 추가.
+  - 검증: Unity CLI `recompile` 완료(`compilationFailed: false`, 현재 콘솔 오류 0 — 05:41의 CS1061 3건은 파일 저장 도중 임포트된 지난 기록), `dotnet build DungeonKeeper.Runtime.csproj`·`Defence.EditMode.Tests.csproj` 오류 0. EditMode 테스트·플레이 실측은 사용자 요청으로 아직 하지 않음.
 
 ## 2026-10-01
 

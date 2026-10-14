@@ -57,6 +57,11 @@ namespace Code.Persistence
         // 방 특수 효과(RoomFeature). 옛 저장에는 없어서 0(없음)으로 읽힌다.
         public int roomFeature;
 
+        // 모험가 사이의 소문(RoomRumor). 옛 저장에는 없어서 0(소문 없음)으로 읽힌다.
+        public int rumorTraps;
+        public int rumorDowns;
+        public int rumorRetreats;
+
         public SavedBuilding centralBuilding;
         public List<SavedBuilding> cellBuildings = new();
         public List<SavedUnit> units = new();
