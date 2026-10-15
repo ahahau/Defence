@@ -85,6 +85,7 @@ namespace Code.UI.Toolkit
         private PartyRailView _partyRail;
         private HudActivityLog _activityLogView;
         private DebtAlertView _debtAlert;
+        private MoraleChipView _moraleChip;
         private readonly PartyRailPresenter _partyRailPresenter = new();
         private readonly List<PartyRailRowViewModel> _partyRows = new();
 
@@ -122,6 +123,7 @@ namespace Code.UI.Toolkit
             UnbindManagers();
             _partyRail?.Dispose();
             _debtAlert?.Dispose();
+            _moraleChip?.Dispose();
         }
 
         private void Update()
@@ -189,6 +191,7 @@ namespace Code.UI.Toolkit
             _partyRail = new PartyRailView(_partyList);
             _activityLogView = new HudActivityLog(_activityLog);
             _debtAlert = new DebtAlertView(root.Q<VisualElement>("debt-chip"));
+            _moraleChip = new MoraleChipView(root.Q<VisualElement>("morale-chip"), root.Q<Label>("morale-label"));
         }
 
         private void RegisterButtons()
@@ -263,6 +266,7 @@ namespace Code.UI.Toolkit
             }
             if (_magicManager != null) _magicManager.MagicChanged += HandleMagicChanged;
             if (_speedController != null) _speedController.SettingChanged += HandleSpeedChanged;
+            _moraleChip?.Bind(SceneReferenceFallback.FindForRuntimeObject<MoralePolicyManager>());
         }
 
         private void UnbindManagers()

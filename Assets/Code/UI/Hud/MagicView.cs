@@ -21,6 +21,9 @@ namespace Code.UI
 
         private void Awake()
         {
+            // HUD 상단 마력 칸(UI Toolkit)이 같은 값을 보여 준다. 오른쪽 패널 위에 겹쳐 그려서 끈다.
+            // 씬에서 이 오브젝트를 지우면 이 스크립트도 함께 지운다(Toolkit 전환 1단계).
+            gameObject.SetActive(false);
             if (magicText == null)
                 return;
             _baseColor = magicText.color;

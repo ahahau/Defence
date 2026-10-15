@@ -13,6 +13,7 @@
                 <ui:VisualElement class="status-chip is-magic"><ui:Label text="마력" class="chip-title" /><ui:Label name="magic-label" text="0 / 0" class="chip-value" /></ui:VisualElement>
                 <ui:VisualElement class="status-chip is-revival"><ui:Label text="부활 마력" class="chip-title" /><ui:Label name="revival-mana-label" text="준비 중" class="chip-value" /></ui:VisualElement>
                 <ui:VisualElement class="status-chip is-grade"><ui:Label text="던전 등급" class="chip-title" /><ui:Label name="grade-label" text="등급 0" class="chip-value" /></ui:VisualElement>
+                <ui:VisualElement name="morale-chip" class="status-chip is-morale"><ui:Label text="민심" class="chip-title" /><ui:Label name="morale-label" text="준비 중" class="chip-value" /></ui:VisualElement>
                 <ui:VisualElement class="status-chip is-threat"><ui:Label text="침입 위협" class="chip-title" /><ui:Label name="threat-label" text="대기 중" class="chip-value" /></ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement class="speed-card">

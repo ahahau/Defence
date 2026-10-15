@@ -5,7 +5,7 @@
 .brand-subtitle { color: var(--text-dim); font-size: 12px; margin-top: 3px; }
 .status-strip { flex-direction: row; flex-grow: 1; justify-content: center; }
 .status-chip { width: 148px; margin-left: 5px; margin-right: 5px; padding-left: 11px; justify-content: center; background-color: var(--surface-control-quiet); border-left-width: 2px; border-left-color: var(--edge-quiet); }
-.status-chip.is-gold { border-left-color: var(--accent); } .status-chip.is-debt { border-left-color: var(--loss); } .status-chip.is-magic { border-left-color: rgb(110, 180, 235); } .status-chip.is-revival { border-left-color: var(--warn); } .status-chip.is-grade { border-left-color: rgb(187, 139, 220); } .status-chip.is-threat { border-left-color: var(--warn); }
+.status-chip.is-gold { border-left-color: var(--accent); } .status-chip.is-debt { border-left-color: var(--loss); } .status-chip.is-magic { border-left-color: rgb(110, 180, 235); } .status-chip.is-revival { border-left-color: var(--warn); } .status-chip.is-grade { border-left-color: rgb(187, 139, 220); } .status-chip.is-threat { border-left-color: var(--warn); } .status-chip.is-morale { border-left-color: var(--gain); }
 .chip-title { color: var(--text-dim); font-size: 11px; } .chip-value { color: var(--text); font-size: 14px; -unity-font-style: bold; margin-top: 2px; } .status-chip.is-debt .chip-value { color: var(--loss); }
 .speed-card { width: 212px; flex-direction: row; align-items: center; justify-content: flex-end; }
 .speed-button, .action-button, .quiet-button { color: var(--text-body); background-color: var(--surface-control); border-width: 1px; border-color: var(--edge-quiet); }

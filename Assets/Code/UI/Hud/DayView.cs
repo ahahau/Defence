@@ -18,6 +18,13 @@ namespace Code.UI
 
         private int _displayedDay = 1;
 
+        private void Awake()
+        {
+            // HUD 왼쪽 위 일차 글(UI Toolkit)이 같은 값을 보여 준다. 하단 바 위에 겹쳐 그려서 끈다.
+            // 씬에서 이 오브젝트를 지우면 이 스크립트도 함께 지운다(Toolkit 전환 1단계).
+            gameObject.SetActive(false);
+        }
+
         private void OnEnable()
         {
             if (dayManager == null) return;

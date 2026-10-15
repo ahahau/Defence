@@ -27,6 +27,9 @@ namespace Code.UI
 
         private void Awake()
         {
+            // HUD 상단 민심 칸(UI Toolkit, MoraleChipView)이 값과 상세를 맡는다. 오른쪽 패널 위에 겹쳐 그려서 끈다.
+            // 씬에서 이 오브젝트를 지우면 이 스크립트도 함께 지운다(Toolkit 전환 1단계).
+            gameObject.SetActive(false);
             if (moraleText == null)
                 return;
             _baseMoraleColor = moraleText.color;

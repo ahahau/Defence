@@ -2,6 +2,33 @@
 
 작업 변경 내역을 날짜순으로 누적한다.
 
+## 2026-10-15
+
+- 캐릭터·UI 에셋 적용(사용자 선택: 프레임 애니메이션 추가 · 해골/오크=부하, 인간·엘프·도적 등=모험가는 이름 보고 배정 · 부하 이름도 그림에 맞게 · UI는 Toolkit 화면만 · Gold).
+  - 프레임 애니메이션: 새 `CharacterAnimationSetSO`(대기·걷기·공격·쓰러짐 프레임 + 동작별 fps)·`CharacterClip`·`CharacterAnimationRules`(`Code.Entities`). `EntityRender`에 `animationSet`이 있으면 프레임을 튼다. 부모가 움직이면(0.05/초 이상, 0.15초 유지) 걷기, 공격은 끝까지 한 번 틀고 스스로 대기로, 쓰러짐은 마지막 프레임에서 멈춤. 이동 방향·공격 대상 쪽으로 좌우 반전(`FaceTowards`, 그림은 오른쪽을 본다고 봄). 묶음이 없으면 지금처럼 포즈 3장(슬라임 유지). 그림이 바뀔 때 `SpriteChanged`.
+  - `EnemyDataSO.AnimationSet` 추가, `Enemy.ApplyData`가 연결하고 받침 테두리를 다시 잰다. 등급 테두리(`EnemyStrengthOutline`)는 `SpriteChanged`로 프레임을 따라 그림. `CharacterPoseView.PlayAttackPose(facingX)`, `Combatant`가 대상 방향을 넘김.
+  - `CharacterBackPlate`: 테두리 크기를 스프라이트 사각형 대신 Tight 메시 꼭짓점(칠해진 영역)으로 잰다. 애니메이션 프레임은 투명 여백이 큰 캔버스라 그대로 재면 테두리가 두세 배가 됐다.
+  - 에셋(Unity CLI eval로 생성): `Data/Characters/Animations/*Anim.asset` 26개. 쓰는 PNG만 임포트 변경 — Point 필터·무압축·밉맵 끔·PPU 28(해골왕 40)·기준점은 동작 첫 프레임의 발밑 + 0.45(발이 원점 0.45 아래, 동작마다 캔버스 크기가 달라 클립별로 잼).
+    - 부하: 던전 주인=해골왕(`Player.prefab`), 뼈 궁수=ske_archer, 망령 암살귀=ske_ghost, 해골 주술사=ske_mage, 해골 방패병=ske_shield, 오크 철퇴병=orc mace, 해골 낫잡이=skeleton scyther, 늑대 기수=orc wolf_raider, 해골 기병=skeleton horse, 오크 주술사=orc shaman, 해골 도끼병=skeleton axe. 프리팹 `EntityRender`에 묶음·포즈 3장, `UnitDataSO.Sprite`는 대기 첫 프레임.
+    - 모험가: 떠돌이=human swordman, 궁수=human archer, 종군 사제=healer_1, 성기사=human hero, 공병=blacksmith_1, 척후병=elf blade, 용병 검사=human hero2, 도적=bandit axe_thrower, 겁많은 관광객=farmer_1_1, 순례 성직자=healer_3, 부유한 관광객=female_1_1. 보스: 사냥꾼 두목=crossbow, 왕국 기사단장=swordhorse, 토벌대장=elf rider, 탐욕의 기사=bandit mega. 포즈 3장·`BoardSprite`도 프레임으로 채움.
+    - 부하 표시 이름 변경(에셋 파일명·수치 그대로): 주술 임프→해골 주술사, 바위 골렘→해골 방패병, 창 코볼트→해골 낫잡이, 동굴 박쥐→해골 기병, 그림자 암살귀→망령 암살귀, 포자 버섯→오크 주술사, 동굴 거미→해골 도끼병, 오우거→오크 철퇴병, 광포한 늑대→늑대 기수. `wave-economy-rules.md`·`RoomManagementUiDesign.md`의 이름도 고침.
+  - UI(Super GUI Gold): 팩의 32px 조각을 이어 붙인 9-slice 그림 3장을 `Assets/GameModules/UI/Skin/Gold/`에 만듦(`PanelFrame` 패널 0~8번·모서리 10, `BoxFrame` 글상자 0~8번·모서리 6, `ButtonFrame` 버튼 20번·모서리 9). 안쪽 채움색은 투명으로 비워 바탕은 기존 색 토큰이 정함. 변 무늬가 늘어나 뭉개지지 않게 `-unity-slice-type: tiled`.
+    - 새 화면: `Components.uss`의 `.btn`(버튼 그림, 상태는 그림에 곱하는 색), `.panel`(패널 그림, `-unity-slice-scale: 2px`), `.panel--inset`(글상자 그림). 선 테두리는 0. `DesignToken.uss`에 `--color-skin-frame*` 토큰. 방 관리 부하 줄 선택은 그림 색(`--color-skin-frame-selected`)으로 보임.
+    - 옛 화면(HUD·정산·방침·패배·타이틀): `Theme.uss`에 `.ui-theme .unity-button` 전체와 큰 카드(`settlement-card`·`run-end-card`·`policy-card`·`title-card`·`settings-card`·`pause-*-card`·`selection-popover`·`right-rail`), 대출 창구(`loan-pane`)에 같은 그림. HUD 칩의 왼쪽 색 줄처럼 색이 뜻을 가진 선은 그대로 둠.
+  - 새 테스트 `CharacterAnimationTests`(반복·한 번 재생 프레임, 묶음마다 네 동작 프레임 존재), `test-rules.md` 표에 추가.
+  - 검증: `dotnet build` Runtime 오류 0, Unity `recompile` 완료. EditMode 310/310 통과(`CharacterAnimationTests` 4, `AssetWiringTests` 28 포함). 플레이 실측: 묶음 26개를 한 줄로 세워 크기·발 위치 확인(해골왕만 크게), 웨이브에서 부하 3명(뼈 궁수·오크 철퇴병·망령 암살귀) 배치 후 기록 — 모험가 stand·walk·die와 좌우 반전, 부하 대기·걷기·공격(attack1) 확인. 팝업·HUD 버튼·오른쪽 기록판·방 관리 패널에 Gold 테두리 표시 확인. 콘솔 오류 0. 세이브는 실측 전 상태로 되돌리고 캡처는 지움.
+  - 남은 것: 모험가의 공격 프레임은 이번 실측에서 나오지 않음(손님이 먼저 쓰러짐). sanctum 팩의 `bandit-topdown/Sprite/axeman `은 폴더 이름 끝 공백 때문에 임포트되지 않음(쓰지 않음). 실측 중 부유한 관광객 하나가 방 밖(node 없음)에 멈춰 웨이브가 끝나지 않는 일이 한 번 있었음(렌더 변경과 무관해 보이나 원인 미확인). 부하 공격음(`GameSfxCue`)은 예전 몬스터 기준 그대로.
+
+- 모험가 표시 정리(사용자 요청).
+  - 적 뒤 회색 사각형 제거: `Enemy`가 네모 받침(`CharacterBackPlate`, `CharacterFrame` 자식)을 더는 붙이지 않음. 프레임 애니메이션 그림 뒤에서 캐릭터와 따로 노는 사각형으로만 보였다. 등급 색은 캐릭터 테두리(`EnemyStrengthOutline`)가 그대로 보여 줌. 부하 쪽 받침(`Unit.EnsureBackPlate`)은 그대로.
+  - 적 오브젝트 이름: 한국어 표시 이름(`Enemy_부유한 관광객`) 대신 에셋 이름으로 짓는다(`Enemy_BasicEnemy`, `Enemy_Boss_Houndmaster`; `Enemy_`로 시작하는 에셋은 그대로 `Enemy_Tourist_Shopaholic`). 이름에 기대는 코드·테스트 없음 확인.
+  - 검증: `dotnet build` 오류 0, 플레이에서 적 이름·`CharacterFrame` 없음 확인, EditMode 310/310, 콘솔 오류 0. 세이브 복원·캡처 삭제.
+- UI 전부 Toolkit으로 전환 시작(사용자 선택: 다른 세션이 SampleScene을 커밋한 뒤 씬 수정 · 단계별 + 단계마다 커밋). 남은 uGUI 조사: 메인 캔버스 아래 약 25개 — Toolkit HUD와 겹치는 중복(금화·일차·배속·마력·등급·민심·설정), Toolkit에 아직 없는 것(영업 시작 버튼·웨이브 목표/진행·일차 배너·유닛 영입·진행 보고서·대화·튜토리얼 덮개·성격 툴팁·보스 연출·하루 전환 연출), 이미 옮긴 화면의 다리(부하·모험가 상태·유물·상인·`NodePanelView`·옛 금고·옛 운영 방침).
+  - 단계: 1) 중복 uGUI 삭제 + 민심 칸 → 2) 영업 시작·웨이브 목표/진행·일차 배너 → 3) 유닛 영입·진행 보고서 → 4) 대화·튜토리얼·툴팁·보스·하루 전환 연출.
+  - 1단계(코드 부분): HUD 상단에 민심 칸(`morale-chip`, 초록 줄) 추가. 새 `MoraleChipView`(`Code.UI.Toolkit`)가 `MoralePolicyManager.MoraleChanged`를 듣고 값을 보이며, 누르면 범용 팝업(`Notice`)으로 유지비·지원자 효과와 최근 변화 8줄을 보여 준다(옛 민심 상세 창 대신). 지도 클릭 막기(`ToolkitPointerBlockers`) 등록.
+  - 오른쪽 기록판 위에 겹치던 uGUI 마력(`MagicView`)·등급(`DangerPanelView`)·민심(`MoraleHudView`)과 하단의 "Day N"(`DayView`)은 `Awake`에서 스스로 꺼진다. 씬에서 오브젝트를 지울 때 스크립트도 함께 지운다(씬은 다른 세션 커밋 대기).
+  - 검증: `dotnet build` 오류 0, 플레이에서 겹침이 사라지고 민심 칸 50·팝업 표시 확인, 콘솔 오류 0. EditMode 309/310 — `UnitMarketTests.Roster_QuotesTheSamePriceItWillCharge` 1건 실패(시세 단계 Expensive 기대, Normal), 단독 재실행 5/5 통과로 시세 난수에 따른 간헐 실패로 보임(다른 세션 작업 영역, 미수정).
+
 ## 2026-10-14
 
 - `CLAUDE.md` 보완: 아키텍처 큰 그림(씬 구성·`Current`·이벤트 채널, 엔티티 모듈, 한 판의 흐름, 즉시 결제와 정산 분리, 저장 순서) 섹션 추가. `AGENTS.md`에만 있던 커밋 접두사·PR 기재 사항·테스트 명명(`Feature_Behavior`, 리플렉션 패턴)을 옮김. 규칙 파일이 `paths:` 경로에서만 자동 로드된다는 안내와 `UnityProjectContext.md`보다 CLAUDE.md가 우선이라는 문구 추가.
