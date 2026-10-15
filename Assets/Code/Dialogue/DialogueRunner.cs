@@ -683,7 +683,7 @@ namespace Code.Dialogue
 
         private void HighlightWaveStartButton()
         {
-            if (waveView == null || !TryBuildRectTransformScreenRect(waveView.StartButtonRect, out var rect))
+            if (waveView == null || !waveView.TryGetStartButtonScreenRect(out var rect))
             {
                 view?.HideSpotlight();
                 return;

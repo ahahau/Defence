@@ -34,6 +34,12 @@
   - 큰 모달 창은 `WindowFrame`: 새 화면은 `.panel--window`(팝업·금고·상인 UXML에 추가), 옛 화면은 정산·운영 방침·패배·타이틀·설정·일시정지 카드. 오른쪽 기록판·선택 카드·방 관리 창 등 늘 떠 있는 판은 네모 `PanelFrame`.
   - `ui-rules.md` 팔레트·테두리 설명 갱신.
   - 검증: 플레이에서 HUD·방 확장 팝업·방 관리 창·정산 창 캡처 확인(잘린 모서리 창, 남색 바탕, 은색 테두리), 콘솔 오류 0, EditMode 310/310. 아직 uGUI인 일차 배너·영업 시작 버튼·웨이브 진행 막대·"유닛 관리" 탭은 갈색 그대로(2·3단계에서 Toolkit으로 옮김).
+- Toolkit 전환 2단계: 영업 시작 버튼·준비 카드(일차 배너)·웨이브 진행 막대·영업 시작 배너·목표 전환을 UI Toolkit으로 옮김.
+  - 새 화면 `Battle/WaveHud/WaveHud.uxml`·`.uss`, `Resources/UI/WaveHudScreen.asset`(공용 패널, 문서 순서 105 — HUD 100 위, 정산 110 아래). 새 `WaveHudToolkitView`(그리기·버튼 입력만, 배너는 실제 시간 1.5초)와 `WaveHudViewModel`(struct).
+  - `WaveView`: 판단(시작 가능·막힌 이유·보스날 문구·목표 선택·준비 카드 내용·진행률·남은 거리 경고)은 그대로 두고, 그리는 대상을 Toolkit 화면으로 바꿈. 옛 uGUI 시작 버튼(같은 오브젝트에 붙은 씬이 있어 투명 처리)·목표 버튼·`WaveRuntimeHudView`는 감춘다. DOTween 연출·`Resources/UI/WaveRuntimeHud` 프리팹 생성 경로 제거. 튜토리얼용 `StartButtonRect`(RectTransform) → `TryGetStartButtonScreenRect`(화면 사각형), 강조는 버튼 그림을 금색으로.
+  - 호출처: `DialogueRunner.HighlightWaveStartButton`, `PlayTutorialView`(SurviveWave 칸 구멍, `ResolveWaveButton` 삭제).
+  - 배치: 준비 카드·진행 막대는 상단 바 아래 가운데, 시작·목표 버튼은 오른쪽 기록판 왼쪽·하단 바 위(예전 uGUI 시작 버튼은 하단의 정산 정보·메뉴 버튼을 덮었다).
+  - 검증: `dotnet build` 오류 0. 플레이에서 준비 카드·시작 버튼(막힌 이유 "방을 하나 확장하세요" → 확장 뒤 "던전 영업 시작 DAY 1 · 방문객 3명")·목표 전환(착취 작전 → 함정 시험)·시작 버튼으로 영업 시작·배너·진행 막대·정산 창이 영업 HUD 위에 뜨는 것 확인. 튜토리얼 API(붙잡기 → 숨김, 놓기 → 보임, 강조 클래스 켜고 끄기, 시작 버튼 화면 사각형 1274,178 320×68) 확인. 콘솔 오류 0, EditMode 310/310. 처음에 문서 순서 140으로 두었더니 준비 카드·시작 버튼이 정산 창 위로 올라와 105로 내림.
 
 ## 2026-10-14
 

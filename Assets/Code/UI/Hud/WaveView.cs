@@ -4,10 +4,8 @@ using Code.Enemies;
 using Code.Events;
 using Code.Manager;
 using Code.Tutorial;
-using DG.Tweening;
-using TMPro;
+using Code.UI.Toolkit;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace Code.UI
@@ -33,44 +31,37 @@ namespace Code.UI
         }
     }
 
+    /// <summary>
+    /// 영업(웨이브) 시작 버튼·준비 카드·진행 막대의 판단. 그리기는 UI Toolkit 화면
+    /// (<see cref="WaveHudToolkitView"/>)이 하고, 이 컴포넌트는 값을 정해 넘기고 버튼 입력을 받는다.
+    ///
+    /// 예전에는 uGUI 버튼과 <see cref="WaveRuntimeHudView"/>를 직접 그렸다. 씬에서 지우기 전까지
+    /// 그 오브젝트들은 여기서 감춘다(UI Toolkit 전환 2단계).
+    /// </summary>
     public class WaveView : MonoBehaviour
     {
         public static WaveView Current { get; private set; }
 
         [SerializeField] private GameEventChannelSO waveEventChannel;
-        [SerializeField] private Button startButton;
+        [SerializeField, Tooltip("옛 uGUI 시작 버튼. 씬 정리 전까지 감추기만 한다.")] private Button startButton;
         [SerializeField] private DayManager dayManager;
         [SerializeField] private WaveManager waveManager;
         [SerializeField, Tooltip(GameScope.FieldTooltip)] private GameScope scope;
         [SerializeField] private GameEventChannelSO nodeEventChannel;
         [SerializeField] private GameEventChannelSO gameStateEventChannel;
         [SerializeField] private bool handleStartButtonClick = true;
-        [SerializeField] private WaveRuntimeHudView runtimeHudView;
-        [SerializeField] private WaveRuntimeHudView runtimeHudPrefab;
+        [SerializeField, Tooltip("옛 uGUI 배너·진행 막대. 씬 정리 전까지 감추기만 한다.")] private WaveRuntimeHudView runtimeHudView;
+        [SerializeField, Tooltip("옛 uGUI 목표 전환 버튼. 씬 정리 전까지 감추기만 한다.")] private Button _objectiveToggleButton;
 
-        private Graphic _tutorialHighlightGraphic;
-        private Color _tutorialHighlightDefaultColor;
-        private bool _hasTutorialHighlightDefaultColor;
-        private readonly Color _tutorialHighlightColor = new(1f, 0.82f, 0.22f, 1f);
-        private TMP_Text _startButtonLabel;
-        private CanvasGroup _startButtonVisibilityGroup;
-        [SerializeField] private Button _objectiveToggleButton;
-        [SerializeField] private TMP_Text _objectiveToggleLabel;
-        private WaveRuntimeHudView _runtimeHud;
-        private bool _ownsRuntimeHud;
-        private GameObject _waveBanner;
-        private GameObject _waveProgressHud;
-        private CanvasGroup _waveProgressGroup;
-        private TMP_Text _waveProgressTitle;
-        private TMP_Text _waveProgressStats;
-        private Image _waveProgressFill;
-        private float _displayedProgress;
         private const float WaveStatsRefreshInterval = 0.1f;
-        private const float DefaultBannerHeight = 104f;
-        private const float PreparationBannerHeight = 176f;
-        private float _nextWaveStatsRefreshTime;
 
-        public RectTransform StartButtonRect => startButton != null ? startButton.transform as RectTransform : null;
+        private WaveHudToolkitView _hud;
+        private WaveHudViewModel _model;
+        private DungeonGradeManager _dungeonGrade;
+        private bool _startVisible = true;
+        private bool _gameOver;
+        private float _displayedProgress;
+        private float _nextWaveStatsRefreshTime;
 
         /// <summary>안내가 시작 버튼을 붙잡고 있는가.</summary>
         private bool _startHeldByTutorial;
@@ -78,10 +69,16 @@ namespace Code.UI
         /// <summary>
         /// <see cref="Start"/> 가 끝났는가.
         ///
-        /// 안내는 이 화면보다 먼저 깨어나서 버튼을 붙잡는다. 그 자리에서 바로 버튼을 꺼 버리면
-        /// 프리팹의 버튼을 준비하기 전에 비활성화하지 않도록 붙잡는 상태만 기록한다.
+        /// 안내는 이 화면보다 먼저 깨어나서 버튼을 붙잡는다. 준비 전에는 붙잡는 상태만 기록한다.
         /// </summary>
         private bool _started;
+
+        /// <summary>시작 버튼의 화면 사각형(왼쪽 아래 원점 픽셀). 튜토리얼이 비춘다. 버튼이 숨었으면 false.</summary>
+        public bool TryGetStartButtonScreenRect(out Rect rect)
+        {
+            rect = default;
+            return _hud != null && _hud.TryGetStartButtonScreenRect(out rect);
+        }
 
         /// <summary>
         /// 안내가 습격 시작 버튼을 붙잡거나 놓는다.
@@ -99,55 +96,42 @@ namespace Code.UI
                 return;
 
             _startHeldByTutorial = held;
+            if (_started)
+                RefreshStartButton();
+        }
 
-            // 아직 준비 전이면 기록만 한다. Start 가 마무리하면서 반영한다.
-            if (!_started)
-                return;
-
-            if (held)
-            {
-                SetStartButtonVisible(false);
-                return;
-            }
-
-            SetStartButtonVisible(true);
+        public void HighlightTutorialStartButton()
+        {
+            _model.StartHighlighted = true;
             RefreshStartButton();
+        }
+
+        public void ClearTutorialHighlight()
+        {
+            if (!_model.StartHighlighted)
+                return;
+
+            _model.StartHighlighted = false;
+            Render();
         }
 
         private void Start()
         {
-            ResolveStartButtonLabel();
-            EnsureRuntimeHud();
-            ApplyStartButtonTheme();
+            HideLegacyViews();
+            EnsureHud();
             _started = true;
-            SetStartButtonVisible(!_startHeldByTutorial);
             RefreshStartButton();
-        }
-
-        private void Update()
-        {
-            if (_waveProgressHud == null || !_waveProgressHud.activeSelf)
-                return;
-
-            var refreshStats = Time.unscaledTime >= _nextWaveStatsRefreshTime;
-            if (refreshStats)
-                _nextWaveStatsRefreshTime = Time.unscaledTime + WaveStatsRefreshInterval;
-
-            RefreshWaveProgressHud(false, refreshStats);
         }
 
         private void OnEnable()
         {
             Current = this;
-            EnsureRuntimeHud();
 
             waveEventChannel?.AddListener<WaveStartedEvent>(HandleWaveStarted);
             waveEventChannel?.AddListener<WaveEndedEvent>(HandleWaveEnded);
             gameStateEventChannel?.AddListener<GameOverEvent>(HandleGameOver);
             nodeEventChannel?.AddListener<NodeBuiltEvent>(HandleNodeBuilt);
-            if (handleStartButtonClick)
-                startButton?.onClick.AddListener(HandleStartClicked);
-            _objectiveToggleButton?.onClick.AddListener(HandleObjectiveToggleClicked);
+            BindHud();
         }
 
         private void OnDisable()
@@ -159,51 +143,32 @@ namespace Code.UI
             waveEventChannel?.RemoveListener<WaveEndedEvent>(HandleWaveEnded);
             gameStateEventChannel?.RemoveListener<GameOverEvent>(HandleGameOver);
             nodeEventChannel?.RemoveListener<NodeBuiltEvent>(HandleNodeBuilt);
-            if (handleStartButtonClick)
-                startButton?.onClick.RemoveListener(HandleStartClicked);
-            _objectiveToggleButton?.onClick.RemoveListener(HandleObjectiveToggleClicked);
-            if (_runtimeHud != null && _ownsRuntimeHud)
-                Destroy(_runtimeHud.gameObject);
-            _runtimeHud = null;
-            _ownsRuntimeHud = false;
-            _waveBanner = null;
-            _waveProgressHud = null;
-            ClearTutorialHighlight();
+            UnbindHud();
+            _model.StartHighlighted = false;
         }
 
-        public void HighlightTutorialStartButton()
+        private void OnDestroy()
         {
-            SetStartButtonVisible(true);
-            RefreshStartButton();
+            if (_hud != null)
+                Destroy(_hud.gameObject);
+            _hud = null;
+        }
 
-            var graphic = startButton != null ? startButton.targetGraphic : null;
-            if (graphic == null)
+        private void Update()
+        {
+            if (!_model.ProgressVisible)
                 return;
 
-            if (_tutorialHighlightGraphic != graphic)
-            {
-                ClearTutorialHighlight();
-                _tutorialHighlightGraphic = graphic;
-                _tutorialHighlightDefaultColor = graphic.color;
-                _hasTutorialHighlightDefaultColor = true;
-            }
+            var refreshStats = Time.unscaledTime >= _nextWaveStatsRefreshTime;
+            if (refreshStats)
+                _nextWaveStatsRefreshTime = Time.unscaledTime + WaveStatsRefreshInterval;
 
-            startButton.transform.SetAsLastSibling();
-            graphic.color = _tutorialHighlightColor;
-        }
-
-        public void ClearTutorialHighlight()
-        {
-            if (_tutorialHighlightGraphic != null && _hasTutorialHighlightDefaultColor)
-                _tutorialHighlightGraphic.color = _tutorialHighlightDefaultColor;
-
-            _tutorialHighlightGraphic = null;
-            _hasTutorialHighlightDefaultColor = false;
+            RefreshWaveProgress(false, refreshStats);
         }
 
         private void HandleStartClicked()
         {
-            if (!TutorialInputGate.AllowsWaveStartClick())
+            if (!handleStartButtonClick || !TutorialInputGate.AllowsWaveStartClick())
                 return;
 
             if (dayManager == null || waveManager == null || !waveManager.CanStartWave(dayManager.NextWaveDay))
@@ -212,35 +177,53 @@ namespace Code.UI
                 return;
             }
 
-            dayManager?.StartWave();
+            dayManager.StartWave();
         }
 
         private void HandleWaveStarted(WaveStartedEvent evt)
         {
-            ClearTutorialHighlight();
-            SetStartButtonVisible(false);
-            SetObjectiveToggleVisible(false);
-            ShowWaveBanner(evt.Day, evt.EnemyCount);
-            ShowWaveProgressHud();
+            _model.StartHighlighted = false;
+            _startVisible = false;
+            _model.ObjectiveVisible = false;
+            _model.PreparationVisible = false;
+            _hud?.PlayBanner($"DAY {evt.Day}  ·  던전 영업 시작",
+                $"오늘의 모험가 {Mathf.Max(0, evt.EnemyCount)}명이 오른쪽 입구로 들어옵니다");
+
+            _model.ProgressVisible = true;
+            _displayedProgress = 0f;
+            _nextWaveStatsRefreshTime = Time.unscaledTime + WaveStatsRefreshInterval;
+            RefreshWaveProgress(true, true);
+            RefreshStartButton();
         }
 
         private void HandleWaveEnded(WaveEndedEvent evt)
         {
-            SetStartButtonVisible(true);
-            HideWaveProgressHud();
+            _startVisible = true;
+            _model.ProgressVisible = false;
             RefreshStartButton();
             StartCoroutine(RefreshStartButtonAfterStateSync());
         }
 
         private void HandleGameOver(GameOverEvent evt)
         {
-            SetStartButtonVisible(false);
-            SetObjectiveToggleVisible(false);
-            HideWaveProgressHud();
-            HidePreparationHud();
+            _gameOver = true;
+            _model = default;
+            Render();
         }
 
         private void HandleNodeBuilt(NodeBuiltEvent evt) => RefreshStartButton();
+
+        private void HandleObjectiveToggleClicked()
+        {
+            if (waveManager == null || dayManager == null || !dayManager.IsStandby)
+                return;
+
+            var next = waveManager.SelectedObjective == waveManager.ObjectiveOptionA
+                ? waveManager.ObjectiveOptionB
+                : waveManager.ObjectiveOptionA;
+            if (waveManager.SelectObjective(next))
+                RefreshStartButton();
+        }
 
         private IEnumerator RefreshStartButtonAfterStateSync()
         {
@@ -250,164 +233,81 @@ namespace Code.UI
 
         private void RefreshStartButton()
         {
-            if (startButton == null)
+            if (_gameOver)
                 return;
 
-            startButton.interactable = !_startHeldByTutorial
-                                       && waveManager != null
-                                       && dayManager != null
-                                       && dayManager.IsStandby
-                                       && waveManager.CanStartWave(dayManager.NextWaveDay);
-
-            ResolveStartButtonLabel();
-            var nextDay = dayManager != null ? dayManager.NextWaveDay : 0;
-            var enemyCount = waveManager != null ? Mathf.Max(0, waveManager.GetPreviewEnemyCount(nextDay)) : 0;
-            var hasEntryDoor = waveManager != null && waveManager.HasEntryDoor;
+            var ready = waveManager != null && dayManager != null;
+            var standby = ready && dayManager.IsStandby;
+            var nextDay = ready ? dayManager.NextWaveDay : 0;
+            var canStart = standby && waveManager.CanStartWave(nextDay);
+            var enemyCount = ready ? Mathf.Max(0, waveManager.GetPreviewEnemyCount(nextDay)) : 0;
+            var hasEntryDoor = ready && waveManager.HasEntryDoor;
             waveManager?.PrepareObjectiveChoices(nextDay);
 
-            if (_startButtonLabel != null)
-            {
-                if (waveManager == null || dayManager == null)
-                    _startButtonLabel.text = "준비 중";
-                else if (!dayManager.IsStandby)
-                    _startButtonLabel.text = "던전 영업 중";
-                else if (!waveManager.CanStartWave(nextDay))
-                    _startButtonLabel.text = waveManager.GetWaveStartBlockedReason(nextDay);
-                else
-                    _startButtonLabel.text = waveManager.IsBossDay(nextDay)
-                        ? $"특별 영업 시작\nDAY {nextDay} · 영웅 파티 {enemyCount}명"
-                        : $"던전 영업 시작\nDAY {nextDay} · 방문객 {enemyCount}명";
-            }
+            // 안내가 붙잡고 있으면 감춘다.
+            _model.StartVisible = _startVisible && standby && !_startHeldByTutorial;
+            _model.StartEnabled = !_startHeldByTutorial && canStart;
+            _model.StartLabel = !ready
+                ? "준비 중"
+                : !standby
+                    ? "던전 영업 중"
+                    : !waveManager.CanStartWave(nextDay)
+                        ? waveManager.GetWaveStartBlockedReason(nextDay)
+                        : waveManager.IsBossDay(nextDay)
+                            ? $"특별 영업 시작\nDAY {nextDay} · 영웅 파티 {enemyCount}명"
+                            : $"던전 영업 시작\nDAY {nextDay} · 방문객 {enemyCount}명";
 
-            RefreshObjectiveToggle(nextDay, hasEntryDoor);
-            ShowPreparationHud(nextDay, enemyCount, hasEntryDoor);
+            RefreshObjectiveToggle(nextDay, hasEntryDoor, canStart);
+            RefreshPreparation(standby, nextDay, enemyCount, hasEntryDoor);
+            Render();
         }
 
-        private void SetStartButtonVisible(bool visible)
+        private void RefreshObjectiveToggle(int day, bool hasEntryDoor, bool canStart)
         {
-            if (startButton == null)
+            _model.ObjectiveVisible = hasEntryDoor && canStart && _model.StartVisible;
+            if (!_model.ObjectiveVisible)
                 return;
 
-            // 안내가 붙잡고 있는 동안에는 다시 띄우지 않는다.
-            if (visible && _startHeldByTutorial)
+            var selected = waveManager.SelectedObjective;
+            var other = selected == waveManager.ObjectiveOptionA
+                ? waveManager.ObjectiveOptionB
+                : waveManager.ObjectiveOptionA;
+            _model.ObjectiveLabel =
+                $"목표: {WaveObjectiveRules.GetTitle(selected)}  ·  클릭: {WaveObjectiveRules.GetTitle(other)} 선택";
+        }
+
+        private void RefreshPreparation(bool standby, int day, int enemyCount, bool hasEntryDoor)
+        {
+            _model.PreparationVisible = standby;
+            if (!standby)
                 return;
 
-            // Some scenes keep WaveView on the start button itself. Disabling that
-            // GameObject would unsubscribe WaveView before WaveEnded can show it again.
-            if (startButton.gameObject == gameObject)
+            _model.PreparationTitle = $"DAY {Mathf.Max(1, day)}  ·  영업 준비";
+            if (!hasEntryDoor)
             {
-                _startButtonVisibilityGroup ??= startButton.GetComponent<CanvasGroup>();
-                if (_startButtonVisibilityGroup == null)
-                    _startButtonVisibilityGroup = startButton.gameObject.AddComponent<CanvasGroup>();
-
-                _startButtonVisibilityGroup.alpha = visible ? 1f : 0f;
-                _startButtonVisibilityGroup.interactable = visible;
-                _startButtonVisibilityGroup.blocksRaycasts = visible;
+                _model.PreparationBody = "던전 입구 문을 준비하는 중입니다";
                 return;
             }
 
-            startButton.gameObject.SetActive(visible);
-        }
-
-        private void ResolveStartButtonLabel()
-        {
-            if (_startButtonLabel == null && startButton != null)
-                _startButtonLabel = startButton.GetComponentInChildren<TMP_Text>(true);
-        }
-
-        private void ShowWaveBanner(int day, int enemyCount)
-        {
-            EnsureRuntimeHud();
-            if (_waveBanner == null || _runtimeHud == null || _runtimeHud.BannerGroup == null)
-                return;
-
-            var rect = (RectTransform)_waveBanner.transform;
-            ApplyBannerLayout(false);
-            rect.SetAsLastSibling();
-            _runtimeHud.BannerTitle.text = $"DAY {day}  ·  던전 영업 시작";
-            _runtimeHud.BannerSubtitle.text = $"오늘의 모험가 {Mathf.Max(0, enemyCount)}명이 오른쪽 입구로 들어옵니다";
-            var group = _runtimeHud.BannerGroup;
-            _waveBanner.SetActive(true);
-            DOTween.Kill(_waveBanner);
-            group.alpha = 0f;
-            group.blocksRaycasts = false;
-            rect.localScale = new Vector3(0.92f, 0.92f, 1f);
-
-            DOTween.Sequence().SetUpdate(true).SetLink(_waveBanner)
-                .Append(group.DOFade(1f, 0.18f))
-                .Join(rect.DOScale(1f, 0.24f).SetEase(Ease.OutBack))
-                .AppendInterval(1.25f)
-                .Append(rect.DOAnchorPosY(-94f, 0.3f).SetEase(Ease.InCubic))
-                .Join(group.DOFade(0f, 0.3f))
-                .OnComplete(() =>
-                {
-                    if (_waveBanner != null)
-                        _waveBanner.SetActive(false);
-                });
-        }
-
-        private void ShowPreparationHud(int day, int enemyCount, bool hasEntryDoor)
-        {
-            EnsureRuntimeHud();
-            if (_waveBanner == null || _runtimeHud == null || _runtimeHud.BannerGroup == null)
-                return;
-
-            _runtimeHud.BannerGroup.DOKill();
-            _runtimeHud.BannerGroup.alpha = 1f;
-            _runtimeHud.BannerGroup.blocksRaycasts = false;
-            _runtimeHud.BannerTitle.text = $"DAY {Mathf.Max(1, day)}  ·  영업 준비";
-            if (hasEntryDoor)
-            {
-                var baseEnemyCount = waveManager != null ? waveManager.GetBasePreviewEnemyCount(day) : enemyCount;
-                var conquestReduction = Mathf.Max(0, baseEnemyCount - enemyCount);
-                var conquestText = conquestReduction > 0 ? $" · 마을 장악으로 -{conquestReduction}명" : string.Empty;
-                var threat = waveManager != null ? waveManager.GetThreatPreview(day) : default;
-                var threatText = threat.IsEmpty
-                    ? string.Empty
-                    : $"\n<color=#FFCC66>{threat.Title}</color> · {threat.CounterHint}";
-                var traitText = threat.HasTraitInfo
-                    ? $"\n<color=#E6AEFF>{threat.TraitSummary}</color>"
-                      + $"\n<color=#9FE6B8>추천 · {threat.TraitCounterHint}</color>"
-                    : string.Empty;
-                ApplyBannerLayout(true);
-                _runtimeHud.BannerSubtitle.text =
-                    $"방문 예정 {enemyCount}명{conquestText} · 시설과 몬스터를 배치하세요\n"
-                    + BuildVisitorMixLine(enemyCount)
-                    + BuildGradeLine()
-                    + CoreLoopFeatureUnlocks.GetPreparationHint(day)
-                    + threatText
-                    + traitText
-                    + (waveManager != null
-                        ? $"\n<color=#8FD6FF>선택 목표 · {waveManager.GetSelectedObjectiveSummary(enemyCount)}</color>"
-                        : string.Empty);
-            }
-            else
-            {
-                ApplyBannerLayout(false);
-                _runtimeHud.BannerSubtitle.text = "던전 입구 문을 준비하는 중입니다";
-            }
-            _waveBanner.SetActive(true);
-            _waveBanner.transform.SetAsLastSibling();
-        }
-
-        private void ApplyBannerLayout(bool expanded)
-        {
-            if (_waveBanner == null || _runtimeHud == null || _runtimeHud.BannerSubtitle == null)
-                return;
-
-            if (_waveBanner.transform is RectTransform bannerRect)
-            {
-                var size = bannerRect.sizeDelta;
-                size.y = expanded ? PreparationBannerHeight : DefaultBannerHeight;
-                bannerRect.sizeDelta = size;
-            }
-
-            var subtitle = _runtimeHud.BannerSubtitle;
-            subtitle.enableAutoSizing = expanded;
-            subtitle.fontSizeMin = 12f;
-            subtitle.fontSizeMax = 20f;
-            if (!expanded)
-                subtitle.fontSize = 20f;
+            var baseEnemyCount = waveManager.GetBasePreviewEnemyCount(day);
+            var conquestReduction = Mathf.Max(0, baseEnemyCount - enemyCount);
+            var conquestText = conquestReduction > 0 ? $" · 마을 장악으로 -{conquestReduction}명" : string.Empty;
+            var threat = waveManager.GetThreatPreview(day);
+            var threatText = threat.IsEmpty
+                ? string.Empty
+                : $"\n<color=#FFCC66>{threat.Title}</color> · {threat.CounterHint}";
+            var traitText = threat.HasTraitInfo
+                ? $"\n<color=#E6AEFF>{threat.TraitSummary}</color>"
+                  + $"\n<color=#9FE6B8>추천 · {threat.TraitCounterHint}</color>"
+                : string.Empty;
+            _model.PreparationBody =
+                $"방문 예정 {enemyCount}명{conquestText} · 시설과 몬스터를 배치하세요\n"
+                + BuildVisitorMixLine(enemyCount)
+                + BuildGradeLine()
+                + CoreLoopFeatureUnlocks.GetPreparationHint(day)
+                + threatText
+                + traitText
+                + $"\n<color=#8FD6FF>선택 목표 · {waveManager.GetSelectedObjectiveSummary(enemyCount)}</color>";
         }
 
         /// <summary>
@@ -463,197 +363,112 @@ namespace Code.UI
                    + $" <size=85%>(처치 {fromKills} · 금고 {fromGold} · 건물 {fromFacilities})</size>\n";
         }
 
-        private DungeonGradeManager _dungeonGrade;
-
-        private void HidePreparationHud()
+        private void RefreshWaveProgress(bool immediate, bool refreshStats)
         {
-            if (_waveBanner != null)
-                _waveBanner.SetActive(false);
-        }
-
-        private void EnsureRuntimeHud()
-        {
-            if (_runtimeHud != null)
-                return;
-
-            var canvas = GetComponentInParent<Canvas>();
-            if (canvas == null)
-            {
-                Debug.LogError("WaveView requires a parent Canvas.", this);
-                return;
-            }
-
-            _runtimeHud = runtimeHudView != null
-                ? runtimeHudView
-                : canvas.GetComponentInChildren<WaveRuntimeHudView>(true);
-
-            if (_runtimeHud == null)
-            {
-                var prefab = runtimeHudPrefab != null
-                    ? runtimeHudPrefab
-                    : Resources.Load<WaveRuntimeHudView>("UI/WaveRuntimeHud");
-                if (prefab == null)
-                {
-                    Debug.LogError("Missing Resources/UI/WaveRuntimeHud prefab.", this);
-                    return;
-                }
-
-                _runtimeHud = Instantiate(prefab, canvas.transform, false);
-                _ownsRuntimeHud = true;
-            }
-
-            _runtimeHud.transform.SetAsLastSibling();
-            _waveBanner = _runtimeHud.BannerRoot;
-            _waveProgressHud = _runtimeHud.ProgressRoot;
-            _waveProgressGroup = _runtimeHud.ProgressGroup;
-            _waveProgressTitle = _runtimeHud.ProgressTitle;
-            _waveProgressStats = _runtimeHud.ProgressStats;
-            _waveProgressFill = _runtimeHud.ProgressFill;
-            _waveBanner?.SetActive(false);
-            _waveProgressHud.SetActive(false);
-        }
-
-        private void ShowWaveProgressHud()
-        {
-            EnsureRuntimeHud();
-            if (_waveProgressHud == null || _waveProgressGroup == null)
-                return;
-
-            _displayedProgress = 0f;
-            if (_waveProgressFill != null)
-                _waveProgressFill.fillAmount = 0f;
-            _waveProgressHud.SetActive(true);
-            _waveProgressHud.transform.SetAsLastSibling();
-            _waveProgressGroup.DOKill();
-            _waveProgressGroup.alpha = 0f;
-            _waveProgressGroup.DOFade(1f, 0.22f).SetUpdate(true).SetLink(_waveProgressHud);
-            _nextWaveStatsRefreshTime = Time.unscaledTime + WaveStatsRefreshInterval;
-            RefreshWaveProgressHud(true, true);
-        }
-
-        private void HideWaveProgressHud()
-        {
-            if (_waveProgressHud == null || !_waveProgressHud.activeSelf || _waveProgressGroup == null)
-                return;
-
-            _waveProgressGroup.DOKill();
-            _waveProgressGroup.DOFade(0f, 0.22f).SetUpdate(true).SetLink(_waveProgressHud)
-                .OnComplete(() =>
-                {
-                    if (_waveProgressHud != null)
-                        _waveProgressHud.SetActive(false);
-                });
-        }
-
-        private void RefreshWaveProgressHud(bool immediate = false, bool refreshStats = true)
-        {
-            if (_waveProgressHud == null || !_waveProgressHud.activeSelf || waveManager == null)
+            if (waveManager == null)
                 return;
 
             var total = Mathf.Max(1, waveManager.TotalEnemyCount);
             var remaining = Mathf.Clamp(waveManager.RemainingThreatCount, 0, total);
-            var resolved = total - remaining;
-            var targetProgress = Mathf.Clamp01(resolved / (float)total);
+            var targetProgress = Mathf.Clamp01((total - remaining) / (float)total);
             _displayedProgress = immediate
                 ? targetProgress
                 : Mathf.MoveTowards(_displayedProgress, targetProgress, Time.unscaledDeltaTime * 1.8f);
-
-            if (_waveProgressFill != null)
-            {
-                _waveProgressFill.fillAmount = _displayedProgress;
-            }
+            _model.Progress = _displayedProgress;
 
             // 제목은 통계 갱신 주기를 기다리지 않는다. 멈춘 순간 손댈 수 있다고 알려 줘야 하는데
             // 반 박자 늦게 뜨면 플레이어는 이미 다른 곳을 누르고 있다.
-            if (_waveProgressTitle != null)
-            {
-                var speed = GameSpeedController.Current;
-                _waveProgressTitle.text = speed != null && speed.IsPausedByPlayer
-                    ? "<color=#8FD6FF>멈춤 · 지금 배치할 수 있습니다</color>"
-                    : waveManager.IsBossWave ? "영웅 파티 특별 영업" : "던전 영업 중";
-            }
+            var speed = GameSpeedController.Current;
+            _model.ProgressTitle = speed != null && speed.IsPausedByPlayer
+                ? "<color=#8FD6FF>멈춤 · 지금 배치할 수 있습니다</color>"
+                : waveManager.IsBossWave ? "영웅 파티 특별 영업" : "던전 영업 중";
+            _model.ProgressIsBoss = waveManager.IsBossWave;
 
-            if (!refreshStats)
-                return;
-
-            if (_waveProgressFill != null)
-                _waveProgressFill.color = waveManager.IsBossWave
-                    ? new Color(0.98f, 0.62f, 0.12f, 1f)
-                    : new Color(0.72f, 0.12f, 0.08f, 1f);
-
-            if (_waveProgressStats != null)
+            if (refreshStats)
             {
                 // 머릿수만으로는 그들이 입구에 있는지 금고 앞인지 알 수 없다. 남은 거리를 같이 적는다.
                 var steps = IntrusionThreat.StepsToObjective(out _, out var objectiveKind);
                 var warning = IntrusionThreat.BuildWarning(steps, objectiveKind);
-                // 넷을 늘어놓으면 아무것도 안 읽힌다. 남은 수와 처치 수는 remaining/total 한 쌍이면
-                // 알 수 있고, 던전 내부와 진입 대기의 구분은 화면을 보면 그대로 보인다.
-                _waveProgressStats.text =
+                _model.ProgressStats =
                     $"남은 방문객 {remaining}/{total}"
                     + (string.IsNullOrEmpty(warning) ? string.Empty : $"  ·  {warning}")
                     + $"\n<color=#8FD6FF>{waveManager.GetSelectedObjectiveProgressText()}</color>";
             }
+
+            Render();
         }
 
-        private void HandleObjectiveToggleClicked()
+        private void Render()
         {
-            if (waveManager == null || dayManager == null || !dayManager.IsStandby)
-                return;
-
-            var next = waveManager.SelectedObjective == waveManager.ObjectiveOptionA
-                ? waveManager.ObjectiveOptionB
-                : waveManager.ObjectiveOptionA;
-            if (waveManager.SelectObjective(next))
-                RefreshStartButton();
+            if (_hud != null)
+                _hud.Render(_model);
         }
 
-        private void RefreshObjectiveToggle(int day, bool hasEntryDoor)
+        private void EnsureHud()
         {
-            if (_objectiveToggleButton == null || waveManager == null || dayManager == null)
+            if (_hud != null)
                 return;
 
-            var visible = hasEntryDoor && dayManager.IsStandby && waveManager.CanStartWave(day);
-            SetObjectiveToggleVisible(visible);
-            if (!visible || _objectiveToggleLabel == null)
-                return;
-
-            var selected = waveManager.SelectedObjective;
-            var other = selected == waveManager.ObjectiveOptionA
-                ? waveManager.ObjectiveOptionB
-                : waveManager.ObjectiveOptionA;
-            _objectiveToggleLabel.text =
-                $"목표: {WaveObjectiveRules.GetTitle(selected)}  ·  클릭: {WaveObjectiveRules.GetTitle(other)} 선택";
+            _hud = ToolkitScreenSO.Spawn<WaveHudToolkitView>(WaveHudToolkitView.ScreenResourcePath, WaveHudToolkitView.RootName);
+            BindHud();
         }
 
-        private void SetObjectiveToggleVisible(bool visible)
+        private void BindHud()
         {
-            if (_objectiveToggleButton != null)
-                _objectiveToggleButton.gameObject.SetActive(visible);
-        }
-
-        private void ApplyStartButtonTheme()
-        {
-            if (startButton == null)
+            if (_hud == null)
                 return;
 
-            var image = startButton.targetGraphic as Image ?? startButton.GetComponent<Image>();
-            if (image != null)
+            _hud.StartClicked -= HandleStartClicked;
+            _hud.StartClicked += HandleStartClicked;
+            _hud.ObjectiveClicked -= HandleObjectiveToggleClicked;
+            _hud.ObjectiveClicked += HandleObjectiveToggleClicked;
+        }
+
+        private void UnbindHud()
+        {
+            if (_hud == null)
+                return;
+
+            _hud.StartClicked -= HandleStartClicked;
+            _hud.ObjectiveClicked -= HandleObjectiveToggleClicked;
+        }
+
+        /// <summary>
+        /// 옛 uGUI 시작 버튼·목표 버튼·배너·진행 막대를 감춘다. 이 컴포넌트가 시작 버튼 오브젝트에
+        /// 붙어 있는 씬이 있어서 버튼은 끄지 않고 투명하게 만든다(끄면 이 컴포넌트도 꺼진다).
+        /// </summary>
+        private void HideLegacyViews()
+        {
+            if (startButton != null)
             {
-                image.color = new Color(0.42f, 0.075f, 0.05f, 0.98f);
-                var outline = startButton.GetComponent<Outline>();
-                if (outline != null)
+                if (startButton.gameObject == gameObject)
                 {
-                    outline.effectColor = new Color(0.92f, 0.62f, 0.2f, 1f);
-                    outline.effectDistance = new Vector2(2f, -2f);
+                    var group = startButton.GetComponent<CanvasGroup>();
+                    if (group == null)
+                        group = startButton.gameObject.AddComponent<CanvasGroup>();
+                    group.alpha = 0f;
+                    group.interactable = false;
+                    group.blocksRaycasts = false;
+                }
+                else
+                {
+                    startButton.gameObject.SetActive(false);
                 }
             }
 
-            ResolveStartButtonLabel();
-            if (_startButtonLabel != null)
+            if (_objectiveToggleButton != null && _objectiveToggleButton.gameObject != gameObject)
+                _objectiveToggleButton.gameObject.SetActive(false);
+
+            // 예전에는 연결이 비면 같은 캔버스 안에서 찾아 썼다. 감출 때도 같은 곳을 본다.
+            if (runtimeHudView == null)
             {
-                _startButtonLabel.color = new Color(1f, 0.9f, 0.66f, 1f);
-                _startButtonLabel.fontStyle = FontStyles.Bold;
+                var canvas = GetComponentInParent<Canvas>();
+                if (canvas != null)
+                    runtimeHudView = canvas.GetComponentInChildren<WaveRuntimeHudView>(true);
             }
+
+            if (runtimeHudView != null && runtimeHudView.gameObject != gameObject)
+                runtimeHudView.gameObject.SetActive(false);
         }
     }
 }

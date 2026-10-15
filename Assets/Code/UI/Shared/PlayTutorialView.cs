@@ -521,7 +521,9 @@ namespace Code.UI
                     return false;
 
                 case Step.SurviveWave:
-                    return TryBuildRect(waveView != null ? waveView.StartButtonRect : ResolveWaveButton(), out rect);
+                    // 시작 버튼은 UI Toolkit 화면에 있다. 화면 사각형을 바로 받는다.
+                    var wave = ResolveWaveView();
+                    return wave != null && wave.TryGetStartButtonScreenRect(out rect);
 
                 case Step.LearnMerchant:
                     return TryBuildRect(MerchantButton, out rect);
@@ -705,12 +707,6 @@ namespace Code.UI
 
             if (hintCanvas.sortingOrder != DimSortingOrder + 1)
                 hintCanvas.sortingOrder = DimSortingOrder + 1;
-        }
-
-        private RectTransform ResolveWaveButton()
-        {
-            var view = ResolveWaveView();
-            return view != null ? view.StartButtonRect : null;
         }
 
         /// <summary>이 칸에서 눌러야 할 방. 못 고르면 아무것도 덮지 않는다.</summary>
