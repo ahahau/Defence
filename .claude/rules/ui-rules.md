@@ -36,7 +36,8 @@ Assets/GameModules/UI/UxmlAndUss/
 5. 색상 값은 전부 `Common/DesignToken.uss`에 정의하고 `var()`로만 참조한다.
    * 다른 USS 파일에 하드코딩된 `#RRGGBB`나 `rgba()`가 있으면 안 된다.
    * 토큰은 원시값(팔레트) → 의미값(semantic) 2단계로 둔다. 예: `--color-gold-500` → `--color-accent`.
-   * 기존 `Theme.uss`의 팔레트(갈색 바탕·금색 테두리·수입 초록/지출 빨강)를 원시값의 출발점으로 삼는다. 옛 uGUI 화면과 같은 팔레트여야 한 게임처럼 보인다.
+   * 팔레트는 Super GUI 팩의 Silver(남색 창 `rgb(77,83,120)`)·Black(회색 칸 `rgb(75,77,78)`) 조각에서 뽑은 값이다(수입 초록·지출 빨강·경고 호박색은 그대로). 옛 Toolkit 화면의 `Theme.uss`도 같은 값을 쓴다 — 둘이 한 화면에 같이 뜬다.
+   * 테두리는 `Assets/GameModules/UI/Skin/Silver/`의 9-slice 그림이다: `PanelFrame`(네모 창, 모서리 10·2배), `WindowFrame`(오른쪽 위·왼쪽 아래가 잘린 큰 모달, 모서리 32·2배, 그림이 바탕까지 칠하므로 요소 바탕은 `--color-skin-window-fill`로 비움), `BoxFrame`(안쪽 칸, 모서리 6), `ButtonFrame`(버튼, 모서리 9). 변은 `-unity-slice-type: tiled`. 클래스는 `.panel`·`.panel--window`·`.panel--inset`·`.btn`. 상태(호버·선택·위험)는 `-unity-background-image-tint-color`로 보인다.
    * 변수는 상속되므로 각 문서의 가장 바깥 요소에 테마 클래스를 붙인다. 여러 UIDocument가 한 패널을 공유하므로 `:root`에 의존하지 않는다.
 6. 버튼, 스크롤바, 패널 등 반복되는 스타일은 `Common/Components.uss`에 클래스로 정의해 재사용한다.
    * Bootstrap처럼 클래스를 조합해 쓰는 것이 목표다. 예: `btn btn--primary btn--lg`.

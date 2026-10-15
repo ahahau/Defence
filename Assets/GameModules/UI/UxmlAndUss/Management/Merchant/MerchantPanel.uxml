@@ -3,7 +3,7 @@
     <Style src="project://database/Assets/GameModules/UI/UxmlAndUss/Common/Components.uss" />
     <Style src="project://database/Assets/GameModules/UI/UxmlAndUss/Management/Merchant/MerchantPanel.uss" />
     <ui:VisualElement name="merchant-root" class="ui-theme scrim merchant-root">
-        <ui:VisualElement name="merchant-card" class="panel merchant-card">
+        <ui:VisualElement name="merchant-card" class="panel panel--window merchant-card">
             <ui:VisualElement class="merchant-header">
                 <ui:Label name="merchant-title" text="떠돌이 상인" class="text-title merchant-title" />
                 <ui:Label name="merchant-visit" text="1일차 · 다음 방문 3일차" class="text-dim text-ellipsis merchant-visit" />

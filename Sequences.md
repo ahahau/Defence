@@ -27,7 +27,13 @@
   - 단계: 1) 중복 uGUI 삭제 + 민심 칸 → 2) 영업 시작·웨이브 목표/진행·일차 배너 → 3) 유닛 영입·진행 보고서 → 4) 대화·튜토리얼·툴팁·보스·하루 전환 연출.
   - 1단계(코드 부분): HUD 상단에 민심 칸(`morale-chip`, 초록 줄) 추가. 새 `MoraleChipView`(`Code.UI.Toolkit`)가 `MoralePolicyManager.MoraleChanged`를 듣고 값을 보이며, 누르면 범용 팝업(`Notice`)으로 유지비·지원자 효과와 최근 변화 8줄을 보여 준다(옛 민심 상세 창 대신). 지도 클릭 막기(`ToolkitPointerBlockers`) 등록.
   - 오른쪽 기록판 위에 겹치던 uGUI 마력(`MagicView`)·등급(`DangerPanelView`)·민심(`MoraleHudView`)과 하단의 "Day N"(`DayView`)은 `Awake`에서 스스로 꺼진다. 씬에서 오브젝트를 지울 때 스크립트도 함께 지운다(씬은 다른 세션 커밋 대기).
-  - 검증: `dotnet build` 오류 0, 플레이에서 겹침이 사라지고 민심 칸 50·팝업 표시 확인, 콘솔 오류 0. EditMode 309/310 — `UnitMarketTests.Roster_QuotesTheSamePriceItWillCharge` 1건 실패(시세 단계 Expensive 기대, Normal), 단독 재실행 5/5 통과로 시세 난수에 따른 간헐 실패로 보임(다른 세션 작업 영역, 미수정).
+  - 검증(1단계): `dotnet build` 오류 0, 플레이에서 겹침이 사라지고 민심 칸 50·팝업 표시 확인, 콘솔 오류 0. EditMode 309/310 — `UnitMarketTests.Roster_QuotesTheSamePriceItWillCharge` 1건 실패(시세 단계 Expensive 기대, Normal), 단독 재실행 5/5 통과로 시세 난수에 따른 간헐 실패로 보임(다른 세션 작업 영역, 미수정).
+- UI 스타일을 남색 패널로 교체(사용자가 보낸 참고 이미지 중 2·3번 — Super GUI 팩 Silver 창 + Black 안쪽 칸, 잘린 모서리. 사용자 선택: 테두리 + 바탕색 전부).
+  - 그림: `Skin/Gold`를 지우고 `Assets/GameModules/UI/Skin/Silver/`를 만듦 — `PanelFrame`(Silver 패널 0~8번, 안쪽 비움, 모서리 10), `WindowFrame`(Silver 0·1·38·3·4·5·51·7·8번 — 오른쪽 위·왼쪽 아래가 잘린 창, 바탕까지 포함, 모서리 32), `BoxFrame`(Black 글상자 0~8번, 모서리 6), `ButtonFrame`(Silver 버튼 20번, 모서리 9).
+  - 팔레트: `DesignToken.uss` 원시값을 팩 색으로 교체(창 `rgb(77,83,120)`, 안쪽 칸 `rgb(75,77,78)`, 버튼 `rgb(80,83,109)`, 테두리 `rgb(177,192,204)`, 글자 흰색·연보라 계열). 수입·지출·경고·위험·강조(금색) 색은 유지. 옛 화면 `Theme.uss` 변수도 같은 값으로, `GameplayHud.uss`·`TitleScreen.uss`에 박혀 있던 갈색 8곳은 변수(`--bar`·`--bar-strip`·`--edge-faint`·`--chip-magic`·`--chip-grade`·`--page`)로 바꿈.
+  - 큰 모달 창은 `WindowFrame`: 새 화면은 `.panel--window`(팝업·금고·상인 UXML에 추가), 옛 화면은 정산·운영 방침·패배·타이틀·설정·일시정지 카드. 오른쪽 기록판·선택 카드·방 관리 창 등 늘 떠 있는 판은 네모 `PanelFrame`.
+  - `ui-rules.md` 팔레트·테두리 설명 갱신.
+  - 검증: 플레이에서 HUD·방 확장 팝업·방 관리 창·정산 창 캡처 확인(잘린 모서리 창, 남색 바탕, 은색 테두리), 콘솔 오류 0, EditMode 310/310. 아직 uGUI인 일차 배너·영업 시작 버튼·웨이브 진행 막대·"유닛 관리" 탭은 갈색 그대로(2·3단계에서 Toolkit으로 옮김).
 
 ## 2026-10-14
 

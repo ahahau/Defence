@@ -3,7 +3,7 @@
     <Style src="project://database/Assets/GameModules/UI/UxmlAndUss/Common/Components.uss" />
     <Style src="project://database/Assets/GameModules/UI/UxmlAndUss/Management/Treasury/TreasuryPanel.uss" />
     <ui:VisualElement name="treasury-root" class="ui-theme treasury-root" picking-mode="Ignore">
-        <ui:VisualElement name="treasury-card" class="panel treasury-card">
+        <ui:VisualElement name="treasury-card" class="panel panel--window treasury-card">
             <ui:VisualElement class="treasury-header">
                 <ui:VisualElement name="treasury-icon" class="treasury-icon" />
                 <ui:Label name="treasury-title" text="금고 관리" class="text-title text-ellipsis treasury-title" />

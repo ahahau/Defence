@@ -2,7 +2,7 @@
     flex-grow: 1;
     align-items: center;
     justify-content: center;
-    background-color: rgb(12, 8, 6);
+    background-color: var(--page);
 }
 
 .title-card, .settings-card {
