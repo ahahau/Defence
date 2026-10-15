@@ -488,7 +488,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &2624532001765305233
 SpriteRenderer:
-  serializedVersion: 2
+  serializedVersion: 3
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -535,7 +535,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 20
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -6620443678240376230, guid: e87236f48560e4940955075b58eab9c8, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 42bee7aeb125b41048702ceba3be77cf, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -545,6 +545,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
 --- !u!114 &7896755577429785000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -558,10 +559,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gameStateEventChannel: {fileID: 0}
-  idleSprite: {fileID: -4669235113563824110, guid: 2b0597aa2e0e7bf4e95b706849f13681, type: 3}
-  attackSprite: {fileID: -1975519954842515521, guid: 6b7c7fab48cb6094083e73028f6a6c4f, type: 3}
-  defeatedSprite: {fileID: 3870693840895197719, guid: 20da7a64c7b28c240b80d255568b0e3b, type: 3}
+  idleSprite: {fileID: 21300000, guid: 42bee7aeb125b41048702ceba3be77cf, type: 3}
+  attackSprite: {fileID: 21300000, guid: dc04d4f2c8e3f49fcaa7d05b4fe9ac52, type: 3}
+  defeatedSprite: {fileID: 21300000, guid: f1d06c41532fe4c25b9801c4ef49ec6f, type: 3}
   spriteRenderer: {fileID: 2624532001765305233}
+  animationSet: {fileID: 11400000, guid: 11c7d1202f0cac144a705880fda1ddc0, type: 2}
 --- !u!1001 &1660696363140019140
 PrefabInstance:
   m_ObjectHideFlags: 0

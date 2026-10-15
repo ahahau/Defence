@@ -72,7 +72,7 @@ namespace Code.Entities
 
             _frame.enabled = true;
 
-            var bounds = _source.sprite.bounds;
+            var bounds = ResolveOpaqueBounds(_source.sprite);
             var size = new Vector2(bounds.size.x, bounds.size.y) * skin.FramePadding;
 
             // 9슬라이스는 경계 합보다 작게 그릴 수 없다. 작게 주면 가운데가 사라지고 모서리가
@@ -91,6 +91,29 @@ namespace Code.Entities
             // 캐릭터 바로 뒤에 둔다. 앞에 두면 테두리 안쪽 여백이 얼굴을 덮는다.
             _frame.sortingLayerID = _source.sortingLayerID;
             _frame.sortingOrder = _source.sortingOrder - 1;
+        }
+
+        /// <summary>
+        /// 그림이 실제로 칠해진 영역. 애니메이션 프레임은 무기 휘두를 자리까지 투명하게 비워 둔
+        /// 큰 캔버스라, 사각형 전체로 재면 테두리가 캐릭터의 두세 배로 커진다. Tight 메시의 꼭짓점으로 잰다.
+        /// </summary>
+        private static Bounds ResolveOpaqueBounds(Sprite sprite)
+        {
+            var vertices = sprite.vertices;
+            if (vertices == null || vertices.Length == 0)
+                return sprite.bounds;
+
+            var min = vertices[0];
+            var max = vertices[0];
+            for (var i = 1; i < vertices.Length; i++)
+            {
+                min = Vector2.Min(min, vertices[i]);
+                max = Vector2.Max(max, vertices[i]);
+            }
+
+            var bounds = new Bounds();
+            bounds.SetMinMax(new Vector3(min.x, min.y, 0f), new Vector3(max.x, max.y, 0f));
+            return bounds;
         }
 
         private SpriteRenderer EnsureFrame()

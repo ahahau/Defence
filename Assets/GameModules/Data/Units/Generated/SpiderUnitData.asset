@@ -16,9 +16,9 @@ MonoBehaviour:
   <BoardSprite>k__BackingField: {fileID: -6620443678240376230, guid: e87236f48560e4940955075b58eab9c8, type: 3}
   <Defense>k__BackingField: 0
   <EvasionChance>k__BackingField: 0
-  <Sprite>k__BackingField: {fileID: -6620443678240376230, guid: e87236f48560e4940955075b58eab9c8, type: 3}
+  <Sprite>k__BackingField: {fileID: 21300000, guid: d27474703d808461a8939432675d2f99, type: 3}
   <Prefab>k__BackingField: {fileID: 8763816506036182599, guid: 4bb09eeb089ac7b972485467115ecc21, type: 3}
-  <Name>k__BackingField: "\uB3D9\uAD74 \uAC70\uBBF8"
+  <Name>k__BackingField: "\uD574\uACE8 \uB3C4\uB07C\uBCD1"
   <Cost>k__BackingField: 36
   <MagicCost>k__BackingField: 2
   <Locked>k__BackingField: 0

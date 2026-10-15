@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: BasicEnemy
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Enemies.EnemyDataSO
   <Grade>k__BackingField: 1
-  <BoardSprite>k__BackingField: {fileID: -7336558010007070346, guid: 2ecc19377939ed44eb89dd458fb90f5e, type: 3}
+  <BoardSprite>k__BackingField: {fileID: 21300000, guid: 1f5f5c694664b4828ab218975a77b922, type: 3}
   <Defense>k__BackingField: 0
   <EvasionChance>k__BackingField: 0
   <Name>k__BackingField: "\uB5A0\uB3CC\uC774 \uBAA8\uD5D8\uAC00"
@@ -25,8 +25,9 @@ MonoBehaviour:
   <MaxHealth>k__BackingField: 5
   <AttackDamage>k__BackingField: 1
   <AttackInterval>k__BackingField: 1
-  <IdleSprite>k__BackingField: {fileID: -7336558010007070346, guid: 2ecc19377939ed44eb89dd458fb90f5e, type: 3}
-  <AttackSprite>k__BackingField: {fileID: -7336558010007070346, guid: 2ecc19377939ed44eb89dd458fb90f5e, type: 3}
-  <DefeatedSprite>k__BackingField: {fileID: -7336558010007070346, guid: 2ecc19377939ed44eb89dd458fb90f5e, type: 3}
+  <IdleSprite>k__BackingField: {fileID: 21300000, guid: 1f5f5c694664b4828ab218975a77b922, type: 3}
+  <AttackSprite>k__BackingField: {fileID: 21300000, guid: dac6d318d15b74758881066a2b1c70b9, type: 3}
+  <DefeatedSprite>k__BackingField: {fileID: 21300000, guid: f032658b0cd2d448990c2f5f4f6f56d7, type: 3}
+  <AnimationSet>k__BackingField: {fileID: 11400000, guid: 2056920ce44c35848a5bb4a71f638af5, type: 2}
   <AttackSfx>k__BackingField: 8
   <DisarmsTraps>k__BackingField: 0

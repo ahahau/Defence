@@ -466,7 +466,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &1816607769188706741
 SpriteRenderer:
-  serializedVersion: 2
+  serializedVersion: 3
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -513,7 +513,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 30
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -2278566297644842510, guid: 3d1a3fa18cf47504cbc71399b9b92c1e, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 3a37e63f3df910044b3561582110c665, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -523,6 +523,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
 --- !u!114 &9208969084259638768
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -536,10 +537,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Entities.EntityRender
   gameStateEventChannel: {fileID: 11400000, guid: 959e35f08825cd94a8b68a1c032d7836, type: 2}
-  idleSprite: {fileID: -4208413977036319912, guid: 04e1c700f9787eb4f987e965f729bc19, type: 3}
-  attackSprite: {fileID: 8442247372213805325, guid: 103c98c3a4c345640ab6aff8e2b701b7, type: 3}
-  defeatedSprite: {fileID: -9030365041162893800, guid: 28c61687a54f1e34fbd7d56883871257, type: 3}
+  idleSprite: {fileID: 21300000, guid: 3a37e63f3df910044b3561582110c665, type: 3}
+  attackSprite: {fileID: 21300000, guid: 52031980897d5e745a57bd5a99b38843, type: 3}
+  defeatedSprite: {fileID: 21300000, guid: 8f9a0998589931e439f54e46c8b7f2a0, type: 3}
   spriteRenderer: {fileID: 1816607769188706741}
+  animationSet: {fileID: 11400000, guid: a962a8800d72e234a940af10e2758b8e, type: 2}
 --- !u!1001 &2524600608494934784
 PrefabInstance:
   m_ObjectHideFlags: 0

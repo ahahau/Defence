@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01dd91c8cfa8fac4997dcf6fb275ff8c, type: 3}
+  m_Name: UnitShadeAnim
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Entities.CharacterAnimationSetSO
+  idleFrames:
+  - {fileID: 21300000, guid: d5d3511d606799447bdae53decfd0f63, type: 3}
+  - {fileID: 21300000, guid: fb29e99ccd17ce2469e0e90e4d5b8df4, type: 3}
+  - {fileID: 21300000, guid: 85c270b84b6a45c40b3b6139870c15b5, type: 3}
+  walkFrames:
+  - {fileID: 21300000, guid: 4956da91324945842a431b6572b9168b, type: 3}
+  - {fileID: 21300000, guid: b8949c2c9c0ca41479bce4e0bae23ce2, type: 3}
+  - {fileID: 21300000, guid: b4b4544e24d96734fa9b064496cd128a, type: 3}
+  attackFrames:
+  - {fileID: 21300000, guid: e53a31886dc71034f9b70237b4d029f3, type: 3}
+  - {fileID: 21300000, guid: f3531341a7d480841b43dceff0eb518f, type: 3}
+  - {fileID: 21300000, guid: 7cf0ac73f683f8c408baae718c9b4098, type: 3}
+  - {fileID: 21300000, guid: 3c75a76482fd9154a9905a7a9af85158, type: 3}
+  - {fileID: 21300000, guid: 5e8245abcd117994d8d9af685fa46fd5, type: 3}
+  defeatedFrames:
+  - {fileID: 21300000, guid: cd77d8d2e2c278f49bd7b173eda42f85, type: 3}
+  - {fileID: 21300000, guid: 605561c1686f5334a98e5eb1000b450f, type: 3}
+  - {fileID: 21300000, guid: bf671c25a7453ef41b076af76fc67f19, type: 3}
+  - {fileID: 21300000, guid: 5a9d04e30afc1ff4bb44e3081226f483, type: 3}
+  idleFramesPerSecond: 8
+  walkFramesPerSecond: 10
+  attackFramesPerSecond: 12
+  defeatedFramesPerSecond: 10

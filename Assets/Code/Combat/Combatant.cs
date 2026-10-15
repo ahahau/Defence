@@ -501,7 +501,7 @@ namespace Code.Combat
             global::Code.Audio.GameSfxPlayer.Play(attackSfx, impactPosition);
 
             if (poseView != null)
-                poseView.PlayAttackPose();
+                poseView.PlayAttackPose(direction.x);
 
             if (attackFeelFeedbacks != null)
                 attackFeelFeedbacks.PlayFeedbacks(impactPosition);

@@ -53,12 +53,13 @@ namespace Code.Combat
                 health.DamagedDetailed -= HandleDamaged;
         }
 
-        /// <summary>공격이 적중한 순간 <see cref="Combatant"/>가 불러준다.</summary>
-        public void PlayAttackPose()
+        /// <summary>공격이 적중한 순간 <see cref="Combatant"/>가 불러준다. 대상 쪽(x 부호)으로 돌아선다.</summary>
+        public void PlayAttackPose(float facingX = 0f)
         {
             if (isDead || entityRender == null)
                 return;
 
+            entityRender.FaceTowards(facingX);
             restoreIdleAt = Time.time + attackPoseDuration;
             entityRender.SetUnitSprite(EntityState.Attack);
         }

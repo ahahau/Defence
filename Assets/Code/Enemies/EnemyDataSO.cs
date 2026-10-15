@@ -43,6 +43,9 @@ namespace Code.Enemies
         [field: SerializeField]
         public Sprite DefeatedSprite { get; private set; }
 
+        [field: SerializeField, Tooltip("있으면 위 세 포즈 대신 프레임 애니메이션을 튼다. 프리팹 넷을 나눠 쓰므로 외형은 데이터가 정한다.")]
+        public CharacterAnimationSetSO AnimationSet { get; private set; }
+
         [field: SerializeField, Tooltip("이 적이 때릴 때 나는 소리. 열두 종이 프리팹 넷을 나눠 쓰기 때문에" +
             " 프리팹에만 두면 관광객도 검을 휘두르는 소리를 낸다.")]
         public global::Code.Audio.GameSfxCue AttackSfx { get; private set; } = global::Code.Audio.GameSfxCue.Attack;

@@ -20,6 +20,8 @@ namespace Code.Enemies
     {
         public enum CombatState { Idle, Chase, Attack, Hit, Dead }
 
+        private const string ObjectNamePrefix = "Enemy_";
+
         [SerializeField] private EnemyDataSO data;
         [SerializeField] private int killExperience = 1;
         [SerializeField] private EntityRender enemyRenderer;
@@ -92,7 +94,6 @@ namespace Code.Enemies
         private bool _killRewardGranted;
         private BattleAgent _battleAgent;
         private EnemyStrengthOutline _strengthOutline;
-        private global::Code.Entities.CharacterBackPlate _backPlate;
 
         // ── BT-facing state queries ─────────────────────────────
         public CombatState State => _state;
@@ -171,10 +172,8 @@ namespace Code.Enemies
             if (_strengthOutline == null)
                 _strengthOutline = gameObject.AddComponent<EnemyStrengthOutline>();
             _strengthOutline.Initialize(enemyRenderer);
-            _backPlate = GetComponent<global::Code.Entities.CharacterBackPlate>();
-            if (_backPlate == null)
-                _backPlate = gameObject.AddComponent<global::Code.Entities.CharacterBackPlate>();
-            _backPlate.Initialize(enemyRenderer != null ? enemyRenderer.SpriteRenderer : null);
+            // 네모 받침(CharacterBackPlate)은 깔지 않는다. 프레임 애니메이션 그림 뒤에서 캐릭터와 따로 노는
+            // 회색 사각형으로만 보였다. 등급은 캐릭터를 두르는 테두리가 보여 준다.
             RefreshStrengthOutline();
             ApplyRoleFromData();
             // Combat behaviour is driven by the Unity Behavior graph on the
@@ -1414,7 +1413,10 @@ namespace Code.Enemies
         private void ApplyData(EnemyDataSO enemyData)
         {
             if (enemyData == null) return;
-            name = $"Enemy_{enemyData.Name}";
+            // 오브젝트 이름은 에셋 이름(영문)으로 짓는다. 표시 이름(한국어)은 화면 글에만 쓴다.
+            name = enemyData.name.StartsWith(ObjectNamePrefix, System.StringComparison.Ordinal)
+                ? enemyData.name
+                : ObjectNamePrefix + enemyData.name;
             health?.SetMaxHealth(enemyData.MaxHealth, true);
             combatant?.SetAttackDamage(enemyData.AttackDamage);
             combatant?.SetDefense(enemyData.Defense);
@@ -1422,6 +1424,7 @@ namespace Code.Enemies
             combatant?.SetEvasionChance(enemyData.EvasionChance);
             combatant?.SetAttackSfx(enemyData.AttackSfx);
             enemyRenderer?.ConfigureSprites(enemyData.IdleSprite, enemyData.AttackSprite, enemyData.DefeatedSprite);
+            enemyRenderer?.ConfigureAnimation(enemyData.AnimationSet);
             _strengthOutline?.RefreshSprite();
         }
 
@@ -1431,15 +1434,6 @@ namespace Code.Enemies
                 return;
 
             _strengthOutline.ApplyStrength(data.Grade, Level, _isBoss);
-
-            // 등급 색은 캐릭터를 두르는 테두리가 말한다. 받침 바깥 링까지 같은 색으로 물들이면
-            // 한 침입자가 두 군데서 빛나 어느 쪽이 뜻을 가진 빛인지 흐려지므로, 링은 옅게 깔고
-            // 등급에 따라 진하기만 달리한다.
-            if (_backPlate != null)
-            {
-                var tint = EnemyStrengthOutline.GetTierColor(_strengthOutline.CurrentTier);
-                _backPlate.SetGlowColor(new Color(tint.r, tint.g, tint.b, 0.28f));
-            }
         }
 
         private void EnsureClickTarget(GameEventChannelSO nodeEventChannel)
@@ -1465,6 +1459,7 @@ namespace Code.Enemies
 
         private SpriteRenderer _source;
         private SpriteRenderer _outline;
+        private EntityRender _render;
 
         public int CurrentTier { get; private set; } = 1;
 
@@ -1478,8 +1473,20 @@ namespace Code.Enemies
                 return;
             }
 
+            // 프레임 애니메이션은 매 프레임 그림이 바뀐다. 테두리가 첫 그림에 멈춰 있지 않게 따라 그린다.
+            if (_render != null)
+                _render.SpriteChanged -= RefreshSprite;
+            _render = entityRender;
+            _render.SpriteChanged += RefreshSprite;
+
             EnsureOutline();
             RefreshSprite();
+        }
+
+        private void OnDestroy()
+        {
+            if (_render != null)
+                _render.SpriteChanged -= RefreshSprite;
         }
 
         public void ApplyStrength(EntityGrade grade, int level, bool isBoss)

@@ -62,7 +62,7 @@
     -unity-text-align: middle-left;
     font-size: 12px;
 }
-.room-unit-row.is-selected { border-color: var(--color-border); color: var(--color-accent); background-color: var(--color-control-pressed); }
+.room-unit-row.is-selected { border-color: var(--color-border); -unity-background-image-tint-color: var(--color-skin-frame-selected); color: var(--color-accent); background-color: var(--color-control-pressed); }
 
 .room-unit-commands { height: 34px; flex-shrink: 0; flex-direction: row; justify-content: space-between; align-items: center; }
 .room-command { width: 88px; height: 30px; flex-shrink: 0; font-size: 12px; padding: 0 4px; }

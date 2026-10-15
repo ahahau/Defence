@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01dd91c8cfa8fac4997dcf6fb275ff8c, type: 3}
+  m_Name: BossSubjugatorAnim
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Entities.CharacterAnimationSetSO
+  idleFrames:
+  - {fileID: 21300000, guid: b10f8ae2928624bcab110ae8dda4eb41, type: 3}
+  - {fileID: 21300000, guid: 6f079ccfda6a948f0bea053af08c9232, type: 3}
+  - {fileID: 21300000, guid: 7d1adb31592bf4843a189d02093dfe0c, type: 3}
+  - {fileID: 21300000, guid: 8008213d7f5c8438da3cd9acdda660cb, type: 3}
+  - {fileID: 21300000, guid: 2e7a7c5dcf66144f891e3bd90e6581ba, type: 3}
+  - {fileID: 21300000, guid: 6642e2586f635415ca71ca72c0fc1493, type: 3}
+  walkFrames:
+  - {fileID: 21300000, guid: bb32c90abcbe34665a9d313fb330a4c0, type: 3}
+  - {fileID: 21300000, guid: 8c6b5451a5a5145688793e91622ed4fb, type: 3}
+  - {fileID: 21300000, guid: 891c80b0b40bf455fb070afa480b1559, type: 3}
+  - {fileID: 21300000, guid: 36be8925161944b739848290b0a30b89, type: 3}
+  - {fileID: 21300000, guid: da8e7740eb3f44a61a19a9721a3cc1fd, type: 3}
+  - {fileID: 21300000, guid: 2c905ffaa126948979206730d7c50c14, type: 3}
+  attackFrames:
+  - {fileID: 21300000, guid: 35a64de06df934135bf25442716893d3, type: 3}
+  - {fileID: 21300000, guid: 5be6268e70a1647e18e5ae2768aadde6, type: 3}
+  - {fileID: 21300000, guid: a51db96467919440e8106fac768f38aa, type: 3}
+  - {fileID: 21300000, guid: 76abb05aa8ebe47ef835fc8ddb184759, type: 3}
+  - {fileID: 21300000, guid: cb7ff3a8141dd4773b68e54d009b4a5c, type: 3}
+  - {fileID: 21300000, guid: 6e6f0fdc8c4ca4ed6ba55823918d886f, type: 3}
+  defeatedFrames:
+  - {fileID: 21300000, guid: e044d5b72afb5456f9259ce339a7867c, type: 3}
+  - {fileID: 21300000, guid: e8ac01e1eaaf44e109274468a6804cd0, type: 3}
+  - {fileID: 21300000, guid: dfd66bea0b8d847018a5ab4fc2b90bca, type: 3}
+  - {fileID: 21300000, guid: afe1ee898aa32430590cb1d369d3a67c, type: 3}
+  - {fileID: 21300000, guid: fb49a62ae2e5c4b84b7ff10c4e67743b, type: 3}
+  - {fileID: 21300000, guid: d920fa0f29dac47548b56ecb4313abe3, type: 3}
+  idleFramesPerSecond: 8
+  walkFramesPerSecond: 10
+  attackFramesPerSecond: 12
+  defeatedFramesPerSecond: 10

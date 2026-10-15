@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01dd91c8cfa8fac4997dcf6fb275ff8c, type: 3}
+  m_Name: UnitArbalistAnim
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Entities.CharacterAnimationSetSO
+  idleFrames:
+  - {fileID: 21300000, guid: 1e73fa0328b566a4787a35162592c611, type: 3}
+  - {fileID: 21300000, guid: 69e1aa5ef532783419acbf9f5ed7ea24, type: 3}
+  - {fileID: 21300000, guid: 21459c1b00ed72248867f844182665a6, type: 3}
+  walkFrames:
+  - {fileID: 21300000, guid: 5563a39c3c692ce4885e30236eaaa341, type: 3}
+  - {fileID: 21300000, guid: 98f3c6ecef6c87a4a9d2047839c75bc3, type: 3}
+  - {fileID: 21300000, guid: 1210b9456321da74180c5e58b4fd87bc, type: 3}
+  - {fileID: 21300000, guid: c6b0c1bbfb8bde148aefbb5c38f33424, type: 3}
+  - {fileID: 21300000, guid: 3c24269e4c178cc45b8b169d90b08b7a, type: 3}
+  - {fileID: 21300000, guid: 58674a4f36417e64ca2570061481ba17, type: 3}
+  attackFrames:
+  - {fileID: 21300000, guid: 63f1a5ef0783a7b4e880083591cea97a, type: 3}
+  - {fileID: 21300000, guid: 9140ad36c0b9b6942bbf4dcba0c113e3, type: 3}
+  - {fileID: 21300000, guid: 6b1368eb97eeb744c8ffd4f27ae1cb2b, type: 3}
+  - {fileID: 21300000, guid: 57d5f59ed356fcb42be09d73c2d8c9f5, type: 3}
+  - {fileID: 21300000, guid: 0a3e3b125d303c44f9c1d67fcd19c422, type: 3}
+  - {fileID: 21300000, guid: 935a8c9c7c72a1b4db2bf9e0d839e0f2, type: 3}
+  defeatedFrames:
+  - {fileID: 21300000, guid: c26f76930bbe4b54683a82691fad33bf, type: 3}
+  - {fileID: 21300000, guid: f3d73cbd2e954084da1de4be99b728da, type: 3}
+  - {fileID: 21300000, guid: 5366b40222811d840bfea6ea310a94aa, type: 3}
+  - {fileID: 21300000, guid: e11e0e2de2403094cbfd993493583f44, type: 3}
+  - {fileID: 21300000, guid: d08525c49930c4548945f6210619a260, type: 3}
+  - {fileID: 21300000, guid: 7f734ee5ac657ca4281ca765b0941adc, type: 3}
+  idleFramesPerSecond: 8
+  walkFramesPerSecond: 10
+  attackFramesPerSecond: 12
+  defeatedFramesPerSecond: 10

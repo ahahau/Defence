@@ -4,14 +4,26 @@
  * 색은 DesignToken.uss의 의미값만 쓴다.
  */
 
+/*
+ * 테두리는 Super GUI Gold 팩 조각을 이어 붙인 9-slice 그림(Skin/Gold)이다. 안쪽은 비워 뒀으니
+ * 바탕색은 토큰이 정한다. 변의 무늬는 늘이면 뭉개져서 반복(tiled)으로 깐다.
+ * 그림 테두리가 선 테두리를 대신하므로 border-width는 0이다. 상태는 그림에 곱하는 색으로 보인다.
+ */
+
 /* ── 버튼 ── */
 .btn {
     margin: 0;
     padding: 0 10px;
-    border-width: 1px;
+    border-width: 0;
     border-radius: 0;
-    border-color: var(--color-border-quiet);
     background-color: var(--color-control);
+    background-image: url("project://database/Assets/GameModules/UI/Skin/Gold/ButtonFrame.png");
+    -unity-slice-left: 9;
+    -unity-slice-right: 9;
+    -unity-slice-top: 9;
+    -unity-slice-bottom: 9;
+    -unity-slice-type: tiled;
+    -unity-background-image-tint-color: var(--color-skin-frame);
     color: var(--color-text-body);
     font-size: 14px;
     -unity-text-align: middle-center;
@@ -20,13 +32,13 @@
     text-overflow: ellipsis;
 }
 
-.btn:enabled:hover { border-color: var(--color-border); color: var(--color-accent-soft); }
-.btn:enabled:active { background-color: var(--color-control-pressed); }
+.btn:enabled:hover { -unity-background-image-tint-color: var(--color-skin-frame-hover); color: var(--color-accent-soft); }
+.btn:enabled:active { background-color: var(--color-control-pressed); -unity-background-image-tint-color: var(--color-skin-frame-pressed); }
 .btn:disabled { opacity: 0.45; }
 
-.btn--primary { background-color: var(--color-primary); border-color: var(--color-primary-border); color: var(--color-text); -unity-font-style: bold; }
+.btn--primary { background-color: var(--color-primary); color: var(--color-text); -unity-font-style: bold; }
 .btn--secondary { background-color: var(--color-control); }
-.btn--danger { border-color: var(--color-danger); color: var(--color-loss); }
+.btn--danger { -unity-background-image-tint-color: var(--color-skin-frame-danger); color: var(--color-loss); }
 
 /* 크기는 가장 긴 문구 기준 고정 폭이다. 문구가 바뀌어도 줄이 흔들리지 않는다. */
 .btn--md { width: 136px; height: 36px; flex-shrink: 0; }
@@ -35,14 +47,28 @@
 /* ── 패널 ── */
 .panel {
     background-color: var(--color-surface);
-    border-width: 2px;
-    border-color: var(--color-border);
+    border-width: 0;
+    background-image: url("project://database/Assets/GameModules/UI/Skin/Gold/PanelFrame.png");
+    -unity-slice-left: 10;
+    -unity-slice-right: 10;
+    -unity-slice-top: 10;
+    -unity-slice-bottom: 10;
+    /* 큰 창은 그림을 두 배로 깐다. 원래 크기면 모서리 장식이 실선처럼 뭉개진다. */
+    -unity-slice-scale: 2px;
+    -unity-slice-type: tiled;
+    -unity-background-image-tint-color: var(--color-skin-frame);
 }
 
 .panel--inset {
     background-color: var(--color-surface-inset);
-    border-width: 1px;
-    border-color: var(--color-border-quiet);
+    border-width: 0;
+    background-image: url("project://database/Assets/GameModules/UI/Skin/Gold/BoxFrame.png");
+    -unity-slice-left: 6;
+    -unity-slice-right: 6;
+    -unity-slice-top: 6;
+    -unity-slice-bottom: 6;
+    -unity-slice-type: tiled;
+    -unity-background-image-tint-color: var(--color-skin-frame);
 }
 
 /* 화면 전체를 덮는 모달 바탕. 아래 UI 클릭을 막는다. */

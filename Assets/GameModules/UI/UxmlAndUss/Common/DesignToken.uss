@@ -28,6 +28,8 @@
     --color-amber-400: rgb(224, 176, 112);
     --color-red-600: rgb(230, 71, 41);
     --color-wine-800: rgb(121, 48, 39);
+    --color-white: rgb(255, 255, 255);
+    --color-bronze-300: rgb(196, 168, 128);
 
     /* ── 2단계: 의미값 ── */
     --color-scrim: var(--color-umber-950-a86);
@@ -53,4 +55,11 @@
 
     --color-primary: var(--color-wine-800);
     --color-primary-border: var(--color-gold-500);
+
+    /* Gold 테두리 이미지(Skin/Gold)에 곱하는 색. 흰색이면 그림 그대로다. */
+    --color-skin-frame: var(--color-white);
+    --color-skin-frame-hover: var(--color-gold-200);
+    --color-skin-frame-pressed: var(--color-bronze-300);
+    --color-skin-frame-selected: var(--color-gold-400);
+    --color-skin-frame-danger: var(--color-danger);
 }

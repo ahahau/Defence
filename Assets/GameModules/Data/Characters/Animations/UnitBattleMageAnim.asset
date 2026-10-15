@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01dd91c8cfa8fac4997dcf6fb275ff8c, type: 3}
+  m_Name: UnitBattleMageAnim
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Entities.CharacterAnimationSetSO
+  idleFrames:
+  - {fileID: 21300000, guid: 0d9c3bc883cd3a64fb4eaa58bd7aa76f, type: 3}
+  - {fileID: 21300000, guid: 11c0f77f1fa963646bf6f1d435d4236f, type: 3}
+  - {fileID: 21300000, guid: f7dec8f6e60646945a796dff6b05e875, type: 3}
+  walkFrames:
+  - {fileID: 21300000, guid: a49c3a9e0c2f8aa40bbfbebd51c4de01, type: 3}
+  - {fileID: 21300000, guid: 5ee9264ddd91c534a8f39aeae1c73202, type: 3}
+  - {fileID: 21300000, guid: ad6d73d214cbd7d408e4e69b39359498, type: 3}
+  - {fileID: 21300000, guid: 74365334d9aaf9244baa18856c993cbd, type: 3}
+  - {fileID: 21300000, guid: 8eed6cdf86e132c48ab92e6658fb6743, type: 3}
+  - {fileID: 21300000, guid: 120438d4cf8ca334caf54680145a58df, type: 3}
+  attackFrames:
+  - {fileID: 21300000, guid: 0497de5233414034bbce232bbbe87081, type: 3}
+  - {fileID: 21300000, guid: b3566d3b13f270e4fa0e1274d5487ae9, type: 3}
+  - {fileID: 21300000, guid: ecf22c4c678e6454bbf83235264e3d4c, type: 3}
+  - {fileID: 21300000, guid: fb6601abad8a4bd46af9ca9ddcb2e3a8, type: 3}
+  defeatedFrames:
+  - {fileID: 21300000, guid: b8823563d1669264f91714f4070aef2f, type: 3}
+  - {fileID: 21300000, guid: 49b4cfbf0d7b20a439e05d91047ea20b, type: 3}
+  - {fileID: 21300000, guid: 8392a923167533540b0fd2d7db593867, type: 3}
+  - {fileID: 21300000, guid: f1633963c1134044ca4e1373493b1ed8, type: 3}
+  - {fileID: 21300000, guid: df8297b934ca79646ab0ba9a1137017f, type: 3}
+  - {fileID: 21300000, guid: 3e4c68f44dc96d941b55c0f357f00d0b, type: 3}
+  idleFramesPerSecond: 8
+  walkFramesPerSecond: 10
+  attackFramesPerSecond: 12
+  defeatedFramesPerSecond: 10

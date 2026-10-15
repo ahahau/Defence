@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Enemy_Tourist_Priest
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Enemies.EnemyDataSO
   <Grade>k__BackingField: 3
-  <BoardSprite>k__BackingField: {fileID: -7336558010007070346, guid: 2ecc19377939ed44eb89dd458fb90f5e, type: 3}
+  <BoardSprite>k__BackingField: {fileID: 21300000, guid: 77e59f47f79a14662b1bb30608b978cd, type: 3}
   <Defense>k__BackingField: 10
   <EvasionChance>k__BackingField: 0.08
   <Name>k__BackingField: "\uC21C\uB840 \uC131\uC9C1\uC790"
@@ -25,8 +25,9 @@ MonoBehaviour:
   <MaxHealth>k__BackingField: 12
   <AttackDamage>k__BackingField: 1
   <AttackInterval>k__BackingField: 1.4
-  <IdleSprite>k__BackingField: {fileID: -7336558010007070346, guid: 2ecc19377939ed44eb89dd458fb90f5e, type: 3}
-  <AttackSprite>k__BackingField: {fileID: -7336558010007070346, guid: 2ecc19377939ed44eb89dd458fb90f5e, type: 3}
-  <DefeatedSprite>k__BackingField: {fileID: -7336558010007070346, guid: 2ecc19377939ed44eb89dd458fb90f5e, type: 3}
+  <IdleSprite>k__BackingField: {fileID: 21300000, guid: 77e59f47f79a14662b1bb30608b978cd, type: 3}
+  <AttackSprite>k__BackingField: {fileID: 21300000, guid: 2aa7b0b0c186f4d1ebc09f3164df9e3d, type: 3}
+  <DefeatedSprite>k__BackingField: {fileID: 21300000, guid: 593f7ae87d11d4f63948eded76d8b681, type: 3}
+  <AnimationSet>k__BackingField: {fileID: 11400000, guid: e40f4a11fc20fb24688f7f447aa94373, type: 2}
   <AttackSfx>k__BackingField: 14
   <DisarmsTraps>k__BackingField: 0

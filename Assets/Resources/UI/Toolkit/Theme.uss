@@ -42,6 +42,72 @@
     /* 확정 버튼 */
     --confirm: rgb(121, 48, 39);
     --confirm-edge: rgb(238, 164, 76);
+
+    /* Gold 테두리 그림에 곱하는 색. 흰색이면 그림 그대로다. 새 화면의 DesignToken과 같은 값이다. */
+    --skin-frame: rgb(255, 255, 255);
+    --skin-frame-hover: rgb(242, 212, 148);
+    --skin-frame-pressed: rgb(196, 168, 128);
+}
+
+/*
+ * Gold 테두리(Super GUI Gold 팩, Assets/GameModules/UI/Skin/Gold).
+ *
+ * 새 화면의 .panel/.btn과 같은 그림을 옛 화면에도 입힌다. 둘이 한 화면에 같이 뜬다.
+ * 그림이 선 테두리를 대신하므로 두께를 0으로 둔다. .ui-theme를 앞에 붙여 각 화면 USS의
+ * 테두리 두께보다 우선하게 한다. 칩의 왼쪽 색 줄처럼 색이 뜻을 가진 선은 건드리지 않는다.
+ */
+.ui-theme .unity-button {
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    background-image: url("project://database/Assets/GameModules/UI/Skin/Gold/ButtonFrame.png");
+    -unity-slice-left: 9;
+    -unity-slice-right: 9;
+    -unity-slice-top: 9;
+    -unity-slice-bottom: 9;
+    -unity-slice-type: tiled;
+    -unity-background-image-tint-color: var(--skin-frame);
+}
+
+.ui-theme .unity-button:enabled:hover { -unity-background-image-tint-color: var(--skin-frame-hover); }
+.ui-theme .unity-button:enabled:active { -unity-background-image-tint-color: var(--skin-frame-pressed); }
+
+.ui-theme .settlement-card,
+.ui-theme .run-end-card,
+.ui-theme .policy-card,
+.ui-theme .title-card,
+.ui-theme .settings-card,
+.ui-theme .pause-menu-card,
+.ui-theme .pause-settings-card,
+.ui-theme .selection-popover,
+.ui-theme .right-rail {
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    background-image: url("project://database/Assets/GameModules/UI/Skin/Gold/PanelFrame.png");
+    -unity-slice-left: 10;
+    -unity-slice-right: 10;
+    -unity-slice-top: 10;
+    -unity-slice-bottom: 10;
+    -unity-slice-scale: 2px;
+    -unity-slice-type: tiled;
+    -unity-background-image-tint-color: var(--skin-frame);
+}
+
+.ui-theme .loan-pane {
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    background-image: url("project://database/Assets/GameModules/UI/Skin/Gold/BoxFrame.png");
+    -unity-slice-left: 6;
+    -unity-slice-right: 6;
+    -unity-slice-top: 6;
+    -unity-slice-bottom: 6;
+    -unity-slice-type: tiled;
+    -unity-background-image-tint-color: var(--skin-frame);
 }
 
 /*
