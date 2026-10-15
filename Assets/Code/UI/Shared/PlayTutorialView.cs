@@ -78,9 +78,6 @@ namespace Code.UI
             PickCard,
             PressInstall,
             ConfirmRoom,
-            OpenRoster,
-            HireUnit,
-            CloseRoster,
             PickCell,
         }
 
@@ -584,21 +581,10 @@ namespace Code.UI
                 _buildTargetIsPopup = true;
                 return BuildStage.ConfirmRoom;
             }
+            // 옛 "유닛 관리" 고용 창은 없어졌다. 고용은 청산일 정산 화면의 유닛 상점에서 하고,
+            // 여기서는 보유한 부하를 방 관리 화면의 배치로 세우는 것만 안내한다.
             if (_step == Step.DeployUnit)
             {
-                var rosterPanel = UnitDeployPanelView.Current;
-                var roster = HiredUnitRoster.Current;
-                if (roster != null && roster.TotalHiredCount == 0 && rosterPanel != null)
-                {
-                    uiTarget = rosterPanel.IsPanelOpen
-                        ? rosterPanel.GetEntryRect(rosterPanel.FirstOwnedUnit) : rosterPanel.ToggleButtonRect;
-                    return rosterPanel.IsPanelOpen ? BuildStage.HireUnit : BuildStage.OpenRoster;
-                }
-                if (rosterPanel != null && rosterPanel.IsPanelOpen)
-                {
-                    uiTarget = rosterPanel.CloseButtonRect;
-                    return BuildStage.CloseRoster;
-                }
                 if (panel != null && panel.IsChoosingUnitCell)
                 {
                     nodeTarget = panel.SelectedNode;
@@ -1131,9 +1117,6 @@ namespace Code.UI
 
             Step.DeployUnit => stage switch
             {
-                BuildStage.OpenRoster => "유닛 관리를 열어 첫 수비병을 고용하세요",
-                BuildStage.HireUnit => "지원자 카드를 눌러 확인하고, 한 번 더 눌러 고용하세요",
-                BuildStage.CloseRoster => "닫기를 눌러 던전으로 돌아오세요",
                 BuildStage.PickCell => "방 안의 밝은 칸을 눌러 수비병을 배치하세요",
                 BuildStage.ConfirmRoom => "확장을 눌러 수비병을 배치할 방을 만드세요",
                 BuildStage.PickNode => "유닛을 세울 방을 고르세요  ·  유닛이 선 방이 방어선이 됩니다",

@@ -71,6 +71,10 @@ namespace Code.UI
 
         private void Awake()
         {
+            // 옛 "유닛 관리" 고용 창은 쓰지 않는다. 고용은 청산일 정산 화면의 유닛 상점(주간 계약 설계),
+            // 배치는 방 관리 화면의 배치가 맡는다. 오른쪽 가장자리 탭이 지도 위에 겹쳐 있어서 끈다.
+            // 씬에서 이 오브젝트를 지울 때 스크립트와 DialogueRunner의 참조도 함께 지운다(Toolkit 전환 3단계).
+            gameObject.SetActive(false);
             dayManager ??= DayManager.Current;
             if (panelRoot != null)
                 panelRoot.SetActive(false);
