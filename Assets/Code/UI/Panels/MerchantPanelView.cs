@@ -63,12 +63,6 @@ namespace Code.UI
         /// </summary>
         private int purchaseCount;
 
-        /// <summary>상인을 여는 버튼. 튜토리얼이 여기를 비춘다.</summary>
-        public RectTransform OpenButtonRect =>
-            openButton != null && openButton.gameObject.activeInHierarchy
-                ? openButton.transform as RectTransform
-                : null;
-
         public bool IsPanelOpen => _view != null && _view.IsVisible;
         public int PurchaseCount => purchaseCount;
 
@@ -210,16 +204,16 @@ namespace Code.UI
             RefreshVisitState();
         }
 
-        /// <summary>상인이 없는 날에는 여는 버튼 자체를 감춘다.</summary>
+        /// <summary>
+        /// 대기가 끝나면 창을 닫는다. 여는 버튼은 HUD(UI Toolkit) 하단 "운영" 묶음에 있고,
+        /// 옛 uGUI 버튼은 지도 위에 겹쳐 떠서 늘 감춘다(씬 정리 때 삭제).
+        /// </summary>
         private void RefreshVisitState()
         {
             var isStandby = DayManager.Current != null && DayManager.Current.IsStandby;
             lastStandbyState = isStandby;
             if (openButton != null)
-            {
-                openButton.gameObject.SetActive(IsMerchantHere);
-                openButton.interactable = isStandby;
-            }
+                openButton.gameObject.SetActive(false);
 
             if (!isStandby)
                 Hide();

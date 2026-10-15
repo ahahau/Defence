@@ -1,0 +1,37 @@
+/*
+ * 첫날 안내 덮개. 눌러야 할 곳만 남기고 네 조각 어둠으로 화면을 덮고, 영업 준비 카드(위 104~340) 바로 아래
+ * 가운데에 안내 카드(860×84)를 띄운다. 아래쪽은 시작 버튼(오른쪽 아래)을 비추는 칸과 겹쳐 피한다.
+ * 어둠은 클릭을 삼킨다 — 구멍 밖은 아무것도 눌리지 않아야 한 걸음씩 따라온다.
+ */
+.tutorial-root {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+}
+
+.tutorial-dims {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    display: none;
+}
+
+.tutorial-dims.is-shown { display: flex; }
+.tutorial-dim { position: absolute; background-color: var(--color-scrim); }
+
+.tutorial-hint {
+    position: absolute;
+    top: 352px;
+    left: 50%;
+    width: 860px;
+    height: 84px;
+    translate: -50% 0;
+    padding: 10px 16px 10px 24px;
+    flex-direction: row;
+    align-items: center;
+    display: none;
+}
+
+.tutorial-hint.is-shown { display: flex; }
+.tutorial-hint-text { flex-grow: 1; min-width: 0; }
+.tutorial-hint-header { height: 22px; flex-shrink: 0; margin: 0; font-size: 14px; -unity-font-style: bold; color: var(--color-accent); -unity-text-align: middle-center; }
+.tutorial-hint-body { height: 36px; flex-shrink: 0; margin: 2px 0 0 0; font-size: 15px; white-space: normal; overflow: hidden; -unity-text-align: middle-center; }
+.tutorial-skip { width: 118px; height: 34px; flex-shrink: 0; margin-left: 12px; font-size: 12px; }

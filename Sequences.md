@@ -46,6 +46,16 @@
   - `PlayTutorialView`: 부하 배치 칸의 고용 단계(`OpenRoster`·`HireUnit`·`CloseRoster`)와 안내 문구 삭제 — 보유 부하를 방 관리 배치로 세우는 흐름만 남김. 첫날 부하가 없으면 막히는 문제(다른 세션의 주간 고용 잠금, 10-15 실측)는 그대로다.
   - `DialogueRunner`의 가이드 튜토리얼(씬에서 꺼짐)은 아직 `UnitDeployPanelView`를 참조한다. 씬에서 스크립트를 지울 때 함께 고친다.
   - 검증: `dotnet build` 오류 0, 플레이에서 탭이 사라진 것 확인(메인 화면에 갈색 uGUI 없음), 콘솔 오류 0, EditMode 310/310.
+- Toolkit 전환 4단계(사용자: 묻지 말고 마지막 단계까지, 중간에 "빌드는 하지마" — 이후 `dotnet build` 없이 Unity 컴파일·콘솔로만 확인).
+  - 남은 uGUI 조사: 화면에 실제로 뜨던 것은 상인 여는 버튼·사건/튜토리얼 대화 상자·방치 알림·첫날 안내 덮개. 하루 전환 캔버스·옛 확인 창·옛 상태 HUD·옛 정산 패널·`Node/NodePanel`·설치 HUD 버튼·`TutorialSpotlight`·옛 승리 패널·옛 설정 창·성격 툴팁은 꺼진 채 참조도 없거나 꺼진 경로뿐이라 씬 정리 때 지운다.
+  - 상인 버튼: HUD 하단 "운영" 묶음에 `merchant-action`(상인 오는 날만 보임, 없는 날은 자리만 비움, 대기 중에만 눌림). `MerchantPanelView`의 옛 여는 버튼은 늘 감추고 `OpenButtonRect` 삭제, 튜토리얼 상인 칸은 `GameplayHudToolkitView.TryGetMerchantButtonScreenRect`.
+  - 대화 상자: 새 `DialogueToolkitView`·`DialogueChoiceViewModel`, `Shared/Dialogue`, `Resources/UI/DialogueScreen.asset`(팝업 패널 800). 화면 아래 가운데 1120×338, 말하는 사람 이름표·제목·진행·닫기·본문(타자 효과, 태그는 글자로 세지 않음)·오른쪽 선택지(결과 요약 없는 칸은 한 줄 높이, 잠긴 선택지는 비활성, 오른쪽에서 미끄러져 들어옴)·다음 버튼, 뒤 화면 덮개, 강조 어둠 네 조각. `DialogueView`는 같은 공개 함수를 유지한 다리(씬 배선 그대로), 옛 uGUI 상자는 감춘다.
+  - 방치 알림: 새 `IdleNoticeToolkitView`(`Shared/IdleNotice`, 팝업 패널 950). `IdleReturnToTitle`이 옛 알림 창 대신 이것을 띄운다(지금 SampleScene에서는 이 컴포넌트가 꺼진 설정 창 안에 있어 원래부터 돌지 않음).
+  - 첫날 안내 덮개: 새 `TutorialOverlayToolkitView`(`Shared/TutorialOverlay`, 팝업 패널 850 — 팝업 900 아래). `PlayTutorialView`는 판단만 남기고 어둠·안내 카드(준비 카드 아래 860×84)·건너뛰기를 넘긴다. 옛 uGUI 안내 상자는 투명, 어둠 네 장은 끔. 정렬을 매번 다시 걸던 `EnsureDimOnTop`·`DimSortingOrder`·uGUI 건너뛰기 프리팹 생성 삭제. 안내 표시 상태 `_hintVisible` 추가.
+  - `BossWavePresenter`: 결과 화면은 `RunEndToolkitView`만 쓰고, 못 띄우면 오류만 남긴다. uGUI 승리 패널 대체 경로·`BuildRunSummaryText`·`uiCanvas`·`victoryView` 삭제.
+  - `TutorialRegressionTests`: 안내가 숨었는지를 CanvasGroup 대신 `_hintVisible`로 확인, 테스트가 띄운 덮개 화면도 정리.
+  - 검증: Unity 재컴파일 실패 없음, 콘솔 오류 0. EditMode 309/310(`UnitMarketTests` 간헐 실패, 단독 5/5)·`TutorialRegressionTests` 4/4. 플레이: 사건 대화(야시장 제안) 선택지 → 민심 50→54·닫힘·시간 재개, 튜토리얼 대화 "다음" 넘김·타자 효과 끝내기·강조 어둠·닫기, 안내 덮개(실행 중 켜서 2/5 칸: 방 자리 구멍·안내 카드) → 건너뛰기로 Done·시작 버튼 복귀, 방치 알림 표시, 상인 오는 날 HUD 상인 버튼 → 상인 창 열림.
+  - 남은 것: 씬 정리(꺼진·숨긴 uGUI 오브젝트와 다리만 남은 스크립트 삭제, `DialogueRunner`의 가이드 튜토리얼이 쓰는 `UnitDeployPanelView` 참조 정리)는 다른 세션의 SampleScene 커밋 뒤.
 
 ## 2026-10-14
 

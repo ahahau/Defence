@@ -1,0 +1,20 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="project://database/Assets/GameModules/UI/UxmlAndUss/Common/DesignToken.uss" />
+    <Style src="project://database/Assets/GameModules/UI/UxmlAndUss/Common/Components.uss" />
+    <Style src="project://database/Assets/GameModules/UI/UxmlAndUss/Shared/TutorialOverlay/TutorialOverlay.uss" />
+    <ui:VisualElement name="tutorial-root" class="ui-theme tutorial-root" picking-mode="Ignore">
+        <ui:VisualElement name="tutorial-dims" class="tutorial-dims" picking-mode="Ignore">
+            <ui:VisualElement name="tutorial-dim-top" class="tutorial-dim" />
+            <ui:VisualElement name="tutorial-dim-bottom" class="tutorial-dim" />
+            <ui:VisualElement name="tutorial-dim-left" class="tutorial-dim" />
+            <ui:VisualElement name="tutorial-dim-right" class="tutorial-dim" />
+        </ui:VisualElement>
+        <ui:VisualElement name="tutorial-hint" class="panel tutorial-hint">
+            <ui:VisualElement class="tutorial-hint-text" picking-mode="Ignore">
+                <ui:Label name="tutorial-hint-header" text="" class="text-ellipsis tutorial-hint-header" picking-mode="Ignore" />
+                <ui:Label name="tutorial-hint-body" text="" class="text-body tutorial-hint-body" picking-mode="Ignore" />
+            </ui:VisualElement>
+            <ui:Button name="tutorial-skip" text="안내 건너뛰기" class="btn tutorial-skip" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

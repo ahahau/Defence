@@ -26,9 +26,6 @@ namespace Code.Manager
         [SerializeField] private GameSpeedController gameSpeedController;
 
         [Header("Banner")]
-        [SerializeField] private Canvas uiCanvas;
-        [SerializeField, Tooltip("결과 화면을 UI Toolkit으로 못 띄웠을 때만 쓰는 옛 uGUI 패널.")]
-        private BossWaveUiView victoryView;
         [SerializeField, Min(0.1f)] private float bannerHoldDuration = 1.6f;
         [SerializeField] private Color finalBannerColor = new(1f, 0.78f, 0.2f, 1f);
         [SerializeField, Tooltip("패배 결과 화면의 강조색.")]
@@ -155,89 +152,9 @@ namespace Code.Manager
             else
                 Time.timeScale = 0f;
 
-            if (RunEndToolkitView.TryShow(title, headline))
-                return;
-
-            if (uiCanvas == null)
-            {
-                Debug.LogError("BossWavePresenter requires a scene-assigned UI Canvas.", this);
-                return;
-            }
-
-            uiCanvas.GetComponentInChildren<TimeSpeedView>(true)?.SetInteractionLocked(true);
-
-            var view = victoryView;
-            if (view == null)
-            {
-                Debug.LogError("BossWavePresenter requires a scene-assigned victory panel view.", this);
-                return;
-            }
-
-            view.gameObject.SetActive(true);
-            view.transform.SetAsLastSibling();
-            view.Title.text = title;
-            view.Title.color = accent;
-            view.Subtitle.text = headline + BuildRunSummaryText();
-            view.RetryButton.onClick.RemoveAllListeners();
-            view.RetryButton.onClick.AddListener(() =>
-            {
-                gameSpeedController?.ResetToNormal();
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-            });
-
-            var root = view.gameObject;
-            var group = view.CanvasGroup;
-            group.DOKill();
-            group.alpha = 0f;
-            group.interactable = true;
-            group.blocksRaycasts = true;
-            group.DOFade(1f, 0.5f).SetUpdate(true).SetLink(root);
-            
-        }
-
-        /// <summary>
-        /// 한 판을 돌아보는 숫자들. 정산은 하루치만 보여주고 사라지므로
-        /// 판 전체가 어땠는지는 여기서만 볼 수 있다.
-        /// </summary>
-        private string BuildRunSummaryText()
-        {
-            var lines = new StringBuilder();
-            lines.Append("\n<size=80%>");
-
-            var finalDay = waveManager != null ? waveManager.FinalDay : 0;
-            var survived = dayManager != null ? dayManager.CurrentDay : 0;
-            lines.Append(finalDay > 0
-                ? $"\n버틴 날  {survived} / {finalDay}일"
-                : $"\n버틴 날  {survived}일");
-
-            var run = runSummarySystem;
-            if (run != null && run.Invaders > 0)
-            {
-                lines.Append($"\n격퇴  {run.Kills} / {run.Invaders}명"
-                             + $"  ·  방어전 {run.WavesFought}회");
-                lines.Append($"\n가한 피해  {run.DamageDealt}"
-                             + $"  ·  받은 피해 {run.DamageTaken}"
-                             + $"  ·  치명타 {run.CriticalHits}");
-            }
-
-            var cost = costManager;
-            if (cost != null)
-            {
-                var peakDebt = run != null ? run.PeakDebt : 0;
-                lines.Append($"\n남은 금화  {cost.CurrentGold}G  ·  최대 부채 {peakDebt}G");
-            }
-
-            var roster = hiredUnitRoster;
-            if (roster != null)
-            {
-                lines.Append($"\n부하  {roster.TotalHiredCount}명"
-                             + $"  ·  유닛 해금 {roster.UnlockedUnits.Count}/{roster.UnlockableUnitCount}"
-                             + $"  ·  시설 해금 {roster.UnlockedBuildings.Count}/{roster.UnlockableBuildingCount}");
-            }
-
-
-            lines.Append("</size>");
-            return lines.ToString();
+            // 결과 화면은 UI Toolkit판(요약 포함)만 쓴다. 옛 uGUI 승리 패널은 씬 정리 때 지운다(Toolkit 전환 4단계).
+            if (!RunEndToolkitView.TryShow(title, headline))
+                Debug.LogError($"{nameof(BossWavePresenter)}: 결과 화면(RunEndToolkitView)을 띄우지 못했습니다.", this);
         }
 
         private void ResolveDependencies()

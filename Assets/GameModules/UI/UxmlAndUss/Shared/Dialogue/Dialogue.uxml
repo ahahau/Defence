@@ -1,0 +1,31 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="project://database/Assets/GameModules/UI/UxmlAndUss/Common/DesignToken.uss" />
+    <Style src="project://database/Assets/GameModules/UI/UxmlAndUss/Common/Components.uss" />
+    <Style src="project://database/Assets/GameModules/UI/UxmlAndUss/Shared/Dialogue/Dialogue.uss" />
+    <ui:VisualElement name="dialogue-root" class="ui-theme dialogue-root" picking-mode="Ignore">
+        <ui:VisualElement name="dialogue-scrim" class="dialogue-scrim" />
+        <ui:VisualElement name="dialogue-spotlight" class="dialogue-spotlight" picking-mode="Ignore">
+            <ui:VisualElement name="dialogue-dim-top" class="dialogue-dim" />
+            <ui:VisualElement name="dialogue-dim-bottom" class="dialogue-dim" />
+            <ui:VisualElement name="dialogue-dim-left" class="dialogue-dim" />
+            <ui:VisualElement name="dialogue-dim-right" class="dialogue-dim" />
+        </ui:VisualElement>
+        <ui:VisualElement name="dialogue-box" class="dialogue-box">
+            <ui:VisualElement class="panel panel--inset dialogue-speaker-tag">
+                <ui:Label name="dialogue-speaker" text="" class="text-ellipsis dialogue-speaker" />
+            </ui:VisualElement>
+            <ui:VisualElement class="panel panel--window dialogue-card">
+                <ui:VisualElement class="dialogue-header">
+                    <ui:Label name="dialogue-title" text="" class="text-ellipsis dialogue-title" />
+                    <ui:Label name="dialogue-progress" text="" class="dialogue-progress" />
+                    <ui:Button name="dialogue-close" text="닫기" class="btn dialogue-close" />
+                </ui:VisualElement>
+                <ui:VisualElement class="dialogue-content">
+                    <ui:Label name="dialogue-body" text="" class="text-body dialogue-body" />
+                    <ui:VisualElement name="dialogue-choices" class="dialogue-choices" />
+                </ui:VisualElement>
+                <ui:Button name="dialogue-next" text="다음 ▶" class="btn btn--primary dialogue-next" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

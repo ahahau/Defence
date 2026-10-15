@@ -33,20 +33,27 @@ namespace Code.UI
         /// </summary>
         private const float MouseMoveThreshold = 4f;
 
-        private IdleReturnNoticeRefs notice;
+        private Code.UI.Toolkit.IdleNoticeToolkitView _notice;
+        private bool _noticeVisible;
         private float _idleSeconds;
         private int _shownRemaining = -1;
 
         private void Start()
         {
-            notice = ResolveNotice(transform);
-            if (notice == null || !notice.IsComplete)
-            {
-                Debug.LogError("IdleReturnToTitle requires an IdleReturnNoticeRefs child assigned in the scene hierarchy.", this);
-                enabled = false;
-                return;
-            }
+            // 알림은 UI Toolkit 화면이 그린다. 옛 uGUI 알림 창은 씬 정리 전까지 감춘다(Toolkit 전환 4단계).
+            var legacy = GetComponentInChildren<IdleReturnNoticeRefs>(true);
+            if (legacy != null && legacy.window != null)
+                legacy.window.SetActive(false);
+
+            _notice = Code.UI.Toolkit.ToolkitScreenSO.Spawn<Code.UI.Toolkit.IdleNoticeToolkitView>(
+                Code.UI.Toolkit.IdleNoticeToolkitView.ScreenResourcePath, Code.UI.Toolkit.IdleNoticeToolkitView.RootName);
             SetNoticeVisible(false);
+        }
+
+        private void OnDestroy()
+        {
+            if (_notice != null)
+                Destroy(_notice.gameObject);
         }
 
         private void Update()
@@ -153,26 +160,23 @@ namespace Code.UI
         {
             SetNoticeVisible(true);
 
-            if (notice == null || notice.countdownText == null || _shownRemaining == seconds)
+            if (_notice == null || _shownRemaining == seconds)
                 return;
 
             _shownRemaining = seconds;
-            notice.countdownText.text = $"{seconds}초 뒤 타이틀로 돌아갑니다\n아무 키나 누르면 계속합니다";
+            _notice.SetText($"{seconds}초 뒤 타이틀로 돌아갑니다\n아무 키나 누르면 계속합니다");
         }
 
         private void SetNoticeVisible(bool visible)
         {
-            if (notice == null || notice.window == null)
-                return;
-
             if (!visible)
                 _shownRemaining = -1;
 
-            if (notice.window.activeSelf != visible)
-                notice.window.SetActive(visible);
-        }
+            if (_notice == null || _noticeVisible == visible)
+                return;
 
-        private IdleReturnNoticeRefs ResolveNotice(Transform parent) =>
-            parent.GetComponentInChildren<IdleReturnNoticeRefs>(true);
+            _noticeVisible = visible;
+            _notice.SetVisible(visible);
+        }
     }
 }

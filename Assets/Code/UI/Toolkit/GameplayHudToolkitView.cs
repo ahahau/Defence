@@ -46,6 +46,7 @@ namespace Code.UI.Toolkit
         private Button _facilityAction;
         private Button _rosterButton;
         private Button _settlementAction;
+        private Button _merchantAction;
         private Button _pauseMenuButton;
         private Button _selectionDetailButton;
         private Button _resumeButton;
@@ -73,6 +74,7 @@ namespace Code.UI.Toolkit
         private CostManager _costManager;
         private DayManager _dayManager;
         private MagicManager _magicManager;
+        private MerchantPanelView _merchant;
         private UnitRevivalSystem _revivalSystem;
         private GameSpeedController _speedController;
         private float _nextPollAt;
@@ -102,6 +104,15 @@ namespace Code.UI.Toolkit
                 _ => _buildAction,
             };
             return ToolkitScreenRect.TryGet(button, out rect);
+        }
+
+        /// <summary>상인 버튼의 화면 사각형(왼쪽 아래 원점 픽셀). 상인이 없는 날이면 false. 튜토리얼이 비춘다.</summary>
+        public bool TryGetMerchantButtonScreenRect(out Rect rect)
+        {
+            rect = default;
+            return _merchantAction != null
+                   && _merchantAction.resolvedStyle.visibility == Visibility.Visible
+                   && ToolkitScreenRect.TryGet(_merchantAction, out rect);
         }
 
         private void OnEnable()
@@ -163,6 +174,7 @@ namespace Code.UI.Toolkit
             _facilityAction = root.Q<Button>("facility-action");
             _rosterButton = root.Q<Button>("roster-button");
             _settlementAction = root.Q<Button>("settlement-action");
+            _merchantAction = root.Q<Button>("merchant-action");
             _pauseMenuButton = root.Q<Button>("pause-menu-button");
             _selectionDetailButton = root.Q<Button>("selection-detail-button");
             _resumeButton = root.Q<Button>("resume-button");
@@ -205,6 +217,7 @@ namespace Code.UI.Toolkit
             if (_facilityAction != null) _facilityAction.clicked += ShowFacilityOptions;
             if (_rosterButton != null) _rosterButton.clicked += ToggleRoster;
             if (_settlementAction != null) _settlementAction.clicked += ExplainSettlement;
+            if (_merchantAction != null) _merchantAction.clicked += ToggleMerchant;
             if (_pauseMenuButton != null) _pauseMenuButton.clicked += ExplainPauseMenuPending;
             if (_selectionDetailButton != null) _selectionDetailButton.clicked += ShowSelectionDetail;
             if (_resumeButton != null) _resumeButton.clicked += ClosePauseMenu;
@@ -233,6 +246,7 @@ namespace Code.UI.Toolkit
             if (_facilityAction != null) _facilityAction.clicked -= ShowFacilityOptions;
             if (_rosterButton != null) _rosterButton.clicked -= ToggleRoster;
             if (_settlementAction != null) _settlementAction.clicked -= ExplainSettlement;
+            if (_merchantAction != null) _merchantAction.clicked -= ToggleMerchant;
             if (_pauseMenuButton != null) _pauseMenuButton.clicked -= ExplainPauseMenuPending;
             if (_selectionDetailButton != null) _selectionDetailButton.clicked -= ShowSelectionDetail;
             if (_resumeButton != null) _resumeButton.clicked -= ClosePauseMenu;
@@ -549,6 +563,30 @@ namespace Code.UI.Toolkit
                 AddMessage(isManagementWindow ? "관리 모드가 활성화되었습니다." : "영업을 시작했습니다.", false);
                 _lastManagementWindow = isManagementWindow;
             }
+            RefreshMerchantAction();
+        }
+
+        /// <summary>
+        /// 상인 버튼. 상인이 오는 날에만 보이고 대기 중에만 눌린다. 없는 날에도 자리는 비워 둔다 —
+        /// 버튼이 빠지면 옆의 정산 정보·메뉴가 밀려 매일 자리가 바뀐다.
+        /// </summary>
+        private void RefreshMerchantAction()
+        {
+            if (_merchantAction == null)
+                return;
+
+            if (_merchant == null)
+                _merchant = SceneReferenceFallback.FindForRuntimeObject<MerchantPanelView>();
+
+            var here = _merchant != null && _merchant.IsMerchantHere;
+            _merchantAction.style.visibility = here ? Visibility.Visible : Visibility.Hidden;
+            _merchantAction.SetEnabled(here && _dayManager != null && _dayManager.IsStandby);
+        }
+
+        private void ToggleMerchant()
+        {
+            if (_merchant != null)
+                _merchant.Toggle();
         }
 
         private void RefreshSpeedButtons()

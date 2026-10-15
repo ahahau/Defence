@@ -139,10 +139,6 @@ namespace Code.UI
 
         private const int MerchantLessonDay = 2;
 
-        /// <summary>덮개가 설 정렬 자리. 관리 창(200대)보다 위, 설정 창(5000)보다 아래.</summary>
-        private const int DimSortingOrder = 900;
-
-
         private bool _merchantTaught;
         private bool _settlementWasOpen;
         private Node _cameraTargetNode;
@@ -165,10 +161,11 @@ namespace Code.UI
         private float _timer;
         private float _stepAge;
         private bool _released;
-        private CanvasGroup _hintGroup;
+        private Code.UI.Toolkit.TutorialOverlayToolkitView _overlay;
+        /// <summary>안내 카드를 띄우라고 했는가. 덮개 화면이 아직 없을 때(EditMode 테스트)도 상태를 잃지 않는다.</summary>
+        private bool _hintVisible;
         private bool _waitingForDialogue;
         private DialogueRunner _dialogue;
-        private UnityEngine.UI.Button _skipButton;
 
         public void SkipTutorial()
         {
@@ -191,8 +188,6 @@ namespace Code.UI
                 _moveStartPosition = camera.transform.position;
             Render();
 
-            EnsureDimOnTop();
-
             // 첫 살피기(0.25초 뒤)까지 기다리면 그 사이에 버튼이 한 번 깜빡인다.
             ApplyStartButtonHold();
         }
@@ -203,6 +198,17 @@ namespace Code.UI
             ReleaseStartButton();
             _cameraTween?.Kill();
             HideSpotlight();
+            SetHintVisible(false);
+        }
+
+        private void OnDestroy()
+        {
+            if (_overlay == null)
+                return;
+
+            _overlay.SkipClicked -= SkipTutorial;
+            Destroy(_overlay.gameObject);
+            _overlay = null;
         }
 
         private void Update()
@@ -523,7 +529,9 @@ namespace Code.UI
                     return wave != null && wave.TryGetStartButtonScreenRect(out rect);
 
                 case Step.LearnMerchant:
-                    return TryBuildRect(MerchantButton, out rect);
+                    // 상인 버튼은 HUD(UI Toolkit) 하단 바에 있다. 화면 사각형을 바로 받는다.
+                    var hud = Code.UI.Toolkit.GameplayHudToolkitView.Current;
+                    return hud != null && hud.TryGetMerchantButtonScreenRect(out rect);
 
 
                 default:
@@ -646,55 +654,6 @@ namespace Code.UI
         private static bool IsBuildStep(Step step) =>
             step == Step.BuildRoom || step == Step.DeployUnit || step == Step.BuildPortal;
 
-        /// <summary>
-        /// 덮개를 화면 맨 위로 올린다.
-        ///
-        /// 덮개는 주 캔버스(정렬 50)의 자식인데, 설치 HUD 는 110, 관리 창은 200 이상으로
-        /// 스스로 정렬을 덮어쓴다. 그래서 덮개가 그 아래에 깔려 어둡게도 못 하고 클릭도 못
-        /// 막았다 — 안내가 지도 한 곳을 가리키는 동안 창의 모든 버튼이 그대로 눌렸다.
-        ///
-        /// 설정 창(5000)보다는 아래에 둔다. 안내 중에도 나가는 길은 열려 있어야 한다.
-        /// </summary>
-        /// 한 번만 하지 않고 덮개를 펼 때마다 다시 건다. overrideSorting 은 꺼져 있는 개체에
-        /// 걸면 조용히 false 로 남기 때문이다 — 덮개는 평소 꺼져 있으므로 처음 한 번은 늘 헛일이 된다.
-        /// 실제로 그렇게 한 번 놓쳤고, 값은 들어갔는데 화면은 그대로였다.
-        private void EnsureDimOnTop()
-        {
-
-            foreach (var panel in dimPanels)
-            {
-                if (panel == null)
-                    continue;
-
-                if (!panel.TryGetComponent<Canvas>(out var canvas))
-                    canvas = panel.gameObject.AddComponent<Canvas>();
-
-                if (!canvas.overrideSorting)
-                    canvas.overrideSorting = true;
-
-                if (canvas.sortingOrder != DimSortingOrder)
-                    canvas.sortingOrder = DimSortingOrder;
-
-                // 자기 캔버스가 된 판은 자기 레이캐스터가 있어야 클릭을 받아 삼킨다.
-                if (!panel.TryGetComponent<UnityEngine.UI.GraphicRaycaster>(out _))
-                    panel.gameObject.AddComponent<UnityEngine.UI.GraphicRaycaster>();
-            }
-
-            // 안내 글은 덮개보다 위에 둔다. 무엇을 하라는 문장까지 같이 어두워지면
-            // 정작 읽어야 할 한 줄이 가장 안 보인다.
-            if (root == null)
-                return;
-
-            if (!root.TryGetComponent<Canvas>(out var hintCanvas))
-                hintCanvas = root.AddComponent<Canvas>();
-
-            if (!hintCanvas.overrideSorting)
-                hintCanvas.overrideSorting = true;
-
-            if (hintCanvas.sortingOrder != DimSortingOrder + 1)
-                hintCanvas.sortingOrder = DimSortingOrder + 1;
-        }
-
         /// <summary>이 칸에서 눌러야 할 방. 못 고르면 아무것도 덮지 않는다.</summary>
         private Node ResolveTargetNode() => _step switch
         {
@@ -799,66 +758,22 @@ namespace Code.UI
             return true;
         }
 
-        /// <summary>겨눈 네모만 남기고 네 장으로 화면을 덮는다.</summary>
+        /// <summary>
+        /// 겨눈 네모만 남기고 네 조각 어둠으로 화면을 덮는다. 어둠은 UI Toolkit 덮개가 그린다 —
+        /// 팝업 패널에 떠서 uGUI와 다른 Toolkit 화면을 함께 덮는다(예전 uGUI 덮개는 정렬을 매번 다시
+        /// 걸어야 관리 창 위로 올라왔다).
+        /// </summary>
         private void ShowSpotlight(Rect hole)
         {
-            if (dimPanels == null || dimPanels.Length < 4)
-                return;
-
-            var canvasRect = dimPanels[0] != null ? dimPanels[0].parent as RectTransform : null;
-            if (canvasRect == null)
-                return;
-
-            // 구멍은 화면 픽셀로 재 왔고 덮개는 캔버스 단위로 놓인다. 캔버스 배율이 1이 아니면
-            // (해상도에 맞춰 늘리는 설정이면 늘 1이 아니다) 두 값의 단위가 달라 구멍이 어긋난다.
-            var canvas = canvasRect.GetComponentInParent<Canvas>();
-            var scale = canvas != null && canvas.scaleFactor > 0f ? canvas.scaleFactor : 1f;
-
-            var size = canvasRect.rect.size;
-            var pad = spotlightPadding / scale;
-
-            var left = Mathf.Clamp(hole.xMin / scale - pad, 0f, size.x);
-            var right = Mathf.Clamp(hole.xMax / scale + pad, 0f, size.x);
-            var bottom = Mathf.Clamp(hole.yMin / scale - pad, 0f, size.y);
-            var top = Mathf.Clamp(hole.yMax / scale + pad, 0f, size.y);
-
-            Place(dimPanels[0], 0f, top, size.x, size.y - top);       // 위
-            Place(dimPanels[1], 0f, 0f, size.x, bottom);              // 아래
-            Place(dimPanels[2], 0f, bottom, left, top - bottom);      // 왼쪽
-            Place(dimPanels[3], right, bottom, size.x - right, top - bottom); // 오른쪽
-
-            SetSpotlightVisible(true);
-            EnsureDimOnTop();
-        }
-
-        private static void Place(RectTransform panel, float x, float y, float width, float height)
-        {
-            if (panel == null)
-                return;
-
-            panel.anchorMin = Vector2.zero;
-            panel.anchorMax = Vector2.zero;
-            panel.pivot = Vector2.zero;
-            panel.anchoredPosition = new Vector2(x, y);
-            panel.sizeDelta = new Vector2(Mathf.Max(0f, width), Mathf.Max(0f, height));
+            if (EnsureOverlay())
+                _overlay.SetHole(hole, spotlightPadding);
         }
 
         private void HideSpotlight()
         {
             _hasHole = false;
-            SetSpotlightVisible(false);
-        }
-
-        private void SetSpotlightVisible(bool visible)
-        {
-            if (dimPanels == null)
-                return;
-
-            for (var i = 0; i < dimPanels.Length; i++)
-            {
-                if (dimPanels[i] != null && dimPanels[i].gameObject.activeSelf != visible)
-                    dimPanels[i].gameObject.SetActive(visible);
-            }
+            if (_overlay != null)
+                _overlay.SetDimVisible(false);
         }
 
         private static Node FindLockedNode()
@@ -925,7 +840,7 @@ namespace Code.UI
 
             var day = CurrentDay;
 
-            if (!_merchantTaught && day >= MerchantLessonDay && MerchantButton != null)
+            if (!_merchantTaught && day >= MerchantLessonDay && IsMerchantHere)
                 return Step.LearnMerchant;
 
             return Step.Idle;
@@ -942,12 +857,13 @@ namespace Code.UI
             }
         }
 
-        private RectTransform MerchantButton
+        /// <summary>오늘 상인이 와 있어 여는 버튼이 보이는가.</summary>
+        private bool IsMerchantHere
         {
             get
             {
                 var merchant = ResolveMerchant();
-                return merchant != null ? merchant.OpenButtonRect : null;
+                return merchant != null && merchant.IsMerchantHere;
             }
         }
 
@@ -1006,12 +922,8 @@ namespace Code.UI
 
             SetHintVisible(show);
 
-            if (show && hintText != null)
-            {
-                var formatted = $"<color=#E7BB6B>{HeaderFor(_step)}</color>\n{text}";
-                if (hintText.text != formatted)
-                    hintText.text = formatted;
-            }
+            if (show && EnsureOverlay())
+                _overlay.SetHint(HeaderFor(_step), text);
         }
 
         private static string HeaderFor(Step step) => step switch
@@ -1028,55 +940,55 @@ namespace Code.UI
             _ => "던전 안내",
         };
 
+        /// <summary>
+        /// 안내 화면을 준비한다. 안내 글·어둠·건너뛰기는 UI Toolkit 덮개가 그리고, 씬의 옛 uGUI
+        /// 안내 상자와 어둠 네 장은 씬 정리 전까지 감춘다(Toolkit 전환 4단계).
+        /// </summary>
         private void ConfigureHint()
         {
+            HideLegacyOverlay();
+            EnsureOverlay();
+        }
+
+        private bool EnsureOverlay()
+        {
+            if (_overlay != null)
+                return true;
+
+            _overlay = Code.UI.Toolkit.ToolkitScreenSO.Spawn<Code.UI.Toolkit.TutorialOverlayToolkitView>(
+                Code.UI.Toolkit.TutorialOverlayToolkitView.ScreenResourcePath, Code.UI.Toolkit.TutorialOverlayToolkitView.RootName);
+            if (_overlay == null)
+                return false;
+
+            _overlay.SkipClicked += SkipTutorial;
+            return true;
+        }
+
+        private void HideLegacyOverlay()
+        {
             var target = root != null ? root : gameObject;
-            _hintGroup = target.GetComponent<CanvasGroup>();
-            if (_hintGroup == null)
-                _hintGroup = target.AddComponent<CanvasGroup>();
-            if (hintText == null)
+            // 이 컴포넌트가 안내 상자 오브젝트에 붙어 있어 끄지 않고 투명하게 만든다(끄면 안내도 멈춘다).
+            if (!target.TryGetComponent<CanvasGroup>(out var group))
+                group = target.AddComponent<CanvasGroup>();
+            group.alpha = 0f;
+            group.interactable = false;
+            group.blocksRaycasts = false;
+
+            if (dimPanels == null)
                 return;
-            hintText.enableAutoSizing = true;
-            hintText.fontSizeMin = 16f;
-            hintText.fontSizeMax = 23f;
-            hintText.raycastTarget = false;
-            hintText.alignment = TextAlignmentOptions.Center;
-            hintText.margin = new Vector4(16f, 6f, 16f, 6f);
-            if (target.transform is RectTransform rect)
+
+            foreach (var panel in dimPanels)
             {
-                rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1f);
-                rect.pivot = new Vector2(0.5f, 1f);
-                rect.anchoredPosition = new Vector2(0f, -18f);
-                rect.sizeDelta = new Vector2(860f, 80f);
+                if (panel != null)
+                    panel.gameObject.SetActive(false);
             }
-            hintText.rectTransform.anchorMin = Vector2.zero;
-            hintText.rectTransform.anchorMax = Vector2.one;
-            hintText.rectTransform.offsetMin = new Vector2(8f, 4f);
-            hintText.rectTransform.offsetMax = new Vector2(-126f, -4f);
-            // 이름으로 자식을 찾지 않고 만든 버튼을 들고 있는다.
-            if (_skipButton == null)
-            {
-                var prefab = Resources.Load<UnityEngine.UI.Button>("UI/TutorialSkipButton");
-                if (prefab != null)
-                {
-                    _skipButton = Instantiate(prefab, target.transform, false);
-                    _skipButton.gameObject.name = "Skip Tutorial";
-                    _skipButton.onClick.AddListener(SkipTutorial);
-                }
-                else
-                    Debug.LogError("Missing UI prefab: UI/TutorialSkipButton", this);
-            }
-            if (target.GetComponent<UnityEngine.UI.GraphicRaycaster>() == null)
-                target.AddComponent<UnityEngine.UI.GraphicRaycaster>();
         }
 
         private void SetHintVisible(bool visible)
         {
-            if (_hintGroup == null)
-                ConfigureHint();
-            _hintGroup.alpha = visible ? 1f : 0f;
-            _hintGroup.interactable = visible;
-            _hintGroup.blocksRaycasts = visible;
+            _hintVisible = visible;
+            if (EnsureOverlay())
+                _overlay.SetHintVisible(visible);
         }
 
         private string HintFor(Step step) => step switch

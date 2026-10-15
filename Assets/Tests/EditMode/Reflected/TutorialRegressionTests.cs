@@ -27,6 +27,12 @@ namespace Tests.EditMode.UI
         [TearDown]
         public void Cleanup()
         {
+            foreach (var obj in created.ToArray())
+            {
+                if (obj is GameObject host && host != null && host.GetComponent(Tutorial) is Component tutorial)
+                    TrackOverlay(tutorial);
+            }
+
             foreach (var obj in created)
             {
                 if (obj is GameObject go)
@@ -48,9 +54,9 @@ namespace Tests.EditMode.UI
             Tutorial.GetMethod("EnterStep", Private).Invoke(tutorial, new[] { Enum.Parse(Step, "Idle") });
             Assert.That(tutorial.gameObject.activeInHierarchy, Is.True);
             Assert.That(((Behaviour)tutorial).isActiveAndEnabled, Is.True);
-            Assert.That(tutorial.GetComponent<CanvasGroup>().alpha, Is.Zero);
+            Assert.That(IsHintVisible(tutorial), Is.False);
             Tutorial.GetMethod("EnterStep", Private).Invoke(tutorial, new[] { Enum.Parse(Step, "LearnMerchant") });
-            Assert.That(tutorial.GetComponent<CanvasGroup>().alpha, Is.EqualTo(1f));
+            Assert.That(IsHintVisible(tutorial), Is.True);
         }
 
         [Test]
@@ -60,8 +66,28 @@ namespace Tests.EditMode.UI
             tutorial.gameObject.SetActive(true);
             Tutorial.GetMethod("SkipTutorial").Invoke(tutorial, null);
             Assert.That(tutorial.gameObject.activeInHierarchy, Is.True);
-            Assert.That(tutorial.GetComponent<CanvasGroup>().blocksRaycasts, Is.False);
+            Assert.That(IsHintVisible(tutorial), Is.False);
             Assert.That(Tutorial.GetField("_step", Private).GetValue(tutorial).ToString(), Is.EqualTo("Done"));
+        }
+
+        /// <summary>
+        /// 안내 카드는 UI Toolkit 덮개가 그린다. EditMode에서는 패널이 서지 않아 화면 요소를 볼 수 없으므로
+        /// 안내가 띄우라고 한 상태(<c>_hintVisible</c>)를 본다. 예전 uGUI 안내는 CanvasGroup 알파로 봤다.
+        /// </summary>
+        private bool IsHintVisible(Component tutorial)
+        {
+            var field = Tutorial.GetField("_hintVisible", Private);
+            Assert.That(field, Is.Not.Null, "PlayTutorialView._hintVisible 를 찾지 못했습니다.");
+            TrackOverlay(tutorial);
+            return (bool)field.GetValue(tutorial);
+        }
+
+        /// <summary>안내가 띄운 덮개 화면도 테스트가 끝나면 지운다. EditMode에서는 OnDestroy가 돌지 않는다.</summary>
+        private void TrackOverlay(Component tutorial)
+        {
+            var overlay = Tutorial.GetField("_overlay", Private)?.GetValue(tutorial) as Component;
+            if (overlay != null && !created.Contains(overlay.gameObject))
+                created.Add(overlay.gameObject);
         }
 
         [Test]

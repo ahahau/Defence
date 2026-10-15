@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="project://database/Assets/GameModules/UI/UxmlAndUss/Common/DesignToken.uss" />
+    <Style src="project://database/Assets/GameModules/UI/UxmlAndUss/Common/Components.uss" />
+    <Style src="project://database/Assets/GameModules/UI/UxmlAndUss/Shared/IdleNotice/IdleNotice.uss" />
+    <ui:VisualElement name="idle-notice-root" class="ui-theme idle-notice-root" picking-mode="Ignore">
+        <ui:VisualElement name="idle-notice-card" class="panel panel--window idle-notice-card" picking-mode="Ignore">
+            <ui:Label text="자리를 비우셨나요?" class="text-title idle-notice-title" picking-mode="Ignore" />
+            <ui:Label name="idle-notice-text" text="" class="text-body idle-notice-text" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
