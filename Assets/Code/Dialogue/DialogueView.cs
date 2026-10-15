@@ -8,13 +8,10 @@ namespace Code.Dialogue
     /// <see cref="DialogueRunner"/>와 대화 상자 화면 사이의 다리. 그리기는 UI Toolkit 화면
     /// (<see cref="DialogueToolkitView"/>)이 하고, 여기서는 표시 값을 만들어 넘기고 버튼 입력을 진행기로 돌려준다.
     ///
-    /// 예전에는 씬의 uGUI 상자를 직접 그렸다. 씬 배선(<c>DialogueRunner.view</c>)을 바꾸지 않으려고
-    /// 이 컴포넌트와 공개 함수는 그대로 두고, 옛 상자는 감춘다(씬 정리 때 삭제, UI Toolkit 전환 4단계).
+    /// 씬의 UI 판단 오브젝트에 붙어 <c>DialogueRunner.view</c>로 배선된다.
     /// </summary>
     public class DialogueView : MonoBehaviour
     {
-        [SerializeField, Tooltip("옛 uGUI 대화 상자. 씬 정리 전까지 감추기만 한다.")]
-        private GameObject root;
         [SerializeField, Tooltip("선택지가 있을 때 본문 끝에 덧붙이는 안내. 비우면 붙이지 않는다.")]
         private string choiceLeadText = string.Empty;
 
@@ -25,13 +22,11 @@ namespace Code.Dialogue
         public void Initialize(DialogueRunner dialogueRunner)
         {
             runner = dialogueRunner;
-            HideLegacy();
             EnsureView();
         }
 
         public void Show(DialogueDisplayData data)
         {
-            HideLegacy();
             if (!EnsureView())
                 return;
 
@@ -140,12 +135,6 @@ namespace Code.Dialogue
             _view.NextClicked -= HandleNextClicked;
             _view.CloseClicked -= HandleCloseClicked;
             _view.ChoiceClicked -= HandleChoiceClicked;
-        }
-
-        private void HideLegacy()
-        {
-            if (root != null && root.activeSelf)
-                root.SetActive(false);
         }
     }
 }

@@ -110,10 +110,6 @@ namespace Code.MapCreateSystem
                  "부하 콜라이더 지름이 0.8이므로 그보다 조금 넉넉하게 둔다.")]
         private float unitInspectRadius = 1.2f;
 
-        [Header("UI Blocking")]
-        [SerializeField]
-        private RectTransform nodePanelBlockRect;
-
         private DungeonGraph graph;
         private readonly Dictionary<Collider2D, Node> lockedNodeByCollider = new();
         private readonly Dictionary<Collider2D, Node> unlockedNodeByCollider = new();
@@ -815,7 +811,7 @@ namespace Code.MapCreateSystem
             if (PopupController.IsOpen)
                 return;
 
-            if (IsPointerOverUi() || IsPointerOverNodePanel())
+            if (IsPointerOverUi())
                 return;
 
             Vector2 worldPosition = inputDataSO.SceneToWorldPoint();
@@ -1049,17 +1045,6 @@ namespace Code.MapCreateSystem
             }
 
             return false;
-        }
-
-        private bool IsPointerOverNodePanel()
-        {
-            if (nodePanelBlockRect == null || !nodePanelBlockRect.gameObject.activeInHierarchy)
-                return false;
-
-            return RectTransformUtility.RectangleContainsScreenPoint(
-                nodePanelBlockRect,
-                inputDataSO.ReadScreenMousePosition(),
-                null);
         }
 
         public RunSaveData CaptureRunSave()

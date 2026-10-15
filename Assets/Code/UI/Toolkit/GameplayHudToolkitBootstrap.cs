@@ -19,12 +19,10 @@ namespace Code.UI.Toolkit
 
         /// <summary>
         /// HUD·배속·일시정지 메뉴는 Toolkit 문서가 소유한다.
-        /// 같은 ESC 입력을 받는 옛 설정 창은 꺼 두고, 전투와 노드 UGUI만 단계적으로 남긴다.
+        /// 타이틀에서 만들어져 씬을 넘어 따라오는 옛 설정 창은 같은 ESC 입력을 받으므로 게임 씬에서는 꺼 둔다.
         /// </summary>
         private static void HideReplacedViews()
         {
-            foreach (var view in Object.FindObjectsByType<GoldCostView>(FindObjectsInactive.Exclude))
-                view.gameObject.SetActive(false);
             foreach (var view in Object.FindObjectsByType<SettingsPanelView>(FindObjectsInactive.Exclude))
                 view.enabled = false;
         }

@@ -62,6 +62,13 @@
   - 코드: `DialogueRunner`(꺼진 가이드 튜토리얼) 고용 단계는 강조 없이 글만, 안내 문구를 "청산일 정산 화면의 유닛 상점에서"로, `unitDeployPanelView`·`TryBuildRectTransformScreenRect` 삭제. `WaveView` `runtimeHudView`, `PlayTutorialView` `dimPanels`, `MerchantPanelView` `openButton` 필드 삭제. HUD·운영 방침 부트스트랩의 옛 화면 끄기 반복 삭제, `HudDisplayState`의 `MagicHudState`·`MoraleHudState` 삭제.
   - 남긴 것(판단·배선이 붙어 있음): `GoldCostPanel`(`GoldHudPresenter`, 씬 배선 테스트), `Node`(`NodePanelView`), 상태·유물·상인 다리, `WaveStartButton`(`WaveView`)·`StartTutorialDialogueOverlay`(`DialogueView`)·`Tutorial Hint`(`PlayTutorialView`), `DailySettlementPanel`(다른 세션의 `ManagementSettlementManager`가 참조), 옛 설정 창·`IdleReturnToTitle`(꺼짐), `PersonalityTooltip`, `InstallHudCanvas`.
   - 검증: Unity 재컴파일 실패 없음·콘솔 오류 0, 씬의 누락 스크립트 0, EditMode 310/310. 플레이에서 영업 시작 → 진행 막대 → 정산 → 사건 대화가 정상.
+- 남은 옛 uGUI 오브젝트 정리(사용자 선택 "3번부터": 판단·배선 컴포넌트가 붙어 있어 남았던 것).
+  - 다리·판단 컴포넌트에서 uGUI 필드 제거: `WaveView`(옛 시작·목표 버튼·숨김 처리), `DialogueView`(`root`), `PlayTutorialView`(`root`·`hintText`·투명 처리), `NodePanelView`(옛 노드 패널·설치/철거/휴업 버튼·`BuildingInfoPanelView`), `UnitStatusPanelView`(`panelRoot`), `MerchantPanelView`(옛 창·닫기·진열 버튼), `IdleReturnToTitle`(옛 알림 숨김). `EnemyStatusPanelView`·`ArtifactPanelView`는 채널을 듣고 Toolkit 화면으로 넘기는 다리만 남기고 다시 씀(옛 uGUI 그리기·툴팁 삭제). `DungeonGraphController`: 꺼진 옛 노드 패널을 가리키던 클릭 막기 영역(`nodePanelBlockRect`·`IsPointerOverNodePanel`) 삭제.
+  - 씬(Unity CLI): `======UI===========/UI Controllers` 아래 일반 오브젝트에 9개 컴포넌트를 새로 붙이고 `EditorUtility.CopySerialized`로 값 복사, 씬의 참조 5곳(튜토리얼 `waveView`, `DialogueRunner.view`, 설치 버튼 이벤트 대상)을 새 컴포넌트로 다시 이음. EventSystem과 다른 세션이 참조하는 `DailySettlementPanel`(꺼짐)은 UI 루트로 옮기고, 메인 `Canvas`를 통째로 삭제(금화 패널·옛 상태/유물/모험가 패널 2개·상인 창·옛 설정 창·성격 툴팁·설치 HUD 포함). `PlayTutorialView` 오브젝트는 씬에서처럼 꺼진 채로 둠. 씬 백업은 스크래치패드.
+  - 삭제한 스크립트: `GoldCostView`·`GoldHudPresenter`·`HudDisplayState`·`BuildingInfoPanelView`·`UnitFatigueManagementView`·`UnitPersonalityTooltip`·`PersonalityTooltipView`(+빈 `UI/Tooltip` 폴더)·`RosterDeployEntryView`·`ArtifactEntryView`. 프리팹: `GoldCostPanel`·`BuildingInfoPanel`·`UI/Panels/Node`·`UnitStatusPanel`·`ArtifactPanel`·`EnemyStatusPanel`·`ArtifactEntryView`·`RosterDeployEntry`, `Resources/UI`의 `UnitFatigueManagement`·`PersonalityTooltip`. 타이틀 씬이 쓰는 `IdleReturnHost`·`IdleReturnNotice`·설정 창 프리팹과 스크립트는 남김.
+  - 테스트: `AssetWiringTests.GoldPanel_ListensToBothTheCostAndTheDayChannel` 삭제(금화는 HUD가 `CostManager`에서 직접 읽고, 표시용 옛 금화 패널을 지움). `TutorialRegressionTests`는 `root` 설정 없이 만든다.
+  - 남은 uGUI: 게임 씬에는 꺼진 `DailySettlementPanel`(다른 세션 의존)과 방 위 월드 공간 글(1번 항목), 캐릭터 머리 위 막대·글(1번 항목)뿐. 타이틀 씬의 옛 캔버스 2개는 2번 항목.
+  - 검증: Unity 재컴파일 실패 없음·콘솔 오류 0, 씬 누락 스크립트 0, 씬의 캔버스는 `DailySettlementPanel` 1개, EditMode 309/309. 플레이: 방 선택 → 방 관리 창, 방 확장 → 영업 시작 → 진행 막대, 사건 대화, 정산, 모험가 상태 창 정상.
 
 ## 2026-10-14
 

@@ -11,7 +11,6 @@ using Code.UI.Popup;
 using Code.UI.RoomManagement;
 using Code.Units;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Code.UI
 {
@@ -20,7 +19,7 @@ namespace Code.UI
     /// 시설 수리·휴업·철거, 유닛 명령·이동·회수를 맡는다.
     ///
     /// 화면은 없다. 방 상세·설치 창(<see cref="RoomManagementController"/>)이 여기 상태를 묻고 요청을 보낸다.
-    /// 예전 uGUI 노드 패널이 씬에 이 이름으로 배선돼 있어 이름과 컴포넌트는 그대로 두었다(씬 정리 때 바꾼다).
+    /// 이름은 예전 uGUI 노드 패널 시절의 것이다. 씬·테스트·튜토리얼이 이 이름으로 부르므로 그대로 둔다.
     /// </summary>
     public class NodePanelView : MonoBehaviour
     {
@@ -28,13 +27,6 @@ namespace Code.UI
 
         private static readonly UnitCommand[] Commands =
             { UnitCommand.Standby, UnitCommand.Guard, UnitCommand.Assault, UnitCommand.Rest };
-
-        [Header("Legacy uGUI (씬 정리 때 지움 — 실행 중에는 숨기기만 한다)")]
-        [SerializeField] private GameObject panelRoot;
-        [SerializeField] private Button installButton;
-        [SerializeField] private Button demolishButton;
-        [SerializeField] private Button closureButton;
-        [SerializeField] private BuildingInfoPanelView buildingInfoPanel;
 
         [Header("Room Management")]
         [SerializeField] private Unit unitPrefab;
@@ -417,7 +409,6 @@ namespace Code.UI
             dayManager ??= DayManager.Current;
             _unitManagementSystem = new UnitManagementSystem(nodeEventChannel, costEventChannel, dayManager);
             _buildingCatalog.Initialize(installableBuildings, unlockCatalog);
-            HideLegacyPanel();
         }
 
         private void OnEnable()
@@ -955,16 +946,6 @@ namespace Code.UI
             _closure != null ? _closure : _closure = GameScope.Resolve(scope, s => s.FacilityClosure, this, nameof(scope));
 
         private FacilityClosureSystem _closure;
-
-        /// <summary>옛 uGUI 노드 패널과 바깥 행동 버튼을 숨긴다. 씬에서 지울 때까지 남아 있다.</summary>
-        private void HideLegacyPanel()
-        {
-            if (panelRoot != null) panelRoot.SetActive(false);
-            if (installButton != null) installButton.gameObject.SetActive(false);
-            if (demolishButton != null) demolishButton.gameObject.SetActive(false);
-            if (closureButton != null) closureButton.gameObject.SetActive(false);
-            if (buildingInfoPanel != null) buildingInfoPanel.Hide();
-        }
 
         private void Notify(string message)
         {

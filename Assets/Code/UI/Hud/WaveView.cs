@@ -6,7 +6,6 @@ using Code.Manager;
 using Code.Tutorial;
 using Code.UI.Toolkit;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Code.UI
 {
@@ -34,23 +33,18 @@ namespace Code.UI
     /// <summary>
     /// 영업(웨이브) 시작 버튼·준비 카드·진행 막대의 판단. 그리기는 UI Toolkit 화면
     /// (<see cref="WaveHudToolkitView"/>)이 하고, 이 컴포넌트는 값을 정해 넘기고 버튼 입력을 받는다.
-    ///
-    /// 이 컴포넌트는 씬의 옛 uGUI 시작 버튼 오브젝트에 붙어 있다. 그 버튼(과 목표 버튼)은 투명하게만 둔다 —
-    /// 오브젝트를 지우면 이 컴포넌트와 씬 배선도 함께 사라진다.
     /// </summary>
     public class WaveView : MonoBehaviour
     {
         public static WaveView Current { get; private set; }
 
         [SerializeField] private GameEventChannelSO waveEventChannel;
-        [SerializeField, Tooltip("옛 uGUI 시작 버튼. 씬 정리 전까지 감추기만 한다.")] private Button startButton;
         [SerializeField] private DayManager dayManager;
         [SerializeField] private WaveManager waveManager;
         [SerializeField, Tooltip(GameScope.FieldTooltip)] private GameScope scope;
         [SerializeField] private GameEventChannelSO nodeEventChannel;
         [SerializeField] private GameEventChannelSO gameStateEventChannel;
         [SerializeField] private bool handleStartButtonClick = true;
-        [SerializeField, Tooltip("옛 uGUI 목표 전환 버튼. 씬 정리 전까지 감추기만 한다.")] private Button _objectiveToggleButton;
 
         private const float WaveStatsRefreshInterval = 0.1f;
 
@@ -116,7 +110,6 @@ namespace Code.UI
 
         private void Start()
         {
-            HideLegacyViews();
             EnsureHud();
             _started = true;
             RefreshStartButton();
@@ -430,33 +423,6 @@ namespace Code.UI
 
             _hud.StartClicked -= HandleStartClicked;
             _hud.ObjectiveClicked -= HandleObjectiveToggleClicked;
-        }
-
-        /// <summary>
-        /// 옛 uGUI 시작 버튼·목표 버튼을 감춘다. 이 컴포넌트가 시작 버튼 오브젝트에
-        /// 붙어 있는 씬이 있어서 버튼은 끄지 않고 투명하게 만든다(끄면 이 컴포넌트도 꺼진다).
-        /// </summary>
-        private void HideLegacyViews()
-        {
-            if (startButton != null)
-            {
-                if (startButton.gameObject == gameObject)
-                {
-                    var group = startButton.GetComponent<CanvasGroup>();
-                    if (group == null)
-                        group = startButton.gameObject.AddComponent<CanvasGroup>();
-                    group.alpha = 0f;
-                    group.interactable = false;
-                    group.blocksRaycasts = false;
-                }
-                else
-                {
-                    startButton.gameObject.SetActive(false);
-                }
-            }
-
-            if (_objectiveToggleButton != null && _objectiveToggleButton.gameObject != gameObject)
-                _objectiveToggleButton.gameObject.SetActive(false);
         }
     }
 }

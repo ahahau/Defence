@@ -11,7 +11,7 @@ namespace Code.UI
     /// <summary>
     /// 부하 상태 패널의 판단을 맡는다: 어느 부하를 보여 줄지, 치료·회수를 할 수 있는지, 버튼을 누르면 무엇을 할지.
     /// 그리기는 UI Toolkit(<see cref="UnitStatusToolkitView"/>)이 한다. 씬에 배선된 채널·하루 관리자를 쓰므로
-    /// 컴포넌트는 씬에 남기고, 옛 uGUI 패널(<c>panelRoot</c>)은 늘 숨긴다. 옛 오브젝트는 씬 정리 때 지운다.
+    /// 컴포넌트는 씬의 UI 판단 오브젝트에 둔다.
     /// </summary>
     public class UnitStatusPanelView : MonoBehaviour
     {
@@ -20,7 +20,6 @@ namespace Code.UI
         [SerializeField] private GameEventChannelSO nodeEventChannel;
         [SerializeField] private GameEventChannelSO costEventChannel;
         [SerializeField] private DayManager dayManager;
-        [SerializeField, Tooltip("옛 uGUI 패널. 늘 숨긴다.")] private GameObject panelRoot;
         [SerializeField, Min(0.05f)] private float refreshInterval = 0.12f;
 
         private Node selectedNode;
@@ -36,7 +35,6 @@ namespace Code.UI
         {
             ActiveInstance = this;
             _unitManagementSystem = new UnitManagementSystem(nodeEventChannel, costEventChannel, dayManager);
-            panelRoot?.SetActive(false);
         }
 
         private void OnEnable()

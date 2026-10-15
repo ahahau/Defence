@@ -16,12 +16,10 @@ namespace Tests.EditMode.UI
 
         private Component CreateTutorial()
         {
-            var go = new GameObject("Tutorial regression", typeof(RectTransform));
+            var go = new GameObject("Tutorial regression");
             go.SetActive(false);
             created.Add(go);
-            var component = go.AddComponent(Tutorial);
-            Tutorial.GetField("root", Private).SetValue(component, go);
-            return component;
+            return go.AddComponent(Tutorial);
         }
 
         [TearDown]

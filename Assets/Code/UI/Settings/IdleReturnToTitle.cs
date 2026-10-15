@@ -40,12 +40,8 @@ namespace Code.UI
 
         private void Start()
         {
-            // 알림은 UI Toolkit 화면이 그린다. 옛 uGUI 알림 창은 씬 정리 전까지 감춘다(Toolkit 전환 4단계).
-            var legacy = GetComponentInChildren<IdleReturnNoticeRefs>(true);
-            if (legacy != null && legacy.window != null)
-                legacy.window.SetActive(false);
-
-            _notice = Code.UI.Toolkit.ToolkitScreenSO.Spawn<Code.UI.Toolkit.IdleNoticeToolkitView>(
+            // 알림은 UI Toolkit 화면이 그린다.
+            _notice =Code.UI.Toolkit.ToolkitScreenSO.Spawn<Code.UI.Toolkit.IdleNoticeToolkitView>(
                 Code.UI.Toolkit.IdleNoticeToolkitView.ScreenResourcePath, Code.UI.Toolkit.IdleNoticeToolkitView.RootName);
             SetNoticeVisible(false);
         }

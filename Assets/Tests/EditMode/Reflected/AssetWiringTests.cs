@@ -186,33 +186,6 @@ namespace Tests.EditMode.Gameplay
                 $"{day}일 보스는 전용 정의가 있어야 공용 보스와 구분됩니다.");
         }
 
-        [Test]
-        public void GoldPanel_ListensToBothTheCostAndTheDayChannel()
-        {
-            // 구독은 표시(GoldCostView)가 아니라 씬의 GoldHudPresenter가 맡는다.
-            var presenterType = RequireType("Code.UI.GoldHudPresenter");
-            var scene = EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity", OpenSceneMode.Additive);
-            try
-            {
-                Component presenter = null;
-                foreach (var root in scene.GetRootGameObjects())
-                    presenter ??= root.GetComponentInChildren(presenterType, true);
-                Assert.That(presenter, Is.Not.Null, "씬에 GoldHudPresenter가 없습니다.");
-
-                // 날짜 채널이 끊기면 빚은 보이는데 청산일까지 며칠인지가 멈춘다.
-                // 화면은 멀쩡해 보이므로 플레이로는 잡기 어렵다.
-                foreach (var field in new[] { "costEventChannel", "dayEventChannel", "view" })
-                {
-                    var info = presenterType.GetField(field, Instance);
-                    Assert.That(info, Is.Not.Null, field + " 필드를 찾지 못했습니다.");
-                    Assert.That(info.GetValue(presenter) as UnityEngine.Object, Is.Not.Null, field + "이 비어 있습니다.");
-                }
-            }
-            finally
-            {
-                EditorSceneManager.CloseScene(scene, true);
-            }
-        }
 
         [Test]
         public void EveryCharacterPrefab_HasAllThreePoses()

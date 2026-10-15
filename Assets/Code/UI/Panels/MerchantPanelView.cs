@@ -3,9 +3,7 @@ using Code.Artifacts;
 using Code.Core;
 using Code.Events;
 using Code.Manager;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Code.UI
 {
@@ -22,12 +20,6 @@ namespace Code.UI
         [SerializeField] private GameEventChannelSO costEventChannel;
         [SerializeField] private GameEventChannelSO dayEventChannel;
         [SerializeField] private GameEventChannelSO artifactEventChannel;
-
-        [Header("UI")]
-        [SerializeField] private GameObject panelRoot;
-        [SerializeField] private Button closeButton;
-        [SerializeField, Tooltip("옛 uGUI 진열 버튼. 창은 이제 UI Toolkit이 그린다.")]
-        private Button[] slotButtons = System.Array.Empty<Button>();
 
         private readonly List<ArtifactCombo> comboBuffer = new();
 
@@ -49,10 +41,8 @@ namespace Code.UI
         private readonly List<ShopOffer> display = new();
         /// <summary>직전 방문에 깔았던 유물. 다음 진열에서 뒤로 미루는 데만 쓴다.</summary>
         private readonly List<ArtifactDataSO> lastDisplay = new();
-        private readonly List<UnityEngine.Events.UnityAction> slotActions = new();
         private int currentDay;
         private bool hasRolled;
-        private bool isWired;
         private bool _pendingWasRandom;
         private bool? lastStandbyState;
 
@@ -85,14 +75,12 @@ namespace Code.UI
             RefreshVisitState();
         }
 
-        // 창은 UI Toolkit(MerchantToolkitView)이 그린다. 이 컴포넌트는 진열·가격·구매와 HUD의 여는 버튼을 맡는다.
-        // 옛 uGUI 창(panelRoot)은 늘 숨기고, 씬을 정리할 때 함께 지운다.
+        // 창은 UI Toolkit(MerchantToolkitView)이 그린다. 이 컴포넌트는 진열·가격·구매를 맡고, 여는 버튼은 HUD에 있다.
         private Code.UI.Toolkit.MerchantToolkitView _view;
         private readonly List<Code.UI.Toolkit.MerchantOfferViewModel> _offerModels = new();
 
         private void Awake()
         {
-            SetActiveSafe(panelRoot, false);
             RefreshVisitState();
         }
 
@@ -122,7 +110,6 @@ namespace Code.UI
 
         private void OnEnable()
         {
-            Wire();
             if (dayEventChannel != null)
                 dayEventChannel.AddListener<DayChangedEvent>(HandleDayChanged);
             if (costEventChannel != null)
@@ -134,7 +121,6 @@ namespace Code.UI
 
         private void OnDisable()
         {
-            Unwire();
             if (dayEventChannel != null)
                 dayEventChannel.RemoveListener<DayChangedEvent>(HandleDayChanged);
             if (costEventChannel != null)
@@ -149,36 +135,6 @@ namespace Code.UI
             var isStandby = DayManager.Current != null && DayManager.Current.IsStandby;
             if (lastStandbyState != isStandby)
                 RefreshVisitState();
-        }
-
-        private void Wire()
-        {
-            if (isWired)
-                return;
-
-            isWired = true;
-            AddClick(closeButton, Hide);
-
-            slotActions.Clear();
-            for (var i = 0; i < slotButtons.Length; i++)
-            {
-                var index = i;
-                UnityEngine.Events.UnityAction action = () => Buy(index);
-                slotActions.Add(action);
-                AddClick(slotButtons[i], action);
-            }
-        }
-
-        private void Unwire()
-        {
-            if (!isWired)
-                return;
-
-            isWired = false;
-            RemoveClick(closeButton, Hide);
-            for (var i = 0; i < slotButtons.Length && i < slotActions.Count; i++)
-                RemoveClick(slotButtons[i], slotActions[i]);
-            slotActions.Clear();
         }
 
         /// <summary>오늘 상인이 던전에 와 있는가.</summary>
@@ -427,24 +383,6 @@ namespace Code.UI
                 return "유물";
 
             return string.IsNullOrWhiteSpace(artifact.DisplayName) ? artifact.name : artifact.DisplayName;
-        }
-
-        private static void SetActiveSafe(GameObject target, bool active)
-        {
-            if (target != null)
-                target.SetActive(active);
-        }
-
-        private static void AddClick(Button button, UnityEngine.Events.UnityAction action)
-        {
-            if (button != null)
-                button.onClick.AddListener(action);
-        }
-
-        private static void RemoveClick(Button button, UnityEngine.Events.UnityAction action)
-        {
-            if (button != null)
-                button.onClick.RemoveListener(action);
         }
     }
 }

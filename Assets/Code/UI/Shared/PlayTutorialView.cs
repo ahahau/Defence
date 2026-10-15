@@ -7,7 +7,6 @@ using Code.Units;
 using Code.UI.Popup;
 using Code.UI.RoomManagement;
 using DG.Tweening;
-using TMPro;
 using UnityEngine;
 
 namespace Code.UI
@@ -87,10 +86,6 @@ namespace Code.UI
 
         private bool IsBeforeFirstWave => _step is Step.BuildRoom or Step.DeployUnit or
             Step.BuildPortal or Step.LearnMove;
-
-        [Header("UI")]
-        [SerializeField] private GameObject root;
-        [SerializeField] private TMP_Text hintText;
 
         [SerializeField, Min(0.05f), Tooltip("판을 다시 살펴보는 간격(초).")]
         private float pollInterval = 0.25f;
@@ -937,15 +932,8 @@ namespace Code.UI
             _ => "던전 안내",
         };
 
-        /// <summary>
-        /// 안내 화면을 준비한다. 안내 글·어둠·건너뛰기는 UI Toolkit 덮개가 그린다. 이 컴포넌트가 붙은
-        /// 씬의 옛 uGUI 안내 상자는 투명하게만 둔다(지우면 이 컴포넌트도 사라진다).
-        /// </summary>
-        private void ConfigureHint()
-        {
-            HideLegacyOverlay();
-            EnsureOverlay();
-        }
+        /// <summary>안내 화면을 준비한다. 안내 글·어둠·건너뛰기는 UI Toolkit 덮개가 그린다.</summary>
+        private void ConfigureHint() => EnsureOverlay();
 
         private bool EnsureOverlay()
         {
@@ -959,17 +947,6 @@ namespace Code.UI
 
             _overlay.SkipClicked += SkipTutorial;
             return true;
-        }
-
-        private void HideLegacyOverlay()
-        {
-            var target = root != null ? root : gameObject;
-            // 이 컴포넌트가 안내 상자 오브젝트에 붙어 있어 끄지 않고 투명하게 만든다(끄면 안내도 멈춘다).
-            if (!target.TryGetComponent<CanvasGroup>(out var group))
-                group = target.AddComponent<CanvasGroup>();
-            group.alpha = 0f;
-            group.interactable = false;
-            group.blocksRaycasts = false;
         }
 
         private void SetHintVisible(bool visible)
