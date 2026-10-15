@@ -18,32 +18,4 @@ namespace Code.UI
         public int WeeklyDue { get; }
         public int DaysUntilSettlement { get; }
     }
-
-    public readonly struct MagicHudState
-    {
-        public MagicHudState(int used, int maximum)
-        {
-            Used = used;
-            Maximum = maximum;
-            Available = System.Math.Max(0, maximum - used);
-        }
-
-        public int Used { get; }
-        public int Maximum { get; }
-        public int Available { get; }
-    }
-
-    public readonly struct MoraleHudState
-    {
-        public MoraleHudState(int value, int delta, string reason)
-        {
-            Value = value;
-            Delta = delta;
-            Reason = reason;
-        }
-
-        public int Value { get; }
-        public int Delta { get; }
-        public string Reason { get; }
-    }
 }

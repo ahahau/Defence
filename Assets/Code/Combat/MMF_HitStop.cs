@@ -7,7 +7,7 @@ namespace Code.Combat
     /// <summary>
     /// 전투 히트스톱용 커스텀 Feel 피드백.
     /// MMTimeManager는 프리즈 후 timeScale을 NormalTimeScale(1)로 되돌려서
-    /// TimeSpeedView의 배속(2x 등)이나 일시정지와 충돌하므로,
+    /// GameSpeedController의 배속(2x 등)이나 일시정지와 충돌하므로,
     /// 현재 timeScale을 기억했다가 그대로 복원하는 방식을 쓴다.
     /// </summary>
     [FeedbackPath("Time/Combat Hit Stop")]

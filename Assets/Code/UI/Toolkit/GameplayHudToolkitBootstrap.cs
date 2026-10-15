@@ -25,8 +25,6 @@ namespace Code.UI.Toolkit
         {
             foreach (var view in Object.FindObjectsByType<GoldCostView>(FindObjectsInactive.Exclude))
                 view.gameObject.SetActive(false);
-            foreach (var view in Object.FindObjectsByType<TimeSpeedView>(FindObjectsInactive.Exclude))
-                view.gameObject.SetActive(false);
             foreach (var view in Object.FindObjectsByType<SettingsPanelView>(FindObjectsInactive.Exclude))
                 view.enabled = false;
         }

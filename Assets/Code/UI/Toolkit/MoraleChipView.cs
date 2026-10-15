@@ -9,7 +9,7 @@ namespace Code.UI.Toolkit
 {
     /// <summary>
     /// HUD 상단 민심 칸. 값을 보여 주고, 누르면 지금 효과와 최근 변화를 팝업으로 보여 준다.
-    /// 옛 uGUI 민심 패널(<c>MoraleHudView</c>)과 그 상세 창을 대신한다.
+    /// 예전 uGUI 민심 패널과 그 상세 창을 대신한다.
     /// </summary>
     public sealed class MoraleChipView
     {

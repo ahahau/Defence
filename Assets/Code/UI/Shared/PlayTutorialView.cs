@@ -103,9 +103,6 @@ namespace Code.UI
         private float stuckReleaseSeconds = 40f;
 
         [Header("Spotlight")]
-        [SerializeField, Tooltip("겨눈 곳만 남기고 화면을 덮는 네 장(위·아래·왼쪽·오른쪽).")]
-        private RectTransform[] dimPanels = new RectTransform[4];
-
         [SerializeField, Min(0f), Tooltip("구멍 둘레에 더 두는 여유(화면 픽셀).")]
         private float spotlightPadding = 28f;
 
@@ -941,8 +938,8 @@ namespace Code.UI
         };
 
         /// <summary>
-        /// 안내 화면을 준비한다. 안내 글·어둠·건너뛰기는 UI Toolkit 덮개가 그리고, 씬의 옛 uGUI
-        /// 안내 상자와 어둠 네 장은 씬 정리 전까지 감춘다(Toolkit 전환 4단계).
+        /// 안내 화면을 준비한다. 안내 글·어둠·건너뛰기는 UI Toolkit 덮개가 그린다. 이 컴포넌트가 붙은
+        /// 씬의 옛 uGUI 안내 상자는 투명하게만 둔다(지우면 이 컴포넌트도 사라진다).
         /// </summary>
         private void ConfigureHint()
         {
@@ -973,15 +970,6 @@ namespace Code.UI
             group.alpha = 0f;
             group.interactable = false;
             group.blocksRaycasts = false;
-
-            if (dimPanels == null)
-                return;
-
-            foreach (var panel in dimPanels)
-            {
-                if (panel != null)
-                    panel.gameObject.SetActive(false);
-            }
         }
 
         private void SetHintVisible(bool visible)

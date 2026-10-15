@@ -65,7 +65,6 @@ namespace Code.Dialogue
         private UnitDataSO guidedHiredUnit;
         private DialogueSequenceSO guidedRuntimeSequence;
         [Header("Guided Tutorial Dependencies")]
-        [SerializeField] private UnitDeployPanelView unitDeployPanelView;
         [SerializeField] private WaveView waveView;
         [SerializeField] private ManagementSettlementManager managementSettlementManager;
         [Header("Scope")]
@@ -320,7 +319,7 @@ namespace Code.Dialogue
                 guidedBuiltNode = evt.Node;
                 guidedStep = GuidedStartTutorialStep.HireUnit;
                 PlayGuidedMessage(
-                    "방이 준비됐습니다. 유닛 관리에서 첫 부하를 영입하십시오.");
+                    "방이 준비됐습니다. 청산일 정산 화면의 유닛 상점에서 첫 부하를 영입하십시오.");
                 guidedHiredUnit = ResolveFirstHireUnit();
                 TutorialInputGate.OnlyHireUnit(guidedHiredUnit);
                 HighlightUnitHireTarget();
@@ -616,37 +615,17 @@ namespace Code.Dialogue
             view?.SetSpotlightScreenRect(rect, 44f);
         }
 
+        /// <summary>
+        /// 고용은 청산일 정산 화면의 유닛 상점에서 한다. 옛 "유닛 관리" 창이 없어져 비출 자리가 없으므로
+        /// 강조를 걷고 글로만 안내한다(이 가이드 튜토리얼은 씬에서 꺼져 있다).
+        /// </summary>
         private void HighlightUnitHireTarget()
         {
-            if (unitDeployPanelView == null)
-            {
-                view?.HideSpotlight();
-                return;
-            }
-
-            if (guidedHiredUnit == null)
-                guidedHiredUnit = unitDeployPanelView.FirstOwnedUnit;
-
             TutorialInputGate.OnlyHireUnit(guidedHiredUnit);
-
-            var targetEntry = unitDeployPanelView.GetEntryRect(guidedHiredUnit);
-            var target = unitDeployPanelView.IsPanelOpen && targetEntry != null
-                ? targetEntry
-                : unitDeployPanelView.ToggleButtonRect;
-
-            if (!TryBuildRectTransformScreenRect(target, out var rect))
-            {
-                view?.HideSpotlight();
-                return;
-            }
-
-            view?.SetSpotlightScreenRect(rect, 24f);
+            view?.HideSpotlight();
         }
 
-        private UnitDataSO ResolveFirstHireUnit()
-        {
-            return unitDeployPanelView != null ? unitDeployPanelView.FirstOwnedUnit : null;
-        }
+        private UnitDataSO ResolveFirstHireUnit() => null;
 
         private void HighlightUnitDeployTarget()
         {
@@ -766,27 +745,6 @@ namespace Code.Dialogue
                 Mathf.Min(min.y, max.y),
                 Mathf.Max(min.x, max.x),
                 Mathf.Max(min.y, max.y));
-            return rect.width > 1f && rect.height > 1f;
-        }
-
-        private bool TryBuildRectTransformScreenRect(RectTransform target, out Rect rect)
-        {
-            rect = default;
-            if (target == null)
-                return false;
-
-            var corners = new Vector3[4];
-            target.GetWorldCorners(corners);
-            var min = RectTransformUtility.WorldToScreenPoint(null, corners[0]);
-            var max = min;
-            for (var i = 1; i < corners.Length; i++)
-            {
-                var point = RectTransformUtility.WorldToScreenPoint(null, corners[i]);
-                min = Vector2.Min(min, point);
-                max = Vector2.Max(max, point);
-            }
-
-            rect = Rect.MinMaxRect(min.x, min.y, max.x, max.y);
             return rect.width > 1f && rect.height > 1f;
         }
 

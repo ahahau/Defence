@@ -15,13 +15,7 @@ namespace Code.UI.Toolkit
         private static void Install()
         {
             ToolkitDocumentSpawner.Install<PolicyChoiceToolkitView>(TitleMenuActions.GameSceneName,
-                "UI/Toolkit/PolicyChoicePanel", "PolicyChoiceToolkitUi", 240, HideLegacyView, PanelSettingsPath);
-        }
-
-        private static void HideLegacyView()
-        {
-            foreach (var view in Object.FindObjectsByType<PolicyChoicePanelView>(FindObjectsInactive.Exclude))
-                view.enabled = false;
+                "UI/Toolkit/PolicyChoicePanel", "PolicyChoiceToolkitUi", 240, panelSettingsPath: PanelSettingsPath);
         }
     }
 }

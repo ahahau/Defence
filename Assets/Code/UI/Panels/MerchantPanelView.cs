@@ -25,7 +25,6 @@ namespace Code.UI
 
         [Header("UI")]
         [SerializeField] private GameObject panelRoot;
-        [SerializeField] private Button openButton;
         [SerializeField] private Button closeButton;
         [SerializeField, Tooltip("옛 uGUI 진열 버튼. 창은 이제 UI Toolkit이 그린다.")]
         private Button[] slotButtons = System.Array.Empty<Button>();
@@ -158,7 +157,6 @@ namespace Code.UI
                 return;
 
             isWired = true;
-            AddClick(openButton, Toggle);
             AddClick(closeButton, Hide);
 
             slotActions.Clear();
@@ -177,7 +175,6 @@ namespace Code.UI
                 return;
 
             isWired = false;
-            RemoveClick(openButton, Toggle);
             RemoveClick(closeButton, Hide);
             for (var i = 0; i < slotButtons.Length && i < slotActions.Count; i++)
                 RemoveClick(slotButtons[i], slotActions[i]);
@@ -205,15 +202,12 @@ namespace Code.UI
         }
 
         /// <summary>
-        /// 대기가 끝나면 창을 닫는다. 여는 버튼은 HUD(UI Toolkit) 하단 "운영" 묶음에 있고,
-        /// 옛 uGUI 버튼은 지도 위에 겹쳐 떠서 늘 감춘다(씬 정리 때 삭제).
+        /// 대기가 끝나면 창을 닫는다. 여는 버튼은 HUD(UI Toolkit) 하단 "운영" 묶음에 있다.
         /// </summary>
         private void RefreshVisitState()
         {
             var isStandby = DayManager.Current != null && DayManager.Current.IsStandby;
             lastStandbyState = isStandby;
-            if (openButton != null)
-                openButton.gameObject.SetActive(false);
 
             if (!isStandby)
                 Hide();
