@@ -4,8 +4,8 @@
 "Assets/GothicUI/**/*.png" filter=lfs diff=lfs merge=lfs -text
 "Assets/GothicUI/**/*.pdf" filter=lfs diff=lfs merge=lfs -text
 "Assets/Sprite Shaders Ultimate/**/*.png" filter=lfs diff=lfs merge=lfs -text
-"Assets/sanctum_pixel/**/*.png" filter=lfs diff=lfs merge=lfs -text
-"Assets/skeleton_king_package/**/*.png" filter=lfs diff=lfs merge=lfs -text
-"Assets/skeleton_warrior_package/**/*.png" filter=lfs diff=lfs merge=lfs -text
-"Assets/Super GUI Bundle 2- Gold Pack v1.1/**/*.png" filter=lfs diff=lfs merge=lfs -text
-"Assets/Super GUI Bundle 2- Gold Pack v1.1/**/*.aseprite" filter=lfs diff=lfs merge=lfs -text
+"Assets/04.Sprites/Characters/SanctumPixel/**/*.png" filter=lfs diff=lfs merge=lfs -text
+"Assets/04.Sprites/Characters/SkeletonKing/**/*.png" filter=lfs diff=lfs merge=lfs -text
+"Assets/04.Sprites/Characters/SkeletonWarrior/**/*.png" filter=lfs diff=lfs merge=lfs -text
+"Assets/04.Sprites/UI/SuperGUIBundle/**/*.png" filter=lfs diff=lfs merge=lfs -text
+"Assets/04.Sprites/UI/SuperGUIBundle/**/*.aseprite" filter=lfs diff=lfs merge=lfs -text
