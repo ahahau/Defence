@@ -7,9 +7,6 @@ namespace Code.MapCreateSystem
     /// <summary>서로 맞닿은 방의 경계에 있는 건물 설치 및 통과 판정 슬롯.</summary>
     public class EdgeLine : MonoBehaviour
     {
-        [SerializeField]
-        private LineRenderer lineRenderer;
-
         private static readonly List<EdgeLine> _active = new();
         /// <summary>씬의 모든 활성 엣지(설치 미리보기·통과 판정용).</summary>
         public static IReadOnlyList<EdgeLine> ActiveEdges => _active;
@@ -48,9 +45,7 @@ namespace Code.MapCreateSystem
             FromId = fromId;
             ToId = toId;
 
-            // 연결 정보는 유지하되 방 사이에 상시 표시되는 선은 그리지 않는다.
-            if (lineRenderer != null)
-                lineRenderer.enabled = false;
+            // 연결 정보와 설치 슬롯만 유지한다. 방 사이의 선은 렌더링하지 않는다.
         }
 
         private void OnEnable()

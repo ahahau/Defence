@@ -17,26 +17,13 @@ namespace Code.MapCreateSystem
         public static IEnumerable<Node> ActiveNodes => nodesByDataId.Values.Where(node => node != null);
         public static IEnumerable<Node> AllInstances => allInstances.Where(node => node != null);
 
-        [SerializeField]
-        private SpriteRenderer spriteRenderer;
+        [SerializeField] private NodeTileRenderer tileRenderer;
 
         [SerializeField]
         private GameObject lockedRoot;
 
         [SerializeField]
-        private SpriteRenderer lockedOverlayRenderer;
-
-        [SerializeField]
         private TextMeshPro lockedCostText;
-
-        [SerializeField]
-        private Sprite unlockedSprite;
-
-        [SerializeField]
-        private Sprite lockedCandidateSprite;
-
-        [SerializeField]
-        private Vector3 unlockedSpriteScale = new(1f, 1.6666667f, 1f);
 
         [SerializeField]
         private Color unlockedVisualColor = Color.white;
@@ -48,7 +35,6 @@ namespace Code.MapCreateSystem
         private NodeTrapGrid trapGrid;
 
         [SerializeField] private Transform entryDoorSpawnPoint;
-        [SerializeField] private GameObject roomDoorsRoot;
         public Transform EntryDoorSpawnPoint => entryDoorSpawnPoint;
 
         [Header("Unit Capacity Label")]
@@ -369,6 +355,8 @@ namespace Code.MapCreateSystem
 
         private void Awake()
         {
+            tileRenderer ??= GetComponent<NodeTileRenderer>();
+
             trapGrid ??= GetComponent<NodeTrapGrid>();
             battlefield = GetComponent<NodeBattlefield>();
             if (trapGrid == null || battlefield == null)
@@ -413,13 +401,10 @@ namespace Code.MapCreateSystem
             transform.localScale = ResolvePrefabScale() * size;
             DangerLevel = 0;
             Rumor = default;
-            SetSprite(unlockedSprite);
-            SetSpriteScale(unlockedSpriteScale);
             SetVisualColor(unlockedVisualColor);
+            tileRenderer?.Render(transform.localScale, unlockedVisualColor, IsEnemySpawnNode);
             SetLockedOverlayVisible(false);
             SetLockedCostVisible(false);
-            if (roomDoorsRoot != null)
-                roomDoorsRoot.SetActive(true);
             SetUnitCapacityVisible(true);
             RefreshUnitCapacityLabel(true);
             nodesByDataId[data.Id] = this;
@@ -440,13 +425,10 @@ namespace Code.MapCreateSystem
             transform.localScale = ResolvePrefabScale() * size;
             if (lockedRoot != null)
                 lockedRoot.transform.localScale = Vector3.one * lockedVisualScale;
-            SetSprite(unlockedSprite);
-            SetSpriteScale(unlockedSpriteScale);
             SetVisualColor(lockedVisualColor);
+            tileRenderer?.Render(transform.localScale, lockedVisualColor, false);
             SetLockedOverlayVisible(true);
             SetLockedCostVisible(false);
-            if (roomDoorsRoot != null)
-                roomDoorsRoot.SetActive(false);
             SetUnitCapacityVisible(false);
         }
 
@@ -774,22 +756,7 @@ namespace Code.MapCreateSystem
 
         private void SetVisualColor(Color color)
         {
-            if (spriteRenderer == null)
-                return;
-
-            spriteRenderer.color = color;
-        }
-
-        private void SetSprite(Sprite sprite)
-        {
-            if (spriteRenderer != null && sprite != null)
-                spriteRenderer.sprite = sprite;
-        }
-
-        private void SetSpriteScale(Vector3 scale)
-        {
-            if (spriteRenderer != null)
-                spriteRenderer.transform.localScale = scale;
+            tileRenderer?.Render(transform.localScale, color, IsEnemySpawnNode);
         }
 
         private NodeGlow glow;
@@ -817,11 +784,6 @@ namespace Code.MapCreateSystem
             // 열 수 있는 방과 아닌 방이 밝기만으로 갈린다.
             EnsureGlow()?.SetUnlocked(!visible);
 
-            if (lockedOverlayRenderer == null)
-                return;
-
-            lockedOverlayRenderer.gameObject.SetActive(visible);
-            lockedOverlayRenderer.enabled = visible;
         }
 
         private void SetLockedCostVisible(bool visible)
