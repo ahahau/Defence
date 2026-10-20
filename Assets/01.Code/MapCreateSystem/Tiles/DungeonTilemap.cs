@@ -14,6 +14,8 @@ namespace Code.MapCreateSystem
     {
         private Tilemap _underlay;
         private Tilemap _tiles;
+        private Tilemap _decor;
+        private Tilemap _torches;
         private RoomTileSet _tileSet;
         private bool _dirty;
         private readonly List<Node> _nodes = new();
@@ -29,12 +31,29 @@ namespace Code.MapCreateSystem
             var root = new GameObject("DungeonTiles", typeof(Grid));
             root.transform.SetParent(parent, false);
             root.transform.position = new Vector3(0f, 0f, 0.01f);
-            root.GetComponent<Grid>().cellSize = new Vector3(RoomLayoutRules.TileWorldSize, RoomLayoutRules.TileWorldSize, 0f);
+
+            // 타일맵은 그림을 칸 크기에 맞춰 줄이지 않는다(16px = 1u). 칸을 1로 두고 격자 전체를 타일 크기(0.625u)로 줄여야
+            // 그림 한 장이 칸 하나에 꼭 맞는다. 칸 크기만 0.625로 두면 그림이 1.6배로 겹쳐 그려진다.
+            root.GetComponent<Grid>().cellSize = Vector3.one;
+            var parentScale = parent != null ? parent.lossyScale : Vector3.one;
+            root.transform.localScale = new Vector3(
+                RoomLayoutRules.TileWorldSize / Mathf.Max(0.0001f, Mathf.Abs(parentScale.x)),
+                RoomLayoutRules.TileWorldSize / Mathf.Max(0.0001f, Mathf.Abs(parentScale.y)),
+                1f);
 
             var map = root.AddComponent<DungeonTilemap>();
             map._tileSet = tileSet;
             map._underlay = CreateLayer(root.transform, "Underlay", underlayTemplate, 0);
             map._tiles = CreateLayer(root.transform, "Tiles", tileTemplate, 1);
+            map._decor = CreateLayer(root.transform, "Decor", tileTemplate, 2);
+            // 장식은 벽 바로 위, 문(+2)과 캐릭터 아래.
+            var decorRenderer = map._decor.GetComponent<TilemapRenderer>();
+            decorRenderer.sortingOrder = (tileTemplate != null ? tileTemplate.sortingOrder : 1) + 1;
+
+            // 횃불 그림은 타일 1×2(가운데 기준)라 기준점을 반 칸 올려 아래 칸 바닥부터 두 칸을 덮게 한다.
+            map._torches = CreateLayer(root.transform, "Torches", tileTemplate, 2);
+            map._torches.tileAnchor = new Vector3(0.5f, 1f, 0f);
+            map._torches.GetComponent<TilemapRenderer>().sortingOrder = decorRenderer.sortingOrder;
             return map;
         }
 
@@ -82,6 +101,7 @@ namespace Code.MapCreateSystem
             }
 
             RoomTilePainter.Paint(_underlay, _tiles, _tileSet, _rooms);
+            RoomTilePainter.PaintDecor(_decor, _torches, _tileSet, _rooms);
         }
 
         private static Tilemap CreateLayer(Transform parent, string name, TilemapRenderer template, int fallbackOrder)
