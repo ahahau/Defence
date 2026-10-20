@@ -72,6 +72,9 @@ namespace Code.MapCreateSystem
                     plan.AddTurningCorridor(shape, side, spacingTiles, half);
                 else
                     plan.AddStraightCorridor(shape, side, half);
+
+                if (side == RoomDoors.Left || side == RoomDoors.Right)
+                    plan.AddDoorPosts(shape, side);
             }
 
             plan.AddDecor(shape);
@@ -333,6 +336,26 @@ namespace Code.MapCreateSystem
                 Floor.Add(new Vector2Int(x, rowA + 1));
             }
         }
+
+        /// <summary>
+        /// 옆 문 양쪽에 2×2 기둥을 세운다. 3/4 시점에서 옆 벽은 난간 한 줄이라 문 그림을 세울 면이 없다.
+        /// 벽 줄과 그 바깥 한 줄(복도 옆)에 세워 방 바닥은 줄지 않는다.
+        /// </summary>
+        private void AddDoorPosts(RoomShape shape, RoomDoors side)
+        {
+            var ring = RingCoordinate(shape, side);
+            var outward = SideSign(side);
+            for (var along = 0; along < DoorPostTiles; along++)
+            for (var height = 0; height < DoorPostTiles; height++)
+            {
+                var x = ring + outward * along;
+                Pillars.Add(new Vector2Int(x, 1 + height));
+                Pillars.Add(new Vector2Int(x, -2 - height));
+            }
+        }
+
+        /// <summary>옆 문 기둥 한 개의 가로·세로 타일 수.</summary>
+        private const int DoorPostTiles = 2;
 
         /// <summary>문 변을 따라 start부터 end까지(둘 다 포함) 폭 2 바닥을 깐다.</summary>
         private void AddRun(RoomDoors side, int start, int end)

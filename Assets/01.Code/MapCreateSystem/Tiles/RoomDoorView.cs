@@ -3,9 +3,9 @@ using UnityEngine;
 namespace Code.MapCreateSystem
 {
     /// <summary>
-    /// 방 위쪽 벽(3/4 시점에서 벽돌 면이 보이는 쪽)의 문. 평소엔 닫혀 있다가 모험가가 지나가면 열리고,
+    /// 방 위·아래 벽의 문. 평소엔 닫혀 있다가 모험가가 지나가면 열리고,
     /// 아무도 지나가지 않으면 잠시 뒤 닫힌다. 그림은 Dark Castle 문 애니메이션(닫힘 → 열림 16장)이다.
-    /// 옆·아래 벽은 3/4 시점에서 문 면이 보이지 않아 문 그림을 두지 않는다.
+    /// 옆 벽은 3/4 시점에서 문 면이 보이지 않아 문 대신 양쪽에 기둥을 세운다(<see cref="RoomTilePlan"/>).
     /// </summary>
     public sealed class RoomDoorView : MonoBehaviour
     {
