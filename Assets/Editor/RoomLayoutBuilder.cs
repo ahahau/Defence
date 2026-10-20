@@ -340,9 +340,35 @@ public static class RoomLayoutBuilder
     {
         var set = LoadOrCreate<RoomTileSet>(TileSetPath);
         set.EditorSet(floor, wall, pillar);
+        set.EditorSetDoorFrames(LoadDoorFrames());
         EditorUtility.SetDirty(set);
         AssetDatabase.SaveAssets();
         return set;
+    }
+
+    private const string DoorSheetPath =
+        "Assets/04.Sprites/Tilesets/ElvGames/Farm Game Assets/Tilesets/Dark Castle/Animated Tiles/FG_Dark_Castle_Purple_Door01.png";
+
+    /// <summary>위쪽 벽 문 애니메이션 16장(닫힘 → 열림), 시트 이름 번호순.</summary>
+    private static Sprite[] LoadDoorFrames()
+    {
+        var frames = new List<Sprite>();
+        foreach (var asset in AssetDatabase.LoadAllAssetsAtPath(DoorSheetPath))
+        {
+            if (asset is Sprite sprite)
+                frames.Add(sprite);
+        }
+
+        frames.Sort((a, b) => FrameNumber(a.name).CompareTo(FrameNumber(b.name)));
+        if (frames.Count == 0)
+            Debug.LogError($"문 그림을 찾지 못했습니다: {DoorSheetPath}");
+        return frames.ToArray();
+    }
+
+    private static int FrameNumber(string spriteName)
+    {
+        var underscore = spriteName.LastIndexOf('_');
+        return underscore >= 0 && int.TryParse(spriteName.Substring(underscore + 1), out var number) ? number : 0;
     }
 
     /// <summary>타일 팔레트에 룰 타일 세 장을 올려 둔다. 프리팹·씬을 손으로 칠할 때 쓴다.</summary>

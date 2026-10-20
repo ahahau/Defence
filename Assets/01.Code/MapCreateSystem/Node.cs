@@ -548,6 +548,7 @@ namespace Code.MapCreateSystem
             tileRenderer?.Clear();
             if (_dungeonTilemap != null)
                 _dungeonTilemap.Register(this);
+            RefreshDoorViews();
         }
 
         /// <summary>복도가 이어진 문을 정하고 다시 그린다. 연결이 생기거나 끊길 때 그래프 쪽이 부른다.</summary>
@@ -593,6 +594,7 @@ namespace Code.MapCreateSystem
             if (Layout == null)
                 return;
 
+            RefreshDoorViews();
             if (_dungeonTilemap != null)
             {
                 _dungeonTilemap.MarkDirty();
@@ -600,6 +602,55 @@ namespace Code.MapCreateSystem
             }
 
             tileRenderer?.Render(BuildPlan(), _visualColor * RoomFeatureRules.Tint(Feature));
+        }
+
+        /// <summary>복도가 이어진 위쪽 문에 선 문(열린 방만). 옆·아래 문은 3/4 시점에서 문 면이 보이지 않는다.</summary>
+        private RoomDoorView _upDoor;
+
+        /// <summary>그 변의 문을 연다. 문 그림이 없는 변이면 아무 일도 없다.</summary>
+        public void OpenDoor(RoomDoors side)
+        {
+            if (side == RoomDoors.Up && _upDoor != null)
+                _upDoor.Open();
+        }
+
+        private void RefreshDoorViews()
+        {
+            tileRenderer ??= GetComponent<NodeTileRenderer>();
+            var frames = tileRenderer != null && tileRenderer.TileSet != null ? tileRenderer.TileSet.DoorFrames : null;
+            var wanted = _dungeonTilemap != null && Layout != null && frames != null && frames.Length > 0
+                         && Layout.HasDoor(RoomDoors.Up) && RoomDoorRules.Has(ConnectedDoors, RoomDoors.Up);
+            if (!wanted)
+            {
+                if (_upDoor != null)
+                {
+                    if (Application.isPlaying)
+                        Destroy(_upDoor.gameObject);
+                    else
+                        DestroyImmediate(_upDoor.gameObject);
+                    _upDoor = null;
+                }
+
+                return;
+            }
+
+            if (_upDoor == null)
+            {
+                var door = new GameObject("UpDoor");
+                door.transform.SetParent(transform, false);
+                _upDoor = door.AddComponent<RoomDoorView>();
+                var walls = tileRenderer.TileRenderer;
+                _upDoor.Configure(frames, walls != null ? walls.sortingLayerID : 0, (walls != null ? walls.sortingOrder : 1) + 1);
+            }
+
+            // 문 그림은 타일 3칸 × 2칸(16px = 타일 하나)이고, 위쪽 벽 벽돌 면 두 줄에 걸친다.
+            var parentScale = transform.lossyScale;
+            _upDoor.transform.localScale = new Vector3(
+                RoomLayoutRules.TileWorldSize / Mathf.Max(0.0001f, Mathf.Abs(parentScale.x)),
+                RoomLayoutRules.TileWorldSize / Mathf.Max(0.0001f, Mathf.Abs(parentScale.y)),
+                1f);
+            var top = Layout.Rows * RoomLayoutRules.CellWorldSize * 0.5f;
+            _upDoor.transform.position = transform.position + new Vector3(0f, top + RoomLayoutRules.TileWorldSize, -0.01f);
         }
 
         private void ReplaceDecor(RoomLayout prefab)

@@ -15,9 +15,13 @@ namespace Code.MapCreateSystem
         [SerializeField] private DungeonWallRuleTile wall;
         [SerializeField] private TileBase pillar;
 
+        [SerializeField, Tooltip("위쪽 벽 문 애니메이션(닫힘 → 열림). 비어 있으면 문을 그리지 않는다.")]
+        private Sprite[] doorFrames;
+
         public DungeonFloorRuleTile Floor => floor;
         public DungeonWallRuleTile Wall => wall;
         public TileBase Pillar => pillar;
+        public Sprite[] DoorFrames => doorFrames;
 
         public bool IsComplete => floor != null && wall != null && pillar != null;
 
@@ -28,6 +32,8 @@ namespace Code.MapCreateSystem
             wall = wallTile;
             pillar = pillarTile;
         }
+
+        public void EditorSetDoorFrames(Sprite[] frames) => doorFrames = frames;
 #endif
     }
 }

@@ -15,3 +15,20 @@ MonoBehaviour:
   floor: {fileID: 11400000, guid: e2c19eed4fa3e0c4c9ac4806d4cddf5d, type: 2}
   wall: {fileID: 11400000, guid: baf116d21236bc845a6979df48c7b22f, type: 2}
   pillar: {fileID: 11400000, guid: b2019fb132e93694fad64519f70981cf, type: 2}
+  doorFrames:
+  - {fileID: -410383139, guid: fe23d18a94d3b2c4ab5a8c70ecebd044, type: 3}
+  - {fileID: -2071484088, guid: fe23d18a94d3b2c4ab5a8c70ecebd044, type: 3}
+  - {fileID: -858174198, guid: fe23d18a94d3b2c4ab5a8c70ecebd044, type: 3}
+  - {fileID: -498062479, guid: fe23d18a94d3b2c4ab5a8c70ecebd044, type: 3}
+  - {fileID: 2025034152, guid: fe23d18a94d3b2c4ab5a8c70ecebd044, type: 3}
+  - {fileID: -577879127, guid: fe23d18a94d3b2c4ab5a8c70ecebd044, type: 3}
+  - {fileID: 793545463, guid: fe23d18a94d3b2c4ab5a8c70ecebd044, type: 3}
+  - {fileID: -1386639526, guid: fe23d18a94d3b2c4ab5a8c70ecebd044, type: 3}
+  - {fileID: -1339188801, guid: fe23d18a94d3b2c4ab5a8c70ecebd044, type: 3}
+  - {fileID: 1347906909, guid: fe23d18a94d3b2c4ab5a8c70ecebd044, type: 3}
+  - {fileID: 62648525, guid: fe23d18a94d3b2c4ab5a8c70ecebd044, type: 3}
+  - {fileID: 735351884, guid: fe23d18a94d3b2c4ab5a8c70ecebd044, type: 3}
+  - {fileID: 869803276, guid: fe23d18a94d3b2c4ab5a8c70ecebd044, type: 3}
+  - {fileID: 100796016, guid: fe23d18a94d3b2c4ab5a8c70ecebd044, type: 3}
+  - {fileID: 370169706, guid: fe23d18a94d3b2c4ab5a8c70ecebd044, type: 3}
+  - {fileID: -2058663091, guid: fe23d18a94d3b2c4ab5a8c70ecebd044, type: 3}
