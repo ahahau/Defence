@@ -18,6 +18,25 @@ public static class UiKit
 
     private static Sprite _fill;
     private static Sprite _line;
+    private static Sprite _frameFill;
+    private static Sprite _frameLine;
+
+    /// <summary>픽셀 UI 팩(SuperGUIBundle, Black 테마). 패널 테두리 조각·아이콘 버튼·금화를 여기서 가져온다.</summary>
+    private const string PackFolder = "Assets/04.Sprites/UI/SuperGUIBundle";
+    private const string PackPanelFolder = PackFolder + "/1 UI/Panels/Black";
+    private const string PackButtonFolder = PackFolder + "/1 UI/Buttons & Scroll Bars/Black";
+    public const string CoinSpritePath = PackFolder + "/2 HUD/Coins/Coins 1/Sprites 32x32/Gold/0.png";
+
+    /// <summary>팩 테두리 그림의 9-slice 두께(px, 나선 모서리 9칸).</summary>
+    private const int FrameBorder = 9;
+
+    /// <summary>픽셀 그림을 화면에 몇 배로 그리는가(1920×1080 기준). 정수여야 픽셀이 고르다.</summary>
+    public const float PixelScale = 2f;
+
+    /// <summary>팩 아이콘 버튼 시트에서 테두리 없는 기호만 있는 칸.</summary>
+    public const int GlyphPause = 213;
+    public const int GlyphPlay = 214;
+    public const int GlyphFast = 227;
 
     public enum ButtonKind
     {
@@ -29,6 +48,12 @@ public static class UiKit
 
     public static Sprite FillSprite => _fill != null ? _fill : _fill = EnsureSprite("RoundFill", false);
     public static Sprite LineSprite => _line != null ? _line : _line = EnsureSprite("RoundLine", true);
+
+    /// <summary>패널·버튼 바탕: 팩 테두리 모양을 흰색으로 채운 그림(색은 칠하는 쪽이 정한다).</summary>
+    public static Sprite FrameFillSprite => _frameFill != null ? _frameFill : _frameFill = EnsureFrameSprite("FrameFill", false);
+
+    /// <summary>패널·버튼 테두리: 팩의 사슬 테두리와 나선 모서리를 밝기만 남긴 흰 그림(테두리 색으로 칠한다).</summary>
+    public static Sprite FrameLineSprite => _frameLine != null ? _frameLine : _frameLine = EnsureFrameSprite("FrameLine", true);
 
     // ── 캔버스 ─────────────────────────────────────────────
 
@@ -83,19 +108,60 @@ public static class UiKit
 
     // ── 면 ─────────────────────────────────────────────────
 
-    /// <summary>둥근 바탕 + 테두리. 테두리 이미지를 돌려준다.</summary>
+    /// <summary>픽셀 테두리 바탕 + 테두리. 테두리 이미지를 돌려준다.</summary>
     public static UnityEngine.UI.Image Panel(RectTransform rt, Color fill, Color border, bool raycast = false)
     {
-        var bg = Image(rt, FillSprite, fill, raycast);
-        bg.type = UnityEngine.UI.Image.Type.Sliced;
+        var bg = Image(rt, FrameFillSprite, fill, raycast);
+        ApplyPixelFrame(bg);
         return Outline(rt, border);
     }
 
     public static UnityEngine.UI.Image Outline(RectTransform parent, Color border)
     {
         var line = Fill(Rect("Outline", parent));
-        var image = Image(line, LineSprite, border, false);
-        image.type = UnityEngine.UI.Image.Type.Sliced;
+        var image = Image(line, FrameLineSprite, border, false);
+        ApplyPixelFrame(image);
+        return image;
+    }
+
+    /// <summary>
+    /// 픽셀 테두리 그림을 <see cref="PixelScale"/>배로 그린다. 사슬 무늬가 늘어나지 않게 가장자리를 늘이지 않고 되풀이한다.
+    /// 이미 만든 프리팹을 고칠 때(<c>UiSkinRefresher</c>)도 이 함수를 쓴다.
+    /// </summary>
+    public static void ApplyPixelFrame(UnityEngine.UI.Image image)
+    {
+        image.type = UnityEngine.UI.Image.Type.Tiled;
+        image.pixelsPerUnitMultiplier = 1f / PixelScale;
+    }
+
+    /// <summary>팩 아이콘의 기호를 흰색으로 바꾼 그림. 버튼 글자 색으로 칠해 쓴다.</summary>
+    public static Sprite GlyphSprite(int index) => EnsureGlyph(index);
+
+    /// <summary>버튼 가운데에 기호를 놓고 글자는 비운다. 기호는 픽셀 그대로 <see cref="PixelScale"/>배 크기다.</summary>
+    public static UnityEngine.UI.Image ButtonGlyph(UiFrameButton button, int glyph, Color color)
+    {
+        var rt = (RectTransform)button.transform;
+        var sprite = GlyphSprite(glyph);
+        var size = sprite != null ? sprite.rect.size * PixelScale : Vector2.one * 24f;
+        var icon = Place(Rect("Glyph", rt), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, size);
+        var image = Image(icon, sprite, color, false);
+        image.type = UnityEngine.UI.Image.Type.Simple;
+        if (button.Label != null)
+            button.Label.text = string.Empty;
+        return image;
+    }
+
+    /// <summary>
+    /// 금화 그림(팩 32px 금화 첫 장)을 놓는다. 그림이 30px로 촘촘해 2배면 금화 숫자보다 커서 원래 크기(1배)로 둔다.
+    /// 움직임은 넣지 않는다(HUD는 조용해야 한다).
+    /// </summary>
+    public static UnityEngine.UI.Image Coin(RectTransform rt)
+    {
+        var sprite = EnsureCrop(CoinSpritePath, "Coin", false);
+        var image = Image(rt, sprite, Color.white, false);
+        image.type = UnityEngine.UI.Image.Type.Simple;
+        if (sprite != null)
+            rt.sizeDelta = sprite.rect.size;
         return image;
     }
 
@@ -256,8 +322,8 @@ public static class UiKit
             _ => (HudPalette.Control, HudPalette.BorderQuiet, HudPalette.TextBody)
         };
 
-        var bg = Image(rt, FillSprite, fill, true);
-        bg.type = UnityEngine.UI.Image.Type.Sliced;
+        var bg = Image(rt, FrameFillSprite, fill, true);
+        ApplyPixelFrame(bg);
         var outline = Outline(rt, border);
         var text = Text("Label", rt, label, fontSize, textColor, TextAlignmentOptions.Center, kind == ButtonKind.Primary, true);
         Fill(text.rectTransform, 6f);
@@ -383,6 +449,145 @@ public static class UiKit
         }
 
         return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+    }
+
+    /// <summary>
+    /// 팩 패널 조각 네 모서리(0 왼쪽 위·2 오른쪽 위·6 왼쪽 아래·8 오른쪽 아래)의 16×16 귀퉁이를 이어 32×32 테두리 그림을 만든다.
+    /// 바탕(<paramref name="lineOnly"/> 거짓)은 모양만 흰색으로, 테두리는 안쪽 바탕색을 비우고 밝기만 남긴다 — 둘 다 흰 그림이라
+    /// 지금처럼 <see cref="HudPalette"/> 색으로 칠해 쓴다(금빛 강조·붉은 위험 테두리가 그대로 산다).
+    /// </summary>
+    private static Sprite EnsureFrameSprite(string name, bool lineOnly)
+    {
+        var path = $"{SkinFolder}/{name}.png";
+        if (!System.IO.File.Exists(path))
+        {
+            EnsureFolder(SkinFolder);
+            var pieces = new[] { (0, 0, 16), (2, 16, 16), (6, 0, 0), (8, 16, 0) };
+            var texture = new Texture2D(SpriteSize, SpriteSize, TextureFormat.RGBA32, false);
+            Color32? fillColor = null;
+            float brightest = 0f;
+            var source = new Color32[SpriteSize * SpriteSize];
+            foreach (var (index, ox, oy) in pieces)
+            {
+                var piece = LoadPackTexture($"{PackPanelFolder}/{index}.png");
+                for (var y = 0; y < 16; y++)
+                for (var x = 0; x < 16; x++)
+                    source[(oy + y) * SpriteSize + ox + x] = piece.GetPixel(ox + x, oy + y);
+                // 조각 한가운데는 바탕색이다.
+                fillColor ??= piece.GetPixel(16, 16);
+                Object.DestroyImmediate(piece);
+            }
+
+            foreach (var c in source)
+                brightest = Mathf.Max(brightest, Luminance(c));
+
+            for (var i = 0; i < source.Length; i++)
+            {
+                var c = source[i];
+                float alpha = c.a / 255f;
+                var value = 1f;
+                if (lineOnly)
+                {
+                    var isFill = fillColor.HasValue && c.r == fillColor.Value.r && c.g == fillColor.Value.g && c.b == fillColor.Value.b;
+                    alpha = isFill ? 0f : alpha;
+                    value = brightest > 0f ? Mathf.Clamp01(Luminance(c) / brightest) : 1f;
+                }
+
+                texture.SetPixel(i % SpriteSize, i / SpriteSize, new Color(value, value, value, alpha));
+            }
+
+            texture.Apply();
+            System.IO.File.WriteAllBytes(path, texture.EncodeToPNG());
+            Object.DestroyImmediate(texture);
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+        }
+
+        ImportPixelSprite(path, new Vector4(FrameBorder, FrameBorder, FrameBorder, FrameBorder));
+        return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+    }
+
+    /// <summary>팩 아이콘 버튼 시트의 기호 칸을 흰색으로 바꿔 가져온다.</summary>
+    private static Sprite EnsureGlyph(int index) => EnsureCrop($"{PackButtonFolder}/{index}.png", $"Glyph_{index}", true);
+
+    /// <summary>
+    /// 팩 그림 한 장을 보이는 부분만 잘라 스킨 폴더에 픽셀 그림으로 가져온다. 팩 원본의 가져오기 설정(흐림 필터·여러 장)은 건드리지 않는다.
+    /// <paramref name="whiten"/>이면 색을 지우고 흰색만 남긴다(칠해 쓰는 기호).
+    /// </summary>
+    private static Sprite EnsureCrop(string sourcePath, string name, bool whiten)
+    {
+        var path = $"{SkinFolder}/{name}.png";
+        if (!System.IO.File.Exists(path))
+        {
+            EnsureFolder(SkinFolder);
+            var piece = LoadPackTexture(sourcePath);
+            // 기호가 칸 안 어디에 있든 화면에서 가운데에 오도록 보이는 부분만 잘라 낸다.
+            int minX = piece.width, minY = piece.height, maxX = -1, maxY = -1;
+            for (var y = 0; y < piece.height; y++)
+            for (var x = 0; x < piece.width; x++)
+            {
+                if (piece.GetPixel(x, y).a <= 0f)
+                    continue;
+                minX = Mathf.Min(minX, x);
+                minY = Mathf.Min(minY, y);
+                maxX = Mathf.Max(maxX, x);
+                maxY = Mathf.Max(maxY, y);
+            }
+
+            if (maxX < 0)
+            {
+                minX = minY = 0;
+                maxX = piece.width - 1;
+                maxY = piece.height - 1;
+            }
+
+            var texture = new Texture2D(maxX - minX + 1, maxY - minY + 1, TextureFormat.RGBA32, false);
+            for (var y = minY; y <= maxY; y++)
+            for (var x = minX; x <= maxX; x++)
+            {
+                var c = piece.GetPixel(x, y);
+                texture.SetPixel(x - minX, y - minY, whiten ? new Color(1f, 1f, 1f, c.a) : c);
+            }
+            texture.Apply();
+            System.IO.File.WriteAllBytes(path, texture.EncodeToPNG());
+            Object.DestroyImmediate(piece);
+            Object.DestroyImmediate(texture);
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+        }
+
+        ImportPixelSprite(path, Vector4.zero);
+        return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+    }
+
+    /// <summary>팩 PNG를 가져오기 설정과 상관없이 파일에서 바로 읽는다(읽기 허용을 켜지 않으려고).</summary>
+    private static Texture2D LoadPackTexture(string path)
+    {
+        var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+        texture.LoadImage(System.IO.File.ReadAllBytes(path));
+        return texture;
+    }
+
+    private static float Luminance(Color32 c) => (0.299f * c.r + 0.587f * c.g + 0.114f * c.b) / 255f;
+
+    /// <summary>픽셀 그림 가져오기: 점 필터(흐려지지 않게), 압축 없음, 9-slice 두께.</summary>
+    private static void ImportPixelSprite(string path, Vector4 border)
+    {
+        var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+        if (importer.textureType == TextureImporterType.Sprite && importer.spriteBorder == border && importer.filterMode == FilterMode.Point)
+            return;
+
+        importer.textureType = TextureImporterType.Sprite;
+        importer.spriteImportMode = SpriteImportMode.Single;
+        importer.spritePixelsPerUnit = 100f;
+        importer.mipmapEnabled = false;
+        importer.filterMode = FilterMode.Point;
+        importer.textureCompression = TextureImporterCompression.Uncompressed;
+        importer.alphaIsTransparency = true;
+        importer.spriteBorder = border;
+        var settings = new TextureImporterSettings();
+        importer.ReadTextureSettings(settings);
+        settings.spriteMeshType = SpriteMeshType.FullRect;
+        importer.SetTextureSettings(settings);
+        importer.SaveAndReimport();
     }
 
     /// <summary>둥근 사각 안쪽 정도(0~1, 가장자리 부드럽게). inset만큼 안으로 들어간 사각을 잰다.</summary>

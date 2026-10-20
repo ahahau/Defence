@@ -78,6 +78,7 @@ public static class GameplayHudBuilder
         var gold = UiKit.Text("Gold", ledger, "0G", 38f, HudPalette.Accent, TextAlignmentOptions.Left, true, true);
         UiKit.TopLeft(gold.rectTransform, 18f, 36f, 304f, 46f);
         UiKit.Wire(view, "goldValue", gold);
+        AddGoldCoin(ledger, gold);
 
         // 부채 줄: 누르면 설명, 파산 위험이면 바탕이 붉게 깜박인다.
         var debt = UiKit.TopLeft(UiKit.Rect("DebtRow", ledger), 10f, 88f, 320f, 46f);
@@ -134,7 +135,43 @@ public static class GameplayHudBuilder
     private static UiFrameButton SpeedButton(RectTransform parent, string name, string label, float x)
     {
         var rt = UiKit.TopLeft(UiKit.Rect(name + "Button", parent), x, 0f, 68f, 44f);
-        return UiKit.Button(rt, label, UiKit.ButtonKind.Secondary, 17f);
+        var button = UiKit.Button(rt, label, UiKit.ButtonKind.Secondary, 17f);
+        AddSpeedGlyph(button);
+        return button;
+    }
+
+    /// <summary>배속 버튼 글자(II·1×·2×) 대신 팩의 멈춤·재생·빨리감기 기호를 놓는다. 이미 있으면 그대로 둔다.</summary>
+    public static void AddSpeedGlyph(UiFrameButton button)
+    {
+        if (button == null || button.transform.Find("Glyph") != null)
+            return;
+
+        var glyph = button.name switch
+        {
+            "PauseButton" => UiKit.GlyphPause,
+            "NormalButton" => UiKit.GlyphPlay,
+            "FastButton" => UiKit.GlyphFast,
+            _ => -1
+        };
+        if (glyph >= 0)
+            UiKit.ButtonGlyph(button, glyph, HudPalette.TextBody);
+    }
+
+    /// <summary>금화 숫자 앞에 금화 그림을 놓고 숫자를 그만큼 민다. 이미 있으면 그대로 둔다.</summary>
+    public static void AddGoldCoin(RectTransform ledger, TMP_Text gold)
+    {
+        if (ledger == null || gold == null || ledger.Find("Coin") != null)
+            return;
+
+        var coin = UiKit.TopLeft(UiKit.Rect("Coin", ledger), 18f, 0f, 28f, 28f);
+        UiKit.Coin(coin);
+        // 숫자 줄 가운데에 맞춘다.
+        var goldRect = gold.rectTransform;
+        var top = -goldRect.anchoredPosition.y;
+        coin.anchoredPosition = new Vector2(18f, -(top + (goldRect.sizeDelta.y - coin.sizeDelta.y) * 0.5f));
+        var shift = coin.sizeDelta.x + 8f;
+        goldRect.anchoredPosition += new Vector2(shift, 0f);
+        goldRect.sizeDelta -= new Vector2(shift, 0f);
     }
 
     private static TextMeshProUGUI StatusChip(RectTransform parent, string name, string label, float x, float y)
