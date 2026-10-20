@@ -36,6 +36,15 @@ namespace Code.MapCreateSystem
         PillarMidRight,
         PillarBaseLeft,
         PillarBase,
-        PillarBaseRight
+        PillarBaseRight,
+
+        /// <summary>
+        /// 위쪽 벽이 계단처럼 올라가는 곳: 낮은 벽의 난간 줄에서 오른쪽 위가 높은 쪽 바닥이면, 높은 쪽의 왼쪽 옆 벽이
+        /// 그 줄까지 내려온다. 난간 조각(속이 검다)을 두면 검은 칸으로 보였다.
+        /// </summary>
+        StepRailLeft,
+
+        /// <summary><see cref="StepRailLeft"/>의 좌우 대칭(└).</summary>
+        StepRailRight
     }
 }

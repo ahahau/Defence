@@ -58,6 +58,9 @@ public static class RoomLayoutBuilder
         { RoomWallKind.FaceUpperStart, (4, 2) },
         { RoomWallKind.FaceUpperEnd, (5, 2) },
         { RoomWallKind.RailTop, (10, 7) },
+        // 계단 모서리는 높은 쪽 옆 벽이 낮은 벽 난간 줄까지 내려온 것이다. 옆 벽 조각을 그대로 쓴다.
+        { RoomWallKind.StepRailLeft, (3, 3) },
+        { RoomWallKind.StepRailRight, (12, 9) },
         { RoomWallKind.RailTopStart, (4, 1) },
         { RoomWallKind.RailTopEnd, (5, 1) },
         { RoomWallKind.WallLeft, (3, 3) },
@@ -105,6 +108,9 @@ public static class RoomLayoutBuilder
         (RoomWallKind.FaceUpperStart, new[] { (0, -2, F), (-1, -2, W) }),
         (RoomWallKind.FaceUpperEnd, new[] { (0, -2, F), (1, -2, W) }),
         (RoomWallKind.FaceUpper, new[] { (0, -2, F) }),
+        // 계단 모서리: 낮은 벽 난간 줄인데 바로 옆 아래가 높은 쪽 바닥이면 난간이 위로 꺾인다.
+        (RoomWallKind.StepRailLeft, new[] { (0, -3, F), (0, -1, W), (1, -1, F), (1, 0, W) }),
+        (RoomWallKind.StepRailRight, new[] { (0, -3, F), (0, -1, W), (-1, -1, F), (-1, 0, W) }),
         (RoomWallKind.RailTopStart, new[] { (0, -3, F), (-1, -3, W) }),
         (RoomWallKind.RailTopEnd, new[] { (0, -3, F), (1, -3, W) }),
         (RoomWallKind.RailTop, new[] { (0, -3, F) }),

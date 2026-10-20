@@ -512,6 +512,36 @@ namespace Tests.EditMode.Rules
         }
 
         /// <summary>
+        /// 위쪽 벽이 계단처럼 올라가는 곳은 높은 쪽 옆 벽이 낮은 벽 난간 줄까지 내려온다.
+        /// 난간 조각(속이 검다)이 놓여 방 위쪽에 검은 칸이 생겼었다.
+        /// </summary>
+        [Test]
+        public void RuleTiles_StepCornerContinuesTheSideWall()
+        {
+            var tileSet = AssetDatabase.LoadAssetAtPath<RoomTileSet>("Assets/07.SO/Map/RoomTileSet.asset");
+            Assert.That(tileSet, Is.Not.Null);
+            var gridHost = new GameObject("TestGrid", typeof(Grid));
+            _layoutHosts.Add(gridHost);
+            var tiles = new GameObject("Tiles", typeof(UnityEngine.Tilemaps.Tilemap)).GetComponent<UnityEngine.Tilemaps.Tilemap>();
+            tiles.transform.SetParent(gridHost.transform, false);
+
+            // 위 줄은 오른쪽 4칸만 바닥: 왼쪽 2칸 위가 낮은 벽, 칸 (1,3)이 계단 모서리. 계단 모서리 타일은 (-3, 4).
+            var left = RoomTilePlan.Build(NewShape(RoomSize.Medium, RoomDoors.Left | RoomDoors.Right, new[]
+            {
+                "##....", "......", "......", "......"
+            }), RoomDoors.None, RoomDoors.None, 24);
+            RoomTilePainter.Paint(null, tiles, tileSet, new[] { new RoomTilePainter.Room(left, Vector2Int.zero, Color.white) });
+            Assert.That(Cell(tiles, -3, 4), Is.EqualTo((3, 3)), "왼쪽 계단 모서리는 높은 쪽의 왼쪽 옆 벽입니다.");
+
+            var right = RoomTilePlan.Build(NewShape(RoomSize.Medium, RoomDoors.Left | RoomDoors.Right, new[]
+            {
+                "....##", "......", "......", "......"
+            }), RoomDoors.None, RoomDoors.None, 24);
+            RoomTilePainter.Paint(null, tiles, tileSet, new[] { new RoomTilePainter.Room(right, Vector2Int.zero, Color.white) });
+            Assert.That(Cell(tiles, 2, 4), Is.EqualTo((12, 9)), "오른쪽 계단 모서리는 높은 쪽의 오른쪽 옆 벽입니다.");
+        }
+
+        /// <summary>
         /// 장식은 위쪽 벽 벽돌 면(벽 칸)과 비어 있는 바닥에만 놓이고, 같은 방이면 늘 같은 자리다.
         /// 바닥 칸 위에 벽 장식이 놓이면 바닥에 횃불이 서 있고, 중앙 시설·문 앞을 가리면 건물과 드나드는 길이 안 보인다.
         /// </summary>
