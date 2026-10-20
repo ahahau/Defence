@@ -507,8 +507,9 @@ namespace Code.Enemies
         private IEnumerator WalkRoute(Node fromNode, Vector3 targetPos, global::Code.Buildings.Building edgeBuilding)
         {
             var start = transform.position;
+            var doorIndex = -1;
             if (fromNode != null)
-                RoomRoute.Between(fromNode, _currentNode, start, targetPos, _route);
+                RoomRoute.Between(fromNode, _currentNode, start, targetPos, _route, out doorIndex);
             else
                 RoomRoute.Inside(_currentNode, start, targetPos, _route);
 
@@ -530,7 +531,33 @@ namespace Code.Enemies
             // 이동 중에 죽는 적이 흔하다. 시퀀스를 오브젝트에 묶지 않으면 파괴된 뒤에도
             // 트윈이 계속 돌며 사라진 Transform 의 position 을 건드려 예외가 난다.
             var sequence = DOTween.Sequence().SetLink(gameObject);
-            sequence.Join(transform.DOPath(_route.ToArray(), duration, PathType.Linear).SetEase(Ease.InOutQuad));
+            var points = _route.ToArray();
+            if (doorIndex >= 0 && doorIndex < points.Length - 1)
+            {
+                // 문 앞까지 걸어가 잠깐 서서 문을 열고, 문을 지나 다음 방으로 들어간다.
+                // 그 시간은 이동 시간에 더하지 않고 나눠 쓴다 — 하루의 침입 속도는 그대로다.
+                var toDoor = new Vector3[doorIndex + 1];
+                var through = new Vector3[points.Length - doorIndex - 1];
+                System.Array.Copy(points, toDoor, toDoor.Length);
+                System.Array.Copy(points, doorIndex + 1, through, 0, through.Length);
+                var walk = Mathf.Max(0.05f, duration - DoorPauseSeconds);
+                var firstShare = Mathf.Clamp01(PathLength(start, toDoor) / Mathf.Max(0.01f, routeLength));
+                var doorFrom = fromNode;
+                var doorTo = _currentNode;
+                sequence.Append(transform.DOPath(toDoor, walk * firstShare, PathType.Linear).SetEase(Ease.OutQuad));
+                sequence.AppendCallback(() => OpenDoorsBetween(doorFrom, doorTo));
+                sequence.AppendInterval(DoorPauseSeconds);
+                sequence.Append(transform.DOPath(through, walk * (1f - firstShare), PathType.Linear).SetEase(Ease.InQuad)
+                    .OnWaypointChange(index =>
+                    {
+                        if (index > 0 && index < through.Length)
+                            FaceMoveDirection(through[index] - through[index - 1]);
+                    }));
+            }
+            else
+            {
+                sequence.Join(transform.DOPath(points, duration, PathType.Linear).SetEase(Ease.InOutQuad));
+            }
 
             // 라인 위 건물(중점) 통과 시점(구간의 절반)에 효과 발동.
             if (edgeBuilding != null)
@@ -579,6 +606,32 @@ namespace Code.Enemies
                 .SetLink(gameObject);
 
             yield return _moveTween.WaitForCompletion();
+        }
+
+        /// <summary>문 앞에서 서서 문을 여는 시간(초). 이동 시간 안에서 나눠 쓴다.</summary>
+        private const float DoorPauseSeconds = 0.18f;
+
+        /// <summary>두 방 사이 복도 양 끝의 문을 연다(그림이 있는 위쪽 문만 실제로 열린다).</summary>
+        private static void OpenDoorsBetween(Node from, Node to)
+        {
+            if (from == null || to == null || !RoomRoute.TryGetSides(from, to, out var fromSide, out var toSide))
+                return;
+
+            from.OpenDoor(fromSide);
+            to.OpenDoor(toSide);
+        }
+
+        private static float PathLength(Vector3 start, Vector3[] points)
+        {
+            var length = 0f;
+            var previous = start;
+            foreach (var point in points)
+            {
+                length += Vector2.Distance(previous, point);
+                previous = point;
+            }
+
+            return length;
         }
 
         private Node SelectNextNode()

@@ -16,9 +16,14 @@ namespace Code.MapCreateSystem
         /// from 방의 start에서 to 방의 target까지 경유점을 points에 담는다(start 제외, target 포함).
         /// 두 방이 이어진 문을 모르면(모양이 없는 방 등) 곧장 간다.
         /// </summary>
-        public static void Between(Node from, Node to, Vector3 start, Vector3 target, List<Vector3> points)
+        public static void Between(Node from, Node to, Vector3 start, Vector3 target, List<Vector3> points) =>
+            Between(from, to, start, target, points, out _);
+
+        /// <param name="doorIndex">points에서 나가는 문 앞(문 칸) 경유점의 번호. 문을 모르면 -1. 모험가가 여기서 잠깐 서서 문을 연다.</param>
+        public static void Between(Node from, Node to, Vector3 start, Vector3 target, List<Vector3> points, out int doorIndex)
         {
             points.Clear();
+            doorIndex = -1;
             if (from == null || to == null || !TryGetSides(from, to, out var fromSide, out var toSide))
             {
                 AppendInside(to, start, target, points);
@@ -27,7 +32,14 @@ namespace Code.MapCreateSystem
 
             var exit = DoorPoint(from, fromSide, out var fromDoorCell);
             if (fromDoorCell.HasValue && from.TrapGrid != null)
-                AppendCells(from.TrapGrid, start, from.TrapGrid.CellWorldPosition(fromDoorCell.Value.x, fromDoorCell.Value.y), points);
+            {
+                var doorCellPosition = from.TrapGrid.CellWorldPosition(fromDoorCell.Value.x, fromDoorCell.Value.y);
+                AppendCells(from.TrapGrid, start, doorCellPosition, points);
+                // 문 앞 칸 가운데(문 폭 가운데 줄)에 선다. 문 칸이 짝수 폭이면 칸 경계가 문 가운데다.
+                points.Add(DoorThreshold(from, fromSide, start.z));
+                doorIndex = points.Count - 1;
+            }
+
             points.Add(exit);
 
             var entry = DoorPoint(to, toSide, out _);
@@ -88,6 +100,18 @@ namespace Code.MapCreateSystem
             var offset = direction * (halfExtent + DoorStepOut);
             var center = node.transform.position;
             return new Vector3(center.x + offset.x, center.y + offset.y, center.z);
+        }
+
+        /// <summary>문 바로 안쪽(문 앞 칸 줄, 문 폭 가운데). 문을 열기 전에 서는 자리다.</summary>
+        private static Vector3 DoorThreshold(Node node, RoomDoors side, float z)
+        {
+            var layout = node.Layout;
+            var direction = (Vector2)RoomDoorRules.ToDirection(side);
+            var halfExtent = (side == RoomDoors.Up || side == RoomDoors.Down ? layout.Rows : layout.Columns)
+                             * RoomLayoutRules.CellWorldSize * 0.5f;
+            var offset = direction * (halfExtent - RoomLayoutRules.CellWorldSize * 0.5f);
+            var center = node.transform.position;
+            return new Vector3(center.x + offset.x, center.y + offset.y, z);
         }
 
         private static void AppendInside(Node room, Vector3 start, Vector3 target, List<Vector3> points)
