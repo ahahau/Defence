@@ -57,6 +57,9 @@ namespace Code.Buildings
         [SerializeField, Min(0.01f)] private float hitShakeDuration = 0.18f;
         [SerializeField, Min(1)] private int hitShakeSteps = 4;
 
+        [SerializeField, Tooltip("터지는 모습. 비우면 흔들림만 보인다.")]
+        private TrapTriggerVisual triggerVisual;
+
         [field: SerializeField, Min(0)]
         public int DangerIncreaseOnTrigger { get; private set; } = 1;
 
@@ -76,10 +79,6 @@ namespace Code.Buildings
         /// <summary>투사체 판정 때 쓰는 임시 목록.</summary>
         private readonly List<Enemy> _rowTargets = new();
         private readonly List<float> _rowTargetX = new();
-
-        private const float ArrowTrailSeconds = 0.18f;
-        private LineRenderer _arrowLine;
-        private Coroutine _arrowRoutine;
 
         public float TriggerChance => triggerChance;
         public int Damage => damage;
@@ -126,14 +125,13 @@ namespace Code.Buildings
                 hitAnimationTarget = transform;
 
             _hitAnimationBaseLocalPosition = hitAnimationTarget.localPosition;
+            if (triggerVisual == null)
+                TryGetComponent(out triggerVisual);
         }
 
         private void OnDisable()
         {
             StopHitAnimation(true);
-            if (_arrowLine != null)
-                _arrowLine.enabled = false;
-            _arrowRoutine = null;
         }
 
         protected override void Update()
@@ -220,6 +218,7 @@ namespace Code.Buildings
             }
 
             PlayHitAnimation();
+            PlayTriggerEffect(mode, stepper);
             // 함정은 플레이어가 깔아 두고 잊는 물건이라, 언제 걸렸는지 소리로 짚어 줘야 한다.
             Code.Audio.GameSfxPlayer.Play(Code.Audio.GameSfxCue.Trap, transform.position);
 
@@ -286,7 +285,9 @@ namespace Code.Buildings
             // 문가처럼 격자 밖에 선 대상도 있어, 화살은 늘 대상보다 서쪽에서 출발하게 한다.
             var start = ResolveRowStart(cellSize);
             start.x = Mathf.Min(start.x, target.transform.position.x - cellSize * 0.5f);
-            ShowArrow(start, target.transform.position);
+            // 무엇이 어디서 맞았는지 보여야 줄 배치를 읽는다.
+            if (triggerVisual != null)
+                triggerVisual.FlyProjectile(start, target.transform.position, cellSize);
             HitEnemy(target, amount, true);
         }
 
@@ -303,38 +304,41 @@ namespace Code.Buildings
             return transform.position + Vector3.left * cellSize;
         }
 
-        /// <summary>날아간 화살을 잠깐 선으로 보여 준다. 무엇이 어디서 맞았는지 보여야 줄 배치를 읽는다.</summary>
-        private void ShowArrow(Vector3 from, Vector3 to)
+        /// <summary>밟기는 밟은 자리, 범위는 닿는 곳만큼, 지속은 덮은 칸마다 작동 시간 동안 보여 준다.</summary>
+        private void PlayTriggerEffect(TrapTriggerMode mode, Enemy stepper)
         {
-            if (_arrowLine == null)
+            if (triggerVisual == null)
+                return;
+
+            var cellSize = ResolveCellSize();
+            switch (mode)
             {
-                var arrow = new GameObject("ArrowTrail");
-                arrow.transform.SetParent(transform, false);
-                _arrowLine = arrow.AddComponent<LineRenderer>();
-                _arrowLine.sharedMaterial = Code.Core.RuntimeMaterials.LoadLine();
-                _arrowLine.startWidth = 0.06f;
-                _arrowLine.endWidth = 0.03f;
-                _arrowLine.startColor = new Color(0.95f, 0.85f, 0.55f, 0.9f);
-                _arrowLine.endColor = new Color(1f, 0.95f, 0.8f, 1f);
-                _arrowLine.positionCount = 2;
-                _arrowLine.useWorldSpace = true;
-                _arrowLine.sortingOrder = 50;
+                case TrapTriggerMode.Area:
+                    triggerVisual.PlayOnce(
+                        transform.position, TrapEffectRules.AreaWidthCells(Footprint, areaRadiusCells) * cellSize);
+                    break;
+                case TrapTriggerMode.Persistent:
+                    var center = (Vector2)transform.position;
+                    for (var column = 0; column < Footprint.x; column++)
+                    {
+                        for (var row = 0; row < Footprint.y; row++)
+                        {
+                            Vector3 tile = TrapEffectRules.TileCenter(center, Footprint, cellSize, column, row);
+                            tile.z = transform.position.z;
+                            triggerVisual.PlayLoop(tile, cellSize, persistentSeconds);
+                        }
+                    }
+
+                    break;
+                case TrapTriggerMode.Step:
+                    var hit = stepper.transform.position;
+                    // 격자 밖(통로)의 화살 함정은 밟기로 동작한다. 그래도 화살이 날아와 꽂혀야 무엇이 터졌는지 보인다.
+                    if (!triggerVisual.HasFrames && triggerVisual.HasProjectile)
+                        triggerVisual.FlyProjectile(hit + Vector3.left * cellSize, hit, cellSize);
+                    else
+                        triggerVisual.PlayOnce(hit, cellSize);
+                    break;
             }
-
-            _arrowLine.SetPosition(0, from);
-            _arrowLine.SetPosition(1, to);
-            _arrowLine.enabled = true;
-            if (_arrowRoutine != null)
-                StopCoroutine(_arrowRoutine);
-            _arrowRoutine = StartCoroutine(HideArrowAfter(ArrowTrailSeconds));
-        }
-
-        private System.Collections.IEnumerator HideArrowAfter(float seconds)
-        {
-            yield return new WaitForSeconds(seconds);
-            if (_arrowLine != null)
-                _arrowLine.enabled = false;
-            _arrowRoutine = null;
         }
 
         /// <summary>같은 방에 있는 살아 있는 침입자를 모은다. 통로를 걷는 중인 적은 방에 없다.</summary>
