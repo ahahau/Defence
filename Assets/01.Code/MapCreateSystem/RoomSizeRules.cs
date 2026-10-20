@@ -51,36 +51,36 @@ namespace Code.MapCreateSystem
 
         /// <summary>
         /// 방 프리팹(<see cref="RoomLayout"/>) 격자 틀의 최대 가로 칸 수. 모양은 정사각형이 아니어도 된다.
-        /// 위쪽 벽(타일 3칸)까지 이웃 방과 겹치지 않도록 세로는 8칸, 가로는 9칸을 넘지 않는다(노드 간격 24타일).
+        /// 위쪽 벽(타일 3칸)과 복도까지 이웃 방과 겹치지 않도록 세로는 16칸, 가로는 18칸을 넘지 않는다(노드 간격 48타일).
         /// </summary>
         public static int MaxColumns(RoomSize size) => size switch
         {
-            RoomSize.Small => 6,
-            RoomSize.Large => 9,
-            _ => 7
+            RoomSize.Small => 12,
+            RoomSize.Large => 18,
+            _ => 15
         };
 
         /// <summary>격자 틀의 최대 세로 칸 수.</summary>
         public static int MaxRows(RoomSize size) => size switch
         {
-            RoomSize.Small => 6,
-            RoomSize.Large => 8,
-            _ => 7
+            RoomSize.Small => 10,
+            RoomSize.Large => 16,
+            _ => 13
         };
 
-        /// <summary>바닥 칸 수 범위. 크기 이름이 실제 넓이와 맞도록 둔다.</summary>
+        /// <summary>바닥 칸 수 범위. 크기 이름이 실제 넓이와 맞도록 둔다(틀의 82%가 상한).</summary>
         public static int MinFloorCells(RoomSize size) => size switch
         {
-            RoomSize.Small => 12,
-            RoomSize.Large => 36,
-            _ => 22
+            RoomSize.Small => 44,
+            RoomSize.Large => 160,
+            _ => 90
         };
 
         public static int MaxFloorCells(RoomSize size) => size switch
         {
-            RoomSize.Small => 22,
-            RoomSize.Large => 72,
-            _ => 36
+            RoomSize.Small => 90,
+            RoomSize.Large => 236,
+            _ => 160
         };
 
         /// <summary>손님이 머무는 시설을 지을 수 있는가. 소형 방은 시설을 못 짓는다(유닛·함정·금고는 된다).</summary>

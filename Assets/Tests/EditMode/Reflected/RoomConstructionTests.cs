@@ -396,7 +396,6 @@ namespace Tests.EditMode.Rules
                 "......",
                 "......"
             });
-            Assert.That(RoomLayoutRules.Validate(shape, out var problem), Is.True, problem);
 
             var node = CreateNode();
             node.ApplyLayout(shape, 15f);

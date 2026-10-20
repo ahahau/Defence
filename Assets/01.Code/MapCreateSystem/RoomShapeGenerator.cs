@@ -17,9 +17,15 @@ namespace Code.MapCreateSystem
         /// <summary>틀 대비 바닥 비율 상한(입구 제외).</summary>
         public const float MaxFillRatio = 0.82f;
 
-        /// <summary>방 안 칸막이 벽 한 줄의 길이(칸).</summary>
+        /// <summary>방 안 칸막이 벽 한 줄의 최소 길이(칸).</summary>
         public const int MinWallCells = 2;
-        public const int MaxWallCells = 4;
+
+        /// <summary>벽 한 줄 길이 상한의 하한. 상한은 놓인 변의 절반이다.</summary>
+        private const int MinWallLongest = 4;
+
+        /// <summary>입구 틀(중형). 문 넷과 바깥문이 들어가는 넉넉한 방.</summary>
+        private const int EntranceColumns = 12;
+        private const int EntranceRows = 11;
 
         /// <summary>
         /// 방 모양을 만든다. 규칙에 맞는 모양을 못 찾으면(거의 없음) 문이 모두 열리는 작은 직사각형으로 대신한다.
@@ -111,8 +117,8 @@ namespace Code.MapCreateSystem
         {
             var maxColumns = RoomSizeRules.MaxColumns(size);
             var maxRows = RoomSizeRules.MaxRows(size);
-            var columns = entrance ? 6 : random.Next(Mathf.Max(4, maxColumns - 2), maxColumns + 1);
-            var rows = entrance ? 6 : random.Next(Mathf.Max(4, maxRows - 2), maxRows + 1);
+            var columns = entrance ? EntranceColumns : random.Next(Mathf.Max(4, maxColumns - 3), maxColumns + 1);
+            var rows = entrance ? EntranceRows : random.Next(Mathf.Max(4, maxRows - 3), maxRows + 1);
             var floor = new bool[columns, rows];
             for (var x = 0; x < columns; x++)
             for (var y = 0; y < rows; y++)
@@ -129,13 +135,15 @@ namespace Code.MapCreateSystem
                 Fill(floor, right ? columns - w : 0, top ? rows - h : 0, w, h);
             }
 
-            // 변의 홈: 1~3곳, 깊이 1~2, 길이 1~3.
-            var notches = random.Next(1, 4);
+            // 변의 홈: 2~5곳. 길이는 틀의 1/3까지, 깊이는 짧은 변의 1/4까지(최소 1~2) — 큰 방도 네모로 보이지 않게.
+            var notches = random.Next(2, 6);
+            var maxNotchLength = Mathf.Max(3, columns / 3);
+            var maxNotchDepth = Mathf.Max(2, Mathf.Min(columns, rows) / 4);
             for (var i = 0; i < notches; i++)
             {
                 var side = random.Next(4);
-                var length = random.Next(1, 4);
-                var depth = random.Next(1, 3);
+                var length = random.Next(1, maxNotchLength + 1);
+                var depth = random.Next(1, maxNotchDepth + 1);
                 if (side < 2)
                 {
                     var x = random.Next(0, Mathf.Max(1, columns - length));
@@ -149,7 +157,12 @@ namespace Code.MapCreateSystem
             }
 
             // 방 안 기둥: 큰 방일수록 많이. 가장자리에 붙지 않게 한 칸 안쪽에만.
-            var pillars = size == RoomSize.Small ? random.Next(0, 2) : random.Next(0, size == RoomSize.Large ? 4 : 3);
+            var pillars = size switch
+            {
+                RoomSize.Large => random.Next(0, 7),
+                RoomSize.Medium => random.Next(0, 5),
+                _ => random.Next(0, 3)
+            };
             for (var i = 0; i < pillars && columns > 2 && rows > 2; i++)
                 floor[random.Next(1, columns - 1), random.Next(1, rows - 1)] = false;
 
@@ -161,23 +174,25 @@ namespace Code.MapCreateSystem
         }
 
         /// <summary>
-        /// 방 안 칸막이 벽: 중형 0~1줄, 대형 0~2줄, 길이 2~4칸. 가장자리에 붙지 않게 한 칸 안쪽에만 세워
-        /// 바깥 벽과 이어지지 않는다(이어지면 3/4 시점 벽 띠가 들어갈 자리가 없다). 길이 끊기는 모양은 검사에서 버려진다.
+        /// 방 안 칸막이 벽: 소형 0~1줄, 중형 0~2줄, 대형 0~3줄. 길이는 2칸부터 놓인 변의 절반(최소 4칸)까지.
+        /// 가장자리에 붙지 않게 한 칸 안쪽에만 세워 바깥 벽과 이어지지 않는다(이어지면 3/4 시점 벽 띠가 들어갈 자리가 없다).
+        /// 길이 끊기는 모양은 검사에서 버려진다.
         /// </summary>
         private static void CarveWalls(System.Random random, bool[,] floor, RoomSize size, int columns, int rows)
         {
             var count = size switch
             {
-                RoomSize.Large => random.Next(0, 3),
-                RoomSize.Medium => random.Next(0, 2),
-                _ => 0
+                RoomSize.Large => random.Next(0, 4),
+                RoomSize.Medium => random.Next(0, 3),
+                _ => random.Next(0, 2)
             };
 
             for (var i = 0; i < count && columns > 4 && rows > 4; i++)
             {
                 var horizontal = random.Next(2) == 0;
                 var span = horizontal ? columns - 2 : rows - 2;
-                var length = Mathf.Min(span, random.Next(MinWallCells, MaxWallCells + 1));
+                var maxLength = Mathf.Max(MinWallLongest, span / 2);
+                var length = Mathf.Min(span, random.Next(MinWallCells, maxLength + 1));
                 var along = random.Next(1, columns - length);
                 var across = random.Next(1, rows - 1);
                 if (!horizontal)
@@ -200,9 +215,9 @@ namespace Code.MapCreateSystem
         {
             var (columns, rows) = size switch
             {
-                RoomSize.Small => (4, 4),
-                RoomSize.Large => (7, 6),
-                _ => (5, 5)
+                RoomSize.Small => (8, 7),
+                RoomSize.Large => (15, 13),
+                _ => (11, 10)
             };
             var floor = new bool[columns, rows];
             for (var x = 0; x < columns; x++)
