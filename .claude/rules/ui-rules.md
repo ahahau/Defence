@@ -52,6 +52,7 @@ UI Toolkit을 모두 걷어냈다. uGUI(A안)로 다시 만드는 중이다. 만
    * 배치 원칙: 자원은 왼쪽 위 장부 하나, 조작(배속)·상황(브리핑·진행)은 오른쪽 위, 주 행동(영업 시작)은 오른쪽 아래. 지도 가운데와 아래 가운데는 비운다. 긴 설명은 "자세히"로 펼친다.
    * 프리팹은 손으로 만들지 않는다. 에디터 생성기(`Assets/Editor/*Builder.cs`)가 `UiKit`(바탕·테두리 그림 생성, 패널·칩·막대·글자·버튼)으로 만들고 `UiSceneInstaller`로 SampleScene에 놓아 배선한다. Unity CLI로 `XxxBuilder.BuildAll()`을 부른다. 새 화면도 같은 방식으로 만든다.
    * 테두리 있는 버튼은 `UiFrameButton`(고름·강조는 `SetSelected`로 금색 테두리, 팝업처럼 역할이 바뀌면 `SetStyle`).
+   * 글자 하나뿐인 버튼은 팩 버튼 면을 색 그대로 쓴다(2026-10-20 사용자 선택 A안, `UiKit.ApplyButtonFaces`): 보통 Black·주요 Gold·위험 Red, 고르면 Gold(주요는 Green). 면이 밝아 글자는 어둡게 — 버튼 글자 색은 `Label.color`에 직접 넣지 말고 `UiFrameButton.SetLabelColor`로 넣는다(팩 면이면 어두운 쪽으로 당김). 팝업 역할은 `SetFace`. 높이 44 미만 버튼은 테두리 1배. 아이콘·둘째 줄 글자가 든 카드·목록 줄(설치 카드·침입 파티 줄·지원자)은 패널 테두리 그대로다.
    * 글꼴(The Jamsil 5 Bold SDF)에 `▾`·`▴` 같은 기호가 없어 네모로 보인다. 화살표 기호 대신 글자로 쓴다(`↑→`는 있음). 말줄임표 `…`도 없어 넘치는 한 줄 글은 말줄임 대신 잘리고 경고가 난다(대체 글꼴 추가 전까지).
    * 패널·버튼 테두리는 픽셀 UI 팩 SuperGUIBundle(`Assets/04.Sprites/UI/SuperGUIBundle`, Black 테마, 2026-10-20 사용자 선택)의 사슬 테두리·나선 모서리다. `UiKit.FrameFillSprite`·`FrameLineSprite`(`Skin/Ledger/FrameFill`·`FrameLine`, 흰 그림이라 `HudPalette` 색으로 칠함)를 2배·되풀이(`UiKit.ApplyPixelFrame`)로 그린다. 막대·칩·스크롤바·슬라이더는 둥근 그림(`RoundFill`)이다. 배속 버튼은 팩 기호(`UiKit.ButtonGlyph`), 금화 앞에는 팩 금화(`UiKit.Coin`).
    * 이미 만든 프리팹의 그림만 바꿀 때는 생성기를 다시 돌리지 말고 `UiSkinRefresher.RefreshAll()`로 프리팹 안에서 바꾼다(생성기는 씬 인스턴스를 새로 놓아 씬이 바뀐다).
