@@ -53,7 +53,10 @@ UI Toolkit을 모두 걷어냈다. uGUI(A안)로 다시 만드는 중이다. 만
    * 프리팹은 손으로 만들지 않는다. 에디터 생성기(`Assets/Editor/*Builder.cs`)가 `UiKit`(바탕·테두리 그림 생성, 패널·칩·막대·글자·버튼)으로 만들고 `UiSceneInstaller`로 SampleScene에 놓아 배선한다. Unity CLI로 `XxxBuilder.BuildAll()`을 부른다. 새 화면도 같은 방식으로 만든다.
    * 테두리 있는 버튼은 `UiFrameButton`(고름·강조는 `SetSelected`로 금색 테두리, 팝업처럼 역할이 바뀌면 `SetStyle`).
    * 글꼴(The Jamsil 5 Bold SDF)에 `▾`·`▴` 같은 기호가 없어 네모로 보인다. 화살표 기호 대신 글자로 쓴다(`↑→`는 있음). 말줄임표 `…`도 없어 넘치는 한 줄 글은 말줄임 대신 잘리고 경고가 난다(대체 글꼴 추가 전까지).
-   * 옛 Silver 테두리 그림(`Assets/09.UI/Skin/Silver/`)은 9-slice 스프라이트로 가져와 두었지만 A안은 쓰지 않는다(`Skin/Ledger/RoundFill`·`RoundLine`).
+   * 패널·버튼 테두리는 픽셀 UI 팩 SuperGUIBundle(`Assets/04.Sprites/UI/SuperGUIBundle`, Black 테마, 2026-10-20 사용자 선택)의 사슬 테두리·나선 모서리다. `UiKit.FrameFillSprite`·`FrameLineSprite`(`Skin/Ledger/FrameFill`·`FrameLine`, 흰 그림이라 `HudPalette` 색으로 칠함)를 2배·되풀이(`UiKit.ApplyPixelFrame`)로 그린다. 막대·칩·스크롤바·슬라이더는 둥근 그림(`RoundFill`)이다. 배속 버튼은 팩 기호(`UiKit.ButtonGlyph`), 금화 앞에는 팩 금화(`UiKit.Coin`).
+   * 이미 만든 프리팹의 그림만 바꿀 때는 생성기를 다시 돌리지 말고 `UiSkinRefresher.RefreshAll()`로 프리팹 안에서 바꾼다(생성기는 씬 인스턴스를 새로 놓아 씬이 바뀐다).
+   * 팩 원본의 가져오기 설정은 건드리지 않는다. 쓸 그림은 `UiKit`이 잘라 `Skin/Ledger/`에 점 필터 픽셀 그림으로 만든다.
+   * 옛 Silver 테두리 그림(`Assets/09.UI/Skin/Silver/`)은 쓰지 않는다.
 4. **범용 팝업은 `PopupController.Show(PopupRequest....)`로 띄운다.** 특수한 팝업이 필요하면 사용자에게 사전 설계를 묻는다.
 5. **레이아웃 크기는 내용에 따라 변하지 않는다.** 텍스트 길이, 조건부 요소의 유무, 스크롤바의 유무 때문에 패널·푸터·상세창·버튼의 크기나 위치가 달라지면 안 된다.
    * 고정 영역(헤더·탭·푸터·상세창·액션 버튼)은 크기를 명시한다. 남는 공간을 쓰는 영역은 하나만 둔다.
