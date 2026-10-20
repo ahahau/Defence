@@ -339,9 +339,12 @@ namespace Tests.EditMode.Rules
             var shape = NewShape(RoomSize.Medium, RoomDoors.Left | RoomDoors.Right, Rows(6));
             var plan = RoomTilePlan.Build(shape, RoomDoors.Right, RoomDoors.None, 24);
 
-            // 6열 방의 오른쪽 벽 줄은 타일 x = 6, 문 틈은 y -1·0.
-            Assert.That(plan.Pillars, Has.Member(new Vector2Int(6, 1)).And.Member(new Vector2Int(7, 2)));
-            Assert.That(plan.Pillars, Has.Member(new Vector2Int(6, -2)).And.Member(new Vector2Int(7, -3)));
+            // 6열 방의 오른쪽 벽 줄은 타일 x = 6, 문 틈은 y -1·0. 기둥은 가로 2 × 세로 3(머리·몸통·받침).
+            Assert.That(plan.Pillars, Has.Member(new Vector2Int(6, 1)).And.Member(new Vector2Int(7, 3)));
+            Assert.That(plan.Pillars, Has.Member(new Vector2Int(6, -2)).And.Member(new Vector2Int(7, -4)));
+            Assert.That(plan.Corridor, Has.Member(new Vector2Int(6, 0)).And.Member(new Vector2Int(8, -1)),
+                "문 틈부터 바깥은 복도로 따로 든다(어둡게 칠함).");
+            Assert.That(plan.Corridor, Has.No.Member(new Vector2Int(5, 0)), "방 바닥은 복도가 아닙니다.");
             Assert.That(plan.Pillars, Has.No.Member(new Vector2Int(6, 0)).And.No.Member(new Vector2Int(6, -1)), "문 틈은 열려 있습니다.");
             Assert.That(plan.Floor, Has.Member(new Vector2Int(6, 0)).And.Member(new Vector2Int(6, -1)));
             Assert.That(plan.Pillars, Has.No.Member(new Vector2Int(5, 1)), "방 바닥에는 서지 않습니다.");
@@ -356,6 +359,10 @@ namespace Tests.EditMode.Rules
             var plan = RoomTilePlan.Build(shape, RoomDoors.None, RoomDoors.None, 24);
             // 칸 (2,3)의 타일은 x -2..-1, y 0..1.
             Assert.That(plan.Pillars, Has.Member(new Vector2Int(-2, 1)).And.Member(new Vector2Int(-1, 0)));
+            // 기둥 조각은 머리·몸통·받침 3줄이라 칸(타일 2줄) 위로 한 줄을 더 그린다. 예전에는 반쪽 기둥으로 보였다.
+            Assert.That(plan.Pillars, Has.Member(new Vector2Int(-2, 2)).And.Member(new Vector2Int(-1, 2)));
+            Assert.That(plan.Floor, Has.No.Member(new Vector2Int(-2, 2)), "기둥 머리 자리는 바닥 대신 기둥으로 칠합니다.");
+            Assert.That(plan.Pillars, Has.No.Member(new Vector2Int(-2, 3)));
             Assert.That(plan.Pillars, Has.No.Member(new Vector2Int(-6, 4)), "깎인 모서리는 기둥이 아니라 벽입니다.");
             Assert.That(plan.Floor, Has.No.Member(new Vector2Int(-6, 4)));
         }
@@ -397,7 +404,9 @@ namespace Tests.EditMode.Rules
             Assert.That(Cell(tiles, 11, 3), Is.EqualTo((10, 7)), "복도 위 난간이 이음매에서 끊기면 안 됩니다.");
             Assert.That(Cell(tiles, 12, 3), Is.EqualTo((10, 7)));
             Assert.That(Cell(tiles, 11, -2), Is.EqualTo((10, 12)));
-            Assert.That(Cell(tiles, spacing - 2, 1), Is.EqualTo((7, 0)), "기둥 왼쪽 머리.");
+            // 기둥은 칸 위로 한 줄 더 그려 머리·몸통·받침 3줄이다.
+            Assert.That(Cell(tiles, spacing - 2, 2), Is.EqualTo((7, 0)), "기둥 왼쪽 머리.");
+            Assert.That(Cell(tiles, spacing - 2, 1), Is.EqualTo((7, 1)), "기둥 왼쪽 몸통.");
             Assert.That(Cell(tiles, spacing - 1, 0), Is.EqualTo((9, 2)), "기둥 오른쪽 받침.");
             Assert.That(Cell(tiles, 0, 0).row, Is.InRange(17, 18), "바닥은 바닥 무늬 칸입니다.");
         }
