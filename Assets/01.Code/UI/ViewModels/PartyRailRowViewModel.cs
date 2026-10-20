@@ -1,6 +1,6 @@
 using Code.Enemies;
 
-namespace Code.UI.Toolkit
+namespace Code.UI.ViewModels
 {
     /// <summary>HUD 우측 파티 목록 한 줄. 파티 줄은 누르면 <see cref="Target"/>의 상태 패널을 연다.</summary>
     public readonly struct PartyRailRowViewModel

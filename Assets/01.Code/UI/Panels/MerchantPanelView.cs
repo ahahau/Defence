@@ -3,6 +3,7 @@ using Code.Artifacts;
 using Code.Core;
 using Code.Events;
 using Code.Manager;
+using Code.UI.ViewModels;
 using UnityEngine;
 
 namespace Code.UI
@@ -10,6 +11,8 @@ namespace Code.UI
     /// <summary>
     /// 떠돌이 상인. 대기 중에만 열 수 있고, 유물을 금화로 판다.
     /// 진열은 하루마다 새로 뽑히며 이미 가진 유물은 나오지 않는다.
+    /// 그리는 화면은 지금 없다(uGUI 전환 대기) — 화면은 <see cref="Changed"/>를 듣고 <see cref="Offers"/>·<see cref="Title"/>·<see cref="Detail"/>을 읽으며,
+    /// 버튼은 <see cref="Buy"/>·<see cref="Hide"/>를 부른다.
     /// </summary>
     public class MerchantPanelView : MonoBehaviour
     {
@@ -52,7 +55,10 @@ namespace Code.UI
         /// </summary>
         private int purchaseCount;
 
-        public bool IsPanelOpen => _view != null && _view.IsVisible;
+        /// <summary>한 번에 진열하는 최대 칸 수.</summary>
+        public const int MaxOffers = 5;
+
+        public bool IsPanelOpen => _isOpen;
         public int PurchaseCount => purchaseCount;
 
         public void RestoreCheckpoint(IReadOnlyList<string> artifactKeys, int savedPurchaseCount, int day)
@@ -75,37 +81,21 @@ namespace Code.UI
             RefreshVisitState();
         }
 
-        // 창은 UI Toolkit(MerchantToolkitView)이 그린다. 이 컴포넌트는 진열·가격·구매를 맡고, 여는 버튼은 HUD에 있다.
-        private Code.UI.Toolkit.MerchantToolkitView _view;
-        private readonly List<Code.UI.Toolkit.MerchantOfferViewModel> _offerModels = new();
+        private bool _isOpen;
+        private readonly List<MerchantOfferViewModel> _offerModels = new();
+
+        public IReadOnlyList<MerchantOfferViewModel> Offers => _offerModels;
+        public string Title { get; private set; } = string.Empty;
+        public string Subtitle { get; private set; } = string.Empty;
+        public string Detail { get; private set; } = string.Empty;
+        public MerchantDetailTone DetailTone { get; private set; }
+
+        /// <summary>열림·진열·안내 문구가 바뀌었다.</summary>
+        public event System.Action Changed;
 
         private void Awake()
         {
             RefreshVisitState();
-        }
-
-        private Code.UI.Toolkit.MerchantToolkitView EnsureView()
-        {
-            if (_view != null)
-                return _view;
-
-            _view = Code.UI.Toolkit.MerchantToolkitView.Ensure();
-            if (_view != null)
-            {
-                _view.BuyRequested += Buy;
-                _view.CloseRequested += Hide;
-            }
-
-            return _view;
-        }
-
-        private void OnDestroy()
-        {
-            if (_view == null)
-                return;
-
-            _view.BuyRequested -= Buy;
-            _view.CloseRequested -= Hide;
         }
 
         private void OnEnable()
@@ -158,7 +148,7 @@ namespace Code.UI
         }
 
         /// <summary>
-        /// 대기가 끝나면 창을 닫는다. 여는 버튼은 HUD(UI Toolkit) 하단 "운영" 묶음에 있다.
+        /// 대기가 끝나면 창을 닫는다.
         /// </summary>
         private void RefreshVisitState()
         {
@@ -187,15 +177,18 @@ namespace Code.UI
                 return;
 
             EnsureRolled();
-            var view = EnsureView();
-            if (view == null)
-                return;
-
+            _isOpen = true;
             Refresh();
-            view.SetVisible(true);
         }
 
-        public void Hide() => _view?.SetVisible(false);
+        public void Hide()
+        {
+            if (!_isOpen)
+                return;
+
+            _isOpen = false;
+            Changed?.Invoke();
+        }
 
         private void EnsureRolled()
         {
@@ -219,7 +212,8 @@ namespace Code.UI
             hasRolled = true;
         }
 
-        private void Buy(int slotIndex)
+        /// <summary>진열 칸을 산다. 결제는 비용 채널로 요청하고 결과는 이벤트로 받는다.</summary>
+        public void Buy(int slotIndex)
         {
             if (slotIndex < 0 || slotIndex >= display.Count || costEventChannel == null || shopCatalog == null)
                 return;
@@ -230,7 +224,7 @@ namespace Code.UI
             var artifact = offer.IsRandom ? shopCatalog.PickRandomUnowned(artifactInventory) : offer.Artifact;
             if (artifact == null)
             {
-                SetDetail("더 내줄 유물이 남아 있지 않습니다.", Code.UI.Toolkit.MerchantDetailTone.Failure);
+                SetDetail("더 내줄 유물이 남아 있지 않습니다.", MerchantDetailTone.Failure);
                 return;
             }
 
@@ -260,13 +254,13 @@ namespace Code.UI
                     display.RemoveAll(o => o.IsRandom);
 
                 SetDetail($"상자에서 {ResolveName(evt.Artifact)}!\n남은 금화 {evt.RemainingGold}G",
-                    Code.UI.Toolkit.MerchantDetailTone.Success);
+                    MerchantDetailTone.Success);
             }
             else
             {
                 display.RemoveAll(o => !o.IsRandom && o.Artifact == evt.Artifact);
                 SetDetail($"{ResolveName(evt.Artifact)} 구입 완료\n남은 금화 {evt.RemainingGold}G",
-                    Code.UI.Toolkit.MerchantDetailTone.Success);
+                    MerchantDetailTone.Success);
             }
 
             _pendingWasRandom = false;
@@ -286,25 +280,21 @@ namespace Code.UI
         private void HandlePurchaseRejected(ArtifactPurchaseRejectedEvent evt)
         {
             SetDetail($"금화가 부족합니다.\n필요 {evt.GoldAmount}G · 보유 {evt.CurrentGold}G",
-                Code.UI.Toolkit.MerchantDetailTone.Failure);
+                MerchantDetailTone.Failure);
         }
 
         private void Refresh(bool resetDetail = true)
         {
-            var view = EnsureView();
-            if (view == null)
-                return;
-
             // 언제 다시 오는지가 살지 말지를 정하는 정보라 제목 옆에 같이 적는다.
             var nextVisit = shopCatalog != null ? shopCatalog.GetNextVisitDay(currentDay + 1) : 0;
 
             _offerModels.Clear();
-            for (var i = 0; i < display.Count && i < Code.UI.Toolkit.MerchantToolkitView.MaxOffers; i++)
+            for (var i = 0; i < display.Count && i < MaxOffers; i++)
             {
                 var offer = display[i];
                 var price = GetOfferPrice(offer);
                 var combo = offer.IsRandom ? (string.Empty, false) : BuildComboHint(offer.Artifact);
-                _offerModels.Add(new Code.UI.Toolkit.MerchantOfferViewModel
+                _offerModels.Add(new MerchantOfferViewModel
                 {
                     Name = offer.IsRandom ? shopCatalog.RandomArtifactLabel : ResolveName(offer.Artifact),
                     Price = price,
@@ -317,14 +307,18 @@ namespace Code.UI
                 });
             }
 
-            view.Render(titleFormat, $"{currentDay}일차  ·  다음 방문 {nextVisit}일차", _offerModels);
+            Title = titleFormat;
+            Subtitle = $"{currentDay}일차  ·  다음 방문 {nextVisit}일차";
 
             if (!resetDetail)
+            {
+                Changed?.Invoke();
                 return;
+            }
 
             if (display.Count == 0)
             {
-                SetDetail("오늘은 팔 물건이 없습니다.", Code.UI.Toolkit.MerchantDetailTone.Normal);
+                SetDetail("오늘은 팔 물건이 없습니다.", MerchantDetailTone.Normal);
                 return;
             }
 
@@ -332,7 +326,7 @@ namespace Code.UI
             SetDetail(purchaseCount > 0
                 ? $"거래할수록 값을 올려 부릅니다. (누적 {purchaseCount}회)"
                 : "유물을 고르면 즉시 구매합니다.\n거래할 때마다 이후 가격이 오릅니다.",
-                Code.UI.Toolkit.MerchantDetailTone.Normal);
+                MerchantDetailTone.Normal);
         }
 
         /// <summary>
@@ -372,9 +366,11 @@ namespace Code.UI
             return (lines.ToString(), complete);
         }
 
-        private void SetDetail(string value, Code.UI.Toolkit.MerchantDetailTone tone)
+        private void SetDetail(string value, MerchantDetailTone tone)
         {
-            EnsureView()?.SetDetail(value, tone);
+            Detail = value;
+            DetailTone = tone;
+            Changed?.Invoke();
         }
 
         private static string ResolveName(ArtifactDataSO artifact)

@@ -18,7 +18,7 @@ namespace Code.UI
     /// 방 관리 로직. 고른 방, 건물·함정 설치(미리보기·결제·설치), 유닛 배치(칸 선택·마력 결제),
     /// 시설 수리·휴업·철거, 유닛 명령·이동·회수를 맡는다.
     ///
-    /// 화면은 없다. 방 상세·설치 창(<see cref="RoomManagementController"/>)이 여기 상태를 묻고 요청을 보낸다.
+    /// 화면은 없다. 방 상세·설치 창(<see cref="RoomManagement.RoomDetailPresenter"/>·<see cref="RoomManagement.InstallPanelPresenter"/>)이 여기 상태를 묻고 요청을 보낸다.
     /// 이름은 예전 uGUI 노드 패널 시절의 것이다. 씬·테스트·튜토리얼이 이 이름으로 부르므로 그대로 둔다.
     /// </summary>
     public class NodePanelView : MonoBehaviour
@@ -32,6 +32,8 @@ namespace Code.UI
         [SerializeField] private Unit unitPrefab;
         [SerializeField] private BuildingDataSO[] installableBuildings;
         [SerializeField] private DungeonUnlockCatalogSO unlockCatalog;
+        [SerializeField, Tooltip("해금과 상관없이 늘 설치 후보에 오르는 건물(금고·대장간)")]
+        private BuildingDataSO[] alwaysInstallableBuildings;
         [SerializeField] private GameEventChannelSO nodeEventChannel;
         [SerializeField] private GameEventChannelSO uiEventChannel;
         [SerializeField] private GameEventChannelSO costEventChannel;
@@ -95,6 +97,12 @@ namespace Code.UI
 
         /// <summary>고른 방이 바뀌었다(방 클릭·유닛 클릭·이동 완료). 방 상세를 연다.</summary>
         public event Action SelectionChanged;
+
+        /// <summary>금고 칸을 눌렀다. 금고 창이 이 금고를 보여 준다.</summary>
+        public event Action<Treasury> TreasuryInspectRequested;
+
+        /// <summary>다른 방을 골라 금고 창을 닫는다.</summary>
+        public event Action TreasuryInspectClosed;
 
         /// <summary>방의 내용이나 고를 수 있는 것이 바뀌었다. 열린 화면을 다시 그린다.</summary>
         public event Action StateChanged;
@@ -408,7 +416,7 @@ namespace Code.UI
         {
             dayManager ??= DayManager.Current;
             _unitManagementSystem = new UnitManagementSystem(nodeEventChannel, costEventChannel, dayManager);
-            _buildingCatalog.Initialize(installableBuildings, unlockCatalog);
+            _buildingCatalog.Initialize(installableBuildings, unlockCatalog, alwaysInstallableBuildings);
         }
 
         private void OnEnable()
@@ -541,7 +549,7 @@ namespace Code.UI
             _selectedManagedUnit = unit;
             // 금고는 칸 건물이라 한 방에 여럿 선다. 어느 금고인지는 방이 아니라
             // 칸을 눌러서 정한다 — HandleNodeGridCellSelected 참고.
-            Code.UI.Toolkit.TreasuryToolkitView.HideCurrent();
+            TreasuryInspectClosed?.Invoke();
             SelectionChanged?.Invoke();
         }
 
@@ -632,7 +640,7 @@ namespace Code.UI
                 && evt.Node.TrapGrid != null
                 && evt.Node.TrapGrid.BuildingAt(evt.Column, evt.Row) is Treasury cellTreasury)
             {
-                Code.UI.Toolkit.TreasuryToolkitView.ShowFor(cellTreasury);
+                TreasuryInspectRequested?.Invoke(cellTreasury);
                 return;
             }
 

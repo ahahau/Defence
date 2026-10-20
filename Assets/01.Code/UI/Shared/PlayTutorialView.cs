@@ -107,6 +107,8 @@ namespace Code.UI
         private DialogueRunner dialogueRunner;
         [SerializeField, Tooltip("상인 수업이 비출 상인 창. 비어 있으면 찾으며 경고한다(배선 뒤 폴백 제거).")]
         private MerchantPanelView merchantPanel;
+        [SerializeField, Tooltip("방을 고른 뒤 갈래 버튼 → 카드 → 설치를 따라갈 방 관리 화면, 상인 버튼도 여기 있다.")]
+        private RoomManagementScreen roomScreen;
         [SerializeField, Min(0.1f), Tooltip("방 하나를 덮을 월드 반지름. 구멍 크기를 재는 기준.")]
         private float spotlightWorldRadius = 2.4f;
 
@@ -146,16 +148,28 @@ namespace Code.UI
         // 방 확장 확인은 UI Toolkit 팝업이라 RectTransform이 없다. 이때는 팝업에게 버튼 위치를 묻는다.
         private bool _buildTargetIsPopup;
 
-        // 방 관리 화면(설치 창·하단 갈래 버튼)도 UI Toolkit이라, 잔걸음을 잴 때 화면 사각형을 받아 둔다.
+        // 방 관리 화면(설치 창·도크 갈래 버튼)은 잔걸음을 잴 때 화면 사각형을 받아 둔다.
         private bool _hasBuildScreenRect;
         private Rect _buildScreenRect;
         private Node _buildNodeTarget;
         private float _timer;
         private float _stepAge;
         private bool _released;
-        private Code.UI.Toolkit.TutorialOverlayToolkitView _overlay;
-        /// <summary>안내 카드를 띄우라고 했는가. 덮개 화면이 아직 없을 때(EditMode 테스트)도 상태를 잃지 않는다.</summary>
+        /// <summary>안내 카드를 띄우라고 했는가.</summary>
         private bool _hintVisible;
+
+        /// <summary>안내 카드 머리글. 그리는 덮개 화면은 지금 없다(uGUI 전환 대기) — 화면은 <see cref="OverlayChanged"/>를 듣는다.</summary>
+        public string HintHeader { get; private set; } = string.Empty;
+        public string HintText { get; private set; } = string.Empty;
+        public bool IsHintVisible => _hintVisible;
+
+        /// <summary>어둠을 깔고 이 사각형(화면 픽셀, 왼쪽 아래 원점)만 뚫는다.</summary>
+        public bool IsSpotlightVisible { get; private set; }
+        public Rect SpotlightHole { get; private set; }
+        public float SpotlightPadding => spotlightPadding;
+
+        /// <summary>안내 글·어둠 구멍이 바뀌었다. 건너뛰기 버튼은 <see cref="SkipTutorial"/>을 부른다.</summary>
+        public event System.Action OverlayChanged;
         private bool _waitingForDialogue;
         private DialogueRunner _dialogue;
 
@@ -191,16 +205,6 @@ namespace Code.UI
             _cameraTween?.Kill();
             HideSpotlight();
             SetHintVisible(false);
-        }
-
-        private void OnDestroy()
-        {
-            if (_overlay == null)
-                return;
-
-            _overlay.SkipClicked -= SkipTutorial;
-            Destroy(_overlay.gameObject);
-            _overlay = null;
         }
 
         private void Update()
@@ -516,15 +520,13 @@ namespace Code.UI
                     return false;
 
                 case Step.SurviveWave:
-                    // 시작 버튼은 UI Toolkit 화면에 있다. 화면 사각형을 바로 받는다.
+                    // 시작 버튼의 화면 사각형은 버튼을 그리는 화면이 알려 준다(지금은 없음).
                     var wave = ResolveWaveView();
                     return wave != null && wave.TryGetStartButtonScreenRect(out rect);
 
                 case Step.LearnMerchant:
-                    // 상인 버튼은 HUD(UI Toolkit) 하단 바에 있다. 화면 사각형을 바로 받는다.
-                    var hud = Code.UI.Toolkit.GameplayHudToolkitView.Current;
-                    return hud != null && hud.TryGetMerchantButtonScreenRect(out rect);
-
+                    // 상인 버튼은 왼쪽 아래 행동 도크에 있다.
+                    return roomScreen != null && roomScreen.TryGetMerchantButtonScreenRect(out rect);
 
                 default:
                     return TryResolveBuildHole(out rect);
@@ -594,17 +596,16 @@ namespace Code.UI
 
             nodeTarget = ResolveTargetNode();
 
-            // 방을 이미 골라 뒀다면 다음은 방 관리 화면 차례다 — 하단 갈래 버튼 → 카드 → 설치.
+            // 방을 이미 골라 뒀다면 다음은 방 관리 화면 차례다 — 도크 갈래 버튼 → 카드 → 설치.
             // 봉인된 방은 예외다. 그건 눌러서 여는 것이 곧 할 일이라 지도를 계속 가리켜야 한다.
-            var controller = RoomManagementController.Current;
             if (panel != null
-                && controller != null
+                && roomScreen != null
                 && nodeTarget != null
                 && panel.SelectedNode == nodeTarget
                 && !IsLocked(nodeTarget))
             {
                 var kind = _step == Step.DeployUnit ? RoomInstallKind.Unit : RoomInstallKind.Building;
-                _hasBuildScreenRect = controller.TryGetTutorialTarget(kind, out var stage, out _buildScreenRect);
+                _hasBuildScreenRect = roomScreen.TryGetTutorialTarget(kind, out var stage, out _buildScreenRect);
                 switch (stage)
                 {
                     case RoomTutorialStage.PickCategory:
@@ -751,21 +752,23 @@ namespace Code.UI
         }
 
         /// <summary>
-        /// 겨눈 네모만 남기고 네 조각 어둠으로 화면을 덮는다. 어둠은 UI Toolkit 덮개가 그린다 —
-        /// 팝업 패널에 떠서 uGUI와 다른 Toolkit 화면을 함께 덮는다(예전 uGUI 덮개는 정렬을 매번 다시
-        /// 걸어야 관리 창 위로 올라왔다).
+        /// 겨눈 네모만 남기고 네 조각 어둠으로 화면을 덮는다. 어둠은 덮개 화면이 그린다.
         /// </summary>
         private void ShowSpotlight(Rect hole)
         {
-            if (EnsureOverlay())
-                _overlay.SetHole(hole, spotlightPadding);
+            IsSpotlightVisible = true;
+            SpotlightHole = hole;
+            OverlayChanged?.Invoke();
         }
 
         private void HideSpotlight()
         {
             _hasHole = false;
-            if (_overlay != null)
-                _overlay.SetDimVisible(false);
+            if (!IsSpotlightVisible)
+                return;
+
+            IsSpotlightVisible = false;
+            OverlayChanged?.Invoke();
         }
 
         private static Node FindLockedNode()
@@ -912,10 +915,13 @@ namespace Code.UI
             var text = HintFor(_step);
             var show = !string.IsNullOrEmpty(text);
 
-            SetHintVisible(show);
+            if (show)
+            {
+                HintHeader = HeaderFor(_step);
+                HintText = text;
+            }
 
-            if (show && EnsureOverlay())
-                _overlay.SetHint(HeaderFor(_step), text);
+            SetHintVisible(show);
         }
 
         private static string HeaderFor(Step step) => step switch
@@ -932,28 +938,15 @@ namespace Code.UI
             _ => "던전 안내",
         };
 
-        /// <summary>안내 화면을 준비한다. 안내 글·어둠·건너뛰기는 UI Toolkit 덮개가 그린다.</summary>
-        private void ConfigureHint() => EnsureOverlay();
-
-        private bool EnsureOverlay()
+        /// <summary>안내 화면을 준비한다. 안내 글·어둠·건너뛰기는 덮개 화면이 그린다(지금은 없음).</summary>
+        private void ConfigureHint()
         {
-            if (_overlay != null)
-                return true;
-
-            _overlay = Code.UI.Toolkit.ToolkitScreenSO.Spawn<Code.UI.Toolkit.TutorialOverlayToolkitView>(
-                Code.UI.Toolkit.TutorialOverlayToolkitView.ScreenResourcePath, Code.UI.Toolkit.TutorialOverlayToolkitView.RootName);
-            if (_overlay == null)
-                return false;
-
-            _overlay.SkipClicked += SkipTutorial;
-            return true;
         }
 
         private void SetHintVisible(bool visible)
         {
             _hintVisible = visible;
-            if (EnsureOverlay())
-                _overlay.SetHintVisible(visible);
+            OverlayChanged?.Invoke();
         }
 
         private string HintFor(Step step) => step switch

@@ -645,19 +645,12 @@ namespace Code.Dialogue
         }
 
         /// <summary>
-        /// 방 관리 화면의 설치 흐름(하단 갈래 버튼 → 카드 → 설치)을 비춘다. 화면이 없거나 방을 아직
-        /// 고르지 않았으면 그 방을 비춘다.
+        /// 설치할 방을 비춘다. 방 관리 화면의 설치 흐름(갈래 버튼 → 카드 → 설치)을 비추던 단계는
+        /// 그 화면이 다시 생길 때(uGUI 전환) 되살린다.
         /// </summary>
         private void HighlightInstallTarget(Code.UI.RoomManagement.RoomInstallKind kind, Node fallbackNode)
         {
-            var controller = Code.UI.RoomManagement.RoomManagementController.Current;
-            if (controller == null || !controller.TryGetTutorialTarget(kind, out _, out var rect))
-            {
-                HighlightNode(fallbackNode);
-                return;
-            }
-
-            view?.SetSpotlightScreenRect(rect, 24f);
+            HighlightNode(fallbackNode);
         }
 
         private void HighlightWaveStartButton()
@@ -674,9 +667,9 @@ namespace Code.Dialogue
 
         private void UpdatePolicyTutorial()
         {
-            // 운영 방침 창은 UI Toolkit판이다. 옛 uGUI 창은 실행 중 꺼져 있어 열린 적이 없다.
-            var policyView = Code.UI.Toolkit.PolicyChoiceToolkitView.Current;
-            if (policyView == null)
+            // 운영 방침 창은 지금 그리는 화면이 없다(uGUI 전환 대기). 고를 방침이 남아 있으면 창이 열린 것으로 본다.
+            var policy = MoralePolicy;
+            if (policy == null)
             {
                 view?.HideSpotlight();
                 return;
@@ -685,7 +678,7 @@ namespace Code.Dialogue
             if (managementSettlementManager != null && managementSettlementManager.IsPanelOpen)
                 managementSettlementManager.ForceHidePanel();
 
-            if (!policyView.IsOpen)
+            if (policy.CurrentChoices.Count == 0)
             {
                 view?.HideSpotlight();
                 if (hasSeenPolicyChoicePanel)
@@ -695,14 +688,8 @@ namespace Code.Dialogue
 
             hasSeenPolicyChoicePanel = true;
             TutorialInputGate.OnlyPolicyChoice();
-
-            if (!policyView.TryGetFirstChoiceScreenRect(out var rect))
-            {
-                view?.HideSpotlight();
-                return;
-            }
-
-            view?.SetSpotlightScreenRect(rect, 24f);
+            // 첫 선택지를 비출 화면 사각형이 없다.
+            view?.HideSpotlight();
         }
 
         private void CompleteGuidedTutorial()

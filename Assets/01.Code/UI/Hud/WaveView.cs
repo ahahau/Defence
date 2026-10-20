@@ -4,7 +4,7 @@ using Code.Enemies;
 using Code.Events;
 using Code.Manager;
 using Code.Tutorial;
-using Code.UI.Toolkit;
+using Code.UI.ViewModels;
 using UnityEngine;
 
 namespace Code.UI
@@ -31,8 +31,8 @@ namespace Code.UI
     }
 
     /// <summary>
-    /// 영업(웨이브) 시작 버튼·준비 카드·진행 막대의 판단. 그리기는 UI Toolkit 화면
-    /// (<see cref="WaveHudToolkitView"/>)이 하고, 이 컴포넌트는 값을 정해 넘기고 버튼 입력을 받는다.
+    /// 영업(웨이브) 시작 버튼·준비 카드·진행 막대의 판단. 값을 <see cref="Model"/>로 정해 <see cref="ModelChanged"/>로 알리고,
+    /// 버튼 입력은 <see cref="RequestStart"/>·<see cref="ToggleObjective"/>로 받는다. 그리는 화면은 지금 없다(uGUI 전환 대기).
     /// </summary>
     public class WaveView : MonoBehaviour
     {
@@ -48,7 +48,6 @@ namespace Code.UI
 
         private const float WaveStatsRefreshInterval = 0.1f;
 
-        private WaveHudToolkitView _hud;
         private WaveHudViewModel _model;
         private DungeonGradeManager _dungeonGrade;
         private bool _startVisible = true;
@@ -66,11 +65,22 @@ namespace Code.UI
         /// </summary>
         private bool _started;
 
-        /// <summary>시작 버튼의 화면 사각형(왼쪽 아래 원점 픽셀). 튜토리얼이 비춘다. 버튼이 숨었으면 false.</summary>
+        /// <summary>지금 화면에 보여야 할 값.</summary>
+        public WaveHudViewModel Model => _model;
+
+        /// <summary>표시 값이 바뀌었다.</summary>
+        public event System.Action<WaveHudViewModel> ModelChanged;
+
+        private ScreenRectSource _startButtonRect;
+
+        /// <summary>시작 버튼을 그리는 화면이 자기 버튼 위치를 알려 줄 통로를 건다. 화면이 사라지면 null로 푼다.</summary>
+        public void SetStartButtonRectSource(ScreenRectSource source) => _startButtonRect = source;
+
+        /// <summary>시작 버튼의 화면 사각형(왼쪽 아래 원점 픽셀). 튜토리얼이 비춘다. 그리는 화면이 없거나 숨었으면 false.</summary>
         public bool TryGetStartButtonScreenRect(out Rect rect)
         {
             rect = default;
-            return _hud != null && _hud.TryGetStartButtonScreenRect(out rect);
+            return _startButtonRect != null && _startButtonRect(out rect);
         }
 
         /// <summary>
@@ -110,7 +120,6 @@ namespace Code.UI
 
         private void Start()
         {
-            EnsureHud();
             _started = true;
             RefreshStartButton();
         }
@@ -123,7 +132,6 @@ namespace Code.UI
             waveEventChannel?.AddListener<WaveEndedEvent>(HandleWaveEnded);
             gameStateEventChannel?.AddListener<GameOverEvent>(HandleGameOver);
             nodeEventChannel?.AddListener<NodeBuiltEvent>(HandleNodeBuilt);
-            BindHud();
         }
 
         private void OnDisable()
@@ -135,15 +143,7 @@ namespace Code.UI
             waveEventChannel?.RemoveListener<WaveEndedEvent>(HandleWaveEnded);
             gameStateEventChannel?.RemoveListener<GameOverEvent>(HandleGameOver);
             nodeEventChannel?.RemoveListener<NodeBuiltEvent>(HandleNodeBuilt);
-            UnbindHud();
             _model.StartHighlighted = false;
-        }
-
-        private void OnDestroy()
-        {
-            if (_hud != null)
-                Destroy(_hud.gameObject);
-            _hud = null;
         }
 
         private void Update()
@@ -158,7 +158,8 @@ namespace Code.UI
             RefreshWaveProgress(false, refreshStats);
         }
 
-        private void HandleStartClicked()
+        /// <summary>시작 버튼을 눌렀다. 튜토리얼이 막거나 시작할 수 없으면 무시한다.</summary>
+        public void RequestStart()
         {
             if (!handleStartButtonClick || !TutorialInputGate.AllowsWaveStartClick())
                 return;
@@ -178,9 +179,6 @@ namespace Code.UI
             _startVisible = false;
             _model.ObjectiveVisible = false;
             _model.PreparationVisible = false;
-            _hud?.PlayBanner($"DAY {evt.Day}  ·  던전 영업 시작",
-                $"오늘의 모험가 {Mathf.Max(0, evt.EnemyCount)}명이 오른쪽 입구로 들어옵니다");
-
             _model.ProgressVisible = true;
             _displayedProgress = 0f;
             _nextWaveStatsRefreshTime = Time.unscaledTime + WaveStatsRefreshInterval;
@@ -205,7 +203,8 @@ namespace Code.UI
 
         private void HandleNodeBuilt(NodeBuiltEvent evt) => RefreshStartButton();
 
-        private void HandleObjectiveToggleClicked()
+        /// <summary>목표 전환 버튼을 눌렀다. 대기 중에만 두 목표를 오간다.</summary>
+        public void ToggleObjective()
         {
             if (waveManager == null || dayManager == null || !dayManager.IsStandby)
                 return;
@@ -232,8 +231,6 @@ namespace Code.UI
             var standby = ready && dayManager.IsStandby;
             var nextDay = ready ? dayManager.NextWaveDay : 0;
             var canStart = standby && waveManager.CanStartWave(nextDay);
-            var enemyCount = ready ? Mathf.Max(0, waveManager.GetPreviewEnemyCount(nextDay)) : 0;
-            var hasEntryDoor = ready && waveManager.HasEntryDoor;
             waveManager?.PrepareObjectiveChoices(nextDay);
 
             // 안내가 붙잡고 있으면 감춘다.
@@ -242,64 +239,42 @@ namespace Code.UI
             _model.StartLabel = !ready
                 ? "준비 중"
                 : !standby
-                    ? "던전 영업 중"
+                    ? "영업 중"
                     : !waveManager.CanStartWave(nextDay)
                         ? waveManager.GetWaveStartBlockedReason(nextDay)
-                        : waveManager.IsBossDay(nextDay)
-                            ? $"특별 영업 시작\nDAY {nextDay} · 영웅 파티 {enemyCount}명"
-                            : $"던전 영업 시작\nDAY {nextDay} · 방문객 {enemyCount}명";
+                        : waveManager.IsBossDay(nextDay) ? "특별 영업 시작" : "영업 시작";
 
-            RefreshObjectiveToggle(nextDay, hasEntryDoor, canStart);
-            RefreshPreparation(standby, nextDay, enemyCount, hasEntryDoor);
+            RefreshObjectiveToggle(nextDay);
+            RefreshPreparation(nextDay);
             Render();
         }
 
-        private void RefreshObjectiveToggle(int day, bool hasEntryDoor, bool canStart)
+        private void RefreshObjectiveToggle(int nextDay)
         {
-            _model.ObjectiveVisible = hasEntryDoor && canStart && _model.StartVisible;
-            if (!_model.ObjectiveVisible)
-                return;
-
-            var selected = waveManager.SelectedObjective;
-            var other = selected == waveManager.ObjectiveOptionA
-                ? waveManager.ObjectiveOptionB
-                : waveManager.ObjectiveOptionA;
-            _model.ObjectiveLabel =
-                $"목표: {WaveObjectiveRules.GetTitle(selected)}  ·  클릭: {WaveObjectiveRules.GetTitle(other)} 선택";
+            _model.ObjectiveVisible = _model.StartVisible;
+            var visitors = waveManager != null ? waveManager.GetPreviewEnemyCount(nextDay) : 0;
+            _model.ObjectiveLabel = waveManager == null
+                ? string.Empty
+                : waveManager.GetSelectedObjectiveSummary(visitors);
         }
 
-        private void RefreshPreparation(bool standby, int day, int enemyCount, bool hasEntryDoor)
+        private void RefreshPreparation(int nextDay)
         {
-            _model.PreparationVisible = standby;
-            if (!standby)
-                return;
-
-            _model.PreparationTitle = $"DAY {Mathf.Max(1, day)}  ·  영업 준비";
-            if (!hasEntryDoor)
+            _model.PreparationVisible = _model.StartVisible;
+            if (!_model.PreparationVisible || waveManager == null)
             {
-                _model.PreparationBody = "던전 입구 문을 준비하는 중입니다";
+                _model.PreparationTitle = string.Empty;
+                _model.PreparationBody = string.Empty;
                 return;
             }
 
-            var baseEnemyCount = waveManager.GetBasePreviewEnemyCount(day);
-            var conquestReduction = Mathf.Max(0, baseEnemyCount - enemyCount);
-            var conquestText = conquestReduction > 0 ? $" · 마을 장악으로 -{conquestReduction}명" : string.Empty;
-            var threat = waveManager.GetThreatPreview(day);
-            var threatText = threat.IsEmpty
-                ? string.Empty
-                : $"\n<color=#FFCC66>{threat.Title}</color> · {threat.CounterHint}";
-            var traitText = threat.HasTraitInfo
-                ? $"\n<color=#E6AEFF>{threat.TraitSummary}</color>"
-                  + $"\n<color=#9FE6B8>추천 · {threat.TraitCounterHint}</color>"
-                : string.Empty;
-            _model.PreparationBody =
-                $"방문 예정 {enemyCount}명{conquestText} · 시설과 몬스터를 배치하세요\n"
-                + BuildVisitorMixLine(enemyCount)
-                + BuildGradeLine()
-                + CoreLoopFeatureUnlocks.GetPreparationHint(day)
-                + threatText
-                + traitText
-                + $"\n<color=#8FD6FF>선택 목표 · {waveManager.GetSelectedObjectiveSummary(enemyCount)}</color>";
+            var visitors = waveManager.GetPreviewEnemyCount(nextDay);
+            _model.PreparationTitle = $"DAY {nextDay} · 영업 준비";
+            _model.PreparationBody = BuildVisitorMixLine(visitors)
+                                     + BuildGradeLine()
+                                     + CoreLoopFeatureUnlocks.GetPreparationHint(nextDay)
+                                     + "\n"
+                                     + waveManager.GetSelectedObjectiveSummary(visitors);
         }
 
         /// <summary>
@@ -390,39 +365,6 @@ namespace Code.UI
             Render();
         }
 
-        private void Render()
-        {
-            if (_hud != null)
-                _hud.Render(_model);
-        }
-
-        private void EnsureHud()
-        {
-            if (_hud != null)
-                return;
-
-            _hud = ToolkitScreenSO.Spawn<WaveHudToolkitView>(WaveHudToolkitView.ScreenResourcePath, WaveHudToolkitView.RootName);
-            BindHud();
-        }
-
-        private void BindHud()
-        {
-            if (_hud == null)
-                return;
-
-            _hud.StartClicked -= HandleStartClicked;
-            _hud.StartClicked += HandleStartClicked;
-            _hud.ObjectiveClicked -= HandleObjectiveToggleClicked;
-            _hud.ObjectiveClicked += HandleObjectiveToggleClicked;
-        }
-
-        private void UnbindHud()
-        {
-            if (_hud == null)
-                return;
-
-            _hud.StartClicked -= HandleStartClicked;
-            _hud.ObjectiveClicked -= HandleObjectiveToggleClicked;
-        }
+        private void Render() => ModelChanged?.Invoke(_model);
     }
 }

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Code.Enemies;
 using Code.Manager;
 
-namespace Code.UI.Toolkit
+namespace Code.UI.ViewModels
 {
     /// <summary>
     /// 던전 안 모험가를 파티별로 묶어 HUD 우측 목록 줄로 만든다. 목록에는 이름과 위험도만 싣고,

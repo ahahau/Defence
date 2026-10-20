@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Code.UI.Toolkit
+namespace Code.UI.ViewModels
 {
     /// <summary>부하 상태 패널에 그릴 값. 판단(회복·회수 가능 여부)은 넘기는 쪽이 끝내고 글과 상태만 담는다.</summary>
     public struct UnitStatusViewModel

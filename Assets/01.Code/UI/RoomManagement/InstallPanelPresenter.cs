@@ -14,6 +14,9 @@ namespace Code.UI.RoomManagement
     /// </summary>
     public sealed class InstallPanelPresenter
     {
+        /// <summary>설치 창 한 쪽에 놓는 카드 수.</summary>
+        public const int CardsPerPage = 5;
+
         private readonly List<InstallOption> _rawOptions = new();
         private readonly List<InstallOption> _buildingOptions = new();
         private readonly List<DeployOption> _deployOptions = new();
@@ -58,7 +61,7 @@ namespace Code.UI.RoomManagement
         public void SelectSlot(NodePanelView panel, int slot)
         {
             Collect(panel);
-            var index = _page * InstallPanelView.CardsPerPage + slot;
+            var index = _page * CardsPerPage + slot;
             if (index >= 0 && index < Count)
                 _selected = DataAt(index);
         }
@@ -95,8 +98,8 @@ namespace Code.UI.RoomManagement
         public int PreferredSlot(NodePanelView panel)
         {
             Collect(panel);
-            var start = _page * InstallPanelView.CardsPerPage;
-            var end = Mathf.Min(Count, start + InstallPanelView.CardsPerPage);
+            var start = _page * CardsPerPage;
+            var end = Mathf.Min(Count, start + CardsPerPage);
             for (var i = start; i < end; i++)
             {
                 if (Kind == RoomInstallKind.Unit && TutorialInputGate.AllowedDeployUnit != null)
@@ -120,8 +123,8 @@ namespace Code.UI.RoomManagement
             var hasSelection = TryGetSelected(out var selectedIndex);
 
             _cards.Clear();
-            var start = _page * InstallPanelView.CardsPerPage;
-            var end = Mathf.Min(Count, start + InstallPanelView.CardsPerPage);
+            var start = _page * CardsPerPage;
+            var end = Mathf.Min(Count, start + CardsPerPage);
             for (var i = start; i < end; i++)
                 _cards.Add(BuildCard(panel, i, hasSelection && i == selectedIndex));
 
@@ -157,7 +160,7 @@ namespace Code.UI.RoomManagement
 
         private int Count => Kind == RoomInstallKind.Unit ? _deployOptions.Count : _buildingOptions.Count;
 
-        private int PageCount => (Count + InstallPanelView.CardsPerPage - 1) / InstallPanelView.CardsPerPage;
+        private int PageCount => (Count + CardsPerPage - 1) / CardsPerPage;
 
         private Object DataAt(int index) =>
             Kind == RoomInstallKind.Unit ? _deployOptions[index].Unit : _buildingOptions[index].Data;

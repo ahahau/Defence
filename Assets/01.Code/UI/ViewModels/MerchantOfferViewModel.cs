@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Code.UI.Toolkit
+namespace Code.UI.ViewModels
 {
     /// <summary>상인 진열 카드 한 장에 그릴 값.</summary>
     public struct MerchantOfferViewModel

@@ -2,7 +2,7 @@ using Code.Core;
 using Code.Events;
 using Code.Manager;
 using Code.MapCreateSystem;
-using Code.UI.Toolkit;
+using Code.UI.ViewModels;
 using Code.Units;
 using UnityEngine;
 
@@ -10,8 +10,9 @@ namespace Code.UI
 {
     /// <summary>
     /// 부하 상태 패널의 판단을 맡는다: 어느 부하를 보여 줄지, 치료·회수를 할 수 있는지, 버튼을 누르면 무엇을 할지.
-    /// 그리기는 UI Toolkit(<see cref="UnitStatusToolkitView"/>)이 한다. 씬에 배선된 채널·하루 관리자를 쓰므로
-    /// 컴포넌트는 씬의 UI 판단 오브젝트에 둔다.
+    /// 씬에 배선된 채널·하루 관리자를 쓰므로 컴포넌트는 씬의 UI 판단 오브젝트에 둔다.
+    /// 그리는 화면은 <see cref="UnitStatusView"/>(uGUI)다 — <see cref="Opened"/>·<see cref="ModelChanged"/>·<see cref="Closed"/>를 듣고
+    /// 버튼은 <see cref="RequestRecover"/>·<see cref="RequestRecall"/>·<see cref="HidePanel"/>을 부른다.
     /// </summary>
     public class UnitStatusPanelView : MonoBehaviour
     {
@@ -25,11 +26,18 @@ namespace Code.UI
         private Node selectedNode;
         private Unit selectedUnit;
         private UnitManagementSystem _unitManagementSystem;
-        private UnitStatusToolkitView _view;
+        private bool _isOpen;
         private string _hint = string.Empty;
         private float _nextRefreshAt;
 
         public Unit SelectedUnit => selectedUnit;
+        public bool IsOpen => _isOpen;
+        public UnitStatusViewModel Model { get; private set; }
+
+        /// <summary>창을 연다(누른 화면 좌표).</summary>
+        public event System.Action<Vector2> Opened;
+        public event System.Action<UnitStatusViewModel> ModelChanged;
+        public event System.Action Closed;
 
         private void Awake()
         {
@@ -49,7 +57,6 @@ namespace Code.UI
             nodeEventChannel?.RemoveListener<UnitStatusRequestedEvent>(HandleUnitStatusRequested);
             costEventChannel?.RemoveListener<UnitRecoveryCostPaidEvent>(HandleRecoveryPaid);
             costEventChannel?.RemoveListener<UnitRecoveryCostRejectedEvent>(HandleRecoveryRejected);
-            DetachView();
         }
 
         private void OnDestroy()
@@ -60,7 +67,7 @@ namespace Code.UI
 
         private void Update()
         {
-            if (selectedUnit == null || _view == null || !_view.IsVisible)
+            if (selectedUnit == null || !_isOpen)
                 return;
 
             if (Time.unscaledTime < _nextRefreshAt)
@@ -87,40 +94,12 @@ namespace Code.UI
             EnemyStatusPanelView.ActiveInstance?.HidePanel();
             _hint = string.Empty;
             _nextRefreshAt = 0f;
-            if (!AttachView())
-                return;
-
+            _isOpen = true;
             Refresh();
-            _view.Open(evt.ScreenPosition);
+            Opened?.Invoke(evt.ScreenPosition);
         }
 
-        private bool AttachView()
-        {
-            if (_view != null)
-                return true;
-
-            _view = UnitStatusToolkitView.Ensure();
-            if (_view == null)
-                return false;
-
-            _view.CloseRequested += HidePanel;
-            _view.RecoverRequested += HandleRecoverClicked;
-            _view.RecallRequested += HandleRecallClicked;
-            return true;
-        }
-
-        private void DetachView()
-        {
-            if (_view == null)
-                return;
-
-            _view.CloseRequested -= HidePanel;
-            _view.RecoverRequested -= HandleRecoverClicked;
-            _view.RecallRequested -= HandleRecallClicked;
-            _view = null;
-        }
-
-        private void HandleRecoverClicked()
+        public void RequestRecover()
         {
             if (selectedNode == null || selectedUnit == null || !CanRecoverSelectedUnit())
                 return;
@@ -131,7 +110,7 @@ namespace Code.UI
                 selectedUnit.RecoveryCost));
         }
 
-        private void HandleRecallClicked()
+        public void RequestRecall()
         {
             if (!CanRecallSelectedUnit())
             {
@@ -173,7 +152,7 @@ namespace Code.UI
 
         public void HidePanel()
         {
-            _view?.Close();
+            CloseView();
             selectedNode = null;
             selectedUnit = null;
         }
@@ -182,12 +161,9 @@ namespace Code.UI
         {
             if (selectedUnit == null)
             {
-                _view?.Close();
+                CloseView();
                 return;
             }
-
-            if (_view == null)
-                return;
 
             var unitName = selectedUnit.Data != null && !string.IsNullOrWhiteSpace(selectedUnit.Data.Name)
                 ? selectedUnit.Data.Name
@@ -204,7 +180,7 @@ namespace Code.UI
             if (string.IsNullOrWhiteSpace(hint) && needsRecovery && !CanRecoverSelectedUnit())
                 hint = ResolveRecoverBlockedReason();
 
-            _view.Render(new UnitStatusViewModel
+            Model = new UnitStatusViewModel
             {
                 Title = $"{unitName} Lv {level.Level}",
                 State = selectedUnit.IsIncapacitated
@@ -231,7 +207,17 @@ namespace Code.UI
                 ShowRecall = selectedUnit is not MainUnit,
                 RecallEnabled = canRecall,
                 RecallLabel = canRecall ? "회수(대기 명단)" : ResolveRecallBlockedReason()
-            });
+            };
+            ModelChanged?.Invoke(Model);
+        }
+
+        private void CloseView()
+        {
+            if (!_isOpen)
+                return;
+
+            _isOpen = false;
+            Closed?.Invoke();
         }
 
         private bool CanRecallSelectedUnit()

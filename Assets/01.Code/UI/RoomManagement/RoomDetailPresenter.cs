@@ -14,6 +14,9 @@ namespace Code.UI.RoomManagement
     /// </summary>
     public sealed class RoomDetailPresenter
     {
+        /// <summary>방 상세에 보이는 소속 유닛 줄 수.</summary>
+        public const int MaxUnitRows = 4;
+
         private const float MessageSeconds = 5f;
 
         private readonly List<Unit> _units = new();
@@ -92,7 +95,7 @@ namespace Code.UI.RoomManagement
             foreach (var placement in node.UnitPlacements)
             {
                 var unit = placement?.Instance;
-                if (unit == null || _units.Count >= RoomDetailView.MaxUnitRows)
+                if (unit == null || _units.Count >= MaxUnitRows)
                     continue;
 
                 _units.Add(unit);

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Code.UI.RoomManagement
 {
-    /// <summary>방 상세에 그릴 값. 판단은 <see cref="RoomManagementController"/>가 끝내고 넘긴다.</summary>
+    /// <summary>방 상세에 그릴 값. 판단은 <see cref="RoomDetailPresenter"/>가 끝내고 넘긴다.</summary>
     public struct RoomDetailViewModel
     {
         public string Title;
@@ -20,7 +20,7 @@ namespace Code.UI.RoomManagement
 
         public string UnitCount;
         public RoomActionState Deploy;
-        /// <summary>소속 유닛 줄(최대 <see cref="RoomDetailView.MaxUnitRows"/>).</summary>
+        /// <summary>소속 유닛 줄(최대 <see cref="RoomDetailPresenter.MaxUnitRows"/>).</summary>
         public IReadOnlyList<RoomUnitRowViewModel> Units;
         /// <summary>명령 버튼(<see cref="Code.UI.NodePanelView.CommandOrder"/> 순서). 고른 유닛이 없으면 비어 있다.</summary>
         public IReadOnlyList<RoomActionState> Commands;

@@ -1,6 +1,6 @@
-namespace Code.UI.Toolkit
+namespace Code.UI.ViewModels
 {
-    /// <summary>영업 HUD 한 장면의 표시 값. <c>WaveView</c>가 판단해서 채우고 <see cref="WaveHudToolkitView"/>가 그린다.</summary>
+    /// <summary>영업 HUD 한 장면의 표시 값. <c>WaveView</c>가 판단해서 채우고 영업 HUD 화면이 그린다.</summary>
     public struct WaveHudViewModel
     {
         public bool StartVisible;

@@ -11,24 +11,24 @@ namespace Code.UI
     /// </summary>
     public class InstallableBuildingCatalog
     {
-        private const string TreasuryResourcePath = "Buildings/TreasuryBuildingData";
-        private const string BlacksmithResourcePath = "Buildings/BlacksmithBuildingData";
-
         private readonly List<BuildingDataSO> _unlocked = new();
         private IReadOnlyList<BuildingDataSO> _installable;
-        private BuildingDataSO _treasuryData;
-        private BuildingDataSO _blacksmithData;
-        private bool _hasLoadedTreasuryData;
+        private IReadOnlyList<BuildingDataSO> _alwaysInstallable;
 
         public IReadOnlyList<BuildingDataSO> Unlocked => _unlocked;
 
         /// <summary>
         /// 시작 해금 상태를 정한다. 해금 카탈로그가 있으면 그 기준을 따르고,
         /// 없으면 설치 가능 목록 전체를 열어 둔다.
+        /// <paramref name="alwaysInstallableBuildings"/>는 해금과 상관없이 늘 후보에 오른다(금고·대장간).
         /// </summary>
-        public void Initialize(IReadOnlyList<BuildingDataSO> installableBuildings, DungeonUnlockCatalogSO unlockCatalog)
+        public void Initialize(
+            IReadOnlyList<BuildingDataSO> installableBuildings,
+            DungeonUnlockCatalogSO unlockCatalog,
+            IReadOnlyList<BuildingDataSO> alwaysInstallableBuildings = null)
         {
             _installable = installableBuildings;
+            _alwaysInstallable = alwaysInstallableBuildings;
             _unlocked.Clear();
 
             if (_installable == null)
@@ -81,24 +81,15 @@ namespace Code.UI
                     yield return buildingData;
             }
 
-            // 금고는 인스펙터 목록에 없어도 항상 지을 수 있어야 해서 리소스에서 직접 가져온다.
-            var treasuryData = ResolveTreasuryData();
-            if (treasuryData != null && yielded.Add(treasuryData))
-                yield return treasuryData;
+            // 금고는 해금 목록에 없어도 항상 지을 수 있어야 한다.
+            if (_alwaysInstallable == null)
+                yield break;
 
-            _blacksmithData ??= Resources.Load<BuildingDataSO>(BlacksmithResourcePath);
-            if (_blacksmithData != null && yielded.Add(_blacksmithData))
-                yield return _blacksmithData;
-        }
-
-        private BuildingDataSO ResolveTreasuryData()
-        {
-            if (_hasLoadedTreasuryData)
-                return _treasuryData;
-
-            _hasLoadedTreasuryData = true;
-            _treasuryData = Resources.Load<BuildingDataSO>(TreasuryResourcePath);
-            return _treasuryData;
+            foreach (var buildingData in _alwaysInstallable)
+            {
+                if (buildingData != null && yielded.Add(buildingData))
+                    yield return buildingData;
+            }
         }
 
         private bool AddUnlocked(BuildingDataSO buildingData)
