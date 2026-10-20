@@ -142,6 +142,12 @@ MonoBehaviour:
   selectedBorder: {r: 0.9490196, g: 0.7607843, b: 0.3529412, a: 1}
   label: {fileID: 8307916321769426978}
   group: {fileID: 0}
+  faceRole: 0
+  normalFace: {fileID: 0}
+  primaryFace: {fileID: 0}
+  dangerFace: {fileID: 0}
+  highlightFace: {fileID: 0}
+  faceText: {r: 0.15686275, g: 0.13333334, b: 0.20392157, a: 1}
 --- !u!1 &46791547656508266
 GameObject:
   m_ObjectHideFlags: 0
@@ -279,81 +285,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!1 &150191831921152534
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 7787285380867517585}
-  - component: {fileID: 2719377775696912110}
-  - component: {fileID: 4108906648402288774}
-  m_Layer: 5
-  m_Name: Outline
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &7787285380867517585
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 150191831921152534}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 8010623584850165905}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -0, y: -0}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!222 &2719377775696912110
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 150191831921152534}
-  m_CullTransparentMesh: 1
---- !u!114 &4108906648402288774
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 150191831921152534}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 0.9490196, g: 0.7607843, b: 0.3529412, a: 1}
-  m_RaycastTarget: 0
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 38fbc4efebcd01f4cba51cd00f630cc8, type: 3}
-  m_Type: 2
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 0.5
 --- !u!1 &199089321357473428
 GameObject:
   m_ObjectHideFlags: 0
@@ -1123,7 +1054,6 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 4473553121981137441}
   - {fileID: 4023838950474981593}
   m_Father: {fileID: 50288581064170730}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1153,14 +1083,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.17254902, g: 0.14509805, b: 0.2, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 9ac0049c692ba91438a07d63961bd7c3, type: 3}
+  m_Sprite: {fileID: 21300000, guid: c57aede5c1a9ea947b91fc57a07a677d, type: 3}
   m_Type: 2
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1169,7 +1099,7 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 0.5
+  m_PixelsPerUnitMultiplier: 1
 --- !u!114 &6006678999067909805
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1195,7 +1125,7 @@ MonoBehaviour:
     m_HighlightedColor: {r: 1.25, g: 1.2, b: 1.1, a: 1}
     m_PressedColor: {r: 0.75, g: 0.7, b: 0.65, a: 1}
     m_SelectedColor: {r: 1, g: 1, b: 1, a: 1}
-    m_DisabledColor: {r: 0.6, g: 0.6, b: 0.6, a: 0.5}
+    m_DisabledColor: {r: 0.62, g: 0.6, b: 0.6, a: 1}
     m_ColorMultiplier: 1.2
     m_FadeDuration: 0.08
   m_SpriteState:
@@ -1227,11 +1157,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.UI.UiFrameButton
   button: {fileID: 6006678999067909805}
-  outline: {fileID: 4002270885295089520}
+  outline: {fileID: 0}
   normalBorder: {r: 0.41960785, g: 0.3529412, b: 0.47058824, a: 1}
   selectedBorder: {r: 0.9490196, g: 0.7607843, b: 0.3529412, a: 1}
   label: {fileID: 7156738964855151472}
   group: {fileID: 0}
+  faceRole: 1
+  normalFace: {fileID: 21300000, guid: c57aede5c1a9ea947b91fc57a07a677d, type: 3}
+  primaryFace: {fileID: 21300000, guid: 37b6bcb0b9c3203439f9e58f1177d0b0, type: 3}
+  dangerFace: {fileID: 21300000, guid: 66666ab3939f54848af8999b34e33249, type: 3}
+  highlightFace: {fileID: 21300000, guid: 0eff00eba9d6982488af3d6dd3f0cdb9, type: 3}
+  faceText: {r: 0.15686275, g: 0.13333334, b: 0.20392157, a: 1}
 --- !u!225 &6912764769172354824
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -1386,6 +1322,12 @@ MonoBehaviour:
   selectedBorder: {r: 0.9490196, g: 0.7607843, b: 0.3529412, a: 1}
   label: {fileID: 3437857509917544859}
   group: {fileID: 0}
+  faceRole: 0
+  normalFace: {fileID: 0}
+  primaryFace: {fileID: 0}
+  dangerFace: {fileID: 0}
+  highlightFace: {fileID: 0}
+  faceText: {r: 0.15686275, g: 0.13333334, b: 0.20392157, a: 1}
 --- !u!1 &2216164458619523417
 GameObject:
   m_ObjectHideFlags: 0
@@ -1461,7 +1403,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 0.9137255, g: 0.8901961, b: 0.8392157, a: 1}
+  m_fontColor: {r: 0.27039215, g: 0.24686274, b: 0.29921567, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -2406,6 +2348,12 @@ MonoBehaviour:
   selectedBorder: {r: 0.9490196, g: 0.7607843, b: 0.3529412, a: 1}
   label: {fileID: 6019694624874224925}
   group: {fileID: 0}
+  faceRole: 0
+  normalFace: {fileID: 0}
+  primaryFace: {fileID: 0}
+  dangerFace: {fileID: 0}
+  highlightFace: {fileID: 0}
+  faceText: {r: 0.15686275, g: 0.13333334, b: 0.20392157, a: 1}
 --- !u!1 &3948527012716902043
 GameObject:
   m_ObjectHideFlags: 0
@@ -2969,7 +2917,6 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 7787285380867517585}
   - {fileID: 2664489525010901330}
   m_Father: {fileID: 50288581064170730}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -2999,14 +2946,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.3529412, g: 0.24705882, b: 0.08627451, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 9ac0049c692ba91438a07d63961bd7c3, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 37b6bcb0b9c3203439f9e58f1177d0b0, type: 3}
   m_Type: 2
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -3015,7 +2962,7 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 0.5
+  m_PixelsPerUnitMultiplier: 1
 --- !u!114 &3647821234916105613
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3041,7 +2988,7 @@ MonoBehaviour:
     m_HighlightedColor: {r: 1.25, g: 1.2, b: 1.1, a: 1}
     m_PressedColor: {r: 0.75, g: 0.7, b: 0.65, a: 1}
     m_SelectedColor: {r: 1, g: 1, b: 1, a: 1}
-    m_DisabledColor: {r: 0.6, g: 0.6, b: 0.6, a: 0.5}
+    m_DisabledColor: {r: 0.62, g: 0.6, b: 0.6, a: 1}
     m_ColorMultiplier: 1.2
     m_FadeDuration: 0.08
   m_SpriteState:
@@ -3073,11 +3020,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.UI.UiFrameButton
   button: {fileID: 3647821234916105613}
-  outline: {fileID: 4108906648402288774}
+  outline: {fileID: 0}
   normalBorder: {r: 0.9490196, g: 0.7607843, b: 0.3529412, a: 1}
   selectedBorder: {r: 0.9490196, g: 0.7607843, b: 0.3529412, a: 1}
   label: {fileID: 4145170487198447683}
   group: {fileID: 0}
+  faceRole: 2
+  normalFace: {fileID: 21300000, guid: c57aede5c1a9ea947b91fc57a07a677d, type: 3}
+  primaryFace: {fileID: 21300000, guid: 37b6bcb0b9c3203439f9e58f1177d0b0, type: 3}
+  dangerFace: {fileID: 21300000, guid: 66666ab3939f54848af8999b34e33249, type: 3}
+  highlightFace: {fileID: 21300000, guid: 0eff00eba9d6982488af3d6dd3f0cdb9, type: 3}
+  faceText: {r: 0.15686275, g: 0.13333334, b: 0.20392157, a: 1}
 --- !u!1 &4679145956174542240
 GameObject:
   m_ObjectHideFlags: 0
@@ -3791,81 +3744,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 0.5
---- !u!1 &6485134179096484201
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 4473553121981137441}
-  - component: {fileID: 7550080573810494247}
-  - component: {fileID: 4002270885295089520}
-  m_Layer: 5
-  m_Name: Outline
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &4473553121981137441
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6485134179096484201}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 6125812322913692036}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -0, y: -0}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!222 &7550080573810494247
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6485134179096484201}
-  m_CullTransparentMesh: 1
---- !u!114 &4002270885295089520
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6485134179096484201}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 0.41960785, g: 0.3529412, b: 0.47058824, a: 1}
-  m_RaycastTarget: 0
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 38fbc4efebcd01f4cba51cd00f630cc8, type: 3}
-  m_Type: 2
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 0.5
 --- !u!1 &6586334454910578435
 GameObject:
   m_ObjectHideFlags: 0
@@ -4315,6 +4193,12 @@ MonoBehaviour:
   selectedBorder: {r: 0.9490196, g: 0.7607843, b: 0.3529412, a: 1}
   label: {fileID: 373084197205828967}
   group: {fileID: 0}
+  faceRole: 0
+  normalFace: {fileID: 0}
+  primaryFace: {fileID: 0}
+  dangerFace: {fileID: 0}
+  highlightFace: {fileID: 0}
+  faceText: {r: 0.15686275, g: 0.13333334, b: 0.20392157, a: 1}
 --- !u!1 &7316430306613847270
 GameObject:
   m_ObjectHideFlags: 0
@@ -4444,7 +4328,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 1, g: 0.9529412, b: 0.8392157, a: 1}
+  m_fontColor: {r: 0.28333333, g: 0.2562745, b: 0.29921567, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -4648,6 +4532,12 @@ MonoBehaviour:
   selectedBorder: {r: 0.9490196, g: 0.7607843, b: 0.3529412, a: 1}
   label: {fileID: 1517364375335123431}
   group: {fileID: 0}
+  faceRole: 0
+  normalFace: {fileID: 0}
+  primaryFace: {fileID: 0}
+  dangerFace: {fileID: 0}
+  highlightFace: {fileID: 0}
+  faceText: {r: 0.15686275, g: 0.13333334, b: 0.20392157, a: 1}
 --- !u!1 &7428565026312586926
 GameObject:
   m_ObjectHideFlags: 0
