@@ -547,7 +547,11 @@ namespace Code.MapCreateSystem
             tileRenderer ??= GetComponent<NodeTileRenderer>();
             tileRenderer?.Clear();
             if (_dungeonTilemap != null)
+            {
                 _dungeonTilemap.Register(this);
+                RefreshLighting();
+            }
+
             RefreshDoorViews();
         }
 
@@ -597,11 +601,48 @@ namespace Code.MapCreateSystem
             RefreshDoorViews();
             if (_dungeonTilemap != null)
             {
+                RefreshLighting();
                 _dungeonTilemap.MarkDirty();
                 return;
             }
 
             tileRenderer?.Render(BuildPlan(), _visualColor * RoomFeatureRules.Tint(Feature));
+        }
+
+        private RoomLighting _lighting;
+        private readonly List<Vector3> _torchPositions = new();
+
+        /// <summary>열린 방의 빛(방 전체 + 횃불)을 방 그림의 횃불 자리에 맞춘다.</summary>
+        private void RefreshLighting()
+        {
+            if (!Application.isPlaying || Layout == null)
+                return;
+
+            if (_lighting == null)
+            {
+                _lighting = GetComponent<RoomLighting>();
+                if (_lighting == null)
+                    _lighting = gameObject.AddComponent<RoomLighting>();
+            }
+            var plan = BuildPlan();
+            var position = transform.position;
+            var offset = new Vector2(
+                Mathf.Round(position.x / RoomLayoutRules.TileWorldSize),
+                Mathf.Round(position.y / RoomLayoutRules.TileWorldSize));
+            _torchPositions.Clear();
+            foreach (var decor in plan.Decor)
+            {
+                if (decor.Kind != RoomDecorKind.Torch)
+                    continue;
+
+                // 횃불 그림은 벽돌 면 두 줄이고 불꽃은 위쪽 줄에 있다.
+                _torchPositions.Add(new Vector3(
+                    (offset.x + decor.Tile.x + 0.5f) * RoomLayoutRules.TileWorldSize,
+                    (offset.y + decor.Tile.y + 1.5f) * RoomLayoutRules.TileWorldSize,
+                    position.z));
+            }
+
+            _lighting.Apply(Layout, _torchPositions);
         }
 
         /// <summary>복도가 이어진 위쪽 문에 선 문(열린 방만). 옆·아래 문은 3/4 시점에서 문 면이 보이지 않는다.</summary>
