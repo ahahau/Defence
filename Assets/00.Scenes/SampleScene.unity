@@ -2788,8 +2788,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.2D.Runtime::UnityEngine.Rendering.Universal.PixelPerfectCamera
   m_ComponentVersion: 1
   m_AssetsPPU: 28
-  m_RefResolutionX: 640
-  m_RefResolutionY: 360
+  m_RefResolutionX: 1280
+  m_RefResolutionY: 720
   m_CropFrame: 0
   m_GridSnapping: 1
   m_FilterMode: 0
@@ -7564,7 +7564,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.MapCreateSystem.DungeonEdgeManager
   edgeLinePrefab: {fileID: 6739963740108835962, guid: e05f910d178d2e14c9d05aae4ebc3489, type: 3}
-  gridSpacing: 15
+  gridSpacing: 30
 --- !u!1 &1645060111
 GameObject:
   m_ObjectHideFlags: 0
@@ -8289,7 +8289,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.MapCreateSystem.DungeonNodeManager
   nodePrefab: {fileID: 4683472917447393176, guid: 82ab6852156a5f14fbe4df6d48002c3d, type: 3}
   lockedNodeRoot: {fileID: 540453750}
-  gridSpacing: 15
+  gridSpacing: 30
   nodeSize: 1.5
   layoutCatalog: {fileID: 11400000, guid: 6dbf9bfd9ca2bfe43b4f3de1930e7d94, type: 2}
 --- !u!114 &1775345820 stripped

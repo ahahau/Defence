@@ -404,6 +404,7 @@ namespace Code.MapCreateSystem
             GridPosition = data.GridPosition;
             name = $"Node_{data.Type}_{data.GridPosition.x}_{data.GridPosition.y}";
             transform.localScale = ResolvePrefabScale() * size;
+            FitColliderToSpacing();
             DangerLevel = 0;
             Rumor = default;
             SetVisualColor(unlockedVisualColor);
@@ -427,6 +428,7 @@ namespace Code.MapCreateSystem
             name = $"LockedNode_{gridPosition.x}_{gridPosition.y}";
             // 잠긴 후보도 방 타일은 이웃과 맞닿게 두고, 자물쇠 장식만 기존 크기로 유지한다.
             transform.localScale = ResolvePrefabScale() * size;
+            FitColliderToSpacing();
             if (lockedRoot != null)
                 lockedRoot.transform.localScale = Vector3.one * lockedVisualScale;
             SetVisualColor(lockedVisualColor);
@@ -502,7 +504,9 @@ namespace Code.MapCreateSystem
         public void ApplyLayout(RoomShape layout, float gridSpacing)
         {
             Layout = layout;
+            _spacingWorld = gridSpacing;
             _spacingTiles = Mathf.Max(2, Mathf.RoundToInt(gridSpacing / RoomLayoutRules.TileWorldSize));
+            FitColliderToSpacing();
             if (layout != null)
             {
                 TrapGrid?.ConfigureCells(layout, RoomLayoutRules.CellWorldSize);
@@ -512,6 +516,28 @@ namespace Code.MapCreateSystem
 
             ReplaceDecor(layout != null ? layout.Prefab : null);
             RefreshRoomVisual();
+        }
+
+        private float _spacingWorld;
+        private BoxCollider2D _roomCollider;
+
+        /// <summary>
+        /// 누르기·전투 입장 판정 칸을 방 간격(월드)에 맞춘다. 노드 배율을 키우면 이름표·자물쇠까지 커지므로 칸만 늘린다.
+        /// 배율이 정해진 뒤(열기·후보 만들기)에도 다시 부른다.
+        /// </summary>
+        private void FitColliderToSpacing()
+        {
+            if (_spacingWorld <= 0f)
+                return;
+
+            _roomCollider ??= GetComponent<BoxCollider2D>();
+            if (_roomCollider == null)
+                return;
+
+            var scale = transform.lossyScale;
+            _roomCollider.size = new Vector2(
+                _spacingWorld / Mathf.Max(0.0001f, Mathf.Abs(scale.x)),
+                _spacingWorld / Mathf.Max(0.0001f, Mathf.Abs(scale.y)));
         }
 
         /// <summary>열린 방은 던전 타일맵 한 장에 함께 그린다. 자기 타일맵은 비운다.</summary>

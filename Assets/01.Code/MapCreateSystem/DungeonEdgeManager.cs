@@ -8,7 +8,7 @@ namespace Code.MapCreateSystem
         private EdgeLine edgeLinePrefab;
 
         [SerializeField]
-        private float gridSpacing = 15f;
+        private float gridSpacing = 30f;
 
         
         public void ClearAll()

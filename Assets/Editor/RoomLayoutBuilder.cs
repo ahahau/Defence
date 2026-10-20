@@ -131,7 +131,7 @@ public static class RoomLayoutBuilder
         (RoomWallKind.PillarMidRight, new[] { (1, 0, NotThis) })
     };
 
-    /// <summary>손으로 만든 특별 방. 어느 부모 쪽 문에도 맞도록 네 변 모두 문이 있다.</summary>
+    /// <summary>손으로 만든 특별 방(칸 하나를 2×2로 늘려 쓴다). 어느 부모 쪽 문에도 맞도록 네 변 모두 문이 있다.</summary>
     private static readonly (string name, RoomSize size, string[] rows)[] SpecialRooms =
     {
         ("Room_Special_S_Crypt", RoomSize.Small, new[]
@@ -166,6 +166,25 @@ public static class RoomLayoutBuilder
 
     private const RoomDoors AllDoors = RoomDoors.Up | RoomDoors.Right | RoomDoors.Down | RoomDoors.Left;
 
+    /// <summary>
+    /// 칸마다 2×2로 늘린다. 방을 두 배로 키우면서(노드 간격 30u) 손으로 그린 특별 방도 같은 비율로 키우고,
+    /// 기둥이 2×2 덩어리라 큰 방에서도 기둥답게 보인다.
+    /// </summary>
+    private static string[] Doubled(string[] rows)
+    {
+        var result = new string[rows.Length * 2];
+        for (var i = 0; i < rows.Length; i++)
+        {
+            var builder = new System.Text.StringBuilder(rows[i].Length * 2);
+            foreach (var c in rows[i])
+                builder.Append(c).Append(c);
+            result[i * 2] = builder.ToString();
+            result[i * 2 + 1] = result[i * 2];
+        }
+
+        return result;
+    }
+
     [MenuItem("Tools/Dungeon Keeper/Build Room Layouts")]
     public static void BuildAll()
     {
@@ -188,7 +207,7 @@ public static class RoomLayoutBuilder
         var specials = new List<RoomLayout>();
         foreach (var (name, size, rows) in SpecialRooms)
         {
-            var shape = new RoomShape(name, size, false, AllDoors, rows);
+            var shape = new RoomShape(name, size, false, AllDoors, Doubled(rows));
             if (!RoomLayoutRules.Validate(shape, out var problem))
             {
                 Debug.LogError($"특별 방을 만들지 않았습니다: {problem}");
@@ -432,15 +451,78 @@ public static class RoomLayoutBuilder
             return;
         }
 
+        var wasDirty = scene.isDirty;
+        var changed = false;
         var serialized = new SerializedObject(manager);
         var property = serialized.FindProperty("layoutCatalog");
-        if (property.objectReferenceValue == catalog)
+        if (property.objectReferenceValue != catalog)
+        {
+            property.objectReferenceValue = catalog;
+            changed = true;
+        }
+
+        changed |= SetFloat(serialized, "gridSpacing", GridSpacing);
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+
+        var edges = Object.FindAnyObjectByType<DungeonEdgeManager>(FindObjectsInactive.Include);
+        if (edges != null)
+        {
+            var edgeSerialized = new SerializedObject(edges);
+            changed |= SetFloat(edgeSerialized, "gridSpacing", GridSpacing);
+            edgeSerialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        // 방이 두 배라 화면도 두 배를 본다. 카메라 크기는 PixelPerfectCamera가 기준 해상도로 정하므로 그쪽을 바꾼다.
+        var camera = Camera.main;
+        var pixelPerfect = camera != null
+            ? camera.GetComponent<UnityEngine.Rendering.Universal.PixelPerfectCamera>()
+            : null;
+        if (pixelPerfect != null)
+        {
+            var cameraSerialized = new SerializedObject(pixelPerfect);
+            changed |= SetInt(cameraSerialized, "m_RefResolutionX", RefResolutionX);
+            changed |= SetInt(cameraSerialized, "m_RefResolutionY", RefResolutionY);
+            cameraSerialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        if (!changed)
             return;
 
-        property.objectReferenceValue = catalog;
-        serialized.ApplyModifiedPropertiesWithoutUndo();
         EditorSceneManager.MarkSceneDirty(scene);
+        if (wasDirty)
+        {
+            Debug.LogWarning("씬에 저장하지 않은 다른 변경이 있어 저장은 하지 않았습니다. 확인 후 저장하세요.");
+            return;
+        }
+
         EditorSceneManager.SaveScene(scene);
+    }
+
+    /// <summary>방 사이 간격(월드). 방 틀 최대 18×16칸(타일 36×32)에 벽·복도가 들어간다.</summary>
+    private const float GridSpacing = 30f;
+
+    /// <summary>PixelPerfectCamera 기준 해상도. 640×360(방 간격 15u 시절)의 두 배라 화면에 담기는 넓이도 두 배다.</summary>
+    private const int RefResolutionX = 1280;
+    private const int RefResolutionY = 720;
+
+    private static bool SetInt(SerializedObject serialized, string name, int value)
+    {
+        var property = serialized.FindProperty(name);
+        if (property == null || property.intValue == value)
+            return false;
+
+        property.intValue = value;
+        return true;
+    }
+
+    private static bool SetFloat(SerializedObject serialized, string name, float value)
+    {
+        var property = serialized.FindProperty(name);
+        if (property == null || Mathf.Approximately(property.floatValue, value))
+            return false;
+
+        property.floatValue = value;
+        return true;
     }
 
     private static void EnsureFolder(string path)
