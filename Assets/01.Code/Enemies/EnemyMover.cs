@@ -193,12 +193,13 @@ namespace Code.Enemies
                     break;
 
                 var nextNode = path[1];
+                var fromNode = _currentNode;
                 if (_currentNode.Data != null)
                     VacateNode(_currentNode, PartyOccupancyId);
                 if (nextNode.Data != null)
                     OccupyNode(nextNode, PartyOccupancyId);
                 _currentNode = nextNode;
-                yield return SmoothMove();
+                yield return WalkRoute(fromNode, GetEnemyPosition(_currentNode), null);
             }
 
             if (_currentNode?.Data != null)
@@ -243,6 +244,7 @@ namespace Code.Enemies
 
             _battleAgent?.BeginTraversal();
 
+            var previousNode = _currentNode;
             var previousNodeId = _currentNode.Data.Id;
             VacateNode(_currentNode, PartyOccupancyId);
             OccupyNode(nextNode, PartyOccupancyId);
@@ -254,7 +256,7 @@ namespace Code.Enemies
             var edge = EdgeLine.FindBetween(previousNodeId, _currentNode.Data.Id);
             var edgeBuilding = edge != null ? edge.InstalledBuilding : null;
 
-            yield return SmoothMove(edgeBuilding);
+            yield return SmoothMove(previousNode, edgeBuilding);
 
             _battleAgent?.EndTraversal();
             _isTurning = false;
@@ -299,12 +301,13 @@ namespace Code.Enemies
                 : wanderDistance;
 
             var offset = UnityEngine.Random.insideUnitCircle.normalized * Mathf.Min(wanderDistance, radius);
-            var target = anchor + new Vector3(offset.x, offset.y, 0f);
+            var target = SnapToWalkable(_currentNode, anchor + new Vector3(offset.x, offset.y, 0f));
 
             FaceMoveDirection(target - transform.position);
 
+            RoomRoute.Inside(_currentNode, transform.position, target, _route);
             _moveTween?.Kill();
-            _moveTween = transform.DOMove(target, wanderDuration)
+            _moveTween = transform.DOPath(_route.ToArray(), wanderDuration, PathType.Linear)
                 .SetEase(Ease.InOutSine)
                 .SetLink(gameObject);
 
@@ -312,13 +315,122 @@ namespace Code.Enemies
             _moveTween = null;
         }
 
-        private IEnumerator SmoothMove(global::Code.Buildings.Building edgeBuilding = null)
+        /// <summary>경유점 목록. 이동마다 새로 만들지 않는다.</summary>
+        private readonly List<Vector3> _route = new();
+        private readonly List<Vector2Int> _wallPath = new();
+        private readonly List<Vector2Int> _floorPath = new();
+        private readonly RoomFloorMap _floorMap = new();
+
+        private IEnumerator SmoothMove(Node fromNode, global::Code.Buildings.Building edgeBuilding = null)
         {
             var targetPos = GetEnemyPosition(_currentNode);
-            var distance = Vector3.Distance(transform.position, targetPos);
+
+            // 칸막이 때문에 크게 돌아가야 하면 벽 앞까지 가서 부수고, 나머지 길을 이어 간다.
+            if (TryPlanSmash(fromNode, targetPos, out var smashStand, out var wall))
+            {
+                yield return WalkRoute(fromNode, smashStand, edgeBuilding);
+                yield return SmashPartition(wall);
+                if (_currentNode == null)
+                    yield break;
+
+                yield return WalkRoute(null, targetPos, null);
+                yield break;
+            }
+
+            yield return WalkRoute(fromNode, targetPos, edgeBuilding);
+        }
+
+        /// <summary>
+        /// 들어갈 방의 문에서 서 있을 자리까지, 칸막이를 돌아가는 길이 벽이 없을 때보다
+        /// <see cref="PartitionRules.SmashDetourCells"/>칸 넘게 길면 부술 벽과 그 앞 자리를 고른다.
+        /// </summary>
+        private bool TryPlanSmash(Node fromNode, Vector3 targetPos, out Vector3 stand, out Partition wall)
+        {
+            stand = default;
+            wall = null;
+            var grid = _currentNode != null ? _currentNode.TrapGrid : null;
+            if (grid == null || !grid.HasWalkBlockers || _ownerEnemy == null && (_ownerEnemy = GetComponent<Enemy>()) == null)
+                return false;
+
+            Vector3 entry;
+            if (fromNode == null || !RoomRoute.TryGetEntry(fromNode, _currentNode, out entry, out _))
+                entry = transform.position;
+
+            if (!grid.TryGetNearestWalkableCell(entry, out var start)
+                || !grid.TryGetCell(targetPos, out var goalColumn, out var goalRow))
+                return false;
+
+            var goal = new Vector2Int(goalColumn, goalRow);
+            _floorMap.Grid = grid;
+            if (!RoomCellPathfinder.TryFindPath(_floorMap, start, goal, _floorPath))
+                return false;
+
+            var detour = RoomCellPathfinder.TryFindPath(grid, start, goal, _wallPath)
+                ? _wallPath.Count - _floorPath.Count
+                : int.MaxValue;
+            if (detour <= PartitionRules.SmashDetourCells)
+                return false;
+
+            for (var i = 1; i < _floorPath.Count; i++)
+            {
+                var cell = _floorPath[i];
+                if (!grid.IsPartitionCell(cell.x, cell.y))
+                    continue;
+
+                wall = grid.BuildingAt(cell.x, cell.y) as Partition;
+                var before = _floorPath[i - 1];
+                stand = grid.CellWorldPosition(before.x, before.y);
+                stand.z = transform.position.z;
+                return wall != null;
+            }
+
+            return false;
+        }
+
+        /// <summary>벽이 무너지거나 모험가가 쓰러지거나, 오래 걸리면 그만둔다. 그 방에 싸울 상대가 오면 멈춘다.</summary>
+        private IEnumerator SmashPartition(Partition wall)
+        {
+            var combatant = GetComponent<Code.Combat.Combatant>();
+            if (wall == null || combatant == null)
+                yield break;
+
+            FaceMoveDirection(wall.transform.position - transform.position);
+            var interval = Mathf.Max(PartitionRules.MinSmashInterval, combatant.AttackInterval);
+            var elapsed = 0f;
+            while (wall != null && !wall.IsDestroyed && elapsed < PartitionRules.MaxSmashSeconds)
+            {
+                if (_ownerEnemy == null || _ownerEnemy.IsDead)
+                    yield break;
+
+                var battlefield = CurrentBattlefield;
+                if (battlefield != null && battlefield.PlayerCount > 0)
+                    yield break;
+
+                yield return new WaitForSeconds(interval);
+                elapsed += interval;
+                if (wall != null && !wall.IsDestroyed)
+                    wall.TakeBuildingDamage(Mathf.Max(1, combatant.AttackDamage));
+            }
+        }
+
+        private IEnumerator WalkRoute(Node fromNode, Vector3 targetPos, global::Code.Buildings.Building edgeBuilding)
+        {
+            var start = transform.position;
+            if (fromNode != null)
+                RoomRoute.Between(fromNode, _currentNode, start, targetPos, _route);
+            else
+                RoomRoute.Inside(_currentNode, start, targetPos, _route);
+
+            var distance = Vector3.Distance(start, targetPos);
             var effectiveSpeed = moveSpeed * Mathf.Clamp(FatigueSpeedMultiplier, 0.1f, 1f);
             var duration = Mathf.Clamp(distance / Mathf.Max(effectiveSpeed, 0.1f), minMoveDuration, maxMoveDuration);
-            var direction = targetPos - transform.position;
+
+            // 꺾여 돌아가는 길은 그만큼 오래 걸린다. 다만 이동 한 번이 턴 간격을 크게 넘지 않게 1.6배에서 자른다.
+            var routeLength = RoomRoute.Length(start, _route);
+            if (distance > 0.01f)
+                duration *= Mathf.Clamp(routeLength / distance, 1f, 1.6f);
+
+            var direction = (_route.Count > 0 ? _route[0] : targetPos) - start;
             FaceMoveDirection(direction);
 
             _moveTween?.Kill();
@@ -327,7 +439,7 @@ namespace Code.Enemies
             // 이동 중에 죽는 적이 흔하다. 시퀀스를 오브젝트에 묶지 않으면 파괴된 뒤에도
             // 트윈이 계속 돌며 사라진 Transform 의 position 을 건드려 예외가 난다.
             var sequence = DOTween.Sequence().SetLink(gameObject);
-            sequence.Join(transform.DOMove(targetPos, duration).SetEase(Ease.InOutQuad));
+            sequence.Join(transform.DOPath(_route.ToArray(), duration, PathType.Linear).SetEase(Ease.InOutQuad));
 
             // 라인 위 건물(중점) 통과 시점(구간의 절반)에 효과 발동.
             if (edgeBuilding != null)
@@ -642,7 +754,18 @@ namespace Code.Enemies
             var basePosition = node.EnemyPosition != null
                 ? node.EnemyPosition.position
                 : node.transform.position;
-            return basePosition + FormationOffset + ResolveNodeScatter(node);
+            return SnapToWalkable(node, basePosition + FormationOffset + ResolveNodeScatter(node));
+        }
+
+        /// <summary>기둥·칸막이 벽·깎인 모서리 위에 서지 않게 가장 가까운 걸을 수 있는 칸으로 옮긴다.</summary>
+        private static Vector3 SnapToWalkable(Node node, Vector3 position)
+        {
+            var grid = node != null ? node.TrapGrid : null;
+            if (grid == null || grid.IsWalkableWorld(position) || !grid.TryGetNearestWalkableCell(position, out var cell))
+                return position;
+
+            var snapped = grid.CellWorldPosition(cell.x, cell.y);
+            return new Vector3(snapped.x, snapped.y, position.z);
         }
 
         /// <summary>

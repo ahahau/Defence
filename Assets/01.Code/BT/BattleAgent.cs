@@ -933,8 +933,67 @@ namespace Code.BT
             if (offset.magnitude > _arenaRadius)
                 p = _arenaCenter + offset.normalized * _arenaRadius;
 
+            p = KeepOnWalkable(p);
             return new Vector3(p.x, p.y, position.z);
         }
+
+        /// <summary>
+        /// 막힌 칸(기둥·칸막이 벽·방 밖)으로 들어가지 않게 한다. 한 축씩 미끄러져 보고, 안 되면 제자리.
+        /// 지금 자리가 이미 막힌 칸(복도에서 막 들어옴 등)이면 빠져나오도록 그대로 둔다.
+        /// </summary>
+        private Vector2 KeepOnWalkable(Vector2 candidate)
+        {
+            var grid = _battlefield != null ? _battlefield.Grid : null;
+            if (grid == null || grid.IsWalkableWorld(candidate))
+                return candidate;
+
+            Vector2 previous = transform.position;
+            if (!grid.IsWalkableWorld(previous))
+                return candidate;
+
+            var slideX = new Vector2(candidate.x, previous.y);
+            if (grid.IsWalkableWorld(slideX))
+                return slideX;
+
+            var slideY = new Vector2(previous.x, candidate.y);
+            return grid.IsWalkableWorld(slideY) ? slideY : previous;
+        }
+
+        /// <summary>
+        /// goal로 가는 다음 경유점. 곧은 길이 막혀 있으면 방 안 칸 길을 따라 모퉁이로 향한다.
+        /// 경로는 출발·도착 칸이 바뀔 때만 다시 찾는다.
+        /// </summary>
+        private Vector2 SteerToward(Vector2 here, Vector2 goal)
+        {
+            var grid = _battlefield != null ? _battlefield.Grid : null;
+            if (grid == null || !grid.HasWalkBlockers
+                || !grid.TryGetCell(here, out var fromColumn, out var fromRow)
+                || !grid.TryGetCell(goal, out var toColumn, out var toRow))
+                return goal;
+
+            var from = new Vector2Int(fromColumn, fromRow);
+            var to = new Vector2Int(toColumn, toRow);
+            if (from == to || Code.MapCreateSystem.RoomCellPathfinder.IsStraightClear(grid, from, to))
+                return goal;
+
+            if (from != _steerFrom || to != _steerTo)
+            {
+                _steerFrom = from;
+                _steerTo = to;
+                _steerFound = Code.MapCreateSystem.RoomCellPathfinder.TryFindPath(grid, from, to, _steerPath);
+            }
+
+            if (!_steerFound || _steerPath.Count < 2)
+                return goal;
+
+            var next = Code.MapCreateSystem.RoomCellPathfinder.FarthestVisible(grid, _steerPath, 0);
+            return next >= _steerPath.Count - 1 ? goal : (Vector2)grid.CellWorldPosition(_steerPath[next].x, _steerPath[next].y);
+        }
+
+        private readonly List<Vector2Int> _steerPath = new();
+        private Vector2Int _steerFrom = new(-1, -1);
+        private Vector2Int _steerTo = new(-1, -1);
+        private bool _steerFound;
 
         public bool HasTarget() => FindNearestEnemy() != null;
 
@@ -975,7 +1034,7 @@ namespace Code.BT
             }
 
             Face(offset.x);
-            transform.position = ClampToArena(Vector2.MoveTowards(here, goal, EffectiveMoveSpeed * deltaTime));
+            transform.position = ClampToArena(Vector2.MoveTowards(here, SteerToward(here, goal), EffectiveMoveSpeed * deltaTime));
         }
 
         private float FlankSide()
@@ -1445,7 +1504,7 @@ namespace Code.BT
             var speed = EffectiveMoveSpeed * Mathf.Max(1f, speedMultiplier);
             Vector2 goal = there - offset / Mathf.Max(0.0001f, dist) * (attackRange * 0.9f);
             Face(offset.x);
-            transform.position = ClampToArena(Vector2.MoveTowards(self, goal, speed * deltaTime));
+            transform.position = ClampToArena(Vector2.MoveTowards(self, SteerToward(self, goal), speed * deltaTime));
             return true;
         }
 

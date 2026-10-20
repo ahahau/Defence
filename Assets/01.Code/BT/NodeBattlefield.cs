@@ -21,7 +21,25 @@ namespace Code.BT
         private BattleAgent _playerFocus;
         private BattleAgent _enemyFocus;
 
+        private Code.MapCreateSystem.NodeTrapGrid _grid;
+        private bool _gridResolved;
+
         public int MaxPerTeam => maxPerTeam;
+
+        /// <summary>이 방의 칸 격자. 전투 이동이 막힌 칸·칸막이 벽을 피할 때 읽는다. 없으면 null.</summary>
+        public Code.MapCreateSystem.NodeTrapGrid Grid
+        {
+            get
+            {
+                if (!_gridResolved)
+                {
+                    _grid = GetComponent<Code.MapCreateSystem.NodeTrapGrid>();
+                    _gridResolved = true;
+                }
+
+                return _grid;
+            }
+        }
 
         /// <summary>방 크기에 맞춰 팀당 정원을 정한다. 이미 들어와 있는 인원은 내보내지 않는다.</summary>
         public void SetMaxPerTeam(int value) => maxPerTeam = Mathf.Max(1, value);
