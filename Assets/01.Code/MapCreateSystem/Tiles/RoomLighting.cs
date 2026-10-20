@@ -31,8 +31,9 @@ namespace Code.MapCreateSystem
             _ambient ??= CreateLight("RoomLight");
             _ambient.transform.position = transform.position;
             var halfExtent = Mathf.Max(shape.Columns, shape.Rows) * RoomLayoutRules.CellWorldSize * 0.5f;
-            _ambient.pointLightInnerRadius = halfExtent * 0.55f;
-            _ambient.pointLightOuterRadius = halfExtent * 1.25f;
+            // 방 구석(가운데에서 반 폭의 1.4배)까지 고르게 밝아야 구석에 세운 유닛이 어둠에 묻히지 않는다.
+            _ambient.pointLightInnerRadius = halfExtent * 0.85f;
+            _ambient.pointLightOuterRadius = halfExtent * 1.6f;
             _ambient.intensity = AmbientIntensity;
             _ambient.color = AmbientColor;
 
