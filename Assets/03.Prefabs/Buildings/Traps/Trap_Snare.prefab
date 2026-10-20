@@ -102,6 +102,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2306502474854140680}
   - component: {fileID: 1428848070512300419}
+  - component: {fileID: 3740826243839270424}
   m_Layer: 0
   m_Name: Trap_Snare
   m_TagString: Untagged
@@ -166,7 +167,33 @@ MonoBehaviour:
   hitShakeDistance: 0.16
   hitShakeDuration: 0.18
   hitShakeSteps: 4
+  triggerVisual: {fileID: 3740826243839270424}
   <DangerIncreaseOnTrigger>k__BackingField: 1
+--- !u!114 &3740826243839270424
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4328671716576560348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f06e04b8eb294d40bcfe165c4c09f87, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Buildings.TrapTriggerVisual
+  triggerFrames:
+  - {fileID: 21300000, guid: ca1c99853a81461459a5ce2e45d30c2c, type: 3}
+  - {fileID: 21300000, guid: 72a34f45296ab6f4091ec1a4e879bcc5, type: 3}
+  - {fileID: 21300000, guid: 2a069a2e7662b844ab41a9677ee530d2, type: 3}
+  - {fileID: 21300000, guid: edd0dbece03e2ec4393ecad2325a6a9b, type: 3}
+  - {fileID: 21300000, guid: 4de67e50af5c8454fa48991fb099adce, type: 3}
+  frameSeconds: 0.06
+  anchorBottom: 0
+  projectileSprite: {fileID: 0}
+  projectileSeconds: 0.18
+  projectileWidthCells: 0.8
+  effectMaterial: {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
+  sortingOrder: 50
 --- !u!1 &7473952817250454834
 GameObject:
   m_ObjectHideFlags: 0

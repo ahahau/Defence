@@ -102,6 +102,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2306502474854140680}
   - component: {fileID: 1428848070512300419}
+  - component: {fileID: 8287765967149890972}
   m_Layer: 0
   m_Name: Trap_ExecutionSaw
   m_TagString: Untagged
@@ -166,7 +167,33 @@ MonoBehaviour:
   hitShakeDistance: 0.16
   hitShakeDuration: 0.18
   hitShakeSteps: 4
+  triggerVisual: {fileID: 8287765967149890972}
   <DangerIncreaseOnTrigger>k__BackingField: 4
+--- !u!114 &8287765967149890972
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4328671716576560348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f06e04b8eb294d40bcfe165c4c09f87, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Buildings.TrapTriggerVisual
+  triggerFrames:
+  - {fileID: 21300000, guid: 51188867e0665fe42bc7d0b263157d17, type: 3}
+  - {fileID: 21300000, guid: 9082bea178d817544a794a751b371a8d, type: 3}
+  - {fileID: 21300000, guid: 822982c6015ce2e428c0beea31b9a67e, type: 3}
+  - {fileID: 21300000, guid: f3bbb385aad34dd40b5bb2cba5e3bd9d, type: 3}
+  - {fileID: 21300000, guid: b50fb34e403ab3542a565ba7ba778803, type: 3}
+  frameSeconds: 0.1
+  anchorBottom: 1
+  projectileSprite: {fileID: 0}
+  projectileSeconds: 0.18
+  projectileWidthCells: 0.8
+  effectMaterial: {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
+  sortingOrder: 50
 --- !u!1 &7473952817250454834
 GameObject:
   m_ObjectHideFlags: 0
