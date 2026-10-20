@@ -17,7 +17,8 @@ namespace Code.Enemies
         /// <summary>피로로 느려지는 배율. 1이면 평소 속도다. 시설에 머문 모험가가 낮춘다.</summary>
         public float FatigueSpeedMultiplier { get; set; } = 1f;
         [SerializeField, Min(0.01f)] private float minMoveDuration = 0.28f;
-        [SerializeField, Min(0.01f)] private float maxMoveDuration = 0.75f;
+        // 방 간격 30u 기준(15u 시절 0.75초의 두 배). 방 사이를 걷는 것처럼 보이게 하는 상한이다.
+        [SerializeField, Min(0.01f)] private float maxMoveDuration = 1.5f;
         [SerializeField, Min(0f)] private float visualHopHeight = 0.12f;
         [SerializeField, Min(0f)] private float visualSquashAmount = 0.08f;
         [SerializeField, Min(0f)] private float visualLeanAngle = 7f;
@@ -278,42 +279,132 @@ namespace Code.Enemies
         private int detourTolerance = 2;
 
         /// <summary>
-        /// 방 안에서 한 걸음 어슬렁거린다.
+        /// 방 안을 둘러본다. 방에 처음 들어온 차례에는 늘, 그 뒤에는 <see cref="wanderChance"/>로
+        /// 칸 길을 따라 2~3곳(방 크기만큼)을 들렀다 돌아온다.
         ///
-        /// 턴 간격 안에서 끝나야 한다 — 이동보다 오래 끌면 침입 속도가 느려져 밸런스가 바뀐다.
-        /// 그래서 짧고, 늘 하지도 않는다.
+        /// 방이 커져(바닥 칸이 예전의 4배) 문에서 문으로 곧장 지나가면 함정 칸을 거의 밟지 않았다.
+        /// 둘러보는 길이 함정 칸을 지나가야 칸 배치와 칸막이로 동선을 모으는 설계가 의미를 가진다.
+        /// 오래 끌면 침입 속도가 느려지므로 한 번에 <see cref="MaxExploreSeconds"/>초를 넘지 않는다.
         ///
         /// 싸움이 붙은 방에서는 건너뛴다. 전투 중에 배회하면 전투 연출과 겹쳐 어지럽고,
         /// 어차피 그 자리에 붙들려 있어야 맞다.
         /// </summary>
         private IEnumerator WanderInsideNode()
         {
-            if (_currentNode == null || wanderChance <= 0f || UnityEngine.Random.value > wanderChance)
+            if (_currentNode == null)
+                yield break;
+
+            var firstVisit = _exploredNodeId != _currentNode.Data?.Id;
+            if (!firstVisit && (wanderChance <= 0f || UnityEngine.Random.value > wanderChance))
                 yield break;
 
             var battlefield = CurrentBattlefield;
             if (battlefield != null && battlefield.PlayerCount > 0)
                 yield break;
 
+            _exploredNodeId = _currentNode.Data?.Id;
+            var grid = _currentNode.TrapGrid;
+            if (grid == null || _currentNode.Layout == null)
+            {
+                yield return WanderStep(battlefield);
+                yield break;
+            }
+
+            var start = transform.position;
+            var from = start;
+            _exploreRoute.Clear();
+            var stops = ExploreStops(_currentNode.Size);
+            for (var i = 0; i < stops; i++)
+            {
+                if (!TryPickExploreCell(grid, out var stop))
+                    break;
+
+                RoomRoute.Inside(_currentNode, from, stop, _route);
+                _exploreRoute.AddRange(_route);
+                from = stop;
+            }
+
+            // 마지막에는 이 방에서 설 자리로 돌아와, 다음 방으로 가는 길이 늘 같은 곳에서 시작한다.
+            RoomRoute.Inside(_currentNode, from, GetEnemyPosition(_currentNode), _route);
+            _exploreRoute.AddRange(_route);
+            if (_exploreRoute.Count == 0)
+                yield break;
+
+            var speed = moveSpeed * Mathf.Clamp(FatigueSpeedMultiplier, 0.1f, 1f) * ExploreSpeedRatio;
+            var duration = Mathf.Clamp(RoomRoute.Length(start, _exploreRoute) / Mathf.Max(0.1f, speed),
+                wanderDuration, MaxExploreSeconds);
+            FaceMoveDirection(_exploreRoute[0] - start);
+
+            _moveTween?.Kill();
+            _moveTween = transform.DOPath(_exploreRoute.ToArray(), duration, PathType.Linear)
+                .SetEase(Ease.Linear)
+                .OnWaypointChange(index =>
+                {
+                    if (index > 0 && index < _exploreRoute.Count)
+                        FaceMoveDirection(_exploreRoute[index] - _exploreRoute[index - 1]);
+                })
+                .SetLink(gameObject);
+
+            yield return _moveTween.WaitForCompletion();
+            _moveTween = null;
+        }
+
+        /// <summary>방 모양이 없는 방(예전 노드·테스트)의 짧은 어슬렁거림.</summary>
+        private IEnumerator WanderStep(NodeBattlefield battlefield)
+        {
             var anchor = GetEnemyPosition(_currentNode);
             var radius = battlefield != null && battlefield.ArenaRadius > 0f
                 ? battlefield.ArenaRadius * 0.6f
                 : wanderDistance;
 
             var offset = UnityEngine.Random.insideUnitCircle.normalized * Mathf.Min(wanderDistance, radius);
-            var target = SnapToWalkable(_currentNode, anchor + new Vector3(offset.x, offset.y, 0f));
-
+            var target = anchor + new Vector3(offset.x, offset.y, 0f);
             FaceMoveDirection(target - transform.position);
 
-            RoomRoute.Inside(_currentNode, transform.position, target, _route);
             _moveTween?.Kill();
-            _moveTween = transform.DOPath(_route.ToArray(), wanderDuration, PathType.Linear)
+            _moveTween = transform.DOMove(target, wanderDuration)
                 .SetEase(Ease.InOutSine)
                 .SetLink(gameObject);
 
             yield return _moveTween.WaitForCompletion();
             _moveTween = null;
         }
+
+        /// <summary>둘러볼 곳: 걸을 수 있는 칸 중 무작위 한 곳(지금 칸은 피한다).</summary>
+        private bool TryPickExploreCell(NodeTrapGrid grid, out Vector3 position)
+        {
+            position = default;
+            grid.TryGetCell(transform.position, out var hereColumn, out var hereRow);
+            for (var attempt = 0; attempt < 12; attempt++)
+            {
+                var column = UnityEngine.Random.Range(0, grid.Columns);
+                var row = UnityEngine.Random.Range(0, grid.Rows);
+                if (!grid.IsWalkableCell(column, row) || (column == hereColumn && row == hereRow))
+                    continue;
+
+                position = grid.CellWorldPosition(column, row);
+                position.z = transform.position.z;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static int ExploreStops(RoomSize size) => size switch
+        {
+            RoomSize.Small => 2,
+            RoomSize.Large => 3,
+            _ => UnityEngine.Random.Range(2, 4)
+        };
+
+        /// <summary>둘러보는 걸음은 방 사이를 옮길 때보다 느긋하다(이동 속도 대비).</summary>
+        private const float ExploreSpeedRatio = 1.2f;
+
+        /// <summary>한 번 둘러보는 데 쓰는 최대 시간(초).</summary>
+        private const float MaxExploreSeconds = 3f;
+
+        private string _exploredNodeId;
+        private readonly List<Vector3> _exploreRoute = new();
 
         /// <summary>경유점 목록. 이동마다 새로 만들지 않는다.</summary>
         private readonly List<Vector3> _route = new();

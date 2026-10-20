@@ -211,7 +211,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Enemies.EnemyMover
   moveSpeed: 5
   minMoveDuration: 0.28
-  maxMoveDuration: 0.75
+  maxMoveDuration: 1.5
   visualHopHeight: 0.12
   visualSquashAmount: 0.08
   visualLeanAngle: 7
@@ -471,7 +471,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &2624532001765305233
 SpriteRenderer:
-  serializedVersion: 2
+  serializedVersion: 3
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -528,6 +528,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
 --- !u!114 &7749111140017749111
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -545,6 +546,7 @@ MonoBehaviour:
   attackSprite: {fileID: -5119810141921525821, guid: 812f9032b8d7c304285fcc8328606d9a, type: 3}
   defeatedSprite: {fileID: -5592725995520629739, guid: c934a582b06e95a42abe42e1b380827c, type: 3}
   spriteRenderer: {fileID: 2624532001765305233}
+  animationSet: {fileID: 0}
 --- !u!1001 &4121340199369248225
 PrefabInstance:
   m_ObjectHideFlags: 0
