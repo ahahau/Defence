@@ -99,6 +99,52 @@ namespace Code.MapCreateSystem
             ApplyTint(tiles, underlay, band);
         }
 
+        /// <summary>
+        /// 장식을 따로 칠한다(벽 위, 캐릭터 아래). 횃불 그림은 타일 1×2라 기준점을 반 칸 올린 타일맵(<paramref name="torches"/>)에
+        /// 아래 칸으로 놓는다 — 애니메이션 타일은 타일별 위치 변환이 먹지 않는다.
+        /// </summary>
+        public static void PaintDecor(Tilemap decor, Tilemap torches, RoomTileSet set, IReadOnlyList<Room> rooms)
+        {
+            if (decor == null)
+                return;
+
+            decor.ClearAllTiles();
+            torches?.ClearAllTiles();
+            if (set == null)
+                return;
+
+            foreach (var room in rooms)
+            {
+                if (room.Plan == null)
+                    continue;
+
+                foreach (var placement in room.Plan.Decor)
+                {
+                    var size = DecorSize(placement.Kind);
+                    for (var dy = 0; dy < size.y; dy++)
+                    for (var dx = 0; dx < size.x; dx++)
+                    {
+                        var tile = set.DecorTile(placement.Kind, placement.Pick, dx, dy);
+                        if (tile == null)
+                            continue;
+
+                        var cell = ToCell(placement.Tile + room.Offset + new Vector2Int(dx, dy));
+                        var map = placement.Kind == RoomDecorKind.Torch && torches != null ? torches : decor;
+                        map.SetTile(cell, tile);
+                        if (room.Tint == Color.white)
+                            continue;
+
+                        map.SetTileFlags(cell, TileFlags.None);
+                        map.SetColor(cell, room.Tint);
+                    }
+                }
+            }
+        }
+
+        /// <summary>장식 갈래가 차지하는 타일(횃불은 그림이 1×2지만 타일 하나에 놓는다).</summary>
+        public static Vector2Int DecorSize(RoomDecorKind kind) =>
+            kind == RoomDecorKind.WallLarge ? new Vector2Int(2, 2) : Vector2Int.one;
+
         private static void ApplyTint(Tilemap tiles, Tilemap underlay, Dictionary<Vector2Int, Color> colors)
         {
             foreach (var pair in colors)

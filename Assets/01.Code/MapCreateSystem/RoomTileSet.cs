@@ -18,10 +18,50 @@ namespace Code.MapCreateSystem
         [SerializeField, Tooltip("위쪽 벽 문 애니메이션(닫힘 → 열림). 비어 있으면 문을 그리지 않는다.")]
         private Sprite[] doorFrames;
 
+        [Header("Decor")]
+        [SerializeField, Tooltip("위쪽 벽 횃불(애니메이션 타일, 그림 타일 1×2).")]
+        private TileBase torch;
+
+        [SerializeField, Tooltip("위쪽 벽 큰 장식(타일 2×2).")]
+        private RoomDecorPiece[] wallLarge;
+
+        [SerializeField, Tooltip("위쪽 벽 작은 장식(타일 1×1).")]
+        private TileBase[] wallSmall;
+
+        [SerializeField, Tooltip("바닥 소품(타일 1×1).")]
+        private TileBase[] floorDecor;
+
         public DungeonFloorRuleTile Floor => floor;
         public DungeonWallRuleTile Wall => wall;
         public TileBase Pillar => pillar;
         public Sprite[] DoorFrames => doorFrames;
+        public TileBase Torch => torch;
+
+        /// <summary>그 갈래의 그림 수. 0이면 그 갈래는 그리지 않는다.</summary>
+        public int DecorCount(RoomDecorKind kind) => kind switch
+        {
+            RoomDecorKind.Torch => torch != null ? 1 : 0,
+            RoomDecorKind.WallLarge => wallLarge?.Length ?? 0,
+            RoomDecorKind.WallSmall => wallSmall?.Length ?? 0,
+            _ => floorDecor?.Length ?? 0
+        };
+
+        /// <summary>장식의 (dx, dy) 타일. pick(0~1)으로 그림을 고른다.</summary>
+        public TileBase DecorTile(RoomDecorKind kind, float pick, int dx, int dy)
+        {
+            var count = DecorCount(kind);
+            if (count == 0)
+                return null;
+
+            var index = Mathf.Clamp(Mathf.FloorToInt(pick * count), 0, count - 1);
+            return kind switch
+            {
+                RoomDecorKind.Torch => dx == 0 && dy == 0 ? torch : null,
+                RoomDecorKind.WallLarge => wallLarge[index]?.At(dx, dy, 2),
+                RoomDecorKind.WallSmall => dx == 0 && dy == 0 ? wallSmall[index] : null,
+                _ => dx == 0 && dy == 0 ? floorDecor[index] : null
+            };
+        }
 
         public bool IsComplete => floor != null && wall != null && pillar != null;
 
@@ -34,6 +74,14 @@ namespace Code.MapCreateSystem
         }
 
         public void EditorSetDoorFrames(Sprite[] frames) => doorFrames = frames;
+
+        public void EditorSetDecor(TileBase torchTile, RoomDecorPiece[] large, TileBase[] small, TileBase[] floorTiles)
+        {
+            torch = torchTile;
+            wallLarge = large;
+            wallSmall = small;
+            floorDecor = floorTiles;
+        }
 #endif
     }
 }

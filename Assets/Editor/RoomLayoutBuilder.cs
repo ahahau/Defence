@@ -341,9 +341,88 @@ public static class RoomLayoutBuilder
         var set = LoadOrCreate<RoomTileSet>(TileSetPath);
         set.EditorSet(floor, wall, pillar);
         set.EditorSetDoorFrames(LoadDoorFrames());
+        BuildDecor(set);
         EditorUtility.SetDirty(set);
         AssetDatabase.SaveAssets();
         return set;
+    }
+
+    private const string DecorFolder = RuleTileFolder + "/Decor";
+    private const string TorchSheetPath =
+        "Assets/04.Sprites/Tilesets/ElvGames/Farm Game Assets/Tilesets/Dark Castle/Animated Tiles/FG_Dark_Castle_Purple_Torch01.png";
+
+    /// <summary>
+    /// 위쪽 벽 가고일(2×2): 시트 위 칸 (열, 위 행). 아래 행은 위 행 + 1. 열 3·4 가고일만 쓴다 —
+    /// 열 0~2 가고일은 날개가 세 칸에 걸치고 받침이 한 칸뿐이라 2×2에 맞지 않는다.
+    /// </summary>
+    private static readonly (int column, int topRow)[] WallLargeCells =
+    {
+        (3, 19), (3, 21), (3, 23)
+    };
+
+    /// <summary>위쪽 벽 작은 장식: 보옥 홈·촛대.</summary>
+    private static readonly (int column, int row)[] WallSmallCells =
+    {
+        (1, 25), (2, 25), (3, 25), (5, 28), (5, 29), (5, 30), (5, 31)
+    };
+
+    /// <summary>바닥 소품: 뼈·해골·핏자국·항아리. 검은 잔해(22·23.30)는 어두운 방에서 바닥 구멍처럼 보여 뺐다.</summary>
+    private static readonly (int column, int row)[] FloorDecorCells =
+    {
+        (16, 29), (17, 29), (18, 29), (19, 29), (20, 29), (15, 29),
+        (16, 30), (18, 30), (20, 30), (25, 29), (25, 30)
+    };
+
+    /// <summary>횃불 불꽃 넘기는 빠르기(초당 장 수).</summary>
+    private const float TorchFramesPerSecond = 8f;
+
+    /// <summary>장식 타일·횃불 애니메이션 타일을 만들어 타일 셋에 넣는다.</summary>
+    private static void BuildDecor(RoomTileSet set)
+    {
+        EnsureFolder(DecorFolder);
+        var sprites = LoadSprites();
+
+        var large = new List<RoomDecorPiece>();
+        foreach (var (column, topRow) in WallLargeCells)
+        {
+            large.Add(new RoomDecorPiece(new[]
+            {
+                DecorTile(sprites, (column, topRow + 1)), DecorTile(sprites, (column + 1, topRow + 1)),
+                DecorTile(sprites, (column, topRow)), DecorTile(sprites, (column + 1, topRow))
+            }));
+        }
+
+        var small = WallSmallCells.Select(cell => (TileBase)DecorTile(sprites, cell)).ToArray();
+        var floor = FloorDecorCells.Select(cell => (TileBase)DecorTile(sprites, cell)).ToArray();
+
+        var torch = LoadOrCreate<AnimatedTile>($"{DecorFolder}/Decor_Torch.asset");
+        var frames = AssetDatabase.LoadAllAssetsAtPath(TorchSheetPath).OfType<Sprite>().ToList();
+        frames.Sort((a, b) => FrameNumber(a.name).CompareTo(FrameNumber(b.name)));
+        torch.m_AnimatedSprites = frames.ToArray();
+        torch.m_MinSpeed = TorchFramesPerSecond;
+        torch.m_MaxSpeed = TorchFramesPerSecond;
+        torch.m_TileColliderType = Tile.ColliderType.None;
+        EditorUtility.SetDirty(torch);
+
+        set.EditorSetDecor(torch, large.ToArray(), small, floor);
+    }
+
+    private static Tile DecorTile(Dictionary<(int, int), Sprite> sprites, (int column, int row) cell)
+    {
+        // 새 에셋은 값을 채운 뒤에 만든다. 만든 직후 고친 값은 첫 실행에서 저장되지 않은 일이 있었다.
+        var path = $"{DecorFolder}/Decor_{cell.column:00}_{cell.row:00}.asset";
+        var tile = AssetDatabase.LoadAssetAtPath<Tile>(path);
+        var created = tile == null;
+        if (created)
+            tile = ScriptableObject.CreateInstance<Tile>();
+
+        tile.sprite = Find(sprites, cell);
+        tile.colliderType = Tile.ColliderType.None;
+        if (created)
+            AssetDatabase.CreateAsset(tile, path);
+        else
+            EditorUtility.SetDirty(tile);
+        return tile;
     }
 
     private const string DoorSheetPath =
@@ -511,6 +590,24 @@ public static class RoomLayoutBuilder
             cameraSerialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
+        // 던전은 어둡게: 방 빛·횃불 빛(RoomLighting)이 비추는 곳만 보인다.
+        foreach (var light in Object.FindObjectsByType<UnityEngine.Rendering.Universal.Light2D>(FindObjectsInactive.Include))
+        {
+            if (light.lightType != UnityEngine.Rendering.Universal.Light2D.LightType.Global)
+                continue;
+
+            var lightSerialized = new SerializedObject(light);
+            changed |= SetFloat(lightSerialized, "m_Intensity", GlobalLightIntensity);
+            var color = lightSerialized.FindProperty("m_Color");
+            if (color != null && color.colorValue != GlobalLightColor)
+            {
+                color.colorValue = GlobalLightColor;
+                changed = true;
+            }
+
+            lightSerialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
         if (!changed)
             return;
 
@@ -530,6 +627,10 @@ public static class RoomLayoutBuilder
     /// <summary>PixelPerfectCamera 기준 해상도. 640×360(방 간격 15u 시절)의 두 배라 화면에 담기는 넓이도 두 배다.</summary>
     private const int RefResolutionX = 1280;
     private const int RefResolutionY = 720;
+
+    /// <summary>던전 전체 빛(예전 1.05). 방 빛·횃불 빛이 그 위에 더해진다.</summary>
+    private const float GlobalLightIntensity = 0.35f;
+    private static readonly Color GlobalLightColor = new(0.55f, 0.6f, 0.85f, 1f);
 
     private static bool SetInt(SerializedObject serialized, string name, int value)
     {

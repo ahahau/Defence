@@ -25,6 +25,15 @@ namespace Code.MapCreateSystem
         /// <summary>방 안에 갇힌 막힌 타일(기둥). 벽이 아니라 기둥 룰 타일로 그린다.</summary>
         public HashSet<Vector2Int> Pillars { get; } = new();
 
+        /// <summary>장식(위쪽 벽 횃불·석상·홈, 바닥 소품). 방 이름으로 자리를 정해 늘 같은 곳에 놓인다.</summary>
+        public List<RoomDecorPlacement> Decor { get; } = new();
+
+        /// <summary>바닥 소품이 놓일 확률(타일마다).</summary>
+        public const float FloorDecorChance = 0.03f;
+
+        /// <summary>방 바닥 타일(복도 제외). 장식을 방 안에만 두려고 따로 든다.</summary>
+        private readonly HashSet<Vector2Int> _roomFloor = new();
+
         /// <param name="shape">방 모양.</param>
         /// <param name="connected">복도가 이어진 문.</param>
         /// <param name="turningDoors">복도가 서쪽으로 꺾이는 문(입구의 위·아래).</param>
@@ -65,6 +74,7 @@ namespace Code.MapCreateSystem
                     plan.AddStraightCorridor(shape, side, half);
             }
 
+            plan.AddDecor(shape);
             return plan;
         }
 
@@ -81,7 +91,150 @@ namespace Code.MapCreateSystem
                     continue;
 
                 foreach (var tile in CellTiles(shape, column, row))
+                {
                     Floor.Add(tile);
+                    _roomFloor.Add(tile);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 위쪽 벽 벽돌 면에 횃불·석상·홈을, 바닥에 소품을 둔다. 복도·문을 다 깐 뒤에 불러야 문 틈을 피한다.
+        /// 자리마다 방 이름과 좌표로 값을 뽑아(순서와 무관) 칸막이를 세우거나 허물어도 다른 장식은 그대로다.
+        /// </summary>
+        private void AddDecor(RoomShape shape)
+        {
+            var seed = StableSeed(shape.Id);
+
+            // 벽돌 면 아래 줄: 방 바닥 바로 위가 벽이고 그 위 세 칸(면 2 + 난간)이 모두 벽인 곳.
+            var rows = new SortedDictionary<int, List<int>>();
+            foreach (var tile in _roomFloor)
+            {
+                if (!Floor.Contains(tile))
+                    continue;
+
+                var face = new Vector2Int(tile.x, tile.y + 1);
+                if (!IsSolidWall(face) || !IsSolidWall(face + Vector2Int.up) || !IsSolidWall(face + Vector2Int.up * 2))
+                    continue;
+
+                if (!rows.TryGetValue(face.y, out var xs))
+                    rows[face.y] = xs = new List<int>();
+                xs.Add(face.x);
+            }
+
+            foreach (var pair in rows)
+            {
+                var xs = pair.Value;
+                xs.Sort();
+                var start = 0;
+                for (var i = 1; i <= xs.Count; i++)
+                {
+                    if (i < xs.Count && xs[i] == xs[i - 1] + 1)
+                        continue;
+
+                    AddWallRun(seed, pair.Key, xs[start], xs[i - 1]);
+                    start = i;
+                }
+            }
+
+            var reserved = ReservedTiles(shape);
+            foreach (var tile in _roomFloor)
+            {
+                if (!Floor.Contains(tile) || reserved.Contains(tile) || Roll(seed, tile, 2) >= FloorDecorChance)
+                    continue;
+
+                Decor.Add(new RoomDecorPlacement(tile, RoomDecorKind.Floor, Roll(seed, tile, 3)));
+            }
+        }
+
+        /// <summary>한 줄로 이어진 벽돌 면에 장식을 띄엄띄엄 둔다. 양 끝 한 칸은 비워 모서리·문 틈과 겹치지 않게 한다.</summary>
+        private void AddWallRun(uint seed, int row, int first, int last)
+        {
+            var x = first + 1;
+            while (x <= last - 1)
+            {
+                var tile = new Vector2Int(x, row);
+                var roll = Roll(seed, tile, 1);
+                var pick = Roll(seed, tile, 4);
+                if (roll < 0.34f)
+                {
+                    Decor.Add(new RoomDecorPlacement(tile, RoomDecorKind.Torch, pick));
+                    x += 3;
+                }
+                else if (roll < 0.52f && x + 1 <= last - 1)
+                {
+                    Decor.Add(new RoomDecorPlacement(tile, RoomDecorKind.WallLarge, pick));
+                    x += 4;
+                }
+                else if (roll < 0.7f)
+                {
+                    Decor.Add(new RoomDecorPlacement(tile, RoomDecorKind.WallSmall, pick));
+                    x += 2;
+                }
+                else
+                {
+                    x++;
+                }
+            }
+        }
+
+        private bool IsSolidWall(Vector2Int tile) => !Floor.Contains(tile) && !Pillars.Contains(tile);
+
+        /// <summary>바닥 소품을 두지 않는 타일: 중앙 시설 자리와 문 앞 칸(건물·드나드는 길이 잘 보여야 한다).</summary>
+        private static HashSet<Vector2Int> ReservedTiles(RoomShape shape)
+        {
+            var reserved = new HashSet<Vector2Int>();
+            var slot = RoomLayoutRules.CentralSlotMin(shape.Columns, shape.Rows);
+            for (var dy = 0; dy < 2; dy++)
+            for (var dx = 0; dx < 2; dx++)
+            {
+                foreach (var tile in CellTiles(shape, slot.x + dx, slot.y + dy))
+                    reserved.Add(tile);
+            }
+
+            foreach (var side in RoomDoorRules.Sides)
+            {
+                if (!shape.HasDoor(side))
+                    continue;
+
+                var (a, b) = RoomLayoutRules.DoorCells(shape.Columns, shape.Rows, side);
+                foreach (var tile in CellTiles(shape, a.x, a.y))
+                    reserved.Add(tile);
+                foreach (var tile in CellTiles(shape, b.x, b.y))
+                    reserved.Add(tile);
+            }
+
+            return reserved;
+        }
+
+        /// <summary>문자열에서 실행마다 같은 값을 내는 씨앗(FNV-1a). string.GetHashCode는 실행마다 달라질 수 있다.</summary>
+        private static uint StableSeed(string text)
+        {
+            var hash = 2166136261u;
+            if (text != null)
+            {
+                foreach (var c in text)
+                {
+                    hash ^= c;
+                    hash *= 16777619u;
+                }
+            }
+
+            return hash;
+        }
+
+        /// <summary>씨앗·타일·용도로 정해지는 0~1 값.</summary>
+        private static float Roll(uint seed, Vector2Int tile, uint salt)
+        {
+            unchecked
+            {
+                var h = seed ^ (uint)(tile.x * 73856093) ^ (uint)(tile.y * 19349663) ^ (salt * 83492791u);
+                h ^= h >> 16;
+                h *= 0x7feb352du;
+                h ^= h >> 15;
+                h *= 0x846ca68bu;
+                h ^= h >> 16;
+                return (h & 0xFFFFFF) / (float)0x1000000;
             }
         }
 

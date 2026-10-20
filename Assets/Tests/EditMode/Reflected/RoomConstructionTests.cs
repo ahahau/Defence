@@ -511,6 +511,67 @@ namespace Tests.EditMode.Rules
             Assert.That(withWalls, Is.GreaterThan(5));
         }
 
+        /// <summary>
+        /// 장식은 위쪽 벽 벽돌 면(벽 칸)과 비어 있는 바닥에만 놓이고, 같은 방이면 늘 같은 자리다.
+        /// 바닥 칸 위에 벽 장식이 놓이면 바닥에 횃불이 서 있고, 중앙 시설·문 앞을 가리면 건물과 드나드는 길이 안 보인다.
+        /// </summary>
+        [Test]
+        public void RoomTilePlan_DecorStaysOnWallsAndFreeFloor()
+        {
+            var shape = NewShape(RoomSize.Medium, RoomDoors.Left | RoomDoors.Right | RoomDoors.Up, new[]
+            {
+                "..............", "..............", "..............", "..............", "..............",
+                "..............", "..............", "..............", "..............", ".............."
+            });
+            var plan = RoomTilePlan.Build(shape, RoomDoors.Up, RoomDoors.None, 48);
+            var again = RoomTilePlan.Build(shape, RoomDoors.Up, RoomDoors.None, 48);
+            Assert.That(plan.Decor.Count, Is.EqualTo(again.Decor.Count));
+            for (var i = 0; i < plan.Decor.Count; i++)
+                Assert.That(plan.Decor[i].Tile, Is.EqualTo(again.Decor[i].Tile), "같은 방은 같은 자리에 장식이 있어야 합니다.");
+
+            Assert.That(plan.Decor.Exists(d => d.Kind == RoomDecorKind.Torch), Is.True, "긴 위쪽 벽에는 횃불이 있어야 합니다.");
+            var slot = RoomLayoutRules.CentralSlotMin(shape.Columns, shape.Rows);
+            var slotMin = RoomTilePlan.CellOriginTile(shape.Columns, shape.Rows, slot.x, slot.y);
+            foreach (var decor in plan.Decor)
+            {
+                var size = RoomTilePainter.DecorSize(decor.Kind);
+                for (var dy = 0; dy < size.y; dy++)
+                for (var dx = 0; dx < size.x; dx++)
+                {
+                    var tile = decor.Tile + new Vector2Int(dx, dy);
+                    if (decor.Kind == RoomDecorKind.Floor)
+                    {
+                        Assert.That(plan.Floor, Has.Member(tile));
+                        var inSlot = tile.x >= slotMin.x && tile.x < slotMin.x + 4 && tile.y >= slotMin.y && tile.y < slotMin.y + 4;
+                        Assert.That(inSlot, Is.False, $"바닥 소품 {tile}이 중앙 시설 자리에 있습니다.");
+                    }
+                    else
+                    {
+                        Assert.That(plan.Floor, Has.No.Member(tile), $"벽 장식 {decor.Kind} {tile}이 바닥 위에 있습니다.");
+                        Assert.That(tile.y, Is.EqualTo(shape.Rows + dy).Or.EqualTo(shape.Rows + 1), "벽 장식은 위쪽 벽 벽돌 면에 있어야 합니다.");
+                        // 위쪽 문 틈(타일 x -1·0)과 그 양옆 한 칸은 문 그림 자리다.
+                        Assert.That(tile.x < -2 || tile.x > 1, Is.True, $"벽 장식 {tile}이 위쪽 문 자리와 겹칩니다.");
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 던전 타일맵은 그림 한 장이 칸 하나(0.625u)에 꼭 맞아야 한다. 격자 칸 크기만 0.625로 두면 그림이 1u로 그려져 1.6배로 겹쳤다.
+        /// </summary>
+        [Test]
+        public void DungeonTilemap_DrawsOneSpritePerCell()
+        {
+            var parent = new GameObject("Root");
+            _layoutHosts.Add(parent);
+            var map = DungeonTilemap.Create(parent.transform, null, null, null);
+            var grid = map.GetComponent<Grid>();
+            Assert.That(grid.cellSize.x, Is.EqualTo(1f).Within(0.0001f));
+            Assert.That(map.transform.lossyScale.x, Is.EqualTo(RoomLayoutRules.TileWorldSize).Within(0.0001f));
+            Assert.That(map.Tiles.CellToWorld(new Vector3Int(1, 0, 0)).x - map.Tiles.CellToWorld(Vector3Int.zero).x,
+                Is.EqualTo(RoomLayoutRules.TileWorldSize).Within(0.0001f));
+        }
+
         private static bool HasInteriorRun(RoomShape shape)
         {
             for (var y = 1; y < shape.Rows - 1; y++)
