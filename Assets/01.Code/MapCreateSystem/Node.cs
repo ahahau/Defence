@@ -646,19 +646,27 @@ namespace Code.MapCreateSystem
         }
 
         /// <summary>
-        /// 복도가 이어진 위·아래 문에 선 문(열린 방만). 아래 문도 같은 정면 문 그림을 아래 벽 난간 줄에 세운다.
-        /// 옆 문은 문 면이 보이지 않아 문 대신 양쪽에 기둥(<see cref="RoomTilePlan"/>)을 세워 문틀로 보이게 한다.
+        /// 복도가 이어진 문마다 선 문(열린 방만). 위·아래 문은 벽 줄에, 옆 문은 위·아래 기둥(<see cref="RoomTilePlan"/>) 사이 틈에
+        /// 같은 정면 문 그림을 세운다. 문에서 문까지가 한 방이라는 경계가 된다.
         /// </summary>
         private RoomDoorView _upDoor;
         private RoomDoorView _downDoor;
+        private RoomDoorView _leftDoor;
+        private RoomDoorView _rightDoor;
 
         /// <summary>그 변의 문을 연다. 문 그림이 없는 변이면 아무 일도 없다.</summary>
         public void OpenDoor(RoomDoors side)
         {
-            if (side == RoomDoors.Up && _upDoor != null)
-                _upDoor.Open();
-            else if (side == RoomDoors.Down && _downDoor != null)
-                _downDoor.Open();
+            var view = side switch
+            {
+                RoomDoors.Up => _upDoor,
+                RoomDoors.Down => _downDoor,
+                RoomDoors.Left => _leftDoor,
+                RoomDoors.Right => _rightDoor,
+                _ => null
+            };
+            if (view != null)
+                view.Open();
         }
 
         private void RefreshDoorViews()
@@ -667,6 +675,8 @@ namespace Code.MapCreateSystem
             var frames = tileRenderer != null && tileRenderer.TileSet != null ? tileRenderer.TileSet.DoorFrames : null;
             RefreshDoorView(ref _upDoor, RoomDoors.Up, frames);
             RefreshDoorView(ref _downDoor, RoomDoors.Down, frames);
+            RefreshDoorView(ref _leftDoor, RoomDoors.Left, frames);
+            RefreshDoorView(ref _rightDoor, RoomDoors.Right, frames);
         }
 
         private void RefreshDoorView(ref RoomDoorView view, RoomDoors side, Sprite[] frames)
@@ -689,7 +699,7 @@ namespace Code.MapCreateSystem
 
             if (view == null)
             {
-                var door = new GameObject(side == RoomDoors.Up ? "UpDoor" : "DownDoor");
+                var door = new GameObject($"{side}Door");
                 door.transform.SetParent(transform, false);
                 view = door.AddComponent<RoomDoorView>();
                 var walls = tileRenderer.TileRenderer;
@@ -698,14 +708,23 @@ namespace Code.MapCreateSystem
 
             // 문 그림은 타일 3칸 × 2칸(16px = 타일 하나)이다. 위 문은 위쪽 벽 벽돌 면 두 줄에,
             // 아래 문은 아래 벽 난간 줄과 그 바깥 한 줄에 걸친다(방 바닥을 가리지 않게).
+            // 옆 문은 벽 줄을 가운데로 문 틈(타일 두 줄) 높이에 선다.
             var parentScale = transform.lossyScale;
             view.transform.localScale = new Vector3(
                 RoomLayoutRules.TileWorldSize / Mathf.Max(0.0001f, Mathf.Abs(parentScale.x)),
                 RoomLayoutRules.TileWorldSize / Mathf.Max(0.0001f, Mathf.Abs(parentScale.y)),
                 1f);
-            var edge = Layout.Rows * RoomLayoutRules.CellWorldSize * 0.5f + RoomLayoutRules.TileWorldSize;
-            var y = side == RoomDoors.Up ? edge : -edge;
-            view.transform.position = transform.position + new Vector3(0f, y, -0.01f);
+            var tile = RoomLayoutRules.TileWorldSize;
+            var vertical = Layout.Rows * RoomLayoutRules.CellWorldSize * 0.5f + tile;
+            var horizontal = Layout.Columns * RoomLayoutRules.CellWorldSize * 0.5f + tile * 0.5f;
+            var offset = side switch
+            {
+                RoomDoors.Up => new Vector3(0f, vertical, -0.01f),
+                RoomDoors.Down => new Vector3(0f, -vertical, -0.01f),
+                RoomDoors.Right => new Vector3(horizontal, 0f, -0.01f),
+                _ => new Vector3(-horizontal, 0f, -0.01f)
+            };
+            view.transform.position = transform.position + offset;
         }
 
         private void ReplaceDecor(RoomLayout prefab)
