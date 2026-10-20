@@ -54,6 +54,37 @@ namespace Tests.EditMode.Rules
             Assert.That(TrapRules.PersistentTickDamage(1, 3f), Is.EqualTo(1), "한 번 피해는 최소 1입니다.");
         }
 
+        /// <summary>발동 효과가 한 번 돌고 사라지는지, 지속형은 끝까지 반복하는지. 멈추지 않는 효과는 함정이 계속 터지는 것처럼 보인다.</summary>
+        [Test]
+        public void TrapEffect_PlaysOnceOrLoopsThroughFrames()
+        {
+            Assert.That(TrapEffectRules.FrameAt(0f, 0.1f, 5, false), Is.EqualTo(0));
+            Assert.That(TrapEffectRules.FrameAt(0.45f, 0.1f, 5, false), Is.EqualTo(4));
+            Assert.That(TrapEffectRules.FrameAt(0.51f, 0.1f, 5, false), Is.EqualTo(-1), "한 번 도는 효과는 끝나면 사라집니다.");
+            Assert.That(TrapEffectRules.FrameAt(0.51f, 0.1f, 5, true), Is.EqualTo(0), "반복 효과는 처음 프레임으로 돌아갑니다.");
+            Assert.That(TrapEffectRules.FrameAt(0f, 0.1f, 0, true), Is.EqualTo(-1));
+
+            var tiles = new Vector2Int(2, 1);
+            Assert.That(TrapEffectRules.TileCenter(Vector2.zero, tiles, 2f, 0, 0), Is.EqualTo(new Vector2(-1f, 0f)));
+            Assert.That(TrapEffectRules.TileCenter(Vector2.zero, tiles, 2f, 1, 0), Is.EqualTo(new Vector2(1f, 0f)));
+            Assert.That(TrapEffectRules.AreaWidthCells(new Vector2Int(2, 2), 1f), Is.EqualTo(4f), "폭발은 범위가 닿는 곳만큼 큽니다.");
+        }
+
+        /// <summary>함정마다 방식에 맞는 발동 효과가 배선돼 있는지. 비면 흔들림만 보여 무엇이 터졌는지 모른다.</summary>
+        [TestCase("Trap"), TestCase("Trap_Spike"), TestCase("Trap_Snare"), TestCase("Generated/Trap_ArmorBreaker"),
+         TestCase("Trap_Crusher"), TestCase("Generated/Trap_AmbushNet"), TestCase("Trap_Blade"),
+         TestCase("Generated/Trap_Caltrop"), TestCase("Generated/Trap_ExecutionSaw"), TestCase("Trap_Arrow")]
+        public void TrapPrefab_HasTriggerEffectForItsMode(string name)
+        {
+            var trap = LoadTrapPrefab(name);
+            var visual = trap.GetComponent<TrapTriggerVisual>();
+            Assert.That(visual, Is.Not.Null, $"{name} 에 TrapTriggerVisual 이 없습니다.");
+            if (trap.TriggerMode == TrapTriggerMode.Projectile)
+                Assert.That(visual.HasProjectile, Is.True, $"{name} 에 화살 그림이 없습니다.");
+            else
+                Assert.That(visual.HasFrames, Is.True, $"{name} 에 발동 프레임이 없습니다.");
+        }
+
         [Test]
         public void Footprint_CoversAllTilesButNotBeyond()
         {
