@@ -150,7 +150,7 @@ namespace Tests.EditMode.Rules
             Assert.That(RouteRiskRules.PathHasReward(null, AdventurerTrait.Shopaholic, AdventurerVisitPurpose.Shopping), Is.False);
 
             var shopRoom = CreateNode();
-            var store = AssetDatabase.LoadAssetAtPath<Code.Buildings.BuildingDataSO>("Assets/GameModules/Data/Buildings/StoreBuildingData.asset");
+            var store = AssetDatabase.LoadAssetAtPath<Code.Buildings.BuildingDataSO>("Assets/07.SO/Buildings/StoreBuildingData.asset");
             Assert.That(store, Is.Not.Null, "상점 데이터를 찾지 못했습니다.");
             Assert.That(Code.Buildings.BuildingPlacement.InstallCentral(shopRoom, store), Is.Not.Null, "빈 중형 방에는 상점을 지을 수 있어야 합니다.");
 
@@ -163,7 +163,7 @@ namespace Tests.EditMode.Rules
         // 노드는 격자·전장 컴포넌트를 필수로 요구해 실제 프리팹을 쓴다. 방 목록에 오르도록 Initialize를 부른다.
         private Node CreateNode()
         {
-            var prefab = AssetDatabase.LoadAssetAtPath<Node>("Assets/GameModules/Prefabs/Map/Node.prefab");
+            var prefab = AssetDatabase.LoadAssetAtPath<Node>("Assets/03.Prefabs/Map/Node.prefab");
             Assert.That(prefab, Is.Not.Null, "노드 프리팹을 찾지 못했습니다.");
             var node = Object.Instantiate(prefab);
             _hosts.Add(node.gameObject);

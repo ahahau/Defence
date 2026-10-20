@@ -73,48 +73,6 @@ namespace Tests.EditMode.Gameplay
         /// 쓰는 것이 정상이고, 그걸 실패로 치면 아트 교체가 끝날 때까지 이 테스트를 꺼 둬야
         /// 한다. 꺼 두면 그사이 진짜 아트끼리 겹치는 것도 못 잡는다.
         /// </summary>
-        /// <summary>
-        /// 필요할 때 띄우는 UI Toolkit 화면(금고 관리 등)은 Resources의 설정이 UXML과 uGUI 위 패널을 가리켜야 한다.
-        /// 비면 금고 칸을 눌러도 아무것도 뜨지 않고 오류 한 줄만 남는다.
-        /// </summary>
-        [TestCase("UI/TreasuryScreen")]
-        [TestCase("UI/EnemyStatusScreen")]
-        [TestCase("UI/ArtifactBarScreen")]
-        [TestCase("UI/UnitStatusScreen")]
-        [TestCase("UI/BossBannerScreen")]
-        [TestCase("UI/MerchantScreen")]
-        public void ToolkitScreens_PointToTheirDocumentAndOverlayPanel(string resourcePath)
-        {
-            var screen = Resources.Load<Code.UI.Toolkit.ToolkitScreenSO>(resourcePath);
-            Assert.That(screen, Is.Not.Null, $"Resources/{resourcePath} 화면 설정이 없습니다.");
-            Assert.That(screen.Template, Is.Not.Null, "UXML이 연결되지 않았습니다.");
-            Assert.That(AssetDatabase.GetAssetPath(screen.Template), Does.StartWith("Assets/GameModules/UI/UxmlAndUss/"),
-                "새 화면 UXML은 GameModules/UI/UxmlAndUss 아래에 둡니다(ui-rules).");
-            Assert.That(screen.PanelSettings, Is.Not.Null, "패널 설정이 없습니다.");
-            Assert.That(screen.PanelSettings.sortingOrder, Is.GreaterThan(50f), "메인 uGUI 캔버스(50) 위에 떠야 합니다.");
-        }
-
-        /// <summary>
-        /// 운영 방침 창은 policy-root를 켜고 끈다. 예전에는 문서 루트를 켜서, USS가 숨겨 둔 policy-root가 그대로
-        /// 숨은 채 시간만 멈춰 판이 굳었다. 창이 기대하는 요소가 policy-root 안에 있는지 지킨다.
-        /// </summary>
-        [Test]
-        public void PolicyChoicePanel_KeepsItsPartsInsideTheToggledRoot()
-        {
-            var tree = Resources.Load<UnityEngine.UIElements.VisualTreeAsset>("UI/Toolkit/PolicyChoicePanel");
-            Assert.That(tree, Is.Not.Null, "운영 방침 UXML을 찾지 못했습니다.");
-
-            var root = tree.CloneTree();
-            var policyRoot = UnityEngine.UIElements.UQueryExtensions.Q(root, "policy-root");
-            Assert.That(policyRoot, Is.Not.Null, "policy-root가 없습니다.");
-            foreach (var name in new[] { "policy-title", "policy-morale", "policy-list" })
-                Assert.That(UnityEngine.UIElements.UQueryExtensions.Q(policyRoot, name), Is.Not.Null, $"{name}이 policy-root 밖에 있거나 없습니다.");
-
-            var uss = System.IO.File.ReadAllText("Assets/Resources/UI/Toolkit/PolicyChoicePanel.uss");
-            Assert.That(uss, Does.Contain(".policy-root { display: none"),
-                "policy-root가 기본으로 숨겨져 있다는 전제가 바뀌면 PolicyChoiceToolkitView의 토글도 다시 봐야 합니다.");
-        }
-
         [Test]
         public void Traps_DoNotShareTheSameArt()
         {
@@ -145,7 +103,7 @@ namespace Tests.EditMode.Gameplay
         public void WaveConfig_RunsForeverWithFourWeeksOfAuthoredDays()
         {
             var configType = RequireType("Code.Manager.WaveConfigSO");
-            var config = AssetDatabase.LoadAssetAtPath<ScriptableObject>("Assets/GameModules/Data/WaveConfig.asset");
+            var config = AssetDatabase.LoadAssetAtPath<ScriptableObject>("Assets/07.SO/WaveConfig.asset");
             Assert.That(config, Is.Not.Null, "WaveConfig 에셋을 찾지 못했습니다.");
 
             var finalDay = configType.GetProperty("FinalDay").GetValue(config);
@@ -175,7 +133,7 @@ namespace Tests.EditMode.Gameplay
         public void WaveConfig_PutsABossOnEverySettlementDay(int day)
         {
             var configType = RequireType("Code.Manager.WaveConfigSO");
-            var config = AssetDatabase.LoadAssetAtPath<ScriptableObject>("Assets/GameModules/Data/WaveConfig.asset");
+            var config = AssetDatabase.LoadAssetAtPath<ScriptableObject>("Assets/07.SO/WaveConfig.asset");
             Assert.That(config, Is.Not.Null, "WaveConfig 에셋을 찾지 못했습니다.");
 
             // 보스와 청산이 같은 날이라 한 주가 하나의 고비로 끝난다.
@@ -193,7 +151,7 @@ namespace Tests.EditMode.Gameplay
             var renderType = RequireType("Code.Entities.EntityRender");
             var missing = new List<string>();
 
-            foreach (var guid in AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/GameModules/Prefabs/Characters" }))
+            foreach (var guid in AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/03.Prefabs/Characters" }))
             {
                 var path = AssetDatabase.GUIDToAssetPath(guid);
                 var root = AssetDatabase.LoadAssetAtPath<GameObject>(path);
@@ -255,11 +213,11 @@ namespace Tests.EditMode.Gameplay
         {
             var paths = new[]
             {
-                "Assets/Resources/Buildings/BlacksmithBuildingData.asset",
-                "Assets/GameModules/Data/Buildings/StoreBuildingData.asset",
-                "Assets/GameModules/Data/Buildings/ArmoryStoreBuildingData.asset",
-                "Assets/GameModules/Data/Buildings/InnBuildingData.asset",
-                "Assets/GameModules/Data/Buildings/GrandInnBuildingData.asset"
+                "Assets/07.SO/Buildings/BlacksmithBuildingData.asset",
+                "Assets/07.SO/Buildings/StoreBuildingData.asset",
+                "Assets/07.SO/Buildings/ArmoryStoreBuildingData.asset",
+                "Assets/07.SO/Buildings/InnBuildingData.asset",
+                "Assets/07.SO/Buildings/GrandInnBuildingData.asset"
             };
 
             foreach (var path in paths)
@@ -274,7 +232,7 @@ namespace Tests.EditMode.Gameplay
         [Test]
         public void OpeningScene_HasNoPlayerAndBlacksmithInstallsAtCentre()
         {
-            var scene = EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
             try
             {
                 var controllerType = RequireType("Code.MapCreateSystem.DungeonGraphController");
@@ -298,7 +256,7 @@ namespace Tests.EditMode.Gameplay
                 Assert.That(entrance, Is.Not.Null);
 
                 var data = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
-                    "Assets/Resources/Buildings/BlacksmithBuildingData.asset");
+                    "Assets/07.SO/Buildings/BlacksmithBuildingData.asset");
                 var placementType = RequireType("Code.Buildings.BuildingPlacement");
                 var install = placementType.GetMethod("InstallCentral", BindingFlags.Public | BindingFlags.Static);
                 var building = (Component)install.Invoke(null, new object[] { entrance, data, 0.92f });
@@ -317,7 +275,7 @@ namespace Tests.EditMode.Gameplay
         [Test]
         public void OpeningScene_DoesNotLaunchTutorial()
         {
-            var scene = EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
             try
             {
                 var dialogueType = RequireType("Code.Dialogue.DialogueRunner");
@@ -345,7 +303,7 @@ namespace Tests.EditMode.Gameplay
         [Test]
         public void OpeningRoom_HasFourDoorsAndUsesEastDoorForIntruders()
         {
-            var scene = EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
             try
             {
                 var controllerType = RequireType("Code.MapCreateSystem.DungeonGraphController");
@@ -382,7 +340,7 @@ namespace Tests.EditMode.Gameplay
         [Test]
         public void AdjacentOperatingFacilities_IncreaseIncomeAndAddUpkeep()
         {
-            var scene = EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
             try
             {
                 var nodeManagerType = RequireType("Code.MapCreateSystem.DungeonNodeManager");
@@ -407,11 +365,11 @@ namespace Tests.EditMode.Gameplay
                 var treasuryNode = (Component)createNode.Invoke(manager, new[] { treasuryModel });
 
                 var blacksmith = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
-                    "Assets/Resources/Buildings/BlacksmithBuildingData.asset");
+                    "Assets/07.SO/Buildings/BlacksmithBuildingData.asset");
                 var mine = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
-                    "Assets/GameModules/Data/Buildings/MineBuildingData.asset");
+                    "Assets/07.SO/Buildings/MineBuildingData.asset");
                 var treasuryData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
-                    "Assets/Resources/Buildings/TreasuryBuildingData.asset");
+                    "Assets/07.SO/Buildings/TreasuryBuildingData.asset");
                 var install = placementType.GetMethod("InstallCentral", BindingFlags.Public | BindingFlags.Static);
                 var upkeepBefore = (int)economyType.GetMethod("CalculateDailyUpkeep").Invoke(null, null);
                 var forge = install.Invoke(null, new object[] { left, blacksmith, 0.92f });
@@ -439,7 +397,7 @@ namespace Tests.EditMode.Gameplay
         [Test]
         public void Grade_CountsTheGoldInTheVaultAndTheBuildingsAroundIt()
         {
-            var scene = EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
             try
             {
                 var nodeManagerType = RequireType("Code.MapCreateSystem.DungeonNodeManager");
@@ -462,9 +420,9 @@ namespace Tests.EditMode.Gameplay
                 var vaultNode = (Component)createNode.Invoke(manager, new[] { vaultModel });
 
                 var storeData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
-                    "Assets/GameModules/Data/Buildings/StoreBuildingData.asset");
+                    "Assets/07.SO/Buildings/StoreBuildingData.asset");
                 var treasuryData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
-                    "Assets/Resources/Buildings/TreasuryBuildingData.asset");
+                    "Assets/07.SO/Buildings/TreasuryBuildingData.asset");
                 var install = placementType.GetMethod("InstallCentral", BindingFlags.Public | BindingFlags.Static);
 
                 var buildingGrade = gradeType.GetMethod("GradeFromBuildings");
@@ -503,7 +461,7 @@ namespace Tests.EditMode.Gameplay
         [Test]
         public void RouteGoal_ErrandsLeadToFacilitiesAndOnlyHuntersHeadForTheVault()
         {
-            var scene = EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
             GameObject visitorObject = null;
             try
             {
@@ -528,9 +486,9 @@ namespace Tests.EditMode.Gameplay
                 var vaultNode = (Component)createNode.Invoke(manager, new[] { vaultModel });
 
                 var storeData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
-                    "Assets/GameModules/Data/Buildings/StoreBuildingData.asset");
+                    "Assets/07.SO/Buildings/StoreBuildingData.asset");
                 var treasuryData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
-                    "Assets/Resources/Buildings/TreasuryBuildingData.asset");
+                    "Assets/07.SO/Buildings/TreasuryBuildingData.asset");
                 var install = placementType.GetMethod("InstallCentral", BindingFlags.Public | BindingFlags.Static);
                 var store = install.Invoke(null, new object[] { storeNode, storeData, 0.92f });
                 var treasury = install.Invoke(null, new object[] { vaultNode, treasuryData, 0.92f });
@@ -586,7 +544,7 @@ namespace Tests.EditMode.Gameplay
         [Test]
         public void Room_EarnsOrDefendsButNotBoth()
         {
-            var scene = EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
             try
             {
                 var nodeManagerType = RequireType("Code.MapCreateSystem.DungeonNodeManager");
@@ -612,9 +570,9 @@ namespace Tests.EditMode.Gameplay
                 Assert.That((bool)canAccept.GetValue(storeNode), Is.True, "빈 방은 유닛을 받아야 합니다.");
 
                 var storeData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
-                    "Assets/GameModules/Data/Buildings/StoreBuildingData.asset");
+                    "Assets/07.SO/Buildings/StoreBuildingData.asset");
                 var treasuryData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
-                    "Assets/Resources/Buildings/TreasuryBuildingData.asset");
+                    "Assets/07.SO/Buildings/TreasuryBuildingData.asset");
                 var install = placementType.GetMethod("InstallCentral", BindingFlags.Public | BindingFlags.Static);
 
                 Assert.That(install.Invoke(null, new object[] { storeNode, storeData, 0.92f }), Is.Not.Null);
@@ -630,7 +588,7 @@ namespace Tests.EditMode.Gameplay
                 var trapModel = addNode.Invoke(graph, new object[] { kind, new Vector2Int(1302, 0) });
                 var trapNode = (Component)createNode.Invoke(manager, new[] { trapModel });
                 var trapData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
-                    "Assets/GameModules/Data/Buildings/SpikeTrapBuildingData.asset");
+                    "Assets/07.SO/Buildings/SpikeTrapBuildingData.asset");
                 Assert.That(trapData, Is.Not.Null, "함정 데이터를 찾지 못했습니다.");
                 var installCell = placementType.GetMethod("InstallOnCell", BindingFlags.Public | BindingFlags.Static);
                 Assert.That(installCell.Invoke(null, new object[] { trapNode, 0, 0, trapData }), Is.Not.Null);
@@ -694,7 +652,7 @@ namespace Tests.EditMode.Gameplay
 
         // ── 도구 ───────────────────────────────────────────────
 
-        private const string PlaceholderRoot = "Assets/_Graphics/Placeholder";
+        private const string PlaceholderRoot = "Assets/04.Sprites/Placeholder";
 
         /// <summary>이 그림이 자리만 지키는 임시 그림인가.</summary>
         private static bool IsPlaceholder(UnityEngine.Object sprite) =>
@@ -716,7 +674,7 @@ namespace Tests.EditMode.Gameplay
             foreach (var guid in AssetDatabase.FindAssets("t:ScriptableObject"))
             {
                 var path = AssetDatabase.GUIDToAssetPath(guid);
-                if (!path.StartsWith("Assets/GameModules/Data") && !path.StartsWith("Assets/Resources"))
+                if (!path.StartsWith("Assets/07.SO") && !path.StartsWith("Assets/Resources"))
                     continue;
 
                 var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);

@@ -13,13 +13,12 @@ namespace Code.Audio
     /// </summary>
     public sealed class GameMusicPlayer : MonoBehaviour
     {
-        private const string CatalogResourcePath = "Audio/GameMusicCatalog";
         private const string VolumeKey = "audio.music.volume";
         private const float CrossfadeDuration = 1.2f;
 
         private static GameMusicPlayer instance;
         private static GameMusicCatalogSO catalog;
-        private static bool catalogLoaded;
+        private static bool missingCatalogWarned;
         private static float volume = -1f;
 
         private AudioSource activeSource;
@@ -49,6 +48,13 @@ namespace Code.Audio
             }
         }
 
+        /// <summary>씬의 <see cref="Code.Core.RuntimeAssetInstaller"/>가 음악 표를 넘긴다.</summary>
+        public static void Provide(GameMusicCatalogSO musicCatalog)
+        {
+            if (musicCatalog != null)
+                catalog = musicCatalog;
+        }
+
         /// <summary>같은 국면을 다시 요청하면 아무 일도 하지 않는다 — 곡이 처음부터 다시 시작되지 않게.</summary>
         public static void Play(MusicCue cue)
         {
@@ -64,7 +70,7 @@ namespace Code.Audio
         {
             instance = null;
             catalog = null;
-            catalogLoaded = false;
+            missingCatalogWarned = false;
             volume = -1f;
         }
 
@@ -88,13 +94,11 @@ namespace Code.Audio
 
         private static GameMusicCatalogSO EnsureCatalog()
         {
-            if (catalogLoaded)
-                return catalog;
-
-            catalogLoaded = true;
-            catalog = Resources.Load<GameMusicCatalogSO>(CatalogResourcePath);
-            if (catalog == null)
-                Debug.LogWarning($"음악 표를 찾지 못했습니다: Resources/{CatalogResourcePath}. 배경음악이 나오지 않습니다.");
+            if (catalog == null && !missingCatalogWarned)
+            {
+                missingCatalogWarned = true;
+                Debug.LogWarning("음악 표를 받지 못했습니다. 씬의 RuntimeAssetInstaller를 확인하세요. 배경음악이 나오지 않습니다.");
+            }
 
             return catalog;
         }

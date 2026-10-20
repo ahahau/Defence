@@ -25,12 +25,6 @@ namespace Tests.EditMode.UI
         [TearDown]
         public void Cleanup()
         {
-            foreach (var obj in created.ToArray())
-            {
-                if (obj is GameObject host && host != null && host.GetComponent(Tutorial) is Component tutorial)
-                    TrackOverlay(tutorial);
-            }
-
             foreach (var obj in created)
             {
                 if (obj is GameObject go)
@@ -69,29 +63,19 @@ namespace Tests.EditMode.UI
         }
 
         /// <summary>
-        /// 안내 카드는 UI Toolkit 덮개가 그린다. EditMode에서는 패널이 서지 않아 화면 요소를 볼 수 없으므로
-        /// 안내가 띄우라고 한 상태(<c>_hintVisible</c>)를 본다. 예전 uGUI 안내는 CanvasGroup 알파로 봤다.
+        /// 안내가 띄우라고 한 상태(<c>_hintVisible</c>)를 본다. 덮개를 그리는 화면은 지금 없다(uGUI 전환 대기).
         /// </summary>
         private bool IsHintVisible(Component tutorial)
         {
             var field = Tutorial.GetField("_hintVisible", Private);
             Assert.That(field, Is.Not.Null, "PlayTutorialView._hintVisible 를 찾지 못했습니다.");
-            TrackOverlay(tutorial);
             return (bool)field.GetValue(tutorial);
-        }
-
-        /// <summary>안내가 띄운 덮개 화면도 테스트가 끝나면 지운다. EditMode에서는 OnDestroy가 돌지 않는다.</summary>
-        private void TrackOverlay(Component tutorial)
-        {
-            var overlay = Tutorial.GetField("_overlay", Private)?.GetValue(tutorial) as Component;
-            if (overlay != null && !created.Contains(overlay.gameObject))
-                created.Add(overlay.gameObject);
         }
 
         [Test]
         public void BuiltEmptyRoom_AdvancesToHireWithoutRequiringAnotherBuilding()
         {
-            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/GameModules/Prefabs/Map/Node.prefab");
+            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/03.Prefabs/Map/Node.prefab");
             var go = Object.Instantiate(prefab);
             created.Add(go);
             var nodeType = Type.GetType("Code.MapCreateSystem.Node, DungeonKeeper.Runtime", true);

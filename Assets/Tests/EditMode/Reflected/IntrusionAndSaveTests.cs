@@ -32,7 +32,7 @@ namespace Tests.EditMode.Intrusion
         /// <summary>노드 프리팹을 하나 세우고 지정한 종류로 연다.</summary>
         private static GameObject CreateNode(string name, string nodeTypeName, Vector2Int position)
         {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/GameModules/Prefabs/Map/Node.prefab");
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/03.Prefabs/Map/Node.prefab");
             Assert.That(prefab, Is.Not.Null, "Node 프리팹을 찾지 못했습니다.");
 
             var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);

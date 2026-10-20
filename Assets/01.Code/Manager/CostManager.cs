@@ -41,8 +41,10 @@ namespace Code.Manager
         private readonly CostLedger _ledger = new();
         private readonly List<WeeklyLoanProduct> _loanProductOptions = new();
         private int _lastLoanSettlementDay = -1;
+        private int _lastContractSettlementDay = -1;
         private string _activeLoanProductId;
         private int _creditWarnings;
+        private int _contractWeeksRemaining;
 
         /// <summary>오늘 영업 중 한 번이라도 빚이 한도를 넘었는가. 영업 종료 판정 뒤 지운다.</summary>
         private bool _exceededLimitToday;
@@ -124,14 +126,17 @@ namespace Code.Manager
             return outcome;
         }
 
+        /// <summary>현재 계약이 끝날 때까지 남은 주. 빚이 남으면 만료일에 같은 계약을 연장한다.</summary>
+        public int ContractWeeksRemaining => Mathf.Max(0, _contractWeeksRemaining);
+
         /// <summary>
-        /// 오늘 대출 상품을 갈아탈 수 있는가. 상품 변경은 매주 청산일에 한 번 열린다.
-        ///
-        /// 그 주의 청산이 끝났는지는 보지 않는다. 청산은 정산표가 열리기 전에 처리되므로,
-        /// 그걸 조건에 넣으면 빚이 있는 주에는 창구가 한 번도 열리지 않는다.
-        /// 상품 변경은 돈을 옮기지 않고 다음 주 조건만 바꾸므로 이미 낸 상환과 충돌하지 않는다.
+        /// 상품 변경은 청산일, 빚이 없는 경우에만 연다. 빚이 든 채 기관만 바꾸면
+        /// 상환 책임을 피하는 선택이 되므로 현재 계약을 연장해야 한다.
         /// </summary>
-        public bool CanChangeLoanProductToday => DayManager.IsSettlementDay(ResolveSettlementDay());
+        public bool CanChangeLoanProductToday =>
+            DayManager.IsSettlementDay(ResolveSettlementDay())
+            && CurrentDebt <= 0
+            && ContractWeeksRemaining == 0;
 
         /// <summary>웨이브가 도는 동안은 수입·지출을 장부에만 적고 금화는 정산에서 한 번에 옮긴다.</summary>
         private bool _isSettlementDeferred;
@@ -154,7 +159,7 @@ namespace Code.Manager
             Current = this;
             _ledger.Reset(initialGold, 0);
             _activeLoanProductId = ResolveDefaultLoanProductId();
-            
+            _contractWeeksRemaining = ResolveContractWeeks(_activeLoanProductId);
         }
 
         private void OnDestroy()
@@ -415,6 +420,24 @@ namespace Code.Manager
         }
 
         /// <summary>
+        /// 청산이 끝난 직후 계약 기간을 한 주 넘긴다. 빚이 남은 만료 계약은 자동 연장하고,
+        /// 빚이 없으면 0으로 남겨 다음 주 조건을 플레이어가 고르게 한다.
+        /// </summary>
+        public void AdvanceContractWeek()
+        {
+            var settlementDay = ResolveSettlementDay();
+            if (settlementDay <= 0 || _lastContractSettlementDay == settlementDay)
+                return;
+
+            _lastContractSettlementDay = settlementDay;
+            _contractWeeksRemaining = Mathf.Max(0, _contractWeeksRemaining - 1);
+            if (_contractWeeksRemaining == 0 && CurrentDebt > 0)
+                _contractWeeksRemaining = ResolveContractWeeks(_activeLoanProductId);
+
+            StateChanged?.Invoke();
+        }
+
+        /// <summary>
         /// 정산을 확정하기 전 대출 상품을 바꾼다. 기존 원금을 감당하지 못하는 상품은 고를 수 없다.
         /// 실제 버튼 UI는 이 메서드의 결과만 보고 선택 상태를 갱신한다.
         /// </summary>
@@ -431,6 +454,7 @@ namespace Code.Manager
                 return false;
 
             _activeLoanProductId = nextProduct.Id;
+            _contractWeeksRemaining = ResolveContractWeeks(_activeLoanProductId);
             costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, 0));
             StateChanged?.Invoke();
             return true;
@@ -530,6 +554,20 @@ namespace Code.Manager
             return TryFindConfiguredLoanProduct(defaultLoanProductId, out var product)
                 ? product.Id
                 : "default";
+        }
+
+        private int ResolveContractWeeks(string productId)
+        {
+            if (loanProducts != null)
+            {
+                foreach (var definition in loanProducts)
+                {
+                    if (definition != null && definition.Id == productId)
+                        return definition.ContractWeeks;
+                }
+            }
+
+            return 1;
         }
 
         private bool TryFindConfiguredLoanProduct(string productId, out WeeklyLoanProduct product)
@@ -684,15 +722,30 @@ namespace Code.Manager
         public void RestoreCheckpoint(
             int gold, int debt, float buildDiscountRate, string activeLoanProductId, int creditWarnings)
         {
+            RestoreCheckpoint(gold, debt, buildDiscountRate, activeLoanProductId, creditWarnings, 0);
+        }
+
+        public void RestoreCheckpoint(
+            int gold,
+            int debt,
+            float buildDiscountRate,
+            string activeLoanProductId,
+            int creditWarnings,
+            int contractWeeksRemaining)
+        {
             _ledger.Reset(gold, debt);
             _creditWarnings = debt > 0 ? CreditWarningRules.Clamp(creditWarnings) : 0;
             _exceededLimitToday = false;
             nextBuildDiscountRate = Mathf.Clamp(buildDiscountRate, 0f, 0.9f);
             _isSettlementDeferred = false;
             _lastLoanSettlementDay = -1;
+            _lastContractSettlementDay = -1;
             _activeLoanProductId = string.IsNullOrWhiteSpace(activeLoanProductId)
                 ? ResolveDefaultLoanProductId()
                 : activeLoanProductId;
+            _contractWeeksRemaining = contractWeeksRemaining > 0
+                ? contractWeeksRemaining
+                : ResolveContractWeeks(_activeLoanProductId);
             RaiseGoldChanged();
             costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, 0));
         }
@@ -706,6 +759,11 @@ namespace Code.Manager
             [SerializeField, Min(0)] private int creditLimit = 10000;
             [SerializeField, Range(0f, 0.5f)] private float weeklyInterestRate = 0.1f;
             [SerializeField, Range(0.01f, 1f)] private float minimumPrincipalRate = 0.2f;
+            [SerializeField, Min(1), Tooltip("계약이 만료되기까지의 청산 횟수.")]
+            private int contractWeeks = 1;
+
+            public string Id => id;
+            public int ContractWeeks => Mathf.Max(1, contractWeeks);
 
             public bool TryCreate(string requestedId, out WeeklyLoanProduct product)
             {

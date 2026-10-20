@@ -13,19 +13,25 @@ namespace Code.Combat
     /// </summary>
     public static class CombatFxHooks
     {
-        private const string CatalogResourcePath = "Combat/CombatFxCatalog";
         private const float FallbackLifetime = 2f;
 
         private static CombatFxCatalogSO catalog;
-        private static bool catalogLoaded;
+        private static bool missingCatalogWarned;
         private static bool subscribed;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void Reset()
         {
             catalog = null;
-            catalogLoaded = false;
+            missingCatalogWarned = false;
             subscribed = false;
+        }
+
+        /// <summary>씬의 <see cref="Code.Core.RuntimeAssetInstaller"/>가 전투 연출 표를 넘긴다.</summary>
+        public static void Provide(CombatFxCatalogSO fxCatalog)
+        {
+            if (fxCatalog != null)
+                catalog = fxCatalog;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -96,13 +102,11 @@ namespace Code.Combat
 
         private static CombatFxCatalogSO EnsureCatalog()
         {
-            if (catalogLoaded)
-                return catalog;
-
-            catalogLoaded = true;
-            catalog = Resources.Load<CombatFxCatalogSO>(CatalogResourcePath);
-            if (catalog == null)
-                Debug.LogWarning($"전투 연출 표를 찾지 못했습니다: Resources/{CatalogResourcePath}. 사망 연출이 나오지 않습니다.");
+            if (catalog == null && !missingCatalogWarned)
+            {
+                missingCatalogWarned = true;
+                Debug.LogWarning("전투 연출 표를 받지 못했습니다. 씬의 RuntimeAssetInstaller를 확인하세요. 사망 연출이 나오지 않습니다.");
+            }
 
             return catalog;
         }

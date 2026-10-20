@@ -48,7 +48,7 @@ namespace Tests.EditMode.Rules
         [Test]
         public void EverySettlementDayBoss_HasADefeatCondition()
         {
-            var config = AssetDatabase.LoadAssetAtPath<WaveConfigSO>("Assets/GameModules/Data/WaveConfig.asset");
+            var config = AssetDatabase.LoadAssetAtPath<WaveConfigSO>("Assets/07.SO/WaveConfig.asset");
             Assert.That(config, Is.Not.Null, "WaveConfig.asset 을 찾지 못했습니다.");
 
             foreach (var day in new[] { 7, 14, 21, 28 })
@@ -74,7 +74,7 @@ namespace Tests.EditMode.Rules
         [Test]
         public void ChurchRevival_FollowsEachBossCharacter()
         {
-            var config = AssetDatabase.LoadAssetAtPath<WaveConfigSO>("Assets/GameModules/Data/WaveConfig.asset");
+            var config = AssetDatabase.LoadAssetAtPath<WaveConfigSO>("Assets/07.SO/WaveConfig.asset");
             Assert.That(config, Is.Not.Null, "WaveConfig.asset 을 찾지 못했습니다.");
 
             Assert.That(config.GetBossForDay(7).allowChurchRevival, Is.False, "7일 토벌대장");

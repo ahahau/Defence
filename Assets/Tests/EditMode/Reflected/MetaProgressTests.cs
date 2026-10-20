@@ -153,7 +153,7 @@ namespace Tests.EditMode.Rules
         public void MetaGatedAssets_UseTheDefinedTiers()
         {
             var catalog = UnityEditor.AssetDatabase.LoadAssetAtPath<DungeonUnlockCatalogSO>(
-                "Assets/GameModules/Data/Progression/DungeonUnlockCatalog.asset");
+                "Assets/07.SO/Progression/DungeonUnlockCatalog.asset");
             Assert.That(catalog, Is.Not.Null);
 
             var opened = new System.Collections.Generic.HashSet<int>();
@@ -172,7 +172,7 @@ namespace Tests.EditMode.Rules
             foreach (var (name, tier) in new[] { ("CursedRelic", 10), ("BlackMarket", 25), ("RivalWarlord", 50) })
             {
                 var sequence = UnityEditor.AssetDatabase.LoadAssetAtPath<Code.Dialogue.DialogueSequenceSO>(
-                    $"Assets/GameModules/Data/Dialogue/Sequences/DayEvent_{name}.asset");
+                    $"Assets/07.SO/Dialogue/Sequences/DayEvent_{name}.asset");
                 Assert.That(sequence, Is.Not.Null, name);
                 Assert.That(sequence.MetaProgressRequired, Is.EqualTo(tier), name);
             }

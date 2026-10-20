@@ -18,6 +18,8 @@ namespace Code.Manager
         [SerializeField] private GameEventChannelSO dayEventChannel;
         [SerializeField] private UnitDataSO[] unitCatalog;
         [SerializeField] private DungeonUnlockCatalogSO unlockCatalog;
+        [SerializeField, Tooltip("해금 카탈로그에 없지만 저장에서 되살려야 하는 건물(금고·대장간)")]
+        private BuildingDataSO[] buildingsOutsideUnlockCatalog;
         [SerializeField, Min(0)] private int startingCopiesOfFirstUnit = 1;
         [Header("Recruitment")]
         [SerializeField, Min(0)] private int candidatesPerDay = 2;
@@ -180,7 +182,7 @@ namespace Code.Manager
         /// <summary>정산 상점이 현재 지원자 한 명의 고용을 요청한다.</summary>
         public bool TryRequestHire(UnitDataSO unit)
         {
-            if (unit == null || GetCandidateCount(unit) <= 0 || costEventChannel == null)
+            if (!IsWeeklyRecruitmentOpen || unit == null || GetCandidateCount(unit) <= 0 || costEventChannel == null)
                 return false;
 
             var price = GetApplicantPrice(unit);
@@ -208,6 +210,10 @@ namespace Code.Manager
             var queue = EnsureApplicantQueue(unit);
             return queue.Count > 0 ? UnitMarketRules.Tier(queue[0].PriceMultiplier) : UnitPriceTier.Normal;
         }
+
+        /// <summary>지원자는 주간 정산에서만 계약한다. 영업 중 고용은 배치·경제 흐름을 흔든다.</summary>
+        public bool IsWeeklyRecruitmentOpen =>
+            DayManager.Current != null && DayManager.IsSettlementDay(DayManager.Current.CurrentDay);
 
         public int GetAvailableUnitCount(UnitDataSO unit)
         {
@@ -316,16 +322,25 @@ namespace Code.Manager
             // 대기 명단의 부하는 상태가 그대로다(기획서: 대기 유닛은 유지비·체력·피로·부상 변화 없음).
             // 쉬게 두면 회수만으로 공짜 회복이 되어 치료비가 의미를 잃는다.
 
-            // 새 지원자를 받기 전에 기한이 다한 사람부터 내보낸다.
-            ExpireApplicants();
-
-            // 민심이 나쁘면 이 던전에서 일하겠다는 사람도 줄어든다.
-            var morale = MoralePolicyManager.Current;
-            var incoming = morale != null ? morale.AdjustRecruitCount(candidatesPerDay) : candidatesPerDay;
-            GenerateRecruitmentCandidates(incoming);
+            if (DayManager.IsSettlementDay(evt.Day))
+                RefreshWeeklyRecruitment();
             UnlockScheduledEntries(evt.Day);
 
             RaiseUnlockChanged();
+        }
+
+        /// <summary>이번 주에 팔지 않은 지원자를 내보내고 새 정산 목록을 만든다.</summary>
+        private void RefreshWeeklyRecruitment()
+        {
+            _ownedUnits.Clear();
+            _applicantsByUnit.Clear();
+
+            // 던전이 커질수록 일하겠다는 사람이 늘고, 민심이 나쁘면 다시 줄어든다.
+            var grade = DungeonGradeManager.Current != null ? DungeonGradeManager.Current.Grade : 0;
+            var weekly = UnitMarketRules.WeeklyCandidateCount(candidatesPerDay, grade);
+            var morale = MoralePolicyManager.Current;
+            var incoming = morale != null ? morale.AdjustRecruitCount(weekly) : weekly;
+            GenerateRecruitmentCandidates(incoming);
         }
 
         /// <summary>
@@ -856,12 +871,13 @@ namespace Code.Manager
                 foreach (var entry in unlockCatalog.Entries)
                     if (entry?.Building != null && AssetKey(entry.Building) == key) return entry.Building;
 
-            // 금고는 해금 카탈로그에 없다 — 설치 메뉴도 Resources에서 직접 집어 온다.
+            // 금고는 해금 카탈로그에 없다.
             // 카탈로그만 뒤지면 저장된 금고가 복원 때 통째로 사라지고 보관 금화도 함께 날아간다.
-            return Resources.Load<BuildingDataSO>(ResourceBuildingFolder + key);
+            if (buildingsOutsideUnlockCatalog != null)
+                foreach (var building in buildingsOutsideUnlockCatalog)
+                    if (building != null && AssetKey(building) == key) return building;
+            return null;
         }
-
-        private const string ResourceBuildingFolder = "Buildings/";
 
         public static string AssetKey(Object asset) => asset != null ? asset.name : string.Empty;
 

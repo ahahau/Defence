@@ -10,23 +10,23 @@ namespace Code.Audio
     /// </summary>
     public static class UiSfxHooks
     {
-        private const string BridgeResourcePath = "Audio/SfxEventBridge";
-
         private static bool subscribed;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void Reset() => subscribed = false;
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void Install()
+        /// <summary>
+        /// 씬의 <see cref="Code.Core.RuntimeAssetInstaller"/>가 다리를 넘기면 한 번만 구독한다.
+        /// 씬을 옮겨 다시 넘겨도 채널은 같은 SO라 다시 걸지 않는다.
+        /// </summary>
+        public static void Provide(SfxEventBridgeSO bridge)
         {
             if (subscribed)
                 return;
 
-            var bridge = Resources.Load<SfxEventBridgeSO>(BridgeResourcePath);
             if (bridge == null || bridge.Channels == null)
             {
-                Debug.LogWarning($"효과음 이벤트 다리를 찾지 못했습니다: Resources/{BridgeResourcePath}. UI 소리 일부가 나지 않습니다.");
+                Debug.LogWarning("효과음 이벤트 다리를 받지 못했습니다. UI 소리 일부가 나지 않습니다.");
                 return;
             }
 

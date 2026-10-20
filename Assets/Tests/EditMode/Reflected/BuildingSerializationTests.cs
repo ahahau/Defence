@@ -19,11 +19,11 @@ namespace Tests.EditMode.Buildings
             var isCentral = placement.GetMethod("IsCentralBuilding");
             foreach (var path in new[]
             {
-                "Assets/GameModules/Data/Buildings/PortalBuildingData.asset",
-                "Assets/GameModules/Data/Buildings/RecoveryRoomBuildingData.asset",
-                "Assets/GameModules/Data/Buildings/MineBuildingData.asset",
-                "Assets/GameModules/Data/Buildings/DeepMineBuildingData.asset",
-                "Assets/Resources/Buildings/TreasuryBuildingData.asset"
+                "Assets/07.SO/Buildings/PortalBuildingData.asset",
+                "Assets/07.SO/Buildings/RecoveryRoomBuildingData.asset",
+                "Assets/07.SO/Buildings/MineBuildingData.asset",
+                "Assets/07.SO/Buildings/DeepMineBuildingData.asset",
+                "Assets/07.SO/Buildings/TreasuryBuildingData.asset"
             })
             {
                 var data = UnityEditor.AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);
@@ -32,7 +32,7 @@ namespace Tests.EditMode.Buildings
                 Assert.That(isCentral.Invoke(null, new object[] { data }), Is.True, path);
             }
             var trap = UnityEditor.AssetDatabase.LoadAssetAtPath<ScriptableObject>(
-                "Assets/GameModules/Data/Buildings/SpikeTrapBuildingData.asset");
+                "Assets/07.SO/Buildings/SpikeTrapBuildingData.asset");
             Assert.That(usesCell.Invoke(null, new object[] { trap }), Is.True);
         }
 

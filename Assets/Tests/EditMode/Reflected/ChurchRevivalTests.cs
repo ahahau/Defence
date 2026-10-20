@@ -76,7 +76,7 @@ namespace Tests.EditMode.Rules
         [Test]
         public void ChurchData_IsACentralFacilityThatBlocksUnitsAndTraps()
         {
-            var data = AssetDatabase.LoadAssetAtPath<BuildingDataSO>("Assets/GameModules/Data/Buildings/ChurchBuildingData.asset");
+            var data = AssetDatabase.LoadAssetAtPath<BuildingDataSO>("Assets/07.SO/Buildings/ChurchBuildingData.asset");
             Assert.That(data, Is.Not.Null, "ChurchBuildingData.asset 을 찾지 못했습니다.");
             Assert.That(data.Prefab, Is.InstanceOf<Church>());
             Assert.That(data.CentralOnly, Is.True);

@@ -3,7 +3,6 @@ using System.Text;
 using Code.Core;
 using Code.Progression;
 using Code.UI;
-using Code.UI.Toolkit;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -44,6 +43,12 @@ namespace Code.Manager
         /// <summary>처치 시네마틱 진행 중인지(승리 패널 타이밍 조율용).</summary>
         public bool IsCinematicRunning => _cinematicRunning;
 
+        /// <summary>보스 배너를 띄운다(제목, 부제, 최종전 여부, 유지 시간). 그리는 화면은 지금 없다(uGUI 전환 대기).</summary>
+        public event System.Action<string, string, bool, float> BannerRequested;
+
+        /// <summary>판이 끝나 결과 화면을 띄운다(제목, 한 줄 요약).</summary>
+        public event System.Action<string, string> RunEndRequested;
+
         private void Awake()
         {
             ResolveDependencies();
@@ -64,8 +69,7 @@ namespace Code.Manager
                     ? $"Day {day} — 이 습격만 막아내면 던전을 지켜낸다"
                     : $"Day {day} — 강력한 모험가가 쳐들어온다";
 
-            // 배너는 UI Toolkit이 그린다. 보스는 빨강, 최종전은 금색(토큰 색 클래스).
-            BossBannerToolkitView.Show(title, subtitle, isFinal, bannerHoldDuration);
+            BannerRequested?.Invoke(title, subtitle, isFinal, bannerHoldDuration);
         }
 
         // ── Death Cinematic ─────────────────────────────────────
@@ -142,7 +146,6 @@ namespace Code.Manager
         /// </summary>
         private void ShowRunEndPanel(string title, string headline, Color accent)
         {
-            Code.UI.Toolkit.PolicyChoiceToolkitView.Current?.CloseForRunEnd();
             // 런 종료 뒤의 이어하기는 끝난 판을 되살릴 수 없다. 재시작 버튼을 누를 때까지
             // 저장을 남기면 타이틀에서 끝난 런을 이어하는 모순이 생긴다.
             Code.Persistence.RunSaveSystem.DeleteSave();
@@ -152,9 +155,7 @@ namespace Code.Manager
             else
                 Time.timeScale = 0f;
 
-            // 결과 화면은 UI Toolkit판(요약 포함)만 쓴다. 옛 uGUI 승리 패널은 씬 정리 때 지운다(Toolkit 전환 4단계).
-            if (!RunEndToolkitView.TryShow(title, headline))
-                Debug.LogError($"{nameof(BossWavePresenter)}: 결과 화면(RunEndToolkitView)을 띄우지 못했습니다.", this);
+            RunEndRequested?.Invoke(title, headline);
         }
 
         private void ResolveDependencies()

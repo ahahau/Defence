@@ -11,7 +11,7 @@ namespace Tests.EditMode.Rules
     /// </summary>
     public class CharacterAnimationTests
     {
-        private const string AnimationFolder = "Assets/GameModules/Data/Characters/Animations";
+        private const string AnimationFolder = "Assets/07.SO/Characters/Animations";
 
         [Test]
         public void CharacterAnimation_LoopingClipWraps()

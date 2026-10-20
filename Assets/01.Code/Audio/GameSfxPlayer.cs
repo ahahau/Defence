@@ -16,12 +16,11 @@ namespace Code.Audio
     /// </summary>
     public sealed class GameSfxPlayer : MonoBehaviour
     {
-        private const string CatalogResourcePath = "Audio/GameSfxCatalog";
         private const string VolumeKey = "audio.sfx.volume";
         private const int VoiceCount = 12;
 
         private static GameSfxCatalogSO catalog;
-        private static bool catalogLoaded;
+        private static bool missingCatalogWarned;
         private static AudioSource[] voices;
         private static int nextVoice;
         private static readonly Dictionary<GameSfxCue, float> NextAllowedTime = new();
@@ -43,6 +42,13 @@ namespace Code.Audio
                 // 즉시 기록한다. Unity는 종료할 때 알아서 저장하지만, 그 전에 죽으면 설정이 날아간다.
                 PlayerPrefs.Save();
             }
+        }
+
+        /// <summary>씬의 <see cref="Code.Core.RuntimeAssetInstaller"/>가 효과음 표를 넘긴다.</summary>
+        public static void Provide(GameSfxCatalogSO sfxCatalog)
+        {
+            if (sfxCatalog != null)
+                catalog = sfxCatalog;
         }
 
         /// <summary>화면 어디서 났는지 상관없는 소리(UI, 웨이브 시작 등).</summary>
@@ -99,13 +105,11 @@ namespace Code.Audio
 
         private static GameSfxCatalogSO EnsureCatalog()
         {
-            if (catalogLoaded)
-                return catalog;
-
-            catalogLoaded = true;
-            catalog = Resources.Load<GameSfxCatalogSO>(CatalogResourcePath);
-            if (catalog == null)
-                Debug.LogWarning($"효과음 표를 찾지 못했습니다: Resources/{CatalogResourcePath}. 게임이 무음으로 돕니다.");
+            if (catalog == null && !missingCatalogWarned)
+            {
+                missingCatalogWarned = true;
+                Debug.LogWarning("효과음 표를 받지 못했습니다. 씬의 RuntimeAssetInstaller를 확인하세요. 게임이 무음으로 돕니다.");
+            }
 
             return catalog;
         }
@@ -159,7 +163,7 @@ namespace Code.Audio
         private static void ResetStatics()
         {
             catalog = null;
-            catalogLoaded = false;
+            missingCatalogWarned = false;
             voices = null;
             nextVoice = 0;
             volume = -1f;

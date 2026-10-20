@@ -53,8 +53,11 @@ namespace Code.Manager
         private bool ledgerClosed;
         private bool _panelOpen;
 
-        /// <summary>UI Toolkit 화면이 정산표를 맡았는지. 참이면 옛 UGUI 패널은 건드리지 않는다.</summary>
-        private bool _legacyPanelSuppressed;
+        /// <summary>
+        /// 옛 UGUI 정산 패널(<see cref="panelRoot"/>)을 쓰지 않는다. 그 패널은 캔버스를 잃어 깨진 채로 그려진다.
+        /// 정산표는 <see cref="ReportOpened"/>를 듣는 화면(<c>Code.UI.SettlementScreenView</c>, uGUI)이 그린다.
+        /// </summary>
+        private bool _legacyPanelSuppressed = true;
 
         /// <summary>직전 정산에서 운영 자금이 실제로 움직인 액수. 표시용 합계와 구분해야 한다.</summary>
         private int _lastSettlementNet;
@@ -81,17 +84,6 @@ namespace Code.Manager
 
         /// <summary>정산표를 닫았다.</summary>
         public event Action ReportClosed;
-
-        /// <summary>
-        /// UI Toolkit 정산 화면이 붙었다. 이제부터 옛 UGUI 패널은 띄우지 않는다.
-        /// 보고서와 열림 상태는 그대로 살아 있어 대화·튜토리얼 쪽 판단은 달라지지 않는다.
-        /// </summary>
-        public void UseToolkitPanel()
-        {
-            _legacyPanelSuppressed = true;
-            if (panelRoot != null)
-                panelRoot.SetActive(false);
-        }
 
         public void ForceHidePanel()
         {
@@ -219,13 +211,16 @@ namespace Code.Manager
                 return;
 
             var owed = costManager.WeeklyDue;
-            if (owed <= 0)
-                return;
+            if (owed > 0)
+            {
+                // 갚지 못하면 CostManager가 파산을 알린다. 보고서에는 최소 상환액을 남긴다.
+                _weeklySettlementPaid = costManager.SettleWeek() ? owed : 0;
+                _weeklySettlementOwed = owed;
+                _weeklyBankrupt = _weeklySettlementPaid <= 0;
+            }
 
-            // 갚지 못하면 CostManager가 파산을 알린다. 보고서에는 최소 상환액을 남긴다.
-            _weeklySettlementPaid = costManager.SettleWeek() ? owed : 0;
-            _weeklySettlementOwed = owed;
-            _weeklyBankrupt = _weeklySettlementPaid <= 0;
+            if (!_weeklyBankrupt)
+                costManager.AdvanceContractWeek();
         }
 
         /// <summary>
@@ -946,7 +941,7 @@ namespace Code.Manager
                    || dailyFatigueByLabel.Count > 0);
         }
 
-        /// <summary>정산표를 그릴 화면이 있는가. UI Toolkit이 맡았다면 UGUI 참조는 없어도 된다.</summary>
+        /// <summary>정산표를 그릴 화면이 있는가. 옛 UGUI 패널을 쓰지 않으면 그 참조는 없어도 된다.</summary>
         private bool HasPanelReferences()
         {
             return _legacyPanelSuppressed

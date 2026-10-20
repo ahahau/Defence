@@ -40,7 +40,7 @@ namespace Tests.EditMode.Rules
 
         private static Trap LoadTrapPrefab(string name)
         {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/GameModules/Prefabs/Buildings/Traps/{name}.prefab");
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/03.Prefabs/Buildings/Traps/{name}.prefab");
             Assert.That(prefab, Is.Not.Null, $"{name}.prefab 을 찾지 못했습니다.");
             return prefab.GetComponent<Trap>();
         }
@@ -179,7 +179,7 @@ namespace Tests.EditMode.Rules
             Assert.That(TrapRules.FirstHitFromWest(new List<float> { 2f, -1f, 0.5f }), Is.EqualTo(1));
             Assert.That(TrapRules.FirstHitFromWest(new List<float>()), Is.EqualTo(-1));
 
-            var data = AssetDatabase.LoadAssetAtPath<BuildingDataSO>("Assets/GameModules/Data/Buildings/ArrowTrapBuildingData.asset");
+            var data = AssetDatabase.LoadAssetAtPath<BuildingDataSO>("Assets/07.SO/Buildings/ArrowTrapBuildingData.asset");
             Assert.That(data, Is.Not.Null, "화살 함정 데이터를 찾지 못했습니다.");
             Assert.That(data.Category, Is.EqualTo(InstallCategory.Trap));
             var arrow = data.Prefab as Trap;

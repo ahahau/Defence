@@ -116,7 +116,7 @@ namespace Tests.EditMode.Rules
         public void Fatigue_RestoredPlacementWithoutDeployEvent_IsReported()
         {
             var manager = Component("Code.Manager.ManagementSettlementManager", "Settlement");
-            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/GameModules/Prefabs/Map/Node.prefab");
+            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/03.Prefabs/Map/Node.prefab");
             var go = UnityEngine.Object.Instantiate(prefab);
             created.Add(go);
             var node = go.GetComponent(Resolve("Code.MapCreateSystem.Node"));
@@ -243,6 +243,16 @@ namespace Tests.EditMode.Rules
 
             // 목록이 비면 대출 조건이 없는 것처럼 보인다. 적용 중인 조건은 항상 한 줄 남아야 한다.
             Assert.That(count, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void LoanContract_DefaultProductStartsWithOneWeekRemaining()
+        {
+            var cost = Component("Code.Manager.CostManager", "Loan contract");
+            Call(cost, "Awake");
+
+            // 기존 씬 데이터에 기간 필드가 없던 저장도 새 계약 한 주로 시작해야 한다.
+            Assert.That(cost.GetType().GetProperty("ContractWeeksRemaining").GetValue(cost), Is.EqualTo(1));
         }
 
         [Test]

@@ -256,7 +256,7 @@ namespace Tests.EditMode.Rules
                      })
             {
                 var data = UnityEditor.AssetDatabase.LoadAssetAtPath<BuildingDataSO>(
-                    $"Assets/GameModules/Data/Buildings/{name}BuildingData.asset");
+                    $"Assets/07.SO/Buildings/{name}BuildingData.asset");
                 Assert.That(data, Is.Not.Null, name);
                 Assert.That(data.FacilityTier, Is.EqualTo(tier), name);
             }
@@ -264,7 +264,7 @@ namespace Tests.EditMode.Rules
             foreach (var name in new[] { "MarketFire", "MineCollapse", "TunnelCollapse" })
             {
                 var sequence = UnityEditor.AssetDatabase.LoadAssetAtPath<Code.Dialogue.DialogueSequenceSO>(
-                    $"Assets/GameModules/Data/Dialogue/Sequences/DayEvent_{name}.asset");
+                    $"Assets/07.SO/Dialogue/Sequences/DayEvent_{name}.asset");
                 Assert.That(sequence, Is.Not.Null, name);
 
                 var wired = false;

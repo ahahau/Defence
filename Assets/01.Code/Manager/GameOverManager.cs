@@ -24,7 +24,7 @@ namespace Code.Manager
             IsGameOver = false;
             // 이전 판이 멈춘 채로 씬을 떠났을 수 있다. 컨트롤러보다 먼저 깨어날 수 있어 직접 푼다.
             Time.timeScale = GameSpeedController.NormalSpeed;
-        }
+        } 
 
         private void OnEnable()
         {
