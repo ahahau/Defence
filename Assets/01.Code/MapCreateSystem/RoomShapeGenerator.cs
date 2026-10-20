@@ -6,16 +6,20 @@ namespace Code.MapCreateSystem
     /// <summary>
     /// 확장 후보마다 방 모양을 시드로 깎는다. 같은 시드면 늘 같은 모양이고, 저장에는 깎은 모양 자체를 넣는다.
     ///
-    /// 틀 크기를 고르고 모서리·변의 홈을 깎고 방 안에 기둥을 세운 뒤 규칙(<see cref="RoomLayoutRules.Validate(RoomShape, out string)"/>)에
+    /// 틀 크기를 고르고 모서리·변의 홈을 깎고 방 안에 기둥과 칸막이 벽을 세운 뒤 규칙(<see cref="RoomLayoutRules.Validate(RoomShape, out string)"/>)에
     /// 맞을 때까지 다시 깎는다. 한 칸 폭 벽 돌기·바닥 틈은 3/4 시점 벽(면 2줄 + 난간)이 들어갈 자리가 없어 검은 틈이 생기므로 버리고,
     /// 틀을 거의 다 채운 모양은 네모로 보여 버린다.
     /// </summary>
     public static class RoomShapeGenerator
     {
-        public const int MaxAttempts = 400;
+        public const int MaxAttempts = 1000;
 
         /// <summary>틀 대비 바닥 비율 상한(입구 제외).</summary>
         public const float MaxFillRatio = 0.82f;
+
+        /// <summary>방 안 칸막이 벽 한 줄의 길이(칸).</summary>
+        public const int MinWallCells = 2;
+        public const int MaxWallCells = 4;
 
         /// <summary>
         /// 방 모양을 만든다. 규칙에 맞는 모양을 못 찾으면(거의 없음) 문이 모두 열리는 작은 직사각형으로 대신한다.
@@ -26,14 +30,16 @@ namespace Code.MapCreateSystem
             var id = entrance ? "gen-entrance" : $"gen-{seed:x8}";
             for (var attempt = 0; attempt < MaxAttempts; attempt++)
             {
-                var shape = new RoomShape(id, size, entrance, doors, Carve(random, size, entrance));
-                if (!RoomLayoutRules.Validate(shape, out _) || HasThinFeatures(shape))
-                    continue;
+                var walled = Carve(random, size, entrance, out var plain);
 
-                if (!entrance && RoomLayoutRules.CountFloor(shape) > shape.Columns * shape.Rows * MaxFillRatio)
-                    continue;
+                // 칸막이 벽이 규칙을 깨면 같은 모양에서 벽만 뺀 것을 쓴다. 벽 때문에 시도를 다 써 버리지 않게 한다.
+                var shape = new RoomShape(id, size, entrance, doors, walled);
+                if (IsUsable(shape, entrance))
+                    return shape;
 
-                return shape;
+                shape = new RoomShape(id, size, entrance, doors, plain);
+                if (IsUsable(shape, entrance))
+                    return shape;
             }
 
             Debug.LogWarning($"방 모양을 깎지 못해 직사각형으로 대신합니다(시드 {seed}, {size}).");
@@ -96,8 +102,12 @@ namespace Code.MapCreateSystem
             return false;
         }
 
-        /// <summary>틀을 고르고 모서리를 깎고 홈을 내고 방 안에 기둥을 세운다.</summary>
-        private static string[] Carve(System.Random random, RoomSize size, bool entrance)
+        private static bool IsUsable(RoomShape shape, bool entrance) =>
+            RoomLayoutRules.Validate(shape, out _) && !HasThinFeatures(shape)
+            && (entrance || RoomLayoutRules.CountFloor(shape) <= shape.Columns * shape.Rows * MaxFillRatio);
+
+        /// <summary>틀을 고르고 모서리를 깎고 홈을 내고 방 안에 기둥을 세운다. plain은 칸막이 벽을 넣기 전 모양이다.</summary>
+        private static string[] Carve(System.Random random, RoomSize size, bool entrance, out string[] plain)
         {
             var maxColumns = RoomSizeRules.MaxColumns(size);
             var maxRows = RoomSizeRules.MaxRows(size);
@@ -143,7 +153,47 @@ namespace Code.MapCreateSystem
             for (var i = 0; i < pillars && columns > 2 && rows > 2; i++)
                 floor[random.Next(1, columns - 1), random.Next(1, rows - 1)] = false;
 
+            plain = ToLines(floor, columns, rows);
+            if (!entrance)
+                CarveWalls(random, floor, size, columns, rows);
+
             return ToLines(floor, columns, rows);
+        }
+
+        /// <summary>
+        /// 방 안 칸막이 벽: 중형 0~1줄, 대형 0~2줄, 길이 2~4칸. 가장자리에 붙지 않게 한 칸 안쪽에만 세워
+        /// 바깥 벽과 이어지지 않는다(이어지면 3/4 시점 벽 띠가 들어갈 자리가 없다). 길이 끊기는 모양은 검사에서 버려진다.
+        /// </summary>
+        private static void CarveWalls(System.Random random, bool[,] floor, RoomSize size, int columns, int rows)
+        {
+            var count = size switch
+            {
+                RoomSize.Large => random.Next(0, 3),
+                RoomSize.Medium => random.Next(0, 2),
+                _ => 0
+            };
+
+            for (var i = 0; i < count && columns > 4 && rows > 4; i++)
+            {
+                var horizontal = random.Next(2) == 0;
+                var span = horizontal ? columns - 2 : rows - 2;
+                var length = Mathf.Min(span, random.Next(MinWallCells, MaxWallCells + 1));
+                var along = random.Next(1, columns - length);
+                var across = random.Next(1, rows - 1);
+                if (!horizontal)
+                {
+                    along = random.Next(1, columns - 1);
+                    across = random.Next(1, rows - length);
+                }
+
+                for (var step = 0; step < length; step++)
+                {
+                    if (horizontal)
+                        floor[along + step, across] = false;
+                    else
+                        floor[along, across + step] = false;
+                }
+            }
         }
 
         private static string[] FallbackRows(RoomSize size)
