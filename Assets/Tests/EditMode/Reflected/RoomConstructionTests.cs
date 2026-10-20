@@ -329,6 +329,25 @@ namespace Tests.EditMode.Rules
                 "입구 바깥문은 바깥으로 열려 있습니다(침입자가 들어오는 곳).");
         }
 
+        /// <summary>
+        /// 이어진 옆 문 양쪽에 2×2 기둥이 서서 문틀로 보인다. 옆 벽은 난간 한 줄이라 문 그림이 없어
+        /// 모험가가 벽 틈으로 빠져나가는 것처럼 보였다. 기둥은 벽 줄과 그 바깥에만 서고 문 틈·방 바닥은 막지 않는다.
+        /// </summary>
+        [Test]
+        public void RoomTilePlan_SideDoorGetsPostsOnBothSides()
+        {
+            var shape = NewShape(RoomSize.Medium, RoomDoors.Left | RoomDoors.Right, Rows(6));
+            var plan = RoomTilePlan.Build(shape, RoomDoors.Right, RoomDoors.None, 24);
+
+            // 6열 방의 오른쪽 벽 줄은 타일 x = 6, 문 틈은 y -1·0.
+            Assert.That(plan.Pillars, Has.Member(new Vector2Int(6, 1)).And.Member(new Vector2Int(7, 2)));
+            Assert.That(plan.Pillars, Has.Member(new Vector2Int(6, -2)).And.Member(new Vector2Int(7, -3)));
+            Assert.That(plan.Pillars, Has.No.Member(new Vector2Int(6, 0)).And.No.Member(new Vector2Int(6, -1)), "문 틈은 열려 있습니다.");
+            Assert.That(plan.Floor, Has.Member(new Vector2Int(6, 0)).And.Member(new Vector2Int(6, -1)));
+            Assert.That(plan.Pillars, Has.No.Member(new Vector2Int(5, 1)), "방 바닥에는 서지 않습니다.");
+            Assert.That(plan.Pillars, Has.No.Member(new Vector2Int(-7, 1)), "이어지지 않은 문에는 기둥이 없습니다.");
+        }
+
         /// <summary>방 안에 갇힌 막힌 칸은 기둥이고, 가장자리와 이어진 막힌 칸(깎인 모서리)은 벽이다.</summary>
         [Test]
         public void RoomTilePlan_EnclosedBlockedCellsBecomePillars()
