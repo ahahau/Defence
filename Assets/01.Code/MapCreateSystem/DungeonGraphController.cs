@@ -34,20 +34,6 @@ namespace Code.MapCreateSystem
             Vector2Int.left
         };
 
-        private readonly Vector2Int[] initialBuildCandidateOffsets =
-        {
-            new(-1, 1),
-            Vector2Int.left,
-            new(-1, -1)
-        };
-
-        private readonly Vector2Int[] nodeBuildCandidateOffsets =
-        {
-            Vector2Int.up,
-            Vector2Int.down,
-            Vector2Int.left
-        };
-
         [Header("Scene Managers")]
         [SerializeField]
         private DungeonNodeManager nodeManager;
@@ -83,6 +69,11 @@ namespace Code.MapCreateSystem
 
         /// <summary>자리마다 정해 둔 후보 특수 효과. 크기와 같이 한 번 뽑으면 유지한다.</summary>
         private readonly Dictionary<Vector2Int, RoomFeature> _candidateFeatures = new();
+
+        /// <summary>자리마다 정해 둔 후보 방 프리팹. 열기 전에 보여 준 모양과 문이 열고 나서 바뀌면 안 된다.</summary>
+        private readonly Dictionary<Vector2Int, RoomShape> _candidateLayouts = new();
+
+        private bool _missingCatalogReported;
 
         [SerializeField]
         private GameEventChannelSO artifactEventChannel;
@@ -257,6 +248,7 @@ namespace Code.MapCreateSystem
             graph = new DungeonGraph();
             _candidateSizes.Clear();
             _candidateFeatures.Clear();
+            _candidateLayouts.Clear();
             nodeManager.ClearAll();
             edgeManager.ClearAll();
             lockedNodeByCollider.Clear();
@@ -265,6 +257,8 @@ namespace Code.MapCreateSystem
 
             var entrance = graph.AddNode(DungeonNodeType.Entrance, Vector2Int.zero);
             var entranceView = nodeManager.CreateNode(entrance);
+            entranceView.ApplyLayout(LayoutCatalog != null && LayoutCatalog.Entrance != null ? LayoutCatalog.Entrance.ToShape() : null,
+                nodeManager.GridSpacing);
             RegisterUnlockedNode(entranceView);
         }
 
@@ -355,21 +349,25 @@ namespace Code.MapCreateSystem
             var type = ResolveBuildType(lockedNode);
             var size = lockedNode.Size;
             var feature = lockedNode.Feature;
+            var layout = lockedNode.Layout;
 
             HideLockedNodeView(lockedNode);
             nodeManager.ClearLockedNodeAt(buildPosition);
 
             var node = graph.AddNode(type, buildPosition);
             var nodeView = nodeManager.CreateNode(node);
+            nodeView.ApplyLayout(layout, nodeManager.GridSpacing);
             nodeView.SetRoomSize(size);
             nodeView.SetRoomFeature(feature);
             _candidateSizes.Remove(buildPosition);
             _candidateFeatures.Remove(buildPosition);
+            _candidateLayouts.Remove(buildPosition);
 
             lastBuiltNodeView = nodeView;
             lastBuiltFrame = Time.frameCount;
             RegisterUnlockedNode(nodeView);
             ConnectAdjacentNodes(node, buildParent);
+            RefreshDoorsAround(node);
 
             // 방은 바로 생기지만 공사가 끝나야 쓸 수 있다. 방이 생겼다는 알림(튜토리얼·영업 시작 조건)은 완공 때 낸다.
             var constructionSeconds = ConstructionSecondsFor(size, feature);
@@ -441,8 +439,22 @@ namespace Code.MapCreateSystem
             // 되돌린 자리는 같은 크기의 후보로 다시 보인다. 취소로 크기를 다시 뽑을 수 없게 한다.
             _candidateSizes[nodeView.GridPosition] = nodeView.Size;
             _candidateFeatures[nodeView.GridPosition] = nodeView.Feature;
+            if (nodeView.Layout != null)
+                _candidateLayouts[nodeView.GridPosition] = nodeView.Layout;
+
+            // 이웃 방의 복도 반쪽도 같이 거둔다. 연결이 끊긴 뒤에는 누가 이웃이었는지 모르므로 먼저 적어 둔다.
+            var formerNeighbors = new List<DungeonNode>();
+            foreach (var neighborId in nodeView.Data.ConnectedNodeIds)
+            {
+                var neighbor = graph.GetNode(neighborId);
+                if (neighbor != null)
+                    formerNeighbors.Add(neighbor);
+            }
+
             edgeManager.RemoveEdgesFor(nodeView.Data.Id);
             graph.RemoveNode(nodeView.Data);
+            foreach (var neighbor in formerNeighbors)
+                RefreshDoors(neighbor);
             unlockedNodeByCollider.Remove(nodeView.ClickCollider);
             nodeView.gameObject.SetActive(false);
             Destroy(nodeView.gameObject);
@@ -509,46 +521,131 @@ namespace Code.MapCreateSystem
             edgeManager.CreateEdge(fromNode.GridPosition, toNode.GridPosition, fromNode.Id, toNode.Id);
         }
 
+        /// <summary>두 방이 서로 마주 보는 문을 가졌는가. 맞닿은 방, 또는 입구와 그 왼쪽 위·아래 방만 이을 수 있다.</summary>
         private bool CanConnectNodes(DungeonNode a, DungeonNode b)
         {
-            return AreOrthogonallyAdjacent(a, b) || IsInitialEntranceCandidateConnection(a, b);
-        }
-
-        private bool AreOrthogonallyAdjacent(DungeonNode a, DungeonNode b)
-        {
             if (a == null || b == null)
                 return false;
 
-            var delta = a.GridPosition - b.GridPosition;
-            return Mathf.Abs(delta.x) + Mathf.Abs(delta.y) == 1;
+            var sideA = SideToward(a, b);
+            var sideB = SideToward(b, a);
+            return sideA != RoomDoors.None && sideB != RoomDoors.None
+                   && ViewHasDoor(a, sideA) && ViewHasDoor(b, sideB);
         }
 
-        private bool IsInitialEntranceCandidateConnection(DungeonNode a, DungeonNode b)
+        private static RoomDoors SideToward(DungeonNode self, DungeonNode other) =>
+            RoomDoorRules.SideToward(
+                self.GridPosition, self.Type == DungeonNodeType.Entrance,
+                other.GridPosition, other.Type == DungeonNodeType.Entrance);
+
+        private static bool ViewHasDoor(DungeonNode node, RoomDoors side)
         {
-            if (a == null || b == null)
-                return false;
-
-            if (a.Type == DungeonNodeType.Entrance)
-                return IsInitialEntranceCandidatePosition(a.GridPosition, b.GridPosition);
-
-            if (b.Type == DungeonNodeType.Entrance)
-                return IsInitialEntranceCandidatePosition(b.GridPosition, a.GridPosition);
-
-            return false;
+            var view = Node.FindByDataId(node.Id);
+            return view != null && view.HasDoor(side);
         }
 
-        private bool IsInitialEntranceCandidatePosition(Vector2Int entrancePosition, Vector2Int candidatePosition)
+        /// <summary>이 방에서 복도가 이어진 문을 그래프 연결로 다시 정해 그린다.</summary>
+        private void RefreshDoors(DungeonNode node)
         {
-            var offset = candidatePosition - entrancePosition;
-            foreach (var candidateOffset in initialBuildCandidateOffsets)
+            var view = node != null ? Node.FindByDataId(node.Id) : null;
+            if (view == null)
+                return;
+
+            var connected = RoomDoors.None;
+            foreach (var otherId in node.ConnectedNodeIds)
             {
-                if (offset == candidateOffset)
-                    return true;
+                var other = graph.GetNode(otherId);
+                if (other != null)
+                    connected |= SideToward(node, other);
             }
 
-            return false;
+            view.SetConnectedDoors(connected);
         }
 
+        private void RefreshDoorsAround(DungeonNode node)
+        {
+            RefreshDoors(node);
+            foreach (var otherId in node.ConnectedNodeIds)
+                RefreshDoors(graph.GetNode(otherId));
+        }
+
+        private RoomLayoutCatalog LayoutCatalog
+        {
+            get
+            {
+                var catalog = nodeManager != null ? nodeManager.LayoutCatalog : null;
+                if (catalog == null && !_missingCatalogReported)
+                {
+                    _missingCatalogReported = true;
+                    Debug.LogError($"{nameof(DungeonNodeManager)}에 방 프리팹 목록(RoomLayoutCatalog)이 연결되지 않았습니다. 방이 그려지지 않습니다.", this);
+                }
+
+                return catalog;
+            }
+        }
+
+        /// <summary>
+        /// 이 자리 후보의 방 모양. 한 번 정하면 유지하되, 크기가 다르거나 부모 쪽 문이 없으면(부모가 바뀐 경우) 다시 정한다.
+        /// </summary>
+        private RoomShape ResolveCandidateLayout(Vector2Int position, RoomSize size, RoomDoors requiredDoor)
+        {
+            if (_candidateLayouts.TryGetValue(position, out var layout)
+                && layout != null && layout.Size == size && layout.HasDoor(requiredDoor))
+                return layout;
+
+            layout = RollCandidateShape(position, size, requiredDoor);
+            _candidateLayouts[position] = layout;
+            return layout;
+        }
+
+        /// <summary>
+        /// 후보 모양을 판 시드로 정한다. 가끔(<see cref="RoomLayoutRules.SpecialRoomChance"/>) 손으로 만든 특별 방 프리팹이고,
+        /// 나머지는 그 자리에서 문과 모양을 새로 깎는다. 부모 쪽 문을 시드에 섞어, 부모가 바뀌면 다른 모양이 나온다.
+        /// </summary>
+        private RoomShape RollCandidateShape(Vector2Int position, RoomSize size, RoomDoors requiredDoor)
+        {
+            var salt = (int)requiredDoor;
+            var catalog = LayoutCatalog;
+            if (catalog != null
+                && RunRandom.Value(RunRandomStream.RoomLayout, position.x, position.y * 16 + salt) < RoomLayoutRules.SpecialRoomChance)
+            {
+                var special = catalog.Pick(size, requiredDoor,
+                    RunRandom.Value(RunRandomStream.RoomLayout, position.y, position.x * 16 + salt));
+                if (special != null && special.HasDoor(requiredDoor))
+                    return special.ToShape();
+            }
+
+            var doors = RoomShapeGenerator.RollDoors(requiredDoor,
+                RunRandom.Hash(RunRandomStream.RoomLayout, position.x * 31 + salt, position.y));
+            return RoomShapeGenerator.Generate(size, doors, false,
+                RunRandom.Hash(RunRandomStream.RoomLayout, position.x, position.y * 31 + salt));
+        }
+
+        /// <summary>
+        /// 저장된 방 모양. 줄이 있으면 그대로 되살린다(생성한 방은 다시 깎으면 생성 규칙이 바뀌었을 때 달라진다).
+        /// 줄이 없으면 프리팹 이름으로, 그것도 없으면 네 변 모두 문이 있는 방을 새로 깎아 저장된 연결을 살린다.
+        /// </summary>
+        private RoomShape ResolveSavedShape(string layoutId, List<string> rows, int doors, DungeonNodeType type, RoomSize size,
+            Vector2Int position)
+        {
+            var catalog = LayoutCatalog;
+            var prefab = catalog != null ? catalog.Find(layoutId) : null;
+            var entrance = type == DungeonNodeType.Entrance;
+            if (rows != null && rows.Count > 0)
+                return new RoomShape(layoutId, size, entrance, (RoomDoors)doors, rows.ToArray(), prefab);
+
+            if (prefab != null)
+                return prefab.ToShape();
+
+            if (!string.IsNullOrEmpty(layoutId))
+                Debug.LogWarning($"저장된 방 모양 '{layoutId}'을(를) 찾지 못해 새로 깎습니다.", this);
+
+            if (entrance && catalog != null && catalog.Entrance != null)
+                return catalog.Entrance.ToShape();
+
+            return RoomShapeGenerator.Generate(size, RoomDoors.Up | RoomDoors.Right | RoomDoors.Down | RoomDoors.Left, entrance,
+                RunRandom.Hash(RunRandomStream.RoomLayout, position.x, position.y));
+        }
         private void HideLockedNodeView(Node lockedNode)
         {
             if (lockedNode == null)
@@ -578,21 +675,34 @@ namespace Code.MapCreateSystem
             var mainGridPosition = ResolveMainGridPosition();
             foreach (var node in graph.Nodes)
             {
-                var candidateOffsets = ResolveBuildCandidateOffsets(node);
-                foreach (var offset in candidateOffsets)
+                // 공사 중인 방에서는 다음 확장을 뻗지 않는다. 취소되면 붙일 곳이 사라진다.
+                var view = Node.FindByDataId(node.Id);
+                if (view == null || node.FreePorts <= 0 || IsUnderConstruction(node))
+                    continue;
+
+                // 후보는 이 방의 문으로만 뻗는다. 입구 바깥문(오른쪽)은 침입자가 들어오는 곳이라 뻗지 않는다.
+                var fromEntrance = node.Type == DungeonNodeType.Entrance;
+                foreach (var side in RoomDoorRules.Sides)
                 {
+                    if (!view.HasDoor(side))
+                        continue;
+
+                    var offset = RoomDoorRules.CandidateOffset(fromEntrance, side);
+                    if (offset == Vector2Int.zero)
+                        continue;
+
                     var position = node.GridPosition + offset;
-                    if (graph.IsOccupied(position) || !usedLockedNodePositions.Add(position))
+                    if (graph.IsOccupied(position) || usedLockedNodePositions.Contains(position))
                         continue;
 
                     if (!IsAllowedBuildCandidatePosition(position, mainGridPosition))
                         continue;
 
-                    if (!TryResolveBuildParent(position, node, out var parentNode))
-                        continue;
-
-                    var lockedNode = nodeManager.CreateLockedNode(parentNode, position, position - parentNode.GridPosition);
                     var size = ResolveCandidateSize(position);
+                    var layout = ResolveCandidateLayout(position, size, RoomDoorRules.RequiredDoor(fromEntrance, side));
+                    usedLockedNodePositions.Add(position);
+
+                    var lockedNode = nodeManager.CreateLockedNode(node, position, offset, layout);
                     var feature = ResolveCandidateFeature(position);
                     lockedNode.SetRoomSize(size);
                     lockedNode.SetRoomFeature(feature);
@@ -621,7 +731,7 @@ namespace Code.MapCreateSystem
                                $" (취소 환불 {Mathf.RoundToInt(refund * 100f)}%)";
             }
 
-            description += $"\n{RoomFeatureRules.ConnectionLabel(PredictConnections(lockedNode))}";
+            description += $"\n{RoomFeatureRules.ConnectionLabel(PredictConnections(lockedNode))} · {RoomDoorRules.Label(lockedNode.Doors)}";
 
             PopupController.Show(PopupRequest
                 .Cost("방 확장", description, cost, gold, () => RequestBuildCost(lockedNode), confirmLabel: "확장")
@@ -655,26 +765,24 @@ namespace Code.MapCreateSystem
             var neighborPorts = new Dictionary<Vector2Int, int>();
             var parent = lockedNode.FromNode;
             var parentDirection = parent != null ? parent.GridPosition - position : Vector2Int.zero;
-            if (parent != null && CanConnectNodesAt(parent, position))
+            // 후보는 부모 방의 문으로 뻗었고 부모 쪽 문을 가진 모양으로 골랐으니 부모와는 늘 이어진다.
+            if (parent != null)
                 neighborPorts[parentDirection] = parent.FreePorts;
 
             foreach (var direction in directions)
             {
-                if (graph.TryGetNodeAt(position + direction, out var adjacent) && adjacent != parent)
+                if (!graph.TryGetNodeAt(position + direction, out var adjacent) || adjacent == parent)
+                    continue;
+
+                var side = RoomDoorRules.FromDirection(direction);
+                var adjacentSide = RoomDoorRules.SideToward(
+                    adjacent.GridPosition, adjacent.Type == DungeonNodeType.Entrance, position, false);
+                if (lockedNode.HasDoor(side) && ViewHasDoor(adjacent, adjacentSide))
                     neighborPorts[direction] = adjacent.FreePorts;
             }
 
             return RoomFeatureRules.PredictConnections(
                 parentDirection, neighborPorts, graph.GetMaxConnections(ResolveBuildType(lockedNode)));
-        }
-
-        private bool CanConnectNodesAt(DungeonNode node, Vector2Int position)
-        {
-            var delta = node.GridPosition - position;
-            if (Mathf.Abs(delta.x) + Mathf.Abs(delta.y) == 1)
-                return true;
-
-            return node.Type == DungeonNodeType.Entrance && IsInitialEntranceCandidatePosition(node.GridPosition, position);
         }
 
         /// <summary>
@@ -733,13 +841,6 @@ namespace Code.MapCreateSystem
             }
         }
 
-        private Vector2Int[] ResolveBuildCandidateOffsets(DungeonNode node)
-        {
-            return node.Type == DungeonNodeType.Entrance
-                ? initialBuildCandidateOffsets
-                : nodeBuildCandidateOffsets;
-        }
-
         private Vector2Int ResolveMainGridPosition()
         {
             foreach (var node in graph.Nodes)
@@ -754,33 +855,6 @@ namespace Code.MapCreateSystem
         private bool IsAllowedBuildCandidatePosition(Vector2Int position, Vector2Int mainGridPosition)
         {
             if (position.x >= mainGridPosition.x)
-                return false;
-
-            return true;
-        }
-
-        private bool TryResolveBuildParent(Vector2Int position, DungeonNode preferredParent, out DungeonNode parentNode)
-        {
-            parentNode = null;
-
-            // 공사 중인 방에서는 다음 확장을 뻗지 않는다. 취소되면 붙일 곳이 사라진다.
-            if (preferredParent != null && preferredParent.FreePorts > 0 && !IsUnderConstruction(preferredParent))
-                parentNode = preferredParent;
-
-            foreach (var direction in directions)
-            {
-                var adjacentPosition = position + direction;
-                if (!graph.TryGetNodeAt(adjacentPosition, out var adjacentNode))
-                    continue;
-
-                if (adjacentNode.FreePorts <= 0 || IsUnderConstruction(adjacentNode))
-                    continue;
-
-                if (parentNode == null || adjacentNode.FreePorts > parentNode.FreePorts)
-                    parentNode = adjacentNode;
-            }
-
-            if (parentNode == null)
                 return false;
 
             return true;
@@ -1021,10 +1095,6 @@ namespace Code.MapCreateSystem
             if (EventSystem.current == null || Mouse.current == null)
                 return false;
 
-            // 지도 위에 뜬 UI Toolkit 패널(금고 등)도 클릭을 가로막는다. uGUI 레이캐스트로는 보이지 않는다.
-            if (Code.UI.Toolkit.ToolkitPointerBlockers.IsPointerOver(Mouse.current.position.ReadValue()))
-                return true;
-
             uiRaycastResults.Clear();
             var pointerData = new PointerEventData(EventSystem.current)
             {
@@ -1065,6 +1135,9 @@ namespace Code.MapCreateSystem
                     constructionPaidGold = node.ConstructionPaidGold,
                     roomSize = (int)node.Size,
                     roomFeature = (int)node.Feature,
+                    layoutId = node.Layout != null ? node.Layout.Id : null,
+                    layoutRows = node.Layout != null ? new List<string>(node.Layout.CopyLines()) : null,
+                    layoutDoors = node.Layout != null ? (int)node.Layout.Doors : 0,
                     rumorTraps = node.Rumor.Traps,
                     rumorDowns = node.Rumor.Downs,
                     rumorRetreats = node.Rumor.Retreats,
@@ -1135,9 +1208,13 @@ namespace Code.MapCreateSystem
             foreach (var pair in _candidateSizes)
             {
                 _candidateFeatures.TryGetValue(pair.Key, out var feature);
+                _candidateLayouts.TryGetValue(pair.Key, out var layout);
                 list.Add(new SavedCandidate
                 {
-                    x = pair.Key.x, y = pair.Key.y, roomSize = (int)pair.Value, roomFeature = (int)feature
+                    x = pair.Key.x, y = pair.Key.y, roomSize = (int)pair.Value, roomFeature = (int)feature,
+                    layoutId = layout != null ? layout.Id : null,
+                    layoutRows = layout != null ? new List<string>(layout.CopyLines()) : null,
+                    layoutDoors = layout != null ? (int)layout.Doors : 0
                 });
             }
 
@@ -1162,6 +1239,10 @@ namespace Code.MapCreateSystem
                 _candidateFeatures[position] = System.Enum.IsDefined(typeof(RoomFeature), saved.roomFeature)
                     ? (RoomFeature)saved.roomFeature
                     : RoomFeature.None;
+                // 옛 저장처럼 모양이 없으면 자리마다 다시 깎는다.
+                if (saved.layoutRows != null && saved.layoutRows.Count > 0)
+                    _candidateLayouts[position] = ResolveSavedShape(saved.layoutId, saved.layoutRows, saved.layoutDoors,
+                        DungeonNodeType.Corridor, _candidateSizes[position], position);
             }
 
             if (HasLockedNodesVisible)
@@ -1176,6 +1257,7 @@ namespace Code.MapCreateSystem
             graph = new DungeonGraph();
             _candidateSizes.Clear();
             _candidateFeatures.Clear();
+            _candidateLayouts.Clear();
             nodeManager.ClearAll();
             edgeManager.ClearAll();
             lockedNodeByCollider.Clear();
@@ -1188,11 +1270,15 @@ namespace Code.MapCreateSystem
                 var position = new Vector2Int(saved.x, saved.y);
                 var data = graph.AddNode(saved.type, position);
                 var view = nodeManager.CreateNode(data);
+                var size = System.Enum.IsDefined(typeof(RoomSize), saved.roomSize)
+                    ? (RoomSize)saved.roomSize
+                    : RoomSize.Medium;
+                // 칸 수·막힌 칸이 모양을 따르므로 건물·유닛보다 먼저 입힌다.
+                view.ApplyLayout(ResolveSavedShape(saved.layoutId, saved.layoutRows, saved.layoutDoors, saved.type, size, position),
+                    nodeManager.GridSpacing);
                 view.RestoreDanger(saved.danger);
                 view.RestoreRumor(new RoomRumor(saved.rumorTraps, saved.rumorDowns, saved.rumorRetreats));
-                view.SetRoomSize(System.Enum.IsDefined(typeof(RoomSize), saved.roomSize)
-                    ? (RoomSize)saved.roomSize
-                    : RoomSize.Medium);
+                view.SetRoomSize(size);
                 view.SetRoomFeature(System.Enum.IsDefined(typeof(RoomFeature), saved.roomFeature)
                     ? (RoomFeature)saved.roomFeature
                     : RoomFeature.None);
@@ -1214,6 +1300,9 @@ namespace Code.MapCreateSystem
                 if (graph.Connect(from.Data, to.Data))
                     edgeManager.CreateEdge(fromPosition, toPosition, from.Data.Id, to.Data.Id);
             }
+
+            foreach (var node in graph.Nodes)
+                RefreshDoors(node);
 
             var roster = HiredUnitRoster.Current;
             foreach (var saved in save.nodes)

@@ -74,6 +74,15 @@ namespace Code.MapCreateSystem
                 ? Mathf.RoundToInt(damage * TrapGroundDamageMultiplier)
                 : damage;
 
+        /// <summary>방 타일에 곱하는 색조. 효과가 지도에서 바로 보이게 한다(일반 돌·풍요 금빛·요새 회청·함정 지대 붉은빛).</summary>
+        public static Color Tint(RoomFeature feature) => feature switch
+        {
+            RoomFeature.Bounty => new Color(1f, 0.88f, 0.55f, 1f),
+            RoomFeature.Fortress => new Color(0.72f, 0.82f, 1f, 1f),
+            RoomFeature.TrapGround => new Color(1f, 0.66f, 0.6f, 1f),
+            _ => Color.white
+        };
+
         public static string Label(RoomFeature feature) => feature switch
         {
             RoomFeature.Bounty => "풍요",

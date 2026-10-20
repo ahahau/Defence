@@ -8,6 +8,7 @@
     "Unity.Behavior",
     "Unity.InputSystem",
     "Unity.RenderPipelines.Universal.2D.Runtime",
+    "Unity.2D.Tilemap.Extras",
     "Unity.TextMeshPro"
   ],
   "includePlatforms": [],

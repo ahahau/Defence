@@ -1,4 +1,4 @@
-﻿using Code.MapCreateSystem;
+using Code.MapCreateSystem;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -136,7 +136,7 @@ namespace Tests.EditMode.Rules
             node.SetRoomSize(RoomSize.Small);
             Assert.That(node.UnitCapacity, Is.EqualTo(2));
 
-            var store = AssetDatabase.LoadAssetAtPath<Code.Buildings.BuildingDataSO>("Assets/GameModules/Data/Buildings/StoreBuildingData.asset");
+            var store = AssetDatabase.LoadAssetAtPath<Code.Buildings.BuildingDataSO>("Assets/07.SO/Buildings/StoreBuildingData.asset");
             Assert.That(store, Is.Not.Null, "상점 데이터를 찾지 못했습니다.");
             Assert.That(Code.Buildings.BuildingPlacement.ViolatesRoomSizeRule(node, store), Is.True, "소형 방에는 상점을 못 짓습니다.");
 
@@ -215,10 +215,265 @@ namespace Tests.EditMode.Rules
             Assert.That(text, Does.StartWith("요새 "), "열린 방 정원 표시에 효과 이름이 붙어야 합니다.");
         }
 
+        /// <summary>
+        /// 입구와 특별 방 프리팹은 규칙을 지킨다. 특별 방은 어느 부모 쪽 문에도 맞도록 네 변 모두 문이 있고 크기마다 하나 이상 있다.
+        /// 특별 방이 부모 쪽 문을 못 맞추면 그 후보는 생성한 방으로 돌아가지만, 크기 하나가 비면 그 크기는 특별 방이 안 나온다.
+        /// </summary>
+        [Test]
+        public void RoomLayouts_EntranceAndSpecialRoomsAreValid()
+        {
+            var catalog = AssetDatabase.LoadAssetAtPath<RoomLayoutCatalog>("Assets/07.SO/Map/RoomLayoutCatalog.asset");
+            Assert.That(catalog, Is.Not.Null, "방 목록이 없습니다. RoomLayoutBuilder.BuildAll()을 돌리세요.");
+            Assert.That(catalog.Entrance, Is.Not.Null);
+            Assert.That(catalog.Entrance.IsEntrance, Is.True);
+            Assert.That(RoomLayoutRules.Validate(catalog.Entrance, out var entranceProblem), Is.True, entranceProblem);
+            foreach (var side in new[] { RoomDoors.Up, RoomDoors.Down, RoomDoors.Left })
+                Assert.That(catalog.Entrance.HasDoor(side), Is.True, $"입구는 {side} 문으로 첫 후보를 뻗습니다.");
+
+            var ids = new System.Collections.Generic.HashSet<string> { catalog.Entrance.LayoutId };
+            foreach (var layout in catalog.Rooms)
+            {
+                Assert.That(layout, Is.Not.Null);
+                Assert.That(RoomLayoutRules.Validate(layout, out var problem), Is.True, problem);
+                Assert.That(ids.Add(layout.LayoutId), Is.True, $"방 이름이 겹칩니다: {layout.LayoutId}");
+            }
+
+            foreach (RoomSize size in System.Enum.GetValues(typeof(RoomSize)))
+            foreach (var side in RoomDoorRules.Sides)
+            {
+                var picked = catalog.Pick(size, side, 0.5f);
+                Assert.That(picked, Is.Not.Null, $"{size} 특별 방이 없습니다.");
+                Assert.That(picked.HasDoor(side), Is.True, $"{size} 특별 방에 {side} 문이 없습니다.");
+            }
+        }
+
+        /// <summary>
+        /// 후보마다 시드로 깎는 방은 크기·부모 쪽 문과 상관없이 늘 규칙에 맞고, 같은 시드면 같은 모양이며, 시드마다 모양이 다양하다.
+        /// 규칙에 어긋난 방이 나오면 함정·유닛이 막힌 칸에 놓이거나 길이 끊기고, 같은 시드에 다른 모양이 나오면 불러오기마다 지도가 바뀐다.
+        /// </summary>
+        [Test]
+        public void RoomShapeGenerator_MakesValidVariedRoomsForEveryDoor()
+        {
+            foreach (RoomSize size in System.Enum.GetValues(typeof(RoomSize)))
+            {
+                var distinct = new System.Collections.Generic.HashSet<string>();
+                foreach (var side in RoomDoorRules.Sides)
+                {
+                    for (var seed = 0; seed < 30; seed++)
+                    {
+                        var doors = RoomShapeGenerator.RollDoors(side, seed * 7 + 1);
+                        Assert.That(RoomDoorRules.Has(doors, side), Is.True, "부모 쪽 문은 반드시 있습니다.");
+                        Assert.That(RoomDoorRules.Count(doors), Is.InRange(2, 4));
+
+                        var shape = RoomShapeGenerator.Generate(size, doors, false, seed);
+                        Assert.That(RoomLayoutRules.Validate(shape, out var problem), Is.True, problem);
+                        Assert.That(RoomShapeGenerator.HasThinFeatures(shape), Is.False, $"{size} 시드 {seed}");
+                        Assert.That(RoomLayoutRules.CountFloor(shape),
+                            Is.LessThanOrEqualTo(shape.Columns * shape.Rows * RoomShapeGenerator.MaxFillRatio));
+
+                        var again = RoomShapeGenerator.Generate(size, doors, false, seed);
+                        Assert.That(again.CopyLines(), Is.EqualTo(shape.CopyLines()), "같은 시드는 같은 모양이어야 합니다.");
+                        distinct.Add(string.Join("/", shape.CopyLines()));
+                    }
+                }
+
+                Assert.That(distinct.Count, Is.GreaterThan(40), $"{size} 방 모양이 너무 적게 나옵니다.");
+            }
+        }
+
+        /// <summary>
+        /// 방은 서로 마주 보는 문으로만 이어진다. 입구의 위·아래 문은 ㄱ자 복도로 왼쪽 위·아래 방의 오른쪽 문에 닿고,
+        /// 오른쪽 바깥문으로는 후보를 뻗지 않는다(침입자가 들어오는 곳).
+        /// </summary>
+        [Test]
+        public void RoomDoors_MapEntranceDiagonalsAndOrthogonalNeighbours()
+        {
+            Assert.That(RoomDoorRules.CandidateOffset(true, RoomDoors.Up), Is.EqualTo(new Vector2Int(-1, 1)));
+            Assert.That(RoomDoorRules.CandidateOffset(true, RoomDoors.Down), Is.EqualTo(new Vector2Int(-1, -1)));
+            Assert.That(RoomDoorRules.CandidateOffset(true, RoomDoors.Left), Is.EqualTo(Vector2Int.left));
+            Assert.That(RoomDoorRules.CandidateOffset(true, RoomDoors.Right), Is.EqualTo(Vector2Int.zero));
+            Assert.That(RoomDoorRules.RequiredDoor(true, RoomDoors.Up), Is.EqualTo(RoomDoors.Right));
+            Assert.That(RoomDoorRules.RequiredDoor(false, RoomDoors.Up), Is.EqualTo(RoomDoors.Down));
+
+            Assert.That(RoomDoorRules.SideToward(Vector2Int.zero, true, new Vector2Int(-1, 1), false), Is.EqualTo(RoomDoors.Up));
+            Assert.That(RoomDoorRules.SideToward(new Vector2Int(-1, -1), false, Vector2Int.zero, true), Is.EqualTo(RoomDoors.Right));
+            Assert.That(RoomDoorRules.SideToward(new Vector2Int(-2, 0), false, new Vector2Int(-1, 1), false), Is.EqualTo(RoomDoors.None),
+                "입구가 아닌 방끼리는 대각선으로 잇지 않습니다.");
+            Assert.That(RoomDoorRules.SideToward(new Vector2Int(-2, 0), false, new Vector2Int(-2, 1), false), Is.EqualTo(RoomDoors.Up));
+        }
+
+        /// <summary>
+        /// 복도는 두 방이 반씩 깐다. 한쪽 반의 끝 바로 다음 칸이 다른 쪽 반의 첫 칸이어야 한 복도로 이어진다.
+        /// 이어지지 않은 문은 막히고, 입구 위 문은 ㄱ자로 꺾이며, 입구 바깥문은 바깥으로 열려 있다.
+        /// </summary>
+        [Test]
+        public void RoomTilePlan_CorridorHalvesMeet()
+        {
+            var left = NewShape(RoomSize.Medium, RoomDoors.Right | RoomDoors.Up, Rows(6));
+            var right = NewShape(RoomSize.Large, RoomDoors.Left | RoomDoors.Down, Rows(8));
+            const int spacing = 24;
+            var a = RoomTilePlan.Build(left, RoomDoors.Right, RoomDoors.None, spacing);
+            var b = RoomTilePlan.Build(right, RoomDoors.Left, RoomDoors.None, spacing);
+
+            Assert.That(a.Floor, Has.Member(new Vector2Int(11, -1)).And.Member(new Vector2Int(11, 0)));
+            Assert.That(a.Floor, Has.No.Member(new Vector2Int(12, 0)), "복도 반쪽은 두 방 사이 가운데까지만 깝니다.");
+            Assert.That(b.Floor, Has.Member(new Vector2Int(12 - spacing, -1)).And.Member(new Vector2Int(12 - spacing, 0)));
+            Assert.That(a.Floor, Has.No.Member(new Vector2Int(-1, 6)), "이어지지 않은 문은 벽으로 막힙니다.");
+
+            var entrance = new RoomShape("Test_Entrance", RoomSize.Medium, true,
+                RoomDoors.Up | RoomDoors.Down | RoomDoors.Left | RoomDoors.Right, Rows(6));
+            var turning = RoomTilePlan.Build(entrance, RoomDoors.Up, RoomDoorRules.EntranceTurningDoors, spacing);
+            Assert.That(turning.Floor, Has.Member(new Vector2Int(0, spacing)).And.Member(new Vector2Int(-12, spacing - 1)),
+                "입구 위 문 복도는 다음 줄까지 올라가 서쪽으로 꺾입니다.");
+            Assert.That(turning.Floor, Has.Member(new Vector2Int(6, -1)).And.Member(new Vector2Int(8, 0)),
+                "입구 바깥문은 바깥으로 열려 있습니다(침입자가 들어오는 곳).");
+        }
+
+        /// <summary>방 안에 갇힌 막힌 칸은 기둥이고, 가장자리와 이어진 막힌 칸(깎인 모서리)은 벽이다.</summary>
+        [Test]
+        public void RoomTilePlan_EnclosedBlockedCellsBecomePillars()
+        {
+            var shape = NewShape(RoomSize.Medium, RoomDoors.Left | RoomDoors.Right, PillarRows);
+            var plan = RoomTilePlan.Build(shape, RoomDoors.None, RoomDoors.None, 24);
+            // 칸 (2,3)의 타일은 x -2..-1, y 0..1.
+            Assert.That(plan.Pillars, Has.Member(new Vector2Int(-2, 1)).And.Member(new Vector2Int(-1, 0)));
+            Assert.That(plan.Pillars, Has.No.Member(new Vector2Int(-6, 4)), "깎인 모서리는 기둥이 아니라 벽입니다.");
+            Assert.That(plan.Floor, Has.No.Member(new Vector2Int(-6, 4)));
+        }
+
+        /// <summary>
+        /// 룰 타일이 예제 씬과 같은 3/4 시점 조각을 고른다: 바닥 위 벽돌 면 2줄 + 난간, 옆 세로 난간, 아래 가로 난간, 바깥 모서리,
+        /// 방 안 기둥 머리·받침. 두 방을 한 타일맵에 칠하면 복도 위 난간이 이음매 없이 이어진다(끝 조각이 생기지 않는다).
+        /// 예전에는 타일이 시트의 엉뚱한 칸(문 자리에 석상, 위쪽 벽에 울타리)을 가리켜 방이 이상하게 보였다.
+        /// </summary>
+        [Test]
+        public void RuleTiles_PickThreeQuarterWallPieces()
+        {
+            var tileSet = AssetDatabase.LoadAssetAtPath<RoomTileSet>("Assets/07.SO/Map/RoomTileSet.asset");
+            Assert.That(tileSet, Is.Not.Null, "방 룰 타일 셋이 없습니다. RoomLayoutBuilder.BuildAll()을 돌리세요.");
+            Assert.That(tileSet.IsComplete, Is.True);
+
+            var gridHost = new GameObject("TestGrid", typeof(Grid));
+            _layoutHosts.Add(gridHost);
+            var tiles = new GameObject("Tiles", typeof(UnityEngine.Tilemaps.Tilemap)).GetComponent<UnityEngine.Tilemaps.Tilemap>();
+            tiles.transform.SetParent(gridHost.transform, false);
+
+            const int spacing = 24;
+            var a = RoomTilePlan.Build(NewShape(RoomSize.Medium, RoomDoors.Right | RoomDoors.Up, Rows(6)), RoomDoors.Right,
+                RoomDoors.None, spacing);
+            var b = RoomTilePlan.Build(NewShape(RoomSize.Medium, RoomDoors.Left | RoomDoors.Down, PillarRows), RoomDoors.Left,
+                RoomDoors.None, spacing);
+            RoomTilePainter.Paint(null, tiles, tileSet, new[]
+            {
+                new RoomTilePainter.Room(a, Vector2Int.zero, Color.white),
+                new RoomTilePainter.Room(b, new Vector2Int(spacing, 0), Color.white)
+            });
+
+            Assert.That(Cell(tiles, -1, 6), Is.EqualTo((10, 9)), "바닥 바로 위는 벽돌 면 아래 줄입니다.");
+            Assert.That(Cell(tiles, -1, 7), Is.EqualTo((10, 8)), "그 위는 벽돌 면 윗줄입니다.");
+            Assert.That(Cell(tiles, -1, 8), Is.EqualTo((10, 7)), "그 위는 난간입니다.");
+            Assert.That(Cell(tiles, -7, 0), Is.EqualTo((3, 3)), "왼쪽 벽은 세로 난간입니다.");
+            Assert.That(Cell(tiles, 0, -7), Is.EqualTo((10, 12)), "아래 벽은 가로 난간입니다.");
+            Assert.That(Cell(tiles, -7, -7), Is.EqualTo((3, 5)), "왼쪽 아래 바깥 모서리.");
+            Assert.That(Cell(tiles, 11, 3), Is.EqualTo((10, 7)), "복도 위 난간이 이음매에서 끊기면 안 됩니다.");
+            Assert.That(Cell(tiles, 12, 3), Is.EqualTo((10, 7)));
+            Assert.That(Cell(tiles, 11, -2), Is.EqualTo((10, 12)));
+            Assert.That(Cell(tiles, spacing - 2, 1), Is.EqualTo((7, 0)), "기둥 왼쪽 머리.");
+            Assert.That(Cell(tiles, spacing - 1, 0), Is.EqualTo((9, 2)), "기둥 오른쪽 받침.");
+            Assert.That(Cell(tiles, 0, 0).row, Is.InRange(17, 18), "바닥은 바닥 무늬 칸입니다.");
+        }
+
+        /// <summary>기둥·빈 공간 칸에는 함정도 유닛도 놓을 수 없다. 칸 수는 방 모양을 따른다.</summary>
+        [Test]
+        public void TrapGrid_FollowsLayoutSizeAndRejectsBlockedCells()
+        {
+            var shape = NewShape(RoomSize.Medium, RoomDoors.Left | RoomDoors.Right, new[]
+            {
+                "......",
+                ".#....",
+                "......",
+                "......",
+                "......",
+                "......"
+            });
+            Assert.That(RoomLayoutRules.Validate(shape, out var problem), Is.True, problem);
+
+            var node = CreateNode();
+            node.ApplyLayout(shape, 15f);
+            var grid = node.TrapGrid;
+            Assert.That(grid.Columns, Is.EqualTo(6));
+            Assert.That(grid.CellSize, Is.EqualTo(RoomLayoutRules.CellWorldSize).Within(0.0001f));
+            Assert.That(grid.IsBlockedCell(1, 4), Is.True);
+            Assert.That(grid.IsCellFree(1, 4), Is.False);
+            Assert.That(grid.CanPlace(0, 4, new Vector2Int(2, 1)), Is.False, "여러 칸 함정이 기둥을 덮으면 안 됩니다.");
+            Assert.That(grid.IsCellFree(0, 4), Is.True);
+            Assert.That(node.IsUnitCellAvailable(1, 4), Is.False);
+
+            var wide = NewShape(RoomSize.Large, RoomDoors.Left | RoomDoors.Right, new[]
+            {
+                ".........", ".........", ".........", ".........", ".........", "........."
+            });
+            var wideNode = Object.Instantiate(AssetDatabase.LoadAssetAtPath<Node>("Assets/03.Prefabs/Map/Node.prefab"));
+            try
+            {
+                wideNode.ApplyLayout(wide, 15f);
+                Assert.That(wideNode.TrapGrid.Columns, Is.EqualTo(9), "정사각이 아닌 방도 칸 수를 그대로 따릅니다.");
+                Assert.That(wideNode.TrapGrid.Rows, Is.EqualTo(6));
+            }
+            finally
+            {
+                Object.DestroyImmediate(wideNode.gameObject);
+            }
+        }
+
+        private static readonly string[] PillarRows =
+        {
+            "#.....",
+            "......",
+            "..#...",
+            "......",
+            "......",
+            "......"
+        };
+
+        private readonly System.Collections.Generic.List<GameObject> _layoutHosts = new();
+
+        [TearDown]
+        public void DestroyLayouts()
+        {
+            foreach (var host in _layoutHosts)
+            {
+                if (host != null)
+                    Object.DestroyImmediate(host);
+            }
+
+            _layoutHosts.Clear();
+        }
+
+        private static RoomShape NewShape(RoomSize size, RoomDoors doors, string[] rows) =>
+            new($"Test_{size}_{doors}", size, false, doors, rows);
+
+        /// <summary>그 칸에 그려진 스프라이트의 시트 칸(열, 행 — 왼쪽 위 기준 16px).</summary>
+        private static (int column, int row) Cell(UnityEngine.Tilemaps.Tilemap tiles, int x, int y)
+        {
+            var sprite = tiles.GetSprite(new Vector3Int(x, y, 0));
+            Assert.That(sprite, Is.Not.Null, $"({x}, {y})에 타일이 없습니다.");
+            return (Mathf.RoundToInt(sprite.rect.x / 16f),
+                Mathf.RoundToInt((sprite.texture.height - sprite.rect.y - sprite.rect.height) / 16f));
+        }
+
+        private static string[] Rows(int count)
+        {
+            var rows = new string[count];
+            for (var i = 0; i < count; i++)
+                rows[i] = new string('.', count);
+            return rows;
+        }
+
         // Node는 격자·전장 컴포넌트를 필수로 요구하고 표시용 글자도 프리팹에 연결돼 있어, 실제 프리팹을 쓴다.
         private Node CreateNode()
         {
-            var prefab = AssetDatabase.LoadAssetAtPath<Node>("Assets/GameModules/Prefabs/Map/Node.prefab");
+            var prefab = AssetDatabase.LoadAssetAtPath<Node>("Assets/03.Prefabs/Map/Node.prefab");
             Assert.That(prefab, Is.Not.Null, "노드 프리팹을 찾지 못했습니다.");
             var node = Object.Instantiate(prefab);
             _host = node.gameObject;

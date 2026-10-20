@@ -635,6 +635,7 @@ MonoBehaviour:
   originOffset: {x: 0, y: 0}
   autoFitToArena: 1
   showGridWhenFocused: 1
+  focusedGridMaterial: {fileID: 2100000, guid: 3854b54fe46ed6d498297c7120c0d37c, type: 2}
   focusedGridColor: {r: 0.62, g: 0.48, b: 0.88, a: 0.34}
   focusedGridLineWidth: 0.03
   focusedGridSortingOrder: 5
@@ -659,23 +660,7 @@ MonoBehaviour:
   floorTilemap: {fileID: 3066609157771345951}
   wallTilemap: {fileID: 4939211599271543057}
   doorTilemap: {fileID: 5225307884758378277}
-  floorTile: {fileID: 11400000, guid: ca6bc7faa06bf4c43b5603962fd382cc, type: 2}
-  floorAccentTile: {fileID: 11400000, guid: b8930ff7b8e758b4f99860d0c93ff7b0, type: 2}
-  topLeftWallCapTile: {fileID: 11400000, guid: 170e6622baf309143909c6ec64c8ec9c, type: 2}
-  topLeftCornerTile: {fileID: 11400000, guid: ce9ae4988690198459fa96a7f1329086, type: 2}
-  topRightCornerTile: {fileID: 11400000, guid: 049a52290c997cb4ca22b6395e59d8c9, type: 2}
-  topRightWallCapTile: {fileID: 11400000, guid: 8b730a6af9f682f4fb14587ef26ab496, type: 2}
-  topWallTile: {fileID: 11400000, guid: 45309ed2522d2364ea7c7432a98eebc5, type: 2}
-  bottomLeftWallTile: {fileID: 11400000, guid: c555f5afa861c5247bbc30b86dd5a11b, type: 2}
-  bottomWallTile: {fileID: 11400000, guid: 828b30b3f5b909a4b829df288d886841, type: 2}
-  bottomRightWallTile: {fileID: 11400000, guid: 3aaf8c0383215494e9564a760dbbb93c, type: 2}
-  leftWallTile: {fileID: 11400000, guid: abf796fe98661b94293ebb00c0b41b2c, type: 2}
-  rightWallTile: {fileID: 11400000, guid: 9dd107ee9aa475843b99c8d2a74e9143, type: 2}
-  entranceDoorBottomTile: {fileID: 11400000, guid: ca0446c02448b124797358720ba37a52, type: 2}
-  entranceDoorMiddleTile: {fileID: 11400000, guid: e64ba20e4f0be1a4da7a7ad412b66b45, type: 2}
-  entranceDoorTopTile: {fileID: 11400000, guid: 22ded8f2bb77dee469619668af271081, type: 2}
-  columns: 20
-  rows: 20
+  tileSet: {fileID: 11400000, guid: 64875877aae7337488a1ee80fbdefead, type: 2}
 --- !u!1 &6003396354075623614
 GameObject:
   m_ObjectHideFlags: 0

@@ -19,7 +19,14 @@ namespace Code.MapCreateSystem
         [SerializeField]
         private float nodeSize = 1f;
 
+        [SerializeField, Tooltip("방 프리팹 목록. 확장 후보와 입구가 여기서 모양을 고른다.")]
+        private RoomLayoutCatalog layoutCatalog;
+
+        /// <summary>열린 방을 함께 그리는 던전 타일맵. 플레이 중 첫 방을 만들 때 만든다.</summary>
+        private DungeonTilemap _dungeonTilemap;
+
         public float GridSpacing => gridSpacing;
+        public RoomLayoutCatalog LayoutCatalog => layoutCatalog;
 
         public void ClearAll()
         {
@@ -51,16 +58,20 @@ namespace Code.MapCreateSystem
             }
         }
 
+        /// <summary>열린 방을 만든다. 방 모양은 만든 쪽이 곧바로 <see cref="Node.ApplyLayout"/>로 입힌다.</summary>
         public Node CreateNode(DungeonNode node)
         {
             var nodeView = Instantiate(nodePrefab);
             nodeView.transform.SetParent(transform);
             nodeView.transform.position = ToWorld(node.GridPosition);
             nodeView.Unlock(node, nodeSize);
+            var tilemap = ResolveDungeonTilemap();
+            if (tilemap != null)
+                nodeView.UseDungeonTilemap(tilemap);
             return nodeView;
         }
 
-        public Node CreateLockedNode(DungeonNode fromNode, Vector2Int position, Vector2Int direction)
+        public Node CreateLockedNode(DungeonNode fromNode, Vector2Int position, Vector2Int direction, RoomShape layout)
         {
             if (lockedNodeRoot == null)
                 return null;
@@ -68,9 +79,24 @@ namespace Code.MapCreateSystem
             var node = Instantiate(nodePrefab);
             node.transform.SetParent(lockedNodeRoot);
             node.transform.position = ToWorld(position);
+            node.ApplyLayout(layout, gridSpacing);
             node.InitializeBuildCandidate(fromNode, position, direction, nodeSize);
             lockedNodes.Add(node);
             return node;
+        }
+
+        // 에디터 미리보기·테스트는 방마다 자기 타일맵에 그린다. 던전 타일맵은 실행 중에만 만든다.
+        private DungeonTilemap ResolveDungeonTilemap()
+        {
+            if (_dungeonTilemap != null || !Application.isPlaying || nodePrefab == null)
+                return _dungeonTilemap;
+
+            var template = nodePrefab.GetComponentInChildren<NodeTileRenderer>(true);
+            if (template == null || template.TileSet == null)
+                return null;
+
+            _dungeonTilemap = DungeonTilemap.Create(transform, template.TileSet, template.UnderlayRenderer, template.TileRenderer);
+            return _dungeonTilemap;
         }
 
         private Vector3 ToWorld(Vector2Int gridPosition)
@@ -84,7 +110,14 @@ namespace Code.MapCreateSystem
                 return;
 
             for (var i = root.childCount - 1; i >= 0; i--)
-                HideAndDestroy(root.GetChild(i).gameObject);
+            {
+                // 던전 타일맵은 방이 아니라 그림판이라 남긴다. 방이 지워지면 알아서 다시 칠한다.
+                var child = root.GetChild(i);
+                if (_dungeonTilemap != null && child == _dungeonTilemap.transform)
+                    continue;
+
+                HideAndDestroy(child.gameObject);
+            }
         }
 
         private void HideAndDestroy(GameObject target)

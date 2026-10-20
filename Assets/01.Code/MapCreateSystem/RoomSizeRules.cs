@@ -7,7 +7,7 @@ namespace Code.MapCreateSystem
     ///
     /// 예전에는 모든 확장이 같은 값·같은 시간·같은 방이라, 어디를 열지가 위치 말고는 고민거리가 아니었다.
     /// 후보마다 크기를 미리 정해 보여 주고(기획서: 열기 전에 공개) 크기마다 값·시간·환불·싸움의 규모가
-    /// 다르면, 싸게 빨리 열지 비싸게 크게 열지가 선택이 된다. 격자(6×6)는 크기와 상관없이 같다.
+    /// 다르면, 싸게 빨리 열지 비싸게 크게 열지가 선택이 된다. 격자 틀과 바닥 넓이도 크기를 따른다(모양은 불규칙).
     /// </summary>
     public static class RoomSizeRules
     {
@@ -47,6 +47,40 @@ namespace Code.MapCreateSystem
             RoomSize.Small => 2,
             RoomSize.Large => 4,
             _ => 3
+        };
+
+        /// <summary>
+        /// 방 프리팹(<see cref="RoomLayout"/>) 격자 틀의 최대 가로 칸 수. 모양은 정사각형이 아니어도 된다.
+        /// 위쪽 벽(타일 3칸)까지 이웃 방과 겹치지 않도록 세로는 8칸, 가로는 9칸을 넘지 않는다(노드 간격 24타일).
+        /// </summary>
+        public static int MaxColumns(RoomSize size) => size switch
+        {
+            RoomSize.Small => 6,
+            RoomSize.Large => 9,
+            _ => 7
+        };
+
+        /// <summary>격자 틀의 최대 세로 칸 수.</summary>
+        public static int MaxRows(RoomSize size) => size switch
+        {
+            RoomSize.Small => 6,
+            RoomSize.Large => 8,
+            _ => 7
+        };
+
+        /// <summary>바닥 칸 수 범위. 크기 이름이 실제 넓이와 맞도록 둔다.</summary>
+        public static int MinFloorCells(RoomSize size) => size switch
+        {
+            RoomSize.Small => 12,
+            RoomSize.Large => 36,
+            _ => 22
+        };
+
+        public static int MaxFloorCells(RoomSize size) => size switch
+        {
+            RoomSize.Small => 22,
+            RoomSize.Large => 72,
+            _ => 36
         };
 
         /// <summary>손님이 머무는 시설을 지을 수 있는가. 소형 방은 시설을 못 짓는다(유닛·함정·금고는 된다).</summary>

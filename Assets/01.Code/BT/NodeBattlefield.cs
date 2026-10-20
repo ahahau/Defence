@@ -26,6 +26,9 @@ namespace Code.BT
         /// <summary>방 크기에 맞춰 팀당 정원을 정한다. 이미 들어와 있는 인원은 내보내지 않는다.</summary>
         public void SetMaxPerTeam(int value) => maxPerTeam = Mathf.Max(1, value);
 
+        /// <summary>방 모양 크기에 맞춰 아레나 반지름을 정한다. 이미 들어온 인원은 다음 입장부터 새 값을 받는다.</summary>
+        public void SetArenaRadius(float value) => arenaRadius = Mathf.Max(0.5f, value);
+
         public int PlayerCount => CountActive(_players);
         public int EnemyCount => CountActive(_enemies);
         /// <summary>전투 아레나 반지름(노드 내부 배치 그리드가 칸 간격을 맞출 때 참조).</summary>

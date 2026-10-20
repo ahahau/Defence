@@ -18,6 +18,8 @@ namespace Code.MapCreateSystem
 
         [Header("Focused Grid Visual")]
         [SerializeField] private bool showGridWhenFocused = true;
+        [SerializeField, Tooltip("격자 셰이더 재질(DungeonGridOverlay). 실행 중에는 복사본을 쓴다.")]
+        private Material focusedGridMaterial;
         [SerializeField] private Color focusedGridColor = new(0.3f, 0.85f, 1f, 0.58f);
         [SerializeField, Min(0.005f)] private float focusedGridLineWidth = 0.03f;
         [SerializeField] private int focusedGridSortingOrder = 5;
@@ -32,6 +34,9 @@ namespace Code.MapCreateSystem
         private Building[] _cells;
         private readonly List<Building> _placed = new();
 
+        /// <summary>방 모양에서 막힌 칸(기둥·빈 공간). 아무것도 놓을 수 없다. null이면 막힌 칸이 없다.</summary>
+        private bool[] _blocked;
+
         /// <summary>여러 칸을 차지하는 건물의 기준 칸(왼쪽 아래). 저장과 철거가 이 칸으로 건물을 찾는다.</summary>
         private readonly Dictionary<Building, Vector2Int> _anchors = new();
 
@@ -40,7 +45,7 @@ namespace Code.MapCreateSystem
         private GameObject _focusedGridRoot;
         private SpriteRenderer _focusedGridSurface;
         private SpriteRenderer _selectedCellMarker;
-        private static Material _focusedGridMaterial;
+        private static Material _focusedGridMaterialCopy;
         private static Sprite _cellMarkerSprite;
 
         public int Columns => columns;
@@ -125,13 +130,69 @@ namespace Code.MapCreateSystem
                 _cells = new Building[CellCount];
         }
 
+        /// <summary>
+        /// 방 프리팹에 맞춰 칸 수·칸 간격·막힌 칸을 정한다. 방을 만들 때 건물을 놓기 전에 한 번 부른다.
+        /// 칸 간격을 정해 주므로 아레나에 맞춰 늘리는 자동 조정은 끈다.
+        /// </summary>
+        public void ConfigureCells(RoomShape layout, float worldCellSize)
+        {
+            if (layout == null || layout.Columns <= 0 || layout.Rows <= 0)
+                return;
+
+            if (_placed.Count > 0)
+            {
+                Debug.LogError($"{name}: 건물이 놓인 격자의 크기를 바꿀 수 없습니다.", this);
+                return;
+            }
+
+            columns = layout.Columns;
+            rows = layout.Rows;
+            cellSize = worldCellSize;
+            originOffset = Vector2.zero;
+            autoFitToArena = false;
+            _cells = new Building[CellCount];
+            _blocked = new bool[CellCount];
+            for (var row = 0; row < rows; row++)
+            for (var column = 0; column < columns; column++)
+                _blocked[Index(column, row)] = !layout.IsFloor(column, row);
+
+            // 칸 수가 바뀌면 격자선·표시도 새 크기로 다시 만든다.
+            if (_focusedGridRoot != null)
+            {
+                DestroyRuntimeObject(_focusedGridRoot);
+                _focusedGridRoot = null;
+                _focusedGridSurface = null;
+                _selectedCellMarker = null;
+            }
+
+            if (_placementHintRoot != null)
+            {
+                DestroyRuntimeObject(_placementHintRoot);
+                _placementHintRoot = null;
+                _placementHints.Clear();
+            }
+        }
+
+        private static void DestroyRuntimeObject(Object target)
+        {
+            if (Application.isPlaying)
+                Destroy(target);
+            else
+                DestroyImmediate(target);
+        }
+
         public bool IsValidCell(int column, int row) =>
             column >= 0 && column < columns && row >= 0 && row < rows;
+
+        /// <summary>기둥·빈 공간처럼 방 모양에서 막힌 칸인가.</summary>
+        public bool IsBlockedCell(int column, int row) =>
+            IsValidCell(column, row) && _blocked != null && _blocked.Length == CellCount && _blocked[Index(column, row)];
 
         public bool IsCellFree(int column, int row)
         {
             EnsureCells();
             return IsValidCell(column, row)
+                   && !IsBlockedCell(column, row)
                    && !IsCentralBuildingSlotCell(column, row)
                    && _cells[Index(column, row)] == null;
         }
@@ -527,7 +588,7 @@ namespace Code.MapCreateSystem
 
             _focusedGridSurface = surfaceObject.AddComponent<SpriteRenderer>();
             _focusedGridSurface.sprite = CellMarkerSprite;
-            _focusedGridSurface.sharedMaterial = FocusedGridMaterial;
+            _focusedGridSurface.sharedMaterial = ResolveFocusedGridMaterial();
             _focusedGridSurface.sortingOrder = focusedGridSortingOrder;
 
             var worldSize = max - min;
@@ -603,27 +664,24 @@ namespace Code.MapCreateSystem
             }
         }
 
-        private static Material FocusedGridMaterial
+        /// <summary>모든 방이 한 복사본을 나눠 쓴다. 칸 수·색은 MaterialPropertyBlock으로 방마다 준다.</summary>
+        private Material ResolveFocusedGridMaterial()
         {
-            get
-            {
-                if (_focusedGridMaterial == null)
-                {
-                    var template = Resources.Load<Material>("Materials/DungeonGridOverlay");
-                    if (template == null)
-                    {
-                        Debug.LogError("DungeonGridOverlay material is missing from Resources/Materials.");
-                        return null;
-                    }
+            if (_focusedGridMaterialCopy != null)
+                return _focusedGridMaterialCopy;
 
-                    _focusedGridMaterial = new Material(template)
-                    {
-                        name = "Dungeon Grid Overlay (Runtime)",
-                        hideFlags = HideFlags.HideAndDontSave
-                    };
-                }
-                return _focusedGridMaterial;
+            if (focusedGridMaterial == null)
+            {
+                Debug.LogError($"{name}의 {nameof(NodeTrapGrid)}.{nameof(focusedGridMaterial)}이(가) 비어 있습니다.", this);
+                return null;
             }
+
+            _focusedGridMaterialCopy = new Material(focusedGridMaterial)
+            {
+                name = "Dungeon Grid Overlay (Runtime)",
+                hideFlags = HideFlags.HideAndDontSave
+            };
+            return _focusedGridMaterialCopy;
         }
 
         private (int minColumn, int maxColumn, int minRow, int maxRow) GetCentralSlotBounds()

@@ -37,6 +37,11 @@ namespace Code.Persistence
         public int y;
         public int roomSize;
         public int roomFeature;
+
+        // 후보에 보여 준 방 모양(SavedNode와 같은 형식).
+        public string layoutId;
+        public List<string> layoutRows = new();
+        public int layoutDoors;
     }
 
     [Serializable]
@@ -56,6 +61,12 @@ namespace Code.Persistence
 
         // 방 특수 효과(RoomFeature). 옛 저장에는 없어서 0(없음)으로 읽힌다.
         public int roomFeature;
+
+        // 방 모양: 특별 방 프리팹 이름(장식용) 또는 생성 표식, 칸 줄(위 줄부터 '.'/'#'), 문(RoomDoors).
+        // 생성한 방은 다시 깎지 않고 이 줄로 되살린다.
+        public string layoutId;
+        public List<string> layoutRows = new();
+        public int layoutDoors;
 
         // 모험가 사이의 소문(RoomRumor). 옛 저장에는 없어서 0(소문 없음)으로 읽힌다.
         public int rumorTraps;

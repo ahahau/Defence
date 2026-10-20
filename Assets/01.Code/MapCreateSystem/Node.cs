@@ -377,6 +377,10 @@ namespace Code.MapCreateSystem
         private void OnDisable()
         {
             allInstances.Remove(this);
+
+            // 공사 취소처럼 방이 꺼지면 던전 타일맵에서도 지운다.
+            if (_dungeonTilemap != null)
+                _dungeonTilemap.MarkDirty();
         }
 
         private void Update()
@@ -402,7 +406,6 @@ namespace Code.MapCreateSystem
             DangerLevel = 0;
             Rumor = default;
             SetVisualColor(unlockedVisualColor);
-            tileRenderer?.Render(transform.localScale, unlockedVisualColor, IsEnemySpawnNode);
             SetLockedOverlayVisible(false);
             SetLockedCostVisible(false);
             SetUnitCapacityVisible(true);
@@ -426,7 +429,6 @@ namespace Code.MapCreateSystem
             if (lockedRoot != null)
                 lockedRoot.transform.localScale = Vector3.one * lockedVisualScale;
             SetVisualColor(lockedVisualColor);
-            tileRenderer?.Render(transform.localScale, lockedVisualColor, false);
             SetLockedOverlayVisible(true);
             SetLockedCostVisible(false);
             SetUnitCapacityVisible(false);
@@ -469,8 +471,129 @@ namespace Code.MapCreateSystem
         {
             Feature = feature;
             RefreshUnitCapacityLabel(true);
+            RefreshRoomVisual();
         }
 
+        /// <summary>이 방의 모양(생성한 방 또는 특별 방 프리팹). 모양 없이 만든 노드(테스트)는 null이다.</summary>
+        public RoomShape Layout { get; private set; }
+
+        /// <summary>문이 난 변. 모양이 없으면 네 변 모두 열린 것으로 본다(예전 방과 같다).</summary>
+        public RoomDoors Doors => Layout != null
+            ? Layout.Doors
+            : RoomDoors.Up | RoomDoors.Right | RoomDoors.Down | RoomDoors.Left;
+
+        public bool HasDoor(RoomDoors side) => RoomDoorRules.Has(Doors, side);
+
+        /// <summary>복도가 실제로 이어진 문.</summary>
+        public RoomDoors ConnectedDoors { get; private set; }
+
+        private int _spacingTiles = 24;
+        private Color _visualColor = Color.white;
+        private GameObject _decor;
+
+        /// <summary>열린 방을 함께 그리는 던전 타일맵. 없으면(잠긴 후보·테스트) 자기 타일맵에 그린다.</summary>
+        private DungeonTilemap _dungeonTilemap;
+
+        /// <summary>
+        /// 방 모양을 입힌다. 칸 수·막힌 칸·아레나 크기가 모양을 따르고, 특별 방 프리팹이면 그 자식(장식)이 방 위에 놓인다.
+        /// 건물·유닛을 놓기 전에 부른다.
+        /// </summary>
+        public void ApplyLayout(RoomShape layout, float gridSpacing)
+        {
+            Layout = layout;
+            _spacingTiles = Mathf.Max(2, Mathf.RoundToInt(gridSpacing / RoomLayoutRules.TileWorldSize));
+            if (layout != null)
+            {
+                TrapGrid?.ConfigureCells(layout, RoomLayoutRules.CellWorldSize);
+                battlefield ??= GetComponent<NodeBattlefield>();
+                battlefield?.SetArenaRadius(Mathf.Max(layout.Columns, layout.Rows) * RoomLayoutRules.CellWorldSize * 0.5f);
+            }
+
+            ReplaceDecor(layout != null ? layout.Prefab : null);
+            RefreshRoomVisual();
+        }
+
+        /// <summary>열린 방은 던전 타일맵 한 장에 함께 그린다. 자기 타일맵은 비운다.</summary>
+        public void UseDungeonTilemap(DungeonTilemap tilemap)
+        {
+            _dungeonTilemap = tilemap;
+            tileRenderer ??= GetComponent<NodeTileRenderer>();
+            tileRenderer?.Clear();
+            if (_dungeonTilemap != null)
+                _dungeonTilemap.Register(this);
+        }
+
+        /// <summary>복도가 이어진 문을 정하고 다시 그린다. 연결이 생기거나 끊길 때 그래프 쪽이 부른다.</summary>
+        public void SetConnectedDoors(RoomDoors doors)
+        {
+            if (ConnectedDoors == doors)
+                return;
+
+            ConnectedDoors = doors;
+            RefreshRoomVisual();
+        }
+
+        /// <summary>던전 타일맵이 칠할 이 방의 몫: 바닥·기둥, 타일 좌표 오프셋, 색조.</summary>
+        public bool TryBuildPaint(out RoomTilePainter.Room room)
+        {
+            room = default;
+            if (Layout == null)
+                return false;
+
+            var position = transform.position;
+            var offset = new Vector2Int(
+                Mathf.RoundToInt(position.x / RoomLayoutRules.TileWorldSize),
+                Mathf.RoundToInt(position.y / RoomLayoutRules.TileWorldSize));
+            room = new RoomTilePainter.Room(BuildPlan(), offset, _visualColor * RoomFeatureRules.Tint(Feature));
+            return true;
+        }
+
+        private RoomTilePlan BuildPlan()
+        {
+            var turning = Layout.IsEntrance ? RoomDoorRules.EntranceTurningDoors : RoomDoors.None;
+            return RoomTilePlan.Build(Layout, ConnectedDoors, turning, _spacingTiles);
+        }
+
+        private void RefreshRoomVisual()
+        {
+            if (Layout == null)
+                return;
+
+            if (_dungeonTilemap != null)
+            {
+                _dungeonTilemap.MarkDirty();
+                return;
+            }
+
+            tileRenderer?.Render(BuildPlan(), _visualColor * RoomFeatureRules.Tint(Feature));
+        }
+
+        private void ReplaceDecor(RoomLayout prefab)
+        {
+            if (_decor != null)
+            {
+                if (Application.isPlaying)
+                    Destroy(_decor);
+                else
+                    DestroyImmediate(_decor);
+                _decor = null;
+            }
+
+            // 장식이 없는 프리팹은 데이터만 쓴다. 빈 오브젝트를 방마다 만들지 않는다.
+            if (prefab == null || prefab.transform.childCount == 0)
+                return;
+
+            var instance = Instantiate(prefab, transform);
+            instance.name = "RoomDecor";
+            instance.enabled = false;
+            _decor = instance.gameObject;
+            var parentScale = transform.lossyScale;
+            _decor.transform.localPosition = new Vector3(0f, 0f, 0.005f);
+            _decor.transform.localScale = new Vector3(
+                1f / Mathf.Max(0.0001f, Mathf.Abs(parentScale.x)),
+                1f / Mathf.Max(0.0001f, Mathf.Abs(parentScale.y)),
+                1f);
+        }
         public void ShowClickFeedback()
         {
             
@@ -548,7 +671,7 @@ namespace Code.MapCreateSystem
             if (grid == null || !grid.IsValidCell(column, row))
                 return false;
 
-            if (grid.IsCentralBuildingSlotCell(column, row))
+            if (grid.IsCentralBuildingSlotCell(column, row) || grid.IsBlockedCell(column, row))
                 return false;
 
             for (var i = 0; i < unitPlacements.Count; i++)
@@ -756,7 +879,8 @@ namespace Code.MapCreateSystem
 
         private void SetVisualColor(Color color)
         {
-            tileRenderer?.Render(transform.localScale, color, IsEnemySpawnNode);
+            _visualColor = color;
+            RefreshRoomVisual();
         }
 
         private NodeGlow glow;
@@ -847,6 +971,8 @@ namespace Code.MapCreateSystem
 
         private void OnDestroy()
         {
+            if (_dungeonTilemap != null)
+                _dungeonTilemap.Unregister(this);
             allInstances.Remove(this);
             if (Data != null)
                 nodesByDataId.Remove(Data.Id);
