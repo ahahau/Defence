@@ -66,6 +66,7 @@ public static class PopupBuilder
         panel.gameObject.SetActive(false);
 
         UiKit.EnsureFolder("Assets/03.Prefabs/UI/Popup");
+        UiKit.ApplyButtonFaces(root);
         PrefabUtility.SaveAsPrefabAsset(root, PrefabPath, out var saved);
         Object.DestroyImmediate(root);
         if (!saved)

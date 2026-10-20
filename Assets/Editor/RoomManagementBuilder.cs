@@ -69,6 +69,7 @@ public static class RoomManagementBuilder
         UiKit.Wire(screen, "detail", detail);
 
         UiKit.EnsureFolder("Assets/03.Prefabs/UI/RoomManagement");
+        UiKit.ApplyButtonFaces(canvas);
         PrefabUtility.SaveAsPrefabAsset(canvas, PrefabPath, out var saved);
         Object.DestroyImmediate(canvas);
         if (!saved)

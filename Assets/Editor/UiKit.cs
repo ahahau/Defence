@@ -506,6 +506,120 @@ public static class UiKit
         return AssetDatabase.LoadAssetAtPath<Sprite>(path);
     }
 
+    /// <summary>팩 버튼 면(빈 버튼 칸 20, 32×32, 테두리 9)을 테마 색 그대로 가져온다.</summary>
+    public static Sprite ButtonFaceSprite(string theme)
+    {
+        var path = $"{SkinFolder}/Button_{theme}.png";
+        if (!System.IO.File.Exists(path))
+        {
+            EnsureFolder(SkinFolder);
+            System.IO.File.Copy($"{PackFolder}/1 UI/Buttons & Scroll Bars/{theme}/20.png", path);
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+        }
+
+        ImportPixelSprite(path, new Vector4(FrameBorder, FrameBorder, FrameBorder, FrameBorder));
+        return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+    }
+
+    /// <summary>밝은 팩 버튼 면 위 글자 색.</summary>
+    public static readonly Color FaceText = new Color32(40, 34, 52, 255);
+
+    /// <summary>
+    /// 글자 하나뿐인 버튼을 팩 버튼 면으로 바꾼다(보통 Black·주요 Gold·위험 Red, 고르면 Gold·주요는 Green).
+    /// 글자 말고 다른 내용(아이콘·둘째 줄 글자)이 든 버튼은 카드·목록 줄이라 패널 테두리를 그대로 둔다. 투명한 조용한 버튼도 그대로.
+    /// 생성기와 <c>UiSkinRefresher</c>가 함께 쓴다. 바꾼 버튼 수를 돌려준다.
+    /// </summary>
+    public static int ApplyButtonFaces(GameObject root)
+    {
+        var normal = ButtonFaceSprite("Black");
+        var primary = ButtonFaceSprite("Gold");
+        var danger = ButtonFaceSprite("Red");
+        var highlight = ButtonFaceSprite("Green");
+        var count = 0;
+        foreach (var frame in root.GetComponentsInChildren<UiFrameButton>(true))
+        {
+            var so = new SerializedObject(frame);
+            if ((UiFrameButton.FaceRole)so.FindProperty("faceRole").enumValueIndex != UiFrameButton.FaceRole.None)
+                continue;
+            if (frame.Button == null || frame.Button.targetGraphic is not UnityEngine.UI.Image face || face.color.a <= 0f)
+                continue;
+            if (!HoldsOnlyLabel(frame))
+                continue;
+
+            var role = SameColor(face.color, HudPalette.Primary) ? UiFrameButton.FaceRole.Primary
+                : SameColor(face.color, HudPalette.DangerSurface) ? UiFrameButton.FaceRole.Danger
+                : UiFrameButton.FaceRole.Normal;
+            face.sprite = role switch
+            {
+                UiFrameButton.FaceRole.Primary => primary,
+                UiFrameButton.FaceRole.Danger => danger,
+                _ => normal
+            };
+            face.color = Color.white;
+            ApplyPixelFrame(face);
+            // 2배 테두리(위아래 18씩)는 낮은 버튼(닫기·배치·명령 줄, 28~36)에서 모서리가 글자를 덮는다. 낮은 버튼은 1배로 그린다.
+            if (ButtonHeight(frame) < SmallButtonHeight)
+                face.pixelsPerUnitMultiplier = 1f;
+            // 잠긴 버튼이 반투명이면 밝은 면이 뒤 어두운 패널에 묻혀 글자까지 사라진다. 불투명한 회색으로 어둡게만 한다.
+            var colors = frame.Button.colors;
+            colors.disabledColor = new Color(0.62f, 0.6f, 0.6f, 1f);
+            frame.Button.colors = colors;
+
+            var outline = so.FindProperty("outline").objectReferenceValue as UnityEngine.UI.Image;
+            if (outline != null)
+                Object.DestroyImmediate(outline.gameObject, true);
+            so.FindProperty("outline").objectReferenceValue = null;
+            so.FindProperty("faceRole").enumValueIndex = (int)role;
+            so.FindProperty("normalFace").objectReferenceValue = normal;
+            so.FindProperty("primaryFace").objectReferenceValue = primary;
+            so.FindProperty("dangerFace").objectReferenceValue = danger;
+            so.FindProperty("highlightFace").objectReferenceValue = highlight;
+            so.FindProperty("faceText").colorValue = FaceText;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            if (frame.Label != null)
+                frame.SetLabelColor(frame.Label.color);
+            var glyph = frame.transform.Find("Glyph");
+            if (glyph != null && glyph.TryGetComponent<UnityEngine.UI.Image>(out var glyphImage))
+                glyphImage.color = FaceText;
+            count++;
+        }
+
+        return count;
+    }
+
+    /// <summary>이보다 낮은 팩 버튼은 테두리를 1배로 그린다.</summary>
+    private const float SmallButtonHeight = 44f;
+
+    /// <summary>버튼 높이. 레이아웃이 크기를 정하는 줄(목록)은 프리팹에서 높이가 0이라 LayoutElement 값을 본다.</summary>
+    private static float ButtonHeight(UiFrameButton frame)
+    {
+        if (frame.TryGetComponent<UnityEngine.UI.LayoutElement>(out var element) && element.preferredHeight > 0f)
+            return element.preferredHeight;
+        return ((RectTransform)frame.transform).rect.height;
+    }
+
+    private static bool HoldsOnlyLabel(UiFrameButton frame)
+    {
+        foreach (var text in frame.GetComponentsInChildren<TMP_Text>(true))
+        {
+            if (text != frame.Label)
+                return false;
+        }
+
+        foreach (var image in frame.GetComponentsInChildren<UnityEngine.UI.Image>(true))
+        {
+            if (image.gameObject == frame.gameObject || image.name == "Outline" || image.name == "Glyph")
+                continue;
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool SameColor(Color a, Color b) =>
+        Mathf.Abs(a.r - b.r) < 0.01f && Mathf.Abs(a.g - b.g) < 0.01f && Mathf.Abs(a.b - b.b) < 0.01f && Mathf.Abs(a.a - b.a) < 0.01f;
+
     /// <summary>팩 아이콘 버튼 시트의 기호 칸을 흰색으로 바꿔 가져온다.</summary>
     private static Sprite EnsureGlyph(int index) => EnsureCrop($"{PackButtonFolder}/{index}.png", $"Glyph_{index}", true);
 

@@ -41,6 +41,7 @@ public static class StatusPanelsBuilder
         BuildTreasury(root);
 
         UiKit.EnsureFolder("Assets/03.Prefabs/UI/Status");
+        UiKit.ApplyButtonFaces(canvas);
         PrefabUtility.SaveAsPrefabAsset(canvas, PrefabPath, out var saved);
         Object.DestroyImmediate(canvas);
         if (!saved)

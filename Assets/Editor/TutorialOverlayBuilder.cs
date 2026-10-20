@@ -55,6 +55,7 @@ public static class TutorialOverlayBuilder
         hint.gameObject.SetActive(false);
 
         UiKit.EnsureFolder("Assets/03.Prefabs/UI/Tutorial");
+        UiKit.ApplyButtonFaces(canvas);
         PrefabUtility.SaveAsPrefabAsset(canvas, PrefabPath, out var saved);
         Object.DestroyImmediate(canvas);
         if (!saved)
