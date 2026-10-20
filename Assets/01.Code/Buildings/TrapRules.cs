@@ -105,7 +105,8 @@ namespace Code.Buildings
             if (placing == null)
                 return false;
 
-            if (placing.Category == InstallCategory.Trap)
+            // 칸막이 벽은 함정 갈래에서 고르지만 아프게 하지 않는다. 손님은 그 옆을 돌아가면 된다.
+            if (placing.Category == InstallCategory.Trap && placing.Prefab is not Partition)
                 return centralBuilding != null && !centralBuilding.IsDestroyed && centralBuilding.DwellSeconds > 0f;
 
             return placing.DwellSeconds > 0f && roomHasTrap;

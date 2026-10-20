@@ -426,6 +426,120 @@ namespace Tests.EditMode.Rules
             }
         }
 
+        /// <summary>
+        /// 방 안 칸 길은 벽을 돌아가고 모서리를 가로지르지 않는다. 가로지르면 모험가가 기둥 모서리를 뚫고 지나가 보인다.
+        /// 칸 하나를 더 막아 방이 끊기는지도 같은 판정으로 본다(칸막이 벽 배치).
+        /// </summary>
+        [Test]
+        public void RoomCellPathfinder_GoesAroundWallsWithoutCuttingCorners()
+        {
+            var map = new ShapeMap(NewShape(RoomSize.Medium, RoomDoors.Left | RoomDoors.Right, new[]
+            {
+                ".....",
+                "..#..",
+                "..#.."
+            }));
+            var path = new System.Collections.Generic.List<Vector2Int>();
+            Assert.That(RoomCellPathfinder.TryFindPath(map, new Vector2Int(0, 0), new Vector2Int(4, 0), path), Is.True);
+            Assert.That(path, Has.Member(new Vector2Int(2, 2)), "벽 위 줄로 돌아가야 합니다.");
+            for (var i = 1; i < path.Count; i++)
+                Assert.That(RoomCellPathfinder.CanStep(map, path[i - 1], path[i]), Is.True, $"{path[i - 1]} → {path[i]}");
+
+            Assert.That(RoomCellPathfinder.CanStep(map, new Vector2Int(1, 0), new Vector2Int(2, 1)), Is.False,
+                "벽 모서리를 대각선으로 가로지르면 안 됩니다.");
+            Assert.That(RoomCellPathfinder.StaysConnectedWithout(map, new Vector2Int(2, 2)), Is.False, "유일한 길을 막으면 끊깁니다.");
+            Assert.That(RoomCellPathfinder.StaysConnectedWithout(map, new Vector2Int(0, 2)), Is.True);
+        }
+
+        /// <summary>
+        /// 칸막이 벽은 문 앞과 방을 끊는 자리에 못 놓고, 놓으면 걸을 수 없는 칸이 되어 기둥처럼 그려진다.
+        /// 방을 끊는 벽을 허용하면 유닛·함정 칸에 아무도 못 가거나 파티가 방에 갇힌다.
+        /// </summary>
+        [Test]
+        public void Partition_KeepsTheRoomOpenAndBlocksWalking()
+        {
+            var data = AssetDatabase.LoadAssetAtPath<Code.Buildings.BuildingDataSO>("Assets/07.SO/Buildings/PartitionBuildingData.asset");
+            Assert.That(data, Is.Not.Null, "칸막이 데이터를 찾지 못했습니다.");
+            Assert.That(data.Prefab, Is.InstanceOf<Code.Buildings.Partition>());
+
+            var shape = NewShape(RoomSize.Medium, RoomDoors.Left | RoomDoors.Right, new[]
+            {
+                "......", "......", "......", "......", "......", "......"
+            });
+            var node = CreateNode();
+            node.ApplyLayout(shape, 15f);
+            var grid = node.TrapGrid;
+
+            Assert.That(grid.KeepsRoomOpen(0, 2), Is.False, "문 앞 칸은 막을 수 없습니다.");
+            Assert.That(Code.Buildings.BuildingPlacement.InstallOnCell(node, 0, 2, data), Is.Null);
+
+            for (var row = 0; row < 5; row++)
+                Assert.That(Code.Buildings.BuildingPlacement.InstallOnCell(node, 4, row, data), Is.Not.Null, $"(4, {row})");
+
+            Assert.That(grid.KeepsRoomOpen(4, 5), Is.False, "마지막 틈을 막으면 방이 두 동강 납니다.");
+            Assert.That(Code.Buildings.BuildingPlacement.InstallOnCell(node, 4, 5, data), Is.Null);
+            Assert.That(grid.IsWalkableCell(4, 1), Is.False);
+            Assert.That(node.IsUnitCellAvailable(4, 1), Is.False);
+
+            var path = new System.Collections.Generic.List<Vector2Int>();
+            Assert.That(RoomCellPathfinder.TryFindPath(grid, new Vector2Int(5, 0), new Vector2Int(3, 0), path), Is.True);
+            Assert.That(path, Has.Member(new Vector2Int(4, 5)), "벽 끝 틈으로 돌아가야 합니다.");
+
+            var cells = new System.Collections.Generic.List<Vector2Int>();
+            grid.CollectPartitionCells(cells);
+            var plan = RoomTilePlan.Build(shape, RoomDoors.None, RoomDoors.None, 24, cells);
+            // 칸 (4,1)의 타일은 x 2..3, y -4..-3.
+            Assert.That(plan.Pillars, Has.Member(new Vector2Int(2, -4)));
+            Assert.That(plan.Floor, Has.No.Member(new Vector2Int(2, -4)));
+
+            Assert.That(grid.Remove(4, 1), Is.True);
+            Assert.That(grid.IsWalkableCell(4, 1), Is.True, "철거한 칸은 다시 바닥입니다.");
+        }
+
+        /// <summary>중·대형 생성 방에는 방 안 칸막이 벽(가장자리와 떨어진 2칸 넘는 막힌 줄)이 가끔 생기고, 그래도 규칙에 맞는다.</summary>
+        [Test]
+        public void RoomShapeGenerator_SometimesCarvesInteriorWalls()
+        {
+            var withWalls = 0;
+            for (var seed = 0; seed < 60; seed++)
+            {
+                var shape = RoomShapeGenerator.Generate(RoomSize.Large, RoomDoors.Left | RoomDoors.Right, false, 5000 + seed);
+                Assert.That(RoomLayoutRules.Validate(shape, out var problem), Is.True, problem);
+                if (HasInteriorRun(shape))
+                    withWalls++;
+            }
+
+            Assert.That(withWalls, Is.GreaterThan(5));
+        }
+
+        private static bool HasInteriorRun(RoomShape shape)
+        {
+            for (var y = 1; y < shape.Rows - 1; y++)
+            for (var x = 1; x < shape.Columns - 2; x++)
+            {
+                if (!shape.IsFloor(x, y) && !shape.IsFloor(x + 1, y))
+                    return true;
+            }
+
+            for (var x = 1; x < shape.Columns - 1; x++)
+            for (var y = 1; y < shape.Rows - 2; y++)
+            {
+                if (!shape.IsFloor(x, y) && !shape.IsFloor(x, y + 1))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private sealed class ShapeMap : IRoomCellMap
+        {
+            private readonly RoomShape _shape;
+            public ShapeMap(RoomShape shape) => _shape = shape;
+            public int Columns => _shape.Columns;
+            public int Rows => _shape.Rows;
+            public bool IsWalkableCell(int column, int row) => _shape.IsFloor(column, row);
+        }
+
         private static readonly string[] PillarRows =
         {
             "#.....",

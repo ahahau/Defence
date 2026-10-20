@@ -132,6 +132,11 @@ namespace Code.Buildings
                 && (ViolatesFacilityTrapRule(node, buildingData) || ViolatesRoomSizeRule(node, buildingData)))
                 return null;
 
+            // 칸막이 벽은 방을 막거나 유닛이 선 칸을 덮지 못한다. 복원은 저장된 그대로 세운다.
+            if (enforceFacilityTrapRule && buildingData.Prefab is Partition
+                && (!grid.KeepsRoomOpen(column, row) || node.TryGetUnitAtCell(column, row, out _)))
+                return null;
+
             var building = grid.TryPlace(column, row, buildingData.Prefab);
             if (building == null)
                 return null;

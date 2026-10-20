@@ -1626,6 +1626,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 069dea4c2a349ed42a5e91ddd60b607f, type: 2}
   - {fileID: 11400000, guid: be8f9003124be0049832853e0de877af, type: 2}
   - {fileID: 11400000, guid: 9978d5ad46fa4c71bb0b0b6ab4d91d91, type: 2}
+  - {fileID: 11400000, guid: b051351cda908c748942942f9cef4fc5, type: 2}
   unlockCatalog: {fileID: 11400000, guid: c3ea30d18d72d2442bc1ca2c2e29b502, type: 2}
   alwaysInstallableBuildings:
   - {fileID: 11400000, guid: 9e268c91c1cd76342ab8cdb1943bf6e5, type: 2}
@@ -2047,22 +2048,7 @@ MonoBehaviour:
   floorTilemap: {fileID: 2042563492}
   wallTilemap: {fileID: 1553045581}
   doorTilemap: {fileID: 922892473}
-  floorTile: {fileID: 11400000, guid: ca6bc7faa06bf4c43b5603962fd382cc, type: 2}
-  floorAccentTile: {fileID: 11400000, guid: b8930ff7b8e758b4f99860d0c93ff7b0, type: 2}
-  topLeftWallCapTile: {fileID: 11400000, guid: 170e6622baf309143909c6ec64c8ec9c, type: 2}
-  topLeftCornerTile: {fileID: 11400000, guid: ce9ae4988690198459fa96a7f1329086, type: 2}
-  topRightCornerTile: {fileID: 11400000, guid: 049a52290c997cb4ca22b6395e59d8c9, type: 2}
-  topRightWallCapTile: {fileID: 11400000, guid: 8b730a6af9f682f4fb14587ef26ab496, type: 2}
-  topWallTile: {fileID: 11400000, guid: 45309ed2522d2364ea7c7432a98eebc5, type: 2}
-  bottomLeftWallTile: {fileID: 11400000, guid: c555f5afa861c5247bbc30b86dd5a11b, type: 2}
-  bottomWallTile: {fileID: 11400000, guid: 828b30b3f5b909a4b829df288d886841, type: 2}
-  bottomRightWallTile: {fileID: 11400000, guid: 3aaf8c0383215494e9564a760dbbb93c, type: 2}
-  leftWallTile: {fileID: 11400000, guid: abf796fe98661b94293ebb00c0b41b2c, type: 2}
-  rightWallTile: {fileID: 11400000, guid: 9dd107ee9aa475843b99c8d2a74e9143, type: 2}
-  entranceDoorBottomTile: {fileID: 11400000, guid: ca0446c02448b124797358720ba37a52, type: 2}
-  entranceDoorMiddleTile: {fileID: 11400000, guid: e64ba20e4f0be1a4da7a7ad412b66b45, type: 2}
-  entranceDoorTopTile: {fileID: 11400000, guid: 22ded8f2bb77dee469619668af271081, type: 2}
-  floorAccentChance: 0.08
+  tileSet: {fileID: 0}
 --- !u!114 &471568751
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5735,22 +5721,7 @@ MonoBehaviour:
   floorTilemap: {fileID: 311758889}
   wallTilemap: {fileID: 661949303}
   doorTilemap: {fileID: 1637014464}
-  floorTile: {fileID: 11400000, guid: ca6bc7faa06bf4c43b5603962fd382cc, type: 2}
-  floorAccentTile: {fileID: 11400000, guid: b8930ff7b8e758b4f99860d0c93ff7b0, type: 2}
-  topLeftWallCapTile: {fileID: 11400000, guid: 170e6622baf309143909c6ec64c8ec9c, type: 2}
-  topLeftCornerTile: {fileID: 11400000, guid: ce9ae4988690198459fa96a7f1329086, type: 2}
-  topRightCornerTile: {fileID: 11400000, guid: 049a52290c997cb4ca22b6395e59d8c9, type: 2}
-  topRightWallCapTile: {fileID: 11400000, guid: 8b730a6af9f682f4fb14587ef26ab496, type: 2}
-  topWallTile: {fileID: 11400000, guid: 45309ed2522d2364ea7c7432a98eebc5, type: 2}
-  bottomLeftWallTile: {fileID: 11400000, guid: c555f5afa861c5247bbc30b86dd5a11b, type: 2}
-  bottomWallTile: {fileID: 11400000, guid: 828b30b3f5b909a4b829df288d886841, type: 2}
-  bottomRightWallTile: {fileID: 11400000, guid: 3aaf8c0383215494e9564a760dbbb93c, type: 2}
-  leftWallTile: {fileID: 11400000, guid: abf796fe98661b94293ebb00c0b41b2c, type: 2}
-  rightWallTile: {fileID: 11400000, guid: 9dd107ee9aa475843b99c8d2a74e9143, type: 2}
-  entranceDoorBottomTile: {fileID: 11400000, guid: ca0446c02448b124797358720ba37a52, type: 2}
-  entranceDoorMiddleTile: {fileID: 11400000, guid: e64ba20e4f0be1a4da7a7ad412b66b45, type: 2}
-  entranceDoorTopTile: {fileID: 11400000, guid: 22ded8f2bb77dee469619668af271081, type: 2}
-  floorAccentChance: 0.08
+  tileSet: {fileID: 0}
 --- !u!114 &1300231601
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7809,22 +7780,7 @@ MonoBehaviour:
   floorTilemap: {fileID: 374458445}
   wallTilemap: {fileID: 1727270507}
   doorTilemap: {fileID: 1777784452}
-  floorTile: {fileID: 11400000, guid: ca6bc7faa06bf4c43b5603962fd382cc, type: 2}
-  floorAccentTile: {fileID: 11400000, guid: b8930ff7b8e758b4f99860d0c93ff7b0, type: 2}
-  topLeftWallCapTile: {fileID: 11400000, guid: 170e6622baf309143909c6ec64c8ec9c, type: 2}
-  topLeftCornerTile: {fileID: 11400000, guid: ce9ae4988690198459fa96a7f1329086, type: 2}
-  topRightCornerTile: {fileID: 11400000, guid: 049a52290c997cb4ca22b6395e59d8c9, type: 2}
-  topRightWallCapTile: {fileID: 11400000, guid: 8b730a6af9f682f4fb14587ef26ab496, type: 2}
-  topWallTile: {fileID: 11400000, guid: 45309ed2522d2364ea7c7432a98eebc5, type: 2}
-  bottomLeftWallTile: {fileID: 11400000, guid: c555f5afa861c5247bbc30b86dd5a11b, type: 2}
-  bottomWallTile: {fileID: 11400000, guid: 828b30b3f5b909a4b829df288d886841, type: 2}
-  bottomRightWallTile: {fileID: 11400000, guid: 3aaf8c0383215494e9564a760dbbb93c, type: 2}
-  leftWallTile: {fileID: 11400000, guid: abf796fe98661b94293ebb00c0b41b2c, type: 2}
-  rightWallTile: {fileID: 11400000, guid: 9dd107ee9aa475843b99c8d2a74e9143, type: 2}
-  entranceDoorBottomTile: {fileID: 11400000, guid: ca0446c02448b124797358720ba37a52, type: 2}
-  entranceDoorMiddleTile: {fileID: 11400000, guid: e64ba20e4f0be1a4da7a7ad412b66b45, type: 2}
-  entranceDoorTopTile: {fileID: 11400000, guid: 22ded8f2bb77dee469619668af271081, type: 2}
-  floorAccentChance: 0.08
+  tileSet: {fileID: 0}
 --- !u!114 &1722183570
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8545,22 +8501,7 @@ MonoBehaviour:
   floorTilemap: {fileID: 763940394}
   wallTilemap: {fileID: 1808981902}
   doorTilemap: {fileID: 1433715622}
-  floorTile: {fileID: 11400000, guid: ca6bc7faa06bf4c43b5603962fd382cc, type: 2}
-  floorAccentTile: {fileID: 11400000, guid: b8930ff7b8e758b4f99860d0c93ff7b0, type: 2}
-  topLeftWallCapTile: {fileID: 11400000, guid: 170e6622baf309143909c6ec64c8ec9c, type: 2}
-  topLeftCornerTile: {fileID: 11400000, guid: ce9ae4988690198459fa96a7f1329086, type: 2}
-  topRightCornerTile: {fileID: 11400000, guid: 049a52290c997cb4ca22b6395e59d8c9, type: 2}
-  topRightWallCapTile: {fileID: 11400000, guid: 8b730a6af9f682f4fb14587ef26ab496, type: 2}
-  topWallTile: {fileID: 11400000, guid: 45309ed2522d2364ea7c7432a98eebc5, type: 2}
-  bottomLeftWallTile: {fileID: 11400000, guid: c555f5afa861c5247bbc30b86dd5a11b, type: 2}
-  bottomWallTile: {fileID: 11400000, guid: 828b30b3f5b909a4b829df288d886841, type: 2}
-  bottomRightWallTile: {fileID: 11400000, guid: 3aaf8c0383215494e9564a760dbbb93c, type: 2}
-  leftWallTile: {fileID: 11400000, guid: abf796fe98661b94293ebb00c0b41b2c, type: 2}
-  rightWallTile: {fileID: 11400000, guid: 9dd107ee9aa475843b99c8d2a74e9143, type: 2}
-  entranceDoorBottomTile: {fileID: 11400000, guid: ca0446c02448b124797358720ba37a52, type: 2}
-  entranceDoorMiddleTile: {fileID: 11400000, guid: e64ba20e4f0be1a4da7a7ad412b66b45, type: 2}
-  entranceDoorTopTile: {fileID: 11400000, guid: 22ded8f2bb77dee469619668af271081, type: 2}
-  floorAccentChance: 0.08
+  tileSet: {fileID: 0}
 --- !u!114 &1797102398
 MonoBehaviour:
   m_ObjectHideFlags: 0

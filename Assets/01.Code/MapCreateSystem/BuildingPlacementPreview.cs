@@ -36,6 +36,13 @@ namespace Code.MapCreateSystem
         /// <summary>실제로 놓일 왼쪽 아래 칸. 확정 때 이 칸을 넘긴다.</summary>
         private Vector2Int _anchor;
 
+        /// <summary>놓을 건물 프리팹. 칸막이 벽처럼 칸 말고도 따질 것이 있는 건물을 가린다.</summary>
+        private Code.Buildings.Building _prefab;
+
+        /// <summary>지금 칸에서 건물 규칙상 놓을 수 있는가(칸이 바뀔 때만 다시 센다).</summary>
+        private bool _hoverPlaceable;
+        private bool _hoverChecked;
+
         /// <summary>테두리 꼭짓점. 매 프레임 새 배열을 만들지 않는다.</summary>
         private readonly Vector3[] _hoverOutlineCorners = new Vector3[4];
 
@@ -76,6 +83,7 @@ namespace Code.MapCreateSystem
             _onConfirm = onConfirm;
             _onCancel = onCancel;
             _camera = Camera.main;
+            _prefab = buildingData != null ? buildingData.Prefab : null;
             _footprint = buildingData != null && buildingData.Prefab != null
                 ? buildingData.Prefab.Footprint
                 : Vector2Int.one;
@@ -144,8 +152,18 @@ namespace Code.MapCreateSystem
                 return;
             }
 
-            _anchor = TrapRules.AnchorForHover(_hoverColumn, _hoverRow, _footprint);
-            _hoverIsFree = _grid.CanPlace(_anchor.x, _anchor.y, _footprint);
+            var anchor = TrapRules.AnchorForHover(_hoverColumn, _hoverRow, _footprint);
+            // 칸막이 벽은 방이 열려 있는지까지 본다. 칸이 바뀔 때만 다시 센다(매 프레임 길찾기 금지).
+            if (anchor != _anchor || !_hoverChecked)
+            {
+                _anchor = anchor;
+                _hoverChecked = true;
+                _hoverPlaceable = _prefab != null
+                    ? _grid.CanPlace(_anchor.x, _anchor.y, _prefab)
+                    : _grid.CanPlace(_anchor.x, _anchor.y, _footprint);
+            }
+
+            _hoverIsFree = _hoverPlaceable && _grid.CanPlace(_anchor.x, _anchor.y, _footprint);
             var cellPosition = _grid.FootprintWorldCenter(_anchor.x, _anchor.y, _footprint);
 
             if (_ghost != null)

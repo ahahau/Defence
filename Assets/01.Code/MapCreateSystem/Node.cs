@@ -366,6 +366,7 @@ namespace Code.MapCreateSystem
                 return;
             }
 
+            trapGrid.PartitionsChanged += HandlePartitionsChanged;
             RefreshUnitCapacityLabel(true);
         }
 
@@ -551,8 +552,15 @@ namespace Code.MapCreateSystem
         private RoomTilePlan BuildPlan()
         {
             var turning = Layout.IsEntrance ? RoomDoorRules.EntranceTurningDoors : RoomDoors.None;
-            return RoomTilePlan.Build(Layout, ConnectedDoors, turning, _spacingTiles);
+            _partitionCells.Clear();
+            TrapGrid?.CollectPartitionCells(_partitionCells);
+            return RoomTilePlan.Build(Layout, ConnectedDoors, turning, _spacingTiles, _partitionCells);
         }
+
+        /// <summary>그림을 그릴 때 칸막이 벽 칸을 모으는 임시 목록. 매번 새로 만들지 않는다.</summary>
+        private readonly List<Vector2Int> _partitionCells = new();
+
+        private void HandlePartitionsChanged() => RefreshRoomVisual();
 
         private void RefreshRoomVisual()
         {
@@ -671,7 +679,7 @@ namespace Code.MapCreateSystem
             if (grid == null || !grid.IsValidCell(column, row))
                 return false;
 
-            if (grid.IsCentralBuildingSlotCell(column, row) || grid.IsBlockedCell(column, row))
+            if (grid.IsCentralBuildingSlotCell(column, row) || !grid.IsWalkableCell(column, row))
                 return false;
 
             for (var i = 0; i < unitPlacements.Count; i++)
@@ -971,6 +979,8 @@ namespace Code.MapCreateSystem
 
         private void OnDestroy()
         {
+            if (trapGrid != null)
+                trapGrid.PartitionsChanged -= HandlePartitionsChanged;
             if (_dungeonTilemap != null)
                 _dungeonTilemap.Unregister(this);
             allInstances.Remove(this);

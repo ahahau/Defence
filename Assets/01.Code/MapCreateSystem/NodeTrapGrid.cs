@@ -1,14 +1,17 @@
+using System;
 using System.Collections.Generic;
 using Code.Buildings;
 using Code.BT;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Code.MapCreateSystem
 {
     /// <summary>노드 내부의 격자. 셀 단위로 건물(트랩 포함)을 자유 배치하고 점유를 관리한다.
     /// 셀 좌표는 노드 중심 기준 '월드 단위'로 계산해 노드의 큰 스케일 영향을 받지 않는다.
-    /// (클래스명은 직렬화 참조 호환을 위해 유지하되, 트랩 외 일반 건물도 여러 개 배치할 수 있다.)</summary>
-    public class NodeTrapGrid : MonoBehaviour
+    /// (클래스명은 직렬화 참조 호환을 위해 유지하되, 트랩 외 일반 건물도 여러 개 배치할 수 있다.)
+    /// 방 안 길찾기(<see cref="RoomCellPathfinder"/>)도 이 격자를 칸 지도로 읽는다.</summary>
+    public class NodeTrapGrid : MonoBehaviour, IRoomCellMap
     {
         [SerializeField, Min(1)] private int columns = 6;
         [SerializeField, Min(1)] private int rows = 6;
@@ -36,6 +39,12 @@ namespace Code.MapCreateSystem
 
         /// <summary>방 모양에서 막힌 칸(기둥·빈 공간). 아무것도 놓을 수 없다. null이면 막힌 칸이 없다.</summary>
         private bool[] _blocked;
+
+        /// <summary>문 앞 칸. 칸막이 벽으로 막을 수 없다.</summary>
+        private readonly List<Vector2Int> _doorCells = new();
+
+        /// <summary>칸막이 벽이 서거나 사라졌을 때. 방 그림과 길찾기가 다시 읽는다.</summary>
+        public event Action PartitionsChanged;
 
         /// <summary>여러 칸을 차지하는 건물의 기준 칸(왼쪽 아래). 저장과 철거가 이 칸으로 건물을 찾는다.</summary>
         private readonly Dictionary<Building, Vector2Int> _anchors = new();
@@ -156,6 +165,18 @@ namespace Code.MapCreateSystem
             for (var column = 0; column < columns; column++)
                 _blocked[Index(column, row)] = !layout.IsFloor(column, row);
 
+            _doorCells.Clear();
+            foreach (var side in RoomDoorRules.Sides)
+            {
+                if (!layout.HasDoor(side))
+                    continue;
+
+                var (a, b) = RoomLayoutRules.DoorCells(columns, rows, side);
+                _doorCells.Add(a);
+                if (b != a)
+                    _doorCells.Add(b);
+            }
+
             // 칸 수가 바뀌면 격자선·표시도 새 크기로 다시 만든다.
             if (_focusedGridRoot != null)
             {
@@ -187,6 +208,132 @@ namespace Code.MapCreateSystem
         /// <summary>기둥·빈 공간처럼 방 모양에서 막힌 칸인가.</summary>
         public bool IsBlockedCell(int column, int row) =>
             IsValidCell(column, row) && _blocked != null && _blocked.Length == CellCount && _blocked[Index(column, row)];
+
+        /// <summary>걸어 지나갈 수 있는 칸인가. 막힌 칸과 서 있는 칸막이 벽은 못 지나간다. 함정·유닛 칸은 지나간다.</summary>
+        public bool IsWalkableCell(int column, int row) =>
+            IsValidCell(column, row) && !IsBlockedCell(column, row) && !IsPartitionCell(column, row);
+
+        /// <summary>서 있는(부서지지 않은) 칸막이 벽이 있는 칸인가.</summary>
+        public bool IsPartitionCell(int column, int row)
+        {
+            if (!IsValidCell(column, row) || _cells == null || _cells.Length != CellCount)
+                return false;
+
+            var building = _cells[Index(column, row)];
+            return building is Partition && building != null && !building.IsDestroyed;
+        }
+
+        /// <summary>그 월드 위치가 걸을 수 있는 칸 위인가. 격자 밖이면 false.</summary>
+        public bool IsWalkableWorld(Vector3 worldPosition) =>
+            TryGetCell(worldPosition, out var column, out var row) && IsWalkableCell(column, row);
+
+        /// <summary>막힌 칸이나 칸막이 벽이 하나라도 있는가. 없으면 방 안 어디로든 곧장 걸어도 된다.</summary>
+        public bool HasWalkBlockers
+        {
+            get
+            {
+                if (_blocked != null)
+                {
+                    for (var i = 0; i < _blocked.Length; i++)
+                    {
+                        if (_blocked[i])
+                            return true;
+                    }
+                }
+
+                foreach (var building in _placed)
+                {
+                    if (building is Partition && building != null && !building.IsDestroyed)
+                        return true;
+                }
+
+                return false;
+            }
+        }
+
+        /// <summary>문 앞 칸인가.</summary>
+        public bool IsDoorCell(int column, int row) => _doorCells.Contains(new Vector2Int(column, row));
+
+        /// <summary>그 변 문 앞 칸(두 칸 중 아래·왼쪽). 문이 없으면 false.</summary>
+        public bool TryGetDoorCell(RoomDoors side, out Vector2Int cell)
+        {
+            var (a, _) = RoomLayoutRules.DoorCells(columns, rows, side);
+            cell = a;
+            return _doorCells.Contains(a);
+        }
+
+        /// <summary>
+        /// 그 칸에 칸막이 벽을 세워도 방이 열려 있는가. 문 앞 칸이 아니고, 걸을 수 있는 칸이 모두 한 덩어리로 남아야 한다.
+        /// </summary>
+        public bool KeepsRoomOpen(int column, int row) =>
+            IsValidCell(column, row)
+            && !IsDoorCell(column, row)
+            && RoomCellPathfinder.StaysConnectedWithout(this, new Vector2Int(column, row));
+
+        /// <summary>그 건물을 그 칸에 놓을 수 있는가. 칸막이 벽이면 방이 열려 있는지도 본다.</summary>
+        public bool CanPlace(int column, int row, Building buildingPrefab)
+        {
+            if (buildingPrefab == null || !CanPlace(column, row, buildingPrefab.Footprint))
+                return false;
+
+            return buildingPrefab is not Partition || KeepsRoomOpen(column, row);
+        }
+
+        /// <summary>칸막이 벽이 선 칸들을 담는다(서 있는 것만).</summary>
+        public void CollectPartitionCells(ICollection<Vector2Int> into)
+        {
+            if (into == null)
+                return;
+
+            foreach (var building in _placed)
+            {
+                if (building is Partition && building != null && !building.IsDestroyed
+                    && _anchors.TryGetValue(building, out var anchor))
+                    into.Add(anchor);
+            }
+        }
+
+        /// <summary>그 월드 위치에서 가장 가까운 걸을 수 있는 칸. 그런 칸이 없으면 false.</summary>
+        public bool TryGetNearestWalkableCell(Vector3 worldPosition, out Vector2Int cell)
+        {
+            cell = new Vector2Int(-1, -1);
+            var best = float.MaxValue;
+            for (var row = 0; row < rows; row++)
+            for (var column = 0; column < columns; column++)
+            {
+                if (!IsWalkableCell(column, row))
+                    continue;
+
+                var distance = (CellWorldPosition(column, row) - worldPosition).sqrMagnitude;
+                if (distance >= best)
+                    continue;
+
+                best = distance;
+                cell = new Vector2Int(column, row);
+            }
+
+            return cell.x >= 0;
+        }
+
+        /// <summary>
+        /// 부서진 건물을 칸에서 뺀다. 오브젝트는 건물이 스스로 지운다(<see cref="Remove"/>와 달리 파괴하지 않는다).
+        /// </summary>
+        public void Release(Building building)
+        {
+            if (building is null || _cells == null)
+                return;
+
+            for (var i = 0; i < _cells.Length; i++)
+            {
+                if (ReferenceEquals(_cells[i], building))
+                    _cells[i] = null;
+            }
+
+            _anchors.Remove(building);
+            _placed.Remove(building);
+            if (building is Partition)
+                PartitionsChanged?.Invoke();
+        }
 
         public bool IsCellFree(int column, int row)
         {
@@ -326,6 +473,8 @@ namespace Code.MapCreateSystem
 
             _anchors[building] = new Vector2Int(column, row);
             _placed.Add(building);
+            if (building is Partition)
+                PartitionsChanged?.Invoke();
             return building;
         }
 
@@ -431,11 +580,14 @@ namespace Code.MapCreateSystem
 
             _anchors.Remove(building);
             _placed.Remove(building);
+            var wasPartition = building is Partition;
             // EditMode 테스트에서도 같은 경로를 탄다. 런타임 Destroy는 에디트 모드에서 경고를 남긴다.
             if (Application.isPlaying)
                 Destroy(building.gameObject);
             else
                 DestroyImmediate(building.gameObject);
+            if (wasPartition)
+                PartitionsChanged?.Invoke();
             return true;
         }
 
@@ -705,13 +857,17 @@ namespace Code.MapCreateSystem
                     _cells[i] = null;
             }
 
+            var hadPartition = false;
             foreach (var building in _placed)
             {
+                hadPartition |= building is Partition;
                 if (building != null)
                     Destroy(building.gameObject);
             }
             _placed.Clear();
             _anchors.Clear();
+            if (hadPartition)
+                PartitionsChanged?.Invoke();
         }
 
     }

@@ -29,7 +29,13 @@ namespace Code.MapCreateSystem
         /// <param name="connected">복도가 이어진 문.</param>
         /// <param name="turningDoors">복도가 서쪽으로 꺾이는 문(입구의 위·아래).</param>
         /// <param name="spacingTiles">이웃 방 중심 사이 타일 수(노드 간격 ÷ 타일 크기).</param>
-        public static RoomTilePlan Build(RoomShape shape, RoomDoors connected, RoomDoors turningDoors, int spacingTiles)
+        /// <param name="partitions">플레이어가 세운 칸막이 벽 칸. 기둥처럼 그린다.</param>
+        public static RoomTilePlan Build(
+            RoomShape shape,
+            RoomDoors connected,
+            RoomDoors turningDoors,
+            int spacingTiles,
+            IEnumerable<Vector2Int> partitions = null)
         {
             var plan = new RoomTilePlan();
             if (shape == null || shape.Columns <= 0 || shape.Rows <= 0)
@@ -37,6 +43,7 @@ namespace Code.MapCreateSystem
 
             plan.AddRoomFloor(shape);
             plan.FindPillars(shape);
+            plan.AddPartitions(shape, partitions);
             var half = spacingTiles / 2;
             foreach (var side in RoomDoorRules.Sides)
             {
@@ -118,6 +125,24 @@ namespace Code.MapCreateSystem
 
                 foreach (var tile in CellTiles(shape, column, row))
                     Pillars.Add(tile);
+            }
+        }
+
+        private void AddPartitions(RoomShape shape, IEnumerable<Vector2Int> partitions)
+        {
+            if (partitions == null)
+                return;
+
+            foreach (var cell in partitions)
+            {
+                if (!shape.IsFloor(cell.x, cell.y))
+                    continue;
+
+                foreach (var tile in CellTiles(shape, cell.x, cell.y))
+                {
+                    Floor.Remove(tile);
+                    Pillars.Add(tile);
+                }
             }
         }
 
