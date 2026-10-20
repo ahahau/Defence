@@ -22,6 +22,12 @@ namespace Code.MapCreateSystem
 
         public HashSet<Vector2Int> Floor { get; } = new();
 
+        /// <summary>복도 바닥(문 틈부터 방 사이 가운데까지). 방 바닥보다 어둡게 칠해 문과 문 사이가 한 방이라는 경계를 보인다.</summary>
+        public HashSet<Vector2Int> Corridor { get; } = new();
+
+        /// <summary>복도 바닥 색 배율(방 색조에 곱한다).</summary>
+        public const float CorridorShade = 0.55f;
+
         /// <summary>방 안에 갇힌 막힌 타일(기둥). 벽이 아니라 기둥 룰 타일로 그린다.</summary>
         public HashSet<Vector2Int> Pillars { get; } = new();
 
@@ -53,6 +59,7 @@ namespace Code.MapCreateSystem
             plan.AddRoomFloor(shape);
             plan.FindPillars(shape);
             plan.AddPartitions(shape, partitions);
+            plan.RaisePillarCaps();
             var half = spacingTiles / 2;
             foreach (var side in RoomDoorRules.Sides)
             {
@@ -284,6 +291,27 @@ namespace Code.MapCreateSystem
             }
         }
 
+        /// <summary>
+        /// 기둥(방 안 기둥·칸막이) 위로 한 줄을 더 기둥으로 그린다. 기둥 조각은 머리·몸통·받침 3줄이라 칸 높이(타일 2줄)만으로는
+        /// 머리와 받침만 남아 반쪽 기둥처럼 보였다. 3/4 시점이라 머리가 위 칸 바닥 아래쪽을 가릴 뿐, 걸을 수 있는 칸은 모양(RoomShape)이 정한다.
+        /// </summary>
+        private void RaisePillarCaps()
+        {
+            var caps = new List<Vector2Int>();
+            foreach (var tile in Pillars)
+            {
+                var above = tile + Vector2Int.up;
+                if (!Pillars.Contains(above))
+                    caps.Add(above);
+            }
+
+            foreach (var cap in caps)
+            {
+                Pillars.Add(cap);
+                Floor.Remove(cap);
+            }
+        }
+
         private void AddPartitions(RoomShape shape, IEnumerable<Vector2Int> partitions)
         {
             if (partitions == null)
@@ -332,21 +360,21 @@ namespace Code.MapCreateSystem
             var rowA = sign > 0 ? spacingTiles - 1 : -spacingTiles - 1;
             for (var x = -2; x >= -half; x--)
             {
-                Floor.Add(new Vector2Int(x, rowA));
-                Floor.Add(new Vector2Int(x, rowA + 1));
+                AddCorridorTile(new Vector2Int(x, rowA));
+                AddCorridorTile(new Vector2Int(x, rowA + 1));
             }
         }
 
         /// <summary>
-        /// 옆 문 양쪽에 2×2 기둥을 세운다. 3/4 시점에서 옆 벽은 난간 한 줄이라 문 그림을 세울 면이 없다.
+        /// 옆 문 위·아래에 가로 2 × 세로 3 기둥(머리·몸통·받침)을 세워 문틀로 삼는다. 문 그림은 그 사이 틈에 선다(<c>Node</c>).
         /// 벽 줄과 그 바깥 한 줄(복도 옆)에 세워 방 바닥은 줄지 않는다.
         /// </summary>
         private void AddDoorPosts(RoomShape shape, RoomDoors side)
         {
             var ring = RingCoordinate(shape, side);
             var outward = SideSign(side);
-            for (var along = 0; along < DoorPostTiles; along++)
-            for (var height = 0; height < DoorPostTiles; height++)
+            for (var along = 0; along < DoorPostWidth; along++)
+            for (var height = 0; height < DoorPostHeight; height++)
             {
                 var x = ring + outward * along;
                 Pillars.Add(new Vector2Int(x, 1 + height));
@@ -355,7 +383,8 @@ namespace Code.MapCreateSystem
         }
 
         /// <summary>옆 문 기둥 한 개의 가로·세로 타일 수.</summary>
-        private const int DoorPostTiles = 2;
+        private const int DoorPostWidth = 2;
+        private const int DoorPostHeight = 3;
 
         /// <summary>문 변을 따라 start부터 end까지(둘 다 포함) 폭 2 바닥을 깐다.</summary>
         private void AddRun(RoomDoors side, int start, int end)
@@ -364,8 +393,14 @@ namespace Code.MapCreateSystem
             for (var along = start; along != end + step; along += step)
             {
                 for (var lateral = -1; lateral <= 0; lateral++)
-                    Floor.Add(Along(side, along, lateral));
+                    AddCorridorTile(Along(side, along, lateral));
             }
+        }
+
+        private void AddCorridorTile(Vector2Int tile)
+        {
+            Floor.Add(tile);
+            Corridor.Add(tile);
         }
 
         /// <summary>그 변의 벽 줄 좌표(문 변과 수직인 축).</summary>

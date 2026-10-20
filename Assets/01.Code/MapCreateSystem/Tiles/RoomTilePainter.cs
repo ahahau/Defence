@@ -46,8 +46,11 @@ namespace Code.MapCreateSystem
                 if (room.Plan == null)
                     continue;
 
+                // 복도는 방보다 어둡게 칠한다. 문과 문 사이가 한 방이라는 경계가 바닥에서도 보이게 한다.
+                var corridorTint = room.Tint * RoomTilePlan.CorridorShade;
+                corridorTint.a = room.Tint.a;
                 foreach (var tile in room.Plan.Floor)
-                    floor[tile + room.Offset] = room.Tint;
+                    floor[tile + room.Offset] = room.Plan.Corridor.Contains(tile) ? corridorTint : room.Tint;
                 foreach (var tile in room.Plan.Pillars)
                     pillars[tile + room.Offset] = room.Tint;
             }
