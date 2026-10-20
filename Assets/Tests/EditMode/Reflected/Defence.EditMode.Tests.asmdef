@@ -4,6 +4,7 @@
     "references": [
         "DungeonKeeper.Runtime",
         "DungeonKeeper.GameLib",
+        "Unity.RenderPipelines.Universal.2D.Runtime",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

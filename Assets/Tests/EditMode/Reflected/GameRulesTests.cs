@@ -11,6 +11,35 @@ namespace Tests.EditMode.Rules
     /// </summary>
     public class GameRulesTests
     {
+        /// <summary>
+        /// 픽셀 단위 카메라(PixelPerfectCamera)는 카메라 크기를 매 프레임 덮어써서 휠 확대가 먹지 않았다.
+        /// 확대는 기준 해상도 단계로 한다: 단계를 넘으면 가장자리에서 멈추고, 지금 단계를 되읽을 수 있어야 한다.
+        /// </summary>
+        [Test]
+        public void PixelPerfectZoom_StepsThroughReferenceResolutions()
+        {
+            var host = new GameObject("ZoomCamera", typeof(Camera));
+            try
+            {
+                var pixelPerfect = host.AddComponent<UnityEngine.Rendering.Universal.PixelPerfectCamera>();
+                var levels = Code.Core.PixelPerfectZoomRules.Levels;
+
+                Assert.That(Code.Core.PixelPerfectZoomRules.Apply(pixelPerfect, levels.Length + 3), Is.EqualTo(levels.Length - 1));
+                Assert.That(pixelPerfect.refResolutionY, Is.EqualTo(levels[levels.Length - 1].y));
+
+                Assert.That(Code.Core.PixelPerfectZoomRules.Apply(pixelPerfect, -2), Is.EqualTo(0), "가장 가까운 단계에서 멈춥니다.");
+                Assert.That(Code.Core.PixelPerfectZoomRules.LevelOf(pixelPerfect), Is.EqualTo(0));
+
+                Code.Core.PixelPerfectZoomRules.Apply(pixelPerfect, Code.Core.PixelPerfectZoomRules.FocusLevel);
+                Assert.That(Code.Core.PixelPerfectZoomRules.LevelOf(pixelPerfect), Is.EqualTo(Code.Core.PixelPerfectZoomRules.FocusLevel));
+                Assert.That(pixelPerfect.refResolutionX, Is.EqualTo(levels[Code.Core.PixelPerfectZoomRules.FocusLevel].x));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
+
         private static Type Resolve(string fullName)
         {
             var type = Type.GetType($"{fullName}, DungeonKeeper.Runtime");
