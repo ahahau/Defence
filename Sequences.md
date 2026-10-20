@@ -1,5 +1,16 @@
 # Sequences
 
+- 2026-10-20 · 방 안 칸막이 벽(사용자: "벽이 생겨 있는 방을 만들던가 플레이어가 벽을 나눌 수 있게" → 고른 안: 생성 벽 + 플레이어 칸막이 섞기, 칸막이는 부서지고 싸게).
+  - 길찾기: `RoomCellPathfinder`(칸 BFS, 8방향·모서리 가로지르기 금지, 칸 하나를 더 막아도 이어지는지), `IRoomCellMap`, 벽 무시 지도 `RoomFloorMap`.
+  - 생성 벽: `RoomShapeGenerator.CarveWalls` 중형 0~1줄·대형 0~2줄(2~4칸, 가장자리와 떨어짐). 벽이 규칙을 깨면 같은 모양에서 벽만 뺀다. 시도 상한 400 → 1000(중형 4문 시드 1이 직사각형으로 떨어지던 것).
+  - 칸막이 건물 `Partition`(`Building` 파생, 부서짐 8, 10G, 함정 갈래, 처음부터 열림). 에디터 생성기 `PartitionBuilder.BuildAll()`이 벽 프리팹을 본떠 `03.Prefabs/Buildings/Facilities/Partition.prefab`, `07.SO/Buildings/PartitionBuildingData.asset`, 해금 카탈로그 항목을 만들고 SampleScene `NodePanelView.installableBuildings`에 넣는다(씬은 다른 미저장 변경이 있어 저장하지 않음).
+  - 배치: 문 앞 칸·유닛 칸·방을 끊는 칸 거부(`NodeTrapGrid.KeepsRoomOpen`, `BuildingPlacement`, 배치 미리보기도 칸이 바뀔 때만 판정). 칸막이는 시설·함정 겹침 규칙에서 빠진다. 기둥·칸막이 칸에는 유닛 불가.
+  - 그리기: `RoomTilePlan.Build`가 칸막이 칸을 기둥 타일로 바꾸고, 격자의 `PartitionsChanged`로 방을 다시 그린다. 부서지면 `NodeTrapGrid.Release`로 칸을 비운다.
+  - 이동: 모험가 방 사이 이동을 `RoomRoute` 경유점(칸 길 → 문 → 입구 ㄱ자 모퉁이 → 문 → 칸 길, `DOPath`, 꺾인 길은 최대 1.6배 시간)으로, 서 있을 자리·배회 목표는 걸을 수 있는 칸으로. 4칸 넘게 돌아가야 하면 칸막이 앞에서 부순다(`PartitionRules`). 전투 이동은 막힌 칸에서 미끄러지고(`ClampToArena`) 접근·돌진은 칸 길 모퉁이로(`SteerToward`).
+  - 테스트(RoomConstructionTests +3): 길찾기 우회·모서리 금지·이어짐, 칸막이 문 앞·방 끊기 거부·걷기 막힘·기둥 그림·철거, 대형 생성 방 칸막이 벽. EditMode 308/308.
+  - 플레이 실측(세이브 백업 후, v4라 새 판): 서쪽 방(7×6) 확장 → 칸막이 3개(문 앞 칸은 거부) → 기둥 벽으로 그려짐. 1·2일차 영업에서 모험가 위치를 1초마다 봤더니 막힌 칸 위 0회, 벽 아래·위로 돌아감. 다시 실행해 칸막이 3개 복원·그림 확인. 콘솔 새 오류 0. 세이브 원상 복구.
+  - 확인 못 함: 벽 부수기(이 방 모양에서는 돌아가는 길이 2칸뿐이라 조건이 안 섰다), 전투 중 우회(아군 미배치), 설치 창에서 실제 클릭으로 칸막이 짓기·금화 차감.
+
 - 2026-10-20 · 룰 타일 도입·방 모양 실행 중 무작위 생성(사용자: "룰 타일도 만들자, 진짜 던전처럼 무작위성을 띄우는 방" → 고른 안: 실행 중 생성 + 특별 방 프리팹, 게임·에디터 모두 룰 타일).
   - 방 모양 데이터 `RoomShape`(칸 줄·문·크기·특별 방이면 프리팹). 보통 방은 후보마다 판 시드로 깎는다(`RoomShapeGenerator`, 런타임으로 옮긴 깎기 규칙: 틀·모서리 2~4·홈 1~3·기둥, 한 칸 폭 돌기/틈·82% 넘게 찬 모양은 다시 깎음). 문은 부모 쪽 + 무작위 1~3개(2개 50%·3개 35%·4개 15%). 15%(`SpecialRoomChance`)는 손으로 만든 특별 방 프리팹(소 지하 묘실·중 기둥 홀·대 열주실, 네 변 문). 부모 쪽 문을 시드에 섞어, 부모가 바뀌면 다른 모양.
   - 룰 타일 3종(`Assets/07.SO/Map/Tiles/`): `DungeonFloorRuleTile`(바닥, 무늬 25% 무작위), `DungeonWallRuleTile`(3/4 시점 벽 24규칙, 이웃이 바닥 룰 타일인지로 판단 — 새 이웃 종류 Floor/NotFloor), `DungeonPillarRuleTile`(기둥 머리·받침·옆). `RoomTileSet`은 이 셋을 묶는다. 타일 팔레트 `Assets/04.Sprites/Tilesets/Palettes/DungeonRoomPalette`에 올려 손으로 칠할 수 있다. 런타임 asmdef에 `Unity.2D.Tilemap.Extras` 참조 추가.

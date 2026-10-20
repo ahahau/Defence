@@ -8,7 +8,7 @@ paths:
 1. 건물은 **데이터 중심**으로 만든다. 새 건물은 먼저 `BuildingDataSO` 하나로 표현하고, 기존 프리팹을 공유한다.
    * 종류 11개가 프리팹 8개를 나눠 쓴다(주점·큰 주점 → `Inn`, 광산·깊은 광산 → `Mine`, 상점·무기 상점 → `Store`).
    * 외형은 `BuildingDataSO.BoardSprite`로 바꾼다. 승급형 시설은 새 프리팹을 만들지 않고 데이터만 추가한다.
-   * 동작이 기존 클래스(`Store`, `Inn`, `Blacksmith`, `Mine`, `Treasury`, `RecoveryFacility`, `Wall`, `Portal`, `Trap`, `Church`)로 안 될 때만, `Building` 파생 클래스와 새 프리팹을 만든다. 이때는 사전에 설계를 확인받는다.
+   * 동작이 기존 클래스(`Store`, `Inn`, `Blacksmith`, `Mine`, `Treasury`, `RecoveryFacility`, `Wall`(방 전체 통행 차단), `Partition`(방 안 칸막이, 함정 갈래), `Portal`, `Trap`, `Church`)로 안 될 때만, `Building` 파생 클래스와 새 프리팹을 만든다. 이때는 사전에 설계를 확인받는다.
 2. 위치와 이름.
    * 데이터: `Assets/07.SO/Buildings/<이름>BuildingData.asset` (함정은 `<이름>TrapBuildingData`)
    * 금고·대장간(`TreasuryBuildingData`, `BlacksmithBuildingData`)은 해금 카탈로그 밖에서 늘 설치할 수 있다. 씬의 `NodePanelView.alwaysInstallableBuildings`(설치 후보)와 `HiredUnitRoster.buildingsOutsideUnlockCatalog`(저장 복원)에 연결돼 있다. 이런 건물을 더 만들면 두 배열에 다 넣는다.
