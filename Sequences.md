@@ -1,5 +1,11 @@
 # Sequences
 
+- 2026-10-20 · 반쪽 기둥 고침, 문으로 방 경계 표시(사용자: "기둥이 반만 나옴 그리고 복도 없애줘 문과문으로 노드를 나누는 기준이 있어야해 그게 있다면 복도없애지않아도됌" → 고른 안: 복도 유지 + 문으로 경계, 기둥 3칸).
+  - 기둥: 기둥 조각은 머리·몸통·받침 3줄인데 칸 높이(타일 2줄)만 칠해 머리와 받침만 나와 반쪽처럼 보였다. 방 안 기둥·칸막이는 위로 한 줄 더 기둥으로 칠한다(`RoomTilePlan.RaisePillarCaps`, 그 자리 바닥 그림을 기둥으로 — 3/4 시점, 걸을 수 있는 칸은 그대로). 옆 문 기둥은 가로 2 × 세로 3.
+  - 문 경계: 옆 문에도 위·아래 문과 같은 문 그림을 기둥 사이 틈(벽 줄 가운데)에 세운다(`Node` 문 넷, 모험가가 지나가면 열림). 복도 바닥은 따로 들고(`RoomTilePlan.Corridor`) 방 색조 × 0.55로 어둡게 칠한다(`RoomTilePainter`). 이제 밝은 방 바닥 = 한 방, 어두운 복도 = 방 사이, 그 경계에 문이다.
+  - 테스트: `RoomTilePlan_EnclosedBlockedCellsBecomePillars`(기둥 머리 줄), `RoomTilePlan_SideDoorGetsPostsOnBothSides`(기둥 3줄·복도 칸), `RuleTiles_PickThreeQuarterWallPieces`(머리가 한 줄 위로, 몸통 조각). EditMode 324/324.
+  - 플레이 캡처(씬 해시 그대로, 세이브 원복): 방 안 기둥이 벽돌 몸통까지 보이고, 옆 문 양 끝에 문이 서고, 복도가 방보다 어둡다.
+
 - 2026-10-20 · 버튼에 팩 버튼 그림 쓰기(사용자: "버튼은 버튼 ui를 사용해줘" → 목업 `Docs/Design/ui_button_mockup.png`, 고른 안 A: 팩 버튼 색 그대로).
   - 팩 빈 버튼 칸(Buttons & Scroll Bars/<테마>/20, 32×32, 테두리 9)을 `Skin/Ledger/Button_Black·Gold·Red·Green`으로 가져와, 글자 하나뿐인 버튼의 바탕을 면으로 바꿨다(`UiKit.ApplyButtonFaces`): 보통 Black(밝은 회색)·주요 Gold(살구색)·위험 Red. 고르면 Gold 면(주요 버튼은 Green). 테두리 이미지(Outline)는 지웠다.
   - 면이 밝아 글자는 어두운 색(40,34,52)으로. 화면이 넣는 글자 색은 `UiFrameButton.SetLabelColor`가 어두운 쪽으로 85% 당겨 뜻(강조·흐림)만 조금 남긴다. 직접 `Label.color`를 넣던 5곳(기록판·대출·지원자·정산 탭·방 상세 부하 줄)을 이 함수로 바꿨다. 팝업은 역할을 `SetFace`로 바꾸고 `SetStyle`은 팩 면을 칠하지 않는다. 배속 기호도 어두운 색.
