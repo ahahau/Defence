@@ -286,6 +286,10 @@ namespace Code.BT
 
                 var usableRadius = Mathf.Max(0f, _arenaRadius - wanderBoundaryPadding);
                 _wanderDestination = _arenaCenter + Random.insideUnitCircle * usableRadius;
+                var grid = _battlefield.Grid;
+                if (grid != null && !grid.IsWalkableWorld(_wanderDestination)
+                    && grid.TryGetNearestWalkableCell(_wanderDestination, out var cell))
+                    _wanderDestination = grid.CellWorldPosition(cell.x, cell.y);
                 _hasWanderDestination = true;
             }
 
@@ -302,7 +306,7 @@ namespace Code.BT
 
             Face(offset.x);
             var speed = EffectiveMoveSpeed * wanderSpeedMultiplier;
-            transform.position = ClampToArena(Vector2.MoveTowards(current, _wanderDestination, speed * deltaTime));
+            transform.position = ClampToArena(Vector2.MoveTowards(current, SteerToward(current, _wanderDestination), speed * deltaTime));
         }
 
         private void DriveAutoBattle(float deltaTime)
@@ -516,7 +520,13 @@ namespace Code.BT
             }
         }
 
-        private float EffectiveMoveSpeed => moveSpeed
+        /// <summary>
+        /// 방 크기 배율. 방 간격이 15u에서 30u로 두 배가 되면서 전투 이동도 1.5배로 맞췄다
+        /// (프리팹 속도 값은 예전 방 기준 그대로 둔다).
+        /// </summary>
+        public const float RoomScaleMoveMultiplier = 1.5f;
+
+        private float EffectiveMoveSpeed => moveSpeed * RoomScaleMoveMultiplier
             * (_combatStatus != null ? _combatStatus.MoveSpeedMultiplier : 1f)
             * (woundedHealthThreshold > 0f && HealthRatio < woundedHealthThreshold ? woundedMoveSpeedMultiplier : 1f)
             * (team == BattleTeam.Player && _unitCommand == UnitCommand.Assault
