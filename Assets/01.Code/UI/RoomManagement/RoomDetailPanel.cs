@@ -90,8 +90,7 @@ namespace Code.UI.RoomManagement
 
                 row.SetLabel(model.Units[i].Label);
                 row.SetSelected(model.Units[i].Selected);
-                if (row.Label != null)
-                    row.Label.color = model.Units[i].Selected ? HudPalette.Accent : HudPalette.TextBody;
+                row.SetLabelColor(model.Units[i].Selected ? HudPalette.Accent : HudPalette.TextBody);
             }
 
             var commands = model.Commands != null ? model.Commands.Count : 0;

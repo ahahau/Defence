@@ -109,15 +109,12 @@ namespace Code.UI
 
             slot.SetLabel($"{unit.Name} · 고용 {GoldText.Amount(price)} ({UnitMarketRules.TierLabel(tier)})"
                           + $" · 유지비 {GoldText.Amount(upkeep)}/일 · 마력 {unit.MagicCost}");
-            if (slot.Label != null)
+            slot.SetLabelColor(tier switch
             {
-                slot.Label.color = tier switch
-                {
-                    UnitPriceTier.Cheap => HudPalette.Gain,
-                    UnitPriceTier.Expensive => HudPalette.Loss,
-                    _ => HudPalette.TextBody
-                };
-            }
+                UnitPriceTier.Cheap => HudPalette.Gain,
+                UnitPriceTier.Expensive => HudPalette.Loss,
+                _ => HudPalette.TextBody
+            });
 
             // 옛 화면은 정가·시세를 툴팁으로 보였다. 툴팁이 없어 둘째 줄 끝에 붙인다.
             if (index < details.Length && details[index] != null)

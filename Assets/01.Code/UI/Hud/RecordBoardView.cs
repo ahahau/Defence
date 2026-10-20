@@ -124,8 +124,7 @@ namespace Code.UI
                 row.SetVisible(true);
                 row.SetLabel(model.Name);
                 row.SetSelected(model.Alert);
-                if (row.Label != null)
-                    row.Label.color = model.Target != null ? HudPalette.TextBody : HudPalette.TextDim;
+                row.SetLabelColor(model.Target != null ? HudPalette.TextBody : HudPalette.TextDim);
                 partyRisks[i].text = model.Risk;
                 partyRisks[i].color = model.Alert ? HudPalette.Loss : HudPalette.Warn;
             }

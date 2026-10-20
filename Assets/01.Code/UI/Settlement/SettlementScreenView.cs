@@ -134,8 +134,7 @@ namespace Code.UI
                     continue;
 
                 tabs[i].SetSelected(i == index);
-                if (tabs[i].Label != null)
-                    tabs[i].Label.color = i == index ? HudPalette.Accent : HudPalette.TextDim;
+                tabs[i].SetLabelColor(i == index ? HudPalette.Accent : HudPalette.TextDim);
             }
 
             if (playSound)

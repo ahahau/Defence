@@ -91,6 +91,12 @@ namespace Code.UI.Popup
 
         private static void ApplyStyle(UiFrameButton slot, PopupButtonStyle style, bool interactable)
         {
+            slot.SetFace(style switch
+            {
+                PopupButtonStyle.Primary when interactable => UiFrameButton.FaceRole.Primary,
+                PopupButtonStyle.Danger => UiFrameButton.FaceRole.Danger,
+                _ => UiFrameButton.FaceRole.Normal
+            });
             switch (style)
             {
                 case PopupButtonStyle.Primary:

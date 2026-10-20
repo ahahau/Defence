@@ -121,8 +121,7 @@ namespace Code.UI
                               + $"  ·  최소 원금 {FormatPercent(option.MinimumPrincipalRate)}</size>");
                 slot.SetSelected(isActive);
                 slot.SetInteractable(selectable);
-                if (slot.Label != null)
-                    slot.Label.color = isActive ? HudPalette.Accent : selectable ? HudPalette.TextBody : HudPalette.TextMuted;
+                slot.SetLabelColor(isActive ? HudPalette.Accent : selectable ? HudPalette.TextBody : HudPalette.TextMuted);
             }
 
             if (options.Count > productButtons.Length)
