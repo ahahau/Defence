@@ -1,5 +1,160 @@
 # Sequences
 
+- 2026-10-20 · 룰 타일 도입·방 모양 실행 중 무작위 생성(사용자: "룰 타일도 만들자, 진짜 던전처럼 무작위성을 띄우는 방" → 고른 안: 실행 중 생성 + 특별 방 프리팹, 게임·에디터 모두 룰 타일).
+  - 방 모양 데이터 `RoomShape`(칸 줄·문·크기·특별 방이면 프리팹). 보통 방은 후보마다 판 시드로 깎는다(`RoomShapeGenerator`, 런타임으로 옮긴 깎기 규칙: 틀·모서리 2~4·홈 1~3·기둥, 한 칸 폭 돌기/틈·82% 넘게 찬 모양은 다시 깎음). 문은 부모 쪽 + 무작위 1~3개(2개 50%·3개 35%·4개 15%). 15%(`SpecialRoomChance`)는 손으로 만든 특별 방 프리팹(소 지하 묘실·중 기둥 홀·대 열주실, 네 변 문). 부모 쪽 문을 시드에 섞어, 부모가 바뀌면 다른 모양.
+  - 룰 타일 3종(`Assets/07.SO/Map/Tiles/`): `DungeonFloorRuleTile`(바닥, 무늬 25% 무작위), `DungeonWallRuleTile`(3/4 시점 벽 24규칙, 이웃이 바닥 룰 타일인지로 판단 — 새 이웃 종류 Floor/NotFloor), `DungeonPillarRuleTile`(기둥 머리·받침·옆). `RoomTileSet`은 이 셋을 묶는다. 타일 팔레트 `Assets/04.Sprites/Tilesets/Palettes/DungeonRoomPalette`에 올려 손으로 칠할 수 있다. 런타임 asmdef에 `Unity.2D.Tilemap.Extras` 참조 추가.
+  - 그리기: `RoomTilePlan`은 바닥·기둥만 계산하고 벽 조각은 룰 타일이 고른다. 열린 방은 던전 타일맵 한 장(`DungeonTilemap`, `DungeonNodeManager`가 실행 중 생성)에 함께 칠해(`RoomTilePainter`) 복도·벽이 방 경계를 넘어 이어진다. 잠긴 후보만 노드 자기 타일맵. 위 타일맵 = 바닥·벽·기둥 룰 타일, 아래 = 벽 띠까지 바닥(투명 부분 아래). 특수 효과 색조는 타일마다.
+  - 저장: `SavedNode`·`SavedCandidate`에 `layoutRows`·`layoutDoors` 추가(생성한 방은 줄로 되살림), `RunSaveFile.CurrentVersion` 3→4(3 이하 판 세이브는 버려짐 — 3은 이번 작업 중 실측 세이브뿐).
+  - 생성기 `RoomLayoutBuilder`: 룰 타일·셋·팔레트·입구(시드 깎기)·특별 방 3개 생성, 노드 프리팹·씬 연결. 예전 생성 방 프리팹 42개는 지움.
+  - 테스트(RoomConstructionTests): 입구·특별 방 유효, 생성기 크기×문×시드 30개 유효·같은 시드 같은 모양·크기마다 모양 40종 넘게, 복도 반쪽 맞닿음·ㄱ자·바깥문, 기둥 판정, 룰 타일이 고른 조각(면 아래/위·난간·옆/아래 난간·모서리·복도 위 난간 이음매·기둥 머리/받침·바닥 무늬), 정사각 아닌 격자. EditMode 305/305.
+  - 플레이 실측(세이브 백업 후 새 판): 후보 4곳 중 1곳이 특별 방(기둥 홀), 나머지는 생성 방(5×6·5×7·6×6·소형 4×6, 문 2개). 방 4개 확장 → 기둥 홀과 위 방이 위/아래 문으로 이어짐(문 맞춤), 함정 칸 2개·기둥 칸 거부. 넓게 렌더해 던전 타일맵 한 장에 벽돌 면·난간·기둥·복도가 이어진 것 확인. 저장 → 재시작 → 모양 6개(생성 4·특별 1·입구)·연결·함정 복원 일치. 영업 1회(침입 3명, 2일차) 새 오류 0. 세이브·메타는 실측 전 파일로 되돌리고 다시 확인.
+  - 남은 것: 특별 방은 3개뿐(장식 자식은 비어 있음 — 프리팹에 석상·횃불을 넣으면 그대로 나온다). 위쪽 벽 계단 꺾임의 옆면 조각·아치 문은 아직 없음. 입구 ㄱ자 복도에서 모험가는 대각선으로 걷는다.
+
+- 2026-10-20 · 방 모양 불규칙화·타일 다시 맞춤(사용자: "형태가 규칙적일 필요는 없음, 타일 배치가 이상함" → 고른 안: 예제 씬처럼 3/4 시점, 불규칙 프리팹 여럿).
+  - 원인: 노드 프리팹에 연결된 타일이 시트의 엉뚱한 칸이었다(문 = 석상 조각, 위 벽 = 울타리 조각 등). 타일셋 예제 씬 `Dark_Castle_001`을 읽어 칸별 조각을 확인했다.
+  - 타일: `RoomTilePlan`을 3/4 시점 규칙으로 다시 씀 — 바닥 위 벽돌 면 2줄 + 난간(위쪽 벽 타일 3칸), 옆 벽·아래 난간, 끝·모서리·안쪽 모서리 조각, 방 안에 갇힌 막힌 칸은 벽돌 기둥(머리·받침). 복도 끝 너머는 이웃 몫이라 벽을 세우지 않고 끝 조각도 안 씀(가상 바닥). 이어지지 않은 문은 벽으로 막고, 입구 바깥문은 바깥으로 3타일 열림. 바닥은 06.17 + 무늬 8종 25%.
+  - 새 `RoomTileSet`(SO, `Assets/07.SO/Map/RoomTileSet.asset`): 벽 종류 31가지 → 타일. 생성기가 Purple 시트 타일 에셋에서 칸 좌표로 찾아 채우고 노드 프리팹 `NodeTileRenderer.tileSet`에 연결(에디터 API로 프리팹 저장). `NodeTileRenderer`의 옛 타일 필드는 지움.
+  - 모양: 크기 규칙을 정사각 고정에서 틀 최대(소 6×6·중 7×7·대 9×8)·바닥 칸 범위(소 12~22·중 22~36·대 36~72)로 바꿈. 생성기가 크기마다 14개를 고정 시드로 깎음(틀 크기, 모서리 2~4곳, 변의 홈 1~3곳 깊이 1~2, 방 안 기둥) — 한 칸 폭 돌기·틈과 틀 82% 넘게 찬 모양은 버림. 방 42개 + 입구(입구도 불규칙). 예전 방 프리팹 33개는 생성기가 지움.
+  - 테스트(RoomConstructionTests): 복도 위 벽돌 면·난간 이어짐·아래 난간·닫힌 문은 벽·왼쪽 벽·바깥 모서리·입구 바깥문, 기둥(머리·받침)과 가장자리 막힘(벽) 구분 추가. EditMode 303/303.
+  - 플레이 실측(세이브 백업 후 새 판): 서쪽 방(`Room_M03_UR`, 7×6·막힌 14칸) 확장 → 입구와 연결, 화살 함정 칸 3개. 줌 아웃 렌더로 예제 씬과 같은 모양(위쪽 벽돌 면·난간·안쪽 모서리) 확인, 한 칸 틈 거르기 전 생기던 검은 틈 사라짐. 저장 → 재시작 → 같은 프리팹·막힌 칸·함정 3·후보 모양 복원. 새 오류 0(CLI 타임아웃 기록만). 세이브·메타는 실측 전 파일로 되돌리고 다시 확인.
+  - 남은 것: 위쪽 벽이 계단처럼 꺾이는 곳의 옆면 조각(예제의 02.03~05)은 쓰지 않아 단순하다. 위 문으로 나가는 복도는 벽돌 면을 뚫은 틈으로 보인다(아치 조각 미사용). 입구 ㄱ자 복도에서 모험가는 여전히 대각선으로 걷는다.
+
+- 2026-10-20 · 던전 방을 프리팹으로 바꿨다(사용자 선택: 문 2개 이상 프리팹 + A·B 혼합 — 노드 구조 유지, 방 크기별 칸 수, 입구 ㄱ자 복도, 특수 효과 색조, 저장 버전 올림).
+  - 방 프리팹 `RoomLayout`: 칸마다 바닥('.')/막힘('#'), 문(상하좌우 중 2개 이상, 변 가운데), 크기. 생성기 `RoomLayoutBuilder.BuildAll()`이 33개 + 입구(`Assets/03.Prefabs/Map/Rooms/`)와 목록 `Assets/07.SO/Map/RoomLayoutCatalog.asset`을 만들고 SampleScene `DungeonNodeManager.layoutCatalog`에 연결(씬 저장 전 미저장 변경 없음 확인). 모양: 소 5×5(통짜·모서리 깎음·기둥), 중 6×6(통짜·모서리·기둥 4·한쪽 홈), 대 8×8(통짜·2×2 기둥 4·십자). 다시 돌려도 프리팹 자식(장식)은 유지되고, 자식이 있으면 방 위에 놓인다.
+  - 그리기 `RoomTilePlan` + `NodeTileRenderer`: 칸 하나 = 타일 2×2(1.25u), 타일은 노드 배율과 상관없이 월드 0.625u라 이웃 방과 한 격자(노드 간격 15u = 24칸). 바닥에 붙은 칸에 벽을 자동으로 세우고, 이어진 문에서 두 방 사이 가운데까지 폭 2 복도를 깐다(끝 너머엔 벽을 세우지 않아 반쪽 둘이 이어짐). 이어지지 않은 문은 닫힌 문 타일. 입구 위·아래 문은 ㄱ자로 꺾어 왼쪽 위·아래 방의 오른쪽 문에 닿는다. 입구 오른쪽은 바깥문.
+  - 격자 `NodeTrapGrid.ConfigureCells`: 칸 수·간격을 프리팹에서, 막힌 칸(`IsBlockedCell`)에는 함정·시설·유닛 불가(`Node.IsUnitCellAvailable`도 봄). 아레나 반지름도 방 크기에 맞춤(`NodeBattlefield.SetArenaRadius`). 격자 크기 `RoomSizeRules.GridCells`(소 5·중 6·대 8).
+  - 확장(`DungeonGraphController`, 민감 영역): 후보는 방의 문으로만 뻗고(입구 바깥문 제외, 서쪽 제한 유지), 부모 쪽 문이 있는 프리팹을 `RunRandom` 줄기 `RoomLayout`으로 골라 자리마다 유지(`_candidateLayouts`, 공사 취소 때 되돌림). 이웃과는 양쪽 문이 마주 볼 때만 잇는다(`RoomDoorRules`). 연결 예측도 같은 규칙, 확장 창에 "문 ↑→" 추가. 연결이 생기거나 끊기면 양쪽 방의 문·복도를 다시 그린다. 예전 상·하·좌 고정 후보와 `TryResolveBuildParent`는 지움.
+  - 테마: 방 타일에 특수 효과 색조(풍요 금빛·요새 회청·함정 지대 붉은빛, `RoomFeatureRules.Tint`).
+  - 저장: `SavedNode.layoutId`·`SavedCandidate.layoutId`, `RunSaveFile.CurrentVersion` 2→3(옛 판 세이브는 버려진다 — 사용자 승인). 못 찾는 이름은 크기에 맞는 방으로 되돌리고 경고.
+  - 규칙 문서: `wave-economy-rules.md`의 격자 크기·던전 그래프 절 갱신.
+  - 테스트(RoomConstructionTests +4): 프리팹 전부 유효·크기마다 네 방향 문 존재, 입구 대각선·문 방향 규칙, 복도 반쪽이 벽 없이 만남·ㄱ자 복도·닫힌 문, 막힌 칸 배치 거부·크기별 칸 수. EditMode 302/302.
+  - 플레이 실측(세이브 백업 후 새 판): 입구 + 후보 3곳에 부모 쪽 문이 있는 프리팹(`M_Cut_UR`·`M_Hall_LR`·`M_Hall_URDL`). 확장 팝업으로 서쪽 방 확장(200→192G) → 입구 왼쪽 ↔ 새 방 오른쪽 연결, 복도가 끊김 없이 그려짐(캡처). 화살 함정을 칸 (1,0)·(4,4)에 설치 — 타일 2×2에 정확히 맞음, 깎인 모서리 (0,0)은 거부. 저장(version 3, layoutId 4개·함정 칸 2개) → 플레이 재시작 → 같은 프리팹·막힌 칸 4·연결·함정 2개 복원. 영업 1회(침입자 3명, 2일차로 넘어감) 새 오류 0. 세이브·메타는 실측 전 파일로 되돌림(되돌린 뒤 다시 확인).
+  - 남은 것: 입구 ㄱ자 복도는 모험가가 대각선으로 곧장 걷는다(이동 경로에 꺾임점 없음). 벽 타일은 곧은 벽 4종·바깥 모서리 4종만 써서 안쪽 모서리 그림이 단순하다. 닫힌 문은 옆 변에도 같은 문 타일. 기둥 장식(석상·횃불)은 프리팹 자식으로 넣을 수 있게만 해 두었다.
+
+- 2026-10-20 · A안 남은 화면 5단계: 부하 상태·모험가 상태·금고 창(uGUI). 기능은 Toolkit `UnitStatusToolkitView`·`EnemyStatusToolkitView`·`TreasuryToolkitView`와 같게.
+  - 캔버스 30(방 관리 20 위, 대화 80 아래), 프리팹 `03.Prefabs/UI/Status/StatusPanels.prefab`, 생성기 `StatusPanelsBuilder`(판단 컴포넌트·노드 패널·비용·날짜 배선).
+  - 부하 상태(`UnitStatusView`) 440×330: 누른 자리 오른쪽 위에 뜨고 화면 밖이면 안으로 밀림(`UiPlacement.PlaceNear`). 이름·상태, 얼굴, HP 막대, 공격·경험, 명령, 특성·성격(마우스를 올리면 설명 툴팁 360×72 — `UiHoverRelay`), 피로 막대(쾌조 초록·피로 호박·과로 빨강·탈진 임박 위험색), 안내 줄, 치료·휴식/회수(해당 없으면 자리 지킨 채 숨김). 값·버튼 판단은 기존 `UnitStatusPanelView`.
+  - 모험가 상태(`EnemyStatusView`) 400×360: 누른 자리 옆, 0.12초마다 다시 읽음. 체력·공격·목적/예산/파티 자금·파티·경계/탐욕/철수·시설 대기 만족도, 상태이상 4줄(넘치면 "외 N개", 없으면 제목째 숨김). 문구는 새 `EnemyStatusPresenter`(원본 화면 안에 있던 판단을 옮김). 지도 클릭 요청은 기존 채널, 기록판 파티 줄은 `RequestShow`.
+  - 금고(`TreasuryView`) 380×316: 오른쪽 열 방 상세 왼쪽(위에서 104 — 원본은 방 상세와 겹치는 오른쪽 위). 보관 금화·이자(다음 정산 +NG 초록)·약탈 위험(빨강)/길 막혀 안전·운영 자금, 청산일 안내, 25G/전부 맡기기·꺼내기(청산일에만). 문구·조건은 새 `TreasuryPresenter`. `NodePanelView.TreasuryInspectRequested`·`Closed`로 열고 닫음.
+  - 검증: Unity 재컴파일 오류 0, 플레이 게임 오류 0(콘솔 오류 3개는 Unity CLI 서버 스레드 중단 — 도메인 리로드). 금고 설치 → 금고 창 → 25G 맡기기(157→132G, 보관 25)·꺼내기 잠김(청산일 아님). 모험가: 영업 중 궁수 상태 창(HP·예산·파티 2명·경계 15·철수 16%·시설 대기 없음). 부하: 청산일로 바꿔 블루 슬라임 고용 → 방 관리 화면 유닛 배치 갈래 → 카드 → 배치 → 첫 빈 칸 → 배치됨, 부하 상태 창(얼굴·HP 20/20·명령 대기·회수 버튼, 특성 툴팁 "강인함…/사교적…"). 이 실측으로 3단계에서 못 본 유닛 배치 흐름도 확인.
+  - EditMode 297/298: `AssetWiringTests.OpeningScene_DoesNotLaunchTutorial` 실패 — SampleScene의 `UI Controllers/PlayTutorialView` 오브젝트가 켜져 저장돼 있다(HEAD는 꺼짐). 씬 파일 마지막 저장은 10-19 22:54로 이 작업의 저장(10-19 09:34) 뒤다. 이 작업이 켠 것이 아니어서 사용자에게 물었고, 사용자 요청으로 다시 껐다(에디터 스크립트로 `SetActive(false)` 후 씬 저장) → EditMode 298/298.
+  - 세이브 복원 실패: 실측 뒤 `editor_stop` 직후 세이브를 되돌렸는데, 플레이를 끝내며 게임이 체크포인트를 그 뒤에 다시 써서 실측 상태(1일차 완료·블루 슬라임 배치, 3,729B)가 남았다. 10-19 금고 실측 때도 같은 일로 3,022B가 남아 있었다(원래 2,336B 세이브는 남은 사본이 없음).
+
+- 2026-10-19 · 시작 HUD 축소·무브리핑·상점 제거 변경을 사용자의 요청에 따라 되돌렸다.
+  - 영업 전 브리핑·목표 전환, 장부 상태 칩, 기록판 초기 기록, 도크의 떠돌이 상인을 이전 A안 동작으로 복원했다.
+
+- 2026-10-19 · A안 남은 화면 4단계: 기록판(침입 파티·최근 기록, uGUI). 기능은 Toolkit HUD 오른쪽 레일(`PartyRailView`·`HudActivityLog`)과 같게.
+  - 배치: HUD 캔버스(10) 오른쪽 열 아래 380×360(위에서 568, 목표 전환 버튼 바로 위). 펼친 브리핑(~544)과 겹치지 않는다. 방 상세가 열린 동안은 브리핑·진행 카드처럼 비켜 둔다(`RecordBoardView.SetYielded`, `RoomManagementScreen`이 부름). 원본은 오른쪽 레일 292 폭이었다.
+  - 침입 파티: "현재 N · 접근 M", 파티 줄 최대 8(스크롤) — 이름 왼쪽·위험도 오른쪽, 보스·엘리트 줄은 금색 테두리·위험도 빨강, 안내 줄(들어온 파티 없음·오늘 보스·다음 파티·보스 패배 조건)은 흐린 글. 줄을 누르면 리더의 모험가 상태 창 요청(`EnemyStatusPanelView.RequestShow` 새 공개 함수 — 창은 5단계). 줄 만들기는 기존 `PartyRailPresenter`.
+  - 최근 기록: 8줄, 같은 알림·같은 종류(침입자 수)는 최신 문구 한 줄로 묶어 "· N회", 경고 줄 호박색, 새 줄이 오면 맨 아래로 스크롤. 알림: 운영 화면 준비, 낮/밤 전환(`DayManager.PhaseChanged`), 침입자 증가·전투 종료, 관리 모드/영업 시작(원본과 같은 문구). 데이터는 새 `ActivityLog`(그리기와 분리), 화면은 `RecordBoardView`(0.25초 갱신). 원본의 오른쪽 토스트(방 먼저 선택 등)는 3단계에서 도크 안내 줄로 옮겼다.
+  - 생성: `GameplayHudBuilder`에 `BuildRecordBoard` 추가(웨이브·날짜·모험가 상태 배선). HUD를 다시 놓으면 방 관리 화면의 HUD 참조가 끊기므로 `RoomManagementBuilder`도 다시 실행(기록판 배선 추가, 튜토리얼 배선 유지).
+  - 검증: Unity 재컴파일 오류 0, EditMode 298/298, 플레이 콘솔 오류 0. 방 확장 → 영업 시작 → 파티 줄 "용병 검사 파티 · 3명"·"강함 2 · 자금 적음", 기록 7줄(침입자 수 "· 2회"로 묶임) 캡처, 파티 줄 `onClick` → 상태 창 요청 대상 "용병 검사". 방 상세를 열면 진행 카드·기록판이 비켜나고 도크에 일시정지 잠김 사유(빨강). 첫 클릭 시험은 파티가 이미 나간 뒤라 대상이 없었다(다시 해서 확인). 세이브는 매번 복원.
+  - 알게 된 것(이번 변경과 무관): 글꼴에 말줄임표 "…" 글리프가 없어 한 줄 글자(`UiKit.Text` singleLine)가 넘칠 때마다 TMP가 "Truncate로 바꾼다" 경고를 낸다. ui-rules 5번(넘치면 말줄임)을 지키려면 글꼴 대체(fallback)에 "…"가 있는 글꼴을 넣어야 한다.
+
+- 2026-10-19 · A안 남은 화면 3단계: 방 관리(행동 도크·설치 창·방 상세, uGUI). 기능은 Toolkit `RoomManagementController`·`RoomDetailView`·`InstallPanelView`와 HUD 하단 바와 같게.
+  - 배치(사용자 선택 "왼쪽 아래 도크"): 캔버스 20. 왼쪽 아래 행동 도크 760×132(관리 안내 줄 — 관리 중 금색·영업 중 흐림·일시정지 잠김 빨강, 건설·유닛 배치·함정·시설 | 상인·정산 정보·메뉴, 보유 유닛·부활 대기·목록 열기), 도크 위 설치 창 760×360(접히면 60)·보유 목록 760×140·잠깐 안내 줄, 오른쪽 열 방 상세 400×640(위에서 104). 방 상세가 열린 동안은 손님 브리핑·진행 카드를 비켜 둔다(`WaveHudView.SetRightColumnYielded`). 아래 가운데는 비움.
+  - 동작(원본과 같음): 방을 누르면 방 상세가 열리고, 갈래 버튼은 방을 골랐을 때·관리 시간에만 눌리며 같은 갈래를 다시 누르면 접힘. 방을 안 골랐으면 "먼저 관리할 방을 선택하세요."(원본은 기록판 토스트 → 지금은 도크 위 안내 줄 4초). 설치 창: 카드 5장·쪽 넘기기·상세·설치, 위치를 고르는 동안 접히고 닫기는 "취소". 방 상세: 시설·내구도 막대(정상 초록·닳음 호박·고장 빨강)·수리/휴업/철거, 유닛 4줄·명령 4·이동/회수, 설치물·소문·안내 줄. 해당 없는 버튼은 자리를 지킨 채 숨김. ESC는 위치 고르기 → 설치 창 → 방 상세 순. 상인 버튼은 상인이 온 날만 보이고 대기 중에만 눌림(자리 유지). 정산 정보는 "정산은 7일차 영업 종료 뒤 자동으로 열립니다." 보유 목록은 원본처럼 보기만.
+  - 아직 없는 것: 메뉴 버튼은 일시정지 메뉴(9단계) 전까지 "메뉴 화면은 아직 만드는 중입니다." 안내(`RoomManagementScreen.MenuRequested`를 일시정지 메뉴가 구독할 자리). 지도 위 선택 말풍선(원본 HUD)은 방 상세가 바로 열려 같은 정보를 보여 만들지 않음.
+  - 튜토리얼 되살림: `PlayTutorialView`가 `roomScreen`(새 직렬화 필드, 생성기가 배선)에 물어 방을 고른 뒤 도크 갈래 버튼 → 카드 → 설치 버튼을 다시 비추고, 상인 수업은 도크 상인 버튼을 비춘다.
+  - 코드(`UI/RoomManagement/`): `RoomManagementScreen`(조립·NodePanelView 잇기·0.25초 갱신·ESC·튜토리얼 사각형), `ActionDockView`·`ActionDockPresenter`·`ActionDockViewModel`·`ActionDockTone`(문구·조건은 Toolkit HUD 하단 바에서 옮김), `RoomDetailPanel`, `InstallPanel`, `InstallCardSlot`. 공용 `UiScreenRect`(오버레이 요소 화면 사각형), `UiFrameButton.Group`(자리 지킨 채 숨기기)·잠긴 버튼 글자 흐림(모든 화면 공통). 생성기 `RoomManagementBuilder`(프리팹 `03.Prefabs/UI/RoomManagement/RoomManagement.prefab`, 씬 매니저·HUD·상인·튜토리얼 배선).
+  - 검증: Unity 재컴파일 오류 0, EditMode 298/298, 플레이 콘솔 오류 0. 캡처: 대기 도크(관리 중 금색), 입구 방 선택 → 방 상세(침입 입구·배치 잠김)·건설 창(고를 것 없음), 방 확장(200→192G) 뒤 통로 선택 → 시설 창 카드 2장(금고·대장간) → 금고 카드 → 설치 버튼 켜짐·튜토리얼 단계 PressInstall → 설치 → 157G·"금고 설치 완료"·방 상세에 금고·휴업·철거 +17G, 카드는 "이미 중앙 시설이 있습니다"로 흐려짐. 잠긴 버튼 글자 흐림 확인. 세이브는 매번 실측 전으로 복원.
+  - 확인 못 함: 유닛 배치(보유 0명), 함정 위치 고르기에서 접힌 창·취소, 유닛 명령·이동·회수, 실제 마우스 ESC, 상인 버튼(2일차 이후), 튜토리얼 덮개가 실제로 갈래 버튼·카드를 비추는 모습.
+
+- 2026-10-19 · A안 남은 화면 2단계: 하루 정산표(uGUI). 기능은 Toolkit `SettlementToolkitView`와 같게.
+  - 화면: 캔버스 84(대화 80 위, 첫날 안내 덮개 85 아래 — "정산표를 확인하세요" 안내 카드가 보여야 함), 덮개 + 카드 1040×740(가운데에서 64 아래, 안내 카드 136~220을 피함): 제목 "N일차 정산", 탭 다섯(이번 주 요약·수입 상세·지출 상세·계약 / 부채·유닛 상점, 168×38, 고른 탭 금색 테두리), 칸 992×534 하나, 아래 "정산 완료" 280×46. 칸 크기는 고정이고 긴 목록은 칸 안에서 스크롤(스크롤바 자리 늘 비움).
+  - 코드(`UI/Settlement/`): `SettlementScreenView`(열기·닫기·탭·등장 연출 0.13초·ESC — 팝업이 떠 있으면 팝업 몫), `SettlementSummaryPane`(운영 자금 증감 초록/빨강, 금고·선지출 몫, 메모 성격별 색, 부하 피로 지침 호박·탈진 위험색, 해금 로드맵 부하·시설 한쪽만 펼침), `SettlementLedgerPane`(수입·지출 공용, 이름 왼쪽·금액 오른쪽, 합계), `SettlementLoanPane`(빚·이번 주 청구·조건·남은 한도·상품 변경 안내, 상품 버튼 — 지금 상품 금색·바꿀 수 없으면 잠김, 슬라이더 + 빌리기, `CostManager.StateChanged`로 다시 그림), `SettlementShopPane`(지원자 줄 — 시세 쌈 초록·비쌈 빨강, 둘째 줄 특성·성격·떠나는 날, 고용하면 대출 칸도 다시 그림). 숫자는 전부 `ManagementSettlementManager.LatestReport`와 `CostManager`·`HiredUnitRoster`에서 읽고 결제는 그쪽 공개 함수(`TryBorrowGold`·`TryChangeLoanProduct`·`TryRequestHire`·`ForceHidePanel`)를 부른다. 매니저는 직렬화 참조(생성기가 배선), 비면 `Current`.
+  - 원본과 다른 점: 해금 머리글의 ▲▼는 글꼴에 없어 "접기/펼치기", 지원자 정가 툴팁(uGUI에 툴팁 없음)은 둘째 줄 끝 "정가 NG"로.
+  - 공용: `HudPalette.Paint`(TMP 색 태그), 에디터 `UiKit.ScrollArea`·`ScrollText`·`Slider`, 생성기 `SettlementBuilder`(프리팹 `03.Prefabs/UI/Settlement/Settlement.prefab`, 상품 4칸·지원자 16칸 풀, SampleScene에 놓고 정산·비용·고용 명단 배선).
+  - 검증: Unity 재컴파일 오류 0, EditMode 298/298, 플레이 콘솔 오류 0. 정산표를 열어(리플렉션 `RefreshPanel`·`ShowPanel`) 탭 다섯 캡처, 시간 0. 계약/부채 탭에서 슬라이더 500 → "500G 빌리기" → 금화 200→700·빚 500·안내 문구, 청산일(7일로 둠)에 지원자 고용 → 684G·고용 1명. 1일차 고용은 "고용하지 못했습니다"(청산일에만 열림, 원본과 같음). 수입·지출 칸에 시험 줄을 그려 좌우 정렬 확인(처음엔 줄 간격이 붙어 1.5줄로 고침). "정산 완료" → 닫힘·시간 1. 세이브는 매번 실측 전으로 복원.
+  - 확인 못 함: 실제 영업을 돌린 뒤의 정산(메모·피로 줄이 찬 모습), 청산일 대출 상품 변경(7일로 바꾼 상태에서도 "청산일에만" 문구 — 상품 변경 판정은 날짜 외 조건도 보는 것으로 보임, 화면 문제 아님).
+
+- 2026-10-19 · A안 남은 화면 1단계: 대화 상자·첫날 안내 덮개(uGUI). 기능은 Toolkit 원본과 같게.
+  - 대화(`UI/Dialogue/DialogueUiView`, `DialogueChoiceButton`): 캔버스 80, 아래 가운데(바닥에서 176) 상자 1120×338 — 말하는 사람 이름표 240×38, 카드(제목·진행·닫기, 본문 왼쪽, 선택지 오른쪽 430 폭 최대 5칸, 선택지가 없을 때 오른쪽 아래 "다음"). 원본 동작: 본문이 초당 45글자 흘러나옴(실제 시간, TMP `maxVisibleCharacters`라 태그는 글자로 안 셈), 흐르는 중 "다음"은 먼저 끝까지 보여 줌, 선택지는 오른쪽에서 0.045초 간격으로 미끄러져 들어옴(0.22초), 요약 없는 선택지는 한 줄 높이(58/38, 넘치면 세로 배치가 줄임), 잠긴 선택지는 비활성, 닫기는 자리 지킨 채 숨김, 뒤를 막는 대화는 덮개가 클릭을 삼키고 강조 중에는 네 조각 어둠만. "다음"은 진행기가 보이라고 했고 선택지가 없을 때만 보인다.
+  - `DialogueView.Version` 추가(새 대사마다 증가 — 화면이 글 흘리기를 다시 시작하는 기준).
+  - 안내 덮개(`UI/Shared/TutorialOverlayView`): 캔버스 85, 네 조각 어둠(클릭 삼킴) + 위 가운데 안내 카드 760×84(위에서 136 — HUD 배너 24~120 아래, 브리핑과 겹치지 않음), 머리글·본문·건너뛰기. `PlayTutorialView.OverlayChanged`를 그리고 건너뛰기는 `SkipTutorial`. 원본(카드 위에서 352)과 위치만 다름: 옛 위 가운데 준비 카드가 없어져 올렸다.
+  - 공용: `UI/Shared/UiSpotlightDim`(화면 사각형 하나만 남기고 네 조각으로 덮음), 에디터 `UiKit.SpotlightDim`, 생성기 `DialogueBuilder`·`TutorialOverlayBuilder`(프리팹 `03.Prefabs/UI/Dialogue/Dialogue.prefab`·`UI/Tutorial/TutorialOverlay.prefab`, SampleScene UI 루트에 놓고 `DialogueView`·`PlayTutorialView` 배선).
+  - 검증: Unity 재컴파일 오류 0, EditMode 298/298, 플레이 콘솔 오류 0. 캡처: `DayEvent_BlackMarket` 재생 → 이름표·제목·1/1·닫기·본문·선택지 2칸(요약 포함), "다음" 숨김. 두 번째 선택지 버튼 `onClick` → 대화 닫힘·민심 50→54(요약 "민심 +4"와 같음). `PlayTutorialView`를 켜서 안내 카드 "처음 시작하기 · 1/5"·잠긴 방 둘레 구멍 확인, 건너뛰기 `onClick` → 카드·어둠 사라짐. 세이브는 실측 전으로 복원.
+  - 확인 못 함: 글 흘리기 중간 모습(캡처가 이미 끝난 뒤였음), 대화 강조(튜토리얼 대화는 씬에서 꺼져 있음). 방이 크게 잡히면 안내 카드가 구멍 위쪽을 조금 가린다(누를 타일은 가운데라 막히지 않음).
+
+- 2026-10-18 · UI 디자인 전면 개편: A안 "장부형"(사용자 선택, 기능은 그대로) + 범용 팝업 화면.
+  - 방향: 목업 두 안(A 모서리 묶음·B 얇은 석판 띠) 중 A. 검은 석판 바탕·금빛 테두리·양피지 글자, 둥근 모서리. 상단 112 전체 바와 위 가운데 큰 준비 카드를 없애고 지도 가운데·아래 가운데를 비움(game-ui-frontend).
+  - `HudPalette`를 A안 팔레트로 교체(바탕·선·글자·뜻 있는 색·버튼 테두리 상태). 새 `UiFrameButton`(테두리 버튼: 평소 테두리 기억, `SetSelected` 금색, `SetStyle`), 새 `ScreenRectSource` 대리자(튜토리얼 구멍용 화면 사각형 통로, `WaveView`·`PopupController`가 같이 씀).
+  - 에디터: `UiKit`(둥근 바탕 `RoundFill`·테두리 `RoundLine` 32px를 코드로 그려 `Assets/09.UI/Skin/Ledger/`에 9-slice로 가져옴, 캔버스·배치·패널·막대·글자·버튼 조각), `UiSceneInstaller`(프리팹을 SampleScene UI 루트에 놓고 같은 프리팹 인스턴스만 교체), `GameplayHudBuilder`를 A안 배치로 다시 씀, 새 `PopupBuilder`.
+  - HUD(A안): 왼쪽 위 장부 340×268(일차, 운영 자금 38px, 부채 줄 — 파산 위험 시 깜박임·누르면 설명, 청산 줄, 마력 막대, 상태 칩 2×2 부활·등급·민심(누르면 설명)·위협(경계 때 호박색)), 오른쪽 위 배속(II·1×·2×) + 일시정지 잠김 사유, 그 아래 손님 브리핑(접힘 380×164: 제목·첫 줄·선택 목표, "자세히"로 380×440 전체 설명) 또는 진행 카드 380×132, 위 가운데 배너 560×96, 오른쪽 아래 목표 전환 320×40 + 영업 시작 320×72. 칩용으로 `TopHudPresenter`의 부활·위협 문구를 짧게(값은 같음, 부활 대기는 있을 때만).
+  - 팝업(A안): 캔버스 100, 덮개 + 가운데 카드 560×300(제목·구분선·본문·비용·경고·버튼 최대 3개, 쓰는 개수만큼 오른쪽에 붙임). `PopupController.Current`·`Changed`를 그리고 `Choose(index)`로 답한다. 잠긴 버튼도 눌리게 두어 컨트롤러가 실패음을 낸다. 확인 버튼 화면 사각형을 `SetConfirmButtonRectSource`로 넘겨 튜토리얼이 팝업 확인 버튼을 다시 비출 수 있다.
+  - 검증: `dotnet build` 오류 0(새 파일은 recompile 뒤), Unity 재컴파일 실패 없음, 생성기 실행 후 배선 비어 있는 곳은 `scope`뿐(씬에 GameScope 없음), EditMode 298/298, 플레이 두 번 콘솔 오류 0. 캡처: 대기(장부·칩·배속 1× 선택·브리핑 접힘), 브리핑 펼침, 방 확장 팝업(취소·확장 버튼, 비용 8G), 취소 버튼 `onClick` → 팝업 닫힘·금화 그대로·시간 1, 영업 시작 → 진행 막대·잠김 사유·위협 칩 호박색. 처음 캡처에서 `▾` 글자가 네모로 보여 "자세히/접기"로, 접힌 목표 줄이 잘려 두 줄로 고침.
+  - 확인 못 함: 첫 실측에서 방 확장 팝업이 1초 안에 저절로 확정된 일이 한 번 있었다(금화 200→192). 같은 순서로 다시 띄웠을 때는 3초·캡처 뒤에도 열려 있어 재현되지 않음. 원인 미확인.
+  - 남은 화면(A안으로 새로 만들 것): 대화·튜토리얼 덮개, 정산(대출·유닛 상점 포함), 하단 방 관리(방 상세·설치 창), 오른쪽 기록판(침입 파티·최근 기록), 부하·모험가 상태, 금고, 상인·유물 줄, 보스 배너·런 종료, 운영 방침, 일시정지 메뉴, 타이틀.
+
+- 2026-10-18 · UI 스킬 2개 추가 + uGUI 1단계(상단 HUD·영업 HUD).
+  - 스킬: `gaming-ui-state-management`(TheOrcDev/8bitcn-ui, 얕은 sparse clone으로 받아 내용 확인 후 `skills add` 로컬 설치), `ui-ugui`(사용자가 준 `Downloads/SKILL.md` 복사, `references/scrollview-setup.md`는 없음). 두 파일 모두 원본과 해시 같음. `CLAUDE.md` UI 행·스킬 목록, `ui-rules.md` 맨 앞 표(스킬별 따를 것·주의)로 연결.
+  - 상단 HUD 모양(사용자 선택: 10-16 개편안 재현). 10-16 개편의 Toolkit 파일은 커밋 전이라 Toolkit 삭제 때 함께 사라져, `Sequences.md` 설명대로 다시 짰다: 높이 112 상단 바, 왼쪽 "겨울 던전"+일차, 핵심 자원 카드 3개(운영 자금·부채/정산·마력, 236×88, 왼쪽 색 줄 + Silver 테두리 2배, 마력은 남은 비율 막대), 보조 상태 행 4개(부활 마력·던전 등급·민심·침입 위협, 370×88 안쪽 칸), 오른쪽 배속 버튼(일시정지·1×·2×, 고른 배속은 테두리 금색) + 일시정지 잠김 사유.
+  - 동작은 Toolkit HUD와 같게: 문구·계산은 지운 `GameplayHudToolkitView`·`DebtAlertView`·`MoraleChipView`(git HEAD)에서 옮김. 부채 카드는 파산 위험이면 0.5초마다 붉게 깜박이고(실제 시간), 부채 카드·민심 행을 누르면 설명 팝업(`PopupController` — 팝업 화면이 아직 없어 지금은 대기열에만 들어감).
+  - 새 코드: `HudPalette`(DesignToken 색), `ViewModels/TopHudViewModel`, `Hud/TopHudPresenter`(판단: 값·문구·부채/민심 설명·민심 최근 변화 8개), `Hud/TopHudView`(uGUI 그리기·버튼, 0.25초 실제 시간 주기로 다시 읽음), `Hud/WaveHudView`(Toolkit WaveHud와 같은 배치: 준비 카드 660×236·진행 막대 620×118을 상단 바 아래 12, 배너 640×120을 위에서 360·1.5초, 목표 320×40 + 시작 320×68을 오른쪽 326·아래 178 — 기록판·하단 바 자리 비움). `WaveView.SetStartButtonRectSource`로 시작 버튼 화면 사각형을 받아 튜토리얼 구멍이 다시 시작 버튼을 비춘다.
+  - 생성(Unity CLI): 에디터 스크립트 `Assets/Editor/GameplayHudBuilder.BuildAll()` — Silver 테두리 PNG 4개를 9-slice 스프라이트로 임포트(Panel 10·Window 32·Box 6·Button 9, FullRect, Point), `Assets/03.Prefabs/UI/Hud/GameplayHud.prefab`(오버레이 캔버스, CanvasScaler 1920×1080·0.5, TMP 잠실 글꼴) 생성, SampleScene `======UI===========` 아래에 놓고 매니저·`WaveView` 배선 후 저장. `GameScope`는 씬에 아직 없어 `scope`는 비어 있음(기존처럼 `Resolve` 폴백). 씬 백업은 스크래치패드.
+  - 검증: `dotnet build` 오류 0, Unity 재컴파일 실패 없음, EditMode 298/298, 콘솔 오류 0. 플레이 캡처: 대기(카드 3·상태 4·배속 1× 선택·준비 카드·막힌 이유 "방을 하나 확장하세요"), 방 확장 뒤 시작 버튼 `onClick`으로 영업 시작 → 진행 막대·위협 "경계 · 3명"·일시정지 잠김 사유, 배너(잘린 모서리 창), DAY 2 준비 카드·목표 전환 버튼. 처음 캡처에서 카드 색 줄이 테두리에 가려져 안쪽으로 옮김. 세이브는 실측 전 상태로 복원.
+  - 남은 것: 하단 바(방 관리·유닛·상인·메뉴)·오른쪽 기록판(침입 파티·최근 기록)·범용 팝업·정산·대화 화면.
+
+- 2026-10-18 · 외부 UI 설계 스킬 `game-ui-frontend` 설치(사용자 요청: `npx skills add https://github.com/openai/plugins --skill game-ui-frontend`, UI 작업 때 읽게).
+  - 저장소가 커서 `skills add`의 clone이 시간 초과로 실패 → 스크래치패드에 얕은 sparse clone(`plugins/game-studio/skills/game-ui-frontend`만)으로 받아 내용(`SKILL.md`·`agents/openai.yaml`, 실행 지시 없는 설계 지침)을 확인한 뒤 로컬 경로로 설치. 결과: `.claude/skills/game-ui-frontend/`(받은 파일과 해시 동일), CLI가 만든 `skills-lock.json`(출처가 스크래치패드 경로)과 빈 `.agents/` 폴더.
+  - 연결: `CLAUDE.md` 작업 표의 UI 행과 프로젝트 스킬 목록, `ui-rules.md` 맨 앞에 "UI 설계·구현 전에 읽는다"와 적용 범위(브라우저·DOM·3D 항목은 uGUI·2D 직교 카메라에 맞게 바꿔 읽음, 참조 문서 `../../references/*`는 설치 안 됨, 충돌하면 `ui-rules.md` 우선).
+  - 앞서 요청한 `ios-hig-design`(thedixitjain/the-mega-skill-library)은 사용자 취소로 설치하지 않음(남은 파일 없음).
+
+- 2026-10-18 · UI Toolkit 전부 제거(사용자 결정: uGUI로 다시 만들기 전 단계. 방식은 "화면·에셋 삭제", 화면 없이 멈추는 흐름은 "그대로 두기" — 판단 컴포넌트의 공개 함수를 CLI로 부른다). 10-16에 시작해 중간에 멈췄다가 이어서 끝냄.
+  - 삭제(Unity `AssetDatabase`): Toolkit 화면 C# 33개(`UI/Toolkit`의 View·Bootstrap·`ToolkitDocumentSpawner`·`ToolkitScreenSO`·`ToolkitPointerBlockers`·`ToolkitScreenRect`·`ToolkitPlacement`·`HudActivityLog`·`DebtAlertView`·`MoraleChipView`·`PartyRailView`, `Popup/PopupView`·`PopupSettingsSO`·`PopupUiNames`, `RoomManagement/InstallPanelView`·`RoomDetailView`) + `RoomManagementController`. 에셋: `Assets/09.UI/UxmlAndUss` 전체, `09.UI/PopupPanelSettings`, `Resources/UI/Toolkit` 전체(UXML·USS·PanelSettings 2개), `Resources/UI`의 화면 설정 SO 10개와 `PopupSettings`. 씬·프리팹에는 Toolkit 컴포넌트·`UIDocument`가 붙어 있지 않았다(모두 실행 중 생성) — 씬은 손대지 않음.
+  - 남김: `09.UI/Skin/Silver` 9-slice 테두리 그림(uGUI에서 재사용), `Resources/UI`의 옛 uGUI 프리팹·스킨, `DOTweenSettings`. Toolkit과 무관한 ViewModel·프레젠터 6개(`DialogueChoiceViewModel`·`MerchantOfferViewModel`·`PartyRailPresenter`·`PartyRailRowViewModel`·`UnitStatusViewModel`·`WaveHudViewModel`)는 `Assets/01.Code/UI/ViewModels/`(네임스페이스 `Code.UI.ViewModels`)로 옮김.
+  - 판단 컴포넌트를 화면 없는 다리로: 표시 값 + 변경 이벤트 + 버튼용 공개 함수. `WaveView`(`Model`·`ModelChanged`·`BannerRequested`, `RequestStart`·`ToggleObjective`), `DialogueView`(새 `DialogueScreenState`, `Changed`, `Next`·`Close`·`Choose`), `PopupController`(대기열·시간 정지·ESC 유지, `Current`·`Changed`·`Choose(index)`), `UnitStatusPanelView`(`Model`·`Opened`·`Closed`, `RequestRecover`·`RequestRecall`), `MerchantPanelView`(`Offers`·`Title`·`Detail`·`Changed`, `Buy` 공개, `MaxOffers` 상수 이동), `ArtifactPanelView`(`Artifacts`·`IsUnlocked`·`Changed`), `EnemyStatusPanelView`(`ShowRequested`·`HideRequested`), `PlayTutorialView`(`HintHeader`·`HintText`·`IsSpotlightVisible`·`SpotlightHole`·`OverlayChanged`), `NodePanelView`(`TreasuryInspectRequested`·`TreasuryInspectClosed`), `BossWavePresenter`(`BannerRequested`·`RunEndRequested`). 프레젠터 상수 `InstallPanelPresenter.CardsPerPage`·`RoomDetailPresenter.MaxUnitRows`로 이동.
+  - 화면 사각형이 없어져 줄어든 동작: 튜토리얼이 방 관리 갈래 버튼·카드·설치, 상인 버튼, 팝업 확인 버튼을 비추던 단계는 방을 비추는 데서 멈춤(`PlayTutorialView`, `DialogueRunner` 가이드 튜토리얼 — 씬에서 꺼져 있음). 가이드 튜토리얼의 운영 방침 단계는 `MoralePolicyManager.CurrentChoices`로 열림을 판단. `DungeonGraphController.IsPointerOverUi`의 Toolkit 클릭 막기 삭제. 운영 방침 창이 걸던 시간 정지는 창과 함께 없어짐.
+  - 정산: `ManagementSettlementManager`의 옛 uGUI 패널 억제가 Toolkit 정산 화면의 `UseToolkitPanel()` 호출에 기대고 있었다. 실측에서 억제가 풀려 캔버스 잃은 `DailySettlementPanel`이 화면 가득 깨진 글자로 뜸 → `_legacyPanelSuppressed` 기본값을 참으로, `UseToolkitPanel` 삭제. 정산표는 `ReportOpened`·`LatestReport`로 읽고 `ForceHidePanel`로 닫는다.
+  - 테스트: `HudToolkitTests` 파일 삭제(대상 `HudActivityLog` 삭제), `AssetWiringTests`의 Toolkit 화면 설정 6건·운영 방침 UXML 구조 1건, `RoomManagementTests`의 화면 사각형 환산 1건 삭제, `TutorialRegressionTests`의 덮개 정리 코드 삭제. 문서: `ui-rules.md`를 "지금 상태(판단 컴포넌트 표) + 유지하는 원칙"으로 다시 씀, `CLAUDE.md` 표·폴더 행, `csharp-style.md`·`audio-rules.md`·`dialogue-rules.md`·`test-rules.md`·`cs-review` 스킬의 Toolkit 문구.
+  - 검증: `dotnet build` Runtime·Tests 오류 0, Unity 재컴파일 실패 없음, EditMode 298/298(Toolkit 전용 테스트 11건 삭제 전 309). 바뀐 .cs·.md 331개 UTF-8 검사 이상 없음. 플레이(SampleScene, CLI만): 씬에 `UIDocument` 0, `DungeonGraphController.TryBuildAt` → `PopupController.Current`(방 확장, 버튼 2) → `Choose(1)`로 확장(금화 200→192), `WaveView.RequestStart`로 DAY 1 영업·`BannerRequested` 문구 확인, 웨이브 종료 → 정산 열림(시간 0, 옛 패널 꺼짐) → `ForceHidePanel`로 닫힘·시간 1·DAY 2 시작 가능. 두 번 돌려 콘솔 오류 0. 세이브는 실측 전 상태로 복원, 캡처는 스크래치패드로 옮김.
+  - 지금 게임은 화면이 없다(타이틀·HUD·정산·대화·팝업). Start 씬에서 새 판 시작도 버튼이 없어 CLI(`TitleMenuActions`)나 SampleScene 직접 실행으로만 들어간다.
+
+- 2026-10-16 · 문서·에셋 폴더 구조 정리.
+  - `DungeonEconomyDesign.md`를 핵심 게임 규칙, 구현 상태, 기능별 설계 링크만 남기는 기준 문서로 압축했다. 누적 변경 이력인 `Sequences.md`는 요약하거나 삭제하지 않는다.
+  - 프로젝트 소유 씬·스프라이트·재질·폰트를 번호 폴더로 옮기고, 외부 패키지와 런타임 로드 경로(`Resources`)는 보존한다.
+  - 사용자가 지정한 번호에 맞춰 씬은 `00.Scenes`, 게임 런타임 코드는 `01.Code`로 옮겼다. 빌드 설정, 테스트, 작업 규칙과 기술 문서의 경로를 함께 갱신했다.
+  - `GameModules`는 데이터 SO(`07.ScriptableObjects`), 프리팹(`03.Prefabs`), UI Toolkit 에셋(`09.UI`)으로 분리하고, 참조 경로·테스트를 새 위치로 갱신했다.
+  - 추가한 시각 에셋은 `04.Sprites` 아래 `Characters`, `Tilesets`, `UI`, `Nodes`로 분류했다. 코드 의존 외부 패키지는 이동하지 않았다.
+  - `Resources/UI`는 런타임 화면 설정(`Screens`), 프리팹(`Prefabs`), 스킨(`Skins`), 설정(`Settings`)으로 나누고 `Resources.Load` 경로와 테스트를 함께 갱신했다. DOTween 설정은 필수 루트 경로라 유지했다.
+  - UI는 목업 뒤 UXML을 만드는 흐름을 기준으로 두고, 플레이어·적 유닛과 투사체의 Prefab Variant 템플릿 및 저장 위치를 작업 규칙에 명시했다.
+  - UI Toolkit 규칙은 목업·UXML·토큰·공통 컴포넌트·레이아웃 고정 원칙 중심으로 간결하게 다시 구성하고, 색상 토큰 규칙은 유지했다.
+  - 전 화면 UI 시각 설계(`Docs/Design/UiVisualDesign.md`)를 추가하고, 런타임 Toolkit 화면 전체가 공통 DesignToken·Components를 절대 경로로 참조하도록 통일했다.
+  - 타이틀은 Dark Castle 석조 배경, 공통 Silver 프레임 창, 상태별 공통 버튼으로 재구성했다. 정산·운영 방침·전투 HUD·런 종료도 같은 공통 테마를 적용해 화면 전환 시 프레임과 상태색이 바뀌지 않게 했다.
+  - 전투 HUD는 7개 상태 칩을 한 줄에 몰아넣지 않고 주요 4개/보조 3개 두 줄로 나눴다. 상·하단 바와 우측 패널의 여백, 조작 버튼 간격도 늘려 1280×720에서 지도와 각 UI 영역이 붙어 보이지 않게 조정했다.
+  - UI 계층 분석 기준을 설계 문서에 기록했다. 현재 런타임의 `Popup.uxml`·`GameplayHud.uxml` 계층과 uGUI 잔존 프리팹의 실제 Layout Group 설정을 구분했으며, HUD 여백 변경에 맞춰 웨이브·유물·방 관리 오버레이의 안전 영역도 함께 이동했다.
+  - HUD 상단을 다시 계층화했다. 운영 자금·부채·마력은 넓은 핵심 자원 카드 3개로, 부활·등급·민심·위협은 얇은 보조 상태 행 4개로 분리해 정보 우선순위와 가로 여백을 확보했다. 이에 맞춰 모든 지도 오버레이의 상단 안전 영역을 112px 헤더 기준으로 맞췄다.
+
+- 2026-10-16 · 폴더 재배치 안전 점검과 md 경로 갱신(사용자 요청).
+  - 점검(커밋 전 작업 트리 기준): HEAD의 `.meta` 22,684개 중 옮겨진 19,679개가 19,675개는 같은 GUID로 새 위치에 있음. 잃은 4개는 폴더(`_Graphics`·`_Graphics/Fonts`·`GameModules`)와 지운 스크립트 `UnitFatigueManagementView.cs`뿐. 중복 GUID 0. 에셋(씬·프리팹·SO·UXML/USS 등)의 GUID 참조 중 HEAD에 있다가 사라진 것 0건 — 이동으로 새로 끊긴 참조 없음. `Resources.Load` 문자열 28개 모두 실제 파일 있음, 빌드 설정 씬 경로 `00.Scenes` 정상, Unity 컴파일 실패 없음·콘솔 오류 0.
+  - 발견: `.gitattributes`의 LFS 규칙이 옛 경로(`Assets/sanctum_pixel`·`skeleton_king_package`·`skeleton_warrior_package`·`Super GUI Bundle…`)에 묶여 있어 새 위치(`04.Sprites/Characters/…`, `04.Sprites/UI/SuperGUIBundle`)의 PNG·aseprite가 LFS 대상이 아님(HEAD의 LFS 파일 15,110개). 이대로 커밋하면 일반 blob으로 들어간다.
+  - `.gitattributes` 수정(사용자 승인): 옛 4개 팩 경로 규칙 5줄을 `Assets/04.Sprites/Characters/SanctumPixel`·`SkeletonKing`·`SkeletonWarrior`, `Assets/04.Sprites/UI/SuperGUIBundle`(png, aseprite)로 교체. `Soundtrack Packs`·`GothicUI`·`Sprite Shaders Ultimate` 줄은 손대지 않음. 확인: HEAD의 LFS 파일 15,110개를 GUID 이동표로 새 경로에 대응시켜 `git check-attr filter`로 보니 15,110개 모두 `lfs`, 새 팩 폴더의 png·aseprite도 15,110개 모두 `lfs`. `.meta`와 팩 밖 그림(`04.Sprites/Nodes` 등)은 예전처럼 일반 추적.
+
+- 2026-10-16 · `Resources` 원위치(사용자 결정: 번호 폴더 재배치는 사용자 방식대로 두고, `Resources` 안은 DOTween 제외 전부 원래대로).
+  - `Resources/UI`를 `Screens`·`Prefabs`·`Skins`·`Settings`로 나눴던 21개 에셋을 Unity `AssetDatabase.MoveAsset`으로 `Resources/UI/` 바로 아래로 되돌리고 빈 하위 폴더 4개(새로 생긴 GUID)를 지움. 이제 `Resources`의 파일 위치·`.meta`는 이전 상태와 같고, 남은 차이는 `Resources/UI/Toolkit`의 UI 내용 수정 8개(공통 토큰 참조·레이아웃, 위치 변경 아님)뿐. `DOTweenSettings.asset`은 원래 `Resources` 루트라 그대로.
+  - 경로 맞춤: `Resources.Load` 문자열 15종(`UI/WaveHudScreen` 등 화면 10종·`UI/EnemyMoodHud`·`UI/HudIcon`·`UI/UiSkin`·`UI/CharacterPlateSkin`·`UI/PopupSettings`)을 이전 값으로 — 런타임 15개 파일, `PopupSettingsSO` 주석, `AssetWiringTests`의 화면 TestCase. `CLAUDE.md` 폴더 표의 `Resources` 행도 고침.
+  - 테스트 경로: 테스트 11개 파일이 아직 `Assets/07.ScriptableObjects/...`를 찾아 SO를 못 불러오던 것(`AssetWiringTests` 14건 실패)을 실제 폴더 `Assets/07.SO/...`로 고침. 코드·테스트·에디터 스크립트의 `"Assets/..."` 문자열 중 없는 경로는 자동 생성 `Controls.cs` 주석(`Assets/Code/Core/Input/...`) 하나만 남음 — `.inputactions`에서 다시 생성할 때 바뀐다.
+  - 검증: `dotnet build` Runtime·Tests 오류 0, Unity 재컴파일 실패 없음, EditMode 309/309 통과, 콘솔 오류 0.
+
+- 2026-10-16 · 오디오·전투 연출·건물·재질의 `Resources.Load` 제거(사용자 선택 A안: 설치기 + 직접 참조, 배선은 Unity CLI). UI Toolkit 화면·DOTween은 그대로 `Resources`.
+  - 새 `RuntimeAssetInstaller`(`Code.Core`): `[SerializeField]`로 효과음·음악 카탈로그, `SfxEventBridge`, 전투 연출 카탈로그, 선 재질을 받아 `Awake`에서 넘긴다. 씬 `Awake`가 `AfterSceneLoad` 자동 설치보다 먼저라 기존 설치 순서 유지. Start·SampleScene 루트에 하나씩.
+  - 정적 쪽: `GameSfxPlayer`·`GameMusicPlayer`·`CombatFxHooks`·`RuntimeMaterials`에 `Provide(...)`를 두고 `Resources.Load`·경로 상수 삭제(받지 못하면 한 번만 경고). `UiSfxHooks`는 `AfterSceneLoad` 자동 설치 대신 `Provide(bridge)`에서 한 번 구독. `RuntimeMaterials.LoadLine`은 플레이 중 미배선이면 오류, 에디트 모드(테스트)는 경고.
+  - 직접 참조: `NodeTrapGrid.focusedGridMaterial`(격자 셰이더 원본, 실행 중 공유 복사본은 그대로), `NodePanelView.alwaysInstallableBuildings` → `InstallableBuildingCatalog.Initialize` 세 번째 인자(금고·대장간을 늘 후보로), `HiredUnitRoster.buildingsOutsideUnlockCatalog`(저장된 금고·대장간 복원).
+  - 에셋 이동(Unity `MoveAsset`, GUID 유지): `Audio/*` 3개 → `Assets/07.SO/Audio/`, `CombatFxCatalog` → `Assets/07.SO/Combat/`, 금고·대장간 데이터 → `Assets/07.SO/Buildings/`, 재질 2개 → `Assets/05.Materials/`. 빈 `Resources/Audio`·`Combat`·`Buildings`·`Materials` 폴더 삭제.
+  - 배선(Unity CLI, `SerializedObject`): 두 씬에 설치기 + 5개 참조, SampleScene `HiredUnitRoster`·`NodePanelView`에 [금고, 대장간], 씬 노드 4개(프리팹 인스턴스 아님)와 `Node.prefab`의 `NodeTrapGrid`에 `DungeonGridOverlay`. 처음 시도 때 Unity 컴파일이 `NodeTrapGrid` 저장보다 3초 먼저 끝나 새 필드를 못 찾아서, 강제 임포트·재컴파일 뒤 다시 연결. 씬·프리팹 백업은 스크래치패드.
+  - 테스트: `Assets/Resources/Buildings/` → `Assets/07.SO/Buildings/`(`AssetWiringTests`·`BuildingSerializationTests`), `RoomManagementTests`의 Resources 폴더 상수 삭제. 문서: `audio-rules.md`(머리말 경로·"옮기지 않는다" 삭제), `building-rules.md`(금고·대장간 예외 → 두 배열 등록 규칙), `csharp-style.md`(`Resources.Load` 신규 금지), `CLAUDE.md` 폴더 표.
+  - 검증: `dotnet build` Runtime·Tests 오류 0, Unity 재컴파일 실패 없음, EditMode 309/309. 플레이(SampleScene): 효과음·음악·전투 연출 카탈로그와 선 재질이 정적 시스템에 들어옴, `UiSfxHooks`·`CombatFxHooks` 구독, 설치 후보 끝에 금고·대장간, `ResolveBuilding`이 금고·대장간·상점 모두 찾음, 격자 재질 `Unknow/Dungeon Grid Overlay` 셰이더 복사본. 플레이(Start): 같은 다섯 값 확인. 두 실행 모두 콘솔 오류 0. 세이브는 실측 전 상태로 복원.
+  - 발견(이번 변경과 무관, 미수정): 음악 카탈로그 5개 큐·효과음 큐 21개 모두 클립이 비어 있다. 카탈로그가 가리키는 오디오 GUID가 이 작업 트리에 없다(HEAD에도 없음, `.gitattributes`의 `Assets/Soundtrack Packs` 등이 없음). 지금 게임은 무음이다.
+  - md 갱신: 규칙 파일 `paths:` 머리말과 본문의 `Assets/07.ScriptableObjects` → `Assets/07.SO`(실제 폴더명. 머리말이 틀려 SO 편집 때 해당 규칙이 자동으로 읽히지 않던 상태), 상대 경로 `Data/…` → `Assets/07.SO/…`, `Code/Events`·`Code/Core` → `Assets/01.Code/…`. `CLAUDE.md` 씬 폴더 `Assets/00.Scenes/`, 폴더 표에 `04.Sprites`·`05.Materials`·`08.Fonts`·`Resources` 행 추가. `UnityProjectContext.md` SO 경로. 위 줄의 `07.ScriptableObjects` 같은 과거 기록과 `output/` 옛 보고서는 이력이라 그대로 둠.
+
+- 2026-10-15: `Dark_Castle_001` 데모 씬의 3레이어 타일 배치를 분석하고, 노드 바닥에 동일한 Purple 석판 타일군과 결정적 희소 변형 패턴을 적용해 단일 벽돌 반복을 없앴다.
+
+- 2026-10-15: 씬에 프리팹 연결 없이 저장돼 있던 이전 노드 미리보기 인스턴스를 제거하고, 타일맵 전용 Node 프리팹으로 초기 던전 노드와 잠긴 후보를 다시 생성해 저장했다.
+
+- 2026-10-15: 노드 프리팹에 남아 있던 `Node_0` 기반 스프라이트(기본 바닥·잠금 오버레이·방 문틀)를 제거하고, 방의 시각 요소를 Tilemap으로만 구성하도록 정리했다. 잠금 비용 라벨과 입구 스폰 지점은 보존한다.
+
+- 2026-10-15: 던전 노드 타일 방을 외곽 석조벽·후면 단차·대칭 횃불 구성으로 보강하고, 노드 간 `EdgeLine`의 표시 전용 `LineRenderer`와 침입 경로 미리보기 컴포넌트를 제거했다. 엣지의 설치·이동 판정 데이터는 유지한다.
+
 작업 변경 내역을 날짜순으로 누적한다.
 
 ## 2026-10-15
@@ -146,7 +301,14 @@
     - 부채 칸: 한도 초과(빚 10,500/10,000)에서 `is-danger` + 0.3초 표본마다 `is-blink` 번갈아 바뀜, 클릭 → "파산 위험" 팝업(사유·신용 규칙).
     - 끝날 때 콘솔 오류 0.
   - 실측에서 찾은 것: 최근 기록이 "침입자가 늘었습니다. 현재 1명/2명/3명"처럼 숫자만 다른 알림을 묶지 못함(같은 문구만 묶음).
-    - 수정(사용자 선택): `HudActivityLog.Add(message, alert, groupKey)` — 같은 종류 키가 이어지면 최신 문구 한 줄로 바꾸고 "· N회"를 붙임(키 없는 알림은 문구가 같을 때만). HUD의 침입자 수 알림에 키 부여. 새 `HudToolkitTests` 3개, 전체 306/306 통과.
+    - 수정(사용자 선택): `HudActivityLog.Add(message, alert, groupKey)`
+- 남은 실측(커밋 `11fb5f1b` + 다른 세션 미커밋 6파일, 세이브 백업 → 새 판 2회 → 복원, 캡처 폴더 삭제).
+  - **첫날 튜토리얼이 꺼져 있음**: 씬의 `Tutorial Hint`(PlayTutorialView) 오브젝트가 `m_IsActive: 0`이고 켜는 코드가 없다. 9/10 도입 커밋에서는 활성, 9/22 이후 씬부터 비활성(의도 기록 없음). 씬 수정이라 보류 — 사용자 확인 필요.
+  - 튜토리얼 ↔ 새 방 관리 화면 연동(플레이 중에만 오브젝트를 켜서 확인): 1/5 방 확장(구멍이 대상 방 → 확장 팝업 버튼 1040,420 136×36) → 2/5 유닛 배치에서 갈래 버튼(107,24 78×46) → 카드(136×150) → 배치 버튼(136×36) → 방 칸 순서로 구멍·안내 글이 맞게 따라감 → 배치 후 4/5(입구가 있어 포탈 단계 건너뜀). 정상.
+  - **새 판에서 첫 유닛을 고용할 수 없음**(다른 세션 미커밋 주간 계약 작업): 0일차 `HiredUnitRoster.IsWeeklyRecruitmentOpen=false`(청산일에만), 보유 0명 → 튜토리얼 2/5 "첫 수비병을 고용하세요"에서 막히고 7일차 전까지 부하가 없다. 실측은 고용 완료 이벤트를 직접 보내 우회.
+  - 화면 캡처(1280×720): 튜토리얼 덮개·구멍·안내 막대 정상, 방 상세 "소문 없음" 줄 보임. 다만 오른쪽 방 상세(Toolkit) 위에 옛 uGUI 마력·등급·민심 패널이 겹쳐 그려지고, 지도 가운데 "DAY 1 · 영업 준비" uGUI 배너가 방을 가림(오늘 변경 아님, Toolkit·uGUI 공존 문제).
+  - 소문 길 선택: 등급 40에서는 손님 전원이 강함 4~6(엘리트)이라 설계대로 소문을 무시(가중치 모두 1.00) — **고등급에서는 소문 시스템이 사실상 꺼짐**. 등급 10에서는 목적지가 있는 비엘리트(강함 1~2)에게 소문 방 가중치 0.22 vs 1.00, 실제 선택 7명 중 소문 방 2명(점유로 후보가 줄어든 경우 포함, 표본 작음). 웨이브 중 살아 나간 손님이 옮긴 소문으로 다른 방 가중치도 0.77·0.53으로 떨어짐(장부 실동작 확인). 시설이 없는 던전이라 손님 대부분이 목적지 없이 배회(가중치 미사용).
+  - 콘솔: 오류 1건 — 첫 판을 웨이브 진행 중에 멈출 때 "Some objects were not cleaned up when closing the scene". `OnDestroy`에서 직접 생성하는 코드는 없음, 원인 미확인. 그 밖의 오류 0. — 같은 종류 키가 이어지면 최신 문구 한 줄로 바꾸고 "· N회"를 붙임(키 없는 알림은 문구가 같을 때만). HUD의 침입자 수 알림에 키 부여. 새 `HudToolkitTests` 3개, 전체 306/306 통과.
   - 못 잰 것: 소문이 실제 길 선택을 바꾸는지(등급 0·3명이라 갈림길 표본 없음), 방 상세 소문 줄 화면, 첫날 튜토리얼 흐름, 화면 문구 잘림(캡처 없음).
 
 ## 2026-10-01
@@ -340,6 +502,14 @@
   - 테스트: `UnitMarketTests` 5개. 전체 EditMode 212/212 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
   - 플레이 실측(청산일로 맞춤): 블루 슬라임 정가 14G → 시세 15·16·12·11G가 매번 다르게 나오고 비쌈은 붉게, 저렴은 초록으로 표시, 유지비 3G/일. 15G 지원자 고용 → 금화 정확히 15 빠짐, 고용 0→1명. 두 번째 줄이 버튼 밖으로 2px 넘쳐 라벨 기본 여백을 없앰. 콘솔 오류 0.
   - 확인 못 한 것: 등급이 오른 판에서 목록이 실제로 늘어나는 모습(등급 0인 판, 해금된 유닛 1종·종류당 최대 2명 제한 때문에 목록이 짧음). 기획서의 "고등급 유닛일수록 시작 레벨이 낮음"·고유 능력 희귀도 가격은 유닛 레벨 체계가 없어 넣지 않음.
+
+- 주간 계약·유닛 상점 1차 구현(기획서 `WeeklyContractAndUnitMarketDesign`).
+  - `CostManager`: 대출 상품에 계약 기간(기본 1주)을 추가하고, 남은 계약 주를 런 저장에 보관한다. 상품 변경은 청산일이면서 빚이 없을 때만 가능하다. 빚이 남은 계약이 만료되면 같은 상품으로 자동 연장한다.
+  - `ManagementSettlementManager`: 청산이 끝난 뒤 계약 기간을 한 주 진행한다.
+  - `HiredUnitRoster`: 지원자 목록을 매일 만들지 않고 청산일에만 교체한다. 고용 요청은 청산일에만 승인한다.
+  - `SettlementToolkitView`: 계약 잔여 기간, 빚 때문에 상품을 못 바꾸는 이유, 유닛 상점의 영업일 잠금 상태를 표시한다.
+  - 테스트: `SettlementRegressionTests.LoanContract_DefaultProductStartsWithOneWeekRemaining` 추가.
+  - 검증: `dotnet build DungeonKeeper.Runtime.csproj --no-restore`, `dotnet build Defence.EditMode.Tests.csproj --no-restore` 오류 0. Unity Pipeline 연결 뒤 재컴파일은 최신 상태(다시 컴파일할 스크립트 없음), `SettlementRegressionTests` EditMode 29/29 통과, 콘솔 오류 0(경고 54개).
 
 - 파티 공동 자금 구현(기획서 "공동 자금, 사망, 관, 교회"). 예산 합 = 공동 지갑, 금고 약탈금은 공동 자금에 더함, 유닛 사망 시 적 자금 증가는 넣지 않음(사용자 선택). 관 상태·교회 부활은 다음 단계.
   - `PartyFundLedger`(새 파일, `Code.Enemies`): 파티 번호별 공동 자금. 합류 때 예산을 더함, 시설 결제는 지갑을 넘지 못함, 약탈금 추가, 사망 시 10%(최소 1) 낙전·마지막 한 명이면 전부, 살아 나가면 남은 인원으로 나눈 몫을 들고 감(마지막 한 명은 전부). 시작 자금 대비 50% 미만 적음·150% 초과 많음. 영업 시작 때 비움.
@@ -552,3 +722,45 @@
   - 튜토리얼: `PlayTutorialView` 잔걸음 OpenInstall 없애고 PressInstall 추가, 하단 갈래 버튼 → 카드 → 설치 버튼을 화면 사각형으로 비춤. 꺼져 있는 `DialogueRunner` 가이드 튜토리얼의 노드 패널 참조를 같은 조회로 바꿈. 화면 사각형 환산 `ToolkitScreenRect`(팝업·운영 방침도 이것을 씀).
   - 문서: 설계 문서에 구현하며 바뀐 점(패널·카드 크기·구조), ui-rules·dialogue-rules 갱신.
   - 아직 확인 못 한 것: 전부(플레이 실측·EditMode 테스트 미실행). 특히 첫날 튜토리얼 진행, uGUI 덮개와 Toolkit 클릭 순서, 미리보기 중 Toolkit 버튼 클릭.
+
+- 2026-10-15 · Dark Castle 타일 기반 던전 노드와 픽셀 스냅 렌더링.
+  - `NodeTileRenderer`를 추가하고 `Node.prefab`에 `Grid`/`Tilemap` 자식을 배선했다. 기존 노드 루트의 10배 스케일·클릭 콜라이더·전투/함정 배치 좌표는 유지하며, 타일맵만 역스케일해 10×10 석재 바닥 타일(`FG_Dark_Dungeon_411`)을 월드 단위로 반복한다. 기존 늘어난 단일 노드 스프라이트는 비활성화했다.
+  - `Main Camera`에 URP `PixelPerfectCamera`을 추가했다(Asset PPU 28, 640×360 참조 해상도, Pixel Snapping). HDR·MSAA는 끄고, 기존 적·유닛 스프라이트와 새 타일셋이 모두 Point 필터·무압축·밉맵 없음임을 확인했다.
+  - 플레이 실측: Day 1 준비 화면에서 석재 바닥 타일이 반복되어 표시되고, 타일 경계와 UI/노드 윤곽이 흐려지지 않음을 게임 화면 캡처로 확인. 콘솔 오류 0.
+
+- 2026-10-15 · 타일 노드 방 테두리와 입구 문.
+  - `NodeTileRenderer`가 바닥만 채우지 않고 같은 Dark Castle 타일셋의 벽 타일로 10×10 노드의 네 변을 두르게 확장했다. 세로 벽 타일은 위·아래 변에서 90도 회전해 방향을 맞춘다.
+  - 입구 노드만 오른쪽 변 중앙에 문 타일을 놓는다. 기존 `roomDoorsRoot`는 통행·스폰 판정과 문 연출을 계속 맡고, 새 타일은 방 외형만 보강한다.
+  - 플레이 실측: 석재 바닥, 네 변 테두리, 오른쪽 붉은 문 타일이 함께 표시되는 것을 확인. 콘솔 오류 0.
+
+- 2026-10-15 · Dark Castle 방식의 10×10 노드 타일 레이어 재구성.
+  - 사용자가 선택한 "현재 노드 판정 10×10에 맞춘 새 배치"로 전환했다. 임의 회전·랜덤 타일 변형을 제거하고, `NodeTileRenderer`가 `Floor`(8×8 바닥)·`Walls`(테두리/모서리)·`Doors`(입구 노드의 오른쪽 문) 세 Tilemap을 독립적으로 비우고 다시 그리게 했다.
+  - `Node.prefab`은 Dark Castle Purple 팔레트에서 실제 데모에 쓰인 바닥(446/447), 벽(55/26/27/28/29/190), 문(318)만 배선했다. 프리팹의 이전 SpriteRenderer를 모두 제거했다.
+  - `SampleScene`의 이미 구워진 초기 노드도 다시 생성했다. 검증 결과 4개 노드에 이전 SpriteRenderer 0개, 새 Tilemap 레이어 12개(노드당 3개)다.
+
+- 2026-10-15 · Dark Castle 벽·문 방향 보정.
+  - 데모 씬의 `Tiles_3`/`Tiles_4` 셀을 직접 조사해, 이전에 바깥 여백용으로 잘못 쓴 55 타일을 제거했다. 방 외곽은 데모와 같은 상단 26·27·190·28·29, 하단 23·308·25, 좌우 87·252 조합으로 그린다.
+  - 입구는 가운데 타일 318 하나가 아니라 데모의 317·318·319 세 조각을 동쪽 벽 방향으로 회전해 한 개의 문으로 그린다. `SampleScene` 초기 노드를 다시 구워 옛 SpriteRenderer 0개/Tilemap 12개 상태를 유지했다.
+
+- 2026-10-15 · 입구 문 방향 재배치.
+  - 동쪽 벽에 문 타일을 회전해 붙이면 아치가 방 바깥으로 튀어나오는 문제가 있어, 데모 원본과 같은 가로 방향의 317·318·319 조합을 방 하단 중앙에 배치했다. 입구 판정과 실제 적 스폰 위치(`EntrySpawn`)는 동쪽을 유지하므로 게임 규칙에는 영향이 없다.
+  - 플레이 화면에서 벽 테두리와 문이 하나의 방 외곽 안에서 이어지는 것을 확인했다.
+
+- 2026-10-15 · 노드 실측 크기에 맞춘 타일 방 확장.
+  - 런타임을 조사해 이전 SpriteRenderer가 남아 있지 않음(노드당 0개)을 확인했다. 파란 배경이 보인 원인은 기존 노드의 실제 월드 크기 15×15에 타일을 10×10만 그린 크기 불일치였다.
+  - `NodeTileRenderer`와 `Node.prefab`의 타일 격자를 15×15로 맞추고 `SampleScene`의 초기 노드를 다시 생성했다. 플레이 화면에서 타일 방이 노드 전체를 덮어 파란 빈 영역이 사라진 것을 확인했다.
+
+- 2026-10-15 · 던전 배경 스프라이트 제거.
+  - `SampleScene`의 `Main Camera/BG/GameBackground`에 남아 있던 SpriteRenderer를 제거했다. 노드 Tilemap과 UI는 유지했으며, 플레이 화면에서 별도 배경 스프라이트가 더 이상 렌더링되지 않는 것을 확인했다.
+
+- 2026-10-15 · 노드 타일 20×20 고밀도화.
+  - 사용자가 요청한 대로 노드의 월드 크기·게임 판정은 유지하고, `NodeTileRenderer`의 타일 수를 20×20으로 늘렸다. Tilemap 자식은 열·행 수에 따라 균등 역스케일하므로 기존 15×15 노드 영역을 정확히 덮는다.
+  - `Node.prefab`과 `SampleScene` 초기 노드를 다시 생성했으며, 플레이 화면에서 촘촘해진 타일이 노드 전체에 표시되는 것을 확인했다.
+
+- 2026-10-15 · 방치 시 타이틀 자동 복귀 비활성화.
+  - 원인인 `IdleReturnToTitle`(대기 상태에서 60초 입력이 없으면 저장 후 Start 씬을 여는 컴포넌트)을 `SampleScene`에서 제거했다. 설정 메뉴의 수동 타이틀 복귀는 유지한다.
+  - 씬 저장 뒤 실제 컴포넌트 수가 0개임을 확인했다.
+
+- 2026-10-15 · 방치 자동 복귀 기능 전체 제거.
+  - `SampleScene`의 빈 자동 복귀 호스트와 `Start` 씬의 자동 복귀 호스트·카운트다운 알림을 제거했다.
+  - 연결된 `IdleNoticeToolkitView`, 자동 복귀 프리팹·화면 에셋·UIToolkit UXML/USS와 관련 개발 규칙 기록을 삭제했다. 설정 메뉴에서 사용자가 직접 타이틀로 돌아가는 기능은 유지한다.

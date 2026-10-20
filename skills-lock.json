@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "skills": {
+    "game-ui-frontend": {
+      "source": "../../Users/ahaha/AppData/Local/Temp/claude/C--Fork-Defence/5b16c584-0fc9-4a0c-b41e-cbc730e80fee/scratchpad/dl-openai-plugins",
+      "sourceType": "local",
+      "computedHash": "83f21277bfaa8427d7f0e67220885d6c04319c0b6cb1f7196186aaba293e8f88"
+    },
+    "gaming-ui-state-management": {
+      "source": "../../Users/ahaha/AppData/Local/Temp/claude/C--Fork-Defence/5b16c584-0fc9-4a0c-b41e-cbc730e80fee/scratchpad/dl-8bitcn",
+      "sourceType": "local",
+      "computedHash": "9c51bf6cc1dcb3255a3b82ed2ae9fd34979da2f31df0e4baec8203ae085b3a67"
+    }
+  }
+}

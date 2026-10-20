@@ -1,6 +1,6 @@
 ---
 paths:
-  - "Assets/Code/Persistence/**/*.cs"
+  - "Assets/01.Code/Persistence/**/*.cs"
 ---
 # 저장 규칙
 

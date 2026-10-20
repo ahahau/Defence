@@ -1,7 +1,7 @@
 ---
 paths:
-  - "Assets/Code/Artifacts/**/*.cs"
-  - "Assets/GameModules/Data/Artifacts/**/*.asset"
+  - "Assets/01.Code/Artifacts/**/*.cs"
+  - "Assets/07.SO/Artifacts/**/*.asset"
 ---
 # 유물·물약 제작 규칙
 
@@ -13,7 +13,7 @@ paths:
    * `IsConsumable`을 켜면 산 자리에서 효과만 내고 소지품에 남지 않는다. 회복량은 `HealRatio`(최대 체력 비율)로 정한다.
    * 물약은 사도 진열 목록에서 빠지지 않는다. 그래서 상인의 소모품 진열 개수에 상한이 있다.
 3. 위치와 이름.
-   * 유물: `Assets/GameModules/Data/Artifacts/GeneratedUnit/<이름>Artifact.asset`
+   * 유물: `Assets/07.SO/Artifacts/GeneratedUnit/<이름>Artifact.asset`
    * 유물 효과: `Artifacts/GeneratedUnit/Effects/<조건>_<이름>.asset` 또는 공용 `Artifacts/Effects/`
    * 물약: `Artifacts/Potions/Potion_<이름>.asset`
 4. 상인에게 팔려면 `Artifacts/ArtifactShopCatalog.asset`의 `stock`에 넣고 `Price`를 준다. `Price`가 0이면 진열되지 않는다.

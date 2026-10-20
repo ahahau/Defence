@@ -1,6 +1,6 @@
 # C# Coding Style
 
-`RPG_2025_winter/Assets/Code`의 실사용 관례를 `Defence`에 적용한다. 이 문서는 새 코드와 리팩터링 대상에 적용하며, 기존 직렬화 필드 이름을 일괄 변경하지 않는다.
+`RPG_2025_winter/Assets/01.Code`의 실사용 관례를 `Defence`에 적용한다. 이 문서는 새 코드와 리팩터링 대상에 적용하며, 기존 직렬화 필드 이름을 일괄 변경하지 않는다.
 
 ## Formatting
 

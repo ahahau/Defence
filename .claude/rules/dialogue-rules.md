@@ -1,7 +1,7 @@
 ---
 paths:
-  - "Assets/Code/Dialogue/**/*.cs"
-  - "Assets/GameModules/Data/Dialogue/**/*.asset"
+  - "Assets/01.Code/Dialogue/**/*.cs"
+  - "Assets/07.SO/Dialogue/**/*.asset"
 ---
 # 대화·일차 이벤트 제작 규칙
 
@@ -16,7 +16,7 @@ paths:
    * 금화 변화는 `CostEventChannel`을 거쳐 장부에 올라간다. 금화를 직접 바꾸지 않는다.
    * 선택지의 `effectSummary`는 실제 액션 값과 반드시 일치시킨다(예: "금화 -30, 사기 +6").
 3. 위치와 이름.
-   * 일차 이벤트: `Assets/GameModules/Data/Dialogue/Sequences/DayEvent_<이름>.asset`
+   * 일차 이벤트: `Assets/07.SO/Dialogue/Sequences/DayEvent_<이름>.asset`
    * 튜토리얼·특수 대화: `Dialogue/Sequences/<이름>Dialogue.asset`
    * 값 테이블: `Dialogue/ValueTables/`
    * `ExampleTRPGDialogueSequence`, `TestDia`, `ValueTables/Example`은 예제·테스트용이다. 게임 이벤트로 연결하지 않는다.
@@ -34,7 +34,7 @@ paths:
    * 금액은 띄우는 순간의 수치로 정하고 결과를 가리지 않는다. 금화가 모자란 선택지는 " · 금화 부족"을 붙여 잠근다(`DialogueChoice` 잠김).
    * 선택지 결과는 `RuntimeDialogueActionSO`(코드 콜백)로 만들고, 사건이 끝나면 `SituationEventFactory.Release`로 버린다.
    * 본문은 두 줄(한 줄 40자 안쪽)까지만 선택지에 가리지 않는다.
-5. 시작 튜토리얼(`StartTutorialDialogue`, 가이드 튜토리얼 단계)은 방 관리 화면 흐름(`RoomManagementController.TryGetTutorialTarget`)에 묶여 있다. 해당 UI를 바꾸면 튜토리얼 단계가 여전히 진행되는지 확인한다. 실제로 도는 첫날 안내는 `PlayTutorialView`이고, `DialogueRunner`의 가이드 튜토리얼은 씬에서 꺼져 있다.
+5. 시작 튜토리얼(`StartTutorialDialogue`, 가이드 튜토리얼 단계)은 방 관리 화면 흐름에 묶여 있다. 첫날 안내(`PlayTutorialView`)는 uGUI 방 관리 화면(`RoomManagementScreen`)에 물어 방 → 도크 갈래 버튼 → 카드 → 설치 순서로 비춘다(`DialogueRunner` 가이드 쪽 강조는 아직 방만 비춘다). 해당 UI를 바꾸면 튜토리얼 단계가 여전히 진행되는지 확인한다. 실제로 도는 첫날 안내는 `PlayTutorialView`이고, `DialogueRunner`의 가이드 튜토리얼은 씬에서 꺼져 있다.
 6. 문장은 게임 세계관(던전 주인, 임프 참모 화자)에 맞는 한국어로 쓴다. 선택지는 결과가 서로 다른 트레이드오프여야 한다. 한쪽이 항상 나은 선택지는 만들지 않는다.
 7. 검증한다.
    * `DialogueSequencePlayerTests`(EditMode)를 돌린다.

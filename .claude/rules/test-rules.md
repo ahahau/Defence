@@ -33,11 +33,10 @@ paths:
 | `RedeployPreparationTests` | 재배치 준비 시간·준비 중 피해 절반, 특성별 재배치 반응, 부활 마력 비용(정가·특성) |
 | `RoomConstructionTests` | 그래프 노드 제거(연결·자리 정리), 공사 중 노드의 막힌 길·배치 불가, 방 크기별 비용·시간·정원·환불·등급·후보 확률·소형 시설 금지, 특수 효과 확률·대가·효과, 연결 방향 예측, 열린 방의 효과 표시 |
 | `PopupRequestTests` | 범용 팝업 요청 규칙 |
-| `HudToolkitTests` | HUD Toolkit 조각: 최근 기록 묶기(같은 종류 키는 최신 문구 한 줄 + 횟수, 이어질 때만, 최대 줄 수) |
 | `RoomManagementTests` | 방 관리 화면: 화면 사각형 환산, 설치·배치 막힘 이유, 설치 판정과 실제 설치 경로 일치(방 상태 × 건물 데이터 전수), 수리·휴업·철거 버튼 상태 |
 | `RouteRiskTests` | 모험가 소문·길 고르기: 소문 누적·절반, 위험 점수·특성별 회피·보상 선호, 견문 → 소문(탈출만·전멸 시 버림·보스 파티 무시·큰 보상 시 삭제) |
 | `CharacterAnimationTests` | 캐릭터 프레임 애니메이션: 반복·한 번 재생 프레임 계산, 애니메이션 묶음마다 네 동작 프레임 존재 |
-| `AssetWiringTests` | 에셋 연결 (그림·프리팹·아이콘·WaveConfig·씬 배선·Toolkit 화면 설정·운영 방침 창 구조) |
+| `AssetWiringTests` | 에셋 연결 (그림·프리팹·아이콘·WaveConfig·씬 배선) |
 | `CombatFormulaTests` | 전투 공식 |
 | `EncounterVarietyTests` | 웨이브 편성 다양성, 파티 인원 변동(리더 유지·밤·등급), 리더 동기 대기, 입장 박자(그룹 간격·배율·밤 배율, 밤 손님 레벨 -1) |
 | `WaveExploitationProgressTests` | 웨이브 목표 진행 |

@@ -16,21 +16,22 @@ paths:
 ## 성능·설계
 - `Update()`/`FixedUpdate()` 안에서 `GetComponent`/`Find`를 호출하지 않는다. `Awake()`에서 캐싱한다.
 - `FindAnyObjectByType`·`FindObjectsByType`·`GameObject.Find`·`transform.Find("이름")`·`Shader.Find`를 새로 쓰지 않는다(static·Find 제거 작업 중, `Docs/AI/RefactoringRoadmap.md`).
-  - 씬 객체는 `[SerializeField]`로 받는다. 씬을 아직 배선하지 못했으면 `SceneReferenceFallback.Find`(경고를 남김)만 쓴다. 실행 중에 생기는 Toolkit 화면은 `FindForRuntimeObject`(2단계에서 주입으로 대체).
-  - 코드가 그리는 선의 재질은 `RuntimeMaterials.LoadLine()`(공용 에셋 `Resources/Materials/RuntimeLineMaterial`).
+  - 씬 객체는 `[SerializeField]`로 받는다. 씬을 아직 배선하지 못했으면 `SceneReferenceFallback.Find`(경고를 남김)만 쓴다. 실행 중에 생기는 화면은 `FindForRuntimeObject`(2단계에서 주입으로 대체).
+  - 코드가 그리는 선의 재질은 `RuntimeMaterials.LoadLine()`(공용 에셋 `Assets/05.Materials/RuntimeLineMaterial`, 씬의 `RuntimeAssetInstaller`가 넘김).
+  - `Resources.Load`를 새로 쓰지 않는다(옛 uGUI 프리팹·스킨과 DOTween 설정만 남아 있다). 씬·프리팹 컴포넌트는 `[SerializeField]`로, 씬 밖 정적 시스템은 `RuntimeAssetInstaller`에 필드를 추가해 넘긴다.
   - 만든 자식은 이름으로 다시 찾지 말고 필드로 들고 있는다.
 - 새 정적 가변 상태(`static` 필드에 담는 장부·목록·캐시)와 새 `Current` 싱글턴을 만들지 않는다. 상태 없는 규칙 함수(`static class ...Rules`)는 그대로 쓴다.
   - 매니저는 조립 루트 `GameScope`로 받는다(`Docs/AI/GameScopeDesign.md`). 씬 컴포넌트는 `[SerializeField] GameScope scope`, 실행 중 생성물은 만드는 쪽이 넘기고, 정적 함수는 인자로 받는다. 씬 컴포넌트는 `GameScope.Resolve(scope, s => s.X, this, nameof(scope))`로 받아 필드에 들고 있는다. `GameScope`에 있는 매니저(`FacilityClosureSystem`·`UnitRevivalSystem`·`RunSummarySystem`·`DungeonGradeManager`·`MoralePolicyManager`)의 `Current`를 새로 쓰지 않는다. `FacilityClosureSystem`은 `Current`가 없다.
 - 매 프레임 class를 `new`로 할당하지 않는다. 꼭 필요하면 사전 승인을 받는다.
-- 한 파일에 public class 하나. 예외: `Code/Events/*Events.cs`는 기능별 이벤트 타입을 한 파일에 모은다. God class 금지. 서로 다른 시스템 간 결합은 인터페이스나 이벤트 채널로 한다.
+- 한 파일에 public class 하나. 예외: `Assets/01.Code/Events/*Events.cs`는 기능별 이벤트 타입을 한 파일에 모은다. God class 금지. 서로 다른 시스템 간 결합은 인터페이스나 이벤트 채널로 한다.
 
 ## 아키텍처
 - 어셈블리:
   - `Assets/GameLib/Entity` → `DungeonKeeper.GameLib`. 게임 코드를 참조하지 않는다.
-  - `Assets/Code` → `DungeonKeeper.Runtime`. 새 패키지 의존을 추가하면 asmdef `references`도 고친다.
+  - `Assets/01.Code` → `DungeonKeeper.Runtime`. 새 패키지 의존을 추가하면 asmdef `references`도 고친다.
   - `Assets/Tests/EditMode/Reflected` → `Defence.EditMode.Tests`(Runtime 참조).
 - 모듈 시스템: `ModuleOwner`가 자식의 `IModule`을 모아 `Initialize` → `AfterInitialize`(`IAfterInitModule`) 2단계로 깨운다. 모듈 간 배선은 `AfterInitialize`에서 하고, 조회는 `GetModule<T>()`로 한다.
-- 이벤트: `GameEventChannelSO` 기반 pub/sub이고 이벤트 타입은 `Code/Events`에 있다. 채널은 SO라 구독 상태가 플레이 종료 후에도 남으므로, 구독은 `OnEnable`/`Awake` ↔ `OnDisable`/`OnDestroy`로 반드시 짝을 맞춰 해제한다.
+- 이벤트: `GameEventChannelSO` 기반 pub/sub이고 이벤트 타입은 `Assets/01.Code/Events`에 있다. 채널은 SO라 구독 상태가 플레이 종료 후에도 남으므로, 구독은 `OnEnable`/`Awake` ↔ `OnDisable`/`OnDestroy`로 반드시 짝을 맞춰 해제한다.
 - 매니저는 정적 `Current` 접근자를 가진다. `Awake`에서 설정하고, `OnDestroy`에서 자기 자신일 때만 해제한다.
-- 데이터는 ScriptableObject(`Assets/GameModules/Data`)에, 진행 중 변하는 값은 런타임 상태에 둔다. 플레이 중에 SO를 쓰면 에셋이 오염된다.
-- 입력: `Code/Core/Input/Controls.cs`는 Input System 생성 코드다. 편집하지 말고 `.inputactions`에서 재생성한다.
+- 데이터는 ScriptableObject(`Assets/07.SO`)에, 진행 중 변하는 값은 런타임 상태에 둔다. 플레이 중에 SO를 쓰면 에셋이 오염된다.
+- 입력: `Assets/01.Code/Core/Input/Controls.cs`는 Input System 생성 코드다. 편집하지 말고 `.inputactions`에서 재생성한다.

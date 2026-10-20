@@ -1,9 +1,9 @@
 ---
 paths:
-  - "Assets/Code/Skills/**/*.cs"
-  - "Assets/Code/StatusEffects/**/*.cs"
-  - "Assets/GameModules/Data/Skills/**/*.asset"
-  - "Assets/GameModules/Data/StatusEffects/**/*.asset"
+  - "Assets/01.Code/Skills/**/*.cs"
+  - "Assets/01.Code/StatusEffects/**/*.cs"
+  - "Assets/07.SO/Skills/**/*.asset"
+  - "Assets/07.SO/StatusEffects/**/*.asset"
 ---
 # 스킬·상태이상 제작 규칙
 
@@ -18,7 +18,7 @@ paths:
    * 궁극기: `IsUltimate`를 켜면 전투당 1회만 쓴다(쿨다운 무시). 준비되면 기본 스킬보다 먼저 쓴다.
 3. 캐릭터에는 프리팹의 `SkillCaster`에 `skill` 1개 + `ultimate` 1개를 연결한다.
    * BT의 Cast Skill 노드가 `SkillCaster.TryCast`를 부른다. 새 전투(전투 필드 변경)가 시작되면 쿨다운과 궁극기가 초기화된다.
-4. 위치와 이름은 `Assets/GameModules/Data/Skills/`를 따른다.
+4. 위치와 이름은 `Assets/07.SO/Skills/`를 따른다.
    * 캐릭터 전용: `Generated/CombatLoadouts/`
      * `Skill_<진영>_<캐릭터>_<스킬명>` / `Ultimate_<진영>_<캐릭터>_<스킬명>`
      * 효과는 `Effect_<진영>_<캐릭터>_<스킬명>[_<Damage|Status|Heal|Zone|Burst>]`
@@ -33,7 +33,7 @@ paths:
    * 단순 배율은 데이터에 바로 넣는다: `attackIntervalMultiplier`(공격 간격), `trapDamageTakenMultiplier`(받는 함정 피해).
    * 추가 효과가 필요하면 `StatusEffectSO`를 상속한다(`AttackIntervalStatusEffectSO`, `TrapDamageTakenStatusEffectSO` 참고).
 7. 위치와 이름.
-   * 상태이상: `Assets/GameModules/Data/StatusEffects/<이름>StatusEffect.asset`
+   * 상태이상: `Assets/07.SO/StatusEffects/<이름>StatusEffect.asset`
    * 효과 조각: `StatusEffects/Effects/<상태>_<효과>.asset`
    * 기존 목록: 출혈, 취함, 광란, 부상, 기절, 취약, 방어 파괴, 노출, 속박. 새로 만들기 전에 겹치는 것이 없는지 확인한다.
 8. 상태이상은 스킬(상태이상 부여 효과)과 함정(`Trap`의 상태이상) 양쪽에서 쓴다. 한쪽을 고치면 다른 쪽 사용처도 확인한다.

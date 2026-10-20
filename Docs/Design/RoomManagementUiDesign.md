@@ -37,7 +37,7 @@
 
 ## 화면
 
-모든 영역은 고정 크기다(ui-rules 10번). 새 UXML은 `Assets/GameModules/UI/UxmlAndUss/Battle/RoomManagement/`에 두고, 기존 HUD 문서(`Resources/UI/Toolkit/GameplayHud.uxml`)와 별개 문서로 띄운다(`ToolkitScreenSO`, 공용 패널 위 `PopupPanelSettings` 문서 순서 350). HUD 문서에서는 옛 `node-detail-panel`·`installation-panel`을 뺀다.
+모든 영역은 고정 크기다(ui-rules 10번). 새 UXML은 `Assets/09.UI/UxmlAndUss/Battle/RoomManagement/`에 두고, 기존 HUD 문서(`Resources/UI/Toolkit/GameplayHud.uxml`)와 별개 문서로 띄운다(`ToolkitScreenSO`, 공용 패널 위 `PopupPanelSettings` 문서 순서 350). HUD 문서에서는 옛 `node-detail-panel`·`installation-panel`을 뺀다.
 
 ### 1. 방 상세 패널 (오른쪽, 400 × 640)
 

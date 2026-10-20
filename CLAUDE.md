@@ -22,7 +22,7 @@ Unity 6000.6.3f1 · URP 2D · New Input System · Unity Behavior · Feel · DOTw
 | 작업 | 먼저 읽을 규칙 |
 |---|---|
 | C# 스크립트 작성·수정 (항상) | `csharp-style.md` |
-| UI (UI Toolkit) | `ui-rules.md` |
+| UI (uGUI 전환 중, Toolkit 제거됨) | `ui-rules.md` + 스킬 `ui-ugui`·`game-ui-frontend`·`gaming-ui-state-management`의 `SKILL.md` |
 | 플레이어 유닛 | `unit-rules.md` |
 | 적(모험가)·파티·보스 | `enemy-rules.md` |
 | 건물·시설·함정 | `building-rules.md` |
@@ -40,6 +40,9 @@ Unity 6000.6.3f1 · URP 2D · New Input System · Unity Behavior · Feel · DOTw
 프로젝트 스킬:
 - `/playtest`: Unity CLI로 플레이 모드를 실측한다.
 - `/cs-review`: 커밋 전 C# 변경을 규칙에 맞춰 리뷰한다.
+- `/game-ui-frontend`: HUD·메뉴·오버레이 설계 지침(외부 스킬, `openai/plugins`). UI 작업 전에 읽는다.
+- `/gaming-ui-state-management`: 체력·마력·경험치 막대처럼 상태가 그림을 정하는 게임 UI 패턴(외부 스킬, `TheOrcDev/8bitcn-ui`). UI 작업 전에 읽는다.
+- `/ui-ugui`: Unity uGUI(Canvas·RectTransform·Layout Group·프리팹 UI) 작업 지침. UI 작업 전에 읽는다.
 
 ## 게임 핵심 (확정)
 
@@ -51,7 +54,7 @@ Unity 6000.6.3f1 · URP 2D · New Input System · Unity Behavior · Feel · DOTw
 
 ## 아키텍처 큰 그림
 
-- **구성:** 씬에 놓인 MonoBehaviour를 직렬화 참조로 잇는다. 매니저는 정적 `Current`로 접근하고, 시스템 사이는 `GameEventChannelSO` 이벤트(`Code/Events`)로 잇는다. 데이터는 SO, 진행 중 변하는 값은 런타임 상태에 둔다.
+- **구성:** 씬에 놓인 MonoBehaviour를 직렬화 참조로 잇는다. 매니저는 정적 `Current`로 접근하고, 시스템 사이는 `GameEventChannelSO` 이벤트(`Assets/01.Code/Events`)로 잇는다. 데이터는 SO, 진행 중 변하는 값은 런타임 상태에 둔다.
 - **엔티티:** `Unit`/`Enemy`는 GameLib `Entity`(`ModuleOwner`)를 상속하고, 모듈은 `Initialize` → `AfterInitialize` 순으로 깨어난다. Unity Behavior 그래프 액션이 `BattleAgent`를 호출해 움직이고, 모든 피해는 `HealthModule.TakeDamage`를 지난다.
 - **한 판의 흐름:** Start 씬 → SampleScene. `DungeonGraphController.Awake`가 그래프를 만들고 한 프레임 뒤 `TryRestoreCurrentRun`으로 복원한다. 대기 상태 + 포탈 + `WaveManager` 승인이면 `DayManager`가 웨이브를 연다. `DayChangedEvent` → 스폰 → `WaveEndedEvent` → 정산 → 한 프레임 뒤 체크포인트 저장.
 - **돈의 두 경로:** 즉시 결제(`CostManager`: 건설·고용·회복·상인)와 웨이브 후 정산(`ManagementSettlementManager`)을 섞지 않는다. 이중 차감 사고가 있었다.
@@ -61,12 +64,14 @@ Unity 6000.6.3f1 · URP 2D · New Input System · Unity Behavior · Feel · DOTw
 
 | 경로 | 내용 |
 |---|---|
-| `Assets/Code/` | 게임 코드 (`Code.<Feature>`, asmdef `DungeonKeeper.Runtime`) |
+| `Assets/01.Code/` | 게임 코드 (`Code.<Feature>`, asmdef `DungeonKeeper.Runtime`) |
 | `Assets/GameLib/Entity/` | 모듈·스탯·센서 기반 (asmdef `DungeonKeeper.GameLib`, 게임 코드 참조 금지) |
-| `Assets/GameModules/Data/` | 데이터 SO (유닛·적·건물·웨이브·스킬·유물·대화) |
-| `Assets/GameModules/Prefabs/` | 프리팹 |
-| `Assets/GameModules/UI/UxmlAndUss/` | UI Toolkit 에셋 (기존 `Assets/Resources/UI/Toolkit/`는 이전 대상) |
-| `Assets/Scenes/` | 씬 (빌드 순서 Start → SampleScene) |
+| `Assets/07.SO/` | 데이터 SO (유닛·적·건물·웨이브·스킬·유물·대화) |
+| `Assets/03.Prefabs/` | 프리팹 |
+| `Assets/09.UI/` | UI 그림(`Skin/Silver` 9-slice 테두리). UI Toolkit 에셋은 지웠다(uGUI로 다시 만드는 중) |
+| `Assets/00.Scenes/` | 씬 (빌드 순서 Start → SampleScene) |
+| `Assets/04.Sprites/` · `05.Materials/` · `08.Fonts/` | 그림(`Characters`·`Tilesets`·`UI`·`Nodes`, 외부 팩 포함)·재질·셰이더·폰트 |
+| `Assets/Resources/` | 옛 uGUI 프리팹·스킨(`UI/<이름>`)과 루트의 `DOTweenSettings`만. 번호 폴더로 옮기지 않고, 옮기면 코드의 문자열 경로도 고친다. 오디오·전투 연출·선 재질은 씬의 `RuntimeAssetInstaller`가 넘긴다 |
 | `Assets/Tests/EditMode/Reflected/` | EditMode 테스트 (asmdef `Defence.EditMode.Tests`) |
 
 ## 빌드·검증

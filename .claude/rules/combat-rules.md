@@ -1,11 +1,11 @@
 ---
 paths:
   - "Assets/GameLib/**/*.cs"
-  - "Assets/Code/BT/**/*.cs"
-  - "Assets/Code/Combat/**/*.cs"
-  - "Assets/Code/Entities/**/*.cs"
-  - "Assets/Code/Units/**/*.cs"
-  - "Assets/Code/Enemies/**/*.cs"
+  - "Assets/01.Code/BT/**/*.cs"
+  - "Assets/01.Code/Combat/**/*.cs"
+  - "Assets/01.Code/Entities/**/*.cs"
+  - "Assets/01.Code/Units/**/*.cs"
+  - "Assets/01.Code/Enemies/**/*.cs"
 ---
 # 전투 시스템·엔티티·스탯 규칙
 
@@ -26,7 +26,7 @@ paths:
 - 값을 **덮어쓰지 말고** 출처 key별 가감치로 얹는다(`WaveLevelStatKey`, `BossStatKey` 등). 덮어쓰면 `ApplyData`가 재실행될 때 일차·보스 배율이 지워진다.
 - 적의 기본값은 `EnemyDataSO`가 정답이다(프리팹의 `StatOverride`는 시드일 뿐). 유닛은 프리팹 `StatOverride`가 정답이다.
 - 정수 스탯은 원래 반올림 지점을 유지한다. 보스 가감치는 `Round(현재값×배율) − 현재값`이다.
-- 스탯 번호는 `StatIndex` 상수로 참조한다. 새 스탯은 `Assets/GameModules/Data/Stats`에 `StatSO` 에셋을 추가하고, 해당 프리팹에 `StatOverride`를 붙인다.
+- 스탯 번호는 `StatIndex` 상수로 참조한다. 새 스탯은 `Assets/07.SO/Stats`에 `StatSO` 에셋을 추가하고, 해당 프리팹에 `StatOverride`를 붙인다.
 
 ## Feel / 연출
 - 히트스톱은 `MMTimeManager` 대신 커스텀 `MMF_HitStop`을 쓴다. MMTimeManager는 timeScale을 1로 되돌려 배속(2x)·일시정지(0)와 충돌한다.

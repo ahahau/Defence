@@ -18,7 +18,7 @@
 
 ### 구현 시 주의
 
-게임 런타임 코드는 `Assets/Code/`에 기능별로 두며 네임스페이스는 `Code.<Feature>`를 사용합니다. 재사용 엔티티·스탯은 `Assets/GameLib/Entity/`에 둡니다. 외부 에셋(`Feel`, `Plugins`, `csiimnida`, `vHierarchy`, `TextMesh Pro`)은 수정하지 말고, `.unity`·프리팹 YAML도 직접 편집하지 않습니다.
+게임 런타임 코드는 `Assets/01.Code/`에 기능별로 두며 네임스페이스는 `Code.<Feature>`를 사용합니다. 재사용 엔티티·스탯은 `Assets/GameLib/Entity/`에 둡니다. 외부 에셋(`Feel`, `Plugins`, `csiimnida`, `vHierarchy`, `TextMesh Pro`)은 수정하지 말고, `.unity`·프리팹 YAML도 직접 편집하지 않습니다.
 
 ### 검증
 

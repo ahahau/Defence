@@ -19,9 +19,9 @@
 - Windows Build Profile exists; supported shipping platforms remain undocumented.
 
 ## Directory and assembly boundaries
-- `Assets/Scenes`: Start and SampleScene are the current scene assets; Build Settings enables them in that order.
-- `Assets/Code`: gameplay runtime code; features include Manager, MapCreateSystem, BT, Combat, Units, Enemies, Buildings, Skills, StatusEffects, Progression, Artifacts, Persistence, Dialogue and UI.
-- `Assets/GameModules/Data`: gameplay definitions; `Assets/GameModules/Prefabs`: gameplay/UI prefabs; `Settings`: render/build assets. `Assets/Scenes` contains the game scenes and `Assets/_Graphics` contains art and fonts.
+- `Assets/00.Scenes`: Start and SampleScene are the current scene assets; Build Settings enables them in that order.
+- `Assets/01.Code`: gameplay runtime code; features include Manager, MapCreateSystem, BT, Combat, Units, Enemies, Buildings, Skills, StatusEffects, Progression, Artifacts, Persistence, Dialogue and UI.
+- `Assets/07.SO`: gameplay definitions; `Assets/03.Prefabs`: gameplay/UI prefabs; `Settings`: render/build assets. `Assets/00.Scenes` contains game scenes; project-owned sprites, materials, and fonts use `04.Sprites`, `05.Materials`, and `08.Fonts`.
 - `Assets/GameLib/Entity`: reusable module owner, stats and sensing primitives. It deliberately has no dependency on gameplay code.
 - Imported assets live in Feel, Plugins, csiimnida, vHierarchy and other vendor folders. Generated Library/Temp/Logs/obj content is not authoritative source.
 - `DungeonKeeper.GameLib` owns reusable entity primitives; `DungeonKeeper.Runtime` owns gameplay code and depends on GameLib. Vendor assemblies remain separate.

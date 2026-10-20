@@ -1,7 +1,7 @@
 ---
 paths:
-  - "Assets/Code/Buildings/**/*.cs"
-  - "Assets/GameModules/Data/Buildings/**/*.asset"
+  - "Assets/01.Code/Buildings/**/*.cs"
+  - "Assets/07.SO/Buildings/**/*.asset"
 ---
 # 건물·함정 제작 규칙
 
@@ -10,10 +10,10 @@ paths:
    * 외형은 `BuildingDataSO.BoardSprite`로 바꾼다. 승급형 시설은 새 프리팹을 만들지 않고 데이터만 추가한다.
    * 동작이 기존 클래스(`Store`, `Inn`, `Blacksmith`, `Mine`, `Treasury`, `RecoveryFacility`, `Wall`, `Portal`, `Trap`, `Church`)로 안 될 때만, `Building` 파생 클래스와 새 프리팹을 만든다. 이때는 사전에 설계를 확인받는다.
 2. 위치와 이름.
-   * 데이터: `Assets/GameModules/Data/Buildings/<이름>BuildingData.asset` (함정은 `<이름>TrapBuildingData`)
-   * 예외: `BlacksmithBuildingData`, `TreasuryBuildingData`는 코드가 `Resources.Load`로 읽어서 `Assets/Resources/Buildings/`에 있다. 옮기지 않는다.
-   * 시설 프리팹: `Assets/GameModules/Prefabs/Buildings/Facilities/<이름>.prefab`
-   * 함정 프리팹: `Assets/GameModules/Prefabs/Buildings/Traps/Trap_<이름>.prefab`. 새 함정은 `Trap.prefab`의 Variant로 만든다.
+   * 데이터: `Assets/07.SO/Buildings/<이름>BuildingData.asset` (함정은 `<이름>TrapBuildingData`)
+   * 금고·대장간(`TreasuryBuildingData`, `BlacksmithBuildingData`)은 해금 카탈로그 밖에서 늘 설치할 수 있다. 씬의 `NodePanelView.alwaysInstallableBuildings`(설치 후보)와 `HiredUnitRoster.buildingsOutsideUnlockCatalog`(저장 복원)에 연결돼 있다. 이런 건물을 더 만들면 두 배열에 다 넣는다.
+   * 시설 프리팹: `Assets/03.Prefabs/Buildings/Facilities/<이름>.prefab`
+   * 함정 프리팹: `Assets/03.Prefabs/Buildings/Traps/Trap_<이름>.prefab`. 새 함정은 `Trap.prefab`의 Variant로 만든다.
 3. `BuildingDataSO` 핵심 값을 반드시 정한다.
    * `Category`: `Building` / `Trap` / `Decoration`.
    * `Cost`는 즉시 결제, `DailyUpkeep`은 정산 때 운영비다. 운영비가 0이면 인접 수익 보너스도 없다.
@@ -45,7 +45,7 @@ paths:
    * 함정 피해는 정산에서 함정의 몫으로 집계된다(`LastTriggerDamage`). 웨이브 목표 "함정 피해"와 연결된다.
    * 공병(`DisarmsTraps`)은 함정을 밟지 않고 해체한다. 강한 함정을 만들 때는 이 카운터를 고려한다.
 6. 만든 건물을 게임에 등록한다.
-   * 씬의 `NodePanelView.installableBuildings` 배열에 넣고, `Data/Progression/DungeonUnlockCatalog.asset`에 해금일과 함께 등록한다. 후반 시설·함정은 `metaProgressRequired`(메타 진행도 10·25·50)로 새 판 후보에 늦게 넣을 수 있다.
+   * 씬의 `NodePanelView.installableBuildings` 배열에 넣고, `Assets/07.SO/Progression/DungeonUnlockCatalog.asset`에 해금일과 함께 등록한다. 후반 시설·함정은 `metaProgressRequired`(메타 진행도 10·25·50)로 새 판 후보에 늦게 넣을 수 있다.
    * 방 특수 효과가 건물 수치를 바꾼다: 풍요 방 수입 +25%(`FacilityEconomyRules.ScaleIncome`), 함정 지대 함정 피해 +50%(`Trap.CurrentDamage`). 수입·함정 피해를 새 경로로 계산하면 이 둘을 거친다.
    * 씬 배선이므로 Unity CLI로 처리하거나 사용자에게 순서대로 요청한다.
 7. 검증한다.

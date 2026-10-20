@@ -1,8 +1,8 @@
 ---
 paths:
-  - "Assets/Code/Manager/**/*.cs"
-  - "Assets/Code/MapCreateSystem/**/*.cs"
-  - "Assets/Code/Progression/**/*.cs"
+  - "Assets/01.Code/Manager/**/*.cs"
+  - "Assets/01.Code/MapCreateSystem/**/*.cs"
+  - "Assets/01.Code/Progression/**/*.cs"
 ---
 # 웨이브·경제·던전 시스템 규칙
 
@@ -53,7 +53,7 @@ paths:
 - 공사 중인 방은 `IsPassBlocked`(적 길찾기 우회), `CanAcceptAdditionalUnit = false`(배치·이동 불가). 공사 중인 방에서는 다음 확장 후보를 뻗지 않고, 그 방에 닿은 라인에는 라인 건물을 놓지 못한다(`EdgeLine.IsAvailableForInstall`).
 - 공사 중인 방을 누르면 취소 확인 팝업. 취소하면 낸 금화의 `constructionCancelRefundRate`(50%)를 `BuildCostRefundedEvent`로 돌려주고(장부: 건설 취소 환불), `DungeonGraph.RemoveNode`·`DungeonEdgeManager.RemoveEdgesFor`로 노드와 라인을 지운 뒤 잠긴 칸을 다시 깐다.
 - 저장: `SavedNode.constructionRemaining`·`constructionPaidGold`. 옛 저장은 0(완공)으로 읽힌다.
-- 방 크기(`RoomSize`, 수치는 `RoomSizeRules`에만): 소형 확장비 ×0.5·공사 3초·팀당 2명·시설 불가·취소 환불 70%, 중형 기본값(8G·4초·3명·50%), 대형 ×2·8초·4명·환불 30%·던전 등급 2 이상. 격자는 모두 6×6. 팀당 정원은 모험가에게도 같이 걸린다(`NodeBattlefield.SetMaxPerTeam`).
+- 방 크기(`RoomSize`, 수치는 `RoomSizeRules`에만): 소형 확장비 ×0.5·공사 3초·팀당 2명·시설 불가·취소 환불 70%, 중형 기본값(8G·4초·3명·50%), 대형 ×2·8초·4명·환불 30%·던전 등급 2 이상. 격자 틀은 불규칙(정사각 아님): 틀 최대 소 6×6·중 7×7·대 9×8, 바닥 칸 소 12~22·중 22~36·대 36~72(`RoomSizeRules.MaxColumns`·`MaxRows`·`MinFloorCells`·`MaxFloorCells`). 팀당 정원은 모험가에게도 같이 걸린다(`NodeBattlefield.SetMaxPerTeam`).
   - 후보 크기는 자리마다 처음 그릴 때 한 번 뽑아 둔다(`_candidateSizes`, 등급 0: 소 40·중 50·대 10%, 등급마다 대 +5%p·소 -3%p). 다시 그려도, 공사를 취소해도 같은 크기다. 판 저장에는 넣지 않아 불러오면 후보 크기는 다시 뽑힌다.
   - 그래프 방이 3개 이하일 때 뻗는 후보는 중형으로 고정한다(입구 옆 첫 확장·튜토리얼이 막히지 않게).
   - 저장: `SavedNode.roomSize`(0 = 중형이라 옛 저장은 중형).
@@ -61,7 +61,11 @@ paths:
 - 연결 방향 공개: 후보 라벨 셋째 줄과 확장 창에 열면 이어질 방향을 화살표로 적는다(`RoomFeatureRules.PredictConnections`·`ConnectionLabel`). 실제 연결(`ConnectAdjacentNodes`: 부모 먼저, 위·오른쪽·아래·왼쪽, 양쪽 남은 연결 수)과 같은 규칙이라, 연결 규칙을 바꾸면 예측도 같이 바꾼다. 입구 옆 첫 후보는 입구와 대각선(↗↘)으로 이어진다.
 
 ## 던전 그래프
+- 방 모양(`RoomShape`: 칸마다 바닥/막힘, 문은 상하좌우 중 2개 이상, 변 가운데). 보통 방은 후보마다 판 시드로 깎는다(`RoomShapeGenerator`: 틀·모서리·홈·기둥, 문은 부모 쪽 + 무작위 1~3개). `RoomLayoutRules.SpecialRoomChance`(15%)로 손으로 만든 특별 방 프리팹(`Assets/03.Prefabs/Map/Rooms/Room_Special_*`, 네 변 문)이 대신 나온다. 입구도 프리팹. 막힌 칸에는 함정·유닛·시설을 놓지 못한다(`NodeTrapGrid.IsBlockedCell`). 칸 하나 = 타일 2×2(1.25u), 노드 간격 15u = 타일 24칸. 생성기는 한 칸 폭 돌기·틈(검은 틈)과 틀의 82% 넘게 찬 모양을 버린다.
+- 후보는 방의 문으로만 뻗고(입구 바깥문 오른쪽 제외), 모양은 `RunRandom`(줄기 `RoomLayout`, 부모 쪽 문을 시드에 섞음)으로 정해 자리마다 유지한다(`_candidateLayouts`). 이웃 방과는 양쪽 문이 마주 볼 때만 잇는다(`RoomDoorRules`). 입구의 위·아래 문은 ㄱ자 복도로 왼쪽 위·아래 방의 오른쪽 문에 닿는다. 생성 규칙을 바꾸면 `RoomShapeGenerator_MakesValidVariedRoomsForEveryDoor`가 크기×문×시드를 검사한다.
+- 타일은 룰 타일(`Assets/07.SO/Map/Tiles/`: `DungeonFloorRuleTile` 무늬 무작위, `DungeonWallRuleTile` 3/4 시점 조각 — 이웃이 바닥 룰 타일인지로 고름, 기둥 `DungeonPillarRuleTile`)이고 `RoomTileSet`으로 묶는다. 예제 씬 `Dark_Castle_001`과 같은 조각: 위쪽 벽 = 벽돌 면 2줄 + 난간(타일 3칸), 옆·아래 = 난간, 방 안 기둥 = 벽돌 기둥. 열린 방은 던전 타일맵 한 장(`DungeonTilemap`, `DungeonNodeManager`가 실행 중 생성)에 함께 칠하고(`RoomTilePainter`), 잠긴 후보만 노드 자기 타일맵에 칠한다. 바닥 룰 타일은 벽과 같은 타일맵에 두어야 벽이 바닥을 본다. 손으로 칠할 때는 팔레트 `Assets/04.Sprites/Tilesets/Palettes/DungeonRoomPalette`. 룰 타일·셋·팔레트·특별 방은 생성기 `RoomLayoutBuilder.BuildAll()`이 만든다.
+- 복도는 양쪽 방이 반씩 깐다(`RoomTilePlan`). 방 색조는 특수 효과를 따른다(`RoomFeatureRules.Tint`, 타일마다 색). 저장: `SavedNode`·`SavedCandidate`의 `layoutId`·`layoutRows`(모양 줄)·`layoutDoors` — 생성한 방은 다시 깎지 않고 줄로 되살린다.
 - `DungeonGraphController.Awake`가 그래프를 만들고, `Start`는 한 프레임 뒤 `TryRestoreCurrentRun`을 호출한다.
 - 방을 지으면 새 갈래가 생겨 `LockedNode`가 늘어난다. 열린 방은 이름이 `LockedNode`로 시작하지 않는 노드로 센다.
-- 해금은 `Data/Progression/DungeonUnlockCatalog.asset`의 `unlockDay`로 관리한다.
+- 해금은 `Assets/07.SO/Progression/DungeonUnlockCatalog.asset`의 `unlockDay`로 관리한다.
 - 메타 콘텐츠 해금: 카탈로그 항목의 `metaProgressRequired`(진행도 단계 10·25·50, `MetaUnlockRules.Tiers`)를 채우지 못하면 해금일이 와도 그 판에는 열리지 않는다(`DungeonUnlockEntry.IsUnlockedOn`, 안내 앞에 "진행도 N 필요"). 지금 10: 망령 암살귀·깊은 광산·갑옷분쇄 함정, 25: 해골 주술사·큰 주점·무기 상점·압쇄 함정, 50: 레드 슬라임·오크 철퇴병·처형 톱날. 처음부터 열린 기본 콘텐츠는 잠그지 않는다. 결과 화면이 이번 판으로 새로 열린 것을, 타이틀이 다음 단계를 보여 준다.

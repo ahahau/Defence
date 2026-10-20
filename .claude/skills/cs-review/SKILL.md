@@ -29,7 +29,7 @@ description: 커밋되지 않은 C# 변경을 이 프로젝트의 규칙(.claude
 - 저장 에이전트 추가 시 `SaveKey` 중복, 레지스트리 순서 누락
 - `GameSfxCue`·직렬화되는 enum의 중간 삽입·삭제
 - `DwellSeconds > 0` 시설과 유닛 배치를 한쪽만 막음
-- `Resources.Load` 경로 에셋(UI Toolkit·오디오 카탈로그·대장간/금고 데이터)을 옮기거나 경로 문자열을 바꿈
+- `Resources.Load` 경로 에셋(옛 uGUI 프리팹·스킨)을 옮기거나 경로 문자열을 바꿈, 또는 `Resources.Load`를 새로 씀
 - UI: 하드코딩된 색·selector 문자열, 내용에 따라 크기가 바뀌는 레이아웃
 
 **품질**
