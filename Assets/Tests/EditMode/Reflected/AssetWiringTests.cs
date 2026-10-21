@@ -176,6 +176,33 @@ namespace Tests.EditMode.Gameplay
         }
 
         /// <summary>
+        /// 고용할 수 있는 부하는 모두 진짜 그림과 움직임(애니메이션 묶음)을 가져야 한다.
+        /// 슬라임 셋이 임시 네모 그림으로 남아 시작 부하부터 사각형으로 싸웠다(2026-10-22 해골 검사 셋으로 교체).
+        /// </summary>
+        [Test]
+        public void EveryUnit_UsesRealAnimatedArt()
+        {
+            var renderType = RequireType("Code.Entities.EntityRender");
+            var setField = renderType.GetField("animationSet", Instance);
+            Assert.That(setField, Is.Not.Null, "EntityRender.animationSet 를 찾지 못했습니다.");
+            var missing = new List<string>();
+
+            foreach (var (asset, _) in LoadAll("Code.Units.UnitDataSO"))
+            {
+                var sprite = ReadProperty(asset, "Sprite");
+                if (sprite == null || IsPlaceholder(sprite))
+                    missing.Add(asset.name + " · 고용 그림");
+
+                var prefab = ReadProperty(asset, "Prefab") as Component;
+                var render = prefab != null ? prefab.GetComponentInChildren(renderType, true) : null;
+                if (render == null || setField.GetValue(render) == null)
+                    missing.Add(asset.name + " · 애니메이션 묶음");
+            }
+
+            Assert.That(missing, Is.Empty, "진짜 그림이 없는 부하:\n  " + string.Join("\n  ", missing));
+        }
+
+        /// <summary>
         /// 유물은 목록에서 그림으로 구분된다. 하나라도 비면 그 칸만 빈 상자로 나온다.
         /// </summary>
         [Test]

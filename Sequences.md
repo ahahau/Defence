@@ -1,5 +1,13 @@
 # Sequences
 
+- 2026-10-22 · 방만 골라 유닛 배치, 그림 없는 슬라임 셋을 해골 검사 셋으로(사용자: "유닛 배치는 타일 선택아니여도 노드 클릭만 되면 되게해주고 유닛이랑 적도 에셋 없는건 없애고 에셋에 맞춰서 만들어줘" → "A안(해골 검사 파랑·초록·빨강)").
+  - 배치: 설치 창 유닛 카드의 '배치'가 고른 방의 가운데에 가장 가까운 빈 칸에 바로 세운다(`NodePanelView.HandleDeployRequested` → 마력 결제 → 배치). "방 안의 밝은 칸을 누르세요" 칸 고르기·칸 칠하기는 없앴고, 빈 칸이 없으면 "이 방에는 유닛을 세울 빈 칸이 없습니다". `Node.TryFindFirstFreeUnitCell`은 왼쪽 위 구석부터 찾던 것을 방 가운데에서 가까운 칸으로(유닛 이동·부활 자리도 같은 함수). 설치 창은 배치 뒤 접지 않는다(`InstallPanelPresenter` 접힘 안내는 건물·함정만).
+  - 그림 조사: 모험가 15종·부하 10종은 모두 전용 애니메이션 묶음이 있었고, 임시 네모 그림(`Placeholder/Unit.png`)은 슬라임 셋뿐이었다.
+  - 슬라임 → 해골 검사(SkeletonWarrior `ske_sword` 색 변형): 블루 → 해골 검사(파랑), 그린 → 독 해골 검사(초록), 레드 → 피 해골 검사(빨강). 값·역할·스킬·해금일·상태이상은 그대로. 데이터 파일 이름(`SlimeBlueUnitData` 등)은 저장 키(`HiredUnitRoster.AssetKey`)라 두고 표시 이름·고용 그림만 바꿨다. 프리팹은 `Units/SkeletonSwords/Unit_SkeletonSword{Blue,Green,Red}`로 이름만 바꿨다(GUID 유지). 애니메이션 묶음 `UnitSkeletonSword{Blue,Green,Red}Anim`(대기 ready 3·걷기 walk 6·공격 attack1 6·쓰러짐 dead_near 6), 포즈 3종, 공격음 Attack(칼, 방패병과 같음).
+  - 그림 가져오기: `ske_sword` 색 셋은 기본값(100PPU·선형 필터·가운데 기준점)이었다. 같은 팩 방패병(`shield_origin`)과 그림 크기·발밑 위치가 같아 같은 이름 프레임의 설정(28PPU·점 필터·발밑 기준점)을 그대로 옮겼다(쓰는 동작 4종, 색마다 21장).
+  - 테스트: `AssetWiringTests.EveryUnit_UsesRealAnimatedArt`(부하마다 진짜 고용 그림 + 애니메이션 묶음, 바꾸기 전 슬라임 셋으로 실패 확인). EditMode 353/353.
+  - 플레이(세이브 원복): 저장의 배치된 블루 슬라임이 해골 검사(파랑) 걷기·대기 프레임으로 그려짐. 회수 뒤 방(12×12)만 골라 '배치' → 칸 고르기 없이 바로 (5,4)칸(가운데)에 섰고 마력 8→7.
+
 - 2026-10-21 · UI 뒤 클릭 막기, 도크 메뉴 버튼 삭제(사용자: "ui 뒤에 패널넣어서 뒤에 클릭 안되게해줘 메뉴 버튼 없애줘").
   - 원인: 지도 클릭 판정(`DungeonGraphController.IsPointerOverUi`)이 버튼·스크롤만 UI로 쳐서, 패널 바탕·창 뒤 어두운 덮개(상인·고용·정산·팝업·대화)·글자를 누르면 그 뒤의 방·유닛이 눌렸다. 장부·손님 브리핑·진행 카드·도크 안내 줄은 바탕이 클릭을 받지도 않았다(`raycastTarget` 꺼짐).
   - 수정: `IsPointerOverUi`는 화면 UI의 어떤 그림에 닿아도 막고, 월드 공간 캔버스만 통과시킨다. `GameplayHudBuilder`(장부·브리핑·진행 카드)·`RoomManagementBuilder`(안내 줄) 바탕을 클릭 받게 켜고 두 생성기를 다시 돌렸다(HUD → 방 관리 순서). 도크의 "메뉴" 버튼과 `ActionDockView.menuButton`·`MenuRequested`, `RoomManagementScreen.MenuRequested`·`HandleMenu`("메뉴 화면은 아직 만드는 중" 안내)를 지웠다. 도크 줄 폭 760 → 684(`DockBarWidth`, 보유 목록·안내 줄도 같은 폭), 설치 창은 카드 5장 때문에 760 그대로.

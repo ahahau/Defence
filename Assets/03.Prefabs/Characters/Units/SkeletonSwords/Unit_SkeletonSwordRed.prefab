@@ -25,7 +25,7 @@ GameObject:
   - component: {fileID: 9165458432751671341}
   - component: {fileID: 7621316638257708000}
   m_Layer: 0
-  m_Name: Unit_SlimeRed
+  m_Name: Unit_SkeletonSwordRed
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -198,7 +198,7 @@ MonoBehaviour:
   enableFeelCombatFeedbacks: 1
   attackHitParticles: {fileID: 0}
   attackImpactOffset: 0.08
-  attackSfx: 20
+  attackSfx: 8
   attackStatusEffect: {fileID: 11400000, guid: e70d9291c81c47e98d34cdcf308513e9, type: 2}
   attackStatusEffectChance: 0.45
   health: {fileID: 2709196990148380843}
@@ -488,7 +488,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &2624532001765305233
 SpriteRenderer:
-  serializedVersion: 2
+  serializedVersion: 3
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -535,7 +535,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 20
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -6620443678240376230, guid: e87236f48560e4940955075b58eab9c8, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 31b695ef66baace438c2be3291cb4e3e, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -545,6 +545,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
 --- !u!114 &4672866224859387311
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -558,10 +559,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Entities.EntityRender
   gameStateEventChannel: {fileID: 0}
-  idleSprite: {fileID: 4723107735738678597, guid: 1c0770678fecb4745a7eb07166a4476b, type: 3}
-  attackSprite: {fileID: -7008412969330441016, guid: 939061c53fd7cd94b85ad7eb23ef1ecb, type: 3}
-  defeatedSprite: {fileID: 2649847697073447219, guid: 582edb42f115ecd4780ed9ef9bf768bf, type: 3}
+  idleSprite: {fileID: 21300000, guid: 31b695ef66baace438c2be3291cb4e3e, type: 3}
+  attackSprite: {fileID: 21300000, guid: a3543a5b97ddfcd42822765361dbe2e6, type: 3}
+  defeatedSprite: {fileID: 21300000, guid: f11b584da2d0c064eb12f351e635e823, type: 3}
   spriteRenderer: {fileID: 2624532001765305233}
+  animationSet: {fileID: 11400000, guid: d1a500564045ffe45b689a8557e50ae4, type: 2}
 --- !u!1001 &1660696363140019140
 PrefabInstance:
   m_ObjectHideFlags: 0

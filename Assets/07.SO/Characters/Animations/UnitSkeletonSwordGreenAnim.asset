@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01dd91c8cfa8fac4997dcf6fb275ff8c, type: 3}
+  m_Name: UnitSkeletonSwordGreenAnim
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Entities.CharacterAnimationSetSO
+  idleFrames:
+  - {fileID: 21300000, guid: f138d83a56948da42b6dc4d76583ac8d, type: 3}
+  - {fileID: 21300000, guid: cb0ef70d397afa244b7f64f15b809f18, type: 3}
+  - {fileID: 21300000, guid: 2af9e72078199eb45898e13e22524d26, type: 3}
+  walkFrames:
+  - {fileID: 21300000, guid: e083135af15e34346b3e59e7532662de, type: 3}
+  - {fileID: 21300000, guid: b00ad410933a104448bbca8cc85c954d, type: 3}
+  - {fileID: 21300000, guid: addcad26e906f514cb87eff818233d45, type: 3}
+  - {fileID: 21300000, guid: a46ac8d725c794d4c87dfa2c19f7bb7c, type: 3}
+  - {fileID: 21300000, guid: ae5eaacea5714314b9d2efb9afe75ccf, type: 3}
+  - {fileID: 21300000, guid: 642a33ba49d3b704989a09ccd3684206, type: 3}
+  attackFrames:
+  - {fileID: 21300000, guid: 54df9b10b707b5848b7a26d32fc64565, type: 3}
+  - {fileID: 21300000, guid: 0b7c09a92067a464eb83fa04f43663d9, type: 3}
+  - {fileID: 21300000, guid: 775f470280a7aae4e80f3162eb2e29a4, type: 3}
+  - {fileID: 21300000, guid: 7d1308dfc47bea84c9e645ad44734919, type: 3}
+  - {fileID: 21300000, guid: b0ef10d6ea78548469d4ee1e4f59b2b7, type: 3}
+  - {fileID: 21300000, guid: cac58f11b4c0ce6469b618af8427b4b6, type: 3}
+  defeatedFrames:
+  - {fileID: 21300000, guid: 90f57e38f4041f2428210e50ccb4dab3, type: 3}
+  - {fileID: 21300000, guid: 4e9f4e90b8f8c8945845f623cc81af78, type: 3}
+  - {fileID: 21300000, guid: 8d9fa8c4622fa084185757717941f189, type: 3}
+  - {fileID: 21300000, guid: 36dadbe7cd4eddf49bc9663b5d70d2e2, type: 3}
+  - {fileID: 21300000, guid: 05d521629ab02a44c97d86ad8222827a, type: 3}
+  - {fileID: 21300000, guid: 76429fca93d5a874893167f3469312b6, type: 3}
+  idleFramesPerSecond: 8
+  walkFramesPerSecond: 10
+  attackFramesPerSecond: 12
+  defeatedFramesPerSecond: 10

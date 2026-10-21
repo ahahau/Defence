@@ -24,7 +24,7 @@ GameObject:
   - component: {fileID: 8874329930751883167}
   - component: {fileID: 2729010641561742593}
   m_Layer: 0
-  m_Name: Unit_SlimeBlue
+  m_Name: Unit_SkeletonSwordBlue
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -197,7 +197,7 @@ MonoBehaviour:
   enableFeelCombatFeedbacks: 1
   attackHitParticles: {fileID: 0}
   attackImpactOffset: 0.08
-  attackSfx: 20
+  attackSfx: 8
   attackStatusEffect: {fileID: 0}
   attackStatusEffectChance: 0
   health: {fileID: 2709196990148380843}
@@ -463,7 +463,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &2624532001765305233
 SpriteRenderer:
-  serializedVersion: 2
+  serializedVersion: 3
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -510,7 +510,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 20
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -6620443678240376230, guid: e87236f48560e4940955075b58eab9c8, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 9409af62864185042be6270da57e0397, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -520,6 +520,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
 --- !u!114 &3703262412818247328
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -533,10 +534,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Entities.EntityRender
   gameStateEventChannel: {fileID: 0}
-  idleSprite: {fileID: 4723107735738678597, guid: 2e94315739cfb2a4aaef66130d3b7be8, type: 3}
-  attackSprite: {fileID: -7008412969330441016, guid: a19d47dbc6c3a7c49a6a2b426e278196, type: 3}
-  defeatedSprite: {fileID: 2649847697073447219, guid: a393a38edd2105a4faa3baea7e1c1244, type: 3}
+  idleSprite: {fileID: 21300000, guid: 9409af62864185042be6270da57e0397, type: 3}
+  attackSprite: {fileID: 21300000, guid: b07072a301d659b4680e691bd49063b0, type: 3}
+  defeatedSprite: {fileID: 21300000, guid: b1905acc40d84d44c94692c647884149, type: 3}
   spriteRenderer: {fileID: 2624532001765305233}
+  animationSet: {fileID: 11400000, guid: ad8579b34510b6544a1684bfd9df702f, type: 2}
 --- !u!1001 &1660696363140019140
 PrefabInstance:
   m_ObjectHideFlags: 0

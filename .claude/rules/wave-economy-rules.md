@@ -73,4 +73,4 @@ paths:
 - `DungeonGraphController.Awake`가 그래프를 만들고, `Start`는 한 프레임 뒤 `TryRestoreCurrentRun`을 호출한다.
 - 방을 지으면 새 갈래가 생겨 `LockedNode`가 늘어난다. 열린 방은 이름이 `LockedNode`로 시작하지 않는 노드로 센다.
 - 해금은 `Assets/07.SO/Progression/DungeonUnlockCatalog.asset`의 `unlockDay`로 관리한다.
-- 메타 콘텐츠 해금: 카탈로그 항목의 `metaProgressRequired`(진행도 단계 10·25·50, `MetaUnlockRules.Tiers`)를 채우지 못하면 해금일이 와도 그 판에는 열리지 않는다(`DungeonUnlockEntry.IsUnlockedOn`, 안내 앞에 "진행도 N 필요"). 지금 10: 망령 암살귀·깊은 광산, 25: 해골 주술사·큰 주점·무기 상점, 50: 레드 슬라임·오크 철퇴병(함정은 잠그지 않는다). 처음부터 열린 기본 콘텐츠는 잠그지 않는다. 결과 화면이 이번 판으로 새로 열린 것을, 타이틀이 다음 단계를 보여 준다.
+- 메타 콘텐츠 해금: 카탈로그 항목의 `metaProgressRequired`(진행도 단계 10·25·50, `MetaUnlockRules.Tiers`)를 채우지 못하면 해금일이 와도 그 판에는 열리지 않는다(`DungeonUnlockEntry.IsUnlockedOn`, 안내 앞에 "진행도 N 필요"). 지금 10: 망령 암살귀·깊은 광산, 25: 해골 주술사·큰 주점·무기 상점, 50: 피 해골 검사(옛 레드 슬라임)·오크 철퇴병(함정은 잠그지 않는다). 처음부터 열린 기본 콘텐츠는 잠그지 않는다. 결과 화면이 이번 판으로 새로 열린 것을, 타이틀이 다음 단계를 보여 준다.

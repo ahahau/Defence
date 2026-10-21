@@ -11,7 +11,9 @@ paths:
    * 기획은 `Docs/Design/`에서 확인한다. 수치·역할이 정해지지 않았으면 사용자에게 묻는다.
 2. 프리팹은 템플릿의 **Prefab Variant**로 만든다.
    * 플레이어 유닛 템플릿: `Assets/03.Prefabs/Characters/Units/Unit.prefab`.
-   * 플레이어 유닛 위치: `Assets/03.Prefabs/Characters/Units/`. 같은 계열은 하위 폴더로 묶는다(예: `Slimes/`).
+   * 플레이어 유닛 위치: `Assets/03.Prefabs/Characters/Units/`. 같은 계열은 하위 폴더로 묶는다(예: `SkeletonSwords/`).
+   * 부하는 모두 진짜 그림과 애니메이션 묶음(`CharacterAnimationSetSO`, 프리팹 `EntityRender.animationSet`)이 있어야 한다. 임시 그림(`Placeholder`)으로 고용 목록에 올리지 않는다(`AssetWiringTests.EveryUnit_UsesRealAnimatedArt`).
+   * 데이터 파일 이름은 저장 키다(`HiredUnitRoster.AssetKey`). 그림·이름을 바꿔도 파일 이름은 바꾸지 않는다(예: `SlimeBlueUnitData` = 해골 검사, `SpiderUnitData` = 해골 도끼병).
    * 이름: `Unit_<이름>`
    * 만드는 법: Unity CLI `eval`로 `PrefabUtility.InstantiatePrefab(템플릿)` 후 `PrefabUtility.SaveAsPrefabAsset`. YAML을 직접 쓰지 않는다.
    * `Generated/`의 기존 프리팹은 Variant가 아닌 독립 복사본이다. 이걸 복사해서 새 유닛을 만들지 않는다.
