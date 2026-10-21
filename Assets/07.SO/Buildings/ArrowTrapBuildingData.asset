@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ArrowTrapBuildingData
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Buildings.BuildingDataSO
   <Grade>k__BackingField: 1
-  <BoardSprite>k__BackingField: {fileID: 2099055159055310883, guid: 64c64edff0c2b5747855664eceaab8c5, type: 3}
+  <BoardSprite>k__BackingField: {fileID: 21300000, guid: e03a1b40369994c488ac5ce66054c319, type: 3}
   <Defense>k__BackingField: 0
   <EvasionChance>k__BackingField: 0
   <DisplayName>k__BackingField: "\uD654\uC0B4 \uD568\uC815"

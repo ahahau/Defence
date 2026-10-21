@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Code.Buildings;
 using Code.MapCreateSystem;
@@ -83,6 +84,55 @@ namespace Tests.EditMode.Rules
                 Assert.That(visual.HasProjectile, Is.True, $"{name} 에 화살 그림이 없습니다.");
             else
                 Assert.That(visual.HasFrames, Is.True, $"{name} 에 발동 프레임이 없습니다.");
+        }
+
+        /// <summary>
+        /// 함정 몸체는 던전 시트의 바닥 장치 조각이고 함정마다 다르다. 예전에는 모두 노란 임시 네모였고, 같은 네모를 쓰는
+        /// 테두리(Border)가 몸체 위를 덮어 설치 카드·미리보기에도 네모가 나왔다. 몸체는 바닥 타일과 같은 텍셀 크기(25.6/유닛)로
+        /// 덮은 칸을 정확히 채워야 확대 배율에서 바닥과 함께 또렷하다.
+        /// </summary>
+        [TestCase("Trap"), TestCase("Trap_Spike"), TestCase("Trap_Snare"), TestCase("Generated/Trap_ArmorBreaker"),
+         TestCase("Trap_Crusher"), TestCase("Generated/Trap_AmbushNet"), TestCase("Trap_Blade"),
+         TestCase("Generated/Trap_Caltrop"), TestCase("Generated/Trap_ExecutionSaw"), TestCase("Trap_Arrow")]
+        public void TrapPrefab_ShowsItsOwnDungeonBody(string name)
+        {
+            var trap = LoadTrapPrefab(name);
+            var renderers = trap.GetComponentsInChildren<SpriteRenderer>(true);
+            Assert.That(renderers.Any(r => r.name == "Border"), Is.False, $"{name} 에 노란 테두리가 남아 몸체를 덮습니다.");
+
+            var body = renderers.FirstOrDefault(r => r.name == "Visual");
+            Assert.That(body, Is.Not.Null, $"{name} 에 몸체(Visual)가 없습니다.");
+            Assert.That(body.sprite, Is.Not.Null);
+            Assert.That(AssetDatabase.GetAssetPath(body.sprite), Does.StartWith("Assets/04.Sprites/Tilesets/Generated/TrapBody_"),
+                $"{name} 몸체가 아직 임시 그림입니다.");
+            Assert.That(body.sprite.pixelsPerUnit, Is.EqualTo(25.6f).Within(0.001f), "바닥 타일과 같은 텍셀 크기여야 합니다.");
+
+            var footprint = trap.Footprint;
+            var size = Vector2.Scale(body.sprite.bounds.size, body.transform.localScale) * new Vector2(footprint.x, footprint.y);
+            Assert.That(size.x, Is.EqualTo(footprint.x * 1.25f).Within(0.001f), "설치하면 덮은 칸 폭을 정확히 채웁니다.");
+            Assert.That(size.y, Is.EqualTo(footprint.y * 1.25f).Within(0.001f));
+        }
+
+        /// <summary>함정 데이터의 보드 그림이 프리팹 몸체와 같고 함정끼리 겹치지 않는다(설치 뒤 Initialize가 보드 그림으로 바꾼다).</summary>
+        [Test]
+        public void TrapData_BoardSpriteMatchesPrefabBodyAndIsUnique()
+        {
+            var seen = new Dictionary<Sprite, string>();
+            foreach (var guid in AssetDatabase.FindAssets("TrapBuildingData t:ScriptableObject", new[] { "Assets/07.SO/Buildings" }))
+            {
+                var data = AssetDatabase.LoadAssetAtPath<BuildingDataSO>(AssetDatabase.GUIDToAssetPath(guid));
+                if (data == null || data.Prefab == null)
+                    continue;
+
+                var body = data.Prefab.GetComponentsInChildren<SpriteRenderer>(true).FirstOrDefault(r => r.name == "Visual");
+                Assert.That(body, Is.Not.Null, data.name);
+                Assert.That(data.BoardSprite, Is.EqualTo(body.sprite), $"{data.name} 보드 그림이 프리팹 몸체와 다릅니다.");
+                Assert.That(seen.ContainsKey(data.BoardSprite), Is.False,
+                    $"{data.name} 와 {(seen.TryGetValue(data.BoardSprite, out var other) ? other : "")} 가 같은 몸체를 씁니다.");
+                seen[data.BoardSprite] = data.name;
+            }
+
+            Assert.That(seen.Count, Is.EqualTo(10));
         }
 
         [Test]
