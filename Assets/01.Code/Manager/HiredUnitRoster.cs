@@ -119,6 +119,17 @@ namespace Code.Manager
             RaiseBuildingUnlockChanged();
         }
 
+        /// <summary>
+        /// 새 판 첫 주 지원자 명단을 청산일처럼 만든다(등급·민심 규칙 그대로, 시작 지원자에 더한다 — 2026-10-21 사용자 결정).
+        /// 예전에는 첫 청산일(7일차)까지 시작 지원자 한 명뿐이라 대기 중 고용을 열어도 고를 사람이 없었다.
+        /// 이어 하는 판은 한 프레임 뒤 저장 복원(<see cref="RestoreSaveState"/>)이 명단을 통째로 덮어 영향이 없다.
+        /// </summary>
+        private void Start()
+        {
+            GenerateRecruitmentCandidates(WeeklyIncomingCount());
+            RaiseUnlockChanged();
+        }
+
         private void RegisterListeners()
         {
             costEventChannel.AddListener<RosterHirePaidEvent>(HandleHirePaid);
@@ -338,13 +349,16 @@ namespace Code.Manager
         {
             _ownedUnits.Clear();
             _applicantsByUnit.Clear();
+            GenerateRecruitmentCandidates(WeeklyIncomingCount());
+        }
 
-            // 던전이 커질수록 일하겠다는 사람이 늘고, 민심이 나쁘면 다시 줄어든다.
+        /// <summary>한 주에 오는 지원자 수. 던전이 커질수록 일하겠다는 사람이 늘고, 민심이 나쁘면 다시 줄어든다.</summary>
+        private int WeeklyIncomingCount()
+        {
             var grade = DungeonGradeManager.Current != null ? DungeonGradeManager.Current.Grade : 0;
             var weekly = UnitMarketRules.WeeklyCandidateCount(candidatesPerDay, grade);
             var morale = MoralePolicyManager.Current;
-            var incoming = morale != null ? morale.AdjustRecruitCount(weekly) : weekly;
-            GenerateRecruitmentCandidates(incoming);
+            return morale != null ? morale.AdjustRecruitCount(weekly) : weekly;
         }
 
         /// <summary>

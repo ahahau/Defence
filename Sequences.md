@@ -1,5 +1,10 @@
 # Sequences
 
+- 2026-10-21 · 새 판 첫 주 지원자 명단(사용자: "새 판 1일차에도 청산일처럼 이번 주 지원자 명단을 만들어줘(등급·민심 규칙 그대로). 시작 지원자는 남겨줘").
+  - 수정(`HiredUnitRoster.Start`): 새 판 시작 때 청산일과 같은 수(`WeeklyIncomingCount` — 등급별 주간 수 × 민심 보정, 청산일 갱신과 공용으로 뽑아냄)의 지원자를 시작 지원자에 더한다. 이어 하는 판은 한 프레임 뒤 저장 복원이 명단을 덮어 그대로다.
+  - 테스트: `NewRun_FillsTheFirstWeekApplicantsOnTopOfTheStartingOne`(Start 없을 때 실패). EditMode 352/352.
+  - 플레이(세이브 원복): 새 판 0일차 블루 슬라임 2명(시작 1 + 1). 0일차에 열린 부하가 블루 슬라임뿐이고 유닛당 지원자 최대 2명(`maxCandidatesPerUnit`)이라 주간 2명 중 1명만 더해졌다. 이어 한 2일차 판은 저장대로 1명.
+
 - 2026-10-21 · 대기 중 언제든 고용(사용자: "유닛도 배치및 추가하는법이 없는데" → "대기 중 언제나 고용").
   - 원인: 고용이 청산일(7·14·21…일) 정산표 "유닛 상점"에서만 돼(`HiredUnitRoster.IsWeeklyRecruitmentOpen`) 1~6일차에는 부하가 0명이었고, 도크의 "유닛 배치"는 고용한 부하만 내보내 빈 창이었다.
   - 수정: `HiredUnitRoster.IsRecruitmentOpen` = 영업 전 대기 중 또는 청산일. 도크에 "고용" 버튼(대기 중에만 눌림, 버튼 넷이 들어가게 폭을 줄이고 "정산 정보"는 "정산"으로)과 새 고용 창 `RecruitScreenView`(가운데 카드, 캔버스 40, 영업이 시작되면 닫힘). 지원자 목록은 정산표의 `SettlementShopPane`을 그대로 쓴다(`SettlementBuilder.BuildShopPane` 공용화, 생성기 `RecruitBuilder`). 보유 0명이면 도크에 "'고용'에서 부하를 데려온 뒤 방에 배치하세요". 지원자 명단은 여전히 청산일마다 새로 온다.
