@@ -362,6 +362,10 @@ namespace Code.Enemies
             if (TickFacilityQueue(deltaTime))
                 return true;
 
+            // 걸어가는 도중 후퇴 판정을 반복하면 동행 코루틴이 끊긴다.
+            if (mover.IsMoving)
+                return true;
+
             _chaseTimer -= deltaTime;
             if (_chaseTimer > 0f) return true;
 
@@ -770,6 +774,9 @@ namespace Code.Enemies
         public float Fatigue { get; private set; }
 
         public bool IsDwelling => _dwellFacility != null && _dwellRemaining > 0f;
+
+        /// <summary>파티가 시설 줄에 선 동료를 두고 출발하지 않게 알린다.</summary>
+        public bool IsWaitingForFacility => _waitingFacility != null;
 
         /// <summary>
         /// 금고를 노리고 온 자인가. 어디로 걸을지만 가른다 — 싸움은 누구와도 붙는다.

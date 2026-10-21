@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Code.Enemies
 {
-    public class EnemyMover : MonoBehaviour
+    public partial class EnemyMover : MonoBehaviour
     {
         [SerializeField] private float moveSpeed = 5f;
 
@@ -76,51 +76,29 @@ namespace Code.Enemies
                 : CreatePartyOccupancyId();
 
             // 파티에 처음 붙은(살아 있는) 멤버가 리더다. 리더가 쓰러지면 다음에 붙는 멤버가 이어받는다.
-            if (!_partyLeaders.TryGetValue(_partyOccupancyId, out var leader) || !IsLeaderAvailable(leader))
-                _partyLeaders[_partyOccupancyId] = this;
+            ResolvePartyLeader();
         }
 
         /// <summary>이 파티원이 파티 리더인가.</summary>
-        public bool IsPartyLeader =>
-            _partyOccupancyId > 0 && _partyLeaders.TryGetValue(_partyOccupancyId, out var leader) && leader == this;
+        public bool IsPartyLeader => _partyOccupancyId > 0 && ResolvePartyLeader() == this;
 
         // 파티 번호별 리더. 파티원이 리더보다 너무 앞서지 않게 기다리는 데 쓴다.
         private static readonly Dictionary<int, EnemyMover> _partyLeaders = new();
-        private float _leaderWaitStartedAt = -1f;
         private Enemy _ownerEnemy;
 
         private static bool IsLeaderAvailable(EnemyMover leader)
         {
-            if (leader == null || leader._currentNode == null)
+            if (leader == null || !leader.isActiveAndEnabled
+                || leader._hasEnteredDungeon && leader._currentNode == null)
                 return false;
 
-            leader._ownerEnemy ??= leader.GetComponent<Enemy>();
-            return leader._ownerEnemy == null || !leader._ownerEnemy.IsDead;
+            return leader._ownerEnemy == null || !leader._ownerEnemy.IsDead && !leader._ownerEnemy.IsReturning;
         }
 
-        /// <summary>
-        /// 다음 방으로 가면 리더와 한 방 넘게 떨어지는가. 그렇다면 리더를 잠깐 기다린다(최대 5초).
-        /// </summary>
-        private bool ShouldWaitForLeader(Node nextNode)
+        private void Awake()
         {
-            if (_partyOccupancyId <= 0 || nextNode == null
-                || !_partyLeaders.TryGetValue(_partyOccupancyId, out var leader)
-                || leader == this || !IsLeaderAvailable(leader))
-            {
-                _leaderWaitStartedAt = -1f;
-                return false;
-            }
-
-            var path = NodePathfinder.FindPath(nextNode, leader._currentNode);
-            var rooms = path != null && path.Count > 0 ? path.Count - 1 : 0;
-            if (_leaderWaitStartedAt < 0f)
-                _leaderWaitStartedAt = Time.time;
-
-            if (PartyCohesionRules.ShouldWaitForLeader(rooms, Time.time - _leaderWaitStartedAt))
-                return true;
-
-            _leaderWaitStartedAt = -1f;
-            return false;
+            _ownerEnemy = GetComponent<Enemy>();
+            _battleAgent = GetComponent<BattleAgent>();
         }
 
         /// <summary>막힌 일반 노드 앞에서 우회 탐색 전까지 기다릴 이동 턴 수를 설정한다.</summary>
@@ -138,6 +116,7 @@ namespace Code.Enemies
                 VacateNode(_currentNode, PartyOccupancyId);
 
             _currentNode = startNode;
+            _hasEnteredDungeon = true;
             _visitedNodes.Clear();
             _blockedNodeWaitCount = 0;
 
@@ -153,7 +132,7 @@ namespace Code.Enemies
 
         public void TakeTurn()
         {
-            if (_isTurning || _currentNode == null)
+            if (_isTurning || _currentNode == null || IsPartyLeader && !CanLeadParty(false))
                 return;
 
             StartCoroutine(DoTurn());
@@ -215,10 +194,32 @@ namespace Code.Enemies
 
             // 다음 방으로 넘어가기 전에 지금 방을 한 번 어슬렁거린다. 곧장 옆으로 직진하면
             // 침입자가 아니라 레일 위를 도는 말처럼 보인다.
-            yield return WanderInsideNode();
+            EnemyMover leader = ResolvePartyLeader();
+            if (leader != null && leader != this)
+                yield return FollowSharedExploration(leader);
+            else
+                yield return WanderInsideNode();
+
+            // 동선을 따르던 중 승계했다면 다음 차례에 새 탐색을 공유하고 모두 합류시킨다.
+            if (leader != this && IsPartyLeader)
+            {
+                _isTurning = false;
+                yield break;
+            }
+
+            // 탐색을 먼저 끝낸 리더가 시설 이용·전투·이동 중인 동료를 두고 떠나지 않는다.
+            while (leader == this && IsPartyLeader && !CanLeadParty(true))
+            {
+                if (HasPartyCombat())
+                {
+                    _isTurning = false;
+                    yield break;
+                }
+                yield return null;
+            }
 
             var nextNode = SelectNextNode();
-            if (nextNode == null || ShouldWaitForLeader(nextNode))
+            if (nextNode == null)
             {
                 _isTurning = false;
                 yield break;
@@ -241,6 +242,7 @@ namespace Code.Enemies
             VacateNode(_currentNode, PartyOccupancyId);
             OccupyNode(nextNode, PartyOccupancyId);
 
+            SharePartyDestination(nextNode);
             _currentNode = nextNode;
             _visitedNodes.Add(_currentNode.Data.Id);
 
@@ -281,6 +283,7 @@ namespace Code.Enemies
             if (_currentNode == null)
                 yield break;
 
+            PublishExploration();
             var firstVisit = _exploredNodeId != _currentNode.Data?.Id;
             if (!firstVisit && (wanderChance <= 0f || UnityEngine.Random.value > wanderChance))
                 yield break;
@@ -317,6 +320,8 @@ namespace Code.Enemies
             if (_exploreRoute.Count == 0)
                 yield break;
 
+            _sharedExploreRoute.Clear();
+            _sharedExploreRoute.AddRange(_exploreRoute);
             yield return WalkPath(_exploreRoute, -1, null, null);
         }
 
@@ -331,6 +336,7 @@ namespace Code.Enemies
             var offset = UnityEngine.Random.insideUnitCircle.normalized * Mathf.Min(wanderDistance, radius);
             _walkPoints.Clear();
             _walkPoints.Add(anchor + new Vector3(offset.x, offset.y, 0f));
+            _sharedExploreRoute.AddRange(_walkPoints);
             yield return WalkPath(_walkPoints, -1, null, null);
         }
 
@@ -507,7 +513,7 @@ namespace Code.Enemies
                 {
                     var here = transform.position;
                     var remaining = Vector3.Distance(here, target);
-                    var step = WalkSpeed * Time.deltaTime;
+                    var step = PartyWalkSpeed * Time.deltaTime;
                     if (step >= remaining)
                     {
                         transform.position = target;
@@ -571,6 +577,10 @@ namespace Code.Enemies
         {
             if (_currentNode?.Data == null)
                 return null;
+
+            EnemyMover leader = ResolvePartyLeader();
+            if (leader != null && leader != this)
+                return SelectPartyFollowNode(leader);
 
             // 1순위: A*로 목적지까지의 최단 경로를 따라간다(벽 회피).
             // 목적지는 저마다 다르다 — 보물을 노린 자는 금고로, 볼일이 있는 모험가는 그 시설로.
@@ -858,7 +868,7 @@ namespace Code.Enemies
         private Vector3 ResolveNodeScatter(Node node)
         {
             var nodeId = node != null && node.Data != null ? node.Data.Id : null;
-            if (string.IsNullOrEmpty(nodeId))
+            if (string.IsNullOrEmpty(nodeId) || HasPartyCompanions())
                 return Vector3.zero;
 
             if (nodeId == _scatterNodeId)

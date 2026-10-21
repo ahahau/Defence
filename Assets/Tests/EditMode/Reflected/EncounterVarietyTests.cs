@@ -10,6 +10,197 @@ namespace Tests.EditMode.Gameplay
         private const BindingFlags StaticFlags =
             BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 
+        /// <summary>초기화 전에도 첫 멤버를 리더로 유지해야 한다.</summary>
+        [Test]
+        public void PartyCohesion_KeepsFirstLeaderBeforeInitialization()
+        {
+            var first = new GameObject("first").AddComponent<Code.Enemies.EnemyMover>();
+            var second = new GameObject("second").AddComponent<Code.Enemies.EnemyMover>();
+            try
+            {
+                typeof(Code.Enemies.EnemyMover).GetMethod("OnEnable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(first, null);
+                typeof(Code.Enemies.EnemyMover).GetMethod("OnEnable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(second, null);
+                int party = Code.Enemies.EnemyMover.CreatePartyOccupancyId();
+                first.ConfigurePartyOccupancy(party);
+                second.ConfigurePartyOccupancy(party);
+                Assert.That(first.IsPartyLeader, Is.True);
+                Assert.That(second.IsPartyLeader, Is.False);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(first.gameObject);
+                UnityEngine.Object.DestroyImmediate(second.gameObject);
+            }
+        }
+
+        /// <summary>새 스폰 없이 기존 동료가 사라진 리더를 승계해야 한다.</summary>
+        [Test]
+        public void PartyCohesion_ExistingMemberSucceedsDestroyedLeader()
+        {
+            var first = new GameObject("first").AddComponent<Code.Enemies.EnemyMover>();
+            var second = new GameObject("second").AddComponent<Code.Enemies.EnemyMover>();
+            try
+            {
+                typeof(Code.Enemies.EnemyMover).GetMethod("OnEnable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(first, null);
+                typeof(Code.Enemies.EnemyMover).GetMethod("OnEnable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(second, null);
+                int party = Code.Enemies.EnemyMover.CreatePartyOccupancyId();
+                first.ConfigurePartyOccupancy(party);
+                second.ConfigurePartyOccupancy(party);
+                UnityEngine.Object.DestroyImmediate(first.gameObject);
+                Assert.That(second.IsPartyLeader, Is.True);
+            }
+            finally
+            {
+                if (first != null) UnityEngine.Object.DestroyImmediate(first.gameObject);
+                UnityEngine.Object.DestroyImmediate(second.gameObject);
+            }
+        }
+
+        /// <summary>갈림길에서 개인 목적지가 달라도 리더가 고른 방만 따라가야 한다.</summary>
+        [Test]
+        public void PartyCohesion_FollowsLeaderInsteadOfPersonalGoal()
+        {
+            var root = new GameObject("party-test");
+            try
+            {
+                var graph = new Code.MapCreateSystem.DungeonGraph();
+                var a = MakePartyRoom(root, graph, Vector2Int.zero);
+                var b = MakePartyRoom(root, graph, Vector2Int.right);
+                var c = MakePartyRoom(root, graph, Vector2Int.up);
+                graph.Connect(a.Data, b.Data);
+                graph.Connect(a.Data, c.Data);
+                var leader = MakePartyMover(root);
+                var follower = MakePartyMover(root);
+                int party = Code.Enemies.EnemyMover.CreatePartyOccupancyId();
+                leader.ConfigurePartyOccupancy(party);
+                follower.ConfigurePartyOccupancy(party);
+                leader.Initialize(b);
+                follower.Initialize(a);
+                bool personalGoalCalled = false;
+                follower.RouteGoalResolver = () => { personalGoalCalled = true; return c; };
+                var choose = typeof(Code.Enemies.EnemyMover).GetMethod("SelectNextNode", BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(choose, Is.Not.Null);
+                Assert.That(choose.Invoke(follower, null), Is.SameAs(b));
+                Assert.That(personalGoalCalled, Is.False);
+                leader.Initialize(a);
+                Assert.That(choose.Invoke(follower, null), Is.Null, "같은 방에서는 혼자 출발하지 않습니다.");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        /// <summary>빠른 멤버도 느린 동료와 속도를 맞추고, 비활성 리더는 즉시 승계한다.</summary>
+        [Test]
+        public void PartyCohesion_MatchesSlowestMemberAndReplacesDisabledLeader()
+        {
+            var root = new GameObject("party-test");
+            try
+            {
+                var leader = MakePartyMover(root);
+                var follower = MakePartyMover(root);
+                int party = Code.Enemies.EnemyMover.CreatePartyOccupancyId();
+                leader.ConfigurePartyOccupancy(party);
+                follower.ConfigurePartyOccupancy(party);
+                leader.MobilitySpeedMultiplier = 2f;
+                follower.FatigueSpeedMultiplier = 0.5f;
+                var speed = typeof(Code.Enemies.EnemyMover).GetProperty("PartyWalkSpeed", BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(speed, Is.Not.Null);
+                Assert.That((float)speed.GetValue(leader), Is.EqualTo((float)speed.GetValue(follower)));
+                Assert.That((float)speed.GetValue(leader), Is.EqualTo(2.5f).Within(0.001f));
+                leader.enabled = false;
+                Assert.That(follower.IsPartyLeader, Is.True);
+                Assert.That((float)speed.GetValue(follower), Is.EqualTo(2.5f).Within(0.001f));
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        /// <summary>다른 목적지를 보더라도 정원 때문에 뒤처진 동료는 공유된 방 순서를 먼저 따른다.</summary>
+        [Test]
+        public void PartyCohesion_KeepsQueuedRouteWhileLeaderMovesAhead()
+        {
+            var root = new GameObject("party-test");
+            try
+            {
+                var graph = new Code.MapCreateSystem.DungeonGraph();
+                var a = MakePartyRoom(root, graph, Vector2Int.zero);
+                var b = MakePartyRoom(root, graph, Vector2Int.right);
+                var c = MakePartyRoom(root, graph, Vector2Int.up);
+                graph.Connect(a.Data, b.Data);
+                graph.Connect(a.Data, c.Data);
+                var leader = MakePartyMover(root);
+                var follower = MakePartyMover(root);
+                int party = Code.Enemies.EnemyMover.CreatePartyOccupancyId();
+                leader.ConfigurePartyOccupancy(party);
+                follower.ConfigurePartyOccupancy(party);
+                leader.Initialize(b);
+                follower.Initialize(a);
+                var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+                var share = leader.GetType().GetMethod("SharePartyDestination", flags);
+                var choose = follower.GetType().GetMethod("SelectNextNode", flags);
+                Assert.That(share, Is.Not.Null);
+                Assert.That(choose, Is.Not.Null);
+                share.Invoke(leader, new object[] { b });
+                leader.Initialize(c);
+                Assert.That(choose.Invoke(follower, null), Is.SameAs(b), "새 리더 위치로 지름길을 타지 않고 앞서 공유한 방을 먼저 지납니다.");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        /// <summary>리더가 먼저 탐색을 끝내도 동료가 동선을 받아 걷기 전에는 출발하지 않는다.</summary>
+        [Test]
+        public void PartyCohesion_WaitsUntilSharedExplorationIsConsumed()
+        {
+            var root = new GameObject("party-test");
+            try
+            {
+                var graph = new Code.MapCreateSystem.DungeonGraph();
+                var room = MakePartyRoom(root, graph, Vector2Int.zero);
+                var leader = MakePartyMover(root);
+                var follower = MakePartyMover(root);
+                int party = Code.Enemies.EnemyMover.CreatePartyOccupancyId();
+                leader.ConfigurePartyOccupancy(party);
+                follower.ConfigurePartyOccupancy(party);
+                leader.Initialize(room);
+                follower.Initialize(room);
+                var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+                var publish = leader.GetType().GetMethod("PublishExploration", flags);
+                var depart = leader.GetType().GetMethod("CanLeadParty", flags);
+                var follow = follower.GetType().GetMethod("FollowSharedExploration", flags);
+                Assert.That(publish, Is.Not.Null);
+                Assert.That(depart, Is.Not.Null);
+                Assert.That(follow, Is.Not.Null);
+                publish.Invoke(leader, null);
+                Assert.That(depart.Invoke(leader, new object[] { true }), Is.False);
+                var routine = (System.Collections.IEnumerator)follow.Invoke(follower, new object[] { leader });
+                Assert.That(routine.MoveNext(), Is.False, "빈 탐색 경로도 동료에게 전달됩니다.");
+                Assert.That(depart.Invoke(leader, new object[] { true }), Is.True);
+                var turning = follower.GetType().GetField("_isTurning", flags);
+                Assert.That(turning, Is.Not.Null);
+                turning.SetValue(follower, true);
+                Assert.That(depart.Invoke(leader, new object[] { true }), Is.False, "걷는 동료를 기다립니다.");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        private static Code.Enemies.EnemyMover MakePartyMover(GameObject root)
+        {
+            var host = new GameObject("member");
+            host.transform.SetParent(root.transform);
+            var mover = host.AddComponent<Code.Enemies.EnemyMover>();
+            var enable = mover.GetType().GetMethod("OnEnable", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(enable, Is.Not.Null);
+            enable.Invoke(mover, null);
+            return mover;
+        }
+
+        private static Code.MapCreateSystem.Node MakePartyRoom(GameObject root, Code.MapCreateSystem.DungeonGraph graph, Vector2Int position)
+        {
+            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<Code.MapCreateSystem.Node>("Assets/03.Prefabs/Map/Node.prefab");
+            Assert.That(prefab, Is.Not.Null);
+            var room = UnityEngine.Object.Instantiate(prefab, root.transform);
+            room.Initialize(graph.AddNode(Code.MapCreateSystem.DungeonNodeType.Corridor, position), 1f);
+            return room;
+        }
+
         [Test]
         public void ThreatPreview_AuthoredTextOverridesRoleInference()
         {
@@ -137,15 +328,15 @@ namespace Tests.EditMode.Gameplay
             Assert.That(first, Is.EqualTo(second));
         }
 
-        /// <summary>
-        /// 리더 동기 이동: 리더보다 한 방 넘게 앞서려는 파티원은 기다리되, 5초가 넘으면 혼자 간다(파티가 굳지 않게).
-        /// </summary>
-        [Test]
-        public void PartyCohesion_WaitsForTheLeaderButNotForever()
+        /// <summary>시설·전투·이동 대기는 시간 초과로 풀리지 않고, 정원 초과만 순차 통과한다.</summary>
+        [TestCase(true, false, true, false, true)]
+        [TestCase(false, true, true, false, true)]
+        [TestCase(false, false, false, false, true)]
+        [TestCase(false, false, false, true, false)]
+        [TestCase(false, false, true, false, false)]
+        public void PartyCohesion_WaitsForBusyOrMissingMembers(bool moving, bool busy, bool sameRoom, bool full, bool expected)
         {
-            Assert.That(Code.Enemies.PartyCohesionRules.ShouldWaitForLeader(1, 0f), Is.False, "리더 옆방까지는 그냥 갑니다.");
-            Assert.That(Code.Enemies.PartyCohesionRules.ShouldWaitForLeader(2, 0f), Is.True);
-            Assert.That(Code.Enemies.PartyCohesionRules.ShouldWaitForLeader(2, 5f), Is.False, "오래 기다리면 혼자 갑니다.");
+            Assert.That(Code.Enemies.PartyCohesionRules.ShouldWaitForMember(moving, busy, sameRoom, full), Is.EqualTo(expected));
         }
 
         private static Type RequireType(string fullName)
