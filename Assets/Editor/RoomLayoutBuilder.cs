@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Code.Core;
 using Code.MapCreateSystem;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -672,16 +673,13 @@ public static class RoomLayoutBuilder
             edgeSerialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        // 방이 두 배라 화면도 두 배를 본다. 카메라 크기는 PixelPerfectCamera가 기준 해상도로 정하므로 그쪽을 바꾼다.
-        var camera = Camera.main;
-        var pixelPerfect = camera != null
-            ? camera.GetComponent<UnityEngine.Rendering.Universal.PixelPerfectCamera>()
-            : null;
-        if (pixelPerfect != null)
+        // 방이 두 배라 화면도 두 배를 본다. 카메라 크기는 TilePixelCamera가 기준 해상도로 정하므로 그쪽을 바꾼다.
+        var pixelCamera = EnsureTilePixelCamera(Camera.main, ref changed);
+        if (pixelCamera != null)
         {
-            var cameraSerialized = new SerializedObject(pixelPerfect);
-            changed |= SetInt(cameraSerialized, "m_RefResolutionX", RefResolutionX);
-            changed |= SetInt(cameraSerialized, "m_RefResolutionY", RefResolutionY);
+            var cameraSerialized = new SerializedObject(pixelCamera);
+            changed |= SetInt(cameraSerialized, "refResolutionX", RefResolutionX);
+            changed |= SetInt(cameraSerialized, "refResolutionY", RefResolutionY);
             cameraSerialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
@@ -719,9 +717,50 @@ public static class RoomLayoutBuilder
     /// <summary>방 사이 간격(월드). 방 틀 최대 18×16칸(타일 36×32)에 벽·복도가 들어간다.</summary>
     private const float GridSpacing = 30f;
 
-    /// <summary>PixelPerfectCamera 기준 해상도. 640×360(방 간격 15u 시절)의 두 배라 화면에 담기는 넓이도 두 배다.</summary>
+    /// <summary>TilePixelCamera 기준 해상도. 640×360(방 간격 15u 시절)의 두 배라 화면에 담기는 넓이도 두 배다.</summary>
     private const int RefResolutionX = 1280;
     private const int RefResolutionY = 720;
+
+    /// <summary>
+    /// 메인 카메라의 PixelPerfectCamera를 TilePixelCamera로 바꾼다(기준 해상도는 넘겨받는다). 메뉴: Tools/Dungeon Keeper/Use Tile Pixel Camera.
+    /// PixelPerfectCamera는 정수 PPU(28)로만 그려 25.6텍셀/유닛인 던전 타일에 칸 줄무늬가 생겼다.
+    /// </summary>
+    [MenuItem("Tools/Dungeon Keeper/Use Tile Pixel Camera")]
+    public static void UseTilePixelCamera()
+    {
+        var scene = EditorSceneManager.GetActiveScene();
+        var changed = false;
+        EnsureTilePixelCamera(Camera.main, ref changed);
+        if (!changed)
+            return;
+
+        EditorSceneManager.MarkSceneDirty(scene);
+        EditorSceneManager.SaveScene(scene);
+    }
+
+    private static TilePixelCamera EnsureTilePixelCamera(Camera camera, ref bool changed)
+    {
+        if (camera == null)
+            return null;
+
+        var pixelCamera = camera.GetComponent<TilePixelCamera>();
+        var pixelPerfect = camera.GetComponent<UnityEngine.Rendering.Universal.PixelPerfectCamera>();
+        if (pixelCamera == null)
+        {
+            pixelCamera = camera.gameObject.AddComponent<TilePixelCamera>();
+            pixelCamera.RefResolutionX = pixelPerfect != null ? pixelPerfect.refResolutionX : RefResolutionX;
+            pixelCamera.RefResolutionY = pixelPerfect != null ? pixelPerfect.refResolutionY : RefResolutionY;
+            changed = true;
+        }
+
+        if (pixelPerfect != null)
+        {
+            Object.DestroyImmediate(pixelPerfect, true);
+            changed = true;
+        }
+
+        return pixelCamera;
+    }
 
     /// <summary>던전 전체 빛(예전 1.05). 방 빛·횃불 빛이 그 위에 더해진다.</summary>
     private const float GlobalLightIntensity = 0.35f;

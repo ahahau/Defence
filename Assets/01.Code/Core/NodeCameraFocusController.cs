@@ -22,7 +22,7 @@ namespace Code.Core
         private Node _focusedNode;
 
         /// <summary>있으면 카메라 크기를 이것이 정한다. 확대는 기준 해상도 단계로 한다(<see cref="PixelPerfectZoomRules"/>).</summary>
-        private UnityEngine.Rendering.Universal.PixelPerfectCamera _pixelPerfect;
+        private TilePixelCamera _pixelPerfect;
         private int _defaultZoomLevel;
 
         private bool UsesPixelPerfect => _pixelPerfect != null && _pixelPerfect.isActiveAndEnabled;
@@ -30,7 +30,7 @@ namespace Code.Core
         private void Awake()
         {
             if (targetCamera != null)
-                _pixelPerfect = targetCamera.GetComponent<UnityEngine.Rendering.Universal.PixelPerfectCamera>();
+                _pixelPerfect = targetCamera.GetComponent<TilePixelCamera>();
             CacheDefaultCameraState();
         }
 

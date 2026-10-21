@@ -18,7 +18,7 @@ namespace Code.Core
         private Vector2 _directMoveInput;
 
         /// <summary>있으면 카메라 크기를 이것이 정한다. 확대는 이것의 기준 해상도 단계로 한다.</summary>
-        private UnityEngine.Rendering.Universal.PixelPerfectCamera _pixelPerfect;
+        private TilePixelCamera _pixelPerfect;
 
         /// <summary>트랙패드처럼 잘게 오는 휠 값을 한 칸이 될 때까지 모은다.</summary>
         private float _scrollCarry;
@@ -26,7 +26,7 @@ namespace Code.Core
         private void Awake()
         {
             if (targetCamera != null)
-                _pixelPerfect = targetCamera.GetComponent<UnityEngine.Rendering.Universal.PixelPerfectCamera>();
+                _pixelPerfect = targetCamera.GetComponent<TilePixelCamera>();
         }
 
         private void OnEnable()
@@ -109,7 +109,7 @@ namespace Code.Core
             if (Mathf.Abs(scrollY) <= Mathf.Epsilon)
                 return;
 
-            // PixelPerfectCamera가 카메라 크기를 매 프레임 덮어쓴다. 휠 한 칸에 기준 해상도 한 단계씩 바꾼다.
+            // 픽셀 단위 카메라가 카메라 크기를 매 프레임 덮어쓴다. 휠 한 칸에 기준 해상도 한 단계씩 바꾼다.
             if (_pixelPerfect != null && _pixelPerfect.isActiveAndEnabled)
             {
                 _scrollCarry += ToNotches(scrollY);

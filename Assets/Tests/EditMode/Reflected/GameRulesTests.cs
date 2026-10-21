@@ -12,7 +12,7 @@ namespace Tests.EditMode.Rules
     public class GameRulesTests
     {
         /// <summary>
-        /// 픽셀 단위 카메라(PixelPerfectCamera)는 카메라 크기를 매 프레임 덮어써서 휠 확대가 먹지 않았다.
+        /// 픽셀 단위 카메라는 카메라 크기를 매 프레임 덮어써서 휠 확대가 먹지 않았다.
         /// 확대는 기준 해상도 단계로 한다: 단계를 넘으면 가장자리에서 멈추고, 지금 단계를 되읽을 수 있어야 한다.
         /// </summary>
         [Test]
@@ -21,23 +21,43 @@ namespace Tests.EditMode.Rules
             var host = new GameObject("ZoomCamera", typeof(Camera));
             try
             {
-                var pixelPerfect = host.AddComponent<UnityEngine.Rendering.Universal.PixelPerfectCamera>();
+                var pixelPerfect = host.AddComponent<Code.Core.TilePixelCamera>();
                 var levels = Code.Core.PixelPerfectZoomRules.Levels;
 
                 Assert.That(Code.Core.PixelPerfectZoomRules.Apply(pixelPerfect, levels.Length + 3), Is.EqualTo(levels.Length - 1));
-                Assert.That(pixelPerfect.refResolutionY, Is.EqualTo(levels[levels.Length - 1].y));
+                Assert.That(pixelPerfect.RefResolutionY, Is.EqualTo(levels[levels.Length - 1].y));
 
                 Assert.That(Code.Core.PixelPerfectZoomRules.Apply(pixelPerfect, -2), Is.EqualTo(0), "가장 가까운 단계에서 멈춥니다.");
                 Assert.That(Code.Core.PixelPerfectZoomRules.LevelOf(pixelPerfect), Is.EqualTo(0));
 
                 Code.Core.PixelPerfectZoomRules.Apply(pixelPerfect, Code.Core.PixelPerfectZoomRules.FocusLevel);
                 Assert.That(Code.Core.PixelPerfectZoomRules.LevelOf(pixelPerfect), Is.EqualTo(Code.Core.PixelPerfectZoomRules.FocusLevel));
-                Assert.That(pixelPerfect.refResolutionX, Is.EqualTo(levels[Code.Core.PixelPerfectZoomRules.FocusLevel].x));
+                Assert.That(pixelPerfect.RefResolutionX, Is.EqualTo(levels[Code.Core.PixelPerfectZoomRules.FocusLevel].x));
             }
             finally
             {
                 UnityEngine.Object.DestroyImmediate(host);
             }
+        }
+
+        /// <summary>
+        /// 던전 타일은 0.625배로 줄여 1유닛 = 25.6텍셀인데, 카메라(PixelPerfectCamera)는 캐릭터에 맞춰 1유닛 = 28픽셀로 그렸다.
+        /// 텍셀 하나가 1.09픽셀이 되어 칸 경계마다 테두리 픽셀이 두 줄로 겹쳐 바닥에 굵은 칸 줄무늬가 생겼다.
+        /// 카메라 크기는 타일 텍셀 하나가 정수 픽셀이 되도록 정한다.
+        /// </summary>
+        [TestCase(1920, 1080, 1280, 720, 1)]
+        [TestCase(1920, 1080, 960, 540, 2)]
+        [TestCase(1920, 1080, 480, 270, 4)]
+        [TestCase(1280, 720, 1280, 720, 1)]
+        [TestCase(2560, 1440, 1280, 720, 2)]
+        [TestCase(1366, 768, 640, 360, 2)]
+        [TestCase(800, 600, 1280, 720, 1)]
+        public void TilePixelCamera_DrawsEachTileTexelAsWholePixels(int screenWidth, int screenHeight, int refWidth, int refHeight,
+            int expectedPixelsPerTexel)
+        {
+            var size = Code.Core.TilePixelCamera.OrthographicSize(screenWidth, screenHeight, refWidth, refHeight);
+            var pixelsPerTexel = screenHeight / (2f * size) / Code.Core.TilePixelCamera.TexelsPerUnit;
+            Assert.That(pixelsPerTexel, Is.EqualTo(expectedPixelsPerTexel).Within(0.0001f));
         }
 
         private static Type Resolve(string fullName)
