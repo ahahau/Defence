@@ -526,7 +526,10 @@ namespace Code.BT
         /// </summary>
         public const float RoomScaleMoveMultiplier = 1.5f;
 
-        private float EffectiveMoveSpeed => moveSpeed * RoomScaleMoveMultiplier
+        /// <summary>모험가 기동성이 주는 이동 속도 배율(<c>MobilityRules.SpeedMultiplier</c>). 부하는 1.</summary>
+        public float MobilitySpeedMultiplier { get; set; } = 1f;
+
+        private float EffectiveMoveSpeed => moveSpeed * RoomScaleMoveMultiplier * Mathf.Max(0.1f, MobilitySpeedMultiplier)
             * (_combatStatus != null ? _combatStatus.MoveSpeedMultiplier : 1f)
             * (woundedHealthThreshold > 0f && HealthRatio < woundedHealthThreshold ? woundedMoveSpeedMultiplier : 1f)
             * (team == BattleTeam.Player && _unitCommand == UnitCommand.Assault

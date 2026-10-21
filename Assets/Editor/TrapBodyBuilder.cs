@@ -27,6 +27,9 @@ public static class TrapBodyBuilder
     private const float PixelsPerUnit = 25.6f;
     private const float FrameSeconds = 0.12f;
 
+    /// <summary>설치된 함정의 기본 발동 확률(사용자 결정: 쉽게 밟히지 않게). 모험가 기동성이 더 깎는다.</summary>
+    private const float TriggerChance = 0.6f;
+
     /// <summary>함정 하나. 그림은 시트의 한 줄(<c>row</c>)에 가로로 늘어선 프레임이다.</summary>
     private sealed class Spec
     {
@@ -243,7 +246,7 @@ public static class TrapBodyBuilder
             var trap = new SerializedObject(root.GetComponent<Trap>());
             trap.FindProperty("triggerMode").intValue = (int)spec.Mode;
             trap.FindProperty("footprint").vector2IntValue = spec.Footprint;
-            trap.FindProperty("triggerChance").floatValue = 1f;
+            trap.FindProperty("triggerChance").floatValue = TriggerChance;
             trap.FindProperty("damage").intValue = spec.Damage;
             trap.FindProperty("damagePerDay").floatValue = spec.DamagePerDay;
             trap.FindProperty("injuryChance").floatValue = 1f;

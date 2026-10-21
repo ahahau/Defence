@@ -209,15 +209,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Enemies.EnemyMover
   moveSpeed: 5
-  minMoveDuration: 0.28
-  maxMoveDuration: 1.5
   visualHopHeight: 0.12
-  visualSquashAmount: 0.08
-  visualLeanAngle: 7
   visual: {fileID: 2787899817810343432}
   wanderChance: 0.55
   wanderDistance: 1.1
-  wanderDuration: 0.45
   detourTolerance: 2
 --- !u!114 &2211442224303028780
 MonoBehaviour:
@@ -411,6 +406,9 @@ MonoBehaviour:
   - <Stat>k__BackingField: {fileID: 11400000, guid: ac8d97a0db055244b9284170db09f45a, type: 2}
     useOverride: 1
     overrideBaseValue: 2
+  - <Stat>k__BackingField: {fileID: 11400000, guid: 4b6514c97cec0e9488db05f5e086ff38, type: 2}
+    useOverride: 1
+    overrideBaseValue: 0
 --- !u!1 &7473952817250454834
 GameObject:
   m_ObjectHideFlags: 0

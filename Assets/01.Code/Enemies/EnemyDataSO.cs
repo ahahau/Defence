@@ -34,6 +34,10 @@ namespace Code.Enemies
         [field: SerializeField, Min(0.05f)]
         public float AttackInterval { get; private set; } = 1f;
 
+        [field: SerializeField, Range(0, MobilityRules.MaxMobility),
+         Tooltip("기동성(0~10). 1점마다 회피 +2%p, 함정 피하기 +4%p, 이동 속도 +5%(MobilityRules).")]
+        public int Mobility { get; private set; } = 2;
+
         [field: SerializeField]
         public Sprite IdleSprite { get; private set; }
 

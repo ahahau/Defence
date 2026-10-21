@@ -179,14 +179,12 @@ namespace Code.Buildings
         /// <summary>
         /// 침입자가 밟았다. 방식에 따라 한 명·주변 모두·지속 작동으로 나뉜다.
         /// 통로 위 함정처럼 방 격자가 없으면 항상 밟기로 동작한다.
+        /// 밟을지(발동 확률 × 기동성)는 부르는 쪽(<c>Enemy</c>)이 칸에 들어선 순간 한 번 굴려 정한다.
         /// </summary>
         /// <returns>실제로 발동했으면 true(해체 포함하지 않음).</returns>
         public bool TriggerBy(Enemy stepper)
         {
             if (stepper == null || stepper.IsDead || !IsReady)
-                return false;
-
-            if (Random.value > triggerChance)
                 return false;
 
             // 공병은 밟지 않고 뜯어낸다. 피해 판정보다 먼저 본다.

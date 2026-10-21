@@ -4,7 +4,6 @@ using Code.Manager;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using DG.Tweening;
 using Code.BT;
 using UnityEngine;
 
@@ -16,12 +15,11 @@ namespace Code.Enemies
 
         /// <summary>피로로 느려지는 배율. 1이면 평소 속도다. 시설에 머문 모험가가 낮춘다.</summary>
         public float FatigueSpeedMultiplier { get; set; } = 1f;
-        [SerializeField, Min(0.01f)] private float minMoveDuration = 0.28f;
-        // 방 간격 30u 기준(15u 시절 0.75초의 두 배). 방 사이를 걷는 것처럼 보이게 하는 상한이다.
-        [SerializeField, Min(0.01f)] private float maxMoveDuration = 1.5f;
-        [SerializeField, Min(0f)] private float visualHopHeight = 0.12f;
-        [SerializeField, Min(0f)] private float visualSquashAmount = 0.08f;
-        [SerializeField, Min(0f)] private float visualLeanAngle = 7f;
+
+        /// <summary>모험가 기동성이 주는 이동 속도 배율(<see cref="MobilityRules.SpeedMultiplier"/>).</summary>
+        public float MobilitySpeedMultiplier { get; set; } = 1f;
+
+        [SerializeField, Min(0f), Tooltip("걸음마다 몸이 튀는 높이(월드).")] private float visualHopHeight = 0.12f;
         [SerializeField] private Transform visual;
 
         // 일반 방은 파티 단위로만 점유한다. 같은 파티의 멤버 수는 따로 세야 마지막 멤버가
@@ -33,7 +31,6 @@ namespace Code.Enemies
 
         private readonly HashSet<string> _visitedNodes = new();
         private Node _currentNode;
-        private Tween _moveTween;
         private Vector3 _visualStartLocalPosition;
         private Vector3 _visualStartLocalScale;
         private Vector3 _visualStartLocalEulerAngles;
@@ -165,8 +162,6 @@ namespace Code.Enemies
         public void StopMoving()
         {
             StopAllCoroutines();
-            _moveTween?.Kill();
-            _moveTween = null;
             _isTurning = false;
             _battleAgent?.EndTraversal();
             ResetVisualPose();
@@ -207,13 +202,9 @@ namespace Code.Enemies
                 VacateNode(_currentNode, PartyOccupancyId);
             _currentNode = null;
 
-            var distance = Vector3.Distance(transform.position, exitPosition);
-            var duration = Mathf.Clamp(distance / Mathf.Max(moveSpeed, 0.1f), minMoveDuration, maxMoveDuration);
-            _moveTween = transform.DOMove(exitPosition, duration)
-                .SetEase(Ease.InQuad)
-                .SetLink(gameObject);
-            yield return _moveTween.WaitForCompletion();
-            _moveTween = null;
+            _walkPoints.Clear();
+            _walkPoints.Add(exitPosition);
+            yield return WalkPath(_walkPoints, -1, null, null);
             _isTurning = false;
             onComplete?.Invoke();
         }
@@ -271,9 +262,6 @@ namespace Code.Enemies
         [SerializeField, Min(0f), Tooltip("둘러보는 거리(월드 단위). 아레나 반지름 안으로 잘린다.")]
         private float wanderDistance = 1.1f;
 
-        [SerializeField, Min(0.05f), Tooltip("둘러보는 데 걸리는 시간(초).")]
-        private float wanderDuration = 0.45f;
-
         [SerializeField, Min(0),
          Tooltip("최단 경로보다 이만큼까지 돌아가는 길도 후보로 삼는다. 0이면 늘 최단 경로만 탄다.")]
         private int detourTolerance = 2;
@@ -284,7 +272,6 @@ namespace Code.Enemies
         ///
         /// 방이 커져(바닥 칸이 예전의 4배) 문에서 문으로 곧장 지나가면 함정 칸을 거의 밟지 않았다.
         /// 둘러보는 길이 함정 칸을 지나가야 칸 배치와 칸막이로 동선을 모으는 설계가 의미를 가진다.
-        /// 오래 끌면 침입 속도가 느려지므로 한 번에 <see cref="MaxExploreSeconds"/>초를 넘지 않는다.
         ///
         /// 싸움이 붙은 방에서는 건너뛴다. 전투 중에 배회하면 전투 연출과 겹쳐 어지럽고,
         /// 어차피 그 자리에 붙들려 있어야 맞다.
@@ -330,23 +317,7 @@ namespace Code.Enemies
             if (_exploreRoute.Count == 0)
                 yield break;
 
-            var speed = moveSpeed * Mathf.Clamp(FatigueSpeedMultiplier, 0.1f, 1f) * ExploreSpeedRatio;
-            var duration = Mathf.Clamp(RoomRoute.Length(start, _exploreRoute) / Mathf.Max(0.1f, speed),
-                wanderDuration, MaxExploreSeconds);
-            FaceMoveDirection(_exploreRoute[0] - start);
-
-            _moveTween?.Kill();
-            _moveTween = transform.DOPath(_exploreRoute.ToArray(), duration, PathType.Linear)
-                .SetEase(Ease.Linear)
-                .OnWaypointChange(index =>
-                {
-                    if (index > 0 && index < _exploreRoute.Count)
-                        FaceMoveDirection(_exploreRoute[index] - _exploreRoute[index - 1]);
-                })
-                .SetLink(gameObject);
-
-            yield return _moveTween.WaitForCompletion();
-            _moveTween = null;
+            yield return WalkPath(_exploreRoute, -1, null, null);
         }
 
         /// <summary>방 모양이 없는 방(예전 노드·테스트)의 짧은 어슬렁거림.</summary>
@@ -358,16 +329,9 @@ namespace Code.Enemies
                 : wanderDistance;
 
             var offset = UnityEngine.Random.insideUnitCircle.normalized * Mathf.Min(wanderDistance, radius);
-            var target = anchor + new Vector3(offset.x, offset.y, 0f);
-            FaceMoveDirection(target - transform.position);
-
-            _moveTween?.Kill();
-            _moveTween = transform.DOMove(target, wanderDuration)
-                .SetEase(Ease.InOutSine)
-                .SetLink(gameObject);
-
-            yield return _moveTween.WaitForCompletion();
-            _moveTween = null;
+            _walkPoints.Clear();
+            _walkPoints.Add(anchor + new Vector3(offset.x, offset.y, 0f));
+            yield return WalkPath(_walkPoints, -1, null, null);
         }
 
         /// <summary>둘러볼 곳: 걸을 수 있는 칸 중 무작위 한 곳(지금 칸은 피한다).</summary>
@@ -397,13 +361,11 @@ namespace Code.Enemies
             _ => UnityEngine.Random.Range(2, 4)
         };
 
-        /// <summary>둘러보는 걸음은 방 사이를 옮길 때보다 느긋하다(이동 속도 대비).</summary>
-        private const float ExploreSpeedRatio = 1.2f;
-
-        /// <summary>한 번 둘러보는 데 쓰는 최대 시간(초).</summary>
-        private const float MaxExploreSeconds = 3f;
+        /// <summary>걸음 하나의 길이(월드). 이만큼 걸을 때마다 몸이 한 번 작게 튄다.</summary>
+        private const float StepLength = 0.6f;
 
         private string _exploredNodeId;
+        private readonly List<Vector3> _walkPoints = new();
         private readonly List<Vector3> _exploreRoute = new();
 
         /// <summary>경유점 목록. 이동마다 새로 만들지 않는다.</summary>
@@ -513,102 +475,86 @@ namespace Code.Enemies
             else
                 RoomRoute.Inside(_currentNode, start, targetPos, _route);
 
-            var distance = Vector3.Distance(start, targetPos);
-            var effectiveSpeed = moveSpeed * Mathf.Clamp(FatigueSpeedMultiplier, 0.1f, 1f);
-            var duration = Mathf.Clamp(distance / Mathf.Max(effectiveSpeed, 0.1f), minMoveDuration, maxMoveDuration);
-
-            // 꺾여 돌아가는 길은 그만큼 오래 걸린다. 다만 이동 한 번이 턴 간격을 크게 넘지 않게 1.6배에서 자른다.
-            var routeLength = RoomRoute.Length(start, _route);
-            if (distance > 0.01f)
-                duration *= Mathf.Clamp(routeLength / distance, 1f, 1.6f);
-
-            var direction = (_route.Count > 0 ? _route[0] : targetPos) - start;
-            FaceMoveDirection(direction);
-
-            _moveTween?.Kill();
-            ResetVisualPose();
-
-            // 이동 중에 죽는 적이 흔하다. 시퀀스를 오브젝트에 묶지 않으면 파괴된 뒤에도
-            // 트윈이 계속 돌며 사라진 Transform 의 position 을 건드려 예외가 난다.
-            var sequence = DOTween.Sequence().SetLink(gameObject);
-            var points = _route.ToArray();
-            if (doorIndex >= 0 && doorIndex < points.Length - 1)
-            {
-                // 문 앞까지 걸어가 잠깐 서서 문을 열고, 문을 지나 다음 방으로 들어간다.
-                // 그 시간은 이동 시간에 더하지 않고 나눠 쓴다 — 하루의 침입 속도는 그대로다.
-                var toDoor = new Vector3[doorIndex + 1];
-                var through = new Vector3[points.Length - doorIndex - 1];
-                System.Array.Copy(points, toDoor, toDoor.Length);
-                System.Array.Copy(points, doorIndex + 1, through, 0, through.Length);
-                var walk = Mathf.Max(0.05f, duration - DoorPauseSeconds);
-                var firstShare = Mathf.Clamp01(PathLength(start, toDoor) / Mathf.Max(0.01f, routeLength));
-                var doorFrom = fromNode;
-                var doorTo = _currentNode;
-                sequence.Append(transform.DOPath(toDoor, walk * firstShare, PathType.Linear).SetEase(Ease.OutQuad));
-                sequence.AppendCallback(() => OpenDoorsBetween(doorFrom, doorTo));
-                sequence.AppendInterval(DoorPauseSeconds);
-                sequence.Append(transform.DOPath(through, walk * (1f - firstShare), PathType.Linear).SetEase(Ease.InQuad)
-                    .OnWaypointChange(index =>
-                    {
-                        if (index > 0 && index < through.Length)
-                            FaceMoveDirection(through[index] - through[index - 1]);
-                    }));
-            }
-            else
-            {
-                sequence.Join(transform.DOPath(points, duration, PathType.Linear).SetEase(Ease.InOutQuad));
-            }
-
-            // 라인 위 건물(중점) 통과 시점(구간의 절반)에 효과 발동.
-            if (edgeBuilding != null)
-            {
-                var passedBuilding = edgeBuilding;
-                sequence.InsertCallback(duration * 0.5f, () => EdgeBuildingPassed?.Invoke(passedBuilding));
-            }
-
-            if (visual != null && visualHopHeight > 0f)
-            {
-                sequence.Join(visual.DOLocalMoveY(_visualStartLocalPosition.y + visualHopHeight, duration * 0.5f)
-                    .SetEase(Ease.OutSine)
-                    .SetLoops(2, LoopType.Yoyo));
-            }
-
-            if (visual != null && visualSquashAmount > 0f)
-            {
-                var squashScale = new Vector3(
-                    _visualStartLocalScale.x * (1f + visualSquashAmount),
-                    _visualStartLocalScale.y * (1f - visualSquashAmount),
-                    _visualStartLocalScale.z);
-                var stretchScale = new Vector3(
-                    _visualStartLocalScale.x * (1f - visualSquashAmount * 0.45f),
-                    _visualStartLocalScale.y * (1f + visualSquashAmount * 0.45f),
-                    _visualStartLocalScale.z);
-
-                sequence.Insert(0f, visual.DOScale(squashScale, duration * 0.2f).SetEase(Ease.OutSine));
-                sequence.Insert(duration * 0.2f, visual.DOScale(stretchScale, duration * 0.2f).SetEase(Ease.InOutSine));
-                sequence.Insert(duration * 0.42f, visual.DOScale(_visualStartLocalScale, duration * 0.28f).SetEase(Ease.OutBack));
-            }
-
-            if (visual != null && visualLeanAngle > 0f)
-            {
-                var leanDirection = Mathf.Abs(direction.x) > 0.001f
-                    ? -Mathf.Sign(direction.x)
-                    : Mathf.Sign(direction.y);
-                var leanRotation = new Vector3(0f, 0f, visualLeanAngle * leanDirection);
-
-                sequence.Join(visual.DOLocalRotate(leanRotation, duration * 0.25f).SetEase(Ease.OutSine));
-                sequence.Insert(duration * 0.55f, visual.DOLocalRotate(Vector3.zero, duration * 0.35f).SetEase(Ease.OutQuad));
-            }
-
-            sequence.OnKill(ResetVisualPose);
-            sequence.OnComplete(ResetVisualPose);
-            _moveTween = sequence
-                .SetLink(gameObject);
-
-            yield return _moveTween.WaitForCompletion();
+            // 문 앞까지 걸어가 잠깐 서서 문을 열고, 문을 지나 다음 방으로 들어간다.
+            _walkPoints.Clear();
+            _walkPoints.AddRange(_route);
+            var doorFrom = fromNode;
+            var doorTo = _currentNode;
+            var pauseAt = doorIndex >= 0 && doorIndex < _walkPoints.Count - 1 ? doorIndex : -1;
+            yield return WalkPath(_walkPoints, pauseAt, () => OpenDoorsBetween(doorFrom, doorTo), edgeBuilding);
         }
 
-        /// <summary>문 앞에서 서서 문을 여는 시간(초). 이동 시간 안에서 나눠 쓴다.</summary>
+        /// <summary>
+        /// 경유점을 따라 일정한 속도로 걷는다(게임 시간이라 일시정지 중에는 멈춘다). 구간마다 방향을 바꾸고 걸음마다 작게 튄다.
+        /// <paramref name="pauseAt"/>번 경유점(문 앞)에 닿으면 <paramref name="atPause"/>를 부르고 잠깐 선다.
+        /// 길 절반을 지날 때 라인 건물 통과를 알린다.
+        ///
+        /// 예전에는 DOTween 경로를 거리와 상관없이 정해진 시간(최대 1.5초)에 가감속 곡선으로 끝내, 방 사이는 내달리고
+        /// 방 안은 느리며 미끄러지듯 움직였다. 이동 한 번에 큰 점프·찌그러짐·기울기도 한 번씩 들어갔다.
+        /// </summary>
+        private IEnumerator WalkPath(List<Vector3> points, int pauseAt, Action atPause,
+            global::Code.Buildings.Building edgeBuilding)
+        {
+            ResetVisualPose();
+            var halfway = RoomRoute.Length(transform.position, points) * 0.5f;
+            var travelled = 0f;
+            var edgeAnnounced = edgeBuilding == null;
+            for (var i = 0; i < points.Count; i++)
+            {
+                var target = points[i];
+                FaceMoveDirection(target - transform.position);
+                while (true)
+                {
+                    var here = transform.position;
+                    var remaining = Vector3.Distance(here, target);
+                    var step = WalkSpeed * Time.deltaTime;
+                    if (step >= remaining)
+                    {
+                        transform.position = target;
+                        travelled += remaining;
+                        break;
+                    }
+
+                    transform.position = Vector3.MoveTowards(here, target, step);
+                    travelled += step;
+                    BobVisual(travelled);
+                    if (!edgeAnnounced && travelled >= halfway)
+                    {
+                        edgeAnnounced = true;
+                        EdgeBuildingPassed?.Invoke(edgeBuilding);
+                    }
+
+                    yield return null;
+                }
+
+                if (i != pauseAt)
+                    continue;
+
+                ResetVisualPose();
+                atPause?.Invoke();
+                yield return new WaitForSeconds(DoorPauseSeconds);
+            }
+
+            if (!edgeAnnounced)
+                EdgeBuildingPassed?.Invoke(edgeBuilding);
+            ResetVisualPose();
+        }
+
+        /// <summary>어디서나 같은 걸음 속도(사용자 결정). 피로가 늦추고 기동성이 올린다.</summary>
+        private float WalkSpeed => Mathf.Max(0.1f,
+            moveSpeed * Mathf.Clamp(FatigueSpeedMultiplier, 0.1f, 1f) * Mathf.Max(0.1f, MobilitySpeedMultiplier));
+
+        /// <summary>걸은 거리만큼 걸음마다 몸을 작게 튀긴다.</summary>
+        private void BobVisual(float travelled)
+        {
+            if (visual == null || visualHopHeight <= 0f)
+                return;
+
+            var lift = Mathf.Abs(Mathf.Sin(travelled / StepLength * Mathf.PI)) * visualHopHeight;
+            visual.localPosition = _visualStartLocalPosition + new Vector3(0f, lift, 0f);
+        }
+
+        /// <summary>문 앞에서 서서 문을 여는 시간(초).</summary>
         private const float DoorPauseSeconds = 0.18f;
 
         /// <summary>두 방 사이 복도 양 끝의 문을 연다(그림이 있는 위쪽 문만 실제로 열린다).</summary>
@@ -619,19 +565,6 @@ namespace Code.Enemies
 
             from.OpenDoor(fromSide);
             to.OpenDoor(toSide);
-        }
-
-        private static float PathLength(Vector3 start, Vector3[] points)
-        {
-            var length = 0f;
-            var previous = start;
-            foreach (var point in points)
-            {
-                length += Vector2.Distance(previous, point);
-                previous = point;
-            }
-
-            return length;
         }
 
         private Node SelectNextNode()
@@ -994,8 +927,6 @@ namespace Code.Enemies
                 VacateNode(_currentNode, PartyOccupancyId);
 
             CurrentBattlefield?.Leave(_battleAgent);
-
-            _moveTween?.Kill();
         }
 
         private void OnEnable()

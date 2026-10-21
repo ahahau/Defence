@@ -15,5 +15,6 @@ namespace GameLib.Entity.Stats
         public const int EvasionChance = 5;
         public const int CriticalChance = 6;
         public const int CriticalDamage = 7;
+        public const int Mobility = 8;
     }
 }

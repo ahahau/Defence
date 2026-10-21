@@ -179,6 +179,59 @@ namespace Tests.EditMode.Rules
             Assert.That(Vector3.Distance(host.transform.position, before), Is.LessThan(0.5f), "맞아도 제자리에서 흔들려야 합니다.");
         }
 
+        /// <summary>
+        /// 함정 판정을 매 프레임 굴려 발동 확률을 낮춰도 서 있는 동안 결국 밟혔다. 칸에 들어선 순간 한 번만 굴리고,
+        /// 피했으면 나갈 때까지 다시 굴리지 않는다. 다시 들어서면 새로 굴린다.
+        /// </summary>
+        [Test]
+        public void TrapStep_RollsOncePerEntry()
+        {
+            var host = new GameObject("Trap");
+            _created.Add(host);
+            var trap = host.AddComponent<Trap>();
+            var memory = new TrapStepMemory();
+
+            Assert.That(memory.Step(trap, 0.6f, 0.9f), Is.False, "굴림이 확률보다 크면 피합니다.");
+            for (var frame = 0; frame < 100; frame++)
+                Assert.That(memory.Step(trap, 0.6f, 0f), Is.False, "피한 칸 위에서는 다시 굴리지 않습니다.");
+
+            memory.Leave(trap);
+            Assert.That(memory.Step(trap, 0.6f, 0.1f), Is.True, "칸을 나갔다 다시 들어오면 새로 굴립니다.");
+        }
+
+        /// <summary>기동성 1점마다 회피 +2%p, 함정 피하기 +4%p, 이동 속도 +5%(0~10).</summary>
+        [Test]
+        public void Mobility_ScalesEvasionTrapAvoidAndSpeed()
+        {
+            Assert.That(Code.Enemies.MobilityRules.StepChance(0.6f, 8), Is.EqualTo(0.6f * 0.68f).Within(0.0001f));
+            Assert.That(Code.Enemies.MobilityRules.StepChance(0.6f, 0), Is.EqualTo(0.6f).Within(0.0001f));
+            Assert.That(Code.Enemies.MobilityRules.EvasionBonus(8), Is.EqualTo(0.16f).Within(0.0001f));
+            Assert.That(Code.Enemies.MobilityRules.SpeedMultiplier(8), Is.EqualTo(1.4f).Within(0.0001f));
+            Assert.That(Code.Enemies.MobilityRules.StepChance(0.6f, 99), Is.EqualTo(0.6f * 0.6f).Within(0.0001f), "10에서 멈춥니다.");
+        }
+
+        /// <summary>설치된 함정은 쉽게 밟히지 않는다(기본 60%), 적마다 기동성이 정해져 있다.</summary>
+        [Test]
+        public void TrapsAndAdventurers_UseAgreedMobilityValues()
+        {
+            foreach (var name in new[] { "Trap_FireBrazier", "Trap_BloodPool", "Trap_ManaCrystal" })
+                Assert.That(LoadTrapPrefab(name).TriggerChance, Is.EqualTo(0.6f).Within(0.0001f), name);
+
+            var expected = new Dictionary<string, int>
+            {
+                { "ThiefEnemy", 8 }, { "ScoutEnemy", 7 }, { "BasicEnemy", 3 }, { "ArcherEnemy", 4 }, { "SapperEnemy", 2 },
+                { "HealterEnemy", 2 }, { "SwordEnemy", 2 }, { "PaladinEnemy", 1 }, { "Enemy_Tourist_Coward", 3 },
+                { "Enemy_Tourist_Priest", 3 }, { "Enemy_Tourist_Shopaholic", 3 }, { "Boss_GreedKnight", 2 },
+                { "Boss_Houndmaster", 2 }, { "Boss_KnightCommander", 2 }, { "Boss_Subjugator", 2 }
+            };
+            foreach (var guid in AssetDatabase.FindAssets("t:Code.Enemies.EnemyDataSO", new[] { "Assets/07.SO/Enemies" }))
+            {
+                var data = AssetDatabase.LoadAssetAtPath<Code.Enemies.EnemyDataSO>(AssetDatabase.GUIDToAssetPath(guid));
+                Assert.That(expected.ContainsKey(data.name), Is.True, $"{data.name} 의 기동성을 정하지 않았습니다.");
+                Assert.That(data.Mobility, Is.EqualTo(expected[data.name]), data.name);
+            }
+        }
+
         /// <summary>그림이 없는 함정은 지웠다. 남은 함정은 팩 그림이 있는 셋뿐이고, 각자 해금 목록에 올라 있다.</summary>
         [Test]
         public void TrapRoster_IsOnlyTrapsWithPackArt()

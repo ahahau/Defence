@@ -4,6 +4,7 @@ using Code.Combat;
 using Code.Buildings;
 using Code.Core;
 using GameLib.Entity;
+using GameLib.Entity.Stats;
 using Code.Entities;
 using Code.Events;
 using Code.Manager;
@@ -94,6 +95,16 @@ namespace Code.Enemies
         private bool _killRewardGranted;
         private BattleAgent _battleAgent;
         private EnemyStrengthOutline _strengthOutline;
+        private IStatModule _stats;
+        private readonly TrapStepMemory _trapSteps = new();
+
+        /// <summary>기동성 보정의 출처 키(회피 가감치).</summary>
+        private static readonly object MobilityStatKey = new();
+
+        /// <summary>기동성(0~10). 회피·함정 피하기·이동 속도를 올린다(<see cref="MobilityRules"/>).</summary>
+        public int Mobility => _stats != null && _stats.TryGetStat(StatIndex.Mobility, out var stat)
+            ? MobilityRules.Clamp(Mathf.RoundToInt(stat.Value))
+            : MobilityRules.Clamp(data != null ? data.Mobility : 0);
 
         // ── BT-facing state queries ─────────────────────────────
         public CombatState State => _state;
@@ -512,7 +523,9 @@ namespace Code.Enemies
             // 노드 도착 때와 같은 순서로 함정을 먼저 터뜨리고 통과 효과를 얹는다.
             if (building is Trap edgeTrap)
             {
-                edgeTrap.TriggerBy(this);
+                // 통로는 지나가는 한 번뿐이라 그 자리에서 한 번 굴린다.
+                if (edgeTrap.IsReady && Random.value < MobilityRules.StepChance(edgeTrap.TriggerChance, Mobility))
+                    edgeTrap.TriggerBy(this);
                 if (!combatant.IsAlive)
                 {
                     BeginDeath();
@@ -626,13 +639,18 @@ namespace Code.Enemies
                 if (!combatant.IsAlive)
                     return;
 
-                if (placed[i] is not Trap trap || trap == null || !trap.IsReady)
+                if (placed[i] is not Trap trap || trap == null)
                     continue;
 
                 if (!trap.Covers(transform.position, radius))
+                {
+                    _trapSteps.Leave(trap);
                     continue;
+                }
 
-                trap.TriggerBy(this);
+                // 칸에 들어선 순간 한 번만 굴린다. 피했으면 그 칸을 나갈 때까지 다시 밟지 않는다.
+                if (trap.IsReady && _trapSteps.Step(trap, MobilityRules.StepChance(trap.TriggerChance, Mobility), Random.value))
+                    trap.TriggerBy(this);
             }
         }
 
@@ -1422,10 +1440,27 @@ namespace Code.Enemies
             combatant?.SetDefense(enemyData.Defense);
             combatant?.SetAttackInterval(enemyData.AttackInterval);
             combatant?.SetEvasionChance(enemyData.EvasionChance);
+            ApplyMobility(enemyData.Mobility);
             combatant?.SetAttackSfx(enemyData.AttackSfx);
             enemyRenderer?.ConfigureSprites(enemyData.IdleSprite, enemyData.AttackSprite, enemyData.DefeatedSprite);
             enemyRenderer?.ConfigureAnimation(enemyData.AnimationSet);
             _strengthOutline?.RefreshSprite();
+        }
+
+        /// <summary>기동성을 스탯에 넣고 회피 가감치·이동 속도 배율로 옮긴다.</summary>
+        private void ApplyMobility(int mobility)
+        {
+            _stats ??= GetComponent<IStatModule>();
+            if (_stats != null && _stats.TryGetStat(StatIndex.Mobility, out var stat))
+                stat.BaseValue = MobilityRules.Clamp(mobility);
+
+            var resolved = Mobility;
+            combatant?.SetDefenseAndEvasionBonus(MobilityStatKey, 0f, MobilityRules.EvasionBonus(resolved));
+            var speed = MobilityRules.SpeedMultiplier(resolved);
+            if (mover != null)
+                mover.MobilitySpeedMultiplier = speed;
+            if (TryGetComponent<BattleAgent>(out var agent))
+                agent.MobilitySpeedMultiplier = speed;
         }
 
         private void RefreshStrengthOutline()

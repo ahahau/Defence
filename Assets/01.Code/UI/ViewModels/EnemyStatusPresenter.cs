@@ -24,7 +24,7 @@ namespace Code.UI.ViewModels
                 State = ResolveState(target),
                 Hp = health != null ? $"HP {health.CurrentHealth}/{health.MaxHealth}" : "HP -",
                 Attack = combatant != null
-                    ? $"ATK {combatant.AttackDamage}  SPD {combatant.AttackInterval:0.##}s"
+                    ? $"ATK {combatant.AttackDamage}  SPD {combatant.AttackInterval:0.##}s  기동 {target.Mobility}"
                     : "ATK -  SPD -",
                 // 예산은 이 모험가가 쓸 마음이 있는 금액, 파티 자금은 실제 지갑이다. 지갑은 단계로만 보여 준다.
                 Purpose = $"목적 {target.VisitPurposeLabel}  ·  예산 {target.RemainingBudget}/{target.InitialBudget}G"
