@@ -615,6 +615,39 @@ namespace Tests.EditMode.Rules
         }
 
         /// <summary>
+        /// 시트 18행 바닥(17행보다 한 톤 어두운 그림자 바닥)은 벽·기둥 바로 아래 줄에만 깐다.
+        /// 예전에는 무작위 무늬에 섞여 방 한가운데에 구멍 같은 어두운 칸이 박혔다.
+        /// </summary>
+        [Test]
+        public void RuleTiles_ShadowFloorOnlyRunsUnderWalls()
+        {
+            var tileSet = AssetDatabase.LoadAssetAtPath<RoomTileSet>("Assets/07.SO/Map/RoomTileSet.asset");
+            Assert.That(tileSet, Is.Not.Null);
+            var gridHost = new GameObject("TestGrid", typeof(Grid));
+            _layoutHosts.Add(gridHost);
+            var tiles = new GameObject("Tiles", typeof(UnityEngine.Tilemaps.Tilemap)).GetComponent<UnityEngine.Tilemaps.Tilemap>();
+            tiles.transform.SetParent(gridHost.transform, false);
+
+            var plan = RoomTilePlan.Build(NewShape(RoomSize.Medium, RoomDoors.Left | RoomDoors.Right, PillarRows), RoomDoors.None,
+                RoomDoors.None, 24);
+            RoomTilePainter.Paint(null, tiles, tileSet, new[] { new RoomTilePainter.Room(plan, Vector2Int.zero, Color.white) });
+
+            int shaded = 0, open = 0;
+            foreach (var tile in plan.Floor)
+            {
+                var underWall = !plan.Floor.Contains(tile + Vector2Int.up);
+                var row = Cell(tiles, tile.x, tile.y).row;
+                Assert.That(row, Is.EqualTo(underWall ? 18 : 17),
+                    $"({tile.x}, {tile.y})는 {(underWall ? "벽 바로 아래라 그림자" : "트인 바닥이라 밝은")} 바닥이어야 합니다.");
+                if (underWall) shaded++;
+                else open++;
+            }
+
+            Assert.That(shaded, Is.GreaterThan(0));
+            Assert.That(open, Is.GreaterThan(0));
+        }
+
+        /// <summary>
         /// 장식은 위쪽 벽 벽돌 면(벽 칸)과 비어 있는 바닥에만 놓이고, 같은 방이면 늘 같은 자리다.
         /// 바닥 칸 위에 벽 장식이 놓이면 바닥에 횃불이 서 있고, 중앙 시설·문 앞을 가리면 건물과 드나드는 길이 안 보인다.
         /// </summary>

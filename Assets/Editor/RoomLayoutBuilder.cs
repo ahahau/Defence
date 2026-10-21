@@ -33,8 +33,8 @@ public static class RoomLayoutBuilder
     private const string NodePrefabPath = "Assets/03.Prefabs/Map/Node.prefab";
     private const string ScenePath = "Assets/00.Scenes/SampleScene.unity";
 
-    /// <summary>바닥 무늬 비율: 기본 24장 + 무늬 8장 = 무늬 25%.</summary>
-    private const int FloorMainWeight = 24;
+    /// <summary>바닥 무늬 비율: 기본 29장 + 금 무늬 4장 = 무늬 약 12%. 금은 원래 두 칸에 걸친 그림이라 흩어지면 끊겨 보인다.</summary>
+    private const int FloorMainWeight = 29;
 
     private const float FloorPerlinScale = 3.7f;
     private const int F = DungeonWallRuleTile.Neighbor.Floor;
@@ -45,10 +45,13 @@ public static class RoomLayoutBuilder
     private static readonly (int column, int row) FloorCell = (6, 17);
     private static readonly (int column, int row) VoidCell = (1, 2);
 
-    private static readonly (int column, int row)[] FloorVariantCells =
-    {
-        (7, 17), (8, 17), (9, 17), (10, 17), (6, 18), (7, 18), (8, 18), (9, 18)
-    };
+    private static readonly (int column, int row)[] FloorVariantCells = { (7, 17), (8, 17), (9, 17), (10, 17) };
+
+    /// <summary>
+    /// 18행은 17행과 무늬가 같고 한 톤 어두운 그림자 바닥이다. 벽·기둥 바로 아래 줄에만 깐다
+    /// (무작위로 섞으면 방 한가운데에 구멍 같은 칸이 생긴다).
+    /// </summary>
+    private const int FloorShadowRowOffset = 1;
 
     /// <summary>예제 씬이 쓰는 조각 칸(열.행, 시트 왼쪽 위 기준 16px).</summary>
     private static readonly Dictionary<RoomWallKind, (int column, int row)> PieceCells = new()
@@ -274,29 +277,37 @@ public static class RoomLayoutBuilder
     private static DungeonFloorRuleTile BuildFloorTile(Dictionary<(int, int), Sprite> sprites)
     {
         var tile = LoadOrCreate<DungeonFloorRuleTile>(FloorTilePath);
-        var main = Find(sprites, FloorCell);
+        tile.m_DefaultSprite = Find(sprites, FloorCell);
+        tile.m_DefaultColliderType = Tile.ColliderType.None;
+        tile.m_TilingRules = new List<RuleTile.TilingRule>
+        {
+            // 위가 바닥이 아니면(벽·기둥) 그림자 바닥. 규칙은 위에서부터 맞춰 보므로 먼저 둔다.
+            FloorRule(sprites, FloorShadowRowOffset, new List<Vector3Int> { Vector3Int.up }, new List<int> { NotThis }),
+            FloorRule(sprites, 0, new List<Vector3Int>(), new List<int>())
+        };
+        EditorUtility.SetDirty(tile);
+        return tile;
+    }
+
+    private static RuleTile.TilingRule FloorRule(Dictionary<(int, int), Sprite> sprites, int rowOffset,
+        List<Vector3Int> neighborPositions, List<int> neighbors)
+    {
+        var main = Find(sprites, (FloorCell.column, FloorCell.row + rowOffset));
         var pool = new List<Sprite>();
         for (var i = 0; i < FloorMainWeight; i++)
             pool.Add(main);
         foreach (var cell in FloorVariantCells)
-            pool.Add(Find(sprites, cell));
+            pool.Add(Find(sprites, (cell.column, cell.row + rowOffset)));
 
-        tile.m_DefaultSprite = main;
-        tile.m_DefaultColliderType = Tile.ColliderType.None;
-        tile.m_TilingRules = new List<RuleTile.TilingRule>
+        return new RuleTile.TilingRule
         {
-            new()
-            {
-                m_Output = RuleTile.TilingRuleOutput.OutputSprite.Random,
-                m_Sprites = pool.ToArray(),
-                m_PerlinScale = FloorPerlinScale,
-                m_ColliderType = Tile.ColliderType.None,
-                m_NeighborPositions = new List<Vector3Int>(),
-                m_Neighbors = new List<int>()
-            }
+            m_Output = RuleTile.TilingRuleOutput.OutputSprite.Random,
+            m_Sprites = pool.ToArray(),
+            m_PerlinScale = FloorPerlinScale,
+            m_ColliderType = Tile.ColliderType.None,
+            m_NeighborPositions = neighborPositions,
+            m_Neighbors = neighbors
         };
-        EditorUtility.SetDirty(tile);
-        return tile;
     }
 
     private static DungeonWallRuleTile BuildWallTile(Dictionary<(int, int), Sprite> sprites)
@@ -328,11 +339,12 @@ public static class RoomLayoutBuilder
         return tile;
     }
 
-    /// <summary>벽·기둥 룰 타일만 다시 만든다(방 프리팹·씬은 건드리지 않음). 메뉴: Tools/Dungeon Keeper/Rebuild Wall Tiles.</summary>
+    /// <summary>바닥·벽·기둥 룰 타일만 다시 만든다(방 프리팹·씬은 건드리지 않음). 메뉴: Tools/Dungeon Keeper/Rebuild Wall Tiles.</summary>
     [MenuItem("Tools/Dungeon Keeper/Rebuild Wall Tiles")]
     public static void RebuildRuleTiles()
     {
         var sprites = LoadSprites();
+        BuildFloorTile(sprites);
         BuildWallTile(sprites);
         BuildPillarTile(sprites);
         AssetDatabase.SaveAssets();
