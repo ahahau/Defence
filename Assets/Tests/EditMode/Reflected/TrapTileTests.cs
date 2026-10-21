@@ -135,6 +135,19 @@ namespace Tests.EditMode.Rules
             Assert.That(seen.Count, Is.EqualTo(10));
         }
 
+        /// <summary>
+        /// 설치 카드·미리보기는 프리팹의 첫 SpriteRenderer 그림을 쓴다. 칸막이는 방에 기둥 타일로 그려져 몸체가 꺼져 있는데,
+        /// 그 몸체에 임시 건물 그림이 남아 카드에 노란 네모가 나왔다. 카드 그림은 보드 그림(기둥 조각)과 같아야 한다.
+        /// </summary>
+        [Test]
+        public void Partition_CardShowsItsBoardArt()
+        {
+            var data = AssetDatabase.LoadAssetAtPath<BuildingDataSO>("Assets/07.SO/Buildings/PartitionBuildingData.asset");
+            Assert.That(data, Is.Not.Null);
+            var cardSprite = data.Prefab.GetComponentInChildren<SpriteRenderer>(true)?.sprite;
+            Assert.That(cardSprite, Is.EqualTo(data.BoardSprite), "칸막이 카드가 임시 그림을 보여 줍니다.");
+        }
+
         [Test]
         public void Footprint_CoversAllTilesButNotBeyond()
         {
