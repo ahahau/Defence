@@ -198,7 +198,7 @@ MonoBehaviour:
   enableFeelCombatFeedbacks: 1
   attackHitParticles: {fileID: 0}
   attackImpactOffset: 0.08
-  attackSfx: 10
+  attackSfx: 8
   attackStatusEffect: {fileID: 0}
   attackStatusEffectChance: 0
   health: {fileID: 2709196990148380843}
@@ -263,11 +263,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.BT.BattleAgent
   team: 0
-  role: 1
+  role: 0
   combatant: {fileID: 0}
   body: {fileID: 0}
   senseRange: 6
-  attackRange: 4.5
+  attackRange: 1.3
   moveSpeed: 3
   threatWeight: 12
   outOfCombatRegenPerSecond: 0

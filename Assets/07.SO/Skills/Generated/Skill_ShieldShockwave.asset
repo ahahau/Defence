@@ -12,9 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2c05617eccf4864aa5672963a8c7578, type: 3}
   m_Name: Skill_ShieldShockwave
   m_EditorClassIdentifier: 
-  <DisplayName>k__BackingField: "\uBC29\uD328 \uCDA9\uACA9\uD30C"
-  <Description>k__BackingField: "\uC8FC\uBCC0 \uC801\uC5D0\uAC8C \uD53C\uD574\uB97C
-    \uC8FC\uACE0 \uC2DC\uC804\uC790\uC5D0\uAC8C\uC11C \uBC00\uC5B4\uB0C5\uB2C8\uB2E4."
+  <DisplayName>k__BackingField: "\uB3C4\uB07C \uD729\uC4F8\uAE30"
+  <Description>k__BackingField: "\uB3C4\uB07C\uB97C \uD06C\uAC8C \uD718\uB458\uB7EC \uBC18\uACBD 2.35 \uC548\uC758 \uC801\uC5D0\uAC8C \uD53C\uD574 4\uB97C \uC8FC\uACE0 1.2\uB9CC\uD07C \uBC00\uC5B4\uB0C5\uB2C8\uB2E4."
   <Icon>k__BackingField: {fileID: -2278566297644842510, guid: 3d1a3fa18cf47504cbc71399b9b92c1e, type: 3}
   <Cooldown>k__BackingField: 5.5
   <IsUltimate>k__BackingField: 0

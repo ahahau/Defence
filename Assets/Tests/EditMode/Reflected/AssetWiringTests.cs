@@ -203,6 +203,32 @@ namespace Tests.EditMode.Gameplay
         }
 
         /// <summary>
+        /// 관광객(겁쟁이·쇼핑광)은 맨손 민간인 그림이다. 척후병 프리팹을 같이 써서 "매복 기습·연막 독무"를 쓰던 것을
+        /// 스킬 없는 관광객 전용 프리팹으로 나눴다(2026-10-22). 다시 공용 프리팹으로 돌리면 민간인이 암살 기술을 쓴다.
+        /// </summary>
+        [Test]
+        public void Tourists_FightWithoutCombatSkills()
+        {
+            var casterType = RequireType("Code.Skills.SkillCaster");
+            var armed = new List<string>();
+
+            foreach (var (asset, _) in LoadAll("Code.Enemies.EnemyDataSO"))
+            {
+                // 탐욕의 기사(보스)도 쇼핑광 특성이라 특성만으로 고르지 않는다. 성직자 관광객은 치유사 프리팹이 맞다.
+                var trait = asset.GetType().GetProperty("Trait", Instance).GetValue(asset).ToString();
+                if (!asset.name.StartsWith("Enemy_Tourist_") || trait == "Priest")
+                    continue;
+
+                var prefab = ReadProperty(asset, "Prefab") as Component;
+                Assert.That(prefab, Is.Not.Null, asset.name + " 프리팹이 없습니다.");
+                if (prefab.GetComponent(casterType) != null)
+                    armed.Add(asset.name + " ← " + prefab.name);
+            }
+
+            Assert.That(armed, Is.Empty, "스킬을 든 관광객:\n  " + string.Join("\n  ", armed));
+        }
+
+        /// <summary>
         /// 유물은 목록에서 그림으로 구분된다. 하나라도 비면 그 칸만 빈 상자로 나온다.
         /// </summary>
         [Test]

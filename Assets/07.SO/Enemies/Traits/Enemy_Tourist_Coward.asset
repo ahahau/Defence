@@ -19,7 +19,7 @@ MonoBehaviour:
   <Name>k__BackingField: "\uAC81\uB9CE\uC740 \uAD00\uAD11\uAC1D"
   <Role>k__BackingField: 0
   <Trait>k__BackingField: 2
-  <Prefab>k__BackingField: {fileID: 6453398018867074118, guid: a5af3a434bf432348801f90079a3ea66, type: 3}
+  <Prefab>k__BackingField: {fileID: 2381010193877715520, guid: f0e1ecc7c0276b042aabb780a92e0e27, type: 3}
   <Fear>k__BackingField: 3
   <Greed>k__BackingField: 2
   <MaxHealth>k__BackingField: 6
@@ -30,5 +30,5 @@ MonoBehaviour:
   <AttackSprite>k__BackingField: {fileID: 21300000, guid: 4e525b97f46ff4fbfb3eb2422de783ff, type: 3}
   <DefeatedSprite>k__BackingField: {fileID: 21300000, guid: 32291526401994cb192554c7c360b0d0, type: 3}
   <AnimationSet>k__BackingField: {fileID: 11400000, guid: b13ab2f6dec1bf0448c3260660b13117, type: 2}
-  <AttackSfx>k__BackingField: 20
+  <AttackSfx>k__BackingField: 8
   <DisarmsTraps>k__BackingField: 0

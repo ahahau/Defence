@@ -9,7 +9,8 @@ paths:
 1. 적은 **데이터 중심**으로 만든다. 새 적은 `EnemyDataSO` 하나 + 기존 역할 프리팹 4종 중 하나로 만든다.
    * 외형은 `EnemyDataSO`의 `IdleSprite`/`AttackSprite`/`DefeatedSprite`/`BoardSprite`로 바꾸고, 공격음은 `AttackSfx`로 정한다.
    * `Prefab`은 **반드시** 채운다(`AssetWiringTests`가 검사한다). 역할에 맞는 공용 프리팹을 고른다. 행동과 스킬은 프리팹이 정한다.
-     * `Enemy_Scout`: 가볍고 빠른 근접 (Basic, Scout, Thief, 관광객)
+     * `Enemy_Scout`: 가볍고 빠른 근접 (Basic, Scout, Thief)
+     * `Enemy_Tourist`: 스킬 없는 민간인 근접 (겁쟁이·쇼핑광 관광객, `Enemy.prefab` Variant). 맨손 그림이라 척후병 스킬을 쓰지 않는다(`AssetWiringTests.Tourists_FightWithoutCombatSkills`)
      * `Enemy_Sword`: 전열·중근접 (Sword, Paladin, Sapper, 기사 보스)
      * `Enemy_Archer`: 후열 사격 (Archer, Houndmaster)
      * `Enemy_Healter`: 지원·치유 (Healter, 성직자)
