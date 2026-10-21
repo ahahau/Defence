@@ -767,19 +767,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4585626299885849687, guid: 363fa9216385a6e4f83245489e6ecd91, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4585626299885849687, guid: 363fa9216385a6e4f83245489e6ecd91, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4585626299885849687, guid: 363fa9216385a6e4f83245489e6ecd91, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 342
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4585626299885849687, guid: 363fa9216385a6e4f83245489e6ecd91, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 171
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5090679683760712039, guid: 363fa9216385a6e4f83245489e6ecd91, type: 3}
       propertyPath: m_Pivot.x
@@ -2355,7 +2355,7 @@ Camera:
   far clip plane: 1000
   field of view: 34
   orthographic: 1
-  orthographic size: 6.428571
+  orthographic size: 19.285715
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -9563,19 +9563,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6231863379424928502, guid: bb1959c1772933a49bed44267ced1fb8, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6231863379424928502, guid: bb1959c1772933a49bed44267ced1fb8, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6231863379424928502, guid: bb1959c1772933a49bed44267ced1fb8, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 724
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6231863379424928502, guid: bb1959c1772933a49bed44267ced1fb8, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 362
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7312864916820106845, guid: bb1959c1772933a49bed44267ced1fb8, type: 3}
       propertyPath: m_fontColor32.rgba
