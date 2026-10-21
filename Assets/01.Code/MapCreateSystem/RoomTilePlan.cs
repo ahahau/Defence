@@ -37,6 +37,9 @@ namespace Code.MapCreateSystem
         /// </summary>
         public Dictionary<Vector2Int, RoomWallKind> PillarBlocks { get; } = new();
 
+        /// <summary>칸 기둥 윗면 중 위 칸으로 삐져나온 줄(<see cref="PillarBlocks"/>의 일부). 위 칸에 놓인 함정을 가리게 앞 층에 한 번 더 그린다.</summary>
+        public HashSet<Vector2Int> PillarOverhangs { get; } = new();
+
         /// <summary>장식(위쪽 벽 횃불·석상·홈, 바닥 소품). 방 이름으로 자리를 정해 늘 같은 곳에 놓인다.</summary>
         public List<RoomDecorPlacement> Decor { get; } = new();
 
@@ -309,10 +312,10 @@ namespace Code.MapCreateSystem
         }
 
         /// <summary>
-        /// 칸 기둥(방 안 기둥·칸막이)을 칸마다 블록으로 그린다: 칸(타일 2×2)이 테두리 있는 윗면이고, 아래 칸 윗줄에 받침 한 줄이 내려온다.
-        /// 예전에는 칸 위로 머리 한 줄을 올려 위 칸 함정을 가렸고, 위아래로 붙은 기둥은 한 덩어리로 이어져 아래 칸 윗면이 보이지 않았다.
-        /// 받침은 그림만 내려올 뿐 그 칸은 그대로 걸을 수 있다(걸을 수 있는 칸은 모양 RoomShape가 정한다).
-        /// 좌우로 붙은 칸은 윗면·받침이 이어지고, 위아래로 붙은 칸은 아래 칸 윗면이 위 칸 받침 자리를 덮는다.
+        /// 칸 기둥(방 안 기둥·칸막이)을 칸마다 블록으로 그린다: 칸 아랫줄이 받침, 칸 윗줄과 그 위 한 줄이 테두리 있는 윗면(타일 2×2)이다.
+        /// 블록 바닥이 칸 바닥에 맞아 놓은 칸에 서 보인다(사용자 요청 — 윗면을 칸에 두고 받침을 아래 칸으로 내렸을 때는 한 칸 아래로 밀려 보였다).
+        /// 위로 삐져나온 윗면 줄(<see cref="PillarOverhangs"/>)은 위 칸 바닥을 가리므로 앞 층에 한 번 더 그린다. 걸을 수 있는 칸은 모양(RoomShape)이 정한다.
+        /// 좌우로 붙은 칸은 윗면·받침이 이어지고, 위아래로 붙은 칸은 아래 칸 윗면이 위 칸 받침 자리를 덮어 칸마다 윗면이 보인다.
         /// </summary>
         private void AddPillarBlocks(RoomShape shape, HashSet<Vector2Int> blockCells)
         {
@@ -326,13 +329,8 @@ namespace Code.MapCreateSystem
                 var right = HasBaseBeside(blockCells, cell + Vector2Int.right);
                 for (var dx = 0; dx < RoomLayoutRules.TilesPerCell; dx++)
                 {
-                    // 방 가장자리 칸이면 아래가 벽(난간)이다. 받침은 바닥 위에만 내린다.
-                    var tile = new Vector2Int(origin.x + dx, origin.y - 1);
-                    if (!_roomFloor.Contains(tile))
-                        continue;
-
-                    SetPillarBlock(tile, Edge(dx, left, right, RoomWallKind.PillarBaseLeft, RoomWallKind.PillarBase,
-                        RoomWallKind.PillarBaseRight));
+                    SetPillarBlock(new Vector2Int(origin.x + dx, origin.y), Edge(dx, left, right,
+                        RoomWallKind.PillarBaseLeft, RoomWallKind.PillarBase, RoomWallKind.PillarBaseRight));
                 }
             }
 
@@ -341,12 +339,16 @@ namespace Code.MapCreateSystem
                 var origin = CellOriginTile(shape.Columns, shape.Rows, cell.x, cell.y);
                 var left = blockCells.Contains(cell + Vector2Int.left);
                 var right = blockCells.Contains(cell + Vector2Int.right);
+                var overhangs = !blockCells.Contains(cell + Vector2Int.up);
                 for (var dx = 0; dx < RoomLayoutRules.TilesPerCell; dx++)
                 {
-                    SetPillarBlock(new Vector2Int(origin.x + dx, origin.y), Edge(dx, left, right,
-                        RoomWallKind.PillarTopLowerLeft, RoomWallKind.PillarTopLower, RoomWallKind.PillarTopLowerRight));
                     SetPillarBlock(new Vector2Int(origin.x + dx, origin.y + 1), Edge(dx, left, right,
+                        RoomWallKind.PillarTopLowerLeft, RoomWallKind.PillarTopLower, RoomWallKind.PillarTopLowerRight));
+                    var top = new Vector2Int(origin.x + dx, origin.y + 2);
+                    SetPillarBlock(top, Edge(dx, left, right,
                         RoomWallKind.PillarTopLeft, RoomWallKind.PillarTop, RoomWallKind.PillarTopRight));
+                    if (overhangs)
+                        PillarOverhangs.Add(top);
                 }
             }
         }

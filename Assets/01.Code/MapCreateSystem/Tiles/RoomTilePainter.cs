@@ -110,6 +110,43 @@ namespace Code.MapCreateSystem
         }
 
         /// <summary>
+        /// 칸 기둥 윗면이 위 칸으로 삐져나온 줄의 앞 층 정렬 순서. 함정 몸체(<c>Trap.BodySortingOrder</c> 10)보다 위, 캐릭터(20)보다 아래다.
+        /// 3/4 시점에서 가까운 기둥의 윗면이 위 칸 바닥에 놓인 함정을 가리고, 그 칸에 선 캐릭터는 가리지 않는다.
+        /// </summary>
+        public const int PillarOverhangSortingOrder = 11;
+
+        /// <summary>삐져나온 윗면 줄(<see cref="RoomTilePlan.PillarOverhangs"/>)을 앞 층에 같은 조각·방 색으로 다시 칠한다.</summary>
+        public static void PaintPillarOverhangs(Tilemap front, RoomTileSet set, IReadOnlyList<Room> rooms)
+        {
+            if (front == null)
+                return;
+
+            front.ClearAllTiles();
+            if (set == null)
+                return;
+
+            foreach (var room in rooms)
+            {
+                if (room.Plan == null)
+                    continue;
+
+                foreach (var tile in room.Plan.PillarOverhangs)
+                {
+                    if (!room.Plan.PillarBlocks.TryGetValue(tile, out var kind))
+                        continue;
+
+                    var cell = ToCell(tile + room.Offset);
+                    front.SetTile(cell, set.PillarBlock(kind));
+                    if (room.Tint == Color.white)
+                        continue;
+
+                    front.SetTileFlags(cell, TileFlags.None);
+                    front.SetColor(cell, room.Tint);
+                }
+            }
+        }
+
+        /// <summary>
         /// 장식을 따로 칠한다(벽 위, 캐릭터 아래). 횃불 그림은 타일 1×2라 기준점을 반 칸 올린 타일맵(<paramref name="torches"/>)에
         /// 아래 칸으로 놓는다 — 애니메이션 타일은 타일별 위치 변환이 먹지 않는다.
         /// </summary>

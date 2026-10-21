@@ -16,6 +16,7 @@ namespace Code.MapCreateSystem
         private Tilemap _tiles;
         private Tilemap _decor;
         private Tilemap _torches;
+        private Tilemap _pillarOverhangs;
         private RoomTileSet _tileSet;
         private bool _dirty;
         private readonly List<Node> _nodes = new();
@@ -54,6 +55,11 @@ namespace Code.MapCreateSystem
             map._torches = CreateLayer(root.transform, "Torches", tileTemplate, 2);
             map._torches.tileAnchor = new Vector3(0.5f, 1f, 0f);
             map._torches.GetComponent<TilemapRenderer>().sortingOrder = decorRenderer.sortingOrder;
+
+            // 위 칸으로 삐져나온 기둥 윗면은 함정보다 앞, 캐릭터보다 뒤.
+            map._pillarOverhangs = CreateLayer(root.transform, "PillarOverhangs", tileTemplate,
+                RoomTilePainter.PillarOverhangSortingOrder);
+            map._pillarOverhangs.GetComponent<TilemapRenderer>().sortingOrder = RoomTilePainter.PillarOverhangSortingOrder;
             return map;
         }
 
@@ -102,6 +108,7 @@ namespace Code.MapCreateSystem
 
             RoomTilePainter.Paint(_underlay, _tiles, _tileSet, _rooms);
             RoomTilePainter.PaintDecor(_decor, _torches, _tileSet, _rooms);
+            RoomTilePainter.PaintPillarOverhangs(_pillarOverhangs, _tileSet, _rooms);
         }
 
         private static Tilemap CreateLayer(Transform parent, string name, TilemapRenderer template, int fallbackOrder)
