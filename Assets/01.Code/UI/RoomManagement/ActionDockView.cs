@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Code.UI.RoomManagement
 {
     /// <summary>
-    /// 왼쪽 아래 행동 도크(uGUI, A안): 관리 안내 줄, 던전 관리(건설·유닛 배치·함정·시설), 운영(정산 정보·메뉴),
+    /// 왼쪽 아래 행동 도크(uGUI, A안): 관리 안내 줄, 던전 관리(건설·유닛 배치·함정·시설), 운영(고용·상인·정산 정보·메뉴),
     /// 보유 유닛·부활 대기 줄과 보유 목록. 그리기와 버튼 입력만 하고, 할 일은 <see cref="RoomManagementScreen"/>이 정한다.
     /// </summary>
     public sealed class ActionDockView : MonoBehaviour
@@ -16,6 +16,7 @@ namespace Code.UI.RoomManagement
 
         [SerializeField] private TMP_Text managementLabel;
         [SerializeField, Tooltip("건설·유닛 배치·함정·시설 순서")] private UiFrameButton[] kindButtons;
+        [SerializeField] private UiFrameButton recruitButton;
         [SerializeField] private UiFrameButton merchantButton;
         [SerializeField] private UiFrameButton settlementButton;
         [SerializeField] private UiFrameButton menuButton;
@@ -32,6 +33,7 @@ namespace Code.UI.RoomManagement
         private float _messageUntil;
 
         public event Action<RoomInstallKind> KindRequested;
+        public event Action RecruitRequested;
         public event Action MerchantRequested;
         public event Action SettlementInfoRequested;
         public event Action MenuRequested;
@@ -52,6 +54,7 @@ namespace Code.UI.RoomManagement
             foreach (var button in kindButtons)
                 button.SetInteractable(model.CanManage);
 
+            recruitButton?.SetInteractable(model.RecruitEnabled);
             if (merchantButton != null)
             {
                 merchantButton.SetVisible(model.MerchantVisible);
@@ -110,6 +113,7 @@ namespace Code.UI.RoomManagement
         {
             for (var i = 0; i < _kindHandlers.Length; i++)
                 kindButtons[i].Button.onClick.AddListener(_kindHandlers[i]);
+            if (recruitButton != null) recruitButton.Button.onClick.AddListener(HandleRecruit);
             if (merchantButton != null) merchantButton.Button.onClick.AddListener(HandleMerchant);
             settlementButton.Button.onClick.AddListener(HandleSettlement);
             menuButton.Button.onClick.AddListener(HandleMenu);
@@ -120,6 +124,7 @@ namespace Code.UI.RoomManagement
         {
             for (var i = 0; i < _kindHandlers.Length; i++)
                 kindButtons[i].Button.onClick.RemoveListener(_kindHandlers[i]);
+            if (recruitButton != null) recruitButton.Button.onClick.RemoveListener(HandleRecruit);
             if (merchantButton != null) merchantButton.Button.onClick.RemoveListener(HandleMerchant);
             settlementButton.Button.onClick.RemoveListener(HandleSettlement);
             menuButton.Button.onClick.RemoveListener(HandleMenu);
@@ -136,6 +141,7 @@ namespace Code.UI.RoomManagement
         }
 
         private void HandleSettlement() => SettlementInfoRequested?.Invoke();
+        private void HandleRecruit() => RecruitRequested?.Invoke();
         private void HandleMerchant() => MerchantRequested?.Invoke();
         private void HandleMenu() => MenuRequested?.Invoke();
         private void HandleRoster() => RosterToggled?.Invoke();

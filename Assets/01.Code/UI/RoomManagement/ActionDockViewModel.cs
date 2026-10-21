@@ -10,6 +10,9 @@ namespace Code.UI.RoomManagement
         /// <summary>건설·유닛 배치·함정·시설을 누를 수 있는가(관리 시간 + 방을 골랐음).</summary>
         public bool CanManage;
 
+        /// <summary>고용 창을 열 수 있는가(영업 전 대기 중).</summary>
+        public bool RecruitEnabled;
+
         public bool MerchantVisible;
         public bool MerchantEnabled;
 

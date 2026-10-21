@@ -234,15 +234,18 @@ public static class SettlementBuilder
 
     // ── 유닛 상점 ──
 
-    private static SettlementShopPane BuildShop(RectTransform card)
+    private static SettlementShopPane BuildShop(RectTransform card) =>
+        BuildShopPane(Pane(card, "Shop"), PaneWidth, PaneHeight);
+
+    /// <summary>지원자 목록 칸을 <paramref name="pane"/>에 채운다. 정산표와 고용 창(<c>RecruitBuilder</c>)이 함께 쓴다.</summary>
+    public static SettlementShopPane BuildShopPane(RectTransform pane, float paneWidth, float paneHeight)
     {
-        var pane = Pane(card, "Shop");
         var view = pane.gameObject.AddComponent<SettlementShopPane>();
 
-        Heading(pane, "이번 주 지원자", 0f, 0f, PaneWidth);
-        var status = Place(UiKit.Text("Status", pane, string.Empty, 15f, HudPalette.TextDim, TextAlignmentOptions.MidlineLeft, false, true), 0f, 30f, PaneWidth, 22f);
+        Heading(pane, "이번 주 지원자", 0f, 0f, paneWidth);
+        var status = Place(UiKit.Text("Status", pane, string.Empty, 15f, HudPalette.TextDim, TextAlignmentOptions.MidlineLeft, false, true), 0f, 30f, paneWidth, 22f);
 
-        var listRect = UiKit.TopLeft(UiKit.Rect("List", pane), 0f, 60f, PaneWidth, PaneHeight - 60f - 62f);
+        var listRect = UiKit.TopLeft(UiKit.Rect("List", pane), 0f, 60f, paneWidth, paneHeight - 60f - 62f);
         var scroll = UiKit.ScrollArea(listRect, out var content);
         var layout = content.gameObject.AddComponent<VerticalLayoutGroup>();
         layout.spacing = 8f;
@@ -276,8 +279,8 @@ public static class SettlementBuilder
             rt.gameObject.SetActive(false);
         }
 
-        var empty = Place(UiKit.Text("Empty", pane, "이번 주에는 새 지원자가 없습니다.", 16f, HudPalette.TextMuted, TextAlignmentOptions.TopLeft, false, true), 0f, 62f, PaneWidth, 24f);
-        var feedback = Place(UiKit.Text("Feedback", pane, string.Empty, 15f, HudPalette.Warn, TextAlignmentOptions.TopLeft), 0f, PaneHeight - 54f, PaneWidth, 50f);
+        var empty = Place(UiKit.Text("Empty", pane, "이번 주에는 새 지원자가 없습니다.", 16f, HudPalette.TextMuted, TextAlignmentOptions.TopLeft, false, true), 0f, 62f, paneWidth, 24f);
+        var feedback = Place(UiKit.Text("Feedback", pane, string.Empty, 15f, HudPalette.Warn, TextAlignmentOptions.TopLeft), 0f, paneHeight - 54f, paneWidth, 50f);
 
         UiKit.Wire(view, "status", status);
         UiKit.Wire(view, "empty", empty);

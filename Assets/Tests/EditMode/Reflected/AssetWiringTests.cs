@@ -326,6 +326,39 @@ namespace Tests.EditMode.Gameplay
             }
         }
 
+        /// <summary>
+        /// 도크의 고용 버튼이 고용 창을 열 수 있어야 한다. 예전에는 고용이 청산일 정산표에서만 돼 첫 주에 부하를 둘 방법이 없었다.
+        /// </summary>
+        [Test]
+        public void RecruitScreen_IsPlacedAndOpenedFromTheDock()
+        {
+            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            try
+            {
+                Code.UI.RecruitScreenView recruit = null;
+                Code.UI.RoomManagement.RoomManagementScreen roomScreen = null;
+                foreach (var root in scene.GetRootGameObjects())
+                {
+                    recruit ??= root.GetComponentInChildren<Code.UI.RecruitScreenView>(true);
+                    roomScreen ??= root.GetComponentInChildren<Code.UI.RoomManagement.RoomManagementScreen>(true);
+                }
+
+                Assert.That(recruit, Is.Not.Null, "고용 창이 씬에 없습니다. RecruitBuilder.BuildAll()을 돌리세요.");
+                var shop = new SerializedObject(recruit).FindProperty("shop").objectReferenceValue as Code.UI.SettlementShopPane;
+                Assert.That(shop, Is.Not.Null);
+                Assert.That(new SerializedObject(shop).FindProperty("roster").objectReferenceValue, Is.Not.Null, "고용 명단과 이어져야 합니다.");
+
+                Assert.That(roomScreen, Is.Not.Null);
+                Assert.That(new SerializedObject(roomScreen).FindProperty("recruit").objectReferenceValue, Is.EqualTo(recruit));
+                var dock = roomScreen.GetComponentInChildren<Code.UI.RoomManagement.ActionDockView>(true);
+                Assert.That(new SerializedObject(dock).FindProperty("recruitButton").objectReferenceValue, Is.Not.Null);
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
+            }
+        }
+
         [Test]
         public void OpeningRoom_HasFourDoorsAndUsesEastDoorForIntruders()
         {

@@ -38,11 +38,14 @@ namespace Code.UI.RoomManagement
                     : isManagementWindow ? ActionDockTone.Management
                     : ActionDockTone.Operating,
                 CanManage = isManagementWindow && panel != null && panel.SelectedNode != null,
+                RecruitEnabled = roster != null && dayManager != null && dayManager.IsStandby,
                 MerchantVisible = merchant != null && merchant.IsMerchantHere,
                 MerchantEnabled = isManagementWindow && merchant != null && merchant.IsMerchantHere,
                 RosterSummary = roster == null
                     ? "보유 유닛 정보를 불러오는 중"
-                    : $"보유 {roster.TotalHiredCount}명 · 방을 선택한 뒤 배치할 수 있습니다",
+                    : roster.TotalHiredCount == 0
+                        ? "보유 0명 · '고용'에서 부하를 데려온 뒤 방에 배치하세요"
+                        : $"보유 {roster.TotalHiredCount}명 · 방을 선택한 뒤 배치할 수 있습니다",
                 RevivalQueue = BuildRevivalQueue(revival),
                 RosterList = rosterOpen ? BuildRosterList(roster) : string.Empty,
             };

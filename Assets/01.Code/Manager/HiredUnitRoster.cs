@@ -182,7 +182,7 @@ namespace Code.Manager
         /// <summary>정산 상점이 현재 지원자 한 명의 고용을 요청한다.</summary>
         public bool TryRequestHire(UnitDataSO unit)
         {
-            if (!IsWeeklyRecruitmentOpen || unit == null || GetCandidateCount(unit) <= 0 || costEventChannel == null)
+            if (!IsRecruitmentOpen || unit == null || GetCandidateCount(unit) <= 0 || costEventChannel == null)
                 return false;
 
             var price = GetApplicantPrice(unit);
@@ -211,9 +211,13 @@ namespace Code.Manager
             return queue.Count > 0 ? UnitMarketRules.Tier(queue[0].PriceMultiplier) : UnitPriceTier.Normal;
         }
 
-        /// <summary>지원자는 주간 정산에서만 계약한다. 영업 중 고용은 배치·경제 흐름을 흔든다.</summary>
-        public bool IsWeeklyRecruitmentOpen =>
-            DayManager.Current != null && DayManager.IsSettlementDay(DayManager.Current.CurrentDay);
+        /// <summary>
+        /// 영업 전 대기 중이면 언제든, 그리고 청산일 정산에서 계약한다(2026-10-21 사용자 결정 — 예전엔 청산일만이라 첫 주에 부하가 없었다).
+        /// 영업 중 고용은 배치·경제 흐름을 흔들어 막는다. 지원자 명단은 여전히 청산일마다 새로 온다.
+        /// </summary>
+        public bool IsRecruitmentOpen =>
+            DayManager.Current != null
+            && (DayManager.Current.IsStandby || DayManager.IsSettlementDay(DayManager.Current.CurrentDay));
 
         public int GetAvailableUnitCount(UnitDataSO unit)
         {

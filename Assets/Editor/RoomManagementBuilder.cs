@@ -9,7 +9,7 @@ using UnityEngine;
 /// 방 관리 화면(uGUI, A안) 프리팹을 만들고 SampleScene에 놓는다. 캔버스 20(HUD 10 위, 대화 80·튜토리얼 덮개 85 아래).
 /// Unity CLI: <c>RoomManagementBuilder.BuildAll()</c>.
 ///
-/// 왼쪽 아래 행동 도크 760×132(관리 안내 · 건설·유닛 배치·함정·시설 | 상인·정산 정보·메뉴 · 보유 유닛·부활 대기·목록),
+/// 왼쪽 아래 행동 도크 760×132(관리 안내 · 건설·유닛 배치·함정·시설 | 고용·상인·정산·메뉴 · 보유 유닛·부활 대기·목록),
 /// 도크 위 설치 창 760×360(접히면 60)·보유 목록 760×140, 오른쪽 열 방 상세 400×640(위에서 104, 열린 동안 브리핑을 비켜 둠).
 /// </summary>
 public static class RoomManagementBuilder
@@ -49,6 +49,7 @@ public static class RoomManagementBuilder
         UiKit.Wire(screen, "speedController", Object.FindAnyObjectByType<GameSpeedController>(FindObjectsInactive.Include));
         UiKit.Wire(screen, "roster", Object.FindAnyObjectByType<HiredUnitRoster>(FindObjectsInactive.Include));
         UiKit.Wire(screen, "merchant", Object.FindAnyObjectByType<MerchantPanelView>(FindObjectsInactive.Include));
+        UiKit.Wire(screen, "recruit", Object.FindAnyObjectByType<RecruitScreenView>(FindObjectsInactive.Include));
         var scope = Object.FindAnyObjectByType<GameScope>(FindObjectsInactive.Include);
         if (scope != null)
             UiKit.Wire(screen, "scope", scope);
@@ -125,9 +126,11 @@ public static class RoomManagementBuilder
             kinds[i] = Button(dock, $"Kind{i}", KindLabels[i], UiKit.ButtonKind.Secondary, 14f + i * 102f, 38f, 96f, 48f, 16f);
 
         Divider(dock, 430f, 40f, 2f, 44f);
-        var merchant = Button(dock, "Merchant", "상인", UiKit.ButtonKind.Secondary, 446f, 38f, 96f, 48f, 16f);
-        var settlement = Button(dock, "SettlementInfo", "정산 정보", UiKit.ButtonKind.Secondary, 548f, 38f, 96f, 48f, 16f);
-        var menu = Button(dock, "Menu", "메뉴", UiKit.ButtonKind.Secondary, 650f, 38f, 96f, 48f, 16f);
+        var recruit = Button(dock, "Recruit", "고용", UiKit.ButtonKind.Secondary, 444f, 38f, 70f, 48f, 15f);
+        var merchant = Button(dock, "Merchant", "상인", UiKit.ButtonKind.Secondary, 520f, 38f, 70f, 48f, 15f);
+        // 버튼 넷이 들어가도록 폭을 줄여 "정산 정보"는 테두리 무늬에 겹쳤다. 짧게 쓴다.
+        var settlement = Button(dock, "SettlementInfo", "정산", UiKit.ButtonKind.Secondary, 596f, 38f, 74f, 48f, 15f);
+        var menu = Button(dock, "Menu", "메뉴", UiKit.ButtonKind.Secondary, 676f, 38f, 70f, 48f, 15f);
 
         var roster = Label(dock, "Roster", "보유 0명", 14f, HudPalette.TextBody, 16f, 96f, 330f, 26f);
         var revival = Label(dock, "Revival", "부활 대기열 없음", 14f, HudPalette.Warn, 352f, 96f, 280f, 26f);
@@ -151,6 +154,7 @@ public static class RoomManagementBuilder
 
         UiKit.Wire(view, "managementLabel", management);
         UiKit.WireArray(view, "kindButtons", kinds);
+        UiKit.Wire(view, "recruitButton", recruit);
         UiKit.Wire(view, "merchantButton", merchant);
         UiKit.Wire(view, "settlementButton", settlement);
         UiKit.Wire(view, "menuButton", menu);

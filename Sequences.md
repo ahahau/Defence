@@ -1,5 +1,11 @@
 # Sequences
 
+- 2026-10-21 · 대기 중 언제든 고용(사용자: "유닛도 배치및 추가하는법이 없는데" → "대기 중 언제나 고용").
+  - 원인: 고용이 청산일(7·14·21…일) 정산표 "유닛 상점"에서만 돼(`HiredUnitRoster.IsWeeklyRecruitmentOpen`) 1~6일차에는 부하가 0명이었고, 도크의 "유닛 배치"는 고용한 부하만 내보내 빈 창이었다.
+  - 수정: `HiredUnitRoster.IsRecruitmentOpen` = 영업 전 대기 중 또는 청산일. 도크에 "고용" 버튼(대기 중에만 눌림, 버튼 넷이 들어가게 폭을 줄이고 "정산 정보"는 "정산"으로)과 새 고용 창 `RecruitScreenView`(가운데 카드, 캔버스 40, 영업이 시작되면 닫힘). 지원자 목록은 정산표의 `SettlementShopPane`을 그대로 쓴다(`SettlementBuilder.BuildShopPane` 공용화, 생성기 `RecruitBuilder`). 보유 0명이면 도크에 "'고용'에서 부하를 데려온 뒤 방에 배치하세요". 지원자 명단은 여전히 청산일마다 새로 온다.
+  - 테스트: `RecruitScreen_IsPlacedAndOpenedFromTheDock`. EditMode 351/351.
+  - 플레이(사용자 2일차 판, 세이브 원복): 고용 창에 지원자 1명(블루 슬라임 16G), 고용하자 금화 30→14·보유 1명·유닛 배치 창에 카드가 떴다(대장간 방이라 배치 이유 표시). 첫 주 지원자는 시작 지원자 1명뿐이다 — 주간 명단은 청산일에 온다.
+
 - 2026-10-21 · 떠돌이 상인 창(사용자: "상점 왜 안열려?" → "화면 가운데 창").
   - 원인: 상인 판단(`MerchantPanelView`: 방문일·진열·결제)만 있고 uGUI 전환 뒤 그리는 화면이 없었다. 도크의 상인 버튼은 `Show()`를 불러 열린 상태가 됐지만 아무것도 그려지지 않았다.
   - 수정: 새 화면 `MerchantScreenView`(캔버스 40, 덮개 + 가운데 카드 780×460)와 생성기 `MerchantBuilder`(메뉴 Build Merchant Screen, `UiSceneInstaller`로 SampleScene에 놓고 상인과 배선). 진열 5칸은 설치 창 카드(`InstallCardSlot`)를 그대로 써서 그림·이름·값·조합 표시, 못 사는 칸은 흐리게. 카드를 고르면 아래에 이름·값·설명·조합, 결과 줄(성공 초록·실패 빨강), 구매 버튼(못 사면 잠김), 닫기.

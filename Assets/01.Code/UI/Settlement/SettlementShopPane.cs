@@ -9,7 +9,7 @@ using UnityEngine.UI;
 namespace Code.UI
 {
     /// <summary>
-    /// 정산표 "유닛 상점" 칸. 이번 주 지원자를 한 줄씩 보여 주고, 누르면 고용한다(이번 정산에서만).
+    /// 지원자 목록 칸(정산표 "유닛 상점"·고용 창이 함께 쓴다). 이번 주 지원자를 한 줄씩 보여 주고, 누르면 고용한다.
     /// 시세가 싸면 초록, 비싸면 빨강. 유지비는 정가 기준이라 시세와 따로 적는다.
     /// 고용 판단·결제는 <see cref="HiredUnitRoster"/>가 한다.
     /// </summary>
@@ -51,7 +51,7 @@ namespace Code.UI
                 return;
             }
 
-            status.text = $"고용 중인 부하 {roster.TotalHiredCount}명 · 이번 정산에서만 계약할 수 있습니다.";
+            status.text = $"고용 중인 부하 {roster.TotalHiredCount}명 · 영업 전 대기 중에 언제든 계약할 수 있습니다.";
             foreach (var unit in roster.UnitCatalog)
             {
                 if (unit != null && roster.GetCandidateCount(unit) > 0)

@@ -29,6 +29,7 @@ namespace Code.UI.RoomManagement
         [SerializeField] private GameSpeedController speedController;
         [SerializeField] private HiredUnitRoster roster;
         [SerializeField] private MerchantPanelView merchant;
+        [SerializeField] private RecruitScreenView recruit;
         [SerializeField, Tooltip(GameScope.FieldTooltip)] private GameScope scope;
 
         private readonly RoomDetailPresenter _detailPresenter = new();
@@ -110,6 +111,8 @@ namespace Code.UI.RoomManagement
                 panel = SceneReferenceFallback.Find<NodePanelView>(this, nameof(panel));
             if (merchant == null)
                 merchant = SceneReferenceFallback.Find<MerchantPanelView>(this, nameof(merchant));
+            if (recruit == null)
+                recruit = SceneReferenceFallback.Find<RecruitScreenView>(this, nameof(recruit));
             _revival = GameScope.Resolve(scope, s => s.UnitRevival, this, nameof(scope));
         }
 
@@ -129,6 +132,7 @@ namespace Code.UI.RoomManagement
             install.ConfirmRequested += HandleConfirm;
             install.CloseRequested += HandleInstallClose;
             dock.KindRequested += HandleKind;
+            dock.RecruitRequested += HandleRecruit;
             dock.MerchantRequested += HandleMerchant;
             dock.SettlementInfoRequested += HandleSettlementInfo;
             dock.MenuRequested += HandleMenu;
@@ -163,6 +167,7 @@ namespace Code.UI.RoomManagement
             install.ConfirmRequested -= HandleConfirm;
             install.CloseRequested -= HandleInstallClose;
             dock.KindRequested -= HandleKind;
+            dock.RecruitRequested -= HandleRecruit;
             dock.MerchantRequested -= HandleMerchant;
             dock.SettlementInfoRequested -= HandleSettlementInfo;
             dock.MenuRequested -= HandleMenu;
@@ -309,6 +314,12 @@ namespace Code.UI.RoomManagement
         }
 
         private void HandleSettlementInfo() => dock.ShowMessage("정산은 7일차 영업 종료 뒤 자동으로 열립니다.");
+
+        private void HandleRecruit()
+        {
+            if (recruit == null || !recruit.Open())
+                dock.ShowMessage("고용은 영업 전 대기 중에 할 수 있습니다.");
+        }
 
         private void HandleMerchant()
         {
