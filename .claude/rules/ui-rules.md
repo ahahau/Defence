@@ -15,7 +15,7 @@ paths:
 
 ## 지금 상태 (2026-10-19)
 
-UI Toolkit을 모두 걷어냈다. uGUI(A안)로 다시 만드는 중이다. 만든 화면: 장부·배속(`TopHudView`), 손님 브리핑·진행 막대·배너·영업 시작(`WaveHudView`), 기록판 침입 파티·최근 기록(`RecordBoardView` + `ActivityLog`, 오른쪽 열 아래), 범용 팝업(`PopupView`, 캔버스 100), 방 관리(`RoomManagementScreen`: 왼쪽 아래 행동 도크·도크 위 설치 창·오른쪽 열 방 상세 — 방 상세가 열린 동안 브리핑을 비켜 둠, 20), 부하 상태·모험가 상태·금고 창(`UnitStatusView`·`EnemyStatusView`·`TreasuryView`, 30 — 상태 창은 누른 자리 옆 `UiPlacement.PlaceNear`), 대화 상자(`DialogueUiView`, 80), 하루 정산표(`SettlementScreenView` + 칸 Pane 넷, 84), 첫날 안내 덮개(`TutorialOverlayView`, 85). 나머지는 아직 화면이 없다. 화면 사각형 하나만 남기고 덮는 어둠은 `UiSpotlightDim`(생성기 `UiKit.SpotlightDim`)을 쓴다.
+UI Toolkit을 모두 걷어냈다. uGUI(A안)로 다시 만드는 중이다. 만든 화면: 장부·배속(`TopHudView`), 손님 브리핑·진행 막대·배너·영업 시작(`WaveHudView`), 기록판 침입 파티·최근 기록(`RecordBoardView` + `ActivityLog`, 오른쪽 열 아래), 범용 팝업(`PopupView`, 캔버스 100), 방 관리(`RoomManagementScreen`: 왼쪽 아래 행동 도크·도크 위 설치 창·오른쪽 열 방 상세 — 방 상세가 열린 동안 브리핑을 비켜 둠, 20), 부하 상태·모험가 상태·금고 창(`UnitStatusView`·`EnemyStatusView`·`TreasuryView`, 30 — 상태 창은 누른 자리 옆 `UiPlacement.PlaceNear`), 대화 상자(`DialogueUiView`, 80), 하루 정산표(`SettlementScreenView` + 칸 Pane 넷, 84), 첫날 안내 덮개(`TutorialOverlayView`, 85), 떠돌이 상인 창(`MerchantScreenView`, 40, 가운데 카드 — 생성기 `MerchantBuilder`). 나머지는 아직 화면이 없다. 화면 사각형 하나만 남기고 덮는 어둠은 `UiSpotlightDim`(생성기 `UiKit.SpotlightDim`)을 쓴다.
 
 - UI Toolkit(UXML·USS·`UIDocument`·`PanelSettings`)을 새로 쓰지 않는다.
 - 판단 컴포넌트는 남아 있다. 각자 표시 값과 변경 이벤트를 내보내고, 버튼이 할 일은 공개 함수로 연다. uGUI 화면은 여기에 붙는다.

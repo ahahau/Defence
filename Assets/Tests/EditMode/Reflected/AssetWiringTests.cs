@@ -300,6 +300,32 @@ namespace Tests.EditMode.Gameplay
             }
         }
 
+        /// <summary>
+        /// 상인 버튼을 누르면 그릴 화면이 씬에 있어야 한다. 예전에는 상인 판단(<c>MerchantPanelView</c>)만 있고 화면이 없어
+        /// 버튼을 눌러도 아무것도 뜨지 않았다.
+        /// </summary>
+        [Test]
+        public void MerchantScreen_IsPlacedAndWiredToTheMerchant()
+        {
+            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            try
+            {
+                Code.UI.MerchantScreenView screen = null;
+                foreach (var root in scene.GetRootGameObjects())
+                    screen ??= root.GetComponentInChildren<Code.UI.MerchantScreenView>(true);
+
+                Assert.That(screen, Is.Not.Null, "상인 창이 씬에 없습니다. MerchantBuilder.BuildAll()을 돌리세요.");
+                var serialized = new SerializedObject(screen);
+                Assert.That(serialized.FindProperty("merchant").objectReferenceValue, Is.Not.Null, "상인 판단과 이어져야 합니다.");
+                Assert.That(serialized.FindProperty("cards").arraySize, Is.EqualTo(Code.UI.MerchantPanelView.MaxOffers));
+                Assert.That(serialized.FindProperty("buyButton").objectReferenceValue, Is.Not.Null);
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
+            }
+        }
+
         [Test]
         public void OpeningRoom_HasFourDoorsAndUsesEastDoorForIntruders()
         {
