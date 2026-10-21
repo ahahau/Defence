@@ -54,6 +54,9 @@ namespace Code.MapCreateSystem
         private GameObject _focusedGridRoot;
         private SpriteRenderer _focusedGridSurface;
         private SpriteRenderer _selectedCellMarker;
+
+        /// <summary>격자 셰이더에 넘기는 열린 칸 표(칸마다 1텍셀, 1 = 방 바닥이고 칸막이 없음). 닫힌 칸끼리의 선은 그리지 않는다.</summary>
+        private Texture2D _openCellMask;
         private static Material _focusedGridMaterialCopy;
         private static Sprite _cellMarkerSprite;
 
@@ -184,6 +187,12 @@ namespace Code.MapCreateSystem
                 _focusedGridRoot = null;
                 _focusedGridSurface = null;
                 _selectedCellMarker = null;
+            }
+
+            if (_openCellMask != null)
+            {
+                DestroyRuntimeObject(_openCellMask);
+                _openCellMask = null;
             }
 
             if (_placementHintRoot != null)
@@ -332,7 +341,7 @@ namespace Code.MapCreateSystem
             _anchors.Remove(building);
             _placed.Remove(building);
             if (building is Partition)
-                PartitionsChanged?.Invoke();
+                NotifyPartitionsChanged();
         }
 
         public bool IsCellFree(int column, int row)
@@ -474,7 +483,7 @@ namespace Code.MapCreateSystem
             _anchors[building] = new Vector2Int(column, row);
             _placed.Add(building);
             if (building is Partition)
-                PartitionsChanged?.Invoke();
+                NotifyPartitionsChanged();
             return building;
         }
 
@@ -587,7 +596,7 @@ namespace Code.MapCreateSystem
             else
                 DestroyImmediate(building.gameObject);
             if (wasPartition)
-                PartitionsChanged?.Invoke();
+                NotifyPartitionsChanged();
             return true;
         }
 
@@ -604,6 +613,33 @@ namespace Code.MapCreateSystem
 
             EnsureFocusedGridVisual();
             _focusedGridRoot.SetActive(true);
+        }
+
+        private void NotifyPartitionsChanged()
+        {
+            RefreshOpenCellMask();
+            PartitionsChanged?.Invoke();
+        }
+
+        /// <summary>격자 선을 그릴 열린 칸: 방 바닥이고 칸막이가 서 있지 않은 칸.</summary>
+        public bool IsOpenGridCell(int column, int row) =>
+            IsValidCell(column, row) && !IsBlockedCell(column, row) && !IsPartitionCell(column, row);
+
+        private void RefreshOpenCellMask()
+        {
+            if (_openCellMask == null)
+                return;
+
+            for (var row = 0; row < rows; row++)
+            for (var column = 0; column < columns; column++)
+                _openCellMask.SetPixel(column, row, IsOpenGridCell(column, row) ? Color.white : Color.clear);
+            _openCellMask.Apply(false);
+        }
+
+        private void OnDestroy()
+        {
+            if (_openCellMask != null)
+                DestroyRuntimeObject(_openCellMask);
         }
 
         public bool TrySelectCell(Vector3 worldPosition, out int column, out int row)
@@ -756,6 +792,15 @@ namespace Code.MapCreateSystem
             properties.SetColor("_CenterColor", centralBuildingSlotColor);
             properties.SetFloat("_LineWidth", Mathf.Clamp(focusedGridLineWidth / cellSize * 0.62f, 0.008f, 0.04f));
             properties.SetFloat("_GlowStrength", 0.09f);
+            _openCellMask = new Texture2D(columns, rows, TextureFormat.R8, false, true)
+            {
+                name = "OpenCellMask",
+                filterMode = FilterMode.Point,
+                wrapMode = TextureWrapMode.Clamp,
+                hideFlags = HideFlags.HideAndDontSave
+            };
+            RefreshOpenCellMask();
+            properties.SetTexture("_CellMask", _openCellMask);
             properties.SetVector("_CentralRect", reserveCentralBuildingSlot
                 ? new Vector4(
                     centralBounds.minColumn / (float)columns,
@@ -867,7 +912,7 @@ namespace Code.MapCreateSystem
             _placed.Clear();
             _anchors.Clear();
             if (hadPartition)
-                PartitionsChanged?.Invoke();
+                NotifyPartitionsChanged();
         }
 
     }

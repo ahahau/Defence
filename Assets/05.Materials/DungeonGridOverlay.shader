@@ -8,6 +8,7 @@ Shader "Unknow/Dungeon Grid Overlay"
         _CentralRect ("Central Slot", Vector) = (0.3333, 0.3333, 0.6667, 0.6667)
         _LineWidth ("Line Width", Range(0.004, 0.12)) = 0.025
         _GlowStrength ("Ember Pulse", Range(0, 0.35)) = 0.10
+        [NoScaleOffset] _CellMask ("Open Cell Mask (1 texel per cell)", 2D) = "white" {}
     }
 
     SubShader
@@ -54,6 +55,16 @@ Shader "Unknow/Dungeon Grid Overlay"
                 float _GlowStrength;
             CBUFFER_END
 
+            TEXTURE2D(_CellMask);
+
+            // 1 = 열린 칸(방 바닥, 칸막이 없음). 격자 밖은 닫힌 칸이다.
+            float CellOpen(int2 cell, float2 gridSize)
+            {
+                if (cell.x < 0 || cell.y < 0 || cell.x >= (int)gridSize.x || cell.y >= (int)gridSize.y)
+                    return 0.0;
+                return LOAD_TEXTURE2D(_CellMask, cell).r > 0.5 ? 1.0 : 0.0;
+            }
+
             Varyings Vert(Attributes input)
             {
                 Varyings output;
@@ -82,6 +93,13 @@ Shader "Unknow/Dungeon Grid Overlay"
                 float verticalLine = 1.0 - smoothstep(_LineWidth, _LineWidth + lineAa.x, cellEdge.x);
                 float horizontalLine = 1.0 - smoothstep(_LineWidth, _LineWidth + lineAa.y, cellEdge.y);
 
+                // 열린 칸에 닿은 경계만 그린다. 방 모양 밖·기둥·칸막이 칸끼리의 선은 지운다.
+                int2 cell = (int2)min(floor(uv * gridSize), gridSize - 1.0);
+                int2 side = int2(cellUv.x < 0.5 ? -1 : 1, cellUv.y < 0.5 ? -1 : 1);
+                float open = CellOpen(cell, gridSize);
+                verticalLine *= max(open, CellOpen(cell + int2(side.x, 0), gridSize));
+                horizontalLine *= max(open, CellOpen(cell + int2(0, side.y), gridSize));
+
                 // Break long spreadsheet-like lines into corner brackets. The grid
                 // stays readable for placement without covering the stone artwork.
                 float verticalSegment = 1.0 - smoothstep(0.25, 0.39, cellEdge.y);
@@ -108,7 +126,7 @@ Shader "Unknow/Dungeon Grid Overlay"
                 float2 outerDistance2 = min(uv, 1.0 - uv);
                 float outerDistance = min(outerDistance2.x, outerDistance2.y);
                 float outerWidth = _LineWidth / min(gridSize.x, gridSize.y) * 1.45;
-                float outerBorder = 1.0 - smoothstep(outerWidth, outerWidth + fwidth(outerDistance), outerDistance);
+                float outerBorder = (1.0 - smoothstep(outerWidth, outerWidth + fwidth(outerDistance), outerDistance)) * open;
 
                 float radial = saturate(1.0 - length((uv - 0.5) * 1.25));
                 float emberPulse = 1.0 + sin(_Time.y * 1.15 + (uv.x + uv.y) * 4.0) * _GlowStrength;
@@ -116,7 +134,7 @@ Shader "Unknow/Dungeon Grid Overlay"
 
                 float normalAlpha = (gridLine * lerp(0.56, 1.0, radial) + outerBorder * 0.55)
                                     * _GridColor.a * emberPulse;
-                normalAlpha += cellCore * _GridColor.a * 0.045 * (1.0 - centerInside);
+                normalAlpha += cellCore * _GridColor.a * 0.045 * (1.0 - centerInside) * open;
 
                 float centerFill = centerInside * _CenterColor.a * (0.18 + radial * 0.12);
                 float centerAlpha = centerBorder * _CenterColor.a + centerFill;

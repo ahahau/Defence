@@ -214,23 +214,19 @@ namespace Code.MapCreateSystem
 
         // ── 비주얼 구성 ─────────────────────────────────────────
 
-        /// <summary>격자를 라인으로 그린다 — 셀 경계선(세로 columns+1개, 가로 rows+1개).</summary>
+        /// <summary>격자를 라인으로 그린다 — 방 바닥 칸(막힌 칸·칸막이 제외)에 닿은 경계만(<see cref="PlacementGridLines"/>).</summary>
         private void BuildGridLines()
         {
             var half = _grid.CellSize * 0.5f;
             var min = _grid.CellWorldPosition(0, 0) - new Vector3(half, half, 0f);
-            var max = _grid.CellWorldPosition(_grid.Columns - 1, _grid.Rows - 1) + new Vector3(half, half, 0f);
+            var segments = new System.Collections.Generic.List<(Vector2Int start, Vector2Int end)>();
+            PlacementGridLines.Collect(_grid.Columns, _grid.Rows, _grid.IsOpenGridCell, segments);
 
-            for (var c = 0; c <= _grid.Columns; c++)
+            foreach (var (start, end) in segments)
             {
-                var x = min.x + c * _grid.CellSize;
-                CreateLine(new Vector3(x, min.y, 0f), new Vector3(x, max.y, 0f));
-            }
-
-            for (var r = 0; r <= _grid.Rows; r++)
-            {
-                var y = min.y + r * _grid.CellSize;
-                CreateLine(new Vector3(min.x, y, 0f), new Vector3(max.x, y, 0f));
+                CreateLine(
+                    new Vector3(min.x + start.x * _grid.CellSize, min.y + start.y * _grid.CellSize, 0f),
+                    new Vector3(min.x + end.x * _grid.CellSize, min.y + end.y * _grid.CellSize, 0f));
             }
         }
 

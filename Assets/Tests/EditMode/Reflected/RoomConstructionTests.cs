@@ -416,6 +416,27 @@ namespace Tests.EditMode.Rules
             Assert.That(Cell(tiles, 0, 0).row, Is.InRange(17, 18), "바닥은 바닥 무늬 칸입니다.");
         }
 
+        /// <summary>
+        /// 설치 격자 선은 열린 칸에 닿은 경계만 그린다. 예전에는 격자 틀 전체에 선을 그어 방 모양 밖(어둠)·기둥·칸막이 위까지
+        /// 선이 보였다. 이어진 경계는 선 하나로 합친다.
+        /// </summary>
+        [Test]
+        public void PlacementGridLines_OnlyBorderOpenCells()
+        {
+            // 3×2 틀에서 열린 칸은 (0,0)·(1,0)뿐.
+            var segments = new System.Collections.Generic.List<(Vector2Int start, Vector2Int end)>();
+            PlacementGridLines.Collect(3, 2, (column, row) => row == 0 && column < 2, segments);
+
+            Assert.That(segments, Is.EquivalentTo(new[]
+            {
+                (new Vector2Int(0, 0), new Vector2Int(0, 1)),
+                (new Vector2Int(1, 0), new Vector2Int(1, 1)),
+                (new Vector2Int(2, 0), new Vector2Int(2, 1)),
+                (new Vector2Int(0, 0), new Vector2Int(2, 0)),
+                (new Vector2Int(0, 1), new Vector2Int(2, 1))
+            }), "닫힌 칸끼리의 경계(오른쪽 열·윗줄)는 그리지 않습니다.");
+        }
+
         /// <summary>기둥·빈 공간 칸에는 함정도 유닛도 놓을 수 없다. 칸 수는 방 모양을 따른다.</summary>
         [Test]
         public void TrapGrid_FollowsLayoutSizeAndRejectsBlockedCells()
