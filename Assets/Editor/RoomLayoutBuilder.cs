@@ -305,8 +305,73 @@ public static class RoomLayoutBuilder
         tile.m_DefaultSprite = Find(sprites, PieceCells[RoomWallKind.PillarMid]);
         tile.m_DefaultColliderType = Tile.ColliderType.None;
         tile.m_TilingRules = BuildRules(sprites, PillarRules);
+        // 시트의 기둥 머리는 윗면이 검게 비어 있다(어둠 아래 붙여 쓰는 조각). 방 한가운데에 서면 구멍처럼 보여 반쪽 기둥으로 읽혀서,
+        // 윗면을 돌 색으로 채운 머리 그림을 만들어 쓴다.
+        for (var i = 0; i < PillarRules.Length; i++)
+        {
+            var kind = PillarRules[i].kind;
+            if (kind is RoomWallKind.PillarCapLeft or RoomWallKind.PillarCap or RoomWallKind.PillarCapRight)
+                tile.m_TilingRules[i].m_Sprites = new[] { SolidPillarCap(kind, Find(sprites, PieceCells[kind])) };
+        }
+
         EditorUtility.SetDirty(tile);
         return tile;
+    }
+
+    /// <summary>룰 타일만 다시 만든다(방 프리팹·씬은 건드리지 않음). 메뉴: Tools/Dungeon Keeper/Rebuild Pillar Tile.</summary>
+    [MenuItem("Tools/Dungeon Keeper/Rebuild Pillar Tile")]
+    public static void RebuildPillarTile()
+    {
+        BuildPillarTile(LoadSprites());
+        AssetDatabase.SaveAssets();
+    }
+
+    private const string GeneratedTileSpriteFolder = "Assets/04.Sprites/Tilesets/Generated";
+
+    /// <summary>기둥 머리의 검은 윗면(시트 색 19090E)을 돌 바탕색(5C283C)으로 채운 그림. 테두리 무늬는 그대로다.</summary>
+    private static Sprite SolidPillarCap(RoomWallKind kind, Sprite source)
+    {
+        if (source == null)
+            return null;
+
+        var path = $"{GeneratedTileSpriteFolder}/{kind}.png";
+        if (!System.IO.File.Exists(path))
+        {
+            EnsureFolder(GeneratedTileSpriteFolder);
+            var sheet = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            sheet.LoadImage(System.IO.File.ReadAllBytes(TexturePath));
+            var rect = source.rect;
+            var cap = new Texture2D((int)rect.width, (int)rect.height, TextureFormat.RGBA32, false);
+            var hollow = new Color32(0x19, 0x09, 0x0E, 0xFF);
+            var stone = new Color32(0x5C, 0x28, 0x3C, 0xFF);
+            for (var y = 0; y < cap.height; y++)
+            for (var x = 0; x < cap.width; x++)
+            {
+                Color32 c = sheet.GetPixel((int)rect.x + x, (int)rect.y + y);
+                cap.SetPixel(x, y, c.r == hollow.r && c.g == hollow.g && c.b == hollow.b && c.a > 0 ? stone : c);
+            }
+
+            cap.Apply();
+            System.IO.File.WriteAllBytes(path, cap.EncodeToPNG());
+            Object.DestroyImmediate(sheet);
+            Object.DestroyImmediate(cap);
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+        }
+
+        var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+        if (importer.textureType != TextureImporterType.Sprite || importer.filterMode != FilterMode.Point || !Mathf.Approximately(importer.spritePixelsPerUnit, 16f))
+        {
+            importer.textureType = TextureImporterType.Sprite;
+            importer.spriteImportMode = SpriteImportMode.Single;
+            importer.spritePixelsPerUnit = 16f;
+            importer.filterMode = FilterMode.Point;
+            importer.mipmapEnabled = false;
+            importer.textureCompression = TextureImporterCompression.Uncompressed;
+            importer.alphaIsTransparency = true;
+            importer.SaveAndReimport();
+        }
+
+        return AssetDatabase.LoadAssetAtPath<Sprite>(path);
     }
 
     private static List<RuleTile.TilingRule> BuildRules(Dictionary<(int, int), Sprite> sprites,
