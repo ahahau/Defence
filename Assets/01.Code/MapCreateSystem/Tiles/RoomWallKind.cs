@@ -45,6 +45,15 @@ namespace Code.MapCreateSystem
         StepRailLeft,
 
         /// <summary><see cref="StepRailLeft"/>의 좌우 대칭(└).</summary>
-        StepRailRight
+        StepRailRight,
+
+        /// <summary>
+        /// 위쪽 벽 아래 줄인데 옆(왼쪽)도 바닥인 곳: 방 안으로 튀어나온 벽 덩어리·홈의 끝. 옆 벽 조각(속이 검다)을 두면
+        /// 검은 세로 줄로 보여 왼쪽 가장자리가 있는 벽돌 면을 둔다.
+        /// </summary>
+        FaceLowerStart,
+
+        /// <summary><see cref="FaceLowerStart"/>의 좌우 대칭(오른쪽 가장자리).</summary>
+        FaceLowerEnd
     }
 }

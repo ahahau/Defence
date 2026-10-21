@@ -54,6 +54,8 @@ public static class RoomLayoutBuilder
     private static readonly Dictionary<RoomWallKind, (int column, int row)> PieceCells = new()
     {
         { RoomWallKind.FaceLower, (10, 9) },
+        { RoomWallKind.FaceLowerStart, (4, 3) },
+        { RoomWallKind.FaceLowerEnd, (5, 3) },
         { RoomWallKind.FaceUpper, (10, 8) },
         { RoomWallKind.FaceUpperStart, (4, 2) },
         { RoomWallKind.FaceUpperEnd, (5, 2) },
@@ -95,9 +97,17 @@ public static class RoomLayoutBuilder
     /// </summary>
     private static readonly (RoomWallKind kind, (int dx, int dy, int need)[] neighbors)[] WallRules =
     {
+        // 위쪽 벽(면·난간)이 옆에도 바닥을 둔 곳(방 안 벽 덩어리·홈·복도 옆)은 옆 벽보다 앞면이 먼저 보인다.
+        // 옆 벽 조각은 속이 검어 검은 세로 줄로 보였다. 가장자리가 있는 면·난간 조각을 둔다.
+        (RoomWallKind.FaceLowerStart, new[] { (0, -1, F), (-1, 0, F) }),
+        (RoomWallKind.FaceLowerEnd, new[] { (0, -1, F), (1, 0, F) }),
         (RoomWallKind.FaceLower, new[] { (0, -1, F) }),
         (RoomWallKind.InnerTopLeft, new[] { (0, 1, F), (-1, 0, F) }),
         (RoomWallKind.InnerTopRight, new[] { (0, 1, F), (1, 0, F) }),
+        (RoomWallKind.FaceUpperStart, new[] { (0, -2, F), (0, -1, W), (-1, 0, F) }),
+        (RoomWallKind.FaceUpperEnd, new[] { (0, -2, F), (0, -1, W), (1, 0, F) }),
+        (RoomWallKind.RailTopStart, new[] { (0, -3, F), (0, -1, W), (0, -2, W), (-1, 0, F) }),
+        (RoomWallKind.RailTopEnd, new[] { (0, -3, F), (0, -1, W), (0, -2, W), (1, 0, F) }),
         (RoomWallKind.WallLeft, new[] { (1, 0, F), (1, -1, F) }),
         (RoomWallKind.WallLeftBottom, new[] { (1, 0, F) }),
         (RoomWallKind.WallRight, new[] { (-1, 0, F), (-1, -1, F) }),
@@ -318,11 +328,13 @@ public static class RoomLayoutBuilder
         return tile;
     }
 
-    /// <summary>룰 타일만 다시 만든다(방 프리팹·씬은 건드리지 않음). 메뉴: Tools/Dungeon Keeper/Rebuild Pillar Tile.</summary>
-    [MenuItem("Tools/Dungeon Keeper/Rebuild Pillar Tile")]
-    public static void RebuildPillarTile()
+    /// <summary>벽·기둥 룰 타일만 다시 만든다(방 프리팹·씬은 건드리지 않음). 메뉴: Tools/Dungeon Keeper/Rebuild Wall Tiles.</summary>
+    [MenuItem("Tools/Dungeon Keeper/Rebuild Wall Tiles")]
+    public static void RebuildRuleTiles()
     {
-        BuildPillarTile(LoadSprites());
+        var sprites = LoadSprites();
+        BuildWallTile(sprites);
+        BuildPillarTile(sprites);
         AssetDatabase.SaveAssets();
     }
 
