@@ -45,7 +45,8 @@ namespace Code.MapCreateSystem
         {
             RoomWallKind.PillarTopLeft, RoomWallKind.PillarTop, RoomWallKind.PillarTopRight,
             RoomWallKind.PillarTopLowerLeft, RoomWallKind.PillarTopLower, RoomWallKind.PillarTopLowerRight,
-            RoomWallKind.PillarBaseLeft, RoomWallKind.PillarBase, RoomWallKind.PillarBaseRight
+            RoomWallKind.PillarBaseLeft, RoomWallKind.PillarBase, RoomWallKind.PillarBaseRight,
+            RoomWallKind.PillarTopMidLeft, RoomWallKind.PillarTopMid, RoomWallKind.PillarTopMidRight
         };
 
         /// <summary>칸 기둥 조각 타일. 없으면 기둥 룰 타일.</summary>

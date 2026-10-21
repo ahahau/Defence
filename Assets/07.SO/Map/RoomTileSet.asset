@@ -25,6 +25,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: bce10ea6ddf81e4439cd93a1f544f89d, type: 2}
   - {fileID: 11400000, guid: 6dbd11d24d6d14d4180bdf53e3afe55e, type: 2}
   - {fileID: 11400000, guid: 01219954a4e2a6447aec4d4df54029ce, type: 2}
+  - {fileID: 11400000, guid: ccf3a3f52838b4b43ac0df3f6e695d02, type: 2}
+  - {fileID: 11400000, guid: 1d6455afd7109e24ea472893f77b862b, type: 2}
+  - {fileID: 11400000, guid: 6244a685f824816458b9c2b3a950fe27, type: 2}
   doorFrames:
   - {fileID: -410383139, guid: fe23d18a94d3b2c4ab5a8c70ecebd044, type: 3}
   - {fileID: -2071484088, guid: fe23d18a94d3b2c4ab5a8c70ecebd044, type: 3}

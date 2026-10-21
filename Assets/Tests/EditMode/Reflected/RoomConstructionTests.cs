@@ -638,12 +638,12 @@ namespace Tests.EditMode.Rules
         }
 
         /// <summary>
-        /// 칸 기둥은 칸마다 윗면(타일 2×2)을 따로 그리고, 블록 바닥(받침)이 놓은 칸 바닥에 맞는다. 예전에는 위아래로 붙은 칸막이가
-        /// 머리 한 줄짜리 한 덩어리로 이어져 아래 칸막이 윗면이 보이지 않았고, 윗면을 칸에 두고 받침을 아래 칸으로 내렸을 때는
-        /// 블록이 한 칸 아래로 밀려 보였다. 좌우로 붙은 칸은 윗면·받침이 이어진다.
+        /// 이어 세운 칸 기둥은 테두리 하나로 감싼 한 덩어리다(위아래·좌우 모두). 받침은 덩어리 맨 아래에만, 블록 바닥은 칸 바닥에 맞는다.
+        /// 예전에는 칸마다 테두리를 따로 그려 2칸짜리 조각이 줄지어 선 것처럼 보였고, 윗면을 칸에 두고 받침을 아래 칸으로 내렸을 때는
+        /// 블록이 한 칸 아래로 밀려 보였다.
         /// </summary>
         [Test]
-        public void PillarBlocks_DrawEachCellsOwnTopFromTheCellBottom()
+        public void PillarBlocks_JoinIntoOneFramedWallFromTheCellBottom()
         {
             // 칸 (2,2)·(2,3)이 위아래, (3,2)가 (2,2) 오른쪽. 칸 (2,2) 타일은 x -2..-1, y -2..-1, 칸 (2,3)은 y 0..1, 칸 (3,2)는 x 0..1.
             var partitions = new[] { new Vector2Int(2, 2), new Vector2Int(2, 3), new Vector2Int(3, 2) };
@@ -651,21 +651,22 @@ namespace Tests.EditMode.Rules
                 RoomDoors.None, 24, partitions);
             var blocks = plan.PillarBlocks;
 
-            Assert.That(blocks[new Vector2Int(-2, 2)], Is.EqualTo(RoomWallKind.PillarTopLeft), "위 칸막이 윗면은 위 칸으로 한 줄 올라갑니다.");
-            Assert.That(blocks[new Vector2Int(-2, 1)], Is.EqualTo(RoomWallKind.PillarTopLowerLeft));
-            Assert.That(blocks[new Vector2Int(-2, 0)], Is.EqualTo(RoomWallKind.PillarTopLeft),
-                "아래 칸막이 윗면이 위 칸막이 받침 자리를 덮어 보입니다.");
+            Assert.That(blocks[new Vector2Int(-2, 2)], Is.EqualTo(RoomWallKind.PillarTopLeft), "윗면은 맨 위 칸 위로 한 줄 올라갑니다.");
+            Assert.That(blocks[new Vector2Int(-2, 1)], Is.EqualTo(RoomWallKind.PillarTopMidLeft), "위아래로 이어진 윗면은 가운데 줄입니다.");
+            Assert.That(blocks[new Vector2Int(-2, 0)], Is.EqualTo(RoomWallKind.PillarTopMidLeft));
             Assert.That(blocks[new Vector2Int(-2, -1)], Is.EqualTo(RoomWallKind.PillarTopLowerLeft));
-            Assert.That(blocks[new Vector2Int(-2, -2)], Is.EqualTo(RoomWallKind.PillarBaseLeft), "받침은 맨 아래 칸막이 칸의 아랫줄.");
+            Assert.That(blocks[new Vector2Int(-2, -2)], Is.EqualTo(RoomWallKind.PillarBaseLeft), "받침은 맨 아래 칸의 아랫줄에만.");
             Assert.That(plan.Pillars, Has.No.Member(new Vector2Int(-2, -3)), "아래 칸은 가리지 않습니다.");
             Assert.That(plan.PillarOverhangs, Has.Member(new Vector2Int(-2, 2)).And.No.Member(new Vector2Int(-2, 0)),
                 "위 칸이 기둥이 아닐 때만 삐져나온 줄입니다.");
 
-            Assert.That(blocks[new Vector2Int(-1, 0)], Is.EqualTo(RoomWallKind.PillarTop), "좌우로 붙은 윗면은 이어집니다.");
+            Assert.That(blocks[new Vector2Int(-1, 0)], Is.EqualTo(RoomWallKind.PillarTopMid), "꺾이는 안쪽은 가운데 조각입니다.");
+            Assert.That(blocks[new Vector2Int(-1, -1)], Is.EqualTo(RoomWallKind.PillarTopLower), "좌우로 붙은 윗면은 이어집니다.");
+            Assert.That(blocks[new Vector2Int(0, 0)], Is.EqualTo(RoomWallKind.PillarTop));
             Assert.That(blocks[new Vector2Int(1, 0)], Is.EqualTo(RoomWallKind.PillarTopRight));
+            Assert.That(blocks[new Vector2Int(-1, 2)], Is.EqualTo(RoomWallKind.PillarTopRight), "옆이 비면 윗면 끝입니다.");
             Assert.That(blocks[new Vector2Int(-1, -2)], Is.EqualTo(RoomWallKind.PillarBase));
             Assert.That(blocks[new Vector2Int(1, -2)], Is.EqualTo(RoomWallKind.PillarBaseRight));
-            Assert.That(blocks[new Vector2Int(-1, 2)], Is.EqualTo(RoomWallKind.PillarTopRight), "옆이 비면 윗면 끝입니다.");
         }
 
         /// <summary>

@@ -312,57 +312,60 @@ namespace Code.MapCreateSystem
         }
 
         /// <summary>
-        /// 칸 기둥(방 안 기둥·칸막이)을 칸마다 블록으로 그린다: 칸 아랫줄이 받침, 칸 윗줄과 그 위 한 줄이 테두리 있는 윗면(타일 2×2)이다.
-        /// 블록 바닥이 칸 바닥에 맞아 놓은 칸에 서 보인다(사용자 요청 — 윗면을 칸에 두고 받침을 아래 칸으로 내렸을 때는 한 칸 아래로 밀려 보였다).
-        /// 위로 삐져나온 윗면 줄(<see cref="PillarOverhangs"/>)은 위 칸 바닥을 가리므로 앞 층에 한 번 더 그린다. 걸을 수 있는 칸은 모양(RoomShape)이 정한다.
-        /// 좌우로 붙은 칸은 윗면·받침이 이어지고, 위아래로 붙은 칸은 아래 칸 윗면이 위 칸 받침 자리를 덮어 칸마다 윗면이 보인다.
+        /// 칸 기둥(방 안 기둥·칸막이)을 이어진 덩어리 하나로 그린다: 칸마다 아랫줄이 받침 자리, 윗줄과 그 위 한 줄이 윗면 자리다.
+        /// 위아래로 붙은 칸은 아래 칸 윗면이 위 칸 받침 자리를 덮어 윗면이 끊김 없이 이어지고, 받침은 덩어리 맨 아래에만 남는다.
+        /// 윗면은 테두리 9조각을 이웃 윗면 타일로 고르므로 2칸이든 8칸이든 테두리 하나로 감싼다(2026-10-21 사용자 결정 — 예전엔 칸마다 따로 테두리였다).
+        /// 블록 바닥은 칸 바닥에 맞는다. 위로 삐져나온 윗면 줄(<see cref="PillarOverhangs"/>)은 위 칸 바닥을 가리므로 앞 층에 한 번 더 그린다.
+        /// 걸을 수 있는 칸은 모양(RoomShape)이 정한다.
         /// </summary>
         private void AddPillarBlocks(RoomShape shape, HashSet<Vector2Int> blockCells)
         {
-            foreach (var cell in blockCells)
-            {
-                if (blockCells.Contains(cell + Vector2Int.down))
-                    continue;
-
-                var origin = CellOriginTile(shape.Columns, shape.Rows, cell.x, cell.y);
-                var left = HasBaseBeside(blockCells, cell + Vector2Int.left);
-                var right = HasBaseBeside(blockCells, cell + Vector2Int.right);
-                for (var dx = 0; dx < RoomLayoutRules.TilesPerCell; dx++)
-                {
-                    SetPillarBlock(new Vector2Int(origin.x + dx, origin.y), Edge(dx, left, right,
-                        RoomWallKind.PillarBaseLeft, RoomWallKind.PillarBase, RoomWallKind.PillarBaseRight));
-                }
-            }
-
+            var tops = new HashSet<Vector2Int>();
+            var bases = new HashSet<Vector2Int>();
             foreach (var cell in blockCells)
             {
                 var origin = CellOriginTile(shape.Columns, shape.Rows, cell.x, cell.y);
-                var left = blockCells.Contains(cell + Vector2Int.left);
-                var right = blockCells.Contains(cell + Vector2Int.right);
                 var overhangs = !blockCells.Contains(cell + Vector2Int.up);
                 for (var dx = 0; dx < RoomLayoutRules.TilesPerCell; dx++)
                 {
-                    SetPillarBlock(new Vector2Int(origin.x + dx, origin.y + 1), Edge(dx, left, right,
-                        RoomWallKind.PillarTopLowerLeft, RoomWallKind.PillarTopLower, RoomWallKind.PillarTopLowerRight));
+                    if (!blockCells.Contains(cell + Vector2Int.down))
+                        bases.Add(new Vector2Int(origin.x + dx, origin.y));
+                    tops.Add(new Vector2Int(origin.x + dx, origin.y + 1));
                     var top = new Vector2Int(origin.x + dx, origin.y + 2);
-                    SetPillarBlock(top, Edge(dx, left, right,
-                        RoomWallKind.PillarTopLeft, RoomWallKind.PillarTop, RoomWallKind.PillarTopRight));
+                    tops.Add(top);
                     if (overhangs)
                         PillarOverhangs.Add(top);
                 }
             }
+
+            foreach (var tile in bases)
+            {
+                SetPillarBlock(tile, Edge(bases, tile, RoomWallKind.PillarBaseLeft, RoomWallKind.PillarBase,
+                    RoomWallKind.PillarBaseRight));
+            }
+
+            foreach (var tile in tops)
+            {
+                RoomWallKind kind;
+                if (!tops.Contains(tile + Vector2Int.up))
+                    kind = Edge(tops, tile, RoomWallKind.PillarTopLeft, RoomWallKind.PillarTop, RoomWallKind.PillarTopRight);
+                else if (!tops.Contains(tile + Vector2Int.down))
+                    kind = Edge(tops, tile, RoomWallKind.PillarTopLowerLeft, RoomWallKind.PillarTopLower,
+                        RoomWallKind.PillarTopLowerRight);
+                else
+                    kind = Edge(tops, tile, RoomWallKind.PillarTopMidLeft, RoomWallKind.PillarTopMid,
+                        RoomWallKind.PillarTopMidRight);
+                SetPillarBlock(tile, kind);
+            }
         }
 
-        /// <summary>옆 칸도 받침을 내리는 기둥이면 받침이 이어진다.</summary>
-        private static bool HasBaseBeside(HashSet<Vector2Int> blockCells, Vector2Int beside) =>
-            blockCells.Contains(beside) && !blockCells.Contains(beside + Vector2Int.down);
-
-        private static RoomWallKind Edge(int dx, bool left, bool right, RoomWallKind leftKind, RoomWallKind middle,
+        /// <summary>같은 줄 이웃이 없는 쪽이 테두리 끝이다.</summary>
+        private static RoomWallKind Edge(HashSet<Vector2Int> tiles, Vector2Int tile, RoomWallKind leftKind, RoomWallKind middle,
             RoomWallKind rightKind)
         {
-            if (dx == 0 && !left)
+            if (!tiles.Contains(tile + Vector2Int.left))
                 return leftKind;
-            return dx == RoomLayoutRules.TilesPerCell - 1 && !right ? rightKind : middle;
+            return tiles.Contains(tile + Vector2Int.right) ? middle : rightKind;
         }
 
         private void SetPillarBlock(Vector2Int tile, RoomWallKind kind)

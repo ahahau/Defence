@@ -93,13 +93,16 @@ public static class RoomLayoutBuilder
         { RoomWallKind.PillarBaseLeft, (7, 2) },
         { RoomWallKind.PillarBase, (8, 2) },
         { RoomWallKind.PillarBaseRight, (9, 2) },
-        // 칸 기둥 윗면 2×2: 시트 왼쪽 위 3×3 윗면 덩어리의 네 귀퉁이(가운데 줄은 좌우로 이어질 때).
+        // 칸 기둥 윗면: 시트 왼쪽 위 3×3 윗면 덩어리(9조각). 가운데 줄·칸은 벽이 이어져 길어질 때 쓴다.
         { RoomWallKind.PillarTopLeft, (0, 1) },
         { RoomWallKind.PillarTop, (1, 1) },
         { RoomWallKind.PillarTopRight, (2, 1) },
         { RoomWallKind.PillarTopLowerLeft, (0, 3) },
         { RoomWallKind.PillarTopLower, (1, 3) },
-        { RoomWallKind.PillarTopLowerRight, (2, 3) }
+        { RoomWallKind.PillarTopLowerRight, (2, 3) },
+        { RoomWallKind.PillarTopMidLeft, (0, 2) },
+        { RoomWallKind.PillarTopMid, (1, 2) },
+        { RoomWallKind.PillarTopMidRight, (2, 2) }
     };
 
     /// <summary>

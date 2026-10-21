@@ -67,6 +67,11 @@ namespace Code.MapCreateSystem
         /// <summary>칸 기둥 윗면 아랫줄(<see cref="PillarTopLeft"/> 참고).</summary>
         PillarTopLowerLeft,
         PillarTopLower,
-        PillarTopLowerRight
+        PillarTopLowerRight,
+
+        /// <summary>칸 기둥 윗면 가운데 줄. 위아래로 이어진 벽의 윗면이 길어질 때 쓴다.</summary>
+        PillarTopMidLeft,
+        PillarTopMid,
+        PillarTopMidRight
     }
 }
