@@ -1,4 +1,3 @@
-using System;
 using Code.Core;
 using Code.MapCreateSystem;
 using Code.Manager;
@@ -37,9 +36,6 @@ namespace Code.UI.RoomManagement
         private readonly ActionDockPresenter _dockPresenter = new();
         private UnitRevivalSystem _revival;
         private float _nextPollAt;
-
-        /// <summary>메뉴 버튼. 일시정지 메뉴 화면이 구독한다.</summary>
-        public event Action MenuRequested;
 
         public bool IsDetailVisible => detail.IsVisible;
         public bool IsInstallVisible => install.IsVisible;
@@ -135,7 +131,6 @@ namespace Code.UI.RoomManagement
             dock.RecruitRequested += HandleRecruit;
             dock.MerchantRequested += HandleMerchant;
             dock.SettlementInfoRequested += HandleSettlementInfo;
-            dock.MenuRequested += HandleMenu;
             dock.RosterToggled += HandleRosterToggle;
 
             if (panel != null)
@@ -170,7 +165,6 @@ namespace Code.UI.RoomManagement
             dock.RecruitRequested -= HandleRecruit;
             dock.MerchantRequested -= HandleMerchant;
             dock.SettlementInfoRequested -= HandleSettlementInfo;
-            dock.MenuRequested -= HandleMenu;
             dock.RosterToggled -= HandleRosterToggle;
 
             if (panel != null)
@@ -327,14 +321,6 @@ namespace Code.UI.RoomManagement
                 return;
 
             merchant.Show();
-        }
-
-        private void HandleMenu()
-        {
-            if (MenuRequested != null)
-                MenuRequested.Invoke();
-            else
-                dock.ShowMessage("메뉴 화면은 아직 만드는 중입니다.");
         }
 
         private void HandleRosterToggle()

@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Code.UI.RoomManagement
 {
     /// <summary>
-    /// 왼쪽 아래 행동 도크(uGUI, A안): 관리 안내 줄, 던전 관리(건설·유닛 배치·함정·시설), 운영(고용·상인·정산 정보·메뉴),
+    /// 왼쪽 아래 행동 도크(uGUI, A안): 관리 안내 줄, 던전 관리(건설·유닛 배치·함정·시설), 운영(고용·상인·정산 정보),
     /// 보유 유닛·부활 대기 줄과 보유 목록. 그리기와 버튼 입력만 하고, 할 일은 <see cref="RoomManagementScreen"/>이 정한다.
     /// </summary>
     public sealed class ActionDockView : MonoBehaviour
@@ -19,7 +19,6 @@ namespace Code.UI.RoomManagement
         [SerializeField] private UiFrameButton recruitButton;
         [SerializeField] private UiFrameButton merchantButton;
         [SerializeField] private UiFrameButton settlementButton;
-        [SerializeField] private UiFrameButton menuButton;
         [SerializeField] private TMP_Text rosterSummary;
         [SerializeField] private TMP_Text revivalQueue;
         [SerializeField] private UiFrameButton rosterToggle;
@@ -36,7 +35,6 @@ namespace Code.UI.RoomManagement
         public event Action RecruitRequested;
         public event Action MerchantRequested;
         public event Action SettlementInfoRequested;
-        public event Action MenuRequested;
         public event Action RosterToggled;
 
         public bool IsRosterOpen => rosterPanel != null && rosterPanel.activeSelf;
@@ -116,7 +114,6 @@ namespace Code.UI.RoomManagement
             if (recruitButton != null) recruitButton.Button.onClick.AddListener(HandleRecruit);
             if (merchantButton != null) merchantButton.Button.onClick.AddListener(HandleMerchant);
             settlementButton.Button.onClick.AddListener(HandleSettlement);
-            menuButton.Button.onClick.AddListener(HandleMenu);
             rosterToggle.Button.onClick.AddListener(HandleRoster);
         }
 
@@ -127,7 +124,6 @@ namespace Code.UI.RoomManagement
             if (recruitButton != null) recruitButton.Button.onClick.RemoveListener(HandleRecruit);
             if (merchantButton != null) merchantButton.Button.onClick.RemoveListener(HandleMerchant);
             settlementButton.Button.onClick.RemoveListener(HandleSettlement);
-            menuButton.Button.onClick.RemoveListener(HandleMenu);
             rosterToggle.Button.onClick.RemoveListener(HandleRoster);
         }
 
@@ -143,7 +139,6 @@ namespace Code.UI.RoomManagement
         private void HandleSettlement() => SettlementInfoRequested?.Invoke();
         private void HandleRecruit() => RecruitRequested?.Invoke();
         private void HandleMerchant() => MerchantRequested?.Invoke();
-        private void HandleMenu() => MenuRequested?.Invoke();
         private void HandleRoster() => RosterToggled?.Invoke();
     }
 }

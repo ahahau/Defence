@@ -1,5 +1,11 @@
 # Sequences
 
+- 2026-10-21 · UI 뒤 클릭 막기, 도크 메뉴 버튼 삭제(사용자: "ui 뒤에 패널넣어서 뒤에 클릭 안되게해줘 메뉴 버튼 없애줘").
+  - 원인: 지도 클릭 판정(`DungeonGraphController.IsPointerOverUi`)이 버튼·스크롤만 UI로 쳐서, 패널 바탕·창 뒤 어두운 덮개(상인·고용·정산·팝업·대화)·글자를 누르면 그 뒤의 방·유닛이 눌렸다. 장부·손님 브리핑·진행 카드·도크 안내 줄은 바탕이 클릭을 받지도 않았다(`raycastTarget` 꺼짐).
+  - 수정: `IsPointerOverUi`는 화면 UI의 어떤 그림에 닿아도 막고, 월드 공간 캔버스만 통과시킨다. `GameplayHudBuilder`(장부·브리핑·진행 카드)·`RoomManagementBuilder`(안내 줄) 바탕을 클릭 받게 켜고 두 생성기를 다시 돌렸다(HUD → 방 관리 순서). 도크의 "메뉴" 버튼과 `ActionDockView.menuButton`·`MenuRequested`, `RoomManagementScreen.MenuRequested`·`HandleMenu`("메뉴 화면은 아직 만드는 중" 안내)를 지웠다. 도크 줄 폭 760 → 684(`DockBarWidth`, 보유 목록·안내 줄도 같은 폭), 설치 창은 카드 5장 때문에 760 그대로.
+  - 테스트: EditMode 352/352.
+  - 플레이(세이브 원복): 장부·브리핑·도크 바탕 왼쪽 아래 모서리를 찍으면 막힘, 지도 가운데는 통과. 고용 창을 열면 화면 아래쪽 덮개(`RecruitScreen/Root`)가 막는다. 도크는 건설·유닛 배치·함정·시설 | 고용·상인·정산.
+
 - 2026-10-21 · 새 판 첫 주 지원자 명단(사용자: "새 판 1일차에도 청산일처럼 이번 주 지원자 명단을 만들어줘(등급·민심 규칙 그대로). 시작 지원자는 남겨줘").
   - 수정(`HiredUnitRoster.Start`): 새 판 시작 때 청산일과 같은 수(`WeeklyIncomingCount` — 등급별 주간 수 × 민심 보정, 청산일 갱신과 공용으로 뽑아냄)의 지원자를 시작 지원자에 더한다. 이어 하는 판은 한 프레임 뒤 저장 복원이 명단을 덮어 그대로다.
   - 테스트: `NewRun_FillsTheFirstWeekApplicantsOnTopOfTheStartingOne`(Start 없을 때 실패). EditMode 352/352.

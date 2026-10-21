@@ -17,6 +17,8 @@ public static class RoomManagementBuilder
     public const string PrefabPath = "Assets/03.Prefabs/UI/RoomManagement/RoomManagement.prefab";
     private const float Margin = 24f;
     private const float DockWidth = 760f;
+    // 메뉴 버튼을 뺀 도크 줄 폭(정산 버튼 끝 670 + 여백 14). 설치 창은 카드 5장이 들어가야 해서 DockWidth 그대로다.
+    private const float DockBarWidth = 684f;
     private const float DockHeight = 132f;
     private const float AboveDock = Margin + DockHeight + 8f;
     private const float DetailWidth = 400f;
@@ -115,11 +117,11 @@ public static class RoomManagementBuilder
 
     private static ActionDockView BuildDock(RectTransform root)
     {
-        var dock = BottomLeft(UiKit.Rect("Dock", root), Margin, Margin, DockWidth, DockHeight);
+        var dock = BottomLeft(UiKit.Rect("Dock", root), Margin, Margin, DockBarWidth, DockHeight);
         UiKit.Panel(dock, HudPalette.Surface, HudPalette.Border, true);
         var view = dock.gameObject.AddComponent<ActionDockView>();
 
-        var management = Label(dock, "Management", "관리 중", 15f, HudPalette.TextDim, 16f, 8f, DockWidth - 32f, 24f);
+        var management = Label(dock, "Management", "관리 중", 15f, HudPalette.TextDim, 16f, 8f, DockBarWidth - 32f, 24f);
 
         var kinds = new Object[KindLabels.Length];
         for (var i = 0; i < KindLabels.Length; i++)
@@ -130,14 +132,13 @@ public static class RoomManagementBuilder
         var merchant = Button(dock, "Merchant", "상인", UiKit.ButtonKind.Secondary, 520f, 38f, 70f, 48f, 15f);
         // 버튼 넷이 들어가도록 폭을 줄여 "정산 정보"는 테두리 무늬에 겹쳤다. 짧게 쓴다.
         var settlement = Button(dock, "SettlementInfo", "정산", UiKit.ButtonKind.Secondary, 596f, 38f, 74f, 48f, 15f);
-        var menu = Button(dock, "Menu", "메뉴", UiKit.ButtonKind.Secondary, 676f, 38f, 70f, 48f, 15f);
 
         var roster = Label(dock, "Roster", "보유 0명", 14f, HudPalette.TextBody, 16f, 96f, 330f, 26f);
         var revival = Label(dock, "Revival", "부활 대기열 없음", 14f, HudPalette.Warn, 352f, 96f, 280f, 26f);
         var rosterToggle = Button(dock, "RosterToggle", "목록 열기", UiKit.ButtonKind.Secondary, 14f, 96f, 100f, 28f, 13f, true);
 
         // 보유 목록: 도크 바로 위(설치 창과 같은 자리).
-        var rosterPanel = BottomLeft(UiKit.Rect("RosterPanel", root), Margin, AboveDock, DockWidth, 140f);
+        var rosterPanel = BottomLeft(UiKit.Rect("RosterPanel", root), Margin, AboveDock, DockBarWidth, 140f);
         UiKit.Panel(rosterPanel, HudPalette.Surface, HudPalette.Border, true);
         var listRect = UiKit.Fill(UiKit.Rect("List", rosterPanel), 12f);
         UiKit.ScrollArea(listRect, out var content);
@@ -145,8 +146,8 @@ public static class RoomManagementBuilder
         rosterList.lineSpacing = 4f;
 
         // 잠깐 띄우는 안내 줄: 도크 바로 위.
-        var messageRoot = BottomLeft(UiKit.Rect("Message", root), Margin, AboveDock, DockWidth, 34f);
-        UiKit.Panel(messageRoot, HudPalette.AlertChip, HudPalette.Border, false);
+        var messageRoot = BottomLeft(UiKit.Rect("Message", root), Margin, AboveDock, DockBarWidth, 34f);
+        UiKit.Panel(messageRoot, HudPalette.AlertChip, HudPalette.Border, true);
         var message = UiKit.Text("Text", messageRoot, string.Empty, 15f, HudPalette.Warn, TextAlignmentOptions.MidlineLeft, false, true);
         UiKit.Fill(message.rectTransform);
         message.rectTransform.offsetMin = new Vector2(14f, 0f);
@@ -157,7 +158,6 @@ public static class RoomManagementBuilder
         UiKit.Wire(view, "recruitButton", recruit);
         UiKit.Wire(view, "merchantButton", merchant);
         UiKit.Wire(view, "settlementButton", settlement);
-        UiKit.Wire(view, "menuButton", menu);
         UiKit.Wire(view, "rosterSummary", roster);
         UiKit.Wire(view, "revivalQueue", revival);
         UiKit.Wire(view, "rosterToggle", rosterToggle);

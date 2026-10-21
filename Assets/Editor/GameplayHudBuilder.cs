@@ -70,7 +70,7 @@ public static class GameplayHudBuilder
         var view = host.gameObject.AddComponent<TopHudView>();
 
         var ledger = UiKit.TopLeft(UiKit.Rect("Ledger", host), Margin, Margin, 340f, 268f);
-        UiKit.Panel(ledger, HudPalette.Surface, HudPalette.Border);
+        UiKit.Panel(ledger, HudPalette.Surface, HudPalette.Border, true);
 
         var day = UiKit.Text("Day", ledger, "영업 준비", 15f, HudPalette.TextDim, TextAlignmentOptions.Left, false, true);
         UiKit.TopLeft(day.rectTransform, 18f, 14f, 304f, 20f);
@@ -202,7 +202,7 @@ public static class GameplayHudBuilder
 
         // 손님 브리핑(접힘/펼침)
         var brief = UiKit.TopRight(UiKit.Rect("Briefing", host), Margin, cardTop, cardWidth, 164f);
-        UiKit.Panel(brief, HudPalette.Surface, HudPalette.BorderQuiet);
+        UiKit.Panel(brief, HudPalette.Surface, HudPalette.BorderQuiet, true);
         var briefTitle = UiKit.Text("Title", brief, "DAY 1 · 영업 준비", 19f, HudPalette.Accent, TextAlignmentOptions.Left, true, true);
         UiKit.TopLeft(briefTitle.rectTransform, 18f, 14f, cardWidth - 36f, 26f);
         var summary = UiKit.Text("Summary", brief, string.Empty, 14f, HudPalette.TextDim, TextAlignmentOptions.TopLeft);
@@ -223,7 +223,7 @@ public static class GameplayHudBuilder
 
         // 진행 막대
         var progress = UiKit.TopRight(UiKit.Rect("Progress", host), Margin, cardTop, cardWidth, 132f);
-        UiKit.Panel(progress, HudPalette.Surface, HudPalette.BorderQuiet);
+        UiKit.Panel(progress, HudPalette.Surface, HudPalette.BorderQuiet, true);
         var progressTitle = UiKit.Text("Title", progress, "던전 영업 중", 19f, HudPalette.Accent, TextAlignmentOptions.Left, true, true);
         UiKit.TopLeft(progressTitle.rectTransform, 18f, 14f, cardWidth - 36f, 26f);
         var bar = UiKit.TopLeft(UiKit.Rect("Bar", progress), 18f, 46f, cardWidth - 36f, 10f);

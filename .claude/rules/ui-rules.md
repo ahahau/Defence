@@ -38,7 +38,8 @@ UI Toolkit을 모두 걷어냈다. uGUI(A안)로 다시 만드는 중이다. 만
 - 운영 방침 창·타이틀·런 종료·HUD는 화면이 통째로 없다. 판단은 `MoralePolicyManager.CurrentChoices`·`SelectPolicy`, `TitleMenuActions` 쪽에 있다.
 - 정산은 `ManagementSettlementManager`가 `ReportOpened`·`ReportClosed`·`LatestReport`를 내고, `ForceHidePanel`로 닫는다(화면: `SettlementScreenView`). 씬에 배선된 옛 uGUI 정산 패널(`panelRoot`)은 캔버스를 잃어 깨져 그려지므로 쓰지 않는다(`_legacyPanelSuppressed` 기본값 참).
 - 튜토리얼이 화면 버튼을 비추는 단계는 각 화면이 화면 사각형을 알려 준다: 영업 시작(`WaveHudView`), 팝업 확인(`PopupView`), 도크 갈래 버튼 → 카드 → 설치·상인 버튼(`RoomManagementScreen.TryGetTutorialTarget`·`TryGetMerchantButtonScreenRect`). 오버레이 요소 사각형은 `UiScreenRect.TryGet`.
-- 메뉴 버튼은 `RoomManagementScreen.MenuRequested`로 알린다. 일시정지 메뉴 화면이 생기면 구독한다.
+- 도크에 메뉴 버튼은 없다(2026-10-21 사용자 결정으로 뺐다). 일시정지 메뉴를 만들면 여는 길을 새로 정한다.
+- 지도 클릭(`DungeonGraphController.IsPointerOverUi`)은 화면 UI의 어떤 그림에 닿아도 막힌다(월드 공간 캔버스만 통과). 창·패널 바탕은 `UiKit.Panel(..., raycast: true)`로 클릭을 받게 만들어 뒤의 방이 눌리지 않게 한다. 글자만 있고 바탕이 없는 자리는 뒤로 통과한다.
 
 ## 유지하는 원칙
 

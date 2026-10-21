@@ -1102,15 +1102,15 @@ namespace Code.MapCreateSystem
             };
 
             EventSystem.current.RaycastAll(pointerData, uiRaycastResults);
+            // 버튼만 막으면 패널 바탕·창 뒤 덮개를 눌렀을 때 그 뒤의 방이 눌렸다. 화면 UI면 무엇이든 막고,
+            // 방 위 글자처럼 지도에 붙은 월드 공간 UI만 지도 클릭으로 둔다.
             foreach (var hit in uiRaycastResults)
             {
                 if (hit.gameObject == null)
                     continue;
 
-                if (hit.gameObject.GetComponentInParent<Selectable>() != null)
-                    return true;
-
-                if (hit.gameObject.GetComponentInParent<ScrollRect>() != null)
+                var canvas = hit.gameObject.GetComponentInParent<Canvas>();
+                if (canvas == null || canvas.rootCanvas.renderMode != RenderMode.WorldSpace)
                     return true;
             }
 
