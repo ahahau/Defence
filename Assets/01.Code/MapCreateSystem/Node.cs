@@ -947,22 +947,32 @@ namespace Code.MapCreateSystem
             AssignedUnitInstance = null;
         }
 
+        // 칸을 고르지 않고 방만 눌러 배치하므로, 왼쪽 위 구석이 아니라 방 가운데에 가장 가까운 빈 칸을 준다.
         private bool TryFindFirstFreeUnitCell(out int column, out int row)
         {
+            column = -1;
+            row = -1;
+            var centerColumn = (TrapGrid.Columns - 1) * 0.5f;
+            var centerRow = (TrapGrid.Rows - 1) * 0.5f;
+            var bestDistance = float.PositiveInfinity;
             for (var r = 0; r < TrapGrid.Rows; r++)
             for (var c = 0; c < TrapGrid.Columns; c++)
             {
                 if (!IsUnitCellAvailable(c, r))
                     continue;
 
+                var dc = c - centerColumn;
+                var dr = r - centerRow;
+                var distance = dc * dc + dr * dr;
+                if (distance >= bestDistance)
+                    continue;
+
+                bestDistance = distance;
                 column = c;
                 row = r;
-                return true;
             }
-            
-            column = -1;
-            row = -1;
-            return false;
+
+            return column >= 0;
         }
 
         private void RefreshPrimaryUnit()

@@ -131,7 +131,7 @@ namespace Code.UI.RoomManagement
             var model = new InstallPanelViewModel
             {
                 Title = TitleOf(Kind),
-                Subtitle = Collapsed ? CollapsedHint(panel) : SubtitleOf(Kind),
+                Subtitle = Collapsed ? CollapsedHint : SubtitleOf(Kind),
                 Collapsed = Collapsed,
                 CloseLabel = Collapsed ? "취소" : "닫기",
                 PageLabel = $"{_page + 1} / {Mathf.Max(1, PageCount)}",
@@ -262,10 +262,8 @@ namespace Code.UI.RoomManagement
             model.ConfirmEnabled = !blocked;
         }
 
-        private static string CollapsedHint(NodePanelView panel) =>
-            panel != null && panel.IsChoosingUnitCell
-                ? "방 안의 밝은 칸을 눌러 배치하세요 · ESC로 취소"
-                : "지도에서 놓을 자리를 누르세요 · 우클릭·ESC로 취소";
+        // 유닛은 방을 고른 것만으로 바로 서므로 접힌 상태는 건물·함정 위치 고르기뿐이다.
+        private const string CollapsedHint = "지도에서 놓을 자리를 누르세요 · 우클릭·ESC로 취소";
 
         private static string TitleOf(RoomInstallKind? kind) => kind switch
         {

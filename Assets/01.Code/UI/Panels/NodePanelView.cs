@@ -241,8 +241,9 @@ namespace Code.UI
         }
 
         /// <summary>
-        /// 설치 창의 유닛 '배치'. 고른 유닛을 칸 선택 대기로 넘긴다. 실제 배치·마력 결제·격자 클릭은
-        /// 한 경로만 써서 로스터를 두 번 빼는 일이 없게 한다.
+        /// 설치 창의 유닛 '배치'. 고른 방의 가운데 가까운 빈 칸에 바로 세운다(마력 결제를 거쳐 같은 프레임에 끝난다).
+        /// 고를 위치가 남지 않으므로 보통 거짓을 돌려 설치 창을 접지 않는다. 배치·결제는 한 경로만 써서
+        /// 로스터를 두 번 빼는 일이 없게 한다.
         /// </summary>
         public bool TryBeginUnitPlacement(UnitDataSO unitData)
         {
@@ -613,19 +614,22 @@ namespace Code.UI
             if (costEventChannel == null || nodeEventChannel == null)
                 return;
 
+            // 방을 고른 것만으로 배치한다(2026-10-21 사용자 결정). 자리는 방 가운데에 가까운 빈 칸.
+            if (!_selectedNode.TryGetFirstFreeUnitSlot(out var column, out var row))
+            {
+                Notify("이 방에는 유닛을 세울 빈 칸이 없습니다");
+                return;
+            }
+
             _pendingUnitNode = _selectedNode;
             _pendingUnitData = unitData;
-            _pendingUnitCellColumn = -1;
-            _pendingUnitCellRow = -1;
+            _pendingUnitCellColumn = column;
+            _pendingUnitCellRow = row;
 
-            // 유닛은 카드에서 고른 뒤 실제 방의 작은 칸을 눌러 자리를 정한다.
-            // 첫 빈 칸을 자동으로 고르면 전술 배치가 불가능하고, 그리드 클릭도 무시된다.
-            var grid = _pendingUnitNode.TrapGrid;
-            grid?.ClearCellSelection();
-            grid?.SetFocusedGridVisible(true);
-            // 놓을 수 있는 칸을 칠해 준다. 격자만으로는 어디가 비었는지 안 보인다.
-            _pendingUnitNode.ShowUnitPlacementHints();
-            Notify($"{GetUnitDisplayName(unitData)}: 방 안의 밝은 칸을 누르세요");
+            costEventChannel.RaiseEvent(new UnitDeployMagicRequestedEvent(
+                _pendingUnitNode,
+                _pendingUnitData,
+                _pendingUnitData.MagicCost));
         }
 
         private void HandleNodeGridCellSelected(NodeGridCellSelectedEvent evt)
