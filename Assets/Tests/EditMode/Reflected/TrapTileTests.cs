@@ -151,6 +151,34 @@ namespace Tests.EditMode.Rules
             Assert.That(animation.FrameCount, Is.EqualTo(8), "팩 애니메이션 8프레임을 돌립니다.");
         }
 
+        /// <summary>
+        /// 맞는 건물은 흔들리는데, 흔들 대상이 루트면 기준 위치를 Awake(노드에 붙기 전 월드 좌표)에서 잡아
+        /// 배율 15인 노드 아래에서 첫 피해에 방 밖 수백 유닛으로 튀었다. 흔들기 시작할 때의 자리를 기준으로 삼아야 한다.
+        /// </summary>
+        [Test]
+        public void DamagedBuilding_ShakesInPlaceUnderAScaledNode()
+        {
+            var node = new GameObject("Node");
+            _created.Add(node);
+            node.transform.position = new Vector3(-30f, -30f, 0f);
+            node.transform.localScale = new Vector3(15f, 15f, 3f);
+
+            var host = new GameObject("Building");
+            _created.Add(host);
+            host.transform.position = new Vector3(-27f, -31f, 0f);
+            var building = host.AddComponent<Building>();
+            typeof(Building).GetField("destructible", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(building, true);
+            // 실제 순서: 생성(Awake) → 노드에 붙이기(월드 자리 유지) → 피해.
+            typeof(Building).GetMethod("Awake", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(building, null);
+            host.transform.SetParent(node.transform, true);
+            var before = host.transform.position;
+
+            typeof(Building).GetField("maxDurability", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(building, 20);
+            typeof(Building).GetField("currentDurability", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(building, 20);
+            Assert.That(building.TakeBuildingDamage(1), Is.False, "한 번 맞아서는 부서지지 않습니다.");
+            Assert.That(Vector3.Distance(host.transform.position, before), Is.LessThan(0.5f), "맞아도 제자리에서 흔들려야 합니다.");
+        }
+
         /// <summary>그림이 없는 함정은 지웠다. 남은 함정은 팩 그림이 있는 셋뿐이고, 각자 해금 목록에 올라 있다.</summary>
         [Test]
         public void TrapRoster_IsOnlyTrapsWithPackArt()

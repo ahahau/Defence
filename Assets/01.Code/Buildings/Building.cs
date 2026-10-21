@@ -333,7 +333,6 @@ namespace Code.Buildings
             if (damageAnimationTarget == null)
                 damageAnimationTarget = transform;
 
-            damageAnimationBaseLocalPosition = damageAnimationTarget.localPosition;
             currentDurability = MaxDurability;
         }
 
@@ -523,8 +522,18 @@ namespace Code.Buildings
             if (damageAnimationTarget == null || damageShakeDistance <= 0f)
                 return;
 
-            damageTween?.Kill();
-            damageAnimationTarget.localPosition = damageAnimationBaseLocalPosition;
+            // 흔드는 중이 아니면 지금 자리를 기준으로 잡는다. Awake에서 잡으면 노드(배율 15)에 붙기 전 월드 좌표라
+            // 루트를 흔드는 건물이 첫 피해에 방 밖 멀리 튀었다.
+            if (damageTween != null && damageTween.IsActive())
+            {
+                damageTween.Kill();
+                damageAnimationTarget.localPosition = damageAnimationBaseLocalPosition;
+            }
+            else
+            {
+                damageAnimationBaseLocalPosition = damageAnimationTarget.localPosition;
+            }
+
             damageTween = damageAnimationTarget
                 .DOLocalMoveX(damageAnimationBaseLocalPosition.x + damageShakeDistance, damageShakeDuration * 0.5f)
                 .SetEase(Ease.InOutSine)
@@ -535,11 +544,15 @@ namespace Code.Buildings
 
         private void OnDisable()
         {
-            damageTween?.Kill();
-            damageTween = null;
+            // 흔드는 중에 꺼질 때만 제자리로 되돌린다(흔든 적 없으면 기준 위치가 없다).
+            if (damageTween != null && damageTween.IsActive())
+            {
+                damageTween.Kill();
+                if (damageAnimationTarget != null)
+                    damageAnimationTarget.localPosition = damageAnimationBaseLocalPosition;
+            }
 
-            if (damageAnimationTarget != null)
-                damageAnimationTarget.localPosition = damageAnimationBaseLocalPosition;
+            damageTween = null;
         }
     }
 }
