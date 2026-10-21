@@ -88,8 +88,9 @@ namespace Tests.EditMode.Rules
 
         /// <summary>
         /// 함정 몸체는 던전 시트의 바닥 장치 조각이고 함정마다 다르다. 예전에는 모두 노란 임시 네모였고, 같은 네모를 쓰는
-        /// 테두리(Border)가 몸체 위를 덮어 설치 카드·미리보기에도 네모가 나왔다. 몸체는 바닥 타일과 같은 텍셀 크기(25.6/유닛)로
-        /// 덮은 칸을 정확히 채워야 확대 배율에서 바닥과 함께 또렷하다.
+        /// 테두리(Border)가 몸체 위를 덮어 설치 카드·미리보기에도 네모가 나왔다. 몸체는 바닥 타일과 같은 텍셀 크기(25.6/유닛)라
+        /// 확대 배율에서 바닥과 함께 또렷하다. 그림은 빈 여백 없이 잘라 카드에서 작게 보이지 않게 하고, 덮은 칸 가운데에 놓인다.
+        /// 몸체는 기둥 머리 층 바로 아래에 그려 기둥 바로 위 칸에서 기둥 머리가 함정을 가린다(캐릭터는 그보다 위).
         /// </summary>
         [TestCase("Trap"), TestCase("Trap_Spike"), TestCase("Trap_Snare"), TestCase("Generated/Trap_ArmorBreaker"),
          TestCase("Trap_Crusher"), TestCase("Generated/Trap_AmbushNet"), TestCase("Trap_Blade"),
@@ -108,9 +109,31 @@ namespace Tests.EditMode.Rules
             Assert.That(body.sprite.pixelsPerUnit, Is.EqualTo(25.6f).Within(0.001f), "바닥 타일과 같은 텍셀 크기여야 합니다.");
 
             var footprint = trap.Footprint;
-            var size = Vector2.Scale(body.sprite.bounds.size, body.transform.localScale) * new Vector2(footprint.x, footprint.y);
-            Assert.That(size.x, Is.EqualTo(footprint.x * 1.25f).Within(0.001f), "설치하면 덮은 칸 폭을 정확히 채웁니다.");
-            Assert.That(size.y, Is.EqualTo(footprint.y * 1.25f).Within(0.001f));
+            var scale = Vector2.Scale(body.transform.localScale, new Vector2(footprint.x, footprint.y));
+            Assert.That(scale.x, Is.EqualTo(1f).Within(0.001f), "설치하면 그림이 늘어나지 않고 텍셀 크기 그대로입니다.");
+            Assert.That(scale.y, Is.EqualTo(1f).Within(0.001f));
+
+            // 기준점이 덮은 칸 가운데라, 잘라 낸 그림은 그 둘레 안에 있어야 한다(조각이 좌우 대칭이 아니라 정확히 가운데는 아니다).
+            var bounds = body.sprite.bounds;
+            Assert.That(bounds.min.x, Is.GreaterThanOrEqualTo(-footprint.x * 0.625f - 0.001f), "덮은 칸 밖으로 나가지 않습니다.");
+            Assert.That(bounds.max.x, Is.LessThanOrEqualTo(footprint.x * 0.625f + 0.001f));
+            Assert.That(bounds.min.y, Is.GreaterThanOrEqualTo(-footprint.y * 0.625f - 0.001f));
+            Assert.That(bounds.max.y, Is.LessThanOrEqualTo(footprint.y * 0.625f + 0.001f));
+            Assert.That(((Vector2)bounds.center).magnitude, Is.LessThan(0.2f), "덮은 칸 가운데쯤에 놓입니다.");
+
+            var png = new Texture2D(2, 2);
+            _created.Add(png);
+            png.LoadImage(System.IO.File.ReadAllBytes(AssetDatabase.GetAssetPath(body.sprite)));
+            var edge = png.GetPixels32();
+            var width = png.width;
+            var height = png.height;
+            bool Opaque(int x, int y) => edge[y * width + x].a > 0;
+            Assert.That(Enumerable.Range(0, width).Any(x => Opaque(x, 0)) && Enumerable.Range(0, width).Any(x => Opaque(x, height - 1))
+                && Enumerable.Range(0, height).Any(y => Opaque(0, y)) && Enumerable.Range(0, height).Any(y => Opaque(width - 1, y)),
+                Is.True, $"{name} 그림에 빈 여백이 남아 설치 카드에서 작게 보입니다.");
+
+            Assert.That(body.sortingOrder, Is.EqualTo(RoomTilePainter.PillarCapSortingOrder - 1),
+                "몸체는 기둥 머리 층 바로 아래입니다.");
         }
 
         /// <summary>함정 데이터의 보드 그림이 프리팹 몸체와 같고 함정끼리 겹치지 않는다(설치 뒤 Initialize가 보드 그림으로 바꾼다).</summary>

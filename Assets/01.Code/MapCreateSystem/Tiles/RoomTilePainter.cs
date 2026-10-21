@@ -103,6 +103,53 @@ namespace Code.MapCreateSystem
         }
 
         /// <summary>
+        /// 기둥 머리 앞 층의 정렬 순서. 함정 몸체(바로 아래)보다 위, 캐릭터(20)보다 아래다.
+        /// 3/4 시점에서 가까운 기둥의 머리가 위 칸 바닥에 놓인 함정을 가리고, 그 칸에 선 캐릭터는 가리지 않는다.
+        /// </summary>
+        public const int PillarCapSortingOrder = 11;
+
+        /// <summary>
+        /// 기둥 머리 줄(<see cref="RoomTilePlan.PillarCaps"/>)을 앞 층에 위 타일맵과 같은 그림·색으로 다시 그린다.
+        /// 룰 타일은 같은 타일맵의 이웃을 보고 조각을 고르므로, 머리는 위 타일맵에 그대로 두고 고른 그림만 옮긴다.
+        /// <paramref name="tileCache"/>는 그림마다 만든 타일을 담아 두는 곳(주인이 지운다).
+        /// </summary>
+        public static void PaintPillarCaps(Tilemap tiles, Tilemap front, IReadOnlyList<Room> rooms, Dictionary<Sprite, Tile> tileCache)
+        {
+            if (front == null)
+                return;
+
+            front.ClearAllTiles();
+            if (tiles == null)
+                return;
+
+            foreach (var room in rooms)
+            {
+                if (room.Plan == null)
+                    continue;
+
+                foreach (var cap in room.Plan.PillarCaps)
+                {
+                    var cell = ToCell(cap + room.Offset);
+                    var sprite = tiles.GetSprite(cell);
+                    if (sprite == null)
+                        continue;
+
+                    if (!tileCache.TryGetValue(sprite, out var tile))
+                    {
+                        tile = ScriptableObject.CreateInstance<Tile>();
+                        tile.sprite = sprite;
+                        tile.colliderType = Tile.ColliderType.None;
+                        tileCache[sprite] = tile;
+                    }
+
+                    front.SetTile(cell, tile);
+                    front.SetTileFlags(cell, TileFlags.None);
+                    front.SetColor(cell, tiles.GetColor(cell));
+                }
+            }
+        }
+
+        /// <summary>
         /// 장식을 따로 칠한다(벽 위, 캐릭터 아래). 횃불 그림은 타일 1×2라 기준점을 반 칸 올린 타일맵(<paramref name="torches"/>)에
         /// 아래 칸으로 놓는다 — 애니메이션 타일은 타일별 위치 변환이 먹지 않는다.
         /// </summary>

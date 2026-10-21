@@ -16,7 +16,9 @@ namespace Code.MapCreateSystem
         private Tilemap _tiles;
         private Tilemap _decor;
         private Tilemap _torches;
+        private Tilemap _pillarCaps;
         private RoomTileSet _tileSet;
+        private readonly Dictionary<Sprite, Tile> _pillarCapTiles = new();
         private bool _dirty;
         private readonly List<Node> _nodes = new();
         private readonly List<RoomTilePainter.Room> _rooms = new();
@@ -54,6 +56,10 @@ namespace Code.MapCreateSystem
             map._torches = CreateLayer(root.transform, "Torches", tileTemplate, 2);
             map._torches.tileAnchor = new Vector3(0.5f, 1f, 0f);
             map._torches.GetComponent<TilemapRenderer>().sortingOrder = decorRenderer.sortingOrder;
+
+            // 기둥 머리는 함정보다 앞, 캐릭터보다 뒤.
+            map._pillarCaps = CreateLayer(root.transform, "PillarCaps", tileTemplate, RoomTilePainter.PillarCapSortingOrder);
+            map._pillarCaps.GetComponent<TilemapRenderer>().sortingOrder = RoomTilePainter.PillarCapSortingOrder;
             return map;
         }
 
@@ -102,6 +108,23 @@ namespace Code.MapCreateSystem
 
             RoomTilePainter.Paint(_underlay, _tiles, _tileSet, _rooms);
             RoomTilePainter.PaintDecor(_decor, _torches, _tileSet, _rooms);
+            RoomTilePainter.PaintPillarCaps(_tiles, _pillarCaps, _rooms, _pillarCapTiles);
+        }
+
+        private void OnDestroy()
+        {
+            foreach (var tile in _pillarCapTiles.Values)
+            {
+                if (tile == null)
+                    continue;
+
+                if (Application.isPlaying)
+                    Destroy(tile);
+                else
+                    DestroyImmediate(tile);
+            }
+
+            _pillarCapTiles.Clear();
         }
 
         private static Tilemap CreateLayer(Transform parent, string name, TilemapRenderer template, int fallbackOrder)

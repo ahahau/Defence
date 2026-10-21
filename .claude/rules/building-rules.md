@@ -22,7 +22,7 @@ paths:
    * 배치 제약: `Unique`(하나만), `CentralOnly`(방 중앙 슬롯만), `InstallOnEdge`(노드 사이 라인에 설치. 함정은 피해, 상점·여관은 통과 효과).
    * `BaseDanger`는 위험도다.
    * `BoardSprite`는 필수다. 함정끼리는 같은 그림을 나눠 쓰지 않는다(임시 그림은 예외).
-   * 함정 몸체는 Dark Castle 시트의 바닥 장치 조각(발판·격자·발사구·문양판·구덩이 틀)을 칸 가운데에 놓은 그림이다(`TrapBodyBuilder`, `Generated/TrapBody_*.png`). 바닥 타일과 같은 25.6PPU라 칸 하나 = 32픽셀이고, 몸체(`Visual`)는 1/칸 수로 줄여 설치 때 늘어나도 덮은 칸을 정확히 채운다. 프리팹 몸체와 데이터 `BoardSprite`는 같은 그림이다(설치 카드·미리보기는 프리팹 첫 SpriteRenderer를 쓴다). 새 함정은 `TrapBodyBuilder.Entries`에 조각을 정해 넣는다.
+   * 함정 몸체는 Dark Castle 시트의 바닥 장치 조각(발판·격자·발사구·문양판·구덩이 틀)을 칸 가운데에 놓은 그림이다(`TrapBodyBuilder`, `Generated/TrapBody_*.png`). 바닥 타일과 같은 25.6PPU라 칸 하나 = 32픽셀이고, 빈 여백은 잘라 기준점을 덮은 칸 가운데에 둔다(설치 카드에서 작게 보이지 않게). 몸체(`Visual`)는 1/칸 수로 줄여 설치 때 늘어나도 텍셀 크기 그대로이고, 정렬은 기둥 머리 앞 층(`RoomTilePainter.PillarCapSortingOrder` 11) 바로 아래 10이다(캐릭터 20보다 아래). 프리팹 몸체와 데이터 `BoardSprite`는 같은 그림이다(설치 카드·미리보기는 프리팹 첫 SpriteRenderer를 쓴다). 새 함정은 `TrapBodyBuilder.Entries`에 조각을 정해 넣는다.
    * 모험가가 머무는 서비스 시설(상점·여관·대장간 계열)은 `CentralOnly = true`, `InstallOnEdge = false`여야 한다.
    * 위 두 항목은 `AssetWiringTests`가 검사한다.
 4. 수익 시설은 번 만큼 닳는다.

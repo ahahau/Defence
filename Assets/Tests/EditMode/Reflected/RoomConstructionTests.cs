@@ -615,6 +615,49 @@ namespace Tests.EditMode.Rules
         }
 
         /// <summary>
+        /// 기둥 머리는 기둥 칸 위 칸의 아래쪽 타일에 그려진다. 그 칸에 함정을 놓으면 함정이 기둥 머리 위에 올라타 보였다.
+        /// 머리 줄만 앞 층(함정보다 위, 캐릭터보다 아래)에 같은 그림·색으로 한 번 더 그려 가까운 기둥이 뒤 칸 바닥을 가리게 한다.
+        /// </summary>
+        [Test]
+        public void PillarCaps_AreRedrawnOnTheFrontLayer()
+        {
+            var tileSet = AssetDatabase.LoadAssetAtPath<RoomTileSet>("Assets/07.SO/Map/RoomTileSet.asset");
+            Assert.That(tileSet, Is.Not.Null);
+            var gridHost = new GameObject("TestGrid", typeof(Grid));
+            _layoutHosts.Add(gridHost);
+            var tiles = new GameObject("Tiles", typeof(UnityEngine.Tilemaps.Tilemap)).GetComponent<UnityEngine.Tilemaps.Tilemap>();
+            tiles.transform.SetParent(gridHost.transform, false);
+            var front = new GameObject("Front", typeof(UnityEngine.Tilemaps.Tilemap)).GetComponent<UnityEngine.Tilemaps.Tilemap>();
+            front.transform.SetParent(gridHost.transform, false);
+
+            var plan = RoomTilePlan.Build(NewShape(RoomSize.Medium, RoomDoors.Left | RoomDoors.Right, PillarRows), RoomDoors.None,
+                RoomDoors.None, 24);
+            var rooms = new[] { new RoomTilePainter.Room(plan, Vector2Int.zero, new Color(0.9f, 0.8f, 0.7f)) };
+            RoomTilePainter.Paint(null, tiles, tileSet, rooms);
+            var cache = new System.Collections.Generic.Dictionary<Sprite, UnityEngine.Tilemaps.Tile>();
+            RoomTilePainter.PaintPillarCaps(tiles, front, rooms, cache);
+
+            Assert.That(plan.PillarCaps, Is.Not.Empty);
+            Assert.That(plan.PillarCaps, Is.SubsetOf(plan.Pillars));
+            foreach (var cap in plan.PillarCaps)
+            {
+                var cell = new Vector3Int(cap.x, cap.y, 0);
+                Assert.That(front.GetSprite(cell), Is.EqualTo(tiles.GetSprite(cell)), $"({cap.x}, {cap.y}) 앞 층 머리 그림");
+                Assert.That(front.GetColor(cell), Is.EqualTo(tiles.GetColor(cell)), "방 색조도 같아야 합니다.");
+                Assert.That(plan.Pillars, Has.No.Member(cap + Vector2Int.up), "머리는 기둥 맨 위 줄입니다.");
+            }
+
+            var frontCount = 0;
+            foreach (var position in front.cellBounds.allPositionsWithin)
+                if (front.GetTile(position) != null)
+                    frontCount++;
+            Assert.That(frontCount, Is.EqualTo(plan.PillarCaps.Count), "앞 층에는 머리 줄만 그립니다.");
+
+            foreach (var tile in cache.Values)
+                Object.DestroyImmediate(tile);
+        }
+
+        /// <summary>
         /// 시트 18행 바닥(17행보다 한 톤 어두운 그림자 바닥)은 벽·기둥 바로 아래 줄에만 깐다.
         /// 예전에는 무작위 무늬에 섞여 방 한가운데에 구멍 같은 어두운 칸이 박혔다.
         /// </summary>

@@ -31,6 +31,9 @@ namespace Code.MapCreateSystem
         /// <summary>방 안에 갇힌 막힌 타일(기둥). 벽이 아니라 기둥 룰 타일로 그린다.</summary>
         public HashSet<Vector2Int> Pillars { get; } = new();
 
+        /// <summary>기둥 위로 올린 머리 줄(<see cref="Pillars"/>의 일부). 위 칸 바닥 아래쪽을 가리므로 앞 층에 한 번 더 그린다.</summary>
+        public HashSet<Vector2Int> PillarCaps { get; } = new();
+
         /// <summary>장식(위쪽 벽 횃불·석상·홈, 바닥 소품). 방 이름으로 자리를 정해 늘 같은 곳에 놓인다.</summary>
         public List<RoomDecorPlacement> Decor { get; } = new();
 
@@ -308,6 +311,7 @@ namespace Code.MapCreateSystem
             foreach (var cap in caps)
             {
                 Pillars.Add(cap);
+                PillarCaps.Add(cap);
                 Floor.Remove(cap);
             }
         }

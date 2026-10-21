@@ -1,13 +1,15 @@
 using System.Collections.Generic;
 using Code.Buildings;
+using Code.MapCreateSystem;
 using UnityEditor;
 using UnityEngine;
 
 /// <summary>
 /// 함정 몸체를 Dark Castle 시트의 바닥 장치 조각(발판·격자·발사구·문양판·구덩이 틀)으로 만든다.
 /// 함정 그림(가시·톱·그물)은 팩에 없어서, 함정마다 다른 조각을 칸 가운데에 놓은 그림을 만든다(2026-10-21 사용자 선택).
-/// 그림은 바닥 타일과 같은 텍셀 크기(25.6/유닛)라 칸 하나 = 32픽셀이다. 몸체(Visual)는 1/칸 수로 줄여 두어,
-/// 설치 때 칸 수만큼 늘어나도(<c>NodeTrapGrid.TryPlace</c>) 덮은 칸을 정확히 채운다.
+/// 그림은 바닥 타일과 같은 텍셀 크기(25.6/유닛)라 칸 하나 = 32픽셀이다. 빈 여백은 잘라 내고(설치 카드에서 작게 보이지 않게)
+/// 기준점을 덮은 칸 가운데에 둔다. 몸체(Visual)는 1/칸 수로 줄여 두어, 설치 때 칸 수만큼 늘어나도(<c>NodeTrapGrid.TryPlace</c>)
+/// 텍셀 크기 그대로다. 몸체는 기둥 머리 앞 층 바로 아래에 그린다(<see cref="RoomTilePainter.PillarCapSortingOrder"/>).
 /// 몸체를 덮던 노란 테두리(Border)는 기본 Trap 프리팹에서 지운다. 메뉴 "Tools/Dungeon Keeper/Build Trap Bodies".
 /// </summary>
 public static class TrapBodyBuilder
@@ -101,15 +103,27 @@ public static class TrapBodyBuilder
             }
         }
 
-        body.Apply();
+        // 빈 여백을 잘라 설치 카드에서 작게 보이지 않게 한다. 기준점은 덮은 칸 가운데로 두어 방에서는 같은 자리에 놓인다.
+        var content = OpaqueBounds(body);
+        var cropped = new Texture2D(content.width, content.height, TextureFormat.RGBA32, false);
+        cropped.SetPixels(body.GetPixels(content.x, content.y, content.width, content.height));
+        cropped.Apply();
+        var pivot = new Vector2((width * 0.5f - content.x) / content.width, (height * 0.5f - content.y) / content.height);
+
         var path = $"{OutputFolder}/TrapBody_{name}.png";
-        System.IO.File.WriteAllBytes(path, body.EncodeToPNG());
+        System.IO.File.WriteAllBytes(path, cropped.EncodeToPNG());
         Object.DestroyImmediate(body);
+        Object.DestroyImmediate(cropped);
         AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
 
         var importer = (TextureImporter)AssetImporter.GetAtPath(path);
         importer.textureType = TextureImporterType.Sprite;
         importer.spriteImportMode = SpriteImportMode.Single;
+        var settings = new TextureImporterSettings();
+        importer.ReadTextureSettings(settings);
+        settings.spriteAlignment = (int)SpriteAlignment.Custom;
+        settings.spritePivot = pivot;
+        importer.SetTextureSettings(settings);
         importer.spritePixelsPerUnit = PixelsPerUnit;
         importer.filterMode = FilterMode.Point;
         importer.mipmapEnabled = false;
@@ -117,6 +131,24 @@ public static class TrapBodyBuilder
         importer.alphaIsTransparency = true;
         importer.SaveAndReimport();
         return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+    }
+
+    private static RectInt OpaqueBounds(Texture2D texture)
+    {
+        int minX = texture.width, minY = texture.height, maxX = -1, maxY = -1;
+        for (var y = 0; y < texture.height; y++)
+        for (var x = 0; x < texture.width; x++)
+        {
+            if (texture.GetPixel(x, y).a <= 0f)
+                continue;
+
+            minX = Mathf.Min(minX, x);
+            minY = Mathf.Min(minY, y);
+            maxX = Mathf.Max(maxX, x);
+            maxY = Mathf.Max(maxY, y);
+        }
+
+        return maxX < 0 ? new RectInt(0, 0, texture.width, texture.height) : new RectInt(minX, minY, maxX - minX + 1, maxY - minY + 1);
     }
 
     /// <summary>조각을 (centerX, centerY)를 가운데로 놓는다. 시트는 왼쪽 위 기준이고 텍스처 픽셀은 왼쪽 아래 기준이다.</summary>
@@ -157,6 +189,7 @@ public static class TrapBodyBuilder
                     continue;
 
                 renderer.sprite = sprite;
+                renderer.sortingOrder = RoomTilePainter.PillarCapSortingOrder - 1;
                 renderer.transform.localScale = new Vector3(1f / footprint.x, 1f / footprint.y, 1f);
             }
 
