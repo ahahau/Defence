@@ -573,6 +573,48 @@ namespace Tests.EditMode.Rules
         }
 
         /// <summary>
+        /// 방 안으로 튀어나온 벽 덩어리·홈의 끝처럼 위쪽 벽(아래 1~2줄이 바닥)인데 옆도 바닥인 칸은 가장자리 있는 벽돌 면이다.
+        /// 예전에는 옆 벽 조각(속이 검다)이 먼저 골라져 방 안에 검은 세로 줄이 생겼다.
+        /// </summary>
+        [Test]
+        public void RuleTiles_WallEndsInsideTheRoomShowAFaceNotASideRail()
+        {
+            var tileSet = AssetDatabase.LoadAssetAtPath<RoomTileSet>("Assets/07.SO/Map/RoomTileSet.asset");
+            Assert.That(tileSet, Is.Not.Null);
+            var gridHost = new GameObject("TestGrid", typeof(Grid));
+            _layoutHosts.Add(gridHost);
+            var tiles = new GameObject("Tiles", typeof(UnityEngine.Tilemaps.Tilemap)).GetComponent<UnityEngine.Tilemaps.Tilemap>();
+            tiles.transform.SetParent(gridHost.transform, false);
+
+            // 오른쪽 벽에서 안으로 튀어나온 벽 덩어리와, 위쪽 벽이 파인 홈.
+            var plan = RoomTilePlan.Build(NewShape(RoomSize.Medium, RoomDoors.Left | RoomDoors.Down, new[]
+            {
+                "..##..", "......", "....##", "....##", "......", "......"
+            }), RoomDoors.None, RoomDoors.None, 24);
+            RoomTilePainter.Paint(null, tiles, tileSet, new[] { new RoomTilePainter.Room(plan, Vector2Int.zero, Color.white) });
+
+            var checkedTiles = 0;
+            foreach (var position in tiles.cellBounds.allPositionsWithin)
+            {
+                var tile = new Vector2Int(position.x, position.y);
+                if (plan.Floor.Contains(tile) || plan.Pillars.Contains(tile) || tiles.GetTile(position) == null)
+                    continue;
+
+                var floorBelow = plan.Floor.Contains(tile + Vector2Int.down) || plan.Floor.Contains(tile + new Vector2Int(0, -2));
+                var floorBeside = plan.Floor.Contains(tile + Vector2Int.left) || plan.Floor.Contains(tile + Vector2Int.right);
+                if (!floorBelow || !floorBeside)
+                    continue;
+
+                checkedTiles++;
+                var cell = Cell(tiles, tile.x, tile.y);
+                Assert.That(cell, Is.Not.EqualTo((3, 3)).And.Not.EqualTo((12, 9)),
+                    $"({tile.x}, {tile.y})는 위쪽 벽 끝이라 옆 벽(검은 줄) 조각이면 안 됩니다.");
+            }
+
+            Assert.That(checkedTiles, Is.GreaterThan(0), "검사할 벽 끝이 있어야 합니다.");
+        }
+
+        /// <summary>
         /// 장식은 위쪽 벽 벽돌 면(벽 칸)과 비어 있는 바닥에만 놓이고, 같은 방이면 늘 같은 자리다.
         /// 바닥 칸 위에 벽 장식이 놓이면 바닥에 횃불이 서 있고, 중앙 시설·문 앞을 가리면 건물과 드나드는 길이 안 보인다.
         /// </summary>
