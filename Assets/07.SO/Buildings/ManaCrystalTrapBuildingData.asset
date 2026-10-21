@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34c4dc0ecf9801d4aa0c5c4a452b0163, type: 3}
+  m_Name: ManaCrystalTrapBuildingData
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Buildings.BuildingDataSO
+  <Grade>k__BackingField: 2
+  <BoardSprite>k__BackingField: {fileID: 21300000, guid: 33486c9af87e5b849bb530eea07bb3b0, type: 3}
+  <Defense>k__BackingField: 0
+  <EvasionChance>k__BackingField: 0
+  <DisplayName>k__BackingField: "\uB9C8\uB825 \uC218\uC815"
+  <Cost>k__BackingField: 45
+  <DailyUpkeep>k__BackingField: 0
+  <GradeWeight>k__BackingField: 0
+  <DwellSeconds>k__BackingField: 0
+  <FacilityTier>k__BackingField: 1
+  <Prefab>k__BackingField: {fileID: 1129533880175718005, guid: 34fe746c5d79012419716b908a5b4c34, type: 3}
+  <Unique>k__BackingField: 0
+  <CentralOnly>k__BackingField: 0
+  <InstallOnEdge>k__BackingField: 0
+  <Locked>k__BackingField: 1
+  <BaseDanger>k__BackingField: 3
+  <Category>k__BackingField: 2

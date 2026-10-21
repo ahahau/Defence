@@ -1,0 +1,141 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &2771833998503779011
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1428848070512300419, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: damage
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 1428848070512300419, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: damagePerDay
+      value: 0.45
+      objectReference: {fileID: 0}
+    - target: {fileID: 1428848070512300419, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: injuryChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1428848070512300419, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: cooldownSeconds
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 1428848070512300419, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: injuryStatusEffect
+      value: 
+      objectReference: {fileID: 11400000, guid: dc968ca5a55ee9c468c0b11a50c5fd7d, type: 2}
+    - target: {fileID: 2306502474854140680, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -1.49
+      objectReference: {fileID: 0}
+    - target: {fileID: 2306502474854140680, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 2306502474854140680, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2306502474854140680, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2306502474854140680, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2306502474854140680, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2306502474854140680, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2306502474854140680, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2306502474854140680, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2306502474854140680, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2624532001765305233, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: b528fc622af5a2c4285020787c597d05, type: 3}
+    - target: {fileID: 2624532001765305233, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_WasSpriteAssigned
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4223868225447123776, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: anchorBottom
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4223868225447123776, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: triggerFrames.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4223868225447123776, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: 'triggerFrames.Array.data[0]'
+      value: 
+      objectReference: {fileID: 21300000, guid: 3da079e08bc097941aa7c6a80faaa531, type: 3}
+    - target: {fileID: 4223868225447123776, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: 'triggerFrames.Array.data[1]'
+      value: 
+      objectReference: {fileID: 21300000, guid: 1252151aa7687b3468122825966998a0, type: 3}
+    - target: {fileID: 4223868225447123776, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: 'triggerFrames.Array.data[2]'
+      value: 
+      objectReference: {fileID: 21300000, guid: ed2a8f98489668f43afeed1ad85d5078, type: 3}
+    - target: {fileID: 4223868225447123776, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: 'triggerFrames.Array.data[3]'
+      value: 
+      objectReference: {fileID: 21300000, guid: 56e115862a3e96246b9d05593543d41c, type: 3}
+    - target: {fileID: 4328671716576560348, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_Name
+      value: Trap_FireBrazier
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7473952817250454834, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7231431720976255862}
+  m_SourcePrefab: {fileID: 100100000, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+--- !u!1 &4742105865443956721 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7473952817250454834, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+  m_PrefabInstance: {fileID: 2771833998503779011}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7231431720976255862
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4742105865443956721}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af584f9221600d74182d1f5e20bf1673, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Buildings.TrapBodyAnimation
+  frames:
+  - {fileID: 21300000, guid: b528fc622af5a2c4285020787c597d05, type: 3}
+  - {fileID: 21300000, guid: b907c13669bd20f40bdbbcc7d4bba9f6, type: 3}
+  - {fileID: 21300000, guid: 563156dec5b3a8c4987133c26a80603c, type: 3}
+  - {fileID: 21300000, guid: de45dd8fa56e11048b216e01099c058d, type: 3}
+  - {fileID: 21300000, guid: e8b0e416d26a703458efc0507e2a1c80, type: 3}
+  - {fileID: 21300000, guid: f5e3fb6c6fa82714cae47fa40a80ddbf, type: 3}
+  - {fileID: 21300000, guid: fa5d653d18004a84fbb6e1a5713d7745, type: 3}
+  - {fileID: 21300000, guid: 754f8a4709c267b49a27ba0b2e2c200b, type: 3}
+  frameSeconds: 0.12

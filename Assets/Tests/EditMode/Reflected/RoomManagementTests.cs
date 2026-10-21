@@ -39,9 +39,11 @@ namespace Tests.EditMode.Rules
         public void InstallBlockReason_NamesEachBlockedState()
         {
             var store = LoadData("StoreBuildingData");
-            var spike = LoadData("SpikeTrapBuildingData");
+            var spike = LoadData("FireBrazierTrapBuildingData");
             var portal = LoadData("PortalBuildingData");
-            var edge = LoadData("BladeTrapBuildingData");
+            // 라인(통로) 함정은 지금 데이터에 없다. 규칙만 보도록 라인 설치 표시를 켠 데이터를 만든다.
+            var edge = ScriptableObject.Instantiate(spike);
+            SetField(edge, "<InstallOnEdge>k__BackingField", true);
 
             Assert.That(Blocked(null, store), Does.Contain("방을 먼저"));
             Assert.That(Blocked(CreateNode(), portal), Does.Contain("입구"));
@@ -62,7 +64,7 @@ namespace Tests.EditMode.Rules
             Assert.That(Blocked(withStore, spike), Does.Contain("손님이 머무는 시설"));
 
             var withTrap = CreateNode();
-            Assert.That(PlaceOnAnyCell(withTrap, spike), Is.True, "빈 방에는 가시 함정을 깔 수 있어야 합니다.");
+            Assert.That(PlaceOnAnyCell(withTrap, spike), Is.True, "빈 방에는 불 화로를 깔 수 있어야 합니다.");
             Assert.That(Blocked(withTrap, store), Does.Contain("함정이 있는 방"));
 
             var guarded = CreateNode();
@@ -70,6 +72,7 @@ namespace Tests.EditMode.Rules
             Assert.That(Blocked(guarded, store), Does.Contain("유닛이 선 방"));
             Assert.That(InstallAvailabilityRules.TryGetBlockReason(guarded, spike, false, out _), Is.False,
                 "함정은 유닛과 한 방을 나눠 씁니다.");
+            Object.DestroyImmediate(edge);
         }
 
         /// <summary>
@@ -162,7 +165,7 @@ namespace Tests.EditMode.Rules
         {
             yield return ("빈 중형 방", _ => { });
             yield return ("빈 소형 방", node => node.SetRoomSize(RoomSize.Small));
-            yield return ("가시 함정이 깔린 방", node => PlaceOnAnyCell(node, LoadData("SpikeTrapBuildingData")));
+            yield return ("불 화로가 깔린 방", node => PlaceOnAnyCell(node, LoadData("FireBrazierTrapBuildingData")));
             yield return ("상점이 선 방", node => BuildingPlacement.InstallCentral(node, LoadData("StoreBuildingData")));
             yield return ("금고가 선 방", node => BuildingPlacement.InstallCentral(node, LoadResourceData("TreasuryBuildingData")));
         }

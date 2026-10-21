@@ -4,8 +4,8 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// 함정 프리팹에 발동 효과(<see cref="TrapTriggerVisual"/>)를 넣는다. 방식별로 그림을 고르고 함정마다 색을 달리한다:
-/// 밟기 = 베기, 범위 = 폭발, 지속 = 솟는 불기둥, 투사체 = 화살. 메뉴 "Tools/Dungeon Keeper/Build Trap Effects".
+/// 함정 프리팹에 발동 효과(<see cref="TrapTriggerVisual"/>)를 넣는다: 불 화로 = 지옥불 폭발, 핏빛 웅덩이 = 솟는 지옥불 기둥,
+/// 마력 수정 = 파란 폭발(방식 기본값: 밟기 = 베기, 투사체 = 화살). 메뉴 "Tools/Dungeon Keeper/Build Trap Effects".
 /// </summary>
 public static class TrapEffectBuilder
 {
@@ -13,6 +13,7 @@ public static class TrapEffectBuilder
     private const string SlashFolder = "Assets/04.Sprites/Characters/SkeletonWarrior/effects/plash attack/";
     private const string BurstFolder = "Assets/04.Sprites/Characters/SkeletonWarrior/effects/plash explore/";
     private const string PillarFolder = "Assets/04.Sprites/Characters/SkeletonKing/effects/effect2/";
+    private const string FlareFolder = "Assets/04.Sprites/Characters/SkeletonKing/effects/effect1/";
     private const string ArrowPath = "Assets/04.Sprites/Characters/SkeletonWarrior/arrows/arrow_origin/arrow_1_origin.png";
     private const string UnlitMaterialPath = "Packages/com.unity.render-pipelines.universal/Runtime/Materials/Sprite-Unlit-Default.mat";
 
@@ -20,19 +21,13 @@ public static class TrapEffectBuilder
     private const float BurstFrameSeconds = 0.07f;
     private const float PillarFrameSeconds = 0.1f;
 
-    /// <summary>프리팹 이름, 효과 폴더(없으면 화살), 프레임 간격, 아래 맞춤. 기본 Trap이 먼저여야 Variant가 덮어쓴다.</summary>
+    /// <summary>프리팹 이름, 효과 폴더(없으면 화살), 프레임 간격, 아래 맞춤. 기본 Trap(Variant 원본)이 먼저여야 Variant가 덮어쓴다.</summary>
     private static readonly (string prefab, string frames, float seconds, bool bottom)[] Entries =
     {
         ("Trap", SlashFolder + "origin", SlashFrameSeconds, false),
-        ("Trap_Spike", SlashFolder + "yellow", SlashFrameSeconds, false),
-        ("Trap_Snare", SlashFolder + "green", SlashFrameSeconds, false),
-        ("Generated/Trap_ArmorBreaker", SlashFolder + "blue", SlashFrameSeconds, false),
-        ("Trap_Crusher", BurstFolder + "orange", BurstFrameSeconds, false),
-        ("Generated/Trap_AmbushNet", BurstFolder + "green", BurstFrameSeconds, false),
-        ("Trap_Blade", PillarFolder + "effect2_standard", PillarFrameSeconds, true),
-        ("Generated/Trap_Caltrop", PillarFolder + "effect2_golden", PillarFrameSeconds, true),
-        ("Generated/Trap_ExecutionSaw", PillarFolder + "effect2_hellfire", PillarFrameSeconds, true),
-        ("Trap_Arrow", null, 0f, false),
+        ("Trap_FireBrazier", FlareFolder + "effect1_hellfire", SlashFrameSeconds, true),
+        ("Trap_BloodPool", PillarFolder + "effect2_hellfire", PillarFrameSeconds, true),
+        ("Trap_ManaCrystal", BurstFolder + "blue", BurstFrameSeconds, false),
     };
 
     [MenuItem("Tools/Dungeon Keeper/Build Trap Effects")]

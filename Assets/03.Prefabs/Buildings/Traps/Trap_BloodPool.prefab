@@ -1,0 +1,165 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &1938389198173725227
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1428848070512300419, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: damage
+      value: 14
+      objectReference: {fileID: 0}
+    - target: {fileID: 1428848070512300419, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: footprint.x
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1428848070512300419, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: footprint.y
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1428848070512300419, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: triggerMode
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1428848070512300419, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: damagePerDay
+      value: 0.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 1428848070512300419, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: injuryChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1428848070512300419, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: injuryStatusEffect
+      value: 
+      objectReference: {fileID: 11400000, guid: e70d9291c81c47e98d34cdcf308513e9, type: 2}
+    - target: {fileID: 1428848070512300419, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: <DangerIncreaseOnTrigger>k__BackingField
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2306502474854140680, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -1.49
+      objectReference: {fileID: 0}
+    - target: {fileID: 2306502474854140680, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 2306502474854140680, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2306502474854140680, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2306502474854140680, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2306502474854140680, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2306502474854140680, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2306502474854140680, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2306502474854140680, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2306502474854140680, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2624532001765305233, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: dd1a5c94f97d1fa4ea43e1545641d5e8, type: 3}
+    - target: {fileID: 2624532001765305233, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_WasSpriteAssigned
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2787899817810343432, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2787899817810343432, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4223868225447123776, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: anchorBottom
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4223868225447123776, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: frameSeconds
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4223868225447123776, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: 'triggerFrames.Array.data[0]'
+      value: 
+      objectReference: {fileID: 21300000, guid: 51188867e0665fe42bc7d0b263157d17, type: 3}
+    - target: {fileID: 4223868225447123776, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: 'triggerFrames.Array.data[1]'
+      value: 
+      objectReference: {fileID: 21300000, guid: 9082bea178d817544a794a751b371a8d, type: 3}
+    - target: {fileID: 4223868225447123776, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: 'triggerFrames.Array.data[2]'
+      value: 
+      objectReference: {fileID: 21300000, guid: 822982c6015ce2e428c0beea31b9a67e, type: 3}
+    - target: {fileID: 4223868225447123776, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: 'triggerFrames.Array.data[3]'
+      value: 
+      objectReference: {fileID: 21300000, guid: f3bbb385aad34dd40b5bb2cba5e3bd9d, type: 3}
+    - target: {fileID: 4223868225447123776, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: 'triggerFrames.Array.data[4]'
+      value: 
+      objectReference: {fileID: 21300000, guid: b50fb34e403ab3542a565ba7ba778803, type: 3}
+    - target: {fileID: 4328671716576560348, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      propertyPath: m_Name
+      value: Trap_BloodPool
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7473952817250454834, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2137578483329439432}
+  m_SourcePrefab: {fileID: 100100000, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+--- !u!1 &9033757725068570393 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7473952817250454834, guid: 0794d55ba6bdf3046a18081a1181deb0, type: 3}
+  m_PrefabInstance: {fileID: 1938389198173725227}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2137578483329439432
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9033757725068570393}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af584f9221600d74182d1f5e20bf1673, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Buildings.TrapBodyAnimation
+  frames:
+  - {fileID: 21300000, guid: dd1a5c94f97d1fa4ea43e1545641d5e8, type: 3}
+  - {fileID: 21300000, guid: 2bb788275b972e34dbb34e0d567582e3, type: 3}
+  - {fileID: 21300000, guid: 29c85677a45c3fa4faa6b41ad42d036c, type: 3}
+  - {fileID: 21300000, guid: 6fd7f0247e80b9846a904ac9446bba7f, type: 3}
+  - {fileID: 21300000, guid: 9c9bd7a657409cb49a804176182be294, type: 3}
+  - {fileID: 21300000, guid: f0f7f2dc2867e5f4387b261aa81b5d0b, type: 3}
+  - {fileID: 21300000, guid: df29d7c9368719d42afefa80f3b92180, type: 3}
+  - {fileID: 21300000, guid: 6e48eb7c25bf5924ca7770f7859bf83c, type: 3}
+  frameSeconds: 0.12

@@ -1,121 +1,211 @@
 using System.Collections.Generic;
 using Code.Buildings;
 using Code.MapCreateSystem;
+using Code.StatusEffects;
 using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// 함정 몸체를 Dark Castle 시트의 바닥 장치 조각(발판·격자·발사구·문양판·구덩이 틀)으로 만든다.
-/// 함정 그림(가시·톱·그물)은 팩에 없어서, 함정마다 다른 조각을 칸 가운데에 놓은 그림을 만든다(2026-10-21 사용자 선택).
-/// 그림은 바닥 타일과 같은 텍셀 크기(25.6/유닛)라 칸 하나 = 32픽셀이다. 빈 여백은 잘라 내고(설치 카드에서 작게 보이지 않게)
-/// 기준점을 덮은 칸 가운데에 둔다. 몸체(Visual)는 1/칸 수로 줄여 두어, 설치 때 칸 수만큼 늘어나도(<c>NodeTrapGrid.TryPlace</c>)
-/// 텍셀 크기 그대로다. 몸체는 기둥 머리 앞 층 바로 아래에 그린다(<see cref="RoomTilePainter.PillarCapSortingOrder"/>).
-/// 몸체를 덮던 노란 테두리(Border)는 기본 Trap 프리팹에서 지운다. 메뉴 "Tools/Dungeon Keeper/Build Trap Bodies".
+/// 팩 애니메이션 그림이 있는 함정(불 화로·핏빛 웅덩이·마력 수정)을 만든다(2026-10-21 사용자 선택 — 함정 그림이 없는 함정은 지웠다).
+/// 함정마다 프레임 그림, <c>Trap.prefab</c> Variant, 데이터, 상태이상(화상)을 만들고 다시 돌려도 같은 결과가 나온다.
+/// 그림은 바닥 타일과 같은 텍셀 크기(25.6/유닛)라 칸 하나 = 32픽셀이고, 모든 프레임을 같은 사각형으로 빈 여백 없이 자른 뒤
+/// 기준점을 덮은 칸 가운데에 둔다. 몸체(Visual)는 1/칸 수로 줄여 두어 설치 때 칸 수만큼 늘어나도(<c>NodeTrapGrid.TryPlace</c>)
+/// 텍셀 크기 그대로이고, 기둥 머리 앞 층 바로 아래에 그린다(<see cref="RoomTilePainter.PillarCapSortingOrder"/>).
+/// 발동 효과는 <see cref="TrapEffectBuilder"/>가 넣는다. 메뉴 "Tools/Dungeon Keeper/Build Traps".
 /// </summary>
 public static class TrapBodyBuilder
 {
     private const string TrapFolder = "Assets/03.Prefabs/Buildings/Traps/";
+    private const string BasePrefabPath = TrapFolder + "Trap.prefab";
     private const string DataFolder = "Assets/07.SO/Buildings/";
+    private const string StatusFolder = "Assets/07.SO/StatusEffects/";
     private const string OutputFolder = "Assets/04.Sprites/Tilesets/Generated";
-    private const int TilePixels = 16;
+    private const string AnimatedFolder = "Assets/04.Sprites/Tilesets/ElvGames/Farm Game Assets/Tilesets/Dark Castle/Animated Tiles/";
+    private const string ObjectFolder = "Assets/04.Sprites/Tilesets/ElvGames/Farm Game Assets/Objects/";
+    private const string BurnStatusPath = StatusFolder + "BurnStatusEffect.asset";
     private const int CellPixels = 32;
     private const float PixelsPerUnit = 25.6f;
+    private const float FrameSeconds = 0.12f;
 
-    /// <summary>시트 조각(왼쪽 위 기준 열·행, 타일 폭·높이).</summary>
-    private readonly struct Piece
+    /// <summary>함정 하나. 그림은 시트의 한 줄(<c>row</c>)에 가로로 늘어선 프레임이다.</summary>
+    private sealed class Spec
     {
-        public Piece(int column, int row, int width = 1, int height = 1)
+        public string Prefab;
+        public string Data;
+        public string DisplayName;
+        public string Texture;
+        public Vector2Int FrameSize;
+        public int Row;
+        public int Frames;
+        public Vector2Int Footprint;
+        public TrapTriggerMode Mode;
+        public int Cost;
+        public int Danger;
+        public int Grade;
+        public int Damage;
+        public float DamagePerDay;
+        public float Cooldown;
+        public float PersistentSeconds = 3f;
+        public float AreaRadius = 1f;
+        public string Status;
+    }
+
+    private static readonly Spec[] Specs =
+    {
+        new()
         {
-            Column = column;
-            Row = row;
-            Width = width;
-            Height = height;
+            Prefab = "Trap_FireBrazier", Data = "FireBrazierTrapBuildingData", DisplayName = "불 화로",
+            Texture = AnimatedFolder + "FG_Dark_Castle_Purple_Torch02.png", FrameSize = new Vector2Int(16, 32), Frames = 8,
+            Footprint = Vector2Int.one, Mode = TrapTriggerMode.Step, Cost = 20, Danger = 1, Grade = 1,
+            Damage = 6, DamagePerDay = 0.45f, Cooldown = 4f, Status = BurnStatusPath
+        },
+        new()
+        {
+            Prefab = "Trap_BloodPool", Data = "BloodPoolTrapBuildingData", DisplayName = "핏빛 웅덩이",
+            Texture = AnimatedFolder + "FG_Dark_Castle_Purple_Pool.png", FrameSize = new Vector2Int(48, 48), Row = 1, Frames = 8,
+            Footprint = new Vector2Int(2, 2), Mode = TrapTriggerMode.Persistent, Cost = 55, Danger = 3, Grade = 2,
+            Damage = 14, DamagePerDay = 0.6f, Cooldown = 5f, Status = StatusFolder + "BleedStatusEffect.asset"
+        },
+        new()
+        {
+            Prefab = "Trap_ManaCrystal", Data = "ManaCrystalTrapBuildingData", DisplayName = "마력 수정",
+            Texture = ObjectFolder + "FG_Crystal_Blue_1.png", FrameSize = new Vector2Int(16, 16), Frames = 8,
+            Footprint = Vector2Int.one, Mode = TrapTriggerMode.Area, Cost = 45, Danger = 3, Grade = 2,
+            Damage = 10, DamagePerDay = 0.55f, Cooldown = 6f, Status = StatusFolder + "VulnerableStatusEffect.asset"
+        },
+    };
+
+    /// <summary>만드는 함정의 데이터 경로(해금 목록·씬 설치 목록 배선, 테스트가 쓴다).</summary>
+    public static IEnumerable<string> DataPaths
+    {
+        get
+        {
+            foreach (var spec in Specs)
+                yield return DataFolder + spec.Data + ".asset";
+        }
+    }
+
+    [MenuItem("Tools/Dungeon Keeper/Build Traps")]
+    public static void BuildAll()
+    {
+        EnsureBurnStatus();
+        ShakeBodyNotRoot();
+        foreach (var spec in Specs)
+        {
+            var frames = WriteFrames(spec);
+            var prefab = BuildPrefab(spec, frames);
+            BuildData(spec, frames[0], prefab);
         }
 
-        public int Column { get; }
-        public int Row { get; }
-        public int Width { get; }
-        public int Height { get; }
+        AssetDatabase.SaveAssets();
+        TrapEffectBuilder.BuildAll();
+        Debug.Log($"함정 {Specs.Length}종 완료");
     }
 
     /// <summary>
-    /// 프리팹, 데이터, 칸마다 놓을 조각(왼쪽 → 오른쪽, 아래 → 위). 조각이 하나뿐이고 칸이 여럿이면 덮은 칸 전체 가운데에 놓는다.
-    /// 기본 Trap이 먼저여야 Variant가 테두리 삭제를 물려받는다.
+    /// 바탕 Trap.prefab이 닳을 때 몸체(Visual)만 흔들게 한다. 비워 두면 루트를 흔드는데, 기준 위치를 노드(배율 15)에 붙기 전
+    /// 월드 좌표로 잡아 첫 발동 뒤 함정이 방 밖 멀리로 튀었다. Variant는 이 값을 물려받는다.
     /// </summary>
-    private static readonly (string prefab, string data, Piece[] pieces)[] Entries =
+    private static void ShakeBodyNotRoot()
     {
-        ("Trap", "TrapBuildingData", new[] { new Piece(1, 25) }),
-        ("Trap_Spike", "SpikeTrapBuildingData", new[] { new Piece(1, 27) }),
-        ("Trap_Snare", "SnareTrapBuildingData", new[] { new Piece(1, 26) }),
-        ("Generated/Trap_ArmorBreaker", "Generated/ArmorBreakerTrapBuildingData", new[] { new Piece(2, 25) }),
-        ("Trap_Crusher", "CrusherTrapBuildingData", new[] { new Piece(12, 29, 3, 3) }),
-        ("Generated/Trap_AmbushNet", "Generated/AmbushNetTrapBuildingData", new[] { new Piece(0, 27), new Piece(0, 27) }),
-        ("Trap_Blade", "BladeTrapBuildingData", new[] { new Piece(2, 27), new Piece(2, 27) }),
-        ("Generated/Trap_Caltrop", "Generated/CaltropTrapBuildingData", new[] { new Piece(10, 30, 1, 2) }),
-        ("Generated/Trap_ExecutionSaw", "Generated/ExecutionSawTrapBuildingData",
-            new[] { new Piece(6, 30, 1, 2), new Piece(7, 30, 1, 2) }),
-        ("Trap_Arrow", "ArrowTrapBuildingData", new[] { new Piece(3, 27) }),
-    };
-
-    [MenuItem("Tools/Dungeon Keeper/Build Trap Bodies")]
-    public static void BuildAll()
-    {
-        var sheet = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-        sheet.LoadImage(System.IO.File.ReadAllBytes(RoomLayoutBuilder.TexturePath));
+        var root = PrefabUtility.LoadPrefabContents(BasePrefabPath);
         try
         {
-            foreach (var entry in Entries)
+            Transform body = null;
+            foreach (var renderer in root.GetComponentsInChildren<SpriteRenderer>(true))
             {
-                var prefabPath = TrapFolder + entry.prefab + ".prefab";
-                var footprint = AssetDatabase.LoadAssetAtPath<Trap>(prefabPath)?.Footprint ?? Vector2Int.one;
-                var sprite = WriteBody(sheet, System.IO.Path.GetFileName(entry.prefab), footprint, entry.pieces);
-                WirePrefab(prefabPath, sprite, footprint);
-                WireData(DataFolder + entry.data + ".asset", sprite);
+                if (renderer.name == "Visual")
+                    body = renderer.transform;
             }
+
+            var trap = new SerializedObject(root.GetComponent<Trap>());
+            trap.FindProperty("damageAnimationTarget").objectReferenceValue = body;
+            trap.ApplyModifiedPropertiesWithoutUndo();
+            PrefabUtility.SaveAsPrefabAsset(root, BasePrefabPath);
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(root);
+        }
+    }
+
+    private static void EnsureBurnStatus()
+    {
+        if (AssetDatabase.LoadAssetAtPath<StatusEffectDataSO>(BurnStatusPath) != null)
+            return;
+
+        var status = ScriptableObject.CreateInstance<StatusEffectDataSO>();
+        AssetDatabase.CreateAsset(status, BurnStatusPath);
+        var serialized = new SerializedObject(status);
+        serialized.FindProperty("displayName").stringValue = "화상";
+        serialized.FindProperty("description").stringValue = "2개 방을 지날 동안 공격이 15% 느려지고 함정에게 받는 피해가 20% 늘어납니다.";
+        serialized.FindProperty("durationNodeVisits").intValue = 2;
+        serialized.FindProperty("attackIntervalMultiplier").floatValue = 1.15f;
+        serialized.FindProperty("trapDamageTakenMultiplier").floatValue = 1.2f;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    /// <summary>프레임을 함정 칸 크기 캔버스 가운데에 놓고, 모든 프레임을 덮는 한 사각형으로 잘라 저장한다(프레임이 흔들리지 않게).</summary>
+    private static Sprite[] WriteFrames(Spec spec)
+    {
+        var sheet = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+        sheet.LoadImage(System.IO.File.ReadAllBytes(spec.Texture));
+        var width = spec.Footprint.x * CellPixels;
+        var height = spec.Footprint.y * CellPixels;
+        var canvases = new List<Texture2D>();
+        try
+        {
+            var crop = new RectInt();
+            var hasContent = false;
+            for (var i = 0; i < spec.Frames; i++)
+            {
+                var canvas = new Texture2D(width, height, TextureFormat.RGBA32, false);
+                canvas.SetPixels32(new Color32[width * height]);
+                var sourceX = i * spec.FrameSize.x;
+                var sourceY = sheet.height - (spec.Row + 1) * spec.FrameSize.y;
+                var left = (width - spec.FrameSize.x) / 2;
+                var bottom = (height - spec.FrameSize.y) / 2;
+                canvas.SetPixels(left, bottom, spec.FrameSize.x, spec.FrameSize.y,
+                    sheet.GetPixels(sourceX, sourceY, spec.FrameSize.x, spec.FrameSize.y));
+                canvas.Apply();
+                canvases.Add(canvas);
+
+                if (!TryOpaqueBounds(canvas, out var bounds))
+                    continue;
+
+                crop = hasContent ? Union(crop, bounds) : bounds;
+                hasContent = true;
+            }
+
+            if (!hasContent)
+                crop = new RectInt(0, 0, width, height);
+
+            var pivot = new Vector2((width * 0.5f - crop.x) / crop.width, (height * 0.5f - crop.y) / crop.height);
+            var sprites = new Sprite[spec.Frames];
+            for (var i = 0; i < canvases.Count; i++)
+            {
+                var path = $"{OutputFolder}/TrapBody_{spec.Prefab}_{i}.png";
+                var cropped = new Texture2D(crop.width, crop.height, TextureFormat.RGBA32, false);
+                cropped.SetPixels(canvases[i].GetPixels(crop.x, crop.y, crop.width, crop.height));
+                cropped.Apply();
+                System.IO.File.WriteAllBytes(path, cropped.EncodeToPNG());
+                Object.DestroyImmediate(cropped);
+                sprites[i] = ImportFrame(path, pivot);
+            }
+
+            return sprites;
         }
         finally
         {
             Object.DestroyImmediate(sheet);
+            foreach (var canvas in canvases)
+                Object.DestroyImmediate(canvas);
         }
-
-        AssetDatabase.SaveAssets();
-        Debug.Log($"함정 몸체 {Entries.Length}종 완료");
     }
 
-    private static Sprite WriteBody(Texture2D sheet, string name, Vector2Int footprint, IReadOnlyList<Piece> pieces)
+    private static Sprite ImportFrame(string path, Vector2 pivot)
     {
-        var width = footprint.x * CellPixels;
-        var height = footprint.y * CellPixels;
-        var body = new Texture2D(width, height, TextureFormat.RGBA32, false);
-        body.SetPixels32(new Color32[width * height]);
-
-        if (pieces.Count == 1)
-        {
-            Stamp(sheet, body, pieces[0], width / 2, height / 2);
-        }
-        else
-        {
-            for (var i = 0; i < pieces.Count; i++)
-            {
-                var column = i % footprint.x;
-                var row = i / footprint.x;
-                Stamp(sheet, body, pieces[i], column * CellPixels + CellPixels / 2, row * CellPixels + CellPixels / 2);
-            }
-        }
-
-        // 빈 여백을 잘라 설치 카드에서 작게 보이지 않게 한다. 기준점은 덮은 칸 가운데로 두어 방에서는 같은 자리에 놓인다.
-        var content = OpaqueBounds(body);
-        var cropped = new Texture2D(content.width, content.height, TextureFormat.RGBA32, false);
-        cropped.SetPixels(body.GetPixels(content.x, content.y, content.width, content.height));
-        cropped.Apply();
-        var pivot = new Vector2((width * 0.5f - content.x) / content.width, (height * 0.5f - content.y) / content.height);
-
-        var path = $"{OutputFolder}/TrapBody_{name}.png";
-        System.IO.File.WriteAllBytes(path, cropped.EncodeToPNG());
-        Object.DestroyImmediate(body);
-        Object.DestroyImmediate(cropped);
         AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
-
         var importer = (TextureImporter)AssetImporter.GetAtPath(path);
         importer.textureType = TextureImporterType.Sprite;
         importer.spriteImportMode = SpriteImportMode.Single;
@@ -133,7 +223,90 @@ public static class TrapBodyBuilder
         return AssetDatabase.LoadAssetAtPath<Sprite>(path);
     }
 
-    private static RectInt OpaqueBounds(Texture2D texture)
+    private static Trap BuildPrefab(Spec spec, Sprite[] frames)
+    {
+        var path = TrapFolder + spec.Prefab + ".prefab";
+        GameObject root;
+        var exists = AssetDatabase.LoadAssetAtPath<GameObject>(path) != null;
+        if (exists)
+        {
+            root = PrefabUtility.LoadPrefabContents(path);
+        }
+        else
+        {
+            root = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(BasePrefabPath));
+            root.name = spec.Prefab;
+        }
+
+        try
+        {
+            var trap = new SerializedObject(root.GetComponent<Trap>());
+            trap.FindProperty("triggerMode").intValue = (int)spec.Mode;
+            trap.FindProperty("footprint").vector2IntValue = spec.Footprint;
+            trap.FindProperty("triggerChance").floatValue = 1f;
+            trap.FindProperty("damage").intValue = spec.Damage;
+            trap.FindProperty("damagePerDay").floatValue = spec.DamagePerDay;
+            trap.FindProperty("injuryChance").floatValue = 1f;
+            trap.FindProperty("injuryStatusEffect").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<StatusEffectDataSO>(spec.Status);
+            trap.FindProperty("cooldownSeconds").floatValue = spec.Cooldown;
+            trap.FindProperty("persistentSeconds").floatValue = spec.PersistentSeconds;
+            trap.FindProperty("areaRadiusCells").floatValue = spec.AreaRadius;
+            trap.FindProperty("<DangerIncreaseOnTrigger>k__BackingField").intValue = spec.Danger;
+            trap.ApplyModifiedPropertiesWithoutUndo();
+
+            foreach (var renderer in root.GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                if (renderer.name != "Visual")
+                    continue;
+
+                renderer.sprite = frames[0];
+                renderer.sortingOrder = RoomTilePainter.PillarCapSortingOrder - 1;
+                renderer.transform.localScale = new Vector3(1f / spec.Footprint.x, 1f / spec.Footprint.y, 1f);
+                if (!renderer.TryGetComponent<TrapBodyAnimation>(out var animation))
+                    animation = renderer.gameObject.AddComponent<TrapBodyAnimation>();
+                var serialized = new SerializedObject(animation);
+                var array = serialized.FindProperty("frames");
+                array.arraySize = frames.Length;
+                for (var i = 0; i < frames.Length; i++)
+                    array.GetArrayElementAtIndex(i).objectReferenceValue = frames[i];
+                serialized.FindProperty("frameSeconds").floatValue = FrameSeconds;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            return PrefabUtility.SaveAsPrefabAsset(root, path).GetComponent<Trap>();
+        }
+        finally
+        {
+            if (exists)
+                PrefabUtility.UnloadPrefabContents(root);
+            else
+                Object.DestroyImmediate(root);
+        }
+    }
+
+    private static void BuildData(Spec spec, Sprite board, Trap prefab)
+    {
+        var path = DataFolder + spec.Data + ".asset";
+        var data = AssetDatabase.LoadAssetAtPath<BuildingDataSO>(path);
+        if (data == null)
+        {
+            data = ScriptableObject.CreateInstance<BuildingDataSO>();
+            AssetDatabase.CreateAsset(data, path);
+        }
+
+        var serialized = new SerializedObject(data);
+        serialized.FindProperty("<Grade>k__BackingField").intValue = spec.Grade;
+        serialized.FindProperty("<BoardSprite>k__BackingField").objectReferenceValue = board;
+        serialized.FindProperty("<DisplayName>k__BackingField").stringValue = spec.DisplayName;
+        serialized.FindProperty("<Cost>k__BackingField").intValue = spec.Cost;
+        serialized.FindProperty("<Prefab>k__BackingField").objectReferenceValue = prefab;
+        serialized.FindProperty("<BaseDanger>k__BackingField").intValue = spec.Danger;
+        serialized.FindProperty("<Category>k__BackingField").intValue = 2;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    private static bool TryOpaqueBounds(Texture2D texture, out RectInt bounds)
     {
         int minX = texture.width, minY = texture.height, maxX = -1, maxY = -1;
         for (var y = 0; y < texture.height; y++)
@@ -148,70 +321,14 @@ public static class TrapBodyBuilder
             maxY = Mathf.Max(maxY, y);
         }
 
-        return maxX < 0 ? new RectInt(0, 0, texture.width, texture.height) : new RectInt(minX, minY, maxX - minX + 1, maxY - minY + 1);
+        bounds = maxX < 0 ? default : new RectInt(minX, minY, maxX - minX + 1, maxY - minY + 1);
+        return maxX >= 0;
     }
 
-    /// <summary>조각을 (centerX, centerY)를 가운데로 놓는다. 시트는 왼쪽 위 기준이고 텍스처 픽셀은 왼쪽 아래 기준이다.</summary>
-    private static void Stamp(Texture2D sheet, Texture2D body, Piece piece, int centerX, int centerY)
+    private static RectInt Union(RectInt a, RectInt b)
     {
-        var pieceWidth = piece.Width * TilePixels;
-        var pieceHeight = piece.Height * TilePixels;
-        var sourceX = piece.Column * TilePixels;
-        var sourceY = sheet.height - (piece.Row + piece.Height) * TilePixels;
-        var pixels = sheet.GetPixels32();
-        var left = centerX - pieceWidth / 2;
-        var bottom = centerY - pieceHeight / 2;
-        for (var y = 0; y < pieceHeight; y++)
-        for (var x = 0; x < pieceWidth; x++)
-        {
-            var color = pixels[(sourceY + y) * sheet.width + sourceX + x];
-            if (color.a > 0)
-                body.SetPixel(left + x, bottom + y, color);
-        }
-    }
-
-    private static void WirePrefab(string path, Sprite sprite, Vector2Int footprint)
-    {
-        var root = PrefabUtility.LoadPrefabContents(path);
-        try
-        {
-            foreach (var renderer in root.GetComponentsInChildren<SpriteRenderer>(true))
-            {
-                if (renderer.name == "Border")
-                {
-                    // Variant에서는 물려받은 자식을 지울 수 없다. 기본 Trap에서 지우면 따라온다.
-                    if (!PrefabUtility.IsPartOfPrefabInstance(renderer.gameObject))
-                        Object.DestroyImmediate(renderer.gameObject);
-                    continue;
-                }
-
-                if (renderer.name != "Visual")
-                    continue;
-
-                renderer.sprite = sprite;
-                renderer.sortingOrder = RoomTilePainter.PillarCapSortingOrder - 1;
-                renderer.transform.localScale = new Vector3(1f / footprint.x, 1f / footprint.y, 1f);
-            }
-
-            PrefabUtility.SaveAsPrefabAsset(root, path);
-        }
-        finally
-        {
-            PrefabUtility.UnloadPrefabContents(root);
-        }
-    }
-
-    private static void WireData(string path, Sprite sprite)
-    {
-        var data = AssetDatabase.LoadAssetAtPath<BuildingDataSO>(path);
-        if (data == null)
-        {
-            Debug.LogError($"{path} 함정 데이터를 찾지 못했습니다.");
-            return;
-        }
-
-        var serialized = new SerializedObject(data);
-        serialized.FindProperty("<BoardSprite>k__BackingField").objectReferenceValue = sprite;
-        serialized.ApplyModifiedPropertiesWithoutUndo();
+        var minX = Mathf.Min(a.xMin, b.xMin);
+        var minY = Mathf.Min(a.yMin, b.yMin);
+        return new RectInt(minX, minY, Mathf.Max(a.xMax, b.xMax) - minX, Mathf.Max(a.yMax, b.yMax) - minY);
     }
 }

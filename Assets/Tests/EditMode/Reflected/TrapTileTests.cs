@@ -72,9 +72,7 @@ namespace Tests.EditMode.Rules
         }
 
         /// <summary>함정마다 방식에 맞는 발동 효과가 배선돼 있는지. 비면 흔들림만 보여 무엇이 터졌는지 모른다.</summary>
-        [TestCase("Trap"), TestCase("Trap_Spike"), TestCase("Trap_Snare"), TestCase("Generated/Trap_ArmorBreaker"),
-         TestCase("Trap_Crusher"), TestCase("Generated/Trap_AmbushNet"), TestCase("Trap_Blade"),
-         TestCase("Generated/Trap_Caltrop"), TestCase("Generated/Trap_ExecutionSaw"), TestCase("Trap_Arrow")]
+        [TestCase("Trap_FireBrazier"), TestCase("Trap_BloodPool"), TestCase("Trap_ManaCrystal")]
         public void TrapPrefab_HasTriggerEffectForItsMode(string name)
         {
             var trap = LoadTrapPrefab(name);
@@ -87,14 +85,12 @@ namespace Tests.EditMode.Rules
         }
 
         /// <summary>
-        /// 함정 몸체는 던전 시트의 바닥 장치 조각이고 함정마다 다르다. 예전에는 모두 노란 임시 네모였고, 같은 네모를 쓰는
-        /// 테두리(Border)가 몸체 위를 덮어 설치 카드·미리보기에도 네모가 나왔다. 몸체는 바닥 타일과 같은 텍셀 크기(25.6/유닛)라
-        /// 확대 배율에서 바닥과 함께 또렷하다. 그림은 빈 여백 없이 잘라 카드에서 작게 보이지 않게 하고, 덮은 칸 가운데에 놓인다.
-        /// 몸체는 기둥 머리 층 바로 아래에 그려 기둥 바로 위 칸에서 기둥 머리가 함정을 가린다(캐릭터는 그보다 위).
+        /// 함정 몸체는 팩의 애니메이션 그림(화로 불꽃·웅덩이 물결·수정 반짝임)이고 함정마다 다르다. 예전에는 노란 임시 네모였고,
+        /// 같은 네모를 쓰는 테두리(Border)가 몸체를 덮었다. 몸체는 바닥 타일과 같은 텍셀 크기(25.6/유닛)라 확대 배율에서 바닥과
+        /// 함께 또렷하다. 그림은 빈 여백 없이 잘라 카드에서 작게 보이지 않게 하고, 덮은 칸 가운데에 놓인다. 몸체는 기둥 머리 층
+        /// 바로 아래에 그려 기둥 바로 위 칸에서 기둥 머리가 함정을 가린다(캐릭터는 그보다 위). 프레임은 게임 시간으로 반복한다.
         /// </summary>
-        [TestCase("Trap"), TestCase("Trap_Spike"), TestCase("Trap_Snare"), TestCase("Generated/Trap_ArmorBreaker"),
-         TestCase("Trap_Crusher"), TestCase("Generated/Trap_AmbushNet"), TestCase("Trap_Blade"),
-         TestCase("Generated/Trap_Caltrop"), TestCase("Generated/Trap_ExecutionSaw"), TestCase("Trap_Arrow")]
+        [TestCase("Trap_FireBrazier"), TestCase("Trap_BloodPool"), TestCase("Trap_ManaCrystal")]
         public void TrapPrefab_ShowsItsOwnDungeonBody(string name)
         {
             var trap = LoadTrapPrefab(name);
@@ -121,19 +117,59 @@ namespace Tests.EditMode.Rules
             Assert.That(bounds.max.y, Is.LessThanOrEqualTo(footprint.y * 0.625f + 0.001f));
             Assert.That(((Vector2)bounds.center).magnitude, Is.LessThan(0.2f), "덮은 칸 가운데쯤에 놓입니다.");
 
-            var png = new Texture2D(2, 2);
-            _created.Add(png);
-            png.LoadImage(System.IO.File.ReadAllBytes(AssetDatabase.GetAssetPath(body.sprite)));
-            var edge = png.GetPixels32();
-            var width = png.width;
-            var height = png.height;
-            bool Opaque(int x, int y) => edge[y * width + x].a > 0;
-            Assert.That(Enumerable.Range(0, width).Any(x => Opaque(x, 0)) && Enumerable.Range(0, width).Any(x => Opaque(x, height - 1))
-                && Enumerable.Range(0, height).Any(y => Opaque(0, y)) && Enumerable.Range(0, height).Any(y => Opaque(width - 1, y)),
-                Is.True, $"{name} 그림에 빈 여백이 남아 설치 카드에서 작게 보입니다.");
+            // 프레임은 모두 같은 사각형으로 잘렸으니(흔들리지 않게) 여백은 프레임 전체를 합쳐서 본다.
+            var firstPath = AssetDatabase.GetAssetPath(body.sprite);
+            Assert.That(firstPath, Does.EndWith("_0.png"));
+            bool top = false, bottom = false, left = false, right = false;
+            for (var frame = 0; System.IO.File.Exists(firstPath.Replace("_0.png", $"_{frame}.png")); frame++)
+            {
+                var png = new Texture2D(2, 2);
+                _created.Add(png);
+                png.LoadImage(System.IO.File.ReadAllBytes(firstPath.Replace("_0.png", $"_{frame}.png")));
+                var pixels = png.GetPixels32();
+                var width = png.width;
+                var height = png.height;
+                bool Opaque(int x, int y) => pixels[y * width + x].a > 0;
+                bottom |= Enumerable.Range(0, width).Any(x => Opaque(x, 0));
+                top |= Enumerable.Range(0, width).Any(x => Opaque(x, height - 1));
+                left |= Enumerable.Range(0, height).Any(y => Opaque(0, y));
+                right |= Enumerable.Range(0, height).Any(y => Opaque(width - 1, y));
+            }
+
+            Assert.That(top && bottom && left && right, Is.True, $"{name} 그림에 빈 여백이 남아 설치 카드에서 작게 보입니다.");
 
             Assert.That(body.sortingOrder, Is.EqualTo(RoomTilePainter.PillarCapSortingOrder - 1),
                 "몸체는 기둥 머리 층 바로 아래입니다.");
+
+            // 닳을 때 흔드는 대상이 비면 루트를 흔드는데, 기준 위치를 노드(배율 15)에 붙기 전 월드 좌표로 잡아 함정이 멀리 튀었다.
+            var shake = typeof(Building).GetField("damageAnimationTarget", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(shake, Is.Not.Null, "Building.damageAnimationTarget 를 찾지 못했습니다.");
+            Assert.That(shake.GetValue(trap), Is.SameAs(body.transform), $"{name} 은 닳을 때 몸체만 흔들어야 합니다.");
+
+            var animation = body.GetComponent<TrapBodyAnimation>();
+            Assert.That(animation, Is.Not.Null, $"{name} 몸체가 움직이지 않습니다.");
+            Assert.That(animation.FrameCount, Is.EqualTo(8), "팩 애니메이션 8프레임을 돌립니다.");
+        }
+
+        /// <summary>그림이 없는 함정은 지웠다. 남은 함정은 팩 그림이 있는 셋뿐이고, 각자 해금 목록에 올라 있다.</summary>
+        [Test]
+        public void TrapRoster_IsOnlyTrapsWithPackArt()
+        {
+            var names = AssetDatabase.FindAssets("TrapBuildingData t:ScriptableObject", new[] { "Assets/07.SO/Buildings" })
+                .Select(guid => System.IO.Path.GetFileNameWithoutExtension(AssetDatabase.GUIDToAssetPath(guid)))
+                .ToArray();
+            Assert.That(names, Is.EquivalentTo(new[]
+            {
+                "FireBrazierTrapBuildingData", "BloodPoolTrapBuildingData", "ManaCrystalTrapBuildingData"
+            }));
+
+            var catalog = AssetDatabase.LoadAssetAtPath<Code.Progression.DungeonUnlockCatalogSO>(
+                "Assets/07.SO/Progression/DungeonUnlockCatalog.asset");
+            var listed = catalog.Entries.Where(entry => entry?.Building != null && entry.Building.Prefab is Trap)
+                .Select(entry => entry.Building.name).ToArray();
+            Assert.That(listed, Is.EquivalentTo(names), "해금 목록의 함정이 남은 함정과 같아야 합니다.");
+            Assert.That(catalog.Entries.Any(entry => entry?.Building != null && entry.Building.name == "FireBrazierTrapBuildingData"
+                && entry.StartsUnlocked), Is.True, "처음부터 깔 수 있는 함정이 하나는 있어야 합니다.");
         }
 
         /// <summary>함정 데이터의 보드 그림이 프리팹 몸체와 같고 함정끼리 겹치지 않는다(설치 뒤 Initialize가 보드 그림으로 바꾼다).</summary>
@@ -155,7 +191,7 @@ namespace Tests.EditMode.Rules
                 seen[data.BoardSprite] = data.name;
             }
 
-            Assert.That(seen.Count, Is.EqualTo(10));
+            Assert.That(seen.Count, Is.EqualTo(3));
         }
 
         /// <summary>
@@ -205,7 +241,7 @@ namespace Tests.EditMode.Rules
         public void Grid_PlacesMultiTileTrapOnEveryCoveredCellAndRemovesItWhole()
         {
             var grid = NewGrid();
-            var crusher = LoadTrapPrefab("Trap_Crusher");
+            var crusher = LoadTrapPrefab("Trap_BloodPool");
             Assert.That(crusher.Footprint, Is.EqualTo(new Vector2Int(2, 2)));
 
             var placed = grid.TryPlace(0, 0, crusher);
@@ -226,7 +262,7 @@ namespace Tests.EditMode.Rules
         public void Grid_RejectsFootprintThatHitsEdgeOrCentralSlotOrAnotherTrap()
         {
             var grid = NewGrid();
-            var crusher = LoadTrapPrefab("Trap_Crusher");
+            var crusher = LoadTrapPrefab("Trap_BloodPool");
 
             Assert.That(grid.CanPlace(5, 0, crusher.Footprint), Is.False, "격자 밖으로 삐져나가면 안 됩니다.");
             Assert.That(grid.CanPlace(1, 1, crusher.Footprint), Is.False, "중앙 시설 자리를 덮으면 안 됩니다.");
@@ -295,13 +331,6 @@ namespace Tests.EditMode.Rules
 
             Assert.That(TrapRules.FirstHitFromWest(new List<float> { 2f, -1f, 0.5f }), Is.EqualTo(1));
             Assert.That(TrapRules.FirstHitFromWest(new List<float>()), Is.EqualTo(-1));
-
-            var data = AssetDatabase.LoadAssetAtPath<BuildingDataSO>("Assets/07.SO/Buildings/ArrowTrapBuildingData.asset");
-            Assert.That(data, Is.Not.Null, "화살 함정 데이터를 찾지 못했습니다.");
-            Assert.That(data.Category, Is.EqualTo(InstallCategory.Trap));
-            var arrow = data.Prefab as Trap;
-            Assert.That(arrow, Is.Not.Null, "화살 함정 프리팹이 Trap이어야 합니다.");
-            Assert.That(arrow.TriggerMode, Is.EqualTo(TrapTriggerMode.Projectile));
         }
     }
 }

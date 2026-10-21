@@ -588,7 +588,7 @@ namespace Tests.EditMode.Gameplay
                 var trapModel = addNode.Invoke(graph, new object[] { kind, new Vector2Int(1302, 0) });
                 var trapNode = (Component)createNode.Invoke(manager, new[] { trapModel });
                 var trapData = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
-                    "Assets/07.SO/Buildings/SpikeTrapBuildingData.asset");
+                    "Assets/07.SO/Buildings/FireBrazierTrapBuildingData.asset");
                 Assert.That(trapData, Is.Not.Null, "함정 데이터를 찾지 못했습니다.");
                 var installCell = placementType.GetMethod("InstallOnCell", BindingFlags.Public | BindingFlags.Static);
                 Assert.That(installCell.Invoke(null, new object[] { trapNode, 0, 0, trapData }), Is.Not.Null);

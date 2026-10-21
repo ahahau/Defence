@@ -92,30 +92,6 @@ MonoBehaviour:
     unlockHint: "16\uC77C\uCC28 \xB7 \uBB34\uAE30 \uC0C1\uC810\uC744 \uC5F0\uB2E4"
     metaProgressRequired: 25
   - unit: {fileID: 0}
-    building: {fileID: 11400000, guid: e54bdac488bf4a19b5cbcf504e34f6e8, type: 2}
-    startsUnlocked: 1
-    unlockDay: 0
-    unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
-    metaProgressRequired: 0
-  - unit: {fileID: 0}
-    building: {fileID: 11400000, guid: b7e6ba90fa9242e7840b10a701686e97, type: 2}
-    startsUnlocked: 1
-    unlockDay: 0
-    unlockHint: "\uAC74\uC124 \uD328\uB110\uC5D0\uC11C \uC124\uCE58\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
-    metaProgressRequired: 0
-  - unit: {fileID: 0}
-    building: {fileID: 11400000, guid: 169a0159d9454abba7660ea48c46532c, type: 2}
-    startsUnlocked: 0
-    unlockDay: 10
-    unlockHint: "10\uC77C\uCC28 \xB7 \uCE7C\uB0A0 \uD568\uC815 \uC124\uACC4\uB3C4\uB97C \uC190\uC5D0 \uB123\uB294\uB2E4"
-    metaProgressRequired: 0
-  - unit: {fileID: 0}
-    building: {fileID: 11400000, guid: 2f9619c18a6e4290b76a38e11290abd5, type: 2}
-    startsUnlocked: 0
-    unlockDay: 16
-    unlockHint: "16\uC77C\uCC28 \xB7 \uC555\uC1C4 \uC7A5\uCE58\uB97C \uC644\uC131\uD55C\uB2E4"
-    metaProgressRequired: 25
-  - unit: {fileID: 0}
     building: {fileID: 11400000, guid: 9978d5ad46fa4c71bb0b0b6ab4d91d91, type: 2}
     startsUnlocked: 0
     unlockDay: 10
@@ -158,30 +134,6 @@ MonoBehaviour:
     unlockHint: "18\uC77C\uCC28 \xB7 \uC120\uBD09\uB300\uAC00 \uBC29\uD328\uB85C \uB545\uC744 \uAC00\uB978\uB2E4"
     metaProgressRequired: 50
   - unit: {fileID: 0}
-    building: {fileID: 11400000, guid: 53e387ff3992aec45bd53e95a365ce02, type: 2}
-    startsUnlocked: 0
-    unlockDay: 6
-    unlockHint: "6\uC77C\uCC28 \xB7 \uAE38\uBAA9\uC5D0 \uB9C8\uB984\uC1E0\uB97C \uBFCC\uB9AC\uB294 \uBC95\uC744 \uBC30\uC6B4\uB2E4"
-    metaProgressRequired: 0
-  - unit: {fileID: 0}
-    building: {fileID: 11400000, guid: c2d5ab8e4d8559242a6ab1fbaa9db62f, type: 2}
-    startsUnlocked: 0
-    unlockDay: 12
-    unlockHint: "12\uC77C\uCC28 \xB7 \uAE38\uBAA9\uC5D0 \uADF8\uBB3C\uC744 \uC228\uACA8 \uB450\uB294 \uC694\uB839\uC744 \uC775\uD78C\uB2E4"
-    metaProgressRequired: 0
-  - unit: {fileID: 0}
-    building: {fileID: 11400000, guid: 069dea4c2a349ed42a5e91ddd60b607f, type: 2}
-    startsUnlocked: 0
-    unlockDay: 13
-    unlockHint: "13\uC77C\uCC28 \xB7 \uAC11\uC637\uC744 \uBD80\uC218\uB294 \uC7A5\uCE58\uB97C \uB4E4\uC5EC\uC628\uB2E4"
-    metaProgressRequired: 10
-  - unit: {fileID: 0}
-    building: {fileID: 11400000, guid: be8f9003124be0049832853e0de877af, type: 2}
-    startsUnlocked: 0
-    unlockDay: 18
-    unlockHint: "18\uC77C\uCC28 \xB7 \uCC98\uD615\uC6A9 \uD1B1\uB0A0\uC744 \uD1B5\uB85C \uCC9C\uC7A5\uC5D0 \uB9E4\uB2E8\uB2E4"
-    metaProgressRequired: 50
-  - unit: {fileID: 0}
     building: {fileID: 11400000, guid: d689d026e327f58949f1593e41847e1c, type: 2}
     startsUnlocked: 0
     unlockDay: 10
@@ -194,14 +146,26 @@ MonoBehaviour:
     unlockHint: "3\uC77C\uCC28\uC5D0 \uD574\uAE08\uB429\uB2C8\uB2E4. \uBAA8\uD5D8\uAC00\uAC00 \uAD00\uC744 \uB04C\uACE0 \uC640 \uBD80\uD65C\uBE44\uB97C \uB0B4\uACE0 \uB3D9\uB8CC\uB97C \uB418\uC0B4\uB9BD\uB2C8\uB2E4."
     metaProgressRequired: 0
   - unit: {fileID: 0}
-    building: {fileID: 11400000, guid: 7f145a668933c114c8130307d12931e9, type: 2}
-    startsUnlocked: 0
-    unlockDay: 10
-    unlockHint: "10\uC77C\uCC28 \xB7 \uBCBD \uD2C8\uC5D0\uC11C \uD654\uC0B4\uC744 \uC3D8\uB294 \uC7A5\uCE58\uB97C \uB2E8\uB2E4"
-    metaProgressRequired: 0
-  - unit: {fileID: 0}
     building: {fileID: 11400000, guid: b051351cda908c748942942f9cef4fc5, type: 2}
     startsUnlocked: 1
     unlockDay: 0
     unlockHint: "\uCC98\uC74C\uBD80\uD130 \xB7 \uBC29 \uCE78\uC744 \uB9C9\uC544 \uBAA8\uD5D8\uAC00\uC758 \uAE38\uC744 \uAEBE\uB294\uB2E4"
+    metaProgressRequired: 0
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: 6ad2f1ac71796be4180ea172e8a7ec94, type: 2}
+    startsUnlocked: 1
+    unlockDay: 0
+    unlockHint: "\uCC98\uC74C\uBD80\uD130 \xB7 \uBC1F\uC73C\uBA74 \uD654\uB85C\uC5D0\uC11C \uBD88\uAE38\uC774 \uCE58\uC19F\uB294\uB2E4"
+    metaProgressRequired: 0
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: 0496bb0f6fdb6714fbdf30ccc3b14fbb, type: 2}
+    startsUnlocked: 0
+    unlockDay: 6
+    unlockHint: "6\uC77C\uCC28 \xB7 \uD54F\uBB3C\uC774 \uACE0\uC778 \uC6C5\uB369\uC774\uB97C \uD310\uB2E4"
+    metaProgressRequired: 0
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: 896e5a2041d65eb4bbddb0b79647f01d, type: 2}
+    startsUnlocked: 0
+    unlockDay: 12
+    unlockHint: "12\uC77C\uCC28 \xB7 \uB9C8\uB825\uC774 \uB9FA\uD78C \uC218\uC815\uC744 \uBC14\uB2E5\uC5D0 \uBC15\uB294\uB2E4"
     metaProgressRequired: 0

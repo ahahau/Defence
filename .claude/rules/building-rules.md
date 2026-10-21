@@ -22,7 +22,8 @@ paths:
    * 배치 제약: `Unique`(하나만), `CentralOnly`(방 중앙 슬롯만), `InstallOnEdge`(노드 사이 라인에 설치. 함정은 피해, 상점·여관은 통과 효과).
    * `BaseDanger`는 위험도다.
    * `BoardSprite`는 필수다. 함정끼리는 같은 그림을 나눠 쓰지 않는다(임시 그림은 예외).
-   * 함정 몸체는 Dark Castle 시트의 바닥 장치 조각(발판·격자·발사구·문양판·구덩이 틀)을 칸 가운데에 놓은 그림이다(`TrapBodyBuilder`, `Generated/TrapBody_*.png`). 바닥 타일과 같은 25.6PPU라 칸 하나 = 32픽셀이고, 빈 여백은 잘라 기준점을 덮은 칸 가운데에 둔다(설치 카드에서 작게 보이지 않게). 몸체(`Visual`)는 1/칸 수로 줄여 설치 때 늘어나도 텍셀 크기 그대로이고, 정렬은 기둥 머리 앞 층(`RoomTilePainter.PillarCapSortingOrder` 11) 바로 아래 10이다(캐릭터 20보다 아래). 프리팹 몸체와 데이터 `BoardSprite`는 같은 그림이다(설치 카드·미리보기는 프리팹 첫 SpriteRenderer를 쓴다). 새 함정은 `TrapBodyBuilder.Entries`에 조각을 정해 넣는다.
+   * **함정은 팩에 그림이 있는 것만 둔다(2026-10-21 사용자 결정).** 지금 셋: 불 화로(밟기 1×1, 화상, 처음부터)·핏빛 웅덩이(지속 2×2, 출혈, 6일차)·마력 수정(범위 1×1, 취약, 12일차). 그림 없는 함정(가시·올가미·칼날·압쇄 등 10종)은 지웠다. 새 함정은 쓸 애니메이션 그림이 팩에 있을 때만 만든다.
+   * 함정은 `TrapBodyBuilder`(메뉴 Tools/Dungeon Keeper/Build Traps)가 만든다: 팩 프레임 그림(`Generated/TrapBody_<프리팹>_<n>.png`), `Trap.prefab` Variant, 데이터, 화상 상태이상, 발동 효과(`TrapEffectBuilder`). 몸체(`Visual`)는 `TrapBodyAnimation`이 8프레임을 게임 시간으로 반복한다. 그림은 바닥 타일과 같은 25.6PPU라 칸 하나 = 32픽셀이고, 모든 프레임을 같은 사각형으로 여백 없이 잘라 기준점을 덮은 칸 가운데에 둔다. 몸체는 1/칸 수로 줄여 설치 때 늘어나도 텍셀 크기 그대로이고, 정렬은 기둥 머리 앞 층(`RoomTilePainter.PillarCapSortingOrder` 11) 바로 아래 10이다(캐릭터 20보다 아래). 첫 프레임 = 데이터 `BoardSprite`(설치 카드·미리보기는 프리팹 첫 SpriteRenderer를 쓴다). 바탕 `Trap.prefab`은 설치하지 않는 Variant 원본이고, 닳을 때 몸체만 흔든다(`damageAnimationTarget` = Visual — 비우면 루트를 흔들어 함정이 노드 밖으로 튀었다).
    * 모험가가 머무는 서비스 시설(상점·여관·대장간 계열)은 `CentralOnly = true`, `InstallOnEdge = false`여야 한다.
    * 위 두 항목은 `AssetWiringTests`가 검사한다.
 4. 수익 시설은 번 만큼 닳는다.
@@ -38,7 +39,7 @@ paths:
    * 소형 방에는 시설(금고 제외 `Category = Building`)을 못 짓는다(`BuildingPlacement.ViolatesRoomSizeRule`). 저장 복원은 이 규칙을 건너뛴다.
    * 수익 시설은 대가로 모험가를 강화한다(Store → 공격력, Inn → 회복, Blacksmith → 공격·방어). 새 수익 시설에도 대가를 정한다.
 5. 함정(`Trap`)은 발동 확률·피해·추가 피해·부상 확률과 상태이상(`StatusEffectDataSO`)으로 정의한다.
-   * 칸·방식·재사용도 반드시 정한다: `footprint`(1×1·2×1·2×2 등), `triggerMode`(밟기=한 명 / 범위=주변 `areaRadiusCells`칸의 적·아군 / 지속=`persistentSeconds` 동안 1초마다 나눠서 올라선 적·아군 / 투사체=그 가로줄 서쪽 끝에서 화살이 날아가 줄 위 가장 서쪽 모험가 한 명, 아군 제외 — 화살 함정, 10일차 해금), `cooldownSeconds`(게임 시간). 계산은 `TrapRules`에만 둔다.
+   * 칸·방식·재사용도 반드시 정한다: `footprint`(1×1·2×1·2×2 등), `triggerMode`(밟기=한 명 / 범위=주변 `areaRadiusCells`칸의 적·아군 / 지속=`persistentSeconds` 동안 1초마다 나눠서 올라선 적·아군 / 투사체=그 가로줄 서쪽 끝에서 화살이 날아가 줄 위 가장 서쪽 모험가 한 명, 아군 제외 — 방식 코드만 남아 있고 지금 쓰는 함정은 없다), `cooldownSeconds`(게임 시간). 계산은 `TrapRules`에만 둔다.
    * 범위·지속은 아군도 맞는다. 설치 카드에 "아군 포함"이 나간다.
    * 손님이 머무는 시설(`DwellSeconds > 0`)이 있는 방에는 함정을 못 깔고, 함정이 있는 방에는 그 시설을 못 짓는다(`BuildingPlacement.ViolatesFacilityTrapRule`). 저장 복원은 `RestoreCentral`/`RestoreOnCell`로 이 규칙을 건너뛴다.
    * 여러 칸 함정은 `NodeTrapGrid`가 덮은 칸 전부에 같은 건물을 넣고 기준 칸(왼쪽 아래)을 기억한다. 칸을 직접 돌며 건물을 세면 중복되니 `TryGetAnchor`로 기준 칸만 센다.

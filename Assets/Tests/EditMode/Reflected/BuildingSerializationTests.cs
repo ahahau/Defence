@@ -32,7 +32,7 @@ namespace Tests.EditMode.Buildings
                 Assert.That(isCentral.Invoke(null, new object[] { data }), Is.True, path);
             }
             var trap = UnityEditor.AssetDatabase.LoadAssetAtPath<ScriptableObject>(
-                "Assets/07.SO/Buildings/SpikeTrapBuildingData.asset");
+                "Assets/07.SO/Buildings/FireBrazierTrapBuildingData.asset");
             Assert.That(usesCell.Invoke(null, new object[] { trap }), Is.True);
         }
 

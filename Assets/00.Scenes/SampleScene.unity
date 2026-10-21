@@ -1617,15 +1617,10 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 6b7d4a8b65db4ce7ac9796c41147c597, type: 2}
   - {fileID: 11400000, guid: 6120671860064b739c4fe040da4747f0, type: 2}
   - {fileID: 11400000, guid: 4bc0888fea494b3da0e4c05d659baaf9, type: 2}
-  - {fileID: 11400000, guid: e54bdac488bf4a19b5cbcf504e34f6e8, type: 2}
-  - {fileID: 11400000, guid: b7e6ba90fa9242e7840b10a701686e97, type: 2}
-  - {fileID: 11400000, guid: 53e387ff3992aec45bd53e95a365ce02, type: 2}
-  - {fileID: 11400000, guid: 169a0159d9454abba7660ea48c46532c, type: 2}
-  - {fileID: 11400000, guid: c2d5ab8e4d8559242a6ab1fbaa9db62f, type: 2}
-  - {fileID: 11400000, guid: 2f9619c18a6e4290b76a38e11290abd5, type: 2}
-  - {fileID: 11400000, guid: 069dea4c2a349ed42a5e91ddd60b607f, type: 2}
-  - {fileID: 11400000, guid: be8f9003124be0049832853e0de877af, type: 2}
   - {fileID: 11400000, guid: 9978d5ad46fa4c71bb0b0b6ab4d91d91, type: 2}
+  - {fileID: 11400000, guid: 6ad2f1ac71796be4180ea172e8a7ec94, type: 2}
+  - {fileID: 11400000, guid: 0496bb0f6fdb6714fbdf30ccc3b14fbb, type: 2}
+  - {fileID: 11400000, guid: 896e5a2041d65eb4bbddb0b79647f01d, type: 2}
   - {fileID: 11400000, guid: b051351cda908c748942942f9cef4fc5, type: 2}
   unlockCatalog: {fileID: 11400000, guid: c3ea30d18d72d2442bc1ca2c2e29b502, type: 2}
   alwaysInstallableBuildings:
