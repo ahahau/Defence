@@ -15,6 +15,9 @@ namespace Code.MapCreateSystem
         [SerializeField] private DungeonWallRuleTile wall;
         [SerializeField] private TileBase pillar;
 
+        [SerializeField, Tooltip("칸 기둥(방 안 기둥·칸막이) 조각. 순서는 PillarBlockKinds. 비어 있으면 기둥 룰 타일로 그린다.")]
+        private TileBase[] pillarBlocks;
+
         [SerializeField, Tooltip("위쪽 벽 문 애니메이션(닫힘 → 열림). 비어 있으면 문을 그리지 않는다.")]
         private Sprite[] doorFrames;
 
@@ -36,6 +39,23 @@ namespace Code.MapCreateSystem
         public TileBase Pillar => pillar;
         public Sprite[] DoorFrames => doorFrames;
         public TileBase Torch => torch;
+
+        /// <summary><see cref="pillarBlocks"/>의 순서.</summary>
+        public static readonly RoomWallKind[] PillarBlockKinds =
+        {
+            RoomWallKind.PillarTopLeft, RoomWallKind.PillarTop, RoomWallKind.PillarTopRight,
+            RoomWallKind.PillarTopLowerLeft, RoomWallKind.PillarTopLower, RoomWallKind.PillarTopLowerRight,
+            RoomWallKind.PillarBaseLeft, RoomWallKind.PillarBase, RoomWallKind.PillarBaseRight
+        };
+
+        /// <summary>칸 기둥 조각 타일. 없으면 기둥 룰 타일.</summary>
+        public TileBase PillarBlock(RoomWallKind kind)
+        {
+            var index = System.Array.IndexOf(PillarBlockKinds, kind);
+            return pillarBlocks != null && index >= 0 && index < pillarBlocks.Length && pillarBlocks[index] != null
+                ? pillarBlocks[index]
+                : pillar;
+        }
 
         /// <summary>그 갈래의 그림 수. 0이면 그 갈래는 그리지 않는다.</summary>
         public int DecorCount(RoomDecorKind kind) => kind switch
@@ -72,6 +92,8 @@ namespace Code.MapCreateSystem
             wall = wallTile;
             pillar = pillarTile;
         }
+
+        public void EditorSetPillarBlocks(TileBase[] tiles) => pillarBlocks = tiles;
 
         public void EditorSetDoorFrames(Sprite[] frames) => doorFrames = frames;
 

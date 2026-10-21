@@ -10,6 +10,9 @@ namespace Code.Buildings
 {
     public class Trap : Building
     {
+        /// <summary>함정 몸체 그림의 정렬 순서. 바닥·기둥 타일보다 위, 캐릭터(20)보다 아래다.</summary>
+        public const int BodySortingOrder = 10;
+
         [SerializeField]
         private float triggerChance = 0.5f;
 

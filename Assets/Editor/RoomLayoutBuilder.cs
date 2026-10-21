@@ -92,7 +92,14 @@ public static class RoomLayoutBuilder
         { RoomWallKind.PillarMidRight, (9, 1) },
         { RoomWallKind.PillarBaseLeft, (7, 2) },
         { RoomWallKind.PillarBase, (8, 2) },
-        { RoomWallKind.PillarBaseRight, (9, 2) }
+        { RoomWallKind.PillarBaseRight, (9, 2) },
+        // 칸 기둥 윗면 2×2: 시트 왼쪽 위 3×3 윗면 덩어리의 네 귀퉁이(가운데 줄은 좌우로 이어질 때).
+        { RoomWallKind.PillarTopLeft, (0, 1) },
+        { RoomWallKind.PillarTop, (1, 1) },
+        { RoomWallKind.PillarTopRight, (2, 1) },
+        { RoomWallKind.PillarTopLowerLeft, (0, 3) },
+        { RoomWallKind.PillarTopLower, (1, 3) },
+        { RoomWallKind.PillarTopLowerRight, (2, 3) }
     };
 
     /// <summary>
@@ -216,7 +223,7 @@ public static class RoomLayoutBuilder
         var floor = BuildFloorTile(sprites);
         var wall = BuildWallTile(sprites);
         var pillar = BuildPillarTile(sprites);
-        var tileSet = BuildTileSet(floor, wall, pillar);
+        var tileSet = BuildTileSet(floor, wall, pillar, BuildPillarBlocks(sprites));
         WireNodePrefab(tileSet);
         BuildPalette(floor, wall, pillar);
 
@@ -348,12 +355,42 @@ public static class RoomLayoutBuilder
         BuildFloorTile(sprites);
         BuildWallTile(sprites);
         BuildPillarTile(sprites);
+        var set = AssetDatabase.LoadAssetAtPath<RoomTileSet>(TileSetPath);
+        if (set != null)
+        {
+            set.EditorSetPillarBlocks(BuildPillarBlocks(sprites));
+            EditorUtility.SetDirty(set);
+        }
+
         AssetDatabase.SaveAssets();
+    }
+
+    private const string PillarBlockFolder = RuleTileFolder + "/PillarBlocks";
+
+    /// <summary>칸 기둥 조각 타일(<see cref="RoomTileSet.PillarBlockKinds"/> 순서). 윗면은 검은 속을 돌 색으로 채운 그림이다.</summary>
+    private static TileBase[] BuildPillarBlocks(Dictionary<(int, int), Sprite> sprites)
+    {
+        EnsureFolder(PillarBlockFolder);
+        var kinds = RoomTileSet.PillarBlockKinds;
+        var tiles = new TileBase[kinds.Length];
+        for (var i = 0; i < kinds.Length; i++)
+        {
+            var kind = kinds[i];
+            var source = Find(sprites, PieceCells[kind]);
+            var isBase = kind is RoomWallKind.PillarBaseLeft or RoomWallKind.PillarBase or RoomWallKind.PillarBaseRight;
+            var tile = LoadOrCreate<Tile>($"{PillarBlockFolder}/{kind}.asset");
+            tile.sprite = isBase ? source : SolidPillarCap(kind, source);
+            tile.colliderType = Tile.ColliderType.None;
+            EditorUtility.SetDirty(tile);
+            tiles[i] = tile;
+        }
+
+        return tiles;
     }
 
     private const string GeneratedTileSpriteFolder = "Assets/04.Sprites/Tilesets/Generated";
 
-    /// <summary>기둥 머리의 검은 윗면(시트 색 19090E)을 돌 바탕색(5C283C)으로 채운 그림. 테두리 무늬는 그대로다.</summary>
+    /// <summary>기둥 머리·윗면의 검은 속(시트 색 19090E)을 돌 바탕색(5C283C)으로 채운 그림. 테두리 무늬는 그대로다.</summary>
     private static Sprite SolidPillarCap(RoomWallKind kind, Sprite source)
     {
         if (source == null)
@@ -432,10 +469,12 @@ public static class RoomLayoutBuilder
         return asset;
     }
 
-    private static RoomTileSet BuildTileSet(DungeonFloorRuleTile floor, DungeonWallRuleTile wall, RuleTile pillar)
+    private static RoomTileSet BuildTileSet(DungeonFloorRuleTile floor, DungeonWallRuleTile wall, RuleTile pillar,
+        TileBase[] pillarBlocks)
     {
         var set = LoadOrCreate<RoomTileSet>(TileSetPath);
         set.EditorSet(floor, wall, pillar);
+        set.EditorSetPillarBlocks(pillarBlocks);
         set.EditorSetDoorFrames(LoadDoorFrames());
         BuildDecor(set);
         EditorUtility.SetDirty(set);

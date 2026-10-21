@@ -87,8 +87,8 @@ namespace Tests.EditMode.Rules
         /// <summary>
         /// 함정 몸체는 팩의 애니메이션 그림(화로 불꽃·웅덩이 물결·수정 반짝임)이고 함정마다 다르다. 예전에는 노란 임시 네모였고,
         /// 같은 네모를 쓰는 테두리(Border)가 몸체를 덮었다. 몸체는 바닥 타일과 같은 텍셀 크기(25.6/유닛)라 확대 배율에서 바닥과
-        /// 함께 또렷하다. 그림은 빈 여백 없이 잘라 카드에서 작게 보이지 않게 하고, 덮은 칸 가운데에 놓인다. 몸체는 기둥 머리 층
-        /// 바로 아래에 그려 기둥 바로 위 칸에서 기둥 머리가 함정을 가린다(캐릭터는 그보다 위). 프레임은 게임 시간으로 반복한다.
+        /// 함께 또렷하다. 그림은 빈 여백 없이 잘라 카드에서 작게 보이지 않게 하고, 덮은 칸 가운데에 놓인다. 몸체는 바닥·기둥 타일
+        /// 위에 그려 기둥 받침이 내려온 아래 칸에서도 함정이 보인다(캐릭터는 그보다 위). 프레임은 게임 시간으로 반복한다.
         /// </summary>
         [TestCase("Trap_FireBrazier"), TestCase("Trap_BloodPool"), TestCase("Trap_ManaCrystal")]
         public void TrapPrefab_ShowsItsOwnDungeonBody(string name)
@@ -138,8 +138,7 @@ namespace Tests.EditMode.Rules
 
             Assert.That(top && bottom && left && right, Is.True, $"{name} 그림에 빈 여백이 남아 설치 카드에서 작게 보입니다.");
 
-            Assert.That(body.sortingOrder, Is.EqualTo(RoomTilePainter.PillarCapSortingOrder - 1),
-                "몸체는 기둥 머리 층 바로 아래입니다.");
+            Assert.That(body.sortingOrder, Is.EqualTo(Trap.BodySortingOrder), "몸체는 바닥·기둥 타일 위, 캐릭터 아래입니다.");
 
             // 닳을 때 흔드는 대상이 비면 루트를 흔드는데, 기준 위치를 노드(배율 15)에 붙기 전 월드 좌표로 잡아 함정이 멀리 튀었다.
             var shake = typeof(Building).GetField("damageAnimationTarget", BindingFlags.Instance | BindingFlags.NonPublic);

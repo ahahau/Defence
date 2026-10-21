@@ -28,11 +28,14 @@ namespace Code.MapCreateSystem
         /// <summary>복도 바닥 색 배율(방 색조에 곱한다).</summary>
         public const float CorridorShade = 0.55f;
 
-        /// <summary>방 안에 갇힌 막힌 타일(기둥). 벽이 아니라 기둥 룰 타일로 그린다.</summary>
+        /// <summary>기둥 타일(방 안 기둥·칸막이·옆 문 기둥). 벽이 아니라 기둥으로 그린다.</summary>
         public HashSet<Vector2Int> Pillars { get; } = new();
 
-        /// <summary>기둥 위로 올린 머리 줄(<see cref="Pillars"/>의 일부). 위 칸 바닥 아래쪽을 가리므로 앞 층에 한 번 더 그린다.</summary>
-        public HashSet<Vector2Int> PillarCaps { get; } = new();
+        /// <summary>
+        /// 칸 기둥(방 안 기둥·칸막이)의 조각(<see cref="Pillars"/>의 일부). 룰 타일은 칸 경계를 모르므로 조각을 여기서 정한다.
+        /// 여기 없는 기둥(옆 문 기둥)은 기둥 룰 타일이 고른다.
+        /// </summary>
+        public Dictionary<Vector2Int, RoomWallKind> PillarBlocks { get; } = new();
 
         /// <summary>장식(위쪽 벽 횃불·석상·홈, 바닥 소품). 방 이름으로 자리를 정해 늘 같은 곳에 놓인다.</summary>
         public List<RoomDecorPlacement> Decor { get; } = new();
@@ -60,9 +63,10 @@ namespace Code.MapCreateSystem
                 return plan;
 
             plan.AddRoomFloor(shape);
-            plan.FindPillars(shape);
-            plan.AddPartitions(shape, partitions);
-            plan.RaisePillarCaps();
+            var blockCells = new HashSet<Vector2Int>();
+            FindPillars(shape, blockCells);
+            AddPartitions(shape, partitions, blockCells);
+            plan.AddPillarBlocks(shape, blockCells);
             var half = spacingTiles / 2;
             foreach (var side in RoomDoorRules.Sides)
             {
@@ -252,7 +256,7 @@ namespace Code.MapCreateSystem
         }
 
         /// <summary>격자 가장자리와 이어지지 않은 막힌 칸은 방 안 기둥이다.</summary>
-        private void FindPillars(RoomShape shape)
+        private static void FindPillars(RoomShape shape, HashSet<Vector2Int> blockCells)
         {
             var columns = shape.Columns;
             var rows = shape.Rows;
@@ -286,52 +290,84 @@ namespace Code.MapCreateSystem
             for (var row = 0; row < rows; row++)
             for (var column = 0; column < columns; column++)
             {
-                if (shape.IsFloor(column, row) || outside.Contains(new Vector2Int(column, row)))
-                    continue;
-
-                foreach (var tile in CellTiles(shape, column, row))
-                    Pillars.Add(tile);
+                var cell = new Vector2Int(column, row);
+                if (!shape.IsFloor(column, row) && !outside.Contains(cell))
+                    blockCells.Add(cell);
             }
         }
 
-        /// <summary>
-        /// 기둥(방 안 기둥·칸막이) 위로 한 줄을 더 기둥으로 그린다. 기둥 조각은 머리·몸통·받침 3줄이라 칸 높이(타일 2줄)만으로는
-        /// 머리와 받침만 남아 반쪽 기둥처럼 보였다. 3/4 시점이라 머리가 위 칸 바닥 아래쪽을 가릴 뿐, 걸을 수 있는 칸은 모양(RoomShape)이 정한다.
-        /// </summary>
-        private void RaisePillarCaps()
-        {
-            var caps = new List<Vector2Int>();
-            foreach (var tile in Pillars)
-            {
-                var above = tile + Vector2Int.up;
-                if (!Pillars.Contains(above))
-                    caps.Add(above);
-            }
-
-            foreach (var cap in caps)
-            {
-                Pillars.Add(cap);
-                PillarCaps.Add(cap);
-                Floor.Remove(cap);
-            }
-        }
-
-        private void AddPartitions(RoomShape shape, IEnumerable<Vector2Int> partitions)
+        private static void AddPartitions(RoomShape shape, IEnumerable<Vector2Int> partitions, HashSet<Vector2Int> blockCells)
         {
             if (partitions == null)
                 return;
 
             foreach (var cell in partitions)
             {
-                if (!shape.IsFloor(cell.x, cell.y))
+                if (shape.IsFloor(cell.x, cell.y))
+                    blockCells.Add(cell);
+            }
+        }
+
+        /// <summary>
+        /// 칸 기둥(방 안 기둥·칸막이)을 칸마다 블록으로 그린다: 칸(타일 2×2)이 테두리 있는 윗면이고, 아래 칸 윗줄에 받침 한 줄이 내려온다.
+        /// 예전에는 칸 위로 머리 한 줄을 올려 위 칸 함정을 가렸고, 위아래로 붙은 기둥은 한 덩어리로 이어져 아래 칸 윗면이 보이지 않았다.
+        /// 받침은 그림만 내려올 뿐 그 칸은 그대로 걸을 수 있다(걸을 수 있는 칸은 모양 RoomShape가 정한다).
+        /// 좌우로 붙은 칸은 윗면·받침이 이어지고, 위아래로 붙은 칸은 아래 칸 윗면이 위 칸 받침 자리를 덮는다.
+        /// </summary>
+        private void AddPillarBlocks(RoomShape shape, HashSet<Vector2Int> blockCells)
+        {
+            foreach (var cell in blockCells)
+            {
+                if (blockCells.Contains(cell + Vector2Int.down))
                     continue;
 
-                foreach (var tile in CellTiles(shape, cell.x, cell.y))
+                var origin = CellOriginTile(shape.Columns, shape.Rows, cell.x, cell.y);
+                var left = HasBaseBeside(blockCells, cell + Vector2Int.left);
+                var right = HasBaseBeside(blockCells, cell + Vector2Int.right);
+                for (var dx = 0; dx < RoomLayoutRules.TilesPerCell; dx++)
                 {
-                    Floor.Remove(tile);
-                    Pillars.Add(tile);
+                    // 방 가장자리 칸이면 아래가 벽(난간)이다. 받침은 바닥 위에만 내린다.
+                    var tile = new Vector2Int(origin.x + dx, origin.y - 1);
+                    if (!_roomFloor.Contains(tile))
+                        continue;
+
+                    SetPillarBlock(tile, Edge(dx, left, right, RoomWallKind.PillarBaseLeft, RoomWallKind.PillarBase,
+                        RoomWallKind.PillarBaseRight));
                 }
             }
+
+            foreach (var cell in blockCells)
+            {
+                var origin = CellOriginTile(shape.Columns, shape.Rows, cell.x, cell.y);
+                var left = blockCells.Contains(cell + Vector2Int.left);
+                var right = blockCells.Contains(cell + Vector2Int.right);
+                for (var dx = 0; dx < RoomLayoutRules.TilesPerCell; dx++)
+                {
+                    SetPillarBlock(new Vector2Int(origin.x + dx, origin.y), Edge(dx, left, right,
+                        RoomWallKind.PillarTopLowerLeft, RoomWallKind.PillarTopLower, RoomWallKind.PillarTopLowerRight));
+                    SetPillarBlock(new Vector2Int(origin.x + dx, origin.y + 1), Edge(dx, left, right,
+                        RoomWallKind.PillarTopLeft, RoomWallKind.PillarTop, RoomWallKind.PillarTopRight));
+                }
+            }
+        }
+
+        /// <summary>옆 칸도 받침을 내리는 기둥이면 받침이 이어진다.</summary>
+        private static bool HasBaseBeside(HashSet<Vector2Int> blockCells, Vector2Int beside) =>
+            blockCells.Contains(beside) && !blockCells.Contains(beside + Vector2Int.down);
+
+        private static RoomWallKind Edge(int dx, bool left, bool right, RoomWallKind leftKind, RoomWallKind middle,
+            RoomWallKind rightKind)
+        {
+            if (dx == 0 && !left)
+                return leftKind;
+            return dx == RoomLayoutRules.TilesPerCell - 1 && !right ? rightKind : middle;
+        }
+
+        private void SetPillarBlock(Vector2Int tile, RoomWallKind kind)
+        {
+            Floor.Remove(tile);
+            Pillars.Add(tile);
+            PillarBlocks[tile] = kind;
         }
 
         private static IEnumerable<Vector2Int> CellTiles(RoomShape shape, int column, int row)

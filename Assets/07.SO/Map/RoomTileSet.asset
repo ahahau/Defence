@@ -15,6 +15,16 @@ MonoBehaviour:
   floor: {fileID: 11400000, guid: e2c19eed4fa3e0c4c9ac4806d4cddf5d, type: 2}
   wall: {fileID: 11400000, guid: baf116d21236bc845a6979df48c7b22f, type: 2}
   pillar: {fileID: 11400000, guid: b2019fb132e93694fad64519f70981cf, type: 2}
+  pillarBlocks:
+  - {fileID: 11400000, guid: 278bc6132dace684aadb640c9ebc154a, type: 2}
+  - {fileID: 11400000, guid: f9361fd1ff512ee4cbf39fff094c893f, type: 2}
+  - {fileID: 11400000, guid: 36244a26efd60df41a2e309d9b0ba52c, type: 2}
+  - {fileID: 11400000, guid: c83da207d37b57445b56495c46397678, type: 2}
+  - {fileID: 11400000, guid: 4fbd8339df513194eba2c95227c5756c, type: 2}
+  - {fileID: 11400000, guid: 9df2a2e02b9f2e74ca916f60a8d9900e, type: 2}
+  - {fileID: 11400000, guid: bce10ea6ddf81e4439cd93a1f544f89d, type: 2}
+  - {fileID: 11400000, guid: 6dbd11d24d6d14d4180bdf53e3afe55e, type: 2}
+  - {fileID: 11400000, guid: 01219954a4e2a6447aec4d4df54029ce, type: 2}
   doorFrames:
   - {fileID: -410383139, guid: fe23d18a94d3b2c4ab5a8c70ecebd044, type: 3}
   - {fileID: -2071484088, guid: fe23d18a94d3b2c4ab5a8c70ecebd044, type: 3}

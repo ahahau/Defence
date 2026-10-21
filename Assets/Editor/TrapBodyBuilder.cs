@@ -10,7 +10,7 @@ using UnityEngine;
 /// 함정마다 프레임 그림, <c>Trap.prefab</c> Variant, 데이터, 상태이상(화상)을 만들고 다시 돌려도 같은 결과가 나온다.
 /// 그림은 바닥 타일과 같은 텍셀 크기(25.6/유닛)라 칸 하나 = 32픽셀이고, 모든 프레임을 같은 사각형으로 빈 여백 없이 자른 뒤
 /// 기준점을 덮은 칸 가운데에 둔다. 몸체(Visual)는 1/칸 수로 줄여 두어 설치 때 칸 수만큼 늘어나도(<c>NodeTrapGrid.TryPlace</c>)
-/// 텍셀 크기 그대로이고, 기둥 머리 앞 층 바로 아래에 그린다(<see cref="RoomTilePainter.PillarCapSortingOrder"/>).
+/// 텍셀 크기 그대로이고, 바닥·기둥 타일 위·캐릭터 아래에 그린다(<see cref="Trap.BodySortingOrder"/>).
 /// 발동 효과는 <see cref="TrapEffectBuilder"/>가 넣는다. 메뉴 "Tools/Dungeon Keeper/Build Traps".
 /// </summary>
 public static class TrapBodyBuilder
@@ -264,7 +264,7 @@ public static class TrapBodyBuilder
                     continue;
 
                 renderer.sprite = frames[0];
-                renderer.sortingOrder = RoomTilePainter.PillarCapSortingOrder - 1;
+                renderer.sortingOrder = Trap.BodySortingOrder;
                 renderer.transform.localScale = new Vector3(1f / spec.Footprint.x, 1f / spec.Footprint.y, 1f);
                 if (!renderer.TryGetComponent<TrapBodyAnimation>(out var animation))
                     animation = renderer.gameObject.AddComponent<TrapBodyAnimation>();

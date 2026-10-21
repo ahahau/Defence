@@ -357,12 +357,12 @@ namespace Tests.EditMode.Rules
         {
             var shape = NewShape(RoomSize.Medium, RoomDoors.Left | RoomDoors.Right, PillarRows);
             var plan = RoomTilePlan.Build(shape, RoomDoors.None, RoomDoors.None, 24);
-            // 칸 (2,3)의 타일은 x -2..-1, y 0..1.
+            // 칸 (2,3)의 타일은 x -2..-1, y 0..1. 칸이 윗면이고 아래 칸 윗줄(y -1)에 받침이 내려온다.
             Assert.That(plan.Pillars, Has.Member(new Vector2Int(-2, 1)).And.Member(new Vector2Int(-1, 0)));
-            // 기둥 조각은 머리·몸통·받침 3줄이라 칸(타일 2줄) 위로 한 줄을 더 그린다. 예전에는 반쪽 기둥으로 보였다.
-            Assert.That(plan.Pillars, Has.Member(new Vector2Int(-2, 2)).And.Member(new Vector2Int(-1, 2)));
-            Assert.That(plan.Floor, Has.No.Member(new Vector2Int(-2, 2)), "기둥 머리 자리는 바닥 대신 기둥으로 칠합니다.");
-            Assert.That(plan.Pillars, Has.No.Member(new Vector2Int(-2, 3)));
+            Assert.That(plan.Pillars, Has.Member(new Vector2Int(-2, -1)).And.Member(new Vector2Int(-1, -1)));
+            Assert.That(plan.Floor, Has.No.Member(new Vector2Int(-2, -1)), "받침 자리는 바닥 대신 기둥으로 칠합니다.");
+            Assert.That(plan.Pillars, Has.No.Member(new Vector2Int(-2, 2)), "위 칸은 가리지 않습니다.");
+            Assert.That(plan.Floor, Has.Member(new Vector2Int(-2, 2)));
             Assert.That(plan.Pillars, Has.No.Member(new Vector2Int(-6, 4)), "깎인 모서리는 기둥이 아니라 벽입니다.");
             Assert.That(plan.Floor, Has.No.Member(new Vector2Int(-6, 4)));
         }
@@ -404,13 +404,15 @@ namespace Tests.EditMode.Rules
             Assert.That(Cell(tiles, 11, 3), Is.EqualTo((10, 7)), "복도 위 난간이 이음매에서 끊기면 안 됩니다.");
             Assert.That(Cell(tiles, 12, 3), Is.EqualTo((10, 7)));
             Assert.That(Cell(tiles, 11, -2), Is.EqualTo((10, 12)));
-            // 기둥은 칸 위로 한 줄 더 그려 머리·몸통·받침 3줄이다.
-            // 머리는 시트 그림의 검은 윗면을 돌 색으로 채운 그림이다(방 한가운데서 구멍처럼 보이지 않게).
-            var cap = tiles.GetSprite(new Vector3Int(spacing - 2, 2, 0));
-            Assert.That(cap, Is.Not.Null);
-            Assert.That(cap.name, Is.EqualTo("PillarCapLeft"), "기둥 왼쪽 머리.");
-            Assert.That(Cell(tiles, spacing - 2, 1), Is.EqualTo((7, 1)), "기둥 왼쪽 몸통.");
-            Assert.That(Cell(tiles, spacing - 1, 0), Is.EqualTo((9, 2)), "기둥 오른쪽 받침.");
+            // 칸 기둥은 칸(타일 2×2)이 윗면이고 아래로 받침 한 줄이다.
+            // 윗면은 시트 그림의 검은 속을 돌 색으로 채운 그림이다(방 한가운데서 구멍처럼 보이지 않게).
+            Assert.That(SpriteName(tiles, spacing - 2, 1), Is.EqualTo("PillarTopLeft"), "윗면 왼쪽 위.");
+            Assert.That(SpriteName(tiles, spacing - 1, 1), Is.EqualTo("PillarTopRight"), "윗면 오른쪽 위.");
+            Assert.That(SpriteName(tiles, spacing - 2, 0), Is.EqualTo("PillarTopLowerLeft"), "윗면 왼쪽 아래.");
+            Assert.That(SpriteName(tiles, spacing - 1, 0), Is.EqualTo("PillarTopLowerRight"), "윗면 오른쪽 아래.");
+            Assert.That(Cell(tiles, spacing - 2, -1), Is.EqualTo((7, 2)), "기둥 왼쪽 받침.");
+            Assert.That(Cell(tiles, spacing - 1, -1), Is.EqualTo((9, 2)), "기둥 오른쪽 받침.");
+            Assert.That(Cell(tiles, spacing - 2, 2).row, Is.InRange(17, 18), "위 칸은 바닥 그대로입니다.");
             Assert.That(Cell(tiles, 0, 0).row, Is.InRange(17, 18), "바닥은 바닥 무늬 칸입니다.");
         }
 
@@ -615,46 +617,30 @@ namespace Tests.EditMode.Rules
         }
 
         /// <summary>
-        /// 기둥 머리는 기둥 칸 위 칸의 아래쪽 타일에 그려진다. 그 칸에 함정을 놓으면 함정이 기둥 머리 위에 올라타 보였다.
-        /// 머리 줄만 앞 층(함정보다 위, 캐릭터보다 아래)에 같은 그림·색으로 한 번 더 그려 가까운 기둥이 뒤 칸 바닥을 가리게 한다.
+        /// 칸 기둥은 칸마다 윗면(타일 2×2)을 따로 그린다. 예전에는 위아래로 붙은 칸막이가 머리 한 줄짜리 한 덩어리로 이어져
+        /// 아래 칸막이 윗면이 보이지 않았고, 머리를 칸 위로 올려 위 칸 바닥을 가렸다. 좌우로 붙은 칸은 윗면·받침이 이어진다.
         /// </summary>
         [Test]
-        public void PillarCaps_AreRedrawnOnTheFrontLayer()
+        public void PillarBlocks_DrawEachCellsOwnTop()
         {
-            var tileSet = AssetDatabase.LoadAssetAtPath<RoomTileSet>("Assets/07.SO/Map/RoomTileSet.asset");
-            Assert.That(tileSet, Is.Not.Null);
-            var gridHost = new GameObject("TestGrid", typeof(Grid));
-            _layoutHosts.Add(gridHost);
-            var tiles = new GameObject("Tiles", typeof(UnityEngine.Tilemaps.Tilemap)).GetComponent<UnityEngine.Tilemaps.Tilemap>();
-            tiles.transform.SetParent(gridHost.transform, false);
-            var front = new GameObject("Front", typeof(UnityEngine.Tilemaps.Tilemap)).GetComponent<UnityEngine.Tilemaps.Tilemap>();
-            front.transform.SetParent(gridHost.transform, false);
+            // 칸 (2,2)·(2,3)이 위아래, (3,2)가 (2,2) 오른쪽. 칸 (2,2) 타일은 x -2..-1, y -2..-1, 칸 (3,2)는 x 0..1.
+            var partitions = new[] { new Vector2Int(2, 2), new Vector2Int(2, 3), new Vector2Int(3, 2) };
+            var plan = RoomTilePlan.Build(NewShape(RoomSize.Medium, RoomDoors.Left | RoomDoors.Right, Rows(6)), RoomDoors.None,
+                RoomDoors.None, 24, partitions);
+            var blocks = plan.PillarBlocks;
 
-            var plan = RoomTilePlan.Build(NewShape(RoomSize.Medium, RoomDoors.Left | RoomDoors.Right, PillarRows), RoomDoors.None,
-                RoomDoors.None, 24);
-            var rooms = new[] { new RoomTilePainter.Room(plan, Vector2Int.zero, new Color(0.9f, 0.8f, 0.7f)) };
-            RoomTilePainter.Paint(null, tiles, tileSet, rooms);
-            var cache = new System.Collections.Generic.Dictionary<Sprite, UnityEngine.Tilemaps.Tile>();
-            RoomTilePainter.PaintPillarCaps(tiles, front, rooms, cache);
+            Assert.That(blocks[new Vector2Int(-2, 1)], Is.EqualTo(RoomWallKind.PillarTopLeft), "위 칸막이 윗면.");
+            Assert.That(blocks[new Vector2Int(-2, 0)], Is.EqualTo(RoomWallKind.PillarTopLowerLeft));
+            Assert.That(blocks[new Vector2Int(-2, -1)], Is.EqualTo(RoomWallKind.PillarTopLeft),
+                "아래 칸막이 윗면이 위 칸막이 받침 자리를 덮어 보입니다.");
+            Assert.That(blocks[new Vector2Int(-2, -3)], Is.EqualTo(RoomWallKind.PillarBaseLeft), "받침은 맨 아래 칸막이 밑에만.");
+            Assert.That(plan.Pillars, Has.No.Member(new Vector2Int(-2, 2)), "위 칸은 가리지 않습니다.");
 
-            Assert.That(plan.PillarCaps, Is.Not.Empty);
-            Assert.That(plan.PillarCaps, Is.SubsetOf(plan.Pillars));
-            foreach (var cap in plan.PillarCaps)
-            {
-                var cell = new Vector3Int(cap.x, cap.y, 0);
-                Assert.That(front.GetSprite(cell), Is.EqualTo(tiles.GetSprite(cell)), $"({cap.x}, {cap.y}) 앞 층 머리 그림");
-                Assert.That(front.GetColor(cell), Is.EqualTo(tiles.GetColor(cell)), "방 색조도 같아야 합니다.");
-                Assert.That(plan.Pillars, Has.No.Member(cap + Vector2Int.up), "머리는 기둥 맨 위 줄입니다.");
-            }
-
-            var frontCount = 0;
-            foreach (var position in front.cellBounds.allPositionsWithin)
-                if (front.GetTile(position) != null)
-                    frontCount++;
-            Assert.That(frontCount, Is.EqualTo(plan.PillarCaps.Count), "앞 층에는 머리 줄만 그립니다.");
-
-            foreach (var tile in cache.Values)
-                Object.DestroyImmediate(tile);
+            Assert.That(blocks[new Vector2Int(-1, -1)], Is.EqualTo(RoomWallKind.PillarTop), "좌우로 붙은 윗면은 이어집니다.");
+            Assert.That(blocks[new Vector2Int(1, -1)], Is.EqualTo(RoomWallKind.PillarTopRight));
+            Assert.That(blocks[new Vector2Int(-1, -3)], Is.EqualTo(RoomWallKind.PillarBase));
+            Assert.That(blocks[new Vector2Int(1, -3)], Is.EqualTo(RoomWallKind.PillarBaseRight));
+            Assert.That(blocks[new Vector2Int(-1, 1)], Is.EqualTo(RoomWallKind.PillarTopRight), "옆이 비면 윗면 끝입니다.");
         }
 
         /// <summary>
@@ -813,6 +799,13 @@ namespace Tests.EditMode.Rules
             Assert.That(sprite, Is.Not.Null, $"({x}, {y})에 타일이 없습니다.");
             return (Mathf.RoundToInt(sprite.rect.x / 16f),
                 Mathf.RoundToInt((sprite.texture.height - sprite.rect.y - sprite.rect.height) / 16f));
+        }
+
+        private static string SpriteName(UnityEngine.Tilemaps.Tilemap tiles, int x, int y)
+        {
+            var sprite = tiles.GetSprite(new Vector3Int(x, y, 0));
+            Assert.That(sprite, Is.Not.Null, $"({x}, {y})에 타일이 없습니다.");
+            return sprite.name;
         }
 
         private static string[] Rows(int count)

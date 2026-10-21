@@ -29,7 +29,8 @@ namespace Code.MapCreateSystem
         }
 
         /// <summary>
-        /// 다시 칠한다. 벽 띠(바닥에서 옆으로 1칸, 아래로 1칸, 위로 벽 두께 3칸)에 벽 룰 타일을, 방 안 기둥 자리에 기둥 룰 타일을 둔다.
+        /// 다시 칠한다. 벽 띠(바닥에서 옆으로 1칸, 아래로 1칸, 위로 벽 두께 3칸)에 벽 룰 타일을, 기둥 자리에 기둥 조각
+        /// (칸 기둥은 <see cref="RoomTilePlan.PillarBlocks"/>가 정한 조각, 옆 문 기둥은 기둥 룰 타일)을 둔다.
         /// </summary>
         public static void Paint(Tilemap underlay, Tilemap tiles, RoomTileSet set, IReadOnlyList<Room> rooms)
         {
@@ -41,6 +42,7 @@ namespace Code.MapCreateSystem
 
             var floor = new Dictionary<Vector2Int, Color>();
             var pillars = new Dictionary<Vector2Int, Color>();
+            var blocks = new Dictionary<Vector2Int, RoomWallKind>();
             foreach (var room in rooms)
             {
                 if (room.Plan == null)
@@ -53,6 +55,8 @@ namespace Code.MapCreateSystem
                     floor[tile + room.Offset] = room.Plan.Corridor.Contains(tile) ? corridorTint : room.Tint;
                 foreach (var tile in room.Plan.Pillars)
                     pillars[tile + room.Offset] = room.Tint;
+                foreach (var pair in room.Plan.PillarBlocks)
+                    blocks[pair.Key + room.Offset] = pair.Value;
             }
 
             var band = new Dictionary<Vector2Int, Color>();
@@ -89,7 +93,10 @@ namespace Code.MapCreateSystem
             foreach (var pair in band)
             {
                 positions[index] = ToCell(pair.Key);
-                topTiles[index] = pillars.ContainsKey(pair.Key) ? set.Pillar : set.Wall;
+                if (blocks.TryGetValue(pair.Key, out var kind))
+                    topTiles[index] = set.PillarBlock(kind);
+                else
+                    topTiles[index] = pillars.ContainsKey(pair.Key) ? set.Pillar : set.Wall;
                 underTiles[index] = set.Floor;
                 index++;
             }
@@ -100,53 +107,6 @@ namespace Code.MapCreateSystem
             // 룰 타일은 칠할 때 색을 흰색으로 되돌리므로 다 칠한 뒤 방마다 색조를 입힌다.
             ApplyTint(tiles, underlay, floor);
             ApplyTint(tiles, underlay, band);
-        }
-
-        /// <summary>
-        /// 기둥 머리 앞 층의 정렬 순서. 함정 몸체(바로 아래)보다 위, 캐릭터(20)보다 아래다.
-        /// 3/4 시점에서 가까운 기둥의 머리가 위 칸 바닥에 놓인 함정을 가리고, 그 칸에 선 캐릭터는 가리지 않는다.
-        /// </summary>
-        public const int PillarCapSortingOrder = 11;
-
-        /// <summary>
-        /// 기둥 머리 줄(<see cref="RoomTilePlan.PillarCaps"/>)을 앞 층에 위 타일맵과 같은 그림·색으로 다시 그린다.
-        /// 룰 타일은 같은 타일맵의 이웃을 보고 조각을 고르므로, 머리는 위 타일맵에 그대로 두고 고른 그림만 옮긴다.
-        /// <paramref name="tileCache"/>는 그림마다 만든 타일을 담아 두는 곳(주인이 지운다).
-        /// </summary>
-        public static void PaintPillarCaps(Tilemap tiles, Tilemap front, IReadOnlyList<Room> rooms, Dictionary<Sprite, Tile> tileCache)
-        {
-            if (front == null)
-                return;
-
-            front.ClearAllTiles();
-            if (tiles == null)
-                return;
-
-            foreach (var room in rooms)
-            {
-                if (room.Plan == null)
-                    continue;
-
-                foreach (var cap in room.Plan.PillarCaps)
-                {
-                    var cell = ToCell(cap + room.Offset);
-                    var sprite = tiles.GetSprite(cell);
-                    if (sprite == null)
-                        continue;
-
-                    if (!tileCache.TryGetValue(sprite, out var tile))
-                    {
-                        tile = ScriptableObject.CreateInstance<Tile>();
-                        tile.sprite = sprite;
-                        tile.colliderType = Tile.ColliderType.None;
-                        tileCache[sprite] = tile;
-                    }
-
-                    front.SetTile(cell, tile);
-                    front.SetTileFlags(cell, TileFlags.None);
-                    front.SetColor(cell, tiles.GetColor(cell));
-                }
-            }
         }
 
         /// <summary>
