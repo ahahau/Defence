@@ -405,7 +405,10 @@ namespace Tests.EditMode.Rules
             Assert.That(Cell(tiles, 12, 3), Is.EqualTo((10, 7)));
             Assert.That(Cell(tiles, 11, -2), Is.EqualTo((10, 12)));
             // 기둥은 칸 위로 한 줄 더 그려 머리·몸통·받침 3줄이다.
-            Assert.That(Cell(tiles, spacing - 2, 2), Is.EqualTo((7, 0)), "기둥 왼쪽 머리.");
+            // 머리는 시트 그림의 검은 윗면을 돌 색으로 채운 그림이다(방 한가운데서 구멍처럼 보이지 않게).
+            var cap = tiles.GetSprite(new Vector3Int(spacing - 2, 2, 0));
+            Assert.That(cap, Is.Not.Null);
+            Assert.That(cap.name, Is.EqualTo("PillarCapLeft"), "기둥 왼쪽 머리.");
             Assert.That(Cell(tiles, spacing - 2, 1), Is.EqualTo((7, 1)), "기둥 왼쪽 몸통.");
             Assert.That(Cell(tiles, spacing - 1, 0), Is.EqualTo((9, 2)), "기둥 오른쪽 받침.");
             Assert.That(Cell(tiles, 0, 0).row, Is.InRange(17, 18), "바닥은 바닥 무늬 칸입니다.");
