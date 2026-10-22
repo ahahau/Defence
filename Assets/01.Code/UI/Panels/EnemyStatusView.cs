@@ -10,7 +10,7 @@ namespace Code.UI
     /// 요청은 <see cref="EnemyStatusPanelView"/>가 넘기고, 문구는 <see cref="EnemyStatusPresenter"/>가 만든다.
     /// 상태이상이 없어도 자리를 지킨다.
     /// </summary>
-    public sealed class EnemyStatusView : MonoBehaviour
+    public sealed class EnemyStatusView : MonoBehaviour, IEscapeClosable
     {
         private const float RefreshInterval = 0.12f;
         private static readonly Vector2 ScreenOffset = new(24f, 24f);
@@ -83,6 +83,10 @@ namespace Code.UI
             _target = null;
             root.SetActive(false);
         }
+
+        bool IEscapeClosable.IsOpen => root != null && root.activeSelf;
+
+        void IEscapeClosable.Close() => Hide();
 
         private void Refresh()
         {

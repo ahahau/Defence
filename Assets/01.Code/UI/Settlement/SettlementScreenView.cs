@@ -1,6 +1,5 @@
 using Code.Audio;
 using Code.Manager;
-using Code.UI.Popup;
 using TMPro;
 using UnityEngine;
 
@@ -12,8 +11,9 @@ namespace Code.UI
     ///
     /// 탭 다섯(요약·수입·지출·계약/부채·유닛 상점) 중 하나만 보이고, 칸마다 그리기는 각 Pane이 맡는다.
     /// 정산 중 시간 정지는 관리자가 건다. 닫기("정산 완료"·ESC)는 <see cref="ManagementSettlementManager.ForceHidePanel"/>.
+    /// ESC는 <see cref="UiEscapeRouter"/>가 받아 맨 위 창인 정산표부터 닫는다.
     /// </summary>
-    public sealed class SettlementScreenView : MonoBehaviour
+    public sealed class SettlementScreenView : MonoBehaviour, IEscapeClosable
     {
         [SerializeField] private ManagementSettlementManager settlement;
         [SerializeField] private GameObject root;
@@ -90,13 +90,6 @@ namespace Code.UI
         private void Update()
         {
             PlayEntrance();
-
-            if (settlement == null || !settlement.IsPanelOpen)
-                return;
-
-            // 정산표는 게임을 멈춰 세우는 화면이라 ESC로도 닫힌다. 팝업이 떠 있으면 ESC는 팝업 몫이다.
-            if (!PopupController.BlocksEscape && EscapePressedThisFrame())
-                Close();
         }
 
         private void Present(SettlementReport report)
@@ -154,6 +147,10 @@ namespace Code.UI
 
         private void HandleReportClosed() => SetVisible(false);
 
+        bool IEscapeClosable.IsOpen => settlement != null && settlement.IsPanelOpen;
+
+        void IEscapeClosable.Close() => Close();
+
         /// <summary>카드가 툭 나타나지 않게 한 번 띄워 올린다(실제 시간).</summary>
         private void PlayEntrance()
         {
@@ -172,16 +169,6 @@ namespace Code.UI
         {
             if (root != null && root.activeSelf != visible)
                 root.SetActive(visible);
-        }
-
-        private static bool EscapePressedThisFrame()
-        {
-#if ENABLE_INPUT_SYSTEM
-            var keyboard = UnityEngine.InputSystem.Keyboard.current;
-            return keyboard != null && keyboard.escapeKey.wasPressedThisFrame;
-#else
-            return Input.GetKeyDown(KeyCode.Escape);
-#endif
         }
     }
 }

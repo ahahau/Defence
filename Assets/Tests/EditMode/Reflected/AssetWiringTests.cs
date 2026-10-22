@@ -412,6 +412,53 @@ namespace Tests.EditMode.Gameplay
             }
         }
 
+        /// <summary>
+        /// ESC는 라우터 하나가 받아 위 창부터 하나씩 닫고, 닫을 창이 없으면 설정을 연다. 예전에는 상인·고용·상태·금고 창이
+        /// ESC로 닫히지 않았고 게임 화면에 설정이 없었다. 창이 라우터 목록에서 빠지면 그 창만 ESC가 안 먹는다.
+        /// </summary>
+        [Test]
+        public void SettingsScreen_IsPlacedAndEveryWindowClosesWithEscape()
+        {
+            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            try
+            {
+                Code.UI.UiEscapeRouter router = null;
+                Code.UI.TopHudView hud = null;
+                foreach (var root in scene.GetRootGameObjects())
+                {
+                    router ??= root.GetComponentInChildren<Code.UI.UiEscapeRouter>(true);
+                    hud ??= root.GetComponentInChildren<Code.UI.TopHudView>(true);
+                }
+
+                Assert.That(router, Is.Not.Null, "ESC 라우터가 씬에 없습니다. SettingsBuilder.BuildAll()을 돌리세요.");
+                var settings = new SerializedObject(router).FindProperty("settings").objectReferenceValue;
+                Assert.That(settings, Is.Not.Null, "닫을 창이 없을 때 열 설정 창이 없습니다.");
+                Assert.That(new SerializedObject(hud).FindProperty("settings").objectReferenceValue, Is.EqualTo(settings), "톱니 버튼이 설정 창을 열어야 합니다.");
+                Assert.That(new SerializedObject(hud).FindProperty("settingsButton").objectReferenceValue, Is.Not.Null);
+
+                var windows = new SerializedObject(router).FindProperty("windows");
+                var wired = new List<Type>();
+                for (var i = 0; i < windows.arraySize; i++)
+                {
+                    var window = windows.GetArrayElementAtIndex(i).objectReferenceValue;
+                    Assert.That(window, Is.Not.Null, $"ESC 목록 {i}번이 비었습니다.");
+                    Assert.That(window, Is.InstanceOf<Code.UI.IEscapeClosable>(), window + "은 ESC로 닫을 수 없는 컴포넌트입니다.");
+                    wired.Add(window.GetType());
+                }
+
+                Assert.That(wired, Is.EquivalentTo(new[]
+                {
+                    typeof(Code.UI.SettingsScreenView), typeof(Code.UI.SettlementScreenView), typeof(Code.UI.MerchantScreenView),
+                    typeof(Code.UI.RecruitScreenView), typeof(Code.UI.TreasuryView), typeof(Code.UI.UnitStatusView),
+                    typeof(Code.UI.EnemyStatusView), typeof(Code.UI.RoomManagement.RoomManagementScreen)
+                }));
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
+            }
+        }
+
         [Test]
         public void OpeningRoom_HasFourDoorsAndUsesEastDoorForIntruders()
         {

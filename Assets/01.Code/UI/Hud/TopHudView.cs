@@ -48,6 +48,8 @@ namespace Code.UI
         [SerializeField] private UiFrameButton normalButton;
         [SerializeField] private UiFrameButton fastButton;
         [SerializeField] private TMP_Text pauseLockLabel;
+        [SerializeField, Tooltip("배속 버튼 옆 톱니 — 설정 창을 연다")] private UiFrameButton settingsButton;
+        [SerializeField] private SettingsScreenView settings;
 
         private readonly TopHudPresenter _presenter = new();
         private UnitRevivalSystem _revival;
@@ -76,6 +78,7 @@ namespace Code.UI
             AddClick(pauseButton, SetPaused);
             AddClick(normalButton, SetNormal);
             AddClick(fastButton, SetFast);
+            AddClick(settingsButton, OpenSettings);
             if (debtButton != null) debtButton.onClick.AddListener(ShowDebtDetail);
             if (moraleButton != null) moraleButton.onClick.AddListener(ShowMoraleDetail);
             Refresh();
@@ -87,6 +90,7 @@ namespace Code.UI
             RemoveClick(pauseButton, SetPaused);
             RemoveClick(normalButton, SetNormal);
             RemoveClick(fastButton, SetFast);
+            RemoveClick(settingsButton, OpenSettings);
             if (debtButton != null) debtButton.onClick.RemoveListener(ShowDebtDetail);
             if (moraleButton != null) moraleButton.onClick.RemoveListener(ShowMoraleDetail);
         }
@@ -181,6 +185,8 @@ namespace Code.UI
             if (_morale != null)
                 PopupController.Show(PopupRequest.Notice("민심 현황", _presenter.BuildMoraleDetail(_morale)));
         }
+
+        private void OpenSettings() => settings?.Open();
 
         private void SetPaused() => SetSpeed(GameSpeedController.PausedSpeed);
         private void SetNormal() => SetSpeed(GameSpeedController.NormalSpeed);

@@ -8,7 +8,7 @@ namespace Code.UI
     /// 영업 전 대기 중에만 열리고, 영업이 시작되면 닫는다. 고용 판단·결제는 <see cref="HiredUnitRoster"/>가 한다.
     /// 예전에는 고용이 청산일 정산표에서만 돼 첫 주(1~6일차)에 부하를 둘 방법이 없었다.
     /// </summary>
-    public sealed class RecruitScreenView : MonoBehaviour
+    public sealed class RecruitScreenView : MonoBehaviour, IEscapeClosable
     {
         [SerializeField] private GameObject root;
         [SerializeField] private SettlementShopPane shop;

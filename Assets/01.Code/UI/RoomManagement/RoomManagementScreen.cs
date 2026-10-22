@@ -1,9 +1,7 @@
 using Code.Core;
 using Code.MapCreateSystem;
 using Code.Manager;
-using Code.UI.Popup;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace Code.UI.RoomManagement
 {
@@ -14,7 +12,7 @@ namespace Code.UI.RoomManagement
     /// 방을 누르면 방 상세가 열린다. 방 상세가 열린 동안은 오른쪽 열의 손님 브리핑·진행 카드를 비켜 둔다.
     /// 캔버스는 HUD 위·튜토리얼 덮개 아래라 덮개가 버튼을 가리고 구멍만 눌린다.
     /// </summary>
-    public sealed class RoomManagementScreen : MonoBehaviour
+    public sealed class RoomManagementScreen : MonoBehaviour, IEscapeClosable
     {
         private const float PollInterval = 0.25f;
 
@@ -183,8 +181,6 @@ namespace Code.UI.RoomManagement
 
         private void Update()
         {
-            HandleEscape();
-
             if (Time.unscaledTime < _nextPollAt)
                 return;
 
@@ -194,19 +190,12 @@ namespace Code.UI.RoomManagement
             RefreshDock();
         }
 
-        /// <summary>
-        /// ESC는 고르던 위치 → 설치 창 → 방 상세 순서로 하나씩 걷는다.
-        /// 팝업이나 건물 미리보기가 같은 프레임에 ESC를 먼저 썼으면 양보한다.
-        /// </summary>
-        private void HandleEscape()
+        bool IEscapeClosable.IsOpen =>
+            (panel != null && panel.IsChoosingLocation) || IsInstallVisible || IsDetailVisible;
+
+        /// <summary>ESC(<see cref="UiEscapeRouter"/>)는 고르던 위치 → 설치 창 → 방 상세 순서로 하나씩 걷는다.</summary>
+        void IEscapeClosable.Close()
         {
-            var keyboard = Keyboard.current;
-            if (keyboard == null || !keyboard.escapeKey.wasPressedThisFrame || PopupController.BlocksEscape)
-                return;
-
-            if (BuildingPlacementPreview.WasActiveThisFrame || EdgePlacementPreview.WasActiveThisFrame)
-                return;
-
             if (panel != null && panel.IsChoosingLocation)
                 panel.CancelPlacement();
             else if (IsInstallVisible)

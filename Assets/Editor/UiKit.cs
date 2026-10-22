@@ -37,6 +37,7 @@ public static class UiKit
     public const int GlyphPause = 213;
     public const int GlyphPlay = 214;
     public const int GlyphFast = 227;
+    public const int GlyphGear = 254;
 
     public enum ButtonKind
     {

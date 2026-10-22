@@ -12,7 +12,7 @@ namespace Code.UI
     /// 판단·결제는 상인 컴포넌트가 하고, 이 화면은 값을 그리고 <c>Buy</c>·<c>Hide</c>만 부른다.
     /// 예전에는 상인 판단만 있고 그리는 화면이 없어 도크의 상인 버튼을 눌러도 아무것도 뜨지 않았다.
     /// </summary>
-    public sealed class MerchantScreenView : MonoBehaviour
+    public sealed class MerchantScreenView : MonoBehaviour, IEscapeClosable
     {
         [SerializeField] private MerchantPanelView merchant;
         [SerializeField] private GameObject root;
@@ -147,5 +147,9 @@ namespace Code.UI
         }
 
         private void HandleClose() => merchant?.Hide();
+
+        bool IEscapeClosable.IsOpen => merchant != null && merchant.IsPanelOpen;
+
+        void IEscapeClosable.Close() => HandleClose();
     }
 }

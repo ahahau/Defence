@@ -128,6 +128,11 @@ public static class GameplayHudBuilder
         UiKit.Wire(view, "pauseButton", SpeedButton(speed, "Pause", "II", 0f));
         UiKit.Wire(view, "normalButton", SpeedButton(speed, "Normal", "1×", 74f));
         UiKit.Wire(view, "fastButton", SpeedButton(speed, "Fast", "2×", 148f));
+        // 설정 톱니: 배속 버튼 왼쪽. 설정 창 배선은 SettingsBuilder가 한다.
+        var gearRect = UiKit.TopRight(UiKit.Rect("SettingsButton", host), Margin + 216f + 10f, Margin, 44f, 44f);
+        var gear = UiKit.Button(gearRect, "설정", UiKit.ButtonKind.Secondary, 13f);
+        UiKit.ButtonGlyph(gear, UiKit.GlyphGear, HudPalette.TextBody);
+        UiKit.Wire(view, "settingsButton", gear);
         var lockLabel = UiKit.Text("PauseLock", host, string.Empty, 13f, HudPalette.Loss, TextAlignmentOptions.TopRight, false, true);
         UiKit.TopRight(lockLabel.rectTransform, Margin, 74f, 520f, 20f);
         UiKit.Wire(view, "pauseLockLabel", lockLabel);

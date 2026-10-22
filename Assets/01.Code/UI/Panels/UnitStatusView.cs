@@ -10,7 +10,7 @@ namespace Code.UI
     /// <see cref="UnitStatusPanelView"/>가 정하고, 여기서는 그리고 버튼만 잇는다.
     /// 특성·성격 줄에 마우스를 올리면 설명을 띄운다. 버튼·안내는 조건에 따라 보이지 않아도 자리를 지킨다.
     /// </summary>
-    public sealed class UnitStatusView : MonoBehaviour
+    public sealed class UnitStatusView : MonoBehaviour, IEscapeClosable
     {
         private static readonly Vector2 ScreenOffset = new(24f, 24f);
 
@@ -141,6 +141,10 @@ namespace Code.UI
         }
 
         private void HandleClose() => source?.HidePanel();
+
+        bool IEscapeClosable.IsOpen => root != null && root.activeSelf;
+
+        void IEscapeClosable.Close() => HandleClose();
         private void HandleRecover() => source?.RequestRecover();
         private void HandleRecall() => source?.RequestRecall();
 

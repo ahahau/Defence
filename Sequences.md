@@ -1,5 +1,11 @@
 # Sequences
 
+- 2026-10-22 · ESC로 창 닫기, 게임 화면 설정 창(사용자: "창 esc누르면 닫히게 해주고 추가로 설정도 만들어줘" → "닫을 창이 없을 때 ESC로 열고, 오른쪽 위 배속 버튼 옆에 톱니 버튼도").
+  - 원인: ESC는 팝업·정산표·방 관리만 각자 받아 상인·고용·금고·부하 상태·모험가 상태 창은 ESC로 닫히지 않았고, 따로 받으면 한 번에 둘이 닫힐 수 있었다. 게임 화면에는 설정이 없었다(옛 `SettingsPanelView`는 타이틀 씬에만).
+  - 수정: `IEscapeClosable`(열림·한 단계 닫기)과 `UiEscapeRouter` — 위 창부터 하나만 닫고(설정 → 정산표 → 상인 → 고용 → 금고 → 부하 상태 → 모험가 상태 → 방 관리[위치 고르기 → 설치 창 → 방 상세]), 닫을 창이 없으면 설정을 연다. 팝업·건물/함정 놓기·사건 대화 중에는 양보. 정산표·방 관리 화면의 자체 ESC 처리는 라우터로 옮겼다. 새 `SettingsScreenView`(가운데 카드 520×344, 캔버스 90): 효과음·음악 음량(0~100%), 전체 화면 켬/끔, 다시 시작(확인 팝업 → 저장 삭제), 타이틀로, 닫기, 열린 동안 `GameSpeedController.Suspend`로 시간 정지. 오른쪽 위 배속 버튼 왼쪽에 톱니 버튼(팩 기호 254). 생성기 `SettingsBuilder`(라우터 배선·톱니 연결), `GameplayHudBuilder` → `RoomManagementBuilder` → `SettingsBuilder` 순으로 다시 놓음.
+  - 테스트: `AssetWiringTests.SettingsScreen_IsPlacedAndEveryWindowClosesWithEscape`(라우터·설정·톱니 배선, ESC 목록 8개). EditMode 355/355.
+  - 플레이(세이브 원복): 고용 창을 연 채 ESC(입력 시스템에 키 입력) → 고용 창만 닫힘, 다시 ESC → 설정 열림·timeScale 0, 다시 ESC → 닫힘·timeScale 1. 톱니 버튼 → 설정 열림·시간 정지. 콘솔 새 오류 없음(플레이 종료 때 "Game Music" 정리 경고는 기존 음악 재생기).
+
 - 2026-10-22 · 부하를 가두던 파란 상자 없앰(사용자: "적이 이런식으로 파란 상자 안에 있는거같은거 수정해줘" — 화면의 캐릭터는 해골 검사 부하).
   - 원인: `Unit.Awake`가 `CharacterBackPlate`(캐릭터 뒤 네모 테두리, 그림은 임시 `Ui` 사각형)를 붙이고 반투명 파랑으로 칠해, 프레임 애니메이션 캐릭터가 파란 상자 안에 서 있는 것처럼 보였다. 모험가는 같은 이유로 예전에 이미 뺐다(`Enemy.cs` 주석).
   - 수정: 부하도 받침을 붙이지 않는다(`EnsureBackPlate` 삭제). `CharacterBackPlate`·`CharacterPlateSkinSO`는 이제 쓰는 곳이 없다(지우지는 않음).

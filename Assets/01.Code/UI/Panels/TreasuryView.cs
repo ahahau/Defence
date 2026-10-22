@@ -11,7 +11,7 @@ namespace Code.UI
     /// 금고 관리 창(uGUI, A안, 방 상세 왼쪽). 금고 칸을 누르면 뜨고(<see cref="NodePanelView.TreasuryInspectRequested"/>),
     /// 맡기기·꺼내기와 이자·약탈 위험을 보여 준다. 금화 이동은 <see cref="Treasury"/>의 공개 함수가 한다.
     /// </summary>
-    public sealed class TreasuryView : MonoBehaviour
+    public sealed class TreasuryView : MonoBehaviour, IEscapeClosable
     {
         private const int QuickAmount = 25;
         private const float RefreshInterval = 0.25f;
@@ -98,6 +98,10 @@ namespace Code.UI
             _target = null;
             root.SetActive(false);
         }
+
+        bool IEscapeClosable.IsOpen => root != null && root.activeSelf;
+
+        void IEscapeClosable.Close() => Hide();
 
         private void DepositQuick()
         {
