@@ -43,8 +43,8 @@ namespace Code.Manager
         /// <summary>처치 시네마틱 진행 중인지(승리 패널 타이밍 조율용).</summary>
         public bool IsCinematicRunning => _cinematicRunning;
 
-        /// <summary>보스 배너를 띄운다(제목, 부제, 최종전 여부, 유지 시간). 그리는 화면은 지금 없다(uGUI 전환 대기).</summary>
-        public event System.Action<string, string, bool, float> BannerRequested;
+        /// <summary>보스 배너를 띄운다. 그리는 화면은 <c>BossBannerView</c>.</summary>
+        public event System.Action<BossBannerRequest> BannerRequested;
 
         /// <summary>판이 끝나 결과 화면을 띄운다(제목, 한 줄 요약, 이겼는가).</summary>
         public event System.Action<string, string, bool> RunEndRequested;
@@ -60,17 +60,25 @@ namespace Code.Manager
         /// <param name="bossSubtitle">보스마다 다른 경고 문구. 무엇을 조심해야 하는지 알린다.</param>
         public void ShowBossBanner(int day, bool isFinal, string bossTitle = null, string bossSubtitle = null)
         {
-            var title = !string.IsNullOrWhiteSpace(bossTitle)
-                ? bossTitle
-                : isFinal ? "최후의 결전" : "보스 습격";
             var subtitle = !string.IsNullOrWhiteSpace(bossSubtitle)
-                ? $"Day {day} — {bossSubtitle}"
+                ? bossSubtitle
                 : isFinal
-                    ? $"Day {day} — 이 습격만 막아내면 던전을 지켜낸다"
-                    : $"Day {day} — 강력한 모험가가 쳐들어온다";
+                    ? "이 습격만 막아내면 던전을 지켜낸다"
+                    : "강력한 모험가가 쳐들어온다";
 
-            BannerRequested?.Invoke(title, subtitle, isFinal, bannerHoldDuration);
+            RequestBanner(isFinal ? BossBannerKind.Final : BossBannerKind.Arrival, day, bossTitle, subtitle);
         }
+
+        /// <summary>보스가 부른 증원이 합류했을 때.</summary>
+        public void ShowReinforcementBanner(int day, string bossTitle, string subtitle) =>
+            RequestBanner(BossBannerKind.Reinforcement, day, bossTitle, subtitle);
+
+        /// <summary>호위가 무너져 보스가 마지막 단계에 들어갔을 때.</summary>
+        public void ShowRageBanner(int day, string bossTitle, string subtitle) =>
+            RequestBanner(BossBannerKind.Rage, day, bossTitle, subtitle);
+
+        private void RequestBanner(BossBannerKind kind, int day, string bossTitle, string subtitle) =>
+            BannerRequested?.Invoke(new BossBannerRequest(kind, day, bossTitle, subtitle, bannerHoldDuration));
 
         // ── Death Cinematic ─────────────────────────────────────
 

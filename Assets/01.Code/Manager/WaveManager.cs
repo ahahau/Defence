@@ -953,10 +953,9 @@ namespace Code.Manager
             }
 
             _bossReinforcementStarted = true;
-            EnsureBossPresenter().ShowBossBanner(
+            EnsureBossPresenter().ShowReinforcementBanner(
                 _currentDay,
-                false,
-                string.IsNullOrWhiteSpace(_currentBoss.title) ? "증원 도착" : $"{_currentBoss.title} · 증원",
+                _currentBoss.title,
                 string.IsNullOrWhiteSpace(_currentBoss.reinforcementSubtitle)
                     ? "두목의 호각에 후열 사냥꾼이 전투에 합류했다"
                     : _currentBoss.reinforcementSubtitle);
@@ -1006,10 +1005,9 @@ namespace Code.Manager
                 _currentBoss.phaseDefensePenalty,
                 _currentBoss.phaseAttackIntervalMultiplier);
 
-            EnsureBossPresenter().ShowBossBanner(
+            EnsureBossPresenter().ShowRageBanner(
                 _currentDay,
-                false,
-                string.IsNullOrWhiteSpace(_currentBoss.title) ? "보스 격노" : $"{_currentBoss.title} · 격노",
+                _currentBoss.title,
                 string.IsNullOrWhiteSpace(_currentBoss.phaseSubtitle)
                     ? "호위가 무너지자 공격이 거세지고 방어의 빈틈이 드러났다"
                     : _currentBoss.phaseSubtitle);

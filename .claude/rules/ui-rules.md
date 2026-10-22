@@ -37,7 +37,8 @@ UI Toolkit을 모두 걷어냈다. uGUI(A안)로 다시 만드는 중이다. 만
 - 화면 없이 멈춰 있는 흐름(정산 확인·사건 선택·방 확장 확인·영업 시작)은 위 공개 함수를 Unity CLI로 불러 넘긴다.
 - 운영 방침 창(`PolicyChoiceScreenView`, 캔버스 83 — 정산표 84가 닫힌 뒤, 첫날 안내 85 아래, 생성기 `PolicyChoiceBuilder`): `MoralePolicyManager.ChoicesChanged`를 듣고 제시가 있으면 연다. 카드 3장(`PolicyCardSlot`, 값은 `PolicyChoicePresenter`), 강제 선택이라 닫기 버튼·ESC가 없고(라우터 `policyChoice`가 비켜 줌) 열린 동안 시간을 멈춘다. 금화가 모자란 카드는 " · 금화 부족"으로 잠그고, 셋 다 잠기면 "이번에는 공포하지 않음"(`DeclinePolicies`)을 연다(`PolicyChoiceRules`). 공포하면 기록판에 "방침 공포" 줄. 튜토리얼이 비출 카드는 `TryGetCardScreenRect`.
 - 판 종료 결과 화면(`RunEndScreenView`, 캔버스 95 — 다른 창 위·팝업 100 아래, 생성기 `RunEndBuilder`): `BossWavePresenter.RunEndRequested`(제목·이유·이겼는가)를 듣고 연다. 전과는 `RunSummarySystem`, 진행도·최고 기록·새로 열린 것은 `MetaProfileStore.LastResult`(값은 `RunEndPresenter`). 닫기·ESC 없음(라우터 `runEnd`가 비켜 줌), 버튼은 "타이틀로"·"새 판 시작"(배속을 되돌린 뒤 씬 이동).
-- 타이틀·보스 배너·유물 줄은 아직 화면이 없다. 판단은 `TitleMenuActions`, `BossWavePresenter.BannerRequested`, `ArtifactPanelView` 쪽에 있다. 일시정지 메뉴는 따로 만들지 않고 설정 창이 맡는다(2026-10-22 사용자 결정).
+- 보스 배너(`BossBannerView`, 캔버스 36, 위 가운데 띠, 생성기 `BossBannerBuilder`): `BossWavePresenter.BannerRequested`(`BossBannerRequest`: 습격·증원·격노·결전)를 받아 잠깐 띄운다. 시간을 멈추지 않고 클릭을 막지 않는다. 값·색은 `BossBannerPresenter`.
+- 타이틀·유물 줄은 아직 화면이 없다. 판단은 `TitleMenuActions`, `ArtifactPanelView` 쪽에 있다. 일시정지 메뉴는 따로 만들지 않고 설정 창이 맡는다(2026-10-22 사용자 결정).
 - 정산은 `ManagementSettlementManager`가 `ReportOpened`·`ReportClosed`·`LatestReport`를 내고, `ForceHidePanel`로 닫는다(화면: `SettlementScreenView`). 씬에 배선된 옛 uGUI 정산 패널(`panelRoot`)은 캔버스를 잃어 깨져 그려지므로 쓰지 않는다(`_legacyPanelSuppressed` 기본값 참).
 - 튜토리얼이 화면 버튼을 비추는 단계는 각 화면이 화면 사각형을 알려 준다: 영업 시작(`WaveHudView`), 팝업 확인(`PopupView`), 도크 갈래 버튼 → 카드 → 설치·상인 버튼(`RoomManagementScreen.TryGetTutorialTarget`·`TryGetMerchantButtonScreenRect`). 오버레이 요소 사각형은 `UiScreenRect.TryGet`.
 - 도크에 메뉴 버튼은 없다(2026-10-21 사용자 결정으로 뺐다).

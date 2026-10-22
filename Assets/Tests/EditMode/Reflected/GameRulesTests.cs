@@ -1143,6 +1143,37 @@ namespace Tests.EditMode.Rules
             }
         }
 
+        /// <summary>
+        /// 보스 배너 값: 첫 줄은 종류(습격·증원·격노)와 습격 일차, 둘째 줄은 보스 이름(없으면 종류 이름), 격노만 흔든다.
+        /// 예전에는 배너를 그리는 화면이 없어 보스 등장·증원·격노가 알림 없이 지나갔고, 증원·격노는 제목 글자("· 증원")로만 갈렸다.
+        /// </summary>
+        [Test]
+        public void BossBanner_ShowsKindDayAndFallbacks()
+        {
+            var arrival = Code.UI.ViewModels.BossBannerPresenter.Build(
+                new Code.Manager.BossBannerRequest(Code.Manager.BossBannerKind.Arrival, 7, "토벌대장", "방패 뒤의 적", 1.6f));
+            Assert.That(arrival.Caption, Is.EqualTo("보스 습격 · 7일차"));
+            Assert.That(arrival.Title, Is.EqualTo("토벌대장"));
+            Assert.That(arrival.Shake, Is.False);
+            Assert.That(arrival.HoldSeconds, Is.EqualTo(1.6f));
+
+            var reinforcement = Code.UI.ViewModels.BossBannerPresenter.Build(
+                new Code.Manager.BossBannerRequest(Code.Manager.BossBannerKind.Reinforcement, 14, "사냥꾼 두목", "호각", 0f));
+            Assert.That(reinforcement.Caption, Is.EqualTo("증원 도착"), "증원·격노는 이미 보스가 나온 뒤라 일차를 붙이지 않는다.");
+            Assert.That(reinforcement.HoldSeconds, Is.EqualTo(Code.UI.ViewModels.BossBannerPresenter.MinHoldSeconds));
+
+            var rage = Code.UI.ViewModels.BossBannerPresenter.Build(
+                new Code.Manager.BossBannerRequest(Code.Manager.BossBannerKind.Rage, 7, null, null, 1.6f));
+            Assert.That(rage.Title, Is.EqualTo("보스 격노"), "보스 이름이 비면 종류 이름을 쓴다.");
+            Assert.That(rage.Subtitle, Is.Empty);
+            Assert.That(rage.Shake, Is.True);
+
+            Assert.That(Code.UI.ViewModels.BossBannerPresenter.BorderColor(Code.Manager.BossBannerKind.Reinforcement),
+                Is.Not.EqualTo(Code.UI.ViewModels.BossBannerPresenter.BorderColor(Code.Manager.BossBannerKind.Arrival)), "증원은 습격과 색이 달라야 한다.");
+            Assert.That(Code.UI.ViewModels.BossBannerPresenter.FillColor(Code.Manager.BossBannerKind.Rage),
+                Is.Not.EqualTo(Code.UI.ViewModels.BossBannerPresenter.FillColor(Code.Manager.BossBannerKind.Arrival)), "격노만 붉은 바탕이다.");
+        }
+
         private static Code.Manager.PolicyDataSO MakePolicy(string name, int gold, int morale, int daily, float damage, int defense, int days)
         {
             var policy = ScriptableObject.CreateInstance<Code.Manager.PolicyDataSO>();

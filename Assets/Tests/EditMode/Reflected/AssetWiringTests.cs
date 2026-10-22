@@ -557,6 +557,37 @@ namespace Tests.EditMode.Gameplay
             }
         }
 
+        /// <summary>
+        /// 보스 배너가 씬에 놓이고 보스 연출(배너 요청)에 이어져 있어야 한다. 예전에는 배너를 요청해도 그리는 화면이 없었다.
+        /// 지도 위에 뜨는 띠라 클릭을 막으면 안 된다(바탕 raycast 없음, 묶음 blocksRaycasts 끔).
+        /// </summary>
+        [Test]
+        public void BossBanner_IsPlacedWiredAndPassesClicks()
+        {
+            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            try
+            {
+                Code.UI.BossBannerView view = null;
+                foreach (var root in scene.GetRootGameObjects())
+                    view ??= root.GetComponentInChildren<Code.UI.BossBannerView>(true);
+
+                Assert.That(view, Is.Not.Null, "보스 배너가 씬에 없습니다. BossBannerBuilder.BuildAll()을 돌리세요.");
+                var wiring = new SerializedObject(view);
+                foreach (var field in new[] { "bossWave", "banner", "group", "fill", "outline", "caption", "title", "subtitle" })
+                    Assert.That(wiring.FindProperty(field).objectReferenceValue, Is.Not.Null, $"보스 배너의 {field}가 비었습니다.");
+
+                var group = (CanvasGroup)wiring.FindProperty("group").objectReferenceValue;
+                Assert.That(group.blocksRaycasts, Is.False, "배너가 지도 클릭을 막으면 안 된다.");
+                foreach (var graphic in ((RectTransform)wiring.FindProperty("banner").objectReferenceValue).GetComponentsInChildren<UnityEngine.UI.Graphic>(true))
+                    Assert.That(graphic.raycastTarget, Is.False, $"{graphic.name}이 클릭을 받으면 지도 클릭이 막힌다(DungeonGraphController.IsPointerOverUi).");
+                Assert.That(view.GetComponentInParent<Canvas>(true).sortingOrder, Is.EqualTo(36));
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
+            }
+        }
+
         [Test]
         public void OpeningRoom_HasFourDoorsAndUsesEastDoorForIntruders()
         {
