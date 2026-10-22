@@ -11,7 +11,7 @@ namespace Code.UI
     /// 예전에는 방 관리·정산만 ESC를 받아 상인·고용·상태·금고 창은 ESC로 닫히지 않았고,
     /// 화면마다 따로 받으면 한 번에 둘이 닫힐 수 있었다.
     ///
-    /// 팝업이나 건물·함정을 놓는 중이면 그쪽이 ESC를 먼저 쓴다. 사건 대화는 골라야 넘어가는 창이라
+    /// 팝업이나 건물·함정을 놓는 중이면 그쪽이 ESC를 먼저 쓴다. 사건 대화·운영 방침 창은 골라야 넘어가는 창이라
     /// 떠 있는 동안 ESC를 쓰지 않는다.
     /// </summary>
     public sealed class UiEscapeRouter : MonoBehaviour
@@ -20,6 +20,8 @@ namespace Code.UI
         private MonoBehaviour[] windows;
         [SerializeField] private SettingsScreenView settings;
         [SerializeField] private DialogueView dialogue;
+        [SerializeField, Tooltip("운영 방침 창. 골라야 닫히는 창이라 떠 있는 동안 ESC를 쓰지 않는다.")]
+        private PolicyChoiceScreenView policyChoice;
 
         private IEscapeClosable[] _windows;
 
@@ -44,6 +46,9 @@ namespace Code.UI
                 return;
 
             if (dialogue != null && dialogue.IsVisible)
+                return;
+
+            if (policyChoice != null && policyChoice.IsOpen)
                 return;
 
             for (var i = 0; i < _windows.Length; i++)

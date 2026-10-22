@@ -2586,6 +2586,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 560138394}
     - target: {fileID: 1016362162346544770, guid: 41700c75582f3cb46af87fd747fb394b, type: 3}
+      propertyPath: policyChoice
+      value: 
+      objectReference: {fileID: 1988278188}
+    - target: {fileID: 1016362162346544770, guid: 41700c75582f3cb46af87fd747fb394b, type: 3}
       propertyPath: windows.Array.size
       value: 8
       objectReference: {fileID: 0}
@@ -4167,11 +4171,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1734988433591678259, guid: bb1959c1772933a49bed44267ced1fb8, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1734988433591678259, guid: bb1959c1772933a49bed44267ced1fb8, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1734988433591678259, guid: bb1959c1772933a49bed44267ced1fb8, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 648
+      objectReference: {fileID: 0}
+    - target: {fileID: 1734988433591678259, guid: bb1959c1772933a49bed44267ced1fb8, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 324
       objectReference: {fileID: 0}
     - target: {fileID: 2369127540383600223, guid: bb1959c1772933a49bed44267ced1fb8, type: 3}
       propertyPath: m_fontColor32.rgba
@@ -4519,7 +4531,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7435162752481521818, guid: a77fa9403fd2f7448abbdb5dbee2f288, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 144
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8573406989139926615, guid: a77fa9403fd2f7448abbdb5dbee2f288, type: 3}
       propertyPath: m_overflowMode
@@ -7245,6 +7257,7 @@ Transform:
   - {fileID: 914943294}
   - {fileID: 886466449}
   - {fileID: 560138393}
+  - {fileID: 1988278187}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1469426849
@@ -9358,19 +9371,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4585626299885849687, guid: 363fa9216385a6e4f83245489e6ecd91, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4585626299885849687, guid: 363fa9216385a6e4f83245489e6ecd91, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4585626299885849687, guid: 363fa9216385a6e4f83245489e6ecd91, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 342
       objectReference: {fileID: 0}
     - target: {fileID: 4585626299885849687, guid: 363fa9216385a6e4f83245489e6ecd91, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 171
       objectReference: {fileID: 0}
     - target: {fileID: 4687071144467165825, guid: 363fa9216385a6e4f83245489e6ecd91, type: 3}
       propertyPath: m_fontColor32.rgba
@@ -9644,6 +9657,135 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e774bff39567a24e808793c577e59e9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.UI.WaveHudView
+--- !u!1001 &1988278186
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1435759162}
+    m_Modifications:
+    - target: {fileID: 4596601751503461283, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: policies
+      value: 
+      objectReference: {fileID: 595499110}
+    - target: {fileID: 4596601751503461283, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: costManager
+      value: 
+      objectReference: {fileID: 1097297361}
+    - target: {fileID: 4596601751503461283, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: recordBoard
+      value: 
+      objectReference: {fileID: 1936833158}
+    - target: {fileID: 4596601751503461283, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: speedController
+      value: 
+      objectReference: {fileID: 174114363}
+    - target: {fileID: 4677917668777522861, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4677917668777522861, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4677917668777522861, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4677917668777522861, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4677917668777522861, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4677917668777522861, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4677917668777522861, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4677917668777522861, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4677917668777522861, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4677917668777522861, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4677917668777522861, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4677917668777522861, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4677917668777522861, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4677917668777522861, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4677917668777522861, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4677917668777522861, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4677917668777522861, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4677917668777522861, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4677917668777522861, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4677917668777522861, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6822083965992749428, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+      propertyPath: m_Name
+      value: PolicyChoiceScreen
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+--- !u!224 &1988278187 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 4677917668777522861, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+  m_PrefabInstance: {fileID: 1988278186}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1988278188 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4596601751503461283, guid: b568b17fae4ffaa43a2d07b6469397bb, type: 3}
+  m_PrefabInstance: {fileID: 1988278186}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 725629f76f51ba84d91ca3dbe2d50920, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.UI.PolicyChoiceScreenView
 --- !u!1 &1997394972
 GameObject:
   m_ObjectHideFlags: 0

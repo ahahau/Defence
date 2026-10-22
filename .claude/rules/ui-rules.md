@@ -35,11 +35,12 @@ UI Toolkit을 모두 걷어냈다. uGUI(A안)로 다시 만드는 중이다. 만
 | 방 상세·설치 창 | `RoomDetailPresenter.Build`, `InstallPanelPresenter.Build`가 ViewModel을 만든다 | 프레젠터 공개 함수 |
 
 - 화면 없이 멈춰 있는 흐름(정산 확인·사건 선택·방 확장 확인·영업 시작)은 위 공개 함수를 Unity CLI로 불러 넘긴다.
-- 운영 방침 창·타이틀·런 종료·HUD는 화면이 통째로 없다. 판단은 `MoralePolicyManager.CurrentChoices`·`SelectPolicy`, `TitleMenuActions` 쪽에 있다.
+- 운영 방침 창(`PolicyChoiceScreenView`, 캔버스 83 — 정산표 84가 닫힌 뒤, 첫날 안내 85 아래, 생성기 `PolicyChoiceBuilder`): `MoralePolicyManager.ChoicesChanged`를 듣고 제시가 있으면 연다. 카드 3장(`PolicyCardSlot`, 값은 `PolicyChoicePresenter`), 강제 선택이라 닫기 버튼·ESC가 없고(라우터 `policyChoice`가 비켜 줌) 열린 동안 시간을 멈춘다. 금화가 모자란 카드는 " · 금화 부족"으로 잠그고, 셋 다 잠기면 "이번에는 공포하지 않음"(`DeclinePolicies`)을 연다(`PolicyChoiceRules`). 공포하면 기록판에 "방침 공포" 줄. 튜토리얼이 비출 카드는 `TryGetCardScreenRect`.
+- 타이틀·런 종료·보스 배너·유물 줄은 아직 화면이 없다. 판단은 `TitleMenuActions`, `BossWavePresenter.RunEndRequested`·`BannerRequested`, `ArtifactPanelView` 쪽에 있다. 일시정지 메뉴는 따로 만들지 않고 설정 창이 맡는다(2026-10-22 사용자 결정).
 - 정산은 `ManagementSettlementManager`가 `ReportOpened`·`ReportClosed`·`LatestReport`를 내고, `ForceHidePanel`로 닫는다(화면: `SettlementScreenView`). 씬에 배선된 옛 uGUI 정산 패널(`panelRoot`)은 캔버스를 잃어 깨져 그려지므로 쓰지 않는다(`_legacyPanelSuppressed` 기본값 참).
 - 튜토리얼이 화면 버튼을 비추는 단계는 각 화면이 화면 사각형을 알려 준다: 영업 시작(`WaveHudView`), 팝업 확인(`PopupView`), 도크 갈래 버튼 → 카드 → 설치·상인 버튼(`RoomManagementScreen.TryGetTutorialTarget`·`TryGetMerchantButtonScreenRect`). 오버레이 요소 사각형은 `UiScreenRect.TryGet`.
 - 도크에 메뉴 버튼은 없다(2026-10-21 사용자 결정으로 뺐다).
-- ESC는 `UiEscapeRouter`(설정 화면 오브젝트에 붙음) 한 곳이 받는다. 위 창부터 하나만 닫고(설정 → 정산표 → 상인 → 고용 → 금고 → 부하 상태 → 모험가 상태 → 방 관리), 닫을 창이 없으면 설정을 연다. 팝업·건물 놓기·사건 대화 중에는 양보한다. 새 창은 `IEscapeClosable`을 구현하고 `SettingsBuilder`의 목록에 넣는다(화면이 따로 ESC를 받지 않는다). `AssetWiringTests.SettingsScreen_IsPlacedAndEveryWindowClosesWithEscape`가 목록을 검사한다.
+- ESC는 `UiEscapeRouter`(설정 화면 오브젝트에 붙음) 한 곳이 받는다. 위 창부터 하나만 닫고(설정 → 정산표 → 상인 → 고용 → 금고 → 부하 상태 → 모험가 상태 → 방 관리), 닫을 창이 없으면 설정을 연다. 팝업·건물 놓기·사건 대화·운영 방침 창 중에는 양보한다. 새 창은 `IEscapeClosable`을 구현하고 `SettingsBuilder`의 목록에 넣는다(화면이 따로 ESC를 받지 않는다). `AssetWiringTests.SettingsScreen_IsPlacedAndEveryWindowClosesWithEscape`가 목록을 검사한다.
 - 설정 화면(`SettingsScreenView`, 캔버스 90, 생성기 `SettingsBuilder`): 효과음·음악 음량, 전체 화면, 다시 시작(확인 팝업), 타이틀로. 열려 있는 동안 시간을 멈춘다. 오른쪽 위 배속 버튼 옆 톱니(`TopHudView.settingsButton`)로도 연다. 생성기 순서: `GameplayHudBuilder` → `RoomManagementBuilder` → `SettingsBuilder`(앞 둘이 다시 놓은 인스턴스를 배선한다). 타이틀 씬의 옛 설정 창(`SettingsPanelView`)은 따로 남아 있다.
 - 지도 클릭(`DungeonGraphController.IsPointerOverUi`)은 화면 UI의 어떤 그림에 닿아도 막힌다(월드 공간 캔버스만 통과). 창·패널 바탕은 `UiKit.Panel(..., raycast: true)`로 클릭을 받게 만들어 뒤의 방이 눌리지 않게 한다. 글자만 있고 바탕이 없는 자리는 뒤로 통과한다.
 

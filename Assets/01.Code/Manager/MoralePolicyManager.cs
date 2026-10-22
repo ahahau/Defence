@@ -70,6 +70,63 @@ namespace Code.Manager
         public IReadOnlyList<PolicyDataSO> CurrentChoices => currentChoices;
         public event System.Action CombatModifiersChanged;
 
+        /// <summary>제시된 방침이 바뀌었다(새로 제시·공포·넘김). 운영 방침 창이 듣고 열고 닫는다.</summary>
+        public event System.Action ChoicesChanged;
+
+        /// <summary>지금 시행 중인 방침과 남은 일수를 채운다(창 머리의 "시행 중" 칩).</summary>
+        public void CollectActivePolicies(List<KeyValuePair<PolicyDataSO, int>> target)
+        {
+            if (target == null)
+                return;
+
+            target.Clear();
+            foreach (var active in activePolicies)
+            {
+                if (active?.Policy != null)
+                    target.Add(new KeyValuePair<PolicyDataSO, int>(active.Policy, active.RemainingDays));
+            }
+        }
+
+        /// <summary>그 방침이 참여하는 조합(짝이 시행 중인지 포함). 창의 조합 칸이 그린다.</summary>
+        public void CollectCombosFor(PolicyDataSO policy, List<(PolicyCombo combo, PolicyDataSO partner, bool partnerActive)> target)
+        {
+            if (target == null)
+                return;
+
+            target.Clear();
+            if (policy == null || policyCombos == null)
+                return;
+
+            foreach (var combo in policyCombos.Combos)
+            {
+                var partner = combo?.GetPartnerOf(policy);
+                if (partner == null)
+                    continue;
+
+                var partnerActive = false;
+                foreach (var active in activePolicies)
+                {
+                    if (active?.Policy == partner)
+                        partnerActive = true;
+                }
+
+                target.Add((combo, partner, partnerActive));
+            }
+        }
+
+        /// <summary>
+        /// 이번 제시를 고르지 않고 넘긴다. 제시된 방침이 모두 금화 부족으로 잠겼을 때 창이 여는 기본 선택이다
+        /// (<see cref="PolicyChoiceRules.ShouldOfferDecline"/>). 금화·민심은 움직이지 않는다.
+        /// </summary>
+        public void DeclinePolicies()
+        {
+            if (currentChoices.Count == 0)
+                return;
+
+            currentChoices.Clear();
+            ChoicesChanged?.Invoke();
+        }
+
         /// <summary>지금 성립한 조합. 화면에 무엇이 걸려 있는지 보여 주는 데 쓴다.</summary>
         public IReadOnlyList<PolicyCombo> ActiveCombos
         {
@@ -156,6 +213,11 @@ namespace Code.Manager
             if (policy == null || !currentChoices.Contains(policy))
                 return;
 
+            // 금화가 모자란 방침은 공포하지 못한다(창도 잠그지만, 다른 경로로 불려도 빚으로 넘어가지 않게).
+            var cost = CostManager.Current;
+            if (cost != null && !PolicyChoiceRules.IsAffordable(policy.GoldDeltaOnSelect, cost.CurrentGold))
+                return;
+
             selectedPolicies.Add(policy);
             currentChoices.Clear();
             // 고른 방침은 다음에 다시 만나면 지속 효과까지 보여 준다.
@@ -165,6 +227,7 @@ namespace Code.Manager
             AddActivePolicy(policy);
             CombatModifiersChanged?.Invoke();
             managementEventChannel?.RaiseEvent(new PolicySelectedEvent(currentDay, policy));
+            ChoicesChanged?.Invoke();
         }
 
         public void OfferPolicies()
@@ -186,7 +249,11 @@ namespace Code.Manager
 
             if (currentChoices.Count > 0)
                 managementEventChannel?.RaiseEvent(new PolicyChoicesOfferedEvent(currentDay, currentChoices));
+            ChoicesChanged?.Invoke();
         }
+
+        /// <summary>제시가 열린 날(창 제목의 일차).</summary>
+        public int OfferDay => currentDay;
 
         private void HandleDayChanged(DayChangedEvent evt)
         {
@@ -414,7 +481,7 @@ namespace Code.Manager
         /// 이름 뒤에 붙는 "와/과"를 고른다. 한글 음절의 받침 유무로 갈린다 —
         /// 고정으로 "와"를 쓰면 "계엄령와"처럼 읽는 사람이 걸리는 문장이 나온다.
         /// </summary>
-        private static string WithParticle(string noun)
+        public static string WithParticle(string noun)
         {
             if (string.IsNullOrEmpty(noun))
                 return noun;
@@ -427,7 +494,8 @@ namespace Code.Manager
             return noun + (hasFinalConsonant ? "과" : "와");
         }
 
-        private static string DescribeComboEffect(PolicyCombo combo)
+        /// <summary>조합의 추가 효과 한 줄("공격 +15% · 방어 +3 · 민심 -2/일"). 운영 방침 창도 쓴다.</summary>
+        public static string DescribeComboEffect(PolicyCombo combo)
         {
             var parts = new List<string>();
             if (!Mathf.Approximately(combo.UnitDamageMultiplier, 1f))

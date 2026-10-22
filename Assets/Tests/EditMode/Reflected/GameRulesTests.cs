@@ -1075,5 +1075,87 @@ namespace Tests.EditMode.Rules
             Assert.That(CallStatic(rules, "IsArtifactUnlocked", 2), Is.True,
                 "첫 방어를 마친 뒤 유물 계층이 열려야 합니다.");
         }
+
+        /// <summary>
+        /// 금화가 모자란 방침은 잠그고(예전에는 그대로 차감했다), 셋 다 잠기면 "이번에는 공포하지 않음"을 연다 —
+        /// 강제 선택 창이 고를 것 없이 시간을 멈춰 두면 판이 굳는다(사용자 결정 2026-10-22).
+        /// </summary>
+        [Test]
+        public void PolicyChoice_LocksUnaffordableAndOffersDeclineOnlyWhenAllLocked()
+        {
+            Assert.That(Code.Manager.PolicyChoiceRules.IsAffordable(-70, 69), Is.False);
+            Assert.That(Code.Manager.PolicyChoiceRules.IsAffordable(-70, 70), Is.True);
+            Assert.That(Code.Manager.PolicyChoiceRules.IsAffordable(120, 0), Is.True, "금화를 받는 방침은 늘 고를 수 있다.");
+            Assert.That(Code.Manager.PolicyChoiceRules.IsAffordable(0, 0), Is.True);
+
+            Assert.That(Code.Manager.PolicyChoiceRules.ShouldOfferDecline(new[] { false, false, false }), Is.True);
+            Assert.That(Code.Manager.PolicyChoiceRules.ShouldOfferDecline(new[] { false, true, false }), Is.False);
+            Assert.That(Code.Manager.PolicyChoiceRules.ShouldOfferDecline(Array.Empty<bool>()), Is.False, "제시가 없으면 창도 없다.");
+        }
+
+        /// <summary>
+        /// 방침 카드 값: 효과는 0인 항목을 빼고 금화 → 민심 → 매일 민심 → 부하 공격 → 부하 방어 순으로, 좋은 쪽은 초록·나쁜 쪽은 빨강.
+        /// 짝이 시행 중이면 조합 칸이 "조합 성립"(금색), 아니면 묶이는 짝 목록. 모두 잠기면 기본 선택이 열린다.
+        /// </summary>
+        [Test]
+        public void PolicyChoicePresenter_ListsEffectsCombosAndLocks()
+        {
+            var draft = MakePolicy("비상 징집", gold: 30, morale: -8, daily: -2, damage: 1.1f, defense: 3, days: 3);
+            var martial = MakePolicy("계엄령", gold: 0, morale: -20, daily: -3, damage: 1.35f, defense: 5, days: 5);
+            var rite = MakePolicy("주술 의식", gold: -70, morale: -6, daily: 0, damage: 1f, defense: 0, days: 4);
+            var combo = new Code.Manager.PolicyCombo();
+            var comboData = typeof(Code.Manager.PolicyCombo);
+            comboData.GetField("displayName", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(combo, "총동원 체제");
+            comboData.GetField("first", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(combo, draft);
+            comboData.GetField("second", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(combo, martial);
+            comboData.GetField("unitDamageMultiplier", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(combo, 1.15f);
+            try
+            {
+                var card = Code.UI.ViewModels.PolicyChoicePresenter.BuildCard(draft, true,
+                    new[] { (combo, martial, true) });
+                Assert.That(card.EffectLabels, Is.EqualTo("금화\n민심\n매일 민심\n부하 공격\n부하 방어"));
+                StringAssert.Contains("+30", card.EffectValues);
+                StringAssert.Contains("+10%", card.EffectValues);
+                Assert.That(card.Duration, Is.EqualTo("3일간"));
+                Assert.That(card.ComboComplete, Is.True);
+                Assert.That(card.ComboTitle, Is.EqualTo("조합 성립 · 총동원 체제"));
+                StringAssert.StartsWith("계엄령과 함께", card.ComboBody);
+
+                var waiting = Code.UI.ViewModels.PolicyChoicePresenter.BuildCard(draft, true, new[] { (combo, martial, false) });
+                Assert.That(waiting.ComboComplete, Is.False);
+                Assert.That(waiting.ComboTitle, Is.EqualTo("함께 쓰면"));
+                Assert.That(waiting.ComboBody, Is.EqualTo("계엄령 → 총동원 체제"));
+
+                var poor = Code.UI.ViewModels.PolicyChoicePresenter.Build(new[] { rite }, 3, 10, 50, null, _ => null);
+                Assert.That(poor.Cards[0].Locked, Is.True);
+                Assert.That(poor.Cards[0].ButtonLabel, Does.EndWith(" · 금화 부족"));
+                Assert.That(poor.ShowDecline, Is.True, "하나뿐인 방침이 잠기면 기본 선택이 열려야 한다.");
+
+                var mixed = Code.UI.ViewModels.PolicyChoicePresenter.Build(new[] { rite, draft }, 3, 10, 50, null, _ => null);
+                Assert.That(mixed.ShowDecline, Is.False);
+                Assert.That(mixed.Title, Is.EqualTo("운영 방침 · 3일차"));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(draft);
+                UnityEngine.Object.DestroyImmediate(martial);
+                UnityEngine.Object.DestroyImmediate(rite);
+            }
+        }
+
+        private static Code.Manager.PolicyDataSO MakePolicy(string name, int gold, int morale, int daily, float damage, int defense, int days)
+        {
+            var policy = ScriptableObject.CreateInstance<Code.Manager.PolicyDataSO>();
+            var data = new UnityEditor.SerializedObject(policy);
+            data.FindProperty("displayName").stringValue = name;
+            data.FindProperty("goldDeltaOnSelect").intValue = gold;
+            data.FindProperty("moraleDeltaOnSelect").intValue = morale;
+            data.FindProperty("dailyMoraleDelta").intValue = daily;
+            data.FindProperty("unitDamageMultiplier").floatValue = damage;
+            data.FindProperty("unitDefenseBonus").intValue = defense;
+            data.FindProperty("durationDays").intValue = days;
+            data.ApplyModifiedPropertiesWithoutUndo();
+            return policy;
+        }
     }
 }

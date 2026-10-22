@@ -470,6 +470,49 @@ namespace Tests.EditMode.Gameplay
             }
         }
 
+        /// <summary>
+        /// 운영 방침 창이 씬에 놓이고 방침 관리자·금화·시간·기록판에 이어져 있어야 한다. 예전에는 방침을 내놓아도 그리는 화면이 없어
+        /// 아무도 고르지 못했고 방침·조합 효과가 한 번도 걸리지 않았다. 강제 선택 창이라 ESC 라우터가 떠 있는 동안 비켜야 한다.
+        /// </summary>
+        [Test]
+        public void PolicyChoiceScreen_IsPlacedWiredAndBlocksEscape()
+        {
+            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            try
+            {
+                Code.UI.PolicyChoiceScreenView view = null;
+                Code.UI.UiEscapeRouter router = null;
+                foreach (var root in scene.GetRootGameObjects())
+                {
+                    view ??= root.GetComponentInChildren<Code.UI.PolicyChoiceScreenView>(true);
+                    router ??= root.GetComponentInChildren<Code.UI.UiEscapeRouter>(true);
+                }
+
+                Assert.That(view, Is.Not.Null, "운영 방침 창이 씬에 없습니다. PolicyChoiceBuilder.BuildAll()을 돌리세요.");
+                var wiring = new SerializedObject(view);
+                foreach (var field in new[] { "policies", "costManager", "speedController", "recordBoard", "root", "title", "moraleFill", "footer", "declineButton" })
+                    Assert.That(wiring.FindProperty(field).objectReferenceValue, Is.Not.Null, $"운영 방침 창의 {field}가 비었습니다.");
+
+                var cards = wiring.FindProperty("cards");
+                Assert.That(cards.arraySize, Is.EqualTo(3), "방침 카드는 세 장이다(제시 수 3).");
+                for (var i = 0; i < cards.arraySize; i++)
+                {
+                    var slot = new SerializedObject(cards.GetArrayElementAtIndex(i).objectReferenceValue);
+                    foreach (var field in new[] { "cardName", "duration", "description", "effectLabels", "effectValues", "comboBack", "comboTitle", "comboBody", "choose" })
+                        Assert.That(slot.FindProperty(field).objectReferenceValue, Is.Not.Null, $"방침 카드 {i}의 {field}가 비었습니다.");
+                }
+
+                Assert.That(view.GetComponentInParent<Canvas>(true).sortingOrder, Is.EqualTo(83), "정산표(84)가 닫힌 뒤 뜨고 첫날 안내(85) 아래여야 한다.");
+                Assert.That(router, Is.Not.Null);
+                Assert.That(new SerializedObject(router).FindProperty("policyChoice").objectReferenceValue, Is.EqualTo(view),
+                    "강제 선택 창이 떠 있는 동안 ESC가 설정을 열면 안 된다.");
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
+            }
+        }
+
         [Test]
         public void OpeningRoom_HasFourDoorsAndUsesEastDoorForIntruders()
         {

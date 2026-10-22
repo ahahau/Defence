@@ -1,5 +1,12 @@
 # Sequences
 
+- 2026-10-22 · 운영 방침 창(사용자: "남은 UI 화면을 만들자" → "운영 방침 창 목업부터, 일시정지 메뉴는 설정 창으로 대신" → 목업 승인 + "금화가 모자라면 그 카드는 ' · 금화 부족'으로 잠그고, 셋 다 잠기면 금화를 쓰지 않는 기본 선택을 하나 열어줘").
+  - 원인: 방침을 내놓아도(`PolicyChoicesOfferedEvent`) 듣는 화면이 없어 아무도 고르지 못했다. 방침·민심·조합 효과가 한 번도 걸리지 않았다.
+  - 화면: `PolicyChoiceScreenView`(캔버스 83, 가운데 1120×660, 생성기 `PolicyChoiceBuilder`). 머리 = 제목·안내·민심 막대(40 미만 호박색·20 미만 빨강)·시행 중 방침과 남은 일수. 카드 3장(`PolicyCardSlot`) = 이름·기간("N일간"/즉시)·설명·효과 최대 5줄(금화·민심·매일 민심·부하 공격·부하 방어, 0 생략, 좋음 초록·나쁨 빨강)·조합 칸(짝이 시행 중이면 금색 "조합 성립 · 이름 · 효과", 아니면 "함께 쓰면 짝 → 조합", 자리 고정)·공포 버튼. 바닥 = "이번에는 공포하지 않음"(자리 고정, 셋 다 잠겼을 때만)·안내 한 줄. 값은 `PolicyChoicePresenter`.
+  - 동작: `MoralePolicyManager.ChoicesChanged`(새 이벤트)를 듣고 연다. 강제 선택이라 닫기·ESC 없음(`UiEscapeRouter.policyChoice`가 비킴), 열린 동안 `GameSpeedController.Suspend`. 금화 부족은 `PolicyChoiceRules.IsAffordable`로 잠그고 `SelectPolicy`도 같은 규칙으로 거절한다(창 밖 경로도 빚으로 넘어가지 않게). 셋 다 잠기면 `DeclinePolicies`(금화·민심 그대로). 공포하면 기록판에 "방침 공포 · 이름". 튜토리얼용 `TryGetCardScreenRect`.
+  - 테스트: `GameRulesTests.PolicyChoice_LocksUnaffordableAndOffersDeclineOnlyWhenAllLocked`·`PolicyChoicePresenter_ListsEffectsCombosAndLocks`, `AssetWiringTests.PolicyChoiceScreen_IsPlacedWiredAndBlocksEscape`. 전체 EditMode 376/377 — 실패 1건 `UnitMarketTests.Roster_QuotesTheSamePriceItWillCharge`는 무작위 시세 경계에서 가끔 깨지는 기존 테스트(단독 3회 모두 통과, 이번 변경과 무관, 고치지 않음).
+  - 플레이(세이브 원복): 방침 제시 → 창 열림·timeScale 0. 비상 징집 공포 → 창 닫힘·timeScale 1·금화 200→230·민심 50→42·시행 중 3일·기록판 줄. 계엄령이 섞인 제시 → 계엄령 카드에 금색 "조합 성립 · 총동원 체제". 금화 30에 금화 쓰는 방침 셋 → 셋 다 잠김·눌러도 변화 없음·기본 선택 보임 → 누르면 닫힘·금화·민심 그대로. 잠긴 카드의 "금화 부족" 글자가 흐려 읽히지 않아 카드 흐림을 0.55 → 0.75로 올림.
+
 - 2026-10-22 · 파티는 전투 전까지만 줄로 걷기(사용자: "파티에 경우 전투에 들어가기전까지만 줄로 따라다니는거고 전투에 들어가면 그거 무시하고 전투" → "계획대로, 수정 전후 실측도").
   - 원인: `EnemyMover`가 한 번 시작한 걸음(방 둘러보기·리더 동선 따라가기·방 옮기기)을 싸움이 붙어도 끝까지 걸었다. 방을 옮기는 걸음은 순회 잠금(`BeginTraversal`)이 걸려 전투 행동이 막히는데, 잠금은 새 방의 줄 자리(`FormationOffset`)에 닿아야 풀려 동료가 싸우는 동안 뒤 파티원은 줄 자리까지 걸어가기만 했다.
   - 수정: `WalkPath`가 싸움(전투 중이거나 방에 상대가 있음)이 붙으면 걸음을 그만둔다(`PartyCohesionRules.ShouldBreakWalkForCombat`). 방 안 걸음은 즉시, 방 옮기는 걸음은 몸이 새 방 바닥 칸 위에 들어선 뒤에만(`EnemyMover.IsOnCurrentRoomFloor`), 귀환은 끊지 않는다. 그친 뒤에는 순회 잠금을 풀고 도착 처리·라인 건물 알림은 그대로, 벽 부수기는 건너뛴다. 싸움이 끝나면 다음 차례에 기존대로 리더 동선·줄 자리로 모인다.
