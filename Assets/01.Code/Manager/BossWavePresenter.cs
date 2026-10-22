@@ -46,8 +46,8 @@ namespace Code.Manager
         /// <summary>보스 배너를 띄운다(제목, 부제, 최종전 여부, 유지 시간). 그리는 화면은 지금 없다(uGUI 전환 대기).</summary>
         public event System.Action<string, string, bool, float> BannerRequested;
 
-        /// <summary>판이 끝나 결과 화면을 띄운다(제목, 한 줄 요약).</summary>
-        public event System.Action<string, string> RunEndRequested;
+        /// <summary>판이 끝나 결과 화면을 띄운다(제목, 한 줄 요약, 이겼는가).</summary>
+        public event System.Action<string, string, bool> RunEndRequested;
 
         private void Awake()
         {
@@ -125,7 +125,7 @@ namespace Code.Manager
         /// <summary>최종 보스 웨이브 클리어 — 승리 패널을 띄우고 게임을 멈춘다.</summary>
         public void ShowVictoryPanel(int day)
         {
-            ShowRunEndPanel("던전 사수 성공!", $"{day}일간의 침공을 모두 막아냈습니다", finalBannerColor);
+            ShowRunEndPanel("던전 사수 성공!", $"{day}일간의 침공을 모두 막아냈습니다", true);
         }
 
         /// <summary>
@@ -137,14 +137,14 @@ namespace Code.Manager
             var headline = string.IsNullOrWhiteSpace(reason)
                 ? $"{day}일차에 던전이 무너졌습니다"
                 : reason;
-            ShowRunEndPanel("던전 함락", headline, defeatPanelColor);
+            ShowRunEndPanel("던전 함락", headline, false);
         }
 
         /// <summary>
         /// 승리와 패배가 같은 패널을 쓴다. 둘이 동시에 뜰 일이 없고,
         /// 무엇이 남았는지 돌아보는 화면이라는 점에서 내용도 같다.
         /// </summary>
-        private void ShowRunEndPanel(string title, string headline, Color accent)
+        private void ShowRunEndPanel(string title, string headline, bool victory)
         {
             // 런 종료 뒤의 이어하기는 끝난 판을 되살릴 수 없다. 재시작 버튼을 누를 때까지
             // 저장을 남기면 타이틀에서 끝난 런을 이어하는 모순이 생긴다.
@@ -155,7 +155,7 @@ namespace Code.Manager
             else
                 Time.timeScale = 0f;
 
-            RunEndRequested?.Invoke(title, headline);
+            RunEndRequested?.Invoke(title, headline, victory);
         }
 
         private void ResolveDependencies()

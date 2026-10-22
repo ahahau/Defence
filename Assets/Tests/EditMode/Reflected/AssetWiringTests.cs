@@ -513,6 +513,50 @@ namespace Tests.EditMode.Gameplay
             }
         }
 
+        /// <summary>
+        /// 판 종료 결과 화면이 씬에 놓이고 보스 연출(결과 요청)·전과·해금 목록에 이어져 있어야 한다. 예전에는 판이 끝나도 그리는 화면이 없어
+        /// 게임이 멈춘 채로 남았다. 판이 끝난 화면이라 다른 창 위(95)에 뜨고, 떠 있는 동안 ESC가 설정을 열면 안 된다.
+        /// </summary>
+        [Test]
+        public void RunEndScreen_IsPlacedWiredAndBlocksEscape()
+        {
+            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            try
+            {
+                Code.UI.RunEndScreenView view = null;
+                Code.UI.UiEscapeRouter router = null;
+                foreach (var root in scene.GetRootGameObjects())
+                {
+                    view ??= root.GetComponentInChildren<Code.UI.RunEndScreenView>(true);
+                    router ??= root.GetComponentInChildren<Code.UI.UiEscapeRouter>(true);
+                }
+
+                Assert.That(view, Is.Not.Null, "판 종료 화면이 씬에 없습니다. RunEndBuilder.BuildAll()을 돌리세요.");
+                var wiring = new SerializedObject(view);
+                foreach (var field in new[] { "bossWave", "runSummary", "dayManager", "speedController", "unlockCatalog", "root", "title", "headline",
+                             "days", "bestBadge", "statLabels", "statValues", "progressBefore", "progressAfter", "unlockEmpty", "titleButton", "restartButton" })
+                    Assert.That(wiring.FindProperty(field).objectReferenceValue, Is.Not.Null, $"판 종료 화면의 {field}가 비었습니다.");
+
+                var slots = wiring.FindProperty("unlockSlots");
+                Assert.That(slots.arraySize, Is.EqualTo(Code.UI.ViewModels.RunEndPresenter.MaxUnlockRows));
+                for (var i = 0; i < slots.arraySize; i++)
+                {
+                    var slot = new SerializedObject(slots.GetArrayElementAtIndex(i).objectReferenceValue);
+                    foreach (var field in new[] { "iconFrame", "icon", "unlockName", "detail" })
+                        Assert.That(slot.FindProperty(field).objectReferenceValue, Is.Not.Null, $"새로 열림 줄 {i}의 {field}가 비었습니다.");
+                }
+
+                Assert.That(view.GetComponentInParent<Canvas>(true).sortingOrder, Is.EqualTo(95), "방침(83)·정산표(84)·설정(90) 위, 팝업(100) 아래여야 한다.");
+                Assert.That(router, Is.Not.Null);
+                Assert.That(new SerializedObject(router).FindProperty("runEnd").objectReferenceValue, Is.EqualTo(view),
+                    "판 종료 화면이 떠 있는 동안 ESC가 설정을 열면 안 된다.");
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
+            }
+        }
+
         [Test]
         public void OpeningRoom_HasFourDoorsAndUsesEastDoorForIntruders()
         {

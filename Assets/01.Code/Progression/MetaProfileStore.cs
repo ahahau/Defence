@@ -87,6 +87,7 @@ namespace Code.Progression
             var points = MetaProgressRules.RunPoints(days, run.bossesDefeated);
             var slotsBefore = MetaProgressRules.SlotCount(profile.progress);
             var newBestDay = days > profile.bestDay;
+            var previousBestDay = profile.bestDay;
 
             profile.runsPlayed++;
             profile.progress += points;
@@ -99,7 +100,8 @@ namespace Code.Progression
             Save();
 
             var result = new MetaRunResult(
-                points, profile.progress, days, newBestDay, slotsBefore, MetaProgressRules.SlotCount(profile.progress));
+                points, profile.progress, days, newBestDay, slotsBefore, MetaProgressRules.SlotCount(profile.progress),
+                run.bossesDefeated, previousBestDay);
             LastResult = result;
             return result;
         }

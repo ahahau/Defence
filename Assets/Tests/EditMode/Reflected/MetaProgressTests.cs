@@ -71,6 +71,63 @@ namespace Tests.EditMode.Rules
             Assert.That(profile.progress, Is.EqualTo(21));
         }
 
+        /// <summary>
+        /// 판 종료 결과 화면 값. 예전에는 판이 끝나도 그리는 화면이 없어 버틴 날·진행도·새로 열린 것을 볼 곳이 없었다.
+        /// 정산 뒤에는 이번 판 기록(잡은 보스)과 지난 최고 기록이 덮이므로 결과에 남아야 하고, 이번 판으로 넘은 단계의 콘텐츠·보정만 "새로 열림"에 오른다.
+        /// </summary>
+        [Test]
+        public void RunEndScreen_ShowsStatsProgressAndNewUnlocks()
+        {
+            MetaProfileStore.Profile.progress = 4;
+            MetaProfileStore.Profile.bestDay = 9;
+            MetaProfileStore.RecordBossDefeat();
+            var result = MetaProfileStore.RecordRunEnd(14, 2);
+            Assert.That(result.BossesDefeated, Is.EqualTo(1));
+            Assert.That(result.PreviousBestDay, Is.EqualTo(9), "새 기록이어도 지난 최고가 남아야 한다.");
+            Assert.That(result.ProgressBefore, Is.EqualTo(4));
+            Assert.That(result.TotalProgress, Is.EqualTo(28));
+
+            var catalog = UnityEditor.AssetDatabase.LoadAssetAtPath<DungeonUnlockCatalogSO>("Assets/07.SO/Progression/DungeonUnlockCatalog.asset");
+            Assert.That(catalog, Is.Not.Null);
+            var unlocks = new System.Collections.Generic.List<Code.UI.ViewModels.RunEndUnlockViewModel>();
+            Code.UI.ViewModels.RunEndPresenter.AddCatalogUnlocks(catalog.Entries, 4, 28, unlocks);
+            var catalogCount = unlocks.Count;
+            foreach (var entry in catalog.Entries)
+            {
+                var opened = unlocks.Exists(u => u.Name == entry.DisplayName);
+                Assert.That(opened, Is.EqualTo(entry.MetaProgressRequired is 10 or 25),
+                    $"{entry.DisplayName}(진행도 {entry.MetaProgressRequired})는 4 → 28에서 {(opened ? "열리지 않아야" : "열려야")} 한다.");
+            }
+
+            Code.UI.ViewModels.RunEndPresenter.AddModifierUnlocks(4, 28, unlocks);
+            Assert.That(unlocks.Count, Is.EqualTo(catalogCount + 1), "진행도 20의 민심 안정만 새로 열린다(비상금은 처음부터 열림).");
+            Assert.That(unlocks[^1].Name, Is.EqualTo(MetaProgressRules.Label(MetaModifier.SteadyMorale)));
+
+            var model = Code.UI.ViewModels.RunEndPresenter.Build("던전 함락", "파산했습니다", false, 14,
+                new Code.UI.ViewModels.RunEndStats(13, 182, 170, 48210, 21940, 312, 3800), result, unlocks);
+            Assert.That(model.Days, Is.EqualTo("14일"));
+            Assert.That(model.NewBest, Is.True);
+            Assert.That(model.BestNote, Is.EqualTo("지난 최고 9일"));
+            Assert.That(model.StatLabels.Split('\n').Length, Is.EqualTo(model.StatValues.Split('\n').Length), "전과 이름과 값 줄 수가 같아야 한다.");
+            StringAssert.Contains("48,210", model.StatValues);
+            Assert.That(model.ProgressRange, Is.EqualTo("4 → 28"));
+            StringAssert.StartsWith("+24", model.ProgressGain);
+            Assert.That(model.BeforeRatio, Is.EqualTo(4f / 50f).Within(0.001f), "막대는 다음 단계(50) 기준이다.");
+            Assert.That(model.AfterRatio, Is.EqualTo(28f / 50f).Within(0.001f));
+            Assert.That(model.ProgressNote, Is.EqualTo("다음 단계 50까지 22"));
+            Assert.That(model.Unlocks.Count, Is.LessThanOrEqualTo(Code.UI.ViewModels.RunEndPresenter.MaxUnlockRows));
+            if (unlocks.Count > Code.UI.ViewModels.RunEndPresenter.MaxUnlockRows)
+                Assert.That(model.Unlocks[^1].IsMore, Is.True, "줄이 넘치면 마지막 줄이 \"+N개 더\"여야 한다.");
+            Assert.That(model.UnlockEmpty, Is.Empty);
+
+            var quiet = Code.UI.ViewModels.RunEndPresenter.Build("던전 함락", "쓰러졌습니다", false, 3, default,
+                new MetaRunResult(3, 31, 3, false, 2, 2, 0, 14), null);
+            Assert.That(quiet.NewBest, Is.False);
+            Assert.That(quiet.BestNote, Is.EqualTo("최고 기록 14일"));
+            Assert.That(quiet.Unlocks, Is.Empty);
+            Assert.That(quiet.UnlockEmpty, Is.Not.Empty, "새로 열린 것이 없으면 빈 자리에 안내를 쓴다.");
+        }
+
         [Test]
         public void Equip_RespectsUnlocksAndSlots()
         {

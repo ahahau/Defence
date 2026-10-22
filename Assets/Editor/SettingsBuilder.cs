@@ -34,6 +34,7 @@ public static class SettingsBuilder
         UiKit.Wire(router, "settings", settings);
         UiKit.Wire(router, "dialogue", Object.FindAnyObjectByType<DialogueView>(FindObjectsInactive.Include));
         UiKit.Wire(router, "policyChoice", Object.FindAnyObjectByType<PolicyChoiceScreenView>(FindObjectsInactive.Include));
+        UiKit.Wire(router, "runEnd", Object.FindAnyObjectByType<RunEndScreenView>(FindObjectsInactive.Include));
         // 위에 그려지는 창부터. 한 번의 ESC는 이 순서로 처음 열린 창 하나만 닫는다.
         UiKit.WireArray(router, "windows", new Object[]
         {

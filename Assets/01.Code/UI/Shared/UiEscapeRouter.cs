@@ -22,6 +22,8 @@ namespace Code.UI
         [SerializeField] private DialogueView dialogue;
         [SerializeField, Tooltip("운영 방침 창. 골라야 닫히는 창이라 떠 있는 동안 ESC를 쓰지 않는다.")]
         private PolicyChoiceScreenView policyChoice;
+        [SerializeField, Tooltip("판 종료 결과 화면. 판이 끝났으므로 떠 있는 동안 ESC로 설정을 열지 않는다.")]
+        private RunEndScreenView runEnd;
 
         private IEscapeClosable[] _windows;
 
@@ -49,6 +51,9 @@ namespace Code.UI
                 return;
 
             if (policyChoice != null && policyChoice.IsOpen)
+                return;
+
+            if (runEnd != null && runEnd.IsOpen)
                 return;
 
             for (var i = 0; i < _windows.Length; i++)
