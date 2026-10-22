@@ -322,7 +322,7 @@ namespace Code.Enemies
 
             _sharedExploreRoute.Clear();
             _sharedExploreRoute.AddRange(_exploreRoute);
-            yield return WalkPath(_exploreRoute, -1, null, null);
+            yield return WalkPath(_exploreRoute, -1, null, null, true);
         }
 
         /// <summary>방 모양이 없는 방(예전 노드·테스트)의 짧은 어슬렁거림.</summary>
@@ -337,7 +337,7 @@ namespace Code.Enemies
             _walkPoints.Clear();
             _walkPoints.Add(anchor + new Vector3(offset.x, offset.y, 0f));
             _sharedExploreRoute.AddRange(_walkPoints);
-            yield return WalkPath(_walkPoints, -1, null, null);
+            yield return WalkPath(_walkPoints, -1, null, null, true);
         }
 
         /// <summary>둘러볼 곳: 걸을 수 있는 칸 중 무작위 한 곳(지금 칸은 피한다).</summary>
@@ -385,18 +385,21 @@ namespace Code.Enemies
             var targetPos = GetEnemyPosition(_currentNode);
 
             // 칸막이 때문에 크게 돌아가야 하면 벽 앞까지 가서 부수고, 나머지 길을 이어 간다.
+            // 새 방 안에 들어선 뒤 싸움이 붙으면 줄 자리까지 가지 않고 그 자리에서 전투에 맡긴다.
             if (TryPlanSmash(fromNode, targetPos, out var smashStand, out var wall))
             {
-                yield return WalkRoute(fromNode, smashStand, edgeBuilding);
+                yield return WalkRoute(fromNode, smashStand, edgeBuilding, true);
+                if (_walkBrokenForCombat)
+                    yield break;
                 yield return SmashPartition(wall);
                 if (_currentNode == null)
                     yield break;
 
-                yield return WalkRoute(null, targetPos, null);
+                yield return WalkRoute(null, targetPos, null, true);
                 yield break;
             }
 
-            yield return WalkRoute(fromNode, targetPos, edgeBuilding);
+            yield return WalkRoute(fromNode, targetPos, edgeBuilding, true);
         }
 
         /// <summary>
@@ -472,7 +475,8 @@ namespace Code.Enemies
             }
         }
 
-        private IEnumerator WalkRoute(Node fromNode, Vector3 targetPos, global::Code.Buildings.Building edgeBuilding)
+        private IEnumerator WalkRoute(Node fromNode, Vector3 targetPos, global::Code.Buildings.Building edgeBuilding,
+            bool breakForCombat = false)
         {
             var start = transform.position;
             var doorIndex = -1;
@@ -487,7 +491,38 @@ namespace Code.Enemies
             var doorFrom = fromNode;
             var doorTo = _currentNode;
             var pauseAt = doorIndex >= 0 && doorIndex < _walkPoints.Count - 1 ? doorIndex : -1;
-            yield return WalkPath(_walkPoints, pauseAt, () => OpenDoorsBetween(doorFrom, doorTo), edgeBuilding);
+            yield return WalkPath(_walkPoints, pauseAt, () => OpenDoorsBetween(doorFrom, doorTo), edgeBuilding,
+                breakForCombat, fromNode != null);
+        }
+
+        /// <summary>마지막 걸음이 싸움 때문에 중간에 그쳤는지. 그친 뒤 이어지는 걸음(벽 부수기 등)을 건너뛴다.</summary>
+        private bool _walkBrokenForCombat;
+
+        /// <summary>몸이 지금 방(<c>_currentNode</c>)의 걸을 수 있는 바닥 칸 위인지. 방 모양이 없으면 아레나 반경 안인지.</summary>
+        private bool IsOnCurrentRoomFloor()
+        {
+            if (_currentNode == null)
+                return false;
+
+            var grid = _currentNode.TrapGrid;
+            if (grid != null)
+                return grid.TryGetCell(transform.position, out var column, out var row) && grid.IsWalkableCell(column, row);
+
+            var battlefield = CurrentBattlefield;
+            return battlefield != null && battlefield.ArenaRadius > 0f
+                   && Vector2.Distance(transform.position, _currentNode.transform.position) <= battlefield.ArenaRadius;
+        }
+
+        private bool ShouldBreakWalkForCombat(bool crossingRooms, bool passedDoor)
+        {
+            var battlefield = CurrentBattlefield;
+            var hasOpponents = battlefield != null && _battleAgent != null && battlefield.HasOpponents(_battleAgent.Team);
+            return PartyCohesionRules.ShouldBreakWalkForCombat(
+                _ownerEnemy != null && _ownerEnemy.IsReturning,
+                crossingRooms,
+                passedDoor,
+                _ownerEnemy != null && _ownerEnemy.IsInCombat,
+                hasOpponents);
         }
 
         /// <summary>
@@ -497,20 +532,32 @@ namespace Code.Enemies
         ///
         /// 예전에는 DOTween 경로를 거리와 상관없이 정해진 시간(최대 1.5초)에 가감속 곡선으로 끝내, 방 사이는 내달리고
         /// 방 안은 느리며 미끄러지듯 움직였다. 이동 한 번에 큰 점프·찌그러짐·기울기도 한 번씩 들어갔다.
+        ///
+        /// <paramref name="breakForCombat"/>이면 싸움이 붙는 순간 그만둔다(줄은 전투 전까지만 따른다,
+        /// <see cref="PartyCohesionRules.ShouldBreakWalkForCombat"/>). 방을 옮기는 걸음(<paramref name="crossingRooms"/>)은
+        /// 몸이 새 방 바닥 위에 들어선 뒤에만 그만둔다.
         /// </summary>
         private IEnumerator WalkPath(List<Vector3> points, int pauseAt, Action atPause,
-            global::Code.Buildings.Building edgeBuilding)
+            global::Code.Buildings.Building edgeBuilding, bool breakForCombat = false, bool crossingRooms = false)
         {
+            _walkBrokenForCombat = false;
             ResetVisualPose();
             var halfway = RoomRoute.Length(transform.position, points) * 0.5f;
             var travelled = 0f;
             var edgeAnnounced = edgeBuilding == null;
-            for (var i = 0; i < points.Count; i++)
+            for (var i = 0; i < points.Count && !_walkBrokenForCombat; i++)
             {
                 var target = points[i];
                 FaceMoveDirection(target - transform.position);
                 while (true)
                 {
+                    // 문 경유점 번호로는 알 수 없다(떠나는 방의 문일 수 있고, 방 사이 길이 길다). 몸이 새 방 바닥 위인지 본다.
+                    if (breakForCombat && ShouldBreakWalkForCombat(crossingRooms, !crossingRooms || IsOnCurrentRoomFloor()))
+                    {
+                        _walkBrokenForCombat = true;
+                        break;
+                    }
+
                     var here = transform.position;
                     var remaining = Vector3.Distance(here, target);
                     var step = PartyWalkSpeed * Time.deltaTime;
@@ -533,7 +580,7 @@ namespace Code.Enemies
                     yield return null;
                 }
 
-                if (i != pauseAt)
+                if (_walkBrokenForCombat || i != pauseAt)
                     continue;
 
                 ResetVisualPose();

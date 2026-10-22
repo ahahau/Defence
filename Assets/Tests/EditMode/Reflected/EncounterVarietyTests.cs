@@ -339,6 +339,23 @@ namespace Tests.EditMode.Gameplay
             Assert.That(Code.Enemies.PartyCohesionRules.ShouldWaitForMember(moving, busy, sameRoom, full), Is.EqualTo(expected));
         }
 
+        /// <summary>
+        /// 파티는 전투에 들어가기 전까지만 줄로 걷는다. 걷기 시작한 동선을 끝까지 걸어, 상대가 있는 방에서도
+        /// 순회 잠금에 묶여 싸우지 못했다(1일차 실측 39%). 방을 옮기는 걸음은 문을 지난 뒤에만 끊고, 귀환은 끊지 않는다.
+        /// </summary>
+        [TestCase(false, false, false, false, true, true, TestName = "PartyWalk_InRoomWalkStopsWhenOpponentsAppear")]
+        [TestCase(false, false, false, true, false, true, TestName = "PartyWalk_InRoomWalkStopsWhenInCombat")]
+        [TestCase(false, false, false, false, false, false, TestName = "PartyWalk_KeepsLineWithoutCombat")]
+        [TestCase(false, true, false, false, true, false, TestName = "PartyWalk_RoomMoveKeepsGoingBeforeTheDoor")]
+        [TestCase(false, true, true, false, true, true, TestName = "PartyWalk_RoomMoveStopsInsideTheNewRoom")]
+        [TestCase(true, false, false, true, true, false, TestName = "PartyWalk_ReturnIgnoresCombat")]
+        public void PartyWalk_BreaksLineOnlyForCombat(bool returning, bool crossingRooms, bool passedDoor,
+            bool inCombat, bool roomHasOpponents, bool expected)
+        {
+            Assert.That(Code.Enemies.PartyCohesionRules.ShouldBreakWalkForCombat(
+                returning, crossingRooms, passedDoor, inCombat, roomHasOpponents), Is.EqualTo(expected));
+        }
+
         private static Type RequireType(string fullName)
         {
             var type = Type.GetType(fullName + ", DungeonKeeper.Runtime");

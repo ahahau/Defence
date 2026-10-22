@@ -125,7 +125,8 @@ namespace Code.Enemies
             Vector3 last = leader._sharedExploreRoute[leader._sharedExploreRoute.Count - 1];
             RoomRoute.Inside(_currentNode, last, GetEnemyPosition(_currentNode), _route);
             _exploreRoute.AddRange(_route);
-            yield return WalkPath(_exploreRoute, -1, null, null);
+            // 리더 동선은 싸움이 붙기 전까지만 따른다.
+            yield return WalkPath(_exploreRoute, -1, null, null, true);
         }
 
         private float PartyWalkSpeed
