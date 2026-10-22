@@ -2011,6 +2011,14 @@ PrefabInstance:
       propertyPath: m_AnchorMin.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1734988433591678259, guid: bb1959c1772933a49bed44267ced1fb8, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1734988433591678259, guid: bb1959c1772933a49bed44267ced1fb8, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1824816321517361713, guid: bb1959c1772933a49bed44267ced1fb8, type: 3}
       propertyPath: m_fontColor32.rgba
       value: 4283187013
@@ -2269,7 +2277,7 @@ MonoBehaviour:
     m_Bits: 1
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
-  m_RenderPostProcessing: 0
+  m_RenderPostProcessing: 1
   m_Antialiasing: 0
   m_AntialiasingQuality: 2
   m_StopNaN: 0
@@ -9364,6 +9372,14 @@ PrefabInstance:
       propertyPath: m_AnchorMin.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4585626299885849687, guid: 363fa9216385a6e4f83245489e6ecd91, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4585626299885849687, guid: 363fa9216385a6e4f83245489e6ecd91, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4687071144467165825, guid: 363fa9216385a6e4f83245489e6ecd91, type: 3}
       propertyPath: m_fontColor32.rgba
       value: 4288314509
@@ -10458,7 +10474,7 @@ MonoBehaviour:
   priority: 10
   blendDistance: 0
   weight: 1
-  sharedProfile: {fileID: 0}
+  sharedProfile: {fileID: 11400000, guid: 452f70b10569f0c4884702a24c64f472, type: 2}
 --- !u!114 &2122532266
 MonoBehaviour:
   m_ObjectHideFlags: 0
