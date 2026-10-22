@@ -1,5 +1,11 @@
 # Sequences
 
+- 2026-10-22 · 유물 줄(사용자: 유물 줄 목업 → "목업 한거 넣고").
+  - 원인: `ArtifactPanelView`(보유 목록·열린 날 판단)만 있고 그리는 화면이 없어, 유물을 사도 무엇을 가졌는지·조합이 맞았는지 볼 곳이 없었다.
+  - 화면: `ArtifactRowView`(캔버스 11 — HUD 10 바로 위, 생성기 `ArtifactRowBuilder`). 장부 바로 아래(24, 304) 340×152 패널 = 머리("유물 N"·금색 "조합 N 성립") + 6칸 2줄 고정 12칸(`ArtifactSlotView`, 산 순서, 빈 칸은 어둡게). 성립한 조합에 든 유물은 금색 테두리. 칸에 마우스를 올리면 오른쪽에 설명 카드 340×220(이름·대상·설명·조합 — 성립은 금색 "조합 성립 · 이름 / 짝과 함께", 아직이면 흐리게 "조합 · 짝 필요"). 물약은 줄에 오르지 않는다. 2일차 전에는 줄 전체를 숨기고, 열린 뒤 유물이 없으면 "떠돌이 상인에게서 살 수 있습니다". 값은 `ArtifactRowPresenter`. `ArtifactPanelView.Combos`를 새로 열었다.
+  - 테스트: `ArtifactShopTests.ArtifactRow_ShowsOwnedArtifactsCombosAndDetail`, `AssetWiringTests.ArtifactRow_IsPlacedAndWired`. 전체 EditMode 384/384.
+  - 플레이(판 저장·보유 목록 원복, SO 변경 없음): 2일차, 야전 숫돌·유리 단검·진군 북을 얻음 → "유물 3"·"조합 1 성립", 숫돌·단검만 금색 테두리. 단검 칸 설명 카드 = 고용 유닛·설명·"조합 성립 · 벼려낸 칼날 / 야전 숫돌과 함께"·"피의 계약 · 처형 서약 필요".
+
 - 2026-10-22 · 보스 배너(사용자: 보스 배너 목업 → "목업대로 만들어 일단").
   - 원인: `BossWavePresenter.BannerRequested`를 듣는 화면이 없어 보스 등장·증원·격노가 알림 없이 지나갔다. 증원·격노는 제목 글자("· 증원"·"· 격노")로만 갈렸다.
   - 판단 쪽: 배너 요청을 `BossBannerRequest`(종류 `BossBannerKind` 습격·증원·격노·결전, 일차, 보스 이름, 경고 문구, 머무는 시간)로 바꿈. `ShowReinforcementBanner`·`ShowRageBanner`를 새로 두고 `WaveManager`의 증원·격노 두 곳이 부른다(제목은 보스 이름 그대로, 기본 경고 문구는 그대로). 부제 앞의 "Day N —"는 빼고 첫 줄로 옮김.

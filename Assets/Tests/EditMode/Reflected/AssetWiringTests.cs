@@ -588,6 +588,45 @@ namespace Tests.EditMode.Gameplay
             }
         }
 
+        /// <summary>
+        /// 유물 줄이 씬에 놓이고 유물 판단(<c>ArtifactPanelView</c>)에 이어져 있어야 한다. 예전에는 판단만 있고 그리는 화면이 없었다.
+        /// 칸 수는 프레젠터 칸 수와 같고, 칸마다 마우스를 받아야 설명 카드가 뜬다. 설명 카드는 마우스를 가로채지 않는다.
+        /// </summary>
+        [Test]
+        public void ArtifactRow_IsPlacedAndWired()
+        {
+            var scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            try
+            {
+                Code.UI.ArtifactRowView view = null;
+                foreach (var root in scene.GetRootGameObjects())
+                    view ??= root.GetComponentInChildren<Code.UI.ArtifactRowView>(true);
+
+                Assert.That(view, Is.Not.Null, "유물 줄이 씬에 없습니다. ArtifactRowBuilder.BuildAll()을 돌리세요.");
+                var wiring = new SerializedObject(view);
+                foreach (var field in new[] { "panel", "root", "header", "comboSummary", "emptyHint", "detailRoot", "detailName", "detailTarget", "detailDescription", "detailCombos" })
+                    Assert.That(wiring.FindProperty(field).objectReferenceValue, Is.Not.Null, $"유물 줄의 {field}가 비었습니다.");
+
+                var slots = wiring.FindProperty("slots");
+                Assert.That(slots.arraySize, Is.EqualTo(Code.UI.ViewModels.ArtifactRowPresenter.SlotCount));
+                for (var i = 0; i < slots.arraySize; i++)
+                {
+                    var slot = (Code.UI.ArtifactSlotView)slots.GetArrayElementAtIndex(i).objectReferenceValue;
+                    var slotWiring = new SerializedObject(slot);
+                    foreach (var field in new[] { "back", "outline", "icon" })
+                        Assert.That(slotWiring.FindProperty(field).objectReferenceValue, Is.Not.Null, $"유물 칸 {i}의 {field}가 비었습니다.");
+                    Assert.That(((UnityEngine.UI.Image)slotWiring.FindProperty("back").objectReferenceValue).raycastTarget, Is.True, $"유물 칸 {i}이 마우스를 받지 않으면 설명이 뜨지 않는다.");
+                }
+
+                foreach (var graphic in ((GameObject)wiring.FindProperty("detailRoot").objectReferenceValue).GetComponentsInChildren<UnityEngine.UI.Graphic>(true))
+                    Assert.That(graphic.raycastTarget, Is.False, $"설명 카드의 {graphic.name}이 마우스를 가로채면 칸에서 벗어난 것으로 읽혀 깜빡인다.");
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
+            }
+        }
+
         [Test]
         public void OpeningRoom_HasFourDoorsAndUsesEastDoorForIntruders()
         {

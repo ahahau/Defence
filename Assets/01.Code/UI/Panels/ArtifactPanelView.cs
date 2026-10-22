@@ -9,7 +9,7 @@ namespace Code.UI
     /// <summary>
     /// 씬에 배선된 유물 인벤토리·채널을 듣고 유물 줄에 보일 값을 정한다.
     /// 줄이 열리는 날(<see cref="CoreLoopFeatureUnlocks.IsArtifactUnlocked"/>)도 여기서 판정한다.
-    /// 그리는 화면은 지금 없다(uGUI 전환 대기) — 화면은 <see cref="Changed"/>를 듣고 <see cref="Artifacts"/>·<see cref="IsUnlocked"/>를 읽는다.
+    /// 그리는 화면은 <see cref="ArtifactRowView"/>다 — <see cref="Changed"/>를 듣고 <see cref="Artifacts"/>·<see cref="IsUnlocked"/>·<see cref="Combos"/>를 읽는다.
     /// </summary>
     public class ArtifactPanelView : MonoBehaviour
     {
@@ -20,6 +20,9 @@ namespace Code.UI
 
         public System.Collections.Generic.IReadOnlyList<ArtifactDataSO> Artifacts => artifactInventory.ObtainedArtifacts;
         public bool IsUnlocked { get; private set; }
+
+        /// <summary>두 유물 조합 목록. 비어 있으면 조합이 없다.</summary>
+        public ArtifactComboCatalogSO Combos => artifactInventory != null ? artifactInventory.Combos : null;
 
         /// <summary>유물 목록이나 해금 여부가 바뀌었다.</summary>
         public event System.Action Changed;

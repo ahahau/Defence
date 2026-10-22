@@ -19,6 +19,49 @@ namespace Tests.EditMode.Rules
 
         private static Type Resolve(string name) => Type.GetType(name + ", DungeonKeeper.Runtime", true);
 
+        /// <summary>
+        /// 유물 줄 값: 산 유물만 칸에(물약 제외), 성립한 조합에 든 유물만 금색, 설명 카드에 성립 조합과 아직인 조합(짝 필요)이 함께 나온다.
+        /// 예전에는 유물을 사도 보이는 곳이 없어 무엇을 가졌는지, 조합이 맞았는지 알 수 없었다. 칸 수는 유물 종류보다 적으면 안 된다.
+        /// </summary>
+        [Test]
+        public void ArtifactRow_ShowsOwnedArtifactsCombosAndDetail()
+        {
+            var combos = UnityEditor.AssetDatabase.LoadAssetAtPath<Code.Artifacts.ArtifactComboCatalogSO>("Assets/07.SO/Artifacts/ArtifactComboCatalog.asset");
+            Assert.That(combos, Is.Not.Null);
+            var byName = new Dictionary<string, Code.Artifacts.ArtifactDataSO>();
+            var permanent = 0;
+            foreach (var guid in UnityEditor.AssetDatabase.FindAssets("t:ArtifactDataSO"))
+            {
+                var artifact = UnityEditor.AssetDatabase.LoadAssetAtPath<Code.Artifacts.ArtifactDataSO>(UnityEditor.AssetDatabase.GUIDToAssetPath(guid));
+                byName[artifact.DisplayName] = artifact;
+                if (!artifact.IsConsumable)
+                    permanent++;
+            }
+
+            Assert.That(Code.UI.ViewModels.ArtifactRowPresenter.SlotCount, Is.GreaterThanOrEqualTo(permanent), "유물을 다 사도 칸이 모자라면 안 된다.");
+
+            var owned = new List<Code.Artifacts.ArtifactDataSO> { byName["야전 숫돌"], byName["유리 단검"], byName["진군 북"], byName["붉은 정수"] };
+            var model = Code.UI.ViewModels.ArtifactRowPresenter.Build(owned, true, combos);
+            Assert.That(model.Visible, Is.True);
+            Assert.That(model.Slots.Count, Is.EqualTo(3), "물약은 줄에 오르지 않는다.");
+            Assert.That(model.Header, Is.EqualTo("유물 3"));
+            Assert.That(model.ComboSummary, Is.EqualTo("조합 1 성립"));
+            Assert.That(model.Slots[0].InCombo && model.Slots[1].InCombo, Is.True, "숫돌·단검은 벼려낸 칼날로 묶인다.");
+            Assert.That(model.Slots[2].InCombo, Is.False, "짝(베테랑 군기)이 없는 진군 북은 금색이 아니다.");
+            Assert.That(model.EmptyHint, Is.Empty);
+
+            var detail = Code.UI.ViewModels.ArtifactRowPresenter.BuildDetail(byName["유리 단검"], owned, combos);
+            Assert.That(detail.Target, Is.EqualTo("고용 유닛"));
+            StringAssert.Contains("조합 성립 · 벼려낸 칼날", detail.Combos);
+            StringAssert.Contains("야전 숫돌과 함께", detail.Combos);
+            StringAssert.Contains("피의 계약 · 처형 서약 필요", detail.Combos);
+
+            var empty = Code.UI.ViewModels.ArtifactRowPresenter.Build(new List<Code.Artifacts.ArtifactDataSO>(), true, combos);
+            Assert.That(empty.EmptyHint, Is.Not.Empty);
+            Assert.That(empty.ComboSummary, Is.Empty);
+            Assert.That(Code.UI.ViewModels.ArtifactRowPresenter.Build(owned, false, combos).Visible, Is.False, "유물이 열리기 전에는 줄을 숨긴다.");
+        }
+
         [TearDown]
         public void TearDown()
         {
