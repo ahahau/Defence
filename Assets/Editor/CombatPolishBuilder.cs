@@ -14,6 +14,7 @@ using UnityEngine;
 ///   첫 공격 그림이 있는 폴더를 기준으로 찾는다. 임포트 설정은 그 캐릭터의 공격 그림을 따르고, 발사체만 기준점을 가운데로 둔다.
 /// - 맞은 캐릭터를 흰색으로 번쩍이는 실루엣 재질(<c>Defence/Sprite Flash</c>)과 근접 베기 섬광 그림(코드로 그린 초승달).
 /// - 피격·회복 파티클 재질(URP 파티클 재질 복사 + 4×4 흰 사각 그림).
+/// - 사망 그림: 부하 = 해골 왕 팩 청록 혼불(effect2_standard), 모험가 = 해골 전사 팩 주황 폭발(plash explore/orange).
 /// - 둘을 전투 연출 표(<see cref="CombatFxCatalogSO"/>)에 건다.
 /// Unity CLI: <c>CombatPolishBuilder.BuildAll()</c>. 돌려준 문자열이 묶음별로 채운 개수다.
 /// </summary>
@@ -30,6 +31,11 @@ public static class CombatPolishBuilder
     public const string ParticleTexturePath = "Assets/04.Sprites/Effects/ParticleSquare.png";
     private const string UrpParticleMaterialPath = "Packages/com.unity.render-pipelines.universal/Runtime/Materials/ParticlesUnlit.mat";
     private const int ParticleTextureSize = 4;
+
+    private const string MinionDeathFolder = "Assets/04.Sprites/Characters/SkeletonKing/effects/effect2/effect2_standard";
+    private const string IntruderDeathFolder = SkeletonWarriorRoot + "/effects/plash explore/orange";
+    private const string MinionReferenceSet = AnimationFolder + "/UnitSkeletonSwordBlueAnim.asset";
+    private const string IntruderReferenceSet = AnimationFolder + "/EnemyBasicAnim.asset";
 
     private const int SlashSize = 32;
     private const float SlashPixelsPerUnit = 40f;
@@ -55,9 +61,18 @@ public static class CombatPolishBuilder
             serialized.FindProperty("<HitFlashMaterial>k__BackingField").objectReferenceValue = material;
             serialized.FindProperty("<MeleeSlashSprite>k__BackingField").objectReferenceValue = slash;
             serialized.FindProperty("<ParticleMaterial>k__BackingField").objectReferenceValue = particle;
+
+            // 사망 그림은 대표 캐릭터(해골 검사·기본 모험가)의 공격 그림 크기(PPU)를 따른다.
+            // 혼불은 발에서 솟도록 아래 기준점, 폭발은 몸 가운데서 터지도록 가운데 기준점.
+            var minion = FindFrames(MinionDeathFolder, "effect2_standard");
+            var intruder = FindFrames(IntruderDeathFolder, "orange");
+            Assign(serialized, "<MinionDeathFrames>k__BackingField", minion, FirstAttackFramePath(MinionReferenceSet), SpriteAlignment.BottomCenter);
+            Assign(serialized, "<IntruderDeathFrames>k__BackingField", intruder, FirstAttackFramePath(IntruderReferenceSet), SpriteAlignment.Center);
+
             serialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(catalog);
-            report.AppendLine($"catalog flash={material != null} slash={slash != null} particle={particle != null}");
+            report.AppendLine($"catalog flash={material != null} slash={slash != null} particle={particle != null}"
+                              + $" minionDeath={minion.Count} intruderDeath={intruder.Count}");
         }
 
         AssetDatabase.SaveAssets();
@@ -85,14 +100,21 @@ public static class CombatPolishBuilder
             : new List<string>();
         ResolveProjectile(folder, out var projectile, out var impact);
 
-        Assign(serialized, "hurtFrames", hurt, referencePath, false);
-        Assign(serialized, "attackAltFrames", alt, referencePath, false);
-        Assign(serialized, "projectileFrames", projectile, referencePath, true);
-        Assign(serialized, "projectileImpactFrames", impact, referencePath, true);
+        Assign(serialized, "hurtFrames", hurt, referencePath, null);
+        Assign(serialized, "attackAltFrames", alt, referencePath, null);
+        Assign(serialized, "projectileFrames", projectile, referencePath, SpriteAlignment.Center);
+        Assign(serialized, "projectileImpactFrames", impact, referencePath, SpriteAlignment.Center);
         serialized.ApplyModifiedPropertiesWithoutUndo();
         EditorUtility.SetDirty(set);
 
         return $"{name}: hurt={hurt.Count} alt={alt.Count} projectile={projectile.Count} impact={impact.Count}";
+    }
+
+    private static string FirstAttackFramePath(string setPath)
+    {
+        var set = AssetDatabase.LoadAssetAtPath<CharacterAnimationSetSO>(setPath);
+        var frames = set != null ? set.GetFrames(CharacterClip.Attack) : System.Array.Empty<Sprite>();
+        return frames.Length > 0 ? AssetDatabase.GetAssetPath(frames[0]) : string.Empty;
     }
 
     private static void ResolveProjectile(string folder, out List<string> projectile, out List<string> impact)
@@ -152,12 +174,12 @@ public static class CombatPolishBuilder
             .ToList();
     }
 
-    private static void Assign(SerializedObject serialized, string field, List<string> paths, string referencePath, bool centerPivot)
+    private static void Assign(SerializedObject serialized, string field, List<string> paths, string referencePath, SpriteAlignment? pivot)
     {
         var sprites = new List<Sprite>();
         foreach (var path in paths)
         {
-            MatchImport(path, referencePath, centerPivot);
+            MatchImport(path, referencePath, pivot);
             var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
             if (sprite != null)
                 sprites.Add(sprite);
@@ -171,9 +193,9 @@ public static class CombatPolishBuilder
 
     /// <summary>
     /// 그 캐릭터의 공격 그림과 같은 크기(PPU)·필터·압축으로 맞춘다. 팩마다 PPU가 달라(28·100) 그대로 두면 크기가 어긋난다.
-    /// 몸 동작은 기준점(발밑)까지 같게, 발사체는 가운데로.
+    /// 몸 동작은 기준점(발밑)까지 같게(<paramref name="pivot"/> null), 발사체·폭발은 가운데, 솟는 혼불은 아래 가운데로.
     /// </summary>
-    private static void MatchImport(string path, string referencePath, bool centerPivot)
+    private static void MatchImport(string path, string referencePath, SpriteAlignment? pivot)
     {
         var source = AssetImporter.GetAtPath(referencePath) as TextureImporter;
         var target = AssetImporter.GetAtPath(path) as TextureImporter;
@@ -182,10 +204,10 @@ public static class CombatPolishBuilder
 
         var settings = new TextureImporterSettings();
         source.ReadTextureSettings(settings);
-        if (centerPivot)
+        if (pivot.HasValue)
         {
-            settings.spriteAlignment = (int)SpriteAlignment.Center;
-            settings.spritePivot = new Vector2(0.5f, 0.5f);
+            settings.spriteAlignment = (int)pivot.Value;
+            settings.spritePivot = pivot.Value == SpriteAlignment.BottomCenter ? new Vector2(0.5f, 0f) : new Vector2(0.5f, 0.5f);
         }
 
         var current = new TextureImporterSettings();

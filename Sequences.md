@@ -1,5 +1,12 @@
 # Sequences
 
+- 2026-10-22 · 사망 이펙트 되살림(사용자: "비어 있는 사망 이펙트(부하·모험가)도 채우고 싶어" → "부하는 effect2_standard(청록 혼불), 모험가는 plash explore 주황 폭발").
+  - 원인: 연출 표의 사망 이펙트 두 칸이 3D 파티클 팩(Epic Toon FX `MysticDeath`·`GenericDeath`) 프리팹을 가리켰는데, 도트 그림으로 바꾸며 팩을 통째로 지워 참조가 끊겼다. 쓰러질 때 사망 소리만 나고 이펙트가 없었다.
+  - 수정: `CombatFxCatalogSO`의 프리팹 칸을 도트 프레임 칸으로 바꿈(`MinionDeathFrames`·`IntruderDeathFrames`·`DeathFramesPerSecond` 12, 배율 `MinionDeathScale` 0.5·`IntruderDeathScale` 1). `CombatFxHooks.SpawnDeathEffect`는 쓰러진 자리에 `SpriteFramePlayer`로 한 번 틀고 지운다. 몸통 크기를 따르고, 혼불은 발밑(아래 기준점)에서 솟고 폭발은 몸 가운데(+0.35)에서 터진다. 정렬 30(캐릭터 위).
+  - 생성기 `CombatPolishBuilder`: 혼불(해골 왕 팩 `effect2_standard`)은 해골 검사, 폭발(해골 전사 팩 `plash explore/orange`)은 기본 모험가의 공격 그림 임포트(PPU 28·점 필터)를 따르게 맞추고 표에 건다.
+  - 테스트: `CombatFxCatalog_HasHitDeathAndParticleArt`(두 사망 그림 비어 있지 않음·빈 프레임 없음·서로 다름, 이름을 바꿈). EditMode 367/367.
+  - 플레이(세이브 원복): 1일차 교전 중 모험가 하나와 해골 검사를 쓰러뜨려 캡처. 모험가 = 흰 섬광 → 주황 폭발이 몸 크기로. 혼불은 첫 실측에서 몸의 두 배로 솟아(64×96 칸) 배율 0.5로 줄인 뒤 몸 크기로 솟는 것을 확인.
+
 - 2026-10-22 · 피격·회복 파티클 자홍색 덩어리 고침(사용자: "피격·회복 파티클 자홍색 문제도 고쳐줘" → "A안(도트 사각 불티)").
   - 원인: `DamageFeedback`이 코드로 만드는 피격·회복 파티클(`AddComponent<ParticleSystem>`)에 재질이 없어(`null`) URP가 "셰이더 없음" 자홍색으로 그렸다. 프로젝트에 URP 파티클 재질이 하나도 없었다.
   - 수정: 생성기 `CombatPolishBuilder`가 URP 기본 파티클 재질(반투명 섞기·색 곱하기)을 `Assets/05.Materials/CombatParticle.mat`로 복사하고 그림을 4×4 흰 사각(`Assets/04.Sprites/Effects/ParticleSquare.png`, 점 필터)으로 바꿔 `CombatFxCatalogSO.ParticleMaterial`에 건다. `DamageFeedback`은 처음 터뜨릴 때 표에서 재질을 입히고(씬에 미리 놓인 캐릭터는 표보다 먼저 깨어날 수 있다), 재질을 못 받으면 터뜨리지 않는다.

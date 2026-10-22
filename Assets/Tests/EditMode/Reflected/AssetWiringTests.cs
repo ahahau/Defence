@@ -870,7 +870,7 @@ namespace Tests.EditMode.Gameplay
         /// 비면 조용히 예전 붉은 칠(흰색이면 아무 변화 없음)로 돌아가 눈으로 보기 전엔 모른다.
         /// </summary>
         [Test]
-        public void CombatFxCatalog_HasHitFlashSlashAndParticleMaterial()
+        public void CombatFxCatalog_HasHitDeathAndParticleArt()
         {
             var catalog = AssetDatabase.LoadAssetAtPath<Code.Combat.CombatFxCatalogSO>("Assets/07.SO/Combat/CombatFxCatalog.asset");
             Assert.That(catalog, Is.Not.Null, "전투 연출 표가 없다.");
@@ -882,6 +882,16 @@ namespace Tests.EditMode.Gameplay
             Assert.That(catalog.ParticleMaterial, Is.Not.Null, "피격·회복 파티클 재질이 비어 있다.");
             Assert.AreEqual("Universal Render Pipeline/Particles/Unlit", catalog.ParticleMaterial.shader.name);
             Assert.That(catalog.ParticleMaterial.GetTexture("_BaseMap"), Is.Not.Null, "파티클 재질에 그림이 없다.");
+
+            // 사망 이펙트는 지운 3D 파티클 팩 프리팹을 가리킨 채 끊겨 있었다. 도트 프레임이 두 벌 다 있어야 한다.
+            foreach (var (label, frames) in new[] { ("부하", catalog.MinionDeathFrames), ("모험가", catalog.IntruderDeathFrames) })
+            {
+                Assert.IsNotEmpty(frames, $"{label} 사망 그림이 비어 있다.");
+                foreach (var frame in frames)
+                    Assert.IsNotNull(frame, $"{label} 사망 그림에 빈 프레임이 있다.");
+            }
+
+            Assert.AreNotEqual(catalog.MinionDeathFrames[0], catalog.IntruderDeathFrames[0], "부하·모험가 사망 그림이 같으면 누가 죽었는지 읽히지 않는다.");
         }
 
         // 게임 코드는 Runtime, 스탯·모듈 같은 재사용 기반은 GameLib 어셈블리에 있다. 둘 다 찾아본다.

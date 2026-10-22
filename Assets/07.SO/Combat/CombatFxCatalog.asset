@@ -12,9 +12,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f17680b14fe3ef43a7060e3ab0be7a3, type: 3}
   m_Name: CombatFxCatalog
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Combat.CombatFxCatalogSO
-  <MinionDeathEffect>k__BackingField: {fileID: 136450, guid: 75f06efdf4dffb64196a8a771986c0b8, type: 3}
-  <IntruderDeathEffect>k__BackingField: {fileID: 119968, guid: e73000b12fb76244cbffd6abbf8bb6e4, type: 3}
-  <DeathEffectScale>k__BackingField: 1
+  <MinionDeathFrames>k__BackingField:
+  - {fileID: 21300000, guid: c4c97a7f85e3c6945bc6ad8720cb9b2d, type: 3}
+  - {fileID: 21300000, guid: 69f5e06eb8d7645408b139c3521cba72, type: 3}
+  - {fileID: 21300000, guid: 30320496c87b4234abe53578ffa14c4a, type: 3}
+  - {fileID: 21300000, guid: 5ec6f68cc9f788e4ea36a373349f6b89, type: 3}
+  - {fileID: 21300000, guid: c7dded6571d115c41a15f2fdf8f9929a, type: 3}
+  <IntruderDeathFrames>k__BackingField:
+  - {fileID: 21300000, guid: 33766889915ed53409225266dfd1c298, type: 3}
+  - {fileID: 21300000, guid: 7c2ea35356c779c4e8244799f78b3730, type: 3}
+  - {fileID: 21300000, guid: 0faee6d5cdf61aa42a5decf8011f4fe1, type: 3}
+  - {fileID: 21300000, guid: b63ecb9671b8e434b9cc53c4422e84cb, type: 3}
+  - {fileID: 21300000, guid: 8c710c2f7778dba45a5bca8342f1dc58, type: 3}
+  <DeathFramesPerSecond>k__BackingField: 12
+  <MinionDeathScale>k__BackingField: 0.5
+  <IntruderDeathScale>k__BackingField: 1
   <SortingOrder>k__BackingField: 30
   <HitFlashMaterial>k__BackingField: {fileID: 2100000, guid: 9fa01cac7e1318840a35606995baca3e, type: 2}
   <MeleeSlashSprite>k__BackingField: {fileID: 21300000, guid: 157f18f5e51b3d54fb254f6cb4ff9799, type: 3}

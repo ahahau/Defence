@@ -3,21 +3,29 @@ using UnityEngine;
 namespace Code.Combat
 {
     /// <summary>
-    /// 전투원이 쓰러질 때 쓰는 연출 묶음.
+    /// 전투 연출 묶음(사망·피격 점멸·베기 섬광·파티클 재질).
     /// 프리팹마다 들고 있게 하면 16개를 다시 배선해야 하므로 한 곳에 모아두고
-    /// <see cref="CombatFxHooks"/>가 전역 피해 이벤트를 듣고 꺼내 쓴다.
+    /// <see cref="CombatFxHooks"/>가 전역 피해 이벤트를 듣고 꺼내 쓴다. 채우는 생성기는 <c>CombatPolishBuilder</c>.
     /// </summary>
     [CreateAssetMenu(fileName = "CombatFxCatalog", menuName = "Defence/Combat/Combat FX Catalog")]
     public sealed class CombatFxCatalogSO : ScriptableObject
     {
-        [field: SerializeField, Tooltip("부하가 쓰러질 때. 비우면 아무것도 띄우지 않는다.")]
-        public GameObject MinionDeathEffect { get; private set; }
+        // 예전에는 3D 파티클 팩 프리팹을 걸었는데, 도트 그림으로 바꾸며 팩을 지워 참조가 끊겼다. 이제 도트 프레임을 직접 튼다.
+        [field: SerializeField, Tooltip("부하가 쓰러질 때 발밑에서 솟는 혼불(해골 왕 팩 effect2_standard). 비우면 띄우지 않는다.")]
+        public Sprite[] MinionDeathFrames { get; private set; } = System.Array.Empty<Sprite>();
 
-        [field: SerializeField, Tooltip("침입자가 쓰러질 때. 아군 죽음과 달라야 누가 죽었는지 읽힌다.")]
-        public GameObject IntruderDeathEffect { get; private set; }
+        [field: SerializeField, Tooltip("모험가가 쓰러질 때 몸 가운데서 터지는 폭발(해골 전사 팩 plash explore 주황). 아군 죽음과 달라야 누가 죽었는지 읽힌다.")]
+        public Sprite[] IntruderDeathFrames { get; private set; } = System.Array.Empty<Sprite>();
+
+        [field: SerializeField, Min(1f)]
+        public float DeathFramesPerSecond { get; private set; } = 12f;
+
+        // 몸통 크기에 곱하는 배율. 혼불 그림은 64×96 칸이라 그대로면 해골(약 50px)의 두 배로 솟았다.
+        [field: SerializeField, Min(0.1f)]
+        public float MinionDeathScale { get; private set; } = 0.5f;
 
         [field: SerializeField, Min(0.1f)]
-        public float DeathEffectScale { get; private set; } = 1.5f;
+        public float IntruderDeathScale { get; private set; } = 1f;
 
         [field: SerializeField, Tooltip("유닛 스프라이트(20)보다 위에 그린다.")]
         public int SortingOrder { get; private set; } = 30;

@@ -13,8 +13,6 @@ namespace Code.Combat
     /// </summary>
     public static class CombatFxHooks
     {
-        private const float FallbackLifetime = 2f;
-
         private static CombatFxCatalogSO catalog;
         private static bool missingCatalogWarned;
         private static bool subscribed;
@@ -72,36 +70,29 @@ namespace Code.Combat
 
             // 침입자와 부하의 죽음이 같아 보이면 전황을 못 읽는다.
             var isIntruder = health.GetComponentInParent<Code.Enemies.Enemy>() != null;
-            var prefab = isIntruder ? config.IntruderDeathEffect : config.MinionDeathEffect;
-            if (prefab == null)
+            var frames = isIntruder ? config.IntruderDeathFrames : config.MinionDeathFrames;
+            if (frames == null || frames.Length == 0)
                 return;
 
-            var instance = Object.Instantiate(prefab, position, Quaternion.identity);
-            instance.transform.localScale = Vector3.one * config.DeathEffectScale;
+            // 그림은 캐릭터 그림과 같은 PPU로 들어오므로 몸통 크기를 따라야 비율이 맞는다.
+            // 혼불은 발밑 기준점이라 발에서 솟고, 폭발은 가운데 기준점이라 몸 높이로 올린다.
+            var owner = health.GetComponentInParent<Combatant>();
+            var render = owner != null
+                ? owner.GetComponentInChildren<Code.Entities.EntityRender>(true)
+                : health.GetComponentInChildren<Code.Entities.EntityRender>(true);
+            var bodyScale = render != null ? Mathf.Abs(render.transform.lossyScale.y) : 1f;
+            var instance = new GameObject(isIntruder ? "IntruderDeathFx" : "MinionDeathFx");
+            instance.transform.position = isIntruder ? position + Vector3.up * IntruderBurstHeight : position;
+            instance.transform.localScale = Vector3.one * (bodyScale * (isIntruder ? config.IntruderDeathScale : config.MinionDeathScale));
 
-            // 파티클 팩이 물고 온 소리는 걷어낸다. 사망음은 위에서 이미 냈다.
-            GameSfxPlayer.StripEmbeddedAudio(instance);
-
-            var lifetime = 0f;
-            foreach (var system in instance.GetComponentsInChildren<ParticleSystem>(true))
-            {
-                var main = system.main;
-                main.loop = false;
-                lifetime = Mathf.Max(lifetime, main.duration + main.startLifetime.constantMax);
-            }
-
-            foreach (var renderer in instance.GetComponentsInChildren<ParticleSystemRenderer>(true))
-            {
-                renderer.sortingLayerName = "Default";
-                renderer.sortingOrder = config.SortingOrder;
-            }
-
-            var root = instance.GetComponent<ParticleSystem>();
-            if (root != null)
-                root.Play(true);
-
-            Object.Destroy(instance, lifetime > 0f ? lifetime : FallbackLifetime);
+            var renderer = instance.AddComponent<SpriteRenderer>();
+            renderer.sortingLayerName = "Default";
+            renderer.sortingOrder = config.SortingOrder;
+            instance.AddComponent<SpriteFramePlayer>().Play(frames, config.DeathFramesPerSecond, false);
         }
+
+        /// <summary>모험가 사망 폭발을 몸 가운데(발밑 기준점 위)에서 터뜨리는 높이.</summary>
+        private const float IntruderBurstHeight = 0.35f;
 
         private static CombatFxCatalogSO EnsureCatalog()
         {
