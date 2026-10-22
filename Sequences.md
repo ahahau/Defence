@@ -1,5 +1,11 @@
 # Sequences
 
+- 2026-10-22 · 부활한 부하가 다시 싸우게(사용자: "부활한 부하가 있던 방의 전투 필드에 다시 들어가 싸우게 고쳐줘").
+  - 원인: 쓰러지면 방의 전투 필드(`NodeBattlefield.CleanUp`)가 명단에서 빼고 소속을 지우는데, 부활(`Unit.Revive`)은 체력만 채워 같은 방 모험가와 서로 상대로 보지 않았다. 쓰러짐 잠금(`CharacterPoseView.isDead`)도 오브젝트가 다시 켜질 때만 풀려, 꺼지지 않는 부하는 쓰러진 그림에 굳고 공격 동작이 막힐 수 있었다.
+  - 수정: `UnitDeployment.Rejoin(node, unit)` — 서 있던 방의 전투 필드에 다시 들여보내고(정원 규칙은 배치와 같음) `CharacterPoseView.ResetAfterRevive`로 쓰러짐 잠금을 풀고 대기로. `Unit.Revive`(부활 마력)와 `RecoverCondition`(치료로 쓰러진 부하를 살릴 때)이 같은 `RejoinHomeBattlefield`를 부른다.
+  - 테스트: `RoomManagementTests.RevivedUnit_RejoinsItsRoomBattlefieldAndStandsUp`. EditMode 363/363.
+  - 플레이(세이브 원복): 1일차 해골 검사 1명 + 모험가 3명. 31.2초 쓰러짐 → 51.7초 부활, 같은 방 전투 필드로 복귀 → 교전 423프레임·휘두르기 6회 → 74.2초 다시 쓰러짐 → 두 번째 부활도 복귀. 살아 있는데 필드 밖 0프레임, 살아 있는데 쓰러짐 그림 0프레임.
+
 - 2026-10-22 · 부하·모험가 전투 다듬기: 방향(회전 Y 180), 공격 예비 동작, 실제 싸움 같은 전투 이동, 블룸(사용자: "전투 bt좀 진짜 전투처럼 수정좀해줘 공격 애니메이션도 넣어주고 블룸 효과도 추가하고 로테이션y 180도 돌려서 움직임에 따라 한쪽만 보지않게해줘" → "네 가지 모두").
   - 방향: `EntityRender`(걸을 때 `flipX`)와 `BattleAgent`(전투 중 몸통 크기 x)가 따로 뒤집어 둘이 겹치면 두 번 뒤집혀 원래 방향을 봤다. 이제 `EntityRender.FaceTowards`가 몸통 회전 Y 0/180 하나로 정하고, 흔들림 연출이 회전을 되돌려도 `LateUpdate`가 z 기울기는 살려 Y만 다시 얹는다(`CharacterFacingRules`). `BattleAgent`의 크기 뒤집기와 "크기 부호 = 보는 쪽" 읽기 4곳은 `FacingX`로. 싸우는 동안은 대상 쪽을 보고 움직임 방향으로 돌지 않는다(`FaceMotion` — 첫 실측에서 넉백·뒷걸음 때 교전 프레임 23%가 대상 반대를 봤다).
   - 공격 애니메이션: 피해가 들어간 뒤에야 공격 동작이 시작됐다. 이제 게이지가 (간격 − 예비 동작)에 닿으면 공격 동작을 시작하고 다 차면 피해·소리·돌진·발사체가 나간다(`CombatTimingRules`, 예비 동작 = 애니메이션 타격 시점 `attackImpactRatio` 0.55 ≤ 간격의 절반).

@@ -70,6 +70,17 @@ namespace Code.Combat
             entityRender.SetUnitSprite(EntityState.Attack);
         }
 
+        /// <summary>
+        /// 살아났다. 쓰러짐 잠금을 풀고 대기로 돌린다. 잠금은 오브젝트가 다시 켜질 때만 풀렸는데
+        /// 부하는 쓰러져도 꺼지지 않아, 부활한 뒤에도 쓰러진 그림에 굳고 공격 동작이 막혔다.
+        /// </summary>
+        public void ResetAfterRevive()
+        {
+            isDead = false;
+            restoreIdleAt = 0f;
+            entityRender?.SetUnitSprite(EntityState.Idle);
+        }
+
         private void Update()
         {
             if (isDead || restoreIdleAt <= 0f || Time.time < restoreIdleAt)

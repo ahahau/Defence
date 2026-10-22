@@ -267,6 +267,7 @@ namespace Code.Units
             health?.RestoreToFull();
             IsIncapacitated = false;
             ApplyConditionModifiers();
+            RejoinHomeBattlefield();
             ConditionChanged?.Invoke();
         }
 
@@ -277,12 +278,22 @@ namespace Code.Units
 
         public void RecoverCondition()
         {
+            var wasIncapacitated = IsIncapacitated;
             Health?.RestoreToFull();
             fatigue = 0f;
             injury = InjurySeverity.None;
             IsIncapacitated = false;
             ApplyConditionModifiers();
+            if (wasIncapacitated)
+                RejoinHomeBattlefield();
             ConditionChanged?.Invoke();
+        }
+
+        /// <summary>부활 마력·치료 어느 쪽으로 살아나도 서 있던 방에서 다시 싸운다(<see cref="UnitDeployment.Rejoin"/>).</summary>
+        private void RejoinHomeBattlefield()
+        {
+            if (Code.MapCreateSystem.Node.TryFindUnit(this, out var node, out _))
+                UnitDeployment.Rejoin(node, this);
         }
 
         public UnitConditionState CaptureConditionState() => new(

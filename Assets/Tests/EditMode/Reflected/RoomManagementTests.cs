@@ -215,6 +215,39 @@ namespace Tests.EditMode.Rules
         private static string DeployBlocked(Node node) =>
             InstallAvailabilityRules.TryGetDeployBlockReason(node, out var reason) ? reason : null;
 
+        /// <summary>
+        /// 쓰러졌다 살아난 부하는 서 있던 방의 전투 필드로 돌아가고 쓰러짐 자세가 풀린다. 쓰러지면 전투 필드가 명단에서 빼는데
+        /// 부활은 체력만 채워, 같은 방 모험가와 서로 상대로 보지 않았고 쓰러진 그림에 굳었다(2026-10-22 실측).
+        /// </summary>
+        [Test]
+        public void RevivedUnit_RejoinsItsRoomBattlefieldAndStandsUp()
+        {
+            var node = CreateNode();
+            var prefab = AssetDatabase.LoadAssetAtPath<Unit>("Assets/03.Prefabs/Characters/Units/SkeletonSwords/Unit_SkeletonSwordBlue.prefab");
+            Assert.That(prefab, Is.Not.Null, "해골 검사 프리팹을 찾지 못했습니다.");
+            var unit = Object.Instantiate(prefab);
+            _hosts.Add(unit.gameObject);
+            Assert.That(node.TryGetFirstFreeUnitSlot(out var column, out var row), Is.True);
+            Assert.That(node.TryAssignUnitToCell(null, unit, column, row), Is.True);
+
+            // EditMode에서는 Awake가 돌지 않아 체력이 0이다. 부활이 채운 상태(가득)로 맞춘다.
+            unit.Health.RestoreToFull();
+            var pose = unit.GetComponent<Code.Combat.CharacterPoseView>();
+            Assert.That(pose, Is.Not.Null, "부하 프리팹에 CharacterPoseView가 있어야 합니다.");
+            var isDead = typeof(Code.Combat.CharacterPoseView).GetField("isDead", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(isDead, Is.Not.Null, "CharacterPoseView.isDead 를 찾지 못했습니다.");
+            isDead.SetValue(pose, true);
+
+            // 전투원 연결도 실행 중에는 Awake가 한다.
+            var agent = unit.GetComponent<Code.BT.BattleAgent>();
+            SetField(agent, "combatant", unit.GetComponent<Code.Combat.Combatant>());
+            Assert.That(agent.Battlefield, Is.Null, "쓰러진 뒤처럼 전투 필드 밖에서 시작한다.");
+
+            Assert.That(UnitDeployment.Rejoin(node, unit), Is.True);
+            Assert.That(agent.Battlefield, Is.EqualTo(node.GetComponent<Code.BT.NodeBattlefield>()), "서 있던 방의 전투 필드로 돌아가야 합니다.");
+            Assert.That(isDead.GetValue(pose), Is.False, "쓰러짐 잠금이 풀려야 공격 동작이 다시 나옵니다.");
+        }
+
         private void AssignUnit(Node node)
         {
             var prefab = AssetDatabase.LoadAssetAtPath<Unit>("Assets/03.Prefabs/Characters/Units/Unit.prefab");

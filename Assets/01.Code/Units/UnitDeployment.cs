@@ -50,5 +50,21 @@ namespace Code.Units
             artifactEventChannel?.RaiseEvent(new UnitArtifactApplyRequestedEvent(unit));
             return unit;
         }
+
+        /// <summary>
+        /// 쓰러졌다 살아난 유닛을 서 있던 방의 전투 필드에 다시 들여보내고 쓰러짐 자세를 푼다.
+        /// 쓰러지면 전투 필드가 명단에서 빼는데 부활은 체력만 채워, 같은 방 모험가와 서로 상대로 보지 않았다.
+        /// 정원이 차 있으면 들어가지 못한다(배치 때와 같은 규칙).
+        /// </summary>
+        public static bool Rejoin(Node node, Unit unit)
+        {
+            if (node == null || unit == null)
+                return false;
+
+            unit.GetComponent<Code.Combat.CharacterPoseView>()?.ResetAfterRevive();
+            var agent = unit.GetComponent<BattleAgent>();
+            var battlefield = node.GetComponent<NodeBattlefield>();
+            return agent != null && battlefield != null && battlefield.TryEnter(agent);
+        }
     }
 }
