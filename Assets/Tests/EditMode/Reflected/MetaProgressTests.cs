@@ -128,6 +128,34 @@ namespace Tests.EditMode.Rules
             Assert.That(quiet.UnlockEmpty, Is.Not.Empty, "새로 열린 것이 없으면 빈 자리에 안내를 쓴다.");
         }
 
+        /// <summary>
+        /// 결과 화면 부하 아이콘은 칠해진 몸만 칸에 맞춘다. 예전에는 무기 자리까지 비워 둔 프레임 전체를 칸에 맞춰
+        /// 몸(예: 망령 암살귀 50×47 칸 중 28×33)이 칸의 절반 남짓으로 작게 보였다.
+        /// </summary>
+        [Test]
+        public void RunEndIcon_FitsOpaqueBodyToBox()
+        {
+            var (size, offset) = Code.UI.UiSpriteFit.Fit(new Vector2(50f, 48f), new Rect(10f, 0f, 25f, 40f), new Vector2(36f, 36f));
+            Assert.That(size.y, Is.EqualTo(48f * 36f / 40f).Within(0.001f), "긴 쪽(세로 40)이 칸 36에 맞아야 한다.");
+            Assert.That(offset.x, Is.EqualTo((25f - 22.5f) * 0.9f).Within(0.001f), "몸 가운데가 칸 가운데로 와야 한다.");
+            Assert.That(offset.y, Is.EqualTo((24f - 20f) * 0.9f).Within(0.001f));
+
+            var catalog = UnityEditor.AssetDatabase.LoadAssetAtPath<DungeonUnlockCatalogSO>("Assets/07.SO/Progression/DungeonUnlockCatalog.asset");
+            foreach (var entry in catalog.Entries)
+            {
+                var sprite = entry?.Unit != null ? entry.Unit.IconSprite : null;
+                if (sprite == null)
+                    continue;
+
+                var opaque = Code.UI.UiSpriteFit.OpaqueRect(sprite);
+                Assert.That(opaque.xMin, Is.GreaterThanOrEqualTo(-0.01f), $"{entry.DisplayName}: 칠해진 영역이 그림 칸 밖이다.");
+                Assert.That(opaque.yMax, Is.LessThanOrEqualTo(sprite.rect.height + 0.01f), $"{entry.DisplayName}: 칠해진 영역이 그림 칸 밖이다.");
+                var (fit, _) = Code.UI.UiSpriteFit.Fit(sprite.rect.size, opaque, new Vector2(36f, 36f));
+                var bodyLong = Mathf.Max(opaque.width, opaque.height) * fit.x / sprite.rect.width;
+                Assert.That(bodyLong, Is.EqualTo(36f).Within(0.01f), $"{entry.DisplayName}: 몸의 긴 쪽이 칸을 채워야 한다.");
+            }
+        }
+
         [Test]
         public void Equip_RespectsUnlocksAndSlots()
         {

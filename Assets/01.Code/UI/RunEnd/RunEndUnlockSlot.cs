@@ -9,6 +9,8 @@ namespace Code.UI
     {
         [SerializeField] private GameObject iconFrame;
         [SerializeField] private UnityEngine.UI.Image icon;
+        [SerializeField, Tooltip("칠해진 몸을 맞출 칸 크기(아이콘 칸 안쪽).")]
+        private Vector2 iconBox = new(40f, 40f);
         [SerializeField] private TMP_Text unlockName;
         [SerializeField] private TMP_Text detail;
 
@@ -21,6 +23,7 @@ namespace Code.UI
             iconFrame.SetActive(!model.IsMore);
             icon.sprite = model.Icon;
             icon.enabled = model.Icon != null;
+            UiSpriteFit.Apply(icon, iconBox);
         }
 
         public void Hide() => gameObject.SetActive(false);

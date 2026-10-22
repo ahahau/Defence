@@ -29,8 +29,9 @@ public static class RunEndBuilder
     private const float UnlockRowHeight = 54f;
     /// <summary>전과 8줄이 칸 높이(330)를 고르게 채우는 줄 간격(TMP 단위, 글자 크기의 1/100).</summary>
     private const float StatLineSpacing = 100f;
-    /// <summary>부하 대기 그림은 둘레 여백이 커서 칸(40)보다 크게 그려야 몸이 보인다.</summary>
-    private const float UnlockIconSize = 56f;
+    private const float IconFrameSize = 44f;
+    /// <summary>칠해진 몸을 맞출 칸(아이콘 칸 테두리 안쪽). 넘친 여백은 아이콘 칸이 자른다.</summary>
+    private const float IconBoxSize = 40f;
 
     [MenuItem("Tools/Dungeon Keeper/Build Run End Screen")]
     public static void BuildAll()
@@ -136,24 +137,30 @@ public static class RunEndBuilder
             Debug.LogError($"{nameof(RunEndBuilder)}: {PrefabPath} 저장 실패");
     }
 
-    /// <summary>"새로 열림" 한 줄(높이 48): 아이콘 칸 40 + 이름·종류 두 줄.</summary>
+    /// <summary>"새로 열림" 한 줄(높이 48): 아이콘 칸 44 + 이름·종류 두 줄. 아이콘은 칠해진 몸만 칸에 맞추고(<see cref="UiSpriteFit"/>) 넘친 여백은 칸이 자른다.</summary>
     private static RunEndUnlockSlot BuildUnlockRow(RectTransform parent, int index, float width)
     {
         var rt = UiKit.TopLeft(UiKit.Rect($"Unlock{index}", parent), Inner, UnlockTop + index * UnlockRowHeight, width, 48f);
-        var frame = UiKit.TopLeft(UiKit.Rect("IconFrame", rt), 0f, 4f, 40f, 40f);
-        UiKit.Panel(frame, HudPalette.Chip, HudPalette.BorderQuiet);
-        var iconRect = UiKit.Place(UiKit.Rect("Icon", frame), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(UnlockIconSize, UnlockIconSize));
+        var frame = UiKit.TopLeft(UiKit.Rect("IconFrame", rt), 0f, 2f, IconFrameSize, IconFrameSize);
+        // 사슬 테두리(2배)는 44칸을 거의 다 덮어 몸이 가려졌다. 아이콘 칸은 테두리 없는 둥근 바탕만 깐다.
+        UiKit.Image(frame, UiKit.FillSprite, HudPalette.Chip, false);
+        var clip = UiKit.Fill(UiKit.Rect("Clip", frame), (IconFrameSize - IconBoxSize) / 2f);
+        clip.gameObject.AddComponent<UnityEngine.UI.RectMask2D>();
+        var iconRect = UiKit.Place(UiKit.Rect("Icon", clip), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(IconBoxSize, IconBoxSize));
         var icon = UiKit.Image(iconRect, null, Color.white, false);
         icon.type = UnityEngine.UI.Image.Type.Simple;
-        icon.preserveAspect = true;
         icon.enabled = false;
 
-        var unlockName = Label(rt, "Name", string.Empty, 16f, HudPalette.Text, 52f, 2f, width - 52f, 24f, true);
-        var detail = Label(rt, "Detail", string.Empty, 13f, HudPalette.TextDim, 52f, 26f, width - 52f, 20f);
+        const float textX = IconFrameSize + 12f;
+        var unlockName = Label(rt, "Name", string.Empty, 16f, HudPalette.Text, textX, 2f, width - textX, 24f, true);
+        var detail = Label(rt, "Detail", string.Empty, 13f, HudPalette.TextDim, textX, 26f, width - textX, 20f);
 
         var slot = rt.gameObject.AddComponent<RunEndUnlockSlot>();
         UiKit.Wire(slot, "iconFrame", frame.gameObject);
         UiKit.Wire(slot, "icon", icon);
+        var slotWiring = new SerializedObject(slot);
+        slotWiring.FindProperty("iconBox").vector2Value = new Vector2(IconBoxSize, IconBoxSize);
+        slotWiring.ApplyModifiedPropertiesWithoutUndo();
         UiKit.Wire(slot, "unlockName", unlockName);
         UiKit.Wire(slot, "detail", detail);
         rt.gameObject.SetActive(false);
