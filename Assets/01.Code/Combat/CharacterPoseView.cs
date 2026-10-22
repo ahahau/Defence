@@ -53,7 +53,13 @@ namespace Code.Combat
                 health.DamagedDetailed -= HandleDamaged;
         }
 
-        /// <summary>공격이 적중한 순간 <see cref="Combatant"/>가 불러준다. 대상 쪽(x 부호)으로 돌아선다.</summary>
+        /// <summary>공격 동작을 시작해 무기가 닿기까지의 시간(초). 프레임 애니메이션이 없으면 0 — 그때는 맞는 순간 포즈만 바꾼다.</summary>
+        public float AttackImpactSeconds => entityRender != null ? entityRender.AttackImpactSeconds : 0f;
+
+        /// <summary>
+        /// 공격 동작을 시작한다. 애니메이션이 있으면 휘두르기 시작할 때(<see cref="Combatant"/>의 예비 동작), 없으면 맞는 순간 불린다.
+        /// 대상 쪽(x 부호)으로 돌아선다.
+        /// </summary>
         public void PlayAttackPose(float facingX = 0f)
         {
             if (isDead || entityRender == null)

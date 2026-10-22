@@ -45,6 +45,8 @@ namespace Code.Combat
         private bool _isAttacking;
         private bool _isPaused;
         private float _attackTimer;
+        private bool _windingUp;
+        private float _staggerUntil;
         private Unit _ownerUnit;
         private Code.Enemies.Enemy _ownerEnemy;
         private GameEventChannelSO artifactEventChannel;
@@ -80,6 +82,21 @@ namespace Code.Combat
         public bool IsAlive => health != null && health.IsAlive;
         public bool IsAttacking => _isAttacking;
         public bool IsPaused => _isPaused;
+
+        /// <summary>휘두르기 시작해 아직 닿지 않은 동안. 이동이 이 동안 발을 묶는다.</summary>
+        public bool IsWindingUp => _windingUp;
+
+        /// <summary>맞고 움찔하는 중.</summary>
+        public bool IsStaggered => Time.time < _staggerUntil;
+
+        /// <summary>평타가 닿는 거리. 이동을 맡은 쪽(<c>BattleAgent</c>)이 사거리를 넣는다. 무한이면 거리를 보지 않는다.</summary>
+        public float StrikeRange { get; set; } = float.PositiveInfinity;
+
+        public void Stagger(float seconds)
+        {
+            if (seconds > 0f)
+                _staggerUntil = Mathf.Max(_staggerUntil, Time.time + seconds);
+        }
         public Combatant Target => _target;
         public Health Health => health;
         public int AttackDamage => ResolveAttackDamagePreview();
@@ -262,6 +279,7 @@ namespace Code.Combat
             _attackRoutine = null;
             _target = null;
             _isAttacking = false;
+            _windingUp = false;
             _isPaused = false;
             _attackTimer = 0f;
             RefreshBars(0f);
@@ -278,6 +296,7 @@ namespace Code.Combat
 
             _attackTimer = 0f;
             _isAttacking = false;
+            _windingUp = false;
             RefreshAttackBar(0f);
         }
 
@@ -302,12 +321,38 @@ namespace Code.Combat
                 }
 
                 var currentAttackInterval = ResolveAttackInterval();
+                var windup = poseView != null
+                    ? Code.Entities.CharacterAnimationRules.WindupSeconds(poseView.AttackImpactSeconds, currentAttackInterval)
+                    : 0f;
+                var distance = Vector2.Distance(transform.position, target.transform.position);
                 _attackTimer += Time.deltaTime;
+
+                // 휘두르기 전에는 사거리 안·움찔 아님을 기다린다. 그동안 게이지는 예비 동작 직전에서 멈춘다.
+                if (!_windingUp)
+                {
+                    if (CombatTimingRules.ShouldStartSwing(_attackTimer, currentAttackInterval, windup,
+                            CombatTimingRules.InSwingRange(distance, StrikeRange), IsStaggered))
+                        BeginSwing(target);
+                    else
+                        _attackTimer = CombatTimingRules.HoldTimer(_attackTimer, currentAttackInterval, windup);
+                }
+
                 RefreshAttackBar(_attackTimer / currentAttackInterval);
 
-                if (_attackTimer >= currentAttackInterval && !_isAttacking)
+                if (_windingUp && _attackTimer >= currentAttackInterval && !_isAttacking)
                 {
                     _isAttacking = true;
+                    _windingUp = false;
+
+                    // 휘두르는 사이 대상이 멀어졌으면 헛친다.
+                    if (target != null && target.Health != null && !CombatTimingRules.InStrikeReach(distance, StrikeRange))
+                    {
+                        _attackTimer = 0f;
+                        RefreshAttackBar(0f);
+                        _isAttacking = false;
+                        yield return null;
+                        continue;
+                    }
 
                     if (target != null && target.Health != null)
                     {
@@ -347,9 +392,18 @@ namespace Code.Combat
             _attackRoutine = null;
             _target = null;
             _isAttacking = false;
+            _windingUp = false;
             _isPaused = false;
             _attackTimer = 0f;
             RefreshBars(0f);
+        }
+
+        /// <summary>대상 쪽으로 돌아서 공격 동작을 시작한다. 피해·소리·돌진은 동작이 닿는 때(게이지가 다 찬 때) 나간다.</summary>
+        private void BeginSwing(Combatant target)
+        {
+            _windingUp = true;
+            if (poseView != null && target != null && poseView.AttackImpactSeconds > 0f)
+                poseView.PlayAttackPose(target.transform.position.x - transform.position.x);
         }
 
         private bool TryDodgeAttack(Vector3 attackerPosition)
@@ -358,9 +412,10 @@ namespace Code.Combat
             if (!IsAlive || evasion <= 0f || UnityEngine.Random.value >= evasion)
                 return false;
 
-            if (_isAttacking)
+            if (_isAttacking || _windingUp)
             {
                 _isAttacking = false;
+                _windingUp = false;
                 _attackTimer = 0f;
                 RefreshAttackBar(0f);
             }
@@ -500,7 +555,8 @@ namespace Code.Combat
 
             global::Code.Audio.GameSfxPlayer.Play(attackSfx, impactPosition);
 
-            if (poseView != null)
+            // 예비 동작이 없는 캐릭터(정지 포즈만 있는 쪽)는 여기서 공격 포즈를 낸다. 애니메이션이 있으면 BeginSwing에서 이미 돌고 있다.
+            if (poseView != null && poseView.AttackImpactSeconds <= 0f)
                 poseView.PlayAttackPose(direction.x);
 
             if (attackFeelFeedbacks != null)

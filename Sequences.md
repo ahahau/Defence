@@ -1,5 +1,14 @@
 # Sequences
 
+- 2026-10-22 · 부하·모험가 전투 다듬기: 방향(회전 Y 180), 공격 예비 동작, 실제 싸움 같은 전투 이동, 블룸(사용자: "전투 bt좀 진짜 전투처럼 수정좀해줘 공격 애니메이션도 넣어주고 블룸 효과도 추가하고 로테이션y 180도 돌려서 움직임에 따라 한쪽만 보지않게해줘" → "네 가지 모두").
+  - 방향: `EntityRender`(걸을 때 `flipX`)와 `BattleAgent`(전투 중 몸통 크기 x)가 따로 뒤집어 둘이 겹치면 두 번 뒤집혀 원래 방향을 봤다. 이제 `EntityRender.FaceTowards`가 몸통 회전 Y 0/180 하나로 정하고, 흔들림 연출이 회전을 되돌려도 `LateUpdate`가 z 기울기는 살려 Y만 다시 얹는다(`CharacterFacingRules`). `BattleAgent`의 크기 뒤집기와 "크기 부호 = 보는 쪽" 읽기 4곳은 `FacingX`로. 싸우는 동안은 대상 쪽을 보고 움직임 방향으로 돌지 않는다(`FaceMotion` — 첫 실측에서 넉백·뒷걸음 때 교전 프레임 23%가 대상 반대를 봤다).
+  - 공격 애니메이션: 피해가 들어간 뒤에야 공격 동작이 시작됐다. 이제 게이지가 (간격 − 예비 동작)에 닿으면 공격 동작을 시작하고 다 차면 피해·소리·돌진·발사체가 나간다(`CombatTimingRules`, 예비 동작 = 애니메이션 타격 시점 `attackImpactRatio` 0.55 ≤ 간격의 절반).
+  - 전투 BT: 한 번 교전을 걸면 사거리 밖으로 쫓아가면서도 계속 맞았다 → 사거리 1.15배 안에서만 휘두르고, 닿을 때 1.3배보다 멀면 헛침(`Combatant.StrikeRange`). 휘두르는 중·맞고 0.2초 움찔하는 중에는 전투 이동 정지(`BattleAgent.IsCombatMoveLocked`). 근접은 대기 시간에 무작위 좌우 이동 대신 대상을 마주 보고 버팀(`EngageTargetAction`, 원거리만 스트레이프). 바짝 붙어도 옆자리 40%를 남겨 한 점에 겹치지 않게.
+  - 블룸: 카메라 후처리가 꺼져 있고 전역 볼륨 설정이 비어 있었다 → `GameVolumeProfile`(블룸 임계 0.85·세기 0.5·퍼짐 0.6)을 씬 전역 볼륨(`WaveManager` 오브젝트에 붙어 있던 것)에 걸고 메인 카메라 후처리 켬(생성기 `PostProcessingBuilder`).
+  - 테스트: `CharacterFacing_KeepsTiltWhenTurned`(4건), `CharacterAnimation_ImpactLandsMidSwingWithinHalfTheInterval`, `Swing_StartsBeforeImpactOnlyInRangeAndNotStaggered`, `Swing_ToleratesKnockbackButWhiffsWhenTargetEscapes`. EditMode 362/362.
+  - 플레이(세이브 원복): 새 판 1일차, 방 하나 확장 + 해골 검사 1명 배치 → 영업 40초 기록. 교전 프레임 중 대상 반대를 본 프레임 204/892 → 0/1580, 휘두르기 18회, 움찔 138프레임, 휘두르는 중 이동 3프레임(맞아서 밀린 넉백). 왼쪽·오른쪽 보기 4823/4819, flipX 0. 블룸은 횃불 둘레만 은은함.
+  - 확인한 기존 문제(고치지 않음): 해골 검사 1명(체력 20)은 1일차 모험가 3명에게 약 5초 만에 쓰러진다. 부활한 부하는 서 있던 방의 전투 필드에 다시 들어가지 않아, 같은 방 모험가와 싸우지 않는다.
+
 - 2026-10-22 · ESC로 창 닫기, 게임 화면 설정 창(사용자: "창 esc누르면 닫히게 해주고 추가로 설정도 만들어줘" → "닫을 창이 없을 때 ESC로 열고, 오른쪽 위 배속 버튼 옆에 톱니 버튼도").
   - 원인: ESC는 팝업·정산표·방 관리만 각자 받아 상인·고용·금고·부하 상태·모험가 상태 창은 ESC로 닫히지 않았고, 따로 받으면 한 번에 둘이 닫힐 수 있었다. 게임 화면에는 설정이 없었다(옛 `SettingsPanelView`는 타이틀 씬에만).
   - 수정: `IEscapeClosable`(열림·한 단계 닫기)과 `UiEscapeRouter` — 위 창부터 하나만 닫고(설정 → 정산표 → 상인 → 고용 → 금고 → 부하 상태 → 모험가 상태 → 방 관리[위치 고르기 → 설치 창 → 방 상세]), 닫을 창이 없으면 설정을 연다. 팝업·건물/함정 놓기·사건 대화 중에는 양보. 정산표·방 관리 화면의 자체 ESC 처리는 라우터로 옮겼다. 새 `SettingsScreenView`(가운데 카드 520×344, 캔버스 90): 효과음·음악 음량(0~100%), 전체 화면 켬/끔, 다시 시작(확인 팝업 → 저장 삭제), 타이틀로, 닫기, 열린 동안 `GameSpeedController.Suspend`로 시간 정지. 오른쪽 위 배속 버튼 왼쪽에 톱니 버튼(팩 기호 254). 생성기 `SettingsBuilder`(라우터 배선·톱니 연결), `GameplayHudBuilder` → `RoomManagementBuilder` → `SettingsBuilder` 순으로 다시 놓음.

@@ -34,5 +34,25 @@ namespace Code.Entities
         }
 
         public static bool IsLooping(CharacterClip clip) => clip == CharacterClip.Idle || clip == CharacterClip.Walk;
+
+        /// <summary>무기가 닿는 지점의 기본값(공격 동작 길이 비율). 6장짜리 휘두르기면 넷째 장 무렵이다.</summary>
+        public const float DefaultImpactRatio = 0.55f;
+
+        /// <summary>공격 동작을 시작하고 무기가 닿기까지의 시간(초). 닿는 프레임의 시작 시각이다.</summary>
+        public static float ImpactSeconds(int frameCount, float framesPerSecond, float impactRatio)
+        {
+            if (frameCount <= 0 || framesPerSecond <= 0f)
+                return 0f;
+
+            var frame = Mathf.Clamp(Mathf.FloorToInt(frameCount * Mathf.Clamp01(impactRatio)), 0, frameCount - 1);
+            return frame / framesPerSecond;
+        }
+
+        /// <summary>
+        /// 공격 예비 동작 시간. 동작이 닿기까지 걸리는 시간이지만 공격 간격의 절반을 넘지 않는다 —
+        /// 넘으면 게이지가 차기 한참 전부터 휘두르기 시작해 다음 공격과 겹친다.
+        /// </summary>
+        public static float WindupSeconds(float impactSeconds, float attackInterval) =>
+            Mathf.Clamp(impactSeconds, 0f, Mathf.Max(0f, attackInterval) * 0.5f);
     }
 }

@@ -102,5 +102,29 @@ namespace Tests.EditMode.Combat
             Assert.That(CallStatic("ApplyCritical", 5, 2f), Is.EqualTo(10));
             Assert.That(CallStatic("ApplyCritical", 3, 0.5f), Is.EqualTo(3), "1보다 작은 배율은 피해를 줄이지 못해야 합니다.");
         }
+
+        /// <summary>
+        /// 평타는 게이지가 (간격 − 예비 동작)에 닿으면 휘두르기 시작해 다 찼을 때 닿는다. 예전에는 맞은 뒤에야 공격 동작이 나왔고,
+        /// 한 번 교전을 시작하면 사거리 밖으로 쫓아가면서도 계속 맞았다. 사거리 밖·움찔하는 중에는 휘두르지 않고 게이지가 예비 동작 직전에서 기다린다.
+        /// </summary>
+        [Test]
+        public void Swing_StartsBeforeImpactOnlyInRangeAndNotStaggered()
+        {
+            Assert.That(Code.Combat.CombatTimingRules.ShouldStartSwing(0.79f, 1f, 0.2f, true, false), Is.False);
+            Assert.That(Code.Combat.CombatTimingRules.ShouldStartSwing(0.8f, 1f, 0.2f, true, false), Is.True);
+            Assert.That(Code.Combat.CombatTimingRules.ShouldStartSwing(0.9f, 1f, 0.2f, false, false), Is.False, "사거리 밖에서는 휘두르지 않는다.");
+            Assert.That(Code.Combat.CombatTimingRules.ShouldStartSwing(0.9f, 1f, 0.2f, true, true), Is.False, "맞고 움찔하는 중에는 휘두르지 않는다.");
+            Assert.That(Code.Combat.CombatTimingRules.HoldTimer(0.95f, 1f, 0.2f), Is.EqualTo(0.8f).Within(0.0001f));
+            Assert.That(Code.Combat.CombatTimingRules.HoldTimer(0.5f, 1f, 0.2f), Is.EqualTo(0.5f).Within(0.0001f));
+        }
+
+        [Test]
+        public void Swing_ToleratesKnockbackButWhiffsWhenTargetEscapes()
+        {
+            Assert.That(Code.Combat.CombatTimingRules.InSwingRange(1.45f, 1.3f), Is.True, "밀려난 직후 조금 벗어난 것은 봐준다.");
+            Assert.That(Code.Combat.CombatTimingRules.InSwingRange(1.6f, 1.3f), Is.False);
+            Assert.That(Code.Combat.CombatTimingRules.InStrikeReach(1.65f, 1.3f), Is.True);
+            Assert.That(Code.Combat.CombatTimingRules.InStrikeReach(1.8f, 1.3f), Is.False, "휘두르는 사이 멀어졌으면 헛친다.");
+        }
     }
 }

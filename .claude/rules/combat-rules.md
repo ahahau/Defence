@@ -16,6 +16,16 @@ paths:
 - 모듈 초기화는 `Initialize` → `AfterInitialize`(`IAfterInitModule`) 2단계다. 다른 모듈을 참조하는 배선은 `AfterInitialize`에서 한다.
 - 캐릭터는 Unity Behavior 그래프 액션(`BT/Actions`, `BT/Conditions`)이 `BattleAgent`를 호출해 움직인다.
 
+## 방향·평타 박자 (2026-10-22)
+- 좌우 방향은 `EntityRender.FaceTowards` 한 곳이 몸통(`Visual`) 회전 Y 0/180으로 정한다. `flipX`나 크기 x 뒤집기를 새로 쓰지 않는다(둘이 겹쳐 두 번 뒤집히면 한쪽만 봤다). 흔들림 연출이 회전을 되돌려도 `LateUpdate`가 z 기울기는 살리고 Y만 다시 얹는다(`CharacterFacingRules.TiltZ`). 보는 쪽이 필요하면 `EntityRender.FacingX`를 읽는다.
+- 싸우는 동안(대상이 있을 때)은 `BattleAgent`가 대상 쪽을 보게 하고 `EntityRender.FaceMotion`을 꺼서 넉백·뒷걸음에 등을 돌리지 않는다. 대상과 x 차이가 0.1 이하면 돌아서지 않는다(겹쳐 서서 떨지 않게).
+- 평타는 게이지 → 예비 동작 → 타격이다(`CombatTimingRules`). 게이지가 (간격 − 예비 동작)에 닿으면 공격 동작을 시작하고, 다 차면 피해·소리·돌진·발사체가 나간다. 예비 동작 = 애니메이션의 타격 시점(`CharacterAnimationSetSO.attackImpactRatio`, 기본 0.55) ≤ 간격의 절반. 애니메이션이 없으면 예비 동작 없이 맞는 순간 포즈만 바꾼다.
+- 휘두르기는 사거리(`Combatant.StrikeRange` = `BattleAgent.attackRange`)의 1.15배 안에서만 시작하고, 닿는 순간 1.3배보다 멀어졌으면 헛친다. 사거리 밖·움찔 중에는 게이지가 예비 동작 직전에서 기다린다(예전에는 한 번 교전을 걸면 쫓아가면서도 계속 맞았다).
+- 맞으면 0.2초 움찔(`Combatant.Stagger`)해 새로 휘두르지도 움직이지도 못한다. 휘두르는 중·움찔 중에는 전투 이동이 모두 멈춘다(`BattleAgent.IsCombatMoveLocked`). 근접은 대기 시간에 무작위 좌우 이동을 하지 않고 대상을 마주 보고 버틴다(`EngageTargetAction`, 원거리만 스트레이프). 한 대상에 붙은 근접은 바짝 붙어도 옆자리 40%를 남긴다.
+
+## 후처리
+- 블룸은 `Assets/05.Materials/PostProcessing/GameVolumeProfile`(임계 0.85·세기 0.5·퍼짐 0.6)을 씬 전역 볼륨에 건다. 생성기 `PostProcessingBuilder.BuildAll()`, 메인 카메라 후처리 켬. 세게 올리면 도트가 뭉개진다.
+
 ## 피해 보정
 - 모든 피해(평타·스킬·함정)는 `HealthModule.TakeDamage`를 지난다. "지금은 덜/더 아프다" 같은 상태는 `Health.ModifyIncomingDamage`(GameLib의 가상 메서드)에 건다. 피해를 주는 쪽마다 따로 보정하지 않는다.
 - 요새 방(`RoomFeature.Fortress`)에 선 부하는 받는 피해 -20%(최소 1). `Health.ModifyIncomingDamage`가 부하의 `BattleAgent.Battlefield` → `Node.Feature`를 보고 재배치 준비 감소 뒤에 곱한다.

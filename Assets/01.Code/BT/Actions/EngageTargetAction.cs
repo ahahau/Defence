@@ -7,8 +7,9 @@ using Random = UnityEngine.Random;
 namespace Code.BT.Actions
 {
     /// <summary>찾기→(원거리면 거리유지)→사거리면 공격, 아니면 접근 — 전투 전체를 노드 하나로.
-    /// 사거리 안에서는 공격 쿨이 도는 동안 좌우 스트레이프/백스텝을 무작위로 섞고(살아있는 교전),
-    /// 가끔 표적을 다른 적으로 바꾼다(난전). 적이 없으면 Failure(다음 분기 Idle/Traverse로).</summary>
+    /// 사거리 안에서 근접은 대상을 마주 보고 버티다 휘두르고, 휘두른 직후 반 걸음 물러났다 다시 붙는다.
+    /// 원거리는 공격 쿨이 도는 동안 좌우 스트레이프/백스텝을 섞는다. 휘두르는 중·맞고 움찔하는 중에는
+    /// <see cref="BattleAgent"/>가 발을 묶는다. 가끔 표적을 다른 적으로 바꾼다(난전). 적이 없으면 Failure.</summary>
     [Serializable, Unity.Properties.GeneratePropertyBag]
     [NodeDescription(
         name: "Engage Target",
@@ -84,7 +85,9 @@ namespace Code.BT.Actions
                 return Status.Running;
             }
 
-            if (VariedOn && !_agent.AttackReady)
+            // 근접은 대기 시간에도 대상을 마주 보고 버틴다(휘두른 직후의 반 걸음 물러남은 위 회복 구간이 맡는다).
+            // 무작위 좌우 이동을 섞으면 칼을 맞대는 대신 제자리에서 미끄러지며 떠는 것처럼 보였다.
+            if (VariedOn && _agent.UsesRangedKiting && !_agent.AttackReady)
                 PerformManeuver(dt);
 
             return Status.Running;

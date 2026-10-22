@@ -27,9 +27,22 @@ namespace Code.Entities
         private Transform _motionSource;
         private Vector3 _lastPosition;
         private float _walkHold;
+        private bool _facingLeft;
 
         public SpriteRenderer SpriteRenderer => spriteRenderer;
         public bool IsAnimated => animationSet != null;
+
+        /// <summary>보는 쪽. 오른쪽 1, 왼쪽 -1.</summary>
+        public float FacingX => _facingLeft ? -1f : 1f;
+
+        /// <summary>
+        /// 움직이는 쪽으로 돌아설지. 싸우는 동안은 끈다 — 넉백·뒷걸음으로 뒤로 밀릴 때마다 등을 돌려,
+        /// 실측에서 교전 프레임의 23%가 대상 반대쪽을 봤다. 싸울 때 방향은 전투 쪽이 대상으로 정한다.
+        /// </summary>
+        public bool FaceMotion { get; set; } = true;
+
+        /// <summary>공격 동작에서 무기가 닿는 때(초). 애니메이션이 없으면 0.</summary>
+        public float AttackImpactSeconds => animationSet != null ? animationSet.AttackImpactSeconds : 0f;
 
         /// <summary>보이는 그림이 바뀔 때마다. 테두리처럼 그림을 따라 그리는 쪽이 듣는다.</summary>
         public event Action SpriteChanged;
@@ -81,24 +94,41 @@ namespace Code.Entities
             }
         }
 
-        /// <summary>그림이 오른쪽을 본다고 보고, 음수면 왼쪽으로 뒤집는다.</summary>
+        /// <summary>
+        /// 그림이 오른쪽을 본다고 보고, 음수면 왼쪽(회전 Y 180)으로 돌린다. 방향은 여기 한 곳만 정한다.
+        /// 예전에는 이 컴포넌트가 flipX를, <c>BattleAgent</c>가 몸통 크기 x를 따로 뒤집어 둘이 겹치면 두 번 뒤집혀
+        /// 원래 방향을 봤다(한쪽만 보는 캐릭터). 자식(테두리 등)도 같이 돌도록 그림 대신 몸통을 돌린다.
+        /// </summary>
         public void FaceTowards(float directionX)
         {
-            if (spriteRenderer == null || Mathf.Abs(directionX) <= 0.001f)
+            if (Mathf.Abs(directionX) <= 0.001f)
                 return;
 
-            var flip = directionX < 0f;
-            if (spriteRenderer.flipX == flip)
-                return;
-
-            spriteRenderer.flipX = flip;
-            SpriteChanged?.Invoke();
+            _facingLeft = directionX < 0f;
+            ApplyFacing();
         }
 
         private void Awake()
         {
             _motionSource = transform.parent != null ? transform.parent : transform;
             _lastPosition = _motionSource.position;
+            // 예전 프리팹·씬에 남은 flipX가 회전과 겹치지 않게 한 번 지운다.
+            if (spriteRenderer != null)
+                spriteRenderer.flipX = false;
+        }
+
+        // 피격 흔들림·이동 연출이 회전을 자기 시작값으로 되돌리며 Y를 덮을 수 있다. 연출이 끝난 뒤 매 프레임 방향만 다시 얹는다.
+        private void LateUpdate() => ApplyFacing();
+
+        /// <summary>z 기울기(흔들림)는 살리고 Y만 보는 쪽(0/180)으로 맞춘다.</summary>
+        private void ApplyFacing()
+        {
+            var rotation = transform.localRotation;
+            var targetY = _facingLeft ? 180f : 0f;
+            var tilt = CharacterFacingRules.TiltZ(rotation * Vector3.up, rotation * Vector3.forward);
+            var desired = Quaternion.Euler(0f, targetY, tilt);
+            if (Quaternion.Angle(rotation, desired) > 0.01f)
+                transform.localRotation = desired;
         }
 
         private void OnEnable()
@@ -177,7 +207,8 @@ namespace Code.Entities
             if (delta.magnitude / deltaTime >= CharacterAnimationRules.WalkSpeedThreshold)
             {
                 _walkHold = CharacterAnimationRules.WalkHoldSeconds;
-                FaceTowards(delta.x);
+                if (FaceMotion)
+                    FaceTowards(delta.x);
             }
             else
             {

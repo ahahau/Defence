@@ -35,8 +35,9 @@ namespace Code.BT
         [SerializeField] private Combatant combatant;
         [SerializeField] private Transform body;
 
-        /// <summary>연출이 끝난 뒤 돌아갈 몸통 자세. 크기의 x는 항상 양수로 들고 있고 부호는 Face가 얹는다.</summary>
+        /// <summary>연출이 끝난 뒤 돌아갈 몸통 자세. 좌우 방향은 크기가 아니라 <see cref="Code.Entities.EntityRender"/>의 회전 Y가 정한다.</summary>
         private Vector3 _bodyBaseScale = Vector3.one;
+        private Code.Entities.EntityRender _render;
         private Vector3 _bodyBaseRotation;
         private Vector3 _bodyBaseLocalPosition;
 
@@ -202,6 +203,13 @@ namespace Code.BT
         /// <summary>속박 상태 — 이동 불가(공격은 가능). 탱커 속박 스킬이 적에게 건다.</summary>
         public bool IsSnared => Time.time < _snareUntil;
 
+        /// <summary>
+        /// 전투 중 발이 묶인 때: 순회 잠금·속박, 휘두르는 중(예비 동작), 맞고 움찔하는 중.
+        /// 예전에는 공격 대기 시간마다 미끄러지듯 옮겨 다니며 때려, 서서 칼을 맞대는 싸움으로 보이지 않았다.
+        /// </summary>
+        private bool IsCombatMoveLocked =>
+            _traversalLocked || IsSnared || (combatant != null && (combatant.IsWindingUp || combatant.IsStaggered));
+
         private void Awake()
         {
             if (combatant == null) combatant = GetComponent<Combatant>();
@@ -226,6 +234,8 @@ namespace Code.BT
             _bodyBaseScale.x = Mathf.Abs(_bodyBaseScale.x);
             _bodyBaseRotation = body != null ? body.localEulerAngles : Vector3.zero;
             _bodyBaseLocalPosition = body != null ? body.localPosition : Vector3.zero;
+            _render = body != null ? body.GetComponent<Code.Entities.EntityRender>() : null;
+            SyncStrikeRange();
 
             // 트리거 감지에 필요한 Rigidbody2D를 Kinematic으로 강제(직접 이동하므로 물리 영향 X)
             var rb = GetComponent<Rigidbody2D>();
@@ -253,6 +263,17 @@ namespace Code.BT
         private void Update()
         {
             if (!IsAlive) return;
+
+            // 싸우는 동안은 대상을 본다. 밀려나거나 물러날 때 움직이는 쪽으로 돌아서지 않게 한다.
+            if (_render != null)
+            {
+                var target = CurrentTarget;
+                _render.FaceMotion = target == null;
+                // 거의 겹쳐 선 대상은 좌우가 프레임마다 바뀌어 떨므로, 조금 벗어났을 때만 돌아선다.
+                var dx = target != null ? target.transform.position.x - transform.position.x : 0f;
+                if (Mathf.Abs(dx) > 0.1f)
+                    _render.FaceTowards(dx);
+            }
 
             // 역할 패시브(autoDrive와 무관하게 항상 동작)
             TickOutOfCombatRegen(Time.deltaTime); // Tank/전열: 비전투 HP 재생
@@ -624,7 +645,7 @@ namespace Code.BT
             var t = CurrentTarget;
             Vector2 dir = t != null
                 ? ((Vector2)t.transform.position - (Vector2)transform.position).normalized
-                : new Vector2(Mathf.Sign(body.localScale.x), 0f);
+                : new Vector2(FacingX, 0f);
             if (dir.sqrMagnitude < 0.0001f) dir = Vector2.right;
 
             body.DOComplete();
@@ -734,6 +755,7 @@ namespace Code.BT
         private void OnDamaged(int amount)
         {
             _lastDamagedTime = Time.time;
+            combatant?.Stagger(CombatTimingRules.HitStaggerSeconds);
             ApplyHitRecoil();
         }
 
@@ -747,7 +769,7 @@ namespace Code.BT
             var attacker = CurrentTarget;
             Vector2 dir = attacker != null
                 ? ((Vector2)transform.position - (Vector2)attacker.transform.position).normalized
-                : new Vector2(-Mathf.Sign(body != null ? body.localScale.x : 1f), 0f);
+                : new Vector2(-FacingX, 0f);
             if (dir.sqrMagnitude < 0.0001f) dir = Vector2.right;
 
             transform.position = ClampToArena(transform.position + (Vector3)(dir * hitKnockbackDistance));
@@ -769,10 +791,9 @@ namespace Code.BT
 
             if (body != null && body != transform)
             {
-                // DOComplete가 피격 펀치를 중간에 끊을 수 있다. 기준 자세로 직접 돌려놓는다(방향은 유지).
+                // DOComplete가 피격 펀치를 중간에 끊을 수 있다. 기준 자세로 직접 돌려놓는다(방향은 EntityRender가 다시 얹는다).
                 body.DOComplete();
-                var facing = body.localScale.x < 0f ? -1f : 1f;
-                body.localScale = new Vector3(_bodyBaseScale.x * facing, _bodyBaseScale.y, _bodyBaseScale.z);
+                body.localScale = _bodyBaseScale;
                 body.localEulerAngles = _bodyBaseRotation;
                 body.localPosition = _bodyBaseLocalPosition;
                 body.DOPunchPosition((Vector3)(tangent * 0.12f), 0.18f, 1, 0.5f).SetLink(gameObject);
@@ -1020,7 +1041,7 @@ namespace Code.BT
         /// <summary>타깃 쪽으로 한 스텝 이동(공격 중이면 멈춘다).</summary>
         public void MoveToTarget(float deltaTime)
         {
-            if (_traversalLocked || IsSnared)
+            if (IsCombatMoveLocked)
                 return;
 
             var t = CurrentTarget;
@@ -1042,7 +1063,8 @@ namespace Code.BT
             if (!UsesRangedKiting && meleeFlankOffset > 0f)
             {
                 var tangent = new Vector2(-approach.y, approach.x) * FlankSide();
-                var flankScale = Mathf.InverseLerp(attackRange, attackRange * 3f, dist);
+                // 바짝 붙어도 옆으로 비낀 자리를 남긴다. 0이 되면 한 대상에 붙은 근접이 같은 점으로 모여 겹쳤다.
+                var flankScale = Mathf.Lerp(CombatTimingRules.CloseFlankShare, 1f, Mathf.InverseLerp(attackRange, attackRange * 3f, dist));
                 goal += tangent * (meleeFlankOffset * flankScale);
             }
 
@@ -1059,7 +1081,7 @@ namespace Code.BT
         /// <summary>타깃 반대 방향으로 후퇴한다(치고 빠지기/도망). 벽에 막히면 벽을 따라 돈다.</summary>
         public void RetreatFromTarget(float deltaTime)
         {
-            if (_traversalLocked || IsSnared) return;
+            if (IsCombatMoveLocked) return;
 
             var t = CurrentTarget;
             if (t == null) return;
@@ -1099,7 +1121,7 @@ namespace Code.BT
         /// <summary>너무 가까우면 물러나며 쏜다(카이팅). 물러났으면 true, 적정/먼 거리면 false(공격·접근에 양보).</summary>
         public bool MaintainRange(float deltaTime)
         {
-            if (_traversalLocked || IsSnared || !IsAlive || !UsesRangedKiting)
+            if (IsCombatMoveLocked || !IsAlive || !UsesRangedKiting)
                 return false;
 
             var t = CurrentTarget;
@@ -1153,7 +1175,7 @@ namespace Code.BT
         /// <summary>타깃을 공격 사거리에 유지하며 옆으로 도는 견제 이동(strafe). direction: +1/-1.</summary>
         public void StrafeTarget(float deltaTime, float direction)
         {
-            if (_traversalLocked || IsSnared)
+            if (IsCombatMoveLocked)
                 return;
 
             var t = CurrentTarget;
@@ -1198,7 +1220,7 @@ namespace Code.BT
         /// <summary>공격 루프를 끊지 않고 타깃 주변을 옆으로 돈다. EngageTargetAction의 쿨다운 기동용.</summary>
         public void CombatStrafe(float deltaTime, float direction)
         {
-            if (_traversalLocked || IsSnared)
+            if (IsCombatMoveLocked)
                 return;
 
             var t = CurrentTarget;
@@ -1220,7 +1242,7 @@ namespace Code.BT
         /// <summary>공격 루프를 끊지 않고 현재 타깃에게서 짧게 물러난다. EngageTargetAction의 쿨다운 기동용.</summary>
         public void CombatBackStep(float deltaTime)
         {
-            if (_traversalLocked || IsSnared)
+            if (IsCombatMoveLocked)
                 return;
 
             var t = CurrentTarget;
@@ -1249,7 +1271,7 @@ namespace Code.BT
             var t = CurrentTarget;
             Vector2 dir = t != null
                 ? (self - (Vector2)t.transform.position).normalized
-                : new Vector2(-Mathf.Sign(body != null ? body.localScale.x : 1f), 0f);
+                : new Vector2(-FacingX, 0f);
             if (dir.sqrMagnitude < 0.0001f) dir = Vector2.right;
 
             transform.position = ClampToArena(self + dir * distance);
@@ -1379,7 +1401,7 @@ namespace Code.BT
         /// <summary>전열(Tank): 적 무리와 아군 후열 사이로 이동해 후열을 가린다. 후열이 없으면 적 쪽으로 전진.</summary>
         public void GuardBackline(float deltaTime)
         {
-            if (_traversalLocked || IsSnared || _battlefield == null)
+            if (IsCombatMoveLocked || _battlefield == null)
                 return;
 
             Vector2 self = transform.position;
@@ -1478,7 +1500,7 @@ namespace Code.BT
         /// <summary>아군 무리 쪽으로 후퇴(저체력 도주/재집결). 아군이 없으면 현재 타깃 반대로 물러난다.</summary>
         public void RetreatTowardAllies(float deltaTime)
         {
-            if (_traversalLocked || IsSnared)
+            if (IsCombatMoveLocked)
                 return;
 
             if (combatant.IsAttacking) combatant.StopCombat();
@@ -1502,7 +1524,7 @@ namespace Code.BT
         /// <summary>타깃에게 빠르게 돌진(평소보다 빠른 접근). 사거리 안에 들면 false(=공격 전환), 아직 멀면 true.</summary>
         public bool ChargeToTarget(float deltaTime, float speedMultiplier)
         {
-            if (_traversalLocked || IsSnared)
+            if (IsCombatMoveLocked)
                 return false;
 
             var t = CurrentTarget;
@@ -1569,6 +1591,14 @@ namespace Code.BT
             role = configuredRole;
             autoDrive = useAutoDrive;
             attackRange = UsesRangedKiting ? 4.5f : 1.3f;
+            SyncStrikeRange();
+        }
+
+        /// <summary>평타가 닿는 거리를 전투원에 알린다. 사거리 밖에서는 휘두르지 않고, 휘두른 끝에 멀어졌으면 헛친다.</summary>
+        private void SyncStrikeRange()
+        {
+            if (combatant != null)
+                combatant.StrikeRange = attackRange;
         }
 
         /// <summary>역할(프리팹/인스톨러가 정한 값)은 보존하고 팀·오토드라이브만 보장한다. 런타임 안전장치.</summary>
@@ -1595,6 +1625,7 @@ namespace Code.BT
         {
             role = configuredRole;
             attackRange = UsesRangedKiting ? 4.5f : 1.3f;
+            SyncStrikeRange();
         }
 
         private void HandleTargetDefeated(BattleAgent defeated)
@@ -1609,33 +1640,26 @@ namespace Code.BT
             _target = null;
         }
 
+        /// <summary>보는 쪽. 오른쪽 1, 왼쪽 -1.</summary>
+        private float FacingX => _render != null ? _render.FacingX : 1f;
+
         /// <summary>
-        /// 스프라이트를 진행 방향으로 돌린다.
-        ///
-        /// 예전에는 `Abs(현재 x) * 부호`로 크기를 그대로 물려썼다. 그래서 연출 트윈이 중간에 끊겨
-        /// 스케일이 한 번 어긋나면(회피의 `body.DOComplete()`가 피격 펀치를 끊는 경로가 있다)
-        /// 방향을 틀 때마다 그 값이 다시 기록되어 영구히 눌린 채로 남았다.
-        /// 기준 크기를 기억해 두고 거기에 부호만 얹으면 방향 전환이 곧 복구가 된다.
+        /// 몸통을 진행 방향으로 돌린다. 좌우는 <see cref="Code.Entities.EntityRender.FaceTowards"/>의 회전 Y 하나로 정한다 —
+        /// 예전에는 여기서 크기 x를 뒤집고 EntityRender가 flipX를 따로 뒤집어, 둘이 겹치면 다시 원래 방향을 봤다.
         /// </summary>
         private void Face(float directionX)
         {
             if (body == null || Mathf.Abs(directionX) < 0.001f) return;
-            var s = body.localScale;
-            s.x = _bodyBaseScale.x * (directionX < 0f ? -1f : 1f);
+            _render?.FaceTowards(directionX);
 
-            // 연출이 돌고 있지 않을 때만 나머지도 맞춘다. 스쿼시나 흔들림 중에 끼어들면 연출을 끊어 버린다.
-            // 가로만 고치면 세로가 늘어난 채로, 회전이 기울어진 채로 남는다
-            // (실측: y가 1.088, 회전 z가 -14.63도에서 안 돌아왔다).
-            // 주인공은 회피율이 0이라 회피 쪽 복원 경로를 타지 않아 스스로 낫지 못한다.
-            if (!DOTween.IsTweening(body))
-            {
-                s.y = _bodyBaseScale.y;
-                s.z = _bodyBaseScale.z;
-                body.localEulerAngles = _bodyBaseRotation;
-                body.localPosition = _bodyBaseLocalPosition;
-            }
+            // 연출이 돌고 있지 않을 때만 나머지 자세를 기준으로 돌린다. 스쿼시나 흔들림 중에 끼어들면 연출을 끊어 버린다
+            // (실측: 크기 y가 1.088, 회전 z가 -14.63도에서 안 돌아온 적이 있다). 회전 Y는 EntityRender가 다시 얹는다.
+            if (DOTween.IsTweening(body))
+                return;
 
-            body.localScale = s;
+            body.localScale = _bodyBaseScale;
+            body.localEulerAngles = _bodyBaseRotation;
+            body.localPosition = _bodyBaseLocalPosition;
         }
     }
 }

@@ -21,9 +21,15 @@ namespace Code.Entities
         [SerializeField, Min(1f), Tooltip("공격 동작은 끝까지 한 번 튼다. 공격 간격보다 짧게 끝나야 다음 공격과 겹치지 않는다.")]
         private float attackFramesPerSecond = 12f;
         [SerializeField, Min(1f)] private float defeatedFramesPerSecond = 10f;
+        [SerializeField, Range(0f, 1f), Tooltip("공격 동작 중 무기가 닿는 지점(동작 길이 비율). 피해·소리·돌진이 이때 나간다.")]
+        private float attackImpactRatio = CharacterAnimationRules.DefaultImpactRatio;
 
         /// <summary>대기 첫 프레임. 고용 목록·보드처럼 정지 그림이 필요한 곳에 쓴다.</summary>
         public Sprite FirstIdleFrame => idleFrames != null && idleFrames.Length > 0 ? idleFrames[0] : null;
+
+        /// <summary>공격 동작을 시작하고 무기가 닿기까지의 시간(초).</summary>
+        public float AttackImpactSeconds =>
+            CharacterAnimationRules.ImpactSeconds(attackFrames != null ? attackFrames.Length : 0, attackFramesPerSecond, attackImpactRatio);
 
         public Sprite[] GetFrames(CharacterClip clip)
         {
