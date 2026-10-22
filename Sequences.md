@@ -1,5 +1,12 @@
 # Sequences
 
+- 2026-10-22 · 피격·회복 파티클 자홍색 덩어리 고침(사용자: "피격·회복 파티클 자홍색 문제도 고쳐줘" → "A안(도트 사각 불티)").
+  - 원인: `DamageFeedback`이 코드로 만드는 피격·회복 파티클(`AddComponent<ParticleSystem>`)에 재질이 없어(`null`) URP가 "셰이더 없음" 자홍색으로 그렸다. 프로젝트에 URP 파티클 재질이 하나도 없었다.
+  - 수정: 생성기 `CombatPolishBuilder`가 URP 기본 파티클 재질(반투명 섞기·색 곱하기)을 `Assets/05.Materials/CombatParticle.mat`로 복사하고 그림을 4×4 흰 사각(`Assets/04.Sprites/Effects/ParticleSquare.png`, 점 필터)으로 바꿔 `CombatFxCatalogSO.ParticleMaterial`에 건다. `DamageFeedback`은 처음 터뜨릴 때 표에서 재질을 입히고(씬에 미리 놓인 캐릭터는 표보다 먼저 깨어날 수 있다), 재질을 못 받으면 터뜨리지 않는다.
+  - 테스트: `CombatFxCatalog_HasHitFlashSlashAndParticleMaterial`(재질 있음·`Universal Render Pipeline/Particles/Unlit`·그림 있음, 이름을 바꿈). EditMode 367/367.
+  - 플레이(세이브 원복): 1일차 교전 중 터진 파티클 재질 모두 `CombatParticle`. 캡처 16장 자홍색 픽셀 0. 모험가에게 1 피해를 주고 확대 캡처 → 붉은 도트 사각 불티 18개가 흩어짐.
+  - 확인한 기존 문제(고치지 않음): 전투 연출 표의 사망 이펙트 두 칸(부하·모험가)이 비어 있어 쓰러질 때 이펙트가 나오지 않는다.
+
 - 2026-10-22 · 전투 연출 다듬기 여섯 가지(사용자: "전투 좀더 폴리싱해줘" → "계획대로 여섯 가지 모두").
   - 맞는 동작: `CharacterAnimationSetSO.hurtFrames`(해골 팩 `hit_*`), `EntityState.Hurt`. 서 있을 때 맞으면 튼다. 휘두르는 중·쓰러진 뒤에는 끼어들지 않는다(`CharacterAnimationRules.AllowsHurt` — 맞아도 휘두르기는 이어져 피해가 나가므로 그림만 움찔하면 이상했다).
   - 흰 점멸: 기본 스프라이트 셰이더는 색을 곱해서 흰색으로 칠하면 변화가 없고, 붉은 점멸은 붉은 피해 숫자와 섞였다. 실루엣 셰이더 `Defence/Sprite Flash`(`Assets/05.Materials/SpriteFlash`)를 몸통 그림 위에 덮는 `SpriteFlashOverlay`(`FeelCombatFeedbacks`가 붙임, 재질은 `CombatFxCatalogSO.HitFlashMaterial`). 일반 흰색·강타 연노랑·쓰러짐 연빨강.

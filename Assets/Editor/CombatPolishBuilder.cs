@@ -13,6 +13,7 @@ using UnityEngine;
 /// - 애니메이션 묶음마다 팩에 있는 둘째 공격(attack2)·맞는 동작(hit)·발사체(화살·eff1·마법 구슬)·발사체 폭발 그림.
 ///   첫 공격 그림이 있는 폴더를 기준으로 찾는다. 임포트 설정은 그 캐릭터의 공격 그림을 따르고, 발사체만 기준점을 가운데로 둔다.
 /// - 맞은 캐릭터를 흰색으로 번쩍이는 실루엣 재질(<c>Defence/Sprite Flash</c>)과 근접 베기 섬광 그림(코드로 그린 초승달).
+/// - 피격·회복 파티클 재질(URP 파티클 재질 복사 + 4×4 흰 사각 그림).
 /// - 둘을 전투 연출 표(<see cref="CombatFxCatalogSO"/>)에 건다.
 /// Unity CLI: <c>CombatPolishBuilder.BuildAll()</c>. 돌려준 문자열이 묶음별로 채운 개수다.
 /// </summary>
@@ -24,6 +25,11 @@ public static class CombatPolishBuilder
     public const string SlashSpritePath = "Assets/04.Sprites/Effects/MeleeSlash.png";
     public const string CatalogPath = "Assets/07.SO/Combat/CombatFxCatalog.asset";
     private const string SkeletonWarriorRoot = "Assets/04.Sprites/Characters/SkeletonWarrior";
+
+    public const string ParticleMaterialPath = "Assets/05.Materials/CombatParticle.mat";
+    public const string ParticleTexturePath = "Assets/04.Sprites/Effects/ParticleSquare.png";
+    private const string UrpParticleMaterialPath = "Packages/com.unity.render-pipelines.universal/Runtime/Materials/ParticlesUnlit.mat";
+    private const int ParticleTextureSize = 4;
 
     private const int SlashSize = 32;
     private const float SlashPixelsPerUnit = 40f;
@@ -37,6 +43,7 @@ public static class CombatPolishBuilder
 
         var material = EnsureFlashMaterial();
         var slash = EnsureSlashSprite();
+        var particle = EnsureParticleMaterial();
         var catalog = AssetDatabase.LoadAssetAtPath<CombatFxCatalogSO>(CatalogPath);
         if (catalog == null)
         {
@@ -47,9 +54,10 @@ public static class CombatPolishBuilder
             var serialized = new SerializedObject(catalog);
             serialized.FindProperty("<HitFlashMaterial>k__BackingField").objectReferenceValue = material;
             serialized.FindProperty("<MeleeSlashSprite>k__BackingField").objectReferenceValue = slash;
+            serialized.FindProperty("<ParticleMaterial>k__BackingField").objectReferenceValue = particle;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(catalog);
-            report.AppendLine($"catalog flash={material != null} slash={slash != null}");
+            report.AppendLine($"catalog flash={material != null} slash={slash != null} particle={particle != null}");
         }
 
         AssetDatabase.SaveAssets();
@@ -214,6 +222,53 @@ public static class CombatPolishBuilder
         }
 
         material.shader = shader;
+        EditorUtility.SetDirty(material);
+        return material;
+    }
+
+    /// <summary>
+    /// 피격·회복 파티클 재질. URP 기본 파티클 재질(반투명 섞기, 색 곱하기)을 복사해 그림만 4×4 흰 사각(점 필터)으로 바꾼다 —
+    /// 둥근 기본 그림은 도트 화면에서 흐릿했다. 파티클 색(노랑→빨강·초록)은 그대로 나온다.
+    /// </summary>
+    private static Material EnsureParticleMaterial()
+    {
+        if (!File.Exists(ParticleTexturePath))
+        {
+            UiKit.EnsureFolder(Path.GetDirectoryName(ParticleTexturePath)!.Replace('\\', '/'));
+            var texture = new Texture2D(ParticleTextureSize, ParticleTextureSize, TextureFormat.RGBA32, false);
+            var pixels = new Color32[ParticleTextureSize * ParticleTextureSize];
+            for (var i = 0; i < pixels.Length; i++)
+                pixels[i] = new Color32(255, 255, 255, 255);
+            texture.SetPixels32(pixels);
+            File.WriteAllBytes(ParticleTexturePath, texture.EncodeToPNG());
+            Object.DestroyImmediate(texture);
+            AssetDatabase.ImportAsset(ParticleTexturePath);
+        }
+
+        var importer = (TextureImporter)AssetImporter.GetAtPath(ParticleTexturePath);
+        importer.textureType = TextureImporterType.Default;
+        importer.filterMode = FilterMode.Point;
+        importer.textureCompression = TextureImporterCompression.Uncompressed;
+        importer.mipmapEnabled = false;
+        importer.wrapMode = TextureWrapMode.Clamp;
+        importer.SaveAndReimport();
+        var square = AssetDatabase.LoadAssetAtPath<Texture2D>(ParticleTexturePath);
+
+        var material = AssetDatabase.LoadAssetAtPath<Material>(ParticleMaterialPath);
+        if (material == null)
+        {
+            if (!AssetDatabase.CopyAsset(UrpParticleMaterialPath, ParticleMaterialPath))
+            {
+                Debug.LogError($"{nameof(CombatPolishBuilder)}: {UrpParticleMaterialPath}를 복사하지 못했습니다.");
+                return null;
+            }
+
+            material = AssetDatabase.LoadAssetAtPath<Material>(ParticleMaterialPath);
+        }
+
+        material.SetTexture("_BaseMap", square);
+        if (material.HasProperty("_MainTex"))
+            material.SetTexture("_MainTex", square);
         EditorUtility.SetDirty(material);
         return material;
     }

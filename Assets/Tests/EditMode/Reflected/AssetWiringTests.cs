@@ -870,13 +870,18 @@ namespace Tests.EditMode.Gameplay
         /// 비면 조용히 예전 붉은 칠(흰색이면 아무 변화 없음)로 돌아가 눈으로 보기 전엔 모른다.
         /// </summary>
         [Test]
-        public void CombatFxCatalog_HasHitFlashMaterialAndMeleeSlash()
+        public void CombatFxCatalog_HasHitFlashSlashAndParticleMaterial()
         {
             var catalog = AssetDatabase.LoadAssetAtPath<Code.Combat.CombatFxCatalogSO>("Assets/07.SO/Combat/CombatFxCatalog.asset");
             Assert.That(catalog, Is.Not.Null, "전투 연출 표가 없다.");
             Assert.That(catalog.HitFlashMaterial, Is.Not.Null, "피격 점멸 재질이 비어 있다.");
             Assert.AreEqual("Defence/Sprite Flash", catalog.HitFlashMaterial.shader.name);
             Assert.That(catalog.MeleeSlashSprite, Is.Not.Null, "근접 베기 섬광 그림이 비어 있다.");
+
+            // 코드로 만드는 피격·회복 파티클은 이 재질이 없으면 URP에서 자홍색 덩어리로 그려졌다.
+            Assert.That(catalog.ParticleMaterial, Is.Not.Null, "피격·회복 파티클 재질이 비어 있다.");
+            Assert.AreEqual("Universal Render Pipeline/Particles/Unlit", catalog.ParticleMaterial.shader.name);
+            Assert.That(catalog.ParticleMaterial.GetTexture("_BaseMap"), Is.Not.Null, "파티클 재질에 그림이 없다.");
         }
 
         // 게임 코드는 Runtime, 스탯·모듈 같은 재사용 기반은 GameLib 어셈블리에 있다. 둘 다 찾아본다.

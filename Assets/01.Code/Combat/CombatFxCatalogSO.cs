@@ -35,5 +35,8 @@ namespace Code.Combat
         [field: SerializeField, Min(0.1f)]
         public float MeleeSlashScale { get; private set; } = 1f;
 
+        [field: SerializeField, Tooltip("코드로 만드는 피격·회복 파티클 재질(URP Particles/Unlit, 도트 사각 그림). 비면 재질 없는 파티클이 자홍색으로 그려진다.")]
+        public Material ParticleMaterial { get; private set; }
+
     }
 }

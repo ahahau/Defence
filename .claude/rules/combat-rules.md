@@ -29,6 +29,7 @@ paths:
 - 피격 점멸은 색을 곱하지 않고 흰 실루엣을 덮는다(`SpriteFlashOverlay`, 재질 `Defence/Sprite Flash`는 `CombatFxCatalogSO.HitFlashMaterial`). 기본 스프라이트 셰이더는 색을 곱해서 흰색으로는 밝아지지 않는다.
 - 근접 평타는 `CombatFxCatalogSO.MeleeSlashSprite` 베기 섬광, 원거리는 묶음의 발사체 그림(없으면 예전 사각형)을 날린다. 발사체는 몸통 크기(`lossyScale`)를 따른다. 피해는 여전히 `Combatant`가 낸다(연출은 시각 전용).
 - 넉백은 0.08초에 나눠 민다(`BattleAgent.TickHitRecoil`). 한 번에 옮기면 순간이동처럼 보였다.
+- 코드로 만드는 파티클에는 반드시 재질을 넣는다. 재질이 없으면 URP가 자홍색으로 그린다. 전투 파티클은 `CombatFxCatalogSO.ParticleMaterial`(URP Particles/Unlit, 도트 사각 그림)을 쓴다.
 
 ## 후처리
 - 블룸은 `Assets/05.Materials/PostProcessing/GameVolumeProfile`(임계 0.85·세기 0.5·퍼짐 0.6)을 씬 전역 볼륨에 건다. 생성기 `PostProcessingBuilder.BuildAll()`, 메인 카메라 후처리 켬. 세게 올리면 도트가 뭉개진다.

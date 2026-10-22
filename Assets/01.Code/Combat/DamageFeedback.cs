@@ -40,6 +40,8 @@ namespace Code.Combat
         [SerializeField] private int hitParticleSortingOrder = 80;
 
         private ParticleSystem _healParticles;
+        private ParticleSystemRenderer _hitRenderer;
+        private ParticleSystemRenderer _healRenderer;
         private int _pendingHealAmount;
         private Coroutine _healTextRoutine;
         private string _pendingCounterplayLabel;
@@ -126,7 +128,7 @@ namespace Code.Combat
 
         private void PlayHitParticles()
         {
-            if (hitParticles == null)
+            if (hitParticles == null || !TryDressParticles(hitParticles))
                 return;
 
             hitParticles.transform.position = transform.position + Vector3.up * hitParticleYOffset;
@@ -137,9 +139,38 @@ namespace Code.Combat
         {
             if (_healParticles == null)
                 _healParticles = CreateHealParticles();
+            if (!TryDressParticles(_healParticles))
+                return;
 
             _healParticles.transform.position = transform.position + Vector3.up * hitParticleYOffset;
             _healParticles.Play(true);
+        }
+
+        /// <summary>
+        /// 코드로 만든 파티클에는 재질이 없어 URP가 자홍색 덩어리로 그렸다. 처음 터뜨릴 때 전투 연출 표의 재질을 입힌다 —
+        /// 씬에 미리 놓인 캐릭터는 표를 받기 전에 깨어날 수 있어 Awake에서는 이르다. 재질을 못 받으면 터뜨리지 않는다.
+        /// </summary>
+        private bool TryDressParticles(ParticleSystem particles)
+        {
+            var particleRenderer = particles == hitParticles ? _hitRenderer : _healRenderer;
+            if (particleRenderer == null)
+            {
+                particleRenderer = particles.GetComponent<ParticleSystemRenderer>();
+                if (particles == hitParticles)
+                    _hitRenderer = particleRenderer;
+                else
+                    _healRenderer = particleRenderer;
+            }
+
+            if (particleRenderer.sharedMaterial != null)
+                return true;
+
+            var material = CombatFxHooks.Catalog != null ? CombatFxHooks.Catalog.ParticleMaterial : null;
+            if (material == null)
+                return false;
+
+            particleRenderer.sharedMaterial = material;
+            return true;
         }
 
         private void CreateDamageText(int damage, bool isCritical)
