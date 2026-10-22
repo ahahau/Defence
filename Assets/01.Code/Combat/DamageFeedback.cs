@@ -99,6 +99,8 @@ namespace Code.Combat
 
             PlayHitParticles();
             CreateDamageText(damage, isCritical);
+            if (isCritical)
+                CombatFxHooks.PlayCriticalHit(transform.position + Vector3.up * hitParticleYOffset);
         }
 
         /// <summary>회복 연출 — 초록 블룸 + 상승 스파클. 텍스트는 잦은 소량 힐이 겹치지 않게 짧게 합산해 표시.</summary>

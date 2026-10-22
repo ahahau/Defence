@@ -13,6 +13,7 @@ paths:
    * 새 스킬은 기존 효과 SO를 먼저 조합한다: 피해, 치유, 치유 지대, 지면 지대, 지연 폭발, 돌진, 충격파, 속박, 검기, 암살, 상태이상 부여.
    * 기존 효과로 안 될 때만 `SkillEffectSO`를 상속한 새 효과 클래스(`<이름>SkillEffectSO`)를 만든다. `Execute(SkillContext)` 하나만 구현하고, 사전에 설계를 확인받는다.
    * 효과의 대표 색은 `SignatureColor`로 정한다(시전 연출에 쓰임).
+   * 주문 그림은 `SkillDataSO.SpellFrames`(틀 자리 `SpellAnchor`·`SpellScale`)다. 생성기 `CombatPolishBuilder.SkillSpells` 표에 스킬 이름을 넣고 돌린다. 회복 기술 말고는 비우지 않는다(`EverySkill_ExceptHeals_HasSpellArt`).
 2. 스킬은 두 종류다.
    * 기본 스킬: `Cooldown`(초)마다 사용한다.
    * 궁극기: `IsUltimate`를 켜면 전투당 1회만 쓴다(쿨다운 무시). 준비되면 기본 스킬보다 먼저 쓴다.

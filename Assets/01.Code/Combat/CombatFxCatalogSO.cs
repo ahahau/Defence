@@ -34,14 +34,19 @@ namespace Code.Combat
         [field: SerializeField, Tooltip("맞은 캐릭터 위에 덮는 단색 실루엣 재질(Defence/Sprite Flash). 비우면 예전처럼 색을 곱해 붉게 칠한다.")]
         public Material HitFlashMaterial { get; private set; }
 
-        [field: SerializeField, Tooltip("근접 평타가 닿은 자리에 잠깐 그리는 베기 섬광.")]
-        public Sprite MeleeSlashSprite { get; private set; }
+        // 예전에는 코드로 그린 흰 초승달 한 장을 늘렸다 줄였다. 이제 팩의 타격 불꽃 프레임을 튼다(Effect_Vol.2).
+        [field: SerializeField, Tooltip("근접 평타가 닿은 자리에서 한 번 트는 타격 불꽃(흰 섬광 → 교차 칼날 파편, Effect07).")]
+        public Sprite[] MeleeHitFrames { get; private set; } = System.Array.Empty<Sprite>();
 
-        [field: SerializeField, Tooltip("베기 섬광 색. 블룸 임계(0.85)를 넘게 밝게 둔다.")]
-        public Color MeleeSlashColor { get; private set; } = new(1f, 0.97f, 0.85f, 1f);
+        [field: SerializeField, Tooltip("치명타가 들어간 자리에서 한 번 더 터지는 붉은 고리(Effect01). 일반 타격과 갈라 준다.")]
+        public Sprite[] CriticalHitFrames { get; private set; } = System.Array.Empty<Sprite>();
 
-        [field: SerializeField, Min(0.1f)]
-        public float MeleeSlashScale { get; private set; } = 1f;
+        [field: SerializeField, Min(1f), Tooltip("타격 불꽃·치명타 고리는 짧게 끝나야 연타와 겹치지 않는다.")]
+        public float HitFramesPerSecond { get; private set; } = 24f;
+
+        // 캐릭터와 같은 PPU(28)로 들이면 타격 불꽃(48px)·고리(60px)가 몸(약 1u)보다 커서 줄인다.
+        [field: SerializeField, Min(0.1f)] public float MeleeHitScale { get; private set; } = 0.55f;
+        [field: SerializeField, Min(0.1f)] public float CriticalHitScale { get; private set; } = 0.6f;
 
         [field: SerializeField, Tooltip("코드로 만드는 피격·회복 파티클 재질(URP Particles/Unlit, 도트 사각 그림). 비면 재질 없는 파티클이 자홍색으로 그려진다.")]
         public Material ParticleMaterial { get; private set; }

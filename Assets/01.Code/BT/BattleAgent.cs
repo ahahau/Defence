@@ -711,8 +711,7 @@ namespace Code.BT
                 .SetEase(Ease.Linear)
                 .OnComplete(() =>
                 {
-                    if (impactFrames.Length > 0)
-                        SpawnFrameEffect(impactFrames, impactRate, go.transform.position, artScale);
+                    SpriteFramePlayer.Spawn("ImpactFx", impactFrames, impactRate, go.transform.position, artScale.y);
                     Destroy(go);
                 })
                 .SetLink(go);
@@ -721,23 +720,14 @@ namespace Code.BT
         /// <summary>몸통 기준점(발밑)에서 맞는 높이. 발사체·베기 섬광이 발이 아니라 몸에 닿게 한다.</summary>
         private const float HitHeight = 0.35f;
 
-        private static void SpawnFrameEffect(Sprite[] frames, float framesPerSecond, Vector3 position, Vector3 scale)
-        {
-            var go = new GameObject("ImpactFx");
-            go.transform.position = position;
-            go.transform.localScale = scale;
-            go.AddComponent<SpriteRenderer>().sortingOrder = 101;
-            go.AddComponent<SpriteFramePlayer>().Play(frames, framesPerSecond, false);
-        }
-
         /// <summary>
-        /// 근접 평타가 닿은 자리에 짧게 그리는 베기 섬광(시각 전용). 공격자→대상 방향으로 눕히고,
-        /// 커지면서 0.14초 안에 사라진다. 블룸 임계보다 밝아 은은하게 빛난다.
+        /// 근접 평타가 닿은 자리에 타격 불꽃(흰 섬광 → 교차 칼날 파편)을 한 번 튼다(시각 전용).
+        /// 대상 몸 앞쪽(공격자 쪽)에 그리고, 좌우를 섞어 매번 같은 모양으로 보이지 않게 한다.
         /// </summary>
         private void SpawnMeleeSlashAt(BattleAgent target)
         {
             var catalog = CombatFxHooks.Catalog;
-            if (catalog == null || catalog.MeleeSlashSprite == null)
+            if (catalog == null)
                 return;
 
             Vector2 from = transform.position;
@@ -746,25 +736,8 @@ namespace Code.BT
             if (dir.sqrMagnitude < 0.0001f) dir = new Vector2(FacingX, 0f);
             dir.Normalize();
 
-            var go = new GameObject("MeleeSlash");
-            // 대상 몸 앞쪽(공격자 쪽)에 그린다.
-            go.transform.position = (Vector3)(to - dir * 0.15f) + Vector3.up * HitHeight;
-            var angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg + Random.Range(-25f, 25f);
-            go.transform.rotation = Quaternion.Euler(0f, 0f, angle);
-
-            var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = catalog.MeleeSlashSprite;
-            sr.color = catalog.MeleeSlashColor;
-            sr.flipY = Random.value < 0.5f; // 위에서 내리긋기·아래에서 올려치기를 섞는다
-            sr.sortingOrder = 101;
-
-            var scale = catalog.MeleeSlashScale;
-            go.transform.localScale = Vector3.one * (scale * 0.6f);
-            DOTween.Sequence()
-                .SetLink(go)
-                .Append(go.transform.DOScale(scale, 0.08f).SetEase(Ease.OutQuad))
-                .Join(sr.DOFade(0f, 0.14f).SetEase(Ease.InQuad))
-                .OnComplete(() => Destroy(go));
+            SpriteFramePlayer.Spawn("MeleeSlash", catalog.MeleeHitFrames, catalog.HitFramesPerSecond,
+                (Vector3)(to - dir * 0.15f) + Vector3.up * HitHeight, catalog.MeleeHitScale, 101, Random.value < 0.5f);
         }
 
         /// <summary>근접 평타 이펙트 프리팹을 타깃 위치에 잠깐 띄운다(이미지는 나중에 프리팹으로 교체).</summary>

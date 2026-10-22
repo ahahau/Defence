@@ -13,10 +13,25 @@ MonoBehaviour:
   m_Name: Ultimate_Enemy_Sword_KnightCharge
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Skills.SkillDataSO
   <DisplayName>k__BackingField: "\uAE30\uC0AC\uC758 \uC9C4\uACA9"
-  <Description>k__BackingField: "\uAC15\uD55C \uCDA9\uACA9\uC73C\uB85C \uC720\uB2DB
-    \uC9C4\uD615\uC744 \uD769\uB728\uB9BD\uB2C8\uB2E4."
+  <Description>k__BackingField: "\uAC15\uD55C \uCDA9\uACA9\uC73C\uB85C \uC720\uB2DB \uC9C4\uD615\uC744 \uD769\uB728\uB9BD\uB2C8\uB2E4."
   <Icon>k__BackingField: {fileID: -7336558010007070346, guid: 2ecc19377939ed44eb89dd458fb90f5e, type: 3}
   <Cooldown>k__BackingField: 0
   <IsUltimate>k__BackingField: 1
   <Effects>k__BackingField:
   - {fileID: 11400000, guid: e034cc78441a2d9428c8155acf54afe9, type: 2}
+  <SpellFrames>k__BackingField:
+  - {fileID: -1486403710, guid: aa4c95fd1f29ef148881631c37e34208, type: 3}
+  - {fileID: -524479500, guid: aa4c95fd1f29ef148881631c37e34208, type: 3}
+  - {fileID: 1904874663, guid: aa4c95fd1f29ef148881631c37e34208, type: 3}
+  - {fileID: -10802046, guid: aa4c95fd1f29ef148881631c37e34208, type: 3}
+  - {fileID: 768018858, guid: aa4c95fd1f29ef148881631c37e34208, type: 3}
+  - {fileID: -1244375561, guid: aa4c95fd1f29ef148881631c37e34208, type: 3}
+  - {fileID: 1932366226, guid: aa4c95fd1f29ef148881631c37e34208, type: 3}
+  - {fileID: 1242473630, guid: aa4c95fd1f29ef148881631c37e34208, type: 3}
+  - {fileID: -1277764950, guid: aa4c95fd1f29ef148881631c37e34208, type: 3}
+  - {fileID: 993399186, guid: aa4c95fd1f29ef148881631c37e34208, type: 3}
+  - {fileID: 1746833181, guid: aa4c95fd1f29ef148881631c37e34208, type: 3}
+  - {fileID: 585922352, guid: aa4c95fd1f29ef148881631c37e34208, type: 3}
+  <SpellFramesPerSecond>k__BackingField: 18
+  <SpellAnchor>k__BackingField: 1
+  <SpellScale>k__BackingField: 1

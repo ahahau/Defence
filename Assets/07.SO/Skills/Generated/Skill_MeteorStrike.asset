@@ -13,11 +13,39 @@ MonoBehaviour:
   m_Name: Skill_MeteorStrike
   m_EditorClassIdentifier: 
   <DisplayName>k__BackingField: "\uC6B4\uC11D \uB099\uD558"
-  <Description>k__BackingField: "\uC9C0\uBA74\uC744 \uD45C\uC2DC\uD55C \uB4A4 \uC7A0\uC2DC
-    \uD6C4 \uADF8 \uC790\uB9AC\uB97C \uAC15\uD0C0\uD574 \uD070 \uD53C\uD574\uC640
-    \uBC00\uCCD0\uB0C4\uC744 \uC90D\uB2C8\uB2E4."
+  <Description>k__BackingField: "\uC9C0\uBA74\uC744 \uD45C\uC2DC\uD55C \uB4A4 \uC7A0\uC2DC \uD6C4 \uADF8 \uC790\uB9AC\uB97C \uAC15\uD0C0\uD574 \uD070 \uD53C\uD574\uC640 \uBC00\uCCD0\uB0C4\uC744 \uC90D\uB2C8\uB2E4."
   <Icon>k__BackingField: {fileID: -2278566297644842510, guid: 3d1a3fa18cf47504cbc71399b9b92c1e, type: 3}
   <Cooldown>k__BackingField: 8
   <IsUltimate>k__BackingField: 0
   <Effects>k__BackingField:
   - {fileID: 11400000, guid: 2f7b63698fa0dbd840d368965097ec82, type: 2}
+  <SpellFrames>k__BackingField:
+  - {fileID: -607659182, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 798350318, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 1433322624, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -1390710640, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -640538140, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 1124459581, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -2084120278, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -2117804920, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -1032108839, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 946766261, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -812114630, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 1753192106, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 2070857692, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -1312636869, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -1545226807, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -1201116128, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 21791660, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 69084175, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -542468994, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 926342727, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 1262117210, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 1529939140, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 909526038, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -208554492, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 794497493, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 2053776039, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  <SpellFramesPerSecond>k__BackingField: 18
+  <SpellAnchor>k__BackingField: 0
+  <SpellScale>k__BackingField: 0.7

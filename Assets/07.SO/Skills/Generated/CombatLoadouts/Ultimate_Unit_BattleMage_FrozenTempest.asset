@@ -13,11 +13,34 @@ MonoBehaviour:
   m_Name: Ultimate_Unit_BattleMage_FrozenTempest
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Skills.SkillDataSO
   <DisplayName>k__BackingField: "\uBE59\uACB0 \uD3ED\uD48D"
-  <Description>k__BackingField: "\uBAA8\uB4E0 \uC801\uC744 \uAC15\uD0C0\uD558\uACE0
-    \uC9C0\uC18D\uC801\uC73C\uB85C \uC5BC\uB9BD\uB2C8\uB2E4."
+  <Description>k__BackingField: "\uBAA8\uB4E0 \uC801\uC744 \uAC15\uD0C0\uD558\uACE0 \uC9C0\uC18D\uC801\uC73C\uB85C \uC5BC\uB9BD\uB2C8\uB2E4."
   <Icon>k__BackingField: {fileID: -6620443678240376230, guid: e87236f48560e4940955075b58eab9c8, type: 3}
   <Cooldown>k__BackingField: 0
   <IsUltimate>k__BackingField: 1
   <Effects>k__BackingField:
   - {fileID: 11400000, guid: 7fb3317f8613da24e905087bc835452c, type: 2}
   - {fileID: 11400000, guid: e7cabfcf7dcb75a4786f7ebaa7ad9bc3, type: 2}
+  <SpellFrames>k__BackingField:
+  - {fileID: -328918912, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+  - {fileID: 647259023, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+  - {fileID: -1440269519, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+  - {fileID: 1140490981, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+  - {fileID: 1430845517, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+  - {fileID: 1852676808, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+  - {fileID: 403172481, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+  - {fileID: -1450815468, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+  - {fileID: -17317064, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+  - {fileID: 1156095430, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+  - {fileID: 1234733732, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+  - {fileID: -401203242, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+  - {fileID: 1247489167, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+  - {fileID: 6365777, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+  - {fileID: -1408496055, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+  - {fileID: 932979921, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+  - {fileID: 1147351663, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+  - {fileID: 2046941136, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+  - {fileID: -214780971, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+  - {fileID: 253620109, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+  <SpellFramesPerSecond>k__BackingField: 18
+  <SpellAnchor>k__BackingField: 0
+  <SpellScale>k__BackingField: 1

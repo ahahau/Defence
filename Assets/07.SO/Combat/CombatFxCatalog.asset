@@ -29,7 +29,23 @@ MonoBehaviour:
   <IntruderDeathScale>k__BackingField: 1
   <SortingOrder>k__BackingField: 30
   <HitFlashMaterial>k__BackingField: {fileID: 2100000, guid: 9fa01cac7e1318840a35606995baca3e, type: 2}
-  <MeleeSlashSprite>k__BackingField: {fileID: 21300000, guid: 157f18f5e51b3d54fb254f6cb4ff9799, type: 3}
-  <MeleeSlashColor>k__BackingField: {r: 1, g: 0.97, b: 0.85, a: 1}
-  <MeleeSlashScale>k__BackingField: 1
+  <MeleeHitFrames>k__BackingField:
+  - {fileID: 4903961934480467071, guid: 7a17aeaeb6839b843abe15e738281d90, type: 3}
+  - {fileID: -7203398846204773049, guid: 7a17aeaeb6839b843abe15e738281d90, type: 3}
+  - {fileID: 2081674953053606581, guid: 7a17aeaeb6839b843abe15e738281d90, type: 3}
+  - {fileID: 1641734770428164170, guid: 7a17aeaeb6839b843abe15e738281d90, type: 3}
+  - {fileID: -1887181929265768980, guid: 7a17aeaeb6839b843abe15e738281d90, type: 3}
+  - {fileID: 5182334879045286644, guid: 7a17aeaeb6839b843abe15e738281d90, type: 3}
+  <CriticalHitFrames>k__BackingField:
+  - {fileID: -8808226116457246334, guid: 5223261889298f34e9d22b549df933e4, type: 3}
+  - {fileID: -1582080079447556530, guid: 5223261889298f34e9d22b549df933e4, type: 3}
+  - {fileID: 2316087311087982436, guid: 5223261889298f34e9d22b549df933e4, type: 3}
+  - {fileID: -8971515801390499089, guid: 5223261889298f34e9d22b549df933e4, type: 3}
+  - {fileID: 9170919702597729257, guid: 5223261889298f34e9d22b549df933e4, type: 3}
+  - {fileID: -4255378398364443110, guid: 5223261889298f34e9d22b549df933e4, type: 3}
+  - {fileID: 2266022007332910987, guid: 5223261889298f34e9d22b549df933e4, type: 3}
+  - {fileID: -5783544707197044771, guid: 5223261889298f34e9d22b549df933e4, type: 3}
+  <HitFramesPerSecond>k__BackingField: 24
+  <MeleeHitScale>k__BackingField: 0.55
+  <CriticalHitScale>k__BackingField: 0.6
   <ParticleMaterial>k__BackingField: {fileID: 2100000, guid: b7bdad95c05689b43833a39cc7e49abf, type: 2}

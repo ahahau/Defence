@@ -15,6 +15,27 @@ namespace Code.Combat
         private bool _loop;
         private float _elapsed;
 
+        /// <summary>
+        /// 그 자리에 프레임 그림을 한 번 틀고 스스로 지우는 오브젝트를 만든다(타격 불꽃·폭발·사망·스킬 연출 공용).
+        /// 그림이 없으면 아무것도 만들지 않고 null.
+        /// </summary>
+        public static SpriteFramePlayer Spawn(string name, Sprite[] frames, float framesPerSecond, Vector3 position,
+            float scale = 1f, int sortingOrder = 101, bool flipX = false)
+        {
+            if (frames == null || frames.Length == 0)
+                return null;
+
+            var go = new GameObject(name);
+            go.transform.position = position;
+            go.transform.localScale = Vector3.one * scale;
+            var spriteRenderer = go.AddComponent<SpriteRenderer>();
+            spriteRenderer.sortingOrder = sortingOrder;
+            spriteRenderer.flipX = flipX;
+            var player = go.AddComponent<SpriteFramePlayer>();
+            player.Play(frames, framesPerSecond, false);
+            return player;
+        }
+
         public void Play(Sprite[] frames, float framesPerSecond, bool loop)
         {
             _renderer = GetComponent<SpriteRenderer>();

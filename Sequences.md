@@ -1,5 +1,13 @@
 # Sequences
 
+- 2026-10-22 · 새 이펙트 팩(Effect_Vol.2·Magic Spell Effects 6) 적용(사용자: "지금 넣은 이펙트 관련 에셋 적용해줘" → "B안(A안 + 스킬 효과 종류별 주문 시트)").
+  - 그림 정리: 쓰는 그림만 `Assets/04.Sprites/Effects/Vol2`(Effect01·05·06·07)·`MagicSpell6`(구슬 폭발·어둠 혼령·에너지 빔·방패 충격파·번개 폭탄·폭풍)로 옮김(guid 유지). 칸 크기는 팩 미리보기 GIF(3배)와 투명 열로 확인, 생성기가 칸 단위로 자르고 빈 칸은 뺀다. 캐릭터와 같은 PPU 28·점 필터(도트 밀도 일치). 팩의 데모 씬·`Effect.cs`·애니메이터·버튼 그림·미리보기 GIF·안 쓰는 시트는 그대로 두고 커밋하지 않음.
+  - 기본 전투: 근접 타격 = 흰 섬광 → 교차 칼날 파편(07, 0.55배)으로 코드 초승달 교체(`MeleeSlash.png` 삭제). 치명타 = 맞은 자리에 붉은 고리(01, 0.6배, `CombatFxHooks.PlayCriticalHit`). 해골 마법사·오크 주술사 발사체 = 청록 마법 탄(05의 날아가는 3칸) + 닿은 자리 전기 불꽃(06).
+  - 스킬: `SkillDataSO`에 주문 그림 칸(`SpellFrames`·초당 프레임·틀 자리 `SkillVisualAnchor`·배율). `SkillCaster`가 시전 고리와 함께 대상(충격파는 시전자) 발밑에서 한 번 튼다. 방패 밀치기·돌파·돌진·방패 충격파 = 방패 충격파(효과 반경 지름에 맞춘 배율), 화염 낙하·운석 = 번개 폭탄, 얼음 폭풍·서리 지대 = 폭풍, 그림자 습격·매복·암살 표식·연막 독·약점 노출·그림자 기습 = 어둠 혼령, 화살비·일제 사격·관통 대형 = 구슬 폭발, 조준 사격·독 화살·파열 찌르기 = 에너지 빔. 회복 6개는 맞는 그림이 없어 고리만.
+  - 공용: `SpriteFramePlayer.Spawn`(그 자리에서 한 번 틀고 지움)으로 타격·폭발·사망·치명타·스킬 연출을 모음. 생성기 `CombatPolishBuilder`에 그림 옮기기·시트 자르기(`ISpriteEditorDataProvider`, 이름 같으면 스프라이트 id 유지)·스킬 표(`SkillSpells`).
+  - 테스트: `CombatFxCatalog_HasHitDeathAndParticleArt`(근접 불꽃·치명타 고리 추가), `EverySkill_ExceptHeals_HasSpellArt`(새). EditMode 368/368(배율 조정 뒤 AssetWiringTests 27/27·CharacterAnimationTests 12/12 다시 확인).
+  - 플레이(세이브 원복): 1일차, 모험가 기사 방패 밀치기를 강제로 시전 → 시전자 둘레에 청록 방패 돔. 1 피해 치명타 → 흰 점멸 + 붉은 고리. 첫 캡처에서 고리(60px≈2.1u)·불꽃(48px≈1.7u)이 몸보다 커 0.6·0.55배로 줄인 뒤 몸 크기 이하 확인. 어둠 혼령은 혼령이 흩어져 솟는 것을 확인. 복도가 어두워 캡처가 어둡다.
+
 - 2026-10-22 · 사망 이펙트 되살림(사용자: "비어 있는 사망 이펙트(부하·모험가)도 채우고 싶어" → "부하는 effect2_standard(청록 혼불), 모험가는 plash explore 주황 폭발").
   - 원인: 연출 표의 사망 이펙트 두 칸이 3D 파티클 팩(Epic Toon FX `MysticDeath`·`GenericDeath`) 프리팹을 가리켰는데, 도트 그림으로 바꾸며 팩을 통째로 지워 참조가 끊겼다. 쓰러질 때 사망 소리만 나고 이펙트가 없었다.
   - 수정: `CombatFxCatalogSO`의 프리팹 칸을 도트 프레임 칸으로 바꿈(`MinionDeathFrames`·`IntruderDeathFrames`·`DeathFramesPerSecond` 12, 배율 `MinionDeathScale` 0.5·`IntruderDeathScale` 1). `CombatFxHooks.SpawnDeathEffect`는 쓰러진 자리에 `SpriteFramePlayer`로 한 번 틀고 지운다. 몸통 크기를 따르고, 혼불은 발밑(아래 기준점)에서 솟고 폭발은 몸 가운데(+0.35)에서 터진다. 정렬 30(캐릭터 위).

@@ -1,0 +1,901 @@
+fileFormatVersion: 2
+guid: d4f53c5e660b8e5489eab1cd031f39ce
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 1931332916571490865
+    second: Storm_spell-Sheet_0
+  - first:
+      213: -8639012944569918645
+    second: Storm_spell-Sheet_1
+  - first:
+      213: -2259638176103574993
+    second: Storm_spell-Sheet_2
+  - first:
+      213: -3992906958988269318
+    second: Storm_spell-Sheet_3
+  - first:
+      213: 4982298654340289289
+    second: Storm_spell-Sheet_4
+  - first:
+      213: -2981962098387023555
+    second: Storm_spell-Sheet_5
+  - first:
+      213: -8752739970719874260
+    second: Storm_spell-Sheet_6
+  - first:
+      213: 524721955976545737
+    second: Storm_spell-Sheet_7
+  - first:
+      213: 5846228818970077962
+    second: Storm_spell-Sheet_8
+  - first:
+      213: 6710381518651856856
+    second: Storm_spell-Sheet_9
+  - first:
+      213: -6193094521575661247
+    second: Storm_spell-Sheet_10
+  - first:
+      213: -1676248633745108443
+    second: Storm_spell-Sheet_11
+  - first:
+      213: 4128028405969131515
+    second: Storm_spell-Sheet_12
+  - first:
+      213: 7451010080066303114
+    second: Storm_spell-Sheet_13
+  - first:
+      213: 3309258055078043787
+    second: Storm_spell-Sheet_14
+  - first:
+      213: 2555461356056393401
+    second: Storm_spell-Sheet_15
+  - first:
+      213: 4776371748418095721
+    second: Storm_spell-Sheet_16
+  - first:
+      213: 4667244324843292066
+    second: Storm_spell-Sheet_17
+  - first:
+      213: -4248195634182573031
+    second: Storm_spell-Sheet_18
+  - first:
+      213: 2393855684556139625
+    second: Storm_spell-Sheet_19
+  - first:
+      213: 3819759453863369140
+    second: Storm_spell-Sheet_20
+  - first:
+      213: 2530507969396042303
+    second: Storm_spell-Sheet_21
+  - first:
+      213: 8310282823698785521
+    second: Storm_spell-Sheet_22
+  - first:
+      213: 300873459198669587
+    second: Storm_spell-Sheet_23
+  - first:
+      213: 1423794025751262396
+    second: Storm_spell-Sheet_24
+  - first:
+      213: -5097916926184271153
+    second: Storm_spell-Sheet_25
+  - first:
+      213: -1814865818073020836
+    second: Storm_spell-Sheet_26
+  - first:
+      213: -2388719363536402035
+    second: Storm_spell-Sheet_27
+  - first:
+      213: -71433336210172261
+    second: Storm_spell-Sheet_28
+  - first:
+      213: -7642417226993641559
+    second: Storm_spell-Sheet_29
+  - first:
+      213: 1611885104077453817
+    second: Storm_spell-Sheet_30
+  - first:
+      213: -3247692699563863462
+    second: Storm_spell-Sheet_31
+  - first:
+      213: -2289323490113913226
+    second: Storm_spell-Sheet_32
+  - first:
+      213: 4931166431375962085
+    second: Storm_spell-Sheet_33
+  - first:
+      213: 4617744281290079129
+    second: Storm_spell-Sheet_34
+  - first:
+      213: -8757478797281209244
+    second: Storm_spell-Sheet_35
+  - first:
+      213: 993112281488584872
+    second: Storm_spell-Sheet_36
+  - first:
+      213: -6684633703731099601
+    second: Storm_spell-Sheet_37
+  - first:
+      213: -3053657625946951589
+    second: Storm_spell-Sheet_38
+  - first:
+      213: 8267100690068076713
+    second: Storm_spell-Sheet_39
+  - first:
+      213: 5187914007633883208
+    second: Storm_spell-Sheet_40
+  - first:
+      213: 8660946898841856186
+    second: Storm_spell-Sheet_41
+  - first:
+      213: 4033566132004160872
+    second: Storm_spell-Sheet_42
+  - first:
+      213: 8081362220921810761
+    second: Storm_spell-Sheet_43
+  - first:
+      213: 3561371665780785038
+    second: Storm_spell-Sheet_44
+  - first:
+      213: 5709169040066395351
+    second: Storm_spell-Sheet_45
+  - first:
+      213: 333484414364205831
+    second: Storm_spell-Sheet_46
+  - first:
+      213: 6320942079691758228
+    second: Storm_spell-Sheet_47
+  - first:
+      213: 1653219623379930786
+    second: Storm_spell-Sheet_48
+  - first:
+      213: -7040951772245631250
+    second: Storm_spell-Sheet_49
+  - first:
+      213: 6842609582016635496
+    second: Storm_spell-Sheet_50
+  - first:
+      213: -953095142468524966
+    second: Storm_spell-Sheet_51
+  - first:
+      213: 7309183440448891741
+    second: Storm_spell-Sheet_52
+  - first:
+      213: 3373612008416732710
+    second: Storm_spell-Sheet_53
+  - first:
+      213: -756985688285076017
+    second: Storm_spell-Sheet_54
+  - first:
+      213: 629104617067946156
+    second: Storm_spell-Sheet_55
+  - first:
+      213: 2847455035279800163
+    second: Storm_spell-Sheet_56
+  - first:
+      213: 3281251317597457970
+    second: Storm_spell-Sheet_57
+  - first:
+      213: 3646022051513211208
+    second: Storm_spell-Sheet_58
+  - first:
+      213: 1405919246043045580
+    second: Storm_spell-Sheet_59
+  - first:
+      213: 8667939278155917312
+    second: Storm_spell-Sheet_60
+  - first:
+      213: -8902847404460364176
+    second: Storm_spell-Sheet_61
+  - first:
+      213: -3800492401413491986
+    second: Storm_spell-Sheet_62
+  - first:
+      213: -895440468108646223
+    second: Storm_spell-Sheet_63
+  - first:
+      213: -8533479254894221180
+    second: Storm_spell-Sheet_64
+  - first:
+      213: 1710238760998515816
+    second: Storm_spell-Sheet_65
+  - first:
+      213: -3611459857172538565
+    second: Storm_spell-Sheet_66
+  - first:
+      213: 6589983704080537155
+    second: Storm_spell-Sheet_67
+  - first:
+      213: 3088559986882928454
+    second: Storm_spell-Sheet_68
+  - first:
+      213: -2128642256734478143
+    second: Storm_spell-Sheet_69
+  - first:
+      213: -5664012273225869110
+    second: Storm_spell-Sheet_70
+  - first:
+      213: -7244799392011942133
+    second: Storm_spell-Sheet_71
+  - first:
+      213: -7163012119783487293
+    second: Storm_spell-Sheet_72
+  - first:
+      213: 2198614747787093977
+    second: Storm_spell-Sheet_73
+  - first:
+      213: -706799352423419316
+    second: Storm_spell-Sheet_74
+  - first:
+      213: -4744200148576798877
+    second: Storm_spell-Sheet_75
+  - first:
+      213: -7880476159817855483
+    second: Storm_spell-Sheet_76
+  - first:
+      213: 3816847345843072263
+    second: Storm_spell-Sheet_77
+  - first:
+      213: 5780136920896521361
+    second: Storm_spell-Sheet_78
+  - first:
+      213: 180681550982467645
+    second: Storm_spell-Sheet_79
+  - first:
+      213: 1332917806426289794
+    second: Storm_spell-Sheet_80
+  - first:
+      213: -5484264836516722779
+    second: Storm_spell-Sheet_81
+  - first:
+      213: -5061563023378779801
+    second: Storm_spell-Sheet_82
+  - first:
+      213: -2395479191375083136
+    second: Storm_spell-Sheet_83
+  - first:
+      213: -4574023117791701532
+    second: Storm_spell-Sheet_84
+  - first:
+      213: 6082919752198213168
+    second: Storm_spell-Sheet_85
+  - first:
+      213: -3118202016911927296
+    second: Storm_spell-Sheet_86
+  - first:
+      213: -751847317696680424
+    second: Storm_spell-Sheet_87
+  - first:
+      213: 8895887159507237272
+    second: Storm_spell-Sheet_88
+  - first:
+      213: -5653953713610682797
+    second: Storm_spell-Sheet_89
+  - first:
+      213: 2353949481927599083
+    second: Storm_spell-Sheet_90
+  - first:
+      213: 8471547567868870526
+    second: Storm_spell-Sheet_91
+  - first:
+      213: 7995181343066277013
+    second: Storm_spell-Sheet_92
+  - first:
+      213: -1533719290428015600
+    second: Storm_spell-Sheet_93
+  - first:
+      213: -3413778588980207357
+    second: Storm_spell-Sheet_94
+  - first:
+      213: -7556904341313859701
+    second: Storm_spell-Sheet_95
+  - first:
+      213: -4862670703395780953
+    second: Storm_spell-Sheet_96
+  - first:
+      213: -1916729903218047152
+    second: Storm_spell-Sheet_97
+  - first:
+      213: 9220594814857943827
+    second: Storm_spell-Sheet_98
+  - first:
+      213: 8422039251772061237
+    second: Storm_spell-Sheet_99
+  - first:
+      213: -6413366019164074560
+    second: Storm_spell-Sheet_100
+  - first:
+      213: -3733864942160859307
+    second: Storm_spell-Sheet_101
+  - first:
+      213: -2233989838013418634
+    second: Storm_spell-Sheet_102
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 28
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: StormSpell_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 160
+        width: 96
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 398ee4c223f7e364b9c193f42d56c536
+      internalID: -328918912
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StormSpell_1
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 160
+        width: 96
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4eb8334971cc54d4cb4e8fdd0d46fbdb
+      internalID: 647259023
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StormSpell_2
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 160
+        width: 96
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 94d01f5c928b7ea4d834c5eccd1fff1c
+      internalID: -1440269519
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StormSpell_3
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 160
+        width: 96
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0794d3f7a8c443645afc9a01e046e262
+      internalID: 1140490981
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StormSpell_4
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 160
+        width: 96
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7a311468114ebc64f88b576b44032382
+      internalID: 1430845517
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StormSpell_5
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 160
+        width: 96
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: df32e94c182bd6f4880450df872f3199
+      internalID: 1852676808
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StormSpell_6
+      rect:
+        serializedVersion: 2
+        x: 576
+        y: 160
+        width: 96
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 547920004e1656b42abfc5766a03364f
+      internalID: 403172481
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StormSpell_7
+      rect:
+        serializedVersion: 2
+        x: 672
+        y: 160
+        width: 96
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ead392e3dcac9244fb649a7c4fbc3998
+      internalID: -1450815468
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StormSpell_8
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 160
+        width: 96
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3787ef33bff67b547b08651c733c803d
+      internalID: -17317064
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StormSpell_9
+      rect:
+        serializedVersion: 2
+        x: 864
+        y: 160
+        width: 96
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3d0736e228807ef4e9655dec52c96b1c
+      internalID: 1156095430
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StormSpell_10
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 96
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8185f36f9fd0c1440bbb6016df2ccf88
+      internalID: 1234733732
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StormSpell_11
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 0
+        width: 96
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4b776510533adad4da4e6e456e44c691
+      internalID: -401203242
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StormSpell_12
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 0
+        width: 96
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 56e3b31220272c247936cdb4f9317e18
+      internalID: 1247489167
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StormSpell_13
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 0
+        width: 96
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d5119feb01261c8488b2daa38a3e573b
+      internalID: 6365777
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StormSpell_14
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 0
+        width: 96
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 96d96a6654fcc1a4c95171735147f77c
+      internalID: -1408496055
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StormSpell_15
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 0
+        width: 96
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 11e24b63ebefa72468ef1463cd43df85
+      internalID: 932979921
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StormSpell_16
+      rect:
+        serializedVersion: 2
+        x: 576
+        y: 0
+        width: 96
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f97b68dcbca70b349ba08ae1226e4288
+      internalID: 1147351663
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StormSpell_17
+      rect:
+        serializedVersion: 2
+        x: 672
+        y: 0
+        width: 96
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2e50b2f88b97d7948ab116f6a1aa338a
+      internalID: 2046941136
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StormSpell_18
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 0
+        width: 96
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2475ecfb032ebdf45bf9dcb0eb2168d8
+      internalID: -214780971
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StormSpell_19
+      rect:
+        serializedVersion: 2
+        x: 864
+        y: 0
+        width: 96
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e8a377fd765459e4cbcc46840ac18352
+      internalID: 253620109
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 27770cd9f2cbee144ba507713f342cb6
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      StormSpell_0: -328918912
+      StormSpell_1: 647259023
+      StormSpell_10: 1234733732
+      StormSpell_11: -401203242
+      StormSpell_12: 1247489167
+      StormSpell_13: 6365777
+      StormSpell_14: -1408496055
+      StormSpell_15: 932979921
+      StormSpell_16: 1147351663
+      StormSpell_17: 2046941136
+      StormSpell_18: -214780971
+      StormSpell_19: 253620109
+      StormSpell_2: -1440269519
+      StormSpell_3: 1140490981
+      StormSpell_4: 1430845517
+      StormSpell_5: 1852676808
+      StormSpell_6: 403172481
+      StormSpell_7: -1450815468
+      StormSpell_8: -17317064
+      StormSpell_9: 1156095430
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

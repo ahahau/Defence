@@ -47,15 +47,12 @@ MonoBehaviour:
   hurtFramesPerSecond: 15
   attackImpactRatio: 0.55
   projectileFrames:
-  - {fileID: 21300000, guid: 994b8ad426fef1b46bb4c81333f281d9, type: 3}
-  - {fileID: 21300000, guid: ac8b4c2bf9fcdda4ca3a7cded4bc4fcc, type: 3}
-  - {fileID: 21300000, guid: a69a2513fc3f36b498d3cb29ef744c54, type: 3}
-  - {fileID: 21300000, guid: bc1d03e9bde4b08499c3962f3df81b16, type: 3}
-  - {fileID: 21300000, guid: aecdc3392af3d3646a48a70cc71c1f2a, type: 3}
+  - {fileID: -8805199726386270818, guid: 2a7f7e3d6eafdfa4c9a85f91b10f85d6, type: 3}
+  - {fileID: 1083405510499150149, guid: 2a7f7e3d6eafdfa4c9a85f91b10f85d6, type: 3}
+  - {fileID: 1244503716918214695, guid: 2a7f7e3d6eafdfa4c9a85f91b10f85d6, type: 3}
   projectileImpactFrames:
-  - {fileID: 21300000, guid: 66ab6948439a4144dbc5f56d3cd4f548, type: 3}
-  - {fileID: 21300000, guid: 80ed065a70dc2314d8b1c438e40a498e, type: 3}
-  - {fileID: 21300000, guid: bf2ce297ef6333a4396df407b8acd0b0, type: 3}
-  - {fileID: 21300000, guid: 6f8f4d1bef1e343429a64fa1128b4929, type: 3}
-  - {fileID: 21300000, guid: 79ae6e525cd80444d92242f15a64d6b2, type: 3}
+  - {fileID: -6754220433557552787, guid: 70730fea6ce73f34bbf67c7cc0d83d23, type: 3}
+  - {fileID: 4621636457903948960, guid: 70730fea6ce73f34bbf67c7cc0d83d23, type: 3}
+  - {fileID: -369642382031894201, guid: 70730fea6ce73f34bbf67c7cc0d83d23, type: 3}
+  - {fileID: -1782009246466099872, guid: 70730fea6ce73f34bbf67c7cc0d83d23, type: 3}
   projectileFramesPerSecond: 12

@@ -13,11 +13,49 @@ MonoBehaviour:
   m_Name: Ultimate_Unit_Pikeman_PiercingFormation
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Skills.SkillDataSO
   <DisplayName>k__BackingField: "\uAD00\uD1B5 \uC9C4\uD615"
-  <Description>k__BackingField: "\uBAA8\uB4E0 \uC801\uC744 \uAD00\uD1B5\uD558\uACE0
-    \uC774\uB3D9\uACFC \uBC29\uC5B4\uB97C \uBB34\uB108\uB728\uB9BD\uB2C8\uB2E4."
+  <Description>k__BackingField: "\uBAA8\uB4E0 \uC801\uC744 \uAD00\uD1B5\uD558\uACE0 \uC774\uB3D9\uACFC \uBC29\uC5B4\uB97C \uBB34\uB108\uB728\uB9BD\uB2C8\uB2E4."
   <Icon>k__BackingField: {fileID: -6620443678240376230, guid: e87236f48560e4940955075b58eab9c8, type: 3}
   <Cooldown>k__BackingField: 0
   <IsUltimate>k__BackingField: 1
   <Effects>k__BackingField:
   - {fileID: 11400000, guid: 8098bb202db543c48a4557f4bbf0ce4c, type: 2}
   - {fileID: 11400000, guid: e9d239b312e49614c99700d0e17e9870, type: 2}
+  <SpellFrames>k__BackingField:
+  - {fileID: 914449681, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: 1354837548, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: -213520705, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: -1711746541, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: -1334294513, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: -989440821, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: 1378472684, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: 688148060, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: 1449045458, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: -941407308, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: -2083613650, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: -1632736772, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: -27975870, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: -170397608, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: -1205658452, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: -623820515, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: -1635476240, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: -1286330650, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: 1982041450, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: 2053054148, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: 856969981, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: 1881480104, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: 1638178119, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: 1408869819, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: -1800443080, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: -412368399, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: -328646208, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: 445244627, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: 1129465453, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: 1626853932, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: 1665630965, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: -689475264, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: -1610161518, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: -1714682436, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  - {fileID: 1657531854, guid: 1bb53469d97d38b4dbce46c1520b67d8, type: 3}
+  <SpellFramesPerSecond>k__BackingField: 18
+  <SpellAnchor>k__BackingField: 0
+  <SpellScale>k__BackingField: 0.7

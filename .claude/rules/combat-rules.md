@@ -27,7 +27,8 @@ paths:
 - 맞는 동작·둘째 공격·발사체 그림은 `CharacterAnimationSetSO`(`hurtFrames`·`attackAltFrames`·`projectileFrames`·`projectileImpactFrames`)에 있다. 팩 폴더에서 찾아 채우는 생성기는 `CombatPolishBuilder.BuildAll()`이다(첫 공격 그림 폴더 기준, 임포트는 그 캐릭터 공격 그림을 따르고 발사체만 기준점 가운데). 새 묶음을 만들면 다시 돌린다.
 - 맞는 동작(`EntityState.Hurt`)은 서 있을 때만 튼다. 휘두르는 중·쓰러진 뒤에는 끼어들지 않는다(`CharacterAnimationRules.AllowsHurt`). 둘째 공격은 그림이 있으면 평타마다 번갈아 쓰고, 예비 동작 시간은 다음에 틀 동작 기준이다(`EntityRender.AttackImpactSeconds`).
 - 피격 점멸은 색을 곱하지 않고 흰 실루엣을 덮는다(`SpriteFlashOverlay`, 재질 `Defence/Sprite Flash`는 `CombatFxCatalogSO.HitFlashMaterial`). 기본 스프라이트 셰이더는 색을 곱해서 흰색으로는 밝아지지 않는다.
-- 근접 평타는 `CombatFxCatalogSO.MeleeSlashSprite` 베기 섬광, 원거리는 묶음의 발사체 그림(없으면 예전 사각형)을 날린다. 발사체는 몸통 크기(`lossyScale`)를 따른다. 피해는 여전히 `Combatant`가 낸다(연출은 시각 전용).
+- 근접 평타는 `CombatFxCatalogSO.MeleeHitFrames` 타격 불꽃, 치명타는 `CriticalHitFrames` 붉은 고리를 한 번 튼다. 원거리는 묶음의 발사체 그림(없으면 예전 사각형)을 날린다.
+- 일회용 프레임 연출(타격·폭발·사망·스킬)은 `SpriteFramePlayer.Spawn` 하나로 띄운다. 이펙트 그림은 `Assets/04.Sprites/Effects`에 두고 캐릭터와 같은 PPU 28로 들인다(도트 밀도 일치). 크기는 배율 필드로 맞춘다. 발사체는 몸통 크기(`lossyScale`)를 따른다. 피해는 여전히 `Combatant`가 낸다(연출은 시각 전용).
 - 넉백은 0.08초에 나눠 민다(`BattleAgent.TickHitRecoil`). 한 번에 옮기면 순간이동처럼 보였다.
 - 사망 이펙트는 `CombatFxCatalogSO.MinionDeathFrames`(청록 혼불)·`IntruderDeathFrames`(주황 폭발) 도트 프레임을 `CombatFxHooks`가 쓰러진 자리에 한 번 튼다. 부하·모험가 그림은 서로 달라야 한다(누가 죽었는지 읽히게).
 - 코드로 만드는 파티클에는 반드시 재질을 넣는다. 재질이 없으면 URP가 자홍색으로 그린다. 전투 파티클은 `CombatFxCatalogSO.ParticleMaterial`(URP Particles/Unlit, 도트 사각 그림)을 쓴다.

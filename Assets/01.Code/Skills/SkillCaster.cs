@@ -124,10 +124,28 @@ namespace Code.Skills
             if (data != null)
                 SkillCastBurst.Play(transform.position, data.CastColor, isUltimate);
 
-            var context = new SkillContext(agent, combatant, agent.CurrentTarget);
+            var target = agent.CurrentTarget;
+            PlaySpellVisual(data, target);
+
+            var context = new SkillContext(agent, combatant, target);
             using (Code.Combat.HitAttribution.Begin(combatant))
                 data.Execute(context);
         }
+
+        /// <summary>스킬 주문 그림을 대상(또는 시전자) 발밑에서 한 번 튼다. 대상이 없으면 시전자 자리.</summary>
+        private void PlaySpellVisual(SkillDataSO data, BattleAgent target)
+        {
+            if (data == null)
+                return;
+
+            var position = data.SpellAnchor == SkillVisualAnchor.Caster || target == null
+                ? transform.position
+                : target.transform.position;
+            SpriteFramePlayer.Spawn("SkillFx", data.SpellFrames, data.SpellFramesPerSecond, position, data.SpellScale, SpellSortingOrder);
+        }
+
+        /// <summary>캐릭터(20)·사망 연출(30)보다 위, 뜨는 숫자(60)보다 아래.</summary>
+        private const int SpellSortingOrder = 34;
 
         /// <summary>시전 순간 캐스터 강조 — 색 플래시 + 스케일 팝. 궁극기는 금색으로 더 크게.</summary>
         private void PlayCastVisual(bool isUltimate)

@@ -866,8 +866,8 @@ namespace Tests.EditMode.Gameplay
         }
 
         /// <summary>
-        /// 흰 피격 점멸은 실루엣 재질이, 근접 베기 섬광은 그림이 전투 연출 표에 걸려 있어야 나온다.
-        /// 비면 조용히 예전 붉은 칠(흰색이면 아무 변화 없음)로 돌아가 눈으로 보기 전엔 모른다.
+        /// 흰 피격 점멸은 실루엣 재질이, 근접 타격 불꽃·치명타 고리는 그림이 전투 연출 표에 걸려 있어야 나온다.
+        /// 비면 조용히 아무것도 안 나오거나 예전 붉은 칠로 돌아가 눈으로 보기 전엔 모른다.
         /// </summary>
         [Test]
         public void CombatFxCatalog_HasHitDeathAndParticleArt()
@@ -876,7 +876,8 @@ namespace Tests.EditMode.Gameplay
             Assert.That(catalog, Is.Not.Null, "전투 연출 표가 없다.");
             Assert.That(catalog.HitFlashMaterial, Is.Not.Null, "피격 점멸 재질이 비어 있다.");
             Assert.AreEqual("Defence/Sprite Flash", catalog.HitFlashMaterial.shader.name);
-            Assert.That(catalog.MeleeSlashSprite, Is.Not.Null, "근접 베기 섬광 그림이 비어 있다.");
+            AssertFrames("근접 타격 불꽃", catalog.MeleeHitFrames);
+            AssertFrames("치명타 고리", catalog.CriticalHitFrames);
 
             // 코드로 만드는 피격·회복 파티클은 이 재질이 없으면 URP에서 자홍색 덩어리로 그려졌다.
             Assert.That(catalog.ParticleMaterial, Is.Not.Null, "피격·회복 파티클 재질이 비어 있다.");
@@ -884,14 +885,44 @@ namespace Tests.EditMode.Gameplay
             Assert.That(catalog.ParticleMaterial.GetTexture("_BaseMap"), Is.Not.Null, "파티클 재질에 그림이 없다.");
 
             // 사망 이펙트는 지운 3D 파티클 팩 프리팹을 가리킨 채 끊겨 있었다. 도트 프레임이 두 벌 다 있어야 한다.
-            foreach (var (label, frames) in new[] { ("부하", catalog.MinionDeathFrames), ("모험가", catalog.IntruderDeathFrames) })
+            AssertFrames("부하 사망", catalog.MinionDeathFrames);
+            AssertFrames("모험가 사망", catalog.IntruderDeathFrames);
+            Assert.AreNotEqual(catalog.MinionDeathFrames[0], catalog.IntruderDeathFrames[0], "부하·모험가 사망 그림이 같으면 누가 죽었는지 읽히지 않는다.");
+        }
+
+        /// <summary>
+        /// 스킬은 시전 고리(색만 다른 원)만으로는 스물여덟 기술이 구분되지 않았다. 회복 기술을 뺀 나머지는 주문 그림이 있어야 한다.
+        /// 회복 기술은 팩에 맞는 그림이 없어 고리만 쓴다(예외 목록).
+        /// </summary>
+        [Test]
+        public void EverySkill_ExceptHeals_HasSpellArt()
+        {
+            var healOnly = new[]
             {
-                Assert.IsNotEmpty(frames, $"{label} 사망 그림이 비어 있다.");
-                foreach (var frame in frames)
-                    Assert.IsNotNull(frame, $"{label} 사망 그림에 빈 프레임이 있다.");
+                "Skill_Unit_Guardian_Sanctuary", "Ultimate_Unit_Guardian_UnbreakableWall",
+                "Skill_Enemy_Healer_FieldTreatment", "Ultimate_Enemy_Healer_ExpeditionHymn",
+                "Skill_RallyHeal", "Skill_SanctuaryField"
+            };
+
+            var checkedCount = 0;
+            foreach (var guid in AssetDatabase.FindAssets("t:SkillDataSO", new[] { "Assets/07.SO/Skills" }))
+            {
+                var skill = AssetDatabase.LoadAssetAtPath<Code.Skills.SkillDataSO>(AssetDatabase.GUIDToAssetPath(guid));
+                if (healOnly.Contains(skill.name))
+                    continue;
+
+                AssertFrames($"{skill.name} 주문", skill.SpellFrames);
+                checkedCount++;
             }
 
-            Assert.AreNotEqual(catalog.MinionDeathFrames[0], catalog.IntruderDeathFrames[0], "부하·모험가 사망 그림이 같으면 누가 죽었는지 읽히지 않는다.");
+            Assert.That(checkedCount, Is.GreaterThan(0), "주문 그림을 검사할 스킬을 하나도 찾지 못했다.");
+        }
+
+        private static void AssertFrames(string label, Sprite[] frames)
+        {
+            Assert.IsNotEmpty(frames, $"{label} 그림이 비어 있다.");
+            foreach (var frame in frames)
+                Assert.IsNotNull(frame, $"{label} 그림에 빈 프레임이 있다.");
         }
 
         // 게임 코드는 Runtime, 스탯·모듈 같은 재사용 기반은 GameLib 어셈블리에 있다. 둘 다 찾아본다.

@@ -13,11 +13,13 @@ MonoBehaviour:
   m_Name: Skill_RallyHeal
   m_EditorClassIdentifier: 
   <DisplayName>k__BackingField: "\uACB0\uC9D1\uC758 \uCE58\uC720"
-  <Description>k__BackingField: "\uAC00\uAE4C\uC6B4 \uC544\uAD70\uC744 \uD68C\uBCF5\uC2DC\uD0B5\uB2C8\uB2E4.
-    \uC9C0\uC6D0 \uC5ED\uD560\uC774 \uD3C9\uD0C0\uB9CC \uCE58\uC9C0 \uC54A\uAC8C
-    \uD569\uB2C8\uB2E4."
+  <Description>k__BackingField: "\uAC00\uAE4C\uC6B4 \uC544\uAD70\uC744 \uD68C\uBCF5\uC2DC\uD0B5\uB2C8\uB2E4. \uC9C0\uC6D0 \uC5ED\uD560\uC774 \uD3C9\uD0C0\uB9CC \uCE58\uC9C0 \uC54A\uAC8C \uD569\uB2C8\uB2E4."
   <Icon>k__BackingField: {fileID: -2278566297644842510, guid: 3d1a3fa18cf47504cbc71399b9b92c1e, type: 3}
   <Cooldown>k__BackingField: 5
   <IsUltimate>k__BackingField: 0
   <Effects>k__BackingField:
   - {fileID: 11400000, guid: fad1d8b701f4dcb6911d35867243d2c1, type: 2}
+  <SpellFrames>k__BackingField: []
+  <SpellFramesPerSecond>k__BackingField: 18
+  <SpellAnchor>k__BackingField: 0
+  <SpellScale>k__BackingField: 1

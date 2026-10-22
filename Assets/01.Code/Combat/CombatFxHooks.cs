@@ -81,14 +81,23 @@ namespace Code.Combat
                 ? owner.GetComponentInChildren<Code.Entities.EntityRender>(true)
                 : health.GetComponentInChildren<Code.Entities.EntityRender>(true);
             var bodyScale = render != null ? Mathf.Abs(render.transform.lossyScale.y) : 1f;
-            var instance = new GameObject(isIntruder ? "IntruderDeathFx" : "MinionDeathFx");
-            instance.transform.position = isIntruder ? position + Vector3.up * IntruderBurstHeight : position;
-            instance.transform.localScale = Vector3.one * (bodyScale * (isIntruder ? config.IntruderDeathScale : config.MinionDeathScale));
+            SpriteFramePlayer.Spawn(
+                isIntruder ? "IntruderDeathFx" : "MinionDeathFx",
+                frames,
+                config.DeathFramesPerSecond,
+                isIntruder ? position + Vector3.up * IntruderBurstHeight : position,
+                bodyScale * (isIntruder ? config.IntruderDeathScale : config.MinionDeathScale),
+                config.SortingOrder);
+        }
 
-            var renderer = instance.AddComponent<SpriteRenderer>();
-            renderer.sortingLayerName = "Default";
-            renderer.sortingOrder = config.SortingOrder;
-            instance.AddComponent<SpriteFramePlayer>().Play(frames, config.DeathFramesPerSecond, false);
+        /// <summary>치명타가 들어간 자리에서 붉은 고리를 한 번 터뜨린다(<see cref="DamageFeedback"/>이 부른다).</summary>
+        public static void PlayCriticalHit(Vector3 position)
+        {
+            var config = catalog;
+            if (config == null)
+                return;
+
+            SpriteFramePlayer.Spawn("CriticalHitFx", config.CriticalHitFrames, config.HitFramesPerSecond, position, config.CriticalHitScale, config.SortingOrder + 2);
         }
 
         /// <summary>모험가 사망 폭발을 몸 가운데(발밑 기준점 위)에서 터뜨리는 높이.</summary>

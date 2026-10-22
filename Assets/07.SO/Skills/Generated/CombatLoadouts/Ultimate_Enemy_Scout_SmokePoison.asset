@@ -13,10 +13,53 @@ MonoBehaviour:
   m_Name: Ultimate_Enemy_Scout_SmokePoison
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Skills.SkillDataSO
   <DisplayName>k__BackingField: "\uC5F0\uB9C9 \uB3C5\uBB34"
-  <Description>k__BackingField: "\uB3C5 \uC5F0\uB9C9\uC73C\uB85C \uC720\uB2DB\uC758
-    \uC774\uB3D9\uC744 \uBC29\uD574\uD569\uB2C8\uB2E4."
+  <Description>k__BackingField: "\uB3C5 \uC5F0\uB9C9\uC73C\uB85C \uC720\uB2DB\uC758 \uC774\uB3D9\uC744 \uBC29\uD574\uD569\uB2C8\uB2E4."
   <Icon>k__BackingField: {fileID: -7336558010007070346, guid: 2ecc19377939ed44eb89dd458fb90f5e, type: 3}
   <Cooldown>k__BackingField: 0
   <IsUltimate>k__BackingField: 1
   <Effects>k__BackingField:
   - {fileID: 11400000, guid: 86c0ab44a41dc4c4181d38cf44d57c1b, type: 2}
+  <SpellFrames>k__BackingField:
+  - {fileID: 396345838, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: -575046694, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: -747918995, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: 1447198291, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: -1803231745, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: 962467179, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: -1562301794, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: -1311657174, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: -1140622363, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: -1104036779, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: -1944547037, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: 1485491390, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: -806996880, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: 2135268627, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: 1014272044, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: 847080634, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: 911060024, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: 117314905, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: -862295736, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: 766682615, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: -1086914473, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: 1288540024, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: 1035510576, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: 335545515, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: 783371509, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: 51914895, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: -863497411, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: -1167746335, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: 1773336168, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: 1586353243, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: -568457594, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: -2111637512, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: -938871144, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: 2111486244, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: 303372973, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: -1275120552, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: 494800426, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: -1169596421, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: -1703915441, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  - {fileID: 2037590368, guid: dc4089ae4a0445940a54083493e61b94, type: 3}
+  <SpellFramesPerSecond>k__BackingField: 18
+  <SpellAnchor>k__BackingField: 0
+  <SpellScale>k__BackingField: 0.6

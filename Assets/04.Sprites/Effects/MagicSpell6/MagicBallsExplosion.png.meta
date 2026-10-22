@@ -1,0 +1,1288 @@
+fileFormatVersion: 2
+guid: 1bb53469d97d38b4dbce46c1520b67d8
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -7219559017466211888
+    second: 4_magic_balls_explosion-Sheet_0
+  - first:
+      213: 3766435192487187468
+    second: 4_magic_balls_explosion-Sheet_1
+  - first:
+      213: 8958970022272927144
+    second: 4_magic_balls_explosion-Sheet_2
+  - first:
+      213: 3972067737067217718
+    second: 4_magic_balls_explosion-Sheet_3
+  - first:
+      213: -3990592155026533671
+    second: 4_magic_balls_explosion-Sheet_4
+  - first:
+      213: 6760907109377416443
+    second: 4_magic_balls_explosion-Sheet_5
+  - first:
+      213: 3620092432144545603
+    second: 4_magic_balls_explosion-Sheet_6
+  - first:
+      213: 3510170423144130440
+    second: 4_magic_balls_explosion-Sheet_7
+  - first:
+      213: 1277981769265830593
+    second: 4_magic_balls_explosion-Sheet_8
+  - first:
+      213: 2843115740977169168
+    second: 4_magic_balls_explosion-Sheet_9
+  - first:
+      213: 6983556297531801506
+    second: 4_magic_balls_explosion-Sheet_10
+  - first:
+      213: -4997546124747776732
+    second: 4_magic_balls_explosion-Sheet_11
+  - first:
+      213: 6720117626469635097
+    second: 4_magic_balls_explosion-Sheet_12
+  - first:
+      213: -285828062145881678
+    second: 4_magic_balls_explosion-Sheet_13
+  - first:
+      213: -7375459158257624224
+    second: 4_magic_balls_explosion-Sheet_14
+  - first:
+      213: 3817604161483321781
+    second: 4_magic_balls_explosion-Sheet_15
+  - first:
+      213: -8564541878389927221
+    second: 4_magic_balls_explosion-Sheet_16
+  - first:
+      213: -4352884469521322243
+    second: 4_magic_balls_explosion-Sheet_17
+  - first:
+      213: 6984805351911919158
+    second: 4_magic_balls_explosion-Sheet_18
+  - first:
+      213: 8452024429955317686
+    second: 4_magic_balls_explosion-Sheet_19
+  - first:
+      213: 3559137232817649875
+    second: 4_magic_balls_explosion-Sheet_20
+  - first:
+      213: -8359974573038905163
+    second: 4_magic_balls_explosion-Sheet_21
+  - first:
+      213: -4516029726973062480
+    second: 4_magic_balls_explosion-Sheet_22
+  - first:
+      213: 1886719340794419832
+    second: 4_magic_balls_explosion-Sheet_23
+  - first:
+      213: -3818277277657067711
+    second: 4_magic_balls_explosion-Sheet_24
+  - first:
+      213: 5723747922163268120
+    second: 4_magic_balls_explosion-Sheet_25
+  - first:
+      213: 1732841453058646192
+    second: 4_magic_balls_explosion-Sheet_26
+  - first:
+      213: -394839432215932086
+    second: 4_magic_balls_explosion-Sheet_27
+  - first:
+      213: -1970088465772242022
+    second: 4_magic_balls_explosion-Sheet_28
+  - first:
+      213: -1964985398074586800
+    second: 4_magic_balls_explosion-Sheet_29
+  - first:
+      213: -6929796737452791532
+    second: 4_magic_balls_explosion-Sheet_30
+  - first:
+      213: -7946613203590466026
+    second: 4_magic_balls_explosion-Sheet_31
+  - first:
+      213: 3360064814311301304
+    second: 4_magic_balls_explosion-Sheet_32
+  - first:
+      213: 4601788400010317086
+    second: 4_magic_balls_explosion-Sheet_33
+  - first:
+      213: 7116195510516063014
+    second: 4_magic_balls_explosion-Sheet_34
+  - first:
+      213: -4759408977372935116
+    second: 4_magic_balls_explosion-Sheet_35
+  - first:
+      213: 7181601013907900640
+    second: 4_magic_balls_explosion-Sheet_36
+  - first:
+      213: 4510734028881342816
+    second: 4_magic_balls_explosion-Sheet_37
+  - first:
+      213: -4598932927518453021
+    second: 4_magic_balls_explosion-Sheet_38
+  - first:
+      213: 4558745474526809943
+    second: 4_magic_balls_explosion-Sheet_39
+  - first:
+      213: 2726078275255712241
+    second: 4_magic_balls_explosion-Sheet_40
+  - first:
+      213: 5299883437396153138
+    second: 4_magic_balls_explosion-Sheet_41
+  - first:
+      213: -1437933171994323554
+    second: 4_magic_balls_explosion-Sheet_42
+  - first:
+      213: 6828941637746480502
+    second: 4_magic_balls_explosion-Sheet_43
+  - first:
+      213: 7052204125018613853
+    second: 4_magic_balls_explosion-Sheet_44
+  - first:
+      213: -5877707834579034050
+    second: 4_magic_balls_explosion-Sheet_45
+  - first:
+      213: -4809855514047065372
+    second: 4_magic_balls_explosion-Sheet_46
+  - first:
+      213: -866446698234312166
+    second: 4_magic_balls_explosion-Sheet_47
+  - first:
+      213: -4330038740396912632
+    second: 4_magic_balls_explosion-Sheet_48
+  - first:
+      213: 348521197538845826
+    second: 4_magic_balls_explosion-Sheet_49
+  - first:
+      213: -5488600171262140744
+    second: 4_magic_balls_explosion-Sheet_50
+  - first:
+      213: 2015446137160589478
+    second: 4_magic_balls_explosion-Sheet_51
+  - first:
+      213: 1521961945773603965
+    second: 4_magic_balls_explosion-Sheet_52
+  - first:
+      213: -2876459838787864680
+    second: 4_magic_balls_explosion-Sheet_53
+  - first:
+      213: 5609225528509891020
+    second: 4_magic_balls_explosion-Sheet_54
+  - first:
+      213: 3988162681553559554
+    second: 4_magic_balls_explosion-Sheet_55
+  - first:
+      213: 485060948778323340
+    second: 4_magic_balls_explosion-Sheet_56
+  - first:
+      213: -9173089952263446008
+    second: 4_magic_balls_explosion-Sheet_57
+  - first:
+      213: -1150205316796819336
+    second: 4_magic_balls_explosion-Sheet_58
+  - first:
+      213: -6727313029446522588
+    second: 4_magic_balls_explosion-Sheet_59
+  - first:
+      213: 3753780835927203937
+    second: 4_magic_balls_explosion-Sheet_60
+  - first:
+      213: 985210721764949800
+    second: 4_magic_balls_explosion-Sheet_61
+  - first:
+      213: 2704541118197937360
+    second: 4_magic_balls_explosion-Sheet_62
+  - first:
+      213: 3033706921810634281
+    second: 4_magic_balls_explosion-Sheet_63
+  - first:
+      213: -565869495608319730
+    second: 4_magic_balls_explosion-Sheet_64
+  - first:
+      213: -7029882448462702428
+    second: 4_magic_balls_explosion-Sheet_65
+  - first:
+      213: 6161458437630270819
+    second: 4_magic_balls_explosion-Sheet_66
+  - first:
+      213: 1367639155792176973
+    second: 4_magic_balls_explosion-Sheet_67
+  - first:
+      213: -5291132321807779892
+    second: 4_magic_balls_explosion-Sheet_68
+  - first:
+      213: 2175347882834699109
+    second: 4_magic_balls_explosion-Sheet_69
+  - first:
+      213: 8481428631172173333
+    second: 4_magic_balls_explosion-Sheet_70
+  - first:
+      213: -581267574280584227
+    second: 4_magic_balls_explosion-Sheet_71
+  - first:
+      213: 5621504783283438312
+    second: 4_magic_balls_explosion-Sheet_72
+  - first:
+      213: 8694804287345131323
+    second: 4_magic_balls_explosion-Sheet_73
+  - first:
+      213: -6783679557996549414
+    second: 4_magic_balls_explosion-Sheet_74
+  - first:
+      213: -138065673553468325
+    second: 4_magic_balls_explosion-Sheet_75
+  - first:
+      213: -8559590738448881919
+    second: 4_magic_balls_explosion-Sheet_76
+  - first:
+      213: 8635228188846455566
+    second: 4_magic_balls_explosion-Sheet_77
+  - first:
+      213: -1698291018769081188
+    second: 4_magic_balls_explosion-Sheet_78
+  - first:
+      213: 4075193310139437691
+    second: 4_magic_balls_explosion-Sheet_79
+  - first:
+      213: 8840791297531677654
+    second: 4_magic_balls_explosion-Sheet_80
+  - first:
+      213: 1623461268949937463
+    second: 4_magic_balls_explosion-Sheet_81
+  - first:
+      213: 9007721896749531277
+    second: 4_magic_balls_explosion-Sheet_82
+  - first:
+      213: -1773766949284644622
+    second: 4_magic_balls_explosion-Sheet_83
+  - first:
+      213: 7990809812246128052
+    second: 4_magic_balls_explosion-Sheet_84
+  - first:
+      213: -7790757669182964943
+    second: 4_magic_balls_explosion-Sheet_85
+  - first:
+      213: 197977869332715392
+    second: 4_magic_balls_explosion-Sheet_86
+  - first:
+      213: -2346369930242197552
+    second: 4_magic_balls_explosion-Sheet_87
+  - first:
+      213: 277128972161339845
+    second: 4_magic_balls_explosion-Sheet_88
+  - first:
+      213: 3977488441677709946
+    second: 4_magic_balls_explosion-Sheet_89
+  - first:
+      213: 8113559488908733926
+    second: 4_magic_balls_explosion-Sheet_90
+  - first:
+      213: 3200756032017620073
+    second: 4_magic_balls_explosion-Sheet_91
+  - first:
+      213: 5740039819037448440
+    second: 4_magic_balls_explosion-Sheet_92
+  - first:
+      213: -8285629151563814696
+    second: 4_magic_balls_explosion-Sheet_93
+  - first:
+      213: -585367799582001110
+    second: 4_magic_balls_explosion-Sheet_94
+  - first:
+      213: -4809155833928888760
+    second: 4_magic_balls_explosion-Sheet_95
+  - first:
+      213: -4553932562622791006
+    second: 4_magic_balls_explosion-Sheet_96
+  - first:
+      213: -4369291767832402848
+    second: 4_magic_balls_explosion-Sheet_97
+  - first:
+      213: 9078250413609110820
+    second: 4_magic_balls_explosion-Sheet_98
+  - first:
+      213: -3019656473023833762
+    second: 4_magic_balls_explosion-Sheet_99
+  - first:
+      213: 3380828555336143384
+    second: 4_magic_balls_explosion-Sheet_100
+  - first:
+      213: -4367757863198602671
+    second: 4_magic_balls_explosion-Sheet_101
+  - first:
+      213: -7547111195867913006
+    second: 4_magic_balls_explosion-Sheet_102
+  - first:
+      213: -3399165474456035438
+    second: 4_magic_balls_explosion-Sheet_103
+  - first:
+      213: -7707127401695955556
+    second: 4_magic_balls_explosion-Sheet_104
+  - first:
+      213: -2991709259085811459
+    second: 4_magic_balls_explosion-Sheet_105
+  - first:
+      213: -6513976222176742116
+    second: 4_magic_balls_explosion-Sheet_106
+  - first:
+      213: -1457998795217055416
+    second: 4_magic_balls_explosion-Sheet_107
+  - first:
+      213: -1560278732778396075
+    second: 4_magic_balls_explosion-Sheet_108
+  - first:
+      213: 2224911803709752171
+    second: 4_magic_balls_explosion-Sheet_109
+  - first:
+      213: 3188285901193265020
+    second: 4_magic_balls_explosion-Sheet_110
+  - first:
+      213: -3287919127479794529
+    second: 4_magic_balls_explosion-Sheet_111
+  - first:
+      213: 244138270056325487
+    second: 4_magic_balls_explosion-Sheet_112
+  - first:
+      213: 1819866633607658994
+    second: 4_magic_balls_explosion-Sheet_113
+  - first:
+      213: 3973808650017734474
+    second: 4_magic_balls_explosion-Sheet_114
+  - first:
+      213: 5597630194208786696
+    second: 4_magic_balls_explosion-Sheet_115
+  - first:
+      213: -2032136335712062739
+    second: 4_magic_balls_explosion-Sheet_116
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 28
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: MagicBallsExplosion_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 480
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a4657af4ad8bf2b4590fb161850e682e
+      internalID: 914449681
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_1
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 480
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 18608b7b3e2e7d14f9e42adb95d16e71
+      internalID: 1354837548
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_2
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 480
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c6a0145cb233cef4b916a2e2f0c772b2
+      internalID: -213520705
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_3
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 480
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1d04dc2ccff3df641b4a238efb3d14d3
+      internalID: -1711746541
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_4
+      rect:
+        serializedVersion: 2
+        x: 640
+        y: 480
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c62ce356d03a1d942bfeeeedcc3e581f
+      internalID: -1334294513
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_5
+      rect:
+        serializedVersion: 2
+        x: 800
+        y: 480
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 88c70a07a79ffab4990982a2c157b402
+      internalID: -989440821
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_6
+      rect:
+        serializedVersion: 2
+        x: 960
+        y: 480
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f08b7a846621a4e4b9e78748e5d250de
+      internalID: 1378472684
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_7
+      rect:
+        serializedVersion: 2
+        x: 1120
+        y: 480
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d9ab9a46c328b704081430ec15d47cb6
+      internalID: 688148060
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_8
+      rect:
+        serializedVersion: 2
+        x: 1280
+        y: 480
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ee50a41649448d2489e206948c5f1069
+      internalID: 1449045458
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_9
+      rect:
+        serializedVersion: 2
+        x: 1440
+        y: 480
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e03c9678860d14a4ba1f65a2d33d7321
+      internalID: -941407308
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_10
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 320
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a2c595a3102458848bd5ec6ed5be6fd0
+      internalID: -2083613650
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_11
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 320
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ca460cb60e7f93d4282fe564aadc0f84
+      internalID: -1632736772
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_12
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 320
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 97d050f53cfc7a1439f34ea4b50f3528
+      internalID: -27975870
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_13
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 320
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e7cef43274ff3ba4ea6581f7f7cdcc80
+      internalID: -170397608
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_14
+      rect:
+        serializedVersion: 2
+        x: 640
+        y: 320
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 525b594fd1a38fe44a3a8fd1462211ff
+      internalID: -1205658452
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_15
+      rect:
+        serializedVersion: 2
+        x: 800
+        y: 320
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ee3aff0edd5555f4780b6b965b7007f0
+      internalID: -623820515
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_16
+      rect:
+        serializedVersion: 2
+        x: 960
+        y: 320
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 67336361b21867d4990b3f6f8d84ee87
+      internalID: -1635476240
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_17
+      rect:
+        serializedVersion: 2
+        x: 1120
+        y: 320
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 06fb99d7465eb4e40aefb3712e116a39
+      internalID: -1286330650
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_18
+      rect:
+        serializedVersion: 2
+        x: 1280
+        y: 320
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7a58927d81920014290a328ab7c69463
+      internalID: 1982041450
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_19
+      rect:
+        serializedVersion: 2
+        x: 1440
+        y: 320
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6e88d5071cf5ecb41ad2958ce516d171
+      internalID: 2053054148
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_20
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 160
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 895a62eb1b1f4c740ab72709c2e65b81
+      internalID: 856969981
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_21
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 160
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1c526e36231f1b34cb5919acb29ff4d0
+      internalID: 1881480104
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_22
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 160
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 52f66b98867cf3a4cb2d350727a85b8c
+      internalID: 1638178119
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_23
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 160
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 61e7f53850a7ccf4e8bd34f3620aeb17
+      internalID: 1408869819
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_24
+      rect:
+        serializedVersion: 2
+        x: 640
+        y: 160
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6a3bbbd6da33fdf4a8d5a9681b40072f
+      internalID: -1800443080
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_25
+      rect:
+        serializedVersion: 2
+        x: 800
+        y: 160
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ac657ad9b9a942b4983612e4d65a8f66
+      internalID: -412368399
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_26
+      rect:
+        serializedVersion: 2
+        x: 960
+        y: 160
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c0ee9908da1a0d74f8eee14fa074dd70
+      internalID: -328646208
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_27
+      rect:
+        serializedVersion: 2
+        x: 1120
+        y: 160
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 051578b920894ee419b26547c6189d8c
+      internalID: 445244627
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_28
+      rect:
+        serializedVersion: 2
+        x: 1280
+        y: 160
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 04f2af69a7e905747abfdf03cb36d777
+      internalID: 1129465453
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_29
+      rect:
+        serializedVersion: 2
+        x: 1440
+        y: 160
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7864644a8fedbb84d882b7e0eed4a0a6
+      internalID: 1626853932
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_30
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d2bd99ccf64d9a44b8e8b7724d454e2d
+      internalID: 1665630965
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_31
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 0
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 87d09dc0f86e2d44489c427032877172
+      internalID: -689475264
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_32
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 0
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c11d1bb03b22d8f4d85894554555e88f
+      internalID: -1610161518
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_33
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 0
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 002639eef31bbfa479bc80ed863fb86b
+      internalID: -1714682436
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MagicBallsExplosion_34
+      rect:
+        serializedVersion: 2
+        x: 640
+        y: 0
+        width: 160
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e8de4595cb352cb4b83845c8bb299b11
+      internalID: 1657531854
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 6339269f3bf0e324bae17dba88c1d004
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      MagicBallsExplosion_0: 914449681
+      MagicBallsExplosion_1: 1354837548
+      MagicBallsExplosion_10: -2083613650
+      MagicBallsExplosion_11: -1632736772
+      MagicBallsExplosion_12: -27975870
+      MagicBallsExplosion_13: -170397608
+      MagicBallsExplosion_14: -1205658452
+      MagicBallsExplosion_15: -623820515
+      MagicBallsExplosion_16: -1635476240
+      MagicBallsExplosion_17: -1286330650
+      MagicBallsExplosion_18: 1982041450
+      MagicBallsExplosion_19: 2053054148
+      MagicBallsExplosion_2: -213520705
+      MagicBallsExplosion_20: 856969981
+      MagicBallsExplosion_21: 1881480104
+      MagicBallsExplosion_22: 1638178119
+      MagicBallsExplosion_23: 1408869819
+      MagicBallsExplosion_24: -1800443080
+      MagicBallsExplosion_25: -412368399
+      MagicBallsExplosion_26: -328646208
+      MagicBallsExplosion_27: 445244627
+      MagicBallsExplosion_28: 1129465453
+      MagicBallsExplosion_29: 1626853932
+      MagicBallsExplosion_3: -1711746541
+      MagicBallsExplosion_30: 1665630965
+      MagicBallsExplosion_31: -689475264
+      MagicBallsExplosion_32: -1610161518
+      MagicBallsExplosion_33: -1714682436
+      MagicBallsExplosion_34: 1657531854
+      MagicBallsExplosion_4: -1334294513
+      MagicBallsExplosion_5: -989440821
+      MagicBallsExplosion_6: 1378472684
+      MagicBallsExplosion_7: 688148060
+      MagicBallsExplosion_8: 1449045458
+      MagicBallsExplosion_9: -941407308
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

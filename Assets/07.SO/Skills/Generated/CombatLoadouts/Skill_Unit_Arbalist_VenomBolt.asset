@@ -13,11 +13,50 @@ MonoBehaviour:
   m_Name: Skill_Unit_Arbalist_VenomBolt
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Skills.SkillDataSO
   <DisplayName>k__BackingField: "\uB9F9\uB3C5 \uBCFC\uD2B8"
-  <Description>k__BackingField: "\uB3C5\uD654\uC0B4\uB85C \uD53C\uD574\uB97C \uC8FC\uACE0
-    \uC774\uB3D9\uC744 \uB454\uD654\uD569\uB2C8\uB2E4."
+  <Description>k__BackingField: "\uB3C5\uD654\uC0B4\uB85C \uD53C\uD574\uB97C \uC8FC\uACE0 \uC774\uB3D9\uC744 \uB454\uD654\uD569\uB2C8\uB2E4."
   <Icon>k__BackingField: {fileID: -6620443678240376230, guid: e87236f48560e4940955075b58eab9c8, type: 3}
   <Cooldown>k__BackingField: 1.7
   <IsUltimate>k__BackingField: 0
   <Effects>k__BackingField:
   - {fileID: 11400000, guid: 29dc16b6ff7d4124aac25ee3cb84f270, type: 2}
   - {fileID: 11400000, guid: fc0c1ba5feefc954291835863fb5f536, type: 2}
+  <SpellFrames>k__BackingField:
+  - {fileID: -713539348, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: 1905155027, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: 1360039810, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: -1040198625, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: -1311848870, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: 771767468, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: -2055066586, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: -38675463, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: 1234952969, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: 1077515459, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: -716419519, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: 122395729, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: 1682679458, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: 577236783, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: 1384910370, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: 1780514575, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: -80399637, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: -2052009573, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: -955164122, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: 1231753934, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: -517299047, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: 1604118552, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: -1948119906, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: -1118303472, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: -1229448709, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: -1830681925, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: -1851673085, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: -1814054211, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: -1560759133, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: 1817054019, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: -1819440239, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: -1453097185, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: -634896297, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: -871758731, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: 2083320572, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  - {fileID: -1702157568, guid: 1e689611dd9122744b94ab3f10b96ed8, type: 3}
+  <SpellFramesPerSecond>k__BackingField: 18
+  <SpellAnchor>k__BackingField: 0
+  <SpellScale>k__BackingField: 0.45

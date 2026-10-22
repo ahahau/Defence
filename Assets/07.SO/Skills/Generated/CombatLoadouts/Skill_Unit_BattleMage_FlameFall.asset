@@ -13,10 +13,39 @@ MonoBehaviour:
   m_Name: Skill_Unit_BattleMage_FlameFall
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Skills.SkillDataSO
   <DisplayName>k__BackingField: "\uD654\uC5FC \uB099\uD558"
-  <Description>k__BackingField: "\uC608\uACE0 \uD6C4 \uBAA9\uD45C \uC9C0\uC810\uC744
-    \uD3ED\uBC1C\uC2DC\uD0B5\uB2C8\uB2E4."
+  <Description>k__BackingField: "\uC608\uACE0 \uD6C4 \uBAA9\uD45C \uC9C0\uC810\uC744 \uD3ED\uBC1C\uC2DC\uD0B5\uB2C8\uB2E4."
   <Icon>k__BackingField: {fileID: -6620443678240376230, guid: e87236f48560e4940955075b58eab9c8, type: 3}
   <Cooldown>k__BackingField: 2
   <IsUltimate>k__BackingField: 0
   <Effects>k__BackingField:
   - {fileID: 11400000, guid: b1b05eef3e4110641bf734b90fd010dc, type: 2}
+  <SpellFrames>k__BackingField:
+  - {fileID: -607659182, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 798350318, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 1433322624, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -1390710640, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -640538140, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 1124459581, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -2084120278, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -2117804920, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -1032108839, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 946766261, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -812114630, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 1753192106, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 2070857692, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -1312636869, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -1545226807, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -1201116128, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 21791660, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 69084175, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -542468994, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 926342727, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 1262117210, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 1529939140, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 909526038, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -208554492, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 794497493, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 2053776039, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  <SpellFramesPerSecond>k__BackingField: 18
+  <SpellAnchor>k__BackingField: 0
+  <SpellScale>k__BackingField: 0.7
