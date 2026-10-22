@@ -224,7 +224,7 @@ namespace Code.UI.RoomManagement
                 var option = _deployOptions[index];
                 var blocked = panel.TryGetDeployBlockReason(out var reason);
                 return new InstallCardViewModel(
-                    option.Unit.BoardSprite != null ? option.Unit.BoardSprite : option.Unit.Sprite,
+                    option.Unit.IconSprite,
                     UnitName(option.Unit),
                     $"×{option.Count} · 마력 {option.Unit.MagicCost}",
                     blocked ? reason : $"Lv{option.Condition.Level} · {option.Condition.TraitLabel}",

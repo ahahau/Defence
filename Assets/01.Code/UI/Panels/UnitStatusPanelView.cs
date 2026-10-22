@@ -199,7 +199,7 @@ namespace Code.UI
                 Fatigue = $"피로 {Mathf.RoundToInt(fatigue)}/100 · {ResolveFatigueState(fatigue)}  "
                           + $"ATK -{Mathf.RoundToInt(fatigueRatio * 30f)}% · 공속 -{Mathf.RoundToInt(fatigueRatio * 40f)}%",
                 FatigueRatio = fatigueRatio,
-                Portrait = selectedUnit.Data != null ? selectedUnit.Data.Sprite : null,
+                Portrait = selectedUnit.Data != null ? selectedUnit.Data.IconSprite : null,
                 Hint = hint,
                 ShowRecover = needsRecovery,
                 RecoverEnabled = CanRecoverSelectedUnit(),

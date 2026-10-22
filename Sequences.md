@@ -1,5 +1,10 @@
 # Sequences
 
+- 2026-10-22 · 유닛 아이콘을 대기 첫 프레임으로(사용자: "유닛 아이콘에 유닛 아이들 아이콘 하나 넣어줘" → "고용·정산표 지원자 목록 줄마다 대기 아이콘도").
+  - `UnitDataSO.IconSprite`: 프리팹 `EntityRender`의 애니메이션 묶음 대기 첫 프레임(`CharacterAnimationSetSO.FirstIdleFrame`). 없으면 `Sprite` → `BoardSprite`. 배치 카드(`InstallPanelPresenter`)와 부하 상태 창 얼굴(`UnitStatusPanelView`)이 이 값을 쓴다.
+  - 지원자 목록(`SettlementShopPane`, 정산표·고용 창 공용): 줄마다 왼쪽 44×44 아이콘 칸(`icons`). 생성기 `SettlementBuilder.BuildShopPane`. 생성기를 정산표 → 고용 창 → 방 관리 → 설정 순서로 다시 돌려 씬 저장(ESC 목록 빈 칸 0, 두 칸 모두 아이콘 16칸).
+  - 테스트: `EveryUnit_UsesRealAnimatedArt`(아이콘 = 대기 첫 프레임·임시 그림 아님), `RecruitScreen_IsPlacedAndOpenedFromTheDock`(아이콘 칸 수 = 줄 수, 빈 칸 없음 — 생성기 재실행 전 실패 확인). 전체 EditMode는 에디터가 응답하지 않아 아직 못 돌렸다(다음 전투 작업과 함께 돌린다).
+
 - 2026-10-22 · 부활한 부하가 다시 싸우게(사용자: "부활한 부하가 있던 방의 전투 필드에 다시 들어가 싸우게 고쳐줘").
   - 원인: 쓰러지면 방의 전투 필드(`NodeBattlefield.CleanUp`)가 명단에서 빼고 소속을 지우는데, 부활(`Unit.Revive`)은 체력만 채워 같은 방 모험가와 서로 상대로 보지 않았다. 쓰러짐 잠금(`CharacterPoseView.isDead`)도 오브젝트가 다시 켜질 때만 풀려, 꺼지지 않는 부하는 쓰러진 그림에 굳고 공격 동작이 막힐 수 있었다.
   - 수정: `UnitDeployment.Rejoin(node, unit)` — 서 있던 방의 전투 필드에 다시 들여보내고(정원 규칙은 배치와 같음) `CharacterPoseView.ResetAfterRevive`로 쓰러짐 잠금을 풀고 대기로. `Unit.Revive`(부활 마력)와 `RecoverCondition`(치료로 쓰러진 부하를 살릴 때)이 같은 `RejoinHomeBattlefield`를 부른다.

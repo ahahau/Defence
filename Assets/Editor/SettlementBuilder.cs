@@ -17,6 +17,8 @@ public static class SettlementBuilder
     public const string PrefabPath = "Assets/03.Prefabs/UI/Settlement/Settlement.prefab";
     public const int ProductSlots = 4;
     public const int ApplicantSlots = 16;
+    private const float ApplicantIconSize = 44f;
+    private const float ApplicantIconInset = 10f;
     private const float CardWidth = 1040f;
     private const float CardHeight = 740f;
     private const float CardOffsetDown = 64f;
@@ -256,26 +258,37 @@ public static class SettlementBuilder
 
         var slots = new Object[ApplicantSlots];
         var details = new Object[ApplicantSlots];
+        var icons = new Object[ApplicantSlots];
         for (var i = 0; i < ApplicantSlots; i++)
         {
             var rt = UiKit.Rect($"Applicant{i}", content);
             rt.gameObject.AddComponent<LayoutElement>().preferredHeight = 60f;
             var button = UiKit.Button(rt, "지원자", UiKit.ButtonKind.Secondary, 16f);
+
+            // 왼쪽 유닛 아이콘(대기 첫 프레임). 글자는 그만큼 오른쪽으로 민다.
+            var iconRect = UiKit.Place(UiKit.Rect("Icon", rt), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
+                new Vector2(ApplicantIconInset, 0f), new Vector2(ApplicantIconSize, ApplicantIconSize));
+            var icon = UiKit.Image(iconRect, null, Color.white, false);
+            icon.type = Image.Type.Simple;
+            icon.preserveAspect = true;
+            var textLeft = ApplicantIconInset + ApplicantIconSize + 10f;
+
             var label = button.Label.rectTransform;
             button.Label.alignment = TextAlignmentOptions.MidlineLeft;
             label.anchorMin = new Vector2(0f, 0.48f);
             label.anchorMax = Vector2.one;
-            label.offsetMin = new Vector2(14f, 0f);
+            label.offsetMin = new Vector2(textLeft, 0f);
             label.offsetMax = new Vector2(-14f, -4f);
 
             var detail = UiKit.Text("Detail", rt, string.Empty, 14f, HudPalette.TextDim, TextAlignmentOptions.MidlineLeft, false, true);
             detail.rectTransform.anchorMin = Vector2.zero;
             detail.rectTransform.anchorMax = new Vector2(1f, 0.48f);
-            detail.rectTransform.offsetMin = new Vector2(14f, 4f);
+            detail.rectTransform.offsetMin = new Vector2(textLeft, 4f);
             detail.rectTransform.offsetMax = new Vector2(-14f, 0f);
 
             slots[i] = button;
             details[i] = detail;
+            icons[i] = icon;
             rt.gameObject.SetActive(false);
         }
 
@@ -286,6 +299,7 @@ public static class SettlementBuilder
         UiKit.Wire(view, "empty", empty);
         UiKit.WireArray(view, "slots", slots);
         UiKit.WireArray(view, "details", details);
+        UiKit.WireArray(view, "icons", icons);
         UiKit.Wire(view, "feedback", feedback);
         UiKit.Wire(view, "scroll", scroll);
         return view;

@@ -31,6 +31,7 @@ namespace Code.Entities
 
         public SpriteRenderer SpriteRenderer => spriteRenderer;
         public bool IsAnimated => animationSet != null;
+        public CharacterAnimationSetSO AnimationSet => animationSet;
 
         /// <summary>보는 쪽. 오른쪽 1, 왼쪽 -1.</summary>
         public float FacingX => _facingLeft ? -1f : 1f;

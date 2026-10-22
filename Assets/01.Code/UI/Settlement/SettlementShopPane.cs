@@ -22,6 +22,7 @@ namespace Code.UI
         [SerializeField] private TMP_Text empty;
         [SerializeField] private UiFrameButton[] slots;
         [SerializeField, Tooltip("슬롯마다 둘째 줄(특성·성격·떠나는 날·정가)")] private TMP_Text[] details;
+        [SerializeField, Tooltip("슬롯마다 왼쪽 유닛 아이콘(대기 첫 프레임)")] private Image[] icons;
         [SerializeField] private TMP_Text feedback;
         [SerializeField] private ScrollRect scroll;
 
@@ -115,6 +116,13 @@ namespace Code.UI
                 UnitPriceTier.Expensive => HudPalette.Loss,
                 _ => HudPalette.TextBody
             });
+
+            if (icons != null && index < icons.Length && icons[index] != null)
+            {
+                var icon = unit.IconSprite;
+                icons[index].sprite = icon;
+                icons[index].enabled = icon != null;
+            }
 
             // 옛 화면은 정가·시세를 툴팁으로 보였다. 툴팁이 없어 둘째 줄 끝에 붙인다.
             if (index < details.Length && details[index] != null)

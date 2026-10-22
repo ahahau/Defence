@@ -195,8 +195,14 @@ namespace Tests.EditMode.Gameplay
 
                 var prefab = ReadProperty(asset, "Prefab") as Component;
                 var render = prefab != null ? prefab.GetComponentInChildren(renderType, true) : null;
-                if (render == null || setField.GetValue(render) == null)
+                var set = render != null ? setField.GetValue(render) as Code.Entities.CharacterAnimationSetSO : null;
+                if (set == null)
                     missing.Add(asset.name + " · 애니메이션 묶음");
+
+                // 화면 아이콘(배치 카드·상태 창·지원자 줄)은 대기 첫 프레임이다. 보드 그림(임시 네모)으로 떨어지면 빈 상자가 보였다.
+                var icon = ((Code.Units.UnitDataSO)asset).IconSprite;
+                if (icon == null || IsPlaceholder(icon) || (set != null && icon != set.FirstIdleFrame))
+                    missing.Add(asset.name + " · 아이콘(대기 첫 프레임)");
             }
 
             Assert.That(missing, Is.Empty, "진짜 그림이 없는 부하:\n  " + string.Join("\n  ", missing));
@@ -400,6 +406,11 @@ namespace Tests.EditMode.Gameplay
                 var shop = new SerializedObject(recruit).FindProperty("shop").objectReferenceValue as Code.UI.SettlementShopPane;
                 Assert.That(shop, Is.Not.Null);
                 Assert.That(new SerializedObject(shop).FindProperty("roster").objectReferenceValue, Is.Not.Null, "고용 명단과 이어져야 합니다.");
+                var shopSo = new SerializedObject(shop);
+                var icons = shopSo.FindProperty("icons");
+                Assert.That(icons.arraySize, Is.EqualTo(shopSo.FindProperty("slots").arraySize), "지원자 줄마다 유닛 아이콘 칸이 있어야 합니다.");
+                for (var i = 0; i < icons.arraySize; i++)
+                    Assert.That(icons.GetArrayElementAtIndex(i).objectReferenceValue, Is.Not.Null, $"지원자 {i}번 줄의 아이콘 칸이 비었습니다.");
 
                 Assert.That(roomScreen, Is.Not.Null);
                 Assert.That(new SerializedObject(roomScreen).FindProperty("recruit").objectReferenceValue, Is.EqualTo(recruit));
