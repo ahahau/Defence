@@ -27,6 +27,9 @@ namespace Code.Combat
             subscribed = false;
         }
 
+        /// <summary>받은 전투 연출 표. 아직 못 받았으면 null(점멸·베기 섬광은 그때 건너뛴다).</summary>
+        public static CombatFxCatalogSO Catalog => catalog;
+
         /// <summary>씬의 <see cref="Code.Core.RuntimeAssetInstaller"/>가 전투 연출 표를 넘긴다.</summary>
         public static void Provide(CombatFxCatalogSO fxCatalog)
         {

@@ -92,9 +92,18 @@ namespace Code.Combat
 
         private void HandleDamaged(int damage, bool isCritical)
         {
-            // 쓰러진 뒤에는 공격 포즈 복구가 사망 포즈를 덮지 않도록 잠근다.
-            if (isDead || health == null || health.IsAlive || entityRender == null)
+            if (isDead || health == null || entityRender == null)
                 return;
+
+            // 살아 있으면 움찔 동작(그림이 있고 휘두르는 중이 아닐 때만 EntityRender가 받는다).
+            if (health.IsAlive)
+            {
+                if (damage > 0)
+                    entityRender.SetUnitSprite(EntityState.Hurt);
+                return;
+            }
+
+            // 쓰러진 뒤에는 공격 포즈 복구가 사망 포즈를 덮지 않도록 잠근다.
 
             isDead = true;
             restoreIdleAt = 0f;

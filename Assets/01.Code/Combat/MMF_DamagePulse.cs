@@ -13,6 +13,8 @@ namespace Code.Combat
         [MMFInspectorGroup("Damage Pulse", true, 65)]
         public Transform Target;
         public SpriteRenderer[] SpriteRenderers = new SpriteRenderer[0];
+        [Tooltip("있으면 색을 곱하는 대신 이 실루엣으로 번쩍인다(흰 점멸이 가능).")]
+        public SpriteFlashOverlay Overlay;
         public Color FlashColor = new(1f, 0.18f, 0.06f, 1f);
         public float Duration = 0.16f;
         public float ShakeDistance = 0.08f;
@@ -33,7 +35,10 @@ namespace Code.Combat
 
             var duration = Mathf.Max(0.01f, FeedbackDuration);
             PlayTargetPulse(duration, feedbacksIntensity);
-            PlaySpriteFlash(duration);
+            if (Overlay != null && Overlay.IsReady)
+                Overlay.Flash(FlashColor, duration);
+            else
+                PlaySpriteFlash(duration);
         }
 
         // 처음 재생할 때의 자세를 기억해 두고 언제나 여기로 되돌린다.

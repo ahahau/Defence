@@ -8,7 +8,9 @@ namespace Code.Entities
     {
         Idle,
         Attack,
-        Defeated
+        Defeated,
+        /// <summary>맞고 움찔. 움찔 그림이 없거나 휘두르는 중이면 무시한다.</summary>
+        Hurt
     }
     public class EntityRender : MonoBehaviour
     {
@@ -28,6 +30,8 @@ namespace Code.Entities
         private Vector3 _lastPosition;
         private float _walkHold;
         private bool _facingLeft;
+        private bool _nextAttackAlt;
+        private CharacterClip _attackClip = CharacterClip.Attack;
 
         public SpriteRenderer SpriteRenderer => spriteRenderer;
         public bool IsAnimated => animationSet != null;
@@ -42,8 +46,13 @@ namespace Code.Entities
         /// </summary>
         public bool FaceMotion { get; set; } = true;
 
-        /// <summary>공격 동작에서 무기가 닿는 때(초). 애니메이션이 없으면 0.</summary>
-        public float AttackImpactSeconds => animationSet != null ? animationSet.AttackImpactSeconds : 0f;
+        /// <summary>다음에 틀 공격 동작에서 무기가 닿는 때(초). 애니메이션이 없으면 0.</summary>
+        public float AttackImpactSeconds => animationSet != null
+            ? animationSet.GetAttackImpactSeconds(CharacterAnimationRules.NextAttack(animationSet.HasAttackAlt, _nextAttackAlt))
+            : 0f;
+
+        /// <summary>지금 보이는 동작. 테스트·진단용.</summary>
+        public CharacterClip CurrentClip => _clip;
 
         /// <summary>보이는 그림이 바뀔 때마다. 테두리처럼 그림을 따라 그리는 쪽이 듣는다.</summary>
         public event Action SpriteChanged;
@@ -92,6 +101,7 @@ namespace Code.Entities
                 case EntityState.Idle:
                     Apply(idleSprite);
                     break;
+                // 정지 그림만 있는 캐릭터는 움찔 그림이 없다. 점멸이 대신한다.
             }
         }
 
@@ -153,8 +163,8 @@ namespace Code.Entities
             else
                 _clipTime += deltaTime;
 
-            // 공격은 끝까지 튼 뒤 스스로 대기로 돌아간다. 공격 포즈를 되돌리는 쪽이 동작을 자르지 않게 한다.
-            if (_clip == CharacterClip.Attack
+            // 공격·움찔은 끝까지 튼 뒤 스스로 대기로 돌아간다. 공격 포즈를 되돌리는 쪽이 동작을 자르지 않게 한다.
+            if (CharacterAnimationRules.ReturnsToIdle(_clip)
                 && CharacterAnimationRules.IsFinished(animationSet.GetFrames(_clip).Length, _clipTime, animationSet.GetFramesPerSecond(_clip)))
             {
                 _state = EntityState.Idle;
@@ -166,15 +176,24 @@ namespace Code.Entities
 
         private void SetAnimatedState(EntityState state)
         {
-            // 공격 동작 중의 대기 요청은 무시한다. 동작이 끝나면 Update가 대기로 돌린다.
-            if (state == EntityState.Idle && _state == EntityState.Attack && _clip == CharacterClip.Attack)
+            // 공격·움찔 동작 중의 대기 요청은 무시한다. 동작이 끝나면 Update가 대기로 돌린다.
+            if (state == EntityState.Idle && CharacterAnimationRules.ReturnsToIdle(_clip) && _state != EntityState.Defeated)
                 return;
 
-            // 쓰러진 뒤에 들어온 공격·대기 요청은 되살아난 경우(대기)만 받는다.
-            if (_state == EntityState.Defeated && state == EntityState.Attack)
+            // 쓰러진 뒤에 들어온 공격·움찔 요청은 받지 않는다. 되살아난 경우(대기)만 받는다.
+            if (_state == EntityState.Defeated && (state == EntityState.Attack || state == EntityState.Hurt))
                 return;
 
-            var restart = state == EntityState.Attack || _state != state;
+            if (state == EntityState.Hurt && (!animationSet.HasHurt || !CharacterAnimationRules.AllowsHurt(_clip)))
+                return;
+
+            if (state == EntityState.Attack)
+            {
+                _attackClip = CharacterAnimationRules.NextAttack(animationSet.HasAttackAlt, _nextAttackAlt);
+                _nextAttackAlt = animationSet.HasAttackAlt && !_nextAttackAlt;
+            }
+
+            var restart = state == EntityState.Attack || state == EntityState.Hurt || _state != state;
             _state = state;
             if (restart)
                 PlayClip(ResolveClip());
@@ -185,7 +204,8 @@ namespace Code.Entities
             return _state switch
             {
                 EntityState.Defeated => CharacterClip.Defeated,
-                EntityState.Attack => CharacterClip.Attack,
+                EntityState.Attack => _attackClip,
+                EntityState.Hurt => CharacterClip.Hurt,
                 _ => _walkHold > 0f ? CharacterClip.Walk : CharacterClip.Idle
             };
         }

@@ -29,8 +29,8 @@ paths:
 5. 스킬은 프리팹의 `SkillCaster`에 기본 스킬 1개 + 궁극기 1개를 연결한다(`skill-rules.md`).
 6. 투사체는 `Assets/03.Prefabs/Projectiles/` 아래에 만든다.
    * 유닛이 투사체를 발사하면 이 위치에 프리팹을 만들고, 유닛 프리팹에는 그 Variant를 직접 연결한다.
-   * 지금 원거리 공격은 `BattleAgent`가 코드로 그리는 임시 사각형이다(시각 전용, 피해는 `Combatant`가 처리).
-   * 투사체 프리팹을 쓰려면 `BattleAgent`를 고쳐야 하므로, 첫 투사체는 설계부터 확인받는다.
+   * 평타 발사체는 프리팹이 아니라 애니메이션 묶음의 `projectileFrames`(화살·마법 구슬 등)를 `BattleAgent`가 날린다(시각 전용, 피해는 `Combatant`). 비면 임시 사각형이 날아간다. 원거리·지원 부하는 채운다(`CombatPolishBuilder`, `CharacterAnimation_SkeletonsFlinchAndShootersHaveProjectileArt`).
+   * 스킬 투사체 프리팹은 `BattleAgent`를 고쳐야 하므로 설계부터 확인받는다.
 7. 게임에 등록한다. 두 곳 모두 해야 고용 목록에 나온다.
    * 씬의 `HiredUnitRoster.unitCatalog` 배열
    * `Assets/07.SO/Progression/DungeonUnlockCatalog.asset` (`unlockDay` 포함. 후반 유닛은 `metaProgressRequired`로 메타 진행도 단계 10·25·50 중 하나를 걸 수 있다)

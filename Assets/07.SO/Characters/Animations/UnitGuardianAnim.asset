@@ -37,7 +37,23 @@ MonoBehaviour:
   - {fileID: 21300000, guid: aae4bf663ff1f8d45bb7642ef0d8b6ed, type: 3}
   - {fileID: 21300000, guid: e2d75ca00c7319947949efa3c58aa184, type: 3}
   - {fileID: 21300000, guid: abfae1ab037a24c41bba0161319d3b64, type: 3}
+  attackAltFrames:
+  - {fileID: 21300000, guid: 9fb4bb52538fe6043b57b489a44b7a2c, type: 3}
+  - {fileID: 21300000, guid: 0dfdf6f6b168e664989bb154ef33f97f, type: 3}
+  - {fileID: 21300000, guid: abea9e9f92a889941884d9e7cc85788c, type: 3}
+  - {fileID: 21300000, guid: 4b5343ff1a3431840be7d842c324cb51, type: 3}
+  - {fileID: 21300000, guid: 86b8b12f5c32c9141a23d3edf1c84da2, type: 3}
+  - {fileID: 21300000, guid: 0e88050e19d92f041bcebf238fe21d9e, type: 3}
+  hurtFrames:
+  - {fileID: 21300000, guid: e756fca657622b14a8cd5cc9f7f6f431, type: 3}
+  - {fileID: 21300000, guid: 9094ea698f3912e44a44b7116d7a45c3, type: 3}
+  - {fileID: 21300000, guid: 0de6935525849b34cbc49d25067f697c, type: 3}
   idleFramesPerSecond: 8
   walkFramesPerSecond: 10
   attackFramesPerSecond: 12
   defeatedFramesPerSecond: 10
+  hurtFramesPerSecond: 15
+  attackImpactRatio: 0.55
+  projectileFrames: []
+  projectileImpactFrames: []
+  projectileFramesPerSecond: 12

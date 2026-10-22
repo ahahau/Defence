@@ -16,3 +16,7 @@ MonoBehaviour:
   <IntruderDeathEffect>k__BackingField: {fileID: 119968, guid: e73000b12fb76244cbffd6abbf8bb6e4, type: 3}
   <DeathEffectScale>k__BackingField: 1
   <SortingOrder>k__BackingField: 30
+  <HitFlashMaterial>k__BackingField: {fileID: 2100000, guid: 9fa01cac7e1318840a35606995baca3e, type: 2}
+  <MeleeSlashSprite>k__BackingField: {fileID: 21300000, guid: 157f18f5e51b3d54fb254f6cb4ff9799, type: 3}
+  <MeleeSlashColor>k__BackingField: {r: 1, g: 0.97, b: 0.85, a: 1}
+  <MeleeSlashScale>k__BackingField: 1

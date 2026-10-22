@@ -21,5 +21,19 @@ namespace Code.Combat
 
         [field: SerializeField, Tooltip("유닛 스프라이트(20)보다 위에 그린다.")]
         public int SortingOrder { get; private set; } = 30;
+
+        [field: Header("Hit")]
+        [field: SerializeField, Tooltip("맞은 캐릭터 위에 덮는 단색 실루엣 재질(Defence/Sprite Flash). 비우면 예전처럼 색을 곱해 붉게 칠한다.")]
+        public Material HitFlashMaterial { get; private set; }
+
+        [field: SerializeField, Tooltip("근접 평타가 닿은 자리에 잠깐 그리는 베기 섬광.")]
+        public Sprite MeleeSlashSprite { get; private set; }
+
+        [field: SerializeField, Tooltip("베기 섬광 색. 블룸 임계(0.85)를 넘게 밝게 둔다.")]
+        public Color MeleeSlashColor { get; private set; } = new(1f, 0.97f, 0.85f, 1f);
+
+        [field: SerializeField, Min(0.1f)]
+        public float MeleeSlashScale { get; private set; } = 1f;
+
     }
 }

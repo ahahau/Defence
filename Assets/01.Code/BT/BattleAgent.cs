@@ -275,6 +275,8 @@ namespace Code.BT
                     _render.FaceTowards(dx);
             }
 
+            TickHitRecoil(Time.deltaTime);
+
             // 역할 패시브(autoDrive와 무관하게 항상 동작)
             TickOutOfCombatRegen(Time.deltaTime); // Tank/전열: 비전투 HP 재생
             TickSupportAura(Time.deltaTime);       // Support: 치유 오라
@@ -655,7 +657,7 @@ namespace Code.BT
 
         private static Sprite _squareSprite;
 
-        /// <summary>공격 비주얼 — 원거리/지원: 사각형 발사체, 전열: 근접 평타 이펙트(프리팹 있으면).</summary>
+        /// <summary>공격 비주얼 — 원거리/지원: 발사체, 전열: 근접 평타 이펙트(프리팹 있으면) 또는 베기 섬광.</summary>
         private void SpawnAttackVisual()
         {
             var t = CurrentTarget;
@@ -665,30 +667,104 @@ namespace Code.BT
                 FireProjectileAt(t);
             else if (meleeAttackEffectPrefab != null)
                 SpawnMeleeEffectAt(t);
+            else
+                SpawnMeleeSlashAt(t);
         }
 
-        /// <summary>시전자→타깃으로 날아가는 임시 사각형 발사체(시각 전용; 데미지는 Combatant가 이미 처리).</summary>
+        /// <summary>
+        /// 시전자→타깃으로 날아가는 발사체(시각 전용; 데미지는 Combatant가 이미 처리).
+        /// 애니메이션 묶음에 발사체 그림(화살·도끼·마법 구슬)이 있으면 그것을, 없으면 예전 사각형을 날린다.
+        /// </summary>
         private void FireProjectileAt(BattleAgent target)
         {
-            Vector3 from = body != null ? body.position : transform.position;
-            Vector3 to = target.transform.position;
+            Vector3 from = (body != null ? body.position : transform.position) + Vector3.up * HitHeight;
+            Vector3 to = target.transform.position + Vector3.up * HitHeight;
             var dir = to - from;
             if (dir.sqrMagnitude < 0.0001f) return;
             var go = new GameObject("Projectile");
             go.transform.position = from;
-            go.transform.right = dir.normalized; // 진행 방향으로 회전
-            go.transform.localScale = new Vector3(Mathf.Max(0.05f, projectileSize.x), Mathf.Max(0.05f, projectileSize.y), 1f);
+            go.transform.right = dir.normalized; // 진행 방향으로 회전(팩 그림은 오른쪽을 본다)
 
             var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = GetSquareSprite();
-            sr.color = projectileColor;
             sr.sortingOrder = 100;
 
+            var set = _render != null ? _render.AnimationSet : null;
+            var frames = set != null ? set.ProjectileFrames : System.Array.Empty<Sprite>();
+            // 발사체 그림은 캐릭터 그림과 같은 PPU로 들어오므로 몸통 크기를 따라야 비율이 맞는다.
+            var artScale = body != null ? new Vector3(Mathf.Abs(body.lossyScale.x), Mathf.Abs(body.lossyScale.y), 1f) : Vector3.one;
+            if (frames.Length > 0)
+            {
+                go.transform.localScale = artScale;
+                go.AddComponent<SpriteFramePlayer>().Play(frames, set.ProjectileFramesPerSecond, true);
+            }
+            else
+            {
+                go.transform.localScale = new Vector3(Mathf.Max(0.05f, projectileSize.x), Mathf.Max(0.05f, projectileSize.y), 1f);
+                sr.sprite = GetSquareSprite();
+                sr.color = projectileColor;
+            }
+
+            var impactFrames = set != null ? set.ProjectileImpactFrames : System.Array.Empty<Sprite>();
+            var impactRate = set != null ? set.ProjectileFramesPerSecond : 12f;
             var duration = dir.magnitude / Mathf.Max(1f, projectileSpeed);
             go.transform.DOMove(to, duration)
                 .SetEase(Ease.Linear)
-                .OnComplete(() => Destroy(go))
+                .OnComplete(() =>
+                {
+                    if (impactFrames.Length > 0)
+                        SpawnFrameEffect(impactFrames, impactRate, go.transform.position, artScale);
+                    Destroy(go);
+                })
                 .SetLink(go);
+        }
+
+        /// <summary>몸통 기준점(발밑)에서 맞는 높이. 발사체·베기 섬광이 발이 아니라 몸에 닿게 한다.</summary>
+        private const float HitHeight = 0.35f;
+
+        private static void SpawnFrameEffect(Sprite[] frames, float framesPerSecond, Vector3 position, Vector3 scale)
+        {
+            var go = new GameObject("ImpactFx");
+            go.transform.position = position;
+            go.transform.localScale = scale;
+            go.AddComponent<SpriteRenderer>().sortingOrder = 101;
+            go.AddComponent<SpriteFramePlayer>().Play(frames, framesPerSecond, false);
+        }
+
+        /// <summary>
+        /// 근접 평타가 닿은 자리에 짧게 그리는 베기 섬광(시각 전용). 공격자→대상 방향으로 눕히고,
+        /// 커지면서 0.14초 안에 사라진다. 블룸 임계보다 밝아 은은하게 빛난다.
+        /// </summary>
+        private void SpawnMeleeSlashAt(BattleAgent target)
+        {
+            var catalog = CombatFxHooks.Catalog;
+            if (catalog == null || catalog.MeleeSlashSprite == null)
+                return;
+
+            Vector2 from = transform.position;
+            Vector2 to = target.transform.position;
+            var dir = to - from;
+            if (dir.sqrMagnitude < 0.0001f) dir = new Vector2(FacingX, 0f);
+            dir.Normalize();
+
+            var go = new GameObject("MeleeSlash");
+            // 대상 몸 앞쪽(공격자 쪽)에 그린다.
+            go.transform.position = (Vector3)(to - dir * 0.15f) + Vector3.up * HitHeight;
+            var angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg + Random.Range(-25f, 25f);
+            go.transform.rotation = Quaternion.Euler(0f, 0f, angle);
+
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = catalog.MeleeSlashSprite;
+            sr.color = catalog.MeleeSlashColor;
+            sr.flipY = Random.value < 0.5f; // 위에서 내리긋기·아래에서 올려치기를 섞는다
+            sr.sortingOrder = 101;
+
+            var scale = catalog.MeleeSlashScale;
+            go.transform.localScale = Vector3.one * (scale * 0.6f);
+            DOTween.Sequence()
+                .SetLink(go)
+                .Append(go.transform.DOScale(scale, 0.08f).SetEase(Ease.OutQuad))
+                .Join(sr.DOFade(0f, 0.14f).SetEase(Ease.InQuad))
+                .OnComplete(() => Destroy(go));
         }
 
         /// <summary>근접 평타 이펙트 프리팹을 타깃 위치에 잠깐 띄운다(이미지는 나중에 프리팹으로 교체).</summary>
@@ -772,7 +848,34 @@ namespace Code.BT
                 : new Vector2(-FacingX, 0f);
             if (dir.sqrMagnitude < 0.0001f) dir = Vector2.right;
 
-            transform.position = ClampToArena(transform.position + (Vector3)(dir * hitKnockbackDistance));
+            // 한 번에 옮기면 툭 끊겨 순간이동처럼 보였다. 짧게 나눠 밀어낸다(TickHitRecoil).
+            _recoilRemaining += dir * hitKnockbackDistance;
+            _recoilTimeLeft = HitRecoilSeconds;
+        }
+
+        private const float HitRecoilSeconds = 0.08f;
+        private Vector2 _recoilRemaining;
+        private float _recoilTimeLeft;
+
+        /// <summary>남은 넉백을 남은 시간에 고르게 나눠 민다. 순회가 잠기면(방을 옮기는 중) 버린다.</summary>
+        private void TickHitRecoil(float deltaTime)
+        {
+            if (_recoilTimeLeft <= 0f)
+                return;
+
+            if (_traversalLocked || !_hasArena)
+            {
+                _recoilRemaining = Vector2.zero;
+                _recoilTimeLeft = 0f;
+                return;
+            }
+
+            var step = _recoilRemaining * Mathf.Clamp01(deltaTime / _recoilTimeLeft);
+            transform.position = ClampToArena(transform.position + (Vector3)step);
+            _recoilRemaining -= step;
+            _recoilTimeLeft -= deltaTime;
+            if (_recoilTimeLeft <= 0f)
+                _recoilRemaining = Vector2.zero;
         }
 
         /// <summary>회피 성공 시 공격 방향과 수직으로 짧게 빠지는 사이드스텝(Combatant가 호출).

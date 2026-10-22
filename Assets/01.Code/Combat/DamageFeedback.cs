@@ -10,6 +10,10 @@ namespace Code.Combat
         [SerializeField] private float textFloatDistance = 0.45f;
         [SerializeField] private float textDuration = 0.55f;
         [SerializeField] private int textSortingOrder = 60;
+        [SerializeField, Min(0f), Tooltip("뜨는 숫자를 좌우로 흩뿌리는 반경. 연타 숫자가 겹치지 않게 한다.")]
+        private float textScatter = 0.22f;
+        [SerializeField, Min(0f), Tooltip("뜬 숫자가 사라지며 바깥쪽으로 흐르는 거리.")]
+        private float textDrift = 0.18f;
         [Header("Critical")]
         [SerializeField, Tooltip("치명타 숫자 색. 평타는 붉은색이므로 여기는 확실히 다른 색이어야 한다 — " +
                                  "붉은 계열끼리 두면 난전에서 치명타가 났는지 알 수 없다.")]
@@ -205,9 +209,12 @@ namespace Code.Combat
 
         private TextMesh SpawnFloatingText(string text, Color color, float sizeScale)
         {
+            // 같은 자리에서 위로만 뜨면 연타 숫자가 한 줄로 겹쳐 읽히지 않았다. 좌우로 흩뿌린다.
+            var scatter = Random.Range(-textScatter, textScatter);
+            var start = transform.position + new Vector3(scatter, 0.85f, 0f);
             var textMesh = damageTextPrefab != null
-                ? Instantiate(damageTextPrefab, transform.position + Vector3.up * 0.85f, Quaternion.identity)
-                : CreateRuntimeFloatingText(transform.position + Vector3.up * 0.85f);
+                ? Instantiate(damageTextPrefab, start, Quaternion.identity)
+                : CreateRuntimeFloatingText(start);
 
             textMesh.text = text;
             textMesh.anchor = TextAnchor.MiddleCenter;
@@ -220,13 +227,18 @@ namespace Code.Combat
             if (meshRenderer != null)
                 meshRenderer.sortingOrder = textSortingOrder;
 
-            var endPosition = textMesh.transform.position + Vector3.up * textFloatDistance;
+            // 튀어 올랐다가(앞 40%) 바깥쪽으로 흘러 조금 떨어지며 사라진다.
+            var peakY = start.y + textFloatDistance;
+            var driftX = start.x + Mathf.Sign(scatter == 0f ? 1f : scatter) * textDrift;
+            var rise = textDuration * 0.4f;
             DOTween.Sequence()
                 // 뜬 숫자는 웨이브가 끝나거나 씬이 바뀌면 함께 사라진다. 묶어 두지 않으면
                 // 그 뒤에도 트윈이 돌며 없어진 Transform 을 건드린다.
                 .SetLink(textMesh.gameObject)
-                .Append(textMesh.transform.DOMove(endPosition, textDuration).SetEase(Ease.OutQuad))
-                .Join(DOTween.To(
+                .Append(textMesh.transform.DOMoveY(peakY, rise).SetEase(Ease.OutQuad))
+                .Join(textMesh.transform.DOMoveX(driftX, textDuration).SetEase(Ease.OutSine))
+                .Insert(rise, textMesh.transform.DOMoveY(peakY - textFloatDistance * 0.3f, textDuration - rise).SetEase(Ease.InQuad))
+                .Insert(textDuration * 0.45f, DOTween.To(
                     () => textMesh.color.a,
                     alpha =>
                     {
@@ -235,7 +247,7 @@ namespace Code.Combat
                         textMesh.color = textColor;
                     },
                     0f,
-                    textDuration))
+                    textDuration * 0.55f))
                 .OnComplete(() => Destroy(textMesh.gameObject));
 
             return textMesh;

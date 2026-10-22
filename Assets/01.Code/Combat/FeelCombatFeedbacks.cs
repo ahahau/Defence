@@ -29,9 +29,10 @@ namespace Code.Combat
         [Header("Damage Pulse")]
         [SerializeField] private Transform feedbackTarget;
         [SerializeField] private SpriteRenderer[] spriteRenderers = new SpriteRenderer[0];
-        [SerializeField] private Color hitFlashColor = new(1f, 0.2f, 0.08f, 1f);
-        [SerializeField] private Color bigHitFlashColor = new(1f, 0.72f, 0.12f, 1f);
-        [SerializeField] private Color deathFlashColor = new(1f, 0.05f, 0.02f, 1f);
+        // 흰 실루엣 점멸(SpriteFlashOverlay). 붉게 칠하면 붉은 피해 숫자와 섞여 읽히지 않았다.
+        [SerializeField] private Color hitFlashColor = new(1f, 1f, 1f, 0.9f);
+        [SerializeField] private Color bigHitFlashColor = new(1f, 0.93f, 0.6f, 1f);
+        [SerializeField] private Color deathFlashColor = new(1f, 0.35f, 0.3f, 1f);
         [SerializeField, Min(0f)] private float hitPulseScale = 0.08f;
         [SerializeField, Min(0f)] private float bigHitPulseScale = 0.18f;
         [SerializeField, Min(0f)] private float deathPulseScale = 0.28f;
@@ -41,6 +42,7 @@ namespace Code.Combat
         private MMF_Player _hitPlayer;
         private MMF_Player _bigHitPlayer;
         private MMF_Player _deathPlayer;
+        private SpriteFlashOverlay _flashOverlay;
 
         private void Awake()
         {
@@ -61,6 +63,17 @@ namespace Code.Combat
                     : transform;
 
             FeelCombatSceneSetup.EnsureCameraShaker();
+
+            // 몸통 그림(애니메이션이 바꾸는 것) 위에만 실루엣을 덮는다. 그림자·테두리까지 번쩍이면 덩어리로 보인다.
+            var render = GetComponentInChildren<Code.Entities.EntityRender>(true);
+            var mainRenderer = render != null && render.SpriteRenderer != null
+                ? render.SpriteRenderer
+                : spriteRenderers != null && spriteRenderers.Length > 0 ? spriteRenderers[0] : null;
+            if (mainRenderer != null)
+            {
+                _flashOverlay = gameObject.AddComponent<SpriteFlashOverlay>();
+                _flashOverlay.Bind(mainRenderer);
+            }
 
             // 큰 타격과 사망은 드물게 일어나므로 쿨다운을 무시하고 항상 멈춘다.
             _hitPlayer = BuildPlayer("Feel Hit", hitShakeDuration, hitShakeAmplitude, hitCooldown, hitStopDuration, hitFlashColor, hitPulseScale, false);
@@ -119,6 +132,7 @@ namespace Code.Combat
             {
                 pulse.Target = feedbackTarget;
                 pulse.SpriteRenderers = spriteRenderers;
+                pulse.Overlay = _flashOverlay;
                 pulse.FlashColor = flashColor;
                 pulse.Duration = Mathf.Max(0.1f, shakeDuration);
                 pulse.ShakeDistance = Mathf.Max(0.02f, shakeAmplitude * 0.85f);

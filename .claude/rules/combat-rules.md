@@ -23,6 +23,13 @@ paths:
 - 휘두르기는 사거리(`Combatant.StrikeRange` = `BattleAgent.attackRange`)의 1.15배 안에서만 시작하고, 닿는 순간 1.3배보다 멀어졌으면 헛친다. 사거리 밖·움찔 중에는 게이지가 예비 동작 직전에서 기다린다(예전에는 한 번 교전을 걸면 쫓아가면서도 계속 맞았다).
 - 맞으면 0.2초 움찔(`Combatant.Stagger`)해 새로 휘두르지도 움직이지도 못한다. 휘두르는 중·움찔 중에는 전투 이동이 모두 멈춘다(`BattleAgent.IsCombatMoveLocked`). 근접은 대기 시간에 무작위 좌우 이동을 하지 않고 대상을 마주 보고 버틴다(`EngageTargetAction`, 원거리만 스트레이프). 한 대상에 붙은 근접은 바짝 붙어도 옆자리 40%를 남긴다.
 
+## 타격 연출 (2026-10-22)
+- 맞는 동작·둘째 공격·발사체 그림은 `CharacterAnimationSetSO`(`hurtFrames`·`attackAltFrames`·`projectileFrames`·`projectileImpactFrames`)에 있다. 팩 폴더에서 찾아 채우는 생성기는 `CombatPolishBuilder.BuildAll()`이다(첫 공격 그림 폴더 기준, 임포트는 그 캐릭터 공격 그림을 따르고 발사체만 기준점 가운데). 새 묶음을 만들면 다시 돌린다.
+- 맞는 동작(`EntityState.Hurt`)은 서 있을 때만 튼다. 휘두르는 중·쓰러진 뒤에는 끼어들지 않는다(`CharacterAnimationRules.AllowsHurt`). 둘째 공격은 그림이 있으면 평타마다 번갈아 쓰고, 예비 동작 시간은 다음에 틀 동작 기준이다(`EntityRender.AttackImpactSeconds`).
+- 피격 점멸은 색을 곱하지 않고 흰 실루엣을 덮는다(`SpriteFlashOverlay`, 재질 `Defence/Sprite Flash`는 `CombatFxCatalogSO.HitFlashMaterial`). 기본 스프라이트 셰이더는 색을 곱해서 흰색으로는 밝아지지 않는다.
+- 근접 평타는 `CombatFxCatalogSO.MeleeSlashSprite` 베기 섬광, 원거리는 묶음의 발사체 그림(없으면 예전 사각형)을 날린다. 발사체는 몸통 크기(`lossyScale`)를 따른다. 피해는 여전히 `Combatant`가 낸다(연출은 시각 전용).
+- 넉백은 0.08초에 나눠 민다(`BattleAgent.TickHitRecoil`). 한 번에 옮기면 순간이동처럼 보였다.
+
 ## 후처리
 - 블룸은 `Assets/05.Materials/PostProcessing/GameVolumeProfile`(임계 0.85·세기 0.5·퍼짐 0.6)을 씬 전역 볼륨에 건다. 생성기 `PostProcessingBuilder.BuildAll()`, 메인 카메라 후처리 켬. 세게 올리면 도트가 뭉개진다.
 

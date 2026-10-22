@@ -35,6 +35,21 @@ namespace Code.Entities
 
         public static bool IsLooping(CharacterClip clip) => clip == CharacterClip.Idle || clip == CharacterClip.Walk;
 
+        public static bool IsAttack(CharacterClip clip) => clip == CharacterClip.Attack || clip == CharacterClip.AttackAlt;
+
+        /// <summary>끝까지 튼 뒤 스스로 대기로 돌아가는 동작(공격 둘·움찔).</summary>
+        public static bool ReturnsToIdle(CharacterClip clip) => IsAttack(clip) || clip == CharacterClip.Hurt;
+
+        /// <summary>
+        /// 맞았을 때 움찔 동작을 틀어도 되는지. 휘두르는 중에는 끊지 않는다 — 맞아도 휘두르기는 이어져
+        /// 피해가 나가는데(<c>Combatant</c>) 그림만 움찔하면 무기 없이 때리는 것처럼 보인다. 쓰러진 뒤에도 틀지 않는다.
+        /// </summary>
+        public static bool AllowsHurt(CharacterClip current) => !IsAttack(current) && current != CharacterClip.Defeated;
+
+        /// <summary>다음 공격 동작. 둘째 동작이 있으면 번갈아 쓴다.</summary>
+        public static CharacterClip NextAttack(bool hasAlt, bool useAlt) =>
+            hasAlt && useAlt ? CharacterClip.AttackAlt : CharacterClip.Attack;
+
         /// <summary>무기가 닿는 지점의 기본값(공격 동작 길이 비율). 6장짜리 휘두르기면 넷째 장 무렵이다.</summary>
         public const float DefaultImpactRatio = 0.55f;
 

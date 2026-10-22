@@ -40,7 +40,26 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 0e6411fa3f3b346139e6d12d3d7ffd92, type: 3}
   - {fileID: 21300000, guid: 5b223b40002634edfbb1909e91bce3ce, type: 3}
   - {fileID: 21300000, guid: 6620e9480d1514f70802eda9e61687c8, type: 3}
+  attackAltFrames: []
+  hurtFrames: []
   idleFramesPerSecond: 8
   walkFramesPerSecond: 10
   attackFramesPerSecond: 12
   defeatedFramesPerSecond: 10
+  hurtFramesPerSecond: 15
+  attackImpactRatio: 0.55
+  projectileFrames:
+  - {fileID: 21300000, guid: dd79973e693a74aea8ad847db4e0d020, type: 3}
+  - {fileID: 21300000, guid: c2602064c607f43228fb2e7591ec3b1c, type: 3}
+  - {fileID: 21300000, guid: 9eb8f9015a3f642d49b4ae2cc3bca648, type: 3}
+  - {fileID: 21300000, guid: 3684508ea38574582bd9a5302143a324, type: 3}
+  - {fileID: 21300000, guid: 534c1875398384e0695e0a98d9577d1f, type: 3}
+  - {fileID: 21300000, guid: 77d62d03c882c4cbf922a3d92d26abd2, type: 3}
+  projectileImpactFrames:
+  - {fileID: 21300000, guid: 52df27ec228064be18dff760f442d51b, type: 3}
+  - {fileID: 21300000, guid: cd7109de86c484e0690a8eb3adf4f9f3, type: 3}
+  - {fileID: 21300000, guid: c1c80bafcbc0249de925af9b8f9df965, type: 3}
+  - {fileID: 21300000, guid: 6430e5007edc14842b1806ce213f4dcd, type: 3}
+  - {fileID: 21300000, guid: 3e6b1c57bb9be4a088608f8a8d261bb6, type: 3}
+  - {fileID: 21300000, guid: de7d9ce2398b64ffbb08b0ae460bbadd, type: 3}
+  projectileFramesPerSecond: 12

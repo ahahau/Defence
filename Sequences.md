@@ -1,5 +1,17 @@
 # Sequences
 
+- 2026-10-22 · 전투 연출 다듬기 여섯 가지(사용자: "전투 좀더 폴리싱해줘" → "계획대로 여섯 가지 모두").
+  - 맞는 동작: `CharacterAnimationSetSO.hurtFrames`(해골 팩 `hit_*`), `EntityState.Hurt`. 서 있을 때 맞으면 튼다. 휘두르는 중·쓰러진 뒤에는 끼어들지 않는다(`CharacterAnimationRules.AllowsHurt` — 맞아도 휘두르기는 이어져 피해가 나가므로 그림만 움찔하면 이상했다).
+  - 흰 점멸: 기본 스프라이트 셰이더는 색을 곱해서 흰색으로 칠하면 변화가 없고, 붉은 점멸은 붉은 피해 숫자와 섞였다. 실루엣 셰이더 `Defence/Sprite Flash`(`Assets/05.Materials/SpriteFlash`)를 몸통 그림 위에 덮는 `SpriteFlashOverlay`(`FeelCombatFeedbacks`가 붙임, 재질은 `CombatFxCatalogSO.HitFlashMaterial`). 일반 흰색·강타 연노랑·쓰러짐 연빨강.
+  - 발사체: 흰 사각형 대신 묶음의 `projectileFrames`/`projectileImpactFrames`(`SpriteFramePlayer`). 해골 궁수 화살, 해골 마법사 마법 구슬+폭발, 모험가 팩 `eff1`, 성직자 빛+폭발, 자기 그림 없는 모험가 팩 캐릭터(오크 주술사 등)는 초록 구슬을 빌림. 몸통 크기(`lossyScale`)를 따른다.
+  - 근접 베기 섬광: 프리팹이 모두 비어 있던 근접 평타 이펙트 자리에 코드로 그린 초승달(`Assets/04.Sprites/Effects/MeleeSlash.png`)을 대상 앞에 눕혀 0.14초 띄운다.
+  - 넉백: 0.2를 한 번에 옮기던 것을 0.08초에 나눠 민다(`BattleAgent.TickHitRecoil`). 피해 숫자: 좌우 ±0.22로 흩뿌리고 튀어 올랐다가 바깥쪽으로 흘러 떨어진다.
+  - 공격 번갈아: `attack2` 그림이 있는 해골 부하(검사 셋·방패병·궁수·망령)는 평타마다 두 동작을 번갈아 쓴다. 예비 동작 시간은 다음에 틀 동작 기준(`EntityRender.AttackImpactSeconds`). 해골 왕의 `attack2`는 긴 연속 동작이라 제외.
+  - 생성기 `CombatPolishBuilder.BuildAll()`: 묶음 29개를 첫 공격 그림 폴더 기준으로 채우고, 새로 쓰는 팩 그림 임포트를 그 캐릭터 공격 그림(PPU·기준점·필터)에 맞춤(발사체만 가운데 기준점). 맞는 동작 9묶음, 둘째 공격 7묶음, 원거리·지원 전원 발사체 그림.
+  - 테스트: `CharacterAnimation_AlternatesAttacksAndHurtNeverCutsASwing`, `EntityRender_AlternatesSwingsAndPlaysHurtOnlyWhenNotSwinging`, `CharacterAnimation_SkeletonsFlinchAndShootersHaveProjectileArt`, `CombatFxCatalog_HasHitFlashMaterialAndMeleeSlash`. 기본 동작 검사는 네 기본 동작만. EditMode 367/367.
+  - 플레이(세이브 원복): 새 판 1일차, 방 하나 + 해골 검사 1명 → 영업 45초 기록. 첫째 공격 시작 21·둘째 공격 4, 움찔 7회(87프레임), 흰 점멸 95프레임, 베기 섬광 12, 발사체 7개 모두 팩 그림(`eff1`)·사각형 0, 교전 중 대상 반대 보기 1/2068. 캡처로 베기 섬광·흰 실루엣·던진 도끼 확인.
+  - 확인한 기존 문제(고치지 않음): 피격·회복 파티클(`DamageFeedback`이 코드로 만드는 것)에 재질이 없어(`null`) URP에서 자홍색 덩어리로 보인다.
+
 - 2026-10-22 · 유닛 아이콘을 대기 첫 프레임으로(사용자: "유닛 아이콘에 유닛 아이들 아이콘 하나 넣어줘" → "고용·정산표 지원자 목록 줄마다 대기 아이콘도").
   - `UnitDataSO.IconSprite`: 프리팹 `EntityRender`의 애니메이션 묶음 대기 첫 프레임(`CharacterAnimationSetSO.FirstIdleFrame`). 없으면 `Sprite` → `BoardSprite`. 배치 카드(`InstallPanelPresenter`)와 부하 상태 창 얼굴(`UnitStatusPanelView`)이 이 값을 쓴다.
   - 지원자 목록(`SettlementShopPane`, 정산표·고용 창 공용): 줄마다 왼쪽 44×44 아이콘 칸(`icons`). 생성기 `SettlementBuilder.BuildShopPane`. 생성기를 정산표 → 고용 창 → 방 관리 → 설정 순서로 다시 돌려 씬 저장(ESC 목록 빈 칸 0, 두 칸 모두 아이콘 16칸).

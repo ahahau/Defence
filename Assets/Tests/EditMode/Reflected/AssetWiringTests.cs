@@ -865,6 +865,20 @@ namespace Tests.EditMode.Gameplay
             return property.GetValue(target) as UnityEngine.Object;
         }
 
+        /// <summary>
+        /// 흰 피격 점멸은 실루엣 재질이, 근접 베기 섬광은 그림이 전투 연출 표에 걸려 있어야 나온다.
+        /// 비면 조용히 예전 붉은 칠(흰색이면 아무 변화 없음)로 돌아가 눈으로 보기 전엔 모른다.
+        /// </summary>
+        [Test]
+        public void CombatFxCatalog_HasHitFlashMaterialAndMeleeSlash()
+        {
+            var catalog = AssetDatabase.LoadAssetAtPath<Code.Combat.CombatFxCatalogSO>("Assets/07.SO/Combat/CombatFxCatalog.asset");
+            Assert.That(catalog, Is.Not.Null, "전투 연출 표가 없다.");
+            Assert.That(catalog.HitFlashMaterial, Is.Not.Null, "피격 점멸 재질이 비어 있다.");
+            Assert.AreEqual("Defence/Sprite Flash", catalog.HitFlashMaterial.shader.name);
+            Assert.That(catalog.MeleeSlashSprite, Is.Not.Null, "근접 베기 섬광 그림이 비어 있다.");
+        }
+
         // 게임 코드는 Runtime, 스탯·모듈 같은 재사용 기반은 GameLib 어셈블리에 있다. 둘 다 찾아본다.
         private static Type RequireType(string fullName)
         {
