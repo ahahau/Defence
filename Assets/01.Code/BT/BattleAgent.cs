@@ -264,16 +264,9 @@ namespace Code.BT
         {
             if (!IsAlive) return;
 
-            // 싸우는 동안은 대상을 본다. 밀려나거나 물러날 때 움직이는 쪽으로 돌아서지 않게 한다.
+            // 대상이 없으면 그림이 움직이는 쪽을 본다. 대상이 있으면 이 프레임 이동이 끝난 뒤 LateUpdate가 정한다.
             if (_render != null)
-            {
-                var target = CurrentTarget;
-                _render.FaceMotion = target == null;
-                // 거의 겹쳐 선 대상은 좌우가 프레임마다 바뀌어 떨므로, 조금 벗어났을 때만 돌아선다.
-                var dx = target != null ? target.transform.position.x - transform.position.x : 0f;
-                if (Mathf.Abs(dx) > 0.1f)
-                    _render.FaceTowards(dx);
-            }
+                _render.FaceMotion = CurrentTarget == null;
 
             TickHitRecoil(Time.deltaTime);
 
@@ -286,6 +279,42 @@ namespace Code.BT
             if (!autoDrive) return; // BT 그래프가 운전하면 나머지는 끔
             DriveAutoBattle(Time.deltaTime);
             ResolveCrowding(Time.deltaTime);
+        }
+
+        /// <summary>
+        /// BT 그래프가 이번 프레임 이동을 마친 뒤 겹침을 풀고 보는 쪽을 정한다.
+        /// 예전에는 밀어내기가 그래프 없이 스스로 싸우는 경우(autoDrive)에만 돌아, 그래프로 움직이는 캐릭터는 서로를 그냥 통과했다.
+        /// </summary>
+        private void LateUpdate()
+        {
+            if (!IsAlive)
+                return;
+
+            if (!autoDrive)
+                ResolveCrowding(Time.deltaTime);
+            UpdateCombatFacing(Time.deltaTime);
+        }
+
+        /// <summary>
+        /// 대상을 가진 동안은 이동 방향과 관계없이 대상을 본다.
+        /// 거의 겹쳐 선 대상 때문에 방향이 떨리지 않도록 가로 차이가 0.1 이하면 현재 방향을 유지한다.
+        /// </summary>
+        private void UpdateCombatFacing(float deltaTime)
+        {
+            if (deltaTime <= 0f)
+                return;
+
+            BattleAgent target = CurrentTarget;
+            if (_render == null)
+                return;
+
+            _render.FaceMotion = target == null;
+            if (target == null)
+                return;
+
+            float directionX = target.transform.position.x - transform.position.x;
+            if (Mathf.Abs(directionX) > 0.1f)
+                _render.FaceTowards(directionX);
         }
 
         /// <summary>
@@ -417,7 +446,7 @@ namespace Code.BT
                 }
                 else
                 {
-                    CombatBackStep(deltaTime);
+                    MeleeRecoveryStep(deltaTime);
                 }
 
                 return;
@@ -501,28 +530,33 @@ namespace Code.BT
                 caster.TryCast();
         }
 
+        /// <summary>
+        /// 겹친 캐릭터를 떼어 놓는다. 그래프로 움직이면 세기를 줄이고(<see cref="CombatMoveRules.GraphSeparationShare"/>),
+        /// 상대 편과는 바짝 겹칠 때만 민다 — 다가가기·근접 정지 거리와 같은 세기로 싸우면 제자리에서 떨었다.
+        /// </summary>
         private void ResolveCrowding(float deltaTime)
         {
-            if (_battlefield == null || _traversalLocked || IsSnared || personalSpaceRadius <= 0f)
+            if (_battlefield == null || IsCombatMoveLocked || personalSpaceRadius <= 0f)
                 return;
 
             Vector2 push = Vector2.zero;
-            AccumulateSeparation(_battlefield.Allies(team), ref push);
-            AccumulateSeparation(_battlefield.Opponents(team), ref push);
+            AccumulateSeparation(_battlefield.Allies(team), personalSpaceRadius, ref push);
+            AccumulateSeparation(_battlefield.Opponents(team),
+                autoDrive ? personalSpaceRadius : personalSpaceRadius * CombatMoveRules.OpponentSeparationShare, ref push);
 
             if (push.sqrMagnitude <= 0.0001f)
                 return;
 
-            var step = Mathf.Min(push.magnitude, separationStrength * deltaTime);
+            var strength = autoDrive ? separationStrength : separationStrength * CombatMoveRules.GraphSeparationShare;
+            var step = Mathf.Min(push.magnitude, strength * deltaTime);
             transform.position = ClampToArena((Vector2)transform.position + push.normalized * step);
         }
 
-        private void AccumulateSeparation(List<BattleAgent> others, ref Vector2 push)
+        private void AccumulateSeparation(List<BattleAgent> others, float minDistance, ref Vector2 push)
         {
             if (others == null) return;
 
             Vector2 self = transform.position;
-            var minDistance = personalSpaceRadius;
             for (var i = 0; i < others.Count; i++)
             {
                 var other = others[i];
@@ -1132,7 +1166,19 @@ namespace Code.BT
 
             // 타깃 중심까지 가지 않고 '사거리 살짝 안쪽' 지점까지만 접근 → 서로 겹쳐 박치기하는 것 방지.
             var stopDist = attackRange * 0.9f;
-            if (dist <= stopDist) return;
+            if (dist <= stopDist)
+            {
+                _chaseTarget = null;
+                return;
+            }
+
+            if (t != _chaseTarget)
+            {
+                _chaseTarget = t;
+                _chaseStart = Time.time;
+            }
+
+            _lastChaseTime = Time.time;
 
             Vector2 approach = offset / dist;
             Vector2 goal = there - approach * stopDist;
@@ -1194,6 +1240,44 @@ namespace Code.BT
             return desired;
         }
 
+        /// <summary>
+        /// 물러나는 한 걸음. 곧장 물러나는 길이 벽·기둥에 막혀 거의 못 가면, 한쪽 벽을 따라 미끄러지고 그 방향을
+        /// <see cref="CombatMoveRules.KiteSlideHoldSeconds"/> 동안 유지한다. 예전에는 막힐 때마다 미끄러지는 쪽이 프레임마다 바뀌어
+        /// 벽 앞에서 떨었다(실측: 남은 모험가 이동 떨림의 89%가 후열이 물러나는 중).
+        /// </summary>
+        private Vector3 KiteStep(Vector2 self, Vector2 target, float step)
+        {
+            Vector2 away = self - target;
+            if (away.sqrMagnitude < 0.0001f) away = Vector2.right;
+            away.Normalize();
+
+            if (Time.time >= _kiteSlideUntil)
+            {
+                var straight = (Vector2)ClampToArena(self + away * step);
+                if (CombatMoveRules.MadeProgress((straight - self).magnitude, step))
+                    return new Vector3(straight.x, straight.y, transform.position.z);
+
+                // 막혔다. 미끄러질 쪽을 한 번 골라 잠깐 유지한다(대상에서 덜 멀어지는 쪽이 아니라 열린 쪽).
+                _kiteSlideSign = PickOpenSlide(self, away, step);
+                _kiteSlideUntil = Time.time + CombatMoveRules.KiteSlideHoldSeconds;
+            }
+
+            var tangent = new Vector2(-away.y, away.x) * _kiteSlideSign;
+            var slid = (Vector2)ClampToArena(self + (tangent * 0.8f + away * 0.2f).normalized * step);
+            return new Vector3(slid.x, slid.y, transform.position.z);
+        }
+
+        private float PickOpenSlide(Vector2 self, Vector2 away, float step)
+        {
+            var tangent = new Vector2(-away.y, away.x);
+            var left = ((Vector2)ClampToArena(self + tangent * step) - self).magnitude;
+            var right = ((Vector2)ClampToArena(self - tangent * step) - self).magnitude;
+            return left >= right ? 1f : -1f;
+        }
+
+        private float _kiteSlideUntil;
+        private float _kiteSlideSign = 1f;
+
         /// <summary>너무 가까우면 물러나며 쏜다(카이팅). 물러났으면 true, 적정/먼 거리면 false(공격·접근에 양보).</summary>
         public bool MaintainRange(float deltaTime)
         {
@@ -1225,7 +1309,7 @@ namespace Code.BT
             // 벽에 막히면 둘레를 따라 도는 카이팅(코너에 안 갇힘).
             // 추격자보다 느리게 물러나야 근접이 거리를 좁힐 수 있다.
             var kiteSpeed = EffectiveMoveSpeed * kiteSpeedMultiplier;
-            transform.position = ClampToArena(RetreatStep(self, target, kiteSpeed * deltaTime));
+            transform.position = KiteStep(self, target, kiteSpeed * deltaTime);
 
             // 사거리 안이면 물러나면서도 계속 사격(kite-shoot).
             if (dist <= attackRange)
@@ -1243,6 +1327,8 @@ namespace Code.BT
             var t = CurrentTarget;
             if (t == null) return;
 
+            // 사거리에 닿았으니 쫓기는 끝났다.
+            _chaseTarget = null;
             Face(t.transform.position.x - transform.position.x);
             if (!combatant.IsAttacking || combatant.Target != t.combatant)
                 combatant.BeginCombat(t.combatant, _ => HandleTargetDefeated(t));
@@ -1274,23 +1360,48 @@ namespace Code.BT
             transform.position = ClampToArena(Vector2.MoveTowards(self, desired, EffectiveMoveSpeed * deltaTime));
         }
 
-        /// <summary>현재 타깃을 같은 전투필드의 다른 생존 적으로 가끔 교체한다. 난전용 보조 동작.</summary>
-        public void SwitchTargetRandomly()
+        /// <summary>
+        /// 같은 대상을 <see cref="CombatMoveRules.ChaseGiveUpSeconds"/> 넘게 쫓았는데 닿지 못했는가(벽 너머·다른 적에 막힘).
+        /// 이때만 대상을 바꾼다. 예전에는 3~6초마다 무작위로 바꿔 싸우다 말고 엉뚱한 쪽으로 돌아섰다.
+        /// </summary>
+        public bool IsChaseStalled =>
+            _chaseTarget != null && _chaseTarget == CurrentTarget
+            && Time.time - _lastChaseTime <= ChaseFreshSeconds
+            && CombatMoveRules.ShouldGiveUpChase(Time.time - _chaseStart);
+
+        private const float ChaseFreshSeconds = 0.25f;
+        private BattleAgent _chaseTarget;
+        private float _chaseStart;
+        private float _lastChaseTime;
+
+        /// <summary>
+        /// 닿지 못하는 대상을 버리고 같은 전투필드에서 가장 가까운 다른 적으로 바꾼다.
+        /// 바꾼 뒤 잠깐(<see cref="CombatMoveRules.SwitchHoldSeconds"/>) 붙잡아 점수 비교로 곧장 되돌아가지 않게 한다.
+        /// </summary>
+        public void SwitchToNearestOtherTarget()
         {
             if (_traversalLocked || _battlefield == null)
                 return;
 
-            var candidates = new List<BattleAgent>();
+            Vector2 pos = transform.position;
+            BattleAgent best = null;
+            var bestDistance = float.MaxValue;
             foreach (var a in _battlefield.Opponents(team))
             {
                 if (!IsValidTarget(a) || a == _target)
                     continue;
 
-                candidates.Add(a);
+                var distance = ((Vector2)a.transform.position - pos).sqrMagnitude;
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    best = a;
+                }
             }
 
-            if (candidates.Count > 0)
-                _target = candidates[Random.Range(0, candidates.Count)];
+            _chaseTarget = null;
+            if (best != null)
+                ForceTarget(best, CombatMoveRules.SwitchHoldSeconds);
         }
 
         /// <summary>공격 루프를 끊지 않고 타깃 주변을 옆으로 돈다. EngageTargetAction의 쿨다운 기동용.</summary>
@@ -1316,7 +1427,7 @@ namespace Code.BT
         }
 
         /// <summary>공격 루프를 끊지 않고 현재 타깃에게서 짧게 물러난다. EngageTargetAction의 쿨다운 기동용.</summary>
-        public void CombatBackStep(float deltaTime)
+        public void CombatBackStep(float deltaTime, float speedShare = 1f)
         {
             if (IsCombatMoveLocked)
                 return;
@@ -1328,7 +1439,23 @@ namespace Code.BT
             Vector2 target = t.transform.position;
 
             Face(target.x - self.x);
-            transform.position = ClampToArena(RetreatStep(self, target, EffectiveMoveSpeed * deltaTime));
+            transform.position = ClampToArena(RetreatStep(self, target, EffectiveMoveSpeed * Mathf.Max(0f, speedShare) * deltaTime));
+        }
+
+        /// <summary>
+        /// 근접이 휘두른 직후 반 걸음 물러난다(<see cref="CombatMoveRules.MeleeRecoveryStepSeconds"/> 동안 느리게).
+        /// 예전에는 회복 구간 내내 최대 속도로 물러나, 싸움의 절반이 뒷걸음질(문워크)로 보였다.
+        /// </summary>
+        public void MeleeRecoveryStep(float deltaTime)
+        {
+            var t = CurrentTarget;
+            if (t == null || !CombatMoveRules.InMeleeRecoveryStep(Time.time - _lastAttackTime))
+                return;
+
+            // 사거리 밖까지 물러나면 곧장 다시 다가가며 앞뒤로 떨었다. 사거리 끝 안쪽에서 멈춘다.
+            var distance = ((Vector2)t.transform.position - (Vector2)transform.position).magnitude;
+            if (CombatMoveRules.KeepsMeleeReach(distance, attackRange))
+                CombatBackStep(deltaTime, CombatMoveRules.MeleeRecoveryStepSpeedShare);
         }
 
         /// <summary>속박을 건다(이동 불가). 탱커 속박 스킬이 적에게 호출.</summary>
@@ -1726,7 +1853,9 @@ namespace Code.BT
         private void Face(float directionX)
         {
             if (body == null || Mathf.Abs(directionX) < 0.001f) return;
-            _render?.FaceTowards(directionX);
+            // 대상이 있으면 보는 쪽은 LateUpdate(UpdateCombatFacing) 한 곳이 정한다. 여기서도 돌리면 둘이 프레임마다 엇갈려 떨었다.
+            if (CurrentTarget == null)
+                _render?.FaceTowards(directionX);
 
             // 연출이 돌고 있지 않을 때만 나머지 자세를 기준으로 돌린다. 스쿼시나 흔들림 중에 끼어들면 연출을 끊어 버린다
             // (실측: 크기 y가 1.088, 회전 z가 -14.63도에서 안 돌아온 적이 있다). 회전 Y는 EntityRender가 다시 얹는다.

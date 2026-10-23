@@ -991,11 +991,14 @@ namespace Code.MapCreateSystem
         public void AssignBuilding(Building building)
         {
             AssignedBuilding = building;
+            // 중앙 시설 그림 위로 걸어 지나가지 않게 그 칸을 막는다(서 있을 자리는 길찾기가 가까운 열린 칸으로 맞춘다).
+            TrapGrid?.SetCentralSlotBlocked(BuildingPlacement.BlocksMovement(building));
         }
 
         public void ClearBuilding()
         {
             AssignedBuilding = null;
+            TrapGrid?.SetCentralSlotBlocked(false);
         }
 
         public bool DamageAssignedBuilding(int damage)

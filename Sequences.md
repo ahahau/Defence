@@ -1,5 +1,14 @@
 # Sequences
 
+- 2026-10-23 · BT 전투 이동 손질(사용자: "bt쪽 더 손봐야할거같아 오브젝트 상관없이 움직이고 이상한곳 보면서 움직이고" → "계획대로 다섯 가지 모두(방향·뒷걸음·대상 바꾸기·겹침·시설 막기), 수정 전후 실측도" → 도중 "얘들이 움직일때 떨어").
+  - 원인(7일차 보스전 60초 실측): 그래프로 움직이는 캐릭터는 겹침 해소가 돌지 않아 서로 통과했다(`ResolveCrowding`이 `autoDrive`만). 근접은 휘두를 때마다 회복 0.3초 내내 최대 속도로 물러났다 다시 붙었고, 원거리는 쏜 직후 좌우를 프레임마다 새로 뽑아 제자리에서 떨었다(모험가 이동 떨림의 91%). 물러나는 길이 막히면 미끄러지는 쪽이 매 프레임 바뀌었다. 대상은 3~6초마다 무작위로 바뀌었다. 시설 그림(중앙 슬롯) 위를 그냥 걸어 지나갔다.
+  - 수정: `CombatMoveRules`(새 규칙)에 수치를 모음. 근접 회복 걸음은 0.15초·속도 35%·사거리 95% 밖으로는 안 물러남(`MeleeRecoveryStep`). 원거리는 쏜 직후 제자리. 물러나다 막히면 열린 쪽 벽을 따라 0.6초 미끄러짐(`KiteStep`). 대상은 3초 넘게 쫓아도 닿지 못할 때만 가장 가까운 다른 적으로 바꾸고 2초 붙잡음(`IsChaseStalled`·`SwitchToNearestOtherTarget`). 겹침 해소는 `LateUpdate`에서 그래프 캐릭터에도 돌림(세기 50%, 상대 편은 반경 50% 안만). 중앙 슬롯 시설(포탈 제외)은 통행을 막음(`NodeTrapGrid.SetCentralSlotBlocked`, `Node.AssignBuilding`/`ClearBuilding`이 켜고 끔). 보는 쪽은 `LateUpdate`(`UpdateCombatFacing`) 한 곳이 정하고 이동 함수의 `Face`는 대상이 있으면 돌리지 않음.
+  - 방향 규칙: 처음에는 "움직이면 가는 쪽, 닿는 거리·물러나며 쏠 때만 대상"으로 바꿨으나, 작업 중 다른 손이 "대상이 있으면 늘 대상을 본다 + 휘두르는 중·움찔 중에는 겹침 해소도 멈춘다"로 정하고 테스트(`BattleAgent_FacesTargetWhileMovingAway`·`BattleAgent_CrowdingRespectsCombatMoveLock`)를 넣었다. 그 결정을 그대로 두었다.
+  - 테스트: `CombatFormulaTests.CombatMove_KeepsRecoveryAndTargetSwitchLimits`·`BattleAgent_FacesTargetWhileMovingAway`·`BattleAgent_CrowdingRespectsCombatMoveLock`(3건), `TrapTileTests.CentralFacility_BlocksWalkingButPortalDoesNot`. 전체 EditMode 410/410.
+  - 실측(판 저장 원복, 같은 조건 7일차 보스전 60초, 1,000표본당, 수정 전은 커밋된 `BattleAgent`·`EngageTargetAction`을 잠깐 되돌려 같은 기록기로 잼): 이동 떨림(가로 방향이 0.15초 안에 뒤집힘) 부하 13.6 → 4.5, 모험가 23.7 → 9.0. 겹침(0.35u 안) 부하 13.6 → 5.6, 모험가 32.3 → 43.8(우리 쪽 첫 수정 직후 15.5였다 — 휘두르는 중·움찔 중 겹침 해소를 멈춘 뒤 보스가 거의 늘 움찔해 늘어난 것으로 보임). 살아 있는 대상을 바꾼 횟수 부하 22 → 2. 시설: 새로 연 중형 방에 상점을 세우고 3일차 영업 60초 — 모험가가 상점 방에 있던 표본 4,798 중 상점 칸 위 0.
+  - 남은 것: "대상을 늘 본다" 규칙 아래에서 모험가가 기둥·시설을 돌아 다가가는 이동의 31%가 대상을 본 채 뒷걸음으로 보인다(3일차). 모험가 겹침 증가. 둘 다 사용자 판단이 필요하다.
+  - 실측 사고: 한 번은 사용자가 플레이 중인 에디터에 7일차 영업을 열어 버렸다(플레이 중인지 확인하지 않음). 사용자가 플레이를 멈춘 뒤 판 저장을 되돌렸고, 이후 실측은 정지 상태를 확인하고 들어갔다.
+
 - 2026-10-22 · 유물 줄(사용자: 유물 줄 목업 → "목업 한거 넣고").
   - 원인: `ArtifactPanelView`(보유 목록·열린 날 판단)만 있고 그리는 화면이 없어, 유물을 사도 무엇을 가졌는지·조합이 맞았는지 볼 곳이 없었다.
   - 화면: `ArtifactRowView`(캔버스 11 — HUD 10 바로 위, 생성기 `ArtifactRowBuilder`). 장부 바로 아래(24, 304) 340×152 패널 = 머리("유물 N"·금색 "조합 N 성립") + 6칸 2줄 고정 12칸(`ArtifactSlotView`, 산 순서, 빈 칸은 어둡게). 성립한 조합에 든 유물은 금색 테두리. 칸에 마우스를 올리면 오른쪽에 설명 카드 340×220(이름·대상·설명·조합 — 성립은 금색 "조합 성립 · 이름 / 짝과 함께", 아직이면 흐리게 "조합 · 짝 필요"). 물약은 줄에 오르지 않는다. 2일차 전에는 줄 전체를 숨기고, 열린 뒤 유물이 없으면 "떠돌이 상인에게서 살 수 있습니다". 값은 `ArtifactRowPresenter`. `ArtifactPanelView.Combos`를 새로 열었다.

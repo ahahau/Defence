@@ -46,6 +46,53 @@ namespace Tests.EditMode.Rules
             return prefab.GetComponent<Trap>();
         }
 
+        /// <summary>
+        /// 방 중앙 시설은 통행을 막는다. 예전에는 상점·여관 그림 위를 부하·모험가가 그냥 걸어 지나갔다.
+        /// 포탈은 모험가가 나오는 자리라 막지 않고, 막힌 중앙으로 향하던 자리는 가까운 열린 칸으로 맞춰진다.
+        /// </summary>
+        [Test]
+        public void CentralFacility_BlocksWalkingButPortalDoesNot()
+        {
+            var grid = NewGrid();
+            var central = new Vector2Int(-1, -1);
+            for (var row = 0; row < grid.Rows && central.x < 0; row++)
+            for (var column = 0; column < grid.Columns; column++)
+            {
+                if (!grid.IsCentralBuildingSlotCell(column, row))
+                    continue;
+                central = new Vector2Int(column, row);
+                break;
+            }
+
+            Assert.That(central.x, Is.GreaterThanOrEqualTo(0), "중앙 슬롯 칸을 찾지 못했습니다.");
+            Assert.That(grid.IsWalkableCell(central.x, central.y), Is.True, "시설이 없으면 중앙도 걷는다.");
+            Assert.That(grid.HasWalkBlockers, Is.False);
+
+            grid.SetCentralSlotBlocked(true);
+            Assert.That(grid.IsWalkableCell(central.x, central.y), Is.False);
+            Assert.That(grid.HasWalkBlockers, Is.True, "막힌 칸이 있으면 전투 이동이 칸 길을 따라 돌아간다.");
+            Assert.That(grid.TryGetNearestWalkableCell(grid.CentralBuildingWorldPosition(), out var stand), Is.True);
+            Assert.That(grid.IsCentralBuildingSlotCell(stand.x, stand.y), Is.False, "서 있을 자리는 시설 밖 열린 칸이다.");
+
+            grid.SetCentralSlotBlocked(false);
+            Assert.That(grid.IsWalkableCell(central.x, central.y), Is.True, "시설을 치우면 다시 걷는다.");
+
+            Building store = null, portal = null;
+            foreach (var guid in AssetDatabase.FindAssets("t:BuildingDataSO"))
+            {
+                var data = AssetDatabase.LoadAssetAtPath<BuildingDataSO>(AssetDatabase.GUIDToAssetPath(guid));
+                if (data == null || data.Prefab == null) continue;
+                if (data.Prefab is Portal) portal = data.Prefab;
+                else if (data.Prefab is Store) store = data.Prefab;
+            }
+
+            Assert.That(store, Is.Not.Null);
+            Assert.That(BuildingPlacement.BlocksMovement(store), Is.True);
+            if (portal != null)
+                Assert.That(BuildingPlacement.BlocksMovement(portal), Is.False, "포탈은 모험가가 나오는 자리다.");
+            Assert.That(BuildingPlacement.BlocksMovement(null), Is.False);
+        }
+
         [Test]
         public void PersistentDamage_IsSplitAcrossTicks()
         {

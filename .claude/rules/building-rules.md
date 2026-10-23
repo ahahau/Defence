@@ -26,6 +26,7 @@ paths:
    * **함정은 팩에 그림이 있는 것만 둔다(2026-10-21 사용자 결정).** 지금 셋: 불 화로(밟기 1×1, 화상, 처음부터)·핏빛 웅덩이(지속 2×2, 출혈, 6일차)·마력 수정(범위 1×1, 취약, 12일차). 그림 없는 함정(가시·올가미·칼날·압쇄 등 10종)은 지웠다. 새 함정은 쓸 애니메이션 그림이 팩에 있을 때만 만든다.
    * 함정은 `TrapBodyBuilder`(메뉴 Tools/Dungeon Keeper/Build Traps)가 만든다: 팩 프레임 그림(`Generated/TrapBody_<프리팹>_<n>.png`), `Trap.prefab` Variant, 데이터, 화상 상태이상, 발동 효과(`TrapEffectBuilder`). 몸체(`Visual`)는 `TrapBodyAnimation`이 8프레임을 게임 시간으로 반복한다. 그림은 바닥 타일과 같은 25.6PPU라 칸 하나 = 32픽셀이고, 모든 프레임을 같은 사각형으로 여백 없이 잘라 기준점을 덮은 칸 가운데에 둔다. 몸체는 1/칸 수로 줄여 설치 때 늘어나도 텍셀 크기 그대로이고, 정렬은 `Trap.BodySortingOrder`(10, 바닥·기둥 타일 위, 캐릭터 20 아래)다. 첫 프레임 = 데이터 `BoardSprite`(설치 카드·미리보기는 프리팹 첫 SpriteRenderer를 쓴다). 바탕 `Trap.prefab`은 설치하지 않는 Variant 원본이고, 닳을 때 몸체만 흔든다(`damageAnimationTarget` = Visual — 비우면 루트를 흔들어 함정이 노드 밖으로 튀었다).
    * 모험가가 머무는 서비스 시설(상점·여관·대장간 계열)은 `CentralOnly = true`, `InstallOnEdge = false`여야 한다.
+   * 중앙 슬롯에 선 건물(포탈 제외, `BuildingPlacement.BlocksMovement`)은 그 칸의 통행을 막는다(`Node.AssignBuilding` → `NodeTrapGrid.SetCentralSlotBlocked`). 길찾기·전투 이동·배회는 그 칸을 돌아가고, 서 있을 자리는 가까운 열린 칸으로 맞춰진다. 예전에는 시설 그림 위를 그냥 걸어 지나갔다.
    * 위 두 항목은 `AssetWiringTests`가 검사한다.
 4. 수익 시설은 번 만큼 닳는다.
    * 머무는 모험가가 `DwellGoldTotal`을 시간에 나눠 내고, 그 수입은 장부(`DwellGoldSource`)에 쌓였다가 정산 때 반영된다.

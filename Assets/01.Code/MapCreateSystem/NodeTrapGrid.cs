@@ -218,9 +218,24 @@ namespace Code.MapCreateSystem
         public bool IsBlockedCell(int column, int row) =>
             IsValidCell(column, row) && _blocked != null && _blocked.Length == CellCount && _blocked[Index(column, row)];
 
-        /// <summary>걸어 지나갈 수 있는 칸인가. 막힌 칸과 서 있는 칸막이 벽은 못 지나간다. 함정·유닛 칸은 지나간다.</summary>
+        /// <summary>
+        /// 걸어 지나갈 수 있는 칸인가. 막힌 칸, 서 있는 칸막이 벽, 시설이 선 중앙 슬롯은 못 지나간다. 함정·유닛 칸은 지나간다.
+        /// </summary>
         public bool IsWalkableCell(int column, int row) =>
-            IsValidCell(column, row) && !IsBlockedCell(column, row) && !IsPartitionCell(column, row);
+            IsValidCell(column, row) && !IsBlockedCell(column, row) && !IsPartitionCell(column, row)
+            && !(_centralSlotBlocked && IsCentralBuildingSlotCell(column, row));
+
+        /// <summary>중앙 슬롯에 시설이 서 있어 통행을 막는가(<see cref="SetCentralSlotBlocked"/>).</summary>
+        private bool _centralSlotBlocked;
+
+        /// <summary>
+        /// 중앙 슬롯 시설이 통행을 막는지 정한다. 방(<see cref="Node"/>)이 시설을 세우거나 치울 때 부른다.
+        /// 예전에는 상점·여관 같은 시설 그림 위를 부하·모험가가 그냥 걸어 지나갔다.
+        /// </summary>
+        public void SetCentralSlotBlocked(bool blocked)
+        {
+            _centralSlotBlocked = blocked;
+        }
 
         /// <summary>서 있는(부서지지 않은) 칸막이 벽이 있는 칸인가.</summary>
         public bool IsPartitionCell(int column, int row)
@@ -256,7 +271,7 @@ namespace Code.MapCreateSystem
                         return true;
                 }
 
-                return false;
+                return _centralSlotBlocked;
             }
         }
 

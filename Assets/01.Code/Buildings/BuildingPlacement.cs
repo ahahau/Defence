@@ -42,6 +42,12 @@ namespace Code.Buildings
             && buildingData.Prefab is not Treasury;
 
         /// <summary>
+        /// 방 중앙 슬롯에 서서 통행을 막는 건물인가. 포탈은 모험가가 나오는 자리라 막지 않는다.
+        /// 금고도 막는다 — 약탈은 방에 들어선 것으로 판정하므로 금고 그림에 닿을 필요가 없다.
+        /// </summary>
+        public static bool BlocksMovement(Building building) => building != null && building is not Portal;
+
+        /// <summary>
         /// 손님이 머무는 시설과 함정이 한 방에 겹치는가. 양쪽에서 다 막아야 순서만 바꿔 둘 다 놓는 길이 없다.
         /// </summary>
         public static bool ViolatesFacilityTrapRule(Node node, BuildingDataSO buildingData)
