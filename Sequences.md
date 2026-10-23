@@ -1,5 +1,10 @@
 # Sequences
 
+- 2026-10-23 · 쫓아갈 때는 가는 쪽 보기(사용자: "대상에게 닿지 않은 채 돌아서 다가갈 때는 가는 쪽을 보게 바꿔줘. 닿는 거리에서는 계속 대상을 보게 두고, 수정 전후 실측도").
+  - 수정: `BattleAgent.MoveToTarget`이 쫓은 프레임을 남기고(`_chasedFrame`), `UpdateCombatFacing`은 그 프레임에 휘두르기 거리 밖·넉백 아님·걷는 중(가로 0.3u/s, 0.12초 평활)이면 가는 쪽을 본다(`CombatMoveRules.FacesTravel`). 돌아선 뒤 0.2초는 다시 돌아서지 않는다(꺾인 길에서 떨지 않게). 물러남·넉백·겹침 해소처럼 쫓는 걸음이 아닌 이동과 닿는 거리에서는 그대로 대상을 본다(기존 테스트 `BattleAgent_FacesTargetWhileMovingAway` 유지).
+  - 테스트: `CombatFormulaTests.BattleAgent_FacesTravelOnlyWhileChasingOutOfReach`(새, 실제 갱신 경로), `CombatMove_KeepsRecoveryAndTargetSwitchLimits`에 규칙 확인 추가. 전체 EditMode 411/411.
+  - 실측(판 저장 원복, 60초, 수정 전은 커밋된 `BattleAgent`를 잠깐 되돌려 같은 기록기로 잼, "쫓는 걸음" = 0.05초 안에 `MoveToTarget`이 돌았고 닿는 거리 밖, 그 이동 중 보는 쪽 반대로 움직인 비율): 3일차·새 중형 방에 상점 — 모험가 607/1,100(55%) → 253/2,161(11.7%), 부하 29/423(6.9%) → 4/323(1.2%). 7일차 보스전(돌아갈 장애물이 적음) — 부하 6.4% → 7.6%, 모험가 5.7% → 6.6%(변화 없음 수준). 빠른 방향 뒤집힘(0.25초 안 두 번) 3일차 모험가 5 → 10, 부하 1 → 2. 상점 칸 위 표본 0(상점 방 3,905 중).
+
 - 2026-10-23 · BT 전투 이동 손질(사용자: "bt쪽 더 손봐야할거같아 오브젝트 상관없이 움직이고 이상한곳 보면서 움직이고" → "계획대로 다섯 가지 모두(방향·뒷걸음·대상 바꾸기·겹침·시설 막기), 수정 전후 실측도" → 도중 "얘들이 움직일때 떨어").
   - 원인(7일차 보스전 60초 실측): 그래프로 움직이는 캐릭터는 겹침 해소가 돌지 않아 서로 통과했다(`ResolveCrowding`이 `autoDrive`만). 근접은 휘두를 때마다 회복 0.3초 내내 최대 속도로 물러났다 다시 붙었고, 원거리는 쏜 직후 좌우를 프레임마다 새로 뽑아 제자리에서 떨었다(모험가 이동 떨림의 91%). 물러나는 길이 막히면 미끄러지는 쪽이 매 프레임 바뀌었다. 대상은 3~6초마다 무작위로 바뀌었다. 시설 그림(중앙 슬롯) 위를 그냥 걸어 지나갔다.
   - 수정: `CombatMoveRules`(새 규칙)에 수치를 모음. 근접 회복 걸음은 0.15초·속도 35%·사거리 95% 밖으로는 안 물러남(`MeleeRecoveryStep`). 원거리는 쏜 직후 제자리. 물러나다 막히면 열린 쪽 벽을 따라 0.6초 미끄러짐(`KiteStep`). 대상은 3초 넘게 쫓아도 닿지 못할 때만 가장 가까운 다른 적으로 바꾸고 2초 붙잡음(`IsChaseStalled`·`SwitchToNearestOtherTarget`). 겹침 해소는 `LateUpdate`에서 그래프 캐릭터에도 돌림(세기 50%, 상대 편은 반경 50% 안만). 중앙 슬롯 시설(포탈 제외)은 통행을 막음(`NodeTrapGrid.SetCentralSlotBlocked`, `Node.AssignBuilding`/`ClearBuilding`이 켜고 끔). 보는 쪽은 `LateUpdate`(`UpdateCombatFacing`) 한 곳이 정하고 이동 함수의 `Face`는 대상이 있으면 돌리지 않음.

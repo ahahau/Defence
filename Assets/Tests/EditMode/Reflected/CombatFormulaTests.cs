@@ -29,8 +29,61 @@ namespace Tests.EditMode.Combat
 
             Assert.That(Code.BT.CombatMoveRules.KeepsMeleeReach(1.1f, 1.3f), Is.True);
             Assert.That(Code.BT.CombatMoveRules.KeepsMeleeReach(1.25f, 1.3f), Is.False, "사거리 끝에서는 더 물러나지 않는다 — 나갔다 다시 붙으며 떨었다.");
+            Assert.That(Code.BT.CombatMoveRules.FacesTravel(true, false, false, true), Is.True, "닿지 않은 채 쫓아 걸으면 가는 쪽.");
+            Assert.That(Code.BT.CombatMoveRules.FacesTravel(false, false, false, true), Is.False, "쫓는 걸음이 아니면(물러남·밀림) 대상.");
+            Assert.That(Code.BT.CombatMoveRules.FacesTravel(true, true, false, true), Is.False, "닿는 거리면 대상.");
+            Assert.That(Code.BT.CombatMoveRules.CanTurn(0.1f), Is.False, "돌아선 직후 다시 돌아서지 않는다.");
+
             Assert.That(Code.BT.CombatMoveRules.ShouldGiveUpChase(2.9f), Is.False);
             Assert.That(Code.BT.CombatMoveRules.ShouldGiveUpChase(3f), Is.True, "3초 넘게 닿지 못하면 다른 상대로 바꾼다.");
+        }
+
+        /// <summary>
+        /// 닿지 않은 채 대상을 쫓아 기둥·시설을 돌아갈 때는 가는 쪽을 본다. 예전에는 대상을 본 채 뒷걸음으로 돌아갔다
+        /// (3일차 모험가 다가가기 이동의 31%). 닿는 거리와 넉백 중에는 그대로 대상을 본다.
+        /// </summary>
+        [Test]
+        public void BattleAgent_FacesTravelOnlyWhileChasingOutOfReach()
+        {
+            GameObject root = new GameObject("CombatTravelFacingTest");
+            try
+            {
+                root.AddComponent<BoxCollider2D>();
+                NodeBattlefield battlefield = root.AddComponent<NodeBattlefield>();
+                BattleAgent agent = CreateAgent(root.transform, battlefield, Vector3.zero);
+                BattleAgent target = CreateAgent(root.transform, battlefield, Vector3.right * 8f);
+                SetField(target, "team", BattleTeam.Player);
+                SetField(agent, "_target", target);
+                GameObject visual = new GameObject("Visual");
+                visual.transform.SetParent(agent.transform);
+                EntityRender render = visual.AddComponent<EntityRender>();
+                SetField(agent, "_render", render);
+                render.FaceTowards(1f);
+
+                // 멀리 있는 대상을 쫓는데 길이 왼쪽으로 꺾였다 → 가는 쪽(왼쪽).
+                SetField(agent, "_chasedFrame", Time.frameCount);
+                agent.transform.position = Vector3.left;
+                InvokeAgent(agent, "UpdateCombatFacing", 0.1f);
+                Assert.That(render.FacingX, Is.Negative, "닿지 않은 채 돌아가는 동안은 가는 쪽을 봐야 합니다.");
+
+                // 맞고 밀리는 중이면 쫓는 걸음이어도 대상을 본다.
+                SetField(agent, "_recoilTimeLeft", 0.05f);
+                agent.transform.position = Vector3.left * 2f;
+                InvokeAgent(agent, "UpdateCombatFacing", 0.1f);
+                Assert.That(render.FacingX, Is.Positive, "밀리는 중에는 대상을 봐야 합니다.");
+                SetField(agent, "_recoilTimeLeft", 0f);
+
+                // 닿는 거리에서는 쫓는 걸음이어도 대상을 본다.
+                render.FaceTowards(-1f);
+                agent.transform.position += Vector3.left;
+                target.transform.position = agent.transform.position + Vector3.right * 1f;
+                InvokeAgent(agent, "UpdateCombatFacing", 0.1f);
+                Assert.That(render.FacingX, Is.Positive, "닿는 거리에서는 대상을 봐야 합니다.");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+            }
         }
 
         /// <summary>대상을 가진 채 반대쪽으로 이동해도 등을 돌리지 않아야 한다. 실제 방향 갱신 경로를 검사한다.</summary>

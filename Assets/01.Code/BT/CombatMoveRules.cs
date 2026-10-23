@@ -27,6 +27,32 @@ namespace Code.BT
         /// <summary>상대 편과는 이 비율의 거리 안으로 겹칠 때만 민다. 근접 정지 거리보다 넓게 밀면 다가가기와 싸웠다.</summary>
         public const float OpponentSeparationShare = 0.5f;
 
+        /// <summary>가로로 이보다 빨리(초당 유닛) 움직이면 "걷는 중"으로 본다. 밀어내기·떨림은 넘지 않는다.</summary>
+        public const float FacingMoveSpeed = 0.3f;
+
+        /// <summary>걷는 쪽을 이 시간(초)에 걸쳐 고르게 본다. 한 프레임 이동으로 정하면 길이 꺾일 때마다 떨렸다.</summary>
+        public const float FacingSmoothingSeconds = 0.12f;
+
+        /// <summary>걷는 쪽으로 돌아선 뒤 이 시간(초) 안에는 다시 돌아서지 않는다.</summary>
+        public const float FacingHoldSeconds = 0.2f;
+
+        /// <summary>
+        /// 대상 대신 가는 쪽을 볼지. 닿지 않은 채 대상을 쫓아 걷는 중일 때만 가는 쪽을 본다.
+        /// 닿는 거리·맞고 밀리는 중·쫓는 걸음이 아닌 이동(물러남·겹침 해소)은 대상을 본다.
+        /// </summary>
+        public static bool FacesTravel(bool chasing, bool inSwingRange, bool recoiling, bool moving) =>
+            chasing && !inSwingRange && !recoiling && moving;
+
+        /// <summary>대상에게 닿는 거리인가(휘두르기 시작 거리와 같다).</summary>
+        public static bool InSwingRange(float distance, float attackRange) => Code.Combat.CombatTimingRules.InSwingRange(distance, attackRange);
+
+        /// <summary>마지막으로 돌아선 지 충분히 지났는가.</summary>
+        public static bool CanTurn(float secondsSinceTurn) => secondsSinceTurn >= FacingHoldSeconds;
+
+        /// <summary>이번 프레임 속도를 섞은 고른 속도(지수 평활).</summary>
+        public static float SmoothVelocity(float smoothed, float current, float deltaTime) =>
+            deltaTime <= 0f ? smoothed : smoothed + (current - smoothed) * (1f - UnityEngine.Mathf.Exp(-deltaTime / FacingSmoothingSeconds));
+
         /// <summary>근접이 휘두른 뒤 아직 물러날 시간인가.</summary>
         public static bool InMeleeRecoveryStep(float secondsSinceAttack) =>
             secondsSinceAttack >= 0f && secondsSinceAttack < MeleeRecoveryStepSeconds;

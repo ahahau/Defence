@@ -296,13 +296,20 @@ namespace Code.BT
         }
 
         /// <summary>
-        /// 대상을 가진 동안은 이동 방향과 관계없이 대상을 본다.
+        /// 대상을 가진 동안은 대상을 본다. 다만 닿지 않은 채 쫓아가는 걸음(<see cref="MoveToTarget"/>)이 기둥·시설을 돌아
+        /// 대상과 다른 쪽으로 향할 때는 가는 쪽을 본다(<see cref="CombatMoveRules.FacesTravel"/>) — 예전에는 대상을 본 채 뒷걸음으로 돌아갔다
+        /// (실측: 3일차 모험가 다가가기 이동의 31%). 물러남·넉백·겹침 해소처럼 쫓는 걸음이 아닌 이동은 계속 대상을 본다.
         /// 거의 겹쳐 선 대상 때문에 방향이 떨리지 않도록 가로 차이가 0.1 이하면 현재 방향을 유지한다.
         /// </summary>
         private void UpdateCombatFacing(float deltaTime)
         {
             if (deltaTime <= 0f)
                 return;
+
+            Vector2 position = transform.position;
+            var motionX = (position.x - _facingLastPosition.x) / deltaTime;
+            _facingLastPosition = position;
+            _smoothedMotionX = CombatMoveRules.SmoothVelocity(_smoothedMotionX, motionX, deltaTime);
 
             BattleAgent target = CurrentTarget;
             if (_render == null)
@@ -312,10 +319,35 @@ namespace Code.BT
             if (target == null)
                 return;
 
-            float directionX = target.transform.position.x - transform.position.x;
+            Vector2 toTarget = (Vector2)target.transform.position - position;
+            var travel = CombatMoveRules.FacesTravel(
+                _chasedFrame == Time.frameCount,
+                CombatMoveRules.InSwingRange(toTarget.magnitude, attackRange),
+                _recoilTimeLeft > 0f,
+                Mathf.Abs(_smoothedMotionX) >= CombatMoveRules.FacingMoveSpeed);
+            if (travel)
+            {
+                // 돌아가는 길이 잠깐씩 꺾일 때마다 돌아서면 떨려 보인다. 돌아선 뒤 잠깐은 그대로 둔다.
+                if (Mathf.Sign(_smoothedMotionX) != Mathf.Sign(_render.FacingX) && CombatMoveRules.CanTurn(Time.time - _lastTravelTurnTime))
+                {
+                    _lastTravelTurnTime = Time.time;
+                    _render.FaceTowards(_smoothedMotionX);
+                }
+
+                return;
+            }
+
+            float directionX = toTarget.x;
             if (Mathf.Abs(directionX) > 0.1f)
                 _render.FaceTowards(directionX);
         }
+
+        private Vector2 _facingLastPosition;
+        private float _smoothedMotionX;
+        private float _lastTravelTurnTime = -999f;
+
+        /// <summary>이번 프레임에 대상을 쫓아 걸었는가(<see cref="MoveToTarget"/>가 기록).</summary>
+        private int _chasedFrame = -1;
 
         /// <summary>
         /// 적이 없는 노드에서 플레이어 유닛을 천천히 배회시킨다.
@@ -1041,6 +1073,7 @@ namespace Code.BT
             _hasArena = true;
             _hasWanderDestination = false;
             _nextWanderTime = Time.time + Random.Range(0.2f, 1f);
+            _facingLastPosition = transform.position;
         }
 
         public void ClearArena(NodeBattlefield battlefield)
@@ -1179,6 +1212,7 @@ namespace Code.BT
             }
 
             _lastChaseTime = Time.time;
+            _chasedFrame = Time.frameCount;
 
             Vector2 approach = offset / dist;
             Vector2 goal = there - approach * stopDist;
