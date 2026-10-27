@@ -7,6 +7,11 @@ namespace Code.Buildings
     public class BuildingDataSO : EntityDataSO
     {
         [field: SerializeField] public string DisplayName { get; private set; }
+        [SerializeField, TextArea(1, 2), Tooltip("설치 상세에 표시할 효과와 대가. 비우면 기존 자동 설명을 사용한다.")]
+        private string description;
+
+        public string Description => description;
+
         [field: SerializeField] public int Cost { get; private set; }
         [field: SerializeField, Min(0), Tooltip("매일 정산에서 지불하는 시설 운영비. 0이면 운영비와 인접 수익 보너스가 없는 시설이다.")]
         public int DailyUpkeep { get; private set; }

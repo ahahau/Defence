@@ -68,6 +68,8 @@ namespace Code.UI
             var effect = buildingData.DwellSeconds > 0f
                 ? $"모험가가 {buildingData.DwellSeconds:0.#}초 머물며 돈을 씁니다 · 이 방에는 유닛을 못 세웁니다"
                 : $"등급 무게 {buildingData.GradeWeight}";
+            if (!string.IsNullOrWhiteSpace(buildingData.Description))
+                effect = buildingData.Description;
             if (buildingData.DailyUpkeep > 0)
                 effect += "\n이웃한 수익 시설이 있으면 수입 최대 +40%";
             return buildingData.Prefab.IsDestructible

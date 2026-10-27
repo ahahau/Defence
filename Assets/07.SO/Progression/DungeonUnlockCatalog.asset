@@ -169,3 +169,15 @@ MonoBehaviour:
     unlockDay: 12
     unlockHint: "12\uC77C\uCC28 \xB7 \uB9C8\uB825\uC774 \uB9FA\uD78C \uC218\uC815\uC744 \uBC14\uB2E5\uC5D0 \uBC15\uB294\uB2E4"
     metaProgressRequired: 0
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: 429f2c0bf64f36244adc820a697103c6, type: 2}
+    startsUnlocked: 0
+    unlockDay: 5
+    unlockHint: "5\uC77C\uCC28 \xB7 \uAE30\uBCF8 \uC218\uC785 8G \xB7 \uCCB4\uB958 2\uCD08 \xB7 \uBAA8\uD5D8\uAC00 HP +1"
+    metaProgressRequired: 0
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: 581372cc13490ef4ea2c828036f65c1c, type: 2}
+    startsUnlocked: 0
+    unlockDay: 10
+    unlockHint: "10\uC77C\uCC28 \xB7 \uAE30\uBCF8 \uC218\uC785 24G \xB7 \uCCB4\uB958 4\uCD08 \xB7 \uBAA8\uD5D8\uAC00 \uBC29\uC5B4 +4"
+    metaProgressRequired: 0

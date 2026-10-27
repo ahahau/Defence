@@ -1299,6 +1299,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 0496bb0f6fdb6714fbdf30ccc3b14fbb, type: 2}
   - {fileID: 11400000, guid: 896e5a2041d65eb4bbddb0b79647f01d, type: 2}
   - {fileID: 11400000, guid: b051351cda908c748942942f9cef4fc5, type: 2}
+  - {fileID: 11400000, guid: 429f2c0bf64f36244adc820a697103c6, type: 2}
+  - {fileID: 11400000, guid: 581372cc13490ef4ea2c828036f65c1c, type: 2}
   unlockCatalog: {fileID: 11400000, guid: c3ea30d18d72d2442bc1ca2c2e29b502, type: 2}
   alwaysInstallableBuildings:
   - {fileID: 11400000, guid: 9e268c91c1cd76342ab8cdb1943bf6e5, type: 2}
@@ -1310,7 +1312,7 @@ MonoBehaviour:
   centralBuildingSlotFill: 0.92
   hiredUnitRoster: {fileID: 327625556}
   dayManager: {fileID: 1370299049}
-  scope: {fileID: 0}
+  scope: {fileID: 1387293634}
 --- !u!1 &327625554
 GameObject:
   m_ObjectHideFlags: 0
@@ -1355,6 +1357,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f61b6d7a839dcca43bf36c564f73c191, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Manager.HiredUnitRoster
+  scope: {fileID: 1387293634}
   costEventChannel: {fileID: 11400000, guid: 734ca3593b5d2884dae267b0e3e601be, type: 2}
   nodeEventChannel: {fileID: 11400000, guid: f1b1e574478592a46b08a62e4c3db082, type: 2}
   dayEventChannel: {fileID: 11400000, guid: f16b75998f67eed45be9a7061ca817f7, type: 2}
@@ -2026,7 +2029,7 @@ MonoBehaviour:
   maxManaPerDungeonGrade: 3
   manaRegenPerDungeonGrade: 0.1
   scanInterval: 0.5
-  scope: {fileID: 0}
+  scope: {fileID: 1387293634}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -2922,6 +2925,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 330bfcc52a35adf4aa64d59de068d495, type: 2}
   - {fileID: 11400000, guid: 787a7523764b9644b88845c58350f370, type: 2}
   - {fileID: 11400000, guid: 7d44a7892f0e23f4cbd126c35dc31b20, type: 2}
+  - {fileID: 11400000, guid: f412b19c4d50d634193fc0c680c1bf20, type: 2}
+  - {fileID: 11400000, guid: 147e69b2570a13a4caff7c60dbeb6ab7, type: 2}
+  - {fileID: 11400000, guid: d8f333ae7400d5d4c96b9a47987e8787, type: 2}
   scheduledEventIntervalDays: 4
   playScheduledEvents: 1
   useGuidedStartTutorial: 0
@@ -2929,7 +2935,7 @@ MonoBehaviour:
   tutorialSpeakerName: "\uC784\uD504 \uCC38\uBAA8"
   waveView: {fileID: 0}
   managementSettlementManager: {fileID: 0}
-  scope: {fileID: 0}
+  scope: {fileID: 1387293634}
 --- !u!4 &576978050
 Transform:
   m_ObjectHideFlags: 0
@@ -4281,19 +4287,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1734988433591678259, guid: bb1959c1772933a49bed44267ced1fb8, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1734988433591678259, guid: bb1959c1772933a49bed44267ced1fb8, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1734988433591678259, guid: bb1959c1772933a49bed44267ced1fb8, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 648
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1734988433591678259, guid: bb1959c1772933a49bed44267ced1fb8, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 324
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2369127540383600223, guid: bb1959c1772933a49bed44267ced1fb8, type: 3}
       propertyPath: m_fontColor32.rgba
@@ -4311,6 +4317,10 @@ PrefabInstance:
       propertyPath: panel
       value: 
       objectReference: {fileID: 318870722}
+    - target: {fileID: 2609343439819135530, guid: bb1959c1772933a49bed44267ced1fb8, type: 3}
+      propertyPath: scope
+      value: 
+      objectReference: {fileID: 1387293634}
     - target: {fileID: 2609343439819135530, guid: bb1959c1772933a49bed44267ced1fb8, type: 3}
       propertyPath: roster
       value: 
@@ -5266,6 +5276,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Blade.Core.CostManager
   costEventChannel: {fileID: 11400000, guid: 734ca3593b5d2884dae267b0e3e601be, type: 2}
   waveEventChannel: {fileID: 11400000, guid: dd03e0a5a2140e441aba26879f409cee, type: 2}
+  scope: {fileID: 1387293634}
   initialGold: 200
   nextBuildDiscountRate: 0
   weeklyDebtInterest: 0.1
@@ -5291,6 +5302,9 @@ MonoBehaviour:
     minimumPrincipalRate: 0.4
     contractWeeks: 1
   defaultLoanProductId: default
+  ledger:
+    <Gold>k__BackingField: 0
+    <Debt>k__BackingField: 0
 --- !u!4 &1097297362
 Transform:
   m_ObjectHideFlags: 0
@@ -5580,10 +5594,10 @@ MonoBehaviour:
   gameStateEventChannel: {fileID: 11400000, guid: 959e35f08825cd94a8b68a1c032d7836, type: 2}
   costEventChannel: {fileID: 11400000, guid: 734ca3593b5d2884dae267b0e3e601be, type: 2}
   waveManager: {fileID: 0}
-  bossWavePresenter: {fileID: 0}
+  bossWavePresenter: {fileID: 2122532263}
   gameSpeedController: {fileID: 0}
   pauseOnGameOver: 1
-  scope: {fileID: 0}
+  scope: {fileID: 1387293634}
 --- !u!1001 &1194297948
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7088,6 +7102,56 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1387293633
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1387293635}
+  - component: {fileID: 1387293634}
+  m_Layer: 0
+  m_Name: GameScope
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1387293634
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1387293633}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 426832f65f41e1f46a0cb99b2f9f9c61, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Manager.GameScope
+  cost: {fileID: 1097297361}
+  facilityClosure: {fileID: 999626796}
+  unitRevival: {fileID: 518893448}
+  runSummary: {fileID: 1377289278}
+  dungeonGrade: {fileID: 2122532266}
+  moralePolicy: {fileID: 595499110}
+--- !u!4 &1387293635
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1387293633}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1427834116
 GameObject:
   m_ObjectHideFlags: 0
@@ -7661,8 +7725,8 @@ MonoBehaviour:
   stuckReleaseSeconds: 40
   spotlightPadding: 28
   waveView: {fileID: 1613973216}
-  dialogueRunner: {fileID: 0}
-  merchantPanel: {fileID: 0}
+  dialogueRunner: {fileID: 576978049}
+  merchantPanel: {fileID: 426373622}
   roomScreen: {fileID: 886466450}
   spotlightWorldRadius: 2.4
   minStepSeconds: 1.6
@@ -8024,7 +8088,7 @@ MonoBehaviour:
   waveEventChannel: {fileID: 11400000, guid: dd03e0a5a2140e441aba26879f409cee, type: 2}
   dayManager: {fileID: 1370299049}
   waveManager: {fileID: 2122532262}
-  scope: {fileID: 0}
+  scope: {fileID: 1387293634}
   nodeEventChannel: {fileID: 11400000, guid: f1b1e574478592a46b08a62e4c3db082, type: 2}
   gameStateEventChannel: {fileID: 11400000, guid: 959e35f08825cd94a8b68a1c032d7836, type: 2}
   handleStartButtonClick: 1
@@ -8294,7 +8358,7 @@ MonoBehaviour:
   selectedType: 1
   buildGoldCost: 8
   roomConstructionSeconds: 4
-  scope: {fileID: 0}
+  scope: {fileID: 1387293634}
   constructionCancelRefundRate: 0.5
   artifactEventChannel: {fileID: 11400000, guid: cc88dffc4f05ec147bf3370d40b143c7, type: 2}
   costEventChannel: {fileID: 11400000, guid: 734ca3593b5d2884dae267b0e3e601be, type: 2}
@@ -8793,7 +8857,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Persistence.Agents.MoraleSaveAgent
   saveKey: morale.state
-  scope: {fileID: 0}
+  scope: {fileID: 1387293634}
 --- !u!114 &1764202679
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8834,8 +8898,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Persistence.Agents.MerchantSaveAgent
   saveKey: merchant.state
-  merchant: {fileID: 0}
-  artifacts: {fileID: 0}
+  merchant: {fileID: 426373622}
+  artifacts: {fileID: 1658808571}
 --- !u!114 &1764202683
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8900,7 +8964,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Persistence.Agents.MagicSaveAgent
   saveKey: magic.state
-  magicManager: {fileID: 0}
+  magicManager: {fileID: 1097297363}
 --- !u!114 &1764202687
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8914,7 +8978,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Persistence.Agents.ReputationSaveAgent
   saveKey: dungeon.reputation
-  scope: {fileID: 0}
+  scope: {fileID: 1387293634}
 --- !u!1 &1772712445
 GameObject:
   m_ObjectHideFlags: 0
@@ -9723,19 +9787,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4585626299885849687, guid: 363fa9216385a6e4f83245489e6ecd91, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4585626299885849687, guid: 363fa9216385a6e4f83245489e6ecd91, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4585626299885849687, guid: 363fa9216385a6e4f83245489e6ecd91, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 342
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4585626299885849687, guid: 363fa9216385a6e4f83245489e6ecd91, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 171
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4687071144467165825, guid: 363fa9216385a6e4f83245489e6ecd91, type: 3}
       propertyPath: m_fontColor32.rgba
@@ -9857,6 +9921,10 @@ PrefabInstance:
       propertyPath: m_TextStyleHashCode
       value: -1183493901
       objectReference: {fileID: 0}
+    - target: {fileID: 6606951450648169304, guid: 363fa9216385a6e4f83245489e6ecd91, type: 3}
+      propertyPath: scope
+      value: 
+      objectReference: {fileID: 1387293634}
     - target: {fileID: 6606951450648169304, guid: 363fa9216385a6e4f83245489e6ecd91, type: 3}
       propertyPath: settings
       value: 
@@ -10917,8 +10985,8 @@ MonoBehaviour:
   bossAttackMultiplier: 2
   bossVisualScale: 1.6
   bossPresenter: {fileID: 2122532263}
-  gameOverManager: {fileID: 0}
-  scope: {fileID: 0}
+  gameOverManager: {fileID: 1189769716}
+  scope: {fileID: 1387293634}
 --- !u!114 &2122532263
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11018,6 +11086,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83d8bd1767e64b54bb6f5a2d5ce3dd15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Manager.ManagementSettlementManager
+  scope: {fileID: 1387293634}
   dayEventChannel: {fileID: 11400000, guid: f16b75998f67eed45be9a7061ca817f7, type: 2}
   costEventChannel: {fileID: 11400000, guid: 734ca3593b5d2884dae267b0e3e601be, type: 2}
   waveEventChannel: {fileID: 11400000, guid: dd03e0a5a2140e441aba26879f409cee, type: 2}
@@ -11221,6 +11290,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 619308821318538621, guid: c06b9c2ccdce8e948b82e07ebe4c2bac, type: 3}
+      propertyPath: backgroundRenderer
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 867073358481535285, guid: c06b9c2ccdce8e948b82e07ebe4c2bac, type: 3}
       propertyPath: m_Name
       value: BG
@@ -11253,3 +11326,4 @@ SceneRoots:
   - {fileID: 2013030322}
   - {fileID: 1764202685}
   - {fileID: 1524212266}
+  - {fileID: 1387293635}
