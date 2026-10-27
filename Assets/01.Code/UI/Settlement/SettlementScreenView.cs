@@ -35,10 +35,10 @@ namespace Code.UI
         private Vector2 _cardRestPosition;
         private float _entranceStart = -1f;
 
-        private void Awake()
+        private void EnsureRuntimeState()
         {
-            if (card != null)
-                _cardRestPosition = card.anchoredPosition;
+            if (_tabHandlers != null)
+                return;
 
             _tabHandlers = new UnityEngine.Events.UnityAction[tabs != null ? tabs.Length : 0];
             for (var i = 0; i < _tabHandlers.Length; i++)
@@ -48,8 +48,17 @@ namespace Code.UI
             }
         }
 
+        private void Awake()
+        {
+            if (card != null)
+                _cardRestPosition = card.anchoredPosition;
+
+            EnsureRuntimeState();
+        }
+
         private void OnEnable()
         {
+            EnsureRuntimeState();
             if (settlement == null)
                 settlement = ManagementSettlementManager.Current;
 
@@ -74,7 +83,7 @@ namespace Code.UI
 
         private void OnDisable()
         {
-            for (var i = 0; i < _tabHandlers.Length; i++)
+            for (var i = 0; _tabHandlers != null && i < _tabHandlers.Length; i++)
                 tabs[i]?.Button.onClick.RemoveListener(_tabHandlers[i]);
             closeButton?.Button.onClick.RemoveListener(Close);
             if (shop != null)

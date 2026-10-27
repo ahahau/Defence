@@ -63,8 +63,11 @@ namespace Code.UI
             RefreshBorrow(headroom);
         }
 
-        private void Awake()
+        private void EnsureRuntimeState()
         {
+            if (_productHandlers != null)
+                return;
+
             _productHandlers = new UnityEngine.Events.UnityAction[productButtons != null ? productButtons.Length : 0];
             for (var i = 0; i < _productHandlers.Length; i++)
             {
@@ -73,8 +76,14 @@ namespace Code.UI
             }
         }
 
+        private void Awake()
+        {
+            EnsureRuntimeState();
+        }
+
         private void OnEnable()
         {
+            EnsureRuntimeState();
             for (var i = 0; i < _productHandlers.Length; i++)
                 productButtons[i]?.Button.onClick.AddListener(_productHandlers[i]);
             borrowButton?.Button.onClick.AddListener(Borrow);
@@ -88,7 +97,7 @@ namespace Code.UI
 
         private void OnDisable()
         {
-            for (var i = 0; i < _productHandlers.Length; i++)
+            for (var i = 0; _productHandlers != null && i < _productHandlers.Length; i++)
                 productButtons[i]?.Button.onClick.RemoveListener(_productHandlers[i]);
             borrowButton?.Button.onClick.RemoveListener(Borrow);
             borrowSlider?.onValueChanged.RemoveListener(HandleBorrowAmountChanged);

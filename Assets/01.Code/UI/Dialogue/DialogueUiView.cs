@@ -40,8 +40,11 @@ namespace Code.UI
         /// <summary>본문이 아직 흘러나오는 중인가.</summary>
         public bool IsRevealing => body != null && body.maxVisibleCharacters < _totalCharacters;
 
-        private void Awake()
+        private void EnsureRuntimeState()
         {
+            if (_choiceHandlers != null)
+                return;
+
             _choiceHandlers = new UnityEngine.Events.UnityAction[choices != null ? choices.Length : 0];
             for (var i = 0; i < _choiceHandlers.Length; i++)
             {
@@ -50,8 +53,14 @@ namespace Code.UI
             }
         }
 
+        private void Awake()
+        {
+            EnsureRuntimeState();
+        }
+
         private void OnEnable()
         {
+            EnsureRuntimeState();
             if (dialogueView == null)
             {
                 Debug.LogWarning($"{nameof(DialogueUiView)}: dialogueView가 비어 있어 대화를 그리지 않습니다.", this);
@@ -75,7 +84,7 @@ namespace Code.UI
 
             nextButton?.Button.onClick.RemoveListener(HandleNext);
             closeButton?.Button.onClick.RemoveListener(HandleClose);
-            for (var i = 0; i < _choiceHandlers.Length; i++)
+            for (var i = 0; _choiceHandlers != null && i < _choiceHandlers.Length; i++)
                 if (choices[i] != null)
                     choices[i].Frame.Button.onClick.RemoveListener(_choiceHandlers[i]);
 

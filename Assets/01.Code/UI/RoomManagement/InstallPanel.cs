@@ -87,8 +87,11 @@ namespace Code.UI.RoomManagement
             confirmButton.SetInteractable(model.ConfirmEnabled);
         }
 
-        private void Awake()
+        private void EnsureRuntimeState()
         {
+            if (_cardHandlers != null)
+                return;
+
             _cardHandlers = new UnityEngine.Events.UnityAction[cards.Length];
             for (var i = 0; i < _cardHandlers.Length; i++)
             {
@@ -97,8 +100,14 @@ namespace Code.UI.RoomManagement
             }
         }
 
+        private void Awake()
+        {
+            EnsureRuntimeState();
+        }
+
         private void OnEnable()
         {
+            EnsureRuntimeState();
             prevButton.Button.onClick.AddListener(HandlePrev);
             nextButton.Button.onClick.AddListener(HandleNext);
             closeButton.Button.onClick.AddListener(HandleClose);
@@ -113,7 +122,7 @@ namespace Code.UI.RoomManagement
             nextButton.Button.onClick.RemoveListener(HandleNext);
             closeButton.Button.onClick.RemoveListener(HandleClose);
             confirmButton.Button.onClick.RemoveListener(HandleConfirm);
-            for (var i = 0; i < _cardHandlers.Length; i++)
+            for (var i = 0; _cardHandlers != null && i < _cardHandlers.Length; i++)
                 cards[i].Frame.Button.onClick.RemoveListener(_cardHandlers[i]);
         }
 

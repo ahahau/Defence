@@ -94,14 +94,22 @@ namespace Code.UI.RoomManagement
                 && UiScreenRect.TryGet((RectTransform)merchantButton.transform, out rect);
         }
 
-        private void Awake()
+        private void EnsureRuntimeState()
         {
+            if (_kindHandlers != null)
+                return;
+
             _kindHandlers = new UnityEngine.Events.UnityAction[kindButtons.Length];
             for (var i = 0; i < _kindHandlers.Length; i++)
             {
                 var kind = KindOrder[i];
                 _kindHandlers[i] = () => KindRequested?.Invoke(kind);
             }
+        }
+
+        private void Awake()
+        {
+            EnsureRuntimeState();
 
             messageRoot.SetActive(false);
             SetRosterOpen(false);
@@ -109,6 +117,7 @@ namespace Code.UI.RoomManagement
 
         private void OnEnable()
         {
+            EnsureRuntimeState();
             for (var i = 0; i < _kindHandlers.Length; i++)
                 kindButtons[i].Button.onClick.AddListener(_kindHandlers[i]);
             if (recruitButton != null) recruitButton.Button.onClick.AddListener(HandleRecruit);
@@ -119,7 +128,7 @@ namespace Code.UI.RoomManagement
 
         private void OnDisable()
         {
-            for (var i = 0; i < _kindHandlers.Length; i++)
+            for (var i = 0; _kindHandlers != null && i < _kindHandlers.Length; i++)
                 kindButtons[i].Button.onClick.RemoveListener(_kindHandlers[i]);
             if (recruitButton != null) recruitButton.Button.onClick.RemoveListener(HandleRecruit);
             if (merchantButton != null) merchantButton.Button.onClick.RemoveListener(HandleMerchant);

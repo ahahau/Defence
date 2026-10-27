@@ -105,8 +105,11 @@ namespace Code.UI.RoomManagement
             SetText(hint, model.Hint);
         }
 
-        private void Awake()
+        private void EnsureRuntimeState()
         {
+            if (_unitHandlers != null && _commandHandlers != null)
+                return;
+
             _unitHandlers = new UnityEngine.Events.UnityAction[unitRows.Length];
             for (var i = 0; i < _unitHandlers.Length; i++)
             {
@@ -122,8 +125,14 @@ namespace Code.UI.RoomManagement
             }
         }
 
+        private void Awake()
+        {
+            EnsureRuntimeState();
+        }
+
         private void OnEnable()
         {
+            EnsureRuntimeState();
             closeButton.Button.onClick.AddListener(HandleClose);
             repairButton.Button.onClick.AddListener(HandleRepair);
             closureButton.Button.onClick.AddListener(HandleClosure);
@@ -146,9 +155,9 @@ namespace Code.UI.RoomManagement
             deployButton.Button.onClick.RemoveListener(HandleDeploy);
             moveButton.Button.onClick.RemoveListener(HandleMove);
             recallButton.Button.onClick.RemoveListener(HandleRecall);
-            for (var i = 0; i < _unitHandlers.Length; i++)
+            for (var i = 0; _unitHandlers != null && i < _unitHandlers.Length; i++)
                 unitRows[i].Button.onClick.RemoveListener(_unitHandlers[i]);
-            for (var i = 0; i < _commandHandlers.Length; i++)
+            for (var i = 0; _commandHandlers != null && i < _commandHandlers.Length; i++)
                 commandButtons[i].Button.onClick.RemoveListener(_commandHandlers[i]);
         }
 

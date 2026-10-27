@@ -31,10 +31,10 @@ namespace Code.UI
         private bool _wasOpen;
         private UnityEngine.Events.UnityAction[] _cardHandlers;
 
-        private void Awake()
+        private void EnsureRuntimeState()
         {
-            if (merchant == null)
-                merchant = SceneReferenceFallback.Find<MerchantPanelView>(this, nameof(merchant));
+            if (_cardHandlers != null)
+                return;
 
             _cardHandlers = new UnityEngine.Events.UnityAction[cards != null ? cards.Length : 0];
             for (var i = 0; i < _cardHandlers.Length; i++)
@@ -44,8 +44,17 @@ namespace Code.UI
             }
         }
 
+        private void Awake()
+        {
+            if (merchant == null)
+                merchant = SceneReferenceFallback.Find<MerchantPanelView>(this, nameof(merchant));
+
+            EnsureRuntimeState();
+        }
+
         private void OnEnable()
         {
+            EnsureRuntimeState();
             for (var i = 0; i < _cardHandlers.Length; i++)
                 cards[i]?.Frame.Button.onClick.AddListener(_cardHandlers[i]);
             closeButton?.Button.onClick.AddListener(HandleClose);
@@ -57,7 +66,7 @@ namespace Code.UI
 
         private void OnDisable()
         {
-            for (var i = 0; i < _cardHandlers.Length; i++)
+            for (var i = 0; _cardHandlers != null && i < _cardHandlers.Length; i++)
                 cards[i]?.Frame.Button.onClick.RemoveListener(_cardHandlers[i]);
             closeButton?.Button.onClick.RemoveListener(HandleClose);
             buyButton?.Button.onClick.RemoveListener(HandleBuy);

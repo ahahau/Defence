@@ -48,6 +48,19 @@ namespace Code.UI
                    && UiScreenRect.TryGet((RectTransform)cards[index].transform, out rect);
         }
 
+        private void EnsureRuntimeState()
+        {
+            if (_cardHandlers != null)
+                return;
+
+            _cardHandlers = new UnityEngine.Events.UnityAction[cards != null ? cards.Length : 0];
+            for (var i = 0; i < _cardHandlers.Length; i++)
+            {
+                var index = i;
+                _cardHandlers[i] = () => Choose(index);
+            }
+        }
+
         private void Awake()
         {
             if (policies == null)
@@ -57,12 +70,7 @@ namespace Code.UI
             if (speedController == null)
                 speedController = GameSpeedController.Current;
 
-            _cardHandlers = new UnityEngine.Events.UnityAction[cards != null ? cards.Length : 0];
-            for (var i = 0; i < _cardHandlers.Length; i++)
-            {
-                var index = i;
-                _cardHandlers[i] = () => Choose(index);
-            }
+            EnsureRuntimeState();
 
             if (root != null)
                 root.SetActive(false);
@@ -70,6 +78,7 @@ namespace Code.UI
 
         private void OnEnable()
         {
+            EnsureRuntimeState();
             for (var i = 0; i < _cardHandlers.Length; i++)
                 cards[i]?.Choose.Button.onClick.AddListener(_cardHandlers[i]);
             declineButton?.Button.onClick.AddListener(Decline);
@@ -84,7 +93,7 @@ namespace Code.UI
 
         private void OnDisable()
         {
-            for (var i = 0; i < _cardHandlers.Length; i++)
+            for (var i = 0; _cardHandlers != null && i < _cardHandlers.Length; i++)
                 cards[i]?.Choose.Button.onClick.RemoveListener(_cardHandlers[i]);
             declineButton?.Button.onClick.RemoveListener(Decline);
             if (policies != null)

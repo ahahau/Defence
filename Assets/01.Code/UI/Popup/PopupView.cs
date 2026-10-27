@@ -22,8 +22,11 @@ namespace Code.UI.Popup
         private readonly Vector3[] _corners = new Vector3[4];
         private UnityEngine.Events.UnityAction[] _handlers;
 
-        private void Awake()
+        private void EnsureRuntimeState()
         {
+            if (_handlers != null)
+                return;
+
             _handlers = new UnityEngine.Events.UnityAction[buttons != null ? buttons.Length : 0];
             for (var i = 0; i < _handlers.Length; i++)
             {
@@ -32,8 +35,14 @@ namespace Code.UI.Popup
             }
         }
 
+        private void Awake()
+        {
+            EnsureRuntimeState();
+        }
+
         private void OnEnable()
         {
+            EnsureRuntimeState();
             for (var i = 0; i < _handlers.Length; i++)
                 if (buttons[i] != null && buttons[i].Button != null)
                     buttons[i].Button.onClick.AddListener(_handlers[i]);
@@ -45,7 +54,7 @@ namespace Code.UI.Popup
 
         private void OnDisable()
         {
-            for (var i = 0; i < _handlers.Length; i++)
+            for (var i = 0; _handlers != null && i < _handlers.Length; i++)
                 if (buttons[i] != null && buttons[i].Button != null)
                     buttons[i].Button.onClick.RemoveListener(_handlers[i]);
 

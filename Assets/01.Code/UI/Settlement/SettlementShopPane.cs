@@ -75,8 +75,11 @@ namespace Code.UI
                 scroll.verticalNormalizedPosition = 1f;
         }
 
-        private void Awake()
+        private void EnsureRuntimeState()
         {
+            if (_handlers != null)
+                return;
+
             _handlers = new UnityEngine.Events.UnityAction[slots != null ? slots.Length : 0];
             for (var i = 0; i < _handlers.Length; i++)
             {
@@ -85,15 +88,21 @@ namespace Code.UI
             }
         }
 
+        private void Awake()
+        {
+            EnsureRuntimeState();
+        }
+
         private void OnEnable()
         {
+            EnsureRuntimeState();
             for (var i = 0; i < _handlers.Length; i++)
                 slots[i]?.Button.onClick.AddListener(_handlers[i]);
         }
 
         private void OnDisable()
         {
-            for (var i = 0; i < _handlers.Length; i++)
+            for (var i = 0; _handlers != null && i < _handlers.Length; i++)
                 slots[i]?.Button.onClick.RemoveListener(_handlers[i]);
         }
 
