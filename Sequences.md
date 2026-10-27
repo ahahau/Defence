@@ -1,5 +1,13 @@
 # Sequences
 
+- 2026-10-27 · 정산 UI 구조 점검 후 정리(사용자 요청: 구조 문제·갓 오브젝트 확인 후 수정, 오래된 md 갱신).
+  - 점검: `SettlementScreenView`(조립)·`SettlementOverviewPresenter`(값)·`SettlementSummaryPane`(그리기) 역할이 나뉘어 갓 오브젝트는 없음.
+  - 생성기 ESC 배선: `SettingsBuilder.WireEscapeRouter()`(공개, 놓인 설정 화면의 라우터·톱니 배선을 다시 함) 추가, `SettlementBuilder.BuildAll()`이 배치 배선 안에서 부름. 정산 생성기를 돌린 뒤 수동 리플렉션 배선이 필요 없어짐. 상인·고용·상태 창·방 관리 생성기는 같은 문제가 남아 있음(그대로 `SettingsBuilder.BuildAll()`을 뒤에 돌림).
+  - `SettlementChipViewModel`을 `SettlementOverviewViewModel.cs`에서 자기 파일로 분리(한 파일 공개 타입 하나).
+  - `BuildChips`를 위험 자리 → 피로 자리 → 남은 자리에 메모 → 넘치면 "메모 N개 더" 단계로 다시 씀. 결과·순서는 같음 — 기존 칩 테스트에 칩 6개 전체 순서 고정 단언을 더해 확인.
+  - 검증: dotnet build Runtime·Tests 오류 0, Unity 재컴파일 오류 0, `WireEscapeRouter` 실행 뒤 SampleScene dirty=false(배선 그대로), 전체 EditMode 544/544. 생성기 자체는 다시 돌리지 않음(씬·프리팹 변경 없음).
+  - 문서: `ui-rules.md`(정산 줄·ESC 줄), `SettlementLedgerUiDesign.md`(검증·칩 순서·실측 범위) 갱신.
+
 - 2026-10-27 · 정산표 한 화면 장부(A안) 구현(사용자: 목업 A안 승인, 정할 점 셋은 추천대로 — 상세 보기 없앰·유닛 상점 탭 늘 열기·피로 칩 상위 둘 + "외 N명").
   - 새 파일 `SettlementOverviewViewModel`·`SettlementOverviewPresenter`(보고서·운영 자금·빚·청산까지 남은 날 → 띠·장부·칩 6자리·해금 한 줄). `SettlementSummaryPane`을 그리기 전용으로 다시 씀, `SettlementLedgerPane` 삭제, `SettlementScreenView` 탭 5→3·`scope`(GameScope)·`dayManager`·제목줄 `status` 추가, 정산 화면 고용 뒤 남은 자금 다시 그림. `SettlementBuilder` 새 배치(띠 72, 장부 560×440, 칩 6, 맨 아래 해금 줄·오른쪽 아래 정산 완료 240×46). 정산 계산·보고서 형식은 그대로.
   - 목업과 다른 점: "시작 금화" 대신 "낮에 이미 반영" 칸. 보고서의 선지출 몫에 금고로 간 돈도 섞여 있어 시작 금화를 역산하면 틀릴 수 있다.

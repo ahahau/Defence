@@ -25,6 +25,22 @@ public static class SettingsBuilder
         UiSceneInstaller.Place(PrefabPath, typeof(SettingsScreenView), Wire);
     }
 
+    /// <summary>
+    /// 이미 놓인 설정 화면의 ESC 라우터·톱니 배선을 다시 한다. 라우터 목록에 든 창을 다시 놓은 생성기가
+    /// 자기 <c>UiSceneInstaller.Place</c> 배선 안에서 부른다(옛 인스턴스를 가리키던 칸이 비지 않게).
+    /// </summary>
+    public static void WireEscapeRouter()
+    {
+        var settings = Object.FindAnyObjectByType<SettingsScreenView>(FindObjectsInactive.Include);
+        if (settings == null)
+        {
+            Debug.LogWarning($"{nameof(SettingsBuilder)}: 설정 화면이 씬에 없어 ESC 배선을 건너뜁니다. {nameof(BuildAll)}()을 돌리세요.");
+            return;
+        }
+
+        Wire(settings.gameObject);
+    }
+
     private static void Wire(GameObject instance)
     {
         var settings = instance.GetComponent<SettingsScreenView>();

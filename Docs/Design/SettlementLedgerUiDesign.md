@@ -28,5 +28,7 @@
 
 ## 검증
 
-- EditMode: `SettlementRegressionTests.SettlementOverview_*` 3개(장부·띠 값, 청산일·빚 문구, 칩 자리·위험 유지·피로 상위 둘), `AssetWiringTests.SettlementOverview_DrawsLedgerChipsAndFoldsUnlocksForEachReport`(프리팹 배선·칩 빈자리·목록 접힘).
-- 생성기는 SampleScene 인스턴스를 다시 놓으므로, 다음에 `SettingsBuilder`의 ESC 목록 배선을 다시 해야 한다(`SettingsScreen_IsPlacedAndEveryWindowClosesWithEscape`가 잡는다).
+- EditMode: `SettlementRegressionTests.SettlementOverview_*` 3개(장부·띠 값, 청산일·빚 문구, 칩 자리·위험 유지·피로 상위 둘·칩 순서 전체), `AssetWiringTests.SettlementOverview_DrawsLedgerChipsAndFoldsUnlocksForEachReport`(프리팹 배선·칩 빈자리·목록 접힘).
+- 칩 순서: 일반 메모 → 피로 → "메모 N개 더" → 위험.
+- 생성기는 SampleScene 인스턴스를 다시 놓고, 같은 배선 안에서 ESC 라우터도 다시 잇는다(`SettingsBuilder.WireEscapeRouter`, `SettingsScreen_IsPlacedAndEveryWindowClosesWithEscape`가 잡는다).
+- 1280×720 실측(4일차): 띠·장부·칩(위험 칩 빨간 바탕)·목록 펼침·다른 두 탭. 긴 장부 스크롤, 정산 화면 고용 뒤 남은 자금 갱신, 1920×1080은 아직 실측하지 않았다.

@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 /// <summary>
 /// 하루 정산표(uGUI, A안) 프리팹을 만들고 SampleScene에 놓는다. 캔버스 84(대화 80 위, 첫날 안내 덮개 85 아래 — 정산을 읽으라는 안내 카드가 보여야 한다).
-/// Unity CLI: <c>SettlementBuilder.BuildAll()</c>.
+/// Unity CLI: <c>SettlementBuilder.BuildAll()</c>. ESC 라우터 배선도 함께 다시 한다(<c>SettingsBuilder.WireEscapeRouter</c>).
 ///
 /// 덮개 + 카드 1040×740(가운데에서 64 아래, 안내 카드 136~220을 피함): 왼쪽 제목·오른쪽 빚/청산일, 탭 셋(168×38),
 /// 칸 하나(992×534, 오늘 정산·계약/부채·유닛 상점), 오른쪽 아래 "정산 완료" 240×46.
@@ -55,6 +55,9 @@ public static class SettlementBuilder
             UiKit.Wire(shop, "roster", roster);
             UiKit.Wire(shop, "costManager", cost);
             UiKit.Wire(shop, "settlement", settlement);
+
+            // ESC 라우터 목록이 지운 옛 인스턴스를 가리키지 않게 다시 잇는다.
+            SettingsBuilder.WireEscapeRouter();
         });
     }
 

@@ -84,31 +84,19 @@ namespace Code.UI.ViewModels
 
             var fatigue = BuildFatigueChips(report.Fatigue);
 
-            // 칸이 넘치면 일반 메모부터 줄이고, 줄인 수를 칩 하나로 알린다. 위험과 피로는 남긴다.
+            // 1) 위험 자리를 먼저 떼고, 2) 피로 자리를 뗀 나머지에 일반 메모를 채운다.
+            // 3) 메모가 넘치면 한 자리를 "메모 N개 더"로 남긴다. 위험과 피로는 메모 때문에 밀리지 않는다.
             var room = MaxChips - danger.Count;
-            var wanted = notes.Count + fatigue.Count;
-            var keptNotes = notes.Count;
-            var hidden = 0;
-            if (wanted > room)
-            {
-                keptNotes = UnityEngine.Mathf.Max(0, room - 1 - fatigue.Count);
-                hidden = notes.Count - keptNotes;
-            }
+            var notesRoom = room - fatigue.Count;
+            var keptNotes = notes.Count <= notesRoom ? notes.Count : UnityEngine.Mathf.Max(0, notesRoom - 1);
+            var hidden = notes.Count - keptNotes;
+            var fatigueRoom = room - keptNotes - (hidden > 0 ? 1 : 0);
 
-            for (var i = 0; i < keptNotes; i++)
-                chips.Add(notes[i]);
-            foreach (var chip in fatigue)
-            {
-                if (chips.Count < room - (hidden > 0 ? 1 : 0))
-                    chips.Add(chip);
-            }
+            chips.AddRange(notes.GetRange(0, keptNotes));
+            chips.AddRange(fatigue.GetRange(0, UnityEngine.Mathf.Clamp(fatigueRoom, 0, fatigue.Count)));
             if (hidden > 0)
                 chips.Add(new SettlementChipViewModel($"메모 {hidden}개 더", SettlementNoteTone.Neutral));
-            foreach (var chip in danger)
-            {
-                if (chips.Count < MaxChips)
-                    chips.Add(chip);
-            }
+            chips.AddRange(danger.GetRange(0, UnityEngine.Mathf.Min(danger.Count, MaxChips - chips.Count)));
         }
 
         private static List<SettlementChipViewModel> BuildFatigueChips(IReadOnlyList<SettlementFatigueLine> fatigue)

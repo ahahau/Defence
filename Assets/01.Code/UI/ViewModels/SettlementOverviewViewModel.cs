@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Code.Manager;
 
 namespace Code.UI.ViewModels
 {
@@ -25,18 +24,5 @@ namespace Code.UI.ViewModels
         public string UnlockSummary;
         /// <summary>"목록"을 펼치면 보이는 몬스터·시설 해금 전체(리치 텍스트).</summary>
         public string UnlockList;
-    }
-
-    /// <summary>오늘 전과 칩 하나.</summary>
-    public readonly struct SettlementChipViewModel
-    {
-        public SettlementChipViewModel(string text, SettlementNoteTone tone)
-        {
-            Text = text;
-            Tone = tone;
-        }
-
-        public string Text { get; }
-        public SettlementNoteTone Tone { get; }
     }
 }

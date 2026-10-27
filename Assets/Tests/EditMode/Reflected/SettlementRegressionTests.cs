@@ -1149,6 +1149,11 @@ namespace Tests.EditMode.Rules
             Assert.That(texts, Has.Some.Contains("성기사").And.Contains("외 2명"));
             Assert.That(texts, Has.None.Contains("척후병"));
             Assert.That(texts, Has.Some.Contains("개 더"), "잘린 칩 수를 알려야 합니다.");
+            // 칩 고르기를 다시 짤 때 순서·개수가 바뀌지 않게 전체를 고정한다.
+            Assert.That(texts, Is.EqualTo(new[]
+            {
+                "제압 2/3", "목표 달성 · +25G", "피로 · 궁수 탈진 100", "피로 · 성기사 75 외 2명", "메모 3개 더", "7일차 보스 예고"
+            }));
         }
     }
 }
