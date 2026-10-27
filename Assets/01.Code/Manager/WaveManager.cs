@@ -226,7 +226,8 @@ namespace Code.Manager
 
         public void PrepareObjectiveChoices(int day)
         {
-            if (day <= 0 || _objectiveDay == day)
+            // 영업 중에는 오늘 고른 목표로 판정해야 한다. HUD가 영업 시작 때 다음 날 후보를 준비해 덮어썼었다.
+            if (day <= 0 || _objectiveDay == day || _isWaveRunning)
                 return;
 
             _objectiveDay = day;

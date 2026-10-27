@@ -11,6 +11,7 @@ paths:
 ## 하루 사이클
 - `DayManager`는 대기 상태 + 포탈 설치 + `WaveManager` 승인일 때만 웨이브를 시작한다. 포탈이 없으면 조용히 아무것도 안 한다.
 - `_hasPortal`을 켜는 유일한 통로는 `PortalInstalledEvent`다.
+- 웨이브 목표 후보 준비(`WaveManager.PrepareObjectiveChoices`)는 영업 중에 하지 않는다. 영업 중 `NextWaveDay`는 내일이라, HUD 갱신이 고른 목표를 내일 후보로 덮어써 판정이 틀렸었다(`WaveExploitationProgressTests.Objective_KeepsTheChosenGoalWhileTheWaveRuns`).
 - `DayChangedEvent`가 스폰을 일으키고, `WaveEndedEvent`가 대기로 돌리며 한 프레임 뒤 체크포인트 저장을 예약한다.
 - `WaveManager`는 편성·위협 미리보기·보스 단계/증원·목표·보상을 다 가진 가장 민감한 클래스다. 분리하려면 편성 규칙부터 추출하고, 기존 EditMode 테스트를 유지한다.
 - WaveConfig에는 `specificWaves`(1~28일 일차별)와 `bossEntries`(7·14·21·28일) 두 목록이 있다. 보스를 두 번 세지 말고, 배율은 보스 쪽에만 곱한다.

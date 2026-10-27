@@ -1,5 +1,11 @@
 # Sequences
 
+- 2026-10-27 · 영업 중 목표가 다음 날 목표로 바뀌던 버그 수정(사용자 A안 승인: WaveManager에서 막기, 테스트 먼저·실측까지).
+  - 원인: 영업 중 `DayManager.NextWaveDay`는 내일인데, `WaveStartedEvent`를 받은 `WaveView.RefreshStartButton`이 대기 여부를 보지 않고 `PrepareObjectiveChoices(내일)`를 불러 `SelectedObjective`를 내일 첫 후보로 덮어썼다. 매 영업 판정과 영업 중 HUD 진행 줄이 고른 목표가 아니라 내일 목표였다.
+  - 수정: `WaveManager.PrepareObjectiveChoices`가 `_isWaveRunning` 중이면 아무것도 하지 않는다(`SelectObjective`의 기존 영업 중 거절과 같은 방식). `RunWave`의 오늘 준비는 `_isWaveRunning = true` 앞이라 영향 없음. 편성·스폰·보스·정산 순서는 그대로.
+  - 테스트: `WaveExploitationProgressTests.Objective_KeepsTheChosenGoalWhileTheWaveRuns`를 먼저 추가해 수정 전 실패 확인(영업 중 오늘 후보 A가 Annihilation → Exploitation). 1일차 B와 2일차 A가 같은 Exploitation이라 선택값 비교는 우연히 통과했고 후보 비교가 잡았다. 수정 뒤 클래스 8/8, 전체 EditMode 519/519. Runtime·Tests 빌드 오류 0, Unity 재컴파일 오류 0.
+  - 플레이 실측(저장 3파일 백업 뒤, 끝나고 복원·SHA256 일치): 사용자 판 2일차 대기에서 HUD 목표 버튼으로 정밀 타격(둘째 후보)을 고르고 영업 시작 → 영업 중 `objDay=3`·`sel=PrecisionStrike` 유지(다음 날 4), HUD "정밀 타격 0/1". 자연 종료 뒤 정산 "정밀 타격 완료 · 보너스 +25G", 대기로 돌아온 뒤 4일차 후보 준비 정상. 시작 직후 운영 방침 창은 첫 카드로 닫음. 새 콘솔 오류 0, SampleScene dirty=false.
+
 - 2026-10-27 · 보류 기획서 4건 플레이 실측(사용자 요청 A→B→C→D, 문제는 고치지 않고 보고, 밸런스 보류, 하루 3분 상한).
   - 방법: 판 저장 3파일 백업(해시 기록) 뒤 새 판. Unity 창에 OS 포커스가 없어 simulate_pointer 입력이 버려져(`Application.isFocused=False`), uGUI 버튼은 EventSystem 클릭 처리기로, 지도 클릭은 노드 채널 `UnlockedNodeClickedEvent`로 대신했다. 입장·시설 줄은 EditorApplication.update 기록 장치로 게임 시간 기준 기록. 하루 상한을 넘기거나 끝내야 할 때는 남은 모험가에게 검증용 피해 99999(자연 종료 표본 아님). B~D는 처치 수 60으로 등급을 6~8로 맞춘 시험 상태.
   - A 방 관리: 확장 8G(200→192), 대장간 25G 1회 결제, 휴업 → 다시 열기 25G·개장 2일 → 철거 확인 팝업 +12G, 고용 표시값 12G 그대로, 배치 마력 8→7, 명령 대기→경계, 이동(다른 방 고르기), 회수 모두 정상. 경비 방에 대장간 "유닛이 선 방에는 지을 수 없습니다"·금고는 허용. 영업 중 이동·회수 잠김, 정산 장부에 시설 재개장비 25G 기록. 튜토리얼은 씬에서 꺼 둔 상태라 제외.
