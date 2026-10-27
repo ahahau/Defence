@@ -38,6 +38,7 @@ paths:
    * 철거(`FacilityClosureSystem.Demolish`)는 건설비 × 50% × 내구도 비율을 돌려주고, 정리 3초 동안 그 방에 중앙 시설을 못 짓는다.
    * 함정·회복실처럼 `destructible`인 건물은 맞아서 깎이고 0이면 파괴된다. 손님 마모 규칙을 따르지 않는다.
    * 시설은 닫을 수 있다(닫으면 무료, 다시 열 때 `reopenCost`와 `reopenDays`). 닫힌 시설은 벌지도, 운영비를 먹지도 않는다.
+   * 재개장비는 FacilityClosureSystem에서 즉시 결제하고 FacilityReopenScheduledEvent로 정산 장부의 시설 재개장비 행에만 기록한다. 이미 낸 금액이므로 순정산에 다시 넣지 않는다(affectsSettlement=false). 실제 개장 완료 때 재차 비용을 기록하지 않는다. 설계: Docs/Design/FacilityReopenLedgerDesign.md.
    * 소형 방에는 시설(금고 제외 `Category = Building`)을 못 짓는다(`BuildingPlacement.ViolatesRoomSizeRule`). 저장 복원은 이 규칙을 건너뛴다.
    * 수익 시설은 대가로 모험가를 강화한다(Store → 공격력, Inn → 회복, Blacksmith → 공격·방어). 새 수익 시설에도 대가를 정한다.
 5. 함정(`Trap`)은 발동 확률·피해·추가 피해·부상 확률과 상태이상(`StatusEffectDataSO`)으로 정의한다.

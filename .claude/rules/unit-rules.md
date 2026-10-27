@@ -22,6 +22,7 @@ paths:
 3. 데이터는 `Assets/07.SO/Units/<이름>UnitData.asset`(`UnitDataSO`)로 만든다.
    * 필수 값: `Prefab`, `Name`, `Sprite`, `Cost`(고용 금화), `MagicCost`, `BaseDanger`, `DangerIncreaseOnCombat`
    * `Cost`는 정가다. 주간 지원자는 정가에 시세(0.75~1.25, `UnitMarketRules`)를 곱한 값에 고용되고, 하루 유지비는 시세와 무관하게 정가 ÷ `upkeepCostDivisor`(올림·최소 1)다.
+   * 시세 등급(2026-10-26 승인)은 원래 배율이 아니라 실제 표시·결제 정수 금액을 정가와 비교한다. 10% 이상 저렴/비싸면 해당 표시, 무료는 보통이다. UnitMarketRules.Tier(baseCost, actualPrice)로 통일하고 경계 비율 자체는 반올림하지 않는다. 저장된 PriceMultiplier와 가격 계산은 유지한다.
 4. 스탯은 프리팹의 `StatModule` + `StatOverride`가 정답이다.
    * 새 스탯이 필요하면 `StatSO` 에셋을 추가하고 `StatIndex` 상수로 참조한다. 스탯에는 아이콘이 있어야 한다.
    * 캐릭터 프리팹에는 세 포즈(`idleSprite`/`attackSprite`/`defeatedSprite`)가 모두 있어야 한다.

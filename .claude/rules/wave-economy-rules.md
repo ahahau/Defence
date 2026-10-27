@@ -74,3 +74,12 @@ paths:
 - 방을 지으면 새 갈래가 생겨 `LockedNode`가 늘어난다. 열린 방은 이름이 `LockedNode`로 시작하지 않는 노드로 센다.
 - 해금은 `Assets/07.SO/Progression/DungeonUnlockCatalog.asset`의 `unlockDay`로 관리한다.
 - 메타 콘텐츠 해금: 카탈로그 항목의 `metaProgressRequired`(진행도 단계 10·25·50, `MetaUnlockRules.Tiers`)를 채우지 못하면 해금일이 와도 그 판에는 열리지 않는다(`DungeonUnlockEntry.IsUnlockedOn`, 안내 앞에 "진행도 N 필요"). 지금 10: 망령 암살귀·깊은 광산, 25: 해골 주술사·큰 주점·무기 상점, 50: 피 해골 검사(옛 레드 슬라임)·오크 철퇴병(함정은 잠그지 않는다). 처음부터 열린 기본 콘텐츠는 잠그지 않는다. 결과 화면이 이번 판으로 새로 열린 것을, 타이틀이 다음 단계를 보여 준다.
+
+## 노드 선택 (2026-10-26 승인)
+- 모양이 있는 방·확장 후보의 클릭은 Node.ContainsFloorPoint의 실제 바닥 칸을 따른다. 기둥·깎인 모서리·복도 빈 지점은 선택하지 않는다. 건물·칸막이가 설치된 원래 바닥은 관리할 수 있다. 모양 없는 옛 노드만 nodeClickAreaScale 범위를 쓴다. 전투 입장 트리거 크기는 유지한다.
+- 좌우 클릭의 노드 탐색은 같은 후보 해석을 사용한다. 선택 격자는 열린 칸과 닫힌 칸 사이를 연속 외곽으로 그리고 기존 내부 격자·중앙 슬롯 표시는 유지한다.
+
+## 비용·일차 재로드 보존 (2026-10-26)
+- CostManager의 숨긴 ledger(CostLedger)는 Unity 직렬화로 금화·부채를 보존한다. 최초 자금·계약 설정은 Awake에서만 하고 OnEnable에서 장부를 리셋하지 않는다. 0G는 정상 상태다.
+- CostManager·DayManager의 Current는 OnEnable에서도 중복 검증 후 재등록한다. 마지막 청산/계약 처리 일차와 정산 이연·신용·할인 상태는 재활성화로 초기화하지 않는다. 같은 일차의 청산·계약 갱신은 한 번만 적용한다.
+- 재로드 복구 때문에 기존 체크포인트를 다시 읽거나 저장 포맷을 바꾸지 않는다. 회귀는 CreditWarningTests.CostReload_*와 실제 RequestScriptReload 전후 상태 비교다. 다른 매니저의 상태 보존은 별도 검증 대상이다.
