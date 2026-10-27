@@ -866,11 +866,14 @@ namespace Code.MapCreateSystem
         }
 
         /// <summary>클릭 지점이 노드 콜라이더 중심부의 좁힌 영역 안인지. 콜라이더 자체(전투 트리거 공유)는
-        /// 그대로 두고 클릭 판정만 nodeClickAreaScale 비율로 줄인다. 노드는 회전이 없어 AABB로 충분.</summary>
+        /// 그대로 두고 모양이 있는 방은 바닥 칸, 옛 노드는 nodeClickAreaScale 비율로 판정한다.</summary>
         private bool IsWithinClickArea(Collider2D clickedCollider, Vector2 worldPosition)
         {
             if (clickedCollider == null)
                 return false;
+            if ((unlockedNodeByCollider.TryGetValue(clickedCollider, out Node node)
+                || lockedNodeByCollider.TryGetValue(clickedCollider, out node)) && node.Layout != null)
+                return node.ContainsFloorPoint(worldPosition);
             if (nodeClickAreaScale >= 1f)
                 return true;
 
@@ -985,7 +988,7 @@ namespace Code.MapCreateSystem
             if (TryRaiseEntityStatusAt(worldPosition, screenPosition))
                 return;
 
-            var clickedCollider = Physics2D.OverlapPoint(worldPosition, nodeClickMask);
+            var clickedCollider = ResolveNodeClickCollider(worldPosition);
 
             if (clickedCollider == null)
                 return;
@@ -1077,13 +1080,13 @@ namespace Code.MapCreateSystem
 
             foreach (var hit in hits)
             {
-                if (hit != null && unlockedNodeByCollider.ContainsKey(hit))
+                if (hit != null && unlockedNodeByCollider.ContainsKey(hit) && IsWithinClickArea(hit, worldPosition))
                     return hit;
             }
 
             foreach (var hit in hits)
             {
-                if (hit != null && lockedNodeByCollider.ContainsKey(hit))
+                if (hit != null && lockedNodeByCollider.ContainsKey(hit) && IsWithinClickArea(hit, worldPosition))
                     return hit;
             }
 

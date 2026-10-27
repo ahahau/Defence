@@ -41,10 +41,19 @@ namespace Code.Entities
         public float FacingX => _facingLeft ? -1f : 1f;
 
         /// <summary>
-        /// 움직이는 쪽으로 돌아설지. 싸우는 동안은 끈다 — 넉백·뒷걸음으로 뒤로 밀릴 때마다 등을 돌려,
-        /// 실측에서 교전 프레임의 23%가 대상 반대쪽을 봤다. 싸울 때 방향은 전투 쪽이 대상으로 정한다.
+        /// 단독 사용 시 이동 방향을 자동 추적할지. 활성 BattleAgent가 있으면 끄고 이동 종류별 방향 판단을 맡긴다.
+        /// 이동 애니메이션 추적은 계속하며, 방향은 FaceTowards가 적용한다.
         /// </summary>
         public bool FaceMotion { get; set; } = true;
+
+        /// <summary>순간이동·재배치 후 이동을 보행으로 읽지 않도록 기준 위치와 걷기 잔여 시간을 초기화한다.</summary>
+        public void ResetMotionTracking()
+        {
+            if (_motionSource == null)
+                _motionSource = transform.parent != null ? transform.parent : transform;
+            _lastPosition = _motionSource.position;
+            _walkHold = 0f;
+        }
 
         /// <summary>다음에 틀 공격 동작에서 무기가 닿는 때(초). 애니메이션이 없으면 0.</summary>
         public float AttackImpactSeconds => animationSet != null

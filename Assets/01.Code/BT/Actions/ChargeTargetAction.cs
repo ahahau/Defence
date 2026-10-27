@@ -40,8 +40,12 @@ namespace Code.BT
                 return Status.Failure;
 
             var mult = SpeedMultiplier != null ? SpeedMultiplier.Value : 1.8f;
-            // 사거리에 들면 false → 교전(Engage)으로 넘긴다.
-            return _agent.ChargeToTarget(Time.deltaTime, mult) ? Status.Running : Status.Success;
+            if (_agent.TargetInRange())
+                return Status.Success;
+            if (_agent.IsCombatMoveLocked)
+                return Status.Running;
+            _agent.ChargeToTarget(Time.deltaTime, mult);
+            return _agent.TargetInRange() ? Status.Success : Status.Running;
         }
 
         private BattleAgent Resolve() =>

@@ -207,8 +207,12 @@ namespace Code.BT
         /// 전투 중 발이 묶인 때: 순회 잠금·속박, 휘두르는 중(예비 동작), 맞고 움찔하는 중.
         /// 예전에는 공격 대기 시간마다 미끄러지듯 옮겨 다니며 때려, 서서 칼을 맞대는 싸움으로 보이지 않았다.
         /// </summary>
-        private bool IsCombatMoveLocked =>
-            _traversalLocked || IsSnared || (combatant != null && (combatant.IsWindingUp || combatant.IsStaggered));
+        public bool IsCombatMoveLocked =>
+            _traversalLocked || IsSnared || IsCombatActionLocked;
+
+        /// <summary>공격 예비 동작·피격 경직 중에는 BT 단계도 기다린다. 이동만 막는 속박과 구분한다.</summary>
+        public bool IsCombatActionLocked =>
+            combatant != null && (combatant.IsWindingUp || combatant.IsStaggered);
 
         private void Awake()
         {
@@ -264,9 +268,9 @@ namespace Code.BT
         {
             if (!IsAlive) return;
 
-            // 대상이 없으면 그림이 움직이는 쪽을 본다. 대상이 있으면 이 프레임 이동이 끝난 뒤 LateUpdate가 정한다.
+            // 그림의 자동 전환과 경쟁하지 않도록 모든 방향은 이동 후 LateUpdate에서 정한다.
             if (_render != null)
-                _render.FaceMotion = CurrentTarget == null;
+                _render.FaceMotion = false;
 
             TickHitRecoil(Time.deltaTime);
 
@@ -296,58 +300,129 @@ namespace Code.BT
         }
 
         /// <summary>
-        /// 대상을 가진 동안은 대상을 본다. 다만 닿지 않은 채 쫓아가는 걸음(<see cref="MoveToTarget"/>)이 기둥·시설을 돌아
-        /// 대상과 다른 쪽으로 향할 때는 가는 쪽을 본다(<see cref="CombatMoveRules.FacesTravel"/>) — 예전에는 대상을 본 채 뒷걸음으로 돌아갔다
-        /// (실측: 3일차 모험가 다가가기 이동의 31%). 물러남·넉백·겹침 해소처럼 쫓는 걸음이 아닌 이동은 계속 대상을 본다.
-        /// 거의 겹쳐 선 대상 때문에 방향이 떨리지 않도록 가로 차이가 0.1 이하면 현재 방향을 유지한다.
+        /// 자발적 이동은 실제 스텝 방향, 교전·후퇴·넉백은 대상 방향으로 정한다.
+        /// 수직 이동·정지·순간이동은 지난 가로 속도로 돌아서지 않는다.
         /// </summary>
         private void UpdateCombatFacing(float deltaTime)
         {
-            if (deltaTime <= 0f)
-                return;
-
             Vector2 position = transform.position;
-            var motionX = (position.x - _facingLastPosition.x) / deltaTime;
+            Vector2 motion = position - _facingLastPosition;
+            if (_crowdingFrame == Time.frameCount)
+                motion -= _crowdingMotion;
             _facingLastPosition = position;
-            _smoothedMotionX = CombatMoveRules.SmoothVelocity(_smoothedMotionX, motionX, deltaTime);
+            _crowdingFrame = -1;
 
-            BattleAgent target = CurrentTarget;
             if (_render == null)
                 return;
+            _render.FaceMotion = false;
 
-            _render.FaceMotion = target == null;
-            if (target == null)
-                return;
-
-            Vector2 toTarget = (Vector2)target.transform.position - position;
-            var travel = CombatMoveRules.FacesTravel(
-                _chasedFrame == Time.frameCount,
-                CombatMoveRules.InSwingRange(toTarget.magnitude, attackRange),
-                _recoilTimeLeft > 0f,
-                Mathf.Abs(_smoothedMotionX) >= CombatMoveRules.FacingMoveSpeed);
-            if (travel)
+            FacingIntent intent = _facingIntentFrame == Time.frameCount ? _facingIntent : FacingIntent.None;
+            Vector2 step = _facingStep;
+            _facingIntentFrame = -1;
+            if (deltaTime <= 0f || _ignoredFacingFrame == Time.frameCount)
             {
-                // 돌아가는 길이 잠깐씩 꺾일 때마다 돌아서면 떨려 보인다. 돌아선 뒤 잠깐은 그대로 둔다.
-                if (Mathf.Sign(_smoothedMotionX) != Mathf.Sign(_render.FacingX) && CombatMoveRules.CanTurn(Time.time - _lastTravelTurnTime))
-                {
-                    _lastTravelTurnTime = Time.time;
-                    _render.FaceTowards(_smoothedMotionX);
-                }
-
+                _smoothedMotionX = 0f;
                 return;
             }
 
-            float directionX = toTarget.x;
-            if (Mathf.Abs(directionX) > 0.1f)
+            BattleAgent target = CurrentTarget;
+            bool forced = _forcedMotionFrame == Time.frameCount || _recoilTimeLeft > 0f;
+            bool pursuitInReach = intent == FacingIntent.Pursuit && target != null
+                && CombatMoveRules.InSwingRange(Vector2.Distance(position, target.transform.position), attackRange);
+            bool targetFacing = forced || IsCombatActionLocked || intent == FacingIntent.Target || pursuitInReach;
+            if (targetFacing)
+            {
+                _smoothedMotionX = 0f;
+                if (target != null)
+                    FaceCombatTarget(target);
+                return;
+            }
+
+            bool travel = intent == FacingIntent.Travel || intent == FacingIntent.Pursuit;
+            if (!travel && target == null)
+            {
+                // 방 사이 순회는 외부 이동을 읽되 겹침 해소는 보행으로 세지 않는다.
+                step = motion;
+                travel = true;
+            }
+            if (!travel)
+            {
+                _smoothedMotionX = 0f;
+                if (target != null && combatant != null && combatant.Target == target.combatant)
+                    FaceCombatTarget(target);
+                return;
+            }
+
+            float motionX = step.x / deltaTime;
+            if (Mathf.Abs(motionX) < CombatMoveRules.FacingMoveSpeed)
+            {
+                _smoothedMotionX = 0f;
+                return;
+            }
+            _smoothedMotionX = CombatMoveRules.SmoothVelocity(_smoothedMotionX, motionX, deltaTime);
+            // 방향이 꺾인 순간에는 지난 평활값으로 반대쪽을 새로 바라보지 않는다.
+            if (Mathf.Sign(_smoothedMotionX) != Mathf.Sign(motionX))
+                return;
+            if (Mathf.Sign(_smoothedMotionX) != Mathf.Sign(_render.FacingX)
+                && CombatMoveRules.CanTurn(Time.time - _lastTravelTurnTime))
+            {
+                _lastTravelTurnTime = Time.time;
+                _render.FaceTowards(_smoothedMotionX);
+            }
+        }
+
+        private void FaceCombatTarget(BattleAgent target)
+        {
+            float directionX = target.transform.position.x - transform.position.x;
+            if (Mathf.Abs(directionX) > CombatMoveRules.TargetFacingDeadZone)
                 _render.FaceTowards(directionX);
         }
 
+        private enum FacingIntent
+        {
+            None,
+            Travel,
+            Pursuit,
+            Target
+        }
+        private FacingIntent _facingIntent;
+        private int _facingIntentFrame = -1;
+        private Vector2 _facingStep;
+        private int _forcedMotionFrame = -1;
+        private int _ignoredFacingFrame = -1;
+        private int _crowdingFrame = -1;
+        private Vector2 _crowdingMotion;
         private Vector2 _facingLastPosition;
         private float _smoothedMotionX;
         private float _lastTravelTurnTime = -999f;
 
-        /// <summary>이번 프레임에 대상을 쫓아 걸었는가(<see cref="MoveToTarget"/>가 기록).</summary>
-        private int _chasedFrame = -1;
+        private void SetTravelPosition(Vector3 position, bool pursuit)
+        {
+            Vector2 before = transform.position;
+            transform.position = position;
+            FacingIntent intent = pursuit ? FacingIntent.Pursuit : FacingIntent.Travel;
+            if (_facingIntentFrame != Time.frameCount || _facingIntent != intent)
+                _facingStep = Vector2.zero;
+            _facingStep += (Vector2)transform.position - before;
+            _facingIntent = intent;
+            _facingIntentFrame = Time.frameCount;
+        }
+
+        private void ResetFacingMotion(bool ignoreCurrentFrame)
+        {
+            _facingLastPosition = transform.position;
+            _smoothedMotionX = 0f;
+            _facingIntentFrame = -1;
+            _crowdingFrame = -1;
+            _lastTravelTurnTime = float.NegativeInfinity;
+            _forcedMotionFrame = -1;
+            _ignoredFacingFrame = ignoreCurrentFrame ? Time.frameCount : -1;
+            if (_render != null)
+            {
+                _render.FaceMotion = false;
+                _render.ResetMotionTracking();
+            }
+        }
 
         /// <summary>
         /// 적이 없는 노드에서 플레이어 유닛을 천천히 배회시킨다.
@@ -390,7 +465,7 @@ namespace Code.BT
 
             Face(offset.x);
             var speed = EffectiveMoveSpeed * wanderSpeedMultiplier;
-            transform.position = ClampToArena(Vector2.MoveTowards(current, SteerToward(current, _wanderDestination), speed * deltaTime));
+            SetTravelPosition(ClampToArena(Vector2.MoveTowards(current, SteerToward(current, _wanderDestination), speed * deltaTime)), false);
         }
 
         private void DriveAutoBattle(float deltaTime)
@@ -581,7 +656,12 @@ namespace Code.BT
 
             var strength = autoDrive ? separationStrength : separationStrength * CombatMoveRules.GraphSeparationShare;
             var step = Mathf.Min(push.magnitude, strength * deltaTime);
-            transform.position = ClampToArena((Vector2)transform.position + push.normalized * step);
+            Vector2 before = transform.position;
+            transform.position = ClampToArena(before + push.normalized * step);
+            if (_crowdingFrame != Time.frameCount)
+                _crowdingMotion = Vector2.zero;
+            _crowdingMotion += (Vector2)transform.position - before;
+            _crowdingFrame = Time.frameCount;
         }
 
         private void AccumulateSeparation(List<BattleAgent> others, float minDistance, ref Vector2 push)
@@ -680,6 +760,7 @@ namespace Code.BT
 
         private void OnEnable()
         {
+            ResetFacingMotion(false);
             var hp = combatant != null ? combatant.Health : null;
             if (hp != null) hp.Damaged += OnDamaged;
             if (combatant != null) combatant.AttackLanded += OnAttackLanded;
@@ -687,6 +768,8 @@ namespace Code.BT
 
         private void OnDisable()
         {
+            if (_render != null)
+                _render.FaceMotion = true;
             if (_battlefield != null)
                 _battlefield.Leave(this);
             else
@@ -911,6 +994,7 @@ namespace Code.BT
 
             var step = _recoilRemaining * Mathf.Clamp01(deltaTime / _recoilTimeLeft);
             transform.position = ClampToArena(transform.position + (Vector3)step);
+            _forcedMotionFrame = Time.frameCount;
             _recoilRemaining -= step;
             _recoilTimeLeft -= deltaTime;
             if (_recoilTimeLeft <= 0f)
@@ -930,6 +1014,7 @@ namespace Code.BT
 
             var tangent = new Vector2(-away.y, away.x) * (Random.value < 0.5f ? -1f : 1f);
             transform.position = ClampToArena(transform.position + (Vector3)(tangent * dodgeSidestepDistance));
+            _forcedMotionFrame = Time.frameCount;
 
             if (body != null && body != transform)
             {
@@ -965,6 +1050,10 @@ namespace Code.BT
                 ClearTarget();
 
             if (_target != null && Time.time < _forcedTargetUntil)
+                return _target;
+
+            // 새 점수가 높아져도 휘두르기는 마친다. 무효 대상 해제와 명시적 도발은 위에서 처리한다.
+            if (_target != null && combatant != null && combatant.IsWindingUp)
                 return _target;
 
             if (_target != null && ShouldKeepCurrentTarget(priority, focus, pos))
@@ -1054,7 +1143,7 @@ namespace Code.BT
             var woundedScore = (1f - candidate.HealthRatio) * 10f;
             var exposedScore = candidate.IsFrontline ? 0f : 7f;
 
-            return priority switch
+            float score = priority switch
             {
                 TargetPriority.LowestHealth => woundedScore - dist * 0.12f + candidate.ThreatWeight * 0.35f,
                 TargetPriority.Backline => exposedScore + woundedScore * 0.35f - dist * 0.1f,
@@ -1062,6 +1151,14 @@ namespace Code.BT
                 TargetPriority.Focused => (candidate == focus ? 100f : 0f) + woundedScore * 0.4f - dist * 0.1f + candidate.ThreatWeight * 0.5f,
                 _ => -dist + candidate.ThreatWeight + woundedScore * 0.25f
             };
+
+            BattleAgent threatened = candidate.CurrentTarget;
+            if (role == BattleRole.Tank && priority == TargetPriority.Frontline
+                && threatened != null && threatened.Team == team && !threatened.IsFrontline
+                && IsActiveBattlefieldMember(threatened) && !threatened.IsTraversalLocked)
+                score += CombatMoveRules.BacklineThreatPriorityBonus;
+
+            return score;
         }
 
         /// <summary>전투 필드(노드)를 설정한다. 이동이 이 원 안으로만 제한된다.</summary>
@@ -1073,7 +1170,7 @@ namespace Code.BT
             _hasArena = true;
             _hasWanderDestination = false;
             _nextWanderTime = Time.time + Random.Range(0.2f, 1f);
-            _facingLastPosition = transform.position;
+            ResetFacingMotion(false);
         }
 
         public void ClearArena(NodeBattlefield battlefield)
@@ -1212,7 +1309,6 @@ namespace Code.BT
             }
 
             _lastChaseTime = Time.time;
-            _chasedFrame = Time.frameCount;
 
             Vector2 approach = offset / dist;
             Vector2 goal = there - approach * stopDist;
@@ -1225,7 +1321,7 @@ namespace Code.BT
             }
 
             Face(offset.x);
-            transform.position = ClampToArena(Vector2.MoveTowards(here, SteerToward(here, goal), EffectiveMoveSpeed * deltaTime));
+            SetTravelPosition(ClampToArena(Vector2.MoveTowards(here, SteerToward(here, goal), EffectiveMoveSpeed * deltaTime)), true);
         }
 
         private float FlankSide()
@@ -1512,6 +1608,7 @@ namespace Code.BT
             if (dir.sqrMagnitude < 0.0001f) dir = Vector2.right;
 
             transform.position = ClampToArena(self + dir * distance);
+            ResetFacingMotion(true);
         }
 
         /// <summary>지정 타깃으로 사각형 발사체를 쏜다(근접 검기 스킬 등이 비주얼용으로 호출).</summary>
@@ -1520,12 +1617,15 @@ namespace Code.BT
             if (_traversalLocked) return;
 
             transform.position = ClampToArena(new Vector3(position.x, position.y, transform.position.z));
+            ResetFacingMotion(true);
         }
 
         public void FaceTarget(BattleAgent target)
         {
             if (target == null) return;
             Face(target.transform.position.x - transform.position.x);
+            if (_render != null)
+                FaceCombatTarget(target);
         }
 
         public void ApplyCombatStatus(string statusId, float duration, float moveSpeedMultiplier = 1f, float damageTakenMultiplier = 1f)
@@ -1635,6 +1735,57 @@ namespace Code.BT
             return false;
         }
 
+        /// <summary>부상 아군에게 합류하고 치유 범위에서는 적을 쫓지 않는다. 치유는 기존 주기 오라가 담당한다.</summary>
+        public bool SupportWoundedAlly(float deltaTime)
+        {
+            if (role != BattleRole.Support || !IsAlive || _traversalLocked || _battlefield == null
+                || supportHealRange <= 0f || supportHealAmount <= 0)
+                return false;
+
+            BattleAgent wounded = null;
+            float lowestRatio = 1f;
+            float nearestDistance = float.PositiveInfinity;
+            Vector2 self = transform.position;
+            foreach (BattleAgent ally in _battlefield.Allies(team))
+            {
+                if (ally == this || !IsActiveBattlefieldMember(ally) || ally.Team != team
+                    || ally.IsTraversalLocked || ally.HealthRatio >= 1f)
+                    continue;
+
+                float distance = ((Vector2)ally.transform.position - self).sqrMagnitude;
+                if (ally.HealthRatio < lowestRatio || ally.HealthRatio == lowestRatio && distance < nearestDistance)
+                {
+                    wounded = ally;
+                    lowestRatio = ally.HealthRatio;
+                    nearestDistance = distance;
+                }
+            }
+
+            if (wounded == null)
+                return false;
+            if (IsCombatActionLocked)
+                return true;
+
+            Vector2 there = wounded.transform.position;
+            float separation = Vector2.Distance(self, there);
+            if (separation > supportHealRange && !IsCombatMoveLocked)
+            {
+                StopAttack();
+                Vector2 goal = there + (self - there).normalized * (supportHealRange * CombatMoveRules.SupportRegroupReachShare);
+                SetTravelPosition(ClampToArena(Vector2.MoveTowards(self, SteerToward(self, goal), EffectiveMoveSpeed * Mathf.Max(0f, deltaTime))), false);
+            }
+            else if (TargetInRange())
+            {
+                Attack();
+            }
+            else
+            {
+                StopAttack();
+            }
+
+            return true;
+        }
+
         /// <summary>전열(Tank): 적 무리와 아군 후열 사이로 이동해 후열을 가린다. 후열이 없으면 적 쪽으로 전진.</summary>
         public void GuardBackline(float deltaTime)
         {
@@ -1662,9 +1813,22 @@ namespace Code.BT
 
             if (combatant.IsAttacking) combatant.StopCombat();
             Face(enemyCenter.x - self.x);
-            transform.position = ClampToArena(Vector2.MoveTowards(self, guardPoint, EffectiveMoveSpeed * deltaTime));
+            MoveTowardRoomPoint(self, guardPoint, deltaTime);
         }
 
+        private void MoveTowardRoomPoint(Vector2 self, Vector2 goal, float deltaTime)
+        {
+            Code.MapCreateSystem.NodeTrapGrid grid = _battlefield != null ? _battlefield.Grid : null;
+            if (grid != null && !grid.IsWalkableWorld(goal))
+            {
+                if (!grid.TryGetNearestWalkableCell(goal, out Vector2Int cell))
+                    return;
+                goal = grid.CellWorldPosition(cell.x, cell.y);
+            }
+
+            SetTravelPosition(ClampToArena(Vector2.MoveTowards(self, SteerToward(self, goal),
+                EffectiveMoveSpeed * Mathf.Max(0f, deltaTime))), false);
+        }
         private bool TryGetEnemyCentroid(out Vector2 center)
         {
             center = Vector2.zero;
@@ -1755,7 +1919,7 @@ namespace Code.BT
             }
 
             Face(goal.x - self.x);
-            transform.position = ClampToArena(Vector2.MoveTowards(self, goal, EffectiveMoveSpeed * deltaTime));
+            MoveTowardRoomPoint(self, goal, deltaTime);
         }
 
         /// <summary>타깃에게 빠르게 돌진(평소보다 빠른 접근). 사거리 안에 들면 false(=공격 전환), 아직 멀면 true.</summary>
@@ -1776,7 +1940,7 @@ namespace Code.BT
             var speed = EffectiveMoveSpeed * Mathf.Max(1f, speedMultiplier);
             Vector2 goal = there - offset / Mathf.Max(0.0001f, dist) * (attackRange * 0.9f);
             Face(offset.x);
-            transform.position = ClampToArena(Vector2.MoveTowards(self, SteerToward(self, goal), speed * deltaTime));
+            SetTravelPosition(ClampToArena(Vector2.MoveTowards(self, SteerToward(self, goal), speed * deltaTime)), true);
             return true;
         }
 
@@ -1886,10 +2050,14 @@ namespace Code.BT
         /// </summary>
         private void Face(float directionX)
         {
-            if (body == null || Mathf.Abs(directionX) < 0.001f) return;
-            // 대상이 있으면 보는 쪽은 LateUpdate(UpdateCombatFacing) 한 곳이 정한다. 여기서도 돌리면 둘이 프레임마다 엇갈려 떨었다.
-            if (CurrentTarget == null)
-                _render?.FaceTowards(directionX);
+            if (CurrentTarget != null)
+            {
+                _facingIntent = FacingIntent.Target;
+                _facingIntentFrame = Time.frameCount;
+            }
+            if (body == null || body == transform || Mathf.Abs(directionX) < 0.001f) return;
+            // 방향은 LateUpdate의 이동/교전 조건이 결정한다. 여기서는 비주얼 자세만 복원한다.
+
 
             // 연출이 돌고 있지 않을 때만 나머지 자세를 기준으로 돌린다. 스쿼시나 흔들림 중에 끼어들면 연출을 끊어 버린다
             // (실측: 크기 y가 1.088, 회전 z가 -14.63도에서 안 돌아온 적이 있다). 회전 Y는 EntityRender가 다시 얹는다.

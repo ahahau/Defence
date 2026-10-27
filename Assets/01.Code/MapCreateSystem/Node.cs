@@ -486,6 +486,17 @@ namespace Code.MapCreateSystem
             : RoomDoors.Up | RoomDoors.Right | RoomDoors.Down | RoomDoors.Left;
 
         public bool HasDoor(RoomDoors side) => RoomDoorRules.Has(Doors, side);
+        /// <summary>실제 방 바닥 위인가. 설치된 건물은 선택할 수 있고 모서리·기둥·방 밖은 제외한다.</summary>
+        public bool ContainsFloorPoint(Vector2 worldPosition)
+        {
+            if (Layout == null)
+                return false;
+
+            Vector2 local = worldPosition - (Vector2)transform.position;
+            int column = Mathf.FloorToInt(local.x / RoomLayoutRules.CellWorldSize + Layout.Columns * 0.5f);
+            int row = Mathf.FloorToInt(local.y / RoomLayoutRules.CellWorldSize + Layout.Rows * 0.5f);
+            return Layout.IsFloor(column, row);
+        }
 
         /// <summary>복도가 실제로 이어진 문.</summary>
         public RoomDoors ConnectedDoors { get; private set; }

@@ -27,14 +27,17 @@ namespace Code.BT
         protected override Status OnStart()
         {
             _agent = Resolve();
-            if (_agent == null || !_agent.TargetInRange()) return Status.Failure; // 사거리 밖 → 추격으로
+            if (_agent == null || !_agent.IsAlive || _agent.IsTraversalLocked || !_agent.TargetInRange()) return Status.Failure; // 사거리 밖 → 추격으로
             _timer = Duration != null ? Duration.Value : 1.2f;
             return Status.Running;
         }
 
         protected override Status OnUpdate()
         {
-            if (_agent == null || !_agent.TargetInRange()) return Status.Failure;
+            if (_agent == null || !_agent.IsAlive || _agent.IsTraversalLocked || !_agent.TargetInRange()) return Status.Failure;
+
+            if (_agent.IsCombatMoveLocked)
+                return Status.Running;
 
             _timer -= Time.deltaTime;
             _agent.StrafeTarget(Time.deltaTime, Direction != null ? Direction.Value : 1f);

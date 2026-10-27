@@ -38,6 +38,9 @@ namespace Code.BT
             if (_agent == null || !_agent.IsAlive || _agent.IsTraversalLocked)
                 return Status.Failure;
 
+            if (_agent.IsCombatMoveLocked)
+                return Status.Running;
+
             _timer -= Time.deltaTime;
             _agent.GuardBackline(Time.deltaTime);
             return _timer > 0f ? Status.Running : Status.Success;

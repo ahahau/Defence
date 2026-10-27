@@ -7,6 +7,12 @@ namespace Code.BT
     /// </summary>
     public static class CombatMoveRules
     {
+        /// <summary>탱커는 전열 자체보다 후열 아군을 공격 중인 적을 먼저 막는다.</summary>
+        public const float BacklineThreatPriorityBonus = 20f;
+
+        /// <summary>지원이 치유 범위 가장자리에서 오가지 않도록 안쪽까지 합류한다.</summary>
+        public const float SupportRegroupReachShare = 0.9f;
+
         /// <summary>근접이 휘두른 뒤 물러나는 시간(초). 예전에는 회복 구간(0.3초) 내내 최대 속도로 물러났다.</summary>
         public const float MeleeRecoveryStepSeconds = 0.15f;
 
@@ -30,18 +36,14 @@ namespace Code.BT
         /// <summary>가로로 이보다 빨리(초당 유닛) 움직이면 "걷는 중"으로 본다. 밀어내기·떨림은 넘지 않는다.</summary>
         public const float FacingMoveSpeed = 0.3f;
 
+        /// <summary>대상과 거의 겹친 동안은 좌우로 돌아서지 않는다.</summary>
+        public const float TargetFacingDeadZone = 0.1f;
+
         /// <summary>걷는 쪽을 이 시간(초)에 걸쳐 고르게 본다. 한 프레임 이동으로 정하면 길이 꺾일 때마다 떨렸다.</summary>
         public const float FacingSmoothingSeconds = 0.12f;
 
         /// <summary>걷는 쪽으로 돌아선 뒤 이 시간(초) 안에는 다시 돌아서지 않는다.</summary>
         public const float FacingHoldSeconds = 0.2f;
-
-        /// <summary>
-        /// 대상 대신 가는 쪽을 볼지. 닿지 않은 채 대상을 쫓아 걷는 중일 때만 가는 쪽을 본다.
-        /// 닿는 거리·맞고 밀리는 중·쫓는 걸음이 아닌 이동(물러남·겹침 해소)은 대상을 본다.
-        /// </summary>
-        public static bool FacesTravel(bool chasing, bool inSwingRange, bool recoiling, bool moving) =>
-            chasing && !inSwingRange && !recoiling && moving;
 
         /// <summary>대상에게 닿는 거리인가(휘두르기 시작 거리와 같다).</summary>
         public static bool InSwingRange(float distance, float attackRange) => Code.Combat.CombatTimingRules.InSwingRange(distance, attackRange);

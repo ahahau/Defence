@@ -53,7 +53,11 @@ namespace Code.BT.Actions
             if (SwitchOn && priority != TargetPriority.Focused && _agent.IsChaseStalled)
                 _agent.SwitchToNearestOtherTarget();
 
-            if (_agent.FindTarget(priority) == null)
+            BattleAgent target = _agent.FindTarget(priority);
+            if (_agent.SupportWoundedAlly(Time.deltaTime))
+                return Status.Running;
+
+            if (target == null)
                 return Status.Failure; // 적 없음 → 다음 분기(Idle/Traverse)로
 
             _agent.RegisterFocus();

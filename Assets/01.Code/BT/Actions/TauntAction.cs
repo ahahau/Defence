@@ -39,6 +39,9 @@ namespace Code.BT
             if (_agent == null || !_agent.IsAlive || _agent.IsTraversalLocked)
                 return Status.Failure;
 
+            if (_agent.IsCombatActionLocked)
+                return Status.Running;
+
             _agent.TauntNearbyEnemies(Range != null ? Range.Value : 5f);
             _timer -= Time.deltaTime;
             return _timer > 0f ? Status.Running : Status.Success;

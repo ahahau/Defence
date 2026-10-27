@@ -15,6 +15,35 @@ namespace Tests.EditMode.Rules
     {
         private GameObject _host;
 
+        [TestCase(4, 3, true)]
+        [TestCase(2, 2, false)]
+        [TestCase(4, 4, false)]
+        [TestCase(5, 2, false)]
+        public void NodeClick_UsesFloorInsteadOfTriggerBounds(int column, int row, bool expected)
+        {
+            _host = new GameObject("NodeClickTest");
+            _host.SetActive(false);
+            DungeonGraphController controller = _host.AddComponent<DungeonGraphController>();
+            GameObject nodeHost = new GameObject("Room");
+            nodeHost.transform.SetParent(_host.transform);
+            nodeHost.transform.position = new Vector3(50f, -20f, 0f);
+            BoxCollider2D trigger = nodeHost.AddComponent<BoxCollider2D>();
+            trigger.size = Vector2.one * 30f;
+            Node node = nodeHost.AddComponent<Node>();
+            RoomShape shape = new RoomShape("click", RoomSize.Medium, false, RoomDoors.None,
+                new[] { "..###", ".....", "..#..", ".....", "....." });
+            System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            typeof(Node).GetField("<Layout>k__BackingField", flags).SetValue(node, shape);
+            var rooms = (System.Collections.IDictionary)typeof(DungeonGraphController).GetField("unlockedNodeByCollider", flags).GetValue(controller);
+            rooms.Add(trigger, node);
+            typeof(DungeonGraphController).GetField("nodeClickAreaScale", flags).SetValue(controller, 0.1f);
+            Vector2 point = (Vector2)nodeHost.transform.position
+                + new Vector2(column - 2f, row - 2f) * RoomLayoutRules.CellWorldSize;
+            Assert.That(node.ContainsFloorPoint(point), Is.EqualTo(expected));
+            var hit = typeof(DungeonGraphController).GetMethod("IsWithinClickArea", flags);
+            Assert.That(hit, Is.Not.Null);
+            Assert.That((bool)hit.Invoke(controller, new object[] { trigger, point }), Is.EqualTo(expected));
+        }
         [TearDown]
         public void TearDown()
         {

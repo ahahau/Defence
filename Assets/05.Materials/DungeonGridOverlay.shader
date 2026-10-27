@@ -123,16 +123,17 @@ Shader "Unknow/Dungeon Grid Overlay"
                     centerBorderWidth + centerAa,
                     abs(centerSdf))) * hasCenter;
 
-                float2 outerDistance2 = min(uv, 1.0 - uv);
-                float outerDistance = min(outerDistance2.x, outerDistance2.y);
-                float outerWidth = _LineWidth / min(gridSize.x, gridSize.y) * 1.45;
-                float outerBorder = (1.0 - smoothstep(outerWidth, outerWidth + fwidth(outerDistance), outerDistance)) * open;
-
+                // 선택 외곽은 사각 틀이 아니라 실제 열린 칸의 경계를 잇는다.
+                float2 borderAa = max(fwidth(cellEdge) * 1.5, 0.0004);
+                float2 borderLine = 1.0 - smoothstep(_LineWidth * 1.8, _LineWidth * 1.8 + borderAa, cellEdge);
+                float outerBorder = max(
+                    borderLine.x * abs(open - CellOpen(cell + int2(side.x, 0), gridSize)),
+                    borderLine.y * abs(open - CellOpen(cell + int2(0, side.y), gridSize)));
                 float radial = saturate(1.0 - length((uv - 0.5) * 1.25));
                 float emberPulse = 1.0 + sin(_Time.y * 1.15 + (uv.x + uv.y) * 4.0) * _GlowStrength;
                 float cellCore = pow(saturate(1.0 - length((cellUv - 0.5) * 2.0)), 4.0);
 
-                float normalAlpha = (gridLine * lerp(0.56, 1.0, radial) + outerBorder * 0.55)
+                float normalAlpha = (gridLine * lerp(0.56, 1.0, radial) + outerBorder * 1.2)
                                     * _GridColor.a * emberPulse;
                 normalAlpha += cellCore * _GridColor.a * 0.045 * (1.0 - centerInside) * open;
 
