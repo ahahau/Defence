@@ -96,6 +96,542 @@ namespace Tests.EditMode.Rules
             Time.timeScale = previousTimeScale;
         }
 
+        private Code.Manager.GameScope CostScope(int gold, int debt = 0, int warnings = 0)
+        {
+            Code.Manager.GameScope scope = GradeScope((Code.Manager.DungeonGradeManager)Component("Code.Manager.DungeonGradeManager", "Cost grade"));
+            scope.Cost.RestoreCheckpoint(gold, debt, 0f, "default", warnings, 1);
+            return scope;
+        }
+
+        private Code.Manager.ManagementSettlementManager ScopedSettlement(Code.Manager.GameScope scope)
+        {
+            Code.Manager.ManagementSettlementManager manager = (Code.Manager.ManagementSettlementManager)Component("Code.Manager.ManagementSettlementManager", "Scoped cost settlement");
+            Set(manager, "scope", scope);
+            Call(manager, "OnEnable");
+            return manager;
+        }
+
+        /// <summary>잔액이 넉넉한 전역 매니저가 있어도 전달받은 지갑이 비었으면 고용 요청을 보내면 안 된다.</summary>
+        [Test]
+        public void CostScope_HireChecksAssignedWalletAndRebindsOnEnable()
+        {
+            object previousDay = typeof(Code.Manager.DayManager).GetProperty("Current").GetValue(null);
+            Code.Manager.DayManager day = (Code.Manager.DayManager)Component("Code.Manager.DayManager", "Recruitment day");
+            Set(day, "currentDay", 7);
+            typeof(Code.Manager.DayManager).GetProperty("Current").SetValue(null, day);
+            Code.Manager.GameScope poor = CostScope(0);
+            Code.Manager.GameScope rich = CostScope(100);
+            typeof(Code.Manager.CostManager).GetProperty("Current").SetValue(null, rich.Cost);
+            Code.Manager.HiredUnitRoster roster = ScopedRoster(poor);
+            Code.Units.UnitDataSO data = (Code.Units.UnitDataSO)UnitData("Candidate", 10);
+            ((Dictionary<Code.Units.UnitDataSO, int>)typeof(Code.Manager.HiredUnitRoster).GetField("_ownedUnits", PrivateInstance).GetValue(roster)).Add(data, 1);
+            Code.Core.GameEventChannelSO channel = (Code.Core.GameEventChannelSO)typeof(Code.Manager.HiredUnitRoster).GetField("costEventChannel", PrivateInstance).GetValue(roster);
+            int requests = 0;
+            System.Action<Code.Events.RosterHireRequestedEvent> listener = _ => requests++;
+            channel.AddListener(listener);
+            try
+            {
+                Assert.That(roster.TryRequestHire(data), Is.False);
+                Assert.That(requests, Is.Zero);
+                Call(roster, "OnDisable");
+                Set(roster, "scope", rich);
+                Call(roster, "OnEnable");
+                typeof(Code.Manager.CostManager).GetProperty("Current").SetValue(null, poor.Cost);
+                Assert.That(roster.TryRequestHire(data), Is.True);
+                Assert.That(requests, Is.EqualTo(1));
+                Assert.That(poor.Cost.CurrentGold, Is.Zero);
+                Assert.That(rich.Cost.CurrentGold, Is.EqualTo(100), "이 테스트의 채널은 요청만 받으며 결제 매니저는 연결하지 않았다.");
+            }
+            finally
+            {
+                channel.RemoveListener(listener);
+                Call(roster, "OnDisable");
+                typeof(Code.Manager.DayManager).GetProperty("Current").SetValue(null, previousDay);
+            }
+        }
+
+        /// <summary>다른 판의 이연 상태 때문에 같은 수입이 정산에서 두 번 들어오거나 누락되면 안 된다.</summary>
+        [TestCase(false)]
+        [TestCase(true)]
+        public void CostScope_IncomeDeferralAndNetUseAssignedWallet(bool deferred)
+        {
+            Code.Manager.GameScope own = CostScope(100);
+            Code.Manager.GameScope other = CostScope(1000);
+            Set(own.Cost, "_isSettlementDeferred", deferred);
+            Set(other.Cost, "_isSettlementDeferred", !deferred);
+            typeof(Code.Manager.CostManager).GetProperty("Current").SetValue(null, other.Cost);
+            Code.Manager.ManagementSettlementManager manager = ScopedSettlement(own);
+            try
+            {
+                if (!deferred) own.Cost.AddGold(20);
+                Call(manager, "HandleGoldEarned", new Code.Events.GoldEarnedEvent(20));
+                Call(manager, "ApplyNetToGold");
+                Assert.That(own.Cost.CurrentGold, Is.EqualTo(120));
+                Assert.That(other.Cost.CurrentGold, Is.EqualTo(1000));
+                Assert.That(typeof(Code.Manager.ManagementSettlementManager).GetField("_lastSettlementNet", PrivateInstance).GetValue(manager), Is.EqualTo(deferred ? 20 : 0));
+                Code.Manager.SettlementReport report = (Code.Manager.SettlementReport)Call(manager, "BuildReport");
+                Assert.That(report.TotalIncome, Is.EqualTo(20));
+                Call(manager, "ApplyNetToGold");
+                Assert.That(own.Cost.CurrentGold, Is.EqualTo(120), "이미 반영한 장부를 다시 적용해도 금화가 늘지 않는다.");
+            }
+            finally { Call(manager, "OnDisable"); }
+        }
+
+        /// <summary>청산과 상환 안내가 전역 지갑 대신 같은 조립 루트의 빚을 사용해야 한다.</summary>
+        [Test]
+        public void CostScope_WeeklyPaymentAndDebtNoteUseAssignedWallet()
+        {
+            object previousDay = typeof(Code.Manager.DayManager).GetProperty("Current").GetValue(null);
+            Code.Manager.DayManager day = (Code.Manager.DayManager)Component("Code.Manager.DayManager", "Settlement day");
+            Set(day, "currentDay", 7);
+            typeof(Code.Manager.DayManager).GetProperty("Current").SetValue(null, day);
+            Code.Manager.GameScope own = CostScope(200, 100);
+            Code.Manager.GameScope other = CostScope(0, 9000, 4);
+            typeof(Code.Manager.CostManager).GetProperty("Current").SetValue(null, other.Cost);
+            Code.Manager.ManagementSettlementManager manager = ScopedSettlement(own);
+            try
+            {
+                Set(manager, "currentDay", 7);
+                int due = own.Cost.WeeklyDue;
+                Call(manager, "SettleWeekIfDue");
+                Assert.That(own.Cost.CurrentGold, Is.EqualTo(200 - due));
+                Assert.That(own.Cost.CurrentDebt, Is.LessThan(100));
+                Assert.That(other.Cost.CurrentGold, Is.Zero);
+                Assert.That(other.Cost.CurrentDebt, Is.EqualTo(9000));
+                List<Code.Manager.SettlementNote> notes = new();
+                Call(manager, "AppendDebtNote", notes);
+                Assert.That(notes, Has.Some.Matches<Code.Manager.SettlementNote>(note => note.Text.Contains("청산했습니다")));
+                Assert.That(typeof(Code.Manager.ManagementSettlementManager).GetField("_weeklyBankrupt", PrivateInstance).GetValue(manager), Is.False);
+            }
+            finally
+            {
+                Call(manager, "OnDisable");
+                typeof(Code.Manager.DayManager).GetProperty("Current").SetValue(null, previousDay);
+            }
+        }
+
+        /// <summary>한도 긴급 상환과 신용 경고 문구가 별도 판의 상태와 섞이지 않아야 한다.</summary>
+        [Test]
+        public void CostScope_CreditResolutionAndNotesUseAssignedWallet()
+        {
+            Code.Manager.GameScope own = CostScope(20, 120);
+            Set(own.Cost, "weeklyLoanCreditLimit", 100);
+            Code.Manager.GameScope other = CostScope(999, 999, 4);
+            typeof(Code.Manager.CostManager).GetProperty("Current").SetValue(null, other.Cost);
+            Code.Manager.ManagementSettlementManager manager = ScopedSettlement(own);
+            try
+            {
+                Call(manager, "ResolveCreditLimit");
+                Assert.That(own.Cost.CurrentGold, Is.Zero);
+                Assert.That(own.Cost.CurrentDebt, Is.EqualTo(100));
+                Assert.That(own.Cost.CreditWarnings, Is.EqualTo(1));
+                Assert.That(other.Cost.CurrentGold, Is.EqualTo(999));
+                Assert.That(other.Cost.CurrentDebt, Is.EqualTo(999));
+                List<Code.Manager.SettlementNote> notes = new();
+                Call(manager, "AppendCreditNote", notes);
+                Assert.That(notes, Has.Some.Matches<Code.Manager.SettlementNote>(note => note.Text.Contains("신용 경고 1/5")));
+                Assert.That(notes, Has.None.Matches<Code.Manager.SettlementNote>(note => note.Text.Contains("신용 경고 4/5")));
+                Assert.That(typeof(Code.Manager.ManagementSettlementManager).GetField("_lastEmergencyRepaid", PrivateInstance).GetValue(manager), Is.EqualTo(20));
+            }
+            finally { Call(manager, "OnDisable"); }
+        }
+
+        /// <summary>재활성화로 조립 루트가 바뀌면 이후 정산은 새 지갑에만 반영해야 한다.</summary>
+        [Test]
+        public void CostScope_SettlementRebindsOnEnable()
+        {
+            Code.Manager.GameScope first = CostScope(100);
+            Code.Manager.GameScope second = CostScope(1000);
+            Code.Manager.ManagementSettlementManager manager = ScopedSettlement(first);
+            try
+            {
+                Set(manager, "settlementIncome", 5);
+                Call(manager, "ApplyNetToGold");
+                Call(manager, "OnDisable");
+                Set(manager, "scope", second);
+                Call(manager, "OnEnable");
+                Set(manager, "settlementIncome", 2);
+                Call(manager, "ApplyNetToGold");
+                Assert.That(first.Cost.CurrentGold, Is.EqualTo(105));
+                Assert.That(second.Cost.CurrentGold, Is.EqualTo(1002));
+            }
+            finally { Call(manager, "OnDisable"); }
+        }
+
+
+        private Code.Manager.UnitRevivalSystem ScopedRevival(int kills)
+        {
+            Code.Manager.DungeonGradeManager grade = (Code.Manager.DungeonGradeManager)Component("Code.Manager.DungeonGradeManager", "Revival grade");
+            grade.RestoreTotalKills(kills);
+            Code.Manager.UnitRevivalSystem system = (Code.Manager.UnitRevivalSystem)Component("Code.Manager.UnitRevivalSystem", "Scoped revival");
+            Set(system, "scope", GradeScope(grade));
+            Call(system, "Awake");
+            return system;
+        }
+
+        /// <summary>별도 판의 초기화·마력 소모·시작 보정이 기존 판의 마력과 상태 알림을 건드리면 안 된다.</summary>
+        [Test]
+        public void RevivalScope_ManaAndStartBonusesRemainIndependent()
+        {
+            Code.Manager.UnitRevivalSystem first = ScopedRevival(0);
+            Code.Manager.UnitRevivalSystem second = ScopedRevival(20);
+            Assert.That(first.CurrentRevivalMana, Is.EqualTo(30));
+            Assert.That(second.CurrentRevivalMana, Is.EqualTo(36));
+            int firstChanges = 0;
+            int secondChanges = 0;
+            first.StateChanged += () => firstChanges++;
+            second.StateChanged += () => secondChanges++;
+            first.AddMaxManaBonus(10);
+            Assert.That(first.MaxRevivalMana, Is.EqualTo(40));
+            Assert.That(first.CurrentRevivalMana, Is.EqualTo(40));
+            Assert.That(second.MaxRevivalMana, Is.EqualTo(36));
+            Assert.That(secondChanges, Is.Zero);
+            Set(first, "_currentRevivalMana", 0f);
+            Call(first, "RegenerateRevivalMana", 2f);
+            Assert.That(first.CurrentRevivalMana, Is.EqualTo(2));
+            Assert.That(second.CurrentRevivalMana, Is.EqualTo(36));
+            second.AddMaxManaBonus(10);
+            Assert.That(second.MaxRevivalMana, Is.EqualTo(46));
+            Assert.That(first.MaxRevivalMana, Is.EqualTo(40));
+            Assert.That(first.CurrentRevivalMana, Is.EqualTo(2));
+            Assert.That(firstChanges, Is.EqualTo(2));
+            Assert.That(secondChanges, Is.EqualTo(1));
+        }
+
+        /// <summary>마력이 모자란 FIFO 대기와 회복은 해당 인스턴스에만 적용하고 부활 뒤 피로·부상은 남긴다.</summary>
+        [Test]
+        public void RevivalScope_QueuesRemainIndependentAndPreserveFifo()
+        {
+            Code.Manager.UnitRevivalSystem first = ScopedRevival(0);
+            Code.Manager.UnitRevivalSystem second = ScopedRevival(0);
+            Code.Units.Unit head = (Code.Units.Unit)Unit(UnitData("Head", 0), 70f);
+            Code.Units.Unit tail = (Code.Units.Unit)Unit(UnitData("Tail", 0), 60f);
+            Code.Units.Unit other = (Code.Units.Unit)Unit(UnitData("Other", 0), 50f);
+            foreach (Code.Units.Unit unit in new[] { head, tail, other })
+            {
+                Set(unit, "<IsIncapacitated>k__BackingField", true);
+                Set(unit, "injury", Code.Units.InjurySeverity.Severe);
+            }
+            Dictionary<Code.Units.Unit, float> pending = (Dictionary<Code.Units.Unit, float>)typeof(Code.Manager.UnitRevivalSystem).GetField("_pending", PrivateInstance).GetValue(first);
+            List<Code.Units.Unit> order = (List<Code.Units.Unit>)typeof(Code.Manager.UnitRevivalSystem).GetField("_revivalOrder", PrivateInstance).GetValue(first);
+            pending.Add(head, 5f);
+            pending.Add(tail, 0f);
+            order.AddRange(new[] { head, tail });
+            ((Dictionary<Code.Units.Unit, float>)typeof(Code.Manager.UnitRevivalSystem).GetField("_pending", PrivateInstance).GetValue(second)).Add(other, 10f);
+            ((List<Code.Units.Unit>)typeof(Code.Manager.UnitRevivalSystem).GetField("_revivalOrder", PrivateInstance).GetValue(second)).Add(other);
+            Set(first, "_currentRevivalMana", 20f);
+            Call(first, "TickPending", 0f);
+            Assert.That(tail.IsIncapacitated, Is.True, "먼저 준비됐어도 앞사람을 건너뛰지 않는다.");
+            int cost = first.GetRevivalCost(head);
+            Assert.That(cost, Is.EqualTo(15));
+            Call(first, "TickPending", 5f);
+            Assert.That(head.IsIncapacitated, Is.False);
+            Assert.That(head.Fatigue, Is.EqualTo(70f));
+            Assert.That(typeof(Code.Units.Unit).GetField("injury", PrivateInstance).GetValue(head), Is.EqualTo(Code.Units.InjurySeverity.Severe));
+            Assert.That(tail.IsIncapacitated, Is.True);
+            Assert.That(first.PendingUnits, Is.EqualTo(new[] { tail }));
+            Assert.That(first.CurrentRevivalMana, Is.EqualTo(20 - cost));
+            Assert.That(second.GetRemainingSeconds(other), Is.EqualTo(10f));
+            Assert.That(second.CurrentRevivalMana, Is.EqualTo(30));
+            Assert.That(second.PendingUnits, Is.EqualTo(new[] { other }));
+            Call(first, "RegenerateRevivalMana", 10f);
+            Call(first, "TickPending", 0f);
+            Assert.That(tail.IsIncapacitated, Is.False);
+            Assert.That(first.PendingCount, Is.Zero);
+            Assert.That(first.CurrentRevivalMana, Is.Zero);
+            Assert.That(other.IsIncapacitated, Is.True);
+            Assert.That(second.PendingCount, Is.EqualTo(1));
+            Assert.That(second.CurrentRevivalMana, Is.EqualTo(30));
+        }
+
+        /// <summary>주입 경로 이전이 끝난 부활 매니저에 전역 접근자가 다시 생기는 것을 막는다.</summary>
+        [Test]
+        public void RevivalScope_HasNoStaticCurrent()
+        {
+            Assert.That(typeof(Code.Manager.UnitRevivalSystem).GetProperty("Current", BindingFlags.Public | BindingFlags.Static), Is.Null);
+        }
+
+
+        private Code.Manager.GameScope GradeScope(Code.Manager.DungeonGradeManager grade)
+        {
+            Code.Manager.GameScope scope = (Code.Manager.GameScope)Component("Code.Manager.GameScope", "Grade scope");
+            Set(scope, "dungeonGrade", grade);
+            Code.Manager.CostManager cost = (Code.Manager.CostManager)Component("Code.Manager.CostManager", "Scope cost");
+            Set(scope, "cost", cost);
+            Set(scope, "runSummary", Component("Code.Progression.RunSummarySystem", "Scope summary"));
+            Set(cost, "scope", scope);
+            Code.Manager.MoralePolicyManager morale = (Code.Manager.MoralePolicyManager)Component("Code.Manager.MoralePolicyManager", "Neutral morale");
+            morale.RestoreCheckpoint(100, 0, null);
+            Set(scope, "moralePolicy", morale);
+            return scope;
+        }
+
+        private Code.Manager.HiredUnitRoster ScopedRoster(Code.Manager.GameScope scope)
+        {
+            Code.Manager.HiredUnitRoster roster = (Code.Manager.HiredUnitRoster)Component("Code.Manager.HiredUnitRoster", "Scoped roster");
+            Code.Core.GameEventChannelSO channel = ScriptableObject.CreateInstance<Code.Core.GameEventChannelSO>();
+            created.Add(channel);
+            Set(roster, "scope", scope);
+            Set(roster, "costEventChannel", channel);
+            Set(roster, "nodeEventChannel", channel);
+            Set(roster, "dayEventChannel", channel);
+            Set(roster, "unitCatalog", Array.Empty<Code.Units.UnitDataSO>());
+            Call(roster, "OnEnable");
+            return roster;
+        }
+
+        /// <summary>다른 판의 민심이 지원자와 유지비에 섞이거나 재활성화 뒤 옛 참조가 남는 것을 막는다.</summary>
+        [Test]
+        public void MoraleScope_RecruitmentAndUpkeepUseAssignedManager()
+        {
+            Code.Manager.GameScope lowScope = GradeScope((Code.Manager.DungeonGradeManager)Component("Code.Manager.DungeonGradeManager", "Grade low"));
+            Code.Manager.GameScope highScope = GradeScope((Code.Manager.DungeonGradeManager)Component("Code.Manager.DungeonGradeManager", "Grade high"));
+            lowScope.MoralePolicy.RestoreCheckpoint(0, 0, null);
+            Code.Manager.HiredUnitRoster low = ScopedRoster(lowScope);
+            Code.Manager.HiredUnitRoster high = ScopedRoster(highScope);
+            Code.Manager.ManagementSettlementManager settlement = (Code.Manager.ManagementSettlementManager)Component("Code.Manager.ManagementSettlementManager", "Morale settlement");
+            Set(settlement, "scope", lowScope);
+            Code.Units.UnitDataSO data = (Code.Units.UnitDataSO)UnitData("Wages", 50);
+            try
+            {
+                Call(settlement, "OnEnable");
+                int weekly = Code.Manager.UnitMarketRules.WeeklyCandidateCount(2, 0);
+                Assert.That(Call(low, "WeeklyIncomingCount"), Is.EqualTo(lowScope.MoralePolicy.AdjustRecruitCount(weekly)));
+                Assert.That(Call(high, "WeeklyIncomingCount"), Is.EqualTo(weekly));
+                Assert.That(settlement.EstimateUnitUpkeep(data), Is.EqualTo(15));
+                Assert.That((string)Call(settlement, "BuildUpkeepLabel"), Does.Contain("+50%"));
+                Set(low, "scope", highScope);
+                Call(low, "OnDisable");
+                Call(low, "OnEnable");
+                Assert.That(Call(low, "WeeklyIncomingCount"), Is.EqualTo(weekly));
+                Call(settlement, "OnDisable");
+                Set(settlement, "scope", highScope);
+                Call(settlement, "OnEnable");
+                Assert.That(settlement.EstimateUnitUpkeep(data), Is.EqualTo(8));
+                Assert.That((string)Call(settlement, "BuildUpkeepLabel"), Does.Contain("-20%"));
+                lowScope.MoralePolicy.RestoreCheckpoint(50, 0, null);
+                Assert.That(settlement.EstimateUnitUpkeep(data), Is.EqualTo(8));
+                ((IDictionary)typeof(Code.Manager.HiredUnitRoster).GetField("_deployedUnits", PrivateInstance).GetValue(low)).Add(data, 2);
+                ((IDictionary)typeof(Code.Manager.HiredUnitRoster).GetField("_ownedUnits", PrivateInstance).GetValue(low)).Add(data, 2);
+                typeof(Code.Manager.HiredUnitRoster).GetProperty("Current").SetValue(null, low);
+                Assert.That(Call(settlement, "CalculateDailyUpkeep"), Is.EqualTo(16));
+            }
+            finally
+            {
+                Call(low, "OnDisable");
+                Call(high, "OnDisable");
+                Call(settlement, "OnDisable");
+            }
+        }
+
+        /// <summary>복원 전후 생성과 참조 교체 때 정책 보정이 누락되거나 중첩되는 것을 막는다.</summary>
+        [TestCase(false)]
+        [TestCase(true)]
+        public void MoraleScope_UnitBindingAppliesRestoredPolicyAndDetachesPreviousManager(bool restoreBeforeBinding)
+        {
+            Code.Manager.MoralePolicyManager first = (Code.Manager.MoralePolicyManager)Component("Code.Manager.MoralePolicyManager", "Policy first");
+            Code.Manager.MoralePolicyManager second = (Code.Manager.MoralePolicyManager)Component("Code.Manager.MoralePolicyManager", "Policy second");
+            Code.Manager.PolicyDataSO policy = ScriptableObject.CreateInstance<Code.Manager.PolicyDataSO>();
+            created.Add(policy);
+            policy.name = "Combat policy";
+            Set(policy, "unitDamageMultiplier", 2f);
+            Set(policy, "unitDefenseBonus", 7);
+            Set(first, "availablePolicies", new[] { policy });
+            Code.Persistence.SavedPolicyState saved = new();
+            saved.active.Add(new Code.Persistence.SavedActivePolicy { assetKey = policy.name, remainingDays = 3 });
+            Code.Units.Unit unit = (Code.Units.Unit)Component("Code.Units.Unit", "Policy unit");
+            Code.Combat.Combatant combat = unit.gameObject.AddComponent<Code.Combat.Combatant>();
+            GameLib.Entity.Stats.StatModule stats = unit.gameObject.AddComponent<GameLib.Entity.Stats.StatModule>();
+            Dictionary<int, GameLib.Entity.Stats.StatSO> values = new();
+            foreach (int index in new[] { GameLib.Entity.Stats.StatIndex.AttackDamage, GameLib.Entity.Stats.StatIndex.Defense })
+            {
+                GameLib.Entity.Stats.StatSO stat = ScriptableObject.CreateInstance<GameLib.Entity.Stats.StatSO>();
+                created.Add(stat);
+                stat.BaseValue = index == GameLib.Entity.Stats.StatIndex.AttackDamage ? 100f : 0f;
+                values.Add(index, stat);
+            }
+            Set(stats, "_statByIndex", values);
+            Set(unit, "combatant", combat);
+            unit.Initialize((Code.Units.UnitDataSO)UnitData("Policy data", 10));
+            Set(unit, "fatigue", 50f);
+            Call(unit, "ApplyConditionModifiers");
+            object artifactKey = new();
+            combat.SetAttackModifier(artifactKey, 10f, 1.2f);
+            combat.SetDefenseAndEvasionBonus(artifactKey, 3f, 0f);
+            int baseDamage = combat.AttackDamage;
+            int baseDefense = combat.Defense;
+            if (restoreBeforeBinding) first.RestoreCheckpoint(60, 3, saved);
+            unit.BindPolicies(first);
+            if (!restoreBeforeBinding) first.RestoreCheckpoint(60, 3, saved);
+            Assert.That(combat.AttackDamage, Is.EqualTo(baseDamage * 2));
+            Assert.That(combat.Defense, Is.EqualTo(baseDefense + 7));
+            unit.BindPolicies(first);
+            Assert.That(combat.AttackDamage, Is.EqualTo(baseDamage * 2));
+            Delegate listeners = (Delegate)typeof(Code.Manager.MoralePolicyManager).GetField("CombatModifiersChanged", PrivateInstance).GetValue(first);
+            Assert.That(listeners.GetInvocationList(), Has.Length.EqualTo(1));
+            unit.BindPolicies(second);
+            Assert.That(combat.AttackDamage, Is.EqualTo(baseDamage));
+            Assert.That(combat.Defense, Is.EqualTo(baseDefense));
+            Assert.That(typeof(Code.Manager.MoralePolicyManager).GetField("CombatModifiersChanged", PrivateInstance).GetValue(first), Is.Null);
+            first.RestoreCheckpoint(100, 4, saved);
+            Assert.That(combat.AttackDamage, Is.EqualTo(baseDamage));
+            unit.BindPolicies(null);
+            Assert.That(typeof(Code.Manager.MoralePolicyManager).GetField("CombatModifiersChanged", PrivateInstance).GetValue(second), Is.Null);
+            Assert.That(combat.Defense, Is.EqualTo(baseDefense));
+        }
+
+        /// <summary>정적 접근자가 되살아나 참조 주입 누락을 숨기는 것을 막는다.</summary>
+        [Test]
+        public void MoraleScope_HasNoStaticCurrent()
+        {
+            Assert.That(typeof(Code.Manager.MoralePolicyManager).GetProperty("Current", BindingFlags.Static | BindingFlags.Public), Is.Null);
+        }
+
+
+        [Test]
+        public void GradeScope_RostersUseTheirOwnGradeAndRebindOnEnable()
+        {
+            Code.Manager.HiredUnitRoster first = null;
+            Code.Manager.HiredUnitRoster second = null;
+            try
+            {
+                Code.Manager.DungeonGradeManager firstGrade = (Code.Manager.DungeonGradeManager)Component("Code.Manager.DungeonGradeManager", "First grade");
+                Code.Manager.DungeonGradeManager secondGrade = (Code.Manager.DungeonGradeManager)Component("Code.Manager.DungeonGradeManager", "Second grade");
+                secondGrade.RestoreTotalKills(40);
+                Code.Manager.GameScope firstScope = GradeScope(firstGrade);
+                Code.Manager.GameScope secondScope = GradeScope(secondGrade);
+                first = ScopedRoster(firstScope);
+                second = ScopedRoster(secondScope);
+                int firstCount = (int)Call(first, "WeeklyIncomingCount");
+                Assert.That(firstCount, Is.EqualTo(Code.Manager.UnitMarketRules.WeeklyCandidateCount(2, firstGrade.Grade)));
+                Assert.That(Call(second, "WeeklyIncomingCount"), Is.EqualTo(Code.Manager.UnitMarketRules.WeeklyCandidateCount(2, secondGrade.Grade)));
+                Assert.That(first.GetType().GetField("_dungeonGrade", PrivateInstance).GetValue(first), Is.SameAs(firstGrade));
+                secondGrade.RestoreTotalKills(1000);
+                Assert.That(Call(first, "WeeklyIncomingCount"), Is.EqualTo(firstCount), "다른 판의 등급 변경이 후보 수에 섞이지 않는다.");
+                Call(first, "OnDisable");
+                Set(first, "scope", secondScope);
+                Call(first, "OnEnable");
+                Assert.That(Call(first, "WeeklyIncomingCount"), Is.EqualTo(6), "재활성화하면 새 조립 루트의 등급을 얻는다.");
+            }
+            finally
+            {
+                if (first != null) Call(first, "OnDisable");
+                if (second != null) Call(second, "OnDisable");
+            }
+        }
+
+        [Test]
+        public void GradeScope_SettlementReportsOnlyTheAssignedGrade()
+        {
+            object previousWave = Resolve("Code.Manager.WaveManager").GetProperty("Current").GetValue(null);
+            Code.Manager.ManagementSettlementManager manager = (Code.Manager.ManagementSettlementManager)Component("Code.Manager.ManagementSettlementManager", "Scoped settlement");
+            try
+            {
+                Code.Manager.DungeonGradeManager firstGrade = (Code.Manager.DungeonGradeManager)Component("Code.Manager.DungeonGradeManager", "Report grade");
+                Code.Manager.DungeonGradeManager secondGrade = (Code.Manager.DungeonGradeManager)Component("Code.Manager.DungeonGradeManager", "Other grade");
+                firstGrade.RestoreTotalKills(40);
+                secondGrade.RestoreTotalKills(900);
+                Set(manager, "scope", GradeScope(firstGrade));
+                Code.Manager.WaveManager wave = (Code.Manager.WaveManager)Component("Code.Manager.WaveManager", "Report wave");
+                object stats = wave.GetType().GetField("_stats", PrivateInstance).GetValue(wave);
+                stats.GetType().GetMethod("Reset").Invoke(stats, new object[] { 3 });
+                Resolve("Code.Manager.WaveManager").GetProperty("Current").SetValue(null, wave);
+                Call(manager, "OnEnable");
+                Code.Manager.SettlementReport report = (Code.Manager.SettlementReport)Call(manager, "BuildReport");
+                Assert.That(report.Notes, Has.Some.Matches<Code.Manager.SettlementNote>(note => note.Text.Contains("누적 처치 40")));
+                secondGrade.RecordKill();
+                report = (Code.Manager.SettlementReport)Call(manager, "BuildReport");
+                Assert.That(report.Notes, Has.None.Matches<Code.Manager.SettlementNote>(note => note.Text.Contains("901")));
+                Call(manager, "OnDisable");
+                Set(manager, "scope", GradeScope(secondGrade));
+                Call(manager, "OnEnable");
+                report = (Code.Manager.SettlementReport)Call(manager, "BuildReport");
+                Assert.That(report.Notes, Has.Some.Matches<Code.Manager.SettlementNote>(note => note.Text.Contains("누적 처치 901")));
+            }
+            finally
+            {
+                Call(manager, "OnDisable");
+                Resolve("Code.Manager.WaveManager").GetProperty("Current").SetValue(null, previousWave);
+            }
+        }
+
+        [Test]
+        public void GradeScope_HasNoStaticCurrent()
+        {
+            Assert.That(typeof(Code.Manager.DungeonGradeManager).GetProperty("Current", BindingFlags.Public | BindingFlags.Static), Is.Null);
+        }
+
+        [TestCase(false, 100, 25)]
+        [TestCase(true, 100, 25)]
+        [TestCase(false, 0, 25)]
+        [TestCase(true, 0, 25)]
+        [TestCase(false, 100, 0)]
+        [TestCase(true, 100, 0)]
+        public void ReopenCost_RecordsPaidExpenseOnceWithoutChargingSettlement(bool deferred, int gold, int fee)
+        {
+            Code.Manager.CostManager cost = (Code.Manager.CostManager)Component("Code.Manager.CostManager", "Reopen cost");
+            Set(cost, "initialGold", gold);
+            Call(cost, "Awake");
+            Set(cost, "_isSettlementDeferred", deferred);
+            Code.Core.GameEventChannelSO channel = ScriptableObject.CreateInstance<Code.Core.GameEventChannelSO>();
+            created.Add(channel);
+            Code.Manager.ManagementSettlementManager manager = (Code.Manager.ManagementSettlementManager)Component(
+                "Code.Manager.ManagementSettlementManager", "Reopen ledger");
+            Set(manager, "costEventChannel", channel);
+            Code.Manager.GameScope reopenScope = GradeScope((Code.Manager.DungeonGradeManager)Component("Code.Manager.DungeonGradeManager", "Reopen grade"));
+            Set(reopenScope, "cost", cost);
+            Set(manager, "scope", reopenScope);
+            Code.Manager.FacilityClosureSystem closure = (Code.Manager.FacilityClosureSystem)Component(
+                "Code.Manager.FacilityClosureSystem", "Reopen system");
+            Set(closure, "costEventChannel", channel);
+            Code.Buildings.BuildingDataSO data = ScriptableObject.CreateInstance<Code.Buildings.BuildingDataSO>();
+            created.Add(data);
+            Set(data, "<DwellSeconds>k__BackingField", 3f);
+            Code.Buildings.Building building = (Code.Buildings.Building)Component("Code.Buildings.Building", "Reopen facility");
+            building.Initialize(data);
+            Set(building, "reopenCost", fee);
+            building.Close();
+
+            Call(manager, "OnEnable");
+            Call(manager, "OnDisable");
+            Call(manager, "OnEnable");
+            try
+            {
+                bool expected = gold >= fee;
+                Assert.That(closure.TryBeginReopen(building, out _), Is.EqualTo(expected));
+                Assert.That(closure.TryBeginReopen(building, out _), Is.False, "예약 중이거나 금화가 부족하면 다시 결제하지 않는다.");
+                int paid = expected ? fee : 0;
+                Assert.That(cost.CurrentGold, Is.EqualTo(gold - paid));
+                Assert.That(cost.CurrentDebt, Is.Zero);
+                if (expected)
+                {
+                    Assert.That(building.TryCompleteReopen(int.MaxValue), Is.True);
+                    channel.RaiseEvent(new Code.Events.FacilityReopenedEvent(building));
+                }
+
+                Call(manager, "ApplyNetToGold");
+                Code.Manager.SettlementReport report = (Code.Manager.SettlementReport)Call(manager, "BuildReport");
+                Assert.That(report.TotalExpense, Is.EqualTo(paid), "이미 결제한 재개장비를 전체 지출에 한 번 기록한다.");
+                Assert.That(report.Net, Is.Zero, "대기·영업 중 모두 이미 결제해 순정산에는 다시 넣지 않는다.");
+                Assert.That(cost.CurrentGold, Is.EqualTo(gold - paid), "정산으로 두 번 차감하지 않는다.");
+                Assert.That(report.Expense.Count, Is.EqualTo(paid > 0 ? 1 : 0));
+                if (paid > 0)
+                {
+                    Assert.That(report.Expense[0].Label, Is.EqualTo("시설 재개장비"));
+                    Assert.That(report.Expense[0].Amount, Is.EqualTo(paid));
+                }
+            }
+            finally
+            {
+                Call(manager, "OnDisable");
+            }
+
+            int before = (int)manager.GetType().GetField("totalExpense", PrivateInstance).GetValue(manager);
+            channel.RaiseEvent(new Code.Events.FacilityReopenScheduledEvent(building, 7, 1));
+            Assert.That(manager.GetType().GetField("totalExpense", PrivateInstance).GetValue(manager), Is.EqualTo(before),
+                "비활성화 뒤에는 이벤트를 받지 않는다.");
+        }
+
         [Test]
         public void Upkeep_AfterRosterRestore_ChargesDeployedUnitsButNotReserveOrApplicants()
         {
@@ -183,6 +719,9 @@ namespace Tests.EditMode.Rules
 
             Set(cost, "costEventChannel", channel);
             Set(settlement, "costEventChannel", channel);
+            Code.Manager.GameScope constructionScope = GradeScope((Code.Manager.DungeonGradeManager)Component("Code.Manager.DungeonGradeManager", "Construction grade"));
+            Set(constructionScope, "cost", cost);
+            Set(settlement, "scope", constructionScope);
             Set(panel, "costEventChannel", channel);
             cost.gameObject.SetActive(true);
             settlement.gameObject.SetActive(true);

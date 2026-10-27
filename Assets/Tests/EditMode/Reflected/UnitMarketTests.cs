@@ -51,10 +51,13 @@ namespace Tests.EditMode.Rules
         [Test]
         public void Tier_MarksCheapAndExpensiveBeyondTenPercent()
         {
-            Assert.That(UnitMarketRules.Tier(0.85f), Is.EqualTo(UnitPriceTier.Cheap));
-            Assert.That(UnitMarketRules.Tier(0.95f), Is.EqualTo(UnitPriceTier.Normal));
-            Assert.That(UnitMarketRules.Tier(1.05f), Is.EqualTo(UnitPriceTier.Normal));
-            Assert.That(UnitMarketRules.Tier(1.15f), Is.EqualTo(UnitPriceTier.Expensive));
+            Assert.That(UnitMarketRules.Tier(100, 85), Is.EqualTo(UnitPriceTier.Cheap));
+            Assert.That(UnitMarketRules.Tier(100, 95), Is.EqualTo(UnitPriceTier.Normal));
+            Assert.That(UnitMarketRules.Tier(100, 105), Is.EqualTo(UnitPriceTier.Normal));
+            Assert.That(UnitMarketRules.Tier(100, 115), Is.EqualTo(UnitPriceTier.Expensive));
+            Assert.That(UnitMarketRules.Tier(11, 10), Is.EqualTo(UnitPriceTier.Normal), "10/11은 10% 할인이 아닙니다.");
+            Assert.That(UnitMarketRules.Tier(11, 12), Is.EqualTo(UnitPriceTier.Normal), "12/11은 10% 인상이 아닙니다.");
+            Assert.That(UnitMarketRules.Tier(int.MaxValue, int.MaxValue), Is.EqualTo(UnitPriceTier.Normal));
         }
 
         [Test]
@@ -101,12 +104,25 @@ namespace Tests.EditMode.Rules
             }
         }
 
-        [Test]
-        public void Roster_QuotesTheSamePriceItWillCharge()
+        [TestCase(100, 0.904f, 90, UnitPriceTier.Cheap)]
+        [TestCase(100, 0.9051f, 91, UnitPriceTier.Normal)]
+        [TestCase(100, 1.096f, 110, UnitPriceTier.Expensive)]
+        [TestCase(100, 1.0949f, 109, UnitPriceTier.Normal)]
+        [TestCase(100, 0.9f, 90, UnitPriceTier.Cheap)]
+        [TestCase(100, 1.1f, 110, UnitPriceTier.Expensive)]
+        [TestCase(1, 0.75f, 1, UnitPriceTier.Normal)]
+        [TestCase(1, 1.25f, 1, UnitPriceTier.Normal)]
+        [TestCase(3, 0.75f, 2, UnitPriceTier.Cheap)]
+        [TestCase(3, 1.25f, 4, UnitPriceTier.Expensive)]
+        [TestCase(0, 0.75f, 0, UnitPriceTier.Normal)]
+        [TestCase(0, 1.25f, 0, UnitPriceTier.Normal)]
+        [TestCase(100, 0f, 100, UnitPriceTier.Normal)]
+        [TestCase(100, -1f, 100, UnitPriceTier.Normal)]
+        public void Roster_QuotesTheSamePriceItWillCharge(int baseCost, float multiplier, int expectedPrice, UnitPriceTier expectedTier)
         {
             _unit = ScriptableObject.CreateInstance<UnitDataSO>();
             typeof(UnitDataSO).GetField("<Cost>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)
-                .SetValue(_unit, 100);
+                .SetValue(_unit, baseCost);
 
             _host = new GameObject("RosterHost");
             _host.SetActive(false);
@@ -115,13 +131,34 @@ namespace Tests.EditMode.Rules
             var owned = (IDictionary)typeof(HiredUnitRoster).GetField("_ownedUnits", flags).GetValue(roster);
             owned[_unit] = 1;
 
+            FieldInfo applicantsField = typeof(HiredUnitRoster).GetField("_applicantsByUnit", flags);
+            Assert.That(applicantsField, Is.Not.Null);
+            System.Type listType = applicantsField.FieldType.GetGenericArguments()[1];
+            System.Type applicantType = listType.GetGenericArguments()[0];
+            object applicant = System.Activator.CreateInstance(applicantType);
+            FieldInfo priceMultiplier = applicantType.GetField("PriceMultiplier");
+            Assert.That(priceMultiplier, Is.Not.Null);
+            priceMultiplier.SetValue(applicant, multiplier);
+            IList queue = (IList)System.Activator.CreateInstance(listType);
+            queue.Add(applicant);
+            ((IDictionary)applicantsField.GetValue(roster))[_unit] = queue;
+
             var price = roster.GetApplicantPrice(_unit);
-            Assert.That(price, Is.InRange(75, 125), "지원자 시세는 정가의 75~125%입니다.");
+            Assert.That(price, Is.EqualTo(expectedPrice));
             Assert.That(roster.GetApplicantPrice(_unit), Is.EqualTo(price), "다시 물어도 같은 지원자, 같은 값이어야 합니다.");
 
             var tier = roster.GetApplicantPriceTier(_unit);
-            var expected = price <= 90 ? UnitPriceTier.Cheap : price >= 110 ? UnitPriceTier.Expensive : UnitPriceTier.Normal;
-            Assert.That(tier, Is.EqualTo(expected));
+            Assert.That(tier, Is.EqualTo(expectedTier));
+        }
+
+        [Test]
+        public void Roster_EmptySelectionHasNoPriceMarkup()
+        {
+            _host = new GameObject("EmptyRosterTest");
+            _host.SetActive(false);
+            HiredUnitRoster roster = _host.AddComponent<HiredUnitRoster>();
+            Assert.That(roster.GetApplicantPrice(null), Is.Zero);
+            Assert.That(roster.GetApplicantPriceTier(null), Is.EqualTo(UnitPriceTier.Normal));
         }
     }
 }

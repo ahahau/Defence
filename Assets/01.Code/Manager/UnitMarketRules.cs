@@ -27,8 +27,8 @@ namespace Code.Manager
         public const float MinPriceMultiplier = 0.75f;
         public const float MaxPriceMultiplier = 1.25f;
 
-        /// <summary>시세가 이만큼 아래면 "저렴", 위면 "비쌈"으로 보인다.</summary>
-        public const float TierThreshold = 0.1f;
+        /// <summary>정가 대비 실제 고용가 차이가 이 백분율 이상이면 저렴·비쌈으로 표시한다.</summary>
+        public const int TierThresholdPercent = 10;
 
         /// <summary>이번 주 지원자 수(민심 보정 전). 최대 <see cref="MaxWeeklyCandidates"/>.</summary>
         public static int WeeklyCandidateCount(int baseCount, int dungeonGrade)
@@ -53,13 +53,18 @@ namespace Code.Manager
             return Mathf.Max(1, Mathf.RoundToInt(baseCost * safe));
         }
 
-        public static UnitPriceTier Tier(float multiplier)
+        /// <summary>표시·결제하는 정수 가격을 정가와 비교한다. 무료 유닛은 보통이다.</summary>
+        public static UnitPriceTier Tier(int baseCost, int actualPrice)
         {
-            if (multiplier <= 0f)
+            if (baseCost <= 0)
                 return UnitPriceTier.Normal;
-            if (multiplier <= 1f - TierThreshold)
+
+            long pricePercent = (long)Mathf.Max(0, actualPrice) * 100;
+            if (pricePercent <= (long)baseCost * (100 - TierThresholdPercent))
                 return UnitPriceTier.Cheap;
-            return multiplier >= 1f + TierThreshold ? UnitPriceTier.Expensive : UnitPriceTier.Normal;
+            return pricePercent >= (long)baseCost * (100 + TierThresholdPercent)
+                ? UnitPriceTier.Expensive
+                : UnitPriceTier.Normal;
         }
 
         public static string TierLabel(UnitPriceTier tier) => tier switch

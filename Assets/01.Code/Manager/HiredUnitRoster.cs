@@ -223,11 +223,12 @@ namespace Code.Manager
             return UnitMarketRules.Price(unit.Cost, multiplier);
         }
 
-        /// <summary>다음 지원자의 시세가 싼지 비싼지.</summary>
+        /// <summary>다음 지원자의 실제 고용가가 정가보다 싼지 비싼지.</summary>
         public UnitPriceTier GetApplicantPriceTier(UnitDataSO unit)
         {
-            var queue = EnsureApplicantQueue(unit);
-            return queue.Count > 0 ? UnitMarketRules.Tier(queue[0].PriceMultiplier) : UnitPriceTier.Normal;
+            return unit != null
+                ? UnitMarketRules.Tier(unit.Cost, GetApplicantPrice(unit))
+                : UnitPriceTier.Normal;
         }
 
         /// <summary>

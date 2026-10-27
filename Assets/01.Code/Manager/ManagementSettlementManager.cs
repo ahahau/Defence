@@ -125,6 +125,7 @@ namespace Code.Manager
             costEventChannel?.AddListener<BuildCostPaidEvent>(HandleBuildCostPaid);
             costEventChannel?.AddListener<BuildCostRefundedEvent>(HandleBuildCostRefunded);
             costEventChannel?.AddListener<FacilityRepairStartedEvent>(HandleFacilityRepairStarted);
+            costEventChannel?.AddListener<FacilityReopenScheduledEvent>(HandleFacilityReopenScheduled);
             costEventChannel?.AddListener<FacilityDemolishedEvent>(HandleFacilityDemolished);
             costEventChannel?.AddListener<RosterHirePaidEvent>(HandleRosterHirePaid);
             costEventChannel?.AddListener<UnitRecoveryCostPaidEvent>(HandleUnitRecoveryCostPaid);
@@ -143,6 +144,7 @@ namespace Code.Manager
             costEventChannel?.RemoveListener<BuildCostPaidEvent>(HandleBuildCostPaid);
             costEventChannel?.RemoveListener<BuildCostRefundedEvent>(HandleBuildCostRefunded);
             costEventChannel?.RemoveListener<FacilityRepairStartedEvent>(HandleFacilityRepairStarted);
+            costEventChannel?.RemoveListener<FacilityReopenScheduledEvent>(HandleFacilityReopenScheduled);
             costEventChannel?.RemoveListener<FacilityDemolishedEvent>(HandleFacilityDemolished);
             costEventChannel?.RemoveListener<RosterHirePaidEvent>(HandleRosterHirePaid);
             costEventChannel?.RemoveListener<UnitRecoveryCostPaidEvent>(HandleUnitRecoveryCostPaid);
@@ -293,6 +295,12 @@ namespace Code.Manager
         private void HandleFacilityRepairStarted(FacilityRepairStartedEvent evt)
         {
             RecordExpense("시설 수리비", evt.GoldCost, false);
+        }
+
+        private void HandleFacilityReopenScheduled(FacilityReopenScheduledEvent evt)
+        {
+            // 재개장 예약에서 이미 결제했으므로 전체 지출만 기록한다.
+            RecordExpense("시설 재개장비", evt.GoldCost, false);
         }
 
         private void HandleFacilityDemolished(FacilityDemolishedEvent evt)
