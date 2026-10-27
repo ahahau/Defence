@@ -13,6 +13,8 @@ namespace Code.Manager
     {
         public static HiredUnitRoster Current { get; private set; }
 
+        [SerializeField, Tooltip(GameScope.FieldTooltip)] private GameScope scope;
+
         [SerializeField] private GameEventChannelSO costEventChannel;
         [SerializeField] private GameEventChannelSO nodeEventChannel;
         [SerializeField] private GameEventChannelSO dayEventChannel;
@@ -49,6 +51,9 @@ namespace Code.Manager
 
         private readonly List<UnitDataSO> _availableUnits = new();
         private readonly List<UnitConditionState> _availableConditions = new();
+        private DungeonGradeManager _dungeonGrade;
+        private MoralePolicyManager _morale;
+        private CostManager _cost;
         private readonly List<UnitDataSO> _unlockedUnits = new();
         private readonly List<BuildingDataSO> _unlockedBuildings = new();
         private readonly Dictionary<UnitDataSO, int> _ownedUnits = new();
@@ -110,6 +115,9 @@ namespace Code.Manager
 
         private void OnEnable()
         {
+            _dungeonGrade = GameScope.Resolve(scope, s => s.DungeonGrade, this, nameof(scope));
+            _morale = GameScope.Resolve(scope, s => s.MoralePolicy, this, nameof(scope));
+            _cost = GameScope.Resolve(scope, s => s.Cost, this, nameof(scope));
             Current = this;
 
             InitializeUnlockedUnits();
@@ -197,7 +205,7 @@ namespace Code.Manager
                 return false;
 
             var price = GetApplicantPrice(unit);
-            if (CostManager.Current == null || CostManager.Current.CurrentGold < price)
+            if (_cost == null || _cost.CurrentGold < price)
                 return false;
 
             costEventChannel.RaiseEvent(new RosterHireRequestedEvent(unit, price));
@@ -355,9 +363,9 @@ namespace Code.Manager
         /// <summary>한 주에 오는 지원자 수. 던전이 커질수록 일하겠다는 사람이 늘고, 민심이 나쁘면 다시 줄어든다.</summary>
         private int WeeklyIncomingCount()
         {
-            var grade = DungeonGradeManager.Current != null ? DungeonGradeManager.Current.Grade : 0;
+            var grade = _dungeonGrade != null ? _dungeonGrade.Grade : 0;
             var weekly = UnitMarketRules.WeeklyCandidateCount(candidatesPerDay, grade);
-            var morale = MoralePolicyManager.Current;
+            var morale = _morale;
             return morale != null ? morale.AdjustRecruitCount(weekly) : weekly;
         }
 

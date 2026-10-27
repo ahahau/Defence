@@ -11,8 +11,6 @@ namespace Code.Manager
     /// </summary>
     public sealed class DungeonGradeManager : MonoBehaviour
     {
-        public static DungeonGradeManager Current { get; private set; }
-
         [SerializeField, Min(0)] private int totalKills;
 
         /// <summary>이 판에서 여기서 죽은 모험가의 총수.</summary>
@@ -32,17 +30,6 @@ namespace Code.Manager
 
         private int _gradeAtDayStart;
         private int _killsAtDayStart;
-
-        private void Awake()
-        {
-            Current = this;
-        }
-
-        private void OnDestroy()
-        {
-            if (Current == this)
-                Current = null;
-        }
 
         public void BeginBusinessDay()
         {

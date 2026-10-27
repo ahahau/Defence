@@ -639,6 +639,14 @@ namespace Tests.EditMode.Rules
             var host = new GameObject("LedgerTestHost");
             var cost = host.AddComponent(Resolve("Code.Manager.CostManager"));
             var settlement = host.AddComponent(Resolve("Code.Manager.ManagementSettlementManager"));
+            var context = new GameObject("Ledger scope");
+            context.SetActive(false);
+            context.transform.SetParent(host.transform);
+            var scope = context.AddComponent(Resolve("Code.Manager.GameScope"));
+            SetPrivate(scope, "cost", cost);
+            SetPrivate(scope, "dungeonGrade", context.AddComponent(Resolve("Code.Manager.DungeonGradeManager")));
+            SetPrivate(scope, "moralePolicy", context.AddComponent(Resolve("Code.Manager.MoralePolicyManager")));
+            SetPrivate(settlement, "scope", scope);
 
             SetPrivate(cost, "costEventChannel", costChannel);
             SetPrivate(cost, "waveEventChannel", waveChannel);
@@ -953,7 +961,6 @@ namespace Tests.EditMode.Rules
         {
             var host = new GameObject("RunSummaryTestHost");
             var component = host.AddComponent(Resolve("Code.Progression.RunSummarySystem"));
-            Call(component, "Awake");
             summary = component;
             return host;
         }

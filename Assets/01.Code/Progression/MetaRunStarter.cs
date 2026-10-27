@@ -1,8 +1,5 @@
 using Code.Manager;
 using Code.Persistence;
-using Code.UI;
-using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace Code.Progression
 {
@@ -11,38 +8,17 @@ namespace Code.Progression
     ///
     /// 판 저장이 없으면 새 판이다 — 장착한 보정을 이번 판 보정으로 확정하고 전부 건다.
     /// 판 저장이 있으면 이어하기다 — 금화·민심처럼 한 번 받은 보정은 이미 저장에 들어 있으므로
-    /// 판 내내 유지되는 보정(부활 마력)만 다시 건다. 씬 배선 없이 씬이 열리는 순간에 붙는다.
+    /// 판 내내 유지되는 보정(부활 마력)만 다시 건다. 조립 루트의 시작 단계에서 지원자 생성 전에 적용한다.
     /// </summary>
     public static class MetaRunStarter
     {
-        private static bool _listening;
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void Install()
+        /// <summary>조립 루트가 전달한 매니저에 새 판 또는 이어하기 보정을 적용한다.</summary>
+        public static void ApplyForRun(CostManager cost, MoralePolicyManager morale, UnitRevivalSystem revival, bool hasSave)
         {
-            if (!_listening)
-            {
-                SceneManager.sceneLoaded += HandleSceneLoaded;
-                _listening = true;
-            }
-
-            // 에디터에서 게임 씬을 바로 재생하면 첫 씬의 sceneLoaded는 이미 지나갔다.
-            if (SceneManager.GetActiveScene().name == TitleMenuActions.GameSceneName)
-                ApplyForCurrentScene();
-        }
-
-        private static void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
-        {
-            if (scene.name == TitleMenuActions.GameSceneName)
-                ApplyForCurrentScene();
-        }
-
-        private static void ApplyForCurrentScene()
-        {
-            if (!RunSaveSystem.HasSave)
+            if (!hasSave)
             {
                 foreach (var value in MetaProfileStore.BeginNewRun())
-                    Apply((MetaModifier)value, true);
+                    Apply((MetaModifier)value, true, cost, morale, revival);
                 return;
             }
 
@@ -54,24 +30,24 @@ namespace Code.Progression
             {
                 var modifier = (MetaModifier)value;
                 if (MetaProgressRules.IsPersistent(modifier))
-                    Apply(modifier, false);
+                    Apply(modifier, false, cost, morale, revival);
             }
         }
 
-        private static void Apply(MetaModifier modifier, bool newRun)
+        private static void Apply(MetaModifier modifier, bool newRun, CostManager cost, MoralePolicyManager morale, UnitRevivalSystem revival)
         {
             switch (modifier)
             {
                 case MetaModifier.EmergencyFund:
                     if (newRun)
-                        CostManager.Current?.AddGold(MetaProgressRules.EmergencyFundGold);
+                        cost?.AddGold(MetaProgressRules.EmergencyFundGold);
                     break;
                 case MetaModifier.SteadyMorale:
                     if (newRun)
-                        MoralePolicyManager.Current?.ApplyBonusMorale(MetaProgressRules.SteadyMoraleBonus, "시작 보정");
+                        morale?.ApplyBonusMorale(MetaProgressRules.SteadyMoraleBonus, "시작 보정");
                     break;
                 case MetaModifier.ManaReserve:
-                    UnitRevivalSystem.Current?.AddMaxManaBonus(MetaProgressRules.ManaReserveBonus);
+                    revival?.AddMaxManaBonus(MetaProgressRules.ManaReserveBonus);
                     break;
             }
         }

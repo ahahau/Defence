@@ -7,21 +7,23 @@
 | 단계 | 내용 | 상태 |
 |---|---|---|
 | 1A | `Find` 제거. 씬 객체는 `[SerializeField]`, 비면 `SceneReferenceFallback.Find`(경고). `Shader.Find`는 공용 재질 에셋(`RuntimeMaterials`). 이름으로 자식 찾기는 필드로 | 코드 완료 |
-| 1A-배선 | 아래 필드를 SampleScene에 연결하고 `SceneReferenceFallback.Find` 호출을 지운다 | 다른 세션 씬 커밋 대기 |
+| 1A-배선 | 아래 필드를 SampleScene에 연결한다. 공용 폴백 제거는 남은 호출처 이전 뒤 진행한다 | 목록의 씬 배선 완료(2026-10-22) |
 | 1A-남김 | 부트스트랩 4개·`UiSfxInstaller`의 `FindObjectsByType`(옛 uGUI 숨김·캔버스 효과음) — 옛 uGUI를 씬에서 지울 때 함께 제거. `ManagementSettlementManager`의 `transform.Find("ProgressDivider")` — 다른 세션 작업 뒤 | 보류 |
-| 2 | 씬 조립 루트 `GameScope`를 두고 `Current` 싱글턴 25개(사용처 271곳)·정적 가변 상태(장부·점유표·레지스트리)를 주입으로 바꾼다. 실행 중 생기는 Toolkit 화면(`FindForRuntimeObject`)도 이때 주입. 설계 `Docs/AI/GameScopeDesign.md` | `FacilityClosureSystem` 완료(`Current` 삭제). 등급·민심·판 요약·부활: 옮길 수 있는 사용처 완료(46 → 19곳), 나머지는 다른 세션 파일·부트스트랩·실행 중 생성물 대기 — `GameScopeDesign.md` "진행" |
+| 2 | 씬 조립 루트 `GameScope`를 두고 `Current` 싱글턴 25개(사용처 271곳)·정적 가변 상태(장부·점유표·레지스트리)를 주입으로 바꾼다. 실행 중 생기는 Toolkit 화면(`FindForRuntimeObject`)도 이때 주입. 설계 `Docs/AI/GameScopeDesign.md` | `FacilityClosureSystem`·`RunSummarySystem`·`DungeonGradeManager`·`MoralePolicyManager`·`UnitRevivalSystem` 완료(`Current` 삭제). 나머지 매니저는 별도 범위로 순차 이전 — `GameScopeDesign.md` "진행" |
 
 1A-배선 목록(SampleScene, Unity CLI로):
-- `WaveManager.gameOverManager` → GameOverManager
-- `MagicSaveAgent.magicManager` → MagicManager
-- `MerchantSaveAgent.merchant` → MerchantPanelView, `.artifacts` → ArtifactEffectController
-- `PlayTutorialView.dialogueRunner` → DialogueRunner, `.merchantPanel` → MerchantPanelView
-- (선택) `GameOverManager.bossWavePresenter` → BossWavePresenter. 비어 있어도 `WaveManager.BossPresenter`로 해결된다.
-- 새 GameObject `GameScope`(컴포넌트 `Code.Manager.GameScope`)를 씬에 두고 `facilityClosure`·`unitRevival`·`runSummary`·`dungeonGrade`·`moralePolicy` → 각 매니저
-- `scope` 필드 → GameScope: `NodePanelView`, `DialogueRunner`, `WaveManager`, `GameOverManager`, `UnitRevivalSystem`, `DungeonGraphController`, `GradeSaveAgent`, `MoraleSaveAgent`, `DangerPanelView`, `WaveView`
-- (확인) `MoraleHudView.moralePolicyManager` — 씬의 `moralePolicyManager` 필드 둘 중 하나가 비어 있다. 비었으면 연결
+- 완료(2026-10-22): `WaveManager.gameOverManager` → GameOverManager
+- 완료(2026-10-22): `MagicSaveAgent.magicManager` → MagicManager
+- 완료(2026-10-22): `MerchantSaveAgent.merchant` → MerchantPanelView, `.artifacts` → ArtifactEffectController
+- 완료(2026-10-22): `PlayTutorialView.dialogueRunner` → DialogueRunner, `.merchantPanel` → MerchantPanelView
+- 완료(2026-10-22): `GameOverManager.bossWavePresenter` → BossWavePresenter. 기존 런타임 폴백은 유지한다.
+- 완료(2026-10-22): GameObject `GameScope`(컴포넌트 `Code.Manager.GameScope`)와 `facilityClosure`·`unitRevival`·`runSummary`·`dungeonGrade`·`moralePolicy` → 기존 매니저 5개
+- 완료(2026-10-22): `scope` 필드 → GameScope: `NodePanelView`, `DialogueRunner`, `WaveManager`, `GameOverManager`, `UnitRevivalSystem`, `DungeonGraphController`, `GradeSaveAgent`, `MoraleSaveAgent`, `WaveView`, `TopHudView`, `RoomManagementScreen`. 저장된 씬 배선 테스트와 타이틀 왕복 검증 완료(전체 EditMode 391/391).
+- 제외(2026-10-22): `MoraleHudView`는 현재 코드에 없다. 현재 HUD는 위 `TopHudView.scope` 배선으로 검사한다.
 
-모두 연결한 뒤 `SceneReferenceFallback.Find`를 지우면 남은 호출처가 컴파일 오류로 드러난다.
+- 완료(2026-10-22): `CostManager.scope` → GameScope. 최고 부채 기록 7곳을 이전하고 `RunSummarySystem.Current`를 제거했다.
+
+목록의 배선은 완료했지만 `SceneReferenceFallback.Find`·`FindForRuntimeObject` 호출이 다른 코드에 남아 있다. 공용 폴백은 해당 호출처를 개별 이전·검증한 뒤 제거한다.
 
 ---
 
@@ -47,3 +49,12 @@
 4. **어셈블리 경계와 정적 상태 — 우선순위 중간.** 자체 런타임은 대부분 `Assembly-CSharp` 하나이며 테스트는 비공개 멤버를 리플렉션으로 호출한다. 게임 규칙부터 공개 가능한 작은 API로 분리한 뒤 asmdef 도입 여부를 결정한다. `Current` 싱글턴의 초기화/해제도 장면 전환별로 점검한다.
 
 위 항목은 코드 구조와 테스트 표면을 기준으로 정한 순서다. 실제 전투 성능이나 전체 시각 품질에 대한 결론은 프로파일러·PlayMode 측정 없이 내리지 않는다.
+
+## 2026-10-26 UI 초기화 안정화·추가 확인
+
+- UI 콜백·표시 배열이 스크립트 재로드로 사라져 Awake 없이 OnEnable이 호출될 때 발생하던 오류 경로를 재현·수정했다. 11개 화면/칸은 OnEnable에서 누락된 런타임 배열을 복구한다. 회귀 11/11, 전체 462/462, 재로드·타이틀 왕복 UI 새 오류 0.
+- 별도 후속: 실행 중 스크립트 재로드 뒤 CostManager의 실제 CurrentGold가 240→0으로 초기화됐다. UI 참조는 정상이며 매니저 런타임 상태 보존 문제로 분리한다. 타이틀 이어하기는 원래 저장의 240G를 정상 복원한다. 이번 범위에서 금화·저장·매니저 초기화를 바꾸지 않았다.
+
+## 2026-10-26 비용 장부 재로드 후속 완료
+
+위 금화 240→0 유실 후속을 CostManager 장부 직렬화와 비용·일차 Current 재등록으로 수정했다. 저장 JSON과 경제 공식은 유지한다. 회귀 6/6·전체 468/468, 실제 955G/0G 두 재로드의 상태 차이 0·중복 청산/계약 차감 0·새 콘솔 오류 0. 다른 매니저나 전투 전체의 재로드 지원을 완료한 것은 아니다. 상세는 Docs/Design/EconomyReloadDesign.md와 Sequences.md에 기록한다.

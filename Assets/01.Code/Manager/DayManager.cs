@@ -72,16 +72,22 @@ namespace Code.Manager
         public static int DaysUntilSettlementFrom(int day) =>
             day <= 0 ? WeekLength : WeekLength - DayOfWeekOf(day);
 
-        private void Awake()
+        private bool TryRegisterCurrent()
         {
             if (Current != null && Current != this)
             {
                 Debug.LogError($"Duplicate {nameof(DayManager)} detected. Keep exactly one scene instance.", this);
                 enabled = false;
-                return;
+                return false;
             }
 
             Current = this;
+            return true;
+        }
+
+        private void Awake()
+        {
+            TryRegisterCurrent();
         }
 
         private void Start()
@@ -92,6 +98,9 @@ namespace Code.Manager
 
         private void OnEnable()
         {
+            if (!TryRegisterCurrent())
+                return;
+
             if (waveEventChannel != null)
                 waveEventChannel.AddListener<WaveEndedEvent>(HandleWaveEnded);
         }

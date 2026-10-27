@@ -15,6 +15,163 @@ namespace Tests.EditMode.Intrusion
     /// </summary>
     public class IntrusionAndSaveTests
     {
+        /// <summary>일차 뒤에 등급이 복원되므로 마지막 조각까지 끝나기 전에 미리보기를 알리면 이전 등급이 화면에 남는다.</summary>
+        [TestCase(false)]
+        [TestCase(true)]
+        public void RunRestore_PublishesPreviewOnlyAfterSuccessfulCompletion(bool failLastSection)
+        {
+            GameObject host = new GameObject("RestorePreviewTest");
+            Code.Manager.DayManager previousDay = Code.Manager.DayManager.Current;
+            bool previousIncomplete = Code.Persistence.RunSaveSystem.RestoreIncomplete;
+            try
+            {
+                Code.Manager.DayManager day = host.AddComponent<Code.Manager.DayManager>();
+                SetStaticProperty(typeof(Code.Manager.DayManager), "Current", day);
+                SetStaticProperty(typeof(Code.Persistence.RunSaveSystem), "RestoreIncomplete", false);
+                Code.Persistence.SaveAgentRegistry registry = host.AddComponent<Code.Persistence.SaveAgentRegistry>();
+                int previewCount = 0;
+                int lastSectionValue = 0;
+                day.DayPreviewChanged += nextDay =>
+                {
+                    previewCount++;
+                    Assert.That(nextDay, Is.EqualTo(3));
+                    Assert.That(lastSectionValue, Is.EqualTo(60), "마지막 저장 섹션이 복원되기 전에 알리면 안 됩니다.");
+                };
+                Code.Persistence.RunSaveFile file = ConfigureRestore(registry,
+                    new RestoreProbe("day", () => day.RestoreCheckpoint(2)),
+                    new RestoreProbe("last", () =>
+                    {
+                        if (failLastSection)
+                            throw new InvalidOperationException("expected restore failure");
+                        lastSectionValue = 60;
+                    }));
+                if (failLastSection)
+                    UnityEngine.TestTools.LogAssert.Expect(LogType.Error, "'last' 복원 실패: expected restore failure");
+
+                bool restored = (bool)CallStatic(typeof(Code.Persistence.RunSaveSystem), "RestoreLoadedRun", registry, file);
+
+                Assert.That(restored, Is.EqualTo(!failLastSection));
+                Assert.That(previewCount, Is.EqualTo(failLastSection ? 0 : 1));
+                Assert.That(Code.Persistence.RunSaveSystem.RestoreIncomplete, Is.EqualTo(failLastSection));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
+                SetStaticProperty(typeof(Code.Manager.DayManager), "Current", previousDay);
+                SetStaticProperty(typeof(Code.Persistence.RunSaveSystem), "RestoreIncomplete", previousIncomplete);
+            }
+        }
+
+        /// <summary>복원 뒤 준비 카드가 첫날·입구 로딩 상태에 머물러 영업 버튼이 잠겼던 실제 표시 경로를 지킨다.</summary>
+        [Test]
+        public void RunRestore_RefreshesWaveHudAndUnsubscribesWhenDisabled()
+        {
+            GameObject host = new GameObject("RestoredWaveHudTest");
+            Code.Manager.DayManager previousDay = Code.Manager.DayManager.Current;
+            bool previousIncomplete = Code.Persistence.RunSaveSystem.RestoreIncomplete;
+            Code.UI.WaveView view = null;
+            try
+            {
+                Code.Manager.DayManager day = host.AddComponent<Code.Manager.DayManager>();
+                Code.Manager.WaveManager wave = host.AddComponent<Code.Manager.WaveManager>();
+                Code.Manager.DungeonGradeManager grade = host.AddComponent<Code.Manager.DungeonGradeManager>();
+                Code.Persistence.SaveAgentRegistry registry = host.AddComponent<Code.Persistence.SaveAgentRegistry>();
+                view = host.AddComponent<Code.UI.WaveView>();
+                SetStaticProperty(typeof(Code.Manager.DayManager), "Current", day);
+                SetStaticProperty(typeof(Code.Persistence.RunSaveSystem), "RestoreIncomplete", false);
+                SetInstanceField(wave, "waveConfig", AssetDatabase.LoadAssetAtPath<Code.Manager.WaveConfigSO>("Assets/07.SO/WaveConfig.asset"));
+                SetInstanceField(wave, "_dungeonGrade", grade);
+                SetInstanceField(view, "_dungeonGrade", grade);
+                SetInstanceField(view, "dayManager", day);
+                SetInstanceField(view, "waveManager", wave);
+                InvokeInstance(view, "OnEnable");
+                InvokeInstance(view, "Start");
+                Assert.That(view.Model.PreparationTitle, Is.EqualTo("DAY 1 · 영업 준비"));
+                Assert.That(view.Model.StartEnabled, Is.False);
+
+                Code.Persistence.RunSaveFile file = ConfigureRestore(registry,
+                    new RestoreProbe("day", () =>
+                    {
+                        GameObject entrance = CreateNode("RestoredEntrance", "Entrance", new Vector2Int(2000, 0));
+                        entrance.transform.SetParent(host.transform);
+                        GameObject interior = CreateNode("RestoredRoom", "Corridor", new Vector2Int(2001, 0));
+                        interior.transform.SetParent(host.transform);
+                        day.RestoreCheckpoint(2);
+                    }),
+                    new RestoreProbe("grade", () => grade.RestoreTotalKills(60)));
+                int modelChanges = 0;
+                view.ModelChanged += _ => modelChanges++;
+
+                Assert.That((bool)CallStatic(typeof(Code.Persistence.RunSaveSystem), "RestoreLoadedRun", registry, file), Is.True);
+
+                Assert.That(wave.CanStartWave(3), Is.True, "복원한 입구·방·웨이브 데이터가 시작 조건을 충족해야 합니다.");
+                Assert.That(view.Model.PreparationTitle, Is.EqualTo("DAY 3 · 영업 준비"));
+                Assert.That(view.Model.StartLabel, Is.EqualTo("영업 시작"));
+                Assert.That(view.Model.StartEnabled, Is.True);
+                Assert.That(view.Model.PreparationBody, Does.Contain($"던전 등급 {grade.Grade}"));
+                Assert.That(modelChanges, Is.EqualTo(1), "복원 완료 후 한 번만 화면에 알려야 합니다.");
+                InvokeInstance(view, "OnDisable");
+                day.ShowNextWaveDay(0f);
+                Assert.That(modelChanges, Is.EqualTo(1), "꺼진 화면의 이벤트 구독은 해제돼야 합니다.");
+            }
+            finally
+            {
+                if (view != null)
+                    InvokeInstance(view, "OnDisable");
+                UnityEngine.Object.DestroyImmediate(host);
+                SetStaticProperty(typeof(Code.Manager.DayManager), "Current", previousDay);
+                SetStaticProperty(typeof(Code.Persistence.RunSaveSystem), "RestoreIncomplete", previousIncomplete);
+            }
+        }
+
+        private sealed class RestoreProbe : Code.Persistence.ISaveable
+        {
+            private readonly Action _restore;
+            public string SaveKey { get; }
+            public RestoreProbe(string key, Action restore)
+            {
+                SaveKey = key;
+                _restore = restore;
+            }
+            public string GetSaveData() => "{}";
+            public void RestoreData(string savedData) => _restore();
+        }
+
+        private static Code.Persistence.RunSaveFile ConfigureRestore(Code.Persistence.SaveAgentRegistry registry, params RestoreProbe[] probes)
+        {
+            FieldInfo field = typeof(Code.Persistence.SaveAgentRegistry).GetField("_agents", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, "SaveAgentRegistry._agents를 찾지 못했습니다.");
+            System.Collections.Generic.List<Code.Persistence.ISaveable> agents = (System.Collections.Generic.List<Code.Persistence.ISaveable>)field.GetValue(registry);
+            Code.Persistence.RunSaveFile file = new Code.Persistence.RunSaveFile { completedDay = 2 };
+            foreach (RestoreProbe probe in probes)
+            {
+                agents.Add(probe);
+                file.entries.Add(new Code.Persistence.RunSaveEntry { key = probe.SaveKey, json = "{}" });
+            }
+            return file;
+        }
+
+        private static void SetStaticProperty(Type type, string name, object value)
+        {
+            PropertyInfo property = type.GetProperty(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            Assert.That(property, Is.Not.Null, $"{type.Name}.{name}을 찾지 못했습니다.");
+            property.SetValue(null, value);
+        }
+
+        private static void SetInstanceField(object target, string name, object value)
+        {
+            FieldInfo field = target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, $"{target.GetType().Name}.{name}을 찾지 못했습니다.");
+            field.SetValue(target, value);
+        }
+
+        private static void InvokeInstance(object target, string name)
+        {
+            MethodInfo method = target.GetType().GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null, $"{target.GetType().Name}.{name}을 찾지 못했습니다.");
+            method.Invoke(target, null);
+        }
+
         private static Type Resolve(string fullName)
         {
             var type = Type.GetType($"{fullName}, DungeonKeeper.Runtime");

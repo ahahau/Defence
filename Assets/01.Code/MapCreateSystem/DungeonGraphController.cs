@@ -1409,6 +1409,7 @@ namespace Code.MapCreateSystem
                 var instance = Instantiate(data.Prefab, node.TrapGrid.CellWorldPosition(saved.column, saved.row), Quaternion.identity);
                 instance.transform.SetParent(unitsRoot, true);
                 instance.Initialize(data);
+                instance.BindPolicies(GameScope.Resolve(scope, s => s.MoralePolicy, this, nameof(scope)));
                 instance.ApplyConditionState(saved.condition);
                 node.TryAssignUnitToCell(data, instance, saved.column, saved.row);
                 artifactEventChannel?.RaiseEvent(new UnitArtifactApplyRequestedEvent(instance));

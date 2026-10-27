@@ -19,6 +19,8 @@ namespace Code.Manager
     {
         public static ManagementSettlementManager Current { get; private set; }
 
+        [SerializeField, Tooltip(GameScope.FieldTooltip)] private GameScope scope;
+
         [SerializeField] private GameEventChannelSO dayEventChannel;
         [SerializeField] private GameEventChannelSO costEventChannel;
         [SerializeField] private GameEventChannelSO waveEventChannel;
@@ -39,6 +41,9 @@ namespace Code.Manager
 
         [SerializeField] private string titleFormat = "{0}일차 정산";
 
+        private DungeonGradeManager _dungeonGrade;
+        private MoralePolicyManager _morale;
+        private CostManager _cost;
         private readonly Dictionary<string, int> incomeByLabel = new();
         private readonly Dictionary<string, int> expenseByLabel = new();
         private readonly Dictionary<UnitDataSO, int> hiredUnitCount = new();
@@ -92,6 +97,9 @@ namespace Code.Manager
 
         private void OnEnable()
         {
+            _dungeonGrade = GameScope.Resolve(scope, s => s.DungeonGrade, this, nameof(scope));
+            _morale = GameScope.Resolve(scope, s => s.MoralePolicy, this, nameof(scope));
+            _cost = GameScope.Resolve(scope, s => s.Cost, this, nameof(scope));
             Current = this;
             RegisterListeners();
             HidePanel();
@@ -175,7 +183,7 @@ namespace Code.Manager
         /// </summary>
         private void ApplyNetToGold()
         {
-            var costManager = CostManager.Current;
+            var costManager = _cost;
             if (costManager == null)
                 return;
 
@@ -206,7 +214,7 @@ namespace Code.Manager
             if (!DayManager.IsSettlementDay(currentDay))
                 return;
 
-            var costManager = CostManager.Current;
+            var costManager = _cost;
             if (costManager == null)
                 return;
 
@@ -232,7 +240,7 @@ namespace Code.Manager
             _lastCreditOutcome = CreditDayEndOutcome.WithinLimit;
             _lastEmergencyRepaid = 0;
 
-            var costManager = CostManager.Current;
+            var costManager = _cost;
             if (costManager == null)
                 return;
 
@@ -247,9 +255,9 @@ namespace Code.Manager
         /// CostManager가 그 자리에서 금화를 옮겼다면(대기 중 정책·이벤트 보상 등) 여기서 또 세면 두 번 반영된다.
         /// 두 쪽이 같은 플래그를 보므로 이벤트 수신 순서가 어떻든 판단이 갈리지 않는다.
         /// </summary>
-        private static bool MovesAtSettlement()
+        private bool MovesAtSettlement()
         {
-            var costManager = CostManager.Current;
+            var costManager = _cost;
             return costManager == null || costManager.IsSettlementDeferred;
         }
 
@@ -374,9 +382,9 @@ namespace Code.Manager
         /// 민심이 유지비를 얼마나 밀어올렸는지 항목 이름에 적는다.
         /// 액수만 바뀌면 왜 늘었는지 알 수 없어 민심을 관리할 이유가 보이지 않는다.
         /// </summary>
-        private static string BuildUpkeepLabel()
+        private string BuildUpkeepLabel()
         {
-            var morale = MoralePolicyManager.Current;
+            var morale = _morale;
             if (morale == null)
                 return "유지비";
 
@@ -398,7 +406,7 @@ namespace Code.Manager
                 return 0;
 
             var upkeep = UnitMarketRules.DailyUpkeep(unit.Cost, upkeepCostDivisor);
-            var morale = MoralePolicyManager.Current;
+            var morale = _morale;
             return morale != null ? Mathf.Max(1, Mathf.RoundToInt(upkeep * morale.UpkeepMultiplier)) : upkeep;
         }
 
@@ -419,7 +427,7 @@ namespace Code.Manager
             }
 
             // 민심이 낮으면 같은 부하를 붙잡아 두는 데 더 든다.
-            var morale = MoralePolicyManager.Current;
+            var morale = _morale;
             if (morale != null && total > 0)
                 total = Mathf.Max(1, Mathf.RoundToInt(total * morale.UpkeepMultiplier));
 
@@ -752,7 +760,7 @@ namespace Code.Manager
         }
 
         /// <summary>그날 영업 결과. 방문객 처리와 시설 성과를 정산에 붙인다.</summary>
-        private static void AppendBattleNotes(List<SettlementNote> notes)
+        private void AppendBattleNotes(List<SettlementNote> notes)
         {
             var wave = WaveManager.Current;
             if (wave == null || wave.TotalEnemyCount <= 0)
@@ -765,7 +773,7 @@ namespace Code.Manager
                 battle.Append($"  ·  함정 {wave.WaveTrapDamage}");
             notes.Add(new SettlementNote(battle.ToString()));
 
-            var grade = DungeonGradeManager.Current;
+            var grade = _dungeonGrade;
             if (grade != null)
             {
                 notes.Add(new SettlementNote(
@@ -864,7 +872,7 @@ namespace Code.Manager
                 return;
             }
 
-            var costManager = CostManager.Current;
+            var costManager = _cost;
             if (costManager == null || costManager.CurrentDebt <= 0)
                 return;
 
@@ -882,7 +890,7 @@ namespace Code.Manager
         /// </summary>
         private void AppendCreditNote(List<SettlementNote> notes)
         {
-            var costManager = CostManager.Current;
+            var costManager = _cost;
             if (costManager == null)
                 return;
 

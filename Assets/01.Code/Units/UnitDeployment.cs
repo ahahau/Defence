@@ -2,6 +2,7 @@ using Code.BT;
 using Code.Core;
 using Code.Events;
 using Code.MapCreateSystem;
+using Code.Manager;
 using UnityEngine;
 
 namespace Code.Units
@@ -23,7 +24,8 @@ namespace Code.Units
             int row,
             Unit fallbackPrefab,
             GameEventChannelSO nodeEventChannel,
-            GameEventChannelSO artifactEventChannel)
+            GameEventChannelSO artifactEventChannel,
+            MoralePolicyManager policies)
         {
             if (node == null || unitData == null)
                 return null;
@@ -38,6 +40,7 @@ namespace Code.Units
 
             var unit = Object.Instantiate(prefab, spawnPosition, Quaternion.identity);
             unit.Initialize(unitData);
+            unit.BindPolicies(policies);
 
             if (!node.TryAssignUnitToCell(unitData, unit, column, row))
             {

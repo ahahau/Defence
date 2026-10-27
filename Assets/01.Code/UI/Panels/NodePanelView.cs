@@ -729,7 +729,8 @@ namespace Code.UI
                 row,
                 unitPrefab,
                 nodeEventChannel,
-                artifactEventChannel) != null;
+                artifactEventChannel,
+                GameScope.Resolve(scope, s => s.MoralePolicy, this, nameof(scope))) != null;
         }
 
         private void RefundDeployMagic(UnitDataSO unitData, int magicAmount)

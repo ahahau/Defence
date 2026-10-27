@@ -15,6 +15,7 @@ namespace Code.Manager
         [SerializeField] private GameEventChannelSO costEventChannel;
         [SerializeField, Tooltip("웨이브 진행 상태를 알아야 정산 전까지 금화 이동을 미룰 수 있다.")]
         private GameEventChannelSO waveEventChannel;
+        [SerializeField, Tooltip(GameScope.FieldTooltip)] private GameScope scope;
 
         [SerializeField]
         private int initialGold = 100;
@@ -38,7 +39,10 @@ namespace Code.Manager
         [SerializeField, Tooltip("저장 데이터에 선택 상품이 없을 때 사용할 상품 ID. 목록에 없으면 기존 기본 상품을 사용한다.")]
         private string defaultLoanProductId = "default";
 
-        private readonly CostLedger _ledger = new();
+        // 재로드에도 잔고를 보존하고 최초 자금 설정은 Awake에서만 한다.
+        [SerializeField, HideInInspector, UnityEngine.Serialization.FormerlySerializedAs("_ledger")]
+        private CostLedger ledger = new();
+        private RunSummarySystem _runSummary;
         private readonly List<WeeklyLoanProduct> _loanProductOptions = new();
         private int _lastLoanSettlementDay = -1;
         private int _lastContractSettlementDay = -1;
@@ -49,14 +53,17 @@ namespace Code.Manager
         /// <summary>오늘 영업 중 한 번이라도 빚이 한도를 넘었는가. 영업 종료 판정 뒤 지운다.</summary>
         private bool _exceededLimitToday;
 
-        public int CurrentGold => _ledger.Gold;
+        private RunSummarySystem RunSummary =>
+            _runSummary != null ? _runSummary : _runSummary = GameScope.Resolve(scope, s => s.RunSummary, this, nameof(scope));
+
+        public int CurrentGold => ledger.Gold;
         public float CurrentBuildDiscountRate => nextBuildDiscountRate;
 
         /// <summary>금화 또는 부채가 바뀌었을 때 HUD처럼 현재 장부를 읽는 표시가 갱신한다.</summary>
         public event Action StateChanged;
 
         /// <summary>하루 정산에서 금화로 메우지 못해 쌓인 빚. 청산일 전에는 갚을 수 없다.</summary>
-        public int CurrentDebt => _ledger.Debt;
+        public int CurrentDebt => ledger.Debt;
 
         /// <summary>이번 주에 적용되는 대출 상품 ID. 이전 저장의 빈 값은 기본 상품으로 해석한다.</summary>
         public string ActiveLoanProductId => ResolveActiveLoanProduct().Id;
@@ -93,21 +100,21 @@ namespace Code.Manager
         public CreditDayEndOutcome ResolveDayEndCredit(out int repaid)
         {
             var limit = CreditLimit;
-            var exceeded = _exceededLimitToday || _ledger.Debt > limit;
+            var exceeded = _exceededLimitToday || ledger.Debt > limit;
 
-            repaid = CreditWarningRules.EmergencyRepayment(_ledger.Debt, limit, _ledger.Gold);
+            repaid = CreditWarningRules.EmergencyRepayment(ledger.Debt, limit, ledger.Gold);
             if (repaid > 0)
             {
-                _ledger.TrySpend(repaid);
-                _ledger.SetDebt(_ledger.Debt - repaid);
+                ledger.TrySpend(repaid);
+                ledger.SetDebt(ledger.Debt - repaid);
                 RaiseGoldChanged();
-                RunSummarySystem.Current?.RecordDebt(CurrentDebt);
+                RunSummary?.RecordDebt(CurrentDebt);
                 costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, -repaid));
             }
 
             var warningsBefore = _creditWarnings;
-            var outcome = CreditWarningRules.EvaluateDayEnd(_ledger.Debt, limit, _creditWarnings, exceeded);
-            _creditWarnings = CreditWarningRules.NextWarnings(_creditWarnings, outcome, _ledger.Debt);
+            var outcome = CreditWarningRules.EvaluateDayEnd(ledger.Debt, limit, _creditWarnings, exceeded);
+            _creditWarnings = CreditWarningRules.NextWarnings(_creditWarnings, outcome, ledger.Debt);
             _exceededLimitToday = false;
 
             costEventChannel?.RaiseEvent(new CreditStatusChangedEvent(outcome, repaid, _creditWarnings, CurrentDebt, limit));
@@ -117,7 +124,7 @@ namespace Code.Manager
 
             if (outcome == CreditDayEndOutcome.Bankrupt)
             {
-                var reason = _ledger.Debt > limit
+                var reason = ledger.Debt > limit
                     ? $"영업이 끝날 때까지 빚 {GoldText.Amount(CurrentDebt)}이 한도 {GoldText.Amount(limit)}를 넘어 파산했습니다"
                     : $"신용 경고 {CreditWarningRules.MaxWarnings}단계에서 또 한도를 넘어 파산했습니다";
                 costEventChannel?.RaiseEvent(new BankruptcyEvent(Mathf.Max(0, CurrentDebt - limit), CurrentGold, reason));
@@ -147,21 +154,28 @@ namespace Code.Manager
         /// </summary>
         public bool IsSettlementDeferred => _isSettlementDeferred;
 
-        private void Awake()
+        private bool TryRegisterCurrent()
         {
             if (Current != null && Current != this)
             {
                 Debug.LogError($"Duplicate {nameof(CostManager)} detected. Keep exactly one scene instance.", this);
                 enabled = false;
-                return;
+                return false;
             }
 
             Current = this;
-            _ledger.Reset(initialGold, 0);
+            return true;
+        }
+
+        private void Awake()
+        {
+            if (!TryRegisterCurrent())
+                return;
+
+            ledger.Reset(initialGold, 0);
             _activeLoanProductId = ResolveDefaultLoanProductId();
             _contractWeeksRemaining = ResolveContractWeeks(_activeLoanProductId);
         }
-
         private void OnDestroy()
         {
             if (Current == this)
@@ -195,12 +209,12 @@ namespace Code.Manager
             if (owed == 0)
                 return 0;
 
-            var borrowed = _ledger.ChargeOrBorrow(owed);
+            var borrowed = ledger.ChargeOrBorrow(owed);
             if (borrowed > 0)
             {
                 NoteCreditLimit();
                 costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, borrowed));
-                RunSummarySystem.Current?.RecordDebt(CurrentDebt);
+                RunSummary?.RecordDebt(CurrentDebt);
             }
 
             RaiseGoldChanged();
@@ -217,10 +231,10 @@ namespace Code.Manager
             if (amount <= 0 || !loan.TryBorrow(amount))
                 return false;
 
-            _ledger.SetDebt(loan.Principal);
-            _ledger.Add(amount);
+            ledger.SetDebt(loan.Principal);
+            ledger.Add(amount);
             RaiseGoldChanged();
-            RunSummarySystem.Current?.RecordDebt(CurrentDebt);
+            RunSummary?.RecordDebt(CurrentDebt);
             costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, amount));
             return true;
         }
@@ -236,11 +250,11 @@ namespace Code.Manager
             if (cash == 0 && debtAdded == 0)
                 return;
 
-            _ledger.SetDebt(_ledger.Debt + debtAdded);
-            _ledger.Add(cash);
+            ledger.SetDebt(ledger.Debt + debtAdded);
+            ledger.Add(cash);
             NoteCreditLimit();
             RaiseGoldChanged();
-            RunSummarySystem.Current?.RecordDebt(CurrentDebt);
+            RunSummary?.RecordDebt(CurrentDebt);
             costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, debtAdded));
         }
 
@@ -248,7 +262,7 @@ namespace Code.Manager
         public int PreviewWeeklyDue(int extraDebt)
         {
             var product = ResolveActiveLoanProduct();
-            var principal = Mathf.Max(0, _ledger.Debt + extraDebt);
+            var principal = Mathf.Max(0, ledger.Debt + extraDebt);
             var preview = new WeeklyLoanProduct(
                 product.Id,
                 Mathf.Max(product.CreditLimit, principal),
@@ -267,12 +281,12 @@ namespace Code.Manager
         public bool TryRepayEarly(int principal)
         {
             principal = Mathf.Min(Mathf.Max(0, principal), CurrentDebt);
-            if (principal <= 0 || !_ledger.TrySpend(principal))
+            if (principal <= 0 || !ledger.TrySpend(principal))
                 return false;
 
-            _ledger.SetDebt(_ledger.Debt - principal);
+            ledger.SetDebt(ledger.Debt - principal);
             RaiseGoldChanged();
-            RunSummarySystem.Current?.RecordDebt(CurrentDebt);
+            RunSummary?.RecordDebt(CurrentDebt);
             costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, -principal));
             return true;
         }
@@ -292,7 +306,7 @@ namespace Code.Manager
         /// <summary>즉시 결제의 단일 경로. 호출자가 가격 검증과 결제 결과 이벤트를 맡는다.</summary>
         private bool TryChargeImmediate(int amount, bool notifyWhenFree = false)
         {
-            if (amount < 0 || !_ledger.TrySpend(amount))
+            if (amount < 0 || !ledger.TrySpend(amount))
                 return false;
             if (amount > 0 || notifyWhenFree)
                 RaiseGoldChanged();
@@ -304,12 +318,15 @@ namespace Code.Manager
             if (amount <= 0)
                 return;
 
-            _ledger.Add(amount);
+            ledger.Add(amount);
             RaiseGoldChanged();
         }
 
         private void OnEnable()
         {
+            if (!TryRegisterCurrent())
+                return;
+
             RegisterListeners();
         }
 
@@ -371,7 +388,7 @@ namespace Code.Manager
         {
             _isSettlementDeferred = false;
 
-            var settlement = _ledger.ApplySettlement(net);
+            var settlement = ledger.ApplySettlement(net);
             var paidFromGold = settlement.PaidFromGold;
             var borrowed = settlement.Borrowed;
             if (borrowed > 0)
@@ -381,7 +398,7 @@ namespace Code.Manager
             }
 
             RaiseGoldChanged();
-            RunSummarySystem.Current?.RecordDebt(CurrentDebt);
+            RunSummary?.RecordDebt(CurrentDebt);
             costEventChannel?.RaiseEvent(
                 new SettlementAppliedEvent(net, paidFromGold, borrowed, CurrentGold, CurrentDebt));
         }
@@ -401,20 +418,20 @@ namespace Code.Manager
             if (quote.MinimumPayment <= 0)
                 return true;
 
-            if (!_ledger.TrySpend(quote.MinimumPayment))
+            if (!ledger.TrySpend(quote.MinimumPayment))
             {
                 costEventChannel?.RaiseEvent(new BankruptcyEvent(quote.MinimumPayment, CurrentGold));
                 return false;
             }
 
             loan.TryApplyWeeklyPayment(quote.MinimumPayment);
-            _ledger.SetDebt(loan.Principal);
+            ledger.SetDebt(loan.Principal);
             // 빚을 다 갚아야 신용 경고가 처음으로 돌아간다.
-            if (_ledger.Debt <= 0)
+            if (ledger.Debt <= 0)
                 _creditWarnings = 0;
             _lastLoanSettlementDay = settlementDay;
             RaiseGoldChanged();
-            RunSummarySystem.Current?.RecordDebt(CurrentDebt);
+            RunSummary?.RecordDebt(CurrentDebt);
             costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, -quote.MinimumPayment));
             return true;
         }
@@ -488,7 +505,7 @@ namespace Code.Manager
         /// <summary>빚이 늘어난 직후 부른다. 한도를 넘었으면 오늘 넘었다는 사실을 남긴다.</summary>
         private void NoteCreditLimit()
         {
-            if (_ledger.Debt > CreditLimit)
+            if (ledger.Debt > CreditLimit)
                 _exceededLimitToday = true;
         }
 
@@ -507,7 +524,7 @@ namespace Code.Manager
         {
             var product = ResolveActiveLoanProduct();
             var loan = new WeeklyLoanLedger(product);
-            loan.RestorePrincipal(_ledger.Debt);
+            loan.RestorePrincipal(ledger.Debt);
             return loan;
         }
 
@@ -521,7 +538,7 @@ namespace Code.Manager
 
             return CreditWarningRules.ApplyWarnings(new WeeklyLoanProduct(
                 "default",
-                Mathf.Max(weeklyLoanCreditLimit, _ledger.Debt),
+                Mathf.Max(weeklyLoanCreditLimit, ledger.Debt),
                 weeklyDebtInterest,
                 weeklyMinimumPrincipalRate,
                 "기본 대출"), _creditWarnings);
@@ -536,14 +553,14 @@ namespace Code.Manager
 
         private WeeklyLoanProduct RaiseLimitToDebt(WeeklyLoanProduct product)
         {
-            if (_ledger.Debt <= product.CreditLimit)
+            if (ledger.Debt <= product.CreditLimit)
                 return product;
 
             // 인스펙터에서 한도를 낮추거나 예전 저장을 불러도 이미 존재하던 빚을 지우지 않는다.
             // 이름까지 새로 만들면 대출 화면에서 같은 상품이 ID로 바뀌어 보인다.
             return new WeeklyLoanProduct(
                 product.Id,
-                _ledger.Debt,
+                ledger.Debt,
                 product.WeeklyInterestRate,
                 product.MinimumPrincipalRate,
                 product.DisplayName);
@@ -660,7 +677,7 @@ namespace Code.Manager
             if (evt.GoldAmount <= 0 || _isSettlementDeferred)
                 return;
 
-            _ledger.Add(evt.GoldAmount);
+            ledger.Add(evt.GoldAmount);
             RaiseGoldChanged();
         }
 
@@ -669,7 +686,7 @@ namespace Code.Manager
             if (evt.GoldAmount <= 0 || _isSettlementDeferred)
                 return;
 
-            _ledger.TrySpend(evt.GoldAmount);
+            ledger.TrySpend(evt.GoldAmount);
             RaiseGoldChanged();
         }
 
@@ -733,7 +750,7 @@ namespace Code.Manager
             int creditWarnings,
             int contractWeeksRemaining)
         {
-            _ledger.Reset(gold, debt);
+            ledger.Reset(gold, debt);
             _creditWarnings = debt > 0 ? CreditWarningRules.Clamp(creditWarnings) : 0;
             _exceededLimitToday = false;
             nextBuildDiscountRate = Mathf.Clamp(buildDiscountRate, 0f, 0.9f);
@@ -793,9 +810,12 @@ namespace Code.Manager
         /// <summary>
         /// 순수 금전 장부. Unity 이벤트와 씬 상태를 몰라 단위 테스트로 검증할 수 있다.
         /// </summary>
+        [Serializable]
         private sealed class CostLedger
         {
+            [field: SerializeField]
             public int Gold { get; private set; }
+            [field: SerializeField]
             public int Debt { get; private set; }
 
             public void Reset(int gold, int debt)

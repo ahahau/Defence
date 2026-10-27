@@ -17,8 +17,6 @@ namespace Code.Manager
     /// </summary>
     public class UnitRevivalSystem : MonoBehaviour
     {
-        public static UnitRevivalSystem Current { get; private set; }
-
         [SerializeField] private GameEventChannelSO costEventChannel;
 
         [SerializeField, Min(1f), Tooltip("쓰러진 부하가 다시 설 때까지 걸리는 시간(초).")]
@@ -107,23 +105,9 @@ namespace Code.Manager
 
         private void Awake()
         {
-            if (Current != null && Current != this)
-            {
-                Debug.LogError($"Duplicate {nameof(UnitRevivalSystem)} detected. Keep exactly one scene instance.", this);
-                enabled = false;
-                return;
-            }
-
-            Current = this;
             _currentRevivalMana = MaxRevivalMana;
             RaiseRevivalManaChanged();
             RaiseStateChanged();
-        }
-
-        private void OnDestroy()
-        {
-            if (Current == this)
-                Current = null;
         }
 
         private void Update()

@@ -128,6 +128,8 @@ namespace Code.UI
         {
             Current = this;
 
+            if (dayManager != null)
+                dayManager.DayPreviewChanged += HandleDayPreviewChanged;
             waveEventChannel?.AddListener<WaveStartedEvent>(HandleWaveStarted);
             waveEventChannel?.AddListener<WaveEndedEvent>(HandleWaveEnded);
             gameStateEventChannel?.AddListener<GameOverEvent>(HandleGameOver);
@@ -139,6 +141,8 @@ namespace Code.UI
             if (Current == this)
                 Current = null;
 
+            if (dayManager != null)
+                dayManager.DayPreviewChanged -= HandleDayPreviewChanged;
             waveEventChannel?.RemoveListener<WaveStartedEvent>(HandleWaveStarted);
             waveEventChannel?.RemoveListener<WaveEndedEvent>(HandleWaveEnded);
             gameStateEventChannel?.RemoveListener<GameOverEvent>(HandleGameOver);
@@ -199,6 +203,13 @@ namespace Code.UI
             _gameOver = true;
             _model = default;
             Render();
+        }
+
+        private void HandleDayPreviewChanged(int nextDay)
+        {
+            // 먼저 깨어난 DayManager의 최초 알림은 Start가 처리한다.
+            if (_started)
+                RefreshStartButton();
         }
 
         private void HandleNodeBuilt(NodeBuiltEvent evt) => RefreshStartButton();

@@ -57,8 +57,6 @@ namespace Code.Manager
         private int _situationDay = -1;
         private SituationKind _situation;
 
-        public static MoralePolicyManager Current { get; private set; }
-
         /// <summary>이번 전환에 판정한 상황 사건. 대화 실행기가 사건 내용을 만들 때 읽는다.</summary>
         public SituationKind CurrentSituation => _situation;
 
@@ -160,21 +158,7 @@ namespace Code.Manager
 
         private void Awake()
         {
-            if (Current != null && Current != this)
-            {
-                Debug.LogError($"Duplicate {nameof(MoralePolicyManager)} detected. Keep exactly one scene instance.", this);
-                enabled = false;
-                return;
-            }
-
-            Current = this;
             CurrentMorale = Mathf.Clamp(initialMorale, 0, 100);
-        }
-
-        private void OnDestroy()
-        {
-            if (Current == this)
-                Current = null;
         }
 
         private void OnEnable()
@@ -593,6 +577,7 @@ namespace Code.Manager
             target.normalEventCooldown = Events.NormalCooldown;
             target.policyDeferred = Events.PolicyDeferred;
             target.chosenEventKeys = new List<string>(Events.ChosenKeys);
+            Events.CaptureFollowUps(target);
             foreach (var policy in selectedPolicies)
                 if (policy != null) target.selected.Add(policy.name);
             foreach (var policy in activePolicies)
@@ -632,6 +617,7 @@ namespace Code.Manager
                     savedPolicies.normalEventCooldown,
                     savedPolicies.hasEventLedger,
                     savedPolicies.policyDeferred);
+                Events.RestoreFollowUps(savedPolicies);
             }
             else
             {

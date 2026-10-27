@@ -160,9 +160,12 @@ namespace Code.Units
                 combatant.AttackLanded -= HandleAttackLanded;
         }
 
-        private void Start()
+        /// <summary>이전 정책 구독을 해제하고 전달받은 매니저의 현재 보정을 즉시 적용한다.</summary>
+        public void BindPolicies(MoralePolicyManager policies)
         {
-            _policyManager = MoralePolicyManager.Current;
+            if (_policyManager != null)
+                _policyManager.CombatModifiersChanged -= HandlePolicyCombatModifiersChanged;
+            _policyManager = policies;
             if (_policyManager != null)
             {
                 _policyManager.CombatModifiersChanged -= HandlePolicyCombatModifiersChanged;

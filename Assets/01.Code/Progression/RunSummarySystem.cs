@@ -11,8 +11,6 @@ namespace Code.Progression
     /// </summary>
     public sealed class RunSummarySystem : MonoBehaviour
     {
-        public static RunSummarySystem Current { get; private set; }
-
         public int WavesFought { get; private set; }
         public int Invaders { get; private set; }
         public int Kills { get; private set; }
@@ -22,24 +20,6 @@ namespace Code.Progression
 
         /// <summary>이 판에서 빚이 가장 많았을 때의 액수. 얼마나 아슬아슬했는지가 남는다.</summary>
         public int PeakDebt { get; private set; }
-
-        private void Awake()
-        {
-            if (Current != null && Current != this)
-            {
-                Debug.LogError($"Duplicate {nameof(RunSummarySystem)} detected. Keep exactly one scene instance.", this);
-                enabled = false;
-                return;
-            }
-
-            Current = this;
-        }
-
-        private void OnDestroy()
-        {
-            if (Current == this)
-                Current = null;
-        }
 
         public void ResetSummary()
         {

@@ -86,6 +86,12 @@ namespace Code.Persistence
             if (registry == null || !TryLoad(out var file))
                 return false;
 
+            return RestoreLoadedRun(registry, file);
+        }
+
+        // 파일 접근 없이도 같은 복원 순서와 완료 시점을 검증할 수 있게 분리한다.
+        private static bool RestoreLoadedRun(SaveAgentRegistry registry, RunSaveFile file)
+        {
             var restoredAny = false;
 
             foreach (var agent in registry.Agents)
@@ -115,7 +121,12 @@ namespace Code.Persistence
                 ? $"{file.completedDay}일차 체크포인트를 일부만 불러왔습니다. 이 판은 저장되지 않습니다."
                 : $"{file.completedDay}일차 체크포인트를 불러왔습니다. ({file.savedAtUtc})");
 
-            return !RestoreIncomplete;
+            if (RestoreIncomplete)
+                return false;
+
+            // 일차보다 뒤에 복원되는 등급까지 준비된 뒤 다음 영업 안내를 다시 계산한다.
+            DayManager.Current?.ShowNextWaveDay(0f);
+            return true;
         }
 
         public static bool TryLoad(out RunSaveFile file)

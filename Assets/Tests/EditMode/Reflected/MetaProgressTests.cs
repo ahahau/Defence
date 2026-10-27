@@ -33,6 +33,48 @@ namespace Tests.EditMode.Rules
                 File.Delete(_path);
         }
 
+        /// <summary>새 판에만 금화·민심을 주고 이어하기에는 지속형 마력만 적용해야 한다.</summary>
+        [TestCase(false)]
+        [TestCase(true)]
+        public void StartModifiers_UseSuppliedManagersAndDoNotRepeatOneTimeBonusesOnContinue(bool hasSave)
+        {
+            GameObject root = new GameObject("Start modifier context");
+            root.SetActive(false);
+            try
+            {
+                Code.Manager.CostManager cost = root.AddComponent<Code.Manager.CostManager>();
+                Code.Manager.MoralePolicyManager morale = root.AddComponent<Code.Manager.MoralePolicyManager>();
+                Code.Manager.UnitRevivalSystem revival = root.AddComponent<Code.Manager.UnitRevivalSystem>();
+
+                cost.AddGold(200);
+                morale.RestoreCheckpoint(50, 0, null);
+                int initialMana = revival.MaxRevivalMana;
+                MetaProfileStore.Profile.progress = 100;
+                MetaProfileStore.Profile.equipped.AddRange(new[] { 0, 1, 2 });
+                if (hasSave) MetaProfileStore.BeginNewRun();
+                MetaRunStarter.ApplyForRun(cost, morale, revival, hasSave);
+                Assert.That(cost.CurrentGold, Is.EqualTo(hasSave ? 200 : 300));
+                Assert.That(morale.CurrentMorale, Is.EqualTo(hasSave ? 50 : 65));
+                Assert.That(revival.MaxRevivalMana, Is.EqualTo(initialMana + 10));
+                Assert.That(MetaProfileStore.Profile.currentRun.modifiers, Is.EquivalentTo(new[] { 0, 1, 2 }));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        /// <summary>첫 주 지원자 생성보다 시작 민심 보정이 먼저 실행되어야 한다.</summary>
+        [Test]
+        public void StartModifiers_ScopeRunsBeforeRosterAndHasNoGlobalBootstrap()
+        {
+            DefaultExecutionOrder scopeOrder = System.Attribute.GetCustomAttribute(typeof(Code.Manager.GameScope), typeof(DefaultExecutionOrder)) as DefaultExecutionOrder;
+            Assert.That(scopeOrder, Is.Not.Null);
+            Assert.That(scopeOrder.order, Is.LessThan(0));
+            Assert.That(typeof(MetaRunStarter).GetFields(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic), Is.Empty);
+        }
+
+
         [Test]
         public void RunPoints_CountDaysAndBosses()
         {
