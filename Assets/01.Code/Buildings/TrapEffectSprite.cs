@@ -45,7 +45,7 @@ namespace Code.Buildings
             _flying = false;
 
             var scale = ScaleFor(frames[0], width);
-            transform.localScale = new Vector3(scale, scale, 1f);
+            SetWorldScale(scale);
             transform.rotation = Quaternion.identity;
             if (anchorBottom)
                 position.y += (frames[0].bounds.size.y * scale - width) * 0.5f;
@@ -68,8 +68,7 @@ namespace Code.Buildings
             _to = to;
             _flySeconds = Mathf.Max(0.01f, seconds);
 
-            var scale = ScaleFor(sprite, width);
-            transform.localScale = new Vector3(scale, scale, 1f);
+            SetWorldScale(ScaleFor(sprite, width));
             var direction = to - from;
             transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
             transform.position = from;
@@ -110,6 +109,19 @@ namespace Code.Buildings
             }
 
             _renderer.sprite = _frames[index];
+        }
+
+        /// <summary>
+        /// 월드 배율을 <paramref name="scale"/>로 맞춘다. 부모(함정)는 여러 칸이면 칸 수만큼 커져 있어, 로컬 배율에 그대로 넣으면
+        /// 2×2 함정의 연출이 2배로 그려졌다. 폭·위치 계산은 월드 값이라 부모 배율로 나눈다.
+        /// </summary>
+        private void SetWorldScale(float scale)
+        {
+            var parent = transform.parent != null ? transform.parent.lossyScale : Vector3.one;
+            transform.localScale = new Vector3(
+                parent.x != 0f ? scale / parent.x : scale,
+                parent.y != 0f ? scale / parent.y : scale,
+                1f);
         }
 
         private static float ScaleFor(Sprite sprite, float width)

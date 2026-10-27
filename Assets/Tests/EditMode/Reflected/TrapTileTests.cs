@@ -332,6 +332,43 @@ namespace Tests.EditMode.Rules
         /// 방식·칸·상태이상·해금일을 나눴다. 생성기를 다시 돌려도 이 조합이 바뀌지 않게 고정한다.
         /// </summary>
         /// <summary>
+        /// 여러 칸 함정은 설치 때 함정 전체를 칸 수만큼 키운다(<c>NodeTrapGrid.TryPlace</c>). 발동 연출은 그 함정의 자식이라 배율을
+        /// 물려받아, 번개 구름(2×2)의 연출이 의도한 폭의 2배로 그려지고 아래 맞춤도 어긋났다(2026-10-27 실측: 칸 1.25, 폭 10 — 의도 5).
+        /// 연출의 월드 폭·아래 끝은 부모 배율과 상관없이 넘긴 값이어야 한다.
+        /// </summary>
+        [TestCase(1f, 1f), TestCase(2f, 2f), TestCase(2f, 1f)]
+        public void TrapEffect_KeepsItsWorldSizeUnderAScaledTrap(float parentX, float parentY)
+        {
+            var trap = new GameObject("Trap");
+            _created.Add(trap);
+            trap.transform.position = new Vector3(3f, -4f, 0f);
+            trap.transform.localScale = new Vector3(parentX, parentY, 1f);
+
+            var texture = new Texture2D(32, 64);
+            _created.Add(texture);
+            texture.SetPixels32(Enumerable.Repeat(new Color32(255, 255, 255, 255), 32 * 64).ToArray());
+            texture.Apply();
+            var sprite = Sprite.Create(texture, new Rect(0f, 0f, 32f, 64f), new Vector2(0.5f, 0.5f), 32f);
+            _created.Add(sprite);
+
+            var child = new GameObject("TriggerEffect");
+            child.transform.SetParent(trap.transform, false);
+            var effect = child.AddComponent<TrapEffectSprite>();
+            effect.Initialize(null, 50);
+
+            const float width = 5f;
+            effect.Play(new[] { sprite }, 0.1f, trap.transform.position, width, 0f, true);
+            var bounds = child.GetComponent<SpriteRenderer>().bounds;
+            Assert.That(bounds.size.x, Is.EqualTo(width).Within(0.01f), "연출 폭은 넘긴 월드 폭이어야 합니다.");
+            Assert.That(bounds.size.y, Is.EqualTo(width * 2f).Within(0.01f), "그림 비율은 그대로입니다.");
+            Assert.That(bounds.min.y, Is.EqualTo(trap.transform.position.y - width * 0.5f).Within(0.01f),
+                "아래 끝은 범위 사각형 아래 끝입니다.");
+
+            effect.Fly(sprite, trap.transform.position, trap.transform.position + Vector3.right * 4f, 1f, 0.2f);
+            Assert.That(child.GetComponent<SpriteRenderer>().bounds.size.x, Is.EqualTo(1f).Within(0.01f), "화살 길이도 월드 값입니다.");
+        }
+
+        /// <summary>
         /// 범위 연출은 그림의 아래 끝을 범위 사각형 아래 끝(2×2 구름 + 반경 1이면 구름보다 한 칸 아래)에 맞춘다. 번개 시트를 그대로 쓰면
         /// 번개가 구름을 지나 한 칸 더 내려가, 방 아래쪽에 깐 구름에서 벽 밖까지 뻗었다(2026-10-27 실측 캡처). 번개 끝은 구름 바닥이어야 한다.
         /// </summary>
