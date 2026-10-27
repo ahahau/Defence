@@ -176,6 +176,10 @@ namespace Code.Persistence
         /// <summary>한 번 고른 사건 선택지(방침·대화). 다시 만나면 결과를 보여 준다.</summary>
         public List<string> chosenEventKeys = new();
 
+        /// <summary>선택 이후 기다리는 후속과 이미 처리한 첫 사건. 누락된 옛 저장은 빈 상태다.</summary>
+        public List<SavedDialogueFollowUp> pendingDialogueFollowUps = new();
+        public List<string> completedDialogueFollowUps = new();
+
         /// <summary>다음 일반 사건까지 남은 전환 수.</summary>
         public int normalEventCooldown;
 

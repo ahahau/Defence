@@ -1,0 +1,84 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47b6fbf626d84142a85744b0f9e1e3dc, type: 3}
+  m_Name: DayEvent_NightOvertime
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Dialogue.DialogueSequenceSO
+  displayTitle: "\uC57C\uAC04 \uCD94\uAC00 \uADFC\uBB34"
+  lines:
+  - speakerName: "\uC784\uD504 \uCC38\uBAA8"
+    text: "\uC8FC\uC778\uB2D8, \uC57C\uAC04 \uC791\uC5C5\uC73C\uB85C \uB0A8\uC740 \uBB3C\uC790\uB97C \uD314\uC790\uB294 \uC81C\uC548\uC785\uB2C8\uB2E4.\n\uB300\uC2E0 \uBD80\uD558\uB4E4\uC744 \uC26C\uAC8C \uD558\uACE0 \uC2DD\uC0AC\uB97C \uB300\uC811\uD560 \uC218\uB3C4 \uC788\uC2B5\uB2C8\uB2E4."
+    enterActions: []
+    choices:
+    - text: "\uC790\uC6D0\uC790\uB97C \uBAA8\uC544 \uC57C\uAC04 \uC791\uC5C5\uC744 \uD55C\uB2E4"
+      effectSummary: "\uAE08\uD654 +35 / \uBBFC\uC2EC -6"
+      actions:
+      - {fileID: 11400000, guid: ea088b6deb1d40de90a45f47cd653610, type: 2}
+      - {fileID: 11400000, guid: f06c646309c14f4d83a7a36263779306, type: 2}
+      nextSequence: {fileID: 992927807614568080}
+      nextLineIndex: 0
+      routes: []
+    - text: "\uCD94\uAC00 \uADFC\uBB34 \uB300\uC2E0 \uC2DD\uC0AC\uB97C \uB300\uC811\uD55C\uB2E4"
+      effectSummary: "\uAE08\uD654 -15 / \uBBFC\uC2EC +6"
+      actions:
+      - {fileID: 11400000, guid: 6140ecac27ac83a4eb3076504304f26b, type: 2}
+      - {fileID: 11400000, guid: 31079dbbd8f2da548a935e323280294e, type: 2}
+      nextSequence: {fileID: 5156224315235716958}
+      nextLineIndex: 0
+      routes: []
+  metaProgressRequired: 0
+  followUps:
+  - choiceIndex: 0
+    delayDays: 2
+    sequence: {fileID: 11400000, guid: f4921ed657efebe46a24b398fe31cae9, type: 2}
+  - choiceIndex: 1
+    delayDays: 2
+    sequence: {fileID: 11400000, guid: 75b5e06531df6cb4c9e68deb8c27fa2a, type: 2}
+--- !u!114 &992927807614568080
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47b6fbf626d84142a85744b0f9e1e3dc, type: 3}
+  m_Name: DayEvent_NightOvertime_OutcomeA
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Dialogue.DialogueSequenceSO
+  displayTitle: "\uC57C\uAC04 \uCD94\uAC00 \uADFC\uBB34"
+  lines:
+  - speakerName: "\uC784\uD504 \uCC38\uBAA8"
+    text: "\uBC24\uC0C8 \uC815\uB9AC\uD55C \uBB3C\uC790\uB97C \uD314\uC544 \uAE08\uD654\uB97C \uB9C8\uB828\uD588\uC2B5\uB2C8\uB2E4.\n\uC544\uCE68 \uC2DD\uD0C1\uC5D0\uC11C\uB294 \uD53C\uACE4\uD55C \uC784\uD504\uB4E4\uC758 \uD55C\uC228\uC774 \uBA3C\uC800 \uB4E4\uB9BD\uB2C8\uB2E4."
+    enterActions: []
+    choices: []
+  metaProgressRequired: 0
+  followUps: []
+--- !u!114 &5156224315235716958
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47b6fbf626d84142a85744b0f9e1e3dc, type: 3}
+  m_Name: DayEvent_NightOvertime_OutcomeB
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Dialogue.DialogueSequenceSO
+  displayTitle: "\uC57C\uAC04 \uCD94\uAC00 \uADFC\uBB34"
+  lines:
+  - speakerName: "\uC784\uD504 \uCC38\uBAA8"
+    text: "\uC1A5\uB69C\uAED1\uC774 \uC5F4\uB9AC\uC790 \uBD80\uD558\uB4E4\uC774 \uC77C\uC190\uC744 \uB193\uACE0 \uBAA8\uC600\uC2B5\uB2C8\uB2E4.\n\uC624\uB298\uB9CC\uD07C\uC740 \uBE5A \uC774\uC57C\uAE30 \uB300\uC2E0 \uC2DD\uD0C1\uC758 \uC6C3\uC74C\uC18C\uB9AC\uAC00 \uB4E4\uB9BD\uB2C8\uB2E4."
+    enterActions: []
+    choices: []
+  metaProgressRequired: 0
+  followUps: []

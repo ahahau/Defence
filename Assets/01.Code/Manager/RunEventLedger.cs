@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Code.Persistence;
 using UnityEngine;
 
 namespace Code.Manager
@@ -19,6 +20,8 @@ namespace Code.Manager
         public const int MaxNormalCooldown = 6;
 
         private readonly HashSet<string> _chosenKeys = new();
+        private readonly List<SavedDialogueFollowUp> _pendingFollowUps = new();
+        private readonly HashSet<string> _completedFollowUps = new();
         private int _resolvedDay = -1;
         private TransitionEventKind _resolvedKind;
 
@@ -29,6 +32,99 @@ namespace Code.Manager
         public bool PolicyDeferred { get; private set; }
 
         public IReadOnlyCollection<string> ChosenKeys => _chosenKeys;
+        public int PendingFollowUpCount => _pendingFollowUps.Count;
+
+        /// <summary>한 첫 사건은 한 판에 한 번만 후속을 만든다. 선택하지 않은 사건은 호출하지 않는다.</summary>
+        public bool TryScheduleFollowUp(string sourceKey, string sequenceKey, int selectedDay, int delayDays)
+        {
+            if (string.IsNullOrWhiteSpace(sourceKey) || string.IsNullOrWhiteSpace(sequenceKey)
+                || _completedFollowUps.Contains(sourceKey))
+                return false;
+
+            foreach (SavedDialogueFollowUp pending in _pendingFollowUps)
+            {
+                if (pending.sourceKey == sourceKey)
+                    return false;
+            }
+
+            _pendingFollowUps.Add(new SavedDialogueFollowUp
+            {
+                sourceKey = sourceKey,
+                sequenceKey = sequenceKey,
+                dueDay = (int)System.Math.Min(int.MaxValue,
+                    (long)System.Math.Max(0, selectedDay) + System.Math.Max(2, delayDays))
+            });
+            return true;
+        }
+
+        /// <summary>등장 허가가 난 일반 사건 자리에서만 조회한다. 예정일 동률은 예약 순서다.</summary>
+        public bool TryGetReadyFollowUp(int day, out string sourceKey, out string sequenceKey)
+        {
+            SavedDialogueFollowUp ready = null;
+            foreach (SavedDialogueFollowUp pending in _pendingFollowUps)
+            {
+                if (pending.dueDay <= day && (ready == null || pending.dueDay < ready.dueDay))
+                    ready = pending;
+            }
+
+            sourceKey = ready?.sourceKey;
+            sequenceKey = ready?.sequenceKey;
+            return ready != null;
+        }
+
+        /// <summary>후속의 실제 선택 또는 건너뛰기를 확정한다. 단순 닫기/중단은 예약을 남긴다.</summary>
+        public void CompleteFollowUp(string sourceKey)
+        {
+            for (int i = 0; i < _pendingFollowUps.Count; i++)
+            {
+                if (_pendingFollowUps[i].sourceKey != sourceKey)
+                    continue;
+
+                _pendingFollowUps.RemoveAt(i);
+                _completedFollowUps.Add(sourceKey);
+                return;
+            }
+        }
+
+        /// <summary>저장 객체와 런타임 장부가 같은 가변 예약을 공유하지 않도록 복사한다.</summary>
+        public void CaptureFollowUps(SavedPolicyState target)
+        {
+            target.pendingDialogueFollowUps = new List<SavedDialogueFollowUp>();
+            target.completedDialogueFollowUps = new List<string>(_completedFollowUps);
+            foreach (SavedDialogueFollowUp pending in _pendingFollowUps)
+            {
+                target.pendingDialogueFollowUps.Add(new SavedDialogueFollowUp
+                {
+                    sourceKey = pending.sourceKey,
+                    sequenceKey = pending.sequenceKey,
+                    dueDay = pending.dueDay
+                });
+            }
+        }
+
+        /// <summary>누락된 옛 저장은 빈 예약으로 시작한다. 완료된 예약과 중복 항목은 되살리지 않는다.</summary>
+        public void RestoreFollowUps(SavedPolicyState state)
+        {
+            _pendingFollowUps.Clear();
+            _completedFollowUps.Clear();
+            if (state?.completedDialogueFollowUps != null)
+            {
+                foreach (string key in state.completedDialogueFollowUps)
+                {
+                    if (!string.IsNullOrWhiteSpace(key))
+                        _completedFollowUps.Add(key);
+                }
+            }
+
+            if (state?.pendingDialogueFollowUps == null)
+                return;
+
+            foreach (SavedDialogueFollowUp saved in state.pendingDialogueFollowUps)
+            {
+                if (saved != null)
+                    TryScheduleFollowUp(saved.sourceKey, saved.sequenceKey, 0, saved.dueDay);
+            }
+        }
 
         /// <summary>
         /// 이 전환에 일반 사건을 띄워도 되는가. 같은 날을 여러 번 물어도 처음 판정을 그대로 돌려준다.
@@ -89,6 +185,8 @@ namespace Code.Manager
         public void Restore(IEnumerable<string> chosenKeys, int normalCooldown, bool hasState, bool policyDeferred = false)
         {
             _chosenKeys.Clear();
+            _pendingFollowUps.Clear();
+            _completedFollowUps.Clear();
             if (chosenKeys != null)
             {
                 foreach (var key in chosenKeys)

@@ -43,6 +43,8 @@ namespace Code.Dialogue
 
         private readonly DialogueSequencePlayer player = new();
         private DialogueSequenceSO pendingScheduledEventSequence;
+        private string _pendingFollowUpKey;
+        private string _activeFollowUpKey;
         private int lastScheduledEventDay;
 
         /// <summary>띄울 차례를 기다리는 상황 사건. 내용은 띄우는 순간의 수치로 만든다.</summary>
@@ -217,6 +219,8 @@ namespace Code.Dialogue
         private void PlaySequence(DialogueSequenceSO sequence, bool normalEvent)
         {
             _playingNormalEvent = normalEvent;
+            if (!normalEvent)
+                _activeFollowUpKey = null;
             view?.SetBackgroundRaycastBlocking(true);
             view?.SetNextButtonVisible(true);
             view?.SetCloseButtonVisible(true);
@@ -765,9 +769,14 @@ namespace Code.Dialogue
             if (_playingNormalEvent && sequence != null && sequence.TryGetLine(lineIndex, out var currentLine)
                 && currentLine.HasChoices && choiceIndex == currentLine.ChoiceCount)
             {
+                CompleteActiveFollowUp();
                 Stop();
                 return;
             }
+
+            if (sequence == null || !sequence.TryGetLine(lineIndex, out var line)
+                || !line.TryGetChoice(choiceIndex, out var requestedChoice) || !player.CanSelect(requestedChoice))
+                return;
 
             if (!player.SelectChoice(choiceIndex, out var choice, out var matchedRoute, out var ended, out var displayData))
             {
@@ -776,8 +785,15 @@ namespace Code.Dialogue
             }
 
             if (_playingNormalEvent && sequence != null)
+            {
                 MoralePolicy?.Events.MarkChosen(
                     RunEventLedger.DialogueChoiceKey(sequence.name, lineIndex, choiceIndex));
+                if (!string.IsNullOrEmpty(_activeFollowUpKey))
+                    CompleteActiveFollowUp();
+                else if (sequence.TryGetFollowUp(lineIndex, choiceIndex, out DialogueFollowUpDefinition followUp))
+                    MoralePolicy?.Events.TryScheduleFollowUp(sequence.name, followUp.Sequence.name,
+                        lastScheduledEventDay, followUp.DelayDays);
+            }
 
             ChoiceSelected?.Invoke(sequence, lineIndex, choice);
             ExecuteActions(choice.Actions);
@@ -796,6 +812,7 @@ namespace Code.Dialogue
         public void Stop()
         {
             _playingNormalEvent = false;
+            _activeFollowUpKey = null;
             var endedSequence = player.Stop();
             view?.Hide();
             ReleaseEventSuspend();
@@ -837,6 +854,30 @@ namespace Code.Dialogue
 
         private DialogueSequenceSO ResolveScheduledEventSequence()
         {
+            _pendingFollowUpKey = null;
+            RunEventLedger events = MoralePolicy?.Events;
+            if (events != null && events.TryGetReadyFollowUp(lastScheduledEventDay,
+                    out string sourceKey, out string sequenceKey))
+            {
+                foreach (DialogueSequenceSO source in ScheduledEventSequences)
+                {
+                    if (source == null || source.name != sourceKey)
+                        continue;
+
+                    foreach (DialogueFollowUpDefinition followUp in source.FollowUps)
+                    {
+                        if (followUp?.Sequence == null || followUp.Sequence.name != sequenceKey)
+                            continue;
+
+                        _pendingFollowUpKey = sourceKey;
+                        return followUp.Sequence;
+                    }
+                }
+
+                // 예약은 보존한다. 에셋 연결이 잘못돼도 기존 일반 사건 전체를 막지 않는다.
+                Debug.LogWarning($"후속 사건 연결을 찾지 못했습니다: {sourceKey} → {sequenceKey}", this);
+            }
+
             if (scheduledEventSequences == null || scheduledEventSequences.Length == 0)
                 return null;
 
@@ -905,8 +946,19 @@ namespace Code.Dialogue
 
             var sequence = pendingScheduledEventSequence;
             pendingScheduledEventSequence = null;
+            _activeFollowUpKey = _pendingFollowUpKey;
+            _pendingFollowUpKey = null;
             SuspendForEvent();
             PlaySequence(sequence, true);
+        }
+
+        private void CompleteActiveFollowUp()
+        {
+            if (string.IsNullOrEmpty(_activeFollowUpKey))
+                return;
+
+            MoralePolicy?.Events.CompleteFollowUp(_activeFollowUpKey);
+            _activeFollowUpKey = null;
         }
 
         /// <summary>

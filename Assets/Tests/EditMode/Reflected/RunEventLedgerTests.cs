@@ -12,6 +12,205 @@ namespace Tests.EditMode.Rules
     /// </summary>
     public class RunEventLedgerTests
     {
+        /// <summary>후속을 조회하는 것만으로 예약을 소모하지 않으며, 날짜 동률은 선택 순서를 지킨다.</summary>
+        [Test]
+        public void FollowUp_WaitsTwoDaysAndPreservesDueOrder()
+        {
+            RunEventLedger ledger = new();
+            Assert.That(ledger.TryScheduleFollowUp("late", "late-result", 10, 0), Is.True);
+            Assert.That(ledger.TryScheduleFollowUp("first", "first-result", 1, 2), Is.True);
+            Assert.That(ledger.TryScheduleFollowUp("second", "second-result", 1, 2), Is.True);
+            Assert.That(ledger.TryGetReadyFollowUp(2, out _, out _), Is.False);
+            Assert.That(ledger.TryGetReadyFollowUp(3, out string source, out string result), Is.True);
+            Assert.That(source, Is.EqualTo("first"));
+            Assert.That(result, Is.EqualTo("first-result"));
+            Assert.That(ledger.PendingFollowUpCount, Is.EqualTo(3));
+            ledger.CompleteFollowUp(source);
+            ledger.TryGetReadyFollowUp(3, out source, out _);
+            Assert.That(source, Is.EqualTo("second"));
+            ledger.CompleteFollowUp(source);
+            Assert.That(ledger.TryGetReadyFollowUp(11, out _, out _), Is.False);
+            Assert.That(ledger.TryGetReadyFollowUp(12, out source, out _), Is.True);
+            Assert.That(source, Is.EqualTo("late"));
+        }
+
+        /// <summary>선택을 바꾸거나 저장을 다시 읽어도 같은 첫 사건의 후속 보상을 두 번 받지 않는다.</summary>
+        [Test]
+        public void FollowUp_PendingAndCompletedSurviveJsonWithoutSharedState()
+        {
+            RunEventLedger ledger = new();
+            ledger.TryScheduleFollowUp("tools", "bought", 4, 2);
+            Assert.That(ledger.TryScheduleFollowUp("tools", "sold", 5, 2), Is.False);
+            Code.Persistence.SavedPolicyState state = new();
+            ledger.CaptureFollowUps(state);
+            state.pendingDialogueFollowUps[0].sequenceKey = "changed-copy";
+            ledger.TryGetReadyFollowUp(6, out _, out string result);
+            Assert.That(result, Is.EqualTo("bought"));
+            ledger.CaptureFollowUps(state);
+            RunEventLedger restored = new();
+            restored.RestoreFollowUps(UnityEngine.JsonUtility.FromJson<Code.Persistence.SavedPolicyState>(UnityEngine.JsonUtility.ToJson(state)));
+            Assert.That(restored.TryGetReadyFollowUp(5, out _, out _), Is.False);
+            Assert.That(restored.TryGetReadyFollowUp(6, out _, out result), Is.True);
+            Assert.That(result, Is.EqualTo("bought"));
+            state.pendingDialogueFollowUps[0].sequenceKey = "changed-after-restore";
+            restored.TryGetReadyFollowUp(6, out _, out result);
+            Assert.That(result, Is.EqualTo("bought"));
+            restored.CompleteFollowUp("tools");
+            restored.CaptureFollowUps(state);
+            ledger.RestoreFollowUps(UnityEngine.JsonUtility.FromJson<Code.Persistence.SavedPolicyState>(UnityEngine.JsonUtility.ToJson(state)));
+            Assert.That(ledger.PendingFollowUpCount, Is.Zero);
+            Assert.That(ledger.TryScheduleFollowUp("tools", "sold", 20, 2), Is.False);
+            ledger.Restore(null, 0, false);
+            Assert.That(ledger.TryScheduleFollowUp("tools", "bought", 1, 2), Is.True, "새 판 장부는 완료 상태도 비운다.");
+        }
+
+        /// <summary>옛 저장의 선택 이력만으로 과거 보상을 새로 예약하지 않는다.</summary>
+        [Test]
+        public void FollowUp_LegacySaveKeepsHistoryWithoutCreatingReservations()
+        {
+            Code.Persistence.SavedPolicyState legacy = UnityEngine.JsonUtility.FromJson<Code.Persistence.SavedPolicyState>(
+                "{\"hasEventLedger\":true,\"chosenEventKeys\":[\"dialogue:DayEvent_ToolCooperative:0:0\"],\"normalEventCooldown\":2}");
+            RunEventLedger ledger = new();
+            ledger.Restore(legacy.chosenEventKeys, legacy.normalEventCooldown, true);
+            ledger.RestoreFollowUps(legacy);
+            Assert.That(ledger.HasChosen("dialogue:DayEvent_ToolCooperative:0:0"), Is.True);
+            Assert.That(ledger.PendingFollowUpCount, Is.Zero);
+            Assert.That(ledger.TryGetReadyFollowUp(100, out _, out _), Is.False);
+        }
+
+        private static object FollowUpCall(object target, string name, params object[] args)
+        {
+            System.Reflection.MethodInfo method = target.GetType().GetMethod(name,
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null, target.GetType().Name + "." + name);
+            return method.Invoke(target, args);
+        }
+
+        private static void FollowUpSet(object target, string name, object value)
+        {
+            System.Reflection.FieldInfo field = target.GetType().GetField(name,
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, target.GetType().Name + "." + name);
+            field.SetValue(target, value);
+        }
+
+        /// <summary>실제 선택 API에서만 해당 분기를 예약하고, 건너뛰기에는 후속이 생기지 않는다.</summary>
+        [TestCase(0)]
+        [TestCase(1)]
+        [TestCase(2)]
+        public void FollowUp_RunnerSchedulesOnlyTheSelectedBranch(int choice)
+        {
+            UnityEngine.GameObject host = new("Follow-up fixture");
+            host.SetActive(false);
+            Code.Dialogue.DialogueSequenceSO root = UnityEngine.ScriptableObject.CreateInstance<Code.Dialogue.DialogueSequenceSO>();
+            Code.Dialogue.DialogueSequenceSO first = UnityEngine.ScriptableObject.CreateInstance<Code.Dialogue.DialogueSequenceSO>();
+            Code.Dialogue.DialogueSequenceSO second = UnityEngine.ScriptableObject.CreateInstance<Code.Dialogue.DialogueSequenceSO>();
+            try
+            {
+                root.name = "root";
+                first.name = "first";
+                second.name = "second";
+                root.Configure(new Code.Dialogue.DialogueLine("참모", "선택", new Code.Dialogue.DialogueChoice("A"), new Code.Dialogue.DialogueChoice("B")));
+                FollowUpSet(root, "followUps", new[] { new Code.Dialogue.DialogueFollowUpDefinition(0, first), new Code.Dialogue.DialogueFollowUpDefinition(1, second) });
+                MoralePolicyManager morale = host.AddComponent<MoralePolicyManager>();
+                Code.Dialogue.DialogueRunner runner = host.AddComponent<Code.Dialogue.DialogueRunner>();
+                FollowUpSet(runner, "_moralePolicy", morale);
+                FollowUpSet(runner, "lastScheduledEventDay", 4);
+                FollowUpCall(runner, "PlaySequence", root, true);
+                runner.SelectChoice(choice);
+                Assert.That(morale.Events.PendingFollowUpCount, Is.EqualTo(choice == 2 ? 0 : 1));
+                if (choice < 2)
+                {
+                    Assert.That(morale.Events.TryGetReadyFollowUp(5, out _, out _), Is.False);
+                    morale.Events.TryGetReadyFollowUp(6, out string source, out string sequence);
+                    Assert.That(source, Is.EqualTo("root"));
+                    Assert.That(sequence, Is.EqualTo(choice == 0 ? "first" : "second"));
+                }
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
+                UnityEngine.Object.DestroyImmediate(root);
+                UnityEngine.Object.DestroyImmediate(first);
+                UnityEngine.Object.DestroyImmediate(second);
+            }
+        }
+
+        /// <summary>후속을 단순히 닫으면 기다리고, 선택/건너뛰기를 확정하면 예약이 한 번만 끝난다.</summary>
+        [TestCase(false)]
+        [TestCase(true)]
+        public void FollowUp_RunnerPrioritizesReadyStoryAndCompletesOnce(bool skip)
+        {
+            UnityEngine.GameObject host = new("Follow-up completion fixture");
+            host.SetActive(false);
+            Code.Dialogue.DialogueSequenceSO root = UnityEngine.ScriptableObject.CreateInstance<Code.Dialogue.DialogueSequenceSO>();
+            Code.Dialogue.DialogueSequenceSO follow = UnityEngine.ScriptableObject.CreateInstance<Code.Dialogue.DialogueSequenceSO>();
+            try
+            {
+                root.name = "root";
+                follow.name = "follow";
+                root.Configure(new Code.Dialogue.DialogueLine("참모", "첫 사건", new Code.Dialogue.DialogueChoice("예약")));
+                follow.Configure(new Code.Dialogue.DialogueLine("참모", "후속", new Code.Dialogue.DialogueChoice("확정")));
+                FollowUpSet(root, "followUps", new[] { new Code.Dialogue.DialogueFollowUpDefinition(0, follow) });
+                MoralePolicyManager morale = host.AddComponent<MoralePolicyManager>();
+                Code.Dialogue.DialogueRunner runner = host.AddComponent<Code.Dialogue.DialogueRunner>();
+                FollowUpSet(runner, "_moralePolicy", morale);
+                FollowUpSet(runner, "scheduledEventSequences", new[] { root });
+                FollowUpSet(runner, "lastScheduledEventDay", 4);
+                FollowUpCall(runner, "PlaySequence", root, true);
+                runner.SelectChoice(0);
+                FollowUpSet(runner, "lastScheduledEventDay", 6);
+                Assert.That(FollowUpCall(runner, "ResolveScheduledEventSequence"), Is.SameAs(follow));
+                FollowUpSet(runner, "pendingScheduledEventSequence", follow);
+                FollowUpCall(runner, "TryPlayPendingScheduledEvent");
+                runner.SelectChoice(99);
+                Assert.That(morale.Events.PendingFollowUpCount, Is.EqualTo(1), "없는 선택지는 보상을 완료하지 않는다.");
+                runner.Stop();
+                Assert.That(morale.Events.PendingFollowUpCount, Is.EqualTo(1));
+                Assert.That(FollowUpCall(runner, "ResolveScheduledEventSequence"), Is.SameAs(follow));
+                FollowUpSet(runner, "pendingScheduledEventSequence", follow);
+                FollowUpCall(runner, "TryPlayPendingScheduledEvent");
+                runner.SelectChoice(skip ? 1 : 0);
+                Assert.That(morale.Events.PendingFollowUpCount, Is.Zero);
+                Assert.That(morale.Events.TryScheduleFollowUp("root", "follow", 20, 2), Is.False);
+                Assert.That(FollowUpCall(runner, "ResolveScheduledEventSequence"), Is.SameAs(root));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
+                UnityEngine.Object.DestroyImmediate(root);
+                UnityEngine.Object.DestroyImmediate(follow);
+            }
+        }
+
+        /// <summary>실제 민심 저장 경로에서 대기/완료 상태를 함께 보존한다.</summary>
+        [Test]
+        public void FollowUp_MoraleCaptureAndRestorePreservePendingAndCompleted()
+        {
+            UnityEngine.GameObject host = new("Follow-up save fixture");
+            host.SetActive(false);
+            try
+            {
+                MoralePolicyManager manager = host.AddComponent<MoralePolicyManager>();
+                manager.Events.TryScheduleFollowUp("done", "done-result", 4, 2);
+                manager.Events.CompleteFollowUp("done");
+                manager.Events.TryScheduleFollowUp("pending", "pending-result", 8, 2);
+                Code.Persistence.SavedPolicyState state = new();
+                manager.CaptureSaveState(state);
+                Code.Persistence.SavedPolicyState copy = UnityEngine.JsonUtility.FromJson<Code.Persistence.SavedPolicyState>(UnityEngine.JsonUtility.ToJson(state));
+                manager.RestoreCheckpoint(50, 8, copy);
+                Assert.That(manager.Events.TryScheduleFollowUp("done", "other-result", 12, 2), Is.False);
+                Assert.That(manager.Events.TryGetReadyFollowUp(9, out _, out _), Is.False);
+                Assert.That(manager.Events.TryGetReadyFollowUp(10, out string source, out string sequence), Is.True);
+                Assert.That(source, Is.EqualTo("pending"));
+                Assert.That(sequence, Is.EqualTo("pending-result"));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
+
         [Test]
         public void NormalEvent_WaitsForTheCooldown()
         {
