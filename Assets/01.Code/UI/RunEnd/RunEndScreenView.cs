@@ -42,8 +42,11 @@ namespace Code.UI
         [SerializeField] private TMP_Text unlockEmpty;
         [SerializeField] private UiFrameButton titleButton;
         [SerializeField] private UiFrameButton restartButton;
+        [SerializeField] private UiFrameButton detailsButton;
 
         private readonly List<RunEndUnlockViewModel> _unlocks = new();
+        private RunEndViewModel _model;
+        private bool _detailsOpen;
 
         public bool IsOpen => root != null && root.activeSelf;
 
@@ -60,6 +63,7 @@ namespace Code.UI
 
         private void OnEnable()
         {
+            detailsButton?.Button.onClick.AddListener(ToggleDetails);
             titleButton.Button.onClick.AddListener(GoToTitle);
             restartButton.Button.onClick.AddListener(StartNewRun);
             if (bossWave != null)
@@ -68,6 +72,7 @@ namespace Code.UI
 
         private void OnDisable()
         {
+            detailsButton?.Button.onClick.RemoveListener(ToggleDetails);
             titleButton.Button.onClick.RemoveListener(GoToTitle);
             restartButton.Button.onClick.RemoveListener(StartNewRun);
             if (bossWave != null)
@@ -100,14 +105,15 @@ namespace Code.UI
 
         private void Render(RunEndViewModel model)
         {
+            _model = model;
+            _detailsOpen = false;
             title.text = model.Title;
             title.color = model.Victory ? HudPalette.Accent : HudPalette.Danger;
             headline.text = model.Headline;
             days.text = model.Days;
             bestBadge.SetActive(model.NewBest);
             bestNote.text = model.BestNote;
-            statLabels.text = model.StatLabels;
-            statValues.text = model.StatValues;
+            RefreshStats();
 
             progressGain.text = model.ProgressGain;
             progressRange.text = model.ProgressRange;
@@ -124,6 +130,24 @@ namespace Code.UI
             }
 
             unlockEmpty.text = model.UnlockEmpty;
+        }
+
+        private void ToggleDetails()
+        {
+            _detailsOpen = !_detailsOpen;
+            GameSfxPlayer.Play(GameSfxCue.UiClick);
+            RefreshStats();
+        }
+
+        private void RefreshStats()
+        {
+            if (_model == null)
+                return;
+
+            statLabels.text = _detailsOpen ? _model.StatLabels : _model.SummaryStatLabels;
+            statValues.text = _detailsOpen ? _model.StatValues : _model.SummaryStatValues;
+            detailsButton?.SetLabel(_detailsOpen ? "통계 접기" : "전체 통계");
+            detailsButton?.SetSelected(_detailsOpen);
         }
 
         private void StartNewRun()

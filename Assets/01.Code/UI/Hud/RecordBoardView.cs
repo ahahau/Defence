@@ -38,13 +38,27 @@ namespace Code.UI
         private int _lastActiveThreat = -1;
         private bool? _lastManagementWindow;
         private bool _yielded;
+        private bool _briefingExpanded;
 
         /// <summary>오른쪽 열을 방 상세에 내준다.</summary>
         public void SetYielded(bool yielded)
         {
             _yielded = yielded;
-            if (root != null && root.activeSelf == yielded)
-                root.SetActive(!yielded);
+            RefreshVisibility();
+        }
+
+        /// <summary>긴 브리핑과 겹치는 동안 기록판을 숨긴다. 방 상세의 숨김 상태는 유지한다.</summary>
+        public void SetBriefingExpanded(bool expanded)
+        {
+            _briefingExpanded = expanded;
+            RefreshVisibility();
+        }
+
+        private void RefreshVisibility()
+        {
+            bool visible = !_yielded && !_briefingExpanded;
+            if (root != null && root.activeSelf != visible)
+                root.SetActive(visible);
         }
 
         /// <summary>최근 기록에 한 줄 남긴다.</summary>
@@ -54,9 +68,13 @@ namespace Code.UI
             RenderLog();
         }
 
-        private void Awake()
+        private void EnsureRuntimeState()
         {
-            _shown = new PartyRailRowViewModel[partyRows.Length];
+            if (_shown == null)
+                _shown = new PartyRailRowViewModel[partyRows.Length];
+            if (_rowHandlers != null)
+                return;
+
             _rowHandlers = new UnityEngine.Events.UnityAction[partyRows.Length];
             for (var i = 0; i < _rowHandlers.Length; i++)
             {
@@ -65,8 +83,14 @@ namespace Code.UI
             }
         }
 
+        private void Awake()
+        {
+            EnsureRuntimeState();
+        }
+
         private void OnEnable()
         {
+            EnsureRuntimeState();
             for (var i = 0; i < _rowHandlers.Length; i++)
                 partyRows[i].Button.onClick.AddListener(_rowHandlers[i]);
             if (dayManager != null)
@@ -78,7 +102,7 @@ namespace Code.UI
 
         private void OnDisable()
         {
-            for (var i = 0; i < _rowHandlers.Length; i++)
+            for (var i = 0; _rowHandlers != null && i < _rowHandlers.Length; i++)
                 partyRows[i].Button.onClick.RemoveListener(_rowHandlers[i]);
             if (dayManager != null)
                 dayManager.PhaseChanged -= HandlePhaseChanged;

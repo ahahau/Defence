@@ -81,11 +81,13 @@ public static class RunEndBuilder
         var stats = UiKit.TopLeft(UiKit.Rect("Stats", card), Pad, BodyTop, columnWidth, BodyHeight);
         UiKit.Panel(stats, HudPalette.SurfaceRaised, HudPalette.BorderQuiet);
         Label(stats, "Header", "이번 판 전과", 14f, HudPalette.TextDim, Inner, 12f, 300f, 24f);
-        var statLabels = Label(stats, "Labels", string.Empty, 16f, HudPalette.TextBody, Inner, 46f, 240f, 330f, false, false, TextAlignmentOptions.TopLeft);
+        var statLabels = Label(stats, "Labels", string.Empty, 16f, HudPalette.TextBody, Inner, 46f, 240f, 286f, false, false, TextAlignmentOptions.TopLeft);
         statLabels.lineSpacing = StatLineSpacing;
         var statValues = UiKit.Text("Values", stats, string.Empty, 16f, HudPalette.Text, TextAlignmentOptions.TopRight, true);
-        UiKit.TopRight(statValues.rectTransform, Inner, 46f, 200f, 330f);
+        UiKit.TopRight(statValues.rectTransform, Inner, 46f, 200f, 286f);
         statValues.lineSpacing = StatLineSpacing;
+        var details = UiKit.Button(UiKit.TopLeft(UiKit.Rect("DetailsButton", stats), Inner, 344f, columnWidth - Inner * 2f, 32f),
+            "전체 통계", UiKit.ButtonKind.Secondary, 15f);
 
         var progress = UiKit.TopLeft(UiKit.Rect("Progress", card), Pad + columnWidth + Gap, BodyTop, columnWidth, BodyHeight);
         UiKit.Panel(progress, HudPalette.SurfaceRaised, HudPalette.BorderQuiet);
@@ -127,6 +129,7 @@ public static class RunEndBuilder
         UiKit.Wire(view, "unlockEmpty", empty);
         UiKit.Wire(view, "titleButton", titleButton);
         UiKit.Wire(view, "restartButton", restartButton);
+        UiKit.Wire(view, "detailsButton", details);
         panel.gameObject.SetActive(false);
 
         UiKit.EnsureFolder("Assets/03.Prefabs/UI/RunEnd");

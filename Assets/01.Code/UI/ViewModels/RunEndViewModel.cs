@@ -14,6 +14,8 @@ namespace Code.UI.ViewModels
         public string BestNote;
         public string StatLabels;
         public string StatValues;
+        public string SummaryStatLabels;
+        public string SummaryStatValues;
         public string ProgressGain;
         public string ProgressRange;
         /// <summary>진행도 막대에서 이번 판 전까지 찬 몫.</summary>

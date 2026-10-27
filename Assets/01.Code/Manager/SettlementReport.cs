@@ -47,14 +47,16 @@ namespace Code.Manager
     /// <summary>정산표 아래에 붙는 설명 한 줄.</summary>
     public readonly struct SettlementNote
     {
-        public SettlementNote(string text, SettlementNoteTone tone = SettlementNoteTone.Neutral)
+        public SettlementNote(string text, SettlementNoteTone tone = SettlementNoteTone.Neutral, string summaryText = null)
         {
             Text = text;
             Tone = tone;
+            SummaryText = summaryText;
         }
 
         public string Text { get; }
         public SettlementNoteTone Tone { get; }
+        public string SummaryText { get; }
     }
 
     /// <summary>오늘 내보냈던 부하 한 명의 피로.</summary>

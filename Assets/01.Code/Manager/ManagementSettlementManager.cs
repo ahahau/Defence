@@ -779,7 +779,8 @@ namespace Code.Manager
             // 함정 몫을 따로 적어야 함정에 쓴 돈이 일을 했는지 판단할 수 있다.
             if (wave.WaveTrapDamage > 0)
                 battle.Append($"  ·  함정 {wave.WaveTrapDamage}");
-            notes.Add(new SettlementNote(battle.ToString()));
+            notes.Add(new SettlementNote(battle.ToString(), summaryText:
+                $"제압 {wave.KillCount}/{wave.TotalEnemyCount}  ·  함정 피해 {wave.WaveTrapDamage}"));
 
             var grade = _dungeonGrade;
             if (grade != null)
@@ -792,8 +793,8 @@ namespace Code.Manager
             notes.Add(wave.LastObjectiveCompleted
                 ? new SettlementNote(
                     $"{wave.LastObjectiveTitle} 완료 · 보너스 {GoldText.Signed(wave.LastObjectiveRewardGold)}",
-                    SettlementNoteTone.Good)
-                : new SettlementNote($"{wave.LastObjectiveTitle} 실패", SettlementNoteTone.Caution));
+                    SettlementNoteTone.Good, $"목표 달성 · {GoldText.Signed(wave.LastObjectiveRewardGold)}")
+                : new SettlementNote($"{wave.LastObjectiveTitle} 실패", SettlementNoteTone.Caution, "목표 미달성"));
         }
 
         /// <summary>이번 방어에서 적 특성을 실제로 역이용한 성과만 보여 준다.</summary>
@@ -862,7 +863,7 @@ namespace Code.Manager
 
             notes.Add(new SettlementNote(
                 $"내구도가 바닥난 시설 {wornOut}곳  ·  수리하기 전까지 손님을 받지 않습니다",
-                SettlementNoteTone.Caution));
+                SettlementNoteTone.Caution, $"시설 {wornOut}곳 수리 필요"));
         }
 
         /// <summary>
@@ -876,7 +877,8 @@ namespace Code.Manager
             if (_weeklySettlementPaid > 0)
             {
                 notes.Add(new SettlementNote(
-                    $"빚 {GoldText.Amount(_weeklySettlementPaid)}를 청산했습니다", SettlementNoteTone.Good));
+                    $"빚 {GoldText.Amount(_weeklySettlementPaid)}를 청산했습니다", SettlementNoteTone.Good,
+                    $"청산 {GoldText.Amount(_weeklySettlementPaid)} 상환"));
                 return;
             }
 

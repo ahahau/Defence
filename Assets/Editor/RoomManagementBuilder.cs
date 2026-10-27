@@ -9,7 +9,7 @@ using UnityEngine;
 /// 방 관리 화면(uGUI, A안) 프리팹을 만들고 SampleScene에 놓는다. 캔버스 20(HUD 10 위, 대화 80·튜토리얼 덮개 85 아래).
 /// Unity CLI: <c>RoomManagementBuilder.BuildAll()</c>.
 ///
-/// 왼쪽 아래 행동 도크 760×132(관리 안내 · 건설·유닛 배치·함정·시설 | 고용·상인·정산·메뉴 · 보유 유닛·부활 대기·목록),
+/// 왼쪽 아래 행동 도크 684×112(관리 안내 · 건설·유닛 배치·함정·시설 | 고용·상인·정산·메뉴 · 보유 유닛·부활 대기·목록),
 /// 도크 위 설치 창 760×360(접히면 60)·보유 목록 760×140, 오른쪽 열 방 상세 400×640(위에서 104, 열린 동안 브리핑을 비켜 둠).
 /// </summary>
 public static class RoomManagementBuilder
@@ -19,7 +19,7 @@ public static class RoomManagementBuilder
     private const float DockWidth = 760f;
     // 메뉴 버튼을 뺀 도크 줄 폭(정산 버튼 끝 670 + 여백 14). 설치 창은 카드 5장이 들어가야 해서 DockWidth 그대로다.
     private const float DockBarWidth = 684f;
-    private const float DockHeight = 132f;
+    private const float DockHeight = 112f;
     private const float AboveDock = Margin + DockHeight + 8f;
     private const float DetailWidth = 400f;
     private const float DetailHeight = 640f;
@@ -121,21 +121,21 @@ public static class RoomManagementBuilder
         UiKit.Panel(dock, HudPalette.Surface, HudPalette.Border, true);
         var view = dock.gameObject.AddComponent<ActionDockView>();
 
-        var management = Label(dock, "Management", "관리 중", 15f, HudPalette.TextDim, 16f, 8f, DockBarWidth - 32f, 24f);
+        var management = Label(dock, "Management", "관리 중", 15f, HudPalette.TextDim, 16f, 4f, DockBarWidth - 32f, 24f);
 
         var kinds = new Object[KindLabels.Length];
         for (var i = 0; i < KindLabels.Length; i++)
-            kinds[i] = Button(dock, $"Kind{i}", KindLabels[i], UiKit.ButtonKind.Secondary, 14f + i * 102f, 38f, 96f, 48f, 16f);
+            kinds[i] = Button(dock, $"Kind{i}", KindLabels[i], UiKit.ButtonKind.Secondary, 14f + i * 102f, 30f, 96f, 48f, 16f);
 
-        Divider(dock, 430f, 40f, 2f, 44f);
-        var recruit = Button(dock, "Recruit", "고용", UiKit.ButtonKind.Secondary, 444f, 38f, 70f, 48f, 15f);
-        var merchant = Button(dock, "Merchant", "상인", UiKit.ButtonKind.Secondary, 520f, 38f, 70f, 48f, 15f);
+        Divider(dock, 430f, 32f, 2f, 44f);
+        var recruit = Button(dock, "Recruit", "고용", UiKit.ButtonKind.Secondary, 444f, 30f, 70f, 48f, 15f);
+        var merchant = Button(dock, "Merchant", "상인", UiKit.ButtonKind.Secondary, 520f, 30f, 70f, 48f, 15f);
         // 버튼 넷이 들어가도록 폭을 줄여 "정산 정보"는 테두리 무늬에 겹쳤다. 짧게 쓴다.
-        var settlement = Button(dock, "SettlementInfo", "정산", UiKit.ButtonKind.Secondary, 596f, 38f, 74f, 48f, 15f);
+        var settlement = Button(dock, "SettlementInfo", "정산", UiKit.ButtonKind.Secondary, 596f, 30f, 74f, 48f, 15f);
 
-        var roster = Label(dock, "Roster", "보유 0명", 14f, HudPalette.TextBody, 16f, 96f, 330f, 26f);
-        var revival = Label(dock, "Revival", "부활 대기열 없음", 14f, HudPalette.Warn, 352f, 96f, 280f, 26f);
-        var rosterToggle = Button(dock, "RosterToggle", "목록 열기", UiKit.ButtonKind.Secondary, 14f, 96f, 100f, 28f, 13f, true);
+        var roster = Label(dock, "Roster", "보유 0명", 14f, HudPalette.TextBody, 16f, 82f, 330f, 26f);
+        var revival = Label(dock, "Revival", "부활 대기열 없음", 14f, HudPalette.Warn, 352f, 82f, 280f, 26f);
+        var rosterToggle = Button(dock, "RosterToggle", "목록 열기", UiKit.ButtonKind.Secondary, 14f, 80f, 100f, 28f, 13f, true);
 
         // 보유 목록: 도크 바로 위(설치 창과 같은 자리).
         var rosterPanel = BottomLeft(UiKit.Rect("RosterPanel", root), Margin, AboveDock, DockBarWidth, 140f);

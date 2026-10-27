@@ -1,4 +1,4 @@
-﻿using Code.Manager;
+using Code.Manager;
 using Code.UI;
 using TMPro;
 using UnityEditor;
@@ -9,8 +9,8 @@ using UnityEngine;
 /// Unity CLI: <c>GameplayHudBuilder.BuildAll()</c>. 메뉴: Tools/Dungeon Keeper/Build Gameplay HUD.
 ///
 /// 배치(1920×1080): 왼쪽 위 장부 340×268, 오른쪽 위 배속 버튼 + 잠김 사유, 그 아래 손님 브리핑(접힘 380×164, 펼침 380×440)
-/// 또는 진행 막대 380×132, 오른쪽 열 아래 기록판 380×360(위에서 568 — 침입 파티·최근 기록), 위 가운데 시작 배너 560×96,
-/// 오른쪽 아래 목표 전환 320×40 + 영업 시작 320×72.
+/// 또는 진행 막대 380×132, 오른쪽 열 아래 기록판 380×360(위에서 288 — 침입 파티·최근 기록), 위 가운데 시작 배너 560×96,
+/// 오른쪽 아래 목표 전환 380×40 + 영업 시작 380×72.
 /// 지도 가운데와 아래 가운데는 비운다.
 /// </summary>
 public static class GameplayHudBuilder
@@ -30,8 +30,9 @@ public static class GameplayHudBuilder
         var root = UiKit.Canvas("GameplayHud", 10);
         var canvas = (RectTransform)root.transform;
         BuildLedger(canvas);
-        BuildWaveHud(canvas);
-        BuildRecordBoard(canvas);
+        WaveHudView wave = BuildWaveHud(canvas);
+        RecordBoardView board = BuildRecordBoard(canvas);
+        UiKit.Wire(wave, "recordBoard", board);
 
         UiKit.EnsureFolder("Assets/03.Prefabs/UI/Hud");
         UiKit.ApplyButtonFaces(root);
@@ -198,7 +199,7 @@ public static class GameplayHudBuilder
 
     // ── 영업 HUD ────────────────────────────────────────────
 
-    private static void BuildWaveHud(RectTransform canvas)
+    private static WaveHudView BuildWaveHud(RectTransform canvas)
     {
         var host = UiKit.Fill(UiKit.Rect("WaveHud", canvas));
         var view = host.gameObject.AddComponent<WaveHudView>();
@@ -242,11 +243,12 @@ public static class GameplayHudBuilder
         UiKit.Wire(view, "progressStats", stats);
 
         // 목표 전환·영업 시작(오른쪽 아래)
-        var start = UiKit.Button(UiKit.BottomRight(UiKit.Rect("StartButton", host), Margin, Margin, 320f, 72f), "던전 영업 시작", UiKit.ButtonKind.Primary, 18f);
+        var start = UiKit.Button(UiKit.BottomRight(UiKit.Rect("StartButton", host), Margin, Margin, 380f, 72f), "던전 영업 시작", UiKit.ButtonKind.Primary, 18f);
         start.Label.textWrappingMode = TextWrappingModes.Normal;
-        var objectiveButton = UiKit.Button(UiKit.BottomRight(UiKit.Rect("ObjectiveButton", host), Margin, Margin + 80f, 320f, 40f), "목표", UiKit.ButtonKind.Secondary, 14f);
+        var objectiveButton = UiKit.Button(UiKit.BottomRight(UiKit.Rect("ObjectiveButton", host), Margin, Margin + 80f, 380f, 40f), "목표", UiKit.ButtonKind.Secondary, 14f);
         UiKit.Wire(view, "startButton", start);
         UiKit.Wire(view, "objectiveButton", objectiveButton);
+        return view;
     }
 
     // ── 기록판(오른쪽 열 아래): 침입 파티 + 최근 기록 ─────────
@@ -255,11 +257,11 @@ public static class GameplayHudBuilder
     private const float BoardHeight = 360f;
     private const int PartyRows = 8;
 
-    private static void BuildRecordBoard(RectTransform canvas)
+    private static RecordBoardView BuildRecordBoard(RectTransform canvas)
     {
         var host = UiKit.Fill(UiKit.Rect("RecordBoard", canvas));
         var view = host.gameObject.AddComponent<RecordBoardView>();
-        var board = UiKit.TopRight(UiKit.Rect("Board", host), Margin, 568f, BoardWidth, BoardHeight);
+        var board = UiKit.TopRight(UiKit.Rect("Board", host), Margin, 288f, BoardWidth, BoardHeight);
         UiKit.Panel(board, HudPalette.Surface, HudPalette.BorderQuiet, true);
         const float inner = BoardWidth - 28f;
 
@@ -310,5 +312,6 @@ public static class GameplayHudBuilder
         UiKit.WireArray(view, "partyRisks", risks);
         UiKit.Wire(view, "logText", log);
         UiKit.Wire(view, "logScroll", logScroll);
+        return view;
     }
 }

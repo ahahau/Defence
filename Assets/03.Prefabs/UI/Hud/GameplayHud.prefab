@@ -5494,7 +5494,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: -24, y: 104}
-  m_SizeDelta: {x: 320, y: 40}
+  m_SizeDelta: {x: 380, y: 40}
   m_Pivot: {x: 1, y: 0}
 --- !u!222 &3791066441302656462
 CanvasRenderer:
@@ -7265,7 +7265,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -24, y: -568}
+  m_AnchoredPosition: {x: -24, y: -288}
   m_SizeDelta: {x: 380, y: 360}
   m_Pivot: {x: 1, y: 1}
 --- !u!222 &8205479278750144549
@@ -11933,7 +11933,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: -24, y: 24}
-  m_SizeDelta: {x: 320, y: 72}
+  m_SizeDelta: {x: 380, y: 72}
   m_Pivot: {x: 1, y: 0}
 --- !u!222 &3465831055824602987
 CanvasRenderer:
@@ -12522,6 +12522,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.UI.WaveHudView
   waveView: {fileID: 0}
+  recordBoard: {fileID: 8673746747804399734}
   briefCard: {fileID: 242968142311377788}
   briefTitle: {fileID: 1260963096280702416}
   briefSummary: {fileID: 8949045365040458909}

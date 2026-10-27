@@ -46,7 +46,7 @@ namespace Code.UI.ViewModels
 
             if (unlocks == null || unlocks.Count == 0)
             {
-                model.UnlockEmpty = "이번 판으로 새로 열린 것은 없습니다";
+                model.UnlockEmpty = "새 해금 없음";
                 return model;
             }
 
@@ -97,6 +97,8 @@ namespace Code.UI.ViewModels
 
         private static void BuildStats(RunEndViewModel model, RunEndStats stats, int bosses)
         {
+            model.SummaryStatLabels = "처치\n잡은 보스";
+            model.SummaryStatValues = $"{Number(stats.Kills)}명\n{Number(bosses)}";
             var labels = new StringBuilder();
             var values = new StringBuilder();
             Line(labels, values, "치른 영업", $"{Number(stats.WavesFought)}일");
@@ -126,10 +128,7 @@ namespace Code.UI.ViewModels
             var result = meta.Value;
             var before = Mathf.Max(0, result.ProgressBefore);
             var after = Mathf.Max(before, result.TotalProgress);
-            var breakdown = result.BossesDefeated > 0
-                ? $"({result.DaysSurvived}일 ×{MetaProgressRules.PointsPerDay} · 보스 {result.BossesDefeated} ×{MetaProgressRules.PointsPerBoss})"
-                : $"({result.DaysSurvived}일 ×{MetaProgressRules.PointsPerDay})";
-            model.ProgressGain = $"+{result.PointsEarned}  {HudPalette.Paint(breakdown, HudPalette.TextDim)}";
+            model.ProgressGain = $"+{result.PointsEarned}";
             model.ProgressRange = $"{before} → {after}";
 
             var next = MetaUnlockRules.NextTier(after);

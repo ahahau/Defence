@@ -1,4 +1,4 @@
-﻿using Code.Manager;
+using Code.Manager;
 using Code.UI;
 using TMPro;
 using UnityEditor;
@@ -27,7 +27,7 @@ public static class SettlementBuilder
     private const float PaneWidth = CardWidth - PaneX * 2f;
     private const float PaneHeight = 534f;
 
-    private static readonly string[] TabLabels = { "이번 주 요약", "수입 상세", "지출 상세", "계약 / 부채", "유닛 상점" };
+    private static readonly string[] TabLabels = { "이번 영업", "수입 상세", "지출 상세", "계약 / 부채", "유닛 상점" };
 
     [MenuItem("Tools/Dungeon Keeper/Build Settlement")]
     public static void BuildAll()
@@ -132,6 +132,8 @@ public static class SettlementBuilder
         var notesScroll = UiKit.ScrollArea(notesRect, out var notesContent);
         var notes = UiKit.ScrollText(notesContent, 16f, HudPalette.TextBody, TextAlignmentOptions.Top);
         notes.lineSpacing = 6f;
+        var details = UiKit.Button(UiKit.TopLeft(UiKit.Rect("DetailsButton", pane), PaneWidth - 160f, 30f, 160f, 36f),
+            "상세 보기", UiKit.ButtonKind.Secondary, 15f);
 
         var line = UiKit.TopLeft(UiKit.Rect("Divider", pane), 0f, 294f, PaneWidth, 2f);
         UiKit.Image(line, null, HudPalette.BorderQuiet, false);
@@ -151,6 +153,7 @@ public static class SettlementBuilder
         UiKit.Wire(view, "deferred", deferred);
         UiKit.Wire(view, "notes", notes);
         UiKit.Wire(view, "notesScroll", notesScroll);
+        UiKit.Wire(view, "detailsButton", details);
         UiKit.Wire(view, "unitUnlockHeader", unitHeader);
         UiKit.Wire(view, "buildingUnlockHeader", buildingHeader);
         UiKit.Wire(view, "unlockList", unlock);

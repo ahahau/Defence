@@ -13,6 +13,7 @@ namespace Code.UI
     public sealed class WaveHudView : MonoBehaviour
     {
         [SerializeField] private WaveView waveView;
+        [SerializeField] private RecordBoardView recordBoard;
 
         [Header("Briefing")]
         [SerializeField] private RectTransform briefCard;
@@ -78,6 +79,8 @@ namespace Code.UI
 
         private void OnDisable()
         {
+            if (recordBoard != null)
+                recordBoard.SetBriefingExpanded(false);
             RemoveClick(startButton, HandleStartClicked);
             RemoveClick(objectiveButton, HandleObjectiveClicked);
             RemoveClick(detailToggle, ToggleDetail);
@@ -126,6 +129,9 @@ namespace Code.UI
         /// </summary>
         private void RenderBriefing()
         {
+            if (recordBoard != null)
+                recordBoard.SetBriefingExpanded(_model.PreparationVisible && _expanded && !_yielded);
+
             if (briefCard == null)
                 return;
 

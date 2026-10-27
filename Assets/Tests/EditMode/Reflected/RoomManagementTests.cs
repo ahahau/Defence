@@ -34,6 +34,31 @@ namespace Tests.EditMode.Rules
             _hosts.Clear();
         }
 
+        [TestCase(true)]
+        [TestCase(false)]
+        public void RecordBoard_IndependentOccludersKeepItHidden(bool closeDetailFirst)
+        {
+            GameObject host = new GameObject("RecordBoardVisibility");
+            host.SetActive(false);
+            _hosts.Add(host);
+            Code.UI.RecordBoardView board = host.AddComponent<Code.UI.RecordBoardView>();
+            GameObject content = new GameObject("Content");
+            content.transform.SetParent(host.transform);
+            typeof(Code.UI.RecordBoardView).GetField("root", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(board, content);
+
+            board.SetBriefingExpanded(true);
+            board.SetYielded(true);
+            Assert.That(content.activeSelf, Is.False);
+            if (closeDetailFirst)
+                board.SetYielded(false);
+            else
+                board.SetBriefingExpanded(false);
+            Assert.That(content.activeSelf, Is.False, "한 가림 상태만 끝나도 다른 상태의 숨김은 유지해야 합니다.");
+            board.SetYielded(false);
+            board.SetBriefingExpanded(false);
+            Assert.That(content.activeSelf, Is.True);
+        }
         /// <summary>막힌 이유가 상태마다 정확히 붙는다.</summary>
         [Test]
         public void InstallBlockReason_NamesEachBlockedState()

@@ -18,6 +18,7 @@ namespace Code.UI
         [SerializeField] private TMP_Text deferred;
         [SerializeField, Tooltip("메모와 부하 피로")] private TMP_Text notes;
         [SerializeField] private ScrollRect notesScroll;
+        [SerializeField] private UiFrameButton detailsButton;
         [SerializeField] private UiFrameButton unitUnlockHeader;
         [SerializeField] private UiFrameButton buildingUnlockHeader;
         [SerializeField] private TMP_Text unlockList;
@@ -26,34 +27,47 @@ namespace Code.UI
         private readonly StringBuilder _builder = new();
         private SettlementReport _report;
 
-        // 해금 로드맵은 한쪽을 열어 둔 채 시작한다. 둘 다 접으면 처음 정산에서 빈 칸만 보인다.
-        private UnlockCategory _openCategory = UnlockCategory.Units;
+        private UnlockCategory _openCategory = UnlockCategory.None;
+        private bool _detailsOpen;
 
         public void Render(SettlementReport report)
         {
             _report = report;
+            _detailsOpen = false;
+            _openCategory = UnlockCategory.None;
 
             // 운영 자금이 실제로 얼마나 늘고 줄었는지를 앞세운다. 이게 내일 쓸 수 있는 돈이다.
             net.text = $"운영 자금 {GoldText.Signed(report.Net)}";
             net.color = report.Net >= 0 ? HudPalette.Gain : HudPalette.Loss;
-            deferred.text = report.DeferredDelta != 0
-                ? $"그중 {GoldText.Signed(report.DeferredDelta)}는 금고·선지출"
-                : string.Empty;
-
-            RenderNotes(report.Notes, report.Fatigue);
+            RefreshNotes();
             RenderUnlocks();
+        }
+
+        private void RefreshNotes()
+        {
+            if (_report == null)
+                return;
+
+            deferred.text = _detailsOpen && _report.DeferredDelta != 0
+                ? $"그중 {GoldText.Signed(_report.DeferredDelta)}는 금고·선지출"
+                : string.Empty;
+            detailsButton?.SetLabel(_detailsOpen ? "상세 접기" : "상세 보기");
+            detailsButton?.SetSelected(_detailsOpen);
+            RenderNotes(_report.Notes, _report.Fatigue);
             if (notesScroll != null)
                 notesScroll.verticalNormalizedPosition = 1f;
         }
 
         private void OnEnable()
         {
+            detailsButton?.Button.onClick.AddListener(ToggleDetails);
             unitUnlockHeader?.Button.onClick.AddListener(ToggleUnitUnlocks);
             buildingUnlockHeader?.Button.onClick.AddListener(ToggleBuildingUnlocks);
         }
 
         private void OnDisable()
         {
+            detailsButton?.Button.onClick.RemoveListener(ToggleDetails);
             unitUnlockHeader?.Button.onClick.RemoveListener(ToggleUnitUnlocks);
             buildingUnlockHeader?.Button.onClick.RemoveListener(ToggleBuildingUnlocks);
         }
@@ -62,9 +76,16 @@ namespace Code.UI
         {
             _builder.Clear();
             foreach (var note in noteLines)
-                _builder.AppendLine(HudPalette.Paint(note.Text, ToneColor(note.Tone)));
+            {
+                var text = _detailsOpen ? note.Text : note.SummaryText;
+                // 파산·보스 예고 등 위험은 전문만 있는 경우에도 감추지 않는다.
+                if (!_detailsOpen && string.IsNullOrEmpty(text) && note.Tone == SettlementNoteTone.Danger)
+                    text = note.Text;
+                if (!string.IsNullOrEmpty(text))
+                    _builder.AppendLine(HudPalette.Paint(text, ToneColor(note.Tone)));
+            }
 
-            if (fatigue.Count > 0)
+            if (_detailsOpen && fatigue.Count > 0)
             {
                 _builder.AppendLine();
                 _builder.AppendLine(HudPalette.Paint("부하 피로", HudPalette.Accent));
@@ -135,6 +156,13 @@ namespace Code.UI
         }
 
         private void ToggleUnitUnlocks() => Toggle(UnlockCategory.Units);
+
+        private void ToggleDetails()
+        {
+            _detailsOpen = !_detailsOpen;
+            GameSfxPlayer.Play(GameSfxCue.UiClick);
+            RefreshNotes();
+        }
 
         private void ToggleBuildingUnlocks() => Toggle(UnlockCategory.Buildings);
 

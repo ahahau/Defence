@@ -24,8 +24,264 @@ namespace Tests.EditMode.Gameplay
     {
         private const BindingFlags Instance = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public void ResultDisclosure_PreservesDetailsAndResetsForEachReport(bool runEnd)
+        {
+            var root = PrefabUtility.LoadPrefabContents(runEnd
+                ? "Assets/03.Prefabs/UI/RunEnd/RunEndScreen.prefab"
+                : "Assets/03.Prefabs/UI/Settlement/Settlement.prefab");
+            Component view = null;
+            bool subscribed = false;
+            try
+            {
+                view = runEnd ? root.GetComponent<Code.UI.RunEndScreenView>()
+                    : root.GetComponentInChildren<Code.UI.SettlementSummaryPane>(true);
+                Assert.That(view, Is.Not.Null);
+                var type = view.GetType();
+                Func<string, string> readText = field =>
+                {
+                    var component = type.GetField(field, Instance).GetValue(view);
+                    return (string)component.GetType().GetProperty("text").GetValue(component);
+                };
+                var button = new SerializedObject(view).FindProperty("detailsButton").objectReferenceValue as Code.UI.UiFrameButton;
+                Assert.That(button, Is.Not.Null, "상세 버튼이 프리팹에 연결되어야 한다.");
+                var enable = type.GetMethod("OnEnable", Instance);
+                var disable = type.GetMethod("OnDisable", Instance);
+                Assert.That(enable, Is.Not.Null);
+                Assert.That(disable, Is.Not.Null);
+                // 재활성화 뒤 한 번 누르면 한 번만 전환해야 한다.
+                enable.Invoke(view, null);
+                disable.Invoke(view, null);
+                enable.Invoke(view, null);
+                subscribed = true;
+
+                Action render;
+                Func<string> text;
+                if (runEnd)
+                {
+                    var model = Code.UI.ViewModels.RunEndPresenter.Build("던전 함락", "제한시간 초과", false, 7,
+                        new Code.UI.ViewModels.RunEndStats(6, 20, 18, 48210, 107, 3, 100), null, null);
+                    render = () => type.GetMethod("Render", Instance).Invoke(view, new object[] { model });
+                    text = () => readText("statLabels");
+                    render();
+                    StringAssert.Contains("처치", text());
+                    StringAssert.DoesNotContain("가한 피해", text());
+                    button.Button.onClick.Invoke();
+                    StringAssert.Contains("가한 피해", text());
+                    StringAssert.Contains("48,210", readText("statValues"));
+                }
+                else
+                {
+                    var section = new Code.Manager.SettlementUnlockSection("해금", "가능", 1, 1,
+                        new[] { new Code.Manager.SettlementUnlockLine("표본", true, string.Empty) });
+                    var report = new Code.Manager.SettlementReport(7,
+                        Array.Empty<Code.Manager.SettlementLedgerLine>(), Array.Empty<Code.Manager.SettlementLedgerLine>(),
+                        100, 20, 81, new[] { new Code.Manager.SettlementFatigueLine("피로 표본", 95) },
+                        new[] { new Code.Manager.SettlementNote("전투 전문", summaryText: "핵심 결과"),
+                            new Code.Manager.SettlementNote("상세 전용"),
+                            new Code.Manager.SettlementNote("파산 위험", Code.Manager.SettlementNoteTone.Danger) }, section, section);
+                    var summary = (Code.UI.SettlementSummaryPane)view;
+                    render = () => summary.Render(report);
+                    text = () => readText("notes");
+                    render();
+                    StringAssert.Contains("핵심 결과", text());
+                    StringAssert.Contains("파산 위험", text());
+                    StringAssert.DoesNotContain("피로 표본", text());
+                    StringAssert.DoesNotContain("상세 전용", text());
+                    var scroll = (UnityEngine.UI.ScrollRect)type.GetField("unlockScroll", Instance).GetValue(view);
+                    Assert.That(scroll.gameObject.activeSelf, Is.False);
+                    var header = (Code.UI.UiFrameButton)type.GetField("unitUnlockHeader", Instance).GetValue(view);
+                    header.Button.onClick.Invoke();
+                    Assert.That(scroll.gameObject.activeSelf, Is.True);
+                    button.Button.onClick.Invoke();
+                    StringAssert.Contains("상세 전용", text());
+                    StringAssert.Contains("피로 표본", text());
+                    render();
+                    Assert.That(scroll.gameObject.activeSelf, Is.False, "새 정산에서 해금은 다시 접힌다.");
+                    button.Button.onClick.Invoke();
+                }
+
+                button.Button.onClick.Invoke();
+                StringAssert.DoesNotContain(runEnd ? "가한 피해" : "상세 전용", text());
+                button.Button.onClick.Invoke();
+                render();
+                StringAssert.DoesNotContain(runEnd ? "가한 피해" : "상세 전용", text(), "새 결과는 기본 요약부터 연다.");
+            }
+            finally
+            {
+                if (subscribed)
+                    view.GetType().GetMethod("OnDisable", Instance).Invoke(view, null);
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        [TestCase("Dialogue/Dialogue", "Code.UI.DialogueUiView")]
+        [TestCase("Merchant/MerchantScreen", "Code.UI.MerchantScreenView")]
+        [TestCase("Policy/PolicyChoiceScreen", "Code.UI.PolicyChoiceScreenView")]
+        [TestCase("Popup/Popup", "Code.UI.Popup.PopupView")]
+        [TestCase("Hud/GameplayHud", "Code.UI.RecordBoardView")]
+        [TestCase("RoomManagement/RoomManagement", "Code.UI.RoomManagement.ActionDockView")]
+        [TestCase("RoomManagement/RoomManagement", "Code.UI.RoomManagement.RoomDetailPanel")]
+        [TestCase("RoomManagement/RoomManagement", "Code.UI.RoomManagement.InstallPanel")]
+        [TestCase("Settlement/Settlement", "Code.UI.SettlementScreenView")]
+        [TestCase("Settlement/Settlement", "Code.UI.SettlementLoanPane")]
+        [TestCase("Recruit/RecruitScreen", "Code.UI.SettlementShopPane")]
+        public void UiLifecycle_RebuildsLostCallbacksWithoutAwake(string prefab, string typeName)
+        {
+            GameObject root = PrefabUtility.LoadPrefabContents("Assets/03.Prefabs/UI/" + prefab + ".prefab");
+            Component view = null;
+            MethodInfo disable = null;
+            bool subscribed = false;
+            try
+            {
+                Type type = RequireType(typeName);
+                view = root.GetComponentInChildren(type, true);
+                Assert.That(view, Is.Not.Null);
+                MethodInfo enable = type.GetMethod("OnEnable", Instance);
+                disable = type.GetMethod("OnDisable", Instance);
+                Assert.That(enable, Is.Not.Null);
+                Assert.That(disable, Is.Not.Null);
+                FieldInfo[] callbacks = type.GetFields(Instance)
+                    .Where(f => f.FieldType == typeof(UnityEngine.Events.UnityAction[])).ToArray();
+                Assert.That(callbacks, Is.Not.Empty);
+
+                Assert.DoesNotThrow(() => disable.Invoke(view, null), "Awake 이전 비활성화도 안전해야 합니다.");
+                enable.Invoke(view, null);
+                subscribed = true;
+                foreach (FieldInfo field in callbacks)
+                    Assert.That(field.GetValue(view), Is.Not.Null, field.Name);
+                disable.Invoke(view, null);
+                subscribed = false;
+                foreach (FieldInfo field in callbacks)
+                    field.SetValue(view, null);
+                FieldInfo shown = type.GetField("_shown", Instance);
+                shown?.SetValue(view, null);
+
+                enable.Invoke(view, null);
+                subscribed = true;
+                object[] rebuilt = callbacks.Select(f => f.GetValue(view)).ToArray();
+                Assert.That(rebuilt, Has.All.Not.Null);
+                if (shown != null)
+                    Assert.That(shown.GetValue(view), Is.Not.Null);
+                disable.Invoke(view, null);
+                subscribed = false;
+                enable.Invoke(view, null);
+                subscribed = true;
+                for (int i = 0; i < callbacks.Length; i++)
+                    Assert.That(callbacks[i].GetValue(view), Is.SameAs(rebuilt[i]), "일반 재활성화에서 콜백을 교체하면 안 됩니다.");
+
+                if (view is Code.UI.RoomManagement.ActionDockView dock)
+                {
+                    int received = 0;
+                    dock.KindRequested += _ => received++;
+                    var buttons = (Code.UI.UiFrameButton[])type.GetField("kindButtons", Instance).GetValue(view);
+                    buttons[0].Button.onClick.Invoke();
+                    Assert.That(received, Is.EqualTo(1), "재활성화 뒤에도 버튼 한 번은 요청 한 번이어야 합니다.");
+                }
+            }
+            finally
+            {
+                try { if (subscribed) disable.Invoke(view, null); }
+                finally { PrefabUtility.UnloadPrefabContents(root); }
+            }
+        }
+
+
+
         /// <summary>아직 그림이 없기로 되어 있는 건물. 그림이 들어오면 여기서 빼면 된다.</summary>
         private static readonly string[] ArtPendingBuildings = System.Array.Empty<string>();
+
+        /// <summary>
+        /// GameScope 코드만 추가하고 씬 배선을 빠뜨리면 매번 폴백 탐색에 의존한다.
+        /// 저장된 씬을 다시 열어 매니저와 비활성 UI까지 같은 조립 루트를 참조하는지 검사한다.
+        /// </summary>
+        [Test]
+        public void GameScope_ConnectsManagersAndEverySceneClient()
+        {
+            Scene scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            try
+            {
+                MonoBehaviour[] components = scene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<MonoBehaviour>(true))
+                    .Where(component => component != null)
+                    .ToArray();
+                Code.Manager.GameScope[] scopes = components.OfType<Code.Manager.GameScope>().ToArray();
+                Assert.That(scopes, Has.Length.EqualTo(1), "SampleScene에 GameScope가 정확히 하나 있어야 합니다.");
+                Code.Manager.GameScope scope = scopes[0];
+                Assert.That(scope.isActiveAndEnabled, Is.True, "조립 루트는 활성 상태여야 합니다.");
+                Assert.That(MonoImporter.GetExecutionOrder(MonoScript.FromMonoBehaviour(scope)), Is.LessThan(0), "시작 보정은 첫 주 지원자 생성 전에 적용되어야 합니다.");
+
+                FieldInfo[] managers = typeof(Code.Manager.GameScope).GetFields(Instance)
+                    .Where(field => field.IsDefined(typeof(SerializeField), false))
+                    .ToArray();
+                Assert.That(managers, Has.Length.EqualTo(6), "현재 GameScope의 매니저 여섯 개를 검사합니다.");
+                foreach (FieldInfo field in managers)
+                {
+                    MonoBehaviour[] matches = components.Where(field.FieldType.IsInstanceOfType).ToArray();
+                    Assert.That(matches, Has.Length.EqualTo(1), field.Name + "의 씬 매니저가 하나여야 합니다.");
+                    Assert.That(field.GetValue(scope), Is.SameAs(matches[0]), field.Name + "가 씬의 매니저와 연결돼야 합니다.");
+                }
+
+                List<string> clients = new List<string>();
+                foreach (MonoBehaviour component in components)
+                {
+                    FieldInfo field = component.GetType().GetField("scope", Instance);
+                    if (field == null || field.FieldType != typeof(Code.Manager.GameScope))
+                        continue;
+
+                    Assert.That(field.GetValue(component), Is.SameAs(scope), component.GetType().Name + ".scope 연결이 빠졌습니다.");
+                    clients.Add(component.GetType().Name);
+                }
+
+                Assert.That(clients, Does.Contain("TopHudView"), "프리팹 인스턴스의 HUD도 배선을 검사해야 합니다.");
+                Assert.That(clients, Does.Contain("RoomManagementScreen"), "방 관리 화면도 배선을 검사해야 합니다.");
+                Assert.That(clients, Does.Contain("WaveManager"));
+                Assert.That(clients, Does.Contain("HiredUnitRoster"));
+                Assert.That(clients, Does.Contain("ManagementSettlementManager"));
+                Assert.That(clients, Does.Contain("CostManager"), "부채 기록도 같은 판의 요약을 참조해야 합니다.");
+                Assert.That(clients, Does.Contain("DungeonGraphController"));
+                Assert.That(clients, Does.Contain("GradeSaveAgent"));
+                Assert.That(clients, Does.Contain("MoraleSaveAgent"));
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
+            }
+        }
+
+        /// <summary>저장·보스 패배·튜토리얼이 씬 탐색 폴백에 의존하던 일곱 참조의 배선을 지킨다.</summary>
+        [TestCase("Code.Persistence.Agents.MagicSaveAgent", "magicManager")]
+        [TestCase("Code.Persistence.Agents.MerchantSaveAgent", "merchant")]
+        [TestCase("Code.Persistence.Agents.MerchantSaveAgent", "artifacts")]
+        [TestCase("Code.Manager.WaveManager", "gameOverManager")]
+        [TestCase("Code.Manager.GameOverManager", "bossWavePresenter")]
+        [TestCase("Code.UI.PlayTutorialView", "dialogueRunner")]
+        [TestCase("Code.UI.PlayTutorialView", "merchantPanel")]
+        public void SceneDependencies_ConnectsExistingManagers(string ownerTypeName, string fieldName)
+        {
+            Scene scene = EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity", OpenSceneMode.Additive);
+            try
+            {
+                MonoBehaviour[] components = scene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<MonoBehaviour>(true))
+                    .Where(component => component != null)
+                    .ToArray();
+                Type ownerType = RequireType(ownerTypeName);
+                MonoBehaviour[] owners = components.Where(ownerType.IsInstanceOfType).ToArray();
+                Assert.That(owners, Has.Length.EqualTo(1), ownerTypeName + "가 씬에 하나 있어야 합니다.");
+                FieldInfo field = ownerType.GetField(fieldName, Instance);
+                Assert.That(field, Is.Not.Null, ownerTypeName + "." + fieldName + "을 찾지 못했습니다.");
+                Assert.That(field.IsDefined(typeof(SerializeField), false), Is.True, "씬에 저장되는 참조여야 합니다.");
+                MonoBehaviour[] targets = components.Where(field.FieldType.IsInstanceOfType).ToArray();
+                Assert.That(targets, Has.Length.EqualTo(1), field.FieldType.Name + "가 씬에 하나 있어야 합니다.");
+                Assert.That(field.GetValue(owners[0]), Is.SameAs(targets[0]), ownerTypeName + "." + fieldName + "의 배선이 빠졌습니다.");
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
+            }
+        }
 
         [Test]
         public void EveryAdventurer_HasAllThreePosesAndPrefab()
