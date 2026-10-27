@@ -6,7 +6,8 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// 팩 애니메이션 그림이 있는 함정(불 화로·핏빛 웅덩이·마력 수정)을 만든다(2026-10-21 사용자 선택 — 함정 그림이 없는 함정은 지웠다).
+/// 팩 애니메이션 그림이 있는 함정(불 화로·핏빛 웅덩이·마력 수정, 2026-10-27 속박·충격·노출 수정·번개 구름)을 만든다
+/// (2026-10-21 사용자 선택 — 함정 그림이 없는 함정은 지웠다). 해금 목록과 SampleScene 설치 목록에 없는 함정은 등록한다.
 /// 함정마다 프레임 그림, <c>Trap.prefab</c> Variant, 데이터, 상태이상(화상)을 만들고 다시 돌려도 같은 결과가 나온다.
 /// 그림은 바닥 타일과 같은 텍셀 크기(25.6/유닛)라 칸 하나 = 32픽셀이고, 모든 프레임을 같은 사각형으로 빈 여백 없이 자른 뒤
 /// 기준점을 덮은 칸 가운데에 둔다. 몸체(Visual)는 1/칸 수로 줄여 두어 설치 때 칸 수만큼 늘어나도(<c>NodeTrapGrid.TryPlace</c>)
@@ -23,6 +24,8 @@ public static class TrapBodyBuilder
     private const string AnimatedFolder = "Assets/04.Sprites/Tilesets/ElvGames/Farm Game Assets/Tilesets/Dark Castle/Animated Tiles/";
     private const string ObjectFolder = "Assets/04.Sprites/Tilesets/ElvGames/Farm Game Assets/Objects/";
     private const string BurnStatusPath = StatusFolder + "BurnStatusEffect.asset";
+    private const string CatalogPath = "Assets/07.SO/Progression/DungeonUnlockCatalog.asset";
+    private const string ScenePath = "Assets/00.Scenes/SampleScene.unity";
     private const int CellPixels = 32;
     private const float PixelsPerUnit = 25.6f;
     private const float FrameSeconds = 0.12f;
@@ -30,7 +33,10 @@ public static class TrapBodyBuilder
     /// <summary>설치된 함정의 기본 발동 확률(사용자 결정: 쉽게 밟히지 않게). 모험가 기동성이 더 깎는다.</summary>
     private const float TriggerChance = 0.6f;
 
-    /// <summary>함정 하나. 그림은 시트의 한 줄(<c>row</c>)에 가로로 늘어선 프레임이다.</summary>
+    /// <summary>
+    /// 함정 하나. 그림은 시트의 한 줄(<c>row</c>)에 가로로 늘어선 프레임이다.
+    /// <see cref="Cells"/>를 주면 그 칸들(가로 칸, 줄)을 차례로 쓰고, <see cref="Sample"/>을 주면 프레임 안의 그 사각형(위에서부터 잼)만 쓴다.
+    /// </summary>
     private sealed class Spec
     {
         public string Prefab;
@@ -40,6 +46,8 @@ public static class TrapBodyBuilder
         public Vector2Int FrameSize;
         public int Row;
         public int Frames;
+        public Vector2Int[] Cells;
+        public RectInt Sample;
         public Vector2Int Footprint;
         public TrapTriggerMode Mode;
         public int Cost;
@@ -51,6 +59,9 @@ public static class TrapBodyBuilder
         public float PersistentSeconds = 3f;
         public float AreaRadius = 1f;
         public string Status;
+        /// <summary>해금 목록에 없을 때 새로 넣는 해금일과 안내. 0이면 처음부터 열린다.</summary>
+        public int UnlockDay;
+        public string UnlockHint;
     }
 
     private static readonly Spec[] Specs =
@@ -76,7 +87,51 @@ public static class TrapBodyBuilder
             Footprint = Vector2Int.one, Mode = TrapTriggerMode.Area, Cost = 45, Danger = 3, Grade = 2,
             Damage = 10, DamagePerDay = 0.55f, Cooldown = 6f, Status = StatusFolder + "VulnerableStatusEffect.asset"
         },
+        // 2026-10-27 함정 추가(TrapExpansionDesign). 수치는 밸런스 전 초기값이다.
+        new()
+        {
+            Prefab = "Trap_SnareCrystal", Data = "SnareCrystalTrapBuildingData", DisplayName = "속박 수정",
+            Texture = ObjectFolder + "FG_Crystal_Green_1.png", FrameSize = new Vector2Int(16, 16), Frames = 8,
+            Footprint = Vector2Int.one, Mode = TrapTriggerMode.Area, Cost = 30, Danger = 2, Grade = 1,
+            Damage = 5, DamagePerDay = 0.35f, Cooldown = 6f, Status = StatusFolder + "Generated/SnaredStatusEffect.asset",
+            UnlockDay = 3, UnlockHint = "3일차 · 녹색 수정이 무리 전체의 손을 묶는다"
+        },
+        new()
+        {
+            Prefab = "Trap_ShockCrystal", Data = "ShockCrystalTrapBuildingData", DisplayName = "충격 수정",
+            Texture = ObjectFolder + "FG_Crystal_Red_1.png", FrameSize = new Vector2Int(16, 16), Frames = 8,
+            Footprint = Vector2Int.one, Mode = TrapTriggerMode.Step, Cost = 35, Danger = 2, Grade = 1,
+            Damage = 8, DamagePerDay = 0.45f, Cooldown = 7f, Status = StatusFolder + "StunStatusEffect.asset",
+            UnlockDay = 9, UnlockHint = "9일차 · 밟은 한 명을 붉은 수정이 크게 늦춘다"
+        },
+        new()
+        {
+            Prefab = "Trap_ExposeCrystal", Data = "ExposeCrystalTrapBuildingData", DisplayName = "노출 수정",
+            Texture = ObjectFolder + "FG_Crystal_Gold_1.png", FrameSize = new Vector2Int(16, 16), Frames = 8,
+            Footprint = Vector2Int.one, Mode = TrapTriggerMode.Area, Cost = 50, Danger = 3, Grade = 2,
+            Damage = 6, DamagePerDay = 0.4f, Cooldown = 8f, Status = StatusFolder + "Generated/ExposedStatusEffect.asset",
+            UnlockDay = 15, UnlockHint = "15일차 · 금빛 수정이 잠깐 함정 피해를 키운다"
+        },
+        // 번개 구름: 시트 한 칸이 96×160(구름 + 아래로 내리꽂는 번개)이라, 구름만 남은 세 칸을 오가며 위쪽 64×64만 쓴다.
+        // 번개는 발동 연출(TrapEffectBuilder)이 같은 시트에서 따로 자른다. 상태이상 없이 피해만 준다.
+        new()
+        {
+            Prefab = "Trap_StormCloud", Data = "StormCloudTrapBuildingData", DisplayName = "번개 구름",
+            Texture = StormSheetPath, FrameSize = new Vector2Int(96, 160), Frames = 8,
+            Cells = new[]
+            {
+                new Vector2Int(4, 0), new Vector2Int(0, 1), new Vector2Int(5, 1), new Vector2Int(0, 1),
+                new Vector2Int(4, 0), new Vector2Int(0, 1), new Vector2Int(5, 1), new Vector2Int(0, 1)
+            },
+            Sample = new RectInt(16, 0, 64, 64),
+            Footprint = new Vector2Int(2, 2), Mode = TrapTriggerMode.Area, Cost = 90, Danger = 4, Grade = 2,
+            Damage = 24, DamagePerDay = 0.9f, Cooldown = 12f, Status = null,
+            UnlockDay = 20, UnlockHint = "20일차 · 먹구름이 넓게 번개를 내리꽂는다"
+        },
     };
+
+    /// <summary>번개 구름 시트(MagicSpell6). 몸체와 발동 연출이 같이 쓴다.</summary>
+    public const string StormSheetPath = "Assets/04.Sprites/Effects/MagicSpell6/StormSpell.png";
 
     /// <summary>만드는 함정의 데이터 경로(해금 목록·씬 설치 목록 배선, 테스트가 쓴다).</summary>
     public static IEnumerable<string> DataPaths
@@ -93,16 +148,90 @@ public static class TrapBodyBuilder
     {
         EnsureBurnStatus();
         ShakeBodyNotRoot();
+        var built = new List<BuildingDataSO>();
         foreach (var spec in Specs)
         {
             var frames = WriteFrames(spec);
             var prefab = BuildPrefab(spec, frames);
-            BuildData(spec, frames[0], prefab);
+            var data = BuildData(spec, frames[0], prefab);
+            RegisterUnlock(spec, data);
+            built.Add(data);
         }
 
         AssetDatabase.SaveAssets();
         TrapEffectBuilder.BuildAll();
+        RegisterInScene(built);
         Debug.Log($"함정 {Specs.Length}종 완료");
+    }
+
+    /// <summary>해금 목록에 없는 함정만 넣는다. 이미 있는 항목(해금일·안내)은 건드리지 않는다.</summary>
+    private static void RegisterUnlock(Spec spec, BuildingDataSO data)
+    {
+        var catalog = AssetDatabase.LoadAssetAtPath<Code.Progression.DungeonUnlockCatalogSO>(CatalogPath);
+        var serialized = new SerializedObject(catalog);
+        var entries = serialized.FindProperty("entries");
+        for (var i = 0; i < entries.arraySize; i++)
+        {
+            if (entries.GetArrayElementAtIndex(i).FindPropertyRelative("building").objectReferenceValue == data)
+                return;
+        }
+
+        entries.arraySize++;
+        var entry = entries.GetArrayElementAtIndex(entries.arraySize - 1);
+        entry.FindPropertyRelative("unit").objectReferenceValue = null;
+        entry.FindPropertyRelative("building").objectReferenceValue = data;
+        entry.FindPropertyRelative("startsUnlocked").boolValue = spec.UnlockDay <= 0;
+        entry.FindPropertyRelative("unlockDay").intValue = spec.UnlockDay;
+        entry.FindPropertyRelative("unlockHint").stringValue = spec.UnlockHint ?? string.Empty;
+        // 함정은 메타 진행도로 잠그지 않는다(wave-economy-rules).
+        entry.FindPropertyRelative("metaProgressRequired").intValue = 0;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+        EditorUtility.SetDirty(catalog);
+    }
+
+    /// <summary>SampleScene의 설치 목록(<c>NodePanelView.installableBuildings</c>)에 없는 함정을 뒤에 붙인다.</summary>
+    private static void RegisterInScene(List<BuildingDataSO> traps)
+    {
+        var scene = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene();
+        if (scene.path != ScenePath)
+        {
+            Debug.LogWarning($"{ScenePath}가 열려 있지 않아 설치 목록 등록을 건너뜁니다.");
+            return;
+        }
+
+        var panel = Object.FindAnyObjectByType<Code.UI.NodePanelView>(FindObjectsInactive.Include);
+        if (panel == null)
+        {
+            Debug.LogWarning("NodePanelView를 찾지 못해 설치 목록 등록을 건너뜁니다.");
+            return;
+        }
+
+        var serialized = new SerializedObject(panel);
+        var list = serialized.FindProperty("installableBuildings");
+        var added = 0;
+        foreach (var trap in traps)
+        {
+            var listed = false;
+            for (var i = 0; i < list.arraySize && !listed; i++)
+                listed = list.GetArrayElementAtIndex(i).objectReferenceValue == trap;
+            if (listed)
+                continue;
+
+            list.arraySize++;
+            list.GetArrayElementAtIndex(list.arraySize - 1).objectReferenceValue = trap;
+            added++;
+        }
+
+        if (added == 0)
+            return;
+
+        var wasDirty = scene.isDirty;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+        UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(scene);
+        if (!wasDirty)
+            UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene);
+        else
+            Debug.LogWarning("씬에 저장하지 않은 다른 변경이 있어 저장은 하지 않았습니다. 확인 후 저장하세요.");
     }
 
     /// <summary>
@@ -160,16 +289,18 @@ public static class TrapBodyBuilder
         {
             var crop = new RectInt();
             var hasContent = false;
+            var sample = spec.Sample.width > 0 ? spec.Sample : new RectInt(0, 0, spec.FrameSize.x, spec.FrameSize.y);
             for (var i = 0; i < spec.Frames; i++)
             {
                 var canvas = new Texture2D(width, height, TextureFormat.RGBA32, false);
                 canvas.SetPixels32(new Color32[width * height]);
-                var sourceX = i * spec.FrameSize.x;
-                var sourceY = sheet.height - (spec.Row + 1) * spec.FrameSize.y;
-                var left = (width - spec.FrameSize.x) / 2;
-                var bottom = (height - spec.FrameSize.y) / 2;
-                canvas.SetPixels(left, bottom, spec.FrameSize.x, spec.FrameSize.y,
-                    sheet.GetPixels(sourceX, sourceY, spec.FrameSize.x, spec.FrameSize.y));
+                var cell = spec.Cells != null ? spec.Cells[i] : new Vector2Int(i, spec.Row);
+                var sourceX = cell.x * spec.FrameSize.x + sample.x;
+                var sourceY = sheet.height - cell.y * spec.FrameSize.y - sample.y - sample.height;
+                var left = (width - sample.width) / 2;
+                var bottom = (height - sample.height) / 2;
+                canvas.SetPixels(left, bottom, sample.width, sample.height,
+                    sheet.GetPixels(sourceX, sourceY, sample.width, sample.height));
                 canvas.Apply();
                 canvases.Add(canvas);
 
@@ -250,8 +381,11 @@ public static class TrapBodyBuilder
             trap.FindProperty("damage").intValue = spec.Damage;
             trap.FindProperty("damagePerDay").floatValue = spec.DamagePerDay;
             trap.FindProperty("injuryChance").floatValue = 1f;
-            trap.FindProperty("injuryStatusEffect").objectReferenceValue =
-                AssetDatabase.LoadAssetAtPath<StatusEffectDataSO>(spec.Status);
+            var status = spec.Status != null ? AssetDatabase.LoadAssetAtPath<StatusEffectDataSO>(spec.Status) : null;
+            // 경로가 틀리면 상태이상 없는 함정이 조용히 만들어진다(처음 만들 때 속박·노출이 그랬다).
+            if (spec.Status != null && status == null)
+                Debug.LogError($"{nameof(TrapBodyBuilder)}: {spec.Prefab}의 상태이상 {spec.Status}를 찾지 못했습니다.");
+            trap.FindProperty("injuryStatusEffect").objectReferenceValue = status;
             trap.FindProperty("cooldownSeconds").floatValue = spec.Cooldown;
             trap.FindProperty("persistentSeconds").floatValue = spec.PersistentSeconds;
             trap.FindProperty("areaRadiusCells").floatValue = spec.AreaRadius;
@@ -288,7 +422,7 @@ public static class TrapBodyBuilder
         }
     }
 
-    private static void BuildData(Spec spec, Sprite board, Trap prefab)
+    private static BuildingDataSO BuildData(Spec spec, Sprite board, Trap prefab)
     {
         var path = DataFolder + spec.Data + ".asset";
         var data = AssetDatabase.LoadAssetAtPath<BuildingDataSO>(path);
@@ -307,6 +441,7 @@ public static class TrapBodyBuilder
         serialized.FindProperty("<BaseDanger>k__BackingField").intValue = spec.Danger;
         serialized.FindProperty("<Category>k__BackingField").intValue = 2;
         serialized.ApplyModifiedPropertiesWithoutUndo();
+        return data;
     }
 
     private static bool TryOpaqueBounds(Texture2D texture, out RectInt bounds)

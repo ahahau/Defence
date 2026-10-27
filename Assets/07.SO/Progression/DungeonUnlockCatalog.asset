@@ -181,3 +181,27 @@ MonoBehaviour:
     unlockDay: 10
     unlockHint: "10\uC77C\uCC28 \xB7 \uAE30\uBCF8 \uC218\uC785 24G \xB7 \uCCB4\uB958 4\uCD08 \xB7 \uBAA8\uD5D8\uAC00 \uBC29\uC5B4 +4"
     metaProgressRequired: 0
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: be41653203961e8469dc7902544fe225, type: 2}
+    startsUnlocked: 0
+    unlockDay: 3
+    unlockHint: "3\uC77C\uCC28 \xB7 \uB179\uC0C9 \uC218\uC815\uC774 \uBB34\uB9AC \uC804\uCCB4\uC758 \uC190\uC744 \uBB36\uB294\uB2E4"
+    metaProgressRequired: 0
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: 268c2e0444131034f8750ebb13ac453e, type: 2}
+    startsUnlocked: 0
+    unlockDay: 9
+    unlockHint: "9\uC77C\uCC28 \xB7 \uBC1F\uC740 \uD55C \uBA85\uC744 \uBD89\uC740 \uC218\uC815\uC774 \uD06C\uAC8C \uB2A6\uCD98\uB2E4"
+    metaProgressRequired: 0
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: 36690a55f0322d94bb7be8271a30d072, type: 2}
+    startsUnlocked: 0
+    unlockDay: 15
+    unlockHint: "15\uC77C\uCC28 \xB7 \uAE08\uBE5B \uC218\uC815\uC774 \uC7A0\uAE50 \uD568\uC815 \uD53C\uD574\uB97C \uD0A4\uC6B4\uB2E4"
+    metaProgressRequired: 0
+  - unit: {fileID: 0}
+    building: {fileID: 11400000, guid: 71c3dd1f6e5e62a46ad3297d59177363, type: 2}
+    startsUnlocked: 0
+    unlockDay: 20
+    unlockHint: "20\uC77C\uCC28 \xB7 \uBA39\uAD6C\uB984\uC774 \uB113\uAC8C \uBC88\uAC1C\uB97C \uB0B4\uB9AC\uAF42\uB294\uB2E4"
+    metaProgressRequired: 0

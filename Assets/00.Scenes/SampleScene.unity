@@ -1168,6 +1168,10 @@ MonoBehaviour:
   - {fileID: 11400000, guid: b051351cda908c748942942f9cef4fc5, type: 2}
   - {fileID: 11400000, guid: 429f2c0bf64f36244adc820a697103c6, type: 2}
   - {fileID: 11400000, guid: 581372cc13490ef4ea2c828036f65c1c, type: 2}
+  - {fileID: 11400000, guid: be41653203961e8469dc7902544fe225, type: 2}
+  - {fileID: 11400000, guid: 268c2e0444131034f8750ebb13ac453e, type: 2}
+  - {fileID: 11400000, guid: 36690a55f0322d94bb7be8271a30d072, type: 2}
+  - {fileID: 11400000, guid: 71c3dd1f6e5e62a46ad3297d59177363, type: 2}
   unlockCatalog: {fileID: 11400000, guid: c3ea30d18d72d2442bc1ca2c2e29b502, type: 2}
   alwaysInstallableBuildings:
   - {fileID: 11400000, guid: 9e268c91c1cd76342ab8cdb1943bf6e5, type: 2}

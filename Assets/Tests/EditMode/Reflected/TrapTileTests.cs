@@ -119,7 +119,8 @@ namespace Tests.EditMode.Rules
         }
 
         /// <summary>함정마다 방식에 맞는 발동 효과가 배선돼 있는지. 비면 흔들림만 보여 무엇이 터졌는지 모른다.</summary>
-        [TestCase("Trap_FireBrazier"), TestCase("Trap_BloodPool"), TestCase("Trap_ManaCrystal")]
+        [TestCase("Trap_FireBrazier"), TestCase("Trap_BloodPool"), TestCase("Trap_ManaCrystal"), TestCase("Trap_SnareCrystal"),
+         TestCase("Trap_ShockCrystal"), TestCase("Trap_ExposeCrystal"), TestCase("Trap_StormCloud")]
         public void TrapPrefab_HasTriggerEffectForItsMode(string name)
         {
             var trap = LoadTrapPrefab(name);
@@ -137,7 +138,8 @@ namespace Tests.EditMode.Rules
         /// 함께 또렷하다. 그림은 빈 여백 없이 잘라 카드에서 작게 보이지 않게 하고, 덮은 칸 가운데에 놓인다. 몸체는 바닥·기둥 타일
         /// 위에 그려 기둥 받침이 내려온 아래 칸에서도 함정이 보인다(캐릭터는 그보다 위). 프레임은 게임 시간으로 반복한다.
         /// </summary>
-        [TestCase("Trap_FireBrazier"), TestCase("Trap_BloodPool"), TestCase("Trap_ManaCrystal")]
+        [TestCase("Trap_FireBrazier"), TestCase("Trap_BloodPool"), TestCase("Trap_ManaCrystal"), TestCase("Trap_SnareCrystal"),
+         TestCase("Trap_ShockCrystal"), TestCase("Trap_ExposeCrystal"), TestCase("Trap_StormCloud")]
         public void TrapPrefab_ShowsItsOwnDungeonBody(string name)
         {
             var trap = LoadTrapPrefab(name);
@@ -278,7 +280,9 @@ namespace Tests.EditMode.Rules
             }
         }
 
-        /// <summary>그림이 없는 함정은 지웠다. 남은 함정은 팩 그림이 있는 셋뿐이고, 각자 해금 목록에 올라 있다.</summary>
+        /// <summary>
+        /// 그림이 없는 함정은 지웠다. 남은 함정은 팩 그림이 있는 것뿐이고(2026-10-27 수정 셋·번개 구름 추가로 일곱), 각자 해금 목록에 올라 있다.
+        /// </summary>
         [Test]
         public void TrapRoster_IsOnlyTrapsWithPackArt()
         {
@@ -287,7 +291,9 @@ namespace Tests.EditMode.Rules
                 .ToArray();
             Assert.That(names, Is.EquivalentTo(new[]
             {
-                "FireBrazierTrapBuildingData", "BloodPoolTrapBuildingData", "ManaCrystalTrapBuildingData"
+                "FireBrazierTrapBuildingData", "BloodPoolTrapBuildingData", "ManaCrystalTrapBuildingData",
+                "SnareCrystalTrapBuildingData", "ShockCrystalTrapBuildingData", "ExposeCrystalTrapBuildingData",
+                "StormCloudTrapBuildingData"
             }));
 
             var catalog = AssetDatabase.LoadAssetAtPath<Code.Progression.DungeonUnlockCatalogSO>(
@@ -318,7 +324,65 @@ namespace Tests.EditMode.Rules
                 seen[data.BoardSprite] = data.name;
             }
 
-            Assert.That(seen.Count, Is.EqualTo(3));
+            Assert.That(seen.Count, Is.EqualTo(7));
+        }
+
+        /// <summary>
+        /// 2026-10-27 함정 추가(TrapExpansionDesign): 상태이상은 공격 간격·함정 피해 배율만 바꾸므로, 새 넷은 역할이 겹치지 않게
+        /// 방식·칸·상태이상·해금일을 나눴다. 생성기를 다시 돌려도 이 조합이 바뀌지 않게 고정한다.
+        /// </summary>
+        /// <summary>
+        /// 범위 연출은 그림의 아래 끝을 범위 사각형 아래 끝(2×2 구름 + 반경 1이면 구름보다 한 칸 아래)에 맞춘다. 번개 시트를 그대로 쓰면
+        /// 번개가 구름을 지나 한 칸 더 내려가, 방 아래쪽에 깐 구름에서 벽 밖까지 뻗었다(2026-10-27 실측 캡처). 번개 끝은 구름 바닥이어야 한다.
+        /// </summary>
+        [Test]
+        public void StormCloud_LightningEndsOnTheCloud()
+        {
+            var trap = LoadTrapPrefab("Trap_StormCloud");
+            var visual = trap.GetComponent<TrapTriggerVisual>();
+            var frames = typeof(TrapTriggerVisual).GetField("triggerFrames", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(frames, Is.Not.Null, "TrapTriggerVisual.triggerFrames 를 찾지 못했습니다.");
+            var sprites = (Sprite[])frames.GetValue(visual);
+            Assert.That(sprites, Is.Not.Empty);
+
+            var areaCells = TrapEffectRules.AreaWidthCells(trap.Footprint, trap.AreaRadiusCells);
+            var lowest = int.MaxValue;
+            var width = 0;
+            foreach (var sprite in sprites)
+            {
+                var png = new Texture2D(2, 2);
+                _created.Add(png);
+                png.LoadImage(System.IO.File.ReadAllBytes(AssetDatabase.GetAssetPath(sprite)));
+                width = png.width;
+                var pixels = png.GetPixels32();
+                for (var y = 0; y < png.height && y < lowest; y++)
+                    if (Enumerable.Range(0, png.width).Any(x => pixels[y * png.width + x].a > 0))
+                        lowest = y;
+            }
+
+            // 그림 폭 = 범위 폭이라, 구름 바닥은 그림 아래 끝에서 (범위 − 구름) / 2 칸 위다.
+            var cloudBottom = width * (areaCells - trap.Footprint.y) * 0.5f / areaCells;
+            Assert.That(lowest, Is.EqualTo(cloudBottom).Within(2f), "번개 아래 끝이 구름 바닥에 닿아야 합니다.");
+        }
+
+        [TestCase("Trap_SnareCrystal", TrapTriggerMode.Area, 1, "SnaredStatusEffect", 3)]
+        [TestCase("Trap_ShockCrystal", TrapTriggerMode.Step, 1, "StunStatusEffect", 9)]
+        [TestCase("Trap_ExposeCrystal", TrapTriggerMode.Area, 1, "ExposedStatusEffect", 15)]
+        [TestCase("Trap_StormCloud", TrapTriggerMode.Area, 2, null, 20)]
+        public void NewTrap_HasItsDesignedModeStatusAndUnlockDay(string prefab, TrapTriggerMode mode, int size, string status, int day)
+        {
+            var trap = LoadTrapPrefab(prefab);
+            Assert.That(trap.TriggerMode, Is.EqualTo(mode), prefab);
+            Assert.That(trap.Footprint, Is.EqualTo(new Vector2Int(size, size)), prefab);
+            Assert.That(trap.StatusEffect != null ? trap.StatusEffect.name : null, Is.EqualTo(status), prefab);
+
+            var catalog = AssetDatabase.LoadAssetAtPath<Code.Progression.DungeonUnlockCatalogSO>(
+                "Assets/07.SO/Progression/DungeonUnlockCatalog.asset");
+            var entry = catalog.Entries.FirstOrDefault(e => e?.Building != null && e.Building.Prefab == trap);
+            Assert.That(entry, Is.Not.Null, $"{prefab} 가 해금 목록에 없습니다.");
+            Assert.That(entry.StartsUnlocked, Is.False);
+            Assert.That(entry.UnlockDay, Is.EqualTo(day));
+            Assert.That(entry.MetaProgressRequired, Is.Zero, "함정은 메타 진행도로 잠그지 않습니다.");
         }
 
         /// <summary>
