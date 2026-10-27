@@ -15,7 +15,7 @@ paths:
 
 ## 지금 상태 (2026-10-19)
 
-UI Toolkit을 모두 걷어냈다. uGUI(A안)로 다시 만드는 중이다. 만든 화면: 장부·배속(`TopHudView`), 손님 브리핑·진행 막대·배너·영업 시작(`WaveHudView`), 기록판 침입 파티·최근 기록(`RecordBoardView` + `ActivityLog`, 오른쪽 열 아래), 범용 팝업(`PopupView`, 캔버스 100), 방 관리(`RoomManagementScreen`: 왼쪽 아래 행동 도크·도크 위 설치 창·오른쪽 열 방 상세 — 방 상세가 열린 동안 브리핑을 비켜 둠, 20), 부하 상태·모험가 상태·금고 창(`UnitStatusView`·`EnemyStatusView`·`TreasuryView`, 30 — 상태 창은 누른 자리 옆 `UiPlacement.PlaceNear`), 대화 상자(`DialogueUiView`, 80), 하루 정산표(`SettlementScreenView` + 칸 Pane 넷, 84), 첫날 안내 덮개(`TutorialOverlayView`, 85), 떠돌이 상인 창(`MerchantScreenView`, 40, 가운데 카드 — 생성기 `MerchantBuilder`), 고용 창(`RecruitScreenView`, 40, 가운데 카드, 지원자 목록은 정산 `SettlementShopPane` 재사용 — 생성기 `RecruitBuilder`, 도크 "고용" 버튼). 생성기 순서: `RecruitBuilder` → `RoomManagementBuilder`(도크가 고용 창을 배선). 나머지는 아직 화면이 없다. 화면 사각형 하나만 남기고 덮는 어둠은 `UiSpotlightDim`(생성기 `UiKit.SpotlightDim`)을 쓴다.
+UI Toolkit을 모두 걷어냈다. uGUI(A안)로 다시 만드는 중이다. 만든 화면: 장부·배속(`TopHudView`), 손님 브리핑·진행 막대·배너·영업 시작(`WaveHudView`), 기록판 침입 파티·최근 기록(`RecordBoardView` + `ActivityLog`, 오른쪽 열 아래), 범용 팝업(`PopupView`, 캔버스 100), 방 관리(`RoomManagementScreen`: 왼쪽 아래 행동 도크·도크 위 설치 창·오른쪽 열 방 상세 — 방 상세가 열린 동안 브리핑을 비켜 둠, 20), 부하 상태·모험가 상태·금고 창(`UnitStatusView`·`EnemyStatusView`·`TreasuryView`, 30 — 상태 창은 누른 자리 옆 `UiPlacement.PlaceNear`), 대화 상자(`DialogueUiView`, 80), 하루 정산표(`SettlementScreenView` + 칸 Pane 셋, 84), 첫날 안내 덮개(`TutorialOverlayView`, 85), 떠돌이 상인 창(`MerchantScreenView`, 40, 가운데 카드 — 생성기 `MerchantBuilder`), 고용 창(`RecruitScreenView`, 40, 가운데 카드, 지원자 목록은 정산 `SettlementShopPane` 재사용 — 생성기 `RecruitBuilder`, 도크 "고용" 버튼). 생성기 순서: `RecruitBuilder` → `RoomManagementBuilder`(도크가 고용 창을 배선). 나머지는 아직 화면이 없다. 화면 사각형 하나만 남기고 덮는 어둠은 `UiSpotlightDim`(생성기 `UiKit.SpotlightDim`)을 쓴다.
 
 - UI Toolkit(UXML·USS·`UIDocument`·`PanelSettings`)을 새로 쓰지 않는다.
 - 판단 컴포넌트는 남아 있다. 각자 표시 값과 변경 이벤트를 내보내고, 버튼이 할 일은 공개 함수로 연다. uGUI 화면은 여기에 붙는다.
@@ -82,4 +82,5 @@ UI Toolkit을 모두 걷어냈다. uGUI(A안)로 다시 만드는 중이다. 만
 - OnDisable은 Awake 전·캐시 소실 상태도 허용한다. 단순 null 검사로 화면 전체를 중단하지 말고 활성화 때 정상 입력을 복구한다. 회귀는 AssetWiringTests.UiLifecycle_RebuildsLostCallbacksWithoutAwake(실제 프리팹 11개 컴포넌트)를 사용한다.
 - UI 콜백 복구를 게임 전체 상태의 재로드 지원으로 해석하지 않는다. 2026-10-26 후속 작업에서 비용 장부·일차 참조의 재로드 보존을 검증했다(경제 규칙·EconomyReloadDesign). 다른 매니저의 런타임 상태는 별도 검증 대상이다.
 
-- 결과 정보 밀도(2026-10-26 승인): 정산 기본 화면은 핵심 SummaryText만 표시하고 상세 버튼에서 전문·피로·금고/선지출 설명을 연다. 보스·파산 위험(Danger)은 요약 문구가 없어도 감추지 않는다. 해금 목록은 매 정산마다 접힌 상태로 시작한다. 판 종료 기본 전과는 처치·보스 2줄, 전체 통계에서 기존 8줄을 보인다. 새 결과는 요약으로 초기화하고 글자 크기·금액 계산·진행도·새 해금·씬 전환은 유지한다. 설계: Docs/Design/ResultInformationDensityDesign.md.
+- 정산표 한 화면 장부(2026-10-27 승인, `Docs/Design/SettlementLedgerUiDesign.md`): 탭 셋(오늘 정산·계약/부채·유닛 상점). 오늘 정산은 위 띠(수입·지출·낮에 이미 반영·남은 운영 자금), 왼쪽 수입·지출 한 장부, 오른쪽 전과 칩 6자리 고정, 맨 아래 해금 한 줄 + "목록". 값은 `SettlementOverviewPresenter`가 만들고 `SettlementSummaryPane`은 그리기만 한다. 위험 메모는 칩이 넘쳐도 남기고, 해금 목록은 매 정산마다 접힌다. `SettlementBuilder.BuildAll()`은 씬 인스턴스를 다시 놓으므로 뒤이어 `SettingsBuilder`의 ESC 목록 배선을 다시 한다.
+- 결과 정보 밀도(2026-10-26 승인, 정산 쪽은 위 한 화면 장부로 대체): 판 종료 기본 전과는 처치·보스 2줄, 전체 통계에서 기존 8줄을 보인다. 새 결과는 요약으로 초기화하고 글자 크기·금액 계산·진행도·새 해금·씬 전환은 유지한다. 설계: Docs/Design/ResultInformationDensityDesign.md.

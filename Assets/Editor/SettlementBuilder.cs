@@ -9,8 +9,10 @@ using UnityEngine.UI;
 /// 하루 정산표(uGUI, A안) 프리팹을 만들고 SampleScene에 놓는다. 캔버스 84(대화 80 위, 첫날 안내 덮개 85 아래 — 정산을 읽으라는 안내 카드가 보여야 한다).
 /// Unity CLI: <c>SettlementBuilder.BuildAll()</c>.
 ///
-/// 덮개 + 카드 1040×740(가운데에서 64 아래, 안내 카드 136~220을 피함): 제목, 탭 다섯(168×38), 칸 하나(992×534, 요약·수입·지출·계약/부채·유닛 상점),
-/// 아래 가운데 "정산 완료" 280×46. 칸 크기는 내용과 상관없이 고정이고, 긴 목록은 칸 안에서 스크롤한다.
+/// 덮개 + 카드 1040×740(가운데에서 64 아래, 안내 카드 136~220을 피함): 왼쪽 제목·오른쪽 빚/청산일, 탭 셋(168×38),
+/// 칸 하나(992×534, 오늘 정산·계약/부채·유닛 상점), 오른쪽 아래 "정산 완료" 240×46.
+/// 오늘 정산(2026-10-27 한 화면 장부): 위 띠(수입·지출·이미 반영·남은 운영 자금) 72, 왼쪽 장부 560×440, 오른쪽 전과 칩 6자리,
+/// 맨 아래 줄(정산 완료와 같은 높이)에 해금 한 줄과 "목록". 칸 크기는 내용과 상관없이 고정이고, 긴 목록은 칸 안에서 스크롤한다.
 /// </summary>
 public static class SettlementBuilder
 {
@@ -27,7 +29,12 @@ public static class SettlementBuilder
     private const float PaneWidth = CardWidth - PaneX * 2f;
     private const float PaneHeight = 534f;
 
-    private static readonly string[] TabLabels = { "이번 영업", "수입 상세", "지출 상세", "계약 / 부채", "유닛 상점" };
+    private const float LedgerWidth = 560f;
+    private const float BodyTop = 86f;
+    private const float BodyHeight = 440f;
+    private const float FooterY = 552f;
+
+    private static readonly string[] TabLabels = { "오늘 정산", "계약 / 부채", "유닛 상점" };
 
     [MenuItem("Tools/Dungeon Keeper/Build Settlement")]
     public static void BuildAll()
@@ -38,7 +45,10 @@ public static class SettlementBuilder
             var settlement = Object.FindAnyObjectByType<ManagementSettlementManager>(FindObjectsInactive.Include);
             var cost = Object.FindAnyObjectByType<CostManager>(FindObjectsInactive.Include);
             var roster = Object.FindAnyObjectByType<HiredUnitRoster>(FindObjectsInactive.Include);
-            UiKit.Wire(instance.GetComponent<SettlementScreenView>(), "settlement", settlement);
+            var screen = instance.GetComponent<SettlementScreenView>();
+            UiKit.Wire(screen, "settlement", settlement);
+            UiKit.Wire(screen, "scope", Object.FindAnyObjectByType<GameScope>(FindObjectsInactive.Include));
+            UiKit.Wire(screen, "dayManager", Object.FindAnyObjectByType<DayManager>(FindObjectsInactive.Include));
             var loan = instance.GetComponentInChildren<SettlementLoanPane>(true);
             UiKit.Wire(loan, "costManager", cost);
             var shop = instance.GetComponentInChildren<SettlementShopPane>(true);
@@ -60,39 +70,37 @@ public static class SettlementBuilder
         UiKit.Panel(card, HudPalette.Surface, HudPalette.Border, true);
         var cardGroup = card.gameObject.AddComponent<CanvasGroup>();
 
-        var title = UiKit.Text("Title", card, "1일차 정산", 28f, HudPalette.AccentSoft, TextAlignmentOptions.Center, true, true);
-        UiKit.TopLeft(title.rectTransform, PaneX, 18f, PaneWidth, 36f);
+        var title = UiKit.Text("Title", card, "1일차 정산", 28f, HudPalette.AccentSoft, TextAlignmentOptions.MidlineLeft, true, true);
+        UiKit.TopLeft(title.rectTransform, PaneX, 18f, 480f, 36f);
+        var status = UiKit.Text("Status", card, "빚 없음 · 청산일까지 7일", 17f, HudPalette.TextDim, TextAlignmentOptions.MidlineRight, false, true);
+        UiKit.TopLeft(status.rectTransform, CardWidth - PaneX - 480f, 22f, 480f, 30f);
         var divider = UiKit.TopLeft(UiKit.Rect("Divider", card), PaneX, 60f, PaneWidth, 2f);
         UiKit.Image(divider, null, HudPalette.BorderQuiet, false);
 
         var tabs = new Object[TabLabels.Length];
         const float tabWidth = 168f;
         const float tabGap = 8f;
-        var tabsLeft = (CardWidth - (tabWidth * TabLabels.Length + tabGap * (TabLabels.Length - 1))) * 0.5f;
         for (var i = 0; i < TabLabels.Length; i++)
         {
-            var rt = UiKit.TopLeft(UiKit.Rect($"Tab{i}", card), tabsLeft + i * (tabWidth + tabGap), 74f, tabWidth, 38f);
+            var rt = UiKit.TopLeft(UiKit.Rect($"Tab{i}", card), PaneX + i * (tabWidth + tabGap), 74f, tabWidth, 38f);
             tabs[i] = UiKit.Button(rt, TabLabels[i], UiKit.ButtonKind.Secondary, 15f);
         }
 
         var summary = BuildSummary(card);
-        var income = BuildLedger(card, "Income", "획득 금화", true);
-        var expense = BuildLedger(card, "Expense", "차감 내역", false);
         var loan = BuildLoan(card);
         var shop = BuildShop(card);
 
-        var closeRect = UiKit.Place(UiKit.Rect("Close", card), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 22f), new Vector2(280f, 46f));
+        var closeRect = UiKit.Place(UiKit.Rect("Close", card), new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-PaneX, 22f), new Vector2(240f, 46f));
         var close = UiKit.Button(closeRect, "정산 완료", UiKit.ButtonKind.Primary, 18f);
 
         UiKit.Wire(view, "root", root.gameObject);
         UiKit.Wire(view, "card", card);
         UiKit.Wire(view, "cardGroup", cardGroup);
         UiKit.Wire(view, "title", title);
+        UiKit.Wire(view, "status", status);
         UiKit.WireArray(view, "tabs", tabs);
-        UiKit.WireArray(view, "panes", new Object[] { summary.gameObject, income.gameObject, expense.gameObject, loan.gameObject, shop.gameObject });
+        UiKit.WireArray(view, "panes", new Object[] { summary.gameObject, loan.gameObject, shop.gameObject });
         UiKit.Wire(view, "summary", summary);
-        UiKit.Wire(view, "income", income);
-        UiKit.Wire(view, "expense", expense);
         UiKit.Wire(view, "loan", loan);
         UiKit.Wire(view, "shop", shop);
         UiKit.Wire(view, "closeButton", close);
@@ -118,75 +126,94 @@ public static class SettlementBuilder
         return text;
     }
 
-    // ── 요약 ──
+    // ── 오늘 정산 ──
 
     private static SettlementSummaryPane BuildSummary(RectTransform card)
     {
         var pane = Pane(card, "Summary");
         var view = pane.gameObject.AddComponent<SettlementSummaryPane>();
 
-        var net = Place(UiKit.Text("Net", pane, "운영 자금 +0G", 30f, HudPalette.Gain, TextAlignmentOptions.Center, true, true), 0f, 0f, PaneWidth, 42f);
-        var deferred = Place(UiKit.Text("Deferred", pane, string.Empty, 15f, HudPalette.TextDim, TextAlignmentOptions.Center, false, true), 0f, 44f, PaneWidth, 22f);
+        // 위 띠: 수입 → 지출 → 이미 반영 → 남은 운영 자금. 칸 폭은 금액 길이와 상관없이 고정이다.
+        var band = UiKit.TopLeft(UiKit.Rect("FlowBand", pane), 0f, 0f, PaneWidth, 72f);
+        UiKit.Image(band, UiKit.FillSprite, HudPalette.Deep, false);
+        // 칸은 가운데 정렬이고 화살표는 칸 사이 경계에 둔다(금액에 붙어 "→-7G"처럼 읽히지 않게).
+        var income = FlowCell(band, "Income", "수입", 0f, 200f, HudPalette.Gain);
+        Arrow(band, "ArrowIncome", 200f);
+        var expense = FlowCell(band, "Expense", "지출", 220f, 200f, HudPalette.Loss);
+        Arrow(band, "ArrowExpense", 420f);
+        var deferred = FlowCell(band, "Deferred", "낮에 이미 반영", 440f, 200f, HudPalette.TextBody);
+        Arrow(band, "ArrowDeferred", 640f);
+        Place(UiKit.Text("RemainingLabel", band, "남은 운영 자금", 13f, HudPalette.TextMuted, TextAlignmentOptions.Center, false, true), 660f, 8f, 332f, 18f);
+        var remaining = Place(UiKit.Text("Remaining", band, "0G", 26f, HudPalette.Accent, TextAlignmentOptions.Center, true, true), 660f, 28f, 332f, 38f);
 
-        var notesRect = UiKit.TopLeft(UiKit.Rect("Notes", pane), 0f, 74f, PaneWidth, 210f);
-        var notesScroll = UiKit.ScrollArea(notesRect, out var notesContent);
-        var notes = UiKit.ScrollText(notesContent, 16f, HudPalette.TextBody, TextAlignmentOptions.Top);
-        notes.lineSpacing = 6f;
-        var details = UiKit.Button(UiKit.TopLeft(UiKit.Rect("DetailsButton", pane), PaneWidth - 160f, 30f, 160f, 36f),
-            "상세 보기", UiKit.ButtonKind.Secondary, 15f);
+        // 왼쪽 장부: 수입·지출을 한 장부로. 줄이 많으면 칸 안에서 스크롤한다.
+        var ledgerBox = UiKit.TopLeft(UiKit.Rect("Ledger", pane), 0f, BodyTop, LedgerWidth, BodyHeight);
+        UiKit.Image(ledgerBox, UiKit.FillSprite, HudPalette.SurfaceRaised, false);
+        var ledgerRect = UiKit.TopLeft(UiKit.Rect("List", ledgerBox), 14f, 10f, LedgerWidth - 20f, BodyHeight - 20f);
+        var ledgerScroll = UiKit.ScrollArea(ledgerRect, out var ledgerContent);
+        var ledger = UiKit.ScrollText(ledgerContent, 16f, HudPalette.TextBody, TextAlignmentOptions.TopLeft);
+        ledger.lineSpacing = 4f;
 
-        var line = UiKit.TopLeft(UiKit.Rect("Divider", pane), 0f, 294f, PaneWidth, 2f);
-        UiKit.Image(line, null, HudPalette.BorderQuiet, false);
+        // 오른쪽 전과 칩 6자리. 빈 자리는 바탕만 끄고 영역은 그대로 둔다.
+        var chipsX = LedgerWidth + 20f;
+        var chipsWidth = PaneWidth - chipsX;
+        Heading(pane, "오늘 전과", chipsX, BodyTop, chipsWidth);
+        var chipBackgrounds = new Object[ChipSlots];
+        var chipTexts = new Object[ChipSlots];
+        for (var i = 0; i < ChipSlots; i++)
+        {
+            var chip = UiKit.TopLeft(UiKit.Rect($"Chip{i}", pane), chipsX, BodyTop + 30f + i * 68f, chipsWidth, 58f);
+            chipBackgrounds[i] = UiKit.Image(chip, UiKit.FillSprite, HudPalette.Chip, false);
+            var text = UiKit.Text("Text", chip, string.Empty, 15f, HudPalette.TextBody, TextAlignmentOptions.MidlineLeft);
+            UiKit.Fill(text.rectTransform);
+            text.rectTransform.offsetMin = new Vector2(14f, 4f);
+            text.rectTransform.offsetMax = new Vector2(-14f, -4f);
+            chipTexts[i] = text;
+        }
 
-        var headerWidth = (PaneWidth - 12f) * 0.5f;
-        var unitHeader = UiKit.Button(UiKit.TopLeft(UiKit.Rect("UnitUnlockHeader", pane), 0f, 306f, headerWidth, 36f), "부하 해금", UiKit.ButtonKind.Secondary, 15f);
-        var buildingHeader = UiKit.Button(UiKit.TopLeft(UiKit.Rect("BuildingUnlockHeader", pane), headerWidth + 12f, 306f, headerWidth, 36f), "시설 해금", UiKit.ButtonKind.Secondary, 15f);
-        unitHeader.Label.color = HudPalette.AccentSoft;
-        buildingHeader.Label.color = HudPalette.AccentSoft;
-
-        var unlockRect = UiKit.TopLeft(UiKit.Rect("UnlockList", pane), 0f, 352f, PaneWidth, PaneHeight - 352f);
+        // 해금 목록: 펼치면 장부·칩 위를 덮는다. 기본은 접힘.
+        var unlockPanel = UiKit.TopLeft(UiKit.Rect("UnlockPanel", pane), 0f, BodyTop, PaneWidth, BodyHeight);
+        // 바탕을 불투명하게 칠해 아래 장부·칩 글자가 비치지 않게 한다.
+        var unlockFill = HudPalette.Deep;
+        unlockFill.a = 1f;
+        UiKit.Panel(unlockPanel, unlockFill, HudPalette.BorderQuiet, true);
+        var unlockRect = UiKit.TopLeft(UiKit.Rect("List", unlockPanel), 18f, 14f, PaneWidth - 30f, BodyHeight - 28f);
         var unlockScroll = UiKit.ScrollArea(unlockRect, out var unlockContent);
         var unlock = UiKit.ScrollText(unlockContent, 15f, HudPalette.TextBody, TextAlignmentOptions.TopLeft);
         unlock.lineSpacing = 4f;
+        unlockPanel.gameObject.SetActive(false);
 
-        UiKit.Wire(view, "net", net);
+        // 맨 아래 줄은 "정산 완료"와 같은 높이에 둔다.
+        var unlockSummary = Place(UiKit.Text("UnlockSummary", pane, string.Empty, 15f, HudPalette.TextDim, TextAlignmentOptions.MidlineLeft, false, true),
+            0f, FooterY, 560f, 40f);
+        var unlockToggle = UiKit.Button(UiKit.TopLeft(UiKit.Rect("UnlockToggle", pane), 572f, FooterY + 2f, 132f, 36f), "목록", UiKit.ButtonKind.Secondary, 15f);
+
+        UiKit.Wire(view, "incomeTotal", income);
+        UiKit.Wire(view, "expenseTotal", expense);
         UiKit.Wire(view, "deferred", deferred);
-        UiKit.Wire(view, "notes", notes);
-        UiKit.Wire(view, "notesScroll", notesScroll);
-        UiKit.Wire(view, "detailsButton", details);
-        UiKit.Wire(view, "unitUnlockHeader", unitHeader);
-        UiKit.Wire(view, "buildingUnlockHeader", buildingHeader);
+        UiKit.Wire(view, "remaining", remaining);
+        UiKit.Wire(view, "ledger", ledger);
+        UiKit.Wire(view, "ledgerScroll", ledgerScroll);
+        UiKit.WireArray(view, "chipBackgrounds", chipBackgrounds);
+        UiKit.WireArray(view, "chipTexts", chipTexts);
+        UiKit.Wire(view, "unlockSummary", unlockSummary);
+        UiKit.Wire(view, "unlockToggle", unlockToggle);
+        UiKit.Wire(view, "unlockPanel", unlockPanel.gameObject);
         UiKit.Wire(view, "unlockList", unlock);
         UiKit.Wire(view, "unlockScroll", unlockScroll);
         return view;
     }
 
-    // ── 수입·지출 ──
+    private const int ChipSlots = Code.UI.ViewModels.SettlementOverviewPresenter.MaxChips;
 
-    private static SettlementLedgerPane BuildLedger(RectTransform card, string name, string heading, bool isIncome)
+    private static TextMeshProUGUI FlowCell(RectTransform band, string name, string label, float x, float width, Color valueColor)
     {
-        var pane = Pane(card, name);
-        var view = pane.gameObject.AddComponent<SettlementLedgerPane>();
-        var color = isIncome ? HudPalette.Gain : HudPalette.Loss;
-
-        Heading(pane, heading, 0f, 0f, PaneWidth);
-        var listRect = UiKit.TopLeft(UiKit.Rect("List", pane), 0f, 34f, PaneWidth, PaneHeight - 34f - 52f);
-        var scroll = UiKit.ScrollArea(listRect, out var content);
-        var lines = UiKit.ScrollText(content, 16f, color, TextAlignmentOptions.TopLeft);
-        lines.lineSpacing = 6f;
-
-        var rule = UiKit.TopLeft(UiKit.Rect("TotalRule", pane), 0f, PaneHeight - 46f, PaneWidth - 12f, 2f);
-        UiKit.Image(rule, null, HudPalette.BorderQuiet, false);
-        var total = Place(UiKit.Text("Total", pane, "합계 0G", 18f, color, TextAlignmentOptions.MidlineRight, true, true), 0f, PaneHeight - 40f, PaneWidth - 12f, 30f);
-
-        UiKit.Wire(view, "lines", lines);
-        UiKit.Wire(view, "total", total);
-        UiKit.Wire(view, "scroll", scroll);
-        var so = new SerializedObject(view);
-        so.FindProperty("isIncome").boolValue = isIncome;
-        so.ApplyModifiedPropertiesWithoutUndo();
-        return view;
+        Place(UiKit.Text(name + "Label", band, label, 13f, HudPalette.TextMuted, TextAlignmentOptions.Center, false, true), x, 8f, width, 18f);
+        return Place(UiKit.Text(name, band, "0G", 22f, valueColor, TextAlignmentOptions.Center, true, true), x, 28f, width, 34f);
     }
+
+    private static void Arrow(RectTransform band, string name, float x) =>
+        Place(UiKit.Text(name, band, "→", 18f, HudPalette.TextMuted, TextAlignmentOptions.Center, false, true), x, 26f, 20f, 34f);
 
     // ── 계약 / 부채 ──
 

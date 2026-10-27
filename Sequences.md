@@ -1,5 +1,14 @@
 # Sequences
 
+- 2026-10-27 · 정산표 한 화면 장부(A안) 구현(사용자: 목업 A안 승인, 정할 점 셋은 추천대로 — 상세 보기 없앰·유닛 상점 탭 늘 열기·피로 칩 상위 둘 + "외 N명").
+  - 새 파일 `SettlementOverviewViewModel`·`SettlementOverviewPresenter`(보고서·운영 자금·빚·청산까지 남은 날 → 띠·장부·칩 6자리·해금 한 줄). `SettlementSummaryPane`을 그리기 전용으로 다시 씀, `SettlementLedgerPane` 삭제, `SettlementScreenView` 탭 5→3·`scope`(GameScope)·`dayManager`·제목줄 `status` 추가, 정산 화면 고용 뒤 남은 자금 다시 그림. `SettlementBuilder` 새 배치(띠 72, 장부 560×440, 칩 6, 맨 아래 해금 줄·오른쪽 아래 정산 완료 240×46). 정산 계산·보고서 형식은 그대로.
+  - 목업과 다른 점: "시작 금화" 대신 "낮에 이미 반영" 칸. 보고서의 선지출 몫에 금고로 간 돈도 섞여 있어 시작 금화를 역산하면 틀릴 수 있다.
+  - 테스트: `SettlementRegressionTests.SettlementOverview_*` 3개(프레젠터가 없어 수정 전 실패는 컴파일 실패로만 확인), `AssetWiringTests.SettlementOverview_DrawsLedgerChipsAndFoldsUnlocksForEachReport` 추가, 옛 정산 상세 보기 경우를 판 종료 전용 `ResultDisclosure_*`에서 뺌.
+  - 생성기 실행 뒤 ESC 목록의 정산표 칸이 끊겨 `SettingsScreen_IsPlacedAndEveryWindowClosesWithEscape` 실패 → `SettingsBuilder`의 배선 함수만 기존 설정 화면에 다시 불러 해결, 전체 EditMode 522/522(첫 배치 기준).
+  - 플레이 실측(저장 3파일 백업·복원·SHA256 일치): 4일차 영업 뒤 새 정산표가 뜨고 띠 +83G/-7G/없음/348G(+76G), 장부·칩 4개(제압·목표·피로 둘)·해금 3/13·5/15, 목록 펼침, 계약/부채·유닛 상점 탭 정상. 캡처에서 장부 "지출" 제목 오른쪽 정렬, 화살표가 금액에 붙음, 목록 펼침 때 아래 글자 비침을 보고 고침(제목마다 왼쪽 정렬, 띠 가운데 정렬·남은 자금 뒤에 증감, 목록 칸 불투명).
+  - 고친 뒤 재검증(에디터 재시작 후): 전체 EditMode 522/522 통과, 새 콘솔 오류 0(CLI 통신 오류만). 저장 백업 뒤 4일차 영업을 다시 돌려 1280×720에서 캡처: "지출" 제목 왼쪽, 화살표는 칸 사이, 348G 바로 뒤 +76G, 피로 탈진 위험 칩 빨간 바탕, 목록 펼침 때 불투명 칸, 계약/부채·유닛 상점 탭 정상. 끝나고 저장 복원·SHA256 일치, Assets/tmp 삭제.
+  - 확인 못 한 것: 긴 장부(칸 안 스크롤), 정산 화면 고용 뒤 남은 자금 갱신(이번 주 지원자가 없었음), 1920×1080.
+
 - 2026-10-27 · 영업 중 목표가 다음 날 목표로 바뀌던 버그 수정(사용자 A안 승인: WaveManager에서 막기, 테스트 먼저·실측까지).
   - 원인: 영업 중 `DayManager.NextWaveDay`는 내일인데, `WaveStartedEvent`를 받은 `WaveView.RefreshStartButton`이 대기 여부를 보지 않고 `PrepareObjectiveChoices(내일)`를 불러 `SelectedObjective`를 내일 첫 후보로 덮어썼다. 매 영업 판정과 영업 중 HUD 진행 줄이 고른 목표가 아니라 내일 목표였다.
   - 수정: `WaveManager.PrepareObjectiveChoices`가 `_isWaveRunning` 중이면 아무것도 하지 않는다(`SelectObjective`의 기존 영업 중 거절과 같은 방식). `RunWave`의 오늘 준비는 `_isWaveRunning = true` 앞이라 영향 없음. 편성·스폰·보스·정산 순서는 그대로.

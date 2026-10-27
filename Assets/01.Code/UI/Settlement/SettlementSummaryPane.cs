@@ -1,7 +1,6 @@
-using System.Collections.Generic;
-using System.Text;
 using Code.Audio;
 using Code.Manager;
+using Code.UI.ViewModels;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,168 +8,86 @@ using UnityEngine.UI;
 namespace Code.UI
 {
     /// <summary>
-    /// 정산표 "이번 주 요약" 칸: 운영 자금 증감, 금고·선지출 몫, 메모, 부하 피로, 해금 로드맵(부하·시설 중 하나를 펼침).
-    /// 숫자와 문구는 <see cref="SettlementReport"/>에서 읽기만 한다.
+    /// 정산표 "오늘 정산" 칸(2026-10-27 한 화면 장부): 위 띠에 수입·지출·이미 반영된 몫·남은 운영 자금,
+    /// 왼쪽에 수입·지출 장부, 오른쪽에 오늘 전과 칩 6자리, 아래에 해금 한 줄과 "목록" 펼치기.
+    /// 값은 <see cref="SettlementOverviewPresenter"/>가 만든 모델을 그리기만 한다.
     /// </summary>
     public sealed class SettlementSummaryPane : MonoBehaviour
     {
-        [SerializeField] private TMP_Text net;
+        [SerializeField] private TMP_Text incomeTotal;
+        [SerializeField] private TMP_Text expenseTotal;
         [SerializeField] private TMP_Text deferred;
-        [SerializeField, Tooltip("메모와 부하 피로")] private TMP_Text notes;
-        [SerializeField] private ScrollRect notesScroll;
-        [SerializeField] private UiFrameButton detailsButton;
-        [SerializeField] private UiFrameButton unitUnlockHeader;
-        [SerializeField] private UiFrameButton buildingUnlockHeader;
+        [SerializeField, Tooltip("남은 운영 자금과 정산으로 움직인 액수")] private TMP_Text remaining;
+        [SerializeField] private TMP_Text ledger;
+        [SerializeField] private ScrollRect ledgerScroll;
+        [SerializeField, Tooltip("전과 칩 바탕(자리 수 = SettlementOverviewPresenter.MaxChips)")] private Image[] chipBackgrounds;
+        [SerializeField, Tooltip("칩 바탕과 같은 순서의 글자")] private TMP_Text[] chipTexts;
+        [SerializeField] private TMP_Text unlockSummary;
+        [SerializeField] private UiFrameButton unlockToggle;
+        [SerializeField, Tooltip("목록을 펼치면 장부·칩 위를 덮는 칸")] private GameObject unlockPanel;
         [SerializeField] private TMP_Text unlockList;
         [SerializeField] private ScrollRect unlockScroll;
 
-        private readonly StringBuilder _builder = new();
-        private SettlementReport _report;
+        private bool _unlockOpen;
 
-        private UnlockCategory _openCategory = UnlockCategory.None;
-        private bool _detailsOpen;
-
-        public void Render(SettlementReport report)
+        public void Render(SettlementOverviewViewModel model)
         {
-            _report = report;
-            _detailsOpen = false;
-            _openCategory = UnlockCategory.None;
+            incomeTotal.text = model.IncomeTotal;
+            expenseTotal.text = model.ExpenseTotal;
+            deferred.text = model.Deferred;
+            // 정산으로 움직인 액수는 남은 자금 바로 뒤에 붙인다. 따로 두면 금액 길이에 따라 멀어진다.
+            remaining.text = model.Remaining + "  <size=65%>"
+                + HudPalette.Paint(model.NetChange, model.NetPositive ? HudPalette.Gain : HudPalette.Loss) + "</size>";
 
-            // 운영 자금이 실제로 얼마나 늘고 줄었는지를 앞세운다. 이게 내일 쓸 수 있는 돈이다.
-            net.text = $"운영 자금 {GoldText.Signed(report.Net)}";
-            net.color = report.Net >= 0 ? HudPalette.Gain : HudPalette.Loss;
-            RefreshNotes();
-            RenderUnlocks();
-        }
+            ledger.text = model.Ledger;
+            if (ledgerScroll != null)
+                ledgerScroll.verticalNormalizedPosition = 1f;
 
-        private void RefreshNotes()
-        {
-            if (_report == null)
-                return;
+            for (var i = 0; i < chipBackgrounds.Length; i++)
+            {
+                var visible = i < model.Chips.Count;
+                // 빈 자리는 숨기기만 한다. 칸 크기는 칩 수와 상관없이 그대로다.
+                chipBackgrounds[i].enabled = visible;
+                chipTexts[i].text = visible ? model.Chips[i].Text : string.Empty;
+                if (!visible)
+                    continue;
 
-            deferred.text = _detailsOpen && _report.DeferredDelta != 0
-                ? $"그중 {GoldText.Signed(_report.DeferredDelta)}는 금고·선지출"
-                : string.Empty;
-            detailsButton?.SetLabel(_detailsOpen ? "상세 접기" : "상세 보기");
-            detailsButton?.SetSelected(_detailsOpen);
-            RenderNotes(_report.Notes, _report.Fatigue);
-            if (notesScroll != null)
-                notesScroll.verticalNormalizedPosition = 1f;
+                var tone = model.Chips[i].Tone;
+                chipBackgrounds[i].color = tone == SettlementNoteTone.Danger ? HudPalette.DangerSurface : HudPalette.Chip;
+                chipTexts[i].color = tone == SettlementNoteTone.Danger ? HudPalette.Text : ToneColor(tone);
+            }
+
+            unlockSummary.text = model.UnlockSummary;
+            unlockList.text = model.UnlockList;
+            // 새 정산은 늘 접힌 목록부터 연다.
+            SetUnlockOpen(false);
         }
 
         private void OnEnable()
         {
-            detailsButton?.Button.onClick.AddListener(ToggleDetails);
-            unitUnlockHeader?.Button.onClick.AddListener(ToggleUnitUnlocks);
-            buildingUnlockHeader?.Button.onClick.AddListener(ToggleBuildingUnlocks);
+            unlockToggle?.Button.onClick.AddListener(ToggleUnlocks);
         }
 
         private void OnDisable()
         {
-            detailsButton?.Button.onClick.RemoveListener(ToggleDetails);
-            unitUnlockHeader?.Button.onClick.RemoveListener(ToggleUnitUnlocks);
-            buildingUnlockHeader?.Button.onClick.RemoveListener(ToggleBuildingUnlocks);
+            unlockToggle?.Button.onClick.RemoveListener(ToggleUnlocks);
         }
 
-        private void RenderNotes(IReadOnlyList<SettlementNote> noteLines, IReadOnlyList<SettlementFatigueLine> fatigue)
+        private void ToggleUnlocks()
         {
-            _builder.Clear();
-            foreach (var note in noteLines)
-            {
-                var text = _detailsOpen ? note.Text : note.SummaryText;
-                // 파산·보스 예고 등 위험은 전문만 있는 경우에도 감추지 않는다.
-                if (!_detailsOpen && string.IsNullOrEmpty(text) && note.Tone == SettlementNoteTone.Danger)
-                    text = note.Text;
-                if (!string.IsNullOrEmpty(text))
-                    _builder.AppendLine(HudPalette.Paint(text, ToneColor(note.Tone)));
-            }
-
-            if (_detailsOpen && fatigue.Count > 0)
-            {
-                _builder.AppendLine();
-                _builder.AppendLine(HudPalette.Paint("부하 피로", HudPalette.Accent));
-                for (var i = 0; i < fatigue.Count; i++)
-                {
-                    var line = fatigue[i];
-                    // 탈진과 지친 상태는 색으로 구분한다 — 숫자만으로는 눈에 안 들어온다.
-                    var text = line.IsExhausted ? $"{line.Label} 탈진 {line.Fatigue}" : $"{line.Label} {line.Fatigue}";
-                    var color = line.IsExhausted ? HudPalette.Danger : line.IsTired ? HudPalette.Warn : HudPalette.TextBody;
-                    if (i > 0)
-                        _builder.Append("   ");
-                    _builder.Append(HudPalette.Paint(text, color));
-                }
-            }
-
-            notes.text = _builder.ToString();
+            GameSfxPlayer.Play(GameSfxCue.UiClick);
+            SetUnlockOpen(!_unlockOpen);
         }
 
-        private void RenderUnlocks()
+        private void SetUnlockOpen(bool open)
         {
-            if (_report == null)
-                return;
-
-            SetHeader(unitUnlockHeader, _report.UnitUnlocks, UnlockCategory.Units);
-            SetHeader(buildingUnlockHeader, _report.BuildingUnlocks, UnlockCategory.Buildings);
-
-            var section = _openCategory switch
-            {
-                UnlockCategory.Units => _report.UnitUnlocks,
-                UnlockCategory.Buildings => _report.BuildingUnlocks,
-                _ => null
-            };
-
-            _builder.Clear();
-            if (section != null)
-            {
-                if (section.Lines.Count == 0)
-                {
-                    _builder.Append(_openCategory == UnlockCategory.Units
-                        ? "고용 목록을 불러오는 중입니다."
-                        : "시설 목록을 불러오는 중입니다.");
-                }
-
-                foreach (var line in section.Lines)
-                {
-                    _builder.AppendLine(line.IsUnlocked
-                        ? HudPalette.Paint($"● {line.Name}  {section.UnlockedStateLabel}", HudPalette.TextBody)
-                        : HudPalette.Paint($"○ {line.Name}  미발견 — {line.Hint}", HudPalette.TextMuted));
-                }
-            }
-
-            unlockList.text = _builder.ToString();
+            _unlockOpen = open;
+            if (unlockPanel != null)
+                unlockPanel.SetActive(open);
             if (unlockScroll != null)
-            {
-                unlockScroll.gameObject.SetActive(section != null);
                 unlockScroll.verticalNormalizedPosition = 1f;
-            }
-        }
-
-        private void SetHeader(UiFrameButton header, SettlementUnlockSection section, UnlockCategory category)
-        {
-            if (header == null || section == null)
-                return;
-
-            var isOpen = _openCategory == category;
-            header.SetLabel($"{section.Title}  {section.UnlockedCount}/{section.TotalCount}  {(isOpen ? "접기" : "펼치기")}");
-            header.SetSelected(isOpen);
-        }
-
-        private void ToggleUnitUnlocks() => Toggle(UnlockCategory.Units);
-
-        private void ToggleDetails()
-        {
-            _detailsOpen = !_detailsOpen;
-            GameSfxPlayer.Play(GameSfxCue.UiClick);
-            RefreshNotes();
-        }
-
-        private void ToggleBuildingUnlocks() => Toggle(UnlockCategory.Buildings);
-
-        private void Toggle(UnlockCategory category)
-        {
-            _openCategory = _openCategory == category ? UnlockCategory.None : category;
-            GameSfxPlayer.Play(GameSfxCue.UiClick);
-            RenderUnlocks();
+            unlockToggle?.SetLabel(open ? "목록 접기" : "목록");
+            unlockToggle?.SetSelected(open);
         }
 
         private static Color ToneColor(SettlementNoteTone tone) => tone switch
@@ -181,12 +98,5 @@ namespace Code.UI
             SettlementNoteTone.Accent => HudPalette.AccentSoft,
             _ => HudPalette.TextBody
         };
-
-        private enum UnlockCategory
-        {
-            None,
-            Units,
-            Buildings
-        }
     }
 }

@@ -24,19 +24,84 @@ namespace Tests.EditMode.Gameplay
     {
         private const BindingFlags Instance = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-        [TestCase(false)]
-        [TestCase(true)]
-        public void ResultDisclosure_PreservesDetailsAndResetsForEachReport(bool runEnd)
+        /// <summary>
+        /// 한 화면 정산표(2026-10-27): 장부·칩·해금 목록이 프리팹에 연결되고, 칩 빈자리는 바탕만 끄며,
+        /// 해금 목록은 재활성화 뒤에도 한 번 눌러 한 번 펼쳐지고 새 정산에서 다시 접힌다.
+        /// </summary>
+        [Test]
+        public void SettlementOverview_DrawsLedgerChipsAndFoldsUnlocksForEachReport()
         {
-            var root = PrefabUtility.LoadPrefabContents(runEnd
-                ? "Assets/03.Prefabs/UI/RunEnd/RunEndScreen.prefab"
-                : "Assets/03.Prefabs/UI/Settlement/Settlement.prefab");
+            var root = PrefabUtility.LoadPrefabContents("Assets/03.Prefabs/UI/Settlement/Settlement.prefab");
+            Code.UI.SettlementSummaryPane view = null;
+            var subscribed = false;
+            try
+            {
+                view = root.GetComponentInChildren<Code.UI.SettlementSummaryPane>(true);
+                Assert.That(view, Is.Not.Null);
+                var type = view.GetType();
+                var screen = root.GetComponent<Code.UI.SettlementScreenView>();
+                var tabs = (Array)typeof(Code.UI.SettlementScreenView).GetField("tabs", Instance).GetValue(screen);
+                Assert.That(tabs.Length, Is.EqualTo(3), "탭은 오늘 정산·계약/부채·유닛 상점 셋이다.");
+                foreach (var field in new[] { "incomeTotal", "expenseTotal", "deferred", "remaining", "ledger",
+                             "unlockSummary", "unlockToggle", "unlockPanel", "unlockList" })
+                    Assert.That(type.GetField(field, Instance).GetValue(view) as UnityEngine.Object, Is.Not.Null, field + " 이(가) 연결되어야 한다.");
+                var backgrounds = (UnityEngine.UI.Image[])type.GetField("chipBackgrounds", Instance).GetValue(view);
+                // 테스트 어셈블리는 TMP를 참조하지 않는다. 글자는 text 속성으로 읽는다.
+                var texts = (Array)type.GetField("chipTexts", Instance).GetValue(view);
+                Func<object, string> textOf = component => (string)component.GetType().GetProperty("text").GetValue(component);
+                Assert.That(backgrounds.Length, Is.EqualTo(Code.UI.ViewModels.SettlementOverviewPresenter.MaxChips));
+                Assert.That(texts.Length, Is.EqualTo(backgrounds.Length));
+
+                var enable = type.GetMethod("OnEnable", Instance);
+                var disable = type.GetMethod("OnDisable", Instance);
+                enable.Invoke(view, null);
+                disable.Invoke(view, null);
+                enable.Invoke(view, null);
+                subscribed = true;
+
+                var section = new Code.Manager.SettlementUnlockSection("몬스터 해금", "고용 가능", 1, 1,
+                    new[] { new Code.Manager.SettlementUnlockLine("표본", true, string.Empty) });
+                var report = new Code.Manager.SettlementReport(7,
+                    new[] { new Code.Manager.SettlementLedgerLine("철거 환불", 12) },
+                    new[] { new Code.Manager.SettlementLedgerLine("건설 투자", 41) },
+                    12, 41, -10, new[] { new Code.Manager.SettlementFatigueLine("피로 표본", 95) },
+                    new[] { new Code.Manager.SettlementNote("전투 전문", summaryText: "핵심 결과"),
+                        new Code.Manager.SettlementNote("파산 위험", Code.Manager.SettlementNoteTone.Danger) }, section, section);
+                var model = Code.UI.ViewModels.SettlementOverviewPresenter.Build(report, 90, 0, 0);
+                view.Render(model);
+
+                var ledger = textOf(type.GetField("ledger", Instance).GetValue(view));
+                StringAssert.Contains("철거 환불", ledger);
+                StringAssert.Contains("건설 투자", ledger);
+                Assert.That(textOf(texts.GetValue(0)), Is.EqualTo("핵심 결과"));
+                Assert.That(backgrounds[model.Chips.Count - 1].color, Is.EqualTo((Color)Code.UI.HudPalette.DangerSurface), "위험 칩은 위험 바탕이다.");
+                Assert.That(backgrounds[model.Chips.Count].enabled, Is.False, "빈 칩 자리는 바탕을 끈다.");
+
+                var panel = (GameObject)type.GetField("unlockPanel", Instance).GetValue(view);
+                var toggle = (Code.UI.UiFrameButton)type.GetField("unlockToggle", Instance).GetValue(view);
+                Assert.That(panel.activeSelf, Is.False);
+                toggle.Button.onClick.Invoke();
+                Assert.That(panel.activeSelf, Is.True, "재활성화 뒤 한 번 누르면 한 번만 펼쳐야 한다.");
+                view.Render(model);
+                Assert.That(panel.activeSelf, Is.False, "새 정산에서 해금 목록은 다시 접힌다.");
+            }
+            finally
+            {
+                if (subscribed)
+                    view.GetType().GetMethod("OnDisable", Instance).Invoke(view, null);
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        [Test]
+        public void ResultDisclosure_PreservesDetailsAndResetsForEachReport()
+        {
+            var root = PrefabUtility.LoadPrefabContents("Assets/03.Prefabs/UI/RunEnd/RunEndScreen.prefab");
             Component view = null;
             bool subscribed = false;
             try
             {
-                view = runEnd ? root.GetComponent<Code.UI.RunEndScreenView>()
-                    : root.GetComponentInChildren<Code.UI.SettlementSummaryPane>(true);
+                view = root.GetComponent<Code.UI.RunEndScreenView>();
                 Assert.That(view, Is.Not.Null);
                 var type = view.GetType();
                 Func<string, string> readText = field =>
@@ -56,57 +121,22 @@ namespace Tests.EditMode.Gameplay
                 enable.Invoke(view, null);
                 subscribed = true;
 
-                Action render;
-                Func<string> text;
-                if (runEnd)
-                {
-                    var model = Code.UI.ViewModels.RunEndPresenter.Build("던전 함락", "제한시간 초과", false, 7,
-                        new Code.UI.ViewModels.RunEndStats(6, 20, 18, 48210, 107, 3, 100), null, null);
-                    render = () => type.GetMethod("Render", Instance).Invoke(view, new object[] { model });
-                    text = () => readText("statLabels");
-                    render();
-                    StringAssert.Contains("처치", text());
-                    StringAssert.DoesNotContain("가한 피해", text());
-                    button.Button.onClick.Invoke();
-                    StringAssert.Contains("가한 피해", text());
-                    StringAssert.Contains("48,210", readText("statValues"));
-                }
-                else
-                {
-                    var section = new Code.Manager.SettlementUnlockSection("해금", "가능", 1, 1,
-                        new[] { new Code.Manager.SettlementUnlockLine("표본", true, string.Empty) });
-                    var report = new Code.Manager.SettlementReport(7,
-                        Array.Empty<Code.Manager.SettlementLedgerLine>(), Array.Empty<Code.Manager.SettlementLedgerLine>(),
-                        100, 20, 81, new[] { new Code.Manager.SettlementFatigueLine("피로 표본", 95) },
-                        new[] { new Code.Manager.SettlementNote("전투 전문", summaryText: "핵심 결과"),
-                            new Code.Manager.SettlementNote("상세 전용"),
-                            new Code.Manager.SettlementNote("파산 위험", Code.Manager.SettlementNoteTone.Danger) }, section, section);
-                    var summary = (Code.UI.SettlementSummaryPane)view;
-                    render = () => summary.Render(report);
-                    text = () => readText("notes");
-                    render();
-                    StringAssert.Contains("핵심 결과", text());
-                    StringAssert.Contains("파산 위험", text());
-                    StringAssert.DoesNotContain("피로 표본", text());
-                    StringAssert.DoesNotContain("상세 전용", text());
-                    var scroll = (UnityEngine.UI.ScrollRect)type.GetField("unlockScroll", Instance).GetValue(view);
-                    Assert.That(scroll.gameObject.activeSelf, Is.False);
-                    var header = (Code.UI.UiFrameButton)type.GetField("unitUnlockHeader", Instance).GetValue(view);
-                    header.Button.onClick.Invoke();
-                    Assert.That(scroll.gameObject.activeSelf, Is.True);
-                    button.Button.onClick.Invoke();
-                    StringAssert.Contains("상세 전용", text());
-                    StringAssert.Contains("피로 표본", text());
-                    render();
-                    Assert.That(scroll.gameObject.activeSelf, Is.False, "새 정산에서 해금은 다시 접힌다.");
-                    button.Button.onClick.Invoke();
-                }
+                var model = Code.UI.ViewModels.RunEndPresenter.Build("던전 함락", "제한시간 초과", false, 7,
+                    new Code.UI.ViewModels.RunEndStats(6, 20, 18, 48210, 107, 3, 100), null, null);
+                Action render = () => type.GetMethod("Render", Instance).Invoke(view, new object[] { model });
+                Func<string> text = () => readText("statLabels");
+                render();
+                StringAssert.Contains("처치", text());
+                StringAssert.DoesNotContain("가한 피해", text());
+                button.Button.onClick.Invoke();
+                StringAssert.Contains("가한 피해", text());
+                StringAssert.Contains("48,210", readText("statValues"));
 
                 button.Button.onClick.Invoke();
-                StringAssert.DoesNotContain(runEnd ? "가한 피해" : "상세 전용", text());
+                StringAssert.DoesNotContain("가한 피해", text());
                 button.Button.onClick.Invoke();
                 render();
-                StringAssert.DoesNotContain(runEnd ? "가한 피해" : "상세 전용", text(), "새 결과는 기본 요약부터 연다.");
+                StringAssert.DoesNotContain("가한 피해", text(), "새 결과는 기본 요약부터 연다.");
             }
             finally
             {

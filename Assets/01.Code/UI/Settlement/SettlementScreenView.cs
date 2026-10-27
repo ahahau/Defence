@@ -1,5 +1,7 @@
 using Code.Audio;
+using Code.Core;
 using Code.Manager;
+using Code.UI.ViewModels;
 using TMPro;
 using UnityEngine;
 
@@ -9,22 +11,24 @@ namespace Code.UI
     /// 하루 정산표(uGUI, A안) 화면 조립. 숫자는 전부 <see cref="ManagementSettlementManager"/>가 만든 보고서에서 읽는다 —
     /// 여기서 장부를 다시 계산하면 같은 하루를 두 가지로 설명하게 된다.
     ///
-    /// 탭 다섯(요약·수입·지출·계약/부채·유닛 상점) 중 하나만 보이고, 칸마다 그리기는 각 Pane이 맡는다.
+    /// 탭 셋(오늘 정산·계약/부채·유닛 상점) 중 하나만 보이고, 칸마다 그리기는 각 Pane이 맡는다.
+    /// "오늘 정산" 칸의 값은 <see cref="SettlementOverviewPresenter"/>가 보고서·운영 자금·빚·청산까지 남은 날로 만든다.
     /// 정산 중 시간 정지는 관리자가 건다. 닫기("정산 완료"·ESC)는 <see cref="ManagementSettlementManager.ForceHidePanel"/>.
     /// ESC는 <see cref="UiEscapeRouter"/>가 받아 맨 위 창인 정산표부터 닫는다.
     /// </summary>
     public sealed class SettlementScreenView : MonoBehaviour, IEscapeClosable
     {
         [SerializeField] private ManagementSettlementManager settlement;
+        [SerializeField, Tooltip(GameScope.FieldTooltip)] private GameScope scope;
+        [SerializeField] private DayManager dayManager;
         [SerializeField] private GameObject root;
         [SerializeField, Tooltip("등장 연출로 띄워 올리는 카드")] private RectTransform card;
         [SerializeField] private CanvasGroup cardGroup;
         [SerializeField] private TMP_Text title;
-        [SerializeField, Tooltip("요약·수입·지출·계약/부채·유닛 상점 순서")] private UiFrameButton[] tabs;
+        [SerializeField, Tooltip("제목 오른쪽 빚·청산일 안내")] private TMP_Text status;
+        [SerializeField, Tooltip("오늘 정산·계약/부채·유닛 상점 순서")] private UiFrameButton[] tabs;
         [SerializeField, Tooltip("탭과 같은 순서의 칸")] private GameObject[] panes;
         [SerializeField] private SettlementSummaryPane summary;
-        [SerializeField] private SettlementLedgerPane income;
-        [SerializeField] private SettlementLedgerPane expense;
         [SerializeField] private SettlementLoanPane loan;
         [SerializeField] private SettlementShopPane shop;
         [SerializeField] private UiFrameButton closeButton;
@@ -34,6 +38,8 @@ namespace Code.UI
         private UnityEngine.Events.UnityAction[] _tabHandlers;
         private Vector2 _cardRestPosition;
         private float _entranceStart = -1f;
+        private CostManager _cost;
+        private SettlementReport _report;
 
         private void EnsureRuntimeState()
         {
@@ -61,6 +67,9 @@ namespace Code.UI
             EnsureRuntimeState();
             if (settlement == null)
                 settlement = ManagementSettlementManager.Current;
+            _cost = GameScope.Resolve(scope, s => s.Cost, this, nameof(scope));
+            if (dayManager == null)
+                dayManager = SceneReferenceFallback.Find<DayManager>(this, nameof(dayManager));
 
             for (var i = 0; i < _tabHandlers.Length; i++)
                 tabs[i]?.Button.onClick.AddListener(_tabHandlers[i]);
@@ -111,10 +120,8 @@ namespace Code.UI
             _entranceStart = Time.unscaledTime;
             PlayEntrance();
 
-            title.text = $"{report.Day}일차 정산";
-            summary.Render(report);
-            income.Render(report.Income, report.TotalIncome);
-            expense.Render(report.Expense, report.TotalExpense);
+            _report = report;
+            RenderOverview();
             loan.SetFeedback(string.Empty);
             loan.Refresh();
             shop.SetFeedback(string.Empty);
@@ -123,7 +130,25 @@ namespace Code.UI
             SelectTab(0, false);
         }
 
-        /// <summary>어느 날이든 정산표는 요약 칸, 오늘 번 돈부터 읽힌다.</summary>
+        private void RenderOverview()
+        {
+            if (_report == null)
+                return;
+
+            var model = SettlementOverviewPresenter.Build(_report,
+                _cost != null ? _cost.CurrentGold : 0,
+                _cost != null ? _cost.CurrentDebt : 0,
+                dayManager != null ? dayManager.DaysUntilSettlement : DayManager.WeekLength);
+            title.text = model.Title;
+            if (status != null)
+            {
+                status.text = model.Status;
+                status.color = model.StatusWarn ? HudPalette.Warn : HudPalette.TextDim;
+            }
+            summary.Render(model);
+        }
+
+        /// <summary>어느 날이든 정산표는 오늘 정산 칸, 오늘 번 돈부터 읽힌다.</summary>
         private void SelectTab(int index, bool playSound)
         {
             for (var i = 0; i < panes.Length; i++)
@@ -143,7 +168,12 @@ namespace Code.UI
                 GameSfxPlayer.Play(GameSfxCue.UiClick);
         }
 
-        private void HandleHired() => loan.Refresh();
+        /// <summary>정산표에서 고용하면 운영 자금이 바뀐다. 계약 칸과 "남은 운영 자금"을 다시 그린다.</summary>
+        private void HandleHired()
+        {
+            loan.Refresh();
+            RenderOverview();
+        }
 
         private void Close()
         {

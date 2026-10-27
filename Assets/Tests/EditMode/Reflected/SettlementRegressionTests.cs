@@ -1067,5 +1067,88 @@ namespace Tests.EditMode.Rules
             Assert.That(Time.timeScale, Is.EqualTo(1f));
             Assert.That(Setting(controller), Is.EqualTo(1f));
         }
+
+        private static Code.Manager.SettlementReport OverviewReport(
+            Code.Manager.SettlementNote[] notes, Code.Manager.SettlementFatigueLine[] fatigue, int net = -25)
+        {
+            var section = new Code.Manager.SettlementUnlockSection("몬스터 해금", "고용 가능", 1, 13,
+                new[] { new Code.Manager.SettlementUnlockLine("해골 검사", true, string.Empty) });
+            return new Code.Manager.SettlementReport(3,
+                new[] { new Code.Manager.SettlementLedgerLine("철거 환불", 12) },
+                new[] { new Code.Manager.SettlementLedgerLine("건설 투자", 41), new Code.Manager.SettlementLedgerLine("유지비", 4) },
+                12, 45, net, fatigue, notes, section, section);
+        }
+
+        /// <summary>
+        /// 한 화면 정산표(2026-10-27)는 수입·지출을 한 장부에, 낮에 이미 반영된 몫과 남은 운영 자금을 위 띠에 둔다.
+        /// 보고서의 Net은 정산으로 실제 움직인 돈이라, 띠의 남은 자금 옆에는 Net을 그대로 쓴다.
+        /// </summary>
+        [Test]
+        public void SettlementOverview_ShowsBothLedgersAndTheFundsFlow()
+        {
+            var report = OverviewReport(Array.Empty<Code.Manager.SettlementNote>(), Array.Empty<Code.Manager.SettlementFatigueLine>());
+            var model = Code.UI.ViewModels.SettlementOverviewPresenter.Build(report, 109, 0, 4);
+
+            Assert.That(model.Title, Is.EqualTo("3일차 정산"));
+            Assert.That(model.Status, Is.EqualTo("빚 없음 · 청산일까지 4일"));
+            Assert.That(model.IncomeTotal, Is.EqualTo("+12G"));
+            Assert.That(model.ExpenseTotal, Is.EqualTo("-45G"));
+            Assert.That(model.Deferred, Is.EqualTo("-8G"), "수입 − 지출 − Net = 12 − 45 + 25");
+            Assert.That(model.Remaining, Is.EqualTo("109G"));
+            Assert.That(model.NetChange, Is.EqualTo("-25G"));
+            StringAssert.Contains("철거 환불", model.Ledger);
+            StringAssert.Contains("건설 투자", model.Ledger);
+            StringAssert.Contains("유지비", model.Ledger);
+            StringAssert.Contains("몬스터 해금 1/13", model.UnlockSummary);
+        }
+
+        [Test]
+        public void SettlementOverview_NamesSettlementDayAndDebt()
+        {
+            var report = OverviewReport(Array.Empty<Code.Manager.SettlementNote>(), Array.Empty<Code.Manager.SettlementFatigueLine>(), -33);
+            var model = Code.UI.ViewModels.SettlementOverviewPresenter.Build(report, 50, 1200, 0);
+
+            Assert.That(model.Status, Is.EqualTo("빚 1,200G · 오늘 청산일"));
+            Assert.That(model.StatusWarn, Is.True, "빚이 있으면 경고 색이어야 합니다.");
+            Assert.That(model.Deferred, Is.EqualTo("없음"));
+        }
+
+        /// <summary>
+        /// 전과 칩은 6자리 고정이다. 넘쳐도 위험 메모(보스 예고·파산 위험)는 빠지지 않고, 피로는 가장 지친 둘만 보인다.
+        /// </summary>
+        [Test]
+        public void SettlementOverview_KeepsDangerChipsAndTopTwoFatigue()
+        {
+            var notes = new[]
+            {
+                new Code.Manager.SettlementNote("전투 전문", summaryText: "제압 2/3"),
+                new Code.Manager.SettlementNote("요약 없는 일반 메모"),
+                new Code.Manager.SettlementNote("목표 전문", Code.Manager.SettlementNoteTone.Good, "목표 달성 · +25G"),
+                new Code.Manager.SettlementNote("메모 1", summaryText: "메모 1"),
+                new Code.Manager.SettlementNote("메모 2", summaryText: "메모 2"),
+                new Code.Manager.SettlementNote("메모 3", summaryText: "메모 3"),
+                new Code.Manager.SettlementNote("7일차 보스 예고", Code.Manager.SettlementNoteTone.Danger)
+            };
+            var fatigue = new[]
+            {
+                new Code.Manager.SettlementFatigueLine("해골 검사", 41),
+                new Code.Manager.SettlementFatigueLine("궁수", 100),
+                new Code.Manager.SettlementFatigueLine("성기사", 75),
+                new Code.Manager.SettlementFatigueLine("척후병", 10)
+            };
+            var model = Code.UI.ViewModels.SettlementOverviewPresenter.Build(OverviewReport(notes, fatigue), 100, 0, 3);
+            var chips = model.Chips;
+            var texts = new List<string>();
+            foreach (var chip in chips)
+                texts.Add(chip.Text);
+
+            Assert.That(chips.Count, Is.EqualTo(Code.UI.ViewModels.SettlementOverviewPresenter.MaxChips));
+            Assert.That(texts, Has.Some.Contains("7일차 보스 예고"), "위험 메모는 넘쳐도 남아야 합니다.");
+            Assert.That(texts, Has.None.Contains("요약 없는 일반 메모"), "요약이 없는 일반 메모는 칩이 되지 않습니다.");
+            Assert.That(texts, Has.Some.Contains("궁수").And.Contains("탈진"));
+            Assert.That(texts, Has.Some.Contains("성기사").And.Contains("외 2명"));
+            Assert.That(texts, Has.None.Contains("척후병"));
+            Assert.That(texts, Has.Some.Contains("개 더"), "잘린 칩 수를 알려야 합니다.");
+        }
     }
 }
