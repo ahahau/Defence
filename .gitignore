@@ -10,6 +10,11 @@
 /[Bb]uilds/
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
+
+# Local work folders (verification evidence, presentation tooling, temporary captures)
+/tmp/
+/[Aa]ssets/tmp/
+/[Aa]ssets/tmp.meta
 *.log
 
 # By default unity supports Blender asset imports, *.blend1 blender files do not need to be commited to version control.
