@@ -89,6 +89,16 @@ namespace Code.Manager
                 // 보스 자신은 첫 단계에 반드시 등장해야 한다.
                 return Mathf.Clamp(reinforcementCount, 0, Mathf.Max(0, totalEnemyCount - 1));
             }
+
+            /// <summary>순환 보스 날에 쓸 사본. 바퀴 배율은 사본에만 곱한다(원본은 에셋이다).</summary>
+            public BossEntry CopyForRotation(int day, int lap)
+            {
+                var copy = (BossEntry)MemberwiseClone();
+                copy.targetDay = day;
+                copy.healthMultiplier = RotatingBossRules.HealthMultiplier(healthMultiplier, lap);
+                copy.attackMultiplier = RotatingBossRules.AttackMultiplier(attackMultiplier, lap);
+                return copy;
+            }
         }
 
         [SerializeField] private WaveEntry[] specificWaves = Array.Empty<WaveEntry>();
@@ -116,6 +126,11 @@ namespace Code.Manager
         [SerializeField, Tooltip("일차별 보스 정의. 여기 없는 보스날은 아래 공용 보스 설정을 쓴다.")]
         private BossEntry[] bossEntries = Array.Empty<BossEntry>();
 
+        [SerializeField, Tooltip("29일 이후 날짜 정의가 없는 보스 날에 차례로 돌릴 보스(targetDay는 무시). 바퀴마다 RotatingBossRules 배율이 붙는다.")]
+        private BossEntry[] rotatingBosses = Array.Empty<BossEntry>();
+
+        [NonSerialized] private BossEntry _rotatedBoss;
+
         public AdventurerPartySO BossParty => bossParty;
         public int FinalDay => finalDay;
 
@@ -137,7 +152,10 @@ namespace Code.Manager
             return WaveThreatProfile.Build(entry?.threatTitle, entry?.counterHint, GetPartyForDay(day));
         }
 
-        /// <summary>그 날 전용 보스 정의. 없으면 null이고, 호출한 쪽이 공용 설정으로 넘어간다.</summary>
+        /// <summary>
+        /// 그 날 전용 보스 정의. 날짜 정의가 먼저이고, 없으면 29일 이후 보스 날에 순환 보스(바퀴 배율을 곱한 사본)를 준다.
+        /// 둘 다 없으면 null이고, 호출한 쪽이 공용 설정으로 넘어간다.
+        /// </summary>
         public BossEntry GetBossForDay(int day)
         {
             foreach (var boss in bossEntries)
@@ -146,7 +164,20 @@ namespace Code.Manager
                     return boss;
             }
 
-            return null;
+            return GetRotatingBoss(day);
+        }
+
+        private BossEntry GetRotatingBoss(int day)
+        {
+            if (rotatingBosses == null
+                || !RotatingBossRules.TryGetSlot(day, rotatingBosses.Length, out var index, out var lap)
+                || rotatingBosses[index] == null)
+                return null;
+
+            // HUD·예고가 같은 날을 자주 물으므로 그 날 사본을 들고 있는다.
+            if (_rotatedBoss == null || _rotatedBoss.targetDay != day)
+                _rotatedBoss = rotatingBosses[index].CopyForRotation(day, lap);
+            return _rotatedBoss;
         }
 
         /// <summary>그 날 보스가 이끄는 파티. 전용 정의가 없으면 공용 보스 파티.</summary>
@@ -194,5 +225,7 @@ namespace Code.Manager
 
             return null;
         }
+
+        private void OnValidate() => _rotatedBoss = null;
     }
 }

@@ -270,7 +270,9 @@ namespace Tests.EditMode.Rules
                 { "ThiefEnemy", 8 }, { "ScoutEnemy", 7 }, { "BasicEnemy", 3 }, { "ArcherEnemy", 4 }, { "SapperEnemy", 2 },
                 { "HealterEnemy", 2 }, { "SwordEnemy", 2 }, { "PaladinEnemy", 1 }, { "Enemy_Tourist_Coward", 3 },
                 { "Enemy_Tourist_Priest", 3 }, { "Enemy_Tourist_Shopaholic", 3 }, { "Boss_GreedKnight", 2 },
-                { "Boss_Houndmaster", 2 }, { "Boss_KnightCommander", 2 }, { "Boss_Subjugator", 2 }
+                { "Boss_Houndmaster", 2 }, { "Boss_KnightCommander", 2 }, { "Boss_Subjugator", 2 },
+                { "Boss_Archmage", 0 }, { "Boss_OrcWarchief", 1 }, { "Boss_BanditRider", 9 },
+                { "ApprenticeMageEnemy", 3 }, { "OrcWarriorEnemy", 1 }, { "OrcArcherEnemy", 4 }, { "BanditSpearmanEnemy", 5 }
             };
             foreach (var guid in AssetDatabase.FindAssets("t:Code.Enemies.EnemyDataSO", new[] { "Assets/07.SO/Enemies" }))
             {

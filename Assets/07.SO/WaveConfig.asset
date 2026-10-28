@@ -341,3 +341,73 @@ MonoBehaviour:
     loseOnTreasuryBreach: 1
     loseAfterUnitsDowned: 0
     allowChurchRevival: 1
+  rotatingBosses:
+  - targetDay: 1
+    party: {fileID: 11400000, guid: 3feac6a16e4791d4da38b2ddff0f3e77, type: 2}
+    title: "\uB300\uB9C8\uBC95\uC0AC"
+    subtitle: "\uBC1F\uC740 \uD568\uC815\uC744 \uD574\uCCB4\uD55C\uB2E4 \u2014 \uD568\uC815\uBCF4\uB2E4 \uBD80\uD558\uB85C \uB9C9\uC544\uB77C"
+    <ForecastText>k__BackingField: 
+    <VictorySummary>k__BackingField: 
+    <VictoryText>k__BackingField: 
+    healthMultiplier: 6
+    attackMultiplier: 2.5
+    visualScale: 1.6
+    enableFinalPhase: 1
+    phaseDefensePenalty: 8
+    phaseAttackIntervalMultiplier: 0.75
+    phaseSubtitle: "\uD638\uC704 \uC804\uBA78 \u2014 \uB300\uB9C8\uBC95\uC0AC \uBC29\uC5B4 \uC57D\uD654 \xB7 \uACF5\uACA9 \uAC00\uC18D"
+    enableReinforcementPhase: 0
+    reinforcementHealthRatio: 0.5
+    reinforcementParty: {fileID: 0}
+    reinforcementCount: 0
+    reinforcementSubtitle: 
+    timeLimitSeconds: 180
+    loseOnTreasuryBreach: 0
+    loseAfterUnitsDowned: 0
+    allowChurchRevival: 0
+  - targetDay: 1
+    party: {fileID: 11400000, guid: daf6bd3785d38f94bb3582b967a5ff1a, type: 2}
+    title: "\uC624\uD06C \uB300\uC871\uC7A5"
+    subtitle: "\uC624\uD06C \uC804\uC7C1\uB2E8\uC774 \uBC00\uACE0 \uB4E4\uC5B4\uC628\uB2E4 \u2014 \uC587\uC740 \uACBD\uBE44\uB294 \uBC84\uD2F0\uC9C0 \uBABB\uD55C\uB2E4"
+    <ForecastText>k__BackingField: 
+    <VictorySummary>k__BackingField: 
+    <VictoryText>k__BackingField: 
+    healthMultiplier: 7.5
+    attackMultiplier: 2.2
+    visualScale: 1.7
+    enableFinalPhase: 0
+    phaseDefensePenalty: 8
+    phaseAttackIntervalMultiplier: 0.75
+    phaseSubtitle: 
+    enableReinforcementPhase: 1
+    reinforcementHealthRatio: 0.55
+    reinforcementParty: {fileID: 11400000, guid: 1f616b14b2b6ef442b54ae00437c0b62, type: 2}
+    reinforcementCount: 3
+    reinforcementSubtitle: "\uC804\uC7C1 \uBD81\uC774 \uC6B8\uB838\uB2E4 \u2014 \uC624\uD06C \uC804\uC0AC\uAC00 \uB354 \uC628\uB2E4"
+    timeLimitSeconds: 0
+    loseOnTreasuryBreach: 0
+    loseAfterUnitsDowned: 4
+    allowChurchRevival: 1
+  - targetDay: 1
+    party: {fileID: 11400000, guid: f1f30c44f463e6342ae43c4aed7900c5, type: 2}
+    title: "\uAE30\uB9C8 \uB450\uBAA9"
+    subtitle: "\uB9D0 \uD0C4 \uB3C4\uC801\uC774 \uAE08\uACE0\uB85C \uB0B4\uB2EC\uB9B0\uB2E4 \u2014 \uC785\uAD6C \uAC00\uAE4C\uC6B4 \uAE08\uACE0\uB97C \uC9C0\uCF1C\uB77C"
+    <ForecastText>k__BackingField: 
+    <VictorySummary>k__BackingField: 
+    <VictoryText>k__BackingField: 
+    healthMultiplier: 5
+    attackMultiplier: 2.5
+    visualScale: 1.6
+    enableFinalPhase: 0
+    phaseDefensePenalty: 8
+    phaseAttackIntervalMultiplier: 0.75
+    phaseSubtitle: 
+    enableReinforcementPhase: 0
+    reinforcementHealthRatio: 0.5
+    reinforcementParty: {fileID: 0}
+    reinforcementCount: 0
+    reinforcementSubtitle: 
+    timeLimitSeconds: 240
+    loseOnTreasuryBreach: 1
+    loseAfterUnitsDowned: 0
+    allowChurchRevival: 0

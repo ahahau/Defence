@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13a7129936dd488895088d04b1e793ac, type: 3}
+  m_Name: Boss_Archmage
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Enemies.EnemyDataSO
+  <Grade>k__BackingField: 1
+  <BoardSprite>k__BackingField: {fileID: 21300000, guid: c636571040d6247a8be1a3c88e385ddc, type: 3}
+  <Defense>k__BackingField: 6
+  <EvasionChance>k__BackingField: 0
+  <Name>k__BackingField: "\uB300\uB9C8\uBC95\uC0AC"
+  <Role>k__BackingField: 1
+  <Trait>k__BackingField: 0
+  <Prefab>k__BackingField: {fileID: 6453398018867074118, guid: 2e3d13168afd6cf428bbf3cfab14e6f4, type: 3}
+  <Fear>k__BackingField: 0
+  <Greed>k__BackingField: 0
+  <CoreArrivalDamage>k__BackingField: 5
+  <MaxHealth>k__BackingField: 22
+  <AttackDamage>k__BackingField: 3
+  <AttackInterval>k__BackingField: 1.4
+  <Mobility>k__BackingField: 0
+  <IdleSprite>k__BackingField: {fileID: 21300000, guid: c636571040d6247a8be1a3c88e385ddc, type: 3}
+  <AttackSprite>k__BackingField: {fileID: 21300000, guid: 6dcdead2d8a8b48b7b950eedd077b14a, type: 3}
+  <DefeatedSprite>k__BackingField: {fileID: 21300000, guid: 7ec4fd373e03f424698cfb22f6eb4c0d, type: 3}
+  <AnimationSet>k__BackingField: {fileID: 11400000, guid: b7d4927f4545675478f58db73bd834fc, type: 2}
+  <AttackSfx>k__BackingField: 9
+  <DisarmsTraps>k__BackingField: 1
