@@ -55,6 +55,15 @@ namespace Code.Stages
                     return false;
             if (OpenDoorCount(0) == 0)
                 return false;
+            // 웨이브 수보다 늦게 열리는 문은 끝까지 열리지 않는다. 문 수보다 긴 목록도 설정 실수다.
+            if (DoorOpensAtWave != null)
+            {
+                if (DoorOpensAtWave.Length > Doors.Length)
+                    return false;
+                foreach (int wave in DoorOpensAtWave)
+                    if (wave < 1 || wave > Waves.Length)
+                        return false;
+            }
             if (Devices != null)
                 foreach (StageDevice device in Devices)
                 {

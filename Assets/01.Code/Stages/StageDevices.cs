@@ -45,7 +45,8 @@ namespace Code.Stages
             foreach (State state in _states)
             {
                 state.Active = false;
-                state.Clock = state.Device.StartDelay;
+                // 시작 지연만큼 주기를 늦춘다(음수 동안은 꺼져 있다)
+                state.Clock = -state.Device.StartDelay;
                 state.TickClock = 0f;
                 state.CooldownLeft = 0f;
             }
@@ -69,7 +70,9 @@ namespace Code.Stages
                     state.CooldownLeft = Mathf.Max(0f, state.CooldownLeft - deltaTime);
                     continue;
                 }
-                state.Clock = (state.Clock + deltaTime) % device.Period;
+                state.Clock += deltaTime;
+                if (state.Clock >= device.Period)
+                    state.Clock %= device.Period;
                 bool active = state.Clock >= device.Period - device.ActiveSeconds;
                 if (device.Kind == StageDeviceKind.Gate)
                     UpdateGate(state, active);
