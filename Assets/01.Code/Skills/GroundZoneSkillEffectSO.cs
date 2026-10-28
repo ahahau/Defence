@@ -28,13 +28,14 @@ namespace Code.Skills
             SkillZoneVisual.AddPulse(renderer);
 
             var runtime = renderer.gameObject.AddComponent<GroundZoneRuntime>();
-            runtime.Initialize(context.Caster, radius, duration, tickInterval, tickDamage, moveSpeedMultiplier);
+            runtime.Initialize(context.Caster, context.Field, radius, duration, tickInterval, tickDamage, moveSpeedMultiplier);
         }
 
         private class GroundZoneRuntime : MonoBehaviour
         {
             private const string OwnershipSlot = "GroundZone";
             private BT.BattleAgent _caster;
+            private ISkillField _field;
             private EntityId _ownerId;
             private float _radius;
             private float _remaining;
@@ -43,9 +44,10 @@ namespace Code.Skills
             private int _tickDamage;
             private float _moveSpeedMultiplier;
 
-            public void Initialize(BT.BattleAgent caster, float radius, float duration, float tickInterval, int tickDamage, float moveSpeedMultiplier)
+            public void Initialize(BT.BattleAgent caster, ISkillField field, float radius, float duration, float tickInterval, int tickDamage, float moveSpeedMultiplier)
             {
                 _caster = caster;
+                _field = field;
                 _radius = radius;
                 _remaining = duration;
                 _tickInterval = tickInterval;
@@ -71,10 +73,13 @@ namespace Code.Skills
                 if (_tickTimer > 0f) return;
 
                 _tickTimer = _tickInterval;
-                var field = _caster != null ? _caster.Battlefield : null;
-                if (field == null) return;
+                if (_caster == null) return;
+                System.Collections.Generic.IEnumerable<BT.BattleAgent> roster = _field != null
+                    ? _field.Opponents(_caster.Team, transform.position)
+                    : _caster.Battlefield != null ? _caster.Battlefield.Opponents(_caster.Team) : null;
+                if (roster == null) return;
 
-                foreach (var enemy in field.Opponents(_caster.Team))
+                foreach (var enemy in roster)
                 {
                     if (enemy == null || !enemy.IsAlive)
                         continue;

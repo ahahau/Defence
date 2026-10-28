@@ -27,6 +27,8 @@ namespace Code.UI
         [SerializeField] private UiFrameButton restartButton;
         [SerializeField] private UiFrameButton titleButton;
         [SerializeField] private UiFrameButton closeButton;
+        [SerializeField, Tooltip("다시 시작(구 런 저장 삭제 후 SampleScene)을 보인다. 스테이지 씬은 자기 재도전 버튼이 있어 끈다.")]
+        private bool allowRunRestart = true;
 
         public bool IsOpen => root != null && root.activeSelf;
 
@@ -57,6 +59,7 @@ namespace Code.UI
         {
             if (root != null)
                 root.SetActive(false);
+            restartButton.SetVisible(allowRunRestart);
         }
 
         private void OnEnable()

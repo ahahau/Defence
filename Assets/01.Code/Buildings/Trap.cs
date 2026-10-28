@@ -10,6 +10,13 @@ namespace Code.Buildings
 {
     public class Trap : Building
     {
+        private Code.Stages.StageSession _stage;
+        private float _stageDamageMultiplier = 1f;
+
+        /// <summary>구 노드 조회 대신 스테이지의 실제 전투원/칸 크기를 사용한다.</summary>
+        public void BindStage(Code.Stages.StageSession stage) => _stage = stage;
+        public void SetStageDamageMultiplier(float multiplier) => _stageDamageMultiplier = Mathf.Max(0f, multiplier);
+
         /// <summary>함정 몸체 그림의 정렬 순서. 바닥·기둥 타일보다 위, 위 칸으로 삐져나온 기둥 윗면(11)과 캐릭터(20)보다 아래다.</summary>
         public const int BodySortingOrder = 10;
 
@@ -194,7 +201,7 @@ namespace Code.Buildings
             if (TryDisarm(stepper))
                 return false;
 
-            var mode = ResolveGrid() != null ? triggerMode : TrapTriggerMode.Step;
+            var mode = ResolveGrid() != null || _stage != null ? triggerMode : TrapTriggerMode.Step;
             switch (mode)
             {
                 case TrapTriggerMode.Area:
@@ -346,6 +353,13 @@ namespace Code.Buildings
         private void CollectEnemiesInNode()
         {
             _enemyBuffer.Clear();
+            if (_stage != null)
+            {
+                foreach (Code.Stages.StageActor actor in _stage.Board.Actors)
+                    if (actor != null && actor.IsEnemy && actor.IsAlive && actor.Enemy.Mover != null)
+                        _enemyBuffer.Add(actor.Enemy.Mover);
+                return;
+            }
             var node = ResolveNode();
             if (node == null)
                 return;
@@ -359,6 +373,7 @@ namespace Code.Buildings
 
         private void HitEnemy(Enemy enemy, int amount, bool allowInjury)
         {
+            amount = Mathf.RoundToInt(amount * _stageDamageMultiplier);
             if (enemy == null || enemy.IsDead || amount <= 0)
                 return;
 
@@ -383,6 +398,13 @@ namespace Code.Buildings
         /// </summary>
         private void HitUnits(int amount, System.Func<Vector2, bool> inRange)
         {
+            if (_stage != null)
+            {
+                foreach (Code.Stages.StageActor actor in _stage.Board.Actors)
+                    if (actor != null && !actor.IsEnemy && actor.IsAlive && inRange(actor.transform.position))
+                        actor.Combat.Health.TakeDamage(Mathf.RoundToInt(amount * _stageDamageMultiplier));
+                return;
+            }
             var node = ResolveNode();
             if (node == null || amount <= 0)
                 return;
@@ -438,6 +460,8 @@ namespace Code.Buildings
 
         private float ResolveCellSize()
         {
+            if (_stage != null)
+                return _stage.Definition.CellSize;
             var grid = ResolveGrid();
             return grid != null ? grid.CellSize : 1f;
         }

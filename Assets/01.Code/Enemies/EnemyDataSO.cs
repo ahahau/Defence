@@ -25,6 +25,9 @@ namespace Code.Enemies
         [field: SerializeField, Min(0)]
         public int Greed { get; private set; }
 
+        [field: SerializeField, Min(1), Tooltip("코어 도달 시 한 번 주는 피해. 공격력과 별개이며 첫 전환 값은 임시 설정이다.")]
+        public int CoreArrivalDamage { get; private set; } = 1;
+
         [field: SerializeField, Min(1)]
         public int MaxHealth { get; private set; } = 10;
 

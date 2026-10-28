@@ -28,7 +28,7 @@ namespace Code.Skills
             SkillZoneVisual.AddPulse(renderer);
 
             var runtime = renderer.gameObject.AddComponent<HealZoneRuntime>();
-            runtime.Initialize(caster, caster.Battlefield, caster.Team, radius, duration, tickInterval, tickHeal, damageTakenMultiplier);
+            runtime.Initialize(caster, caster.Battlefield, context.Field, caster.Team, radius, duration, tickInterval, tickHeal, damageTakenMultiplier);
         }
 
         private class HealZoneRuntime : MonoBehaviour
@@ -36,6 +36,7 @@ namespace Code.Skills
             private const string OwnershipSlot = "HealZone";
             private EntityId _ownerId;
             private NodeBattlefield _battlefield;
+            private ISkillField _field;
             private BattleTeam _team;
             private float _radius;
             private float _remaining;
@@ -47,6 +48,7 @@ namespace Code.Skills
             public void Initialize(
                 BattleAgent caster,
                 NodeBattlefield battlefield,
+                ISkillField field,
                 BattleTeam team,
                 float radius,
                 float duration,
@@ -55,6 +57,7 @@ namespace Code.Skills
                 float damageTakenMultiplier)
             {
                 _battlefield = battlefield;
+                _field = field;
                 _team = team;
                 _radius = radius;
                 _remaining = duration;
@@ -81,9 +84,12 @@ namespace Code.Skills
                 if (_tickTimer > 0f) return;
 
                 _tickTimer = _tickInterval;
-                if (_battlefield == null) return;
+                System.Collections.Generic.IEnumerable<BattleAgent> roster = _field != null
+                    ? _field.Allies(_team, transform.position)
+                    : _battlefield != null ? _battlefield.Allies(_team) : null;
+                if (roster == null) return;
 
-                foreach (var ally in _battlefield.Allies(_team))
+                foreach (var ally in roster)
                 {
                     if (ally == null || !ally.IsAlive)
                         continue;

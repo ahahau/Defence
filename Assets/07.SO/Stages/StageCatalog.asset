@@ -1,0 +1,94 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5354c4d293fe7645bcefa68cebb3b56, type: 3}
+  m_Name: StageCatalog
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Stages.StageCatalogSO
+  <Stages>k__BackingField:
+  - {fileID: 11400000, guid: 747866e2609363f43a7ec64cdf2af0cc, type: 2}
+  - {fileID: 11400000, guid: c1def227b3c195f4a9608ab5562740a8, type: 2}
+  - {fileID: 11400000, guid: c48157c2f99690d47b8efae6833133e2, type: 2}
+  - {fileID: 11400000, guid: 7cd9ec15d49eceb4cbf50660af2ab8cf, type: 2}
+  - {fileID: 11400000, guid: b1a95fc88b982974e9eba55a4b579e16, type: 2}
+  - {fileID: 11400000, guid: 6caf1011d27cc7f42bddb215a508e062, type: 2}
+  - {fileID: 11400000, guid: 167be25159eb3e94e885bd994c492e0a, type: 2}
+  <Options>k__BackingField:
+  - <Id>k__BackingField: unit:9785451f10274e549bb2f0f1448bee7a
+    <Unit>k__BackingField: {fileID: 11400000, guid: 9785451f10274e549bb2f0f1448bee7a, type: 2}
+    <Trap>k__BackingField: {fileID: 0}
+    <RequiredClear>k__BackingField: 
+  - <Id>k__BackingField: unit:b6ce91f584084e0caa2a843d9c51c8df
+    <Unit>k__BackingField: {fileID: 11400000, guid: b6ce91f584084e0caa2a843d9c51c8df, type: 2}
+    <Trap>k__BackingField: {fileID: 0}
+    <RequiredClear>k__BackingField: 
+  - <Id>k__BackingField: trap:be41653203961e8469dc7902544fe225
+    <Unit>k__BackingField: {fileID: 0}
+    <Trap>k__BackingField: {fileID: 11400000, guid: be41653203961e8469dc7902544fe225, type: 2}
+    <RequiredClear>k__BackingField: 
+  - <Id>k__BackingField: trap:6ad2f1ac71796be4180ea172e8a7ec94
+    <Unit>k__BackingField: {fileID: 0}
+    <Trap>k__BackingField: {fileID: 11400000, guid: 6ad2f1ac71796be4180ea172e8a7ec94, type: 2}
+    <RequiredClear>k__BackingField: 
+  - <Id>k__BackingField: unit:87f47b479049307a49aea727ee3389ec
+    <Unit>k__BackingField: {fileID: 11400000, guid: 87f47b479049307a49aea727ee3389ec, type: 2}
+    <Trap>k__BackingField: {fileID: 0}
+    <RequiredClear>k__BackingField: Stage_01
+  - <Id>k__BackingField: unit:c06b8869e135ed445904927bf3ad4d13
+    <Unit>k__BackingField: {fileID: 11400000, guid: c06b8869e135ed445904927bf3ad4d13, type: 2}
+    <Trap>k__BackingField: {fileID: 0}
+    <RequiredClear>k__BackingField: Stage_01
+  - <Id>k__BackingField: trap:896e5a2041d65eb4bbddb0b79647f01d
+    <Unit>k__BackingField: {fileID: 0}
+    <Trap>k__BackingField: {fileID: 11400000, guid: 896e5a2041d65eb4bbddb0b79647f01d, type: 2}
+    <RequiredClear>k__BackingField: Stage_01
+  - <Id>k__BackingField: trap:268c2e0444131034f8750ebb13ac453e
+    <Unit>k__BackingField: {fileID: 0}
+    <Trap>k__BackingField: {fileID: 11400000, guid: 268c2e0444131034f8750ebb13ac453e, type: 2}
+    <RequiredClear>k__BackingField: Stage_02
+  - <Id>k__BackingField: trap:0496bb0f6fdb6714fbdf30ccc3b14fbb
+    <Unit>k__BackingField: {fileID: 0}
+    <Trap>k__BackingField: {fileID: 11400000, guid: 0496bb0f6fdb6714fbdf30ccc3b14fbb, type: 2}
+    <RequiredClear>k__BackingField: Stage_02
+  - <Id>k__BackingField: unit:e184f7c088dfb3741b3f6ce7a83c4c4e
+    <Unit>k__BackingField: {fileID: 11400000, guid: e184f7c088dfb3741b3f6ce7a83c4c4e, type: 2}
+    <Trap>k__BackingField: {fileID: 0}
+    <RequiredClear>k__BackingField: Stage_03
+  - <Id>k__BackingField: unit:2e0126834afad1541981aab6d8b74ca9
+    <Unit>k__BackingField: {fileID: 11400000, guid: 2e0126834afad1541981aab6d8b74ca9, type: 2}
+    <Trap>k__BackingField: {fileID: 0}
+    <RequiredClear>k__BackingField: Stage_03
+  - <Id>k__BackingField: unit:d5aee0cfbb2a1cd4d99f545c45a2c004
+    <Unit>k__BackingField: {fileID: 11400000, guid: d5aee0cfbb2a1cd4d99f545c45a2c004, type: 2}
+    <Trap>k__BackingField: {fileID: 0}
+    <RequiredClear>k__BackingField: Stage_04
+  - <Id>k__BackingField: trap:36690a55f0322d94bb7be8271a30d072
+    <Unit>k__BackingField: {fileID: 0}
+    <Trap>k__BackingField: {fileID: 11400000, guid: 36690a55f0322d94bb7be8271a30d072, type: 2}
+    <RequiredClear>k__BackingField: Stage_04
+  - <Id>k__BackingField: unit:09ffde85ae48bac38cfe448e868def54
+    <Unit>k__BackingField: {fileID: 11400000, guid: 09ffde85ae48bac38cfe448e868def54, type: 2}
+    <Trap>k__BackingField: {fileID: 0}
+    <RequiredClear>k__BackingField: Stage_05
+  - <Id>k__BackingField: trap:71c3dd1f6e5e62a46ad3297d59177363
+    <Unit>k__BackingField: {fileID: 0}
+    <Trap>k__BackingField: {fileID: 11400000, guid: 71c3dd1f6e5e62a46ad3297d59177363, type: 2}
+    <RequiredClear>k__BackingField: Stage_05
+  - <Id>k__BackingField: unit:379b349ef8bb457292ab66141feaae13
+    <Unit>k__BackingField: {fileID: 11400000, guid: 379b349ef8bb457292ab66141feaae13, type: 2}
+    <Trap>k__BackingField: {fileID: 0}
+    <RequiredClear>k__BackingField: Stage_06
+  <UpgradeBaseCost>k__BackingField: 2
+  <UpgradeLimit>k__BackingField: 3
+  <DamagePerUpgrade>k__BackingField: 0.15
+  <BaseLoadoutSlots>k__BackingField: 4
+  <SlotRewardStages>k__BackingField:
+  - Stage_02
+  - Stage_04

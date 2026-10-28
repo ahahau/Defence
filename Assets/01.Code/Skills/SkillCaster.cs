@@ -97,7 +97,7 @@ namespace Code.Skills
 
             if (ultimate != null && !_ultimateUsed)
             {
-                Execute(ultimate);
+                Execute(ultimate, agent.CurrentTarget, null);
                 _ultimateUsed = true;
                 // 궁극기 직후 일반 스킬이 다음 자동 검사에서 연달아 발동하지 않게
                 // 동일한 일반 스킬 주기를 공유한다.
@@ -107,7 +107,7 @@ namespace Code.Skills
 
             if (skill != null)
             {
-                Execute(skill);
+                Execute(skill, agent.CurrentTarget, null);
                 _cooldownTimer = skill.Cooldown;
                 return true;
             }
@@ -115,7 +115,30 @@ namespace Code.Skills
             return false;
         }
 
-        private void Execute(SkillDataSO data)
+        public bool HasSkill => skill != null;
+        public bool HasUltimate => ultimate != null;
+
+        /// <summary>스테이지용: 일반 스킬만 쿨다운마다 쓴다. 대상과 대상 조회를 밖에서 받는다(궁극기는 <see cref="TryCastUltimate"/>).</summary>
+        public bool TryCastSkill(BattleAgent target, ISkillField field)
+        {
+            if (skill == null || agent == null || !agent.IsAlive || _cooldownTimer > 0f)
+                return false;
+            Execute(skill, target, field);
+            _cooldownTimer = skill.Cooldown;
+            return true;
+        }
+
+        /// <summary>스테이지용: 궁극기를 바로 쓴다. 쓸 때(게이지 등)는 부르는 쪽이 정한다.</summary>
+        public bool TryCastUltimate(BattleAgent target, ISkillField field)
+        {
+            if (ultimate == null || agent == null || !agent.IsAlive)
+                return false;
+            Execute(ultimate, target, field);
+            _cooldownTimer = skill != null ? skill.Cooldown : 0f;
+            return true;
+        }
+
+        private void Execute(SkillDataSO data, BattleAgent target, ISkillField field)
         {
             var isUltimate = data != null && data.IsUltimate;
             PlayCastVisual(isUltimate);
@@ -124,10 +147,9 @@ namespace Code.Skills
             if (data != null)
                 SkillCastBurst.Play(transform.position, data.CastColor, isUltimate);
 
-            var target = agent.CurrentTarget;
             PlaySpellVisual(data, target);
 
-            var context = new SkillContext(agent, combatant, target);
+            var context = new SkillContext(agent, combatant, target, field);
             using (Code.Combat.HitAttribution.Begin(combatant))
                 data.Execute(context);
         }

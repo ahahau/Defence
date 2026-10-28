@@ -58,6 +58,7 @@ namespace Code.Skills
             var runtime = warning.gameObject.AddComponent<DelayedBlastRuntime>();
             runtime.Initialize(
                 caster.Battlefield,
+                context.Field,
                 caster.Team,
                 fill,
                 radius,
@@ -74,6 +75,7 @@ namespace Code.Skills
         private class DelayedBlastRuntime : MonoBehaviour
         {
             private NodeBattlefield _battlefield;
+            private ISkillField _field;
             private BattleTeam _team;
             private SpriteRenderer _fill;
             private float _radius;
@@ -88,6 +90,7 @@ namespace Code.Skills
 
             public void Initialize(
                 NodeBattlefield battlefield,
+                ISkillField field,
                 BattleTeam team,
                 SpriteRenderer fill,
                 float radius,
@@ -101,6 +104,7 @@ namespace Code.Skills
                 float hitStopDuration)
             {
                 _battlefield = battlefield;
+                _field = field;
                 _team = team;
                 _fill = fill;
                 _radius = radius;
@@ -136,9 +140,12 @@ namespace Code.Skills
 
             private void Explode()
             {
-                if (_battlefield != null)
+                System.Collections.Generic.IEnumerable<BattleAgent> roster = _field != null
+                    ? _field.Opponents(_team, transform.position)
+                    : _battlefield != null ? _battlefield.Opponents(_team) : null;
+                if (roster != null)
                 {
-                    foreach (var enemy in _battlefield.Opponents(_team))
+                    foreach (var enemy in roster)
                     {
                         if (enemy == null || !enemy.IsAlive)
                             continue;
@@ -149,7 +156,8 @@ namespace Code.Skills
 
                         enemy.TakeSkillDamage(_damage);
 
-                        if (_knockbackDistance > 0f)
+                        // 스테이지 격자에서는 밀어내면 벽·칸 밖으로 갈 수 있어 넉백을 하지 않는다
+                        if (_knockbackDistance > 0f && _field == null)
                         {
                             var dir = offset.sqrMagnitude > 0.0001f
                                 ? offset.normalized

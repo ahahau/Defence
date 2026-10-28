@@ -20,6 +20,7 @@ namespace Code.UI
 
         /// <summary>시작하면 넘어갈 씬.</summary>
         public const string GameSceneName = "SampleScene";
+        public const string StageSceneName = "StageDefense";
 
         [SerializeField, Tooltip("저장이 없으면 잠글 버튼.")]
         private Button continueButton;
@@ -54,6 +55,12 @@ namespace Code.UI
         public void StartNewRun()
         {
             GameSfxPlayer.Play(GameSfxCue.UiClick);
+            // 새 스테이지는 구 런 파일을 지우거나 변환하지 않는다. 기존 이어하기 경로는 보존한다.
+            if (Application.CanStreamedLevelBeLoaded(StageSceneName))
+            {
+                SceneManager.LoadScene(StageSceneName);
+                return;
+            }
             RunSaveSystem.DeleteSave();
             SceneManager.LoadScene(GameSceneName);
         }

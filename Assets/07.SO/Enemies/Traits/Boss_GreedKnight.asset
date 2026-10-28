@@ -22,6 +22,7 @@ MonoBehaviour:
   <Prefab>k__BackingField: {fileID: 6453398018867074118, guid: 8130c1f18f0b8334eae8a599efde258c, type: 3}
   <Fear>k__BackingField: 0
   <Greed>k__BackingField: 8
+  <CoreArrivalDamage>k__BackingField: 5
   <MaxHealth>k__BackingField: 30
   <AttackDamage>k__BackingField: 4
   <AttackInterval>k__BackingField: 0.9

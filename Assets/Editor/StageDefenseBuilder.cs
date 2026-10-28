@@ -1,0 +1,691 @@
+using System;
+using System.Collections.Generic;
+using Code.Buildings;
+using Code.Combat;
+using Code.Core;
+using Code.Enemies;
+using Code.Manager;
+using Code.MapCreateSystem;
+using Code.Stages;
+using Code.UI;
+using Code.Units;
+using TMPro;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
+using UnityEngine.Rendering.Universal;
+using UnityEngine.SceneManagement;
+using UnityEngine.Tilemaps;
+
+/// <summary>새 전환 씬만 작성한다. 구 씬/프리팹과 이미 작성된 스테이지 수치는 덮어쓰지 않는다.</summary>
+public static class StageDefenseBuilder
+{
+    private const string Root = "Assets/07.SO/Stages";
+    private const string ScenePath = "Assets/00.Scenes/StageDefense.unity";
+    private const string BarricadePath = "Assets/03.Prefabs/Buildings/StageBarricade.prefab";
+
+    public static void BuildData()
+    {
+        Guard();
+        if (!AssetDatabase.IsValidFolder(Root))
+            AssetDatabase.CreateFolder("Assets/07.SO", "Stages");
+        string catalogPath = Root + "/StageCatalog.asset";
+        if (AssetDatabase.LoadAssetAtPath<StageCatalogSO>(catalogPath) == null)
+        {
+            StageCatalogSO catalog = ScriptableObject.CreateInstance<StageCatalogSO>();
+            Set(catalog, "Stages", Array.Empty<StageDefinitionSO>());
+            Set(catalog, "UpgradeBaseCost", 2);
+            Set(catalog, "UpgradeLimit", 3);
+            Set(catalog, "DamagePerUpgrade", 0.15f);
+            AssetDatabase.CreateAsset(catalog, catalogPath);
+        }
+        BuildStageSet();
+        ApplyUnlockTable();
+        AssetDatabase.SaveAssets();
+    }
+
+    private const string Enemies = "Assets/07.SO/Enemies/";
+
+    /// <summary>
+    /// 스테이지 7개를 구성표대로 쓴다(2026-10-28 사용자 결정, StageDefenseDesign.md "스테이지 구성 확정").
+    /// 이미 있는 Stage_01·02도 같은 GUID로 덮어써 클리어 기록 ID가 이어진다. 기믹은 도중에 열리는 문·설치 불가/강화 칸·표식 적·환경 장치(<see cref="DevicesFor"/>)다.
+    /// 마지막 웨이브는 보스 + 호위(기존 보스 파티에서 셋 이하). 맵·웨이브·보스 도달 피해 5·배율(체력 ×6, 공격 ×2)은 모두 임시 값이다.
+    /// </summary>
+    public static string BuildStageSet()
+    {
+        Guard();
+        EnemyDataSO basic = Load<EnemyDataSO>(Enemies + "BasicEnemy.asset");
+        EnemyDataSO sword = Load<EnemyDataSO>(Enemies + "SwordEnemy.asset");
+        EnemyDataSO archer = Load<EnemyDataSO>(Enemies + "ArcherEnemy.asset");
+        EnemyDataSO healer = Load<EnemyDataSO>(Enemies + "HealterEnemy.asset");
+        EnemyDataSO[] pool = { basic, sword, archer, basic, sword, healer, archer };
+        Vector2Int[] oneDoor = { new(1, 5) };
+        Vector2Int[] twoDoors = { new(1, 2), new(1, 9) };
+        Vector2Int[] threeDoors = { new(1, 2), new(1, 5), new(1, 9) };
+        string[] pillars =
+        {
+            "#######################",
+            "#.....................#",
+            "#.....................#",
+            "#.....##.......##.....#",
+            "#.....##.......##.....#",
+            "#.....................#",
+            "#.....................#",
+            "#.....##.......##.....#",
+            "#.....##.......##.....#",
+            "#.....................#",
+            "#.....................#",
+            "#######################"
+        };
+        string[] lanes =
+        {
+            "#######################",
+            "#.....................#",
+            "#......##.....##......#",
+            "#......##.....##......#",
+            "#.....................#",
+            "#......##.....##......#",
+            "#......##.....##......#",
+            "#.....................#",
+            "#......##.....##......#",
+            "#......##.....##......#",
+            "#.....................#",
+            "#######################"
+        };
+        string[] fork =
+        {
+            "#######################",
+            "#.....................#",
+            "#.........###.........#",
+            "#.........###.........#",
+            "#.....................#",
+            "#.........###.........#",
+            "#.........###.........#",
+            "#.....................#",
+            "#.........###.........#",
+            "#.........###.........#",
+            "#.....................#",
+            "#######################"
+        };
+        string[] zigzag =
+        {
+            "#######################",
+            "#.....................#",
+            "#.....#.......#.......#",
+            "#.....#.......#.......#",
+            "#.....#...#...#...#...#",
+            "#.........#.......#...#",
+            "#.........#.......#...#",
+            "#.....#...#...#...#...#",
+            "#.....#.......#.......#",
+            "#.....#.......#.......#",
+            "#.....................#",
+            "#######################"
+        };
+        string[] scattered =
+        {
+            "#######################",
+            "#.....................#",
+            "#.....................#",
+            "#....##....##....##...#",
+            "#.....................#",
+            "#.....................#",
+            "#.....................#",
+            "#.....................#",
+            "#....##....##....##...#",
+            "#.....................#",
+            "#.....................#",
+            "#######################"
+        };
+        // 'x' 설치 불가 바닥, '+' 강화 칸(함정 피해 ×1.5)
+        string[] forkCells =
+        {
+            "#######################",
+            "#.....................#",
+            "#...xx....###....++...#",
+            "#.........###.........#",
+            "#.....+...............#",
+            "#...xx....###....xx...#",
+            "#.........###.........#",
+            "#.....+...............#",
+            "#.........###....++...#",
+            "#...xx....###.........#",
+            "#.....................#",
+            "#######################"
+        };
+        string[] zigzagCells =
+        {
+            "#######################",
+            "#..xx.....++.....xx...#",
+            "#.....#.......#.......#",
+            "#.....#.......#.......#",
+            "#.....#...#...#...#...#",
+            "#....+....#..+....#...#",
+            "#.........#.......#...#",
+            "#.....#...#...#...#...#",
+            "#.....#.......#.......#",
+            "#.....#.......#.......#",
+            "#..xx.....++.....xx...#",
+            "#######################"
+        };
+        // 문마다 처음 열리는 웨이브(1부터). 마지막 문이 3웨이브부터 열린다.
+        int[] always = Array.Empty<int>();
+        int[] secondOpensAt3 = { 1, 3 };
+        int[] thirdOpensAt3 = { 1, 1, 3 };
+        (string id, string title, string gimmick, string[] layout, Vector2Int[] doors, int[] opens, bool marked, int waves, string boss, string party)[] specs =
+        {
+            ("Stage_01", "첫 금고", "연습: 문 하나, 기믹 없음", pillars, oneDoor, always, false, 3, "Traits/Boss_GreedKnight", "Traits/BossParty_GreedKnight"),
+            ("Stage_02", "두 개의 침입로", "도중에 열리는 문: 3웨이브부터 아래 문", lanes, twoDoors, secondOpensAt3, false, 4, "Bosses/Boss_BanditRider", "Bosses/BossParty_Rotation_BanditRider"),
+            ("Stage_03", "갈림길의 문", "붉은 바닥 설치 불가 · 파란 바닥 함정 피해 +50%", forkCells, oneDoor, always, false, 4, "Bosses/Boss_KnightCommander", "Bosses/BossParty_Day20"),
+            ("Stage_04", "구불길", "환경 장치: 불 구멍 · 여닫는 문", zigzag, oneDoor, always, false, 5, "Bosses/Boss_Archmage", "Bosses/BossParty_Rotation_Archmage"),
+            ("Stage_05", "사냥터", "표식 적: 도약(바리케이드를 넘음) · 돌진(부하와 싸우지 않음)", scattered, twoDoors, always, true, 5, "Bosses/Boss_Houndmaster", "Bosses/BossParty_Day18"),
+            ("Stage_06", "세 갈래 문", "3웨이브부터 새 문 + 불 구멍 · 여닫는 문 · 낙석", lanes, threeDoors, thirdOpensAt3, false, 6, "Bosses/Boss_OrcWarchief", "Bosses/BossParty_Rotation_OrcWarchief"),
+            ("Stage_07", "마지막 금고", "새 문 · 칸 · 표식 적 · 환경 장치 전부", zigzagCells, threeDoors, thirdOpensAt3, true, 6, "Bosses/Boss_Subjugator", "Bosses/BossParty_Day9")
+        };
+        List<StageDefinitionSO> stages = new();
+        for (int index = 0; index < specs.Length; index++)
+        {
+            (string id, string title, string gimmick, string[] layout, Vector2Int[] doors, int[] opens, bool marked, int waves, string boss, string party) spec = specs[index];
+            EnemyDataSO boss = Load<EnemyDataSO>(Enemies + spec.boss + ".asset");
+            Set(boss, "CoreArrivalDamage", 5);
+            EnemyDataSO[] members = Load<AdventurerPartySO>("Assets/07.SO/Waves/" + spec.party + ".asset").Members;
+            EnemyDataSO[] escorts = new EnemyDataSO[Mathf.Min(3, members.Length - 1)];
+            Array.Copy(members, 1, escorts, 0, escorts.Length);
+            StageWave[] waves = new StageWave[spec.waves];
+            float interval = Mathf.Max(0.9f, 1.4f - index * 0.05f);
+            for (int wave = 0; wave < spec.waves; wave++)
+            {
+                bool last = wave == spec.waves - 1;
+                EnemyDataSO[] regular = new EnemyDataSO[last ? 3 : 4 + index + wave];
+                // 표식 스테이지는 일반 적 셋 중 하나에 도약/돌진을 웨이브마다 번갈아 붙인다(임시)
+                StageEnemyRule[] rules = new StageEnemyRule[spec.marked ? regular.Length : 0];
+                for (int i = 0; i < regular.Length; i++)
+                {
+                    regular[i] = pool[(i + wave + index) % pool.Length];
+                    if (spec.marked && i % 3 == 1)
+                        rules[i] = (i / 3 + wave) % 2 == 0 ? StageEnemyRule.Vault : StageEnemyRule.Rush;
+                }
+                waves[wave] = last ? new StageWave(regular, interval, boss, escorts, rules) : new StageWave(regular, interval, rules);
+            }
+            StageDefinitionSO stage = WriteStage(spec.id, spec.title, spec.gimmick, spec.layout, spec.doors, new Vector2Int(21, 5), waves);
+            Set(stage, "DoorOpensAtWave", spec.opens);
+            Set(stage, "Devices", DevicesFor(spec.id));
+            Set(stage, "EmpoweredTrapMultiplier", 1.5f);
+            stages.Add(stage);
+        }
+        StageCatalogSO catalog = Load<StageCatalogSO>(Root + "/StageCatalog.asset");
+        Set(catalog, "Stages", stages.ToArray());
+        AssetDatabase.SaveAssets();
+        return "stages=" + stages.Count;
+    }
+
+    /// <summary>
+    /// 편성 선택지를 해금표대로 다시 쓴다(2026-10-28 사용자 결정, StageDefenseDesign.md "해금 배정").
+    /// 부하 9종·함정 7종, 시작 4개, 클리어마다 다음 기믹 대비 종류를 푼다. 슬롯은 기본 4에 Stage_02·Stage_04 첫 클리어마다 +1.
+    /// 선택지 ID는 에셋 GUID라 기존 강화 기록은 그대로 이어진다. 강화 비용·상한·피해 배율은 건드리지 않는다.
+    /// </summary>
+    public static string ApplyUnlockTable()
+    {
+        Guard();
+        StageCatalogSO catalog = AssetDatabase.LoadAssetAtPath<StageCatalogSO>(Root + "/StageCatalog.asset");
+        if (catalog == null)
+            return "카탈로그가 없습니다";
+        const string units = "Assets/07.SO/Units/";
+        const string traps = "Assets/07.SO/Buildings/";
+        StageOption[] options =
+        {
+            UnitOption(units + "Generated/GuardianUnitData.asset", ""),
+            UnitOption(units + "SlimeBlueUnitData.asset", ""),
+            TrapOption(traps + "SnareCrystalTrapBuildingData.asset", ""),
+            TrapOption(traps + "FireBrazierTrapBuildingData.asset", ""),
+            UnitOption(units + "Generated/WolfUnitData.asset", "Stage_01"),
+            UnitOption(units + "Generated/ArbalistUnitData.asset", "Stage_01"),
+            TrapOption(traps + "ManaCrystalTrapBuildingData.asset", "Stage_01"),
+            TrapOption(traps + "ShockCrystalTrapBuildingData.asset", "Stage_02"),
+            TrapOption(traps + "BloodPoolTrapBuildingData.asset", "Stage_02"),
+            UnitOption(units + "Generated/BattleMageUnitData.asset", "Stage_03"),
+            UnitOption(units + "Generated/VanguardUnitData.asset", "Stage_03"),
+            UnitOption(units + "SkeletonSniperUnitData.asset", "Stage_04"),
+            TrapOption(traps + "ExposeCrystalTrapBuildingData.asset", "Stage_04"),
+            UnitOption(units + "Generated/ShroomUnitData.asset", "Stage_05"),
+            TrapOption(traps + "StormCloudTrapBuildingData.asset", "Stage_05"),
+            UnitOption(units + "Generated/ShadeUnitData.asset", "Stage_06")
+        };
+        int before = catalog.Options?.Length ?? 0;
+        Set(catalog, "Options", options);
+        Set(catalog, "BaseLoadoutSlots", 4);
+        Set(catalog, "SlotRewardStages", new[] { "Stage_02", "Stage_04" });
+        return $"options {before} -> {options.Length}";
+    }
+
+    /// <summary>
+    /// 이미 작성된 StageDefense 씬의 편성 목록을 카탈로그 선택지 수에 맞춘 스크롤 목록으로 다시 만든다.
+    /// 다른 HUD 요소는 건드리지 않는다. 씬이 열려 있고 저장하지 않은 변경이 있으면 멈춘다.
+    /// </summary>
+    public static string RebuildOptionList() => EditScene(scene =>
+    {
+        StageHudView view = FindInScene<StageHudView>(scene);
+        RectTransform side = (RectTransform)view.transform.Find("Preparation");
+        if (side == null)
+            throw new InvalidOperationException("편성 패널(Preparation)을 찾지 못했습니다");
+        for (int i = side.childCount - 1; i >= 0; i--)
+        {
+            Transform child = side.GetChild(i);
+            if (child.name.StartsWith("Option_", StringComparison.Ordinal) || child.name == OptionListName)
+                UnityEngine.Object.DestroyImmediate(child.gameObject);
+        }
+        StageOptionRow[] rows = BuildOptionList(side, FindInScene<StageSession>(scene).Catalog);
+        UiKit.WireArray(view, "rows", rows);
+        return $"rows={rows.Length}";
+    });
+
+    /// <summary>
+    /// 이미 작성된 StageDefense 씬에 배속 컨트롤러·설정 화면(ESC)·오른쪽 위 배속/설정 버튼을 더한다.
+    /// 이미 있으면 다시 만들지 않고 배선만 다시 한다. 다른 HUD 요소는 제목·상태 글 폭만 줄인다(버튼 자리).
+    /// </summary>
+    public static string AddSpeedAndSettings() => EditScene(scene =>
+    {
+        StageHudView view = FindInScene<StageHudView>(scene);
+        GameSpeedController speed = EnsureSpeedController(scene);
+        SettingsScreenView settings = EnsureSettingsScreen(scene, speed);
+        UiKit.Wire(FindInScene<StageSession>(scene), "speedController", speed);
+        RectTransform host = (RectTransform)view.transform;
+        foreach (string name in new[] { "StageTitle", "Status" })
+        {
+            RectTransform text = (RectTransform)host.Find(name);
+            if (text != null)
+                text.sizeDelta = new Vector2(HeadlineWidth, text.sizeDelta.y);
+        }
+        foreach (string name in SpeedButtonNames)
+        {
+            Transform old = host.Find(name);
+            if (old != null)
+                UnityEngine.Object.DestroyImmediate(old.gameObject);
+        }
+        BuildSpeedButtons(view, host, speed, settings);
+        return "speed=" + (speed != null) + " settings=" + (settings != null);
+    });
+
+    private static readonly string[] SpeedButtonNames = { "Pause", "NormalSpeed", "FastSpeed", "Settings" };
+
+    /// <summary>제목·상태 글 폭. 오른쪽 위 배속/설정 버튼(1480~1888)과 겹치지 않게 470~1460.</summary>
+    private const float HeadlineWidth = 990;
+
+    private static void BuildSpeedButtons(StageHudView view, RectTransform host, GameSpeedController speed,
+        SettingsScreenView settings)
+    {
+        UiKit.Wire(view, "speedController", speed);
+        UiKit.Wire(view, "settings", settings);
+        UiKit.Wire(view, "pauseButton", Button(host, "Pause", "일시정지", 1480, 28, 120, 44));
+        UiKit.Wire(view, "normalSpeedButton", Button(host, "NormalSpeed", "1배", 1608, 28, 72, 44));
+        UiKit.Wire(view, "fastSpeedButton", Button(host, "FastSpeed", "2배", 1688, 28, 72, 44));
+        UiKit.Wire(view, "settingsButton", Button(host, "Settings", "설정", 1768, 28, 120, 44));
+    }
+
+    private static GameSpeedController EnsureSpeedController(Scene scene)
+    {
+        GameSpeedController speed = FindInScene<GameSpeedController>(scene, false);
+        if (speed != null)
+            return speed;
+        GameObject host = new("Game Speed");
+        SceneManager.MoveGameObjectToScene(host, scene);
+        return host.AddComponent<GameSpeedController>();
+    }
+
+    /// <summary>
+    /// SampleScene과 같은 설정 화면 프리팹을 놓는다. ESC 라우터는 이 씬에 다른 창이 없어 설정 하나만 닫고 연다.
+    /// "다시 시작"은 구 런 저장을 지우고 SampleScene으로 가므로 끈다(스테이지 HUD의 재도전을 쓴다).
+    /// </summary>
+    private static SettingsScreenView EnsureSettingsScreen(Scene scene, GameSpeedController speed)
+    {
+        SettingsScreenView settings = FindInScene<SettingsScreenView>(scene, false);
+        if (settings == null)
+        {
+            GameObject prefab = Load<GameObject>(SettingsBuilder.PrefabPath);
+            GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
+            settings = instance.GetComponent<SettingsScreenView>();
+        }
+        UiKit.Wire(settings, "speedController", speed);
+        SerializedObject serialized = new(settings);
+        serialized.FindProperty("allowRunRestart").boolValue = false;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+        UiEscapeRouter router = settings.GetComponent<UiEscapeRouter>();
+        UiKit.Wire(router, "settings", settings);
+        UiKit.WireArray(router, "windows", new UnityEngine.Object[] { settings });
+        return settings;
+    }
+
+    /// <summary>
+    /// 작성된 StageDefense 씬을 열어(이미 열려 있으면 그대로) 고치고 저장한다. 저장하지 않은 변경이 있으면 멈춘다.
+    /// 다른 열린 씬은 건드리지 않는다.
+    /// </summary>
+    private static string EditScene(Func<Scene, string> edit)
+    {
+        Guard();
+        Scene scene = SceneManager.GetSceneByPath(ScenePath);
+        bool opened = !scene.IsValid() || !scene.isLoaded;
+        if (!opened && scene.isDirty)
+            throw new InvalidOperationException("StageDefense 씬에 저장하지 않은 변경이 있어 멈춥니다");
+        if (opened)
+            scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Additive);
+        try
+        {
+            string result = edit(scene);
+            EditorSceneManager.MarkSceneDirty(scene);
+            if (!EditorSceneManager.SaveScene(scene))
+                throw new InvalidOperationException("StageDefense 씬 저장 실패");
+            return result;
+        }
+        finally
+        {
+            if (opened)
+                EditorSceneManager.CloseScene(scene, true);
+        }
+    }
+
+    private static T FindInScene<T>(Scene scene, bool required = true) where T : Component
+    {
+        foreach (GameObject root in scene.GetRootGameObjects())
+        {
+            T found = root.GetComponentInChildren<T>(true);
+            if (found != null)
+                return found;
+        }
+        if (required)
+            throw new InvalidOperationException(typeof(T).Name + "을(를) 찾지 못했습니다");
+        return null;
+    }
+
+    /// <summary>
+    /// 환경 장치 배치(2026-10-28 사용자 결정: 맵 고정, 4스테이지부터 불 구멍·여닫는 문, 6·7스테이지에 낙석을 더함).
+    /// 임시 값: 불 구멍 6초마다 2초 켜짐·0.5초마다 피해 2, 여닫는 문 8초 열림·8초 닫힘, 낙석 반경 1.5칸·피해 6·대기 20초.
+    /// 문 칸은 닫혀도 다른 통로가 남는 자리다(스테이지 선택 때 다시 확인한다).
+    /// </summary>
+    private static StageDevice[] DevicesFor(string id)
+    {
+        static StageDevice Vent(int x, int y, float delay) => new(StageDeviceKind.FireVent, new Vector2Int(x, y), 6f, 2f, delay, 0.5f, 2, 0f, 0f);
+        static StageDevice Gate(int x, int y, float delay) => new(StageDeviceKind.Gate, new Vector2Int(x, y), 16f, 8f, delay, 0.5f, 0, 0f, 0f);
+        static StageDevice Rockfall(int x, int y) => new(StageDeviceKind.Rockfall, new Vector2Int(x, y), 1f, 0f, 0f, 0.5f, 6, 1.5f, 20f);
+        return id switch
+        {
+            "Stage_04" => new[] { Vent(8, 5, 0f), Vent(16, 6, 3f), Gate(6, 5, 0f) },
+            "Stage_06" => new[] { Vent(11, 1, 0f), Vent(11, 10, 3f), Gate(11, 7, 0f), Rockfall(19, 2) },
+            "Stage_07" => new[] { Vent(8, 6, 0f), Vent(16, 5, 3f), Gate(6, 6, 0f), Gate(14, 1, 4f), Rockfall(19, 2) },
+            _ => Array.Empty<StageDevice>()
+        };
+    }
+
+    /// <summary>스테이지 에셋을 쓴다. 이미 있으면 같은 에셋(GUID)에 덮어쓴다.</summary>
+    private static StageDefinitionSO WriteStage(string id, string title, string gimmick, string[] layout,
+        Vector2Int[] doors, Vector2Int core, StageWave[] waves)
+    {
+        string path = Root + "/" + id + ".asset";
+        StageDefinitionSO existing = AssetDatabase.LoadAssetAtPath<StageDefinitionSO>(path);
+        StageDefinitionSO stage = existing != null ? existing : ScriptableObject.CreateInstance<StageDefinitionSO>();
+        (string, object)[] settings =
+        {
+            ("Id", id), ("Title", title), ("Gimmick", gimmick), ("Layout", layout), ("Doors", doors), ("Core", core),
+            ("CoreHealth", 10), ("StartingGold", 250), ("CellSize", 1.25f),
+            ("UnitSpeed", 2.5f), ("EnemySpeed", 1.6f), ("EngageRadius", 3.5f), ("LeashRadius", 4f),
+            ("BarricadeCost", 10), ("BarricadeHealth", 8), ("RecoveryDelay", 3f), ("RecoveryPerSecond", 1f),
+            ("DestroyRefund", 0.25f), ("DemolishRefund", 0.5f), ("ClearReward", 3), ("KillReward", 5), ("Waves", waves)
+        };
+        foreach ((string property, object value) in settings)
+            Set(stage, property, value);
+        if (existing == null)
+            AssetDatabase.CreateAsset(stage, path);
+        return stage;
+    }
+
+    public static void BuildBarricade()
+    {
+        Guard();
+        if (AssetDatabase.LoadAssetAtPath<GameObject>(BarricadePath) != null)
+            return;
+        RoomTileSet tileSet = Load<RoomTileSet>("Assets/07.SO/Map/RoomTileSet.asset");
+        GameObject root = new("StageBarricade");
+        try
+        {
+            Health health = root.AddComponent<Health>();
+            Combatant combat = root.AddComponent<Combatant>();
+            UiKit.Wire(combat, "health", health);
+            StageBarricade barricade = root.AddComponent<StageBarricade>();
+            SpriteRenderer visual = new GameObject("Visual").AddComponent<SpriteRenderer>();
+            visual.transform.SetParent(root.transform, false);
+            visual.sprite = tileSet.Wall.m_DefaultSprite;
+            visual.sortingOrder = 12;
+            if (visual.sprite != null)
+                visual.transform.localScale = Vector3.one * (1.25f / visual.sprite.bounds.size.x);
+            SpriteRenderer background = SpriteBar("HealthTrack", root.transform, new Color(0.08f, 0.06f, 0.1f), 0.9f, 0.1f);
+            background.transform.localPosition = new Vector3(0, 0.7f, 0);
+            SpriteRenderer fill = SpriteBar("HealthFill", root.transform, new Color(0.45f, 0.9f, 0.55f), 0.9f, 0.1f);
+            fill.transform.localPosition = new Vector3(0, 0.7f, -0.01f);
+            fill.sortingOrder++;
+            StageHealthBar bar = root.AddComponent<StageHealthBar>();
+            UiKit.Wire(bar, "health", health);
+            UiKit.Wire(bar, "fill", fill.transform);
+            PrefabUtility.SaveAsPrefabAsset(root, BarricadePath);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(root);
+        }
+    }
+
+    public static void BuildScene()
+    {
+        Guard();
+        if (AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath) != null)
+            throw new InvalidOperationException("이미 있는 StageDefense 씬은 자동으로 덮어쓰지 않습니다");
+        Scene previous = SceneManager.GetActiveScene();
+        RuntimeAssetInstaller sourceInstaller = UnityEngine.Object.FindFirstObjectByType<RuntimeAssetInstaller>();
+        Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+        SceneManager.SetActiveScene(scene);
+        try
+        {
+            Camera camera = new GameObject("Main Camera", typeof(AudioListener)).AddComponent<Camera>();
+            camera.tag = "MainCamera";
+            camera.orthographic = true;
+            camera.orthographicSize = 12;
+            camera.transform.position = new Vector3(0, 0, -10);
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = new Color(0.025f, 0.022f, 0.04f);
+            camera.gameObject.AddComponent<UniversalAdditionalCameraData>();
+            Light2D light = new GameObject("Stage Light").AddComponent<Light2D>();
+            light.lightType = Light2D.LightType.Point;
+            light.pointLightInnerRadius = 35f;
+            light.pointLightOuterRadius = 40f;
+            light.intensity = 0.9f;
+            if (sourceInstaller != null)
+            {
+                RuntimeAssetInstaller installer = new GameObject("Runtime Assets").AddComponent<RuntimeAssetInstaller>();
+                EditorUtility.CopySerialized(sourceInstaller, installer);
+            }
+            StageSession session = new GameObject("Stage Session").AddComponent<StageSession>();
+            Transform actors = new GameObject("Actors").transform;
+            StageMapView map = new GameObject("Stage Map").AddComponent<StageMapView>();
+            Grid grid = new GameObject("Grid").AddComponent<Grid>();
+            grid.transform.SetParent(map.transform);
+            Tilemap tilemap = new GameObject("Terrain", typeof(Tilemap), typeof(TilemapRenderer)).GetComponent<Tilemap>();
+            tilemap.transform.SetParent(grid.transform, false);
+            tilemap.GetComponent<TilemapRenderer>().sortingOrder = 0;
+            RoomTileSet tileSet = Load<RoomTileSet>("Assets/07.SO/Map/RoomTileSet.asset");
+            SpriteRenderer core = new GameObject("Core").AddComponent<SpriteRenderer>();
+            core.sortingOrder = 10;
+            core.color = new Color(0.65f, 0.8f, 1f);
+            core.sprite = Load<BuildingDataSO>("Assets/07.SO/Buildings/TreasuryBuildingData.asset").BoardSprite;
+            if (core.sprite == null)
+                core.sprite = tileSet.Floor.m_DefaultSprite;
+            Health coreHealth = core.gameObject.AddComponent<Health>();
+            SpriteRenderer door = new GameObject("Door Template").AddComponent<SpriteRenderer>();
+            door.sortingOrder = 10;
+            door.sprite = tileSet.DoorFrames.Length > 0 ? tileSet.DoorFrames[0] : tileSet.Wall.m_DefaultSprite;
+            door.gameObject.SetActive(false);
+            Transform doors = new GameObject("Dungeon Doors").transform;
+            UiKit.Wire(map, "grid", grid);
+            UiKit.Wire(map, "tiles", tilemap);
+            UiKit.Wire(map, "floor", tileSet.Floor);
+            UiKit.Wire(map, "wall", tileSet.Wall);
+            UiKit.Wire(map, "worldCamera", camera);
+            UiKit.Wire(map, "coreSprite", core);
+            UiKit.Wire(map, "doorPrefab", door);
+            UiKit.Wire(map, "doorsRoot", doors);
+            UiKit.Wire(map, "<CoreHealth>k__BackingField", coreHealth);
+            UiKit.Wire(session, "<Catalog>k__BackingField", Load<StageCatalogSO>(Root + "/StageCatalog.asset"));
+            UiKit.Wire(session, "mapView", map);
+            UiKit.Wire(session, "actorsRoot", actors);
+            UiKit.Wire(session, "barricadePrefab", Load<GameObject>(BarricadePath).GetComponent<StageBarricade>());
+            // 작성된 씬에서도 고정 지형을 편집할 수 있게 최초 맵을 직접 칠한다. 플레이/시뮬레이션은 하지 않는다.
+            StageDefinitionSO initial = session.Catalog.Stages[0];
+            StageBoard board = new(initial);
+            grid.cellSize = new Vector3(0.625f, 0.625f, 1f);
+            grid.transform.localScale = new Vector3(initial.CellSize / 0.625f, initial.CellSize / 0.625f, 1);
+            Vector3 origin = board.World(Vector2Int.zero);
+            grid.transform.position = new Vector3(origin.x - initial.CellSize * 0.5f, origin.y - initial.CellSize * 0.5f, 0);
+            for (int y = 0; y < board.Rows; y++)
+            for (int x = 0; x < board.Columns; x++)
+                tilemap.SetTile(new Vector3Int(x, y, 0), initial.IsFloor(new Vector2Int(x, y)) ? tileSet.Floor : tileSet.Wall);
+            core.transform.position = board.World(initial.Core);
+            foreach (Vector2Int cell in initial.Doors)
+            {
+                SpriteRenderer marker = UnityEngine.Object.Instantiate(door, board.World(cell), Quaternion.identity, doors);
+                marker.gameObject.SetActive(true);
+            }
+            BuildHud(session, camera);
+            StageHudView hud = FindInScene<StageHudView>(scene);
+            GameSpeedController speed = EnsureSpeedController(scene);
+            UiKit.Wire(session, "speedController", speed);
+            BuildSpeedButtons(hud, (RectTransform)hud.transform, speed, EnsureSettingsScreen(scene, speed));
+            GameObject events = new("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
+            events.GetComponent<InputSystemUIInputModule>().AssignDefaultActions();
+            if (!EditorSceneManager.SaveScene(scene, ScenePath))
+                throw new InvalidOperationException("새 스테이지 씬 저장 실패");
+            List<EditorBuildSettingsScene> scenes = new(EditorBuildSettings.scenes);
+            if (!scenes.Exists(entry => entry.path == ScenePath))
+                scenes.Add(new EditorBuildSettingsScene(ScenePath, true));
+            EditorBuildSettings.scenes = scenes.ToArray();
+        }
+        finally
+        {
+            SceneManager.SetActiveScene(previous);
+            EditorSceneManager.CloseScene(scene, true);
+        }
+        AssetDatabase.SaveAssets();
+    }
+
+    private static void BuildHud(StageSession session, Camera camera)
+    {
+        GameObject root = new("Stage HUD", typeof(RectTransform), typeof(Canvas), typeof(UnityEngine.UI.CanvasScaler),
+            typeof(UnityEngine.UI.GraphicRaycaster));
+        Canvas canvas = root.GetComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        UnityEngine.UI.CanvasScaler scaler = root.GetComponent<UnityEngine.UI.CanvasScaler>();
+        scaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920, 1080);
+        scaler.matchWidthOrHeight = 0.5f;
+        RectTransform host = (RectTransform)root.transform;
+        StageHudView view = root.AddComponent<StageHudView>();
+        UiKit.Wire(view, "session", session);
+        UiKit.Wire(view, "worldCamera", camera);
+        RectTransform side = UiKit.TopLeft(UiKit.Rect("Preparation", host), 20, 20, 410, 1040);
+        UiKit.Panel(side, HudPalette.Surface, HudPalette.Border, true);
+        Text(side, "Title", "방어 편성", 22, 18, 18, 240, 40, HudPalette.Accent);
+        UiKit.Wire(view, "previousStage", Button(side, "PreviousStage", "<", 270, 22, 54, 32));
+        UiKit.Wire(view, "nextStage", Button(side, "NextStage", ">", 332, 22, 54, 32));
+        UiKit.Wire(view, "loadout", Text(side, "Loadout", "편성을 선택하세요", 17, 18, 70, 374, 40, HudPalette.TextBody));
+        Text(side, "Hint", "편성 추가 → 종류 선택 → 바닥에 배치\n첫 웨이브 이후 편성은 고정됩니다", 15, 18, 112, 374, 54, HudPalette.TextDim);
+        UiKit.Wire(view, "barricade", Button(side, "Barricade", "바리케이드", 18, 176, 177, 44));
+        UiKit.Wire(view, "demolish", Button(side, "Demolish", "철거", 211, 176, 177, 44));
+        UiKit.WireArray(view, "rows", BuildOptionList(side, session.Catalog));
+        UiKit.Wire(view, "message", Text(side, "Message", "", 16, 18, 864, 374, 142, HudPalette.Warn));
+        UiKit.Wire(view, "headline", Text(host, "StageTitle", "스테이지", 24, 470, 28, HeadlineWidth, 42, HudPalette.Accent));
+        UiKit.Wire(view, "status", Text(host, "Status", "", 22, 470, 82, HeadlineWidth, 42, HudPalette.TextBody));
+        UiKit.Wire(view, "tool", Text(host, "Tool", "", 18, 470, 930, 1400, 38, HudPalette.TextBody));
+        UiKit.Wire(view, "primary", Button(host, "Primary", "웨이브 시작", 470, 996, 300, 54));
+        UiKit.Wire(view, "retry", Button(host, "Retry", "스테이지 재도전", 800, 996, 300, 54));
+        UiKit.Wire(view, "title", Button(host, "Title", "타이틀", 1130, 996, 180, 54));
+        SpriteRenderer cursor = SpriteBar("Placement Cursor", null, new Color(0.3f, 0.9f, 0.6f, 0.3f), 1, 1);
+        cursor.sortingOrder = 100;
+        UiKit.Wire(view, "cursor", cursor);
+    }
+
+    private const string OptionListName = "OptionList";
+
+    /// <summary>
+    /// 편성 선택지 줄을 스크롤 목록에 쌓는다. 자리는 예전 6줄 자리(위 240~840)이고 선택지가 늘면 스크롤된다 —
+    /// 고정 6줄일 때 선택지가 늘면 HUD가 넘친 줄을 묶지 않아 조용히 사라졌다.
+    /// </summary>
+    private static StageOptionRow[] BuildOptionList(RectTransform side, StageCatalogSO catalog)
+    {
+        RectTransform area = UiKit.TopLeft(UiKit.Rect(OptionListName, side), 18, 240, 386, 600);
+        UiKit.ScrollArea(area, out RectTransform content);
+        UnityEngine.UI.VerticalLayoutGroup layout = content.gameObject.AddComponent<UnityEngine.UI.VerticalLayoutGroup>();
+        layout.spacing = 10;
+        layout.childControlWidth = true;
+        layout.childForceExpandWidth = true;
+        layout.childControlHeight = true;
+        layout.childForceExpandHeight = false;
+
+        StageOptionRow[] rows = new StageOptionRow[catalog.Options.Length];
+        for (int i = 0; i < rows.Length; i++)
+        {
+            RectTransform row = UiKit.Rect("Option_" + i, content);
+            row.gameObject.AddComponent<UnityEngine.UI.LayoutElement>().preferredHeight = 90;
+            rows[i] = row.gameObject.AddComponent<StageOptionRow>();
+            UiKit.Wire(rows[i], "label", Text(row, "Name", catalog.Options[i].Label, 15, 0, 0, 310, 32, HudPalette.TextBody));
+            UiKit.Wire(rows[i], "remove", Button(row, "Remove", "해제", 316, 0, 58, 30));
+            UiKit.Wire(rows[i], "pick", Button(row, "Pick", "편성 추가", 0, 38, 178, 40));
+            UiKit.Wire(rows[i], "upgrade", Button(row, "Upgrade", "강화", 194, 38, 178, 40));
+        }
+        return rows;
+    }
+
+    private static TMP_Text Text(Transform parent, string name, string value, float size,
+        float x, float y, float width, float height, Color color)
+    {
+        TMP_Text text = UiKit.Text(name, parent, value, size, color, TextAlignmentOptions.TopLeft);
+        UiKit.TopLeft(text.rectTransform, x, y, width, height);
+        return text;
+    }
+
+    private static UiFrameButton Button(Transform parent, string name, string label,
+        float x, float y, float width, float height)
+    {
+        return UiKit.Button(UiKit.TopLeft(UiKit.Rect(name, parent), x, y, width, height), label, UiKit.ButtonKind.Secondary, 16);
+    }
+
+    private static SpriteRenderer SpriteBar(string name, Transform parent, Color color, float width, float height)
+    {
+        SpriteRenderer renderer = new GameObject(name).AddComponent<SpriteRenderer>();
+        renderer.transform.SetParent(parent, false);
+        renderer.sprite = UiKit.FillSprite;
+        renderer.color = color;
+        renderer.sortingOrder = 40;
+        Vector2 bounds = renderer.sprite.bounds.size;
+        renderer.transform.localScale = new Vector3(width / bounds.x, height / bounds.y, 1);
+        return renderer;
+    }
+
+    private static StageOption UnitOption(string path, string required) => new("unit:" + AssetDatabase.AssetPathToGUID(path), Load<UnitDataSO>(path), null, required);
+    private static StageOption TrapOption(string path, string required) => new("trap:" + AssetDatabase.AssetPathToGUID(path), null, Load<BuildingDataSO>(path), required);
+
+    private static T Load<T>(string path) where T : UnityEngine.Object
+    {
+        T asset = AssetDatabase.LoadAssetAtPath<T>(path);
+        return asset != null ? asset : throw new InvalidOperationException("필수 에셋이 없습니다: " + path);
+    }
+
+    private static void Set(UnityEngine.Object target, string property, object value)
+    {
+        target.GetType().GetProperty(property).SetValue(target, value);
+        EditorUtility.SetDirty(target);
+    }
+
+    private static void Guard()
+    {
+        if (EditorApplication.isPlaying || EditorApplication.isCompiling)
+            throw new InvalidOperationException("편집 모드에서 컴파일 완료 후 실행하세요");
+    }
+}
