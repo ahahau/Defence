@@ -31,6 +31,7 @@ namespace Code.UI
         private bool allowRunRestart = true;
 
         public bool IsOpen => root != null && root.activeSelf;
+        public event System.Action LeavingScene;
 
         public void Open()
         {
@@ -116,16 +117,24 @@ namespace Code.UI
 
         private void ConfirmRestart()
         {
+            bool stage = SceneManager.GetActiveScene().name == TitleMenuActions.StageSceneName;
             PopupController.Show(PopupRequest.Confirm(
-                "이번 런을 다시 시작할까요?",
-                "현재 저장과 진행 중인 운영 기록이 삭제됩니다.",
+                stage ? "스테이지 진행을 새로 시작할까요?" : "이번 런을 다시 시작할까요?",
+                stage ? "스테이지 준비 저장을 보관하고 처음부터 시작합니다. 영구 강화는 유지됩니다."
+                    : "현재 저장과 진행 중인 운영 기록이 삭제됩니다.",
                 RestartRun,
-                confirmLabel: "삭제 후 재시작",
+                confirmLabel: stage ? "처음부터 시작" : "삭제 후 재시작",
                 destructive: true));
         }
 
         private void RestartRun()
         {
+            if (SceneManager.GetActiveScene().name == TitleMenuActions.StageSceneName)
+            {
+                if (Code.Stages.StageCheckpointStore.EndRun(Application.persistentDataPath))
+                    LeaveTo(TitleMenuActions.StageSceneName);
+                return;
+            }
             RunSaveSystem.DeleteSave();
             LeaveTo(TitleMenuActions.GameSceneName);
         }
@@ -135,6 +144,7 @@ namespace Code.UI
         /// <summary>창을 닫고 배속을 되돌린 뒤 씬을 바꾼다. 멈춘 채로 나가면 다음 판이 멈춘 채로 시작한다.</summary>
         private void LeaveTo(string sceneName)
         {
+            LeavingScene?.Invoke();
             Close();
             speedController?.ResetToNormal();
             SceneManager.LoadScene(sceneName);

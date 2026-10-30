@@ -16,25 +16,28 @@ MonoBehaviour:
   <Title>k__BackingField: "\uAD6C\uBD88\uAE38"
   <Gimmick>k__BackingField: "\uD658\uACBD \uC7A5\uCE58: \uBD88 \uAD6C\uBA4D \xB7 \uC5EC\uB2EB\uB294 \uBB38"
   <Layout>k__BackingField:
-  - '#######################'
-  - '#.....................#'
-  - '#.....#.......#.......#'
-  - '#.....#.......#.......#'
-  - '#.....#...#...#...#...#'
-  - '#.........#.......#...#'
-  - '#.........#.......#...#'
-  - '#.....#...#...#...#...#'
-  - '#.....#.......#.......#'
-  - '#.....#.......#.......#'
-  - '#.....................#'
-  - '#######################'
+  - '#######################################'
+  - '#############...........###############'
+  - '#........####...........####..........#'
+  - '#.......................####..........#'
+  - '#.................###...####..........#'
+  - '#.................###...####..........#'
+  - '#.................###...####..........#'
+  - '#........####.....###.................#'
+  - '#........####.........................#'
+  - '#........####.........................#'
+  - '#........####.........................#'
+  - '#........####...........####..........#'
+  - '#######################################'
+  - '#######################################'
+  - '#######################################'
   <Doors>k__BackingField:
-  - {x: 1, y: 5}
+  - {x: 2, y: 6}
   <DoorOpensAtWave>k__BackingField: 
   <EmpoweredTrapMultiplier>k__BackingField: 1.5
   <Devices>k__BackingField:
   - <Kind>k__BackingField: 0
-    <Cell>k__BackingField: {x: 8, y: 5}
+    <Cell>k__BackingField: {x: 14, y: 5}
     <Period>k__BackingField: 6
     <ActiveSeconds>k__BackingField: 2
     <StartDelay>k__BackingField: 0
@@ -43,7 +46,7 @@ MonoBehaviour:
     <Radius>k__BackingField: 0
     <Cooldown>k__BackingField: 0
   - <Kind>k__BackingField: 0
-    <Cell>k__BackingField: {x: 16, y: 6}
+    <Cell>k__BackingField: {x: 26, y: 8}
     <Period>k__BackingField: 6
     <ActiveSeconds>k__BackingField: 2
     <StartDelay>k__BackingField: 3
@@ -52,7 +55,7 @@ MonoBehaviour:
     <Radius>k__BackingField: 0
     <Cooldown>k__BackingField: 0
   - <Kind>k__BackingField: 1
-    <Cell>k__BackingField: {x: 6, y: 5}
+    <Cell>k__BackingField: {x: 11, y: 5}
     <Period>k__BackingField: 16
     <ActiveSeconds>k__BackingField: 8
     <StartDelay>k__BackingField: 0
@@ -60,7 +63,7 @@ MonoBehaviour:
     <Damage>k__BackingField: 0
     <Radius>k__BackingField: 0
     <Cooldown>k__BackingField: 0
-  <Core>k__BackingField: {x: 21, y: 5}
+  <Core>k__BackingField: {x: 36, y: 6}
   <CoreHealth>k__BackingField: 10
   <StartingGold>k__BackingField: 250
   <CellSize>k__BackingField: 1.25

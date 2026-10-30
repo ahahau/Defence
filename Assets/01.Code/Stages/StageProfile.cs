@@ -22,6 +22,9 @@ namespace Code.Stages
             [SerializeField] internal int currency;
             [SerializeField] internal List<string> cleared = new();
             [SerializeField] internal List<Upgrade> upgrades = new();
+            // 유물(2026-10-29): 없던 기존 파일은 빈 목록으로 읽는다. 후보는 고르기 전에 나가도 다시 뽑지 않게 남긴다.
+            [SerializeField] internal List<string> artifacts = new();
+            [SerializeField] internal List<string> artifactChoices = new();
         }
 
         private readonly string _path;
@@ -29,6 +32,9 @@ namespace Code.Stages
         private bool _canWrite = true;
         public string Error { get; private set; }
         public int Currency => _document.currency;
+        public IReadOnlyList<string> Artifacts => _document.artifacts;
+        public IReadOnlyList<string> ArtifactChoices => _document.artifactChoices;
+        public bool HasArtifact(string id) => !string.IsNullOrEmpty(id) && _document.artifacts.Contains(id);
 
         public StageProfile(string folder)
         {
@@ -69,7 +75,10 @@ namespace Code.Stages
             return 0;
         }
 
-        public bool TryClear(StageDefinitionSO definition, out int awarded)
+        /// <summary>첫 클리어를 기록한다. 유물 후보도 같은 저장에 넣어 보상과 후보가 따로 남지 않게 한다.</summary>
+        /// <param name="keepPendingChoices">남은 후보 중 현재 카탈로그에 있는 것이 있으면 참. 거짓이면 남은 후보를 새 후보로 바꾼다.</param>
+        public bool TryClear(StageDefinitionSO definition, IReadOnlyList<string> artifactChoices, bool keepPendingChoices,
+            out int awarded)
         {
             awarded = 0;
             if (IsCleared(definition.Id))
@@ -78,6 +87,13 @@ namespace Code.Stages
             int reward = Mathf.Max(0, definition.ClearReward);
             next.cleared.Add(definition.Id);
             next.currency = checked(next.currency + reward);
+            // 고를 수 있는 후보가 남아 있으면 덮지 않는다(정상 흐름에서는 창이 고를 때까지 닫히지 않는다).
+            // 카탈로그에서 빠진 후보만 남았으면 고를 방법이 없으므로 새 후보로 바꾼다.
+            if (artifactChoices != null && !keepPendingChoices)
+            {
+                next.artifactChoices.Clear();
+                next.artifactChoices.AddRange(artifactChoices);
+            }
             if (!Commit(next))
                 return false;
             awarded = reward;
@@ -99,6 +115,18 @@ namespace Code.Stages
                 next.upgrades.Add(new Upgrade { id = option.Id, level = 1 });
             else
                 found.level++;
+            return Commit(next);
+        }
+
+        /// <summary>남은 후보 중 하나를 영구 보유로 옮기고 후보를 비운다.</summary>
+        public bool TryPickArtifact(string id)
+        {
+            if (string.IsNullOrEmpty(id) || !_document.artifactChoices.Contains(id))
+                return false;
+            Document next = Clone();
+            next.artifactChoices.Clear();
+            if (!next.artifacts.Contains(id))
+                next.artifacts.Add(id);
             return Commit(next);
         }
 
@@ -147,6 +175,16 @@ namespace Code.Stages
                 ids.Clear();
                 foreach (Upgrade upgrade in loaded.upgrades)
                     if (upgrade == null || string.IsNullOrWhiteSpace(upgrade.id) || upgrade.level < 0 || !ids.Add(upgrade.id))
+                        return false;
+                loaded.artifacts ??= new List<string>();
+                loaded.artifactChoices ??= new List<string>();
+                ids.Clear();
+                foreach (string id in loaded.artifacts)
+                    if (string.IsNullOrWhiteSpace(id) || !ids.Add(id))
+                        return false;
+                HashSet<string> choices = new(StringComparer.Ordinal);
+                foreach (string id in loaded.artifactChoices)
+                    if (string.IsNullOrWhiteSpace(id) || ids.Contains(id) || !choices.Add(id))
                         return false;
                 document = loaded;
                 return true;

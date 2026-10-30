@@ -20,17 +20,22 @@ namespace Code.Stages
         private float _spawnClock;
         private int _spawned;
         private bool _locked;
+        private StageCheckpoint _checkpoint;
+        private bool _leaving;
         public StageDefinitionSO Definition { get; private set; }
         public StageBoard Board { get; private set; }
         public StagePathfinder Paths { get; private set; }
         public StageSkillField SkillField { get; private set; }
         public StageDevices Devices { get; private set; }
         public StageProfile Profile { get; private set; }
+        public StageArtifacts Artifacts { get; private set; }
+        public StageWaveResults Results { get; private set; } = new();
         public StagePhase Phase { get; private set; } = StagePhase.Unavailable;
         public int Gold { get; private set; }
         public int WaveIndex { get; private set; }
         public int StageIndex { get; private set; }
         public string Message { get; private set; }
+        public string SaveError => _checkpoint?.Error;
         public int CoreHealth => mapView.CoreHealth.CurrentHealth;
         public StagePlacement Placement { get; private set; }
         public IReadOnlyList<Trap> Traps => Placement.Traps;
@@ -41,6 +46,10 @@ namespace Code.Stages
         public bool CanChangeStage => Phase == StagePhase.Cleared || Phase == StagePhase.Failed
             || CanChoose && !Placement.HasPlacements && Board.Barricades.Count == 0;
         public event Action Changed;
+        public event Action<int> CoreDamaged;
+        public event Action<Vector2Int> BarricadeDestroyed;
+
+        internal void ReportBarricadeDestroyed(Vector2Int cell) => BarricadeDestroyed?.Invoke(cell);
 
         public bool CanSelectStage(int index) => Catalog != null && index >= 0 && index < Catalog.Stages.Length
             && (index == 0 || Profile.IsCleared(Catalog.Stages[index - 1].Id));
@@ -48,6 +57,16 @@ namespace Code.Stages
         private void Start()
         {
             Profile = new StageProfile(Application.persistentDataPath);
+            Artifacts = new StageArtifacts(this);
+            _checkpoint = new StageCheckpoint(this, Application.persistentDataPath);
+            if (_checkpoint.Restore())
+                return;
+            if (!string.IsNullOrEmpty(_checkpoint.Error))
+            {
+                Phase = StagePhase.Unavailable;
+                Tell(_checkpoint.Error);
+                return;
+            }
             SelectStage(0);
         }
 
@@ -79,6 +98,72 @@ namespace Code.Stages
             return true;
         }
 
+        public bool HasArtifact(StageArtifact artifact) => artifact != null && artifact.Artifact != null
+            && Profile.HasArtifact(artifact.Id);
+
+        /// <summary>현재 카탈로그에 있는 후보가 하나라도 남았는가. 카탈로그에서 빠진 후보만 남으면 고를 것이 없다.</summary>
+        public bool HasArtifactChoice
+        {
+            get
+            {
+                if (Profile == null || Catalog == null)
+                    return false;
+                foreach (string id in Profile.ArtifactChoices)
+                    if (Catalog.FindArtifact(id) != null)
+                        return true;
+                return false;
+            }
+        }
+
+        /// <summary>편성과 같이 첫 웨이브 전까지만 바꾼다. 가진 유물만, 장착 칸 수까지.</summary>
+        public bool ToggleArtifact(StageArtifact artifact)
+        {
+            if (!CanChoose || !HasArtifact(artifact))
+                return false;
+            if (Artifacts.IsEquipped(artifact))
+            {
+                Artifacts.Unequip(artifact);
+                Notify();
+                return true;
+            }
+            if (Artifacts.Equipped.Count >= Catalog.ArtifactSlots)
+            {
+                Tell("유물 칸이 가득 찼습니다");
+                return false;
+            }
+            Artifacts.Equip(artifact);
+            Notify();
+            return true;
+        }
+
+        public bool TryPickArtifact(StageArtifact artifact)
+        {
+            if (artifact == null || !Profile.TryPickArtifact(artifact.Id))
+            {
+                Tell(!string.IsNullOrEmpty(Profile.Error) ? Profile.Error : "고를 수 없는 유물입니다");
+                return false;
+            }
+            Tell($"유물 획득: {artifact.Label}");
+            return true;
+        }
+
+        /// <summary>아직 없는 유물 중 무작위 후보. 남은 것이 적으면 있는 만큼만 준다.</summary>
+        private List<string> DrawArtifactChoices()
+        {
+            List<string> pool = new();
+            foreach (StageArtifact artifact in Catalog.Artifacts)
+                if (artifact != null && artifact.Artifact != null && !Profile.HasArtifact(artifact.Id) && !pool.Contains(artifact.Id))
+                    pool.Add(artifact.Id);
+            int count = Mathf.Min(Catalog.ArtifactChoices, pool.Count);
+            for (int i = 0; i < count; i++)
+            {
+                int pick = UnityEngine.Random.Range(i, pool.Count);
+                (pool[i], pool[pick]) = (pool[pick], pool[i]);
+            }
+            pool.RemoveRange(count, pool.Count - count);
+            return pool;
+        }
+
         public bool SelectStage(int index)
         {
             if (Phase == StagePhase.Fighting)
@@ -102,6 +187,7 @@ namespace Code.Stages
                 Destroy(child.gameObject);
             }
             _loadout.Clear();
+            Artifacts.Clear();
             Definition = definition;
             StageIndex = index;
             Board = new StageBoard(definition);
@@ -125,12 +211,14 @@ namespace Code.Stages
             }
             Devices.Reset();
             Gold = definition.StartingGold;
+            Results.Reset();
             WaveIndex = 0;
             _spawned = 0;
             _locked = false;
             Phase = StagePhase.Preparing;
             mapView.Draw(Board);
             mapView.ShowDoors(definition, WaveIndex);
+            _checkpoint?.NewStage();
             Tell("편성을 고르고 바리케이드·부하·함정을 배치하세요");
             return true;
         }
@@ -144,6 +232,8 @@ namespace Code.Stages
                 Tell("가져갈 부하/함정을 먼저 선택하세요");
                 return;
             }
+            _checkpoint?.Save();
+            Results.Begin();
             _locked = true;
             _spawned = 0;
             _spawnClock = 0;
@@ -207,15 +297,23 @@ namespace Code.Stages
             if (Board == null || !Board.Actors.Remove(actor))
                 return;
             actor.Stop();
+            int coreDamage = 0;
             if (Phase == StagePhase.Fighting)
             {
                 if (arrived)
+                {
+                    int before = CoreHealth;
                     mapView.CoreHealth.TakeDamage(actor.Enemy.Data.CoreArrivalDamage);
+                    coreDamage = before - CoreHealth;
+                }
                 else
                     Gold += Definition.KillReward;
+                Results.RecordEnemy(arrived, coreDamage, arrived ? 0 : Definition.KillReward);
                 if (CoreHealth <= 0)
                 {
+                    Results.Complete(WaveIndex + 1, false);
                     Phase = StagePhase.Failed;
+                    _checkpoint?.End();
                     StopActors();
                     Tell("코어가 파괴됐습니다. 스테이지 처음부터 다시 편성할 수 있습니다");
                 }
@@ -223,10 +321,13 @@ namespace Code.Stages
             actor.gameObject.SetActive(false);
             Destroy(actor.gameObject);
             Notify();
+            if (coreDamage > 0)
+                CoreDamaged?.Invoke(coreDamage);
         }
 
         private void EndWave()
         {
+            Results.Complete(WaveIndex + 1, true);
             WaveIndex++;
             Devices.Reset();
             foreach (StageActor actor in Board.Actors)
@@ -251,8 +352,14 @@ namespace Code.Stages
         {
             if (Phase != StagePhase.Cleared)
                 return;
-            if (Profile.TryClear(Definition, out int awarded))
-                Tell(awarded > 0 ? $"스테이지 클리어 · 강화 재화 +{awarded}" : "스테이지 클리어 · 초회 보상은 이미 받았습니다");
+            bool previouslyClaimed = Profile.IsCleared(Definition.Id);
+            // 유물은 초회 클리어에만 3택1 후보를 준다(2026-10-29 사용자 결정).
+            if (Profile.TryClear(Definition, previouslyClaimed ? null : DrawArtifactChoices(), HasArtifactChoice, out int awarded))
+            {
+                Results.ConfirmReward(awarded, previouslyClaimed);
+                _checkpoint?.End();
+                Tell(StageIndex + 1 < Catalog.Stages.Length ? "다음 스테이지를 준비하세요" : "모든 스테이지를 방어했습니다");
+            }
             else
                 Tell(Profile.Error);
         }
@@ -315,7 +422,7 @@ namespace Code.Stages
             for (int i = 1; i < samples; i++)
             {
                 Vector2Int cell = Board.Cell(Vector3.Lerp(from, to, (float)i / samples));
-                if (!Definition.IsFloor(cell))
+                if (!Board.IsPassable(cell))
                     return false;
                 if (Board.Barricades.TryGetValue(cell, out StageBarricade wall) && wall != null && wall.IsAlive)
                     return false;
@@ -338,7 +445,10 @@ namespace Code.Stages
         {
             if (Phase != StagePhase.Preparing && Phase != StagePhase.Fighting)
                 return;
-            Gold += Mathf.Max(0, amount);
+            int refund = Mathf.Max(0, amount);
+            Gold += refund;
+            if (Phase == StagePhase.Fighting)
+                Results.AddGold(refund);
             Notify();
         }
 
@@ -350,7 +460,46 @@ namespace Code.Stages
 
         internal void Pay(int amount) => Gold -= amount;
         internal void RefreshUI() => Notify();
-        private void Notify() => Changed?.Invoke();
+        private void Notify()
+        {
+            _checkpoint?.MarkDirty();
+            Changed?.Invoke();
+        }
+
+        internal void RestorePreparation(int nextWave, bool locked, int coreHealth, int gold, IEnumerable<string> loadout,
+            IEnumerable<string> artifacts)
+        {
+            WaveIndex = nextWave;
+            _locked = locked;
+            Gold = gold;
+            _loadout.Clear();
+            foreach (string id in loadout)
+                _loadout.Add(id);
+            Artifacts.Clear();
+            foreach (string id in artifacts)
+                Artifacts.Equip(Catalog.FindArtifact(id));
+            mapView.CoreHealth.SetCurrentRatio((float)coreHealth / mapView.CoreHealth.MaxHealth);
+            mapView.ShowDoors(Definition, WaveIndex);
+        }
+
+        private void LateUpdate() => _checkpoint?.Tick();
+
+        private void OnApplicationPause(bool paused)
+        {
+            if (paused)
+                _checkpoint?.Save();
+        }
+
+        /// <summary>씬 객체가 파괴되기 전에 준비 상태를 저장한다.</summary>
+        public void PrepareToLeave()
+        {
+            if (_leaving)
+                return;
+            _checkpoint?.Save();
+            _leaving = true;
+        }
+
+        private void OnApplicationQuit() => PrepareToLeave();
 
         private void StopActors()
         {
@@ -363,8 +512,12 @@ namespace Code.Stages
 
         private void OnDisable()
         {
+            if (!_leaving)
+                _checkpoint?.Save();
             StopActors();
             speedController?.SetPauseLock(this, false, null);
         }
+
+        private void OnDestroy() => Artifacts?.Dispose();
     }
 }

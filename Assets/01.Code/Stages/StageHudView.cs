@@ -1,8 +1,10 @@
 using Code.Manager;
 using Code.UI;
+using Code.UI.Stages;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Events;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
@@ -33,28 +35,37 @@ namespace Code.Stages
         [SerializeField] private UiFrameButton normalSpeedButton;
         [SerializeField] private UiFrameButton fastSpeedButton;
         [SerializeField] private UiFrameButton settingsButton;
-        private StageOption _selected;
-        private bool _demolishing;
+        [SerializeField] private TMP_Text artifactSummary;
+        [SerializeField] private UiFrameButton artifactButton;
+        [SerializeField] private StageArtifactWindow artifactWindow;
+        // 인스펙터 배선용이 아니다. 실행 중 만든 월드 표식 묶음을 직렬화해 두어
+        // 재활성화·스크립트 재로드 뒤에도 이전 묶음을 찾아 정리한다(StageHudLifecycleDesign.md).
+        [SerializeField, HideInInspector] private Transform visualRoot;
+        private StagePlacementTool _placementTool;
+        private StageBattleSignals _battleSignals;
+        private StageBriefingPresenter _briefing;
+        private StageArtifactPresenter _artifacts;
         private bool _bound;
         private float _nextRefresh;
+        private float _messageFontSize;
         private Vector3 _cursorScale;
         private StageRoutePreview _route;
         private StageUltimateBars _ultimates;
         private StageEnemyMarks _marks;
         private StageDeviceView _devices;
 
-        private void Awake()
-        {
-            _cursorScale = cursor.transform.localScale;
-            _route = new StageRoutePreview(cursor, _cursorScale);
-            _ultimates = new StageUltimateBars(cursor, _cursorScale);
-            _marks = new StageEnemyMarks(cursor, _cursorScale);
-            _devices = new StageDeviceView(cursor, _cursorScale);
-        }
+        private void Awake() => EnsureRuntimeState();
 
         private void OnEnable()
         {
+            UnbindEvents();
+            if (!EnsureRuntimeState())
+                return;
+            _bound = false;
             session.Changed += Refresh;
+            session.CoreDamaged += HandleCoreDamaged;
+            session.BarricadeDestroyed += HandleBarricadeDestroyed;
+            _placementTool.Changed += Refresh;
             previousStage.Button.onClick.AddListener(PreviousStage);
             nextStage.Button.onClick.AddListener(NextStage);
             primary.Button.onClick.AddListener(Primary);
@@ -66,50 +77,164 @@ namespace Code.Stages
             normalSpeedButton.Button.onClick.AddListener(NormalSpeed);
             fastSpeedButton.Button.onClick.AddListener(FastSpeed);
             settingsButton.Button.onClick.AddListener(OpenSettings);
+            if (artifactButton != null)
+                artifactButton.Button.onClick.AddListener(OpenArtifacts);
+            if (settings != null)
+                settings.LeavingScene += session.PrepareToLeave;
             if (speedController != null)
                 speedController.SettingChanged += HandleSpeedChanged;
             RenderSpeed();
+            BindRows();
+            if (session.Board != null && session.Profile != null)
+                Refresh();
         }
 
         private void OnDisable()
         {
-            session.Changed -= Refresh;
-            previousStage.Button.onClick.RemoveListener(PreviousStage);
-            nextStage.Button.onClick.RemoveListener(NextStage);
-            primary.Button.onClick.RemoveListener(Primary);
-            retry.Button.onClick.RemoveListener(Retry);
-            barricade.Button.onClick.RemoveListener(ChooseBarricade);
-            demolish.Button.onClick.RemoveListener(ChooseDemolish);
-            title.Button.onClick.RemoveListener(Title);
-            pauseButton.Button.onClick.RemoveListener(TogglePause);
-            normalSpeedButton.Button.onClick.RemoveListener(NormalSpeed);
-            fastSpeedButton.Button.onClick.RemoveListener(FastSpeed);
-            settingsButton.Button.onClick.RemoveListener(OpenSettings);
-            if (speedController != null)
+            UnbindEvents();
+            _battleSignals?.Hide();
+            _placementTool?.Hide();
+            if (cursor != null)
+                cursor.gameObject.SetActive(false);
+            if (visualRoot != null)
+                visualRoot.gameObject.SetActive(false);
+            if (rows != null)
+                foreach (StageOptionRow row in rows)
+                    if (row != null)
+                        row.Unbind();
+            _bound = false;
+        }
+
+        private void UnbindEvents()
+        {
+            if (session is not null)
+            {
+                session.Changed -= Refresh;
+                session.CoreDamaged -= HandleCoreDamaged;
+                session.BarricadeDestroyed -= HandleBarricadeDestroyed;
+            }
+            if (_placementTool != null)
+                _placementTool.Changed -= Refresh;
+            RemoveListener(previousStage, PreviousStage);
+            RemoveListener(nextStage, NextStage);
+            RemoveListener(primary, Primary);
+            RemoveListener(retry, Retry);
+            RemoveListener(barricade, ChooseBarricade);
+            RemoveListener(demolish, ChooseDemolish);
+            RemoveListener(title, Title);
+            RemoveListener(pauseButton, TogglePause);
+            RemoveListener(normalSpeedButton, NormalSpeed);
+            RemoveListener(fastSpeedButton, FastSpeed);
+            RemoveListener(settingsButton, OpenSettings);
+            RemoveListener(artifactButton, OpenArtifacts);
+            if (settings is not null && session is not null)
+                settings.LeavingScene -= session.PrepareToLeave;
+            if (speedController is not null)
                 speedController.SettingChanged -= HandleSpeedChanged;
         }
 
+        private static void RemoveListener(UiFrameButton button, UnityAction action)
+        {
+            if (button != null && button.Button != null)
+                button.Button.onClick.RemoveListener(action);
+        }
+
+        private bool EnsureRuntimeState()
+        {
+            if (session == null || worldCamera == null || cursor == null || message == null)
+            {
+                Debug.LogError("스테이지 HUD의 세션·카메라·커서·안내 참조를 확인하세요", this);
+                return false;
+            }
+            if (_messageFontSize <= 0)
+                _messageFontSize = message.enableAutoSizing ? message.fontSizeMax : message.fontSize;
+            message.fontSizeMax = _messageFontSize;
+            message.fontSizeMin = Mathf.Min(14, _messageFontSize);
+            float toolFontSize = tool.enableAutoSizing ? tool.fontSizeMax : tool.fontSize;
+            tool.fontSizeMax = toolFontSize;
+            tool.fontSizeMin = Mathf.Min(14, toolFontSize);
+            tool.enableAutoSizing = true;
+            tool.textWrappingMode = TextWrappingModes.Normal;
+            float statusFontSize = status.enableAutoSizing ? status.fontSizeMax : status.fontSize;
+            status.fontSizeMax = statusFontSize;
+            status.fontSizeMin = Mathf.Min(16, statusFontSize);
+            status.enableAutoSizing = true;
+            status.textWrappingMode = TextWrappingModes.Normal;
+            _briefing ??= new StageBriefingPresenter();
+            _artifacts ??= new StageArtifactPresenter();
+            if (_cursorScale == Vector3.zero)
+                _cursorScale = cursor.transform.localScale;
+            if (_placementTool == null)
+            {
+                _placementTool = new StagePlacementTool(session, worldCamera, cursor, _cursorScale);
+                _placementTool.Hide();
+            }
+            if (visualRoot == null || _battleSignals == null || !_battleSignals.IsValid
+                || _route == null || !_route.IsValid || _ultimates == null || !_ultimates.IsValid
+                || _marks == null || !_marks.IsValid || _devices == null || !_devices.IsValid)
+            {
+                ReleaseVisuals();
+                visualRoot = new GameObject("Stage HUD Visuals").transform;
+                // 월드 표식이 캔버스 배율을 상속하지 않도록 월드 변환을 유지한다.
+                visualRoot.SetParent(session.transform, true);
+                _battleSignals = new StageBattleSignals(session, cursor, _cursorScale, visualRoot);
+                _route = new StageRoutePreview(cursor, _cursorScale, visualRoot);
+                _ultimates = new StageUltimateBars(cursor, _cursorScale, visualRoot);
+                _marks = new StageEnemyMarks(cursor, _cursorScale, visualRoot);
+                _devices = new StageDeviceView(cursor, _cursorScale, visualRoot);
+            }
+            visualRoot.gameObject.SetActive(true);
+            return true;
+        }
+
+        private void ReleaseVisuals()
+        {
+            if (visualRoot != null)
+            {
+                visualRoot.gameObject.SetActive(false);
+                Destroy(visualRoot.gameObject);
+            }
+            visualRoot = null;
+            _battleSignals = null;
+            _route = null;
+            _ultimates = null;
+            _marks = null;
+            _devices = null;
+        }
+
+        private void BindRows()
+        {
+            if (_bound || session.Profile == null || session.Catalog == null || rows == null)
+                return;
+            for (int i = 0; i < rows.Length; i++)
+            {
+                if (rows[i] == null)
+                    continue;
+                bool valid = i < session.Catalog.Options.Length;
+                rows[i].gameObject.SetActive(valid);
+                if (valid)
+                    rows[i].Bind(this, session, session.Catalog.Options[i]);
+            }
+            _bound = true;
+        }
+
+        private void HandleCoreDamaged(int amount) => _battleSignals?.CoreDamaged(amount);
+        private void HandleBarricadeDestroyed(Vector2Int cell) => _battleSignals?.BarricadeDestroyed(cell);
+
         private void Update()
         {
-            if (session.Profile == null || session.Board == null)
+            if (session == null || session.Profile == null || session.Board == null
+                || _battleSignals == null || _placementTool == null)
                 return;
-            if (!_bound)
-            {
-                for (int i = 0; i < rows.Length; i++)
-                {
-                    bool valid = i < session.Catalog.Options.Length;
-                    rows[i].gameObject.SetActive(valid);
-                    if (valid)
-                        rows[i].Bind(this, session, session.Catalog.Options[i]);
-                }
-                _bound = true;
-            }
+            _battleSignals.Tick();
+            BindRows();
             if (Time.unscaledTime >= _nextRefresh)
             {
                 _nextRefresh = Time.unscaledTime + 0.2f;
                 Refresh();
             }
-            bool pointerFree = Mouse.current != null
+            bool pointerFree = Mouse.current != null && (settings == null || !settings.IsOpen) && !Code.UI.Popup.PopupController.IsOpen
+                && (artifactWindow == null || !artifactWindow.IsOpen)
                 && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject());
             if (session.Devices != null)
                 _devices.Show(session);
@@ -129,22 +254,7 @@ namespace Code.Stages
                 _ultimates.Hide();
                 _marks.Hide();
             }
-            bool edit = session.Phase == StagePhase.Preparing && pointerFree;
-            cursor.gameObject.SetActive(edit);
-            if (!edit)
-                return;
-            Vector3 world = worldCamera.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-            Vector2Int cell = session.Board.Cell(world);
-            cursor.transform.position = session.Board.World(cell);
-            cursor.transform.localScale = _cursorScale * session.Definition.CellSize;
-            bool validCell = session.Definition.IsBuildable(cell) && !session.Board.Reserved(cell);
-            cursor.color = validCell ? new Color(0.3f, 0.9f, 0.65f, 0.3f) : new Color(1f, 0.25f, 0.2f, 0.3f);
-            if (!Mouse.current.leftButton.wasPressedThisFrame || !validCell)
-                return;
-            if (_demolishing)
-                session.Demolish(cell);
-            else if (!session.TryPlace(cell, _selected, _selected == null))
-                session.Tell("이 위치에 배치할 수 없습니다. 편성·금화·설치 영역을 확인하세요");
+            _placementTool.Tick(pointerFree);
         }
 
         /// <summary>누른 자리에서 가장 가까운(한 칸 안) 게이지가 찬 부하의 궁극기를 쓴다.</summary>
@@ -170,62 +280,100 @@ namespace Code.Stages
 
         public void Select(StageOption option)
         {
-            _selected = option;
-            _demolishing = false;
-            Refresh();
+            if (isActiveAndEnabled)
+                _placementTool?.Select(option);
         }
+
+        public bool IsPlacementSelected(StageOption option) => isActiveAndEnabled && _placementTool != null
+            && _placementTool.IsSelected(option);
 
         public void Forget(StageOption option)
         {
-            if (_selected == option)
+            if (_placementTool != null && _placementTool.Selected == option)
                 ChooseBarricade();
         }
 
         private void Refresh()
         {
-            if (session.Definition == null || session.Profile == null)
+            if (!isActiveAndEnabled || session == null || _battleSignals == null)
+                return;
+            if (session.Board != null)
+                _battleSignals.Tick();
+            bool showResult = string.IsNullOrEmpty(session.SaveError) && StageWaveResultPresenter.HasResult(session);
+            message.enableAutoSizing = showResult;
+            if (!showResult)
+                message.fontSize = _messageFontSize;
+            message.text = !string.IsNullOrEmpty(session.SaveError) ? session.SaveError
+                : showResult ? StageWaveResultPresenter.MessageFor(session)
+                : !string.IsNullOrEmpty(_battleSignals.Alert) ? _battleSignals.Alert : session.Message;
+            if (session.Phase == StagePhase.Unavailable)
+            {
+                primary.SetInteractable(false);
+                retry.SetInteractable(false);
+                previousStage.SetInteractable(false);
+                nextStage.SetInteractable(false);
+                barricade.SetInteractable(false);
+                demolish.SetInteractable(false);
+                _route.Hide();
+                return;
+            }
+            if (session.Definition == null || session.Profile == null || session.Board == null)
                 return;
             StageDefinitionSO definition = session.Definition;
             headline.text = definition.Title + " · " + definition.Gimmick;
             int waveNumber = Mathf.Min(session.WaveIndex + 1, definition.Waves.Length);
             StageWave wave = definition.Waves[waveNumber - 1];
-            string boss = wave.HasBoss ? $" · 보스 {wave.Boss.Name}" : string.Empty;
-            status.text = $"코어 {session.CoreHealth}/{definition.CoreHealth}    금화 {session.Gold}G    "
-                + $"웨이브 {waveNumber}/{definition.Waves.Length}{boss}    남은 적 {session.Remaining}";
-            message.text = session.Message;
-            loadout.text = $"편성 {session.SelectedCount}/{session.LoadoutSlots} · 강화 재화 {session.Profile.Currency}";
+            _briefing.Refresh(definition, waveNumber - 1);
             bool preparing = session.Phase == StagePhase.Preparing;
+            bool fighting = session.Phase == StagePhase.Fighting;
+            string boss = wave.HasBoss ? $" · 보스 {wave.Boss.Name}" : string.Empty;
+            status.text = $"{_battleSignals.CoreLabel()}    금화 {session.Gold}G    "
+                + $"웨이브 {waveNumber}/{definition.Waves.Length}{boss}    남은 적 {session.Remaining}"
+                + (_battleSignals.WaitingCount > 0 ? $"    복구 대기 {_battleSignals.WaitingCount}" : string.Empty)
+                + (preparing || fighting ? $"    {_briefing.Doors}" + (preparing ? _briefing.NextDoors : string.Empty) : string.Empty);
+            loadout.text = $"편성 {session.SelectedCount}/{session.LoadoutSlots} · 강화 재화 {session.Profile.Currency}";
+            if (artifactSummary != null && session.Artifacts != null)
+                artifactSummary.text = _artifacts.Summary(session);
             if (preparing)
                 _route.Show(session);
             else
                 _route.Hide();
-            tool.text = (_demolishing ? "철거 · 준비 중 클릭하면 즉시 철거/일부 환급"
-                : _selected == null ? $"바리케이드 · {definition.BarricadeCost}G · 바닥을 클릭해 설치"
-                : $"{_selected.Label} · {_selected.Cost}G · 바닥을 클릭해 배치")
-                + (wave.HasRules && (preparing || session.Phase == StagePhase.Fighting)
-                    ? "    표식 적: 주황 도약(바리케이드를 넘음) · 빨강 돌진(부하와 싸우지 않음)" : string.Empty)
-                + (session.Phase == StagePhase.Fighting ? "    금색 게이지 부하를 누르면 궁극기"
+            StageOption selected = _placementTool.Selected;
+            bool placementBlocked = preparing && !string.IsNullOrEmpty(_placementTool.Hint);
+            tool.text = (session.Phase == StagePhase.Cleared || session.Phase == StagePhase.Failed
+                ? StageWaveResultPresenter.NextActionFor(session)
+                : !preparing ? "전투 중 · 배치·철거는 준비 단계"
+                : _placementTool.Demolishing ? "철거 · 대상 클릭 · 우클릭 취소"
+                : !_placementTool.Placing ? "도구 없음 · 왼쪽에서 배치할 종류를 선택하세요"
+                : selected == null ? $"현재 도구: 바리케이드 · {definition.BarricadeCost}G · 우클릭 취소"
+                : $"현재 도구: {selected.Label} · {selected.Cost}G · 우클릭 취소")
+                + (placementBlocked ? $"    불가: {_placementTool.Hint}" : string.Empty)
+                + (_battleSignals.WaitingCount > 0 ? "    회색 '=' 표식: 웨이브 종료 후 복구" : string.Empty)
+                + (!placementBlocked && !string.IsNullOrEmpty(_briefing.Rules) && (preparing || fighting)
+                    ? $"    {_briefing.Rules}" : string.Empty)
+                + (fighting ? "    금색 부하 게이지 클릭: 궁극기"
                     : !preparing ? string.Empty
-                    : _route.Blocked ? "    노랑 적의 길 · 진한 붉음 적이 부술 차단물 · 붉음 부하 추적 범위"
-                    : "    노랑 적의 길 · 붉음 부하 추적 범위")
-                + (preparing && definition.OpensDoorAt(session.WaveIndex) ? "    이번 웨이브에 새 던전문이 열립니다" : string.Empty)
-                + (definition.Devices != null && definition.Devices.Length > 0 && (preparing || session.Phase == StagePhase.Fighting)
-                    ? "    장치: 주황 불 구멍(모두 피해) · 회색 여닫는 문 · 파랑 낙석(준비되면 금색, 눌러 사용)" : string.Empty);
+                    : _route.Blocked ? "    경로: 노랑 · 파괴 대상: 진한 빨강 · 추적 범위: 빨강"
+                    : "    경로: 노랑 · 추적 범위: 빨강")
+                + (!placementBlocked && !string.IsNullOrEmpty(_briefing.Devices) && (preparing || fighting)
+                    ? $"    {_briefing.Devices}" : string.Empty);
             previousStage.SetInteractable(session.CanChangeStage && session.CanSelectStage(session.StageIndex - 1));
             nextStage.SetInteractable(session.CanChangeStage && session.CanSelectStage(session.StageIndex + 1));
             primary.SetInteractable(preparing || session.Phase == StagePhase.Cleared);
             primary.SetLabel(session.Phase == StagePhase.Cleared
                 ? !session.Profile.IsCleared(definition.Id) ? "보상 저장 재시도"
+                    : session.HasArtifactChoice ? "유물 보상 고르기"
                     : session.StageIndex + 1 < session.Catalog.Stages.Length ? "다음 스테이지" : "처음부터 다시 편성"
                 : preparing ? "웨이브 시작" : session.Phase == StagePhase.Failed ? "코어 파괴" : "방어 중");
             retry.SetInteractable(session.Phase != StagePhase.Fighting);
             retry.SetLabel("스테이지 재도전");
             barricade.SetInteractable(preparing);
             demolish.SetInteractable(preparing);
-            barricade.SetSelected(!_demolishing && _selected == null);
-            demolish.SetSelected(_demolishing);
+            barricade.SetSelected(_placementTool.IsSelected(null));
+            demolish.SetSelected(preparing && _placementTool.Demolishing);
             foreach (StageOptionRow row in rows)
-                row.Refresh();
+                if (row != null)
+                    row.Refresh();
         }
 
         private void Primary()
@@ -234,6 +382,8 @@ namespace Code.Stages
             {
                 if (!session.Profile.IsCleared(session.Definition.Id))
                     session.RetryClearReward();
+                else if (session.HasArtifactChoice)
+                    OpenArtifacts();
                 else
                 {
                     int next = session.StageIndex + 1;
@@ -253,11 +403,7 @@ namespace Code.Stages
 
         private void ChooseBarricade() => Select(null);
 
-        private void ChooseDemolish()
-        {
-            _demolishing = true;
-            Refresh();
-        }
+        private void ChooseDemolish() => _placementTool.SelectDemolition();
 
         private void PreviousStage()
         {
@@ -273,6 +419,7 @@ namespace Code.Stages
 
         private void Title()
         {
+            session.PrepareToLeave();
             if (speedController != null)
                 speedController.ResetToNormal();
             Time.timeScale = 1f;
@@ -283,7 +430,17 @@ namespace Code.Stages
         private void NormalSpeed() => speedController?.SetSetting(GameSpeedController.NormalSpeed);
         private void FastSpeed() => speedController?.SetSetting(GameSpeedController.FastSpeed);
         private void OpenSettings() => settings?.Open();
+        private void OpenArtifacts() => artifactWindow?.Open();
         private void HandleSpeedChanged(float _) => RenderSpeed();
+
+        private void OnDestroy()
+        {
+            UnbindEvents();
+            if (cursor != null)
+                cursor.gameObject.SetActive(false);
+            ReleaseVisuals();
+            _placementTool = null;
+        }
 
         /// <summary>고른 배속 버튼만 금색 테두리. 스페이스·1·2 단축키로 바꿔도 같은 이벤트로 맞춘다.</summary>
         private void RenderSpeed()

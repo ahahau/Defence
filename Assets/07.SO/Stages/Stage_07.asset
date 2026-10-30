@@ -16,27 +16,30 @@ MonoBehaviour:
   <Title>k__BackingField: "\uB9C8\uC9C0\uB9C9 \uAE08\uACE0"
   <Gimmick>k__BackingField: "\uC0C8 \uBB38 \xB7 \uCE78 \xB7 \uD45C\uC2DD \uC801 \xB7 \uD658\uACBD \uC7A5\uCE58 \uC804\uBD80"
   <Layout>k__BackingField:
-  - '#######################'
-  - '#..xx.....++.....xx...#'
-  - '#.....#.......#.......#'
-  - '#.....#.......#.......#'
-  - '#.....#...#...#...#...#'
-  - '#....+....#..+....#...#'
-  - '#.........#.......#...#'
-  - '#.....#...#...#...#...#'
-  - '#.....#.......#.......#'
-  - '#.....#.......#.......#'
-  - '#..xx.....++.....xx...#'
-  - '#######################'
+  - '#######################################'
+  - '#############...........###############'
+  - '#........####...........####..........#'
+  - '#...xx..........###.....####..++......#'
+  - '#...xx..........###.....####..........#'
+  - '#...............###.....####..........#'
+  - '#...............###.....####..........#'
+  - '#........####...###.##................#'
+  - '#...xx........++....##................#'
+  - '#...xx........++....##................#'
+  - '#...................##................#'
+  - '#........####...........####..........#'
+  - '#######################################'
+  - '#######################################'
+  - '#######################################'
   <Doors>k__BackingField:
-  - {x: 1, y: 2}
-  - {x: 1, y: 5}
-  - {x: 1, y: 9}
+  - {x: 2, y: 3}
+  - {x: 2, y: 6}
+  - {x: 2, y: 10}
   <DoorOpensAtWave>k__BackingField: 010000000100000003000000i
   <EmpoweredTrapMultiplier>k__BackingField: 1.5
   <Devices>k__BackingField:
   - <Kind>k__BackingField: 0
-    <Cell>k__BackingField: {x: 8, y: 6}
+    <Cell>k__BackingField: {x: 15, y: 5}
     <Period>k__BackingField: 6
     <ActiveSeconds>k__BackingField: 2
     <StartDelay>k__BackingField: 0
@@ -45,7 +48,7 @@ MonoBehaviour:
     <Radius>k__BackingField: 0
     <Cooldown>k__BackingField: 0
   - <Kind>k__BackingField: 0
-    <Cell>k__BackingField: {x: 16, y: 5}
+    <Cell>k__BackingField: {x: 29, y: 8}
     <Period>k__BackingField: 6
     <ActiveSeconds>k__BackingField: 2
     <StartDelay>k__BackingField: 3
@@ -54,7 +57,7 @@ MonoBehaviour:
     <Radius>k__BackingField: 0
     <Cooldown>k__BackingField: 0
   - <Kind>k__BackingField: 1
-    <Cell>k__BackingField: {x: 6, y: 6}
+    <Cell>k__BackingField: {x: 11, y: 5}
     <Period>k__BackingField: 16
     <ActiveSeconds>k__BackingField: 8
     <StartDelay>k__BackingField: 0
@@ -63,7 +66,7 @@ MonoBehaviour:
     <Radius>k__BackingField: 0
     <Cooldown>k__BackingField: 0
   - <Kind>k__BackingField: 1
-    <Cell>k__BackingField: {x: 14, y: 1}
+    <Cell>k__BackingField: {x: 26, y: 8}
     <Period>k__BackingField: 16
     <ActiveSeconds>k__BackingField: 8
     <StartDelay>k__BackingField: 4
@@ -72,7 +75,7 @@ MonoBehaviour:
     <Radius>k__BackingField: 0
     <Cooldown>k__BackingField: 0
   - <Kind>k__BackingField: 2
-    <Cell>k__BackingField: {x: 19, y: 2}
+    <Cell>k__BackingField: {x: 33, y: 5}
     <Period>k__BackingField: 1
     <ActiveSeconds>k__BackingField: 0
     <StartDelay>k__BackingField: 0
@@ -80,7 +83,7 @@ MonoBehaviour:
     <Damage>k__BackingField: 6
     <Radius>k__BackingField: 1.5
     <Cooldown>k__BackingField: 20
-  <Core>k__BackingField: {x: 21, y: 5}
+  <Core>k__BackingField: {x: 36, y: 6}
   <CoreHealth>k__BackingField: 10
   <StartingGold>k__BackingField: 250
   <CellSize>k__BackingField: 1.25

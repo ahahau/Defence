@@ -23,7 +23,14 @@ namespace Code.Skills
             var dir = ((Vector2)target.transform.position - (Vector2)caster.transform.position).normalized;
             if (dir.sqrMagnitude < 0.0001f) dir = Vector2.right;
 
-            caster.TeleportToCombatPosition((Vector2)target.transform.position + dir * behindDistance);
+            Vector2 destination = (Vector2)target.transform.position + dir * behindDistance;
+            if (context.Field is ISkillMovement movement)
+            {
+                if (!movement.TryTeleport(caster, target, destination))
+                    return;
+            }
+            else
+                caster.TeleportToCombatPosition(destination);
             caster.FaceTarget(target);
             caster.FireProjectile(target);
 

@@ -118,6 +118,14 @@ namespace Code.Skills
         public bool HasSkill => skill != null;
         public bool HasUltimate => ultimate != null;
 
+        internal float CaptureStageCooldown() => Mathf.Max(0f, _cooldownTimer);
+
+        internal void RestoreStageCooldown(float remaining)
+        {
+            _cooldownTimer = Mathf.Max(0f, remaining);
+            _lastBattlefield = agent != null ? agent.Battlefield : null;
+        }
+
         /// <summary>스테이지용: 일반 스킬만 쿨다운마다 쓴다. 대상과 대상 조회를 밖에서 받는다(궁극기는 <see cref="TryCastUltimate"/>).</summary>
         public bool TryCastSkill(BattleAgent target, ISkillField field)
         {

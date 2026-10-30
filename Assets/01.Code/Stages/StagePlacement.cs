@@ -46,40 +46,71 @@ namespace Code.Stages
             return false;
         }
 
-        public bool TryPlace(Vector2Int cell, StageOption option, bool barricade)
+        /// <summary>미리보기와 실행이 함께 쓰는 전체 면적 검사. 상태/금화/메시지는 바꾸지 않는다.</summary>
+        public StagePlacementCheck Check(Vector2Int cell, StageOption option, bool barricade)
         {
-            if (_session.Phase != StagePhase.Preparing || !_session.Definition.IsBuildable(cell) || _session.Board.Reserved(cell)
-                || _session.Board.BlockerAt(cell, null) != null)
-                return false;
-            if (!barricade && (!_session.IsSelected(option) || !_session.Profile.IsUnlocked(option)))
-                return false;
             Vector2Int footprint = !barricade && option?.Trap?.Prefab is Trap template ? template.Footprint : Vector2Int.one;
-            bool empowered = false;
+            int cost = barricade ? (_session.Definition?.BarricadeCost ?? 0) : (option?.Cost ?? 0);
+            if (_session.Phase != StagePhase.Preparing || _session.Board == null)
+                return new StagePlacementCheck(cell, footprint, cost, "준비 단계에서만 배치할 수 있습니다");
+            if (!barricade && option == null)
+                return new StagePlacementCheck(cell, footprint, cost, "배치할 종류를 선택하세요");
+            if (!barricade && !_session.Profile.IsUnlocked(option))
+                return new StagePlacementCheck(cell, footprint, cost, "아직 해금되지 않은 종류입니다");
+            if (!barricade && !_session.IsSelected(option))
+                return new StagePlacementCheck(cell, footprint, cost, "먼저 편성에 추가하세요");
+            bool available = barricade ? _prefab != null
+                : option.Unit != null ? option.Unit.Prefab != null : option.Trap?.Prefab is Trap;
+            if (!available)
+                return new StagePlacementCheck(cell, footprint, cost, "이 종류는 현재 배치할 수 없습니다");
             for (int y = 0; y < footprint.y; y++)
             for (int x = 0; x < footprint.x; x++)
             {
                 Vector2Int occupied = cell + new Vector2Int(x, y);
-                empowered |= _session.Definition.IsEmpowered(occupied);
-                if (!_session.Definition.IsBuildable(occupied) || _session.Board.Reserved(occupied)
-                    || _session.Board.BlockerAt(occupied, null) != null)
-                    return false;
+                if (!_session.Definition.IsFloor(occupied))
+                    return new StagePlacementCheck(cell, footprint, cost, "배치 범위에 벽이나 맵 밖이 포함됩니다");
+                if (!_session.Definition.IsBuildable(occupied))
+                    return new StagePlacementCheck(cell, footprint, cost, "배치 범위에 설치 제한 칸이 포함됩니다");
+                if (_session.Board.Reserved(occupied))
+                    return new StagePlacementCheck(cell, footprint, cost, "코어·던전문·환경 장치는 비워두세요");
+                if (_session.Board.BlockerAt(occupied, null) != null)
+                    return new StagePlacementCheck(cell, footprint, cost, "유닛이나 바리케이드가 있는 칸입니다");
                 foreach (Trap installed in _traps)
                     if (installed != null && !installed.IsDestroyed && installed.Covers(_session.Board.World(occupied), 0f))
-                        return false;
+                        return new StagePlacementCheck(cell, footprint, cost, "이미 함정이 있는 칸입니다");
             }
-            int cost = barricade ? _session.Definition.BarricadeCost : option.Cost;
             if (_session.Gold < cost)
+                return new StagePlacementCheck(cell, footprint, cost, "금화가 부족합니다");
+            return new StagePlacementCheck(cell, footprint, cost);
+        }
+
+        public bool TryPlace(Vector2Int cell, StageOption option, bool barricade)
+        {
+            StagePlacementCheck check = Check(cell, option, barricade);
+            if (!check.Allowed)
             {
-                _session.Tell("금화가 부족합니다");
+                _session.Tell(check.Reason);
                 return false;
             }
-            if (!barricade && option.Unit == null && (option.Trap == null || option.Trap.Prefab is not Trap))
-                return false;
+            Create(cell, option, barricade, check.Cost);
+            _session.Pay(check.Cost);
+            _session.RefreshUI();
+            return true;
+        }
+
+        private Component Create(Vector2Int cell, StageOption option, bool barricade, int cost)
+        {
+            Vector2Int footprint = !barricade && option?.Trap?.Prefab is Trap template ? template.Footprint : Vector2Int.one;
+            bool empowered = false;
+            for (int y = 0; y < footprint.y; y++)
+            for (int x = 0; x < footprint.x; x++)
+                empowered |= _session.Definition.IsEmpowered(cell + new Vector2Int(x, y));
             if (barricade)
             {
                 StageBarricade wall = Object.Instantiate(_prefab, _session.Board.World(cell), Quaternion.identity, _root);
                 wall.Initialize(_session, cell, cost);
                 _session.Board.Barricades.Add(cell, wall);
+                return wall;
             }
             else if (option.Unit != null)
             {
@@ -88,6 +119,8 @@ namespace Code.Stages
                 StageActor actor = unit.gameObject.AddComponent<StageActor>();
                 actor.Initialize(_session, cell, option, cost);
                 unit.Combatant.SetAttackModifier(actor, 0f, 1f + _session.Profile.Level(option.Id) * _session.Catalog.DamagePerUpgrade);
+                _session.Artifacts?.Apply(actor);
+                return actor;
             }
             else
             {
@@ -104,17 +137,97 @@ namespace Code.Stages
                 _traps.Add(trap);
                 _trapOptions.Add(trap, option);
                 _trapPayments.Add(trap, cost);
+                return trap;
             }
-            _session.Pay(cost);
-            _session.RefreshUI();
-            return true;
+        }
+
+        internal void Capture(List<StageSavedPlacement> placements)
+        {
+            foreach (StageBarricade wall in _session.Board.Barricades.Values)
+            {
+                if (wall == null || !wall.IsAlive)
+                    continue;
+                StageSavedPlacement saved = new() { kind = "barricade", cell = wall.Cell, paid = wall.PaidGold };
+                wall.Capture(saved);
+                placements.Add(saved);
+            }
+            foreach (StageActor actor in _session.Board.Actors)
+            {
+                if (actor == null || actor.IsEnemy)
+                    continue;
+                placements.Add(new StageSavedPlacement
+                {
+                    kind = "unit", optionId = actor.Option.Id, cell = actor.Home,
+                    position = actor.transform.position, paid = actor.PaidGold,
+                    upgrade = _session.Profile.Level(actor.Option.Id), condition = actor.Unit.CaptureConditionState(),
+                    cooldown = actor.Skills != null ? actor.Skills.CaptureStageCooldown() : 0
+                });
+            }
+            foreach (Trap trap in _traps)
+            {
+                if (trap == null || trap.IsDestroyed)
+                    continue;
+                StageSavedPlacement saved = new()
+                {
+                    kind = "trap", optionId = _trapOptions[trap].Id, cell = TrapAnchor(trap),
+                    paid = _trapPayments[trap], health = trap.CurrentDurability,
+                    upgrade = _session.Profile.Level(_trapOptions[trap].Id)
+                };
+                trap.CaptureStageTiming(out saved.cooldown, out saved.active, out saved.tick, out saved.tickDamage);
+                placements.Add(saved);
+            }
+        }
+
+        internal void Restore(StageSavedPlacement saved, StageOption option)
+        {
+            Component placed = Create(saved.cell, option, saved.kind == "barricade", saved.paid);
+            if (placed is StageBarricade wall)
+                wall.Restore(saved);
+            else if (placed is StageActor actor)
+            {
+                actor.transform.position = saved.position;
+                actor.Unit.ApplyConditionState(saved.condition);
+                actor.Skills?.RestoreStageCooldown(saved.cooldown);
+            }
+            else if (placed is Trap trap)
+            {
+                trap.RestoreDurability(saved.health);
+                trap.RestoreStageTiming(saved.cooldown, saved.active, saved.tick, saved.tickDamage);
+            }
+        }
+
+        /// <summary>철거 대상의 실제 차지 범위. 함정 어느 칸을 가리켜도 같은 범위를 반환한다.</summary>
+        public StagePlacementCheck CheckDemolition(Vector2Int cell)
+        {
+            if (_session.Phase != StagePhase.Preparing || _session.Board == null)
+                return new StagePlacementCheck(cell, Vector2Int.one, 0, "준비 단계에서만 철거할 수 있습니다");
+            if (_session.Board.Barricades.TryGetValue(cell, out StageBarricade wall) && wall != null && wall.IsAlive)
+                return new StagePlacementCheck(cell, Vector2Int.one, 0);
+            foreach (StageActor actor in _session.Board.Actors)
+                if (actor != null && !actor.IsEnemy && _session.Board.Cell(actor.transform.position) == cell)
+                    return new StagePlacementCheck(cell, Vector2Int.one, 0);
+            foreach (Trap trap in _traps)
+                if (trap != null && !trap.IsDestroyed && trap.Covers(_session.Board.World(cell), 0f))
+                    return new StagePlacementCheck(TrapAnchor(trap), trap.Footprint, 0);
+            return new StagePlacementCheck(cell, Vector2Int.one, 0, "이 칸에는 철거할 대상이 없습니다");
+        }
+
+        private Vector2Int TrapAnchor(Trap trap)
+        {
+            Vector3 corner = trap.transform.position - new Vector3(trap.Footprint.x - 1, trap.Footprint.y - 1, 0)
+                * (_session.Definition.CellSize * 0.5f);
+            return _session.Board.Cell(corner);
         }
 
         public void Demolish(Vector2Int cell)
         {
-            if (_session.Phase != StagePhase.Preparing)
+            StagePlacementCheck check = CheckDemolition(cell);
+            if (!check.Allowed)
+            {
+                _session.Tell(check.Reason);
                 return;
-            if (_session.Board.Barricades.TryGetValue(cell, out StageBarricade wall))
+            }
+            if (_session.Board.Barricades.TryGetValue(cell, out StageBarricade wall) && wall != null && wall.IsAlive)
             {
                 wall.Demolish();
                 return;
@@ -134,7 +247,7 @@ namespace Code.Stages
             for (int i = _traps.Count - 1; i >= 0; i--)
             {
                 Trap trap = _traps[i];
-                if (trap == null || !trap.Covers(_session.Board.World(cell), 0f))
+                if (trap == null || trap.IsDestroyed || !trap.Covers(_session.Board.World(cell), 0f))
                     continue;
                 _session.Refund(Mathf.FloorToInt(_trapPayments[trap] * _session.Definition.DemolishRefund));
                 _traps.RemoveAt(i);

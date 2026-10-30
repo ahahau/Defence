@@ -92,3 +92,44 @@ MonoBehaviour:
   <SlotRewardStages>k__BackingField:
   - Stage_02
   - Stage_04
+  <Artifacts>k__BackingField:
+  - <Id>k__BackingField: artifact:cefe93e23c5ca844f87af3a4b43fd70d
+    <Artifact>k__BackingField: {fileID: 11400000, guid: cefe93e23c5ca844f87af3a4b43fd70d, type: 2}
+    <StageDescription>k__BackingField: 
+  - <Id>k__BackingField: artifact:978ea6756bceca84e88ee8dc78d8e67b
+    <Artifact>k__BackingField: {fileID: 11400000, guid: 978ea6756bceca84e88ee8dc78d8e67b, type: 2}
+    <StageDescription>k__BackingField: 
+  - <Id>k__BackingField: artifact:f14edc1fb89191e458128f9c6f1a8368
+    <Artifact>k__BackingField: {fileID: 11400000, guid: f14edc1fb89191e458128f9c6f1a8368, type: 2}
+    <StageDescription>k__BackingField: 
+  - <Id>k__BackingField: artifact:dabb9a0fb0c93e84d9cedb6577646512
+    <Artifact>k__BackingField: {fileID: 11400000, guid: dabb9a0fb0c93e84d9cedb6577646512, type: 2}
+    <StageDescription>k__BackingField: 
+  - <Id>k__BackingField: artifact:6e0aa922425fda541b0761ffcb3aa380
+    <Artifact>k__BackingField: {fileID: 11400000, guid: 6e0aa922425fda541b0761ffcb3aa380, type: 2}
+    <StageDescription>k__BackingField: 
+  - <Id>k__BackingField: artifact:c0f4fc4e97ccde34ba2379ab1598f434
+    <Artifact>k__BackingField: {fileID: 11400000, guid: c0f4fc4e97ccde34ba2379ab1598f434, type: 2}
+    <StageDescription>k__BackingField: 
+  - <Id>k__BackingField: artifact:b5f67e1ed5ec65c46b14e4b7fb2c9931
+    <Artifact>k__BackingField: {fileID: 11400000, guid: b5f67e1ed5ec65c46b14e4b7fb2c9931, type: 2}
+    <StageDescription>k__BackingField: 
+  - <Id>k__BackingField: artifact:ddf810f3afd9aa44f9226a07e1d8a497
+    <Artifact>k__BackingField: {fileID: 11400000, guid: ddf810f3afd9aa44f9226a07e1d8a497, type: 2}
+    <StageDescription>k__BackingField: 
+  - <Id>k__BackingField: artifact:a1ee05dcf8955de4198a70ff634d01d9
+    <Artifact>k__BackingField: {fileID: 11400000, guid: a1ee05dcf8955de4198a70ff634d01d9, type: 2}
+    <StageDescription>k__BackingField: 
+  - <Id>k__BackingField: artifact:3f0ac0b9c5e57194ebe20c16d43ff2db
+    <Artifact>k__BackingField: {fileID: 11400000, guid: 3f0ac0b9c5e57194ebe20c16d43ff2db, type: 2}
+    <StageDescription>k__BackingField: 
+  - <Id>k__BackingField: artifact:9c571ddd8ffc350419fc7b606bcc7c51
+    <Artifact>k__BackingField: {fileID: 11400000, guid: 9c571ddd8ffc350419fc7b606bcc7c51, type: 2}
+    <StageDescription>k__BackingField: "\uC8FC\uBCC0 2\uCE78 \uC548\uC5D0 \uB2E4\uB978 \uBD80\uD558\uAC00 \uC5C6\uC744 \uB54C \uBD80\uD558\uAC00 \uC8FC\uB294 \uD53C\uD574 \xD71.35."
+  - <Id>k__BackingField: artifact:754b02fc92577d04f92b287df6d112c3
+    <Artifact>k__BackingField: {fileID: 11400000, guid: 754b02fc92577d04f92b287df6d112c3, type: 2}
+    <StageDescription>k__BackingField: "\uBAA8\uB4E0 \uBD80\uD558 \uACF5\uACA9\uB825 +3, \uCD5C\uB300 \uCCB4\uB825 +10."
+  <ArtifactCombos>k__BackingField: {fileID: 11400000, guid: f0c86d742c2ec484fbc08ee5cc420956, type: 2}
+  <ArtifactSlots>k__BackingField: 2
+  <ArtifactChoices>k__BackingField: 3
+  <LoneAllyRadius>k__BackingField: 2

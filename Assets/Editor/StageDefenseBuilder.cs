@@ -8,6 +8,7 @@ using Code.Manager;
 using Code.MapCreateSystem;
 using Code.Stages;
 using Code.UI;
+using Code.UI.Stages;
 using Code.Units;
 using TMPro;
 using UnityEditor;
@@ -43,7 +44,140 @@ public static class StageDefenseBuilder
         }
         BuildStageSet();
         ApplyUnlockTable();
+        ApplyArtifactTable();
         AssetDatabase.SaveAssets();
+    }
+
+    private const string ArtifactRoot = "Assets/07.SO/Artifacts/";
+
+    /// <summary>
+    /// 스테이지 유물 후보를 쓴다(2026-10-29 사용자 결정: 초회 클리어 3택1·영구 수집·2칸 장착·장착한 둘만 조합).
+    /// 물약은 부하가 웨이브 뒤 자동 복구되므로 뺀다. 메인 유닛 전용 인장과 방 조건 늑대 부적은 스테이지 설명만 바꾼다
+    /// (에셋은 구 SampleScene이 그대로 쓴다). 칸 수 2·후보 3·늑대 부적 거리 2칸은 임시 값이다.
+    /// </summary>
+    public static string ApplyArtifactTable()
+    {
+        Guard();
+        StageCatalogSO catalog = Load<StageCatalogSO>(Root + "/StageCatalog.asset");
+        string[] names =
+        {
+            "QuartermasterLedger", "VeteranBanner", "SharpeningKit", "TowerShield", "IronRations", "FieldMedicSatchel",
+            "WarDrum", "SkirmisherBoots", "GlassDagger", "ExecutionOath", "LoneWolfCharm", "CaptainSigil"
+        };
+        Dictionary<string, string> stageText = new()
+        {
+            ["CaptainSigil"] = "모든 부하 공격력 +3, 최대 체력 +10.",
+            ["LoneWolfCharm"] = "주변 2칸 안에 다른 부하가 없을 때 부하가 주는 피해 ×1.35."
+        };
+        StageArtifact[] entries = new StageArtifact[names.Length];
+        for (int i = 0; i < names.Length; i++)
+        {
+            string path = ArtifactRoot + "GeneratedUnit/" + names[i] + "Artifact.asset";
+            stageText.TryGetValue(names[i], out string text);
+            entries[i] = new StageArtifact("artifact:" + AssetDatabase.AssetPathToGUID(path),
+                Load<Code.Artifacts.ArtifactDataSO>(path), text ?? string.Empty);
+        }
+        Set(catalog, "Artifacts", entries);
+        Set(catalog, "ArtifactCombos", Load<Code.Artifacts.ArtifactComboCatalogSO>(ArtifactRoot + "ArtifactComboCatalog.asset"));
+        Set(catalog, "ArtifactSlots", 2);
+        Set(catalog, "ArtifactChoices", 3);
+        Set(catalog, "LoneAllyRadius", 2f);
+        AssetDatabase.SaveAssets();
+        return "artifacts=" + entries.Length;
+    }
+
+    /// <summary>
+    /// 작성된 StageDefense 씬에 유물 칸(편성 패널)과 가운데 유물 창을 더한다. 이미 있으면 지우고 다시 만든다.
+    /// 편성 목록은 높이만 줄이고 줄은 그대로 둔다. 설정 ESC 목록에 유물 창을 더한다.
+    /// </summary>
+    public static string AddArtifacts() => EditScene(scene =>
+    {
+        StageHudView view = FindInScene<StageHudView>(scene);
+        RectTransform host = (RectTransform)view.transform;
+        RectTransform side = (RectTransform)host.Find("Preparation");
+        if (side == null)
+            throw new InvalidOperationException("편성 패널(Preparation)을 찾지 못했습니다");
+        RectTransform list = (RectTransform)side.Find(OptionListName);
+        if (list != null)
+            list.sizeDelta = new Vector2(list.sizeDelta.x, OptionListHeight);
+        foreach (Transform old in new[] { side.Find("ArtifactSummary"), side.Find("Artifacts"), host.Find(ArtifactWindowName) })
+            if (old != null)
+                UnityEngine.Object.DestroyImmediate(old.gameObject);
+        StageArtifactWindow window = BuildArtifactSection(view, side, host, FindInScene<StageSession>(scene));
+        SettingsScreenView settings = FindInScene<SettingsScreenView>(scene, false);
+        if (settings != null)
+            WireEscape(settings, window);
+        return "artifactRows=" + FindInScene<StageSession>(scene).Catalog.Artifacts.Length;
+    });
+
+    private const string ArtifactWindowName = "ArtifactWindow";
+
+    /// <summary>편성 목록 높이. 유물 칸(위 720~826) 자리를 위해 600에서 줄였다.</summary>
+    private const float OptionListHeight = 470;
+
+    private static StageArtifactWindow BuildArtifactSection(StageHudView view, RectTransform side, RectTransform host,
+        StageSession session)
+    {
+        UiKit.Wire(view, "artifactSummary", Text(side, "ArtifactSummary", "유물 0/2 · 장착 없음\n조합: 없음", 15, 18, 720, 374, 56, HudPalette.TextBody));
+        UiKit.Wire(view, "artifactButton", Button(side, "Artifacts", "유물 장착 · 보상", 18, 782, 374, 44));
+        StageArtifactWindow window = BuildArtifactWindow(host, session);
+        UiKit.Wire(view, "artifactWindow", window);
+        return window;
+    }
+
+    /// <summary>
+    /// 가운데 고정 크기 창(840×720). 줄은 카탈로그 유물 수만큼 미리 만들고 스크롤한다.
+    /// 바깥 오브젝트는 켜 둔 채(세션 변경을 듣는다) 안쪽 패널만 여닫는다.
+    /// </summary>
+    private static StageArtifactWindow BuildArtifactWindow(RectTransform host, StageSession session)
+    {
+        RectTransform root = UiKit.Fill(UiKit.Rect(ArtifactWindowName, host));
+        StageArtifactWindow window = root.gameObject.AddComponent<StageArtifactWindow>();
+        // 보상 모드에서만 켜서 고를 때까지 다른 HUD 조작을 막는다. 장착 모드는 바깥 HUD를 그대로 쓴다.
+        RectTransform blocker = UiKit.Fill(UiKit.Rect("Blocker", root));
+        UiKit.Image(blocker, null, HudPalette.Scrim, true);
+        blocker.gameObject.SetActive(false);
+        UiKit.Wire(window, "blocker", blocker.gameObject);
+        Vector2 center = new(0.5f, 0.5f);
+        RectTransform panel = UiKit.Place(UiKit.Rect("Panel", root), center, center, center, Vector2.zero, new Vector2(840, 720));
+        UiKit.Panel(panel, HudPalette.Surface, HudPalette.Border, true);
+        UiKit.Wire(window, "session", session);
+        UiKit.Wire(window, "panel", panel.gameObject);
+        UiKit.Wire(window, "title", Text(panel, "Title", "유물 장착", 24, 24, 20, 600, 40, HudPalette.Accent));
+        UiKit.Wire(window, "closeButton", Button(panel, "Close", "닫기", 716, 20, 100, 40));
+        UiKit.Wire(window, "hint", Text(panel, "Hint", "", 16, 24, 70, 792, 48, HudPalette.TextDim));
+        RectTransform area = UiKit.TopLeft(UiKit.Rect("List", panel), 24, 128, 792, 568);
+        UiKit.ScrollArea(area, out RectTransform content);
+        UnityEngine.UI.VerticalLayoutGroup layout = content.gameObject.AddComponent<UnityEngine.UI.VerticalLayoutGroup>();
+        layout.spacing = 8;
+        layout.childControlWidth = true;
+        layout.childForceExpandWidth = true;
+        layout.childControlHeight = true;
+        layout.childForceExpandHeight = false;
+        StageArtifactRow[] rows = new StageArtifactRow[session.Catalog.Artifacts.Length];
+        for (int i = 0; i < rows.Length; i++)
+        {
+            RectTransform row = UiKit.Rect("Artifact_" + i, content);
+            row.gameObject.AddComponent<UnityEngine.UI.LayoutElement>().preferredHeight = 104;
+            rows[i] = row.gameObject.AddComponent<StageArtifactRow>();
+            UiKit.Wire(rows[i], "label", Text(row, "Text", "", 15, 0, 0, 630, 100, HudPalette.TextBody));
+            UiKit.Wire(rows[i], "action", Button(row, "Action", "장착", 646, 28, 130, 44));
+        }
+        UiKit.WireArray(window, "rows", rows);
+        panel.gameObject.SetActive(false);
+        // 나중에 놓인 HUD 요소가 창을 덮지 않게 맨 뒤 형제로 둔다.
+        root.SetAsLastSibling();
+        return window;
+    }
+
+    /// <summary>ESC는 설정 → 유물 창 순으로 하나씩 닫는다. 고르지 않은 보상이 있으면 유물 창은 닫히지 않는다.</summary>
+    private static void WireEscape(SettingsScreenView settings, StageArtifactWindow window)
+    {
+        UiEscapeRouter router = settings.GetComponent<UiEscapeRouter>();
+        UiKit.Wire(router, "settings", settings);
+        UiKit.WireArray(router, "windows", window != null
+            ? new UnityEngine.Object[] { settings, window }
+            : new UnityEngine.Object[] { settings });
     }
 
     private const string Enemies = "Assets/07.SO/Enemies/";
@@ -212,6 +346,7 @@ public static class StageDefenseBuilder
             StageDefinitionSO stage = WriteStage(spec.id, spec.title, spec.gimmick, spec.layout, spec.doors, new Vector2Int(21, 5), waves);
             Set(stage, "DoorOpensAtWave", spec.opens);
             Set(stage, "Devices", DevicesFor(spec.id));
+            StageHallBuilder.ApplyShape(stage, index + 1);
             Set(stage, "EmpoweredTrapMultiplier", 1.5f);
             stages.Add(stage);
         }
@@ -351,9 +486,7 @@ public static class StageDefenseBuilder
         SerializedObject serialized = new(settings);
         serialized.FindProperty("allowRunRestart").boolValue = false;
         serialized.ApplyModifiedPropertiesWithoutUndo();
-        UiEscapeRouter router = settings.GetComponent<UiEscapeRouter>();
-        UiKit.Wire(router, "settings", settings);
-        UiKit.WireArray(router, "windows", new UnityEngine.Object[] { settings });
+        WireEscape(settings, FindInScene<StageArtifactWindow>(scene, false));
         return settings;
     }
 
@@ -540,19 +673,8 @@ public static class StageDefenseBuilder
             // 작성된 씬에서도 고정 지형을 편집할 수 있게 최초 맵을 직접 칠한다. 플레이/시뮬레이션은 하지 않는다.
             StageDefinitionSO initial = session.Catalog.Stages[0];
             StageBoard board = new(initial);
-            grid.cellSize = new Vector3(0.625f, 0.625f, 1f);
-            grid.transform.localScale = new Vector3(initial.CellSize / 0.625f, initial.CellSize / 0.625f, 1);
-            Vector3 origin = board.World(Vector2Int.zero);
-            grid.transform.position = new Vector3(origin.x - initial.CellSize * 0.5f, origin.y - initial.CellSize * 0.5f, 0);
-            for (int y = 0; y < board.Rows; y++)
-            for (int x = 0; x < board.Columns; x++)
-                tilemap.SetTile(new Vector3Int(x, y, 0), initial.IsFloor(new Vector2Int(x, y)) ? tileSet.Floor : tileSet.Wall);
-            core.transform.position = board.World(initial.Core);
-            foreach (Vector2Int cell in initial.Doors)
-            {
-                SpriteRenderer marker = UnityEngine.Object.Instantiate(door, board.World(cell), Quaternion.identity, doors);
-                marker.gameObject.SetActive(true);
-            }
+            StageHallBuilder.ConfigureMap(map);
+            map.PaintLayout(board);
             BuildHud(session, camera);
             StageHudView hud = FindInScene<StageHudView>(scene);
             GameSpeedController speed = EnsureSpeedController(scene);
@@ -599,6 +721,7 @@ public static class StageDefenseBuilder
         UiKit.Wire(view, "barricade", Button(side, "Barricade", "바리케이드", 18, 176, 177, 44));
         UiKit.Wire(view, "demolish", Button(side, "Demolish", "철거", 211, 176, 177, 44));
         UiKit.WireArray(view, "rows", BuildOptionList(side, session.Catalog));
+        BuildArtifactSection(view, side, host, session);
         UiKit.Wire(view, "message", Text(side, "Message", "", 16, 18, 864, 374, 142, HudPalette.Warn));
         UiKit.Wire(view, "headline", Text(host, "StageTitle", "스테이지", 24, 470, 28, HeadlineWidth, 42, HudPalette.Accent));
         UiKit.Wire(view, "status", Text(host, "Status", "", 22, 470, 82, HeadlineWidth, 42, HudPalette.TextBody));
@@ -619,7 +742,7 @@ public static class StageDefenseBuilder
     /// </summary>
     private static StageOptionRow[] BuildOptionList(RectTransform side, StageCatalogSO catalog)
     {
-        RectTransform area = UiKit.TopLeft(UiKit.Rect(OptionListName, side), 18, 240, 386, 600);
+        RectTransform area = UiKit.TopLeft(UiKit.Rect(OptionListName, side), 18, 240, 386, OptionListHeight);
         UiKit.ScrollArea(area, out RectTransform content);
         UnityEngine.UI.VerticalLayoutGroup layout = content.gameObject.AddComponent<UnityEngine.UI.VerticalLayoutGroup>();
         layout.spacing = 10;

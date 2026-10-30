@@ -10,7 +10,10 @@ namespace Code.Skills
 
         public override void Execute(SkillContext context)
         {
-            context.Caster?.DashAwayFromTarget(dashDistance);
+            if (context.Field is ISkillMovement movement)
+                movement.TryDash(context.Caster, context.Target, dashDistance);
+            else
+                context.Caster?.DashAwayFromTarget(dashDistance);
         }
     }
 }

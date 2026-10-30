@@ -6,10 +6,6 @@ namespace Code.Stages
 {
     public sealed class StageMapView : MonoBehaviour
     {
-        /// <summary>설치 불가 칸('x') 바닥 색.</summary>
-        private static readonly Color BlockedTint = new(0.62f, 0.32f, 0.32f);
-        /// <summary>강화 칸('+') 바닥 색.</summary>
-        private static readonly Color EmpoweredTint = new(0.45f, 0.62f, 1f);
         /// <summary>아직 닫힌 던전문.</summary>
         private static readonly Color ClosedDoorTint = new(0.35f, 0.35f, 0.4f, 0.55f);
         private readonly System.Collections.Generic.List<SpriteRenderer> _doors = new();
@@ -18,6 +14,9 @@ namespace Code.Stages
         [SerializeField] private Tilemap tiles;
         [SerializeField] private TileBase floor;
         [SerializeField] private TileBase wall;
+        [SerializeField] private Tilemap underlay;
+        [SerializeField] private Tilemap decor;
+        [SerializeField] private Code.MapCreateSystem.RoomTileSet roomTiles;
         [SerializeField] private Camera worldCamera;
         [SerializeField] private SpriteRenderer coreSprite;
         [SerializeField] private SpriteRenderer doorPrefab;
@@ -26,41 +25,47 @@ namespace Code.Stages
 
         public void Draw(StageBoard board)
         {
+            PaintLayout(board);
+            CoreHealth.SetMaxHealth(board.Definition.CoreHealth, true);
+        }
+
+        /// <summary>편집 중 고정 지형도 같은 그리기로 저장한다. 전투 상태에는 접근하지 않는다.</summary>
+        public void PaintLayout(StageBoard board)
+        {
             StageDefinitionSO definition = board.Definition;
-            tiles.ClearAllTiles();
-            grid.cellSize = new Vector3(0.625f, 0.625f, 1f);
-            grid.transform.localScale = new Vector3(definition.CellSize / 0.625f, definition.CellSize / 0.625f, 1f);
+            // 실제 타일은 16px/16PPU다. 0.625를 쓰면 그림이 논리 칸의 1.6배가 된다.
+            grid.cellSize = Vector3.one;
+            grid.transform.localScale = new Vector3(definition.CellSize, definition.CellSize, 1f);
             grid.transform.position = board.World(Vector2Int.zero) - Vector3.one * (definition.CellSize * 0.5f);
             grid.transform.position = new Vector3(grid.transform.position.x, grid.transform.position.y, 0f);
-            for (int y = 0; y < board.Rows; y++)
-            for (int x = 0; x < board.Columns; x++)
+            StageMapPainter.Paint(board, tiles, underlay, decor, floor, wall, roomTiles);
+            for (int i = doorsRoot.childCount - 1; i >= 0; i--)
             {
-                Vector2Int cell = new(x, y);
-                Vector3Int position = new(x, y, 0);
-                tiles.SetTile(position, definition.IsFloor(cell) ? floor : wall);
-                // 룰 타일이 색을 잠그므로 풀고 칠한다
-                tiles.SetTileFlags(position, TileFlags.None);
-                tiles.SetColor(position, !definition.IsFloor(cell) ? Color.white
-                    : !definition.IsBuildable(cell) ? BlockedTint
-                    : definition.IsEmpowered(cell) ? EmpoweredTint : Color.white);
+                GameObject child = doorsRoot.GetChild(i).gameObject;
+                if (Application.isPlaying)
+                    Destroy(child);
+                else
+                    DestroyImmediate(child);
             }
-            foreach (Transform child in doorsRoot)
-                Destroy(child.gameObject);
             _doors.Clear();
             foreach (Vector2Int door in definition.Doors)
             {
                 SpriteRenderer marker = Instantiate(doorPrefab, board.World(door), Quaternion.identity, doorsRoot);
                 marker.gameObject.SetActive(true);
-                Fit(marker, definition.CellSize);
+                // 문은 긴 변이 아니라 너비를 칸에 맞춘다.
+                if (marker.sprite != null && marker.sprite.bounds.size.x > 0)
+                    marker.transform.localScale = Vector3.one * (definition.CellSize / marker.sprite.bounds.size.x);
                 _doors.Add(marker);
             }
             coreSprite.transform.position = board.World(definition.Core);
             Fit(coreSprite, definition.CellSize);
-            CoreHealth.SetMaxHealth(definition.CoreHealth, true);
-            float height = board.Rows * definition.CellSize * 0.5f + 2f;
-            float width = board.Columns * definition.CellSize * 0.5f + 5f;
-            worldCamera.orthographicSize = Mathf.Max(height, width / Mathf.Max(0.1f, worldCamera.aspect));
-            worldCamera.transform.position = new Vector3(-worldCamera.orthographicSize * worldCamera.aspect * 0.22f, 0, -10);
+            // 좌측 편성 패널(32%)·상하 HUD를 제외한 화면에 전체 지형을 맞춘다.
+            float aspect = Mathf.Max(0.1f, worldCamera.aspect);
+            float height = (board.Rows * definition.CellSize + 1f) / (2f * 0.76f);
+            float width = (board.Columns * definition.CellSize + 1f) / (2f * aspect * 0.65f);
+            worldCamera.orthographicSize = Mathf.Max(height, width);
+            worldCamera.transform.position = new Vector3(-0.31f * worldCamera.orthographicSize * aspect,
+                -0.02f * worldCamera.orthographicSize, -10);
         }
 
         /// <summary>그 웨이브에 아직 닫힌 문은 어둡게 그린다.</summary>

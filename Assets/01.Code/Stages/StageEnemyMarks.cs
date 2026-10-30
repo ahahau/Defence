@@ -21,17 +21,23 @@ namespace Code.Stages
         private readonly Transform _root;
         private readonly List<SpriteRenderer> _marks = new();
 
-        public StageEnemyMarks(SpriteRenderer template, Vector3 unitScale)
+        public bool IsValid => _root != null;
+
+        public StageEnemyMarks(SpriteRenderer template, Vector3 unitScale, Transform parent = null)
         {
             _template = template;
             _unitScale = unitScale;
             _root = new GameObject("Enemy Marks").transform;
+            if (parent != null)
+                _root.SetParent(parent, false);
         }
 
         public static Color ColorOf(StageEnemyRule rule) => rule == StageEnemyRule.Rush ? HudPalette.Danger : HudPalette.Warn;
 
         public void Show(StageSession session)
         {
+            if (_root == null)
+                return;
             int used = 0;
             float size = session.Definition.CellSize;
             foreach (StageActor actor in session.Board.Actors)
@@ -65,7 +71,8 @@ namespace Code.Stages
         private void Trim(int used)
         {
             for (int i = used; i < _marks.Count; i++)
-                _marks[i].gameObject.SetActive(false);
+                if (_marks[i] != null)
+                    _marks[i].gameObject.SetActive(false);
         }
     }
 }

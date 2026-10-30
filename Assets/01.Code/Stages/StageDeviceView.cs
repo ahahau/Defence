@@ -21,15 +21,21 @@ namespace Code.Stages
         private readonly List<SpriteRenderer> _cells = new();
         private readonly List<SpriteRenderer> _bars = new();
 
-        public StageDeviceView(SpriteRenderer template, Vector3 unitScale)
+        public bool IsValid => _root != null;
+
+        public StageDeviceView(SpriteRenderer template, Vector3 unitScale, Transform parent = null)
         {
             _template = template;
             _unitScale = unitScale;
             _root = new GameObject("Stage Devices").transform;
+            if (parent != null)
+                _root.SetParent(parent, false);
         }
 
         public void Show(StageSession session)
         {
+            if (_root == null)
+                return;
             int bars = 0;
             float size = session.Definition.CellSize;
             IReadOnlyList<StageDevices.State> states = session.Devices.States;
@@ -96,7 +102,8 @@ namespace Code.Stages
         private static void Trim(List<SpriteRenderer> pool, int used)
         {
             for (int i = used; i < pool.Count; i++)
-                pool[i].gameObject.SetActive(false);
+                if (pool[i] != null)
+                    pool[i].gameObject.SetActive(false);
         }
     }
 }

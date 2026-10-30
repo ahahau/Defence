@@ -14,6 +14,11 @@ namespace Code.Stages
         public Vector2Int Cell { get; private set; }
         public int PaidGold { get; private set; }
         public bool IsAlive => !_removed && Combat != null && Combat.IsAlive;
+        public float RecoveryRemaining => _session == null ? 0f
+            : Mathf.Max(0f, _session.Definition.RecoveryDelay - (Time.time - _lastHit));
+        public bool IsRecovering => IsAlive && Combat.Health.CurrentHealth < Combat.Health.MaxHealth
+            && RecoveryRemaining <= 0f && _session.Definition.RecoveryPerSecond > 0f
+            && (_session.Phase == StagePhase.Preparing || _session.Phase == StagePhase.Fighting);
 
         public void Initialize(StageSession session, Vector2Int cell, int paid)
         {
@@ -29,7 +34,21 @@ namespace Code.Stages
         {
             if (_session.Phase != StagePhase.Preparing)
                 return;
-            Remove(_session.Definition.DemolishRefund);
+            Remove(_session.Definition.DemolishRefund, false);
+        }
+
+        internal void Capture(StageSavedPlacement saved)
+        {
+            saved.health = Combat.Health.CurrentHealth;
+            saved.recoveryDelay = RecoveryRemaining;
+            saved.recoveryFraction = _recovery;
+        }
+
+        internal void Restore(StageSavedPlacement saved)
+        {
+            Combat.Health.SetCurrentRatio((float)saved.health / Combat.Health.MaxHealth);
+            _lastHit = Time.time - _session.Definition.RecoveryDelay + saved.recoveryDelay;
+            _recovery = saved.recoveryFraction;
         }
 
         private void Update()
@@ -38,7 +57,7 @@ namespace Code.Stages
                 return;
             if (!Combat.IsAlive)
             {
-                Remove(_session.Definition.DestroyRefund);
+                Remove(_session.Definition.DestroyRefund, true);
                 return;
             }
             if (_session.Phase != StagePhase.Preparing && _session.Phase != StagePhase.Fighting)
@@ -64,10 +83,10 @@ namespace Code.Stages
             _lastHit = Time.time;
             _recovery = 0;
             if (!Combat.IsAlive)
-                Remove(_session.Definition.DestroyRefund);
+                Remove(_session.Definition.DestroyRefund, true);
         }
 
-        private void Remove(float rate)
+        private void Remove(float rate, bool destroyed)
         {
             if (_removed)
                 return;
@@ -76,6 +95,8 @@ namespace Code.Stages
             _session.Refund(Mathf.FloorToInt(PaidGold * Mathf.Clamp01(rate)));
             gameObject.SetActive(false);
             Destroy(gameObject);
+            if (destroyed)
+                _session.ReportBarricadeDestroyed(Cell);
         }
 
         private void OnDestroy()

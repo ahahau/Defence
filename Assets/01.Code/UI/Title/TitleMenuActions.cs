@@ -1,5 +1,6 @@
 using Code.Audio;
 using Code.Persistence;
+using Code.Stages;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -42,25 +43,36 @@ namespace Code.UI
         /// </summary>
         private void RefreshContinue()
         {
-            var hasSave = RunSaveSystem.HasSave;
+            bool stageSave = StageCheckpointStore.HasSave(Application.persistentDataPath);
+            bool hasSave = stageSave || RunSaveSystem.HasSave;
 
             if (continueButton != null)
                 continueButton.interactable = hasSave;
 
             if (continueLabel != null)
+            {
                 continueLabel.color = hasSave ? LabelOn : LabelOff;
+                continueLabel.text = stageSave ? "스테이지 이어하기" : hasSave ? "이전 던전 이어하기" : "이어하기";
+            }
         }
 
-        /// <summary>새 판. 남아 있던 저장을 지우고 들어간다.</summary>
+        /// <summary>새 스테이지 판. 이전 준비 저장은 보관하고 영구 강화와 구 런은 유지한다.</summary>
         public void StartNewRun()
         {
-            GameSfxPlayer.Play(GameSfxCue.UiClick);
             // 새 스테이지는 구 런 파일을 지우거나 변환하지 않는다. 기존 이어하기 경로는 보존한다.
             if (Application.CanStreamedLevelBeLoaded(StageSceneName))
             {
+                // 이전 준비 저장을 보관하지 못하면 덮어쓰지 않게 멈춘다. 타이틀에는 팝업 화면이 없어 실패음으로 알린다.
+                if (!StageCheckpointStore.EndRun(Application.persistentDataPath))
+                {
+                    GameSfxPlayer.Play(GameSfxCue.UiFail);
+                    return;
+                }
+                GameSfxPlayer.Play(GameSfxCue.UiClick);
                 SceneManager.LoadScene(StageSceneName);
                 return;
             }
+            GameSfxPlayer.Play(GameSfxCue.UiClick);
             RunSaveSystem.DeleteSave();
             SceneManager.LoadScene(GameSceneName);
         }
@@ -68,11 +80,12 @@ namespace Code.UI
         /// <summary>저장을 그대로 두고 들어간다. 복원은 게임 씬 쪽이 맡는다.</summary>
         public void ContinueRun()
         {
-            if (!RunSaveSystem.HasSave)
+            bool stageSave = StageCheckpointStore.HasSave(Application.persistentDataPath);
+            if (!stageSave && !RunSaveSystem.HasSave)
                 return;
 
             GameSfxPlayer.Play(GameSfxCue.UiClick);
-            SceneManager.LoadScene(GameSceneName);
+            SceneManager.LoadScene(stageSave ? StageSceneName : GameSceneName);
         }
 
         public void OpenSettings()

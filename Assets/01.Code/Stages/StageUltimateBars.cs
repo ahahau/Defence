@@ -23,15 +23,21 @@ namespace Code.Stages
         private readonly List<SpriteRenderer> _backs = new();
         private readonly List<SpriteRenderer> _fills = new();
 
-        public StageUltimateBars(SpriteRenderer template, Vector3 unitScale)
+        public bool IsValid => _root != null;
+
+        public StageUltimateBars(SpriteRenderer template, Vector3 unitScale, Transform parent = null)
         {
             _template = template;
             _unitScale = unitScale;
             _root = new GameObject("Ultimate Bars").transform;
+            if (parent != null)
+                _root.SetParent(parent, false);
         }
 
         public void Show(StageSession session)
         {
+            if (_root == null)
+                return;
             int used = 0;
             float size = session.Definition.CellSize;
             foreach (StageActor actor in session.Board.Actors)
@@ -80,7 +86,8 @@ namespace Code.Stages
         private static void Trim(List<SpriteRenderer> pool, int used)
         {
             for (int i = used; i < pool.Count; i++)
-                pool[i].gameObject.SetActive(false);
+                if (pool[i] != null)
+                    pool[i].gameObject.SetActive(false);
         }
     }
 }

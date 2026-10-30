@@ -259,13 +259,28 @@ namespace Code.Stages
 
         private void Advance(Vector3 point)
         {
-            if (Combat.IsWindingUp || Combat.IsStaggered)
+            if ((Agent != null && Agent.IsCombatMoveLocked) || Combat.IsWindingUp || Combat.IsStaggered)
                 return;
             Vector3 next = Vector3.MoveTowards(transform.position, point, Speed * (_status != null ? _status.MoveSpeedMultiplier : 1f) * Time.deltaTime);
             if (!_session.Board.IsPassable(_session.Board.Cell(next)) || !_session.CanAdvance(this, next))
                 return;
             _render?.FaceTowards(point.x - transform.position.x);
             transform.position = next;
+        }
+
+        internal bool CanUseSkillMovement => IsAlive && _session.Phase == StagePhase.Fighting
+            && (Agent == null || !Agent.IsSnared);
+
+        internal float FacingX => _render != null ? _render.FacingX : 1f;
+
+        internal void ApplySkillPosition(Vector2 position)
+        {
+            Combat.StopCombat();
+            transform.position = new Vector3(position.x, position.y, transform.position.z);
+            _path.Clear();
+            _nextPathAt = 0f;
+            _nextReturnCheckAt = 0f;
+            _render?.ResetMotionTracking();
         }
 
         private void HandleHealthChanged(float ratio)

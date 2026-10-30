@@ -17,6 +17,22 @@ namespace Code.Buildings
         public void BindStage(Code.Stages.StageSession stage) => _stage = stage;
         public void SetStageDamageMultiplier(float multiplier) => _stageDamageMultiplier = Mathf.Max(0f, multiplier);
 
+        internal void CaptureStageTiming(out float cooldown, out float active, out float tick, out int tickDamage)
+        {
+            cooldown = Mathf.Max(0, _cooldownRemaining);
+            active = Mathf.Max(0, _activeRemaining);
+            tick = Mathf.Max(0, _tickTimer);
+            tickDamage = _tickDamage;
+        }
+
+        internal void RestoreStageTiming(float cooldown, float active, float tick, int tickDamage)
+        {
+            _cooldownRemaining = cooldown;
+            _activeRemaining = active;
+            _tickTimer = tick;
+            _tickDamage = tickDamage;
+        }
+
         /// <summary>함정 몸체 그림의 정렬 순서. 바닥·기둥 타일보다 위, 위 칸으로 삐져나온 기둥 윗면(11)과 캐릭터(20)보다 아래다.</summary>
         public const int BodySortingOrder = 10;
 

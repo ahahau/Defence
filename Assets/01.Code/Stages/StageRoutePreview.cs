@@ -26,19 +26,32 @@ namespace Code.Stages
         private readonly HashSet<Vector2Int> _route = new();
         private readonly HashSet<Vector2Int> _reach = new();
         private readonly HashSet<Vector2Int> _breaks = new();
+        private bool _painted;
+        private int _signature;
 
         /// <summary>문 하나라도 차단물을 부숴야 코어에 닿는가.</summary>
         public bool Blocked { get; private set; }
+        public bool IsValid => _root != null;
 
-        public StageRoutePreview(SpriteRenderer template, Vector3 unitScale)
+        public StageRoutePreview(SpriteRenderer template, Vector3 unitScale, Transform parent = null)
         {
             _template = template;
             _unitScale = unitScale;
             _root = new GameObject("Route Preview").transform;
+            if (parent != null)
+                _root.SetParent(parent, false);
         }
 
         public void Show(StageSession session)
         {
+            if (_root == null)
+                return;
+            // HUD가 0.2초마다·변경마다 부르므로 길찾기 입력이 그대로면 이전 칠을 둔다.
+            int signature = Signature(session);
+            if (_painted && signature == _signature)
+                return;
+            _signature = signature;
+            _painted = true;
             Collect(session);
             int used = 0;
             float size = session.Definition.CellSize;
@@ -51,14 +64,17 @@ namespace Code.Stages
                 if (!_route.Contains(cell) && !_breaks.Contains(cell))
                     Paint(used++, session.Board.World(cell), size, HudPalette.Danger, ReachAlpha);
             for (int i = used; i < _cells.Count; i++)
-                _cells[i].gameObject.SetActive(false);
+                if (_cells[i] != null)
+                    _cells[i].gameObject.SetActive(false);
         }
 
         public void Hide()
         {
             Blocked = false;
+            _painted = false;
             foreach (SpriteRenderer cell in _cells)
-                cell.gameObject.SetActive(false);
+                if (cell != null)
+                    cell.gameObject.SetActive(false);
         }
 
         private void Collect(StageSession session)
@@ -115,6 +131,30 @@ namespace Code.Stages
                     }
                 }
             }
+        }
+
+        /// <summary>길·추적 범위·파괴 시간을 바꾸는 입력만 요약한다. 순서와 무관하게 더한다.</summary>
+        private static int Signature(StageSession session)
+        {
+            StageBoard board = session.Board;
+            int sum = 0;
+            int count = 0;
+            foreach (StageActor actor in board.Actors)
+            {
+                if (actor == null || actor.IsEnemy || !actor.IsAlive)
+                    continue;
+                sum += System.HashCode.Combine(actor.Home, board.Cell(actor.transform.position),
+                    actor.Combat.StrikeRange, actor.Combat.Health.CurrentHealth);
+                count++;
+            }
+            foreach (KeyValuePair<Vector2Int, StageBarricade> pair in board.Barricades)
+            {
+                if (pair.Value == null || !pair.Value.IsAlive)
+                    continue;
+                sum += System.HashCode.Combine(pair.Key, pair.Value.Combat.Health.CurrentHealth, 1);
+                count++;
+            }
+            return System.HashCode.Combine(session.Definition, board, session.WaveIndex, count, sum);
         }
 
         private static bool HasGate(StageDefinitionSO definition)
