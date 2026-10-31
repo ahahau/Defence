@@ -11,7 +11,8 @@ namespace Code.Stages
     public static class StageRouteRules
     {
         /// <summary>
-        /// 그 문으로 처음 들어올 적과 그 적의 규칙. 스폰은 그 웨이브에 열린 문을 차례로 번갈아 쓴다(<see cref="StageSession"/>).
+        /// 그 문으로 처음 들어올 적과 그 적의 규칙. 스폰은 파티마다 그 웨이브에 열린 문을 차례로 번갈아 쓴다(<see cref="StageSession"/>).
+        /// 파티 리더가 처음 들어오는 적이라 파티 길도 이 적의 능력으로 잰다.
         /// </summary>
         /// <param name="slot">열린 문 중 순서.</param>
         public static EnemyDataSO FirstEnemyAtDoor(StageWave wave, int slot, int openDoorCount, out StageEnemyRule rule)
@@ -19,8 +20,11 @@ namespace Code.Stages
             rule = StageEnemyRule.None;
             if (wave?.Enemies == null || openDoorCount <= 0)
                 return null;
-            for (int i = slot; i < wave.Count; i += openDoorCount)
+            // 문은 파티마다 돌아가며 배정된다(StageSession과 같은 규칙)
+            for (int i = 0; i < wave.Count; i++)
             {
+                if (wave.PartyIndex(i) % openDoorCount != slot)
+                    continue;
                 EnemyDataSO enemy = wave.At(i, out _);
                 if (enemy == null)
                     continue;

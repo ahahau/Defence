@@ -108,6 +108,7 @@ MonoBehaviour:
     <BossAttackMultiplier>k__BackingField: 2
     <BossScale>k__BackingField: 1.6
     <Rules>k__BackingField: 
+    <PartySize>k__BackingField: 3
   - <Enemies>k__BackingField:
     - {fileID: 11400000, guid: 6ee6e1b5213d40e8a931a3e0e4f4811a, type: 2}
     - {fileID: 11400000, guid: 6031153906814462808020aadde25242, type: 2}
@@ -126,6 +127,7 @@ MonoBehaviour:
     <BossAttackMultiplier>k__BackingField: 2
     <BossScale>k__BackingField: 1.6
     <Rules>k__BackingField: 
+    <PartySize>k__BackingField: 3
   - <Enemies>k__BackingField:
     - {fileID: 11400000, guid: 6031153906814462808020aadde25242, type: 2}
     - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
@@ -145,6 +147,7 @@ MonoBehaviour:
     <BossAttackMultiplier>k__BackingField: 2
     <BossScale>k__BackingField: 1.6
     <Rules>k__BackingField: 
+    <PartySize>k__BackingField: 3
   - <Enemies>k__BackingField:
     - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
     - {fileID: 11400000, guid: 6ee6e1b5213d40e8a931a3e0e4f4811a, type: 2}
@@ -165,6 +168,7 @@ MonoBehaviour:
     <BossAttackMultiplier>k__BackingField: 2
     <BossScale>k__BackingField: 1.6
     <Rules>k__BackingField: 
+    <PartySize>k__BackingField: 3
   - <Enemies>k__BackingField:
     - {fileID: 11400000, guid: 6ee6e1b5213d40e8a931a3e0e4f4811a, type: 2}
     - {fileID: 11400000, guid: 6031153906814462808020aadde25242, type: 2}
@@ -186,6 +190,7 @@ MonoBehaviour:
     <BossAttackMultiplier>k__BackingField: 2
     <BossScale>k__BackingField: 1.6
     <Rules>k__BackingField: 
+    <PartySize>k__BackingField: 3
   - <Enemies>k__BackingField:
     - {fileID: 11400000, guid: 6031153906814462808020aadde25242, type: 2}
     - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
@@ -200,3 +205,4 @@ MonoBehaviour:
     <BossAttackMultiplier>k__BackingField: 2
     <BossScale>k__BackingField: 1.6
     <Rules>k__BackingField: 
+    <PartySize>k__BackingField: 3

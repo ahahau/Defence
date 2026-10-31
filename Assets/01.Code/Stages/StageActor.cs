@@ -25,12 +25,19 @@ namespace Code.Stages
         private Code.Buildings.Trap _lastTrap;
         private Code.Entities.EntityRender _render;
         private CombatStatusController _status;
+        private float _waitStartedAt = -1f;
+        private int _trailIndex;
+        private int _trailVersion = -1;
         public Combatant Combat { get; private set; }
         public Unit Unit { get; private set; }
         public Enemy Enemy { get; private set; }
         public bool IsEnemy => Enemy != null;
         public bool IsAlive => !_resolved && Combat != null && Combat.IsAlive;
         public float Speed { get; private set; }
+        /// <summary>함께 들어온 침입자 파티. 부하·표식 적·혼자 나온 적은 null.</summary>
+        public StageParty Party { get; private set; }
+        /// <summary>지금 쫓거나 때리는 상대. 같은 파티원이 합류할 대상을 고를 때 읽는다.</summary>
+        public StageActor Opponent { get; private set; }
         public StageOption Option { get; private set; }
         public int PaidGold { get; private set; }
         public Vector2Int Home => _home;
@@ -84,6 +91,15 @@ namespace Code.Stages
         /// <summary>스폰 직후 적 특수 규칙을 붙인다. 부하는 쓰지 않는다.</summary>
         public void SetRule(StageEnemyRule rule) => Rule = IsEnemy ? rule : StageEnemyRule.None;
 
+        /// <summary>스폰 직후 파티에 넣는다. 부하는 쓰지 않는다.</summary>
+        public void JoinParty(StageParty party)
+        {
+            if (!IsEnemy || party == null)
+                return;
+            Party = party;
+            party.Add(this);
+        }
+
         /// <summary>게이지가 찬 부하의 궁극기를 쓴다. 대상은 지금 싸우는 상대(없으면 시전자 자리).</summary>
         public bool TryUltimate()
         {
@@ -128,9 +144,19 @@ namespace Code.Stages
                 _session.CheckTraps(this);
                 if (!IsAlive)
                     return;
+                if (Party != null && Party.Leader == this)
+                    Party.RecordLeaderCell(this, _session.Board.Cell(transform.position));
             }
             // 돌진 표식 적은 부하와 싸우지 않는다(길이 완전히 막히면 아래 이동이 부수고 지나간다)
             StageActor target = Rule == StageEnemyRule.Rush ? null : _session.FindOpponent(this, _home);
+            // 근처 파티원이 싸우면 같은 부하를 치러 간다. 직접 상대를 고를 때처럼 보이는 부하만 친다.
+            if (target == null && Party != null)
+            {
+                StageActor assist = Party.AssistTarget(this, _session.Definition.EngageRadius);
+                if (assist != null && _session.CanSee(transform.position, assist.transform.position))
+                    target = assist;
+            }
+            Opponent = target;
             if (target != null)
             {
                 float distance = Vector2.Distance(transform.position, target.transform.position);
@@ -157,8 +183,63 @@ namespace Code.Stages
                 _session.FinishEnemy(this, true);
                 return;
             }
+            if (Party != null && HoldForParty())
+                return;
             MoveToward(goal, true);
+        }
 
+        /// <summary>
+        /// 멤버는 리더가 한 칸보다 멀면 리더 쪽으로 가고, 가까우면 리더가 앞장서도록 선다.
+        /// 리더는 처진 멤버가 있으면 최대 <see cref="StageParty.MaxWaitSeconds"/>초 기다린다. 참이면 이번 프레임은 코어로 걷지 않는다.
+        /// </summary>
+        private bool HoldForParty()
+        {
+            float cell = _session.Definition.CellSize;
+            StageActor leader = Party.Leader;
+            if (leader != null && leader != this)
+            {
+                _waitStartedAt = -1f;
+                if (Vector2.Distance(transform.position, leader.transform.position) > StageParty.FollowCells * cell)
+                    MoveToward(NextTrailCell(leader), true);
+                else
+                    Combat.StopCombat();
+                return true;
+            }
+            // 바리케이드 등 막는 것을 부수는 중이면 기다리지 않고 계속 친다
+            if (Combat.Target != null && Combat.Target.IsAlive || !Party.HasStraggler(this, StageParty.WaitCells * cell))
+            {
+                _waitStartedAt = -1f;
+                return false;
+            }
+            // 오래 기다렸으면 처진 멤버가 따라붙을 때까지 다시 기다리지 않고 간다
+            if (_waitStartedAt < 0f)
+                _waitStartedAt = Time.time;
+            if (Time.time - _waitStartedAt >= StageParty.MaxWaitSeconds)
+                return false;
+            Combat.StopCombat();
+            return true;
+        }
+
+        /// <summary>
+        /// 리더 발자국에서 다음에 밟을 칸. 지금 선 칸이 발자국에 있으면 그 다음 칸으로 넘어가고(싸우다 돌아와도 앞쪽에서 잇는다),
+        /// 발자국을 다 따라왔거나 비었으면 리더 칸으로 간다. 목표가 바로 앞 칸이라 길 다시 찾기가 짧다.
+        /// </summary>
+        private Vector2Int NextTrailCell(StageActor leader)
+        {
+            IReadOnlyList<Vector2Int> trail = Party.Trail;
+            if (_trailVersion != Party.TrailVersion)
+            {
+                _trailVersion = Party.TrailVersion;
+                _trailIndex = 0;
+            }
+            Vector2Int current = _session.Board.Cell(transform.position);
+            for (int i = trail.Count - 1; i >= _trailIndex; i--)
+                if (trail[i] == current)
+                {
+                    _trailIndex = i + 1;
+                    break;
+                }
+            return _trailIndex < trail.Count ? trail[_trailIndex] : _session.Board.Cell(leader.transform.position);
         }
 
         private void ReturnHome()
@@ -261,7 +342,9 @@ namespace Code.Stages
         {
             if ((Agent != null && Agent.IsCombatMoveLocked) || Combat.IsWindingUp || Combat.IsStaggered)
                 return;
-            Vector3 next = Vector3.MoveTowards(transform.position, point, Speed * (_status != null ? _status.MoveSpeedMultiplier : 1f) * Time.deltaTime);
+            // 리더가 가장 느린 생존자 속도로 앞장선다. 멤버는 제 속도로 따라붙어 한 칸 뒤에 선다.
+            float speed = Party != null && Party.Leader == this ? Party.Speed(this) : Speed;
+            Vector3 next = Vector3.MoveTowards(transform.position, point, speed * (_status != null ? _status.MoveSpeedMultiplier : 1f) * Time.deltaTime);
             if (!_session.Board.IsPassable(_session.Board.Cell(next)) || !_session.CanAdvance(this, next))
                 return;
             _render?.FaceTowards(point.x - transform.position.x);

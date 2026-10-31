@@ -17,6 +17,7 @@ namespace Code.Stages
         [SerializeField] private Code.Manager.GameSpeedController speedController;
         private readonly HashSet<string> _loadout = new(StringComparer.Ordinal);
         private StageActor _boss;
+        private StageParty _party;
         private float _spawnClock;
         private int _spawned;
         private bool _locked;
@@ -237,6 +238,7 @@ namespace Code.Stages
             _locked = true;
             _spawned = 0;
             _spawnClock = 0;
+            _party = null;
             Phase = StagePhase.Fighting;
             Tell("침입자가 코어로 접근합니다");
         }
@@ -258,7 +260,8 @@ namespace Code.Stages
             {
                 EnemyDataSO data = wave.At(_spawned, out bool isBoss);
                 int open = Definition.OpenDoorCount(WaveIndex);
-                Vector2Int door = Definition.Doors[Definition.OpenDoorIndex(WaveIndex, _spawned % open)];
+                // 문은 파티마다 돌아가며 고른다. 한 파티는 같은 문으로 들어온다.
+                Vector2Int door = Definition.Doors[Definition.OpenDoorIndex(WaveIndex, wave.PartyIndex(_spawned) % open)];
                 Enemy enemy = Instantiate(data.Prefab, Board.World(door), Quaternion.identity, actorsRoot);
                 enemy.ConfigureData(data);
                 if (isBoss)
@@ -266,17 +269,36 @@ namespace Code.Stages
                 StageActor actor = enemy.gameObject.AddComponent<StageActor>();
                 actor.Initialize(this, door, null, 0);
                 actor.SetRule(wave.RuleAt(_spawned));
+                if (wave.StartsParty(_spawned))
+                    _party = wave.PartyLength(_spawned) > 1 ? new StageParty() : null;
+                // 표식 적은 같은 문으로 나오되 자기 규칙대로 혼자 움직인다
+                if (_party != null && actor.Rule == StageEnemyRule.None)
+                    actor.JoinParty(_party);
                 if (isBoss)
                 {
                     _boss = actor;
                     Tell($"보스 {data.Name} 등장");
                 }
+                _spawnClock = NextSpawnDelay(wave, _spawned);
                 _spawned++;
-                _spawnClock = wave.SpawnInterval;
                 Notify();
             }
             if (_spawned >= wave.Count && EnemyCount() == 0)
                 EndWave();
+        }
+
+        /// <summary>
+        /// 파티 안은 짧게 연달아, 파티 사이는 기존 간격 × 파티 인원에서 파티 안 간격을 뺀 만큼 기다린다.
+        /// 웨이브 전체 길이를 파티가 없던 때와 같게 둔다(2026-11-01 사용자 결정).
+        /// </summary>
+        private static float NextSpawnDelay(StageWave wave, int spawned)
+        {
+            int length = wave.PartyLength(spawned);
+            if (length <= 1)
+                return wave.SpawnInterval;
+            if (spawned + 1 < wave.Count && !wave.StartsParty(spawned + 1))
+                return StageParty.SpawnGap;
+            return Mathf.Max(0.1f, wave.SpawnInterval * length - StageParty.SpawnGap * (length - 1));
         }
 
         public int EnemyCount()

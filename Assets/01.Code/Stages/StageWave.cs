@@ -17,7 +17,40 @@ namespace Code.Stages
         /// <summary>일반 적 순서와 짝인 특수 규칙. 짧거나 비면 나머지는 규칙 없음.</summary>
         [field: SerializeField] public StageEnemyRule[] Rules { get; private set; } = Array.Empty<StageEnemyRule>();
 
+        /// <summary>
+        /// 일반 적을 순서대로 이 수만큼 끊어 한 파티로 묶는다(2026-11-01 사용자 결정, 임시 3). 보스와 호위는 크기와 상관없이 한 파티다.
+        /// 0이나 1이면 파티 없이 각자 움직인다(예전 동작).
+        /// </summary>
+        [field: SerializeField, Min(0)] public int PartySize { get; private set; } = 3;
+
         public bool HasBoss => Boss != null;
+
+        private int GroupSize => PartySize > 1 ? PartySize : 1;
+        private int RegularParties => ((Enemies?.Length ?? 0) + GroupSize - 1) / GroupSize;
+
+        /// <summary>등장 순서 번호가 속한 파티 번호. 문 배정에 쓴다. 파티가 없으면 등장 순서 그대로다.</summary>
+        public int PartyIndex(int index)
+        {
+            int regular = Enemies?.Length ?? 0;
+            if (index < regular)
+                return index / GroupSize;
+            // 각자 움직이면 보스·호위도 한 명씩 문을 돈다(예전 동작)
+            return GroupSize > 1 ? RegularParties : regular + (index - regular);
+        }
+
+        public bool StartsParty(int index) => index == 0 || PartyIndex(index) != PartyIndex(index - 1);
+
+        /// <summary>이 등장 순서 번호가 속한 파티의 인원.</summary>
+        public int PartyLength(int index)
+        {
+            int party = PartyIndex(index);
+            int length = 0;
+            for (int i = 0; i < Count; i++)
+                if (PartyIndex(i) == party)
+                    length++;
+            return length;
+        }
+
 
         public bool HasRules
         {

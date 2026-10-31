@@ -48,6 +48,32 @@ public static class StageDefenseBuilder
         AssetDatabase.SaveAssets();
     }
 
+    /// <summary>
+    /// 이미 쓴 7개 스테이지의 모든 웨이브에 파티 크기를 쓴다(2026-11-01 사용자 결정: 순서대로 3명씩 끊어 파티, 임시 값).
+    /// 편성·간격·보스 배율은 건드리지 않는다. 새로 쓰는 웨이브(<see cref="BuildStageSet"/>)는 기본값 3을 그대로 받는다.
+    /// </summary>
+    public static string ApplyPartySize(int size = 3)
+    {
+        Guard();
+        StageCatalogSO catalog = Load<StageCatalogSO>(Root + "/StageCatalog.asset");
+        System.Reflection.PropertyInfo property = typeof(StageWave).GetProperty(nameof(StageWave.PartySize));
+        int waves = 0;
+        foreach (StageDefinitionSO stage in catalog.Stages)
+        {
+            if (stage == null || stage.Waves == null)
+                continue;
+            foreach (StageWave wave in stage.Waves)
+            {
+                property.SetValue(wave, size);
+                waves++;
+            }
+            EditorUtility.SetDirty(stage);
+            // 다른 세션이 편집 중인 에셋까지 저장하지 않게 스테이지만 저장한다
+            AssetDatabase.SaveAssetIfDirty(stage);
+        }
+        return $"partySize={size} waves={waves}";
+    }
+
     private const string ArtifactRoot = "Assets/07.SO/Artifacts/";
 
     /// <summary>
