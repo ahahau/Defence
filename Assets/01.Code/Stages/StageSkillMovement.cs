@@ -110,7 +110,7 @@ namespace Code.Stages
         }
 
         private bool WithinLeash(StageActor actor, Vector2 point) => actor.IsEnemy
-            || Vector2.Distance(_board.World(actor.Home), point) <= _board.Definition.LeashRadius;
+            || Vector2.Distance(_board.World(actor.Home), point) <= actor.LeashRadius;
 
         private StageActor FindActor(BattleAgent agent)
         {

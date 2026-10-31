@@ -38,6 +38,14 @@ namespace Code.Stages
         public StageParty Party { get; private set; }
         /// <summary>지금 쫓거나 때리는 상대. 같은 파티원이 합류할 대상을 고를 때 읽는다.</summary>
         public StageActor Opponent { get; private set; }
+        /// <summary>부하 이동 범위 명령. 적은 늘 기본이다.</summary>
+        public StageUnitCommand Command { get; private set; }
+        /// <summary>배치 칸에서 쫓고 걸을 수 있는 거리. 명령에 따라 달라진다(적은 쓰지 않는다).</summary>
+        public float LeashRadius => StageUnitCommandRules.LeashRadius(Command, _session.Definition.LeashRadius,
+            _session.Definition.CellSize);
+        /// <summary>자기 자리에서 적을 알아채는 거리.</summary>
+        public float EngageRadius => IsEnemy ? _session.Definition.EngageRadius
+            : StageUnitCommandRules.EngageRadius(Command, _session.Definition.EngageRadius);
         public StageOption Option { get; private set; }
         public int PaidGold { get; private set; }
         public Vector2Int Home => _home;
@@ -90,6 +98,17 @@ namespace Code.Stages
 
         /// <summary>스폰 직후 적 특수 규칙을 붙인다. 부하는 쓰지 않는다.</summary>
         public void SetRule(StageEnemyRule rule) => Rule = IsEnemy ? rule : StageEnemyRule.None;
+
+        /// <summary>명령을 바꾸고 이전 범위로 잡아 둔 길·복귀 자리를 버린다. 적에게는 걸지 않는다.</summary>
+        internal void SetCommand(StageUnitCommand command)
+        {
+            if (IsEnemy)
+                return;
+            Command = command;
+            _path.Clear();
+            _nextPathAt = 0f;
+            _nextReturnCheckAt = 0f;
+        }
 
         /// <summary>스폰 직후 파티에 넣는다. 부하는 쓰지 않는다.</summary>
         public void JoinParty(StageParty party)
@@ -168,7 +187,11 @@ namespace Code.Stages
                     return;
                 }
                 Combat.StopCombat();
-                MoveToward(_session.Board.Cell(target.transform.position), true);
+                // 사수는 걸어서 쫓지 않는다. 사거리 밖이면 자리를 지키고, 밀려났으면 제자리로 돌아간다.
+                if (!IsEnemy && Command == StageUnitCommand.Hold)
+                    ReturnHome();
+                else
+                    MoveToward(_session.Board.Cell(target.transform.position), true);
                 return;
             }
             if (!IsEnemy)
@@ -275,7 +298,7 @@ namespace Code.Stages
                 {
                     Vector2Int next = cell + step;
                     if (!_session.Board.IsPassable(next) || !_visited.Add(next)
-                        || Vector2.Distance(board.World(_home), board.World(next)) > _session.Definition.LeashRadius)
+                        || Vector2.Distance(board.World(_home), board.World(next)) > LeashRadius)
                         continue;
                     _frontier.Enqueue(next);
                 }

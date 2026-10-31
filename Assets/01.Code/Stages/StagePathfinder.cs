@@ -113,7 +113,7 @@ namespace Code.Stages
                     if (!_board.IsPassable(next))
                         continue;
                     if (actor != null && !actor.IsEnemy
-                        && Vector2.Distance(_board.World(actor.Home), _board.World(next)) > _board.Definition.LeashRadius)
+                        && Vector2.Distance(_board.World(actor.Home), _board.World(next)) > actor.LeashRadius)
                         continue;
                     int index = Index(next);
                     if (_closed[index])

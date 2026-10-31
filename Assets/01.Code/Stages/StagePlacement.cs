@@ -160,7 +160,8 @@ namespace Code.Stages
                     kind = "unit", optionId = actor.Option.Id, cell = actor.Home,
                     position = actor.transform.position, paid = actor.PaidGold,
                     upgrade = _session.Profile.Level(actor.Option.Id), condition = actor.Unit.CaptureConditionState(),
-                    cooldown = actor.Skills != null ? actor.Skills.CaptureStageCooldown() : 0
+                    cooldown = actor.Skills != null ? actor.Skills.CaptureStageCooldown() : 0,
+                    command = (int)actor.Command
                 });
             }
             foreach (Trap trap in _traps)
@@ -188,6 +189,7 @@ namespace Code.Stages
                 actor.transform.position = saved.position;
                 actor.Unit.ApplyConditionState(saved.condition);
                 actor.Skills?.RestoreStageCooldown(saved.cooldown);
+                actor.SetCommand((StageUnitCommand)saved.command);
             }
             else if (placed is Trap trap)
             {

@@ -22,5 +22,7 @@ namespace Code.Stages
         [SerializeField] internal int tickDamage;
         [SerializeField] internal float recoveryDelay;
         [SerializeField] internal float recoveryFraction;
+        // 부하 명령(StageUnitCommand, 2026-11-01). 없는 구 저장은 0(기본)으로 읽는다.
+        [SerializeField] internal int command;
     }
 }

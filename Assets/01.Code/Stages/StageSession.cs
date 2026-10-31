@@ -401,16 +401,31 @@ namespace Code.Stages
 
         public void Demolish(Vector2Int cell) => Placement.Demolish(cell);
 
+        /// <summary>준비 단계에만 배치한 부하 한 명의 명령을 바꾼다(2026-11-01 사용자 결정).</summary>
+        public bool TrySetCommand(StageActor actor, StageUnitCommand command)
+        {
+            if (Phase != StagePhase.Preparing || actor == null || actor.IsEnemy || !actor.IsAlive
+                || Board == null || !Board.Actors.Contains(actor))
+                return false;
+            if (actor.Command == command)
+                return true;
+            actor.SetCommand(command);
+            Tell($"{actor.Option?.Label} 명령: {StageUnitCommandRules.Label(command)}");
+            return true;
+        }
+
         public StageActor FindOpponent(StageActor self, Vector2Int home)
         {
             StageActor best = null;
-            float range = Mathf.Max(Definition.EngageRadius, self.Combat.StrikeRange);
+            // 부하는 명령(사수·기본·추격)에 따라 알아채는 거리와 배치 칸에서 쫓는 거리가 달라진다
+            float range = Mathf.Max(self.EngageRadius, self.Combat.StrikeRange);
             float score = range * range;
+            float leash = self.IsEnemy ? 0f : Mathf.Max(self.LeashRadius, self.Combat.StrikeRange);
             foreach (StageActor other in Board.Actors)
             {
                 if (other == null || other == self || !other.IsAlive || other.IsEnemy == self.IsEnemy)
                     continue;
-                if (!self.IsEnemy && Vector2.Distance(Board.World(home), other.transform.position) > Mathf.Max(Definition.LeashRadius, self.Combat.StrikeRange))
+                if (!self.IsEnemy && Vector2.Distance(Board.World(home), other.transform.position) > leash)
                     continue;
                 float distance = (self.transform.position - other.transform.position).sqrMagnitude;
                 if (distance < score && CanSee(self.transform.position, other.transform.position))

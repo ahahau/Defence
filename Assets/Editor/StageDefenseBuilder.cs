@@ -136,6 +136,49 @@ public static class StageDefenseBuilder
         return "artifactRows=" + FindInScene<StageSession>(scene).Catalog.Artifacts.Length;
     });
 
+    /// <summary>
+    /// 작성된 StageDefense 씬에 부하 명령 막대(2026-11-01 사용자 결정: 사수·기본·추격, 준비 단계·한 명씩)를 더한다.
+    /// 이미 있으면 지우고 다시 만든다. 다른 HUD 요소는 건드리지 않는다.
+    /// </summary>
+    public static string AddCommandBar() => EditScene(scene =>
+    {
+        StageHudView view = FindInScene<StageHudView>(scene);
+        RectTransform host = (RectTransform)view.transform;
+        Transform old = host.Find(CommandBarName);
+        if (old != null)
+            UnityEngine.Object.DestroyImmediate(old.gameObject);
+        BuildCommandBar(view, host);
+        return "commandBar=" + (host.Find(CommandBarName) != null);
+    });
+
+    private const string CommandBarName = "CommandBar";
+
+    /// <summary>
+    /// 맵 아래 도구 안내 줄(위 930) 바로 위의 고정 크기 막대(640×48). 고른 부하가 없으면 HUD가 통째로 숨긴다.
+    /// 지도 가운데를 가리지 않게 왼쪽 패널 옆에 붙인다.
+    /// </summary>
+    private static void BuildCommandBar(StageHudView view, RectTransform host)
+    {
+        RectTransform root = UiKit.TopLeft(UiKit.Rect(CommandBarName, host), 470, 872, 640, 48);
+        UiKit.Panel(root, HudPalette.Surface, HudPalette.Border, true);
+        StageCommandBar bar = root.gameObject.AddComponent<StageCommandBar>();
+        UiKit.Wire(bar, "label", Text(root, "Label", "", 15, 12, 12, 300, 28, HudPalette.TextBody));
+        UiKit.Wire(bar, "hold", Button(root, "Hold", "사수", 320, 6, 96, 36));
+        UiKit.Wire(bar, "normal", Button(root, "Normal", "기본", 424, 6, 96, 36));
+        UiKit.Wire(bar, "pursue", Button(root, "Pursue", "추격", 528, 6, 96, 36));
+        UiKit.Wire(view, "commandBar", bar);
+        root.gameObject.SetActive(false);
+        KeepArtifactWindowOnTop(host);
+    }
+
+    /// <summary>가운데 유물 창이 나중에 놓인 HUD 요소에 가려지지 않게 맨 뒤 형제로 다시 둔다.</summary>
+    private static void KeepArtifactWindowOnTop(RectTransform host)
+    {
+        Transform window = host.Find(ArtifactWindowName);
+        if (window != null)
+            window.SetAsLastSibling();
+    }
+
     private const string ArtifactWindowName = "ArtifactWindow";
 
     /// <summary>편성 목록 높이. 유물 칸(위 720~826) 자리를 위해 600에서 줄였다.</summary>
@@ -752,12 +795,14 @@ public static class StageDefenseBuilder
         UiKit.Wire(view, "headline", Text(host, "StageTitle", "스테이지", 24, 470, 28, HeadlineWidth, 42, HudPalette.Accent));
         UiKit.Wire(view, "status", Text(host, "Status", "", 22, 470, 82, HeadlineWidth, 42, HudPalette.TextBody));
         UiKit.Wire(view, "tool", Text(host, "Tool", "", 18, 470, 930, 1400, 38, HudPalette.TextBody));
+        BuildCommandBar(view, host);
         UiKit.Wire(view, "primary", Button(host, "Primary", "웨이브 시작", 470, 996, 300, 54));
         UiKit.Wire(view, "retry", Button(host, "Retry", "스테이지 재도전", 800, 996, 300, 54));
         UiKit.Wire(view, "title", Button(host, "Title", "타이틀", 1130, 996, 180, 54));
         SpriteRenderer cursor = SpriteBar("Placement Cursor", null, new Color(0.3f, 0.9f, 0.6f, 0.3f), 1, 1);
         cursor.sortingOrder = 100;
         UiKit.Wire(view, "cursor", cursor);
+        KeepArtifactWindowOnTop(host);
     }
 
     private const string OptionListName = "OptionList";

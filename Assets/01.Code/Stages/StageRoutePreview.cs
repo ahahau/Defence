@@ -89,7 +89,7 @@ namespace Code.Stages
             foreach (StageActor actor in board.Actors)
                 if (actor != null && !actor.IsEnemy && actor.IsAlive)
                     StageRouteRules.CollectReach(board, actor.Home,
-                        Mathf.Max(definition.LeashRadius, actor.Combat.StrikeRange), _reach);
+                        Mathf.Max(actor.LeashRadius, actor.Combat.StrikeRange), _reach);
 
             if (session.WaveIndex >= definition.Waves.Length)
                 return;
@@ -144,7 +144,7 @@ namespace Code.Stages
                 if (actor == null || actor.IsEnemy || !actor.IsAlive)
                     continue;
                 sum += System.HashCode.Combine(actor.Home, board.Cell(actor.transform.position),
-                    actor.Combat.StrikeRange, actor.Combat.Health.CurrentHealth);
+                    actor.Combat.StrikeRange, actor.Combat.Health.CurrentHealth, actor.Command);
                 count++;
             }
             foreach (KeyValuePair<Vector2Int, StageBarricade> pair in board.Barricades)

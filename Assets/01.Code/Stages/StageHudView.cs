@@ -38,6 +38,7 @@ namespace Code.Stages
         [SerializeField] private TMP_Text artifactSummary;
         [SerializeField] private UiFrameButton artifactButton;
         [SerializeField] private StageArtifactWindow artifactWindow;
+        [SerializeField] private StageCommandBar commandBar;
         // 인스펙터 배선용이 아니다. 실행 중 만든 월드 표식 묶음을 직렬화해 두어
         // 재활성화·스크립트 재로드 뒤에도 이전 묶음을 찾아 정리한다(StageHudLifecycleDesign.md).
         [SerializeField, HideInInspector] private Transform visualRoot;
@@ -53,6 +54,7 @@ namespace Code.Stages
         private StageUltimateBars _ultimates;
         private StageEnemyMarks _marks;
         private StageDeviceView _devices;
+        private StageCommandMarks _commands;
 
         private void Awake() => EnsureRuntimeState();
 
@@ -94,6 +96,9 @@ namespace Code.Stages
             UnbindEvents();
             _battleSignals?.Hide();
             _placementTool?.Hide();
+            _commands?.Hide();
+            if (commandBar != null)
+                commandBar.Hide();
             if (cursor != null)
                 cursor.gameObject.SetActive(false);
             if (visualRoot != null)
@@ -171,7 +176,8 @@ namespace Code.Stages
             }
             if (visualRoot == null || _battleSignals == null || !_battleSignals.IsValid
                 || _route == null || !_route.IsValid || _ultimates == null || !_ultimates.IsValid
-                || _marks == null || !_marks.IsValid || _devices == null || !_devices.IsValid)
+                || _marks == null || !_marks.IsValid || _devices == null || !_devices.IsValid
+                || _commands == null || !_commands.IsValid)
             {
                 ReleaseVisuals();
                 visualRoot = new GameObject("Stage HUD Visuals").transform;
@@ -182,6 +188,7 @@ namespace Code.Stages
                 _ultimates = new StageUltimateBars(cursor, _cursorScale, visualRoot);
                 _marks = new StageEnemyMarks(cursor, _cursorScale, visualRoot);
                 _devices = new StageDeviceView(cursor, _cursorScale, visualRoot);
+                _commands = new StageCommandMarks(cursor, _cursorScale, visualRoot);
             }
             visualRoot.gameObject.SetActive(true);
             return true;
@@ -200,6 +207,7 @@ namespace Code.Stages
             _ultimates = null;
             _marks = null;
             _devices = null;
+            _commands = null;
         }
 
         private void BindRows()
@@ -240,6 +248,11 @@ namespace Code.Stages
                 _devices.Show(session);
             else
                 _devices.Hide();
+            bool preparing = session.Phase == StagePhase.Preparing;
+            if (preparing || session.Phase == StagePhase.Fighting)
+                _commands.Show(session, preparing ? _placementTool.SelectedUnit : null);
+            else
+                _commands.Hide();
             if (session.Phase == StagePhase.Fighting)
             {
                 _ultimates.Show(session);
@@ -334,6 +347,14 @@ namespace Code.Stages
             loadout.text = $"편성 {session.SelectedCount}/{session.LoadoutSlots} · 강화 재화 {session.Profile.Currency}";
             if (artifactSummary != null && session.Artifacts != null)
                 artifactSummary.text = _artifacts.Summary(session);
+            if (commandBar != null)
+            {
+                StageActor commanded = session.Phase == StagePhase.Preparing ? _placementTool.SelectedUnit : null;
+                if (commanded != null)
+                    commandBar.Show(session, commanded);
+                else
+                    commandBar.Hide();
+            }
             if (preparing)
                 _route.Show(session);
             else
@@ -343,6 +364,7 @@ namespace Code.Stages
             tool.text = (session.Phase == StagePhase.Cleared || session.Phase == StagePhase.Failed
                 ? StageWaveResultPresenter.NextActionFor(session)
                 : !preparing ? "전투 중 · 배치·철거는 준비 단계"
+                : _placementTool.SelectedUnit != null ? "부하 명령 · 아래 막대에서 선택 · 우클릭 해제"
                 : _placementTool.Demolishing ? "철거 · 대상 클릭 · 우클릭 취소"
                 : !_placementTool.Placing ? "도구 없음 · 왼쪽에서 배치할 종류를 선택하세요"
                 : selected == null ? $"현재 도구: 바리케이드 · {definition.BarricadeCost}G · 우클릭 취소"

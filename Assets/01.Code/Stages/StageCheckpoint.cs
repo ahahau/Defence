@@ -236,8 +236,9 @@ namespace Code.Stages
                         || !Finite(saved.condition.HealthRatio) || saved.condition.HealthRatio < 0 || saved.condition.HealthRatio > 1
                         || !Enum.IsDefined(typeof(UnitTrait), saved.condition.Trait)
                         || !Enum.IsDefined(typeof(UnitPersonality), saved.condition.Personality)
-                        || !Enum.IsDefined(typeof(UnitCommand), saved.condition.Command))
-                        return Reject("부하 위치·체력 또는 개체 상태가 유효하지 않습니다.", out reason);
+                        || !Enum.IsDefined(typeof(UnitCommand), saved.condition.Command)
+                        || !Enum.IsDefined(typeof(StageUnitCommand), saved.command))
+                        return Reject("부하 위치·체력·명령 또는 개체 상태가 유효하지 않습니다.", out reason);
                     // 실제 배치(StagePlacement.Check)처럼 부하 자리도 바리케이드·함정·다른 부하와 겹칠 수 없다.
                     if (!occupied.Add(saved.cell))
                         return Reject("부하 자리가 다른 배치와 겹칩니다.", out reason);
