@@ -15,6 +15,10 @@ namespace Code.Stages
         public bool RewardConfirmed { get; private set; }
         public bool RewardPreviouslyClaimed { get; private set; }
         public int ClearReward { get; private set; }
+        /// <summary>이번 패배로 실제 지급한 강화 재화.</summary>
+        public int FailureReward { get; private set; }
+        /// <summary>패배 보상을 저장하지 못해 지급하지 않았다.</summary>
+        public bool FailureRewardLost { get; private set; }
 
         internal void Reset()
         {
@@ -23,6 +27,14 @@ namespace Code.Stages
             RewardConfirmed = false;
             RewardPreviouslyClaimed = false;
             ClearReward = 0;
+            FailureReward = 0;
+            FailureRewardLost = false;
+        }
+
+        internal void RecordFailureReward(int awarded, bool saved)
+        {
+            FailureReward = awarded;
+            FailureRewardLost = !saved;
         }
 
         internal void Begin()

@@ -100,6 +100,22 @@ namespace Code.Stages
             return true;
         }
 
+        /// <summary>
+        /// 아직 깨지 못한 스테이지의 패배 보상을 더한다(2026-11-02 사용자 결정). 깬 스테이지거나 0이면 저장하지 않는다.
+        /// </summary>
+        public bool TryAwardFailure(StageDefinitionSO definition, int reward, out int awarded)
+        {
+            awarded = 0;
+            if (definition == null || IsCleared(definition.Id) || reward <= 0)
+                return true;
+            Document next = Clone();
+            next.currency = checked(next.currency + reward);
+            if (!Commit(next))
+                return false;
+            awarded = reward;
+            return true;
+        }
+
         public bool TryUpgrade(StageOption option, StageCatalogSO catalog)
         {
             if (!IsUnlocked(option))

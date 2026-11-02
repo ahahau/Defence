@@ -13,6 +13,21 @@ namespace Code.Stages
         [field: SerializeField, Min(1)] public int BaseLoadoutSlots { get; private set; } = 4;
         [field: SerializeField] public string[] SlotRewardStages { get; private set; } = System.Array.Empty<string>();
 
+        [field: Header("실패 보상 (임시 값, 2026-11-02 사용자 결정)")]
+        [field: SerializeField, Min(0), Tooltip("코어 0 패배 때 끝까지 막은 웨이브 하나당 강화 재화.")]
+        public int FailureRewardPerWave { get; private set; } = 1;
+        [field: SerializeField, Range(0f, 1f), Tooltip("실패 보상 상한 = 초회 클리어 보상 × 이 비율(내림).")]
+        public float FailureRewardCapRatio { get; private set; } = 0.5f;
+
+        /// <summary>아직 깨지 못한 스테이지에서 코어 0으로 졌을 때 줄 강화 재화.</summary>
+        public int FailureReward(StageDefinitionSO definition, int defendedWaves)
+        {
+            if (definition == null || defendedWaves <= 0)
+                return 0;
+            int cap = Mathf.FloorToInt(Mathf.Max(0, definition.ClearReward) * FailureRewardCapRatio);
+            return Mathf.Clamp(defendedWaves * FailureRewardPerWave, 0, cap);
+        }
+
         [field: Header("유물 (임시 값, 2026-10-29 사용자 결정)")]
         [field: SerializeField] public StageArtifact[] Artifacts { get; private set; } = System.Array.Empty<StageArtifact>();
         [field: SerializeField] public Code.Artifacts.ArtifactComboCatalogSO ArtifactCombos { get; private set; }

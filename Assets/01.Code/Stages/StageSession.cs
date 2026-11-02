@@ -354,7 +354,10 @@ namespace Code.Stages
                     Phase = StagePhase.Failed;
                     _checkpoint?.End();
                     StopActors();
-                    Tell("코어가 파괴됐습니다. 스테이지 처음부터 다시 편성할 수 있습니다");
+                    // 끝까지 막은 웨이브 수 = 지금 웨이브 번호. 깨지 못한 스테이지에서만 준다(2026-11-02 사용자 결정).
+                    bool saved = Profile.TryAwardFailure(Definition, Catalog.FailureReward(Definition, WaveIndex), out int awarded);
+                    Results.RecordFailureReward(awarded, saved);
+                    Tell(saved ? "코어가 파괴됐습니다. 스테이지 처음부터 다시 편성할 수 있습니다" : Profile.Error);
                 }
             }
             actor.gameObject.SetActive(false);

@@ -18,7 +18,20 @@ namespace Code.UI.Stages
             string text = $"{report.WaveNumber}웨이브 {(report.Completed ? "방어 완료" : "방어 실패")}\n"
                 + $"처치 {report.Kills} · 도달 {report.Arrivals}\n"
                 + $"코어 피해 {report.CoreDamage}\n금화 +{report.EarnedGold}G (파괴 환급 포함)";
+            if (session.Phase == StagePhase.Failed)
+                text += "\n" + FailureRewardLine(session, report);
             return text + "\n" + session.Message;
+        }
+
+        /// <summary>패배 보상 한 줄(2026-11-02 사용자 결정). 막은 웨이브 = 실패한 웨이브 번호 - 1.</summary>
+        private static string FailureRewardLine(StageSession session, StageWaveReport report)
+        {
+            StageWaveResults results = session.Results;
+            if (results.FailureRewardLost)
+                return "강화 재화 저장 실패";
+            if (session.Profile != null && results.FailureReward == 0 && session.Profile.IsCleared(session.Definition.Id))
+                return "강화 재화 +0 (클리어한 스테이지)";
+            return $"강화 재화 +{results.FailureReward} ({report.WaveNumber - 1}웨이브 방어)";
         }
 
         /// <summary>
