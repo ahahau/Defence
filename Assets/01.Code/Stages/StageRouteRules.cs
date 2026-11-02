@@ -36,9 +36,9 @@ namespace Code.Stages
 
         /// <summary>적 데이터로 만든 길찾기 주체. 실제 적과 같은 이동 속도·평타·규칙으로 잰다.</summary>
         public static StagePathfinder.Traveler EnemyTraveler(StageDefinitionSO definition, EnemyDataSO enemy,
-            StageEnemyRule rule) =>
+            StageEnemyRule rule, float barricadeMultiplier = 1f) =>
             new(null, definition.EnemySpeed * MobilityRules.SpeedMultiplier(enemy.Mobility), true,
-                enemy.AttackDamage, enemy.AttackInterval, rule == StageEnemyRule.Vault);
+                enemy.AttackDamage, enemy.AttackInterval, rule == StageEnemyRule.Vault, barricadeMultiplier);
 
         /// <summary>부하가 적을 쫓아 나가는 바닥 칸. 배치 칸에서 반경 안(<see cref="StageSession.FindOpponent"/>과 같은 기준).</summary>
         public static void CollectReach(StageBoard board, Vector2Int home, float radius, ISet<Vector2Int> cells)

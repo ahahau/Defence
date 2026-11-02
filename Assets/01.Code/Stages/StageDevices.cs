@@ -20,6 +20,9 @@ namespace Code.Stages
 
             public State(StageDevice device) => Device = device;
 
+            /// <summary>불 구멍이 타면 함께 타는 이웃 풀섬 칸(지형 <see cref="StageTerrainRule.SpreadsFire"/>). 적·부하를 모두 친다.</summary>
+            public List<Vector2Int> SpreadCells { get; } = new();
+
             public bool Ready => Device.Kind == StageDeviceKind.Rockfall && CooldownLeft <= 0f;
             public float CooldownRatio => Device.Cooldown <= 0f ? 1f : 1f - Mathf.Clamp01(CooldownLeft / Device.Cooldown);
         }
@@ -35,7 +38,12 @@ namespace Code.Stages
             if (board.Definition.Devices != null)
                 foreach (StageDevice device in board.Definition.Devices)
                     if (device != null)
-                        _states.Add(new State(device));
+                    {
+                        State state = new(device);
+                        if (device.Kind == StageDeviceKind.FireVent)
+                            FindSpreadCells(device.Cell, state.SpreadCells);
+                        _states.Add(state);
+                    }
             Reset();
         }
 
@@ -127,17 +135,34 @@ namespace Code.Stages
             if (state.TickClock > 0f)
                 return;
             state.TickClock = state.Device.TickInterval;
-            Collect(_board.World(state.Device.Cell), _board.Definition.CellSize * 0.5f, true, true);
+            float radius = _board.Definition.CellSize * 0.5f;
+            Collect(_board.World(state.Device.Cell), radius, true, true);
+            // 번진 풀섬 칸도 같은 박자에 친다. 두 칸 경계에 선 전투원은 한 번만 맞는다.
+            foreach (Vector2Int cell in state.SpreadCells)
+                Collect(_board.World(cell), radius, true, true, false);
             Hit(state.Device.Damage);
         }
 
-        /// <summary>피해로 쓰러지면 보드 목록이 바뀌므로 먼저 모은다.</summary>
-        private void Collect(Vector3 center, float radius, bool enemies, bool units)
+        /// <summary>불 구멍을 둘러싼 8칸 중 불이 번지는 지형 칸.</summary>
+        private void FindSpreadCells(Vector2Int vent, List<Vector2Int> cells)
         {
-            _hits.Clear();
+            for (int y = -1; y <= 1; y++)
+            for (int x = -1; x <= 1; x++)
+            {
+                Vector2Int cell = vent + new Vector2Int(x, y);
+                if (cell != vent && _board.Definition.IsFloor(cell) && _board.Terrain.SpreadsFire(cell))
+                    cells.Add(cell);
+            }
+        }
+
+        /// <summary>피해로 쓰러지면 보드 목록이 바뀌므로 먼저 모은다. <paramref name="clear"/>가 거짓이면 이어 모은다.</summary>
+        private void Collect(Vector3 center, float radius, bool enemies, bool units, bool clear = true)
+        {
+            if (clear)
+                _hits.Clear();
             foreach (StageActor actor in _board.Actors)
             {
-                if (actor == null || !actor.IsAlive || (actor.IsEnemy ? !enemies : !units))
+                if (actor == null || !actor.IsAlive || (actor.IsEnemy ? !enemies : !units) || (!clear && _hits.Contains(actor)))
                     continue;
                 if (((Vector2)(actor.transform.position - center)).sqrMagnitude <= radius * radius)
                     _hits.Add(actor);

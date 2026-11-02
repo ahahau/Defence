@@ -55,24 +55,9 @@ MonoBehaviour:
   <KillReward>k__BackingField: 5
   <Waves>k__BackingField:
   - <Enemies>k__BackingField:
-    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
-    - {fileID: 11400000, guid: 6ee6e1b5213d40e8a931a3e0e4f4811a, type: 2}
     - {fileID: 11400000, guid: 6031153906814462808020aadde25242, type: 2}
     - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
-    - {fileID: 11400000, guid: 8af77e86c8ec4cb0a33b599cf083ed5a, type: 2}
-    <SpawnInterval>k__BackingField: 1.35
-    <Boss>k__BackingField: {fileID: 0}
-    <BossEscorts>k__BackingField: []
-    <BossHealthMultiplier>k__BackingField: 6
-    <BossAttackMultiplier>k__BackingField: 2
-    <BossScale>k__BackingField: 1.6
-    <Rules>k__BackingField: 
-    <PartySize>k__BackingField: 3
-  - <Enemies>k__BackingField:
-    - {fileID: 11400000, guid: 6ee6e1b5213d40e8a931a3e0e4f4811a, type: 2}
     - {fileID: 11400000, guid: 6031153906814462808020aadde25242, type: 2}
-    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
-    - {fileID: 11400000, guid: 8af77e86c8ec4cb0a33b599cf083ed5a, type: 2}
     - {fileID: 11400000, guid: 6ee6e1b5213d40e8a931a3e0e4f4811a, type: 2}
     - {fileID: 11400000, guid: 6031153906814462808020aadde25242, type: 2}
     <SpawnInterval>k__BackingField: 1.35
@@ -84,12 +69,27 @@ MonoBehaviour:
     <Rules>k__BackingField: 
     <PartySize>k__BackingField: 3
   - <Enemies>k__BackingField:
+    - {fileID: 11400000, guid: d68d85cb6a080c9f9cd6e61e90fc5ee7, type: 2}
+    - {fileID: 11400000, guid: 8af77e86c8ec4cb0a33b599cf083ed5a, type: 2}
+    - {fileID: 11400000, guid: d68d85cb6a080c9f9cd6e61e90fc5ee7, type: 2}
     - {fileID: 11400000, guid: 6031153906814462808020aadde25242, type: 2}
+    - {fileID: 11400000, guid: d68d85cb6a080c9f9cd6e61e90fc5ee7, type: 2}
     - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    <SpawnInterval>k__BackingField: 1.35
+    <Boss>k__BackingField: {fileID: 0}
+    <BossEscorts>k__BackingField: []
+    <BossHealthMultiplier>k__BackingField: 6
+    <BossAttackMultiplier>k__BackingField: 2
+    <BossScale>k__BackingField: 1.6
+    <Rules>k__BackingField: 
+    <PartySize>k__BackingField: 3
+  - <Enemies>k__BackingField:
+    - {fileID: 11400000, guid: 6ee6e1b5213d40e8a931a3e0e4f4811a, type: 2}
     - {fileID: 11400000, guid: 8af77e86c8ec4cb0a33b599cf083ed5a, type: 2}
     - {fileID: 11400000, guid: 6ee6e1b5213d40e8a931a3e0e4f4811a, type: 2}
+    - {fileID: 11400000, guid: d68d85cb6a080c9f9cd6e61e90fc5ee7, type: 2}
+    - {fileID: 11400000, guid: 6ee6e1b5213d40e8a931a3e0e4f4811a, type: 2}
     - {fileID: 11400000, guid: 6031153906814462808020aadde25242, type: 2}
-    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
     - {fileID: 11400000, guid: 6ee6e1b5213d40e8a931a3e0e4f4811a, type: 2}
     <SpawnInterval>k__BackingField: 1.35
     <Boss>k__BackingField: {fileID: 0}
@@ -101,8 +101,8 @@ MonoBehaviour:
     <PartySize>k__BackingField: 3
   - <Enemies>k__BackingField:
     - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
-    - {fileID: 11400000, guid: 8af77e86c8ec4cb0a33b599cf083ed5a, type: 2}
     - {fileID: 11400000, guid: 6ee6e1b5213d40e8a931a3e0e4f4811a, type: 2}
+    - {fileID: 11400000, guid: 8af77e86c8ec4cb0a33b599cf083ed5a, type: 2}
     <SpawnInterval>k__BackingField: 1.35
     <Boss>k__BackingField: {fileID: 11400000, guid: f71a0dd734b36a34594122885a52e27a, type: 2}
     <BossEscorts>k__BackingField:

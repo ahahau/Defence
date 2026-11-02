@@ -218,8 +218,7 @@ namespace Code.Stages
                 return Reject("상인 구매 기록이 진행과 맞지 않습니다.", out reason);
             // 금고 보수(사건·상인)로 되찾은 체력을 빼야 전과의 코어 피해와 실제 손실을 맞출 수 있다
             int unrepairedCore = data.coreHealth - data.supplyRepaired - data.followUpRepaired - data.merchantRepaired;
-            int barricadeHealth = StageMerchant.BarricadeHealth(definition,
-                StageMerchant.BarricadeMultiplier(_session.Catalog, data.merchantItems));
+            float barricadeMultiplier = StageMerchant.BarricadeMultiplier(_session.Catalog, data.merchantItems);
             if (data.hasWaveReport && (data.waveReport == null
                 || !data.waveReport.MatchesPreparation(definition, data.nextWave, unrepairedCore)))
                 return Reject("마지막 결과 요약이 직전 완료 웨이브와 맞지 않습니다.", out reason);
@@ -240,7 +239,7 @@ namespace Code.Stages
                     if (!equipped.Add(id ?? string.Empty) || !_session.HasArtifact(_session.Catalog.FindArtifact(id)))
                         return Reject("장착 유물이 중복되거나 현재 보유하지 않은 유물입니다.", out reason);
             }
-            StageBoard board = new(definition);
+            StageBoard board = new(definition, _session.Catalog);
             HashSet<Vector2Int> occupied = new();
             foreach (StageSavedPlacement saved in data.placements)
             {
@@ -249,7 +248,8 @@ namespace Code.Stages
                     return Reject("배치 좌표·설치비 또는 대기시간이 유효하지 않습니다.", out reason);
                 if (saved.kind == "barricade")
                 {
-                    if (!string.IsNullOrEmpty(saved.optionId) || saved.health <= 0 || saved.health > barricadeHealth
+                    if (!string.IsNullOrEmpty(saved.optionId) || saved.health <= 0 || saved.health > StageMerchant.BarricadeHealth(definition,
+                            barricadeMultiplier * board.Terrain.BarricadeMultiplier(saved.cell))
                         || !Finite(saved.recoveryDelay) || saved.recoveryDelay < 0 || saved.recoveryDelay > definition.RecoveryDelay
                         || !Finite(saved.recoveryFraction) || saved.recoveryFraction < 0 || saved.recoveryFraction >= 1
                         || !occupied.Add(saved.cell))
@@ -286,6 +286,9 @@ namespace Code.Stages
                         if (!definition.IsBuildable(cell) || board.Reserved(cell) || !occupied.Add(cell))
                             return Reject("함정 면적이 설치 불가 칸을 포함하거나 다른 배치와 겹칩니다.", out reason);
                     }
+                    // 지형을 나중에 더한 맵에서 막힌 칸 위에 저장된 함정은 되살리지 않는다
+                    if (board.Terrain.BlockReason(saved.cell, template.Footprint, option.Trap).Length > 0)
+                        return Reject("함정이 지금 지형에서 설치할 수 없는 칸에 있습니다.", out reason);
                 }
                 else
                     return Reject("배치 종류 또는 프리팹이 현재 콘텐츠와 맞지 않습니다.", out reason);
@@ -301,11 +304,12 @@ namespace Code.Stages
 
         private static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 
-        private static string Signature(StageDefinitionSO definition)
+        private string Signature(StageDefinitionSO definition)
         {
             StringBuilder text = new();
+            // 지형 칸을 더해도 기존 저장을 "맵 변경"으로 막지 않는다. 지형 위 함정은 Validate가 따로 본다.
             foreach (string row in definition.Layout)
-                text.Append(row).Append('\n');
+                text.Append(StageTerrain.NormalizeRow(_session.Catalog, row)).Append('\n');
             foreach (Vector2Int door in definition.Doors)
                 text.Append(door.x).Append(',').Append(door.y).Append(';');
             foreach (int wave in definition.DoorOpensAtWave)

@@ -129,7 +129,7 @@ namespace Code.Stages
             return true;
         }
 
-        /// <summary>'#' 벽이 아니면 지나갈 수 있다. 'x'(설치 불가)·'+'(강화 칸)도 바닥이다.</summary>
+        /// <summary>'#' 벽이 아니면 지나갈 수 있다. 'x'(설치 불가)·'+'(강화 칸)·지형 칸(<see cref="StageTerrainRule"/>)도 바닥이다.</summary>
         public bool IsFloor(Vector2Int cell) => Tile(cell) is char tile && tile != '#';
 
         /// <summary>바리케이드·부하·함정을 놓을 수 있는 바닥('x' 제외).</summary>
@@ -183,6 +183,9 @@ namespace Code.Stages
             }
             return -1;
         }
+
+        /// <summary>맵 문자. 맵 밖이면 null. 지형 칸 판정(<see cref="StageTerrain"/>)이 쓴다.</summary>
+        public char? TileAt(Vector2Int cell) => Tile(cell);
 
         private char? Tile(Vector2Int cell)
         {

@@ -26,9 +26,13 @@ namespace Code.Stages
             Cell = cell;
             PaidGold = paid;
             Combat = GetComponent<Combatant>();
-            Combat.Health.SetMaxHealth(StageMerchant.BarricadeHealth(session.Definition, session.Merchant.BarricadeHealthMultiplier), true);
+            Combat.Health.SetMaxHealth(MaxHealthFor(session, cell), true);
             Combat.Health.Damaged += HandleDamaged;
         }
+
+        /// <summary>상인 보강과 암반 같은 지형 배율을 곱한 최대 체력. 설치·상인 구매가 같은 값을 쓴다.</summary>
+        public static int MaxHealthFor(StageSession session, Vector2Int cell) => StageMerchant.BarricadeHealth(session.Definition,
+            session.Merchant.BarricadeHealthMultiplier * session.Board.Terrain.BarricadeMultiplier(cell));
 
         public void Demolish()
         {

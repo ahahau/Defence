@@ -36,6 +36,24 @@ namespace Code.Stages
         [field: SerializeField, Min(0), Tooltip("고립 늑대 부적: 이 칸 수 안에 다른 부하가 없어야 한다.")]
         public float LoneAllyRadius { get; private set; } = 2f;
 
+        [field: Header("지형 칸 (임시 값, 2026-11-02 사용자 결정)")]
+        [field: SerializeField] public StageTerrainRule[] TerrainRules { get; private set; } = System.Array.Empty<StageTerrainRule>();
+
+        [field: Header("적 역할 규칙 (임시 값, 2026-11-02 사용자 결정)")]
+        [field: SerializeField, Tooltip("바리케이드를 때릴 때 공격력이 커지는 적(공병).")]
+        public Code.Enemies.EnemyDataSO[] BarricadeBreakers { get; private set; } = System.Array.Empty<Code.Enemies.EnemyDataSO>();
+        [field: SerializeField, Min(1f)] public float BarricadeBreakerMultiplier { get; private set; } = 3f;
+        [field: SerializeField, Tooltip("적을 맞히면 이동을 늦추는 함정(속박 수정).")]
+        public Code.Buildings.BuildingDataSO[] SlowingTraps { get; private set; } = System.Array.Empty<Code.Buildings.BuildingDataSO>();
+        [field: SerializeField, Range(0.05f, 1f)] public float TrapSlowMultiplier { get; private set; } = 0.6f;
+        [field: SerializeField, Min(0f)] public float TrapSlowSeconds { get; private set; } = 2f;
+
+        public bool IsBarricadeBreaker(Code.Enemies.EnemyDataSO enemy) =>
+            enemy != null && BarricadeBreakers != null && System.Array.IndexOf(BarricadeBreakers, enemy) >= 0;
+
+        public bool IsSlowingTrap(Code.Buildings.BuildingDataSO trap) =>
+            trap != null && SlowingTraps != null && System.Array.IndexOf(SlowingTraps, trap) >= 0;
+
         [field: Header("스테이지 상인 (임시 값, 2026-11-02 사용자 결정)")]
         [field: SerializeField] public StageMerchantItem[] MerchantItems { get; private set; } = System.Array.Empty<StageMerchantItem>();
 

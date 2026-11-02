@@ -25,8 +25,9 @@ namespace Code.Stages
                     continue;
                 Vector3Int position = new(x, y, 0);
                 terrain.SetTile(position, walkable ? floor : wall);
+                StageTerrainRule terrainRule = walkable ? board.Terrain.RuleAt(cell) : null;
                 Color tint = !walkable ? Color.white : !board.Definition.IsBuildable(cell) ? BlockedTint
-                    : board.Definition.IsEmpowered(cell) ? EmpoweredTint : Color.white;
+                    : board.Definition.IsEmpowered(cell) ? EmpoweredTint : terrainRule != null ? terrainRule.Tint : Color.white;
                 if (walkable && !board.Definition.IsFloor(cell + Vector2Int.up))
                     tint *= new Color(0.82f, 0.82f, 0.9f, 1);
                 Tint(terrain, position, tint);

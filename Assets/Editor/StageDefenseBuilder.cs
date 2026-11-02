@@ -272,6 +272,199 @@ public static class StageDefenseBuilder
         return "merchantItems=" + items.Length;
     }
 
+    private const string TrapData = "Assets/07.SO/Buildings/";
+
+    /// <summary>
+    /// 지형 칸 규칙(2026-11-02 사용자 결정: 지형으로 함정을 막아 맵마다 다른 함정을 쓰게 한다). 배율·색은 임시 값.
+    /// 맵 문자는 <see cref="StageHallLayout"/>의 지형 표와 같다.
+    /// </summary>
+    private static StageTerrainRule[] TerrainRules()
+    {
+        BuildingDataSO Trap(string name) => Load<BuildingDataSO>(TrapData + name + "TrapBuildingData.asset");
+        BuildingDataSO fire = Trap("FireBrazier");
+        BuildingDataSO[] crystals = { Trap("SnareCrystal"), Trap("ManaCrystal"), Trap("ShockCrystal"), Trap("ExposeCrystal") };
+        return new[]
+        {
+            new StageTerrainRule('~', "물웅덩이", new[] { fire }, new[] { Trap("StormCloud"), Trap("ShockCrystal") }, 1.5f, 1f, false,
+                new Color(0.45f, 0.82f, 0.85f)),
+            new StageTerrainRule('o', "봉인 문양", crystals, null, 1f, 1f, false, new Color(0.78f, 0.58f, 0.95f)),
+            new StageTerrainRule('r', "단단한 암반", new[] { Trap("BloodPool") }, null, 1f, 1.5f, false, new Color(0.62f, 0.6f, 0.58f)),
+            new StageTerrainRule('g', "마른 풀섬", null, new[] { fire }, 1.5f, 1f, true, new Color(0.8f, 0.86f, 0.42f))
+        };
+    }
+
+    /// <summary>
+    /// 카탈로그에 지형 규칙을 쓰고, 이미 쓴 스테이지 맵에 <see cref="StageHallLayout"/>의 지형 칸을 더한다.
+    /// 지형 말고 다른 칸이 다르면(맵을 손으로 바꿨으면) 아무것도 바꾸지 않고 멈춘다. 모두 검사를 통과해야 저장한다.
+    /// </summary>
+    public static string ApplyTerrain()
+    {
+        Guard();
+        StageCatalogSO catalog = Load<StageCatalogSO>(Root + "/StageCatalog.asset");
+        StageTerrainRule[] rules = TerrainRules();
+        List<(StageDefinitionSO stage, string[] rows)> changes = new();
+        for (int i = 0; i < catalog.Stages.Length; i++)
+        {
+            StageDefinitionSO stage = catalog.Stages[i];
+            if (stage == null)
+                continue;
+            string[] rows = StageHallLayout.Create(i + 1);
+            if (rows.Length != stage.Layout.Length)
+                throw new InvalidOperationException(stage.Id + ": 맵 줄 수가 생성기와 다릅니다");
+            for (int y = 0; y < rows.Length; y++)
+                if (StageHallLayout.StripTerrain(rows[y]) != StageHallLayout.StripTerrain(stage.Layout[y]))
+                    throw new InvalidOperationException($"{stage.Id}: {y}번 줄이 지형 말고도 생성기와 다릅니다");
+            changes.Add((stage, rows));
+        }
+        StageTerrainRule[] previousRules = catalog.TerrainRules;
+        Set(catalog, "TerrainRules", rules);
+        if (!StageTerrain.TryValidate(catalog, out string reason))
+        {
+            Set(catalog, "TerrainRules", previousRules);
+            throw new InvalidOperationException(reason);
+        }
+        foreach ((StageDefinitionSO stage, string[] rows) in changes)
+            Set(stage, "Layout", rows);
+        // 다른 세션이 편집 중인 에셋까지 저장하지 않게 카탈로그와 스테이지만 저장한다
+        AssetDatabase.SaveAssetIfDirty(catalog);
+        foreach ((StageDefinitionSO stage, string[] _) in changes)
+            AssetDatabase.SaveAssetIfDirty(stage);
+        return "terrainRules=" + rules.Length + " stages=" + changes.Count;
+    }
+
+    /// <summary>
+    /// 적 역할 규칙(2026-11-02 사용자 결정): 공병은 바리케이드에 ×3, 속박 수정은 맞힌 적 이동 ×0.6 2초. 임시 값.
+    /// </summary>
+    public static string ApplyEnemyRoles()
+    {
+        Guard();
+        StageCatalogSO catalog = Load<StageCatalogSO>(Root + "/StageCatalog.asset");
+        WriteEnemyRoles(catalog);
+        AssetDatabase.SaveAssetIfDirty(catalog);
+        return "breakers=" + catalog.BarricadeBreakers.Length + " slowing=" + catalog.SlowingTraps.Length;
+    }
+
+    private static void WriteEnemyRoles(StageCatalogSO catalog)
+    {
+        Set(catalog, "BarricadeBreakers", new[] { Load<EnemyDataSO>(Enemies + "SapperEnemy.asset") });
+        Set(catalog, "BarricadeBreakerMultiplier", 3f);
+        Set(catalog, "SlowingTraps", new[] { Load<BuildingDataSO>(TrapData + "SnareCrystalTrapBuildingData.asset") });
+        Set(catalog, "TrapSlowMultiplier", 0.6f);
+        Set(catalog, "TrapSlowSeconds", 2f);
+    }
+
+    /// <summary>
+    /// 웨이브 주제(2026-11-02 사용자 결정: 안 쓰던 일반 적을 스테이지마다 1~2종 소개, 웨이브마다 주제 적). 보스 웨이브를 뺀 웨이브 순서다.
+    /// 새 적은 그 스테이지 둘째 웨이브에서 처음 나온다. 7스테이지는 새 적 없이 섞는다.
+    /// </summary>
+    private static readonly (string stage, string[] themes, string[] introduced)[] WaveThemeTable =
+    {
+        ("Stage_01", new[] { "SwordEnemy", "ArcherEnemy" }, Array.Empty<string>()),
+        ("Stage_02", new[] { "BasicEnemy", "ThiefEnemy", "ArcherEnemy" }, new[] { "ThiefEnemy" }),
+        ("Stage_03", new[] { "SwordEnemy", "SapperEnemy", "HealterEnemy" }, new[] { "SapperEnemy" }),
+        ("Stage_04", new[] { "ArcherEnemy", "ApprenticeMageEnemy", "BanditSpearmanEnemy", "SapperEnemy" },
+            new[] { "ApprenticeMageEnemy", "BanditSpearmanEnemy" }),
+        ("Stage_05", new[] { "ThiefEnemy", "ScoutEnemy", "PaladinEnemy", "ApprenticeMageEnemy" }, new[] { "ScoutEnemy", "PaladinEnemy" }),
+        ("Stage_06", new[] { "SapperEnemy", "OrcWarriorEnemy", "OrcArcherEnemy", "PaladinEnemy", "ScoutEnemy" },
+            new[] { "OrcWarriorEnemy", "OrcArcherEnemy" }),
+        ("Stage_07", new[] { "ThiefEnemy", "SapperEnemy", "OrcArcherEnemy", "PaladinEnemy", "OrcWarriorEnemy" }, Array.Empty<string>())
+    };
+
+    private static readonly string[] BaseEnemies = { "BasicEnemy", "SwordEnemy", "ArcherEnemy", "HealterEnemy" };
+
+    /// <summary>
+    /// 한 스테이지 웨이브의 일반 적 자리를 주제대로 다시 채운다. 짝수 자리는 주제 적, 홀수 자리는 지금까지 나온 적을 돌려 쓴다.
+    /// 보스 웨이브는 주제 없이 섞는다. 정예 자리(<paramref name="isElite"/>)와 인원·표식 규칙·보스·호위는 그대로 둔다.
+    /// </summary>
+    private static void ThemeWaves(string stageId, StageWave[] waves, Func<EnemyDataSO, bool> isElite)
+    {
+        int at = Array.FindIndex(WaveThemeTable, row => row.stage == stageId);
+        if (at < 0)
+            return;
+        List<string> pool = new(BaseEnemies);
+        for (int i = 0; i <= at; i++)
+            foreach (string name in WaveThemeTable[i].introduced)
+                if (!pool.Contains(name))
+                    pool.Add(name);
+        (string _, string[] themes, string[] introduced) = WaveThemeTable[at];
+        int regular = waves.Length - (waves.Length > 0 && waves[^1].HasBoss ? 1 : 0);
+        if (themes.Length != regular)
+            throw new InvalidOperationException($"{stageId}: 주제 수({themes.Length})가 보스 아닌 웨이브 수({regular})와 다릅니다");
+        int filler = 0;
+        for (int w = 0; w < waves.Length; w++)
+        {
+            StageWave wave = waves[w];
+            string theme = w < themes.Length ? themes[w] : null;
+            for (int slot = 0; slot < wave.Enemies.Length; slot++)
+            {
+                if (isElite(wave.Enemies[slot]))
+                    continue;
+                string name = theme != null && slot % 2 == 0 ? theme : NextFiller(pool, theme, introduced, w, ref filler);
+                wave.Enemies[slot] = Load<EnemyDataSO>(Enemies + name + ".asset");
+            }
+        }
+    }
+
+    // 새 적은 둘째 웨이브(번호 1)부터 섞는다. 주제 적과 같은 적은 건너뛴다.
+    private static string NextFiller(List<string> pool, string theme, string[] introduced, int wave, ref int index)
+    {
+        for (int tries = 0; tries < pool.Count; tries++)
+        {
+            string name = pool[index++ % pool.Count];
+            if (name != theme && (wave >= 1 || Array.IndexOf(introduced, name) < 0))
+                return name;
+        }
+        return theme ?? pool[0];
+    }
+
+    /// <summary>
+    /// 이미 쓴 스테이지에 <see cref="WaveThemeTable"/>의 웨이브 주제를 쓴다. 정예는 자리를 건너뛰어 그대로 남는다.
+    /// 모든 스테이지가 검사를 통과해야 저장하고, 하나라도 실패하면 모두 원래 적으로 되돌린다.
+    /// </summary>
+    public static string ApplyWaveThemes()
+    {
+        Guard();
+        StageCatalogSO catalog = Load<StageCatalogSO>(Root + "/StageCatalog.asset");
+        List<(StageDefinitionSO stage, EnemyDataSO[][] enemies)> originals = new();
+        string failure = null;
+        try
+        {
+            foreach (StageDefinitionSO stage in catalog.Stages)
+            {
+                if (stage == null || stage.Waves == null)
+                    continue;
+                EnemyDataSO[][] copy = new EnemyDataSO[stage.Waves.Length][];
+                for (int w = 0; w < copy.Length; w++)
+                    copy[w] = (EnemyDataSO[])stage.Waves[w].Enemies.Clone();
+                originals.Add((stage, copy));
+                ThemeWaves(stage.Id, stage.Waves, catalog.IsElite);
+                if (!stage.TryValidate(out string reason))
+                {
+                    failure = stage.Id + ": " + reason;
+                    break;
+                }
+            }
+        }
+        catch (Exception exception)
+        {
+            failure = exception.Message;
+        }
+        if (failure != null)
+        {
+            foreach ((StageDefinitionSO stage, EnemyDataSO[][] enemies) in originals)
+                for (int w = 0; w < enemies.Length; w++)
+                    Array.Copy(enemies[w], stage.Waves[w].Enemies, enemies[w].Length);
+            throw new InvalidOperationException(failure);
+        }
+        foreach ((StageDefinitionSO stage, EnemyDataSO[][] _) in originals)
+        {
+            EditorUtility.SetDirty(stage);
+            // 다른 세션이 편집 중인 에셋까지 저장하지 않게 스테이지만 저장한다
+            AssetDatabase.SaveAssetIfDirty(stage);
+        }
+        return "themedStages=" + originals.Count;
+    }
+
     /// <summary><see cref="EliteTable"/>에 나오는 정예 종류(중복 없이). 카탈로그 정예 목록이 된다.</summary>
     private static EnemyDataSO[] EliteData()
     {
@@ -745,6 +938,8 @@ public static class StageDefenseBuilder
                 }
                 waves[wave] = last ? new StageWave(regular, interval, boss, escorts, rules) : new StageWave(regular, interval, rules);
             }
+            // 주제를 먼저 채우고 정예 자리를 덮는다(정예는 주제와 상관없이 정해진 자리)
+            ThemeWaves(spec.id, waves, _ => false);
             PlaceElites(spec.id, waves, true);
             StageDefinitionSO stage = WriteStage(spec.id, spec.title, spec.gimmick, spec.layout, spec.doors, new Vector2Int(21, 5), waves);
             Set(stage, "DoorOpensAtWave", spec.opens);
@@ -759,6 +954,8 @@ public static class StageDefenseBuilder
         Set(catalog, "Stages", stages.ToArray());
         Set(catalog, "Elites", EliteData());
         Set(catalog, "MerchantItems", MerchantItems());
+        Set(catalog, "TerrainRules", TerrainRules());
+        WriteEnemyRoles(catalog);
         AssetDatabase.SaveAssets();
         return "stages=" + stages.Count;
     }

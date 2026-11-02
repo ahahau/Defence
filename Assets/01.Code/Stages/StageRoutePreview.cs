@@ -114,7 +114,8 @@ namespace Code.Stages
                 EnemyDataSO enemy = StageRouteRules.FirstEnemyAtDoor(wave, slot, open, out StageEnemyRule rule);
                 if (enemy == null)
                     continue;
-                StagePathfinder.Traveler traveler = StageRouteRules.EnemyTraveler(definition, enemy, rule);
+                float breaker = session.Catalog.IsBarricadeBreaker(enemy) ? session.Catalog.BarricadeBreakerMultiplier : 1f;
+                StagePathfinder.Traveler traveler = StageRouteRules.EnemyTraveler(definition, enemy, rule, breaker);
                 Vector2Int door = definition.Doors[definition.OpenDoorIndex(session.WaveIndex, slot)];
                 if (!session.Paths.Find(door, definition.Core, traveler, true, _path))
                     continue;

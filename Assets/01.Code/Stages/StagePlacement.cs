@@ -79,6 +79,10 @@ namespace Code.Stages
                     if (installed != null && !installed.IsDestroyed && installed.Covers(_session.Board.World(occupied), 0f))
                         return new StagePlacementCheck(cell, footprint, cost, "이미 함정이 있는 칸입니다");
             }
+            // 덮는 칸 중 하나라도 이 함정을 막는 지형이면 놓을 수 없다. 부하·바리케이드는 지형을 가리지 않는다.
+            string terrain = !barricade && option.Trap != null ? _session.Board.Terrain.BlockReason(cell, footprint, option.Trap) : string.Empty;
+            if (terrain.Length > 0)
+                return new StagePlacementCheck(cell, footprint, cost, terrain);
             if (_session.Gold < cost)
                 return new StagePlacementCheck(cell, footprint, cost, "금화가 부족합니다");
             return new StagePlacementCheck(cell, footprint, cost);
@@ -135,6 +139,10 @@ namespace Code.Stages
                 // 덮은 칸 중 하나라도 강화 칸이면 영구 강화 배율 위에 곱한다
                 float upgrade = 1f + _session.Profile.Level(option.Id) * _session.Catalog.DamagePerUpgrade;
                 trap.SetStageDamageMultiplier(upgrade * (empowered ? _session.Definition.EmpoweredTrapMultiplier : 1f));
+                // 지형 강화는 적에게 주는 피해에만, 감속은 적을 맞혔을 때만 건다(2026-11-02 사용자 결정)
+                trap.SetStageEnemyMultiplier(_session.Board.Terrain.TrapMultiplier(cell, footprint, option.Trap));
+                if (_session.Catalog.IsSlowingTrap(option.Trap))
+                    trap.SetStageMoveSlow(_session.Catalog.TrapSlowMultiplier, _session.Catalog.TrapSlowSeconds);
                 _traps.Add(trap);
                 _trapOptions.Add(trap, option);
                 _trapPayments.Add(trap, cost);

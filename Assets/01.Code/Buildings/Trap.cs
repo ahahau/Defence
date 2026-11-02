@@ -12,10 +12,21 @@ namespace Code.Buildings
     {
         private Code.Stages.StageSession _stage;
         private float _stageDamageMultiplier = 1f;
+        private float _stageEnemyMultiplier = 1f;
+        private float _stageMoveSlow = 1f;
+        private float _stageMoveSlowSeconds;
 
         /// <summary>구 노드 조회 대신 스테이지의 실제 전투원/칸 크기를 사용한다.</summary>
         public void BindStage(Code.Stages.StageSession stage) => _stage = stage;
         public void SetStageDamageMultiplier(float multiplier) => _stageDamageMultiplier = Mathf.Max(0f, multiplier);
+        /// <summary>지형 강화처럼 적에게 주는 피해에만 곱하는 배율. 범위에 든 부하 피해에는 곱하지 않는다.</summary>
+        public void SetStageEnemyMultiplier(float multiplier) => _stageEnemyMultiplier = Mathf.Max(0f, multiplier);
+        /// <summary>맞힌 적의 이동을 잠시 늦춘다(스테이지 속박 수정). 1이면 늦추지 않는다.</summary>
+        public void SetStageMoveSlow(float multiplier, float seconds)
+        {
+            _stageMoveSlow = Mathf.Clamp(multiplier, 0.05f, 1f);
+            _stageMoveSlowSeconds = Mathf.Max(0f, seconds);
+        }
 
         internal void CaptureStageTiming(out float cooldown, out float active, out float tick, out int tickDamage)
         {
@@ -389,7 +400,7 @@ namespace Code.Buildings
 
         private void HitEnemy(Enemy enemy, int amount, bool allowInjury)
         {
-            amount = Mathf.RoundToInt(amount * _stageDamageMultiplier);
+            amount = Mathf.RoundToInt(amount * _stageDamageMultiplier * _stageEnemyMultiplier);
             if (enemy == null || enemy.IsDead || amount <= 0)
                 return;
 
@@ -405,6 +416,10 @@ namespace Code.Buildings
             target.TakeDamage(resolved);
             if (allowInjury)
                 TryApplyInjury(target, target as Component ?? enemy);
+            // 같은 출처 이름이라 다시 맞으면 시간만 새로 건다(겹쳐서 더 느려지지 않는다)
+            if (_stage != null && _stageMoveSlow < 1f && _stageMoveSlowSeconds > 0f
+                && enemy.TryGetComponent<CombatStatusController>(out var movement))
+                movement.Apply("StageTrapSlow", _stageMoveSlowSeconds, _stageMoveSlow);
             enemy.HandleTrapHit(this, resolved);
         }
 

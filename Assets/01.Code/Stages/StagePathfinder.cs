@@ -19,9 +19,11 @@ namespace Code.Stages
             public readonly float AttackInterval;
             /// <summary>바리케이드를 넘는 적(<see cref="StageEnemyRule.Vault"/>). 바리케이드 칸을 열린 칸으로 본다.</summary>
             public readonly bool IgnoresBarricades;
+            /// <summary>바리케이드를 칠 때 공격력 배율(공병). 부수는 시간 계산에만 쓴다.</summary>
+            public readonly float BarricadeMultiplier;
 
             public Traveler(StageActor actor, float speed, bool isEnemy, int attackDamage, float attackInterval,
-                bool ignoresBarricades = false)
+                bool ignoresBarricades = false, float barricadeMultiplier = 1f)
             {
                 Actor = actor;
                 Speed = speed;
@@ -29,12 +31,13 @@ namespace Code.Stages
                 AttackDamage = attackDamage;
                 AttackInterval = attackInterval;
                 IgnoresBarricades = ignoresBarricades;
+                BarricadeMultiplier = Mathf.Max(1f, barricadeMultiplier);
             }
 
             public static Traveler From(StageActor actor) => actor == null
                 ? new Traveler(null, 1f, false, 0, 0f)
-                : new Traveler(actor, actor.Speed, actor.IsEnemy, actor.Combat.AttackDamage, actor.Combat.AttackInterval,
-                    actor.Rule == StageEnemyRule.Vault);
+                : new Traveler(actor, actor.Speed, actor.IsEnemy, actor.PlainAttackDamage, actor.Combat.AttackInterval,
+                    actor.Rule == StageEnemyRule.Vault, actor.BarricadeBreakMultiplier);
         }
 
         private readonly StageBoard _board;
@@ -121,8 +124,12 @@ namespace Code.Stages
                     Code.Combat.Combatant blocker = _board.BlockerAt(next, actor, !traveler.IgnoresBarricades);
                     if (blocker != null && (!breaking || !traveler.IsEnemy))
                         continue;
+                    // 공병은 바리케이드를 더 빨리 부수므로 그 칸의 부수는 시간이 짧다
+                    int damage = blocker != null && _board.Barricades.TryGetValue(next, out StageBarricade wall) && wall != null
+                        && wall.Combat == blocker ? Mathf.RoundToInt(traveler.AttackDamage * traveler.BarricadeMultiplier)
+                        : traveler.AttackDamage;
                     float destroyTime = blocker != null
-                        ? Mathf.Ceil((float)blocker.Health.CurrentHealth / Mathf.Max(1, Code.Combat.CombatFormula.ApplyDefense(traveler.AttackDamage, blocker.Defense)))
+                        ? Mathf.Ceil((float)blocker.Health.CurrentHealth / Mathf.Max(1, Code.Combat.CombatFormula.ApplyDefense(damage, blocker.Defense)))
                             * traveler.AttackInterval : 0f;
                     float cost = _cost[current] + stepTime + destroyTime;
                     if (cost >= _cost[index])

@@ -37,13 +37,25 @@ namespace Code.Stages
             if (_root == null)
                 return;
             int bars = 0;
+            int cells = 0;
             float size = session.Definition.CellSize;
             IReadOnlyList<StageDevices.State> states = session.Devices.States;
             for (int i = 0; i < states.Count; i++)
             {
                 StageDevices.State state = states[i];
+                // 불이 번지는 풀섬 칸은 불 구멍이 탈 때만 같은 주황으로 칠한다(부하도 맞는 칸)
+                if (state.Device.Kind == StageDeviceKind.FireVent && state.Active)
+                    foreach (Vector2Int spread in state.SpreadCells)
+                    {
+                        SpriteRenderer burning = Pick(_cells, cells++, "Device Cell");
+                        burning.transform.position = session.Board.World(spread);
+                        burning.transform.localScale = _unitScale * size;
+                        burning.sortingOrder = FloorOrder;
+                        burning.color = Tint(HudPalette.Warn, 0.6f);
+                        burning.gameObject.SetActive(true);
+                    }
                 Vector3 position = session.Board.World(state.Device.Cell);
-                SpriteRenderer cell = Pick(_cells, i, "Device Cell");
+                SpriteRenderer cell = Pick(_cells, cells++, "Device Cell");
                 cell.transform.position = position;
                 cell.transform.localScale = _unitScale * size;
                 switch (state.Device.Kind)
@@ -65,7 +77,7 @@ namespace Code.Stages
                 }
                 cell.gameObject.SetActive(true);
             }
-            Trim(_cells, states.Count);
+            Trim(_cells, cells);
             Trim(_bars, bars);
         }
 

@@ -398,7 +398,8 @@ namespace Code.Stages
                 : !_placementTool.Placing ? "도구 없음 · 왼쪽에서 배치할 종류를 선택하세요"
                 : selected == null ? $"현재 도구: 바리케이드 · {definition.BarricadeCost}G · 우클릭 취소"
                 : $"현재 도구: {selected.Label} · {selected.Cost}G · 우클릭 취소")
-                + (placementBlocked ? $"    불가: {_placementTool.Hint}" : string.Empty)
+                + (placementBlocked ? $"    불가: {_placementTool.Hint}"
+                    : preparing && _placementTool.TerrainNote.Length > 0 ? $"    {_placementTool.TerrainNote}" : string.Empty)
                 + (_battleSignals.WaitingCount > 0 ? "    회색 '=' 표식: 웨이브 종료 후 복구" : string.Empty)
                 + (!placementBlocked && !string.IsNullOrEmpty(_briefing.Rules) && (preparing || fighting)
                     ? $"    {_briefing.Rules}" : string.Empty)

@@ -56,6 +56,13 @@ namespace Code.Stages
         public bool CanUltimate => !IsEnemy && IsAlive && Skills != null && Skills.HasUltimate && UltimateCharge >= 1f
             && _session.Phase == StagePhase.Fighting;
         public StageEnemyRule Rule { get; private set; }
+        /// <summary>바리케이드를 칠 때 곱하는 공격력 배율. 공병(<see cref="StageCatalogSO.BarricadeBreakers"/>)만 1보다 크다.</summary>
+        public float BarricadeBreakMultiplier { get; private set; } = 1f;
+        /// <summary>바리케이드 공격 배율을 뺀 평타 피해. 지금 바리케이드를 치고 있어도 길 계산이 같은 값을 쓰게 한다.</summary>
+        public int PlainAttackDamage => _breakingBarricade
+            ? Mathf.RoundToInt(Combat.AttackDamage / BarricadeBreakMultiplier) : Combat.AttackDamage;
+        private const string BarricadeBreakKey = "StageBarricadeBreak";
+        private bool _breakingBarricade;
         private bool _enemyUltimateUsed;
         private float _lastHealthRatio = 1f;
 
@@ -89,6 +96,8 @@ namespace Code.Stages
             }
             Speed = IsEnemy ? session.Definition.EnemySpeed * MobilityRules.SpeedMultiplier(Enemy.Data.Mobility)
                 : session.Definition.UnitSpeed;
+            BarricadeBreakMultiplier = IsEnemy && session.Catalog.IsBarricadeBreaker(Enemy.Data)
+                ? session.Catalog.BarricadeBreakerMultiplier : 1f;
             Combat.StrikeRange = Mathf.Max(session.Definition.CellSize * 0.75f, range);
             _render = GetComponentInChildren<Code.Entities.EntityRender>();
             Combat.Health.Changed += HandleHealthChanged;
@@ -181,6 +190,7 @@ namespace Code.Stages
                 float distance = Vector2.Distance(transform.position, target.transform.position);
                 if (distance <= Combat.StrikeRange && _session.CanSee(transform.position, target.transform.position))
                 {
+                    SetBreakingBarricade(false);
                     Combat.BeginCombat(target.Combat, null);
                     _render?.FaceTowards(target.transform.position.x - transform.position.x);
                     CastSkills(target);
@@ -344,6 +354,9 @@ namespace Code.Stages
                 Vector3 destination = blocker.transform.position;
                 if (Vector2.Distance(transform.position, destination) <= Combat.StrikeRange)
                 {
+                    // 공병은 바리케이드를 칠 때만 공격력이 커진다(2026-11-02 사용자 결정). 부하를 칠 때는 뗀다.
+                    SetBreakingBarricade(_session.Board.Barricades.TryGetValue(next, out StageBarricade wall)
+                        && wall != null && wall.Combat == blocker);
                     Combat.BeginCombat(blocker, null);
                     _render?.FaceTowards(destination.x - transform.position.x);
                 }
@@ -402,6 +415,15 @@ namespace Code.Stages
                 _resolved = true;
                 _session.FinishEnemy(this, false);
             }
+        }
+
+        // 바뀔 때만 공격력 보정을 다시 건다(매 프레임 스탯을 건드리지 않는다)
+        private void SetBreakingBarricade(bool breaking)
+        {
+            if (breaking == _breakingBarricade || BarricadeBreakMultiplier <= 1f)
+                return;
+            _breakingBarricade = breaking;
+            Combat.SetAttackModifier(BarricadeBreakKey, 0f, breaking ? BarricadeBreakMultiplier : 1f);
         }
 
         public void Recover()

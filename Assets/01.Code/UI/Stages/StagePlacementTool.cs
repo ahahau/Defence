@@ -16,6 +16,9 @@ namespace Code.UI.Stages
         public bool Placing { get; private set; } = true;
         public bool Demolishing { get; private set; }
         public string Hint { get; private set; } = string.Empty;
+        /// <summary>커서가 올라간 지형 칸의 이름과 효과(예: "물웅덩이: 불 화로 설치 불가 · …"). 지형이 아니면 빈 문자열.</summary>
+        public string TerrainNote { get; private set; } = string.Empty;
+        private StageTerrainRule _noteRule;
         /// <summary>명령을 줄 부하. 철거 도구가 아니면 배치한 부하를 눌러 고르고, 우클릭으로 푼다.</summary>
         public StageActor SelectedUnit => _selectedUnit != null && _selectedUnit.IsAlive ? _selectedUnit : null;
         private StageActor _selectedUnit;
@@ -70,6 +73,7 @@ namespace Code.UI.Stages
             if (_cursor != null)
                 _cursor.gameObject.SetActive(false);
             SetHint(string.Empty);
+            SetTerrain(null);
         }
 
         public void Tick(bool pointerFree)
@@ -102,6 +106,7 @@ namespace Code.UI.Stages
                 : _session.Placement.Check(cell, Selected, Selected == null);
             Show(check);
             SetHint(check.Allowed ? string.Empty : check.Reason);
+            SetTerrain(_session.Board.Terrain.RuleAt(cell));
             if (!click)
                 return;
             // 실행 직전에도 같은 검사를 거친다. 실패 문구는 설치/철거 쪽이 한 번만 알린다.
@@ -142,6 +147,16 @@ namespace Code.UI.Stages
             if (Hint == reason)
                 return;
             Hint = reason;
+            Changed?.Invoke();
+        }
+
+        // 같은 지형 위에서는 글을 다시 만들지 않는다(커서는 매 프레임 움직인다)
+        private void SetTerrain(StageTerrainRule rule)
+        {
+            if (rule == _noteRule)
+                return;
+            _noteRule = rule;
+            TerrainNote = rule != null ? $"{rule.Label}: {rule.Describe()}" : string.Empty;
             Changed?.Invoke();
         }
     }

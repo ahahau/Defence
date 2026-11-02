@@ -179,7 +179,7 @@ namespace Code.Stages
                 return false;
             StageDefinitionSO definition = Catalog.Stages[index];
             string reason = "스테이지 데이터가 없습니다";
-            if (definition == null || !definition.TryValidate(out reason))
+            if (definition == null || !definition.TryValidate(out reason) || !StageTerrain.TryValidate(Catalog, out reason))
             {
                 Phase = StagePhase.Unavailable;
                 Tell(definition == null ? "스테이지 데이터가 없습니다" : reason);
@@ -195,7 +195,7 @@ namespace Code.Stages
             Artifacts.Clear();
             Definition = definition;
             StageIndex = index;
-            Board = new StageBoard(definition);
+            Board = new StageBoard(definition, Catalog);
             Paths = new StagePathfinder(Board);
             // 스킬 대상 반경은 임시로 교전 반경과 같다(2026-10-28 승인)
             SkillField = new StageSkillField(Board, definition.EngageRadius);
@@ -337,12 +337,9 @@ namespace Code.Stages
                 foreach (StageActor actor in Board.Actors)
                     Merchant.Apply(actor);
             if (item.BarricadeHealthMultiplier > 1f)
-            {
-                int maximum = StageMerchant.BarricadeHealth(Definition, Merchant.BarricadeHealthMultiplier);
                 foreach (StageBarricade wall in Board.Barricades.Values)
                     if (wall != null && wall.IsAlive)
-                        wall.RaiseMaxHealth(maximum);
-            }
+                        wall.RaiseMaxHealth(StageBarricade.MaxHealthFor(this, wall.Cell));
             // 보수는 최대 체력에서 잘릴 수 있어 실제 회복량을 알린다
             Tell($"{item.Label}: -{item.Price}G, " + (repaired > 0 ? $"코어 +{repaired}" : "이번 스테이지 " + item.EffectText()));
             return true;
@@ -546,6 +543,11 @@ namespace Code.Stages
             float range = Mathf.Max(self.EngageRadius, self.Combat.StrikeRange);
             float score = range * range;
             float leash = self.IsEnemy ? 0f : Mathf.Max(self.LeashRadius, self.Combat.StrikeRange);
+            // 원거리 부하는 사거리 안에 보이는 공병을 먼저 노린다(2026-11-02 사용자 결정). 없으면 가장 가까운 적.
+            bool huntBreakers = !self.IsEnemy && self.Agent != null && self.Agent.Role == Code.BT.BattleRole.Ranged;
+            float strike = self.Combat.StrikeRange * self.Combat.StrikeRange;
+            StageActor breaker = null;
+            float breakerScore = strike;
             foreach (StageActor other in Board.Actors)
             {
                 if (other == null || other == self || !other.IsAlive || other.IsEnemy == self.IsEnemy)
@@ -553,13 +555,22 @@ namespace Code.Stages
                 if (!self.IsEnemy && Vector2.Distance(Board.World(home), other.transform.position) > leash)
                     continue;
                 float distance = (self.transform.position - other.transform.position).sqrMagnitude;
-                if (distance < score && CanSee(self.transform.position, other.transform.position))
+                bool wanted = huntBreakers && other.BarricadeBreakMultiplier > 1f && distance <= breakerScore;
+                if ((distance < score || wanted) && CanSee(self.transform.position, other.transform.position))
                 {
-                    best = other;
-                    score = distance;
+                    if (wanted)
+                    {
+                        breaker = other;
+                        breakerScore = distance;
+                    }
+                    if (distance < score)
+                    {
+                        best = other;
+                        score = distance;
+                    }
                 }
             }
-            return best;
+            return breaker != null ? breaker : best;
         }
 
         public bool CanAdvance(StageActor self, Vector3 next)

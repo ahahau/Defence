@@ -15,7 +15,14 @@ namespace Code.Stages
         public int Columns => Definition.Layout[0].Length;
         public int Rows => Definition.Layout.Length;
 
-        public StageBoard(StageDefinitionSO definition) => Definition = definition;
+        /// <summary>지형 칸 판정. 카탈로그 없이 만든 판(편집기 미리 칠하기)은 규칙이 없어 모든 칸이 일반 바닥이다.</summary>
+        public StageTerrain Terrain { get; }
+
+        public StageBoard(StageDefinitionSO definition, StageCatalogSO catalog = null)
+        {
+            Definition = definition;
+            Terrain = new StageTerrain(catalog, definition);
+        }
 
         public Vector3 World(Vector2Int cell) => new((cell.x - (Columns - 1) * 0.5f) * Definition.CellSize,
             (cell.y - (Rows - 1) * 0.5f) * Definition.CellSize, 0f);
