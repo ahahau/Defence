@@ -144,25 +144,106 @@ public static class StageDefenseBuilder
         };
     }
 
-    /// <summary>이미 쓴 스테이지에 <see cref="PreparationEventFor"/>의 사건을 쓴다. 스테이지 에셋만 저장한다.</summary>
+    /// <summary>
+    /// 첫 사건 선택에 따른 후속 사건(2026-11-02 사용자 결정: 선택마다 다른 후속, 바로 다음 준비 단계). 수치는 임시 값.
+    /// 칸 번호 + 1이 첫 사건의 선택 번호다: [금화 선택의 후속, 보수·보강 선택의 후속]. "사용하지 않음"은 후속이 없다.
+    /// </summary>
+    private static StagePreparationEvent[] FollowUpEventsFor(string stageId)
+    {
+        StagePreparationOption skip = new("사용하지 않음", 0, 0);
+        // 금화를 고른 뒤: 금화를 더 받거나 금화로 보강한다. 보수·보강을 고른 뒤: 더 보수하거나 남은 것을 판다.
+        StagePreparationEvent AfterGold(string title, string line, string button, int gold, int cost, int repair) =>
+            new(title, line, button, 2, new[]
+            {
+                new StagePreparationOption($"금화 +{gold}G", gold, 0), new StagePreparationOption("금화로 보강", -cost, repair), skip
+            });
+        StagePreparationEvent AfterRepair(string title, string line, string button, int repair, int gold) =>
+            new(title, line, button, 2, new[]
+            {
+                new StagePreparationOption($"금고 보수 +{repair}", 0, repair), new StagePreparationOption($"금화 +{gold}G", gold, 0), skip
+            });
+        return stageId switch
+        {
+            "Stage_01" => new[]
+            {
+                AfterGold("보급 상자 바닥", "상자 바닥에 남은 것이 더 있습니다.", "상자", 15, 10, 2),
+                AfterRepair("남은 수리 자재", "보수하고 남은 자재가 쌓여 있습니다.", "자재", 2, 15)
+            },
+            "Stage_02" => new[]
+            {
+                AfterGold("짐 주인의 행방", "짐 주인이 값을 더 쳐 주겠답니다.", "행방", 20, 15, 2),
+                AfterRepair("짐 속 공구", "짐 속에 쓸 만한 공구가 남았습니다.", "공구", 2, 20)
+            },
+            "Stage_03" => new[]
+            {
+                AfterGold("갱도 깊은 곳", "갱도 안쪽에 자재가 더 있습니다.", "갱도", 20, 15, 3),
+                AfterRepair("보강 틈새", "보강한 벽에 틈이 보입니다.", "틈새", 2, 20)
+            },
+            "Stage_04" => new[]
+            {
+                AfterGold("석탄 상인", "석탄을 사겠다는 상인이 왔습니다.", "석탄", 20, 15, 3),
+                AfterRepair("달군 철판", "석탄으로 달군 철판이 남았습니다.", "철판", 2, 20)
+            },
+            "Stage_05" => new[]
+            {
+                AfterGold("사냥꾼의 귀환", "사냥꾼이 장비 값을 흥정하러 왔습니다.", "사냥꾼", 25, 20, 3),
+                AfterRepair("남은 덫 부품", "보강에 쓰고 남은 덫 부품이 있습니다.", "부품", 3, 25)
+            },
+            "Stage_06" => new[]
+            {
+                AfterGold("문지기의 두 번째 제안", "문지기가 또 뇌물을 내밉니다.", "제안", 30, 20, 3),
+                AfterRepair("문지기의 보답", "보수를 본 문지기가 돌을 날라 왔습니다.", "보답", 3, 30)
+            },
+            "Stage_07" => new[]
+            {
+                AfterGold("비축 창고 끝", "창고 끝에 마지막 상자가 있습니다.", "창고", 30, 25, 4),
+                AfterRepair("마지막 보강", "남은 자재를 모두 쓸 수 있습니다.", "보강", 3, 30)
+            },
+            _ => Array.Empty<StagePreparationEvent>()
+        };
+    }
+
+    /// <summary>
+    /// 이미 쓴 스테이지에 <see cref="PreparationEventFor"/>의 사건과 <see cref="FollowUpEventsFor"/>의 후속을 쓴다.
+    /// 모든 스테이지가 검사를 통과해야 저장하고, 하나라도 실패하면 모두 원래 값으로 되돌린다. 스테이지 에셋만 저장한다.
+    /// </summary>
     public static string ApplyPreparationEvents()
     {
         Guard();
         StageCatalogSO catalog = Load<StageCatalogSO>(Root + "/StageCatalog.asset");
-        int written = 0;
+        List<(StageDefinitionSO stage, StagePreparationEvent first, StagePreparationEvent[] followUps)> originals = new();
+        int followUps = 0;
+        string failure = null;
         foreach (StageDefinitionSO stage in catalog.Stages)
         {
             StagePreparationEvent preparationEvent = stage != null ? PreparationEventFor(stage.Id) : null;
             if (preparationEvent == null)
                 continue;
-            if (!preparationEvent.TryValidate(stage.Waves.Length, out string reason))
-                throw new InvalidOperationException(stage.Id + ": " + reason);
+            originals.Add((stage, stage.PreparationEvent, stage.FollowUpEvents));
             Set(stage, "PreparationEvent", preparationEvent);
-            // 다른 세션이 편집 중인 에셋까지 저장하지 않게 스테이지만 저장한다
-            AssetDatabase.SaveAssetIfDirty(stage);
-            written++;
+            StagePreparationEvent[] next = FollowUpEventsFor(stage.Id);
+            Set(stage, "FollowUpEvents", next);
+            followUps += next.Length;
+            if (!stage.TryValidate(out string reason))
+            {
+                failure = stage.Id + ": " + reason;
+                break;
+            }
         }
-        return "events=" + written;
+        // 일부만 바뀐 채 메모리에 남으면 다른 저장이 검사를 통과하지 못한 값을 파일에 쓸 수 있다
+        if (failure != null)
+        {
+            foreach ((StageDefinitionSO stage, StagePreparationEvent first, StagePreparationEvent[] previous) in originals)
+            {
+                Set(stage, "PreparationEvent", first);
+                Set(stage, "FollowUpEvents", previous);
+            }
+            throw new InvalidOperationException(failure);
+        }
+        // 다른 세션이 편집 중인 에셋까지 저장하지 않게 스테이지만 저장한다
+        foreach ((StageDefinitionSO stage, StagePreparationEvent _, StagePreparationEvent[] _) in originals)
+            AssetDatabase.SaveAssetIfDirty(stage);
+        return "events=" + originals.Count + " followUps=" + followUps;
     }
 
     /// <summary>
@@ -671,6 +752,7 @@ public static class StageDefenseBuilder
             StageHallBuilder.ApplyShape(stage, index + 1);
             Set(stage, "EmpoweredTrapMultiplier", 1.5f);
             Set(stage, "PreparationEvent", PreparationEventFor(spec.id));
+            Set(stage, "FollowUpEvents", FollowUpEventsFor(spec.id));
             stages.Add(stage);
         }
         StageCatalogSO catalog = Load<StageCatalogSO>(Root + "/StageCatalog.asset");

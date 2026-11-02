@@ -36,6 +36,10 @@ namespace Code.Stages
         [field: SerializeField] public StageWave[] Waves { get; private set; } = Array.Empty<StageWave>();
         /// <summary>준비 단계 사건(선택). 선택지가 없으면 사건이 없다.</summary>
         [field: SerializeField] public StagePreparationEvent PreparationEvent { get; private set; }
+        /// <summary>
+        /// 첫 사건 선택에 따른 후속 사건(2026-11-02 사용자 결정). 칸 번호 + 1이 첫 사건의 선택 번호이고, 선택지가 없는 칸은 후속이 없다.
+        /// </summary>
+        [field: SerializeField] public StagePreparationEvent[] FollowUpEvents { get; private set; } = Array.Empty<StagePreparationEvent>();
 
         /// <summary>저장 ID와 실제 통행 바닥을 포함해 시작 전 설정을 확인한다.</summary>
         public bool TryValidate(out string reason)
@@ -92,6 +96,34 @@ namespace Code.Stages
             {
                 reason = eventReason;
                 return false;
+            }
+            if (FollowUpEvents != null && FollowUpEvents.Length > 0)
+            {
+                bool first = PreparationEvent != null && PreparationEvent.IsDefined;
+                if (!first || FollowUpEvents.Length > PreparationEvent.Options.Length)
+                {
+                    reason = "후속 사건 수가 첫 사건 선택지 수와 맞지 않습니다";
+                    return false;
+                }
+                for (int i = 0; i < FollowUpEvents.Length; i++)
+                {
+                    StagePreparationEvent followUp = FollowUpEvents[i];
+                    if (followUp == null || !followUp.IsDefined)
+                        continue;
+                    // "사용하지 않음"처럼 효과가 없는 선택은 후속을 만들지 않는다(2026-11-02 사용자 결정)
+                    if (PreparationEvent.Options[i] == null || !PreparationEvent.Options[i].HasEffect)
+                    {
+                        reason = "효과 없는 선택지에는 후속 사건을 둘 수 없습니다";
+                        return false;
+                    }
+                    if (!followUp.TryValidate(Waves.Length, out reason))
+                        return false;
+                    if (followUp.Wave <= PreparationEvent.Wave)
+                    {
+                        reason = "후속 사건은 첫 사건보다 뒤 준비 단계여야 합니다";
+                        return false;
+                    }
+                }
             }
             reason = string.Empty;
             return true;

@@ -13,7 +13,9 @@ namespace Code.UI.Stages
         private const string EventTag = "stage-preparation-event";
         private const string BossTag = "stage-boss-intro";
         private readonly StageSession _session;
+        // 저절로 띄운 사건의 시도·준비 단계. 첫 사건과 후속은 준비 단계가 달라 따로 한 번씩 뜬다.
         private int _eventShownAttempt = -1;
+        private int _eventShownWave = -1;
 
         public StagePreparationPopups(StageSession session) => _session = session;
 
@@ -21,12 +23,13 @@ namespace Code.UI.Stages
         public void Tick(UiFrameButton eventButton, bool blocked)
         {
             StagePreparationEvents events = _session.PreparationEvents;
-            bool offered = events.IsOffered(_session);
+            StagePreparationEvent offeredEvent = events.Offered(_session, out _);
+            bool offered = offeredEvent != null;
             if (eventButton != null)
             {
                 eventButton.SetVisible(offered);
                 if (offered)
-                    eventButton.SetLabel(StagePreparationEvents.EventOf(_session.Definition).ButtonLabel);
+                    eventButton.SetLabel(offeredEvent.ButtonLabel);
             }
             if (blocked || PopupController.IsOpen)
                 return;
@@ -36,18 +39,20 @@ namespace Code.UI.Stages
                 PopupController.Show(BossIntro());
             }
             // ESC로 닫으면 미선택으로 남는다. 같은 시도에서는 다시 저절로 열지 않고 사건 버튼으로 연다.
-            else if (offered && _eventShownAttempt != events.Attempt)
+            else if (offered && (_eventShownAttempt != events.Attempt || _eventShownWave != _session.WaveIndex))
                 ShowEvent();
         }
 
         public void ShowEvent()
         {
             StagePreparationEvents events = _session.PreparationEvents;
-            StagePreparationEvent preparationEvent = StagePreparationEvents.EventOf(_session.Definition);
-            if (preparationEvent == null || !events.IsOffered(_session) || PopupController.IsShowing(EventTag))
+            StagePreparationEvent preparationEvent = events.Offered(_session, out _);
+            if (preparationEvent == null || PopupController.IsShowing(EventTag))
                 return;
             _eventShownAttempt = events.Attempt;
+            _eventShownWave = _session.WaveIndex;
             int attempt = events.Attempt;
+            int wave = _session.WaveIndex;
             // 팝업 본문은 508×104(17pt, 넘치면 잘림)라 대사 한 줄에, 이름만으로 알 수 없는 선택지(보수·비용)만 짧게 붙인다
             System.Text.StringBuilder message = new($"임프 참모: \"{preparationEvent.Line}\"");
             List<PopupButtonSpec> options = new();
@@ -59,7 +64,7 @@ namespace Code.UI.Stages
                     message.Append('\n').Append(option.Label).Append(": ").Append(EffectText(option));
                 bool usable = !option.HasEffect || Available(option);
                 options.Add(new PopupButtonSpec(option.Label, option.HasEffect ? PopupButtonStyle.Primary : PopupButtonStyle.Secondary,
-                    () => Choose(choice, attempt), usable));
+                    () => Choose(choice, attempt, wave), usable));
             }
             // 닫기(ESC)는 아무것도 고르지 않는다
             PopupController.Show(PopupRequest.Choice(preparationEvent.Title, message.ToString(), options, () => { }).WithTag(EventTag));
@@ -81,11 +86,11 @@ namespace Code.UI.Stages
             (option.GoldChange >= 0 || _session.Gold >= -option.GoldChange)
             && (option.CoreRepair == 0 || _session.CoreHealth < _session.MaxCoreHealth);
 
-        private void Choose(int choice, int attempt)
+        private void Choose(int choice, int attempt, int wave)
         {
             // 씬을 떠났거나 재도전·다른 준비로 넘어간 뒤의 콜백은 세션이 다시 걸러 낸다
             if (_session != null)
-                _session.TryChooseEvent(choice, attempt);
+                _session.TryChooseEvent(choice, attempt, wave);
         }
 
         private PopupRequest BossIntro()

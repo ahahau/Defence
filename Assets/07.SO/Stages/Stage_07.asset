@@ -235,3 +235,32 @@ MonoBehaviour:
     - <Label>k__BackingField: "\uC0AC\uC6A9\uD558\uC9C0 \uC54A\uC74C"
       <GoldChange>k__BackingField: 0
       <CoreRepair>k__BackingField: 0
+  <FollowUpEvents>k__BackingField:
+  - <Title>k__BackingField: "\uBE44\uCD95 \uCC3D\uACE0 \uB05D"
+    <Line>k__BackingField: "\uCC3D\uACE0 \uB05D\uC5D0 \uB9C8\uC9C0\uB9C9 \uC0C1\uC790\uAC00 \uC788\uC2B5\uB2C8\uB2E4."
+    <ButtonLabel>k__BackingField: "\uCC3D\uACE0"
+    <Wave>k__BackingField: 2
+    <Options>k__BackingField:
+    - <Label>k__BackingField: "\uAE08\uD654 +30G"
+      <GoldChange>k__BackingField: 30
+      <CoreRepair>k__BackingField: 0
+    - <Label>k__BackingField: "\uAE08\uD654\uB85C \uBCF4\uAC15"
+      <GoldChange>k__BackingField: -25
+      <CoreRepair>k__BackingField: 4
+    - <Label>k__BackingField: "\uC0AC\uC6A9\uD558\uC9C0 \uC54A\uC74C"
+      <GoldChange>k__BackingField: 0
+      <CoreRepair>k__BackingField: 0
+  - <Title>k__BackingField: "\uB9C8\uC9C0\uB9C9 \uBCF4\uAC15"
+    <Line>k__BackingField: "\uB0A8\uC740 \uC790\uC7AC\uB97C \uBAA8\uB450 \uC4F8 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+    <ButtonLabel>k__BackingField: "\uBCF4\uAC15"
+    <Wave>k__BackingField: 2
+    <Options>k__BackingField:
+    - <Label>k__BackingField: "\uAE08\uACE0 \uBCF4\uC218 +3"
+      <GoldChange>k__BackingField: 0
+      <CoreRepair>k__BackingField: 3
+    - <Label>k__BackingField: "\uAE08\uD654 +30G"
+      <GoldChange>k__BackingField: 30
+      <CoreRepair>k__BackingField: 0
+    - <Label>k__BackingField: "\uC0AC\uC6A9\uD558\uC9C0 \uC54A\uC74C"
+      <GoldChange>k__BackingField: 0
+      <CoreRepair>k__BackingField: 0

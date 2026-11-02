@@ -250,14 +250,15 @@ namespace Code.Stages
         }
 
         /// <summary>
-        /// 준비 사건의 선택지(1부터)를 고른다(2026-11-02 사용자 승인). 사건을 연 시도의 같은 준비 단계에서만, 한 번만 적용한다.
+        /// 지금 열린 준비 사건(첫 사건 또는 후속)의 선택지(1부터)를 고른다(2026-11-02 사용자 승인).
+        /// 사건을 연 시도의 같은 준비 단계에서만, 한 번만 적용한다.
         /// 저장이 막혀 있으면 이어하기 뒤 두 번 적용되지 않도록 효과를 주지 않는다.
         /// </summary>
-        public bool TryChooseEvent(int choice, int attempt)
+        public bool TryChooseEvent(int choice, int attempt, int waveIndex)
         {
-            StagePreparationEvent preparationEvent = StagePreparationEvents.EventOf(Definition);
+            StagePreparationEvent preparationEvent = PreparationEvents.Offered(this, out bool followUp);
             if (preparationEvent == null || choice < 1 || choice > preparationEvent.Options.Length
-                || attempt != PreparationEvents.Attempt || !PreparationEvents.IsOffered(this))
+                || attempt != PreparationEvents.Attempt || waveIndex != WaveIndex)
                 return false;
             if (!string.IsNullOrEmpty(SaveError))
             {
@@ -282,7 +283,10 @@ namespace Code.Stages
                 mapView.CoreHealth.Heal(repaired);
             }
             Gold += option.GoldChange;
-            PreparationEvents.Set(choice, repaired);
+            if (followUp)
+                PreparationEvents.SetFollowUp(choice, repaired);
+            else
+                PreparationEvents.Set(choice, repaired);
             // 이름의 숫자가 아니라 실제로 적용된 결과를 알린다(보수는 최대 체력에서 잘릴 수 있다)
             string result = (option.GoldChange != 0 ? $"{option.GoldChange:+0;-0}G" : string.Empty)
                 + (repaired > 0 ? (option.GoldChange != 0 ? ", " : string.Empty) + $"코어 +{repaired}" : string.Empty);

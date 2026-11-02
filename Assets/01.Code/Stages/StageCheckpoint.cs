@@ -52,6 +52,7 @@ namespace Code.Stages
                 _session.Results.Restore(data.hasWaveReport ? data.waveReport : null,
                     data.hasStageTotals ? data.stageTotals : data.nextWave == 0 ? StageWaveReport.Empty : null);
                 _session.PreparationEvents.Set(data.supplyChoice, data.supplyRepaired);
+                _session.PreparationEvents.SetFollowUp(data.followUpChoice, data.followUpRepaired);
                 // 바리케이드 체력·부하 공격력 배율이 붙도록 배치보다 먼저 되살린다
                 _session.Merchant.Set(_session.Catalog, data.merchantItems, data.merchantRepairWave, data.merchantRepaired);
                 foreach (StageSavedPlacement saved in data.placements)
@@ -111,6 +112,8 @@ namespace Code.Stages
                     stageTotals = _session.Results.Totals,
                     supplyChoice = _session.PreparationEvents.Choice,
                     supplyRepaired = _session.PreparationEvents.CoreRepaired,
+                    followUpChoice = _session.PreparationEvents.FollowUpChoice,
+                    followUpRepaired = _session.PreparationEvents.FollowUpRepaired,
                     merchantItems = new List<string>(_session.Merchant.Bought),
                     merchantRepairWave = _session.Merchant.RepairWave,
                     merchantRepaired = _session.Merchant.CoreRepaired,
@@ -207,11 +210,14 @@ namespace Code.Stages
             HashSet<string> selected = new(StringComparer.Ordinal);
             if (!StagePreparationEvents.IsValidSaved(definition, data.nextWave, data.supplyChoice, data.supplyRepaired))
                 return Reject("준비 사건 기록이 진행과 맞지 않습니다.", out reason);
+            if (!StagePreparationEvents.IsValidSavedFollowUp(definition, data.nextWave, data.supplyChoice, data.followUpChoice,
+                    data.followUpRepaired))
+                return Reject("준비 사건 후속 기록이 진행과 맞지 않습니다.", out reason);
             if (!StageMerchant.IsValidSaved(_session.Catalog, data.nextWave, data.merchantItems, data.merchantRepairWave,
                     data.merchantRepaired))
                 return Reject("상인 구매 기록이 진행과 맞지 않습니다.", out reason);
             // 금고 보수(사건·상인)로 되찾은 체력을 빼야 전과의 코어 피해와 실제 손실을 맞출 수 있다
-            int unrepairedCore = data.coreHealth - data.supplyRepaired - data.merchantRepaired;
+            int unrepairedCore = data.coreHealth - data.supplyRepaired - data.followUpRepaired - data.merchantRepaired;
             int barricadeHealth = StageMerchant.BarricadeHealth(definition,
                 StageMerchant.BarricadeMultiplier(_session.Catalog, data.merchantItems));
             if (data.hasWaveReport && (data.waveReport == null

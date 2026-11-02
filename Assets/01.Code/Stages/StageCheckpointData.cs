@@ -26,6 +26,9 @@ namespace Code.Stages
         // 없는 구 저장은 미선택(0)·보수 0으로 읽는다.
         [SerializeField] internal int supplyChoice;
         [SerializeField] internal int supplyRepaired;
+        // 준비 사건 후속(2026-11-02). 고른 선택지 번호(1부터)와 실제 코어 보수량. 없는 구 저장은 미선택(0)·보수 0으로 읽는다.
+        [SerializeField] internal int followUpChoice;
+        [SerializeField] internal int followUpRepaired;
         // 스테이지 상인(2026-11-02). 이번 스테이지에 산 배율 물건 ID, 마지막 보수 준비 단계(다음 웨이브 번호, 0이면 없음),
         // 상인 보수 누계. 없는 구 저장은 구매 없음으로 읽는다.
         [SerializeField] internal List<string> merchantItems;
