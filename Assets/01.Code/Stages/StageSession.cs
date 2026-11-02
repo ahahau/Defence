@@ -32,6 +32,7 @@ namespace Code.Stages
         public StageArtifacts Artifacts { get; private set; }
         public StageWaveResults Results { get; private set; } = new();
         public StagePreparationEvents PreparationEvents { get; } = new();
+        public StageMerchant Merchant { get; } = new();
         public StagePhase Phase { get; private set; } = StagePhase.Unavailable;
         public int Gold { get; private set; }
         public int WaveIndex { get; private set; }
@@ -217,6 +218,7 @@ namespace Code.Stages
             Gold = definition.StartingGold;
             Results.Reset();
             PreparationEvents.Reset();
+            Merchant.Reset(Catalog);
             WaveIndex = 0;
             _spawned = 0;
             _locked = false;
@@ -285,6 +287,60 @@ namespace Code.Stages
             string result = (option.GoldChange != 0 ? $"{option.GoldChange:+0;-0}G" : string.Empty)
                 + (repaired > 0 ? (option.GoldChange != 0 ? ", " : string.Empty) + $"코어 +{repaired}" : string.Empty);
             Tell($"{preparationEvent.Title}: {(result.Length > 0 ? result : option.Label)}");
+            return true;
+        }
+
+        /// <summary>
+        /// 상인 물건(카탈로그 순서 번호)을 산다(2026-11-02 사용자 결정). 팝업을 연 시도·준비 단계에서만 적용한다.
+        /// 저장이 막혀 있으면 이어하기 뒤 두 번 적용되지 않도록 팔지 않는다.
+        /// </summary>
+        public bool TryBuyMerchantItem(int index, int attempt, int waveIndex)
+        {
+            IReadOnlyList<StageMerchantItem> items = StageMerchant.ItemsOf(Catalog);
+            if (!StageMerchant.IsOpen(this) || index < 0 || index >= items.Count
+                || attempt != Merchant.Attempt || waveIndex != WaveIndex)
+                return false;
+            if (!string.IsNullOrEmpty(SaveError))
+            {
+                Tell(SaveError);
+                return false;
+            }
+            StageMerchantItem item = items[index];
+            if (Merchant.IsSoldOut(item, WaveIndex))
+            {
+                Tell(item.IsStageBuff ? "이번 스테이지에 이미 산 물건입니다" : "이번 준비 단계에 이미 산 물건입니다");
+                return false;
+            }
+            if (Gold < item.Price)
+            {
+                Tell("금화가 부족합니다");
+                return false;
+            }
+            int repaired = 0;
+            if (item.CoreRepair > 0)
+            {
+                repaired = Mathf.Min(item.CoreRepair, MaxCoreHealth - CoreHealth);
+                if (repaired <= 0)
+                {
+                    Tell("코어가 가득 차 보수할 수 없습니다");
+                    return false;
+                }
+                mapView.CoreHealth.Heal(repaired);
+            }
+            Gold -= item.Price;
+            Merchant.Buy(item, WaveIndex, repaired);
+            if (item.UnitAttackMultiplier > 1f)
+                foreach (StageActor actor in Board.Actors)
+                    Merchant.Apply(actor);
+            if (item.BarricadeHealthMultiplier > 1f)
+            {
+                int maximum = StageMerchant.BarricadeHealth(Definition, Merchant.BarricadeHealthMultiplier);
+                foreach (StageBarricade wall in Board.Barricades.Values)
+                    if (wall != null && wall.IsAlive)
+                        wall.RaiseMaxHealth(maximum);
+            }
+            // 보수는 최대 체력에서 잘릴 수 있어 실제 회복량을 알린다
+            Tell($"{item.Label}: -{item.Price}G, " + (repaired > 0 ? $"코어 +{repaired}" : "이번 스테이지 " + item.EffectText()));
             return true;
         }
 

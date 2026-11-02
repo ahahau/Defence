@@ -26,7 +26,7 @@ namespace Code.Stages
             Cell = cell;
             PaidGold = paid;
             Combat = GetComponent<Combatant>();
-            Combat.Health.SetMaxHealth(session.Definition.BarricadeHealth, true);
+            Combat.Health.SetMaxHealth(StageMerchant.BarricadeHealth(session.Definition, session.Merchant.BarricadeHealthMultiplier), true);
             Combat.Health.Damaged += HandleDamaged;
         }
 
@@ -35,6 +35,16 @@ namespace Code.Stages
             if (_session.Phase != StagePhase.Preparing)
                 return;
             Remove(_session.Definition.DemolishRefund, false);
+        }
+
+        /// <summary>상인 보강으로 최대 체력을 올리고 늘어난 만큼 채운다. 회복 대기는 건드리지 않는다.</summary>
+        public void RaiseMaxHealth(int maximum)
+        {
+            int added = maximum - Combat.Health.MaxHealth;
+            if (added <= 0)
+                return;
+            Combat.Health.SetMaxHealth(maximum, false);
+            Combat.Health.Heal(added);
         }
 
         internal void Capture(StageSavedPlacement saved)

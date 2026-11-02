@@ -40,6 +40,7 @@ namespace Code.Stages
         [SerializeField] private StageArtifactWindow artifactWindow;
         [SerializeField] private StageCommandBar commandBar;
         [SerializeField] private UiFrameButton supplyButton;
+        [SerializeField] private UiFrameButton merchantButton;
         // 인스펙터 배선용이 아니다. 실행 중 만든 월드 표식 묶음을 직렬화해 두어
         // 재활성화·스크립트 재로드 뒤에도 이전 묶음을 찾아 정리한다(StageHudLifecycleDesign.md).
         [SerializeField, HideInInspector] private Transform visualRoot;
@@ -49,6 +50,7 @@ namespace Code.Stages
         private StageArtifactPresenter _artifacts;
         private StagePreparationPopups _preparationPopups;
         private StageEndingPopup _endingPopup;
+        private StageMerchantPopup _merchantPopup;
         private bool _bound;
         private float _nextRefresh;
         private float _messageFontSize;
@@ -86,6 +88,8 @@ namespace Code.Stages
                 artifactButton.Button.onClick.AddListener(OpenArtifacts);
             if (supplyButton != null)
                 supplyButton.Button.onClick.AddListener(OpenSupply);
+            if (merchantButton != null)
+                merchantButton.Button.onClick.AddListener(OpenMerchant);
             if (settings != null)
                 settings.LeavingScene += session.PrepareToLeave;
             if (speedController != null)
@@ -106,6 +110,8 @@ namespace Code.Stages
                 commandBar.Hide();
             if (supplyButton != null)
                 supplyButton.SetVisible(false);
+            if (merchantButton != null)
+                merchantButton.SetVisible(false);
             if (cursor != null)
                 cursor.gameObject.SetActive(false);
             if (visualRoot != null)
@@ -140,6 +146,7 @@ namespace Code.Stages
             RemoveListener(settingsButton, OpenSettings);
             RemoveListener(artifactButton, OpenArtifacts);
             RemoveListener(supplyButton, OpenSupply);
+            RemoveListener(merchantButton, OpenMerchant);
             if (settings is not null && session is not null)
                 settings.LeavingScene -= session.PrepareToLeave;
             if (speedController is not null)
@@ -147,6 +154,7 @@ namespace Code.Stages
         }
 
         private void OpenSupply() => _preparationPopups?.ShowEvent();
+        private void OpenMerchant() => _merchantPopup?.Show();
 
         private static void RemoveListener(UiFrameButton button, UnityAction action)
         {
@@ -179,6 +187,7 @@ namespace Code.Stages
             _artifacts ??= new StageArtifactPresenter();
             _preparationPopups ??= new StagePreparationPopups(session);
             _endingPopup ??= new StageEndingPopup(session);
+            _merchantPopup ??= new StageMerchantPopup(session);
             if (_cursorScale == Vector3.zero)
                 _cursorScale = cursor.transform.localScale;
             if (_placementTool == null)
@@ -253,6 +262,7 @@ namespace Code.Stages
                 || (settings != null && settings.IsOpen) || (artifactWindow != null && artifactWindow.IsOpen);
             _preparationPopups.Tick(supplyButton, popupsBlocked);
             _endingPopup.Tick(popupsBlocked);
+            _merchantPopup.Tick(merchantButton);
             if (Time.unscaledTime >= _nextRefresh)
             {
                 _nextRefresh = Time.unscaledTime + 0.2f;

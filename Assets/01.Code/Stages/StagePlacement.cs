@@ -120,6 +120,7 @@ namespace Code.Stages
                 actor.Initialize(_session, cell, option, cost);
                 unit.Combatant.SetAttackModifier(actor, 0f, 1f + _session.Profile.Level(option.Id) * _session.Catalog.DamagePerUpgrade);
                 _session.Artifacts?.Apply(actor);
+                _session.Merchant.Apply(actor);
                 return actor;
             }
             else

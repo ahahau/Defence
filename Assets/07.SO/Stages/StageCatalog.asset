@@ -92,6 +92,8 @@ MonoBehaviour:
   <SlotRewardStages>k__BackingField:
   - Stage_02
   - Stage_04
+  <FailureRewardPerWave>k__BackingField: 1
+  <FailureRewardCapRatio>k__BackingField: 0.5
   <Artifacts>k__BackingField:
   - <Id>k__BackingField: artifact:cefe93e23c5ca844f87af3a4b43fd70d
     <Artifact>k__BackingField: {fileID: 11400000, guid: cefe93e23c5ca844f87af3a4b43fd70d, type: 2}
@@ -133,6 +135,25 @@ MonoBehaviour:
   <ArtifactSlots>k__BackingField: 2
   <ArtifactChoices>k__BackingField: 3
   <LoneAllyRadius>k__BackingField: 2
+  <MerchantItems>k__BackingField:
+  - <Id>k__BackingField: merchant:core-repair
+    <Label>k__BackingField: "\uCF54\uC5B4 \uBCF4\uC218"
+    <Price>k__BackingField: 30
+    <CoreRepair>k__BackingField: 3
+    <UnitAttackMultiplier>k__BackingField: 1
+    <BarricadeHealthMultiplier>k__BackingField: 1
+  - <Id>k__BackingField: merchant:unit-training
+    <Label>k__BackingField: "\uBD80\uD558 \uD6C8\uB828"
+    <Price>k__BackingField: 40
+    <CoreRepair>k__BackingField: 0
+    <UnitAttackMultiplier>k__BackingField: 1.1
+    <BarricadeHealthMultiplier>k__BackingField: 1
+  - <Id>k__BackingField: merchant:barricade
+    <Label>k__BackingField: "\uBC14\uB9AC\uCF00\uC774\uB4DC"
+    <Price>k__BackingField: 30
+    <CoreRepair>k__BackingField: 0
+    <UnitAttackMultiplier>k__BackingField: 1
+    <BarricadeHealthMultiplier>k__BackingField: 1.2
   <Elites>k__BackingField:
   - {fileID: 11400000, guid: daa1222371f323d4c944f6fe5d34916a, type: 2}
   - {fileID: 11400000, guid: 1f84d6d94b5b10941b916f27e113d750, type: 2}

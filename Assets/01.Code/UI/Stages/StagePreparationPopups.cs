@@ -70,13 +70,8 @@ namespace Code.UI.Stages
         {
             string text = option.GoldChange != 0 ? $"{option.GoldChange:+0;-0}G" : string.Empty;
             if (option.CoreRepair > 0)
-            {
-                int current = _session.CoreHealth;
-                int maximum = _session.MaxCoreHealth;
-                int repair = System.Math.Min(option.CoreRepair, maximum - current);
                 text += (text.Length > 0 ? ", " : string.Empty)
-                    + (repair > 0 ? $"코어 {current}→{current + repair}/{maximum}" : "코어가 가득 참");
-            }
+                    + (StageCoreRepairPreview.TryText(_session, option.CoreRepair, out string repair) ? repair : "코어가 가득 참");
             if (option.GoldChange < 0 && _session.Gold < -option.GoldChange)
                 text += " (금화 부족)";
             return text;

@@ -165,6 +165,32 @@ public static class StageDefenseBuilder
         return "events=" + written;
     }
 
+    /// <summary>
+    /// 스테이지 상인 물건(2026-11-02 사용자 결정: 이번 스테이지 한정, 매 준비 단계, 범용 팝업 3칸).
+    /// 가격·효과는 임시 값이다. 코어 보수는 준비 단계마다, 배율 물건은 스테이지마다 한 번 산다.
+    /// </summary>
+    private static StageMerchantItem[] MerchantItems() => new[]
+    {
+        new StageMerchantItem("merchant:core-repair", "코어 보수", 30, 3, 1f, 1f),
+        new StageMerchantItem("merchant:unit-training", "부하 훈련", 40, 0, 1.1f, 1f),
+        new StageMerchantItem("merchant:barricade", "바리케이드", 30, 0, 1f, 1.2f)
+    };
+
+    /// <summary>카탈로그에 <see cref="MerchantItems"/>를 쓴다. 카탈로그 에셋만 저장한다.</summary>
+    public static string ApplyMerchantItems()
+    {
+        Guard();
+        StageCatalogSO catalog = Load<StageCatalogSO>(Root + "/StageCatalog.asset");
+        StageMerchantItem[] items = MerchantItems();
+        foreach (StageMerchantItem item in items)
+            if (!item.TryValidate(out string reason))
+                throw new InvalidOperationException(reason);
+        Set(catalog, "MerchantItems", items);
+        // 다른 세션이 편집 중인 에셋까지 저장하지 않게 카탈로그만 저장한다
+        AssetDatabase.SaveAssetIfDirty(catalog);
+        return "merchantItems=" + items.Length;
+    }
+
     /// <summary><see cref="EliteTable"/>에 나오는 정예 종류(중복 없이). 카탈로그 정예 목록이 된다.</summary>
     private static EnemyDataSO[] EliteData()
     {
@@ -287,6 +313,20 @@ public static class StageDefenseBuilder
 
     private const string CommandBarName = "CommandBar";
     private const string SupplyButtonName = "Supply";
+    private const string MerchantButtonName = "Merchant";
+
+    /// <summary>작성된 StageDefense 씬에 상인 버튼을 놓는다(2026-11-02 사용자 결정). 이미 있으면 지우고 다시 만든다.</summary>
+    public static string AddMerchantButton() => EditScene(scene =>
+    {
+        EnsurePopup(scene);
+        StageHudView view = FindInScene<StageHudView>(scene);
+        RectTransform host = (RectTransform)view.transform;
+        Transform old = host.Find(MerchantButtonName);
+        if (old != null)
+            UnityEngine.Object.DestroyImmediate(old.gameObject);
+        BuildMerchantButton(view, host);
+        return "merchant=" + (host.Find(MerchantButtonName) != null);
+    });
 
     /// <summary>
     /// 1스테이지 준비 단계의 보스 소개·사건 팝업(2026-11-02 사용자 승인)을 위해 범용 팝업 프리팹과 보급품 버튼을 놓는다.
@@ -352,6 +392,15 @@ public static class StageDefenseBuilder
     {
         UiFrameButton button = Button(host, SupplyButtonName, "보급품", 1340, 996, 180, 54);
         UiKit.Wire(view, "supplyButton", button);
+        button.gameObject.SetActive(false);
+        KeepArtifactWindowOnTop(host);
+    }
+
+    /// <summary>아래 버튼 줄의 보급품 버튼 오른쪽(180×54). 준비 단계에만 HUD가 보인다.</summary>
+    private static void BuildMerchantButton(StageHudView view, RectTransform host)
+    {
+        UiFrameButton button = Button(host, MerchantButtonName, "상인", 1550, 996, 180, 54);
+        UiKit.Wire(view, "merchantButton", button);
         button.gameObject.SetActive(false);
         KeepArtifactWindowOnTop(host);
     }
@@ -627,6 +676,7 @@ public static class StageDefenseBuilder
         StageCatalogSO catalog = Load<StageCatalogSO>(Root + "/StageCatalog.asset");
         Set(catalog, "Stages", stages.ToArray());
         Set(catalog, "Elites", EliteData());
+        Set(catalog, "MerchantItems", MerchantItems());
         AssetDatabase.SaveAssets();
         return "stages=" + stages.Count;
     }
@@ -1009,6 +1059,7 @@ public static class StageDefenseBuilder
         UiKit.Wire(view, "retry", Button(host, "Retry", "스테이지 재도전", 800, 996, 300, 54));
         UiKit.Wire(view, "title", Button(host, "Title", "타이틀", 1130, 996, 180, 54));
         BuildSupplyButton(view, host);
+        BuildMerchantButton(view, host);
         SpriteRenderer cursor = SpriteBar("Placement Cursor", null, new Color(0.3f, 0.9f, 0.6f, 0.3f), 1, 1);
         cursor.sortingOrder = 100;
         UiKit.Wire(view, "cursor", cursor);

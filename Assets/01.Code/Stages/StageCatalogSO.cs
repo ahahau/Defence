@@ -36,6 +36,9 @@ namespace Code.Stages
         [field: SerializeField, Min(0), Tooltip("고립 늑대 부적: 이 칸 수 안에 다른 부하가 없어야 한다.")]
         public float LoneAllyRadius { get; private set; } = 2f;
 
+        [field: Header("스테이지 상인 (임시 값, 2026-11-02 사용자 결정)")]
+        [field: SerializeField] public StageMerchantItem[] MerchantItems { get; private set; } = System.Array.Empty<StageMerchantItem>();
+
         /// <summary>
         /// 스테이지에서 정예로 보는 적(2026-11-01 사용자 결정). 일시정지 잠금·등장 안내·준비 예고가 이 목록만 본다.
         /// 등급만 보면 일반 검사·성기사도 정예와 같은 4라 따로 둔다.
