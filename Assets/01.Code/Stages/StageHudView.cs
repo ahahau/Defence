@@ -48,6 +48,7 @@ namespace Code.Stages
         private StageBriefingPresenter _briefing;
         private StageArtifactPresenter _artifacts;
         private StagePreparationPopups _preparationPopups;
+        private StageEndingPopup _endingPopup;
         private bool _bound;
         private float _nextRefresh;
         private float _messageFontSize;
@@ -177,6 +178,7 @@ namespace Code.Stages
             _briefing ??= new StageBriefingPresenter();
             _artifacts ??= new StageArtifactPresenter();
             _preparationPopups ??= new StagePreparationPopups(session);
+            _endingPopup ??= new StageEndingPopup(session);
             if (_cursorScale == Vector3.zero)
                 _cursorScale = cursor.transform.localScale;
             if (_placementTool == null)
@@ -246,9 +248,11 @@ namespace Code.Stages
                 return;
             _battleSignals.Tick();
             BindRows();
-            // 저장 오류·설정·유물 창이 열려 있으면 보스 소개·보급품 팝업을 미룬다
-            _preparationPopups.Tick(supplyButton, !string.IsNullOrEmpty(session.SaveError)
-                || (settings != null && settings.IsOpen) || (artifactWindow != null && artifactWindow.IsOpen));
+            // 저장 오류·설정·유물 창이 열려 있으면 보스 소개·보급품·엔딩 팝업을 미룬다
+            bool popupsBlocked = !string.IsNullOrEmpty(session.SaveError)
+                || (settings != null && settings.IsOpen) || (artifactWindow != null && artifactWindow.IsOpen);
+            _preparationPopups.Tick(supplyButton, popupsBlocked);
+            _endingPopup.Tick(popupsBlocked);
             if (Time.unscaledTime >= _nextRefresh)
             {
                 _nextRefresh = Time.unscaledTime + 0.2f;

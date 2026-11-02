@@ -29,12 +29,33 @@ namespace Code.UI
         [SerializeField, Tooltip("잠겼을 때 흐리게 만들 글자.")]
         private TMP_Text continueLabel;
 
+        // 카탈로그를 직접 참조하면 타이틀이 스테이지·적·부하 데이터와 프리팹을 모두 올린다. ID 문자열만 둔다.
+        [SerializeField, Tooltip("마지막 스테이지 ID. 생성기 StageDefenseBuilder.AddTitleClearRecord가 카탈로그에서 써 넣는다(스테이지 목록이 바뀌면 다시 돌린다).")]
+        private string finalStageId;
+
+        [SerializeField, Tooltip("모든 스테이지를 지켜냈으면 보이는 기록. 아니면 비워 자리만 둔다.")]
+        private TMP_Text clearRecord;
+
         private static readonly Color LabelOn = new(0.96f, 0.92f, 0.84f, 1f);
         private static readonly Color LabelOff = new(0.46f, 0.42f, 0.37f, 1f);
 
         private void Start()
         {
             RefreshContinue();
+            RefreshClearRecord();
+        }
+
+        /// <summary>
+        /// 마지막 스테이지를 깬 프로필이면 "모든 스테이지 방어 완료"를 보인다(2026-11-02 사용자 결정).
+        /// 따로 기록하지 않고 저장된 클리어 목록을 읽기만 한다.
+        /// </summary>
+        private void RefreshClearRecord()
+        {
+            if (clearRecord == null)
+                return;
+            // 읽기만 한다. 손상된 프로필은 기록 없음으로 보고 오류 로그는 스테이지 씬이 남긴다.
+            bool allCleared = StageProfile.IsClearedOnDisk(Application.persistentDataPath, finalStageId);
+            clearRecord.text = allCleared ? "모든 스테이지 방어 완료" : string.Empty;
         }
 
         /// <summary>

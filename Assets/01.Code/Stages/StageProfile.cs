@@ -27,6 +27,7 @@ namespace Code.Stages
             [SerializeField] internal List<string> artifactChoices = new();
         }
 
+        private const string FileName = "defence-stage-profile-v1.json";
         private readonly string _path;
         private Document _document = new() { version = 1 };
         private bool _canWrite = true;
@@ -38,7 +39,7 @@ namespace Code.Stages
 
         public StageProfile(string folder)
         {
-            _path = Path.Combine(folder, "defence-stage-profile-v1.json");
+            _path = Path.Combine(folder, FileName);
             if (!File.Exists(_path) && !File.Exists(_path + ".bak"))
                 return;
             if (TryRead(_path, out Document loaded))
@@ -54,6 +55,17 @@ namespace Code.Stages
         }
 
         public bool IsCleared(string id) => !string.IsNullOrEmpty(id) && _document.cleared.Contains(id);
+
+        /// <summary>
+        /// 저장된 프로필에서 클리어 여부만 읽는다(타이틀 기록 표시용). 쓰기 차단·오류 로그 없이, 원본을 못 읽으면 백업을, 둘 다 못 읽으면 거짓이다.
+        /// </summary>
+        public static bool IsClearedOnDisk(string folder, string id)
+        {
+            if (string.IsNullOrEmpty(id))
+                return false;
+            string path = Path.Combine(folder, FileName);
+            return (TryRead(path, out Document document) || TryRead(path + ".bak", out document)) && document.cleared.Contains(id);
+        }
         public bool IsUnlocked(StageOption option) => option != null
             && (string.IsNullOrEmpty(option.RequiredClear) || IsCleared(option.RequiredClear));
 

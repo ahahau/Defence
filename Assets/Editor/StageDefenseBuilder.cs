@@ -304,6 +304,39 @@ public static class StageDefenseBuilder
         return $"popup={popup != null} supply={host.Find(SupplyButtonName) != null}";
     });
 
+    private const string TitleScenePath = "Assets/00.Scenes/Start.unity";
+    private const string ClearRecordName = "ClearRecord";
+
+    /// <summary>
+    /// 타이틀 메뉴의 종료 버튼 아래에 "모든 스테이지 방어 완료" 기록 글자를 놓고 배선한다(2026-11-02 사용자 결정).
+    /// 이미 있으면 다시 만든다. 글은 실행 중에 프로필을 읽어 정한다.
+    /// 타이틀이 카탈로그 전체를 올리지 않도록 마지막 스테이지 ID만 써 넣으므로, 스테이지 목록이 바뀌면 다시 돌린다.
+    /// </summary>
+    public static string AddTitleClearRecord() => EditScene(TitleScenePath, scene =>
+    {
+        TitleMenuActions menu = FindInScene<TitleMenuActions>(scene);
+        SerializedObject serialized = new(menu);
+        Component continueButton = serialized.FindProperty("continueButton").objectReferenceValue as Component;
+        if (continueButton == null)
+            throw new InvalidOperationException("타이틀 이어하기 버튼 배선이 없습니다");
+        Transform host = continueButton.transform.parent;
+        Transform old = host.Find(ClearRecordName);
+        if (old != null)
+            UnityEngine.Object.DestroyImmediate(old.gameObject);
+        TMP_Text record = UiKit.Text(ClearRecordName, host, string.Empty, 18, HudPalette.Accent, TextAlignmentOptions.Center, true, true);
+        // 메뉴 버튼들과 같은 가운데 기준으로 종료 버튼(위 -230, 높이 58) 아래에 둔다
+        Vector2 center = new(0.5f, 0.5f);
+        UiKit.Place(record.rectTransform, center, center, center, new Vector2(0, -300), new Vector2(400, 32));
+        record.raycastTarget = false;
+        StageCatalogSO catalog = Load<StageCatalogSO>(Root + "/StageCatalog.asset");
+        string finalStageId = catalog.Stages[catalog.Stages.Length - 1].Id;
+        UiKit.Wire(menu, "clearRecord", record);
+        serialized.Update();
+        serialized.FindProperty("finalStageId").stringValue = finalStageId;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+        return "clearRecord=" + (host.Find(ClearRecordName) != null) + " finalStageId=" + finalStageId;
+    });
+
     /// <summary>SampleScene과 같은 범용 팝업 프리팹(캔버스 100)을 놓는다. 팝업 컨트롤러는 처음 쓸 때 스스로 생긴다.</summary>
     private static PopupView EnsurePopup(Scene scene)
     {
@@ -736,21 +769,23 @@ public static class StageDefenseBuilder
     /// 작성된 StageDefense 씬을 열어(이미 열려 있으면 그대로) 고치고 저장한다. 저장하지 않은 변경이 있으면 멈춘다.
     /// 다른 열린 씬은 건드리지 않는다.
     /// </summary>
-    private static string EditScene(Func<Scene, string> edit)
+    private static string EditScene(Func<Scene, string> edit) => EditScene(ScenePath, edit);
+
+    private static string EditScene(string path, Func<Scene, string> edit)
     {
         Guard();
-        Scene scene = SceneManager.GetSceneByPath(ScenePath);
+        Scene scene = SceneManager.GetSceneByPath(path);
         bool opened = !scene.IsValid() || !scene.isLoaded;
         if (!opened && scene.isDirty)
-            throw new InvalidOperationException("StageDefense 씬에 저장하지 않은 변경이 있어 멈춥니다");
+            throw new InvalidOperationException(path + " 씬에 저장하지 않은 변경이 있어 멈춥니다");
         if (opened)
-            scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Additive);
+            scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
         try
         {
             string result = edit(scene);
             EditorSceneManager.MarkSceneDirty(scene);
             if (!EditorSceneManager.SaveScene(scene))
-                throw new InvalidOperationException("StageDefense 씬 저장 실패");
+                throw new InvalidOperationException(path + " 씬 저장 실패");
             return result;
         }
         finally
