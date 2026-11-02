@@ -133,3 +133,8 @@ MonoBehaviour:
   <ArtifactSlots>k__BackingField: 2
   <ArtifactChoices>k__BackingField: 3
   <LoneAllyRadius>k__BackingField: 2
+  <Elites>k__BackingField:
+  - {fileID: 11400000, guid: daa1222371f323d4c944f6fe5d34916a, type: 2}
+  - {fileID: 11400000, guid: 1f84d6d94b5b10941b916f27e113d750, type: 2}
+  - {fileID: 11400000, guid: 3a57e171c52a2d142ba47390b16e3a86, type: 2}
+  - {fileID: 11400000, guid: 3955a229f66fc704f91be7fbea52f1e5, type: 2}

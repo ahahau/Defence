@@ -48,7 +48,9 @@ namespace Code.Stages
                     throw new InvalidOperationException("스테이지를 생성하지 못했습니다");
                 _session.RestorePreparation(data.nextWave, data.locked, data.coreHealth, data.gold, data.loadout,
                     data.artifacts ?? new List<string>());
-                _session.Results.Restore(data.hasWaveReport ? data.waveReport : null);
+                // 누계가 없는 구 저장은 첫 웨이브 전이 아니면 누계를 모르는 채로 둔다(클리어 때 누계 줄을 숨긴다)
+                _session.Results.Restore(data.hasWaveReport ? data.waveReport : null,
+                    data.hasStageTotals ? data.stageTotals : data.nextWave == 0 ? StageWaveReport.Empty : null);
                 foreach (StageSavedPlacement saved in data.placements)
                     _session.Placement.Restore(saved, Option(saved.optionId));
                 _session.Tell(_blocked ? Error : "마지막 준비 단계를 이어합니다. 전투 중 종료했다면 해당 웨이브부터 재시작합니다");
@@ -102,6 +104,8 @@ namespace Code.Stages
                     placements = new List<StageSavedPlacement>(),
                     hasWaveReport = _session.Results.Latest != null,
                     waveReport = _session.Results.Latest,
+                    hasStageTotals = _session.Results.Totals != null,
+                    stageTotals = _session.Results.Totals,
                     artifacts = new List<string>()
                 };
                 foreach (StageArtifact artifact in _session.Artifacts.Equipped)
@@ -196,6 +200,9 @@ namespace Code.Stages
             if (data.hasWaveReport && (data.waveReport == null
                 || !data.waveReport.MatchesPreparation(definition, data.nextWave, data.coreHealth)))
                 return Reject("마지막 결과 요약이 직전 완료 웨이브와 맞지 않습니다.", out reason);
+            if (data.hasStageTotals && (data.stageTotals == null || !data.stageTotals.MatchesTotals(definition,
+                    data.nextWave, data.coreHealth, data.hasWaveReport ? data.waveReport : null)))
+                return Reject("스테이지 누계가 끝난 웨이브와 맞지 않습니다.", out reason);
             foreach (string id in data.loadout)
                 if (string.IsNullOrEmpty(id) || !selected.Add(id) || !_session.Profile.IsUnlocked(Option(id)))
                     return Reject("편성에 중복되거나 현재 해금되지 않은 종류가 있습니다.", out reason);

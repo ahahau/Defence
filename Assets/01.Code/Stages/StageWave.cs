@@ -67,6 +67,18 @@ namespace Code.Stages
         /// <summary>일반 적 다음에 보스, 그 뒤 호위가 나온다.</summary>
         public int Count => (Enemies?.Length ?? 0) + (HasBoss ? 1 + (BossEscorts?.Length ?? 0) : 0);
 
+        /// <summary>보스를 뺀 정예 수. 정예는 카탈로그 목록(<see cref="StageCatalogSO.Elites"/>)이 정한다.</summary>
+        public int EliteCount(StageCatalogSO catalog)
+        {
+            int count = 0;
+            if (catalog == null)
+                return count;
+            for (int i = 0; i < Count; i++)
+                if (catalog.IsElite(At(i, out bool isBoss)) && !isBoss)
+                    count++;
+            return count;
+        }
+
         public StageWave(EnemyDataSO[] enemies, float interval, StageEnemyRule[] rules = null)
         {
             Enemies = enemies;

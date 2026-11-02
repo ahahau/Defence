@@ -247,8 +247,13 @@ namespace Code.Stages
 
         private void Update()
         {
-            // 보스가 살아 있는 동안만 멈출 수 없다. 웨이브 종료·실패로 보스가 사라지면 바로 풀린다.
-            speedController?.SetPauseLock(this, Phase == StagePhase.Fighting && IsBossAlive, Code.Manager.PauseLockRules.BossLockReason);
+            // 보스·정예가 살아 있는 동안만 멈출 수 없다. 웨이브 종료·실패로 사라지면 바로 풀린다.
+            if (speedController != null)
+            {
+                bool locked = Phase == StagePhase.Fighting && (IsBossAlive || IsEliteAlive());
+                speedController.SetPauseLock(this, locked, IsBossAlive
+                    ? Code.Manager.PauseLockRules.BossLockReason : Code.Manager.PauseLockRules.EliteLockReason);
+            }
             if (Phase != StagePhase.Fighting)
                 return;
             Devices.Tick(Time.deltaTime);
@@ -279,6 +284,8 @@ namespace Code.Stages
                     _boss = actor;
                     Tell($"보스 {data.Name} 등장");
                 }
+                else if (Catalog != null && Catalog.IsElite(data))
+                    Tell($"{data.Name} 등장");
                 _spawnClock = NextSpawnDelay(wave, _spawned);
                 _spawned++;
                 Notify();
@@ -311,6 +318,16 @@ namespace Code.Stages
             return count;
         }
 
+        /// <summary>카탈로그 정예가 살아 있는가. 등급 4인 일반 검사·성기사는 잠그지 않는다.</summary>
+        private bool IsEliteAlive()
+        {
+            if (Board != null && Catalog != null)
+                foreach (StageActor actor in Board.Actors)
+                    if (actor != null && actor.IsEnemy && actor != _boss && actor.IsAlive && Catalog.IsElite(actor.Enemy.Data))
+                        return true;
+            return false;
+        }
+
         public int Remaining => Phase == StagePhase.Fighting
             ? EnemyCount() + Definition.Waves[WaveIndex].Count - _spawned : 0;
 
@@ -330,7 +347,7 @@ namespace Code.Stages
                 }
                 else
                     Gold += Definition.KillReward;
-                Results.RecordEnemy(arrived, coreDamage, arrived ? 0 : Definition.KillReward);
+                Results.RecordEnemy(arrived, coreDamage, arrived ? 0 : Definition.KillReward, actor == _boss);
                 if (CoreHealth <= 0)
                 {
                     Results.Complete(WaveIndex + 1, false);

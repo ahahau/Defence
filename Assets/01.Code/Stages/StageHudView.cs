@@ -339,7 +339,9 @@ namespace Code.Stages
             _briefing.Refresh(definition, waveNumber - 1);
             bool preparing = session.Phase == StagePhase.Preparing;
             bool fighting = session.Phase == StagePhase.Fighting;
-            string boss = wave.HasBoss ? $" · 보스 {wave.Boss.Name}" : string.Empty;
+            int elites = wave.EliteCount(session.Catalog);
+            string boss = (wave.HasBoss ? $" · 보스 {wave.Boss.Name}" : string.Empty)
+                + (elites > 0 ? $" · 정예 {elites}" : string.Empty);
             status.text = $"{_battleSignals.CoreLabel()}    금화 {session.Gold}G    "
                 + $"웨이브 {waveNumber}/{definition.Waves.Length}{boss}    남은 적 {session.Remaining}"
                 + (_battleSignals.WaitingCount > 0 ? $"    복구 대기 {_battleSignals.WaitingCount}" : string.Empty)

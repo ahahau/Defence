@@ -8,6 +8,10 @@ namespace Code.Stages
         private int _coreDamage;
         private long _earnedGold;
         public StageWaveReport Latest { get; private set; }
+        /// <summary>이번 스테이지에서 끝난 웨이브 전체의 합. 누계 없는 구 저장을 이어하면 null이다.</summary>
+        public StageWaveReport Totals { get; private set; }
+        public bool BossDefeated { get; private set; }
+        public bool BossArrived { get; private set; }
         public bool RewardConfirmed { get; private set; }
         public bool RewardPreviouslyClaimed { get; private set; }
         public int ClearReward { get; private set; }
@@ -15,6 +19,7 @@ namespace Code.Stages
         internal void Reset()
         {
             Begin();
+            Totals = StageWaveReport.Empty;
             RewardConfirmed = false;
             RewardPreviouslyClaimed = false;
             ClearReward = 0;
@@ -26,15 +31,22 @@ namespace Code.Stages
             _arrivals = 0;
             _coreDamage = 0;
             _earnedGold = 0;
+            BossDefeated = false;
+            BossArrived = false;
             Latest = null;
         }
 
-        internal void RecordEnemy(bool arrived, int coreDamage, int killReward)
+        internal void RecordEnemy(bool arrived, int coreDamage, int killReward, bool isBoss)
         {
             if (arrived)
                 _arrivals++;
             else
                 _kills++;
+            if (isBoss)
+            {
+                BossArrived = arrived;
+                BossDefeated = !arrived;
+            }
             _coreDamage += coreDamage;
             AddGold(killReward);
         }
@@ -44,6 +56,7 @@ namespace Code.Stages
         internal void Complete(int waveNumber, bool completed)
         {
             Latest = new StageWaveReport(waveNumber, completed, _kills, _arrivals, _coreDamage, _earnedGold);
+            Totals = Totals?.Add(Latest);
         }
 
         internal void ConfirmReward(int awarded, bool previouslyClaimed)
@@ -56,6 +69,10 @@ namespace Code.Stages
             ClearReward = awarded;
         }
 
-        internal void Restore(StageWaveReport report) => Latest = report;
+        internal void Restore(StageWaveReport report, StageWaveReport totals)
+        {
+            Latest = report;
+            Totals = totals;
+        }
     }
 }

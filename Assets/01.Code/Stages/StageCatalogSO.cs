@@ -21,6 +21,23 @@ namespace Code.Stages
         [field: SerializeField, Min(0), Tooltip("고립 늑대 부적: 이 칸 수 안에 다른 부하가 없어야 한다.")]
         public float LoneAllyRadius { get; private set; } = 2f;
 
+        /// <summary>
+        /// 스테이지에서 정예로 보는 적(2026-11-01 사용자 결정). 일시정지 잠금·등장 안내·준비 예고가 이 목록만 본다.
+        /// 등급만 보면 일반 검사·성기사도 정예와 같은 4라 따로 둔다.
+        /// </summary>
+        [field: Header("정예")]
+        [field: SerializeField] public Code.Enemies.EnemyDataSO[] Elites { get; private set; } = System.Array.Empty<Code.Enemies.EnemyDataSO>();
+
+        public bool IsElite(Code.Enemies.EnemyDataSO enemy)
+        {
+            if (enemy == null || Elites == null)
+                return false;
+            foreach (Code.Enemies.EnemyDataSO elite in Elites)
+                if (elite == enemy)
+                    return true;
+            return false;
+        }
+
         public StageArtifact FindArtifact(string id)
         {
             if (string.IsNullOrEmpty(id) || Artifacts == null)

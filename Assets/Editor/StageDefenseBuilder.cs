@@ -74,6 +74,91 @@ public static class StageDefenseBuilder
         return $"partySize={size} waves={waves}";
     }
 
+    /// <summary>
+    /// 스테이지별 정예(2026-11-01 사용자 결정: 3스테이지부터 보스 직전 웨이브, 스테이지마다 고정 종류, 임시 배치).
+    /// 첫 파티는 비우고 둘째 파티부터 하나씩 일반 적 자리를 바꾼다. 전열은 파티 맨 앞, 후열·지원은 맨 뒤 자리다.
+    /// </summary>
+    private static readonly (string stage, string[] elites)[] EliteTable =
+    {
+        ("Stage_03", new[] { "EliteShieldGuardEnemy" }),
+        ("Stage_04", new[] { "EliteArcherEnemy" }),
+        ("Stage_05", new[] { "EliteScoutEnemy" }),
+        ("Stage_06", new[] { "EliteHealerEnemy", "EliteShieldGuardEnemy" }),
+        ("Stage_07", new[] { "EliteArcherEnemy", "EliteScoutEnemy" })
+    };
+
+    /// <summary>
+    /// 이미 쓴 스테이지에 <see cref="EliteTable"/>대로 정예를 넣는다. 같은 자리에 다시 써서 여러 번 돌려도 같다.
+    /// 모든 스테이지의 자리를 먼저 검사해, 한 곳이라도 틀리면 아무것도 바꾸지 않고 멈춘다.
+    /// </summary>
+    public static string ApplyElites()
+    {
+        Guard();
+        StageCatalogSO catalog = Load<StageCatalogSO>(Root + "/StageCatalog.asset");
+        foreach (StageDefinitionSO stage in catalog.Stages)
+            if (stage != null && stage.Waves != null)
+                PlaceElites(stage.Id, stage.Waves, false);
+        int placed = 0;
+        foreach (StageDefinitionSO stage in catalog.Stages)
+        {
+            if (stage == null || stage.Waves == null)
+                continue;
+            int count = PlaceElites(stage.Id, stage.Waves, true);
+            if (count == 0)
+                continue;
+            placed += count;
+            EditorUtility.SetDirty(stage);
+            // 다른 세션이 편집 중인 에셋까지 저장하지 않게 스테이지만 저장한다
+            AssetDatabase.SaveAssetIfDirty(stage);
+        }
+        Set(catalog, "Elites", EliteData());
+        AssetDatabase.SaveAssetIfDirty(catalog);
+        return "elites=" + placed + " catalog=" + catalog.Elites.Length;
+    }
+
+    /// <summary><see cref="EliteTable"/>에 나오는 정예 종류(중복 없이). 카탈로그 정예 목록이 된다.</summary>
+    private static EnemyDataSO[] EliteData()
+    {
+        List<EnemyDataSO> elites = new();
+        foreach ((string _, string[] names) in EliteTable)
+            foreach (string name in names)
+            {
+                EnemyDataSO elite = Load<EnemyDataSO>(Enemies + name + ".asset");
+                if (!elites.Contains(elite))
+                    elites.Add(elite);
+            }
+        return elites.ToArray();
+    }
+
+    /// <summary>표의 정예 자리를 검사하고, <paramref name="apply"/>가 참이면 그 자리를 바꾼다. 넣을 정예 수를 돌려준다.</summary>
+    private static int PlaceElites(string stageId, StageWave[] waves, bool apply)
+    {
+        foreach ((string stage, string[] elites) in EliteTable)
+        {
+            if (stage != stageId)
+                continue;
+            if (waves.Length < 2)
+                throw new InvalidOperationException(stageId + ": 보스 직전 웨이브가 없습니다");
+            StageWave wave = waves[waves.Length - 2];
+            int group = Mathf.Max(1, wave.PartySize);
+            for (int i = 0; i < elites.Length; i++)
+            {
+                EnemyDataSO elite = Load<EnemyDataSO>(Enemies + elites[i] + ".asset");
+                bool front = elite.Role is Code.BT.BattleRole.Tank or Code.BT.BattleRole.Melee;
+                int slot = (i + 1) * group + (front ? 0 : group - 1);
+                if (wave.Enemies == null || slot >= wave.Enemies.Length)
+                    throw new InvalidOperationException($"{stageId}: 정예 자리 {slot}가 웨이브 밖입니다");
+                // 표식 적 자리는 혼자 움직이므로 정예가 파티와 함께 걷도록 피한다
+                if (wave.RuleAt(slot) != StageEnemyRule.None)
+                    throw new InvalidOperationException($"{stageId}: 정예 자리 {slot}가 표식 적입니다");
+                if (apply)
+                    wave.Enemies[slot] = elite;
+            }
+            return elites.Length;
+        }
+        return 0;
+    }
+
     private const string ArtifactRoot = "Assets/07.SO/Artifacts/";
 
     /// <summary>
@@ -412,6 +497,7 @@ public static class StageDefenseBuilder
                 }
                 waves[wave] = last ? new StageWave(regular, interval, boss, escorts, rules) : new StageWave(regular, interval, rules);
             }
+            PlaceElites(spec.id, waves, true);
             StageDefinitionSO stage = WriteStage(spec.id, spec.title, spec.gimmick, spec.layout, spec.doors, new Vector2Int(21, 5), waves);
             Set(stage, "DoorOpensAtWave", spec.opens);
             Set(stage, "Devices", DevicesFor(spec.id));
@@ -421,6 +507,7 @@ public static class StageDefenseBuilder
         }
         StageCatalogSO catalog = Load<StageCatalogSO>(Root + "/StageCatalog.asset");
         Set(catalog, "Stages", stages.ToArray());
+        Set(catalog, "Elites", EliteData());
         AssetDatabase.SaveAssets();
         return "stages=" + stages.Count;
     }

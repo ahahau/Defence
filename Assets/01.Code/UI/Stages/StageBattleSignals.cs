@@ -20,6 +20,7 @@ namespace Code.UI.Stages
         private readonly float[] _breakUntil = new float[BreakSlots];
         private readonly Vector3[] _breakPositions = new Vector3[BreakSlots];
         private readonly List<SpriteRenderer> _waiting = new();
+        private readonly StageCoreThreat _threat = new();
         private StageBoard _board;
         private float _corePulseUntil;
         private float _coreAlertUntil;
@@ -54,7 +55,10 @@ namespace Code.UI.Stages
                 text += " [파괴]";
             else if (low)
                 text += " [위험]";
-            return HudPalette.Paint(text, low ? HudPalette.Danger : HudPalette.TextBody);
+            // 상태 줄이 넘치지 않게 가장 가까운 적까지의 칸은 코어 항목에 붙인다
+            if (_threat.NearestCells >= 0)
+                text += $" · 적 {_threat.NearestCells}칸";
+            return HudPalette.Paint(text, low || _threat.IsDanger ? HudPalette.Danger : HudPalette.TextBody);
         }
 
         public void CoreDamaged(int amount)
@@ -92,9 +96,13 @@ namespace Code.UI.Stages
                 return;
             }
             float size = _session.Definition.CellSize;
+            _threat.Tick(_session);
             float pulse = Mathf.Clamp01((_corePulseUntil - Time.time) / CorePulseSeconds);
-            Place(_core, _board.World(_session.Definition.Core), size, 1.3f + (1f - pulse) * 0.25f,
-                1.3f + (1f - pulse) * 0.25f, 0, HudPalette.Danger, pulse * 0.45f);
+            // 피격 강조가 우선이고, 적이 가까운 동안은 그보다 옅게 맥동한다
+            float threat = _threat.IsDanger ? 0.12f + 0.1f * (0.5f + 0.5f * Mathf.Sin(Time.time * 6f)) : 0f;
+            float scale = pulse > 0 ? 1.3f + (1f - pulse) * 0.25f : 1.3f;
+            Place(_core, _board.World(_session.Definition.Core), size, scale, scale, 0, HudPalette.Danger,
+                Mathf.Max(pulse * 0.45f, threat));
             for (int i = 0; i < BreakSlots; i++)
             {
                 float alpha = Mathf.Clamp01((_breakUntil[i] - Time.time) / BreakSeconds);
@@ -132,6 +140,7 @@ namespace Code.UI.Stages
             _coreAlertUntil = 0;
             _breakAlertUntil = 0;
             WaitingCount = 0;
+            _threat.Clear();
         }
 
         public void Dispose()
