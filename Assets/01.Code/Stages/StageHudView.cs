@@ -39,6 +39,7 @@ namespace Code.Stages
         [SerializeField] private UiFrameButton artifactButton;
         [SerializeField] private StageArtifactWindow artifactWindow;
         [SerializeField] private StageCommandBar commandBar;
+        [SerializeField] private UiFrameButton supplyButton;
         // 인스펙터 배선용이 아니다. 실행 중 만든 월드 표식 묶음을 직렬화해 두어
         // 재활성화·스크립트 재로드 뒤에도 이전 묶음을 찾아 정리한다(StageHudLifecycleDesign.md).
         [SerializeField, HideInInspector] private Transform visualRoot;
@@ -46,6 +47,7 @@ namespace Code.Stages
         private StageBattleSignals _battleSignals;
         private StageBriefingPresenter _briefing;
         private StageArtifactPresenter _artifacts;
+        private StagePreparationPopups _preparationPopups;
         private bool _bound;
         private float _nextRefresh;
         private float _messageFontSize;
@@ -81,6 +83,8 @@ namespace Code.Stages
             settingsButton.Button.onClick.AddListener(OpenSettings);
             if (artifactButton != null)
                 artifactButton.Button.onClick.AddListener(OpenArtifacts);
+            if (supplyButton != null)
+                supplyButton.Button.onClick.AddListener(OpenSupply);
             if (settings != null)
                 settings.LeavingScene += session.PrepareToLeave;
             if (speedController != null)
@@ -99,6 +103,8 @@ namespace Code.Stages
             _commands?.Hide();
             if (commandBar != null)
                 commandBar.Hide();
+            if (supplyButton != null)
+                supplyButton.SetVisible(false);
             if (cursor != null)
                 cursor.gameObject.SetActive(false);
             if (visualRoot != null)
@@ -132,11 +138,14 @@ namespace Code.Stages
             RemoveListener(fastSpeedButton, FastSpeed);
             RemoveListener(settingsButton, OpenSettings);
             RemoveListener(artifactButton, OpenArtifacts);
+            RemoveListener(supplyButton, OpenSupply);
             if (settings is not null && session is not null)
                 settings.LeavingScene -= session.PrepareToLeave;
             if (speedController is not null)
                 speedController.SettingChanged -= HandleSpeedChanged;
         }
+
+        private void OpenSupply() => _preparationPopups?.ShowSupply();
 
         private static void RemoveListener(UiFrameButton button, UnityAction action)
         {
@@ -167,6 +176,7 @@ namespace Code.Stages
             status.textWrappingMode = TextWrappingModes.Normal;
             _briefing ??= new StageBriefingPresenter();
             _artifacts ??= new StageArtifactPresenter();
+            _preparationPopups ??= new StagePreparationPopups(session);
             if (_cursorScale == Vector3.zero)
                 _cursorScale = cursor.transform.localScale;
             if (_placementTool == null)
@@ -236,6 +246,9 @@ namespace Code.Stages
                 return;
             _battleSignals.Tick();
             BindRows();
+            // 저장 오류·설정·유물 창이 열려 있으면 보스 소개·보급품 팝업을 미룬다
+            _preparationPopups.Tick(supplyButton, !string.IsNullOrEmpty(session.SaveError)
+                || (settings != null && settings.IsOpen) || (artifactWindow != null && artifactWindow.IsOpen));
             if (Time.unscaledTime >= _nextRefresh)
             {
                 _nextRefresh = Time.unscaledTime + 0.2f;

@@ -22,6 +22,9 @@ namespace Code.Stages
         // 스테이지 누계(2026-11-02). 없는 구 저장은 첫 웨이브 전이 아니면 누계 없이 복원한다.
         [SerializeField] internal bool hasStageTotals;
         [SerializeField] internal StageWaveReport stageTotals;
+        // 사건 "남은 보급품"(2026-11-02). 없는 구 저장은 미선택(0)·보수 0으로 읽는다.
+        [SerializeField] internal int supplyChoice;
+        [SerializeField] internal int supplyRepaired;
         // 장착 유물(2026-10-29). 없는 구 저장은 장착 없이 복원한다.
         [SerializeField] internal List<string> artifacts;
     }

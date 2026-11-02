@@ -31,6 +31,7 @@ namespace Code.Stages
         public StageProfile Profile { get; private set; }
         public StageArtifacts Artifacts { get; private set; }
         public StageWaveResults Results { get; private set; } = new();
+        public StagePreparationEvents PreparationEvents { get; } = new();
         public StagePhase Phase { get; private set; } = StagePhase.Unavailable;
         public int Gold { get; private set; }
         public int WaveIndex { get; private set; }
@@ -38,6 +39,8 @@ namespace Code.Stages
         public string Message { get; private set; }
         public string SaveError => _checkpoint?.Error;
         public int CoreHealth => mapView.CoreHealth.CurrentHealth;
+        /// <summary>실제 코어 체력의 최대치. 보수 미리보기와 적용이 같은 값을 쓴다.</summary>
+        public int MaxCoreHealth => mapView.CoreHealth.MaxHealth;
         public StagePlacement Placement { get; private set; }
         public IReadOnlyList<Trap> Traps => Placement.Traps;
         public int SelectedCount => _loadout.Count;
@@ -213,6 +216,7 @@ namespace Code.Stages
             Devices.Reset();
             Gold = definition.StartingGold;
             Results.Reset();
+            PreparationEvents.Reset();
             WaveIndex = 0;
             _spawned = 0;
             _locked = false;
@@ -241,6 +245,42 @@ namespace Code.Stages
             _party = null;
             Phase = StagePhase.Fighting;
             Tell("침입자가 코어로 접근합니다");
+        }
+
+        /// <summary>
+        /// 사건 "남은 보급품"을 고른다(2026-11-02 사용자 승인). 사건을 연 시도의 같은 준비 단계에서만, 한 번만 적용한다.
+        /// 저장이 막혀 있으면 이어하기 뒤 두 번 적용되지 않도록 효과를 주지 않는다.
+        /// </summary>
+        public bool TryChooseSupply(StageSupplyChoice choice, int attempt)
+        {
+            if (choice == StageSupplyChoice.None || attempt != PreparationEvents.Attempt || !PreparationEvents.IsSupplyOffered(this))
+                return false;
+            if (!string.IsNullOrEmpty(SaveError))
+            {
+                Tell(SaveError);
+                return false;
+            }
+            int repaired = 0;
+            if (choice == StageSupplyChoice.Repair)
+            {
+                repaired = Mathf.Min(StagePreparationEvents.SupplyRepair, MaxCoreHealth - CoreHealth);
+                if (repaired <= 0)
+                {
+                    Tell("코어가 가득 차 보수할 수 없습니다");
+                    return false;
+                }
+                mapView.CoreHealth.Heal(repaired);
+            }
+            else if (choice == StageSupplyChoice.Gold)
+                Gold += StagePreparationEvents.SupplyGold;
+            PreparationEvents.Set(choice, repaired);
+            Tell(choice switch
+            {
+                StageSupplyChoice.Gold => $"보급품을 금화로 바꿨습니다 +{StagePreparationEvents.SupplyGold}G",
+                StageSupplyChoice.Repair => $"보급품으로 금고를 보수했습니다 코어 +{repaired}",
+                _ => "보급품을 쓰지 않았습니다"
+            });
+            return true;
         }
 
         public bool IsBossAlive => _boss != null && _boss.IsAlive;

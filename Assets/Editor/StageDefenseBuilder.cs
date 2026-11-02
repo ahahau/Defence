@@ -8,6 +8,7 @@ using Code.Manager;
 using Code.MapCreateSystem;
 using Code.Stages;
 using Code.UI;
+using Code.UI.Popup;
 using Code.UI.Stages;
 using Code.Units;
 using TMPro;
@@ -237,6 +238,42 @@ public static class StageDefenseBuilder
     });
 
     private const string CommandBarName = "CommandBar";
+    private const string SupplyButtonName = "Supply";
+
+    /// <summary>
+    /// 1스테이지 준비 단계의 보스 소개·사건 팝업(2026-11-02 사용자 승인)을 위해 범용 팝업 프리팹과 보급품 버튼을 놓는다.
+    /// 이미 있으면 버튼만 다시 만들고 배선한다.
+    /// </summary>
+    public static string AddPreparationPopups() => EditScene(scene =>
+    {
+        PopupView popup = EnsurePopup(scene);
+        StageHudView view = FindInScene<StageHudView>(scene);
+        RectTransform host = (RectTransform)view.transform;
+        Transform old = host.Find(SupplyButtonName);
+        if (old != null)
+            UnityEngine.Object.DestroyImmediate(old.gameObject);
+        BuildSupplyButton(view, host);
+        return $"popup={popup != null} supply={host.Find(SupplyButtonName) != null}";
+    });
+
+    /// <summary>SampleScene과 같은 범용 팝업 프리팹(캔버스 100)을 놓는다. 팝업 컨트롤러는 처음 쓸 때 스스로 생긴다.</summary>
+    private static PopupView EnsurePopup(Scene scene)
+    {
+        PopupView popup = FindInScene<PopupView>(scene, false);
+        if (popup != null)
+            return popup;
+        GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(Load<GameObject>(PopupBuilder.PrefabPath), scene);
+        return instance.GetComponent<PopupView>();
+    }
+
+    /// <summary>아래 버튼 줄의 타이틀 버튼 오른쪽(180×54). 사건이 열려 있는 준비 단계에만 HUD가 보인다.</summary>
+    private static void BuildSupplyButton(StageHudView view, RectTransform host)
+    {
+        UiFrameButton button = Button(host, SupplyButtonName, "보급품", 1340, 996, 180, 54);
+        UiKit.Wire(view, "supplyButton", button);
+        button.gameObject.SetActive(false);
+        KeepArtifactWindowOnTop(host);
+    }
 
     /// <summary>
     /// 맵 아래 도구 안내 줄(위 930) 바로 위의 고정 크기 막대(640×48). 고른 부하가 없으면 HUD가 통째로 숨긴다.
@@ -836,6 +873,7 @@ public static class StageDefenseBuilder
             GameSpeedController speed = EnsureSpeedController(scene);
             UiKit.Wire(session, "speedController", speed);
             BuildSpeedButtons(hud, (RectTransform)hud.transform, speed, EnsureSettingsScreen(scene, speed));
+            EnsurePopup(scene);
             GameObject events = new("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
             events.GetComponent<InputSystemUIInputModule>().AssignDefaultActions();
             if (!EditorSceneManager.SaveScene(scene, ScenePath))
@@ -886,6 +924,7 @@ public static class StageDefenseBuilder
         UiKit.Wire(view, "primary", Button(host, "Primary", "웨이브 시작", 470, 996, 300, 54));
         UiKit.Wire(view, "retry", Button(host, "Retry", "스테이지 재도전", 800, 996, 300, 54));
         UiKit.Wire(view, "title", Button(host, "Title", "타이틀", 1130, 996, 180, 54));
+        BuildSupplyButton(view, host);
         SpriteRenderer cursor = SpriteBar("Placement Cursor", null, new Color(0.3f, 0.9f, 0.6f, 0.3f), 1, 1);
         cursor.sortingOrder = 100;
         UiKit.Wire(view, "cursor", cursor);
