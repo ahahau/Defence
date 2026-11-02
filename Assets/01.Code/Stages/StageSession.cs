@@ -248,22 +248,30 @@ namespace Code.Stages
         }
 
         /// <summary>
-        /// 사건 "남은 보급품"을 고른다(2026-11-02 사용자 승인). 사건을 연 시도의 같은 준비 단계에서만, 한 번만 적용한다.
+        /// 준비 사건의 선택지(1부터)를 고른다(2026-11-02 사용자 승인). 사건을 연 시도의 같은 준비 단계에서만, 한 번만 적용한다.
         /// 저장이 막혀 있으면 이어하기 뒤 두 번 적용되지 않도록 효과를 주지 않는다.
         /// </summary>
-        public bool TryChooseSupply(StageSupplyChoice choice, int attempt)
+        public bool TryChooseEvent(int choice, int attempt)
         {
-            if (choice == StageSupplyChoice.None || attempt != PreparationEvents.Attempt || !PreparationEvents.IsSupplyOffered(this))
+            StagePreparationEvent preparationEvent = StagePreparationEvents.EventOf(Definition);
+            if (preparationEvent == null || choice < 1 || choice > preparationEvent.Options.Length
+                || attempt != PreparationEvents.Attempt || !PreparationEvents.IsOffered(this))
                 return false;
             if (!string.IsNullOrEmpty(SaveError))
             {
                 Tell(SaveError);
                 return false;
             }
-            int repaired = 0;
-            if (choice == StageSupplyChoice.Repair)
+            StagePreparationOption option = preparationEvent.Options[choice - 1];
+            if (option.GoldChange < 0 && Gold < -option.GoldChange)
             {
-                repaired = Mathf.Min(StagePreparationEvents.SupplyRepair, MaxCoreHealth - CoreHealth);
+                Tell("금화가 부족합니다");
+                return false;
+            }
+            int repaired = 0;
+            if (option.CoreRepair > 0)
+            {
+                repaired = Mathf.Min(option.CoreRepair, MaxCoreHealth - CoreHealth);
                 if (repaired <= 0)
                 {
                     Tell("코어가 가득 차 보수할 수 없습니다");
@@ -271,15 +279,12 @@ namespace Code.Stages
                 }
                 mapView.CoreHealth.Heal(repaired);
             }
-            else if (choice == StageSupplyChoice.Gold)
-                Gold += StagePreparationEvents.SupplyGold;
+            Gold += option.GoldChange;
             PreparationEvents.Set(choice, repaired);
-            Tell(choice switch
-            {
-                StageSupplyChoice.Gold => $"보급품을 금화로 바꿨습니다 +{StagePreparationEvents.SupplyGold}G",
-                StageSupplyChoice.Repair => $"보급품으로 금고를 보수했습니다 코어 +{repaired}",
-                _ => "보급품을 쓰지 않았습니다"
-            });
+            // 이름의 숫자가 아니라 실제로 적용된 결과를 알린다(보수는 최대 체력에서 잘릴 수 있다)
+            string result = (option.GoldChange != 0 ? $"{option.GoldChange:+0;-0}G" : string.Empty)
+                + (repaired > 0 ? (option.GoldChange != 0 ? ", " : string.Empty) + $"코어 +{repaired}" : string.Empty);
+            Tell($"{preparationEvent.Title}: {(result.Length > 0 ? result : option.Label)}");
             return true;
         }
 

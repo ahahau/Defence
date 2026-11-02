@@ -117,6 +117,54 @@ public static class StageDefenseBuilder
         return "elites=" + placed + " catalog=" + catalog.Elites.Length;
     }
 
+    /// <summary>
+    /// 스테이지 준비 사건(2026-11-02 사용자 승인, StagePreparationContentDesign.md). 모두 둘째 웨이브 준비에 열린다. 수치는 임시 값.
+    /// 선택지 순서가 준비 저장의 선택 번호다 — Stage_01은 예전 "남은 보급품"과 같은 순서(금화·보수·사용 안 함)를 지킨다.
+    /// </summary>
+    private static StagePreparationEvent PreparationEventFor(string stageId)
+    {
+        StagePreparationOption skip = new("사용하지 않음", 0, 0);
+        return stageId switch
+        {
+            "Stage_01" => new StagePreparationEvent("남은 보급품", "남은 보급품을 어디에 쓸까요?", "보급품", 1,
+                new[] { new StagePreparationOption("금화 +20G", 20, 0), new StagePreparationOption("금고 보수 +2", 0, 2), skip }),
+            "Stage_02" => new StagePreparationEvent("도망친 상인의 짐", "도망친 상인이 짐을 두고 갔습니다.", "짐", 1,
+                new[] { new StagePreparationOption("금화 +30G", 30, 0), new StagePreparationOption("금고 보수 +2", 0, 2), skip }),
+            "Stage_03" => new StagePreparationEvent("무너진 갱도 자재", "갱도 자재로 금고를 보강할 수 있습니다.", "자재", 1,
+                new[] { new StagePreparationOption("금화 +25G", 25, 0), new StagePreparationOption("금화로 보강", -20, 3), skip }),
+            "Stage_04" => new StagePreparationEvent("불 구멍 옆 석탄", "불 구멍 옆에 석탄이 쌓여 있습니다.", "석탄", 1,
+                new[] { new StagePreparationOption("금화 +30G", 30, 0), new StagePreparationOption("금고 보수 +2", 0, 2), skip }),
+            "Stage_05" => new StagePreparationEvent("사냥꾼이 남긴 장비", "사냥꾼이 쓰던 장비가 남아 있습니다.", "장비", 1,
+                new[] { new StagePreparationOption("금화 +35G", 35, 0), new StagePreparationOption("금화로 보강", -25, 3), skip }),
+            "Stage_06" => new StagePreparationEvent("세 갈래 문지기의 뇌물", "문지기가 눈감아 달라며 뇌물을 내밉니다.", "뇌물", 1,
+                new[] { new StagePreparationOption("금화 +40G", 40, 0), new StagePreparationOption("금고 보수 +3", 0, 3), skip }),
+            "Stage_07" => new StagePreparationEvent("마지막 비축분", "마지막 비축분을 풀 때입니다.", "비축분", 1,
+                new[] { new StagePreparationOption("금화 +40G", 40, 0), new StagePreparationOption("금화로 보강", -30, 4), skip }),
+            _ => null
+        };
+    }
+
+    /// <summary>이미 쓴 스테이지에 <see cref="PreparationEventFor"/>의 사건을 쓴다. 스테이지 에셋만 저장한다.</summary>
+    public static string ApplyPreparationEvents()
+    {
+        Guard();
+        StageCatalogSO catalog = Load<StageCatalogSO>(Root + "/StageCatalog.asset");
+        int written = 0;
+        foreach (StageDefinitionSO stage in catalog.Stages)
+        {
+            StagePreparationEvent preparationEvent = stage != null ? PreparationEventFor(stage.Id) : null;
+            if (preparationEvent == null)
+                continue;
+            if (!preparationEvent.TryValidate(stage.Waves.Length, out string reason))
+                throw new InvalidOperationException(stage.Id + ": " + reason);
+            Set(stage, "PreparationEvent", preparationEvent);
+            // 다른 세션이 편집 중인 에셋까지 저장하지 않게 스테이지만 저장한다
+            AssetDatabase.SaveAssetIfDirty(stage);
+            written++;
+        }
+        return "events=" + written;
+    }
+
     /// <summary><see cref="EliteTable"/>에 나오는 정예 종류(중복 없이). 카탈로그 정예 목록이 된다.</summary>
     private static EnemyDataSO[] EliteData()
     {
@@ -540,6 +588,7 @@ public static class StageDefenseBuilder
             Set(stage, "Devices", DevicesFor(spec.id));
             StageHallBuilder.ApplyShape(stage, index + 1);
             Set(stage, "EmpoweredTrapMultiplier", 1.5f);
+            Set(stage, "PreparationEvent", PreparationEventFor(spec.id));
             stages.Add(stage);
         }
         StageCatalogSO catalog = Load<StageCatalogSO>(Root + "/StageCatalog.asset");

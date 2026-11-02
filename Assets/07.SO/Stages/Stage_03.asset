@@ -116,3 +116,18 @@ MonoBehaviour:
     <BossScale>k__BackingField: 1.6
     <Rules>k__BackingField: 
     <PartySize>k__BackingField: 3
+  <PreparationEvent>k__BackingField:
+    <Title>k__BackingField: "\uBB34\uB108\uC9C4 \uAC31\uB3C4 \uC790\uC7AC"
+    <Line>k__BackingField: "\uAC31\uB3C4 \uC790\uC7AC\uB85C \uAE08\uACE0\uB97C \uBCF4\uAC15\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+    <ButtonLabel>k__BackingField: "\uC790\uC7AC"
+    <Wave>k__BackingField: 1
+    <Options>k__BackingField:
+    - <Label>k__BackingField: "\uAE08\uD654 +25G"
+      <GoldChange>k__BackingField: 25
+      <CoreRepair>k__BackingField: 0
+    - <Label>k__BackingField: "\uAE08\uD654\uB85C \uBCF4\uAC15"
+      <GoldChange>k__BackingField: -20
+      <CoreRepair>k__BackingField: 3
+    - <Label>k__BackingField: "\uC0AC\uC6A9\uD558\uC9C0 \uC54A\uC74C"
+      <GoldChange>k__BackingField: 0
+      <CoreRepair>k__BackingField: 0

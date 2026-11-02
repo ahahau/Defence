@@ -51,7 +51,7 @@ namespace Code.Stages
                 // 누계가 없는 구 저장은 첫 웨이브 전이 아니면 누계를 모르는 채로 둔다(클리어 때 누계 줄을 숨긴다)
                 _session.Results.Restore(data.hasWaveReport ? data.waveReport : null,
                     data.hasStageTotals ? data.stageTotals : data.nextWave == 0 ? StageWaveReport.Empty : null);
-                _session.PreparationEvents.Set((StageSupplyChoice)data.supplyChoice, data.supplyRepaired);
+                _session.PreparationEvents.Set(data.supplyChoice, data.supplyRepaired);
                 foreach (StageSavedPlacement saved in data.placements)
                     _session.Placement.Restore(saved, Option(saved.optionId));
                 _session.Tell(_blocked ? Error : "마지막 준비 단계를 이어합니다. 전투 중 종료했다면 해당 웨이브부터 재시작합니다");
@@ -107,8 +107,8 @@ namespace Code.Stages
                     waveReport = _session.Results.Latest,
                     hasStageTotals = _session.Results.Totals != null,
                     stageTotals = _session.Results.Totals,
-                    supplyChoice = (int)_session.PreparationEvents.Supply,
-                    supplyRepaired = _session.PreparationEvents.SupplyRepaired,
+                    supplyChoice = _session.PreparationEvents.Choice,
+                    supplyRepaired = _session.PreparationEvents.CoreRepaired,
                     artifacts = new List<string>()
                 };
                 foreach (StageArtifact artifact in _session.Artifacts.Equipped)
@@ -200,8 +200,8 @@ namespace Code.Stages
                 || data.locked != (data.nextWave > 0) || data.coreHealth <= 0 || data.coreHealth > definition.CoreHealth)
                 return Reject("웨이브·편성 잠금 또는 코어 체력이 유효하지 않습니다.", out reason);
             HashSet<string> selected = new(StringComparer.Ordinal);
-            if (!StagePreparationEvents.IsValidSaved(stage, data.nextWave, data.supplyChoice, data.supplyRepaired))
-                return Reject("보급품 사건 기록이 진행과 맞지 않습니다.", out reason);
+            if (!StagePreparationEvents.IsValidSaved(definition, data.nextWave, data.supplyChoice, data.supplyRepaired))
+                return Reject("준비 사건 기록이 진행과 맞지 않습니다.", out reason);
             // 금고 보수로 되찾은 체력을 빼야 전과의 코어 피해와 실제 손실을 맞출 수 있다
             int unrepairedCore = data.coreHealth - data.supplyRepaired;
             if (data.hasWaveReport && (data.waveReport == null

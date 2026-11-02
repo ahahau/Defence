@@ -145,7 +145,7 @@ namespace Code.Stages
                 speedController.SettingChanged -= HandleSpeedChanged;
         }
 
-        private void OpenSupply() => _preparationPopups?.ShowSupply();
+        private void OpenSupply() => _preparationPopups?.ShowEvent();
 
         private static void RemoveListener(UiFrameButton button, UnityAction action)
         {

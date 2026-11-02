@@ -5,25 +5,29 @@ using Code.UI.Popup;
 namespace Code.UI.Stages
 {
     /// <summary>
-    /// 1스테이지 준비 단계의 첫 보스 소개와 사건 "남은 보급품" 팝업(2026-11-02 사용자 승인, StagePreparationContentDesign.md).
-    /// 범용 팝업으로 띄우기만 하고 효과는 <see cref="StageSession.TryChooseSupply"/>가 다시 검사한 뒤 적용한다.
+    /// 스테이지 준비 사건과 1스테이지 첫 보스 소개 팝업(2026-11-02 사용자 승인, StagePreparationContentDesign.md).
+    /// 범용 팝업으로 띄우기만 하고 효과는 <see cref="StageSession.TryChooseEvent"/>가 다시 검사한 뒤 적용한다.
     /// </summary>
     public sealed class StagePreparationPopups
     {
-        private const string SupplyTag = "stage-supply";
+        private const string EventTag = "stage-preparation-event";
         private const string BossTag = "stage-boss-intro";
         private readonly StageSession _session;
-        private int _supplyShownAttempt = -1;
+        private int _eventShownAttempt = -1;
 
         public StagePreparationPopups(StageSession session) => _session = session;
 
         /// <summary>설정·유물 창·저장 오류처럼 가리는 것이 있으면 <paramref name="blocked"/>로 미룬다.</summary>
-        public void Tick(UiFrameButton supplyButton, bool blocked)
+        public void Tick(UiFrameButton eventButton, bool blocked)
         {
             StagePreparationEvents events = _session.PreparationEvents;
-            bool offered = events.IsSupplyOffered(_session);
-            if (supplyButton != null)
-                supplyButton.SetVisible(offered);
+            bool offered = events.IsOffered(_session);
+            if (eventButton != null)
+            {
+                eventButton.SetVisible(offered);
+                if (offered)
+                    eventButton.SetLabel(StagePreparationEvents.EventOf(_session.Definition).ButtonLabel);
+            }
             if (blocked || PopupController.IsOpen)
                 return;
             if (events.NeedsBossIntro(_session))
@@ -31,45 +35,62 @@ namespace Code.UI.Stages
                 events.MarkBossIntroShown();
                 PopupController.Show(BossIntro());
             }
-            // ESC로 닫으면 미선택으로 남는다. 같은 시도에서는 다시 저절로 열지 않고 보급품 버튼으로 연다.
-            else if (offered && _supplyShownAttempt != events.Attempt)
-                ShowSupply();
+            // ESC로 닫으면 미선택으로 남는다. 같은 시도에서는 다시 저절로 열지 않고 사건 버튼으로 연다.
+            else if (offered && _eventShownAttempt != events.Attempt)
+                ShowEvent();
         }
 
-        public void ShowSupply()
+        public void ShowEvent()
         {
             StagePreparationEvents events = _session.PreparationEvents;
-            if (!events.IsSupplyOffered(_session) || PopupController.IsShowing(SupplyTag))
+            StagePreparationEvent preparationEvent = StagePreparationEvents.EventOf(_session.Definition);
+            if (preparationEvent == null || !events.IsOffered(_session) || PopupController.IsShowing(EventTag))
                 return;
-            _supplyShownAttempt = events.Attempt;
+            _eventShownAttempt = events.Attempt;
             int attempt = events.Attempt;
-            int current = _session.CoreHealth;
-            int maximum = _session.MaxCoreHealth;
-            int repair = System.Math.Min(StagePreparationEvents.SupplyRepair, maximum - current);
-            // 팝업 본문은 508×104(17pt, 넘치면 잘림)라 한 줄 29자 안쪽 4줄로 쓴다
-            string repairText = repair > 0
-                ? $"금고 보수: 코어 {current} → {current + repair}/{maximum}"
-                : "금고 보수: 코어가 가득 차 있습니다";
-            string message = "임프 참모: \"남은 보급품을 어디에 쓸까요?\"\n"
-                + $"금화 교환: 이번 스테이지 금화 +{StagePreparationEvents.SupplyGold}G\n{repairText}\n"
-                + "닫으면 보급품 버튼으로 다시 엽니다";
-            List<PopupButtonSpec> options = new()
+            // 팝업 본문은 508×104(17pt, 넘치면 잘림)라 대사 한 줄에, 이름만으로 알 수 없는 선택지(보수·비용)만 짧게 붙인다
+            System.Text.StringBuilder message = new($"임프 참모: \"{preparationEvent.Line}\"");
+            List<PopupButtonSpec> options = new();
+            for (int i = 0; i < preparationEvent.Options.Length; i++)
             {
-                new($"금화 +{StagePreparationEvents.SupplyGold}G", PopupButtonStyle.Primary,
-                    () => Choose(StageSupplyChoice.Gold, attempt)),
-                new($"금고 보수 +{System.Math.Max(0, repair)}", PopupButtonStyle.Primary,
-                    () => Choose(StageSupplyChoice.Repair, attempt), repair > 0),
-                new("사용하지 않음", PopupButtonStyle.Secondary, () => Choose(StageSupplyChoice.Skip, attempt))
-            };
+                StagePreparationOption option = preparationEvent.Options[i];
+                int choice = i + 1;
+                if (option.CoreRepair > 0 || option.GoldChange < 0)
+                    message.Append('\n').Append(option.Label).Append(": ").Append(EffectText(option));
+                bool usable = !option.HasEffect || Available(option);
+                options.Add(new PopupButtonSpec(option.Label, option.HasEffect ? PopupButtonStyle.Primary : PopupButtonStyle.Secondary,
+                    () => Choose(choice, attempt), usable));
+            }
             // 닫기(ESC)는 아무것도 고르지 않는다
-            PopupController.Show(PopupRequest.Choice("남은 보급품", message, options, () => { }).WithTag(SupplyTag));
+            PopupController.Show(PopupRequest.Choice(preparationEvent.Title, message.ToString(), options, () => { }).WithTag(EventTag));
         }
 
-        private void Choose(StageSupplyChoice choice, int attempt)
+        /// <summary>예: "-20G, 코어 7→10/10". 한 줄 29자 안쪽으로 짧게 쓴다.</summary>
+        private string EffectText(StagePreparationOption option)
+        {
+            string text = option.GoldChange != 0 ? $"{option.GoldChange:+0;-0}G" : string.Empty;
+            if (option.CoreRepair > 0)
+            {
+                int current = _session.CoreHealth;
+                int maximum = _session.MaxCoreHealth;
+                int repair = System.Math.Min(option.CoreRepair, maximum - current);
+                text += (text.Length > 0 ? ", " : string.Empty)
+                    + (repair > 0 ? $"코어 {current}→{current + repair}/{maximum}" : "코어가 가득 참");
+            }
+            if (option.GoldChange < 0 && _session.Gold < -option.GoldChange)
+                text += " (금화 부족)";
+            return text;
+        }
+
+        private bool Available(StagePreparationOption option) =>
+            (option.GoldChange >= 0 || _session.Gold >= -option.GoldChange)
+            && (option.CoreRepair == 0 || _session.CoreHealth < _session.MaxCoreHealth);
+
+        private void Choose(int choice, int attempt)
         {
             // 씬을 떠났거나 재도전·다른 준비로 넘어간 뒤의 콜백은 세션이 다시 걸러 낸다
             if (_session != null)
-                _session.TryChooseSupply(choice, attempt);
+                _session.TryChooseEvent(choice, attempt);
         }
 
         private PopupRequest BossIntro()

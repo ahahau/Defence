@@ -34,6 +34,8 @@ namespace Code.Stages
         [field: SerializeField, Min(0)] public int ClearReward { get; private set; }
         [field: SerializeField, Min(0)] public int KillReward { get; private set; }
         [field: SerializeField] public StageWave[] Waves { get; private set; } = Array.Empty<StageWave>();
+        /// <summary>준비 단계 사건(선택). 선택지가 없으면 사건이 없다.</summary>
+        [field: SerializeField] public StagePreparationEvent PreparationEvent { get; private set; }
 
         /// <summary>저장 ID와 실제 통행 바닥을 포함해 시작 전 설정을 확인한다.</summary>
         public bool TryValidate(out string reason)
@@ -85,6 +87,11 @@ namespace Code.Stages
                     if (enemy == null || enemy.Prefab == null || enemy.CoreArrivalDamage <= 0)
                         return false;
                 }
+            }
+            if (PreparationEvent != null && !PreparationEvent.TryValidate(Waves.Length, out string eventReason))
+            {
+                reason = eventReason;
+                return false;
             }
             reason = string.Empty;
             return true;
