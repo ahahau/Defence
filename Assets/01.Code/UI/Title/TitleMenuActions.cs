@@ -1,5 +1,4 @@
 using Code.Audio;
-using Code.Persistence;
 using Code.Stages;
 using TMPro;
 using UnityEngine;
@@ -61,52 +60,51 @@ namespace Code.UI
         /// <summary>
         /// 이어할 판이 있는지 실행할 때 다시 본다. 씬에 박아 둔 값은 만들 때의 상태일 뿐이라
         /// 저장을 지우고 돌아오면 어긋난다. 감추지 않고 잠그는 건 버튼 자리가 흔들리지 않게 하려는 것이다.
+        /// 구 SampleScene 판은 이어하지 않는다(2026-11-02 사용자 결정). 그 저장 파일은 지우거나 바꾸지 않고 둔다.
         /// </summary>
         private void RefreshContinue()
         {
             bool stageSave = StageCheckpointStore.HasSave(Application.persistentDataPath);
-            bool hasSave = stageSave || RunSaveSystem.HasSave;
 
             if (continueButton != null)
-                continueButton.interactable = hasSave;
+                continueButton.interactable = stageSave;
 
             if (continueLabel != null)
             {
-                continueLabel.color = hasSave ? LabelOn : LabelOff;
-                continueLabel.text = stageSave ? "스테이지 이어하기" : hasSave ? "이전 던전 이어하기" : "이어하기";
+                continueLabel.color = stageSave ? LabelOn : LabelOff;
+                continueLabel.text = stageSave ? "스테이지 이어하기" : "이어하기";
             }
         }
 
-        /// <summary>새 스테이지 판. 이전 준비 저장은 보관하고 영구 강화와 구 런은 유지한다.</summary>
+        /// <summary>새 스테이지 판. 이전 준비 저장은 보관하고 영구 강화와 구 런 파일은 유지한다.</summary>
         public void StartNewRun()
         {
-            // 새 스테이지는 구 런 파일을 지우거나 변환하지 않는다. 기존 이어하기 경로는 보존한다.
-            if (Application.CanStreamedLevelBeLoaded(StageSceneName))
+            // 타이틀은 구 SampleScene 판으로 들어가지 않는다(2026-11-02 사용자 결정). 스테이지 씬이 빌드에 없으면
+            // 구 런 파일을 지우고 SampleScene으로 가는 대신 멈춘다 — 빌드 설정 실수다.
+            if (!Application.CanStreamedLevelBeLoaded(StageSceneName))
             {
-                // 이전 준비 저장을 보관하지 못하면 덮어쓰지 않게 멈춘다. 타이틀에는 팝업 화면이 없어 실패음으로 알린다.
-                if (!StageCheckpointStore.EndRun(Application.persistentDataPath))
-                {
-                    GameSfxPlayer.Play(GameSfxCue.UiFail);
-                    return;
-                }
-                GameSfxPlayer.Play(GameSfxCue.UiClick);
-                SceneManager.LoadScene(StageSceneName);
+                Debug.LogError($"{StageSceneName} 씬이 빌드 목록에 없어 새 게임을 시작할 수 없습니다", this);
+                GameSfxPlayer.Play(GameSfxCue.UiFail);
+                return;
+            }
+            // 이전 준비 저장을 보관하지 못하면 덮어쓰지 않게 멈춘다. 타이틀에는 팝업 화면이 없어 실패음으로 알린다.
+            if (!StageCheckpointStore.EndRun(Application.persistentDataPath))
+            {
+                GameSfxPlayer.Play(GameSfxCue.UiFail);
                 return;
             }
             GameSfxPlayer.Play(GameSfxCue.UiClick);
-            RunSaveSystem.DeleteSave();
-            SceneManager.LoadScene(GameSceneName);
+            SceneManager.LoadScene(StageSceneName);
         }
 
-        /// <summary>저장을 그대로 두고 들어간다. 복원은 게임 씬 쪽이 맡는다.</summary>
+        /// <summary>스테이지 준비 저장을 그대로 두고 들어간다. 복원은 스테이지 씬이 맡는다.</summary>
         public void ContinueRun()
         {
-            bool stageSave = StageCheckpointStore.HasSave(Application.persistentDataPath);
-            if (!stageSave && !RunSaveSystem.HasSave)
+            if (!StageCheckpointStore.HasSave(Application.persistentDataPath))
                 return;
 
             GameSfxPlayer.Play(GameSfxCue.UiClick);
-            SceneManager.LoadScene(stageSave ? StageSceneName : GameSceneName);
+            SceneManager.LoadScene(StageSceneName);
         }
 
         public void OpenSettings()
