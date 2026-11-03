@@ -11,6 +11,8 @@ namespace Code.Stages
         [SerializeField] internal int version;
         [SerializeField] internal string stageId;
         [SerializeField] internal string layoutSignature;
+        // 없는 구 저장은 맵 기본 방향을 쓴다. 장치 배열의 밀치기 순서와 대응한다.
+        [SerializeField] internal List<Vector2Int> pushDirections;
         [SerializeField] internal int nextWave;
         [SerializeField] internal bool locked;
         [SerializeField] internal int coreHealth;

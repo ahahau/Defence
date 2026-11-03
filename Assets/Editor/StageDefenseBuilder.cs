@@ -359,7 +359,7 @@ public static class StageDefenseBuilder
     /// </summary>
     private static readonly (string stage, string[] themes, string[] introduced)[] WaveThemeTable =
     {
-        ("Stage_01", new[] { "SwordEnemy", "ArcherEnemy" }, Array.Empty<string>()),
+        // Stage_01은 실측으로 맞춘 연습 웨이브(StageOneWaves)를 쓰므로 주제를 덮지 않는다
         ("Stage_02", new[] { "BasicEnemy", "ThiefEnemy", "ArcherEnemy" }, new[] { "ThiefEnemy" }),
         ("Stage_03", new[] { "SwordEnemy", "SapperEnemy", "HealterEnemy" }, new[] { "SapperEnemy" }),
         ("Stage_04", new[] { "ArcherEnemy", "ApprenticeMageEnemy", "BanditSpearmanEnemy", "SapperEnemy" },
@@ -371,6 +371,65 @@ public static class StageDefenseBuilder
     };
 
     private static readonly string[] BaseEnemies = { "BasicEnemy", "SwordEnemy", "ArcherEnemy", "HealterEnemy" };
+
+    /// <summary>
+    /// 1스테이지 연습 웨이브(2026-11-02 사용자 결정: 약 5분, 처음 하는 플레이어가 코어를 거의 잃지 않음, 보스 호위는 일반 적).
+    /// 1웨이브는 기본 적 위주, 2웨이브는 검사·궁수, 3웨이브는 보스와 호위(검사·궁수·치유사). 플레이 실측으로 맞춘 값이다.
+    /// </summary>
+    private static readonly string[][] StageOneEnemies =
+    {
+        new[] { "BasicEnemy", "BasicEnemy", "BasicEnemy", "BasicEnemy", "SwordEnemy", "BasicEnemy", "BasicEnemy", "BasicEnemy" },
+        new[] { "BasicEnemy", "BasicEnemy", "SwordEnemy", "BasicEnemy", "ArcherEnemy", "BasicEnemy", "BasicEnemy", "SwordEnemy", "BasicEnemy", "ArcherEnemy" },
+        new[] { "BasicEnemy", "SwordEnemy", "BasicEnemy", "ArcherEnemy", "BasicEnemy", "SwordEnemy", "BasicEnemy", "ArcherEnemy" }
+    };
+    private static readonly string[] StageOneEscorts = { "SwordEnemy", "ArcherEnemy", "HealterEnemy" };
+    private const float StageOneInterval = 1.4f;
+    private const float StageOneBossHealth = 2f;
+    private const float StageOneBossAttack = 1.2f;
+    private const int StageOneStartingGold = 300;
+
+    private static StageWave[] StageOneWaves(EnemyDataSO boss)
+    {
+        EnemyDataSO[] Named(string[] names) => Array.ConvertAll(names, name => Load<EnemyDataSO>(Enemies + name + ".asset"));
+        StageWave[] waves = new StageWave[StageOneEnemies.Length];
+        for (int w = 0; w < waves.Length; w++)
+            waves[w] = w == waves.Length - 1
+                ? new StageWave(Named(StageOneEnemies[w]), StageOneInterval, boss, Named(StageOneEscorts))
+                : new StageWave(Named(StageOneEnemies[w]), StageOneInterval);
+        StageWave last = waves[^1];
+        typeof(StageWave).GetProperty(nameof(StageWave.BossHealthMultiplier)).SetValue(last, StageOneBossHealth);
+        typeof(StageWave).GetProperty(nameof(StageWave.BossAttackMultiplier)).SetValue(last, StageOneBossAttack);
+        return waves;
+    }
+
+    /// <summary>
+    /// 이미 쓴 1스테이지에 <see cref="StageOneEnemies"/>의 웨이브·보스 배율·시작 금화를 쓴다. 검사를 통과해야 저장하고, 실패하면 되돌린다.
+    /// 다른 스테이지·맵·사건은 건드리지 않는다.
+    /// </summary>
+    public static string ApplyStageOne()
+    {
+        Guard();
+        StageCatalogSO catalog = Load<StageCatalogSO>(Root + "/StageCatalog.asset");
+        StageDefinitionSO stage = catalog.Stages[0];
+        if (stage == null || stage.Id != "Stage_01")
+            throw new InvalidOperationException("카탈로그 첫 스테이지가 Stage_01이 아닙니다");
+        StageWave[] previousWaves = stage.Waves;
+        int previousGold = stage.StartingGold;
+        Set(stage, "Waves", StageOneWaves(stage.Waves[^1].Boss));
+        Set(stage, "StartingGold", StageOneStartingGold);
+        if (!stage.TryValidate(out string reason))
+        {
+            Set(stage, "Waves", previousWaves);
+            Set(stage, "StartingGold", previousGold);
+            throw new InvalidOperationException(reason);
+        }
+        // 다른 세션이 편집 중인 에셋까지 저장하지 않게 스테이지만 저장한다
+        AssetDatabase.SaveAssetIfDirty(stage);
+        int total = 0;
+        foreach (StageWave wave in stage.Waves)
+            total += wave.Count;
+        return $"waves={stage.Waves.Length} enemies={total} gold={stage.StartingGold}";
+    }
 
     /// <summary>
     /// 한 스테이지 웨이브의 일반 적 자리를 주제대로 다시 채운다. 짝수 자리는 주제 적, 홀수 자리는 지금까지 나온 적을 돌려 쓴다.
@@ -638,9 +697,9 @@ public static class StageDefenseBuilder
         if (old != null)
             UnityEngine.Object.DestroyImmediate(old.gameObject);
         TMP_Text record = UiKit.Text(ClearRecordName, host, string.Empty, 18, HudPalette.Accent, TextAlignmentOptions.Center, true, true);
-        // 메뉴 버튼들과 같은 가운데 기준으로 종료 버튼(위 -230, 높이 58) 아래에 둔다
+        // 함정 공략 연습 버튼(가운데 -300, 높이 58) 아래로 완료 기록을 분리한다.
         Vector2 center = new(0.5f, 0.5f);
-        UiKit.Place(record.rectTransform, center, center, center, new Vector2(0, -300), new Vector2(400, 32));
+        UiKit.Place(record.rectTransform, center, center, center, new Vector2(0, -362), new Vector2(400, 32));
         record.raycastTarget = false;
         StageCatalogSO catalog = Load<StageCatalogSO>(Root + "/StageCatalog.asset");
         string finalStageId = catalog.Stages[catalog.Stages.Length - 1].Id;
@@ -938,6 +997,9 @@ public static class StageDefenseBuilder
                 }
                 waves[wave] = last ? new StageWave(regular, interval, boss, escorts, rules) : new StageWave(regular, interval, rules);
             }
+            // 1스테이지는 실측으로 맞춘 연습 웨이브를 쓴다
+            if (spec.id == "Stage_01")
+                waves = StageOneWaves(boss);
             // 주제를 먼저 채우고 정예 자리를 덮는다(정예는 주제와 상관없이 정해진 자리)
             ThemeWaves(spec.id, waves, _ => false);
             PlaceElites(spec.id, waves, true);
@@ -946,6 +1008,8 @@ public static class StageDefenseBuilder
             Set(stage, "Devices", DevicesFor(spec.id));
             StageHallBuilder.ApplyShape(stage, index + 1);
             Set(stage, "EmpoweredTrapMultiplier", 1.5f);
+            if (spec.id == "Stage_01")
+                Set(stage, "StartingGold", StageOneStartingGold);
             Set(stage, "PreparationEvent", PreparationEventFor(spec.id));
             Set(stage, "FollowUpEvents", FollowUpEventsFor(spec.id));
             stages.Add(stage);
@@ -1003,7 +1067,10 @@ public static class StageDefenseBuilder
     /// 이미 작성된 StageDefense 씬의 편성 목록을 카탈로그 선택지 수에 맞춘 스크롤 목록으로 다시 만든다.
     /// 다른 HUD 요소는 건드리지 않는다. 씬이 열려 있고 저장하지 않은 변경이 있으면 멈춘다.
     /// </summary>
-    public static string RebuildOptionList() => EditScene(scene =>
+    public static string RebuildOptionList() => RebuildOptionList(ScenePath);
+
+    /// <summary>StageDefense를 복사한 다른 스테이지 씬(함정 본편)의 편성 목록도 그 씬 카탈로그에 맞춘다.</summary>
+    public static string RebuildOptionList(string scenePath) => EditScene(scenePath, scene =>
     {
         StageHudView view = FindInScene<StageHudView>(scene);
         RectTransform side = (RectTransform)view.transform.Find("Preparation");

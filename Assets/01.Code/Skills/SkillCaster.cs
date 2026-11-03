@@ -118,6 +118,12 @@ namespace Code.Skills
         public bool HasSkill => skill != null;
         public bool HasUltimate => ultimate != null;
 
+        /// <summary>후보와 배치 상세에서 읽는 일반 스킬 데이터. 시전 상태는 바꾸지 않는다.</summary>
+        public SkillDataSO SkillData => skill;
+
+        /// <summary>후보와 배치 상세에서 읽는 궁극기 데이터. 시전 상태는 바꾸지 않는다.</summary>
+        public SkillDataSO UltimateData => ultimate;
+
         internal float CaptureStageCooldown() => Mathf.Max(0f, _cooldownTimer);
 
         internal void RestoreStageCooldown(float remaining)

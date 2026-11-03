@@ -66,6 +66,7 @@ namespace Code.Skills
                 _tickHeal = tickHeal;
                 _damageTakenMultiplier = damageTakenMultiplier;
                 _ownerId = SkillZoneOwnership.Replace(caster, OwnershipSlot, gameObject);
+                _field?.TrackEffect(gameObject);
             }
 
             private void OnDestroy() =>
@@ -73,6 +74,11 @@ namespace Code.Skills
 
             private void Update()
             {
+                if (_field != null && !_field.IsActive)
+                {
+                    Destroy(gameObject);
+                    return;
+                }
                 _remaining -= Time.deltaTime;
                 if (_remaining <= 0f)
                 {
@@ -91,6 +97,10 @@ namespace Code.Skills
 
                 foreach (var ally in roster)
                 {
+                    if (_field != null && !_field.IsActive)
+                    {
+                        break;
+                    }
                     if (ally == null || !ally.IsAlive)
                         continue;
                     if (Vector2.Distance(transform.position, ally.transform.position) > _radius)

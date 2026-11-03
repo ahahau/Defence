@@ -20,6 +20,445 @@ namespace Tests.EditMode.Rules
     {
         private readonly List<Object> _created = new();
 
+        [Test]
+        public void StagePush_VisitsIntermediateCellsWithoutActivatingContactsDuringPreview()
+        {
+            Code.Stages.StageBoard board = NewPushBoard(out Code.Stages.StageActor actor);
+            List<Vector3> contacts = new List<Vector3>();
+            Code.Stages.StageForcedMovement movement = new Code.Stages.StageForcedMovement(board,
+                moved => contacts.Add(moved.transform.position));
+            Vector3 source = actor.transform.position;
+            Vector3 destination = board.World(new Vector2Int(4, 1));
+
+            Assert.That(Vector3.Distance(movement.Preview(actor, Vector2Int.right, 3), destination), Is.LessThan(0.001f));
+            Assert.That(contacts, Is.Empty);
+            Assert.That(actor.transform.position, Is.EqualTo(source));
+            Assert.That(movement.TryPush(actor, Vector2Int.right, 3), Is.True);
+            CollectionAssert.AreEquivalent(new[] { new Vector2Int(1, 1), new Vector2Int(2, 1),
+                new Vector2Int(3, 1), new Vector2Int(4, 1) }, contacts.Select(board.Cell).Distinct());
+            Assert.That(Vector3.Distance(actor.transform.position, destination), Is.LessThan(0.001f));
+            Vector3 previous = source;
+            foreach (Vector3 contact in contacts)
+            {
+                Assert.That(Vector3.Distance(previous, contact), Is.LessThanOrEqualTo(board.Definition.CellSize / 8f + 0.001f));
+                previous = contact;
+            }
+        }
+
+        [Test]
+        public void StagePush_StopsAtTheContactThatKillsTheActor()
+        {
+            Code.Stages.StageBoard board = NewPushBoard(out Code.Stages.StageActor actor);
+            int contacts = 0;
+            Code.Stages.StageForcedMovement movement = new Code.Stages.StageForcedMovement(board, moved =>
+            {
+                contacts++;
+                if (board.Cell(moved.transform.position) == new Vector2Int(2, 1))
+                    moved.Combat.Health.SetCurrentRatio(0f);
+            });
+
+            Assert.That(movement.TryPush(actor, Vector2Int.right, 3), Is.True);
+            Assert.That(actor.IsAlive, Is.False);
+            Assert.That(board.Cell(actor.transform.position), Is.EqualTo(new Vector2Int(2, 1)));
+            Vector3 stopped = actor.transform.position;
+            int contactsBeforeRetry = contacts;
+            Assert.That(movement.TryPush(actor, Vector2Int.right, 3), Is.False);
+            Assert.That(actor.transform.position, Is.EqualTo(stopped));
+            Assert.That(contacts, Is.EqualTo(contactsBeforeRetry));
+        }
+
+        [Test]
+        public void StagePush_DoesNotReportContactsInsideOrBeyondAClosedGate()
+        {
+            Code.Stages.StageBoard board = NewPushBoard(out Code.Stages.StageActor actor);
+            board.ClosedCells.Add(new Vector2Int(3, 1));
+            List<Vector2Int> contacts = new List<Vector2Int>();
+            Code.Stages.StageForcedMovement movement = new Code.Stages.StageForcedMovement(board,
+                moved => contacts.Add(board.Cell(moved.transform.position)));
+
+            Assert.That(movement.TryPush(actor, Vector2Int.right, 3), Is.True);
+            Assert.That(contacts, Is.Not.Empty);
+            Assert.That(contacts.All(cell => cell.x < 3 && board.IsPassable(cell)), Is.True);
+            Assert.That(board.Cell(actor.transform.position), Is.EqualTo(new Vector2Int(2, 1)));
+        }
+
+        private Code.Stages.StageBoard NewPushBoard(out Code.Stages.StageActor actor)
+        {
+            Code.Stages.StageDefinitionSO definition = ScriptableObject.CreateInstance<Code.Stages.StageDefinitionSO>();
+            _created.Add(definition);
+            SetPushProperty(definition, "Layout", new[] { "#######", "#.....#", "#######" });
+            SetPushProperty(definition, "CellSize", 1f);
+            Code.Stages.StageBoard board = new Code.Stages.StageBoard(definition);
+            Code.Enemies.EnemyDataSO data = AssetDatabase.LoadAssetAtPath<Code.Enemies.EnemyDataSO>(
+                "Assets/07.SO/Enemies/BasicEnemy.asset");
+            Assert.That(data, Is.Not.Null);
+            Assert.That(data.Prefab, Is.Not.Null);
+            Code.Enemies.Enemy enemy = Object.Instantiate(data.Prefab);
+            _created.Add(enemy.gameObject);
+            Code.Combat.Combatant combat = enemy.GetComponent<Code.Combat.Combatant>();
+            Assert.That(combat, Is.Not.Null);
+            Assert.That(combat.Health, Is.Not.Null);
+            combat.Health.SetMaxHealth(10, true);
+            actor = enemy.gameObject.AddComponent<Code.Stages.StageActor>();
+            SetPushProperty(actor, "Combat", combat);
+            SetPushProperty(actor, "Enemy", enemy);
+            actor.transform.position = board.World(new Vector2Int(1, 1));
+            board.Actors.Add(actor);
+            return board;
+        }
+
+        private static void SetPushProperty(object target, string name, object value)
+        {
+            PropertyInfo property = target.GetType().GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            Assert.That(property, Is.Not.Null, target.GetType().Name + "." + name + " 를 찾지 못했습니다.");
+            property.SetValue(target, value);
+        }
+
+        [Test]
+        public void StagePush_RestartsTheSurvivingLeadersTrailAtItsNewCell()
+        {
+            Code.Stages.StageBoard board = NewPushBoard(out Code.Stages.StageActor leader);
+            Code.Stages.StageParty party = new Code.Stages.StageParty();
+            leader.JoinParty(party);
+            party.RecordLeaderCell(leader, new Vector2Int(1, 1));
+            party.RecordLeaderCell(leader, new Vector2Int(2, 1));
+            int version = party.TrailVersion;
+
+            Assert.That(new Code.Stages.StageForcedMovement(board).TryPush(leader, Vector2Int.right, 2), Is.True);
+            Assert.That(party.TrailVersion, Is.EqualTo(version + 1));
+            CollectionAssert.AreEqual(new[] { new Vector2Int(3, 1) }, party.Trail);
+            party.RestartDisplacedLeader(null, Vector2Int.zero);
+            Assert.That(party.TrailVersion, Is.EqualTo(version + 1));
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void StagePush_DisplacedFollowerRejoinsTheNearestReachableRemainingTrailCell(bool nearestClosed)
+        {
+            Code.Stages.StageBoard board = NewPushBoard(out Code.Stages.StageActor follower);
+            NewPushBoard(out Code.Stages.StageActor leader);
+            SetPushProperty(board.Definition, "Layout", new[] { "#######", "#.....#", "#.....#", "#.....#", "#######" });
+            leader.transform.position = board.World(new Vector2Int(5, 1));
+            follower.transform.position = board.World(new Vector2Int(4, 2));
+            if (nearestClosed)
+                board.ClosedCells.Add(new Vector2Int(4, 1));
+            Code.Stages.StageParty party = new Code.Stages.StageParty();
+            leader.JoinParty(party);
+            follower.JoinParty(party);
+            for (int x = 1; x <= 5; x++)
+                party.RecordLeaderCell(leader, new Vector2Int(x, 1));
+            GameObject host = new GameObject("PartyRejoinSession");
+            _created.Add(host);
+            Code.Stages.StageSession session = host.AddComponent<Code.Stages.StageSession>();
+            SetPushProperty(session, "Board", board);
+            SetPushProperty(session, "Paths", new Code.Stages.StagePathfinder(board));
+            BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            FieldInfo sessionField = typeof(Code.Stages.StageActor).GetField("_session", flags);
+            FieldInfo trailIndex = typeof(Code.Stages.StageActor).GetField("_trailIndex", flags);
+            FieldInfo trailVersion = typeof(Code.Stages.StageActor).GetField("_trailVersion", flags);
+            MethodInfo finish = typeof(Code.Stages.StageActor).GetMethod("FinishForcedMovement", flags);
+            MethodInfo next = typeof(Code.Stages.StageActor).GetMethod("NextTrailCell", flags);
+            Assert.That(sessionField, Is.Not.Null, "StageActor._session 를 찾지 못했습니다.");
+            Assert.That(trailIndex, Is.Not.Null, "StageActor._trailIndex 를 찾지 못했습니다.");
+            Assert.That(trailVersion, Is.Not.Null, "StageActor._trailVersion 를 찾지 못했습니다.");
+            Assert.That(finish, Is.Not.Null, "StageActor.FinishForcedMovement 를 찾지 못했습니다.");
+            Assert.That(next, Is.Not.Null, "StageActor.NextTrailCell 를 찾지 못했습니다.");
+            sessionField.SetValue(follower, session);
+            trailIndex.SetValue(follower, 1);
+            trailVersion.SetValue(follower, party.TrailVersion);
+            finish.Invoke(follower, new object[] { board });
+
+            Vector2Int expected = nearestClosed ? new Vector2Int(5, 1) : new Vector2Int(4, 1);
+            Assert.That((Vector2Int)next.Invoke(follower, new object[] { leader }), Is.EqualTo(expected),
+                "밀리기 전 목표인 (2,1)로 되돌아가지 않고 가까운 남은 경로에 합류해야 합니다.");
+        }
+
+        [Test]
+        public void StagePush_QueryDuringContactDoesNotInvalidateActivationTargets()
+        {
+            Code.Stages.StageBoard board = NewPushBoard(out Code.Stages.StageActor actor);
+            Vector2Int cell = new Vector2Int(1, 1);
+            SetPushProperty(board.Definition, "Devices", new[]
+            {
+                new Code.Stages.StageDevice(Code.Stages.StageDeviceKind.Push, cell,
+                    6f, 0f, 0f, 0.5f, 0, 4f, 8f, Vector2Int.right, 3)
+            });
+            Code.Stages.StageDevices devices = null;
+            int queries = 0;
+            devices = new Code.Stages.StageDevices(board, moved =>
+            {
+                queries++;
+                devices.CanTrigger(cell, out _);
+            });
+
+            Assert.That(devices.TryTrigger(cell, out _), Is.True);
+            Assert.That(queries, Is.GreaterThan(0));
+            Assert.That(board.Cell(actor.transform.position), Is.EqualTo(new Vector2Int(4, 1)));
+            Assert.That(devices.At(cell).CooldownLeft, Is.GreaterThan(0f));
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void StageDevice_RejectsNestedActivationWithoutChangingEitherTargetList(bool differentDevice)
+        {
+            Code.Stages.StageBoard board = NewPushBoard(out Code.Stages.StageActor actor);
+            Vector2Int first = new Vector2Int(1, 1);
+            Vector2Int second = new Vector2Int(2, 1);
+            SetPushProperty(board.Definition, "Devices", new[]
+            {
+                new Code.Stages.StageDevice(Code.Stages.StageDeviceKind.Push, first,
+                    6f, 0f, 0f, 0.5f, 0, 4f, 8f, Vector2Int.right, 3),
+                new Code.Stages.StageDevice(Code.Stages.StageDeviceKind.Push, second,
+                    6f, 0f, 0f, 0.5f, 0, 4f, 8f, Vector2Int.right, 3)
+            });
+            Code.Stages.StageDevices devices = null;
+            bool attempted = false;
+            devices = new Code.Stages.StageDevices(board, moved =>
+            {
+                if (attempted)
+                    return;
+                attempted = true;
+                Assert.That(devices.At(first).Ready, Is.False);
+                Assert.That(devices.At(first).IsTriggering, Is.True);
+                Vector2Int nested = differentDevice ? second : first;
+                Assert.That(devices.CanTrigger(nested, out string queryReason), Is.False);
+                Assert.That(devices.TryTrigger(nested, out string triggerReason), Is.False);
+                Assert.That(triggerReason, Is.EqualTo(queryReason));
+                Assert.That(triggerReason, Is.Not.Empty);
+            });
+
+            Assert.That(devices.TryTrigger(first, out _), Is.True);
+            Assert.That(attempted, Is.True);
+            Assert.That(board.Cell(actor.transform.position), Is.EqualTo(new Vector2Int(4, 1)));
+            Assert.That(devices.At(first).IsTriggering, Is.False);
+            Assert.That(devices.At(first).CooldownLeft, Is.EqualTo(8f));
+            Assert.That(devices.At(second).CooldownLeft, Is.Zero);
+            Assert.That(devices.CanTrigger(second, out _), Is.True, "앞선 발동이 끝나면 다른 준비 장치는 사용할 수 있어야 합니다.");
+        }
+
+        [Test]
+        public void StageDevice_ContactExceptionReleasesProcessingLockButPreservesReservedCooldown()
+        {
+            Code.Stages.StageBoard board = NewPushBoard(out Code.Stages.StageActor actor);
+            Vector2Int cell = new Vector2Int(1, 1);
+            SetPushProperty(board.Definition, "Devices", new[]
+            {
+                new Code.Stages.StageDevice(Code.Stages.StageDeviceKind.Push, cell,
+                    6f, 0f, 0f, 0.5f, 0, 4f, 8f, Vector2Int.right, 3)
+            });
+            bool throwOnce = true;
+            Code.Stages.StageDevices devices = new Code.Stages.StageDevices(board, moved =>
+            {
+                if (!throwOnce)
+                    return;
+                throwOnce = false;
+                throw new System.InvalidOperationException("접촉 처리 실패를 모의합니다.");
+            });
+
+            Assert.Throws<System.InvalidOperationException>(() => devices.TryTrigger(cell, out _));
+            Assert.That(actor.transform.position.x, Is.GreaterThan(board.World(cell).x));
+            Assert.That(devices.At(cell).IsTriggering, Is.False);
+            Assert.That(devices.At(cell).CooldownLeft, Is.EqualTo(8f));
+            Assert.That(devices.TryTrigger(cell, out _), Is.False);
+            devices.Tick(8f);
+            Assert.That(devices.CanTrigger(cell, out _), Is.True);
+            Assert.That(devices.TryTrigger(cell, out _), Is.True);
+        }
+
+        [Test]
+        public void StagePush_IntegrationTriggersBothIntermediateTrapsExactlyOnce()
+        {
+            Code.Stages.StageBoard board = NewPushBoard(out Code.Stages.StageActor actor);
+            Code.Stages.StageSession session = NewTrapContactSession(board, actor);
+            Trap first = NewContactTrap(session, new Vector2Int(2, 1), Vector2Int.one, 2);
+            Trap second = NewContactTrap(session, new Vector2Int(3, 1), Vector2Int.one, 2);
+            Random.State previous = Random.state;
+            try
+            {
+                Random.InitState(8271);
+                Code.Stages.StageForcedMovement movement = new Code.Stages.StageForcedMovement(board, session.CheckTraps);
+                Assert.That(movement.TryPush(actor, Vector2Int.right, 3), Is.True);
+                Assert.That(actor.Combat.Health.CurrentHealth, Is.EqualTo(6));
+                Assert.That(first.LastTriggerDamage, Is.EqualTo(2));
+                Assert.That(second.LastTriggerDamage, Is.EqualTo(2));
+                Assert.That(board.Cell(actor.transform.position), Is.EqualTo(new Vector2Int(4, 1)));
+            }
+            finally
+            {
+                Random.state = previous;
+            }
+        }
+
+        [Test]
+        public void StagePush_IntegrationDoesNotRetriggerAZeroCooldownTrapAcrossItsFootprint()
+        {
+            Code.Stages.StageBoard board = NewPushBoard(out Code.Stages.StageActor actor);
+            Code.Stages.StageSession session = NewTrapContactSession(board, actor);
+            Trap trap = NewContactTrap(session, new Vector2Int(2, 1), new Vector2Int(2, 1), 2);
+            Random.State previous = Random.state;
+            try
+            {
+                Random.InitState(8271);
+                Assert.That(new Code.Stages.StageForcedMovement(board, session.CheckTraps)
+                    .TryPush(actor, Vector2Int.right, 3), Is.True);
+                Assert.That(actor.Combat.Health.CurrentHealth, Is.EqualTo(8));
+                Assert.That(trap.LastTriggerDamage, Is.EqualTo(2));
+                Assert.That(trap.IsReady, Is.True, "재사용 대기로 중복 피해를 우연히 막은 결과여서는 안 됩니다.");
+            }
+            finally
+            {
+                Random.state = previous;
+            }
+        }
+
+        [Test]
+        public void StagePush_IntegrationLethalFirstTrapStopsBeforeTheNextTrap()
+        {
+            Code.Stages.StageBoard board = NewPushBoard(out Code.Stages.StageActor actor);
+            Code.Stages.StageSession session = NewTrapContactSession(board, actor);
+            NewContactTrap(session, new Vector2Int(2, 1), Vector2Int.one, 20);
+            Trap second = NewContactTrap(session, new Vector2Int(3, 1), Vector2Int.one, 2);
+            Random.State previous = Random.state;
+            try
+            {
+                Random.InitState(8271);
+                Assert.That(new Code.Stages.StageForcedMovement(board, session.CheckTraps)
+                    .TryPush(actor, Vector2Int.right, 3), Is.True);
+                Assert.That(actor.IsAlive, Is.False);
+                Assert.That(board.Cell(actor.transform.position), Is.EqualTo(new Vector2Int(2, 1)));
+                Assert.That(second.LastTriggerDamage, Is.Zero);
+            }
+            finally
+            {
+                Random.state = previous;
+            }
+        }
+
+        [TestCase(TrapTriggerMode.Area)]
+        [TestCase(TrapTriggerMode.Persistent)]
+        public void StagePush_IntegrationAreaAndPersistentTrapsDamageTheActualActor(TrapTriggerMode mode)
+        {
+            Code.Stages.StageBoard board = NewPushBoard(out Code.Stages.StageActor actor);
+            Code.Stages.StageSession session = NewTrapContactSession(board, actor);
+            Trap trap = NewContactTrap(session, new Vector2Int(2, 1), Vector2Int.one, 4);
+            SetContactField(trap, "triggerMode", mode);
+            SetContactField(trap, "areaRadiusCells", 0f);
+            SetContactField(trap, "persistentSeconds", 2f);
+            Random.State previous = Random.state;
+            try
+            {
+                Random.InitState(8271);
+                Assert.That(new Code.Stages.StageForcedMovement(board, session.CheckTraps)
+                    .TryPush(actor, Vector2Int.right, 3), Is.True);
+                Assert.That(trap.LastTriggerDamage, Is.GreaterThan(0));
+                Assert.That(actor.Combat.Health.CurrentHealth, Is.EqualTo(10 - trap.LastTriggerDamage),
+                    "밀치기 도중 들어온 첫 피해가 실제 적 체력에 반영되어야 합니다.");
+                Assert.That(trap.IsActive, Is.EqualTo(mode == TrapTriggerMode.Persistent));
+            }
+            finally
+            {
+                Random.state = previous;
+            }
+        }
+
+        private Code.Stages.StageSession NewTrapContactSession(Code.Stages.StageBoard board, Code.Stages.StageActor actor)
+        {
+            GameObject host = new GameObject("TrapContactSession");
+            _created.Add(host);
+            Code.Stages.StageSession session = host.AddComponent<Code.Stages.StageSession>();
+            SetPushProperty(session, "Board", board);
+            SetPushProperty(session, "Definition", board.Definition);
+            SetPushProperty(session, "Placement", new Code.Stages.StagePlacement(session, host.transform, null));
+            Code.Enemies.EnemyDataSO data = Object.Instantiate(AssetDatabase.LoadAssetAtPath<Code.Enemies.EnemyDataSO>(
+                "Assets/07.SO/Enemies/BasicEnemy.asset"));
+            _created.Add(data);
+            SetPushProperty(data, "Mobility", 0);
+            SetContactField(actor.Enemy, "data", data);
+            SetContactField(actor.Enemy, "fearGainOnTrap", 0);
+            return session;
+        }
+
+        private Trap NewContactTrap(Code.Stages.StageSession session, Vector2Int anchor, Vector2Int footprint, int damage)
+        {
+            GameObject host = new GameObject("ContactTrap");
+            _created.Add(host);
+            Trap trap = host.AddComponent<Trap>();
+            SetContactField(trap, "triggerChance", 1f);
+            SetContactField(trap, "damage", damage);
+            SetContactField(trap, "damagePerDay", 0f);
+            SetContactField(trap, "injuryChance", 0f);
+            SetContactField(trap, "wearPerTrigger", 0);
+            SetContactField(trap, "cooldownSeconds", 0f);
+            SetContactField(trap, "footprint", footprint);
+            trap.BindStage(session);
+            trap.transform.position = session.Board.World(anchor)
+                + new Vector3(footprint.x - 1, footprint.y - 1, 0f) * (session.Definition.CellSize * 0.5f);
+            FieldInfo traps = typeof(Code.Stages.StagePlacement).GetField("_traps", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(traps, Is.Not.Null, "StagePlacement._traps 를 찾지 못했습니다.");
+            ((List<Trap>)traps.GetValue(session.Placement)).Add(trap);
+            return trap;
+        }
+
+        private static void SetContactField(object target, string name, object value)
+        {
+            FieldInfo field = target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, target.GetType().Name + "." + name + " 를 찾지 못했습니다.");
+            field.SetValue(target, value);
+        }
+
+        [TestCase(TrapTriggerMode.Area, 8)]
+        [TestCase(TrapTriggerMode.Persistent, 4)]
+        public void StagePush_IntegrationFriendlyFireUsesCommonButNotEnemyOnlyMultiplier(
+            TrapTriggerMode mode, int expectedFriendlyDamage)
+        {
+            Code.Stages.StageBoard board = NewPushBoard(out Code.Stages.StageActor enemy);
+            SetPushProperty(board.Definition, "Layout", new[] { "#######", "#.....#", "#.....#", "#.....#", "#######" });
+            enemy.transform.position = board.World(new Vector2Int(1, 1));
+            enemy.Combat.Health.SetMaxHealth(100, true);
+            Code.Stages.StageSession session = NewTrapContactSession(board, enemy);
+            Code.Stages.StageActor inside = NewFriendlyTrapTarget(board, new Vector2Int(2, 2));
+            Code.Stages.StageActor outside = NewFriendlyTrapTarget(board, new Vector2Int(5, 3));
+            NewPushBoard(out Code.Stages.StageActor outsideEnemy);
+            outsideEnemy.transform.position = board.World(new Vector2Int(5, 3));
+            board.Actors.Add(outsideEnemy);
+            Trap trap = NewContactTrap(session, new Vector2Int(2, 1), new Vector2Int(2, 2), 4);
+            SetContactField(trap, "triggerMode", mode);
+            SetContactField(trap, "areaRadiusCells", 0f);
+            SetContactField(trap, "persistentSeconds", 2f);
+            trap.SetStageDamageMultiplier(2f);
+            trap.SetStageEnemyMultiplier(3f);
+            Random.State previous = Random.state;
+            try
+            {
+                Random.InitState(8271);
+                Assert.That(new Code.Stages.StageForcedMovement(board, session.CheckTraps)
+                    .TryPush(enemy, Vector2Int.right, 3), Is.True);
+                Assert.That(inside.Combat.Health.CurrentHealth, Is.EqualTo(100 - expectedFriendlyDamage));
+                Assert.That(enemy.Combat.Health.CurrentHealth, Is.EqualTo(100 - expectedFriendlyDamage * 3));
+                Assert.That(outside.Combat.Health.CurrentHealth, Is.EqualTo(100));
+                Assert.That(outsideEnemy.Combat.Health.CurrentHealth, Is.EqualTo(10));
+            }
+            finally
+            {
+                Random.state = previous;
+            }
+        }
+
+        private Code.Stages.StageActor NewFriendlyTrapTarget(Code.Stages.StageBoard board, Vector2Int cell)
+        {
+            GameObject host = new GameObject("FriendlyTrapTarget");
+            _created.Add(host);
+            Code.Combat.Health health = host.AddComponent<Code.Combat.Health>();
+            health.SetMaxHealth(100, true);
+            Code.Combat.Combatant combat = host.AddComponent<Code.Combat.Combatant>();
+            SetContactField(combat, "health", health);
+            Code.Stages.StageActor actor = host.AddComponent<Code.Stages.StageActor>();
+            SetPushProperty(actor, "Combat", combat);
+            actor.transform.position = board.World(cell);
+            board.Actors.Add(actor);
+            return actor;
+        }
+
         [TearDown]
         public void TearDown()
         {
@@ -268,7 +707,7 @@ namespace Tests.EditMode.Rules
             var expected = new Dictionary<string, int>
             {
                 { "ThiefEnemy", 8 }, { "ScoutEnemy", 7 }, { "BasicEnemy", 3 }, { "ArcherEnemy", 4 }, { "SapperEnemy", 2 },
-                { "HealterEnemy", 2 }, { "SwordEnemy", 2 }, { "PaladinEnemy", 1 }, { "Enemy_Tourist_Coward", 3 },
+                { "HealterEnemy", 2 }, { "SwordEnemy", 2 }, { "PaladinEnemy", 1 }, { "EliteShieldGuardEnemy", 1 }, { "EliteArcherEnemy", 4 }, { "EliteHealerEnemy", 2 }, { "EliteScoutEnemy", 7 }, { "Enemy_Tourist_Coward", 3 },
                 { "Enemy_Tourist_Priest", 3 }, { "Enemy_Tourist_Shopaholic", 3 }, { "Boss_GreedKnight", 2 },
                 { "Boss_Houndmaster", 2 }, { "Boss_KnightCommander", 2 }, { "Boss_Subjugator", 2 },
                 { "Boss_Archmage", 0 }, { "Boss_OrcWarchief", 1 }, { "Boss_BanditRider", 9 },

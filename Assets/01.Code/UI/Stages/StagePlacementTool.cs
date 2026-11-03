@@ -32,7 +32,9 @@ namespace Code.UI.Stages
             _unitScale = unitScale;
         }
 
-        public bool IsSelected(StageOption option) => _session.Phase == StagePhase.Preparing && Placing && Selected == option;
+        /// <summary>전투 중에는 함정 도구만 "배치 중"으로 본다(골라 둔 부하·바리케이드 도구는 쉰다).</summary>
+        public bool IsSelected(StageOption option) => _session.EditsTrapsNow && Placing && Selected == option
+            && (_session.Phase == StagePhase.Preparing || option != null && option.IsAnyTrap);
 
         public void Select(StageOption option)
         {
@@ -81,7 +83,14 @@ namespace Code.UI.Stages
             // 웨이브가 시작되면 부하 선택을 푼다. 다음 준비 단계에 막대가 저절로 다시 뜨지 않게 한다.
             if (_session.Phase != StagePhase.Preparing)
                 _selectedUnit = null;
-            if (_session.Phase != StagePhase.Preparing || !pointerFree || Mouse.current == null)
+            if (!_session.EditsTrapsNow || !pointerFree || Mouse.current == null)
+            {
+                Hide();
+                return;
+            }
+            bool fighting = _session.Phase == StagePhase.Fighting;
+            // 전투 중에는 함정 설치·철거 도구만 커서를 보인다(바리케이드 도구는 조용히 쉰다)
+            if (fighting && Placing && (Selected == null || !Selected.IsAnyTrap))
             {
                 Hide();
                 return;
@@ -95,7 +104,7 @@ namespace Code.UI.Stages
             Vector2Int cell = _session.Board.Cell(world);
             bool click = Mouse.current.leftButton.wasPressedThisFrame;
             // 부하가 선 칸을 누르면 배치 대신 그 부하를 고른다(철거 도구는 원래대로 철거한다)
-            if (click && !Demolishing && TrySelectUnit(cell))
+            if (click && !Demolishing && !fighting && TrySelectUnit(cell))
                 return;
             if (!Placing && !Demolishing)
             {
@@ -107,7 +116,8 @@ namespace Code.UI.Stages
             Show(check);
             SetHint(check.Allowed ? string.Empty : check.Reason);
             SetTerrain(_session.Board.Terrain.RuleAt(cell));
-            if (!click)
+            // 전투 중 수동 장치 칸 클릭은 장치 발동이 받는다
+            if (!click || fighting && _session.Definition.DeviceAt(cell)?.IsManual == true)
                 return;
             // 실행 직전에도 같은 검사를 거친다. 실패 문구는 설치/철거 쪽이 한 번만 알린다.
             if (Demolishing)
@@ -123,6 +133,11 @@ namespace Code.UI.Stages
                 if (actor == null || actor.IsEnemy || !actor.IsAlive || _session.Board.Cell(actor.transform.position) != cell)
                     continue;
                 _selectedUnit = actor;
+                // 명령 선택과 배치 모드는 동시에 켜지지 않게 한다.
+                Selected = null;
+                Placing = false;
+                Demolishing = false;
+                Hide();
                 Changed?.Invoke();
                 return true;
             }

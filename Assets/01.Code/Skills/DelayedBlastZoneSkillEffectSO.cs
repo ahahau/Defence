@@ -117,6 +117,12 @@ namespace Code.Skills
                 _shakeFrequency = shakeFrequency;
                 _hitStopDuration = hitStopDuration;
 
+                _field?.TrackEffect(gameObject);
+                if (_fill != null)
+                {
+                    _field?.TrackEffect(_fill.gameObject);
+                }
+
                 if (_fill != null)
                 {
                     _fill.transform.localScale = Vector3.one * 0.01f;
@@ -128,6 +134,15 @@ namespace Code.Skills
 
             private void Update()
             {
+                if (_field != null && !_field.IsActive)
+                {
+                    if (_fill != null)
+                    {
+                        Destroy(_fill.gameObject);
+                    }
+                    Destroy(gameObject);
+                    return;
+                }
                 _timer -= Time.deltaTime;
                 if (_timer > 0f) return;
 
@@ -147,6 +162,10 @@ namespace Code.Skills
                 {
                     foreach (var enemy in roster)
                     {
+                        if (_field != null && !_field.IsActive)
+                        {
+                            break;
+                        }
                         if (enemy == null || !enemy.IsAlive)
                             continue;
 
@@ -167,6 +186,10 @@ namespace Code.Skills
                     }
                 }
 
+                if (_field != null && !_field.IsActive)
+                {
+                    return;
+                }
                 PlayExplosionVisual();
                 PlayFeelFeedback();
             }
@@ -174,6 +197,7 @@ namespace Code.Skills
             private void PlayExplosionVisual()
             {
                 var flash = SkillZoneVisual.CreateZone("Blast Explosion", transform.position, _radius, _explosionColor, 7);
+                _field?.TrackEffect(flash.gameObject);
                 flash.transform.localScale = Vector3.one * (_radius * 0.6f);
 
                 DOTween.Sequence()

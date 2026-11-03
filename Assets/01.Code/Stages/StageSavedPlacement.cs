@@ -20,9 +20,15 @@ namespace Code.Stages
         [SerializeField] internal float active;
         [SerializeField] internal float tick;
         [SerializeField] internal int tickDamage;
+        // 지속 함정의 마지막 소모(2026-11-03). 없는 구 저장은 이미 소모한 것으로 읽는다.
+        [SerializeField] internal int pendingWear;
         [SerializeField] internal float recoveryDelay;
         [SerializeField] internal float recoveryFraction;
         // 부하 명령(StageUnitCommand, 2026-11-01). 없는 구 저장은 0(기본)으로 읽는다.
         [SerializeField] internal int command;
+        // 함정 판 안 강화 단계(2026-11-03). 없는 구 저장은 0이며 1단계로 읽는다.
+        [SerializeField] internal int level;
+        // 벽 함정이 향하는 방향(2026-11-03, kind = wall).
+        [SerializeField] internal Vector2Int direction;
     }
 }

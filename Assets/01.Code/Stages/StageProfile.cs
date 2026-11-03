@@ -29,17 +29,23 @@ namespace Code.Stages
 
         private const string FileName = "defence-stage-profile-v1.json";
         private readonly string _path;
+        private readonly bool _persist;
         private Document _document = new() { version = 1 };
         private bool _canWrite = true;
         public string Error { get; private set; }
+        /// <summary>원본/백업 보호로 영구 기록 쓰기가 차단되지 않았는가. 일시적 저장 실패는 재시도할 수 있다.</summary>
+        public bool CanWrite => _canWrite;
         public int Currency => _document.currency;
         public IReadOnlyList<string> Artifacts => _document.artifacts;
         public IReadOnlyList<string> ArtifactChoices => _document.artifactChoices;
         public bool HasArtifact(string id) => !string.IsNullOrEmpty(id) && _document.artifacts.Contains(id);
 
-        public StageProfile(string folder)
+        public StageProfile(string folder, bool persist = true)
         {
+            _persist = persist;
             _path = Path.Combine(folder, FileName);
+            if (!_persist)
+                return;
             if (!File.Exists(_path) && !File.Exists(_path + ".bak"))
                 return;
             if (TryRead(_path, out Document loaded))
@@ -164,6 +170,12 @@ namespace Code.Stages
         {
             if (!_canWrite)
                 return false;
+            if (!_persist)
+            {
+                _document = next;
+                Error = string.Empty;
+                return true;
+            }
             string temp = _path + ".tmp";
             try
             {

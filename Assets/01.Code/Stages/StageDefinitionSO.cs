@@ -75,7 +75,16 @@ namespace Code.Stages
                 {
                     if (device == null || !IsFloor(device.Cell) || device.Cell == Core || Array.IndexOf(Doors, device.Cell) >= 0)
                         return false;
-                    if (device.Kind != StageDeviceKind.Rockfall && device.ActiveSeconds >= device.Period)
+                    if (!System.Enum.IsDefined(typeof(StageDeviceKind), device.Kind) || device.Damage < 0
+                        || device.Cooldown < 0f || device.Radius < 0f)
+                        return false;
+                    if (device.Kind == StageDeviceKind.Push && (device.PushCells < 1
+                        || Mathf.Abs(device.Direction.x) + Mathf.Abs(device.Direction.y) != 1))
+                        return false;
+                    if (device.Kind == StageDeviceKind.Hazard && device.TickInterval <= 0f)
+                        return false;
+                    if ((device.Kind == StageDeviceKind.Gate || device.Kind == StageDeviceKind.FireVent)
+                        && (device.Period <= 0f || device.ActiveSeconds >= device.Period || device.TickInterval <= 0f))
                         return false;
                 }
             foreach (StageWave wave in Waves)

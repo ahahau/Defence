@@ -52,6 +52,9 @@ namespace Code.Combat
             _modifiers.Add(modifier);
         }
 
+        /// <summary>전투 경계에서 시간제 이동·받는 피해 보정을 모두 해제한다.</summary>
+        public void Clear() => _modifiers.Clear();
+
         private void Update()
         {
             for (var i = _modifiers.Count - 1; i >= 0; i--)

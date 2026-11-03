@@ -11,6 +11,7 @@ namespace Code.Stages
     public sealed class StageSession : MonoBehaviour
     {
         [field: SerializeField] public StageCatalogSO Catalog { get; private set; }
+        [SerializeField] private StageCatalogSO legacyCatalog;
         [SerializeField] private StageMapView mapView;
         [SerializeField] private Transform actorsRoot;
         [SerializeField] private StageBarricade barricadePrefab;
@@ -46,23 +47,37 @@ namespace Code.Stages
         public IReadOnlyList<Trap> Traps => Placement.Traps;
         public int SelectedCount => _loadout.Count;
         public bool CanChoose => Phase == StagePhase.Preparing && !_locked;
+        /// <summary>지금 함정을 설치·강화·철거할 수 있는가. 함정 본편은 웨이브 중에도 함정만 다룬다(2026-11-03 사용자 결정).</summary>
+        public bool EditsTrapsNow => Phase == StagePhase.Preparing
+            || Phase == StagePhase.Fighting && Catalog != null && Catalog.EditsTrapsInWaves;
+        /// <summary>마지막 준비 저장을 보존해야 하는 클리어 보상 미확정 상태.</summary>
+        public bool HasPendingClearReward => Phase == StagePhase.Cleared && !Results.RewardConfirmed;
         public bool CanUpgrade => Phase == StagePhase.Cleared || Phase == StagePhase.Failed
             || CanChoose && !Placement.HasPlacements;
-        public bool CanChangeStage => Phase == StagePhase.Cleared || Phase == StagePhase.Failed
-            || CanChoose && !Placement.HasPlacements && Board.Barricades.Count == 0;
+        public bool CanChangeStage => !HasPendingClearReward && (Phase == StagePhase.Cleared || Phase == StagePhase.Failed
+            || CanChoose && !Placement.HasPlacements && Board.Barricades.Count == 0);
         public event Action Changed;
         public event Action<int> CoreDamaged;
         public event Action<Vector2Int> BarricadeDestroyed;
 
-        internal void ReportBarricadeDestroyed(Vector2Int cell) => BarricadeDestroyed?.Invoke(cell);
+        internal void ReportBarricadeDestroyed(Vector2Int cell)
+        {
+            Placement?.DetachWallTrap(cell);
+            BarricadeDestroyed?.Invoke(cell);
+        }
 
         public bool CanSelectStage(int index) => Catalog != null && index >= 0 && index < Catalog.Stages.Length
             && (index == 0 || Profile.IsCleared(Catalog.Stages[index - 1].Id));
 
         private void Start()
         {
-            Profile = new StageProfile(Application.persistentDataPath);
+            Profile = new StageProfile(Application.persistentDataPath, Catalog == null || !Catalog.IsTrapLab);
             Artifacts = new StageArtifacts(this);
+            if (Catalog != null && Catalog.IsTrapLab)
+            {
+                SelectStage(0);
+                return;
+            }
             _checkpoint = new StageCheckpoint(this, Application.persistentDataPath);
             if (_checkpoint.Restore())
                 return;
@@ -120,6 +135,9 @@ namespace Code.Stages
             }
         }
 
+        /// <summary>저장 오류 중에는 후보를 유지하되 보상 창을 닫아 복구 경로로 나갈 수 있게 한다.</summary>
+        public bool RequiresArtifactChoice => HasArtifactChoice && Profile.CanWrite && string.IsNullOrEmpty(Profile.Error);
+
         /// <summary>편성과 같이 첫 웨이브 전까지만 바꾼다. 가진 유물만, 장착 칸 수까지.</summary>
         public bool ToggleArtifact(StageArtifact artifact)
         {
@@ -171,6 +189,11 @@ namespace Code.Stages
 
         public bool SelectStage(int index)
         {
+            if (HasPendingClearReward)
+            {
+                Tell("보상을 먼저 저장하세요. 보상 저장 재시도 또는 타이틀 복귀가 가능합니다");
+                return false;
+            }
             if (Phase == StagePhase.Fighting)
                 return false;
             if (Profile == null || Catalog == null || Catalog.Stages == null || index < 0 || index >= Catalog.Stages.Length)
@@ -200,7 +223,7 @@ namespace Code.Stages
             // 스킬 대상 반경은 임시로 교전 반경과 같다(2026-10-28 승인)
             SkillField = new StageSkillField(Board, definition.EngageRadius);
             Placement = new StagePlacement(this, actorsRoot, barricadePrefab);
-            Devices = new StageDevices(Board);
+            Devices = new StageDevices(Board, CheckTraps);
             List<Vector2Int> path = new();
             // 여닫는 문이 모두 닫혀도 모든 던전문에서 코어로 가는 길이 남아야 한다
             Devices.CloseAllGates();
@@ -223,6 +246,10 @@ namespace Code.Stages
             _spawned = 0;
             _locked = false;
             Phase = StagePhase.Preparing;
+            if (Catalog.IsTrapLab)
+                foreach (StageOption option in Catalog.Options)
+                    if (option != null && Profile.IsUnlocked(option))
+                        _loadout.Add(option.Id);
             mapView.Draw(Board);
             mapView.ShowDoors(definition, WaveIndex);
             _checkpoint?.NewStage();
@@ -240,10 +267,13 @@ namespace Code.Stages
                 return;
             }
             _checkpoint?.Save();
+            SkillField?.Close();
+            SkillField = new StageSkillField(Board, Definition.EngageRadius);
             Results.Begin();
             _locked = true;
             _spawned = 0;
-            _spawnClock = 0;
+            StageWave wave = Definition.Waves[WaveIndex];
+            _spawnClock = (wave.PartyLength(0) - 1) * (wave.SpawnInterval - PartySpawnGap(wave));
             _party = null;
             Phase = StagePhase.Fighting;
             Tell("침입자가 코어로 접근합니다");
@@ -347,6 +377,14 @@ namespace Code.Stages
 
         public bool IsBossAlive => _boss != null && _boss.IsAlive;
 
+        internal bool IsBossActor(StageActor actor) => actor != null && actor == _boss;
+
+        /// <summary>맵 서명이 일치하는 구 본편만 호환 카탈로그로 이어한다.</summary>
+        internal void UseCheckpointCatalog(string stageId, string signature)
+        {
+            Catalog = StageCheckpoint.MatchingCatalog(Catalog, legacyCatalog, stageId, signature);
+        }
+
         private void Update()
         {
             // 보스·정예가 살아 있는 동안만 멈출 수 없다. 웨이브 종료·실패로 사라지면 바로 풀린다.
@@ -359,6 +397,9 @@ namespace Code.Stages
             if (Phase != StagePhase.Fighting)
                 return;
             Devices.Tick(Time.deltaTime);
+            if (Phase != StagePhase.Fighting)
+                return;
+            Placement.WallTraps.Tick(Time.deltaTime);
             if (Phase != StagePhase.Fighting)
                 return;
             StageWave wave = Definition.Waves[WaveIndex];
@@ -397,18 +438,21 @@ namespace Code.Stages
         }
 
         /// <summary>
-        /// 파티 안은 짧게 연달아, 파티 사이는 기존 간격 × 파티 인원에서 파티 안 간격을 뺀 만큼 기다린다.
-        /// 웨이브 전체 길이를 파티가 없던 때와 같게 둔다(2026-11-01 사용자 결정).
+        /// 파티의 마지막 멤버가 기존 순번의 시각에 등장하도록 다음 파티 앞에서 대기한다.
+        /// 마지막 등장 뒤의 대기로 길이를 보정하면 웨이브 종료 전에 사용되지 않는다.
         /// </summary>
         private static float NextSpawnDelay(StageWave wave, int spawned)
         {
-            int length = wave.PartyLength(spawned);
-            if (length <= 1)
+            int next = spawned + 1;
+            if (next >= wave.Count)
                 return wave.SpawnInterval;
-            if (spawned + 1 < wave.Count && !wave.StartsParty(spawned + 1))
-                return StageParty.SpawnGap;
-            return Mathf.Max(0.1f, wave.SpawnInterval * length - StageParty.SpawnGap * (length - 1));
+            float gap = PartySpawnGap(wave);
+            if (!wave.StartsParty(next))
+                return gap;
+            return wave.SpawnInterval + (wave.PartyLength(next) - 1) * (wave.SpawnInterval - gap);
         }
+
+        private static float PartySpawnGap(StageWave wave) => Mathf.Min(StageParty.SpawnGap, wave.SpawnInterval);
 
         public int EnemyCount()
         {
@@ -471,9 +515,11 @@ namespace Code.Stages
 
         private void EndWave()
         {
+            SkillField?.Close();
             Results.Complete(WaveIndex + 1, true);
             WaveIndex++;
             Devices.Reset();
+            Placement.WallTraps.Reset();
             foreach (StageActor actor in Board.Actors)
                 if (actor != null && !actor.IsEnemy)
                     actor.Recover();
@@ -522,6 +568,8 @@ namespace Code.Stages
         public bool TryPlace(Vector2Int cell, StageOption option, bool barricade) => Placement.TryPlace(cell, option, barricade);
 
         public void Demolish(Vector2Int cell) => Placement.Demolish(cell);
+
+        public bool TryLevelTrap(Vector2Int cell) => Placement.TryLevelTrap(cell);
 
         /// <summary>준비 단계에만 배치한 부하 한 명의 명령을 바꾼다(2026-11-01 사용자 결정).</summary>
         public bool TrySetCommand(StageActor actor, StageUnitCommand command)
@@ -573,12 +621,18 @@ namespace Code.Stages
             return breaker != null ? breaker : best;
         }
 
+        /// <summary>
+        /// 같은 편에게 너무 붙지 않게 막는다. 먼저 나온(목록 앞) 전투원에게만 비켜 준다.
+        /// 서로 비키면 두 적이 0.5칸 거리에서 함께 멈춰 웨이브가 끝나지 않았다(2026-11-02 1스테이지 실측).
+        /// </summary>
         public bool CanAdvance(StageActor self, Vector3 next)
         {
             float spacing = Definition.CellSize * 0.4f;
             foreach (StageActor other in Board.Actors)
             {
-                if (other == null || other == self || !other.IsAlive || other.IsEnemy != self.IsEnemy)
+                if (other == self)
+                    break;
+                if (other == null || !other.IsAlive || other.IsEnemy != self.IsEnemy)
                     continue;
                 float before = (self.transform.position - other.transform.position).sqrMagnitude;
                 float after = (next - other.transform.position).sqrMagnitude;
@@ -608,19 +662,43 @@ namespace Code.Stages
         /// <summary>전투 중 준비된 낙석 칸을 누르면 터뜨린다.</summary>
         public bool TryTriggerDevice(Vector2Int cell)
         {
-            if (Phase != StagePhase.Fighting || Devices == null || !Devices.TryTrigger(cell))
+            if (!isActiveAndEnabled || Phase != StagePhase.Fighting || Devices == null || Time.timeScale <= 0f
+                || Code.UI.Popup.PopupController.IsOpen)
                 return false;
-            Tell("낙석");
+            bool triggered = Devices.TryTrigger(cell, out string reason);
+            if (!string.IsNullOrEmpty(reason))
+                Tell(reason);
+            return triggered;
+        }
+
+        public bool TryRotateDevice(Vector2Int cell)
+        {
+            if (!isActiveAndEnabled || Phase != StagePhase.Preparing || Devices == null
+                || Code.UI.Popup.PopupController.IsOpen || !Catalog.UsesTrapControls)
+                return false;
+            if (Placement.WallTraps.Rotate(cell))
+            {
+                Tell("벽 함정 방향 회전 · 표시된 공격 칸을 확인하세요");
+                return true;
+            }
+            if (!Devices.Rotate(cell))
+                return false;
+            Tell(Board.Pits.Count > 0 ? "밀치기 방향 회전 · 화살표와 구덩이까지의 경로를 확인하세요"
+                : "밀치기 방향 회전 · 화살표와 위험 구역까지의 경로를 확인하세요");
             return true;
         }
 
-        public void Refund(int amount)
+        public void Refund(int amount) => Refund(amount, true);
+
+        /// <param name="earned">거짓이면 전투 금화 집계에 넣지 않는다. 전투 중 직접 철거한 함정 환급은 번 돈이 아니다
+        /// (설치·강화에 쓴 금화를 빼지 않으므로 되팔기가 수입으로 잡혔다).</param>
+        public void Refund(int amount, bool earned)
         {
             if (Phase != StagePhase.Preparing && Phase != StagePhase.Fighting)
                 return;
             int refund = Mathf.Max(0, amount);
             Gold += refund;
-            if (Phase == StagePhase.Fighting)
+            if (earned && Phase == StagePhase.Fighting)
                 Results.AddGold(refund);
             Notify();
         }
@@ -668,6 +746,7 @@ namespace Code.Stages
         {
             if (_leaving)
                 return;
+            SkillField?.Close();
             _checkpoint?.Save();
             _leaving = true;
         }
@@ -676,6 +755,7 @@ namespace Code.Stages
 
         private void StopActors()
         {
+            SkillField?.Close();
             if (Board == null)
                 return;
             foreach (StageActor actor in Board.Actors)
@@ -691,6 +771,18 @@ namespace Code.Stages
             speedController?.SetPauseLock(this, false, null);
         }
 
-        private void OnDestroy() => Artifacts?.Dispose();
+        private void OnEnable()
+        {
+            if (Phase == StagePhase.Fighting && Board != null && SkillField != null && !SkillField.IsActive && !_leaving)
+            {
+                SkillField = new StageSkillField(Board, Definition.EngageRadius);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            SkillField?.Close();
+            Artifacts?.Dispose();
+        }
     }
 }

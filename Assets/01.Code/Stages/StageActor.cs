@@ -28,10 +28,12 @@ namespace Code.Stages
         private float _waitStartedAt = -1f;
         private int _trailIndex;
         private int _trailVersion = -1;
+        private bool _needsPartyRejoin;
         public Combatant Combat { get; private set; }
         public Unit Unit { get; private set; }
         public Enemy Enemy { get; private set; }
         public bool IsEnemy => Enemy != null;
+        public bool IsBoss => _session != null && _session.IsBossActor(this);
         public bool IsAlive => !_resolved && Combat != null && Combat.IsAlive;
         public float Speed { get; private set; }
         /// <summary>함께 들어온 침입자 파티. 부하·표식 적·혼자 나온 적은 null.</summary>
@@ -54,7 +56,7 @@ namespace Code.Stages
         /// <summary>부하 궁극기 게이지(0~1). 때리거나 맞으면 차고, 웨이브가 끝나면 비운다.</summary>
         public float UltimateCharge { get; private set; }
         public bool CanUltimate => !IsEnemy && IsAlive && Skills != null && Skills.HasUltimate && UltimateCharge >= 1f
-            && _session.Phase == StagePhase.Fighting;
+            && _session.isActiveAndEnabled && _session.SkillField.IsActive && _session.Phase == StagePhase.Fighting;
         public StageEnemyRule Rule { get; private set; }
         /// <summary>바리케이드를 칠 때 곱하는 공격력 배율. 공병(<see cref="StageCatalogSO.BarricadeBreakers"/>)만 1보다 크다.</summary>
         public float BarricadeBreakMultiplier { get; private set; } = 1f;
@@ -145,6 +147,12 @@ namespace Code.Stages
             if (Skills == null || target == null)
                 return;
             BattleAgent targetAgent = target.Agent;
+            if (!IsEnemy && _session.Catalog.UsesTrapControls && CanUltimate
+                && Skills.TryCastUltimate(targetAgent, _session.SkillField))
+            {
+                UltimateCharge = 0f;
+                return;
+            }
             // 적은 궁극기를 교전마다가 아니라 등장 뒤 첫 교전에 한 번 자동으로 쓴다
             if (IsEnemy && !_enemyUltimateUsed && Skills.HasUltimate)
             {
@@ -165,7 +173,8 @@ namespace Code.Stages
 
         private void Update()
         {
-            if (_session == null || _session.Phase != StagePhase.Fighting || !IsAlive)
+            if (_session == null || !_session.isActiveAndEnabled || !_session.SkillField.IsActive
+                || _session.Phase != StagePhase.Fighting || !IsAlive)
                 return;
             if (IsEnemy)
             {
@@ -266,6 +275,20 @@ namespace Code.Stages
                 _trailIndex = 0;
             }
             Vector2Int current = _session.Board.Cell(transform.position);
+            if (_needsPartyRejoin)
+            {
+                _needsPartyRejoin = false;
+                int bestIndex = trail.Count;
+                int bestLength = int.MaxValue;
+                // 강제로 경로 밖으로 밀린 경우에만 남은 발자국에 합류할 열린 길을 다시 찾는다.
+                for (int i = Mathf.Clamp(_trailIndex, 0, trail.Count); i < trail.Count; i++)
+                    if (_session.Paths.Find(current, trail[i], this, false, _probe) && _probe.Count <= bestLength)
+                    {
+                        bestIndex = i;
+                        bestLength = _probe.Count;
+                    }
+                _trailIndex = bestIndex;
+            }
             for (int i = trail.Count - 1; i >= _trailIndex; i--)
                 if (trail[i] == current)
                 {
@@ -402,6 +425,28 @@ namespace Code.Stages
             _render?.ResetMotionTracking();
         }
 
+        internal void FinishForcedMovement(StageBoard board)
+        {
+            Opponent = null;
+            _waitStartedAt = -1f;
+            if (Party == null)
+                return;
+            if (Party.Leader == this)
+                Party.RestartDisplacedLeader(this, board.Cell(transform.position));
+            else
+                _needsPartyRejoin = true;
+        }
+
+        /// <summary>구덩이에 떨어져 사라진다. 처치와 같은 금화·집계로 한 번만 끝낸다.</summary>
+        internal void Fall()
+        {
+            if (_resolved || !IsEnemy || !Combat.IsAlive)
+                return;
+            Combat.StopCombat();
+            _resolved = true;
+            _session.FinishEnemy(this, false);
+        }
+
         private void HandleHealthChanged(float ratio)
         {
             if (ratio < _lastHealthRatio)
@@ -429,6 +474,8 @@ namespace Code.Stages
         public void Recover()
         {
             Combat.StopCombat();
+            _status?.Clear();
+            Agent?.ClearSnare();
             Unit?.RecoverCondition();
             UltimateCharge = 0f;
             transform.position = _session.Board.World(_home);

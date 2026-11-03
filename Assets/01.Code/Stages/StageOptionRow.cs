@@ -1,10 +1,12 @@
 using Code.UI;
+using Code.UI.Stages;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace Code.Stages
 {
-    public sealed class StageOptionRow : MonoBehaviour
+    public sealed class StageOptionRow : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         [SerializeField] private TMP_Text label;
         [SerializeField] private UiFrameButton pick;
@@ -13,6 +15,12 @@ namespace Code.Stages
         private StageHudView _view;
         private StageSession _session;
         private StageOption _option;
+        private PointerEventData _pointer;
+        private string _baseline;
+
+        internal string InspectionMessage => CanInteract && _pointer?.pointerEnter != null
+            && _pointer.pointerEnter.transform.IsChildOf(transform)
+            ? StageOptionDetailsPresenter.MessageFor(_session, _option, _baseline) : string.Empty;
 
         public void Bind(StageHudView view, StageSession session, StageOption option)
         {
@@ -20,6 +28,10 @@ namespace Code.Stages
             _view = view;
             _session = session;
             _option = option;
+            _baseline = StageOptionDetailsPresenter.BaseMessageFor(option, session.Catalog.UsesTrapControls);
+            // 잠긴 후보도 이름 위에서 설명을 읽을 수 있어야 한다.
+            if (label != null)
+                label.raycastTarget = true;
             if (CanInteract)
                 BindCallbacks();
         }
@@ -27,6 +39,7 @@ namespace Code.Stages
         /// <summary>이 행이 연결한 런타임 콜백만 해제한다. 재활성화용 대상은 유지한다.</summary>
         public void Unbind()
         {
+            _pointer = null;
             if (pick != null && pick.Button != null)
                 pick.Button.onClick.RemoveListener(Pick);
             if (upgrade != null && upgrade.Button != null)
@@ -55,6 +68,9 @@ namespace Code.Stages
         private void OnDisable() => Unbind();
         private void OnDestroy() => Unbind();
 
+        public void OnPointerEnter(PointerEventData eventData) => _pointer = eventData;
+        public void OnPointerExit(PointerEventData eventData) => _pointer = null;
+
         private bool CanInteract => isActiveAndEnabled && _view != null && _view.isActiveAndEnabled
             && _session != null && _session.Profile != null && _session.Board != null && _option != null;
 
@@ -71,7 +87,9 @@ namespace Code.Stages
             remove.SetVisible(selected && _session.CanChoose);
             remove.SetInteractable(selected && _session.CanChoose);
             pick.SetSelected(activeTool);
-            pick.SetInteractable(unlocked && (_session.CanChoose || selected && _session.Phase == StagePhase.Preparing));
+            // 함정 본편은 전투 중에도 편성한 함정을 골라 설치한다
+            pick.SetInteractable(unlocked && (_session.CanChoose || selected && (_session.Phase == StagePhase.Preparing
+                || _option.IsAnyTrap && _session.EditsTrapsNow)));
             int cost = _session.Catalog.UpgradeBaseCost * (level + 1);
             upgrade.SetLabel(level >= _session.Catalog.UpgradeLimit ? "강화 완료" : $"강화 {cost}");
             upgrade.SetInteractable(unlocked && _session.CanUpgrade && level < _session.Catalog.UpgradeLimit

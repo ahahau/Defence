@@ -43118,6 +43118,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Stages.StageSession
   <Catalog>k__BackingField: {fileID: 11400000, guid: 3dada44c9db124847a7835e417d713d7, type: 2}
+  legacyCatalog: {fileID: 0}
   mapView: {fileID: 1275564447}
   actorsRoot: {fileID: 290941606}
   barricadePrefab: {fileID: 8977318053267650016, guid: 15c525517cc0b2b4ba174ca90d15dc04, type: 3}

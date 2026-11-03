@@ -17,8 +17,8 @@ namespace Code.Stages
         private bool _restoring;
         private bool _blocked;
         private bool _ended;
-        private bool _dirty;
         private float _nextSave;
+        private string _lastSavedState;
         public string Error => _store.Error;
 
         internal StageCheckpoint(StageSession session, string folder)
@@ -38,6 +38,8 @@ namespace Code.Stages
                     return false;
                 }
                 _blocked = !string.IsNullOrEmpty(Error);
+                if (data != null)
+                    _session.UseCheckpointCatalog(data.stageId, data.layoutSignature);
                 if (!Validate(data, out int stage, out string reason))
                 {
                     _blocked = true;
@@ -46,6 +48,7 @@ namespace Code.Stages
                 }
                 if (!_session.SelectStage(stage))
                     throw new InvalidOperationException("스테이지를 생성하지 못했습니다");
+                _session.Devices.RestoreDirections(data.pushDirections);
                 _session.RestorePreparation(data.nextWave, data.locked, data.coreHealth, data.gold, data.loadout,
                     data.artifacts ?? new List<string>());
                 // 누계가 없는 구 저장은 첫 웨이브 전이 아니면 누계를 모르는 채로 둔다(클리어 때 누계 줄을 숨긴다)
@@ -57,6 +60,7 @@ namespace Code.Stages
                 _session.Merchant.Set(_session.Catalog, data.merchantItems, data.merchantRepairWave, data.merchantRepaired);
                 foreach (StageSavedPlacement saved in data.placements)
                     _session.Placement.Restore(saved, Option(saved.optionId));
+                _lastSavedState = JsonUtility.ToJson(data);
                 _session.Tell(_blocked ? Error : "마지막 준비 단계를 이어합니다. 전투 중 종료했다면 해당 웨이브부터 재시작합니다");
                 _nextSave = Time.unscaledTime + 5f;
                 return true;
@@ -77,15 +81,17 @@ namespace Code.Stages
         {
             if (_restoring || _blocked || _ended || _session.Phase != StagePhase.Preparing)
                 return;
-            if (!_dirty)
-                _nextSave = Mathf.Min(_nextSave, Time.unscaledTime + 0.35f);
-            _dirty = true;
+            _nextSave = Mathf.Min(_nextSave, Time.unscaledTime + 0.35f);
         }
 
         internal void Tick()
         {
-            // 바뀐 것이 없으면 쓰지 않는다. 매번 쓰면 .bak까지 직전 상태로 밀려 백업이 의미를 잃는다.
-            if (_dirty && Time.unscaledTime >= _nextSave)
+            if (_restoring || _blocked || _ended || _session.Phase != StagePhase.Preparing)
+            {
+                return;
+            }
+            // 조작이 없어도 회복·대기시간은 바뀐다. 파일 교체 여부는 캡처한 내용을 비교해 정한다.
+            if (Time.unscaledTime >= _nextSave)
                 Save();
         }
 
@@ -100,6 +106,7 @@ namespace Code.Stages
                     version = 1,
                     stageId = _session.Definition.Id,
                     layoutSignature = Signature(_session.Definition),
+                    pushDirections = _session.Devices.CaptureDirections(),
                     nextWave = _session.WaveIndex,
                     locked = !_session.CanChoose,
                     coreHealth = _session.CoreHealth,
@@ -127,12 +134,20 @@ namespace Code.Stages
                 _session.Placement.Capture(data.placements);
                 if (!Validate(data, out _, out string reason))
                     throw new InvalidOperationException(reason);
-                if (!_store.Write(data) && !string.IsNullOrEmpty(Error))
+                string state = JsonUtility.ToJson(data);
+                // 같은 상태를 다시 써서 직전의 다른 상태를 담은 백업까지 밀어내지 않는다.
+                if (!string.Equals(state, _lastSavedState, StringComparison.Ordinal))
                 {
-                    _blocked = true;
-                    _session.Tell(Error);
+                    if (_store.Write(data))
+                    {
+                        _lastSavedState = state;
+                    }
+                    else if (!string.IsNullOrEmpty(Error))
+                    {
+                        _blocked = true;
+                        _session.Tell(Error);
+                    }
                 }
-                _dirty = false;
                 _nextSave = Time.unscaledTime + 5f;
             }
             catch (Exception exception)
@@ -165,6 +180,8 @@ namespace Code.Stages
                 _blocked = !string.IsNullOrEmpty(Error);
                 _ended = false;
             }
+            // 종료된 파일이 보관된 뒤에는 같은 초기 상태라도 새 체크포인트가 필요하다.
+            _lastSavedState = null;
             MarkDirty();
         }
 
@@ -204,6 +221,8 @@ namespace Code.Stages
                 return Reject($"현재 스테이지 설정 오류: {definitionError}", out reason);
             if (data.layoutSignature != Signature(definition))
                 return Reject("맵·설정이 변경됐습니다.", out reason);
+            if (!StageDevices.ValidDirections(definition, data.pushDirections))
+                return Reject("밀치기 방향 목록이 현재 장치와 맞지 않습니다.", out reason);
             if (data.nextWave < 0 || data.nextWave >= definition.Waves.Length
                 || data.locked != (data.nextWave > 0) || data.coreHealth <= 0 || data.coreHealth > definition.CoreHealth)
                 return Reject("웨이브·편성 잠금 또는 코어 체력이 유효하지 않습니다.", out reason);
@@ -241,8 +260,25 @@ namespace Code.Stages
             }
             StageBoard board = new(definition, _session.Catalog);
             HashSet<Vector2Int> occupied = new();
+            HashSet<Vector2Int> barricades = new();
+            HashSet<Vector2Int> walls = new();
             foreach (StageSavedPlacement saved in data.placements)
             {
+                // 벽 함정은 벽 칸이나 앞서 저장된 바리케이드에 붙는다(바닥 배치 검사와 따로 본다)
+                if (saved != null && saved.kind == "wall")
+                {
+                    StageOption wallOption = Option(saved.optionId);
+                    if (wallOption?.WallTrap == null || !selected.Contains(saved.optionId)
+                        || saved.upgrade != _session.Profile.Level(wallOption.Id))
+                        return Reject("벽 함정 종류·편성 또는 강화 단계가 현재 프로필과 맞지 않습니다.", out reason);
+                    bool mount = barricades.Contains(saved.cell) || definition.TileAt(saved.cell) == '#';
+                    if (saved.paid < 0 || !mount || !walls.Add(saved.cell)
+                        || Mathf.Abs(saved.direction.x) + Mathf.Abs(saved.direction.y) != 1
+                        || !definition.IsFloor(saved.cell + saved.direction)
+                        || saved.level < 0 || saved.level > (_session.Catalog.EditsTrapsInWaves ? _session.Catalog.TrapMaxLevel : 1))
+                        return Reject("벽 함정 자리·방향·설치비 또는 강화 단계가 유효하지 않습니다.", out reason);
+                    continue;
+                }
                 if (saved == null || saved.paid < 0 || !definition.IsBuildable(saved.cell) || board.Reserved(saved.cell)
                     || !Finite(saved.cooldown) || saved.cooldown < 0)
                     return Reject("배치 좌표·설치비 또는 대기시간이 유효하지 않습니다.", out reason);
@@ -254,6 +290,7 @@ namespace Code.Stages
                         || !Finite(saved.recoveryFraction) || saved.recoveryFraction < 0 || saved.recoveryFraction >= 1
                         || !occupied.Add(saved.cell))
                         return Reject("바리케이드 체력·회복 또는 점유 값이 유효하지 않습니다.", out reason);
+                    barricades.Add(saved.cell);
                     continue;
                 }
                 StageOption option = Option(saved.optionId);
@@ -279,6 +316,14 @@ namespace Code.Stages
                         || saved.active > template.PersistentSeconds || !Finite(saved.tick) || saved.tick < 0
                         || saved.tickDamage < 0 || saved.cooldown > template.CooldownSeconds)
                         return Reject("함정 내구도·지속시간 또는 대기시간이 유효하지 않습니다.", out reason);
+                    if (saved.pendingWear < 0 || saved.pendingWear > 0 && (saved.active <= 0f || !template.IsDestructible
+                        || template.TriggerMode != TrapTriggerMode.Persistent || saved.pendingWear != template.WearPerTrigger
+                        || saved.pendingWear < saved.health))
+                        return Reject("지속 함정의 마지막 소모 기록이 작동 상태와 맞지 않습니다.", out reason);
+                    // 0은 강화 단계가 없던 구 저장. 판 안 강화가 없는 카탈로그에서는 1단계만 있다.
+                    int maxLevel = _session.Catalog.EditsTrapsInWaves ? _session.Catalog.TrapMaxLevel : 1;
+                    if (saved.level < 0 || saved.level > maxLevel)
+                        return Reject("함정 강화 단계가 유효하지 않습니다.", out reason);
                     for (int y = 0; y < template.Footprint.y; y++)
                     for (int x = 0; x < template.Footprint.x; x++)
                     {
@@ -304,12 +349,28 @@ namespace Code.Stages
 
         private static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 
-        private string Signature(StageDefinitionSO definition)
+        private string Signature(StageDefinitionSO definition) => SignatureFor(_session.Catalog, definition);
+
+        internal static StageCatalogSO MatchingCatalog(StageCatalogSO current, StageCatalogSO legacy,
+            string stageId, string signature)
+        {
+            foreach (StageCatalogSO catalog in new[] { current, legacy })
+            {
+                if (catalog == null || catalog.Stages == null)
+                    continue;
+                foreach (StageDefinitionSO definition in catalog.Stages)
+                    if (definition != null && definition.Id == stageId && SignatureFor(catalog, definition) == signature)
+                        return catalog;
+            }
+            return current;
+        }
+
+        internal static string SignatureFor(StageCatalogSO catalog, StageDefinitionSO definition)
         {
             StringBuilder text = new();
             // 지형 칸을 더해도 기존 저장을 "맵 변경"으로 막지 않는다. 지형 위 함정은 Validate가 따로 본다.
             foreach (string row in definition.Layout)
-                text.Append(StageTerrain.NormalizeRow(_session.Catalog, row)).Append('\n');
+                text.Append(StageTerrain.NormalizeRow(catalog, row)).Append('\n');
             foreach (Vector2Int door in definition.Doors)
                 text.Append(door.x).Append(',').Append(door.y).Append(';');
             foreach (int wave in definition.DoorOpensAtWave)
@@ -318,7 +379,7 @@ namespace Code.Stages
                 .Append(definition.CoreHealth).Append(';').Append(definition.BarricadeHealth).Append(';')
                 .Append(definition.Waves.Length).Append(';').Append(definition.CellSize.ToString("R", CultureInfo.InvariantCulture));
             foreach (StageDevice device in definition.Devices)
-                text.Append(JsonUtility.ToJson(device));
+                text.Append(device.CheckpointSignature());
             using SHA256 hash = SHA256.Create();
             return Convert.ToBase64String(hash.ComputeHash(Encoding.UTF8.GetBytes(text.ToString())));
         }

@@ -1,0 +1,233 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a50269762730fae40b9727d88b6507fc, type: 3}
+  m_Name: TrapLab_01
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Stages.StageDefinitionSO
+  <Id>k__BackingField: TrapLab_01
+  <Title>k__BackingField: "\uD568\uC815 \uACF5\uB7B5 \uC5F0\uC2B5"
+  <Gimmick>k__BackingField: "\uC801\uC744 \uBAA8\uC544 \uAE08\uC0C9 \uD654\uC0B4\uD45C\uB85C \uC8FC\uD669 \uC704\uD5D8 \uAD6C\uC5ED\uC5D0 \uBC00\uC5B4 \uB123\uC73C\uC138\uC694"
+  <Layout>k__BackingField:
+  - '#########################'
+  - '#########################'
+  - '##########.....##########'
+  - '##########.....##########'
+  - '##########.....##########'
+  - '#.......................#'
+  - '#.......................#'
+  - '#.......................#'
+  - '#.......................#'
+  - '#########################'
+  - '#########################'
+  - '#########################'
+  - '#########################'
+  <Doors>k__BackingField:
+  - {x: 2, y: 6}
+  <DoorOpensAtWave>k__BackingField: 01000000i
+  <EmpoweredTrapMultiplier>k__BackingField: 1.5
+  <Devices>k__BackingField:
+  - <Kind>k__BackingField: 3
+    <Cell>k__BackingField: {x: 12, y: 6}
+    <Period>k__BackingField: 6
+    <ActiveSeconds>k__BackingField: 0
+    <StartDelay>k__BackingField: 0
+    <TickInterval>k__BackingField: 0.5
+    <Damage>k__BackingField: 0
+    <Radius>k__BackingField: 1.4
+    <Cooldown>k__BackingField: 8
+    <Direction>k__BackingField: {x: 0, y: -1}
+    <PushCells>k__BackingField: 3
+  - <Kind>k__BackingField: 4
+    <Cell>k__BackingField: {x: 11, y: 2}
+    <Period>k__BackingField: 6
+    <ActiveSeconds>k__BackingField: 0
+    <StartDelay>k__BackingField: 0
+    <TickInterval>k__BackingField: 0.5
+    <Damage>k__BackingField: 2
+    <Radius>k__BackingField: 0
+    <Cooldown>k__BackingField: 0
+    <Direction>k__BackingField: {x: 0, y: -1}
+    <PushCells>k__BackingField: 3
+  - <Kind>k__BackingField: 4
+    <Cell>k__BackingField: {x: 12, y: 2}
+    <Period>k__BackingField: 6
+    <ActiveSeconds>k__BackingField: 0
+    <StartDelay>k__BackingField: 0
+    <TickInterval>k__BackingField: 0.5
+    <Damage>k__BackingField: 2
+    <Radius>k__BackingField: 0
+    <Cooldown>k__BackingField: 0
+    <Direction>k__BackingField: {x: 0, y: -1}
+    <PushCells>k__BackingField: 3
+  - <Kind>k__BackingField: 4
+    <Cell>k__BackingField: {x: 13, y: 2}
+    <Period>k__BackingField: 6
+    <ActiveSeconds>k__BackingField: 0
+    <StartDelay>k__BackingField: 0
+    <TickInterval>k__BackingField: 0.5
+    <Damage>k__BackingField: 2
+    <Radius>k__BackingField: 0
+    <Cooldown>k__BackingField: 0
+    <Direction>k__BackingField: {x: 0, y: -1}
+    <PushCells>k__BackingField: 3
+  - <Kind>k__BackingField: 4
+    <Cell>k__BackingField: {x: 11, y: 3}
+    <Period>k__BackingField: 6
+    <ActiveSeconds>k__BackingField: 0
+    <StartDelay>k__BackingField: 0
+    <TickInterval>k__BackingField: 0.5
+    <Damage>k__BackingField: 2
+    <Radius>k__BackingField: 0
+    <Cooldown>k__BackingField: 0
+    <Direction>k__BackingField: {x: 0, y: -1}
+    <PushCells>k__BackingField: 3
+  - <Kind>k__BackingField: 4
+    <Cell>k__BackingField: {x: 12, y: 3}
+    <Period>k__BackingField: 6
+    <ActiveSeconds>k__BackingField: 0
+    <StartDelay>k__BackingField: 0
+    <TickInterval>k__BackingField: 0.5
+    <Damage>k__BackingField: 2
+    <Radius>k__BackingField: 0
+    <Cooldown>k__BackingField: 0
+    <Direction>k__BackingField: {x: 0, y: -1}
+    <PushCells>k__BackingField: 3
+  - <Kind>k__BackingField: 4
+    <Cell>k__BackingField: {x: 13, y: 3}
+    <Period>k__BackingField: 6
+    <ActiveSeconds>k__BackingField: 0
+    <StartDelay>k__BackingField: 0
+    <TickInterval>k__BackingField: 0.5
+    <Damage>k__BackingField: 2
+    <Radius>k__BackingField: 0
+    <Cooldown>k__BackingField: 0
+    <Direction>k__BackingField: {x: 0, y: -1}
+    <PushCells>k__BackingField: 3
+  - <Kind>k__BackingField: 4
+    <Cell>k__BackingField: {x: 11, y: 4}
+    <Period>k__BackingField: 6
+    <ActiveSeconds>k__BackingField: 0
+    <StartDelay>k__BackingField: 0
+    <TickInterval>k__BackingField: 0.5
+    <Damage>k__BackingField: 2
+    <Radius>k__BackingField: 0
+    <Cooldown>k__BackingField: 0
+    <Direction>k__BackingField: {x: 0, y: -1}
+    <PushCells>k__BackingField: 3
+  - <Kind>k__BackingField: 4
+    <Cell>k__BackingField: {x: 12, y: 4}
+    <Period>k__BackingField: 6
+    <ActiveSeconds>k__BackingField: 0
+    <StartDelay>k__BackingField: 0
+    <TickInterval>k__BackingField: 0.5
+    <Damage>k__BackingField: 2
+    <Radius>k__BackingField: 0
+    <Cooldown>k__BackingField: 0
+    <Direction>k__BackingField: {x: 0, y: -1}
+    <PushCells>k__BackingField: 3
+  - <Kind>k__BackingField: 4
+    <Cell>k__BackingField: {x: 13, y: 4}
+    <Period>k__BackingField: 6
+    <ActiveSeconds>k__BackingField: 0
+    <StartDelay>k__BackingField: 0
+    <TickInterval>k__BackingField: 0.5
+    <Damage>k__BackingField: 2
+    <Radius>k__BackingField: 0
+    <Cooldown>k__BackingField: 0
+    <Direction>k__BackingField: {x: 0, y: -1}
+    <PushCells>k__BackingField: 3
+  <Core>k__BackingField: {x: 22, y: 6}
+  <CoreHealth>k__BackingField: 10
+  <StartingGold>k__BackingField: 300
+  <CellSize>k__BackingField: 1.25
+  <UnitSpeed>k__BackingField: 2.5
+  <EnemySpeed>k__BackingField: 1.6
+  <EngageRadius>k__BackingField: 3.5
+  <LeashRadius>k__BackingField: 4
+  <BarricadeCost>k__BackingField: 10
+  <BarricadeHealth>k__BackingField: 8
+  <RecoveryDelay>k__BackingField: 3
+  <RecoveryPerSecond>k__BackingField: 1
+  <DestroyRefund>k__BackingField: 0.25
+  <DemolishRefund>k__BackingField: 0.5
+  <ClearReward>k__BackingField: 0
+  <KillReward>k__BackingField: 5
+  <Waves>k__BackingField:
+  - <Enemies>k__BackingField:
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    <SpawnInterval>k__BackingField: 1.1
+    <Boss>k__BackingField: {fileID: 0}
+    <BossEscorts>k__BackingField: []
+    <BossHealthMultiplier>k__BackingField: 6
+    <BossAttackMultiplier>k__BackingField: 2
+    <BossScale>k__BackingField: 1.6
+    <Rules>k__BackingField: 
+    <PartySize>k__BackingField: 3
+  - <Enemies>k__BackingField:
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: a133e5bdb2ea4e23076af23308deaada, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: a133e5bdb2ea4e23076af23308deaada, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: a133e5bdb2ea4e23076af23308deaada, type: 2}
+    <SpawnInterval>k__BackingField: 0.9
+    <Boss>k__BackingField: {fileID: 0}
+    <BossEscorts>k__BackingField: []
+    <BossHealthMultiplier>k__BackingField: 6
+    <BossAttackMultiplier>k__BackingField: 2
+    <BossScale>k__BackingField: 1.6
+    <Rules>k__BackingField: 
+    <PartySize>k__BackingField: 3
+  - <Enemies>k__BackingField:
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: a133e5bdb2ea4e23076af23308deaada, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: a133e5bdb2ea4e23076af23308deaada, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    - {fileID: 11400000, guid: a133e5bdb2ea4e23076af23308deaada, type: 2}
+    - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
+    <SpawnInterval>k__BackingField: 0.8
+    <Boss>k__BackingField: {fileID: 0}
+    <BossEscorts>k__BackingField: []
+    <BossHealthMultiplier>k__BackingField: 6
+    <BossAttackMultiplier>k__BackingField: 2
+    <BossScale>k__BackingField: 1.6
+    <Rules>k__BackingField: 
+    <PartySize>k__BackingField: 3
+  <PreparationEvent>k__BackingField:
+    <Title>k__BackingField: 
+    <Line>k__BackingField: 
+    <ButtonLabel>k__BackingField: 
+    <Wave>k__BackingField: 1
+    <Options>k__BackingField: []
+  <FollowUpEvents>k__BackingField: []

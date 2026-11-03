@@ -1595,6 +1595,9 @@ namespace Code.BT
                 _snareUntil = Mathf.Max(_snareUntil, Time.time + duration);
         }
 
+        /// <summary>스테이지 부하 복구 시 남아 있는 시간제 속박을 해제한다.</summary>
+        public void ClearSnare() => _snareUntil = 0f;
+
         /// <summary>현재 타깃 반대 방향으로 즉시 대쉬(아레나 클램프). 원거리 대쉬 스킬이 호출. 속박과 무관.</summary>
         public void DashAwayFromTarget(float distance)
         {

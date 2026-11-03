@@ -21,6 +21,9 @@ namespace Code.Skills
                 if (offset.magnitude > radius) continue;
 
                 enemy.TakeSkillDamage(damage);
+                // 구 아레나 이동은 스테이지의 벽·맵 경계를 검사하지 않는다.
+                if (context.Field != null)
+                    continue;
                 var dir = offset.sqrMagnitude > 0.0001f ? offset.normalized : Random.insideUnitCircle.normalized;
                 enemy.TeleportToCombatPosition((Vector2)enemy.transform.position + dir * knockbackDistance);
             }

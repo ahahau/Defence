@@ -14,6 +14,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/00.Scenes/StageDefense.unity
     guid: e09161afb430f91429318355d15e547d
+  - enabled: 1
+    path: Assets/00.Scenes/TrapLab.unity
+    guid: 1a014da472168e845bbfc1d9a246b158
+  - enabled: 1
+    path: Assets/00.Scenes/TrapCampaign.unity
+    guid: 8d29517978a70b341877b6771ec795e4
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 99f9c9493070a9d4c979a8fec7c5a8d3, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}

@@ -49,6 +49,17 @@ namespace Code.Stages
                 _members.Add(actor);
         }
 
+        /// <summary>밀려난 생존 리더의 새 위치에서 동행 경로를 다시 시작한다.</summary>
+        public void RestartDisplacedLeader(StageActor leader, Vector2Int cell)
+        {
+            if (leader == null || Leader != leader)
+                return;
+            _trailOwner = leader;
+            _trail.Clear();
+            _trail.Add(cell);
+            TrailVersion++;
+        }
+
         public StageActor Leader
         {
             get

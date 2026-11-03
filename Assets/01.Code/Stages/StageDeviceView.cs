@@ -20,6 +20,7 @@ namespace Code.Stages
         private readonly Transform _root;
         private readonly List<SpriteRenderer> _cells = new();
         private readonly List<SpriteRenderer> _bars = new();
+        private readonly List<SpriteRenderer> _arrows = new();
 
         public bool IsValid => _root != null;
 
@@ -32,17 +33,60 @@ namespace Code.Stages
                 _root.SetParent(parent, false);
         }
 
-        public void Show(StageSession session)
+        public void Show(StageSession session, Vector2Int? focus = null)
         {
             if (_root == null)
                 return;
             int bars = 0;
             int cells = 0;
+            int arrows = 0;
             float size = session.Definition.CellSize;
             IReadOnlyList<StageDevices.State> states = session.Devices.States;
             for (int i = 0; i < states.Count; i++)
             {
                 StageDevices.State state = states[i];
+                if (state.Device.Kind == StageDeviceKind.Push)
+                {
+                    Vector3 center = session.Board.World(state.Device.Cell);
+                    Vector3 direction = new(state.Direction.x, state.Direction.y, 0f);
+                    Vector3 side = new(-direction.y, direction.x, 0f);
+                    Vector3 tip = center + direction * (size * 0.32f);
+                    Stroke(arrows++, center - direction * (size * 0.28f), tip, size);
+                    Stroke(arrows++, tip - direction * (size * 0.24f) + side * (size * 0.2f), tip, size);
+                    Stroke(arrows++, tip - direction * (size * 0.24f) - side * (size * 0.2f), tip, size);
+                    if (focus == state.Device.Cell)
+                    {
+                        for (int step = 1; step <= state.Device.PushCells; step++)
+                        {
+                            Vector2Int at = state.Device.Cell + state.Direction * step;
+                            if (!session.Definition.IsFloor(at))
+                                break;
+                            bool pit = session.Board.Pits.Contains(at);
+                            bool blocked = pit || !session.Board.IsPassable(at) || session.Board.BlockerAt(at, null) != null;
+                            SpriteRenderer range = Pick(_cells, cells++, "Push Route");
+                            range.transform.position = session.Board.World(at);
+                            range.transform.localScale = _unitScale * size;
+                            range.sortingOrder = FloorOrder + 1;
+                            // 구덩이에 닿는 경로는 낙하 지점으로 붉게 보인다
+                            range.color = Tint(pit ? HudPalette.Danger : blocked ? HudPalette.Warn : HudPalette.Accent, pit ? 0.55f : 0.3f);
+                            range.gameObject.SetActive(true);
+                            if (blocked)
+                                break;
+                        }
+                    }
+                }
+                if (state.Device.IsManual && focus == state.Device.Cell)
+                {
+                    Vector3 center = session.Board.World(state.Device.Cell);
+                    float radius = state.Device.Radius * size;
+                    for (int segment = 0; segment < 32; segment++)
+                    {
+                        float from = segment * Mathf.PI * 2f / 32f;
+                        float to = (segment + 1) * Mathf.PI * 2f / 32f;
+                        Stroke(arrows++, center + new Vector3(Mathf.Cos(from), Mathf.Sin(from)) * radius,
+                            center + new Vector3(Mathf.Cos(to), Mathf.Sin(to)) * radius, size);
+                    }
+                }
                 // 불이 번지는 풀섬 칸은 불 구멍이 탈 때만 같은 주황으로 칠한다(부하도 맞는 칸)
                 if (state.Device.Kind == StageDeviceKind.FireVent && state.Active)
                     foreach (Vector2Int spread in state.SpreadCells)
@@ -64,6 +108,14 @@ namespace Code.Stages
                         cell.sortingOrder = FloorOrder;
                         cell.color = Tint(HudPalette.Warn, state.Active ? 0.85f : 0.3f);
                         break;
+                    case StageDeviceKind.Hazard:
+                        cell.sortingOrder = FloorOrder;
+                        cell.color = Tint(HudPalette.Warn, 0.65f);
+                        break;
+                    case StageDeviceKind.Pit:
+                        cell.sortingOrder = FloorOrder;
+                        cell.color = Tint(HudPalette.Scrim, 0.92f);
+                        break;
                     case StageDeviceKind.Gate:
                         cell.sortingOrder = GateOrder;
                         cell.color = Tint(HudPalette.Track, state.Active ? 0.95f : 0.25f);
@@ -79,12 +131,26 @@ namespace Code.Stages
             }
             Trim(_cells, cells);
             Trim(_bars, bars);
+            Trim(_arrows, arrows);
         }
 
         public void Hide()
         {
             Trim(_cells, 0);
             Trim(_bars, 0);
+            Trim(_arrows, 0);
+        }
+
+        private void Stroke(int index, Vector3 from, Vector3 to, float size)
+        {
+            SpriteRenderer line = Pick(_arrows, index, "Push Direction");
+            Vector3 delta = to - from;
+            line.transform.position = (from + to) * 0.5f;
+            line.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
+            line.transform.localScale = new Vector3(_unitScale.x * delta.magnitude, _unitScale.y * size * 0.09f, _unitScale.z);
+            line.sortingOrder = GateOrder;
+            line.color = HudPalette.TextBody;
+            line.gameObject.SetActive(true);
         }
 
         private void Bar(int index, Vector3 anchor, float size, float ratio)

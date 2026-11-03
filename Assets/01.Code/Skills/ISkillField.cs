@@ -10,6 +10,10 @@ namespace Code.Skills
     /// </summary>
     public interface ISkillField
     {
+        /// <summary>이 효과가 속한 전투가 아직 진행 중인지 나타낸다.</summary>
+        bool IsActive { get; }
+        /// <summary>전투 종료 때 함께 정리할 런타임 효과 객체를 등록한다.</summary>
+        void TrackEffect(GameObject effect);
         IReadOnlyList<BattleAgent> Allies(BattleTeam team, Vector3 center);
         IReadOnlyList<BattleAgent> Opponents(BattleTeam team, Vector3 center);
     }

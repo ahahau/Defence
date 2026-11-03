@@ -5,6 +5,12 @@ namespace Code.Stages
     [CreateAssetMenu(menuName = "Defence/Stages/Catalog")]
     public sealed class StageCatalogSO : ScriptableObject
     {
+        [field: SerializeField, Tooltip("별도 함정 실험. 본편 저장을 읽거나 쓰지 않는다.")]
+        public bool IsTrapLab { get; private set; }
+        [field: SerializeField] public bool IsTrapCampaign { get; private set; }
+        [field: SerializeField, Range(0.1f, 1f)] public float HeavyPushMultiplier { get; private set; } = 1f;
+        [field: SerializeField, Range(0.1f, 1f)] public float BossPushMultiplier { get; private set; } = 1f;
+        public bool UsesTrapControls => IsTrapLab || IsTrapCampaign;
         [field: SerializeField] public StageDefinitionSO[] Stages { get; private set; }
         [field: SerializeField] public StageOption[] Options { get; private set; }
         [field: SerializeField, Min(1)] public int UpgradeBaseCost { get; private set; }
@@ -53,6 +59,23 @@ namespace Code.Stages
 
         public bool IsSlowingTrap(Code.Buildings.BuildingDataSO trap) =>
             trap != null && SlowingTraps != null && System.Array.IndexOf(SlowingTraps, trap) >= 0;
+
+        [field: Header("전투 중 함정 운용 (임시 값, 2026-11-03 사용자 결정)")]
+        [field: SerializeField, Min(1), Tooltip("판 안 강화 최고 단계. 설치하면 1단계다.")]
+        public int TrapMaxLevel { get; private set; } = 3;
+        [field: SerializeField, Min(0f), Tooltip("다음 단계 비용 = 설치비 × 이 비율 × 현재 단계(올림).")]
+        public float TrapLevelCostRatio { get; private set; } = 0.75f;
+        [field: SerializeField, Min(0f), Tooltip("단계마다 더하는 피해 배율.")]
+        public float TrapLevelDamage { get; private set; } = 0.5f;
+        [field: SerializeField, Range(0f, 1f), Tooltip("전투 중 철거는 스테이지 철거 환급률에 이 비율을 더 곱한다.")]
+        public float FightingRefundRatio { get; private set; } = 0.5f;
+
+        /// <summary>함정만 웨이브 중에도 설치·강화·철거한다. 바리케이드·부하는 준비 단계 전용(2026-11-03 사용자 결정, 함정 본편만).</summary>
+        public bool EditsTrapsInWaves => IsTrapCampaign;
+
+        public int TrapLevelCost(int installCost, int level) => Mathf.CeilToInt(Mathf.Max(0, installCost) * TrapLevelCostRatio * level);
+
+        public float TrapLevelMultiplier(int level) => 1f + TrapLevelDamage * Mathf.Max(0, level - 1);
 
         [field: Header("스테이지 상인 (임시 값, 2026-11-02 사용자 결정)")]
         [field: SerializeField] public StageMerchantItem[] MerchantItems { get; private set; } = System.Array.Empty<StageMerchantItem>();

@@ -36,12 +36,13 @@ namespace Code.Buildings
             tickDamage = _tickDamage;
         }
 
-        internal void RestoreStageTiming(float cooldown, float active, float tick, int tickDamage)
+        internal void RestoreStageTiming(float cooldown, float active, float tick, int tickDamage, int pendingWear = 0)
         {
             _cooldownRemaining = cooldown;
             _activeRemaining = active;
             _tickTimer = tick;
             _tickDamage = tickDamage;
+            _pendingWear = pendingWear;
         }
 
         /// <summary>함정 몸체 그림의 정렬 순서. 바닥·기둥 타일보다 위, 위 칸으로 삐져나온 기둥 윗면(11)과 캐릭터(20)보다 아래다.</summary>
@@ -107,6 +108,7 @@ namespace Code.Buildings
         private float _activeRemaining;
         private float _tickTimer;
         private int _tickDamage;
+        private int _pendingWear;
         private Node _node;
         private NodeTrapGrid _grid;
 
@@ -128,6 +130,8 @@ namespace Code.Buildings
         public float AreaRadiusCells => areaRadiusCells;
         public float PersistentSeconds => persistentSeconds;
         public bool IsActive => _activeRemaining > 0f;
+        internal int WearPerTrigger => wearPerTrigger;
+        internal int PendingWear => _pendingWear;
 
         public override Vector2Int Footprint => new(Mathf.Max(1, footprint.x), Mathf.Max(1, footprint.y));
 
@@ -180,6 +184,8 @@ namespace Code.Buildings
         /// <summary>재사용 시간과 지속 작동을 흘린다. 게임 시간이라 일시정지 중에는 멈춘다.</summary>
         public void TickTrap(float deltaTime)
         {
+            if (IsDestroyed)
+                return;
             var dt = Mathf.Max(0f, deltaTime);
             if (_activeRemaining > 0f)
             {
@@ -195,6 +201,10 @@ namespace Code.Buildings
                 {
                     _activeRemaining = 0f;
                     _cooldownRemaining = CooldownSeconds;
+                    int pendingWear = _pendingWear;
+                    _pendingWear = 0;
+                    if (pendingWear > 0)
+                        TakeBuildingDamage(pendingWear);
                 }
 
                 return;
@@ -259,7 +269,13 @@ namespace Code.Buildings
 
             // 발동한 만큼 닳는다. 지속형은 작동 한 번에 한 번만 닳는다. 다 닳으면 Building이 부서뜨린다.
             if (wearPerTrigger > 0)
-                TakeBuildingDamage(wearPerTrigger);
+            {
+                // 마지막 발동의 지속 피해가 내구도 소진으로 중간에 끊기지 않게 한다.
+                if (mode == TrapTriggerMode.Persistent && IsActive && IsDestructible && wearPerTrigger >= CurrentDurability)
+                    _pendingWear = wearPerTrigger;
+                else
+                    TakeBuildingDamage(wearPerTrigger);
+            }
 
             return true;
         }

@@ -20,7 +20,11 @@ namespace Code.UI
 
         /// <summary>시작하면 넘어갈 씬.</summary>
         public const string GameSceneName = "SampleScene";
-        public const string StageSceneName = "StageDefense";
+        public const string StageSceneName = "TrapCampaign";
+        public const string LegacyStageSceneName = "StageDefense";
+
+        public static bool IsStageScene(string sceneName) => sceneName == StageSceneName || sceneName == LegacyStageSceneName;
+        public const string TrapLabSceneName = "TrapLab";
 
         [SerializeField, Tooltip("저장이 없으면 잠글 버튼.")]
         private Button continueButton;
@@ -105,6 +109,19 @@ namespace Code.UI
 
             GameSfxPlayer.Play(GameSfxCue.UiClick);
             SceneManager.LoadScene(StageSceneName);
+        }
+
+        /// <summary>본편 저장을 건드리지 않고 함정 공략 실험으로 들어간다.</summary>
+        public void StartTrapLab()
+        {
+            if (!Application.CanStreamedLevelBeLoaded(TrapLabSceneName))
+            {
+                Debug.LogError("함정 공략 연습 씬이 빌드 목록에 없습니다", this);
+                GameSfxPlayer.Play(GameSfxCue.UiFail);
+                return;
+            }
+            GameSfxPlayer.Play(GameSfxCue.UiClick);
+            SceneManager.LoadScene(TrapLabSceneName);
         }
 
         public void OpenSettings()

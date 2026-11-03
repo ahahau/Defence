@@ -78,7 +78,8 @@ namespace Code.UI.Stages
                 foreach (Vector2Int step in Steps)
                 {
                     Vector2Int neighbor = cell + step;
-                    if (!Inside(board, neighbor) || !board.Definition.IsFloor(neighbor) || _distance[Index(board, neighbor)] >= 0)
+                    if (!Inside(board, neighbor) || !board.Definition.IsFloor(neighbor) || board.Pits.Contains(neighbor)
+                        || _distance[Index(board, neighbor)] >= 0)
                         continue;
                     _distance[Index(board, neighbor)] = next;
                     _frontier.Enqueue(neighbor);

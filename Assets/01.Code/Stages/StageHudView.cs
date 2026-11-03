@@ -59,6 +59,7 @@ namespace Code.Stages
         private StageUltimateBars _ultimates;
         private StageEnemyMarks _marks;
         private StageDeviceView _devices;
+        private StageWallTrapView _wallTraps;
         private StageCommandMarks _commands;
 
         private void Awake() => EnsureRuntimeState();
@@ -198,7 +199,7 @@ namespace Code.Stages
             if (visualRoot == null || _battleSignals == null || !_battleSignals.IsValid
                 || _route == null || !_route.IsValid || _ultimates == null || !_ultimates.IsValid
                 || _marks == null || !_marks.IsValid || _devices == null || !_devices.IsValid
-                || _commands == null || !_commands.IsValid)
+                || _wallTraps == null || !_wallTraps.IsValid || _commands == null || !_commands.IsValid)
             {
                 ReleaseVisuals();
                 visualRoot = new GameObject("Stage HUD Visuals").transform;
@@ -209,6 +210,7 @@ namespace Code.Stages
                 _ultimates = new StageUltimateBars(cursor, _cursorScale, visualRoot);
                 _marks = new StageEnemyMarks(cursor, _cursorScale, visualRoot);
                 _devices = new StageDeviceView(cursor, _cursorScale, visualRoot);
+                _wallTraps = new StageWallTrapView(cursor, _cursorScale, visualRoot);
                 _commands = new StageCommandMarks(cursor, _cursorScale, visualRoot);
             }
             visualRoot.gameObject.SetActive(true);
@@ -228,6 +230,7 @@ namespace Code.Stages
             _ultimates = null;
             _marks = null;
             _devices = null;
+            _wallTraps = null;
             _commands = null;
         }
 
@@ -268,14 +271,24 @@ namespace Code.Stages
                 _nextRefresh = Time.unscaledTime + 0.2f;
                 Refresh();
             }
-            bool pointerFree = Mouse.current != null && (settings == null || !settings.IsOpen) && !Code.UI.Popup.PopupController.IsOpen
-                && (artifactWindow == null || !artifactWindow.IsOpen)
-                && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject());
+            bool pointerFree = CanPointAtMap();
+            Vector2Int? focusedCell = pointerFree
+                ? session.Board.Cell(worldCamera.ScreenToWorldPoint(Mouse.current.position.ReadValue())) : null;
             if (session.Devices != null)
-                _devices.Show(session);
+                _devices.Show(session, focusedCell);
             else
                 _devices.Hide();
+            if (session.Placement != null)
+                _wallTraps.Show(session, focusedCell);
+            else
+                _wallTraps.Hide();
             bool preparing = session.Phase == StagePhase.Preparing;
+            if (preparing && focusedCell.HasValue && Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
+                session.TryRotateDevice(focusedCell.Value);
+            // 함정 위에서 E: 판 안 강화(함정 본편은 전투 중에도)
+            if (session.EditsTrapsNow && session.Catalog.EditsTrapsInWaves && focusedCell.HasValue && Keyboard.current != null
+                && Keyboard.current.eKey.wasPressedThisFrame && session.Placement.TryDescribeTrap(focusedCell.Value, out _, out _))
+                session.TryLevelTrap(focusedCell.Value);
             if (preparing || session.Phase == StagePhase.Fighting)
                 _commands.Show(session, preparing ? _placementTool.SelectedUnit : null);
             else
@@ -287,7 +300,11 @@ namespace Code.Stages
                 // 낙석 칸을 누르면 낙석이 먼저, 아니면 가까운 부하의 궁극기
                 if (pointerFree && Mouse.current.leftButton.wasPressedThisFrame
                     && !session.TryTriggerDevice(session.Board.Cell(worldCamera.ScreenToWorldPoint(Mouse.current.position.ReadValue()))))
-                    TryUltimateAtPointer();
+                {
+                    if (!session.Catalog.UsesTrapControls
+                        && session.Definition.DeviceAt(focusedCell.Value)?.IsManual != true)
+                        TryUltimateAtPointer();
+                }
             }
             else
             {
@@ -295,6 +312,72 @@ namespace Code.Stages
                 _marks.Hide();
             }
             _placementTool.Tick(pointerFree);
+        }
+
+        private bool CanPointAtMap() => Mouse.current != null && (settings == null || !settings.IsOpen)
+            && !Code.UI.Popup.PopupController.IsOpen && (artifactWindow == null || !artifactWindow.IsOpen)
+            && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject());
+
+        private string InspectionAtPointer()
+        {
+            if ((session.Phase != StagePhase.Preparing && session.Phase != StagePhase.Fighting) || Mouse.current == null
+                || (settings != null && settings.IsOpen) || Code.UI.Popup.PopupController.IsOpen
+                || (artifactWindow != null && artifactWindow.IsOpen))
+            {
+                return string.Empty;
+            }
+            if (session.Phase == StagePhase.Preparing && rows != null)
+            {
+                foreach (StageOptionRow row in rows)
+                {
+                    string candidate = row != null ? row.InspectionMessage : string.Empty;
+                    if (!string.IsNullOrEmpty(candidate))
+                        return candidate;
+                }
+            }
+            if (session.Board == null || worldCamera == null || !CanPointAtMap())
+            {
+                return string.Empty;
+            }
+            Vector2Int cell = session.Board.Cell(worldCamera.ScreenToWorldPoint(Mouse.current.position.ReadValue()));
+            StageDevices.State device = session.Devices?.At(cell);
+            if (device != null && device.Device.IsManual)
+            {
+                string label = device.Device.Kind == StageDeviceKind.Push ? "밀치기" : "낙석";
+                string state = session.Phase == StagePhase.Preparing
+                    ? device.Device.Kind == StageDeviceKind.Push && session.Catalog.UsesTrapControls
+                        ? $"준비 단계 · R로 방향 회전 · 현재 {device.Direction}"
+                        : "전투 중 장치 칸을 클릭해 발동"
+                    : Time.timeScale <= 0f ? "일시정지 중에는 발동할 수 없습니다"
+                    : session.Devices.CanTrigger(cell, out string reason) ? "발동 가능 · 클릭"
+                    : reason;
+                return $"수동 장치 · {label}\n{state}\n반경 {device.Device.Radius:0.#}칸 · 재사용 {device.Device.Cooldown:0.#}초"
+                    + (device.Device.Kind == StageDeviceKind.Push
+                        ? $"\n최대 {device.Device.PushCells}칸 · 벽·점유 앞 정지"
+                            + (session.Catalog.IsTrapCampaign ? " · 무거운 적·보스는 짧게 밀림" : string.Empty)
+                        : $"\n적 피해 {device.Device.Damage} · 아군 피해 없음");
+            }
+            string level = TrapLevelLine(cell);
+            if (session.Phase == StagePhase.Fighting)
+                return level;
+            string message = StageInspectionPresenter.MessageFor(session, cell);
+            return level.Length == 0 ? message : message.Length == 0 ? level : message + "\n" + level;
+        }
+
+        /// <summary>가리킨 함정의 판 안 강화 단계·다음 비용·철거 환급. 판 안 강화가 없는 스테이지는 빈 문자열.</summary>
+        private string TrapLevelLine(Vector2Int cell)
+        {
+            if (!session.Catalog.EditsTrapsInWaves)
+                return string.Empty;
+            if (!session.Placement.TryDescribeTrap(cell, out int level, out int refund))
+                return string.Empty;
+            StagePlacementCheck next = session.Placement.CheckTrapLevel(cell);
+            string upgrade = next.Allowed ? $"E: Lv{level + 1} 강화 {next.Cost}G" : next.Reason;
+            StageWallTraps.Placed wall = session.Placement.WallTraps.At(cell);
+            string wallLine = wall == null ? string.Empty
+                : $"{wall.Option.Label} · 피해 {session.Placement.WallTraps.Damage(wall)}\n{wall.Data.Describe()}"
+                    + (session.Phase == StagePhase.Preparing ? "\nR: 방향 회전" : string.Empty) + "\n";
+            return $"{wallLine}함정 Lv{level} · {upgrade} · 철거 환급 {refund}G";
         }
 
         /// <summary>누른 자리에서 가장 가까운(한 칸 안) 게이지가 찬 부하의 궁극기를 쓴다.</summary>
@@ -340,12 +423,27 @@ namespace Code.Stages
             if (session.Board != null)
                 _battleSignals.Tick();
             bool showResult = string.IsNullOrEmpty(session.SaveError) && StageWaveResultPresenter.HasResult(session);
-            message.enableAutoSizing = showResult;
-            if (!showResult)
+            string inspection = string.IsNullOrEmpty(session.SaveError) && string.IsNullOrEmpty(_battleSignals.Alert)
+                && (session.Profile == null || string.IsNullOrEmpty(session.Profile.Error))
+                ? InspectionAtPointer() : string.Empty;
+            bool resultInspection = showResult && !string.IsNullOrEmpty(inspection);
+            bool showInspection = !showResult && !string.IsNullOrEmpty(inspection);
+            string tutorial = string.IsNullOrEmpty(session.SaveError) && string.IsNullOrEmpty(_battleSignals.Alert)
+                && (_placementTool == null || string.IsNullOrEmpty(_placementTool.Hint))
+                ? StageTutorialPresenter.MessageFor(session) : string.Empty;
+            bool showTutorial = !showResult && !showInspection && !string.IsNullOrEmpty(tutorial);
+            message.enableAutoSizing = showResult || showTutorial || showInspection;
+            if (!showResult && !showTutorial && !showInspection)
                 message.fontSize = _messageFontSize;
             message.text = !string.IsNullOrEmpty(session.SaveError) ? session.SaveError
                 : showResult ? StageWaveResultPresenter.MessageFor(session)
                 : !string.IsNullOrEmpty(_battleSignals.Alert) ? _battleSignals.Alert : session.Message;
+            if (showInspection || showTutorial)
+            {
+                // 조작 피드백은 먼저 남기고, 결과 영역에는 별도 안내를 덧붙이지 않는다.
+                string context = showInspection ? inspection : tutorial;
+                message.text = string.IsNullOrEmpty(message.text) ? context : message.text + "\n" + context;
+            }
             if (session.Phase == StagePhase.Unavailable)
             {
                 primary.SetInteractable(false);
@@ -363,7 +461,7 @@ namespace Code.Stages
             headline.text = definition.Title + " · " + definition.Gimmick;
             int waveNumber = Mathf.Min(session.WaveIndex + 1, definition.Waves.Length);
             StageWave wave = definition.Waves[waveNumber - 1];
-            _briefing.Refresh(definition, waveNumber - 1);
+            _briefing.Refresh(definition, waveNumber - 1, session.Catalog);
             bool preparing = session.Phase == StagePhase.Preparing;
             bool fighting = session.Phase == StagePhase.Fighting;
             int elites = wave.EliteCount(session.Catalog);
@@ -389,9 +487,16 @@ namespace Code.Stages
             else
                 _route.Hide();
             StageOption selected = _placementTool.Selected;
-            bool placementBlocked = preparing && !string.IsNullOrEmpty(_placementTool.Hint);
+            bool trapEditing = fighting && session.EditsTrapsNow;
+            bool placementBlocked = (preparing || trapEditing) && !string.IsNullOrEmpty(_placementTool.Hint);
+            bool showWavePreview = preparing && !placementBlocked && !resultInspection
+                && string.IsNullOrEmpty(session.SaveError) && string.IsNullOrEmpty(session.Profile.Error)
+                && string.IsNullOrEmpty(_battleSignals.Alert);
             tool.text = (session.Phase == StagePhase.Cleared || session.Phase == StagePhase.Failed
                 ? StageWaveResultPresenter.NextActionFor(session)
+                : trapEditing ? _placementTool.Demolishing ? "전투 중 함정 철거 · 환급 낮음 · 우클릭 취소"
+                    : selected != null && selected.IsAnyTrap ? $"전투 중 함정 설치: {selected.Label} · {selected.Cost}G · 함정 위 E: 강화"
+                    : "전투 중 · 왼쪽 함정을 골라 설치 · 함정 위 E: 강화"
                 : !preparing ? "전투 중 · 배치·철거는 준비 단계"
                 : _placementTool.SelectedUnit != null ? "부하 명령 · 아래 막대에서 선택 · 우클릭 해제"
                 : _placementTool.Demolishing ? "철거 · 대상 클릭 · 우클릭 취소"
@@ -401,13 +506,19 @@ namespace Code.Stages
                 + (placementBlocked ? $"    불가: {_placementTool.Hint}"
                     : preparing && _placementTool.TerrainNote.Length > 0 ? $"    {_placementTool.TerrainNote}" : string.Empty)
                 + (_battleSignals.WaitingCount > 0 ? "    회색 '=' 표식: 웨이브 종료 후 복구" : string.Empty)
-                + (!placementBlocked && !string.IsNullOrEmpty(_briefing.Rules) && (preparing || fighting)
+                + (!placementBlocked && !resultInspection && !showWavePreview && !string.IsNullOrEmpty(_briefing.Rules) && (preparing || fighting)
                     ? $"    {_briefing.Rules}" : string.Empty)
-                + (fighting ? "    금색 부하 게이지 클릭: 궁극기"
+                + (fighting ? session.Catalog.UsesTrapControls ? session.Board.Pits.Count > 0
+                        ? "    금색 장치 클릭: 직접 발동 · 검은 구덩이: 밀면 낙하 · 부하 자동 전투"
+                        : "    금색 장치 클릭: 직접 발동 · 주황 바닥: 위험 구역 · 부하 자동 전투"
+                    : "    금색 부하 게이지 클릭: 궁극기"
                     : !preparing ? string.Empty
+                    : resultInspection ? $"    {inspection.Replace("\n", " · ")}"
+                    : showWavePreview ? $"    {_briefing.Enemies}"
+                    : showResult && !string.IsNullOrEmpty(tutorial) ? $"    {tutorial}"
                     : _route.Blocked ? "    경로: 노랑 · 파괴 대상: 진한 빨강 · 추적 범위: 빨강"
                     : "    경로: 노랑 · 추적 범위: 빨강")
-                + (!placementBlocked && !string.IsNullOrEmpty(_briefing.Devices) && (preparing || fighting)
+                + (!placementBlocked && !resultInspection && !showWavePreview && !string.IsNullOrEmpty(_briefing.Devices) && (preparing || fighting)
                     ? $"    {_briefing.Devices}" : string.Empty);
             previousStage.SetInteractable(session.CanChangeStage && session.CanSelectStage(session.StageIndex - 1));
             nextStage.SetInteractable(session.CanChangeStage && session.CanSelectStage(session.StageIndex + 1));
@@ -417,12 +528,12 @@ namespace Code.Stages
                     : session.HasArtifactChoice ? "유물 보상 고르기"
                     : session.StageIndex + 1 < session.Catalog.Stages.Length ? "다음 스테이지" : "처음부터 다시 편성"
                 : preparing ? "웨이브 시작" : session.Phase == StagePhase.Failed ? "코어 파괴" : "방어 중");
-            retry.SetInteractable(session.Phase != StagePhase.Fighting);
+            retry.SetInteractable(session.Phase != StagePhase.Fighting && !session.HasPendingClearReward);
             retry.SetLabel("스테이지 재도전");
             barricade.SetInteractable(preparing);
-            demolish.SetInteractable(preparing);
-            barricade.SetSelected(_placementTool.IsSelected(null));
-            demolish.SetSelected(preparing && _placementTool.Demolishing);
+            demolish.SetInteractable(preparing || trapEditing);
+            barricade.SetSelected(preparing && _placementTool.IsSelected(null));
+            demolish.SetSelected((preparing || trapEditing) && _placementTool.Demolishing);
             foreach (StageOptionRow row in rows)
                 if (row != null)
                     row.Refresh();
