@@ -479,7 +479,10 @@ namespace Code.Stages
                 if (arrived)
                 {
                     int before = CoreHealth;
-                    mapView.CoreHealth.TakeDamage(actor.Enemy.Data.CoreArrivalDamage);
+                    // 보스는 웨이브의 덮어쓰기 피해가 있으면 그것을 쓴다(함정 본편)
+                    mapView.CoreHealth.TakeDamage(actor == _boss
+                        ? Definition.Waves[WaveIndex].BossArrivalDamage
+                        : actor.Enemy.Data.CoreArrivalDamage);
                     coreDamage = before - CoreHealth;
                 }
                 else

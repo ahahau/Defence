@@ -99,7 +99,7 @@ namespace Code.UI.Stages
             StageWave wave = waves[waves.Length - 1];
             int escorts = wave.BossEscorts != null ? wave.BossEscorts.Length : 0;
             string message = $"임프 참모: \"{wave.Boss.Name} 일행이 금고를 노립니다.\"\n"
-                + $"호위 {escorts}명 · 코어에 닿으면 코어 피해 {wave.Boss.CoreArrivalDamage}\n"
+                + $"호위 {escorts}명 · 코어에 닿으면 코어 피해 {wave.BossArrivalDamage}\n"
                 + "호위까지 함께 막을 방어선을 세우세요\n"
                 + "보스가 살아 있는 동안 일시정지할 수 없습니다";
             return PopupRequest.Notice("보스 예고", message).WithTag(BossTag);

@@ -14,6 +14,8 @@ namespace Code.Stages
         [field: SerializeField, Min(1f)] public float BossHealthMultiplier { get; private set; } = 6f;
         [field: SerializeField, Min(1f)] public float BossAttackMultiplier { get; private set; } = 2f;
         [field: SerializeField, Min(1f)] public float BossScale { get; private set; } = 1.6f;
+        /// <summary>보스가 코어에 닿을 때의 피해. 0이면 적 데이터 값을 쓴다(함정 본편만 덮어쓴다, 2026-11-04).</summary>
+        [field: SerializeField, Min(0)] public int BossCoreDamage { get; private set; }
         /// <summary>일반 적 순서와 짝인 특수 규칙. 짧거나 비면 나머지는 규칙 없음.</summary>
         [field: SerializeField] public StageEnemyRule[] Rules { get; private set; } = Array.Empty<StageEnemyRule>();
 
@@ -24,6 +26,9 @@ namespace Code.Stages
         [field: SerializeField, Min(0)] public int PartySize { get; private set; } = 3;
 
         public bool HasBoss => Boss != null;
+
+        /// <summary>보스의 코어 도달 피해. 웨이브 덮어쓰기 값이 있으면 그것을 쓴다.</summary>
+        public int BossArrivalDamage => BossCoreDamage > 0 ? BossCoreDamage : Boss != null ? Boss.CoreArrivalDamage : 0;
 
         private int GroupSize => PartySize > 1 ? PartySize : 1;
         private int RegularParties => ((Enemies?.Length ?? 0) + GroupSize - 1) / GroupSize;

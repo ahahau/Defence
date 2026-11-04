@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Code.Enemies;
 using Code.Stages;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -155,9 +156,66 @@ public static class StageTrapCampaignBuilder
         return last;
     }
 
+    // 보스 한 번에 판이 갈리지 않게 코어를 늘리고 보스 피해를 줄인 대신 일반 웨이브 적을 늘린다
+    // (2026-11-04 사용자 승인, TrapCampaignBalanceProposal.md 1번, 임시)
+    private const int CoreHealth = 12;
+    private const int BossCoreDamage = 4;
+    private const int ExtraEnemies = 2;
+
+    /// <summary>
+    /// 이미 만든 본편 스테이지에 코어 체력·보스 코어 피해·일반 웨이브 추가 적만 갱신한다. 씬은 건드리지 않는다.
+    /// 적 목록은 원본 스테이지에서 다시 만들어 여러 번 돌려도 적이 계속 늘지 않는다.
+    /// </summary>
+    public static string ApplyBossReliance()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling)
+            throw new InvalidOperationException("컴파일 완료 후 편집 모드에서 실행하세요");
+        StageCatalogSO legacy = AssetDatabase.LoadAssetAtPath<StageCatalogSO>("Assets/07.SO/Stages/StageCatalog.asset");
+        StageCatalogSO catalog = AssetDatabase.LoadAssetAtPath<StageCatalogSO>(Root + "/TrapCampaignCatalog.asset");
+        if (legacy == null || catalog == null || legacy.Stages.Length != catalog.Stages.Length)
+            throw new InvalidOperationException("원본과 본편 7개 스테이지가 필요합니다");
+        List<string> results = new();
+        for (int index = 0; index < catalog.Stages.Length; index++)
+        {
+            StageDefinitionSO stage = catalog.Stages[index];
+            results.Add(SetBossReliance(stage, legacy.Stages[index]));
+            EditorUtility.SetDirty(stage);
+            AssetDatabase.SaveAssetIfDirty(stage);
+        }
+        return string.Join(" · ", results);
+    }
+
+    /// <param name="source">일반 적 목록의 기준(원본 스테이지). 웨이브 수가 같아야 한다.</param>
+    private static string SetBossReliance(StageDefinitionSO stage, StageDefinitionSO source)
+    {
+        if (source.Waves.Length != stage.Waves.Length)
+            throw new InvalidOperationException(stage.Id + ": 원본과 웨이브 수가 다릅니다");
+        Set(stage, nameof(StageDefinitionSO.CoreHealth), CoreHealth);
+        List<int> counts = new();
+        for (int wave = 0; wave < stage.Waves.Length; wave++)
+        {
+            StageWave target = stage.Waves[wave];
+            EnemyDataSO[] enemies = source.Waves[wave].Enemies ?? Array.Empty<EnemyDataSO>();
+            if (target.HasBoss)
+                Set(target, nameof(StageWave.BossCoreDamage), BossCoreDamage);
+            // 2웨이브부터 일반 웨이브에 그 웨이브에서 가장 많은 적(웨이브 주제)을 뒤에 더한다. 특수 규칙은 앞쪽 순서와 짝이라 그대로다.
+            else if (wave > 0 && enemies.Length > 0)
+            {
+                EnemyDataSO theme = enemies.GroupBy(enemy => enemy).OrderByDescending(group => group.Count())
+                    .ThenBy(group => Array.IndexOf(enemies, group.Key)).First().Key;
+                enemies = enemies.Concat(Enumerable.Repeat(theme, ExtraEnemies)).ToArray();
+            }
+            Set(target, nameof(StageWave.Enemies), enemies);
+            counts.Add(enemies.Length);
+        }
+        return $"{stage.Id} 코어 {stage.CoreHealth} 적 {string.Join("/", counts)}";
+    }
+
     private static void Configure(StageDefinitionSO stage, StageCatalogSO catalog, int index)
     {
         SetBossHealth(stage, index);
+        // 복제 직후라 이 스테이지의 적 목록이 곧 원본이다
+        SetBossReliance(stage, stage);
         // 복도 맵이 있는 스테이지는 지형·문·코어·장치를 통째로 바꾼다(2026-11-03). 불 구멍·문·낙석 설정은 원본에서 옮긴다.
         if (StageCorridorLayout.TryCreate(index + 1, stage.Devices, out StageCorridorLayout.Map corridor))
         {

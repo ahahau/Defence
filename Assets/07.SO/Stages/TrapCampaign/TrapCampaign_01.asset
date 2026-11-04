@@ -114,7 +114,7 @@ MonoBehaviour:
     <Direction>k__BackingField: {x: 0, y: -1}
     <PushCells>k__BackingField: 3
   <Core>k__BackingField: {x: 2, y: 2}
-  <CoreHealth>k__BackingField: 10
+  <CoreHealth>k__BackingField: 12
   <StartingGold>k__BackingField: 300
   <CellSize>k__BackingField: 1.25
   <UnitSpeed>k__BackingField: 2.5
@@ -145,6 +145,7 @@ MonoBehaviour:
     <BossHealthMultiplier>k__BackingField: 6
     <BossAttackMultiplier>k__BackingField: 2
     <BossScale>k__BackingField: 1.6
+    <BossCoreDamage>k__BackingField: 0
     <Rules>k__BackingField: 
     <PartySize>k__BackingField: 3
   - <Enemies>k__BackingField:
@@ -158,12 +159,15 @@ MonoBehaviour:
     - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
     - {fileID: 11400000, guid: 6031153906814462808020aadde25242, type: 2}
     - {fileID: 11400000, guid: 6ee6e1b5213d40e8a931a3e0e4f4811a, type: 2}
+    - {fileID: 11400000, guid: 6031153906814462808020aadde25242, type: 2}
+    - {fileID: 11400000, guid: 6031153906814462808020aadde25242, type: 2}
     <SpawnInterval>k__BackingField: 1.4
     <Boss>k__BackingField: {fileID: 0}
     <BossEscorts>k__BackingField: []
     <BossHealthMultiplier>k__BackingField: 6
     <BossAttackMultiplier>k__BackingField: 2
     <BossScale>k__BackingField: 1.6
+    <BossCoreDamage>k__BackingField: 0
     <Rules>k__BackingField: 
     <PartySize>k__BackingField: 3
   - <Enemies>k__BackingField:
@@ -184,6 +188,7 @@ MonoBehaviour:
     <BossHealthMultiplier>k__BackingField: 2
     <BossAttackMultiplier>k__BackingField: 1.2
     <BossScale>k__BackingField: 1.6
+    <BossCoreDamage>k__BackingField: 4
     <Rules>k__BackingField: 
     <PartySize>k__BackingField: 3
   <PreparationEvent>k__BackingField:
