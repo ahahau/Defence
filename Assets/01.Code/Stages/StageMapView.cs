@@ -25,14 +25,16 @@ namespace Code.Stages
         [SerializeField, Tooltip("함정 본편 HUD: 위 띠·아래 단축칸을 비우고, 편성 패널이 닫히면 맵을 화면 너비로 넓힌다.")]
         private bool hudFraming;
 
-        // 화면 비율(0~1)로 비울 가장자리. 위 띠 76px·아래 단축칸 150px(1080 기준).
-        private const float TopInset = 0.075f;
-        private const float BottomInset = 0.14f;
+        // 화면 비율(0~1)로 비울 가장자리. 위는 띠·제목·알림 한 줄까지 184px, 아래는 단축칸·도구 줄까지 189px(1080 기준).
+        // 16:9에서는 지도가 거의 너비에 맞춰지고, 21:9처럼 넓은 화면에서는 높이에 맞춰 글이 지도에 겹치지 않는다.
+        private const float TopInset = 0.17f;
+        private const float BottomInset = 0.175f;
         private const float SideInset = 0.015f;
         private const float FrameSeconds = 0.3f;
         private Vector2 _mapSize;
         private float _leftInset = SideInset;
         private float _targetLeftInset = SideInset;
+        private float _framedAspect;
 
         /// <summary>왼쪽 패널이 차지하는 화면 비율. hudFraming일 때만 카메라를 부드럽게 옮긴다.</summary>
         public void SetLeftInset(float fraction)
@@ -94,7 +96,11 @@ namespace Code.Stages
 
         private void LateUpdate()
         {
-            if (!hudFraming || _mapSize == Vector2.zero || Mathf.Approximately(_leftInset, _targetLeftInset))
+            if (!hudFraming || _mapSize == Vector2.zero)
+                return;
+            // 창 크기·전체 화면 전환으로 화면 비율이 바뀌면 바로 다시 맞춘다
+            bool aspectChanged = !Mathf.Approximately(worldCamera.aspect, _framedAspect);
+            if (!aspectChanged && Mathf.Approximately(_leftInset, _targetLeftInset))
                 return;
             _leftInset = Mathf.MoveTowards(_leftInset, _targetLeftInset, Time.unscaledDeltaTime / FrameSeconds);
             FrameCamera();
@@ -103,6 +109,7 @@ namespace Code.Stages
         /// <summary>가장자리를 뺀 화면 칸에 지형 전체를 맞추고, 그 칸의 가운데에 지형 가운데(원점)를 둔다.</summary>
         private void FrameCamera()
         {
+            _framedAspect = worldCamera.aspect;
             float aspect = Mathf.Max(0.1f, worldCamera.aspect);
             float width = 1f - _leftInset - SideInset;
             float height = 1f - TopInset - BottomInset;

@@ -155,7 +155,8 @@ public static class StageHudPolishBuilder
         UiFrameButton loadoutButton = UiKit.Button(UiKit.BottomRight(UiKit.Rect("Loadout", hud), 468, 24, 160, 64), "편성",
             UiKit.ButtonKind.Secondary, 18);
         UiKit.Wire(view, "loadoutButton", loadoutButton);
-        MoveBottomRight(wiring, "supplyButton", 640, 24, 160, 64);
+        // 보급품은 웨이브가 끝난 뒤에만, 편성은 첫 웨이브 전에만 보여 같은 자리를 쓴다(640은 단축칸과 겹친다)
+        MoveBottomRight(wiring, "supplyButton", 468, 24, 160, 64);
         BuildLoadoutWindow(view, hud, wiring);
         side.gameObject.SetActive(false);
         string retry = MoveRetryIntoSettings(scene, wiring);

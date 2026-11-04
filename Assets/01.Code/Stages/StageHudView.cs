@@ -694,12 +694,14 @@ namespace Code.Stages
                 tool.text = Join(Join(Join(Join(toolText, waiting), rules), preview.Length > 0 ? preview : legend), devices);
             previousStage.SetInteractable(session.CanChangeStage && session.CanSelectStage(session.StageIndex - 1));
             nextStage.SetInteractable(session.CanChangeStage && session.CanSelectStage(session.StageIndex + 1));
-            primary.SetInteractable(preparing || session.Phase == StagePhase.Cleared);
+            // 패배하면 큰 버튼이 재도전을 맡는다(설정 창 안의 재도전과 같은 동작)
+            bool failed = session.Phase == StagePhase.Failed;
+            primary.SetInteractable(preparing || session.Phase == StagePhase.Cleared || failed && !session.HasPendingClearReward);
             primary.SetLabel(session.Phase == StagePhase.Cleared
                 ? !session.Profile.IsCleared(definition.Id) ? "보상 저장 재시도"
                     : session.HasArtifactChoice ? "유물 보상 고르기"
                     : session.StageIndex + 1 < session.Catalog.Stages.Length ? "다음 스테이지" : "처음부터 다시 편성"
-                : preparing ? "웨이브 시작" : session.Phase == StagePhase.Failed ? "코어 파괴" : "방어 중");
+                : preparing ? "웨이브 시작" : failed ? "스테이지 재도전" : "방어 중");
             if (retry != null)
             {
                 retry.SetInteractable(session.Phase != StagePhase.Fighting && !session.HasPendingClearReward);
@@ -753,6 +755,8 @@ namespace Code.Stages
                     ChooseBarricade();
                 }
             }
+            else if (session.Phase == StagePhase.Failed)
+                Retry();
             else
                 session.BeginWave();
         }
