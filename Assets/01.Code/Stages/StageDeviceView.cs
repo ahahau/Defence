@@ -14,6 +14,7 @@ namespace Code.Stages
         private const int FloorOrder = 6;
         private const int GateOrder = 11;
         private const int BarOrder = 45;
+        private static readonly Vector2Int[] Sides = { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
 
         private readonly SpriteRenderer _template;
         private readonly Vector3 _unitScale;
@@ -115,6 +116,15 @@ namespace Code.Stages
                     case StageDeviceKind.Pit:
                         cell.sortingOrder = FloorOrder;
                         cell.color = Tint(HudPalette.Scrim, 0.92f);
+                        // 바닥과 맞닿은 가장자리에 테두리를 그어 걸을 수 있는 바닥과 구분한다
+                        foreach (Vector2Int step in Sides)
+                        {
+                            if (session.Board.Pits.Contains(state.Device.Cell + step))
+                                continue;
+                            Vector3 edge = position + new Vector3(step.x, step.y, 0f) * (size * 0.45f);
+                            Vector3 along = new Vector3(-step.y, step.x, 0f) * (size * 0.5f);
+                            Stroke(arrows++, edge - along, edge + along, size, Tint(HudPalette.Danger, 0.9f));
+                        }
                         break;
                     case StageDeviceKind.Gate:
                         cell.sortingOrder = GateOrder;
@@ -141,7 +151,9 @@ namespace Code.Stages
             Trim(_arrows, 0);
         }
 
-        private void Stroke(int index, Vector3 from, Vector3 to, float size)
+        private void Stroke(int index, Vector3 from, Vector3 to, float size) => Stroke(index, from, to, size, HudPalette.TextBody);
+
+        private void Stroke(int index, Vector3 from, Vector3 to, float size, Color color)
         {
             SpriteRenderer line = Pick(_arrows, index, "Push Direction");
             Vector3 delta = to - from;
@@ -149,7 +161,7 @@ namespace Code.Stages
             line.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
             line.transform.localScale = new Vector3(_unitScale.x * delta.magnitude, _unitScale.y * size * 0.09f, _unitScale.z);
             line.sortingOrder = GateOrder;
-            line.color = HudPalette.TextBody;
+            line.color = color;
             line.gameObject.SetActive(true);
         }
 

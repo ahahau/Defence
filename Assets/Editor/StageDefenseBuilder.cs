@@ -1069,8 +1069,11 @@ public static class StageDefenseBuilder
     /// </summary>
     public static string RebuildOptionList() => RebuildOptionList(ScenePath);
 
-    /// <summary>StageDefense를 복사한 다른 스테이지 씬(함정 본편)의 편성 목록도 그 씬 카탈로그에 맞춘다.</summary>
-    public static string RebuildOptionList(string scenePath) => EditScene(scenePath, scene =>
+    /// <summary>
+    /// StageDefense를 복사한 다른 스테이지 씬(함정 본편)의 편성 목록도 그 씬 카탈로그에 맞춘다.
+    /// <paramref name="compact"/>면 종류 탭 자리(위 34)를 비우고 줄 높이를 줄인다(2026-11-03 HUD 정리).
+    /// </summary>
+    public static string RebuildOptionList(string scenePath, bool compact = false) => EditScene(scenePath, scene =>
     {
         StageHudView view = FindInScene<StageHudView>(scene);
         RectTransform side = (RectTransform)view.transform.Find("Preparation");
@@ -1082,7 +1085,7 @@ public static class StageDefenseBuilder
             if (child.name.StartsWith("Option_", StringComparison.Ordinal) || child.name == OptionListName)
                 UnityEngine.Object.DestroyImmediate(child.gameObject);
         }
-        StageOptionRow[] rows = BuildOptionList(side, FindInScene<StageSession>(scene).Catalog);
+        StageOptionRow[] rows = BuildOptionList(side, FindInScene<StageSession>(scene).Catalog, compact);
         UiKit.WireArray(view, "rows", rows);
         return $"rows={rows.Length}";
     });
@@ -1176,6 +1179,9 @@ public static class StageDefenseBuilder
             throw new InvalidOperationException(path + " 씬에 저장하지 않은 변경이 있어 멈춥니다");
         if (opened)
             scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
+        // 새 오브젝트는 활성 씬에 먼저 생겨 다른 씬을 dirty로 만든다. 편집하는 동안 대상 씬을 활성으로 둔다.
+        Scene previous = SceneManager.GetActiveScene();
+        SceneManager.SetActiveScene(scene);
         try
         {
             string result = edit(scene);
@@ -1186,6 +1192,8 @@ public static class StageDefenseBuilder
         }
         finally
         {
+            if (previous.IsValid() && previous.isLoaded && previous != scene)
+                SceneManager.SetActiveScene(previous);
             if (opened)
                 EditorSceneManager.CloseScene(scene, true);
         }
@@ -1418,9 +1426,14 @@ public static class StageDefenseBuilder
     /// 편성 선택지 줄을 스크롤 목록에 쌓는다. 자리는 예전 6줄 자리(위 240~840)이고 선택지가 늘면 스크롤된다 —
     /// 고정 6줄일 때 선택지가 늘면 HUD가 넘친 줄을 묶지 않아 조용히 사라졌다.
     /// </summary>
-    private static StageOptionRow[] BuildOptionList(RectTransform side, StageCatalogSO catalog)
+    private static StageOptionRow[] BuildOptionList(RectTransform side, StageCatalogSO catalog, bool compact = false)
     {
-        RectTransform area = UiKit.TopLeft(UiKit.Rect(OptionListName, side), 18, 240, 386, OptionListHeight);
+        // 작은 줄: 이름(26)과 버튼(30)을 붙여 한 줄 62로 줄인다. 탭(위 34+6)만큼 목록을 내린다.
+        float top = compact ? 280 : 240;
+        float rowHeight = compact ? 62 : 90;
+        float buttonTop = compact ? 30 : 38;
+        float buttonHeight = compact ? 30 : 40;
+        RectTransform area = UiKit.TopLeft(UiKit.Rect(OptionListName, side), 18, top, 386, OptionListHeight - (top - 240));
         UiKit.ScrollArea(area, out RectTransform content);
         UnityEngine.UI.VerticalLayoutGroup layout = content.gameObject.AddComponent<UnityEngine.UI.VerticalLayoutGroup>();
         layout.spacing = 10;
@@ -1433,12 +1446,16 @@ public static class StageDefenseBuilder
         for (int i = 0; i < rows.Length; i++)
         {
             RectTransform row = UiKit.Rect("Option_" + i, content);
-            row.gameObject.AddComponent<UnityEngine.UI.LayoutElement>().preferredHeight = 90;
+            row.gameObject.AddComponent<UnityEngine.UI.LayoutElement>().preferredHeight = rowHeight;
             rows[i] = row.gameObject.AddComponent<StageOptionRow>();
-            UiKit.Wire(rows[i], "label", Text(row, "Name", catalog.Options[i].Label, 15, 0, 0, 310, 32, HudPalette.TextBody));
-            UiKit.Wire(rows[i], "remove", Button(row, "Remove", "해제", 316, 0, 58, 30));
-            UiKit.Wire(rows[i], "pick", Button(row, "Pick", "편성 추가", 0, 38, 178, 40));
-            UiKit.Wire(rows[i], "upgrade", Button(row, "Upgrade", "강화", 194, 38, 178, 40));
+            UiKit.Wire(rows[i], "label", Text(row, "Name", catalog.Options[i].Label, 15, 0, 0, 310, compact ? 26 : 32, HudPalette.TextBody));
+            UiFrameButton remove = Button(row, "Remove", "해제", 316, 0, 58, compact ? 28 : 30);
+            // 작은 줄의 해제 버튼은 높이가 낮아 기본 글자(16)가 넘친다
+            if (compact)
+                remove.Label.fontSize = 13;
+            UiKit.Wire(rows[i], "remove", remove);
+            UiKit.Wire(rows[i], "pick", Button(row, "Pick", "편성 추가", 0, buttonTop, 178, buttonHeight));
+            UiKit.Wire(rows[i], "upgrade", Button(row, "Upgrade", "강화", 194, buttonTop, 178, buttonHeight));
         }
         return rows;
     }

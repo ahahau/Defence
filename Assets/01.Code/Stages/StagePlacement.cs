@@ -308,6 +308,16 @@ namespace Code.Stages
             return wall != null || trap != null;
         }
 
+        /// <summary>그 칸에 놓인 바닥·벽 함정의 편성 후보. 없으면 null.</summary>
+        public StageOption TrapOptionAt(Vector2Int cell)
+        {
+            StageWallTraps.Placed wall = WallTraps.At(cell);
+            if (wall != null)
+                return wall.Option;
+            Trap trap = TrapAt(cell);
+            return trap != null ? _trapOptions[trap] : null;
+        }
+
         /// <summary>판 안 강화 가능 여부와 비용. 미리보기와 실행이 같은 검사를 쓴다.</summary>
         public StagePlacementCheck CheckTrapLevel(Vector2Int cell)
         {

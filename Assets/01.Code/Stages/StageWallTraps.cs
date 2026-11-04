@@ -261,15 +261,18 @@ namespace Code.Stages
             return Mathf.Max(1, Mathf.RoundToInt(placed.Data.Damage * placed.UpgradeMultiplier * level));
         }
 
-        private void BuildZone(Placed placed)
+        private void BuildZone(Placed placed) => FillZone(placed.Cell, placed.Direction, placed.Data.Range, placed.Zone);
+
+        /// <summary>설치 전 미리보기와 실제 설치가 같은 공격 칸을 쓴다. 벽·맵 밖에서 끊긴다.</summary>
+        public void FillZone(Vector2Int mount, Vector2Int direction, int range, List<Vector2Int> zone)
         {
-            placed.Zone.Clear();
-            for (int step = 1; step <= placed.Data.Range; step++)
+            zone.Clear();
+            for (int step = 1; step <= range; step++)
             {
-                Vector2Int cell = placed.Cell + placed.Direction * step;
+                Vector2Int cell = mount + direction * step;
                 if (!_board.Definition.IsFloor(cell))
                     break;
-                placed.Zone.Add(cell);
+                zone.Add(cell);
             }
         }
     }

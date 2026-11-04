@@ -85,9 +85,9 @@ public static class StageTrapCampaignBuilder
         if (!scenes.Any(entry => entry.path == ScenePath))
             scenes.Add(new EditorBuildSettingsScene(ScenePath, true));
         EditorBuildSettings.scenes = scenes.ToArray();
-        // 벽 함정으로 선택지가 늘어 편성 목록 줄 수를 카탈로그에 맞춘다
-        string rows = StageDefenseBuilder.RebuildOptionList(ScenePath);
-        return "함정 중심 본편 7개 생성·씬 배선 완료. 원본 카탈로그/맵과 프로필 ID 유지 · " + rows;
+        // 편성 목록 줄 수를 카탈로그에 맞추고(벽 함정), 씬 묶음·문 복제본 정리·HUD 다듬기를 다시 적용한다
+        string polished = StageHudPolishBuilder.Apply(ScenePath);
+        return "함정 중심 본편 7개 생성·씬 배선 완료. 원본 카탈로그/맵과 프로필 ID 유지 · " + polished;
     }
 
     private const string WallTrapRoot = Root + "/WallTraps";

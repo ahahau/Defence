@@ -22,6 +22,23 @@ namespace Code.Stages
         [SerializeField] private SpriteRenderer doorPrefab;
         [SerializeField] private Transform doorsRoot;
         [field: SerializeField] public Health CoreHealth { get; private set; }
+        [SerializeField, Tooltip("함정 본편 HUD: 위 띠·아래 단축칸을 비우고, 편성 패널이 닫히면 맵을 화면 너비로 넓힌다.")]
+        private bool hudFraming;
+
+        // 화면 비율(0~1)로 비울 가장자리. 위 띠 76px·아래 단축칸 150px(1080 기준).
+        private const float TopInset = 0.075f;
+        private const float BottomInset = 0.14f;
+        private const float SideInset = 0.015f;
+        private const float FrameSeconds = 0.3f;
+        private Vector2 _mapSize;
+        private float _leftInset = SideInset;
+        private float _targetLeftInset = SideInset;
+
+        /// <summary>왼쪽 패널이 차지하는 화면 비율. hudFraming일 때만 카메라를 부드럽게 옮긴다.</summary>
+        public void SetLeftInset(float fraction)
+        {
+            _targetLeftInset = Mathf.Max(SideInset, fraction);
+        }
 
         public void Draw(StageBoard board)
         {
@@ -59,6 +76,13 @@ namespace Code.Stages
             }
             coreSprite.transform.position = board.World(definition.Core);
             Fit(coreSprite, definition.CellSize);
+            _mapSize = new Vector2(board.Columns * definition.CellSize + 1f, board.Rows * definition.CellSize + 1f);
+            if (hudFraming)
+            {
+                _leftInset = _targetLeftInset;
+                FrameCamera();
+                return;
+            }
             // 좌측 편성 패널(32%)·상하 HUD를 제외한 화면에 전체 지형을 맞춘다.
             float aspect = Mathf.Max(0.1f, worldCamera.aspect);
             float height = (board.Rows * definition.CellSize + 1f) / (2f * 0.76f);
@@ -66,6 +90,28 @@ namespace Code.Stages
             worldCamera.orthographicSize = Mathf.Max(height, width);
             worldCamera.transform.position = new Vector3(-0.31f * worldCamera.orthographicSize * aspect,
                 -0.02f * worldCamera.orthographicSize, -10);
+        }
+
+        private void LateUpdate()
+        {
+            if (!hudFraming || _mapSize == Vector2.zero || Mathf.Approximately(_leftInset, _targetLeftInset))
+                return;
+            _leftInset = Mathf.MoveTowards(_leftInset, _targetLeftInset, Time.unscaledDeltaTime / FrameSeconds);
+            FrameCamera();
+        }
+
+        /// <summary>가장자리를 뺀 화면 칸에 지형 전체를 맞추고, 그 칸의 가운데에 지형 가운데(원점)를 둔다.</summary>
+        private void FrameCamera()
+        {
+            float aspect = Mathf.Max(0.1f, worldCamera.aspect);
+            float width = 1f - _leftInset - SideInset;
+            float height = 1f - TopInset - BottomInset;
+            float size = Mathf.Max(_mapSize.y / (2f * height), _mapSize.x / (2f * aspect * width));
+            float centerX = _leftInset + width * 0.5f;
+            float centerY = BottomInset + height * 0.5f;
+            worldCamera.orthographicSize = size;
+            worldCamera.transform.position = new Vector3(-(centerX - 0.5f) * 2f * size * aspect,
+                -(centerY - 0.5f) * 2f * size, -10);
         }
 
         /// <summary>그 웨이브에 아직 닫힌 문은 어둡게 그린다.</summary>

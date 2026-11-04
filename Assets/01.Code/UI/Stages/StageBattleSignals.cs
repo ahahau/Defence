@@ -45,6 +45,12 @@ namespace Code.UI.Stages
                 _breaks[i] = Create("Barricade Broken", 49);
         }
 
+        /// <summary>코어가 30% 이하이거나 적이 코어 가까이 있다. 위 띠의 막대 색이 본다.</summary>
+        public bool CoreDanger => _session.CoreHealth <= _session.Definition.CoreHealth * 0.3f || _threat.IsDanger;
+
+        /// <summary>코어까지 가장 가까운 적의 칸 수. 적이 없으면 -1.</summary>
+        public int NearestEnemyCells => _threat.NearestCells;
+
         public string CoreLabel()
         {
             int current = _session.CoreHealth;

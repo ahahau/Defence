@@ -41,6 +41,20 @@ namespace Code.Stages
         [SerializeField] private StageCommandBar commandBar;
         [SerializeField] private UiFrameButton supplyButton;
         [SerializeField] private UiFrameButton merchantButton;
+        // 2026-11-03 함정 본편 HUD(위 띠·단축칸). 비어 있으면 원본처럼 상태 한 줄·도구 한 줄에 모두 적는다.
+        [SerializeField] private StageTopBand topBand;
+        [SerializeField] private StageHotbar hotbar;
+        [SerializeField] private TMP_Text notice;
+        [SerializeField] private GameObject preparationPanel;
+        [SerializeField] private StageMapView mapView;
+        [SerializeField] private StageTrapRing trapRing;
+        [SerializeField] private StageOptionTabs optionTabs;
+        // 2단계: 시작 전 편성 창. 있으면 왼쪽 편성 패널 대신 쓴다.
+        [SerializeField] private StageLoadoutWindow loadoutWindow;
+        [SerializeField] private UiFrameButton loadoutButton;
+        // 4단계: 전투 중 부하 초상(왼쪽 아래)·수동 장치 버튼(오른쪽 아래, F)
+        [SerializeField] private StageUnitPortraits unitPortraits;
+        [SerializeField] private StageDeviceButtons deviceButtons;
         // 인스펙터 배선용이 아니다. 실행 중 만든 월드 표식 묶음을 직렬화해 두어
         // 재활성화·스크립트 재로드 뒤에도 이전 묶음을 찾아 정리한다(StageHudLifecycleDesign.md).
         [SerializeField, HideInInspector] private Transform visualRoot;
@@ -61,6 +75,18 @@ namespace Code.Stages
         private StageDeviceView _devices;
         private StageWallTrapView _wallTraps;
         private StageCommandMarks _commands;
+        private StageTrapRingController _ring;
+        private StageBattlePanels _battlePanels;
+        // 위 알림은 같은 안내를 이 시간만 보인다(경고·저장 오류는 따로 정한다)
+        private const float NoticeSeconds = 4f;
+        private string _noticeMessage;
+        private float _noticeUntil;
+        // 편성 창을 저절로 연 스테이지. 스테이지를 바꾸거나 재도전하면 비워 다음 준비 단계에 다시 연다.
+        private StageDefinitionSO _loadoutShownFor;
+        private bool UsesLoadoutWindow => loadoutWindow != null && loadoutWindow.IsValid;
+        private bool Banded => topBand != null && topBand.IsValid && hotbar != null && hotbar.IsValid && notice != null;
+        // 편성 패널이 차지하는 화면 너비(20+410+여백 16, 1920 기준). 패널이 닫히면 맵이 그만큼 넓어진다.
+        private const float PanelScreenFraction = 446f / 1920f;
 
         private void Awake() => EnsureRuntimeState();
 
@@ -77,10 +103,11 @@ namespace Code.Stages
             previousStage.Button.onClick.AddListener(PreviousStage);
             nextStage.Button.onClick.AddListener(NextStage);
             primary.Button.onClick.AddListener(Primary);
-            retry.Button.onClick.AddListener(Retry);
+            // 함정 본편은 재도전을 설정 창 안으로, 타이틀을 숨겨 둔다. 다른 생성기가 그 창을 다시 만들어도 HUD는 켜진다.
+            AddListener(retry, Retry);
             barricade.Button.onClick.AddListener(ChooseBarricade);
             demolish.Button.onClick.AddListener(ChooseDemolish);
-            title.Button.onClick.AddListener(Title);
+            AddListener(title, Title);
             pauseButton.Button.onClick.AddListener(TogglePause);
             normalSpeedButton.Button.onClick.AddListener(NormalSpeed);
             fastSpeedButton.Button.onClick.AddListener(FastSpeed);
@@ -95,6 +122,23 @@ namespace Code.Stages
                 settings.LeavingScene += session.PrepareToLeave;
             if (speedController != null)
                 speedController.SettingChanged += HandleSpeedChanged;
+            if (optionTabs != null)
+                optionTabs.Changed += ApplyTabs;
+            if (hotbar != null)
+            {
+                hotbar.OptionPicked += Select;
+                hotbar.BarricadePicked += ChooseBarricade;
+                hotbar.DemolishPicked += ChooseDemolish;
+            }
+            if (loadoutWindow != null)
+            {
+                loadoutWindow.Bind(session);
+                loadoutWindow.OptionRemoved += Forget;
+            }
+            if (loadoutButton != null)
+                loadoutButton.Button.onClick.AddListener(OpenLoadout);
+            _ring.Bind();
+            _battlePanels.Bind();
             RenderSpeed();
             BindRows();
             if (session.Board != null && session.Profile != null)
@@ -106,6 +150,7 @@ namespace Code.Stages
             UnbindEvents();
             _battleSignals?.Hide();
             _placementTool?.Hide();
+            _ring?.Close();
             _commands?.Hide();
             if (commandBar != null)
                 commandBar.Hide();
@@ -152,10 +197,35 @@ namespace Code.Stages
                 settings.LeavingScene -= session.PrepareToLeave;
             if (speedController is not null)
                 speedController.SettingChanged -= HandleSpeedChanged;
+            if (optionTabs is not null)
+                optionTabs.Changed -= ApplyTabs;
+            if (hotbar is not null)
+            {
+                hotbar.OptionPicked -= Select;
+                hotbar.BarricadePicked -= ChooseBarricade;
+                hotbar.DemolishPicked -= ChooseDemolish;
+            }
+            if (loadoutWindow is not null)
+                loadoutWindow.OptionRemoved -= Forget;
+            RemoveListener(loadoutButton, OpenLoadout);
+            _ring?.Unbind();
+            _battlePanels?.Unbind();
+        }
+
+        private void OpenLoadout()
+        {
+            if (loadoutWindow != null && session.CanChoose)
+                loadoutWindow.Open();
         }
 
         private void OpenSupply() => _preparationPopups?.ShowEvent();
         private void OpenMerchant() => _merchantPopup?.Show();
+
+        private static void AddListener(UiFrameButton button, UnityAction action)
+        {
+            if (button != null && button.Button != null)
+                button.Button.onClick.AddListener(action);
+        }
 
         private static void RemoveListener(UiFrameButton button, UnityAction action)
         {
@@ -196,6 +266,8 @@ namespace Code.Stages
                 _placementTool = new StagePlacementTool(session, worldCamera, cursor, _cursorScale);
                 _placementTool.Hide();
             }
+            _ring ??= new StageTrapRingController(session, worldCamera, trapRing);
+            _battlePanels ??= new StageBattlePanels(session, unitPortraits, deviceButtons);
             if (visualRoot == null || _battleSignals == null || !_battleSignals.IsValid
                 || _route == null || !_route.IsValid || _ultimates == null || !_ultimates.IsValid
                 || _marks == null || !_marks.IsValid || _devices == null || !_devices.IsValid
@@ -247,7 +319,30 @@ namespace Code.Stages
                 if (valid)
                     rows[i].Bind(this, session, session.Catalog.Options[i]);
             }
+            if (optionTabs != null && optionTabs.IsValid)
+            {
+                bool hasWallTraps = false;
+                foreach (StageOption option in session.Catalog.Options)
+                    hasWallTraps |= option != null && option.WallTrap != null;
+                optionTabs.Configure(hasWallTraps);
+            }
+            ApplyTabs();
             _bound = true;
+        }
+
+        /// <summary>고른 탭의 종류만 편성 목록에 보인다. 탭이 없으면 모든 줄을 보인다.</summary>
+        private void ApplyTabs()
+        {
+            if (rows == null || session == null || session.Catalog == null)
+                return;
+            for (int i = 0; i < rows.Length; i++)
+            {
+                if (rows[i] == null || i >= session.Catalog.Options.Length)
+                    continue;
+                bool shown = optionTabs == null || !optionTabs.IsValid || optionTabs.Matches(session.Catalog.Options[i]);
+                if (rows[i].gameObject.activeSelf != shown)
+                    rows[i].gameObject.SetActive(shown);
+            }
         }
 
         private void HandleCoreDamaged(int amount) => _battleSignals?.CoreDamaged(amount);
@@ -279,9 +374,14 @@ namespace Code.Stages
             else
                 _devices.Hide();
             if (session.Placement != null)
-                _wallTraps.Show(session, focusedCell);
+            {
+                StageOption placing = session.EditsTrapsNow && _placementTool.Placing && _placementTool.Selected?.WallTrap != null
+                    ? _placementTool.Selected : null;
+                _wallTraps.Show(session, focusedCell, placing);
+            }
             else
                 _wallTraps.Hide();
+            bool ringConsumed = _ring.Tick(pointerFree, focusedCell, _placementTool);
             bool preparing = session.Phase == StagePhase.Preparing;
             if (preparing && focusedCell.HasValue && Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
                 session.TryRotateDevice(focusedCell.Value);
@@ -297,9 +397,12 @@ namespace Code.Stages
             {
                 _ultimates.Show(session);
                 _marks.Show(session);
+                // 함정 메뉴가 쓴 클릭은 장치에 넘기지 않는다. 맵에서 누른 수동 장치는 F로 다시 쓸 장치가 된다.
+                bool mapClick = pointerFree && !ringConsumed && Mouse.current.leftButton.wasPressedThisFrame;
+                if (mapClick)
+                    _battlePanels.SelectAt(focusedCell.Value);
                 // 낙석 칸을 누르면 낙석이 먼저, 아니면 가까운 부하의 궁극기
-                if (pointerFree && Mouse.current.leftButton.wasPressedThisFrame
-                    && !session.TryTriggerDevice(session.Board.Cell(worldCamera.ScreenToWorldPoint(Mouse.current.position.ReadValue()))))
+                if (mapClick && !session.TryTriggerDevice(session.Board.Cell(worldCamera.ScreenToWorldPoint(Mouse.current.position.ReadValue()))))
                 {
                     if (!session.Catalog.UsesTrapControls
                         && session.Definition.DeviceAt(focusedCell.Value)?.IsManual != true)
@@ -311,11 +414,17 @@ namespace Code.Stages
                 _ultimates.Hide();
                 _marks.Hide();
             }
-            _placementTool.Tick(pointerFree);
+            // 메뉴를 열거나 닫은 클릭은 배치 도구에 넘기지 않는다
+            _placementTool.Tick(pointerFree && !ringConsumed);
+            if (Banded && NoWindowOpen())
+                hotbar.HandleKeys(Keyboard.current);
+            _battlePanels.Tick(session.Phase == StagePhase.Fighting, NoWindowOpen());
         }
 
-        private bool CanPointAtMap() => Mouse.current != null && (settings == null || !settings.IsOpen)
-            && !Code.UI.Popup.PopupController.IsOpen && (artifactWindow == null || !artifactWindow.IsOpen)
+        private bool NoWindowOpen() => (settings == null || !settings.IsOpen) && !Code.UI.Popup.PopupController.IsOpen
+            && (artifactWindow == null || !artifactWindow.IsOpen) && (loadoutWindow == null || !loadoutWindow.IsOpen);
+
+        private bool CanPointAtMap() => Mouse.current != null && NoWindowOpen()
             && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject());
 
         private string InspectionAtPointer()
@@ -423,6 +532,7 @@ namespace Code.Stages
             if (session.Board != null)
                 _battleSignals.Tick();
             bool showResult = string.IsNullOrEmpty(session.SaveError) && StageWaveResultPresenter.HasResult(session);
+            _ring?.Render();
             string inspection = string.IsNullOrEmpty(session.SaveError) && string.IsNullOrEmpty(_battleSignals.Alert)
                 && (session.Profile == null || string.IsNullOrEmpty(session.Profile.Error))
                 ? InspectionAtPointer() : string.Empty;
@@ -447,7 +557,8 @@ namespace Code.Stages
             if (session.Phase == StagePhase.Unavailable)
             {
                 primary.SetInteractable(false);
-                retry.SetInteractable(false);
+                if (retry != null)
+                    retry.SetInteractable(false);
                 previousStage.SetInteractable(false);
                 nextStage.SetInteractable(false);
                 barricade.SetInteractable(false);
@@ -467,10 +578,46 @@ namespace Code.Stages
             int elites = wave.EliteCount(session.Catalog);
             string boss = (wave.HasBoss ? $" · 보스 {wave.Boss.Name}" : string.Empty)
                 + (elites > 0 ? $" · 정예 {elites}" : string.Empty);
-            status.text = $"{_battleSignals.CoreLabel()}    금화 {session.Gold}G    "
-                + $"웨이브 {waveNumber}/{definition.Waves.Length}{boss}    남은 적 {session.Remaining}"
-                + (_battleSignals.WaitingCount > 0 ? $"    복구 대기 {_battleSignals.WaitingCount}" : string.Empty)
-                + (preparing || fighting ? $"    {_briefing.Doors}" + (preparing ? _briefing.NextDoors : string.Empty) : string.Empty);
+            string waveText = $"웨이브 {waveNumber}/{definition.Waves.Length}{boss}";
+            string remainingText = $"남은 적 {session.Remaining}"
+                + (_battleSignals.WaitingCount > 0 ? $" · 복구 대기 {_battleSignals.WaitingCount}" : string.Empty);
+            string doorText = preparing || fighting ? _briefing.Doors + (preparing ? _briefing.NextDoors : string.Empty) : string.Empty;
+            if (Banded)
+            {
+                status.text = string.Empty;
+                // 진행 막대: 이번 웨이브 인원 중 처리한 비율. 준비 단계에는 다음 웨이브 인원을 적는다.
+                float progress = fighting && wave.Count > 0 ? 1f - (float)session.Remaining / wave.Count : 0f;
+                string bandRemaining = fighting
+                    ? $"남은 적 {session.Remaining}" + (_battleSignals.NearestEnemyCells >= 0 ? $" · 코어까지 {_battleSignals.NearestEnemyCells}칸" : string.Empty)
+                    : $"다음 {wave.Count}명";
+                topBand.Show(session.CoreHealth, definition.CoreHealth, _battleSignals.CoreDanger, session.Gold, waveText,
+                    progress, bandRemaining);
+                // 편성 창이 있으면 왼쪽 패널은 쓰지 않고, 첫 웨이브 전 준비 단계에 들어올 때마다 창을 한 번 연다
+                bool showPanel = preparing && !UsesLoadoutWindow;
+                if (preparationPanel != null && preparationPanel.activeSelf != showPanel)
+                    preparationPanel.SetActive(showPanel);
+                if (mapView != null)
+                    mapView.SetLeftInset(showPanel ? PanelScreenFraction : 0f);
+                if (UsesLoadoutWindow)
+                {
+                    if (session.CanChoose && session.WaveIndex == 0 && _loadoutShownFor != definition)
+                    {
+                        _loadoutShownFor = definition;
+                        loadoutWindow.Open();
+                    }
+                    else if (!session.CanChoose && loadoutWindow.IsOpen)
+                        loadoutWindow.Close();
+                    loadoutWindow.Render();
+                    if (loadoutButton != null)
+                        loadoutButton.SetVisible(session.CanChoose);
+                }
+                hotbar.Render(session, _placementTool);
+                // 전투 중 오른쪽 아래는 수동 장치 버튼 자리라 "방어 중" 버튼을 숨긴다
+                primary.SetVisible(!fighting || !_battlePanels.HasDeviceButtons);
+            }
+            else
+                status.text = $"{_battleSignals.CoreLabel()}    금화 {session.Gold}G    {waveText}    {remainingText.Replace(" · ", "    ")}"
+                    + (doorText.Length > 0 ? $"    {doorText}" : string.Empty);
             loadout.text = $"편성 {session.SelectedCount}/{session.LoadoutSlots} · 강화 재화 {session.Profile.Currency}";
             if (artifactSummary != null && session.Artifacts != null)
                 artifactSummary.text = _artifacts.Summary(session);
@@ -492,7 +639,7 @@ namespace Code.Stages
             bool showWavePreview = preparing && !placementBlocked && !resultInspection
                 && string.IsNullOrEmpty(session.SaveError) && string.IsNullOrEmpty(session.Profile.Error)
                 && string.IsNullOrEmpty(_battleSignals.Alert);
-            tool.text = (session.Phase == StagePhase.Cleared || session.Phase == StagePhase.Failed
+            string toolText = (session.Phase == StagePhase.Cleared || session.Phase == StagePhase.Failed
                 ? StageWaveResultPresenter.NextActionFor(session)
                 : trapEditing ? _placementTool.Demolishing ? "전투 중 함정 철거 · 환급 낮음 · 우클릭 취소"
                     : selected != null && selected.IsAnyTrap ? $"전투 중 함정 설치: {selected.Label} · {selected.Cost}G · 함정 위 E: 강화"
@@ -504,22 +651,47 @@ namespace Code.Stages
                 : selected == null ? $"현재 도구: 바리케이드 · {definition.BarricadeCost}G · 우클릭 취소"
                 : $"현재 도구: {selected.Label} · {selected.Cost}G · 우클릭 취소")
                 + (placementBlocked ? $"    불가: {_placementTool.Hint}"
-                    : preparing && _placementTool.TerrainNote.Length > 0 ? $"    {_placementTool.TerrainNote}" : string.Empty)
-                + (_battleSignals.WaitingCount > 0 ? "    회색 '=' 표식: 웨이브 종료 후 복구" : string.Empty)
-                + (!placementBlocked && !resultInspection && !showWavePreview && !string.IsNullOrEmpty(_briefing.Rules) && (preparing || fighting)
-                    ? $"    {_briefing.Rules}" : string.Empty)
-                + (fighting ? session.Catalog.UsesTrapControls ? session.Board.Pits.Count > 0
-                        ? "    금색 장치 클릭: 직접 발동 · 검은 구덩이: 밀면 낙하 · 부하 자동 전투"
-                        : "    금색 장치 클릭: 직접 발동 · 주황 바닥: 위험 구역 · 부하 자동 전투"
-                    : "    금색 부하 게이지 클릭: 궁극기"
-                    : !preparing ? string.Empty
-                    : resultInspection ? $"    {inspection.Replace("\n", " · ")}"
-                    : showWavePreview ? $"    {_briefing.Enemies}"
-                    : showResult && !string.IsNullOrEmpty(tutorial) ? $"    {tutorial}"
-                    : _route.Blocked ? "    경로: 노랑 · 파괴 대상: 진한 빨강 · 추적 범위: 빨강"
-                    : "    경로: 노랑 · 추적 범위: 빨강")
-                + (!placementBlocked && !resultInspection && !showWavePreview && !string.IsNullOrEmpty(_briefing.Devices) && (preparing || fighting)
-                    ? $"    {_briefing.Devices}" : string.Empty);
+                    : preparing && _placementTool.TerrainNote.Length > 0 ? $"    {_placementTool.TerrainNote}" : string.Empty);
+            string waiting = _battleSignals.WaitingCount > 0 ? "회색 '=' 표식: 웨이브 종료 후 복구" : string.Empty;
+            bool showRules = !placementBlocked && !resultInspection && !showWavePreview && (preparing || fighting);
+            string rules = showRules ? _briefing.Rules ?? string.Empty : string.Empty;
+            string devices = showRules ? _briefing.Devices ?? string.Empty : string.Empty;
+            // 준비 단계의 결과 상세·적 예고·튜토리얼은 브리핑 줄, 색 범례·조작 키는 안내 줄로 나눈다
+            string preview = !preparing ? string.Empty
+                : resultInspection ? inspection.Replace("\n", " · ")
+                : showWavePreview ? _briefing.Enemies
+                : showResult && !string.IsNullOrEmpty(tutorial) ? tutorial
+                : string.Empty;
+            string legend = fighting ? session.Catalog.UsesTrapControls ? session.Board.Pits.Count > 0
+                    ? "금색 장치 클릭: 직접 발동 · 검은 구덩이: 밀면 낙하 · 부하 자동 전투"
+                    : "금색 장치 클릭: 직접 발동 · 주황 바닥: 위험 구역 · 부하 자동 전투"
+                : "금색 부하 게이지 클릭: 궁극기"
+                : !preparing || preview.Length > 0 ? string.Empty
+                : RouteLegend();
+            if (Banded)
+            {
+                // 도구 줄은 단축칸 바로 위 한 줄. 적 예고·규칙은 준비 단계 제목 아래, 안내 글은 패널이 닫히면 위 알림으로 옮긴다.
+                tool.text = Join(BandToolText(definition, selected, preparing, trapEditing),
+                    placementBlocked ? HudPalette.Paint(_placementTool.Hint, HudPalette.Warn) : string.Empty);
+                // 적 예고는 커서가 놓을 수 없는 칸에 있어도 남긴다(제목 아래 고정 줄)
+                string brief = preview.Length > 0 ? preview : preparing ? _briefing.Enemies ?? string.Empty : Join(rules, devices);
+                headline.text = !preparing ? string.Empty
+                    : $"{definition.Title} · {definition.Gimmick}" + (brief.Length > 0 ? $"\n<size=80%>{HudPalette.Paint(brief, HudPalette.TextDim)}</size>" : string.Empty);
+                // 알림은 경고·상황 한 줄만(편성 창을 쓰면 준비 단계에도). 커서 설명·튜토리얼 문단은 띄우지 않는다(함정 메뉴가 맡는다).
+                // 세션 안내는 바뀐 뒤 몇 초만 보여 지난 안내가 남지 않게 한다. 경고는 스스로 사라지고 저장 오류는 계속 보인다.
+                if (session.Message != _noticeMessage)
+                {
+                    _noticeMessage = session.Message;
+                    _noticeUntil = Time.unscaledTime + NoticeSeconds;
+                }
+                notice.text = preparing && !UsesLoadoutWindow ? string.Empty
+                    : !string.IsNullOrEmpty(session.SaveError) ? session.SaveError
+                    : !string.IsNullOrEmpty(_battleSignals.Alert) ? _battleSignals.Alert
+                    : Time.unscaledTime < _noticeUntil ? session.Message ?? string.Empty
+                    : string.Empty;
+            }
+            else
+                tool.text = Join(Join(Join(Join(toolText, waiting), rules), preview.Length > 0 ? preview : legend), devices);
             previousStage.SetInteractable(session.CanChangeStage && session.CanSelectStage(session.StageIndex - 1));
             nextStage.SetInteractable(session.CanChangeStage && session.CanSelectStage(session.StageIndex + 1));
             primary.SetInteractable(preparing || session.Phase == StagePhase.Cleared);
@@ -528,8 +700,11 @@ namespace Code.Stages
                     : session.HasArtifactChoice ? "유물 보상 고르기"
                     : session.StageIndex + 1 < session.Catalog.Stages.Length ? "다음 스테이지" : "처음부터 다시 편성"
                 : preparing ? "웨이브 시작" : session.Phase == StagePhase.Failed ? "코어 파괴" : "방어 중");
-            retry.SetInteractable(session.Phase != StagePhase.Fighting && !session.HasPendingClearReward);
-            retry.SetLabel("스테이지 재도전");
+            if (retry != null)
+            {
+                retry.SetInteractable(session.Phase != StagePhase.Fighting && !session.HasPendingClearReward);
+                retry.SetLabel("스테이지 재도전");
+            }
             barricade.SetInteractable(preparing);
             demolish.SetInteractable(preparing || trapEditing);
             barricade.SetSelected(preparing && _placementTool.IsSelected(null));
@@ -538,6 +713,30 @@ namespace Code.Stages
                 if (row != null)
                     row.Refresh();
         }
+
+        /// <summary>단축칸 위 한 줄. 키는 칸에 적혀 있어 지금 도구와 취소 방법만 짧게 적는다.</summary>
+        private string BandToolText(StageDefinitionSO definition, StageOption selected, bool preparing, bool trapEditing)
+        {
+            if (session.Phase == StagePhase.Cleared || session.Phase == StagePhase.Failed)
+                return StageWaveResultPresenter.NextActionFor(session);
+            if (!preparing && !trapEditing)
+                return "전투 중";
+            if (preparing && _placementTool.SelectedUnit != null)
+                return "부하 명령 · 아래 막대에서 선택 · 우클릭 해제";
+            if (_placementTool.Demolishing)
+                return trapEditing ? "철거 · 함정 클릭 · 전투 중 환급 낮음 · 우클릭 취소" : "철거 · 대상 클릭 · 우클릭 취소";
+            if (!_placementTool.Placing || (trapEditing && (selected == null || !selected.IsAnyTrap)))
+                return "숫자키나 아래 칸으로 함정 선택 · 함정 위 E: 강화";
+            if (selected == null)
+                return $"바리케이드 · {definition.BarricadeCost}G · 우클릭 취소";
+            return $"{selected.Label} · {selected.Cost}G" + (selected.WallTrap != null ? " · R 방향 회전" : string.Empty) + " · 우클릭 취소";
+        }
+
+        private string RouteLegend() => _route.Blocked ? "경로: 노랑 · 파괴 대상: 진한 빨강 · 추적 범위: 빨강" : "경로: 노랑 · 추적 범위: 빨강";
+
+        /// <summary>빈 조각을 건너뛰고 넓은 간격으로 잇는다.</summary>
+        private static string Join(string left, string right) =>
+            string.IsNullOrEmpty(left) ? right ?? string.Empty : string.IsNullOrEmpty(right) ? left : left + "    " + right;
 
         private void Primary()
         {
@@ -560,6 +759,9 @@ namespace Code.Stages
 
         private void Retry()
         {
+            // 함정 본편은 재도전 버튼이 설정 창 안에 있다. 다시 고르도록 편성 창을 다시 연다.
+            settings?.Close();
+            _loadoutShownFor = null;
             session.SelectStage(session.StageIndex);
             ChooseBarricade();
         }

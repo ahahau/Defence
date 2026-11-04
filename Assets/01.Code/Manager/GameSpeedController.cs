@@ -26,6 +26,9 @@ namespace Code.Manager
         [SerializeField, Tooltip("판을 시작할 때의 배속.")]
         private float defaultSpeed = NormalSpeed;
 
+        [SerializeField, Tooltip("배속을 1·2 대신 F1·F2로 고른다. 숫자키를 함정 단축칸이 쓰는 씬(함정 본편)에서 켠다.")]
+        private bool functionKeySpeeds;
+
         /// <summary>플레이어가 고른 배속. 연출이 끝나면 언제나 이 값으로 돌아온다.</summary>
         public float Setting { get; private set; } = NormalSpeed;
 
@@ -85,7 +88,7 @@ namespace Code.Manager
 
         /// <summary>
         /// 스페이스로 멈추고 푼다. 배속을 고르려고 매번 버튼까지 커서를 옮기면
-        /// 급할 때 손이 늦는다. 1·2로 배속을 직접 고른다.
+        /// 급할 때 손이 늦는다. 1·2로 배속을 직접 고른다(functionKeySpeeds면 F1·F2, 숫자키는 함정 단축칸이 쓴다).
         ///
         /// 모달이 시간을 잡고 있는 동안에는 받지 않는다. 정책 창을 띄워 둔 채로
         /// 스페이스를 눌러 전투를 돌려 버리는 일을 막는다.
@@ -98,9 +101,9 @@ namespace Code.Manager
 
             if (keyboard.spaceKey.wasPressedThisFrame)
                 TogglePause();
-            else if (keyboard.digit1Key.wasPressedThisFrame)
+            else if ((functionKeySpeeds ? keyboard.f1Key : keyboard.digit1Key).wasPressedThisFrame)
                 SetSetting(NormalSpeed);
-            else if (keyboard.digit2Key.wasPressedThisFrame)
+            else if ((functionKeySpeeds ? keyboard.f2Key : keyboard.digit2Key).wasPressedThisFrame)
                 SetSetting(FastSpeed);
         }
 
