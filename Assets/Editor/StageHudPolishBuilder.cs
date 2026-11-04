@@ -132,11 +132,14 @@ public static class StageHudPolishBuilder
         MoveTopRight(hud, "Pause", 264, 20, 100, 40);
 
         // 준비 단계 제목·적 예고(패널 오른쪽), 전투 중 알림(가운데 위), 상태 한 줄은 띠가 대신한다
-        // 왼쪽 패널은 편성 창으로 바뀌어 쓰지 않는다. 제목은 왼쪽 위, 알림은 오른쪽 위에 나란히.
-        UiKit.TopLeft(((TMP_Text)wiring.FindProperty("headline").objectReferenceValue).rectTransform, 24, 80, 900, 64);
+        // 왼쪽 패널은 편성 창으로 바뀌어 쓰지 않는다. 제목·적 예고는 띠 아래 가운데, 알림 한 줄은 그 아래 가운데.
+        Vector2 topCenter = new(0.5f, 1f);
+        TMP_Text headline = (TMP_Text)wiring.FindProperty("headline").objectReferenceValue;
+        UiKit.Place(headline.rectTransform, topCenter, topCenter, topCenter, new Vector2(0, -78), new Vector2(1200, 64));
+        headline.alignment = TextAlignmentOptions.Top;
         Hide(wiring, "status");
-        TMP_Text notice = UiKit.Text("Notice", hud, string.Empty, 20, HudPalette.Warn, TextAlignmentOptions.TopRight, false, true);
-        UiKit.TopRight(notice.rectTransform, 24, 80, 960, 32);
+        TMP_Text notice = UiKit.Text("Notice", hud, string.Empty, 20, HudPalette.Warn, TextAlignmentOptions.Top, false, true);
+        UiKit.Place(notice.rectTransform, topCenter, topCenter, topCenter, new Vector2(0, -146), new Vector2(1200, 32));
         // 글꼴에 말줄임표가 없어 넘치면 자른다(ui-rules)
         notice.overflowMode = TextOverflowModes.Truncate;
         UiKit.Wire(view, "notice", notice);
@@ -183,28 +186,40 @@ public static class StageHudPolishBuilder
         return $"위 띠·단축칸·알림·함정 메뉴·편성 창 배선 · {retry}";
     }
 
-    /// <summary>코어 막대(빨강)·금화·웨이브 진행 막대·남은 적. 배속·설정 버튼은 띠 오른쪽 끝 위에 따로 놓인다.</summary>
+    /// <summary>
+    /// 화면 너비로 늘어나는 위 한 띠: 왼쪽 코어 막대(빨강)·금화, 가운데 웨이브·진행 막대·남은 적.
+    /// 배속·설정 버튼은 띠 오른쪽 끝 위에 따로 놓인다(화면 비율이 바뀌어도 세 덩어리가 양끝·가운데에 남는다).
+    /// </summary>
     private static void BuildTopBand(StageHudView view, RectTransform hud)
     {
-        RectTransform band = UiKit.TopLeft(UiKit.Rect("TopBand", hud), 16, 12, 1888, 56);
+        RectTransform band = UiKit.Place(UiKit.Rect("TopBand", hud), new Vector2(0f, 1f), new Vector2(1f, 1f),
+            new Vector2(0.5f, 1f), new Vector2(0, -12), new Vector2(-32, 56));
         band.SetAsFirstSibling();
         UiKit.Panel(band, HudPalette.Surface, HudPalette.Border, true);
         StageTopBand top = band.gameObject.AddComponent<StageTopBand>();
-        BandText(band, "CoreLabel", "코어", 16, 56, 18, HudPalette.TextDim, false);
-        UiKit.Wire(top, "coreFill", UiKit.Bar(UiKit.TopLeft(UiKit.Rect("CoreBar", band), 76, 20, 200, 16), HudPalette.Track, HudPalette.Loss));
-        UiKit.Wire(top, "core", BandText(band, "Core", string.Empty, 288, 100, 22, HudPalette.Text, true));
-        UiKit.Coin(UiKit.TopLeft(UiKit.Rect("Coin", band), 410, 13, 30, 30));
-        UiKit.Wire(top, "gold", BandText(band, "Gold", string.Empty, 448, 140, 24, HudPalette.Accent, true));
-        UiKit.Wire(top, "wave", BandText(band, "Wave", string.Empty, 610, 300, 20, HudPalette.Text, true));
-        UiKit.Wire(top, "waveFill", UiKit.Bar(UiKit.TopLeft(UiKit.Rect("WaveBar", band), 910, 23, 220, 10), HudPalette.Track, HudPalette.Accent));
-        UiKit.Wire(top, "remaining", BandText(band, "Remaining", string.Empty, 1150, 380, 18, HudPalette.TextBody, false));
+        BandText(band, "CoreLabel", "코어", 0f, 16, 56, 18, HudPalette.TextDim, false, TextAlignmentOptions.MidlineLeft);
+        UiKit.Wire(top, "coreFill", UiKit.Bar(BandRect(band, "CoreBar", 0f, 76, 20, 200, 16), HudPalette.Track, HudPalette.Loss));
+        UiKit.Wire(top, "core", BandText(band, "Core", string.Empty, 0f, 288, 100, 22, HudPalette.Text, true, TextAlignmentOptions.MidlineLeft));
+        UiKit.Coin(BandRect(band, "Coin", 0f, 410, 13, 30, 30));
+        UiKit.Wire(top, "gold", BandText(band, "Gold", string.Empty, 0f, 448, 140, 24, HudPalette.Accent, true, TextAlignmentOptions.MidlineLeft));
+        // 가운데 덩어리: 웨이브 글(가운데 왼쪽, 오른쪽 맞춤) · 막대(가운데 오른쪽) · 남은 적(막대 오른쪽)
+        UiKit.Wire(top, "wave", BandText(band, "Wave", string.Empty, 0.5f, -318, 300, 20, HudPalette.Text, true, TextAlignmentOptions.MidlineRight));
+        UiKit.Wire(top, "waveFill", UiKit.Bar(BandRect(band, "WaveBar", 0.5f, -6, 23, 220, 10), HudPalette.Track, HudPalette.Accent));
+        UiKit.Wire(top, "remaining", BandText(band, "Remaining", string.Empty, 0.5f, 230, 330, 18, HudPalette.TextBody, false, TextAlignmentOptions.MidlineLeft));
         UiKit.Wire(view, "topBand", top);
     }
 
-    private static TMP_Text BandText(RectTransform band, string name, string value, float x, float width, float size, Color color, bool bold)
+    /// <summary>띠 안 칸. <paramref name="anchorX"/> 0이면 띠 왼쪽 끝, 0.5면 띠 가운데에서 x만큼(왼쪽 위 기준).</summary>
+    private static RectTransform BandRect(RectTransform band, string name, float anchorX, float x, float y, float width, float height) =>
+        UiKit.Place(UiKit.Rect(name, band), new Vector2(anchorX, 1f), new Vector2(anchorX, 1f), new Vector2(0f, 1f),
+            new Vector2(x, -y), new Vector2(width, height));
+
+    private static TMP_Text BandText(RectTransform band, string name, string value, float anchorX, float x, float width, float size,
+        Color color, bool bold, TextAlignmentOptions alignment)
     {
-        TMP_Text text = UiKit.Text(name, band, value, size, color, TextAlignmentOptions.MidlineLeft, bold, true);
-        UiKit.TopLeft(text.rectTransform, x, 0, width, 56);
+        TMP_Text text = UiKit.Text(name, band, value, size, color, alignment, bold, true);
+        UiKit.Place(text.rectTransform, new Vector2(anchorX, 1f), new Vector2(anchorX, 1f), new Vector2(0f, 1f),
+            new Vector2(x, 0), new Vector2(width, 56));
         return text;
     }
 

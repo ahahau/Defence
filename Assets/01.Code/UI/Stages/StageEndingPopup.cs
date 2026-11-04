@@ -18,8 +18,6 @@ namespace Code.UI.Stages
         /// <summary>설정·유물 창·다른 팝업이 있으면 <paramref name="blocked"/>로 미룬다. 초회 유물 후보가 남아 있으면 고른 뒤에 띄운다.</summary>
         public void Tick(bool blocked)
         {
-            if (_session.Catalog != null && _session.Catalog.IsTrapLab)
-                return;
             // 같은 클리어 화면에서는 한 번만. 클리어 화면을 떠나면 푼다(다시 깨면 초회가 아니라 어차피 뜨지 않는다).
             if (_session.Phase != StagePhase.Cleared)
             {

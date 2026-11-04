@@ -32,7 +32,7 @@ namespace Code.Stages
             catalog != null && catalog.MerchantItems != null ? catalog.MerchantItems : Array.Empty<StageMerchantItem>();
 
         public static bool IsOpen(StageSession session) =>
-            session.Phase == StagePhase.Preparing && session.Merchant.IsAvailable && !session.Catalog.IsTrapLab;
+            session.Phase == StagePhase.Preparing && session.Merchant.IsAvailable;
 
         /// <summary>물건마다 효과 하나·ID 중복 없음·팝업 버튼 수 이하인가. 빌더가 쓴 값을 인스펙터에서 바꿨을 때를 막는다.</summary>
         public static bool TryValidate(StageCatalogSO catalog, out string reason)

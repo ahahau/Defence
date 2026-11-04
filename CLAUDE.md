@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # 던전키퍼 (Dungeon Keeper)
 
 2D 던전 경영 + 자동 전투 Unity 게임(졸업작품, 개발 중).
+**메인 씬: Start(타이틀) → TrapCampaign(본편).** 아래 기록에 나오는 StageDefense·TrapLab 씬은 2026-11-04에 지웠다.
 Unity 6000.6.3f1 · URP 2D · New Input System · Unity Behavior · Feel · DOTween
 
 ## 작업 규칙
@@ -69,7 +70,7 @@ Unity 6000.6.3f1 · URP 2D · New Input System · Unity Behavior · Feel · DOTw
 | `Assets/07.SO/` | 데이터 SO (유닛·적·건물·웨이브·스킬·유물·대화) |
 | `Assets/03.Prefabs/` | 프리팹 |
 | `Assets/09.UI/` | UI 그림(`Skin/Silver` 9-slice 테두리). UI Toolkit 에셋은 지웠다(uGUI로 다시 만드는 중) |
-| `Assets/00.Scenes/` | 씬 (빌드 순서 Start → SampleScene) |
+| `Assets/00.Scenes/` | 씬 3개. **메인은 Start(타이틀) → TrapCampaign(본편: 새 게임·이어하기)**. SampleScene은 보존한 구 경영 런(타이틀에서 가지 않음). StageDefense·TrapLab은 2026-11-04 사용자 요청으로 지웠다(원본 스테이지 데이터 StageCatalog·Stage_01~07은 예전 저장 복원용으로 남김) |
 | `Assets/04.Sprites/` · `05.Materials/` · `08.Fonts/` | 그림(`Characters`·`Tilesets`·`UI`·`Nodes`, 외부 팩 포함)·재질·셰이더·폰트 |
 | `Assets/Resources/` | 옛 uGUI 프리팹·스킨(`UI/<이름>`)과 루트의 `DOTweenSettings`만. 번호 폴더로 옮기지 않고, 옮기면 코드의 문자열 경로도 고친다. 오디오·전투 연출·선 재질은 씬의 `RuntimeAssetInstaller`가 넘긴다 |
 | `Assets/Tests/EditMode/Reflected/` | EditMode 테스트 (asmdef `Defence.EditMode.Tests`) |

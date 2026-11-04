@@ -31,7 +31,6 @@ public static class StageTrapCampaignBuilder
             AssetDatabase.CreateFolder("Assets/07.SO/Stages", "TrapCampaign");
         StageCatalogSO catalog = UnityEngine.Object.Instantiate(legacy);
         catalog.name = "TrapCampaignCatalog";
-        Set(catalog, "IsTrapLab", false);
         Set(catalog, "IsTrapCampaign", true);
         Set(catalog, "HeavyPushMultiplier", 0.65f);
         Set(catalog, "BossPushMultiplier", 0.35f);
@@ -51,9 +50,9 @@ public static class StageTrapCampaignBuilder
         }
         Set(catalog, "Stages", stages);
         catalog = Save(catalog, Root + "/TrapCampaignCatalog.asset");
-        if (AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath) == null
-            && !AssetDatabase.CopyAsset("Assets/00.Scenes/StageDefense.unity", ScenePath))
-            throw new InvalidOperationException("본편 씬을 복사하지 못했습니다");
+        // 원본 StageDefense 씬은 지웠다(2026-11-04). 본편 씬을 처음부터 복사해 만들지 않고 있는 씬을 고친다.
+        if (AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath) == null)
+            throw new InvalidOperationException(ScenePath + " 씬이 없습니다. git에서 되돌린 뒤 다시 돌리세요");
         bool opened = !scene.IsValid() || !scene.isLoaded;
         if (opened)
             scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Additive);

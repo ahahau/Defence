@@ -34,7 +34,6 @@ namespace Tests.EditMode.Gameplay
             Assert.That(catalog, Is.Not.Null);
             Assert.That(legacy, Is.Not.Null);
             Assert.That(catalog.IsTrapCampaign, Is.True);
-            Assert.That(catalog.IsTrapLab, Is.False);
             Assert.That(catalog.Stages, Has.Length.EqualTo(legacy.Stages.Length));
             // 벽 함정(2026-11-03)만 더하고 기존 선택지 ID는 그대로 둔다
             CollectionAssert.AreEquivalent(legacy.Options.Select(option => option.Id),
@@ -91,62 +90,6 @@ namespace Tests.EditMode.Gameplay
                 Assert.That(Code.Stages.StageDevices.ValidDirections(stage, original), Is.False);
                 Assert.Throws<ArgumentException>(() => devices.RestoreDirections(original));
             }
-        }
-
-        [Test]
-        public void TrapLab_CatalogKeepsExperimentSeparateFromCampaignProgression()
-        {
-            Code.Stages.StageCatalogSO lab = AssetDatabase.LoadAssetAtPath<Code.Stages.StageCatalogSO>(
-                "Assets/07.SO/Stages/TrapLab/TrapLabCatalog.asset");
-            Code.Stages.StageCatalogSO campaign = AssetDatabase.LoadAssetAtPath<Code.Stages.StageCatalogSO>(
-                "Assets/07.SO/Stages/StageCatalog.asset");
-
-            Assert.That(lab, Is.Not.Null);
-            Assert.That(campaign, Is.Not.Null);
-            Assert.That(lab.IsTrapLab, Is.True);
-            Assert.That(campaign.IsTrapLab, Is.False);
-            Assert.That(lab.Stages, Has.Length.EqualTo(1));
-            Assert.That(Array.IndexOf(campaign.Stages, lab.Stages[0]), Is.EqualTo(-1));
-            Assert.That(lab.Stages[0], Is.Not.Null);
-            Assert.That(lab.Stages[0].ClearReward, Is.Zero);
-            Assert.That(lab.FailureRewardPerWave, Is.Zero);
-            Assert.That(lab.Artifacts, Is.Empty);
-            Assert.That(lab.SlotRewardStages, Is.Empty);
-            Assert.That(lab.Options, Has.Length.EqualTo(2));
-            foreach (Code.Stages.StageOption option in lab.Options)
-            {
-                Assert.That(option, Is.Not.Null);
-                Assert.That(option.Unit, Is.Null);
-                Assert.That(option.Trap, Is.Not.Null);
-                Assert.That(string.IsNullOrEmpty(option.RequiredClear), Is.True);
-            }
-        }
-
-        [Test]
-        public void TrapLab_PushHasOpenRouteIntoHazardWithoutCrossingCoreOrDoor()
-        {
-            Code.Stages.StageDefinitionSO stage = AssetDatabase.LoadAssetAtPath<Code.Stages.StageDefinitionSO>(
-                "Assets/07.SO/Stages/TrapLab/TrapLab_01.asset");
-            Assert.That(stage, Is.Not.Null);
-            Assert.That(stage.TryValidate(out string reason), Is.True, reason);
-            Code.Stages.StageDevice[] pushes = stage.Devices
-                .Where(device => device.Kind == Code.Stages.StageDeviceKind.Push).ToArray();
-            Assert.That(pushes, Has.Length.EqualTo(1));
-            Code.Stages.StageDevice push = pushes[0];
-            Assert.That(push.IsManual, Is.True);
-            Assert.That(push.Cooldown, Is.GreaterThan(0f));
-
-            bool reachesHazard = false;
-            for (int distance = 1; distance <= push.PushCells; distance++)
-            {
-                Vector2Int cell = push.Cell + push.Direction * distance;
-                Assert.That(stage.IsFloor(cell), Is.True, $"밀치기 경로 {cell}이 벽으로 막혔습니다.");
-                Assert.That(cell, Is.Not.EqualTo(stage.Core));
-                Assert.That(Array.IndexOf(stage.Doors, cell), Is.EqualTo(-1));
-                reachesHazard |= stage.Devices.Any(device =>
-                    device.Kind == Code.Stages.StageDeviceKind.Hazard && device.Cell == cell);
-            }
-            Assert.That(reachesHazard, Is.True, "밀치기 경로가 위험 구역에 닿아야 합니다.");
         }
 
         /// <summary>

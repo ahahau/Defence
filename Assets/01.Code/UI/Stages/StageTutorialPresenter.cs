@@ -14,12 +14,6 @@ namespace Code.UI.Stages
                     : session.Phase == StagePhase.Fighting
                         ? "직접 발동 · 금색 장치 칸 클릭\n적이 모일 때 밀치기·낙석을 사용하세요.\n무거운 적·보스는 짧게 밀리며 부하 스킬은 자동입니다."
                         : string.Empty;
-            if (session != null && session.Catalog != null && session.Catalog.IsTrapLab)
-                return session.Phase == StagePhase.Preparing
-                    ? "함정 공략 연습\n속박 수정과 핏빛 웅덩이를 통로에 배치하세요.\n적을 모아 금색 화살표로 주황 구역에 미세요.\n실험 진행은 저장되지 않습니다."
-                    : session.Phase == StagePhase.Fighting
-                        ? "직접 발동 · 금색 화살표 칸 클릭\n적이 모이면 눌러 주황 위험 구역으로 미세요.\n금색은 준비, 보라색 막대는 재사용 대기입니다."
-                        : string.Empty;
             if (session == null || session.StageIndex != 0 || session.Definition == null
                 || session.Profile == null || session.Catalog == null || session.Board == null
                 || session.Placement == null || session.Profile.IsCleared(session.Definition.Id)

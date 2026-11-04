@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 /// <summary>편집 씬은 그대로 두고, 스테이지가 활성 씬일 때만 단독 시작 씬으로 지정한다.</summary>
 public static class StageEditorPlayEntry
 {
-    private const string StagePath = "Assets/00.Scenes/StageDefense.unity";
+    private const string StagePath = "Assets/00.Scenes/TrapCampaign.unity";
     private const string OwnershipKey = "Defence.StageEditorPlayEntry.OwnsStartScene";
 
     [InitializeOnLoadMethod]

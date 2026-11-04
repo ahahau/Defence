@@ -12,12 +12,6 @@ EditorBuildSettings:
     path: Assets/00.Scenes/SampleScene.unity
     guid: 8c9cfa26abfee488c85f1582747f6a02
   - enabled: 1
-    path: Assets/00.Scenes/StageDefense.unity
-    guid: e09161afb430f91429318355d15e547d
-  - enabled: 1
-    path: Assets/00.Scenes/TrapLab.unity
-    guid: 1a014da472168e845bbfc1d9a246b158
-  - enabled: 1
     path: Assets/00.Scenes/TrapCampaign.unity
     guid: 8d29517978a70b341877b6771ec795e4
   m_configObjects:

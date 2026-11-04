@@ -5,12 +5,10 @@ namespace Code.Stages
     [CreateAssetMenu(menuName = "Defence/Stages/Catalog")]
     public sealed class StageCatalogSO : ScriptableObject
     {
-        [field: SerializeField, Tooltip("별도 함정 실험. 본편 저장을 읽거나 쓰지 않는다.")]
-        public bool IsTrapLab { get; private set; }
         [field: SerializeField] public bool IsTrapCampaign { get; private set; }
         [field: SerializeField, Range(0.1f, 1f)] public float HeavyPushMultiplier { get; private set; } = 1f;
         [field: SerializeField, Range(0.1f, 1f)] public float BossPushMultiplier { get; private set; } = 1f;
-        public bool UsesTrapControls => IsTrapLab || IsTrapCampaign;
+        public bool UsesTrapControls => IsTrapCampaign;
         [field: SerializeField] public StageDefinitionSO[] Stages { get; private set; }
         [field: SerializeField] public StageOption[] Options { get; private set; }
         [field: SerializeField, Min(1)] public int UpgradeBaseCost { get; private set; }

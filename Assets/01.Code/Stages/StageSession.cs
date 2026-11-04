@@ -71,13 +71,8 @@ namespace Code.Stages
 
         private void Start()
         {
-            Profile = new StageProfile(Application.persistentDataPath, Catalog == null || !Catalog.IsTrapLab);
+            Profile = new StageProfile(Application.persistentDataPath);
             Artifacts = new StageArtifacts(this);
-            if (Catalog != null && Catalog.IsTrapLab)
-            {
-                SelectStage(0);
-                return;
-            }
             _checkpoint = new StageCheckpoint(this, Application.persistentDataPath);
             if (_checkpoint.Restore())
                 return;
@@ -246,10 +241,6 @@ namespace Code.Stages
             _spawned = 0;
             _locked = false;
             Phase = StagePhase.Preparing;
-            if (Catalog.IsTrapLab)
-                foreach (StageOption option in Catalog.Options)
-                    if (option != null && Profile.IsUnlocked(option))
-                        _loadout.Add(option.Id);
             mapView.Draw(Board);
             mapView.ShowDoors(definition, WaveIndex);
             _checkpoint?.NewStage();
