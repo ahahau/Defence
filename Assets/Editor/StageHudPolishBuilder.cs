@@ -19,6 +19,8 @@ using UnityEngine.SceneManagement;
 public static class StageHudPolishBuilder
 {
     public const string TrapCampaignScene = "Assets/00.Scenes/TrapCampaign.unity";
+    private const string CoreIconPath = "Assets/04.Sprites/Tilesets/ElvGames/Farm Game Assets/Objects/FG_Treasure_Big.png";
+    private const string CoreIconName = "FG_Treasure_Big_0";
 
     [MenuItem("Tools/Dungeon Keeper/Polish Trap Campaign Scene")]
     private static void ApplyFromMenu() => Debug.Log(Apply(TrapCampaignScene));
@@ -179,6 +181,11 @@ public static class StageHudPolishBuilder
         StageMapView map = scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<StageMapView>(true)).Single();
         UiKit.Wire(view, "mapView", map);
         SetBool(map, "hudFraming", true);
+        // 코어는 보물상자 그림으로 금고임을 보인다(2026-11-04 가독성, ElvGames 팩의 닫힌 큰 상자)
+        Sprite chest = AssetDatabase.LoadAllAssetsAtPath(CoreIconPath).OfType<Sprite>().FirstOrDefault(sprite => sprite.name == CoreIconName);
+        if (chest == null)
+            throw new InvalidOperationException(CoreIconPath + "에 " + CoreIconName + " 그림이 없습니다");
+        UiKit.Wire(map, "coreIcon", chest);
         GameSpeedController speed = scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<GameSpeedController>(true)).Single();
         SetBool(speed, "functionKeySpeeds", true);
         StageArtifactWindow artifacts = hud.GetComponentInChildren<StageArtifactWindow>(true);
@@ -241,10 +248,10 @@ public static class StageHudPolishBuilder
         row.childForceExpandHeight = false;
         bar.gameObject.AddComponent<UnityEngine.UI.ContentSizeFitter>().horizontalFit = UnityEngine.UI.ContentSizeFitter.FitMode.PreferredSize;
         StageHotbar hotbar = bar.gameObject.AddComponent<StageHotbar>();
-        UiKit.WireArray(hotbar, "floorSlots", Group(bar, "Floor", "바닥 함정", 8, out _));
-        UiKit.WireArray(hotbar, "wallSlots", Group(bar, "Wall", "벽 함정", 8, out RectTransform wall));
+        UiKit.WireArray(hotbar, "floorSlots", Group(bar, "Floor", 8, out _));
+        UiKit.WireArray(hotbar, "wallSlots", Group(bar, "Wall", 8, out RectTransform wall));
         UiKit.Wire(hotbar, "wallGroup", wall.gameObject);
-        StageHotbarSlot[] tools = Group(bar, "Tools", "도구", 2, out _);
+        StageHotbarSlot[] tools = Group(bar, "Tools", 2, out _);
         UiKit.Wire(hotbar, "barricadeSlot", tools[0]);
         UiKit.Wire(hotbar, "demolishSlot", tools[1]);
 
@@ -258,7 +265,7 @@ public static class StageHudPolishBuilder
         unitRow.childForceExpandWidth = false;
         unitRow.childForceExpandHeight = false;
         units.gameObject.AddComponent<UnityEngine.UI.ContentSizeFitter>().horizontalFit = UnityEngine.UI.ContentSizeFitter.FitMode.PreferredSize;
-        UiKit.WireArray(hotbar, "unitSlots", Group(units, "UnitSlots", "부하", 6, out RectTransform unitGroup));
+        UiKit.WireArray(hotbar, "unitSlots", Group(units, "UnitSlots", 6, out RectTransform unitGroup));
         UiKit.Wire(hotbar, "unitGroup", unitGroup.gameObject);
         UiKit.Wire(view, "hotbar", hotbar);
     }
@@ -514,7 +521,7 @@ public static class StageHudPolishBuilder
         place(rect);
     }
 
-    private static StageHotbarSlot[] Group(RectTransform bar, string name, string title, int count, out RectTransform group)
+    private static StageHotbarSlot[] Group(RectTransform bar, string name, int count, out RectTransform group)
     {
         group = UiKit.Rect(name, bar);
         group.sizeDelta = new Vector2(0, 92);
@@ -527,10 +534,7 @@ public static class StageHudPolishBuilder
         row.childControlHeight = false;
         row.childForceExpandWidth = false;
         row.childForceExpandHeight = false;
-        // 묶음 이름표는 테두리 위에 걸친다(배치 계산에서 뺀다)
-        TMP_Text label = UiKit.Text("Title", group, title, 15, HudPalette.AccentSoft, TextAlignmentOptions.BottomLeft, false, true);
-        label.gameObject.AddComponent<UnityEngine.UI.LayoutElement>().ignoreLayout = true;
-        UiKit.Place(label.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 0f), new Vector2(10, 2), new Vector2(160, 22));
+        // 묶음 이름표는 두지 않는다. 칸 그림과 묶음 테두리로 나뉜다(2026-11-04 사용자 "글자가 너무 많아").
         Transform outline = group.Find("Outline");
         if (outline != null)
             outline.gameObject.AddComponent<UnityEngine.UI.LayoutElement>().ignoreLayout = true;

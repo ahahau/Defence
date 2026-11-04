@@ -11,8 +11,10 @@ namespace Code.Stages
     /// </summary>
     public sealed class StageRoutePreview
     {
-        private const float RouteAlpha = 0.5f;
-        private const float ReachAlpha = 0.4f;
+        private const float RouteAlpha = 0.75f;
+        /// <summary>길은 칸 가운데 작은 점으로 찍어 바닥·함정을 가리지 않는다(2026-11-04 가독성).</summary>
+        private const float RouteDotScale = 0.28f;
+        private const float ReachAlpha = 0.25f;
         private const float BreakAlpha = 0.75f;
 
         /// <summary>지형(0) 위, 코어·문(10)·바리케이드(12)·캐릭터 아래.</summary>
@@ -59,7 +61,7 @@ namespace Code.Stages
                 Paint(used++, session.Board.World(cell), size, HudPalette.Danger, BreakAlpha);
             foreach (Vector2Int cell in _route)
                 if (!_breaks.Contains(cell))
-                    Paint(used++, session.Board.World(cell), size, HudPalette.Warn, RouteAlpha);
+                    Paint(used++, session.Board.World(cell), size * RouteDotScale, HudPalette.Warn, RouteAlpha);
             foreach (Vector2Int cell in _reach)
                 if (!_route.Contains(cell) && !_breaks.Contains(cell))
                     Paint(used++, session.Board.World(cell), size, HudPalette.Danger, ReachAlpha);

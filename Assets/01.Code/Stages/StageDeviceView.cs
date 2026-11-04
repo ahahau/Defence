@@ -114,16 +114,29 @@ namespace Code.Stages
                         cell.color = Tint(HudPalette.Warn, 0.65f);
                         break;
                     case StageDeviceKind.Pit:
+                        // 바깥은 어두운 칸, 안쪽은 더 어두운 칸으로 겹쳐 깊이를 보인다(2026-11-04 가독성). 바닥 타일을 완전히 덮는다.
                         cell.sortingOrder = FloorOrder;
-                        cell.color = Tint(HudPalette.Scrim, 0.92f);
-                        // 바닥과 맞닿은 가장자리에 테두리를 그어 걸을 수 있는 바닥과 구분한다
+                        cell.color = Tint(HudPalette.Deep, 1f);
+                        // 안쪽 칸은 구덩이 바깥 경계 쪽만 들여 이어진 구덩이가 한 덩어리로 보이게 한다
+                        // 이웃 구덩이 쪽은 칸 경계를 조금 넘겨 둥근 모서리 틈이 메워지게 한다
+                        float left = session.Board.Pits.Contains(state.Device.Cell + Vector2Int.left) ? 0.6f : 0.35f;
+                        float right = session.Board.Pits.Contains(state.Device.Cell + Vector2Int.right) ? 0.6f : 0.35f;
+                        float down = session.Board.Pits.Contains(state.Device.Cell + Vector2Int.down) ? 0.6f : 0.35f;
+                        float up = session.Board.Pits.Contains(state.Device.Cell + Vector2Int.up) ? 0.6f : 0.35f;
+                        SpriteRenderer depth = Pick(_cells, cells++, "Device Cell");
+                        depth.transform.position = position + new Vector3((right - left) * 0.5f, (up - down) * 0.5f, 0f) * size;
+                        depth.transform.localScale = new Vector3(_unitScale.x * size * (left + right), _unitScale.y * size * (up + down), _unitScale.z);
+                        depth.sortingOrder = FloorOrder + 1;
+                        depth.color = Tint(HudPalette.Scrim, 1f);
+                        depth.gameObject.SetActive(true);
+                        // 이어진 구덩이의 바깥 경계에서 모서리가 맞물리도록 한다.
                         foreach (Vector2Int step in Sides)
                         {
                             if (session.Board.Pits.Contains(state.Device.Cell + step))
                                 continue;
-                            Vector3 edge = position + new Vector3(step.x, step.y, 0f) * (size * 0.45f);
+                            Vector3 edge = position + new Vector3(step.x, step.y, 0f) * (size * 0.5f);
                             Vector3 along = new Vector3(-step.y, step.x, 0f) * (size * 0.5f);
-                            Stroke(arrows++, edge - along, edge + along, size, Tint(HudPalette.Danger, 0.9f));
+                            Stroke(arrows++, edge - along, edge + along, size, Tint(HudPalette.Danger, 0.6f));
                         }
                         break;
                     case StageDeviceKind.Gate:

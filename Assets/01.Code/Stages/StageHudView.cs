@@ -587,9 +587,8 @@ namespace Code.Stages
                 status.text = string.Empty;
                 // 진행 막대: 이번 웨이브 인원 중 처리한 비율. 준비 단계에는 다음 웨이브 인원을 적는다.
                 float progress = fighting && wave.Count > 0 ? 1f - (float)session.Remaining / wave.Count : 0f;
-                string bandRemaining = fighting
-                    ? $"남은 적 {session.Remaining}" + (_battleSignals.NearestEnemyCells >= 0 ? $" · 코어까지 {_battleSignals.NearestEnemyCells}칸" : string.Empty)
-                    : $"다음 {wave.Count}명";
+                // 코어 거리는 코어 막대 위험 표시가 맡아 글로 적지 않는다
+                string bandRemaining = fighting ? $"남은 적 {session.Remaining}" : $"다음 {wave.Count}명";
                 topBand.Show(session.CoreHealth, definition.CoreHealth, _battleSignals.CoreDanger, session.Gold, waveText,
                     progress, bandRemaining);
                 // 편성 창이 있으면 왼쪽 패널은 쓰지 않고, 첫 웨이브 전 준비 단계에 들어올 때마다 창을 한 번 연다
@@ -673,10 +672,12 @@ namespace Code.Stages
                 // 도구 줄은 단축칸 바로 위 한 줄. 적 예고·규칙은 준비 단계 제목 아래, 안내 글은 패널이 닫히면 위 알림으로 옮긴다.
                 tool.text = Join(BandToolText(definition, selected, preparing, trapEditing),
                     placementBlocked ? HudPalette.Paint(_placementTool.Hint, HudPalette.Warn) : string.Empty);
-                // 적 예고는 커서가 놓을 수 없는 칸에 있어도 남긴다(제목 아래 고정 줄)
-                string brief = preview.Length > 0 ? preview : preparing ? _briefing.Enemies ?? string.Empty : Join(rules, devices);
+                // 제목은 스테이지 이름만, 아래 줄은 적 구성만 둔다. 기믹 문장은 편성 창이, 인원 수는 위 띠가 맡는다.
+                string brief = showWavePreview || preview.Length == 0
+                    ? preparing ? _briefing.Roster ?? string.Empty : Join(rules, devices)
+                    : preview;
                 headline.text = !preparing ? string.Empty
-                    : $"{definition.Title} · {definition.Gimmick}" + (brief.Length > 0 ? $"\n<size=80%>{HudPalette.Paint(brief, HudPalette.TextDim)}</size>" : string.Empty);
+                    : definition.Title + (brief.Length > 0 ? $"\n<size=80%>{HudPalette.Paint(brief, HudPalette.TextDim)}</size>" : string.Empty);
                 // 알림은 경고·상황 한 줄만(편성 창을 쓰면 준비 단계에도). 커서 설명·튜토리얼 문단은 띄우지 않는다(함정 메뉴가 맡는다).
                 // 세션 안내는 바뀐 뒤 몇 초만 보여 지난 안내가 남지 않게 한다. 경고는 스스로 사라지고 저장 오류는 계속 보인다.
                 if (session.Message != _noticeMessage)
@@ -716,22 +717,23 @@ namespace Code.Stages
                     row.Refresh();
         }
 
-        /// <summary>단축칸 위 한 줄. 키는 칸에 적혀 있어 지금 도구와 취소 방법만 짧게 적는다.</summary>
+        /// <summary>
+        /// 단축칸 위 한 줄. 도구를 들었을 때만 이름·가격(벽 함정은 R 회전)을 적는다. 키·취소·결과 안내는
+        /// 단축칸 글자·우클릭 습관·큰 버튼이 맡아 글로 되풀이하지 않는다(2026-11-04 사용자 "글자가 너무 많아").
+        /// </summary>
         private string BandToolText(StageDefinitionSO definition, StageOption selected, bool preparing, bool trapEditing)
         {
-            if (session.Phase == StagePhase.Cleared || session.Phase == StagePhase.Failed)
-                return StageWaveResultPresenter.NextActionFor(session);
-            if (!preparing && !trapEditing)
-                return "전투 중";
+            if (session.Phase == StagePhase.Cleared || session.Phase == StagePhase.Failed || (!preparing && !trapEditing))
+                return string.Empty;
             if (preparing && _placementTool.SelectedUnit != null)
-                return "부하 명령 · 아래 막대에서 선택 · 우클릭 해제";
+                return "부하 명령";
             if (_placementTool.Demolishing)
-                return trapEditing ? "철거 · 함정 클릭 · 전투 중 환급 낮음 · 우클릭 취소" : "철거 · 대상 클릭 · 우클릭 취소";
+                return trapEditing ? "철거 · 환급 낮음" : "철거";
             if (!_placementTool.Placing || (trapEditing && (selected == null || !selected.IsAnyTrap)))
-                return "숫자키나 아래 칸으로 함정 선택 · 함정 위 E: 강화";
+                return string.Empty;
             if (selected == null)
-                return $"바리케이드 · {definition.BarricadeCost}G · 우클릭 취소";
-            return $"{selected.Label} · {selected.Cost}G" + (selected.WallTrap != null ? " · R 방향 회전" : string.Empty) + " · 우클릭 취소";
+                return $"바리케이드 {definition.BarricadeCost}G";
+            return $"{selected.Label} {selected.Cost}G" + (selected.WallTrap != null ? " · R 회전" : string.Empty);
         }
 
         private string RouteLegend() => _route.Blocked ? "경로: 노랑 · 파괴 대상: 진한 빨강 · 추적 범위: 빨강" : "경로: 노랑 · 추적 범위: 빨강";

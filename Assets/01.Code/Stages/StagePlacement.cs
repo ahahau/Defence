@@ -177,6 +177,7 @@ namespace Code.Stages
                 Vector3 scale = trap.transform.localScale * _session.Definition.CellSize;
                 trap.transform.localScale = new Vector3(scale.x * footprint.x, scale.y * footprint.y, scale.z);
                 trap.Initialize(option.Trap);
+                FitTrapBody(trap, footprint);
                 trap.BindStage(_session);
                 // 덮은 칸 중 하나라도 강화 칸이면 영구 강화 배율 위에 곱한다. 판 안 강화 단계는 그 위에 곱한다.
                 float upgrade = 1f + _session.Profile.Level(option.Id) * _session.Catalog.DamagePerUpgrade;
@@ -384,6 +385,25 @@ namespace Code.Stages
             _trapLevels[trap] = level;
             trap.SetStageDamageMultiplier(_trapBaseDamage[trap] * _session.Catalog.TrapLevelMultiplier(level));
         }
+
+        /// <summary>
+        /// 수정류처럼 칸보다 훨씬 작은 몸통 그림을 덮은 칸 높이의 약 85%까지 키운다(2026-11-04 가독성). 판정·연출 크기는 그대로다.
+        /// </summary>
+        private void FitTrapBody(Trap trap, Vector2Int footprint)
+        {
+            TrapBodyAnimation body = trap.GetComponentInChildren<TrapBodyAnimation>(true);
+            SpriteRenderer sprite = body != null ? body.GetComponent<SpriteRenderer>() : null;
+            if (sprite == null || sprite.sprite == null)
+                return;
+            float height = sprite.bounds.size.y;
+            float target = _session.Definition.CellSize * footprint.y * TrapBodyFill;
+            if (height <= 0f || height >= target)
+                return;
+            body.transform.localScale *= Mathf.Min(target / height, MaxTrapBodyGrowth);
+        }
+
+        private const float TrapBodyFill = 0.85f;
+        private const float MaxTrapBodyGrowth = 2.2f;
 
         private bool EnemyAt(Vector2Int cell)
         {

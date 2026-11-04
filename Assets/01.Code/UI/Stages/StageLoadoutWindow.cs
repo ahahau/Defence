@@ -84,7 +84,8 @@ namespace Code.UI.Stages
             }
             RenderDetail(options);
             RenderCarry(options);
-            status.text = _session.Message ?? string.Empty;
+            // 아래 줄은 이 스테이지의 공략 한 줄(위 제목에서 옮김). 조작 안내·오류는 위 알림이 맡는다.
+            status.text = _session.Definition.Gimmick ?? string.Empty;
         }
 
         private void OnEnable()
@@ -143,7 +144,7 @@ namespace Code.UI.Stages
             {
                 _baselines = new string[_session.Catalog.Options.Length];
                 for (int i = 0; i < _baselines.Length; i++)
-                    _baselines[i] = StageOptionDetailsPresenter.BaseMessageFor(_session.Catalog.Options[i], _session.Catalog.UsesTrapControls);
+                    _baselines[i] = StageLoadoutDetailPresenter.BaseFor(_session.Catalog.Options[i]);
             }
         }
 
@@ -196,10 +197,10 @@ namespace Code.UI.Stages
             bool unlocked = _session.Profile.IsUnlocked(_focused);
             bool selected = _session.IsSelected(_focused);
             int level = _session.Profile.Level(_focused.Id);
-            int bonus = Mathf.RoundToInt(level * _session.Catalog.DamagePerUpgrade * 100f);
             detailName.text = $"{_focused.Label}  {HudPalette.Paint($"{_focused.Cost}G", HudPalette.Accent)}";
+            string progress = StageLoadoutDetailPresenter.ProgressFor(_session, _focused);
             detailBody.text = (index >= 0 && _baselines != null ? _baselines[index] : string.Empty)
-                + $"\n\n영구 강화 {level} · 피해 +{bonus}%"
+                + (progress.Length > 0 ? "\n" + HudPalette.Paint(progress, HudPalette.Accent) : string.Empty)
                 + (unlocked ? string.Empty : "\n" + HudPalette.Paint($"{_session.Catalog.StageLabel(_focused.RequiredClear)} 클리어 시 해금", HudPalette.Warn));
             toggle.SetVisible(true);
             toggle.SetLabel(selected ? "편성에서 빼기" : "편성에 넣기");

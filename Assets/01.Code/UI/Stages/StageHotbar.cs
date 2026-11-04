@@ -185,7 +185,7 @@ namespace Code.UI.Stages
             {
                 _slotOptions[offset + i] = null;
                 if (i == 0)
-                    slots[i].Show(null, "없음", string.Empty, 0, false, true, false);
+                    slots[i].Show(null, string.Empty, string.Empty, 0, false, true, false);
                 else
                     slots[i].Hide();
             }

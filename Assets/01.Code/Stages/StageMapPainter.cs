@@ -20,9 +20,9 @@ namespace Code.Stages
             for (int x = 0; x < board.Columns; x++)
             {
                 Vector2Int cell = new(x, y);
+                // 구덩이 칸도 바닥으로 깔아 주변 벽·바닥 타일 모서리가 이어지게 한다. 구덩이는 장치 표시가 불투명하게 덮는다.
+                // 지도 안의 벽 칸은 띠 밖도 모두 벽으로 채워 복도 사이가 빈 검은 틈으로 보이지 않게 한다(2026-11-04).
                 bool walkable = board.Definition.IsFloor(cell);
-                if (!walkable && !IsWallBand(board, cell))
-                    continue;
                 Vector3Int position = new(x, y, 0);
                 terrain.SetTile(position, walkable ? floor : wall);
                 StageTerrainRule terrainRule = walkable ? board.Terrain.RuleAt(cell) : null;
@@ -42,15 +42,6 @@ namespace Code.Stages
             // 전체 이웃을 채운 뒤 모서리·3줄 벽면을 한 번에 다시 계산한다.
             terrain.RefreshAllTiles();
             underlay?.RefreshAllTiles();
-        }
-
-        private static bool IsWallBand(StageBoard board, Vector2Int cell)
-        {
-            for (int dy = -3; dy <= 1; dy++)
-            for (int dx = -1; dx <= 1; dx++)
-                if (board.Definition.IsFloor(cell + new Vector2Int(dx, dy)))
-                    return true;
-            return false;
         }
 
         private static void PaintDecor(StageBoard board, Vector2Int cell, Vector3Int position, Tilemap decor, RoomTileSet set)

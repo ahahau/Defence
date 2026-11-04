@@ -16,6 +16,8 @@ namespace Code.UI.Stages
         public string Rules { get; private set; } = string.Empty;
         public string Devices { get; private set; } = string.Empty;
         public string Enemies { get; private set; } = string.Empty;
+        /// <summary>적 구성만(종류·인원). 총 인원은 위 띠가 따로 보여 줄 때 쓴다.</summary>
+        public string Roster { get; private set; } = string.Empty;
 
         internal void Refresh(StageDefinitionSO definition, int waveIndex, StageCatalogSO catalog)
         {
@@ -79,7 +81,8 @@ namespace Code.UI.Stages
                     : rule == StageEnemyRule.Rush ? "(돌진)" : string.Empty;
                 Append($"{role}{name}{mark} {count}");
             }
-            return $"침입 예정 {total}명" + (_text.Length > 0 ? " · " + _text.ToString() : string.Empty);
+            Roster = _text.ToString();
+            return $"침입 예정 {total}명" + (_text.Length > 0 ? " · " + Roster : string.Empty);
         }
 
         private string RulesFor(StageWave wave)

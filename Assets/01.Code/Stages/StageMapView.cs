@@ -24,6 +24,8 @@ namespace Code.Stages
         [field: SerializeField] public Health CoreHealth { get; private set; }
         [SerializeField, Tooltip("함정 본편 HUD: 위 띠·아래 단축칸을 비우고, 편성 패널이 닫히면 맵을 화면 너비로 넓힌다.")]
         private bool hudFraming;
+        [SerializeField, Tooltip("함정 본편 코어 그림(보물상자). 비면 씬의 코어 그림을 그대로 쓴다.")]
+        private Sprite coreIcon;
 
         // 화면 비율(0~1)로 비울 가장자리. 위는 띠·제목·알림 한 줄까지 184px, 아래는 단축칸·도구 줄까지 189px(1080 기준).
         // 16:9에서는 지도가 거의 너비에 맞춰지고, 21:9처럼 넓은 화면에서는 높이에 맞춰 글이 지도에 겹치지 않는다.
@@ -31,6 +33,8 @@ namespace Code.Stages
         private const float BottomInset = 0.175f;
         private const float SideInset = 0.015f;
         private const float FrameSeconds = 0.3f;
+        /// <summary>코어·던전문을 칸보다 크게 그리는 배율(함정 본편 HUD).</summary>
+        private const float LandmarkScale = 1.5f;
         private Vector2 _mapSize;
         private float _leftInset = SideInset;
         private float _targetLeftInset = SideInset;
@@ -71,13 +75,18 @@ namespace Code.Stages
             {
                 SpriteRenderer marker = Instantiate(doorPrefab, board.World(door), Quaternion.identity, doorsRoot);
                 marker.gameObject.SetActive(true);
-                // 문은 긴 변이 아니라 너비를 칸에 맞춘다.
+                // 문은 긴 변이 아니라 너비를 칸에 맞춘다. 함정 본편 HUD는 입구가 눈에 띄게 조금 크게 그린다.
                 if (marker.sprite != null && marker.sprite.bounds.size.x > 0)
-                    marker.transform.localScale = Vector3.one * (definition.CellSize / marker.sprite.bounds.size.x);
+                    marker.transform.localScale = Vector3.one * (definition.CellSize * (hudFraming ? LandmarkScale : 1f) / marker.sprite.bounds.size.x);
                 _doors.Add(marker);
             }
+            // 밋밋한 건물 상자에 푸른 색조를 입혀 회녹색 네모로 보였다(2026-11-04). 함정 본편은 보물상자를 원래 색으로 그린다.
+            if (hudFraming && coreIcon != null)
+                coreSprite.sprite = coreIcon;
+            if (hudFraming)
+                coreSprite.color = Color.white;
             coreSprite.transform.position = board.World(definition.Core);
-            Fit(coreSprite, definition.CellSize);
+            Fit(coreSprite, definition.CellSize * (hudFraming ? LandmarkScale : 1f));
             _mapSize = new Vector2(board.Columns * definition.CellSize + 1f, board.Rows * definition.CellSize + 1f);
             if (hudFraming)
             {
