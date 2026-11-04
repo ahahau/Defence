@@ -330,7 +330,7 @@ MonoBehaviour:
     <BossEscorts>k__BackingField:
     - {fileID: 11400000, guid: 8647d5480401b5141b47aaf106d1cf8d, type: 2}
     - {fileID: 11400000, guid: 8647d5480401b5141b47aaf106d1cf8d, type: 2}
-    <BossHealthMultiplier>k__BackingField: 6
+    <BossHealthMultiplier>k__BackingField: 7.7
     <BossAttackMultiplier>k__BackingField: 2
     <BossScale>k__BackingField: 1.6
     <Rules>k__BackingField: 

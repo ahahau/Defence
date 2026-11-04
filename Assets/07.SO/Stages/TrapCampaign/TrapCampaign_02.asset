@@ -263,7 +263,7 @@ MonoBehaviour:
     - {fileID: 11400000, guid: 70da6f18c0af4a640b5c44dfec89e03c, type: 2}
     - {fileID: 11400000, guid: 70da6f18c0af4a640b5c44dfec89e03c, type: 2}
     - {fileID: 11400000, guid: 70da6f18c0af4a640b5c44dfec89e03c, type: 2}
-    <BossHealthMultiplier>k__BackingField: 6
+    <BossHealthMultiplier>k__BackingField: 5
     <BossAttackMultiplier>k__BackingField: 2
     <BossScale>k__BackingField: 1.6
     <Rules>k__BackingField: 

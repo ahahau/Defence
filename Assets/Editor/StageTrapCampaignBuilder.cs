@@ -120,8 +120,44 @@ public static class StageTrapCampaignBuilder
         return new StageOption("wall:" + name.ToLowerInvariant(), null, null, required, data);
     }
 
+    /// <summary>
+    /// 스테이지별 보스 체력 배율. 보스마다 기본 체력이 달라 같은 배율이면 5·7스테이지에서 체력이 내려가서,
+    /// 실효 체력이 60·120·151·169·189·210·240으로 오르게 맞췄다(2026-11-04 사용자 승인, TrapCampaignBalanceProposal.md 2번, 임시).
+    /// </summary>
+    private static readonly float[] BossHealthMultipliers = { 2f, 5f, 5.4f, 7.7f, 13.5f, 7f, 10f };
+
+    /// <summary>이미 만든 본편 스테이지의 보스 체력 배율만 갱신한다. 씬과 원본 스테이지는 건드리지 않는다.</summary>
+    public static string ApplyBossHealth()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling)
+            throw new InvalidOperationException("컴파일 완료 후 편집 모드에서 실행하세요");
+        StageCatalogSO catalog = AssetDatabase.LoadAssetAtPath<StageCatalogSO>(Root + "/TrapCampaignCatalog.asset");
+        if (catalog == null || catalog.Stages == null || catalog.Stages.Length != BossHealthMultipliers.Length)
+            throw new InvalidOperationException("본편 7개 스테이지가 필요합니다");
+        List<string> results = new();
+        for (int index = 0; index < catalog.Stages.Length; index++)
+        {
+            StageDefinitionSO stage = catalog.Stages[index];
+            StageWave boss = SetBossHealth(stage, index);
+            EditorUtility.SetDirty(stage);
+            AssetDatabase.SaveAssetIfDirty(stage);
+            results.Add($"{stage.Id} {boss.Boss.name} {boss.Boss.MaxHealth}×{boss.BossHealthMultiplier}");
+        }
+        return string.Join(" · ", results);
+    }
+
+    private static StageWave SetBossHealth(StageDefinitionSO stage, int index)
+    {
+        StageWave last = stage.Waves.Length > 0 ? stage.Waves[^1] : null;
+        if (last == null || !last.HasBoss)
+            throw new InvalidOperationException(stage.Id + ": 마지막 웨이브에 보스가 없습니다");
+        Set(last, nameof(StageWave.BossHealthMultiplier), BossHealthMultipliers[index]);
+        return last;
+    }
+
     private static void Configure(StageDefinitionSO stage, StageCatalogSO catalog, int index)
     {
+        SetBossHealth(stage, index);
         // 복도 맵이 있는 스테이지는 지형·문·코어·장치를 통째로 바꾼다(2026-11-03). 불 구멍·문·낙석 설정은 원본에서 옮긴다.
         if (StageCorridorLayout.TryCreate(index + 1, stage.Devices, out StageCorridorLayout.Map corridor))
         {
