@@ -2,30 +2,25 @@ using System;
 using System.Collections.Generic;
 using Code.Buildings;
 using Code.Combat;
-using Code.Core;
 using Code.Enemies;
 using Code.Manager;
 using Code.MapCreateSystem;
 using Code.Stages;
 using Code.UI;
-using Code.UI.Popup;
-using Code.UI.Stages;
 using Code.Units;
 using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.InputSystem.UI;
-using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
-using UnityEngine.Tilemaps;
 
-/// <summary>새 전환 씬만 작성한다. 구 씬/프리팹과 이미 작성된 스테이지 수치는 덮어쓰지 않는다.</summary>
+/// <summary>
+/// 원본 스테이지 데이터(StageCatalog·Stage_01~07)·바리케이드 프리팹·타이틀 완료 기록, 스테이지 씬의 편성 목록을 작성한다.
+/// StageDefense 씬을 만들고 고치던 함수는 그 씬을 지우며 없앴다(2026-11-04). 이미 작성된 스테이지 수치는 덮어쓰지 않는다.
+/// </summary>
 public static class StageDefenseBuilder
 {
     private const string Root = "Assets/07.SO/Stages";
-    private const string ScenePath = "Assets/00.Scenes/StageDefense.unity";
     private const string BarricadePath = "Assets/03.Prefabs/Buildings/StageBarricade.prefab";
 
     public static void BuildData()
@@ -605,78 +600,6 @@ public static class StageDefenseBuilder
         return "artifacts=" + entries.Length;
     }
 
-    /// <summary>
-    /// 작성된 StageDefense 씬에 유물 칸(편성 패널)과 가운데 유물 창을 더한다. 이미 있으면 지우고 다시 만든다.
-    /// 편성 목록은 높이만 줄이고 줄은 그대로 둔다. 설정 ESC 목록에 유물 창을 더한다.
-    /// </summary>
-    public static string AddArtifacts() => EditScene(scene =>
-    {
-        StageHudView view = FindInScene<StageHudView>(scene);
-        RectTransform host = (RectTransform)view.transform;
-        RectTransform side = (RectTransform)host.Find("Preparation");
-        if (side == null)
-            throw new InvalidOperationException("편성 패널(Preparation)을 찾지 못했습니다");
-        RectTransform list = (RectTransform)side.Find(OptionListName);
-        if (list != null)
-            list.sizeDelta = new Vector2(list.sizeDelta.x, OptionListHeight);
-        foreach (Transform old in new[] { side.Find("ArtifactSummary"), side.Find("Artifacts"), host.Find(ArtifactWindowName) })
-            if (old != null)
-                UnityEngine.Object.DestroyImmediate(old.gameObject);
-        StageArtifactWindow window = BuildArtifactSection(view, side, host, FindInScene<StageSession>(scene));
-        SettingsScreenView settings = FindInScene<SettingsScreenView>(scene, false);
-        if (settings != null)
-            WireEscape(settings, window);
-        return "artifactRows=" + FindInScene<StageSession>(scene).Catalog.Artifacts.Length;
-    });
-
-    /// <summary>
-    /// 작성된 StageDefense 씬에 부하 명령 막대(2026-11-01 사용자 결정: 사수·기본·추격, 준비 단계·한 명씩)를 더한다.
-    /// 이미 있으면 지우고 다시 만든다. 다른 HUD 요소는 건드리지 않는다.
-    /// </summary>
-    public static string AddCommandBar() => EditScene(scene =>
-    {
-        StageHudView view = FindInScene<StageHudView>(scene);
-        RectTransform host = (RectTransform)view.transform;
-        Transform old = host.Find(CommandBarName);
-        if (old != null)
-            UnityEngine.Object.DestroyImmediate(old.gameObject);
-        BuildCommandBar(view, host);
-        return "commandBar=" + (host.Find(CommandBarName) != null);
-    });
-
-    private const string CommandBarName = "CommandBar";
-    private const string SupplyButtonName = "Supply";
-    private const string MerchantButtonName = "Merchant";
-
-    /// <summary>작성된 StageDefense 씬에 상인 버튼을 놓는다(2026-11-02 사용자 결정). 이미 있으면 지우고 다시 만든다.</summary>
-    public static string AddMerchantButton() => EditScene(scene =>
-    {
-        EnsurePopup(scene);
-        StageHudView view = FindInScene<StageHudView>(scene);
-        RectTransform host = (RectTransform)view.transform;
-        Transform old = host.Find(MerchantButtonName);
-        if (old != null)
-            UnityEngine.Object.DestroyImmediate(old.gameObject);
-        BuildMerchantButton(view, host);
-        return "merchant=" + (host.Find(MerchantButtonName) != null);
-    });
-
-    /// <summary>
-    /// 1스테이지 준비 단계의 보스 소개·사건 팝업(2026-11-02 사용자 승인)을 위해 범용 팝업 프리팹과 보급품 버튼을 놓는다.
-    /// 이미 있으면 버튼만 다시 만들고 배선한다.
-    /// </summary>
-    public static string AddPreparationPopups() => EditScene(scene =>
-    {
-        PopupView popup = EnsurePopup(scene);
-        StageHudView view = FindInScene<StageHudView>(scene);
-        RectTransform host = (RectTransform)view.transform;
-        Transform old = host.Find(SupplyButtonName);
-        if (old != null)
-            UnityEngine.Object.DestroyImmediate(old.gameObject);
-        BuildSupplyButton(view, host);
-        return $"popup={popup != null} supply={host.Find(SupplyButtonName) != null}";
-    });
-
     private const string TitleScenePath = "Assets/00.Scenes/Start.unity";
     private const string ClearRecordName = "ClearRecord";
 
@@ -710,129 +633,8 @@ public static class StageDefenseBuilder
         return "clearRecord=" + (host.Find(ClearRecordName) != null) + " finalStageId=" + finalStageId;
     });
 
-    /// <summary>SampleScene과 같은 범용 팝업 프리팹(캔버스 100)을 놓는다. 팝업 컨트롤러는 처음 쓸 때 스스로 생긴다.</summary>
-    private static PopupView EnsurePopup(Scene scene)
-    {
-        PopupView popup = FindInScene<PopupView>(scene, false);
-        if (popup != null)
-            return popup;
-        GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(Load<GameObject>(PopupBuilder.PrefabPath), scene);
-        return instance.GetComponent<PopupView>();
-    }
-
-    /// <summary>아래 버튼 줄의 타이틀 버튼 오른쪽(180×54). 사건이 열려 있는 준비 단계에만 HUD가 보인다.</summary>
-    private static void BuildSupplyButton(StageHudView view, RectTransform host)
-    {
-        UiFrameButton button = Button(host, SupplyButtonName, "보급품", 1340, 996, 180, 54);
-        UiKit.Wire(view, "supplyButton", button);
-        button.gameObject.SetActive(false);
-        KeepArtifactWindowOnTop(host);
-    }
-
-    /// <summary>아래 버튼 줄의 보급품 버튼 오른쪽(180×54). 준비 단계에만 HUD가 보인다.</summary>
-    private static void BuildMerchantButton(StageHudView view, RectTransform host)
-    {
-        UiFrameButton button = Button(host, MerchantButtonName, "상인", 1550, 996, 180, 54);
-        UiKit.Wire(view, "merchantButton", button);
-        button.gameObject.SetActive(false);
-        KeepArtifactWindowOnTop(host);
-    }
-
-    /// <summary>
-    /// 맵 아래 도구 안내 줄(위 930) 바로 위의 고정 크기 막대(640×48). 고른 부하가 없으면 HUD가 통째로 숨긴다.
-    /// 지도 가운데를 가리지 않게 왼쪽 패널 옆에 붙인다.
-    /// </summary>
-    private static void BuildCommandBar(StageHudView view, RectTransform host)
-    {
-        RectTransform root = UiKit.TopLeft(UiKit.Rect(CommandBarName, host), 470, 872, 640, 48);
-        UiKit.Panel(root, HudPalette.Surface, HudPalette.Border, true);
-        StageCommandBar bar = root.gameObject.AddComponent<StageCommandBar>();
-        UiKit.Wire(bar, "label", Text(root, "Label", "", 15, 12, 12, 300, 28, HudPalette.TextBody));
-        UiKit.Wire(bar, "hold", Button(root, "Hold", "사수", 320, 6, 96, 36));
-        UiKit.Wire(bar, "normal", Button(root, "Normal", "기본", 424, 6, 96, 36));
-        UiKit.Wire(bar, "pursue", Button(root, "Pursue", "추격", 528, 6, 96, 36));
-        UiKit.Wire(view, "commandBar", bar);
-        root.gameObject.SetActive(false);
-        KeepArtifactWindowOnTop(host);
-    }
-
-    /// <summary>가운데 유물 창이 나중에 놓인 HUD 요소에 가려지지 않게 맨 뒤 형제로 다시 둔다.</summary>
-    private static void KeepArtifactWindowOnTop(RectTransform host)
-    {
-        Transform window = host.Find(ArtifactWindowName);
-        if (window != null)
-            window.SetAsLastSibling();
-    }
-
-    private const string ArtifactWindowName = "ArtifactWindow";
-
     /// <summary>편성 목록 높이. 유물 칸(위 720~826) 자리를 위해 600에서 줄였다.</summary>
     private const float OptionListHeight = 470;
-
-    private static StageArtifactWindow BuildArtifactSection(StageHudView view, RectTransform side, RectTransform host,
-        StageSession session)
-    {
-        UiKit.Wire(view, "artifactSummary", Text(side, "ArtifactSummary", "유물 0/2 · 장착 없음\n조합: 없음", 15, 18, 720, 374, 56, HudPalette.TextBody));
-        UiKit.Wire(view, "artifactButton", Button(side, "Artifacts", "유물 장착 · 보상", 18, 782, 374, 44));
-        StageArtifactWindow window = BuildArtifactWindow(host, session);
-        UiKit.Wire(view, "artifactWindow", window);
-        return window;
-    }
-
-    /// <summary>
-    /// 가운데 고정 크기 창(840×720). 줄은 카탈로그 유물 수만큼 미리 만들고 스크롤한다.
-    /// 바깥 오브젝트는 켜 둔 채(세션 변경을 듣는다) 안쪽 패널만 여닫는다.
-    /// </summary>
-    private static StageArtifactWindow BuildArtifactWindow(RectTransform host, StageSession session)
-    {
-        RectTransform root = UiKit.Fill(UiKit.Rect(ArtifactWindowName, host));
-        StageArtifactWindow window = root.gameObject.AddComponent<StageArtifactWindow>();
-        // 보상 모드에서만 켜서 고를 때까지 다른 HUD 조작을 막는다. 장착 모드는 바깥 HUD를 그대로 쓴다.
-        RectTransform blocker = UiKit.Fill(UiKit.Rect("Blocker", root));
-        UiKit.Image(blocker, null, HudPalette.Scrim, true);
-        blocker.gameObject.SetActive(false);
-        UiKit.Wire(window, "blocker", blocker.gameObject);
-        Vector2 center = new(0.5f, 0.5f);
-        RectTransform panel = UiKit.Place(UiKit.Rect("Panel", root), center, center, center, Vector2.zero, new Vector2(840, 720));
-        UiKit.Panel(panel, HudPalette.Surface, HudPalette.Border, true);
-        UiKit.Wire(window, "session", session);
-        UiKit.Wire(window, "panel", panel.gameObject);
-        UiKit.Wire(window, "title", Text(panel, "Title", "유물 장착", 24, 24, 20, 600, 40, HudPalette.Accent));
-        UiKit.Wire(window, "closeButton", Button(panel, "Close", "닫기", 716, 20, 100, 40));
-        UiKit.Wire(window, "hint", Text(panel, "Hint", "", 16, 24, 70, 792, 48, HudPalette.TextDim));
-        RectTransform area = UiKit.TopLeft(UiKit.Rect("List", panel), 24, 128, 792, 568);
-        UiKit.ScrollArea(area, out RectTransform content);
-        UnityEngine.UI.VerticalLayoutGroup layout = content.gameObject.AddComponent<UnityEngine.UI.VerticalLayoutGroup>();
-        layout.spacing = 8;
-        layout.childControlWidth = true;
-        layout.childForceExpandWidth = true;
-        layout.childControlHeight = true;
-        layout.childForceExpandHeight = false;
-        StageArtifactRow[] rows = new StageArtifactRow[session.Catalog.Artifacts.Length];
-        for (int i = 0; i < rows.Length; i++)
-        {
-            RectTransform row = UiKit.Rect("Artifact_" + i, content);
-            row.gameObject.AddComponent<UnityEngine.UI.LayoutElement>().preferredHeight = 104;
-            rows[i] = row.gameObject.AddComponent<StageArtifactRow>();
-            UiKit.Wire(rows[i], "label", Text(row, "Text", "", 15, 0, 0, 630, 100, HudPalette.TextBody));
-            UiKit.Wire(rows[i], "action", Button(row, "Action", "장착", 646, 28, 130, 44));
-        }
-        UiKit.WireArray(window, "rows", rows);
-        panel.gameObject.SetActive(false);
-        // 나중에 놓인 HUD 요소가 창을 덮지 않게 맨 뒤 형제로 둔다.
-        root.SetAsLastSibling();
-        return window;
-    }
-
-    /// <summary>ESC는 설정 → 유물 창 순으로 하나씩 닫는다. 고르지 않은 보상이 있으면 유물 창은 닫히지 않는다.</summary>
-    private static void WireEscape(SettingsScreenView settings, StageArtifactWindow window)
-    {
-        UiEscapeRouter router = settings.GetComponent<UiEscapeRouter>();
-        UiKit.Wire(router, "settings", settings);
-        UiKit.WireArray(router, "windows", window != null
-            ? new UnityEngine.Object[] { settings, window }
-            : new UnityEngine.Object[] { settings });
-    }
 
     private const string Enemies = "Assets/07.SO/Enemies/";
 
@@ -1064,13 +866,7 @@ public static class StageDefenseBuilder
     }
 
     /// <summary>
-    /// 이미 작성된 StageDefense 씬의 편성 목록을 카탈로그 선택지 수에 맞춘 스크롤 목록으로 다시 만든다.
-    /// 다른 HUD 요소는 건드리지 않는다. 씬이 열려 있고 저장하지 않은 변경이 있으면 멈춘다.
-    /// </summary>
-    public static string RebuildOptionList() => RebuildOptionList(ScenePath);
-
-    /// <summary>
-    /// StageDefense를 복사한 다른 스테이지 씬(함정 본편)의 편성 목록도 그 씬 카탈로그에 맞춘다.
+    /// 스테이지 씬(함정 본편)의 편성 목록을 그 씬 카탈로그의 선택지 수에 맞춘 스크롤 목록으로 다시 만든다.
     /// <paramref name="compact"/>면 종류 탭 자리(위 34)를 비우고 줄 높이를 줄인다(2026-11-03 HUD 정리).
     /// </summary>
     public static string RebuildOptionList(string scenePath, bool compact = false) => EditScene(scenePath, scene =>
@@ -1090,86 +886,7 @@ public static class StageDefenseBuilder
         return $"rows={rows.Length}";
     });
 
-    /// <summary>
-    /// 이미 작성된 StageDefense 씬에 배속 컨트롤러·설정 화면(ESC)·오른쪽 위 배속/설정 버튼을 더한다.
-    /// 이미 있으면 다시 만들지 않고 배선만 다시 한다. 다른 HUD 요소는 제목·상태 글 폭만 줄인다(버튼 자리).
-    /// </summary>
-    public static string AddSpeedAndSettings() => EditScene(scene =>
-    {
-        StageHudView view = FindInScene<StageHudView>(scene);
-        GameSpeedController speed = EnsureSpeedController(scene);
-        SettingsScreenView settings = EnsureSettingsScreen(scene, speed);
-        UiKit.Wire(FindInScene<StageSession>(scene), "speedController", speed);
-        RectTransform host = (RectTransform)view.transform;
-        foreach (string name in new[] { "StageTitle", "Status" })
-        {
-            RectTransform text = (RectTransform)host.Find(name);
-            if (text != null)
-                text.sizeDelta = new Vector2(HeadlineWidth, text.sizeDelta.y);
-        }
-        foreach (string name in SpeedButtonNames)
-        {
-            Transform old = host.Find(name);
-            if (old != null)
-                UnityEngine.Object.DestroyImmediate(old.gameObject);
-        }
-        BuildSpeedButtons(view, host, speed, settings);
-        return "speed=" + (speed != null) + " settings=" + (settings != null);
-    });
-
-    private static readonly string[] SpeedButtonNames = { "Pause", "NormalSpeed", "FastSpeed", "Settings" };
-
-    /// <summary>제목·상태 글 폭. 오른쪽 위 배속/설정 버튼(1480~1888)과 겹치지 않게 470~1460.</summary>
-    private const float HeadlineWidth = 990;
-
-    private static void BuildSpeedButtons(StageHudView view, RectTransform host, GameSpeedController speed,
-        SettingsScreenView settings)
-    {
-        UiKit.Wire(view, "speedController", speed);
-        UiKit.Wire(view, "settings", settings);
-        UiKit.Wire(view, "pauseButton", Button(host, "Pause", "일시정지", 1480, 28, 120, 44));
-        UiKit.Wire(view, "normalSpeedButton", Button(host, "NormalSpeed", "1배", 1608, 28, 72, 44));
-        UiKit.Wire(view, "fastSpeedButton", Button(host, "FastSpeed", "2배", 1688, 28, 72, 44));
-        UiKit.Wire(view, "settingsButton", Button(host, "Settings", "설정", 1768, 28, 120, 44));
-    }
-
-    private static GameSpeedController EnsureSpeedController(Scene scene)
-    {
-        GameSpeedController speed = FindInScene<GameSpeedController>(scene, false);
-        if (speed != null)
-            return speed;
-        GameObject host = new("Game Speed");
-        SceneManager.MoveGameObjectToScene(host, scene);
-        return host.AddComponent<GameSpeedController>();
-    }
-
-    /// <summary>
-    /// SampleScene과 같은 설정 화면 프리팹을 놓는다. ESC 라우터는 이 씬에 다른 창이 없어 설정 하나만 닫고 연다.
-    /// "다시 시작"은 구 런 저장을 지우고 SampleScene으로 가므로 끈다(스테이지 HUD의 재도전을 쓴다).
-    /// </summary>
-    private static SettingsScreenView EnsureSettingsScreen(Scene scene, GameSpeedController speed)
-    {
-        SettingsScreenView settings = FindInScene<SettingsScreenView>(scene, false);
-        if (settings == null)
-        {
-            GameObject prefab = Load<GameObject>(SettingsBuilder.PrefabPath);
-            GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
-            settings = instance.GetComponent<SettingsScreenView>();
-        }
-        UiKit.Wire(settings, "speedController", speed);
-        SerializedObject serialized = new(settings);
-        serialized.FindProperty("allowRunRestart").boolValue = false;
-        serialized.ApplyModifiedPropertiesWithoutUndo();
-        WireEscape(settings, FindInScene<StageArtifactWindow>(scene, false));
-        return settings;
-    }
-
-    /// <summary>
-    /// 작성된 StageDefense 씬을 열어(이미 열려 있으면 그대로) 고치고 저장한다. 저장하지 않은 변경이 있으면 멈춘다.
-    /// 다른 열린 씬은 건드리지 않는다.
-    /// </summary>
-    private static string EditScene(Func<Scene, string> edit) => EditScene(ScenePath, edit);
-
+    /// <summary>씬을 열어(이미 열려 있으면 그대로) 고치고 저장한다. 저장하지 않은 변경이 있으면 멈추고 다른 열린 씬은 건드리지 않는다.</summary>
     private static string EditScene(string path, Func<Scene, string> edit)
     {
         Guard();
@@ -1286,138 +1003,6 @@ public static class StageDefenseBuilder
         {
             UnityEngine.Object.DestroyImmediate(root);
         }
-    }
-
-    public static void BuildScene()
-    {
-        Guard();
-        if (AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath) != null)
-            throw new InvalidOperationException("이미 있는 StageDefense 씬은 자동으로 덮어쓰지 않습니다");
-        Scene previous = SceneManager.GetActiveScene();
-        RuntimeAssetInstaller sourceInstaller = UnityEngine.Object.FindFirstObjectByType<RuntimeAssetInstaller>();
-        Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
-        SceneManager.SetActiveScene(scene);
-        try
-        {
-            Camera camera = new GameObject("Main Camera", typeof(AudioListener)).AddComponent<Camera>();
-            camera.tag = "MainCamera";
-            camera.orthographic = true;
-            camera.orthographicSize = 12;
-            camera.transform.position = new Vector3(0, 0, -10);
-            camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = new Color(0.025f, 0.022f, 0.04f);
-            camera.gameObject.AddComponent<UniversalAdditionalCameraData>();
-            Light2D light = new GameObject("Stage Light").AddComponent<Light2D>();
-            light.lightType = Light2D.LightType.Point;
-            light.pointLightInnerRadius = 35f;
-            light.pointLightOuterRadius = 40f;
-            light.intensity = 0.9f;
-            if (sourceInstaller != null)
-            {
-                RuntimeAssetInstaller installer = new GameObject("Runtime Assets").AddComponent<RuntimeAssetInstaller>();
-                EditorUtility.CopySerialized(sourceInstaller, installer);
-            }
-            StageSession session = new GameObject("Stage Session").AddComponent<StageSession>();
-            Transform actors = new GameObject("Actors").transform;
-            StageMapView map = new GameObject("Stage Map").AddComponent<StageMapView>();
-            Grid grid = new GameObject("Grid").AddComponent<Grid>();
-            grid.transform.SetParent(map.transform);
-            Tilemap tilemap = new GameObject("Terrain", typeof(Tilemap), typeof(TilemapRenderer)).GetComponent<Tilemap>();
-            tilemap.transform.SetParent(grid.transform, false);
-            tilemap.GetComponent<TilemapRenderer>().sortingOrder = 0;
-            RoomTileSet tileSet = Load<RoomTileSet>("Assets/07.SO/Map/RoomTileSet.asset");
-            SpriteRenderer core = new GameObject("Core").AddComponent<SpriteRenderer>();
-            core.sortingOrder = 10;
-            core.color = new Color(0.65f, 0.8f, 1f);
-            core.sprite = Load<BuildingDataSO>("Assets/07.SO/Buildings/TreasuryBuildingData.asset").BoardSprite;
-            if (core.sprite == null)
-                core.sprite = tileSet.Floor.m_DefaultSprite;
-            Health coreHealth = core.gameObject.AddComponent<Health>();
-            SpriteRenderer door = new GameObject("Door Template").AddComponent<SpriteRenderer>();
-            door.sortingOrder = 10;
-            door.sprite = tileSet.DoorFrames.Length > 0 ? tileSet.DoorFrames[0] : tileSet.Wall.m_DefaultSprite;
-            door.gameObject.SetActive(false);
-            Transform doors = new GameObject("Dungeon Doors").transform;
-            UiKit.Wire(map, "grid", grid);
-            UiKit.Wire(map, "tiles", tilemap);
-            UiKit.Wire(map, "floor", tileSet.Floor);
-            UiKit.Wire(map, "wall", tileSet.Wall);
-            UiKit.Wire(map, "worldCamera", camera);
-            UiKit.Wire(map, "coreSprite", core);
-            UiKit.Wire(map, "doorPrefab", door);
-            UiKit.Wire(map, "doorsRoot", doors);
-            UiKit.Wire(map, "<CoreHealth>k__BackingField", coreHealth);
-            UiKit.Wire(session, "<Catalog>k__BackingField", Load<StageCatalogSO>(Root + "/StageCatalog.asset"));
-            UiKit.Wire(session, "mapView", map);
-            UiKit.Wire(session, "actorsRoot", actors);
-            UiKit.Wire(session, "barricadePrefab", Load<GameObject>(BarricadePath).GetComponent<StageBarricade>());
-            // 작성된 씬에서도 고정 지형을 편집할 수 있게 최초 맵을 직접 칠한다. 플레이/시뮬레이션은 하지 않는다.
-            StageDefinitionSO initial = session.Catalog.Stages[0];
-            StageBoard board = new(initial);
-            StageHallBuilder.ConfigureMap(map);
-            map.PaintLayout(board);
-            BuildHud(session, camera);
-            StageHudView hud = FindInScene<StageHudView>(scene);
-            GameSpeedController speed = EnsureSpeedController(scene);
-            UiKit.Wire(session, "speedController", speed);
-            BuildSpeedButtons(hud, (RectTransform)hud.transform, speed, EnsureSettingsScreen(scene, speed));
-            EnsurePopup(scene);
-            GameObject events = new("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
-            events.GetComponent<InputSystemUIInputModule>().AssignDefaultActions();
-            if (!EditorSceneManager.SaveScene(scene, ScenePath))
-                throw new InvalidOperationException("새 스테이지 씬 저장 실패");
-            List<EditorBuildSettingsScene> scenes = new(EditorBuildSettings.scenes);
-            if (!scenes.Exists(entry => entry.path == ScenePath))
-                scenes.Add(new EditorBuildSettingsScene(ScenePath, true));
-            EditorBuildSettings.scenes = scenes.ToArray();
-        }
-        finally
-        {
-            SceneManager.SetActiveScene(previous);
-            EditorSceneManager.CloseScene(scene, true);
-        }
-        AssetDatabase.SaveAssets();
-    }
-
-    private static void BuildHud(StageSession session, Camera camera)
-    {
-        GameObject root = new("Stage HUD", typeof(RectTransform), typeof(Canvas), typeof(UnityEngine.UI.CanvasScaler),
-            typeof(UnityEngine.UI.GraphicRaycaster));
-        Canvas canvas = root.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        UnityEngine.UI.CanvasScaler scaler = root.GetComponent<UnityEngine.UI.CanvasScaler>();
-        scaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920, 1080);
-        scaler.matchWidthOrHeight = 0.5f;
-        RectTransform host = (RectTransform)root.transform;
-        StageHudView view = root.AddComponent<StageHudView>();
-        UiKit.Wire(view, "session", session);
-        UiKit.Wire(view, "worldCamera", camera);
-        RectTransform side = UiKit.TopLeft(UiKit.Rect("Preparation", host), 20, 20, 410, 1040);
-        UiKit.Panel(side, HudPalette.Surface, HudPalette.Border, true);
-        Text(side, "Title", "방어 편성", 22, 18, 18, 240, 40, HudPalette.Accent);
-        UiKit.Wire(view, "previousStage", Button(side, "PreviousStage", "<", 270, 22, 54, 32));
-        UiKit.Wire(view, "nextStage", Button(side, "NextStage", ">", 332, 22, 54, 32));
-        UiKit.Wire(view, "loadout", Text(side, "Loadout", "편성을 선택하세요", 17, 18, 70, 374, 40, HudPalette.TextBody));
-        Text(side, "Hint", "편성 추가 → 종류 선택 → 바닥에 배치\n첫 웨이브 이후 편성은 고정됩니다", 15, 18, 112, 374, 54, HudPalette.TextDim);
-        UiKit.Wire(view, "barricade", Button(side, "Barricade", "바리케이드", 18, 176, 177, 44));
-        UiKit.Wire(view, "demolish", Button(side, "Demolish", "철거", 211, 176, 177, 44));
-        UiKit.WireArray(view, "rows", BuildOptionList(side, session.Catalog));
-        BuildArtifactSection(view, side, host, session);
-        UiKit.Wire(view, "message", Text(side, "Message", "", 16, 18, 864, 374, 142, HudPalette.Warn));
-        UiKit.Wire(view, "headline", Text(host, "StageTitle", "스테이지", 24, 470, 28, HeadlineWidth, 42, HudPalette.Accent));
-        UiKit.Wire(view, "status", Text(host, "Status", "", 22, 470, 82, HeadlineWidth, 42, HudPalette.TextBody));
-        UiKit.Wire(view, "tool", Text(host, "Tool", "", 18, 470, 930, 1400, 38, HudPalette.TextBody));
-        BuildCommandBar(view, host);
-        UiKit.Wire(view, "primary", Button(host, "Primary", "웨이브 시작", 470, 996, 300, 54));
-        UiKit.Wire(view, "retry", Button(host, "Retry", "스테이지 재도전", 800, 996, 300, 54));
-        UiKit.Wire(view, "title", Button(host, "Title", "타이틀", 1130, 996, 180, 54));
-        BuildSupplyButton(view, host);
-        BuildMerchantButton(view, host);
-        SpriteRenderer cursor = SpriteBar("Placement Cursor", null, new Color(0.3f, 0.9f, 0.6f, 0.3f), 1, 1);
-        cursor.sortingOrder = 100;
-        UiKit.Wire(view, "cursor", cursor);
-        KeepArtifactWindowOnTop(host);
     }
 
     private const string OptionListName = "OptionList";
