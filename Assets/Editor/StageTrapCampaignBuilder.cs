@@ -164,6 +164,14 @@ public static class StageTrapCampaignBuilder
     // 보스 조정 뒤 자동 완주에서도 일반 웨이브가 모두 무피해여서 6·7스테이지에 한 무리를 더한다
     // (2026-11-04 사용자 "적 추가만 적용", TrapCampaignBalanceProposal.md 3번, 처치 금화는 그대로, 임시)
     private const int ExtraPartyFromStage = 6;
+    // 자동 완주에서 일반 웨이브 26개가 모두 무피해여서 일반 적 체력·생성 간격·시작 금화를 함께 조인다
+    // (2026-11-04 사용자 승인, TrapCampaignBalanceProposal.md 4번, 임시). 체력 배율은 2웨이브부터 일반 적에만 건다.
+    // 첫 완주에서 4스테이지가 두 번 지고 5·7스테이지가 무피해여서 4는 내리고 5·7은 올렸다(영구 강화·유물이 쌓이는 후반을 더 세게).
+    private static readonly float[] EnemyHealthMultipliers = { 1.2f, 1.3f, 1.35f, 1.35f, 1.8f, 1.8f, 2.2f };
+    private const float SpawnIntervalCut = 0.3f;
+    private const float MinSpawnInterval = 0.6f;
+    private const int FirstStageGold = 240;
+    private const int StageGold = 210;
 
     /// <summary>
     /// 이미 만든 본편 스테이지에 코어 체력·보스 코어 피해·일반 웨이브 추가 적만 갱신한다. 씬은 건드리지 않는다.
@@ -196,6 +204,7 @@ public static class StageTrapCampaignBuilder
         if (source.Waves.Length != stage.Waves.Length)
             throw new InvalidOperationException(stage.Id + ": 원본과 웨이브 수가 다릅니다");
         Set(stage, nameof(StageDefinitionSO.CoreHealth), CoreHealth);
+        Set(stage, nameof(StageDefinitionSO.StartingGold), index == 0 ? FirstStageGold : StageGold);
         List<int> counts = new();
         for (int wave = 0; wave < stage.Waves.Length; wave++)
         {
@@ -215,6 +224,10 @@ public static class StageTrapCampaignBuilder
                 enemies = enemies.Concat(extra).ToArray();
             }
             Set(target, nameof(StageWave.Enemies), enemies);
+            Set(target, nameof(StageWave.SpawnInterval),
+                Mathf.Max(MinSpawnInterval, source.Waves[wave].SpawnInterval - SpawnIntervalCut));
+            Set(target, nameof(StageWave.EnemyHealthMultiplier),
+                wave > 0 && !target.HasBoss ? EnemyHealthMultipliers[Mathf.Min(index, EnemyHealthMultipliers.Length - 1)] : 1f);
             counts.Add(enemies.Length);
         }
         return $"{stage.Id} 코어 {stage.CoreHealth} 적 {string.Join("/", counts)}";

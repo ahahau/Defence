@@ -55,6 +55,7 @@ namespace Code.Enemies
         // 스탯 가감치를 붙일 때 쓰는 출처. 같은 출처는 한 번만 붙고, 떼면 원래 값으로 돌아온다.
         private static readonly object WaveLevelStatKey = new();
         private static readonly object BossStatKey = new();
+        private static readonly object StageWaveStatKey = new();
         private static readonly object BossFinalPhaseStatKey = new();
 
         private GameEventChannelSO _costEventChannel;
@@ -1389,6 +1390,13 @@ namespace Code.Enemies
         }
 
         // ── Helpers ─────────────────────────────────────────────
+
+        /// <summary>스테이지 웨이브가 정한 일반 적 체력 배율. 보스 배율과 다른 출처로 얹는다(2026-11-04).</summary>
+        public void ApplyStageHealthMultiplier(float multiplier)
+        {
+            if (multiplier > 1f)
+                health?.SetMaxHealthModifier(StageWaveStatKey, 0f, multiplier);
+        }
 
         /// <summary>일반 적 데이터를 보스로 승격 — 스탯 배율 + 거대화. 전용 보스 에셋 없이도 보스 웨이브가 성립한다.
         /// ApplyWaveLevel(일차 스케일링) 이후에 호출해 배율이 최종 스탯에 적용되게 한다.</summary>

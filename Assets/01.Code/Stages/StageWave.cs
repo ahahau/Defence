@@ -16,6 +16,8 @@ namespace Code.Stages
         [field: SerializeField, Min(1f)] public float BossScale { get; private set; } = 1.6f;
         /// <summary>보스가 코어에 닿을 때의 피해. 0이면 적 데이터 값을 쓴다(함정 본편만 덮어쓴다, 2026-11-04).</summary>
         [field: SerializeField, Min(0)] public int BossCoreDamage { get; private set; }
+        /// <summary>일반 적(보스·호위 제외)의 체력 배율. 1 이하면 적 데이터 그대로다(함정 본편만 쓴다, 2026-11-04).</summary>
+        [field: SerializeField, Min(1f)] public float EnemyHealthMultiplier { get; private set; } = 1f;
         /// <summary>일반 적 순서와 짝인 특수 규칙. 짧거나 비면 나머지는 규칙 없음.</summary>
         [field: SerializeField] public StageEnemyRule[] Rules { get; private set; } = Array.Empty<StageEnemyRule>();
 

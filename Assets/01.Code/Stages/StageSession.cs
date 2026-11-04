@@ -405,6 +405,8 @@ namespace Code.Stages
                 enemy.ConfigureData(data);
                 if (isBoss)
                     enemy.PromoteToBoss(wave.BossHealthMultiplier, wave.BossAttackMultiplier, wave.BossScale);
+                else if (_spawned < (wave.Enemies?.Length ?? 0))
+                    enemy.ApplyStageHealthMultiplier(wave.EnemyHealthMultiplier);
                 StageActor actor = enemy.gameObject.AddComponent<StageActor>();
                 actor.Initialize(this, door, null, 0);
                 actor.SetRule(wave.RuleAt(_spawned));
