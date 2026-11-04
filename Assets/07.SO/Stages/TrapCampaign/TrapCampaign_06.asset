@@ -285,6 +285,9 @@ MonoBehaviour:
     - {fileID: 11400000, guid: 846d66d0edba53c43977ab571e0fae2f, type: 2}
     - {fileID: 11400000, guid: ca2625fba3b9cc54093ec44ac4ef26a7, type: 2}
     - {fileID: 11400000, guid: ca2625fba3b9cc54093ec44ac4ef26a7, type: 2}
+    - {fileID: 11400000, guid: ca2625fba3b9cc54093ec44ac4ef26a7, type: 2}
+    - {fileID: 11400000, guid: d68d85cb6a080c9f9cd6e61e90fc5ee7, type: 2}
+    - {fileID: 11400000, guid: ca2625fba3b9cc54093ec44ac4ef26a7, type: 2}
     <SpawnInterval>k__BackingField: 1.15
     <Boss>k__BackingField: {fileID: 0}
     <BossEscorts>k__BackingField: []
@@ -307,6 +310,9 @@ MonoBehaviour:
     - {fileID: 11400000, guid: 6ee6e1b5213d40e8a931a3e0e4f4811a, type: 2}
     - {fileID: 11400000, guid: b560705f09a9acb44b6488845ae1d68d, type: 2}
     - {fileID: 11400000, guid: b560705f09a9acb44b6488845ae1d68d, type: 2}
+    - {fileID: 11400000, guid: b560705f09a9acb44b6488845ae1d68d, type: 2}
+    - {fileID: 11400000, guid: b560705f09a9acb44b6488845ae1d68d, type: 2}
+    - {fileID: 11400000, guid: a133e5bdb2ea4e23076af23308deaada, type: 2}
     - {fileID: 11400000, guid: b560705f09a9acb44b6488845ae1d68d, type: 2}
     <SpawnInterval>k__BackingField: 1.15
     <Boss>k__BackingField: {fileID: 0}
@@ -332,6 +338,9 @@ MonoBehaviour:
     - {fileID: 11400000, guid: 846d66d0edba53c43977ab571e0fae2f, type: 2}
     - {fileID: 11400000, guid: a133e5bdb2ea4e23076af23308deaada, type: 2}
     - {fileID: 11400000, guid: a133e5bdb2ea4e23076af23308deaada, type: 2}
+    - {fileID: 11400000, guid: a133e5bdb2ea4e23076af23308deaada, type: 2}
+    - {fileID: 11400000, guid: 8af77e86c8ec4cb0a33b599cf083ed5a, type: 2}
+    - {fileID: 11400000, guid: a133e5bdb2ea4e23076af23308deaada, type: 2}
     <SpawnInterval>k__BackingField: 1.15
     <Boss>k__BackingField: {fileID: 0}
     <BossEscorts>k__BackingField: []
@@ -356,6 +365,9 @@ MonoBehaviour:
     - {fileID: 11400000, guid: d5dbed2501df4cb6b259b2f76e898e6c, type: 2}
     - {fileID: 11400000, guid: 846d66d0edba53c43977ab571e0fae2f, type: 2}
     - {fileID: 11400000, guid: 846d66d0edba53c43977ab571e0fae2f, type: 2}
+    - {fileID: 11400000, guid: 846d66d0edba53c43977ab571e0fae2f, type: 2}
+    - {fileID: 11400000, guid: 846d66d0edba53c43977ab571e0fae2f, type: 2}
+    - {fileID: 11400000, guid: a133e5bdb2ea4e23076af23308deaada, type: 2}
     - {fileID: 11400000, guid: 846d66d0edba53c43977ab571e0fae2f, type: 2}
     <SpawnInterval>k__BackingField: 1.15
     <Boss>k__BackingField: {fileID: 0}

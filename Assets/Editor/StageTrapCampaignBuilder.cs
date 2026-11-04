@@ -161,6 +161,9 @@ public static class StageTrapCampaignBuilder
     private const int CoreHealth = 12;
     private const int BossCoreDamage = 4;
     private const int ExtraEnemies = 2;
+    // 보스 조정 뒤 자동 완주에서도 일반 웨이브가 모두 무피해여서 6·7스테이지에 한 무리를 더한다
+    // (2026-11-04 사용자 "적 추가만 적용", TrapCampaignBalanceProposal.md 3번, 처치 금화는 그대로, 임시)
+    private const int ExtraPartyFromStage = 6;
 
     /// <summary>
     /// 이미 만든 본편 스테이지에 코어 체력·보스 코어 피해·일반 웨이브 추가 적만 갱신한다. 씬은 건드리지 않는다.
@@ -178,7 +181,7 @@ public static class StageTrapCampaignBuilder
         for (int index = 0; index < catalog.Stages.Length; index++)
         {
             StageDefinitionSO stage = catalog.Stages[index];
-            results.Add(SetBossReliance(stage, legacy.Stages[index]));
+            results.Add(SetBossReliance(stage, legacy.Stages[index], index));
             EditorUtility.SetDirty(stage);
             AssetDatabase.SaveAssetIfDirty(stage);
         }
@@ -186,8 +189,10 @@ public static class StageTrapCampaignBuilder
     }
 
     /// <param name="source">일반 적 목록의 기준(원본 스테이지). 웨이브 수가 같아야 한다.</param>
-    private static string SetBossReliance(StageDefinitionSO stage, StageDefinitionSO source)
+    /// <param name="index">스테이지 순서(0부터). 후반 스테이지의 추가 무리를 정한다.</param>
+    private static string SetBossReliance(StageDefinitionSO stage, StageDefinitionSO source, int index)
     {
+        int partySize = Mathf.Max(1, source.Waves.Length > 0 ? source.Waves[0].PartySize : 1);
         if (source.Waves.Length != stage.Waves.Length)
             throw new InvalidOperationException(stage.Id + ": 원본과 웨이브 수가 다릅니다");
         Set(stage, nameof(StageDefinitionSO.CoreHealth), CoreHealth);
@@ -203,7 +208,11 @@ public static class StageTrapCampaignBuilder
             {
                 EnemyDataSO theme = enemies.GroupBy(enemy => enemy).OrderByDescending(group => group.Count())
                     .ThenBy(group => Array.IndexOf(enemies, group.Key)).First().Key;
-                enemies = enemies.Concat(Enumerable.Repeat(theme, ExtraEnemies)).ToArray();
+                EnemyDataSO[] extra = Enumerable.Repeat(theme, ExtraEnemies).ToArray();
+                // 후반 스테이지는 그 웨이브 첫 무리(앞 파티 인원)를 한 번 더 붙인다
+                if (index + 1 >= ExtraPartyFromStage)
+                    extra = extra.Concat(enemies.Take(partySize)).ToArray();
+                enemies = enemies.Concat(extra).ToArray();
             }
             Set(target, nameof(StageWave.Enemies), enemies);
             counts.Add(enemies.Length);
@@ -215,7 +224,7 @@ public static class StageTrapCampaignBuilder
     {
         SetBossHealth(stage, index);
         // 복제 직후라 이 스테이지의 적 목록이 곧 원본이다
-        SetBossReliance(stage, stage);
+        SetBossReliance(stage, stage, index);
         // 복도 맵이 있는 스테이지는 지형·문·코어·장치를 통째로 바꾼다(2026-11-03). 불 구멍·문·낙석 설정은 원본에서 옮긴다.
         if (StageCorridorLayout.TryCreate(index + 1, stage.Devices, out StageCorridorLayout.Map corridor))
         {
