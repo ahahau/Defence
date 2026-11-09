@@ -1,0 +1,104 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a0ca23336c55d945a04e92753bfb497, type: 3}
+  m_Name: RunEncounter_Stage1
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Run.RunEncounterSO
+  legacyLayout: 00000000030000000400000005000000020000000a00000001000000i
+  <GridLayout>k__BackingField:
+  - <Kind>k__BackingField: 5
+    <Floor>k__BackingField: 0
+    <Row>k__BackingField: 0
+    <Column>k__BackingField: 1
+    <TrapAffinity>k__BackingField: 0
+  - <Kind>k__BackingField: 3
+    <Floor>k__BackingField: 0
+    <Row>k__BackingField: 1
+    <Column>k__BackingField: 1
+    <TrapAffinity>k__BackingField: 0
+  - <Kind>k__BackingField: 4
+    <Floor>k__BackingField: 0
+    <Row>k__BackingField: 1
+    <Column>k__BackingField: 0
+    <TrapAffinity>k__BackingField: 0
+  - <Kind>k__BackingField: 2
+    <Floor>k__BackingField: 0
+    <Row>k__BackingField: 1
+    <Column>k__BackingField: 2
+    <TrapAffinity>k__BackingField: 0
+  - <Kind>k__BackingField: 1
+    <Floor>k__BackingField: 0
+    <Row>k__BackingField: 2
+    <Column>k__BackingField: 1
+    <TrapAffinity>k__BackingField: 0
+  <EntryRoom>k__BackingField: 0
+  <Minions>k__BackingField:
+  - <Combatant>k__BackingField: {fileID: 11400000, guid: dd54e69f5d0ac874c803b7a3ef06e028, type: 2}
+    <Room>k__BackingField: 1
+  - <Combatant>k__BackingField: {fileID: 11400000, guid: 8b18b8d8b16086d47a59529baf2d293a, type: 2}
+    <Room>k__BackingField: 1
+  - <Combatant>k__BackingField: {fileID: 11400000, guid: b0fb92ad243dbfc4bb626e148fbf9041, type: 2}
+    <Room>k__BackingField: 0
+  - <Combatant>k__BackingField: {fileID: 11400000, guid: d2f3980f32abeff4bbee45ceca21f6de, type: 2}
+    <Room>k__BackingField: 3
+  legacyIntruders:
+  - {fileID: 11400000, guid: c0e541b00a4adc0438928463e5f4d8bc, type: 2}
+  - {fileID: 11400000, guid: dd31ca830e1c8154bb13b57f2d8685b4, type: 2}
+  - {fileID: 11400000, guid: a2bba8a995277074e9764a07122dd4a5, type: 2}
+  - {fileID: 11400000, guid: 3d88d2ad1b135de4db92c9f124203d79, type: 2}
+  <Party>k__BackingField:
+  - <Combatant>k__BackingField: {fileID: 11400000, guid: c0e541b00a4adc0438928463e5f4d8bc, type: 2}
+    <OverrideAffinity>k__BackingField: 1
+    <Affinity>k__BackingField: 0
+  - <Combatant>k__BackingField: {fileID: 11400000, guid: dd31ca830e1c8154bb13b57f2d8685b4, type: 2}
+    <OverrideAffinity>k__BackingField: 1
+    <Affinity>k__BackingField: 1
+  - <Combatant>k__BackingField: {fileID: 11400000, guid: 3d88d2ad1b135de4db92c9f124203d79, type: 2}
+    <OverrideAffinity>k__BackingField: 1
+    <Affinity>k__BackingField: 0
+  - <Combatant>k__BackingField: {fileID: 11400000, guid: f338fa9e96a439d498d650d3135e2aca, type: 2}
+    <OverrideAffinity>k__BackingField: 1
+    <Affinity>k__BackingField: 1
+  - <Combatant>k__BackingField: {fileID: 11400000, guid: a2bba8a995277074e9764a07122dd4a5, type: 2}
+    <OverrideAffinity>k__BackingField: 1
+    <Affinity>k__BackingField: 2
+  <Settings>k__BackingField:
+    <TimeLimitSeconds>k__BackingField: 120
+    <EntryIntervalSeconds>k__BackingField: 1.5
+    <SimulationStep>k__BackingField: 0.05
+    <AttackIntervalFactor>k__BackingField: 6
+    <MeleeRange>k__BackingField: 0.6
+    <RangedRange>k__BackingField: 2.5
+    <SupportRadius>k__BackingField: 1.5
+    <RetreatHealthRatio>k__BackingField: 0.3
+    <RoomLength>k__BackingField: 3
+    <EntranceLength>k__BackingField: 1
+    <StairLength>k__BackingField: 2
+    <CorridorLength>k__BackingField: 3
+    <LadderLength>k__BackingField: 2
+    <DoorStopGap>k__BackingField: 0.2
+    <PostOffset>k__BackingField: 0.5
+    <HeartHealth>k__BackingField: 30
+    <VaultGold>k__BackingField: 100
+    <StartingManaCapacity>k__BackingField: 3
+    <ManaPerKill>k__BackingField: 1
+    <GoldPerKill>k__BackingField: 10
+    <RoomDurability>k__BackingField: 8
+    <DoorDurability>k__BackingField: 10
+    <FavoredRoomMultiplier>k__BackingField: 1.5
+    <TrapDamagePerMana>k__BackingField: 2
+    <TrapCooldownSeconds>k__BackingField: 4
+    <TrapMaxMana>k__BackingField: 2
+    <SpringHealPerSecond>k__BackingField: 1
+    <ThiefStealPerSecond>k__BackingField: 10
+    <ThiefCarryLimit>k__BackingField: 45
+    <SapperRoomDamageMultiplier>k__BackingField: 2
+  <DemoEliteAppearance>k__BackingField: {fileID: 11400000, guid: daa1222371f323d4c944f6fe5d34916a, type: 2}

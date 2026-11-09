@@ -1,5 +1,6 @@
 using Code.Audio;
 using Code.Stages;
+using Code.Run;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -24,6 +25,7 @@ namespace Code.UI
         public const string StageSceneName = "TrapCampaign";
 
         public static bool IsStageScene(string sceneName) => sceneName == StageSceneName;
+        private static int DemoSceneIndex => SceneUtility.GetBuildIndexByScenePath(RunDemoSave.ScenePath);
 
         [SerializeField, Tooltip("저장이 없으면 잠글 버튼.")]
         private Button continueButton;
@@ -67,7 +69,8 @@ namespace Code.UI
         /// </summary>
         private void RefreshContinue()
         {
-            bool stageSave = StageCheckpointStore.HasSave(Application.persistentDataPath);
+            bool demo = DemoSceneIndex >= 0;
+            bool stageSave = demo ? RunDemoSave.CanContinue() : StageCheckpointStore.HasSave(Application.persistentDataPath);
 
             if (continueButton != null)
                 continueButton.interactable = stageSave;
@@ -75,13 +78,24 @@ namespace Code.UI
             if (continueLabel != null)
             {
                 continueLabel.color = stageSave ? LabelOn : LabelOff;
-                continueLabel.text = stageSave ? "스테이지 이어하기" : "이어하기";
+                continueLabel.text = stageSave && !demo ? "스테이지 이어하기" : "이어하기";
             }
         }
 
         /// <summary>새 스테이지 판. 이전 준비 저장은 보관하고 영구 강화와 구 런 파일은 유지한다.</summary>
         public void StartNewRun()
         {
+            int demoScene = DemoSceneIndex;
+            if (demoScene >= 0)
+            {
+                if (RunDemoSave.BeginNew())
+                {
+                    GameSfxPlayer.Play(GameSfxCue.UiClick);
+                    SceneManager.LoadScene(demoScene);
+                }
+                else GameSfxPlayer.Play(GameSfxCue.UiFail);
+                return;
+            }
             // 타이틀은 구 SampleScene 판으로 들어가지 않는다(2026-11-02 사용자 결정). 스테이지 씬이 빌드에 없으면
             // 구 런 파일을 지우고 SampleScene으로 가는 대신 멈춘다 — 빌드 설정 실수다.
             if (!Application.CanStreamedLevelBeLoaded(StageSceneName))
@@ -103,6 +117,14 @@ namespace Code.UI
         /// <summary>스테이지 준비 저장을 그대로 두고 들어간다. 복원은 스테이지 씬이 맡는다.</summary>
         public void ContinueRun()
         {
+            int demoScene = DemoSceneIndex;
+            if (demoScene >= 0)
+            {
+                if (!RunDemoSave.CanContinue()) return;
+                GameSfxPlayer.Play(GameSfxCue.UiClick);
+                SceneManager.LoadScene(demoScene);
+                return;
+            }
             if (!StageCheckpointStore.HasSave(Application.persistentDataPath))
                 return;
 

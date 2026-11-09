@@ -1,5 +1,18 @@
 # Sequences
 
+- 2026-11-09 · 사용자 결정으로, 돌진이 예고를 시작할 때 경로에 잠겨 있던 문을 기억해 발동 전에 문이 풀려도 그 앞에서 멈추게 했다(`RunTelegraph.WasDoorLockedAtStart`, `RunTelegraphRules.MarkLockedDoors`·`ResolveCharge`). 새 EditMode 테스트 `Charge_DoorLockedAtWarningStartStillStopsAfterUnlock`를 추가했다. `RunBattleTests` 107/116, `RunPreparationTests` 28/32 통과이고, 실패 13개는 앞선 작업과 같은 무관한 기존 실패다. 재현 결과, 폭파를 끊은 저격수를 서쪽 치유 샘으로 불러들이면 살아남았다. 다만 해골 검사 사망·심장 24로, 명령 없이 문 제어실을 내준 경우보다 결과가 나빴다. 결과는 시연 런 기획에 기록했다. 저장 23개는 `TestResults.xml`을 되돌린 뒤 SHA-256이 모두 같다.
+
+- 2026-11-09 · 사용자 결정으로, 예고 시전자에게 가려고 적을 지나친 부하가 새 이동 명령을 받으면 길의 적을 다시 지나쳐 돌아오게 했다(`RunCombatant.HasSlippedPast`·`IsSlippingBack`, `RunBattle.OrderMove`·`UpdateMinion`). 새 EditMode 테스트 `PowderBlast_MinionThatSlippedPastReturnsPastBlockerAfterInterrupt`를 추가했다. `RunBattleTests` 106/115, `RunPreparationTests` 28/32 통과이고, 실패 13개는 앞선 작업과 같은 무관한 기존 실패다. 재현 결과, 불러들인 해골 저격수는 가운데 방까지 돌아왔다. 그러나 끊긴 공병이 문 제어실을 부순 뒤 풀린 문을 지나온 침입자 검사의 돌진에 쓰러졌다. 저장 23개는 `TestResults.xml`을 되돌린 뒤 SHA-256이 모두 같다.
+
+- 2026-11-09 · 공병 폭파를 끊은 뒤 해골 저격수가 쓰러지는 원인을 Unity 에디터 시뮬레이션으로 추적했다(플레이 모드 없음, 저장 23개 SHA-256 일치). 저격수는 지나치기로 침입자 검사를 넘어간 뒤 검사(근접)와 견습 마법사 사이에 끼었다. 끊은 직후 불러들여도 돌아가는 길을 검사가 막아 2초 뒤 쓰러졌다. 물러나기 기준(30%)은 마지막 한 방보다 늦었고, 물리 → 마법 상성이 피해를 키웠다. 결과를 시연 런 기획에 기록했다. 코드는 바꾸지 않았다.
+
+- 2026-11-09 · 사용자 결정(C안)을 넣었다. 폭파·화염구를 예고 중인 시전자가 있는 방으로 이동 명령을 받은 부하는 길의 적을 지나쳐 걷고, 시전자가 사거리에 들면 평타와 스킬 모두 시전자를 먼저 친다(`RunBattle.UpdateMinion`·`InterruptibleCasterIn`, 스킬 대상 정렬 `_focusTarget`). 새 EditMode 테스트 `PowderBlast_OrderedMinionPassesBlockerAndInterruptsCaster`를 추가했다. `RunBattleTests` 105/114, `RunPreparationTests` 28/32 통과이고, 실패 13개는 앞선 작업과 같은 무관한 기존 실패다. 재현 결과, 이어진 시작에서 해골 저격수를 보내면 +3.00초에 폭파를 끊었다. 검사를 함께 보내면 문 제어실도 지켰지만, 끊은 모든 경우에 저격수가 쓰러졌다. 저장 23개는 `TestResults.xml`을 되돌린 뒤 SHA-256이 모두 같다.
+
+- 2026-11-09 · 사용자 결정(A안)으로 공병이 방 가운데까지 걸어가 폭약을 놓은 뒤 예고를 시작하게 했다. 가는 동안 그 방 부하는 무시한다(`RunTelegraphRules.ShouldApproachBlast`·`RunBattle.UpdateIntruder`). 새 EditMode 테스트 `PowderBlast_SapperWalksPastDefenderToRoomCenterBeforeWarning`를 추가했다. 기존 테스트도 사용자 요청으로 실행했다. `RunBattleTests` 104/113, `RunPreparationTests` 28/32 통과(새 테스트 포함)이고, 실패 13개는 이번 변경과 무관하다. 수동 함정·처치 마력 제거 전 기대값이 8개, 11-06 입장 순서 변경 뒤 인덱스가 어긋난 것이 5개다. 재현을 다시 돌린 결과 예고는 4.00초 북 방 가운데에서 시작하지만, 보낸 부하가 가까운 침입자 검사·견습 마법사를 먼저 쏘아 여전히 폭파를 끊지 못했다. 결과는 시연 런 기획에 기록했다. 저장 23개는 테스트가 갱신한 `TestResults.xml`을 백업으로 되돌린 뒤 SHA-256이 모두 같다.
+
+- 2026-11-09 · 첫 공병 위기를 Unity 에디터에서 시연판 실제 데이터로 재현했다(플레이 모드 없음, 저장 23개 SHA-256 전후 일치). 새 시작과 도적 침입에서 이어진 시작 모두에서, 가운데 방 부하를 북쪽으로 보내 4초 안에 폭파를 끊는 대응은 성립하지 않았다. 원인은 거리 7.5와 앞선 검사의 길막기다. 폭파를 끊은 것은 이미 북 방에 있던 오크 주술사뿐이었고, 모든 경우에 문 제어실이 고장 났다. 결과와 막힌 지점을 시연 런 기획에 기록했다. 코드는 바꾸지 않았다.
+
+
 - 2026-10-27 · 2×2 함정 발동 연출 크기 버그 수정(사용자: 테스트 먼저, 실측까지).
   - 원인: 여러 칸 함정은 설치 때(`NodeTrapGrid.TryPlace`) 함정 전체가 칸 수만큼 커지고, 발동 연출 `TrapEffectSprite`가 그 자식이라 배율을 물려받아 2배로 그려졌다(번개 구름 실측 폭 10, 의도 5).
   - 수정: `TrapEffectSprite.SetWorldScale`이 부모 `lossyScale`로 나눠 월드 폭을 맞춘다(`Play`·`Fly`). 위치·아래 맞춤 계산은 그대로.

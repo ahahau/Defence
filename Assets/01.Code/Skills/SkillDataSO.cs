@@ -24,6 +24,22 @@ namespace Code.Skills
         [field: SerializeField] public SkillVisualAnchor SpellAnchor { get; private set; } = SkillVisualAnchor.Target;
         [field: SerializeField, Min(0.1f)] public float SpellScale { get; private set; } = 1f;
 
+        // 던전 FTL 전투용. 함정 본편 Cooldown·Effects와 따로 둬 함정 본편 스킬이 그대로 돈다.
+        [field: Header("Dungeon Run Battle")]
+        [field: SerializeField, Min(1), Tooltip("쿨 = 이 값 × 시전자 공격 간격(초). 3이면 쓰고·평타·평타·다시.")]
+        public int CooldownTurns { get; private set; } = 1;
+
+        [field: SerializeField] public Code.Run.RunTurnSkillEffectSO[] TurnEffects { get; private set; } =
+            System.Array.Empty<Code.Run.RunTurnSkillEffectSO>();
+
+        /// <summary>던전 FTL 전투 효과 조각을 차례대로 적용한다.</summary>
+        public void ExecuteTurn(Code.Run.RunBattle battle, Code.Run.RunCombatant caster)
+        {
+            if (TurnEffects == null) return;
+            foreach (Code.Run.RunTurnSkillEffectSO effect in TurnEffects)
+                effect?.Apply(battle, caster);
+        }
+
         /// <summary>
         /// 시전 순간 퍼지는 고리의 색. 첫 번째 효과 조각이 정한다 —
         /// 한 스킬 안에서 색이 갈리면 무슨 기술인지가 아니라 몇 겹인지가 보인다.

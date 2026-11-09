@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2c05617eccf4864aa5672963a8c7578, type: 3}
+  m_Name: RunSkill_PowderBlast
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Skills.SkillDataSO
+  <DisplayName>k__BackingField: "\uD654\uC57D \uD3ED\uD30C"
+  <Description>k__BackingField: "4\uCD08 \uB4A4 \uACE0\uC815\uD55C \uBC29\uC758 \uC591\uCABD \uC804\uC6D0\uC5D0\uAC8C \uC2DC\uC804\uC790 \uC0C1\uC131 \uD53C\uD574 8, \uC2DC\uC2A4\uD15C\uC5D0 \uCD5C\uC885 \uD53C\uD574 8. \uCCB4\uB825\uC774 \uAE4E\uC774\uAC70\uB098 \uC4F0\uB7EC\uC9C0\uBA74 \uCDE8\uC18C. \uCFE8\uC740 \uC2DC\uC791\uBD80\uD130 \uACF5\uACA9 \uAC04\uACA9 6\uD68C."
+  <Icon>k__BackingField: {fileID: 0}
+  <Cooldown>k__BackingField: 5
+  <IsUltimate>k__BackingField: 0
+  <Effects>k__BackingField: []
+  <SpellFrames>k__BackingField:
+  - {fileID: -607659182, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 798350318, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 1433322624, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -1390710640, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -640538140, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 1124459581, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -2084120278, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -2117804920, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -1032108839, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 946766261, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -812114630, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 1753192106, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 2070857692, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -1312636869, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -1545226807, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -1201116128, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 21791660, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 69084175, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -542468994, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 926342727, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 1262117210, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 1529939140, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 909526038, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: -208554492, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 794497493, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  - {fileID: 2053776039, guid: 0cfdb8e1cdc14de479d720e6065bcf5a, type: 3}
+  <SpellFramesPerSecond>k__BackingField: 18
+  <SpellAnchor>k__BackingField: 0
+  <SpellScale>k__BackingField: 1
+  <CooldownTurns>k__BackingField: 6
+  <TurnEffects>k__BackingField:
+  - {fileID: 11400000, guid: e06c20c77ff7dbc48b371f43513c1e17, type: 2}
