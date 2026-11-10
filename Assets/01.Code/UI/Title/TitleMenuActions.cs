@@ -40,9 +40,6 @@ namespace Code.UI
         [SerializeField, Tooltip("모든 스테이지를 지켜냈으면 보이는 기록. 아니면 비워 자리만 둔다.")]
         private TMP_Text clearRecord;
 
-        private static readonly Color LabelOn = new(0.96f, 0.92f, 0.84f, 1f);
-        private static readonly Color LabelOff = new(0.46f, 0.42f, 0.37f, 1f);
-
         private void Start()
         {
             RefreshContinue();
@@ -77,7 +74,7 @@ namespace Code.UI
 
             if (continueLabel != null)
             {
-                continueLabel.color = stageSave ? LabelOn : LabelOff;
+                continueLabel.color = stageSave ? HudPalette.TextBody : HudPalette.TextMuted;
                 continueLabel.text = stageSave && !demo ? "스테이지 이어하기" : "이어하기";
             }
         }

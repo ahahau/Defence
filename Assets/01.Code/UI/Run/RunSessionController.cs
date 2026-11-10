@@ -177,16 +177,65 @@ namespace Code.UI.Run
                 ShowHerbalist(0);
                 return;
             }
+            ShowMerchant();
+        }
+
+        // 범용 팝업 버튼이 3개까지라 상인은 두 단계로 보인다(2026-11-10 사용자 "두 단계 팝업").
+        // 가격·가진 금화는 비용 줄, 살 수 없는 이유는 경고 줄에 둔다(2026-11-10 사용자 목업 승인).
+        private void ShowMerchant()
+        {
             RunBattleCarryover state = _demo.Carryover;
-            PopupController.Show(PopupRequest.Choice("상인 · 던전 정비",
-                $"금화 {state.Gold} · 심장 {state.HeartHealth}/{Deployment.Encounter.Settings.HeartHealth}\n한 항목만 구매할 수 있습니다.\n심장 수리 +10 또는 이번 런의 함정 기본 피해 +2\n가격 · 각 금화 30",
+            int lost = _demo.FirstLostMinion;
+            bool affordable = state.Gold >= RunDemoCampaign.MerchantPrice;
+            string hire = lost >= 0 ? $"쓰러진 {Deployment.Encounter.Minions[lost].Combatant.DisplayName} 복귀" : "쓰러진 부하 없음";
+            PopupController.Show(PopupRequest.Choice("상인",
+                $"던전 정비 · 심장 수리나 함정 강화\n부하 고용 · {hire}\n한 가지만 살 수 있습니다.",
                 new[]
                 {
                     new PopupButtonSpec("떠나기", PopupButtonStyle.Secondary, () => CompleteBranch(-1)),
-                    new PopupButtonSpec("심장 수리", PopupButtonStyle.Primary, () => CompleteBranch(0),
-                        state.Gold >= 30 && state.HeartHealth < Deployment.Encounter.Settings.HeartHealth),
-                    new PopupButtonSpec("함정 강화", PopupButtonStyle.Primary, () => CompleteBranch(1), state.Gold >= 30),
-                }, () => { }));
+                    new PopupButtonSpec("던전 정비", PopupButtonStyle.Primary, ShowMerchantUpkeep),
+                    new PopupButtonSpec("부하 고용", PopupButtonStyle.Primary, ShowMerchantHire, affordable && lost >= 0),
+                }, () => { })
+                .WithLines($"가진 금화 {state.Gold} · 각 금화 {RunDemoCampaign.MerchantPrice}", affordable ? null : "금화가 모자라 살 수 없습니다"));
+        }
+
+        private void ShowMerchantUpkeep()
+        {
+            RunBattleCarryover state = _demo.Carryover;
+            int maxHeart = Deployment.Encounter.Settings.HeartHealth;
+            bool affordable = state.Gold >= RunDemoCampaign.MerchantPrice;
+            bool heartFull = state.HeartHealth >= maxHeart;
+            string warning = !affordable ? "금화가 모자라 살 수 없습니다" : heartFull ? "심장이 가득 차 수리할 수 없습니다" : null;
+            PopupController.Show(PopupRequest.Choice("상인 · 던전 정비",
+                $"심장 수리 · 심장 +10 (지금 {state.HeartHealth}/{maxHeart})\n함정 강화 · 이번 런 함정 기본 피해 +2",
+                new[]
+                {
+                    new PopupButtonSpec("뒤로", PopupButtonStyle.Secondary, ShowMerchant),
+                    new PopupButtonSpec("심장 수리", PopupButtonStyle.Primary, () => CompleteBranch(0), affordable && !heartFull),
+                    new PopupButtonSpec("함정 강화", PopupButtonStyle.Primary, () => CompleteBranch(1), affordable),
+                }, ShowMerchant)
+                .WithLines($"가진 금화 {state.Gold} · 가격 금화 {RunDemoCampaign.MerchantPrice}", warning));
+        }
+
+        private void ShowMerchantHire()
+        {
+            int lost = _demo.FirstLostMinion;
+            if (lost < 0)
+            {
+                ShowMerchant();
+                return;
+            }
+            RunCombatantSO minion = Deployment.Encounter.Minions[lost].Combatant;
+            int gold = _demo.Carryover.Gold;
+            bool affordable = gold >= RunDemoCampaign.MerchantPrice;
+            PopupController.Show(PopupRequest.Choice("상인 · 부하 고용",
+                $"돌아올 부하 · {minion.DisplayName}\n체력 {minion.MaxHealth}/{minion.MaxHealth} · 원래 자리에 섭니다",
+                new[]
+                {
+                    new PopupButtonSpec("뒤로", PopupButtonStyle.Secondary, ShowMerchant),
+                    new PopupButtonSpec("고용", PopupButtonStyle.Primary, () => CompleteBranch(2), affordable),
+                }, ShowMerchant)
+                .WithLines($"가진 금화 {gold} · 가격 금화 {RunDemoCampaign.MerchantPrice}", affordable ? null : "금화가 모자라 살 수 없습니다"));
         }
 
         private void ShowHerbalist(int from)

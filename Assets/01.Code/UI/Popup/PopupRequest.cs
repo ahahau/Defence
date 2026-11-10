@@ -61,6 +61,14 @@ namespace Code.UI.Popup
             return this;
         }
 
+        /// <summary>비용 줄과 경고 줄을 채운다. null이면 그 줄을 숨긴다(자리는 남는다). 선택 팝업이 가격·잠긴 이유를 보일 때 쓴다.</summary>
+        public PopupRequest WithLines(string costText, string warningText)
+        {
+            CostText = costText;
+            WarningText = warningText;
+            return this;
+        }
+
         /// <summary>이 팝업에 이름을 붙인다(<see cref="PopupController.IsShowing"/>로 확인).</summary>
         public PopupRequest WithTag(string tag)
         {

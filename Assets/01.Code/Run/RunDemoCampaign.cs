@@ -58,19 +58,32 @@ namespace Code.Run
             Carryover = new RunBattleCarryover(battle);
         }
 
+        /// <summary>상인 항목 하나의 금화 가격(심장 수리·함정 강화·부하 고용 공통).</summary>
+        internal const int MerchantPrice = 30;
+
+        /// <summary>상인이 고용으로 채울 쓰러진 부하(배치 순서상 첫 번째). 없으면 -1.</summary>
+        internal int FirstLostMinion => Carryover == null ? -1 : Array.FindIndex(Carryover.MinionHealth, health => health <= 0);
+
         internal bool ResolveBranch(int option)
         {
             if (Route.CurrentResult != RunDemoRoute.Result.Pending || Carryover == null) return false;
             if (Route.Current == RunDemoRoute.Node.Merchant)
             {
-                if (option is < -1 or > 1 || (option >= 0 && Carryover.Gold < 30)) return false;
+                if (option is < -1 or > 2 || (option >= 0 && Carryover.Gold < MerchantPrice)) return false;
                 if (option == 0)
                 {
                     if (Carryover.HeartHealth >= _encounter.Settings.HeartHealth) return false;
                     Carryover.HeartHealth = Math.Min(_encounter.Settings.HeartHealth, Carryover.HeartHealth + 10);
                 }
                 if (option == 1) TrapBonus = 2;
-                if (option >= 0) Carryover.Gold -= 30;
+                // 고용: 쓰러진 부하 한 명을 같은 종류로 체력 가득 채운다(2026-11-10 사용자 결정, 금화 30).
+                if (option == 2)
+                {
+                    int lost = FirstLostMinion;
+                    if (lost < 0) return false;
+                    Carryover.MinionHealth[lost] = _encounter.Minions[lost].Combatant.MaxHealth;
+                }
+                if (option >= 0) Carryover.Gold -= MerchantPrice;
             }
             else if (Route.Current == RunDemoRoute.Node.StoryEvent)
             {
