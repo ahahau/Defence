@@ -225,6 +225,8 @@ namespace Code.Run
             if (_rooms[roomIndex].Floor != _rooms[minion.HomeRoom].Floor) return false;
             if (float.IsPositiveInfinity(Distance(minion.Position, CenterOf(roomIndex)))) return false;
             if (minion.IsRetreating) minion.EndRetreat(false);
+            // 체력이 낮아도 플레이어 명령이 우선한다. 기준 이상으로 회복할 때까지 자동으로 물러나지 않는다(2026-11-10 사용자 결정).
+            if (minion.Health < minion.MaxHealth * Settings.RetreatHealthRatio) minion.SetRetreatSuppressed(true);
             minion.SetMoveTarget(roomIndex);
             minion.BeginSlipBack();
             return true;
@@ -576,7 +578,12 @@ namespace Code.Run
                 if (!minion.HasMoveOrder && minion.Health >= minion.MaxHealth) minion.EndRetreat(true);
                 return;
             }
-            if (minion.Health >= minion.MaxHealth * Settings.RetreatHealthRatio) return;
+            if (minion.Health >= minion.MaxHealth * Settings.RetreatHealthRatio)
+            {
+                minion.SetRetreatSuppressed(false);
+                return;
+            }
+            if (minion.IsRetreatSuppressed) return;
             int best = -1;
             float distance = float.PositiveInfinity;
             foreach (RunRoom room in _rooms)

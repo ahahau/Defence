@@ -64,6 +64,9 @@ namespace Code.Run
         /// <summary>물러나기 전에 지키던 방. 다 나으면 돌아간다.</summary>
         public int ReturnRoom { get; private set; } = -1;
 
+        /// <summary>체력이 낮을 때 이동 명령을 받아 자동 물러나기를 멈췄다. 체력이 물러나기 기준 이상이 되면 풀린다.</summary>
+        public bool IsRetreatSuppressed { get; private set; }
+
         /// <summary>예고 시전자에게 가려고 길의 적을 지나친 부하. 다음 이동 명령에서 적을 다시 지나쳐 돌아갈 수 있다.</summary>
         public bool HasSlippedPast { get; private set; }
 
@@ -160,6 +163,8 @@ namespace Code.Run
             ReturnRoom = HasMoveOrder ? MoveTarget : HomeRoom;
             MoveTarget = spring;
         }
+
+        internal void SetRetreatSuppressed(bool suppressed) => IsRetreatSuppressed = suppressed;
 
         internal void EndRetreat(bool goBack)
         {
