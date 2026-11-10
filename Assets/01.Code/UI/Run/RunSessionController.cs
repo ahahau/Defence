@@ -251,6 +251,13 @@ namespace Code.UI.Run
                 if (index < 0) index = candidate;
                 injured++;
             }
+            // 다친 부하 중 몇 번째인지(배치 순서 기준). "다른 부하"로 넘길 때 위치를 보인다.
+            int ordinal = 0;
+            for (int i = 0; index >= 0 && i <= index; i++)
+            {
+                int health = _demo.Carryover.MinionHealth[i];
+                if (health > 0 && health < minions[i].Combatant.MaxHealth) ordinal++;
+            }
             if (index < 0)
             {
                 PopupController.Show(PopupRequest.Notice("굴 근처 약초꾼", "회복할 부하가 없습니다.",
@@ -258,20 +265,26 @@ namespace Code.UI.Run
                 return;
             }
             RunCombatantSO minion = minions[index].Combatant;
+            int current = _demo.Carryover.MinionHealth[index];
+            // 회복량은 RunDemoCampaign.ResolveBranch와 같은 식(최대 체력의 절반, 올림)이다.
+            int healed = Math.Min(minion.MaxHealth, current + (minion.MaxHealth + 1) / 2);
+            // 상인과 같은 형식: 항목마다 한 줄, 비용·인원은 비용 줄(2026-11-10 사용자 목업 승인).
             PopupController.Show(PopupRequest.Choice("굴 근처 약초꾼",
-                $"약초꾼이 부상당한 부하 한 명을 무료로 치료합니다.\n{minion.DisplayName} · {_demo.Carryover.MinionHealth[index]}/{minion.MaxHealth}\n최대 체력의 절반만큼 회복",
+                $"치료할 부하 · {minion.DisplayName} ({ordinal}/{injured})\n체력 {current}/{minion.MaxHealth} → {healed}/{minion.MaxHealth}\n최대 체력의 절반만큼 회복합니다.",
                 new[]
                 {
                     new PopupButtonSpec("떠나기", PopupButtonStyle.Secondary, () => CompleteBranch(-1)),
                     new PopupButtonSpec("다른 부하", PopupButtonStyle.Secondary, () => ShowHerbalist(index + 1), injured > 1),
                     new PopupButtonSpec("치료", PopupButtonStyle.Primary, () => CompleteBranch(index)),
-                }, () => { }));
+                }, () => { })
+                .WithLines($"비용 없음 · 다친 부하 {injured}명", null));
         }
 
         private void CompleteBranch(int choice)
         {
             if (!_demo.ResolveBranch(choice)) return;
-            Battle.SetInitialResources(_demo.Carryover.HeartHealth, _demo.Carryover.Gold);
+            // 끝난 전투가 지도 뒤 화면을 그리므로 고용·치료한 부하 체력까지 이어지는 값으로 맞춘다.
+            _demo.Carryover.ApplyTo(Battle);
             SaveCheckpoint();
             OpenNextEncounter();
         }
