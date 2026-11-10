@@ -14,12 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Run.RunEncounterSO
   legacyLayout: 00000000030000000400000005000000020000000a00000001000000i
   <GridLayout>k__BackingField:
-  - <Kind>k__BackingField: 5
+  - <Kind>k__BackingField: 3
     <Floor>k__BackingField: 0
     <Row>k__BackingField: 0
     <Column>k__BackingField: 1
     <TrapAffinity>k__BackingField: 0
-  - <Kind>k__BackingField: 3
+  - <Kind>k__BackingField: 5
     <Floor>k__BackingField: 0
     <Row>k__BackingField: 1
     <Column>k__BackingField: 1

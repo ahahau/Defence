@@ -277,7 +277,9 @@ namespace Code.Run
             int direction = Math.Sign(to - from);
             int room = origin.IsInRoom ? origin.Room
                 : direction > 0 ? _battle.Links[origin.Link].To : _battle.Links[origin.Link].From;
-            while (true)
+            // 같은 방 안의 대상에게는 그 방 끝까지만 달린다(2026-11-10 사용자 결정).
+            bool sameRoom = origin.IsInRoom && target.IsInRoom && origin.Room == target.Room;
+            while (!sameRoom)
             {
                 int next = -1;
                 for (int i = 0; i < _battle.Links.Count; i++)

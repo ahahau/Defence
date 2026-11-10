@@ -65,6 +65,10 @@ namespace Code.Run
 
         internal int TrapDamageBonus { get; private set; }
 
+        // 전투 깊이 비교 시뮬레이션용(2026-11-09 사용자 승인). 저장하지 않고 기본은 꺼져 있어 게임 규칙은 그대로다.
+        internal bool TrapReachesLinks { get; set; }
+        internal bool BlocksRepairOfBrokenRooms { get; set; }
+
         internal RunBattleSettings ForDemo(int mana, int trapDamageBonus, bool hasTimeLimit)
         {
             RunBattleSettings copy = (RunBattleSettings)MemberwiseClone();

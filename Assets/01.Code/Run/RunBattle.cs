@@ -425,9 +425,17 @@ namespace Code.Run
             for (int i = 0; i < _combatants.Count; i++)
             {
                 RunCombatant actor = _combatants[i];
-                if (actor.IsOnField && actor.Side == RunSide.Intruder && RoomOf(actor) == roomIndex) return true;
+                if (actor.IsOnField && actor.Side == RunSide.Intruder && IsInTrapReach(actor, roomIndex)) return true;
             }
             return false;
+        }
+
+        private bool IsInTrapReach(RunCombatant actor, int roomIndex)
+        {
+            if (RoomOf(actor) == roomIndex) return true;
+            if (!Settings.TrapReachesLinks || actor.Position.IsInRoom || actor.Position.Link < 0) return false;
+            RunLink link = _links[actor.Position.Link];
+            return link.From == roomIndex || link.To == roomIndex;
         }
 
         /// <summary>함정 방의 적 전원을 공격한다. 실패하면 충전을 소비하지 않는다.</summary>
@@ -439,9 +447,12 @@ namespace Code.Run
             // Boost도 같은 임시 목록을 쓰므로 침입자 목록보다 먼저 계산한다.
             int damage = TrapDamage(roomIndex);
 
-            List<RunCombatant> intruders = CombatantsIn(room.Index, RunSide.Intruder);
+            _scratch.Clear();
+            foreach (RunCombatant actor in _combatants)
+                if (actor.IsOnField && actor.Side == RunSide.Intruder && IsInTrapReach(actor, room.Index))
+                    _scratch.Add(actor);
 
-            foreach (RunCombatant intruder in intruders)
+            foreach (RunCombatant intruder in _scratch)
                 DealDamage(null, intruder, RunAffinityRules.Damage(damage, room.TrapAffinity, intruder.Affinity));
             room.SetTrapCooldown(Settings.TrapCooldownSeconds);
             return true;
@@ -527,7 +538,8 @@ namespace Code.Run
                 return;
             }
             int room = RoomOf(minion);
-            if (room >= 0 && _rooms[room].IsDamaged && minion.Definition.RepairPerSecond > 0f)
+            if (room >= 0 && _rooms[room].IsDamaged && minion.Definition.RepairPerSecond > 0f
+                && !(Settings.BlocksRepairOfBrokenRooms && _rooms[room].IsBroken))
             {
                 _rooms[room].RepairBy(minion.Definition.RepairPerSecond * dt);
                 minion.SetActivity(RunActionKind.Repair);
