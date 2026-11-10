@@ -282,7 +282,7 @@ namespace Code.UI.Run
                         new PopupButtonSpec("수리·치료", PopupButtonStyle.Primary, () => ShowUpkeepTarget(0), anyTarget),
                         new PopupButtonSpec("마력 용량 +1", PopupButtonStyle.Primary, BuyCapacity, _demo.CanBuyCapacity),
                     }, LeaveUpkeep)
-                .WithLines($"가진 금화 {state.Gold} · 수리·치료 {RunDemoCampaign.RepairPrice} · 용량 {RunDemoCampaign.CapacityPrice}", null));
+                .WithLines($"금화 {state.Gold} · 고치기 {RunDemoCampaign.RepairPrice} · 용량 {RunDemoCampaign.CapacityPrice}", null));
         }
 
         // 수리·치료 대상: 고장·깎인 시스템 방(배치 순서) 다음에 체력이 깎인 부하(배치 순서).
@@ -715,7 +715,8 @@ namespace Code.UI.Run
             }
             int slots = 0;
             for (int i = 0; i < Deployment.RoomCount; i++) slots += Deployment.MaxMana(i);
-            preparation.SetSummary($"남은 마력 {Deployment.Capacity - Deployment.ManaInUse}/{Deployment.Capacity}\n칸 {slots}개 중 {Deployment.Capacity}개만",
+            string slotLine = Deployment.Capacity >= slots ? $"칸 {slots}개 모두 켤 수 있음" : $"칸 {slots}개 중 {Deployment.Capacity}개만";
+            preparation.SetSummary($"남은 마력 {Deployment.Capacity - Deployment.ManaInUse}/{Deployment.Capacity}\n{slotLine}",
                 $"침입 {EncounterNumber}/{RunBattleFlow.EncounterLimit} · 심장 {Battle.HeartHealth} · 금화 {Battle.VaultGold}\n{detail}", _memory.HasPrevious);
         }
 
