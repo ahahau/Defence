@@ -72,7 +72,7 @@ MonoBehaviour:
     <Affinity>k__BackingField: 2
   <Settings>k__BackingField:
     <TimeLimitSeconds>k__BackingField: 120
-    <EntryIntervalSeconds>k__BackingField: 1.5
+    <EntryIntervalSeconds>k__BackingField: 0.75
     <SimulationStep>k__BackingField: 0.05
     <AttackIntervalFactor>k__BackingField: 6
     <MeleeRange>k__BackingField: 0.6

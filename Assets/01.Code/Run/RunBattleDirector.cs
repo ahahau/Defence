@@ -791,7 +791,9 @@ namespace Code.Run
                 }
                 RunCombatant m = _visibleMinions[i];
                 string danger = session.DangerLabel(m.Id);
-                string place = danger ?? (m.IsDown ? "쓰러짐" : RunBattleText.Where(_battle, _battle.RoomOf(m)));
+                // 방 이름은 세션에서 받는다. 원정 진지는 방 종류가 본진과 같아도 이름이 다르다(대장실·옆 통로).
+                int room = _battle.RoomOf(m);
+                string place = danger ?? (m.IsDown ? "쓰러짐" : room >= 0 ? session.RoomName(room) : "복도");
                 hud.ShowRosterCard(i, true, _faces[m.Id], m.Definition.DisplayName, place, m.Health / (float)m.MaxHealth,
                     m == _selected || danger != null, m.IsDown, RunVisualPalette.Affinity(m.Affinity));
             }

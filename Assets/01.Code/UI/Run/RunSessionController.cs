@@ -319,21 +319,36 @@ namespace Code.UI.Run
                 return;
             }
             RunCombatantSO minion = minions[index].Combatant;
-            PopupController.Show(PopupRequest.Confirm("원정 · 파견 인원",
-                $"선택한 부하 {_raiders.Count}/3\n{minion.DisplayName} · {_demo.Carryover.MinionHealth[index]}/{minion.MaxHealth}",
-                () => { _raiders.Add(index); SelectRaider(index + 1); }, () => SelectRaider(index + 1), "파견", "남기기"));
+            int health = _demo.Carryover.MinionHealth[index];
+            // 보상·위험을 비용 줄·경고 줄에 둔다(2026-11-10 사용자 목업 승인).
+            _text.Clear().Append(minion.DisplayName).Append(" · 체력 ").Append(health).Append('/').Append(minion.MaxHealth).Append('\n');
+            if (_raiders.Count > 0) _text.Append("지금까지 · ").Append(RaiderNames()).Append('\n');
+            _text.Append("쓰러지면 이 런에서 잃습니다.");
+            bool weak = health < minion.MaxHealth * Deployment.Encounter.Settings.RetreatHealthRatio;
+            PopupController.Show(PopupRequest.Confirm($"원정 · 파견 인원 ({_raiders.Count}/3 선택)", _text.ToString(),
+                    () => { _raiders.Add(index); SelectRaider(index + 1); }, () => SelectRaider(index + 1), "파견", "남기기")
+                .WithLines("승리 보상 · 정예 침입 마력 용량 +1", weak ? "체력이 30% 아래입니다" : null));
         }
 
         private void ShowRaidRoute()
         {
             PopupController.Show(PopupRequest.Choice("원정 · 진입 경로",
-                $"파견 {_raiders.Count}명 · 목표: 진지 대장 처치\n정면: 가까우나 검사와 궁수가 지킵니다.\n우회: 경비실을 피하지만 길이 깁니다.\n진입 후 부하를 골라 다음 방으로 보냅니다.",
-                new[]
-                {
-                    new PopupButtonSpec("다시 선택", PopupButtonStyle.Secondary, BeginRaidSelection),
-                    new PopupButtonSpec("정면", PopupButtonStyle.Primary, () => StartRaid(false)),
-                    new PopupButtonSpec("우회", PopupButtonStyle.Primary, () => StartRaid(true)),
-                }, () => { }));
+                    "정면 · 가깝지만 검사와 궁수가 지킵니다\n우회 · 경비실을 피하지만 길이 깁니다\n진입 뒤 부하를 골라 다음 방으로 보냅니다.",
+                    new[]
+                    {
+                        new PopupButtonSpec("다시 선택", PopupButtonStyle.Secondary, BeginRaidSelection),
+                        new PopupButtonSpec("정면", PopupButtonStyle.Primary, () => StartRaid(false)),
+                        new PopupButtonSpec("우회", PopupButtonStyle.Primary, () => StartRaid(true)),
+                    }, () => { })
+                .WithLines("파견 · " + RaiderNames(), null));
+        }
+
+        private string RaiderNames()
+        {
+            string names = string.Empty;
+            foreach (int raider in _raiders)
+                names += (names.Length > 0 ? ", " : string.Empty) + Deployment.Encounter.Minions[raider].Combatant.DisplayName;
+            return names;
         }
 
         private void StartRaid(bool detour)
@@ -355,27 +370,63 @@ namespace Code.UI.Run
 
         private void ShowSettlement()
         {
+            // 지나온 칸·남은 부하·잃은 부하를 줄마다, 심장·금화는 비용 줄, 패배 이유는 경고 줄에 둔다(2026-11-10 사용자 목업 승인).
             RunBattleCarryover state = _demo.Carryover;
+            RunDemoRoute route = _demo.Route;
+            bool won = route.CurrentResult == RunDemoRoute.Result.Victory;
             _text.Clear();
-            for (int i = 0; i < state.MinionHealth.Length; i++)
-                if (state.MinionHealth[i] == 0)
-                {
-                    if (_text.Length > 0) _text.Append(", ");
-                    _text.Append(Deployment.Encounter.Minions[i].Combatant.DisplayName);
-                }
-            string lost = _text.Length == 0 ? "없음" : _text.ToString();
-            int survivors = Array.FindAll(state.MinionHealth, health => health > 0).Length;
-            string branch = _demo.Route.ChosenBranch is RunDemoRoute.Node node ? NodeLabel(node) : "미방문";
-            string raid = _demo.Route.RaidResult switch
+            AppendRouteStep(RunDemoRoute.Node.ThiefDefense, route);
+            if (route.ChosenBranch is RunDemoRoute.Node branch && route.Current != RunDemoRoute.Node.ThiefDefense)
+                _text.Append(" → ").Append(NodeLabel(branch));
+            AppendRouteStep(RunDemoRoute.Node.SapperDefense, route);
+            AppendRouteStep(RunDemoRoute.Node.OutpostRaid, route);
+            AppendRouteStep(RunDemoRoute.Node.EliteDefense, route);
+            _text.Append("\n남은 부하 · ");
+            AppendMinions(state, alive: true);
+            _text.Append("\n잃은 부하 · ");
+            AppendMinions(state, alive: false);
+            int maxHeart = Deployment.Encounter.Settings.HeartHealth;
+            string warning = won ? null : state.HeartHealth <= 0 ? "심장이 무너졌습니다" : "방어에 실패했습니다";
+            PopupController.Show(PopupRequest.Notice(won ? "시연 런 방어 성공" : "시연 런 패배", _text.ToString(),
+                    () => UnityEngine.SceneManagement.SceneManager.LoadScene("Start"), "타이틀로")
+                .WithLines($"심장 {state.HeartHealth}/{maxHeart} · 금화 {state.Gold}", warning));
+        }
+
+        // 지나온 칸만 "도적 승리"처럼 짧게 붙인다. 앞 칸은 이겨야 다음으로 가므로 지금 칸만 결과를 따로 읽는다.
+        private void AppendRouteStep(RunDemoRoute.Node node, RunDemoRoute route)
+        {
+            if (node > route.Current) return;
+            string name = node switch
             {
-                RunDemoRoute.Result.Victory => "승리",
-                RunDemoRoute.Result.Retreat => "후퇴",
-                RunDemoRoute.Result.Defeat => "실패",
-                _ => "미진행",
+                RunDemoRoute.Node.ThiefDefense => "도적",
+                RunDemoRoute.Node.SapperDefense => "공병",
+                RunDemoRoute.Node.OutpostRaid => "원정",
+                _ => "정예",
             };
-            PopupController.Show(PopupRequest.Notice(_demo.Route.CurrentResult == RunDemoRoute.Result.Victory ? "시연 런 방어 성공" : "시연 런 패배",
-                $"도달 · {NodeLabel(_demo.Route.Current)} / 분기 · {branch}\n원정 · {raid}\n심장 {state.HeartHealth} · 금화 {state.Gold} · 생존 {survivors}명\n잃은 부하 · {lost}",
-                () => UnityEngine.SceneManagement.SceneManager.LoadScene("Start"), "타이틀로"));
+            string result = node == RunDemoRoute.Node.OutpostRaid
+                ? route.RaidResult switch
+                {
+                    RunDemoRoute.Result.Victory => "승리",
+                    RunDemoRoute.Result.Retreat => "후퇴",
+                    _ => "실패",
+                }
+                : node == route.Current && route.CurrentResult != RunDemoRoute.Result.Victory ? "패배" : "승리";
+            if (_text.Length > 0) _text.Append(" → ");
+            _text.Append(name).Append(' ').Append(result);
+        }
+
+        private void AppendMinions(RunBattleCarryover state, bool alive)
+        {
+            int start = _text.Length;
+            for (int i = 0; i < state.MinionHealth.Length; i++)
+            {
+                if (state.MinionHealth[i] > 0 != alive) continue;
+                RunCombatantSO minion = Deployment.Encounter.Minions[i].Combatant;
+                if (_text.Length > start) _text.Append(", ");
+                _text.Append(minion.DisplayName);
+                if (alive) _text.Append(' ').Append(state.MinionHealth[i]).Append('/').Append(minion.MaxHealth);
+            }
+            if (_text.Length == start) _text.Append("없음");
         }
 
         private static string NodeLabel(RunDemoRoute.Node node) => node switch

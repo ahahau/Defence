@@ -90,8 +90,10 @@ namespace Code.Run
                     float length = settings.CorridorLength;
                     _links.Add(new RunLink(index, from, to, vertical, length,
                         a.Length, 0f));
-                    int controller = a.Kind == RunRoomKind.DoorControl && b.Kind == RunRoomKind.Trap ? i
-                        : b.Kind == RunRoomKind.DoorControl && a.Kind == RunRoomKind.Trap ? j : -1;
+                    // 문 제어실은 심장으로 이어진 복도의 문을 잠근다(2026-11-10 사용자 결정, 이전에는 함정 방 쪽 복도).
+                    // 함정 방 쪽 문은 적을 문 앞에 모았다가 한꺼번에 들여보내 켜는 쪽이 손해였다.
+                    int controller = a.Kind == RunRoomKind.DoorControl && b.Kind == RunRoomKind.Heart ? i
+                        : b.Kind == RunRoomKind.DoorControl && a.Kind == RunRoomKind.Heart ? j : -1;
                     _doors.Add(new RunDoor(index, RunPosition.OnLink(index, length * 0.5f), settings.DoorDurability, controller));
                 }
             }

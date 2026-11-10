@@ -49,7 +49,8 @@ namespace Code.Run
                 bool low = actor.IsOnField && actor.Side == RunSide.Minion && actor.Health < actor.MaxHealth * _battle.Settings.RetreatHealthRatio;
                 if (low && !_low[i]) _events.Add(new RunCrisis(RunCrisisKind.LowHealth, i, current));
                 _low[i] = low;
-                bool heart = actor.Side == RunSide.Intruder && actor.HasEntered && current == _battle.HeartRoom;
+                // 원정 진지에는 지킬 심장이 없다(대장실이 심장 자리를 빌린다). 대장이 제 방에 있는 것을 위기로 읽지 않는다.
+                bool heart = !_battle.IsRaid && actor.Side == RunSide.Intruder && actor.HasEntered && current == _battle.HeartRoom;
                 if (heart && !_atHeart[i]) _events.Add(new RunCrisis(RunCrisisKind.HeartEntered, i, current));
                 _atHeart[i] = heart;
             }
