@@ -16,11 +16,44 @@ namespace Code.UI.Run
         [SerializeField] private UnityEngine.UI.Image[] dots = System.Array.Empty<UnityEngine.UI.Image>();
         [SerializeField] private RectTransform canvas;
 
+        [SerializeField, Tooltip("상성표와 안내 줄이 든 아래 띠. 위기 때나 상성 버튼으로 열 때만 보인다.")]
+        private GameObject legendPanel;
+
+        [SerializeField] private UiFrameButton legendToggle;
+
         private string _normalFooter;
         private float _noticeLeft;
+        private bool _battleMode;
+        private bool _legendOpen;
+        private UnityEngine.Events.UnityAction _toggle;
         public bool IsShowing { get; private set; }
 
         private void Awake() => _normalFooter = footer != null ? footer.text : string.Empty;
+
+        private void OnEnable()
+        {
+            _toggle ??= () => { _legendOpen = !_legendOpen; RefreshLegend(); };
+            if (legendToggle != null) legendToggle.Button.onClick.AddListener(_toggle);
+        }
+
+        private void OnDisable()
+        {
+            if (legendToggle != null && _toggle != null) legendToggle.Button.onClick.RemoveListener(_toggle);
+        }
+
+        /// <summary>전투(원정 포함) 중에만 아래 띠와 상성 버튼을 쓴다. 준비 화면에서는 닫는다.</summary>
+        public void SetBattleMode(bool battle, bool openLegend = false)
+        {
+            _battleMode = battle;
+            _legendOpen = battle && openLegend;
+            RefreshLegend();
+        }
+
+        // 아래 띠는 늘 떠 있지 않고 위기 때(대처 안내)나 상성 버튼을 눌렀을 때만 연다(2026-11-10 사용자 C 목업 승인).
+        private void RefreshLegend()
+        {
+            if (legendPanel != null) legendPanel.SetActive(_battleMode && (IsShowing || _legendOpen));
+        }
 
         public void ShowCrisis(string text)
         {
@@ -35,6 +68,7 @@ namespace Code.UI.Run
             }
             footer.SetText(IsShowing ? "부하를 누르고 옮길 방을 누르세요 · 다 됐으면 Space로 계속" : _normalFooter);
             if (!IsShowing) for (int i = 0; i < dots.Length; i++) dots[i].gameObject.SetActive(false);
+            RefreshLegend();
         }
 
         public void Notify(string text)

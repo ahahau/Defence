@@ -24,6 +24,9 @@ namespace Code.UI.Run
         private int _shownState = -1;
         public event Action Activated;
 
+        /// <summary>함정 방 옆에 붙여 놓을 패널(전투 화면이 매 배치 때 옮긴다).</summary>
+        public RectTransform Panel => root != null ? (RectTransform)root.transform : null;
+
         private void OnEnable()
         {
             _activate ??= () => Activated?.Invoke();

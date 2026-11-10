@@ -15,6 +15,8 @@ namespace Code.UI.Popup
         [SerializeField] private TMP_Text message;
         [SerializeField] private TMP_Text cost;
         [SerializeField] private TMP_Text warning;
+        [SerializeField, Tooltip("제목 위 종류별 색 띠. 요청에 색이 없으면 숨긴다.")] private UnityEngine.UI.Image accentBand;
+        [SerializeField] private TMP_Text subtitle;
         [SerializeField] private UiFrameButton[] buttons;
         [SerializeField, Tooltip("버튼 사이 간격 포함 한 칸 폭")] private float buttonStride = 168f;
         [SerializeField] private float buttonRightMargin = 26f;
@@ -74,6 +76,12 @@ namespace Code.UI.Popup
             SetText(message, request.Message);
             SetText(cost, request.CostText);
             SetText(warning, request.WarningText);
+            SetText(subtitle, request.Subtitle);
+            if (accentBand != null)
+            {
+                accentBand.gameObject.SetActive(request.Accent.HasValue);
+                if (request.Accent.HasValue) accentBand.color = request.Accent.Value;
+            }
 
             for (var i = 0; i < buttons.Length; i++)
             {

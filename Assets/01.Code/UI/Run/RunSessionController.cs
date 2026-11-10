@@ -42,6 +42,10 @@ namespace Code.UI.Run
         public RunBattle Battle => _raid ?? _flow.Battle;
         public RunDeployment Deployment => _flow.Deployment;
         public bool IsPreparing => _raid == null && _flow.Phase == RunBattlePhase.Preparation;
+
+        /// <summary>함정 조작 패널과 그 방. 전투 화면이 패널을 함정 방 옆에 붙인다.</summary>
+        public RectTransform TrapPanel => trapControl != null ? trapControl.Panel : null;
+        public int TrapRoom => _trapRoom;
         public bool IsResult => _raid == null ? _flow.Phase == RunBattlePhase.Result : _raid.Outcome != RunBattleOutcome.Ongoing;
         public int EncounterNumber => _flow.EncounterNumber;
         public bool CanPrepareNext => IsResult || (_raid != null && !_raid.IsRaidRetreating);
@@ -107,7 +111,7 @@ namespace Code.UI.Run
             {
                 if (!_raid.IsRaidRetreating)
                     PopupController.Show(PopupRequest.Confirm("원정 후퇴", "부하가 진지 입구까지 걸어 나갑니다. 이동 중에도 공격받습니다.",
-                        _raid.RequestRaidRetreat, confirmLabel: "후퇴").PauseGame());
+                        _raid.RequestRaidRetreat, confirmLabel: "후퇴").PauseGame().WithAccent(HudPalette.Danger, null));
                 return;
             }
             if (!IsResult) return;
@@ -205,7 +209,8 @@ namespace Code.UI.Run
                     new PopupButtonSpec("심장·함정", PopupButtonStyle.Primary, ShowMerchantUpkeep),
                     new PopupButtonSpec("부하 고용", PopupButtonStyle.Primary, ShowMerchantHire, _demo.CanBuyAtMerchant(2)),
                 }, () => { })
-                .WithLines($"가진 금화 {state.Gold} · 각 금화 {RunDemoCampaign.MerchantPrice}", affordable ? null : "금화가 모자라 살 수 없습니다"));
+                .WithLines($"가진 금화 {state.Gold} · 각 금화 {RunDemoCampaign.MerchantPrice}", affordable ? null : "금화가 모자라 살 수 없습니다")
+                .WithAccent(HudPalette.Accent, "금화가 되는 만큼 삽니다"));
         }
 
         private void ShowMerchantUpkeep()
@@ -225,7 +230,8 @@ namespace Code.UI.Run
                     new PopupButtonSpec("심장 수리", PopupButtonStyle.Primary, () => CompleteBranch(0), _demo.CanBuyAtMerchant(0)),
                     new PopupButtonSpec("함정 강화", PopupButtonStyle.Primary, () => CompleteBranch(1), _demo.CanBuyAtMerchant(1)),
                 }, ShowMerchant)
-                .WithLines($"가진 금화 {state.Gold} · 가격 금화 {RunDemoCampaign.MerchantPrice}", warning));
+                .WithLines($"가진 금화 {state.Gold} · 가격 금화 {RunDemoCampaign.MerchantPrice}", warning)
+                .WithAccent(HudPalette.Accent, null));
         }
 
         private void ShowMerchantHire()
@@ -246,34 +252,35 @@ namespace Code.UI.Run
                     new PopupButtonSpec("뒤로", PopupButtonStyle.Secondary, ShowMerchant),
                     new PopupButtonSpec("고용", PopupButtonStyle.Primary, () => CompleteBranch(2), _demo.CanBuyAtMerchant(2)),
                 }, ShowMerchant)
-                .WithLines($"가진 금화 {gold} · 가격 금화 {RunDemoCampaign.MerchantPrice}", affordable ? null : "금화가 모자라 살 수 없습니다"));
+                .WithLines($"가진 금화 {gold} · 가격 금화 {RunDemoCampaign.MerchantPrice}", affordable ? null : "금화가 모자라 살 수 없습니다")
+                .WithAccent(HudPalette.Accent, null));
         }
 
         // ── 던전 정비: 방어·원정이 끝날 때마다 지도보다 먼저 뜬다(2026-11-10 사용자 목업 승인) ──
 
         private void ShowUpkeep()
         {
+            // 본문은 '이름 · 값' 대신 문장으로 쓴다(2026-11-10 사용자 목업 승인).
             RunBattleCarryover state = _demo.Carryover;
-            _text.Clear().Append("고칠 방 · ");
-            int start = _text.Length;
-            for (int i = 0; i < state.RoomBroken.Length; i++)
-            {
-                if (!_demo.IsRoomDamaged(i)) continue;
-                if (_text.Length > start) _text.Append(", ");
-                _text.Append(RunBattleText.RoomName(Deployment.Encounter.GridLayout[i].Kind)).Append(state.RoomBroken[i] ? "(고장)" : "(깎임)");
-            }
-            if (_text.Length == start) _text.Append("없음");
-            _text.Append("\n다친 부하 · ");
-            start = _text.Length;
+            _text.Clear();
+            AppendRoomSentence(state, true, "고장 났습니다.");
+            AppendRoomSentence(state, false, "내구가 깎였습니다.");
+            if (_text.Length == 0) _text.Append("고칠 방이 없습니다.");
+            _text.Append('\n');
+            int hurt = 0;
+            string last = null;
             for (int i = 0; i < state.MinionHealth.Length; i++)
             {
                 if (!_demo.IsMinionHurt(i)) continue;
                 RunCombatantSO minion = Deployment.Encounter.Minions[i].Combatant;
-                if (_text.Length > start) _text.Append(", ");
-                _text.Append(minion.DisplayName).Append(' ').Append(state.MinionHealth[i]).Append('/').Append(minion.MaxHealth);
+                if (hurt++ > 0) _text.Append(", ");
+                _text.Append(minion.DisplayName).Append('(').Append(state.MinionHealth[i]).Append('/').Append(minion.MaxHealth).Append(')');
+                last = minion.DisplayName;
             }
-            if (_text.Length == start) _text.Append("없음");
-            _text.Append("\n마력 용량 · 3 + ").Append(_demo.ExtraCapacity).Append(" (최대 +").Append(RunDemoCampaign.MaxExtraCapacity).Append(')');
+            _text.Append(hurt == 0 ? "다친 부하가 없습니다." : Particle(last, "이", "가") + " 다쳤습니다.");
+            int left = RunDemoCampaign.MaxExtraCapacity - _demo.ExtraCapacity;
+            _text.Append("\n마력 용량 ").Append(3 + _demo.ExtraCapacity)
+                .Append(left > 0 ? $" · {left}번 더 늘릴 수 있습니다." : " · 더 늘릴 수 없습니다.");
             bool anyTarget = UpkeepTargetCount() > 0;
             PopupController.Show(PopupRequest.Choice("던전 정비", _text.ToString(),
                     new[]
@@ -282,7 +289,24 @@ namespace Code.UI.Run
                         new PopupButtonSpec("수리·치료", PopupButtonStyle.Primary, () => ShowUpkeepTarget(0), anyTarget),
                         new PopupButtonSpec("마력 용량 +1", PopupButtonStyle.Primary, BuyCapacity, _demo.CanBuyCapacity),
                     }, LeaveUpkeep)
-                .WithLines($"금화 {state.Gold} · 고치기 {RunDemoCampaign.RepairPrice} · 용량 {RunDemoCampaign.CapacityPrice}", null));
+                .WithLines($"금화 {state.Gold} · 고치기 {RunDemoCampaign.RepairPrice} · 용량 {RunDemoCampaign.CapacityPrice}", null)
+                .WithAccent(HudPalette.Gain, "다음 침입 전에 고칩니다"));
+        }
+
+        // "함정 방, 문 제어실이 고장 났습니다." 처럼 같은 상태의 방을 한 문장으로 잇는다.
+        private void AppendRoomSentence(RunBattleCarryover state, bool broken, string predicate)
+        {
+            string last = null;
+            int lineStart = _text.Length;
+            for (int i = 0; i < state.RoomBroken.Length; i++)
+            {
+                if (!_demo.IsRoomDamaged(i) || state.RoomBroken[i] != broken) continue;
+                if (last != null) _text.Append(", ");
+                else if (lineStart > 0) _text.Append('\n');
+                last = RunBattleText.RoomName(Deployment.Encounter.GridLayout[i].Kind);
+                _text.Append(last);
+            }
+            if (last != null) _text.Append(broken ? Particle(last, "이", "가") : Particle(last, "은", "는")).Append(' ').Append(predicate);
         }
 
         // 수리·치료 대상: 고장·깎인 시스템 방(배치 순서) 다음에 체력이 깎인 부하(배치 순서).
@@ -341,7 +365,8 @@ namespace Code.UI.Run
                         new PopupButtonSpec("다음 대상", PopupButtonStyle.Secondary, () => ShowUpkeepTarget(ordinal + 1), count > 1),
                         new PopupButtonSpec(room >= 0 ? "고치기" : "치료", PopupButtonStyle.Primary, buy, affordable),
                     }, ShowUpkeep)
-                .WithLines($"가진 금화 {state.Gold} · 가격 금화 {price}", affordable ? null : "금화가 모자라 살 수 없습니다"));
+                .WithLines($"가진 금화 {state.Gold} · 가격 금화 {price}", affordable ? null : "금화가 모자라 살 수 없습니다")
+                .WithAccent(HudPalette.Gain, null));
         }
 
         private void BuyCapacity() => BuyUpkeep(_demo.TryBuyCapacity());
@@ -402,7 +427,8 @@ namespace Code.UI.Run
                     new PopupButtonSpec("다른 부하", PopupButtonStyle.Secondary, () => ShowHerbalist(index + 1), injured > 1),
                     new PopupButtonSpec("치료", PopupButtonStyle.Primary, () => CompleteBranch(index)),
                 }, () => { })
-                .WithLines($"비용 없음 · 다친 부하 {injured}명", null));
+                .WithLines($"비용 없음 · 다친 부하 {injured}명", null)
+                .WithAccent(HudPalette.Gain, "한 명을 무료로 치료"));
         }
 
         private void CompleteBranch(int choice)
@@ -454,7 +480,8 @@ namespace Code.UI.Run
             bool weak = health < minion.MaxHealth * Deployment.Encounter.Settings.RetreatHealthRatio;
             PopupController.Show(PopupRequest.Confirm($"원정 · 파견 인원 ({_raiders.Count}/3 선택)", _text.ToString(),
                     () => { _raiders.Add(index); SelectRaider(index + 1); }, () => SelectRaider(index + 1), "파견", "남기기")
-                .WithLines("승리 보상 · 정예 침입 마력 용량 +1", weak ? "체력이 30% 아래입니다" : null));
+                .WithLines("승리 보상 · 정예 침입 마력 용량 +1", weak ? "체력이 30% 아래입니다" : null)
+                .WithAccent(HudPalette.Danger, null));
         }
 
         private void ShowRaidRoute()
@@ -467,7 +494,8 @@ namespace Code.UI.Run
                         new PopupButtonSpec("정면", PopupButtonStyle.Primary, () => StartRaid(false)),
                         new PopupButtonSpec("우회", PopupButtonStyle.Primary, () => StartRaid(true)),
                     }, () => { })
-                .WithLines("파견 · " + RaiderNames(), null));
+                .WithLines("파견 · " + RaiderNames(), null)
+                .WithAccent(HudPalette.Danger, "진지 대장을 노립니다"));
         }
 
         private string RaiderNames()
@@ -491,6 +519,8 @@ namespace Code.UI.Run
             for (int i = 0; i < _roomNames.Length; i++) _roomNames[i] = RoomName(i);
             crisisView.ShowCrisis(null);
             crisisView.ClearNotice();
+            // 원정은 할 일 안내가 필요해 아래 띠를 연 채로 시작한다(상성 버튼으로 닫을 수 있다).
+            crisisView.SetBattleMode(true, true);
             BindTrap();
             Started?.Invoke();
         }
@@ -516,7 +546,8 @@ namespace Code.UI.Run
             string warning = won ? null : state.HeartHealth <= 0 ? "심장이 무너졌습니다" : "방어에 실패했습니다";
             PopupController.Show(PopupRequest.Notice(won ? "시연 런 방어 성공" : "시연 런 패배", _text.ToString(),
                     () => UnityEngine.SceneManagement.SceneManager.LoadScene("Start"), "타이틀로")
-                .WithLines($"심장 {state.HeartHealth}/{maxHeart} · 금화 {state.Gold}", warning));
+                .WithLines($"심장 {state.HeartHealth}/{maxHeart} · 금화 {state.Gold}", warning)
+                .WithAccent(HudPalette.Accent, "1구역 시연 런 결과"));
         }
 
         // 지나온 칸만 "도적 승리"처럼 짧게 붙인다. 앞 칸은 이겨야 다음으로 가므로 지금 칸만 결과를 따로 읽는다.
@@ -615,6 +646,7 @@ namespace Code.UI.Run
             crisisView.ShowCrisis(null);
             crisisView.ClearNotice();
             preparation.Show(IsPreparing);
+            crisisView.SetBattleMode(!IsPreparing);
             RunIntruderEntry[] party = _flow.CurrentParty;
             for (int i = 0; i < preparation.PartyCapacity; i++)
             {
@@ -626,7 +658,7 @@ namespace Code.UI.Run
                 RunIntruderEntry entry = party[i];
                 RunCombatantSO data = entry.Combatant;
                 RunAffinity affinity = entry.OverrideAffinity ? entry.Affinity : data.Affinity;
-                string effect = data.Skill != null ? data.Skill.DisplayName : "큰 기술 없음";
+                string effect = data.Skill != null ? "큰 기술: " + data.Skill.DisplayName : "큰 기술 없음";
                 if (data.Skill != null)
                     foreach (RunTurnSkillEffectSO skillEffect in data.Skill.TurnEffects)
                         if (skillEffect is RunTelegraphSkillEffectSO warning)
@@ -635,19 +667,49 @@ namespace Code.UI.Run
                             {
                                 RunTelegraphKind.PowderBlast => "방 전체 폭파",
                                 RunTelegraphKind.Fireball => "목표 방 화염구",
-                                RunTelegraphKind.Charge => "일자 줄 돌진",
+                                RunTelegraphKind.Charge => "일자 돌진",
                                 _ => "지정 부하 사격",
                             };
-                            effect = $"{warning.WarningSeconds:0.#}초 뒤 {area}";
+                            effect = $"큰 기술: {warning.WarningSeconds:0.#}초 예고 뒤 {area}";
                             break;
                         }
-                string goal = data.IntruderRole == RunIntruderRole.Sapper ? "마력 켜진 방 시스템"
-                    : data.Goal == RunGoal.Vault ? "금고" : "심장";
+                // 카드는 이름 → 노리는 곳 → 큰 기술 순의 문장으로 읽힌다(2026-11-10 사용자 목업 승인).
                 preparation.SetParty(i, data.DisplayName + "  " + HudPalette.Paint(AffinityName(affinity), RunVisualPalette.Affinity(affinity))
-                    + "\n" + effect + "\n목표 · " + goal);
+                    + "\n" + GoalSentence(data) + "\n" + effect);
             }
+            preparation.SetTip(PartyGoalTip(party));
             RefreshPreparation();
             Prepared?.Invoke();
+        }
+
+        /// <summary>마지막 글자에 받침이 있으면 withFinal, 없으면 withoutFinal 조사를 붙인다.</summary>
+        private static string Josa(string word, string withFinal, string withoutFinal) => word + Particle(word, withFinal, withoutFinal);
+
+        private static string Particle(string word, string withFinal, string withoutFinal)
+        {
+            if (string.IsNullOrEmpty(word)) return withoutFinal;
+            char last = word[^1];
+            bool final = last >= '가' && last <= '힣' && (last - '가') % 28 != 0;
+            return final ? withFinal : withoutFinal;
+        }
+
+        private static string GoalSentence(RunCombatantSO data) => data.IntruderRole == RunIntruderRole.Sapper ? "켜진 방을 부숩니다"
+            : data.Goal == RunGoal.Vault ? "금고 금화를 훔칩니다" : "심장을 노립니다";
+
+        // 아래 띠: 이번 파티에 실제로 있는 역할만 말한다(도적전에 공병을 말하지 않는다).
+        private static string PartyGoalTip(RunIntruderEntry[] party)
+        {
+            bool thief = false, sapper = false;
+            foreach (RunIntruderEntry entry in party)
+            {
+                RunCombatantSO data = entry.Combatant;
+                if (data.IntruderRole == RunIntruderRole.Sapper) sapper = true;
+                else if (data.Goal == RunGoal.Vault) thief = true;
+            }
+            // 왼쪽 열 폭이 좁아 한글이 단어 중간에서 끊기지 않게 줄을 직접 나눈다.
+            if (!thief && !sapper) return "이번 적\n모두 심장을 노립니다";
+            string roles = thief && sapper ? "도적은 금고, 공병은 켜진 방" : thief ? "도적은 금고" : "공병은 켜진 방";
+            return "이번 적\n" + roles + "\n나머지는 심장을 노립니다";
         }
 
         private static string AffinityName(RunAffinity affinity) => affinity switch
@@ -702,11 +764,18 @@ namespace Code.UI.Run
             for (int i = 0; i < Deployment.MinionCount; i++)
             {
                 RunCombatantSO data = Deployment.Encounter.Minions[i].Combatant;
-                bool available = CanPlaceMinion(i);
-                preparation.SetMinion(i, data.DisplayName + "\n배치됨 · " + _roomNames[Deployment.RoomOf(i)],
-                    RunVisualPalette.Affinity(data.Affinity), i == _selection, available);
+                // 쓰러진 부하도 카드를 흐리게 남겨 목록에 틈이 생기지 않고 잃은 것이 보이게 한다(2026-11-10 사용자 목업 승인).
+                if (!CanPlaceMinion(i))
+                {
+                    preparation.SetMinion(i, HudPalette.Paint(data.DisplayName + "\n쓰러짐 · 이번 런에서 잃음", HudPalette.TextMuted),
+                        HudPalette.TextMuted, false);
+                    continue;
+                }
+                preparation.SetMinion(i, data.DisplayName + $"\n{Josa(_roomNames[Deployment.RoomOf(i)], "을", "를")} 지킴 · 체력 {Battle.Combatants[i].Health}/{data.MaxHealth}",
+                    RunVisualPalette.Affinity(data.Affinity), i == _selection);
             }
-            string detail = "부하 카드 또는 지도 위 부하를\n끌어 놓거나 눌러 방을 고르세요.";
+            // 조작 안내는 위 제목줄 한 곳에만 둔다(2026-11-10 사용자 목업 승인).
+            string detail = string.Empty;
             if (_selection >= 0)
             {
                 RunCombatantSO data = Deployment.Encounter.Minions[_selection].Combatant;
@@ -715,8 +784,10 @@ namespace Code.UI.Run
             }
             int slots = 0;
             for (int i = 0; i < Deployment.RoomCount; i++) slots += Deployment.MaxMana(i);
-            string slotLine = Deployment.Capacity >= slots ? $"칸 {slots}개 모두 켤 수 있음" : $"칸 {slots}개 중 {Deployment.Capacity}개만";
-            preparation.SetSummary($"남은 마력 {Deployment.Capacity - Deployment.ManaInUse}/{Deployment.Capacity}\n{slotLine}",
+            int unpowered = slots - Deployment.Capacity;
+            string slotLine = unpowered <= 0 ? $"칸 {slots}개를 모두 켤 수 있습니다"
+                : unpowered == 1 ? $"칸이 {slots}개라 하나는 못 켭니다" : $"칸이 {slots}개라 {unpowered}개는 못 켭니다";
+            preparation.SetSummary($"마력 {Deployment.Capacity - Deployment.ManaInUse} 남음\n{slotLine}",
                 $"침입 {EncounterNumber}/{RunBattleFlow.EncounterLimit} · 심장 {Battle.HeartHealth} · 금화 {Battle.VaultGold}\n{detail}", _memory.HasPrevious);
         }
 
@@ -726,6 +797,7 @@ namespace Code.UI.Run
             _monitor = new RunCrisisMonitor(Battle);
             BindTrap();
             preparation.Show(false);
+            crisisView.SetBattleMode(true);
             Started?.Invoke();
         }
 

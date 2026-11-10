@@ -10,9 +10,11 @@ namespace Code.UI.Run
         [SerializeField] private GameObject[] preparationParts = Array.Empty<GameObject>();
         [SerializeField] private GameObject[] battleParts = Array.Empty<GameObject>();
         [SerializeField] private TMP_Text[] partyCards = Array.Empty<TMP_Text>();
+        [SerializeField, Tooltip("partyCards와 같은 순서의 카드 테두리. 빈 칸을 숨길 때 쓴다.")] private GameObject[] partyFrames = Array.Empty<GameObject>();
         [SerializeField] private RunPreparationCard[] minionCards = Array.Empty<RunPreparationCard>();
         [SerializeField] private TMP_Text mana;
         [SerializeField] private TMP_Text detail;
+        [SerializeField] private TMP_Text tip;
         [SerializeField] private UiFrameButton startButton;
         [SerializeField] private UiFrameButton restoreButton;
         [SerializeField] private RectTransform dragGhost;
@@ -88,7 +90,16 @@ namespace Code.UI.Run
 
         public void SetParty(int index, string text)
         {
-            if (index < partyCards.Length) partyCards[index].SetText(text);
+            if (index >= partyCards.Length) return;
+            partyCards[index].SetText(text);
+            // 빈 칸은 테두리까지 숨긴다. 카드는 위에서부터 채우므로 남은 카드 자리는 움직이지 않는다.
+            if (index < partyFrames.Length && partyFrames[index] != null) partyFrames[index].SetActive(!string.IsNullOrEmpty(text));
+        }
+
+        /// <summary>준비 화면 아래 띠. 비우면 씬에 적힌 글을 그대로 둔다.</summary>
+        public void SetTip(string text)
+        {
+            if (tip != null && !string.IsNullOrEmpty(text)) tip.SetText(text);
         }
 
         public void SetMinion(int index, string text, Color color, bool selected, bool available = true)

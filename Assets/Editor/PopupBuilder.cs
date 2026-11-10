@@ -34,8 +34,14 @@ public static class PopupBuilder
         var card = UiKit.Place(UiKit.Rect("Card", panel), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(CardWidth, CardHeight));
         UiKit.Panel(card, HudPalette.Surface, HudPalette.Border, true);
 
+        // 종류별 색 띠(요청에 색이 있을 때만)와 제목 줄 오른쪽 한 줄 부제(2026-11-10 사용자 C 목업 승인).
+        var band = UiKit.TopLeft(UiKit.Rect("AccentBand", card), 26f, 10f, CardWidth - 52f, 4f);
+        var bandImage = UiKit.Image(band, null, HudPalette.Accent, false);
+        band.gameObject.SetActive(false);
         var title = UiKit.Text("Title", card, "제목", 24f, HudPalette.Accent, TextAlignmentOptions.Left, true, true);
         UiKit.TopLeft(title.rectTransform, 26f, 22f, CardWidth - 52f, 32f);
+        var subtitle = UiKit.Text("Subtitle", card, string.Empty, 15f, HudPalette.TextDim, TextAlignmentOptions.Right, false, true);
+        UiKit.Place(subtitle.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-26f, -28f), new Vector2(240f, 24f));
         var divider = UiKit.TopLeft(UiKit.Rect("Divider", card), 26f, 60f, CardWidth - 52f, 2f);
         UiKit.Image(divider, null, HudPalette.BorderQuiet, false);
 
@@ -62,6 +68,8 @@ public static class PopupBuilder
         UiKit.Wire(view, "message", message);
         UiKit.Wire(view, "cost", cost);
         UiKit.Wire(view, "warning", warning);
+        UiKit.Wire(view, "accentBand", bandImage);
+        UiKit.Wire(view, "subtitle", subtitle);
         UiKit.WireArray(view, "buttons", buttons);
         panel.gameObject.SetActive(false);
 

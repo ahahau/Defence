@@ -424,7 +424,9 @@ namespace Code.Run
 
         private Vector3 PathToWorld(RunPosition position) => _grid.ToWorld(position);
         private float RoomTopY(int room) => _grid.RoomRect(room).yMax;
-        private void FitCamera() => _grid.FitCamera(worldCamera, session.IsPreparing ? 0.23f : leftHudFraction, topHudFraction, session.IsPreparing ? 0.09f : 0.21f);
+        // 함정 조작·상성 띠를 걷어 아래 몫을 줄였다(2026-11-10 사용자 C 목업 승인). 원정은 아래 줄 방 이름을 방 밑에 달아 조금 더 둔다.
+        private void FitCamera() => _grid.FitCamera(worldCamera, session.IsPreparing ? 0.23f : leftHudFraction, topHudFraction,
+            session.IsPreparing ? 0.04f : _battle.IsRaid ? 0.09f : 0.06f);
 
         private int ActorFloor(RunCombatant actor) => _battle.Rooms[actor.Position.IsAtEntrance ? _battle.EntryRoom : actor.Position.IsInRoom
             ? actor.Position.Room : _battle.Links[actor.Position.Link].From].Floor;
@@ -526,10 +528,42 @@ namespace Code.Run
                 if (!used) continue;
                 if (panel.Footer != null) panel.Footer.gameObject.SetActive(false);
                 Rect rect = _grid.RoomRect(i);
-                Place(panel.Header, new Vector3(rect.center.x - (i == _battle.EntryRoom ? 2.7f : 0f), rect.yMax + 1.2f, 0f), rect.width);
+                // 원정 진지 아래 줄 방은 위로 난 복도에 이름이 걸려 걷는 부하를 가리므로 방 아래에 단다(2026-11-10 사용자 목업 승인).
+                bool below = _battle.IsRaid && HasVerticalLink(i, true) && !HasVerticalLink(i, false);
+                Place(panel.Header, new Vector3(rect.center.x - (i == _battle.EntryRoom ? 2.7f : 0f), below ? rect.yMin - 0.15f : rect.yMax + 1.2f, 0f), rect.width);
             }
             session.LayoutCrisis(worldCamera, _grid);
+            // 함정 조작은 아래 띠 대신 함정 방 오른쪽 위에 붙인다(2026-11-10 사용자 C 목업 승인).
+            if (session.TrapPanel != null && session.TrapRoom >= 0 && session.TrapRoom < _battle.Rooms.Count
+                && _battle.Rooms[session.TrapRoom].Floor == _grid.Floor)
+            {
+                Rect trap = _grid.RoomRect(session.TrapRoom);
+                PlaceCorner(session.TrapPanel, new Vector3(trap.xMax + 0.25f, trap.yMax, 0f));
+            }
             Place(hud.EntryWaitingRect, _grid.EntranceOutside + new Vector3(2.1f, 0.5f, 0f), 3.8f);
+        }
+
+        /// <summary>월드 점에 패널의 왼쪽 위 모서리를 맞춘다. 크기는 그대로 둔다.</summary>
+        private void PlaceCorner(RectTransform rect, Vector3 world)
+        {
+            Vector2 screen = worldCamera.WorldToScreenPoint(world);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(hudCanvas, screen, null, out Vector2 local);
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0f, 1f);
+            rect.anchoredPosition = local;
+        }
+
+        private bool HasVerticalLink(int room, bool above)
+        {
+            float y = _grid.RoomRect(room).center.y;
+            foreach (RunLink link in _battle.Links)
+            {
+                int other = link.From == room ? link.To : link.To == room ? link.From : -1;
+                if (other < 0 || _battle.Rooms[other].Floor != _battle.Rooms[room].Floor) continue;
+                float otherY = _grid.RoomRect(other).center.y;
+                if (above ? otherY > y + 0.01f : otherY < y - 0.01f) return true;
+            }
+            return false;
         }
 
         /// <summary>월드 점을 HUD 좌표로 옮겨 띠의 위 가장자리를 맞추고, 너비를 방 너비에 맞춘다.</summary>
@@ -697,15 +731,8 @@ namespace Code.Run
                 _shownHeart = _battle.HeartHealth;
                 _shownManaUse = manaUse;
                 _shownManaCap = _battle.ManaCapacity;
-                int rooms = 0;
-                int slots = 0;
-                for (int i = 0; i < _battle.Rooms.Count; i++)
-                {
-                    if (_battle.Rooms[i].Kind != RunRoomKind.Entrance) rooms++;
-                    slots += _battle.Rooms[i].MaxMana;
-                }
-                hud.ShowLedger($"금화 {_shownGold}   심장 {_shownHeart}/{_battle.Settings.HeartHealth}   마력 {_shownManaUse}/{_shownManaCap} · 방 {rooms}개"
-                    + (slots > _shownManaCap ? " · 다 못 켬" : string.Empty));
+                // 방 수·"다 못 켬"은 준비 화면이 이미 알려 줘서 전투 중 위 띠에서는 뺀다(2026-11-10 사용자 목업 승인).
+                hud.ShowLedger($"금화 {_shownGold}   심장 {_shownHeart}/{_battle.Settings.HeartHealth}   마력 {_shownManaUse}/{_shownManaCap}");
             }
 
             int total = 0, remaining = 0, onFloor = 0, waiting = 0;

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Code.UI.Popup
 {
@@ -66,6 +67,20 @@ namespace Code.UI.Popup
         {
             CostText = costText;
             WarningText = warningText;
+            return this;
+        }
+
+        /// <summary>제목 위 색 띠. 없으면 띠를 숨긴다.</summary>
+        public Color? Accent { get; private set; }
+
+        /// <summary>제목 줄 오른쪽의 한 줄 부제. 없으면 비운다.</summary>
+        public string Subtitle { get; private set; }
+
+        /// <summary>팝업 종류를 색 띠와 한 줄 부제로 구분한다(2026-11-10 사용자 C 목업 승인). 색은 HudPalette 값을 넘긴다.</summary>
+        public PopupRequest WithAccent(Color accent, string subtitle)
+        {
+            Accent = accent;
+            Subtitle = subtitle;
             return this;
         }
 
