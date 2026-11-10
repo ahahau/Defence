@@ -56,6 +56,8 @@ namespace Code.Run
         [field: SerializeField, Min(0)] public int TrapDamagePerMana { get; private set; } = 2;
         [field: SerializeField, Min(0f)] public float TrapCooldownSeconds { get; private set; } = 4f;
         [field: SerializeField, Min(1)] public int TrapMaxMana { get; private set; } = 2;
+        [field: SerializeField, Min(1), Tooltip("함정이 다 찬 뒤 충전 시간마다 한 단계씩 더 쌓인다(최대 이 값). 발동하면 단계만큼 피해가 커진다.")]
+        public int TrapMaxStages { get; private set; } = 3;
         [field: SerializeField, Min(0)] public int SpringHealPerSecond { get; private set; } = 1;
 
         [field: Header("Intruders")]
@@ -65,15 +67,23 @@ namespace Code.Run
 
         internal int TrapDamageBonus { get; private set; }
 
+        /// <summary>같은 파티가 들어오는 횟수(시연판 판마다 정함). 1보다 작으면 1로 본다.</summary>
+        internal int WaveCount { get; private set; } = 1;
+
+        /// <summary>무리가 들어오기 시작하는 간격(초).</summary>
+        internal float WaveGapSeconds { get; private set; }
+
         // 전투 깊이 비교 시뮬레이션용(2026-11-09 사용자 승인). 저장하지 않고 기본은 꺼져 있어 게임 규칙은 그대로다.
         internal bool TrapReachesLinks { get; set; }
         internal bool BlocksRepairOfBrokenRooms { get; set; }
 
-        internal RunBattleSettings ForDemo(int mana, int trapDamageBonus, bool hasTimeLimit)
+        internal RunBattleSettings ForDemo(int mana, int trapDamageBonus, bool hasTimeLimit, int waves = 1, float waveGapSeconds = 0f)
         {
             RunBattleSettings copy = (RunBattleSettings)MemberwiseClone();
             copy.StartingManaCapacity = mana;
             copy.TrapDamageBonus = trapDamageBonus;
+            copy.WaveCount = Math.Max(1, waves);
+            copy.WaveGapSeconds = Math.Max(0f, waveGapSeconds);
             if (!hasTimeLimit) copy.TimeLimitSeconds = float.PositiveInfinity;
             return copy;
         }

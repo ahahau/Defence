@@ -74,7 +74,14 @@ namespace Code.UI.Run
             int tenth = Mathf.Clamp(Mathf.CeilToInt(room.TrapCooldown * 10f), 0, _tenths.Length - 1);
             if (tenth != _shownTenth) { _shownTenth = tenth; seconds.SetText(_tenths[tenth]); }
             int value = _battle.TrapDamage(_room);
-            if (value != _shownDamage) { _shownDamage = value; damage.SetText("피해 {0} · 방 안 적 전원", (float)value); }
+            int stage = _battle.TrapStage(_room);
+            // 다 찬 뒤에도 모으면 단계가 올라 피해가 커진다(2026-11-10 사용자 결정). 단계도 함께 보인다.
+            int shown = value * 10 + stage;
+            if (shown != _shownDamage)
+            {
+                _shownDamage = shown;
+                damage.SetText("피해 {0} · 단계 {1}/{2} · 방 안 적 전원", value, stage, _battle.Settings.TrapMaxStages);
+            }
             float duration = _battle.Settings.TrapCooldownSeconds;
             charge.fillAmount = duration > 0f ? Mathf.Clamp01(1f - room.TrapCooldown / duration) : 1f;
         }

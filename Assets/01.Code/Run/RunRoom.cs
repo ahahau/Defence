@@ -79,5 +79,10 @@ namespace Code.Run
         }
 
         internal void SetTrapCooldown(float seconds) => TrapCooldown = System.Math.Max(0f, seconds);
+
+        /// <summary>함정이 다 찬 뒤 더 모은 초. 단계 계산에 쓰고 발동하면 0으로 돌아간다.</summary>
+        public float TrapStoredSeconds { get; private set; }
+
+        internal void SetTrapStored(float seconds) => TrapStoredSeconds = System.Math.Max(0f, seconds);
     }
 }

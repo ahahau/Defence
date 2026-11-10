@@ -20,6 +20,9 @@ namespace Code.Run
             public int Branch = -1;
             public RunDemoRoute.Result RaidResult;
             public int TrapBonus;
+            // 2026-11-10 던전 정비: 산 마력 용량과 지금 상인 칸에서 산 항목. 예전 저장에는 없어 0으로 읽힌다.
+            public int ExtraCapacity;
+            public int MerchantBought;
             public RunBattleCarryover Carryover;
 
             internal RunDemoRoute GetRoute() => RunDemoRoute.Restore(Current, Result,
@@ -45,6 +48,8 @@ namespace Code.Run
                 Branch = route.ChosenBranch.HasValue ? (int)route.ChosenBranch.Value : -1,
                 RaidResult = route.RaidResult,
                 TrapBonus = campaign.TrapBonus,
+                ExtraCapacity = campaign.ExtraCapacity,
+                MerchantBought = campaign.MerchantBought,
                 Carryover = campaign.Carryover,
             }, false);
         }
@@ -67,7 +72,11 @@ namespace Code.Run
             try
             {
                 Checkpoint value = JsonUtility.FromJson<Checkpoint>(File.ReadAllText(path));
-                if (value == null || value.Version != Version || value.GetRoute() == null || value.TrapBonus is not (0 or 2)) return null;
+                if (value == null || value.Version != Version || value.GetRoute() == null || value.TrapBonus is not (0 or 2)
+                    || value.ExtraCapacity < 0 || value.ExtraCapacity > RunDemoCampaign.MaxExtraCapacity || value.MerchantBought is < 0 or > 0b111) return null;
+                // JsonUtility는 null 이월 상태를 빈 배열 객체로 쓴다. 새 게임 체크포인트는 이월 상태가 없는 것으로 읽는다.
+                if (value.Carryover != null && (value.Carryover.MinionHealth == null || value.Carryover.MinionHealth.Length == 0))
+                    value.Carryover = null;
                 if (value.Carryover == null)
                     return value.Current == RunDemoRoute.Node.ThiefDefense && value.Result == RunDemoRoute.Result.Pending ? value : null;
                 RunBattleCarryover state = value.Carryover;

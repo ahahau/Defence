@@ -170,6 +170,13 @@ namespace Code.Run
             return combatant;
         }
 
+        /// <summary>다음에 줄 세우는 적이 이 시각(초) 이후에 들어오게 한다. 두 번째 무리에 쓴다.</summary>
+        public void DelayNextEntryUntil(float seconds)
+        {
+            if (Settings.EntryIntervalSeconds <= Epsilon) return;
+            _queuedIntruders = Math.Max(_queuedIntruders, (int)Math.Ceiling(seconds / Settings.EntryIntervalSeconds - Epsilon));
+        }
+
         /// <summary>적을 입구 줄에 세운다. 넣은 순서대로 입장 간격마다 한 명씩 들어온다.</summary>
         public RunCombatant AddIntruderAtEntrance(RunCombatantSO definition, RunAffinity? affinity = null)
         {
@@ -298,12 +305,23 @@ namespace Code.Run
         /// <summary>모든 부하의 기준 자리는 방 중앙이다. 화면 겹침은 별도로 보정한다.</summary>
         public RunPosition PostPosition(RunCombatantSO definition, int roomIndex) => CenterOf(roomIndex);
 
-        /// <summary>다음에 이 함정 방이 줄 피해. 꺼져 있으면 0. 화면 표시용.</summary>
+        /// <summary>다음에 이 함정 방이 줄 피해(쌓인 단계 포함). 꺼져 있으면 0. 화면 표시용.</summary>
         public int TrapDamage(int roomIndex)
         {
             RunRoom room = _rooms[roomIndex];
             if (room.Kind != RunRoomKind.Trap || !IsPowered(roomIndex)) return 0;
-            return Boost(room, Settings.TrapDamagePerMana * room.Mana + Settings.TrapDamageBonus);
+            return Boost(room, Settings.TrapDamagePerMana * room.Mana + Settings.TrapDamageBonus) * TrapStage(roomIndex);
+        }
+
+        /// <summary>
+        /// 함정에 쌓인 단계(1부터). 다 찬 뒤 충전 시간마다 한 단계씩 더 쌓인다(2026-11-10 사용자 결정 "충전이 쌓임").
+        /// 아직 차지 않았으면 1이다.
+        /// </summary>
+        public int TrapStage(int roomIndex)
+        {
+            RunRoom room = _rooms[roomIndex];
+            if (room.Kind != RunRoomKind.Trap || room.TrapCooldown > Epsilon || Settings.TrapCooldownSeconds <= Epsilon) return 1;
+            return Math.Min(Settings.TrapMaxStages, 1 + (int)((room.TrapStoredSeconds + Epsilon) / Settings.TrapCooldownSeconds));
         }
 
         // ── 대상 ──
@@ -417,7 +435,10 @@ namespace Code.Run
 
         private void UpdateTrap(RunRoom room, float dt)
         {
-            if (room.TrapCooldown > 0f && IsPowered(room.Index)) room.SetTrapCooldown(room.TrapCooldown - dt);
+            if (!IsPowered(room.Index)) return;
+            if (room.TrapCooldown > 0f) room.SetTrapCooldown(room.TrapCooldown - dt);
+            // 다 찬 뒤에도 전력이 있으면 계속 모은다. 최대 단계에 닿으면 더 쌓지 않는다.
+            else if (TrapStage(room.Index) < Settings.TrapMaxStages) room.SetTrapStored(room.TrapStoredSeconds + dt);
         }
 
         /// <summary>수동 발동 조건. 전력·충전·대상을 발동 순간 다시 확인한다.</summary>
@@ -459,6 +480,7 @@ namespace Code.Run
             foreach (RunCombatant intruder in _scratch)
                 DealDamage(null, intruder, RunAffinityRules.Damage(damage, room.TrapAffinity, intruder.Affinity));
             room.SetTrapCooldown(Settings.TrapCooldownSeconds);
+            room.SetTrapStored(0f);
             return true;
         }
 

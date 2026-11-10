@@ -43,9 +43,14 @@ namespace Code.Run
             }
             if (deployment != null)
                 for (int i = 0; i < GridLayout.Length; i++) battle.SetMana(i, deployment.ManaAt(i));
-            foreach (RunIntruderEntry intruder in party)
-                if (intruder.Combatant != null)
-                    battle.AddIntruderAtEntrance(intruder.Combatant, intruder.OverrideAffinity ? intruder.Affinity : null);
+            // 무리마다 같은 파티가 입장 줄에 다시 선다. 다음 무리는 정한 간격에 맞춰 입장을 시작한다(2026-11-10 사용자 결정).
+            for (int wave = 0; wave < System.Math.Max(1, settings.WaveCount); wave++)
+            {
+                if (wave > 0) battle.DelayNextEntryUntil(wave * settings.WaveGapSeconds);
+                foreach (RunIntruderEntry intruder in party)
+                    if (intruder.Combatant != null)
+                        battle.AddIntruderAtEntrance(intruder.Combatant, intruder.OverrideAffinity ? intruder.Affinity : null);
+            }
             return battle;
         }
     }

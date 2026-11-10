@@ -23,6 +23,8 @@ namespace Code.UI.Run
         private RunBattle _raid;
         private readonly List<int> _raiders = new(3);
         private bool _saveBlocked;
+        // 끝난 방어·원정 칸에서 던전 정비 창을 이미 지나갔는가. 새 칸에 들어가면 다시 띄운다.
+        private bool _upkeepDone;
         private RunCrisisMonitor _monitor;
         private bool[] _highlighted;
         private bool[] _danger;
@@ -121,6 +123,11 @@ namespace Code.UI.Run
                 else ShowDemoBranch();
                 return;
             }
+            if (!_upkeepDone && route.Current is not (RunDemoRoute.Node.Merchant or RunDemoRoute.Node.StoryEvent))
+            {
+                ShowUpkeep();
+                return;
+            }
             if (route.Current == RunDemoRoute.Node.ThiefDefense)
             {
                 PopupController.Show(PopupRequest.Choice("구역 지도 · 도적 침입",
@@ -151,6 +158,7 @@ namespace Code.UI.Run
         private void EnterDemoNode(RunDemoRoute.Node node)
         {
             if (!_demo.Route.TryEnter(node)) return;
+            _upkeepDone = false;
             SaveCheckpoint();
             switch (node)
             {
@@ -182,19 +190,20 @@ namespace Code.UI.Run
 
         // 범용 팝업 버튼이 3개까지라 상인은 두 단계로 보인다(2026-11-10 사용자 "두 단계 팝업").
         // 가격·가진 금화는 비용 줄, 살 수 없는 이유는 경고 줄에 둔다(2026-11-10 사용자 목업 승인).
+        // 항목마다 한 번, 금화가 되는 만큼 산다. 떠나기를 눌러야 칸이 끝난다(2026-11-10 던전 정비 목업 승인).
         private void ShowMerchant()
         {
             RunBattleCarryover state = _demo.Carryover;
             int lost = _demo.FirstLostMinion;
             bool affordable = state.Gold >= RunDemoCampaign.MerchantPrice;
-            string hire = lost >= 0 ? $"쓰러진 {Deployment.Encounter.Minions[lost].Combatant.DisplayName} 복귀" : "쓰러진 부하 없음";
+            string hire = _demo.HasBoughtAtMerchant(2) ? "고용함" : lost >= 0 ? $"쓰러진 {Deployment.Encounter.Minions[lost].Combatant.DisplayName} 복귀" : "쓰러진 부하 없음";
             PopupController.Show(PopupRequest.Choice("상인",
-                $"던전 정비 · 심장 수리나 함정 강화\n부하 고용 · {hire}\n한 가지만 살 수 있습니다.",
+                $"심장·함정 · 심장 수리나 함정 강화\n부하 고용 · {hire}\n항목마다 한 번, 금화가 되는 만큼 살 수 있습니다.",
                 new[]
                 {
                     new PopupButtonSpec("떠나기", PopupButtonStyle.Secondary, () => CompleteBranch(-1)),
-                    new PopupButtonSpec("던전 정비", PopupButtonStyle.Primary, ShowMerchantUpkeep),
-                    new PopupButtonSpec("부하 고용", PopupButtonStyle.Primary, ShowMerchantHire, affordable && lost >= 0),
+                    new PopupButtonSpec("심장·함정", PopupButtonStyle.Primary, ShowMerchantUpkeep),
+                    new PopupButtonSpec("부하 고용", PopupButtonStyle.Primary, ShowMerchantHire, _demo.CanBuyAtMerchant(2)),
                 }, () => { })
                 .WithLines($"가진 금화 {state.Gold} · 각 금화 {RunDemoCampaign.MerchantPrice}", affordable ? null : "금화가 모자라 살 수 없습니다"));
         }
@@ -205,14 +214,16 @@ namespace Code.UI.Run
             int maxHeart = Deployment.Encounter.Settings.HeartHealth;
             bool affordable = state.Gold >= RunDemoCampaign.MerchantPrice;
             bool heartFull = state.HeartHealth >= maxHeart;
-            string warning = !affordable ? "금화가 모자라 살 수 없습니다" : heartFull ? "심장이 가득 차 수리할 수 없습니다" : null;
-            PopupController.Show(PopupRequest.Choice("상인 · 던전 정비",
-                $"심장 수리 · 심장 +10 (지금 {state.HeartHealth}/{maxHeart})\n함정 강화 · 이번 런 함정 기본 피해 +2",
+            string warning = !affordable ? "금화가 모자라 살 수 없습니다"
+                : _demo.HasBoughtAtMerchant(0) && _demo.HasBoughtAtMerchant(1) ? "둘 다 샀습니다"
+                : heartFull && !_demo.HasBoughtAtMerchant(0) ? "심장이 가득 차 수리할 수 없습니다" : null;
+            PopupController.Show(PopupRequest.Choice("상인 · 심장·함정",
+                $"심장 수리 · 심장 +10 (지금 {state.HeartHealth}/{maxHeart}){(_demo.HasBoughtAtMerchant(0) ? " · 삼" : string.Empty)}\n함정 강화 · 이번 런 함정 기본 피해 +2{(_demo.HasBoughtAtMerchant(1) ? " · 삼" : string.Empty)}",
                 new[]
                 {
                     new PopupButtonSpec("뒤로", PopupButtonStyle.Secondary, ShowMerchant),
-                    new PopupButtonSpec("심장 수리", PopupButtonStyle.Primary, () => CompleteBranch(0), affordable && !heartFull),
-                    new PopupButtonSpec("함정 강화", PopupButtonStyle.Primary, () => CompleteBranch(1), affordable),
+                    new PopupButtonSpec("심장 수리", PopupButtonStyle.Primary, () => CompleteBranch(0), _demo.CanBuyAtMerchant(0)),
+                    new PopupButtonSpec("함정 강화", PopupButtonStyle.Primary, () => CompleteBranch(1), _demo.CanBuyAtMerchant(1)),
                 }, ShowMerchant)
                 .WithLines($"가진 금화 {state.Gold} · 가격 금화 {RunDemoCampaign.MerchantPrice}", warning));
         }
@@ -220,7 +231,7 @@ namespace Code.UI.Run
         private void ShowMerchantHire()
         {
             int lost = _demo.FirstLostMinion;
-            if (lost < 0)
+            if (lost < 0 || _demo.HasBoughtAtMerchant(2))
             {
                 ShowMerchant();
                 return;
@@ -233,9 +244,123 @@ namespace Code.UI.Run
                 new[]
                 {
                     new PopupButtonSpec("뒤로", PopupButtonStyle.Secondary, ShowMerchant),
-                    new PopupButtonSpec("고용", PopupButtonStyle.Primary, () => CompleteBranch(2), affordable),
+                    new PopupButtonSpec("고용", PopupButtonStyle.Primary, () => CompleteBranch(2), _demo.CanBuyAtMerchant(2)),
                 }, ShowMerchant)
                 .WithLines($"가진 금화 {gold} · 가격 금화 {RunDemoCampaign.MerchantPrice}", affordable ? null : "금화가 모자라 살 수 없습니다"));
+        }
+
+        // ── 던전 정비: 방어·원정이 끝날 때마다 지도보다 먼저 뜬다(2026-11-10 사용자 목업 승인) ──
+
+        private void ShowUpkeep()
+        {
+            RunBattleCarryover state = _demo.Carryover;
+            _text.Clear().Append("고칠 방 · ");
+            int start = _text.Length;
+            for (int i = 0; i < state.RoomBroken.Length; i++)
+            {
+                if (!_demo.IsRoomDamaged(i)) continue;
+                if (_text.Length > start) _text.Append(", ");
+                _text.Append(RunBattleText.RoomName(Deployment.Encounter.GridLayout[i].Kind)).Append(state.RoomBroken[i] ? "(고장)" : "(깎임)");
+            }
+            if (_text.Length == start) _text.Append("없음");
+            _text.Append("\n다친 부하 · ");
+            start = _text.Length;
+            for (int i = 0; i < state.MinionHealth.Length; i++)
+            {
+                if (!_demo.IsMinionHurt(i)) continue;
+                RunCombatantSO minion = Deployment.Encounter.Minions[i].Combatant;
+                if (_text.Length > start) _text.Append(", ");
+                _text.Append(minion.DisplayName).Append(' ').Append(state.MinionHealth[i]).Append('/').Append(minion.MaxHealth);
+            }
+            if (_text.Length == start) _text.Append("없음");
+            _text.Append("\n마력 용량 · 3 + ").Append(_demo.ExtraCapacity).Append(" (최대 +").Append(RunDemoCampaign.MaxExtraCapacity).Append(')');
+            bool anyTarget = UpkeepTargetCount() > 0;
+            PopupController.Show(PopupRequest.Choice("던전 정비", _text.ToString(),
+                    new[]
+                    {
+                        new PopupButtonSpec("지도로", PopupButtonStyle.Secondary, LeaveUpkeep),
+                        new PopupButtonSpec("수리·치료", PopupButtonStyle.Primary, () => ShowUpkeepTarget(0), anyTarget),
+                        new PopupButtonSpec("마력 용량 +1", PopupButtonStyle.Primary, BuyCapacity, _demo.CanBuyCapacity),
+                    }, LeaveUpkeep)
+                .WithLines($"가진 금화 {state.Gold} · 수리·치료 {RunDemoCampaign.RepairPrice} · 용량 {RunDemoCampaign.CapacityPrice}", null));
+        }
+
+        // 수리·치료 대상: 고장·깎인 시스템 방(배치 순서) 다음에 체력이 깎인 부하(배치 순서).
+        private int UpkeepTargetCount()
+        {
+            int count = 0;
+            for (int i = 0; i < _demo.Carryover.RoomBroken.Length; i++) if (_demo.IsRoomDamaged(i)) count++;
+            for (int i = 0; i < _demo.Carryover.MinionHealth.Length; i++) if (_demo.IsMinionHurt(i)) count++;
+            return count;
+        }
+
+        // n번째 대상을 돌려준다. 방이면 room, 부하면 minion이 0 이상이다.
+        private void UpkeepTarget(int ordinal, out int room, out int minion)
+        {
+            room = minion = -1;
+            for (int i = 0; i < _demo.Carryover.RoomBroken.Length; i++)
+                if (_demo.IsRoomDamaged(i) && ordinal-- == 0) { room = i; return; }
+            for (int i = 0; i < _demo.Carryover.MinionHealth.Length; i++)
+                if (_demo.IsMinionHurt(i) && ordinal-- == 0) { minion = i; return; }
+        }
+
+        private void ShowUpkeepTarget(int ordinal)
+        {
+            int count = UpkeepTargetCount();
+            if (count == 0)
+            {
+                ShowUpkeep();
+                return;
+            }
+            ordinal %= count;
+            UpkeepTarget(ordinal, out int room, out int minionIndex);
+            RunBattleCarryover state = _demo.Carryover;
+            int price;
+            string line;
+            System.Action buy;
+            if (room >= 0)
+            {
+                int max = Deployment.Encounter.Settings.RoomDurability;
+                string name = RunBattleText.RoomName(Deployment.Encounter.GridLayout[room].Kind);
+                line = state.RoomBroken[room] ? $"{name} · 고장 → 내구 가득" : $"{name} · 내구 {Mathf.CeilToInt(state.RoomDurability[room])}/{max} → {max}/{max}";
+                price = RunDemoCampaign.RepairPrice;
+                buy = () => BuyUpkeep(_demo.TryRepairRoom(room));
+            }
+            else
+            {
+                RunCombatantSO minion = Deployment.Encounter.Minions[minionIndex].Combatant;
+                line = $"{minion.DisplayName} · 체력 {state.MinionHealth[minionIndex]}/{minion.MaxHealth} → {minion.MaxHealth}/{minion.MaxHealth}";
+                price = RunDemoCampaign.HealPrice;
+                buy = () => BuyUpkeep(_demo.TryHealMinion(minionIndex));
+            }
+            bool affordable = state.Gold >= price;
+            PopupController.Show(PopupRequest.Choice("던전 정비 · 수리·치료", $"{line} ({ordinal + 1}/{count})",
+                    new[]
+                    {
+                        new PopupButtonSpec("뒤로", PopupButtonStyle.Secondary, ShowUpkeep),
+                        new PopupButtonSpec("다음 대상", PopupButtonStyle.Secondary, () => ShowUpkeepTarget(ordinal + 1), count > 1),
+                        new PopupButtonSpec(room >= 0 ? "고치기" : "치료", PopupButtonStyle.Primary, buy, affordable),
+                    }, ShowUpkeep)
+                .WithLines($"가진 금화 {state.Gold} · 가격 금화 {price}", affordable ? null : "금화가 모자라 살 수 없습니다"));
+        }
+
+        private void BuyCapacity() => BuyUpkeep(_demo.TryBuyCapacity());
+
+        private void BuyUpkeep(bool bought)
+        {
+            if (bought)
+            {
+                // 끝난 전투가 지도 뒤 화면을 그리므로 고친 방·치료한 부하·금화를 바로 보인다.
+                _demo.Carryover.ApplyTo(Battle);
+                SaveCheckpoint();
+            }
+            ShowUpkeep();
+        }
+
+        private void LeaveUpkeep()
+        {
+            _upkeepDone = true;
+            OpenNextEncounter();
         }
 
         private void ShowHerbalist(int from)
@@ -282,11 +407,13 @@ namespace Code.UI.Run
 
         private void CompleteBranch(int choice)
         {
+            bool merchantPurchase = _demo.Route.Current == RunDemoRoute.Node.Merchant && choice >= 0;
             if (!_demo.ResolveBranch(choice)) return;
             // 끝난 전투가 지도 뒤 화면을 그리므로 고용·치료한 부하 체력까지 이어지는 값으로 맞춘다.
             _demo.Carryover.ApplyTo(Battle);
             SaveCheckpoint();
-            OpenNextEncounter();
+            if (merchantPurchase) ShowMerchant();
+            else OpenNextEncounter();
         }
 
         private void PrepareDefense(int number)
@@ -451,7 +578,7 @@ namespace Code.UI.Run
                 return;
             }
             RunDemoRoute route = checkpoint.GetRoute();
-            _demo.Restore(route, carryover, checkpoint.TrapBonus);
+            _demo.Restore(route, carryover, checkpoint.TrapBonus, checkpoint.ExtraCapacity, checkpoint.MerchantBought);
             int number = route.Current switch
             {
                 RunDemoRoute.Node.ThiefDefense or RunDemoRoute.Node.Merchant or RunDemoRoute.Node.StoryEvent => 1,

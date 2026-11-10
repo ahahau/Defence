@@ -63,6 +63,13 @@ namespace Code.Run
             return variant;
         }
 
+        /// <summary>시연용 변형의 최대 체력을 배율만큼 바꾼다. 에셋이 아닌 <see cref="CreateDemoVariant"/> 사본에만 쓴다.</summary>
+        internal void ScaleDemoHealth(float ratio)
+        {
+            if (_demoDisplayName == null) throw new System.InvalidOperationException("시연용 변형에만 쓸 수 있습니다.");
+            MaxHealth = Mathf.Max(1, Mathf.RoundToInt(MaxHealth * ratio));
+        }
+
         /// <summary>
         /// 그림 묶음. 적은 데이터에, 부하는 프리팹의 EntityRender에 들어 있다.
         /// 전투를 차릴 때 한 번 부른다(프리팹 계층을 훑는다).
