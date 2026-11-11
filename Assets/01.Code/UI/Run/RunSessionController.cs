@@ -161,7 +161,7 @@ namespace Code.UI.Run
 
         private void EnterDemoNode(RunDemoRoute.Node node)
         {
-            if (!_demo.Route.TryEnter(node)) return;
+            if (!_demo.EnterNode(node)) return;
             _upkeepDone = false;
             SaveCheckpoint();
             switch (node)
@@ -200,7 +200,7 @@ namespace Code.UI.Run
             RunBattleCarryover state = _demo.Carryover;
             int lost = _demo.FirstLostMinion;
             bool affordable = state.Gold >= RunDemoCampaign.MerchantPrice;
-            string hire = _demo.HasBoughtAtMerchant(2) ? "고용함" : lost >= 0 ? $"쓰러진 {Deployment.Encounter.Minions[lost].Combatant.DisplayName} 복귀" : "쓰러진 부하 없음";
+            string hire = _demo.HasBoughtAtMerchant(2) ? "고용함" : lost >= 0 ? $"쓰러진 {_demo.Roster[lost].Combatant.DisplayName} 복귀" : "쓰러진 부하 없음";
             PopupController.Show(PopupRequest.Choice("상인",
                 $"심장·함정 · 심장 수리나 함정 강화\n부하 고용 · {hire}\n항목마다 한 번, 금화가 되는 만큼 살 수 있습니다.",
                 new[]
@@ -242,7 +242,7 @@ namespace Code.UI.Run
                 ShowMerchant();
                 return;
             }
-            RunCombatantSO minion = Deployment.Encounter.Minions[lost].Combatant;
+            RunCombatantSO minion = _demo.Roster[lost].Combatant;
             int gold = _demo.Carryover.Gold;
             bool affordable = gold >= RunDemoCampaign.MerchantPrice;
             PopupController.Show(PopupRequest.Choice("상인 · 부하 고용",
@@ -272,7 +272,7 @@ namespace Code.UI.Run
             for (int i = 0; i < state.MinionHealth.Length; i++)
             {
                 if (!_demo.IsMinionHurt(i)) continue;
-                RunCombatantSO minion = Deployment.Encounter.Minions[i].Combatant;
+                RunCombatantSO minion = _demo.Roster[i].Combatant;
                 if (hurt++ > 0) _text.Append(", ");
                 _text.Append(minion.DisplayName).Append('(').Append(state.MinionHealth[i]).Append('/').Append(minion.MaxHealth).Append(')');
                 last = minion.DisplayName;
@@ -283,7 +283,7 @@ namespace Code.UI.Run
             for (int i = 0; i < state.MinionHealth.Length; i++)
             {
                 if (!_demo.IsMinionLost(i)) continue;
-                _text.Append(lost++ == 0 ? "\n쓰러진 부하: " : ", ").Append(Deployment.Encounter.Minions[i].Combatant.DisplayName);
+                _text.Append(lost++ == 0 ? "\n쓰러진 부하: " : ", ").Append(_demo.Roster[i].Combatant.DisplayName);
             }
             int left = RunDemoCampaign.MaxExtraCapacity - _demo.ExtraCapacity;
             _text.Append("\n마력 용량 ").Append(3 + _demo.ExtraCapacity)
@@ -362,14 +362,14 @@ namespace Code.UI.Run
             }
             else if (hire)
             {
-                RunCombatantSO minion = Deployment.Encounter.Minions[minionIndex].Combatant;
+                RunCombatantSO minion = _demo.Roster[minionIndex].Combatant;
                 line = $"{minion.DisplayName} · 쓰러짐 → 체력 {minion.MaxHealth}/{minion.MaxHealth}로 고용";
                 price = RunDemoCampaign.UpkeepHirePrice;
                 buy = () => BuyUpkeep(_demo.TryHireAtUpkeep(minionIndex));
             }
             else
             {
-                RunCombatantSO minion = Deployment.Encounter.Minions[minionIndex].Combatant;
+                RunCombatantSO minion = _demo.Roster[minionIndex].Combatant;
                 line = $"{minion.DisplayName} · 체력 {state.MinionHealth[minionIndex]}/{minion.MaxHealth} → {minion.MaxHealth}/{minion.MaxHealth}";
                 price = RunDemoCampaign.HealPrice;
                 buy = () => BuyUpkeep(_demo.TryHealMinion(minionIndex));
@@ -407,7 +407,7 @@ namespace Code.UI.Run
 
         private void ShowHerbalist(int from)
         {
-            RunPlacement[] minions = Deployment.Encounter.Minions;
+            RunPlacement[] minions = _demo.Roster;
             int index = -1;
             int injured = 0;
             for (int offset = 0; offset < minions.Length; offset++)
@@ -462,7 +462,7 @@ namespace Code.UI.Run
         private void PrepareDefense(int number)
         {
             _raid = null;
-            _flow.PrepareDemoDefense(number, _demo.DefenseSettings(number), _demo.DefenseParty(number), _demo.Carryover);
+            _flow.PrepareDemoDefense(number, _demo.DefenseSettings(number), _demo.DefenseParty(number), _demo.Carryover, _demo.Roster);
             ShowPreparation(Deployment.Encounter);
         }
 
@@ -474,7 +474,7 @@ namespace Code.UI.Run
 
         private void SelectRaider(int index)
         {
-            RunPlacement[] minions = Deployment.Encounter.Minions;
+            RunPlacement[] minions = _demo.Roster;
             while (index < minions.Length && _demo.Carryover.MinionHealth[index] <= 0) index++;
             if (index == minions.Length || _raiders.Count == 3)
             {
@@ -519,7 +519,7 @@ namespace Code.UI.Run
         {
             string names = string.Empty;
             foreach (int raider in _raiders)
-                names += (names.Length > 0 ? ", " : string.Empty) + Deployment.Encounter.Minions[raider].Combatant.DisplayName;
+                names += (names.Length > 0 ? ", " : string.Empty) + _demo.Roster[raider].Combatant.DisplayName;
             return names;
         }
 
@@ -596,7 +596,7 @@ namespace Code.UI.Run
             for (int i = 0; i < state.MinionHealth.Length; i++)
             {
                 if (state.MinionHealth[i] > 0 != alive) continue;
-                RunCombatantSO minion = Deployment.Encounter.Minions[i].Combatant;
+                RunCombatantSO minion = _demo.Roster[i].Combatant;
                 if (_text.Length > start) _text.Append(", ");
                 _text.Append(minion.DisplayName);
                 if (alive) _text.Append(' ').Append(state.MinionHealth[i]).Append('/').Append(minion.MaxHealth);
@@ -619,21 +619,22 @@ namespace Code.UI.Run
             RunDemoSave.Checkpoint checkpoint = RunDemoSave.Load(out _saveBlocked);
             if (checkpoint == null || checkpoint.Carryover == null) return;
             RunBattleCarryover carryover = checkpoint.Carryover;
-            if (carryover.MinionHealth.Length != encounter.Minions.Length || carryover.RoomDurability.Length != encounter.GridLayout.Length)
+            int minions = encounter.Minions.Length + (checkpoint.ExtraMinionKind >= 0 ? 1 : 0);
+            if (carryover.MinionHealth.Length != minions || carryover.RoomDurability.Length != encounter.GridLayout.Length)
             {
                 _saveBlocked = true;
                 Debug.LogWarning("현재 던전 구성과 다른 시연 저장을 보존합니다.", this);
                 return;
             }
             RunDemoRoute route = checkpoint.GetRoute();
-            _demo.Restore(route, carryover, checkpoint.TrapBonus, checkpoint.ExtraCapacity, checkpoint.MerchantBought);
+            _demo.Restore(route, checkpoint);
             int number = route.Current switch
             {
                 RunDemoRoute.Node.ThiefDefense or RunDemoRoute.Node.Merchant or RunDemoRoute.Node.StoryEvent => 1,
                 RunDemoRoute.Node.EliteDefense => 3,
                 _ => 2,
             };
-            _flow.PrepareDemoDefense(number, _demo.DefenseSettings(number), _demo.DefenseParty(number), carryover);
+            _flow.PrepareDemoDefense(number, _demo.DefenseSettings(number), _demo.DefenseParty(number), carryover, _demo.Roster);
             bool defense = route.Current is RunDemoRoute.Node.ThiefDefense or RunDemoRoute.Node.SapperDefense or RunDemoRoute.Node.EliteDefense;
             if (!defense || route.CurrentResult != RunDemoRoute.Result.Pending)
                 _flow.RestoreDemoResult(route.IsFinished && route.CurrentResult == RunDemoRoute.Result.Defeat
@@ -784,7 +785,7 @@ namespace Code.UI.Run
         {
             for (int i = 0; i < Deployment.MinionCount; i++)
             {
-                RunCombatantSO data = Deployment.Encounter.Minions[i].Combatant;
+                RunCombatantSO data = _demo.Roster[i].Combatant;
                 // 쓰러진 부하도 카드를 흐리게 남겨 목록에 틈이 생기지 않고 잃은 것이 보이게 한다(2026-11-10 사용자 목업 승인).
                 if (!CanPlaceMinion(i))
                 {
@@ -799,7 +800,7 @@ namespace Code.UI.Run
             string detail = string.Empty;
             if (_selection >= 0)
             {
-                RunCombatantSO data = Deployment.Encounter.Minions[_selection].Combatant;
+                RunCombatantSO data = _demo.Roster[_selection].Combatant;
                 detail = data.DisplayName + $" · 체력 {Battle.Combatants[_selection].Health}/{data.MaxHealth} · 공격 {data.Attack}\n"
                     + (data.Skill != null ? data.Skill.DisplayName + ": " + data.Skill.Description : "큰 기술 없음");
             }
@@ -897,6 +898,16 @@ namespace Code.UI.Run
                 _text.Append(" 공격 시작\n").Append(room).Append(withEuro ? "으로" : "로").Append(" 부하 보내기\n")
                     .Append(room).Append(" 내구 ").Append(Mathf.CeilToInt(target.Durability)).Append('/').Append(target.MaxDurability)
                     .Append(" · 약 ").Append(seconds).Append("초 뒤 고장");
+                return;
+            }
+            if (item.Kind == RunCrisisKind.DoorUnderAttack)
+            {
+                // 부서지기까지 남은 초는 이 적 혼자 칠 때의 어림값이다(2026-11-11 사용자 결정 "멈춤 + 위기 카드").
+                RunDoor door = Battle.Doors[item.Sequence];
+                float perSecond = actor.Definition.Attack / Mathf.Max(0.01f, Battle.AttackInterval(actor));
+                int seconds = Mathf.CeilToInt(door.Durability / Mathf.Max(0.01f, perSecond));
+                _text.Append(" 문 앞\n").Append(room).Append(" 문으로 부하 보내기\n문 내구 ").Append(door.Durability).Append('/')
+                    .Append(door.MaxDurability).Append(" · 약 ").Append(seconds).Append("초 뒤 부서짐");
                 return;
             }
             RunTelegraph warning = actor.Telegraph;

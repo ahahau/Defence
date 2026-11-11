@@ -109,5 +109,13 @@ namespace Code.Run
             if (!hasTimeLimit) copy.TimeLimitSeconds = float.PositiveInfinity;
             return copy;
         }
+
+        /// <summary>시연 유물을 <see cref="ForDemo"/> 사본에 얹는다. 에셋의 설정에는 부르지 않는다.</summary>
+        internal RunBattleSettings WithDemoRelics(float? trapCooldownSeconds, float thiefCarryRatio)
+        {
+            if (trapCooldownSeconds.HasValue) TrapCooldownSeconds = Math.Min(TrapCooldownSeconds, trapCooldownSeconds.Value);
+            ThiefCarryLimit = Math.Max(1, (int)Math.Round(ThiefCarryLimit * thiefCarryRatio));
+            return this;
+        }
     }
 }

@@ -134,11 +134,21 @@ namespace Code.UI.Run
                 _doors[i].gameObject.SetActive(controlled);
                 if (!controlled) continue;
                 bool locked = _battle.IsDoorLocked(i);
-                _doors[i].color = locked ? HudPalette.DoorLocked : door.IsBrokenOpen ? HudPalette.BorderDanger : HudPalette.DoorOpen;
+                // 적이 치는 잠긴 문은 붉게 보인다(2026-11-11 사용자 결정 "멈춤 + 위기 카드", 문 막대 붉게).
+                _doors[i].color = locked ? (IsDoorHit(i) ? HudPalette.Danger : HudPalette.DoorLocked)
+                    : door.IsBrokenOpen ? HudPalette.BorderDanger : HudPalette.DoorOpen;
                 float thickness = locked ? 0.2f : 0.08f;
                 _doors[i].transform.localScale = _battle.Links[i].IsVertical
                     ? new Vector3(1.2f, thickness, 1f) : new Vector3(thickness, 1.2f, 1f);
             }
+        }
+
+        private bool IsDoorHit(int door)
+        {
+            foreach (RunCombatant actor in _battle.Combatants)
+                if (actor.IsOnField && actor.Side == RunSide.Intruder && actor.Activity == RunActionKind.AttackDoor
+                    && !actor.Position.IsInRoom && !actor.Position.IsAtEntrance && actor.Position.Link == door) return true;
+            return false;
         }
 
         private Rect BoundsOf(int floor)

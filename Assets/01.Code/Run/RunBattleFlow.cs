@@ -46,11 +46,13 @@ namespace Code.Run
             return true;
         }
 
-        internal void PrepareDemoDefense(int number, RunBattleSettings settings, RunIntruderEntry[] party, RunBattleCarryover carryover)
+        internal void PrepareDemoDefense(int number, RunBattleSettings settings, RunIntruderEntry[] party, RunBattleCarryover carryover,
+            RunPlacement[] roster = null)
         {
             _carryover = carryover;
             _demoSettings = settings;
             _demoParty = party;
+            Deployment.SetRoster(roster);
             Deployment.Capacity = settings.StartingManaCapacity;
             _memory.Restore(Deployment);
             Battle = CreateBattle();

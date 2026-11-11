@@ -73,6 +73,14 @@ namespace Code.Run
             MoveSpeed *= ratio;
         }
 
+        /// <summary>시연용 변형의 최대 체력·공격력에 더한다(유물·글 사건 강화). 에셋이 아닌 <see cref="CreateDemoVariant"/> 사본에만 쓴다.</summary>
+        internal void AddDemoStats(int health, int attack)
+        {
+            if (_demoDisplayName == null) throw new System.InvalidOperationException("시연용 변형에만 쓸 수 있습니다.");
+            MaxHealth = Mathf.Max(1, MaxHealth + health);
+            Attack = Mathf.Max(0, Attack + attack);
+        }
+
         /// <summary>시연용 변형의 최대 체력을 배율만큼 바꾼다. 에셋이 아닌 <see cref="CreateDemoVariant"/> 사본에만 쓴다.</summary>
         internal void ScaleDemoHealth(float ratio)
         {

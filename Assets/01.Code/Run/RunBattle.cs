@@ -92,8 +92,9 @@ namespace Code.Run
                         a.Length, 0f));
                     // 문 제어실은 심장으로 이어진 복도의 문을 잠근다(2026-11-10 사용자 결정, 이전에는 함정 방 쪽 복도).
                     // 함정 방 쪽 문은 적을 문 앞에 모았다가 한꺼번에 들여보내 켜는 쪽이 손해였다.
-                    int controller = a.Kind == RunRoomKind.DoorControl && b.Kind == RunRoomKind.Heart ? i
-                        : b.Kind == RunRoomKind.DoorControl && a.Kind == RunRoomKind.Heart ? j : -1;
+                    // 치유 샘·금고로 가는 복도의 문도 잠근다. 지나쳐 가는 궁수·도적을 문 앞에 세운다(2026-11-11 사용자 결정).
+                    int controller = a.Kind == RunRoomKind.DoorControl && IsLockedByDoorControl(b.Kind) ? i
+                        : b.Kind == RunRoomKind.DoorControl && IsLockedByDoorControl(a.Kind) ? j : -1;
                     _doors.Add(new RunDoor(index, RunPosition.OnLink(index, length * 0.5f), settings.DoorDurability, controller));
                 }
             }
@@ -495,6 +496,9 @@ namespace Code.Run
                 if (door.RelockProgress + Epsilon >= needed) door.Relock();
             }
         }
+
+        private static bool IsLockedByDoorControl(RunRoomKind neighbor) =>
+            neighbor is RunRoomKind.Heart or RunRoomKind.HealingSpring or RunRoomKind.Vault;
 
         private bool IntruderOnLink(int link)
         {

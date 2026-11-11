@@ -22,10 +22,25 @@ namespace Code.Run
             Retreat,
         }
 
+        public RunDemoRoute(bool postRaidBranch = false)
+        {
+            PostRaidBranch = postRaidBranch;
+        }
+
+        /// <summary>원정과 정예 침입 사이에도 상인/글 사건 갈래를 둔다(2026-11-11 사용자 결정). 화면을 만들기 전까지 시뮬레이션에서만 켠다.</summary>
+        public bool PostRaidBranch { get; }
+
         public Node Current { get; private set; } = Node.ThiefDefense;
         public Result CurrentResult { get; private set; }
         public Node? ChosenBranch { get; private set; }
+
+        /// <summary>원정 뒤 갈래에서 고른 칸.</summary>
+        public Node? SecondBranch { get; private set; }
         public Result RaidResult { get; private set; }
+
+        /// <summary>지금 상인·글 사건 칸이 원정 뒤 갈래인가. 상인 물건과 사건을 다시 뽑는 데 쓴다.</summary>
+        public bool IsSecondBranch => Current is Node.Merchant or Node.StoryEvent && RaidResult != Result.Pending;
+
         public bool IsFinished => CurrentResult != Result.Pending
             && (Current == Node.EliteDefense || (Current != Node.OutpostRaid && CurrentResult == Result.Defeat));
 
@@ -53,9 +68,9 @@ namespace Code.Run
             return Current switch
             {
                 Node.ThiefDefense => node is Node.Merchant or Node.StoryEvent,
-                Node.Merchant or Node.StoryEvent => node == Node.SapperDefense,
+                Node.Merchant or Node.StoryEvent => node == (IsSecondBranch ? Node.EliteDefense : Node.SapperDefense),
                 Node.SapperDefense => node == Node.OutpostRaid,
-                Node.OutpostRaid => node == Node.EliteDefense,
+                Node.OutpostRaid => PostRaidBranch ? node is Node.Merchant or Node.StoryEvent : node == Node.EliteDefense,
                 _ => false,
             };
         }
@@ -66,32 +81,46 @@ namespace Code.Run
             if (!CanEnter(node)) return false;
             Current = node;
             CurrentResult = Result.Pending;
-            if (node is Node.Merchant or Node.StoryEvent) ChosenBranch = node;
+            if (node is Node.Merchant or Node.StoryEvent)
+            {
+                if (RaidResult == Result.Pending) ChosenBranch = node;
+                else SecondBranch = node;
+            }
             return true;
         }
 
-        internal static RunDemoRoute Restore(Node current, Result currentResult, Node? branch, Result raidResult)
+        internal static RunDemoRoute Restore(Node current, Result currentResult, Node? branch, Result raidResult,
+            Node? secondBranch = null, bool postRaidBranch = false)
         {
-            RunDemoRoute route = new();
+            RunDemoRoute route = new(postRaidBranch);
+            bool atSecond = current is Node.Merchant or Node.StoryEvent && raidResult != Result.Pending;
             if (current != Node.ThiefDefense)
             {
                 if (branch != Node.Merchant && branch != Node.StoryEvent) return null;
                 route.TryResolve(Result.Victory);
                 route.TryEnter(branch.Value);
-                if (current != branch)
+                if (current != branch || atSecond)
                 {
                     route.TryResolve(Result.Completed);
                     route.TryEnter(Node.SapperDefense);
-                    if (current is Node.OutpostRaid or Node.EliteDefense)
+                    if (current is Node.OutpostRaid or Node.EliteDefense || atSecond)
                     {
                         route.TryResolve(Result.Victory);
                         route.TryEnter(Node.OutpostRaid);
-                        if (current == Node.EliteDefense
-                            && (!route.TryResolve(raidResult) || !route.TryEnter(Node.EliteDefense))) return null;
+                        if (current == Node.EliteDefense || atSecond)
+                        {
+                            if (!route.TryResolve(raidResult)) return null;
+                            if (postRaidBranch)
+                            {
+                                if ((secondBranch != Node.Merchant && secondBranch != Node.StoryEvent) || !route.TryEnter(secondBranch.Value)) return null;
+                                if (current == Node.EliteDefense) route.TryResolve(Result.Completed);
+                            }
+                            if (current == Node.EliteDefense && !route.TryEnter(Node.EliteDefense)) return null;
+                        }
                     }
                 }
             }
-            if (route.Current != current || route.ChosenBranch != branch) return null;
+            if (route.Current != current || route.ChosenBranch != branch || route.SecondBranch != secondBranch) return null;
             if (currentResult != Result.Pending && !route.TryResolve(currentResult)) return null;
             return route.RaidResult == raidResult ? route : null;
         }

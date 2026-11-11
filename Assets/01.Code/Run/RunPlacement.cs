@@ -7,6 +7,13 @@ namespace Code.Run
     [Serializable]
     public struct RunPlacement
     {
+        /// <summary>런에서 바뀐 부하 목록(새 부하, 강화한 변형)용. 에셋 배치는 인스펙터에서 정한다.</summary>
+        internal RunPlacement(RunCombatantSO combatant, int room) : this()
+        {
+            Combatant = combatant;
+            Room = room;
+        }
+
         [field: SerializeField] public RunCombatantSO Combatant { get; private set; }
         [field: SerializeField, Min(0)] public int Room { get; private set; }
     }

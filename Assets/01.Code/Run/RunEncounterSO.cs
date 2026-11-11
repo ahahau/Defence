@@ -35,9 +35,11 @@ namespace Code.Run
         internal RunBattle CreateBattle(RunDeployment deployment, RunBattleSettings settings, RunIntruderEntry[] party)
         {
             RunBattle battle = new(settings, GridLayout, EntryRoom);
-            for (int i = 0; i < Minions.Length; i++)
+            // 시연 런은 배치가 가진 부하 목록(새 부하·강화 변형)을 쓴다.
+            RunPlacement[] minions = deployment != null ? deployment.Roster : Minions;
+            for (int i = 0; i < minions.Length; i++)
             {
-                RunPlacement placement = Minions[i];
+                RunPlacement placement = minions[i];
                 if (placement.Combatant != null)
                     battle.AddCombatant(placement.Combatant, deployment != null ? deployment.RoomOf(i) : placement.Room);
             }
