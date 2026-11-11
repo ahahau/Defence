@@ -170,13 +170,17 @@ namespace Code.Run
         };
 
         /// <summary>이번 상인 방문에서 살 수 있는 만큼 다 샀는가.</summary>
-        internal bool MerchantLimitReached => Economy.MerchantPurchaseLimit > 0 && BoughtCount() >= Economy.MerchantPurchaseLimit;
+        internal bool MerchantLimitReached => Economy.MerchantPurchaseLimit > 0 && MerchantBoughtCount >= Economy.MerchantPurchaseLimit;
 
-        private int BoughtCount()
+        /// <summary>이번 상인 방문에서 산 항목 수.</summary>
+        internal int MerchantBoughtCount
         {
-            int count = 0;
-            for (int bits = MerchantBought; bits != 0; bits &= bits - 1) count++;
-            return count;
+            get
+            {
+                int count = 0;
+                for (int bits = MerchantBought; bits != 0; bits &= bits - 1) count++;
+                return count;
+            }
         }
 
         /// <summary>상인이 고용으로 채울 쓰러진 부하(배치 순서상 첫 번째). 없으면 -1.</summary>

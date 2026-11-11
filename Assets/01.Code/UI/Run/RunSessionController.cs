@@ -13,6 +13,9 @@ namespace Code.UI.Run
         [SerializeField] private RunPreparationView preparation;
         [SerializeField] private RunCrisisView crisisView;
         [SerializeField] private RunTrapControlView trapControl;
+        [SerializeField, Tooltip("상인 좌판(RunMerchantBuilder). 비어 있으면 예전 두 단계 팝업을 쓴다.")]
+        private RunMerchantView merchantWindow;
+        private RunMerchantPresenter _merchant;
         private int _trapRoom = -1;
         private int _queuedTrap = -1;
         private bool _trapCancelled;
@@ -74,6 +77,11 @@ namespace Code.UI.Run
             preparation.Selected -= Select;
             preparation.Dropped -= Drop;
             if (trapControl != null) trapControl.Activated -= RequestTrap;
+            if (_merchant != null)
+            {
+                _merchant.Bought -= HandleMerchantBought;
+                _merchant.Left -= HandleMerchantLeft;
+            }
             _bound = false;
         }
 
@@ -85,6 +93,12 @@ namespace Code.UI.Run
             preparation.Selected += Select;
             preparation.Dropped += Drop;
             if (trapControl != null) trapControl.Activated += RequestTrap;
+            if (merchantWindow != null)
+            {
+                _merchant ??= new RunMerchantPresenter(merchantWindow);
+                _merchant.Bought += HandleMerchantBought;
+                _merchant.Left += HandleMerchantLeft;
+            }
             _bound = true;
         }
 
@@ -106,7 +120,7 @@ namespace Code.UI.Run
 
         public void OpenNextEncounter()
         {
-            if (PopupController.IsOpen) return;
+            if (PopupController.IsOpen || (_merchant != null && _merchant.IsOpen)) return;
             if (_raid != null && !IsResult)
             {
                 if (!_raid.IsRaidRetreating)
@@ -197,6 +211,12 @@ namespace Code.UI.Run
         // 항목마다 한 번, 방문마다 두 개까지 산다(2026-11-11 사용자 결정). 떠나기를 눌러야 칸이 끝난다(2026-11-10 던전 정비 목업 승인).
         private void ShowMerchant()
         {
+            // 좌판 창이 놓여 있으면 그것을 쓴다(2026-11-11 사용자 결정 "B 전용 좌판").
+            if (_merchant != null)
+            {
+                _merchant.Show(_demo, Deployment.Encounter);
+                return;
+            }
             RunBattleCarryover state = _demo.Carryover;
             int lost = _demo.FirstLostMinion;
             bool affordable = state.Gold >= RunDemoCampaign.MerchantPrice;
@@ -450,6 +470,15 @@ namespace Code.UI.Run
                 .WithLines($"비용 없음 · 다친 부하 {injured}명", null)
                 .WithAccent(HudPalette.Gain, "한 명을 무료로 치료"));
         }
+
+        private void HandleMerchantBought()
+        {
+            // 끝난 전투가 지도 뒤 화면을 그리므로 고친 심장·되살린 부하·금화를 바로 보인다.
+            _demo.Carryover.ApplyTo(Battle);
+            SaveCheckpoint();
+        }
+
+        private void HandleMerchantLeft() => CompleteBranch(-1);
 
         private void CompleteBranch(int choice)
         {
@@ -799,6 +828,9 @@ namespace Code.UI.Run
                 preparation.SetMinion(i, data.DisplayName + $"\n{Josa(_roomNames[Deployment.RoomOf(i)], "을", "를")} 지킴 · 체력 {Battle.Combatants[i].Health}/{data.MaxHealth}",
                     RunVisualPalette.Affinity(data.Affinity), i == _selection);
             }
+            // 카드는 5장이다(상인 새 부하, 2026-11-11). 부하가 넷이면 남는 카드를 숨긴다.
+            for (int i = Deployment.MinionCount; i < preparation.MinionCapacity; i++)
+                preparation.SetMinion(i, string.Empty, HudPalette.TextMuted, false, false);
             // 조작 안내는 위 제목줄 한 곳에만 둔다(2026-11-10 사용자 목업 승인).
             string detail = string.Empty;
             if (_selection >= 0)

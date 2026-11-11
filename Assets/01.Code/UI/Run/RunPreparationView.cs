@@ -32,6 +32,7 @@ namespace Code.UI.Run
         public event Action<int> Selected;
         public event Action<int, Vector2> Dropped;
         public int PartyCapacity => partyCards.Length;
+        public int MinionCapacity => minionCards.Length;
 
         private void OnEnable()
         {
