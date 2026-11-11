@@ -360,8 +360,7 @@ namespace Code.Run
                     break;
                 // 최대 체력의 일부를 잃되 쓰러지지는 않는다(시뮬레이션용 임시 해석).
                 case RunDemoExchange.HealthForRelic:
-                    int loss = (int)Math.Round(Minion(target).MaxHealth * Economy.HealthForRelicRatio);
-                    Carryover.MinionHealth[target] = Math.Max(1, Carryover.MinionHealth[target] - loss);
+                    Carryover.MinionHealth[target] = Math.Max(1, Carryover.MinionHealth[target] - HealthForRelicLoss(target));
                     GainRelic(DrawMissingRelic(17));
                     break;
                 // 마력 칸이 거의 차 있어 용량 +1이 쓸모없었다. 방을 고장 낸 대가로 유물을 준다(2026-11-11 사용자 결정).
@@ -382,7 +381,10 @@ namespace Code.Run
             Carryover.MinionHealth[target] = Math.Min(Minion(target).MaxHealth, Carryover.MinionHealth[target] + Economy.UpgradeHealth);
         }
 
-        /// <summary>상인·글 사건 칸의 선택. -1은 떠나기(칸을 끝냄), 상인의 0~2는 예전 항목, 글 사건의 0 이상은 약초꾼 치료(부하 번호).</summary>
+        /// <summary>
+        /// 상인·글 사건 칸의 선택. -1은 떠나기(칸을 끝냄), 상인의 0~2는 예전 항목이다.
+        /// 글 사건은 떠나기만 받는다(교환은 <see cref="TryExchange"/>). 약초꾼 치료는 교환으로 바꿨다(2026-11-11 사용자 결정).
+        /// </summary>
         internal bool ResolveBranch(int option)
         {
             if (Route.CurrentResult != RunDemoRoute.Result.Pending || Carryover == null) return false;
@@ -397,21 +399,22 @@ namespace Code.Run
                 }
                 return option is >= 0 and <= 2 && TryBuyAtMerchant((MerchantItem)option);
             }
-            else if (Route.Current == RunDemoRoute.Node.StoryEvent)
-            {
-                // 약초꾼 치료는 교환 화면을 만들 때까지 남긴다(남길지는 미정, 2026-11-11).
-                if (option < -1 || option >= Carryover.MinionHealth.Length) return false;
-                if (option >= 0)
-                {
-                    int max = Minion(option).MaxHealth;
-                    int health = Carryover.MinionHealth[option];
-                    if (health <= 0 || health >= max) return false;
-                    Carryover.MinionHealth[option] = Math.Min(max, health + (max + 1) / 2);
-                }
-            }
-            else return false;
+            if (Route.Current != RunDemoRoute.Node.StoryEvent || option != -1) return false;
             return Route.TryResolve(RunDemoRoute.Result.Completed);
         }
+
+        /// <summary>
+        /// 지금 상인·글 사건 칸에 제안이 없으면 뽑는다. 제안을 저장하기 전의 저장으로 칸 안에서 이어 할 때를 위한 것이다.
+        /// </summary>
+        internal void EnsureBranchOffers()
+        {
+            if (Route.CurrentResult != RunDemoRoute.Result.Pending || Offer0 >= 0 || Offer1 >= 0) return;
+            if (Route.Current == RunDemoRoute.Node.Merchant) DrawRelicOffer();
+            else if (Route.Current == RunDemoRoute.Node.StoryEvent) DrawExchangeOffer();
+        }
+
+        /// <summary>교환 대상 부하가 잃는 체력("부하 체력 → 유물").</summary>
+        internal int HealthForRelicLoss(int target) => (int)Math.Round(Minion(target).MaxHealth * Economy.HealthForRelicRatio);
 
         // ── 원정 ──
 

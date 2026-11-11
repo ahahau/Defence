@@ -47,6 +47,7 @@ namespace Code.UI.Run
         {
             _demo = demo;
             _encounter = encounter;
+            _demo.EnsureBranchOffers();
             _pick = -1;
             _view.ShowPick(false);
             Refresh();

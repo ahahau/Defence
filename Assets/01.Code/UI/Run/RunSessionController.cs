@@ -16,6 +16,7 @@ namespace Code.UI.Run
         [SerializeField, Tooltip("상인 좌판(RunMerchantBuilder). 비어 있으면 예전 두 단계 팝업을 쓴다.")]
         private RunMerchantView merchantWindow;
         private RunMerchantPresenter _merchant;
+        private readonly RunExchangePresenter _exchange = new();
         private int _trapRoom = -1;
         private int _queuedTrap = -1;
         private bool _trapCancelled;
@@ -82,6 +83,7 @@ namespace Code.UI.Run
                 _merchant.Bought -= HandleMerchantBought;
                 _merchant.Left -= HandleMerchantLeft;
             }
+            _exchange.Finished -= HandleExchangeFinished;
             _bound = false;
         }
 
@@ -99,6 +101,7 @@ namespace Code.UI.Run
                 _merchant.Bought += HandleMerchantBought;
                 _merchant.Left += HandleMerchantLeft;
             }
+            _exchange.Finished += HandleExchangeFinished;
             _bound = true;
         }
 
@@ -198,9 +201,10 @@ namespace Code.UI.Run
 
         private void ShowDemoBranch()
         {
+            // 글 사건은 약초꾼 대신 교환 "굴 속 거래"다(2026-11-11 사용자 결정).
             if (_demo.Route.Current == RunDemoRoute.Node.StoryEvent)
             {
-                ShowHerbalist(0);
+                _exchange.Show(_demo, Deployment.Encounter);
                 return;
             }
             ShowMerchant();
@@ -428,47 +432,12 @@ namespace Code.UI.Run
             OpenNextEncounter();
         }
 
-        private void ShowHerbalist(int from)
+        // 글 사건 "굴 속 거래"가 끝났다(교환 또는 떠나기). 칸은 이미 끝났으므로 이어지는 상태를 보이고 저장한 뒤 다음으로 간다.
+        private void HandleExchangeFinished()
         {
-            RunPlacement[] minions = _demo.Roster;
-            int index = -1;
-            int injured = 0;
-            for (int offset = 0; offset < minions.Length; offset++)
-            {
-                int candidate = (from + offset) % minions.Length;
-                int health = _demo.Carryover.MinionHealth[candidate];
-                if (health <= 0 || health >= minions[candidate].Combatant.MaxHealth) continue;
-                if (index < 0) index = candidate;
-                injured++;
-            }
-            // 다친 부하 중 몇 번째인지(배치 순서 기준). "다른 부하"로 넘길 때 위치를 보인다.
-            int ordinal = 0;
-            for (int i = 0; index >= 0 && i <= index; i++)
-            {
-                int health = _demo.Carryover.MinionHealth[i];
-                if (health > 0 && health < minions[i].Combatant.MaxHealth) ordinal++;
-            }
-            if (index < 0)
-            {
-                PopupController.Show(PopupRequest.Notice("굴 근처 약초꾼", "회복할 부하가 없습니다.",
-                    () => CompleteBranch(-1), "떠나기"));
-                return;
-            }
-            RunCombatantSO minion = minions[index].Combatant;
-            int current = _demo.Carryover.MinionHealth[index];
-            // 회복량은 RunDemoCampaign.ResolveBranch와 같은 식(최대 체력의 절반, 올림)이다.
-            int healed = Math.Min(minion.MaxHealth, current + (minion.MaxHealth + 1) / 2);
-            // 상인과 같은 형식: 항목마다 한 줄, 비용·인원은 비용 줄(2026-11-10 사용자 목업 승인).
-            PopupController.Show(PopupRequest.Choice("굴 근처 약초꾼",
-                $"치료할 부하 · {minion.DisplayName} ({ordinal}/{injured})\n체력 {current}/{minion.MaxHealth} → {healed}/{minion.MaxHealth}\n최대 체력의 절반만큼 회복합니다.",
-                new[]
-                {
-                    new PopupButtonSpec("떠나기", PopupButtonStyle.Secondary, () => CompleteBranch(-1)),
-                    new PopupButtonSpec("다른 부하", PopupButtonStyle.Secondary, () => ShowHerbalist(index + 1), injured > 1),
-                    new PopupButtonSpec("치료", PopupButtonStyle.Primary, () => CompleteBranch(index)),
-                }, () => { })
-                .WithLines($"비용 없음 · 다친 부하 {injured}명", null)
-                .WithAccent(HudPalette.Gain, "한 명을 무료로 치료"));
+            _demo.Carryover.ApplyTo(Battle);
+            SaveCheckpoint();
+            OpenNextEncounter();
         }
 
         private void HandleMerchantBought()
