@@ -194,23 +194,24 @@ namespace Code.UI.Run
 
         // 범용 팝업 버튼이 3개까지라 상인은 두 단계로 보인다(2026-11-10 사용자 "두 단계 팝업").
         // 가격·가진 금화는 비용 줄, 살 수 없는 이유는 경고 줄에 둔다(2026-11-10 사용자 목업 승인).
-        // 항목마다 한 번, 금화가 되는 만큼 산다. 떠나기를 눌러야 칸이 끝난다(2026-11-10 던전 정비 목업 승인).
+        // 항목마다 한 번, 방문마다 두 개까지 산다(2026-11-11 사용자 결정). 떠나기를 눌러야 칸이 끝난다(2026-11-10 던전 정비 목업 승인).
         private void ShowMerchant()
         {
             RunBattleCarryover state = _demo.Carryover;
             int lost = _demo.FirstLostMinion;
             bool affordable = state.Gold >= RunDemoCampaign.MerchantPrice;
+            string warning = _demo.MerchantLimitReached ? "이번에는 두 개를 다 샀습니다" : affordable ? null : "금화가 모자라 살 수 없습니다";
             string hire = _demo.HasBoughtAtMerchant(2) ? "고용함" : lost >= 0 ? $"쓰러진 {_demo.Roster[lost].Combatant.DisplayName} 복귀" : "쓰러진 부하 없음";
             PopupController.Show(PopupRequest.Choice("상인",
-                $"심장·함정 · 심장 수리나 함정 강화\n부하 고용 · {hire}\n항목마다 한 번, 금화가 되는 만큼 살 수 있습니다.",
+                $"심장·함정 · 심장 수리나 함정 강화\n부하 고용 · {hire}\n한 번 들를 때 두 개까지 살 수 있습니다.",
                 new[]
                 {
                     new PopupButtonSpec("떠나기", PopupButtonStyle.Secondary, () => CompleteBranch(-1)),
                     new PopupButtonSpec("심장·함정", PopupButtonStyle.Primary, ShowMerchantUpkeep),
                     new PopupButtonSpec("부하 고용", PopupButtonStyle.Primary, ShowMerchantHire, _demo.CanBuyAtMerchant(2)),
                 }, () => { })
-                .WithLines($"가진 금화 {state.Gold} · 각 금화 {RunDemoCampaign.MerchantPrice}", affordable ? null : "금화가 모자라 살 수 없습니다")
-                .WithAccent(HudPalette.Accent, "금화가 되는 만큼 삽니다"));
+                .WithLines($"가진 금화 {state.Gold} · 각 금화 {RunDemoCampaign.MerchantPrice}", warning)
+                .WithAccent(HudPalette.Accent, "두 개까지 삽니다"));
         }
 
         private void ShowMerchantUpkeep()
@@ -219,7 +220,8 @@ namespace Code.UI.Run
             int maxHeart = Deployment.Encounter.Settings.HeartHealth;
             bool affordable = state.Gold >= RunDemoCampaign.MerchantPrice;
             bool heartFull = state.HeartHealth >= maxHeart;
-            string warning = !affordable ? "금화가 모자라 살 수 없습니다"
+            string warning = _demo.MerchantLimitReached ? "이번에는 두 개를 다 샀습니다"
+                : !affordable ? "금화가 모자라 살 수 없습니다"
                 : _demo.HasBoughtAtMerchant(0) && _demo.HasBoughtAtMerchant(1) ? "둘 다 샀습니다"
                 : heartFull && !_demo.HasBoughtAtMerchant(0) ? "심장이 가득 차 수리할 수 없습니다" : null;
             PopupController.Show(PopupRequest.Choice("상인 · 심장·함정",
@@ -252,7 +254,8 @@ namespace Code.UI.Run
                     new PopupButtonSpec("뒤로", PopupButtonStyle.Secondary, ShowMerchant),
                     new PopupButtonSpec("고용", PopupButtonStyle.Primary, () => CompleteBranch(2), _demo.CanBuyAtMerchant(2)),
                 }, ShowMerchant)
-                .WithLines($"가진 금화 {gold} · 가격 금화 {RunDemoCampaign.MerchantPrice}", affordable ? null : "금화가 모자라 살 수 없습니다")
+                .WithLines($"가진 금화 {gold} · 가격 금화 {RunDemoCampaign.MerchantPrice}",
+                    _demo.MerchantLimitReached ? "이번에는 두 개를 다 샀습니다" : affordable ? null : "금화가 모자라 살 수 없습니다")
                 .WithAccent(HudPalette.Accent, null));
         }
 

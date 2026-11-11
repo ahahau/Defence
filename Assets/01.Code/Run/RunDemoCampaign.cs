@@ -62,7 +62,7 @@ namespace Code.Run
         /// <summary>상인에서 금화로 산 마력 용량(런 동안 유지).</summary>
         internal int ExtraCapacity { get; private set; }
 
-        /// <summary>이번 상인 칸에서 산 항목(비트 = <see cref="MerchantItem"/>). 항목마다 한 번만 산다.</summary>
+        /// <summary>이번 상인 칸에서 산 항목(비트 = <see cref="MerchantItem"/>). 항목마다 한 번, 방문마다 두 개까지 산다.</summary>
         internal int MerchantBought { get; private set; }
 
         /// <summary>상인 물건·글 사건을 뽑는 런 시드. 저장해 다시 불러도 같은 제안이 나온다.</summary>
@@ -72,9 +72,6 @@ namespace Code.Run
 
         /// <summary>상인에서 들인 5번째 부하의 종류(에셋 부하 목록 번호). 없으면 -1.</summary>
         internal int ExtraMinionKind { get; private set; } = -1;
-
-        /// <summary>교환 "방 내구 → 마력"으로 다음 방어 한 판만 늘어나는 마력 용량.</summary>
-        internal int BonusCapacity { get; private set; }
 
         /// <summary>지금 상인·글 사건 칸의 제안 두 개(상인은 유물 값, 글 사건은 <see cref="RunDemoExchange"/> 값). 없으면 -1.</summary>
         internal int Offer0 { get; private set; } = -1;
@@ -116,7 +113,7 @@ namespace Code.Run
         internal bool Has(RunDemoRelic relic) => (Relics & relic) != 0;
 
         internal RunBattleSettings DefenseSettings(int number) => _encounter.Settings.ForDemo(
-                (number == 3 && Route.RaidResult == RunDemoRoute.Result.Victory ? 4 : 3) + ExtraCapacity + BonusCapacity
+                (number == 3 && Route.RaidResult == RunDemoRoute.Result.Victory ? 4 : 3) + ExtraCapacity
                 + (Has(RunDemoRelic.ManaCrystal) ? 1 : 0), TrapBonus, number != 3, DefenseWaves(number), WaveGapSeconds)
             .WithDemoRelics(Has(RunDemoRelic.QuickTrap) ? QuickTrapCooldownSeconds : null, Has(RunDemoRelic.HeavyLock) ? HeavyLockCarryRatio : 1f);
 
@@ -146,7 +143,6 @@ namespace Code.Run
         {
             if (!Route.TryResolve(battle.Outcome == RunBattleOutcome.Victory ? RunDemoRoute.Result.Victory : RunDemoRoute.Result.Defeat)) return;
             Carryover = new RunBattleCarryover(battle);
-            BonusCapacity = 0;
         }
 
         /// <summary>지도에서 칸에 들어간다. 상인·글 사건이면 이번 방문의 제안 두 개를 뽑는다.</summary>
@@ -173,6 +169,9 @@ namespace Code.Run
             _ => MerchantPrice,
         };
 
+        /// <summary>이번 상인 방문에서 살 수 있는 만큼 다 샀는가.</summary>
+        internal bool MerchantLimitReached => Economy.MerchantPurchaseLimit > 0 && BoughtCount() >= Economy.MerchantPurchaseLimit;
+
         private int BoughtCount()
         {
             int count = 0;
@@ -198,7 +197,7 @@ namespace Code.Run
         {
             if (Carryover == null || Route.Current != RunDemoRoute.Node.Merchant || Route.CurrentResult != RunDemoRoute.Result.Pending) return false;
             if (item < MerchantItem.HeartRepair || item > MerchantItem.Relic1 || HasBoughtAtMerchant(item) || Carryover.Gold < PriceOf(item)) return false;
-            if (Economy.MerchantPurchaseLimit > 0 && BoughtCount() >= Economy.MerchantPurchaseLimit) return false;
+            if (MerchantLimitReached) return false;
             return item switch
             {
                 MerchantItem.HeartRepair => Carryover.HeartHealth < _encounter.Settings.HeartHealth,
@@ -326,10 +325,6 @@ namespace Code.Run
             return value >= 0 ? (RunDemoExchange)value : null;
         }
 
-        /// <summary>교환에 대상(부하·방)이 필요한가.</summary>
-        internal static bool NeedsTarget(RunDemoExchange exchange) => exchange is RunDemoExchange.GoldForUpgrade
-            or RunDemoExchange.HealthForRelic or RunDemoExchange.RoomForMana;
-
         /// <summary>이 교환을 이 대상으로 할 수 있는가. 부하 교환은 부하 번호, 방 교환은 방 번호다.</summary>
         internal bool CanExchange(RunDemoExchange exchange, int target = -1)
         {
@@ -337,10 +332,10 @@ namespace Code.Run
             if (OfferedExchange(0) != exchange && OfferedExchange(1) != exchange) return false;
             return exchange switch
             {
-                RunDemoExchange.HeartForGold => Carryover.HeartHealth > Economy.HeartForGoldHeart,
+                RunDemoExchange.HeartForUpgrade => Carryover.HeartHealth > Economy.HeartUpgradeCost && IsMinionAlive(target),
                 RunDemoExchange.GoldForUpgrade => Carryover.Gold >= Economy.UpgradePrice && IsMinionAlive(target),
                 RunDemoExchange.HealthForRelic => IsMinionAlive(target) && Relics != RunDemoRelic.All,
-                _ => IsSystemRoom(target) && !Carryover.RoomBroken[target],
+                _ => IsSystemRoom(target) && !Carryover.RoomBroken[target] && Relics != RunDemoRelic.All,
             };
         }
 
@@ -350,16 +345,14 @@ namespace Code.Run
             if (!CanExchange(exchange, target)) return false;
             switch (exchange)
             {
-                case RunDemoExchange.HeartForGold:
-                    Carryover.HeartHealth -= Economy.HeartForGoldHeart;
-                    Carryover.Gold += Economy.HeartForGoldGold;
+                // 금화 대신 심장으로 내는 강화(2026-11-11 사용자 결정, "심장 → 금화"는 글 사건 길에서 금화 쓸 곳이 없어 손해만 났다).
+                case RunDemoExchange.HeartForUpgrade:
+                    Carryover.HeartHealth -= Economy.HeartUpgradeCost;
+                    UpgradeMinion(target);
                     break;
-                // 최대 체력이 오른 만큼 지금 체력도 오른다(시뮬레이션용 임시 해석, 시연 런 기획에 적음).
                 case RunDemoExchange.GoldForUpgrade:
                     Carryover.Gold -= Economy.UpgradePrice;
-                    _minionUpgrades[target]++;
-                    InvalidateRoster();
-                    Carryover.MinionHealth[target] = Math.Min(Minion(target).MaxHealth, Carryover.MinionHealth[target] + Economy.UpgradeHealth);
+                    UpgradeMinion(target);
                     break;
                 // 최대 체력의 일부를 잃되 쓰러지지는 않는다(시뮬레이션용 임시 해석).
                 case RunDemoExchange.HealthForRelic:
@@ -367,13 +360,22 @@ namespace Code.Run
                     Carryover.MinionHealth[target] = Math.Max(1, Carryover.MinionHealth[target] - loss);
                     GainRelic(DrawMissingRelic(17));
                     break;
+                // 마력 칸이 거의 차 있어 용량 +1이 쓸모없었다. 방을 고장 낸 대가로 유물을 준다(2026-11-11 사용자 결정).
                 default:
                     Carryover.RoomBroken[target] = true;
                     Carryover.RoomDurability[target] = 0f;
-                    BonusCapacity = Economy.RoomForManaCapacity;
+                    GainRelic(DrawMissingRelic(23));
                     break;
             }
             return Route.TryResolve(RunDemoRoute.Result.Completed);
+        }
+
+        // 최대 체력이 오른 만큼 지금 체력도 오른다(시뮬레이션용 임시 해석, 시연 런 기획에 적음).
+        private void UpgradeMinion(int target)
+        {
+            _minionUpgrades[target]++;
+            InvalidateRoster();
+            Carryover.MinionHealth[target] = Math.Min(Minion(target).MaxHealth, Carryover.MinionHealth[target] + Economy.UpgradeHealth);
         }
 
         /// <summary>상인·글 사건 칸의 선택. -1은 떠나기(칸을 끝냄), 상인의 0~2는 예전 항목, 글 사건의 0 이상은 약초꾼 치료(부하 번호).</summary>
@@ -382,7 +384,8 @@ namespace Code.Run
             if (Route.CurrentResult != RunDemoRoute.Result.Pending || Carryover == null) return false;
             if (Route.Current == RunDemoRoute.Node.Merchant)
             {
-                // 떠나기(-1)만 칸을 끝낸다. 항목은 금화가 되는 만큼 하나씩 사고, 같은 항목은 한 번만 산다(2026-11-10 사용자 승인).
+                // 떠나기(-1)만 칸을 끝낸다. 항목은 하나씩 사고, 같은 항목은 한 번만 산다(2026-11-10 사용자 승인).
+                // 한 방문에서는 두 개까지다(2026-11-11 사용자 결정 "두 개로 제한").
                 if (option == -1)
                 {
                     MerchantBought = 0;
@@ -449,7 +452,6 @@ namespace Code.Run
             if (checkpoint.Seed != 0) Seed = checkpoint.Seed;
             Relics = (RunDemoRelic)checkpoint.Relics & RunDemoRelic.All;
             ExtraMinionKind = checkpoint.ExtraMinionKind is >= 0 && checkpoint.ExtraMinionKind < _encounter.Minions.Length ? checkpoint.ExtraMinionKind : -1;
-            BonusCapacity = Math.Clamp(checkpoint.BonusCapacity, 0, 3);
             Offer0 = checkpoint.Offer0;
             Offer1 = checkpoint.Offer1;
             Array.Clear(_minionUpgrades, 0, _minionUpgrades.Length);

@@ -24,12 +24,11 @@ namespace Code.Run
             public int ExtraCapacity;
             public int MerchantBought;
             public RunBattleCarryover Carryover;
-            // 2026-11-11 지도와 경제: 시드·유물·새 부하·강화·다음 판 마력·이번 칸 제안·원정 뒤 갈래. 예전 저장은 기본값으로 읽힌다.
+            // 2026-11-11 지도와 경제: 시드·유물·새 부하·강화·이번 칸 제안·원정 뒤 갈래. 예전 저장은 기본값으로 읽힌다.
             public int Seed;
             public int Relics;
             public int ExtraMinionKind = -1;
             public int[] MinionUpgrades;
-            public int BonusCapacity;
             public int Offer0 = -1;
             public int Offer1 = -1;
             public int SecondBranch = -1;
@@ -66,7 +65,6 @@ namespace Code.Run
                 Relics = (int)campaign.Relics,
                 ExtraMinionKind = campaign.ExtraMinionKind,
                 MinionUpgrades = campaign.CopyUpgrades(),
-                BonusCapacity = campaign.BonusCapacity,
                 Offer0 = campaign.Offer0,
                 Offer1 = campaign.Offer1,
                 SecondBranch = route.SecondBranch.HasValue ? (int)route.SecondBranch.Value : -1,
@@ -94,7 +92,7 @@ namespace Code.Run
                 Checkpoint value = JsonUtility.FromJson<Checkpoint>(File.ReadAllText(path));
                 if (value == null || value.Version != Version || value.GetRoute() == null || value.TrapBonus is not (0 or 2)
                     || value.ExtraCapacity < 0 || value.ExtraCapacity > RunDemoCampaign.MaxExtraCapacity || value.MerchantBought is < 0 or > RunDemoCampaign.MerchantItemMask
-                    || (value.Relics & ~(int)RunDemoRelic.All) != 0 || value.BonusCapacity is < 0 or > 3) return null;
+                    || (value.Relics & ~(int)RunDemoRelic.All) != 0) return null;
                 // JsonUtility는 null 이월 상태를 빈 배열 객체로 쓴다. 새 게임 체크포인트는 이월 상태가 없는 것으로 읽는다.
                 if (value.Carryover != null && (value.Carryover.MinionHealth == null || value.Carryover.MinionHealth.Length == 0))
                     value.Carryover = null;

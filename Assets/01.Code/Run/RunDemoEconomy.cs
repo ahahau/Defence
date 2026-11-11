@@ -10,19 +10,16 @@ namespace Code.Run
         internal int NewMinionPrice { get; set; } = 50;
         internal int RelicPrice { get; set; } = 40;
 
-        /// <summary>한 상인 방문에서 살 수 있는 항목 수. 0이면 제한 없음(금화가 되는 만큼).</summary>
-        internal int MerchantPurchaseLimit { get; set; }
+        /// <summary>한 상인 방문에서 살 수 있는 항목 수(2026-11-11 사용자 결정 "두 개로 제한"). 0이면 제한 없음.</summary>
+        internal int MerchantPurchaseLimit { get; set; } = 2;
 
-        internal int HeartForGoldHeart { get; set; } = 10;
-        internal int HeartForGoldGold { get; set; } = 40;
+        /// <summary>"심장 → 부하 강화"에서 내는 심장 체력.</summary>
+        internal int HeartUpgradeCost { get; set; } = 10;
         internal int UpgradePrice { get; set; } = 40;
         internal int UpgradeHealth { get; set; } = 4;
         internal int UpgradeAttack { get; set; } = 1;
 
         /// <summary>"부하 체력 → 유물"에서 잃는 최대 체력 비율.</summary>
         internal float HealthForRelicRatio { get; set; } = 0.5f;
-
-        /// <summary>"방 내구 → 마력"이 다음 방어에 더하는 마력 용량.</summary>
-        internal int RoomForManaCapacity { get; set; } = 1;
     }
 }
