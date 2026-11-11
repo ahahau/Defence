@@ -27,7 +27,7 @@ namespace Code.Run
             PostRaidBranch = postRaidBranch;
         }
 
-        /// <summary>원정과 정예 침입 사이에도 상인/글 사건 갈래를 둔다(2026-11-11 사용자 결정). 화면을 만들기 전까지 시뮬레이션에서만 켠다.</summary>
+        /// <summary>원정과 정예 침입 사이에도 상인/글 사건 갈래를 둔다(2026-11-11 사용자 결정). 새 런은 켜고, 예전 저장은 저장된 값을 따른다.</summary>
         public bool PostRaidBranch { get; }
 
         public Node Current { get; private set; } = Node.ThiefDefense;

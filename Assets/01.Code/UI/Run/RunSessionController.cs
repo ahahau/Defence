@@ -13,8 +13,10 @@ namespace Code.UI.Run
         [SerializeField] private RunPreparationView preparation;
         [SerializeField] private RunCrisisView crisisView;
         [SerializeField] private RunTrapControlView trapControl;
+        [SerializeField] private RunRouteMapView routeMap;
         [SerializeField, Tooltip("상인 좌판(RunMerchantBuilder). 비어 있으면 예전 두 단계 팝업을 쓴다.")]
         private RunMerchantView merchantWindow;
+        private RunRouteMapPresenter _map;
         private RunMerchantPresenter _merchant;
         private readonly RunExchangePresenter _exchange = new();
         private int _trapRoom = -1;
@@ -78,6 +80,11 @@ namespace Code.UI.Run
             preparation.Selected -= Select;
             preparation.Dropped -= Drop;
             if (trapControl != null) trapControl.Activated -= RequestTrap;
+            if (routeMap != null)
+            {
+                routeMap.NodeClicked -= SelectMapNode;
+                routeMap.GoClicked -= EnterSelectedNode;
+            }
             if (_merchant != null)
             {
                 _merchant.Bought -= HandleMerchantBought;
@@ -95,6 +102,12 @@ namespace Code.UI.Run
             preparation.Selected += Select;
             preparation.Dropped += Drop;
             if (trapControl != null) trapControl.Activated += RequestTrap;
+            if (routeMap != null)
+            {
+                _map ??= new RunRouteMapPresenter(routeMap);
+                routeMap.NodeClicked += SelectMapNode;
+                routeMap.GoClicked += EnterSelectedNode;
+            }
             if (merchantWindow != null)
             {
                 _merchant ??= new RunMerchantPresenter(merchantWindow);
@@ -105,12 +118,22 @@ namespace Code.UI.Run
             _bound = true;
         }
 
+        private void SelectMapNode(int index) => _map.Select(index);
+
+        private void EnterSelectedNode()
+        {
+            if (_map.SelectedEnterable is not RunDemoRoute.Node node) return;
+            routeMap.Hide();
+            EnterDemoNode(node);
+        }
+
         public void Prepare(RunEncounterSO encounter)
         {
             Bind();
             _demo?.Dispose();
             _raid = null;
-            _demo = new RunDemoCampaign(encounter);
+            // 원정과 정예 침입 사이에도 상인/글 사건 갈래를 둔다(2026-11-11 사용자 결정). 예전 저장은 저장된 지도대로 이어진다.
+            _demo = new RunDemoCampaign(encounter, postRaidBranch: true);
             _flow = new RunBattleFlow(encounter, _memory, _demo.DefenseSettings(1), _demo.DefenseParty(1));
             RestoreCheckpoint(encounter);
             ShowPreparation(encounter);
@@ -123,7 +146,7 @@ namespace Code.UI.Run
 
         public void OpenNextEncounter()
         {
-            if (PopupController.IsOpen || (_merchant != null && _merchant.IsOpen)) return;
+            if (PopupController.IsOpen || (routeMap != null && routeMap.IsOpen) || (_merchant != null && _merchant.IsOpen)) return;
             if (_raid != null && !IsResult)
             {
                 if (!_raid.IsRaidRetreating)
@@ -149,31 +172,12 @@ namespace Code.UI.Run
                 ShowUpkeep();
                 return;
             }
-            if (route.Current == RunDemoRoute.Node.ThiefDefense)
+            if (routeMap == null)
             {
-                PopupController.Show(PopupRequest.Choice("구역 지도 · 도적 침입",
-                    "도적 침입 방어 완료\n상인 · 심장 수리 또는 함정 강화\n글 사건 · 부상 부하 한 명 회복\n이후 · 공병 침입 → 원정 → 정예 침입",
-                    new[]
-                    {
-                        new PopupButtonSpec("닫기", PopupButtonStyle.Secondary, null),
-                        new PopupButtonSpec("상인", PopupButtonStyle.Primary, () => EnterDemoNode(RunDemoRoute.Node.Merchant)),
-                        new PopupButtonSpec("글 사건", PopupButtonStyle.Primary, () => EnterDemoNode(RunDemoRoute.Node.StoryEvent)),
-                    }, () => { }));
+                Debug.LogWarning("구역 지도 창이 연결되지 않았습니다(RunRouteMapBuilder.BuildAll).", this);
                 return;
             }
-            RunDemoRoute.Node next = route.Current switch
-            {
-                RunDemoRoute.Node.Merchant or RunDemoRoute.Node.StoryEvent => RunDemoRoute.Node.SapperDefense,
-                RunDemoRoute.Node.SapperDefense => RunDemoRoute.Node.OutpostRaid,
-                _ => RunDemoRoute.Node.EliteDefense,
-            };
-            string label = NodeLabel(next);
-            string current = NodeLabel(route.Current);
-            string effect = next == RunDemoRoute.Node.EliteDefense
-                ? $"마력 용량 {_demo.DefenseSettings(3).StartingManaCapacity} · 남은 전력으로 정예 침입 방어"
-                : next == RunDemoRoute.Node.OutpostRaid ? "최대 3명 파견 · 진지 대장 처치" : "공병의 화약 폭파에 대비";
-            PopupController.Show(PopupRequest.Confirm($"구역 지도 · {current}",
-                $"다음 칸 · {label}\n{effect}", () => EnterDemoNode(next), confirmLabel: "이동"));
+            _map.Show(route, _demo, Deployment.Encounter);
         }
 
         private void EnterDemoNode(RunDemoRoute.Node node)
@@ -305,25 +309,16 @@ namespace Code.UI.Run
                 last = minion.DisplayName;
             }
             _text.Append(hurt == 0 ? "다친 부하가 없습니다." : Particle(last, "이", "가") + " 다쳤습니다.");
-            // 쓰러진 부하는 정비에서도 금화로 되살린다(2026-11-11 사용자 결정, 상인보다 비싸다).
-            int lost = 0;
-            for (int i = 0; i < state.MinionHealth.Length; i++)
-            {
-                if (!_demo.IsMinionLost(i)) continue;
-                _text.Append(lost++ == 0 ? "\n쓰러진 부하: " : ", ").Append(_demo.Roster[i].Combatant.DisplayName);
-            }
-            int left = RunDemoCampaign.MaxExtraCapacity - _demo.ExtraCapacity;
-            _text.Append("\n마력 용량 ").Append(3 + _demo.ExtraCapacity)
-                .Append(left > 0 ? $" · {left}번 더 늘릴 수 있습니다." : " · 더 늘릴 수 없습니다.");
+            // 정비 창은 수리·치료만 한다. 고용·마력 용량은 상인으로 옮겼다(2026-11-11 사용자 결정 "매번 뜨되 일부만").
+            _text.Append("\n고용·마력 용량은 상인에서 삽니다.");
             bool anyTarget = UpkeepTargetCount() > 0;
             PopupController.Show(PopupRequest.Choice("던전 정비", _text.ToString(),
                     new[]
                     {
                         new PopupButtonSpec("지도로", PopupButtonStyle.Secondary, LeaveUpkeep),
-                        new PopupButtonSpec("수리·치료·고용", PopupButtonStyle.Primary, () => ShowUpkeepTarget(0), anyTarget),
-                        new PopupButtonSpec("마력 용량 +1", PopupButtonStyle.Primary, BuyCapacity, _demo.CanBuyCapacity),
+                        new PopupButtonSpec("수리·치료", PopupButtonStyle.Primary, () => ShowUpkeepTarget(0), anyTarget),
                     }, LeaveUpkeep)
-                .WithLines($"금화 {state.Gold} · 고치기 {RunDemoCampaign.RepairPrice} · 용량 {RunDemoCampaign.CapacityPrice}", null)
+                .WithLines($"금화 {state.Gold} · 고치기 {RunDemoCampaign.RepairPrice} · 치료 {RunDemoCampaign.HealPrice}", null)
                 .WithAccent(HudPalette.Gain, "다음 침입 전에 고칩니다"));
         }
 
@@ -343,26 +338,23 @@ namespace Code.UI.Run
             if (last != null) _text.Append(broken ? Particle(last, "이", "가") : Particle(last, "은", "는")).Append(' ').Append(predicate);
         }
 
-        // 수리·치료·고용 대상: 고장·깎인 시스템 방, 체력이 깎인 부하, 쓰러진 부하 순(각각 배치 순서).
+        // 수리·치료 대상: 고장·깎인 시스템 방, 체력이 깎인 부하 순(각각 배치 순서).
         private int UpkeepTargetCount()
         {
             int count = 0;
             for (int i = 0; i < _demo.Carryover.RoomBroken.Length; i++) if (_demo.IsRoomDamaged(i)) count++;
-            for (int i = 0; i < _demo.Carryover.MinionHealth.Length; i++) if (_demo.IsMinionHurt(i) || _demo.IsMinionLost(i)) count++;
+            for (int i = 0; i < _demo.Carryover.MinionHealth.Length; i++) if (_demo.IsMinionHurt(i)) count++;
             return count;
         }
 
-        // n번째 대상을 돌려준다. 방이면 room, 부하면 minion이 0 이상이고, 쓰러진 부하면 hire가 참이다.
-        private void UpkeepTarget(int ordinal, out int room, out int minion, out bool hire)
+        // n번째 대상을 돌려준다. 방이면 room, 부하면 minion이 0 이상이다.
+        private void UpkeepTarget(int ordinal, out int room, out int minion)
         {
             room = minion = -1;
-            hire = false;
             for (int i = 0; i < _demo.Carryover.RoomBroken.Length; i++)
                 if (_demo.IsRoomDamaged(i) && ordinal-- == 0) { room = i; return; }
             for (int i = 0; i < _demo.Carryover.MinionHealth.Length; i++)
                 if (_demo.IsMinionHurt(i) && ordinal-- == 0) { minion = i; return; }
-            for (int i = 0; i < _demo.Carryover.MinionHealth.Length; i++)
-                if (_demo.IsMinionLost(i) && ordinal-- == 0) { minion = i; hire = true; return; }
         }
 
         private void ShowUpkeepTarget(int ordinal)
@@ -374,7 +366,7 @@ namespace Code.UI.Run
                 return;
             }
             ordinal %= count;
-            UpkeepTarget(ordinal, out int room, out int minionIndex, out bool hire);
+            UpkeepTarget(ordinal, out int room, out int minionIndex);
             RunBattleCarryover state = _demo.Carryover;
             int price;
             string line;
@@ -387,13 +379,6 @@ namespace Code.UI.Run
                 price = RunDemoCampaign.RepairPrice;
                 buy = () => BuyUpkeep(_demo.TryRepairRoom(room));
             }
-            else if (hire)
-            {
-                RunCombatantSO minion = _demo.Roster[minionIndex].Combatant;
-                line = $"{minion.DisplayName} · 쓰러짐 → 체력 {minion.MaxHealth}/{minion.MaxHealth}로 고용";
-                price = RunDemoCampaign.UpkeepHirePrice;
-                buy = () => BuyUpkeep(_demo.TryHireAtUpkeep(minionIndex));
-            }
             else
             {
                 RunCombatantSO minion = _demo.Roster[minionIndex].Combatant;
@@ -402,18 +387,16 @@ namespace Code.UI.Run
                 buy = () => BuyUpkeep(_demo.TryHealMinion(minionIndex));
             }
             bool affordable = state.Gold >= price;
-            PopupController.Show(PopupRequest.Choice("던전 정비 · 수리·치료·고용", $"{line} ({ordinal + 1}/{count})",
+            PopupController.Show(PopupRequest.Choice("던전 정비 · 수리·치료", $"{line} ({ordinal + 1}/{count})",
                     new[]
                     {
                         new PopupButtonSpec("뒤로", PopupButtonStyle.Secondary, ShowUpkeep),
                         new PopupButtonSpec("다음 대상", PopupButtonStyle.Secondary, () => ShowUpkeepTarget(ordinal + 1), count > 1),
-                        new PopupButtonSpec(room >= 0 ? "고치기" : hire ? "고용" : "치료", PopupButtonStyle.Primary, buy, affordable),
+                        new PopupButtonSpec(room >= 0 ? "고치기" : "치료", PopupButtonStyle.Primary, buy, affordable),
                     }, ShowUpkeep)
                 .WithLines($"가진 금화 {state.Gold} · 가격 금화 {price}", affordable ? null : "금화가 모자라 살 수 없습니다")
                 .WithAccent(HudPalette.Gain, null));
         }
-
-        private void BuyCapacity() => BuyUpkeep(_demo.TryBuyCapacity());
 
         private void BuyUpkeep(bool bought)
         {
@@ -555,6 +538,8 @@ namespace Code.UI.Run
                 _text.Append(" → ").Append(NodeLabel(branch));
             AppendRouteStep(RunDemoRoute.Node.SapperDefense, route);
             AppendRouteStep(RunDemoRoute.Node.OutpostRaid, route);
+            if (route.SecondBranch is RunDemoRoute.Node second && route.Current == RunDemoRoute.Node.EliteDefense)
+                _text.Append(" → ").Append(NodeLabel(second));
             AppendRouteStep(RunDemoRoute.Node.EliteDefense, route);
             _text.Append("\n남은 부하 · ");
             AppendMinions(state, alive: true);
@@ -629,9 +614,11 @@ namespace Code.UI.Run
             }
             RunDemoRoute route = checkpoint.GetRoute();
             _demo.Restore(route, checkpoint);
+            // 원정 뒤 갈래(2026-11-11)는 원정 칸처럼 공병전 결과 화면 뒤에서 이어진다.
             int number = route.Current switch
             {
-                RunDemoRoute.Node.ThiefDefense or RunDemoRoute.Node.Merchant or RunDemoRoute.Node.StoryEvent => 1,
+                RunDemoRoute.Node.ThiefDefense => 1,
+                RunDemoRoute.Node.Merchant or RunDemoRoute.Node.StoryEvent => route.IsSecondBranch ? 2 : 1,
                 RunDemoRoute.Node.EliteDefense => 3,
                 _ => 2,
             };
@@ -842,6 +829,8 @@ namespace Code.UI.Run
                 if (_raid != null) _demo.ResolveRaid(_raid, _raiders);
                 else _demo.ResolveDefense(Battle);
                 SaveCheckpoint();
+                // 칸을 끝내면 지도(런이 끝났으면 정산)를 바로 띄운다. 닫아도 결과 띠의 버튼으로 다시 연다.
+                OpenNextEncounter();
                 return;
             }
             _monitor.Scan();

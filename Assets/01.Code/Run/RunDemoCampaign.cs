@@ -81,7 +81,6 @@ namespace Code.Run
 
         internal const int RepairPrice = 20;
         internal const int HealPrice = 20;
-        internal const int CapacityPrice = 60;
         internal const int MaxExtraCapacity = 2;
         internal const int MaxExtraMinions = 1;
         internal const float QuickTrapCooldownSeconds = 3f;
@@ -292,32 +291,7 @@ namespace Code.Run
             return true;
         }
 
-        /// <summary>정비에서 쓰러진 부하를 되살리는 값. 상인(30)보다 비싸다(2026-11-11 사용자 결정).
-        /// 2026-11-11 "C 지도와 경제"에서 정비 창의 고용은 상인으로 옮기기로 했다(화면에서 뺄 때 함께 정리).</summary>
-        internal const int UpkeepHirePrice = 60;
-
-        /// <summary>정비에서 되살릴 수 있는 부하인가: 쓰러졌다.</summary>
-        internal bool IsMinionLost(int index) =>
-            Carryover != null && index >= 0 && index < Carryover.MinionHealth.Length && Carryover.MinionHealth[index] <= 0;
-
-        /// <summary>쓰러진 부하를 같은 종류로 체력 가득 되살린다.</summary>
-        internal bool TryHireAtUpkeep(int index)
-        {
-            if (!IsMinionLost(index) || Carryover.Gold < UpkeepHirePrice) return false;
-            Carryover.MinionHealth[index] = Minion(index).MaxHealth;
-            Carryover.Gold -= UpkeepHirePrice;
-            return true;
-        }
-
-        internal bool CanBuyCapacity => Carryover != null && ExtraCapacity < MaxExtraCapacity && Carryover.Gold >= CapacityPrice;
-
-        internal bool TryBuyCapacity()
-        {
-            if (!CanBuyCapacity) return false;
-            ExtraCapacity++;
-            Carryover.Gold -= CapacityPrice;
-            return true;
-        }
+        // 정비 창의 잃은 부하 고용(60)과 마력 용량(60)은 상인으로 옮겨 지웠다(2026-11-11 사용자 결정 "매번 뜨되 일부만").
 
         // ── 글 사건: 대가 있는 교환 ──
 
