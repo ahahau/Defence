@@ -64,6 +64,10 @@ namespace Code.Run
         [field: SerializeField, Min(0)] public int ThiefStealPerSecond { get; private set; } = 10;
         [field: SerializeField, Min(0)] public int ThiefCarryLimit { get; private set; } = 45;
         [field: SerializeField, Min(1)] public int SapperRoomDamageMultiplier { get; private set; } = 2;
+        [field: SerializeField, Tooltip("켜면 방·금고를 노리는 적(궁수·마법사·도적)이 목표 방까지 싸우지 않고 부하를 지나친다.")]
+        public bool RoomGoalsPassDefenders { get; private set; }
+        [field: SerializeField, Tooltip("켜면 금화를 들고 도망치는 도적도 부하를 지나친다.")]
+        public bool EscapingThievesPass { get; private set; }
 
         internal int TrapDamageBonus { get; private set; }
 

@@ -292,6 +292,13 @@ namespace Code.Run
                 }
                 if (nearest >= 0) return nearest;
             }
+            if (intruder.Definition.Goal == RunGoal.Room)
+            {
+                // 꺼진 방도 노린다. 고장 내면 심장으로 넘어간다(2026-11-11 사용자 결정).
+                foreach (RunRoom room in _rooms)
+                    if (room.Kind == intruder.Definition.GoalRoomKind && !room.IsBroken) return room.Index;
+                return HeartRoom;
+            }
             return (intruder.Definition.IntruderRole == RunIntruderRole.Thief || intruder.Definition.Goal == RunGoal.Vault)
                 && VaultRoom >= 0 ? VaultRoom : HeartRoom;
         }
@@ -631,6 +638,7 @@ namespace Code.Run
                 UpdateRaidDefender(intruder, dt);
                 return;
             }
+            if (TryPassToGoal(intruder, dt)) return;
             if (TryBeginTelegraph(intruder, intruder.Telegraph.Effect)) return;
             if (intruder.Telegraph.IsActive)
             {
@@ -664,6 +672,16 @@ namespace Code.Run
                 }
                 return;
             }
+            if (!intruder.IsEscaping && intruder.Definition.Goal == RunGoal.Room && room == goalRoom && room != HeartRoom)
+            {
+                intruder.SetActivity(RunActionKind.AttackRoom);
+                if (intruder.AttackTimer <= Epsilon)
+                {
+                    _rooms[room].Damage(intruder.Definition.Attack);
+                    intruder.Strike(AttackInterval(intruder));
+                }
+                return;
+            }
             foe = DefenderInRoom(room, intruder);
             if (foe != null)
             {
@@ -689,6 +707,36 @@ namespace Code.Run
             }
             Walk(intruder, goal, dt, true);
             if (intruder.IsEscaping && intruder.Activity == RunActionKind.Move) intruder.SetActivity(RunActionKind.Escape);
+        }
+
+        /// <summary>
+        /// 방·금고를 노리는 적은 목표 방에 닿기 전까지 싸우지 않고 부하를 지나쳐 걷는다. 목표 방에서는 평소처럼 싸운다(2026-11-11 사용자 결정).
+        /// </summary>
+        private bool TryPassToGoal(RunCombatant intruder, float dt)
+        {
+            if (!Settings.RoomGoalsPassDefenders || intruder.Telegraph.IsActive) return false;
+            bool roomSeeker = intruder.Definition.IntruderRole == RunIntruderRole.Thief
+                || intruder.Definition.Goal == RunGoal.Vault || intruder.Definition.Goal == RunGoal.Room;
+            if (!roomSeeker) return false;
+            if (intruder.IsEscaping)
+            {
+                if (!Settings.EscapingThievesPass) return false;
+                if (Distance(intruder.Position, EntrancePosition) <= Epsilon)
+                {
+                    intruder.SetActivity(RunActionKind.Escape);
+                    intruder.Leave();
+                }
+                else
+                {
+                    Walk(intruder, EntrancePosition, dt, true, 0f, true);
+                    intruder.SetActivity(RunActionKind.Escape);
+                }
+                return true;
+            }
+            int goalRoom = GoalRoomOf(intruder);
+            if (goalRoom < 0 || goalRoom == HeartRoom || RoomOf(intruder) == goalRoom) return false;
+            Walk(intruder, CenterOf(goalRoom), dt, true, 0f, true);
+            return true;
         }
 
         private void Steal(RunCombatant thief, float dt)
@@ -718,6 +766,14 @@ namespace Code.Run
                 return;
             }
             if (defender.Telegraph.IsActive) return;
+            // 진지 대장은 사거리 밖에서 자기를 친 부하에게 걸어가 싸운다. 복도에서 쏘기만 해도 잡히던 빈틈을 막는다(2026-11-11 사용자 결정).
+            RunCombatant attacker = defender.LastAttacker;
+            if (defender == RaidCommander && attacker != null && attacker.IsOnField && attacker.Side != defender.Side)
+            {
+                Walk(defender, attacker.Position, dt, false, RangeOf(defender));
+                defender.SetActivity(RunActionKind.Move, attacker);
+                return;
+            }
             RunPosition post = CenterOf(defender.HomeRoom);
             if (Distance(defender.Position, post) > Epsilon) Walk(defender, post, dt, false);
             else defender.SetActivity(RunActionKind.Idle);

@@ -25,6 +25,7 @@ namespace Code.Run
         private readonly RunIntruderEntry _mage;
         private readonly RunCombatantSO _elite;
         private readonly RunCombatantSO _commander;
+        private readonly RunCombatantSO _raidArcher;
 
         internal RunDemoCampaign(RunEncounterSO encounter)
         {
@@ -38,6 +39,10 @@ namespace Code.Run
             _commander = _sword.Combatant.CreateDemoVariant("진지 대장");
             // 대장 한 명만 잡으면 피해 없이 끝나던 원정을 다친 부하를 데려갈지 고민하게 만든다(2026-11-10 사용자 결정).
             _commander.ScaleDemoHealth(1.5f);
+            // 침입 궁수는 부하를 지나쳐 치유 샘으로 가도록 체력·속도를 2배로 올렸다. 진지 경비실 궁수는 그 전 값을 쓴다(2026-11-11 사용자 결정).
+            _raidArcher = _archer.Combatant.CreateDemoVariant(_archer.Combatant.DisplayName, healthBonus: 0f);
+            _raidArcher.ScaleDemoHealth(0.5f);
+            _raidArcher.ScaleDemoMoveSpeed(0.5f);
         }
 
         internal RunDemoRoute Route { get; private set; } = new();
@@ -137,6 +142,22 @@ namespace Code.Run
             return true;
         }
 
+        /// <summary>정비에서 쓰러진 부하를 되살리는 값. 상인(30)보다 비싸다(2026-11-11 사용자 결정).</summary>
+        internal const int UpkeepHirePrice = 60;
+
+        /// <summary>정비에서 되살릴 수 있는 부하인가: 쓰러졌다.</summary>
+        internal bool IsMinionLost(int index) =>
+            Carryover != null && index >= 0 && index < Carryover.MinionHealth.Length && Carryover.MinionHealth[index] <= 0;
+
+        /// <summary>쓰러진 부하를 같은 종류로 체력 가득 되살린다.</summary>
+        internal bool TryHireAtUpkeep(int index)
+        {
+            if (!IsMinionLost(index) || Carryover.Gold < UpkeepHirePrice) return false;
+            Carryover.MinionHealth[index] = _encounter.Minions[index].Combatant.MaxHealth;
+            Carryover.Gold -= UpkeepHirePrice;
+            return true;
+        }
+
         internal bool CanBuyCapacity => Carryover != null && ExtraCapacity < MaxExtraCapacity && Carryover.Gold >= CapacityPrice;
 
         internal bool TryBuyCapacity()
@@ -198,7 +219,7 @@ namespace Code.Run
                 raid.OrderMove(minion, detour ? 3 : 1);
             }
             raid.AddCombatant(_sword.Combatant, 1, _sword.OverrideAffinity ? _sword.Affinity : null);
-            raid.AddCombatant(_archer.Combatant, 1, _archer.OverrideAffinity ? _archer.Affinity : null);
+            raid.AddCombatant(_raidArcher, 1, _archer.OverrideAffinity ? _archer.Affinity : null);
             raid.RaidCommander = raid.AddCombatant(_commander, 2);
             return raid;
         }
@@ -230,11 +251,13 @@ namespace Code.Run
             {
                 UnityEngine.Object.Destroy(_elite);
                 UnityEngine.Object.Destroy(_commander);
+                UnityEngine.Object.Destroy(_raidArcher);
             }
             else
             {
                 UnityEngine.Object.DestroyImmediate(_elite);
                 UnityEngine.Object.DestroyImmediate(_commander);
+                UnityEngine.Object.DestroyImmediate(_raidArcher);
             }
         }
 

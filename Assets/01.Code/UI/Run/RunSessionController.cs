@@ -278,6 +278,13 @@ namespace Code.UI.Run
                 last = minion.DisplayName;
             }
             _text.Append(hurt == 0 ? "다친 부하가 없습니다." : Particle(last, "이", "가") + " 다쳤습니다.");
+            // 쓰러진 부하는 정비에서도 금화로 되살린다(2026-11-11 사용자 결정, 상인보다 비싸다).
+            int lost = 0;
+            for (int i = 0; i < state.MinionHealth.Length; i++)
+            {
+                if (!_demo.IsMinionLost(i)) continue;
+                _text.Append(lost++ == 0 ? "\n쓰러진 부하: " : ", ").Append(Deployment.Encounter.Minions[i].Combatant.DisplayName);
+            }
             int left = RunDemoCampaign.MaxExtraCapacity - _demo.ExtraCapacity;
             _text.Append("\n마력 용량 ").Append(3 + _demo.ExtraCapacity)
                 .Append(left > 0 ? $" · {left}번 더 늘릴 수 있습니다." : " · 더 늘릴 수 없습니다.");
@@ -286,7 +293,7 @@ namespace Code.UI.Run
                     new[]
                     {
                         new PopupButtonSpec("지도로", PopupButtonStyle.Secondary, LeaveUpkeep),
-                        new PopupButtonSpec("수리·치료", PopupButtonStyle.Primary, () => ShowUpkeepTarget(0), anyTarget),
+                        new PopupButtonSpec("수리·치료·고용", PopupButtonStyle.Primary, () => ShowUpkeepTarget(0), anyTarget),
                         new PopupButtonSpec("마력 용량 +1", PopupButtonStyle.Primary, BuyCapacity, _demo.CanBuyCapacity),
                     }, LeaveUpkeep)
                 .WithLines($"금화 {state.Gold} · 고치기 {RunDemoCampaign.RepairPrice} · 용량 {RunDemoCampaign.CapacityPrice}", null)
@@ -309,23 +316,26 @@ namespace Code.UI.Run
             if (last != null) _text.Append(broken ? Particle(last, "이", "가") : Particle(last, "은", "는")).Append(' ').Append(predicate);
         }
 
-        // 수리·치료 대상: 고장·깎인 시스템 방(배치 순서) 다음에 체력이 깎인 부하(배치 순서).
+        // 수리·치료·고용 대상: 고장·깎인 시스템 방, 체력이 깎인 부하, 쓰러진 부하 순(각각 배치 순서).
         private int UpkeepTargetCount()
         {
             int count = 0;
             for (int i = 0; i < _demo.Carryover.RoomBroken.Length; i++) if (_demo.IsRoomDamaged(i)) count++;
-            for (int i = 0; i < _demo.Carryover.MinionHealth.Length; i++) if (_demo.IsMinionHurt(i)) count++;
+            for (int i = 0; i < _demo.Carryover.MinionHealth.Length; i++) if (_demo.IsMinionHurt(i) || _demo.IsMinionLost(i)) count++;
             return count;
         }
 
-        // n번째 대상을 돌려준다. 방이면 room, 부하면 minion이 0 이상이다.
-        private void UpkeepTarget(int ordinal, out int room, out int minion)
+        // n번째 대상을 돌려준다. 방이면 room, 부하면 minion이 0 이상이고, 쓰러진 부하면 hire가 참이다.
+        private void UpkeepTarget(int ordinal, out int room, out int minion, out bool hire)
         {
             room = minion = -1;
+            hire = false;
             for (int i = 0; i < _demo.Carryover.RoomBroken.Length; i++)
                 if (_demo.IsRoomDamaged(i) && ordinal-- == 0) { room = i; return; }
             for (int i = 0; i < _demo.Carryover.MinionHealth.Length; i++)
                 if (_demo.IsMinionHurt(i) && ordinal-- == 0) { minion = i; return; }
+            for (int i = 0; i < _demo.Carryover.MinionHealth.Length; i++)
+                if (_demo.IsMinionLost(i) && ordinal-- == 0) { minion = i; hire = true; return; }
         }
 
         private void ShowUpkeepTarget(int ordinal)
@@ -337,7 +347,7 @@ namespace Code.UI.Run
                 return;
             }
             ordinal %= count;
-            UpkeepTarget(ordinal, out int room, out int minionIndex);
+            UpkeepTarget(ordinal, out int room, out int minionIndex, out bool hire);
             RunBattleCarryover state = _demo.Carryover;
             int price;
             string line;
@@ -350,6 +360,13 @@ namespace Code.UI.Run
                 price = RunDemoCampaign.RepairPrice;
                 buy = () => BuyUpkeep(_demo.TryRepairRoom(room));
             }
+            else if (hire)
+            {
+                RunCombatantSO minion = Deployment.Encounter.Minions[minionIndex].Combatant;
+                line = $"{minion.DisplayName} · 쓰러짐 → 체력 {minion.MaxHealth}/{minion.MaxHealth}로 고용";
+                price = RunDemoCampaign.UpkeepHirePrice;
+                buy = () => BuyUpkeep(_demo.TryHireAtUpkeep(minionIndex));
+            }
             else
             {
                 RunCombatantSO minion = Deployment.Encounter.Minions[minionIndex].Combatant;
@@ -358,12 +375,12 @@ namespace Code.UI.Run
                 buy = () => BuyUpkeep(_demo.TryHealMinion(minionIndex));
             }
             bool affordable = state.Gold >= price;
-            PopupController.Show(PopupRequest.Choice("던전 정비 · 수리·치료", $"{line} ({ordinal + 1}/{count})",
+            PopupController.Show(PopupRequest.Choice("던전 정비 · 수리·치료·고용", $"{line} ({ordinal + 1}/{count})",
                     new[]
                     {
                         new PopupButtonSpec("뒤로", PopupButtonStyle.Secondary, ShowUpkeep),
                         new PopupButtonSpec("다음 대상", PopupButtonStyle.Secondary, () => ShowUpkeepTarget(ordinal + 1), count > 1),
-                        new PopupButtonSpec(room >= 0 ? "고치기" : "치료", PopupButtonStyle.Primary, buy, affordable),
+                        new PopupButtonSpec(room >= 0 ? "고치기" : hire ? "고용" : "치료", PopupButtonStyle.Primary, buy, affordable),
                     }, ShowUpkeep)
                 .WithLines($"가진 금화 {state.Gold} · 가격 금화 {price}", affordable ? null : "금화가 모자라 살 수 없습니다")
                 .WithAccent(HudPalette.Gain, null));
@@ -694,22 +711,26 @@ namespace Code.UI.Run
         }
 
         private static string GoalSentence(RunCombatantSO data) => data.IntruderRole == RunIntruderRole.Sapper ? "켜진 방을 부숩니다"
-            : data.Goal == RunGoal.Vault ? "금고 금화를 훔칩니다" : "심장을 노립니다";
+            : data.Goal == RunGoal.Vault ? "금고 금화를 훔칩니다"
+            : data.Goal == RunGoal.Room ? Josa(RunBattleText.RoomName(data.GoalRoomKind), "을", "를") + " 부수러 갑니다"
+            : "심장을 노립니다";
 
         // 아래 띠: 이번 파티에 실제로 있는 역할만 말한다(도적전에 공병을 말하지 않는다).
         private static string PartyGoalTip(RunIntruderEntry[] party)
         {
-            bool thief = false, sapper = false;
+            var roles = new System.Collections.Generic.List<string>();
             foreach (RunIntruderEntry entry in party)
             {
                 RunCombatantSO data = entry.Combatant;
-                if (data.IntruderRole == RunIntruderRole.Sapper) sapper = true;
-                else if (data.Goal == RunGoal.Vault) thief = true;
+                string role = data.IntruderRole == RunIntruderRole.Sapper ? "공병은 켜진 방"
+                    : data.Goal == RunGoal.Vault ? Josa(data.DisplayName, "은", "는") + " 금고"
+                    : data.Goal == RunGoal.Room ? Josa(data.DisplayName, "은", "는") + " " + RunBattleText.RoomName(data.GoalRoomKind)
+                    : null;
+                if (role != null && !roles.Contains(role)) roles.Add(role);
             }
             // 왼쪽 열 폭이 좁아 한글이 단어 중간에서 끊기지 않게 줄을 직접 나눈다.
-            if (!thief && !sapper) return "이번 적\n모두 심장을 노립니다";
-            string roles = thief && sapper ? "도적은 금고, 공병은 켜진 방" : thief ? "도적은 금고" : "공병은 켜진 방";
-            return "이번 적\n" + roles + "\n나머지는 심장을 노립니다";
+            if (roles.Count == 0) return "이번 적\n모두 심장을 노립니다";
+            return "이번 적\n" + string.Join("\n", roles) + "\n나머지는 심장을 노립니다";
         }
 
         private static string AffinityName(RunAffinity affinity) => affinity switch

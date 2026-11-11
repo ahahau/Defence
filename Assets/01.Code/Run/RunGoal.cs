@@ -5,5 +5,8 @@ namespace Code.Run
     {
         Heart = 0,
         Vault = 1,
+
+        /// <summary><see cref="RunCombatantSO.GoalRoomKind"/> 방을 고장 낼 때까지 치고, 고장 나면 심장으로 간다.</summary>
+        Room = 2,
     }
 }

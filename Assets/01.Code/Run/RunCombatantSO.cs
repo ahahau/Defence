@@ -41,6 +41,9 @@ namespace Code.Run
         [field: SerializeField, Tooltip("침입자의 목표.")]
         public RunGoal Goal { get; private set; }
 
+        [field: SerializeField, Tooltip("Goal이 Room일 때 노리는 방 종류. 마력이 없어도 간다.")]
+        public RunRoomKind GoalRoomKind { get; private set; }
+
         [field: SerializeField] public RunIntruderRole IntruderRole { get; private set; }
 
         [field: SerializeField, Tooltip("켜면 FavoredRoom에 있을 때 그 방 효과가 커진다.")]
@@ -52,15 +55,22 @@ namespace Code.Run
 
         private string _demoDisplayName;
 
-        internal RunCombatantSO CreateDemoVariant(string displayName, EnemyDataSO appearance = null)
+        internal RunCombatantSO CreateDemoVariant(string displayName, EnemyDataSO appearance = null, float healthBonus = 0.5f)
         {
             RunCombatantSO variant = Instantiate(this);
             variant.hideFlags = HideFlags.DontSave;
             variant.name = displayName;
             variant._demoDisplayName = displayName;
             if (appearance != null) variant.SourceEnemy = appearance;
-            variant.MaxHealth += Mathf.CeilToInt(MaxHealth * 0.5f);
+            variant.MaxHealth += Mathf.CeilToInt(MaxHealth * healthBonus);
             return variant;
+        }
+
+        /// <summary>시연용 변형의 이동 속도를 배율만큼 바꾼다. 에셋이 아닌 <see cref="CreateDemoVariant"/> 사본에만 쓴다.</summary>
+        internal void ScaleDemoMoveSpeed(float ratio)
+        {
+            if (_demoDisplayName == null) throw new System.InvalidOperationException("시연용 변형에만 쓸 수 있습니다.");
+            MoveSpeed *= ratio;
         }
 
         /// <summary>시연용 변형의 최대 체력을 배율만큼 바꾼다. 에셋이 아닌 <see cref="CreateDemoVariant"/> 사본에만 쓴다.</summary>

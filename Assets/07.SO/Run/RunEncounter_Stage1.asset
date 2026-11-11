@@ -97,8 +97,11 @@ MonoBehaviour:
     <TrapDamagePerMana>k__BackingField: 2
     <TrapCooldownSeconds>k__BackingField: 4
     <TrapMaxMana>k__BackingField: 2
+    <TrapMaxStages>k__BackingField: 3
     <SpringHealPerSecond>k__BackingField: 1
     <ThiefStealPerSecond>k__BackingField: 10
     <ThiefCarryLimit>k__BackingField: 45
     <SapperRoomDamageMultiplier>k__BackingField: 2
+    <RoomGoalsPassDefenders>k__BackingField: 1
+    <EscapingThievesPass>k__BackingField: 0
   <DemoEliteAppearance>k__BackingField: {fileID: 11400000, guid: daa1222371f323d4c944f6fe5d34916a, type: 2}
