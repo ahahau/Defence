@@ -25,6 +25,17 @@ namespace Code.Run
         /// <summary>적이 부숴 이번 전투 동안 열린 채다.</summary>
         public bool IsBrokenOpen { get; private set; }
 
+        /// <summary>담당 문 제어실이 부서진 문을 다시 잠그려고 모은 초.</summary>
+        internal float RelockProgress { get; set; }
+
+        /// <summary>부서진 문을 내구 가득으로 되돌린다.</summary>
+        internal void Relock()
+        {
+            Durability = MaxDurability;
+            IsBrokenOpen = false;
+            RelockProgress = 0f;
+        }
+
         internal void Damage(int amount)
         {
             if (IsBrokenOpen || amount <= 0) return;

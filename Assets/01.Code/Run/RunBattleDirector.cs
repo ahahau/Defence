@@ -917,6 +917,15 @@ namespace Code.Run
             return false;
         }
 
+        // 방을 치는 적(공병·방 목표 적)이 있으면 이름판에 붉게 보인다(2026-11-11 목업 A안 승인).
+        private bool IsRoomUnderAttack(int roomIndex)
+        {
+            foreach (RunCombatant actor in _battle.Combatants)
+                if (actor.IsOnField && actor.Side == RunSide.Intruder && actor.Activity == RunActionKind.AttackRoom && _battle.RoomOf(actor) == roomIndex)
+                    return true;
+            return false;
+        }
+
         private (string, Color) RoomStatus(RunRoom room)
         {
             switch (room.Kind)
@@ -926,6 +935,7 @@ namespace Code.Run
                 case RunRoomKind.Vault: return ($"금화 {_battle.VaultGold}", HudPalette.Accent);
             }
             if (room.IsBroken) return ("고장", HudPalette.Danger);
+            if (IsRoomUnderAttack(room.Index)) return ("공격받는 중", HudPalette.Danger);
             if (room.Mana > 0 && !_battle.IsConnected(room.Index)) return ("끊김", HudPalette.Warn);
             if (room.Mana == 0) return ("꺼짐", HudPalette.TextMuted);
             if (room.Kind == RunRoomKind.Trap && room.TrapCooldown > 0f)

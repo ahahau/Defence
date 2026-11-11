@@ -380,12 +380,28 @@ namespace Code.Run
                 target.NoteAttacker(source);
                 amount = RunAffinityRules.Damage(amount, affinity ?? source.Affinity, target.Affinity);
             }
+            if (IsExposedRoomAttacker(target))
+                amount = (int)Math.Ceiling(amount * Settings.RoomAttackerDamageTakenMultiplier);
             int actualDamage = target.TakeDamage(amount);
             _telegraphRules.OnDamage(target, actualDamage);
             if (!IsRaid && target.IsDown && target.Side == RunSide.Intruder)
             {
                 VaultGold += Settings.GoldPerKill + target.DropGold();
             }
+        }
+
+        /// <summary>
+        /// 목표 방을 치는 통과 적은 무방비라 피해를 더 받는다. 쫓아가 잡는 쪽이 이득이 되게 한다(2026-11-11 사용자 결정).
+        /// 켜기 값이 있으면 방을 치기 시작한 뒤 그 방에 있는 동안(쫓아온 부하와 싸우는 중 포함) 내내 무방비다.
+        /// 부하가 지키던 목표 방에 들어와 바로 싸운 적은 방을 치지 않았으므로 무방비가 아니다.
+        /// </summary>
+        public bool IsExposedRoomAttacker(RunCombatant target)
+        {
+            if (Settings.RoomAttackerDamageTakenMultiplier <= 1f + Epsilon || target.Side != RunSide.Intruder) return false;
+            if (target.Definition.Goal != RunGoal.Room || target.IsEscaping) return false;
+            if (Settings.RoomAttackerStaysExposed)
+                return target.HasHitGoalRoom && RoomOf(target) == GoalRoomOf(target) && RoomOf(target) != HeartRoom;
+            return target.Activity == RunActionKind.AttackRoom;
         }
 
         // ── 한 걸음 ──
@@ -436,13 +452,77 @@ namespace Code.Run
                     case RunRoomKind.HealingSpring:
                         UpdateSpring(room, dt);
                         break;
+                    case RunRoomKind.DoorControl:
+                        UpdateDoorRelock(room, dt);
+                        break;
                 }
             }
         }
 
+        /// <summary>
+        /// 방 담당 정도. 부하가 방 안에 있으면 담당(싸우는 중 포함), 맞는 방의 부하면 맞는 담당이다.
+        /// 마력 칸이 있는 방은 켜져 있어야 한다(2026-11-11 사용자 결정).
+        /// </summary>
+        public RunStaffing StaffingOf(int roomIndex)
+        {
+            if (!Settings.RoomStaffing || roomIndex < 0 || roomIndex >= _rooms.Count) return RunStaffing.None;
+            RunRoom room = _rooms[roomIndex];
+            if (room.MaxMana > 0 && !IsPowered(roomIndex)) return RunStaffing.None;
+            RunStaffing staffing = RunStaffing.None;
+            foreach (RunCombatant minion in _combatants)
+            {
+                if (!minion.IsOnField || minion.Side != RunSide.Minion || RoomOf(minion) != roomIndex) continue;
+                if (minion.Definition.HasFavoredRoom && minion.Definition.FavoredRoom == room.Kind) return RunStaffing.Favored;
+                staffing = RunStaffing.Staffed;
+            }
+            return staffing;
+        }
+
+        /// <summary>담당 문 제어실은 부서진 문을 그 복도에 적이 없는 동안 일정 시간 뒤 다시 잠근다(2026-11-11 사용자 결정).</summary>
+        private void UpdateDoorRelock(RunRoom room, float dt)
+        {
+            RunStaffing staffing = StaffingOf(room.Index);
+            foreach (RunDoor door in _doors)
+            {
+                if (door == null || door.ControllerRoom != room.Index || !door.IsBrokenOpen) continue;
+                if (staffing == RunStaffing.None || IntruderOnLink(door.Index))
+                {
+                    door.RelockProgress = 0f;
+                    continue;
+                }
+                door.RelockProgress += dt;
+                float needed = staffing == RunStaffing.Favored ? Settings.FavoredDoorRelockSeconds : Settings.StaffedDoorRelockSeconds;
+                if (door.RelockProgress + Epsilon >= needed) door.Relock();
+            }
+        }
+
+        private bool IntruderOnLink(int link)
+        {
+            foreach (RunCombatant actor in _combatants)
+                if (actor.IsOnField && actor.Side == RunSide.Intruder && !actor.Position.IsInRoom && !actor.Position.IsAtEntrance && actor.Position.Link == link)
+                    return true;
+            return false;
+        }
+
+        /// <summary>방어에 이긴 순간 금고를 맡은 부하가 있으면 더하는 금화(2026-11-11 사용자 결정).</summary>
+        public int VaultInterest() => StaffingOf(VaultRoom) switch
+        {
+            RunStaffing.Favored => Settings.FavoredVaultInterest,
+            RunStaffing.Staffed => Settings.StaffedVaultInterest,
+            _ => 0,
+        };
+
+        private float TrapChargeRate(RunRoom room) => StaffingOf(room.Index) switch
+        {
+            RunStaffing.Favored => Settings.FavoredTrapChargeRate,
+            RunStaffing.Staffed => Settings.StaffedTrapChargeRate,
+            _ => 1f,
+        };
+
         private void UpdateTrap(RunRoom room, float dt)
         {
             if (!IsPowered(room.Index)) return;
+            dt *= TrapChargeRate(room);
             if (room.TrapCooldown > 0f) room.SetTrapCooldown(room.TrapCooldown - dt);
             // 다 찬 뒤에도 전력이 있으면 계속 모은다. 최대 단계에 닿으면 더 쌓지 않는다.
             else if (TrapStage(room.Index) < Settings.TrapMaxStages) room.SetTrapStored(room.TrapStoredSeconds + dt);
@@ -502,10 +582,23 @@ namespace Code.Run
             while (room.SpringTimer + Epsilon >= 1f)
             {
                 room.SpringTimer -= 1f;
-                int heal = Boost(room, Settings.SpringHealPerSecond * room.Mana);
+                int heal = SpringHeal(room);
                 foreach (RunCombatant minion in CombatantsIn(room.Index, RunSide.Minion))
                     minion.Heal(heal);
             }
+        }
+
+        /// <summary>샘이 1초마다 주는 회복. 담당 규칙이 꺼져 있으면 예전처럼 맞는 부하만 1.5배다.</summary>
+        public int SpringHeal(RunRoom room)
+        {
+            int baseHeal = Settings.SpringHealPerSecond * room.Mana;
+            if (!Settings.RoomStaffing) return Boost(room, baseHeal);
+            return StaffingOf(room.Index) switch
+            {
+                RunStaffing.Favored => (int)Math.Ceiling((baseHeal + Settings.StaffedSpringHealBonus) * Settings.FavoredSpringHealMultiplier),
+                RunStaffing.Staffed => baseHeal + Settings.StaffedSpringHealBonus,
+                _ => baseHeal,
+            };
         }
 
         private void UpdateMinion(RunCombatant minion, float dt)
@@ -678,6 +771,7 @@ namespace Code.Run
                 if (intruder.AttackTimer <= Epsilon)
                 {
                     _rooms[room].Damage(intruder.Definition.Attack);
+                    intruder.HasHitGoalRoom = true;
                     intruder.Strike(AttackInterval(intruder));
                 }
                 return;
@@ -1027,6 +1121,7 @@ namespace Code.Run
             foreach (RunCombatant combatant in _combatants)
                 if (combatant.Side == RunSide.Intruder && combatant.IsActive)
                     return false;
+            VaultGold += VaultInterest();
             Outcome = RunBattleOutcome.Victory;
             _telegraphRules.EndBattle();
             return true;

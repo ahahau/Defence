@@ -15,6 +15,6 @@ namespace Code.Run
         public int Actor { get; }
         public int Room { get; }
         public int Sequence { get; }
-        public bool Pauses => Kind <= RunCrisisKind.ThiefAtVault;
+        public bool Pauses => Kind <= RunCrisisKind.ThiefAtVault || Kind == RunCrisisKind.RoomUnderAttack;
     }
 }

@@ -11,6 +11,7 @@ namespace Code.Run
         private readonly bool[] _low;
         private readonly bool[] _stealing;
         private readonly bool[] _atHeart;
+        private readonly int[] _alertedRoom;
         private readonly List<RunCrisis> _events;
 
         public RunCrisisMonitor(RunBattle battle)
@@ -21,6 +22,8 @@ namespace Code.Run
             _low = new bool[count];
             _stealing = new bool[count];
             _atHeart = new bool[count];
+            _alertedRoom = new int[count];
+            for (int i = 0; i < count; i++) _alertedRoom[i] = -1;
             _broken = new bool[battle.Rooms.Count];
             for (int i = 0; i < _broken.Length; i++) _broken[i] = battle.Rooms[i].IsBroken;
             _events = new List<RunCrisis>(count * 3 + battle.Rooms.Count);
@@ -46,6 +49,14 @@ namespace Code.Run
                 bool stealing = actor.IsOnField && actor.Definition.Goal == RunGoal.Vault && actor.Activity == RunActionKind.Steal;
                 if (stealing && !_stealing[i]) _events.Add(new RunCrisis(RunCrisisKind.ThiefAtVault, i, _battle.VaultRoom));
                 _stealing[i] = stealing;
+                // 같은 적이 같은 방을 다시 칠 때(싸우다 돌아옴)는 다시 멈추지 않는다.
+                bool hitting = actor.IsOnField && actor.Side == RunSide.Intruder && actor.Definition.Goal == RunGoal.Room
+                    && actor.Activity == RunActionKind.AttackRoom;
+                if (hitting && _alertedRoom[i] != current)
+                {
+                    _events.Add(new RunCrisis(RunCrisisKind.RoomUnderAttack, i, current));
+                    _alertedRoom[i] = current;
+                }
                 bool low = actor.IsOnField && actor.Side == RunSide.Minion && actor.Health < actor.MaxHealth * _battle.Settings.RetreatHealthRatio;
                 if (low && !_low[i]) _events.Add(new RunCrisis(RunCrisisKind.LowHealth, i, current));
                 _low[i] = low;

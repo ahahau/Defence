@@ -885,6 +885,20 @@ namespace Code.UI.Run
                 _text.Append(" · 금고 도착\n부하를 금고로 보내기\n금화를 들고 나가기 전에 막으세요");
                 return;
             }
+            if (item.Kind == RunCrisisKind.RoomUnderAttack)
+            {
+                // 고장까지 남은 초는 이 적 혼자 칠 때의 어림값이다(2026-11-11 목업 A안 승인).
+                RunRoom target = Battle.Rooms[item.Room];
+                float perSecond = actor.Definition.Attack / Mathf.Max(0.01f, Battle.AttackInterval(actor));
+                int seconds = Mathf.CeilToInt(target.Durability / Mathf.Max(0.01f, perSecond));
+                char last = room.Length > 0 ? room[^1] : ' ';
+                // '으로'는 받침이 있을 때만, ㄹ 받침(제어실)은 '로'다.
+                bool withEuro = last >= '가' && last <= '힣' && (last - '가') % 28 != 0 && (last - '가') % 28 != 8;
+                _text.Append(" 공격 시작\n").Append(room).Append(withEuro ? "으로" : "로").Append(" 부하 보내기\n")
+                    .Append(room).Append(" 내구 ").Append(Mathf.CeilToInt(target.Durability)).Append('/').Append(target.MaxDurability)
+                    .Append(" · 약 ").Append(seconds).Append("초 뒤 고장");
+                return;
+            }
             RunTelegraph warning = actor.Telegraph;
             _text.Append(" · ").Append(warning.Skill.DisplayName).Append(' ').Append(warning.RemainingSeconds.ToString("0.0")).Append("초\n");
             _text.Append(warning.Kind switch

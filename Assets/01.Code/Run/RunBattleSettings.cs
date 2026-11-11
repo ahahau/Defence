@@ -60,6 +60,20 @@ namespace Code.Run
         public int TrapMaxStages { get; private set; } = 3;
         [field: SerializeField, Min(0)] public int SpringHealPerSecond { get; private set; } = 1;
 
+        [field: Header("Room staffing")]
+        [field: SerializeField, Tooltip("켜면 부하가 있는 켜진 방(금고는 늘)이 담당 효과를 낸다. 맞는 방의 부하면 더 크다.")]
+        public bool RoomStaffing { get; private set; }
+        [field: SerializeField, Min(1f)] public float StaffedTrapChargeRate { get; private set; } = 1.25f;
+        [field: SerializeField, Min(1f)] public float FavoredTrapChargeRate { get; private set; } = 1.5f;
+        [field: SerializeField, Min(0)] public int StaffedSpringHealBonus { get; private set; } = 1;
+        [field: SerializeField, Min(1f)] public float FavoredSpringHealMultiplier { get; private set; } = 2f;
+        [field: SerializeField, Min(0f), Tooltip("담당 문 제어실이 부서진 문을 다시 잠그기까지 걸리는 초(문 복도에 적이 없을 때만 흐른다).")]
+        public float StaffedDoorRelockSeconds { get; private set; } = 8f;
+        [field: SerializeField, Min(0f)] public float FavoredDoorRelockSeconds { get; private set; } = 4f;
+        [field: SerializeField, Min(0), Tooltip("방어에 이긴 순간 금고가 담당이면 더하는 금화.")]
+        public int StaffedVaultInterest { get; private set; } = 10;
+        [field: SerializeField, Min(0)] public int FavoredVaultInterest { get; private set; } = 20;
+
         [field: Header("Intruders")]
         [field: SerializeField, Min(0)] public int ThiefStealPerSecond { get; private set; } = 10;
         [field: SerializeField, Min(0)] public int ThiefCarryLimit { get; private set; } = 45;
@@ -68,6 +82,10 @@ namespace Code.Run
         public bool RoomGoalsPassDefenders { get; private set; }
         [field: SerializeField, Tooltip("켜면 금화를 들고 도망치는 도적도 부하를 지나친다.")]
         public bool EscapingThievesPass { get; private set; }
+        [field: SerializeField, Min(1f), Tooltip("목표 방을 치는 통과 적(궁수·마법사)이 받는 피해 배율. 1이면 끔.")]
+        public float RoomAttackerDamageTakenMultiplier { get; private set; } = 1f;
+        [field: SerializeField, Tooltip("켜면 방을 치기 시작한 뒤 그 방에 있는 동안(싸우는 중 포함) 내내 무방비다. 끄면 방을 치는 동안만.")]
+        public bool RoomAttackerStaysExposed { get; private set; }
 
         internal int TrapDamageBonus { get; private set; }
 
