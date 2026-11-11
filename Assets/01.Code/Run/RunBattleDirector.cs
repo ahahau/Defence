@@ -26,6 +26,7 @@ namespace Code.Run
         [SerializeField] private RunSessionController session;
         [SerializeField] private RectTransform hudCanvas;
         [SerializeField] private RunRoomPanel[] roomPanels = System.Array.Empty<RunRoomPanel>();
+        [SerializeField, Tooltip("평면도 타일·장치 그림. 비면 단색 도형으로 그린다.")] private RunFloorArtSO floorArt;
 
         [SerializeField, Min(0.5f)] private float actorScale = 0.65f;
         [SerializeField, Min(0.3f), Tooltip("머리 위 표시 높이(인물 로컬 단위).")] private float headHeight = 1.1f;
@@ -45,6 +46,7 @@ namespace Code.Run
         private readonly StringBuilder _text = new();
         private RunGridView _grid;
         private RunWorldPrimitives _drawing;
+        private RunFloorArt _floorArt;
         private RunTelegraphView _telegraphs;
         private readonly Collider2D[] _pickHits = new Collider2D[32];
         private ContactFilter2D _pickFilter;
@@ -89,6 +91,7 @@ namespace Code.Run
             if (worldCamera == null) worldCamera = Camera.main;
             _drawing = new RunWorldPrimitives(worldRoot != null ? worldRoot : transform);
             _square = _drawing.Square;
+            if (floorArt != null) _floorArt = new RunFloorArt(floorArt);
             _pickFilter = new ContactFilter2D().NoFilter();
 
             session.Prepare(encounter);
@@ -139,6 +142,7 @@ namespace Code.Run
                 }
             }
             _drawing?.Dispose();
+            _floorArt?.Dispose();
         }
 
         private void Update()
@@ -156,6 +160,7 @@ namespace Code.Run
 
             RefreshActors();
             _grid.Refresh();
+            _grid.Tick(Time.deltaTime);
             _telegraphs.Refresh(Time.unscaledDeltaTime);
             RefreshFast();
             _refreshTimer -= Time.unscaledDeltaTime;
@@ -417,7 +422,7 @@ namespace Code.Run
             _roomByCollider.Clear();
             _battleVisuals = new GameObject("BattleVisuals").transform;
             _battleVisuals.SetParent(worldRoot != null ? worldRoot : transform, false);
-            _grid = new RunGridView(_battle, _drawing, _battleVisuals, _roomByCollider);
+            _grid = new RunGridView(_battle, _drawing, _battleVisuals, _roomByCollider, _floorArt);
             BuildActors();
             _telegraphs = new RunTelegraphView(_battle, _grid, _drawing, _actors, _battleVisuals);
         }

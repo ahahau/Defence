@@ -28266,6 +28266,7 @@ MonoBehaviour:
   - {fileID: 1737956657}
   - {fileID: 1962534472}
   - {fileID: 1467178976}
+  floorArt: {fileID: 11400000, guid: 28c72acd3783d6049912f301cf75e737, type: 2}
   actorScale: 0.65
   headHeight: 1.1
   leftHudFraction: 0.14

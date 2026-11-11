@@ -17,12 +17,16 @@ namespace Code.UI.Run
         private readonly SpriteRenderer[] _borders;
         private readonly SpriteRenderer[] _doors;
         private readonly GameObject _entrance;
+        private readonly RunFloorDressing _dressing;
+        private readonly GameObject[][] _brokenFrames;
 
+        /// <param name="art">평면도 그림. 없으면 예전처럼 단색 도형으로 그린다.</param>
         public RunGridView(RunBattle battle, RunWorldPrimitives drawing, Transform parent,
-            Dictionary<Collider2D, int> roomColliders)
+            Dictionary<Collider2D, int> roomColliders, RunFloorArt art = null)
         {
             _battle = battle;
             _drawing = drawing;
+            _brokenFrames = art != null ? new GameObject[battle.Rooms.Count][] : null;
             _rooms = new Rect[battle.Rooms.Count];
             _roomRoots = new GameObject[battle.Rooms.Count];
             _bodies = new SpriteRenderer[battle.Rooms.Count];
@@ -45,17 +49,34 @@ namespace Code.UI.Run
             }
             Vector3 outside = ToWorld(battle.EntrancePosition);
             Vector3 inside = ToWorld(RunPosition.InRoom(battle.EntryRoom, RunAxis.Vertical, 0f));
-            drawing.Line("EntranceBorder", outside, inside, battle.Rooms[battle.EntryRoom].Length * 0.4f + 0.12f,
-                HudPalette.DungeonFloor, 0, parent);
+            if (art == null)
+                drawing.Line("EntranceBorder", outside, inside, battle.Rooms[battle.EntryRoom].Length * 0.4f + 0.12f,
+                    HudPalette.DungeonFloor, 0, parent);
             _entrance = drawing.Line("EntranceTunnel", outside, inside, battle.Rooms[battle.EntryRoom].Length * 0.4f,
                 HudPalette.DungeonTunnel, 1, parent).gameObject;
+            if (art != null) _entrance.GetComponent<SpriteRenderer>().enabled = false;
             for (int i = 0; i < battle.Rooms.Count; i++) BuildRoom(i, parent, roomColliders);
-            for (int i = 0; i < battle.Links.Count; i++) BuildLink(i, parent);
+            for (int i = 0; i < battle.Links.Count; i++) BuildLink(i, parent, art == null);
+            if (art != null)
+            {
+                Transform[] roomRoots = new Transform[_roomRoots.Length];
+                for (int i = 0; i < roomRoots.Length; i++) roomRoots[i] = _roomRoots[i].transform;
+                Transform[] linkRoots = new Transform[_linkRoots.Length];
+                for (int i = 0; i < linkRoots.Length; i++) linkRoots[i] = _linkRoots[i].transform;
+                _dressing = new RunFloorDressing(battle, this, art, parent, roomRoots, linkRoots);
+            }
             ShowFloor(0);
             Refresh();
         }
 
-        public void BindBattle(RunBattle battle) => _battle = battle;
+        public void BindBattle(RunBattle battle)
+        {
+            _battle = battle;
+            _dressing?.BindBattle(battle);
+        }
+
+        /// <summary>횃불·샘·함정 그림을 전투 시간만큼 돌린다.</summary>
+        public void Tick(float deltaTime) => _dressing?.Tick(deltaTime);
         public void SetHighlights(bool[] rooms) { _highlights = rooms; Refresh(); }
 
         public int Floor { get; private set; }
@@ -92,6 +113,7 @@ namespace Code.UI.Run
             _entrance.SetActive(_battle.Rooms[_battle.EntryRoom].Floor == floor);
             for (int i = 0; i < _roomRoots.Length; i++) _roomRoots[i].SetActive(_battle.Rooms[i].Floor == floor);
             for (int i = 0; i < _linkRoots.Length; i++) _linkRoots[i].SetActive(_battle.Rooms[_battle.Links[i].From].Floor == floor);
+            _dressing?.ShowFloor(floor);
         }
 
         public void FitCamera(Camera camera, float leftShare, float topShare, float bottomShare)
@@ -115,6 +137,11 @@ namespace Code.UI.Run
 
         public void Refresh()
         {
+            if (_dressing != null)
+            {
+                RefreshDressed();
+                return;
+            }
             for (int i = 0; i < _rooms.Length; i++)
             {
                 RunRoom room = _battle.Rooms[i];
@@ -143,7 +170,23 @@ namespace Code.UI.Run
             }
         }
 
-        private bool IsDoorHit(int door)
+        /// <summary>그림을 입힌 평면도: 꺼짐·강조는 어두운 막, 고장은 붉은 테두리로 덮는다(첫 구현 범위, 2026-11-11 사용자 선택).</summary>
+        private void RefreshDressed()
+        {
+            for (int i = 0; i < _rooms.Length; i++)
+            {
+                RunRoom room = _battle.Rooms[i];
+                float shade = _highlights != null && !_highlights[i] ? 0.7f
+                    : room.HasSystem && !_battle.IsPowered(i) ? 0.5f : 0f;
+                Color veil = HudPalette.Deep;
+                veil.a = shade;
+                _bodies[i].color = veil;
+                foreach (GameObject edge in _brokenFrames[i]) edge.SetActive(room.IsBroken);
+            }
+            _dressing.RefreshDoors();
+        }
+
+        public bool IsDoorHit(int door)
         {
             foreach (RunCombatant actor in _battle.Combatants)
                 if (actor.IsOnField && actor.Side == RunSide.Intruder && actor.Activity == RunActionKind.AttackDoor
@@ -182,14 +225,30 @@ namespace Code.UI.Run
             area.size = Vector2.one;
             colliders[area] = index;
             _bodies[index] = _drawing.Quad("Body", center, rect.size - new Vector2(0.14f, 0.14f), RunVisualPalette.RoomFill(room.Kind), 1, group.transform);
+            if (_brokenFrames == null) return;
+            // 그림을 입히면 테두리 사각형은 클릭 판정만 남기고, 몸체는 상태 막(평소 투명)이 된다.
+            _borders[index].enabled = false;
+            _bodies[index].transform.localScale = new Vector3(rect.width, rect.height, 1f);
+            _bodies[index].sortingOrder = 2;
+            const float edge = 0.08f;
+            Vector3 topLeft = new(rect.xMin, rect.yMax, 0f), topRight = new(rect.xMax, rect.yMax, 0f);
+            Vector3 bottomLeft = new(rect.xMin, rect.yMin, 0f), bottomRight = new(rect.xMax, rect.yMin, 0f);
+            _brokenFrames[index] = new[]
+            {
+                _drawing.Line("BrokenTop", topLeft, topRight, edge, HudPalette.BorderDanger, 3, group.transform).gameObject,
+                _drawing.Line("BrokenBottom", bottomLeft, bottomRight, edge, HudPalette.BorderDanger, 3, group.transform).gameObject,
+                _drawing.Line("BrokenLeft", bottomLeft, topLeft, edge, HudPalette.BorderDanger, 3, group.transform).gameObject,
+                _drawing.Line("BrokenRight", bottomRight, topRight, edge, HudPalette.BorderDanger, 3, group.transform).gameObject,
+            };
         }
 
-        private void BuildLink(int index, Transform parent)
+        private void BuildLink(int index, Transform parent, bool drawShapes)
         {
             RunLink link = _battle.Links[index];
             GameObject group = new($"Corridor_{index}");
             group.transform.SetParent(parent, false);
             _linkRoots[index] = group;
+            if (!drawShapes) return;
             Vector3 a = ToWorld(RunPosition.InRoom(link.From, link.Axis, link.FromOffset));
             Vector3 b = ToWorld(RunPosition.InRoom(link.To, link.Axis, link.ToOffset));
             float width = _battle.Rooms[link.From].Length * 0.4f;
