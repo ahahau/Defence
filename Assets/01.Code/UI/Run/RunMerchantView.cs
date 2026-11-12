@@ -24,6 +24,8 @@ namespace Code.UI.Run
         [SerializeField] private TMP_Text pickHeading;
         [SerializeField] private UiFrameButton[] pickCards = Array.Empty<UiFrameButton>();
         [SerializeField] private TMP_Text[] pickBodies = Array.Empty<TMP_Text>();
+        [SerializeField, Tooltip("pickCards와 같은 순서의 부하 그림(2026-11-12 사용자 A안 승인).")]
+        private UnityEngine.UI.Image[] pickPortraits = Array.Empty<UnityEngine.UI.Image>();
         [SerializeField] private UiFrameButton pickBackButton;
         [SerializeField] private UiFrameButton pickConfirmButton;
 
@@ -144,12 +146,15 @@ namespace Code.UI.Run
 
         public void SetPickHeading(string text) => pickHeading?.SetText(text);
 
-        public void SetPickCard(int index, string title, string body, bool selected)
+        public void SetPickCard(int index, string title, string body, Sprite portrait, bool selected)
         {
             if (index >= pickCards.Length) return;
             pickCards[index].SetLabel(title);
             pickCards[index].SetSelected(selected);
             if (index < pickBodies.Length) pickBodies[index].SetText(body);
+            if (index >= pickPortraits.Length || pickPortraits[index] == null) return;
+            pickPortraits[index].sprite = portrait;
+            pickPortraits[index].enabled = portrait != null;
         }
 
         public void SetPickConfirm(string label, bool interactable)

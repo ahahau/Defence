@@ -28,6 +28,8 @@ public static class RunMerchantBuilder
     private const int PickCount = 4;
     private const float PickGap = 16f;
     private const float PickHeight = 300f;
+    private const float PortraitTop = 52f;
+    private const float PortraitSize = 96f;
 
     [MenuItem("Tools/Dungeon Keeper/Build Run Merchant")]
     public static void BuildAll()
@@ -85,13 +87,15 @@ public static class RunMerchantBuilder
         float pickWidth = (inner - PickGap * (PickCount - 1)) / PickCount;
         var cards = new Object[PickCount];
         var bodies = new Object[PickCount];
+        var portraits = new Object[PickCount];
         for (int i = 0; i < PickCount; i++)
         {
             var rt = UiKit.TopLeft(UiKit.Rect($"Kind{i}", pick), i * (pickWidth + PickGap), 44f, pickWidth, PickHeight);
             var kind = UiKit.Button(rt, string.Empty, UiKit.ButtonKind.Secondary, 19f);
             UiKit.Place(kind.Label.rectTransform, new Vector2(0f, 1f), Vector2.one, new Vector2(0.5f, 1f), new Vector2(0f, -16f), new Vector2(-24f, 32f));
+            portraits[i] = PickPortrait(rt);
             var body = UiKit.Text("Body", rt, string.Empty, 15f, HudPalette.TextBody, TextAlignmentOptions.TopLeft);
-            UiKit.Place(body.rectTransform, Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), new Vector2(0f, -24f), new Vector2(-32f, -96f));
+            PlacePickBody(body.rectTransform);
             cards[i] = kind;
             bodies[i] = body;
         }
@@ -115,6 +119,7 @@ public static class RunMerchantBuilder
         UiKit.Wire(view, "pickHeading", pickHeading);
         UiKit.WireArray(view, "pickCards", cards);
         UiKit.WireArray(view, "pickBodies", bodies);
+        UiKit.WireArray(view, "pickPortraits", portraits);
         UiKit.Wire(view, "pickBackButton", back);
         UiKit.Wire(view, "pickConfirmButton", confirm);
         panel.gameObject.SetActive(false);
@@ -151,6 +156,31 @@ public static class RunMerchantBuilder
 
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
+    }
+
+    /// <summary>
+    /// 고르기 카드 이름 밑의 부하 그림(2026-11-12 사용자 A안 승인). 이미 놓인 프리팹에 더할 때도 이 함수를 쓴다
+    /// (다시 만들면 프리팹 내부 ID가 바뀌어 씬 연결이 끊긴다).
+    /// </summary>
+    public static UnityEngine.UI.Image PickPortrait(RectTransform card)
+    {
+        var rt = UiKit.Place(UiKit.Rect("Portrait", card), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+            new Vector2(0f, -PortraitTop), new Vector2(PortraitSize, PortraitSize));
+        var image = rt.gameObject.AddComponent<UnityEngine.UI.Image>();
+        image.raycastTarget = false;
+        image.preserveAspect = true;
+        image.enabled = false;
+        return image;
+    }
+
+    /// <summary>본문은 그림 밑에서 시작한다(다섯 줄: 체력·공격, 사거리·상성, 큰 기술, 맞는 방, 지금 인원).</summary>
+    public static void PlacePickBody(RectTransform body)
+    {
+        body.anchorMin = Vector2.zero;
+        body.anchorMax = Vector2.one;
+        body.pivot = new Vector2(0.5f, 0.5f);
+        body.offsetMin = new Vector2(16f, 12f);
+        body.offsetMax = new Vector2(-16f, -(PortraitTop + PortraitSize + 8f));
     }
 
     private static void Divider(RectTransform parent, float x, float y, float width)

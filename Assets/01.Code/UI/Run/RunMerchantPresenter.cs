@@ -1,4 +1,5 @@
 using System;
+using Code.Entities;
 using Code.Run;
 
 namespace Code.UI.Run
@@ -162,18 +163,38 @@ namespace Code.UI.Run
             {
                 if (i >= kinds.Length || kinds[i].Combatant == null)
                 {
-                    _view.SetPickCard(i, string.Empty, string.Empty, false);
+                    _view.SetPickCard(i, string.Empty, string.Empty, null, false);
                     continue;
                 }
                 RunCombatantSO data = kinds[i].Combatant;
                 string skill = data.Skill != null ? data.Skill.DisplayName : "없음";
+                // 카드 아래 빈 곳을 그림과 이미 있는 부하 정보로 채운다(2026-11-12 사용자 A안 승인).
+                string reach = data.IsRanged ? "원거리" : "근접";
+                string affinity = HudPalette.Paint(AffinityName(data.Affinity), RunVisualPalette.Affinity(data.Affinity));
+                string favored = data.HasFavoredRoom ? RunBattleText.RoomName(data.FavoredRoom) : "없음";
                 _view.SetPickCard(i, data.DisplayName,
-                    $"체력 {data.MaxHealth + bones} · 공격 {data.Attack}\n큰 기술 · {skill}\n{CountLine(data.DisplayName)}", i == _pick);
+                    $"체력 {data.MaxHealth + bones} · 공격 {data.Attack}\n{reach} · {affinity}\n큰 기술 · {skill}\n맞는 방 · {favored}\n{CountLine(data.DisplayName)}",
+                    Portrait(data), i == _pick);
             }
             bool chosen = _pick >= 0 && _pick < kinds.Length;
             int price = _demo.PriceOf(RunDemoCampaign.MerchantItem.NewMinion);
             _view.SetPickConfirm(chosen ? $"{kinds[_pick].Combatant.DisplayName} 고용 · 금화 {price}" : "부하를 고르세요",
                 chosen && _demo.CanBuyAtMerchant(RunDemoCampaign.MerchantItem.NewMinion));
+        }
+
+        private static string AffinityName(RunAffinity affinity) => affinity switch
+        {
+            RunAffinity.Magic => "마법",
+            RunAffinity.Curse => "저주",
+            _ => "물리",
+        };
+
+        // 전투 화면 부하 카드와 같은 그림(서 있는 첫 프레임)을 쓴다.
+        private static UnityEngine.Sprite Portrait(RunCombatantSO data)
+        {
+            CharacterAnimationSetSO set = data.ResolveAnimationSet();
+            UnityEngine.Sprite[] frames = set != null ? set.GetFrames(CharacterClip.Idle) : null;
+            return frames != null && frames.Length > 0 ? frames[0] : null;
         }
 
         // 같은 이름의 부하가 지금 몇 명 살아 있는지(쓰러진 부하는 따로 센다).
