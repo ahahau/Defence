@@ -24,6 +24,7 @@ namespace Code.UI.Run
         private bool _trapCancelled;
         private readonly RunDeploymentMemory _memory = new();
         private readonly StringBuilder _text = new();
+        private readonly StringBuilder _notice = new();
         private RunBattleFlow _flow;
         private RunDemoCampaign _demo;
         private RunBattle _raid;
@@ -309,8 +310,7 @@ namespace Code.UI.Run
                 last = minion.DisplayName;
             }
             _text.Append(hurt == 0 ? "다친 부하가 없습니다." : Particle(last, "이", "가") + " 다쳤습니다.");
-            // 정비 창은 수리·치료만 한다. 고용·마력 용량은 상인으로 옮겼다(2026-11-11 사용자 결정 "매번 뜨되 일부만").
-            _text.Append("\n고용·마력 용량은 상인에서 삽니다.");
+            // 정비 창은 수리·치료만 한다(2026-11-11 사용자 결정). 상인 안내 줄과 머리 글은 뺐다(2026-11-12 사용자 목업 승인).
             bool anyTarget = UpkeepTargetCount() > 0;
             PopupController.Show(PopupRequest.Choice("던전 정비", _text.ToString(),
                     new[]
@@ -319,7 +319,7 @@ namespace Code.UI.Run
                         new PopupButtonSpec("수리·치료", PopupButtonStyle.Primary, () => ShowUpkeepTarget(0), anyTarget),
                     }, LeaveUpkeep)
                 .WithLines($"금화 {state.Gold} · 고치기 {RunDemoCampaign.RepairPrice} · 치료 {RunDemoCampaign.HealPrice}", null)
-                .WithAccent(HudPalette.Gain, "다음 침입 전에 고칩니다"));
+                .WithAccent(HudPalette.Gain, null));
         }
 
         // "함정 방, 문 제어실이 고장 났습니다." 처럼 같은 상태의 방을 한 문장으로 잇는다.
@@ -476,12 +476,12 @@ namespace Code.UI.Run
             int health = _demo.Carryover.MinionHealth[index];
             // 보상·위험을 비용 줄·경고 줄에 둔다(2026-11-10 사용자 목업 승인).
             _text.Clear().Append(minion.DisplayName).Append(" · 체력 ").Append(health).Append('/').Append(minion.MaxHealth).Append('\n');
-            if (_raiders.Count > 0) _text.Append("지금까지 · ").Append(RaiderNames()).Append('\n');
-            _text.Append("쓰러지면 이 런에서 잃습니다.");
+            if (_raiders.Count > 0) _text.Append("지금까지 · ").Append(RaiderNames());
             bool weak = health < minion.MaxHealth * Deployment.Encounter.Settings.RetreatHealthRatio;
-            PopupController.Show(PopupRequest.Confirm($"원정 · 파견 인원 ({_raiders.Count}/3 선택)", _text.ToString(),
+            // 잃는다는 경고와 승리 보상 줄은 뺐다(2026-11-12 사용자 목업 승인 "전투 뒤 창" 글 줄이기).
+            PopupController.Show(PopupRequest.Confirm($"원정 · 파견 ({_raiders.Count}/3)", _text.ToString(),
                     () => { _raiders.Add(index); SelectRaider(index + 1); }, () => SelectRaider(index + 1), "파견", "남기기")
-                .WithLines("승리 보상 · 정예 침입 마력 용량 +1", weak ? "체력이 30% 아래입니다" : null)
+                .WithLines(null, weak ? "체력이 30% 아래입니다" : null)
                 .WithAccent(HudPalette.Danger, null));
         }
 
@@ -664,26 +664,9 @@ namespace Code.UI.Run
                 RunIntruderEntry entry = party[i];
                 RunCombatantSO data = entry.Combatant;
                 RunAffinity affinity = entry.OverrideAffinity ? entry.Affinity : data.Affinity;
-                string effect = data.Skill != null ? "큰 기술: " + data.Skill.DisplayName : "큰 기술 없음";
-                if (data.Skill != null)
-                    foreach (RunTurnSkillEffectSO skillEffect in data.Skill.TurnEffects)
-                        if (skillEffect is RunTelegraphSkillEffectSO warning)
-                        {
-                            string area = warning.Kind switch
-                            {
-                                RunTelegraphKind.PowderBlast => "방 전체 폭파",
-                                RunTelegraphKind.Fireball => "목표 방 화염구",
-                                RunTelegraphKind.Charge => "일자 돌진",
-                                _ => "지정 부하 사격",
-                            };
-                            effect = $"큰 기술: {warning.WarningSeconds:0.#}초 예고 뒤 {area}";
-                            break;
-                        }
-                // 카드는 이름 → 노리는 곳 → 큰 기술 순의 문장으로 읽힌다(2026-11-10 사용자 목업 승인).
-                preparation.SetParty(i, data.DisplayName + "  " + HudPalette.Paint(AffinityName(affinity), RunVisualPalette.Affinity(affinity))
-                    + "\n" + GoalSentence(data) + "\n" + effect);
+                // 카드는 "이름 ● → 노리는 곳" 한 줄이다. 큰 기술·상성 이름은 뺐다(2026-11-12 사용자 목업 승인 "준비 화면 양쪽 글").
+                preparation.SetParty(i, data.DisplayName + " " + HudPalette.Paint("●", RunVisualPalette.Affinity(affinity)) + " → " + GoalTarget(data));
             }
-            preparation.SetTip(PartyGoalTip(party));
             RefreshPreparation();
             Prepared?.Invoke();
         }
@@ -699,35 +682,10 @@ namespace Code.UI.Run
             return final ? withFinal : withoutFinal;
         }
 
-        private static string GoalSentence(RunCombatantSO data) => data.IntruderRole == RunIntruderRole.Sapper ? "켜진 방을 부숩니다"
-            : data.Goal == RunGoal.Vault ? "금고 금화를 훔칩니다"
-            : data.Goal == RunGoal.Room ? Josa(RunBattleText.RoomName(data.GoalRoomKind), "을", "를") + " 부수러 갑니다"
-            : "심장을 노립니다";
-
-        // 아래 띠: 이번 파티에 실제로 있는 역할만 말한다(도적전에 공병을 말하지 않는다).
-        private static string PartyGoalTip(RunIntruderEntry[] party)
-        {
-            var roles = new System.Collections.Generic.List<string>();
-            foreach (RunIntruderEntry entry in party)
-            {
-                RunCombatantSO data = entry.Combatant;
-                string role = data.IntruderRole == RunIntruderRole.Sapper ? "공병은 켜진 방"
-                    : data.Goal == RunGoal.Vault ? Josa(data.DisplayName, "은", "는") + " 금고"
-                    : data.Goal == RunGoal.Room ? Josa(data.DisplayName, "은", "는") + " " + RunBattleText.RoomName(data.GoalRoomKind)
-                    : null;
-                if (role != null && !roles.Contains(role)) roles.Add(role);
-            }
-            // 왼쪽 열 폭이 좁아 한글이 단어 중간에서 끊기지 않게 줄을 직접 나눈다.
-            if (roles.Count == 0) return "이번 적\n모두 심장을 노립니다";
-            return "이번 적\n" + string.Join("\n", roles) + "\n나머지는 심장을 노립니다";
-        }
-
-        private static string AffinityName(RunAffinity affinity) => affinity switch
-        {
-            RunAffinity.Magic => "● 마법",
-            RunAffinity.Curse => "● 저주",
-            _ => "● 물리",
-        };
+        private static string GoalTarget(RunCombatantSO data) => data.IntruderRole == RunIntruderRole.Sapper ? "켜진 방"
+            : data.Goal == RunGoal.Vault ? "금고"
+            : data.Goal == RunGoal.Room ? RunBattleText.RoomName(data.GoalRoomKind)
+            : "심장";
 
         public void Select(int index)
         {
@@ -777,11 +735,12 @@ namespace Code.UI.Run
                 // 쓰러진 부하도 카드를 흐리게 남겨 목록에 틈이 생기지 않고 잃은 것이 보이게 한다(2026-11-10 사용자 목업 승인).
                 if (!CanPlaceMinion(i))
                 {
-                    preparation.SetMinion(i, HudPalette.Paint(data.DisplayName + "\n쓰러짐 · 이번 런에서 잃음", HudPalette.TextMuted),
+                    preparation.SetMinion(i, HudPalette.Paint(data.DisplayName + "\n쓰러짐", HudPalette.TextMuted),
                         HudPalette.TextMuted, false);
                     continue;
                 }
-                preparation.SetMinion(i, data.DisplayName + $"\n{Josa(_roomNames[Deployment.RoomOf(i)], "을", "를")} 지킴 · 체력 {Battle.Combatants[i].Health}/{data.MaxHealth}",
+                // 자리는 평면도에서 보이므로 카드에는 이름과 체력만 둔다(2026-11-12 사용자 목업 승인).
+                preparation.SetMinion(i, data.DisplayName + $"\n체력 {Battle.Combatants[i].Health}/{data.MaxHealth}",
                     RunVisualPalette.Affinity(data.Affinity), i == _selection);
             }
             // 카드는 5장이다(상인 새 부하, 2026-11-11). 부하가 넷이면 남는 카드를 숨긴다.
@@ -795,12 +754,8 @@ namespace Code.UI.Run
                 detail = data.DisplayName + $" · 체력 {Battle.Combatants[_selection].Health}/{data.MaxHealth} · 공격 {data.Attack}\n"
                     + (data.Skill != null ? data.Skill.DisplayName + ": " + data.Skill.Description : "큰 기술 없음");
             }
-            int slots = 0;
-            for (int i = 0; i < Deployment.RoomCount; i++) slots += Deployment.MaxMana(i);
-            int unpowered = slots - Deployment.Capacity;
-            string slotLine = unpowered <= 0 ? $"칸 {slots}개를 모두 켤 수 있습니다"
-                : unpowered == 1 ? $"칸이 {slots}개라 하나는 못 켭니다" : $"칸이 {slots}개라 {unpowered}개는 못 켭니다";
-            preparation.SetSummary($"마력 {Deployment.Capacity - Deployment.ManaInUse} 남음\n{slotLine}",
+            // 칸 수 안내 줄은 뺐다(2026-11-12 사용자 목업 승인).
+            preparation.SetSummary($"마력 {Deployment.Capacity - Deployment.ManaInUse} 남음",
                 $"침입 {EncounterNumber}/{RunBattleFlow.EncounterLimit} · 심장 {Battle.HeartHealth} · 금화 {Battle.VaultGold}\n{detail}", _memory.HasPrevious);
         }
 
@@ -836,14 +791,15 @@ namespace Code.UI.Run
             _monitor.Scan();
             bool pauses = false;
             _text.Clear();
+            _notice.Clear();
             for (int i = 0; i < _monitor.Events.Count; i++)
             {
                 RunCrisis item = _monitor.Events[i];
-                if (!item.Pauses)
+                // 심장 진입과 공병 폭파 예고만 멈춘다. 나머지는 한 줄 알림만 띄운다(2026-11-12 사용자 "큰 위기만 멈춤").
+                if (!StopsBattle(item))
                 {
-                    string name = Battle.Combatants[item.Actor].Definition.DisplayName;
-                    crisisView.Notify(item.Kind == RunCrisisKind.LowHealth ? name + " · 체력 30% 미만\n치유 샘의 마력을 확인하세요"
-                        : name + " · 심장 방 진입\n심장을 지킬 부하를 보내세요");
+                    if (_notice.Length > 0) _notice.Append('\n');
+                    AppendNotice(item);
                     continue;
                 }
                 pauses = true;
@@ -857,61 +813,49 @@ namespace Code.UI.Run
                         _dangerLabels[actor] = "위험 · " + (room >= 0 ? _roomNames[room] : "복도");
                     }
             }
+            if (_notice.Length > 0) crisisView.Notify(_notice.ToString());
             if (!pauses) return;
             IsCrisis = true;
             crisisView.ShowCrisis(_text.ToString());
             CrisisStarted?.Invoke();
         }
 
+        private bool StopsBattle(RunCrisis item) => item.Kind == RunCrisisKind.HeartEntered
+            || (item.Kind == RunCrisisKind.Telegraph && Battle.Combatants[item.Actor].Telegraph.Kind == RunTelegraphKind.PowderBlast);
+
+        /// <summary>멈춤 카드: 누가 · 어디서 · 무엇을 한 줄(해결 방법 줄은 2026-11-12 사용자 목업 승인으로 뺐다).</summary>
         private void AppendCrisis(RunCrisis item)
         {
-            if (_text.Length > 0) _text.Append("\n\n");
+            if (_text.Length > 0) _text.Append('\n');
+            string room = item.Room >= 0 ? _roomNames[item.Room] : "복도";
+            RunCombatant actor = Battle.Combatants[item.Actor];
+            _text.Append(actor.Definition.DisplayName).Append(" · ");
+            if (item.Kind == RunCrisisKind.HeartEntered) _text.Append("심장 진입");
+            else _text.Append(room).Append(" 폭파 ").Append(actor.Telegraph.RemainingSeconds.ToString("0.0")).Append('초');
+        }
+
+        /// <summary>멈추지 않는 위기의 한 줄 알림.</summary>
+        private void AppendNotice(RunCrisis item)
+        {
             string room = item.Room >= 0 ? _roomNames[item.Room] : "복도";
             if (item.Kind == RunCrisisKind.RoomBroken)
             {
-                _text.Append(room).Append(" · 방 고장\n마력을 다른 방으로 옮기기\n부하 보내 수리하기");
+                _notice.Append(room).Append(" 고장");
                 return;
             }
             RunCombatant actor = Battle.Combatants[item.Actor];
-            _text.Append(actor.Definition.DisplayName).Append(" · ").Append(room);
-            if (item.Kind == RunCrisisKind.ThiefAtVault)
+            _notice.Append(actor.Definition.DisplayName).Append(" · ");
+            switch (item.Kind)
             {
-                _text.Append(" · 금고 도착\n부하를 금고로 보내기\n금화를 들고 나가기 전에 막으세요");
-                return;
+                case RunCrisisKind.LowHealth: _notice.Append("체력 낮음"); break;
+                case RunCrisisKind.ThiefAtVault: _notice.Append("금고 도착"); break;
+                case RunCrisisKind.RoomUnderAttack: _notice.Append(room).Append(" 공격"); break;
+                case RunCrisisKind.DoorUnderAttack: _notice.Append(room).Append(" 문"); break;
+                default:
+                    _notice.Append(actor.Telegraph.Skill.DisplayName).Append(' ')
+                        .Append(actor.Telegraph.RemainingSeconds.ToString("0.0")).Append('초');
+                    break;
             }
-            if (item.Kind == RunCrisisKind.RoomUnderAttack)
-            {
-                // 고장까지 남은 초는 이 적 혼자 칠 때의 어림값이다(2026-11-11 목업 A안 승인).
-                RunRoom target = Battle.Rooms[item.Room];
-                float perSecond = actor.Definition.Attack / Mathf.Max(0.01f, Battle.AttackInterval(actor));
-                int seconds = Mathf.CeilToInt(target.Durability / Mathf.Max(0.01f, perSecond));
-                char last = room.Length > 0 ? room[^1] : ' ';
-                // '으로'는 받침이 있을 때만, ㄹ 받침(제어실)은 '로'다.
-                bool withEuro = last >= '가' && last <= '힣' && (last - '가') % 28 != 0 && (last - '가') % 28 != 8;
-                _text.Append(" 공격 시작\n").Append(room).Append(withEuro ? "으로" : "로").Append(" 부하 보내기\n")
-                    .Append(room).Append(" 내구 ").Append(Mathf.CeilToInt(target.Durability)).Append('/').Append(target.MaxDurability)
-                    .Append(" · 약 ").Append(seconds).Append("초 뒤 고장");
-                return;
-            }
-            if (item.Kind == RunCrisisKind.DoorUnderAttack)
-            {
-                // 부서지기까지 남은 초는 이 적 혼자 칠 때의 어림값이다(2026-11-11 사용자 결정 "멈춤 + 위기 카드").
-                RunDoor door = Battle.Doors[item.Sequence];
-                float perSecond = actor.Definition.Attack / Mathf.Max(0.01f, Battle.AttackInterval(actor));
-                int seconds = Mathf.CeilToInt(door.Durability / Mathf.Max(0.01f, perSecond));
-                _text.Append(" 문 앞\n").Append(room).Append(" 문으로 부하 보내기\n문 내구 ").Append(door.Durability).Append('/')
-                    .Append(door.MaxDurability).Append(" · 약 ").Append(seconds).Append("초 뒤 부서짐");
-                return;
-            }
-            RunTelegraph warning = actor.Telegraph;
-            _text.Append(" · ").Append(warning.Skill.DisplayName).Append(' ').Append(warning.RemainingSeconds.ToString("0.0")).Append("초\n");
-            _text.Append(warning.Kind switch
-            {
-                RunTelegraphKind.PowderBlast => "그 방 부하 빼기\n시전자 때려 끊기",
-                RunTelegraphKind.Fireball => "그 방 부하 빼기\n시전자 때려 끊기 또는 문 잠그기",
-                RunTelegraphKind.Charge => "그 줄에서 비키기\n문 잠그기",
-                _ => "대상 부하를 방 밖으로 빼기\n방을 나가거나 사거리 밖이면 빗나갑니다",
-            });
         }
 
         /// <summary>복도의 사격 대상과 일자 돌진도 이어진 방을 강조한다.</summary>

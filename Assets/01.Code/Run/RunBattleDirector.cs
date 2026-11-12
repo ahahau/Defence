@@ -667,7 +667,8 @@ namespace Code.Run
                 overlay.SetSelected(c == _selected);
                 if (c.Side == RunSide.Intruder)
                 {
-                    int goal = c.IsOnField ? (c.IsEscaping ? -2 : _battle.GoalRoomOf(c)) : -1;
+                    // 목표 글은 마우스를 올린 적에만 단다(2026-11-12 사용자 목업 승인 "전투 중 고정 글" 줄이기).
+                    int goal = c == _hovered && c.IsOnField ? (c.IsEscaping ? -2 : _battle.GoalRoomOf(c)) : -1;
                     if (goal != _lastGoal[i])
                     {
                         _lastGoal[i] = goal;
@@ -804,7 +805,7 @@ namespace Code.Run
             {
                 if (roomPanels[i] == null) continue;
                 RunRoom room = _battle.Rooms[i];
-                (string status, Color color) = RoomStatus(room);
+                (string status, Color color) = PlateStatus(room);
                 float fill = room.HasSystem ? room.Durability / room.MaxDurability
                     : room.Kind == RunRoomKind.Heart ? _battle.HeartHealth / (float)_battle.Settings.HeartHealth : 1f;
                 bool showBar = room.HasSystem || room.Kind == RunRoomKind.Heart;
@@ -823,9 +824,8 @@ namespace Code.Run
                 }
                 RunCombatant m = _visibleMinions[i];
                 string danger = session.DangerLabel(m.Id);
-                // 방 이름은 세션에서 받는다. 원정 진지는 방 종류가 본진과 같아도 이름이 다르다(대장실·옆 통로).
-                int room = _battle.RoomOf(m);
-                string place = danger ?? (m.IsDown ? "쓰러짐" : room >= 0 ? session.RoomName(room) : "복도");
+                // 자리는 평면도에서 보이므로 카드에는 위험·쓰러짐일 때만 적는다(2026-11-12 사용자 목업 승인).
+                string place = danger ?? (m.IsDown ? "쓰러짐" : string.Empty);
                 hud.ShowRosterCard(i, true, _faces[m.Id], m.Definition.DisplayName, place, m.Health / (float)m.MaxHealth,
                     m == _selected || danger != null, m.IsDown, RunVisualPalette.Affinity(m.Affinity));
             }
@@ -929,6 +929,21 @@ namespace Code.Run
                 if (actor.IsOnField && actor.Side == RunSide.Intruder && actor.Activity == RunActionKind.AttackRoom && _battle.RoomOf(actor) == roomIndex)
                     return true;
             return false;
+        }
+
+        /// <summary>
+        /// 방 이름판에는 이상할 때만 상태를 단다(고장·공격·끊김·꺼짐·문 부서짐). 켜짐·쿨·심장 체력·금고 금화·입구 안내는
+        /// 막대·위 장부·함정 판이 이미 보여 줘서 뺐다(2026-11-12 사용자 목업 승인). 자세한 상태는 방을 눌러 본다.
+        /// </summary>
+        private (string, Color) PlateStatus(RunRoom room)
+        {
+            if (_battle.IsRaid || !room.HasSystem) return (string.Empty, HudPalette.TextMuted);
+            if (room.IsBroken) return ("고장", HudPalette.Danger);
+            if (IsRoomUnderAttack(room.Index)) return ("공격받는 중", HudPalette.Danger);
+            if (room.Mana > 0 && !_battle.IsConnected(room.Index)) return ("끊김", HudPalette.Warn);
+            if (room.Mana == 0) return ("꺼짐", HudPalette.TextMuted);
+            if (room.Kind == RunRoomKind.DoorControl && ControlledDoorBroken(room.Index)) return ("문 부서짐", HudPalette.Warn);
+            return (string.Empty, HudPalette.TextMuted);
         }
 
         private (string, Color) RoomStatus(RunRoom room)

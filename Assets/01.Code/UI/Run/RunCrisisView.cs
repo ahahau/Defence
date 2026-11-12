@@ -52,7 +52,8 @@ namespace Code.UI.Run
         // 아래 띠는 늘 떠 있지 않고 위기 때(대처 안내)나 상성 버튼을 눌렀을 때만 연다(2026-11-10 사용자 C 목업 승인).
         private void RefreshLegend()
         {
-            if (legendPanel != null) legendPanel.SetActive(_battleMode && (IsShowing || _legendOpen));
+            // 위기 때도 저절로 열지 않는다. 상성 버튼으로만 연다(2026-11-12 사용자 목업 승인 "전투 중 고정 글" 줄이기).
+            if (legendPanel != null) legendPanel.SetActive(_battleMode && _legendOpen);
         }
 
         public void ShowCrisis(string text)
@@ -66,7 +67,7 @@ namespace Code.UI.Run
                 UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(scroll.content);
                 scroll.verticalNormalizedPosition = 1f;
             }
-            footer.SetText(IsShowing ? "부하를 누르고 옮길 방을 누르세요 · 다 됐으면 Space로 계속" : _normalFooter);
+            footer.SetText(_normalFooter);
             if (!IsShowing) for (int i = 0; i < dots.Length; i++) dots[i].gameObject.SetActive(false);
             RefreshLegend();
         }

@@ -83,8 +83,7 @@ public static class RunRouteMapBuilder
             Label(strip, $"Arrow{column}", "→", 26f, HudPalette.TextDim, x, center - 20f, columnGap, 40f, false, true, TextAlignmentOptions.Center);
         }
 
-        Label(card, "Legend", "밝은 칸 · 지금 고를 수 있음     흐린 칸 · 지나옴     어두운 칸 · 아직 잠김(눌러서 미리 보기)",
-            14f, HudPalette.TextDim, Pad, StripTop + StripHeight + 10f, CardWidth - Pad * 2f, 26f);
+        // 칸 밝기 범례 줄은 뺐다. 칸 아래 상태 글(고를 수 있음·지나옴)이 같은 뜻이다(2026-11-12 사용자 목업 승인).
 
         var detail = UiKit.TopLeft(UiKit.Rect("Detail", card), Pad, DetailTop, CardWidth - Pad * 2f, DetailHeight);
         UiKit.Panel(detail, HudPalette.SurfaceRaised, HudPalette.BorderQuiet);

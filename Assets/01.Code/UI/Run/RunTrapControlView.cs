@@ -60,16 +60,17 @@ namespace Code.UI.Run
             if (_shownState != state)
             {
                 _shownState = state;
+                // 상태는 짧은 말 하나만 쓴다(2026-11-12 사용자 목업 승인 "전투 중 고정 글" 줄이기).
                 status.SetText(state switch
                 {
-                    0 => "재개하면 발동 조건을 확인합니다",
-                    1 => "예약 취소 · 전력과 방 안 적을 확인하세요",
-                    2 => "고장 · 수리할 부하를 보내세요",
-                    3 => "마력 연결 끊김 · 충전 보존",
-                    4 => "마력 없음 · 충전 보존",
-                    5 => "전력으로 충전 중",
-                    6 => "준비 완료 · 발동 시점을 고르세요",
-                    _ => "준비 완료 · 방 안 적 없음",
+                    0 => "예약됨",
+                    1 => "예약 취소",
+                    2 => "고장",
+                    3 => "연결 끊김",
+                    4 => "꺼짐",
+                    5 => "충전 중",
+                    6 => "준비 완료",
+                    _ => "준비 완료 · 적 없음",
                 });
                 activateButton.SetLabel(queued ? "발동 예약됨" : "함정 발동");
             }
@@ -78,12 +79,12 @@ namespace Code.UI.Run
             if (tenth != _shownTenth) { _shownTenth = tenth; seconds.SetText(_tenths[tenth]); }
             int value = _battle.TrapDamage(_room);
             int stage = _battle.TrapStage(_room);
-            // 다 찬 뒤에도 모으면 단계가 올라 피해가 커진다(2026-11-10 사용자 결정). 단계도 함께 보인다.
+            // 다 찬 뒤에도 모으면 단계가 올라 피해가 커진다(2026-11-10 사용자 결정). 판에는 피해만 보인다(2026-11-12 목업 승인).
             int shown = value * 10 + stage;
             if (shown != _shownDamage)
             {
                 _shownDamage = shown;
-                damage.SetText("피해 {0} · 단계 {1}/{2} · 방 안 적 전원", value, stage, _battle.Settings.TrapMaxStages);
+                damage.SetText("피해 {0}", value);
             }
             float duration = _battle.Settings.TrapCooldownSeconds;
             charge.fillAmount = duration > 0f ? Mathf.Clamp01(1f - room.TrapCooldown / duration) : 1f;

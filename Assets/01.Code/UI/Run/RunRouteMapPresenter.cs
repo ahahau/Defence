@@ -163,31 +163,27 @@ namespace Code.UI.Run
         private string Body(RunDemoRoute.Node node)
         {
             _text.Clear();
+            // 칸 설명은 오는 적과 핵심 한 줄만 둔다(2026-11-12 사용자 목업 승인 "전투 뒤 창" 글 줄이기).
             switch (node)
             {
                 case RunDemoRoute.Node.ThiefDefense:
-                    AppendParty(1).Append("\n도적이 금고의 금화를 노립니다.\n지면 런이 끝납니다.");
+                    AppendParty(1).Append("\n도적이 금고 금화를 노립니다.");
                     break;
-                // 상인 좌판·교환 사건으로 바뀐 내용(2026-11-11 사용자 결정).
                 case RunDemoRoute.Node.Merchant:
-                    _text.Append("한 번 들를 때 ").Append(_demo.Economy.MerchantPurchaseLimit).Append("개까지 삽니다.\n")
-                        .Append("· 심장 수리 · 함정 강화 · 쓰러진 부하 복귀 (각 금화 ").Append(RunDemoCampaign.MerchantPrice).Append(")\n")
-                        .Append("· 마력 용량 +1 · 새 부하 · 유물 둘");
-                    if (_demo.Carryover != null) _text.Append("\n지금 금화 ").Append(_demo.Carryover.Gold);
+                    _text.Append("한 번 들를 때 ").Append(_demo.Economy.MerchantPurchaseLimit).Append("개까지 삽니다.");
+                    if (_demo.Carryover != null) _text.Append(" · 지금 금화 ").Append(_demo.Carryover.Gold);
                     break;
                 case RunDemoRoute.Node.StoryEvent:
-                    _text.Append("굴 속 거래: 교환 네 가지 중 두 가지가 나옵니다.\n심장·금화·부하 체력·방 하나를 내고 부하 강화나 유물을 얻습니다.\n그냥 떠나도 됩니다.");
+                    _text.Append("굴 속 거래 · 대가를 내고 강화나 유물을 얻습니다.");
                     break;
                 case RunDemoRoute.Node.SapperDefense:
-                    AppendParty(2).Append("\n공병이 방 가운데에 폭약을 놓고 터뜨립니다. 때리거나 함정으로 끊으세요.\n지면 런이 끝납니다.");
+                    AppendParty(2).Append("\n공병이 켜진 방을 폭파합니다.");
                     break;
                 case RunDemoRoute.Node.OutpostRaid:
-                    _text.Append("부하를 최대 3명 보내 진지 대장을 처치합니다.\n지키는 적 · ").Append(_demo.RaidDefenders)
-                        .Append("\n언제든 후퇴할 수 있습니다. 이기면 마지막 침입의 마력 용량이 늘어납니다.");
+                    _text.Append("부하 최대 3명 · 진지 대장 처치\n지키는 적 · ").Append(_demo.RaidDefenders);
                     break;
                 default:
-                    AppendParty(3).Append("\n마지막 침입입니다. 마력 용량 ").Append(_demo.DefenseSettings(3).StartingManaCapacity)
-                        .Append("\n지면 런이 끝납니다.");
+                    AppendParty(3).Append("\n마지막 침입 · 마력 용량 ").Append(_demo.DefenseSettings(3).StartingManaCapacity);
                     break;
             }
             return _text.ToString();
@@ -203,7 +199,7 @@ namespace Code.UI.Run
                 _text.Append(party[i].Combatant.DisplayName);
             }
             int waves = RunDemoCampaign.DefenseWaves(number);
-            if (waves > 1) _text.Append(" · ").Append(waves).Append("무리(").Append(RunDemoCampaign.WaveGapSeconds.ToString("0")).Append("초 간격)");
+            if (waves > 1) _text.Append(" · ").Append(waves).Append("무리");
             return _text;
         }
 
