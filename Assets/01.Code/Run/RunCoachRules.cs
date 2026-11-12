@@ -12,8 +12,9 @@ namespace Code.Run
         public const float PauseHintSeconds = 8f;
 
         /// <param name="revived">상인에서 살린 부하인가(부하 번호). 준비 화면 자리 안내에 쓴다. 없으면 null.</param>
+        /// <param name="paused">전투가 멈춰 있는가. 멈춰 있으면 멈춤 안내를 고르지 않는다.</param>
         public static RunCoachHint Pick(RunBattle battle, bool preparing, int trapRoom, Predicate<RunCoachStep> done,
-            Predicate<int> revived = null)
+            Predicate<int> revived = null, bool paused = false)
         {
             // 원정에는 따로 할 일 안내가 있다.
             if (battle == null || battle.IsRaid || done == null) return default;
@@ -38,7 +39,8 @@ namespace Code.Run
                 RunCombatant minion = room >= 0 ? NearestMinion(battle, room) : null;
                 if (minion != null) return new RunCoachHint(RunCoachStep.SendMinion, room, minion);
             }
-            if (!done(RunCoachStep.Pause) && battle.Elapsed < PauseHintSeconds)
+            // 멈춤 버튼 말고 다른 경로로 멈춰도(지금은 없다) 멈춘 화면에 "멈추고 명령"이 뜨지 않게 한다.
+            if (!paused && !done(RunCoachStep.Pause) && battle.Elapsed < PauseHintSeconds)
                 return new RunCoachHint(RunCoachStep.Pause, -1, null);
             return default;
         }

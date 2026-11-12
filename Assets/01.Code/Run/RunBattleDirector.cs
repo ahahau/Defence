@@ -868,7 +868,7 @@ namespace Code.Run
         private void RefreshCoach()
         {
             if (coach == null || _coachMemory == null) return;
-            RunCoachHint hint = RunCoachRules.Pick(_battle, session.IsPreparing, session.TrapRoom, _coachDone, _coachRevived);
+            RunCoachHint hint = RunCoachRules.Pick(_battle, session.IsPreparing, session.TrapRoom, _coachDone, _coachRevived, _paused);
             bool roomShown = hint.Room >= 0 && _battle.Rooms[hint.Room].Floor == _grid.Floor;
             switch (hint.Step)
             {
