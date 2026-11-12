@@ -34,6 +34,10 @@ namespace Code.UI.Run
         public int PartyCapacity => partyCards.Length;
         public int MinionCapacity => minionCards.Length;
 
+        /// <summary>첫 판 안내가 가리킬 부하 준비 카드. 없는 번호면 null.</summary>
+        public RectTransform MinionCardRect(int index) =>
+            index >= 0 && index < minionCards.Length && minionCards[index] != null ? (RectTransform)minionCards[index].transform : null;
+
         private void OnEnable()
         {
             EnsureRuntimeState();

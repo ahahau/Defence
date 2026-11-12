@@ -84,6 +84,7 @@ namespace Code.Run
         private string _infoTitle, _infoBody, _tooltipText;
         private RunCoachMemory _coachMemory;
         private System.Predicate<RunCoachStep> _coachDone;
+        private System.Predicate<int> _coachRevived;
         private System.Action _trapActivated;
 
         private void Start()
@@ -122,6 +123,7 @@ namespace Code.Run
             {
                 _coachMemory = new RunCoachMemory();
                 _coachDone = _coachMemory.IsDone;
+                _coachRevived = session.WasRevived;
                 _trapActivated = () => _coachMemory.MarkDone(RunCoachStep.FireTrap);
                 if (trapControl != null) trapControl.Activated += _trapActivated;
             }
@@ -275,7 +277,7 @@ namespace Code.Run
                 if (_dropUiHits.Count > 0) return;
             }
             Pick(point, out _, out int room);
-            if (room >= 0) session.Place(index, room);
+            if (room >= 0 && session.Place(index, room)) _coachMemory?.MarkDone(RunCoachStep.MoveMinion);
         }
 
         private void HandlePreparationPointer(Mouse mouse, Vector2 point, bool overUi)
@@ -289,7 +291,7 @@ namespace Code.Run
                     _dragMinion = actor.Id;
                     _dragStart = point;
                 }
-                else if (room >= 0 && _selected != null) session.Place(_selected.Id, room);
+                else if (room >= 0 && _selected != null && session.Place(_selected.Id, room)) _coachMemory?.MarkDone(RunCoachStep.MoveMinion);
             }
             if (_dragMinion < 0) return;
             if (mouse.leftButton.isPressed && (point - _dragStart).sqrMagnitude > 36f)
@@ -866,7 +868,7 @@ namespace Code.Run
         private void RefreshCoach()
         {
             if (coach == null || _coachMemory == null) return;
-            RunCoachHint hint = RunCoachRules.Pick(_battle, session.IsPreparing, session.TrapRoom, _coachDone);
+            RunCoachHint hint = RunCoachRules.Pick(_battle, session.IsPreparing, session.TrapRoom, _coachDone, _coachRevived);
             bool roomShown = hint.Room >= 0 && _battle.Rooms[hint.Room].Floor == _grid.Floor;
             switch (hint.Step)
             {
@@ -887,6 +889,9 @@ namespace Code.Run
                     int card = _visibleMinions.IndexOf(hint.Minion);
                     if (card < 0) break;
                     coach.Show("부하 누르고 → " + session.RoomName(hint.Room) + " 누르기", hud.RosterCardRect(card));
+                    return;
+                case RunCoachStep.MoveMinion when hint.Minion != null:
+                    coach.Show("끌어서 자리 옮기기", session.PreparationCard(hint.Minion.Id));
                     return;
                 case RunCoachStep.Pause:
                     coach.Show("급하면 멈추고 명령", hud.PauseRect);

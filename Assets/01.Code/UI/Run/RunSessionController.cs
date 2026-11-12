@@ -53,6 +53,12 @@ namespace Code.UI.Run
         /// <summary>함정 조작 패널과 그 방. 전투 화면이 패널을 함정 방 옆에 붙인다.</summary>
         public RectTransform TrapPanel => trapControl != null ? trapControl.Panel : null;
         public int TrapRoom => _trapRoom;
+
+        /// <summary>상인에서 살린 부하인가(다음 전투가 끝나기 전까지). 준비 화면 자리 안내에 쓴다.</summary>
+        public bool WasRevived(int minion) => _demo != null && _demo.WasRevived(minion);
+
+        /// <summary>첫 판 안내가 가리킬 부하 준비 카드.</summary>
+        public RectTransform PreparationCard(int minion) => preparation != null ? preparation.MinionCardRect(minion) : null;
         public bool IsResult => _raid == null ? _flow.Phase == RunBattlePhase.Result : _raid.Outcome != RunBattleOutcome.Ongoing;
         public int EncounterNumber => _flow.EncounterNumber;
         public bool CanPrepareNext => IsResult || (_raid != null && !_raid.IsRaidRetreating);
@@ -297,7 +303,8 @@ namespace Code.UI.Run
             _text.Clear();
             AppendRoomSentence(state, true, "고장 났습니다.");
             AppendRoomSentence(state, false, "내구가 깎였습니다.");
-            if (_text.Length == 0) _text.Append("고칠 방이 없습니다.");
+            bool hasDamagedRoom = _text.Length > 0;
+            if (!hasDamagedRoom) _text.Append("고칠 방이 없습니다.");
             _text.Append('\n');
             int hurt = 0;
             string last = null;
@@ -318,8 +325,17 @@ namespace Code.UI.Run
                         new PopupButtonSpec("지도로", PopupButtonStyle.Secondary, LeaveUpkeep),
                         new PopupButtonSpec("수리·치료", PopupButtonStyle.Primary, () => ShowUpkeepTarget(0), anyTarget),
                     }, LeaveUpkeep)
-                .WithLines($"금화 {state.Gold} · 고치기 {RunDemoCampaign.RepairPrice} · 치료 {RunDemoCampaign.HealPrice}", null)
+                .WithLines(UpkeepPriceLine(state.Gold, hasDamagedRoom, hurt > 0), null)
                 .WithAccent(HudPalette.Gain, null));
+        }
+
+        // 할 수 있는 일의 가격만 적는다(다친 부하가 없으면 치료 가격을 빼는 식).
+        private static string UpkeepPriceLine(int gold, bool repair, bool heal)
+        {
+            string line = $"금화 {gold}";
+            if (repair) line += $" · 고치기 {RunDemoCampaign.RepairPrice}";
+            if (heal) line += $" · 치료 {RunDemoCampaign.HealPrice}";
+            return line;
         }
 
         // "함정 방, 문 제어실이 고장 났습니다." 처럼 같은 상태의 방을 한 문장으로 잇는다.
@@ -740,7 +756,10 @@ namespace Code.UI.Run
                     continue;
                 }
                 // 자리는 평면도에서 보이므로 카드에는 이름과 체력만 둔다(2026-11-12 사용자 목업 승인).
-                preparation.SetMinion(i, data.DisplayName + $"\n체력 {Battle.Combatants[i].Health}/{data.MaxHealth}",
+                // 상인에서 살린 부하는 체력이 가득이라 체력 대신 "지난 판 쓰러짐"을 보인다(2026-11-12 사용자 결정).
+                string second = _demo.WasRevived(i) ? HudPalette.Paint("지난 판 쓰러짐", HudPalette.Warn)
+                    : $"체력 {Battle.Combatants[i].Health}/{data.MaxHealth}";
+                preparation.SetMinion(i, data.DisplayName + "\n" + second,
                     RunVisualPalette.Affinity(data.Affinity), i == _selection);
             }
             // 카드는 5장이다(상인 새 부하, 2026-11-11). 부하가 넷이면 남는 카드를 숨긴다.

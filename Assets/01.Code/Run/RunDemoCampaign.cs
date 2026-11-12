@@ -65,6 +65,14 @@ namespace Code.Run
         /// <summary>이번 상인 칸에서 산 항목(비트 = <see cref="MerchantItem"/>). 항목마다 한 번, 방문마다 두 개까지 산다.</summary>
         internal int MerchantBought { get; private set; }
 
+        /// <summary>
+        /// 상인에서 살린 부하(부하 번호 비트). 다음 준비 화면에서 "지난 판 쓰러짐"과 자리 안내를 보이고,
+        /// 다음 전투·원정이 끝나면 지운다(2026-11-12 사용자 결정 "준비 화면에서 자리 안내").
+        /// </summary>
+        internal int RevivedMinions { get; private set; }
+
+        internal bool WasRevived(int index) => index is >= 0 and < 31 && (RevivedMinions & (1 << index)) != 0;
+
         /// <summary>상인 물건·글 사건을 뽑는 런 시드. 저장해 다시 불러도 같은 제안이 나온다.</summary>
         internal int Seed { get; private set; }
 
@@ -142,6 +150,7 @@ namespace Code.Run
         {
             if (!Route.TryResolve(battle.Outcome == RunBattleOutcome.Victory ? RunDemoRoute.Result.Victory : RunDemoRoute.Result.Defeat)) return;
             Carryover = new RunBattleCarryover(battle);
+            RevivedMinions = 0;
         }
 
         /// <summary>지도에서 칸에 들어간다. 상인·글 사건이면 이번 방문의 제안 두 개를 뽑는다.</summary>
@@ -232,6 +241,7 @@ namespace Code.Run
                 case MerchantItem.Revive:
                     int lost = FirstLostMinion;
                     Carryover.MinionHealth[lost] = Minion(lost).MaxHealth;
+                    RevivedMinions |= 1 << lost;
                     break;
                 case MerchantItem.Capacity:
                     ExtraCapacity++;
@@ -419,6 +429,7 @@ namespace Code.Run
             };
             if (!Route.TryResolve(result)) return;
             for (int i = 0; i < party.Count; i++) Carryover.MinionHealth[party[i]] = raid.Combatants[i].Health;
+            RevivedMinions = 0;
         }
 
         // ── 저장 ──
@@ -430,6 +441,7 @@ namespace Code.Run
             TrapBonus = checkpoint.TrapBonus;
             ExtraCapacity = Math.Clamp(checkpoint.ExtraCapacity, 0, MaxExtraCapacity);
             MerchantBought = checkpoint.MerchantBought & MerchantItemMask;
+            RevivedMinions = Math.Max(0, checkpoint.RevivedMinions);
             if (checkpoint.Seed != 0) Seed = checkpoint.Seed;
             Relics = (RunDemoRelic)checkpoint.Relics & RunDemoRelic.All;
             ExtraMinionKind = checkpoint.ExtraMinionKind is >= 0 && checkpoint.ExtraMinionKind < _encounter.Minions.Length ? checkpoint.ExtraMinionKind : -1;

@@ -77,7 +77,8 @@ namespace Code.UI.Run
                 });
                 activateButton.SetLabel(queued ? "발동 예약됨" : "함정 발동");
             }
-            activateButton.Button.interactable = ready && !queued;
+            // 버튼만 잠그면 글자가 밝게 남아 눌릴 것처럼 보인다. 다른 버튼처럼 글자까지 흐린다.
+            activateButton.SetInteractable(ready && !queued);
             int tenth = Mathf.Clamp(Mathf.CeilToInt(room.TrapCooldown * 10f), 0, _tenths.Length - 1);
             if (tenth != _shownTenth) { _shownTenth = tenth; seconds.SetText(_tenths[tenth]); }
             int value = _battle.TrapDamage(_room);

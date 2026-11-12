@@ -11,7 +11,9 @@ namespace Code.Run
         /// <summary>전투 시작 뒤 멈춤 안내를 보이는 시간(초).</summary>
         public const float PauseHintSeconds = 8f;
 
-        public static RunCoachHint Pick(RunBattle battle, bool preparing, int trapRoom, Predicate<RunCoachStep> done)
+        /// <param name="revived">상인에서 살린 부하인가(부하 번호). 준비 화면 자리 안내에 쓴다. 없으면 null.</param>
+        public static RunCoachHint Pick(RunBattle battle, bool preparing, int trapRoom, Predicate<RunCoachStep> done,
+            Predicate<int> revived = null)
         {
             // 원정에는 따로 할 일 안내가 있다.
             if (battle == null || battle.IsRaid || done == null) return default;
@@ -20,6 +22,11 @@ namespace Code.Run
             {
                 if (hasTrap && !done(RunCoachStep.PowerTrap) && battle.Rooms[trapRoom].Mana == 0)
                     return new RunCoachHint(RunCoachStep.PowerTrap, trapRoom, null);
+                // 살린 부하는 예전 자리에 그대로 놓여 같은 자리에서 다시 쓰러지기 쉽다(2026-11-12 사용자 "준비 화면에서 자리 안내").
+                if (revived != null && !done(RunCoachStep.MoveMinion))
+                    foreach (RunCombatant minion in battle.Combatants)
+                        if (minion.Side == RunSide.Minion && minion.IsActive && revived(minion.Id))
+                            return new RunCoachHint(RunCoachStep.MoveMinion, -1, minion);
                 return default;
             }
             if (battle.Outcome != RunBattleOutcome.Ongoing) return default;
@@ -36,7 +43,10 @@ namespace Code.Run
             return default;
         }
 
-        /// <summary>적이 닿았는데 지키는 부하가 없는 금고·샘·심장. 없으면 -1.</summary>
+        /// <summary>
+        /// 적이 닿았는데 지키는 부하가 없거나, 지키는 부하가 모두 체력 1/3 아래인 금고·샘·심장. 없으면 -1.
+        /// 버티던 부하가 쓰러지는 동안에도 도움을 보내라고 알린다(2026-11-12 사용자 선택 "버티는 부하가 위험하면 안내").
+        /// </summary>
         private static int UnguardedTarget(RunBattle battle)
         {
             foreach (RunCombatant intruder in battle.Combatants)
@@ -46,9 +56,20 @@ namespace Code.Run
                 if (room < 0) continue;
                 RunRoomKind kind = battle.Rooms[room].Kind;
                 if (kind != RunRoomKind.Vault && kind != RunRoomKind.HealingSpring && kind != RunRoomKind.Heart) continue;
-                if (!battle.IsDefended(room)) return room;
+                if (!HasSturdyDefender(battle, room)) return room;
             }
             return -1;
+        }
+
+        /// <summary>이동 명령 없이 그 방을 지키는 부하 중 체력이 1/3 이상인 부하가 있는가.</summary>
+        private static bool HasSturdyDefender(RunBattle battle, int room)
+        {
+            foreach (RunCombatant minion in battle.Combatants)
+            {
+                if (minion.Side != RunSide.Minion || !minion.IsOnField || minion.HasMoveOrder || battle.RoomOf(minion) != room) continue;
+                if (minion.Health * 3 >= minion.MaxHealth) return true;
+            }
+            return false;
         }
 
         private static RunCombatant NearestMinion(RunBattle battle, int room)

@@ -33,6 +33,8 @@ namespace Code.Run
             public int Offer1 = -1;
             public int SecondBranch = -1;
             public bool PostRaidBranch;
+            // 2026-11-12 상인에서 살린 부하(비트). 다음 준비 화면 자리 안내에 쓴다. 예전 저장은 0(없음)으로 읽힌다.
+            public int RevivedMinions;
 
             internal RunDemoRoute GetRoute() => RunDemoRoute.Restore(Current, Result,
                 Branch == -1 ? null : (RunDemoRoute.Node)Branch, RaidResult,
@@ -69,6 +71,7 @@ namespace Code.Run
                 Offer1 = campaign.Offer1,
                 SecondBranch = route.SecondBranch.HasValue ? (int)route.SecondBranch.Value : -1,
                 PostRaidBranch = route.PostRaidBranch,
+                RevivedMinions = campaign.RevivedMinions,
             }, false);
         }
 
