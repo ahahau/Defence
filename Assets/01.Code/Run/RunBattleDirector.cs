@@ -876,10 +876,11 @@ namespace Code.Run
             _text.Append($"체력 {m.Health}/{m.MaxHealth} · 공격 {d.Attack} · {_battle.AttackInterval(m):0.#}초마다");
             if (d.Skill != null)
                 _text.Append('\n').Append(m.IsSkillReady ? $"{d.Skill.DisplayName} 준비됨" : $"{d.Skill.DisplayName} {m.SkillCooldownLeft:0.0}초 뒤");
-            _text.Append("\n방을 누르면 걸어간다 · 우클릭 해제");
+            // 사용법 줄은 뺐다(2026-11-12 사용자 선택 "같이 줄이기").
             return _text.ToString();
         }
 
+        /// <summary>정보 창의 방 글: 상태 한 줄과 내구·마력 한 줄(사용법·함정 피해 줄은 2026-11-12 사용자 선택으로 뺐다).</summary>
         private string RoomInfo(int index)
         {
             RunRoom room = _battle.Rooms[index];
@@ -887,30 +888,27 @@ namespace Code.Run
             _text.Clear();
             _text.Append(status);
             if (room.HasSystem) _text.Append($"\n내구 {Mathf.CeilToInt(room.Durability)}/{room.MaxDurability} · 마력 {room.Mana}/{room.MaxMana}");
-            int trap = _battle.TrapDamage(index);
-            if (trap > 0) _text.Append($"\n들어온 적 전원에게 {trap} · 쿨 {_battle.Settings.TrapCooldownSeconds:0.#}초");
-            if (room.MaxMana > 0) _text.Append("\n이름판 칸을 눌러 마력을 넣고 뺀다");
             return _text.ToString();
         }
 
+        /// <summary>마우스 설명 카드: 두 줄(2026-11-12 사용자 선택 "두 줄짜리 작은 카드").</summary>
         private string Describe(RunCombatant combatant, int room)
         {
             if (combatant != null)
             {
-                RunCombatantSO d = combatant.Definition;
                 _text.Clear();
-                _text.Append($"<b>{d.DisplayName}</b> · {(d.IsRanged ? "원거리" : "근접")}\n");
-                _text.Append($"체력 {combatant.Health}/{combatant.MaxHealth} · 공격 {d.Attack} · {_battle.AttackInterval(combatant):0.#}초마다");
-                if (combatant.Side == RunSide.Minion && d.RepairPerSecond > 0f) _text.Append($" · 수리 {d.RepairPerSecond:0.#}/초");
-                if (d.Skill != null)
-                    _text.Append($"\n{d.Skill.DisplayName}: {d.Skill.Description}");
-                _text.Append('\n').Append(RunBattleText.Activity(_battle, combatant));
+                _text.Append($"<b>{combatant.Definition.DisplayName}</b> · 체력 {combatant.Health}/{combatant.MaxHealth}\n");
+                _text.Append(RunBattleText.Activity(_battle, combatant));
                 return _text.ToString();
             }
             if (room < 0) return null;
             RunRoom r = _battle.Rooms[room];
-            return $"<b>{session.RoomName(room)}</b>\n{RoomInfo(room)}"
-                + (_selected != null ? "\n누르면 고른 부하가 이 방으로 간다" : string.Empty);
+            (string status, Color _) = RoomStatus(r);
+            _text.Clear();
+            _text.Append("<b>").Append(session.RoomName(room)).Append("</b>");
+            if (!string.IsNullOrEmpty(status)) _text.Append(" · ").Append(status);
+            if (r.HasSystem) _text.Append($"\n내구 {Mathf.CeilToInt(r.Durability)}/{r.MaxDurability} · 마력 {r.Mana}/{r.MaxMana}");
+            return _text.ToString();
         }
 
         private bool ControlledDoorBroken(int room)

@@ -172,7 +172,14 @@ namespace Code.UI.Run
             infoPanel.gameObject.SetActive(visible);
             if (!visible) return;
             if (infoTitle != null) infoTitle.text = title;
-            if (infoBody != null) infoBody.text = body;
+            if (infoBody != null)
+            {
+                infoBody.text = body;
+                // 떠 있는 작은 창이라 고정 칸 규칙 대신 글 줄 수에 높이를 맞춘다(2026-11-12 사용자 선택 "같이 줄이기").
+                float width = infoPanel.sizeDelta.x;
+                float lines = infoBody.GetPreferredValues(body ?? string.Empty, width + infoBody.rectTransform.sizeDelta.x, 0f).y;
+                infoPanel.sizeDelta = new Vector2(width, Mathf.Ceil(lines) - infoBody.rectTransform.sizeDelta.y);
+            }
             SetBar(infoHealth, health);
             SetBar(infoSkill, skill);
             // 정보 창은 머리 위로 띄워 그 인물과 둘레 싸움을 가리지 않는다.
@@ -197,7 +204,14 @@ namespace Code.UI.Run
             bool visible = !string.IsNullOrEmpty(text);
             tooltip.gameObject.SetActive(visible);
             if (!visible) return;
-            if (tooltipText != null) tooltipText.text = text;
+            if (tooltipText != null)
+            {
+                tooltipText.text = text;
+                // 두 줄짜리 작은 카드: 폭은 씬 값, 높이는 글에 맞춘다(2026-11-12 사용자 선택 "두 줄짜리 작은 카드").
+                float width = tooltip.sizeDelta.x;
+                float lines = tooltipText.GetPreferredValues(text, width + tooltipText.rectTransform.sizeDelta.x, 0f).y;
+                tooltip.sizeDelta = new Vector2(width, Mathf.Ceil(lines) - tooltipText.rectTransform.sizeDelta.y);
+            }
             PlaceBeside(tooltip, screenPosition, 18f);
         }
 

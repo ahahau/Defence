@@ -75,6 +75,13 @@ namespace Code.UI.Run
         public void Notify(string text)
         {
             notificationText.SetText(text);
+            // 한 줄 알림이라 칸 높이를 글 줄 수에 맞춘다(2026-11-12 사용자 요청 "알림도 줄이기"). 위아래 여백은 글 칸 위치와 같다.
+            if (notification.transform is RectTransform box && notificationText.transform.parent is RectTransform body)
+            {
+                float lines = Mathf.Ceil(notificationText.GetPreferredValues(text, body.sizeDelta.x, 0f).y);
+                body.sizeDelta = new Vector2(body.sizeDelta.x, lines);
+                box.sizeDelta = new Vector2(box.sizeDelta.x, lines - body.anchoredPosition.y * 2f);
+            }
             notification.SetActive(true);
             _noticeLeft = 4f;
         }
