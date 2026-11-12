@@ -24,6 +24,7 @@ namespace Code.UI.Run
         private RunDemoCampaign _demo;
         private RunEncounterSO _encounter;
         private int _pick = -1;
+        private int _revived = -1;
 
         internal RunMerchantPresenter(RunMerchantView view)
         {
@@ -49,6 +50,7 @@ namespace Code.UI.Run
             _encounter = encounter;
             _demo.EnsureBranchOffers();
             _pick = -1;
+            _revived = -1;
             _view.ShowPick(false);
             Refresh();
             _view.Open();
@@ -101,8 +103,10 @@ namespace Code.UI.Run
                 case RunDemoCampaign.MerchantItem.Revive:
                     int lost = _demo.FirstLostMinion;
                     name = "쓰러진 부하";
-                    detail = lost >= 0 ? $"{_demo.Minion(lost).DisplayName} 복귀 · 체력 가득" : "쓰러진 부하가 없습니다";
-                    unavailable = lost < 0;
+                    // 산 뒤에는 다음 대상 대신 이번에 복귀시킨 부하를 보인다.
+                    detail = bought ? (_revived >= 0 ? $"{_demo.Minion(_revived).DisplayName} 복귀함" : "이번에 한 명 복귀시켰습니다")
+                        : lost >= 0 ? $"{_demo.Minion(lost).DisplayName} 복귀 · 체력 가득" : "쓰러진 부하가 없습니다";
+                    unavailable = lost < 0 && !bought;
                     break;
                 case RunDemoCampaign.MerchantItem.Capacity:
                     int capacity = 3 + _demo.ExtraCapacity;
@@ -124,7 +128,8 @@ namespace Code.UI.Run
                     break;
             }
             string label = bought ? "삼" : item == RunDemoCampaign.MerchantItem.NewMinion ? "고르기" : "사기";
-            _view.SetRow(row, name, detail, $"금화 {_demo.PriceOf(item)}", label, can, bought || unavailable);
+            // 이번 방문에서 살 수 있는 수를 다 채웠으면 남은 줄도 흐린다(버튼만 잠그면 살 수 있어 보였다).
+            _view.SetRow(row, name, detail, $"금화 {_demo.PriceOf(item)}", label, can, bought || unavailable || _demo.MerchantLimitReached);
         }
 
         private void HandleRow(int row)
@@ -132,6 +137,7 @@ namespace Code.UI.Run
             if (_demo == null || row < 0 || row >= Rows.Length) return;
             RunDemoCampaign.MerchantItem item = Rows[row];
             if (!_demo.CanBuyAtMerchant(item)) return;
+            int lost = _demo.FirstLostMinion;
             if (item == RunDemoCampaign.MerchantItem.NewMinion)
             {
                 _pick = -1;
@@ -140,6 +146,7 @@ namespace Code.UI.Run
                 return;
             }
             if (!_demo.TryBuyAtMerchant(item)) return;
+            if (item == RunDemoCampaign.MerchantItem.Revive) _revived = lost;
             Bought?.Invoke();
             Refresh();
         }

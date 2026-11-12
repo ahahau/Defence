@@ -32,9 +32,14 @@ namespace Code.Run
                 render.SetUnitSprite(EntityState.Idle);
                 AlignFeet();
             }
+            // 묶을 때는 체력을 피해·회복으로 넣지 않고 바로 맞춘다. 피해로 넣으면 이미 쓰러진 부하의
+            // 사망 연출·소리가 다시 나고, 멈춘 준비 화면에 그대로 남았다(2026-11-12 한 판 완주 확인).
             if (_health != null)
+            {
                 _health.SetMaxHealth(combatant.MaxHealth, true);
-            ShowHealth(combatant.Health);
+                _health.SetCurrentRatio(combatant.Health / (float)Mathf.Max(1, combatant.MaxHealth));
+            }
+            IsDead = combatant.Health <= 0;
         }
 
         /// <summary>
