@@ -8,13 +8,17 @@ namespace Code.UI.Run
     {
         public const int RimCenter = 4;
 
+        /// <summary>안쪽 모서리 번호의 시작. 9~12는 바닥이 왼쪽 위·오른쪽 위·왼쪽 아래·오른쪽 아래 대각선에 있는 조각이다.</summary>
+        public const int RimInnerStart = 9;
+
         public static RunFloorCellKind KindOf(bool[,] open, int x, int y)
         {
             if (IsOpen(open, x, y)) return IsFace(open, x, y + 1) ? RunFloorCellKind.LitFloor : RunFloorCellKind.Floor;
             return IsOpen(open, x, y - 1) ? RunFloorCellKind.Face : RunFloorCellKind.Wall;
         }
 
-        public static int RimIndex(bool[,] open, int x, int y)
+        /// <summary>안쪽 모서리 조각이 있으면 9~12를, 없으면 반대쪽 바깥 모서리(작은 돌기가 남는다)를 돌려준다.</summary>
+        public static int RimIndex(bool[,] open, int x, int y, bool hasInner)
         {
             bool top = !IsTop(open, x, y + 1);
             bool bottom = !IsTop(open, x, y - 1);
@@ -28,7 +32,8 @@ namespace Code.UI.Run
             bool downLeft = !IsTop(open, x - 1, y - 1);
             bool downRight = !IsTop(open, x + 1, y - 1);
             if (!(upLeft || upRight || downLeft || downRight)) return RimCenter;
-            // 안쪽 모서리 조각이 타일셋에 없어 반대쪽 바깥 모서리로 잇는다(작은 돌기가 남는다).
+            // 안쪽 모서리 조각은 타일셋에 없어 생성기가 테두리 조각을 합쳐 만든다(2026-11-12 사용자 목업 승인).
+            if (hasInner) return RimInnerStart + (upLeft ? 0 : upRight ? 1 : downLeft ? 2 : 3);
             column = upLeft || downLeft ? 2 : 0;
             row = upLeft || upRight ? 2 : 0;
             return row * 3 + column;

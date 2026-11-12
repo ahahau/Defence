@@ -19,6 +19,8 @@ namespace Code.UI.Run
         [field: SerializeField, Tooltip("벽돌 면 바로 아래 바닥.")] public RunArtPiece[] LitFloors { get; private set; } = System.Array.Empty<RunArtPiece>();
         [field: SerializeField, Tooltip("바닥 위쪽 벽의 벽돌 면.")] public RunArtPiece[] WallFaces { get; private set; } = System.Array.Empty<RunArtPiece>();
         [field: SerializeField, Tooltip("벽 윗면 테두리 9조각(위·가운데·아래 줄 × 왼·가운데·오른쪽).")] public RunArtPiece[] Rim { get; private set; } = System.Array.Empty<RunArtPiece>();
+        [field: SerializeField, Tooltip("테두리 안쪽 모서리 4조각(바닥이 왼쪽 위·오른쪽 위·왼쪽 아래·오른쪽 아래 대각선). 비면 바깥 모서리로 대신한다.")]
+        public RunArtPiece[] RimInner { get; private set; } = System.Array.Empty<RunArtPiece>();
 
         [field: Header("장치")]
         [field: SerializeField] public RunRoomDecor[] Decor { get; private set; } = System.Array.Empty<RunRoomDecor>();
@@ -37,6 +39,19 @@ namespace Code.UI.Run
         [field: SerializeField, Tooltip("세로 복도 문(열림).")] public RunArtPiece DoorOpen { get; private set; }
         [field: SerializeField, Tooltip("가로 복도 문(잠기면 세움).")] public RunArtPiece DoorPost { get; private set; }
         [field: SerializeField, Min(0.1f)] public float DoorPostScale { get; private set; } = 0.75f;
+
+        [field: Header("방 상태(2026-11-12 사용자 목업 승인)")]
+        [field: SerializeField, Tooltip("꺼진 방의 횃불 자리에 놓는 불 없는 화로.")] public RunArtPiece TorchOff { get; private set; }
+        [field: SerializeField, Range(0f, 1f), Tooltip("꺼진 방 장치·샘의 회색 밝기.")] public float OffDeviceGray { get; private set; } = 0.55f;
+        [field: SerializeField, Tooltip("고장 난 방 바닥에서 깜빡이는 불길 장면.")] public RunArtPiece[] BrokenFlameFrames { get; private set; } = System.Array.Empty<RunArtPiece>();
+        [field: SerializeField, Tooltip("불길 자리(방 왼쪽 위에서 잰 타일 칸).")] public Vector2[] BrokenFlameCells { get; private set; } = System.Array.Empty<Vector2>();
+        [field: SerializeField, Min(0.1f), Tooltip("불길 크기 배율. 횃불 불꽃만 자른 그림이라 원래 크기로는 너무 작다.")] public float BrokenFlameScale { get; private set; } = 2f;
+        [field: SerializeField, Tooltip("고장 난 방 바닥의 파편·불씨. 자리는 같은 순서의 BrokenDebrisCells.")] public RunArtPiece[] BrokenDebris { get; private set; } = System.Array.Empty<RunArtPiece>();
+        [field: SerializeField] public Vector2[] BrokenDebrisCells { get; private set; } = System.Array.Empty<Vector2>();
+        [field: SerializeField, Tooltip("심장 방 핏자국. 앞 HeartBloodFirstCount개는 체력 2/3 아래, 나머지는 1/3 아래에서 보인다.")] public RunArtPiece[] HeartBlood { get; private set; } = System.Array.Empty<RunArtPiece>();
+        [field: SerializeField] public Vector2[] HeartBloodCells { get; private set; } = System.Array.Empty<Vector2>();
+        [field: SerializeField, Min(0)] public int HeartBloodFirstCount { get; private set; } = 2;
+        [field: SerializeField, Range(0f, 1f), Tooltip("심장 체력 0일 때 기둥 밝기.")] public float HeartDarkest { get; private set; } = 0.35f;
 
         [field: Header("함정 발동")]
         [field: SerializeField] public RunArtPiece[] StrikeFrames { get; private set; } = System.Array.Empty<RunArtPiece>();

@@ -200,6 +200,31 @@ MonoBehaviour:
       y: 48
       width: 16
       height: 16
+  <RimInner>k__BackingField:
+  - texture: {fileID: 2800000, guid: 27af76ac8c924784ea49c4f74b3bf9bb, type: 3}
+    pixels:
+      x: 0
+      y: 0
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 27af76ac8c924784ea49c4f74b3bf9bb, type: 3}
+    pixels:
+      x: 16
+      y: 0
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 27af76ac8c924784ea49c4f74b3bf9bb, type: 3}
+    pixels:
+      x: 32
+      y: 0
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 27af76ac8c924784ea49c4f74b3bf9bb, type: 3}
+    pixels:
+      x: 48
+      y: 0
+      width: 16
+      height: 16
   <Decor>k__BackingField:
   - kind: 2
     piece:
@@ -409,6 +434,157 @@ MonoBehaviour:
       width: 16
       height: 64
   <DoorPostScale>k__BackingField: 0.75
+  <TorchOff>k__BackingField:
+    texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 368
+      y: 432
+      width: 16
+      height: 32
+  <OffDeviceGray>k__BackingField: 0.55
+  <BrokenFlameFrames>k__BackingField:
+  - texture: {fileID: 2800000, guid: 935d304a88c909e42840dd1a1f4d427e, type: 3}
+    pixels:
+      x: 0
+      y: 0
+      width: 16
+      height: 12
+  - texture: {fileID: 2800000, guid: 935d304a88c909e42840dd1a1f4d427e, type: 3}
+    pixels:
+      x: 16
+      y: 0
+      width: 16
+      height: 12
+  - texture: {fileID: 2800000, guid: 935d304a88c909e42840dd1a1f4d427e, type: 3}
+    pixels:
+      x: 32
+      y: 0
+      width: 16
+      height: 12
+  - texture: {fileID: 2800000, guid: 935d304a88c909e42840dd1a1f4d427e, type: 3}
+    pixels:
+      x: 48
+      y: 0
+      width: 16
+      height: 12
+  - texture: {fileID: 2800000, guid: 935d304a88c909e42840dd1a1f4d427e, type: 3}
+    pixels:
+      x: 64
+      y: 0
+      width: 16
+      height: 12
+  - texture: {fileID: 2800000, guid: 935d304a88c909e42840dd1a1f4d427e, type: 3}
+    pixels:
+      x: 80
+      y: 0
+      width: 16
+      height: 12
+  - texture: {fileID: 2800000, guid: 935d304a88c909e42840dd1a1f4d427e, type: 3}
+    pixels:
+      x: 96
+      y: 0
+      width: 16
+      height: 12
+  - texture: {fileID: 2800000, guid: 935d304a88c909e42840dd1a1f4d427e, type: 3}
+    pixels:
+      x: 112
+      y: 0
+      width: 16
+      height: 12
+  <BrokenFlameCells>k__BackingField:
+  - {x: 1.2, y: 1.6}
+  - {x: 4, y: 3.2}
+  <BrokenFlameScale>k__BackingField: 2
+  <BrokenDebris>k__BackingField:
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 352
+      y: 480
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 368
+      y: 480
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 384
+      y: 496
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 352
+      y: 496
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 256
+      y: 480
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 288
+      y: 480
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 320
+      y: 480
+      width: 16
+      height: 16
+  <BrokenDebrisCells>k__BackingField:
+  - {x: 1.8, y: 0.8}
+  - {x: 4.2, y: 1.6}
+  - {x: 0.8, y: 3.8}
+  - {x: 3.4, y: 4.4}
+  - {x: 2.6, y: 2.4}
+  - {x: 0.6, y: 2.2}
+  - {x: 4.6, y: 3.6}
+  <HeartBlood>k__BackingField:
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 256
+      y: 496
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 304
+      y: 496
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 320
+      y: 480
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 272
+      y: 496
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 336
+      y: 496
+      width: 16
+      height: 16
+  <HeartBloodCells>k__BackingField:
+  - {x: 0.6, y: 3.4}
+  - {x: 4.4, y: 4.2}
+  - {x: 1.4, y: 4.6}
+  - {x: 4.6, y: 2}
+  - {x: 0.4, y: 1.6}
+  <HeartBloodFirstCount>k__BackingField: 2
+  <HeartDarkest>k__BackingField: 0.35
   <StrikeFrames>k__BackingField:
   - texture: {fileID: 2800000, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
     pixels:

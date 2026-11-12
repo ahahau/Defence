@@ -11,11 +11,20 @@ namespace Code.UI.Run
     /// </summary>
     public class RunFloorDressing
     {
+        /// <summary>꺼진 방에서 멈추는 그림인가(횃불·샘). 고장 불길은 묶음이 꺼져 있으면 보이지 않을 뿐 늘 돈다.</summary>
+        private enum Loop
+        {
+            Always,
+            StopsWhenOff,
+        }
+
         private struct Animated
         {
             public SpriteRenderer Renderer;
             public Sprite[] Frames;
             public int Phase;
+            public int Room;
+            public Loop Loop;
         }
 
         private struct Strike
@@ -34,7 +43,18 @@ namespace Code.UI.Run
         private readonly float[] _lastCooldown;
         private readonly SpriteRenderer[] _doors;
         private readonly Sprite[] _strikeFrames;
-        private readonly Sprite _ventIdle, _ventCharged, _doorClosed, _doorOpen;
+        private readonly Sprite _ventIdle, _ventCharged, _doorClosed, _doorOpen, _torchOff;
+        // 방 상태(꺼짐·고장·심장 피해) 그림. 2026-11-12 사용자 목업 승인.
+        private readonly List<SpriteRenderer>[] _torches;
+        private readonly List<SpriteRenderer>[] _devices;
+        private readonly Color[][] _deviceColors;
+        private readonly GameObject[] _brokenSets;
+        private readonly List<SpriteRenderer> _heartPillars = new();
+        private readonly List<GameObject> _heartBlood = new();
+        // 꺼진 방의 어두운 막(격자 뷰 몸체, 순서 2) 위에 그려야 고장 불길이 보인다.
+        private const int BrokenOrder = 3;
+        private readonly int[] _shownState;
+        private bool[] _off;
         private float _clock;
 
         public RunFloorDressing(RunBattle battle, RunGridView grid, RunFloorArt art, Transform parent,
@@ -49,6 +69,7 @@ namespace Code.UI.Run
             _doorClosed = art.SpriteOf(data.DoorClosed);
             _doorOpen = art.SpriteOf(data.DoorOpen);
             _strikeFrames = art.SpritesOf(data.StrikeFrames);
+            _torchOff = art.SpriteOf(data.TorchOff);
 
             GameObject plan = new("FloorPlan");
             plan.transform.SetParent(parent, false);
@@ -61,6 +82,12 @@ namespace Code.UI.Run
             _vents = new List<SpriteRenderer>[battle.Rooms.Count];
             _strikes = new Strike[battle.Rooms.Count];
             _lastCooldown = new float[battle.Rooms.Count];
+            _torches = new List<SpriteRenderer>[battle.Rooms.Count];
+            _devices = new List<SpriteRenderer>[battle.Rooms.Count];
+            _deviceColors = new Color[battle.Rooms.Count][];
+            _brokenSets = new GameObject[battle.Rooms.Count];
+            _shownState = new int[battle.Rooms.Count];
+            _off = new bool[battle.Rooms.Count];
             for (int i = 0; i < battle.Rooms.Count; i++) DressRoom(i, roomRoots[i]);
             _doors = new SpriteRenderer[battle.Links.Count];
             for (int i = 0; i < battle.Links.Count; i++) _doors[i] = BuildDoor(i, linkRoots[i]);
@@ -75,6 +102,8 @@ namespace Code.UI.Run
                 _lastCooldown[i] = i < battle.Rooms.Count ? battle.Rooms[i].TrapCooldown : 0f;
                 if (_strikes[i].Renderer != null) _strikes[i].Renderer.gameObject.SetActive(false);
             }
+            // 새 전투의 방 상태를 처음부터 다시 그린다.
+            for (int i = 0; i < _shownState.Length; i++) _shownState[i] = -1;
         }
 
         public void ShowFloor(int floor)
@@ -110,10 +139,11 @@ namespace Code.UI.Run
         public void Tick(float deltaTime)
         {
             _clock += deltaTime;
+            RefreshStates();
             int tick = Mathf.FloorToInt(_clock / _art.Data.FrameSeconds);
             foreach (Animated item in _animated)
             {
-                if (item.Frames.Length == 0) continue;
+                if (item.Frames.Length == 0 || item.Loop == Loop.StopsWhenOff && _off[item.Room]) continue;
                 item.Renderer.sprite = item.Frames[(tick + item.Phase) % item.Frames.Length];
             }
             for (int i = 0; i < _battle.Rooms.Count && i < _vents.Length; i++)
@@ -195,7 +225,7 @@ namespace Code.UI.Run
                         RunFloorCellKind.Floor => Pick(data.Floors, hash),
                         RunFloorCellKind.LitFloor => Pick(data.LitFloors.Length > 0 ? data.LitFloors : data.Floors, hash),
                         RunFloorCellKind.Face => Pick(data.WallFaces, hash),
-                        _ => data.Rim.Length == 9 ? data.Rim[RunFloorTileRules.RimIndex(cells, x, y)] : default,
+                        _ => data.Rim.Length == 9 ? RimPiece(data, RunFloorTileRules.RimIndex(cells, x, y, data.RimInner.Length == 4)) : default,
                     };
                     tiles[y * width + x] = _art.TileOf(piece);
                 }
@@ -213,6 +243,9 @@ namespace Code.UI.Run
                 : Rect.MinMaxRect(Mathf.Min(a.x, b.x), Mathf.Min(a.y, b.y) - half, Mathf.Max(a.x, b.x), Mathf.Max(a.y, b.y) + half);
         }
 
+        private static RunArtPiece RimPiece(RunFloorArtSO data, int index) =>
+            index >= RunFloorTileRules.RimInnerStart ? data.RimInner[index - RunFloorTileRules.RimInnerStart] : data.Rim[index];
+
         private static int Hash(int x, int y) => (x * 73856093) ^ (y * 19349663);
 
         private static RunArtPiece Pick(RunArtPiece[] pieces, int hash) =>
@@ -225,25 +258,54 @@ namespace Code.UI.Run
             RunFloorArtSO data = _art.Data;
             RunRoom room = _battle.Rooms[index];
             Sprite[] torch = _art.SpritesOf(data.TorchFrames);
+            _torches[index] = new List<SpriteRenderer>();
+            _devices[index] = new List<SpriteRenderer>();
             for (int i = 0; i < data.TorchCells.Length && torch.Length > 0; i++)
             {
                 SpriteRenderer renderer = Place("Torch", torch[0], index, data.TorchCells[i], -4, root);
-                _animated.Add(new Animated { Renderer = renderer, Frames = torch, Phase = index * 3 + i * 5 });
+                _torches[index].Add(renderer);
+                _animated.Add(new Animated { Renderer = renderer, Frames = torch, Phase = index * 3 + i * 5, Room = index, Loop = Loop.StopsWhenOff });
             }
             if (_battle.IsRaid) return;
 
             foreach (RunRoomDecor decor in data.Decor)
-                if (decor.Kind == room.Kind) Place("Decor", _art.SpriteOf(decor.Piece), index, decor.Cell, -5, root);
+            {
+                if (decor.Kind != room.Kind) continue;
+                SpriteRenderer renderer = Place("Decor", _art.SpriteOf(decor.Piece), index, decor.Cell, -5, root);
+                if (room.Kind == RunRoomKind.Heart) _heartPillars.Add(renderer);
+                else _devices[index].Add(renderer);
+            }
             if (room.Kind == RunRoomKind.HealingSpring && data.SpringFrames.Length > 0)
             {
                 Sprite[] water = _art.SpritesOf(data.SpringFrames);
                 SpriteRenderer spring = Place("Spring", water[0], index, data.SpringCell, -5, root);
                 spring.color = data.SpringTint;
-                _animated.Add(new Animated { Renderer = spring, Frames = water });
+                _devices[index].Add(spring);
+                _animated.Add(new Animated { Renderer = spring, Frames = water, Room = index, Loop = Loop.StopsWhenOff });
             }
+            if (room.Kind == RunRoomKind.Heart)
+            {
+                for (int i = 0; i < data.HeartBlood.Length && i < data.HeartBloodCells.Length; i++)
+                {
+                    SpriteRenderer blood = Place("HeartBlood", _art.SpriteOf(data.HeartBlood[i]), index, data.HeartBloodCells[i], -7, root);
+                    blood.gameObject.SetActive(false);
+                    _heartBlood.Add(blood.gameObject);
+                }
+            }
+            if (room.HasSystem) _brokenSets[index] = BuildBrokenSet(index, root);
+            if (room.Kind == RunRoomKind.Trap)
+            {
+                _vents[index] = new List<SpriteRenderer>();
+                foreach (Vector2 cell in data.TrapVentCells)
+                {
+                    SpriteRenderer vent = Place("TrapVent", _ventIdle, index, cell, -5, root);
+                    _vents[index].Add(vent);
+                    _devices[index].Add(vent);
+                }
+            }
+            _deviceColors[index] = new Color[_devices[index].Count];
+            for (int i = 0; i < _devices[index].Count; i++) _deviceColors[index][i] = _devices[index][i].color;
             if (room.Kind != RunRoomKind.Trap) return;
-            _vents[index] = new List<SpriteRenderer>();
-            foreach (Vector2 cell in data.TrapVentCells) _vents[index].Add(Place("TrapVent", _ventIdle, index, cell, -5, root));
             if (_strikeFrames.Length == 0) return;
             GameObject strike = new("TrapStrike");
             strike.transform.SetParent(root, false);
@@ -270,6 +332,64 @@ namespace Code.UI.Run
             renderer.sprite = sprite;
             renderer.sortingOrder = order;
             return renderer;
+        }
+
+        // ── 방 상태 ──
+
+        /// <summary>고장 난 방 바닥의 불길·파편·불씨 묶음. 고장일 때만 켠다.</summary>
+        private GameObject BuildBrokenSet(int index, Transform root)
+        {
+            RunFloorArtSO data = _art.Data;
+            GameObject set = new("BrokenSet");
+            set.transform.SetParent(root, false);
+            for (int i = 0; i < data.BrokenDebris.Length && i < data.BrokenDebrisCells.Length; i++)
+                Place("Debris", _art.SpriteOf(data.BrokenDebris[i]), index, data.BrokenDebrisCells[i], BrokenOrder, set.transform);
+            Sprite[] flames = _art.SpritesOf(data.BrokenFlameFrames);
+            for (int i = 0; i < data.BrokenFlameCells.Length && flames.Length > 0; i++)
+            {
+                SpriteRenderer flame = Place("Flame", flames[0], index, data.BrokenFlameCells[i], BrokenOrder, set.transform);
+                flame.transform.localScale = Vector3.one * data.BrokenFlameScale;
+                _animated.Add(new Animated { Renderer = flame, Frames = flames, Phase = index * 2 + i * 3, Room = index, Loop = Loop.Always });
+            }
+            set.SetActive(false);
+            return set;
+        }
+
+        /// <summary>
+        /// 꺼진 방은 횃불을 불 없는 화로로 바꾸고 장치·샘을 회색으로 멈춘다. 고장 난 방은 불길·파편을 켠다(붉은 테두리는 격자 뷰).
+        /// 심장 기둥은 체력에 맞춰 어두워지고, 체력 2/3·1/3 아래에서 핏자국이 늘어난다.
+        /// </summary>
+        private void RefreshStates()
+        {
+            if (_battle.IsRaid) return;
+            RunFloorArtSO data = _art.Data;
+            for (int i = 0; i < _battle.Rooms.Count && i < _shownState.Length; i++)
+            {
+                RunRoom room = _battle.Rooms[i];
+                bool off = room.HasSystem && !_battle.IsPowered(i);
+                bool broken = room.HasSystem && room.IsBroken;
+                int state = (off ? 1 : 0) | (broken ? 2 : 0);
+                _off[i] = off;
+                if (state == _shownState[i]) continue;
+                _shownState[i] = state;
+                foreach (SpriteRenderer torch in _torches[i])
+                {
+                    // 켜질 때는 다음 장면 넘김이 불꽃 그림으로 되돌린다.
+                    if (off && _torchOff != null) torch.sprite = _torchOff;
+                }
+                Color gray = new(data.OffDeviceGray, data.OffDeviceGray, data.OffDeviceGray, 1f);
+                for (int d = 0; d < _devices[i].Count; d++)
+                    _devices[i][d].color = off ? _deviceColors[i][d] * gray : _deviceColors[i][d];
+                if (_brokenSets[i] != null) _brokenSets[i].SetActive(broken);
+            }
+
+            float ratio = Mathf.Clamp01(_battle.HeartHealth / (float)Mathf.Max(1, _battle.Settings.HeartHealth));
+            float light = Mathf.Lerp(data.HeartDarkest, 1f, ratio);
+            Color pillar = new(light, light, light, 1f);
+            foreach (SpriteRenderer renderer in _heartPillars) renderer.color = pillar;
+            int bloodShown = ratio < 1f / 3f ? _heartBlood.Count : ratio < 2f / 3f ? Mathf.Min(data.HeartBloodFirstCount, _heartBlood.Count) : 0;
+            for (int i = 0; i < _heartBlood.Count; i++)
+                if (_heartBlood[i].activeSelf != i < bloodShown) _heartBlood[i].SetActive(i < bloodShown);
         }
 
         private void StartStrike(int room)
