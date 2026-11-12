@@ -20,12 +20,31 @@ namespace Code.UI.Run
         [SerializeField] private TMP_Text intent;
 
         private UnityEngine.Events.UnityAction[] _pipActions;
+        private readonly Vector3[] _corners = new Vector3[4];
 
         /// <summary>구슬 번호(0부터). 디렉터가 마력을 바꾼다.</summary>
         public event Action<int> PipClicked;
 
         public RectTransform Header => header;
         public RectTransform Footer => footer;
+
+        /// <summary>보이는 마력 구슬을 모두 감싼 화면 픽셀 사각형(첫 판 안내용). 구슬이 없으면 false.</summary>
+        public bool TryGetManaScreenRect(out Rect rect)
+        {
+            rect = default;
+            bool any = false;
+            Vector3[] corners = _corners;
+            for (int i = 0; i < manaButtons.Length; i++)
+            {
+                if (manaButtons[i] == null || !manaButtons[i].gameObject.activeInHierarchy) continue;
+                ((RectTransform)manaButtons[i].transform).GetWorldCorners(corners);
+                Rect pip = Rect.MinMaxRect(corners[0].x, corners[0].y, corners[2].x, corners[2].y);
+                rect = any ? Rect.MinMaxRect(Mathf.Min(rect.xMin, pip.xMin), Mathf.Min(rect.yMin, pip.yMin),
+                    Mathf.Max(rect.xMax, pip.xMax), Mathf.Max(rect.yMax, pip.yMax)) : pip;
+                any = true;
+            }
+            return any;
+        }
 
         private void OnEnable()
         {

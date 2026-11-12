@@ -27,6 +27,9 @@ namespace Code.UI.Run
         /// <summary>함정 방 옆에 붙여 놓을 패널(전투 화면이 매 배치 때 옮긴다).</summary>
         public RectTransform Panel => root != null ? (RectTransform)root.transform : null;
 
+        /// <summary>첫 판 안내가 가리킬 발동 버튼.</summary>
+        public RectTransform ActivateRect => activateButton != null ? (RectTransform)activateButton.transform : null;
+
         private void OnEnable()
         {
             _activate ??= () => Activated?.Invoke();

@@ -56,6 +56,13 @@ namespace Code.UI.Run
 
         public int RosterCapacity => rosterCards.Length;
 
+        /// <summary>첫 판 안내가 가리킬 멈춤 버튼.</summary>
+        public RectTransform PauseRect => pauseButton != null ? (RectTransform)pauseButton.transform : null;
+
+        /// <summary>첫 판 안내가 가리킬 왼쪽 부하 카드. 없는 번호면 null.</summary>
+        public RectTransform RosterCardRect(int index) =>
+            index >= 0 && index < rosterCards.Length && rosterCards[index] != null ? (RectTransform)rosterCards[index].transform : null;
+
         private void OnEnable()
         {
             EnsureRuntimeState();

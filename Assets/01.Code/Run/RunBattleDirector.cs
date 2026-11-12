@@ -27,6 +27,8 @@ namespace Code.Run
         [SerializeField] private RectTransform hudCanvas;
         [SerializeField] private RunRoomPanel[] roomPanels = System.Array.Empty<RunRoomPanel>();
         [SerializeField, Tooltip("평면도 타일·장치 그림. 비면 단색 도형으로 그린다.")] private RunFloorArtSO floorArt;
+        [SerializeField, Tooltip("첫 판 안내. 비면 띄우지 않는다.")] private RunCoachView coach;
+        [SerializeField, Tooltip("함정 발동 버튼. 첫 판 안내가 가리키고, 누르면 그 안내를 끝낸다.")] private RunTrapControlView trapControl;
 
         [SerializeField, Min(0.5f)] private float actorScale = 0.65f;
         [SerializeField, Min(0.3f), Tooltip("머리 위 표시 높이(인물 로컬 단위).")] private float headHeight = 1.1f;
@@ -79,6 +81,9 @@ namespace Code.Run
         private Transform _battleVisuals;
         private bool _shownCanContinue;
         private string _infoTitle, _infoBody, _tooltipText;
+        private RunCoachMemory _coachMemory;
+        private System.Predicate<RunCoachStep> _coachDone;
+        private System.Action _trapActivated;
 
         private void Start()
         {
@@ -112,6 +117,13 @@ namespace Code.Run
             hud.SpeedClicked += SetSpeed;
             hud.RosterClicked += OnRosterClicked;
             hud.FloorClicked += OnFloorClicked;
+            if (coach != null)
+            {
+                _coachMemory = new RunCoachMemory();
+                _coachDone = _coachMemory.IsDone;
+                _trapActivated = () => _coachMemory.MarkDone(RunCoachStep.FireTrap);
+                if (trapControl != null) trapControl.Activated += _trapActivated;
+            }
             LayoutPanels();
             ApplyTime();
             RefreshSlow();
@@ -134,6 +146,7 @@ namespace Code.Run
             hud.SpeedClicked -= SetSpeed;
             hud.RosterClicked -= OnRosterClicked;
             hud.FloorClicked -= OnFloorClicked;
+            if (trapControl != null && _trapActivated != null) trapControl.Activated -= _trapActivated;
             if (_pipHandlers != null)
             {
                 for (int i = 0; i < _pipHandlers.Length; i++)
@@ -340,8 +353,8 @@ namespace Code.Run
             }
             else if (hoveredRoom >= 0)
             {
-                if (_selected != null) _battle.OrderMove(_selected, hoveredRoom);
-                else _infoRoom = hoveredRoom;
+                if (_selected == null) _infoRoom = hoveredRoom;
+                else if (_battle.OrderMove(_selected, hoveredRoom)) _coachMemory?.MarkDone(RunCoachStep.SendMinion);
             }
             RefreshSlow();
         }
@@ -374,7 +387,8 @@ namespace Code.Run
             if (_battle.Outcome != RunBattleOutcome.Ongoing) return;
             int current = _battle.Rooms[room].Mana;
             int wanted = current == pip + 1 ? pip : pip + 1;
-            session.ChangeMana(room, wanted);
+            if (session.ChangeMana(room, wanted) && wanted > 0 && room == session.TrapRoom)
+                _coachMemory?.MarkDone(RunCoachStep.PowerTrap);
             _grid.Refresh();
             RefreshSlow();
         }
@@ -384,6 +398,7 @@ namespace Code.Run
             if (session.IsPreparing || session.IsResult) return;
             if (session.IsCrisis) { session.Resume(); _grid.SetHighlights(null); RefreshSlow(); }
             _paused = !_paused;
+            if (_paused) _coachMemory?.MarkDone(RunCoachStep.Pause);
             ApplyTime();
         }
 
@@ -841,6 +856,47 @@ namespace Code.Run
                 _infoBody = RoomInfo(_infoRoom);
             }
             if (_hovered != null || _hoveredRoom >= 0) _tooltipText = Describe(_hovered, _hoveredRoom);
+            RefreshCoach();
+        }
+
+        /// <summary>첫 판 안내 하나를 골라 누를 곳에 띄운다(2026-11-12 사용자 목업 승인, 한 번 해 보면 다시 안 뜸).</summary>
+        private void RefreshCoach()
+        {
+            if (coach == null || _coachMemory == null) return;
+            RunCoachHint hint = RunCoachRules.Pick(_battle, session.IsPreparing, session.TrapRoom, _coachDone);
+            bool roomShown = hint.Room >= 0 && _battle.Rooms[hint.Room].Floor == _grid.Floor;
+            switch (hint.Step)
+            {
+                case RunCoachStep.PowerTrap when roomShown && hint.Room < roomPanels.Length && roomPanels[hint.Room] != null
+                    && roomPanels[hint.Room].TryGetManaScreenRect(out Rect pips):
+                    coach.Show("구슬 눌러 함정 켜기", pips);
+                    return;
+                case RunCoachStep.FireTrap when roomShown && trapControl != null:
+                    coach.Show("지금 누르기", trapControl.ActivateRect);
+                    return;
+                case RunCoachStep.SendMinion when roomShown:
+                    // 부하를 고르기 전에는 가장 가까운 부하 카드를, 고른 뒤에는 보낼 방을 가리킨다.
+                    if (_selected != null && _selected.IsActive)
+                    {
+                        coach.Show(session.RoomName(hint.Room) + " 누르기", ScreenRectOf(_grid.RoomRect(hint.Room)));
+                        return;
+                    }
+                    int card = _visibleMinions.IndexOf(hint.Minion);
+                    if (card < 0) break;
+                    coach.Show("부하 누르고 → " + session.RoomName(hint.Room) + " 누르기", hud.RosterCardRect(card));
+                    return;
+                case RunCoachStep.Pause:
+                    coach.Show("급하면 멈추고 명령", hud.PauseRect);
+                    return;
+            }
+            coach.Hide();
+        }
+
+        private Rect ScreenRectOf(Rect world)
+        {
+            Vector2 min = worldCamera.WorldToScreenPoint(new Vector3(world.xMin, world.yMin, 0f));
+            Vector2 max = worldCamera.WorldToScreenPoint(new Vector3(world.xMax, world.yMax, 0f));
+            return Rect.MinMaxRect(min.x, min.y, max.x, max.y);
         }
 
         private string BuildResultText()
