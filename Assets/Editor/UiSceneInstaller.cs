@@ -15,11 +15,15 @@ public static class UiSceneInstaller
 
     /// <param name="marker">이 화면을 알아보는 컴포넌트 형식. 있으면 그 프리팹 인스턴스를 지우고 새로 놓는다.</param>
     /// <param name="wire">놓은 인스턴스에 씬 참조를 잇는다.</param>
-    public static GameObject Place(string prefabPath, Type marker, Action<GameObject> wire)
+    public static GameObject Place(string prefabPath, Type marker, Action<GameObject> wire) =>
+        Place(prefabPath, marker, wire, ScenePath);
+
+    /// <param name="scenePath">놓을 씬. UI 루트가 없는 씬이면 씬 맨 위에 놓는다.</param>
+    public static GameObject Place(string prefabPath, Type marker, Action<GameObject> wire, string scenePath)
     {
         var scene = EditorSceneManager.GetActiveScene();
-        if (scene.path != ScenePath)
-            scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+        if (scene.path != scenePath)
+            scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
 
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
         foreach (var existing in Object.FindObjectsByType(marker, FindObjectsInactive.Include, FindObjectsSortMode.None))

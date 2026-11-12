@@ -40,6 +40,9 @@ namespace Code.UI
         [SerializeField, Tooltip("모든 스테이지를 지켜냈으면 보이는 기록. 아니면 비워 자리만 둔다.")]
         private TMP_Text clearRecord;
 
+        [SerializeField, Tooltip("설정 버튼이 여는 창(장부형, SettingsBuilder가 놓고 잇는다). 비면 옛 설정 창을 연다.")]
+        private SettingsScreenView settings;
+
         private void Start()
         {
             RefreshContinue();
@@ -132,7 +135,9 @@ namespace Code.UI
         public void OpenSettings()
         {
             GameSfxPlayer.Play(GameSfxCue.UiClick);
-            SettingsPanelView.Open();
+            // 옛 설정 창은 타이틀 씬에 크기 0으로 놓여 보이지 않았다. 새 창이 있으면 그것을 연다(2026-11-12 사용자 결정).
+            if (settings != null) settings.Open();
+            else SettingsPanelView.Open();
         }
 
         public void QuitGame()

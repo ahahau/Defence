@@ -29,6 +29,7 @@ namespace Code.Run
         [SerializeField, Tooltip("평면도 타일·장치 그림. 비면 단색 도형으로 그린다.")] private RunFloorArtSO floorArt;
         [SerializeField, Tooltip("첫 판 안내. 비면 띄우지 않는다.")] private RunCoachView coach;
         [SerializeField, Tooltip("함정 발동 버튼. 첫 판 안내가 가리키고, 누르면 그 안내를 끝낸다.")] private RunTrapControlView trapControl;
+        [SerializeField, Tooltip("ESC 설정 창. 떠 있는 동안 전투를 멈춘다.")] private SettingsScreenView settings;
 
         [SerializeField, Min(0.5f)] private float actorScale = 0.65f;
         [SerializeField, Min(0.3f), Tooltip("머리 위 표시 높이(인물 로컬 단위).")] private float headHeight = 1.1f;
@@ -164,9 +165,11 @@ namespace Code.Run
             Vector2Int screen = new(Screen.width, Screen.height);
             if (screen != _lastScreen) LayoutPanels();
 
-            HandleKeys();
+            // 설정 창이 떠 있는 동안은 전투를 흘리지 않고 Space·1·2도 받지 않는다(2026-11-12 사용자 승인).
+            bool settingsOpen = settings != null && settings.IsOpen;
+            if (!settingsOpen) HandleKeys();
             // 멈춤은 timeScale 0이라 흐른 시간이 0이다. 프레임이 끊겨도 한 번에 너무 많이 가지 않게 자른다.
-            if (_battle.Outcome == RunBattleOutcome.Ongoing && !Code.UI.Popup.PopupController.IsOpen)
+            if (_battle.Outcome == RunBattleOutcome.Ongoing && !Code.UI.Popup.PopupController.IsOpen && !settingsOpen)
                 session.Advance(Mathf.Min(Time.deltaTime, 0.1f * _speed));
             session.RefreshDisplay(Time.unscaledDeltaTime);
             HandlePointer();

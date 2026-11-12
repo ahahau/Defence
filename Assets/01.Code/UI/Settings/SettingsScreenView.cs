@@ -27,8 +27,13 @@ namespace Code.UI
         [SerializeField] private UiFrameButton restartButton;
         [SerializeField] private UiFrameButton titleButton;
         [SerializeField] private UiFrameButton closeButton;
+        [SerializeField, Tooltip("첫 판 안내 기록을 지워 다시 보이게 한다(던전 FTL).")] private UiFrameButton coachResetButton;
         [SerializeField, Tooltip("다시 시작(구 런 저장 삭제 후 SampleScene)을 보인다. 스테이지 씬은 자기 재도전 버튼이 있어 끈다.")]
         private bool allowRunRestart = true;
+
+        private const string CoachResetLabel = "첫 판 안내 다시 보기";
+        private const float CoachResetNoticeSeconds = 2f;
+        private float _coachLabelRestoreAt = -1f;
 
         public bool IsOpen => root != null && root.activeSelf;
         public event System.Action LeavingScene;
@@ -61,6 +66,16 @@ namespace Code.UI
             if (root != null)
                 root.SetActive(false);
             restartButton.SetVisible(allowRunRestart);
+            // 타이틀에서는 "타이틀로"가 뜻이 없다.
+            titleButton.SetVisible(SceneManager.GetActiveScene().name != TitleMenuActions.TitleSceneName);
+        }
+
+        private void Update()
+        {
+            // 창이 열린 동안 게임 시간이 멈춰 있으므로 실제 시간으로 잰다.
+            if (_coachLabelRestoreAt < 0f || Time.unscaledTime < _coachLabelRestoreAt) return;
+            _coachLabelRestoreAt = -1f;
+            if (coachResetButton != null) coachResetButton.SetLabel(CoachResetLabel);
         }
 
         private void OnEnable()
@@ -71,6 +86,7 @@ namespace Code.UI
             restartButton.Button.onClick.AddListener(ConfirmRestart);
             titleButton.Button.onClick.AddListener(GoToTitle);
             closeButton.Button.onClick.AddListener(Close);
+            if (coachResetButton != null) coachResetButton.Button.onClick.AddListener(ResetCoach);
         }
 
         private void OnDisable()
@@ -81,6 +97,7 @@ namespace Code.UI
             restartButton.Button.onClick.RemoveListener(ConfirmRestart);
             titleButton.Button.onClick.RemoveListener(GoToTitle);
             closeButton.Button.onClick.RemoveListener(Close);
+            if (coachResetButton != null) coachResetButton.Button.onClick.RemoveListener(ResetCoach);
             // 열린 채로 꺼지면(씬 이동) 멈춤을 남기지 않는다.
             speedController?.Release(this);
         }
@@ -111,6 +128,15 @@ namespace Code.UI
             sfxValue.text = Mathf.RoundToInt(sfxSlider.value) + "%";
             musicValue.text = Mathf.RoundToInt(musicSlider.value) + "%";
             fullscreenButton.SetLabel(FullscreenLabel(Screen.fullScreen));
+        }
+
+        /// <summary>첫 판 안내를 처음처럼 다시 보이게 한다(2026-11-12 사용자 목업 승인). 전투 중이면 바로 다시 뜬다.</summary>
+        private void ResetCoach()
+        {
+            Code.UI.Run.RunCoachMemory.ResetAll();
+            GameSfxPlayer.Play(GameSfxCue.UiConfirm);
+            coachResetButton.SetLabel("다시 보여 줍니다");
+            _coachLabelRestoreAt = Time.unscaledTime + CoachResetNoticeSeconds;
         }
 
         private static string FullscreenLabel(bool on) => on ? "전체 화면: 켬" : "전체 화면: 끔";

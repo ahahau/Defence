@@ -25,6 +25,55 @@ public static class SettingsBuilder
         UiSceneInstaller.Place(PrefabPath, typeof(SettingsScreenView), Wire);
     }
 
+    private const string TitleScenePath = "Assets/00.Scenes/Start.unity";
+    private const string RunScenePath = "Assets/00.Scenes/DungeonRun.unity";
+    private const int DemoSortingOrder = 110;
+
+    /// <summary>
+    /// 던전 FTL 시연의 타이틀(Start)과 DungeonRun에 같은 설정 창을 놓는다(2026-11-12 사용자 결정 "새 설정 창으로 바꾸기").
+    /// 타이틀의 옛 설정 창(<c>SettingsPanelView</c>, 크기 0으로 놓여 보이지 않았다)은 꺼서 ESC를 둘이 받지 않게 한다.
+    /// "다시 시작"은 예전 경영 판 저장을 지우는 버튼이라 두 씬 모두 숨긴다. Unity CLI: <c>SettingsBuilder.BuildRunScenes()</c>.
+    /// </summary>
+    [MenuItem("Tools/Dungeon Keeper/Build Settings Screen (Run Demo)")]
+    public static string BuildRunScenes()
+    {
+        BuildPrefab();
+        UiSceneInstaller.Place(PrefabPath, typeof(SettingsScreenView), WireTitle, TitleScenePath);
+        UiSceneInstaller.Place(PrefabPath, typeof(SettingsScreenView), WireRun, RunScenePath);
+        return "settings placed in Start and DungeonRun";
+    }
+
+    private static void WireTitle(GameObject instance)
+    {
+        var settings = WireDemo(instance);
+        UiKit.Wire(Object.FindAnyObjectByType<TitleMenuActions>(FindObjectsInactive.Include), "settings", settings);
+        var old = Object.FindAnyObjectByType<SettingsPanelView>(FindObjectsInactive.Include);
+        if (old != null) old.gameObject.SetActive(false);
+    }
+
+    private static void WireRun(GameObject instance)
+    {
+        var settings = WireDemo(instance);
+        UiKit.Wire(Object.FindAnyObjectByType<Code.Run.RunBattleDirector>(FindObjectsInactive.Include), "settings", settings);
+    }
+
+    /// <summary>시연 씬에는 ESC로 닫을 다른 창이 없다. 라우터는 설정 창만 연다·닫는다.</summary>
+    private static SettingsScreenView WireDemo(GameObject instance)
+    {
+        var settings = instance.GetComponent<SettingsScreenView>();
+        var so = new SerializedObject(settings);
+        so.FindProperty("allowRunRestart").boolValue = false;
+        so.ApplyModifiedPropertiesWithoutUndo();
+        // 타이틀 화면 캔버스가 100이라 기본값 90으로는 그 밑에 깔려 보이지 않았다. 시연 씬은 맨 위로 올린다.
+        var canvas = instance.GetComponent<Canvas>();
+        canvas.sortingOrder = DemoSortingOrder;
+        EditorUtility.SetDirty(canvas);
+        var router = instance.GetComponent<UiEscapeRouter>();
+        UiKit.Wire(router, "settings", settings);
+        UiKit.WireArray(router, "windows", new Object[] { settings });
+        return settings;
+    }
+
     /// <summary>
     /// 이미 놓인 설정 화면의 ESC 라우터·톱니 배선을 다시 한다. 라우터 목록에 든 창을 다시 놓은 생성기가
     /// 자기 <c>UiSceneInstaller.Place</c> 배선 안에서 부른다(옛 인스턴스를 가리키던 칸이 비지 않게).
@@ -90,6 +139,9 @@ public static class SettingsBuilder
 
         var fullscreenRect = UiKit.TopLeft(UiKit.Rect("Fullscreen", card), Pad, 198f, 220f, 44f);
         var fullscreen = UiKit.Button(fullscreenRect, "전체 화면: 켬", UiKit.ButtonKind.Secondary, 15f);
+        // 전체 화면 옆 빈자리(2026-11-12 사용자 목업 승인). 던전 FTL 첫 판 안내 기록을 지운다.
+        var coachRect = UiKit.TopLeft(UiKit.Rect("CoachReset", card), Pad + 236f, 198f, CardWidth - Pad * 2f - 236f, 44f);
+        var coachReset = UiKit.Button(coachRect, "첫 판 안내 다시 보기", UiKit.ButtonKind.Secondary, 15f);
         Divider(card, 258f);
 
         var restartRect = UiKit.Place(UiKit.Rect("Restart", card), Vector2.zero, Vector2.zero, Vector2.zero, new Vector2(Pad, 22f), new Vector2(180f, 48f));
@@ -106,6 +158,7 @@ public static class SettingsBuilder
         UiKit.Wire(view, "restartButton", restart);
         UiKit.Wire(view, "titleButton", title);
         UiKit.Wire(view, "closeButton", close);
+        UiKit.Wire(view, "coachResetButton", coachReset);
         root.gameObject.SetActive(false);
 
         UiKit.EnsureFolder("Assets/03.Prefabs/UI/Settings");
