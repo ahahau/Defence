@@ -820,8 +820,9 @@ namespace Code.UI.Run
             CrisisStarted?.Invoke();
         }
 
-        private bool StopsBattle(RunCrisis item) => item.Kind == RunCrisisKind.HeartEntered
-            || (item.Kind == RunCrisisKind.Telegraph && Battle.Combatants[item.Actor].Telegraph.Kind == RunTelegraphKind.PowderBlast);
+        // 자동 멈춤은 없앴다. 심장 진입·공병 폭파 예고도 알림만 띄우고, 멈춤은 플레이어가 Space로 한다
+        // (2026-11-12 사용자 결정 "자동 멈춤 없애기", 그 전에는 이 둘만 멈췄다).
+        private static bool StopsBattle(RunCrisis item) => false;
 
         /// <summary>멈춤 카드: 누가 · 어디서 · 무엇을 한 줄(해결 방법 줄은 2026-11-12 사용자 목업 승인으로 뺐다).</summary>
         private void AppendCrisis(RunCrisis item)
@@ -848,6 +849,7 @@ namespace Code.UI.Run
             switch (item.Kind)
             {
                 case RunCrisisKind.LowHealth: _notice.Append("체력 낮음"); break;
+                case RunCrisisKind.HeartEntered: _notice.Append("심장 진입"); break;
                 case RunCrisisKind.ThiefAtVault: _notice.Append("금고 도착"); break;
                 case RunCrisisKind.RoomUnderAttack: _notice.Append(room).Append(" 공격"); break;
                 case RunCrisisKind.DoorUnderAttack: _notice.Append(room).Append(" 문"); break;
