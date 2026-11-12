@@ -9,7 +9,7 @@ using UnityEngine;
 /// 던전 FTL 시연 런의 상인 좌판(uGUI, 장부형) 프리팹을 만들고 DungeonRun 씬에 놓아 <see cref="RunSessionController"/>에 잇는다.
 /// 구역 지도(50) 위, 팝업(100) 아래 캔버스(60). Unity CLI: <c>RunMerchantBuilder.BuildAll()</c>.
 ///
-/// 카드 1040×680(2026-11-11 사용자 목업 승인 "B 전용 좌판"): 제목·금화, 안내 줄, 항목 일곱 줄(이름·효과·가격·사기),
+/// 카드 1040×630(2026-11-11 사용자 목업 승인 "B 전용 좌판", 2026-11-12 아래 빈 곳 줄임): 제목·금화, 안내 줄, 항목 일곱 줄(이름·효과·가격·사기),
 /// 경고 줄과 떠나기. 새 부하 고르기 판은 같은 자리에 네 종류 카드와 뒤로·고용 버튼을 둔다.
 /// </summary>
 public static class RunMerchantBuilder
@@ -18,7 +18,8 @@ public static class RunMerchantBuilder
     private const string ScenePath = "Assets/00.Scenes/DungeonRun.unity";
     private const int SortingOrder = 60;
     private const float CardWidth = 1040f;
-    private const float CardHeight = 680f;
+    // 일곱 줄과 떠나기 버튼 아래 여백만 남긴다(2026-11-12 사용자 승인 "빈 공간 줄이기", 680→630).
+    private const float CardHeight = 630f;
     private const float Pad = 28f;
     private const float BodyTop = 108f;
     private const int RowCount = 7;

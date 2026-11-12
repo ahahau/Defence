@@ -9,7 +9,7 @@ using UnityEngine;
 /// 던전 FTL 시연 런의 구역 지도 창(uGUI, 장부형) 프리팹을 만들고 DungeonRun 씬에 놓아 <see cref="RunSessionController"/>에 잇는다.
 /// RunHud(10) 위, 팝업(100) 아래 캔버스(50). Unity CLI: <c>RunRouteMapBuilder.BuildAll()</c>.
 ///
-/// 카드 1500×620: 제목·자원 줄, 칸 줄(여섯 열, 둘째·다섯째 열은 상인·글 사건 두 칸), 색 설명 한 줄, 고른 칸 설명(이름·종류·본문·닫기·들어가기).
+/// 카드 1500×580(2026-11-12 설명칸 빈 곳 줄임): 제목·자원 줄, 칸 줄(여섯 열, 둘째·다섯째 열은 상인·글 사건 두 칸), 색 설명 한 줄, 고른 칸 설명(이름·종류·본문·닫기·들어가기).
 /// 칸 순서는 RunDemoRoute.Node 순서(도적·상인·글 사건·공병·원정·정예) 뒤에 원정 뒤 갈래(상인·글 사건)를 붙인다(2026-11-11 원정 뒤 갈래).
 /// </summary>
 public static class RunRouteMapBuilder
@@ -18,7 +18,7 @@ public static class RunRouteMapBuilder
     private const string ScenePath = "Assets/00.Scenes/DungeonRun.unity";
     private const int SortingOrder = 50;
     private const float CardWidth = 1500f;
-    private const float CardHeight = 620f;
+    private const float CardHeight = 580f;
     private const float Pad = 28f;
     private const float StripTop = 84f;
     private const float StripHeight = 220f;
@@ -27,7 +27,9 @@ public static class RunRouteMapBuilder
     private const float BranchGap = 12f;
     private const int Columns = 6;
     private const float DetailTop = 348f;
-    private const float DetailHeight = 244f;
+    // 본문은 많아야 3줄이라(상인 칸 부족분 줄까지) 본문 칸을 3줄 높이로 두고 버튼을 그 아래에 붙인다(2026-11-12 사용자 A안 승인).
+    private const float DetailHeight = 204f;
+    private const float DetailBodyHeight = 72f;
 
     // 칸 순서 → 열. 둘째 열(1)과 다섯째 열(4)에 상인·글 사건이 위아래로 선다.
     private static readonly int[] NodeColumns = { 0, 1, 1, 2, 3, 5, 4, 4 };
@@ -91,7 +93,7 @@ public static class RunRouteMapBuilder
         var detailName = Label(detail, "Name", string.Empty, 22f, HudPalette.Text, 20f, 14f, 420f, 34f, true);
         var detailKind = Label(detail, "Kind", string.Empty, 15f, HudPalette.TextDim, 0f, 18f, 400f, 28f, false, true, TextAlignmentOptions.MidlineRight);
         UiKit.TopRight(detailKind.rectTransform, 20f, 18f, 400f, 28f);
-        var detailBody = Label(detail, "Body", string.Empty, 16f, HudPalette.TextBody, 20f, 56f, detailWidth - 40f, 112f, false, false, TextAlignmentOptions.TopLeft);
+        var detailBody = Label(detail, "Body", string.Empty, 16f, HudPalette.TextBody, 20f, 56f, detailWidth - 40f, DetailBodyHeight, false, false, TextAlignmentOptions.TopLeft);
 
         var goRect = UiKit.BottomRight(UiKit.Rect("Go", detail), 20f, 16f, 280f, 48f);
         var go = UiKit.Button(goRect, "들어가기", UiKit.ButtonKind.Primary, 17f);
