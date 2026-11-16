@@ -16,13 +16,14 @@ MonoBehaviour:
   <SourceEnemy>k__BackingField: {fileID: 11400000, guid: 5f0ad77f6166ad9489f75c25eafb3045, type: 2}
   <Side>k__BackingField: 1
   <Affinity>k__BackingField: 0
-  <MaxHealth>k__BackingField: 11
+  <MaxHealth>k__BackingField: 7
   <Attack>k__BackingField: 2
   <Speed>k__BackingField: 3
   <MoveSpeed>k__BackingField: 1
   <IsRanged>k__BackingField: 0
   <RepairPerSecond>k__BackingField: 0
   <Goal>k__BackingField: 0
+  <GoalRoomKind>k__BackingField: 0
   <IntruderRole>k__BackingField: 2
   <HasFavoredRoom>k__BackingField: 0
   <FavoredRoom>k__BackingField: 0

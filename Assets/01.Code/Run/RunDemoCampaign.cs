@@ -112,10 +112,11 @@ namespace Code.Run
 
         internal const int MerchantItemMask = 0b111_1111;
 
-        // 도적·공병 침입은 같은 파티가 20초 간격으로 두 무리 들어오고, 정예 침입은 한 무리다(2026-11-10 사용자 결정).
+        // 세 침입 모두 같은 파티가 20초 간격으로 두 무리 들어온다(2026-11-10 사용자 결정).
+        // 정예 침입은 한 무리였으나 약 17초 만에 끝나 공병 침입보다 쉬워서 두 무리로 늘렸다(2026-11-16 사용자 결정 "S4 + E1").
         internal const float WaveGapSeconds = 20f;
 
-        internal static int DefenseWaves(int number) => number == 3 ? 1 : 2;
+        internal static int DefenseWaves(int number) => 2;
 
         internal bool Has(RunDemoRelic relic) => (Relics & relic) != 0;
 
