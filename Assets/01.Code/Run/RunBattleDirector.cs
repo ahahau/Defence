@@ -909,12 +909,13 @@ namespace Code.Run
 
         private string BuildResultText()
         {
+            // 원정 결과도 침입 결과처럼 큰 제목과 작은 줄로 나눈다. 한 줄로 두면 결과 띠 폭을 넘었다(2026-11-16 한 판 점검 3번).
             if (session.IsRaidNode)
                 return session.RaidResult switch
                 {
-                    RunDemoRoute.Result.Victory => "원정 성공 · 생존 부하 귀환",
-                    RunDemoRoute.Result.Retreat => "원정 후퇴 · 귀환 완료",
-                    RunDemoRoute.Result.Defeat => "원정 실패",
+                    RunDemoRoute.Result.Victory => "<size=24>원정 성공</size>\n<size=18>생존 부하 귀환 · 정예전 마력 +1</size>",
+                    RunDemoRoute.Result.Retreat => "<size=24>원정 후퇴</size>\n<size=18>귀환 완료</size>",
+                    RunDemoRoute.Result.Defeat => "<size=24>원정 실패</size>",
                     _ when !_battle.IsRaid => "원정 준비",
                     _ => _battle.IsRaidRetreating ? "원정 · 입구로 후퇴 중" : "원정 · 진지 대장 처치",
                 };

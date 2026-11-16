@@ -98,6 +98,7 @@ namespace Code.UI.Run
                 _merchant.Left -= HandleMerchantLeft;
             }
             _exchange.Finished -= HandleExchangeFinished;
+            _exchange.Exchanged -= HandleExchanged;
             _bound = false;
         }
 
@@ -122,6 +123,7 @@ namespace Code.UI.Run
                 _merchant.Left += HandleMerchantLeft;
             }
             _exchange.Finished += HandleExchangeFinished;
+            _exchange.Exchanged += HandleExchanged;
             _bound = true;
         }
 
@@ -431,6 +433,9 @@ namespace Code.UI.Run
             OpenNextEncounter();
         }
 
+        // 유물 알림이 떠 있는 동안에도 왼쪽 부하 카드가 내준 체력을 보이게 한다(2026-11-16 한 판 점검 1번).
+        private void HandleExchanged() => _demo.Carryover.ApplyTo(Battle);
+
         // 글 사건 "굴 속 거래"가 끝났다(교환 또는 떠나기). 칸은 이미 끝났으므로 이어지는 상태를 보이고 저장한 뒤 다음으로 간다.
         private void HandleExchangeFinished()
         {
@@ -503,15 +508,16 @@ namespace Code.UI.Run
 
         private void ShowRaidRoute()
         {
+            // 아래 줄은 한 줄 칸이라 세 이름이 잘렸다. 이름은 본문 끝 줄로 옮기고 아래 줄은 인원만 적는다(2026-11-16 한 판 점검 2번).
             PopupController.Show(PopupRequest.Choice("원정 · 진입 경로",
-                    "정면 · 가깝지만 검사와 궁수가 지킵니다\n우회 · 경비실을 피하지만 길이 깁니다\n진입 뒤 부하를 골라 다음 방으로 보냅니다.",
+                    "정면 · 가깝지만 검사와 궁수가 지킵니다\n우회 · 경비실을 피하지만 길이 깁니다\n진입 뒤 부하를 골라 다음 방으로 보냅니다.\n파견 · " + RaiderNames(),
                     new[]
                     {
                         new PopupButtonSpec("다시 선택", PopupButtonStyle.Secondary, BeginRaidSelection),
                         new PopupButtonSpec("정면", PopupButtonStyle.Primary, () => StartRaid(false)),
                         new PopupButtonSpec("우회", PopupButtonStyle.Primary, () => StartRaid(true)),
                     }, () => { })
-                .WithLines("파견 · " + RaiderNames(), null)
+                .WithLines($"파견 {_raiders.Count}명", null)
                 .WithAccent(HudPalette.Danger, "진지 대장을 노립니다"));
         }
 
@@ -601,6 +607,8 @@ namespace Code.UI.Run
                 RunCombatantSO minion = _demo.Roster[i].Combatant;
                 if (_text.Length > start) _text.Append(", ");
                 _text.Append(minion.DisplayName);
+                // 상인에서 들인 다섯째는 같은 이름의 처음 부하와 구별한다(2026-11-16 한 판 점검 7번).
+                if (i >= Deployment.Encounter.Minions.Length) _text.Append("(새로 들임)");
                 if (alive) _text.Append(' ').Append(state.MinionHealth[i]).Append('/').Append(minion.MaxHealth);
             }
             if (_text.Length == start) _text.Append("없음");

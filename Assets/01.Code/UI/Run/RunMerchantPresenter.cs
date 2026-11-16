@@ -98,7 +98,7 @@ namespace Code.UI.Run
                     break;
                 case RunDemoCampaign.MerchantItem.TrapUpgrade:
                     name = "함정 강화";
-                    detail = "이번 런 함정 기본 피해 +2";
+                    detail = _demo.TrapBonus != 0 && !bought ? "이번 런에 이미 강화했습니다" : "이번 런 함정 기본 피해 +2";
                     unavailable = _demo.TrapBonus != 0 && !bought;
                     break;
                 case RunDemoCampaign.MerchantItem.Revive:
@@ -113,7 +113,9 @@ namespace Code.UI.Run
                     int capacity = 3 + _demo.ExtraCapacity;
                     int left = RunDemoCampaign.MaxExtraCapacity - _demo.ExtraCapacity;
                     name = "마력 용량 +1";
-                    detail = left > 0 ? $"{capacity} → {capacity + 1} · {left}번 더 늘릴 수 있음" : "더 늘릴 수 없습니다";
+                    // 산 뒤에는 다음 단계가 아니라 이번에 늘린 값을 보인다(다음 단계를 보이면 안 산 것처럼 읽혔다).
+                    detail = bought ? $"이번에 {capacity - 1} → {capacity}로 늘렸습니다"
+                        : left > 0 ? $"{capacity} → {capacity + 1} · {left}번 더 늘릴 수 있음" : "더 늘릴 수 없습니다";
                     unavailable = left <= 0 && !bought;
                     break;
                 case RunDemoCampaign.MerchantItem.NewMinion:
@@ -128,7 +130,7 @@ namespace Code.UI.Run
                     unavailable = relic == RunDemoRelic.None;
                     break;
             }
-            string label = bought ? "삼" : item == RunDemoCampaign.MerchantItem.NewMinion ? "고르기" : "사기";
+            string label = bought ? "산 것" :item == RunDemoCampaign.MerchantItem.NewMinion ? "고르기" : "사기";
             // 이번 방문에서 살 수 있는 수를 다 채웠으면 남은 줄도 흐린다(버튼만 잠그면 살 수 있어 보였다).
             _view.SetRow(row, name, detail, $"금화 {_demo.PriceOf(item)}", label, can, bought || unavailable || _demo.MerchantLimitReached);
         }

@@ -79,8 +79,10 @@ namespace Code.UI.Run
             }
             // 버튼만 잠그면 글자가 밝게 남아 눌릴 것처럼 보인다. 다른 버튼처럼 글자까지 흐린다.
             activateButton.SetInteractable(ready && !queued);
-            int tenth = Mathf.Clamp(Mathf.CeilToInt(room.TrapCooldown * 10f), 0, _tenths.Length - 1);
-            if (tenth != _shownTenth) { _shownTenth = tenth; seconds.SetText(_tenths[tenth]); }
+            // 고장·꺼짐·연결 끊김이면 충전이 멈춘 것이라 막대를 비우고 초 글도 지운다(가득 찬 막대가 준비된 것처럼 보였다, 2026-11-16 한 판 점검 6번).
+            bool halted = room.IsBroken || room.Mana == 0 || !_battle.IsConnected(_room);
+            int tenth = halted ? -2 : Mathf.Clamp(Mathf.CeilToInt(room.TrapCooldown * 10f), 0, _tenths.Length - 1);
+            if (tenth != _shownTenth) { _shownTenth = tenth; seconds.SetText(halted ? string.Empty : _tenths[tenth]); }
             int value = _battle.TrapDamage(_room);
             int stage = _battle.TrapStage(_room);
             // 다 찬 뒤에도 모으면 단계가 올라 피해가 커진다(2026-11-10 사용자 결정). 판에는 피해만 보인다(2026-11-12 목업 승인).
@@ -91,7 +93,7 @@ namespace Code.UI.Run
                 damage.SetText("피해 {0}", value);
             }
             float duration = _battle.Settings.TrapCooldownSeconds;
-            charge.fillAmount = duration > 0f ? Mathf.Clamp01(1f - room.TrapCooldown / duration) : 1f;
+            charge.fillAmount = halted ? 0f : duration > 0f ? Mathf.Clamp01(1f - room.TrapCooldown / duration) : 1f;
         }
     }
 }

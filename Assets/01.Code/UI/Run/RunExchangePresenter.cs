@@ -21,6 +21,9 @@ namespace Code.UI.Run
         /// <summary>교환하거나 떠나서 칸이 끝났다.</summary>
         internal event Action Finished;
 
+        /// <summary>교환이 성사됐다. 유물 알림이 뜨기 전에 화면(부하 체력·방)을 맞춘다.</summary>
+        internal event Action Exchanged;
+
         internal void Show(RunDemoCampaign demo, RunEncounterSO encounter)
         {
             _demo = demo;
@@ -78,6 +81,7 @@ namespace Code.UI.Run
                 ShowChoice();
                 return;
             }
+            Exchanged?.Invoke();
             RunDemoRelic gained = _demo.Relics & ~before;
             if (gained == RunDemoRelic.None)
             {
