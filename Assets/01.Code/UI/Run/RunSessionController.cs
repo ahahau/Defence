@@ -16,8 +16,11 @@ namespace Code.UI.Run
         [SerializeField] private RunRouteMapView routeMap;
         [SerializeField, Tooltip("상인 좌판(RunMerchantBuilder). 비어 있으면 예전 두 단계 팝업을 쓴다.")]
         private RunMerchantView merchantWindow;
+        [SerializeField, Tooltip("원정 파견 판(RunRaidSelectBuilder). 비어 있으면 예전처럼 한 명씩 묻는 팝업을 쓴다.")]
+        private RunRaidSelectView raidSelectWindow;
         private RunRouteMapPresenter _map;
         private RunMerchantPresenter _merchant;
+        private RunRaidSelectPresenter _raidSelect;
         private readonly RunExchangePresenter _exchange = new();
         private int _trapRoom = -1;
         private int _queuedTrap = -1;
@@ -97,6 +100,7 @@ namespace Code.UI.Run
                 _merchant.Bought -= HandleMerchantBought;
                 _merchant.Left -= HandleMerchantLeft;
             }
+            if (_raidSelect != null) _raidSelect.Confirmed -= HandleRaidersConfirmed;
             _exchange.Finished -= HandleExchangeFinished;
             _exchange.Exchanged -= HandleExchanged;
             _bound = false;
@@ -121,6 +125,11 @@ namespace Code.UI.Run
                 _merchant ??= new RunMerchantPresenter(merchantWindow);
                 _merchant.Bought += HandleMerchantBought;
                 _merchant.Left += HandleMerchantLeft;
+            }
+            if (raidSelectWindow != null)
+            {
+                _raidSelect ??= new RunRaidSelectPresenter(raidSelectWindow);
+                _raidSelect.Confirmed += HandleRaidersConfirmed;
             }
             _exchange.Finished += HandleExchangeFinished;
             _exchange.Exchanged += HandleExchanged;
@@ -155,7 +164,8 @@ namespace Code.UI.Run
 
         public void OpenNextEncounter()
         {
-            if (PopupController.IsOpen || (routeMap != null && routeMap.IsOpen) || (_merchant != null && _merchant.IsOpen)) return;
+            if (PopupController.IsOpen || (routeMap != null && routeMap.IsOpen) || (_merchant != null && _merchant.IsOpen)
+                || (_raidSelect != null && _raidSelect.IsOpen)) return;
             if (_raid != null && !IsResult)
             {
                 if (!_raid.IsRaidRetreating)
@@ -473,8 +483,21 @@ namespace Code.UI.Run
 
         private void BeginRaidSelection()
         {
+            // 파견 판이 놓여 있으면 카드로 한 번에 고른다(2026-11-16 사용자 A안 승인). 살아 있는 부하가 없으면 예전 경로가 실패를 알린다.
+            if (_raidSelect != null && Array.Exists(_demo.Carryover.MinionHealth, health => health > 0))
+            {
+                _raidSelect.Show(_demo, Deployment.Encounter.Settings.RetreatHealthRatio, _raiders);
+                return;
+            }
             _raiders.Clear();
             SelectRaider(0);
+        }
+
+        private void HandleRaidersConfirmed(IReadOnlyList<int> picked)
+        {
+            _raiders.Clear();
+            _raiders.AddRange(picked);
+            ShowRaidRoute();
         }
 
         private void SelectRaider(int index)

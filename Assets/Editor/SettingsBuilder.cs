@@ -59,7 +59,7 @@ public static class SettingsBuilder
     }
 
     /// <summary>
-    /// DungeonRun 라우터 목록: 설정(110) → 상인 고르기 판(60) → 구역 지도(50). 위에 그려지는 창부터다.
+    /// DungeonRun 라우터 목록: 설정(110) → 상인 고르기 판·원정 파견 판(60, 함께 뜨지 않음) → 구역 지도(50). 위에 그려지는 창부터다.
     /// 상인 좌판 자체는 "떠나기"로만 끝나고 ESC는 고르기 판만 닫는다(<c>RunMerchantView</c>).
     /// 이미 놓인 씬에는 이 함수만 불러 다시 잇는다(설정 프리팹을 다시 만들면 내부 ID가 바뀐다).
     /// </summary>
@@ -70,6 +70,7 @@ public static class SettingsBuilder
         {
             settings,
             Object.FindAnyObjectByType<Code.UI.Run.RunMerchantView>(FindObjectsInactive.Include),
+            Object.FindAnyObjectByType<Code.UI.Run.RunRaidSelectView>(FindObjectsInactive.Include),
             Object.FindAnyObjectByType<Code.UI.Run.RunRouteMapView>(FindObjectsInactive.Include),
         });
     }

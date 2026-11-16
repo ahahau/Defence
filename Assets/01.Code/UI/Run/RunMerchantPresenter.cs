@@ -184,7 +184,7 @@ namespace Code.UI.Run
                 chosen && _demo.CanBuyAtMerchant(RunDemoCampaign.MerchantItem.NewMinion));
         }
 
-        private static string AffinityName(RunAffinity affinity) => affinity switch
+        internal static string AffinityName(RunAffinity affinity) => affinity switch
         {
             RunAffinity.Magic => "마법",
             RunAffinity.Curse => "저주",
@@ -192,7 +192,7 @@ namespace Code.UI.Run
         };
 
         // 전투 화면 부하 카드와 같은 그림(서 있는 첫 프레임)을 쓴다.
-        private static UnityEngine.Sprite Portrait(RunCombatantSO data)
+        internal static UnityEngine.Sprite Portrait(RunCombatantSO data)
         {
             CharacterAnimationSetSO set = data.ResolveAnimationSet();
             UnityEngine.Sprite[] frames = set != null ? set.GetFrames(CharacterClip.Idle) : null;
