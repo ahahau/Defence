@@ -5016,12 +5016,20 @@ PrefabInstance:
       objectReference: {fileID: 356325533}
     - target: {fileID: 1016362162346544770, guid: 41700c75582f3cb46af87fd747fb394b, type: 3}
       propertyPath: windows.Array.size
-      value: 1
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 1016362162346544770, guid: 41700c75582f3cb46af87fd747fb394b, type: 3}
       propertyPath: 'windows.Array.data[0]'
       value: 
       objectReference: {fileID: 356325533}
+    - target: {fileID: 1016362162346544770, guid: 41700c75582f3cb46af87fd747fb394b, type: 3}
+      propertyPath: 'windows.Array.data[1]'
+      value: 
+      objectReference: {fileID: 871667287}
+    - target: {fileID: 1016362162346544770, guid: 41700c75582f3cb46af87fd747fb394b, type: 3}
+      propertyPath: 'windows.Array.data[2]'
+      value: 
+      objectReference: {fileID: 1687243935}
     - target: {fileID: 1141874141600939462, guid: 41700c75582f3cb46af87fd747fb394b, type: 3}
       propertyPath: m_SortingOrder
       value: 110

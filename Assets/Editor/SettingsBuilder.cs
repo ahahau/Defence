@@ -55,9 +55,26 @@ public static class SettingsBuilder
     {
         var settings = WireDemo(instance);
         UiKit.Wire(Object.FindAnyObjectByType<Code.Run.RunBattleDirector>(FindObjectsInactive.Include), "settings", settings);
+        WireRunEscape(settings);
     }
 
-    /// <summary>시연 씬에는 ESC로 닫을 다른 창이 없다. 라우터는 설정 창만 연다·닫는다.</summary>
+    /// <summary>
+    /// DungeonRun 라우터 목록: 설정(110) → 상인 고르기 판(60) → 구역 지도(50). 위에 그려지는 창부터다.
+    /// 상인 좌판 자체는 "떠나기"로만 끝나고 ESC는 고르기 판만 닫는다(<c>RunMerchantView</c>).
+    /// 이미 놓인 씬에는 이 함수만 불러 다시 잇는다(설정 프리팹을 다시 만들면 내부 ID가 바뀐다).
+    /// </summary>
+    public static void WireRunEscape(SettingsScreenView settings)
+    {
+        var router = settings.GetComponent<UiEscapeRouter>();
+        UiKit.WireArray(router, "windows", new Object[]
+        {
+            settings,
+            Object.FindAnyObjectByType<Code.UI.Run.RunMerchantView>(FindObjectsInactive.Include),
+            Object.FindAnyObjectByType<Code.UI.Run.RunRouteMapView>(FindObjectsInactive.Include),
+        });
+    }
+
+    /// <summary>시연 씬 공통 배선. 라우터 목록은 설정 창만 두고, DungeonRun은 <see cref="WireRunEscape"/>가 지도·상인을 더한다.</summary>
     private static SettingsScreenView WireDemo(GameObject instance)
     {
         var settings = instance.GetComponent<SettingsScreenView>();
