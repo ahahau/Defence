@@ -786,7 +786,8 @@ namespace Code.Run
             if (onFloor != _shownFloorEnemies)
             {
                 _shownFloorEnemies = onFloor;
-                hud.ShowFloor($"{_grid.Floor + 1}층 · 적 {onFloor}", _grid.Floor, _battle.FloorCount);
+                // 원정 진지는 본진의 층이 아니라 "진지"로 적는다.
+                hud.ShowFloor(_battle.IsRaid ? $"진지 · 적 {onFloor}" : $"{_grid.Floor + 1}층 · 적 {onFloor}", _grid.Floor, _battle.FloorCount);
             }
             int second = Mathf.FloorToInt(_battle.Elapsed);
             if (second != _shownSecond)

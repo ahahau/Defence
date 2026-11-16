@@ -629,10 +629,12 @@ namespace Code.UI.Run
                 if (state.MinionHealth[i] > 0 != alive) continue;
                 RunCombatantSO minion = _demo.Roster[i].Combatant;
                 if (_text.Length > start) _text.Append(", ");
-                _text.Append(minion.DisplayName);
+                // 줄이 넘쳐도 부하 하나는 한 줄에 둔다("해골 / 방패병"처럼 이름 가운데서 끊겼다).
+                _text.Append("<nobr>").Append(minion.DisplayName);
                 // 상인에서 들인 다섯째는 같은 이름의 처음 부하와 구별한다(2026-11-16 한 판 점검 7번).
                 if (i >= Deployment.Encounter.Minions.Length) _text.Append("(새로 들임)");
                 if (alive) _text.Append(' ').Append(state.MinionHealth[i]).Append('/').Append(minion.MaxHealth);
+                _text.Append("</nobr>");
             }
             if (_text.Length == start) _text.Append("없음");
         }
@@ -833,6 +835,8 @@ namespace Code.UI.Run
             {
                 if (_raid != null) _demo.ResolveRaid(_raid, _raiders);
                 else _demo.ResolveDefense(Battle);
+                // 끝난 전투의 경고(돌진 예고 등)가 결과 화면 위에 남지 않게 한다(2026-11-16 원정 중 작은 표기).
+                crisisView.ClearNotice();
                 SaveCheckpoint();
                 // 칸을 끝내면 지도(런이 끝났으면 정산)를 바로 띄운다. 닫아도 결과 띠의 버튼으로 다시 연다.
                 OpenNextEncounter();
