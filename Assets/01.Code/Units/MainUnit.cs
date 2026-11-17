@@ -1,10 +1,10 @@
-using _01.Code.Combat;
-using _01.Code.Core;
-using _01.Code.Entities;
-using _01.Code.Events;
+using Code.Combat;
+using Code.Core;
+using Code.Entities;
+using Code.Events;
 using UnityEngine;
 
-namespace _01.Code.Units
+namespace Code.Units
 {
     public class MainUnit : Unit
     {

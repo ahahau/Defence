@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace _01.Code.Dialogue
+namespace Code.Dialogue
 {
     [Serializable]
     public struct DialogueChoice
@@ -14,6 +14,9 @@ namespace _01.Code.Dialogue
         [SerializeField] private int nextLineIndex;
         [SerializeField] private DialogueChoiceRoute[] routes;
 
+        /// <summary>코드로 만든 사건에서 지금 고를 수 없는 선택지(금화 부족 등). 에셋에는 저장하지 않는다.</summary>
+        [NonSerialized] private bool locked;
+
         public DialogueChoice(string text, int nextLineIndex = -1)
         {
             this.text = text;
@@ -22,10 +25,30 @@ namespace _01.Code.Dialogue
             this.nextSequence = null;
             this.nextLineIndex = nextLineIndex;
             this.routes = Array.Empty<DialogueChoiceRoute>();
+            this.locked = false;
         }
+
+        /// <summary>코드로 만드는 사건의 선택지. 결과 요약과 실행할 액션을 함께 받는다.</summary>
+        public DialogueChoice(string text, string effectSummary, bool locked, params DialogueActionSO[] actions)
+            : this(text)
+        {
+            this.effectSummary = effectSummary ?? string.Empty;
+            this.actions = actions ?? Array.Empty<DialogueActionSO>();
+            this.locked = locked;
+        }
+
+        public bool IsLocked => locked;
 
         public string Text => text;
         public string EffectSummary => effectSummary;
+
+        /// <summary>결과 요약만 바꾼 사본. 처음 보는 선택지의 결과를 가리거나 "확인함"을 붙일 때 쓴다.</summary>
+        public DialogueChoice WithEffectSummary(string summary)
+        {
+            var copy = this;
+            copy.effectSummary = summary ?? string.Empty;
+            return copy;
+        }
         public IReadOnlyList<DialogueActionSO> Actions => actions;
         public DialogueSequenceSO NextSequence => nextSequence;
         public int NextLineIndex => nextLineIndex;
@@ -34,6 +57,9 @@ namespace _01.Code.Dialogue
 
         public bool CanSelect(DialogueValueTableSO valueTable)
         {
+            if (locked)
+                return false;
+
             if (!HasConditions)
                 return true;
 

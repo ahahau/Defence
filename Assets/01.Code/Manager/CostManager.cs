@@ -1,9 +1,12 @@
-using _01.Code.Events;
-using _01.Code.Core;
-using _01.Code.Progression;
+using System;
+using System.Collections.Generic;
+using Code.Events;
+using Code.Core;
+using Code.Manager.Economy;
+using Code.Progression;
 using UnityEngine;
 
-namespace _01.Code.Manager
+namespace Code.Manager
 {
     public class CostManager : MonoBehaviour
     {
@@ -12,6 +15,7 @@ namespace _01.Code.Manager
         [SerializeField] private GameEventChannelSO costEventChannel;
         [SerializeField, Tooltip("웨이브 진행 상태를 알아야 정산 전까지 금화 이동을 미룰 수 있다.")]
         private GameEventChannelSO waveEventChannel;
+        [SerializeField, Tooltip(GameScope.FieldTooltip)] private GameScope scope;
 
         [SerializeField]
         private int initialGold = 100;
@@ -20,20 +24,126 @@ namespace _01.Code.Manager
         [SerializeField, Range(0f, 0.9f)] private float nextBuildDiscountRate;
 
         [Header("Debt")]
-        [SerializeField, Min(0), Tooltip("정산에서 금화가 모자라면 이 한도까지 빚을 진다. 넘기면 파산.")]
-        private int debtLimit = 300;
-        [SerializeField, Range(0f, 1f), Tooltip("흑자 정산일 때 순액 중 빚을 갚는 데 먼저 쓰는 비율. 1이면 전액 상환.")]
-        private float autoRepayRatio = 0.5f;
-        [SerializeField, Range(0f, 0.5f), Tooltip("정산마다 남은 빚에 붙는 이자. 0이면 이자 없음.")]
-        private float dailyDebtInterest = 0.1f;
+        [SerializeField, Range(0f, 0.5f), Tooltip("청산일에 쌓인 빚 위에 얹히는 이자. 0이면 이자 없음.")]
+        private float weeklyDebtInterest = 0.1f;
 
-        public int CurrentGold { get; private set; }
+        [SerializeField, Range(0.01f, 1f), Tooltip("주간 청산 때 원금에서 반드시 줄여야 하는 비율.")]
+        private float weeklyMinimumPrincipalRate = 0.2f;
+
+        [SerializeField, Min(0), Tooltip("대출 상품 선택 UI를 붙이기 전 기본 상품이 허용하는 원금 한도.")]
+        private int weeklyLoanCreditLimit = 10000;
+
+        [SerializeField, Tooltip("비어 있으면 기존 기본 대출 설정을 그대로 사용한다.")]
+        private LoanProductDefinition[] loanProducts = Array.Empty<LoanProductDefinition>();
+
+        [SerializeField, Tooltip("저장 데이터에 선택 상품이 없을 때 사용할 상품 ID. 목록에 없으면 기존 기본 상품을 사용한다.")]
+        private string defaultLoanProductId = "default";
+
+        // 재로드에도 잔고를 보존하고 최초 자금 설정은 Awake에서만 한다.
+        [SerializeField, HideInInspector, UnityEngine.Serialization.FormerlySerializedAs("_ledger")]
+        private CostLedger ledger = new();
+        private RunSummarySystem _runSummary;
+        private readonly List<WeeklyLoanProduct> _loanProductOptions = new();
+        private int _lastLoanSettlementDay = -1;
+        private int _lastContractSettlementDay = -1;
+        private string _activeLoanProductId;
+        private int _creditWarnings;
+        private int _contractWeeksRemaining;
+
+        /// <summary>오늘 영업 중 한 번이라도 빚이 한도를 넘었는가. 영업 종료 판정 뒤 지운다.</summary>
+        private bool _exceededLimitToday;
+
+        private RunSummarySystem RunSummary =>
+            _runSummary != null ? _runSummary : _runSummary = GameScope.Resolve(scope, s => s.RunSummary, this, nameof(scope));
+
+        public int CurrentGold => ledger.Gold;
         public float CurrentBuildDiscountRate => nextBuildDiscountRate;
 
-        /// <summary>정산에서 갚지 못해 쌓인 빚.</summary>
-        public int CurrentDebt { get; private set; }
-        public int DebtLimit => debtLimit;
-        public int RemainingCredit => Mathf.Max(0, debtLimit - CurrentDebt);
+        /// <summary>금화 또는 부채가 바뀌었을 때 HUD처럼 현재 장부를 읽는 표시가 갱신한다.</summary>
+        public event Action StateChanged;
+
+        /// <summary>하루 정산에서 금화로 메우지 못해 쌓인 빚. 청산일 전에는 갚을 수 없다.</summary>
+        public int CurrentDebt => ledger.Debt;
+
+        /// <summary>이번 주에 적용되는 대출 상품 ID. 이전 저장의 빈 값은 기본 상품으로 해석한다.</summary>
+        public string ActiveLoanProductId => ResolveActiveLoanProduct().Id;
+
+        /// <summary>청산일에 반드시 내야 하는 최소 상환액. 이자와 원금 일부를 포함한다.</summary>
+        public int WeeklyDue => CreateLoanLedger().GetWeeklyQuote().MinimumPayment;
+
+        /// <summary>지금 즉시 빚을 전부 끝낼 때 필요한 금액. HUD의 최소 상환액과 구분한다.</summary>
+        public int WeeklyFullPayoff => CreateLoanLedger().GetWeeklyQuote().FullPayoff;
+
+        /// <summary>이번 주에 적용 중인 대출 조건. 대출 화면이 한도와 이자를 그대로 읽는다.</summary>
+        public WeeklyLoanProduct ActiveLoanProduct => ResolveActiveLoanProduct();
+
+        /// <summary>지금 상품에서 더 빌릴 수 있는 금액.</summary>
+        public int LoanHeadroom => Mathf.Max(0, ResolveActiveLoanProduct().CreditLimit - CurrentDebt);
+
+        /// <summary>
+        /// 지금 상품의 원래 부채 한도. 빚이 넘쳐도 늘어나지 않는다 — 대출 화면용
+        /// <see cref="ActiveLoanProduct"/>는 이미 있는 빚을 지우지 않으려고 한도를 빚만큼 올려 둔다.
+        /// </summary>
+        public int CreditLimit => ResolveBaseCreditLimit();
+
+        /// <summary>쌓인 신용 경고(0~5). 다음 주 이자와 최소 상환을 키운다.</summary>
+        public int CreditWarnings => _creditWarnings;
+
+        /// <summary>지금 빚이 한도를 넘었는가. 영업 종료까지 내려오지 않으면 파산한다.</summary>
+        public bool IsOverCreditLimit => CurrentDebt > CreditLimit;
+
+        /// <summary>
+        /// 영업 종료 정산 맨 끝에 부른다. 한도를 넘은 만큼 금화로 긴급 상환하고, 그래도 넘으면 파산,
+        /// 오늘 한 번이라도 넘었으면 신용 경고를 한 단계 올린다(5단계였으면 파산).
+        /// </summary>
+        /// <param name="repaid">긴급 상환으로 금화에서 빚으로 옮긴 액수.</param>
+        public CreditDayEndOutcome ResolveDayEndCredit(out int repaid)
+        {
+            var limit = CreditLimit;
+            var exceeded = _exceededLimitToday || ledger.Debt > limit;
+
+            repaid = CreditWarningRules.EmergencyRepayment(ledger.Debt, limit, ledger.Gold);
+            if (repaid > 0)
+            {
+                ledger.TrySpend(repaid);
+                ledger.SetDebt(ledger.Debt - repaid);
+                RaiseGoldChanged();
+                RunSummary?.RecordDebt(CurrentDebt);
+                costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, -repaid));
+            }
+
+            var warningsBefore = _creditWarnings;
+            var outcome = CreditWarningRules.EvaluateDayEnd(ledger.Debt, limit, _creditWarnings, exceeded);
+            _creditWarnings = CreditWarningRules.NextWarnings(_creditWarnings, outcome, ledger.Debt);
+            _exceededLimitToday = false;
+
+            costEventChannel?.RaiseEvent(new CreditStatusChangedEvent(outcome, repaid, _creditWarnings, CurrentDebt, limit));
+            if (_creditWarnings != warningsBefore)
+                costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, 0));
+            StateChanged?.Invoke();
+
+            if (outcome == CreditDayEndOutcome.Bankrupt)
+            {
+                var reason = ledger.Debt > limit
+                    ? $"영업이 끝날 때까지 빚 {GoldText.Amount(CurrentDebt)}이 한도 {GoldText.Amount(limit)}를 넘어 파산했습니다"
+                    : $"신용 경고 {CreditWarningRules.MaxWarnings}단계에서 또 한도를 넘어 파산했습니다";
+                costEventChannel?.RaiseEvent(new BankruptcyEvent(Mathf.Max(0, CurrentDebt - limit), CurrentGold, reason));
+            }
+
+            return outcome;
+        }
+
+        /// <summary>현재 계약이 끝날 때까지 남은 주. 빚이 남으면 만료일에 같은 계약을 연장한다.</summary>
+        public int ContractWeeksRemaining => Mathf.Max(0, _contractWeeksRemaining);
+
+        /// <summary>
+        /// 상품 변경은 청산일, 빚이 없는 경우에만 연다. 빚이 든 채 기관만 바꾸면
+        /// 상환 책임을 피하는 선택이 되므로 현재 계약을 연장해야 한다.
+        /// </summary>
+        public bool CanChangeLoanProductToday =>
+            DayManager.IsSettlementDay(ResolveSettlementDay())
+            && CurrentDebt <= 0
+            && ContractWeeksRemaining == 0;
 
         /// <summary>웨이브가 도는 동안은 수입·지출을 장부에만 적고 금화는 정산에서 한 번에 옮긴다.</summary>
         private bool _isSettlementDeferred;
@@ -44,20 +154,28 @@ namespace _01.Code.Manager
         /// </summary>
         public bool IsSettlementDeferred => _isSettlementDeferred;
 
-        private void Awake()
+        private bool TryRegisterCurrent()
         {
             if (Current != null && Current != this)
             {
                 Debug.LogError($"Duplicate {nameof(CostManager)} detected. Keep exactly one scene instance.", this);
                 enabled = false;
-                return;
+                return false;
             }
 
             Current = this;
-            CurrentGold = initialGold;
-            
+            return true;
         }
 
+        private void Awake()
+        {
+            if (!TryRegisterCurrent())
+                return;
+
+            ledger.Reset(initialGold, 0);
+            _activeLoanProductId = ResolveDefaultLoanProductId();
+            _contractWeeksRemaining = ResolveContractWeeks(_activeLoanProductId);
+        }
         private void OnDestroy()
         {
             if (Current == this)
@@ -75,11 +193,123 @@ namespace _01.Code.Manager
         public bool TrySpendGold(int amount)
         {
             var normalizedAmount = Mathf.Max(0, amount);
-            if (normalizedAmount <= 0 || CurrentGold < normalizedAmount)
+            return normalizedAmount > 0 && TryChargeImmediate(normalizedAmount);
+        }
+
+        /// <summary>
+        /// 필수 비용을 금화로 먼저 내고 모자란 만큼은 긴급 부채로 넘긴다. 거절하지 않는다.
+        ///
+        /// 되살리기처럼 미룰 수 없는 지출에 쓴다. 돈이 없다고 막아 버리면 형편이
+        /// 나쁠수록 더 나빠지기만 해서 되돌아올 길이 없어진다. 빚은 청산일에 청구된다.
+        /// </summary>
+        /// <returns>빚으로 넘어간 금액.</returns>
+        public int ChargeOrBorrow(int amount)
+        {
+            var owed = Mathf.Max(0, amount);
+            if (owed == 0)
+                return 0;
+
+            var borrowed = ledger.ChargeOrBorrow(owed);
+            if (borrowed > 0)
+            {
+                NoteCreditLimit();
+                costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, borrowed));
+                RunSummary?.RecordDebt(CurrentDebt);
+            }
+
+            RaiseGoldChanged();
+            return borrowed;
+        }
+
+        /// <summary>
+        /// 플레이어가 선택해서 운영 자금을 빌린다. 필수 부활비처럼 자동으로 생기는 긴급 부채와
+        /// 구분해 기본 상품의 한도를 반드시 적용한다.
+        /// </summary>
+        public bool TryBorrowGold(int amount)
+        {
+            var loan = CreateLoanLedger();
+            if (amount <= 0 || !loan.TryBorrow(amount))
                 return false;
 
-            CurrentGold -= normalizedAmount;
+            ledger.SetDebt(loan.Principal);
+            ledger.Add(amount);
             RaiseGoldChanged();
+            RunSummary?.RecordDebt(CurrentDebt);
+            costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, amount));
+            return true;
+        }
+
+        /// <summary>
+        /// 상황 사건(청산 위기)의 급전. 상품 한도와 상관없이 금화를 받고 그보다 큰 빚을 진다.
+        /// 한도를 넘기면 오늘 넘은 것으로 기록돼 다음 영업 종료 때 신용 경고 판정을 받는다.
+        /// </summary>
+        public void TakeEventLoan(int cash, int debtAdded)
+        {
+            cash = Mathf.Max(0, cash);
+            debtAdded = Mathf.Max(0, debtAdded);
+            if (cash == 0 && debtAdded == 0)
+                return;
+
+            ledger.SetDebt(ledger.Debt + debtAdded);
+            ledger.Add(cash);
+            NoteCreditLimit();
+            RaiseGoldChanged();
+            RunSummary?.RecordDebt(CurrentDebt);
+            costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, debtAdded));
+        }
+
+        /// <summary>빚이 <paramref name="extraDebt"/>만큼 늘었을 때의 최소 상환액. 급전이 늘어난 청구액까지 메우는지 미리 잰다.</summary>
+        public int PreviewWeeklyDue(int extraDebt)
+        {
+            var product = ResolveActiveLoanProduct();
+            var principal = Mathf.Max(0, ledger.Debt + extraDebt);
+            var preview = new WeeklyLoanProduct(
+                product.Id,
+                Mathf.Max(product.CreditLimit, principal),
+                product.WeeklyInterestRate,
+                product.MinimumPrincipalRate,
+                product.DisplayName);
+            var loan = new WeeklyLoanLedger(preview);
+            loan.RestorePrincipal(principal);
+            return loan.GetWeeklyQuote().MinimumPayment;
+        }
+
+        /// <summary>
+        /// 상황 사건(부채 한도 위험)의 조기 상환. 청산일이 아니어도 원금을 금화로 갚는다.
+        /// 수수료는 부르는 쪽이 장부에 남도록 따로 낸다.
+        /// </summary>
+        public bool TryRepayEarly(int principal)
+        {
+            principal = Mathf.Min(Mathf.Max(0, principal), CurrentDebt);
+            if (principal <= 0 || !ledger.TrySpend(principal))
+                return false;
+
+            ledger.SetDebt(ledger.Debt - principal);
+            RaiseGoldChanged();
+            RunSummary?.RecordDebt(CurrentDebt);
+            costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, -principal));
+            return true;
+        }
+
+        /// <summary>상황 사건(기관 접대)으로 신용 경고를 한 단계 내린다. 접대비는 부르는 쪽이 낸다.</summary>
+        public bool TryReduceCreditWarning()
+        {
+            if (_creditWarnings <= 0)
+                return false;
+
+            _creditWarnings--;
+            costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, 0));
+            StateChanged?.Invoke();
+            return true;
+        }
+
+        /// <summary>즉시 결제의 단일 경로. 호출자가 가격 검증과 결제 결과 이벤트를 맡는다.</summary>
+        private bool TryChargeImmediate(int amount, bool notifyWhenFree = false)
+        {
+            if (amount < 0 || !ledger.TrySpend(amount))
+                return false;
+            if (amount > 0 || notifyWhenFree)
+                RaiseGoldChanged();
             return true;
         }
 
@@ -88,13 +318,31 @@ namespace _01.Code.Manager
             if (amount <= 0)
                 return;
 
-            CurrentGold += amount;
+            ledger.Add(amount);
             RaiseGoldChanged();
         }
 
         private void OnEnable()
         {
+            if (!TryRegisterCurrent())
+                return;
+
+            RegisterListeners();
+        }
+
+        private void OnDisable()
+        {
+            UnregisterListeners();
+        }
+
+        /// <summary>
+        /// 비용 요청과 승인/거절 결과는 이 조정자만 구독한다.
+        /// 등록과 해제를 나란히 둬 활성화 반복 시 리스너가 중복되지 않게 한다.
+        /// </summary>
+        private void RegisterListeners()
+        {
             costEventChannel.AddListener<BuildCostRequestedEvent>(HandleBuildCostRequested);
+            costEventChannel.AddListener<BuildCostRefundedEvent>(HandleBuildCostRefunded);
             costEventChannel.AddListener<HireUnitCostRequestedEvent>(HandleHireUnitCostRequested);
             costEventChannel.AddListener<RosterHireRequestedEvent>(HandleRosterHireRequested);
             costEventChannel.AddListener<GoldEarnedEvent>(HandleGoldEarned);
@@ -111,9 +359,10 @@ namespace _01.Code.Manager
             RaiseGoldChanged();
         }
 
-        private void OnDisable()
+        private void UnregisterListeners()
         {
             costEventChannel.RemoveListener<BuildCostRequestedEvent>(HandleBuildCostRequested);
+            costEventChannel.RemoveListener<BuildCostRefundedEvent>(HandleBuildCostRefunded);
             costEventChannel.RemoveListener<HireUnitCostRequestedEvent>(HandleHireUnitCostRequested);
             costEventChannel.RemoveListener<RosterHireRequestedEvent>(HandleRosterHireRequested);
             costEventChannel.RemoveListener<GoldEarnedEvent>(HandleGoldEarned);
@@ -131,104 +380,256 @@ namespace _01.Code.Manager
         }
 
         /// <summary>
-        /// 정산 순액을 실제 금화에 반영한다. 양수면 그만큼 벌고, 음수면 지불한다.
-        /// 보유 금화로 다 못 내면 모자란 만큼 빚으로 넘기고, 한도를 넘으면 파산을 알린다.
+        /// 하루 정산의 순액을 금화에 반영한다. 양수면 그만큼 벌고, 음수면 지불한다.
+        /// 보유 금화로 다 못 내면 모자란 만큼 빚으로 넘긴다. 빚은 여기서 갚지 못하고
+        /// 이자도 붙지 않는다 — 둘 다 청산일(<see cref="SettleWeek"/>)에만 일어난다.
         /// </summary>
         public void ApplySettlement(int net)
         {
             _isSettlementDeferred = false;
 
-            var paidFromGold = 0;
-            var borrowed = 0;
-
-            AccrueDebtInterest();
-
-            if (net > 0)
+            var settlement = ledger.ApplySettlement(net);
+            var paidFromGold = settlement.PaidFromGold;
+            var borrowed = settlement.Borrowed;
+            if (borrowed > 0)
             {
-                // 흑자면 빚부터 일부 갚는다. 전액을 다 갚아버리면 운영할 돈이 안 남으므로 비율로 나눈다.
-                var repaid = Mathf.Min(CurrentDebt, Mathf.FloorToInt(net * autoRepayRatio));
-                if (repaid > 0)
-                {
-                    CurrentDebt -= repaid;
-                    costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, debtLimit, -repaid));
-                }
-
-                CurrentGold += net - repaid;
-            }
-            else if (net < 0)
-            {
-                var owed = -net;
-                paidFromGold = Mathf.Min(CurrentGold, owed);
-                CurrentGold -= paidFromGold;
-
-                borrowed = owed - paidFromGold;
-                if (borrowed > 0)
-                {
-                    CurrentDebt += borrowed;
-                    costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, debtLimit, borrowed));
-                }
+                NoteCreditLimit();
+                costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, borrowed));
             }
 
             RaiseGoldChanged();
-            RunSummarySystem.Current?.RecordDebt(CurrentDebt);
+            RunSummary?.RecordDebt(CurrentDebt);
             costEventChannel?.RaiseEvent(
                 new SettlementAppliedEvent(net, paidFromGold, borrowed, CurrentGold, CurrentDebt));
-
-            if (CurrentDebt > debtLimit)
-                costEventChannel?.RaiseEvent(new BankruptcyEvent(CurrentDebt, debtLimit));
         }
 
         /// <summary>
-        /// 정산마다 남은 빚에 이자를 붙인다.
-        /// 빚을 오래 끌수록 불어나야 갚을 동기가 생긴다. 최소 1G는 붙여서 1~9G 구간이 공짜가 되지 않게 한다.
+        /// 청산일. 쌓인 빚에 이자를 얹고 최소 상환액을 낸다.
         /// </summary>
-        private void AccrueDebtInterest()
+        /// <returns>청산했으면 true, 금화가 모자라 파산했으면 false.</returns>
+        public bool SettleWeek()
         {
-            if (CurrentDebt <= 0 || dailyDebtInterest <= 0f)
-                return;
+            var settlementDay = DayManager.Current != null ? DayManager.Current.CurrentDay : -1;
+            if (settlementDay > 0 && _lastLoanSettlementDay == settlementDay)
+                return true;
 
-            var interest = Mathf.Max(1, Mathf.CeilToInt(CurrentDebt * dailyDebtInterest));
-            CurrentDebt += interest;
-            costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, debtLimit, interest));
+            var loan = CreateLoanLedger();
+            var quote = loan.GetWeeklyQuote();
+            if (quote.MinimumPayment <= 0)
+                return true;
+
+            if (!ledger.TrySpend(quote.MinimumPayment))
+            {
+                costEventChannel?.RaiseEvent(new BankruptcyEvent(quote.MinimumPayment, CurrentGold));
+                return false;
+            }
+
+            loan.TryApplyWeeklyPayment(quote.MinimumPayment);
+            ledger.SetDebt(loan.Principal);
+            // 빚을 다 갚아야 신용 경고가 처음으로 돌아간다.
+            if (ledger.Debt <= 0)
+                _creditWarnings = 0;
+            _lastLoanSettlementDay = settlementDay;
+            RaiseGoldChanged();
+            RunSummary?.RecordDebt(CurrentDebt);
+            costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, -quote.MinimumPayment));
+            return true;
         }
 
-        /// <summary>빚을 갚는다. 실제로 갚은 금액을 돌려준다.</summary>
-        public int RepayDebt(int amount)
+        /// <summary>
+        /// 청산이 끝난 직후 계약 기간을 한 주 넘긴다. 빚이 남은 만료 계약은 자동 연장하고,
+        /// 빚이 없으면 0으로 남겨 다음 주 조건을 플레이어가 고르게 한다.
+        /// </summary>
+        public void AdvanceContractWeek()
         {
-            var repaid = Mathf.Clamp(amount, 0, Mathf.Min(CurrentGold, CurrentDebt));
-            if (repaid <= 0)
-                return 0;
+            var settlementDay = ResolveSettlementDay();
+            if (settlementDay <= 0 || _lastContractSettlementDay == settlementDay)
+                return;
 
-            CurrentGold -= repaid;
-            CurrentDebt -= repaid;
-            RaiseGoldChanged();
-            costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, debtLimit, -repaid));
-            return repaid;
+            _lastContractSettlementDay = settlementDay;
+            _contractWeeksRemaining = Mathf.Max(0, _contractWeeksRemaining - 1);
+            if (_contractWeeksRemaining == 0 && CurrentDebt > 0)
+                _contractWeeksRemaining = ResolveContractWeeks(_activeLoanProductId);
+
+            StateChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// 정산을 확정하기 전 대출 상품을 바꾼다. 기존 원금을 감당하지 못하는 상품은 고를 수 없다.
+        /// 실제 버튼 UI는 이 메서드의 결과만 보고 선택 상태를 갱신한다.
+        /// </summary>
+        public bool TryChangeLoanProduct(string productId)
+        {
+            if (!CanChangeLoanProductToday)
+                return false;
+
+            if (!TryFindConfiguredLoanProduct(productId, out var nextProduct))
+                return false;
+
+            var loan = CreateLoanLedger();
+            if (!loan.TryChangeProduct(nextProduct))
+                return false;
+
+            _activeLoanProductId = nextProduct.Id;
+            _contractWeeksRemaining = ResolveContractWeeks(_activeLoanProductId);
+            costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, 0));
+            StateChanged?.Invoke();
+            return true;
+        }
+
+        /// <summary>
+        /// 대출 화면이 고를 수 있는 상품들.
+        /// 상품을 하나도 설정하지 않았으면 지금 쓰는 기본 조건 하나만 들어간다 — 목록이 비면
+        /// 대출 조건이 없는 것처럼 보여서, 실제로 적용 중인 조건을 항상 한 줄은 보여 준다.
+        /// </summary>
+        public IReadOnlyList<WeeklyLoanProduct> GetLoanProductOptions()
+        {
+            _loanProductOptions.Clear();
+            if (loanProducts != null)
+            {
+                foreach (var definition in loanProducts)
+                {
+                    if (definition != null && definition.TryCreate(out var product))
+                        _loanProductOptions.Add(CreateDebtSafeProduct(product));
+                }
+            }
+
+            if (_loanProductOptions.Count == 0)
+                _loanProductOptions.Add(ResolveActiveLoanProduct());
+
+            return _loanProductOptions;
+        }
+
+        private int ResolveSettlementDay() => DayManager.Current != null ? DayManager.Current.CurrentDay : -1;
+
+        /// <summary>빚이 늘어난 직후 부른다. 한도를 넘었으면 오늘 넘었다는 사실을 남긴다.</summary>
+        private void NoteCreditLimit()
+        {
+            if (ledger.Debt > CreditLimit)
+                _exceededLimitToday = true;
+        }
+
+        private int ResolveBaseCreditLimit()
+        {
+            if (TryFindConfiguredLoanProduct(_activeLoanProductId, out var product))
+                return product.CreditLimit;
+
+            if (TryFindConfiguredLoanProduct(defaultLoanProductId, out product))
+                return product.CreditLimit;
+
+            return Mathf.Max(0, weeklyLoanCreditLimit);
+        }
+
+        private WeeklyLoanLedger CreateLoanLedger()
+        {
+            var product = ResolveActiveLoanProduct();
+            var loan = new WeeklyLoanLedger(product);
+            loan.RestorePrincipal(ledger.Debt);
+            return loan;
+        }
+
+        private WeeklyLoanProduct ResolveActiveLoanProduct()
+        {
+            if (TryFindConfiguredLoanProduct(_activeLoanProductId, out var product))
+                return CreateDebtSafeProduct(product);
+
+            if (TryFindConfiguredLoanProduct(defaultLoanProductId, out product))
+                return CreateDebtSafeProduct(product);
+
+            return CreditWarningRules.ApplyWarnings(new WeeklyLoanProduct(
+                "default",
+                Mathf.Max(weeklyLoanCreditLimit, ledger.Debt),
+                weeklyDebtInterest,
+                weeklyMinimumPrincipalRate,
+                "기본 대출"), _creditWarnings);
+        }
+
+        /// <summary>
+        /// 이미 있는 빚을 지우지 않도록 한도를 빚만큼 올리고, 신용 경고만큼 조건을 무겁게 한다.
+        /// 경고는 어느 기관에서나 같이 따라온다.
+        /// </summary>
+        private WeeklyLoanProduct CreateDebtSafeProduct(WeeklyLoanProduct product) =>
+            CreditWarningRules.ApplyWarnings(RaiseLimitToDebt(product), _creditWarnings);
+
+        private WeeklyLoanProduct RaiseLimitToDebt(WeeklyLoanProduct product)
+        {
+            if (ledger.Debt <= product.CreditLimit)
+                return product;
+
+            // 인스펙터에서 한도를 낮추거나 예전 저장을 불러도 이미 존재하던 빚을 지우지 않는다.
+            // 이름까지 새로 만들면 대출 화면에서 같은 상품이 ID로 바뀌어 보인다.
+            return new WeeklyLoanProduct(
+                product.Id,
+                ledger.Debt,
+                product.WeeklyInterestRate,
+                product.MinimumPrincipalRate,
+                product.DisplayName);
+        }
+
+        private string ResolveDefaultLoanProductId()
+        {
+            return TryFindConfiguredLoanProduct(defaultLoanProductId, out var product)
+                ? product.Id
+                : "default";
+        }
+
+        private int ResolveContractWeeks(string productId)
+        {
+            if (loanProducts != null)
+            {
+                foreach (var definition in loanProducts)
+                {
+                    if (definition != null && definition.Id == productId)
+                        return definition.ContractWeeks;
+                }
+            }
+
+            return 1;
+        }
+
+        private bool TryFindConfiguredLoanProduct(string productId, out WeeklyLoanProduct product)
+        {
+            if (loanProducts != null)
+            {
+                foreach (var definition in loanProducts)
+                {
+                    if (definition != null && definition.TryCreate(productId, out product))
+                        return true;
+                }
+            }
+
+            product = null;
+            return false;
         }
 
         private void HandleBuildCostRequested(BuildCostRequestedEvent evt)
         {
             var originalCost = Mathf.Max(0, evt.GoldAmount);
+            var consumedDiscountRate = originalCost > 0 ? nextBuildDiscountRate : 0f;
             var chargedCost = GetDiscountedBuildCost(originalCost);
 
             if (chargedCost <= 0)
             {
                 if (originalCost > 0)
                     nextBuildDiscountRate = 0f;
-                costEventChannel.RaiseEvent(new BuildCostPaidEvent(evt.Node, chargedCost, CurrentGold));
+                costEventChannel.RaiseEvent(new BuildCostPaidEvent(evt.Node, chargedCost, CurrentGold, consumedDiscountRate));
                 return;
             }
 
-            if (CurrentGold < chargedCost)
+            if (!TryChargeImmediate(chargedCost))
             {
                 costEventChannel.RaiseEvent(new BuildCostRejectedEvent(evt.Node, chargedCost, CurrentGold));
                 return;
             }
 
-            CurrentGold -= chargedCost;
             nextBuildDiscountRate = 0f;
-            RaiseGoldChanged();
-            costEventChannel.RaiseEvent(new BuildCostPaidEvent(evt.Node, chargedCost, CurrentGold));
+            costEventChannel.RaiseEvent(new BuildCostPaidEvent(evt.Node, chargedCost, CurrentGold, consumedDiscountRate));
+        }
+
+        private void HandleBuildCostRefunded(BuildCostRefundedEvent evt)
+        {
+            AddGold(evt.GoldAmount);
+            nextBuildDiscountRate = Mathf.Max(nextBuildDiscountRate, evt.RestoredDiscountRate);
         }
 
         private void HandleConstructionDiscountGranted(ConstructionDiscountGrantedEvent evt)
@@ -244,14 +645,12 @@ namespace _01.Code.Manager
                 return;
             }
 
-            if (CurrentGold < evt.GoldAmount)
+            if (!TryChargeImmediate(evt.GoldAmount))
             {
                 costEventChannel.RaiseEvent(new HireUnitCostRejectedEvent(evt.Node, evt.Unit, evt.GoldAmount, CurrentGold));
                 return;
             }
 
-            CurrentGold -= evt.GoldAmount;
-            RaiseGoldChanged();
             costEventChannel.RaiseEvent(new HireUnitCostPaidEvent(evt.Node, evt.Unit, evt.GoldAmount, CurrentGold));
         }
 
@@ -262,14 +661,13 @@ namespace _01.Code.Manager
 
             var hireCost = Mathf.Max(0, evt.GoldAmount);
             var roster = HiredUnitRoster.Current;
-            if (roster == null || roster.GetCandidateCount(evt.Unit) <= 0 || CurrentGold < hireCost)
+            if (roster == null || roster.GetCandidateCount(evt.Unit) <= 0 ||
+                !TryChargeImmediate(hireCost, notifyWhenFree: true))
             {
                 costEventChannel.RaiseEvent(new RosterHireRejectedEvent(evt.Unit, hireCost, CurrentGold));
                 return;
             }
 
-            CurrentGold -= hireCost;
-            RaiseGoldChanged();
             costEventChannel.RaiseEvent(new RosterHirePaidEvent(evt.Unit, hireCost, CurrentGold));
         }
 
@@ -279,7 +677,7 @@ namespace _01.Code.Manager
             if (evt.GoldAmount <= 0 || _isSettlementDeferred)
                 return;
 
-            CurrentGold += evt.GoldAmount;
+            ledger.Add(evt.GoldAmount);
             RaiseGoldChanged();
         }
 
@@ -288,7 +686,7 @@ namespace _01.Code.Manager
             if (evt.GoldAmount <= 0 || _isSettlementDeferred)
                 return;
 
-            CurrentGold = Mathf.Max(0, CurrentGold - evt.GoldAmount);
+            ledger.TrySpend(evt.GoldAmount);
             RaiseGoldChanged();
         }
 
@@ -300,14 +698,12 @@ namespace _01.Code.Manager
                 return;
             }
 
-            if (CurrentGold < evt.GoldAmount)
+            if (!TryChargeImmediate(evt.GoldAmount))
             {
                 costEventChannel.RaiseEvent(new UnitRecoveryCostRejectedEvent(evt.Node, evt.Unit, evt.GoldAmount, CurrentGold));
                 return;
             }
 
-            CurrentGold -= evt.GoldAmount;
-            RaiseGoldChanged();
             costEventChannel.RaiseEvent(new UnitRecoveryCostPaidEvent(evt.Node, evt.Unit, evt.GoldAmount, CurrentGold));
         }
 
@@ -315,30 +711,172 @@ namespace _01.Code.Manager
         private void HandleArtifactPurchaseRequested(ArtifactPurchaseRequestedEvent evt)
         {
             var price = Mathf.Max(0, evt.GoldAmount);
-            if (evt.Artifact == null || CurrentGold < price)
+            if (evt.Artifact == null || !TryChargeImmediate(price, notifyWhenFree: true))
             {
                 costEventChannel.RaiseEvent(new ArtifactPurchaseRejectedEvent(evt.Artifact, price, CurrentGold));
                 return;
             }
 
-            CurrentGold -= price;
-            RaiseGoldChanged();
             costEventChannel.RaiseEvent(new ArtifactPurchasePaidEvent(evt.Artifact, price, CurrentGold));
         }
 
         private void RaiseGoldChanged()
         {
             costEventChannel?.RaiseEvent(new GoldChangedEvent(CurrentGold));
+            StateChanged?.Invoke();
         }
 
         public void RestoreCheckpoint(int gold, int debt, float buildDiscountRate)
         {
-            CurrentGold = Mathf.Max(0, gold);
-            CurrentDebt = Mathf.Max(0, debt);
+            RestoreCheckpoint(gold, debt, buildDiscountRate, string.Empty);
+        }
+
+        public void RestoreCheckpoint(int gold, int debt, float buildDiscountRate, string activeLoanProductId)
+        {
+            RestoreCheckpoint(gold, debt, buildDiscountRate, activeLoanProductId, 0);
+        }
+
+        public void RestoreCheckpoint(
+            int gold, int debt, float buildDiscountRate, string activeLoanProductId, int creditWarnings)
+        {
+            RestoreCheckpoint(gold, debt, buildDiscountRate, activeLoanProductId, creditWarnings, 0);
+        }
+
+        public void RestoreCheckpoint(
+            int gold,
+            int debt,
+            float buildDiscountRate,
+            string activeLoanProductId,
+            int creditWarnings,
+            int contractWeeksRemaining)
+        {
+            ledger.Reset(gold, debt);
+            _creditWarnings = debt > 0 ? CreditWarningRules.Clamp(creditWarnings) : 0;
+            _exceededLimitToday = false;
             nextBuildDiscountRate = Mathf.Clamp(buildDiscountRate, 0f, 0.9f);
             _isSettlementDeferred = false;
+            _lastLoanSettlementDay = -1;
+            _lastContractSettlementDay = -1;
+            _activeLoanProductId = string.IsNullOrWhiteSpace(activeLoanProductId)
+                ? ResolveDefaultLoanProductId()
+                : activeLoanProductId;
+            _contractWeeksRemaining = contractWeeksRemaining > 0
+                ? contractWeeksRemaining
+                : ResolveContractWeeks(_activeLoanProductId);
             RaiseGoldChanged();
-            costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, debtLimit, 0));
+            costEventChannel?.RaiseEvent(new DebtChangedEvent(CurrentDebt, WeeklyDue, 0));
+        }
+
+        [Serializable]
+        private sealed class LoanProductDefinition
+        {
+            [SerializeField] private string id = "default";
+            [SerializeField, Tooltip("대출 화면에 적을 이름. 비워 두면 ID를 그대로 쓴다.")]
+            private string displayName;
+            [SerializeField, Min(0)] private int creditLimit = 10000;
+            [SerializeField, Range(0f, 0.5f)] private float weeklyInterestRate = 0.1f;
+            [SerializeField, Range(0.01f, 1f)] private float minimumPrincipalRate = 0.2f;
+            [SerializeField, Min(1), Tooltip("계약이 만료되기까지의 청산 횟수.")]
+            private int contractWeeks = 1;
+
+            public string Id => id;
+            public int ContractWeeks => Mathf.Max(1, contractWeeks);
+
+            public bool TryCreate(string requestedId, out WeeklyLoanProduct product)
+            {
+                if (!string.Equals(id, requestedId, StringComparison.Ordinal))
+                {
+                    product = null;
+                    return false;
+                }
+
+                return TryCreate(out product);
+            }
+
+            /// <summary>ID를 맞춰 보지 않고 만든다. 대출 화면이 목록을 세울 때 쓴다.</summary>
+            public bool TryCreate(out WeeklyLoanProduct product)
+            {
+                if (string.IsNullOrWhiteSpace(id))
+                {
+                    product = null;
+                    return false;
+                }
+
+                product = new WeeklyLoanProduct(id, creditLimit, weeklyInterestRate, minimumPrincipalRate, displayName);
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// 순수 금전 장부. Unity 이벤트와 씬 상태를 몰라 단위 테스트로 검증할 수 있다.
+        /// </summary>
+        [Serializable]
+        private sealed class CostLedger
+        {
+            [field: SerializeField]
+            public int Gold { get; private set; }
+            [field: SerializeField]
+            public int Debt { get; private set; }
+
+            public void Reset(int gold, int debt)
+            {
+                Gold = Mathf.Max(0, gold);
+                Debt = Mathf.Max(0, debt);
+            }
+
+            public void Add(int amount) => Gold += Mathf.Max(0, amount);
+
+            public bool TrySpend(int amount)
+            {
+                if (amount < 0 || Gold < amount)
+                    return false;
+
+                Gold -= amount;
+                return true;
+            }
+
+            public int ChargeOrBorrow(int amount)
+            {
+                var owed = Mathf.Max(0, amount);
+                var paid = Mathf.Min(Gold, owed);
+                Gold -= paid;
+                var borrowed = owed - paid;
+                Debt += borrowed;
+                return borrowed;
+            }
+
+            public SettlementResult ApplySettlement(int net)
+            {
+                if (net >= 0)
+                {
+                    Add(net);
+                    return default;
+                }
+
+                var owed = -net;
+                var paid = Mathf.Min(Gold, owed);
+                Gold -= paid;
+                var borrowed = owed - paid;
+                Debt += borrowed;
+                return new SettlementResult(paid, borrowed);
+            }
+
+            public void SetDebt(int debt)
+            {
+                Debt = Mathf.Max(0, debt);
+            }
+        }
+
+        private readonly struct SettlementResult
+        {
+            public SettlementResult(int paidFromGold, int borrowed)
+            {
+                PaidFromGold = paidFromGold;
+                Borrowed = borrowed;
+            }
+
+            public int PaidFromGold { get; }
+            public int Borrowed { get; }
         }
     }
 }

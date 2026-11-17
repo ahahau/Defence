@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
-using _01.Code.Artifacts;
-using _01.Code.Manager;
-using _01.Code.UI;
+using Code.Artifacts;
+using Code.Core;
+using Code.Manager;
+using Code.UI;
 using UnityEngine;
 
-namespace _01.Code.Persistence.Agents
+namespace Code.Persistence.Agents
 {
     [Serializable]
     public struct MerchantSaveState
@@ -26,8 +27,8 @@ namespace _01.Code.Persistence.Agents
     public sealed class MerchantSaveAgent : MonoBehaviour, ISaveable
     {
         [SerializeField] private string saveKey = "merchant.state";
-        [SerializeField, Tooltip("비우면 씬에서 찾는다.")] private MerchantPanelView merchant;
-        [SerializeField, Tooltip("비우면 씬에서 찾는다.")] private ArtifactEffectController artifacts;
+        [SerializeField, Tooltip("씬의 상인. 비어 있으면 찾으며 경고한다(배선 뒤 폴백 제거).")] private MerchantPanelView merchant;
+        [SerializeField, Tooltip("씬의 유물 효과. 비어 있으면 찾으며 경고한다(배선 뒤 폴백 제거).")] private ArtifactEffectController artifacts;
 
         public string SaveKey => saveKey;
 
@@ -63,9 +64,9 @@ namespace _01.Code.Persistence.Agents
         }
 
         private MerchantPanelView ResolveMerchant() =>
-            merchant != null ? merchant : merchant = FindAnyObjectByType<MerchantPanelView>(FindObjectsInactive.Include);
+            merchant != null ? merchant : merchant = SceneReferenceFallback.Find<MerchantPanelView>(this, nameof(merchant));
 
         private ArtifactEffectController ResolveArtifacts() =>
-            artifacts != null ? artifacts : artifacts = FindAnyObjectByType<ArtifactEffectController>(FindObjectsInactive.Include);
+            artifacts != null ? artifacts : artifacts = SceneReferenceFallback.Find<ArtifactEffectController>(this, nameof(artifacts));
     }
 }

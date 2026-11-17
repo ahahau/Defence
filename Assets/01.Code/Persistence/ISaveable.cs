@@ -1,4 +1,4 @@
-namespace _01.Code.Persistence
+namespace Code.Persistence
 {
     /// <summary>
     /// 자기 상태를 스스로 담고 되돌리는 것.

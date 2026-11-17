@@ -3,7 +3,7 @@ using Unity.Behavior;
 using UnityEngine;
 using Action = Unity.Behavior.Action;
 
-namespace _01.Code.BT
+namespace Code.BT
 {
     [Serializable, Unity.Properties.GeneratePropertyBag]
     [NodeDescription(

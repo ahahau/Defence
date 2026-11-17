@@ -1,10 +1,10 @@
-using _01.Code.BT;
-using _01.Code.Combat;
+using Code.BT;
+using Code.Combat;
 using DG.Tweening;
 using MoreMountains.Feedbacks;
 using UnityEngine;
 
-namespace _01.Code.Skills
+namespace Code.Skills
 {
     /// <summary>지연 폭발 장판: 타깃 위치에 경고 장판을 깔고, 안쪽 원이 차오른 뒤 폭발해
     /// 범위 피해 + 넉백을 준다. 폭발 시 Feel 카메라 셰이크와 히트스톱이 재생된다.</summary>
@@ -33,6 +33,9 @@ namespace _01.Code.Skills
         [SerializeField, Min(0f)] private float shakeFrequency = 25f;
         [SerializeField, Min(0f)] private float hitStopDuration = 0.045f;
 
+        /// <summary>예고선이 아니라 터질 때의 색을 쓴다. 시전 순간에 알려야 할 것은 결과다.</summary>
+        public override Color SignatureColor => new(explosionColor.r, explosionColor.g, explosionColor.b, 1f);
+
         public override void Execute(SkillContext context)
         {
             var caster = context.Caster;
@@ -55,6 +58,7 @@ namespace _01.Code.Skills
             var runtime = warning.gameObject.AddComponent<DelayedBlastRuntime>();
             runtime.Initialize(
                 caster.Battlefield,
+                context.Field,
                 caster.Team,
                 fill,
                 radius,
@@ -71,6 +75,7 @@ namespace _01.Code.Skills
         private class DelayedBlastRuntime : MonoBehaviour
         {
             private NodeBattlefield _battlefield;
+            private ISkillField _field;
             private BattleTeam _team;
             private SpriteRenderer _fill;
             private float _radius;
@@ -85,6 +90,7 @@ namespace _01.Code.Skills
 
             public void Initialize(
                 NodeBattlefield battlefield,
+                ISkillField field,
                 BattleTeam team,
                 SpriteRenderer fill,
                 float radius,
@@ -98,6 +104,7 @@ namespace _01.Code.Skills
                 float hitStopDuration)
             {
                 _battlefield = battlefield;
+                _field = field;
                 _team = team;
                 _fill = fill;
                 _radius = radius;
@@ -110,6 +117,12 @@ namespace _01.Code.Skills
                 _shakeFrequency = shakeFrequency;
                 _hitStopDuration = hitStopDuration;
 
+                _field?.TrackEffect(gameObject);
+                if (_fill != null)
+                {
+                    _field?.TrackEffect(_fill.gameObject);
+                }
+
                 if (_fill != null)
                 {
                     _fill.transform.localScale = Vector3.one * 0.01f;
@@ -121,6 +134,15 @@ namespace _01.Code.Skills
 
             private void Update()
             {
+                if (_field != null && !_field.IsActive)
+                {
+                    if (_fill != null)
+                    {
+                        Destroy(_fill.gameObject);
+                    }
+                    Destroy(gameObject);
+                    return;
+                }
                 _timer -= Time.deltaTime;
                 if (_timer > 0f) return;
 
@@ -133,10 +155,17 @@ namespace _01.Code.Skills
 
             private void Explode()
             {
-                if (_battlefield != null)
+                System.Collections.Generic.IEnumerable<BattleAgent> roster = _field != null
+                    ? _field.Opponents(_team, transform.position)
+                    : _battlefield != null ? _battlefield.Opponents(_team) : null;
+                if (roster != null)
                 {
-                    foreach (var enemy in _battlefield.Opponents(_team))
+                    foreach (var enemy in roster)
                     {
+                        if (_field != null && !_field.IsActive)
+                        {
+                            break;
+                        }
                         if (enemy == null || !enemy.IsAlive)
                             continue;
 
@@ -146,7 +175,8 @@ namespace _01.Code.Skills
 
                         enemy.TakeSkillDamage(_damage);
 
-                        if (_knockbackDistance > 0f)
+                        // 스테이지 격자에서는 밀어내면 벽·칸 밖으로 갈 수 있어 넉백을 하지 않는다
+                        if (_knockbackDistance > 0f && _field == null)
                         {
                             var dir = offset.sqrMagnitude > 0.0001f
                                 ? offset.normalized
@@ -156,6 +186,10 @@ namespace _01.Code.Skills
                     }
                 }
 
+                if (_field != null && !_field.IsActive)
+                {
+                    return;
+                }
                 PlayExplosionVisual();
                 PlayFeelFeedback();
             }
@@ -163,6 +197,7 @@ namespace _01.Code.Skills
             private void PlayExplosionVisual()
             {
                 var flash = SkillZoneVisual.CreateZone("Blast Explosion", transform.position, _radius, _explosionColor, 7);
+                _field?.TrackEffect(flash.gameObject);
                 flash.transform.localScale = Vector3.one * (_radius * 0.6f);
 
                 DOTween.Sequence()

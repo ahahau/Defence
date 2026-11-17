@@ -1,0 +1,784 @@
+using System;
+using System.Collections.Generic;
+using Code.Buildings;
+using Code.Enemies;
+using Code.Units;
+using UnityEngine;
+
+namespace Code.Stages
+{
+    /// <summary>고정 스테이지의 진행/재도전과 금화/코어. 구 일차/보스/정산 이벤트를 발행하지 않는다.</summary>
+    public sealed class StageSession : MonoBehaviour
+    {
+        [field: SerializeField] public StageCatalogSO Catalog { get; private set; }
+        [SerializeField] private StageCatalogSO legacyCatalog;
+        [SerializeField] private StageMapView mapView;
+        [SerializeField] private Transform actorsRoot;
+        [SerializeField] private StageBarricade barricadePrefab;
+        [SerializeField] private Code.Manager.GameSpeedController speedController;
+        private readonly HashSet<string> _loadout = new(StringComparer.Ordinal);
+        private StageActor _boss;
+        private StageParty _party;
+        private float _spawnClock;
+        private int _spawned;
+        private bool _locked;
+        private StageCheckpoint _checkpoint;
+        private bool _leaving;
+        public StageDefinitionSO Definition { get; private set; }
+        public StageBoard Board { get; private set; }
+        public StagePathfinder Paths { get; private set; }
+        public StageSkillField SkillField { get; private set; }
+        public StageDevices Devices { get; private set; }
+        public StageProfile Profile { get; private set; }
+        public StageArtifacts Artifacts { get; private set; }
+        public StageWaveResults Results { get; private set; } = new();
+        public StagePreparationEvents PreparationEvents { get; } = new();
+        public StageMerchant Merchant { get; } = new();
+        public StagePhase Phase { get; private set; } = StagePhase.Unavailable;
+        public int Gold { get; private set; }
+        public int WaveIndex { get; private set; }
+        public int StageIndex { get; private set; }
+        public string Message { get; private set; }
+        public string SaveError => _checkpoint?.Error;
+        public int CoreHealth => mapView.CoreHealth.CurrentHealth;
+        /// <summary>실제 코어 체력의 최대치. 보수 미리보기와 적용이 같은 값을 쓴다.</summary>
+        public int MaxCoreHealth => mapView.CoreHealth.MaxHealth;
+        public StagePlacement Placement { get; private set; }
+        public IReadOnlyList<Trap> Traps => Placement.Traps;
+        public int SelectedCount => _loadout.Count;
+        public bool CanChoose => Phase == StagePhase.Preparing && !_locked;
+        /// <summary>지금 함정을 설치·강화·철거할 수 있는가. 함정 본편은 웨이브 중에도 함정만 다룬다(2026-11-03 사용자 결정).</summary>
+        public bool EditsTrapsNow => Phase == StagePhase.Preparing
+            || Phase == StagePhase.Fighting && Catalog != null && Catalog.EditsTrapsInWaves;
+        /// <summary>마지막 준비 저장을 보존해야 하는 클리어 보상 미확정 상태.</summary>
+        public bool HasPendingClearReward => Phase == StagePhase.Cleared && !Results.RewardConfirmed;
+        public bool CanUpgrade => Phase == StagePhase.Cleared || Phase == StagePhase.Failed
+            || CanChoose && !Placement.HasPlacements;
+        public bool CanChangeStage => !HasPendingClearReward && (Phase == StagePhase.Cleared || Phase == StagePhase.Failed
+            || CanChoose && !Placement.HasPlacements && Board.Barricades.Count == 0);
+        public event Action Changed;
+        public event Action<int> CoreDamaged;
+        public event Action<Vector2Int> BarricadeDestroyed;
+
+        internal void ReportBarricadeDestroyed(Vector2Int cell)
+        {
+            Placement?.DetachWallTrap(cell);
+            BarricadeDestroyed?.Invoke(cell);
+        }
+
+        public bool CanSelectStage(int index) => Catalog != null && index >= 0 && index < Catalog.Stages.Length
+            && (index == 0 || Profile.IsCleared(Catalog.Stages[index - 1].Id));
+
+        private void Start()
+        {
+            Profile = new StageProfile(Application.persistentDataPath);
+            Artifacts = new StageArtifacts(this);
+            _checkpoint = new StageCheckpoint(this, Application.persistentDataPath);
+            if (_checkpoint.Restore())
+                return;
+            if (!string.IsNullOrEmpty(_checkpoint.Error))
+            {
+                Phase = StagePhase.Unavailable;
+                Tell(_checkpoint.Error);
+                return;
+            }
+            SelectStage(0);
+        }
+
+        public int LoadoutSlots => Profile.LoadoutSlots(Catalog);
+
+        public bool IsSelected(StageOption option) => option != null && _loadout.Contains(option.Id);
+
+        public bool ToggleOption(StageOption option)
+        {
+            if (!CanChoose || !Profile.IsUnlocked(option))
+                return false;
+            if (Placement.HasPlaced(option))
+            {
+                Tell("이미 배치한 종류입니다. 먼저 회수/철거하세요");
+                return false;
+            }
+            if (_loadout.Remove(option.Id))
+            {
+                Notify();
+                return true;
+            }
+            if (_loadout.Count >= LoadoutSlots)
+            {
+                Tell("편성 슬롯이 가득 찼습니다");
+                return false;
+            }
+            _loadout.Add(option.Id);
+            Notify();
+            return true;
+        }
+
+        public bool HasArtifact(StageArtifact artifact) => artifact != null && artifact.Artifact != null
+            && Profile.HasArtifact(artifact.Id);
+
+        /// <summary>현재 카탈로그에 있는 후보가 하나라도 남았는가. 카탈로그에서 빠진 후보만 남으면 고를 것이 없다.</summary>
+        public bool HasArtifactChoice
+        {
+            get
+            {
+                if (Profile == null || Catalog == null)
+                    return false;
+                foreach (string id in Profile.ArtifactChoices)
+                    if (Catalog.FindArtifact(id) != null)
+                        return true;
+                return false;
+            }
+        }
+
+        /// <summary>저장 오류 중에는 후보를 유지하되 보상 창을 닫아 복구 경로로 나갈 수 있게 한다.</summary>
+        public bool RequiresArtifactChoice => HasArtifactChoice && Profile.CanWrite && string.IsNullOrEmpty(Profile.Error);
+
+        /// <summary>편성과 같이 첫 웨이브 전까지만 바꾼다. 가진 유물만, 장착 칸 수까지.</summary>
+        public bool ToggleArtifact(StageArtifact artifact)
+        {
+            if (!CanChoose || !HasArtifact(artifact))
+                return false;
+            if (Artifacts.IsEquipped(artifact))
+            {
+                Artifacts.Unequip(artifact);
+                Notify();
+                return true;
+            }
+            if (Artifacts.Equipped.Count >= Catalog.ArtifactSlots)
+            {
+                Tell("유물 칸이 가득 찼습니다");
+                return false;
+            }
+            Artifacts.Equip(artifact);
+            Notify();
+            return true;
+        }
+
+        public bool TryPickArtifact(StageArtifact artifact)
+        {
+            if (artifact == null || !Profile.TryPickArtifact(artifact.Id))
+            {
+                Tell(!string.IsNullOrEmpty(Profile.Error) ? Profile.Error : "고를 수 없는 유물입니다");
+                return false;
+            }
+            Tell($"유물 획득: {artifact.Label}");
+            return true;
+        }
+
+        /// <summary>아직 없는 유물 중 무작위 후보. 남은 것이 적으면 있는 만큼만 준다.</summary>
+        private List<string> DrawArtifactChoices()
+        {
+            List<string> pool = new();
+            foreach (StageArtifact artifact in Catalog.Artifacts)
+                if (artifact != null && artifact.Artifact != null && !Profile.HasArtifact(artifact.Id) && !pool.Contains(artifact.Id))
+                    pool.Add(artifact.Id);
+            int count = Mathf.Min(Catalog.ArtifactChoices, pool.Count);
+            for (int i = 0; i < count; i++)
+            {
+                int pick = UnityEngine.Random.Range(i, pool.Count);
+                (pool[i], pool[pick]) = (pool[pick], pool[i]);
+            }
+            pool.RemoveRange(count, pool.Count - count);
+            return pool;
+        }
+
+        public bool SelectStage(int index)
+        {
+            if (HasPendingClearReward)
+            {
+                Tell("보상을 먼저 저장하세요. 보상 저장 재시도 또는 타이틀 복귀가 가능합니다");
+                return false;
+            }
+            if (Phase == StagePhase.Fighting)
+                return false;
+            if (Profile == null || Catalog == null || Catalog.Stages == null || index < 0 || index >= Catalog.Stages.Length)
+                return false;
+            if (index > 0 && !Profile.IsCleared(Catalog.Stages[index - 1].Id))
+                return false;
+            StageDefinitionSO definition = Catalog.Stages[index];
+            string reason = "스테이지 데이터가 없습니다";
+            if (definition == null || !definition.TryValidate(out reason) || !StageTerrain.TryValidate(Catalog, out reason))
+            {
+                Phase = StagePhase.Unavailable;
+                Tell(definition == null ? "스테이지 데이터가 없습니다" : reason);
+                return false;
+            }
+            StopActors();
+            foreach (Transform child in actorsRoot)
+            {
+                child.gameObject.SetActive(false);
+                Destroy(child.gameObject);
+            }
+            _loadout.Clear();
+            Artifacts.Clear();
+            Definition = definition;
+            StageIndex = index;
+            Board = new StageBoard(definition, Catalog);
+            Paths = new StagePathfinder(Board);
+            // 스킬 대상 반경은 임시로 교전 반경과 같다(2026-10-28 승인)
+            SkillField = new StageSkillField(Board, definition.EngageRadius);
+            Placement = new StagePlacement(this, actorsRoot, barricadePrefab);
+            Devices = new StageDevices(Board, CheckTraps);
+            List<Vector2Int> path = new();
+            // 여닫는 문이 모두 닫혀도 모든 던전문에서 코어로 가는 길이 남아야 한다
+            Devices.CloseAllGates();
+            foreach (Vector2Int door in definition.Doors)
+            {
+                if (!Paths.Find(door, definition.Core, null, false, path))
+                {
+                    Devices.Reset();
+                    Phase = StagePhase.Unavailable;
+                    Tell("고정 지형의 던전문과 코어가 연결되지 않았습니다");
+                    return false;
+                }
+            }
+            Devices.Reset();
+            Gold = definition.StartingGold;
+            Results.Reset();
+            PreparationEvents.Reset();
+            Merchant.Reset(Catalog);
+            WaveIndex = 0;
+            _spawned = 0;
+            _locked = false;
+            Phase = StagePhase.Preparing;
+            mapView.Draw(Board);
+            mapView.ShowDoors(definition, WaveIndex);
+            _checkpoint?.NewStage();
+            Tell("편성을 고르고 바리케이드·부하·함정을 배치하세요");
+            return true;
+        }
+
+        public void BeginWave()
+        {
+            if (Phase != StagePhase.Preparing || WaveIndex >= Definition.Waves.Length)
+                return;
+            if (_loadout.Count == 0)
+            {
+                Tell("가져갈 부하/함정을 먼저 선택하세요");
+                return;
+            }
+            _checkpoint?.Save();
+            SkillField?.Close();
+            SkillField = new StageSkillField(Board, Definition.EngageRadius);
+            Results.Begin();
+            _locked = true;
+            _spawned = 0;
+            StageWave wave = Definition.Waves[WaveIndex];
+            _spawnClock = (wave.PartyLength(0) - 1) * (wave.SpawnInterval - PartySpawnGap(wave));
+            _party = null;
+            Phase = StagePhase.Fighting;
+            Tell("침입자가 코어로 접근합니다");
+        }
+
+        /// <summary>
+        /// 지금 열린 준비 사건(첫 사건 또는 후속)의 선택지(1부터)를 고른다(2026-11-02 사용자 승인).
+        /// 사건을 연 시도의 같은 준비 단계에서만, 한 번만 적용한다.
+        /// 저장이 막혀 있으면 이어하기 뒤 두 번 적용되지 않도록 효과를 주지 않는다.
+        /// </summary>
+        public bool TryChooseEvent(int choice, int attempt, int waveIndex)
+        {
+            StagePreparationEvent preparationEvent = PreparationEvents.Offered(this, out bool followUp);
+            if (preparationEvent == null || choice < 1 || choice > preparationEvent.Options.Length
+                || attempt != PreparationEvents.Attempt || waveIndex != WaveIndex)
+                return false;
+            if (!string.IsNullOrEmpty(SaveError))
+            {
+                Tell(SaveError);
+                return false;
+            }
+            StagePreparationOption option = preparationEvent.Options[choice - 1];
+            if (option.GoldChange < 0 && Gold < -option.GoldChange)
+            {
+                Tell("금화가 부족합니다");
+                return false;
+            }
+            int repaired = 0;
+            if (option.CoreRepair > 0)
+            {
+                repaired = Mathf.Min(option.CoreRepair, MaxCoreHealth - CoreHealth);
+                if (repaired <= 0)
+                {
+                    Tell("코어가 가득 차 보수할 수 없습니다");
+                    return false;
+                }
+                mapView.CoreHealth.Heal(repaired);
+            }
+            Gold += option.GoldChange;
+            if (followUp)
+                PreparationEvents.SetFollowUp(choice, repaired);
+            else
+                PreparationEvents.Set(choice, repaired);
+            // 이름의 숫자가 아니라 실제로 적용된 결과를 알린다(보수는 최대 체력에서 잘릴 수 있다)
+            string result = (option.GoldChange != 0 ? $"{option.GoldChange:+0;-0}G" : string.Empty)
+                + (repaired > 0 ? (option.GoldChange != 0 ? ", " : string.Empty) + $"코어 +{repaired}" : string.Empty);
+            Tell($"{preparationEvent.Title}: {(result.Length > 0 ? result : option.Label)}");
+            return true;
+        }
+
+        /// <summary>
+        /// 상인 물건(카탈로그 순서 번호)을 산다(2026-11-02 사용자 결정). 팝업을 연 시도·준비 단계에서만 적용한다.
+        /// 저장이 막혀 있으면 이어하기 뒤 두 번 적용되지 않도록 팔지 않는다.
+        /// </summary>
+        public bool TryBuyMerchantItem(int index, int attempt, int waveIndex)
+        {
+            IReadOnlyList<StageMerchantItem> items = StageMerchant.ItemsOf(Catalog);
+            if (!StageMerchant.IsOpen(this) || index < 0 || index >= items.Count
+                || attempt != Merchant.Attempt || waveIndex != WaveIndex)
+                return false;
+            if (!string.IsNullOrEmpty(SaveError))
+            {
+                Tell(SaveError);
+                return false;
+            }
+            StageMerchantItem item = items[index];
+            if (Merchant.IsSoldOut(item, WaveIndex))
+            {
+                Tell(item.IsStageBuff ? "이번 스테이지에 이미 산 물건입니다" : "이번 준비 단계에 이미 산 물건입니다");
+                return false;
+            }
+            if (Gold < item.Price)
+            {
+                Tell("금화가 부족합니다");
+                return false;
+            }
+            int repaired = 0;
+            if (item.CoreRepair > 0)
+            {
+                repaired = Mathf.Min(item.CoreRepair, MaxCoreHealth - CoreHealth);
+                if (repaired <= 0)
+                {
+                    Tell("코어가 가득 차 보수할 수 없습니다");
+                    return false;
+                }
+                mapView.CoreHealth.Heal(repaired);
+            }
+            Gold -= item.Price;
+            Merchant.Buy(item, WaveIndex, repaired);
+            if (item.UnitAttackMultiplier > 1f)
+                foreach (StageActor actor in Board.Actors)
+                    Merchant.Apply(actor);
+            if (item.BarricadeHealthMultiplier > 1f)
+                foreach (StageBarricade wall in Board.Barricades.Values)
+                    if (wall != null && wall.IsAlive)
+                        wall.RaiseMaxHealth(StageBarricade.MaxHealthFor(this, wall.Cell));
+            // 보수는 최대 체력에서 잘릴 수 있어 실제 회복량을 알린다
+            Tell($"{item.Label}: -{item.Price}G, " + (repaired > 0 ? $"코어 +{repaired}" : "이번 스테이지 " + item.EffectText()));
+            return true;
+        }
+
+        public bool IsBossAlive => _boss != null && _boss.IsAlive;
+
+        internal bool IsBossActor(StageActor actor) => actor != null && actor == _boss;
+
+        /// <summary>맵 서명이 일치하는 구 본편만 호환 카탈로그로 이어한다.</summary>
+        internal void UseCheckpointCatalog(string stageId, string signature)
+        {
+            Catalog = StageCheckpoint.MatchingCatalog(Catalog, legacyCatalog, stageId, signature);
+        }
+
+        private void Update()
+        {
+            // 보스·정예가 살아 있는 동안만 멈출 수 없다. 웨이브 종료·실패로 사라지면 바로 풀린다.
+            if (speedController != null)
+            {
+                bool locked = Phase == StagePhase.Fighting && (IsBossAlive || IsEliteAlive());
+                speedController.SetPauseLock(this, locked, IsBossAlive
+                    ? Code.Manager.PauseLockRules.BossLockReason : Code.Manager.PauseLockRules.EliteLockReason);
+            }
+            if (Phase != StagePhase.Fighting)
+                return;
+            Devices.Tick(Time.deltaTime);
+            if (Phase != StagePhase.Fighting)
+                return;
+            Placement.WallTraps.Tick(Time.deltaTime);
+            if (Phase != StagePhase.Fighting)
+                return;
+            StageWave wave = Definition.Waves[WaveIndex];
+            _spawnClock -= Time.deltaTime;
+            if (_spawned < wave.Count && _spawnClock <= 0)
+            {
+                EnemyDataSO data = wave.At(_spawned, out bool isBoss);
+                int open = Definition.OpenDoorCount(WaveIndex);
+                // 문은 파티마다 돌아가며 고른다. 한 파티는 같은 문으로 들어온다.
+                Vector2Int door = Definition.Doors[Definition.OpenDoorIndex(WaveIndex, wave.PartyIndex(_spawned) % open)];
+                Enemy enemy = Instantiate(data.Prefab, Board.World(door), Quaternion.identity, actorsRoot);
+                enemy.ConfigureData(data);
+                if (isBoss)
+                    enemy.PromoteToBoss(wave.BossHealthMultiplier, wave.BossAttackMultiplier, wave.BossScale);
+                else if (_spawned < (wave.Enemies?.Length ?? 0))
+                    enemy.ApplyStageHealthMultiplier(wave.EnemyHealthMultiplier);
+                StageActor actor = enemy.gameObject.AddComponent<StageActor>();
+                actor.Initialize(this, door, null, 0);
+                actor.SetRule(wave.RuleAt(_spawned));
+                if (wave.StartsParty(_spawned))
+                    _party = wave.PartyLength(_spawned) > 1 ? new StageParty() : null;
+                // 표식 적은 같은 문으로 나오되 자기 규칙대로 혼자 움직인다
+                if (_party != null && actor.Rule == StageEnemyRule.None)
+                    actor.JoinParty(_party);
+                if (isBoss)
+                {
+                    _boss = actor;
+                    Tell($"보스 {data.Name} 등장");
+                }
+                else if (Catalog != null && Catalog.IsElite(data))
+                    Tell($"{data.Name} 등장");
+                _spawnClock = NextSpawnDelay(wave, _spawned);
+                _spawned++;
+                Notify();
+            }
+            if (_spawned >= wave.Count && EnemyCount() == 0)
+                EndWave();
+        }
+
+        /// <summary>
+        /// 파티의 마지막 멤버가 기존 순번의 시각에 등장하도록 다음 파티 앞에서 대기한다.
+        /// 마지막 등장 뒤의 대기로 길이를 보정하면 웨이브 종료 전에 사용되지 않는다.
+        /// </summary>
+        private static float NextSpawnDelay(StageWave wave, int spawned)
+        {
+            int next = spawned + 1;
+            if (next >= wave.Count)
+                return wave.SpawnInterval;
+            float gap = PartySpawnGap(wave);
+            if (!wave.StartsParty(next))
+                return gap;
+            return wave.SpawnInterval + (wave.PartyLength(next) - 1) * (wave.SpawnInterval - gap);
+        }
+
+        private static float PartySpawnGap(StageWave wave) => Mathf.Min(StageParty.SpawnGap, wave.SpawnInterval);
+
+        public int EnemyCount()
+        {
+            int count = 0;
+            if (Board != null)
+                foreach (StageActor actor in Board.Actors)
+                    if (actor != null && actor.IsEnemy && actor.IsAlive)
+                        count++;
+            return count;
+        }
+
+        /// <summary>카탈로그 정예가 살아 있는가. 등급 4인 일반 검사·성기사는 잠그지 않는다.</summary>
+        private bool IsEliteAlive()
+        {
+            if (Board != null && Catalog != null)
+                foreach (StageActor actor in Board.Actors)
+                    if (actor != null && actor.IsEnemy && actor != _boss && actor.IsAlive && Catalog.IsElite(actor.Enemy.Data))
+                        return true;
+            return false;
+        }
+
+        public int Remaining => Phase == StagePhase.Fighting
+            ? EnemyCount() + Definition.Waves[WaveIndex].Count - _spawned : 0;
+
+        public void FinishEnemy(StageActor actor, bool arrived)
+        {
+            if (Board == null || !Board.Actors.Remove(actor))
+                return;
+            actor.Stop();
+            int coreDamage = 0;
+            if (Phase == StagePhase.Fighting)
+            {
+                if (arrived)
+                {
+                    int before = CoreHealth;
+                    // 보스는 웨이브의 덮어쓰기 피해가 있으면 그것을 쓴다(함정 본편)
+                    mapView.CoreHealth.TakeDamage(actor == _boss
+                        ? Definition.Waves[WaveIndex].BossArrivalDamage
+                        : actor.Enemy.Data.CoreArrivalDamage);
+                    coreDamage = before - CoreHealth;
+                }
+                else
+                    Gold += Definition.KillReward;
+                Results.RecordEnemy(arrived, coreDamage, arrived ? 0 : Definition.KillReward, actor == _boss);
+                if (CoreHealth <= 0)
+                {
+                    Results.Complete(WaveIndex + 1, false);
+                    Phase = StagePhase.Failed;
+                    _checkpoint?.End();
+                    StopActors();
+                    // 끝까지 막은 웨이브 수 = 지금 웨이브 번호. 깨지 못한 스테이지에서만 준다(2026-11-02 사용자 결정).
+                    bool saved = Profile.TryAwardFailure(Definition, Catalog.FailureReward(Definition, WaveIndex), out int awarded);
+                    Results.RecordFailureReward(awarded, saved);
+                    Tell(saved ? "코어가 파괴됐습니다. 스테이지 처음부터 다시 편성할 수 있습니다" : Profile.Error);
+                }
+            }
+            actor.gameObject.SetActive(false);
+            Destroy(actor.gameObject);
+            Notify();
+            if (coreDamage > 0)
+                CoreDamaged?.Invoke(coreDamage);
+        }
+
+        private void EndWave()
+        {
+            SkillField?.Close();
+            Results.Complete(WaveIndex + 1, true);
+            WaveIndex++;
+            Devices.Reset();
+            Placement.WallTraps.Reset();
+            foreach (StageActor actor in Board.Actors)
+                if (actor != null && !actor.IsEnemy)
+                    actor.Recover();
+            if (WaveIndex == Definition.Waves.Length)
+            {
+                Phase = StagePhase.Cleared;
+                RetryClearReward();
+            }
+            else
+            {
+                Phase = StagePhase.Preparing;
+                mapView.ShowDoors(Definition, WaveIndex);
+                Tell(Definition.OpensDoorAt(WaveIndex)
+                    ? "웨이브 방어 완료. 다음 웨이브에 새 던전문이 열립니다 — 길을 다시 확인하세요"
+                    : "웨이브 방어 완료. 코어 체력은 유지되며 부하는 복구되었습니다");
+            }
+        }
+
+        public void RetryClearReward()
+        {
+            if (Phase != StagePhase.Cleared)
+                return;
+            bool previouslyClaimed = Profile.IsCleared(Definition.Id);
+            // 유물은 초회 클리어에만 3택1 후보를 준다(2026-10-29 사용자 결정).
+            if (Profile.TryClear(Definition, previouslyClaimed ? null : DrawArtifactChoices(), HasArtifactChoice, out int awarded))
+            {
+                Results.ConfirmReward(awarded, previouslyClaimed);
+                _checkpoint?.End();
+                Tell(StageIndex + 1 < Catalog.Stages.Length ? "다음 스테이지를 준비하세요" : "모든 스테이지를 방어했습니다");
+            }
+            else
+                Tell(Profile.Error);
+        }
+
+        public void TryUpgrade(StageOption option)
+        {
+            if (!CanUpgrade)
+            {
+                Tell("강화는 스테이지 밖이나 첫 배치 전에 가능합니다");
+                return;
+            }
+            bool changed = Profile.TryUpgrade(option, Catalog);
+            Tell(changed ? "영구 강화 완료" : !string.IsNullOrEmpty(Profile.Error) ? Profile.Error : "강화 재화/해금/최대 단계를 확인하세요");
+        }
+
+        public bool TryPlace(Vector2Int cell, StageOption option, bool barricade) => Placement.TryPlace(cell, option, barricade);
+
+        public void Demolish(Vector2Int cell) => Placement.Demolish(cell);
+
+        public bool TryLevelTrap(Vector2Int cell) => Placement.TryLevelTrap(cell);
+
+        /// <summary>준비 단계에만 배치한 부하 한 명의 명령을 바꾼다(2026-11-01 사용자 결정).</summary>
+        public bool TrySetCommand(StageActor actor, StageUnitCommand command)
+        {
+            if (Phase != StagePhase.Preparing || actor == null || actor.IsEnemy || !actor.IsAlive
+                || Board == null || !Board.Actors.Contains(actor))
+                return false;
+            if (actor.Command == command)
+                return true;
+            actor.SetCommand(command);
+            Tell($"{actor.Option?.Label} 명령: {StageUnitCommandRules.Label(command)}");
+            return true;
+        }
+
+        public StageActor FindOpponent(StageActor self, Vector2Int home)
+        {
+            StageActor best = null;
+            // 부하는 명령(사수·기본·추격)에 따라 알아채는 거리와 배치 칸에서 쫓는 거리가 달라진다
+            float range = Mathf.Max(self.EngageRadius, self.Combat.StrikeRange);
+            float score = range * range;
+            float leash = self.IsEnemy ? 0f : Mathf.Max(self.LeashRadius, self.Combat.StrikeRange);
+            // 원거리 부하는 사거리 안에 보이는 공병을 먼저 노린다(2026-11-02 사용자 결정). 없으면 가장 가까운 적.
+            bool huntBreakers = !self.IsEnemy && self.Agent != null && self.Agent.Role == Code.BT.BattleRole.Ranged;
+            float strike = self.Combat.StrikeRange * self.Combat.StrikeRange;
+            StageActor breaker = null;
+            float breakerScore = strike;
+            foreach (StageActor other in Board.Actors)
+            {
+                if (other == null || other == self || !other.IsAlive || other.IsEnemy == self.IsEnemy)
+                    continue;
+                if (!self.IsEnemy && Vector2.Distance(Board.World(home), other.transform.position) > leash)
+                    continue;
+                float distance = (self.transform.position - other.transform.position).sqrMagnitude;
+                bool wanted = huntBreakers && other.BarricadeBreakMultiplier > 1f && distance <= breakerScore;
+                if ((distance < score || wanted) && CanSee(self.transform.position, other.transform.position))
+                {
+                    if (wanted)
+                    {
+                        breaker = other;
+                        breakerScore = distance;
+                    }
+                    if (distance < score)
+                    {
+                        best = other;
+                        score = distance;
+                    }
+                }
+            }
+            return breaker != null ? breaker : best;
+        }
+
+        /// <summary>
+        /// 같은 편에게 너무 붙지 않게 막는다. 먼저 나온(목록 앞) 전투원에게만 비켜 준다.
+        /// 서로 비키면 두 적이 0.5칸 거리에서 함께 멈춰 웨이브가 끝나지 않았다(2026-11-02 1스테이지 실측).
+        /// </summary>
+        public bool CanAdvance(StageActor self, Vector3 next)
+        {
+            float spacing = Definition.CellSize * 0.4f;
+            foreach (StageActor other in Board.Actors)
+            {
+                if (other == self)
+                    break;
+                if (other == null || !other.IsAlive || other.IsEnemy != self.IsEnemy)
+                    continue;
+                float before = (self.transform.position - other.transform.position).sqrMagnitude;
+                float after = (next - other.transform.position).sqrMagnitude;
+                if (after < spacing * spacing && after < before)
+                    return false;
+            }
+            return true;
+        }
+
+        public bool CanSee(Vector3 from, Vector3 to)
+        {
+            float length = Vector2.Distance(from, to);
+            int samples = Mathf.Max(1, Mathf.CeilToInt(length / (Definition.CellSize * 0.25f)));
+            for (int i = 1; i < samples; i++)
+            {
+                Vector2Int cell = Board.Cell(Vector3.Lerp(from, to, (float)i / samples));
+                if (!Board.IsPassable(cell))
+                    return false;
+                if (Board.Barricades.TryGetValue(cell, out StageBarricade wall) && wall != null && wall.IsAlive)
+                    return false;
+            }
+            return true;
+        }
+
+        public void CheckTraps(StageActor enemy) => Placement.CheckTraps(enemy);
+
+        /// <summary>전투 중 준비된 낙석 칸을 누르면 터뜨린다.</summary>
+        public bool TryTriggerDevice(Vector2Int cell)
+        {
+            if (!isActiveAndEnabled || Phase != StagePhase.Fighting || Devices == null || Time.timeScale <= 0f
+                || Code.UI.Popup.PopupController.IsOpen)
+                return false;
+            bool triggered = Devices.TryTrigger(cell, out string reason);
+            if (!string.IsNullOrEmpty(reason))
+                Tell(reason);
+            return triggered;
+        }
+
+        public bool TryRotateDevice(Vector2Int cell)
+        {
+            if (!isActiveAndEnabled || Phase != StagePhase.Preparing || Devices == null
+                || Code.UI.Popup.PopupController.IsOpen || !Catalog.UsesTrapControls)
+                return false;
+            if (Placement.WallTraps.Rotate(cell))
+            {
+                Tell("벽 함정 방향 회전 · 표시된 공격 칸을 확인하세요");
+                return true;
+            }
+            if (!Devices.Rotate(cell))
+                return false;
+            Tell(Board.Pits.Count > 0 ? "밀치기 방향 회전 · 화살표와 구덩이까지의 경로를 확인하세요"
+                : "밀치기 방향 회전 · 화살표와 위험 구역까지의 경로를 확인하세요");
+            return true;
+        }
+
+        public void Refund(int amount) => Refund(amount, true);
+
+        /// <param name="earned">거짓이면 전투 금화 집계에 넣지 않는다. 전투 중 직접 철거한 함정 환급은 번 돈이 아니다
+        /// (설치·강화에 쓴 금화를 빼지 않으므로 되팔기가 수입으로 잡혔다).</param>
+        public void Refund(int amount, bool earned)
+        {
+            if (Phase != StagePhase.Preparing && Phase != StagePhase.Fighting)
+                return;
+            int refund = Mathf.Max(0, amount);
+            Gold += refund;
+            if (earned && Phase == StagePhase.Fighting)
+                Results.AddGold(refund);
+            Notify();
+        }
+
+        public void Tell(string message)
+        {
+            Message = message;
+            Notify();
+        }
+
+        internal void Pay(int amount) => Gold -= amount;
+        internal void RefreshUI() => Notify();
+        private void Notify()
+        {
+            _checkpoint?.MarkDirty();
+            Changed?.Invoke();
+        }
+
+        internal void RestorePreparation(int nextWave, bool locked, int coreHealth, int gold, IEnumerable<string> loadout,
+            IEnumerable<string> artifacts)
+        {
+            WaveIndex = nextWave;
+            _locked = locked;
+            Gold = gold;
+            _loadout.Clear();
+            foreach (string id in loadout)
+                _loadout.Add(id);
+            Artifacts.Clear();
+            foreach (string id in artifacts)
+                Artifacts.Equip(Catalog.FindArtifact(id));
+            mapView.CoreHealth.SetCurrentRatio((float)coreHealth / mapView.CoreHealth.MaxHealth);
+            mapView.ShowDoors(Definition, WaveIndex);
+        }
+
+        private void LateUpdate() => _checkpoint?.Tick();
+
+        private void OnApplicationPause(bool paused)
+        {
+            if (paused)
+                _checkpoint?.Save();
+        }
+
+        /// <summary>씬 객체가 파괴되기 전에 준비 상태를 저장한다.</summary>
+        public void PrepareToLeave()
+        {
+            if (_leaving)
+                return;
+            SkillField?.Close();
+            _checkpoint?.Save();
+            _leaving = true;
+        }
+
+        private void OnApplicationQuit() => PrepareToLeave();
+
+        private void StopActors()
+        {
+            SkillField?.Close();
+            if (Board == null)
+                return;
+            foreach (StageActor actor in Board.Actors)
+                if (actor != null)
+                    actor.Stop();
+        }
+
+        private void OnDisable()
+        {
+            if (!_leaving)
+                _checkpoint?.Save();
+            StopActors();
+            speedController?.SetPauseLock(this, false, null);
+        }
+
+        private void OnEnable()
+        {
+            if (Phase == StagePhase.Fighting && Board != null && SkillField != null && !SkillField.IsActive && !_leaving)
+            {
+                SkillField = new StageSkillField(Board, Definition.EngageRadius);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            SkillField?.Close();
+            Artifacts?.Dispose();
+        }
+    }
+}

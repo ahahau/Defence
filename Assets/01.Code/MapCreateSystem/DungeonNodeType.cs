@@ -1,4 +1,4 @@
-namespace _01.Code.MapCreateSystem
+namespace Code.MapCreateSystem
 {
     public enum DungeonNodeType
     {

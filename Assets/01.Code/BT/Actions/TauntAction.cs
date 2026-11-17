@@ -3,7 +3,7 @@ using Unity.Behavior;
 using UnityEngine;
 using Action = Unity.Behavior.Action;
 
-namespace _01.Code.BT
+namespace Code.BT
 {
     /// <summary>도발(Tank): 사거리 내 적들이 잠시 나를 노리게 어그로를 끈다(후열 보호). 지정 시간 후 Success.</summary>
     [Serializable, Unity.Properties.GeneratePropertyBag]
@@ -38,6 +38,9 @@ namespace _01.Code.BT
         {
             if (_agent == null || !_agent.IsAlive || _agent.IsTraversalLocked)
                 return Status.Failure;
+
+            if (_agent.IsCombatActionLocked)
+                return Status.Running;
 
             _agent.TauntNearbyEnemies(Range != null ? Range.Value : 5f);
             _timer -= Time.deltaTime;

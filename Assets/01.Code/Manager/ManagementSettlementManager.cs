@@ -1,20 +1,25 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
-using _01.Code.Buildings;
-using _01.Code.Core;
-using _01.Code.Events;
-using _01.Code.MapCreateSystem;
-using _01.Code.UI;
-using _01.Code.Units;
+using Code.Core;
+using Code.Events;
+using Code.Manager;
+using Code.Manager.Economy;
+using Code.MapCreateSystem;
+using Code.Progression;
+using Code.UI;
+using Code.Units;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace _01.Code.Manager
+namespace Code.Manager
 {
     public class ManagementSettlementManager : MonoBehaviour
     {
         public static ManagementSettlementManager Current { get; private set; }
+
+        [SerializeField, Tooltip(GameScope.FieldTooltip)] private GameScope scope;
 
         [SerializeField] private GameEventChannelSO dayEventChannel;
         [SerializeField] private GameEventChannelSO costEventChannel;
@@ -24,9 +29,6 @@ namespace _01.Code.Manager
         [Header("Unit Upkeep")]
         [SerializeField, Min(1)] private int upkeepCostDivisor = 5;
 
-        /// <summary>이 피로부터는 정산에서 눈에 띄게 표시한다. 100이면 탈진.</summary>
-        private const int ExhaustionWarningFatigue = 70;
-
         [Header("Panel References")]
         [SerializeField] private GameObject panelRoot;
         [SerializeField] private TMP_Text titleText;
@@ -34,15 +36,19 @@ namespace _01.Code.Manager
         [SerializeField] private TMP_Text expenseText;
         [SerializeField] private TMP_Text netText;
         [SerializeField] private Button closeButton;
+
         [SerializeField] private DungeonProgressReportView progressReportView;
 
         [SerializeField] private string titleFormat = "{0}일차 정산";
 
+        private DungeonGradeManager _dungeonGrade;
+        private MoralePolicyManager _morale;
+        private CostManager _cost;
         private readonly Dictionary<string, int> incomeByLabel = new();
         private readonly Dictionary<string, int> expenseByLabel = new();
         private readonly Dictionary<UnitDataSO, int> hiredUnitCount = new();
-        private readonly Dictionary<Node, Unit> deployedUnitByNode = new();
-        private readonly Dictionary<string, int> dailyFatigueByLabel = new();
+        private readonly HashSet<Unit> deployedUnits = new();
+        private readonly List<KeyValuePair<string, int>> dailyFatigueByLabel = new();
         private int currentDay;
         private int totalIncome;
         /// <summary>정산에서 실제로 금화를 옮길 몫. 즉시 결제된 건설·고용비는 제외한다.</summary>
@@ -50,11 +56,39 @@ namespace _01.Code.Manager
         private int settlementExpense;
         private int totalExpense;
         private bool ledgerClosed;
+        private bool _panelOpen;
+
+        /// <summary>
+        /// 옛 UGUI 정산 패널(<see cref="panelRoot"/>)을 쓰지 않는다. 그 패널은 캔버스를 잃어 깨진 채로 그려진다.
+        /// 정산표는 <see cref="ReportOpened"/>를 듣는 화면(<c>Code.UI.SettlementScreenView</c>, uGUI)이 그린다.
+        /// </summary>
+        private bool _legacyPanelSuppressed = true;
 
         /// <summary>직전 정산에서 운영 자금이 실제로 움직인 액수. 표시용 합계와 구분해야 한다.</summary>
         private int _lastSettlementNet;
 
-        public bool IsPanelOpen => panelRoot != null && panelRoot.activeInHierarchy;
+        /// <summary>직전 청산일에 내야 했던 금액과 실제로 낸 금액. 둘이 다르면 갚지 못한 것이다.</summary>
+        private int _weeklySettlementOwed;
+        private int _weeklySettlementPaid;
+
+        /// <summary>오늘 청산일 미납으로 이미 파산했는가. 부채 한도 판정이 두 번 알리지 않게 한다.</summary>
+        private bool _weeklyBankrupt;
+
+        /// <summary>오늘 영업 종료의 부채 한도 판정과 긴급 상환액. 정산 메모가 읽는다.</summary>
+        private CreditDayEndOutcome _lastCreditOutcome;
+        private int _lastEmergencyRepaid;
+
+        /// <summary>정산표가 열려 있는지. 어느 화면이 그리고 있든 대화·튜토리얼은 이 값만 본다.</summary>
+        public bool IsPanelOpen => _panelOpen || (panelRoot != null && panelRoot.activeInHierarchy);
+
+        /// <summary>방금 만든 정산 보고서. 늦게 붙은 화면도 이걸 읽어 같은 하루를 그린다.</summary>
+        public SettlementReport LatestReport { get; private set; }
+
+        /// <summary>정산표를 열었다. 보고서를 그릴 화면이 구독한다.</summary>
+        public event Action<SettlementReport> ReportOpened;
+
+        /// <summary>정산표를 닫았다.</summary>
+        public event Action ReportClosed;
 
         public void ForceHidePanel()
         {
@@ -63,19 +97,11 @@ namespace _01.Code.Manager
 
         private void OnEnable()
         {
+            _dungeonGrade = GameScope.Resolve(scope, s => s.DungeonGrade, this, nameof(scope));
+            _morale = GameScope.Resolve(scope, s => s.MoralePolicy, this, nameof(scope));
+            _cost = GameScope.Resolve(scope, s => s.Cost, this, nameof(scope));
             Current = this;
-
-            dayEventChannel?.AddListener<DayChangedEvent>(HandleDayChanged);
-            waveEventChannel?.AddListener<WaveEndedEvent>(HandleWaveEnded);
-            nodeEventChannel?.AddListener<UnitAssignedToNodeEvent>(HandleUnitAssigned);
-            nodeEventChannel?.AddListener<UnitReturnedFromNodeEvent>(HandleUnitReturned);
-            costEventChannel?.AddListener<GoldEarnedEvent>(HandleGoldEarned);
-            costEventChannel?.AddListener<GoldLostEvent>(HandleGoldLost);
-            costEventChannel?.AddListener<TreasuryRobbedEvent>(HandleTreasuryRobbed);
-            costEventChannel?.AddListener<BuildCostPaidEvent>(HandleBuildCostPaid);
-            costEventChannel?.AddListener<RosterHirePaidEvent>(HandleRosterHirePaid);
-            costEventChannel?.AddListener<UnitRecoveryCostPaidEvent>(HandleUnitRecoveryCostPaid);
-            closeButton?.onClick.AddListener(HidePanel);
+            RegisterListeners();
             HidePanel();
         }
 
@@ -84,6 +110,30 @@ namespace _01.Code.Manager
             if (Current == this)
                 Current = null;
 
+            UnregisterListeners();
+        }
+
+        private void RegisterListeners()
+        {
+            dayEventChannel?.AddListener<DayChangedEvent>(HandleDayChanged);
+            waveEventChannel?.AddListener<WaveEndedEvent>(HandleWaveEnded);
+            nodeEventChannel?.AddListener<UnitAssignedToNodeEvent>(HandleUnitAssigned);
+            nodeEventChannel?.AddListener<UnitReturnedFromNodeEvent>(HandleUnitReturned);
+            costEventChannel?.AddListener<GoldEarnedEvent>(HandleGoldEarned);
+            costEventChannel?.AddListener<GoldLostEvent>(HandleGoldLost);
+            costEventChannel?.AddListener<TreasuryRobbedEvent>(HandleTreasuryRobbed);
+            costEventChannel?.AddListener<BuildCostPaidEvent>(HandleBuildCostPaid);
+            costEventChannel?.AddListener<BuildCostRefundedEvent>(HandleBuildCostRefunded);
+            costEventChannel?.AddListener<FacilityRepairStartedEvent>(HandleFacilityRepairStarted);
+            costEventChannel?.AddListener<FacilityReopenScheduledEvent>(HandleFacilityReopenScheduled);
+            costEventChannel?.AddListener<FacilityDemolishedEvent>(HandleFacilityDemolished);
+            costEventChannel?.AddListener<RosterHirePaidEvent>(HandleRosterHirePaid);
+            costEventChannel?.AddListener<UnitRecoveryCostPaidEvent>(HandleUnitRecoveryCostPaid);
+            closeButton?.onClick.AddListener(HidePanel);
+        }
+
+        private void UnregisterListeners()
+        {
             dayEventChannel?.RemoveListener<DayChangedEvent>(HandleDayChanged);
             waveEventChannel?.RemoveListener<WaveEndedEvent>(HandleWaveEnded);
             nodeEventChannel?.RemoveListener<UnitAssignedToNodeEvent>(HandleUnitAssigned);
@@ -92,6 +142,10 @@ namespace _01.Code.Manager
             costEventChannel?.RemoveListener<GoldLostEvent>(HandleGoldLost);
             costEventChannel?.RemoveListener<TreasuryRobbedEvent>(HandleTreasuryRobbed);
             costEventChannel?.RemoveListener<BuildCostPaidEvent>(HandleBuildCostPaid);
+            costEventChannel?.RemoveListener<BuildCostRefundedEvent>(HandleBuildCostRefunded);
+            costEventChannel?.RemoveListener<FacilityRepairStartedEvent>(HandleFacilityRepairStarted);
+            costEventChannel?.RemoveListener<FacilityReopenScheduledEvent>(HandleFacilityReopenScheduled);
+            costEventChannel?.RemoveListener<FacilityDemolishedEvent>(HandleFacilityDemolished);
             costEventChannel?.RemoveListener<RosterHirePaidEvent>(HandleRosterHirePaid);
             costEventChannel?.RemoveListener<UnitRecoveryCostPaidEvent>(HandleUnitRecoveryCostPaid);
             closeButton?.onClick.RemoveListener(HidePanel);
@@ -106,9 +160,12 @@ namespace _01.Code.Manager
         {
             currentDay = evt.Day;
             ApplyDailyUpkeep();
+            ApplyFacilityUpkeep();
             AccrueTreasuryInterest();
             ApplyBattleFatigue();
             ApplyNetToGold();
+            SettleWeekIfDue();
+            ResolveCreditLimit();
 
             if (!HasSettlementEntries() || !HasPanelReferences())
             {
@@ -128,7 +185,7 @@ namespace _01.Code.Manager
         /// </summary>
         private void ApplyNetToGold()
         {
-            var costManager = CostManager.Current;
+            var costManager = _cost;
             if (costManager == null)
                 return;
 
@@ -145,13 +202,64 @@ namespace _01.Code.Manager
         }
 
         /// <summary>
+        /// 청산일이면 그 주에 쌓인 빚을 이자까지 한 번에 갚는다.
+        ///
+        /// 하루 정산이 끝난 뒤에 부른다. 그날 번 돈까지 청산에 쓸 수 있어야
+        /// 마지막 날 방어를 잘해 빚을 막는 길이 열린다.
+        /// </summary>
+        private void SettleWeekIfDue()
+        {
+            // 지난 청산의 값이 남으면 평일에도 "빚을 청산했습니다"가 뜨고 빚 안내가 가려진다.
+            _weeklyBankrupt = false;
+            _weeklySettlementPaid = 0;
+            _weeklySettlementOwed = 0;
+            if (!DayManager.IsSettlementDay(currentDay))
+                return;
+
+            var costManager = _cost;
+            if (costManager == null)
+                return;
+
+            var owed = costManager.WeeklyDue;
+            if (owed > 0)
+            {
+                // 갚지 못하면 CostManager가 파산을 알린다. 보고서에는 최소 상환액을 남긴다.
+                _weeklySettlementPaid = costManager.SettleWeek() ? owed : 0;
+                _weeklySettlementOwed = owed;
+                _weeklyBankrupt = _weeklySettlementPaid <= 0;
+            }
+
+            if (!_weeklyBankrupt)
+                costManager.AdvanceContractWeek();
+        }
+
+        /// <summary>
+        /// 청산까지 끝난 뒤 부채 한도를 본다. 청산일 상환으로 한도 아래로 내려왔으면 그것까지 쳐준다.
+        /// 청산일 미납으로 이미 파산했으면 두 번 알리지 않는다.
+        /// </summary>
+        private void ResolveCreditLimit()
+        {
+            _lastCreditOutcome = CreditDayEndOutcome.WithinLimit;
+            _lastEmergencyRepaid = 0;
+
+            var costManager = _cost;
+            if (costManager == null)
+                return;
+
+            if (_weeklyBankrupt)
+                return;
+
+            _lastCreditOutcome = costManager.ResolveDayEndCredit(out _lastEmergencyRepaid);
+        }
+
+        /// <summary>
         /// 이 수입·지출을 정산 순액에도 넣어야 하는가.
         /// CostManager가 그 자리에서 금화를 옮겼다면(대기 중 정책·이벤트 보상 등) 여기서 또 세면 두 번 반영된다.
         /// 두 쪽이 같은 플래그를 보므로 이벤트 수신 순서가 어떻든 판단이 갈리지 않는다.
         /// </summary>
-        private static bool MovesAtSettlement()
+        private bool MovesAtSettlement()
         {
-            var costManager = CostManager.Current;
+            var costManager = _cost;
             return costManager == null || costManager.IsSettlementDeferred;
         }
 
@@ -179,6 +287,27 @@ namespace _01.Code.Manager
             RecordExpense("건설 투자", evt.GoldAmount, false);
         }
 
+        private void HandleBuildCostRefunded(BuildCostRefundedEvent evt)
+        {
+            RecordIncome("건설 취소 환불", evt.GoldAmount, false);
+        }
+
+        private void HandleFacilityRepairStarted(FacilityRepairStartedEvent evt)
+        {
+            RecordExpense("시설 수리비", evt.GoldCost, false);
+        }
+
+        private void HandleFacilityReopenScheduled(FacilityReopenScheduledEvent evt)
+        {
+            // 재개장 예약에서 이미 결제했으므로 전체 지출만 기록한다.
+            RecordExpense("시설 재개장비", evt.GoldCost, false);
+        }
+
+        private void HandleFacilityDemolished(FacilityDemolishedEvent evt)
+        {
+            RecordIncome("철거 환불", evt.Refund, false);
+        }
+
         private void HandleRosterHirePaid(RosterHirePaidEvent evt)
         {
             AddHiredUnit(evt.Unit);
@@ -195,13 +324,13 @@ namespace _01.Code.Manager
             if (evt.Node == null || evt.Instance == null)
                 return;
 
-            deployedUnitByNode[evt.Node] = evt.Instance;
+            deployedUnits.Add(evt.Instance);
         }
 
         private void HandleUnitReturned(UnitReturnedFromNodeEvent evt)
         {
-            if (evt.Node != null)
-                deployedUnitByNode.Remove(evt.Node);
+            if (evt.Instance != null)
+                deployedUnits.Remove(evt.Instance);
         }
 
         private void AddHiredUnit(UnitDataSO unit)
@@ -250,13 +379,20 @@ namespace _01.Code.Manager
             RecordExpense(BuildUpkeepLabel(), upkeep);
         }
 
+        private void ApplyFacilityUpkeep()
+        {
+            var upkeep = FacilityEconomyRules.CalculateDailyUpkeep();
+            if (upkeep > 0)
+                RecordExpense("시설 운영비", upkeep);
+        }
+
         /// <summary>
         /// 민심이 유지비를 얼마나 밀어올렸는지 항목 이름에 적는다.
         /// 액수만 바뀌면 왜 늘었는지 알 수 없어 민심을 관리할 이유가 보이지 않는다.
         /// </summary>
-        private static string BuildUpkeepLabel()
+        private string BuildUpkeepLabel()
         {
-            var morale = MoralePolicyManager.Current;
+            var morale = _morale;
             if (morale == null)
                 return "유지비";
 
@@ -269,20 +405,37 @@ namespace _01.Code.Manager
                 : $"유지비 (민심 {morale.CurrentMorale} · -{Mathf.RoundToInt((1f - multiplier) * 100f)}%)";
         }
 
+        /// <summary>
+        /// 이 부하 한 명을 데리고 있으면 하루에 드는 유지비(지금 민심 기준). 고용 화면이 계약 전에 보여 준다.
+        /// </summary>
+        public int EstimateUnitUpkeep(UnitDataSO unit)
+        {
+            if (unit == null)
+                return 0;
+
+            var upkeep = UnitMarketRules.DailyUpkeep(unit.Cost, upkeepCostDivisor);
+            var morale = _morale;
+            return morale != null ? Mathf.Max(1, Mathf.RoundToInt(upkeep * morale.UpkeepMultiplier)) : upkeep;
+        }
+
         private int CalculateDailyUpkeep()
         {
+            // 이어하기는 고용 이벤트를 다시 발행하지 않는다. 복원된 명단을 기준으로 계산한다.
+            var roster = HiredUnitRoster.Current;
+            roster?.CopyHiredUnitCounts(hiredUnitCount);
             var total = 0;
             foreach (var pair in hiredUnitCount)
             {
                 if (pair.Key == null || pair.Value <= 0)
                     continue;
 
-                var unitUpkeep = Mathf.Max(1, Mathf.CeilToInt(pair.Key.Cost / (float)upkeepCostDivisor));
-                total += unitUpkeep * pair.Value;
+                // 유지비는 배치한 부하만 낸다. 대기 명단의 부하는 유지비·상태 변화가 없다(기획서).
+                var deployed = roster != null ? Mathf.Min(pair.Value, roster.GetDeployedUnitCount(pair.Key)) : pair.Value;
+                total += UnitMarketRules.DailyUpkeep(pair.Key.Cost, upkeepCostDivisor) * deployed;
             }
 
             // 민심이 낮으면 같은 부하를 붙잡아 두는 데 더 든다.
-            var morale = MoralePolicyManager.Current;
+            var morale = _morale;
             if (morale != null && total > 0)
                 total = Mathf.Max(1, Mathf.RoundToInt(total * morale.UpkeepMultiplier));
 
@@ -295,12 +448,20 @@ namespace _01.Code.Manager
             // 어제 값이 그대로 남아 오늘 것처럼 보이면 안 되므로 장부부터 연다.
             EnsureLedgerOpen();
 
-            foreach (var unit in deployedUnitByNode.Values)
+            dailyFatigueByLabel.Clear();
+            // 이어하기는 고용 명단을 소비하는 배치 이벤트 없이 노드에 직접 복원한다.
+            foreach (var node in Node.ActiveNodes)
+                foreach (var placement in node.UnitPlacements)
+                    if (placement?.Instance != null && placement.Instance is not MainUnit)
+                        deployedUnits.Add(placement.Instance);
+            deployedUnits.RemoveWhere(unit => unit == null);
+            foreach (var unit in deployedUnits)
             {
                 if (unit == null)
                     continue;
 
-                dailyFatigueByLabel[ResolveUnitLabel(unit)] = Mathf.RoundToInt(unit.Fatigue);
+                dailyFatigueByLabel.Add(new KeyValuePair<string, int>(
+                    ResolveUnitLabel(unit), Mathf.RoundToInt(unit.Fatigue)));
             }
         }
 
@@ -375,6 +536,35 @@ namespace _01.Code.Manager
 
         private void ShowPanel()
         {
+            _panelOpen = true;
+
+            // 정산 중에는 시간이 완전히 멈춘다. 어느 화면이 정산표를 그리든 같아야 하므로
+            // 장부를 쥔 여기서 멈춘다 — 표를 읽는 동안 다음 영업이 돌기 시작하면 안 된다.
+            GameSpeedController.Current?.Suspend(this);
+            ReportOpened?.Invoke(LatestReport);
+
+            if (_legacyPanelSuppressed)
+                return;
+
+            if (progressReportView != null && progressReportView.transform is RectTransform report)
+            {
+                report.sizeDelta = new Vector2(760f, 260f);
+                report.anchoredPosition = new Vector2(0f, -425f);
+            }
+            if (netText != null)
+            {
+                netText.rectTransform.sizeDelta = new Vector2(700f, 170f);
+                netText.rectTransform.anchoredPosition = new Vector2(0f, -645f);
+                netText.enableAutoSizing = true;
+                netText.fontSizeMin = 14f;
+                netText.fontSizeMax = 20f;
+                netText.alignment = TextAlignmentOptions.Top;
+                netText.textWrappingMode = TextWrappingModes.Normal;
+                netText.margin = new Vector4(0f, 6f, 0f, 6f);
+                var divider = netText.transform.parent.Find("ProgressDivider") as RectTransform;
+                if (divider != null)
+                    divider.anchoredPosition = new Vector2(divider.anchoredPosition.x, -552f);
+            }
             panelRoot.SetActive(true);
             panelRoot.transform.SetAsLastSibling();
         }
@@ -383,106 +573,380 @@ namespace _01.Code.Manager
         {
             if (panelRoot != null)
                 panelRoot.SetActive(false);
+
+            if (!_panelOpen)
+                return;
+
+            _panelOpen = false;
+            GameSpeedController.Current?.Release(this);
+            ReportClosed?.Invoke();
         }
 
         private void RefreshPanel()
         {
-            titleText.text = string.Format(titleFormat, Mathf.Max(0, currentDay));
-            incomeText.text = BuildLedgerText("획득 금화", incomeByLabel, totalIncome, '+');
-            expenseText.text = BuildExpenseText();
-            progressReportView?.RefreshReport();
+            LatestReport = BuildReport();
+            if (_legacyPanelSuppressed)
+                return;
+
+            RenderLegacyPanel(LatestReport);
+        }
+
+        /// <summary>
+        /// 오늘의 장부를 화면이 읽을 보고서로 옮긴다.
+        ///
+        /// 문구를 여기서 한 번만 정해야 UGUI와 UI Toolkit이 같은 하루를 같은 말로 설명한다.
+        /// 색은 정하지 않는다 — 리치 텍스트와 USS가 색을 다루는 방식이 달라 각자 칠해야 한다.
+        /// </summary>
+        private SettlementReport BuildReport()
+        {
+            var income = new List<SettlementLedgerLine>(incomeByLabel.Count);
+            foreach (var pair in incomeByLabel)
+                income.Add(new SettlementLedgerLine(pair.Key, pair.Value));
+
+            var expense = new List<SettlementLedgerLine>(expenseByLabel.Count);
+            foreach (var pair in expenseByLabel)
+                expense.Add(new SettlementLedgerLine(pair.Key, pair.Value));
+
+            var fatigue = new List<SettlementFatigueLine>(dailyFatigueByLabel.Count);
+            foreach (var pair in dailyFatigueByLabel)
+                fatigue.Add(new SettlementFatigueLine(pair.Key, pair.Value));
+            // 지친 순으로 세워야 손봐야 할 부하가 맨 앞에 온다.
+            fatigue.Sort((left, right) => right.Fatigue.CompareTo(left.Fatigue));
+
+            var notes = new List<SettlementNote>();
+            AppendBattleNotes(notes);
+            AppendCounterplayNotes(notes);
+            AppendPartyFundNote(notes);
+            AppendBossForecastNote(notes);
+            AppendRepairForecastNote(notes);
+            AppendDebtNote(notes);
+
+            return new SettlementReport(
+                Mathf.Max(0, currentDay),
+                income,
+                expense,
+                totalIncome,
+                totalExpense,
+                _lastSettlementNet,
+                fatigue,
+                notes,
+                BuildUnlockSection(true),
+                BuildUnlockSection(false));
+        }
+
+        /// <summary>
+        /// 해금 로드맵 한 묶음을 만든다.
+        ///
+        /// 줄과 총계가 같은 곳에서 나와야 한다 — 표시용 목록으로 만들면 "1/9" 밑에 세 줄만 서고
+        /// 해금 예정인 항목이 통째로 안 보인다. 카탈로그 순서는 작성 순서라 일차가 뒤섞여 있어
+        /// 해금 일차 순으로 다시 세운다.
+        /// </summary>
+        private static SettlementUnlockSection BuildUnlockSection(bool forUnits)
+        {
+            var roster = HiredUnitRoster.Current;
+            var lines = new List<SettlementUnlockLine>();
+            var catalog = roster?.UnlockCatalog?.Entries;
+            if (catalog != null)
+            {
+                var entries = new List<DungeonUnlockEntry>(catalog.Count);
+                foreach (var entry in catalog)
+                {
+                    if (entry == null || (forUnits ? entry.Unit == null : entry.Building == null))
+                        continue;
+
+                    entries.Add(entry);
+                }
+
+                entries.Sort((left, right) => UnlockOrder(left).CompareTo(UnlockOrder(right)));
+                foreach (var entry in entries)
+                {
+                    var isUnlocked = forUnits
+                        ? roster.IsUnlocked(entry.Unit)
+                        : Contains(roster.UnlockedBuildings, entry.Building);
+                    lines.Add(new SettlementUnlockLine(
+                        forUnits ? entry.Unit.Name : entry.Building.DisplayName,
+                        isUnlocked,
+                        isUnlocked ? string.Empty : ResolveUnlockHint(entry.UnlockHint)));
+                }
+            }
+
+            var unlockedCount = forUnits
+                ? roster?.UnlockedUnits?.Count ?? 0
+                : roster?.UnlockedBuildings?.Count ?? 0;
+            var totalCount = roster != null
+                ? forUnits ? roster.UnlockableUnitCount : roster.UnlockableBuildingCount
+                : 0;
+
+            return new SettlementUnlockSection(
+                forUnits ? "몬스터 해금" : "시설 해금",
+                forUnits ? "고용 가능" : "설치 가능",
+                unlockedCount,
+                totalCount,
+                lines);
+        }
+
+        /// <summary>처음부터 열려 있는 항목이 맨 위, 나머지는 해금 일차 순.</summary>
+        private static int UnlockOrder(DungeonUnlockEntry entry)
+        {
+            return entry.StartsUnlocked ? 0 : Mathf.Max(1, entry.UnlockDay);
+        }
+
+        private static string ResolveUnlockHint(string hint)
+        {
+            return string.IsNullOrWhiteSpace(hint) ? "던전 발전 조건을 충족하면 해금" : hint;
+        }
+
+        private static bool Contains<T>(IReadOnlyList<T> entries, T value) where T : class
+        {
+            if (entries == null || value == null)
+                return false;
+
+            for (var i = 0; i < entries.Count; i++)
+            {
+                if (entries[i] == value)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private void RenderLegacyPanel(SettlementReport report)
+        {
+            titleText.text = string.Format(titleFormat, report.Day);
+            incomeText.text = BuildLedgerText("획득 금화", report.Income, report.TotalIncome, '+');
+            expenseText.text = BuildLedgerText("차감 내역", report.Expense, report.TotalExpense, '-');
+            progressReportView?.RefreshReport(report);
 
             // 운영 자금이 실제로 얼마나 늘고 줄었는지를 앞세운다. 이게 내일 쓸 수 있는 돈이다.
-            var net = _lastSettlementNet;
-            var recorded = totalIncome - totalExpense;
-            netText.text = $"운영 자금 {FormatSignedGold(net)}\n획득 +{totalIncome}G  ·  지출 -{totalExpense}G"
-                           + (recorded != net
-                               ? $"\n<size=85%>이 중 {FormatSignedGold(recorded - net)}는 이미 치렀거나 금고에 쌓였습니다</size>"
-                               : string.Empty)
-                           + BuildBattleSummaryText() + BuildFatigueText() + BuildDebtText();
-            netText.color = net >= 0 ? new Color(0.45f, 0.95f, 0.55f) : new Color(1f, 0.45f, 0.4f);
+            var summary = new StringBuilder($"운영 자금 {FormatSignedGold(report.Net)}");
+            summary.Append($"\n획득 {GoldText.Signed(report.TotalIncome)}  ·  지출 -{GoldText.Amount(report.TotalExpense)}");
+            if (report.DeferredDelta != 0)
+                summary.Append($"\n<size=85%>그중 {FormatSignedGold(report.DeferredDelta)}는 금고·선지출</size>");
+
+            foreach (var note in report.Notes)
+                summary.Append($"\n<size=85%>{WrapLegacyColor(note.Text, note.Tone)}</size>");
+
+            AppendLegacyFatigueLine(summary, report.Fatigue);
+
+            netText.text = summary.ToString();
+            netText.color = report.Net >= 0 ? new Color(0.45f, 0.95f, 0.55f) : new Color(1f, 0.45f, 0.4f);
         }
 
         /// <summary>
         /// 오늘 내보낸 부하가 얼마나 지쳤는지. 다음 날 그대로 또 세울지, 쉬게 할지 여기서 판단한다.
-        /// 지친 순으로 세워야 손봐야 할 부하가 맨 앞에 온다.
         /// </summary>
-        private string BuildFatigueText()
+        private static void AppendLegacyFatigueLine(StringBuilder summary, IReadOnlyList<SettlementFatigueLine> fatigue)
         {
-            if (dailyFatigueByLabel.Count == 0)
-                return string.Empty;
+            if (fatigue.Count == 0)
+                return;
 
-            var sorted = new List<KeyValuePair<string, int>>(dailyFatigueByLabel);
-            sorted.Sort((left, right) => right.Value.CompareTo(left.Value));
-
-            var line = new StringBuilder("\n<size=85%>부하 피로");
-            foreach (var pair in sorted)
-                line.Append($"  ·  {pair.Key} {FormatFatigue(pair.Value)}");
-
-            line.Append("</size>");
-            return line.ToString();
+            summary.Append("\n<size=85%>부하 피로");
+            foreach (var line in fatigue)
+                summary.Append($"  ·  {line.Label} {FormatLegacyFatigue(line)}");
+            summary.Append("</size>");
         }
 
         /// <summary>탈진은 붉게, 지친 상태는 노랗게 — 숫자만으로는 눈에 안 들어온다.</summary>
-        private static string FormatFatigue(int fatigue)
+        private static string FormatLegacyFatigue(SettlementFatigueLine line)
         {
-            if (fatigue >= 100)
-                return $"<color=#FF7A6B>탈진 {fatigue}</color>";
+            if (line.IsExhausted)
+                return $"<color=#FF7A6B>탈진 {line.Fatigue}</color>";
 
-            return fatigue >= ExhaustionWarningFatigue
-                ? $"<color=#FFC85A>{fatigue}</color>"
-                : fatigue.ToString();
+            return line.IsTired ? $"<color=#FFC85A>{line.Fatigue}</color>" : line.Fatigue.ToString();
         }
 
-        /// <summary>
-        /// 그날 방어전의 전과. 보상 패널을 없애면서 갈 곳을 잃은 정보라 정산에 붙인다.
-        /// </summary>
-        private static string BuildBattleSummaryText()
+        private static string WrapLegacyColor(string text, SettlementNoteTone tone)
+        {
+            return tone switch
+            {
+                SettlementNoteTone.Good => $"<color=#8FD9A0>{text}</color>",
+                SettlementNoteTone.Caution => $"<color=#E0B070>{text}</color>",
+                SettlementNoteTone.Danger => $"<color=#FF7A6B>{text}</color>",
+                SettlementNoteTone.Accent => $"<color=#9FE6B8>{text}</color>",
+                _ => text
+            };
+        }
+
+        /// <summary>그날 영업 결과. 방문객 처리와 시설 성과를 정산에 붙인다.</summary>
+        private void AppendBattleNotes(List<SettlementNote> notes)
         {
             var wave = WaveManager.Current;
             if (wave == null || wave.TotalEnemyCount <= 0)
-                return string.Empty;
+                return;
 
+            var battle = new StringBuilder(
+                $"방문객 {wave.TotalEnemyCount}명  ·  제압 {wave.KillCount}명  ·  받은 피해 {wave.WaveDamageTaken}");
             // 함정 몫을 따로 적어야 함정에 쓴 돈이 일을 했는지 판단할 수 있다.
-            var trapShare = wave.WaveTrapDamage > 0
-                ? $"  ·  <color=#C79BFF>함정 {wave.WaveTrapDamage}</color>"
-                : string.Empty;
+            if (wave.WaveTrapDamage > 0)
+                battle.Append($"  ·  함정 {wave.WaveTrapDamage}");
+            notes.Add(new SettlementNote(battle.ToString(), summaryText:
+                $"제압 {wave.KillCount}/{wave.TotalEnemyCount}  ·  함정 피해 {wave.WaveTrapDamage}"));
 
-            return $"\n<size=85%>격퇴 {wave.KillCount}/{wave.TotalEnemyCount}"
-                   + $"  ·  가한 피해 {wave.WaveDamageDealt}"
-                   + trapShare
-                   + $"  ·  받은 피해 {wave.WaveDamageTaken}"
-                   + $"  ·  치명타 {wave.WaveCriticalHits}</size>";
+            var grade = _dungeonGrade;
+            if (grade != null)
+            {
+                notes.Add(new SettlementNote(
+                    $"던전 등급 {FormatSigned(grade.LastGradeDelta)} → {grade.Grade} ({grade.GradeLabel})"
+                    + $"  ·  누적 처치 {grade.TotalKills}"));
+            }
+
+            notes.Add(wave.LastObjectiveCompleted
+                ? new SettlementNote(
+                    $"{wave.LastObjectiveTitle} 완료 · 보너스 {GoldText.Signed(wave.LastObjectiveRewardGold)}",
+                    SettlementNoteTone.Good, $"목표 달성 · {GoldText.Signed(wave.LastObjectiveRewardGold)}")
+                : new SettlementNote($"{wave.LastObjectiveTitle} 실패", SettlementNoteTone.Caution, "목표 미달성"));
         }
 
-        /// <summary>빚이 있을 때만 한 줄 덧붙인다. 한도가 얼마 안 남았는지가 핵심 정보다.</summary>
-        private static string BuildDebtText()
+        /// <summary>이번 방어에서 적 특성을 실제로 역이용한 성과만 보여 준다.</summary>
+        /// <summary>
+        /// 모험가가 살아 나가며 들고 간 공동 자금. 놓친 파티가 얼마를 가져갔는지 보여야 끝까지 잡을 이유가 보인다.
+        /// </summary>
+        private static void AppendPartyFundNote(List<SettlementNote> notes)
         {
-            var costManager = CostManager.Current;
+            var escaped = Code.Enemies.PartyFundLedger.Active.EscapedTotal;
+            if (escaped <= 0)
+                return;
+
+            notes.Add(new SettlementNote(
+                $"살아 나간 모험가가 공동 자금 {GoldText.Amount(escaped)}를 들고 갔습니다",
+                SettlementNoteTone.Caution));
+        }
+
+        /// <summary>
+        /// 내일이 보스 날이면 보스와 패배 조건을 미리 알린다. 하루 전에 알아야 배치를 바꿀 수 있다.
+        /// </summary>
+        private void AppendBossForecastNote(List<SettlementNote> notes)
+        {
+            var wave = WaveManager.Current;
+            if (wave == null || !wave.TryGetBossPreview(currentDay + 1, out var title, out var conditions))
+                return;
+
+            notes.Add(new SettlementNote(
+                string.IsNullOrEmpty(conditions) ? $"내일 보스: {title}" : $"내일 보스: {title}  ·  {conditions}",
+                SettlementNoteTone.Danger));
+        }
+
+        private static void AppendCounterplayNotes(List<SettlementNote> notes)
+        {
+            var wave = WaveManager.Current;
+            if (wave == null)
+                return;
+
+            var line = new StringBuilder();
+            if (wave.WaveCowardTrapTriggers > 0)
+                AppendCounterplayEntry(line, $"겁쟁이 함정 압박 {wave.WaveCowardTrapTriggers}회 (경계 +{wave.WaveCowardBonusFear})");
+            if (wave.WavePriestHealingPrevented > 0)
+                AppendCounterplayEntry(line, $"성직자 치유 {wave.WavePriestHealingPrevented} 차단");
+            if (wave.WaveShopaholicBonusGold > 0)
+                AppendCounterplayEntry(line, $"쇼핑광 추가 수익 {GoldText.Signed(wave.WaveShopaholicBonusGold)}");
+
+            if (line.Length > 0)
+                notes.Add(new SettlementNote($"상성 활용  ·  {line}", SettlementNoteTone.Accent));
+        }
+
+        private static void AppendCounterplayEntry(StringBuilder line, string entry)
+        {
+            if (line.Length > 0)
+                line.Append("  ·  ");
+            line.Append(entry);
+        }
+
+        /// <summary>
+        /// 다 닳아 문을 닫은 시설을 알린다. 운영비는 계속 나가는데 벌이가 없으므로
+        /// 고치든 허물든 정해야 한다.
+        /// </summary>
+        private void AppendRepairForecastNote(List<SettlementNote> notes)
+        {
+            var wornOut = FacilityEconomyRules.CountWornOutFacilities();
+            if (wornOut <= 0)
+                return;
+
+            notes.Add(new SettlementNote(
+                $"내구도가 바닥난 시설 {wornOut}곳  ·  수리하기 전까지 손님을 받지 않습니다",
+                SettlementNoteTone.Caution, $"시설 {wornOut}곳 수리 필요"));
+        }
+
+        /// <summary>
+        /// 빚 한 줄. 청산일에는 방금 갚은 금액을, 평소에는 며칠 뒤 얼마를 내야 하는지 보여준다.
+        /// 청산일이 닥쳐서야 알면 손쓸 수 없으므로 남은 날과 금액을 항상 같이 적는다.
+        /// </summary>
+        private void AppendDebtNote(List<SettlementNote> notes)
+        {
+            AppendCreditNote(notes);
+
+            if (_weeklySettlementPaid > 0)
+            {
+                notes.Add(new SettlementNote(
+                    $"빚 {GoldText.Amount(_weeklySettlementPaid)}를 청산했습니다", SettlementNoteTone.Good,
+                    $"청산 {GoldText.Amount(_weeklySettlementPaid)} 상환"));
+                return;
+            }
+
+            var costManager = _cost;
             if (costManager == null || costManager.CurrentDebt <= 0)
-                return string.Empty;
+                return;
 
-            return $"\n<color=#FF7A6B>부채 {costManager.CurrentDebt}G / 한도 {costManager.DebtLimit}G"
-                   + $"  ·  남은 한도 {costManager.RemainingCredit}G</color>";
+            var daysLeft = DayManager.DaysUntilSettlementFrom(currentDay);
+            var due = costManager.WeeklyDue;
+            notes.Add(new SettlementNote(
+                daysLeft > 0
+                    ? $"빚 {GoldText.Amount(costManager.CurrentDebt)}  ·  {daysLeft}일 뒤 최소 {GoldText.Amount(due)}를 내야 합니다"
+                    : $"빚 {GoldText.Amount(costManager.CurrentDebt)}  ·  오늘 최소 {GoldText.Amount(due)}를 내야 합니다",
+                SettlementNoteTone.Danger));
         }
 
-        private string BuildLedgerText(string title, Dictionary<string, int> ledger, int total, char sign)
+        /// <summary>
+        /// 부채 한도 판정 결과. 한도를 넘었다는 사실과 경고가 다음 주에 얼마나 무거워지는지를 같이 적는다.
+        /// </summary>
+        private void AppendCreditNote(List<SettlementNote> notes)
         {
-            if (ledger.Count == 0)
-                return $"{title}\n· 없음\n합계 {sign}0G";
+            var costManager = _cost;
+            if (costManager == null)
+                return;
 
-            var lines = new StringBuilder();
-            lines.AppendLine(title);
-            foreach (var pair in ledger)
-                lines.AppendLine($"· {pair.Key}  {sign}{pair.Value}G");
+            if (_lastEmergencyRepaid > 0)
+                notes.Add(new SettlementNote(
+                    $"한도를 넘은 빚 {GoldText.Amount(_lastEmergencyRepaid)}를 금화로 긴급 상환했습니다",
+                    SettlementNoteTone.Caution));
 
-            lines.Append($"합계 {sign}{total}G");
-            return lines.ToString();
+            var warnings = costManager.CreditWarnings;
+            if (_lastCreditOutcome == CreditDayEndOutcome.Bankrupt)
+            {
+                notes.Add(new SettlementNote("부채 한도를 지키지 못해 파산했습니다", SettlementNoteTone.Danger));
+                return;
+            }
+
+            if (_lastCreditOutcome == CreditDayEndOutcome.Warned)
+            {
+                var interest = Mathf.RoundToInt(CreditWarningRules.InterestPerWarning * warnings * 100f);
+                var minimum = Mathf.RoundToInt(CreditWarningRules.MinimumPrincipalPerWarning * warnings * 100f);
+                var last = warnings >= CreditWarningRules.MaxWarnings
+                    ? "  ·  한 번 더 넘으면 파산합니다"
+                    : string.Empty;
+                notes.Add(new SettlementNote(
+                    $"신용 경고 {warnings}/{CreditWarningRules.MaxWarnings}  ·  이자 +{interest}%p, 최소 상환 +{minimum}%p{last}",
+                    SettlementNoteTone.Danger));
+            }
+            else if (warnings > 0)
+            {
+                notes.Add(new SettlementNote(
+                    $"신용 경고 {warnings}/{CreditWarningRules.MaxWarnings}  ·  빚을 다 갚으면 지워집니다",
+                    SettlementNoteTone.Caution));
+            }
         }
 
-        private string BuildExpenseText()
+        private static string BuildLedgerText(string title, IReadOnlyList<SettlementLedgerLine> lines, int total, char sign)
         {
-            return BuildLedgerText("차감 내역", expenseByLabel, totalExpense, '-');
+            if (lines.Count == 0)
+                return $"{title}\n· 없음\n합계 {sign}{GoldText.Amount(0)}";
+
+            var text = new StringBuilder();
+            text.AppendLine(title);
+            foreach (var line in lines)
+                text.AppendLine($"· {line.Label}  {sign}{GoldText.Amount(line.Amount)}");
+
+            text.Append($"합계 {sign}{GoldText.Amount(total)}");
+            return text.ToString();
         }
 
         private bool HasSettlementEntries()
@@ -495,18 +959,20 @@ namespace _01.Code.Manager
                    || dailyFatigueByLabel.Count > 0);
         }
 
+        /// <summary>정산표를 그릴 화면이 있는가. 옛 UGUI 패널을 쓰지 않으면 그 참조는 없어도 된다.</summary>
         private bool HasPanelReferences()
         {
-            return panelRoot != null
+            return _legacyPanelSuppressed
+                   || panelRoot != null
                    && titleText != null
                    && incomeText != null
                    && expenseText != null
                    && netText != null;
         }
 
-        private string FormatGold(int amount)
+        private static string FormatGold(int amount)
         {
-            return amount >= 0 ? $"{amount}G" : $"-{Mathf.Abs(amount)}G";
+            return GoldText.Amount(amount);
         }
 
         private string ResolveIncomeLabel(GoldChangeSource source)
@@ -514,9 +980,16 @@ namespace _01.Code.Manager
             return source switch
             {
                 GoldChangeSource.WaveReward => "웨이브 보상",
+                GoldChangeSource.Bounty => "모험가 처치",
+                GoldChangeSource.PartyDrop => "모험가 낙전",
+                GoldChangeSource.PartyWipe => "파티 전멸 회수",
+                GoldChangeSource.Church => "교회 부활비",
                 GoldChangeSource.Mine => "광산 수익",
                 GoldChangeSource.Inn => "여관 수익",
                 GoldChangeSource.Store => "상점 수익",
+                GoldChangeSource.Blacksmith => "대장간 수익",
+                GoldChangeSource.Exploitation => "착취 작전 보너스",
+                GoldChangeSource.WaveObjective => "선택 목표 보너스",
                 GoldChangeSource.Dialogue => "이벤트 수익",
                 GoldChangeSource.Policy => "정책 수입",
                 _ => "기타 수익"
@@ -530,14 +1003,17 @@ namespace _01.Code.Manager
                 GoldChangeSource.TreasuryLoot => "금고 약탈",
                 GoldChangeSource.Dialogue => "이벤트 비용",
                 GoldChangeSource.Policy => "정책 비용",
+                GoldChangeSource.UnitRevival => "부하 부활비 (모험가 지갑으로)",
                 _ => "기타 비용"
             };
         }
 
-        private string FormatSignedGold(int amount)
+        private static string FormatSignedGold(int amount)
         {
-            return amount > 0 ? $"+{amount}G" : FormatGold(amount);
+            return GoldText.Signed(amount);
         }
+
+        private static string FormatSigned(int amount) => amount > 0 ? $"+{amount}" : amount.ToString();
 
         private string ResolveUnitLabel(Unit unit)
         {

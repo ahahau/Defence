@@ -1,7 +1,7 @@
-using _01.Code.Enemies;
+using Code.Enemies;
 using UnityEngine;
 
-namespace _01.Code.StatusEffects
+namespace Code.StatusEffects
 {
     [CreateAssetMenu(fileName = "StatusEffectData", menuName = "Defence/Status Effect")]
     public class StatusEffectDataSO : ScriptableObject

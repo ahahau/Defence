@@ -1,29 +1,31 @@
 using System.Collections;
 using System.Text;
-using _01.Code.Core;
-using _01.Code.Progression;
-using _01.Code.UI;
+using Code.Core;
+using Code.Progression;
+using Code.UI;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-namespace _01.Code.Manager
+namespace Code.Manager
 {
     /// <summary>보스 웨이브 연출 담당 — 시작 배너, 처치 시 카메라 줌인+슬로모 시네마틱, 승리 패널.
     /// UI는 프리팹으로 구성하며 Resources/UI에 기본 프리팹을 둔다.
     /// WaveManager가 생성/호출한다.</summary>
     public class BossWavePresenter : MonoBehaviour
     {
+        [Header("Runtime Dependencies")]
+        [SerializeField] private DayManager dayManager;
+        [SerializeField] private WaveManager waveManager;
+        [SerializeField] private RunSummarySystem runSummarySystem;
+        [SerializeField] private CostManager costManager;
+        [SerializeField] private HiredUnitRoster hiredUnitRoster;
+        [SerializeField] private GameSpeedController gameSpeedController;
+
         [Header("Banner")]
-        [SerializeField] private Canvas uiCanvas;
-        [SerializeField] private BossWaveUiView bannerPrefab;
-        [SerializeField] private BossWaveUiView victoryPrefab;
-        [SerializeField] private BossWaveUiView bannerView;
-        [SerializeField] private BossWaveUiView victoryView;
         [SerializeField, Min(0.1f)] private float bannerHoldDuration = 1.6f;
-        [SerializeField] private Color bossBannerColor = new(0.85f, 0.15f, 0.1f, 1f);
         [SerializeField] private Color finalBannerColor = new(1f, 0.78f, 0.2f, 1f);
         [SerializeField, Tooltip("패배 결과 화면의 강조색.")]
         private Color defeatPanelColor = new(0.9f, 0.3f, 0.25f, 1f);
@@ -41,51 +43,42 @@ namespace _01.Code.Manager
         /// <summary>처치 시네마틱 진행 중인지(승리 패널 타이밍 조율용).</summary>
         public bool IsCinematicRunning => _cinematicRunning;
 
+        /// <summary>보스 배너를 띄운다. 그리는 화면은 <c>BossBannerView</c>.</summary>
+        public event System.Action<BossBannerRequest> BannerRequested;
+
+        /// <summary>판이 끝나 결과 화면을 띄운다(제목, 한 줄 요약, 이겼는가).</summary>
+        public event System.Action<string, string, bool> RunEndRequested;
+
+        private void Awake()
+        {
+            ResolveDependencies();
+        }
+
         // ── Banner ──────────────────────────────────────────────
 
         /// <param name="bossTitle">그 날 보스의 이름. 비어 있으면 기본 문구로 떨어진다.</param>
         /// <param name="bossSubtitle">보스마다 다른 경고 문구. 무엇을 조심해야 하는지 알린다.</param>
         public void ShowBossBanner(int day, bool isFinal, string bossTitle = null, string bossSubtitle = null)
         {
-            if (uiCanvas == null)
-                return;
-
-            var accent = isFinal ? finalBannerColor : bossBannerColor;
-            var title = !string.IsNullOrWhiteSpace(bossTitle)
-                ? bossTitle
-                : isFinal ? "최후의 결전" : "보스 습격";
             var subtitle = !string.IsNullOrWhiteSpace(bossSubtitle)
-                ? $"Day {day} — {bossSubtitle}"
+                ? bossSubtitle
                 : isFinal
-                    ? $"Day {day} — 이 습격만 막아내면 던전을 지켜낸다"
-                    : $"Day {day} — 강력한 모험가가 쳐들어온다";
+                    ? "이 습격만 막아내면 던전을 지켜낸다"
+                    : "강력한 모험가가 쳐들어온다";
 
-            var view = bannerView;
-            if (view == null)
-            {
-                Debug.LogError("BossWavePresenter requires a scene-assigned boss banner view.", this);
-                return;
-            }
-
-            view.gameObject.SetActive(true);
-            view.transform.SetAsLastSibling();
-            view.Title.text = title;
-            view.Title.color = accent;
-            view.Subtitle.text = subtitle;
-            var root = view.gameObject;
-            var rect = (RectTransform)view.transform;
-            var group = view.CanvasGroup;
-            group.alpha = 0f;
-            group.blocksRaycasts = false;
-
-            DOTween.Sequence().SetUpdate(true).SetLink(root)
-                .Append(group.DOFade(1f, 0.25f))
-                .Join(rect.DOAnchorPosX(0f, 0.35f).From(new Vector2(-80f, rect.anchoredPosition.y)).SetEase(Ease.OutCubic))
-                .AppendInterval(bannerHoldDuration)
-                .Append(group.DOFade(0f, 0.4f))
-                .OnComplete(() => root.SetActive(false));
-
+            RequestBanner(isFinal ? BossBannerKind.Final : BossBannerKind.Arrival, day, bossTitle, subtitle);
         }
+
+        /// <summary>보스가 부른 증원이 합류했을 때.</summary>
+        public void ShowReinforcementBanner(int day, string bossTitle, string subtitle) =>
+            RequestBanner(BossBannerKind.Reinforcement, day, bossTitle, subtitle);
+
+        /// <summary>호위가 무너져 보스가 마지막 단계에 들어갔을 때.</summary>
+        public void ShowRageBanner(int day, string bossTitle, string subtitle) =>
+            RequestBanner(BossBannerKind.Rage, day, bossTitle, subtitle);
+
+        private void RequestBanner(BossBannerKind kind, int day, string bossTitle, string subtitle) =>
+            BannerRequested?.Invoke(new BossBannerRequest(kind, day, bossTitle, subtitle, bannerHoldDuration));
 
         // ── Death Cinematic ─────────────────────────────────────
 
@@ -106,7 +99,6 @@ namespace _01.Code.Manager
         {
             _cinematicRunning = true;
 
-            var previousTimeScale = Time.timeScale;
             Time.timeScale = cinematicTimeScale;
 
             var camTransform = cam.transform;
@@ -119,8 +111,6 @@ namespace _01.Code.Manager
             cam.DOKill();
             camTransform.DOMove(focusPosition, cinematicZoomDuration).SetEase(Ease.InOutQuad).SetUpdate(true);
             cam.DOOrthoSize(zoomSize, cinematicZoomDuration).SetEase(Ease.InOutQuad).SetUpdate(true);
-            // 시네마틱 동안 화면 가장자리를 조여 시선을 보스에 모은다.
-            ScenePostProcessing.PulseVignette(0.18f, cinematicZoomDuration * 2f + cinematicHoldDuration);
 
             yield return new WaitForSecondsRealtime(cinematicZoomDuration + cinematicHoldDuration);
 
@@ -129,9 +119,11 @@ namespace _01.Code.Manager
 
             yield return new WaitForSecondsRealtime(cinematicZoomDuration);
 
-            // 시네마틱 도중 외부(일시정지/게임오버)에서 timeScale을 건드렸다면 복원하지 않는다(HitStopRunner와 같은 규약).
+            // 연출 도중 플레이어가 배속을 바꿨거나 모달이 열렸으면 그쪽 뜻을 따른다(HitStopRunner와 같은 규약).
             if (Mathf.Approximately(Time.timeScale, cinematicTimeScale))
-                Time.timeScale = previousTimeScale;
+                Time.timeScale = gameSpeedController != null
+                    ? gameSpeedController.RestoreTimeScale
+                    : GameSpeedController.NormalSpeed;
 
             _cinematicRunning = false;
         }
@@ -141,7 +133,7 @@ namespace _01.Code.Manager
         /// <summary>최종 보스 웨이브 클리어 — 승리 패널을 띄우고 게임을 멈춘다.</summary>
         public void ShowVictoryPanel(int day)
         {
-            ShowRunEndPanel("던전 사수 성공!", $"{day}일간의 침공을 모두 막아냈습니다", finalBannerColor, true);
+            ShowRunEndPanel("던전 사수 성공!", $"{day}일간의 침공을 모두 막아냈습니다", true);
         }
 
         /// <summary>
@@ -149,106 +141,34 @@ namespace _01.Code.Manager
         /// </summary>
         public void ShowDefeatPanel(string reason)
         {
-            var day = DayManager.Current != null ? DayManager.Current.CurrentDay : 0;
+            var day = dayManager != null ? dayManager.CurrentDay : 0;
             var headline = string.IsNullOrWhiteSpace(reason)
                 ? $"{day}일차에 던전이 무너졌습니다"
                 : reason;
-            ShowRunEndPanel("던전 함락", headline, defeatPanelColor, false);
+            ShowRunEndPanel("던전 함락", headline, false);
         }
 
         /// <summary>
         /// 승리와 패배가 같은 패널을 쓴다. 둘이 동시에 뜰 일이 없고,
         /// 무엇이 남았는지 돌아보는 화면이라는 점에서 내용도 같다.
         /// </summary>
-        private void ShowRunEndPanel(string title, string headline, Color accent, bool clearSaveOnRetry)
+        private void ShowRunEndPanel(string title, string headline, bool victory)
         {
-            PolicyChoicePanelView.Current?.CloseForRunEnd();
-            Time.timeScale = 0f;
+            // 런 종료 뒤의 이어하기는 끝난 판을 되살릴 수 없다. 재시작 버튼을 누를 때까지
+            // 저장을 남기면 타이틀에서 끝난 런을 이어하는 모순이 생긴다.
+            Code.Persistence.RunSaveSystem.DeleteSave();
+            // 판이 끝난 화면이라 푸는 쪽이 없다. 재시작할 때 씬이 새로 뜨며 정상으로 돌아간다.
+            if (gameSpeedController != null)
+                gameSpeedController.Suspend(this);
+            else
+                Time.timeScale = 0f;
 
-            if (uiCanvas == null)
-            {
-                Debug.LogError("BossWavePresenter requires a scene-assigned UI Canvas.", this);
-                return;
-            }
-
-            uiCanvas.GetComponentInChildren<TimeSpeedView>(true)?.SetInteractionLocked(true);
-
-            var view = victoryView;
-            if (view == null)
-            {
-                Debug.LogError("BossWavePresenter requires a scene-assigned victory panel view.", this);
-                return;
-            }
-
-            view.gameObject.SetActive(true);
-            view.transform.SetAsLastSibling();
-            view.Title.text = title;
-            view.Title.color = accent;
-            view.Subtitle.text = headline + BuildRunSummaryText();
-            view.RetryButton.onClick.RemoveAllListeners();
-            view.RetryButton.onClick.AddListener(() =>
-            {
-                if (clearSaveOnRetry)
-                    _01.Code.Persistence.RunSaveSystem.DeleteSave();
-                Time.timeScale = 1f;
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-            });
-
-            var root = view.gameObject;
-            var group = view.CanvasGroup;
-            group.DOKill();
-            group.alpha = 0f;
-            group.interactable = true;
-            group.blocksRaycasts = true;
-            group.DOFade(1f, 0.5f).SetUpdate(true).SetLink(root);
+            RunEndRequested?.Invoke(title, headline, victory);
         }
 
-        /// <summary>
-        /// 한 판을 돌아보는 숫자들. 정산은 하루치만 보여주고 사라지므로
-        /// 판 전체가 어땠는지는 여기서만 볼 수 있다.
-        /// </summary>
-        private static string BuildRunSummaryText()
+        private void ResolveDependencies()
         {
-            var lines = new StringBuilder();
-            lines.Append("\n<size=80%>");
-
-            var finalDay = WaveManager.Current != null ? WaveManager.Current.FinalDay : 0;
-            var survived = DayManager.Current != null ? DayManager.Current.CurrentDay : 0;
-            lines.Append(finalDay > 0
-                ? $"\n버틴 날  {survived} / {finalDay}일"
-                : $"\n버틴 날  {survived}일");
-
-            var run = RunSummarySystem.Current;
-            if (run != null && run.Invaders > 0)
-            {
-                lines.Append($"\n격퇴  {run.Kills} / {run.Invaders}명"
-                             + $"  ·  방어전 {run.WavesFought}회");
-                lines.Append($"\n가한 피해  {run.DamageDealt}"
-                             + $"  ·  받은 피해 {run.DamageTaken}"
-                             + $"  ·  치명타 {run.CriticalHits}");
-            }
-
-            var cost = CostManager.Current;
-            if (cost != null)
-            {
-                var peakDebt = run != null ? run.PeakDebt : 0;
-                lines.Append($"\n남은 금화  {cost.CurrentGold}G  ·  최대 부채 {peakDebt}G");
-            }
-
-            var roster = HiredUnitRoster.Current;
-            if (roster != null)
-            {
-                lines.Append($"\n부하  {roster.TotalHiredCount}명"
-                             + $"  ·  유닛 해금 {roster.UnlockedUnits.Count}/{roster.UnlockableUnitCount}"
-                             + $"  ·  시설 해금 {roster.UnlockedBuildings.Count}/{roster.UnlockableBuildingCount}");
-            }
-
-            var conquest = VillageConquestSystem.Current;
-            if (conquest != null && conquest.VillageCount > 0)
-                lines.Append($"\n장악한 마을  {conquest.FullyConqueredCount} / {conquest.VillageCount}곳");
-
-            lines.Append("</size>");
-            return lines.ToString();
+            waveManager ??= GetComponent<WaveManager>();
         }
     }
 }

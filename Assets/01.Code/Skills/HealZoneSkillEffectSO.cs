@@ -1,7 +1,7 @@
-using _01.Code.BT;
+using Code.BT;
 using UnityEngine;
 
-namespace _01.Code.Skills
+namespace Code.Skills
 {
     /// <summary>힐 장판: 시전자 위치에 깔리고, 위에 있는 아군을 틱마다 회복한다.
     /// 선택적으로 장판 위 아군의 받는 피해를 줄이는 가호 효과도 준다.</summary>
@@ -16,6 +16,9 @@ namespace _01.Code.Skills
         private float damageTakenMultiplier = 1f;
         [SerializeField] private Color zoneColor = new(0.35f, 0.95f, 0.55f, 0.26f);
 
+        /// <summary>지대에 깔리는 색을 그대로 쓴다. 시전 고리와 바닥이 따로 놀면 같은 기술로 안 보인다.</summary>
+        public override Color SignatureColor => new(zoneColor.r, zoneColor.g, zoneColor.b, 1f);
+
         public override void Execute(SkillContext context)
         {
             var caster = context.Caster;
@@ -25,14 +28,15 @@ namespace _01.Code.Skills
             SkillZoneVisual.AddPulse(renderer);
 
             var runtime = renderer.gameObject.AddComponent<HealZoneRuntime>();
-            runtime.Initialize(caster, caster.Battlefield, caster.Team, radius, duration, tickInterval, tickHeal, damageTakenMultiplier);
+            runtime.Initialize(caster, caster.Battlefield, context.Field, caster.Team, radius, duration, tickInterval, tickHeal, damageTakenMultiplier);
         }
 
         private class HealZoneRuntime : MonoBehaviour
         {
             private const string OwnershipSlot = "HealZone";
-            private int _ownerId;
+            private EntityId _ownerId;
             private NodeBattlefield _battlefield;
+            private ISkillField _field;
             private BattleTeam _team;
             private float _radius;
             private float _remaining;
@@ -44,6 +48,7 @@ namespace _01.Code.Skills
             public void Initialize(
                 BattleAgent caster,
                 NodeBattlefield battlefield,
+                ISkillField field,
                 BattleTeam team,
                 float radius,
                 float duration,
@@ -52,6 +57,7 @@ namespace _01.Code.Skills
                 float damageTakenMultiplier)
             {
                 _battlefield = battlefield;
+                _field = field;
                 _team = team;
                 _radius = radius;
                 _remaining = duration;
@@ -60,6 +66,7 @@ namespace _01.Code.Skills
                 _tickHeal = tickHeal;
                 _damageTakenMultiplier = damageTakenMultiplier;
                 _ownerId = SkillZoneOwnership.Replace(caster, OwnershipSlot, gameObject);
+                _field?.TrackEffect(gameObject);
             }
 
             private void OnDestroy() =>
@@ -67,6 +74,11 @@ namespace _01.Code.Skills
 
             private void Update()
             {
+                if (_field != null && !_field.IsActive)
+                {
+                    Destroy(gameObject);
+                    return;
+                }
                 _remaining -= Time.deltaTime;
                 if (_remaining <= 0f)
                 {
@@ -78,10 +90,17 @@ namespace _01.Code.Skills
                 if (_tickTimer > 0f) return;
 
                 _tickTimer = _tickInterval;
-                if (_battlefield == null) return;
+                System.Collections.Generic.IEnumerable<BattleAgent> roster = _field != null
+                    ? _field.Allies(_team, transform.position)
+                    : _battlefield != null ? _battlefield.Allies(_team) : null;
+                if (roster == null) return;
 
-                foreach (var ally in _battlefield.Allies(_team))
+                foreach (var ally in roster)
                 {
+                    if (_field != null && !_field.IsActive)
+                    {
+                        break;
+                    }
                     if (ally == null || !ally.IsAlive)
                         continue;
                     if (Vector2.Distance(transform.position, ally.transform.position) > _radius)

@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace _01.Code.Manager
+namespace Code.Manager
 {
     public class WaveEnemyTracker : MonoBehaviour
     {

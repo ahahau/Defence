@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using _01.Code.Units;
+using Code.Units;
 using UnityEngine;
 
-namespace _01.Code.Artifacts
+namespace Code.Artifacts
 {
     public enum ArtifactTarget
     {

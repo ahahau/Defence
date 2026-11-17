@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace _01.Code.Persistence
+namespace Code.Persistence
 {
     /// <summary>
     /// 저장에 참여하는 것들의 명단.

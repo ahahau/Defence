@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34c4dc0ecf9801d4aa0c5c4a452b0163, type: 3}
+  m_Name: BloodPoolTrapBuildingData
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Buildings.BuildingDataSO
+  <Grade>k__BackingField: 2
+  <BoardSprite>k__BackingField: {fileID: 21300000, guid: dd1a5c94f97d1fa4ea43e1545641d5e8, type: 3}
+  <Defense>k__BackingField: 0
+  <EvasionChance>k__BackingField: 0
+  <DisplayName>k__BackingField: "\uD54F\uBE5B \uC6C5\uB369\uC774"
+  <Cost>k__BackingField: 55
+  <DailyUpkeep>k__BackingField: 0
+  <GradeWeight>k__BackingField: 0
+  <DwellSeconds>k__BackingField: 0
+  <FacilityTier>k__BackingField: 1
+  <Prefab>k__BackingField: {fileID: 662806548690121640, guid: d49844838927183439878ddf21b5199b, type: 3}
+  <Unique>k__BackingField: 0
+  <CentralOnly>k__BackingField: 0
+  <InstallOnEdge>k__BackingField: 0
+  <Locked>k__BackingField: 1
+  <BaseDanger>k__BackingField: 3
+  <Category>k__BackingField: 2

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace _01.Code.Artifacts
+namespace Code.Artifacts
 {
     /// <summary>
     /// 상인이 취급하는 유물 목록과 진열 규칙.
@@ -15,6 +15,9 @@ namespace _01.Code.Artifacts
 
         [SerializeField, Min(1), Tooltip("한 번에 진열할 칸 수")]
         private int slotCount = 3;
+
+        [SerializeField, Min(0), Tooltip("한 진열에 올릴 소모품 최대 개수. 물약은 사도 목록에서 빠지지 않아, 제한이 없으면 영구 유물이 팔려 나갈수록 매대가 물약으로 뒤덮인다.")]
+        private int maxConsumableSlots = 1;
 
         [SerializeField, Range(0f, 1f), Tooltip("일차가 오를수록 붙는 가격 상승률. 0이면 정가 고정.")]
         private float priceInflationPerDay;
@@ -92,45 +95,103 @@ namespace _01.Code.Artifacts
             return Mathf.Max(1, Mathf.RoundToInt(basePrice * dayScale * purchaseScale));
         }
 
-        /// <summary>무작위 상품이 실제로 내줄 유물. 아직 없는 것 중에서 하나 고른다.</summary>
+        /// <summary>
+        /// 무작위 상품이 실제로 내줄 유물. 아직 없는 것 중에서 하나 고른다.
+        /// 소모품은 제외한다 — 상자 값(<see cref="randomArtifactPrice"/>)은 유물 기준이라
+        /// 물약이 나오면 정가보다 비싸게 주고 산 꼴이 되고, 손에 남는 것도 없다.
+        /// </summary>
         public ArtifactDataSO PickRandomUnowned(ArtifactInventorySO inventory)
         {
-            var candidates = CollectAvailable(inventory);
+            var candidates = CollectAvailable(inventory, true);
             return candidates.Count == 0 ? null : candidates[Random.Range(0, candidates.Count)];
         }
 
-        /// <summary>무작위 상품으로 내줄 수 있는 유물이 아직 남아 있는가.</summary>
+        /// <summary>무작위 상품으로 내줄 수 있는 유물이 아직 남아 있는가. 소모품은 세지 않는다.</summary>
         public bool HasAvailableArtifact(ArtifactInventorySO inventory)
         {
-            return CollectAvailable(inventory).Count > 0;
+            return CollectAvailable(inventory, true).Count > 0;
         }
 
         /// <summary>
         /// 이번 진열 목록을 뽑는다. 이미 가진 유물과 가격이 없는 유물은 빼고 무작위로 고른다.
         /// 살 수 있는 게 칸 수보다 적으면 있는 만큼만 돌려준다.
+        /// 지정 진열에는 소모품도 함께 올린다 — 물약을 살 자리가 여기뿐이다.
         /// </summary>
-        public List<ArtifactDataSO> RollDisplay(ArtifactInventorySO inventory)
+        /// <param name="previousDisplay">
+        /// 지난번에 깔았던 목록. 여기 있던 것은 뒤로 미뤄, 상인이 다시 왔을 때 같은 매대를 보지 않게 한다.
+        /// 상태를 이 에셋에 담지 않고 밖에서 받는 이유는 <see cref="GetPrice"/>와 같다 —
+        /// 스크립터블 오브젝트에 적어 두면 플레이할 때마다 에디터 에셋이 바뀐다.
+        /// </param>
+        public List<ArtifactDataSO> RollDisplay(ArtifactInventorySO inventory,
+            IReadOnlyList<ArtifactDataSO> previousDisplay = null)
         {
-            var candidates = CollectAvailable(inventory);
-            var display = new List<ArtifactDataSO>();
-            var take = Mathf.Min(SlotCount, candidates.Count);
-            for (var i = 0; i < take; i++)
+            // 새 물건을 먼저 깔고, 모자랄 때만 지난번 것을 다시 꺼낸다.
+            // 후보가 칸 수보다 적은 날에도 매대를 비우지 않기 위해서다.
+            var fresh = new List<ArtifactDataSO>();
+            var repeats = new List<ArtifactDataSO>();
+            foreach (var artifact in CollectAvailable(inventory, false))
             {
-                var index = Random.Range(0, candidates.Count);
-                display.Add(candidates[index]);
-                candidates.RemoveAt(index);
+                if (WasDisplayed(previousDisplay, artifact))
+                    repeats.Add(artifact);
+                else
+                    fresh.Add(artifact);
             }
 
+            var display = new List<ArtifactDataSO>();
+            var consumables = 0;
+            DrawInto(display, fresh, ref consumables);
+            DrawInto(display, repeats, ref consumables);
             return display;
         }
 
-        /// <summary>아직 안 가졌고 가격이 매겨진 유물만 추린다.</summary>
-        private List<ArtifactDataSO> CollectAvailable(ArtifactInventorySO inventory)
+        /// <summary>IReadOnlyList 에는 Contains 가 없어 직접 훑는다. 목록이 서너 칸이라 이걸로 충분하다.</summary>
+        private static bool WasDisplayed(IReadOnlyList<ArtifactDataSO> previousDisplay, ArtifactDataSO artifact)
+        {
+            if (previousDisplay == null)
+                return false;
+
+            for (var i = 0; i < previousDisplay.Count; i++)
+                if (previousDisplay[i] == artifact)
+                    return true;
+
+            return false;
+        }
+
+        /// <summary>후보 더미에서 칸이 찰 때까지 뽑아 담는다. 소모품은 정해진 몫까지만 올린다.</summary>
+        private void DrawInto(List<ArtifactDataSO> display, List<ArtifactDataSO> pool, ref int consumables)
+        {
+            while (display.Count < SlotCount && pool.Count > 0)
+            {
+                var index = Random.Range(0, pool.Count);
+                var artifact = pool[index];
+                pool.RemoveAt(index);
+
+                if (artifact.IsConsumable)
+                {
+                    if (consumables >= maxConsumableSlots)
+                        continue;
+
+                    consumables++;
+                }
+
+                display.Add(artifact);
+            }
+        }
+
+        /// <summary>
+        /// 아직 안 가졌고 가격이 매겨진 유물만 추린다.
+        /// 소모품은 소지품에 남지 않아 <c>HasObtained</c>로 걸러지지 않으므로,
+        /// 영구 유물만 필요한 자리에서는 <paramref name="permanentOnly"/>로 따로 뺀다.
+        /// </summary>
+        private List<ArtifactDataSO> CollectAvailable(ArtifactInventorySO inventory, bool permanentOnly)
         {
             var candidates = new List<ArtifactDataSO>();
             foreach (var artifact in stock)
             {
                 if (artifact == null || artifact.Price <= 0)
+                    continue;
+
+                if (permanentOnly && artifact.IsConsumable)
                     continue;
 
                 if (inventory != null && inventory.HasObtained(artifact))

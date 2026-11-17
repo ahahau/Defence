@@ -1,7 +1,7 @@
-using _01.Code.MapCreateSystem;
+using Code.MapCreateSystem;
 using UnityEngine;
 
-namespace _01.Code.Buildings
+namespace Code.Buildings
 {
     /// <summary>
     /// 건물이 노드의 어디에 놓이는지 판정하고 실제로 생성하는 공통 절차.
@@ -10,13 +10,18 @@ namespace _01.Code.Buildings
     /// </summary>
     public static class BuildingPlacement
     {
-        public const float DefaultCentralSlotFill = 0.92f;
+        /// <summary>
+        /// 건물이 중앙 슬롯을 채우는 비율. 슬롯을 넘지 않게 줄이는 값이지 여백을 두려는 값이 아니다.
+        /// 0.92 는 방 안에서 건물이 작아 보였다 — 그림 자체에 이미 여백이 있어 두 번 줄어든 셈이다.
+        /// </summary>
+        public const float DefaultCentralSlotFill = 1.12f;
 
         /// <summary>중앙 슬롯 바깥의 작은 칸에 여러 개 놓이는 건물인가.</summary>
         public static bool UsesGridCell(BuildingDataSO buildingData)
         {
             return buildingData != null
                    && !buildingData.Unique
+                   && !buildingData.CentralOnly
                    && !buildingData.InstallOnEdge;
         }
 
@@ -28,13 +33,68 @@ namespace _01.Code.Buildings
                    && !UsesGridCell(buildingData);
         }
 
+        /// <summary>
+        /// 유닛과 자리를 다투는 건물인가. 함정은 아니고(같이 둘 수 있다), 금고도 아니다
+        /// (지켜야 할 곳이라 유닛을 세울 수 있어야 한다).
+        /// </summary>
+        public static bool IsRoomBuilding(BuildingDataSO buildingData) =>
+            buildingData != null && buildingData.Category == InstallCategory.Building
+            && buildingData.Prefab is not Treasury;
+
+        /// <summary>
+        /// 방 중앙 슬롯에 서서 통행을 막는 건물인가. 포탈은 모험가가 나오는 자리라 막지 않는다.
+        /// 금고도 막는다 — 약탈은 방에 들어선 것으로 판정하므로 금고 그림에 닿을 필요가 없다.
+        /// </summary>
+        public static bool BlocksMovement(Building building) => building != null && building is not Portal;
+
+        /// <summary>
+        /// 손님이 머무는 시설과 함정이 한 방에 겹치는가. 양쪽에서 다 막아야 순서만 바꿔 둘 다 놓는 길이 없다.
+        /// </summary>
+        public static bool ViolatesFacilityTrapRule(Node node, BuildingDataSO buildingData)
+        {
+            if (node == null)
+                return false;
+
+            var grid = node.TrapGrid;
+            return TrapRules.ConflictsWithFacility(buildingData, node.AssignedBuilding, grid != null && grid.HasLiveTrap);
+        }
+
+        /// <summary>
+        /// 이 방 크기에 지을 수 없는 시설인가. 소형 방은 시설을 못 짓는다(유닛·함정·금고는 된다).
+        /// </summary>
+        public static bool ViolatesRoomSizeRule(Node node, BuildingDataSO buildingData) =>
+            node != null && IsRoomBuilding(buildingData) && buildingData.Prefab is not Portal
+            && !RoomSizeRules.AllowsFacility(node.Size);
+
         /// <summary>중앙 슬롯에 건물을 세우고 노드에 등록한다. 이미 차 있으면 null.</summary>
         public static Building InstallCentral(
             Node node,
             BuildingDataSO buildingData,
-            float centralSlotFill = DefaultCentralSlotFill)
+            float centralSlotFill = DefaultCentralSlotFill) =>
+            InstallCentralCore(node, buildingData, centralSlotFill, true);
+
+        /// <summary>
+        /// 저장 복원용 중앙 설치. 시설·함정 겹침 규칙을 보지 않는다 — 규칙이 생기기 전의 저장에서 건물이 사라지면 안 된다.
+        /// </summary>
+        public static Building RestoreCentral(Node node, BuildingDataSO buildingData) =>
+            InstallCentralCore(node, buildingData, DefaultCentralSlotFill, false);
+
+        private static Building InstallCentralCore(
+            Node node,
+            BuildingDataSO buildingData,
+            float centralSlotFill,
+            bool enforceFacilityTrapRule)
         {
             if (node == null || node.HasAssignedBuilding)
+                return null;
+
+            // 유닛이 선 방은 경비 몫이다. 같은 규칙을 반대편에서도 지켜야 방 하나가
+            // 벌이와 경비를 겸하지 못한다 — 한쪽만 막으면 순서만 바꿔 둘 다 놓을 수 있다.
+            if (node.HasAssignedUnit && IsRoomBuilding(buildingData))
+                return null;
+
+            if (enforceFacilityTrapRule
+                && (ViolatesFacilityTrapRule(node, buildingData) || ViolatesRoomSizeRule(node, buildingData)))
                 return null;
 
             var building = CreateCentral(node, buildingData, centralSlotFill);
@@ -42,6 +102,9 @@ namespace _01.Code.Buildings
                 return null;
 
             building.Initialize(buildingData);
+            // Initialize가 등급별 BoardSprite를 교체하므로 최종 그림 기준으로 중앙 크기를 다시 맞춘다.
+            if (building is not Portal && IsCentralBuilding(buildingData))
+                FitToCentralSlot(building, node.TrapGrid, centralSlotFill);
             node.AssignBuilding(building);
 
             if (building is Portal portal)
@@ -50,11 +113,34 @@ namespace _01.Code.Buildings
             return building;
         }
 
-        /// <summary>지정한 칸에 건물을 세운다. 칸이 차 있으면 null.</summary>
-        public static Building InstallOnCell(Node node, int column, int row, BuildingDataSO buildingData)
+        /// <summary>지정한 칸(여러 칸이면 왼쪽 아래)에 건물을 세운다. 칸이 차 있으면 null.</summary>
+        public static Building InstallOnCell(Node node, int column, int row, BuildingDataSO buildingData) =>
+            InstallOnCellCore(node, column, row, buildingData, true);
+
+        /// <summary>
+        /// 저장 복원용 칸 설치. 시설·함정 겹침 규칙을 보지 않는다 — 규칙이 생기기 전의 저장에서 함정이 사라지면 안 된다.
+        /// </summary>
+        public static Building RestoreOnCell(Node node, int column, int row, BuildingDataSO buildingData) =>
+            InstallOnCellCore(node, column, row, buildingData, false);
+
+        private static Building InstallOnCellCore(
+            Node node, int column, int row, BuildingDataSO buildingData, bool enforceFacilityTrapRule)
         {
             var grid = node != null ? node.TrapGrid : null;
             if (grid == null || buildingData == null || buildingData.Prefab == null)
+                return null;
+
+            // 금고처럼 칸에 서는 건물도 같은 규칙을 지킨다. 함정만 유닛과 자리를 나눠 쓴다.
+            if (node.HasAssignedUnit && IsRoomBuilding(buildingData))
+                return null;
+
+            if (enforceFacilityTrapRule
+                && (ViolatesFacilityTrapRule(node, buildingData) || ViolatesRoomSizeRule(node, buildingData)))
+                return null;
+
+            // 칸막이 벽은 방을 막거나 유닛이 선 칸을 덮지 못한다. 복원은 저장된 그대로 세운다.
+            if (enforceFacilityTrapRule && buildingData.Prefab is Partition
+                && (!grid.KeepsRoomOpen(column, row) || node.TryGetUnitAtCell(column, row, out _)))
                 return null;
 
             var building = grid.TryPlace(column, row, buildingData.Prefab);

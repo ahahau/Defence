@@ -1,11 +1,11 @@
 using System;
-using _01.Code.Buildings;
+using Code.Buildings;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
-namespace _01.Code.MapCreateSystem
+namespace Code.MapCreateSystem
 {
     /// <summary>라인(엣지) 건물 배치 모드. 설치 가능한 라인의 중점에 슬롯 마커를 표시하고,
     /// 마우스에 가장 가까운 빈 라인을 하이라이트 + 건물 고스트 + "여기에 설치"로 보여준다.
@@ -54,7 +54,7 @@ namespace _01.Code.MapCreateSystem
         {
             foreach (var edge in EdgeLine.ActiveEdges)
             {
-                if (edge != null && !edge.HasBuilding)
+                if (edge != null && edge.IsAvailableForInstall)
                     return true;
             }
 
@@ -103,6 +103,10 @@ namespace _01.Code.MapCreateSystem
 
         private static bool WasCancelPressed()
         {
+            // 팝업 위에서 누른 취소는 팝업 몫이다.
+            if (Code.UI.Popup.PopupController.BlocksEscape)
+                return false;
+
             var rightClick = Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame;
             var escape = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
             return rightClick || escape;
@@ -153,7 +157,7 @@ namespace _01.Code.MapCreateSystem
 
             foreach (var edge in EdgeLine.ActiveEdges)
             {
-                if (edge == null || edge.HasBuilding)
+                if (edge == null || !edge.IsAvailableForInstall)
                     continue;
 
                 var distance = edge.DistanceTo(worldPosition);
@@ -203,7 +207,7 @@ namespace _01.Code.MapCreateSystem
         {
             foreach (var edge in EdgeLine.ActiveEdges)
             {
-                if (edge == null || edge.HasBuilding)
+                if (edge == null || !edge.IsAvailableForInstall)
                     continue;
 
                 var marker = CreateSquare("EdgeSlot", SlotColor, MarkerSortingOrder);

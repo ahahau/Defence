@@ -3,7 +3,7 @@ using Unity.Behavior;
 using UnityEngine;
 using Action = Unity.Behavior.Action;
 
-namespace _01.Code.BT
+namespace Code.BT
 {
     /// <summary>아군 무리 쪽으로 후퇴한다(저체력 도주/재집결). 보통 Health Below 가드와 함께 쓴다.
     /// 지정 시간 동안 후퇴 후 Success로 빠져 다음 분기로 넘어간다.</summary>
@@ -37,6 +37,9 @@ namespace _01.Code.BT
         {
             if (_agent == null || !_agent.IsAlive || _agent.IsTraversalLocked)
                 return Status.Failure;
+
+            if (_agent.IsCombatMoveLocked)
+                return Status.Running;
 
             _agent.RetreatTowardAllies(Time.deltaTime);
             _timer -= Time.deltaTime;

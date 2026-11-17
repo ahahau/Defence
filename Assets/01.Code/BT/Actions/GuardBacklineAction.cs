@@ -3,7 +3,7 @@ using Unity.Behavior;
 using UnityEngine;
 using Action = Unity.Behavior.Action;
 
-namespace _01.Code.BT
+namespace Code.BT
 {
     /// <summary>전열(Tank): 적 무리와 아군 후열 사이를 사수하며 후열을 가린다.
     /// 지정 시간 동안 포지셔닝 후 Success로 빠져 공격 분기로 넘어간다.</summary>
@@ -37,6 +37,9 @@ namespace _01.Code.BT
         {
             if (_agent == null || !_agent.IsAlive || _agent.IsTraversalLocked)
                 return Status.Failure;
+
+            if (_agent.IsCombatMoveLocked)
+                return Status.Running;
 
             _timer -= Time.deltaTime;
             _agent.GuardBackline(Time.deltaTime);

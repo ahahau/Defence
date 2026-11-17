@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace _01.Code.MapCreateSystem
+namespace Code.MapCreateSystem
 {
     [Serializable]
     public class DungeonNode
@@ -40,5 +40,8 @@ namespace _01.Code.MapCreateSystem
             ConnectedNodeIds.Add(other.Id);
             return true;
         }
+
+        /// <summary>연결을 끊는다. 공사를 취소해 방을 없앨 때 이웃 쪽에서도 부른다.</summary>
+        public bool Disconnect(string otherId) => ConnectedNodeIds.Remove(otherId);
     }
 }

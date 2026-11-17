@@ -1,0 +1,74 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8444304044723558897
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47b6fbf626d84142a85744b0f9e1e3dc, type: 3}
+  m_Name: DayEvent_ScrapAuction_OutcomeB
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Dialogue.DialogueSequenceSO
+  displayTitle: "\uD3D0\uC790\uC7AC \uACBD\uB9E4"
+  lines:
+  - speakerName: "\uC784\uD504 \uCC38\uBAA8"
+    text: "\uC784\uD504\uB4E4\uC774 \uD3D0\uBAA9\uC7AC\uC640 \uC1F3\uC870\uAC01\uC744 \uACE8\uB77C \uC790\uAE30 \uBAAB\uC744 \uCC59\uACBC\uC2B5\uB2C8\uB2E4.\n\uB0A8\uC740 \uBB3C\uAC74\uB3C4 \uBC84\uB9AC\uC9C0 \uC54A\uB294 \uC8FC\uC778\uC774\uB77C\uBA70 \uACE0\uAC1C\uB97C \uB044\uB355\uC785\uB2C8\uB2E4."
+    enterActions: []
+    choices: []
+  metaProgressRequired: 0
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47b6fbf626d84142a85744b0f9e1e3dc, type: 3}
+  m_Name: DayEvent_ScrapAuction
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Dialogue.DialogueSequenceSO
+  displayTitle: "\uD3D0\uC790\uC7AC \uACBD\uB9E4"
+  lines:
+  - speakerName: "\uC784\uD504 \uCC38\uBAA8"
+    text: "\uC8FC\uC778\uB2D8, \uD3D0\uC790\uC7AC\uB97C \uC0AC\uACA0\uB2E4\uB294 \uC0C1\uC778\uC774 \uC654\uC2B5\uB2C8\uB2E4.\n\uAC00\uB3D9 \uC2DC\uC124\uC758 \uBD80\uD488\uAE4C\uC9C0 \uB0B4\uB193\uC73C\uBA74 \uAC12\uC744 \uB354 \uCCD0\uC900\uB2F5\uB2C8\uB2E4."
+    enterActions: []
+    choices:
+    - text: "\uAC00\uB3D9 \uC2DC\uC124\uC758 \uBD80\uD488\uAE4C\uC9C0 \uCC98\uBD84\uD55C\uB2E4"
+      effectSummary: "\uAE08\uD654 +35 / \uBAA8\uB4E0 \uC218\uC775 \uC2DC\uC124 \uB0B4\uAD6C\uB3C4 -3"
+      actions:
+      - {fileID: 11400000, guid: ea088b6deb1d40de90a45f47cd653610, type: 2}
+      - {fileID: 11400000, guid: bfa0ae4d6ac34dc46829b001a9f4fb83, type: 2}
+      nextSequence: {fileID: 5775042272720818558}
+      nextLineIndex: 0
+      routes: []
+    - text: "\uD3D0\uC790\uC7AC\uB97C \uBD80\uD558\uB4E4\uC5D0\uAC8C \uB098\uB220 \uC900\uB2E4"
+      effectSummary: "\uBBFC\uC2EC +4"
+      actions:
+      - {fileID: 11400000, guid: f9a6b229b4b34b54f8f05cb83bb88237, type: 2}
+      nextSequence: {fileID: -8444304044723558897}
+      nextLineIndex: 0
+      routes: []
+  metaProgressRequired: 0
+--- !u!114 &5775042272720818558
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47b6fbf626d84142a85744b0f9e1e3dc, type: 3}
+  m_Name: DayEvent_ScrapAuction_OutcomeA
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Dialogue.DialogueSequenceSO
+  displayTitle: "\uD3D0\uC790\uC7AC \uACBD\uB9E4"
+  lines:
+  - speakerName: "\uC784\uD504 \uCC38\uBAA8"
+    text: "\uC0C1\uC778\uC740 \uBD80\uD488\uC744 \uCC59\uAE30\uACE0 \uC57D\uC18D\uD55C \uAC12\uC744 \uCE58\uB800\uC2B5\uB2C8\uB2E4.\n\uC218\uC775 \uC2DC\uC124\uB4E4\uC740 \uBE60\uC9C4 \uBD80\uD488\uC744 \uBA54\uC6B8 \uC77C\uC774 \uB0A8\uC558\uC2B5\uB2C8\uB2E4."
+    enterActions: []
+    choices: []
+  metaProgressRequired: 0

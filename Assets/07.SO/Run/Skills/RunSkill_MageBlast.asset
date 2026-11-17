@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2c05617eccf4864aa5672963a8c7578, type: 3}
+  m_Name: RunSkill_MageBlast
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Skills.SkillDataSO
+  <DisplayName>k__BackingField: "\uB9C8\uB825 \uD3ED\uBC1C"
+  <Description>k__BackingField: "\uAC19\uC740 \uBC29 \uBD80\uD558 \uC804\uC6D0\uC5D0\uAC8C 2."
+  <Icon>k__BackingField: {fileID: 0}
+  <Cooldown>k__BackingField: 5
+  <IsUltimate>k__BackingField: 0
+  <Effects>k__BackingField: []
+  <SpellFrames>k__BackingField: []
+  <SpellFramesPerSecond>k__BackingField: 18
+  <SpellAnchor>k__BackingField: 0
+  <SpellScale>k__BackingField: 1
+  <CooldownTurns>k__BackingField: 3
+  <TurnEffects>k__BackingField:
+  - {fileID: 11400000, guid: 4eea910ce688465429b0f8c620b0fce6, type: 2}

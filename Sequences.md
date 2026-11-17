@@ -1,0 +1,1419 @@
+# Sequences
+
+- 2026-11-09 · 사용자 결정으로, 돌진이 예고를 시작할 때 경로에 잠겨 있던 문을 기억해 발동 전에 문이 풀려도 그 앞에서 멈추게 했다(`RunTelegraph.WasDoorLockedAtStart`, `RunTelegraphRules.MarkLockedDoors`·`ResolveCharge`). 새 EditMode 테스트 `Charge_DoorLockedAtWarningStartStillStopsAfterUnlock`를 추가했다. `RunBattleTests` 107/116, `RunPreparationTests` 28/32 통과이고, 실패 13개는 앞선 작업과 같은 무관한 기존 실패다. 재현 결과, 폭파를 끊은 저격수를 서쪽 치유 샘으로 불러들이면 살아남았다. 다만 해골 검사 사망·심장 24로, 명령 없이 문 제어실을 내준 경우보다 결과가 나빴다. 결과는 시연 런 기획에 기록했다. 저장 23개는 `TestResults.xml`을 되돌린 뒤 SHA-256이 모두 같다.
+
+- 2026-11-09 · 사용자 결정으로, 예고 시전자에게 가려고 적을 지나친 부하가 새 이동 명령을 받으면 길의 적을 다시 지나쳐 돌아오게 했다(`RunCombatant.HasSlippedPast`·`IsSlippingBack`, `RunBattle.OrderMove`·`UpdateMinion`). 새 EditMode 테스트 `PowderBlast_MinionThatSlippedPastReturnsPastBlockerAfterInterrupt`를 추가했다. `RunBattleTests` 106/115, `RunPreparationTests` 28/32 통과이고, 실패 13개는 앞선 작업과 같은 무관한 기존 실패다. 재현 결과, 불러들인 해골 저격수는 가운데 방까지 돌아왔다. 그러나 끊긴 공병이 문 제어실을 부순 뒤 풀린 문을 지나온 침입자 검사의 돌진에 쓰러졌다. 저장 23개는 `TestResults.xml`을 되돌린 뒤 SHA-256이 모두 같다.
+
+- 2026-11-09 · 공병 폭파를 끊은 뒤 해골 저격수가 쓰러지는 원인을 Unity 에디터 시뮬레이션으로 추적했다(플레이 모드 없음, 저장 23개 SHA-256 일치). 저격수는 지나치기로 침입자 검사를 넘어간 뒤 검사(근접)와 견습 마법사 사이에 끼었다. 끊은 직후 불러들여도 돌아가는 길을 검사가 막아 2초 뒤 쓰러졌다. 물러나기 기준(30%)은 마지막 한 방보다 늦었고, 물리 → 마법 상성이 피해를 키웠다. 결과를 시연 런 기획에 기록했다. 코드는 바꾸지 않았다.
+
+- 2026-11-09 · 사용자 결정(C안)을 넣었다. 폭파·화염구를 예고 중인 시전자가 있는 방으로 이동 명령을 받은 부하는 길의 적을 지나쳐 걷고, 시전자가 사거리에 들면 평타와 스킬 모두 시전자를 먼저 친다(`RunBattle.UpdateMinion`·`InterruptibleCasterIn`, 스킬 대상 정렬 `_focusTarget`). 새 EditMode 테스트 `PowderBlast_OrderedMinionPassesBlockerAndInterruptsCaster`를 추가했다. `RunBattleTests` 105/114, `RunPreparationTests` 28/32 통과이고, 실패 13개는 앞선 작업과 같은 무관한 기존 실패다. 재현 결과, 이어진 시작에서 해골 저격수를 보내면 +3.00초에 폭파를 끊었다. 검사를 함께 보내면 문 제어실도 지켰지만, 끊은 모든 경우에 저격수가 쓰러졌다. 저장 23개는 `TestResults.xml`을 되돌린 뒤 SHA-256이 모두 같다.
+
+- 2026-11-09 · 사용자 결정(A안)으로 공병이 방 가운데까지 걸어가 폭약을 놓은 뒤 예고를 시작하게 했다. 가는 동안 그 방 부하는 무시한다(`RunTelegraphRules.ShouldApproachBlast`·`RunBattle.UpdateIntruder`). 새 EditMode 테스트 `PowderBlast_SapperWalksPastDefenderToRoomCenterBeforeWarning`를 추가했다. 기존 테스트도 사용자 요청으로 실행했다. `RunBattleTests` 104/113, `RunPreparationTests` 28/32 통과(새 테스트 포함)이고, 실패 13개는 이번 변경과 무관하다. 수동 함정·처치 마력 제거 전 기대값이 8개, 11-06 입장 순서 변경 뒤 인덱스가 어긋난 것이 5개다. 재현을 다시 돌린 결과 예고는 4.00초 북 방 가운데에서 시작하지만, 보낸 부하가 가까운 침입자 검사·견습 마법사를 먼저 쏘아 여전히 폭파를 끊지 못했다. 결과는 시연 런 기획에 기록했다. 저장 23개는 테스트가 갱신한 `TestResults.xml`을 백업으로 되돌린 뒤 SHA-256이 모두 같다.
+
+- 2026-11-09 · 첫 공병 위기를 Unity 에디터에서 시연판 실제 데이터로 재현했다(플레이 모드 없음, 저장 23개 SHA-256 전후 일치). 새 시작과 도적 침입에서 이어진 시작 모두에서, 가운데 방 부하를 북쪽으로 보내 4초 안에 폭파를 끊는 대응은 성립하지 않았다. 원인은 거리 7.5와 앞선 검사의 길막기다. 폭파를 끊은 것은 이미 북 방에 있던 오크 주술사뿐이었고, 모든 경우에 문 제어실이 고장 났다. 결과와 막힌 지점을 시연 런 기획에 기록했다. 코드는 바꾸지 않았다.
+
+
+- 2026-10-27 · 2×2 함정 발동 연출 크기 버그 수정(사용자: 테스트 먼저, 실측까지).
+  - 원인: 여러 칸 함정은 설치 때(`NodeTrapGrid.TryPlace`) 함정 전체가 칸 수만큼 커지고, 발동 연출 `TrapEffectSprite`가 그 자식이라 배율을 물려받아 2배로 그려졌다(번개 구름 실측 폭 10, 의도 5).
+  - 수정: `TrapEffectSprite.SetWorldScale`이 부모 `lossyScale`로 나눠 월드 폭을 맞춘다(`Play`·`Fly`). 위치·아래 맞춤 계산은 그대로.
+  - 테스트: `TrapTileTests.TrapEffect_KeepsItsWorldSizeUnderAScaledTrap`(부모 1×1·2×2·2×1) — 고치기 전 2×2·2×1 실패(폭 10) 확인, 고친 뒤 전체 EditMode 560/560.
+  - 플레이(저장 백업·복원·SHA256 일치): 번개 구름 연출 폭 5, 번개 끝이 함정 칸 바닥에서 멈춰 방 안에 머묾. 핏빛 웅덩이(검증용으로 같은 방에 설치) 칸 연출 넷이 각 폭 1.25로 2×2 칸 안에 맞음. 발동은 `Trap.TriggerBy` 직접 호출. 새 콘솔 오류 0.
+
+- 2026-10-27 · 함정 넷 추가 구현(사용자: 기획서대로, 정할 점은 추천대로 — 금빛은 노출, 번개 구름 메타 조건 없음, 이름 그대로). 상세 `Docs/Design/TrapExpansionDesign.md` "구현 결과".
+  - 생성기 확장(`TrapBodyBuilder` 칸 목록·프레임 안 사각형·해금/설치 목록 등록·상태이상 경로 오류 로그, `TrapEffectBuilder` 번개 낱장 자르기). 새 런타임 코드·상태이상·저장 형식 변경 없음.
+  - 속박 수정(범위·속박·3일차)·충격 수정(밟기·기절·9일차)·노출 수정(범위·노출·15일차)·번개 구름(범위 2×2·피해만·20일차). 수치는 밸런스 전 초기값.
+  - 테스트 먼저: 함정 목록 7종·새 함정 조합 4케이스·번개 끝 위치(고치기 전 실패 확인). 처음 생성 때 속박·노출 상태이상 경로가 틀린 것(`StatusEffects/Generated/`)을 새 테스트가 잡아 고침. 전체 EditMode 557/557, 기존 함정 에셋 해시 동일.
+  - 플레이(저장 백업·복원·SHA256 일치, 4~7일차): 자연 발동이 없어 `Trap.TriggerBy`를 직접 불러 피해·상태이상·정산 함정 피해 합산·번개 연출을 확인. 정산표 닫기는 전체 경로 버튼으로 정상(앞서 "Card/Close"는 다른 창 버튼을 찾음).
+  - 기존 버그 발견·보고만: 2×2 함정의 발동 연출이 함정 배율(2)을 물려받아 2배 크기로 그려짐(번개 구름 실측, 핏빛 웅덩이도 같은 경로). 런타임 수정 승인 대기.
+
+- 2026-10-27 · 함정 추가 기획서 작성(사용자: 1안 수정 셋 + 2안 번개 구름 묶어서). `Docs/Design/TrapExpansionDesign.md`, 승인 대기·코드 변경 없음.
+  - 그림 확인: 지금 생성기로 바로 쓰는 반복 그림은 색만 다른 수정(녹·적·금)·붉은 웅덩이·주황 화로뿐. `MagicSpell6/StormSpell`(미사용)은 구름 3프레임을 몸체로, 번개 프레임을 기존 `TrapTriggerVisual.PlayOnce` 발동 연출로 쓸 수 있음.
+  - 상태이상 실제 값 확인: 이동·방어를 바꾸지 않고 공격 간격·함정 피해 배율만 바꿈 → 금빛 수정은 방어 파괴 대신 노출로 제안.
+
+- 2026-10-27 · 정산 UI 구조 점검 후 정리(사용자 요청: 구조 문제·갓 오브젝트 확인 후 수정, 오래된 md 갱신).
+  - 점검: `SettlementScreenView`(조립)·`SettlementOverviewPresenter`(값)·`SettlementSummaryPane`(그리기) 역할이 나뉘어 갓 오브젝트는 없음.
+  - 생성기 ESC 배선: `SettingsBuilder.WireEscapeRouter()`(공개, 놓인 설정 화면의 라우터·톱니 배선을 다시 함) 추가, `SettlementBuilder.BuildAll()`이 배치 배선 안에서 부름. 정산 생성기를 돌린 뒤 수동 리플렉션 배선이 필요 없어짐. 상인·고용·상태 창·방 관리 생성기는 같은 문제가 남아 있음(그대로 `SettingsBuilder.BuildAll()`을 뒤에 돌림).
+  - `SettlementChipViewModel`을 `SettlementOverviewViewModel.cs`에서 자기 파일로 분리(한 파일 공개 타입 하나).
+  - `BuildChips`를 위험 자리 → 피로 자리 → 남은 자리에 메모 → 넘치면 "메모 N개 더" 단계로 다시 씀. 결과·순서는 같음 — 기존 칩 테스트에 칩 6개 전체 순서 고정 단언을 더해 확인.
+  - 검증: dotnet build Runtime·Tests 오류 0, Unity 재컴파일 오류 0, `WireEscapeRouter` 실행 뒤 SampleScene dirty=false(배선 그대로), 전체 EditMode 544/544. 생성기 자체는 다시 돌리지 않음(씬·프리팹 변경 없음).
+  - 문서: `ui-rules.md`(정산 줄·ESC 줄), `SettlementLedgerUiDesign.md`(검증·칩 순서·실측 범위) 갱신.
+
+- 2026-10-27 · 정산표 한 화면 장부(A안) 구현(사용자: 목업 A안 승인, 정할 점 셋은 추천대로 — 상세 보기 없앰·유닛 상점 탭 늘 열기·피로 칩 상위 둘 + "외 N명").
+  - 새 파일 `SettlementOverviewViewModel`·`SettlementOverviewPresenter`(보고서·운영 자금·빚·청산까지 남은 날 → 띠·장부·칩 6자리·해금 한 줄). `SettlementSummaryPane`을 그리기 전용으로 다시 씀, `SettlementLedgerPane` 삭제, `SettlementScreenView` 탭 5→3·`scope`(GameScope)·`dayManager`·제목줄 `status` 추가, 정산 화면 고용 뒤 남은 자금 다시 그림. `SettlementBuilder` 새 배치(띠 72, 장부 560×440, 칩 6, 맨 아래 해금 줄·오른쪽 아래 정산 완료 240×46). 정산 계산·보고서 형식은 그대로.
+  - 목업과 다른 점: "시작 금화" 대신 "낮에 이미 반영" 칸. 보고서의 선지출 몫에 금고로 간 돈도 섞여 있어 시작 금화를 역산하면 틀릴 수 있다.
+  - 테스트: `SettlementRegressionTests.SettlementOverview_*` 3개(프레젠터가 없어 수정 전 실패는 컴파일 실패로만 확인), `AssetWiringTests.SettlementOverview_DrawsLedgerChipsAndFoldsUnlocksForEachReport` 추가, 옛 정산 상세 보기 경우를 판 종료 전용 `ResultDisclosure_*`에서 뺌.
+  - 생성기 실행 뒤 ESC 목록의 정산표 칸이 끊겨 `SettingsScreen_IsPlacedAndEveryWindowClosesWithEscape` 실패 → `SettingsBuilder`의 배선 함수만 기존 설정 화면에 다시 불러 해결, 전체 EditMode 522/522(첫 배치 기준).
+  - 플레이 실측(저장 3파일 백업·복원·SHA256 일치): 4일차 영업 뒤 새 정산표가 뜨고 띠 +83G/-7G/없음/348G(+76G), 장부·칩 4개(제압·목표·피로 둘)·해금 3/13·5/15, 목록 펼침, 계약/부채·유닛 상점 탭 정상. 캡처에서 장부 "지출" 제목 오른쪽 정렬, 화살표가 금액에 붙음, 목록 펼침 때 아래 글자 비침을 보고 고침(제목마다 왼쪽 정렬, 띠 가운데 정렬·남은 자금 뒤에 증감, 목록 칸 불투명).
+  - 고친 뒤 재검증(에디터 재시작 후): 전체 EditMode 522/522 통과, 새 콘솔 오류 0(CLI 통신 오류만). 저장 백업 뒤 4일차 영업을 다시 돌려 1280×720에서 캡처: "지출" 제목 왼쪽, 화살표는 칸 사이, 348G 바로 뒤 +76G, 피로 탈진 위험 칩 빨간 바탕, 목록 펼침 때 불투명 칸, 계약/부채·유닛 상점 탭 정상. 끝나고 저장 복원·SHA256 일치, Assets/tmp 삭제.
+  - 확인 못 한 것: 긴 장부(칸 안 스크롤), 정산 화면 고용 뒤 남은 자금 갱신(이번 주 지원자가 없었음), 1920×1080.
+
+- 2026-10-27 · 영업 중 목표가 다음 날 목표로 바뀌던 버그 수정(사용자 A안 승인: WaveManager에서 막기, 테스트 먼저·실측까지).
+  - 원인: 영업 중 `DayManager.NextWaveDay`는 내일인데, `WaveStartedEvent`를 받은 `WaveView.RefreshStartButton`이 대기 여부를 보지 않고 `PrepareObjectiveChoices(내일)`를 불러 `SelectedObjective`를 내일 첫 후보로 덮어썼다. 매 영업 판정과 영업 중 HUD 진행 줄이 고른 목표가 아니라 내일 목표였다.
+  - 수정: `WaveManager.PrepareObjectiveChoices`가 `_isWaveRunning` 중이면 아무것도 하지 않는다(`SelectObjective`의 기존 영업 중 거절과 같은 방식). `RunWave`의 오늘 준비는 `_isWaveRunning = true` 앞이라 영향 없음. 편성·스폰·보스·정산 순서는 그대로.
+  - 테스트: `WaveExploitationProgressTests.Objective_KeepsTheChosenGoalWhileTheWaveRuns`를 먼저 추가해 수정 전 실패 확인(영업 중 오늘 후보 A가 Annihilation → Exploitation). 1일차 B와 2일차 A가 같은 Exploitation이라 선택값 비교는 우연히 통과했고 후보 비교가 잡았다. 수정 뒤 클래스 8/8, 전체 EditMode 519/519. Runtime·Tests 빌드 오류 0, Unity 재컴파일 오류 0.
+  - 플레이 실측(저장 3파일 백업 뒤, 끝나고 복원·SHA256 일치): 사용자 판 2일차 대기에서 HUD 목표 버튼으로 정밀 타격(둘째 후보)을 고르고 영업 시작 → 영업 중 `objDay=3`·`sel=PrecisionStrike` 유지(다음 날 4), HUD "정밀 타격 0/1". 자연 종료 뒤 정산 "정밀 타격 완료 · 보너스 +25G", 대기로 돌아온 뒤 4일차 후보 준비 정상. 시작 직후 운영 방침 창은 첫 카드로 닫음. 새 콘솔 오류 0, SampleScene dirty=false.
+
+- 2026-10-27 · 보류 기획서 4건 플레이 실측(사용자 요청 A→B→C→D, 문제는 고치지 않고 보고, 밸런스 보류, 하루 3분 상한).
+  - 방법: 판 저장 3파일 백업(해시 기록) 뒤 새 판. Unity 창에 OS 포커스가 없어 simulate_pointer 입력이 버려져(`Application.isFocused=False`), uGUI 버튼은 EventSystem 클릭 처리기로, 지도 클릭은 노드 채널 `UnlockedNodeClickedEvent`로 대신했다. 입장·시설 줄은 EditorApplication.update 기록 장치로 게임 시간 기준 기록. 하루 상한을 넘기거나 끝내야 할 때는 남은 모험가에게 검증용 피해 99999(자연 종료 표본 아님). B~D는 처치 수 60으로 등급을 6~8로 맞춘 시험 상태.
+  - A 방 관리: 확장 8G(200→192), 대장간 25G 1회 결제, 휴업 → 다시 열기 25G·개장 2일 → 철거 확인 팝업 +12G, 고용 표시값 12G 그대로, 배치 마력 8→7, 명령 대기→경계, 이동(다른 방 고르기), 회수 모두 정상. 경비 방에 대장간 "유닛이 선 방에는 지을 수 없습니다"·금고는 허용. 영업 중 이동·회수 잠김, 정산 장부에 시설 재개장비 25G 기록. 튜토리얼은 씬에서 꺼 둔 상태라 제외.
+  - B 입장 박자: 9일(등급 6) 간격 3.31·5.28초 = 4.65×0.707, 4.65×0.710×1.6. 7일(보스) 3.56·7.13초, 14일(보스) 3.13·4.15초 모두 공식과 0.02초 안. 밤 손님 레벨 3→2, 보스 3 유지. 배율이 같은 시드로 미리 뽑은 값과 같음. 9일 배율 0.707·0.710·0.701은 그 시드의 실제 난수였음(다른 날은 고르게 퍼짐).
+  - C 대기 만족도: 상점 줄 감소 속도 0.05/초, 이용 시작 만족도 0.849(2.99초)·0.669(6.60초), FIFO 확인. 손님이 띄엄띄엄 와 자연 줄이 안 생겨 `TryBeginDwell`을 직접 불러 줄을 세움. 특성 손님이 없어 성격 배율·대체 탐색·불만 탈출은 실측 못 함.
+  - D 소문: 살아 나간 후퇴가 방 소문으로 쌓이고, 영업 시작 때 절반(입구 12→6, 복도 6→3). 방 상세 "소문 함정 0 · 쓰러짐 0 · 후퇴 1 → 겁쟁이가 피합니다" 표시. 갈림길 경로 비율·저장 복원·쓰러짐 소문은 실측 못 함.
+  - 찾은 문제(수정 안 함): ① `WaveView.RefreshStartButton`이 영업 중에도 `PrepareObjectiveChoices(다음 날)`를 불러 1일차 "완전 섬멸"이 "착취 작전"으로 바뀌어 판정됨(`objDay=2`, `curDay=1`). ② 14일차 보스(탐욕 기사, 목적 보물 사냥, 금고 없음)가 Idle·공포 80·귀환 안 함으로 게임 시간 1,200초 넘게 남아 영업이 끝나지 않음(원인 미확정). ③ 1일차(등급 0) 방문객 3명이 한 그룹으로 들어와 0.17초 만에 밤 전환, 하루 325초는 모험가가 머문 시간. ④ 밤 전환 순간의 파티는 첫 사람만 낮 레벨. ⑤ 1일차부터 "엘리트가 던전에 있어 멈출 수 없습니다"로 일시정지 잠김. ⑥ 방 상세 제목이 "Corridor · 중형"(내부 영어 이름). ⑦ 상점이 사흘 만에 내구도 0/20.
+  - 마무리: 기록 장치 해제, 플레이 종료 뒤 저장 3파일 복원·SHA256 일치, `Assets/tmp` 삭제(캡처는 tmp/playtest-20261027/shots), SampleScene dirty=false, 기준 이후 게임 코드 콘솔 오류 0(CLI 파이프라인 연결 오류 2건만). 증거·스크립트: tmp/playtest-20261027. 기획서 4건 상태 줄 갱신.
+
+- 2026-10-27 · 취사장·방어구 공방 콘텐츠 구현 완료(사용자 두 시설 승인, 여기까지 요청으로 종료).
+  - 기존 솥/화덕 그림을 프로젝트 소유 FieldKitchen.png·ArmorWorkshop.png로 복사해 Point/PPU25.6/압축·밉맵 없음으로 가져왔다. Inn/Blacksmith 기반 프리팹 Variant와 BuildingData2개, 해금5/10일차·메타0 및 씬 설치 목록을 연결했다. 취사장18G/운영1/체류2초/기본 수입8/모험가HP+1, 공방35G/운영4/체류4초/기본 수입24/모험가공격+0·방어+4다. 원본 그림/설정과 기존 기반 프리팹·데이터8파일 해시는 동일하고 씬 변경은 참조2줄 추가뿐이다.
+  - 승인한 효과/대가 설명을 위해 BuildingDataSO에 선택적 description/Description, InstallCardTextFormatter에 기존 상세 영역 표시를 추가했다. 설명이 없는 기존 시설은 기존 자동 설명을 사용한다. 내부 코드/Unity 오브젝트/에셋 파일명은 영어, 사용자 표시·진행 설명은 한국어라는 사용자 지시를 확인했다. 새 효과 타입·UI 배치·저장 형식과 보스는 변경하지 않았다.
+  - Runtime·Tests 각각 빌드 경고0/오류0, Unity 재컴파일 오류0, 관련 검사59/59(AssetWiring52·RoomManagement7) 통과. 에셋 읽기로 값·Variant·그림·설치/해금·저장 키와 초기 수입8/24를 확인했다. 초기 생성 요청은 메인 스레드5000ms 시간 초과로 빈 결과였지만 재실행하지 않고 실제 파일·배선을 읽어 전체 완료를 확인했다.
+  - 실제 플레이는 검증용10일차/해금 상태를 명시적으로 구성해 확인했다. 자연 진행·밸런스 실측은 아니다. 실제 방2개 확장 후184G→취사장18G 결제166G→공방35G 결제131G, 합계 운영비5와 실제 그림/설명을 확인했다. 검증용 SaveCurrentRun 후 실제 Start 씬 도착→ContinueRun에서10일차·131G·시설2개 각 내구도20/올바른 그림/초기 수입8·24·RestoreIncomplete=false를 확인했다. 웨이브 영업·실제 이용 수입 획득은 실측하지 않았다.
+  - 원본 런/백업/메타3파일은 백업 후 검증했고 종료 후 복원·SHA256 모두 일치했다(save-restored.json). 에디터 stopped·SampleScene dirty=false, 기준 커서 이후 콘솔 오류0/reset·dropped=false. 캡처는 kitchen.png·workshop.png·restored.png, 증거/작업 전 사본은 tmp/facility-content-20261027에 있다. Assets 임시 캡처는 Editor API로 정리했다. 설계/결과는 Docs/Design/FacilityContentExpansionDesign.md에 기록했다. 사용자 요청에 따라 여기서 종료한다.
+
+
+- 2026-10-27 · 사용자 요청으로 보스 작업을 보류하고 기존 그림 기반 신규 시설을 검토했다. 실제 건물16개와 주점/대장간 프리팹 수치, 솥·화덕 PNG 및 가져오기 설정을 확인했다. 취사장/방어구 공방의 그림·대가·해금·설치/운영 조건을 Docs/Design/FacilityContentExpansionDesign.md에 승인용으로 작성했다. 회복실의 같은 방 회복과 시설/유닛 공존 제한은 별도 설계가 필요한 것으로 남겼고 임의 변경하지 않았다. 코드·게임 에셋·씬 수정은 아직 없다.
+
+- 2026-10-27 · 사용자 선택에 따라 첫 보스 콘텐츠 구현에 앞서 서사 문안만 수정했다. 임프 참모의 전조/승리 보고와 토벌대장의 등장/격노 대사를 구분하고, 호위 제압의 방어 약화·공격 가속을 짧게 명시했다. 승리 요약은 첫 공세 방어로 한정해 부채 상환/판 전체 승리와 혼동하지 않게 했다. FirstBossNarrativeDesign.md·Sequences.md만 갱신했으며 코드·에셋·씬 변경이나 테스트 실행은 없다.
+
+- 2026-10-27 · 다음 콘텐츠로7일차 토벌대장 서사 보강을 검토했다. 실제 WaveConfig의150초 제한·호위 전멸 후 약점/공격 가속과 기존 예고/배너/정산 표시 경로를 확인하고 Docs/Design/FirstBossNarrativeDesign.md에 구현 전 범위를 작성했다. 코드·에셋 변경은 아직 하지 않았다.
+
+- 2026-10-27 · 유물 조합·연속 선택 사건 구현 완료(두 단계 사용자 승인).
+  - 기존 유물로 야전 의료 체계(의무낭+병참 장부, 전체 체력+10), 기동 보급대(의무낭+장화, 고용 유닛 체력+6/공격 간격×0.94), 친위대의 맹세(인장+탑 방패, 메인 공격+2/체력+12/공격 간격×1.05)를 추가해 조합6→9개다. 기존 조합/유물 가격/효과/상인 진열과 보유 목록은 유지한다. Unity Editor API로 카탈로그만 변경했고 대상별 CalculateBonus·짝 양방향 조회·기존 설명 UI 표시를 확인했다.
+  - 공구 공동구매와 야간 추가 근무의 각 선택에 따라 작업반의 답례/공구를 빌리러 온 작업반/밤샘 작업반의 요청/다시 모인 식탁의4개 후속과8개 후일담을 추가했다. 첫 사건 선택→최소2일 지연→일반 사건 허용 전환에서 후속 우선→선택/건너뛰기 시 한 번만 완료된다. 닫기·중단·없는 선택은 예약을 보존한다. 기존 긴급/방침/상황 우선순위와4~6회 휴식은 유지한다. 첫 사건2개에 후속 정의를 연결했으며 일반 무작위 풀16개와 씬 해시는 작업 전과 동일하다.
+  - DialogueSequenceSO/DialogueRunner, RunEventLedger와 MoralePolicyManager 캡처/복원, SavedPolicyState에 필요한 확장을 했다. 새 DialogueFollowUpDefinition·SavedDialogueFollowUp 타입을 추가했다. 대기 예약과 완료 ID를 선택 필드로 저장하고, 옛 저장 누락 필드는 빈 상태로 처리한다. 승인한 하위 호환 범위로 파일 버전과 다른 섹션은 유지하며 과거 선택 이력으로 후속을 소급 생성하지 않는다. 새 전역 접근자·런타임 에셋 쓰기·새 효과/유물은 없다.
+  - 최소 관련 검사84/84 통과: RunEventLedgerTests24/24(새9케이스 포함), ArtifactShopTests3/3, DialogueSequencePlayerTests5/5, AssetWiringTests52/52. 지연/순서·반복 보상 방지·선택 분기·중단 재시도·건너뛰기·옛 저장·JSON/민심 캡처 복원과 복사 격리를 확인했다. Runtime 오류0(외부 Feel 경고22), Tests 경고0/오류0, Unity 재컴파일 오류0. 처음 두 dotnet 빌드를 병렬 실행해 공유 DLL 출력 충돌이 났고 순차 실행으로 해결했다. 이후 코드 변경은 없다.
+  - 새3조합의 대상/효과/표시와8후속 선택의 액션·후일담 이동/종료를 Editor에서 확인했다(content-verified.json). 사용자 요청대로 장시간 플레이·밸런스 튜닝은 하지 않았고 플레이 진입/사용자 저장 파일 조작도 없다. 설계와 결과: Docs/Design/ArtifactComboExpansionDesign.md·ChainedDayEventsDesign.md. 증거/작업 전 사본: tmp/combo-chain-20261027.
+
+
+- 2026-10-27 · 사용자 요청(유물 조합·연속 사건)을 검토했다. 기존 유물 조합6개와 선택 이력 저장/후속 예약 부재를 확인하고 ArtifactComboExpansionDesign.md·ChainedDayEventsDesign.md에 추가 조합3개와 공구/야간근무 후속2편(선택별4도입)의 구현 전 범위를 작성했다. 코드·에셋 변경 전 상세 범위 승인을 확인한다.
+
+- 2026-10-27 · 초반 일반 선택 사건3개 구현 완료(사용자 제안 범위 승인).
+  - 공구 공동구매(-15G/+민심4 또는 +35G/-민심6), 야간 추가 근무(+35G/-민심6 또는 -15G/+민심6), 폐자재 경매(+35G/모든 수익 시설 내구도-3 또는 민심+4)를 추가했다. 화자는 임프 참모이며 사건마다 도입·선택지2개·선택별 후일담을 작성했다. 기존6종 액션 SO를 재사용하며 기존 사건/공식/등장 주기/메타 잠금/저장 형식은 변경하지 않았다.
+  - Unity CLI 최신beta.14의 Editor API로 DayEvent_ToolCooperative/NightOvertime/ScrapAuction.asset을 생성했다. 파일마다 주 시퀀스1개+후일담 서브에셋2개를 보관하며 후일담은 선택지/진입 액션이 없어 효과가 중복되지 않고 종료한다. SampleScene의 DialogueRunner.scheduledEventSequences는 기존13개 뒤에3개를 연결해16개다. 씬 작업 전 사본과 차이는 참조3줄 추가뿐이며 기존 Dialogue 전체 파일의 해시는 동일하다. YAML 직접 편집은 하지 않았다.
+  - 사용자 요청대로 장시간 플레이·밸런스 실측을 확대하지 않았다. Unity 에셋 읽기와 기존 DialogueSequencePlayer로 선택6개의 올바른 후일담 이동/종료, 효과 목록, 메타 조건0, 중복 없는 씬 연결을 확인했다(verified.json). 본문은 두 줄/줄당40자 이내다. 런타임 코드·테스트 추가/수정과 플레이 진입은 없으며 기존 사용자 저장 파일을 건드리지 않았다. 에디터 stopped 상태에서 작업했고 저장 후 scene dirty=false다.
+  - 설계와 결과는 Docs/Design/EarlyDayEventsDesign.md, 증거는 tmp/early-events-20261027에 기록했다. 특정 일차 고정 등장이나 첫 주 등장 보장은 추가하지 않았다.
+
+
+- 2026-10-27 · 사용자 요청으로 테스트·밸런스/추가 참조 리팩터링을 보류하고 초반 선택 사건 콘텐츠를 검토했다. 기존 일반 사건13개·무작위 풀·전환 휴식과 재사용 액션을 확인하고 Docs/Design/EarlyDayEventsDesign.md에 신규3개·분기 후일담·기존 주기 유지의 승인용 초안을 작성했다. 구현/에셋/씬 변경은 아직 하지 않았다.
+
+- 2026-10-27 · 고용·정산 CostManager 참조8곳 GameScope 이전 완료(사용자 승인 범위).
+  - HiredUnitRoster 2곳·ManagementSettlementManager 6곳을 OnEnable에서 받은 GameScope.Cost 캐시로 이전했다. MovesAtSettlement만 인스턴스 메서드로 변경했으며, 공식·즉시 결제/정산 이연·이벤트 순서·저장 형식과 CostManager.Current 자체는 유지했다. 작업 전 사본과 비교해 두 생산 파일의 나머지 본문은 동일함을 확인했다. 씬·프리팹 변경은 없다. 설계: Docs/Design/CostScopeClientsDesign.md.
+  - 독립 지갑의 고용 잔액 판정·즉시/이연 수입 중복 방지·주간 상환·긴급 상환/신용 안내·재활성화 참조 교체를 6개 테스트 케이스로 추가하고 기존 fixture에 명시적 scope를 연결했다. Runtime/Tests 빌드 각각 경고0·오류0, Unity 재컴파일 오류0, 전체 EditMode509/509 통과(tests.json).
+  - 실제 고용200→185G(15G), 방 확장8G→177G, 현재 설치 목록의 여관10G→167G와 두 클라이언트의 참조 일치를 확인했다. 기존 검증 스크립트의 익명 객체 컴파일 오류는 실행 전 실패이며, 대장간이 현재 InstallableBuildings 목록에 없어 여관으로 표본을 바꿨다. 1일차는 프레임·모험가 위치가 계속 변했으나 두 차례 300초 기록 제한 안에 자연 종료되지 않았다. 남은 모험가의 목적 달성true·예산5·공포4·귀환false를 기록했고 이동/퇴장 원인은 확정하거나 수정하지 않았다.
+  - 남은 적1명에 검증용 피해99999를 적용한 뒤 실제 종료/정산 경로로 보고서 day1·수입30·지출35·순액28·선반영 차이-33, 금화167→195G를 확인했다(cleanup.json). 자연 전투 종료 표본은 아니다. 이후 사용자가 테스트·밸런스를 중단하고 콘텐츠로 전환하도록 요청해 추가 검증·타이틀 왕복은 진행하지 않았다.
+  - 기록 콜백 해제·Unity stopped 확인 후 원본 런/백업/메타3파일을 복원했고 SHA256 모두 일치했다(save-restored.json). 증거: tmp/cost-scope-20261027. 경제 참조 이전의 다른 호출처는 남아 있으며 후속 리팩터링은 보류한다.
+
+- 2026-10-27 · UnitRevivalSystem.Current 제거 완료(사용자 제안 범위 승인).
+  - Docs/Design/UnitRevivalScopeDesign.md를 먼저 작성했다. 생산 호출0건을 확인한 뒤 Current 프로퍼티·Awake의 전역 중복 차단/등록·등록 해제 전용 OnDestroy만 삭제했다(작업 전 대비0추가/16삭제). Awake의 초기 마력=최대치·상태 알림과 부활 비용/타이머/FIFO/자연 회복/금화 귀속 본문은 그대로다. 새 참조·씬/프리팹/SO/저장 형식 변경은 없다. 기존 GameScope와 시작 보정 인자 전달을 사용하며 GameScopeDesign·RefactoringRoadmap에 완료를 반영했다.
+  - 기존 SettlementRegressionTests에3개를 추가했다(+93줄): 독립 등급별 초기 마력·시작 보정·회복·상태 알림 분리, 독립 대기열/FIFO·마력 부족 대기/회복 후 부활·피로70/중상 유지, 정적 Current 부재. 첫 전체 실행502/503은 새 테스트의1레벨 비용 기대값23이 실제15와 달라 실패했다(tests-first.json). RevivalManaCostRules가 level-1을 사용함을 확인하고 생산 로직은 바꾸지 않은 채 시작 마력20·소모15·회복10으로 표본을 고쳤다. 최종 전체 EditMode503/503 통과(tests-final.json). 기존 MetaProgressTests의 새 판/이어하기 시작 보정도 통과했다.
+  - 빌드/재컴파일: Runtime·Tests dotnet build 각각 경고0·오류0, Unity 재컴파일 오류0. 초기 재컴파일 상태 요청이 시간 초과돼 테스트가 시작되지 않았다. 로그의 라이선스 조회404를 보고 팝업 문구를 사용자에게 물었고 팝업이 있다는 응답을 받았다. Computer Use로 확인한 창은 최소화된 Unity와 게임 뷰의 고용 창이었으며 별도 모달은 보이지 않았다. 창을 복원한 뒤 CLI가 정상 응답해 검증을 재개했다. 라이선스 오류를 게임 결함이나 시간 초과 원인으로 확정하지 않았고 임의 팝업 클릭/에디터 재시작은 하지 않았다. CLI 최신beta.14를 사용했다.
+  - 실제 플레이: 원본 런/백업/메타3파일을 백업·해시 확인하고 검증용 메타 진행100을 사용했다. 장착 없는 새 판 기본 마력30/현재30/대기0/Current 없음(default-mana.json), 실제 타이틀→새 판에서 마력 비축만 장착해 최대/현재40(bonus-build-hire.json)을 확인했다. 실제 방 확장·고용 뒤177G, NodePanelView의 실제 배치 경로로 유닛을 놓고 검증용 피해99999를 적용했다. 자연 전투 표본은 아니다. 실제 대기열 진입 후20.005게임초(피격부터20.255게임초,1968프레임)에 부활해 마력40→27(해당 지원자의 실제 비용13), 대기0/쓰러짐false, 금화177 유지, 피로·부상 전후0/None을 확인했다(revival-result.json, revival-timing.tsv). 피격 직후 시작 scale0.05는 연출 히트스톱이며 최종 scale1에서 게임 시간으로 대기를 측정했다.
+  - 실제 독립성: 별도 비활성 오브젝트에 같은 scope를 넣고 활성화한 두 번째 부활 시스템은 enabled=true/초기30이었다. 그쪽에 보정10을 더해40이 돼도 기존 시스템 마력40은 유지됐다(live-isolation.json). 검증 오브젝트·Editor update 기록 콜백을 해제했다. 기존 운영 씬의 단일 매니저 배선 검사는 유지한다.
+  - 마무리: 에디터 stopped·SampleScene dirty=false, 원본 런/백업/메타3파일 복원·SHA256 일치(save-restored.json, editor-restored.json). 플레이 기준 커서444 이후 새 콘솔 오류0·동일 세션·reset/dropped=false(console-final.json). C#2파일 UTF8 무BOM·CRLF와 작업 파일 diff --check 통과. 작업 전 대비 runtime.diff를 검토했고 전체 관련 경로 누적 diff는 diff-after.txt에 보관했다. 증거는 tmp/revival-scope-20261027에 있다.
+
+- 2026-10-27 · CLI 재연결 확인: Defence 에디터 ready(포트7800). 현재 콘솔 오류2건은 모두 Pipeline의 지원하지 않는 editor status 명령 조회 오류이며 게임 코드 오류는 발견되지 않았다. console-reconnected.json에 세션714d849bf3ee4573b2b0ace098607d8f의 조회 결과를 저장했다. 코드·씬·저장 파일은 변경하지 않았다.
+
+- 2026-10-27 · MoralePolicyManager.Current 전체 제거 완료(2026-10-26 착수, 보완 설계 사용자 승인).
+  - 설계: Docs/Design/MoraleScopeDesign.md에 시작 순서와 유닛 주입 계약을 작성한 뒤 구현했다. GameScope는 실행 순서 -100의 Start에서 금화·민심·부활 매니저를 MetaRunStarter.ApplyForRun에 전달한다. Cost 직렬화 참조1곳을 Editor API로 SampleScene에 연결했다. MonoImporter 조회값0을 확인한 뒤 Editor API로 -100을 명시했고 GameScope.cs.meta와 실제 배선 테스트에 반영했다. 씬의 이번 차이는 Cost 참조1줄이며 YAML 직접 편집은 하지 않았다.
+  - 구현: 고용1곳·정산3곳은 기존 scope에서 캐시한 민심을 사용한다. Unit.Start의 전역 조회를 BindPolicies로 바꾸고 일반 배치(UnitDeployment/NodePanelView)·저장 복원(DungeonGraphController)에서 Initialize 직후 주입한다. 이전 매니저 구독 해제·중복 방지·즉시 보정 적용·파괴 시 해제를 유지했다. MoralePolicyManager.Current와 등록 코드를 제거하고 Awake의 초기 민심은 유지했다. MetaRunStarter의 전역 sceneLoaded 구독·_listening을 제거했다. 민심/정책/전투 공식·저장 형식·에이전트 복원 순서는 유지했다.
+  - 검증: Runtime/Tests dotnet build 각각 경고0·오류0, Unity 재컴파일 오류0. 독립 scope의 지원자/유지비/문구·재활성화, 정책 복원 전후 유닛 생성·공격/방어·피로/외부 보정 유지·참조 교체/중복/null 해제, 새 판/이어하기 보정과 실행 순서 회귀7개를 추가했다. 실제 임포터 순서 검사까지 포함해 전체 EditMode 500/500 통과(tests-final.json). cs-review 기준으로 작업 전 백업 대비 생산 코드9파일 차이를 확인했다(task-source.diff).
+  - 실제 플레이: 원본 런/백업/메타3파일을 백업한 뒤 메타 진행100·보정3종을 장착한 통제 새 판에서300G/민심65/최대 부활마력40과 첫 주 후보총2를 확인했다(fresh.json). 실제 방 확장8G와 지원자 고용11G 후281G, NodePanelView의 실제 배치 경로로 유닛1명을 놓았다. 검증 목적으로 OfferPolicies를 수동 호출해 실제 제시된 긴급 징집을 선택했다. 금화311/민심57, 정책 공격1.1배·방어+3이 반영됐다. 유닛의 정수 공격력은 반올림으로1 그대로지만 원시 공격 스탯1.1·방어3을 확인했다. 자연 일차 진행이나 새 전투 실측은 아니다.
+  - 실제 저장/복원: 루트 비활성/재활성 뒤311G/민심57/마력40이 유지됐고 저장 성공. 초기 검증 스크립트가 비공개 GoToTitle을 직접 호출해 실패한 title.json/continue.json 및 after-continue.json/unmodified-verified.json은 씬 왕복 증거에서 제외했다. 리플렉션으로 실제 설정창 메서드를 호출하고 Start 씬 도착을 검증한 뒤 TitleMenuActions.ContinueRun을 실행했다(title-actual.json, continue-actual.json). 실제 복원 후에도311G/민심57/마력40/긴급 징집 남은3일/유닛 원시공격1.1·방어3·scope 참조 일치·RestoreIncomplete=false였으며 값 비교를 자동 확인했다(continued-actual.json). 캡처 continued.png는 최초 잘못된 왕복 전의 배치 상태 이미지로만 사용한다. 장착 해제 후 실제 타이틀 새 판은200G/민심50/최대마력30/정책·유닛 없음이었다(unmodified-actual-verified.json).
+  - 마무리: 26일 플레이 종료 뒤 사용량 한도로 자동 승인 검토가 실패해 원본 복원 명령이 실행되지 않았다. 27일 재개 시 에디터 stopped 및 파일 타임스탬프/내용이 마지막 검증용 새 판임을 확인하고 원본3개를 복원해 SHA256 일치(save-restored.json)를 확인했다. 임시 캡처 에셋 삭제, SampleScene stopped·dirty=false(editor-restored.json), 작업 파일 diff --check 통과. 에디터 재시작으로 콘솔 세션이 바뀌어 전날 커서1839 이후 전체 증분은 판정하지 않았다. 재개 콘솔1건은 Pipeline의 지원하지 않는 editor status 명령 조회 오류이며 게임 코드 스택이 아니다(console-resumed.json). 플레이 중 스크립트 재로드에 따른 전체 런타임 상태 보존은 별도 검증 대상이다. 증거는 tmp/morale-scope-20261026에 보관했다.
+
+- 2026-10-26 · 민심 Current 전체 제거의 시작 보정·유닛 주입 추가 설계 검토(사용자 요청, 구현 승인 전).
+  - 생산 호출6곳과 유닛 생성2경로를 확인했다. 순서 지정 없는 GameScope.Start 이전은 HiredUnitRoster.Start의 첫 주 후보 생성보다 늦을 수 있음을 발견해 기존 제안을 보완했다. DefaultExecutionOrder(-100)의 GameScope.Start, 직렬화 Cost 참조와 기존 Morale/Revival 인자 전달, 전역 부트스트랩 구독 제거를 권장안으로 정리했다.
+  - 일반 배치와 저장 복원에서 Initialize 직후 BindPolicies로 주입하고 즉시 정책 재계산·기존 구독 해제·중복 방지·정책 복원 이벤트 수신을 보장하는 계약을 Docs/Design/MoraleScopeDesign.md에 작성했다. 별도 sceneLoaded 부트스트랩 대안, 유지할 공식/저장/실패 차단 정책, 회귀 및 실제 플레이 확인 항목도 기록했다. 이번에는 문서만 변경했으며 빌드/플레이는 실행하지 않았다.
+- 2026-10-26 · DungeonGradeManager.Current 제거 완료(고용/정산 정적 접근3곳·씬2곳·회귀/플레이 검증 사용자 승인).
+  - Docs/Design/DungeonGradeScopeDesign.md를 먼저 작성했다. HiredUnitRoster와 ManagementSettlementManager에 직렬화 scope와 OnEnable의 DungeonGrade 캐시를 추가하고 지원자 수·정산 보고서가 해당 참조를 사용하도록 변경했다. DungeonGradeManager.Current 및 등록 전용 Awake/OnDestroy를 제거했다. 등급 공식·처치/일차 처리·저장 형식은 유지했다. GameScopeDesign·RefactoringRoadmap의 완료 상태도 갱신했다.
+  - Unity Editor API로 SampleScene의 두 scope 참조를 기존 GameScope에 연결했다. 이번 씬 차이는 참조2줄과 이전 승인된 CostManager ledger 기본값0G/0부채 직렬화3줄(+5/-0)이다. YAML 직접 편집 없이 저장했고 새 판 실제 시작금200G와 이어하기222G를 확인했다. 기존 UI·프리팹 변경은 보존했다.
+  - 독립 scope 간 고용 후보/정산 등급 분리, 재활성화 시 참조 재해석, 정적 Current 부재 회귀3개와 기존 씬 배선 검증을 보강했다. Runtime/Tests dotnet build 각각 경고0·오류0, Unity 재컴파일 오류0, 전체 EditMode 493/493 통과(tests.json). 테스트의 의도된 복원 실패 로그는 플레이 검증 기준 커서 이전에 포함된다.
+  - 실제7일차 체크포인트(222G/부채80G/등급2/누적처치20)에서 두 캐시가 scope.DungeonGrade와 일치했다. 별도 등급100 매니저를 활성화해도 후보 계산2와 보고서 등급2/처치20은 유지됐다. 보고서 검사는 적 수를 임시 설정 후 복구한 통제 표본이며 새로운 자연 전투 결과가 아니다. 실제 타이틀→이어하기에서도 같은 값과 RestoreIncomplete=false를 확인했다. 새 판은0일차/200G/부채0/등급0/처치0, 주간 후보 계산1·실제 총후보2 및 참조 일치를 확인했다(new-run-verified.json, new-run.png).
+  - 원본 런·백업·메타3파일을 복원하고 SHA256 일치를 확인했다(save-restored.json). 에디터 stopped·씬 dirty=false, 임시 캡처 에셋 삭제 완료. 플레이 기준 커서1206 이후 새 콘솔 오류0, session 유지·reset/dropped=false(console-final.json). 증거는 tmp/grade-scope-20261026에 보관했다. 다음 정적 참조 이전 후보는 MoralePolicyManager·UnitRevivalSystem이며 별도 승인 전에는 변경하지 않았다.
+
+- 2026-10-26 · 수리 중 저장·이어하기 및 내구도0 복원 검증 완료(코드 변경 없음).
+  - 원본 런/백업/메타를 tmp/repair-save-20261026에 백업·해시 확인하고 이전 자연 테스트의3일차/128G/대장간20 체크포인트를 로드했다. 이번에는 검증용 ApplyWear와 일시정지를 사용한 통제 표본이며 자연 마모·전투 결과가 아니다. 코드·에셋·씬·저장 형식은 바꾸지 않았다.
+  - 마모3점 → 실제 수리 팝업12G 결제 →116G/내구도17/20/남은1.5게임초/수리횟수1/이용불가를 기존 SaveCurrentRun으로 명시 저장. 실제 타이틀→ContinueRun을 두 번 거쳐 모두 같은 값과 RestoreIncomplete=false 확인. sceneLoaded 일회 콜백에서 일반 SetSetting(0)으로 잠가 CLI 지연 동안 수리가 끝나는 것을 방지했다. 저장 JSON의durability17/repairRemaining1.5/repairCount1도 확인했다.
+  - 일반1배속 재개 뒤 약1.527게임초에20/20/수리횟수1/잔액116/이용가능으로 완료됐다(completion.tsv). 다음 통제 표본은 마모20점으로0/20 고갈을 만들고 수리100G를 결제해16G/남은10초/수리횟수2/이용불가로 저장했다. 타이틀 이어하기에서0/20·10초·횟수2·16G·RestoreIncomplete=false가 그대로 복원됐다. 일반2배속 재개 뒤 약10.209게임초에20/20·수리종료·고갈false·이용가능·잔액16으로 완료됐고 재수리 요청은 창/추가결제/횟수증가가 없었다(completion-zero.tsv, after-completion.json).
+  - 원본3파일 복원·SHA256 일치(save-restored.json), 에디터 stopped·씬 dirty=false, 일회 복원 콜백 해제 확인. 시작커서818/session1ab7cd2fa5a94ae8aee88781e0a88240 이후 새 콘솔 오류0(reset/dropped=false). 소스 변경이 없어 빌드/EditMode는 반복하지 않았다. 관련 경로 누적 diff는 기존 변경 포함 diff-after.txt에 보관했다. 보류된 대기 만족도 실측은 재개하지 않았다. 이번 검증에서는 새 결함이 발견되지 않았다.
+
+- 2026-10-26 · 재개장비 정산 지출 누락 수정 완료(사용자 제안 범위 승인).
+  - 착수·설계: 승인 직후 이 항목에 착수를 남기고 Docs/Design/FacilityReopenLedgerDesign.md를 먼저 작성했다. 앞선 실제 검증의 재개장25G 결제/지출 행 누락을 기준으로, 표시 장부만 보완하고 지갑·부채·순정산·날짜·저장 형식을 유지하는 범위다. 건물 규칙에도 예약 시 즉시 결제/장부만 기록/개장 완료 시 재기록 없음 원칙을 추가했다.
+  - 회귀 먼저: 기존 SettlementRegressionTests에 실제 FacilityClosureSystem.TryBeginReopen과 독립 GameEventChannelSO를 연결한 6개 사례를 추가했다. 대기/이연 상태 × 유료 성공·금화 부족·무료를 검사하며 활성/비활성 반복, 중복 예약, 개장 완료 이벤트, 해제 후 이벤트, 정산 뒤 지갑/부채/지출 행/순정산을 확인한다. 수정 전 유료2개는 예상25G/실제0G로 실패하고 나머지4개는 통과(before-tests.json). 기존 asmdef·리플렉션 헬퍼를 사용하고 새 파일/의존/싱글턴을 만들지 않았다.
+  - 구현: ManagementSettlementManager에 FacilityReopenScheduledEvent 구독/해제 한 쌍과 HandleFacilityReopenScheduled를 추가했다. 핸들러는 RecordExpense("시설 재개장비",evt.GoldCost,false)만 호출해 이미 낸 금액을 전체 지출에 기록한다. CostManager·FacilityClosureSystem·날짜/재개장/저장 로직은 바꾸지 않았다. 수정 전 파일에서 새 구독 쌍/핸들러를 제외한 본문과 현재 본문이 일치함도 비교했다.
+  - 검증: Runtime·Tests dotnet 빌드 각각 경고0/오류0, Unity 재컴파일 오류0. 수정 후 새6개 전부 통과·전체 EditMode490/490 통과(after-tests.json). C#2파일 UTF8 무BOM/CRLF·공백 검사 통과. 테스트 메시지 편집 중 메모리 매핑 쓰기 실패는 실제 파일을 확인하고 원자 교체로 마무리했으며 중복 메서드는 없다. 새 정적 상태·매 프레임 할당·SO 쓰기·직렬화 필드명 변경 없음.
+  - 실제 경로: 최신 CLI beta.14/Unity6000.6.3f1. 원본 런/백업/메타3파일을 tmp/reopen-ledger-20261026에 백업·해시 확인 후, 이전 자연 검증의 day3-rebuilt-checkpoint.json(3일차/128G/대장간20)을 그대로 로드했다. 실제 방 선택·RequestToggleClosure로 휴업은128G 그대로, 재개장25G는103G, 중복 요청도103G. 즉시 장부는 시설 재개장비25G 한 줄/전체 지출25/순정산0/개장 예정5일차였다(live-reopen.json). 날짜·금화·스탯 주입 없이 일반2배속으로 4일차 영업을 진행했다. 마지막 모험가의 자연 귀환까지 기다렸고 강제 처치·종료는 하지 않았다.
+  - 실제 정산: 4일차 종료에서 수입0/지출25/순정산0/이연-25/잔액103G를 확인했다(live-settlement.json). 실제 지출 상세 탭에 시설 재개장비 -25G와 합계 -25G가 한 번만 표시됐다(expense.png). 실제 자동 체크포인트 day4-checkpoint.json도 보관했다. 무료·잔액 부족·구독 해제/개장 완료의 경계는 EditMode 표본이며 이번 자연 플레이에서 모두 재실행했다고 주장하지 않는다.
+  - 종료·보존: 에디터 stopped·씬 dirty=false 확인 뒤 원본3파일 복원·SHA256 모두 일치(save-restored.json). 시작 커서674/session1ab7cd2fa5a94ae8aee88781e0a88240 이후 새 콘솔 오류0(reset/dropped=false, console-final.json). 임시 캡처는 tmp에 복사한 뒤 AssetDatabase로 삭제했다. 씬 누적+79/-16, 정산 프리팹+286/-1·판 종료+287/-2는 시작 전과 같고 이번 씬·프리팹·SO 변경은 없다. 관련 선택 경로 누적49파일 +2156/-220은 기존 작업 포함·완료 기록 직전 수치이며 신규 미추적 설계 파일은 별도다(diff-stat.txt). 재현/결과 JSON·490개 결과·영업 TSV·화면 캡처를 같은 폴더에 보관했다.
+
+- 2026-10-26 · 수익 시설 흐름 검증 완료·재개장비 정산 누락 1건 발견(코드 수정 승인 대기).
+  - 착수·조건: 사용자 다음 작업 요청에 따라 이전 주간 검증에서 미확인한 수익 시설 흐름을 점검했다. CLAUDE·건물/경제/저장 규칙·playtest·시설 대기열/만족도 설계와 실제 코드·에셋을 확인했다. 최신 CLI beta.14/Unity6000.6.3f1 사용. 원본 런/백업/메타 3파일을 tmp/facility-flow-20261026에 복사·해시 확인하고, Start 씬의 실제 StartNewRun으로 새 런을 만들었다. 첫날 안내는 SkipTutorial, 일반2배속, 강제 처치/일차 이동/금화·스탯 주입 없이 진행했다. 원본 소스·씬·프리팹·SO·밸런스는 수정하지 않았다.
+  - 설치·1일차: 시작200G에서 중형 방 확장8G→192G, 항상 설치 가능한 대장간25G→167G를 기존 방 선택/설치/결제 경로로 설치했다. 시설 실제 내구도20/20·이용3초·기본 총액20G 확인. EditorApplication.update 표본/STOP 파일/300초 제한으로 프레임·이용/대기·내구도·금화를 기록했다. 자연 이용 뒤17/20, 대장간 수익19G·운영비3G·순정산+16G→183G. 전체 지출36G에는 이미 낸 방/시설33G가 포함됐으며 중복 차감은 없었다.
+  - 수리·휴업: 실제 NodePanelView.RequestRepair 확인 창이12G/1.5게임초를 표시했고 결제183→171G, 즉시 IsRepairing=true/AcceptsDwell=false/RepairCount1. 수리 중 재요청은 창·추가 결제를 만들지 않았다. 실제 시간이 흐른 뒤20/20·수리 종료·수리 횟수1 확인. 휴업은171G 그대로/IsClosed=true/운영·이용false. 실제 재개장 요청은25G를 결제해146G/3일차 개장 예약, 중복 예약 요청은146G 그대로였다.
+  - 휴업 일차·복원: 2일차 전체 표본에서 내구도20 유지·이용/대기0, 종료 시 대장간 수익0·시설 운영비0·순정산0·146G. 자동 체크포인트 day2-checkpoint.json을 보관하고 실제 설정의 타이틀로 → ContinueRun에서 2일차/146G/내구도20/수리 횟수1/휴업true/재개장 예약true/개장일3/RestoreIncomplete=false 복원 확인. 날짜를 바꾸지 않고 실제 3일차를 시작하자 추가 차감 없이 운영/이용true·예약false로 전환됐다.
+  - 재개장 운영·철거: 3일차 강제 방침에서 선택 가능한 철벽 수비(-20G)를 선택했다(영업 중 이연). 재개장 후 자연 이용으로19/20, 수익19G/정책20G/운영비3G/순정산-4G→142G. 수리 횟수1이 보존돼 현재1점 손상 수리 견적5G(기본4G의25% 할증)를 확인했고 수리 팝업 취소 뒤142G 그대로였다. 철거 팝업은11G 환불·정리3초를 예고, 실제142→153G/시설 제거/정리중true. 정리 중 재설치 요청은 잔해 정리 사유로 실패하고 추가 차감0. 완료 후 실제 재설치25G→128G/내구도20/수리횟수0/영업중·예약없음 확인. 기존 SaveCurrentRun을 명시 호출해 day3-rebuilt-checkpoint.json을 별도 보관했으며 자연 자동 저장과 구분한다.
+  - 발견 1건: 재개장 예약비25G는 TrySpendGold로 실제171→146G 차감됐지만, 다음 정산의 전체 지출에는 수리비12G만 있고 재개장비 행이 없었다(day2-result.json). 순정산0은 이미 결제한 돈을 다시 빼지 않는 정상 동작이나, 전체 지출에는12+25=37G가 기록돼야 한다. FacilityClosureSystem.TryBeginReopen은 FacilityReopenScheduledEvent를 발행하지만 ManagementSettlementManager.RegisterListeners/UnregisterListeners에는 그 이벤트가 없다. 제안은 구독/해제 짝과 RecordExpense("시설 재개장비",evt.GoldCost,false)만 추가해 장부를 보완하는 것이다. 금화·순정산·날짜·저장 형식은 바꾸지 않는다. 실제 채널/중복 구독·중복 예약·실패/무료 예약 회귀 및 실제 경로 재검증 범위로 사용자 승인을 요청했으며 아직 응답이 없어 적용하지 않았다. 상세 제안: tmp/facility-flow-20261026/reopen-fee-finding.md.
+  - 종료·한계: 원본3파일을 복원·SHA256 모두 일치(save-restored.json), 에디터 stopped·SampleScene dirty=false·임시 캡처 AssetDatabase 삭제 확인. 기본 수용인원1의 이용 표본은 관찰했지만 복수 대기 FIFO/만족도 감액·시설 고갈0·수리 중 저장·파산 경로는 이번 자연 표본으로 검증하지 않았다. 시작 커서236/session1ab7cd2fa5a94ae8aee88781e0a88240 이후 게임 예외0, CLI /api/commands 연결 종료 및 헤더 오류2건은 패키지 통신 로그로 별도 분류(console-final.json, reset/dropped=false). 명령·저장·정지 결과는 성공했다. 소스 변경이 없어 빌드/EditMode는 반복하지 않았다. Sequences 제외 관련 코드/문서 diff 통계는 시작 전과 같고, 관련 경로 누적60파일 +2199/-263은 기존 변경 포함 기록 전 기준(diff-after.txt)이다. 동작별 JSON·TSV·휴업 화면을 같은 폴더에 보관했다.
+
+- 2026-10-26 · 정산·판 종료 결과창 정보량 축소 완료(사용자: 둘 다 수정 범위 승인, 중단 후 작업 재개).
+  - 설계·착수: 승인 직후 이 항목에 착수를 기록하고 Docs/Design/ResultInformationDensityDesign.md를 먼저 작성했다. 기존 검은 석판·금색 테두리·글자 크기와 고정 카드 배치를 유지하면서 핵심 결과와 상세 내용을 나눴다. ui-rules에도 실제 표시·접힘 규칙을 반영했다.
+  - 정산: SettlementNote에 표시용 SummaryText를 추가하고 기존 전문 Text와 경제 계산을 보존했다. ManagementSettlementManager의 메모 생성에서 제압/함정·목표·청산·수리 필요의 짧은 문구만 지정한다. 기본 화면에는 이 문구를, 상세 보기에는 전체 메모·금고/선지출 설명·개별 피로를 보인다. 보스 예고·파산 위험 같은 Danger 전문은 요약이 없어도 감추지 않는다. 해금 두 목록은 매 새 정산마다 접고 기존 버튼으로 펼친다. 첫 탭 이름은 ‘이번 영업’으로 수정했다. 수입/지출/대출/고용·정산 완료·ESC·금액/청산/저장 계산은 유지했다.
+  - 판 종료: 생존 일수·최고 기록·처치/잡은 보스 2줄·진행 막대·획득 진행도·새 해금만 기본 표시한다. 전체 통계 버튼은 기존 전과 8줄과 정확한 수치를 열고 접는다. 새 결과를 Render할 때 기본 요약으로 초기화한다. 진행도 산식 중복 문구를 없애고 실제 획득·범위·다음 단계는 유지했으며, 새 해금이 없을 때 ‘새 해금 없음’으로 줄였다. 기존 통계 필드/정산 공식은 그대로다.
+  - 프리팹·생성기: Unity CLI와 PrefabUtility.LoadPrefabContents/SaveAsPrefabAsset으로 기존 두 프리팹에 DetailsButton만 추가하고 직렬화 참조를 연결했다. 기존 계층을 재생성하지 않았다. RunEnd의 통계 텍스트 높이는 286으로 조정해 아래 버튼과 겹치지 않게 했고 글자 크기는 유지했다. SettlementBuilder·RunEndBuilder도 같은 버튼/치수/참조를 만들도록 갱신했다. 프리팹 diff는 정산 +286/-1·판 종료 +287/-2, 씬 누적 +79/-16은 시작 전과 같다. YAML 직접 편집·SO 변경 없음.
+  - 회귀·빌드: 실제 프리팹을 불러오는 ResultDisclosure_PreservesDetailsAndResetsForEachReport 2개 사례를 추가했다. 기본 요약/전문·수치 보존/위험 표시/해금 기본 접힘/실제 버튼 전환/재활성화 뒤 단일 콜백/다음 결과 초기화를 검사해 2/2 통과. 테스트 asmdef가 TMP를 직접 참조하지 않아 첫 dotnet 빌드가 실패했으나 기존 리플렉션 경계 패턴으로 text를 읽도록 수정했고 의존을 늘리지 않았다. 최종 Runtime·Tests dotnet 빌드 각각 경고0/오류0, Unity 재컴파일 오류0, 현재 에디터에서 전체 EditMode 484/484 통과(final-tests.json). 변경 C# 9파일 UTF8 무BOM·CRLF 및 공백 검사 통과. 새 정적 가변 상태/싱글턴/매 프레임 할당/직렬화 필드 이름 변경 없음.
+  - 실제 화면: 원본 저장을 백업하고 지난 검증의 7일차 체크포인트를 로드한 뒤, 이전 플레이 결과 수치를 사용한 표시 전용 SettlementReport/RunEndViewModel 표본으로 검증했다. 이번에 자연 전투·청산을 다시 실행한 결과가 아니다. Game View 실제 1280×720/1920×1080에서 기본·상세 화면을 캡처했다. 정산 표본은 기본 3줄/해금 접힘, 상세 전문·피로와 해금 펼침을 확인했다. 판 종료는 기본 2줄/전체 8줄, 48,210 같은 긴 수치의 TMP overflow=false, 진행도·새 해금 아이콘·새 해금 없음 상태를 확인했다. ShowDefeatPanel의 실제 경로로 화면을 열고 새 판 시작 버튼 → SampleScene/200G/배속1/결과창 닫힘, 타이틀로 버튼 → Start/배속1을 확인했다. 캡처와 입력/상태 JSON은 tmp/result-density-20261026에 보관한다.
+  - 중단·보존: 첫 중단은 사용량 제한으로 자동 승인 검토가 실패해 후속 명령이 실행되지 않은 상태였다. 이후 화면·씬 전환 검증까지 완료하고 원본 런/백업/메타 3파일을 복원했으며 재개 후에도 SHA256이 모두 같음을 재확인했다(save-restore.json). 검증용 720p Game View 항목은 삭제하고 기존 1080p 선택을 복구, 에디터 stopped·씬 dirty=false·Assets 임시 캡처 폴더 삭제 확인. 마지막 재개 때 Unity 서버 세션이 바뀌어 이전 커서 기준 조회는 reset/dropped=true였으므로 이전 세션 전체 오류0으로 주장하지 않는다. 현재 재컴파일 오류0. 최종 원시 콘솔 오류1건은 IntrusionAndSaveTests.RunRestore_PublishesPreviewOnlyAfterSuccessfulCompletion이 LogAssert.Expect로 의도한 복원 실패(expected restore failure)이며 예상 밖 오류는 없다(console-final-current.json). 관련 경로 누적 diff는 이전 작업 포함60파일 +2739/-245(완료 문서 기록 직전 기준, 미추적 신규 설계 파일 별도)이며 diff-stat.txt에 보관했다.
+
+- 2026-10-26 · 주간 통합 검증 재시도 완료: 기존 규칙으로 5~7일차 보스·청산·이어하기 통과(사용자: 다음 작업, Unity CLI 사용 허용).
+  - 범위·보존: CLAUDE·playtest·건물/유닛/적/저장/경제 규칙과 전투·부활 설계를 확인했다. Unity 6000.6.3f1/CLI 최신 beta.14 사용. tmp/week-retry-20261026에 원본 런/백업/메타 3파일을 별도 복사·SHA256 확인하고, 이전 실측의 4일차 종료 test-checkpoint.json을 정상 저장 형식 그대로 복원했다. 신규 전체 1~7일차 연속 런이 아니라, 보관점에서 5~7일차를 재검증한 결과다. 코드·씬·프리팹·SO·밸런스·해금 조건은 수정하지 않았으며 일차/금화/후보/스탯 주입·강제 처치·배속 상한 우회 없이 일반 2배속을 사용했다. 작업 시작에 이 항목으로 착수를 남겼다.
+  - 실제 함정 설치: 복원 4일차 282G/부하2/RestoreIncomplete=false. 실제 해금된 불 화로 20G·피해6·발동60%·BurnStatusEffect를 확인하고, 방 선택 → TryBeginBuildingPlacement → 유효한 빈 칸의 미리보기 Confirm → 기존 결제/설치 경로로 8개 설치, 282→122G. 자동 입력은 화면 클릭에 해당하는 미리보기 anchor/Confirm만 사용했으며 CanPlace와 설치 제한을 먼저 확인했다. 첫 연속 설치 스크립트는 Destroy 대기 중인 옛 미리보기를 조회해 2개 뒤 멈췄다. 242G/설치2를 확인한 뒤 현재 _active 미리보기로 수정하고 남은 6개만 설치했다. 게임 소스를 고치거나 결제를 우회하지 않았다.
+  - 첫 시도: 기존 명령+불 화로8로 이전 5일차 장기 교전을 통과했다. 5일차 보고서 수입13/지출215/순정산-42/이연-160, 추가 치료42G. 6일차 세금 인상(+80G) 선택, 보고서142/49/+135/-42 →173G. 실제 정산 계약/부채 탭에서 슬라이더100과 빌리기 버튼으로 100G 대출, 273G/부채100/주간최소30/전액110 확인. 치료26G 후247G로 7일차 진행. 150초 제한 패배, 함정49·보스 잔여 HP약56%·금화247/부채100. RunEndScreenView는 ‘던전 함락’과 제한시간 이유를 표시했고 저장 파일을 삭제했다. boss-defeat.png/first-boss-defeat.json 보관. 패배 뒤 6일차 저장도 없어졌으므로 보관된 4일차부터 다시 자연 진행했다.
+  - 두 번째 시도: 같은 보관점에서 불 화로8/160G를 설치하고 실제 NodePanelView.IssueCommand로 부하2명 모두 ‘공격’(기존 후열 우선·피로 증가) 적용. 5일차 보고서86/166/+80/-160 →202G, 치료42G →160G. 6일차 세금 인상80G, 보고서145/49/+138/-42 →298G. 실제 대출100G →398G, 치료27G →371G. 유효한 진입 동선 10칸에 같은 불 화로 추가/200G →171G, 총18개. 검증용으로 기존 SaveCurrentRun을 명시 호출하고 prepared-day6-checkpoint.json 별도 보관(일차6/171G/부채100). 일반 자동 체크포인트와 이 명시 저장은 구분한다.
+  - 7일차 성공·청산: second-boss-progress.tsv에서 19:05:13 시작 →19:06:07 정산 대기, 프레임21913→26360 실제 증가. 후열을 먼저 처치하고 토벌대장 처치·활성 적0·함정 피해18 확인. 보고서 수입117/지출263/순정산+81/이연-227. 전체 지출에는 이미 낸 치료27+설치200이 포함돼 있으므로 다시 차감하지 않는다. 실제 금화171+순정산81-최소상환30=222G, 부채100→80, 다음 최소상환24G, _lastLoanSettlementDay=7, 보고서 ‘빚 30G를 청산했습니다’. 첫 대출 최소30은 이자10+원금20이며 30이 한 번 반영됐다. 승리는 코드·적 수치 변경 없이 함정·명령을 함께 보강한 한 표본이며 단일 변경의 인과나 모든 시드의 승리를 보장하지 않는다.
+  - 자동 저장·이어하기: WaveEnded 후 생성된 실제 저장을 cleared-day7-checkpoint.json에 복사, completedDay7/222G/부채80 확인. 실제 설정의 타이틀로 → TitleMenuActions.ContinueRun으로 7일차 완료/다음8/대기/222G/부채80/예정24/마력사용2/8/함정18/RestoreIncomplete=false 복원. 부하 HP26/26·5/23, 두 명 공격 명령, 피로34.734375·61.3125도 저장 전과 일치(continue-verified.json). 새 8일차 영업을 시작하지 않았다.
+  - 종료·한계: 에디터 stopped/dirty=false 확인 뒤 원본 런/백업/메타 3파일 복원·SHA256 모두 일치(save-restore-verification.json). 시작 커서1610/session ef2376ce9dab4bf3a25123563ec45ce4 이후 게임 코드 오류0, CLI Pipeline 통신 오류4건(console-final.json). 19:04:28·19:04:38의 /api/commands 응답 연결 종료2회와 응답 헤더 전송 뒤 상태 변경 오류2회로, 스택은 Unity.Pipeline 패키지이며 이후 설치·저장·보스·이어하기·정지 명령은 성공했다. 콘솔 전체 오류0으로 표시하지 않는다. 기존 잘못된 editor status 진단 오류는 시작 기준점 이전 로그다. Assets 임시 캡처는 보관 폴더로 복사한 뒤 AssetDatabase.DeleteAsset으로 삭제했다. 씬 누적+79/-16, HUD+4/-3·방관리+16/-16·SO변경없음은 시작 전과 같다. 이번 런타임 소스 변경이 없어 빌드/EditMode는 다시 실행하지 않았다. Sequences 외 코드/문서 diff 통계는 시작 전과 같고, 지정 경로 누적 diff는 기존 변경 포함50파일 +1981/-216이다. 선택지/트랩 발동/전투 표본은 로그에 보관했으며 수익 시설·8일차 이후·다른 시드·파산 경로는 이번 검증에 포함하지 않았다. 결과 캡처 day6.png/day7-clear.png와 양 시도 TSV를 tmp/week-retry-20261026에 보관한다.
+
+- 2026-10-26 · 1~7일차 통합 플레이 검증: 1~4일차 완료·5일차 장기 교전 재현(사용자: 다음 작업 진행).
+  - 보존·조건: 원본 런/백업/메타를 tmp/week-playtest-20261026에 복사하고 실제 타이틀 StartNewRun으로 새 런을 시작했다. 시작 200G, 실제 후보 해골 검사 2명. 튜토리얼은 SkipTutorial로 건너뛰었으므로 안내 단계 자체는 이번 검증 대상에서 제외한다. 일반 플레이 배속 2배만 사용했으며 일차·스탯·지원자·금화 주입, 강제 처치, 일차 건너뛰기는 하지 않았다. 테스트 입력·상태는 EditorApplication.update 기록기로 남겼고 STOP 파일·시간 제한·예외/예상 밖 팝업 중단 장치를 뒀다.
+  - 준비·1일차: 실제 방 확장 확인 팝업에서 중형 8G·공사 4초를 확인하고 건설 완료, 해골 검사 2명 고용 32G·실제 배치 후 160G/마력 사용 2/8을 확인했다. 1일차 종료 140G, 보고서 수입 43·지출 103·순정산 -20·이연액 -40. 보고서 전체 내역에는 이미 지급한 건설/고용 등 즉시 비용도 들어가므로 총 수입-총 지출을 다시 차감하지 않는다. 한 부하 HP 2/20, 다른 부하 20/20.
+  - 이어하기·후속 일차: 실제 인게임 SettingsScreenView의 타이틀로 경로 → TitleMenuActions.ContinueRun에서 1일차·140G·마력 2/8·HP 2/20 및 20/20 복원, RestoreIncomplete=false. 처음 사용한 구형 SettingsPanelView는 인게임 씬에 없어서 진단 eval 2회가 실패했으며 게임 동작을 바꾸지 않았다. 실제 치료·휴식으로 37G 지급 후 HP 20 복구·103G에서 2일차 시작. 2일차 정산 수입74/지출44/순정산+67/이연-37 →170G, 추가 치료20G →150G. 3일차 철벽 수비(-20G) 선택·정산83/47/+56/-20 →206G. 4일차 정산83/7/+76/0 →282G. 대화에서 선택 가능한 ‘비축분을 풀어 안심시킨다’를 선택하고 252G로 5일차 진입. 각 입력은 auto-progress.tsv에 기록했다.
+  - 진행 정체: 18:39:13~18:44:59 동안 5일차를 진행했으나 처치 2/4·활성 적1·대기 스폰0에서 끝나지 않았다. 남은 Enemy_HealterEnemy와 해골 검사 2명이 공격·치유·전투 불능·자동 부활을 반복했다. 프레임 84065→113080 등 실제 증가 및 배속2 확인, 최종 252G/부채0. 추가 35초 피해 관찰에서 치유형 적 피격25회는 모두 1 피해였고, 피격 직후 체력이 9→10→11처럼 다시 증가하는 표본을 확인했다. 정지 프레임이나 스폰 대기 오류로 단정하지 않으며, 이 편성의 지속 교전 사례다. 피해 수치·자기 치유·부활 마력 회복은 기존 규칙이므로 수정하지 않았다. 교전 캡처 day5.png, 피해 day5-damage.tsv, 상태 stalled-final-state.json 및 4일차 test-checkpoint.json 보관.
+  - 한계·후속: 6~7일차·보스·청산·유료 대출 상환·시설 설치는 미검증이며 주간 완주 성공으로 처리하지 않는다. 기존 규칙으로 함정/편성을 보강한 재검증과 장기전 종료 규칙 변경은 구분해야 한다. 이번 작업에서는 게임 코드·씬·프리팹·SO·밸런스를 수정하지 않았다.
+  - 종료 검증: 시작 콘솔 커서1444/session ef2376ce9dab4bf3a25123563ec45ce4 이후 새 오류0(console-final.json). 에디터 stopped·SampleScene dirty=false. 런/백업/메타 3파일 원복 후 SHA256 모두 일치(save-restore-verification.json). Assets 안 임시 캡처 폴더는 Editor AssetDatabase로 삭제했다. 씬 누적 +79/-16, HUD +4/-3·방 관리 +16/-16은 작업 전과 같다. 코드/문서 누적 diff(본 작업 직전 기존 변경 포함)는 50파일 +1966/-216(code-diff-stat.txt). 런타임 소스 변경이 없어 빌드/EditMode는 반복하지 않았으며 직전 결과482/482를 이번 신규 실행 결과로 간주하지 않는다.
+
+- 2026-10-26 · 고용 시세 등급 기준 통일 완료(사용자: 1번 실제 표시·결제 금액 기준 승인).
+  - 설계·착수: WeeklyContractAndUnitMarketDesign.md에 승인 기준을 먼저 추가하고 이 항목에 착수를 기록했다. 기존 계산은 정수 고용가인데 등급은 반올림 전 배율을 사용했고, 기존 검사는 정수 고용가를 기준으로 기대해 간헐 실패했다. 정가 100·배율 0.904의 90G/보통, 1.096의 110G/보통, 정가 1·무료 유닛의 등급 불일치를 고정 입력으로 재현했다.
+  - 구현: UnitMarketRules.Tier(baseCost, actualPrice)는 실제 정수 가격과 정가를 비교한다. 10% 이상 저렴/비싸면 Cheap/Expensive, 나머지와 무료는 Normal이다. long 정수 교차 곱으로 비교해 비율 경계의 float 오차·int 곱셈 넘침을 피한다. 정가 11에서 10G·12G는 10% 차이가 아니므로 보통이다. HiredUnitRoster.GetApplicantPriceTier는 기존 GetApplicantPrice가 계산한 금액을 사용하고 null 선택은 보통을 반환한다. 가격 배율 0.75~1.25·반올림·최소 가격·유지비·결제·지원자 생성·저장 형식은 그대로다.
+  - 회귀 먼저: 기존 난수 의존 Roster_QuotesTheSamePriceItWillCharge를 고정 배율 14건으로 바꾸고 null 선택 검사 1건을 추가했다. 90/91G·109/110G 경계, 1G·3G·무료, 옛 저장 0/음수 배율 기본값과 정가 11 비율 및 int 최대 비교를 검사한다. 수정 전 UnitMarketTests 14/20 통과·6건 실패, 수정 후 전체 EditMode 482/482 통과(UnitMarketTests 20건 포함). Runtime·Tests dotnet build 각각 경고 0·오류 0, Unity 재컴파일 오류 0. 편집 도구가 두 런타임 파일만 적용한 뒤 재시도 오류를 반환해 실제 diff를 확인하고 남은 테스트 API 치환을 완료했다.
+  - 실제 고용: 플레이 프레임 3747→3755 증가 확인. 실제 카탈로그의 정가 20G 피 해골 검사 지원자에 통제 배율만 설정하고 기존 고용 창과 버튼을 사용했다. 0.904→18G/저렴·글자색 9BE6A0FF, 실제 차감 18G·고용 성공. 1.096→22G/비쌈·글자색 FF9F8AFF, 실제 차감 22G·고용 성공. 유지비는 두 경우 모두 4G/일로 유지됐다. 자연 생성 시세를 관찰한 것이 아니라 경계 배율을 주입한 검증이며 해금·데이터 에셋을 바꾸지 않았다. finally에서 후보·명단·조건·금화·Random.state를 원래 상태로 돌렸다. 결과는 tmp/unit-market-review-20261026/live-hire.json에 보관한다.
+  - 보존·기록: 플레이 시작 커서 이후 새 콘솔 오류 0, 에디터 정지·dirty=false 뒤 런/백업/메타 3파일 원복·SHA256 모두 일치. 씬 누적 +79/-16, 기존 HUD 프리팹 +4/-3·방 관리 +16/-16은 작업 전과 같고 이번 씬·프리팹·SO·UI 배치 변경은 없다. 수정 C# UTF-8 무BOM·CRLF, 코드/문서 공백 검사 통과. 새 정적 가변 상태·프레임당 할당·외부 에셋 수정 없음. 설계·unit-rules에 실제 금액 기준을 반영했다.
+
+- 2026-10-26 · 금화·부채 재로드 보존 완료(사용자: 제안 범위 승인, 작업 시퀀스 기록 확인).
+  - 기록·설계: 승인 직후 이 항목에 착수를 기록했고 검증 완료 후 결과로 갱신했다. 구현 전 Docs/Design/EconomyReloadDesign.md 작성. 이전 실측에서 정상 240G가 실행 중 스크립트 재로드 후 0G가 되는 경로를 확인했다. 원인은 readonly 비직렬화 CostLedger가 새로 만들어지는 것과 Awake에서만 등록하던 정적 매니저 참조 소실이다.
+  - 장부: CostManager의 _ledger를 숨긴 직렬화 ledger로 전환하고 FormerlySerializedAs("_ledger")를 붙였다. private CostLedger는 Serializable, Gold/Debt 자동 프로퍼티 backing field는 SerializeField로 보존한다. 최초 Awake의 initialGold 지급과 계약 초기화는 유지하고 OnEnable은 잔고·계약을 초기화하지 않는다. 잔고 0을 미초기화로 해석하지 않는다. 체크포인트를 다시 읽어 아직 저장되지 않은 상태를 되돌리는 복구 방식은 쓰지 않는다.
+  - 참조: CostManager와 정산 일차 의존 대상 DayManager가 공통 인스턴스 검증 경로 TryRegisterCurrent를 Awake·OnEnable에서 사용한다. 정적 Current가 사라졌어도 재활성화 때 복구하고, 중복 인스턴스는 기존처럼 오류·비활성화로 거절한다. 할인·신용 경고·한도 초과 기록·상품·계약 주수·정산 이연·마지막 청산/계약 일차를 건드리지 않는다. 대출·청산·정산 공식과 저장 에이전트·JSON 형식은 그대로다.
+  - 회귀 먼저: Unity 직렬화 왕복 잔고(321/123, 0/123, 0/0), Awake 없는 비용 매니저 재활성화(양수/0 잔고), 비용·일차 매니저 복구 후 동일 일차 청산/계약 중복 방지 등 6건 추가. 수정 전 1/6 통과·5건 실패(장부 유실·Current null), 수정 후 6/6. 전체 EditMode 최종 468/468 통과. Runtime·Tests dotnet build 각각 경고 0·오류 0, Unity 재컴파일 오류 0.
+  - 실제 재로드: 테스트 직후 씬 재개방 없이 플레이, 프레임 429→438 증가·원래 저장 2일차 240G 확인. 통제 검증으로 일차 7, 금화 1000·부채 100·할인 25%·신용 경고 2·계약 3주를 설정하고 실제 SettleWeek/AdvanceContractWeek를 한 번 수행했다. 결과 955G·부채 69·계약 2주. 정산 이연·오늘 한도 초과를 true로 두고 RequestScriptReload 전후 금화/부채/할인/경고/계약/상품/두 처리 일차/일차/두 Current 연결을 비교한 결과 차이 0. 재로드 뒤 동일 일차 SettleWeek/AdvanceContractWeek 재호출도 수치 변화 0.
+  - 잔고 0 실측: 실제 TrySpendGold(955)로 0G를 만든 뒤 두 번째 RequestScriptReload. 0G·부채 69·할인 25%·경고 2·계약 2주·마지막 처리 일차 7과 두 Current 연결이 모두 유지됐다. 다시 청산·계약 갱신을 호출해도 추가 차감 없음. 두 비교에서 frame을 제외한 모든 표본 속성이 일치한다. 이 검증은 비용·일차 상태의 재로드 보존이며 다른 매니저·전투 전체의 재로드 지원을 뜻하지 않는다.
+  - 보존·마무리: 플레이 시작 커서 이후 새 콘솔 오류 0. 에디터 정지·SampleScene dirty=false 뒤 런·백업·메타 3파일 원복·SHA256 모두 일치. 누적 씬 +79/-16, 기존 UI 프리팹 +4/-3·+16/-16은 착수 전과 동일. 이번 작업의 씬·프리팹·외부 에셋·저장 JSON 변경 없음. C# UTF-8 무BOM·CRLF 및 변경 코드/문서 공백 검사 통과. 실측·비교·테스트 JSON과 원본 저장은 tmp/economy-reload-review-20261026/에 보관. 경제 규칙·로드맵·UI 초기화 기록의 해당 미해결 표시를 갱신했다.
+
+- 2026-10-26 · UI 초기화 안정화(사용자: 추천 작업 1번 진행 승인).
+  - 재현: 저장된 씬 UiFrameButton 129개 중 Button 참조 누락 0개, AssetWiringTests 기존 39/39 통과. 정상 플레이의 RecordBoard _rowHandlers·_shown은 모두 존재했다. EditorUtility.RequestScriptReload로 어셈블리를 재로드하자 두 배열이 null로 바뀌고 버튼 참조는 여전히 정상인 채 Dialogue·Merchant·Policy·Popup·RecordBoard·ActionDock·Settlement의 OnEnable과 기록판 반복 RenderParties 오류가 기존 기록과 같은 위치에서 재현됐다. 씬 배선 누락이 아니라 Awake 없이 재호출되는 OnEnable의 런타임 초기화 경로 문제를 확인했다. 과거 모든 첫 진입 오류의 발생 계기가 동일했다고 단정하지는 않는다.
+  - 설계·수정: UiVisualDesign.md에 초기화 조건을 먼저 기록했다. 위 7개와 같은 패턴의 RoomDetailPanel·InstallPanel·SettlementShopPane·SettlementLoanPane까지 11개 컴포넌트에 EnsureRuntimeState를 적용했다. OnEnable에서 사라진 콜백 배열·기록판 표시 캐시만 재구성하고, 일반 재활성화에서는 기존 콜백을 재사용한다. Awake의 참조 연결·초기 화면 처리는 유지한다. OnDisable은 배열 초기화 전에도 안전하게 구독 해제한다. 직렬화 필드·프리팹·씬·배치·경제 공식·저장 형식 변경은 없다.
+  - 회귀 먼저: 실제 프리팹을 격리 로드해 Awake 이전 OnDisable, Awake 없는 OnEnable, 콜백/표시 캐시 소실 후 재활성화, 재활성화 시 콜백 인스턴스 유지, 도크 버튼 한 번→요청 한 번을 검사하는 매개변수 회귀 11건 추가. 수정 전 0/11·수정 후 11/11. 전체 EditMode 462/462 통과. Runtime·Tests dotnet build 각각 경고 0·오류 0, Unity 재컴파일 오류 0, C#·문서 공백 검사 통과.
+  - 플레이: 전체 테스트 직후 씬을 다시 열지 않고 진입해 프레임 2975→2983 증가, 금화 240G·기록판 콜백/표시 준비 true·활성 UI 콜백 누락 0을 확인했다. 실제 RequestScriptReload 뒤에도 콜백/표시 준비 true·활성 UI 누락 0. 수정 후 플레이 시작 커서부터 스크립트 재로드와 타이틀 왕복을 포함한 새 콘솔 오류 0. 설정 창의 실제 타이틀 버튼→Start의 실제 이어하기 버튼으로 SampleScene 복귀 후 240G 복원·콜백 정상. 브리핑 펼침/접기·방 상세 열기/닫기·보유 목록→설치·고용 열기/닫기 모두 정상이며 설치/도크 간격 8px 유지. 실측 JSON과 캡처는 tmp/ui-init-review-20261026/에 보관한다.
+  - 별도 한계: 실행 중 어셈블리 재로드 뒤 CostManager의 실제 금화가 240→0으로 초기화됐다. UI 콜백 오류는 없지만 매니저의 비직렬화 런타임 상태 보존은 별도 문제다. 타이틀 이어하기에서는 저장된 240G가 정상 복원됐다. 이번 UI 작업으로 게임 전체의 실행 중 재컴파일 상태 보존을 해결했다고 보지 않는다. 후속 항목으로 RefactoringRoadmap에 기록했으며 매니저·저장 코드는 수정하지 않았다.
+  - 보존·검토: 초기 실측 eval 1회가 5초 메인 스레드 시간 초과로 결과가 비어 상태 판독에서 제외했다. 실제 재로드 비교 JSON으로 원인을 검증했다. 검증 뒤 에디터 정지·SampleScene dirty=false, 런/백업/메타 3파일 원복·SHA256 모두 일치. 캡처용 Assets/tmp 하위 폴더 정리. 누적 씬 +79/-16, 기존 UI 프리팹 +4/-3·+16/-16은 이번 작업 전과 같다. 새 정적 가변 상태·프레임당 할당·Find·외부 에셋 수정은 없다. ui-rules에 초기화/재로드 규칙을 반영했다.
+- 2026-10-26 · 노드 이동·바닥 선택·BT 조건 보완(사용자: 1·2·3번 모두, 제안 범위 작업 승인).
+  - 설계·순서: CombatBehaviorPolishDesign.md에 승인 범위를 먼저 기록하고 이동→선택→BT 순서로 적용했다. 기존 방 크기·통로 생성·확장비·저장 형식은 유지한다. 지원의 부상 아군 합류는 이미 SteerToward를 쓰므로 그대로 두었다. 엄호와 아군 쪽 후퇴는 MoveTowardRoomPoint에서 막힌 목적지를 가까운 통행 가능 칸으로 맞추고 같은 칸 길 경유점을 따른다.
+  - 선택: Node.ContainsFloorPoint를 추가해 월드 위치를 실제 RoomShape 바닥으로 판정한다. DungeonGraphController는 모양 있는 열린 방·후보에서 이 판정을 쓰고, Physics2D 후보 단계에서 모서리·기둥·빈 복도 지점을 거른다. 좌우 클릭이 같은 노드 해석을 쓴다. 시설·칸막이가 선 원래 바닥은 관리할 수 있고 모양 없는 옛 노드는 기존 축소 클릭 범위를 유지한다. 공유 전투 트리거는 건드리지 않았다. DungeonGridOverlay는 사각 틀 대신 열린 칸과 막힌 칸 사이를 연속 경계선으로 그려 불규칙한 방 선택을 표시한다. 내부 격자와 중앙 슬롯 색은 유지한다.
+  - BT: IsCombatMoveLocked를 공개 읽기 속성으로 사용한다. ChargeTargetAction은 실제 사거리 안일 때만 Success이고, 사거리 밖 이동 잠금은 Running이다. GuardBackline·FleeToAllies·StrafeTarget의 타이머와 Skirmish 후퇴는 이동 잠금 중 기다린다. Strafe는 사망·순회도 거절한다. Taunt는 예비 동작·피격 경직만 기다려 속박 중 도발·공격 가능 조건을 보존한다. 두 Behavior 그래프 에셋은 바꾸지 않았다.
+  - 테스트: 기둥 너머 엄호·재집결 2건, 이동/행동 잠금 타이머 7건, 속박·피격·예비 동작의 돌진 도착 구분 3건, 속박 중 Skirmish 후퇴 유지 1건, 바닥/기둥/깎인 모서리/방 밖 클릭 4건 등 새 17건 통과. 최초 전체 450/451에서 기존 UnitMarketTests 시세 등급 경계 검사 1건 실패(Cheap/Normal), 전체 재실행 최종 451/451 통과. Runtime·Tests 빌드 각각 경고 0·오류 0, Unity 재컴파일 오류 0. 테스트 삽입 때 같은 파일의 두 TearDown 앞에 중복 메서드가 들어간 빌드 오류는 중복 하나를 제거해 수정했다.
+  - 플레이 실측: 에디터 정지 확인→테스트 후 SampleScene 재개방→예열→플레이 순서. 프레임 2385→2397, 원래 금화 240G 확인. 실제 던전 방 2개 바닥 236·빈 지점 167, ResolveNodeClickCollider와 모양 판정 불일치 0. 선택 격자 활성·15×11 불규칙 방의 연속 경계 캡처 확인. 셰이더 컴파일 메시지 0. 통제 BattleAgent/NodeTrapGrid 표본에서 각 400스텝 후 엄호 목적지 거리 0·재집결 거리 0·막힌 칸 진입 0. 속박 중 Charge Running, Flee 타이머 0.8 유지. 통제 표본은 실제 게임 웨이브 완주나 밸런스 검증을 뜻하지 않는다.
+  - 진단·보존: 임시 실측 코드에서 Health 네임스페이스를 잘못 적은 컴파일 진단 2회는 실제 Code.Combat.Health 선언을 확인해 정정했다. 게임 코드의 플레이 시작 커서 이후 새 콘솔 오류 0. finally로 임시 표본을 정리하고 잔여 0 확인. 에디터 정지·dirty=false 뒤 런/백업/메타 3파일 원복·SHA256 모두 일치. 캡처·JSON·원본 저장은 tmp/node-review-20261026/ 보관, 캡처용 Assets/tmp 하위 폴더 정리. 씬 누적 +79/-16, 기존 UI 프리팹 +4/-3·+16/-16은 이번 작업 전과 동일. 추가 씬·프리팹 변경·YAML 편집·외부 에셋 수정은 없다. C# UTF-8 무BOM·CRLF 및 공백 검사 통과. 규칙 두 파일에 승인 조건 반영.
+- 2026-10-26 · UI 배치 효율 개선(사용자: 목업 승인 후 작업 지시).
+  - 설계: Docs/Design/UiVisualDesign.md에 승인 배치를 먼저 기록했다. tmp/ui-layout-review-20261026/layout-proposal.png 목업과 기존 스킨·기능을 유지한다. 오른쪽 기록판은 위 568→288로 올려 접힌 브리핑 아래 20 간격으로 모으고, 목표·영업 시작 폭 320→380으로 같은 열에 맞췄다. 왼쪽 아래 도크는 684×132→684×112, 버튼·글자 크기는 그대로이고 안내·버튼·보유 줄 사이 여백만 줄였다. 설치 창·보유 목록·안내 메시지도 도크 위 8 간격을 유지했다.
+  - 구현: 기존 GameplayHud·RoomManagement 프리팹을 PrefabUtility.LoadPrefabContents/SaveAsPrefabAsset으로 직접 수정했다. 전체 생성기·씬 인스턴스 재생성이나 YAML 직접 편집은 없다. 두 Builder에도 같은 치수와 WaveHudView.recordBoard 참조를 반영했다. RecordBoardView는 방 상세와 긴 브리핑의 숨김 상태를 별도로 보관해 한쪽 해제가 다른 쪽 숨김을 풀지 않는다. WaveHudView는 실제 준비 브리핑이 펼쳐져 있을 때만 기록판을 숨기고 비활성 때 해제한다. 기존 직렬화 필드 이름·매니저 배선·저장 형식은 유지한다.
+  - 검증: Runtime·Tests dotnet build 각각 경고 0·오류 0, Unity 재컴파일 오류 0. RoomManagementTests에 두 숨김 해제 순서를 검사하는 회귀 2건 추가. 전체 최초 433/434에서 기존 UnitMarketTests.Roster_QuotesTheSamePriceItWillCharge 1건 실패(Cheap 예상/Normal 실제), 단독 6/6 및 전체 재실행 434/434 통과. 해당 기존 검사는 반올림 정수 가격과 원래 배율의 등급 경계를 비교하며 이번 UI 범위에서 변경하지 않았다. 에디터 전용 Builder의 반환 누락 2건은 Unity 컴파일에서 발견해 반환과 배선을 보완한 뒤 재컴파일 성공했다.
+  - 플레이: 실제 Screen 1280×720 및 1920×1080에서 자세히 버튼→방 선택→방 상세 닫기→접기→보유 목록→설치 창을 실제 버튼 콜백으로 확인했다. 두 해상도 모두 브리핑 숨김·방 상세 숨김·펼친 브리핑 복원·접힌 브리핑과 기록판 복원·목록 열기·설치 때 목록 닫기가 true. 설치 창과 도크 간격은 각각 5.333px(2/3 배율)·8px. 빈 건설·유닛 설치 목록 상태와 접힌/펼친 브리핑을 캡처로 확인했다. 가득 찬 설치 목록은 이번 저장에 없어 검증하지 않았다. 정상 240G·버튼 참조 null 0개를 확인했다. 해상도용 임시 GameView 항목을 삭제하고 기존 1920×1080 선택으로 복원했다.
+  - 실측 예외: 전체 테스트 직후 첫 플레이에서 이전 작업에도 기록됐던 여러 UI OnEnable/OnDisable 초기화 NullReference와 RecordBoardView.RenderParties 반복 오류가 재현됐다. 정지·원본 저장 복원·SampleScene 재개방 후 같은 UI 흐름에서는 재현되지 않았다. 이 초기화 원인은 미확정이며 배치 변경으로 해결됐다고 보지 않는다. 두 번째 플레이의 게임 코드 새 오류는 0개다. 진단 API 잘못 사용(IsPropertyOverride), 최초 eval 시간 초과와 임시 해상도 삭제 인덱스 오류는 별도 도구 실수로 기록하고 각각 올바른 속성·상태 재조회·절대 인덱스 7로 정정했다.
+  - 보존: 정지·dirty=false 뒤 런·백업·메타 3파일을 원복했고 SHA256 모두 일치. SampleScene 누적 diff +79/-16은 작업 전과 같다. 이번 프리팹 diff는 HUD +4/-3, 방 관리 +16/-16으로 승인 치수·참조만 포함한다. 검증 JSON·캡처·작업 전 프리팹은 tmp/ui-layout-review-20261026/에 보관하고 캡처용 Assets/tmp 하위 폴더는 AssetDatabase로 정리했다. C# UTF-8 무BOM·CRLF 및 변경 코드·문서 공백 검사 통과. 새 정적 상태·프레임당 객체 생성·Find·외부 에셋 변경은 없다.
+- 2026-10-26 · 이동과 스프라이트 좌우 전환 조건 재정리(사용자: 상태별 방향 표와 이동·자세 복원 수정 승인).
+  - 기준: 순회·접근·돌진·지원 합류·재집결·엄호 위치 이동은 실제 자발적 스텝 방향, 공격·카이팅·뒷걸음·넉백은 유효한 대상 방향. 정지·수직 이동·대상과 가로 0.1u 이하는 방향 유지. 순간이동·즉시 대시는 이동 추적 초기화. 암살 스킬의 명시적 FaceTarget 조준은 적용한다. 구현 전에 CombatBehaviorPolishDesign에 후속 승인 표를 추가했다.
+  - 원인: 기존 방향 처리는 루트 최종 이동량에 밀림·겹침 해소가 섞였고, MoveToTarget만 추적해 지원 합류·돌진을 구분하지 못했다. 이동이 멈춰도 평활값이 남아 반대로 돌아설 수 있었다. Face가 body==루트인 폴백에도 기준 localPosition을 써 이동을 원점으로 되돌렸다.
+  - 구현: BattleAgent가 클램프 후 실제 자발적 스텝과 교전 요청을 프레임 단위로 기록한다. 외부 순회는 실제 이동에서 겹침 해소를 빼고 넉백·회피는 강제 이동으로 구분한다. LateUpdate의 한 판단에서 방향을 정하며 활성 BattleAgent가 있는 동안 EntityRender.FaceMotion은 항상 false다. 비활성화 시 기존 자동 추적으로 돌린다. 기존 이동 속도 임계 0.3u/s·평활 0.12초·이동 방향 유지 0.2초는 보존하며 정지·모드 전환 때 평활을 초기화한다. 근접 공격 거리·예비 동작·피격 때 대상 방향을 우선한다.
+  - 자세·재배치: Face의 자세 복원은 별도 비주얼 자식만 대상으로 하며 루트에는 적용하지 않는다. SetArena·재활성화 시 기준 위치를 초기화하고 순간이동·즉시 대시는 이번 프레임 이동 방향 판정을 건너뛴다. EntityRender.ResetMotionTracking으로 보행 기준과 걷기 잔여값도 초기화한다. 기존 private _chasedFrame과 해당 조건만 표현하던 FacesTravel 규칙은 제거하고 실제 이동 의도로 대체했다. 직렬화 필드·그래프·씬·프리팹·스탯·저장 형식은 수정하지 않았다.
+  - 테스트 먼저: 지원의 가로/수직 합류, 정지/이동 없는 접근, 대상 없는 순회, 대상 유무별 순간이동, 루트 자세 복원 8건 모두 수정 전 실패(기존 24/32 통과). 넉백 마지막 프레임·겹침 해소의 방향 유지 2건을 추가해 최종 전투 테스트 34/34 통과. 기존 방향 테스트도 실제 뒷걸음·명시적 조준·기록된 우회 스텝을 검사하도록 갱신했다. 전체 EditMode 432/432, Runtime·Tests dotnet build 경고 0·오류 0, Unity 재컴파일 오류 0. 구현 중 테스트 일괄 치환이 다른 fixture의 위치 설정까지 바꿔 생긴 빌드 오류 1건과 순회 fixture 오류 1건은 해당 위치 설정을 복구한 뒤 최종 검증했다.
+  - 플레이 실측: 프레임 6169→6182 증가. 실제 BattleAgent·EntityRender를 사용한 통제 표본에서 지원 왼쪽 합류 -0.45u·FacingX=-1·Y=180, 수직 합류 +0.45u·기존 FacingX=+1·Y=0 유지, 돌진 -0.6975u·FacingX=-1·Y=180, 대상 없는 순회 -1u·FacingX=-1·Y=180을 확인했다. 정지는 잔여 가로 속도 -10에도 오른쪽 유지. 루트 body 폴백의 뒷걸음 -0.45u가 원위치로 되돌아가지 않고 오른쪽 대상 방향을 유지했다. 넉백 -1u에도 오른쪽 유지. 순간이동 뒤 왼쪽 유지·walkHold=0, FaceTarget 명시 요청 뒤 오른쪽 전환을 확인했다.
+  - 실제 캐릭터: 저장에서 복원한 Unit_SkeletonSwordBlue(Clone)의 실제 ready_2 스프라이트로 자발적 왼쪽 스텝 -0.25u 후 FacingX=-1·비주얼 Y=180·flipX=false를 확인했고, 수직 스텝에서는 왼쪽 유지. 통제 스텝은 private 이동 기록 경로를 호출했으며 경로 탐색·새 웨이브 완주를 검증했다고 보지는 않는다. 캐릭터 위치·방향은 실측 직후 되돌렸다. 실측 JSON은 tmp/facing-review-20261026/에 보관한다.
+  - 보존·마무리: 플레이 시작 커서 이후 새 콘솔 오류 0. 임시 실측 객체는 finally에서 제거하고 잔여 0개 확인. 에디터 정지·SampleScene dirty=false 뒤 런·백업·메타 3파일을 원복하고 SHA256 모두 일치. 누적 SampleScene diff +79/-16은 이전 작업과 같고 두 BT 그래프 diff는 없다. 변경 C# UTF-8·CRLF, 변경 코드·규칙·설계 문서의 공백 검사 통과. combat-rules에 새 승인 조건과 단일 방향 제어를 반영했다.
+
+- 2026-10-26 · 전투 BT 동작 연결·역할 전술 보완(사용자: 두 범위 모두 승인).
+  - 설계: 구현 전에 Docs/Design/CombatBehaviorPolishDesign.md 작성. 현재 UnitBT·EnemyBT의 실제 분기와 10월 23일 방향 규칙을 확인했다. 그래프·씬·프리팹·스탯·저장 형식은 이번 작업에서 수정하지 않는다.
+  - 치고 빠지기: SkirmishTargetAction이 대상을 추적해 대상 변경·공격/후퇴 중 사거리 이탈 시 접근으로 돌아간다. 공격 예비 동작·피격 경직 중에는 타이머도 기다리고, 공격을 시작한 그 프레임의 예비 동작도 중간에 취소하지 않는다. 공격 단계에서 기존 MaintainRange를 사용한다. 속박은 공격 잠금과 분리해 이동만 막는 기존 규칙을 유지한다.
+  - 역할: BattleAgent.FindTarget은 유효한 대상을 휘두르는 동안 점수 비교로 대상을 바꾸지 않는다(사망·퇴장 해제와 명시적 도발 유지). Tank+Frontline 전술만 후열 아군을 공격하는 적에 가중치 20을 더한다. Support는 같은 방의 순회 중이 아닌 부상 아군을 체력 비율→거리 순으로 골라 치유 범위 90% 지점까지 합류하며, 범위 안에서는 적을 쫓아 나가지 않는다. 이동에서 치유를 추가하지 않고 기존 주기 오라에 맡긴다. 사거리 안의 공격은 유지하고, 속박 중 합류할 수 없더라도 사격을 끊지 않는다.
+  - 회귀: CombatFormulaTests에 초기 10건 추가 후 수정 전 기존 13/23 통과·새 10건 실패 확인. 수정 후 23/23. 대상이 바뀌어도 여전히 사거리 안인 경우, 잠금 중 단계 보존, 무효 대상 즉시 교체, 탱커 가중치가 다른 우선순위를 침범하지 않음, 지원의 치유 범위 유지·순회 아군 제외까지 검증을 강화했다. 최종 검토에서 속박 지원의 공격 유지 1건 추가. 전체 EditMode 최종 422/422 통과. Runtime·Tests dotnet build 각각 경고 0·오류 0, Unity 재컴파일 오류 0, C#·문서 공백 검사 통과. 수정 C#은 UTF-8·CRLF.
+  - 통제 플레이 실측: 실제 플레이 프레임 453→463 증가 확인. 임시 전투 필드·실제 BattleAgent/SkirmishTargetAction을 사용해 Tank의 후열 위협 선택 true, Support 합류 0.4500u, 이동 전후 아군 HP 10→10·기존 오라 후 12를 확인했다. 사거리 이탈은 Approach, 대상 변경 뒤 Attack, 예비 동작 중 Attack 단계 유지. 원거리의 정상 비주얼 자식 구조에서 고정 dt=0.1 카이팅 -0.2475u, 실제 BT 업데이트 한 번에서 -0.0269u를 확인했다.
+  - 실측 함정: 최초 임시 객체에는 비주얼 자식이 없어 body가 루트가 됐고 Face의 자세 복원이 루트 이동을 되돌려 카이팅 이동량이 0이었다. 실제 프리팹과 같은 별도 Visual+SpriteRenderer를 둔 실측에서 위 이동량을 확인했다. 원거리 이동 코드를 추측으로 바꾸지 않았다. 임시 객체는 각 eval finally에서 정리했다.
+  - 실제 씬: 기존 2일차·240G 저장에서 3일차 영업 시작. 운영 방침 모달이 timeScale=0으로 멈춰 있어 실제 카드 선택 버튼 콜백으로 선택한 뒤 timeScale=1 진행을 확인했다. 양 팀 실제 캐릭터는 AutoDrive=false·BehaviorGraphAgent 활성이고 적 이동·부하 사망/부활 대기와 밤 영업 진행을 관찰했다. 모든 역할이 섞인 대규모 전투·웨이브 완주·밸런스는 이번에 검증하지 않았다. 캡처 tmp/bt-polish-review-20261026/live-combat.png 확인.
+  - 콘솔·보존: 플레이 시작 커서 이후 새 콘솔 오류 0. 에디터 정지·dirty=false 확인 뒤 런·백업·메타 3파일을 원복하고 각각 SHA256 일치를 확인했다. 백업·실측 JSON·캡처는 tmp/bt-polish-review-20261026/에 보관하며 캡처용 Assets/tmp 하위 폴더는 AssetDatabase로 정리했다. 누적 SampleScene diff +79/-16은 작업 전과 같고 두 BT 그래프 에셋 diff는 없다.
+  - 문서: .claude/rules/combat-rules.md에 새 행동 규칙과 설계 참조를 추가했다. 코드 검토에서 새 정적 가변 상태·프레임당 객체 생성·외부 에셋 수정·직렬화 필드 이름 변경은 없다. Unity CLI beta.14가 최신임을 확인했고 에디터 연결을 유지했다.
+
+- 2026-10-23 · 쫓아갈 때는 가는 쪽 보기(사용자: "대상에게 닿지 않은 채 돌아서 다가갈 때는 가는 쪽을 보게 바꿔줘. 닿는 거리에서는 계속 대상을 보게 두고, 수정 전후 실측도").
+  - 수정: `BattleAgent.MoveToTarget`이 쫓은 프레임을 남기고(`_chasedFrame`), `UpdateCombatFacing`은 그 프레임에 휘두르기 거리 밖·넉백 아님·걷는 중(가로 0.3u/s, 0.12초 평활)이면 가는 쪽을 본다(`CombatMoveRules.FacesTravel`). 돌아선 뒤 0.2초는 다시 돌아서지 않는다(꺾인 길에서 떨지 않게). 물러남·넉백·겹침 해소처럼 쫓는 걸음이 아닌 이동과 닿는 거리에서는 그대로 대상을 본다(기존 테스트 `BattleAgent_FacesTargetWhileMovingAway` 유지).
+  - 테스트: `CombatFormulaTests.BattleAgent_FacesTravelOnlyWhileChasingOutOfReach`(새, 실제 갱신 경로), `CombatMove_KeepsRecoveryAndTargetSwitchLimits`에 규칙 확인 추가. 전체 EditMode 411/411.
+  - 실측(판 저장 원복, 60초, 수정 전은 커밋된 `BattleAgent`를 잠깐 되돌려 같은 기록기로 잼, "쫓는 걸음" = 0.05초 안에 `MoveToTarget`이 돌았고 닿는 거리 밖, 그 이동 중 보는 쪽 반대로 움직인 비율): 3일차·새 중형 방에 상점 — 모험가 607/1,100(55%) → 253/2,161(11.7%), 부하 29/423(6.9%) → 4/323(1.2%). 7일차 보스전(돌아갈 장애물이 적음) — 부하 6.4% → 7.6%, 모험가 5.7% → 6.6%(변화 없음 수준). 빠른 방향 뒤집힘(0.25초 안 두 번) 3일차 모험가 5 → 10, 부하 1 → 2. 상점 칸 위 표본 0(상점 방 3,905 중).
+
+- 2026-10-23 · BT 전투 이동 손질(사용자: "bt쪽 더 손봐야할거같아 오브젝트 상관없이 움직이고 이상한곳 보면서 움직이고" → "계획대로 다섯 가지 모두(방향·뒷걸음·대상 바꾸기·겹침·시설 막기), 수정 전후 실측도" → 도중 "얘들이 움직일때 떨어").
+  - 원인(7일차 보스전 60초 실측): 그래프로 움직이는 캐릭터는 겹침 해소가 돌지 않아 서로 통과했다(`ResolveCrowding`이 `autoDrive`만). 근접은 휘두를 때마다 회복 0.3초 내내 최대 속도로 물러났다 다시 붙었고, 원거리는 쏜 직후 좌우를 프레임마다 새로 뽑아 제자리에서 떨었다(모험가 이동 떨림의 91%). 물러나는 길이 막히면 미끄러지는 쪽이 매 프레임 바뀌었다. 대상은 3~6초마다 무작위로 바뀌었다. 시설 그림(중앙 슬롯) 위를 그냥 걸어 지나갔다.
+  - 수정: `CombatMoveRules`(새 규칙)에 수치를 모음. 근접 회복 걸음은 0.15초·속도 35%·사거리 95% 밖으로는 안 물러남(`MeleeRecoveryStep`). 원거리는 쏜 직후 제자리. 물러나다 막히면 열린 쪽 벽을 따라 0.6초 미끄러짐(`KiteStep`). 대상은 3초 넘게 쫓아도 닿지 못할 때만 가장 가까운 다른 적으로 바꾸고 2초 붙잡음(`IsChaseStalled`·`SwitchToNearestOtherTarget`). 겹침 해소는 `LateUpdate`에서 그래프 캐릭터에도 돌림(세기 50%, 상대 편은 반경 50% 안만). 중앙 슬롯 시설(포탈 제외)은 통행을 막음(`NodeTrapGrid.SetCentralSlotBlocked`, `Node.AssignBuilding`/`ClearBuilding`이 켜고 끔). 보는 쪽은 `LateUpdate`(`UpdateCombatFacing`) 한 곳이 정하고 이동 함수의 `Face`는 대상이 있으면 돌리지 않음.
+  - 방향 규칙: 처음에는 "움직이면 가는 쪽, 닿는 거리·물러나며 쏠 때만 대상"으로 바꿨으나, 작업 중 다른 손이 "대상이 있으면 늘 대상을 본다 + 휘두르는 중·움찔 중에는 겹침 해소도 멈춘다"로 정하고 테스트(`BattleAgent_FacesTargetWhileMovingAway`·`BattleAgent_CrowdingRespectsCombatMoveLock`)를 넣었다. 그 결정을 그대로 두었다.
+  - 테스트: `CombatFormulaTests.CombatMove_KeepsRecoveryAndTargetSwitchLimits`·`BattleAgent_FacesTargetWhileMovingAway`·`BattleAgent_CrowdingRespectsCombatMoveLock`(3건), `TrapTileTests.CentralFacility_BlocksWalkingButPortalDoesNot`. 전체 EditMode 410/410.
+  - 실측(판 저장 원복, 같은 조건 7일차 보스전 60초, 1,000표본당, 수정 전은 커밋된 `BattleAgent`·`EngageTargetAction`을 잠깐 되돌려 같은 기록기로 잼): 이동 떨림(가로 방향이 0.15초 안에 뒤집힘) 부하 13.6 → 4.5, 모험가 23.7 → 9.0. 겹침(0.35u 안) 부하 13.6 → 5.6, 모험가 32.3 → 43.8(우리 쪽 첫 수정 직후 15.5였다 — 휘두르는 중·움찔 중 겹침 해소를 멈춘 뒤 보스가 거의 늘 움찔해 늘어난 것으로 보임). 살아 있는 대상을 바꾼 횟수 부하 22 → 2. 시설: 새로 연 중형 방에 상점을 세우고 3일차 영업 60초 — 모험가가 상점 방에 있던 표본 4,798 중 상점 칸 위 0.
+  - 남은 것: "대상을 늘 본다" 규칙 아래에서 모험가가 기둥·시설을 돌아 다가가는 이동의 31%가 대상을 본 채 뒷걸음으로 보인다(3일차). 모험가 겹침 증가. 둘 다 사용자 판단이 필요하다.
+  - 실측 사고: 한 번은 사용자가 플레이 중인 에디터에 7일차 영업을 열어 버렸다(플레이 중인지 확인하지 않음). 사용자가 플레이를 멈춘 뒤 판 저장을 되돌렸고, 이후 실측은 정지 상태를 확인하고 들어갔다.
+
+- 2026-10-22 · RunSummarySystem의 정적 Current 제거(사용자: 제안 범위 승인).
+  - 범위: CostManager의 최고 부채 기록 7곳(긴급 부채·대출·사건 급전·조기 상환·일말 긴급 상환·일일 정산·주간 청산)이 GameScope에서 받은 판 요약에 기록하도록 전환했다. 최초 기록 때 참조를 캐시하며 기존 기록 위치·대출/정산 공식·이벤트 순서·저장 형식은 그대로다. RunSummarySystem.Current와 설정·해제 생명주기를 제거했다. WaveManager와 결과 화면은 이미 인스턴스 참조를 사용하므로 추가 수정하지 않았다.
+  - 씬: Unity CLI의 SerializedObject로 SampleScene의 CostManager.scope를 기존 GameScope에 연결했다. scope 클라이언트는 11→12개. 기존 씬 변경에 추가된 것은 참조 1줄이고 누적 diff +79/-16이다. YAML 직접 편집과 UI·프리팹 변경은 없다.
+  - 테스트 먼저: CreditWarningTests에 7개 기록 경로·두 scope의 최고 부채 격리·정적 접근자 부재 9건을 추가했다. 최초 RunSummary_* 결과는 기존 3건 통과·새 9건 실패(주입 필드 없음·Current 존재), 수정 후 12/12. 초기 경로 목록의 restore 항목은 기존 기록 시점에 맞춰 조기 상환 경로로 정정했다. 기존 GameRulesTests의 요약 생성 헬퍼는 더 이상 없는 Awake를 호출하지 않는다. AssetWiringTests는 CostManager도 같은 조립 루트의 클라이언트인지 검사한다.
+  - 검증: Runtime·Tests dotnet build 각각 경고 0·오류 0, Unity 재컴파일 오류 0, 전체 EditMode 410/410 통과. 코드 전체 검색에서 RunSummarySystem.Current 사용처 0개. C#·문서 diff 공백 검사 통과, C# UTF-8·CRLF 유지. 이전 승인 범위의 다른 미커밋 변경이 있는 작업 트리에서 검증했다.
+  - 플레이: 기존 저장 2일차·240G로 진입, 프레임 1828→1841 증가 확인. 실제 CostManager.TryBorrowGold(100) 호출로 240→340G·부채 100·최고 부채 100, TryRepayEarly(100)로 240G·부채 0·최고 부채 100. 캐시된 요약과 GameScope.RunSummary가 같은 객체이며 정적 접근자가 없음을 런타임에서도 확인했다. GameOverManager.TriggerRunDefeat로 결과 화면을 열어 가장 컸던 빚 100G·timeScale=0 표시를 확인했다. 자연 영업·청산일 완주는 이번 범위에서 실행하지 않았다.
+  - 실측 예외: 첫 플레이 진입에서 DialogueUiView·MerchantScreenView·PolicyChoiceScreenView·PopupView·RecordBoardView·ActionDockView·SettlementScreenView의 OnEnable 및 RecordBoardView.RenderParties에서 NullReferenceException 30건을 수집했다. 에디트 상태에서는 UiFrameButton 129개 중 Button null 0개·partyRows 8개 정상. 코드 변경 없이 다시 플레이하자 partyRows 8개와 버튼 참조가 정상이고 같은 대출·상환·패배 경로에서 새 콘솔 오류 0개였다. 첫 진입 오류의 원인은 미확정이며 재현되지 않았다고 기록한다. 이번 참조 이전의 폴백 경고는 없었다.
+  - 보존: 런·백업·메타 파일을 tmp/run-summary-review-20261022/에 백업했다. 두 차례 실측 뒤 에디터 정지·dirty=false 확인 후 원복하고 3파일 모두 SHA256 일치를 확인했다. 결과 캡처 tmp/run-summary-review-20261022/peak-debt.png를 확인했고 캡처용 Assets/tmp 하위 폴더는 AssetDatabase로 정리했다.
+  - 문서: GameScopeDesign과 RefactoringRoadmap에 RunSummarySystem 이전 완료를 반영했다. FacilityClosureSystem에 이어 두 번째 Current 제거 완료이며, 등급·민심·부활 및 정적 레지스트리 이전은 아직 남았다.
+
+- 2026-10-22 · 저장·패배·튜토리얼의 남은 씬 참조 배선(사용자: 다음 작업 진행, 없으면 보고).
+  - 범위: SampleScene의 `MagicSaveAgent.magicManager`, `MerchantSaveAgent.merchant`·`artifacts`, `WaveManager.gameOverManager`, `GameOverManager.bossWavePresenter`, `PlayTutorialView.dialogueRunner`·`merchantPanel` 7곳을 기존 객체에 연결했다. Unity CLI의 SerializedObject·PrefabUtility·EditorSceneManager로 처리했으며 YAML 직접 편집, 저장 순서·형식·런타임 코드 변경은 없다.
+  - 테스트 먼저: `AssetWiringTests.SceneDependencies_ConnectsExistingManagers` 7건이 수정 전 모두 null 참조로 실패(0/7), 배선 후 7/7 통과. 전체 EditMode 401/401, Runtime·Tests dotnet build 경고 0·오류 0, Unity 재컴파일 오류 0. 테스트 도중 Save 대화상자로 CLI가 시간 초과됐으며 사용자가 저장을 누른 뒤 완료 결과를 확인했다.
+  - 실측: 기존 저장 2일차·240G, RestoreIncomplete=false. 프레임 2268→2287 증가 확인. 복원 전후 7개 섹션 JSON이 같고, 지형은 노드·엣지·후보 순서 정렬 뒤 동일했다. 연결된 WaveManager.gameOverManager를 통해 검증용 TriggerRunDefeat를 호출해 GameOver=true, 결과 화면 열림, 사유 표시, timeScale=0을 확인했다. 자연 보스 패배 조건 충족과 첫날 튜토리얼 완주는 이번에 검증하지 않았다.
+  - 콘솔: 실측 시작 커서 이후 게임 오류·이번 7개 필드의 탐색 폴백 경고 0개. 외부 PluginImporter 구버전·폰트 생략 문자·계정 API·이미 플레이 중 경고는 남았다. 이후 배경 참조 복원용 진단 eval에서 일치 요소 없음 오류 1건이 발생했으며 게임 실행 오류와 구분한다.
+  - 씬 검토: 이전에 원복 승인받은 HUD·방 관리 RectTransform 8개 자동 변경을 다시 원복했다. 기존에 SpriteRenderer가 제거된 BG 프리팹 인스턴스의 backgroundRenderer가 저장 시 명시적 null 오버라이드로 정규화된다(원래도 해석 결과 null). 배경 컴포넌트나 프리팹은 수정하지 않았다. 누적 씬 diff는 이전 GameScope 작업을 포함해 +78/-16이며 이번 추가는 참조 7개 교체와 위 자동 직렬화 4줄이다.
+  - 화면 확인: `tmp/scene-dependencies-review-20261022/wiring-verified.png`에서 패배 화면을 확인했다. 뒤쪽 HUD가 DAY 7로 보였으나 직전 실측 일차는 2였다. 사용자는 직접 조작하지 않았다고 답했다. 재진입 실측은 실제 2일차·대기·웨이브 중지, TopHud 연결 일차 2·표시 DAY 2, WaveView 다음 영업 DAY 3으로 정상이고 최초 차이는 재현하지 못했다. 마력 6/8은 잔여량(사용 2)이므로 정상이다. 최초 캡처 불일치의 원인은 미확정이다.
+  - 원복: 검증 전 런·백업·메타 3개를 `tmp/scene-dependencies-review-20261022/`에 보관했다. 플레이 정지 뒤 모두 원복하고 SHA256 일치를 확인했다. 캡처용 Assets/tmp 하위 폴더는 AssetDatabase로 정리했다.
+  - 문서: RefactoringRoadmap의 1A 배선 목록을 완료 처리하고 현재 코드에 없는 MoraleHudView 항목은 제외했다. Current 사용처 이전·정적 레지스트리 소유권 이전·공용 폴백 제거는 남아 있으며, 코드에 폴백 호출 15곳이 남아 있어 공용 클래스를 지우지 않았다.
+
+- 2026-10-22 · 이어하기 후 영업 HUD 갱신(사용자: 다음 작업 진행 승인).
+  - 원인: 2일차·240G 저장을 불러와 실제 다음 영업은 3일차이고 방·입구 조건도 충족했지만, WaveView가 초기 Start 이후 복원 알림을 받지 않아 `DAY 1 · 영업 준비`·`방을 하나 확장하세요`·시작 버튼 잠금이 남았다. 등급은 일차 뒤에 복원되므로 일차 복원 직후 갱신하는 것도 불충분하다.
+  - 수정: RunSaveSystem에서 파일을 읽은 뒤의 기존 복원 루프를 private RestoreLoadedRun으로 분리해 사용자 저장을 건드리지 않는 테스트가 가능하게 했다. 모든 섹션이 정상 복원된 뒤에만 기존 DayManager.ShowNextWaveDay(0f)를 호출한다. WaveView는 DayPreviewChanged를 OnEnable/OnDisable에서 구독·해제하고 준비 카드·시작 버튼을 다시 계산한다. 새 씬 참조·저장 형식 변경은 없다.
+  - 테스트 먼저: IntrusionAndSaveTests의 RunRestore_* 3건. 수정 전 1/3(정상 복원 알림 0회·준비 카드 DAY 1 잔류 실패), 수정 후 3/3 통과. 마지막 섹션까지 완료 후 한 번 알림, 실패 시 알림 없음·RestoreIncomplete 유지, 실제 WaveView의 DAY 3·시작 허용·복원 등급 반영·비활성 시 구독 해제를 검사한다. 초기 테스트 구성에서 계산 프로퍼티인 WaveManager._entryNode를 필드로 접근한 오류를 바로잡은 뒤, 표시 잔류 실패를 확인했다.
+  - 검증: Runtime·Tests dotnet build 경고 0·오류 0, Unity 재컴파일 오류 0, 전체 EditMode 394/394 통과. 현재 작업 트리에는 앞선 전투·함정·GameScope 변경도 포함돼 있다.
+  - 플레이: 기존 저장에서 2일차·240G·다음 3일차·DAY 3 준비 카드·영업 시작·실제 Button.interactable=true·표시=true·RestoreIncomplete=false 확인. 타이틀 GoToTitle → ContinueRun 왕복 후에도 유지됐다. 실제 HUD Button.onClick 이벤트로 일차 2→3, Phase=Day, WaveManager.IsWaveRunning=true, 진행 HUD=true 확인(실제 마우스 클릭·3일차 종료까지는 이번 범위 밖).
+  - 보존·화면: 실측 구간 새 콘솔 오류 0·에디터 콘솔 오류 0. 플레이 정지·씬 dirty=false 확인 후 런·백업·메타 저장 3개를 원복하고 각각 SHA256 일치 확인. 캡처는 `tmp/restore-hud-review-20261022/restored-hud.png`로 보관·시각 확인했고 Assets 임시 캡처는 에디터 API로 정리했다. 이번 작업으로 씬·프리팹 변경은 추가되지 않았다.
+  - 작업 diff: 이번 C# 3파일 +180/-1. 실측 당시 앞선 변경 포함 게임 코드·테스트 diff는 12파일 +603/-48와 미추적 CombatMoveRules.cs·meta다. persistence-rules·ui-rules에 복원 완료 갱신 경로를 기록했다.
+
+- 2026-10-22 · GameScope 씬 배선(사용자: 다음 작업으로 진행 승인).
+  - 범위: 기존 GameScope 코드에 맞춰 SampleScene에 루트 하나·매니저 5개·scope 참조 11곳을 Unity CLI의 에디터 API로 연결했다. HUD·방 관리 프리팹은 씬 인스턴스 오버라이드로 기록했다. 런타임 코드는 바꾸지 않았다.
+  - 테스트 먼저: `AssetWiringTests.GameScope_ConnectsManagersAndEverySceneClient` 추가. 배선 전 GameScope 0개로 실패(0/1) → 배선 후 저장된 씬을 다시 열어 루트·매니저·비활성 UI까지 검사해 1/1 통과. 전체 EditMode 391/391, Runtime·Tests dotnet build 경고 0·오류 0, Unity 재컴파일 오류 0.
+  - 씬 변경: `SampleScene.unity` +67/-9(루트 추가·참조 9개·프리팹 오버라이드 2개). YAML 직접 편집 없이 SerializedObject·Undo·EditorSceneManager.SaveScene을 사용했다. 씬 재확인 dirty=false.
+  - 최종 diff에서 배선 저장 직후에는 없던 HUD·방 관리 Text의 RectTransform 오버라이드 8개 변화를 발견했다. 사용자가 직접 수정한 것이 아님을 확인받은 뒤 PrefabUtility.SetPropertyModifications로 그 8개만 이전 값으로 복원했다. 씬 diff는 다시 +67/-9로 배선 변경만 남았다. Unity가 생성한 YAML의 빈 `value:`·`m_Name:` 뒤 공백 3개는 serializer 출력이므로 직접 편집하지 않았다.
+  - 플레이: 기존 2일차·240G 저장 복원, 프레임 증가, GameScope 1개·클라이언트 11개·미연결 0개 확인. 저장 후 실제 설정의 타이틀 복귀 → 타이틀 ContinueRun으로 재진입해 잘못 연결된 참조 0개·RestoreIncomplete=false 확인. 저장 7개 섹션 문자열 일치, 지형은 방 순서만 달라 방·연결·후보를 정렬한 뒤 완전 일치(방 2·연결 1·후보 2·시드 일치).
+  - 콘솔: 실측 커서 이후 scope 폴백 경고 0·새 오류 0. MagicSaveAgent.magicManager와 MerchantSaveAgent.merchant·artifacts는 별도 미배선 경고가 남는다. 오래된 외부 플러그인 임포터·폰트·계정 API 경고는 건드리지 않았다. 테스트 중 도구 응답 타임아웃 한 차례 후 완료 상태를 재확인했다.
+  - 보존: 플레이 정지 후 런·백업·메타 저장 3개를 원복하고 SHA256 일치 확인. 캡처는 `tmp/game-scope-review-20261022/game-scope-play.png`로 옮겨 확인했고 Assets 임시 캡처는 에디터 API로 정리했다. GameScopeDesign·RefactoringRoadmap에 배선 완료 상태 반영.
+  - 별도 발견(미수정): 이어하기 실제 NextWaveDay=3·시작 거절 사유 없음인데 WaveView.Model은 `DAY 1 · 영업 준비`·`방을 하나 확장하세요`·StartEnabled=false. WaveView는 Start/웨이브 시작·종료/NodeBuilt에 갱신하지만 저장 복원 뒤 표시 갱신 경로가 없다. 다음 수정 후보로 보고하며 이번 배선 변경에는 포함하지 않았다.
+
+- 2026-10-22 · 프로젝트 순차 점검 1~3단계(전투 이동 검토 → 첫날·정산·이어하기 실측 → GameScope 배선 점검).
+  - 사용자 결정: 기존 `.claude/rules/combat-rules.md`의 방향 규칙 유지. 승인 범위는 대상 방향 처리, 공격 예비 동작·피격 경직 중 겹침 해소 이동 잠금, 회귀 테스트와 이 기록이다.
+  - 수정: `BattleAgent.UpdateCombatFacing`가 대상이 있는 동안 이동 방향과 무관하게 대상을 보게 하고, 가로 차이 0.1 이하에서는 방향을 유지한다. 대상이 없어지면 `EntityRender.FaceMotion`을 다시 켠다. 이동 방향 평활·방향 전환 대기와 관련된 미사용 상태·`CombatMoveRules` API는 제거했다. `ResolveCrowding`도 기존 `IsCombatMoveLocked`를 적용한다.
+  - 회귀 재현: 구현 수정 전 `CombatFormulaTests` 9/12 통과. 대상 반대를 보는 1건, 공격 예비 동작·피격 경직 중 각각 0.05u 이동한 2건 실패를 확인했다. 수정 후 12/12, 전체 EditMode 390/390 통과. Runtime·Tests dotnet build 모두 경고 0·오류 0, Unity 재컴파일 오류 0. 기존 전투 이동·중앙 시설 통행 차단 등 다른 미커밋 변경이 함께 있는 작업 트리에서 검증했다.
+  - 실측: 백업 뒤 새 판에서 프레임 증가 확인. 실제 팝업 확인으로 방 확장 200→192G, 공사 완료. 지원자 실제 고용·배치 경로로 192→176G(고용가 16G), 배치 1명. 첫날 실제 교전 표본에서 부하 대상 dx +1.025/facing +1, 모험가 dx -1.025/facing -1로 대상 방향 일치. 영업은 1배속에서 시작하고 후반은 제공되는 2배속으로 진행했으며, 강제 종료·강제 처치 없이 자연 종료했다.
+  - 정산: 1일차 순액 -60G로 176→116G. 표시 지출 84G = 건설 8 + 고용 16 + 부하 부활비 56 + 유지비 4. 선결제 24G가 정산에서 이중 차감되지 않았다. 자동 저장 생성·`RestoreIncomplete=false` 확인.
+  - 이어하기: 실제 설정 화면의 타이틀 복귀 동작 → `TitleMenuActions.ContinueRun`으로 복원. 1일차·116G·대기 상태와 저장 에이전트 8개 섹션(roster, merchant, graph, cost, morale, day, magic, reputation)의 캡처 JSON이 복원 전후 전부 동일했다. 실측 이후 새 콘솔 오류 0, 에디터 콘솔 오류 0. 예전 도구 명령 오류는 타임스탬프로 구분했다.
+  - 원복: 플레이 정지 확인 후 기존 런·백업·메타 저장 3개를 복원하고 각각 SHA256 일치를 확인했다. SampleScene 편집 상태는 dirty=false. 원본 백업은 `tmp/project-review-20261022/`에 보관했다. 현재 판에는 활성 튜토리얼이 없어 첫 실행 튜토리얼·실제 마우스 조작은 검증하지 않았다.
+  - 배선 점검(수정 전): SampleScene의 `GameScope` 인스턴스 0개. 실행 중 `scope` 미연결 컴포넌트 11개: DialogueRunner, MoraleSaveAgent, WaveView, TopHudView, GradeSaveAgent, DungeonGraphController, UnitRevivalSystem, RoomManagementScreen, WaveManager, GameOverManager, NodePanelView. 폴백에 의존한다. 다음 변경 후보는 GameScope 하나에 기존 매니저 5개를 연결하고 이 참조들을 Unity CLI로 배선하는 작업이며, 아직 적용하지 않았다.
+  - 도구: 사용자 승인으로 Unity CLI 1.0.0-beta.13→beta.14 업데이트 완료. 실행 파일은 `C:/Users/ahaha/AppData/Local/Unity/bin/unity.exe`이며 PowerShell PATH에는 없다.
+  - 실측 작업 트리 규모(기존 변경 포함): 추적된 게임 코드·테스트 8파일 +369/-47, 별도 미추적 `CombatMoveRules.cs`·meta. 씬·프리팹·외부 에셋은 이번 작업에서 수정하지 않았다.
+
+- 2026-10-22 · 유물 줄(사용자: 유물 줄 목업 → "목업 한거 넣고").
+  - 원인: `ArtifactPanelView`(보유 목록·열린 날 판단)만 있고 그리는 화면이 없어, 유물을 사도 무엇을 가졌는지·조합이 맞았는지 볼 곳이 없었다.
+  - 화면: `ArtifactRowView`(캔버스 11 — HUD 10 바로 위, 생성기 `ArtifactRowBuilder`). 장부 바로 아래(24, 304) 340×152 패널 = 머리("유물 N"·금색 "조합 N 성립") + 6칸 2줄 고정 12칸(`ArtifactSlotView`, 산 순서, 빈 칸은 어둡게). 성립한 조합에 든 유물은 금색 테두리. 칸에 마우스를 올리면 오른쪽에 설명 카드 340×220(이름·대상·설명·조합 — 성립은 금색 "조합 성립 · 이름 / 짝과 함께", 아직이면 흐리게 "조합 · 짝 필요"). 물약은 줄에 오르지 않는다. 2일차 전에는 줄 전체를 숨기고, 열린 뒤 유물이 없으면 "떠돌이 상인에게서 살 수 있습니다". 값은 `ArtifactRowPresenter`. `ArtifactPanelView.Combos`를 새로 열었다.
+  - 테스트: `ArtifactShopTests.ArtifactRow_ShowsOwnedArtifactsCombosAndDetail`, `AssetWiringTests.ArtifactRow_IsPlacedAndWired`. 전체 EditMode 384/384.
+  - 플레이(판 저장·보유 목록 원복, SO 변경 없음): 2일차, 야전 숫돌·유리 단검·진군 북을 얻음 → "유물 3"·"조합 1 성립", 숫돌·단검만 금색 테두리. 단검 칸 설명 카드 = 고용 유닛·설명·"조합 성립 · 벼려낸 칼날 / 야전 숫돌과 함께"·"피의 계약 · 처형 서약 필요".
+
+- 2026-10-22 · 보스 배너(사용자: 보스 배너 목업 → "목업대로 만들어 일단").
+  - 원인: `BossWavePresenter.BannerRequested`를 듣는 화면이 없어 보스 등장·증원·격노가 알림 없이 지나갔다. 증원·격노는 제목 글자("· 증원"·"· 격노")로만 갈렸다.
+  - 판단 쪽: 배너 요청을 `BossBannerRequest`(종류 `BossBannerKind` 습격·증원·격노·결전, 일차, 보스 이름, 경고 문구, 머무는 시간)로 바꿈. `ShowReinforcementBanner`·`ShowRageBanner`를 새로 두고 `WaveManager`의 증원·격노 두 곳이 부른다(제목은 보스 이름 그대로, 기본 경고 문구는 그대로). 부제 앞의 "Day N —"는 빼고 첫 줄로 옮김.
+  - 화면: `BossBannerView`(캔버스 36 — HUD 30 위, 상인·고용 40 아래, 위 가운데 880×118, 생성기 `BossBannerBuilder`). 세 줄 = 종류·일차(습격만 일차) / 보스 이름(비면 종류 이름) / 경고 문구. 색 = 습격·격노 빨강 테두리, 증원 호박색, 결전 금색, 격노만 붉은 바탕. 0.2초 위에서 내려오며 나타나 1.6초 머물고 0.3초 사라짐, 격노는 나타난 뒤 좌우로 짧게 흔듦. 실제 시간 기준(배속 무관), 시간을 멈추지 않고 클릭을 막지 않음(raycast 없음). 떠 있을 때 새 요청은 내용만 바꾸고 머무는 시간을 다시 센다. 값은 `BossBannerPresenter`.
+  - 테스트: `GameRulesTests.BossBanner_ShowsKindDayAndFallbacks`, `AssetWiringTests.BossBanner_IsPlacedWiredAndPassesClicks`. 전체 EditMode 382/382.
+  - 플레이(판 저장 원복): 일차를 6으로 두고 영업 시작 → 7일차 보스 웨이브가 실제 경로로 배너 요청(습격·7·토벌대장·경고 문구), 배너 뜬 뒤 스스로 사라짐. 습격·증원·격노 캡처는 eval 한 번이 실제 3~4초라 머무는 시간을 플레이 중에만 30초로 늘려 찍음.
+
+- 2026-10-22 · 판 종료 화면 부하 아이콘 키움(사용자: "부하 아이콘이 작게 보이는 것부터" → "A안(칠해진 몸만 칸에 맞추기)").
+  - 원인 둘: (1) 대기 첫 프레임은 무기 자리까지 비워 둔 큰 칸이라(망령 암살귀 50×47 중 몸 28×33) 그림 전체를 맞추면 몸이 작았다. (2) 아이콘 칸에 쓴 사슬 테두리(2배)가 44칸을 거의 다 덮어, 몸을 키운 첫 수정 뒤에도 테두리에 가려 작게 보였다(확대 캡처로 확인).
+  - 수정: `UiSpriteFit`(새 규칙) — Tight 메시 꼭짓점으로 칠해진 영역을 재(`OpaqueRect`) 그 영역이 칸에 꼭 맞도록 그림 크기·위치를 정한다(`Fit`·`Apply`). `RunEndUnlockSlot`이 묶을 때 적용하고, 넘친 여백은 `RectMask2D`가 자른다. 아이콘 칸은 사슬 테두리 대신 테두리 없는 둥근 바탕(44, 몸 칸 40).
+  - 테스트: `MetaProgressTests.RunEndIcon_FitsOpaqueBodyToBox`(맞춤 계산·해금 목록 부하 전부 몸의 긴 쪽이 칸을 채움). 전체 EditMode 380/380.
+  - 플레이(판 저장·메타 기록 원복): 같은 14일차 패배 → 망령 암살귀 몸·양손 칼날이 칸을 채움(확대 캡처).
+
+- 2026-10-22 · 판 종료 결과 화면(사용자: 판 종료 화면 목업 → "목업대로 판 종료 화면을 만들어줘").
+  - 원인: 판이 끝나면 `BossWavePresenter`가 시간을 멈추고 `RunEndRequested`를 냈지만 듣는 화면이 없어, 파산·메인 유닛 사망 뒤 게임이 그냥 멈춘 채로 남았다. 진행도·새로 열린 콘텐츠를 볼 곳도 없었다.
+  - 화면: `RunEndScreenView`(캔버스 95 — 방침 83·정산표 84·설정 90 위, 팝업 100 아래, 가운데 1040×600, 생성기 `RunEndBuilder`). 머리 = 제목(함락 빨강·사수 금색)·이유 한 줄, 오른쪽 버틴 날·"최고 기록" 칩(새 기록일 때)·지난 최고/최고 기록. 왼쪽 = 이번 판 전과 8줄(치른 영업·침입·처치·잡은 보스·가한 피해·받은 피해·치명타·가장 컸던 빚). 오른쪽 = 진행도(+점수와 내역·전→후·다음 단계 기준 막대, 이번에 얻은 몫만 밝게·다음 단계까지 남은 점수·장착 칸 증가), 새로 열림 4줄(`RunEndUnlockSlot`, 넘치면 마지막 줄 "+N개 더", 없으면 안내 한 줄). 바닥 = "타이틀로"·"새 판 시작". 값은 `RunEndPresenter`.
+  - 새로 열림: 진행도가 이번 판 전→후로 넘은 단계(`MetaUnlockRules.BecameUnlocked`)의 해금 목록 항목(부하·시설, 부하는 대기 그림 아이콘)과 시작 보정(처음부터 열린 비상금 제외). 사건 잠금은 넣지 않았다.
+  - 판단 쪽: `RunEndRequested`에 이겼는가를 더함(제목 색). `MetaRunResult`에 잡은 보스·지난 최고 기록·전 진행도를 남김 — 정산이 이번 판 기록과 최고 기록을 덮기 때문.
+  - 동작: 닫기·ESC 없음(`UiEscapeRouter.runEnd`가 비킴, `SettingsBuilder`도 배선). 시간은 판이 끝날 때 이미 멈춰 있고, 버튼은 배속을 되돌린 뒤 게임 씬(새 판 — 판 저장은 판 끝에 지워짐)이나 타이틀 씬을 연다.
+  - 테스트: `MetaProgressTests.RunEndScreen_ShowsStatsProgressAndNewUnlocks`, `AssetWiringTests.RunEndScreen_IsPlacedWiredAndBlocksEscape`. 전체 EditMode 379/379.
+  - 플레이(판 저장·메타 기록 원복): 진행도 4·지난 최고 9일·보스 1로 14일차 패배를 일으킴 → 화면 열림·timeScale 0·진행도 4→28·"최고 기록" 칩·지난 최고 9일·새로 열림 망령 암살귀·깊은 광산·큰 주점 + "+3개 더". ESC → 설정 안 열림. "새 판 시작" → SampleScene 0일차·금화 200·timeScale 1. 첫 캡처에서 전과 줄이 위에 몰려 줄 간격을 넓히고, 칩을 날짜 옆으로 붙임.
+  - 남은 것: 부하 아이콘이 대기 그림 여백 때문에 칸 안에서 작게 보인다(고용 목록과 같은 그림).
+
+- 2026-10-22 · 운영 방침 창(사용자: "남은 UI 화면을 만들자" → "운영 방침 창 목업부터, 일시정지 메뉴는 설정 창으로 대신" → 목업 승인 + "금화가 모자라면 그 카드는 ' · 금화 부족'으로 잠그고, 셋 다 잠기면 금화를 쓰지 않는 기본 선택을 하나 열어줘").
+  - 원인: 방침을 내놓아도(`PolicyChoicesOfferedEvent`) 듣는 화면이 없어 아무도 고르지 못했다. 방침·민심·조합 효과가 한 번도 걸리지 않았다.
+  - 화면: `PolicyChoiceScreenView`(캔버스 83, 가운데 1120×660, 생성기 `PolicyChoiceBuilder`). 머리 = 제목·안내·민심 막대(40 미만 호박색·20 미만 빨강)·시행 중 방침과 남은 일수. 카드 3장(`PolicyCardSlot`) = 이름·기간("N일간"/즉시)·설명·효과 최대 5줄(금화·민심·매일 민심·부하 공격·부하 방어, 0 생략, 좋음 초록·나쁨 빨강)·조합 칸(짝이 시행 중이면 금색 "조합 성립 · 이름 · 효과", 아니면 "함께 쓰면 짝 → 조합", 자리 고정)·공포 버튼. 바닥 = "이번에는 공포하지 않음"(자리 고정, 셋 다 잠겼을 때만)·안내 한 줄. 값은 `PolicyChoicePresenter`.
+  - 동작: `MoralePolicyManager.ChoicesChanged`(새 이벤트)를 듣고 연다. 강제 선택이라 닫기·ESC 없음(`UiEscapeRouter.policyChoice`가 비킴), 열린 동안 `GameSpeedController.Suspend`. 금화 부족은 `PolicyChoiceRules.IsAffordable`로 잠그고 `SelectPolicy`도 같은 규칙으로 거절한다(창 밖 경로도 빚으로 넘어가지 않게). 셋 다 잠기면 `DeclinePolicies`(금화·민심 그대로). 공포하면 기록판에 "방침 공포 · 이름". 튜토리얼용 `TryGetCardScreenRect`.
+  - 테스트: `GameRulesTests.PolicyChoice_LocksUnaffordableAndOffersDeclineOnlyWhenAllLocked`·`PolicyChoicePresenter_ListsEffectsCombosAndLocks`, `AssetWiringTests.PolicyChoiceScreen_IsPlacedWiredAndBlocksEscape`. 전체 EditMode 376/377 — 실패 1건 `UnitMarketTests.Roster_QuotesTheSamePriceItWillCharge`는 무작위 시세 경계에서 가끔 깨지는 기존 테스트(단독 3회 모두 통과, 이번 변경과 무관, 고치지 않음).
+  - 플레이(세이브 원복): 방침 제시 → 창 열림·timeScale 0. 비상 징집 공포 → 창 닫힘·timeScale 1·금화 200→230·민심 50→42·시행 중 3일·기록판 줄. 계엄령이 섞인 제시 → 계엄령 카드에 금색 "조합 성립 · 총동원 체제". 금화 30에 금화 쓰는 방침 셋 → 셋 다 잠김·눌러도 변화 없음·기본 선택 보임 → 누르면 닫힘·금화·민심 그대로. 잠긴 카드의 "금화 부족" 글자가 흐려 읽히지 않아 카드 흐림을 0.55 → 0.75로 올림.
+
+- 2026-10-22 · 파티는 전투 전까지만 줄로 걷기(사용자: "파티에 경우 전투에 들어가기전까지만 줄로 따라다니는거고 전투에 들어가면 그거 무시하고 전투" → "계획대로, 수정 전후 실측도").
+  - 원인: `EnemyMover`가 한 번 시작한 걸음(방 둘러보기·리더 동선 따라가기·방 옮기기)을 싸움이 붙어도 끝까지 걸었다. 방을 옮기는 걸음은 순회 잠금(`BeginTraversal`)이 걸려 전투 행동이 막히는데, 잠금은 새 방의 줄 자리(`FormationOffset`)에 닿아야 풀려 동료가 싸우는 동안 뒤 파티원은 줄 자리까지 걸어가기만 했다.
+  - 수정: `WalkPath`가 싸움(전투 중이거나 방에 상대가 있음)이 붙으면 걸음을 그만둔다(`PartyCohesionRules.ShouldBreakWalkForCombat`). 방 안 걸음은 즉시, 방 옮기는 걸음은 몸이 새 방 바닥 칸 위에 들어선 뒤에만(`EnemyMover.IsOnCurrentRoomFloor`), 귀환은 끊지 않는다. 그친 뒤에는 순회 잠금을 풀고 도착 처리·라인 건물 알림은 그대로, 벽 부수기는 건너뛴다. 싸움이 끝나면 다음 차례에 기존대로 리더 동선·줄 자리로 모인다.
+  - 첫 수정은 "문 경유점 번호를 지났는가"로 판정했다가 셋 다 앞 방에 굳었다(그 문은 떠나는 방의 문이었고 방 사이 길이 길다, 전투 범위는 새 방이라 상대에게 닿지 못함: 상대와 같은 방 12,836프레임 중 대상 0·휘두르기 0). 몸이 새 방 바닥 위인지로 바꿨다.
+  - 테스트: `EncounterVarietyTests.PartyWalk_BreaksLineOnlyForCombat` 6건(방 안 즉시·전투 중·싸움 없으면 유지·문 전 유지·새 방 안 중단·귀환 유지). EditMode 374/374.
+  - 플레이(세이브 원복, 같은 조건 1일차 해골 검사 1명 vs 모험가 3명, 45초): 새 방 바닥 위에서 상대와 같은 방에 있던 프레임 중 순회 잠금·줄 걸음이 몸을 옮긴 프레임 532/2,685(19.8%) → 3/3,741(0.1%). 대상 없이 굳은 프레임 2 → 3, 휘두르기 17 → 19. 수정 전 값은 커밋된 `EnemyMover`를 잠깐 되돌려 같은 기록기로 쟀다.
+
+- 2026-10-22 · 새 이펙트 팩(Effect_Vol.2·Magic Spell Effects 6) 적용(사용자: "지금 넣은 이펙트 관련 에셋 적용해줘" → "B안(A안 + 스킬 효과 종류별 주문 시트)").
+  - 그림 정리: 쓰는 그림만 `Assets/04.Sprites/Effects/Vol2`(Effect01·05·06·07)·`MagicSpell6`(구슬 폭발·어둠 혼령·에너지 빔·방패 충격파·번개 폭탄·폭풍)로 옮김(guid 유지). 칸 크기는 팩 미리보기 GIF(3배)와 투명 열로 확인, 생성기가 칸 단위로 자르고 빈 칸은 뺀다. 캐릭터와 같은 PPU 28·점 필터(도트 밀도 일치). 팩의 데모 씬·`Effect.cs`·애니메이터·버튼 그림·미리보기 GIF·안 쓰는 시트는 사용자 요청으로 지움(두 팩 폴더째 휴지통, 밖에서 참조 0 확인 후, AssetWiringTests 27/27).
+  - 기본 전투: 근접 타격 = 흰 섬광 → 교차 칼날 파편(07, 0.55배)으로 코드 초승달 교체(`MeleeSlash.png` 삭제). 치명타 = 맞은 자리에 붉은 고리(01, 0.6배, `CombatFxHooks.PlayCriticalHit`). 해골 마법사·오크 주술사 발사체 = 청록 마법 탄(05의 날아가는 3칸) + 닿은 자리 전기 불꽃(06).
+  - 스킬: `SkillDataSO`에 주문 그림 칸(`SpellFrames`·초당 프레임·틀 자리 `SkillVisualAnchor`·배율). `SkillCaster`가 시전 고리와 함께 대상(충격파는 시전자) 발밑에서 한 번 튼다. 방패 밀치기·돌파·돌진·방패 충격파 = 방패 충격파(효과 반경 지름에 맞춘 배율), 화염 낙하·운석 = 번개 폭탄, 얼음 폭풍·서리 지대 = 폭풍, 그림자 습격·매복·암살 표식·연막 독·약점 노출·그림자 기습 = 어둠 혼령, 화살비·일제 사격·관통 대형 = 구슬 폭발, 조준 사격·독 화살·파열 찌르기 = 에너지 빔. 회복 6개는 맞는 그림이 없어 고리만.
+  - 공용: `SpriteFramePlayer.Spawn`(그 자리에서 한 번 틀고 지움)으로 타격·폭발·사망·치명타·스킬 연출을 모음. 생성기 `CombatPolishBuilder`에 그림 옮기기·시트 자르기(`ISpriteEditorDataProvider`, 이름 같으면 스프라이트 id 유지)·스킬 표(`SkillSpells`).
+  - 테스트: `CombatFxCatalog_HasHitDeathAndParticleArt`(근접 불꽃·치명타 고리 추가), `EverySkill_ExceptHeals_HasSpellArt`(새). EditMode 368/368(배율 조정 뒤 AssetWiringTests 27/27·CharacterAnimationTests 12/12 다시 확인).
+  - 플레이(세이브 원복): 1일차, 모험가 기사 방패 밀치기를 강제로 시전 → 시전자 둘레에 청록 방패 돔. 1 피해 치명타 → 흰 점멸 + 붉은 고리. 첫 캡처에서 고리(60px≈2.1u)·불꽃(48px≈1.7u)이 몸보다 커 0.6·0.55배로 줄인 뒤 몸 크기 이하 확인. 어둠 혼령은 혼령이 흩어져 솟는 것을 확인. 복도가 어두워 캡처가 어둡다.
+
+- 2026-10-22 · 사망 이펙트 되살림(사용자: "비어 있는 사망 이펙트(부하·모험가)도 채우고 싶어" → "부하는 effect2_standard(청록 혼불), 모험가는 plash explore 주황 폭발").
+  - 원인: 연출 표의 사망 이펙트 두 칸이 3D 파티클 팩(Epic Toon FX `MysticDeath`·`GenericDeath`) 프리팹을 가리켰는데, 도트 그림으로 바꾸며 팩을 통째로 지워 참조가 끊겼다. 쓰러질 때 사망 소리만 나고 이펙트가 없었다.
+  - 수정: `CombatFxCatalogSO`의 프리팹 칸을 도트 프레임 칸으로 바꿈(`MinionDeathFrames`·`IntruderDeathFrames`·`DeathFramesPerSecond` 12, 배율 `MinionDeathScale` 0.5·`IntruderDeathScale` 1). `CombatFxHooks.SpawnDeathEffect`는 쓰러진 자리에 `SpriteFramePlayer`로 한 번 틀고 지운다. 몸통 크기를 따르고, 혼불은 발밑(아래 기준점)에서 솟고 폭발은 몸 가운데(+0.35)에서 터진다. 정렬 30(캐릭터 위).
+  - 생성기 `CombatPolishBuilder`: 혼불(해골 왕 팩 `effect2_standard`)은 해골 검사, 폭발(해골 전사 팩 `plash explore/orange`)은 기본 모험가의 공격 그림 임포트(PPU 28·점 필터)를 따르게 맞추고 표에 건다.
+  - 테스트: `CombatFxCatalog_HasHitDeathAndParticleArt`(두 사망 그림 비어 있지 않음·빈 프레임 없음·서로 다름, 이름을 바꿈). EditMode 367/367.
+  - 플레이(세이브 원복): 1일차 교전 중 모험가 하나와 해골 검사를 쓰러뜨려 캡처. 모험가 = 흰 섬광 → 주황 폭발이 몸 크기로. 혼불은 첫 실측에서 몸의 두 배로 솟아(64×96 칸) 배율 0.5로 줄인 뒤 몸 크기로 솟는 것을 확인.
+
+- 2026-10-22 · 피격·회복 파티클 자홍색 덩어리 고침(사용자: "피격·회복 파티클 자홍색 문제도 고쳐줘" → "A안(도트 사각 불티)").
+  - 원인: `DamageFeedback`이 코드로 만드는 피격·회복 파티클(`AddComponent<ParticleSystem>`)에 재질이 없어(`null`) URP가 "셰이더 없음" 자홍색으로 그렸다. 프로젝트에 URP 파티클 재질이 하나도 없었다.
+  - 수정: 생성기 `CombatPolishBuilder`가 URP 기본 파티클 재질(반투명 섞기·색 곱하기)을 `Assets/05.Materials/CombatParticle.mat`로 복사하고 그림을 4×4 흰 사각(`Assets/04.Sprites/Effects/ParticleSquare.png`, 점 필터)으로 바꿔 `CombatFxCatalogSO.ParticleMaterial`에 건다. `DamageFeedback`은 처음 터뜨릴 때 표에서 재질을 입히고(씬에 미리 놓인 캐릭터는 표보다 먼저 깨어날 수 있다), 재질을 못 받으면 터뜨리지 않는다.
+  - 테스트: `CombatFxCatalog_HasHitFlashSlashAndParticleMaterial`(재질 있음·`Universal Render Pipeline/Particles/Unlit`·그림 있음, 이름을 바꿈). EditMode 367/367.
+  - 플레이(세이브 원복): 1일차 교전 중 터진 파티클 재질 모두 `CombatParticle`. 캡처 16장 자홍색 픽셀 0. 모험가에게 1 피해를 주고 확대 캡처 → 붉은 도트 사각 불티 18개가 흩어짐.
+  - 확인한 기존 문제(고치지 않음): 전투 연출 표의 사망 이펙트 두 칸(부하·모험가)이 비어 있어 쓰러질 때 이펙트가 나오지 않는다.
+
+- 2026-10-22 · 전투 연출 다듬기 여섯 가지(사용자: "전투 좀더 폴리싱해줘" → "계획대로 여섯 가지 모두").
+  - 맞는 동작: `CharacterAnimationSetSO.hurtFrames`(해골 팩 `hit_*`), `EntityState.Hurt`. 서 있을 때 맞으면 튼다. 휘두르는 중·쓰러진 뒤에는 끼어들지 않는다(`CharacterAnimationRules.AllowsHurt` — 맞아도 휘두르기는 이어져 피해가 나가므로 그림만 움찔하면 이상했다).
+  - 흰 점멸: 기본 스프라이트 셰이더는 색을 곱해서 흰색으로 칠하면 변화가 없고, 붉은 점멸은 붉은 피해 숫자와 섞였다. 실루엣 셰이더 `Defence/Sprite Flash`(`Assets/05.Materials/SpriteFlash`)를 몸통 그림 위에 덮는 `SpriteFlashOverlay`(`FeelCombatFeedbacks`가 붙임, 재질은 `CombatFxCatalogSO.HitFlashMaterial`). 일반 흰색·강타 연노랑·쓰러짐 연빨강.
+  - 발사체: 흰 사각형 대신 묶음의 `projectileFrames`/`projectileImpactFrames`(`SpriteFramePlayer`). 해골 궁수 화살, 해골 마법사 마법 구슬+폭발, 모험가 팩 `eff1`, 성직자 빛+폭발, 자기 그림 없는 모험가 팩 캐릭터(오크 주술사 등)는 초록 구슬을 빌림. 몸통 크기(`lossyScale`)를 따른다.
+  - 근접 베기 섬광: 프리팹이 모두 비어 있던 근접 평타 이펙트 자리에 코드로 그린 초승달(`Assets/04.Sprites/Effects/MeleeSlash.png`)을 대상 앞에 눕혀 0.14초 띄운다.
+  - 넉백: 0.2를 한 번에 옮기던 것을 0.08초에 나눠 민다(`BattleAgent.TickHitRecoil`). 피해 숫자: 좌우 ±0.22로 흩뿌리고 튀어 올랐다가 바깥쪽으로 흘러 떨어진다.
+  - 공격 번갈아: `attack2` 그림이 있는 해골 부하(검사 셋·방패병·궁수·망령)는 평타마다 두 동작을 번갈아 쓴다. 예비 동작 시간은 다음에 틀 동작 기준(`EntityRender.AttackImpactSeconds`). 해골 왕의 `attack2`는 긴 연속 동작이라 제외.
+  - 생성기 `CombatPolishBuilder.BuildAll()`: 묶음 29개를 첫 공격 그림 폴더 기준으로 채우고, 새로 쓰는 팩 그림 임포트를 그 캐릭터 공격 그림(PPU·기준점·필터)에 맞춤(발사체만 가운데 기준점). 맞는 동작 9묶음, 둘째 공격 7묶음, 원거리·지원 전원 발사체 그림.
+  - 테스트: `CharacterAnimation_AlternatesAttacksAndHurtNeverCutsASwing`, `EntityRender_AlternatesSwingsAndPlaysHurtOnlyWhenNotSwinging`, `CharacterAnimation_SkeletonsFlinchAndShootersHaveProjectileArt`, `CombatFxCatalog_HasHitFlashMaterialAndMeleeSlash`. 기본 동작 검사는 네 기본 동작만. EditMode 367/367.
+  - 플레이(세이브 원복): 새 판 1일차, 방 하나 + 해골 검사 1명 → 영업 45초 기록. 첫째 공격 시작 21·둘째 공격 4, 움찔 7회(87프레임), 흰 점멸 95프레임, 베기 섬광 12, 발사체 7개 모두 팩 그림(`eff1`)·사각형 0, 교전 중 대상 반대 보기 1/2068. 캡처로 베기 섬광·흰 실루엣·던진 도끼 확인.
+  - 확인한 기존 문제(고치지 않음): 피격·회복 파티클(`DamageFeedback`이 코드로 만드는 것)에 재질이 없어(`null`) URP에서 자홍색 덩어리로 보인다.
+
+- 2026-10-22 · 유닛 아이콘을 대기 첫 프레임으로(사용자: "유닛 아이콘에 유닛 아이들 아이콘 하나 넣어줘" → "고용·정산표 지원자 목록 줄마다 대기 아이콘도").
+  - `UnitDataSO.IconSprite`: 프리팹 `EntityRender`의 애니메이션 묶음 대기 첫 프레임(`CharacterAnimationSetSO.FirstIdleFrame`). 없으면 `Sprite` → `BoardSprite`. 배치 카드(`InstallPanelPresenter`)와 부하 상태 창 얼굴(`UnitStatusPanelView`)이 이 값을 쓴다.
+  - 지원자 목록(`SettlementShopPane`, 정산표·고용 창 공용): 줄마다 왼쪽 44×44 아이콘 칸(`icons`). 생성기 `SettlementBuilder.BuildShopPane`. 생성기를 정산표 → 고용 창 → 방 관리 → 설정 순서로 다시 돌려 씬 저장(ESC 목록 빈 칸 0, 두 칸 모두 아이콘 16칸).
+  - 테스트: `EveryUnit_UsesRealAnimatedArt`(아이콘 = 대기 첫 프레임·임시 그림 아님), `RecruitScreen_IsPlacedAndOpenedFromTheDock`(아이콘 칸 수 = 줄 수, 빈 칸 없음 — 생성기 재실행 전 실패 확인). 전체 EditMode는 에디터가 응답하지 않아 아직 못 돌렸다(다음 전투 작업과 함께 돌린다).
+
+- 2026-10-22 · 부활한 부하가 다시 싸우게(사용자: "부활한 부하가 있던 방의 전투 필드에 다시 들어가 싸우게 고쳐줘").
+  - 원인: 쓰러지면 방의 전투 필드(`NodeBattlefield.CleanUp`)가 명단에서 빼고 소속을 지우는데, 부활(`Unit.Revive`)은 체력만 채워 같은 방 모험가와 서로 상대로 보지 않았다. 쓰러짐 잠금(`CharacterPoseView.isDead`)도 오브젝트가 다시 켜질 때만 풀려, 꺼지지 않는 부하는 쓰러진 그림에 굳고 공격 동작이 막힐 수 있었다.
+  - 수정: `UnitDeployment.Rejoin(node, unit)` — 서 있던 방의 전투 필드에 다시 들여보내고(정원 규칙은 배치와 같음) `CharacterPoseView.ResetAfterRevive`로 쓰러짐 잠금을 풀고 대기로. `Unit.Revive`(부활 마력)와 `RecoverCondition`(치료로 쓰러진 부하를 살릴 때)이 같은 `RejoinHomeBattlefield`를 부른다.
+  - 테스트: `RoomManagementTests.RevivedUnit_RejoinsItsRoomBattlefieldAndStandsUp`. EditMode 363/363.
+  - 플레이(세이브 원복): 1일차 해골 검사 1명 + 모험가 3명. 31.2초 쓰러짐 → 51.7초 부활, 같은 방 전투 필드로 복귀 → 교전 423프레임·휘두르기 6회 → 74.2초 다시 쓰러짐 → 두 번째 부활도 복귀. 살아 있는데 필드 밖 0프레임, 살아 있는데 쓰러짐 그림 0프레임.
+
+- 2026-10-22 · 부하·모험가 전투 다듬기: 방향(회전 Y 180), 공격 예비 동작, 실제 싸움 같은 전투 이동, 블룸(사용자: "전투 bt좀 진짜 전투처럼 수정좀해줘 공격 애니메이션도 넣어주고 블룸 효과도 추가하고 로테이션y 180도 돌려서 움직임에 따라 한쪽만 보지않게해줘" → "네 가지 모두").
+  - 방향: `EntityRender`(걸을 때 `flipX`)와 `BattleAgent`(전투 중 몸통 크기 x)가 따로 뒤집어 둘이 겹치면 두 번 뒤집혀 원래 방향을 봤다. 이제 `EntityRender.FaceTowards`가 몸통 회전 Y 0/180 하나로 정하고, 흔들림 연출이 회전을 되돌려도 `LateUpdate`가 z 기울기는 살려 Y만 다시 얹는다(`CharacterFacingRules`). `BattleAgent`의 크기 뒤집기와 "크기 부호 = 보는 쪽" 읽기 4곳은 `FacingX`로. 싸우는 동안은 대상 쪽을 보고 움직임 방향으로 돌지 않는다(`FaceMotion` — 첫 실측에서 넉백·뒷걸음 때 교전 프레임 23%가 대상 반대를 봤다).
+  - 공격 애니메이션: 피해가 들어간 뒤에야 공격 동작이 시작됐다. 이제 게이지가 (간격 − 예비 동작)에 닿으면 공격 동작을 시작하고 다 차면 피해·소리·돌진·발사체가 나간다(`CombatTimingRules`, 예비 동작 = 애니메이션 타격 시점 `attackImpactRatio` 0.55 ≤ 간격의 절반).
+  - 전투 BT: 한 번 교전을 걸면 사거리 밖으로 쫓아가면서도 계속 맞았다 → 사거리 1.15배 안에서만 휘두르고, 닿을 때 1.3배보다 멀면 헛침(`Combatant.StrikeRange`). 휘두르는 중·맞고 0.2초 움찔하는 중에는 전투 이동 정지(`BattleAgent.IsCombatMoveLocked`). 근접은 대기 시간에 무작위 좌우 이동 대신 대상을 마주 보고 버팀(`EngageTargetAction`, 원거리만 스트레이프). 바짝 붙어도 옆자리 40%를 남겨 한 점에 겹치지 않게.
+  - 블룸: 카메라 후처리가 꺼져 있고 전역 볼륨 설정이 비어 있었다 → `GameVolumeProfile`(블룸 임계 0.85·세기 0.5·퍼짐 0.6)을 씬 전역 볼륨(`WaveManager` 오브젝트에 붙어 있던 것)에 걸고 메인 카메라 후처리 켬(생성기 `PostProcessingBuilder`).
+  - 테스트: `CharacterFacing_KeepsTiltWhenTurned`(4건), `CharacterAnimation_ImpactLandsMidSwingWithinHalfTheInterval`, `Swing_StartsBeforeImpactOnlyInRangeAndNotStaggered`, `Swing_ToleratesKnockbackButWhiffsWhenTargetEscapes`. EditMode 362/362.
+  - 플레이(세이브 원복): 새 판 1일차, 방 하나 확장 + 해골 검사 1명 배치 → 영업 40초 기록. 교전 프레임 중 대상 반대를 본 프레임 204/892 → 0/1580, 휘두르기 18회, 움찔 138프레임, 휘두르는 중 이동 3프레임(맞아서 밀린 넉백). 왼쪽·오른쪽 보기 4823/4819, flipX 0. 블룸은 횃불 둘레만 은은함.
+  - 확인한 기존 문제(고치지 않음): 해골 검사 1명(체력 20)은 1일차 모험가 3명에게 약 5초 만에 쓰러진다. 부활한 부하는 서 있던 방의 전투 필드에 다시 들어가지 않아, 같은 방 모험가와 싸우지 않는다.
+
+- 2026-10-22 · ESC로 창 닫기, 게임 화면 설정 창(사용자: "창 esc누르면 닫히게 해주고 추가로 설정도 만들어줘" → "닫을 창이 없을 때 ESC로 열고, 오른쪽 위 배속 버튼 옆에 톱니 버튼도").
+  - 원인: ESC는 팝업·정산표·방 관리만 각자 받아 상인·고용·금고·부하 상태·모험가 상태 창은 ESC로 닫히지 않았고, 따로 받으면 한 번에 둘이 닫힐 수 있었다. 게임 화면에는 설정이 없었다(옛 `SettingsPanelView`는 타이틀 씬에만).
+  - 수정: `IEscapeClosable`(열림·한 단계 닫기)과 `UiEscapeRouter` — 위 창부터 하나만 닫고(설정 → 정산표 → 상인 → 고용 → 금고 → 부하 상태 → 모험가 상태 → 방 관리[위치 고르기 → 설치 창 → 방 상세]), 닫을 창이 없으면 설정을 연다. 팝업·건물/함정 놓기·사건 대화 중에는 양보. 정산표·방 관리 화면의 자체 ESC 처리는 라우터로 옮겼다. 새 `SettingsScreenView`(가운데 카드 520×344, 캔버스 90): 효과음·음악 음량(0~100%), 전체 화면 켬/끔, 다시 시작(확인 팝업 → 저장 삭제), 타이틀로, 닫기, 열린 동안 `GameSpeedController.Suspend`로 시간 정지. 오른쪽 위 배속 버튼 왼쪽에 톱니 버튼(팩 기호 254). 생성기 `SettingsBuilder`(라우터 배선·톱니 연결), `GameplayHudBuilder` → `RoomManagementBuilder` → `SettingsBuilder` 순으로 다시 놓음.
+  - 테스트: `AssetWiringTests.SettingsScreen_IsPlacedAndEveryWindowClosesWithEscape`(라우터·설정·톱니 배선, ESC 목록 8개). EditMode 355/355.
+  - 플레이(세이브 원복): 고용 창을 연 채 ESC(입력 시스템에 키 입력) → 고용 창만 닫힘, 다시 ESC → 설정 열림·timeScale 0, 다시 ESC → 닫힘·timeScale 1. 톱니 버튼 → 설정 열림·시간 정지. 콘솔 새 오류 없음(플레이 종료 때 "Game Music" 정리 경고는 기존 음악 재생기).
+
+- 2026-10-22 · 부하를 가두던 파란 상자 없앰(사용자: "적이 이런식으로 파란 상자 안에 있는거같은거 수정해줘" — 화면의 캐릭터는 해골 검사 부하).
+  - 원인: `Unit.Awake`가 `CharacterBackPlate`(캐릭터 뒤 네모 테두리, 그림은 임시 `Ui` 사각형)를 붙이고 반투명 파랑으로 칠해, 프레임 애니메이션 캐릭터가 파란 상자 안에 서 있는 것처럼 보였다. 모험가는 같은 이유로 예전에 이미 뺐다(`Enemy.cs` 주석).
+  - 수정: 부하도 받침을 붙이지 않는다(`EnsureBackPlate` 삭제). `CharacterBackPlate`·`CharacterPlateSkinSO`는 이제 쓰는 곳이 없다(지우지는 않음).
+  - 확인(세이브 원복): 플레이 중 해골 검사의 그림은 캐릭터 한 장(`Visual`)뿐이고 `CharacterFrame`이 없다. 빌드 오류 0.
+
+- 2026-10-22 · 그림과 어긋난 부하·모험가 설정 맞추기(사용자: "적이랑 유닛전부 에셋에 맞춰서 바꿔줘" → "확실히 어긋난 것만").
+  - 조사: 부하 13종·모험가 15종의 공격 그림을 한 장으로 모아 역할·스킬·공격음과 대조. 수치(체력·공격·값)와 데이터 파일 이름(저장 키)은 그대로.
+  - 해골 기병(`Unit_Scout`)·망령 암살귀(`Unit_Shade`): 그림은 탈것 위 베기·낫 베기인데 원거리(사거리 4.5)였다 → 근접(1.3), 공격음 Attack(칼).
+  - 해골 도끼병(`Unit_Spider`): 옛 거미 스킬 "서리 지대" → "도끼 휩쓸기"(`Skill_ShieldShockwave`의 표시 이름·설명만 바꿈: 반경 2.35, 피해 4, 1.2 밀침, 다른 사용처 없음), 공격음 발톱 → Attack. 피 해골 검사: 방패가 없는데 "방패 충격파" → "약점 간파"(늑대 기수와 같이 씀). "서리 지대"는 이제 쓰는 캐릭터가 없다.
+  - 관광객(겁쟁이·쇼핑광): 척후병 프리팹을 같이 써서 맨손 민간인이 "매복 기습·연막 독무"를 썼다 → 스킬 없는 전용 프리팹 `Enemy_Tourist`(적 템플릿 `Enemy.prefab` Variant, 근접), 공격음 발톱 → Attack. 성직자 관광객은 치유사 프리팹 그대로.
+  - 테스트: `AssetWiringTests.Tourists_FightWithoutCombatSkills`(바꾸기 전 관광객 둘로 실패 확인. 탐욕의 기사 보스도 쇼핑광 특성이라 관광객 데이터만 본다). EditMode 354/354.
+  - 플레이(세이브 원복): 3일차 영업에 관광객 둘을 강제 스폰 → 각자 농부·여성 그림, 근접 1.3, 스킬 시전기 없음. 콘솔 새 오류 0. 해골 기병·망령의 실제 근접 전투는 보지 못했다(프리팹 값만 확인).
+
+- 2026-10-22 · 방만 골라 유닛 배치, 그림 없는 슬라임 셋을 해골 검사 셋으로(사용자: "유닛 배치는 타일 선택아니여도 노드 클릭만 되면 되게해주고 유닛이랑 적도 에셋 없는건 없애고 에셋에 맞춰서 만들어줘" → "A안(해골 검사 파랑·초록·빨강)").
+  - 배치: 설치 창 유닛 카드의 '배치'가 고른 방의 가운데에 가장 가까운 빈 칸에 바로 세운다(`NodePanelView.HandleDeployRequested` → 마력 결제 → 배치). "방 안의 밝은 칸을 누르세요" 칸 고르기·칸 칠하기는 없앴고, 빈 칸이 없으면 "이 방에는 유닛을 세울 빈 칸이 없습니다". `Node.TryFindFirstFreeUnitCell`은 왼쪽 위 구석부터 찾던 것을 방 가운데에서 가까운 칸으로(유닛 이동·부활 자리도 같은 함수). 설치 창은 배치 뒤 접지 않는다(`InstallPanelPresenter` 접힘 안내는 건물·함정만).
+  - 그림 조사: 모험가 15종·부하 10종은 모두 전용 애니메이션 묶음이 있었고, 임시 네모 그림(`Placeholder/Unit.png`)은 슬라임 셋뿐이었다.
+  - 슬라임 → 해골 검사(SkeletonWarrior `ske_sword` 색 변형): 블루 → 해골 검사(파랑), 그린 → 독 해골 검사(초록), 레드 → 피 해골 검사(빨강). 값·역할·스킬·해금일·상태이상은 그대로. 데이터 파일 이름(`SlimeBlueUnitData` 등)은 저장 키(`HiredUnitRoster.AssetKey`)라 두고 표시 이름·고용 그림만 바꿨다. 프리팹은 `Units/SkeletonSwords/Unit_SkeletonSword{Blue,Green,Red}`로 이름만 바꿨다(GUID 유지). 애니메이션 묶음 `UnitSkeletonSword{Blue,Green,Red}Anim`(대기 ready 3·걷기 walk 6·공격 attack1 6·쓰러짐 dead_near 6), 포즈 3종, 공격음 Attack(칼, 방패병과 같음).
+  - 그림 가져오기: `ske_sword` 색 셋은 기본값(100PPU·선형 필터·가운데 기준점)이었다. 같은 팩 방패병(`shield_origin`)과 그림 크기·발밑 위치가 같아 같은 이름 프레임의 설정(28PPU·점 필터·발밑 기준점)을 그대로 옮겼다(쓰는 동작 4종, 색마다 21장).
+  - 테스트: `AssetWiringTests.EveryUnit_UsesRealAnimatedArt`(부하마다 진짜 고용 그림 + 애니메이션 묶음, 바꾸기 전 슬라임 셋으로 실패 확인). EditMode 353/353.
+  - 플레이(세이브 원복): 저장의 배치된 블루 슬라임이 해골 검사(파랑) 걷기·대기 프레임으로 그려짐. 회수 뒤 방(12×12)만 골라 '배치' → 칸 고르기 없이 바로 (5,4)칸(가운데)에 섰고 마력 8→7.
+
+- 2026-10-21 · UI 뒤 클릭 막기, 도크 메뉴 버튼 삭제(사용자: "ui 뒤에 패널넣어서 뒤에 클릭 안되게해줘 메뉴 버튼 없애줘").
+  - 원인: 지도 클릭 판정(`DungeonGraphController.IsPointerOverUi`)이 버튼·스크롤만 UI로 쳐서, 패널 바탕·창 뒤 어두운 덮개(상인·고용·정산·팝업·대화)·글자를 누르면 그 뒤의 방·유닛이 눌렸다. 장부·손님 브리핑·진행 카드·도크 안내 줄은 바탕이 클릭을 받지도 않았다(`raycastTarget` 꺼짐).
+  - 수정: `IsPointerOverUi`는 화면 UI의 어떤 그림에 닿아도 막고, 월드 공간 캔버스만 통과시킨다. `GameplayHudBuilder`(장부·브리핑·진행 카드)·`RoomManagementBuilder`(안내 줄) 바탕을 클릭 받게 켜고 두 생성기를 다시 돌렸다(HUD → 방 관리 순서). 도크의 "메뉴" 버튼과 `ActionDockView.menuButton`·`MenuRequested`, `RoomManagementScreen.MenuRequested`·`HandleMenu`("메뉴 화면은 아직 만드는 중" 안내)를 지웠다. 도크 줄 폭 760 → 684(`DockBarWidth`, 보유 목록·안내 줄도 같은 폭), 설치 창은 카드 5장 때문에 760 그대로.
+  - 테스트: EditMode 352/352.
+  - 플레이(세이브 원복): 장부·브리핑·도크 바탕 왼쪽 아래 모서리를 찍으면 막힘, 지도 가운데는 통과. 고용 창을 열면 화면 아래쪽 덮개(`RecruitScreen/Root`)가 막는다. 도크는 건설·유닛 배치·함정·시설 | 고용·상인·정산.
+
+- 2026-10-21 · 새 판 첫 주 지원자 명단(사용자: "새 판 1일차에도 청산일처럼 이번 주 지원자 명단을 만들어줘(등급·민심 규칙 그대로). 시작 지원자는 남겨줘").
+  - 수정(`HiredUnitRoster.Start`): 새 판 시작 때 청산일과 같은 수(`WeeklyIncomingCount` — 등급별 주간 수 × 민심 보정, 청산일 갱신과 공용으로 뽑아냄)의 지원자를 시작 지원자에 더한다. 이어 하는 판은 한 프레임 뒤 저장 복원이 명단을 덮어 그대로다.
+  - 테스트: `NewRun_FillsTheFirstWeekApplicantsOnTopOfTheStartingOne`(Start 없을 때 실패). EditMode 352/352.
+  - 플레이(세이브 원복): 새 판 0일차 블루 슬라임 2명(시작 1 + 1). 0일차에 열린 부하가 블루 슬라임뿐이고 유닛당 지원자 최대 2명(`maxCandidatesPerUnit`)이라 주간 2명 중 1명만 더해졌다. 이어 한 2일차 판은 저장대로 1명.
+
+- 2026-10-21 · 대기 중 언제든 고용(사용자: "유닛도 배치및 추가하는법이 없는데" → "대기 중 언제나 고용").
+  - 원인: 고용이 청산일(7·14·21…일) 정산표 "유닛 상점"에서만 돼(`HiredUnitRoster.IsWeeklyRecruitmentOpen`) 1~6일차에는 부하가 0명이었고, 도크의 "유닛 배치"는 고용한 부하만 내보내 빈 창이었다.
+  - 수정: `HiredUnitRoster.IsRecruitmentOpen` = 영업 전 대기 중 또는 청산일. 도크에 "고용" 버튼(대기 중에만 눌림, 버튼 넷이 들어가게 폭을 줄이고 "정산 정보"는 "정산"으로)과 새 고용 창 `RecruitScreenView`(가운데 카드, 캔버스 40, 영업이 시작되면 닫힘). 지원자 목록은 정산표의 `SettlementShopPane`을 그대로 쓴다(`SettlementBuilder.BuildShopPane` 공용화, 생성기 `RecruitBuilder`). 보유 0명이면 도크에 "'고용'에서 부하를 데려온 뒤 방에 배치하세요". 지원자 명단은 여전히 청산일마다 새로 온다.
+  - 테스트: `RecruitScreen_IsPlacedAndOpenedFromTheDock`. EditMode 351/351.
+  - 플레이(사용자 2일차 판, 세이브 원복): 고용 창에 지원자 1명(블루 슬라임 16G), 고용하자 금화 30→14·보유 1명·유닛 배치 창에 카드가 떴다(대장간 방이라 배치 이유 표시). 첫 주 지원자는 시작 지원자 1명뿐이다 — 주간 명단은 청산일에 온다.
+
+- 2026-10-21 · 떠돌이 상인 창(사용자: "상점 왜 안열려?" → "화면 가운데 창").
+  - 원인: 상인 판단(`MerchantPanelView`: 방문일·진열·결제)만 있고 uGUI 전환 뒤 그리는 화면이 없었다. 도크의 상인 버튼은 `Show()`를 불러 열린 상태가 됐지만 아무것도 그려지지 않았다.
+  - 수정: 새 화면 `MerchantScreenView`(캔버스 40, 덮개 + 가운데 카드 780×460)와 생성기 `MerchantBuilder`(메뉴 Build Merchant Screen, `UiSceneInstaller`로 SampleScene에 놓고 상인과 배선). 진열 5칸은 설치 창 카드(`InstallCardSlot`)를 그대로 써서 그림·이름·값·조합 표시, 못 사는 칸은 흐리게. 카드를 고르면 아래에 이름·값·설명·조합, 결과 줄(성공 초록·실패 빨강), 구매 버튼(못 사면 잠김), 닫기.
+  - 테스트: `MerchantScreen_IsPlacedAndWiredToTheMerchant`(씬에 화면·상인 배선·5칸·구매 버튼). EditMode 350/350.
+  - 플레이(사용자 2일차 판, 세이브 원복): 상인 방문일, 진열 4칸(물약 30G·유물 3개), 다음 방문 4일차 표시 확인.
+
+- 2026-10-21 · 이어 세운 벽을 한 덩어리로(사용자: "벽 이렇게 2칸씩만 연결되지말고 4칸 8칸 이런것도 연결되게" → "한 덩어리로 잇기").
+  - 수정(`RoomTilePlan.AddPillarBlocks`): 칸마다 윗면 자리(칸 윗줄 + 그 위 한 줄)·받침 자리(칸 아랫줄, 아래 칸이 기둥이 아닐 때만)를 모은 뒤, 윗면 조각을 이웃 윗면 타일로 9조각(위·가운데·아래 줄 × 왼·가운데·오른쪽) 중에서 고른다. 위아래·좌우로 몇 칸이 이어지든 테두리 하나로 감싸고 받침은 덩어리 맨 아래에만 남는다(예전 "칸마다 윗면 따로"를 바꿈). 가운데 줄 그림 3장(`PillarTopMid*`, 시트 3×3 윗면 덩어리 가운데 줄)을 추가했다.
+  - 테스트: `PillarBlocks_JoinIntoOneFramedWallFromTheCellBottom`.
+  - 플레이: 사용자 판의 이어 세운 칸막이가 테두리 하나짜리 덩어리로 보였다.
+
+- 2026-10-21 · 칸 기둥 블록을 칸 바닥 기준으로(사용자: "설치했을때 위에 기준이 아니라 아래기준으로 생성되게해줘").
+  - 원인: 윗면(2×2)을 칸에 두고 받침을 아래 칸 윗줄로 내려, 칸막이가 놓은 칸보다 한 줄 아래로 밀려 보였다.
+  - 수정(`RoomTilePlan.AddPillarBlocks`): 칸 아랫줄 = 받침, 칸 윗줄 + 그 위 한 줄 = 윗면. 아래 칸은 가리지 않는다. 위로 삐져나온 윗면 줄(`PillarOverhangs`, 위 칸이 기둥이 아닐 때)은 위 칸 함정을 가리게 던전 타일맵 앞 층 `PillarOverhangs`(정렬 11, 함정 10과 캐릭터 20 사이)에 같은 조각·색으로 다시 칠한다(`RoomTilePainter.PaintPillarOverhangs`). 위아래로 붙으면 아래 칸 윗면이 위 칸 받침 자리를 덮어 칸마다 윗면이 보이는 것은 그대로.
+  - 테스트: `PillarBlocks_DrawEachCellsOwnTopFromTheCellBottom`, `PillarOverhangs_AreRedrawnOnTheFrontLayer`, 기존 기둥 조각 테스트를 새 위치로. 파티 동행 작업과 함께 EditMode 349/349.
+  - 플레이(입구 방, 세이브 원복): 위아래 칸막이 두 칸·좌우 칸막이 두 칸의 받침이 놓은 칸 아랫줄에 맞고 칸마다 윗면이 보였다. 작업 중 사용자가 플레이 중일 때 재컴파일을 돌려 에디터가 멈췄다(사용자가 정지해 해결).
+
+- 2026-10-21 · 모험가 파티 동행 수정(사용자: "적 파티로 같이 돌아다녀야하는데 같이 돌아다니지않아" → 리더 경로·탐색 공유, 동료 대기, 리더 승계 승인).
+  - 원인: 멤버별 목적지·무작위 방 탐색을 따로 처리했고, 리더와 멀어져도 5초 뒤 독립 이동했다. 스폰 초기화 전에는 현재 방이 없어 기존 리더가 바뀔 수 있었고, 리더 사망 뒤 기존 멤버를 승계하는 처리도 없었다.
+  - 수정: EnemyMover.Party에 동행 처리를 분리. 기존 파티 번호와 활성 멤버 목록으로 생존 리더를 유지·승계하고, 리더가 고른 방 순서를 멤버별 큐로 공유한다. 방 안 탐색 경유점도 공유하고, 동료의 도착·탐색·시설 이용/대기·전투를 기다린다. 파티 걷기는 가장 느린 멤버에 맞추고 개인 귀환은 제외한다. 정원보다 큰 파티는 기존 정원을 지키며 같은 길을 순차 통과한다. 이동 중 반복 후퇴 판정이 동행 코루틴을 끊지 않게 했다.
+  - 회귀 테스트: 초기화 전 리더 유지 실패를 먼저 확인. EncounterVarietyTests에 기존 멤버 승계·비활성 리더 교체·개인 목적지 무시·공유 방 순서 유지·탐색 전달/완료 대기·최저 이동 속도·동료 대기/정원 예외 검증을 추가. 최종 전체 EditMode 349/349, Runtime·EditMode csproj 빌드와 Unity 재컴파일 오류 0, Unity 콘솔 오류 0.
+  - 플레이 실측: 기존 2일차 체크포인트에서 3일차를 시작해 55초간 파티 3개를 기록. 시설 이용 중 동료를 기다리는 동작을 확인했고, 귀환 제외 멤버가 3개 이상 방에 퍼진 표본은 0개. 별도 4개 방 갈림길에서 실제 적 프리팹 3종(검사·정찰병·궁수)을 서로 다른 목적지로 설정해 같은 첫 방 도착을 확인(최대 시차 0.64 게임 초). 리더를 피해로 쓰러뜨리자 기존 멤버가 승계하고 이후 4차례 방 이동을 함께 계속했다. 2명 정원의 방 4개를 3인 파티로 40초 동안 순회해 도착 21회, 최대 전투 등록 인원 2명, 진행 막힘 없음. 진단에서는 BT 대신 동일한 TickTraversal을 에디터 드라이버가 호출하고 공포 귀환을 억제했다. 테스트 중 정산 모달로 시간이 멈춘 구간은 이동 근거에서 제외했다.
+  - 산출물: output/party-follow-live.csv, output/party-follow-controlled.log, output/party-follow-small-room.log. 판 저장·백업·메타 기록을 실측 전 백업하고 종료 뒤 바이트 비교로 원복 확인. 씬·프리팹 직렬화 변경 없음(기존 미커밋 변경 유지).
+  - 영향: 동행 대기로 시설 방문·웨이브 소요 시간이 늘 수 있다. 장기 밸런스와 보스 전투 전체 실측은 이번 검증 범위 밖이다.
+
+- 2026-10-21 · 설치 격자 선을 방 바닥 칸에만(사용자: "타일 설치 가능한 노드 라인렌더러로 보이는거 설치안되는 노드 바깥부분은 안보이게해줘" → "칸막이 칸도 숨김").
+  - 원인: 격자 표시 두 가지가 모두 격자 틀 전체(columns × rows)에 그려졌다 — 노드 선택 때 셰이더 격자(`DungeonGridOverlay`, 칸 모서리 십자)와 설치 모드 선(`BuildingPlacementPreview` LineRenderer). 방 모양 밖 어둠·기둥·칸막이 위에도 선이 보였다.
+  - 수정: 열린 칸 = 방 바닥이고 칸막이 없음(`NodeTrapGrid.IsOpenGridCell`). 설치 모드 선은 새 규칙 `PlacementGridLines.Collect`가 열린 칸에 닿은 경계만 골라 이어진 경계를 선 하나로 합친다. 셰이더 격자는 칸마다 1텍셀 마스크(`_CellMask`, R8·점 필터)를 받아 양쪽 칸이 모두 닫힌 경계·바깥 테두리·칸 빛을 지운다. 마스크는 칸막이가 서거나 사라질 때 다시 칠한다(`NotifyPartitionsChanged`).
+  - 테스트: `PlacementGridLines_OnlyBorderOpenCells`. EditMode 338/338. 셰이더 컴파일 오류 없음.
+  - 플레이(입구 방, 칸막이 4칸, 세이브 원복): 선택 격자 십자는 바닥 칸에만, 위쪽이 파인 어둠·칸막이 칸에는 없음. 설치 모드 선도 방 안에만.
+
+- 2026-10-21 · 칸막이·방 안 기둥을 칸마다 2×2 윗면 블록으로(사용자: "칸막이 위아래로 2개 설치했을때… 아래 타일 윗부분 보이게해주고 칸막이의 윗부분이 타일 2개로 만든거 같은데 4개를 사용해줘" → "칸막이 칸 위에", "기둥도 같이").
+  - 원인: 칸 기둥은 기둥 룰 타일(머리·몸통·받침)이 이웃만 보고 골라 칸 경계를 몰랐다. 위아래로 붙은 칸막이는 머리 1줄 + 몸통 4줄 한 덩어리가 되어 아래 칸막이 윗면이 없었고, 머리는 칸 위로 한 줄 올라가 타일 2장(1줄)짜리였다.
+  - 수정: `RoomTilePlan`이 칸 기둥 조각을 직접 정한다(`PillarBlocks`). 칸(타일 2×2)이 테두리 있는 윗면(시트 왼쪽 위 3×3 윗면 덩어리의 귀퉁이 — 검은 속을 돌 색으로 채운 새 그림 6장), 그 아래 칸 윗줄에 받침 한 줄(기존 기둥 받침 그림). 위아래로 붙으면 아래 칸 윗면이 위 칸 받침 자리를 덮고, 좌우로 붙으면 윗면·받침이 이어진다. 방 가장자리라 아래가 벽이면 받침을 내리지 않는다. 받침 칸은 그대로 걸을 수 있다.
+  - 칸 위로 올리던 머리 줄(`RaisePillarCaps`)과 그것을 함정 앞에 다시 그리던 앞 층(`PillarCaps`, `PaintPillarCaps`)은 가릴 일이 없어져 지웠다. 함정 몸체 정렬 10은 `Trap.BodySortingOrder`로 옮겼다(값 그대로). 옆 문 기둥(2×3)은 기둥 룰 타일 그대로.
+  - 에셋: `RoomTileSet.pillarBlocks`(조각 타일 9개, `Assets/07.SO/Map/Tiles/PillarBlocks/`), 그림 `Tilesets/Generated/PillarTop*.png` 6장. 생성기 `RoomLayoutBuilder`(Rebuild Wall Tiles·Build Room Layouts가 함께 만든다).
+  - 테스트: `PillarBlocks_DrawEachCellsOwnTop`(위아래 칸막이 각자 윗면·좌우 이음·위 칸 안 가림), 기존 기둥 조각·칸 기둥 테스트를 새 모양으로 고침, 앞 층 테스트는 지움. EditMode 337/337(에디터가 플레이 중 재컴파일돼 uGUI 정적 상태가 깨진 첫 회는 7개 실패 — 스크립트 다시 불러 재실행).
+  - 플레이(입구 방, 세이브 원복): 위아래 칸막이 두 쌍은 칸마다 테두리 윗면이 따로 보이고, 좌우 칸막이는 넓은 윗면 하나 + 벽돌 받침, 받침 아래 칸 화로는 받침 위에 그려졌다.
+
+- 2026-10-21 · 느려진 웨이브로 1~2주차 밸런스 실측(사용자: "느려진 웨이브로 1~2주차 밸런스를 다시 재 줘") — 7일차에서 막힘, 코드 변경 없음.
+  - 도구: 예전 `BalanceRunner`는 없어서 에디터 안 드라이버를 새로 짰다(scratchpad `driver.cs`, 저장소 밖). 게임과 같은 결제 경로(확장 팝업 확인·`ConfirmPlacementCell`·배치 마력 이벤트)로 방 5개까지 확장, 광산, 금화 절반으로 함정을 방마다 나눠 깔기, 청산일 고용·배치, 모달 자동 처리, 2배속. 새 판(메타 기록 그대로), 실측 뒤 판 저장 복원.
+  - 발견: **첫 주는 함정만으로 버텨야 한다.** 고용은 청산일(`IsWeeklyRecruitmentOpen`)에만 열려 7일차 보스 웨이브가 끝난 뒤에야 부하가 생긴다. 시작 지원자 1명도 그때까지 고용할 수 없다.
+  - 1~6일차(2판): 손님 4~6명 중 격퇴 0~2명, 함정 피해 하루 0~18, 받은 피해 0(부하 없음), 웨이브 11~30초(게임 시간). 대부분 둘러보고 빠져나간다.
+  - 7일차 보스(BossParty_Day9, 진압관 체력 75·방어 17, "150초 안에 처치"): 2판 모두 게임오버. 2판째 함정 8개를 방 5개에 나눠 깔았지만 150초 동안 보스 체력 75/75 그대로 — 함정을 한 번도 밟지 않았다(나머지 7명 중 1명 격퇴, 함정 피해 합 112).
+  - 한계: 드라이버는 함정을 길목에 모으지 않고 칸막이도 쓰지 않는다. 오늘 바꾸기 전(함정 10종·매 프레임 판정·방 사이 1.5초) 같은 드라이버 기준선이 없어 변경 전후를 수치로 비교하지 못했다. 8~14일차는 재지 못했다.
+
+- 2026-10-21 · 모험가 기동성·함정 피하기·걷는 이동(사용자: "적이 어느정도 함정을 피했으면… 기동성이란 스탯… 함정은 쉽게 안당하게… 두트윈이여서 그런지 움직임이 너무 부자연스러워" → "함정 더 약하게", "모두 같은 속도").
+  - 원인: 함정 접촉을 매 프레임 판정하며 그때마다 발동 확률을 굴려, 확률을 낮춰도 서 있는 동안 결국 100% 밟혔다. 이동은 DOTween 경로를 거리와 상관없이 정해진 시간(방 사이 최대 1.5초)에 가감속 곡선으로 끝내 방 사이는 내달리고 방 안은 느렸고, 이동마다 큰 점프·찌그러짐·기울기가 한 번씩 들어갔다.
+  - 기동성: 새 스탯 `StatIndex.Mobility`(8, `Stat_Mobility`, 적 바탕 프리팹 스탯 표에 추가), `EnemyDataSO.Mobility`(0~10). `MobilityRules`: 1점마다 회피 +2%p(출처 키 가감치), 함정 피하기 +4%p, 이동 속도 +5%(`EnemyMover`·`BattleAgent.MobilitySpeedMultiplier`). 값: 도둑 8·정찰병 7·궁수 4·기본·관광객 3·공병·치유사·검사·보스 2·성기사 1. 모험가 상태 창 공격 줄에 "기동 N".
+  - 함정: 발동 확률 0.6(3종, `TrapBodyBuilder`). `Enemy`가 함정 칸에 들어선 순간 한 번만 굴리고(`TrapStepMemory`, 확률 × (1 − 기동성×4%)), 피하면 그 칸을 나갈 때까지 다시 굴리지 않는다. 통로 함정도 지나갈 때 한 번 굴린다. `Trap.TriggerBy`는 이제 굴리지 않는다.
+  - 이동: `EnemyMover`의 DOTween 이동(방 사이·둘러보기·출구·짧은 배회)을 모두 `WalkPath`로 바꿨다 — 경유점을 따라 같은 속도(이동 속도 × 피로 × 기동성)로 걷고, 구간마다 방향을 바꾸며, 0.6유닛마다 작게 튀고, 문 앞에서 0.18초 선다. 시간 상한이 없어져 방 사이 이동이 길어졌다(사용자가 고른 대로 웨이브가 느려짐 — 밸런스 재측정 필요).
+  - 테스트: `TrapStep_RollsOncePerEntry`·`Mobility_ScalesEvasionTrapAvoidAndSpeed`·`TrapsAndAdventurers_UseAgreedMobilityValues`(값 넣기 전 실패 확인). EditMode 337/337.
+  - 플레이(세이브 원복): 입구에 함정 18개 웨이브 — 정찰병 기동 7·회피 0.39·이속 ×1.35, 검사 2·0.09·×1.10, 궁수 4·0.26·×1.20, 함정 21회 발동. 함정 치운 다음 날 관광객(기동 3) 걸음 속도를 프레임마다 쟀더니 3667프레임 내내 5.75(=5×1.15), 순간이동 0. 런타임 오류 없음.
+
+- 2026-10-21 · 맞는 건물이 튀는 버그 공통 수정, 새 함정 실전 피해 확인(사용자: "남은거 하자").
+  - 원인: `Building`이 흔들 기준 위치를 `Awake`에서 잡는다. 건물은 생성(Awake) 뒤 노드(배율 15)에 월드 자리를 지키며 붙으므로, 흔들 대상이 루트인 건물(`damageAnimationTarget` 비어 있음 — 칸막이·회복실 등 맞는 건물)은 첫 피해에 로컬 위치가 옛 월드 좌표로 바뀌어 수백 유닛 밖으로 튀었다(재현 테스트에서 617 유닛).
+  - 수정(`Building.PlayHitAnimation`·`OnDisable`): 흔드는 중이 아니면 흔들기 시작할 때의 자리를 기준으로 잡고, 꺼질 때는 흔드는 중이었을 때만 되돌린다. Awake에서는 잡지 않는다.
+  - 테스트: `DamagedBuilding_ShakesInPlaceUnderAScaledNode`(Awake → 배율 15 노드에 붙이기 → 피해 뒤 자리 그대로, 수정 전 617 유닛 실패 확인). EditMode 334/334.
+  - 실전(웨이브, 입구 방에 웅덩이·수정 18개, 세이브 원복): 웅덩이는 지속 피해 틱당 최대 5(3초 14를 3틱으로 나눔)로 작동했고, 마력 수정은 3번 발동해 최대 11(10 + 일차분)을 줬다.
+
+- 2026-10-21 · 그림 없는 함정 정리, 팩 그림 함정 3종(사용자: "지금 에셋안들어간 함정 다 없애고 에셋은 있는데 구현은 안된 함정은 구현해" → "10종 모두 없앰기", "핏빛 웅덩이, 불 화로, 마력 수정", 수치안 승인).
+  - 조사: 프로젝트 전체에 함정 자체 그림(가시·톱·그물)은 없다. 지금 10종은 바닥 장치 조각을 빌린 몸체였다. 팩에 애니메이션이 있는 함정감은 Dark Castle 핏빛 웅덩이(48×48 8프레임)·불 화로(Torch02, 16×32 8프레임)·Objects 크리스탈(16×16 8프레임).
+  - 지움: 함정 데이터 10(기본·가시·올가미·칼날·압쇄·화살·매복 그물·갑옷분쇄·마름쇠·처형 톱날), 프리팹 9(+빈 `Traps/Generated` 폴더), 몸체 그림 10. 해금 목록·씬 `NodePanelView.installableBuildings`에서도 뺐다(씬은 그 배열만 바뀜). `Trap.prefab`은 설치하지 않는 Variant 원본으로 남겼고 투사체 등 방식 코드도 그대로다. 옛 저장에 깔린 지운 함정은 불러올 때 환불 없이 빠진다(`ResolveBuilding`이 못 찾아 건너뜀).
+  - 새 함정(`TrapBodyBuilder` 재작성, 메뉴 Tools/Dungeon Keeper/Build Traps): 불 화로(밟기 1×1, 20G, 피해 6+0.45/일, 재사용 4초, 새 상태이상 화상 `BurnStatusEffect` — 2방, 공격 간격 ×1.15, 받는 함정 피해 ×1.2, 처음부터 열림, 발동 효과 지옥불 effect1), 핏빛 웅덩이(지속 2×2, 55G, 3초 동안 14+0.6/일, 재사용 5초, 출혈, 6일차, 지옥불 기둥), 마력 수정(범위 반경 1칸 1×1, 45G, 10+0.55/일, 재사용 6초, 취약, 12일차, 파란 폭발). 몸체는 새 `TrapBodyAnimation`이 8프레임을 게임 시간으로 반복하고, 프레임은 같은 사각형으로 여백 없이 잘랐다(25.6PPU, 기준점 칸 가운데, 정렬 10).
+  - 실측 중 찾은 버그: 함정이 닳으면(`Building.PlayHitAnimation`) 흔드는 대상이 비어 루트를 흔드는데, 기준 위치를 노드(배율 15)에 붙기 전 월드 좌표로 잡아 첫 발동 뒤 함정이 방 밖 수백 유닛 밖으로 튀었다(옛 함정도 같은 설정). 바탕 `Trap.prefab`의 `damageAnimationTarget`을 몸체(Visual)로 맞췄다. 같은 방식으로 노드에 붙는 다른 건물(회복실 등 맞는 건물)은 확인하지 않았다.
+  - 테스트(`TrapTileTests` 등, 고친 뒤 새 검사 실패 확인 후 통과): 함정 목록이 셋뿐이고 해금 목록과 같음·처음부터 열린 함정 있음, 몸체가 생성 그림·8프레임·여백 없음·흔들림 대상이 몸체, 기존 테스트의 가시·칼날·압쇄를 새 함정으로(라인 함정 규칙은 테스트 안에서 라인 표시를 켠 데이터로). EditMode 333/333.
+  - 플레이(1080p, 기둥 홀, 세이브 원복): 셋을 깔고 모험가로 `TriggerBy` — 모두 발동, 화로는 피해 6·화상. 웅덩이 불기둥이 덮은 칸 위로 솟고 함정은 발동 뒤에도 제자리. 범위·지속 피해는 실험용 모험가가 방 이동자 목록에 없어 0으로 나왔다(판정 로직은 기존 `TrapRules` 테스트 그대로).
+
+- 2026-10-21 · 함정 카드 그림 크기, 기둥 머리 겹침(사용자: "남은거 수정하자" → "기둥 머리를 앞에 그리기").
+  - 카드: 함정 몸체 그림이 칸 가운데 16px 조각 + 빈 여백이라 설치 카드에서 작게 보였다. `TrapBodyBuilder`가 빈 여백을 잘라 내고 기준점을 덮은 칸 가운데로 둔다(사용자 지정 피벗) — 방에서는 같은 자리, 카드에서는 그림이 꽉 찬다.
+  - 겹침: 기둥 머리는 기둥 칸 위 칸의 아래쪽 타일에 그려지는데, 함정(정렬 20)이 타일맵(1)보다 위라 그 칸의 함정이 머리 위에 올라타 보였다. 머리 줄을 `RoomTilePlan.PillarCaps`로 기억하고, 던전 타일맵에 앞 층 `PillarCaps`(정렬 11)를 두어 위 타일맵과 같은 그림·색으로 한 번 더 그린다(`RoomTilePainter.PaintPillarCaps`, 그림별 타일은 `DungeonTilemap`이 만들고 지운다 — 룰 타일은 이웃을 봐야 하므로 머리는 위 타일맵에도 그대로 둔다). 함정 몸체 정렬은 10으로 내렸다(캐릭터 20은 그대로라 머리에 가리지 않는다).
+  - 테스트: `PillarCaps_AreRedrawnOnTheFrontLayer`(앞 층에 머리 줄만 같은 그림·색), `TrapPrefab_ShowsItsOwnDungeonBody`를 고침(여백 없음·덮은 칸 안·정렬 10, 수정 전 10개 실패 확인). 머리 앞 층 테스트는 구현과 함께 넣어 실패를 먼저 보지는 못했다. EditMode 346/346.
+  - 플레이 캡처(1080p, 기둥 홀에 10종, 세이브 원복): 기둥 바로 위 칸의 압쇄 틀·칼날 슬롯 아래쪽이 기둥 머리 뒤로 들어가고, 설치 카드의 올가미·가시 그림이 칸막이만큼 커졌다.
+
+- 2026-10-21 · 카드 모양 결정, 칸막이 카드 그림(사용자: 4번 → "A: 지금 테두리 유지").
+  - 목업(설치 카드에 팩 버튼 면 Black·고르면 Gold)과 지금 패널 테두리를 비교했다. 버튼 면은 밝은 은색·금색이라 카드가 줄지어 있으면 눈에 너무 띄고, 테두리가 두꺼워 셋째 줄 글자가 가려졌다. 설치 카드·침입 파티 줄·지원자 칸은 패널 테두리 그대로 두었다(ui-rules 그대로).
+  - 칸막이 카드가 임시 건물 그림(노란 네모)이었다. 카드·미리보기는 프리팹 첫 SpriteRenderer를 쓰는데, 칸막이는 방에 기둥 타일로 그려져 몸체(`Visual`)가 꺼져 있고 거기에 `Placeholder/Building` 그림이 남아 있었다. `Partition.prefab`의 몸체 그림을 보드 그림(시트 기둥 몸통 조각 (8,1))으로 바꿨다(에디터 CLI, 몸체는 여전히 꺼짐).
+  - 테스트: `Partition_CardShowsItsBoardArt`(수정 전 실패 확인). EditMode 345/345. 플레이 캡처: 설치 창 함정 카드에 올가미·가시 몸체와 칸막이 벽돌 그림이 보인다. 함정 카드 그림은 칸 가운데 조각이라 칸막이보다 작게 보인다.
+
+- 2026-10-21 · 함정 몸체를 시트 조각으로(사용자: "1,2,4번 순서로 하자" → "시트 조각으로 바꾸기").
+  - 1번 확인: 타일 기준 카메라로 바꾼 뒤 웨이브를 띄워 1080p 원본으로 모험가를 확대해 봤다. 캐릭터(28PPU, 텍셀당 0.91픽셀)는 깨짐 없이 보였다.
+  - 원인: 함정 10종이 모두 임시 노란 네모(`Placeholder/Trap.png`)였고, 같은 네모를 쓰는 테두리(`Border`, 정렬 30)가 몸체(`Visual`, 20) 위를 덮었다. 설치 카드·미리보기는 프리팹 첫 SpriteRenderer(=테두리)를 써서 거기도 네모였다. 가시·톱·그물 같은 함정 그림은 여전히 프로젝트에 없다.
+  - 수정(새 에디터 스크립트 `TrapBodyBuilder`, 메뉴 Tools/Dungeon Keeper/Build Trap Bodies): Dark Castle 시트의 바닥 장치 조각을 칸 가운데에 놓은 그림을 함정마다 만든다(`Assets/04.Sprites/Tilesets/Generated/TrapBody_*.png`, 25.6PPU·점 필터 — 바닥 타일과 같은 텍셀 크기, 칸 = 32픽셀). 기본 = 구멍 발판(1,25), 가시 = 촘촘한 격자(1,27), 올가미 = 고리 발판(1,26), 갑옷분쇄 = 붉은 보석 발판(2,25), 화살 = 아치형 발사구(3,27), 마름쇠 = 홈 판(10,30 1×2), 압쇄(2×2) = 구덩이 틀(12,29 3×3), 매복 그물(2×1) = 작은 격자 둘(0,27), 칼날(2×1) = 슬롯 둘(2,27), 처형 톱날(2×1) = 문양판 둘(6,30·7,30 1×2). 프리팹 몸체 그림과 데이터 `BoardSprite`를 같은 그림으로, 몸체 크기는 1/칸 수(설치 때 칸 수만큼 늘어나 덮은 칸을 정확히 채움). 테두리(`Border`)는 프리팹 10개에서 지웠다.
+  - 테스트(`TrapTileTests`, 수정 전 11개 실패 확인): `TrapPrefab_ShowsItsOwnDungeonBody`(테두리 없음·몸체가 생성 그림·25.6PPU·덮은 칸 크기와 같음, 10종), `TrapData_BoardSpriteMatchesPrefabBodyAndIsUnique`. EditMode 344/344.
+  - 플레이 캡처(1080p 방 포커스 단계, 기둥 홀에 10종 설치, 세이브 원복): 함정마다 다른 바닥 장치로 보이고 바닥과 같은 픽셀 크기로 또렷하다. 기둥 바로 위 칸에 놓으면 기둥 머리 줄과 겹쳐 그려진다(기둥 머리는 그 칸 위로 한 줄 올라온 그림).
+
+- 2026-10-21 · 바닥 칸 줄무늬 없앰(사용자: "바닥이 노드가맞지않아 생기는거 말한거야 한번만 더 확인해줘").
+  - 확인: 노드 칸과 타일은 맞는다(칸 1개 = 타일 2×2, 칸 경계 = 짝수 타일 경계). 줄무늬는 화면 배율 탓이었다. `PixelPerfectCamera`가 정수 PPU 28(캐릭터 그림)로 1유닛 = 28픽셀을 그리는데, 던전 타일은 16px을 0.625유닛에 깔아 1유닛 = 25.6텍셀이다. 텍셀 하나가 1.09픽셀이라 타일 2장(칸)마다 테두리 픽셀이 두 줄로 겹쳐 굵은 세로줄이 생겼다. 1080p 원본 캡처에서 텍셀 1개 = 1픽셀로 맞추면 줄무늬가 사라지는 것을 먼저 확인했다.
+  - 수정(사용자 선택 "카메라를 타일 기준으로"): 새 `Code.Core.TilePixelCamera`가 카메라 크기를 화면 높이 ÷ (2 × 25.6 × 배율)로 정한다(배율 = 화면 ÷ 기준 해상도, 정수 내림·최소 1). `PixelPerfectZoomRules`·`InputSystemCameraMover`(휠 확대)·`NodeCameraFocusController`(방 포커스)가 이것을 쓴다. 씬 메인 카메라의 `PixelPerfectCamera`는 `RoomLayoutBuilder.UseTilePixelCamera()`(메뉴 Tools/Dungeon Keeper/Use Tile Pixel Camera)로 바꿨다(기준 해상도 1280×720 그대로). `WireScene`도 이 카메라를 맞춘다. 1080p 단계별 카메라 크기 21.1·10.5·7.0·5.3(예전 19.3·9.6·6.4·4.8), 기본 시야가 약 9% 넓어졌다.
+  - 테스트: `TilePixelCamera_DrawsEachTileTexelAsWholePixels`(화면·기준 해상도 7가지에서 텍셀당 픽셀이 정수), `PixelPerfectZoom_StepsThroughReferenceResolutions`를 새 카메라로. EditMode 333/333.
+  - 플레이 캡처(1920×1080 원본, 세이브 원복): 기본·방 포커스 단계 모두 칸 줄무늬 없이 고르게 보인다. 캐릭터(28PPU)는 텍셀당 0.91배라 이번에 눈으로 확인하지 못했다(그 판에 배치된 유닛이 없었다).
+
+- 2026-10-21 · 바닥 타일 다듬기(사용자: "노드 타일 좀더 다듬자").
+  - 실측(방 4개를 열어 확대 캡처)으로 찾은 것: 바닥 한가운데에 구멍처럼 어두운 칸이 박혀 있었다. 바닥 무작위 무늬 8장 중 4장이 시트 18행(17행과 무늬가 같고 한 톤 어두운 그림자 바닥)이었다. 17행 금 무늬 4장은 원래 두 칸에 걸친 금이라 한 칸씩 흩어지면 끊긴 점선처럼 보였다.
+  - 수정(`RoomLayoutBuilder.BuildFloorTile`, 사용자 선택 "그림자 줄로 쓰기"·"비율만 줄이기"): 바닥 룰 타일 규칙을 둘로 나눴다. 위가 바닥이 아닌 칸(벽·기둥 바로 아래 줄)은 18행 그림자 바닥, 나머지는 17행 바닥. 금 무늬 비율은 25% → 약 12%(기본 29장 + 무늬 4장). `RebuildRuleTiles()`가 바닥 룰 타일도 다시 만든다.
+  - 테스트: `RuleTiles_ShadowFloorOnlyRunsUnderWalls`(기둥 있는 방을 칠해 위가 벽·기둥인 바닥만 18행인지, 수정 전 실패 확인). EditMode 326/326.
+  - 플레이 캡처(세이브 원복): 위쪽 벽과 기둥 아래에 그림자 줄이 생기고 방 한가운데 어두운 칸이 사라졌다. 기본 확대(1280×720 게임 창)에서 보이는 고르지 않은 세로 이음매는 타일 그림이 아니라 0.625배 격자를 정수 아닌 배율로 줄여 그린 탓이다(2배 확대에선 없음). 이번에는 손대지 않았다.
+
+- 2026-10-21 · 방 타일 어색한 곳 고침(사용자: "노드에 타일이 어색한 부분이 좀 있어 그거 고쳐줘").
+  - 실측으로 찾은 것: 불규칙한 방의 안쪽 모서리(위쪽 벽이 파인 홈의 양 끝, 옆 벽에서 방 안으로 튀어나온 벽 덩어리의 끝, 위 문 복도 옆 벽)에 검은 세로 줄이 생겼다. 그 칸은 아래 1~2줄이 바닥인 위쪽 벽(벽돌 면·난간)인데 옆도 바닥이라, 규칙 순서상 옆 벽 조각(시트 (3,3)·(12,9), 난간 선 말고는 속이 검다)이 먼저 골라졌다(타일맵 조각 덤프로 확인).
+  - 수정(`RoomLayoutBuilder` 벽 규칙): 위쪽 벽이 옆에도 바닥을 둔 칸은 옆 벽보다 앞면을 먼저 고른다 — 아래 줄 `FaceLowerStart/End`(새 조각 (4,3)·(5,3)), 윗줄 `FaceUpperStart/End`(4,2)·(5,2), 난간 `RailTopStart/End`(4,1)·(5,1), 왼쪽이 바닥이면 왼쪽 가장자리·오른쪽이면 오른쪽 가장자리 조각. 방 프리팹·씬은 그대로 두고 룰 타일만 다시 만드는 `RebuildRuleTiles()`(메뉴 Tools/Dungeon Keeper/Rebuild Wall Tiles, 기둥 타일도 함께)로 바꿨다.
+  - 테스트: `RuleTiles_WallEndsInsideTheRoomShowAFaceNotASideRail`(홈·튀어나온 벽 덩어리가 있는 방을 칠해 그런 칸에 옆 벽 조각이 없는지). EditMode 325/325.
+  - 플레이 캡처(씬 해시 그대로, 세이브 원복): 홈 양 끝·벽 덩어리 끝·위 문 옆이 가장자리 있는 벽돌 면으로 이어진다. 그대로 둔 것: 옆 문 아래 기둥은 복도 아래 난간보다 한 줄 더 내려와 있다(기둥 3줄).
+
+- 2026-10-21 · 기둥 머리 윗면 채움(사용자: "기둥이 아직도 이상태야 아직 문제가 있는거같아").
+  - 원인: 시트의 기둥 머리 조각(7~9, 0)은 윗면이 거의 검정(19090E)으로 비어 있다. 어둠 아래 붙여 쓰는 조각이라 방 한가운데에 서면 구멍처럼 보여, 3줄로 늘린 뒤에도 반쪽 기둥으로 읽혔다.
+  - 수정: `RoomLayoutBuilder`가 머리 세 조각의 검은 윗면을 돌 바탕색(5C283C)으로 채운 그림(`Assets/04.Sprites/Tilesets/Generated/PillarCap*.png`, 16PPU·점 필터)을 만들어 기둥 룰 타일 머리 규칙에 넣는다. 방 프리팹·씬을 건드리지 않게 룰 타일만 다시 만드는 `RebuildPillarTile()`(메뉴 Tools/Dungeon Keeper/Rebuild Pillar Tile)을 두었다.
+  - 테스트: `RuleTiles_PickThreeQuarterWallPieces`가 머리를 새 그림 이름으로 확인. EditMode 324/324.
+  - 플레이 캡처(씬 해시 그대로, 세이브 원복): 방 안 기둥·옆 문 기둥 모두 윗면이 막힌 벽돌 기둥으로 보인다.
+
+- 2026-10-20 · 반쪽 기둥 고침, 문으로 방 경계 표시(사용자: "기둥이 반만 나옴 그리고 복도 없애줘 문과문으로 노드를 나누는 기준이 있어야해 그게 있다면 복도없애지않아도됌" → 고른 안: 복도 유지 + 문으로 경계, 기둥 3칸).
+  - 기둥: 기둥 조각은 머리·몸통·받침 3줄인데 칸 높이(타일 2줄)만 칠해 머리와 받침만 나와 반쪽처럼 보였다. 방 안 기둥·칸막이는 위로 한 줄 더 기둥으로 칠한다(`RoomTilePlan.RaisePillarCaps`, 그 자리 바닥 그림을 기둥으로 — 3/4 시점, 걸을 수 있는 칸은 그대로). 옆 문 기둥은 가로 2 × 세로 3.
+  - 문 경계: 옆 문에도 위·아래 문과 같은 문 그림을 기둥 사이 틈(벽 줄 가운데)에 세운다(`Node` 문 넷, 모험가가 지나가면 열림). 복도 바닥은 따로 들고(`RoomTilePlan.Corridor`) 방 색조 × 0.55로 어둡게 칠한다(`RoomTilePainter`). 이제 밝은 방 바닥 = 한 방, 어두운 복도 = 방 사이, 그 경계에 문이다.
+  - 테스트: `RoomTilePlan_EnclosedBlockedCellsBecomePillars`(기둥 머리 줄), `RoomTilePlan_SideDoorGetsPostsOnBothSides`(기둥 3줄·복도 칸), `RuleTiles_PickThreeQuarterWallPieces`(머리가 한 줄 위로, 몸통 조각). EditMode 324/324.
+  - 플레이 캡처(씬 해시 그대로, 세이브 원복): 방 안 기둥이 벽돌 몸통까지 보이고, 옆 문 양 끝에 문이 서고, 복도가 방보다 어둡다.
+
+- 2026-10-20 · 버튼에 팩 버튼 그림 쓰기(사용자: "버튼은 버튼 ui를 사용해줘" → 목업 `Docs/Design/ui_button_mockup.png`, 고른 안 A: 팩 버튼 색 그대로).
+  - 팩 빈 버튼 칸(Buttons & Scroll Bars/<테마>/20, 32×32, 테두리 9)을 `Skin/Ledger/Button_Black·Gold·Red·Green`으로 가져와, 글자 하나뿐인 버튼의 바탕을 면으로 바꿨다(`UiKit.ApplyButtonFaces`): 보통 Black(밝은 회색)·주요 Gold(살구색)·위험 Red. 고르면 Gold 면(주요 버튼은 Green). 테두리 이미지(Outline)는 지웠다.
+  - 면이 밝아 글자는 어두운 색(40,34,52)으로. 화면이 넣는 글자 색은 `UiFrameButton.SetLabelColor`가 어두운 쪽으로 85% 당겨 뜻(강조·흐림)만 조금 남긴다. 직접 `Label.color`를 넣던 5곳(기록판·대출·지원자·정산 탭·방 상세 부하 줄)을 이 함수로 바꿨다. 팝업은 역할을 `SetFace`로 바꾸고 `SetStyle`은 팩 면을 칠하지 않는다. 배속 기호도 어두운 색.
+  - 잠긴 버튼: 반투명이면 밝은 면이 뒤 패널에 묻혀 글자까지 사라져서(실측), 잠김 색을 불투명 회색(0.62)으로, 글자 흐림을 0.7로.
+  - 높이 44 미만 버튼(닫기·배치·명령·탭 28~36)은 2배 테두리가 글자를 덮어(실측) 1배로 그린다.
+  - 아이콘·둘째 줄 글자가 든 버튼(설치 카드·침입 파티 줄·지원자 칸)은 카드·목록 줄이라 패널 테두리 그대로. 투명한 조용한 버튼(자세히)도 그대로.
+  - 프리팹 6개는 `UiSkinRefresher.RefreshAll()`로 프리팹 안에서만 바꿨다(버튼 면 59개). 생성기 7개도 저장 전에 `ApplyButtonFaces`를 부른다. 씬 해시 그대로.
+  - 검증: EditMode 324/324. 플레이 캡처로 HUD(배속·도크·영업 시작·목표), 방 확장 팝업, 방 상세(닫기·배치), 1일차 정산표(탭·접기·정산 완료)를 확인 — 잠긴 도크 버튼도 글자가 읽힌다.
+
+- 2026-10-20 · UI에 픽셀 UI 팩 그림 넣기(사용자: "ui에 에셋 넣어줘 에셋 없으면 말하고" → 고른 안: Black 테마, 공용 부품 전체).
+  - 있는 에셋: `Assets/04.Sprites/UI/SuperGUIBundle`(패널 테두리 조각·아이콘 버튼·막대·금화·하트·별, 색 5종). 목업 `Docs/Design/ui_asset_mockup.png`.
+  - 없는 에셋: 시설·함정·부하 카드 그림(팩에는 물약·책 같은 소품 몇 개뿐), 한글 픽셀 글꼴(지금 The Jamsil 유지).
+  - `UiKit`: 팩 Black 패널 조각 네 모서리로 32×32 테두리 그림을 만든다 — 바탕(`FrameFill`, 모양만 흰색)과 테두리(`FrameLine`, 안쪽 바탕을 비우고 밝기만 남긴 흰색). 둘 다 `HudPalette` 색으로 칠해 금빛 강조·붉은 위험 테두리가 그대로 산다. 2배(픽셀 배율 `PixelScale`)·가장자리 되풀이(`ApplyPixelFrame`)로 그려 사슬 무늬가 늘어나지 않는다. `Panel`·`Outline`·`Button`이 이 그림을 쓰고, 막대·칩·스크롤바·슬라이더는 둥근 그림 그대로다.
+  - HUD: 배속 버튼 글자(II·1×·2×) 대신 팩의 멈춤·재생·빨리감기 기호(`ButtonGlyph`, 2배), 금화 숫자 앞에 팩 금화(`Coin`, 30px 그대로 — 2배는 숫자보다 커서). 움직이는 금화는 HUD를 시끄럽게 해 넣지 않았다.
+  - 팩 원본 가져오기 설정(흐림 필터·여러 장)은 그대로 두고, 쓸 그림만 `Assets/09.UI/Skin/Ledger/`에 잘라 점 필터로 가져온다(`FrameFill`·`FrameLine`·`Glyph_213/214/227`·`Coin`).
+  - 이미 만든 UI 프리팹 6개(HUD·방 관리·팝업·상태 창·대화·정산표)는 `UiSkinRefresher.RefreshAll()`로 프리팹 안의 그림만 바꿨다(테두리 달린 바탕·테두리 이미지의 스프라이트·그리기 방식·배율, HUD 기호·금화). 생성기를 다시 돌리면 씬 인스턴스를 새로 놓아 씬이 바뀌므로 피했다 — 씬 해시 그대로. 생성기(`UiKit`·`GameplayHudBuilder`)도 같은 결과를 내게 맞췄다. 튜토리얼 덮개는 테두리가 없어 그대로.
+  - 검증: EditMode 324/324. 플레이 캡처로 장부·배속·브리핑·기록판·방 관리 도크·방 확장 팝업·1일차 정산표를 확인 — 사슬 테두리와 나선 모서리가 칠한 색(금빛 강조·회색 보통)으로 보이고, 고른 배속(재생)은 금빛 테두리. 36px 높이 탭·파티 줄은 모서리가 맞닿아 조금 촘촘하다.
+
+- 2026-10-20 · 옆·아래 문도 문처럼 보이게(사용자: "노드에 문이 있어야 거기로 적이 지나다니지않을까?" → 2번: 옆·아래 문 모양).
+  - 모험가는 이미 문으로만 오갔지만(칸 길 → 문 앞 → 복도 → 문), 문 그림이 위쪽 벽에만 있어 옆·아래로는 벽 틈으로 빠져나가는 것처럼 보였다.
+  - 아래 문: 위 문과 같은 정면 문 그림(`RoomDoorView`)을 아래 벽 난간 줄과 그 바깥 한 줄에 세운다(방 바닥은 가리지 않음). 모험가가 지나가면 위 문처럼 열린다(`Node.OpenDoor(Down)`).
+  - 옆 문: 문 면이 보이지 않아 문 틈 위·아래에 2×2 기둥을 세워 문틀로 보이게 했다(`RoomTilePlan.AddDoorPosts`, 벽 줄과 그 바깥 한 줄 — 방 바닥과 문 틈은 그대로). 이어진 옆 문에만 선다.
+  - 테스트: `RoomTilePlan_SideDoorGetsPostsOnBothSides`. EditMode 324/324.
+  - 플레이 실측(씬 해시 그대로, 세이브 원복): 방 3개를 지어 입구 아래 문에 문이 서고(DownDoor (0, -7.5)), 옆 문 양쪽에 기둥이 선 것을 캡처로 확인. 입구 → 아래 방 경로의 문 변은 Down/Right로 나와 아래 문이 열렸다(16장째 프레임). 1일차 웨이브의 모험가 3명은 왼쪽 방으로만 다녀 실제 모험가가 아래 문을 지나가는 장면은 보지 못했다.
+
+- 2026-10-20 · 함정 발동 효과(사용자: "함정도 에셋있으면 넣고 발동 에니메이션도 있으면 같이 넣어" → 몸통: "에셋 있는거만 하고 없으면 넣지마", 발동 효과: 방식별).
+  - 조사: 프로젝트에 함정 몸통 그림(가시·톱·그물 등)은 없다. Dark Castle 타일셋에는 바닥 발판·불 화로만 있어 함정과 맞지 않으므로 몸통은 임시 그림 그대로 둔다. 발동 효과는 해골 팩 효과와 화살 그림을 쓴다.
+  - 방식별 효과(함정마다 색이 다름): 밟기 = 베기 5프레임(기본 origin·가시 yellow·올가미 green·갑옷 파괴 blue), 범위 = 폭발 5프레임, 범위가 닿는 폭만큼(압쇄 orange·매복 그물 green), 지속 = 덮은 칸마다 솟는 불기둥을 작동 시간 동안 반복(칼날 standard·마름쇠 golden·처형 톱 hellfire), 투사체 = 화살 그림이 줄 서쪽 끝에서 대상까지 0.18초 동안 난다(예전의 선을 대신함). 효과는 빛을 받지 않는 재질(Sprite-Unlit-Default)이라 어두운 방에서도 보이고, 게임 시간으로 흘러 일시정지 중에는 멈춘다. 피해·판정 타이밍은 그대로다.
+  - 코드: `TrapEffectRules`(프레임 계산·칸 중심·폭발 폭), `TrapEffectSprite`(효과 하나: 한 번/반복/날기), `TrapTriggerVisual`(프리팹의 프레임·화살 그림·재질, 효과 재사용 목록), `Trap.PlayTriggerEffect`. 배선은 에디터 스크립트 `TrapEffectBuilder`(메뉴 "Tools/Dungeon Keeper/Build Trap Effects")로 함정 프리팹 10개에 넣는다.
+  - 격자 밖(통로)에 놓인 화살 함정은 밟기로 동작하는데 프레임이 없어 아무것도 안 보였다. 이때는 한 칸 서쪽에서 화살이 날아와 꽂히게 했다.
+  - 테스트: `TrapEffect_PlaysOnceOrLoopsThroughFrames`, `TrapPrefab_HasTriggerEffectForItsMode`(프리팹 10개). EditMode 323/323.
+  - 플레이 실측(씬 해시 그대로, 세이브 원복):
+    - 함정 10종을 화면에 놓고 방식별 효과를 띄움: 밟기 4종은 베기 1개(폭 1.25), 범위 2종은 폭발 1개(2×2·반경 1 → 4칸 폭), 지속 3종은 덮은 칸 수만큼 불기둥(칼날·처형 톱 2개, 마름쇠 1개), 화살은 화살 그림. 모두 Sprite-Unlit-Default 재질이고 어두운 방에서 또렷이 보였다. 한 번 도는 효과는 끝나면 사라지고, 불기둥은 계속 반복했다.
+    - 실제 모험가(Enemy_Sword)로 `TriggerBy`: 10종 모두 발동했고 효과가 떴다(격자 밖이라 전부 밟기로 동작). 화살 함정은 고친 뒤 화살 그림이 대상 서쪽 한 칸에서 출발했다.
+    - 방 격자 위에서 범위·지속·투사체 방식으로 웨이브 중에 터지는 장면은 보지 못했다(효과 호출은 같은 함수를 방식별로 불러 확인).
+
+- 2026-10-20 · 휠 확대 되살림(사용자: "휠로 확대하는 기능은 사라졌어?" → 고른 안: 휠로 PixelPerfectCamera 기준 해상도 단계 바꾸기).
+  - 원인: 10-16 커밋(`9f9460a81`)에서 메인 카메라에 PixelPerfectCamera가 들어온 뒤로 이 컴포넌트가 카메라 크기를 매 프레임 기준 해상도로 덮어써, 휠 확대(`InputSystemCameraMover`, 크기 3~30)와 방 고를 때 확대(`NodeCameraFocusController`, 4.2)가 먹지 않았다.
+  - `PixelPerfectZoomRules`: 기준 해상도 단계 480×270 / 640×360 / 960×540 / 1280×720(1920×1080 화면에서 카메라 크기 4.8 / 6.4 / 9.6 / 19.3, 정수 배율이라 마지막 단계에서 크게 넓어진다). 휠 한 칸에 한 단계(위로 굴리면 가까이, 트랙패드 값은 한 칸이 될 때까지 모음). 방을 고르면 960×540 단계로 바꾸고, 놓으면 고르기 전 단계로 돌아간다. PixelPerfectCamera가 없으면 예전처럼 카메라 크기를 바꾼다.
+  - 테스트: `PixelPerfectZoom_StepsThroughReferenceResolutions`(단계 가장자리에서 멈춤·되읽기·방 고를 때 단계), 테스트 asmdef에 URP 2D 런타임 참조 추가. EditMode 312/312.
+  - 플레이 실측(사용자 허락: 씬 변경은 두고 씬 파일은 건드리지 않음 — CLI `editor_play` 대신 `EditorApplication.EnterPlaymode`로 들어가고, 씬 파일 해시가 실측 전후 같음을 확인): 입력 시스템에 휠 한 칸(±120)씩 넣어 1280×720(크기 19.29) → 960×540(9.64) → 640×360(6.43) → 480×270(4.82)로 들어가고 거꾸로 돌아오며, 가장 먼 단계에서 더 굴려도 그대로. 입구 방을 고르면 960×540(9.64), 다시 누르면 1280×720으로 복귀. 도중에 게임 뷰가 포커스를 잃자 휠 입력이 버려졌다(입력 설정 `PointersAndKeyboardsRespectGameViewFocus` — 코드 문제 아님). 세이브 원상 복구.
+  - 남은 것: 보스 등장 연출의 확대(`BossWavePresenter`)도 카메라 크기를 바꾸므로 같은 이유로 먹지 않을 것이다(미수정).
+
+- 2026-10-20 · 남은 것 정리: 위쪽 벽 계단 모서리 검은 칸, 유닛이 선 방의 밝기.
+  - 검은 칸 원인: 위쪽 벽이 계단처럼 올라가는 곳에서 낮은 벽 난간 줄의 타일이 난간 조각(10.07, 속이 검다)을 받았다. 그 자리는 높은 쪽의 옆 벽이 내려온 곳이라, 벽 룰 타일에 계단 모서리 규칙 둘(`RoomWallKind.StepRailLeft`·`StepRailRight`: 3칸 아래 바닥 + 바로 아래 벽 + 옆 아래 바닥 + 옆 벽)을 난간 규칙보다 앞에 넣고 옆 벽 조각(03.03·12.09)을 쓴다. 처음 고른 아치 테두리 모서리(02.03)는 속이 검어 그대로 검은 칸이었다.
+  - 밝기: 유닛도 모험가와 같은 재질(Sprite-Lit-Default, 순서 20)이다. 방 구석에 세운 유닛이 가운데보다 눈에 띄게 어두워, 방 빛 안쪽 반경을 반 폭의 0.55 → 0.85배, 바깥 1.25 → 1.6배로 넓혀 구석까지 고르게 밝힌다.
+  - 검증: EditMode 311/311(계단 모서리 좌우 +1). 플레이(세이브 백업 후 새 판): 입구 위쪽 계단 모서리가 옆 벽으로 이어지고 검은 칸 없음, 서쪽 방 가운데·아래 구석에 유닛 그림을 세워 비슷한 밝기 확인. 콘솔 새 오류 0. 세이브 원상 복구.
+
+- 2026-10-20 · 방을 더 던전답게: 벽 장식·바닥 소품·어둠과 횃불 빛(사용자: "노드에 벽처럼 좀 더 던전처럼" → 고른 안: 벽 장식, 바닥 소품, 어둠과 횃불 빛).
+  - 고친 버그(이번 일의 원인 조사 중 발견): 열린 방을 그리는 던전 타일맵(`DungeonTilemap`)이 격자 칸만 0.625로 두고 그림은 16px = 1u 그대로라, 타일 한 장이 1.6배로 겹쳐 그려지고 있었다(잠긴 후보 방은 정상). 칸을 1로, 격자를 0.625배로 바꿔 한 장이 칸 하나에 맞는다. 재발 방지 테스트 `DungeonTilemap_DrawsOneSpritePerCell`.
+  - 장식(`RoomTilePlan.Decor`, 방 이름·좌표로 정하는 값이라 칸막이를 바꿔도 다른 장식은 그대로): 위쪽 벽 벽돌 면에 횃불(1×2 애니메이션 타일, 8장 초당 8장)·가고일(2×2, 3종)·보옥 홈과 촛대(1×1, 7종)를 띄엄띄엄(양 끝 한 칸·위쪽 문 자리 비움), 바닥에 해골·뼈·핏자국·항아리(11종, 타일마다 3%, 중앙 시설 자리·문 앞 칸 제외). 장식 타일맵(벽 위·캐릭터 아래)과 횃불 전용 타일맵(기준점을 반 칸 올려 1×2 그림이 벽돌 면 두 줄을 덮게 — 애니메이션 타일은 타일별 위치 변환이 먹지 않았다).
+  - 빛: 씬 Global Light 2D 1.05 → 0.35(색 0.55·0.6·0.85). 열린 방마다 방 전체를 옅게 비추는 빛(0.6, 반경 방 크기)과 횃불마다 흔들리는 따뜻한 빛(1.1±18%, 반경 4.5u)을 `RoomLighting`이 둔다. 복도·잠긴 후보는 어둡다.
+  - 생성기(`RoomLayoutBuilder`): 시트 칸에서 장식 타일(`Assets/07.SO/Map/Tiles/Decor/`, 30장 + 횃불)을 만들어 `RoomTileSet`에 넣고, 씬 전체 빛을 맞춘다. 새 타일 에셋은 값을 채운 뒤 만든다(만든 직후 고친 그림이 첫 실행에서 저장되지 않았다). 검은 잔해 소품은 어두운 방에서 바닥 구멍처럼 보여 뺐다.
+  - 검증: EditMode 310/310(장식 자리·같은 방 같은 장식·벽 장식은 벽돌 면에만·위쪽 문 자리 비움 +1, 타일 크기 +1). 플레이(세이브 백업 후 새 판): 방 두 개에 횃불·가고일·촛대·해골·핏자국이 보이고 횃불이 벽돌 면 안에 선다, 영업 중 어두운 방에서도 모험가가 잘 보인다. 콘솔 새 오류 0. 세이브 원상 복구.
+  - 남은 것: 위쪽 벽이 계단처럼 꺾이는 안쪽 모서리의 검은 칸(그 조각 미구현). 아군 유닛이 선 방의 밝기는 따로 보지 않았다.
+
+- 2026-10-20 · 문을 통과하는 이동 연출(사용자: "노드 있는 복도가 아니라 문으로 이동" → 고른 안: 지금 구조는 두고 문 앞에 서서 문을 지나 들어가는 모습, 문 열림 표시 포함).
+  - 경로: `RoomRoute.Between`이 나가는 문 앞(문 칸 줄, 문 폭 가운데) 경유점 번호를 돌려준다. 모험가는 거기까지 걸어가 0.18초 서서 문을 열고 복도로 나간다(그 시간은 이동 시간 안에서 나눠 써 하루 침입 속도는 그대로). 복도 구간은 꺾일 때마다 방향을 바꾼다.
+  - 문 그림 `RoomDoorView`: 위쪽 벽(3/4 시점에서 벽돌 면이 보이는 쪽)의 이어진 문에만 Dark Castle 보라 문 애니메이션(16장, 닫힘 → 열림)을 둔다. 지나가면 0.4초에 걸쳐 열리고 1.2초 뒤 닫힌다. 옆·아래 문은 문 면이 보이지 않아 그림 없이 문 앞에서 서기만 한다. 그림 순서는 벽 타일 위(2), 캐릭터(20) 아래.
+  - 그림 연결: `RoomTileSet.doorFrames`(생성기 `RoomLayoutBuilder`가 시트에서 번호순으로 채움), 노드가 열린 방·위쪽 문 연결 때 만들고 연결이 끊기면 지운다(`Node.RefreshDoorViews`, `OpenDoor`).
+  - 검증: EditMode 308/308. 플레이(세이브 백업 후 새 판): 입구 위 ㄱ자 복도로 이어진 방(-1,1) 확장 → 입구 위쪽 벽에 닫힌 문, 강제로 열어 확대 캡처(벽돌 면 틈에 아치·열린 어둠), 영업에서 모험가가 (0, 7.9)·(0, 10.0)을 지나는 순간 문 열림. 콘솔 새 오류 0. 세이브 원상 복구.
+  - 남은 것: 옆·아래 문 그림(시트에 옆면 문이 없다), 문 그림이 복도 가운데보다 1/4 타일쯤 오른쪽으로 보인다(시트 그림 자체의 여백).
+
+- 2026-10-20 · 큰 방에 맞춘 이동·전투·함정(사용자: "그거에 맞게 유닛이나 적 BT, 트랩 작업" → 고른 안: 이동은 거리 비례 최대 2배, 모험가가 방 안을 더 돌아다님, 전투 이동 1.5배).
+  - 방 사이 이동: `EnemyMover.maxMoveDuration` 0.75 → 1.5초(코드 기본값 + 적 프리팹 5개, 에디터 스크립트로). 꺾인 길 1.6배는 그대로.
+  - 방 안 둘러보기: 방에 처음 들어온 차례에는 늘, 그 뒤엔 `wanderChance`로 칸 길을 따라 소 2·중 2~3·대 3곳을 들렀다 설 자리로 돌아온다(속도 이동 속도×1.2, 최대 3초, 꺾일 때마다 방향 전환). 방 모양이 없는 방은 예전 짧은 배회.
+  - 전투 이동: `BattleAgent.RoomScaleMoveMultiplier` 1.5(유닛·모험가 모두, 프리팹 값은 그대로). 유닛 배회 목표는 걸을 수 있는 칸으로 맞추고 칸 길 모퉁이로 향한다.
+  - 함정 판정(밟는 거리 = 칸 크기×0.4, 범위는 칸 단위)은 바꾸지 않았다.
+  - 검증: EditMode 308/308. 플레이(세이브 백업 후 새 판): 서쪽 방 15×12에 가시 함정 6개 → 1일차 모험가가 5칸에 흩어져 섰고, 2일차 함정 2개가 발동(피해 9씩). 막힌 칸 위 0회, 콘솔 새 오류 0. 세이브 원상 복구.
+  - 확인 못 함: 아군이 있는 방의 교전 속도, 웨이브 하루 길이 변화(둘러보기·이동 시간 증가로 길어짐 — 밸런스 실측 필요).
+
+- 2026-10-20 · 방 크기 두 배(사용자: "방을 더 크게" → 고른 안: 2배 + 간격 넓힘, 넓이만 키움(정원·값·시간 그대로), 카메라는 기준 해상도 2배).
+  - 크기 규칙(`RoomSizeRules`): 틀 최대 소 6×6→12×10·중 7×7→15×13·대 9×8→18×16, 바닥 소 44~90·중 90~160·대 160~236칸. 팀당 정원·확장비·공사 시간은 그대로.
+  - 생성기(`RoomShapeGenerator`): 틀은 최대에서 3칸 안쪽까지, 홈 2~5곳(길이 틀의 1/3·깊이 짧은 변의 1/4까지), 기둥 소 0~2·중 0~4·대 0~6, 칸막이 벽 소 0~1·중 0~2·대 0~3줄(길이 2~변의 절반), 입구 12×11, 실패 시 직사각형 8×7·11×10·15×13.
+  - 방 간격 15u → 30u(씬 `DungeonNodeManager`·`DungeonEdgeManager`, 코드 기본값도). 노드 충돌 칸(누르기·전투 입장)은 노드 배율 대신 `Node.FitColliderToSpacing`이 간격(30×30)에 맞춘다 — 배율을 키우면 이름표·자물쇠도 커진다.
+  - 특별 방 3개는 손 그림을 칸마다 2×2로 늘려 다시 만들었다(지하 묘실 10×10·기둥 홀 12×12·열주실 18×16). 입구 프리팹도 다시 깎음(`RoomLayoutBuilder.BuildAll`, 씬 간격·카메라도 이 생성기가 맞춘다).
+  - 카메라: `PixelPerfectCamera`(기준 640×360, 28PPU)가 카메라 크기를 정하고 있어 휠 확대(3~30)·방 고를 때 확대(4.2)는 원래부터 먹지 않았다. 기준을 1280×720으로 바꿈. 정수 배율이라 1920×1080에서는 크기 6.43 → 19.29(예전의 3배 넓이), 1280×720 화면에서는 2배.
+  - 저장: 저장된 방은 칸 줄을 그대로 되살리므로 예전 판의 방은 작은 채로, 새 후보부터 큰 방이 나온다(방 사이 복도만 길어짐).
+  - 테스트: `TrapGrid_FollowsLayoutSizeAndRejectsBlockedCells`에서 6×6 중형 검증 줄 제거(격자 크기 검사가 목적). EditMode 308/308(두 번).
+  - 플레이 실측(세이브 백업 후 새 판): 입구 12×11·후보 13×10·15×10·12×12(기둥 홀), 충돌 칸 30×30, 서쪽 방 확장 → 한 화면에 두 방, 영업 1회 모험가 3명이 서쪽 방까지 다녀옴(막힌 칸 위 0회). 콘솔 새 오류 0. 세이브 원상 복구.
+  - 남은 것: 입구 위쪽 벽이 계단처럼 꺾이는 안쪽 모서리에 검은 칸 하나(그 조각 미구현, 예전부터의 빈칸). 이동 시간은 최대 0.75초×1.6배로 그대로라 긴 복도를 빠르게 지나간다.
+
+- 2026-10-20 · 방 안 칸막이 벽(사용자: "벽이 생겨 있는 방을 만들던가 플레이어가 벽을 나눌 수 있게" → 고른 안: 생성 벽 + 플레이어 칸막이 섞기, 칸막이는 부서지고 싸게).
+  - 길찾기: `RoomCellPathfinder`(칸 BFS, 8방향·모서리 가로지르기 금지, 칸 하나를 더 막아도 이어지는지), `IRoomCellMap`, 벽 무시 지도 `RoomFloorMap`.
+  - 생성 벽: `RoomShapeGenerator.CarveWalls` 중형 0~1줄·대형 0~2줄(2~4칸, 가장자리와 떨어짐). 벽이 규칙을 깨면 같은 모양에서 벽만 뺀다. 시도 상한 400 → 1000(중형 4문 시드 1이 직사각형으로 떨어지던 것).
+  - 칸막이 건물 `Partition`(`Building` 파생, 부서짐 8, 10G, 함정 갈래, 처음부터 열림). 에디터 생성기 `PartitionBuilder.BuildAll()`이 벽 프리팹을 본떠 `03.Prefabs/Buildings/Facilities/Partition.prefab`, `07.SO/Buildings/PartitionBuildingData.asset`, 해금 카탈로그 항목을 만들고 SampleScene `NodePanelView.installableBuildings`에 넣는다(씬은 다른 미저장 변경이 있어 저장하지 않음).
+  - 배치: 문 앞 칸·유닛 칸·방을 끊는 칸 거부(`NodeTrapGrid.KeepsRoomOpen`, `BuildingPlacement`, 배치 미리보기도 칸이 바뀔 때만 판정). 칸막이는 시설·함정 겹침 규칙에서 빠진다. 기둥·칸막이 칸에는 유닛 불가.
+  - 그리기: `RoomTilePlan.Build`가 칸막이 칸을 기둥 타일로 바꾸고, 격자의 `PartitionsChanged`로 방을 다시 그린다. 부서지면 `NodeTrapGrid.Release`로 칸을 비운다.
+  - 이동: 모험가 방 사이 이동을 `RoomRoute` 경유점(칸 길 → 문 → 입구 ㄱ자 모퉁이 → 문 → 칸 길, `DOPath`, 꺾인 길은 최대 1.6배 시간)으로, 서 있을 자리·배회 목표는 걸을 수 있는 칸으로. 4칸 넘게 돌아가야 하면 칸막이 앞에서 부순다(`PartitionRules`). 전투 이동은 막힌 칸에서 미끄러지고(`ClampToArena`) 접근·돌진은 칸 길 모퉁이로(`SteerToward`).
+  - 테스트(RoomConstructionTests +3): 길찾기 우회·모서리 금지·이어짐, 칸막이 문 앞·방 끊기 거부·걷기 막힘·기둥 그림·철거, 대형 생성 방 칸막이 벽. EditMode 308/308.
+  - 플레이 실측(세이브 백업 후, v4라 새 판): 서쪽 방(7×6) 확장 → 칸막이 3개(문 앞 칸은 거부) → 기둥 벽으로 그려짐. 1·2일차 영업에서 모험가 위치를 1초마다 봤더니 막힌 칸 위 0회, 벽 아래·위로 돌아감. 다시 실행해 칸막이 3개 복원·그림 확인. 콘솔 새 오류 0. 세이브 원상 복구.
+  - 확인 못 함: 벽 부수기(이 방 모양에서는 돌아가는 길이 2칸뿐이라 조건이 안 섰다), 전투 중 우회(아군 미배치), 설치 창에서 실제 클릭으로 칸막이 짓기·금화 차감.
+
+- 2026-10-20 · 룰 타일 도입·방 모양 실행 중 무작위 생성(사용자: "룰 타일도 만들자, 진짜 던전처럼 무작위성을 띄우는 방" → 고른 안: 실행 중 생성 + 특별 방 프리팹, 게임·에디터 모두 룰 타일).
+  - 방 모양 데이터 `RoomShape`(칸 줄·문·크기·특별 방이면 프리팹). 보통 방은 후보마다 판 시드로 깎는다(`RoomShapeGenerator`, 런타임으로 옮긴 깎기 규칙: 틀·모서리 2~4·홈 1~3·기둥, 한 칸 폭 돌기/틈·82% 넘게 찬 모양은 다시 깎음). 문은 부모 쪽 + 무작위 1~3개(2개 50%·3개 35%·4개 15%). 15%(`SpecialRoomChance`)는 손으로 만든 특별 방 프리팹(소 지하 묘실·중 기둥 홀·대 열주실, 네 변 문). 부모 쪽 문을 시드에 섞어, 부모가 바뀌면 다른 모양.
+  - 룰 타일 3종(`Assets/07.SO/Map/Tiles/`): `DungeonFloorRuleTile`(바닥, 무늬 25% 무작위), `DungeonWallRuleTile`(3/4 시점 벽 24규칙, 이웃이 바닥 룰 타일인지로 판단 — 새 이웃 종류 Floor/NotFloor), `DungeonPillarRuleTile`(기둥 머리·받침·옆). `RoomTileSet`은 이 셋을 묶는다. 타일 팔레트 `Assets/04.Sprites/Tilesets/Palettes/DungeonRoomPalette`에 올려 손으로 칠할 수 있다. 런타임 asmdef에 `Unity.2D.Tilemap.Extras` 참조 추가.
+  - 그리기: `RoomTilePlan`은 바닥·기둥만 계산하고 벽 조각은 룰 타일이 고른다. 열린 방은 던전 타일맵 한 장(`DungeonTilemap`, `DungeonNodeManager`가 실행 중 생성)에 함께 칠해(`RoomTilePainter`) 복도·벽이 방 경계를 넘어 이어진다. 잠긴 후보만 노드 자기 타일맵. 위 타일맵 = 바닥·벽·기둥 룰 타일, 아래 = 벽 띠까지 바닥(투명 부분 아래). 특수 효과 색조는 타일마다.
+  - 저장: `SavedNode`·`SavedCandidate`에 `layoutRows`·`layoutDoors` 추가(생성한 방은 줄로 되살림), `RunSaveFile.CurrentVersion` 3→4(3 이하 판 세이브는 버려짐 — 3은 이번 작업 중 실측 세이브뿐).
+  - 생성기 `RoomLayoutBuilder`: 룰 타일·셋·팔레트·입구(시드 깎기)·특별 방 3개 생성, 노드 프리팹·씬 연결. 예전 생성 방 프리팹 42개는 지움.
+  - 테스트(RoomConstructionTests): 입구·특별 방 유효, 생성기 크기×문×시드 30개 유효·같은 시드 같은 모양·크기마다 모양 40종 넘게, 복도 반쪽 맞닿음·ㄱ자·바깥문, 기둥 판정, 룰 타일이 고른 조각(면 아래/위·난간·옆/아래 난간·모서리·복도 위 난간 이음매·기둥 머리/받침·바닥 무늬), 정사각 아닌 격자. EditMode 305/305.
+  - 플레이 실측(세이브 백업 후 새 판): 후보 4곳 중 1곳이 특별 방(기둥 홀), 나머지는 생성 방(5×6·5×7·6×6·소형 4×6, 문 2개). 방 4개 확장 → 기둥 홀과 위 방이 위/아래 문으로 이어짐(문 맞춤), 함정 칸 2개·기둥 칸 거부. 넓게 렌더해 던전 타일맵 한 장에 벽돌 면·난간·기둥·복도가 이어진 것 확인. 저장 → 재시작 → 모양 6개(생성 4·특별 1·입구)·연결·함정 복원 일치. 영업 1회(침입 3명, 2일차) 새 오류 0. 세이브·메타는 실측 전 파일로 되돌리고 다시 확인.
+  - 남은 것: 특별 방은 3개뿐(장식 자식은 비어 있음 — 프리팹에 석상·횃불을 넣으면 그대로 나온다). 위쪽 벽 계단 꺾임의 옆면 조각·아치 문은 아직 없음. 입구 ㄱ자 복도에서 모험가는 대각선으로 걷는다.
+
+- 2026-10-20 · 방 모양 불규칙화·타일 다시 맞춤(사용자: "형태가 규칙적일 필요는 없음, 타일 배치가 이상함" → 고른 안: 예제 씬처럼 3/4 시점, 불규칙 프리팹 여럿).
+  - 원인: 노드 프리팹에 연결된 타일이 시트의 엉뚱한 칸이었다(문 = 석상 조각, 위 벽 = 울타리 조각 등). 타일셋 예제 씬 `Dark_Castle_001`을 읽어 칸별 조각을 확인했다.
+  - 타일: `RoomTilePlan`을 3/4 시점 규칙으로 다시 씀 — 바닥 위 벽돌 면 2줄 + 난간(위쪽 벽 타일 3칸), 옆 벽·아래 난간, 끝·모서리·안쪽 모서리 조각, 방 안에 갇힌 막힌 칸은 벽돌 기둥(머리·받침). 복도 끝 너머는 이웃 몫이라 벽을 세우지 않고 끝 조각도 안 씀(가상 바닥). 이어지지 않은 문은 벽으로 막고, 입구 바깥문은 바깥으로 3타일 열림. 바닥은 06.17 + 무늬 8종 25%.
+  - 새 `RoomTileSet`(SO, `Assets/07.SO/Map/RoomTileSet.asset`): 벽 종류 31가지 → 타일. 생성기가 Purple 시트 타일 에셋에서 칸 좌표로 찾아 채우고 노드 프리팹 `NodeTileRenderer.tileSet`에 연결(에디터 API로 프리팹 저장). `NodeTileRenderer`의 옛 타일 필드는 지움.
+  - 모양: 크기 규칙을 정사각 고정에서 틀 최대(소 6×6·중 7×7·대 9×8)·바닥 칸 범위(소 12~22·중 22~36·대 36~72)로 바꿈. 생성기가 크기마다 14개를 고정 시드로 깎음(틀 크기, 모서리 2~4곳, 변의 홈 1~3곳 깊이 1~2, 방 안 기둥) — 한 칸 폭 돌기·틈과 틀 82% 넘게 찬 모양은 버림. 방 42개 + 입구(입구도 불규칙). 예전 방 프리팹 33개는 생성기가 지움.
+  - 테스트(RoomConstructionTests): 복도 위 벽돌 면·난간 이어짐·아래 난간·닫힌 문은 벽·왼쪽 벽·바깥 모서리·입구 바깥문, 기둥(머리·받침)과 가장자리 막힘(벽) 구분 추가. EditMode 303/303.
+  - 플레이 실측(세이브 백업 후 새 판): 서쪽 방(`Room_M03_UR`, 7×6·막힌 14칸) 확장 → 입구와 연결, 화살 함정 칸 3개. 줌 아웃 렌더로 예제 씬과 같은 모양(위쪽 벽돌 면·난간·안쪽 모서리) 확인, 한 칸 틈 거르기 전 생기던 검은 틈 사라짐. 저장 → 재시작 → 같은 프리팹·막힌 칸·함정 3·후보 모양 복원. 새 오류 0(CLI 타임아웃 기록만). 세이브·메타는 실측 전 파일로 되돌리고 다시 확인.
+  - 남은 것: 위쪽 벽이 계단처럼 꺾이는 곳의 옆면 조각(예제의 02.03~05)은 쓰지 않아 단순하다. 위 문으로 나가는 복도는 벽돌 면을 뚫은 틈으로 보인다(아치 조각 미사용). 입구 ㄱ자 복도에서 모험가는 여전히 대각선으로 걷는다.
+
+- 2026-10-20 · 던전 방을 프리팹으로 바꿨다(사용자 선택: 문 2개 이상 프리팹 + A·B 혼합 — 노드 구조 유지, 방 크기별 칸 수, 입구 ㄱ자 복도, 특수 효과 색조, 저장 버전 올림).
+  - 방 프리팹 `RoomLayout`: 칸마다 바닥('.')/막힘('#'), 문(상하좌우 중 2개 이상, 변 가운데), 크기. 생성기 `RoomLayoutBuilder.BuildAll()`이 33개 + 입구(`Assets/03.Prefabs/Map/Rooms/`)와 목록 `Assets/07.SO/Map/RoomLayoutCatalog.asset`을 만들고 SampleScene `DungeonNodeManager.layoutCatalog`에 연결(씬 저장 전 미저장 변경 없음 확인). 모양: 소 5×5(통짜·모서리 깎음·기둥), 중 6×6(통짜·모서리·기둥 4·한쪽 홈), 대 8×8(통짜·2×2 기둥 4·십자). 다시 돌려도 프리팹 자식(장식)은 유지되고, 자식이 있으면 방 위에 놓인다.
+  - 그리기 `RoomTilePlan` + `NodeTileRenderer`: 칸 하나 = 타일 2×2(1.25u), 타일은 노드 배율과 상관없이 월드 0.625u라 이웃 방과 한 격자(노드 간격 15u = 24칸). 바닥에 붙은 칸에 벽을 자동으로 세우고, 이어진 문에서 두 방 사이 가운데까지 폭 2 복도를 깐다(끝 너머엔 벽을 세우지 않아 반쪽 둘이 이어짐). 이어지지 않은 문은 닫힌 문 타일. 입구 위·아래 문은 ㄱ자로 꺾어 왼쪽 위·아래 방의 오른쪽 문에 닿는다. 입구 오른쪽은 바깥문.
+  - 격자 `NodeTrapGrid.ConfigureCells`: 칸 수·간격을 프리팹에서, 막힌 칸(`IsBlockedCell`)에는 함정·시설·유닛 불가(`Node.IsUnitCellAvailable`도 봄). 아레나 반지름도 방 크기에 맞춤(`NodeBattlefield.SetArenaRadius`). 격자 크기 `RoomSizeRules.GridCells`(소 5·중 6·대 8).
+  - 확장(`DungeonGraphController`, 민감 영역): 후보는 방의 문으로만 뻗고(입구 바깥문 제외, 서쪽 제한 유지), 부모 쪽 문이 있는 프리팹을 `RunRandom` 줄기 `RoomLayout`으로 골라 자리마다 유지(`_candidateLayouts`, 공사 취소 때 되돌림). 이웃과는 양쪽 문이 마주 볼 때만 잇는다(`RoomDoorRules`). 연결 예측도 같은 규칙, 확장 창에 "문 ↑→" 추가. 연결이 생기거나 끊기면 양쪽 방의 문·복도를 다시 그린다. 예전 상·하·좌 고정 후보와 `TryResolveBuildParent`는 지움.
+  - 테마: 방 타일에 특수 효과 색조(풍요 금빛·요새 회청·함정 지대 붉은빛, `RoomFeatureRules.Tint`).
+  - 저장: `SavedNode.layoutId`·`SavedCandidate.layoutId`, `RunSaveFile.CurrentVersion` 2→3(옛 판 세이브는 버려진다 — 사용자 승인). 못 찾는 이름은 크기에 맞는 방으로 되돌리고 경고.
+  - 규칙 문서: `wave-economy-rules.md`의 격자 크기·던전 그래프 절 갱신.
+  - 테스트(RoomConstructionTests +4): 프리팹 전부 유효·크기마다 네 방향 문 존재, 입구 대각선·문 방향 규칙, 복도 반쪽이 벽 없이 만남·ㄱ자 복도·닫힌 문, 막힌 칸 배치 거부·크기별 칸 수. EditMode 302/302.
+  - 플레이 실측(세이브 백업 후 새 판): 입구 + 후보 3곳에 부모 쪽 문이 있는 프리팹(`M_Cut_UR`·`M_Hall_LR`·`M_Hall_URDL`). 확장 팝업으로 서쪽 방 확장(200→192G) → 입구 왼쪽 ↔ 새 방 오른쪽 연결, 복도가 끊김 없이 그려짐(캡처). 화살 함정을 칸 (1,0)·(4,4)에 설치 — 타일 2×2에 정확히 맞음, 깎인 모서리 (0,0)은 거부. 저장(version 3, layoutId 4개·함정 칸 2개) → 플레이 재시작 → 같은 프리팹·막힌 칸 4·연결·함정 2개 복원. 영업 1회(침입자 3명, 2일차로 넘어감) 새 오류 0. 세이브·메타는 실측 전 파일로 되돌림(되돌린 뒤 다시 확인).
+  - 남은 것: 입구 ㄱ자 복도는 모험가가 대각선으로 곧장 걷는다(이동 경로에 꺾임점 없음). 벽 타일은 곧은 벽 4종·바깥 모서리 4종만 써서 안쪽 모서리 그림이 단순하다. 닫힌 문은 옆 변에도 같은 문 타일. 기둥 장식(석상·횃불)은 프리팹 자식으로 넣을 수 있게만 해 두었다.
+
+- 2026-10-20 · A안 남은 화면 5단계: 부하 상태·모험가 상태·금고 창(uGUI). 기능은 Toolkit `UnitStatusToolkitView`·`EnemyStatusToolkitView`·`TreasuryToolkitView`와 같게.
+  - 캔버스 30(방 관리 20 위, 대화 80 아래), 프리팹 `03.Prefabs/UI/Status/StatusPanels.prefab`, 생성기 `StatusPanelsBuilder`(판단 컴포넌트·노드 패널·비용·날짜 배선).
+  - 부하 상태(`UnitStatusView`) 440×330: 누른 자리 오른쪽 위에 뜨고 화면 밖이면 안으로 밀림(`UiPlacement.PlaceNear`). 이름·상태, 얼굴, HP 막대, 공격·경험, 명령, 특성·성격(마우스를 올리면 설명 툴팁 360×72 — `UiHoverRelay`), 피로 막대(쾌조 초록·피로 호박·과로 빨강·탈진 임박 위험색), 안내 줄, 치료·휴식/회수(해당 없으면 자리 지킨 채 숨김). 값·버튼 판단은 기존 `UnitStatusPanelView`.
+  - 모험가 상태(`EnemyStatusView`) 400×360: 누른 자리 옆, 0.12초마다 다시 읽음. 체력·공격·목적/예산/파티 자금·파티·경계/탐욕/철수·시설 대기 만족도, 상태이상 4줄(넘치면 "외 N개", 없으면 제목째 숨김). 문구는 새 `EnemyStatusPresenter`(원본 화면 안에 있던 판단을 옮김). 지도 클릭 요청은 기존 채널, 기록판 파티 줄은 `RequestShow`.
+  - 금고(`TreasuryView`) 380×316: 오른쪽 열 방 상세 왼쪽(위에서 104 — 원본은 방 상세와 겹치는 오른쪽 위). 보관 금화·이자(다음 정산 +NG 초록)·약탈 위험(빨강)/길 막혀 안전·운영 자금, 청산일 안내, 25G/전부 맡기기·꺼내기(청산일에만). 문구·조건은 새 `TreasuryPresenter`. `NodePanelView.TreasuryInspectRequested`·`Closed`로 열고 닫음.
+  - 검증: Unity 재컴파일 오류 0, 플레이 게임 오류 0(콘솔 오류 3개는 Unity CLI 서버 스레드 중단 — 도메인 리로드). 금고 설치 → 금고 창 → 25G 맡기기(157→132G, 보관 25)·꺼내기 잠김(청산일 아님). 모험가: 영업 중 궁수 상태 창(HP·예산·파티 2명·경계 15·철수 16%·시설 대기 없음). 부하: 청산일로 바꿔 블루 슬라임 고용 → 방 관리 화면 유닛 배치 갈래 → 카드 → 배치 → 첫 빈 칸 → 배치됨, 부하 상태 창(얼굴·HP 20/20·명령 대기·회수 버튼, 특성 툴팁 "강인함…/사교적…"). 이 실측으로 3단계에서 못 본 유닛 배치 흐름도 확인.
+  - EditMode 297/298: `AssetWiringTests.OpeningScene_DoesNotLaunchTutorial` 실패 — SampleScene의 `UI Controllers/PlayTutorialView` 오브젝트가 켜져 저장돼 있다(HEAD는 꺼짐). 씬 파일 마지막 저장은 10-19 22:54로 이 작업의 저장(10-19 09:34) 뒤다. 이 작업이 켠 것이 아니어서 사용자에게 물었고, 사용자 요청으로 다시 껐다(에디터 스크립트로 `SetActive(false)` 후 씬 저장) → EditMode 298/298.
+  - 세이브 복원 실패: 실측 뒤 `editor_stop` 직후 세이브를 되돌렸는데, 플레이를 끝내며 게임이 체크포인트를 그 뒤에 다시 써서 실측 상태(1일차 완료·블루 슬라임 배치, 3,729B)가 남았다. 10-19 금고 실측 때도 같은 일로 3,022B가 남아 있었다(원래 2,336B 세이브는 남은 사본이 없음).
+
+- 2026-10-19 · 시작 HUD 축소·무브리핑·상점 제거 변경을 사용자의 요청에 따라 되돌렸다.
+  - 영업 전 브리핑·목표 전환, 장부 상태 칩, 기록판 초기 기록, 도크의 떠돌이 상인을 이전 A안 동작으로 복원했다.
+
+- 2026-10-19 · A안 남은 화면 4단계: 기록판(침입 파티·최근 기록, uGUI). 기능은 Toolkit HUD 오른쪽 레일(`PartyRailView`·`HudActivityLog`)과 같게.
+  - 배치: HUD 캔버스(10) 오른쪽 열 아래 380×360(위에서 568, 목표 전환 버튼 바로 위). 펼친 브리핑(~544)과 겹치지 않는다. 방 상세가 열린 동안은 브리핑·진행 카드처럼 비켜 둔다(`RecordBoardView.SetYielded`, `RoomManagementScreen`이 부름). 원본은 오른쪽 레일 292 폭이었다.
+  - 침입 파티: "현재 N · 접근 M", 파티 줄 최대 8(스크롤) — 이름 왼쪽·위험도 오른쪽, 보스·엘리트 줄은 금색 테두리·위험도 빨강, 안내 줄(들어온 파티 없음·오늘 보스·다음 파티·보스 패배 조건)은 흐린 글. 줄을 누르면 리더의 모험가 상태 창 요청(`EnemyStatusPanelView.RequestShow` 새 공개 함수 — 창은 5단계). 줄 만들기는 기존 `PartyRailPresenter`.
+  - 최근 기록: 8줄, 같은 알림·같은 종류(침입자 수)는 최신 문구 한 줄로 묶어 "· N회", 경고 줄 호박색, 새 줄이 오면 맨 아래로 스크롤. 알림: 운영 화면 준비, 낮/밤 전환(`DayManager.PhaseChanged`), 침입자 증가·전투 종료, 관리 모드/영업 시작(원본과 같은 문구). 데이터는 새 `ActivityLog`(그리기와 분리), 화면은 `RecordBoardView`(0.25초 갱신). 원본의 오른쪽 토스트(방 먼저 선택 등)는 3단계에서 도크 안내 줄로 옮겼다.
+  - 생성: `GameplayHudBuilder`에 `BuildRecordBoard` 추가(웨이브·날짜·모험가 상태 배선). HUD를 다시 놓으면 방 관리 화면의 HUD 참조가 끊기므로 `RoomManagementBuilder`도 다시 실행(기록판 배선 추가, 튜토리얼 배선 유지).
+  - 검증: Unity 재컴파일 오류 0, EditMode 298/298, 플레이 콘솔 오류 0. 방 확장 → 영업 시작 → 파티 줄 "용병 검사 파티 · 3명"·"강함 2 · 자금 적음", 기록 7줄(침입자 수 "· 2회"로 묶임) 캡처, 파티 줄 `onClick` → 상태 창 요청 대상 "용병 검사". 방 상세를 열면 진행 카드·기록판이 비켜나고 도크에 일시정지 잠김 사유(빨강). 첫 클릭 시험은 파티가 이미 나간 뒤라 대상이 없었다(다시 해서 확인). 세이브는 매번 복원.
+  - 알게 된 것(이번 변경과 무관): 글꼴에 말줄임표 "…" 글리프가 없어 한 줄 글자(`UiKit.Text` singleLine)가 넘칠 때마다 TMP가 "Truncate로 바꾼다" 경고를 낸다. ui-rules 5번(넘치면 말줄임)을 지키려면 글꼴 대체(fallback)에 "…"가 있는 글꼴을 넣어야 한다.
+
+- 2026-10-19 · A안 남은 화면 3단계: 방 관리(행동 도크·설치 창·방 상세, uGUI). 기능은 Toolkit `RoomManagementController`·`RoomDetailView`·`InstallPanelView`와 HUD 하단 바와 같게.
+  - 배치(사용자 선택 "왼쪽 아래 도크"): 캔버스 20. 왼쪽 아래 행동 도크 760×132(관리 안내 줄 — 관리 중 금색·영업 중 흐림·일시정지 잠김 빨강, 건설·유닛 배치·함정·시설 | 상인·정산 정보·메뉴, 보유 유닛·부활 대기·목록 열기), 도크 위 설치 창 760×360(접히면 60)·보유 목록 760×140·잠깐 안내 줄, 오른쪽 열 방 상세 400×640(위에서 104). 방 상세가 열린 동안은 손님 브리핑·진행 카드를 비켜 둔다(`WaveHudView.SetRightColumnYielded`). 아래 가운데는 비움.
+  - 동작(원본과 같음): 방을 누르면 방 상세가 열리고, 갈래 버튼은 방을 골랐을 때·관리 시간에만 눌리며 같은 갈래를 다시 누르면 접힘. 방을 안 골랐으면 "먼저 관리할 방을 선택하세요."(원본은 기록판 토스트 → 지금은 도크 위 안내 줄 4초). 설치 창: 카드 5장·쪽 넘기기·상세·설치, 위치를 고르는 동안 접히고 닫기는 "취소". 방 상세: 시설·내구도 막대(정상 초록·닳음 호박·고장 빨강)·수리/휴업/철거, 유닛 4줄·명령 4·이동/회수, 설치물·소문·안내 줄. 해당 없는 버튼은 자리를 지킨 채 숨김. ESC는 위치 고르기 → 설치 창 → 방 상세 순. 상인 버튼은 상인이 온 날만 보이고 대기 중에만 눌림(자리 유지). 정산 정보는 "정산은 7일차 영업 종료 뒤 자동으로 열립니다." 보유 목록은 원본처럼 보기만.
+  - 아직 없는 것: 메뉴 버튼은 일시정지 메뉴(9단계) 전까지 "메뉴 화면은 아직 만드는 중입니다." 안내(`RoomManagementScreen.MenuRequested`를 일시정지 메뉴가 구독할 자리). 지도 위 선택 말풍선(원본 HUD)은 방 상세가 바로 열려 같은 정보를 보여 만들지 않음.
+  - 튜토리얼 되살림: `PlayTutorialView`가 `roomScreen`(새 직렬화 필드, 생성기가 배선)에 물어 방을 고른 뒤 도크 갈래 버튼 → 카드 → 설치 버튼을 다시 비추고, 상인 수업은 도크 상인 버튼을 비춘다.
+  - 코드(`UI/RoomManagement/`): `RoomManagementScreen`(조립·NodePanelView 잇기·0.25초 갱신·ESC·튜토리얼 사각형), `ActionDockView`·`ActionDockPresenter`·`ActionDockViewModel`·`ActionDockTone`(문구·조건은 Toolkit HUD 하단 바에서 옮김), `RoomDetailPanel`, `InstallPanel`, `InstallCardSlot`. 공용 `UiScreenRect`(오버레이 요소 화면 사각형), `UiFrameButton.Group`(자리 지킨 채 숨기기)·잠긴 버튼 글자 흐림(모든 화면 공통). 생성기 `RoomManagementBuilder`(프리팹 `03.Prefabs/UI/RoomManagement/RoomManagement.prefab`, 씬 매니저·HUD·상인·튜토리얼 배선).
+  - 검증: Unity 재컴파일 오류 0, EditMode 298/298, 플레이 콘솔 오류 0. 캡처: 대기 도크(관리 중 금색), 입구 방 선택 → 방 상세(침입 입구·배치 잠김)·건설 창(고를 것 없음), 방 확장(200→192G) 뒤 통로 선택 → 시설 창 카드 2장(금고·대장간) → 금고 카드 → 설치 버튼 켜짐·튜토리얼 단계 PressInstall → 설치 → 157G·"금고 설치 완료"·방 상세에 금고·휴업·철거 +17G, 카드는 "이미 중앙 시설이 있습니다"로 흐려짐. 잠긴 버튼 글자 흐림 확인. 세이브는 매번 실측 전으로 복원.
+  - 확인 못 함: 유닛 배치(보유 0명), 함정 위치 고르기에서 접힌 창·취소, 유닛 명령·이동·회수, 실제 마우스 ESC, 상인 버튼(2일차 이후), 튜토리얼 덮개가 실제로 갈래 버튼·카드를 비추는 모습.
+
+- 2026-10-19 · A안 남은 화면 2단계: 하루 정산표(uGUI). 기능은 Toolkit `SettlementToolkitView`와 같게.
+  - 화면: 캔버스 84(대화 80 위, 첫날 안내 덮개 85 아래 — "정산표를 확인하세요" 안내 카드가 보여야 함), 덮개 + 카드 1040×740(가운데에서 64 아래, 안내 카드 136~220을 피함): 제목 "N일차 정산", 탭 다섯(이번 주 요약·수입 상세·지출 상세·계약 / 부채·유닛 상점, 168×38, 고른 탭 금색 테두리), 칸 992×534 하나, 아래 "정산 완료" 280×46. 칸 크기는 고정이고 긴 목록은 칸 안에서 스크롤(스크롤바 자리 늘 비움).
+  - 코드(`UI/Settlement/`): `SettlementScreenView`(열기·닫기·탭·등장 연출 0.13초·ESC — 팝업이 떠 있으면 팝업 몫), `SettlementSummaryPane`(운영 자금 증감 초록/빨강, 금고·선지출 몫, 메모 성격별 색, 부하 피로 지침 호박·탈진 위험색, 해금 로드맵 부하·시설 한쪽만 펼침), `SettlementLedgerPane`(수입·지출 공용, 이름 왼쪽·금액 오른쪽, 합계), `SettlementLoanPane`(빚·이번 주 청구·조건·남은 한도·상품 변경 안내, 상품 버튼 — 지금 상품 금색·바꿀 수 없으면 잠김, 슬라이더 + 빌리기, `CostManager.StateChanged`로 다시 그림), `SettlementShopPane`(지원자 줄 — 시세 쌈 초록·비쌈 빨강, 둘째 줄 특성·성격·떠나는 날, 고용하면 대출 칸도 다시 그림). 숫자는 전부 `ManagementSettlementManager.LatestReport`와 `CostManager`·`HiredUnitRoster`에서 읽고 결제는 그쪽 공개 함수(`TryBorrowGold`·`TryChangeLoanProduct`·`TryRequestHire`·`ForceHidePanel`)를 부른다. 매니저는 직렬화 참조(생성기가 배선), 비면 `Current`.
+  - 원본과 다른 점: 해금 머리글의 ▲▼는 글꼴에 없어 "접기/펼치기", 지원자 정가 툴팁(uGUI에 툴팁 없음)은 둘째 줄 끝 "정가 NG"로.
+  - 공용: `HudPalette.Paint`(TMP 색 태그), 에디터 `UiKit.ScrollArea`·`ScrollText`·`Slider`, 생성기 `SettlementBuilder`(프리팹 `03.Prefabs/UI/Settlement/Settlement.prefab`, 상품 4칸·지원자 16칸 풀, SampleScene에 놓고 정산·비용·고용 명단 배선).
+  - 검증: Unity 재컴파일 오류 0, EditMode 298/298, 플레이 콘솔 오류 0. 정산표를 열어(리플렉션 `RefreshPanel`·`ShowPanel`) 탭 다섯 캡처, 시간 0. 계약/부채 탭에서 슬라이더 500 → "500G 빌리기" → 금화 200→700·빚 500·안내 문구, 청산일(7일로 둠)에 지원자 고용 → 684G·고용 1명. 1일차 고용은 "고용하지 못했습니다"(청산일에만 열림, 원본과 같음). 수입·지출 칸에 시험 줄을 그려 좌우 정렬 확인(처음엔 줄 간격이 붙어 1.5줄로 고침). "정산 완료" → 닫힘·시간 1. 세이브는 매번 실측 전으로 복원.
+  - 확인 못 함: 실제 영업을 돌린 뒤의 정산(메모·피로 줄이 찬 모습), 청산일 대출 상품 변경(7일로 바꾼 상태에서도 "청산일에만" 문구 — 상품 변경 판정은 날짜 외 조건도 보는 것으로 보임, 화면 문제 아님).
+
+- 2026-10-19 · A안 남은 화면 1단계: 대화 상자·첫날 안내 덮개(uGUI). 기능은 Toolkit 원본과 같게.
+  - 대화(`UI/Dialogue/DialogueUiView`, `DialogueChoiceButton`): 캔버스 80, 아래 가운데(바닥에서 176) 상자 1120×338 — 말하는 사람 이름표 240×38, 카드(제목·진행·닫기, 본문 왼쪽, 선택지 오른쪽 430 폭 최대 5칸, 선택지가 없을 때 오른쪽 아래 "다음"). 원본 동작: 본문이 초당 45글자 흘러나옴(실제 시간, TMP `maxVisibleCharacters`라 태그는 글자로 안 셈), 흐르는 중 "다음"은 먼저 끝까지 보여 줌, 선택지는 오른쪽에서 0.045초 간격으로 미끄러져 들어옴(0.22초), 요약 없는 선택지는 한 줄 높이(58/38, 넘치면 세로 배치가 줄임), 잠긴 선택지는 비활성, 닫기는 자리 지킨 채 숨김, 뒤를 막는 대화는 덮개가 클릭을 삼키고 강조 중에는 네 조각 어둠만. "다음"은 진행기가 보이라고 했고 선택지가 없을 때만 보인다.
+  - `DialogueView.Version` 추가(새 대사마다 증가 — 화면이 글 흘리기를 다시 시작하는 기준).
+  - 안내 덮개(`UI/Shared/TutorialOverlayView`): 캔버스 85, 네 조각 어둠(클릭 삼킴) + 위 가운데 안내 카드 760×84(위에서 136 — HUD 배너 24~120 아래, 브리핑과 겹치지 않음), 머리글·본문·건너뛰기. `PlayTutorialView.OverlayChanged`를 그리고 건너뛰기는 `SkipTutorial`. 원본(카드 위에서 352)과 위치만 다름: 옛 위 가운데 준비 카드가 없어져 올렸다.
+  - 공용: `UI/Shared/UiSpotlightDim`(화면 사각형 하나만 남기고 네 조각으로 덮음), 에디터 `UiKit.SpotlightDim`, 생성기 `DialogueBuilder`·`TutorialOverlayBuilder`(프리팹 `03.Prefabs/UI/Dialogue/Dialogue.prefab`·`UI/Tutorial/TutorialOverlay.prefab`, SampleScene UI 루트에 놓고 `DialogueView`·`PlayTutorialView` 배선).
+  - 검증: Unity 재컴파일 오류 0, EditMode 298/298, 플레이 콘솔 오류 0. 캡처: `DayEvent_BlackMarket` 재생 → 이름표·제목·1/1·닫기·본문·선택지 2칸(요약 포함), "다음" 숨김. 두 번째 선택지 버튼 `onClick` → 대화 닫힘·민심 50→54(요약 "민심 +4"와 같음). `PlayTutorialView`를 켜서 안내 카드 "처음 시작하기 · 1/5"·잠긴 방 둘레 구멍 확인, 건너뛰기 `onClick` → 카드·어둠 사라짐. 세이브는 실측 전으로 복원.
+  - 확인 못 함: 글 흘리기 중간 모습(캡처가 이미 끝난 뒤였음), 대화 강조(튜토리얼 대화는 씬에서 꺼져 있음). 방이 크게 잡히면 안내 카드가 구멍 위쪽을 조금 가린다(누를 타일은 가운데라 막히지 않음).
+
+- 2026-10-18 · UI 디자인 전면 개편: A안 "장부형"(사용자 선택, 기능은 그대로) + 범용 팝업 화면.
+  - 방향: 목업 두 안(A 모서리 묶음·B 얇은 석판 띠) 중 A. 검은 석판 바탕·금빛 테두리·양피지 글자, 둥근 모서리. 상단 112 전체 바와 위 가운데 큰 준비 카드를 없애고 지도 가운데·아래 가운데를 비움(game-ui-frontend).
+  - `HudPalette`를 A안 팔레트로 교체(바탕·선·글자·뜻 있는 색·버튼 테두리 상태). 새 `UiFrameButton`(테두리 버튼: 평소 테두리 기억, `SetSelected` 금색, `SetStyle`), 새 `ScreenRectSource` 대리자(튜토리얼 구멍용 화면 사각형 통로, `WaveView`·`PopupController`가 같이 씀).
+  - 에디터: `UiKit`(둥근 바탕 `RoundFill`·테두리 `RoundLine` 32px를 코드로 그려 `Assets/09.UI/Skin/Ledger/`에 9-slice로 가져옴, 캔버스·배치·패널·막대·글자·버튼 조각), `UiSceneInstaller`(프리팹을 SampleScene UI 루트에 놓고 같은 프리팹 인스턴스만 교체), `GameplayHudBuilder`를 A안 배치로 다시 씀, 새 `PopupBuilder`.
+  - HUD(A안): 왼쪽 위 장부 340×268(일차, 운영 자금 38px, 부채 줄 — 파산 위험 시 깜박임·누르면 설명, 청산 줄, 마력 막대, 상태 칩 2×2 부활·등급·민심(누르면 설명)·위협(경계 때 호박색)), 오른쪽 위 배속(II·1×·2×) + 일시정지 잠김 사유, 그 아래 손님 브리핑(접힘 380×164: 제목·첫 줄·선택 목표, "자세히"로 380×440 전체 설명) 또는 진행 카드 380×132, 위 가운데 배너 560×96, 오른쪽 아래 목표 전환 320×40 + 영업 시작 320×72. 칩용으로 `TopHudPresenter`의 부활·위협 문구를 짧게(값은 같음, 부활 대기는 있을 때만).
+  - 팝업(A안): 캔버스 100, 덮개 + 가운데 카드 560×300(제목·구분선·본문·비용·경고·버튼 최대 3개, 쓰는 개수만큼 오른쪽에 붙임). `PopupController.Current`·`Changed`를 그리고 `Choose(index)`로 답한다. 잠긴 버튼도 눌리게 두어 컨트롤러가 실패음을 낸다. 확인 버튼 화면 사각형을 `SetConfirmButtonRectSource`로 넘겨 튜토리얼이 팝업 확인 버튼을 다시 비출 수 있다.
+  - 검증: `dotnet build` 오류 0(새 파일은 recompile 뒤), Unity 재컴파일 실패 없음, 생성기 실행 후 배선 비어 있는 곳은 `scope`뿐(씬에 GameScope 없음), EditMode 298/298, 플레이 두 번 콘솔 오류 0. 캡처: 대기(장부·칩·배속 1× 선택·브리핑 접힘), 브리핑 펼침, 방 확장 팝업(취소·확장 버튼, 비용 8G), 취소 버튼 `onClick` → 팝업 닫힘·금화 그대로·시간 1, 영업 시작 → 진행 막대·잠김 사유·위협 칩 호박색. 처음 캡처에서 `▾` 글자가 네모로 보여 "자세히/접기"로, 접힌 목표 줄이 잘려 두 줄로 고침.
+  - 확인 못 함: 첫 실측에서 방 확장 팝업이 1초 안에 저절로 확정된 일이 한 번 있었다(금화 200→192). 같은 순서로 다시 띄웠을 때는 3초·캡처 뒤에도 열려 있어 재현되지 않음. 원인 미확인.
+  - 남은 화면(A안으로 새로 만들 것): 대화·튜토리얼 덮개, 정산(대출·유닛 상점 포함), 하단 방 관리(방 상세·설치 창), 오른쪽 기록판(침입 파티·최근 기록), 부하·모험가 상태, 금고, 상인·유물 줄, 보스 배너·런 종료, 운영 방침, 일시정지 메뉴, 타이틀.
+
+- 2026-10-18 · UI 스킬 2개 추가 + uGUI 1단계(상단 HUD·영업 HUD).
+  - 스킬: `gaming-ui-state-management`(TheOrcDev/8bitcn-ui, 얕은 sparse clone으로 받아 내용 확인 후 `skills add` 로컬 설치), `ui-ugui`(사용자가 준 `Downloads/SKILL.md` 복사, `references/scrollview-setup.md`는 없음). 두 파일 모두 원본과 해시 같음. `CLAUDE.md` UI 행·스킬 목록, `ui-rules.md` 맨 앞 표(스킬별 따를 것·주의)로 연결.
+  - 상단 HUD 모양(사용자 선택: 10-16 개편안 재현). 10-16 개편의 Toolkit 파일은 커밋 전이라 Toolkit 삭제 때 함께 사라져, `Sequences.md` 설명대로 다시 짰다: 높이 112 상단 바, 왼쪽 "겨울 던전"+일차, 핵심 자원 카드 3개(운영 자금·부채/정산·마력, 236×88, 왼쪽 색 줄 + Silver 테두리 2배, 마력은 남은 비율 막대), 보조 상태 행 4개(부활 마력·던전 등급·민심·침입 위협, 370×88 안쪽 칸), 오른쪽 배속 버튼(일시정지·1×·2×, 고른 배속은 테두리 금색) + 일시정지 잠김 사유.
+  - 동작은 Toolkit HUD와 같게: 문구·계산은 지운 `GameplayHudToolkitView`·`DebtAlertView`·`MoraleChipView`(git HEAD)에서 옮김. 부채 카드는 파산 위험이면 0.5초마다 붉게 깜박이고(실제 시간), 부채 카드·민심 행을 누르면 설명 팝업(`PopupController` — 팝업 화면이 아직 없어 지금은 대기열에만 들어감).
+  - 새 코드: `HudPalette`(DesignToken 색), `ViewModels/TopHudViewModel`, `Hud/TopHudPresenter`(판단: 값·문구·부채/민심 설명·민심 최근 변화 8개), `Hud/TopHudView`(uGUI 그리기·버튼, 0.25초 실제 시간 주기로 다시 읽음), `Hud/WaveHudView`(Toolkit WaveHud와 같은 배치: 준비 카드 660×236·진행 막대 620×118을 상단 바 아래 12, 배너 640×120을 위에서 360·1.5초, 목표 320×40 + 시작 320×68을 오른쪽 326·아래 178 — 기록판·하단 바 자리 비움). `WaveView.SetStartButtonRectSource`로 시작 버튼 화면 사각형을 받아 튜토리얼 구멍이 다시 시작 버튼을 비춘다.
+  - 생성(Unity CLI): 에디터 스크립트 `Assets/Editor/GameplayHudBuilder.BuildAll()` — Silver 테두리 PNG 4개를 9-slice 스프라이트로 임포트(Panel 10·Window 32·Box 6·Button 9, FullRect, Point), `Assets/03.Prefabs/UI/Hud/GameplayHud.prefab`(오버레이 캔버스, CanvasScaler 1920×1080·0.5, TMP 잠실 글꼴) 생성, SampleScene `======UI===========` 아래에 놓고 매니저·`WaveView` 배선 후 저장. `GameScope`는 씬에 아직 없어 `scope`는 비어 있음(기존처럼 `Resolve` 폴백). 씬 백업은 스크래치패드.
+  - 검증: `dotnet build` 오류 0, Unity 재컴파일 실패 없음, EditMode 298/298, 콘솔 오류 0. 플레이 캡처: 대기(카드 3·상태 4·배속 1× 선택·준비 카드·막힌 이유 "방을 하나 확장하세요"), 방 확장 뒤 시작 버튼 `onClick`으로 영업 시작 → 진행 막대·위협 "경계 · 3명"·일시정지 잠김 사유, 배너(잘린 모서리 창), DAY 2 준비 카드·목표 전환 버튼. 처음 캡처에서 카드 색 줄이 테두리에 가려져 안쪽으로 옮김. 세이브는 실측 전 상태로 복원.
+  - 남은 것: 하단 바(방 관리·유닛·상인·메뉴)·오른쪽 기록판(침입 파티·최근 기록)·범용 팝업·정산·대화 화면.
+
+- 2026-10-18 · 외부 UI 설계 스킬 `game-ui-frontend` 설치(사용자 요청: `npx skills add https://github.com/openai/plugins --skill game-ui-frontend`, UI 작업 때 읽게).
+  - 저장소가 커서 `skills add`의 clone이 시간 초과로 실패 → 스크래치패드에 얕은 sparse clone(`plugins/game-studio/skills/game-ui-frontend`만)으로 받아 내용(`SKILL.md`·`agents/openai.yaml`, 실행 지시 없는 설계 지침)을 확인한 뒤 로컬 경로로 설치. 결과: `.claude/skills/game-ui-frontend/`(받은 파일과 해시 동일), CLI가 만든 `skills-lock.json`(출처가 스크래치패드 경로)과 빈 `.agents/` 폴더.
+  - 연결: `CLAUDE.md` 작업 표의 UI 행과 프로젝트 스킬 목록, `ui-rules.md` 맨 앞에 "UI 설계·구현 전에 읽는다"와 적용 범위(브라우저·DOM·3D 항목은 uGUI·2D 직교 카메라에 맞게 바꿔 읽음, 참조 문서 `../../references/*`는 설치 안 됨, 충돌하면 `ui-rules.md` 우선).
+  - 앞서 요청한 `ios-hig-design`(thedixitjain/the-mega-skill-library)은 사용자 취소로 설치하지 않음(남은 파일 없음).
+
+- 2026-10-18 · UI Toolkit 전부 제거(사용자 결정: uGUI로 다시 만들기 전 단계. 방식은 "화면·에셋 삭제", 화면 없이 멈추는 흐름은 "그대로 두기" — 판단 컴포넌트의 공개 함수를 CLI로 부른다). 10-16에 시작해 중간에 멈췄다가 이어서 끝냄.
+  - 삭제(Unity `AssetDatabase`): Toolkit 화면 C# 33개(`UI/Toolkit`의 View·Bootstrap·`ToolkitDocumentSpawner`·`ToolkitScreenSO`·`ToolkitPointerBlockers`·`ToolkitScreenRect`·`ToolkitPlacement`·`HudActivityLog`·`DebtAlertView`·`MoraleChipView`·`PartyRailView`, `Popup/PopupView`·`PopupSettingsSO`·`PopupUiNames`, `RoomManagement/InstallPanelView`·`RoomDetailView`) + `RoomManagementController`. 에셋: `Assets/09.UI/UxmlAndUss` 전체, `09.UI/PopupPanelSettings`, `Resources/UI/Toolkit` 전체(UXML·USS·PanelSettings 2개), `Resources/UI`의 화면 설정 SO 10개와 `PopupSettings`. 씬·프리팹에는 Toolkit 컴포넌트·`UIDocument`가 붙어 있지 않았다(모두 실행 중 생성) — 씬은 손대지 않음.
+  - 남김: `09.UI/Skin/Silver` 9-slice 테두리 그림(uGUI에서 재사용), `Resources/UI`의 옛 uGUI 프리팹·스킨, `DOTweenSettings`. Toolkit과 무관한 ViewModel·프레젠터 6개(`DialogueChoiceViewModel`·`MerchantOfferViewModel`·`PartyRailPresenter`·`PartyRailRowViewModel`·`UnitStatusViewModel`·`WaveHudViewModel`)는 `Assets/01.Code/UI/ViewModels/`(네임스페이스 `Code.UI.ViewModels`)로 옮김.
+  - 판단 컴포넌트를 화면 없는 다리로: 표시 값 + 변경 이벤트 + 버튼용 공개 함수. `WaveView`(`Model`·`ModelChanged`·`BannerRequested`, `RequestStart`·`ToggleObjective`), `DialogueView`(새 `DialogueScreenState`, `Changed`, `Next`·`Close`·`Choose`), `PopupController`(대기열·시간 정지·ESC 유지, `Current`·`Changed`·`Choose(index)`), `UnitStatusPanelView`(`Model`·`Opened`·`Closed`, `RequestRecover`·`RequestRecall`), `MerchantPanelView`(`Offers`·`Title`·`Detail`·`Changed`, `Buy` 공개, `MaxOffers` 상수 이동), `ArtifactPanelView`(`Artifacts`·`IsUnlocked`·`Changed`), `EnemyStatusPanelView`(`ShowRequested`·`HideRequested`), `PlayTutorialView`(`HintHeader`·`HintText`·`IsSpotlightVisible`·`SpotlightHole`·`OverlayChanged`), `NodePanelView`(`TreasuryInspectRequested`·`TreasuryInspectClosed`), `BossWavePresenter`(`BannerRequested`·`RunEndRequested`). 프레젠터 상수 `InstallPanelPresenter.CardsPerPage`·`RoomDetailPresenter.MaxUnitRows`로 이동.
+  - 화면 사각형이 없어져 줄어든 동작: 튜토리얼이 방 관리 갈래 버튼·카드·설치, 상인 버튼, 팝업 확인 버튼을 비추던 단계는 방을 비추는 데서 멈춤(`PlayTutorialView`, `DialogueRunner` 가이드 튜토리얼 — 씬에서 꺼져 있음). 가이드 튜토리얼의 운영 방침 단계는 `MoralePolicyManager.CurrentChoices`로 열림을 판단. `DungeonGraphController.IsPointerOverUi`의 Toolkit 클릭 막기 삭제. 운영 방침 창이 걸던 시간 정지는 창과 함께 없어짐.
+  - 정산: `ManagementSettlementManager`의 옛 uGUI 패널 억제가 Toolkit 정산 화면의 `UseToolkitPanel()` 호출에 기대고 있었다. 실측에서 억제가 풀려 캔버스 잃은 `DailySettlementPanel`이 화면 가득 깨진 글자로 뜸 → `_legacyPanelSuppressed` 기본값을 참으로, `UseToolkitPanel` 삭제. 정산표는 `ReportOpened`·`LatestReport`로 읽고 `ForceHidePanel`로 닫는다.
+  - 테스트: `HudToolkitTests` 파일 삭제(대상 `HudActivityLog` 삭제), `AssetWiringTests`의 Toolkit 화면 설정 6건·운영 방침 UXML 구조 1건, `RoomManagementTests`의 화면 사각형 환산 1건 삭제, `TutorialRegressionTests`의 덮개 정리 코드 삭제. 문서: `ui-rules.md`를 "지금 상태(판단 컴포넌트 표) + 유지하는 원칙"으로 다시 씀, `CLAUDE.md` 표·폴더 행, `csharp-style.md`·`audio-rules.md`·`dialogue-rules.md`·`test-rules.md`·`cs-review` 스킬의 Toolkit 문구.
+  - 검증: `dotnet build` Runtime·Tests 오류 0, Unity 재컴파일 실패 없음, EditMode 298/298(Toolkit 전용 테스트 11건 삭제 전 309). 바뀐 .cs·.md 331개 UTF-8 검사 이상 없음. 플레이(SampleScene, CLI만): 씬에 `UIDocument` 0, `DungeonGraphController.TryBuildAt` → `PopupController.Current`(방 확장, 버튼 2) → `Choose(1)`로 확장(금화 200→192), `WaveView.RequestStart`로 DAY 1 영업·`BannerRequested` 문구 확인, 웨이브 종료 → 정산 열림(시간 0, 옛 패널 꺼짐) → `ForceHidePanel`로 닫힘·시간 1·DAY 2 시작 가능. 두 번 돌려 콘솔 오류 0. 세이브는 실측 전 상태로 복원, 캡처는 스크래치패드로 옮김.
+  - 지금 게임은 화면이 없다(타이틀·HUD·정산·대화·팝업). Start 씬에서 새 판 시작도 버튼이 없어 CLI(`TitleMenuActions`)나 SampleScene 직접 실행으로만 들어간다.
+
+- 2026-10-16 · 문서·에셋 폴더 구조 정리.
+  - `DungeonEconomyDesign.md`를 핵심 게임 규칙, 구현 상태, 기능별 설계 링크만 남기는 기준 문서로 압축했다. 누적 변경 이력인 `Sequences.md`는 요약하거나 삭제하지 않는다.
+  - 프로젝트 소유 씬·스프라이트·재질·폰트를 번호 폴더로 옮기고, 외부 패키지와 런타임 로드 경로(`Resources`)는 보존한다.
+  - 사용자가 지정한 번호에 맞춰 씬은 `00.Scenes`, 게임 런타임 코드는 `01.Code`로 옮겼다. 빌드 설정, 테스트, 작업 규칙과 기술 문서의 경로를 함께 갱신했다.
+  - `GameModules`는 데이터 SO(`07.ScriptableObjects`), 프리팹(`03.Prefabs`), UI Toolkit 에셋(`09.UI`)으로 분리하고, 참조 경로·테스트를 새 위치로 갱신했다.
+  - 추가한 시각 에셋은 `04.Sprites` 아래 `Characters`, `Tilesets`, `UI`, `Nodes`로 분류했다. 코드 의존 외부 패키지는 이동하지 않았다.
+  - `Resources/UI`는 런타임 화면 설정(`Screens`), 프리팹(`Prefabs`), 스킨(`Skins`), 설정(`Settings`)으로 나누고 `Resources.Load` 경로와 테스트를 함께 갱신했다. DOTween 설정은 필수 루트 경로라 유지했다.
+  - UI는 목업 뒤 UXML을 만드는 흐름을 기준으로 두고, 플레이어·적 유닛과 투사체의 Prefab Variant 템플릿 및 저장 위치를 작업 규칙에 명시했다.
+  - UI Toolkit 규칙은 목업·UXML·토큰·공통 컴포넌트·레이아웃 고정 원칙 중심으로 간결하게 다시 구성하고, 색상 토큰 규칙은 유지했다.
+  - 전 화면 UI 시각 설계(`Docs/Design/UiVisualDesign.md`)를 추가하고, 런타임 Toolkit 화면 전체가 공통 DesignToken·Components를 절대 경로로 참조하도록 통일했다.
+  - 타이틀은 Dark Castle 석조 배경, 공통 Silver 프레임 창, 상태별 공통 버튼으로 재구성했다. 정산·운영 방침·전투 HUD·런 종료도 같은 공통 테마를 적용해 화면 전환 시 프레임과 상태색이 바뀌지 않게 했다.
+  - 전투 HUD는 7개 상태 칩을 한 줄에 몰아넣지 않고 주요 4개/보조 3개 두 줄로 나눴다. 상·하단 바와 우측 패널의 여백, 조작 버튼 간격도 늘려 1280×720에서 지도와 각 UI 영역이 붙어 보이지 않게 조정했다.
+  - UI 계층 분석 기준을 설계 문서에 기록했다. 현재 런타임의 `Popup.uxml`·`GameplayHud.uxml` 계층과 uGUI 잔존 프리팹의 실제 Layout Group 설정을 구분했으며, HUD 여백 변경에 맞춰 웨이브·유물·방 관리 오버레이의 안전 영역도 함께 이동했다.
+  - HUD 상단을 다시 계층화했다. 운영 자금·부채·마력은 넓은 핵심 자원 카드 3개로, 부활·등급·민심·위협은 얇은 보조 상태 행 4개로 분리해 정보 우선순위와 가로 여백을 확보했다. 이에 맞춰 모든 지도 오버레이의 상단 안전 영역을 112px 헤더 기준으로 맞췄다.
+
+- 2026-10-16 · 폴더 재배치 안전 점검과 md 경로 갱신(사용자 요청).
+  - 점검(커밋 전 작업 트리 기준): HEAD의 `.meta` 22,684개 중 옮겨진 19,679개가 19,675개는 같은 GUID로 새 위치에 있음. 잃은 4개는 폴더(`_Graphics`·`_Graphics/Fonts`·`GameModules`)와 지운 스크립트 `UnitFatigueManagementView.cs`뿐. 중복 GUID 0. 에셋(씬·프리팹·SO·UXML/USS 등)의 GUID 참조 중 HEAD에 있다가 사라진 것 0건 — 이동으로 새로 끊긴 참조 없음. `Resources.Load` 문자열 28개 모두 실제 파일 있음, 빌드 설정 씬 경로 `00.Scenes` 정상, Unity 컴파일 실패 없음·콘솔 오류 0.
+  - 발견: `.gitattributes`의 LFS 규칙이 옛 경로(`Assets/sanctum_pixel`·`skeleton_king_package`·`skeleton_warrior_package`·`Super GUI Bundle…`)에 묶여 있어 새 위치(`04.Sprites/Characters/…`, `04.Sprites/UI/SuperGUIBundle`)의 PNG·aseprite가 LFS 대상이 아님(HEAD의 LFS 파일 15,110개). 이대로 커밋하면 일반 blob으로 들어간다.
+  - `.gitattributes` 수정(사용자 승인): 옛 4개 팩 경로 규칙 5줄을 `Assets/04.Sprites/Characters/SanctumPixel`·`SkeletonKing`·`SkeletonWarrior`, `Assets/04.Sprites/UI/SuperGUIBundle`(png, aseprite)로 교체. `Soundtrack Packs`·`GothicUI`·`Sprite Shaders Ultimate` 줄은 손대지 않음. 확인: HEAD의 LFS 파일 15,110개를 GUID 이동표로 새 경로에 대응시켜 `git check-attr filter`로 보니 15,110개 모두 `lfs`, 새 팩 폴더의 png·aseprite도 15,110개 모두 `lfs`. `.meta`와 팩 밖 그림(`04.Sprites/Nodes` 등)은 예전처럼 일반 추적.
+
+- 2026-10-16 · `Resources` 원위치(사용자 결정: 번호 폴더 재배치는 사용자 방식대로 두고, `Resources` 안은 DOTween 제외 전부 원래대로).
+  - `Resources/UI`를 `Screens`·`Prefabs`·`Skins`·`Settings`로 나눴던 21개 에셋을 Unity `AssetDatabase.MoveAsset`으로 `Resources/UI/` 바로 아래로 되돌리고 빈 하위 폴더 4개(새로 생긴 GUID)를 지움. 이제 `Resources`의 파일 위치·`.meta`는 이전 상태와 같고, 남은 차이는 `Resources/UI/Toolkit`의 UI 내용 수정 8개(공통 토큰 참조·레이아웃, 위치 변경 아님)뿐. `DOTweenSettings.asset`은 원래 `Resources` 루트라 그대로.
+  - 경로 맞춤: `Resources.Load` 문자열 15종(`UI/WaveHudScreen` 등 화면 10종·`UI/EnemyMoodHud`·`UI/HudIcon`·`UI/UiSkin`·`UI/CharacterPlateSkin`·`UI/PopupSettings`)을 이전 값으로 — 런타임 15개 파일, `PopupSettingsSO` 주석, `AssetWiringTests`의 화면 TestCase. `CLAUDE.md` 폴더 표의 `Resources` 행도 고침.
+  - 테스트 경로: 테스트 11개 파일이 아직 `Assets/07.ScriptableObjects/...`를 찾아 SO를 못 불러오던 것(`AssetWiringTests` 14건 실패)을 실제 폴더 `Assets/07.SO/...`로 고침. 코드·테스트·에디터 스크립트의 `"Assets/..."` 문자열 중 없는 경로는 자동 생성 `Controls.cs` 주석(`Assets/Code/Core/Input/...`) 하나만 남음 — `.inputactions`에서 다시 생성할 때 바뀐다.
+  - 검증: `dotnet build` Runtime·Tests 오류 0, Unity 재컴파일 실패 없음, EditMode 309/309 통과, 콘솔 오류 0.
+
+- 2026-10-16 · 오디오·전투 연출·건물·재질의 `Resources.Load` 제거(사용자 선택 A안: 설치기 + 직접 참조, 배선은 Unity CLI). UI Toolkit 화면·DOTween은 그대로 `Resources`.
+  - 새 `RuntimeAssetInstaller`(`Code.Core`): `[SerializeField]`로 효과음·음악 카탈로그, `SfxEventBridge`, 전투 연출 카탈로그, 선 재질을 받아 `Awake`에서 넘긴다. 씬 `Awake`가 `AfterSceneLoad` 자동 설치보다 먼저라 기존 설치 순서 유지. Start·SampleScene 루트에 하나씩.
+  - 정적 쪽: `GameSfxPlayer`·`GameMusicPlayer`·`CombatFxHooks`·`RuntimeMaterials`에 `Provide(...)`를 두고 `Resources.Load`·경로 상수 삭제(받지 못하면 한 번만 경고). `UiSfxHooks`는 `AfterSceneLoad` 자동 설치 대신 `Provide(bridge)`에서 한 번 구독. `RuntimeMaterials.LoadLine`은 플레이 중 미배선이면 오류, 에디트 모드(테스트)는 경고.
+  - 직접 참조: `NodeTrapGrid.focusedGridMaterial`(격자 셰이더 원본, 실행 중 공유 복사본은 그대로), `NodePanelView.alwaysInstallableBuildings` → `InstallableBuildingCatalog.Initialize` 세 번째 인자(금고·대장간을 늘 후보로), `HiredUnitRoster.buildingsOutsideUnlockCatalog`(저장된 금고·대장간 복원).
+  - 에셋 이동(Unity `MoveAsset`, GUID 유지): `Audio/*` 3개 → `Assets/07.SO/Audio/`, `CombatFxCatalog` → `Assets/07.SO/Combat/`, 금고·대장간 데이터 → `Assets/07.SO/Buildings/`, 재질 2개 → `Assets/05.Materials/`. 빈 `Resources/Audio`·`Combat`·`Buildings`·`Materials` 폴더 삭제.
+  - 배선(Unity CLI, `SerializedObject`): 두 씬에 설치기 + 5개 참조, SampleScene `HiredUnitRoster`·`NodePanelView`에 [금고, 대장간], 씬 노드 4개(프리팹 인스턴스 아님)와 `Node.prefab`의 `NodeTrapGrid`에 `DungeonGridOverlay`. 처음 시도 때 Unity 컴파일이 `NodeTrapGrid` 저장보다 3초 먼저 끝나 새 필드를 못 찾아서, 강제 임포트·재컴파일 뒤 다시 연결. 씬·프리팹 백업은 스크래치패드.
+  - 테스트: `Assets/Resources/Buildings/` → `Assets/07.SO/Buildings/`(`AssetWiringTests`·`BuildingSerializationTests`), `RoomManagementTests`의 Resources 폴더 상수 삭제. 문서: `audio-rules.md`(머리말 경로·"옮기지 않는다" 삭제), `building-rules.md`(금고·대장간 예외 → 두 배열 등록 규칙), `csharp-style.md`(`Resources.Load` 신규 금지), `CLAUDE.md` 폴더 표.
+  - 검증: `dotnet build` Runtime·Tests 오류 0, Unity 재컴파일 실패 없음, EditMode 309/309. 플레이(SampleScene): 효과음·음악·전투 연출 카탈로그와 선 재질이 정적 시스템에 들어옴, `UiSfxHooks`·`CombatFxHooks` 구독, 설치 후보 끝에 금고·대장간, `ResolveBuilding`이 금고·대장간·상점 모두 찾음, 격자 재질 `Unknow/Dungeon Grid Overlay` 셰이더 복사본. 플레이(Start): 같은 다섯 값 확인. 두 실행 모두 콘솔 오류 0. 세이브는 실측 전 상태로 복원.
+  - 발견(이번 변경과 무관, 미수정): 음악 카탈로그 5개 큐·효과음 큐 21개 모두 클립이 비어 있다. 카탈로그가 가리키는 오디오 GUID가 이 작업 트리에 없다(HEAD에도 없음, `.gitattributes`의 `Assets/Soundtrack Packs` 등이 없음). 지금 게임은 무음이다.
+  - md 갱신: 규칙 파일 `paths:` 머리말과 본문의 `Assets/07.ScriptableObjects` → `Assets/07.SO`(실제 폴더명. 머리말이 틀려 SO 편집 때 해당 규칙이 자동으로 읽히지 않던 상태), 상대 경로 `Data/…` → `Assets/07.SO/…`, `Code/Events`·`Code/Core` → `Assets/01.Code/…`. `CLAUDE.md` 씬 폴더 `Assets/00.Scenes/`, 폴더 표에 `04.Sprites`·`05.Materials`·`08.Fonts`·`Resources` 행 추가. `UnityProjectContext.md` SO 경로. 위 줄의 `07.ScriptableObjects` 같은 과거 기록과 `output/` 옛 보고서는 이력이라 그대로 둠.
+
+- 2026-10-15: `Dark_Castle_001` 데모 씬의 3레이어 타일 배치를 분석하고, 노드 바닥에 동일한 Purple 석판 타일군과 결정적 희소 변형 패턴을 적용해 단일 벽돌 반복을 없앴다.
+
+- 2026-10-15: 씬에 프리팹 연결 없이 저장돼 있던 이전 노드 미리보기 인스턴스를 제거하고, 타일맵 전용 Node 프리팹으로 초기 던전 노드와 잠긴 후보를 다시 생성해 저장했다.
+
+- 2026-10-15: 노드 프리팹에 남아 있던 `Node_0` 기반 스프라이트(기본 바닥·잠금 오버레이·방 문틀)를 제거하고, 방의 시각 요소를 Tilemap으로만 구성하도록 정리했다. 잠금 비용 라벨과 입구 스폰 지점은 보존한다.
+
+- 2026-10-15: 던전 노드 타일 방을 외곽 석조벽·후면 단차·대칭 횃불 구성으로 보강하고, 노드 간 `EdgeLine`의 표시 전용 `LineRenderer`와 침입 경로 미리보기 컴포넌트를 제거했다. 엣지의 설치·이동 판정 데이터는 유지한다.
+
+작업 변경 내역을 날짜순으로 누적한다.
+
+## 2026-10-15
+
+- 캐릭터·UI 에셋 적용(사용자 선택: 프레임 애니메이션 추가 · 해골/오크=부하, 인간·엘프·도적 등=모험가는 이름 보고 배정 · 부하 이름도 그림에 맞게 · UI는 Toolkit 화면만 · Gold).
+  - 프레임 애니메이션: 새 `CharacterAnimationSetSO`(대기·걷기·공격·쓰러짐 프레임 + 동작별 fps)·`CharacterClip`·`CharacterAnimationRules`(`Code.Entities`). `EntityRender`에 `animationSet`이 있으면 프레임을 튼다. 부모가 움직이면(0.05/초 이상, 0.15초 유지) 걷기, 공격은 끝까지 한 번 틀고 스스로 대기로, 쓰러짐은 마지막 프레임에서 멈춤. 이동 방향·공격 대상 쪽으로 좌우 반전(`FaceTowards`, 그림은 오른쪽을 본다고 봄). 묶음이 없으면 지금처럼 포즈 3장(슬라임 유지). 그림이 바뀔 때 `SpriteChanged`.
+  - `EnemyDataSO.AnimationSet` 추가, `Enemy.ApplyData`가 연결하고 받침 테두리를 다시 잰다. 등급 테두리(`EnemyStrengthOutline`)는 `SpriteChanged`로 프레임을 따라 그림. `CharacterPoseView.PlayAttackPose(facingX)`, `Combatant`가 대상 방향을 넘김.
+  - `CharacterBackPlate`: 테두리 크기를 스프라이트 사각형 대신 Tight 메시 꼭짓점(칠해진 영역)으로 잰다. 애니메이션 프레임은 투명 여백이 큰 캔버스라 그대로 재면 테두리가 두세 배가 됐다.
+  - 에셋(Unity CLI eval로 생성): `Data/Characters/Animations/*Anim.asset` 26개. 쓰는 PNG만 임포트 변경 — Point 필터·무압축·밉맵 끔·PPU 28(해골왕 40)·기준점은 동작 첫 프레임의 발밑 + 0.45(발이 원점 0.45 아래, 동작마다 캔버스 크기가 달라 클립별로 잼).
+    - 부하: 던전 주인=해골왕(`Player.prefab`), 뼈 궁수=ske_archer, 망령 암살귀=ske_ghost, 해골 주술사=ske_mage, 해골 방패병=ske_shield, 오크 철퇴병=orc mace, 해골 낫잡이=skeleton scyther, 늑대 기수=orc wolf_raider, 해골 기병=skeleton horse, 오크 주술사=orc shaman, 해골 도끼병=skeleton axe. 프리팹 `EntityRender`에 묶음·포즈 3장, `UnitDataSO.Sprite`는 대기 첫 프레임.
+    - 모험가: 떠돌이=human swordman, 궁수=human archer, 종군 사제=healer_1, 성기사=human hero, 공병=blacksmith_1, 척후병=elf blade, 용병 검사=human hero2, 도적=bandit axe_thrower, 겁많은 관광객=farmer_1_1, 순례 성직자=healer_3, 부유한 관광객=female_1_1. 보스: 사냥꾼 두목=crossbow, 왕국 기사단장=swordhorse, 토벌대장=elf rider, 탐욕의 기사=bandit mega. 포즈 3장·`BoardSprite`도 프레임으로 채움.
+    - 부하 표시 이름 변경(에셋 파일명·수치 그대로): 주술 임프→해골 주술사, 바위 골렘→해골 방패병, 창 코볼트→해골 낫잡이, 동굴 박쥐→해골 기병, 그림자 암살귀→망령 암살귀, 포자 버섯→오크 주술사, 동굴 거미→해골 도끼병, 오우거→오크 철퇴병, 광포한 늑대→늑대 기수. `wave-economy-rules.md`·`RoomManagementUiDesign.md`의 이름도 고침.
+  - UI(Super GUI Gold): 팩의 32px 조각을 이어 붙인 9-slice 그림 3장을 `Assets/GameModules/UI/Skin/Gold/`에 만듦(`PanelFrame` 패널 0~8번·모서리 10, `BoxFrame` 글상자 0~8번·모서리 6, `ButtonFrame` 버튼 20번·모서리 9). 안쪽 채움색은 투명으로 비워 바탕은 기존 색 토큰이 정함. 변 무늬가 늘어나 뭉개지지 않게 `-unity-slice-type: tiled`.
+    - 새 화면: `Components.uss`의 `.btn`(버튼 그림, 상태는 그림에 곱하는 색), `.panel`(패널 그림, `-unity-slice-scale: 2px`), `.panel--inset`(글상자 그림). 선 테두리는 0. `DesignToken.uss`에 `--color-skin-frame*` 토큰. 방 관리 부하 줄 선택은 그림 색(`--color-skin-frame-selected`)으로 보임.
+    - 옛 화면(HUD·정산·방침·패배·타이틀): `Theme.uss`에 `.ui-theme .unity-button` 전체와 큰 카드(`settlement-card`·`run-end-card`·`policy-card`·`title-card`·`settings-card`·`pause-*-card`·`selection-popover`·`right-rail`), 대출 창구(`loan-pane`)에 같은 그림. HUD 칩의 왼쪽 색 줄처럼 색이 뜻을 가진 선은 그대로 둠.
+  - 새 테스트 `CharacterAnimationTests`(반복·한 번 재생 프레임, 묶음마다 네 동작 프레임 존재), `test-rules.md` 표에 추가.
+  - 검증: `dotnet build` Runtime 오류 0, Unity `recompile` 완료. EditMode 310/310 통과(`CharacterAnimationTests` 4, `AssetWiringTests` 28 포함). 플레이 실측: 묶음 26개를 한 줄로 세워 크기·발 위치 확인(해골왕만 크게), 웨이브에서 부하 3명(뼈 궁수·오크 철퇴병·망령 암살귀) 배치 후 기록 — 모험가 stand·walk·die와 좌우 반전, 부하 대기·걷기·공격(attack1) 확인. 팝업·HUD 버튼·오른쪽 기록판·방 관리 패널에 Gold 테두리 표시 확인. 콘솔 오류 0. 세이브는 실측 전 상태로 되돌리고 캡처는 지움.
+  - 남은 것: 모험가의 공격 프레임은 이번 실측에서 나오지 않음(손님이 먼저 쓰러짐). sanctum 팩의 `bandit-topdown/Sprite/axeman `은 폴더 이름 끝 공백 때문에 임포트되지 않음(쓰지 않음). 실측 중 부유한 관광객 하나가 방 밖(node 없음)에 멈춰 웨이브가 끝나지 않는 일이 한 번 있었음(렌더 변경과 무관해 보이나 원인 미확인). 부하 공격음(`GameSfxCue`)은 예전 몬스터 기준 그대로.
+
+- 모험가 표시 정리(사용자 요청).
+  - 적 뒤 회색 사각형 제거: `Enemy`가 네모 받침(`CharacterBackPlate`, `CharacterFrame` 자식)을 더는 붙이지 않음. 프레임 애니메이션 그림 뒤에서 캐릭터와 따로 노는 사각형으로만 보였다. 등급 색은 캐릭터 테두리(`EnemyStrengthOutline`)가 그대로 보여 줌. 부하 쪽 받침(`Unit.EnsureBackPlate`)은 그대로.
+  - 적 오브젝트 이름: 한국어 표시 이름(`Enemy_부유한 관광객`) 대신 에셋 이름으로 짓는다(`Enemy_BasicEnemy`, `Enemy_Boss_Houndmaster`; `Enemy_`로 시작하는 에셋은 그대로 `Enemy_Tourist_Shopaholic`). 이름에 기대는 코드·테스트 없음 확인.
+  - 검증: `dotnet build` 오류 0, 플레이에서 적 이름·`CharacterFrame` 없음 확인, EditMode 310/310, 콘솔 오류 0. 세이브 복원·캡처 삭제.
+- UI 전부 Toolkit으로 전환 시작(사용자 선택: 다른 세션이 SampleScene을 커밋한 뒤 씬 수정 · 단계별 + 단계마다 커밋). 남은 uGUI 조사: 메인 캔버스 아래 약 25개 — Toolkit HUD와 겹치는 중복(금화·일차·배속·마력·등급·민심·설정), Toolkit에 아직 없는 것(영업 시작 버튼·웨이브 목표/진행·일차 배너·유닛 영입·진행 보고서·대화·튜토리얼 덮개·성격 툴팁·보스 연출·하루 전환 연출), 이미 옮긴 화면의 다리(부하·모험가 상태·유물·상인·`NodePanelView`·옛 금고·옛 운영 방침).
+  - 단계: 1) 중복 uGUI 삭제 + 민심 칸 → 2) 영업 시작·웨이브 목표/진행·일차 배너 → 3) 유닛 영입·진행 보고서 → 4) 대화·튜토리얼·툴팁·보스·하루 전환 연출.
+  - 1단계(코드 부분): HUD 상단에 민심 칸(`morale-chip`, 초록 줄) 추가. 새 `MoraleChipView`(`Code.UI.Toolkit`)가 `MoralePolicyManager.MoraleChanged`를 듣고 값을 보이며, 누르면 범용 팝업(`Notice`)으로 유지비·지원자 효과와 최근 변화 8줄을 보여 준다(옛 민심 상세 창 대신). 지도 클릭 막기(`ToolkitPointerBlockers`) 등록.
+  - 오른쪽 기록판 위에 겹치던 uGUI 마력(`MagicView`)·등급(`DangerPanelView`)·민심(`MoraleHudView`)과 하단의 "Day N"(`DayView`)은 `Awake`에서 스스로 꺼진다. 씬에서 오브젝트를 지울 때 스크립트도 함께 지운다(씬은 다른 세션 커밋 대기).
+  - 검증(1단계): `dotnet build` 오류 0, 플레이에서 겹침이 사라지고 민심 칸 50·팝업 표시 확인, 콘솔 오류 0. EditMode 309/310 — `UnitMarketTests.Roster_QuotesTheSamePriceItWillCharge` 1건 실패(시세 단계 Expensive 기대, Normal), 단독 재실행 5/5 통과로 시세 난수에 따른 간헐 실패로 보임(다른 세션 작업 영역, 미수정).
+- UI 스타일을 남색 패널로 교체(사용자가 보낸 참고 이미지 중 2·3번 — Super GUI 팩 Silver 창 + Black 안쪽 칸, 잘린 모서리. 사용자 선택: 테두리 + 바탕색 전부).
+  - 그림: `Skin/Gold`를 지우고 `Assets/GameModules/UI/Skin/Silver/`를 만듦 — `PanelFrame`(Silver 패널 0~8번, 안쪽 비움, 모서리 10), `WindowFrame`(Silver 0·1·38·3·4·5·51·7·8번 — 오른쪽 위·왼쪽 아래가 잘린 창, 바탕까지 포함, 모서리 32), `BoxFrame`(Black 글상자 0~8번, 모서리 6), `ButtonFrame`(Silver 버튼 20번, 모서리 9).
+  - 팔레트: `DesignToken.uss` 원시값을 팩 색으로 교체(창 `rgb(77,83,120)`, 안쪽 칸 `rgb(75,77,78)`, 버튼 `rgb(80,83,109)`, 테두리 `rgb(177,192,204)`, 글자 흰색·연보라 계열). 수입·지출·경고·위험·강조(금색) 색은 유지. 옛 화면 `Theme.uss` 변수도 같은 값으로, `GameplayHud.uss`·`TitleScreen.uss`에 박혀 있던 갈색 8곳은 변수(`--bar`·`--bar-strip`·`--edge-faint`·`--chip-magic`·`--chip-grade`·`--page`)로 바꿈.
+  - 큰 모달 창은 `WindowFrame`: 새 화면은 `.panel--window`(팝업·금고·상인 UXML에 추가), 옛 화면은 정산·운영 방침·패배·타이틀·설정·일시정지 카드. 오른쪽 기록판·선택 카드·방 관리 창 등 늘 떠 있는 판은 네모 `PanelFrame`.
+  - `ui-rules.md` 팔레트·테두리 설명 갱신.
+  - 검증: 플레이에서 HUD·방 확장 팝업·방 관리 창·정산 창 캡처 확인(잘린 모서리 창, 남색 바탕, 은색 테두리), 콘솔 오류 0, EditMode 310/310. 아직 uGUI인 일차 배너·영업 시작 버튼·웨이브 진행 막대·"유닛 관리" 탭은 갈색 그대로(2·3단계에서 Toolkit으로 옮김).
+- Toolkit 전환 2단계: 영업 시작 버튼·준비 카드(일차 배너)·웨이브 진행 막대·영업 시작 배너·목표 전환을 UI Toolkit으로 옮김.
+  - 새 화면 `Battle/WaveHud/WaveHud.uxml`·`.uss`, `Resources/UI/WaveHudScreen.asset`(공용 패널, 문서 순서 105 — HUD 100 위, 정산 110 아래). 새 `WaveHudToolkitView`(그리기·버튼 입력만, 배너는 실제 시간 1.5초)와 `WaveHudViewModel`(struct).
+  - `WaveView`: 판단(시작 가능·막힌 이유·보스날 문구·목표 선택·준비 카드 내용·진행률·남은 거리 경고)은 그대로 두고, 그리는 대상을 Toolkit 화면으로 바꿈. 옛 uGUI 시작 버튼(같은 오브젝트에 붙은 씬이 있어 투명 처리)·목표 버튼·`WaveRuntimeHudView`는 감춘다. DOTween 연출·`Resources/UI/WaveRuntimeHud` 프리팹 생성 경로 제거. 튜토리얼용 `StartButtonRect`(RectTransform) → `TryGetStartButtonScreenRect`(화면 사각형), 강조는 버튼 그림을 금색으로.
+  - 호출처: `DialogueRunner.HighlightWaveStartButton`, `PlayTutorialView`(SurviveWave 칸 구멍, `ResolveWaveButton` 삭제).
+  - 배치: 준비 카드·진행 막대는 상단 바 아래 가운데, 시작·목표 버튼은 오른쪽 기록판 왼쪽·하단 바 위(예전 uGUI 시작 버튼은 하단의 정산 정보·메뉴 버튼을 덮었다).
+  - 검증: `dotnet build` 오류 0. 플레이에서 준비 카드·시작 버튼(막힌 이유 "방을 하나 확장하세요" → 확장 뒤 "던전 영업 시작 DAY 1 · 방문객 3명")·목표 전환(착취 작전 → 함정 시험)·시작 버튼으로 영업 시작·배너·진행 막대·정산 창이 영업 HUD 위에 뜨는 것 확인. 튜토리얼 API(붙잡기 → 숨김, 놓기 → 보임, 강조 클래스 켜고 끄기, 시작 버튼 화면 사각형 1274,178 320×68) 확인. 콘솔 오류 0, EditMode 310/310. 처음에 문서 순서 140으로 두었더니 준비 카드·시작 버튼이 정산 창 위로 올라와 105로 내림.
+- Toolkit 전환 3단계(사용자 선택: "유닛 관리" 탭 없애기).
+  - 조사: 진행 보고서(`DungeonProgressReportView`)는 정산 Toolkit 화면의 몬스터·시설 해금 목록으로 이미 옮겨져 있었고, 옛 uGUI 정산 패널은 씬에서 꺼져 있어 할 일 없음(씬 정리 때 삭제). 오른쪽 "유닛 관리" 탭(`UnitDeployPanelView`)은 계약서로 언제든 고용하는 옛 창이라 주간 계약 설계(고용은 청산일 정산 화면 유닛 상점)와 어긋났다 — 평일엔 고용이 거절된다.
+  - `UnitDeployPanelView`: `Awake`에서 스스로 꺼진다. 고용은 정산 화면 유닛 상점, 배치는 방 관리 배치로 통일.
+  - `PlayTutorialView`: 부하 배치 칸의 고용 단계(`OpenRoster`·`HireUnit`·`CloseRoster`)와 안내 문구 삭제 — 보유 부하를 방 관리 배치로 세우는 흐름만 남김. 첫날 부하가 없으면 막히는 문제(다른 세션의 주간 고용 잠금, 10-15 실측)는 그대로다.
+  - `DialogueRunner`의 가이드 튜토리얼(씬에서 꺼짐)은 아직 `UnitDeployPanelView`를 참조한다. 씬에서 스크립트를 지울 때 함께 고친다.
+  - 검증: `dotnet build` 오류 0, 플레이에서 탭이 사라진 것 확인(메인 화면에 갈색 uGUI 없음), 콘솔 오류 0, EditMode 310/310.
+- Toolkit 전환 4단계(사용자: 묻지 말고 마지막 단계까지, 중간에 "빌드는 하지마" — 이후 `dotnet build` 없이 Unity 컴파일·콘솔로만 확인).
+  - 남은 uGUI 조사: 화면에 실제로 뜨던 것은 상인 여는 버튼·사건/튜토리얼 대화 상자·방치 알림·첫날 안내 덮개. 하루 전환 캔버스·옛 확인 창·옛 상태 HUD·옛 정산 패널·`Node/NodePanel`·설치 HUD 버튼·`TutorialSpotlight`·옛 승리 패널·옛 설정 창·성격 툴팁은 꺼진 채 참조도 없거나 꺼진 경로뿐이라 씬 정리 때 지운다.
+  - 상인 버튼: HUD 하단 "운영" 묶음에 `merchant-action`(상인 오는 날만 보임, 없는 날은 자리만 비움, 대기 중에만 눌림). `MerchantPanelView`의 옛 여는 버튼은 늘 감추고 `OpenButtonRect` 삭제, 튜토리얼 상인 칸은 `GameplayHudToolkitView.TryGetMerchantButtonScreenRect`.
+  - 대화 상자: 새 `DialogueToolkitView`·`DialogueChoiceViewModel`, `Shared/Dialogue`, `Resources/UI/DialogueScreen.asset`(팝업 패널 800). 화면 아래 가운데 1120×338, 말하는 사람 이름표·제목·진행·닫기·본문(타자 효과, 태그는 글자로 세지 않음)·오른쪽 선택지(결과 요약 없는 칸은 한 줄 높이, 잠긴 선택지는 비활성, 오른쪽에서 미끄러져 들어옴)·다음 버튼, 뒤 화면 덮개, 강조 어둠 네 조각. `DialogueView`는 같은 공개 함수를 유지한 다리(씬 배선 그대로), 옛 uGUI 상자는 감춘다.
+  - 방치 알림: 새 `IdleNoticeToolkitView`(`Shared/IdleNotice`, 팝업 패널 950). `IdleReturnToTitle`이 옛 알림 창 대신 이것을 띄운다(지금 SampleScene에서는 이 컴포넌트가 꺼진 설정 창 안에 있어 원래부터 돌지 않음).
+  - 첫날 안내 덮개: 새 `TutorialOverlayToolkitView`(`Shared/TutorialOverlay`, 팝업 패널 850 — 팝업 900 아래). `PlayTutorialView`는 판단만 남기고 어둠·안내 카드(준비 카드 아래 860×84)·건너뛰기를 넘긴다. 옛 uGUI 안내 상자는 투명, 어둠 네 장은 끔. 정렬을 매번 다시 걸던 `EnsureDimOnTop`·`DimSortingOrder`·uGUI 건너뛰기 프리팹 생성 삭제. 안내 표시 상태 `_hintVisible` 추가.
+  - `BossWavePresenter`: 결과 화면은 `RunEndToolkitView`만 쓰고, 못 띄우면 오류만 남긴다. uGUI 승리 패널 대체 경로·`BuildRunSummaryText`·`uiCanvas`·`victoryView` 삭제.
+  - `TutorialRegressionTests`: 안내가 숨었는지를 CanvasGroup 대신 `_hintVisible`로 확인, 테스트가 띄운 덮개 화면도 정리.
+  - 검증: Unity 재컴파일 실패 없음, 콘솔 오류 0. EditMode 309/310(`UnitMarketTests` 간헐 실패, 단독 5/5)·`TutorialRegressionTests` 4/4. 플레이: 사건 대화(야시장 제안) 선택지 → 민심 50→54·닫힘·시간 재개, 튜토리얼 대화 "다음" 넘김·타자 효과 끝내기·강조 어둠·닫기, 안내 덮개(실행 중 켜서 2/5 칸: 방 자리 구멍·안내 카드) → 건너뛰기로 Done·시작 버튼 복귀, 방치 알림 표시, 상인 오는 날 HUD 상인 버튼 → 상인 창 열림.
+  - 남은 것: 씬 정리(꺼진·숨긴 uGUI 오브젝트와 다리만 남은 스크립트 삭제, `DialogueRunner`의 가이드 튜토리얼이 쓰는 `UnitDeployPanelView` 참조 정리)는 다른 세션의 SampleScene 커밋 뒤.
+- 씬 정리(사용자 요청 "씬정리하고 커밋하자" — 다른 세션의 SampleScene 미커밋 변경이 남은 상태라 씬 파일은 그 변경과 함께 커밋됨).
+  - Unity CLI(eval, `DestroyImmediate` + `EditorSceneManager.SaveScene`)로 SampleScene에서 21개 삭제: 메인 캔버스의 `DayText`·`TimeSpeedControl`·`MagicPanel`·`DangerPanel`·`MoraleHud`·`MoraleDetailPanel`·`UnitDeploy`·`PolicyChoicePanelController`·`WaveRuntimeHud`·`PlayerStatusHud`·`Dim Top/Bottom/Left/Right`, `SceneUiPrefabs`의 `TreasuryPanel`·`BossWaveBanner`·`BossVictoryPanel`·`TutorialSpotlight`, `MerchantPanel/MerchantButton`, `DayTransitionCanvas`·`DayTransitionTextCanvas`(안의 `BuildConfirmPanel` 포함). 지우기 전 바깥 참조를 훑어 옛 화면끼리의 참조와 null 안전한 필드뿐임을 확인. 씬 백업은 스크래치패드.
+  - 쓰이지 않게 된 스크립트 17개(`DayView`·`MagicView`·`DangerPanelView`·`MoraleHudView`·`UnitDeployPanelView`·`UnitDeployEntryView`·`UnitHireEntryView`·`PolicyChoicePanelView`·`WaveRuntimeHudView`·`PlayerStatusHudView`·`TreasuryPanelView`·`BossWaveUiView`·`TutorialSpotlightView`·`BuildConfirmPanelView`·`TimeSpeedView`·`DialogueChoiceButtonView`·`DialogueChoiceButtonBase`)와 그것만 쓰던 프리팹 11개(`UnitDeploy`·`UnitDeployEntry`·`UnitHireEntry`·`TimeSpeedControl`·`DialogueChoiceButton`, `Resources/UI`의 `WaveRuntimeHud`·`TreasuryPanel`·`BossVictoryPanel`·`BossWaveBanner`·`TutorialSpotlight`·`TutorialSkipButton`) 삭제. 남은 사용처는 `Assets/_Recovery`의 충돌 복구 씬뿐(빌드 대상 아님).
+  - 코드: `DialogueRunner`(꺼진 가이드 튜토리얼) 고용 단계는 강조 없이 글만, 안내 문구를 "청산일 정산 화면의 유닛 상점에서"로, `unitDeployPanelView`·`TryBuildRectTransformScreenRect` 삭제. `WaveView` `runtimeHudView`, `PlayTutorialView` `dimPanels`, `MerchantPanelView` `openButton` 필드 삭제. HUD·운영 방침 부트스트랩의 옛 화면 끄기 반복 삭제, `HudDisplayState`의 `MagicHudState`·`MoraleHudState` 삭제.
+  - 남긴 것(판단·배선이 붙어 있음): `GoldCostPanel`(`GoldHudPresenter`, 씬 배선 테스트), `Node`(`NodePanelView`), 상태·유물·상인 다리, `WaveStartButton`(`WaveView`)·`StartTutorialDialogueOverlay`(`DialogueView`)·`Tutorial Hint`(`PlayTutorialView`), `DailySettlementPanel`(다른 세션의 `ManagementSettlementManager`가 참조), 옛 설정 창·`IdleReturnToTitle`(꺼짐), `PersonalityTooltip`, `InstallHudCanvas`.
+  - 검증: Unity 재컴파일 실패 없음·콘솔 오류 0, 씬의 누락 스크립트 0, EditMode 310/310. 플레이에서 영업 시작 → 진행 막대 → 정산 → 사건 대화가 정상.
+- 남은 옛 uGUI 오브젝트 정리(사용자 선택 "3번부터": 판단·배선 컴포넌트가 붙어 있어 남았던 것).
+  - 다리·판단 컴포넌트에서 uGUI 필드 제거: `WaveView`(옛 시작·목표 버튼·숨김 처리), `DialogueView`(`root`), `PlayTutorialView`(`root`·`hintText`·투명 처리), `NodePanelView`(옛 노드 패널·설치/철거/휴업 버튼·`BuildingInfoPanelView`), `UnitStatusPanelView`(`panelRoot`), `MerchantPanelView`(옛 창·닫기·진열 버튼), `IdleReturnToTitle`(옛 알림 숨김). `EnemyStatusPanelView`·`ArtifactPanelView`는 채널을 듣고 Toolkit 화면으로 넘기는 다리만 남기고 다시 씀(옛 uGUI 그리기·툴팁 삭제). `DungeonGraphController`: 꺼진 옛 노드 패널을 가리키던 클릭 막기 영역(`nodePanelBlockRect`·`IsPointerOverNodePanel`) 삭제.
+  - 씬(Unity CLI): `======UI===========/UI Controllers` 아래 일반 오브젝트에 9개 컴포넌트를 새로 붙이고 `EditorUtility.CopySerialized`로 값 복사, 씬의 참조 5곳(튜토리얼 `waveView`, `DialogueRunner.view`, 설치 버튼 이벤트 대상)을 새 컴포넌트로 다시 이음. EventSystem과 다른 세션이 참조하는 `DailySettlementPanel`(꺼짐)은 UI 루트로 옮기고, 메인 `Canvas`를 통째로 삭제(금화 패널·옛 상태/유물/모험가 패널 2개·상인 창·옛 설정 창·성격 툴팁·설치 HUD 포함). `PlayTutorialView` 오브젝트는 씬에서처럼 꺼진 채로 둠. 씬 백업은 스크래치패드.
+  - 삭제한 스크립트: `GoldCostView`·`GoldHudPresenter`·`HudDisplayState`·`BuildingInfoPanelView`·`UnitFatigueManagementView`·`UnitPersonalityTooltip`·`PersonalityTooltipView`(+빈 `UI/Tooltip` 폴더)·`RosterDeployEntryView`·`ArtifactEntryView`. 프리팹: `GoldCostPanel`·`BuildingInfoPanel`·`UI/Panels/Node`·`UnitStatusPanel`·`ArtifactPanel`·`EnemyStatusPanel`·`ArtifactEntryView`·`RosterDeployEntry`, `Resources/UI`의 `UnitFatigueManagement`·`PersonalityTooltip`. 타이틀 씬이 쓰는 `IdleReturnHost`·`IdleReturnNotice`·설정 창 프리팹과 스크립트는 남김.
+  - 테스트: `AssetWiringTests.GoldPanel_ListensToBothTheCostAndTheDayChannel` 삭제(금화는 HUD가 `CostManager`에서 직접 읽고, 표시용 옛 금화 패널을 지움). `TutorialRegressionTests`는 `root` 설정 없이 만든다.
+  - 남은 uGUI: 게임 씬에는 꺼진 `DailySettlementPanel`(다른 세션 의존)과 방 위 월드 공간 글(1번 항목), 캐릭터 머리 위 막대·글(1번 항목)뿐. 타이틀 씬의 옛 캔버스 2개는 2번 항목.
+  - 검증: Unity 재컴파일 실패 없음·콘솔 오류 0, 씬 누락 스크립트 0, 씬의 캔버스는 `DailySettlementPanel` 1개, EditMode 309/309. 플레이: 방 선택 → 방 관리 창, 방 확장 → 영업 시작 → 진행 막대, 사건 대화, 정산, 모험가 상태 창 정상.
+
+## 2026-10-14
+
+- `CLAUDE.md` 보완: 아키텍처 큰 그림(씬 구성·`Current`·이벤트 채널, 엔티티 모듈, 한 판의 흐름, 즉시 결제와 정산 분리, 저장 순서) 섹션 추가. `AGENTS.md`에만 있던 커밋 접두사·PR 기재 사항·테스트 명명(`Feature_Behavior`, 리플렉션 패턴)을 옮김. 규칙 파일이 `paths:` 경로에서만 자동 로드된다는 안내와 `UnityProjectContext.md`보다 CLAUDE.md가 우선이라는 문구 추가.
+- `Docs/AI/UnityProjectContext.md` 사실 정정: Unity 6000.6.3f1(45d8eee7de74), URP 17.6.0, Input System 1.20.0, Test Framework 1.8.0. 9일 보스·20일 종료·부채 한도 300을 무한 진행(`finalDay: 0`)·7일 청산일=보스날(7·14·21·28일)·주간 대출 3종으로 교체. 승리 경로는 `finalDay > 0`일 때만 돈다고 명시. 테스트 현황을 26개 파일·`[Test]` 229개로 갱신, 옛 커밋 해시·dirty 작업 트리 문구 제거.
+- `Docs/Design/AdventurerRouteRiskDesign.md` 추가(설계 초안, 코드 변경 없음): 모험가 경로 위험 판단. 사용자 선택에 따라 방마다 새 '소문'(함정 발동·쓰러짐·후퇴)을 쌓고, 살아 나간 파티만 견문을 퍼뜨리며 전멸하면 사라지고 큰 보상 탈출은 소문을 지운다. 하루마다 절반. 다음 방은 기존 후보(최단+2칸 우회) 안에서 위험·보상 가중치로 뽑고, 특성별 회피(겁쟁이 강함·엘리트/보스 무시)와 보상 선호(쇼핑광 시설·보물 탐색 금고)를 둔다. 방 상세에 소문 한 줄. 기존 악명(`Node.DangerLevel`)은 줄지 않아 길 판단에 쓰지 않는다.
+- 방 관리 화면 EditMode 테스트·실측은 사용자 요청으로 보류.
+- 모험가 경로 위험 판단(소문) 구현(`AdventurerRouteRiskDesign.md`, 확인 항목은 초안대로 확정).
+  - 새 파일: `RoomRumor`·`RumorKind`(`Code.MapCreateSystem`), `AdventurerRumorLedger`·`RouteRiskRules`(`Code.Enemies`).
+  - `Node`: `Rumor`와 `AddRumor`·`HalveRumor`·`RestoreRumor`. 방을 열 때 비운다.
+  - `Enemy`: 함정 피격·쓰러짐·겁먹은 후퇴를 파티 견문에 기록하고, 살아 나갈 때 소문으로 옮긴다(공동 자금 "많음"이면 던전 소문 삭제). 전멸하면 견문을 버리고, 보스 파티는 기록하지 않는다. 다음 방 가중치 `ResolveRouteWeight`를 `EnemyMover`에 연결.
+  - `EnemyMover`: `RouteWeightResolver`가 있으면 기존 후보(최단+2칸 우회) 안에서 가중 뽑기, 없으면 지금처럼 무작위.
+  - `WaveManager`: 영업 시작 때 공동 자금 초기화 옆에서 `AdventurerRumorLedger.Active.BeginBusinessDay()`(견문 비우기·소문 절반) 한 줄.
+  - 저장: `SavedNode.rumorTraps`·`rumorDowns`·`rumorRetreats`(옛 저장은 0), `DungeonGraphController` 저장·복원.
+  - 방 상세: 설치물 아래 `room-rumor` 한 줄("소문 함정 N · 쓰러짐 N · 후퇴 N — 겁쟁이가 피합니다" / "소문 없음").
+  - `enemy-rules.md`에 소문 규칙 추가.
+  - 검증: Unity CLI `recompile` 완료(`compilationFailed: false`, 현재 콘솔 오류 0 — 05:41의 CS1061 3건은 파일 저장 도중 임포트된 지난 기록), `dotnet build DungeonKeeper.Runtime.csproj`·`Defence.EditMode.Tests.csproj` 오류 0. EditMode 테스트·플레이 실측은 사용자 요청으로 아직 하지 않음.
+- 시설 대기 만족도 2단계(`FacilitySatisfactionDesign.md` 2단계 절, 사용자 선택: 시설 × 성격 · 모험가 상태 패널).
+  - `FacilityDwellRules`: 감소 속도 = 시설 기준값(주점 3·대장간 4·상점과 그 밖 5%p/초) × 성격 배율(겁쟁이 1.5·성직자 0.8·쇼핑광 0.6). `QueueSatisfaction`·`AlternativeSearchSeconds`(만족도 바닥 = 대체 시설 탐색 시작)·`EscapeWaitSeconds`(성격 참을성, 단 탐색 시작 + 2초 이후) 추가. 기존 2인자 `ApplyQueueSatisfaction`은 상점 기준값으로 유지.
+  - `Enemy`: 줄을 설 때 시설·성격별 속도를 잡아 탐색·탈출 시점에 쓰고, 이용 시작 때 마지막 만족도를 기억. 상태 패널용 `QueueSatisfaction`·`LastVisitSatisfaction`·`AlternativeSearchSeconds`·`EscapeWaitSeconds` 공개.
+  - 모험가 상태 패널: 수치 칸에 만족도 줄 추가(카드 312 → 336, 수치 칸 96 → 120).
+  - `enemy-rules.md`, `DungeonEconomyDesign.md` 구현 현황(만족도·소문 경로) 갱신.
+  - 검증: Unity CLI `recompile` 완료(오류 0), `dotnet build` Runtime·EditMode.Tests 오류 0. 처음 컴파일에서 `Enemy`에 이미 있던 `WaitingFacility`·`DwellFacility`·`FacilityWaitSeconds`와 이름이 겹쳐(CS0102) 중복 정의를 지우고 기존 것을 씀. 테스트·실측은 사용자 요청으로 보류.
+- 모험가 입장 박자(`Docs/Design/AdventurerArrivalPacingDesign.md`, 사용자 선택: 회귀 수정 + 난이도 실측 · 방문객 수 고정 + 간격 난수 · 밤 레벨 -1).
+  - 회귀 수정: 낮·밤 단계 커밋(`307c1f1d`)에서 그룹 스폰 루프가 `_currentGroupInterval`(기본 간격 × 내보낸 인원) 대신 기본 간격을 써서 파티가 그룹 크기만큼 빨리 들어오던 것을 되돌림. 그 커밋 이후 밸런스 실측은 빠른 속도 기준이었음.
+  - 새 `SpawnPacingRules`: 간격 배율 0.5~1.5(평균 1), `GapSeconds`(기본 × 배율 × 밤 배율), 밤 손님 레벨 -1(최소 1, 보스 제외).
+  - `RunRandomStream.WavePacing`(=6) 추가, `WaveManager._pacingRandom`(시드 + 일차)으로 간격 배율을 뽑아 편성 난수 순서는 그대로.
+  - `WaveManager`: 스폰 루프 간격 계산과 방문객 레벨 계산 두 곳, `SpawnNextGroup`에는 밤 배율을 뺀 기본 간격을 넘김(전에는 밤 배율이 그룹 간격에 섞여 들어갔음).
+  - `wave-economy-rules.md`에 입장 박자 규칙 추가.
+  - 검증: Unity CLI `recompile` 완료(오류 0), `dotnet build` Runtime·EditMode.Tests 오류 0. 난이도 실측·테스트는 아직(허락 받고 진행).
+- HUD 우측 파티 목록·최근 기록·부채 파산 경고(기획서 "인게임 기본 화면", 사용자 선택: 리더 상태 패널 + 구성 한 줄 · 한도 초과 또는 파산 위험 때 점멸).
+  - 파티 목록: `PartyRailPresenter`가 `WaveManager.ActiveEnemies`(새 읽기 전용 접근자)를 `Enemy.PartyId`(공개로 바꿈)로 묶어 "리더 파티 · N명 · 관 N / 강함 N(엘리트·보스) · 자금 단계" 줄을 만들고, `PartyRailView`가 미리 만든 줄 8개에 글만 바꿔 그림. 파티 줄을 누르면 리더 상태 패널. 보스 준비·다음 파티·보스 패배 조건 줄은 그대로.
+  - 최근 기록: `HudActivityLog`(최대 8줄, 같은 알림 연속이면 "×N"). 예전 5줄 큐 대체.
+  - 부채 칸: `BankruptcyRiskRules`/`BankruptcyRisk`(한도 초과·신용 경고 5단계·오늘/내일 청산인데 운영 자금 < 최소 상환액) → `DebtAlertView`가 붉게 깜박이고, 누르면 사유·신용 규칙 팝업. 런타임에 뜨지 않던 tooltip 설명을 팝업으로 옮김.
+  - 모험가 상태 패널: 파티 줄 추가("파티 N명 · 리더/파티원/보스 · 관 N", 카드 336 → 360, 수치 칸 120 → 144). `Enemy.IsPartyLeader` 공개.
+  - USS: `Theme.uss`에 `--surface-danger` 토큰, `GameplayHud.uss`에 파티 줄 hover·경고색과 부채 칸 점멸 스타일.
+  - `GameplayHudToolkitView`에서 파티 줄·기록·부채 설명 코드를 걷어 내고 새 뷰에 위임.
+  - `ui-rules.md`, `DungeonEconomyDesign.md` 구현 현황 갱신.
+  - 검증: Unity CLI 컴파일 실패 없음(`compilationFailed: false`, 콘솔 오류 0), `dotnet build` Runtime·EditMode.Tests 오류 0. 화면 실측은 아직.
+- static·Find 제거 1단계 A(사용자 결정: 단계적, 씬 배선은 코드 먼저 — `Docs/AI/RefactoringRoadmap.md`에 단계·배선 목록).
+  - 새 `SceneReferenceFallback`(Code.Core): 씬에 아직 연결하지 않은 참조를 찾는 유일한 통로. `Find`는 경고를 남기고, `FindForRuntimeObject`는 실행 중 생기는 Toolkit 화면용(2단계에서 주입으로 대체).
+  - `GameOverManager`: `FindAnyObjectByType<BossWavePresenter>` 삭제(`WaveManager.BossPresenter`로 해결, 없으면 게임오버 때 경고).
+  - `WaveManager`: 내부 필드를 `[SerializeField] gameOverManager`로, 비면 폴백.
+  - `MagicSaveAgent`·`MerchantSaveAgent`: 직렬화 필드 우선은 그대로, 폴백만 경고 경로로.
+  - `PlayTutorialView`: `dialogueRunner`·`merchantPanel` 직렬화 필드 추가(상인 판정은 매 프레임 `Find`하던 것을 한 번 구해 들고 있음), 습격 화면은 `WaveView.Current`, 건너뛰기 버튼은 이름으로 찾지 않고 만든 버튼을 필드로.
+  - `GameplayHudToolkitView`·`RunEndToolkitView`(실행 중 생성): `FindForRuntimeObject`.
+  - `ConsumableUse`: 물약 대상 `FindObjectsByType<Unit>` → 방 배치(`Node.UnitPlacements`, 주인공 포함)를 훑음.
+  - `Shader.Find` 5건(함정 화살선·설치 미리보기·침입 경로선) → 새 공용 재질 `Assets/Resources/Materials/RuntimeLineMaterial.mat`(URP 2D Sprite-Unlit, Unity CLI `eval_file`로 생성) + `RuntimeMaterials.LoadLine()`. `BuildingPlacementPreview`의 정적 재질 캐시도 지움.
+  - 남긴 것: 부트스트랩 4개·`UiSfxInstaller`(옛 uGUI 정리 때), `ManagementSettlementManager`(다른 세션 작업 뒤). 직접 `Find` 호출 26 → 7.
+  - `csharp-style.md`에 Find·새 static 금지 규칙 추가.
+  - 검증: Unity CLI `recompile` 완료, `dotnet build` Runtime·EditMode.Tests 오류 0. 실측 아직 — 씬 배선 전이라 플레이하면 폴백 경고가 콘솔에 뜨는 것이 정상.
+- static 제거 2단계 설계 + 시범(사용자 선택: 조립 루트 GameScope · 설계서 + 시범 하나 · 정적 레지스트리는 소유자로).
+  - `Docs/AI/GameScopeDesign.md`: 구조(씬 컴포넌트는 `GameScope` 하나를 직렬화로, 실행 중 생성물은 만드는 쪽이 넘김, 정적 함수는 인자), 정적 상태의 새 주인, 전환 규칙, 매니저 순서.
+  - 새 `GameScope`(Code.Manager, static 접근자 없음) — 지금은 `FacilityClosure` 하나.
+  - 시범 `FacilityClosureSystem`: `NodePanelView`(3곳)·`DialogueRunner`가 `[SerializeField] GameScope scope`로 받고(비면 `SceneReferenceFallback` 경고 폴백), `SituationEventFactory.Build`는 인자로 받음. 사용처가 0이 되어 `FacilityClosureSystem.Current`와 중복 검사용 `Awake`/`OnDestroy`를 지움.
+  - `RefactoringRoadmap.md` 단계·배선 목록(GameScope 오브젝트, `NodePanelView.scope`, `DialogueRunner.scope`), `csharp-style.md` 갱신.
+  - 검증: Unity CLI `recompile` 완료, `dotnet build` Runtime·EditMode.Tests 오류 0. `Current` 사용처 0(에디터 스크립트 포함).
+- static 제거 2단계 — 등급·민심·판 요약·부활 매니저(`GameScopeDesign.md` "진행" 표).
+  - `GameScope`에 `unitRevival`·`runSummary`·`dungeonGrade`·`moralePolicy` 필드와 상태 없는 `Resolve`(루트가 비면 `SceneReferenceFallback` 경고 폴백), `FieldTooltip` 상수 추가.
+  - `DungeonGradeRules.CalculateGrade()`·`GradeFromKills()`가 숨어서 읽던 `DungeonGradeManager.Current`를 없애고 처치 수를 인자로 받게 함(`DungeonGradeManager.Grade`가 자기 처치 수를 넘김). 테스트가 쓰는 `GradeFromKills(int)`는 그대로.
+  - `scope` 필드로 옮김: `WaveManager`(등급 계산·영업 시작/마감·처치 기록·판 요약), `GameOverManager`, `UnitRevivalSystem`, `DungeonGraphController`(대형 방 등급 판정), `GradeSaveAgent`·`MoraleSaveAgent`(찾는 경로만, 복원 순서·형식 그대로), `DangerPanelView`, `WaveView`, `DialogueRunner`(민심 3곳).
+  - `SituationEventFactory.Build`가 민심 관리자도 인자로 받음(상납금·일꾼 징발).
+  - `MoraleHudView`·`PolicyChoicePanelView`는 이미 가진 직렬화 필드를 씀(`MoraleHudView`는 비면 경고 폴백 — 씬 필드 하나가 비어 있음).
+  - `NodePanelView`·`DialogueRunner`의 휴업 시스템 폴백을 `GameScope.Resolve`로 통일.
+  - 네 매니저 `Current` 사용처 46 → 19. 남은 곳: 다른 세션 파일 13(`CostManager`·`HiredUnitRoster`·`ManagementSettlementManager`), `MetaRunStarter` 2(부트스트랩), HUD·운영 방침 Toolkit·`Unit` 4(실행 중 생성) — `GameScope`가 씬에 놓인 뒤 주입.
+  - 검증: Unity CLI `recompile` 완료, `dotnet build` Runtime·EditMode.Tests 오류 0. PowerShell 일괄 치환한 `WaveManager`·`DialogueRunner`는 diff로 의도한 줄만 바뀐 것 확인(한글·줄 끝 유지).
+- 오늘 작업 테스트·실측(사용자 요청).
+  - 기존 EditMode 285/285 통과(오늘 변경으로 깨진 테스트 없음).
+  - 새 테스트 18개: `RoomManagementTests`(5 — 화면 사각형, 막힘 이유, 설치 판정 ↔ 실제 설치 전수 일치, 배치 막힘, 시설 버튼), `RouteRiskTests`(8 — 소문·위험·회피·꼬리말·견문 탈출/전멸/보스/큰 보상·보상 길), `FacilityQueueTests`(+2 — 시설 × 성격 속도, 탈출 ≥ 탐색 + 2초), `CreditWarningTests`(+1 — 파산 위험 사유), `EncounterVarietyTests`(+2 — 그룹 간격·밤 레벨). 전체 303/303 통과. `test-rules.md` 표 갱신.
+  - 플레이 실측(Unity CLI, 커밋 `502af2bc` + 다른 세션 미커밋 6파일, 세이브 백업 → 새 판 → 복원):
+    - 시작 직후 콘솔 오류 0. `GameScope` 폴백 경고 5건(컴포넌트당 한 번, 캐시 정상), 기존 플러그인 meta 경고 6건.
+    - 입장 간격: 5일차(기본 1.9초) 2인 파티 → 다음 파티 5.27초(밤). 회귀 상태였다면 3.04초 고정, 고친 식의 범위 3.04~9.12초 안. 등급 0이라 하루 3명이어서 표본은 간격 하나뿐.
+    - 낮→밤 전환 실제 시간 약 1초 정지 확인.
+    - HUD 파티 목록: 파티별 줄("용병 검사 파티 · 1명 | 엘리트 · 강함 4 · 자금 보통", 엘리트 경고 표시), 줄 클릭 → 리더 상태 패널(새 줄 "파티 2명 · 리더", "시설 대기 없음").
+    - 부채 칸: 한도 초과(빚 10,500/10,000)에서 `is-danger` + 0.3초 표본마다 `is-blink` 번갈아 바뀜, 클릭 → "파산 위험" 팝업(사유·신용 규칙).
+    - 끝날 때 콘솔 오류 0.
+  - 실측에서 찾은 것: 최근 기록이 "침입자가 늘었습니다. 현재 1명/2명/3명"처럼 숫자만 다른 알림을 묶지 못함(같은 문구만 묶음).
+    - 수정(사용자 선택): `HudActivityLog.Add(message, alert, groupKey)`
+- 남은 실측(커밋 `11fb5f1b` + 다른 세션 미커밋 6파일, 세이브 백업 → 새 판 2회 → 복원, 캡처 폴더 삭제).
+  - **첫날 튜토리얼이 꺼져 있음**: 씬의 `Tutorial Hint`(PlayTutorialView) 오브젝트가 `m_IsActive: 0`이고 켜는 코드가 없다. 9/10 도입 커밋에서는 활성, 9/22 이후 씬부터 비활성(의도 기록 없음). 씬 수정이라 보류 — 사용자 확인 필요.
+  - 튜토리얼 ↔ 새 방 관리 화면 연동(플레이 중에만 오브젝트를 켜서 확인): 1/5 방 확장(구멍이 대상 방 → 확장 팝업 버튼 1040,420 136×36) → 2/5 유닛 배치에서 갈래 버튼(107,24 78×46) → 카드(136×150) → 배치 버튼(136×36) → 방 칸 순서로 구멍·안내 글이 맞게 따라감 → 배치 후 4/5(입구가 있어 포탈 단계 건너뜀). 정상.
+  - **새 판에서 첫 유닛을 고용할 수 없음**(다른 세션 미커밋 주간 계약 작업): 0일차 `HiredUnitRoster.IsWeeklyRecruitmentOpen=false`(청산일에만), 보유 0명 → 튜토리얼 2/5 "첫 수비병을 고용하세요"에서 막히고 7일차 전까지 부하가 없다. 실측은 고용 완료 이벤트를 직접 보내 우회.
+  - 화면 캡처(1280×720): 튜토리얼 덮개·구멍·안내 막대 정상, 방 상세 "소문 없음" 줄 보임. 다만 오른쪽 방 상세(Toolkit) 위에 옛 uGUI 마력·등급·민심 패널이 겹쳐 그려지고, 지도 가운데 "DAY 1 · 영업 준비" uGUI 배너가 방을 가림(오늘 변경 아님, Toolkit·uGUI 공존 문제).
+  - 소문 길 선택: 등급 40에서는 손님 전원이 강함 4~6(엘리트)이라 설계대로 소문을 무시(가중치 모두 1.00) — **고등급에서는 소문 시스템이 사실상 꺼짐**. 등급 10에서는 목적지가 있는 비엘리트(강함 1~2)에게 소문 방 가중치 0.22 vs 1.00, 실제 선택 7명 중 소문 방 2명(점유로 후보가 줄어든 경우 포함, 표본 작음). 웨이브 중 살아 나간 손님이 옮긴 소문으로 다른 방 가중치도 0.77·0.53으로 떨어짐(장부 실동작 확인). 시설이 없는 던전이라 손님 대부분이 목적지 없이 배회(가중치 미사용).
+  - 콘솔: 오류 1건 — 첫 판을 웨이브 진행 중에 멈출 때 "Some objects were not cleaned up when closing the scene". `OnDestroy`에서 직접 생성하는 코드는 없음, 원인 미확인. 그 밖의 오류 0. — 같은 종류 키가 이어지면 최신 문구 한 줄로 바꾸고 "· N회"를 붙임(키 없는 알림은 문구가 같을 때만). HUD의 침입자 수 알림에 키 부여. 새 `HudToolkitTests` 3개, 전체 306/306 통과.
+  - 못 잰 것: 소문이 실제 길 선택을 바꾸는지(등급 0·3명이라 갈림길 표본 없음), 방 상세 소문 줄 화면, 첫날 튜토리얼 흐름, 화면 문구 잘림(캡처 없음).
+
+## 2026-10-01
+
+- `Docs/DungeonEconomyDesign.md`에 기획 전체 기준 `구현됨 / 일부 구현됨 / 미구현` 현황을 추가. 기존 런·정산·노드·전투·저장·UI 기반과 새 Toolkit/낮밤 작업을 구분하고, 기획과 다른 세부 규칙은 일부 구현 또는 미구현으로 명시.
+- `AGENTS.md` 추가·보완: Codex 등 에이전트가 `CLAUDE.md`의 승인, 변경 기록, 설계 근거 및 작업별 규칙 파일 참조 절차를 동일하게 따르도록 기여 가이드화. `CLAUDE.md`를 단일 기준 문서로 참조하게 하여 신규 규칙은 자동 반영. Unity AI 활용 교안의 `개요 → 작업 원칙 → 구현·검증 → 제출` 계층을 참고해 구조를 재편. 구현 전 `Docs/` 기획서 확인 및 새·변경 기획의 `Docs/Design/` 기록 원칙을 명시.
+- 시설별 동시 이용 정원과 FIFO 대기열을 `Docs/Design/FacilityQueueDesign.md`에 기록·구현. 이용 종료·사망·파괴 때 슬롯을 해제한다.
+  - `dotnet build DungeonKeeper.Runtime.csproj -v:q`는 기존 `SkillZoneVisual.cs:97`, `BattleAgent.cs:982`의 `GetInstanceID()` 사용 금지 오류로 실패(대기열 코드 오류 없음). Unity CLI `cmd`는 프로젝트 Unity Pipeline 패키지 버전 문제로 실행 불가.
+- 사용자 승인에 따라 Unity 6000.6.3f1 호환을 위해 외부 에셋을 직접 패치. Feel 5.4의 인스펙터 접힘 상태 키를 `EntityId`로 전환. vHierarchy 2.1.2는 제거된 Hierarchy·TreeView API를 폭넓게 사용해 Unity 6000.6 이상에서 asmdef로 비활성화(게임 런타임에는 영향 없음)하고, 호환 버전 2.1.11 설치 뒤 다시 활성화하도록 함. 프로젝트 코드의 `GetInstanceID()` 2곳도 `EntityId` 방식으로 교체.
+  - 지대 스킬의 소유자 식별자도 `EntityId`로 통일해 Unity 6000.6의 정수 ID 암묵 변환 오류를 제거.
+  - 검증: `dotnet build DungeonKeeper.Runtime.csproj -v:q` 통과(오류 0, 기존 경고 390개). Unity `Logs/Editor.log`의 마지막 재컴파일 구간에도 C# 오류 없음.
+- 일반 노드 점유를 개별 적 2명 제한에서 파티 단위로 변경. `WaveManager`가 그룹 스폰과 보스 증원 그룹에 공통 점유 ID를 부여하고, `EnemyMover`는 같은 파티만 일반 노드를 함께 점유하게 한다. 방에 설치된 시설은 기존 FIFO 이용 대기열을 유지하므로 노드 점유로 막지 않는다.
+  - 검증: `dotnet build DungeonKeeper.Runtime.csproj -v:q` 통과(오류 0, 기존 경고 390개).
+- 작업 중 추가했던 FIFO·파티 점유 EditMode 테스트를 제거했다. 외부 패키지 호환을 위해 수정한 Feel 인스펙터와 vHierarchy asmdef는 Unity 6000.6 호환에 필요하므로 유지한다.
+- `Docs/Design/PartyNodeOccupancyDesign.md`를 추가하고, 막힌 일반 노드 앞에서 파티원이 성격·방문 목적·예산에 따라 1~6턴 대기한 뒤 열린 인접 노드로 우회 탐색하도록 구현했다. 겁쟁이는 빨리 우회하고, 보물 탐색·성직자·높은 예산 방문객은 더 오래 기다린다.
+  - 검증: `dotnet build DungeonKeeper.Runtime.csproj -v:q` 통과(오류 0, 기존 경고 390개).
+- Unity CLI 연결 상태 확인: Unity 6000.6.3f1, 프로젝트 `C:\Fork\Defence`, 상태 `ready`.
+- `Docs/Design/UnitRevivalManaDesign.md`를 추가하고 유닛 부활을 금화·부채 결제에서 독립 부활 마력으로 전환했다. 부활 마력은 자연 회복하며, 쓰러진 유닛은 쿨다운 뒤 먼저 쓰러진 순서대로 마력이 충분할 때 부활한다. 주둔 마력(배치 슬롯)은 변경하지 않았다.
+  - 검증: `dotnet build DungeonKeeper.Runtime.csproj -v:q` 통과(오류 0, 기존 경고 390개). Unity CLI 재컴파일 완료(`compilationFailed: false`). 재컴파일 중 Pipeline 포트가 7801에서 7800으로 바뀌었으나 Editor 연결은 복구·정상 확인.
+
+## 2026-09-30
+
+- `CLAUDE.md` 신설·개편: 작업 규칙(변경 기록, 수정 전 승인, 규칙 파일 참조, Unity CLI, 모호하면 질문) 중심의 메인 문서로 재작성.
+- `.claude/rules/` 분리: `csharp-style.md`, `ui-rules.md`, `combat-rules.md`, `wave-economy-rules.md`, `persistence-rules.md`.
+- `.claude/skills/playtest/SKILL.md` 추가: Unity CLI 플레이 실측 절차와 함정.
+- `ui-rules.md`를 UI Toolkit 제작 규칙으로 재작성.
+  - UXML/USS 위치를 `Assets/GameModules/UI/UxmlAndUss/`로 정함(기존 `Resources/UI/Toolkit`는 이전 대상).
+  - 화면 폴더는 Common / Title / Management / Battle / Shared.
+  - 디자인 토큰 2단계, 컴포넌트 클래스, 레이아웃 고정 규칙, 범용 팝업(`PopupController`, 구현 전) 규칙을 넣음.
+- `.claude/rules/unit-rules.md` 추가: 유닛 제작 규칙.
+  - 템플릿은 기존 `Prefabs/Characters/Units/Unit.prefab`, `Prefabs/Characters/Enemies/Enemy.prefab`의 Variant로 제작.
+  - 투사체는 `Prefabs/Projectiles/`(첫 투사체 때 `BattleAgent` 설계 확인).
+  - 데이터 SO, 스탯 정답 위치, 해금 카탈로그·파티 등록, 실측 절차를 넣음.
+  - CLAUDE.md 작업 규칙에 유닛 제작 시 참조 항목 추가.
+- `.claude/rules/enemy-rules.md` 추가: 기존 적 15종(일반 8, 보스 3, 특성 변형 4)과 파티·WaveConfig 구조를 보고 작성.
+  - 적은 데이터 중심(`EnemyDataSO` + 스프라이트)으로 만들고, 전용 프리팹은 필요할 때만 만든다.
+  - 역할·특성·수치 기준표, 파티/보스 등록 절차, 설계 제약, 검증 절차를 넣음.
+- 콘텐츠별 제작 규칙 4종 추가(현재 코드·데이터 구조 분석 기반).
+  - `building-rules.md`: 데이터 중심 건물(프리팹 공유, BoardSprite), BuildingDataSO 핵심 값, 마모·폐쇄, 함정, 등록 절차.
+  - `skill-rules.md`: 조합형 스킬(SkillDataSO + SkillEffectSO), 기본/궁극기, CombatLoadouts 명명 규칙, 상태이상(노드 방문 지속).
+  - `artifact-rules.md`: 유물·물약 구조, 상인 카탈로그, 조합 카탈로그, 런타임 보유 목록 주의.
+  - `dialogue-rules.md`: 시퀀스·선택지·조건 분기, 액션 SO, 일차 이벤트 스케줄, 튜토리얼 연동.
+  - CLAUDE.md 작업 규칙에 각 규칙 파일 참조 추가.
+- 문서 정리.
+  - CLAUDE.md: 작업 규칙을 번호 목록 + "작업 → 먼저 읽을 규칙" 표로 정리, 폴더 구조를 표로 바꿈.
+  - 규칙 파일 역할 분리: 제작 규칙(unit/enemy/building/skill/artifact/dialogue)과 시스템 규칙(combat/wave-economy/persistence)의 중복 제거.
+  - `unit-rules.md`를 플레이어 유닛 전용으로 정리(적 내용은 enemy-rules로 이동).
+  - `wave-economy-rules.md`에서 건물 경로 제외(building-rules가 담당).
+- 게임 구조 사실 정정(에셋·씬·테스트 확인 결과, 기존 문서가 낡아 있었음).
+  - 20일 런이 아니라 무한 진행(`finalDay = 0`)이고, 1~28일이 직접 짠 웨이브다.
+  - 7일마다 청산일이고, 청산일에 보스(7·14·21·28일)가 온다. 대출 이자와 최소 상환을 내지 못하면 파산이다.
+  - 대출 상품 3종: 뒷골목 사채, 기본 대출, 상인 길드 융자.
+  - 적 데이터는 모두 역할 프리팹 4종 중 하나를 `Prefab`으로 연결한다(`AssetWiringTests`가 검사). enemy-rules를 고침.
+  - 일차 이벤트 간격 4일(씬 값)로 고침.
+  - CLAUDE.md, wave-economy, enemy, artifact, dialogue, playtest 문서를 반영.
+- 추가 문서.
+  - `audio-rules.md`: 큐 기반 재생, 카탈로그(Resources), enum 끝에만 추가, 소리 발생 위치.
+  - `test-rules.md`: EditMode 구조, 리플렉션 패턴, 파일별 대상, `AssetWiringTests`가 검사하는 것, 명명·회귀 테스트 규칙.
+  - building/unit/artifact 규칙에 `AssetWiringTests` 필수 조건 반영.
+  - `.claude/skills/cs-review/SKILL.md`: 프로젝트 규칙 기반 C# 변경 리뷰 스킬.
+
+## 2026-10-02
+
+- CLAUDE.md의 Unity 버전을 6000.6.3f1로 고침(워킹트리가 업그레이드돼 있었음).
+
+## 2026-10-07
+
+- 범용 팝업 라이브러리 추가(9월 30일 설계안 기준).
+  - 공통 스타일 신설: `Assets/GameModules/UI/UxmlAndUss/Common/DesignToken.uss`(Theme.uss 팔레트 → 원시값/의미값 2단계), `Components.uss`(btn·panel·scrim·text 클래스).
+  - `Shared/Popup/Popup.uxml`·`Popup.uss`: 고정 크기 카드(480×280), 비용·경고 줄은 visibility로 자리 유지, 버튼 고정 폭 136px.
+  - `Assets/Code/UI/Popup/`: `PopupController`(대기열·일시정지 옵션·ESC·사운드, 씬 전환 시 대기열 폐기), `PopupRequest`(Notice/Confirm/Cost/Choice), `PopupView`, `PopupButtonSpec`, `PopupButtonStyle`, `PopupUiNames`, `PopupSettingsSO`.
+  - 테스트: `PopupRequestTests` 6개(금화 부족 잠금·부족액 문구, 확인/취소 순서, 선택지 강제, 버튼 수 제한, 일시정지 기본값).
+  - 검증: 임시 csproj로 런타임+테스트 컴파일 오류 0. Unity CLI 서버가 꺼져 있어 meta 생성, PopupSettings 에셋 생성, 테스트 실행, 화면 확인은 못 함.
+  - ui-rules 9번에 사용법 반영.
+- Unity를 켠 뒤 이어서 진행.
+  - `Assets/Resources/UI/PopupSettings.asset` 생성(Template = Popup.uxml).
+  - 버그 수정: 팝업이 uGUI 메인 캔버스(정렬 50)와 DAY 배너 아래에 깔림. UI Toolkit 문서는 모두 공용 RuntimePanelSettings(정렬 0)를 공유하기 때문. 팝업 전용 `Assets/GameModules/UI/PopupPanelSettings.asset`(정렬 1000)을 만들고 `PopupSettingsSO.panelSettings`로 연결.
+  - 테스트: `PopupRequestTests` 6/6 통과. 전체 EditMode 150/154. 실패 4개는 팝업과 무관한 기존 문제(`AssetWiringTests`: GoldCostView 네임스페이스가 `Blade.Core`, StatSO가 GameLib 어셈블리라 타입 조회 실패, 오프닝 씬 검사 2개 NRE).
+  - 플레이 실측: 비용(금화 부족 → 경고·구매 잠김) → 확인(위험) → 알림(일시정지 timeScale 0 → 닫으면 1) → 선택(긴 문구 말줄임) 순으로 대기열 처리. 네 상태 모두 카드 (720,400,480×280)·버튼 줄 (744,608,432×52) 경계 동일. 콘솔 오류 0. 세이브는 백업 후 복원.
+  - ui-rules 9번에 패널 정렬 규칙 추가.
+- 기존 팝업을 범용 팝업 라이브러리로 교체(사용자 선택: 튜토리얼까지 함께, 재시작 확인 두 곳 모두).
+  - 팝업 라이브러리 보강: `PopupRequest.WithTag`/`Tag`, `ConfirmButtonIndex`; `PopupController.IsShowing(tag)`, `TryGetConfirmButtonScreenRect`(uGUI와 같은 왼쪽 아래 원점 픽셀), `BlocksEscape`(팝업이 ESC를 쓴 프레임 포함); `PopupView.TryGetButtonScreenRect`.
+  - 방 확장(`DungeonGraphController`): 옛 `BuildConfirmPanelView`(클릭 위치 옆 uGUI 창 + 별도 "골드 부족" 창) → 비용 팝업 하나. 표시 비용을 실제 청구액(건설 할인 반영)으로 맞춤. 금화 부족이면 부족액 경고 + 확장 잠김. 확인 후 결제 시점에 거절되면 알림 팝업. 직렬화 필드 `buildConfirmPanel`과 클릭 위치 저장 필드 제거.
+  - 튜토리얼: `PlayTutorialView`·`DialogueRunner`가 `BuildConfirmPanelView` 대신 팝업 태그와 버튼 화면 좌표를 읽음. `DialogueRunner.buildConfirmPanelView` 필드 제거.
+  - 재시작 확인: `SettingsPanelView`(옛 confirmWindow → 위험 확인 팝업, 프리팹의 옛 창은 남기고 숨김)와 `GameplayHudToolkitView`(인라인 `restart-confirm-panel` 삭제, UXML·USS 조각 제거) 모두 위험 확인 팝업으로.
+  - ESC 양보: `SettingsPanelView`, `SettlementToolkitView`, `BuildingPlacementPreview`, `EdgePlacementPreview`.
+  - 제외: `IdleReturnToTitle`(실시간 카운트다운 안내라 버튼 팝업과 맞지 않음), 정책 선택(설명이 긴 강제 선택 화면이라 특수 화면). `BuildConfirmPanelView` 클래스와 씬 오브젝트는 남김(코드 참조 0).
+  - 팝업 패널 정렬 1000 → 10000: 설정창 캔버스가 5000이라 그 아래에 깔릴 수 있었음. 하루 전환 연출(30000)보다는 아래.
+  - 테스트: `PopupRequestTests` 8개(태그·확인 버튼 순서 추가). 전체 EditMode 152/156, 실패 4개는 기존 AssetWiringTests 문제 그대로.
+  - 플레이 실측: 방 확장 팝업(비용 8 G, 보유 192 G) → 확장 → 금화 184·노드 2→3. 금화 0에서 "8 G 부족"·확장 잠김, 잠긴 버튼은 무반응, 취소 시 건설 없음. 튜토리얼 판정 `ConfirmRoom` + 강조 영역이 확장 버튼 화면 좌표(1040,420,136×36)와 일치(튜토리얼 뷰는 이 판에서 비활성이라 판정 함수를 직접 호출해 확인). HUD·설정창 재시작 팝업 표시 후 취소. 콘솔 오류 0. 세이브 백업 후 복원.
+  - 확인 못 한 것: 설정창이 실제로 열린 상태에서 팝업이 위에 뜨는 화면(`Open()`이 이 테스트에서 창을 열지 않음). 정렬 값으로는 위.
+- 실패하던 `AssetWiringTests` 4개 수정 → 전체 EditMode 156/156 통과.
+  - `EveryStat_HasIcon`: 테스트의 `RequireType`이 Runtime 어셈블리만 찾아 GameLib의 `StatSO`를 못 찾음 → GameLib도 찾도록 수정.
+  - `GoldPanel_ListensToBothTheCostAndTheDayChannel`: `GoldCostView` 네임스페이스가 `Blade.Core`(규칙 위반) → `Code.UI`로 변경, `GoldHudPresenter`·`GameplayHudToolkitBootstrap`의 `using Blade.Core` 제거. 또 채널 구독은 표시/구독 분리 이후 씬의 `GoldHudPresenter`가 맡는데 테스트는 프리팹의 `GoldCostView`를 보고 있었음 → 씬의 프레젠터가 비용·날짜 채널과 view를 모두 가졌는지 검사하도록 수정. (프리팹의 `GoldCostView`에 남은 채널 값은 옛 직렬화 데이터)
+  - `OpeningScene_HasNoPlayerAndBlacksmithInstallsAtCentre`, `OpeningRoom_HasFourDoorsAndUsesEastDoorForIntruders`: 9월 22일 폴더 이동 리팩터링 때 에디터 전용 `DungeonGraphController.EditorBakeInitialScenePreview`가 지워져 NRE → `#if UNITY_EDITOR`로 복원. 플레이 모드 `RebuildInitialGraph`와 같은 본문은 `BuildInitialGraph()`로 묶음.
+- 10월 5~6일에 남아 있던 시설 대기 만족도·부활 마력 등급 보정 작업을 기획서와 대조해 검증·마무리.
+  - 대조 결과 기획서와 일치: 대기 1초당 수입 5%p 감액(최대 50%, 최소 1G), 상점 특성 보정은 감액된 금액에 적용, 10초부터 1초마다 같은 목적·도달 가능한 대체 시설 탐색, 포기한 시설 재방문 안 함, 대체 시설이 없으면 계속 대기. 방 상세 두 줄(이용 수/정원·대기 인원, 최장 대기·최대 감액). 부활 마력 등급 1점당 최대 +3·회복 +0.1/초, HUD 칩(현재/최대·대기 인원)과 부활 대기 순서 줄.
+  - 빠져 있던 테스트 추가: `FacilityQueueTests` 8개(감액 0/4/10/30초, 최소 1G, FIFO 순서, 동시 이용 수, 대기 취소 뒤 다음 손님 진입). 테스트 asmdef에 `DungeonKeeper.GameLib` 참조 추가(GameLib `Entity`를 상속한 `Enemy`를 직접 쓰기 위해).
+  - 전체 EditMode 164/164 통과, 플레이 모드 HUD 부활 마력 표시(등급 0 → 30/30·회복 1/초) 확인.
+  - 기획서 구현 현황 갱신: 시설 대기열·만족도와 부활 마력 HUD·등급 보정을 구현됨으로 반영.
+- 시간 운영 리듬 마무리(기획서 "시간과 운영 리듬"). 엘리트 기준은 강함 4단계(위험) 이상, 재배치 준비 시간은 다음 단계로 미룸(사용자 선택).
+  - `PauseLockRules`(새 파일): 살아 있는 보스 또는 강함 4단계 이상이면 일시정지 잠금. 잠긴 이유 문구, 낮·밤 전환 정지 시간(1초).
+  - `GameSpeedController`: `SetPauseLock`(주인별 잠금, 잠기는 순간 플레이어가 멈춰 뒀으면 마지막 배속으로 자동 재개), `IsPauseLocked`·`PauseLockReason`·`PauseLockChanged`. 잠긴 동안 일시정지 요청(버튼·스페이스)은 거절하고 1·2 배속 전환은 허용. 창·연출의 `Suspend`는 잠금과 무관. `PauseForTransition`(실제 시간 기준 정지). `ResetToNormal`이 잠금·전환 정지도 정리.
+  - `Enemy.StrengthTier`: 테두리 색과 같은 강함 단계 계산을 공개.
+  - `WaveManager`: 웨이브 루프에서 매 프레임 잠금 갱신, 웨이브 종료·정리 때 해제. 낮→밤 전환 때 1초 정지.
+  - `UnitManagementSystem`: 같은 방(노드 전장)에 적이 있으면 회수·이동 불가. 기존 "전투 중인 유닛" 조건은 유지.
+  - HUD: 관리 안내 자리에 "일시정지 잠김 · 이유"를 손실 색으로 표시, 잠긴 동안 일시정지 버튼 비활성·툴팁.
+  - 테스트: `PauseLockTests` 9개(잠금 규칙 5, 자동 재개, 잠긴 동안 정지 거절·배속 허용, 해제 뒤 정지 가능, 창 정지는 잠금과 무관).
+  - 검증: Unity CLI 서버가 꺼져 있어 csproj에 새 파일을 임시로 넣고 `dotnet build`(런타임+테스트) 오류 0만 확인. 테스트 실행과 플레이 실측은 아직.
+  - 기획서 구현 현황, wave-economy·test 규칙 갱신.
+
+## 2026-10-08
+
+- 시간 운영 리듬 Unity 검증.
+  - 전체 EditMode 173/173 통과(`PauseLockTests` 9개 포함).
+  - 플레이 실측(7일차 보스날): 플레이어가 멈춘 상태(배속 0)에서 보스 입장 → 배속 1로 자동 재개, 잠금 이유 "보스가 던전에 있어 멈출 수 없습니다", 일시정지 시도 거절(1→1), 관리 창 닫힘, HUD 하단에 빨간 "일시정지 잠김 · …"과 일시정지 버튼 비활성. 보스 처치로 웨이브가 끝나자 잠금 해제, 다시 일시정지 가능.
+  - 플레이 실측(2일차): 밤 전환 0.013초 뒤 timeScale 0 → 1.009초에 1로 복귀(실제 시간 1초 정지). 모달·플레이어 정지 개입 없음.
+  - 확인 못 한 것: 웨이브 도중 엘리트만 죽고 웨이브는 계속되는 경우의 해제(규칙은 테스트로 확인), 같은 방 적 회수·이동 차단(배치된 유닛이 없는 판이라 실측 못 함).
+  - `playtest` 스킬 갱신: 포탈 단계 삭제(내부 방 확장으로 대체), 플레이 직후 첫 eval이 메인 스레드 시간 초과로 비어 돌아오는 함정, 짧은 순간을 이벤트+에디터 update로 기록하는 방법.
+- 재배치 준비 시간 구현(기획서 "시간과 운영 리듬"). 스킬·궁극기도 준비 중 금지(사용자 선택).
+  - `RedeployRules`(새 파일): 이동한 방 수 × 1초(최소 1방), 준비 중 받는 피해 배율 0.5(최소 1).
+  - `Unit`: `BeginRedeployPreparation`(더 긴 쪽 유지), `IsPreparingRedeploy`, `RedeployPreparationRemaining`. 게임 시간으로 줄어 일시정지 중에는 멈춤.
+  - `UnitManagementSystem.TryMove`: 출발 방→도착 방 경로의 방 수로 준비 시간을 걸고 결과 문구에 "준비 N초" 표시.
+  - `Combatant`: 준비 중 공격 게이지를 채우지 않음(끝나면 이어서). `SkillCaster.TryCast`: 준비 중 거절.
+  - 피해 감소: GameLib `HealthModule.TakeDamage`에 `ModifyIncomingDamage` 가상 메서드 추가, `Health`가 준비 중이면 절반. 평타·스킬·함정 피해 모두 이 한 곳을 지남. GameLib은 여전히 게임 코드를 모름.
+  - 테스트: `RedeployPreparationTests` 10개. 전체 EditMode 183/183 통과.
+  - 플레이 실측: 1칸 이동 "전입 완료 · 준비 1초", 준비 중 피해 10 → 5(20→15), 일시정지 중 남은 시간 1.00 유지. 준비 8초 동안 적과 교전 중에도 공격 게이지 0.00·적 체력 14 그대로. 준비 2.5초로 다시 돌리자 끝난 직후 게이지가 차고 적 체력 14→12→10, 받는 피해도 준비 뒤 6씩 그대로. 게임 오류 0.
+  - 기획서 구현 현황, combat·test 규칙 갱신.
+- 방 확장 공사 구현(기획서 "확장 노드"). 공사 시간 4초, 취소 환불 50%, 취소까지 포함(사용자 선택).
+  - `Node`: `BeginConstruction`·`IsUnderConstruction`·`ConstructionRemaining`·`ConstructionPaidGold`·`ConstructionCompleted`. 게임 시간으로 줄고 일시정지 중 멈춤. 공사 중에는 흐린 색 + "공사 중 N초" 표시, `IsPassBlocked`·배치 불가.
+  - `DungeonGraphController`: 결제 후 노드를 만들고 공사 시작, 완공 때 `NodeBuiltEvent`. 공사 중인 방 클릭 → 취소 확인 팝업 → 50% 환불(`BuildCostRefundedEvent`), 노드·라인 제거, 잠긴 칸 복원. 공사 중인 방에서는 확장 후보를 뻗지 않음. 저장·복원에 남은 공사 시간 포함.
+  - `DungeonGraph.RemoveNode`, `DungeonNode.Disconnect`, `DungeonEdgeManager.RemoveEdgesFor` 추가. `EdgeLine.IsAvailableForInstall`(공사 중인 방에 닿은 라인 제외)을 라인 건물 배치 3곳에 적용.
+  - `RunSaveData.SavedNode`에 `constructionRemaining`·`constructionPaidGold`(옛 저장은 0으로 읽힘, 버전 유지).
+  - `WaveManager`: 영업 시작 조건은 완공된 방만 센다. 공사 중뿐이면 "첫 방 공사가 끝나면 영업을 시작할 수 있습니다". `UnitManagementSystem`: 공사 중인 방으로 이동 시 "공사 중인 구역으로는 옮길 수 없습니다".
+  - 테스트: `RoomConstructionTests` 4개. 전체 EditMode 187/187 통과. (처음 만든 `ConstructionTests.cs`는 컴파일 도중 생성돼 임포트가 꼬여 목록에서 빠짐 → 지우고 `RoomConstructionTests.cs`로 다시 만듦)
+  - 플레이 실측: 확장 시 금화 192→184, 공사 중·"공사 중 4초"·막힌 길·배치 불가 → 완공. 일시정지 중 남은 시간 4.00 그대로, 재개 후 완공. 공사 취소 팝업 "낸 비용 8G 중 4G" → 금화 176→180, 그래프에서 제거, 그 자리에 잠긴 칸 복원. 공사 중 저장(남은 2.44초·8G)·복원 → 공사 이어지다 완공. 콘솔 오류 0.
+  - 확인 못 한 것: 공사 중인 방을 실제로 클릭했을 때의 팝업(팝업 함수를 직접 호출), 적 파티의 실제 우회 경로(길찾기는 기존 `IsPassBlocked`를 그대로 씀).
+  - 기획서 구현 현황, wave-economy·test 규칙 갱신.
+- 시설 내구도·수리·철거 구현(기획서 "시설과 내구도"). 마모를 내구도로 통합, 수입은 내구도에 비례, 수리·철거 수치는 기본안(사용자 선택).
+  - `FacilityDurabilityRules`(새 파일): 수입 배율 = 50% + 50% × 내구도 비율(0이면 0), 수리비 = 깎인 내구도 × 4G × (1 + 누적 수리 × 25%), 수리 시간 = 깎인 1점당 0.5초, 철거 환불 = 건설비 × 50% × 내구도 비율, 정리 3초.
+  - `Building`: 수익 시설(부서지지 않고 손님이 머무는 시설)은 손님마다 내구도가 깎임. 0이면 영업 정지(`IsWornOut`)·손님 안 받음(대기열은 기존 `AcceptsDwell` 확인으로 흩어짐). `BeginRepair`/`TickRepair`(게임 시간), 수리 중 손님 안 받음, 끝나면 가득 참. 옛 저장의 마모는 내구도에서 깎아 옮김(`RestoreWear`). 함정·회복실은 기존대로 맞아서 깎이고 0이면 파괴.
+  - 청산일 자동 수리비(`ApplyWeeklyRepair`)와 마모 예고를 없애고, 정산 메모를 "내구도가 바닥난 시설 N곳"으로 바꿈. 수입은 `FacilityEconomyRules.ScaleIncome`에서 내구도 배율을 곱함. 손님은 값을 먼저 매긴 뒤 닳게 함(마지막 손님도 자기 몫은 냄).
+  - `FacilityClosureSystem`: `TryBeginRepair`(금화 부족 시 거절, 빚 없음), `Demolish`(환불 + 정리 시작), `DemolishRefundOf`. 장부 "시설 수리비"(`FacilityRepairStartedEvent`)·"철거 환불"(`FacilityDemolishedEvent`).
+  - `Node`: 철거 뒤 정리 중(`IsClearingRubble`)에는 중앙 시설을 못 지음.
+  - `NodePanelView`: 수리 버튼(휴업 버튼을 런타임에 복제해 한 칸 위에 둠 — 씬 배선 없음), "수리 NG (내구도)" / "수리 중 N초". 수리는 비용 팝업, 철거는 환불액을 보여 주는 확인 팝업을 거침. HUD 시설 상태에 내구도·수입 %·수리 중/영업 정지 표시.
+  - 저장: `SavedBuilding.repairRemaining`·`repairCount`(옛 저장은 0, 버전 유지).
+  - 테스트: `FacilityDurabilityTests` 7개, `GameRulesTests`의 옛 마모 테스트 3개 삭제. `FacilityQueueTests` 헬퍼는 EditMode에서 Awake가 안 돌아 내구도 0으로 시작하던 것을 `Initialize`로 고침. 전체 EditMode 191/191 통과.
+  - 플레이 실측(1일차, 빈 방에 상점): 내구도 20/20 수입 15 → 10/20 수입 11(75%) → 0/20 수입 0·손님 안 받음·"영업 정지(수리 필요)". 수리 팝업 "비용 80 G" 확인 → 금화 192→112, "수리 중 N초"가 초마다 줄고 10초 뒤 20/20·수입 15, 다음 수리비 25% 할증. 수리 중 저장(남은 6.00초)·복원 → 새 건물이 수리 중으로 이어짐. 철거 팝업 → 환불 7G(건설비 15 × 50% × 내구도 50%), 정리 중 설치 불가 → 3초 뒤 가능. 장부에 "시설 수리비 80"·"철거 환불 3". 버튼은 철거·문 닫기·수리 순으로 겹침 없이 쌓임. 콘솔 오류 0.
+  - 확인 못 한 것: 실제 모험가 방문으로 닳는 장면(방문 처리 함수를 직접 호출), 대기 중이던 손님이 영업 정지 때 흩어지는 장면(기존 대기열 확인 경로를 그대로 씀), 철거 정리 시간의 저장(3초라 저장하지 않음).
+  - 기획서 구현 현황, building·test 규칙 갱신.
+- 부채 한도·5단계 신용 경고 구현(기획서 "부채 한도와 파산"). 영업 종료 자동 긴급 상환, 유예는 그날 영업 종료까지, 경고 1단계마다 이자 +2%p·최소 상환 +5%p(사용자 선택).
+  - `CreditWarningRules`(새 파일, `Manager/Economy`): 경고 반영 대출 조건, 긴급 상환액, 영업 종료 판정(한도 안 / 경고 / 파산), 다음 경고 단계(빚 0이면 초기화).
+  - `CostManager`: 빚이 늘 때(`ChargeOrBorrow`·`ApplySettlement`) 한도를 넘었는지 기록. `ResolveDayEndCredit`가 초과분을 금화로 긴급 상환 → 그래도 넘으면 파산, 오늘 넘었던 적이 있으면 경고 +1(5단계였으면 파산). `CreditLimit`(원래 한도, 빚만큼 늘어나지 않음)·`CreditWarnings`·`IsOverCreditLimit`. 대출 조건은 어느 상품이든 경고만큼 무거워짐. 청산일에 빚을 다 갚으면 경고 0.
+  - `ManagementSettlementManager`: 청산 뒤 `ResolveCreditLimit` 호출(청산일 미납으로 이미 파산했으면 건너뜀). 정산 메모에 긴급 상환액·경고 단계·파산. 지난 청산 값이 남아 평일에도 "빚을 청산했습니다"가 뜨고 빚 안내가 가려지던 문제도 함께 고침.
+  - `BankruptcyEvent`에 이유 문구 추가, 패배 화면이 그 문구를 씀. 새 이벤트 `CreditStatusChangedEvent`.
+  - HUD 부채 칸: 한도 초과 시 "한도 초과 NG", 경고가 있으면 "· 경고 N". 툴팁에 빚/한도·경고 단계·규칙.
+  - 저장: `CostSaveState.creditWarnings`(옛 저장은 0, 버전 유지).
+  - 패배 화면이 뜨지 않던 기존 문제 2개 수정: 씬의 `GameOverManager`에 웨이브 매니저·결과 화면 연결이 비어 시간만 멈췄음 → 게임오버 순간 씬에서 찾아 씀. `RunEndToolkitView`가 문서 루트만 켜고 USS가 숨긴 `run-end-root`는 그대로 둬서 화면이 안 보였음 → 실제 패널을 켬. 메인 유닛 사망·청산일 파산에도 해당.
+  - 테스트: `CreditWarningTests` 7개. 전체 EditMode 198/198 통과.
+  - 플레이 실측(1일차, 한도 10,000G): 필수 비용으로 빚 10,500G → HUD "한도 초과 500G". 금화 800G 벌고 영업 종료 → 500G 긴급 상환, 빚 10,000G, 경고 1/5, 조건 12%/25%, 최소 상환 3,150→3,700G, 정산 메모 3줄. 저장·복원 후 경고 1 유지. 경고 5단계에서 90G 초과 → 긴급 상환으로 내려와도 파산, 패배 화면 "신용 경고 5단계에서 또 한도를 넘어 파산했습니다". 콘솔 오류 0.
+  - 확인 못 한 것: 실제 웨이브를 끝까지 돌려 맞은 영업 종료(정산 함수를 직접 호출), 등급·자산에 따른 한도 보너스(미구현).
+  - 남은 문제: 패배 화면이 공용 PanelSettings(정렬 0)를 써서 메인 uGUI 캔버스(50)의 오른쪽 패널이 위로 비쳐 보임.
+  - 기획서 구현 현황, wave-economy·test 규칙 갱신.
+- 패배·승리 화면을 uGUI 위로 올림.
+  - `Assets/Resources/UI/Toolkit/RunEndPanelSettings.asset`(공용 설정 복사, Sort Order 9000 — 설정창 캔버스 5000보다 위, 팝업 10000보다 아래).
+  - `ToolkitDocumentSpawner.Install`에 문서별 `panelSettingsPath` 선택 인자 추가(비우면 공용). `RunEndToolkitBootstrap`이 새 설정을 씀.
+  - 실측: 게임오버 시 패널 `RunEndPanelSettings`(9000), 오른쪽 uGUI 패널까지 어두운 배경 아래로 깔리고 "던전 함락" 카드가 맨 위에 뜸.
+- 함정 타일 조건 구현(기획서 "함정"). 재사용 시간, 발동 방식(밟기·범위·지속)과 아군 피해, 시설 방 금지, 여러 칸 함정 전부(사용자 선택). 분류는 이름 따라, 재사용은 함정별 3~8초(사용자 선택). 칸 수는 내가 정함.
+  - `TrapRules`(새 파일): `TrapTriggerMode`, 지속 피해 나누기(1초마다, 올림·최소 1), 여러 칸 밟기 판정, 범위(덮은 칸에서 사방 N칸), 마우스 칸을 가운데로 두는 기준 칸, 시설·함정 겹침.
+  - `Trap`: `triggerMode`·`footprint`·`cooldownSeconds`·`areaRadiusCells`·`persistentSeconds` 추가. `TriggerBy(enemy)`가 방식별로 처리(밟기=한 명, 범위=주변 적·아군 모두, 지속=3초 동안 1초마다 올라선 적·아군). 재사용 시간·지속 작동은 게임 시간(`TickTrap`). 통로 위 함정은 항상 밟기. 지속형은 작동 한 번에 내구도 한 번만 닳음.
+  - `Enemy`: "방문당 한 번" 기록을 없애고 `Trap.IsReady`·`Covers`로 판정. 함정 피해 뒤처리(공포·위험도·겁쟁이·함정 피해 집계)를 공개 `HandleTrapHit`로 빼서 범위·지속에 휘말린 적도 같은 처리를 받음.
+  - `NodeTrapGrid`: 여러 칸 점유(`CanPlace`·`HasRoomFor`·`FootprintWorldCenter`·`TryGetAnchor`), 덮은 칸 전체 철거, 그림을 칸 수만큼 늘림, `HasLiveTrap`. 핵심부 인접 건물 수는 여러 칸 건물을 한 번만 셈.
+  - `BuildingPlacementPreview`: 마우스 칸을 가운데로 칸 수만큼 테두리·유령 그림. `NodePanelView`: 그만한 빈자리가 있어야 설치 가능, 시설·함정 겹침이면 설치 불가, 대체 칸도 칸 수 기준.
+  - `BuildingPlacement`: `ViolatesFacilityTrapRule` — 손님이 머무는 시설 방에는 함정 불가, 함정이 있는 방에는 그 시설 불가. 저장 복원은 `RestoreCentral`/`RestoreOnCell`로 이 규칙을 건너뜀(규칙 전 저장에서 건물이 사라지지 않게). 기존 테스트가 리플렉션으로 부르는 `InstallCentral`/`InstallOnCell` 시그니처는 그대로 둠.
+  - 저장: 여러 칸 함정은 기준 칸에서 한 번만 저장. 옛 저장의 1칸 함정이 2칸이 되어 그 자리에 안 들어가면 가까운 빈자리로 옮겨 복원.
+  - 설치 카드: "범위(주변 1칸, 아군 포함) · 2×2칸 · 재사용 8초" 줄 추가.
+  - 프리팹 값(에디터 스크립트로 설정): 밟기 — 기본·가시 1×1 5초, 올가미 1×1 3초, 갑옷분쇄 1×1 5초 / 범위 — 압쇄 2×2 8초, 매복 그물 2×1 5초 / 지속 — 칼날 2×1 5초, 마름쇠 1×1 3초, 처형 톱날 2×1 8초.
+  - 테스트: `TrapTileTests` 8개. 전체 EditMode 206/206 통과. (EditMode에서 `NodeTrapGrid.Remove`가 런타임 `Destroy`를 불러 경고가 나서, 에디트 모드에서는 `DestroyImmediate`를 쓰게 함)
+  - 플레이 실측(1일차, 방 2개에 함정 12개씩): 압쇄가 (0,0)~(1,1) 네 칸 모두 차지, 시설·함정 겹침으로 상점 설치 거절. 웨이브 중 칼날(지속 2×1) 4씩 3.00초 작동 뒤 재사용 5초, 압쇄(범위 2×2) 20 피해 뒤 재사용 8초, 마름쇠(지속) 2씩 3.01초 작동 뒤 3초. 정산 "함정 26". 저장·복원 뒤 함정 12개·압쇄 기준 칸 (0,0) 그대로. 콘솔 오류 0.
+  - 확인 못 한 것: 아군 피해(보유 유닛 0명인 판), 배치 미리보기의 실제 마우스 조작, 설치 카드에 한 줄 늘어난 뒤의 카드 레이아웃.
+
+## 2026-10-11
+
+- 유닛 판매 마무리(기획서 "유닛과 판매 목록"). 등급 2단계마다 지원자 +1명·최대 6명, 시세 ±25%·±10% 넘으면 색(사용자 선택).
+  - `UnitMarketRules`(새 파일): 주간 지원자 수, 시세 배율(0.75~1.25), 시세 가격(정가 0이면 0, 옛 저장 배율 0이면 정가), 저렴/보통/비쌈, 하루 유지비(정가 기준).
+  - `HiredUnitRoster`: 지원자마다 시세를 명단에 오를 때 정해 둠. `GetApplicantPrice`·`GetApplicantPriceTier`, 고용 요청은 그 값으로 결제.
+  - 등급에 따른 목록 수(`UnitMarketRules.WeeklyCandidateCount`)는 같은 시기에 다른 작업이 만든 청산일 목록 교체(`RefreshWeeklyRecruitment`) 안에 들어가 있어, 그 작업과 함께 커밋된다.
+  - `ManagementSettlementManager`: 유지비 계산을 `UnitMarketRules.DailyUpkeep`으로 옮기고 `EstimateUnitUpkeep`(민심 반영) 추가.
+  - 정산 화면 유닛 상점: "이름 · 고용 NG (저렴/보통/비쌈) · 유지비 NG/일 · 마력 N" 줄을 시세 색(초록/기본/붉은색)으로, 툴팁에 정가. 두 번째 줄에 특성·성격·떠나는 날.
+  - 저장: `SavedApplicant.priceMultiplier`(옛 저장은 0 → 정가, 버전 유지).
+  - 테스트: `UnitMarketTests` 5개. 전체 EditMode 212/212 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측(청산일로 맞춤): 블루 슬라임 정가 14G → 시세 15·16·12·11G가 매번 다르게 나오고 비쌈은 붉게, 저렴은 초록으로 표시, 유지비 3G/일. 15G 지원자 고용 → 금화 정확히 15 빠짐, 고용 0→1명. 두 번째 줄이 버튼 밖으로 2px 넘쳐 라벨 기본 여백을 없앰. 콘솔 오류 0.
+  - 확인 못 한 것: 등급이 오른 판에서 목록이 실제로 늘어나는 모습(등급 0인 판, 해금된 유닛 1종·종류당 최대 2명 제한 때문에 목록이 짧음). 기획서의 "고등급 유닛일수록 시작 레벨이 낮음"·고유 능력 희귀도 가격은 유닛 레벨 체계가 없어 넣지 않음.
+
+- 주간 계약·유닛 상점 1차 구현(기획서 `WeeklyContractAndUnitMarketDesign`).
+  - `CostManager`: 대출 상품에 계약 기간(기본 1주)을 추가하고, 남은 계약 주를 런 저장에 보관한다. 상품 변경은 청산일이면서 빚이 없을 때만 가능하다. 빚이 남은 계약이 만료되면 같은 상품으로 자동 연장한다.
+  - `ManagementSettlementManager`: 청산이 끝난 뒤 계약 기간을 한 주 진행한다.
+  - `HiredUnitRoster`: 지원자 목록을 매일 만들지 않고 청산일에만 교체한다. 고용 요청은 청산일에만 승인한다.
+  - `SettlementToolkitView`: 계약 잔여 기간, 빚 때문에 상품을 못 바꾸는 이유, 유닛 상점의 영업일 잠금 상태를 표시한다.
+  - 테스트: `SettlementRegressionTests.LoanContract_DefaultProductStartsWithOneWeekRemaining` 추가.
+  - 검증: `dotnet build DungeonKeeper.Runtime.csproj --no-restore`, `dotnet build Defence.EditMode.Tests.csproj --no-restore` 오류 0. Unity Pipeline 연결 뒤 재컴파일은 최신 상태(다시 컴파일할 스크립트 없음), `SettlementRegressionTests` EditMode 29/29 통과, 콘솔 오류 0(경고 54개).
+
+- 파티 공동 자금 구현(기획서 "공동 자금, 사망, 관, 교회"). 예산 합 = 공동 지갑, 금고 약탈금은 공동 자금에 더함, 유닛 사망 시 적 자금 증가는 넣지 않음(사용자 선택). 관 상태·교회 부활은 다음 단계.
+  - `PartyFundLedger`(새 파일, `Code.Enemies`): 파티 번호별 공동 자금. 합류 때 예산을 더함, 시설 결제는 지갑을 넘지 못함, 약탈금 추가, 사망 시 10%(최소 1) 낙전·마지막 한 명이면 전부, 살아 나가면 남은 인원으로 나눈 몫을 들고 감(마지막 한 명은 전부). 시작 자금 대비 50% 미만 적음·150% 초과 많음. 영업 시작 때 비움.
+  - `Enemy`: `Initialize`에서 지갑 합류, 시설 결제를 지갑에서 차감(개인 예산은 "쓸 마음"으로만 남김), 금고 약탈금을 지갑에 넣음, 쓰러질 때 낙전/전멸 회수를 `GoldEarnedEvent`(정산 장부)로 보내고 "낙전 +N"·"파티 자금 회수 +N" 표시, 탈출 때 몫을 잃음. `EnemyMover.PartyId` 공개.
+  - 정산: 수입 줄 "모험가 낙전"·"파티 전멸 회수", 메모 "살아 나간 모험가가 공동 자금 NG를 들고 갔습니다".
+  - 표시: 적 머리 위 글자의 정확한 예산 금액을 "자금 적음/보통/많음"으로 바꿈. 적 상세 창에 "파티 자금 단계" 추가(개인 예산 숫자는 유지).
+  - 테스트: `PartyFundTests` 6개. 전체 EditMode 218/218 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측(1일차, 방 2개에 함정): 3인 파티 지갑 40G(예산 10+16+14), 머리 위 "휴식 · 자금 보통". 웨이브 결과 2명 쓰러지며 낙전 합계 7G, 1명 탈출하며 33G를 들고 감. 정산 수입 "모험가 낙전 7", 메모에 33G 표시. 콘솔 오류 0.
+  - 확인 못 한 것: 파티 전멸 회수가 실제로 나는 장면(이번 판은 한 명이 탈출), 금고를 턴 파티를 잡아 되찾는 장면, 시설 결제가 지갑 바닥으로 막히는 장면.
+
+- 관 상태·교회 부활 구현(기획서 "공동 자금, 사망, 관, 교회"). 교회는 플레이어가 짓는 시설, 부활비 10G + 레벨×5G·모자라면 낸 비율만큼 체력(최소 25%), 관은 쓰러진 그림을 어둡게(사용자 선택).
+  - `PartyCoffin`(새 파일): 파티원이 쓰러졌는데 동료가 남아 있으면 관이 생겨 살아 있는 파티원 뒤를 따라감(싸우지도 맞지도 않음, 웨이브 남은 적 수에 안 셈). 쓰러진 그림을 어둡게 칠해 0.8배로. 파티 전멸·마지막 한 명 탈출·영업 시작/종료 때 치움. 보스는 관이 되지 않음.
+  - `Church`(새 `Building`) + `ChurchRevivalRules`: 관을 끈 파티원이 교회 방에 들어오면 관마다 공동 자금에서 부활비를 받고 그 방에서 되살림. 받은 값은 "교회 부활비" 수입. 되살아난 모험가가 같은 방에 서며 다시 부르는 것을 막는 재진입 방지.
+  - `WaveManager.ReviveFromCoffin`: 같은 데이터·레벨·파티 번호·목적으로 다시 세우고(예산 0, 지갑은 이미 파티에 있음) 체력을 비율만큼. 되살아난 모험가는 방문객 수에 더하고, 다시 쓰러지면 처치도 다시 셈.
+  - `Enemy`: 관을 끌고 있으면 경로 목표가 가장 가까운 문 연 교회가 됨. 교회 방 도착 시 부활.
+  - 에셋(에디터 스크립트로 생성): `Prefabs/Buildings/Facilities/Church.prefab`(여관 프리팹을 복사해 Inn 대신 Church, 비용 채널 유지), `Data/Buildings/ChurchBuildingData.asset`(교회, 건설 30G, 운영비 3G, DwellSeconds 2 → 유닛·함정 금지, 그림은 임시로 여관 그림), 해금 카탈로그에 3일차 해금으로 추가.
+  - 테스트: `ChurchRevivalTests` 5개. 전체 EditMode 223/223 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측(1일차, 확장한 방에 교회): 5인 파티에서 한 명(검사, 1레벨)을 쓰러뜨리자 지갑 85→77(낙전 8), 관 1개, 남은 파티원의 목표가 교회 방으로 바뀜. 0.3초 뒤 파티원이 교회에 들어가 부활비 15G를 내고 그 방에서 14/14로 되살아남, 관 사라짐. 정산 수입 "교회 부활비 15·모험가 낙전 8". 콘솔 오류 0.
+  - 확인 못 한 것: 관이 파티를 따라다니는 모습(카메라 밖), 돈이 모자라 낮은 체력으로 살아나는 장면(규칙은 테스트), 교회 설치 카드·해금 화면. 적 머리 위 자금 단계는 기분이 바뀔 때만 다시 그려져 조금 늦게 바뀔 수 있음.
+
+- 주간 보스 예고·보스별 패배 조건 구현(기획서 "던전 등급과 최종 보스"). 확정 구조(7일마다 보스)에 붙이고 "최종 보스"는 만들지 않음. 조건은 보스 성격대로, 예고는 전날 정산 + 보스 날 HUD(사용자 선택). 던전 주인 유닛이 방에 서지 않는 구조라 "핵심 유닛 처치"는 부하 손실, "핵심 방 침입"은 금고 방 도달로 둠.
+  - `WaveConfigSO.BossEntry`: `timeLimitSeconds`(입장 뒤 게임 초)·`loseOnTreasuryBreach`·`loseAfterUnitsDowned` 추가. `WaveConfig.asset`(에디터 스크립트): 7일 토벌대장 150초 / 14일 탐욕의 기사 금고 방 침입 / 21일 사냥꾼 두목 부하 3명 / 28일 왕국 기사단장 180초 + 금고 방 침입.
+  - `BossDefeatRules`(새 파일): 패배 판정과 패배 이유 문구, 예고 문구, HUD 진행 문구(남은 시간·부하 손실 N/M).
+  - `WaveManager`: 보스가 살아 있는 동안 경과 시간을 흘리고(웨이브 루프), 보스가 금고 방에 들어오면(`ReportBossEnteredRoom`, `Enemy`가 호출) 침입, `UnitDownedEvent`로 부하 손실을 셈. 조건을 채우면 `GameOverManager.TriggerRunDefeat(이유)`. `TryGetBossPreview(day)`·`BossDefeatProgressText` 공개.
+  - 정산 메모: 내일이 보스 날이면 "내일 보스: 이름 · 조건". HUD 파티 목록: 보스 날 준비 중 "오늘 보스 · 이름 / 조건", 보스가 있는 동안 "보스 패배 조건 / 남은 시간 N초…". 긴 문구는 말줄임 + 툴팁.
+  - 테스트: `BossDefeatTests` 5개(청산일 보스 4명 모두 조건이 있는지 포함). 전체 EditMode 228/228 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측: 6일차 정산 메모 "내일 보스: 토벌대장 · 150초 안에 처치"(5일차엔 없음, 13일차엔 탐욕의 기사 금고 조건). 7일차 준비 HUD "오늘 보스 · 토벌대장 | 150초 안에 처치". 웨이브 중 "보스 패배 조건 | 남은 시간 145초". 경과 시간을 145초로 당기자 150초에 게임오버, 패배 화면 "토벌대장을(를) 150초 안에 쓰러뜨리지 못해 던전이 무너졌습니다". 콘솔 오류 0.
+  - 확인 못 한 것: 금고 방 침입·부하 손실 패배의 실제 장면(규칙은 테스트), 보스별 교회 부활 가능 여부(지금 보스는 관이 되지 않음).
+
+- 사건 우선순위·기록 구현(기획서 "이벤트, 튜토리얼, 메타 진행"). 운영 방침 = 주요 사건(반드시 선택, 3일마다 그대로), 일차 대화 = 일반 사건(4~6회 전환 쿨다운, "아무것도 하지 않음"), 처음 보는 선택지는 일부만 숨김(사용자 선택).
+  - `RunEventLedger`(새 파일): 전환(영업 종료)마다 한 번 판정. 주요 사건이 뜨는 전환엔 일반 사건을 미루고(쉬는 시간은 줄어든 채로 다음 전환), 일반 사건이 나오면 쉬는 시간을 4~6회로 다시 건다. 같은 날을 여러 번 물어도 처음 판정을 돌려줘 방침·대화 중 누가 먼저 물어도 같다. 고른 선택지 키(`policy:이름`, `dialogue:시퀀스:줄:선택지`) 기록.
+  - `MoralePolicyManager`: `Events`(장부) 소유, `TryGrantNormalEvent(day)`, 방침을 고르면 기록. 저장(`SavedPolicyState.hasEventLedger`·`chosenEventKeys`·`normalEventCooldown`, 옛 저장은 처음부터 셈).
+  - `DialogueRunner`: 정기 이벤트를 "N일마다" 대신 장부 판정으로 띄움(장부가 없으면 예전 간격). 정기 이벤트일 때만 선택지 꾸밈 — 처음 보는 선택지는 결과 요약을 "결과는 골라 봐야 안다"로, 고른 적 있으면 요약 + "· 확인함", 맨 끝에 "아무것도 하지 않음"(아무 효과 없이 닫음). 튜토리얼 대화는 그대로. `DialogueChoice.WithEffectSummary` 추가.
+  - `DialogueView`: 선택지가 셋이 되며 마지막 칸이 대사 상자(고정 높이) 밖으로 빠져서, 넘치면 한 줄짜리 선택지를 34로 두고 두 줄짜리만 남는 자리에 맞게 줄임.
+  - 운영 방침 화면: 즉시 효과(민심·금화)는 늘 보이고 지속 효과(일별 민심·공격·방어)는 처음엔 "? 지속 효과", 고른 적 있으면 전부 + "· 확인함".
+  - 테스트: `RunEventLedgerTests` 5개. 전체 EditMode 233/233 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측: 전환 판정 1~13일 — 4일·10일에 일반 사건, 나올 때마다 쉬는 시간 6으로 재설정. 정기 이벤트("경비병 이탈") 선택지 두 개가 "결과는 골라 봐야 안다" + "아무것도 하지 않음", 첫 선택지를 고른 뒤 같은 사건을 다시 띄우자 "골드 -30 / 민심 +8 · 확인함"으로 바뀌고 나머지는 계속 가려짐, "아무것도 하지 않음"을 누르자 대화가 닫힘. 운영 방침: 계엄령이 처음엔 "민심 -20 · ? 지속 효과", 고른 뒤엔 "민심 -20 · 5일간 민심 -3/일 · 공격 +35% · 방어 +5 · 확인함". 대사 상자 안에 선택지 셋이 모두 들어감. 콘솔 오류 0.
+  - 확인 못 한 것: 실제 웨이브를 연달아 끝내며 맞은 전환(판정 함수를 직접 호출), 방침과 일반 사건이 같은 전환에 겹쳐 미뤄지는 장면(규칙은 테스트), 저장·복원 후 기록 유지(규칙은 테스트). "긴급 운영 사건"(파산·위험 운영 문제) 같은 새 사건 내용은 아직 없음.
+
+- 메타 진행 1차 구현(기획서 "엔딩 메타 진행"). 기록 + 시작 보정, 진행도 = 버틴 날 + 보스 처치 × 10(사용자 선택). 끝없는 판이라 "엔딩"은 패배(게임오버) 시점.
+  - `MetaProfile`·`MetaRunState`·`MetaRunResult`·`MetaProgressRules`·`MetaProfileStore`·`MetaRunStarter`(새 파일, `Code.Progression`): 판 저장과 따로 `defence-meta.json`에 최고 기록(버틴 날·등급·처치·보스)과 누적 진행도·장착 보정·진행 중인 판 기록을 둠(임시 파일에 쓴 뒤 바꿔치기). 장착 칸 1→2(진행도 30)→3(100). 보정 3종: 비상금(시작 금화 +100, 진행도 0), 민심 안정(시작 민심 +15, 20), 마력 비축(부활 마력 최대 +10·판 내내, 50).
+  - 새 판 판정: 게임 씬이 열릴 때 판 저장이 없으면 새 판 — 장착 중 열려 있고 칸에 드는 보정만 이번 판 보정으로 확정해 전부 건다. 이어하기면 판 내내 유지되는 보정(마력 비축)만 다시 건다. 씬 배선 없음.
+  - 기록: 영업 종료마다 처치·최고 등급, 보스 처치 때 보스 수를 프로필에 바로 적음(이어하기를 거쳐도 남음). 게임오버 때 `RecordRunEnd`로 진행도·최고 기록 정산.
+  - `UnitRevivalSystem.AddMaxManaBonus`, `MoralePolicyManager.ApplyBonusMorale` 추가.
+  - 결과 화면: "진행도 +N (누적 M)", 신기록이면 "최고 기록!", 칸이 늘면 안내. 타이틀: 최고 기록·진행도·판 수, "새 게임 시작 보정 N/M칸", 보정 3개를 장착/해제 버튼으로(잠긴 것은 "진행도 N에 열림", 칸이 차면 비활성).
+  - 테스트: `MetaProgressTests` 6개(임시 파일 사용). 전체 EditMode 239/239 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측(판 저장·메타 기록 백업 뒤): 메타 기록을 진행도 60·장착 [비상금, 마력 비축]으로 두고 판 저장 없이 게임 씬 → 금화 200→300, 부활 마력 40/40(+10), 이번 판 보정 [0,2] 기록. 게임오버 → 판 수 +1, 결과 화면 "진행도 +0 (누적 60)"(0일차 판). 타이틀 씬 → "최고 9일 · 최고 등급 0 · 보스 0명 / 진행도 60 · 3판", "새 게임 시작 보정 2/2칸", 칸이 차서 민심 안정 비활성. 원래 메타 기록 파일이 없어서 실측 뒤 다시 지우고 판 저장 복원. 콘솔 오류 0.
+  - 확인 못 한 것: 실제로 며칠 버틴 판의 진행도 정산, 이어하기 때 마력 비축 재적용(규칙은 코드 경로로만 확인), 보스 처치 집계의 실제 장면. 유닛·시설·함정 해금 같은 콘텐츠 해금은 이번 범위 밖.
+
+## 2026-10-13
+
+- 긴급·상황 사건 구현(기획서 "가장 위험한 운영 문제"). 종류: 청산 위기·부채 한도 위험·멈춘 시설(사용자 선택, 민심 바닥은 제외). 우선순위: 청산 위기만 운영 방침보다 위. 쉬는 시간: 상황 사건은 일반 사건과 공유. 금액은 코드로 지금 수치에 맞춰 생성(모두 사용자 선택).
+  - `SituationEventRules`(새 파일): 판정(내일 청산 + 금화 < 최소 상환액 → 청산 위기 / 빚 ≥ 한도 90% 또는 경고 3단계 → 부채 한도 위험 / 내구도 0 시설 → 멈춘 시설, 이 순서로 하나)과 선택지 수치(급전 = 늘어난 상환액까지 채우는 금화·그 130%를 빚, 상납금 = 부족분 절반·민심 -12, 조기 상환 = 빚 20%까지·수수료 10%·보유 금화 안에서, 기관 접대 = 30 + 경고×20G·경고 -1, 긴급 수리 = 수리비 ×1.5, 일꾼 징발 = ×0.5·민심 -8). 금화는 정수 백분율로 계산(실수 올림에서 1G가 튀던 문제 회피).
+  - `RunEventLedger`: 전환 하나의 사건 종류(`TransitionEventKind`: 없음·일반·상황·주요·긴급)를 고르는 판정 추가. 긴급은 쉬는 시간과 무관하고 그날 운영 방침을 다음 전환으로 미룸(`PolicyDeferred`, 저장 `policyDeferred`). 상황 사건은 쉬는 시간이 끝났을 때 일반 사건 대신 나옴. 기존 bool 판정은 그대로 둠.
+  - `MoralePolicyManager`·`DialogueRunner`: 사건 판정을 영업 종료 정산의 맨 끝(부채 한도 판정 `CreditStatusChangedEvent`)으로 옮김 — 정산이 반영된 금화·빚을 봐야 해서. 비용 채널이 없는 씬은 예전처럼 영업 종료 때 판정. 파산한 날은 판정하지 않음.
+  - `SituationEventFactory`·`RuntimeDialogueActionSO`(새 파일): 상황 사건을 대화로 만들고(결과를 가리지 않음, 금화가 모자란 선택지는 " · 금화 부족"을 붙여 잠금), 사건이 끝나면 만든 대화와 액션을 버림. `DialogueChoice`에 저장되지 않는 잠김 값 추가.
+  - `CostManager`: `TakeEventLoan`(한도 무시·`NoteCreditLimit`), `TryRepayEarly`, `TryReduceCreditWarning`, `PreviewWeeklyDue`. `FacilityClosureSystem`: `RepairWornOutNow`(내구도 0 시설 전부 즉시 수리, 시설마다 "시설 수리비" 장부), `WornOutRepairCost`.
+  - 테스트: `RunEventLedgerTests` +10(긴급 우선·방침 미룸·쉬는 시간 무관·상황 사건 쉬는 시간 공유·방침 뒤 대기·미룸 저장, 판정 순서·부채 위험 기준·급전이 늘어난 상환액까지 채움·조기 상환이 보유 금화를 넘지 않음·잠긴 선택지). 전체 EditMode 249/249 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측(판 저장 백업 뒤 영업 종료 이벤트를 직접 발생): 6일차 금화 50·빚 1000 → "청산 위기", 상환액 300G에 250G 부족, 급전 "금화 +411, 빚 +535" 선택 → 금화 461 = 새 상환액 461. 10일차 빚 9499/10000 → "부채 한도 위험", 조기 상환 "금화 -500, 빚 -454 (수수료 46)" 선택 → 금화 0·빚 9045, 경고 0이라 기관 접대 잠김. 임시 상점을 세워 내구도 0 → "멈춘 시설", 긴급 수리 -120G 선택 → 즉시 20/20·수리 횟수 1, 금화 3일 때 두 수리 선택지 "금화 부족"으로 잠김, 일꾼 징발 -50G·민심 -8 → 즉시 20/20. 상황 사건 뒤 쉬는 시간 5~6으로 재설정, 쉬는 중엔 일반 사건 대신 아무것도 안 뜸. 처음 문구가 세 줄이라 첫 선택지를 덮어서 두 줄로 줄임. 실측 뒤 판 저장 복원, 콘솔 오류 0.
+  - 참고: 씬의 운영 방침은 영업 종료가 아니라 하루 시작에 뜬다(`offerAfterWaveEnd = 0`). 그래서 지금 씬에서는 청산 위기와 운영 방침이 같은 전환에 겹치지 않는다(겹칠 때 미루는 규칙은 테스트로만 확인).
+  - 확인 못 한 것: 실제 웨이브를 끝내고 맞은 상황 사건, 정산 창과 사건 창이 함께 뜰 때의 순서, 저장·복원 뒤 미룬 방침 유지(규칙은 테스트).
+
+- 아군 사망 부활비 금화 구현(기획서 "아군 유닛 사망 시 금화 부활비가 해당 파티 공동 자금으로"). 금액 = 고용 정가 50%(올림) + 레벨 1 위로 레벨당 5G, 쓰러질 때 즉시·모자라면 빚, 받는 파티 = 마지막으로 때린 모험가 기록, 받을 파티가 없으면 면제(모두 사용자 선택).
+  - `UnitRevivalGoldRules`(새 파일): 금액 계산과 받는 파티 결정(5초 안에 마지막으로 때린 파티가 살아 있으면 그 파티, 아니면 같은 방에서 살아 있는 인원이 가장 많은 파티, 없으면 -1 = 면제).
+  - `Combatant`: 맞을 때 때린 모험가의 파티 번호·시각을 기록(`NoteAttacker`, `LastAttackerPartyId`, `OwnerPartyId`). 평타·원거리 스플래시에서 기록. `HitAttribution`(새 파일): 스킬 효과는 시전자를 넘기지 않아서 `SkillCaster`가 시전하는 동안만 공격자를 걸어 두고 `BattleAgent.TakeSkillDamage`가 읽음. 지연 폭발·지대처럼 나중에 터지는 피해와 상태이상 피해는 기록되지 않아 방 기준으로 정함.
+  - `UnitRevivalSystem`: 새로 쓰러진 부하를 찾을 때 부활비 금화를 받는 파티 지갑에 넣고(`PartyFundLedger.AddLoot`) `GoldLostEvent(UnitRevival)`을 냄 — 웨이브 중 다른 지출처럼 정산에서 빠지고 모자라면 정산 적자로 빚. 마력 부활 대기는 그대로. `GetRevivalGold` 추가.
+  - `GoldChangeSource.UnitRevival`, 정산 장부 이름 "부하 부활비 (모험가 지갑으로)".
+  - 테스트: `PartyFundTests` +3(금액, 받는 파티: 때린 파티·방의 가장 큰 파티·없음, 스킬 공격자 기록 복원). 전체 EditMode 252/252 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측(판 저장 백업 뒤): 빈 방에 뱅가드(정가 82G) 둘을 임시 배치. 영업 전 모험가가 없을 때 쓰러뜨림 → 받을 파티 없음, 장부 지출 0, 금화 그대로. 영업 시작 뒤 같은 방의 모험가가 때린 것으로 기록하고 쓰러뜨림 → 그 파티 자금 36 → 77(+41), 정산 지출 0 → 41(웨이브 중이라 금화는 정산 때 빠짐). 실측 뒤 판 저장 복원, 콘솔 오류 0.
+  - 확인 못 한 것: 실제 전투의 평타·스킬로 쓰러졌을 때의 공격자 기록(기록은 직접 호출로 넣음), 영업 종료 정산에서 금화가 빠지는 장면, 그 파티를 잡아 낙전으로 되찾는 장면. 부활비 금화는 HUD 부활 대기 목록에는 나오지 않고 정산 장부에만 나온다.
+
+- 보스별 교회 부활 가능 여부 구현(기획서 "교회 부활 가능 여부도 보스 종류별로 다르다"). 보스 성격대로(사용자 선택): 7일 토벌대장 불가, 14일 탐욕의 기사 가능, 21일 사냥꾼 두목 불가, 28일 왕국 기사단장 가능. 29일 이후 공용 보스는 가능.
+  - `WaveConfigSO.BossEntry.allowChurchRevival`(기본 true). `WaveConfig.asset` 값은 에디터 스크립트(SerializedObject)로 넣음.
+  - `WaveManager.IsChurchRevivalBlocked`: 교회 부활을 끈 보스의 웨이브가 도는 동안 true. `Enemy`는 이때 쓰러진 호위를 관으로 만들지 않음(보스는 원래 관이 되지 않음).
+  - 예고: `BossDefeatRules.DescribePreview`가 패배 조건 뒤에 "교회 부활 가능/불가"를 붙임 — 전날 정산 메모와 보스 날 준비 HUD에 같이 나옴.
+  - 테스트: `BossDefeatTests` +2(예고 문구, 보스별 값). 전체 EditMode 254/254 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측(판 저장 백업 뒤): 예고 "토벌대장 / 150초 안에 처치 · 교회 부활 불가", "탐욕의 기사 / 금고 방 침입 시 패배 · 교회 부활 가능". 7일 보스 웨이브에서 호위(종군 사제)를 쓰러뜨림 → 관 0→0. 14일 보스 웨이브에서 호위(순례 성직자) → 관 0→1. 판 저장 복원. 콘솔에는 플레이를 두 번 연달아 멈출 때 "Game Music Player가 정리되지 않았다"는 기존 경고성 오류 하나만 남음(이번 변경과 무관).
+  - 확인 못 한 것: 14·28일에 관을 끈 파티가 실제로 교회에서 되살리는 장면(교회 부활 자체는 이전 작업에서 실측).
+
+- 방 크기(소·중·대) 구현(기획서 "확장 노드는 소형·중형·대형, 열기 전에 공개, 일부는 던전 등급 조건, 크기별 공사·환불"). 격자는 그대로 두고 수치만, 후보마다 무작위·등급 따라 대형 증가(모두 사용자 선택).
+  - `RoomSize`·`RoomSizeRules`(새 파일): 소형 확장비 ×0.5·공사 3초·팀당 2명·시설 불가·취소 환불 70%, 중형 기존값(8G·4초·3명·50%), 대형 ×2·8초·4명·환불 30%·던전 등급 2 필요. 후보 확률 등급 0: 소 40·중 50·대 10%, 등급마다 대 +5%p(최대 40)·소 -3%p(최소 20). 저장 값 0이 중형이라 옛 저장의 방은 모두 중형.
+  - `DungeonGraphController`: 후보 크기를 자리마다 한 번 뽑아 두고(다시 그려도·공사를 취소해도 같은 크기), 후보 위에 "소형 / 4G · 3초"처럼 표시(등급이 모자라면 "대형 / 등급 2 필요"). 등급이 모자란 대형 후보를 누르면 "등급 부족" 알림. 확장 확인 창에 크기·공사 시간·팀당 인원·시설 가능 여부·취소 환불률. 확장비·공사 시간·취소 환불이 크기를 따름. 그래프 방이 3개 이하일 때의 후보는 중형 고정(첫 확장·튜토리얼 보호). 판 저장에 방 크기 추가(`SavedNode.roomSize`), 후보 크기는 저장하지 않음.
+  - `Node.SetRoomSize`/`Size`, `NodeBattlefield.SetMaxPerTeam`: 크기에 맞춰 팀당 정원(유닛·모험가 모두)을 바꿈. `BuildingPlacement.ViolatesRoomSizeRule`: 소형 방에는 시설(금고 제외) 설치 불가 — 설치 경로와 방 패널 버튼 둘 다 막음.
+  - 테스트: `RoomConstructionTests` +3(크기별 수치·라벨, 후보 확률, 정원과 소형 시설 금지). 전체 EditMode 257/257 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측(판 저장 백업 뒤 결제 완료 경로로 방을 연달아 지음): 처음 세 방은 중형. 이후 후보에 소형·중형·대형이 섞여 나옴(대형 후보도 한 번 자연히 나옴). 후보 라벨 "중형 / 8G · 4초", "소형 / 4G · 3초", "대형 / 등급 2 필요". 소형 방 정원 2·공사 3초, 대형 방 정원 4·공사 8초. 취소 환불: 소형 4G → 2G, 대형 16G → 4G. 등급 0에서 대형 후보를 누르면 확장 창 대신 "등급 부족" 알림. 판 저장 캡처에 방마다 크기가 들어감. 실측 뒤 판 저장 복원, 콘솔 오류 0.
+  - 확인 못 한 것: 후보 위 두 줄 라벨이 방 그림 안에 잘 들어가는지(지도 화면을 찍지 못함), 정원 2·4 방에서의 실제 전투, 저장을 불러온 뒤 방 크기 복원(캡처만 확인). 특수 효과 노드·연결 방향 공개는 이번 범위 밖.
+
+- 시설 기능 저하 세부 구현(기획서 "파티 레벨·적 특성으로 내구도 감소, 낮은 내구도는 대기열 지연·특수 기능 약화"). 마모 요인: 파티 레벨·쇼핑광 2배·엘리트/보스 3배, 저하 효과: 이용 시간 지연·부가 효과 약화(모두 사용자 선택).
+  - `FacilityDurabilityRules`: `WearMultiplier`(레벨 1 위로 레벨당 +25%, 쇼핑광 ×2, 엘리트(강함 4단계 이상)·보스 ×3, 곱), `DwellTimeMultiplier`(내구도 절반까지 1, 바닥 근처 1.5), `ScaleEffect`(효과를 수입 배율 50~100%로 줄이고 0.5는 올림 — 1점 효과는 남고 2점부터 줆).
+  - `Building`: `RecordVisitWear(배율)` — 소수 마모를 쌓았다가 1이 되면 깎음, `EffectiveDwellSeconds`, `ScaleServiceEffect`. `Enemy`: 머무는 시간을 내구도에 맞춰 늘리고 같은 총액을 늘어난 시간에 나눠 냄(시간이 늘어도 더 벌지 않음), 손님 배율로 마모. `Store` 공격·`Inn` 회복·`Blacksmith` 공격/방어 효과를 내구도에 맞춰 줄임(여관 상태이상은 그대로).
+  - 테스트: `FacilityDurabilityTests` +4(마모 배율, 소수 마모 누적, 이용 시간 지연, 효과 약화). 전체 EditMode 261/261 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측(판 저장 백업 뒤 임시 상점을 세우고 내구도 5/20): 이용 시간 3초 → 3.75초. 영업을 시작하자 엘리트로 잡힌 용병 검사(레벨 1)가 머물며 이용 시간 3.75초, 내구도 5 → 2(엘리트 ×3). 내구도 2/20에서 이용 시간 4.2초. 판 저장 복원. 콘솔에는 플레이를 멈출 때 나는 기존 "Game Music Player가 정리되지 않았다" 메시지만 남음(이번 변경과 무관).
+  - 참고: 1일차 용병 검사도 강함 4단계라 엘리트로 잡혀 3배로 닳았다. 강함 단계 기준이 낮으면 초반 시설이 빨리 닳을 수 있다.
+  - 확인 못 한 것: 쇼핑광·레벨 높은 손님의 실제 마모, 효과 약화의 실제 장면(규칙은 테스트), 늘어난 이용 시간이 대기열을 밀리게 하는 장면. 시설 등급·전투·이벤트에 따른 마모는 범위 밖.
+
+- 시설 마모 마무리(기획서 "시설 등급·전투·이벤트로 내구도 감소"). 등급: 승급 시설은 튼튼하게, 전투: 시설 방에서 쓰러지면, 사건: 기존 사건에 마모 행동(모두 사용자 선택).
+  - `BuildingDataSO.FacilityTier`(기본 1) 추가, `FacilityDurabilityRules.MaxDurability`(등급 1 오를 때마다 +50%), `CombatDeathWear` = 2. `Building.MaxDurability`가 등급을 반영(지을 때·복원 때 모두), 손님 아닌 마모용 `Building.ApplyWear`(수익 시설만, 실제로 깎인 양을 돌려줌).
+  - 전투: `FacilityEconomyRules.ApplyCombatDeathWear` — 모험가가 쓰러질 때(`Enemy.BeginDeath`)와 아군이 쓰러질 때(`UnitRevivalSystem`) 그 방의 수익 시설 -2.
+  - 사건: 새 액션 `FacilityWearDialogueActionSO`(모든 수익 시설을 값만큼 깎음, `FacilityEconomyRules.WearAllFacilities`)와 `FacilityWearMinus3DialogueAction.asset`. 시장 화재 "자력 복구를 지시한다", 광산 붕괴 "남은 광석을 회수한다", 무너진 갱도 "그대로 둔다"에 붙이고 요약 끝에 " / 시설 내구도 -3"을 더함(에디터 스크립트).
+  - 에셋: 무기 상점·큰 주점·깊은 광산 `FacilityTier` = 2(에디터 스크립트). 깊은 광산은 손님이 머물지 않아 지금은 내구도 규칙과 무관.
+  - 테스트: `FacilityDurabilityTests` +3(등급별 최대 내구도·복원 상한, 전투/사건 마모가 수익 시설만 깎음, 승급 등급·사건 마모 에셋 연결과 요약 일치). 전체 EditMode 264/264 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측(판 저장 백업 뒤 빈 방에 큰 주점을 세움): 큰 주점 30/30, 사건 행동 실행 뒤 27/30. 영업을 시작하자 엘리트 용병 검사가 머물며 24/30(손님 마모 ×3), 그 손님을 그 방에서 쓰러뜨리자 22/30(-2). 판 저장 복원, 콘솔 오류 0.
+  - 확인 못 한 것: 대화 창에서 사건 선택지를 직접 골라 깎이는 장면(행동 실행만 확인), 아군이 시설 방에서 쓰러지는 장면(시설 방에 유닛을 세울 수 없어 드묾).
+
+- 방 특수 효과와 연결 방향 공개(기획서 "열기 전에 크기·연결 방향·특수 효과 공개, 특수 효과별 공사 시간·환불"). 효과: 공간 역할별 3종, 규칙: 드물고 느리게, 공개: 후보 위 연결 표시(모두 사용자 선택).
+  - 새 파일 `RoomFeature`(없음·풍요·요새·함정 지대), `RoomFeatureRules`(15% 확률, 확장비 ×1.5, 공사 +2초, 취소 환불 -20%p, 풍요 수입 ×1.25, 요새 부하 피해 ×0.8·최소 1, 함정 지대 함정 피해 ×1.5, 연결 방향 예측 `PredictConnections`·화살표 `ConnectionLabel`).
+  - `DungeonGraphController`: 자리마다 효과를 한 번 뽑아 유지(`_candidateFeatures`, 그래프 방 3개 이하일 때는 없음), 효과 반영 비용·공사 시간·취소 환불, 후보 라벨 "중형 · 요새 / 12G · 6초 / 연결 ↘↓", 확장 창에 효과 설명·환불 비율·연결 방향. 공사 취소해도 같은 효과. 저장 `SavedNode.roomFeature`(옛 저장은 없음).
+  - `Node.Feature`·`SetRoomFeature`(열린 방 정원 표시 앞에 효과 이름). 효과 적용: `FacilityEconomyRules.ScaleIncome`(풍요), `Health.ModifyIncomingDamage`(요새, 부하의 전장 방을 봄), `Trap.CurrentDamage`(함정 지대).
+- 메타 콘텐츠 해금(기획서 "유닛·함정·시설, 기관·특약·이벤트를 진행도로 새 판 후보에 추가"). 범위: 유닛·함정·시설 + 사건, 기관·특약은 다른 작업(주간 계약)이 끝난 뒤로 미룸(사용자 선택).
+  - 새 파일 `MetaUnlockRules`(단계 10·25·50, `IsMet`·`BecameUnlocked`·`NextTier`). `DungeonUnlockEntry.metaProgressRequired`: 모자라면 해금일이 와도 그 판에 열리지 않고(`IsUnlockedOn`), 안내 앞에 "진행도 N 필요". `InstallableBuildingCatalog` 시작 해금도 같은 조건. `DialogueSequenceSO.metaProgressRequired`: 모자라면 `DialogueRunner`가 사건 후보에서 뺌.
+  - 에셋(에디터 스크립트): 10 = 그림자 암살귀·깊은 광산·갑옷분쇄 함정·사건 파묻힌 유물, 25 = 주술 임프·큰 주점·무기 상점·압쇄 함정·사건 야시장 제안, 50 = 레드 슬라임·오우거·처형 톱날·사건 이웃 군주의 전갈.
+  - 결과 화면에 "다음 판부터 새로 나옴: …"(이번 판으로 단계를 넘긴 콘텐츠), 타이틀 기록 줄에 "새 콘텐츠 N에 열림".
+- 테스트: `RoomConstructionTests` +3(특수 효과 확률·대가·효과, 연결 방향 예측·화살표·입구 대각선, 열린 방 효과 표시), `MetaProgressTests` +2(진행도 잠금·안내·단계 함수, 잠금 에셋 단계 값). 전체 EditMode 269/269 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+- 플레이 실측(판 저장 백업 뒤, 끝나고 복원·메타 캐시 다시 읽음):
+  - 후보 셋을 요새로 바꿔 다시 그리자 라벨 "중형 · 요새 | 12G · 6초 | 연결 ↘↓", "… 연결 ↑↗", "… 연결 →". 글꼴(The Jamsil 5 Bold SDF)에 화살표 글자가 있음. 결제 경로로 짓자 중형·요새 방, 공사 6초, 12G 결제, 판 저장 캡처 roomFeature = 2.
+  - 효과: 함정 피해 8 → 함정 지대 12, 상점 수입 20 → 풍요 25, 배치한 파란 슬라임에 피해 5 → 요새에서 4.
+  - 메타: 진행도 0이면 잠근 10개가 20일차에도 안 열리고 사건 후보 10개, 10이면 3개+사건 1, 25면 7개+사건 2, 50이면 전부+사건 13개. 안내 "진행도 10 필요 · 11일차 · …". 진행도 5에서 8일 버틴 판을 끝내자 결과 줄 "진행도 +8 (누적 13) · 최고 기록! / 다음 판부터 새로 나옴: 그림자 암살귀, 깊은 광산, 갑옷분쇄 함정, 사건 '파묻힌 유물'". 콘솔 오류 0.
+  - 확인 못 한 것: 확장 창 실제 화면(문구는 코드 경로만), 자연히 뽑힌 특수 효과 후보, 결과 화면·타이틀 화면을 직접 띄운 모습, 실제 판을 끝낸 뒤 다음 판에서 잠금이 풀린 고용·설치 목록.
+
+- 남은 기획 1차 묶음(기획서 "일부 구현" 남은 줄 중 다른 작업과 겹치지 않는 것). 부활비: 고용 정가 + 특성, 사건 정지: 고를 때까지 정지, 재배치: 특성마다 하나씩, 엔딩: 단계별 공개 + 타이틀 버튼(모두 사용자 선택).
+  - 부활 마력 비용: 새 파일 `RevivalManaCostRules` — (기본 15 + 레벨당 8 + 고용 정가 10G당 1) × 특성(수호자 1.2·공격적 1.1·강인함 0.9·야전 의무병 0.8), 반올림·최소 1. `UnitRevivalSystem.GetRevivalCost`가 사용. 기존 `SettlementRegressionTests.Revival_CostsMoreForAUnitYouRaised` 기대값을 15 → 19로(정가 40G → +4).
+  - 사건 정지: `DialogueRunner`가 일반·상황 사건을 띄울 때 `GameSpeedController.Suspend`, `Stop`·비활성화 때 `Release`. 튜토리얼 말풍선은 그대로.
+  - 재배치 반응(`RedeployRules`): 강인함 준비 ×0.5, 신중함 ×1.5·준비 중 피해 0, 수호자 준비 중 피해 25%(최소 1), 공격적 준비 뒤 첫 평타 +50%(`Unit.ConsumeRedeployFirstStrike`·`Combatant`), 야전 의무병 도착한 방 아군 최대 체력 10% 회복(`UnitManagementSystem.TryMove`). 이동 안내 문구에 반응을 덧붙임.
+  - 엔딩: `RunEndPanel.uxml/uss`에 진행도 줄(`run-end-meta`, 고정 높이)과 '타이틀로' 버튼(빌드 0번 씬) 추가, 제목 → 통계(0.9초) → 진행도(1.6초) → 버튼(2.3초, 그때부터 누를 수 있음) 순서로 드러남(실제 시간, 패널 스케줄러). `RunEndToolkitView`의 사건 찾기를 `FindAnyObjectByType`로.
+  - 테스트: `RedeployPreparationTests` +4(특성 반응 수치, 공격적 첫 공격 1회, 신중함 준비 중 피해 0, 부활 마력 비용). 전체 EditMode 273/273 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측(판 저장 백업 뒤, 끝나고 복원): 파란 슬라임(정가 14G) 부활 마력 비용 특성 없음 16·야전 의무병 13. 의무병을 옆방으로 옮기자 "전입 완료 · 준비 1초 · 도착한 방 아군 체력 10% 회복", 그 방 아군 체력 14 → 16/20. 신중함으로 옮기자 준비 1.5초, 준비 중 피해 5 → 0. 사건(피란민)을 띄우자 timeScale 1 → 0, 대화를 닫자 1. 결과 창을 띄우자 처음엔 버튼이 안 보이고 몇 초 뒤 '새 런 시작'·'타이틀로'가 나타남, 카드 크기 그대로. 콘솔 오류 0.
+  - 확인 못 한 것: '타이틀로'를 눌러 타이틀 씬으로 가는 장면, 실제 판 종료 뒤 진행도 줄이 채워진 결과 창 모습(코드 경로는 앞선 실측), 공격적 첫 공격 +50%의 실제 전투 장면.
+
+- 남은 기획 2차 묶음. 투사체 함정: 줄 따라 쏘는 화살 함정, 난수 고정: 판 시드 + 시스템별 난수, 파티 구성: 짠 파티에 인원 변동, 파티 행동: 리더 동기 + 불만 탈출(모두 사용자 선택).
+  - 화살 함정: `TrapTriggerMode.Projectile` 추가 — 밟으면 그 가로줄 서쪽 끝에서 화살이 날아가 줄 위(위아래 반 칸 안) 가장 서쪽 모험가 한 명을 맞힘, 아군 제외, 잠깐 선으로 화살을 보여 줌(`Trap.FireAlongRow`, `TrapRules.OnSameRow`·`FirstHitFromWest`). 설치 카드 문구 "투사체(같은 줄 첫 모험가)". 에셋(에디터 스크립트): `Trap_Arrow.prefab`(Trap.prefab 변형, 피해 9·재사용 4초·1×1), `ArrowTrapBuildingData`(화살 함정, 50G, 위험 2, 임시 그림), 해금 카탈로그 10일차.
+  - 판 시드: 새 파일 `RunRandom`(시드 + 줄기 + 값 해시, `Value`·`Create`). 새 판은 `RebuildInitialGraph`에서 시드를 뽑고, 지형 조각(`DungeonGraphSaveState.runSeed`)에 저장·지형보다 먼저 복원(옛 저장은 새로 뽑음). 방 후보 크기·특수 효과는 시드 + 자리로 뽑고, 이미 뽑은 후보도 저장(`SavedCandidate`, 처음 방 중형 고정 규칙 때문에 시드만으로는 같아지지 않음). 사건 순서는 시드 + 섞은 횟수, 웨이브(무작위 파티·풀 적·프리팹)는 시드 + 일차(`WaveManager._waveRandom`).
+  - 파티 인원 변동: 새 파일 `PartyCompositionRules` — 리더(첫 멤버)는 늘, 나머지는 15%(밤 25%)로 빠지고, 5% + 등급당 3%p + 운영 시설당 2%p(최대 40%)로 리더 아닌 파티원 한 명이 더. 짠 파티·무작위 파티 모두, 보스 호위는 그대로(`WaveManager.VaryPartyComposition`). `FacilityEconomyRules.IsOperatingFacility`를 공개로.
+  - 리더 동기: 새 파일 `PartyCohesionRules`. `EnemyMover`가 파티별 리더를 기억(처음 붙은 살아 있는 멤버, 쓰러지면 다음 멤버)하고, 다음 방이 리더와 두 방 이상 떨어지면 최대 5초 기다림.
+  - 불만 탈출: `AdventurerTraitRules.GetEscapeWaitSeconds`(기본 18초·겁쟁이 12·쇼핑광 28·성직자 22). 시설 줄에서 그만큼 기다리고 대체 시설도 없으면 "불만 탈출"을 띄우고 돈을 들고 떠남(보스 제외).
+  - 테스트: `TrapTileTests` +1(줄 판정·첫 대상·화살 함정 데이터), `EncounterVarietyTests` +2(인원 변동, 리더 대기), `FacilityQueueTests` +1(불만 탈출 시간), `IntrusionAndSaveTests` +1(판 시드). 전체 EditMode 278/278 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측(판 저장 백업 뒤, 끝나고 복원): 방 셋을 더 지어 저장하고 다시 열자 시드(-1304006462)와 후보 다섯 자리의 크기·효과가 그대로(그중 하나는 자연히 뽑힌 "소형 · 함정 지대"). 1일차 영업: 파티 하나가 검사(리더)·기본·궁수, 리더 표시 하나씩, 파티원이 리더 옆방 안에 머묾. 모험가가 선 줄에 화살 함정을 두고 발동하자 피해 9로 궁수 8 → 0, 화살 선 표시, 재사용 4초. 콘솔 오류 0.
+  - 처음 실측에서 저장 전 첫 세 방 규칙으로 중형이던 후보가 불러온 뒤 대형으로 바뀐 것을 보고 후보 저장을 추가함. 화살 시작점이 격자 밖에 선 대상보다 동쪽이 되는 경우도 보고 대상보다 서쪽에서 출발하게 고침.
+  - 확인 못 한 것: 불만 탈출이 실제로 일어나는 장면(규칙은 테스트), 리더를 5초 기다린 뒤 혼자 가는 장면, 밤 시간대의 인원 감소, 화살 함정의 실제 밟힘(직접 발동만 확인).
+
+- 대기 유닛 규칙(기획서 "대기 유닛은 유지비·체력·피로·부상 변화 없음", 사용자 선택: 기획서대로). 등급별 보유 한도는 주간 유닛 상점 작업과 겹쳐 미룸(사용자 선택).
+  - `ManagementSettlementManager.CalculateDailyUpkeep`: 고용 인원 중 배치한 수(`HiredUnitRoster.GetDeployedUnitCount`)만 유지비를 냄. `HiredUnitRoster.HandleDayChanged`: 대기 명단 자연 회복(`RestAvailableUnits`) 호출을 뺌. 회수 안내 "회수 완료 · 대기 명단에 상태 그대로 보관", 회수 버튼 "회수(대기 명단)". 두 파일은 다른 작업이 함께 고치는 중이라 내 변경만 따로 커밋.
+  - 테스트: `SettlementRegressionTests`의 유지비 회귀 테스트를 새 규칙으로(대기 1·배치 2 → 9G가 아니라 6G, 이름 `Upkeep_AfterRosterRestore_ChargesDeployedUnitsButNotReserveOrApplicants`). 전체 EditMode 278/278 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측(판 저장 백업 뒤, 끝나고 복원): 대기 명단에 피로 60·경상인 부하를 넣고 하루를 넘기자 피로 60·경상 그대로, 그때 유지비 0. 같은 부하를 하나 배치하자 유지비 3G(정가 14G). 콘솔 오류 0.
+  - 전투 중 이동 제한은 이미 있었음(전투 중·같은 방에 적이 있으면 회수·이동 불가, 버튼에 이유, 보스가 있는 동안 일시정지 잠금) — 기획서 현황만 고침.
+
+- UI Toolkit 교체 — 작은 패널부터 하나씩(사용자 선택). 첫 번째: 금고 관리 패널.
+  - 새 파일 `ToolkitScreenSO`(필요할 때 띄우는 화면 설정: UXML·패널 설정·문서 순서, `Spawn<TView>`), `ToolkitPointerBlockers`(지도 위 Toolkit 패널 카드를 등록하면 지도 클릭이 뚫고 가지 않음), `TreasuryToolkitView`(금고 관리: 보관·이자·약탈 위험·운영 자금·청산일 안내, 25G/전부 맡기기·꺼내기, 0.25초마다 갱신, 아이콘은 HUD 스킨 금고 아이콘).
+  - UXML/USS `Assets/GameModules/UI/UxmlAndUss/Management/Treasury/TreasuryPanel.uxml/.uss`(고정 크기 380×316, 색은 토큰·컴포넌트 클래스만, 이자 줄은 text-gain, 위험 줄은 text-loss). 설정 `Assets/Resources/UI/TreasuryScreen.asset`(PopupPanelSettings, 순서 500, 에디터 스크립트로 생성).
+  - `NodePanelView`가 금고 칸을 누르면 새 패널을 연다(`TreasuryToolkitView.ShowFor`/`HideCurrent`). `DungeonGraphController.IsPointerOverUi`가 `ToolkitPointerBlockers`도 본다.
+  - 옛 uGUI `TreasuryPanelView`·`Resources/UI/TreasuryPanel.prefab`은 SampleScene에 인스턴스가 있고, 그 씬에 다른 작업의 미커밋 변경이 있어 이번엔 지우지 않음(쓰이지 않음).
+  - 테스트: `AssetWiringTests` +1(화면 설정이 GameModules UXML과 uGUI 위 패널을 가리킴). 전체 EditMode 279/279 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측(판 저장 백업 뒤, 끝나고 복원): 빈 칸에 금고를 두고 열자 오른쪽 위에 패널, 25G 맡기기로 운영 자금 192 → 167·보관 25/500G, "정산 이자 8 % · 다음 정산 +2G"(초록)·"침입자가 노리는 곳"(빨강)·"남은 7일", 꺼내기 버튼 잠김. 처음 캡처에서 넷째 줄(운영 자금)이 상태 상자 밖으로 밀려 줄 여백을 0으로 고침 → 상자 안. 카드 가운데는 지도 클릭을 막고 화면 구석은 막지 않음, 닫으면 막지 않음. 콘솔 오류 0.
+  - 확인 못 한 것: 실제 마우스로 금고 칸을 눌러 여는 장면(코드 경로는 같은 `ShowFor`), 청산일에 꺼내기.
+
+- UI Toolkit 교체 두 번째: 모험가 상태 패널.
+  - 새 파일 `EnemyStatusToolkitView`(이름·레벨, 특성·목적·본능, HP, 공격·간격, 목적·예산·파티 자금, 경계·탐욕·철수 %, 상태이상 4줄(넘치면 "외 N개"), 0.12초마다 갱신, 누른 자리 오른쪽 위에 놓고 화면 밖이면 안으로 밀어 넣음, 지도 클릭 차단 등록). UXML/USS `Battle/EnemyStatus/EnemyStatusPanel.uxml/.uss`(고정 400×312, 상태이상 자리는 비어도 유지), 설정 `Resources/UI/EnemyStatusScreen.asset`(PopupPanelSettings, 순서 480).
+  - 씬의 `EnemyStatusPanelView`는 씬 배선 채널(`EnemyStatusRequestedEvent`)을 듣는 다리로 남김: 받은 요청을 Toolkit 화면으로 넘기고 자기 uGUI 패널은 숨김, `HidePanel`도 Toolkit 화면을 닫음(유닛 상태 패널이 열릴 때 함께 닫힘). 옛 uGUI 오브젝트는 씬 정리 때 지움.
+  - 테스트: `AssetWiringTests` 화면 설정 검사에 EnemyStatusScreen 추가. 전체 EditMode 280/280 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측(판 저장 백업 뒤, 끝나고 복원): 1일차 영업 중 모험가(용병 검사) 상태를 요청하자 패널이 뜨고 "용병 검사 Lv 1 / 휴식 · 경계 한계 · 철수 가능 / HP 14/14 / ATK 2 SPD 1s / 목적 휴식 · 예산 10/10G · 파티 자금 보통 / 경계 12 · 탐욕 3 · 철수 10%"가 갱신됨. 누른 자리가 화면 왼쪽 밖이라 카드가 왼쪽 끝 안으로 밀려 들어감. 닫으면 닫힘. 콘솔 오류 0.
+  - 확인 못 한 것: 실제 마우스로 모험가를 눌러 여는 장면, 상태이상이 걸린 모험가의 표시.
+
+- UI Toolkit 교체 세 번째: 유물 줄.
+  - 새 파일 `ArtifactToolkitView`(가진 유물 아이콘 36px 줄, 아이콘이 없는 유물은 데이터 색, 마우스를 올리면 아이콘 아래 고정 크기 툴팁에 이름·설명, 해금 전이거나 유물이 없으면 숨김, 지도 클릭 차단 등록). UXML/USS `Battle/Artifacts/ArtifactBar.uxml/.uss`(상단바 아래 왼쪽), 설정 `Resources/UI/ArtifactBarScreen.asset`(PopupPanelSettings, 순서 300).
+  - 씬의 `ArtifactPanelView`는 인벤토리·채널을 듣는 다리로 남김: 목록·해금 여부를 Toolkit 줄로 넘기고 자기 uGUI 줄은 늘 숨김.
+  - 테스트: `AssetWiringTests` 화면 설정 검사에 ArtifactBarScreen 추가. 전체 EditMode 281/281 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측(판 저장 백업 뒤, 끝나고 복원): 유물 넷을 넣고 해금하자 왼쪽 위에 줄이 뜨고, 둘째 아이콘에 툴팁 "처형 서약 / 고용 유닛 공격력 +1…"이 아이콘 바로 아래에 뜸. 처음 위치(위 72px)는 제목 아래 부제와 겹쳐 104px로 내림. 콘솔 오류 0.
+  - 확인 못 한 것: 실제 마우스 호버, 상인에서 유물을 사서 줄이 늘어나는 장면(다리의 갱신 경로는 같음).
+
+- UI Toolkit 교체 네 번째: 부하 상태 패널(피로 표시 포함, 옛 `UnitFatigueManagementView` 몫도 여기로).
+  - 새 파일 `UnitStatusToolkitView`(그리기만: 이름·레벨, 상태 요약, 얼굴, HP 글·막대, 공격·EXP, 명령, 특성·성격(마우스를 올리면 설명 툴팁), 피로 글·막대(단계별 색 클래스), 안내, 치료·회수 버튼, 닫기/치료/회수 콜백), `UnitStatusViewModel`, `ToolkitPlacement`(누른 자리 옆 배치를 모험가 상태와 공용으로 뺌). UXML/USS `Battle/UnitStatus/UnitStatusPanel.uxml/.uss`(고정 440×330, 버튼·안내는 visibility로만 숨김), 설정 `Resources/UI/UnitStatusScreen.asset`(순서 490).
+  - `UnitStatusPanelView`를 판단 담당으로 다시 씀: 채널 구독, 대상 선택, 치료 가능·회수 가능 판단과 이유, 버튼 처리, 뷰 모델을 만들어 넘김. 옛 uGUI 패널은 늘 숨김(씬 정리 때 지움). 옛 TMP 직렬화 필드는 뺌.
+  - 테스트: `AssetWiringTests` 화면 설정 검사에 UnitStatusScreen 추가. 전체 EditMode 282/282 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측(판 저장 백업 뒤, 끝나고 복원): 파란 슬라임을 배치하고 체력을 15/20으로 깎아 상태를 열자 패널에 이름·상태·HP 막대(75%)·공격·명령·특성·피로가 그려지고, 특성 툴팁 "특성 없음: … / 침착함: 피로가 천천히 누적됩니다." 표시. 치료 버튼 "치료·휴식 7G"를 누르자 금화 192 → 185·HP 20/20·안내 "치료와 휴식 완료". 회수 버튼으로 회수하자 패널이 닫힘. 콘솔 오류 0.
+  - 확인 못 한 것: 실제 마우스 클릭으로 열기·툴팁 호버, 영업 중 "습격 중 회복 불가"·같은 방 적으로 회수 불가 문구가 버튼에 보이는 장면(판단 코드는 그대로).
+
+- UI Toolkit 교체 다섯 번째: 운영 방침 창 정리 + 버그 수정.
+  - 버그: Toolkit 운영 방침 창(`PolicyChoiceToolkitView`)이 문서 루트만 켜서, USS가 기본으로 숨긴 `policy-root`가 그대로 숨은 채 시간만 멈춤(선택지가 안 보여 판이 굳음). 옛 uGUI 창은 실행 중 꺼져 있어 대신 뜨지도 않았음. → `policy-root`를 켜고 끄게 고침.
+  - 공용 패널(Sort Order 0)이라 하루 안내 배너 등 uGUI가 위를 덮음 → 패배 화면과 같은 `RunEndPanelSettings`(9000, 문서 순서 240 < 패배 260)로 옮김.
+  - Toolkit판에 튜토리얼·패배 연결을 옮김: `Current`, `IsOpen`, `TryGetFirstChoiceScreenRect`(튜토리얼 강조), `CloseForRunEnd`, 선택 때 `TutorialInputGate.AllowsPolicyChoice` 검사. `DialogueRunner.UpdatePolicyTutorial`과 `BossWavePresenter`가 옛 uGUI 창 대신 이것을 봄(두 컴포넌트의 옛 직렬화 필드는 뺌). 옛 `PolicyChoicePanelView`는 씬 정리 때 지움.
+  - 테스트: `AssetWiringTests.PolicyChoicePanel_KeepsItsPartsInsideTheToggledRoot`(창이 켜고 끄는 policy-root 안에 제목·민심·목록이 있고, USS가 그 루트를 기본으로 숨긴다는 전제). 고친 뒤에 추가해 실패를 먼저 보지는 못함. 전체 EditMode 283/283 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측(판 저장 백업 뒤, 끝나고 복원): 방침 셋을 띄우자 처음엔 창이 안 보이고 timeScale 0(버그 재현) → 고친 뒤 창이 화면 가운데에 보이고 하루 안내 배너보다 위. 첫 선택지 화면 사각형을 얻음(튜토리얼 강조용). 튜토리얼 제한 중 둘째 선택은 막히고 첫째는 적용(선택지 0개, timeScale 1로 복귀). 패배 시 닫기로 창이 닫히고 timeScale 1. 콘솔 오류 0.
+
+- UI Toolkit 교체 여섯 번째: 보스 습격 배너.
+  - 새 파일 `BossBannerToolkitView`(제목·부제, 보스는 위험 색·최종전은 강조 색 클래스, 한 프레임 뒤 클래스를 붙여 USS 전환으로 미끄러져 나타났다가 머문 뒤 사라짐, 패널 스케줄러라 시간이 멈춰도 흐름, 클릭은 막지 않음). UXML/USS `Battle/BossBanner/BossBanner.uxml/.uss`(고정 720×104), 설정 `Resources/UI/BossBannerScreen.asset`(순서 400).
+  - `BossWavePresenter.ShowBossBanner`가 Toolkit 배너를 부르게 고치고 옛 uGUI 배너 코드·필드(배너 프리팹·뷰·보스 색)를 뺌. 결과 화면 uGUI 대체 경로(`victoryView`)는 Toolkit 결과 화면을 못 띄울 때만 쓰여 남김.
+  - 테스트: `AssetWiringTests` 화면 설정 검사에 BossBannerScreen 추가. 전체 EditMode 284/284 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측(판 저장 백업 뒤, 끝나고 복원): 배너를 8초 머무르게 띄우자 1초 뒤 보임(투명도 1, 화면 위쪽 가운데 720×104, 제목 "갈대 기사단장" 빨강·부제 "Day 7 — 금고 방에 들어오면 패배"), 10초 뒤 사라짐(표시 없음). 콘솔 오류 0.
+  - 확인 못 한 것: 실제 보스 날(7일차) 영업 시작 때 뜨는 장면, 최종전 색.
+
+- UI Toolkit 교체 일곱 번째: 떠돌이 상인 창. (이번부터 사용자 요청대로 패널마다 테스트하지 않고, 작업을 마친 뒤 한 번에 테스트·실측)
+  - 새 파일 `MerchantToolkitView`(제목·방문 일차, 진열 카드 최대 5장: 그림(없으면 "유물", 정체불명은 "?")·이름·값(모자라면 "· 금화 부족"과 손실 색, 버튼 잠금)·설명·조합(완성이면 이득 색), 결과 줄(성공·실패 색), 닫기·구매 콜백, 화면 전체 클릭 차단), `MerchantOfferViewModel`·`MerchantDetailTone`. UXML/USS `Management/Merchant/MerchantPanel.uxml/.uss`(고정 1040×460), 설정 `Resources/UI/MerchantScreen.asset`(순서 600).
+  - `MerchantPanelView`는 진열·가격·구매·저장 복원과 HUD의 여는 버튼을 그대로 맡고, 창은 Toolkit 뷰에 뷰 모델로 넘김. 결과 글의 하드코딩 색 리치 텍스트를 빼고 분위기 값으로 바꿈. 옛 uGUI 창은 늘 숨김(씬 정리 때 지움).
+  - `BuildConfirmPanelView`: 부르는 곳이 없음을 확인(방 확장은 범용 팝업) → 요약에 적고 씬 정리 때 지움.
+  - 노드 패널(건물 정보 포함)은 튜토리얼 강조와 엮인 큰 화면이라 따로 설계한 뒤 옮기기로 함(사용자 선택). 유닛 영입 패널은 주간 유닛 상점 작업과 겹쳐 미룸.
+  - 테스트: `AssetWiringTests` 화면 설정 검사에 MerchantScreen 추가. 전체 EditMode 285/285 통과(다른 작업의 변경이 함께 있는 작업 트리 기준).
+  - 플레이 실측(판 저장 백업 뒤, 끝나고 복원): 방문일(2일차)로 상인을 열자 창 가운데 1040×460, "떠돌이 상인 / 2일차 · 다음 방문 4일차", 카드 넷(물약 30G·의무낭 105G·처형 서약 195G 금화 부족·잠김·조합 안내, 정체불명 120G "?"). 첫 칸을 사자 금화 192 → 162·구매 횟수 1·결과 줄 "약초 달인 물약 구입 완료 / 남은 금화 162G". 닫기로 닫힘. 처음 캡처에서 설명·조합 줄이 버튼의 한 줄 스타일을 물려받아 잘려 줄바꿈으로 고침 → 여러 줄로 보임. 콘솔 오류 0.
+  - 확인 못 한 것: HUD의 상인 버튼을 실제로 눌러 여는 장면, 정체불명 상품 구매 결과 글.
+
+- 방 관리 화면 통합 설계(노드 패널 → UI Toolkit). 새 문서 `Docs/Design/RoomManagementUiDesign.md`.
+  - 조사: 같은 일을 하는 화면이 둘 — Toolkit HUD(선택 말풍선·방 상세·한 줄 설치 목록·보유 유닛 배치)와 uGUI 노드 패널(갈래 카드 → 항목 카드 → 건물 정보 + 설치, 철거·휴업·수리, 유닛 명령·이동). 철거·휴업·수리와 유닛 명령·이동은 uGUI에만 있고, 살아 있는 튜토리얼(`PlayTutorialView`)이 노드 패널의 RectTransform 8곳을 비춤. `DialogueRunner` 옛 안내 튜토리얼은 씬에서 꺼져 있음.
+  - 결정(사용자 선택): HUD로 통합(`NodePanelView`는 화면 없는 방 관리 로직으로 남김), 설치 목록은 카드 + 상세 + 설치, 시설 관리·유닛 명령/이동/회수는 방 상세에 모음, 튜토리얼은 Toolkit 화면 사각형으로 비춤(꺼진 옛 안내 튜토리얼은 옮기지 않고 정리).
+  - 문서 내용: 지금 상태 표, 방 상세(400×640: 시설 줄·유닛 줄·설치물)와 설치 창(760×360: 카드·상세·설치, 유닛 배치 갈래) 배치, 튜토리얼 잔걸음 대응표(OpenInstall 없앰·PressInstall 추가), 코드 구조(`RoomManagementController`·`RoomDetailView`·`InstallPanelView`·`ToolkitScreenRect`, HUD는 더 키우지 않음), `NodePanelView`에 더할 조회 API, 진행 순서 6단계, 검증 계획, 범위 밖(유닛 영입 패널·씬 정리·HUD 문서 이전).
+
+- 방 관리 화면 통합 구현(노드 패널 → UI Toolkit, `Docs/Design/RoomManagementUiDesign.md` 1~5단계). 테스트·실측은 사용자 요청으로 하지 않음(컴파일만 확인: Unity 재컴파일·dotnet build 오류 0).
+  - `NodePanelView`를 화면 없는 방 관리 로직으로 다시 씀(2,167줄 → 약 800줄). 설치 미리보기·결제·설치, 유닛 칸 선택·마력 결제, 시설 수리·휴업·철거, 유닛 명령·이동(지도에서 방을 눌러 고름)·회수를 공개 API로 내고, 이벤트 `SelectionChanged`·`StateChanged`·`MessageRaised`·`PlacementEnded`로 화면에 알림. uGUI 그리기·갈래 카드·튜토리얼 강조 코드 제거, 옛 uGUI 패널·바깥 버튼은 실행 중 숨기기만 함(씬 정리 때 지움).
+  - 새 판정 `InstallAvailabilityRules`(건물·함정·유닛을 놓을 수 없는 이유). 실제 설치가 거절하던 "유닛이 선 방의 건물"을 미리 막음(전에는 결제 뒤 환불). 버튼 상태 `RoomActionRules`·`RoomActionState`(숨기지 않고 잠그며 짧은 글 + 이유).
+  - 새 화면 `Code.UI.RoomManagement`: `RoomManagementController`(조립·ESC·튜토리얼 조회), 뷰 `RoomDetailView`(오른쪽 400×640: 시설 줄 내구도 막대·수리/휴업/철거, 유닛 줄 최대 4명 → 명령 4개·이동·회수, 설치물, 안내 줄)·`InstallPanelView`(하단 위 760×360: 카드 136×150 한 쪽 5장·상세·설치, 위치를 고르는 동안 접힘 + 취소), 프레젠터 `RoomDetailPresenter`·`InstallPanelPresenter`, 뷰 모델들. UXML/USS `Battle/RoomManagement/RoomManagement.uxml/.uss`, 설정 `Resources/UI/RoomManagementScreen.asset`(공용 패널, 문서 순서 150 — uGUI 튜토리얼 덮개 아래라 덮개가 버튼을 가림).
+  - 설치 창은 막힌 항목도 카드로 보이고 이유를 적음. 건설·시설·함정·유닛 배치 네 갈래(하단 행동 바 버튼). 고른 카드는 데이터로 기억해 연속 설치가 됨. 설치 문구는 `InstallCardTextFormatter`(요약·효과·카드 한 줄)로 정리, 안 쓰던 `InstallCardPresenter`·`TutorialHighlighter` 삭제.
+  - HUD: 옛 방 상세·한 줄 설치 목록 제거(UXML·USS·코드), 하단 버튼 → `ToggleInstall`, '상세 보기' → `ShowDetail`, 보유 유닛 서랍은 목록 보기만, 일시정지 메뉴를 열면 방 관리 화면을 치움. `GameplayHudToolkitView.Current`·`TryGetActionScreenRect` 추가.
+  - 튜토리얼: `PlayTutorialView` 잔걸음 OpenInstall 없애고 PressInstall 추가, 하단 갈래 버튼 → 카드 → 설치 버튼을 화면 사각형으로 비춤. 꺼져 있는 `DialogueRunner` 가이드 튜토리얼의 노드 패널 참조를 같은 조회로 바꿈. 화면 사각형 환산 `ToolkitScreenRect`(팝업·운영 방침도 이것을 씀).
+  - 문서: 설계 문서에 구현하며 바뀐 점(패널·카드 크기·구조), ui-rules·dialogue-rules 갱신.
+  - 아직 확인 못 한 것: 전부(플레이 실측·EditMode 테스트 미실행). 특히 첫날 튜토리얼 진행, uGUI 덮개와 Toolkit 클릭 순서, 미리보기 중 Toolkit 버튼 클릭.
+
+- 2026-10-15 · Dark Castle 타일 기반 던전 노드와 픽셀 스냅 렌더링.
+  - `NodeTileRenderer`를 추가하고 `Node.prefab`에 `Grid`/`Tilemap` 자식을 배선했다. 기존 노드 루트의 10배 스케일·클릭 콜라이더·전투/함정 배치 좌표는 유지하며, 타일맵만 역스케일해 10×10 석재 바닥 타일(`FG_Dark_Dungeon_411`)을 월드 단위로 반복한다. 기존 늘어난 단일 노드 스프라이트는 비활성화했다.
+  - `Main Camera`에 URP `PixelPerfectCamera`을 추가했다(Asset PPU 28, 640×360 참조 해상도, Pixel Snapping). HDR·MSAA는 끄고, 기존 적·유닛 스프라이트와 새 타일셋이 모두 Point 필터·무압축·밉맵 없음임을 확인했다.
+  - 플레이 실측: Day 1 준비 화면에서 석재 바닥 타일이 반복되어 표시되고, 타일 경계와 UI/노드 윤곽이 흐려지지 않음을 게임 화면 캡처로 확인. 콘솔 오류 0.
+
+- 2026-10-15 · 타일 노드 방 테두리와 입구 문.
+  - `NodeTileRenderer`가 바닥만 채우지 않고 같은 Dark Castle 타일셋의 벽 타일로 10×10 노드의 네 변을 두르게 확장했다. 세로 벽 타일은 위·아래 변에서 90도 회전해 방향을 맞춘다.
+  - 입구 노드만 오른쪽 변 중앙에 문 타일을 놓는다. 기존 `roomDoorsRoot`는 통행·스폰 판정과 문 연출을 계속 맡고, 새 타일은 방 외형만 보강한다.
+  - 플레이 실측: 석재 바닥, 네 변 테두리, 오른쪽 붉은 문 타일이 함께 표시되는 것을 확인. 콘솔 오류 0.
+
+- 2026-10-15 · Dark Castle 방식의 10×10 노드 타일 레이어 재구성.
+  - 사용자가 선택한 "현재 노드 판정 10×10에 맞춘 새 배치"로 전환했다. 임의 회전·랜덤 타일 변형을 제거하고, `NodeTileRenderer`가 `Floor`(8×8 바닥)·`Walls`(테두리/모서리)·`Doors`(입구 노드의 오른쪽 문) 세 Tilemap을 독립적으로 비우고 다시 그리게 했다.
+  - `Node.prefab`은 Dark Castle Purple 팔레트에서 실제 데모에 쓰인 바닥(446/447), 벽(55/26/27/28/29/190), 문(318)만 배선했다. 프리팹의 이전 SpriteRenderer를 모두 제거했다.
+  - `SampleScene`의 이미 구워진 초기 노드도 다시 생성했다. 검증 결과 4개 노드에 이전 SpriteRenderer 0개, 새 Tilemap 레이어 12개(노드당 3개)다.
+
+- 2026-10-15 · Dark Castle 벽·문 방향 보정.
+  - 데모 씬의 `Tiles_3`/`Tiles_4` 셀을 직접 조사해, 이전에 바깥 여백용으로 잘못 쓴 55 타일을 제거했다. 방 외곽은 데모와 같은 상단 26·27·190·28·29, 하단 23·308·25, 좌우 87·252 조합으로 그린다.
+  - 입구는 가운데 타일 318 하나가 아니라 데모의 317·318·319 세 조각을 동쪽 벽 방향으로 회전해 한 개의 문으로 그린다. `SampleScene` 초기 노드를 다시 구워 옛 SpriteRenderer 0개/Tilemap 12개 상태를 유지했다.
+
+- 2026-10-15 · 입구 문 방향 재배치.
+  - 동쪽 벽에 문 타일을 회전해 붙이면 아치가 방 바깥으로 튀어나오는 문제가 있어, 데모 원본과 같은 가로 방향의 317·318·319 조합을 방 하단 중앙에 배치했다. 입구 판정과 실제 적 스폰 위치(`EntrySpawn`)는 동쪽을 유지하므로 게임 규칙에는 영향이 없다.
+  - 플레이 화면에서 벽 테두리와 문이 하나의 방 외곽 안에서 이어지는 것을 확인했다.
+
+- 2026-10-15 · 노드 실측 크기에 맞춘 타일 방 확장.
+  - 런타임을 조사해 이전 SpriteRenderer가 남아 있지 않음(노드당 0개)을 확인했다. 파란 배경이 보인 원인은 기존 노드의 실제 월드 크기 15×15에 타일을 10×10만 그린 크기 불일치였다.
+  - `NodeTileRenderer`와 `Node.prefab`의 타일 격자를 15×15로 맞추고 `SampleScene`의 초기 노드를 다시 생성했다. 플레이 화면에서 타일 방이 노드 전체를 덮어 파란 빈 영역이 사라진 것을 확인했다.
+
+- 2026-10-15 · 던전 배경 스프라이트 제거.
+  - `SampleScene`의 `Main Camera/BG/GameBackground`에 남아 있던 SpriteRenderer를 제거했다. 노드 Tilemap과 UI는 유지했으며, 플레이 화면에서 별도 배경 스프라이트가 더 이상 렌더링되지 않는 것을 확인했다.
+
+- 2026-10-15 · 노드 타일 20×20 고밀도화.
+  - 사용자가 요청한 대로 노드의 월드 크기·게임 판정은 유지하고, `NodeTileRenderer`의 타일 수를 20×20으로 늘렸다. Tilemap 자식은 열·행 수에 따라 균등 역스케일하므로 기존 15×15 노드 영역을 정확히 덮는다.
+  - `Node.prefab`과 `SampleScene` 초기 노드를 다시 생성했으며, 플레이 화면에서 촘촘해진 타일이 노드 전체에 표시되는 것을 확인했다.
+
+- 2026-10-15 · 방치 시 타이틀 자동 복귀 비활성화.
+  - 원인인 `IdleReturnToTitle`(대기 상태에서 60초 입력이 없으면 저장 후 Start 씬을 여는 컴포넌트)을 `SampleScene`에서 제거했다. 설정 메뉴의 수동 타이틀 복귀는 유지한다.
+  - 씬 저장 뒤 실제 컴포넌트 수가 0개임을 확인했다.
+
+- 2026-10-15 · 방치 자동 복귀 기능 전체 제거.
+  - `SampleScene`의 빈 자동 복귀 호스트와 `Start` 씬의 자동 복귀 호스트·카운트다운 알림을 제거했다.
+  - 연결된 `IdleNoticeToolkitView`, 자동 복귀 프리팹·화면 에셋·UIToolkit UXML/USS와 관련 개발 규칙 기록을 삭제했다. 설정 메뉴에서 사용자가 직접 타이틀로 돌아가는 기능은 유지한다.

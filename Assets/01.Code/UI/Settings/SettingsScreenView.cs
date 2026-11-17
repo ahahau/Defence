@@ -1,0 +1,179 @@
+using Code.Audio;
+using Code.Manager;
+using Code.Persistence;
+using Code.UI.Popup;
+using TMPro;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+
+namespace Code.UI
+{
+    /// <summary>
+    /// 게임 화면 설정 창(uGUI, A안, 화면 가운데). 효과음·음악 음량, 전체 화면, 다시 시작, 타이틀로.
+    /// 닫을 창이 없을 때 ESC(<see cref="UiEscapeRouter"/>)나 오른쪽 위 톱니 버튼으로 연다.
+    /// 열려 있는 동안 게임 시간을 멈춘다 — 영업 중에 켜 둔 사이 손님을 놓치지 않게.
+    /// 타이틀 씬의 옛 설정 창(<see cref="SettingsPanelView"/>)과 따로 돈다.
+    /// </summary>
+    public sealed class SettingsScreenView : MonoBehaviour, IEscapeClosable
+    {
+        [SerializeField] private GameSpeedController speedController;
+        [SerializeField] private GameObject root;
+        [SerializeField] private Slider sfxSlider;
+        [SerializeField] private TMP_Text sfxValue;
+        [SerializeField] private Slider musicSlider;
+        [SerializeField] private TMP_Text musicValue;
+        [SerializeField] private UiFrameButton fullscreenButton;
+        [SerializeField] private UiFrameButton restartButton;
+        [SerializeField] private UiFrameButton titleButton;
+        [SerializeField] private UiFrameButton closeButton;
+        [SerializeField, Tooltip("첫 판 안내 기록을 지워 다시 보이게 한다(던전 FTL).")] private UiFrameButton coachResetButton;
+        [SerializeField, Tooltip("다시 시작(구 런 저장 삭제 후 SampleScene)을 보인다. 스테이지 씬은 자기 재도전 버튼이 있어 끈다.")]
+        private bool allowRunRestart = true;
+
+        private const string CoachResetLabel = "첫 판 안내 다시 보기";
+        private const float CoachResetNoticeSeconds = 2f;
+        private float _coachLabelRestoreAt = -1f;
+
+        public bool IsOpen => root != null && root.activeSelf;
+        public event System.Action LeavingScene;
+
+        public void Open()
+        {
+            if (IsOpen)
+                return;
+
+            root.SetActive(true);
+            sfxSlider.SetValueWithoutNotify(Mathf.Round(GameSfxPlayer.Volume * 100f));
+            musicSlider.SetValueWithoutNotify(Mathf.Round(GameMusicPlayer.Volume * 100f));
+            RenderValues();
+            speedController?.Suspend(this);
+            GameSfxPlayer.Play(GameSfxCue.UiOpen);
+        }
+
+        public void Close()
+        {
+            if (!IsOpen)
+                return;
+
+            root.SetActive(false);
+            speedController?.Release(this);
+            GameSfxPlayer.Play(GameSfxCue.UiClose);
+        }
+
+        private void Awake()
+        {
+            if (root != null)
+                root.SetActive(false);
+            restartButton.SetVisible(allowRunRestart);
+            // 타이틀에서는 "타이틀로"가 뜻이 없다.
+            titleButton.SetVisible(SceneManager.GetActiveScene().name != TitleMenuActions.TitleSceneName);
+        }
+
+        private void Update()
+        {
+            // 창이 열린 동안 게임 시간이 멈춰 있으므로 실제 시간으로 잰다.
+            if (_coachLabelRestoreAt < 0f || Time.unscaledTime < _coachLabelRestoreAt) return;
+            _coachLabelRestoreAt = -1f;
+            if (coachResetButton != null) coachResetButton.SetLabel(CoachResetLabel);
+        }
+
+        private void OnEnable()
+        {
+            sfxSlider.onValueChanged.AddListener(HandleSfxChanged);
+            musicSlider.onValueChanged.AddListener(HandleMusicChanged);
+            fullscreenButton.Button.onClick.AddListener(ToggleFullscreen);
+            restartButton.Button.onClick.AddListener(ConfirmRestart);
+            titleButton.Button.onClick.AddListener(GoToTitle);
+            closeButton.Button.onClick.AddListener(Close);
+            if (coachResetButton != null) coachResetButton.Button.onClick.AddListener(ResetCoach);
+        }
+
+        private void OnDisable()
+        {
+            sfxSlider.onValueChanged.RemoveListener(HandleSfxChanged);
+            musicSlider.onValueChanged.RemoveListener(HandleMusicChanged);
+            fullscreenButton.Button.onClick.RemoveListener(ToggleFullscreen);
+            restartButton.Button.onClick.RemoveListener(ConfirmRestart);
+            titleButton.Button.onClick.RemoveListener(GoToTitle);
+            closeButton.Button.onClick.RemoveListener(Close);
+            if (coachResetButton != null) coachResetButton.Button.onClick.RemoveListener(ResetCoach);
+            // 열린 채로 꺼지면(씬 이동) 멈춤을 남기지 않는다.
+            speedController?.Release(this);
+        }
+
+        // 슬라이더는 끄는 동안 값이 수십 번 바뀐다. 소리를 매번 들려주면 크기를 가늠할 수 없어 값만 바꾼다.
+        private void HandleSfxChanged(float value)
+        {
+            GameSfxPlayer.Volume = value / 100f;
+            RenderValues();
+        }
+
+        private void HandleMusicChanged(float value)
+        {
+            GameMusicPlayer.Volume = value / 100f;
+            RenderValues();
+        }
+
+        private void ToggleFullscreen()
+        {
+            // 전체 화면 전환은 다음 프레임에 반영된다. 글자는 바뀔 값으로 미리 쓴다.
+            var next = !Screen.fullScreen;
+            Screen.fullScreen = next;
+            fullscreenButton.SetLabel(FullscreenLabel(next));
+        }
+
+        private void RenderValues()
+        {
+            sfxValue.text = Mathf.RoundToInt(sfxSlider.value) + "%";
+            musicValue.text = Mathf.RoundToInt(musicSlider.value) + "%";
+            fullscreenButton.SetLabel(FullscreenLabel(Screen.fullScreen));
+        }
+
+        /// <summary>첫 판 안내를 처음처럼 다시 보이게 한다(2026-11-12 사용자 목업 승인). 전투 중이면 바로 다시 뜬다.</summary>
+        private void ResetCoach()
+        {
+            Code.UI.Run.RunCoachMemory.ResetAll();
+            GameSfxPlayer.Play(GameSfxCue.UiConfirm);
+            coachResetButton.SetLabel("다시 보여 줍니다");
+            _coachLabelRestoreAt = Time.unscaledTime + CoachResetNoticeSeconds;
+        }
+
+        private static string FullscreenLabel(bool on) => on ? "전체 화면: 켬" : "전체 화면: 끔";
+
+        private void ConfirmRestart()
+        {
+            bool stage = SceneManager.GetActiveScene().name == TitleMenuActions.StageSceneName;
+            PopupController.Show(PopupRequest.Confirm(
+                stage ? "스테이지 진행을 새로 시작할까요?" : "이번 런을 다시 시작할까요?",
+                stage ? "스테이지 준비 저장을 보관하고 처음부터 시작합니다. 영구 강화는 유지됩니다."
+                    : "현재 저장과 진행 중인 운영 기록이 삭제됩니다.",
+                RestartRun,
+                confirmLabel: stage ? "처음부터 시작" : "삭제 후 재시작",
+                destructive: true));
+        }
+
+        private void RestartRun()
+        {
+            if (SceneManager.GetActiveScene().name == TitleMenuActions.StageSceneName)
+            {
+                if (Code.Stages.StageCheckpointStore.EndRun(Application.persistentDataPath))
+                    LeaveTo(TitleMenuActions.StageSceneName);
+                return;
+            }
+            RunSaveSystem.DeleteSave();
+            LeaveTo(TitleMenuActions.GameSceneName);
+        }
+
+        private void GoToTitle() => LeaveTo(TitleMenuActions.TitleSceneName);
+
+        /// <summary>창을 닫고 배속을 되돌린 뒤 씬을 바꾼다. 멈춘 채로 나가면 다음 판이 멈춘 채로 시작한다.</summary>
+        private void LeaveTo(string sceneName)
+        {
+            LeavingScene?.Invoke();
+            Close();
+            speedController?.ResetToNormal();
+            SceneManager.LoadScene(sceneName);
+        }
+    }
+}

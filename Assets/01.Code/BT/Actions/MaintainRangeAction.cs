@@ -3,7 +3,7 @@ using Unity.Behavior;
 using UnityEngine;
 using Action = Unity.Behavior.Action;
 
-namespace _01.Code.BT
+namespace Code.BT
 {
     /// <summary>
     /// 후열(원거리) 카이팅: 선호 사거리를 유지한다. 멀면 접근, 너무 가까우면 물러난다.

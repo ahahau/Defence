@@ -3,7 +3,7 @@ using Unity.Behavior;
 using UnityEngine;
 using Action = Unity.Behavior.Action;
 
-namespace _01.Code.BT
+namespace Code.BT
 {
     /// <summary>가장 가까운 적 반대 방향으로 노드 안에서 도망친다. 적이 없으면 Failure.
     /// Health Below 조건과 묶어 "저체력이면 도망" 같은 겁쟁이 행동에 쓴다.</summary>

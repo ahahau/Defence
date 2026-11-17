@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace _01.Code.Combat
+namespace Code.Combat
 {
     public class CombatStatusController : MonoBehaviour
     {
@@ -51,6 +51,9 @@ namespace _01.Code.Combat
 
             _modifiers.Add(modifier);
         }
+
+        /// <summary>전투 경계에서 시간제 이동·받는 피해 보정을 모두 해제한다.</summary>
+        public void Clear() => _modifiers.Clear();
 
         private void Update()
         {

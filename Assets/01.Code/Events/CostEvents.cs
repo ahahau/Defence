@@ -1,9 +1,9 @@
-using _01.Code.Core;
-using _01.Code.MapCreateSystem;
-using _01.Code.Units;
+using Code.Core;
+using Code.MapCreateSystem;
+using Code.Units;
 using UnityEngine;
 
-namespace _01.Code.Events
+namespace Code.Events
 {
     public enum GoldChangeSource
     {
@@ -12,9 +12,25 @@ namespace _01.Code.Events
         Mine,
         Inn,
         Store,
+        Exploitation,
         TreasuryLoot,
         Dialogue,
-        Policy
+        Policy,
+        Blacksmith,
+        WaveObjective,
+        Bounty,
+
+        /// <summary>쓰러진 모험가가 떨어뜨린 파티 공동 자금.</summary>
+        PartyDrop,
+
+        /// <summary>전멸한 파티가 남긴 공동 자금 전부.</summary>
+        PartyWipe,
+
+        /// <summary>교회에서 관을 되살리며 받은 부활비.</summary>
+        Church,
+
+        /// <summary>쓰러진 부하의 부활비. 쓰러뜨린 모험가 파티의 지갑으로 들어간다.</summary>
+        UnitRevival
     }
 
     public class BuildCostRequestedEvent : GameEvent
@@ -31,16 +47,33 @@ namespace _01.Code.Events
 
     public class BuildCostPaidEvent : GameEvent
     {
-        public BuildCostPaidEvent(Node node, int goldAmount, int remainingGold)
+        public BuildCostPaidEvent(Node node, int goldAmount, int remainingGold, float consumedDiscountRate = 0f)
         {
             Node = node;
             GoldAmount = goldAmount;
             RemainingGold = remainingGold;
+            ConsumedDiscountRate = consumedDiscountRate;
         }
 
         public Node Node { get; }
         public int GoldAmount { get; }
         public int RemainingGold { get; }
+        public float ConsumedDiscountRate { get; }
+    }
+
+    /// <summary>결제 후 설치가 실패했을 때만 발생한다. 금화와 이번 건설 할인을 함께 되돌린다.</summary>
+    public class BuildCostRefundedEvent : GameEvent
+    {
+        public BuildCostRefundedEvent(Node node, int goldAmount, float restoredDiscountRate)
+        {
+            Node = node;
+            GoldAmount = goldAmount;
+            RestoredDiscountRate = restoredDiscountRate;
+        }
+
+        public Node Node { get; }
+        public int GoldAmount { get; }
+        public float RestoredDiscountRate { get; }
     }
 
     public class BuildCostRejectedEvent : GameEvent
@@ -275,33 +308,69 @@ namespace _01.Code.Events
         public int PendingNet => PendingIncome - PendingExpense;
     }
 
-    /// <summary>정산에서 갚지 못한 금액이 부채로 넘어갔을 때. 표시 갱신용.</summary>
+    /// <summary>빚이 늘거나 줄었을 때. 표시 갱신용.</summary>
     public class DebtChangedEvent : GameEvent
     {
-        public DebtChangedEvent(int currentDebt, int debtLimit, int delta)
+        public DebtChangedEvent(int currentDebt, int weeklyDue, int delta)
         {
             CurrentDebt = currentDebt;
-            DebtLimit = debtLimit;
+            WeeklyDue = weeklyDue;
             Delta = delta;
         }
 
         public int CurrentDebt { get; }
-        public int DebtLimit { get; }
+
+        /// <summary>청산일에 반드시 내야 하는 최소 상환액.</summary>
+        public int WeeklyDue { get; }
         public int Delta { get; }
-        public int RemainingCredit => Mathf.Max(0, DebtLimit - CurrentDebt);
     }
 
-    /// <summary>부채가 한도를 넘겨 더는 운영할 수 없을 때. 게임오버로 이어진다.</summary>
+    /// <summary>청산일에 빚을 다 갚지 못했거나 부채 한도를 넘어 파산했을 때. 게임오버로 이어진다.</summary>
     public class BankruptcyEvent : GameEvent
     {
-        public BankruptcyEvent(int currentDebt, int debtLimit)
+        public BankruptcyEvent(int owed, int gold, string reason = null)
         {
-            CurrentDebt = currentDebt;
-            DebtLimit = debtLimit;
+            Owed = owed;
+            Gold = gold;
+            Reason = reason;
         }
 
+        /// <summary>내지 못해 파산을 부른 금액(최소 상환액 또는 한도 초과분).</summary>
+        public int Owed { get; }
+
+        /// <summary>파산 시점에 가지고 있던 금화.</summary>
+        public int Gold { get; }
+
+        /// <summary>패배 화면에 적을 이유. 비어 있으면 청산일 미납으로 본다.</summary>
+        public string Reason { get; }
+    }
+
+    /// <summary>영업 종료 때 부채 한도와 신용 경고를 판정했을 때.</summary>
+    public class CreditStatusChangedEvent : GameEvent
+    {
+        public CreditStatusChangedEvent(
+            global::Code.Manager.Economy.CreditDayEndOutcome outcome,
+            int emergencyRepaid,
+            int warnings,
+            int currentDebt,
+            int creditLimit)
+        {
+            Outcome = outcome;
+            EmergencyRepaid = emergencyRepaid;
+            Warnings = warnings;
+            CurrentDebt = currentDebt;
+            CreditLimit = creditLimit;
+        }
+
+        public global::Code.Manager.Economy.CreditDayEndOutcome Outcome { get; }
+
+        /// <summary>한도 초과분을 금화로 메운 액수.</summary>
+        public int EmergencyRepaid { get; }
+
+        /// <summary>판정 뒤의 신용 경고 단계(0~5).</summary>
+        public int Warnings { get; }
         public int CurrentDebt { get; }
-        public int DebtLimit { get; }
+        public int CreditLimit { get; }
     }
 
     /// <summary>정산이 끝나 순액이 실제로 반영됐을 때. 정산 패널 표시용.</summary>

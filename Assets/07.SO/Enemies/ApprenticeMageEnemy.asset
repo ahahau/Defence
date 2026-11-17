@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13a7129936dd488895088d04b1e793ac, type: 3}
+  m_Name: ApprenticeMageEnemy
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Enemies.EnemyDataSO
+  <Grade>k__BackingField: 2
+  <BoardSprite>k__BackingField: {fileID: 21300000, guid: 6daa9445f068941f8a29c9dc4061f77e, type: 3}
+  <Defense>k__BackingField: 0
+  <EvasionChance>k__BackingField: 0.12
+  <Name>k__BackingField: "\uACAC\uC2B5 \uB9C8\uBC95\uC0AC"
+  <Role>k__BackingField: 1
+  <Trait>k__BackingField: 0
+  <Prefab>k__BackingField: {fileID: 6453398018867074118, guid: 2e3d13168afd6cf428bbf3cfab14e6f4, type: 3}
+  <Fear>k__BackingField: 2
+  <Greed>k__BackingField: 1
+  <MaxHealth>k__BackingField: 9
+  <AttackDamage>k__BackingField: 2
+  <AttackInterval>k__BackingField: 1.5
+  <Mobility>k__BackingField: 3
+  <IdleSprite>k__BackingField: {fileID: 21300000, guid: 6daa9445f068941f8a29c9dc4061f77e, type: 3}
+  <AttackSprite>k__BackingField: {fileID: 21300000, guid: 6e668f5db11fa4927a794e2cbe959a36, type: 3}
+  <DefeatedSprite>k__BackingField: {fileID: 21300000, guid: 3c16fc879f2944e6e8e5c62b07fd1925, type: 3}
+  <AnimationSet>k__BackingField: {fileID: 11400000, guid: 4457494953178d240ac8297347f2ab4d, type: 2}
+  <AttackSfx>k__BackingField: 9
+  <DisarmsTraps>k__BackingField: 0

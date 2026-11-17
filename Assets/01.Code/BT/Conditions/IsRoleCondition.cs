@@ -2,7 +2,7 @@ using System;
 using Unity.Behavior;
 using UnityEngine;
 
-namespace _01.Code.BT
+namespace Code.BT
 {
     /// <summary>에이전트가 지정한 역할인지. 전열/후열/지원 그래프 분기에 사용.</summary>
     [Serializable, Unity.Properties.GeneratePropertyBag]

@@ -1,0 +1,1459 @@
+fileFormatVersion: 2
+guid: 0cfdb8e1cdc14de479d720e6065bcf5a
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -5267423902119880752
+    second: Lightning_bomb-Sheet_0
+  - first:
+      213: -6052881432640008843
+    second: Lightning_bomb-Sheet_1
+  - first:
+      213: 8476925255086136386
+    second: Lightning_bomb-Sheet_2
+  - first:
+      213: -3690973410614941176
+    second: Lightning_bomb-Sheet_3
+  - first:
+      213: -3426482315097573432
+    second: Lightning_bomb-Sheet_4
+  - first:
+      213: 2912493743160807134
+    second: Lightning_bomb-Sheet_5
+  - first:
+      213: 5235116965715863380
+    second: Lightning_bomb-Sheet_6
+  - first:
+      213: -5767223733501816868
+    second: Lightning_bomb-Sheet_7
+  - first:
+      213: -1458802686720395078
+    second: Lightning_bomb-Sheet_8
+  - first:
+      213: -2839013234050209687
+    second: Lightning_bomb-Sheet_9
+  - first:
+      213: -9077225844877528554
+    second: Lightning_bomb-Sheet_10
+  - first:
+      213: 3444293842255503639
+    second: Lightning_bomb-Sheet_11
+  - first:
+      213: -541835940256740524
+    second: Lightning_bomb-Sheet_12
+  - first:
+      213: 8038162536062278735
+    second: Lightning_bomb-Sheet_13
+  - first:
+      213: -6338890720483808859
+    second: Lightning_bomb-Sheet_14
+  - first:
+      213: -7008544578016620619
+    second: Lightning_bomb-Sheet_15
+  - first:
+      213: 2829273829483072032
+    second: Lightning_bomb-Sheet_16
+  - first:
+      213: 7910912963027268954
+    second: Lightning_bomb-Sheet_17
+  - first:
+      213: -6058149780709115837
+    second: Lightning_bomb-Sheet_18
+  - first:
+      213: 1997534699324684096
+    second: Lightning_bomb-Sheet_19
+  - first:
+      213: -5645301325982624218
+    second: Lightning_bomb-Sheet_20
+  - first:
+      213: 1055944167290845609
+    second: Lightning_bomb-Sheet_21
+  - first:
+      213: -4089915363983689390
+    second: Lightning_bomb-Sheet_22
+  - first:
+      213: 356365455291510877
+    second: Lightning_bomb-Sheet_23
+  - first:
+      213: -1135506484369845528
+    second: Lightning_bomb-Sheet_24
+  - first:
+      213: 4841694792329163777
+    second: Lightning_bomb-Sheet_25
+  - first:
+      213: -7804740375409259788
+    second: Lightning_bomb-Sheet_26
+  - first:
+      213: -1386093290475002837
+    second: Lightning_bomb-Sheet_27
+  - first:
+      213: -8629765438612420514
+    second: Lightning_bomb-Sheet_28
+  - first:
+      213: 2494379577277842877
+    second: Lightning_bomb-Sheet_29
+  - first:
+      213: -8504330707266638243
+    second: Lightning_bomb-Sheet_30
+  - first:
+      213: -3229264588583252689
+    second: Lightning_bomb-Sheet_31
+  - first:
+      213: 2388817911620314093
+    second: Lightning_bomb-Sheet_32
+  - first:
+      213: -7097423181684397453
+    second: Lightning_bomb-Sheet_33
+  - first:
+      213: 8463909057446911062
+    second: Lightning_bomb-Sheet_34
+  - first:
+      213: 1241568921978910211
+    second: Lightning_bomb-Sheet_35
+  - first:
+      213: 6381328937918685768
+    second: Lightning_bomb-Sheet_36
+  - first:
+      213: -3642487333806559592
+    second: Lightning_bomb-Sheet_37
+  - first:
+      213: -3423051672675924082
+    second: Lightning_bomb-Sheet_38
+  - first:
+      213: 5846939092785520121
+    second: Lightning_bomb-Sheet_39
+  - first:
+      213: 3996222864441890058
+    second: Lightning_bomb-Sheet_40
+  - first:
+      213: 103890221032457065
+    second: Lightning_bomb-Sheet_41
+  - first:
+      213: 6119865291595363806
+    second: Lightning_bomb-Sheet_42
+  - first:
+      213: -55298099872731222
+    second: Lightning_bomb-Sheet_43
+  - first:
+      213: -8114614089567491993
+    second: Lightning_bomb-Sheet_44
+  - first:
+      213: -1120179937569748623
+    second: Lightning_bomb-Sheet_45
+  - first:
+      213: 711138337403256592
+    second: Lightning_bomb-Sheet_46
+  - first:
+      213: 1478744294003632912
+    second: Lightning_bomb-Sheet_47
+  - first:
+      213: 1138367727922307731
+    second: Lightning_bomb-Sheet_48
+  - first:
+      213: -3325427195421655086
+    second: Lightning_bomb-Sheet_49
+  - first:
+      213: -4365316953536972463
+    second: Lightning_bomb-Sheet_50
+  - first:
+      213: -845824099406971530
+    second: Lightning_bomb-Sheet_51
+  - first:
+      213: -7779206802899088517
+    second: Lightning_bomb-Sheet_52
+  - first:
+      213: 9159179720481226503
+    second: Lightning_bomb-Sheet_53
+  - first:
+      213: 1041666270947269872
+    second: Lightning_bomb-Sheet_54
+  - first:
+      213: 7216531049562408091
+    second: Lightning_bomb-Sheet_55
+  - first:
+      213: -8047110834731636253
+    second: Lightning_bomb-Sheet_56
+  - first:
+      213: -3737594521862709422
+    second: Lightning_bomb-Sheet_57
+  - first:
+      213: 5513910435293042829
+    second: Lightning_bomb-Sheet_58
+  - first:
+      213: -8769034177790448463
+    second: Lightning_bomb-Sheet_59
+  - first:
+      213: -624457611052830264
+    second: Lightning_bomb-Sheet_60
+  - first:
+      213: 7580697377696729978
+    second: Lightning_bomb-Sheet_61
+  - first:
+      213: -8684565935351941116
+    second: Lightning_bomb-Sheet_62
+  - first:
+      213: 2858150205059614304
+    second: Lightning_bomb-Sheet_63
+  - first:
+      213: -9193344991472256836
+    second: Lightning_bomb-Sheet_64
+  - first:
+      213: 1377435840099815792
+    second: Lightning_bomb-Sheet_65
+  - first:
+      213: -1732525510905660075
+    second: Lightning_bomb-Sheet_66
+  - first:
+      213: -8531856324640697105
+    second: Lightning_bomb-Sheet_67
+  - first:
+      213: 8853207615372556598
+    second: Lightning_bomb-Sheet_68
+  - first:
+      213: -155339690286253681
+    second: Lightning_bomb-Sheet_69
+  - first:
+      213: 759538588427521650
+    second: Lightning_bomb-Sheet_70
+  - first:
+      213: 8436620863864173367
+    second: Lightning_bomb-Sheet_71
+  - first:
+      213: 1481932050419215347
+    second: Lightning_bomb-Sheet_72
+  - first:
+      213: -3281809341341768535
+    second: Lightning_bomb-Sheet_73
+  - first:
+      213: 6683098896941783436
+    second: Lightning_bomb-Sheet_74
+  - first:
+      213: -6587060615150439187
+    second: Lightning_bomb-Sheet_75
+  - first:
+      213: -2302559631353954864
+    second: Lightning_bomb-Sheet_76
+  - first:
+      213: 7276457869648350310
+    second: Lightning_bomb-Sheet_77
+  - first:
+      213: 4958005524381195649
+    second: Lightning_bomb-Sheet_78
+  - first:
+      213: -1704158540496760647
+    second: Lightning_bomb-Sheet_79
+  - first:
+      213: 7443916928536853042
+    second: Lightning_bomb-Sheet_80
+  - first:
+      213: -3746548084526330114
+    second: Lightning_bomb-Sheet_81
+  - first:
+      213: 6265149681980018847
+    second: Lightning_bomb-Sheet_82
+  - first:
+      213: 5680968404234789934
+    second: Lightning_bomb-Sheet_83
+  - first:
+      213: -5352563494204755468
+    second: Lightning_bomb-Sheet_84
+  - first:
+      213: -8639711038349046047
+    second: Lightning_bomb-Sheet_85
+  - first:
+      213: 1748146007490067351
+    second: Lightning_bomb-Sheet_86
+  - first:
+      213: -5707661490843041512
+    second: Lightning_bomb-Sheet_87
+  - first:
+      213: -2861017798644241534
+    second: Lightning_bomb-Sheet_88
+  - first:
+      213: -3348245919382015789
+    second: Lightning_bomb-Sheet_89
+  - first:
+      213: 2280515656785501148
+    second: Lightning_bomb-Sheet_90
+  - first:
+      213: 93999435628774164
+    second: Lightning_bomb-Sheet_91
+  - first:
+      213: 7601873879941624992
+    second: Lightning_bomb-Sheet_92
+  - first:
+      213: -8038182015591474201
+    second: Lightning_bomb-Sheet_93
+  - first:
+      213: 1268995196117438804
+    second: Lightning_bomb-Sheet_94
+  - first:
+      213: 7415603570305327415
+    second: Lightning_bomb-Sheet_95
+  - first:
+      213: 7125717827398222029
+    second: Lightning_bomb-Sheet_96
+  - first:
+      213: 4074629517653687151
+    second: Lightning_bomb-Sheet_97
+  - first:
+      213: 1847893862022358647
+    second: Lightning_bomb-Sheet_98
+  - first:
+      213: 6112149443528078995
+    second: Lightning_bomb-Sheet_99
+  - first:
+      213: -8726136071025027558
+    second: Lightning_bomb-Sheet_100
+  - first:
+      213: 1597292672461029726
+    second: Lightning_bomb-Sheet_101
+  - first:
+      213: -4266775994450519059
+    second: Lightning_bomb-Sheet_102
+  - first:
+      213: 5746487337447737706
+    second: Lightning_bomb-Sheet_103
+  - first:
+      213: -5236448292165872978
+    second: Lightning_bomb-Sheet_104
+  - first:
+      213: -2977671401162492184
+    second: Lightning_bomb-Sheet_105
+  - first:
+      213: -7313449236316966699
+    second: Lightning_bomb-Sheet_106
+  - first:
+      213: 3364006456711607536
+    second: Lightning_bomb-Sheet_107
+  - first:
+      213: -6314283136300190263
+    second: Lightning_bomb-Sheet_108
+  - first:
+      213: 8526859035203647525
+    second: Lightning_bomb-Sheet_109
+  - first:
+      213: 4900408732182132633
+    second: Lightning_bomb-Sheet_110
+  - first:
+      213: -498874842272122040
+    second: Lightning_bomb-Sheet_111
+  - first:
+      213: 1009706580237962488
+    second: Lightning_bomb-Sheet_112
+  - first:
+      213: -1270067204981113112
+    second: Lightning_bomb-Sheet_113
+  - first:
+      213: -3105072596730581201
+    second: Lightning_bomb-Sheet_114
+  - first:
+      213: -3148297467918073629
+    second: Lightning_bomb-Sheet_115
+  - first:
+      213: -4243465844217899984
+    second: Lightning_bomb-Sheet_116
+  - first:
+      213: -6992831030062668943
+    second: Lightning_bomb-Sheet_117
+  - first:
+      213: 3831425188569497051
+    second: Lightning_bomb-Sheet_118
+  - first:
+      213: -2103317884574528545
+    second: Lightning_bomb-Sheet_119
+  - first:
+      213: -2214622366528034
+    second: Lightning_bomb-Sheet_120
+  - first:
+      213: -5436147163219676955
+    second: Lightning_bomb-Sheet_121
+  - first:
+      213: -2995824444673076691
+    second: Lightning_bomb-Sheet_122
+  - first:
+      213: 1612267908891023068
+    second: Lightning_bomb-Sheet_123
+  - first:
+      213: -5893273097216505833
+    second: Lightning_bomb-Sheet_124
+  - first:
+      213: 6472227058372402576
+    second: Lightning_bomb-Sheet_125
+  - first:
+      213: -6179878823498336141
+    second: Lightning_bomb-Sheet_126
+  - first:
+      213: -2586463588808325302
+    second: Lightning_bomb-Sheet_127
+  - first:
+      213: -1507390611385752071
+    second: Lightning_bomb-Sheet_128
+  - first:
+      213: 189862747369208644
+    second: Lightning_bomb-Sheet_129
+  - first:
+      213: 8282674971231419823
+    second: Lightning_bomb-Sheet_130
+  - first:
+      213: 4516354302537023066
+    second: Lightning_bomb-Sheet_131
+  - first:
+      213: 5174228649539098135
+    second: Lightning_bomb-Sheet_132
+  - first:
+      213: -4274753320846514686
+    second: Lightning_bomb-Sheet_133
+  - first:
+      213: 877465707948030576
+    second: Lightning_bomb-Sheet_134
+  - first:
+      213: -420404270125332859
+    second: Lightning_bomb-Sheet_135
+  - first:
+      213: -2464033513628812667
+    second: Lightning_bomb-Sheet_136
+  - first:
+      213: -5319612458189091410
+    second: Lightning_bomb-Sheet_137
+  - first:
+      213: -5953629199226175133
+    second: Lightning_bomb-Sheet_138
+  - first:
+      213: 3130239325604291745
+    second: Lightning_bomb-Sheet_139
+  - first:
+      213: -5584027648964966949
+    second: Lightning_bomb-Sheet_140
+  - first:
+      213: -797117910793237972
+    second: Lightning_bomb-Sheet_141
+  - first:
+      213: 5858754323003949808
+    second: Lightning_bomb-Sheet_142
+  - first:
+      213: 4520943463892544875
+    second: Lightning_bomb-Sheet_143
+  - first:
+      213: -2326082389934575308
+    second: Lightning_bomb-Sheet_144
+  - first:
+      213: -8990982798411719155
+    second: Lightning_bomb-Sheet_145
+  - first:
+      213: -3271502214219427999
+    second: Lightning_bomb-Sheet_146
+  - first:
+      213: -3622648013075598557
+    second: Lightning_bomb-Sheet_147
+  - first:
+      213: 7177166246362769608
+    second: Lightning_bomb-Sheet_148
+  - first:
+      213: -2967887788133903407
+    second: Lightning_bomb-Sheet_149
+  - first:
+      213: -845848370061636277
+    second: Lightning_bomb-Sheet_150
+  - first:
+      213: -3170854579354968138
+    second: Lightning_bomb-Sheet_151
+  - first:
+      213: -8885830776860322995
+    second: Lightning_bomb-Sheet_152
+  - first:
+      213: 6968644878246060166
+    second: Lightning_bomb-Sheet_153
+  - first:
+      213: -3017754941051279291
+    second: Lightning_bomb-Sheet_154
+  - first:
+      213: 4041546016513229652
+    second: Lightning_bomb-Sheet_155
+  - first:
+      213: 7275016254800770836
+    second: Lightning_bomb-Sheet_156
+  - first:
+      213: 6959599649557236133
+    second: Lightning_bomb-Sheet_157
+  - first:
+      213: 8695964044832737826
+    second: Lightning_bomb-Sheet_158
+  - first:
+      213: -4467012158118704096
+    second: Lightning_bomb-Sheet_159
+  - first:
+      213: -4993762191517510100
+    second: Lightning_bomb-Sheet_160
+  - first:
+      213: 7765797824008203855
+    second: Lightning_bomb-Sheet_161
+  - first:
+      213: 2942252420957775024
+    second: Lightning_bomb-Sheet_162
+  - first:
+      213: -2495172785216950378
+    second: Lightning_bomb-Sheet_163
+  - first:
+      213: -1746791439279061830
+    second: Lightning_bomb-Sheet_164
+  - first:
+      213: -4130498753625645758
+    second: Lightning_bomb-Sheet_165
+  - first:
+      213: -4507232180764442199
+    second: Lightning_bomb-Sheet_166
+  - first:
+      213: -1205092370603813635
+    second: Lightning_bomb-Sheet_167
+  - first:
+      213: -4783545895958596928
+    second: Lightning_bomb-Sheet_168
+  - first:
+      213: 5794691848515090658
+    second: Lightning_bomb-Sheet_169
+  - first:
+      213: 3668363172607145702
+    second: Lightning_bomb-Sheet_170
+  - first:
+      213: 6420793516444426335
+    second: Lightning_bomb-Sheet_171
+  - first:
+      213: -2398505124221597966
+    second: Lightning_bomb-Sheet_172
+  - first:
+      213: 8311445456158172196
+    second: Lightning_bomb-Sheet_173
+  - first:
+      213: 1500889657096577142
+    second: Lightning_bomb-Sheet_174
+  - first:
+      213: 294206798890582778
+    second: Lightning_bomb-Sheet_175
+  - first:
+      213: -3018352639054087307
+    second: Lightning_bomb-Sheet_176
+  - first:
+      213: -4978212826944488356
+    second: Lightning_bomb-Sheet_177
+  - first:
+      213: 894659839584240175
+    second: Lightning_bomb-Sheet_178
+  - first:
+      213: -171121526839079355
+    second: Lightning_bomb-Sheet_179
+  - first:
+      213: -7715069678461463495
+    second: Lightning_bomb-Sheet_180
+  - first:
+      213: 7636457731255161271
+    second: Lightning_bomb-Sheet_181
+  - first:
+      213: -482279287916334495
+    second: Lightning_bomb-Sheet_182
+  - first:
+      213: -9214196903376166067
+    second: Lightning_bomb-Sheet_183
+  - first:
+      213: 5302073760786315790
+    second: Lightning_bomb-Sheet_184
+  - first:
+      213: 1883054196737837821
+    second: Lightning_bomb-Sheet_185
+  - first:
+      213: 6282912798684688832
+    second: Lightning_bomb-Sheet_186
+  - first:
+      213: 3425307923977907068
+    second: Lightning_bomb-Sheet_187
+  - first:
+      213: 6722633205087097345
+    second: Lightning_bomb-Sheet_188
+  - first:
+      213: 8392274209375580158
+    second: Lightning_bomb-Sheet_189
+  - first:
+      213: 7982089639723243020
+    second: Lightning_bomb-Sheet_190
+  - first:
+      213: -8949436235813763915
+    second: Lightning_bomb-Sheet_191
+  - first:
+      213: -2058957261394266070
+    second: Lightning_bomb-Sheet_192
+  - first:
+      213: 1555493055654547095
+    second: Lightning_bomb-Sheet_193
+  - first:
+      213: -8025069688551504836
+    second: Lightning_bomb-Sheet_194
+  - first:
+      213: 4160452582798958734
+    second: Lightning_bomb-Sheet_195
+  - first:
+      213: 2640617097793758551
+    second: Lightning_bomb-Sheet_196
+  - first:
+      213: 2733312032550207799
+    second: Lightning_bomb-Sheet_197
+  - first:
+      213: -6801526797483246260
+    second: Lightning_bomb-Sheet_198
+  - first:
+      213: 5333756462513219549
+    second: Lightning_bomb-Sheet_199
+  - first:
+      213: 8246460387973199369
+    second: Lightning_bomb-Sheet_200
+  - first:
+      213: 3904031288071322056
+    second: Lightning_bomb-Sheet_201
+  - first:
+      213: -6508169543236276201
+    second: Lightning_bomb-Sheet_202
+  - first:
+      213: 5322695594178294823
+    second: Lightning_bomb-Sheet_203
+  - first:
+      213: -4734953997183341751
+    second: Lightning_bomb-Sheet_204
+  - first:
+      213: 6559537759697726760
+    second: Lightning_bomb-Sheet_205
+  - first:
+      213: -1822819676474414793
+    second: Lightning_bomb-Sheet_206
+  - first:
+      213: 5051550067534861912
+    second: Lightning_bomb-Sheet_207
+  - first:
+      213: 6835292425925941203
+    second: Lightning_bomb-Sheet_208
+  - first:
+      213: 8820522411122744176
+    second: Lightning_bomb-Sheet_209
+  - first:
+      213: 6814858538202257609
+    second: Lightning_bomb-Sheet_210
+  - first:
+      213: 1339873066447487756
+    second: Lightning_bomb-Sheet_211
+  - first:
+      213: -554493709718247252
+    second: Lightning_bomb-Sheet_212
+  - first:
+      213: 710623242555646344
+    second: Lightning_bomb-Sheet_213
+  - first:
+      213: -6261756489707134214
+    second: Lightning_bomb-Sheet_214
+  - first:
+      213: 6570377235030153949
+    second: Lightning_bomb-Sheet_215
+  - first:
+      213: -1905136223603943814
+    second: Lightning_bomb-Sheet_216
+  - first:
+      213: 1314259340974809119
+    second: Lightning_bomb-Sheet_217
+  - first:
+      213: -5879459150979661912
+    second: Lightning_bomb-Sheet_218
+  - first:
+      213: -7603327216204657278
+    second: Lightning_bomb-Sheet_219
+  - first:
+      213: -4602084979239237295
+    second: Lightning_bomb-Sheet_220
+  - first:
+      213: 2445836851543694841
+    second: Lightning_bomb-Sheet_221
+  - first:
+      213: 8086928053437329445
+    second: Lightning_bomb-Sheet_222
+  - first:
+      213: 3934848640449831560
+    second: Lightning_bomb-Sheet_223
+  - first:
+      213: -6967077360474532315
+    second: Lightning_bomb-Sheet_224
+  - first:
+      213: 8008764012174176573
+    second: Lightning_bomb-Sheet_225
+  - first:
+      213: 4258038101860701140
+    second: Lightning_bomb-Sheet_226
+  - first:
+      213: -1714682710538239362
+    second: Lightning_bomb-Sheet_227
+  - first:
+      213: -1166971302573906233
+    second: Lightning_bomb-Sheet_228
+  - first:
+      213: 7266849040161336711
+    second: Lightning_bomb-Sheet_229
+  - first:
+      213: -3081878374061887976
+    second: Lightning_bomb-Sheet_230
+  - first:
+      213: -7184686332301174235
+    second: Lightning_bomb-Sheet_231
+  - first:
+      213: -598916217209963012
+    second: Lightning_bomb-Sheet_232
+  - first:
+      213: -5207947297724394334
+    second: Lightning_bomb-Sheet_233
+  - first:
+      213: 5516711692966010793
+    second: Lightning_bomb-Sheet_234
+  - first:
+      213: 4997658257536984812
+    second: Lightning_bomb-Sheet_235
+  - first:
+      213: 7967881627369217190
+    second: Lightning_bomb-Sheet_236
+  - first:
+      213: 5606587594715971908
+    second: Lightning_bomb-Sheet_237
+  - first:
+      213: 8444353957061713325
+    second: Lightning_bomb-Sheet_238
+  - first:
+      213: -5357333629420325614
+    second: Lightning_bomb-Sheet_239
+  - first:
+      213: 2656372120190798199
+    second: Lightning_bomb-Sheet_240
+  - first:
+      213: 8882088981961716845
+    second: Lightning_bomb-Sheet_241
+  - first:
+      213: -3720239044613158205
+    second: Lightning_bomb-Sheet_242
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 28
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: LightningBomb_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 480
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f42761793c67dbb4ea6db56b44b2ff07
+      internalID: -607659182
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_1
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 480
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2dd5e1e37b309494b80cec2a42ae5563
+      internalID: 798350318
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_2
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 480
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: af9a58d52d0f5aa489f055dc8953454f
+      internalID: 1433322624
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_3
+      rect:
+        serializedVersion: 2
+        x: 528
+        y: 480
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d89fe1641a7f23244af75c7eccb3a889
+      internalID: -1390710640
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_4
+      rect:
+        serializedVersion: 2
+        x: 704
+        y: 480
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 22dbbf2de6540124990b6bdfdd9b9c73
+      internalID: -640538140
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_5
+      rect:
+        serializedVersion: 2
+        x: 880
+        y: 480
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e8759db5fb66e114db58fc8251e83bc7
+      internalID: 1124459581
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_6
+      rect:
+        serializedVersion: 2
+        x: 1056
+        y: 480
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a0008fa944a5cfa4cacfd5da01a43b41
+      internalID: -2084120278
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_7
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 320
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f4ba619e66e71be448de3b9596a9e48f
+      internalID: -2117804920
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_8
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 320
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2f271f0f7cd62c44abddbd85ea8a0790
+      internalID: -1032108839
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_9
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 320
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0d3f9706ad505b841a7609e323ff6378
+      internalID: 946766261
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_10
+      rect:
+        serializedVersion: 2
+        x: 528
+        y: 320
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d7482183aa2811b4caf025e550290d7d
+      internalID: -812114630
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_11
+      rect:
+        serializedVersion: 2
+        x: 704
+        y: 320
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6554d9b8a98428145b21490b769b1baa
+      internalID: 1753192106
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_12
+      rect:
+        serializedVersion: 2
+        x: 880
+        y: 320
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 15de99c4351e7534fb17373996182168
+      internalID: 2070857692
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_13
+      rect:
+        serializedVersion: 2
+        x: 1056
+        y: 320
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 26dfee9198c19f7488924c038e4799c6
+      internalID: -1312636869
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_14
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 160
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7dddb83b13f8fc546a8cf6dbd6dc5ad6
+      internalID: -1545226807
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_15
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 160
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fade31470bc24eb4887e5de331824516
+      internalID: -1201116128
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_16
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 160
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 117916fd238157b4fb27ee2e04f937e7
+      internalID: 21791660
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_17
+      rect:
+        serializedVersion: 2
+        x: 528
+        y: 160
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3e924fae11dcb3341b86e2bbc6d506b3
+      internalID: 69084175
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_18
+      rect:
+        serializedVersion: 2
+        x: 704
+        y: 160
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6cb619929419210478b9d9bd29360235
+      internalID: -542468994
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_19
+      rect:
+        serializedVersion: 2
+        x: 880
+        y: 160
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1dc99b114ef8c50498349f9cbf6546e3
+      internalID: 926342727
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_20
+      rect:
+        serializedVersion: 2
+        x: 1056
+        y: 160
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8d788bf45ed625b448044173380cb7a7
+      internalID: 1262117210
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_21
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4d32361ebd2c4424297b1b4e9ca11338
+      internalID: 1529939140
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_22
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 0
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7c52eac7639b7ae44b70dab6f4f43a24
+      internalID: 909526038
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_23
+      rect:
+        serializedVersion: 2
+        x: 352
+        y: 0
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 174d61a3bfe005c479c008b014b57af1
+      internalID: -208554492
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_24
+      rect:
+        serializedVersion: 2
+        x: 528
+        y: 0
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1b1b1739072185c4bb62ecfefb00040f
+      internalID: 794497493
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: LightningBomb_25
+      rect:
+        serializedVersion: 2
+        x: 704
+        y: 0
+        width: 176
+        height: 160
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b62a5b45dad875f4dac5d3e7ca9fe035
+      internalID: 2053776039
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: e64e3a6c51f189a4fbeedc4b39dc6ff0
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      LightningBomb_0: -607659182
+      LightningBomb_1: 798350318
+      LightningBomb_10: -812114630
+      LightningBomb_11: 1753192106
+      LightningBomb_12: 2070857692
+      LightningBomb_13: -1312636869
+      LightningBomb_14: -1545226807
+      LightningBomb_15: -1201116128
+      LightningBomb_16: 21791660
+      LightningBomb_17: 69084175
+      LightningBomb_18: -542468994
+      LightningBomb_19: 926342727
+      LightningBomb_2: 1433322624
+      LightningBomb_20: 1262117210
+      LightningBomb_21: 1529939140
+      LightningBomb_22: 909526038
+      LightningBomb_23: -208554492
+      LightningBomb_24: 794497493
+      LightningBomb_25: 2053776039
+      LightningBomb_3: -1390710640
+      LightningBomb_4: -640538140
+      LightningBomb_5: 1124459581
+      LightningBomb_6: -2084120278
+      LightningBomb_7: -2117804920
+      LightningBomb_8: -1032108839
+      LightningBomb_9: 946766261
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

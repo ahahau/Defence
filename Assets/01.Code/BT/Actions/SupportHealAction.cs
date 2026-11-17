@@ -3,7 +3,7 @@ using Unity.Behavior;
 using UnityEngine;
 using Action = Unity.Behavior.Action;
 
-namespace _01.Code.BT
+namespace Code.BT
 {
     /// <summary>지원(Support): 사거리 내 최저 HP 아군을 회복한다. 대상이 없으면 Failure.</summary>
     [Serializable, Unity.Properties.GeneratePropertyBag]

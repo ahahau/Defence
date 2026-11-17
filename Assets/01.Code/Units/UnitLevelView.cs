@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace _01.Code.Units
+namespace Code.Units
 {
     public class UnitLevelView : MonoBehaviour
     {

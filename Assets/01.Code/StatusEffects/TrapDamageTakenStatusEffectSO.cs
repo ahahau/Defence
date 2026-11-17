@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace _01.Code.StatusEffects
+namespace Code.StatusEffects
 {
     [CreateAssetMenu(
         fileName = "TrapDamageTakenStatusEffect",

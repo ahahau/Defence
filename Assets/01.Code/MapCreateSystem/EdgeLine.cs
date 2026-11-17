@@ -1,16 +1,12 @@
 using System.Collections.Generic;
-using _01.Code.Buildings;
+using Code.Buildings;
 using UnityEngine;
 
-namespace _01.Code.MapCreateSystem
+namespace Code.MapCreateSystem
 {
-    /// <summary>노드 사이 연결 라인. 비주얼(LineRenderer)에 더해 건물 설치 슬롯 하나를 가진다 —
-    /// 상점/여관 같은 통과형 건물을 라인 위(중점)에 설치하면 적이 이 라인을 지나갈 때 효과가 발동한다.</summary>
+    /// <summary>서로 맞닿은 방의 경계에 있는 건물 설치 및 통과 판정 슬롯.</summary>
     public class EdgeLine : MonoBehaviour
     {
-        [SerializeField]
-        private LineRenderer lineRenderer;
-
         private static readonly List<EdgeLine> _active = new();
         /// <summary>씬의 모든 활성 엣지(설치 미리보기·통과 판정용).</summary>
         public static IReadOnlyList<EdgeLine> ActiveEdges => _active;
@@ -22,6 +18,19 @@ namespace _01.Code.MapCreateSystem
         public Vector3 Midpoint => (StartPoint + EndPoint) * 0.5f;
         public Building InstalledBuilding { get; private set; }
         public bool HasBuilding => InstalledBuilding != null;
+
+        /// <summary>
+        /// 라인 건물을 새로 놓을 수 있는가. 비어 있어도 공사 중인 방에 닿은 라인은 안 된다 —
+        /// 공사를 취소하면 라인째 사라지기 때문이다.
+        /// </summary>
+        public bool IsAvailableForInstall =>
+            !HasBuilding && !IsTouchingConstruction(FromId) && !IsTouchingConstruction(ToId);
+
+        private static bool IsTouchingConstruction(string nodeId)
+        {
+            var node = Node.FindByDataId(nodeId);
+            return node != null && node.IsUnderConstruction;
+        }
 
         public void Initialize(string objectName, Vector3 start, Vector3 end)
         {
@@ -36,15 +45,7 @@ namespace _01.Code.MapCreateSystem
             FromId = fromId;
             ToId = toId;
 
-            if (lineRenderer == null)
-            {
-                Debug.LogError($"{nameof(EdgeLine)} requires a line renderer.", this);
-                return;
-            }
-
-            lineRenderer.positionCount = 2;
-            lineRenderer.SetPosition(0, start);
-            lineRenderer.SetPosition(1, end);
+            // 연결 정보와 설치 슬롯만 유지한다. 방 사이의 선은 렌더링하지 않는다.
         }
 
         private void OnEnable()

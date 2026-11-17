@@ -1,7 +1,7 @@
-using _01.Code.Combat;
-using _01.Code.Enemies;
+using Code.Combat;
+using Code.Enemies;
 
-namespace _01.Code.StatusEffects
+namespace Code.StatusEffects
 {
     public class StatusEffectContext
     {

@@ -1,11 +1,10 @@
 using System.Collections.Generic;
-using _01.Code.Buildings;
-using _01.Code.Enemies;
-using _01.Code.MapCreateSystem;
-using _01.Code.Units;
+using Code.Buildings;
+using Code.Enemies;
+using Code.MapCreateSystem;
 using UnityEngine;
 
-namespace _01.Code.Manager
+namespace Code.Manager
 {
     /// <summary>
     /// 침입자가 금고에 얼마나 다가왔는지.
@@ -100,7 +99,7 @@ namespace _01.Code.Manager
             if (target == null)
                 return false;
 
-            var portal = WaveManager.Current != null ? WaveManager.Current.PortalNode : null;
+            var portal = WaveManager.Current != null ? WaveManager.Current.EntryNode : null;
             if (portal == null)
                 return false;
 
@@ -126,7 +125,7 @@ namespace _01.Code.Manager
 
         /// <summary>
         /// 침입자의 공통 목표 규칙. 돈이 든 금고를 먼저 노리고, 없으면 금고형 노드,
-        /// 그것도 없으면 주인공이 지키는 핵심부(마지막으로 입구)를 향한다.
+        /// 그것도 없으면 가장 안쪽 방을 향한다.
         /// </summary>
         public static Node FindPriorityTarget(Vector2 from, out ObjectiveKind kind)
         {
@@ -146,16 +145,28 @@ namespace _01.Code.Manager
                 return treasury;
             }
 
-            var core = FindNearest(from, HasMainUnit);
-            if (core == null)
-            {
-                core = FindNearest(
-                    from,
-                    node => node.Data != null && node.Data.Type == DungeonNodeType.Entrance);
-            }
+            // 침입은 오른쪽 시작 방에서 시작하므로 금고가 없을 때는 가장 안쪽 방을 향한다.
+            var core = FindDeepestRoom();
 
             kind = core != null ? ObjectiveKind.DungeonCore : ObjectiveKind.None;
             return core;
+        }
+
+        private static Node FindDeepestRoom()
+        {
+            Node deepest = null;
+            foreach (var node in Node.ActiveNodes)
+            {
+                if (node == null || node.Data == null)
+                    continue;
+
+                if (deepest == null || node.GridPosition.x < deepest.GridPosition.x ||
+                    node.GridPosition.x == deepest.GridPosition.x &&
+                    Mathf.Abs(node.GridPosition.y) < Mathf.Abs(deepest.GridPosition.y))
+                    deepest = node;
+            }
+
+            return deepest;
         }
 
         private static Node FindNearest(Vector2 from, System.Func<Node, bool> predicate)
@@ -177,18 +188,6 @@ namespace _01.Code.Manager
             }
 
             return best;
-        }
-
-        private static bool HasMainUnit(Node node)
-        {
-            var placements = node.UnitPlacements;
-            for (var i = 0; i < placements.Count; i++)
-            {
-                if (placements[i]?.Instance is MainUnit)
-                    return true;
-            }
-
-            return node.AssignedUnitInstance is MainUnit;
         }
 
         /// <summary>남은 구역 수를 한 줄 경고로. 가까울수록 붉어진다.</summary>

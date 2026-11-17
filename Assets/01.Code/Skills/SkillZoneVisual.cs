@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 
-namespace _01.Code.Skills
+namespace Code.Skills
 {
     /// <summary>장판형 스킬 공용 비주얼 유틸. 원형 스프라이트 생성과 장판 GO 구성을 담당한다.</summary>
     public static class SkillZoneVisual
@@ -68,20 +68,20 @@ namespace _01.Code.Skills
     {
         private readonly struct ZoneKey
         {
-            public ZoneKey(int ownerId, string slot)
+            public ZoneKey(EntityId ownerId, string slot)
             {
                 OwnerId = ownerId;
                 Slot = slot;
             }
 
-            public int OwnerId { get; }
+            public EntityId OwnerId { get; }
             public string Slot { get; }
 
             public override bool Equals(object obj) =>
                 obj is ZoneKey other && OwnerId == other.OwnerId && Slot == other.Slot;
 
             public override int GetHashCode() =>
-                (OwnerId * 397) ^ (Slot != null ? Slot.GetHashCode() : 0);
+                (OwnerId.GetHashCode() * 397) ^ (Slot != null ? Slot.GetHashCode() : 0);
         }
 
         private static readonly Dictionary<ZoneKey, GameObject> ActiveZones = new();
@@ -89,12 +89,12 @@ namespace _01.Code.Skills
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void Reset() => ActiveZones.Clear();
 
-        public static int Replace(Object owner, string slot, GameObject zone)
+        public static EntityId Replace(Object owner, string slot, GameObject zone)
         {
             if (owner == null || string.IsNullOrEmpty(slot) || zone == null)
-                return 0;
+                return EntityId.None;
 
-            var ownerId = owner.GetInstanceID();
+            var ownerId = owner.GetEntityId();
             var key = new ZoneKey(ownerId, slot);
             if (ActiveZones.TryGetValue(key, out var previous)
                 && previous != null
@@ -108,9 +108,9 @@ namespace _01.Code.Skills
             return ownerId;
         }
 
-        public static void Release(int ownerId, string slot, GameObject zone)
+        public static void Release(EntityId ownerId, string slot, GameObject zone)
         {
-            if (ownerId == 0 || string.IsNullOrEmpty(slot))
+            if (!ownerId.IsValid() || string.IsNullOrEmpty(slot))
                 return;
 
             var key = new ZoneKey(ownerId, slot);

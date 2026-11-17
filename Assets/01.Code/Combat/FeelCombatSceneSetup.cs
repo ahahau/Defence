@@ -1,7 +1,7 @@
 using MoreMountains.Feedbacks;
 using UnityEngine;
 
-namespace _01.Code.Combat
+namespace Code.Combat
 {
     /// <summary>
     /// Feel 전투 연출에 필요한 씬 구성 요소를 런타임에 보장한다.

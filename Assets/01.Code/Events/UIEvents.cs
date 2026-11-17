@@ -1,8 +1,8 @@
-using _01.Code.Core;
-using _01.Code.MapCreateSystem;
-using _01.Code.Units;
+using Code.Core;
+using Code.MapCreateSystem;
+using Code.Units;
 
-namespace _01.Code.Events
+namespace Code.Events
 {
     public class ShowNodePanelEvent : GameEvent
     {

@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2c05617eccf4864aa5672963a8c7578, type: 3}
+  m_Name: Skill_ShieldShockwave
+  m_EditorClassIdentifier: 
+  <DisplayName>k__BackingField: "\uB3C4\uB07C \uD729\uC4F8\uAE30"
+  <Description>k__BackingField: "\uB3C4\uB07C\uB97C \uD06C\uAC8C \uD718\uB458\uB7EC \uBC18\uACBD 2.35 \uC548\uC758 \uC801\uC5D0\uAC8C \uD53C\uD574 4\uB97C \uC8FC\uACE0 1.2\uB9CC\uD07C \uBC00\uC5B4\uB0C5\uB2C8\uB2E4."
+  <Icon>k__BackingField: {fileID: -2278566297644842510, guid: 3d1a3fa18cf47504cbc71399b9b92c1e, type: 3}
+  <Cooldown>k__BackingField: 5.5
+  <IsUltimate>k__BackingField: 0
+  <Effects>k__BackingField:
+  - {fileID: 11400000, guid: 40236b2907a94a9495c357706d8711c3, type: 2}
+  <SpellFrames>k__BackingField:
+  - {fileID: -1486403710, guid: aa4c95fd1f29ef148881631c37e34208, type: 3}
+  - {fileID: -524479500, guid: aa4c95fd1f29ef148881631c37e34208, type: 3}
+  - {fileID: 1904874663, guid: aa4c95fd1f29ef148881631c37e34208, type: 3}
+  - {fileID: -10802046, guid: aa4c95fd1f29ef148881631c37e34208, type: 3}
+  - {fileID: 768018858, guid: aa4c95fd1f29ef148881631c37e34208, type: 3}
+  - {fileID: -1244375561, guid: aa4c95fd1f29ef148881631c37e34208, type: 3}
+  - {fileID: 1932366226, guid: aa4c95fd1f29ef148881631c37e34208, type: 3}
+  - {fileID: 1242473630, guid: aa4c95fd1f29ef148881631c37e34208, type: 3}
+  - {fileID: -1277764950, guid: aa4c95fd1f29ef148881631c37e34208, type: 3}
+  - {fileID: 993399186, guid: aa4c95fd1f29ef148881631c37e34208, type: 3}
+  - {fileID: 1746833181, guid: aa4c95fd1f29ef148881631c37e34208, type: 3}
+  - {fileID: 585922352, guid: aa4c95fd1f29ef148881631c37e34208, type: 3}
+  <SpellFramesPerSecond>k__BackingField: 18
+  <SpellAnchor>k__BackingField: 1
+  <SpellScale>k__BackingField: 0.85

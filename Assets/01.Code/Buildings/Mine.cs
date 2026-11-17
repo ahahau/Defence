@@ -1,8 +1,9 @@
-using _01.Code.Core;
-using _01.Code.Events;
+using Code.Core;
+using Code.Events;
+using Code.Manager;
 using UnityEngine;
 
-namespace _01.Code.Buildings
+namespace Code.Buildings
 {
     public class Mine : Building
     {
@@ -22,10 +23,12 @@ namespace _01.Code.Buildings
 
         private void HandleDayChanged(DayChangedEvent evt)
         {
-            if (goldPerDay <= 0)
+            // 닫아 둔 광산은 캐지 않는다.
+            if (goldPerDay <= 0 || !IsOperating)
                 return;
 
-            costEventChannel?.RaiseEvent(new GoldEarnedEvent(goldPerDay, GoldChangeSource.Mine));
+            costEventChannel?.RaiseEvent(new GoldEarnedEvent(
+                FacilityEconomyRules.ScaleIncome(this, goldPerDay), GoldChangeSource.Mine));
         }
     }
 }

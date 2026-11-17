@@ -1,9 +1,9 @@
-using _01.Code.Buildings;
-using _01.Code.MapCreateSystem;
-using _01.Code.UI;
-using _01.Code.Units;
+using Code.Buildings;
+using Code.MapCreateSystem;
+using Code.UI;
+using Code.Units;
 
-namespace _01.Code.Tutorial
+namespace Code.Tutorial
 {
     public static class TutorialInputGate
     {

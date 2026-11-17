@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using _01.Code.MapCreateSystem;
-using _01.Code.Units;
+using Code.MapCreateSystem;
+using Code.Units;
 
-namespace _01.Code.Persistence
+namespace Code.Persistence
 {
     [Serializable]
     public sealed class RunSaveData
@@ -26,6 +26,24 @@ namespace _01.Code.Persistence
         public SavedRoster roster = new();
     }
 
+    /// <summary>
+    /// 확장 후보 자리에 이미 뽑아 둔 크기·특수 효과. 처음 방들은 중형으로 고정해 뽑으므로, 시드만으로는
+    /// 불러온 뒤 같은 후보를 다시 만들 수 없다.
+    /// </summary>
+    [Serializable]
+    public sealed class SavedCandidate
+    {
+        public int x;
+        public int y;
+        public int roomSize;
+        public int roomFeature;
+
+        // 후보에 보여 준 방 모양(SavedNode와 같은 형식).
+        public string layoutId;
+        public List<string> layoutRows = new();
+        public int layoutDoors;
+    }
+
     [Serializable]
     public sealed class SavedNode
     {
@@ -33,6 +51,28 @@ namespace _01.Code.Persistence
         public int x;
         public int y;
         public int danger;
+
+        // 공사 중이던 방. 옛 저장에는 없어서 0(완공)으로 읽힌다.
+        public float constructionRemaining;
+        public int constructionPaidGold;
+
+        // 방 크기(RoomSize). 옛 저장에는 없어서 0(중형)으로 읽힌다.
+        public int roomSize;
+
+        // 방 특수 효과(RoomFeature). 옛 저장에는 없어서 0(없음)으로 읽힌다.
+        public int roomFeature;
+
+        // 방 모양: 특별 방 프리팹 이름(장식용) 또는 생성 표식, 칸 줄(위 줄부터 '.'/'#'), 문(RoomDoors).
+        // 생성한 방은 다시 깎지 않고 이 줄로 되살린다.
+        public string layoutId;
+        public List<string> layoutRows = new();
+        public int layoutDoors;
+
+        // 모험가 사이의 소문(RoomRumor). 옛 저장에는 없어서 0(소문 없음)으로 읽힌다.
+        public int rumorTraps;
+        public int rumorDowns;
+        public int rumorRetreats;
+
         public SavedBuilding centralBuilding;
         public List<SavedBuilding> cellBuildings = new();
         public List<SavedUnit> units = new();
@@ -56,6 +96,19 @@ namespace _01.Code.Persistence
         public int row = -1;
         public int durability;
         public int storedGold;
+
+        /// <summary>옛 저장의 마모. 지금은 내구도에 바로 깎이므로 새로 쓰지 않는다.</summary>
+        public int wear;
+        public bool closed;
+
+        /// <summary>남은 수리 시간(게임 초). 0이면 수리 중이 아니다.</summary>
+        public float repairRemaining;
+
+        /// <summary>누적 수리 횟수. 다음 수리비 할증의 기준이다.</summary>
+        public int repairCount;
+
+        /// <summary>다시 열리기로 예약된 날. 0이면 닫힌 채로 예약하지 않았다.</summary>
+        public int reopenOnDay;
     }
 
     [Serializable]
@@ -106,6 +159,9 @@ namespace _01.Code.Persistence
     {
         public UnitConditionState condition;
         public int daysLeft;
+
+        /// <summary>정가에 곱하는 시세. 옛 저장은 0으로 읽혀 정가로 본다.</summary>
+        public float priceMultiplier;
     }
 
     [Serializable]
@@ -113,6 +169,22 @@ namespace _01.Code.Persistence
     {
         public List<string> selected = new();
         public List<SavedActivePolicy> active = new();
+
+        /// <summary>사건 기록을 담은 저장인가. 옛 저장은 false로 읽혀 사건 순서를 처음부터 센다.</summary>
+        public bool hasEventLedger;
+
+        /// <summary>한 번 고른 사건 선택지(방침·대화). 다시 만나면 결과를 보여 준다.</summary>
+        public List<string> chosenEventKeys = new();
+
+        /// <summary>선택 이후 기다리는 후속과 이미 처리한 첫 사건. 누락된 옛 저장은 빈 상태다.</summary>
+        public List<SavedDialogueFollowUp> pendingDialogueFollowUps = new();
+        public List<string> completedDialogueFollowUps = new();
+
+        /// <summary>다음 일반 사건까지 남은 전환 수.</summary>
+        public int normalEventCooldown;
+
+        /// <summary>청산 위기에 밀린 운영 방침이 다음 전환을 기다리는가.</summary>
+        public bool policyDeferred;
     }
 
     [Serializable]

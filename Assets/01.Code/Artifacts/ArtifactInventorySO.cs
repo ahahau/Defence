@@ -1,16 +1,21 @@
 using System.Collections.Generic;
-using _01.Code.Core;
-using _01.Code.Events;
-using _01.Code.Units;
+using Code.Core;
+using Code.Events;
+using Code.Units;
 using UnityEngine;
 
-namespace _01.Code.Artifacts
+namespace Code.Artifacts
 {
     [CreateAssetMenu(menuName = "SO/Artifact/Inventory", fileName = "ArtifactInventory", order = 1)]
     public class ArtifactInventorySO : ScriptableObject
     {
         [SerializeField]
         private List<ArtifactDataSO> obtainedArtifacts = new();
+
+        [SerializeField, Tooltip("두 유물을 함께 가졌을 때 붙는 추가 효과. 비어 있으면 조합이 없다.")]
+        private ArtifactComboCatalogSO combos;
+
+        public ArtifactComboCatalogSO Combos => combos;
 
         public IReadOnlyList<ArtifactDataSO> ObtainedArtifacts => obtainedArtifacts;
 
@@ -50,6 +55,10 @@ namespace _01.Code.Artifacts
                 var context = new ArtifactEffectContext(artifact, unit);
                 bonus.Add(artifact.CalculateStatBonus(context));
             }
+
+            // 조합은 개별 유물을 다 더한 뒤에 얹는다 — 짝이 맞아야만 생기는 몫이다.
+            if (combos != null)
+                bonus.Add(combos.CalculateBonus(obtainedArtifacts, unit));
 
             return bonus;
         }

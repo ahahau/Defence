@@ -1,13 +1,15 @@
 using System;
 using System.Collections;
-using _01.Code.Core;
-using _01.Code.Core.Stats;
-using _01.Code.Events;
-using _01.Code.StatusEffects;
+using Code.Core;
+using GameLib.Entity.Stats;
+using Code.Events;
+using Code.Manager;
+using Code.StatusEffects;
+using Code.Units;
 using MoreMountains.Feedbacks;
 using UnityEngine;
 
-namespace _01.Code.Combat
+namespace Code.Combat
 {
     public class Combatant : MonoBehaviour
     {
@@ -17,6 +19,7 @@ namespace _01.Code.Combat
         [SerializeField, Min(0)] private int defense;
         [SerializeField] private float attackInterval = 1f;
         [SerializeField, Range(0f, 1f)] private float evasionChance;
+        // 치명타 값도 스탯 표가 있으면 그쪽을 쓴다. 아래 둘은 표가 없는 상대를 위한 폴백이다.
         [Header("Critical")]
         [SerializeField, Range(0f, 1f), Tooltip("평타 크리티컬 확률.")]
         private float criticalChance = 0.12f;
@@ -26,10 +29,10 @@ namespace _01.Code.Combat
         [SerializeField] private MMF_Player attackFeelFeedbacks;
         [SerializeField] private bool enableFeelCombatFeedbacks = true;
         [SerializeField] private ParticleSystem attackHitParticles;
-        [SerializeField] private Color attackParticleColor = new(1f, 0.82f, 0.35f, 1f);
-        [SerializeField, Min(1)] private int attackParticleBurstCount = 14;
         [SerializeField, Min(0f)] private float attackImpactOffset = 0.08f;
-        [SerializeField] private int attackParticleSortingOrder = 75;
+
+        [SerializeField, Tooltip("이 전투원이 때릴 때 나는 소리. 활잡이와 마도사는 바꿔줘야 구분된다.")]
+        private global::Code.Audio.GameSfxCue attackSfx = global::Code.Audio.GameSfxCue.Attack;
         [SerializeField] private StatusEffectDataSO attackStatusEffect;
         [SerializeField, Range(0f, 1f)] private float attackStatusEffectChance;
         [SerializeField] private Health health;
@@ -42,15 +45,58 @@ namespace _01.Code.Combat
         private bool _isAttacking;
         private bool _isPaused;
         private float _attackTimer;
-        private float conditionCriticalChanceBonus;
+        private bool _windingUp;
+        private float _staggerUntil;
+        private Unit _ownerUnit;
+        private Code.Enemies.Enemy _ownerEnemy;
         private GameEventChannelSO artifactEventChannel;
-        private EnemyStatusController enemyStatusController;
+
+        /// <summary>마지막으로 이 전투원을 때린 모험가의 파티 번호. 없으면 -1. 아군 부활비가 그 파티 지갑으로 간다.</summary>
+        public int LastAttackerPartyId { get; private set; } = -1;
+
+        /// <summary>그 공격을 받은 게임 시각.</summary>
+        public float LastAttackedTime { get; private set; } = float.NegativeInfinity;
+
+        /// <summary>이 전투원이 모험가면 그 파티 번호, 아니면 -1.</summary>
+        public int OwnerPartyId => _ownerEnemy != null && _ownerEnemy.Mover != null ? _ownerEnemy.Mover.PartyId : -1;
+
+        /// <summary>맞았다. 때린 쪽이 모험가면 그 파티를 기억한다.</summary>
+        public void NoteAttacker(Combatant attacker)
+        {
+            var partyId = attacker != null ? attacker.OwnerPartyId : -1;
+            if (partyId < 0)
+                return;
+
+            LastAttackerPartyId = partyId;
+            LastAttackedTime = Time.time;
+        }
+
+        public void ClearAttacker()
+        {
+            LastAttackerPartyId = -1;
+            LastAttackedTime = float.NegativeInfinity;
+        }
         /// <summary>공격이 적중한 순간 발생(타격 연출/돌진용). BattleAgent가 구독해 lunge 모션을 낸다.</summary>
         public event Action AttackLanded;
 
         public bool IsAlive => health != null && health.IsAlive;
         public bool IsAttacking => _isAttacking;
         public bool IsPaused => _isPaused;
+
+        /// <summary>휘두르기 시작해 아직 닿지 않은 동안. 이동이 이 동안 발을 묶는다.</summary>
+        public bool IsWindingUp => _windingUp;
+
+        /// <summary>맞고 움찔하는 중.</summary>
+        public bool IsStaggered => Time.time < _staggerUntil;
+
+        /// <summary>평타가 닿는 거리. 이동을 맡은 쪽(<c>BattleAgent</c>)이 사거리를 넣는다. 무한이면 거리를 보지 않는다.</summary>
+        public float StrikeRange { get; set; } = float.PositiveInfinity;
+
+        public void Stagger(float seconds)
+        {
+            if (seconds > 0f)
+                _staggerUntil = Mathf.Max(_staggerUntil, Time.time + seconds);
+        }
         public Combatant Target => _target;
         public Health Health => health;
         public int AttackDamage => ResolveAttackDamagePreview();
@@ -112,6 +158,17 @@ namespace _01.Code.Combat
                 attackDamage += amount;
         }
 
+        public void AddDefense(int amount)
+        {
+            if (amount <= 0)
+                return;
+
+            if (TryGetStat(StatIndex.Defense, out var stat))
+                stat.BaseValue += amount;
+            else
+                defense += amount;
+        }
+
         public void SetAttackDamage(int value)
         {
             value = Mathf.Max(1, value);
@@ -157,14 +214,19 @@ namespace _01.Code.Combat
                 stat.RemoveModifier(key);
         }
 
-        public void SetConditionCriticalChanceBonus(float bonus)
-        {
-            conditionCriticalChanceBonus = Mathf.Clamp(bonus, -1f, 1f);
-        }
+        /// <summary>출처별 치명타 확률 보정. 같은 출처로 다시 부르면 이전 값이 걷힌다.</summary>
+        public void SetCriticalChanceBonus(object key, float bonus) =>
+            SetKeyedModifier(StatIndex.CriticalChance, key, Mathf.Clamp(bonus, -1f, 1f), 1f);
 
         public void SetArtifactEventChannel(GameEventChannelSO eventChannel)
         {
             artifactEventChannel = eventChannel;
+        }
+
+        /// <summary>때릴 때 나는 소리를 데이터에서 갈아 끼운다.</summary>
+        public void SetAttackSfx(global::Code.Audio.GameSfxCue cue)
+        {
+            attackSfx = cue;
         }
 
         public void SetAttackInterval(float value)
@@ -176,10 +238,15 @@ namespace _01.Code.Combat
                 attackInterval = value;
         }
 
+        /// <summary>공격 포즈 교체를 맡는다. 없으면 스프라이트는 그대로 둔다.</summary>
+        private CharacterPoseView poseView;
+
         private void Awake()
         {
-            enemyStatusController = GetComponent<EnemyStatusController>();
+            _ownerUnit = GetComponent<Unit>();
+            _ownerEnemy = GetComponent<Code.Enemies.Enemy>();
             EnsureFeelCombatFeedbacks();
+            EnsurePoseView();
             if (health != null)
                 health.Changed += RefreshHealthBar;
             RefreshBars(0f);
@@ -212,6 +279,7 @@ namespace _01.Code.Combat
             _attackRoutine = null;
             _target = null;
             _isAttacking = false;
+            _windingUp = false;
             _isPaused = false;
             _attackTimer = 0f;
             RefreshBars(0f);
@@ -228,6 +296,7 @@ namespace _01.Code.Combat
 
             _attackTimer = 0f;
             _isAttacking = false;
+            _windingUp = false;
             RefreshAttackBar(0f);
         }
 
@@ -244,13 +313,46 @@ namespace _01.Code.Combat
                     continue;
                 }
 
+                // 재배치 준비 중에는 공격 게이지를 채우지 않는다. 준비가 끝나면 이어서 찬다.
+                if (_ownerUnit != null && _ownerUnit.IsPreparingRedeploy)
+                {
+                    yield return null;
+                    continue;
+                }
+
                 var currentAttackInterval = ResolveAttackInterval();
+                var windup = poseView != null
+                    ? Code.Entities.CharacterAnimationRules.WindupSeconds(poseView.AttackImpactSeconds, currentAttackInterval)
+                    : 0f;
+                var distance = Vector2.Distance(transform.position, target.transform.position);
                 _attackTimer += Time.deltaTime;
+
+                // 휘두르기 전에는 사거리 안·움찔 아님을 기다린다. 그동안 게이지는 예비 동작 직전에서 멈춘다.
+                if (!_windingUp)
+                {
+                    if (CombatTimingRules.ShouldStartSwing(_attackTimer, currentAttackInterval, windup,
+                            CombatTimingRules.InSwingRange(distance, StrikeRange), IsStaggered))
+                        BeginSwing(target);
+                    else
+                        _attackTimer = CombatTimingRules.HoldTimer(_attackTimer, currentAttackInterval, windup);
+                }
+
                 RefreshAttackBar(_attackTimer / currentAttackInterval);
 
-                if (_attackTimer >= currentAttackInterval && !_isAttacking)
+                if (_windingUp && _attackTimer >= currentAttackInterval && !_isAttacking)
                 {
                     _isAttacking = true;
+                    _windingUp = false;
+
+                    // 휘두르는 사이 대상이 멀어졌으면 헛친다.
+                    if (target != null && target.Health != null && !CombatTimingRules.InStrikeReach(distance, StrikeRange))
+                    {
+                        _attackTimer = 0f;
+                        RefreshAttackBar(0f);
+                        _isAttacking = false;
+                        yield return null;
+                        continue;
+                    }
 
                     if (target != null && target.Health != null)
                     {
@@ -264,7 +366,11 @@ namespace _01.Code.Combat
                         }
 
                         PlayAttackFeedback(transform.position, target.transform.position);
-                        target.Health.TakeDamage(ResolveAttackDamage(target, out var isCritical), isCritical);
+                        var damage = ResolveAttackDamage(target, out var isCritical);
+                        if (_ownerUnit != null && _ownerUnit.ConsumeRedeployFirstStrike())
+                            damage = Code.Units.RedeployRules.ApplyFirstStrike(damage);
+                        target.NoteAttacker(this);
+                        target.Health.TakeDamage(ApplyNightUnitMitigation(target, damage), isCritical);
                         TryApplyAttackStatusEffect(target);
                         AttackLanded?.Invoke();
                     }
@@ -286,9 +392,18 @@ namespace _01.Code.Combat
             _attackRoutine = null;
             _target = null;
             _isAttacking = false;
+            _windingUp = false;
             _isPaused = false;
             _attackTimer = 0f;
             RefreshBars(0f);
+        }
+
+        /// <summary>대상 쪽으로 돌아서 공격 동작을 시작한다. 피해·소리·돌진은 동작이 닿는 때(게이지가 다 찬 때) 나간다.</summary>
+        private void BeginSwing(Combatant target)
+        {
+            _windingUp = true;
+            if (poseView != null && target != null && poseView.AttackImpactSeconds > 0f)
+                poseView.PlayAttackPose(target.transform.position.x - transform.position.x);
         }
 
         private bool TryDodgeAttack(Vector3 attackerPosition)
@@ -297,9 +412,10 @@ namespace _01.Code.Combat
             if (!IsAlive || evasion <= 0f || UnityEngine.Random.value >= evasion)
                 return false;
 
-            if (_isAttacking)
+            if (_isAttacking || _windingUp)
             {
                 _isAttacking = false;
+                _windingUp = false;
                 _attackTimer = 0f;
                 RefreshAttackBar(0f);
             }
@@ -308,15 +424,24 @@ namespace _01.Code.Combat
             return true;
         }
 
+        public void ShowCounterplayFeedback(string label, int amount, bool showAsGain, Color color)
+        {
+            damageFeedback ??= GetComponent<DamageFeedback>();
+            damageFeedback?.ShowCounterplayText(label, amount, showAsGain, color);
+        }
+
         /// <summary>회피 성공 연출 — 사이드스텝 이동(BattleAgent) + MISS 텍스트(DamageFeedback).</summary>
         private void PlayDodgeReaction(Vector3 attackerPosition)
         {
-            var agent = GetComponent<_01.Code.BT.BattleAgent>();
+            var agent = GetComponent<Code.BT.BattleAgent>();
             if (agent != null)
                 agent.PlayDodgeSidestep(attackerPosition);
 
             var feedback = damageFeedback != null ? damageFeedback : GetComponent<DamageFeedback>();
             feedback?.ShowMissText();
+
+            // 빗나간 것도 소리로 알려 준다. 피해가 0으로 뜨는 것과 헷갈리지 않게.
+            global::Code.Audio.GameSfxPlayer.Play(global::Code.Audio.GameSfxCue.Dodge, transform.position);
         }
 
         private void RefreshBars(float attackRatio)
@@ -346,10 +471,10 @@ namespace _01.Code.Combat
             }
 
             // 크리티컬은 방어 계산 전에 적용(원피해 증폭).
-            var resolvedCriticalChance = Mathf.Clamp01(criticalChance + conditionCriticalChanceBonus);
+            var resolvedCriticalChance = Mathf.Clamp01(ReadStat(StatIndex.CriticalChance, criticalChance));
             isCritical = resolvedCriticalChance > 0f && UnityEngine.Random.value < resolvedCriticalChance;
             if (isCritical)
-                damage = Mathf.RoundToInt(damage * Mathf.Max(1f, criticalDamageMultiplier));
+                damage = CombatFormula.ApplyCritical(damage, ReadStat(StatIndex.CriticalDamage, criticalDamageMultiplier));
 
             return CalculateDamageAfterDefense(damage, target);
         }
@@ -368,51 +493,50 @@ namespace _01.Code.Combat
         private int ResolveAttackDamagePreview() =>
             Mathf.Max(1, Mathf.RoundToInt(ReadStat(StatIndex.AttackDamage, attackDamage)));
 
-        /// <summary>
-        /// 방어의 체감 기준점. 방어가 이 값과 같아지면 피해가 정확히 절반으로 줄고,
-        /// 그 위로는 완만해져 100%에 닿지 않는다.
-        ///
-        /// 이 숫자를 건드리기 전에 알아야 할 것: 방어 감소율은 방어값의 "자릿수"에 좌우된다.
-        /// 유닛 쪽은 수호자 특성 +20, 방어 명령 +15로 20~35를 쓰고 이 기준점에 맞춰져 있다
-        /// (35면 약 26% 감소). 그래서 기준점을 20으로 낮추면 적의 방어 5는 20%로 살아나지만
-        /// 같은 손으로 유닛의 방어 35가 64% 감소가 되어 거의 맞지 않는 몸이 된다.
-        /// 적의 방어가 약하게 느껴진다면 고칠 곳은 이 상수가 아니라 적의 방어값 자릿수다.
-        /// </summary>
-        private const float DefenseHalvingPoint = 100f;
+        /// <summary>피해 산정 규칙 자체는 CombatFormula에 있다. 여기서는 대상이 없는 경우만 걸러 낸다.</summary>
+        private int CalculateDamageAfterDefense(int damage, Combatant target) =>
+            target == null
+                ? Mathf.Max(1, damage)
+                : CombatFormula.ApplyDefense(damage, target.Defense);
 
-        private int CalculateDamageAfterDefense(int damage, Combatant target)
+        private static int ApplyNightUnitMitigation(Combatant target, int damage)
         {
-            if (target == null)
-                return Mathf.Max(1, damage);
+            if (damage <= 0 || target == null || target.GetComponent<Unit>() == null
+                || DayManager.Current == null || DayManager.Current.Phase != DayManager.OperationPhase.Night)
+                return damage;
 
-            var defense = target.Defense;
-            if (defense <= 0)
-                return Mathf.Max(1, damage);
-
-            var reducedDamage = damage - damage * (defense / (defense + DefenseHalvingPoint));
-            return Mathf.Max(1, Mathf.RoundToInt(reducedDamage));
+            return Mathf.Max(1, Mathf.CeilToInt(damage * 0.9f));
         }
 
         private float ResolveAttackInterval()
         {
-            var statusController = ResolveEnemyStatusController();
-            var multiplier = statusController != null
-                ? statusController.GetAttackIntervalMultiplier()
-                : 1f;
-            // 상태이상만 여기 남는다. 지속시간이 있어 만료 시점에 정확히 걷어내야 하는데
-            // 지금 상태이상 쪽에 그 훅이 없어, 매번 살아 있는 효과를 훑는 편이 안전하다.
-            return Mathf.Max(0.05f, ReadStat(StatIndex.AttackInterval, attackInterval) * multiplier);
+            // 상태이상도 이제 자기 열쇠로 스탯에 얹고 만료 때 걷어간다.
+            // 여기서 따로 훑을 것이 남아 있지 않다.
+            return Mathf.Max(0.05f, ReadStat(StatIndex.AttackInterval, attackInterval));
         }
 
-        private EnemyStatusController ResolveEnemyStatusController()
-        {
-            if (enemyStatusController == null)
-                enemyStatusController = GetComponent<EnemyStatusController>();
-
-            return enemyStatusController;
-        }
 
         // 화면 단위 타격감(셰이크/히트스톱)은 FeelCombatFeedbacks가 담당한다. 프리팹 수정 없이 자동 부착.
+        /// <summary>
+        /// 공격 포즈를 갈아 끼울 부품을 챙긴다.
+        ///
+        /// 부하 프리팹에는 처음부터 붙여 뒀지만 침입자 쪽 다섯에는 없었다. 침입자는 자기 상태 기계가
+        /// 포즈를 바꾼다고 봤는데, 실제로 EnterState(Attack)를 부르는 곳이 없어서 때려도 서 있는
+        /// 그림 그대로였다. 모험가 열다섯의 Attack 그림이 통째로 놀고 있었다.
+        /// </summary>
+        private void EnsurePoseView()
+        {
+            poseView = GetComponent<CharacterPoseView>();
+            if (poseView != null)
+                return;
+
+            // 갈아 끼울 그림을 들고 있는 쪽이 없으면 붙여도 할 일이 없다.
+            if (GetComponentInChildren<global::Code.Entities.EntityRender>(true) == null)
+                return;
+
+            poseView = gameObject.AddComponent<CharacterPoseView>();
+        }
+
         private void EnsureFeelCombatFeedbacks()
         {
             if (enableFeelCombatFeedbacks && GetComponent<FeelCombatFeedbacks>() == null)
@@ -428,6 +552,13 @@ namespace _01.Code.Combat
                 direction = Vector3.right;
 
             var impactPosition = targetPosition - direction.normalized * attackImpactOffset;
+
+            global::Code.Audio.GameSfxPlayer.Play(attackSfx, impactPosition);
+
+            // 예비 동작이 없는 캐릭터(정지 포즈만 있는 쪽)는 여기서 공격 포즈를 낸다. 애니메이션이 있으면 BeginSwing에서 이미 돌고 있다.
+            if (poseView != null && poseView.AttackImpactSeconds <= 0f)
+                poseView.PlayAttackPose(direction.x);
+
             if (attackFeelFeedbacks != null)
                 attackFeelFeedbacks.PlayFeedbacks(impactPosition);
 
@@ -437,75 +568,6 @@ namespace _01.Code.Combat
             attackHitParticles.transform.position = impactPosition;
             attackHitParticles.transform.right = direction.normalized;
             attackHitParticles.Play(true);
-        }
-
-        private void EnsureDefaultAttackParticles()
-        {
-            if (attackHitParticles != null)
-                return;
-
-            var particleObject = new GameObject("AttackHitParticles");
-            particleObject.transform.SetParent(transform);
-            particleObject.transform.localPosition = Vector3.zero;
-            particleObject.transform.localRotation = Quaternion.identity;
-            particleObject.transform.localScale = Vector3.one;
-
-            attackHitParticles = particleObject.AddComponent<ParticleSystem>();
-            ConfigureAttackParticles(attackHitParticles);
-        }
-
-        private void ConfigureAttackParticles(ParticleSystem particles)
-        {
-            particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-
-            var main = particles.main;
-            main.playOnAwake = false;
-            main.loop = false;
-            main.duration = 0.22f;
-            main.startLifetime = new ParticleSystem.MinMaxCurve(0.12f, 0.22f);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(1.2f, 2.6f);
-            main.startSize = new ParticleSystem.MinMaxCurve(0.04f, 0.11f);
-            main.startColor = attackParticleColor;
-            main.simulationSpace = ParticleSystemSimulationSpace.World;
-            main.maxParticles = 48;
-
-            var emission = particles.emission;
-            emission.enabled = true;
-            emission.rateOverTime = 0f;
-            emission.SetBursts(new[]
-            {
-                new ParticleSystem.Burst(0f, (short)attackParticleBurstCount)
-            });
-
-            var shape = particles.shape;
-            shape.enabled = true;
-            shape.shapeType = ParticleSystemShapeType.Cone;
-            shape.angle = 24f;
-            shape.radius = 0.03f;
-
-            var colorOverLifetime = particles.colorOverLifetime;
-            colorOverLifetime.enabled = true;
-            var gradient = new Gradient();
-            gradient.SetKeys(
-                new[]
-                {
-                    new GradientColorKey(attackParticleColor, 0f),
-                    new GradientColorKey(new Color(1f, 0.2f, 0.12f, 1f), 1f)
-                },
-                new[]
-                {
-                    new GradientAlphaKey(1f, 0f),
-                    new GradientAlphaKey(0f, 1f)
-                });
-            colorOverLifetime.color = gradient;
-
-            var sizeOverLifetime = particles.sizeOverLifetime;
-            sizeOverLifetime.enabled = true;
-            sizeOverLifetime.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.EaseInOut(0f, 1f, 1f, 0f));
-
-            var renderer = particles.GetComponent<ParticleSystemRenderer>();
-            renderer.renderMode = ParticleSystemRenderMode.Billboard;
-            renderer.sortingOrder = attackParticleSortingOrder;
         }
     }
 }

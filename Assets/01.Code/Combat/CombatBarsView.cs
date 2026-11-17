@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace _01.Code.Combat
+namespace Code.Combat
 {
     public class CombatBarsView : MonoBehaviour
     {

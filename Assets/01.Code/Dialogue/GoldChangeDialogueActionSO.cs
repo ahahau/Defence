@@ -1,8 +1,8 @@
-using _01.Code.Events;
-using _01.Code.Core;
+using Code.Events;
+using Code.Core;
 using UnityEngine;
 
-namespace _01.Code.Dialogue
+namespace Code.Dialogue
 {
     [CreateAssetMenu(menuName = "SO/Dialogue/Actions/Gold Change", fileName = "GoldChangeDialogueAction", order = 0)]
     public class GoldChangeDialogueActionSO : DialogueActionSO

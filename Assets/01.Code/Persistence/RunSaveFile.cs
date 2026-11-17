@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace _01.Code.Persistence
+namespace Code.Persistence
 {
     /// <summary>
     /// 저장 파일의 겉껍데기. 시스템별 조각을 열쇠와 함께 나란히 담는다.
@@ -12,7 +12,8 @@ namespace _01.Code.Persistence
     [Serializable]
     public sealed class RunSaveFile
     {
-        public const int CurrentVersion = 2;
+        // 3: 방 프리팹(모양·문)과 크기별 격자. 4: 실행 중 깎은 방 모양을 줄로 저장. 3 이하는 모양을 되살릴 수 없어 버린다.
+        public const int CurrentVersion = 4;
 
         public int version = CurrentVersion;
         public string savedAtUtc;

@@ -2,7 +2,7 @@ using System;
 using Unity.Behavior;
 using UnityEngine;
 
-namespace _01.Code.BT
+namespace Code.BT
 {
     /// <summary>자신의 HP 비율이 임계값 미만인지. 후퇴/궁여지책 분기에 사용.</summary>
     [Serializable, Unity.Properties.GeneratePropertyBag]

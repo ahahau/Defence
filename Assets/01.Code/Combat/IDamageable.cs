@@ -1,4 +1,4 @@
-namespace _01.Code.Combat
+namespace Code.Combat
 {
     public interface IDamageable
     {

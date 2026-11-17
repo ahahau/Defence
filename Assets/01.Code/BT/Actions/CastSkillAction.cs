@@ -1,10 +1,10 @@
 using System;
-using _01.Code.Skills;
+using Code.Skills;
 using Unity.Behavior;
 using UnityEngine;
 using Action = Unity.Behavior.Action;
 
-namespace _01.Code.BT
+namespace Code.BT
 {
     /// <summary>준비된 스킬/궁극기를 시전한다(SkillCaster 필요). 시전 실패면 Failure(다음 분기로).</summary>
     [Serializable, Unity.Properties.GeneratePropertyBag]

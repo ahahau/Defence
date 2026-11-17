@@ -1,7 +1,7 @@
 using UnityEngine;
-using _01.Code.Combat;
+using Code.Combat;
 
-namespace _01.Code.Skills
+namespace Code.Skills
 {
     [CreateAssetMenu(menuName = "SO/Skill/Effect/Apply Combat Status", fileName = "ApplyCombatStatusSkillEffect", order = 0)]
     public class ApplyCombatStatusSkillEffectSO : SkillEffectSO

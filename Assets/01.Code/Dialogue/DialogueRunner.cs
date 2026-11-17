@@ -1,16 +1,18 @@
 using System;
 using System.Collections.Generic;
-using _01.Code.Buildings;
-using _01.Code.Core;
-using _01.Code.Events;
-using _01.Code.Manager;
-using _01.Code.MapCreateSystem;
-using _01.Code.Tutorial;
-using _01.Code.UI;
-using _01.Code.Units;
+using Code.Buildings;
+using Code.Manager;
+using Code.Core;
+using Code.Events;
+using Code.MapCreateSystem;
+using Code.Persistence;
+using Code.Tutorial;
+using Code.UI;
+using Code.Units;
+using Code.UI.Popup;
 using UnityEngine;
 
-namespace _01.Code.Dialogue
+namespace Code.Dialogue
 {
     public class DialogueRunner : MonoBehaviour
     {
@@ -27,6 +29,12 @@ namespace _01.Code.Dialogue
 
         /// <summary>이번 판에서 아직 안 나온 이벤트들. 섞어 두고 하나씩 꺼내 같은 판에서 겹치지 않게 한다.</summary>
         private readonly List<DialogueSequenceSO> _shuffledEventQueue = new();
+
+        /// <summary>이번 판에서 사건 목록을 섞은 횟수. 섞을 때마다 다른 순서가 나오게 시드에 섞는다.</summary>
+        private int _eventShuffleCount;
+
+        /// <summary>사건을 띄우며 시간을 세워 두었는가. 대화가 끝나면 푼다.</summary>
+        private bool _suspendedForEvent;
         [SerializeField] private bool playScheduledEvents = true;
         [Header("Guided Start Tutorial")]
         [SerializeField] private bool useGuidedStartTutorial;
@@ -35,7 +43,22 @@ namespace _01.Code.Dialogue
 
         private readonly DialogueSequencePlayer player = new();
         private DialogueSequenceSO pendingScheduledEventSequence;
+        private string _pendingFollowUpKey;
+        private string _activeFollowUpKey;
         private int lastScheduledEventDay;
+
+        /// <summary>띄울 차례를 기다리는 상황 사건. 내용은 띄우는 순간의 수치로 만든다.</summary>
+        private SituationKind _pendingSituation;
+
+        /// <summary>
+        /// 지금 도는 대화가 일반 사건(정기 이벤트)인가. 일반 사건에만 "아무것도 하지 않음"을 붙이고,
+        /// 처음 보는 선택지의 결과를 가리고 고른 결과를 기록한다. 튜토리얼 대화는 손대지 않는다.
+        /// </summary>
+        private bool _playingNormalEvent;
+
+        private const string SkipChoiceText = "아무것도 하지 않음";
+        private const string HiddenResultText = "결과는 골라 봐야 안다";
+        private const string KnownResultSuffix = "  · 확인함";
         private GuidedStartTutorialStep guidedStep;
         private Node guidedLockedNode;
         private Node guidedBuiltNode;
@@ -44,12 +67,12 @@ namespace _01.Code.Dialogue
         private UnitDataSO guidedHiredUnit;
         private DialogueSequenceSO guidedRuntimeSequence;
         [Header("Guided Tutorial Dependencies")]
-        [SerializeField] private UnitDeployPanelView unitDeployPanelView;
-        [SerializeField] private NodePanelView nodePanelView;
         [SerializeField] private WaveView waveView;
-        [SerializeField] private BuildConfirmPanelView buildConfirmPanelView;
-        [SerializeField] private PolicyChoicePanelView policyChoicePanelView;
         [SerializeField] private ManagementSettlementManager managementSettlementManager;
+        [Header("Scope")]
+        [SerializeField, Tooltip(GameScope.FieldTooltip)] private GameScope scope;
+        private FacilityClosureSystem _closure;
+        private MoralePolicyManager _moralePolicy;
         private bool hasSeenPolicyChoicePanel;
 
         public event Action<DialogueSequenceSO> DialogueStarted;
@@ -72,6 +95,20 @@ namespace _01.Code.Dialogue
 
         private void OnEnable()
         {
+            RegisterListeners();
+        }
+
+        private void OnDisable()
+        {
+            UnregisterListeners();
+            ReleaseEventSuspend();
+
+            if (useGuidedStartTutorial)
+                TutorialInputGate.Clear();
+        }
+
+        private void RegisterListeners()
+        {
             scheduledDayEventChannel?.AddListener<DayChangedEvent>(HandleDayChanged);
             scheduledWaveEventChannel?.AddListener<WaveEndedEvent>(HandleWaveEnded);
             guidedNodeEventChannel?.AddListener<NodeBuiltEvent>(HandleGuidedNodeBuilt);
@@ -80,10 +117,11 @@ namespace _01.Code.Dialogue
             guidedNodeEventChannel?.AddListener<PortalInstalledEvent>(HandleGuidedPortalInstalled);
             guidedNodeEventChannel?.AddListener<BuildingInstalledEvent>(HandleGuidedBuildingInstalled);
             costEventChannel?.AddListener<RosterHirePaidEvent>(HandleGuidedRosterHirePaid);
+            costEventChannel?.AddListener<CreditStatusChangedEvent>(HandleDayLedgerClosed);
             scheduledWaveEventChannel?.AddListener<WaveStartedEvent>(HandleGuidedWaveStarted);
         }
 
-        private void OnDisable()
+        private void UnregisterListeners()
         {
             scheduledDayEventChannel?.RemoveListener<DayChangedEvent>(HandleDayChanged);
             scheduledWaveEventChannel?.RemoveListener<WaveEndedEvent>(HandleWaveEnded);
@@ -93,10 +131,8 @@ namespace _01.Code.Dialogue
             guidedNodeEventChannel?.RemoveListener<PortalInstalledEvent>(HandleGuidedPortalInstalled);
             guidedNodeEventChannel?.RemoveListener<BuildingInstalledEvent>(HandleGuidedBuildingInstalled);
             costEventChannel?.RemoveListener<RosterHirePaidEvent>(HandleGuidedRosterHirePaid);
+            costEventChannel?.RemoveListener<CreditStatusChangedEvent>(HandleDayLedgerClosed);
             scheduledWaveEventChannel?.RemoveListener<WaveStartedEvent>(HandleGuidedWaveStarted);
-
-            if (useGuidedStartTutorial)
-                TutorialInputGate.Clear();
         }
 
         private void Awake()
@@ -123,7 +159,9 @@ namespace _01.Code.Dialogue
                 return;
             }
 
-            if (playOnStart && initialSequence != null)
+            // 이어하기에서는 첫날 설명을 되풀이하지 않는다. 새 게임은 시작 전에 저장을 지우므로
+            // 이 시점의 저장 유무가 새 판과 이어하기를 가장 정확하게 가른다.
+            if (playOnStart && initialSequence != null && !RunSaveSystem.HasSave)
                 Play(initialSequence);
             else
                 view?.Hide();
@@ -173,8 +211,16 @@ namespace _01.Code.Dialogue
             }
         }
 
-        public void Play(DialogueSequenceSO sequence)
+        public void Play(DialogueSequenceSO sequence) => PlaySequence(sequence, false);
+
+        /// <summary>
+        /// 대화를 시작한다. 일반 사건이면 첫 줄부터 결과 가림·"아무것도 하지 않음"을 입혀 그린다.
+        /// </summary>
+        private void PlaySequence(DialogueSequenceSO sequence, bool normalEvent)
         {
+            _playingNormalEvent = normalEvent;
+            if (!normalEvent)
+                _activeFollowUpKey = null;
             view?.SetBackgroundRaycastBlocking(true);
             view?.SetNextButtonVisible(true);
             view?.SetCloseButtonVisible(true);
@@ -204,16 +250,47 @@ namespace _01.Code.Dialogue
         private void HandleWaveEnded(WaveEndedEvent evt)
         {
             HandleGuidedWaveEnded(evt);
-            ScheduleEventForDay(evt.Day);
+
+            // 상황 사건은 정산이 끝난 금화·빚을 봐야 하므로 비용 채널이 있으면 정산 마지막 신호에서 고른다.
+            if (costEventChannel == null)
+                ScheduleEventForDay(evt.Day);
+        }
+
+        /// <summary>영업 종료 정산의 맨 끝(청산·부채 한도 판정 뒤). 이 전환의 사건을 띄운다.</summary>
+        private void HandleDayLedgerClosed(CreditStatusChangedEvent evt)
+        {
+            if (scheduledWaveEventChannel == null || evt.Outcome == Manager.Economy.CreditDayEndOutcome.Bankrupt)
+                return;
+
+            ScheduleEventForDay(DayManager.Current != null ? DayManager.Current.CurrentDay : 0);
         }
 
         private void ScheduleEventForDay(int day)
         {
-            if (!playScheduledEvents || scheduledEventIntervalDays <= 0)
+            if (!playScheduledEvents || day <= 0 || day == lastScheduledEventDay)
                 return;
 
-            if (day <= 0 || day % scheduledEventIntervalDays != 0 || day == lastScheduledEventDay)
+            // 한 전환에는 사건 하나만. 청산 위기 → 운영 방침 → 상황 사건 → 일반 사건 순이고,
+            // 일반·상황 사건 뒤에는 4~6회 쉰다. 사건 관리자가 없으면(테스트 씬 등) 예전처럼 일정 간격으로 띄운다.
+            var events = MoralePolicy;
+            if (events != null)
+            {
+                var kind = events.ResolveTransitionEvent(day);
+                if (kind == TransitionEventKind.Urgent || kind == TransitionEventKind.Situation)
+                {
+                    lastScheduledEventDay = day;
+                    _pendingSituation = events.CurrentSituation;
+                    TryPlayPendingScheduledEvent();
+                    return;
+                }
+
+                if (kind != TransitionEventKind.Normal)
+                    return;
+            }
+            else if (scheduledEventIntervalDays <= 0 || day % scheduledEventIntervalDays != 0)
+            {
                 return;
+            }
 
             lastScheduledEventDay = day;
             pendingScheduledEventSequence = ResolveScheduledEventSequence();
@@ -230,7 +307,7 @@ namespace _01.Code.Dialogue
 
             guidedStep = GuidedStartTutorialStep.BuildFirstRoom;
             PlayGuidedMessage(
-                "첫 지령 · 봉인된 타일을 열어 던전의 첫 방을 만드십시오.");
+                "밝은 타일을 눌러 던전의 첫 방을 파세요.");
             guidedLockedNode = ResolvePreferredLockedNode();
             TutorialInputGate.OnlyLockedNode(guidedLockedNode);
             HighlightBuildTarget();
@@ -246,7 +323,7 @@ namespace _01.Code.Dialogue
                 guidedBuiltNode = evt.Node;
                 guidedStep = GuidedStartTutorialStep.HireUnit;
                 PlayGuidedMessage(
-                    "방이 준비됐습니다. 수비대 관리에서 첫 부하를 영입하십시오.");
+                    "방이 준비됐습니다. 청산일 정산 화면의 유닛 상점에서 첫 부하를 영입하십시오.");
                 guidedHiredUnit = ResolveFirstHireUnit();
                 TutorialInputGate.OnlyHireUnit(guidedHiredUnit);
                 HighlightUnitHireTarget();
@@ -363,7 +440,7 @@ namespace _01.Code.Dialogue
 
             guidedStep = GuidedStartTutorialStep.BuildPortalRoom;
             PlayGuidedMessage(
-                "수비대 배치 완료. 봉인된 타일을 하나 더 여십시오.");
+                "유닛 배치 완료. 봉인된 타일을 하나 더 여십시오.");
             guidedLockedNode = ResolvePreferredLockedNode();
             TutorialInputGate.OnlyLockedNode(guidedLockedNode);
             HighlightBuildTarget();
@@ -399,7 +476,7 @@ namespace _01.Code.Dialogue
             {
                 guidedStep = GuidedStartTutorialStep.SecondWaveRunning;
                 PlayGuidedMessage(
-                    "두 번째 습격 · 수비대와 함정이 모험가의 경계를 끌어올립니다.");
+                    "두 번째 습격 · 유닛과 함정이 모험가의 경계를 끌어올립니다.");
                 TutorialInputGate.Clear();
                 view?.HideSpotlight();
                 return;
@@ -517,13 +594,11 @@ namespace _01.Code.Dialogue
 
         private void HighlightBuildTarget()
         {
-            if (buildConfirmPanelView != null && buildConfirmPanelView.IsOpen)
+            if (PopupController.IsShowing(DungeonGraphController.ExpandRoomPopupTag)
+                && PopupController.TryGetConfirmButtonScreenRect(out var confirmRect))
             {
-                if (TryBuildRectTransformScreenRect(buildConfirmPanelView.ConfirmButtonRect, out var confirmRect))
-                {
-                    view?.SetSpotlightScreenRect(confirmRect, 24f);
-                    return;
-                }
+                view?.SetSpotlightScreenRect(confirmRect, 24f);
+                return;
             }
 
             if (guidedLockedNode == null)
@@ -544,117 +619,47 @@ namespace _01.Code.Dialogue
             view?.SetSpotlightScreenRect(rect, 44f);
         }
 
+        /// <summary>
+        /// 고용은 청산일 정산 화면의 유닛 상점에서 한다. 옛 "유닛 관리" 창이 없어져 비출 자리가 없으므로
+        /// 강조를 걷고 글로만 안내한다(이 가이드 튜토리얼은 씬에서 꺼져 있다).
+        /// </summary>
         private void HighlightUnitHireTarget()
         {
-            if (unitDeployPanelView == null)
-            {
-                view?.HideSpotlight();
-                return;
-            }
-
-            if (guidedHiredUnit == null)
-                guidedHiredUnit = unitDeployPanelView.FirstOwnedUnit;
-
             TutorialInputGate.OnlyHireUnit(guidedHiredUnit);
-
-            var targetEntry = unitDeployPanelView.GetEntryRect(guidedHiredUnit);
-            var target = unitDeployPanelView.IsPanelOpen && targetEntry != null
-                ? targetEntry
-                : unitDeployPanelView.ToggleButtonRect;
-
-            if (!TryBuildRectTransformScreenRect(target, out var rect))
-            {
-                view?.HideSpotlight();
-                return;
-            }
-
-            view?.SetSpotlightScreenRect(rect, 24f);
+            view?.HideSpotlight();
         }
 
-        private UnitDataSO ResolveFirstHireUnit()
-        {
-            return unitDeployPanelView != null ? unitDeployPanelView.FirstOwnedUnit : null;
-        }
+        private UnitDataSO ResolveFirstHireUnit() => null;
 
         private void HighlightUnitDeployTarget()
         {
-            if (nodePanelView == null)
-            {
-                HighlightNode(guidedBuiltNode);
-                return;
-            }
-
             TutorialInputGate.OnlyDeployUnit(guidedBuiltNode, guidedHiredUnit);
-            nodePanelView.HighlightCurrentTutorialUnitTarget();
-
-            var target = nodePanelView.FirstDeployEntryRect != null
-                ? nodePanelView.FirstDeployEntryRect
-                : nodePanelView.UnitCategoryCardRect != null
-                    ? nodePanelView.UnitCategoryCardRect
-                    : nodePanelView.InstallButtonRect;
-
-            if (!TryBuildRectTransformScreenRect(target, out var rect))
-            {
-                HighlightNode(guidedBuiltNode);
-                return;
-            }
-
-            view?.SetSpotlightScreenRect(rect, 24f);
+            HighlightInstallTarget(Code.UI.RoomManagement.RoomInstallKind.Unit, guidedBuiltNode);
         }
 
         private void HighlightPortalInstallTarget()
         {
-            if (nodePanelView == null)
-            {
-                HighlightNode(guidedPortalNode);
-                return;
-            }
-
-            nodePanelView.HighlightCurrentTutorialInstallTarget();
-
-            var target = nodePanelView.PortalInstallCardRect != null
-                ? nodePanelView.PortalInstallCardRect
-                : nodePanelView.BuildingCategoryCardRect != null
-                    ? nodePanelView.BuildingCategoryCardRect
-                    : nodePanelView.InstallButtonRect;
-
-            if (!TryBuildRectTransformScreenRect(target, out var rect))
-            {
-                HighlightNode(guidedPortalNode);
-                return;
-            }
-
-            view?.SetSpotlightScreenRect(rect, 24f);
+            HighlightInstallTarget(Code.UI.RoomManagement.RoomInstallKind.Building, guidedPortalNode);
         }
 
         private void HighlightTrapInstallTarget()
         {
-            if (nodePanelView == null)
-            {
-                HighlightNode(guidedTrapNode);
-                return;
-            }
+            TutorialInputGate.OnlyInstallTrap(guidedTrapNode);
+            HighlightInstallTarget(Code.UI.RoomManagement.RoomInstallKind.Trap, guidedTrapNode);
+        }
 
-            var trapData = nodePanelView.FirstTrapInstallData;
-            TutorialInputGate.OnlyInstallTrap(guidedTrapNode, trapData);
-            nodePanelView.HighlightCurrentTutorialInstallTarget();
-
-            var target = nodePanelView.FirstTrapInstallCardRect != null
-                ? nodePanelView.FirstTrapInstallCardRect
-                : nodePanelView.InstallButtonRect;
-
-            if (!TryBuildRectTransformScreenRect(target, out var rect))
-            {
-                HighlightNode(guidedTrapNode);
-                return;
-            }
-
-            view?.SetSpotlightScreenRect(rect, 24f);
+        /// <summary>
+        /// 설치할 방을 비춘다. 방 관리 화면의 설치 흐름(갈래 버튼 → 카드 → 설치)을 비추던 단계는
+        /// 그 화면이 다시 생길 때(uGUI 전환) 되살린다.
+        /// </summary>
+        private void HighlightInstallTarget(Code.UI.RoomManagement.RoomInstallKind kind, Node fallbackNode)
+        {
+            HighlightNode(fallbackNode);
         }
 
         private void HighlightWaveStartButton()
         {
-            if (waveView == null || !TryBuildRectTransformScreenRect(waveView.StartButtonRect, out var rect))
+            if (waveView == null || !waveView.TryGetStartButtonScreenRect(out var rect))
             {
                 view?.HideSpotlight();
                 return;
@@ -666,7 +671,9 @@ namespace _01.Code.Dialogue
 
         private void UpdatePolicyTutorial()
         {
-            if (policyChoicePanelView == null)
+            // 운영 방침 창은 지금 그리는 화면이 없다(uGUI 전환 대기). 고를 방침이 남아 있으면 창이 열린 것으로 본다.
+            var policy = MoralePolicy;
+            if (policy == null)
             {
                 view?.HideSpotlight();
                 return;
@@ -675,7 +682,7 @@ namespace _01.Code.Dialogue
             if (managementSettlementManager != null && managementSettlementManager.IsPanelOpen)
                 managementSettlementManager.ForceHidePanel();
 
-            if (!policyChoicePanelView.IsPanelOpen)
+            if (policy.CurrentChoices.Count == 0)
             {
                 view?.HideSpotlight();
                 if (hasSeenPolicyChoicePanel)
@@ -685,15 +692,8 @@ namespace _01.Code.Dialogue
 
             hasSeenPolicyChoicePanel = true;
             TutorialInputGate.OnlyPolicyChoice();
-            policyChoicePanelView.BringToFront();
-
-            if (!TryBuildRectTransformScreenRect(policyChoicePanelView.FirstPolicyButtonRect, out var rect))
-            {
-                view?.HideSpotlight();
-                return;
-            }
-
-            view?.SetSpotlightScreenRect(rect, 24f);
+            // 첫 선택지를 비출 화면 사각형이 없다.
+            view?.HideSpotlight();
         }
 
         private void CompleteGuidedTutorial()
@@ -739,27 +739,6 @@ namespace _01.Code.Dialogue
             return rect.width > 1f && rect.height > 1f;
         }
 
-        private bool TryBuildRectTransformScreenRect(RectTransform target, out Rect rect)
-        {
-            rect = default;
-            if (target == null)
-                return false;
-
-            var corners = new Vector3[4];
-            target.GetWorldCorners(corners);
-            var min = RectTransformUtility.WorldToScreenPoint(null, corners[0]);
-            var max = min;
-            for (var i = 1; i < corners.Length; i++)
-            {
-                var point = RectTransformUtility.WorldToScreenPoint(null, corners[i]);
-                min = Vector2.Min(min, point);
-                max = Vector2.Max(max, point);
-            }
-
-            rect = Rect.MinMaxRect(min.x, min.y, max.x, max.y);
-            return rect.width > 1f && rect.height > 1f;
-        }
-
         public void Next()
         {
             if (!IsPlaying)
@@ -785,10 +764,35 @@ namespace _01.Code.Dialogue
 
             var sequence = player.CurrentSequence;
             var lineIndex = player.CurrentLineIndex;
+
+            // 일반 사건의 마지막 칸은 "아무것도 하지 않음"이다. 아무 효과 없이 사건을 닫는다.
+            if (_playingNormalEvent && sequence != null && sequence.TryGetLine(lineIndex, out var currentLine)
+                && currentLine.HasChoices && choiceIndex == currentLine.ChoiceCount)
+            {
+                CompleteActiveFollowUp();
+                Stop();
+                return;
+            }
+
+            if (sequence == null || !sequence.TryGetLine(lineIndex, out var line)
+                || !line.TryGetChoice(choiceIndex, out var requestedChoice) || !player.CanSelect(requestedChoice))
+                return;
+
             if (!player.SelectChoice(choiceIndex, out var choice, out var matchedRoute, out var ended, out var displayData))
             {
                 Stop();
                 return;
+            }
+
+            if (_playingNormalEvent && sequence != null)
+            {
+                MoralePolicy?.Events.MarkChosen(
+                    RunEventLedger.DialogueChoiceKey(sequence.name, lineIndex, choiceIndex));
+                if (!string.IsNullOrEmpty(_activeFollowUpKey))
+                    CompleteActiveFollowUp();
+                else if (sequence.TryGetFollowUp(lineIndex, choiceIndex, out DialogueFollowUpDefinition followUp))
+                    MoralePolicy?.Events.TryScheduleFollowUp(sequence.name, followUp.Sequence.name,
+                        lastScheduledEventDay, followUp.DelayDays);
             }
 
             ChoiceSelected?.Invoke(sequence, lineIndex, choice);
@@ -807,17 +811,24 @@ namespace _01.Code.Dialogue
 
         public void Stop()
         {
+            _playingNormalEvent = false;
+            _activeFollowUpKey = null;
             var endedSequence = player.Stop();
             view?.Hide();
+            ReleaseEventSuspend();
 
             if (endedSequence != null)
+            {
                 DialogueEnded?.Invoke(endedSequence);
+                SituationEventFactory.Release(endedSequence);
+            }
 
             TryPlayPendingScheduledEvent();
         }
 
         private void Show(DialogueDisplayData displayData)
         {
+            displayData = DecorateNormalEventChoices(displayData);
             view?.Show(displayData);
             LineChanged?.Invoke(player.CurrentSequence, player.CurrentLineIndex, displayData);
         }
@@ -837,8 +848,36 @@ namespace _01.Code.Dialogue
         /// 예전에는 일차로 첨자를 계산해서, 20일 한 판이면 목록 앞쪽 몇 개만 늘 같은 순서로 나왔다.
         /// 섞은 뒤 하나씩 꺼내 쓰면 판마다 다른 조합을 보게 되고, 한 판 안에서는 겹치지 않는다.
         /// </summary>
+        /// <summary>씬에 걸린 일반 사건 전부(메타 잠금 포함). 결과 화면이 새로 열린 사건을 셀 때 읽는다.</summary>
+        public IReadOnlyList<DialogueSequenceSO> ScheduledEventSequences =>
+            scheduledEventSequences ?? System.Array.Empty<DialogueSequenceSO>();
+
         private DialogueSequenceSO ResolveScheduledEventSequence()
         {
+            _pendingFollowUpKey = null;
+            RunEventLedger events = MoralePolicy?.Events;
+            if (events != null && events.TryGetReadyFollowUp(lastScheduledEventDay,
+                    out string sourceKey, out string sequenceKey))
+            {
+                foreach (DialogueSequenceSO source in ScheduledEventSequences)
+                {
+                    if (source == null || source.name != sourceKey)
+                        continue;
+
+                    foreach (DialogueFollowUpDefinition followUp in source.FollowUps)
+                    {
+                        if (followUp?.Sequence == null || followUp.Sequence.name != sequenceKey)
+                            continue;
+
+                        _pendingFollowUpKey = sourceKey;
+                        return followUp.Sequence;
+                    }
+                }
+
+                // 예약은 보존한다. 에셋 연결이 잘못돼도 기존 일반 사건 전체를 막지 않는다.
+                Debug.LogWarning($"후속 사건 연결을 찾지 못했습니다: {sourceKey} → {sequenceKey}", this);
+            }
+
             if (scheduledEventSequences == null || scheduledEventSequences.Length == 0)
                 return null;
 
@@ -859,27 +898,115 @@ namespace _01.Code.Dialogue
         private void RefillShuffledEventQueue()
         {
             _shuffledEventQueue.Clear();
+            // 메타 진행도가 모자란 사건은 이번 판 후보에서 뺀다.
             foreach (var sequence in scheduledEventSequences)
             {
-                if (sequence != null)
+                if (sequence != null && Code.Progression.MetaUnlockRules.IsMet(sequence.MetaProgressRequired))
                     _shuffledEventQueue.Add(sequence);
             }
 
+            // 판 시드로 섞는다. 불러와도 사건 순서가 다시 뽑히지 않는다.
+            var random = RunRandom.Create(RunRandomStream.Events, _eventShuffleCount++);
             for (var i = _shuffledEventQueue.Count - 1; i > 0; i--)
             {
-                var swap = UnityEngine.Random.Range(0, i + 1);
+                var swap = random.Next(0, i + 1);
                 (_shuffledEventQueue[i], _shuffledEventQueue[swap]) = (_shuffledEventQueue[swap], _shuffledEventQueue[i]);
             }
         }
 
+        /// <summary>휴업·수리 시스템. 조립 루트에서 받는다.</summary>
+        private FacilityClosureSystem ResolveClosure() =>
+            _closure != null ? _closure : _closure = GameScope.Resolve(scope, s => s.FacilityClosure, this, nameof(scope));
+
+        /// <summary>민심·운영 방침과 사건 순서를 맡는 관리자. 조립 루트에서 받는다.</summary>
+        private MoralePolicyManager MoralePolicy =>
+            _moralePolicy != null ? _moralePolicy : _moralePolicy = GameScope.Resolve(scope, s => s.MoralePolicy, this, nameof(scope));
+
         private void TryPlayPendingScheduledEvent()
         {
-            if (!playScheduledEvents || IsPlaying || pendingScheduledEventSequence == null)
+            if (!playScheduledEvents || IsPlaying)
+                return;
+
+            // 상황 사건은 띄우는 순간의 금화로 금액을 정한다(앞선 대화가 금화를 바꿨을 수 있음).
+            if (_pendingSituation != SituationKind.None)
+            {
+                var situation = _pendingSituation;
+                _pendingSituation = SituationKind.None;
+                var built = SituationEventFactory.Build(situation, costEventChannel, ResolveClosure(), MoralePolicy);
+                if (built != null)
+                {
+                    SuspendForEvent();
+                    PlaySequence(built, false);
+                    return;
+                }
+            }
+
+            if (pendingScheduledEventSequence == null)
                 return;
 
             var sequence = pendingScheduledEventSequence;
             pendingScheduledEventSequence = null;
-            Play(sequence);
+            _activeFollowUpKey = _pendingFollowUpKey;
+            _pendingFollowUpKey = null;
+            SuspendForEvent();
+            PlaySequence(sequence, true);
+        }
+
+        private void CompleteActiveFollowUp()
+        {
+            if (string.IsNullOrEmpty(_activeFollowUpKey))
+                return;
+
+            MoralePolicy?.Events.CompleteFollowUp(_activeFollowUpKey);
+            _activeFollowUpKey = null;
+        }
+
+        /// <summary>
+        /// 사건(일반·상황)은 고를 때까지 시간을 세운다(기획서: 주요 이벤트가 있으면 선택 종료까지 정지).
+        /// 튜토리얼 말풍선은 세우지 않는다 — 배치·건설을 직접 해 보라는 안내라 시간이 흘러야 한다.
+        /// </summary>
+        private void SuspendForEvent()
+        {
+            if (_suspendedForEvent || GameSpeedController.Current == null)
+                return;
+
+            _suspendedForEvent = true;
+            GameSpeedController.Current.Suspend(this);
+        }
+
+        private void ReleaseEventSuspend()
+        {
+            if (!_suspendedForEvent)
+                return;
+
+            _suspendedForEvent = false;
+            GameSpeedController.Current?.Release(this);
+        }
+
+        /// <summary>
+        /// 일반 사건의 선택지를 꾸민다. 처음 보는 선택지는 결과를 가리고, 고른 적 있는 선택지는
+        /// "확인함"을 붙이며, 맨 끝에 "아무것도 하지 않음"을 더한다(기획서: 일반 사건은 안 할 수 있다).
+        /// </summary>
+        private DialogueDisplayData DecorateNormalEventChoices(DialogueDisplayData data)
+        {
+            var sequence = player.CurrentSequence;
+            if (!_playingNormalEvent || !data.HasChoices || sequence == null)
+                return data;
+
+            var events = MoralePolicy?.Events;
+            var choices = new DialogueChoice[data.ChoiceCount + 1];
+            for (var i = 0; i < data.ChoiceCount; i++)
+            {
+                var choice = data.Choices[i];
+                var key = RunEventLedger.DialogueChoiceKey(sequence.name, player.CurrentLineIndex, i);
+                var summary = choice.EffectSummary;
+                if (!string.IsNullOrWhiteSpace(summary))
+                    summary = events != null && events.HasChosen(key) ? summary + KnownResultSuffix : HiddenResultText;
+                choices[i] = choice.WithEffectSummary(summary);
+            }
+
+            choices[data.ChoiceCount] = new DialogueChoice(SkipChoiceText);
+            return new DialogueDisplayData(data.Title, data.SpeakerName, data.Text, data.Progress, data.EnterActions, choices);
         }
 
         private enum GuidedStartTutorialStep

@@ -1,9 +1,9 @@
-using _01.Code.Artifacts;
-using _01.Code.Combat;
-using _01.Code.Core;
-using _01.Code.Units;
+using Code.Artifacts;
+using Code.Combat;
+using Code.Core;
+using Code.Units;
 
-namespace _01.Code.Events
+namespace Code.Events
 {
     public class ArtifactObtainedEvent : GameEvent
     {

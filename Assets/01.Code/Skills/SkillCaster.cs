@@ -1,9 +1,10 @@
-using _01.Code.BT;
-using _01.Code.Combat;
+using Code.BT;
+using Code.Combat;
+using Code.Units;
 using MoreMountains.Feedbacks;
 using UnityEngine;
 
-namespace _01.Code.Skills
+namespace Code.Skills
 {
     /// <summary>에이전트의 스킬/궁극기를 보유하고 쿨다운·궁극기 사용 여부를 관리한다.
     /// BT의 Cast Skill 노드가 TryCast를 호출. 새 전투(전투필드 변경) 시 쿨다운/궁극기 초기화.</summary>
@@ -31,6 +32,7 @@ namespace _01.Code.Skills
         private SpriteRenderer[] _spriteRenderers;
         private MMF_Player _skillCastPlayer;
         private MMF_Player _ultimateCastPlayer;
+        private Unit _ownerUnit;
 
         public bool HasReadySkill =>
             _cooldownTimer <= 0f
@@ -53,6 +55,7 @@ namespace _01.Code.Skills
             if (agent == null) agent = GetComponent<BattleAgent>();
             if (combatant == null) combatant = GetComponent<Combatant>();
             if (barsView == null) barsView = GetComponentInChildren<CombatBarsView>();
+            _ownerUnit = GetComponent<Unit>();
 
             _spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
             BuildFeelPlayers();
@@ -88,9 +91,13 @@ namespace _01.Code.Skills
             if (agent == null || !agent.IsAlive || _cooldownTimer > 0f)
                 return false;
 
+            // 재배치 준비 중에는 스킬·궁극기도 쓰지 못한다. 옮기자마자 궁극기를 터뜨리는 수를 막는다.
+            if (_ownerUnit != null && _ownerUnit.IsPreparingRedeploy)
+                return false;
+
             if (ultimate != null && !_ultimateUsed)
             {
-                Execute(ultimate);
+                Execute(ultimate, agent.CurrentTarget, null);
                 _ultimateUsed = true;
                 // 궁극기 직후 일반 스킬이 다음 자동 검사에서 연달아 발동하지 않게
                 // 동일한 일반 스킬 주기를 공유한다.
@@ -100,7 +107,7 @@ namespace _01.Code.Skills
 
             if (skill != null)
             {
-                Execute(skill);
+                Execute(skill, agent.CurrentTarget, null);
                 _cooldownTimer = skill.Cooldown;
                 return true;
             }
@@ -108,12 +115,73 @@ namespace _01.Code.Skills
             return false;
         }
 
-        private void Execute(SkillDataSO data)
+        public bool HasSkill => skill != null;
+        public bool HasUltimate => ultimate != null;
+
+        /// <summary>후보와 배치 상세에서 읽는 일반 스킬 데이터. 시전 상태는 바꾸지 않는다.</summary>
+        public SkillDataSO SkillData => skill;
+
+        /// <summary>후보와 배치 상세에서 읽는 궁극기 데이터. 시전 상태는 바꾸지 않는다.</summary>
+        public SkillDataSO UltimateData => ultimate;
+
+        internal float CaptureStageCooldown() => Mathf.Max(0f, _cooldownTimer);
+
+        internal void RestoreStageCooldown(float remaining)
         {
-            PlayCastVisual(data != null && data.IsUltimate);
-            var context = new SkillContext(agent, combatant, agent.CurrentTarget);
-            data.Execute(context);
+            _cooldownTimer = Mathf.Max(0f, remaining);
+            _lastBattlefield = agent != null ? agent.Battlefield : null;
         }
+
+        /// <summary>스테이지용: 일반 스킬만 쿨다운마다 쓴다. 대상과 대상 조회를 밖에서 받는다(궁극기는 <see cref="TryCastUltimate"/>).</summary>
+        public bool TryCastSkill(BattleAgent target, ISkillField field)
+        {
+            if (skill == null || agent == null || !agent.IsAlive || _cooldownTimer > 0f)
+                return false;
+            Execute(skill, target, field);
+            _cooldownTimer = skill.Cooldown;
+            return true;
+        }
+
+        /// <summary>스테이지용: 궁극기를 바로 쓴다. 쓸 때(게이지 등)는 부르는 쪽이 정한다.</summary>
+        public bool TryCastUltimate(BattleAgent target, ISkillField field)
+        {
+            if (ultimate == null || agent == null || !agent.IsAlive)
+                return false;
+            Execute(ultimate, target, field);
+            _cooldownTimer = skill != null ? skill.Cooldown : 0f;
+            return true;
+        }
+
+        private void Execute(SkillDataSO data, BattleAgent target, ISkillField field)
+        {
+            var isUltimate = data != null && data.IsUltimate;
+            PlayCastVisual(isUltimate);
+
+            // 몸에 색만 입히면 스물여덟 기술이 다 같아 보인다. 판 위에도 한 겹 남긴다.
+            if (data != null)
+                SkillCastBurst.Play(transform.position, data.CastColor, isUltimate);
+
+            PlaySpellVisual(data, target);
+
+            var context = new SkillContext(agent, combatant, target, field);
+            using (Code.Combat.HitAttribution.Begin(combatant))
+                data.Execute(context);
+        }
+
+        /// <summary>스킬 주문 그림을 대상(또는 시전자) 발밑에서 한 번 튼다. 대상이 없으면 시전자 자리.</summary>
+        private void PlaySpellVisual(SkillDataSO data, BattleAgent target)
+        {
+            if (data == null)
+                return;
+
+            var position = data.SpellAnchor == SkillVisualAnchor.Caster || target == null
+                ? transform.position
+                : target.transform.position;
+            SpriteFramePlayer.Spawn("SkillFx", data.SpellFrames, data.SpellFramesPerSecond, position, data.SpellScale, SpellSortingOrder);
+        }
+
+        /// <summary>캐릭터(20)·사망 연출(30)보다 위, 뜨는 숫자(60)보다 아래.</summary>
+        private const int SpellSortingOrder = 34;
 
         /// <summary>시전 순간 캐스터 강조 — 색 플래시 + 스케일 팝. 궁극기는 금색으로 더 크게.</summary>
         private void PlayCastVisual(bool isUltimate)

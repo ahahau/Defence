@@ -1,7 +1,7 @@
-using _01.Code.Combat;
+using Code.Combat;
 using UnityEngine;
 
-namespace _01.Code.Skills
+namespace Code.Skills
 {
     [CreateAssetMenu(menuName = "SO/Skill/Effect/Ground Zone", fileName = "GroundZoneSkillEffect", order = 0)]
     public class GroundZoneSkillEffectSO : SkillEffectSO
@@ -12,6 +12,9 @@ namespace _01.Code.Skills
         [SerializeField, Min(0)] private int tickDamage = 1;
         [SerializeField, Min(0.05f)] private float moveSpeedMultiplier = 0.45f;
         [SerializeField] private Color zoneColor = new(0.45f, 0.9f, 0.25f, 0.28f);
+
+        /// <summary>지대에 깔리는 색을 그대로 쓴다. 시전 고리와 바닥이 따로 놀면 같은 기술로 안 보인다.</summary>
+        public override Color SignatureColor => new(zoneColor.r, zoneColor.g, zoneColor.b, 1f);
 
         public override void Execute(SkillContext context)
         {
@@ -25,14 +28,15 @@ namespace _01.Code.Skills
             SkillZoneVisual.AddPulse(renderer);
 
             var runtime = renderer.gameObject.AddComponent<GroundZoneRuntime>();
-            runtime.Initialize(context.Caster, radius, duration, tickInterval, tickDamage, moveSpeedMultiplier);
+            runtime.Initialize(context.Caster, context.Field, radius, duration, tickInterval, tickDamage, moveSpeedMultiplier);
         }
 
         private class GroundZoneRuntime : MonoBehaviour
         {
             private const string OwnershipSlot = "GroundZone";
             private BT.BattleAgent _caster;
-            private int _ownerId;
+            private ISkillField _field;
+            private EntityId _ownerId;
             private float _radius;
             private float _remaining;
             private float _tickInterval;
@@ -40,9 +44,10 @@ namespace _01.Code.Skills
             private int _tickDamage;
             private float _moveSpeedMultiplier;
 
-            public void Initialize(BT.BattleAgent caster, float radius, float duration, float tickInterval, int tickDamage, float moveSpeedMultiplier)
+            public void Initialize(BT.BattleAgent caster, ISkillField field, float radius, float duration, float tickInterval, int tickDamage, float moveSpeedMultiplier)
             {
                 _caster = caster;
+                _field = field;
                 _radius = radius;
                 _remaining = duration;
                 _tickInterval = tickInterval;
@@ -50,6 +55,7 @@ namespace _01.Code.Skills
                 _tickDamage = tickDamage;
                 _moveSpeedMultiplier = moveSpeedMultiplier;
                 _ownerId = SkillZoneOwnership.Replace(caster, OwnershipSlot, gameObject);
+                _field?.TrackEffect(gameObject);
             }
 
             private void OnDestroy() =>
@@ -57,6 +63,11 @@ namespace _01.Code.Skills
 
             private void Update()
             {
+                if (_field != null && !_field.IsActive)
+                {
+                    Destroy(gameObject);
+                    return;
+                }
                 _remaining -= Time.deltaTime;
                 if (_remaining <= 0f)
                 {
@@ -68,11 +79,18 @@ namespace _01.Code.Skills
                 if (_tickTimer > 0f) return;
 
                 _tickTimer = _tickInterval;
-                var field = _caster != null ? _caster.Battlefield : null;
-                if (field == null) return;
+                if (_caster == null) return;
+                System.Collections.Generic.IEnumerable<BT.BattleAgent> roster = _field != null
+                    ? _field.Opponents(_caster.Team, transform.position)
+                    : _caster.Battlefield != null ? _caster.Battlefield.Opponents(_caster.Team) : null;
+                if (roster == null) return;
 
-                foreach (var enemy in field.Opponents(_caster.Team))
+                foreach (var enemy in roster)
                 {
+                    if (_field != null && !_field.IsActive)
+                    {
+                        break;
+                    }
                     if (enemy == null || !enemy.IsAlive)
                         continue;
                     if (Vector2.Distance(transform.position, enemy.transform.position) > _radius)

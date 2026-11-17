@@ -1,11 +1,12 @@
-using _01.Code.Artifacts;
-using _01.Code.Combat;
-using _01.Code.Core.Modules;
-using _01.Code.MapCreateSystem;
+using Code.Artifacts;
+using Code.Combat;
+using GameLib.Entity;
+using Code.Manager;
+using Code.MapCreateSystem;
 using System;
 using UnityEngine;
 
-namespace _01.Code.Units
+namespace Code.Units
 {
     [RequireComponent(typeof(UnitClickTarget))]
     public class Unit : Entity
@@ -27,7 +28,7 @@ namespace _01.Code.Units
         [SerializeField] private UnitTrait trait;
         [SerializeField, Min(0f)] private float aggressiveDamageMultiplier = 1.2f;
         [SerializeField, Min(0f)] private float aggressiveFatigueMultiplier = 1.25f;
-        [SerializeField, Min(0)] private int guardianDefenseBonus = 20;
+        [SerializeField, Min(0)] private int guardianDefenseBonus = 6;
         [SerializeField, Min(0f)] private float guardianDamageMultiplier = 0.9f;
         [SerializeField, Range(0f, 1f)] private float cautiousEvasionBonus = 0.1f;
         [SerializeField, Min(0f)] private float cautiousAttackIntervalMultiplier = 1.1f;
@@ -48,7 +49,7 @@ namespace _01.Code.Units
 
         [Header("Command Balance")]
         [SerializeField] private UnitCommand currentCommand = UnitCommand.Standby;
-        [SerializeField, Min(0)] private int commandGuardDefenseBonus = 15;
+        [SerializeField, Min(0)] private int commandGuardDefenseBonus = 5;
         [SerializeField, Min(0f)] private float commandGuardDamageMultiplier = 0.92f;
         [SerializeField, Min(0f)] private float commandGuardAttackIntervalMultiplier = 1.08f;
         [SerializeField, Min(0f)] private float commandAssaultDamageMultiplier = 1.15f;
@@ -63,6 +64,12 @@ namespace _01.Code.Units
         public Health Health => health;
         public UnitLevel Level => level;
         public bool IsIncapacitated { get; private set; }
+
+        /// <summary>재배치 뒤 자리를 잡는 중인가. 이 동안 공격·스킬을 못 쓰고 받는 피해가 줄어든다.</summary>
+        public bool IsPreparingRedeploy => _redeployPreparationRemaining > 0f;
+
+        /// <summary>재배치 준비가 끝나기까지 남은 게임 시간(초).</summary>
+        public float RedeployPreparationRemaining => _redeployPreparationRemaining;
         public bool CanFight => !IsIncapacitated && !IsExhausted && Combatant != null && Combatant.IsAlive;
         public bool NeedsRecovery => (Health != null && Health.CurrentHealth < Health.MaxHealth)
                                      || fatigue > 0.01f
@@ -110,6 +117,12 @@ namespace _01.Code.Units
         private static readonly object FatigueStatKey = new();
         private static readonly object InjuryStatKey = new();
         private static readonly object PersonalityStatKey = new();
+        private static readonly object PolicyStatKey = new();
+
+        private MoralePolicyManager _policyManager;
+        private float _nightRecoveryTimer;
+        private float _redeployPreparationRemaining;
+        private bool _redeployFirstStrikePending;
 
         protected override void Awake()
         {
@@ -122,22 +135,92 @@ namespace _01.Code.Units
             EnsureDefaultPersonality();
             ApplyTraitBaseStats();
             ApplyConditionModifiers();
+            // 네모 받침(CharacterBackPlate)은 깔지 않는다. 침입자와 같은 이유로, 프레임 애니메이션 그림 뒤에서
+            // 캐릭터를 가두는 파란 상자로만 보였다(2026-10-22 사용자 요청으로 뺌).
         }
 
         private void EnsureBattleAgent()
         {
             // 역할은 프리팹/인스톨러가 정한 값을 유지하고, 팀(Player)·BT 제어만 보장한다.
-            var battleAgent = GetComponent<_01.Code.BT.BattleAgent>();
+            var battleAgent = GetComponent<Code.BT.BattleAgent>();
             if (battleAgent != null)
-                battleAgent.EnsureTeam(_01.Code.BT.BattleTeam.Player, false);
+            {
+                battleAgent.EnsureTeam(Code.BT.BattleTeam.Player, false);
+                battleAgent.ApplyUnitCommand(currentCommand);
+            }
         }
 
         protected virtual void OnDestroy()
         {
+            if (_policyManager != null)
+                _policyManager.CombatModifiersChanged -= HandlePolicyCombatModifiersChanged;
             if (health != null)
                 health.Changed -= HandleHealthChanged;
             if (combatant != null)
                 combatant.AttackLanded -= HandleAttackLanded;
+        }
+
+        /// <summary>이전 정책 구독을 해제하고 전달받은 매니저의 현재 보정을 즉시 적용한다.</summary>
+        public void BindPolicies(MoralePolicyManager policies)
+        {
+            if (_policyManager != null)
+                _policyManager.CombatModifiersChanged -= HandlePolicyCombatModifiersChanged;
+            _policyManager = policies;
+            if (_policyManager != null)
+            {
+                _policyManager.CombatModifiersChanged -= HandlePolicyCombatModifiersChanged;
+                _policyManager.CombatModifiersChanged += HandlePolicyCombatModifiersChanged;
+            }
+
+            HandlePolicyCombatModifiersChanged();
+        }
+
+        /// <summary>재배치 준비를 시작한다. 이미 준비 중이면 더 긴 쪽을 남긴다.</summary>
+        public void BeginRedeployPreparation(float seconds)
+        {
+            _redeployPreparationRemaining = Mathf.Max(_redeployPreparationRemaining, seconds);
+            // 공격적인 부하는 자리를 잡고 나서 첫 공격을 세게 친다.
+            if (trait == UnitTrait.Aggressive)
+                _redeployFirstStrikePending = true;
+        }
+
+        /// <summary>준비가 끝난 공격적인 부하의 첫 공격이면 true를 돌려주고 소모한다.</summary>
+        public bool ConsumeRedeployFirstStrike()
+        {
+            if (!_redeployFirstStrikePending || IsPreparingRedeploy)
+                return false;
+
+            _redeployFirstStrikePending = false;
+            return true;
+        }
+
+        private void Update()
+        {
+            // 준비 시간은 게임 시간으로 흐른다. 일시정지 중에는 줄지 않는다.
+            if (_redeployPreparationRemaining > 0f)
+                _redeployPreparationRemaining = Mathf.Max(0f, _redeployPreparationRemaining - Time.deltaTime);
+
+            // 밤에는 싸우지 않는 부하만 천천히 회복한다. 대상이 남아 있으면 전투 중으로 보고
+            // 회복을 멈춰, 맞으면서 버티는 무한 회복이 되지 않게 한다.
+            if (DayManager.Current == null || DayManager.Current.Phase != DayManager.OperationPhase.Night
+                || health == null || !health.IsAlive || combatant == null || combatant.Target != null)
+            {
+                _nightRecoveryTimer = 0f;
+                return;
+            }
+
+            _nightRecoveryTimer += Time.deltaTime;
+            if (_nightRecoveryTimer < 1f)
+                return;
+
+            _nightRecoveryTimer = 0f;
+            health.Heal(Mathf.Max(1, Mathf.CeilToInt(health.MaxHealth * 0.02f)));
+        }
+
+        private void HandlePolicyCombatModifiersChanged()
+        {
+            ApplyTraitBaseStats();
+            ApplyConditionModifiers();
         }
 
         public void Initialize(UnitDataSO unitData)
@@ -173,6 +256,24 @@ namespace _01.Code.Units
             RecoverCondition();
         }
 
+        /// <summary>
+        /// 쓰러진 부하를 다시 세운다. 체력만 채우고 피로와 부상은 그대로 둔다.
+        ///
+        /// 전부 지워 주면 다친 채로 버티는 것보다 한 번 쓰러지는 편이 이득이 되어,
+        /// 되살리는 값을 치르고도 상태가 나아진다.
+        /// </summary>
+        public void Revive()
+        {
+            if (!IsIncapacitated)
+                return;
+
+            health?.RestoreToFull();
+            IsIncapacitated = false;
+            ApplyConditionModifiers();
+            RejoinHomeBattlefield();
+            ConditionChanged?.Invoke();
+        }
+
         public void RecoverToFull()
         {
             RecoverCondition();
@@ -180,12 +281,22 @@ namespace _01.Code.Units
 
         public void RecoverCondition()
         {
+            var wasIncapacitated = IsIncapacitated;
             Health?.RestoreToFull();
             fatigue = 0f;
             injury = InjurySeverity.None;
             IsIncapacitated = false;
             ApplyConditionModifiers();
+            if (wasIncapacitated)
+                RejoinHomeBattlefield();
             ConditionChanged?.Invoke();
+        }
+
+        /// <summary>부활 마력·치료 어느 쪽으로 살아나도 서 있던 방에서 다시 싸운다(<see cref="UnitDeployment.Rejoin"/>).</summary>
+        private void RejoinHomeBattlefield()
+        {
+            if (Code.MapCreateSystem.Node.TryFindUnit(this, out var node, out _))
+                UnitDeployment.Rejoin(node, this);
         }
 
         public UnitConditionState CaptureConditionState() => new(
@@ -205,6 +316,7 @@ namespace _01.Code.Units
             trait = state.Trait;
             personality = state.Personality;
             currentCommand = state.Command;
+            GetComponent<Code.BT.BattleAgent>()?.ApplyUnitCommand(currentCommand);
 
             // 레벨이 최대 체력을 올리므로 비율보다 먼저 복원해야 한다.
             // 순서를 뒤집으면 늘어난 최대치가 아니라 기본 최대치 기준으로 비율이 적용된다.
@@ -261,11 +373,8 @@ namespace _01.Code.Units
         /// <summary>
         /// 명령을 바꾼 뒤 다시 바꿀 수 있을 때까지의 시간.
         /// 웨이브 중에도 명령이 통하게 되면서, 매 순간 최적값으로 갈아타는 손놀림 싸움이 되지 않도록
-        /// 한 번의 판단에 잠시 묶어 둔다.
+        /// 한 번의 판단에 잠시 묶어 둔다. 길이는 명령마다 다르며 UnitCommandRules가 정한다.
         /// </summary>
-        [SerializeField, Min(0f), Tooltip("명령을 다시 내리기까지의 대기 시간(초).")]
-        private float commandCooldown = 3f;
-
         private float _commandReadyTime;
 
         public bool IsCommandReady => Time.time >= _commandReadyTime;
@@ -277,7 +386,9 @@ namespace _01.Code.Units
                 return;
 
             currentCommand = command;
-            _commandReadyTime = Time.time + Mathf.Max(0f, commandCooldown);
+            GetComponent<Code.BT.BattleAgent>()?.ApplyUnitCommand(currentCommand);
+            // 명령마다 무게가 다르다. 되돌리기(대기)는 짧고, 전투에서 빼는 휴식은 가장 길다.
+            _commandReadyTime = Time.time + Mathf.Max(0f, UnitCommandRules.GetCooldown(command));
             ApplyTraitBaseStats();
             ApplyConditionModifiers();
             ConditionChanged?.Invoke();
@@ -411,6 +522,9 @@ namespace _01.Code.Units
                 UnitCommand.Rest => commandRestAttackIntervalMultiplier,
                 _ => 1f
             };
+            var policyDamageMultiplier = _policyManager != null
+                ? _policyManager.UnitDamageMultiplier
+                : 1f;
 
             // 예전에는 다섯을 미리 곱해 하나의 숫자로 넘겼다. 그러면 어느 출처가 얼마를
             // 기여했는지 알 수 없어, 화면에 이유를 보여 줄 수도 하나만 걷어낼 수도 없었다.
@@ -419,7 +533,9 @@ namespace _01.Code.Units
             ApplyConditionMultiplier(TraitStatKey, traitDamageMultiplier, traitIntervalMultiplier);
             ApplyConditionMultiplier(PersonalityStatKey, personalityDamageMultiplier, personalityIntervalMultiplier);
             ApplyConditionMultiplier(CommandStatKey, commandDamageMultiplier, commandIntervalMultiplier);
-            combatant.SetConditionCriticalChanceBonus(
+            ApplyConditionMultiplier(PolicyStatKey, policyDamageMultiplier, 1f);
+            combatant.SetCriticalChanceBonus(
+                PersonalityStatKey,
                 personality == UnitPersonality.Perfectionist ? perfectionistCriticalChanceBonus : 0f);
         }
 
@@ -466,6 +582,11 @@ namespace _01.Code.Units
             combatant.SetDefenseAndEvasionBonus(
                 CommandStatKey,
                 currentCommand == UnitCommand.Guard ? commandGuardDefenseBonus : 0f,
+                0f);
+
+            combatant.SetDefenseAndEvasionBonus(
+                PolicyStatKey,
+                _policyManager != null ? _policyManager.UnitDefenseBonus : 0f,
                 0f);
         }
 

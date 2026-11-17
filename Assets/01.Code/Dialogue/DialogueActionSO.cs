@@ -1,7 +1,7 @@
-using _01.Code.Core;
+using Code.Core;
 using UnityEngine;
 
-namespace _01.Code.Dialogue
+namespace Code.Dialogue
 {
     public abstract class DialogueActionSO : ScriptableObject
     {

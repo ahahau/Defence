@@ -1,7 +1,8 @@
 using System;
+using Code.BT;
 using UnityEngine;
 
-namespace _01.Code.Units
+namespace Code.Units
 {
     public enum InjurySeverity
     {
@@ -96,11 +97,21 @@ namespace _01.Code.Units
 
         public static string GetDescription(UnitCommand command) => command switch
         {
-            UnitCommand.Guard => "방어를 우선해 버티지만 공격 속도가 조금 느려집니다.",
-            UnitCommand.Assault => "공격을 우선해 피해량과 속도가 오르지만 피로가 더 쌓입니다.",
-            UnitCommand.Rest => "피로 누적을 줄이고 회복을 우선하지만 전투 성능이 크게 낮아집니다.",
-            _ => "기본 행동입니다. 별도 보정 없이 노드 안에서 대기합니다."
+            // 명령 버튼마다 따라붙는 줄이라 길면 목록 전체가 글로 덮인다.
+            // 고를 때 필요한 것은 "무엇을 얻고 무엇을 잃는가" 한 쌍이다.
+            UnitCommand.Guard => "적을 도발해 대신 맞음 · 공격 속도 느려짐",
+            UnitCommand.Assault => "후열을 먼저 노림 · 피로 더 쌓임",
+            UnitCommand.Rest => "피로 회복 · 전투력 크게 낮아짐",
+            _ => "보정 없이 대기"
         };
+
+        public static TargetPriority ResolveTargetPriority(UnitCommand command, TargetPriority requested) =>
+            command switch
+            {
+                UnitCommand.Guard => TargetPriority.Frontline,
+                UnitCommand.Assault => TargetPriority.Backline,
+                _ => requested
+            };
     }
 
     [Serializable]

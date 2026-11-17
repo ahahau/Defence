@@ -2,7 +2,7 @@ using System;
 using Unity.Behavior;
 using UnityEngine;
 
-namespace _01.Code.BT
+namespace Code.BT
 {
     /// <summary>사거리 내 같은 팀 아군이 있는지. WoundedOnly면 부상 아군만(서포터 힐 분기용).</summary>
     [Serializable, Unity.Properties.GeneratePropertyBag]

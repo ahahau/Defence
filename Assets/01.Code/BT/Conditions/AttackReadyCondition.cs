@@ -2,7 +2,7 @@ using System;
 using Unity.Behavior;
 using UnityEngine;
 
-namespace _01.Code.BT
+namespace Code.BT
 {
     /// <summary>공격 쿨이 다 차서 지금 때릴 수 있는지. False면(공속 부족) 추격/재배치 분기로.</summary>
     [Serializable, Unity.Properties.GeneratePropertyBag]

@@ -3,7 +3,7 @@ using Unity.Behavior;
 using UnityEngine;
 using Action = Unity.Behavior.Action;
 
-namespace _01.Code.BT
+namespace Code.BT
 {
     /// <summary>타깃에게 빠르게 돌진해 거리를 좁힌다(근접 개시기). 사거리 안에 들면 Success(공격 분기로),
     /// 적이 없으면 Failure. 보통 Engage Target 앞에 두어 "달려들어 붙은 뒤 교전" 흐름을 만든다.</summary>
@@ -40,8 +40,12 @@ namespace _01.Code.BT
                 return Status.Failure;
 
             var mult = SpeedMultiplier != null ? SpeedMultiplier.Value : 1.8f;
-            // 사거리에 들면 false → 교전(Engage)으로 넘긴다.
-            return _agent.ChargeToTarget(Time.deltaTime, mult) ? Status.Running : Status.Success;
+            if (_agent.TargetInRange())
+                return Status.Success;
+            if (_agent.IsCombatMoveLocked)
+                return Status.Running;
+            _agent.ChargeToTarget(Time.deltaTime, mult);
+            return _agent.TargetInRange() ? Status.Success : Status.Running;
         }
 
         private BattleAgent Resolve() =>

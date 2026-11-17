@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace _01.Code.Entities
+namespace Code.Entities
 {
     public enum EntityGrade
     {

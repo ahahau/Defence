@@ -2,7 +2,7 @@ using System;
 using Unity.Behavior;
 using UnityEngine;
 
-namespace _01.Code.BT
+namespace Code.BT
 {
     /// <summary>이 전투필드에서 적 팀 인원이 아군 팀보다 많은지(수세 판단). 도주·재집결 분기 가드에 사용.</summary>
     [Serializable, Unity.Properties.GeneratePropertyBag]

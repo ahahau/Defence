@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace _01.Code.BT
+namespace Code.BT
 {
     /// <summary>
     /// 하나의 던전 노드를 전투 필드로 만든다. 노드 트리거에 들어온 <see cref="BattleAgent"/>를
@@ -21,7 +21,32 @@ namespace _01.Code.BT
         private BattleAgent _playerFocus;
         private BattleAgent _enemyFocus;
 
+        private Code.MapCreateSystem.NodeTrapGrid _grid;
+        private bool _gridResolved;
+
         public int MaxPerTeam => maxPerTeam;
+
+        /// <summary>이 방의 칸 격자. 전투 이동이 막힌 칸·칸막이 벽을 피할 때 읽는다. 없으면 null.</summary>
+        public Code.MapCreateSystem.NodeTrapGrid Grid
+        {
+            get
+            {
+                if (!_gridResolved)
+                {
+                    _grid = GetComponent<Code.MapCreateSystem.NodeTrapGrid>();
+                    _gridResolved = true;
+                }
+
+                return _grid;
+            }
+        }
+
+        /// <summary>방 크기에 맞춰 팀당 정원을 정한다. 이미 들어와 있는 인원은 내보내지 않는다.</summary>
+        public void SetMaxPerTeam(int value) => maxPerTeam = Mathf.Max(1, value);
+
+        /// <summary>방 모양 크기에 맞춰 아레나 반지름을 정한다. 이미 들어온 인원은 다음 입장부터 새 값을 받는다.</summary>
+        public void SetArenaRadius(float value) => arenaRadius = Mathf.Max(0.5f, value);
+
         public int PlayerCount => CountActive(_players);
         public int EnemyCount => CountActive(_enemies);
         /// <summary>전투 아레나 반지름(노드 내부 배치 그리드가 칸 간격을 맞출 때 참조).</summary>

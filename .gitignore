@@ -10,6 +10,11 @@
 /[Bb]uilds/
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
+
+# Local work folders (verification evidence, presentation tooling, temporary captures)
+/tmp/
+/[Aa]ssets/tmp/
+/[Aa]ssets/tmp.meta
 *.log
 
 # By default unity supports Blender asset imports, *.blend1 blender files do not need to be commited to version control.
@@ -117,3 +122,18 @@ InitTestScene*.unity*
 # Unity 크래시 복구 스냅샷
 /[Aa]ssets/_Recovery/
 /[Aa]ssets/_Recovery.meta
+
+# Claude 스킬 초안 — 프로젝트 코드가 아니라 개인 작업 도구
+/plugin-drafts/
+
+# Player builds. 284MB per build and reproducible from the project.
+/Build/
+
+# 밸런스 자동 실측 기록 (세션마다 쌓인다)
+BalanceRuns/
+
+# 빌드 압축본 — 한 개에 72MB이고 /Build/ 에서 다시 만들 수 있다
+[Bb]uild*.zip
+
+# 검사·측정 산출물 (빌드 사본, 감사 로그, 리포트)
+/output/

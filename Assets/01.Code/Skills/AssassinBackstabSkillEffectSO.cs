@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace _01.Code.Skills
+namespace Code.Skills
 {
     [CreateAssetMenu(menuName = "SO/Skill/Effect/Assassin Backstab", fileName = "AssassinBackstabSkillEffect", order = 0)]
     public class AssassinBackstabSkillEffectSO : SkillEffectSO
@@ -11,6 +11,9 @@ namespace _01.Code.Skills
         [SerializeField, Min(1f)] private float vulnerableDamageMultiplier = 1.35f;
         [SerializeField, Min(0f)] private float vulnerableDuration = 2f;
 
+        /// <summary>그림자 계열은 자주색.</summary>
+        public override Color SignatureColor => new(0.72f, 0.5f, 1f, 1f);
+
         public override void Execute(SkillContext context)
         {
             var caster = context.Caster;
@@ -20,7 +23,14 @@ namespace _01.Code.Skills
             var dir = ((Vector2)target.transform.position - (Vector2)caster.transform.position).normalized;
             if (dir.sqrMagnitude < 0.0001f) dir = Vector2.right;
 
-            caster.TeleportToCombatPosition((Vector2)target.transform.position + dir * behindDistance);
+            Vector2 destination = (Vector2)target.transform.position + dir * behindDistance;
+            if (context.Field is ISkillMovement movement)
+            {
+                if (!movement.TryTeleport(caster, target, destination))
+                    return;
+            }
+            else
+                caster.TeleportToCombatPosition(destination);
             caster.FaceTarget(target);
             caster.FireProjectile(target);
 

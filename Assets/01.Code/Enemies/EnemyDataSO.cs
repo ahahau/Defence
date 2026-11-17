@@ -1,8 +1,8 @@
-using _01.Code.BT;
-using _01.Code.Entities;
+using Code.BT;
+using Code.Entities;
 using UnityEngine;
 
-namespace _01.Code.Enemies
+namespace Code.Enemies
 {
     [CreateAssetMenu(fileName = "EnemyData", menuName = "Defence/Enemy")]
     public class EnemyDataSO : EntityDataSO
@@ -13,6 +13,9 @@ namespace _01.Code.Enemies
         [field: SerializeField, Tooltip("전투 역할. 전열(Tank/Melee)/후열(Ranged)/지원(Support).")]
         public BattleRole Role { get; private set; } = BattleRole.Melee;
 
+        [field: SerializeField, Tooltip("시설 이용과 공포 반응을 바꾸는 개인 특성.")]
+        public AdventurerTrait Trait { get; private set; }
+
         [field: SerializeField, Tooltip("이 적 종류의 전용 프리팹. 비어 있으면 WaveManager의 기본 프리팹 사용.")]
         public Enemy Prefab { get; private set; }
 
@@ -21,6 +24,9 @@ namespace _01.Code.Enemies
 
         [field: SerializeField, Min(0)]
         public int Greed { get; private set; }
+
+        [field: SerializeField, Min(1), Tooltip("코어 도달 시 한 번 주는 피해. 공격력과 별개이며 첫 전환 값은 임시 설정이다.")]
+        public int CoreArrivalDamage { get; private set; } = 1;
 
         [field: SerializeField, Min(1)]
         public int MaxHealth { get; private set; } = 10;
@@ -31,6 +37,10 @@ namespace _01.Code.Enemies
         [field: SerializeField, Min(0.05f)]
         public float AttackInterval { get; private set; } = 1f;
 
+        [field: SerializeField, Range(0, MobilityRules.MaxMobility),
+         Tooltip("기동성(0~10). 1점마다 회피 +2%p, 함정 피하기 +4%p, 이동 속도 +5%(MobilityRules).")]
+        public int Mobility { get; private set; } = 2;
+
         [field: SerializeField]
         public Sprite IdleSprite { get; private set; }
 
@@ -39,5 +49,16 @@ namespace _01.Code.Enemies
 
         [field: SerializeField]
         public Sprite DefeatedSprite { get; private set; }
+
+        [field: SerializeField, Tooltip("있으면 위 세 포즈 대신 프레임 애니메이션을 튼다. 프리팹 넷을 나눠 쓰므로 외형은 데이터가 정한다.")]
+        public CharacterAnimationSetSO AnimationSet { get; private set; }
+
+        [field: SerializeField, Tooltip("이 적이 때릴 때 나는 소리. 열두 종이 프리팹 넷을 나눠 쓰기 때문에" +
+            " 프리팹에만 두면 관광객도 검을 휘두르는 소리를 낸다.")]
+        public global::Code.Audio.GameSfxCue AttackSfx { get; private set; } = global::Code.Audio.GameSfxCue.Attack;
+
+        [field: SerializeField, Tooltip("밟는 대신 함정을 뜯어낸다. 공병이 이걸로 산다 —" +
+            " 함정을 깔아 둔 길이 그냥 뚫리므로 도착하기 전에 잡아야 한다.")]
+        public bool DisarmsTraps { get; private set; }
     }
 }

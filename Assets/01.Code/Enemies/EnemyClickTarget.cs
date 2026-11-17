@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace _01.Code.Enemies
+namespace Code.Enemies
 {
     public class EnemyClickTarget : MonoBehaviour
     {

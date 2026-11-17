@@ -3,7 +3,7 @@ using Unity.Behavior;
 using UnityEngine;
 using Action = Unity.Behavior.Action;
 
-namespace _01.Code.BT
+namespace Code.BT
 {
     /// <summary>체력이 가장 낮은 적을 팀 공유 포커스로 지정한다(협동 집중공격 설정). 한 번에 Success.
     /// Engage Target(Priority=Focused) 앞에 두면 팀이 같은 처치 가능 대상을 함께 노린다.</summary>

@@ -11,84 +11,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="60a71e54-2ed6-426f-84f0-8dc9ea69b70b" name="변경" comment="">
-      <change beforePath="$PROJECT_DIR$/.claude/settings.local.json" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/settings.local.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Defence/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Defence/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/00.Scenes/SampleScene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/00.Scenes/SampleScene.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/00.Scenes/Start.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/00.Scenes/Start.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Artifacts/ArtifactEffectController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Artifacts/ArtifactEffectController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Buildings/Building.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings/Building.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Buildings/Trap.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings/Trap.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Buildings/Treasury.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Buildings/Treasury.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Combat/DamageFeedback.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Combat/DamageFeedback.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Dialogue/DialogueRunner.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Dialogue/DialogueRunner.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Editor/ExpeditionMapPrefabInstaller.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Editor/ExpeditionMapPrefabInstaller.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Editor/GeneratedSkillContentInstaller.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Editor/GeneratedSkillContentInstaller.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Enemies/Enemy.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Enemies/Enemy.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Enemies/EnemyMover.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Enemies/EnemyMover.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Entities/EntityRender.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Entities/EntityRender.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/BossWavePresenter.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/BossWavePresenter.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/CostManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/CostManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/DayManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/DayManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/GameOverManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/GameOverManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/HiredUnitRoster.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/HiredUnitRoster.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/IntrusionThreat.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/IntrusionThreat.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/MoralePolicyManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/MoralePolicyManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/NestCohesionSystem.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/NestCohesionSystem.cs.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/UnitManagementSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/UnitManagementSystem.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Manager/WaveManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Manager/WaveManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/DungeonGraphController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/DungeonGraphController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/Node.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/Node.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/NodeTrapGrid.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/MapCreateSystem/NodeTrapGrid.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Progression/VillageConquestState.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Progression/VillageConquestState.cs.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Progression/VillageConquestSystem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Progression/VillageConquestSystem.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Skills/GroundZoneSkillEffectSO.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Skills/GroundZoneSkillEffectSO.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Skills/HealZoneSkillEffectSO.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Skills/HealZoneSkillEffectSO.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Skills/SkillCaster.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Skills/SkillCaster.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/Skills/SkillZoneVisual.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/Skills/SkillZoneVisual.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/ExpeditionMapPanelView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/ExpeditionMapPanelView.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/MerchantPanelView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/MerchantPanelView.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/StartMenuController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/StartMenuController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/WaveRuntimeHudView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/WaveRuntimeHudView.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/01.Code/UI/WaveView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/01.Code/UI/WaveView.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Enemies/ArcherEnemy.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/Enemies/ArcherEnemy.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Enemies/HealterEnemy.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/Enemies/HealterEnemy.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/03.SO/Enemies/SwordEnemy.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/Enemies/SwordEnemy.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/03.SO/WaveConfig.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/03.SO/WaveConfig.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Generated/Trap_AmbushNet.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Generated/Trap_AmbushNet.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Generated/Trap_ArmorBreaker.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Generated/Trap_ArmorBreaker.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Generated/Trap_Caltrop.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Generated/Trap_Caltrop.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Generated/Trap_ExecutionSaw.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Generated/Trap_ExecutionSaw.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Trap_Blade.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Trap_Blade.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Trap_Crusher.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Trap_Crusher.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Trap_Snare.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Trap_Snare.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Trap_Spike.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Buildings/Traps/Trap_Spike.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Enemies/Enemy.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Enemies/Enemy.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Enemies/Generated/Enemy_Archer.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Enemies/Generated/Enemy_Archer.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Enemies/Generated/Enemy_Healter.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Enemies/Generated/Enemy_Healter.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Enemies/Generated/Enemy_Scout.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Enemies/Generated/Enemy_Scout.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Enemies/Generated/Enemy_Sword.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Enemies/Generated/Enemy_Sword.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Player.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Player.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Generated/Unit_Arbalist.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Generated/Unit_Arbalist.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Generated/Unit_BattleMage.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Generated/Unit_BattleMage.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Generated/Unit_Guardian.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Generated/Unit_Guardian.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Generated/Unit_Pikeman.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Generated/Unit_Pikeman.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Generated/Unit_Scout.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Generated/Unit_Scout.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Generated/Unit_Vanguard.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Generated/Unit_Vanguard.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Slimes/Unit_SlimeBlue.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Slimes/Unit_SlimeBlue.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Slimes/Unit_SlimeGreen.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Slimes/Unit_SlimeGreen.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Slimes/Unit_SlimeRed.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Slimes/Unit_SlimeRed.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Unit.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/04.Prefab/Characters/Units/Unit.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/08.Font/The Jamsil 5 Bold SDF.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/08.Font/The Jamsil 5 Bold SDF.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Resources/Materials/NestGridOverlay.mat" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Resources/Materials/NestGridOverlay.mat.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Shaders/NestGridOverlay.shader" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Shaders/NestGridOverlay.shader.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Tests/EditMode/Dialogue/Defence.EditMode.Tests.asmdef" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Tests/EditMode/Dialogue/GameRulesTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Tests/EditMode/Dialogue/GameRulesTests.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Packages/manifest.json" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/manifest.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Packages/packages-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/Packages/packages-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Code/Manager/BossWavePresenter.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Code/Manager/BossWavePresenter.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Code/Manager/GameSpeedController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Code/Manager/GameSpeedController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Code/Manager/HiredUnitRoster.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Code/Manager/HiredUnitRoster.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Code/UI/Hud/GoldCostView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Code/UI/Hud/GoldCostView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Code/UI/Panels/NodePanelView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Code/UI/Panels/NodePanelView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Code/UI/Toolkit/GameplayHudToolkitBootstrap.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Code/UI/Toolkit/GameplayHudToolkitBootstrap.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Code/UI/Toolkit/GameplayHudToolkitView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Code/UI/Toolkit/GameplayHudToolkitView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Code/UI/Toolkit/SettlementToolkitView.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Code/UI/Toolkit/SettlementToolkitView.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Code/UI/Toolkit/TitleToolkitBootstrap.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Code/UI/Toolkit/TitleToolkitBootstrap.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/UI/Toolkit/GameplayHud.uss" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/UI/Toolkit/GameplayHud.uss" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/UI/Toolkit/GameplayHud.uxml" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/UI/Toolkit/GameplayHud.uxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/UI/Toolkit/SettlementPanel.uss" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/UI/Toolkit/SettlementPanel.uss" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Resources/UI/Toolkit/SettlementPanel.uxml" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/UI/Toolkit/SettlementPanel.uxml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/_Graphics/Fonts/The Jamsil 5 Bold SDF.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/_Graphics/Fonts/The Jamsil 5 Bold SDF.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Docs/Design/DungeonEconomyDesign.md" beforeDir="false" afterPath="$PROJECT_DIR$/Docs/Design/DungeonEconomyDesign.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -102,13 +40,10 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/Assets/01.Code/Artifacts/ArtifactInventorySO.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Assets/01.Code/Buildings/Trap.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.behavior@1b9c0eccba9c/Runtime/Execution/Nodes/Composites/SelectorComposite.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.pipeline@24975d51528a/Runtime/Common/BasePipelineServer.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.ugui@473409526770/Editor/TMP/TMP_BaseEditorPanel.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.ugui@473409526770/Runtime/TMP/MaterialReferenceManager.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/60413e0732da4f899b47cce87c14ed90214800/b6/2d9eeacc/Camera.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.pipeline@62c08c808737/Runtime/Common/BasePipelineServer.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.render-pipelines.universal@327d93d1cbc8/Runtime/2D/Lights/Light2DManager.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Library/PackageCache/com.unity.ugui@0727b404f3a0/Runtime/UGUI/UI/Core/Selectable.cs" root0="SKIP_HIGHLIGHTING" />
   </component>
   <component name="McpProjectServerCommands">
     <commands />
@@ -117,23 +52,23 @@
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0000132992544473" />
-      <entry key="S2" value="1.3156847677619103" />
-      <entry key="S5" value="4.8601213928490585" />
-      <entry key="S10" value="11.282609895743079" />
-      <entry key="S30" value="21.781891458795883" />
-      <entry key="S60" value="25.937634266853987" />
-      <entry key="M2" value="28.34336849366186" />
-      <entry key="M5" value="29.905532110650675" />
-      <entry key="M10" value="30.44731413346297" />
-      <entry key="M15" value="30.63031988977564" />
-      <entry key="M30" value="30.81454565422219" />
-      <entry key="H1" value="30.90711871617984" />
-      <entry key="H2" value="30.95352076285963" />
-      <entry key="H4" value="30.97675072417162" />
-      <entry key="D1" value="30.996123778691516" />
-      <entry key="W1" value="30.999446221224034" />
+      <entry key="MS100" value="1.6222012580255352" />
+      <entry key="MS500" value="3.460713685771263" />
+      <entry key="S2" value="8.671923370082931" />
+      <entry key="S5" value="14.56060483423631" />
+      <entry key="S10" value="18.1014730187169" />
+      <entry key="S30" value="24.736406350171357" />
+      <entry key="S60" value="47.732501779261874" />
+      <entry key="M2" value="98.73590804595185" />
+      <entry key="M5" value="177.10272413140052" />
+      <entry key="M10" value="224.0144135244834" />
+      <entry key="M15" value="245.18986264751632" />
+      <entry key="M30" value="271.2962094719233" />
+      <entry key="H1" value="286.9711221125174" />
+      <entry key="H2" value="295.65584568082176" />
+      <entry key="H4" value="300.2405233803971" />
+      <entry key="D1" value="304.1941654688888" />
+      <entry key="W1" value="304.8845664335431" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -155,24 +90,27 @@
       <entry key="W1" value="0.0" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.010821167719616593" />
-      <entry key="MS500" value="0.40445336609998156" />
-      <entry key="S2" value="1.1068778370633623" />
-      <entry key="S5" value="4.734730718372102" />
-      <entry key="S10" value="11.180606000083298" />
-      <entry key="S30" value="21.724856075453175" />
-      <entry key="S60" value="25.904382682628324" />
-      <entry key="M2" value="28.325355296651725" />
-      <entry key="M5" value="29.89796403842943" />
-      <entry key="M10" value="30.44346697473178" />
-      <entry key="M15" value="30.627740886734745" />
-      <entry key="M30" value="30.813248985958293" />
-      <entry key="H1" value="30.90646858065131" />
-      <entry key="H2" value="30.95319524352703" />
-      <entry key="H4" value="30.9765878514605" />
-      <entry key="D1" value="30.996096617526042" />
-      <entry key="W1" value="30.999442340672545" />
+      <entry key="MS100" value="0.794360356648429" />
+      <entry key="MS500" value="2.568100487991403" />
+      <entry key="S2" value="7.899642182384966" />
+      <entry key="S5" value="14.070987813053955" />
+      <entry key="S10" value="17.808622676051677" />
+      <entry key="S30" value="24.621267067655694" />
+      <entry key="S60" value="47.656399093033635" />
+      <entry key="M2" value="98.67390030519901" />
+      <entry key="M5" value="177.06044743912736" />
+      <entry key="M10" value="223.98684296253373" />
+      <entry key="M15" value="245.16923554491626" />
+      <entry key="M30" value="271.2843683393585" />
+      <entry key="H1" value="286.9647076453261" />
+      <entry key="H2" value="295.6524964579033" />
+      <entry key="H4" value="300.23881059793825" />
+      <entry key="D1" value="304.19387445767063" />
+      <entry key="W1" value="304.8845247213117" />
     </decayedShown>
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
@@ -197,13 +135,14 @@
     &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
     &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
     &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;feat/combat-refactor-balance-content&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;rider.unittesting.toolwindow.stripe.button.shown&quot;: &quot;true&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
     &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
@@ -211,7 +150,7 @@
 }</component>
   <component name="RunManager" selected="Unity 에디터에 연결.Unity 에디터에 연결">
     <configuration name="유닛 테스트(배치 모드)" type="RunUnityExe" factoryName="Unity Executable">
-      <option name="EXE_PATH" value="C:\Program Files\Unity\Hub\Editor\6000.4.6f1\Editor\Unity.exe" />
+      <option name="EXE_PATH" value="C:\Program Files\Unity\Hub\Editor\6000.6.3f1\Editor\Unity.exe" />
       <option name="PROGRAM_PARAMETERS" value="-runTests -batchmode -projectPath C:\Fork\Defence -testResults Logs/results.xml -logFile Logs/Editor.log -testPlatform EditMode -debugCodeOptimization" />
       <option name="WORKING_DIRECTORY" value="C:\Fork\Defence" />
       <option name="PASS_PARENT_ENVS" value="1" />
@@ -231,7 +170,7 @@
       <method v="2" />
     </configuration>
     <configuration name="Unity 시작" type="RunUnityExe" factoryName="Unity Executable">
-      <option name="EXE_PATH" value="C:\Program Files\Unity\Hub\Editor\6000.4.6f1\Editor\Unity.exe" />
+      <option name="EXE_PATH" value="C:\Program Files\Unity\Hub\Editor\6000.6.3f1\Editor\Unity.exe" />
       <option name="PROGRAM_PARAMETERS" value="-projectPath C:\Fork\Defence -debugCodeOptimization" />
       <option name="WORKING_DIRECTORY" value="C:\Fork\Defence" />
       <option name="PASS_PARENT_ENVS" value="1" />
@@ -242,12 +181,10 @@
     </configuration>
     <configuration name="Unity 에디터에 연결" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost" useMixedMode="false">
       <option name="allowRunningInParallel" value="false" />
+      <option name="coreClr" value="false" />
       <option name="listenPortForConnections" value="false" />
       <option name="pid" />
       <option name="projectPathOnTarget" />
-      <option name="runtimes">
-        <list />
-      </option>
       <option name="selectedOptions">
         <list />
       </option>
@@ -255,12 +192,10 @@
     </configuration>
     <configuration name="Unreal 에디터에 연결 후 재생" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="UNITY_ATTACH_AND_PLAY" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost" useMixedMode="false">
       <option name="allowRunningInParallel" value="false" />
+      <option name="coreClr" value="false" />
       <option name="listenPortForConnections" value="false" />
       <option name="pid" />
       <option name="projectPathOnTarget" />
-      <option name="runtimes">
-        <list />
-      </option>
       <option name="selectedOptions">
         <list />
       </option>
@@ -339,6 +274,19 @@
       <workItem from="1787724563503" duration="620000" />
       <workItem from="1787790894820" duration="2016000" />
       <workItem from="1787876325375" duration="1557000" />
+      <workItem from="1788096233603" duration="598000" />
+      <workItem from="1788142106652" duration="1311000" />
+      <workItem from="1789517306431" duration="1216000" />
+      <workItem from="1789552429592" duration="2278000" />
+      <workItem from="1789601247278" duration="3877000" />
+      <workItem from="1789620775311" duration="1815000" />
+      <workItem from="1789691640092" duration="9966000" />
+      <workItem from="1789908512969" duration="2279000" />
+      <workItem from="1789947334043" duration="1043000" />
+      <workItem from="1789977597624" duration="9834000" />
+      <workItem from="1790040011822" duration="7490000" />
+      <workItem from="1790133319827" duration="2069000" />
+      <workItem from="1790644425145" duration="19193000" />
     </task>
     <servers />
   </component>

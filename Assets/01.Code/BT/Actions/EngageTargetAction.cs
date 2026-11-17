@@ -4,11 +4,12 @@ using UnityEngine;
 using Action = Unity.Behavior.Action;
 using Random = UnityEngine.Random;
 
-namespace _01.Code.BT.Actions
+namespace Code.BT.Actions
 {
     /// <summary>찾기→(원거리면 거리유지)→사거리면 공격, 아니면 접근 — 전투 전체를 노드 하나로.
-    /// 사거리 안에서는 공격 쿨이 도는 동안 좌우 스트레이프/백스텝을 무작위로 섞고(살아있는 교전),
-    /// 가끔 표적을 다른 적으로 바꾼다(난전). 적이 없으면 Failure(다음 분기 Idle/Traverse로).</summary>
+    /// 사거리 안에서 근접은 대상을 마주 보고 버티다 휘두르고, 휘두른 직후 반 걸음만 느리게 물러난다.
+    /// 원거리는 공격 쿨이 도는 동안 좌우 스트레이프/백스텝을 섞는다. 휘두르는 중·맞고 움찔하는 중에는
+    /// <see cref="BattleAgent"/>가 발을 묶는다. 쫓아도 닿지 못하는 표적만 가까운 다른 적으로 바꾼다. 적이 없으면 Failure.</summary>
     [Serializable, Unity.Properties.GeneratePropertyBag]
     [NodeDescription(
         name: "Engage Target",
@@ -23,7 +24,7 @@ namespace _01.Code.BT.Actions
         [SerializeReference] public BlackboardVariable<TargetPriority> Priority = new(TargetPriority.Nearest);
         [Tooltip("공격 쿨이 도는 동안 제자리 대신 좌우 스트레이프/백스텝을 무작위로 섞는다(살아있는 교전). 끄면 제자리.")]
         [SerializeReference] public BlackboardVariable<bool> VariedMovement = new(true);
-        [Tooltip("난전 중 가끔 다른 적으로 표적을 바꾼다. Focused 우선순위에서는 무시(협동 화력 유지).")]
+        [Tooltip("쫓아도 3초 넘게 닿지 못하는 표적은 가까운 다른 적으로 바꾼다. Focused 우선순위에서는 무시(협동 화력 유지).")]
         [SerializeReference] public BlackboardVariable<bool> SwitchTargets = new(true);
 
         private BattleAgent _agent;
@@ -32,13 +33,11 @@ namespace _01.Code.BT.Actions
         private enum Maneuver { Hold, StrafeLeft, StrafeRight, BackStep }
         private Maneuver _maneuver;
         private float _maneuverUntil;
-        private float _nextSwitchTime;
 
         protected override Status OnStart()
         {
             _agent = Resolve();
             _maneuverUntil = 0f;
-            _nextSwitchTime = Time.time + Random.Range(2f, 5f);
             return _agent == null ? Status.Failure : Status.Running;
         }
 
@@ -49,14 +48,16 @@ namespace _01.Code.BT.Actions
 
             var priority = Priority != null ? Priority.Value : TargetPriority.Nearest;
             
-            // 난전 표적 변경 — 집중공격(Focused) 역할은 협동 화력을 위해 제외.
-            if (SwitchOn && priority != TargetPriority.Focused && Time.time >= _nextSwitchTime)
-            {
-                _agent.SwitchTargetRandomly();
-                _nextSwitchTime = Time.time + Random.Range(3f, 6f);
-            }
-            
-            if (_agent.FindTarget(priority) == null)
+            // 쫓아도 닿지 못하는 대상만 바꾼다 — 집중공격(Focused) 역할은 협동 화력을 위해 제외.
+            // 예전에는 3~6초마다 무작위로 바꿔, 싸우던 중에 엉뚱한 쪽으로 돌아섰다.
+            if (SwitchOn && priority != TargetPriority.Focused && _agent.IsChaseStalled)
+                _agent.SwitchToNearestOtherTarget();
+
+            BattleAgent target = _agent.FindTarget(priority);
+            if (_agent.SupportWoundedAlly(Time.deltaTime))
+                return Status.Running;
+
+            if (target == null)
                 return Status.Failure; // 적 없음 → 다음 분기(Idle/Traverse)로
 
             _agent.RegisterFocus();
@@ -77,14 +78,16 @@ namespace _01.Code.BT.Actions
             _agent.Attack();
             if (_agent.InAttackRecovery)
             {
-                if (_agent.UsesRangedKiting)
-                    _agent.CombatStrafe(dt, Random.value < 0.5f ? -1f : 1f);
-                else
-                    _agent.CombatBackStep(dt);
+                // 원거리는 쏜 직후 제자리에 선다(근접이 파고들 틈). 예전에는 여기서 좌우를 프레임마다 새로 뽑아
+                // 제자리에서 떨었다(실측: 모험가 이동 떨림의 91%가 치유사·궁수의 이 구간).
+                if (!_agent.UsesRangedKiting)
+                    _agent.MeleeRecoveryStep(dt);
                 return Status.Running;
             }
 
-            if (VariedOn && !_agent.AttackReady)
+            // 근접은 대기 시간에도 대상을 마주 보고 버틴다(휘두른 직후의 반 걸음 물러남은 위 회복 구간이 맡는다).
+            // 무작위 좌우 이동을 섞으면 칼을 맞대는 대신 제자리에서 미끄러지며 떠는 것처럼 보였다.
+            if (VariedOn && _agent.UsesRangedKiting && !_agent.AttackReady)
                 PerformManeuver(dt);
 
             return Status.Running;

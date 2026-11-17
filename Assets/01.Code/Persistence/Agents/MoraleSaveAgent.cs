@@ -1,8 +1,8 @@
 using System;
-using _01.Code.Manager;
+using Code.Manager;
 using UnityEngine;
 
-namespace _01.Code.Persistence.Agents
+namespace Code.Persistence.Agents
 {
     [Serializable]
     public struct MoraleSaveState
@@ -20,12 +20,14 @@ namespace _01.Code.Persistence.Agents
     public sealed class MoraleSaveAgent : MonoBehaviour, ISaveable
     {
         [SerializeField] private string saveKey = "morale.state";
+        [SerializeField, Tooltip(GameScope.FieldTooltip)] private GameScope scope;
+        private MoralePolicyManager _morale;
 
         public string SaveKey => saveKey;
 
         public string GetSaveData()
         {
-            var morale = MoralePolicyManager.Current;
+            var morale = Resolve();
             if (morale == null)
                 return string.Empty;
 
@@ -42,11 +44,15 @@ namespace _01.Code.Persistence.Agents
 
         public void RestoreData(string savedData)
         {
-            if (string.IsNullOrWhiteSpace(savedData) || MoralePolicyManager.Current == null)
+            var morale = Resolve();
+            if (string.IsNullOrWhiteSpace(savedData) || morale == null)
                 return;
 
             var state = JsonUtility.FromJson<MoraleSaveState>(savedData);
-            MoralePolicyManager.Current.RestoreCheckpoint(state.morale, state.completedDay, state.policies);
+            morale.RestoreCheckpoint(state.morale, state.completedDay, state.policies);
         }
+
+        private MoralePolicyManager Resolve() =>
+            _morale != null ? _morale : _morale = GameScope.Resolve(scope, s => s.MoralePolicy, this, nameof(scope));
     }
 }

@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6cec2de7cb574a51b3d26073c6d6ae0d, type: 3}
+  m_Name: IronWall
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Manager.PolicyDataSO
+  displayName: "\uCCA0\uBCBD \uC218\uBE44"
+  description: "\uBAA8\uB4E0 \uBD80\uD558\uC5D0\uAC8C \uBC29\uBCBD\uC744 \uC138\uC6B0\uAC8C
+    \uD55C\uB2E4. \uBC84\uD2F0\uB294 \uB370\uB294 \uC88B\uC73C\uB098 \uBC00\uC5B4\uB0B4\uC9C0\uB294
+    \uBABB\uD55C\uB2E4."
+  moraleDeltaOnSelect: 0
+  goldDeltaOnSelect: -20
+  dailyMoraleDelta: 0
+  durationDays: 3
+  canRepeat: 1
+  unitDamageMultiplier: 0.75
+  unitDefenseBonus: 8
+  dungeonPowerGainMultiplier: 1

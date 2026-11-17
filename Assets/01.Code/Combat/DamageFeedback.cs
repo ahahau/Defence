@@ -2,7 +2,7 @@ using DG.Tweening;
 using System.Collections;
 using UnityEngine;
 
-namespace _01.Code.Combat
+namespace Code.Combat
 {
     [RequireComponent(typeof(Health))]
     public class DamageFeedback : MonoBehaviour
@@ -10,10 +10,16 @@ namespace _01.Code.Combat
         [SerializeField] private float textFloatDistance = 0.45f;
         [SerializeField] private float textDuration = 0.55f;
         [SerializeField] private int textSortingOrder = 60;
+        [SerializeField, Min(0f), Tooltip("뜨는 숫자를 좌우로 흩뿌리는 반경. 연타 숫자가 겹치지 않게 한다.")]
+        private float textScatter = 0.22f;
+        [SerializeField, Min(0f), Tooltip("뜬 숫자가 사라지며 바깥쪽으로 흐르는 거리.")]
+        private float textDrift = 0.18f;
         [Header("Critical")]
-        [SerializeField] private Color criticalTextColor = new(1f, 0.72f, 0.1f, 1f);
-        [SerializeField, Min(1f), Tooltip("크리티컬 데미지 텍스트 크기 배율.")]
-        private float criticalTextScale = 1.5f;
+        [SerializeField, Tooltip("치명타 숫자 색. 평타는 붉은색이므로 여기는 확실히 다른 색이어야 한다 — " +
+                                 "붉은 계열끼리 두면 난전에서 치명타가 났는지 알 수 없다.")]
+        private Color criticalTextColor = new(1f, 0.9f, 0.35f, 1f);
+        [SerializeField, Min(1f), Tooltip("치명타 숫자 크기 배율. 색만으로는 부족해 크기로도 갈라 준다.")]
+        private float criticalTextScale = 2f;
         [Header("Miss")]
         [SerializeField] private Color missTextColor = new(0.85f, 0.85f, 0.85f, 1f);
         [Header("Heal")]
@@ -22,6 +28,9 @@ namespace _01.Code.Combat
         [SerializeField, Min(1)] private int healParticleBurstCount = 10;
         [SerializeField, Min(0f), Tooltip("잦은 소량 힐(자연회복 등)을 하나의 텍스트로 합산하는 시간 창.")]
         private float healTextAggregateWindow = 0.4f;
+        [Header("Counterplay")]
+        [SerializeField, Min(0f), Tooltip("같은 적에게 연달아 발생한 상성 효과를 한 줄로 합산하는 시간 창.")]
+        private float counterplayTextAggregateWindow = 0.35f;
         [SerializeField] private TextMesh damageTextPrefab;
         [SerializeField] private ParticleSystem hitParticles;
         [SerializeField] private Health health;
@@ -31,8 +40,15 @@ namespace _01.Code.Combat
         [SerializeField] private int hitParticleSortingOrder = 80;
 
         private ParticleSystem _healParticles;
+        private ParticleSystemRenderer _hitRenderer;
+        private ParticleSystemRenderer _healRenderer;
         private int _pendingHealAmount;
         private Coroutine _healTextRoutine;
+        private string _pendingCounterplayLabel;
+        private int _pendingCounterplayAmount;
+        private bool _pendingCounterplayShowsGain;
+        private Color _pendingCounterplayColor;
+        private Coroutine _counterplayTextRoutine;
         private void Awake()
         {
             if (health == null)
@@ -65,6 +81,15 @@ namespace _01.Code.Combat
                 _pendingHealAmount = 0;
             }
 
+            if (_counterplayTextRoutine != null)
+            {
+                StopCoroutine(_counterplayTextRoutine);
+                _counterplayTextRoutine = null;
+            }
+
+            _pendingCounterplayLabel = string.Empty;
+            _pendingCounterplayAmount = 0;
+
         }
 
         private void Play(int damage, bool isCritical)
@@ -74,6 +99,8 @@ namespace _01.Code.Combat
 
             PlayHitParticles();
             CreateDamageText(damage, isCritical);
+            if (isCritical)
+                CombatFxHooks.PlayCriticalHit(transform.position + Vector3.up * hitParticleYOffset);
         }
 
         /// <summary>회복 연출 — 초록 블룸 + 상승 스파클. 텍스트는 잦은 소량 힐이 겹치지 않게 짧게 합산해 표시.</summary>
@@ -103,7 +130,7 @@ namespace _01.Code.Combat
 
         private void PlayHitParticles()
         {
-            if (hitParticles == null)
+            if (hitParticles == null || !TryDressParticles(hitParticles))
                 return;
 
             hitParticles.transform.position = transform.position + Vector3.up * hitParticleYOffset;
@@ -114,9 +141,38 @@ namespace _01.Code.Combat
         {
             if (_healParticles == null)
                 _healParticles = CreateHealParticles();
+            if (!TryDressParticles(_healParticles))
+                return;
 
             _healParticles.transform.position = transform.position + Vector3.up * hitParticleYOffset;
             _healParticles.Play(true);
+        }
+
+        /// <summary>
+        /// 코드로 만든 파티클에는 재질이 없어 URP가 자홍색 덩어리로 그렸다. 처음 터뜨릴 때 전투 연출 표의 재질을 입힌다 —
+        /// 씬에 미리 놓인 캐릭터는 표를 받기 전에 깨어날 수 있어 Awake에서는 이르다. 재질을 못 받으면 터뜨리지 않는다.
+        /// </summary>
+        private bool TryDressParticles(ParticleSystem particles)
+        {
+            var particleRenderer = particles == hitParticles ? _hitRenderer : _healRenderer;
+            if (particleRenderer == null)
+            {
+                particleRenderer = particles.GetComponent<ParticleSystemRenderer>();
+                if (particles == hitParticles)
+                    _hitRenderer = particleRenderer;
+                else
+                    _healRenderer = particleRenderer;
+            }
+
+            if (particleRenderer.sharedMaterial != null)
+                return true;
+
+            var material = CombatFxHooks.Catalog != null ? CombatFxHooks.Catalog.ParticleMaterial : null;
+            if (material == null)
+                return false;
+
+            particleRenderer.sharedMaterial = material;
+            return true;
         }
 
         private void CreateDamageText(int damage, bool isCritical)
@@ -142,11 +198,56 @@ namespace _01.Code.Combat
             SpawnFloatingText("MISS", missTextColor, 0.85f);
         }
 
+        /// <summary>짧은 시간 안에 반복된 같은 상성 효과는 합쳐서 화면 과밀을 막는다.</summary>
+        public void ShowCounterplayText(string label, int amount, bool showAsGain, Color color)
+        {
+            if (string.IsNullOrWhiteSpace(label) || amount <= 0 || !isActiveAndEnabled)
+                return;
+
+            var isDifferentNotice = _pendingCounterplayAmount > 0
+                                    && (_pendingCounterplayLabel != label
+                                        || _pendingCounterplayShowsGain != showAsGain);
+            if (isDifferentNotice)
+                FlushCounterplayTextNow();
+
+            _pendingCounterplayLabel = label;
+            _pendingCounterplayAmount += amount;
+            _pendingCounterplayShowsGain = showAsGain;
+            _pendingCounterplayColor = color;
+
+            if (_counterplayTextRoutine == null)
+                _counterplayTextRoutine = StartCoroutine(FlushCounterplayText());
+        }
+
+        private IEnumerator FlushCounterplayText()
+        {
+            yield return new WaitForSecondsRealtime(counterplayTextAggregateWindow);
+            _counterplayTextRoutine = null;
+            FlushCounterplayTextNow();
+        }
+
+        private void FlushCounterplayTextNow()
+        {
+            if (_pendingCounterplayAmount <= 0 || string.IsNullOrWhiteSpace(_pendingCounterplayLabel))
+                return;
+
+            var sign = _pendingCounterplayShowsGain ? "+" : "-";
+            SpawnFloatingText(
+                $"{_pendingCounterplayLabel} {sign}{_pendingCounterplayAmount}",
+                _pendingCounterplayColor,
+                0.92f);
+            _pendingCounterplayLabel = string.Empty;
+            _pendingCounterplayAmount = 0;
+        }
+
         private TextMesh SpawnFloatingText(string text, Color color, float sizeScale)
         {
+            // 같은 자리에서 위로만 뜨면 연타 숫자가 한 줄로 겹쳐 읽히지 않았다. 좌우로 흩뿌린다.
+            var scatter = Random.Range(-textScatter, textScatter);
+            var start = transform.position + new Vector3(scatter, 0.85f, 0f);
             var textMesh = damageTextPrefab != null
-                ? Instantiate(damageTextPrefab, transform.position + Vector3.up * 0.85f, Quaternion.identity)
-                : CreateRuntimeFloatingText(transform.position + Vector3.up * 0.85f);
+                ? Instantiate(damageTextPrefab, start, Quaternion.identity)
+                : CreateRuntimeFloatingText(start);
 
             textMesh.text = text;
             textMesh.anchor = TextAnchor.MiddleCenter;
@@ -159,10 +260,18 @@ namespace _01.Code.Combat
             if (meshRenderer != null)
                 meshRenderer.sortingOrder = textSortingOrder;
 
-            var endPosition = textMesh.transform.position + Vector3.up * textFloatDistance;
+            // 튀어 올랐다가(앞 40%) 바깥쪽으로 흘러 조금 떨어지며 사라진다.
+            var peakY = start.y + textFloatDistance;
+            var driftX = start.x + Mathf.Sign(scatter == 0f ? 1f : scatter) * textDrift;
+            var rise = textDuration * 0.4f;
             DOTween.Sequence()
-                .Append(textMesh.transform.DOMove(endPosition, textDuration).SetEase(Ease.OutQuad))
-                .Join(DOTween.To(
+                // 뜬 숫자는 웨이브가 끝나거나 씬이 바뀌면 함께 사라진다. 묶어 두지 않으면
+                // 그 뒤에도 트윈이 돌며 없어진 Transform 을 건드린다.
+                .SetLink(textMesh.gameObject)
+                .Append(textMesh.transform.DOMoveY(peakY, rise).SetEase(Ease.OutQuad))
+                .Join(textMesh.transform.DOMoveX(driftX, textDuration).SetEase(Ease.OutSine))
+                .Insert(rise, textMesh.transform.DOMoveY(peakY - textFloatDistance * 0.3f, textDuration - rise).SetEase(Ease.InQuad))
+                .Insert(textDuration * 0.45f, DOTween.To(
                     () => textMesh.color.a,
                     alpha =>
                     {
@@ -171,7 +280,7 @@ namespace _01.Code.Combat
                         textMesh.color = textColor;
                     },
                     0f,
-                    textDuration))
+                    textDuration * 0.55f))
                 .OnComplete(() => Destroy(textMesh.gameObject));
 
             return textMesh;

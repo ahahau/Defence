@@ -1,0 +1,1110 @@
+fileFormatVersion: 2
+guid: 1e689611dd9122744b94ab3f10b96ed8
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 8864314094071749348
+    second: Energy_beam-Sheet_0
+  - first:
+      213: 7612704187034220100
+    second: Energy_beam-Sheet_1
+  - first:
+      213: 1090595936698221232
+    second: Energy_beam-Sheet_2
+  - first:
+      213: 7100602118883034922
+    second: Energy_beam-Sheet_3
+  - first:
+      213: -1958932080946468429
+    second: Energy_beam-Sheet_4
+  - first:
+      213: 5885271738285744066
+    second: Energy_beam-Sheet_5
+  - first:
+      213: 1648779143721787051
+    second: Energy_beam-Sheet_6
+  - first:
+      213: -7536373866228375441
+    second: Energy_beam-Sheet_7
+  - first:
+      213: 5820789062153014993
+    second: Energy_beam-Sheet_8
+  - first:
+      213: -2410279275633824063
+    second: Energy_beam-Sheet_9
+  - first:
+      213: 2554485705294951043
+    second: Energy_beam-Sheet_10
+  - first:
+      213: -4869121074649777603
+    second: Energy_beam-Sheet_11
+  - first:
+      213: -7293903277255284755
+    second: Energy_beam-Sheet_12
+  - first:
+      213: -2842188979770728190
+    second: Energy_beam-Sheet_13
+  - first:
+      213: -1198047646956331841
+    second: Energy_beam-Sheet_14
+  - first:
+      213: 1678386572202458180
+    second: Energy_beam-Sheet_15
+  - first:
+      213: 5092311230280983172
+    second: Energy_beam-Sheet_16
+  - first:
+      213: 6172464373205919417
+    second: Energy_beam-Sheet_17
+  - first:
+      213: -7351060358550245819
+    second: Energy_beam-Sheet_18
+  - first:
+      213: -5550268396028813906
+    second: Energy_beam-Sheet_19
+  - first:
+      213: 7263896900445303107
+    second: Energy_beam-Sheet_20
+  - first:
+      213: 3405783651076920487
+    second: Energy_beam-Sheet_21
+  - first:
+      213: -5760750786693708519
+    second: Energy_beam-Sheet_22
+  - first:
+      213: 2211256329754687484
+    second: Energy_beam-Sheet_23
+  - first:
+      213: 7154419919252281009
+    second: Energy_beam-Sheet_24
+  - first:
+      213: -6538025411192386076
+    second: Energy_beam-Sheet_25
+  - first:
+      213: 8734906696039541770
+    second: Energy_beam-Sheet_26
+  - first:
+      213: 2700126144425818428
+    second: Energy_beam-Sheet_27
+  - first:
+      213: 6134954412203527815
+    second: Energy_beam-Sheet_28
+  - first:
+      213: -5876419271005487770
+    second: Energy_beam-Sheet_29
+  - first:
+      213: 7348069647081239623
+    second: Energy_beam-Sheet_30
+  - first:
+      213: -527599986839984012
+    second: Energy_beam-Sheet_31
+  - first:
+      213: 820791780263488412
+    second: Energy_beam-Sheet_32
+  - first:
+      213: 4649694893396414001
+    second: Energy_beam-Sheet_33
+  - first:
+      213: 2423662516239213999
+    second: Energy_beam-Sheet_34
+  - first:
+      213: -4462800704940317627
+    second: Energy_beam-Sheet_35
+  - first:
+      213: 2658691493450994186
+    second: Energy_beam-Sheet_36
+  - first:
+      213: -9195559685017996778
+    second: Energy_beam-Sheet_37
+  - first:
+      213: -8953296256512267531
+    second: Energy_beam-Sheet_38
+  - first:
+      213: 6113628646245058365
+    second: Energy_beam-Sheet_39
+  - first:
+      213: -6661875775037811001
+    second: Energy_beam-Sheet_40
+  - first:
+      213: -3111799848789931049
+    second: Energy_beam-Sheet_41
+  - first:
+      213: 330594188469763906
+    second: Energy_beam-Sheet_42
+  - first:
+      213: -6822972999358497763
+    second: Energy_beam-Sheet_43
+  - first:
+      213: 5114235881959142134
+    second: Energy_beam-Sheet_44
+  - first:
+      213: 5684257732840606700
+    second: Energy_beam-Sheet_45
+  - first:
+      213: -4865619209343879841
+    second: Energy_beam-Sheet_46
+  - first:
+      213: -7182358447260655628
+    second: Energy_beam-Sheet_47
+  - first:
+      213: 6163979032448393538
+    second: Energy_beam-Sheet_48
+  - first:
+      213: 7687031665238929500
+    second: Energy_beam-Sheet_49
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 28
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: EnergyBeam_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 504
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c2b0811d83329cb47bf19e33bc0a2862
+      internalID: -713539348
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_1
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 504
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b5c412ba1ecd17e42876433f7cf8e40c
+      internalID: 1905155027
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_2
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 504
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a68ee73ee379f03448e9a8e0a8a78eb8
+      internalID: 1360039810
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_3
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 504
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 786537a2458b12e40a46545481a9ce42
+      internalID: -1040198625
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_4
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 504
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 271af93341f00ce4cb10af368ec6d835
+      internalID: -1311848870
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_5
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 504
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b7d04febe7951d3428ff98b6faba9f71
+      internalID: 771767468
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_6
+      rect:
+        serializedVersion: 2
+        x: 576
+        y: 504
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 524c7f15b1d663844bd9a7478e3819ed
+      internalID: -2055066586
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_7
+      rect:
+        serializedVersion: 2
+        x: 672
+        y: 504
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f1f8cc41af25496478d09e4635ff5c5d
+      internalID: -38675463
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_8
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 504
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5c385a3f3478e4f42a7c89cf11177eae
+      internalID: 1234952969
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_9
+      rect:
+        serializedVersion: 2
+        x: 864
+        y: 504
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9d392605bf0e81c4d9ae4b02cfd5c96d
+      internalID: 1077515459
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_10
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 336
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ceaf437ce1d89d043ad390f54cf0383c
+      internalID: -716419519
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_11
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 336
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 18729e62a2f58e24ba9a481b1c35cc4c
+      internalID: 122395729
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_12
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 336
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7fecae942736ccf4d95e3007a7444a6f
+      internalID: 1682679458
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_13
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 336
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dcf7d203d2fd47e458cdbb7621a8c619
+      internalID: 577236783
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_14
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 336
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 87b62b10083b0494d8ce66513116b75a
+      internalID: 1384910370
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_15
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 336
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e12a591c761e7c54c94c79b923f38159
+      internalID: 1780514575
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_16
+      rect:
+        serializedVersion: 2
+        x: 576
+        y: 336
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 63f3f12fa7b59ae44a64cd62bf0e1829
+      internalID: -80399637
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_17
+      rect:
+        serializedVersion: 2
+        x: 672
+        y: 336
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dac4d545f38660a448e876e99a4cda80
+      internalID: -2052009573
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_18
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 336
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cb3194f4437e1964fa645866d2536c30
+      internalID: -955164122
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_19
+      rect:
+        serializedVersion: 2
+        x: 864
+        y: 336
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 120d7cc874983e044af0decc0ca13e8b
+      internalID: 1231753934
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_20
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 168
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b2648b4055dd69741aa82cf6eefaeb33
+      internalID: -517299047
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_21
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 168
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5d257dd010d9f60458fc71cd9058d204
+      internalID: 1604118552
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_22
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 168
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 707dc9643787b22499b0c4583c4003b7
+      internalID: -1948119906
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_23
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 168
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d191ef92dd0a039429733bcfe987a0bc
+      internalID: -1118303472
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_24
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 168
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 53cefb7bd728fb64dbaeeea369c002d5
+      internalID: -1229448709
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_25
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 168
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9fd660ef2b3976040a540d03430979ae
+      internalID: -1830681925
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_26
+      rect:
+        serializedVersion: 2
+        x: 576
+        y: 168
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 87b745c214f2914428544d0d85ca5114
+      internalID: -1851673085
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_27
+      rect:
+        serializedVersion: 2
+        x: 672
+        y: 168
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0ec37df3bcc7ca545a3db429fbfe30a9
+      internalID: -1814054211
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_28
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 168
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9e52d57b680f6dc41af2d990d32b8219
+      internalID: -1560759133
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_29
+      rect:
+        serializedVersion: 2
+        x: 864
+        y: 168
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9ecbaef4f3a0fca4da93a3f604c994c5
+      internalID: 1817054019
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_30
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e5cf907c27855f642bb19d6af04ce0e6
+      internalID: -1819440239
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_31
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 0
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0b80ef1f68af07244923a051d71e4bec
+      internalID: -1453097185
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_32
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 0
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 35a68f0d4a84e324aa00c6e0ee9cab3f
+      internalID: -634896297
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_33
+      rect:
+        serializedVersion: 2
+        x: 288
+        y: 0
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 93c49204c1aa5c3489278005ce1f6996
+      internalID: -871758731
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_34
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 0
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 61ac842c52e873d4db284edd62dae528
+      internalID: 2083320572
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: EnergyBeam_35
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 0
+        width: 96
+        height: 168
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6f0ccb97b6326d34b86c9f1725b24077
+      internalID: -1702157568
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 6d02360dfb9d5cd4ebce8f84f6c58652
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      EnergyBeam_0: -713539348
+      EnergyBeam_1: 1905155027
+      EnergyBeam_10: -716419519
+      EnergyBeam_11: 122395729
+      EnergyBeam_12: 1682679458
+      EnergyBeam_13: 577236783
+      EnergyBeam_14: 1384910370
+      EnergyBeam_15: 1780514575
+      EnergyBeam_16: -80399637
+      EnergyBeam_17: -2052009573
+      EnergyBeam_18: -955164122
+      EnergyBeam_19: 1231753934
+      EnergyBeam_2: 1360039810
+      EnergyBeam_20: -517299047
+      EnergyBeam_21: 1604118552
+      EnergyBeam_22: -1948119906
+      EnergyBeam_23: -1118303472
+      EnergyBeam_24: -1229448709
+      EnergyBeam_25: -1830681925
+      EnergyBeam_26: -1851673085
+      EnergyBeam_27: -1814054211
+      EnergyBeam_28: -1560759133
+      EnergyBeam_29: 1817054019
+      EnergyBeam_3: -1040198625
+      EnergyBeam_30: -1819440239
+      EnergyBeam_31: -1453097185
+      EnergyBeam_32: -634896297
+      EnergyBeam_33: -871758731
+      EnergyBeam_34: 2083320572
+      EnergyBeam_35: -1702157568
+      EnergyBeam_4: -1311848870
+      EnergyBeam_5: 771767468
+      EnergyBeam_6: -2055066586
+      EnergyBeam_7: -38675463
+      EnergyBeam_8: 1234952969
+      EnergyBeam_9: 1077515459
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

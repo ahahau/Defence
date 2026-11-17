@@ -1,8 +1,8 @@
-using _01.Code.Core;
-using _01.Code.Events;
+using Code.Core;
+using Code.Events;
 using UnityEngine;
 
-namespace _01.Code.Dialogue
+namespace Code.Dialogue
 {
     [CreateAssetMenu(menuName = "SO/Dialogue/Actions/Morale Change", fileName = "MoraleChangeDialogueAction", order = 1)]
     public class MoraleChangeDialogueActionSO : DialogueActionSO

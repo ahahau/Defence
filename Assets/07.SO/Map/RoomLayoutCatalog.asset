@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 142d9976cbd8ebd4ea205b770475d2ec, type: 3}
+  m_Name: RoomLayoutCatalog
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.MapCreateSystem.RoomLayoutCatalog
+  entrance: {fileID: 3775812179206091510, guid: 1b97ef9aef11d2e449411358af7a1383, type: 3}
+  rooms:
+  - {fileID: 2452562064203657062, guid: c4d7afd52364fc44188437da94b41503, type: 3}
+  - {fileID: 8000236997682711771, guid: ad6c4d1401947c947a727722f364ce4c, type: 3}
+  - {fileID: 9056672723285540042, guid: 05b5a8e0418e3ae47b1698363edfdcea, type: 3}

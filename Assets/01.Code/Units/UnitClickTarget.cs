@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace _01.Code.Units
+namespace Code.Units
 {
     public class UnitClickTarget : MonoBehaviour
     {

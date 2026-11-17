@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34c4dc0ecf9801d4aa0c5c4a452b0163, type: 3}
+  m_Name: PortalBuildingData
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Buildings.BuildingDataSO
+  <Grade>k__BackingField: 1
+  <BoardSprite>k__BackingField: {fileID: -1370150288747598966, guid: 4fd6a78c5ebc20a48a7ccb57ab2c23b5, type: 3}
+  <Defense>k__BackingField: 0
+  <EvasionChance>k__BackingField: 0
+  <DisplayName>k__BackingField: "\uD3EC\uD0C8"
+  <Cost>k__BackingField: 0
+  <DailyUpkeep>k__BackingField: 0
+  <Fame>k__BackingField: 0
+  <DwellSeconds>k__BackingField: 0
+  <Prefab>k__BackingField: {fileID: 6750984763358774362, guid: 6eaa4d203b053694b965f2b5b22059a7, type: 3}
+  <Unique>k__BackingField: 1
+  <CentralOnly>k__BackingField: 1
+  <InstallOnEdge>k__BackingField: 0
+  <Locked>k__BackingField: 0
+  <BaseDanger>k__BackingField: 0
+  <Category>k__BackingField: 0

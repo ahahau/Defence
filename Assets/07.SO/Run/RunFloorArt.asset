@@ -1,0 +1,711 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc5af9203b8f24449b3a76f0a3bc7d9e, type: 3}
+  m_Name: RunFloorArt
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.UI.Run.RunFloorArtSO
+  <TileWorldSize>k__BackingField: 0.5
+  <SheetPixelsPerTile>k__BackingField: 16
+  <WallMargin>k__BackingField: {x: 24, y: 12}
+  <EntranceExtra>k__BackingField: 2.5
+  <Floors>k__BackingField:
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 0
+      y: 272
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 16
+      y: 272
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 32
+      y: 272
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 48
+      y: 272
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 64
+      y: 272
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 0
+      y: 288
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 16
+      y: 288
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 32
+      y: 288
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 48
+      y: 288
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 64
+      y: 288
+      width: 16
+      height: 16
+  <LitFloors>k__BackingField:
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 0
+      y: 256
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 16
+      y: 256
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 32
+      y: 256
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 48
+      y: 256
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 64
+      y: 256
+      width: 16
+      height: 16
+  <WallFaces>k__BackingField:
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 0
+      y: 64
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 16
+      y: 64
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 32
+      y: 64
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 0
+      y: 80
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 16
+      y: 80
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 32
+      y: 80
+      width: 16
+      height: 16
+  <Rim>k__BackingField:
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 0
+      y: 16
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 16
+      y: 16
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 32
+      y: 16
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 0
+      y: 32
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 16
+      y: 32
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 32
+      y: 32
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 0
+      y: 48
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 16
+      y: 48
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 32
+      y: 48
+      width: 16
+      height: 16
+  <RimInner>k__BackingField:
+  - texture: {fileID: 2800000, guid: 27af76ac8c924784ea49c4f74b3bf9bb, type: 3}
+    pixels:
+      x: 0
+      y: 0
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 27af76ac8c924784ea49c4f74b3bf9bb, type: 3}
+    pixels:
+      x: 16
+      y: 0
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 27af76ac8c924784ea49c4f74b3bf9bb, type: 3}
+    pixels:
+      x: 32
+      y: 0
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 27af76ac8c924784ea49c4f74b3bf9bb, type: 3}
+    pixels:
+      x: 48
+      y: 0
+      width: 16
+      height: 16
+  <Decor>k__BackingField:
+  - kind: 2
+    piece:
+      texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+      pixels:
+        x: 352
+        y: 464
+        width: 16
+        height: 16
+    cell: {x: 1, y: 1}
+  - kind: 2
+    piece:
+      texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+      pixels:
+        x: 384
+        y: 464
+        width: 16
+        height: 16
+    cell: {x: 2, y: 1}
+  - kind: 2
+    piece:
+      texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+      pixels:
+        x: 336
+        y: 464
+        width: 16
+        height: 16
+    cell: {x: 4, y: 1}
+  - kind: 2
+    piece:
+      texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+      pixels:
+        x: 416
+        y: 480
+        width: 32
+        height: 32
+    cell: {x: 3, y: 4}
+  - kind: 5
+    piece:
+      texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+      pixels:
+        x: 16
+        y: 448
+        width: 64
+        height: 64
+    cell: {x: 1, y: 1}
+  - kind: 5
+    piece:
+      texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+      pixels:
+        x: 128
+        y: 448
+        width: 32
+        height: 32
+    cell: {x: 2, y: 1}
+  - kind: 1
+    piece:
+      texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+      pixels:
+        x: 480
+        y: 400
+        width: 32
+        height: 48
+    cell: {x: 2, y: 1}
+  <TorchFrames>k__BackingField:
+  - texture: {fileID: 2800000, guid: 935d304a88c909e42840dd1a1f4d427e, type: 3}
+    pixels:
+      x: 0
+      y: 0
+      width: 16
+      height: 32
+  - texture: {fileID: 2800000, guid: 935d304a88c909e42840dd1a1f4d427e, type: 3}
+    pixels:
+      x: 16
+      y: 0
+      width: 16
+      height: 32
+  - texture: {fileID: 2800000, guid: 935d304a88c909e42840dd1a1f4d427e, type: 3}
+    pixels:
+      x: 32
+      y: 0
+      width: 16
+      height: 32
+  - texture: {fileID: 2800000, guid: 935d304a88c909e42840dd1a1f4d427e, type: 3}
+    pixels:
+      x: 48
+      y: 0
+      width: 16
+      height: 32
+  - texture: {fileID: 2800000, guid: 935d304a88c909e42840dd1a1f4d427e, type: 3}
+    pixels:
+      x: 64
+      y: 0
+      width: 16
+      height: 32
+  - texture: {fileID: 2800000, guid: 935d304a88c909e42840dd1a1f4d427e, type: 3}
+    pixels:
+      x: 80
+      y: 0
+      width: 16
+      height: 32
+  - texture: {fileID: 2800000, guid: 935d304a88c909e42840dd1a1f4d427e, type: 3}
+    pixels:
+      x: 96
+      y: 0
+      width: 16
+      height: 32
+  - texture: {fileID: 2800000, guid: 935d304a88c909e42840dd1a1f4d427e, type: 3}
+    pixels:
+      x: 112
+      y: 0
+      width: 16
+      height: 32
+  <TorchCells>k__BackingField:
+  - {x: -1, y: 0}
+  - {x: 6, y: 0}
+  <SpringFrames>k__BackingField:
+  - texture: {fileID: 2800000, guid: 1a3938924d3ff68418c488501b576250, type: 3}
+    pixels:
+      x: 0
+      y: 48
+      width: 48
+      height: 48
+  - texture: {fileID: 2800000, guid: 1a3938924d3ff68418c488501b576250, type: 3}
+    pixels:
+      x: 48
+      y: 48
+      width: 48
+      height: 48
+  - texture: {fileID: 2800000, guid: 1a3938924d3ff68418c488501b576250, type: 3}
+    pixels:
+      x: 96
+      y: 48
+      width: 48
+      height: 48
+  - texture: {fileID: 2800000, guid: 1a3938924d3ff68418c488501b576250, type: 3}
+    pixels:
+      x: 144
+      y: 48
+      width: 48
+      height: 48
+  - texture: {fileID: 2800000, guid: 1a3938924d3ff68418c488501b576250, type: 3}
+    pixels:
+      x: 192
+      y: 48
+      width: 48
+      height: 48
+  - texture: {fileID: 2800000, guid: 1a3938924d3ff68418c488501b576250, type: 3}
+    pixels:
+      x: 240
+      y: 48
+      width: 48
+      height: 48
+  - texture: {fileID: 2800000, guid: 1a3938924d3ff68418c488501b576250, type: 3}
+    pixels:
+      x: 288
+      y: 48
+      width: 48
+      height: 48
+  - texture: {fileID: 2800000, guid: 1a3938924d3ff68418c488501b576250, type: 3}
+    pixels:
+      x: 336
+      y: 48
+      width: 48
+      height: 48
+  <SpringCell>k__BackingField: {x: 1.5, y: 1.5}
+  <SpringTint>k__BackingField: {r: 1, g: 1, b: 1, a: 1}
+  <TrapVentIdle>k__BackingField:
+    texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 80
+      y: 432
+      width: 16
+      height: 16
+  <TrapVentCharged>k__BackingField:
+    texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 96
+      y: 432
+      width: 16
+      height: 16
+  <TrapVentCells>k__BackingField:
+  - {x: 1, y: 1}
+  - {x: 4, y: 1}
+  - {x: 1, y: 4}
+  - {x: 4, y: 4}
+  <FrameSeconds>k__BackingField: 0.12
+  <DoorClosed>k__BackingField:
+    texture: {fileID: 2800000, guid: b5e1ad53aa9fb8945bbc6c8b11c711a1, type: 3}
+    pixels:
+      x: 0
+      y: 0
+      width: 48
+      height: 32
+  <DoorOpen>k__BackingField:
+    texture: {fileID: 2800000, guid: b5e1ad53aa9fb8945bbc6c8b11c711a1, type: 3}
+    pixels:
+      x: 336
+      y: 32
+      width: 48
+      height: 32
+  <DoorPost>k__BackingField:
+    texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 176
+      y: 320
+      width: 16
+      height: 64
+  <DoorPostScale>k__BackingField: 0.75
+  <TorchOff>k__BackingField:
+    texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 368
+      y: 432
+      width: 16
+      height: 32
+  <OffDeviceGray>k__BackingField: 0.55
+  <BrokenFlameFrames>k__BackingField:
+  - texture: {fileID: 2800000, guid: 935d304a88c909e42840dd1a1f4d427e, type: 3}
+    pixels:
+      x: 0
+      y: 0
+      width: 16
+      height: 12
+  - texture: {fileID: 2800000, guid: 935d304a88c909e42840dd1a1f4d427e, type: 3}
+    pixels:
+      x: 16
+      y: 0
+      width: 16
+      height: 12
+  - texture: {fileID: 2800000, guid: 935d304a88c909e42840dd1a1f4d427e, type: 3}
+    pixels:
+      x: 32
+      y: 0
+      width: 16
+      height: 12
+  - texture: {fileID: 2800000, guid: 935d304a88c909e42840dd1a1f4d427e, type: 3}
+    pixels:
+      x: 48
+      y: 0
+      width: 16
+      height: 12
+  - texture: {fileID: 2800000, guid: 935d304a88c909e42840dd1a1f4d427e, type: 3}
+    pixels:
+      x: 64
+      y: 0
+      width: 16
+      height: 12
+  - texture: {fileID: 2800000, guid: 935d304a88c909e42840dd1a1f4d427e, type: 3}
+    pixels:
+      x: 80
+      y: 0
+      width: 16
+      height: 12
+  - texture: {fileID: 2800000, guid: 935d304a88c909e42840dd1a1f4d427e, type: 3}
+    pixels:
+      x: 96
+      y: 0
+      width: 16
+      height: 12
+  - texture: {fileID: 2800000, guid: 935d304a88c909e42840dd1a1f4d427e, type: 3}
+    pixels:
+      x: 112
+      y: 0
+      width: 16
+      height: 12
+  <BrokenFlameCells>k__BackingField:
+  - {x: 1.2, y: 1.6}
+  - {x: 4, y: 3.2}
+  <BrokenFlameScale>k__BackingField: 2
+  <BrokenDebris>k__BackingField:
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 352
+      y: 480
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 368
+      y: 480
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 384
+      y: 496
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 352
+      y: 496
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 256
+      y: 480
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 288
+      y: 480
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 320
+      y: 480
+      width: 16
+      height: 16
+  <BrokenDebrisCells>k__BackingField:
+  - {x: 1.8, y: 0.8}
+  - {x: 4.2, y: 1.6}
+  - {x: 0.8, y: 3.8}
+  - {x: 3.4, y: 4.4}
+  - {x: 2.6, y: 2.4}
+  - {x: 0.6, y: 2.2}
+  - {x: 4.6, y: 3.6}
+  <HeartBlood>k__BackingField:
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 256
+      y: 496
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 304
+      y: 496
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 320
+      y: 480
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 272
+      y: 496
+      width: 16
+      height: 16
+  - texture: {fileID: 2800000, guid: 5fba585feca07994ea2d3b91f92a84d6, type: 3}
+    pixels:
+      x: 336
+      y: 496
+      width: 16
+      height: 16
+  <HeartBloodCells>k__BackingField:
+  - {x: 0.6, y: 3.4}
+  - {x: 4.4, y: 4.2}
+  - {x: 1.4, y: 4.6}
+  - {x: 4.6, y: 2}
+  - {x: 0.4, y: 1.6}
+  <HeartBloodFirstCount>k__BackingField: 2
+  <HeartDarkest>k__BackingField: 0.35
+  <StrikeFrames>k__BackingField:
+  - texture: {fileID: 2800000, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+    pixels:
+      x: 0
+      y: 0
+      width: 96
+      height: 160
+  - texture: {fileID: 2800000, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+    pixels:
+      x: 96
+      y: 0
+      width: 96
+      height: 160
+  - texture: {fileID: 2800000, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+    pixels:
+      x: 192
+      y: 0
+      width: 96
+      height: 160
+  - texture: {fileID: 2800000, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+    pixels:
+      x: 288
+      y: 0
+      width: 96
+      height: 160
+  - texture: {fileID: 2800000, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+    pixels:
+      x: 384
+      y: 0
+      width: 96
+      height: 160
+  - texture: {fileID: 2800000, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+    pixels:
+      x: 480
+      y: 0
+      width: 96
+      height: 160
+  - texture: {fileID: 2800000, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+    pixels:
+      x: 576
+      y: 0
+      width: 96
+      height: 160
+  - texture: {fileID: 2800000, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+    pixels:
+      x: 672
+      y: 0
+      width: 96
+      height: 160
+  - texture: {fileID: 2800000, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+    pixels:
+      x: 768
+      y: 0
+      width: 96
+      height: 160
+  - texture: {fileID: 2800000, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+    pixels:
+      x: 864
+      y: 0
+      width: 96
+      height: 160
+  - texture: {fileID: 2800000, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+    pixels:
+      x: 0
+      y: 160
+      width: 96
+      height: 160
+  - texture: {fileID: 2800000, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+    pixels:
+      x: 96
+      y: 160
+      width: 96
+      height: 160
+  - texture: {fileID: 2800000, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+    pixels:
+      x: 192
+      y: 160
+      width: 96
+      height: 160
+  - texture: {fileID: 2800000, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+    pixels:
+      x: 288
+      y: 160
+      width: 96
+      height: 160
+  - texture: {fileID: 2800000, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+    pixels:
+      x: 384
+      y: 160
+      width: 96
+      height: 160
+  - texture: {fileID: 2800000, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+    pixels:
+      x: 480
+      y: 160
+      width: 96
+      height: 160
+  - texture: {fileID: 2800000, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+    pixels:
+      x: 576
+      y: 160
+      width: 96
+      height: 160
+  - texture: {fileID: 2800000, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+    pixels:
+      x: 672
+      y: 160
+      width: 96
+      height: 160
+  - texture: {fileID: 2800000, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+    pixels:
+      x: 768
+      y: 160
+      width: 96
+      height: 160
+  - texture: {fileID: 2800000, guid: d4f53c5e660b8e5489eab1cd031f39ce, type: 3}
+    pixels:
+      x: 864
+      y: 160
+      width: 96
+      height: 160
+  <StrikeFrameSeconds>k__BackingField: 0.04
+  <StrikeScale>k__BackingField: 0.55
+  <StrikeOffset>k__BackingField: {x: 0, y: 1.1}

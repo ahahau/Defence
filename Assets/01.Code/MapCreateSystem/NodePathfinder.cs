@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace _01.Code.MapCreateSystem
+namespace Code.MapCreateSystem
 {
     /// <summary>노드 그래프 위 A* 경로 탐색. 적 이동이 목표(금고)까지의 최단 경로를 찾을 때 사용한다.
     /// 간선 비용은 노드 사이 월드 거리, 휴리스틱은 목표까지의 직선 거리.</summary>

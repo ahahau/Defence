@@ -3,7 +3,7 @@ using Unity.Behavior;
 using UnityEngine;
 using Action = Unity.Behavior.Action;
 
-namespace _01.Code.BT
+namespace Code.BT
 {
     /// <summary>제자리 대기. 공격/이동을 멈추고 가만히 있는다(Selector의 기본 폴백).</summary>
     [Serializable, Unity.Properties.GeneratePropertyBag]

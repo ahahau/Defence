@@ -1,11 +1,11 @@
-using _01.Code.BT;
-using _01.Code.Core;
-using _01.Code.Events;
-using _01.Code.MapCreateSystem;
-using _01.Code.Units;
+using Code.BT;
+using Code.Core;
+using Code.Events;
+using Code.MapCreateSystem;
+using Code.Units;
 using UnityEngine;
 
-namespace _01.Code.Manager
+namespace Code.Manager
 {
     /// <summary>
     /// 아군의 명령, 노드 이동, 회수를 한곳에서 검증하고 실행한다.
@@ -36,7 +36,7 @@ namespace _01.Code.Manager
         {
             if (!IsManageableUnit(unit, out reason))
                 return false;
-
+            
             if (!unit.IsCommandReady)
             {
                 reason = $"명령을 다시 내리기까지 {unit.CommandCooldownRemaining:F1}초";
@@ -58,6 +58,7 @@ namespace _01.Code.Manager
                 return false;
             }
 
+            // 명령을 막는 것은 재사용 대기뿐이다. 값을 치르지 않으니 진형을 바꾸는 판단만 남는다.
             unit.SetCommand(command);
             reason = $"{unit.CommandLabel} 명령 적용";
             return true;
@@ -80,6 +81,11 @@ namespace _01.Code.Manager
             if (sourceNode == targetNode)
             {
                 reason = "이미 이 구역에 배치되어 있습니다";
+                return false;
+            }
+            if (targetNode.IsUnderConstruction)
+            {
+                reason = "공사 중인 구역으로는 옮길 수 없습니다";
                 return false;
             }
             if (!targetNode.CanAcceptAdditionalUnit || !targetNode.TryGetFirstFreeUnitSlot(out _, out _))
@@ -118,8 +124,31 @@ namespace _01.Code.Manager
             }
 
             targetNode.GetComponent<NodeBattlefield>()?.TryEnter(agent);
-            reason = "전입 완료";
+
+            // 옮긴 방 수만큼 자리 잡는 시간이 붙는다. 길을 못 찾으면 한 방으로 센다.
+            var path = NodePathfinder.FindPath(sourceNode, targetNode);
+            var roomsMoved = path != null && path.Count >= 2 ? path.Count - 1 : 1;
+            var preparation = RedeployRules.SecondsFor(roomsMoved, unit.Trait);
+            unit.BeginRedeployPreparation(preparation);
+            if (unit.Trait == UnitTrait.FieldMedic)
+                HealRoomOnArrival(targetNode);
+
+            var reaction = RedeployRules.DescribeReaction(unit.Trait);
+            reason = string.IsNullOrEmpty(reaction)
+                ? $"전입 완료 · 준비 {preparation:0.#}초"
+                : $"전입 완료 · 준비 {preparation:0.#}초 · {reaction}";
             return true;
+        }
+
+        /// <summary>야전 의무병이 도착한 방의 아군(자신 포함)을 조금씩 치료한다.</summary>
+        private static void HealRoomOnArrival(Node node)
+        {
+            foreach (var placement in node.UnitPlacements)
+            {
+                var health = placement?.Instance != null ? placement.Instance.Health : null;
+                if (health != null && health.IsAlive)
+                    health.Heal(RedeployRules.FieldMedicHeal(health.MaxHealth));
+            }
         }
 
         public bool CanRecall(Node node, Unit unit, out string reason)
@@ -155,7 +184,7 @@ namespace _01.Code.Manager
             _costEventChannel.RaiseEvent(new UnitDeployMagicRefundRequestedEvent(unitData, unitData.MagicCost));
             _nodeEventChannel.RaiseEvent(new UnitReturnedFromNodeEvent(node, unitData, unit));
             Object.Destroy(unit.gameObject);
-            reason = "회수 완료 · 대기 명단에서 휴식 시작";
+            reason = "회수 완료 · 대기 명단에 상태 그대로 보관";
             return true;
         }
 
@@ -206,15 +235,26 @@ namespace _01.Code.Manager
                 return false;
             }
 
-            var dayManager = _dayManager != null ? _dayManager : DayManager.Current;
-            if (dayManager == null || !dayManager.IsStandby)
+            // 멈춰 둔 동안에는 영업 중이라도 경비를 옮길 수 있다. 바로 아래에서 전투 중인
+            // 유닛을 걸러 내므로, 맞기 직전에 빼는 것은 여전히 안 된다.
+            if (!DayManager.IsManagementWindow)
             {
-                reason = "웨이브 중에는 유닛을 관리할 수 없습니다";
+                reason = "영업 중에는 멈춘 동안에만 유닛을 옮길 수 있습니다";
                 return false;
             }
             if (unit.Combatant != null && unit.Combatant.Target != null)
             {
                 reason = "전투 중인 유닛은 관리할 수 없습니다";
+                return false;
+            }
+
+            // 아직 맞붙기 전이라도 같은 방에 적이 들어와 있으면 빼거나 옮기지 못한다.
+            // 그러지 않으면 멈춰 두고 적 바로 앞의 경비를 빼돌리는 것이 정답이 된다.
+            if (Node.TryFindUnit(unit, out var node, out _)
+                && node.TryGetComponent<NodeBattlefield>(out var battlefield)
+                && battlefield.EnemyCount > 0)
+            {
+                reason = "같은 방에 적이 있어 회수·이동할 수 없습니다";
                 return false;
             }
 

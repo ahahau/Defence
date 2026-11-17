@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace _01.Code.Dialogue
+namespace Code.Dialogue
 {
     public class DialogueSequencePlayer
     {

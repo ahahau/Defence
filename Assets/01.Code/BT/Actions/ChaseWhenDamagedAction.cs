@@ -3,7 +3,7 @@ using Unity.Behavior;
 using UnityEngine;
 using Action = Unity.Behavior.Action;
 
-namespace _01.Code.BT
+namespace Code.BT
 {
     /// <summary>
     /// 최근 피해를 받았을 때만 타깃을 추격한다. 평소엔 Failure(다음 분기로) → "발견해도 바로 안 움직임".

@@ -1,11 +1,11 @@
-using _01.Code.Core;
-using _01.Code.Buildings;
-using _01.Code.Enemies;
-using _01.Code.MapCreateSystem;
-using _01.Code.Units;
+using Code.Core;
+using Code.Buildings;
+using Code.Enemies;
+using Code.MapCreateSystem;
+using Code.Units;
 using UnityEngine;
 
-namespace _01.Code.Events
+namespace Code.Events
 {
     public class UnlockedNodeClickedEvent : GameEvent
     {
@@ -111,7 +111,6 @@ namespace _01.Code.Events
         public BuildingDataSO Building { get; }
     }
 
-    public class PortalRemovedEvent : GameEvent { }
 
     public class UnitStatusRequestedEvent : GameEvent
     {

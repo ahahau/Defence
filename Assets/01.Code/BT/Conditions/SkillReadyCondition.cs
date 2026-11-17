@@ -1,9 +1,9 @@
 using System;
-using _01.Code.Skills;
+using Code.Skills;
 using Unity.Behavior;
 using UnityEngine;
 
-namespace _01.Code.BT
+namespace Code.BT
 {
     /// <summary>사용 가능한 스킬/궁극기가 있는지(SkillCaster 필요).</summary>
     [Serializable, Unity.Properties.GeneratePropertyBag]

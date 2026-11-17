@@ -3,7 +3,7 @@ using Unity.Behavior;
 using UnityEngine;
 using Action = Unity.Behavior.Action;
 
-namespace _01.Code.BT
+namespace Code.BT
 {
     /// <summary>치고 빠지기(hit &amp; run): 접근 → 잠깐 공격 → 노드 안에서 후퇴 → 반복.
     /// 붙어서 평타만 하는 Engage Target과 다른 전투 스타일. 적 없으면 Failure.</summary>
@@ -27,6 +27,7 @@ namespace _01.Code.BT
         private enum Phase { Approach, Attack, Retreat }
 
         private BattleAgent _agent;
+        private BattleAgent _target;
         private Phase _phase;
         private float _timer;
 
@@ -35,6 +36,8 @@ namespace _01.Code.BT
             _agent = Resolve();
             if (_agent == null) return Status.Failure;
             _phase = Phase.Approach;
+            _target = _agent.CurrentTarget;
+            _timer = 0f;
             return Status.Running;
         }
 
@@ -44,11 +47,31 @@ namespace _01.Code.BT
                 return Status.Failure;
 
             var priority = Priority != null ? Priority.Value : TargetPriority.Nearest;
-            if (_agent.FindTarget(priority) == null)
+            BattleAgent target = _agent.FindTarget(priority);
+            if (target == null)
                 return Status.Failure;
 
+            if (target != _target)
+            {
+                _agent.StopAttack();
+                _target = target;
+                _phase = Phase.Approach;
+                _timer = 0f;
+            }
+
             _agent.RegisterFocus();
+            if (_agent.IsCombatActionLocked)
+                return Status.Running;
+
             var dt = Time.deltaTime;
+
+            // 사거리를 놓친 채 공격·후퇴 타이머를 채우지 않는다.
+            if (_phase != Phase.Approach && !_agent.TargetInRange())
+            {
+                _agent.StopAttack();
+                _phase = Phase.Approach;
+                _timer = 0f;
+            }
 
             switch (_phase)
             {
@@ -65,7 +88,10 @@ namespace _01.Code.BT
                     break;
 
                 case Phase.Attack:
-                    if (_agent.TargetInRange()) _agent.Attack();
+                    if (!_agent.MaintainRange(dt))
+                        _agent.Attack();
+                    if (_agent.IsCombatActionLocked)
+                        return Status.Running;
                     _timer -= dt;
                     if (_timer <= 0f)
                     {
@@ -76,6 +102,8 @@ namespace _01.Code.BT
                     break;
 
                 case Phase.Retreat:
+                    if (_agent.IsCombatMoveLocked)
+                        return Status.Running;
                     _agent.RetreatFromTarget(dt);
                     _timer -= dt;
                     if (_timer <= 0f)
@@ -86,7 +114,12 @@ namespace _01.Code.BT
             return Status.Running;
         }
 
-        protected override void OnEnd() => _agent?.StopAttack();
+        protected override void OnEnd()
+        {
+            _agent?.StopAttack();
+            _target = null;
+            _timer = 0f;
+        }
 
         private BattleAgent Resolve() =>
             Agent?.Value != null ? Agent.Value : GameObject?.GetComponentInParent<BattleAgent>();

@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf8678c43bff25e45808c797db5d488c, type: 3}
+  m_Name: RunMinion_SkeletonSword
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Run.RunCombatantSO
+  <SourceUnit>k__BackingField: {fileID: 11400000, guid: b6ce91f584084e0caa2a843d9c51c8df, type: 2}
+  <SourceEnemy>k__BackingField: {fileID: 0}
+  <Side>k__BackingField: 0
+  <MaxHealth>k__BackingField: 16
+  <Attack>k__BackingField: 3
+  <Speed>k__BackingField: 5
+  <MoveSpeed>k__BackingField: 1.2
+  <IsRanged>k__BackingField: 0
+  <RepairPerSecond>k__BackingField: 2
+  <Goal>k__BackingField: 0
+  <IntruderRole>k__BackingField: 0
+  <HasFavoredRoom>k__BackingField: 0
+  <FavoredRoom>k__BackingField: 0
+  <Skill>k__BackingField: {fileID: 11400000, guid: 546874a195c1e6341b15a99172c11cf5, type: 2}

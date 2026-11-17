@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace _01.Code.Manager
+namespace Code.Manager
 {
     [CreateAssetMenu(menuName = "SO/Wave/Config", fileName = "WaveConfig")]
     public class WaveConfigSO : ScriptableObject
@@ -14,6 +14,14 @@ namespace _01.Code.Manager
             [Min(0.5f)] public float spawnInterval = 1f;
             public float enemyTurnInterval = 3f;
             [Min(0)] public int clearGoldReward = 30;
+
+            [Header("Encounter Identity")]
+            [Tooltip("이 날 고정해서 보낼 파티. 비우면 WaveManager의 파티 풀에서 무작위 선택.")]
+            public AdventurerPartySO party;
+            [Tooltip("대기 화면에 표시할 핵심 위협. 비우면 파티 역할로 자동 생성.")]
+            public string threatTitle;
+            [TextArea, Tooltip("이 위협에 대응하는 한 줄 힌트. 비우면 파티 역할로 자동 생성.")]
+            public string counterHint;
         }
 
         /// <summary>
@@ -37,6 +45,60 @@ namespace _01.Code.Manager
             [Min(1f)] public float healthMultiplier = 6f;
             [Min(1f)] public float attackMultiplier = 2f;
             [Min(1f)] public float visualScale = 1.6f;
+
+            [Header("Final Phase")]
+            [Tooltip("호위를 모두 쓰러뜨렸을 때 보스의 격노/약점 노출 단계를 시작한다.")]
+            public bool enableFinalPhase;
+            [Min(0), Tooltip("최종 단계에서 드러나는 방어 약점.")]
+            public int phaseDefensePenalty = 8;
+            [Range(0.2f, 1f), Tooltip("최종 단계 공격 주기 배율. 작을수록 빠르게 공격한다.")]
+            public float phaseAttackIntervalMultiplier = 0.75f;
+            [TextArea, Tooltip("최종 단계가 시작될 때 표시할 대응 문구.")]
+            public string phaseSubtitle;
+
+            [Header("Reinforcement Phase")]
+            [Tooltip("보스 체력이 기준 이하가 되면 별도 파티를 전투 중 증원한다.")]
+            public bool enableReinforcementPhase;
+            [Range(0.1f, 0.9f), Tooltip("증원을 부르는 보스 체력 비율.")]
+            public float reinforcementHealthRatio = 0.5f;
+            [Tooltip("증원으로 합류할 파티. 구성원 순서대로 반복해서 등장한다.")]
+            public AdventurerPartySO reinforcementParty;
+            [Min(0), Tooltip("전체 웨이브 인원 중 증원 단계까지 보류할 인원.")]
+            public int reinforcementCount;
+            [TextArea, Tooltip("증원이 시작될 때 표시할 대응 문구.")]
+            public string reinforcementSubtitle;
+
+            [Header("Defeat Conditions")]
+            [Min(0f), Tooltip("보스가 입장한 뒤 이 시간(게임 초) 안에 쓰러뜨리지 못하면 패배. 0이면 제한 없음.")]
+            public float timeLimitSeconds;
+            [Tooltip("보스가 금고가 있는 방에 들어가면 패배.")]
+            public bool loseOnTreasuryBreach;
+            [Min(0), Tooltip("보스가 있는 동안 부하가 이만큼 쓰러지면 패배. 0이면 제한 없음.")]
+            public int loseAfterUnitsDowned;
+
+            [Header("Church")]
+            [Tooltip("이 보스 날에 모험가가 교회에서 동료를 되살릴 수 있는가. 끄면 쓰러진 파티원이 관이 되지 않는다.")]
+            public bool allowChurchRevival = true;
+
+            public int GetReservedReinforcementCount(int totalEnemyCount)
+            {
+                if (!enableReinforcementPhase || reinforcementParty == null
+                    || reinforcementParty.Members == null || reinforcementParty.Members.Length == 0)
+                    return 0;
+
+                // 보스 자신은 첫 단계에 반드시 등장해야 한다.
+                return Mathf.Clamp(reinforcementCount, 0, Mathf.Max(0, totalEnemyCount - 1));
+            }
+
+            /// <summary>순환 보스 날에 쓸 사본. 바퀴 배율은 사본에만 곱한다(원본은 에셋이다).</summary>
+            public BossEntry CopyForRotation(int day, int lap)
+            {
+                var copy = (BossEntry)MemberwiseClone();
+                copy.targetDay = day;
+                copy.healthMultiplier = RotatingBossRules.HealthMultiplier(healthMultiplier, lap);
+                copy.attackMultiplier = RotatingBossRules.AttackMultiplier(attackMultiplier, lap);
+                return copy;
+            }
         }
 
         [SerializeField] private WaveEntry[] specificWaves = Array.Empty<WaveEntry>();
@@ -64,10 +126,36 @@ namespace _01.Code.Manager
         [SerializeField, Tooltip("일차별 보스 정의. 여기 없는 보스날은 아래 공용 보스 설정을 쓴다.")]
         private BossEntry[] bossEntries = Array.Empty<BossEntry>();
 
+        [SerializeField, Tooltip("29일 이후 날짜 정의가 없는 보스 날에 차례로 돌릴 보스(targetDay는 무시). 바퀴마다 RotatingBossRules 배율이 붙는다.")]
+        private BossEntry[] rotatingBosses = Array.Empty<BossEntry>();
+
+        [NonSerialized] private BossEntry _rotatedBoss;
+
         public AdventurerPartySO BossParty => bossParty;
         public int FinalDay => finalDay;
 
-        /// <summary>그 날 전용 보스 정의. 없으면 null이고, 호출한 쪽이 공용 설정으로 넘어간다.</summary>
+        public AdventurerPartySO GetPartyForDay(int day)
+        {
+            if (IsBossDay(day))
+            {
+                var bossPartyForDay = GetBossPartyForDay(day);
+                if (bossPartyForDay != null)
+                    return bossPartyForDay;
+            }
+
+            return GetWaveForDay(day)?.party;
+        }
+
+        public WaveThreatPreview GetThreatPreview(int day)
+        {
+            var entry = GetWaveForDay(day);
+            return WaveThreatProfile.Build(entry?.threatTitle, entry?.counterHint, GetPartyForDay(day));
+        }
+
+        /// <summary>
+        /// 그 날 전용 보스 정의. 날짜 정의가 먼저이고, 없으면 29일 이후 보스 날에 순환 보스(바퀴 배율을 곱한 사본)를 준다.
+        /// 둘 다 없으면 null이고, 호출한 쪽이 공용 설정으로 넘어간다.
+        /// </summary>
         public BossEntry GetBossForDay(int day)
         {
             foreach (var boss in bossEntries)
@@ -76,7 +164,20 @@ namespace _01.Code.Manager
                     return boss;
             }
 
-            return null;
+            return GetRotatingBoss(day);
+        }
+
+        private BossEntry GetRotatingBoss(int day)
+        {
+            if (rotatingBosses == null
+                || !RotatingBossRules.TryGetSlot(day, rotatingBosses.Length, out var index, out var lap)
+                || rotatingBosses[index] == null)
+                return null;
+
+            // HUD·예고가 같은 날을 자주 물으므로 그 날 사본을 들고 있는다.
+            if (_rotatedBoss == null || _rotatedBoss.targetDay != day)
+                _rotatedBoss = rotatingBosses[index].CopyForRotation(day, lap);
+            return _rotatedBoss;
         }
 
         /// <summary>그 날 보스가 이끄는 파티. 전용 정의가 없으면 공용 보스 파티.</summary>
@@ -91,6 +192,9 @@ namespace _01.Code.Manager
         {
             if (day <= 0)
                 return false;
+
+            if (GetBossForDay(day) != null)
+                return true;
 
             if (bossEveryNDays > 0 && day % bossEveryNDays == 0)
                 return true;
@@ -121,5 +225,7 @@ namespace _01.Code.Manager
 
             return null;
         }
+
+        private void OnValidate() => _rotatedBoss = null;
     }
 }

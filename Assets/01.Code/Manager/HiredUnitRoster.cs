@@ -1,23 +1,27 @@
 using System.Collections.Generic;
-using _01.Code.Buildings;
-using _01.Code.Core;
-using _01.Code.Events;
-using _01.Code.Progression;
-using _01.Code.Units;
-using _01.Code.Persistence;
+using Code.Buildings;
+using Code.Core;
+using Code.Events;
+using Code.Progression;
+using Code.Units;
+using Code.Persistence;
 using UnityEngine;
 
-namespace _01.Code.Manager
+namespace Code.Manager
 {
     public class HiredUnitRoster : MonoBehaviour
     {
         public static HiredUnitRoster Current { get; private set; }
+
+        [SerializeField, Tooltip(GameScope.FieldTooltip)] private GameScope scope;
 
         [SerializeField] private GameEventChannelSO costEventChannel;
         [SerializeField] private GameEventChannelSO nodeEventChannel;
         [SerializeField] private GameEventChannelSO dayEventChannel;
         [SerializeField] private UnitDataSO[] unitCatalog;
         [SerializeField] private DungeonUnlockCatalogSO unlockCatalog;
+        [SerializeField, Tooltip("해금 카탈로그에 없지만 저장에서 되살려야 하는 건물(금고·대장간)")]
+        private BuildingDataSO[] buildingsOutsideUnlockCatalog;
         [SerializeField, Min(0)] private int startingCopiesOfFirstUnit = 1;
         [Header("Recruitment")]
         [SerializeField, Min(0)] private int candidatesPerDay = 2;
@@ -47,6 +51,9 @@ namespace _01.Code.Manager
 
         private readonly List<UnitDataSO> _availableUnits = new();
         private readonly List<UnitConditionState> _availableConditions = new();
+        private DungeonGradeManager _dungeonGrade;
+        private MoralePolicyManager _morale;
+        private CostManager _cost;
         private readonly List<UnitDataSO> _unlockedUnits = new();
         private readonly List<BuildingDataSO> _unlockedBuildings = new();
         private readonly Dictionary<UnitDataSO, int> _ownedUnits = new();
@@ -61,6 +68,9 @@ namespace _01.Code.Manager
 
             /// <summary>이 날짜가 지나면 떠난다. 무한정 기다려 주면 미루는 데 대가가 없다.</summary>
             public int DaysLeft;
+
+            /// <summary>정가에 곱하는 시세(0.75~1.25). 명단에 오를 때 정해져 화면과 결제가 같은 값을 본다.</summary>
+            public float PriceMultiplier;
         }
 
         private readonly Dictionary<UnitDataSO, List<Applicant>> _applicantsByUnit = new();
@@ -105,10 +115,31 @@ namespace _01.Code.Manager
 
         private void OnEnable()
         {
+            _dungeonGrade = GameScope.Resolve(scope, s => s.DungeonGrade, this, nameof(scope));
+            _morale = GameScope.Resolve(scope, s => s.MoralePolicy, this, nameof(scope));
+            _cost = GameScope.Resolve(scope, s => s.Cost, this, nameof(scope));
             Current = this;
 
             InitializeUnlockedUnits();
             EnsureAvailableConditionAlignment();
+            RegisterListeners();
+            RaiseUnlockChanged();
+            RaiseBuildingUnlockChanged();
+        }
+
+        /// <summary>
+        /// 새 판 첫 주 지원자 명단을 청산일처럼 만든다(등급·민심 규칙 그대로, 시작 지원자에 더한다 — 2026-10-21 사용자 결정).
+        /// 예전에는 첫 청산일(7일차)까지 시작 지원자 한 명뿐이라 대기 중 고용을 열어도 고를 사람이 없었다.
+        /// 이어 하는 판은 한 프레임 뒤 저장 복원(<see cref="RestoreSaveState"/>)이 명단을 통째로 덮어 영향이 없다.
+        /// </summary>
+        private void Start()
+        {
+            GenerateRecruitmentCandidates(WeeklyIncomingCount());
+            RaiseUnlockChanged();
+        }
+
+        private void RegisterListeners()
+        {
             costEventChannel.AddListener<RosterHirePaidEvent>(HandleHirePaid);
             costEventChannel.AddListener<UnitAcquiredEvent>(HandleUnitAcquired);
             costEventChannel.AddListener<BuildingAcquiredEvent>(HandleBuildingAcquired);
@@ -118,8 +149,6 @@ namespace _01.Code.Manager
             nodeEventChannel.AddListener<UnitAssignedToNodeEvent>(HandleUnitDeployed);
             nodeEventChannel.AddListener<UnitReturnedFromNodeEvent>(HandleUnitReturned);
             dayEventChannel?.AddListener<DayChangedEvent>(HandleDayChanged);
-            RaiseUnlockChanged();
-            RaiseBuildingUnlockChanged();
         }
 
         private void OnDisable()
@@ -127,6 +156,11 @@ namespace _01.Code.Manager
             if (Current == this)
                 Current = null;
 
+            UnregisterListeners();
+        }
+
+        private void UnregisterListeners()
+        {
             costEventChannel.RemoveListener<RosterHirePaidEvent>(HandleHirePaid);
             costEventChannel.RemoveListener<UnitAcquiredEvent>(HandleUnitAcquired);
             costEventChannel.RemoveListener<BuildingAcquiredEvent>(HandleBuildingAcquired);
@@ -164,6 +198,47 @@ namespace _01.Code.Manager
 
         public int GetCandidateCount(UnitDataSO unit) => GetOwnedUnitCount(unit);
 
+        /// <summary>정산 상점이 현재 지원자 한 명의 고용을 요청한다.</summary>
+        public bool TryRequestHire(UnitDataSO unit)
+        {
+            if (!IsRecruitmentOpen || unit == null || GetCandidateCount(unit) <= 0 || costEventChannel == null)
+                return false;
+
+            var price = GetApplicantPrice(unit);
+            if (_cost == null || _cost.CurrentGold < price)
+                return false;
+
+            costEventChannel.RaiseEvent(new RosterHireRequestedEvent(unit, price));
+            return true;
+        }
+
+        /// <summary>다음 지원자를 데려오는 값. 정가에 그 지원자의 시세를 곱한다.</summary>
+        public int GetApplicantPrice(UnitDataSO unit)
+        {
+            if (unit == null)
+                return 0;
+
+            var queue = EnsureApplicantQueue(unit);
+            var multiplier = queue.Count > 0 ? queue[0].PriceMultiplier : 1f;
+            return UnitMarketRules.Price(unit.Cost, multiplier);
+        }
+
+        /// <summary>다음 지원자의 실제 고용가가 정가보다 싼지 비싼지.</summary>
+        public UnitPriceTier GetApplicantPriceTier(UnitDataSO unit)
+        {
+            return unit != null
+                ? UnitMarketRules.Tier(unit.Cost, GetApplicantPrice(unit))
+                : UnitPriceTier.Normal;
+        }
+
+        /// <summary>
+        /// 영업 전 대기 중이면 언제든, 그리고 청산일 정산에서 계약한다(2026-10-21 사용자 결정 — 예전엔 청산일만이라 첫 주에 부하가 없었다).
+        /// 영업 중 고용은 배치·경제 흐름을 흔들어 막는다. 지원자 명단은 여전히 청산일마다 새로 온다.
+        /// </summary>
+        public bool IsRecruitmentOpen =>
+            DayManager.Current != null
+            && (DayManager.Current.IsStandby || DayManager.IsSettlementDay(DayManager.Current.CurrentDay));
+
         public int GetAvailableUnitCount(UnitDataSO unit)
         {
             if (unit == null)
@@ -181,6 +256,29 @@ namespace _01.Code.Manager
 
         public int GetDeployedUnitCount(UnitDataSO unit) =>
             unit != null && _deployedUnits.TryGetValue(unit, out var count) ? count : 0;
+
+        /// <summary>현재 고용 중인 부하만 집계한다. 아직 고용하지 않은 지원자는 제외한다.</summary>
+        public void CopyHiredUnitCounts(Dictionary<UnitDataSO, int> target)
+        {
+            target.Clear();
+            foreach (var unit in _availableUnits)
+            {
+                if (unit == null)
+                    continue;
+
+                target.TryGetValue(unit, out var count);
+                target[unit] = count + 1;
+            }
+
+            foreach (var pair in _deployedUnits)
+            {
+                if (pair.Key == null || pair.Value <= 0)
+                    continue;
+
+                target.TryGetValue(pair.Key, out var count);
+                target[pair.Key] = count + pair.Value;
+            }
+        }
 
         public bool TryTakeAvailableUnit(UnitDataSO unit, out UnitConditionState condition)
         {
@@ -245,18 +343,31 @@ namespace _01.Code.Manager
             if (evt.Day <= 0)
                 return;
 
-            RestAvailableUnits();
+            // 대기 명단의 부하는 상태가 그대로다(기획서: 대기 유닛은 유지비·체력·피로·부상 변화 없음).
+            // 쉬게 두면 회수만으로 공짜 회복이 되어 치료비가 의미를 잃는다.
 
-            // 새 지원자를 받기 전에 기한이 다한 사람부터 내보낸다.
-            ExpireApplicants();
-
-            // 민심이 나쁘면 이 던전에서 일하겠다는 사람도 줄어든다.
-            var morale = MoralePolicyManager.Current;
-            var incoming = morale != null ? morale.AdjustRecruitCount(candidatesPerDay) : candidatesPerDay;
-            GenerateRecruitmentCandidates(incoming);
+            if (DayManager.IsSettlementDay(evt.Day))
+                RefreshWeeklyRecruitment();
             UnlockScheduledEntries(evt.Day);
 
             RaiseUnlockChanged();
+        }
+
+        /// <summary>이번 주에 팔지 않은 지원자를 내보내고 새 정산 목록을 만든다.</summary>
+        private void RefreshWeeklyRecruitment()
+        {
+            _ownedUnits.Clear();
+            _applicantsByUnit.Clear();
+            GenerateRecruitmentCandidates(WeeklyIncomingCount());
+        }
+
+        /// <summary>한 주에 오는 지원자 수. 던전이 커질수록 일하겠다는 사람이 늘고, 민심이 나쁘면 다시 줄어든다.</summary>
+        private int WeeklyIncomingCount()
+        {
+            var grade = _dungeonGrade != null ? _dungeonGrade.Grade : 0;
+            var weekly = UnitMarketRules.WeeklyCandidateCount(candidatesPerDay, grade);
+            var morale = _morale;
+            return morale != null ? morale.AdjustRecruitCount(weekly) : weekly;
         }
 
         /// <summary>
@@ -537,7 +648,8 @@ namespace _01.Code.Manager
                 queue.Add(new Applicant
                 {
                     Condition = CreateFreshHiredUnitCondition(),
-                    DaysLeft = Mathf.Max(1, applicantLifetimeDays)
+                    DaysLeft = Mathf.Max(1, applicantLifetimeDays),
+                    PriceMultiplier = UnitMarketRules.PriceMultiplierFromRoll(Random.value)
                 });
             if (queue.Count > wanted)
                 queue.RemoveRange(wanted, queue.Count - wanted);
@@ -701,7 +813,8 @@ namespace _01.Code.Manager
                     group.applicants.Add(new SavedApplicant
                     {
                         condition = applicant.Condition,
-                        daysLeft = applicant.DaysLeft
+                        daysLeft = applicant.DaysLeft,
+                        priceMultiplier = applicant.PriceMultiplier
                     });
                 target.applicants.Add(group);
             }
@@ -753,7 +866,9 @@ namespace _01.Code.Manager
                     queue.Add(new Applicant
                     {
                         Condition = saved.condition,
-                        DaysLeft = Mathf.Max(1, saved.daysLeft)
+                        DaysLeft = Mathf.Max(1, saved.daysLeft),
+                        // 옛 저장은 0으로 읽힌다. 정가(1)로 본다.
+                        PriceMultiplier = saved.priceMultiplier > 0f ? saved.priceMultiplier : 1f
                     });
                 _applicantsByUnit[unit] = queue;
             }
@@ -783,12 +898,13 @@ namespace _01.Code.Manager
                 foreach (var entry in unlockCatalog.Entries)
                     if (entry?.Building != null && AssetKey(entry.Building) == key) return entry.Building;
 
-            // 금고는 해금 카탈로그에 없다 — 설치 메뉴도 Resources에서 직접 집어 온다.
+            // 금고는 해금 카탈로그에 없다.
             // 카탈로그만 뒤지면 저장된 금고가 복원 때 통째로 사라지고 보관 금화도 함께 날아간다.
-            return Resources.Load<BuildingDataSO>(ResourceBuildingFolder + key);
+            if (buildingsOutsideUnlockCatalog != null)
+                foreach (var building in buildingsOutsideUnlockCatalog)
+                    if (building != null && AssetKey(building) == key) return building;
+            return null;
         }
-
-        private const string ResourceBuildingFolder = "Buildings/";
 
         public static string AssetKey(Object asset) => asset != null ? asset.name : string.Empty;
 

@@ -7,10 +7,10 @@ namespace Tests.EditMode.Dialogue
 {
     public class DialogueSequencePlayerTests
     {
-        private static readonly Type SequenceType = Type.GetType("_01.Code.Dialogue.DialogueSequenceSO, Assembly-CSharp");
-        private static readonly Type PlayerType = Type.GetType("_01.Code.Dialogue.DialogueSequencePlayer, Assembly-CSharp");
-        private static readonly Type LineType = Type.GetType("_01.Code.Dialogue.DialogueLine, Assembly-CSharp");
-        private static readonly Type ChoiceType = Type.GetType("_01.Code.Dialogue.DialogueChoice, Assembly-CSharp");
+        private static readonly Type SequenceType = Type.GetType("Code.Dialogue.DialogueSequenceSO, DungeonKeeper.Runtime");
+        private static readonly Type PlayerType = Type.GetType("Code.Dialogue.DialogueSequencePlayer, DungeonKeeper.Runtime");
+        private static readonly Type LineType = Type.GetType("Code.Dialogue.DialogueLine, DungeonKeeper.Runtime");
+        private static readonly Type ChoiceType = Type.GetType("Code.Dialogue.DialogueChoice, DungeonKeeper.Runtime");
 
         [Test]
         public void Play_OutputsDisplayData_FromSequence()

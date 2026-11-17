@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using _01.Code.Buildings;
-using _01.Code.Core;
-using _01.Code.Units;
+using Code.Buildings;
+using Code.Core;
+using Code.Units;
 
-namespace _01.Code.Events
+namespace Code.Events
 {
     public class RosterHireRequestedEvent : GameEvent
     {
@@ -147,5 +147,48 @@ namespace _01.Code.Events
         }
 
         public IReadOnlyList<BuildingDataSO> UnlockedBuildings { get; }
+    }
+
+    /// <summary>배치된 부하가 쓰러져 되살리기를 기다리기 시작했을 때.</summary>
+    public class UnitDownedEvent : GameEvent
+    {
+        public UnitDownedEvent(Unit unit, float revivalSeconds, int revivalCost)
+        {
+            Unit = unit;
+            RevivalSeconds = revivalSeconds;
+            RevivalCost = revivalCost;
+        }
+
+        public Unit Unit { get; }
+        public float RevivalSeconds { get; }
+        public int RevivalCost { get; }
+    }
+
+    /// <summary>쓰러졌던 부하가 부활 마력을 소비하고 다시 섰을 때.</summary>
+    public class UnitRevivedEvent : GameEvent
+    {
+        public UnitRevivedEvent(Unit unit, int manaCost, int remainingMana)
+        {
+            Unit = unit;
+            ManaCost = manaCost;
+            RemainingMana = remainingMana;
+        }
+
+        public Unit Unit { get; }
+        public int ManaCost { get; }
+        public int RemainingMana { get; }
+    }
+
+    /// <summary>부활용 마력의 현재량 또는 최대량이 바뀌었을 때.</summary>
+    public class RevivalManaChangedEvent : GameEvent
+    {
+        public RevivalManaChangedEvent(int currentMana, int maxMana)
+        {
+            CurrentMana = currentMana;
+            MaxMana = maxMana;
+        }
+
+        public int CurrentMana { get; }
+        public int MaxMana { get; }
     }
 }

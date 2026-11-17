@@ -1,5 +1,5 @@
 using UnityEngine;
-namespace _01.Code.Artifacts
+namespace Code.Artifacts
 {
     [CreateAssetMenu(
         menuName = "SO/Artifact/Effects/Low Health Damage Multiplier",

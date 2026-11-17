@@ -1,6 +1,6 @@
-using _01.Code.Core;
+using Code.Core;
 
-namespace _01.Code.Events
+namespace Code.Events
 {
     public class DayChangedEvent : GameEvent
     {

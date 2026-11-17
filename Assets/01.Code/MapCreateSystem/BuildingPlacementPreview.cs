@@ -1,11 +1,11 @@
 using System;
-using _01.Code.Buildings;
+using Code.Buildings;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
-namespace _01.Code.MapCreateSystem
+namespace Code.MapCreateSystem
 {
     /// <summary>건물 배치 미리보기(배치 모드). 노드 그리드의 빈 칸을 표시하고,
     /// 마우스가 올라간 칸에 하이라이트 + 건물 고스트 + "여기에 설치" 안내를 띄운다.
@@ -30,6 +30,22 @@ namespace _01.Code.MapCreateSystem
         private int _hoverRow = -1;
         private bool _hoverIsFree;
 
+        /// <summary>놓을 건물이 차지하는 칸 수. 마우스가 가리킨 칸을 가운데로 둔다.</summary>
+        private Vector2Int _footprint = Vector2Int.one;
+
+        /// <summary>실제로 놓일 왼쪽 아래 칸. 확정 때 이 칸을 넘긴다.</summary>
+        private Vector2Int _anchor;
+
+        /// <summary>놓을 건물 프리팹. 칸막이 벽처럼 칸 말고도 따질 것이 있는 건물을 가린다.</summary>
+        private Code.Buildings.Building _prefab;
+
+        /// <summary>지금 칸에서 건물 규칙상 놓을 수 있는가(칸이 바뀔 때만 다시 센다).</summary>
+        private bool _hoverPlaceable;
+        private bool _hoverChecked;
+
+        /// <summary>테두리 꼭짓점. 매 프레임 새 배열을 만들지 않는다.</summary>
+        private readonly Vector3[] _hoverOutlineCorners = new Vector3[4];
+
         private static readonly Color GridLineColor = new(1f, 1f, 1f, 0.35f);
         private static readonly Color HoverGhostColor = new(1f, 0.82f, 0.38f, 0.82f);
         private static readonly Color HoverOutlineColor = new(1f, 0.74f, 0.28f, 0.95f);
@@ -37,7 +53,6 @@ namespace _01.Code.MapCreateSystem
         private const float GridLineWidth = 0.035f;
 
         private static Sprite _squareSprite;
-        private static Material _lineMaterial;
 
         /// <summary>배치 모드 시작. 이미 열려 있던 미리보기는 취소된다.</summary>
         public static void Begin(NodeTrapGrid grid, BuildingDataSO buildingData, Action<int, int> onConfirm, Action onCancel)
@@ -68,6 +83,10 @@ namespace _01.Code.MapCreateSystem
             _onConfirm = onConfirm;
             _onCancel = onCancel;
             _camera = Camera.main;
+            _prefab = buildingData != null ? buildingData.Prefab : null;
+            _footprint = buildingData != null && buildingData.Prefab != null
+                ? buildingData.Prefab.Footprint
+                : Vector2Int.one;
 
             BuildGridLines();
             BuildGhost(buildingData);
@@ -104,6 +123,10 @@ namespace _01.Code.MapCreateSystem
 
         private static bool WasCancelPressed()
         {
+            // 팝업 위에서 누른 취소는 팝업 몫이다.
+            if (Code.UI.Popup.PopupController.BlocksEscape)
+                return false;
+
             var rightClick = Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame;
             var escape = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
             return rightClick || escape;
@@ -129,8 +152,19 @@ namespace _01.Code.MapCreateSystem
                 return;
             }
 
-            _hoverIsFree = _grid.IsCellFree(_hoverColumn, _hoverRow);
-            var cellPosition = _grid.CellWorldPosition(_hoverColumn, _hoverRow);
+            var anchor = TrapRules.AnchorForHover(_hoverColumn, _hoverRow, _footprint);
+            // 칸막이 벽은 방이 열려 있는지까지 본다. 칸이 바뀔 때만 다시 센다(매 프레임 길찾기 금지).
+            if (anchor != _anchor || !_hoverChecked)
+            {
+                _anchor = anchor;
+                _hoverChecked = true;
+                _hoverPlaceable = _prefab != null
+                    ? _grid.CanPlace(_anchor.x, _anchor.y, _prefab)
+                    : _grid.CanPlace(_anchor.x, _anchor.y, _footprint);
+            }
+
+            _hoverIsFree = _hoverPlaceable && _grid.CanPlace(_anchor.x, _anchor.y, _footprint);
+            var cellPosition = _grid.FootprintWorldCenter(_anchor.x, _anchor.y, _footprint);
 
             if (_ghost != null)
             {
@@ -150,8 +184,8 @@ namespace _01.Code.MapCreateSystem
         private void Confirm()
         {
             var onConfirm = _onConfirm;
-            var column = _hoverColumn;
-            var row = _hoverRow;
+            var column = _anchor.x;
+            var row = _anchor.y;
             Close();
             onConfirm?.Invoke(column, row);
         }
@@ -180,23 +214,19 @@ namespace _01.Code.MapCreateSystem
 
         // ── 비주얼 구성 ─────────────────────────────────────────
 
-        /// <summary>격자를 라인으로 그린다 — 셀 경계선(세로 columns+1개, 가로 rows+1개).</summary>
+        /// <summary>격자를 라인으로 그린다 — 방 바닥 칸(막힌 칸·칸막이 제외)에 닿은 경계만(<see cref="PlacementGridLines"/>).</summary>
         private void BuildGridLines()
         {
             var half = _grid.CellSize * 0.5f;
             var min = _grid.CellWorldPosition(0, 0) - new Vector3(half, half, 0f);
-            var max = _grid.CellWorldPosition(_grid.Columns - 1, _grid.Rows - 1) + new Vector3(half, half, 0f);
+            var segments = new System.Collections.Generic.List<(Vector2Int start, Vector2Int end)>();
+            PlacementGridLines.Collect(_grid.Columns, _grid.Rows, _grid.IsOpenGridCell, segments);
 
-            for (var c = 0; c <= _grid.Columns; c++)
+            foreach (var (start, end) in segments)
             {
-                var x = min.x + c * _grid.CellSize;
-                CreateLine(new Vector3(x, min.y, 0f), new Vector3(x, max.y, 0f));
-            }
-
-            for (var r = 0; r <= _grid.Rows; r++)
-            {
-                var y = min.y + r * _grid.CellSize;
-                CreateLine(new Vector3(min.x, y, 0f), new Vector3(max.x, y, 0f));
+                CreateLine(
+                    new Vector3(min.x + start.x * _grid.CellSize, min.y + start.y * _grid.CellSize, 0f),
+                    new Vector3(min.x + end.x * _grid.CellSize, min.y + end.y * _grid.CellSize, 0f));
             }
         }
 
@@ -212,31 +242,15 @@ namespace _01.Code.MapCreateSystem
             line.SetPosition(1, end);
             line.startWidth = GridLineWidth;
             line.endWidth = GridLineWidth;
-            line.material = GetLineMaterial();
+            line.sharedMaterial = GetLineMaterial();
             line.startColor = GridLineColor;
             line.endColor = GridLineColor;
             line.sortingOrder = MarkerSortingOrder;
         }
 
-        private static Material GetLineMaterial()
-        {
-            if (_lineMaterial != null)
-                return _lineMaterial;
-
-            // Unity 6에는 Default-Line.mat 내장 리소스가 없다. 이를 요청하면 작은 칸
-            // 설치 미리보기마다 재질 오류가 쌓이므로, 현재 렌더 파이프라인의 스프라이트
-            // 셰이더로 런타임 전용 라인 재질을 만든다.
-            var shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default")
-                         ?? Shader.Find("Sprites/Default")
-                         ?? Shader.Find("Unlit/Color");
-            if (shader != null)
-                _lineMaterial = new Material(shader)
-                {
-                    hideFlags = HideFlags.HideAndDontSave
-                };
-
-            return _lineMaterial;
-        }
+        // Unity 6에는 Default-Line.mat 내장 리소스가 없다. 이를 요청하면 작은 칸
+        // 설치 미리보기마다 재질 오류가 쌓이므로 공용 선 재질 에셋을 쓴다.
+        private static Material GetLineMaterial() => Code.Core.RuntimeMaterials.LoadLine();
 
         private void BuildGhost(BuildingDataSO buildingData)
         {
@@ -258,6 +272,10 @@ namespace _01.Code.MapCreateSystem
                 if (prefabRenderer != null)
                     go.transform.localScale = prefabRenderer.transform.lossyScale;
             }
+
+            // 설치될 때처럼 덮을 칸만큼 늘려 보여 준다.
+            var stretched = go.transform.localScale;
+            go.transform.localScale = new Vector3(stretched.x * _footprint.x, stretched.y * _footprint.y, stretched.z);
 
             _ghostBaseScale = go.transform.localScale;
         }
@@ -287,7 +305,7 @@ namespace _01.Code.MapCreateSystem
             _hoverOutline.positionCount = 4;
             _hoverOutline.startWidth = 0.055f;
             _hoverOutline.endWidth = 0.055f;
-            _hoverOutline.material = GetLineMaterial();
+            _hoverOutline.sharedMaterial = GetLineMaterial();
             _hoverOutline.startColor = HoverOutlineColor;
             _hoverOutline.endColor = HoverOutlineColor;
             _hoverOutline.sortingOrder = MarkerSortingOrder + 3;
@@ -297,14 +315,14 @@ namespace _01.Code.MapCreateSystem
         private void UpdateHoverOutline(Vector3 center, bool visible)
         {
             if (_hoverOutline == null) return;
-            var half = _grid.CellSize * 0.46f;
-            _hoverOutline.SetPositions(new[]
-            {
-                center + new Vector3(-half, -half, -0.02f),
-                center + new Vector3(-half, half, -0.02f),
-                center + new Vector3(half, half, -0.02f),
-                center + new Vector3(half, -half, -0.02f)
-            });
+            // 여러 칸 함정은 덮을 칸 전체를 감싼다.
+            var halfX = _grid.CellSize * (_footprint.x * 0.5f - 0.04f);
+            var halfY = _grid.CellSize * (_footprint.y * 0.5f - 0.04f);
+            _hoverOutlineCorners[0] = center + new Vector3(-halfX, -halfY, -0.02f);
+            _hoverOutlineCorners[1] = center + new Vector3(-halfX, halfY, -0.02f);
+            _hoverOutlineCorners[2] = center + new Vector3(halfX, halfY, -0.02f);
+            _hoverOutlineCorners[3] = center + new Vector3(halfX, -halfY, -0.02f);
+            _hoverOutline.SetPositions(_hoverOutlineCorners);
             _hoverOutline.enabled = visible;
         }
 

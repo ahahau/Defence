@@ -1,10 +1,12 @@
-using _01.Code.Combat;
-using _01.Code.Core;
-using _01.Code.Events;
+using Code.Combat;
+using Code.Core;
+using Code.Events;
+using Code.Enemies;
+using Code.Manager;
 using MoreMountains.Feedbacks;
 using UnityEngine;
 
-namespace _01.Code.Buildings
+namespace Code.Buildings
 {
     public class Store : Building
     {
@@ -16,16 +18,26 @@ namespace _01.Code.Buildings
         [SerializeField] private Color buffFlashColor = new(0.95f, 0.66f, 1f, 1f);
         [SerializeField, Min(0.01f)] private float buffFlashDuration = 0.28f;
 
+        /// <summary>머무는 동안 흘려 받을 총액. 인접 시너지를 여기서 한 번만 반영한다.</summary>
+        public override int DwellGoldTotal => FacilityEconomyRules.ScaleIncome(this, goldReward);
+
+        public override GoldChangeSource DwellGoldSource => GoldChangeSource.Store;
+
+        public override void ReportDwellIncome(int gold) =>
+            costEventChannel?.RaiseEvent(new GoldEarnedEvent(gold, GoldChangeSource.Store));
+
         public void ApplyPassEffect(Combatant enemy)
         {
-            if (enemy == null || !enemy.IsAlive)
+            // 닫아 둔 시설은 지나가도 아무 일이 없다. 손님도 받지 않고 효과도 주지 않는다.
+            if (enemy == null || !enemy.IsAlive || !IsOperating)
                 return;
 
-            enemy.AddAttackDamage(damageBonus);
-            if (damageBonus > 0)
+            // 낡은 상점은 손님에게 주는 효과도 수입과 같은 비율로 약하다.
+            var bonus = ScaleServiceEffect(damageBonus);
+            enemy.AddAttackDamage(bonus);
+            if (bonus > 0)
                 PlayPassEffectFeedback(enemy, buffFlashColor, buffFlashDuration, buffFeelFeedback);
 
-            costEventChannel?.RaiseEvent(new GoldEarnedEvent(goldReward, GoldChangeSource.Store));
         }
     }
 }

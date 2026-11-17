@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace _01.Code.Units
+namespace Code.Units
 {
     public class UnitLevel : MonoBehaviour
     {

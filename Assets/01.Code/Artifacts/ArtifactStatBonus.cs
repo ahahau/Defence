@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace _01.Code.Artifacts
+namespace Code.Artifacts
 {
     public struct ArtifactStatBonus
     {

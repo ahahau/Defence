@@ -9,7 +9,32 @@ namespace Tests.EditMode.Buildings
     public class BuildingSerializationTests
     {
         private static readonly Type BuildingType =
-            Type.GetType("_01.Code.Buildings.Building, Assembly-CSharp");
+            Type.GetType("Code.Buildings.Building, DungeonKeeper.Runtime");
+
+        [Test]
+        public void CentralOnlyBuildings_UseCentralSlots_WhileTrapsKeepCells()
+        {
+            var placement = Type.GetType("Code.Buildings.BuildingPlacement, DungeonKeeper.Runtime", true);
+            var usesCell = placement.GetMethod("UsesGridCell");
+            var isCentral = placement.GetMethod("IsCentralBuilding");
+            foreach (var path in new[]
+            {
+                "Assets/07.SO/Buildings/PortalBuildingData.asset",
+                "Assets/07.SO/Buildings/RecoveryRoomBuildingData.asset",
+                "Assets/07.SO/Buildings/MineBuildingData.asset",
+                "Assets/07.SO/Buildings/DeepMineBuildingData.asset",
+                "Assets/07.SO/Buildings/TreasuryBuildingData.asset"
+            })
+            {
+                var data = UnityEditor.AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);
+                Assert.That(data, Is.Not.Null, path);
+                Assert.That(usesCell.Invoke(null, new object[] { data }), Is.False, path);
+                Assert.That(isCentral.Invoke(null, new object[] { data }), Is.True, path);
+            }
+            var trap = UnityEditor.AssetDatabase.LoadAssetAtPath<ScriptableObject>(
+                "Assets/07.SO/Buildings/FireBrazierTrapBuildingData.asset");
+            Assert.That(usesCell.Invoke(null, new object[] { trap }), Is.True);
+        }
 
         [Test]
         public void BuildingHierarchy_DoesNotReuseSerializedFieldNames()

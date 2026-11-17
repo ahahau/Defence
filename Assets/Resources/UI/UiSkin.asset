@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b247b6d68e367af41a17b48f7afd1a3f, type: 3}
+  m_Name: UiSkin
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.UI.UiSkinSO
+  <WindowFrame>k__BackingField: {fileID: -907767961651953922, guid: 95df10558cf324f44834a04b3668f435, type: 3}
+  <ButtonFrame>k__BackingField: {fileID: -907767961651953922, guid: 95df10558cf324f44834a04b3668f435, type: 3}
+  <SliderTrack>k__BackingField: {fileID: -907767961651953922, guid: 95df10558cf324f44834a04b3668f435, type: 3}
+  <SliderFill>k__BackingField: {fileID: -907767961651953922, guid: 95df10558cf324f44834a04b3668f435, type: 3}
+  <GoldIcon>k__BackingField: {fileID: -907767961651953922, guid: 95df10558cf324f44834a04b3668f435, type: 3}
+  <MagicIcon>k__BackingField: {fileID: -907767961651953922, guid: 95df10558cf324f44834a04b3668f435, type: 3}
+  <DangerIcon>k__BackingField: {fileID: -907767961651953922, guid: 95df10558cf324f44834a04b3668f435, type: 3}
+  <MoraleIcon>k__BackingField: {fileID: -907767961651953922, guid: 95df10558cf324f44834a04b3668f435, type: 3}
+  <CohesionIcon>k__BackingField: {fileID: -907767961651953922, guid: 95df10558cf324f44834a04b3668f435, type: 3}
+  <DayIcon>k__BackingField: {fileID: -907767961651953922, guid: 95df10558cf324f44834a04b3668f435, type: 3}
+  <TreasuryIcon>k__BackingField: {fileID: -907767961651953922, guid: 95df10558cf324f44834a04b3668f435, type: 3}

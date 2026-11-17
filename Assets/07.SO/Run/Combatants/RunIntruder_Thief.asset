@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf8678c43bff25e45808c797db5d488c, type: 3}
+  m_Name: RunIntruder_Thief
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Run.RunCombatantSO
+  <SourceUnit>k__BackingField: {fileID: 0}
+  <SourceEnemy>k__BackingField: {fileID: 11400000, guid: d68d85cb6a080c9f9cd6e61e90fc5ee7, type: 2}
+  <Side>k__BackingField: 1
+  <Affinity>k__BackingField: 2
+  <MaxHealth>k__BackingField: 12
+  <Attack>k__BackingField: 2
+  <Speed>k__BackingField: 8
+  <MoveSpeed>k__BackingField: 3.2
+  <IsRanged>k__BackingField: 0
+  <RepairPerSecond>k__BackingField: 0
+  <Goal>k__BackingField: 1
+  <GoalRoomKind>k__BackingField: 0
+  <IntruderRole>k__BackingField: 1
+  <HasFavoredRoom>k__BackingField: 0
+  <FavoredRoom>k__BackingField: 0
+  <Skill>k__BackingField: {fileID: 0}

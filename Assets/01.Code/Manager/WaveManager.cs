@@ -1,22 +1,25 @@
 using System.Collections;
 using System.Collections.Generic;
-using _01.Code.BT;
-using _01.Code.Buildings;
-using _01.Code.Combat;
-using _01.Code.Core;
-using _01.Code.Enemies;
-using _01.Code.Events;
-using _01.Code.MapCreateSystem;
-using _01.Code.Progression;
-using _01.Code.UI;
-using _01.Code.Units;
+using Code.Audio;
+using Code.BT;
+using Code.Buildings;
+using Code.Combat;
+using Code.Core;
+using Code.Enemies;
+using Code.Events;
+using Code.MapCreateSystem;
+using Code.Progression;
+using Code.UI;
+using Code.Units;
 using UnityEngine;
 
-namespace _01.Code.Manager
+namespace Code.Manager
 {
     [RequireComponent(typeof(BossWavePresenter))]
     public class WaveManager : MonoBehaviour
     {
+        public const int ExploitationBonusGold = 20;
+
         public static WaveManager Current { get; private set; }
 
         [SerializeField] private GameEventChannelSO dayEventChannel;
@@ -37,13 +40,16 @@ namespace _01.Code.Manager
         private int fallbackGroupSize = 3;
         [SerializeField, Min(0f), Tooltip("그룹 내 멤버 간 스폰 간격(초). 우르르 들어오는 연출용")]
         private float memberSpawnDelay = 0.15f;
+        [SerializeField, Min(0f), Tooltip("입구에서 전투가 붙어 스폰을 미룰 수 있는 최대 시간(초). 넘기면 전투 중이어도 내보낸다 — 안 죽는 선두가 웨이브를 영구히 막는 것을 막는다.")]
+        private float maxSpawnHoldSeconds = 6f;
         [SerializeField, Min(0f), Tooltip("파티원이 서로 겹치지 않게 흩어지는 대형 반경")]
         private float formationSpread = 0.35f;
+        [Header("Day / Night Pace")]
+        [SerializeField, Range(0.1f, 0.9f), Tooltip("하루 방문객 중 낮에 들어오는 비율. 나머지는 밤에 들어온다.")]
+        private float daytimeSpawnShare = 0.7f;
+        [SerializeField, Min(1f), Tooltip("밤 스폰 간격 배율. 밤에는 적은 파티가 더 느슨하게 들어온다.")]
+        private float nightSpawnIntervalMultiplier = 1.6f;
         [SerializeField, Min(0)] private int treasuryGoldLoss = 10;
-        [Header("Village Conquest")]
-        [SerializeField, Range(0f, 1f),
-         Tooltip("마을을 모두 장악했을 때 줄어드는 침입자 비율. 0.4면 습격이 40%까지 줄어든다.")]
-        private float maxWaveReductionFromConquest = 0.4f;
 
         [Header("Enemy Level Scaling")]
         [SerializeField, Min(0), Tooltip("일차마다 침입자에게 더해지는 최대 체력.")]
@@ -51,7 +57,7 @@ namespace _01.Code.Manager
 
         [SerializeField, Min(0),
          Tooltip("일차마다 더해지는 공격력. 0을 권장한다 — 일차 수만큼 누적되므로 1만 넣어도 " +
-                 "18일차 침입자의 공격력이 4에서 18로 뛰어 수비대가 두세 대에 쓰러진다. " +
+                 "18일차 침입자의 공격력이 4에서 18로 뛰어 유닛이 두세 대에 쓰러진다. " +
                  "후반을 조이려면 일차별 보스 항목의 배율을 쓰는 편이 정밀하다.")]
         private int enemyAttackPerLevel;
         [Header("Boss Wave")]
@@ -62,26 +68,60 @@ namespace _01.Code.Manager
         [SerializeField, Min(1f), Tooltip("보스 거대화 배율.")]
         private float bossVisualScale = 1.6f;
 
-        private Node _portalNode;
-        public bool HasPortal => _portalNode != null;
+        private Node _entryNode
+        {
+            get
+            {
+                foreach (var node in Node.ActiveNodes)
+                    if (node != null && node.Data != null && node.Data.Type == DungeonNodeType.Entrance)
+                        return node;
+                return null;
+            }
+        }
+
+        public Node EntryNode => _entryNode;
+        public bool HasEntryDoor => EntryNode != null;
+        public bool HasPortal => HasEntryDoor; // 비활성 튜토리얼과 기존 호출부의 호환 이름
         public bool IsWaveRunning => _isWaveRunning;
         public bool IsBossWave => _isBossWave;
-        public int TotalEnemyCount => Mathf.Max(0, _waveEnemyCount);
-        public int KillCount => Mathf.Max(0, _waveKillCount);
+        public int TotalEnemyCount => _stats.EnemyCount;
+        public int KillCount => _stats.KillCount;
         /// <summary>직전 웨이브 전과. 정산 보고서가 읽어 간다.</summary>
-        public int WaveDamageDealt => Mathf.Max(0, _waveDamageDealt);
-        public int WaveDamageTaken => Mathf.Max(0, _waveDamageTaken);
-        public int WaveCriticalHits => Mathf.Max(0, _waveCriticalHitCount);
+        public int WaveDamageDealt => _stats.DamageDealt;
+        public int WaveDamageTaken => _stats.DamageTaken;
+        public int WaveCriticalHits => _stats.CriticalHitCount;
 
         /// <summary>이번 웨이브에서 함정이 낸 피해. 유닛이 낸 몫과 나눠 보여야 함정 투자를 판단할 수 있다.</summary>
-        public int WaveTrapDamage => Mathf.Max(0, _waveTrapDamage);
+        public int WaveTrapDamage => _stats.TrapDamage;
+        public int WaveCowardTrapTriggers => _stats.CowardTrapTriggers;
+        public int WaveCowardBonusFear => _stats.CowardBonusFear;
+        public int WavePriestHealingPrevented => _stats.PriestHealingPrevented;
+        public int WaveShopaholicBonusGold => _stats.ShopaholicBonusGold;
 
         public void RecordTrapDamage(int damage)
         {
             if (_isWaveRunning && damage > 0)
-                _waveTrapDamage += damage;
+                _stats.RecordTrapDamage(damage);
         }
+
+        public void RecordCowardTrapPressure(int bonusFear)
+        {
+            if (!_isWaveRunning || bonusFear <= 0)
+                return;
+
+            _stats.RecordCowardTrapPressure(bonusFear);
+        }
+
+        public void RecordPriestHealingPrevented(int preventedHealing)
+        {
+            if (_isWaveRunning && preventedHealing > 0)
+                _stats.RecordPriestHealingPrevented(preventedHealing);
+        }
+
         public int ActiveEnemyCount => _activeEnemies.Count;
+
+        /// <summary>지금 던전에 있는 모험가. HUD 파티 목록이 읽는다.</summary>
+        public IReadOnlyList<Enemy> ActiveEnemies => _activeEnemies;
         public int PendingSpawnCount => Mathf.Max(0, _remainingSpawns);
         public int RemainingThreatCount => ActiveEnemyCount + PendingSpawnCount;
         public int FinalDay => waveConfig != null ? waveConfig.FinalDay : 0;
@@ -89,15 +129,30 @@ namespace _01.Code.Manager
         public int GetPreviewEnemyCount(int day)
         {
             var baseEnemyCount = GetBasePreviewEnemyCount(day);
-            // 예고도 장악 보정을 거친 수를 보여야 실제로 오는 수와 어긋나지 않는다.
-            return GetConquestAdjustedEnemyCount(baseEnemyCount);
+            // 예고와 실제가 같은 계산을 타야 어긋나지 않는다. 한쪽만 고치면 화면이 거짓말을 한다.
+            return ResolveWaveEnemyCount(baseEnemyCount);
         }
 
-        /// <summary>마을 장악 보정을 적용하기 전의 원래 습격 인원.</summary>
+        /// <summary>
+        /// 이 습격에 실제로 오는 인원. 마을 장악으로 줄고, 연속 방어로 늘어난다.
+        ///
+        /// 예고 화면과 실제 스폰이 반드시 이 하나를 거쳐야 한다.
+        /// 한쪽에만 보정을 더하면 "12명 온다"고 적어 놓고 15명을 보내게 된다.
+        /// </summary>
+        private int ResolveWaveEnemyCount(int baseEnemyCount) => Mathf.Max(0, baseEnemyCount);
+
+        public WaveThreatPreview GetThreatPreview(int day) =>
+            waveConfig != null ? waveConfig.GetThreatPreview(day) : default;
+
+        /// <summary>
+        /// 마을 장악 보정을 적용하기 전의 원래 습격 인원.
+        ///
+        /// 날짜가 아니라 던전 등급이 정한다. 여기서 죽어 나간 수와 금고에 쌓은 돈과 지어 둔
+        /// 건물이 소문을 만들고, 그 소문이 몇 명을 부르는지 결정한다. 일차는 날짜를 셀 뿐이다.
+        /// </summary>
         public int GetBasePreviewEnemyCount(int day)
         {
-            var entry = waveConfig != null ? waveConfig.GetWaveForDay(day) : null;
-            return entry != null ? Mathf.Max(0, entry.enemyCount) : 0;
+            return DungeonGradeRules.ResolveVisitorCount(CurrentGrade);
         }
 
         public bool IsBossDay(int day) => waveConfig != null && waveConfig.IsBossDay(day);
@@ -105,34 +160,111 @@ namespace _01.Code.Manager
         /// <summary>결과 화면을 띄우는 연출 담당. 게임오버 쪽에서도 같은 패널을 쓴다.</summary>
         public BossWavePresenter BossPresenter => bossPresenter;
 
-        /// <summary>침입자가 들어오는 구역. 어디까지 걸어올 수 있는지 재는 기준점이다.</summary>
-        public Node PortalNode => _portalNode;
         private int _currentDay;
+
+        /// <summary>이 습격을 시작할 때 잰 던전 등급. 인원과 모험가의 숙련 단계가 이 값을 본다.</summary>
+        private int _currentGrade;
         private int _remainingSpawns;
         private int _currentClearGoldReward;
         private bool _isWaveRunning;
         private Coroutine _waveCoroutine;
         private Coroutine _groupSpawnCoroutine;
+        private Coroutine _reinforcementSpawnCoroutine;
         private float _currentGroupInterval;
         private readonly List<Enemy> _activeEnemies = new();
         private readonly List<EnemyDataSO> _partyQueue = new();
         private int _partyIndex;
+
+        /// <summary>이 날 웨이브의 난수. 판 시드와 일차로 정해져 불러와도 같은 파티가 같은 순서로 온다.</summary>
+        private System.Random _waveRandom = new();
+
+        /// <summary>파티 간격 난수. 편성 난수(<see cref="_waveRandom"/>)와 줄기를 나눠 간격이 편성 순서를 흔들지 않게 한다.</summary>
+        private System.Random _pacingRandom = new();
+
+        /// <summary>지금 기다리는 파티 간격의 배율. 파티를 내보낼 때마다 새로 뽑는다.</summary>
+        private float _spawnGapJitter = 1f;
         private bool _isDestroying;
         [SerializeField] private BossWavePresenter bossPresenter;
+        [SerializeField, Tooltip("보스 패배 조건을 채우면 판을 끝낸다. 비어 있으면 씬에서 찾고 경고한다(배선 뒤 폴백 제거).")]
+        private GameOverManager gameOverManager;
+        [SerializeField, Tooltip(GameScope.FieldTooltip)] private GameScope scope;
+        private DungeonGradeManager _dungeonGrade;
+        private RunSummarySystem _runSummary;
+
+        private DungeonGradeManager DungeonGrade =>
+            _dungeonGrade != null ? _dungeonGrade : _dungeonGrade = GameScope.Resolve(scope, s => s.DungeonGrade, this, nameof(scope));
+
+        private RunSummarySystem RunSummary =>
+            _runSummary != null ? _runSummary : _runSummary = GameScope.Resolve(scope, s => s.RunSummary, this, nameof(scope));
+
+        /// <summary>지금 던전 등급. 처치 수는 등급 매니저가 기억한다.</summary>
+        private int CurrentGrade => DungeonGradeRules.CalculateGrade(DungeonGrade != null ? DungeonGrade.TotalKills : 0);
         private Enemy _bossEnemy;
         /// <summary>이 날 전용 보스 정의. 없으면 공용 보스 설정으로 떨어진다.</summary>
         private WaveConfigSO.BossEntry _currentBoss;
         private bool _isBossWave;
         private bool _isFinalWave;
         private bool _bossSpawned;
+        private bool _bossFinalPhaseStarted;
+        private bool _bossReinforcementStarted;
+        private int _reservedReinforcementSpawns;
         private bool _isGameCleared;
-        private int _waveEnemyCount;
-        private int _waveKillCount;
-        private int _waveDamageDealt;
-        private int _waveDamageTaken;
-        private int _waveCriticalHitCount;
-        private int _waveTrapDamage;
+        private readonly WaveRunStats _stats = new();
         private bool _unitConditionWearPending;
+
+        public int WaveFacilityGold => _stats.Exploitation.FacilityGold;
+        public int ExploitationTargetGold => _stats.Exploitation.TargetGold;
+        public bool IsExploitationObjectiveCompleted => _stats.Exploitation.IsCompleted;
+        public float ExploitationProgress01 => _stats.Exploitation.Progress01;
+        public WaveObjectiveKind ObjectiveOptionA { get; private set; }
+        public WaveObjectiveKind ObjectiveOptionB { get; private set; }
+        public WaveObjectiveKind SelectedObjective { get; private set; }
+        public bool LastObjectiveCompleted { get; private set; }
+        public string LastObjectiveTitle { get; private set; } = string.Empty;
+        public int LastObjectiveRewardGold { get; private set; }
+        private int _objectiveDay;
+
+        public void PrepareObjectiveChoices(int day)
+        {
+            // 영업 중에는 오늘 고른 목표로 판정해야 한다. HUD가 영업 시작 때 다음 날 후보를 준비해 덮어썼었다.
+            if (day <= 0 || _objectiveDay == day || _isWaveRunning)
+                return;
+
+            _objectiveDay = day;
+            ObjectiveOptionA = WaveObjectiveRules.GetFirstOffer(day);
+            ObjectiveOptionB = WaveObjectiveRules.GetSecondOffer(day);
+            SelectedObjective = ObjectiveOptionA;
+        }
+
+        public bool SelectObjective(WaveObjectiveKind objective)
+        {
+            if (_isWaveRunning || (objective != ObjectiveOptionA && objective != ObjectiveOptionB))
+                return false;
+
+            SelectedObjective = objective;
+            return true;
+        }
+
+        public string GetSelectedObjectiveSummary(int enemyCount)
+        {
+            return $"{WaveObjectiveRules.GetTitle(SelectedObjective)} · "
+                   + WaveObjectiveRules.GetDescription(SelectedObjective, enemyCount)
+                   + $" · 성공 +{WaveObjectiveRules.GetRewardGold(SelectedObjective)}G";
+        }
+
+        public string GetSelectedObjectiveProgressText()
+        {
+            var target = WaveObjectiveRules.GetTarget(SelectedObjective, _stats.EnemyCount);
+            var progress = WaveObjectiveRules.GetProgress(
+                SelectedObjective,
+                _stats.EnemyCount,
+                _stats.KillCount,
+                _stats.Exploitation.FacilityGold,
+                _stats.TrapDamage,
+                _stats.CriticalHitCount);
+            return $"{WaveObjectiveRules.GetTitle(SelectedObjective)} {Mathf.Min(progress, target)}/{target}"
+                   + $" · 보너스 +{WaveObjectiveRules.GetRewardGold(SelectedObjective)}G";
+        }
 
         private void Awake()
         {
@@ -155,20 +287,28 @@ namespace _01.Code.Manager
         private void OnEnable()
         {
             _isDestroying = false;
-            dayEventChannel.AddListener<DayChangedEvent>(HandleDayChanged);
-            nodeEventChannel.AddListener<PortalInstalledEvent>(HandlePortalInstalled);
-            nodeEventChannel.AddListener<PortalRemovedEvent>(HandlePortalRemoved);
-            Health.AnyDamaged += HandleAnyDamage;
+            RegisterListeners();
         }
 
         private void OnDisable()
         {
-            dayEventChannel.RemoveListener<DayChangedEvent>(HandleDayChanged);
-            nodeEventChannel.RemoveListener<PortalInstalledEvent>(HandlePortalInstalled);
-            nodeEventChannel.RemoveListener<PortalRemovedEvent>(HandlePortalRemoved);
-            Health.AnyDamaged -= HandleAnyDamage;
+            UnregisterListeners();
             StopRunningWave();
             ClearEnemyTrackers();
+        }
+
+        private void RegisterListeners()
+        {
+            dayEventChannel?.AddListener<DayChangedEvent>(HandleDayChanged);
+            costEventChannel?.AddListener<UnitDownedEvent>(HandleUnitDowned);
+            Health.AnyDamaged += HandleAnyDamage;
+        }
+
+        private void UnregisterListeners()
+        {
+            dayEventChannel?.RemoveListener<DayChangedEvent>(HandleDayChanged);
+            costEventChannel?.RemoveListener<UnitDownedEvent>(HandleUnitDowned);
+            Health.AnyDamaged -= HandleAnyDamage;
         }
 
         private void OnDestroy()
@@ -181,32 +321,34 @@ namespace _01.Code.Manager
             ClearEnemyTrackers();
         }
 
-        private void HandlePortalInstalled(PortalInstalledEvent evt)
-        {
-            _portalNode = evt.Node;
-        }
-
-        private void HandlePortalRemoved(PortalRemovedEvent evt)
-        {
-            _portalNode = null;
-        }
-
         public bool CanStartWave(int day)
         {
             return string.IsNullOrEmpty(GetWaveStartBlockedReason(day));
         }
 
-        /// <summary>습격 시작 버튼이 잠긴 이유. 표시 계층이 게임 규칙을 다시 추측하지 않게 한다.</summary>
+        /// <summary>영업 시작 버튼이 잠긴 이유.</summary>
         public string GetWaveStartBlockedReason(int day)
         {
-            if (_portalNode == null)
-                return "포털을 설치하세요";
+            var entryNode = EntryNode;
+            if (entryNode == null)
+                return "입구 문을 불러오는 중";
+
+            var hasInteriorRoom = false;
+            foreach (var node in Node.ActiveNodes)
+            {
+                if (node == null || node == entryNode || node.Data == null || node.IsUnderConstruction)
+                    continue;
+                hasInteriorRoom = true;
+                break;
+            }
+            if (!hasInteriorRoom)
+                return HasRoomUnderConstruction() ? "첫 방 공사가 끝나면 영업을 시작할 수 있습니다" : "방을 하나 확장하세요";
 
             if (waveConfig == null)
-                return "습격 정보를 불러오는 중";
+                return "오늘 방문객 정보를 불러오는 중";
 
             return waveConfig.GetWaveForDay(day) == null
-                ? "예정된 습격이 없습니다"
+                ? "오늘은 예약된 방문객이 없습니다"
                 : string.Empty;
         }
 
@@ -214,7 +356,7 @@ namespace _01.Code.Manager
         {
             _currentDay = evt.Day;
 
-            if (_portalNode == null || waveConfig == null)
+            if (_entryNode == null || waveConfig == null)
             {
                 _currentClearGoldReward = 0;
                 RaiseWaveEnded();
@@ -235,41 +377,49 @@ namespace _01.Code.Manager
             _waveCoroutine = StartCoroutine(RunWave(entry));
         }
 
-        /// <summary>
-        /// 장악한 마을은 사람을 덜 보낸다. 마릿수를 줄여야 실제로 방어가 편해진다 —
-        /// 파티 등장만 막으면 구성만 바뀌고 쳐들어오는 수는 그대로다.
-        /// </summary>
-        public int GetConquestAdjustedEnemyCount(int baseEnemyCount)
-        {
-            var normalized = Mathf.Max(0, baseEnemyCount);
-            if (normalized <= 0 || maxWaveReductionFromConquest <= 0f)
-                return normalized;
-
-            var conquest = VillageConquestSystem.Current;
-            if (conquest == null)
-                return normalized;
-
-            var reduction = conquest.AverageConquestRatio * maxWaveReductionFromConquest;
-            // 다 장악해도 습격이 아예 사라지지는 않는다. 최소 한 명은 온다.
-            return Mathf.Max(1, Mathf.RoundToInt(normalized * (1f - reduction)));
-        }
-
         private IEnumerator RunWave(WaveConfigSO.WaveEntry entry)
         {
-            var adjustedEnemyCount = GetConquestAdjustedEnemyCount(entry.enemyCount);
-            _remainingSpawns = adjustedEnemyCount;
+            // 오늘 오는 인원은 영업 시작 시점의 등급으로 확정한다.
+            _currentGrade = CurrentGrade;
+            _waveRandom = RunRandom.Create(RunRandomStream.Wave, _currentDay);
+            _pacingRandom = RunRandom.Create(RunRandomStream.WavePacing, _currentDay);
+
+            var adjustedEnemyCount = ResolveWaveEnemyCount(
+                DungeonGradeRules.ResolveVisitorCount(_currentGrade));
+
+            PrepareObjectiveChoices(_currentDay);
             ResetWaveResults(adjustedEnemyCount);
-            _currentClearGoldReward = CoreCohesionSystem.ScaleGoldReward(entry.clearGoldReward);
+            // 벌이는 막아낸 만큼이다. 하나 쓰러뜨릴 때마다 전리품이 쌓인다 —
+            // 그냥 들여보내면 시설에서 쓰고 간 푼돈만 남는다.
+            _currentClearGoldReward = 0;
+            DungeonGrade?.BeginBusinessDay();
             _isWaveRunning = true;
             _unitConditionWearPending = true;
             _activeEnemies.Clear();
+            // 어제 파티의 지갑이 남아 있으면 같은 번호를 다시 쓰는 파티가 그 돈을 이어받는다.
+            PartyFundLedger.Active.Clear();
+            // 하루가 지났다. 어제 파티의 견문은 비우고 던전 소문은 절반만 남긴다.
+            AdventurerRumorLedger.Active.BeginBusinessDay();
+            PartyCoffin.ClearAll();
             _isBossWave = waveConfig != null && waveConfig.IsBossDay(_currentDay);
             _isFinalWave = waveConfig != null && waveConfig.IsFinalDay(_currentDay);
             // 이 날의 보스가 누구인지 웨이브가 도는 내내 같은 값을 봐야 호위·배율·배너가 어긋나지 않는다.
             _currentBoss = waveConfig != null ? waveConfig.GetBossForDay(_currentDay) : null;
+            _remainingSpawns = adjustedEnemyCount;
+            _reservedReinforcementSpawns = _currentBoss?.GetReservedReinforcementCount(adjustedEnemyCount) ?? 0;
             _bossEnemy = null;
             _bossSpawned = false;
+            _bossFinalPhaseStarted = false;
+            _bossReinforcementStarted = false;
+            _bossElapsed = 0f;
+            _bossTreasuryBreached = false;
+            _bossUnitsDowned = 0;
+            _bossDefeatRaised = false;
             SetupPartyForWave();
+
+            GameSfxPlayer.Play(GameSfxCue.WaveStart);
+
+            GameMusicPlayer.Play(_isBossWave ? MusicCue.Boss : MusicCue.Wave);
 
             waveEventChannel.RaiseEvent(new WaveStartedEvent(_currentDay, adjustedEnemyCount));
 
@@ -287,8 +437,13 @@ namespace _01.Code.Manager
                 SpawnNextGroup(spawnInterval);
             else
                 SpawnNextEnemyIfNeeded(false);
+            _spawnGapJitter = SpawnPacingRules.GapJitter(_pacingRandom.NextDouble());
 
             var spawnTimer = 0f;
+            var holdTimer = 0f;
+            // 하루 방문객의 앞 절반은 낮, 뒤 절반은 밤으로 본다. 실제 시간 대신 스폰 진행도를
+            // 기준으로 잡아 입구 전투 때문에 스폰이 잠시 밀려도 밤 전환이 엉뚱하게 앞서지 않는다.
+            var nightAtRemainingSpawns = Mathf.CeilToInt(adjustedEnemyCount * (1f - daytimeSpawnShare));
 
             while (_isWaveRunning)
             {
@@ -297,42 +452,75 @@ namespace _01.Code.Manager
                 if (!_isWaveRunning)
                     break;
 
-                // 포탈 노드에서 전투가 붙어 있으면 스폰을 미룬다.
+                // 입구 방에서 전투가 붙어 있으면 스폰을 미룬다.
                 // 그대로 밀어 넣으면 스폰 지점에 적이 겹겹이 쌓여 싸움이 보이지 않는다.
-                if (IsPortalNodeInCombat())
-                    continue;
+                //
+                // 다만 무한정 미루면 안 된다. 선두가 좀처럼 안 죽는 적이면 그 전투가 끝나지 않아
+                // 웨이브 전체가 영구히 멈추고, 그동안 선두는 코어를 깬다. 실측에서 12일·20일 보스가
+                // 정확히 그렇게 끝냈다 — 열세 마리가 스폰도 못 한 채 활성1로 굳었다.
+                // 쌓임을 막는 데는 잠깐 미루는 것으로 충분하므로 상한을 둔다.
+                if (IsEntryNodeInCombat())
+                {
+                    holdTimer += Time.deltaTime;
+                    if (holdTimer < maxSpawnHoldSeconds)
+                        continue;
+                }
+                else
+                {
+                    holdTimer = 0f;
+                }
 
                 spawnTimer += Time.deltaTime;
 
-                if (spawnTimer >= (spawnAsGroup ? _currentGroupInterval : spawnInterval))
+                // 그룹이면 파티 간격은 (기본 간격 × 실제로 내보낸 인원)이다. 낮·밤 단계를 넣을 때 이것이
+                // 기본 간격으로 바뀌어, 한 파티가 한 사람 몫의 시간마다 들어와 하루가 그룹 크기만큼 빨라졌었다.
+                var baseGap = spawnAsGroup ? _currentGroupInterval : spawnInterval;
+                var activeSpawnInterval = SpawnPacingRules.GapSeconds(
+                    baseGap, _spawnGapJitter, IsNight, nightSpawnIntervalMultiplier);
+                if (spawnTimer >= activeSpawnInterval)
                 {
                     spawnTimer = 0f;
+                    // 한 번 내보냈으니 미룰 여유를 다시 준다. 교착일 때는 (간격 + 상한) 속도로 흘러간다.
+                    holdTimer = 0f;
                     if (spawnAsGroup)
                         SpawnNextGroup(spawnInterval);
                     else
                         SpawnNextEnemyIfNeeded(false);
+                    _spawnGapJitter = SpawnPacingRules.GapJitter(_pacingRandom.NextDouble());
                 }
 
                 RemoveMissingEnemies();
+                RefreshPauseLock();
+                TickBossDefeatConditions(Time.deltaTime);
+                if (DayManager.Current != null && DayManager.Current.Phase == DayManager.OperationPhase.Day
+                    && _remainingSpawns <= nightAtRemainingSpawns)
+                {
+                    DayManager.Current.SetPhase(DayManager.OperationPhase.Night);
+                    // 전환을 알아챌 틈을 준다. 주요 사건 창은 따로 시간을 세우므로 여기서는 1초만.
+                    GameSpeedController.Current?.PauseForTransition(PauseLockRules.DayNightTransitionPauseSeconds);
+                }
                 CompleteWaveIfCleared(false);
             }
 
             CompleteWave(false);
         }
 
-        /// <summary>포탈 노드에서 아군과 적이 맞붙어 있는 상태인가.</summary>
-        private bool IsPortalNodeInCombat()
+        private static bool IsNight =>
+            DayManager.Current != null && DayManager.Current.Phase == DayManager.OperationPhase.Night;
+
+        /// <summary>입구 방에서 아군과 적이 맞붙어 있는 상태인가.</summary>
+        private bool IsEntryNodeInCombat()
         {
-            if (_portalNode == null)
+            if (_entryNode == null)
                 return false;
 
-            var battlefield = _portalNode.GetComponent<NodeBattlefield>();
+            var battlefield = _entryNode.GetComponent<NodeBattlefield>();
             return battlefield != null && battlefield.PlayerCount > 0 && battlefield.EnemyCount > 0;
         }
 
         private void SpawnNextEnemyIfNeeded(bool stopRunningCoroutine)
         {
-            if (_portalNode == null || _remainingSpawns <= 0)
+            if (_entryNode == null || !HasRegularSpawnsPending)
             {
                 CompleteWaveIfCleared(stopRunningCoroutine);
                 return;
@@ -345,7 +533,7 @@ namespace _01.Code.Manager
         /// <summary>파티 전체를 한 그룹으로 몰아서 스폰한다. 그룹 간 간격은 spawnInterval × 그룹 크기로 늘려 전체 스폰량을 유지한다.</summary>
         private void SpawnNextGroup(float spawnInterval)
         {
-            if (_portalNode == null || _remainingSpawns <= 0)
+            if (_entryNode == null || !HasRegularSpawnsPending)
             {
                 CompleteWaveIfCleared(false);
                 return;
@@ -357,37 +545,52 @@ namespace _01.Code.Manager
             // 보스는 파티 큐(호위) 밖에서 첫 스폰을 차지하므로 그룹에 한 자리 더.
             if (_isBossWave && !_bossSpawned)
                 groupSize += 1;
-            groupSize = Mathf.Min(groupSize, _remainingSpawns);
+            groupSize = Mathf.Min(groupSize, RegularSpawnCount);
             _currentGroupInterval = spawnInterval * groupSize;
 
             if (_groupSpawnCoroutine != null)
                 StopCoroutine(_groupSpawnCoroutine);
-            _groupSpawnCoroutine = StartCoroutine(SpawnGroupRoutine(groupSize));
+            _groupSpawnCoroutine = StartCoroutine(SpawnGroupRoutine(groupSize, spawnInterval));
         }
 
-        private IEnumerator SpawnGroupRoutine(int groupSize)
+        private IEnumerator SpawnGroupRoutine(int groupSize, float spawnInterval)
         {
+            var spawned = 0;
+            var partyOccupancyId = EnemyMover.CreatePartyOccupancyId();
+
             for (var i = 0; i < groupSize; i++)
             {
-                if (!_isWaveRunning || _portalNode == null)
+                if (!_isWaveRunning || _entryNode == null)
                     break;
 
-                // 그룹을 쏟는 도중에 전투가 붙으면 남은 인원은 다음 기회로 미룬다.
-                if (IsPortalNodeInCombat())
+                // 그룹을 쏟는 "도중에" 전투가 붙으면 남은 인원은 다음 기회로 미룬다.
+                // 첫 마리까지 막으면 안 된다 — 여기까지 왔다는 건 바깥 루프가 내보내기로 정한
+                // 것이고, i == 0 에서 되돌아가면 한 마리도 안 나가 웨이브가 그대로 굳는다.
+                if (i > 0 && IsEntryNodeInCombat())
                     break;
 
-                if (!SpawnEnemy(FormationOffsetFor(i, groupSize)))
+                if (!SpawnEnemy(FormationOffsetFor(i, groupSize), null, partyOccupancyId))
                     break;
+
+                spawned++;
 
                 if (memberSpawnDelay > 0f && i < groupSize - 1)
                     yield return new WaitForSeconds(memberSpawnDelay);
             }
 
+            // 다음 그룹까지의 간격은 "실제로 내보낸 수"에 맞춘다.
+            //
+            // 간격은 그룹 정원(spawnInterval × groupSize)으로 잡아 두는데, 위에서 전투 때문에
+            // 중간에 끊기면 정원이 아니라 한 마리만 나간다. 그대로 두면 여섯 자리 시간을 기다리고
+            // 한 마리를 내보내게 되어 웨이브가 정원 배수만큼 느려진다. 실측에서 16일차가 그랬다 —
+            // 6인 파티가 전투에 물려 30마리를 29번에 나눠 내보내며 336초를 썼다(이웃한 날은 40초).
+            _currentGroupInterval = spawnInterval * Mathf.Max(1, spawned);
+
             _groupSpawnCoroutine = null;
             CompleteWaveIfCleared(false);
         }
 
-        /// <summary>멤버를 포탈 주위에 원형으로 흩어 배치해 같은 노드에서도 겹쳐 보이지 않게 한다.</summary>
+        /// <summary>멤버를 입구 문 주위에 원형으로 흩어 배치해 같은 노드에서도 겹쳐 보이지 않게 한다.</summary>
         private Vector3 FormationOffsetFor(int index, int groupSize)
         {
             if (groupSize <= 1 || formationSpread <= 0f)
@@ -397,20 +600,29 @@ namespace _01.Code.Manager
             return new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * formationSpread;
         }
 
-        private bool SpawnEnemy(Vector3 formationOffset)
+        private int RegularSpawnCount => Mathf.Max(0, _remainingSpawns - _reservedReinforcementSpawns);
+        private bool HasRegularSpawnsPending => RegularSpawnCount > 0;
+
+        private bool SpawnEnemy(
+            Vector3 formationOffset,
+            EnemyDataSO forcedData = null,
+            int partyOccupancyId = 0)
         {
-            if (_portalNode == null || _remainingSpawns <= 0)
+            if (_entryNode == null || _remainingSpawns <= 0)
                 return false;
 
-            var spawnPos = (_portalNode.EnemyPosition != null
-                ? _portalNode.EnemyPosition.position
-                : _portalNode.transform.position) + formationOffset;
+            var entryPoint = _entryNode.EntryDoorSpawnPoint != null
+                ? _entryNode.EntryDoorSpawnPoint.position
+                : _entryNode.EnemyPosition.position;
+            var spawnPos = entryPoint + formationOffset;
 
             // 데이터를 먼저 뽑고, 그 데이터 전용 프리팹이 있으면 그것을 스폰(종류↔프리팹 짝 보장).
             // 없으면 기존 방식(공용 프리팹 풀)으로 폴백한다.
             // 보스 웨이브의 첫 스폰은 보스 — 전용 파티가 없어도 풀에서 가장 강한 적을 승격시킨다.
             var isBossSpawn = _isBossWave && !_bossSpawned;
-            var enemyData = isBossSpawn ? ResolveBossData() : ResolveEnemyData();
+            var enemyData = forcedData != null
+                ? forcedData
+                : isBossSpawn ? ResolveBossData() : ResolveEnemyData();
             var prefab = enemyData != null && enemyData.Prefab != null
                 ? enemyData.Prefab
                 : ResolveEnemyPrefab();
@@ -424,8 +636,21 @@ namespace _01.Code.Manager
             Enemy enemy = Instantiate(prefab, spawnPos, Quaternion.identity);
             enemy.DeathStarted += HandleWaveEnemyDeathStarted;
             enemy.Removed += HandleEnemyRemoved;
+            enemy.FacilityGoldSpent += HandleEnemyFacilityGoldSpent;
             enemy.ConfigureData(enemyData);
-            enemy.ApplyWaveLevel(_currentDay, enemyHealthPerLevel, enemyAttackPerLevel);
+            // 날짜가 아니라 등급이 모험가의 성장 단계를 정한다. 웅크린 던전에는 오래 버텨도
+            // 약한 모험가가 오고, 크게 키운 던전에는 이틀 만에도 강한 자가 온다.
+            // 밤 손님은 같은 종류의 약한 파티다(레벨 -1, 보스 제외).
+            var visitorLevel = SpawnPacingRules.VisitorLevel(
+                DungeonGradeRules.ResolveVisitorLevel(_currentGrade), IsNight, isBossSpawn);
+            enemy.ApplyWaveLevel(visitorLevel, enemyHealthPerLevel, enemyAttackPerLevel);
+            var visitorIndex = Mathf.Max(0, _stats.EnemyCount - _remainingSpawns);
+            var purpose = isBossSpawn
+                ? AdventurerVisitPurpose.TreasureHunt
+                : AdventurerVisitRules.ResolvePurpose(enemy.Trait, visitorIndex);
+            enemy.ConfigureVisitProfile(
+                purpose,
+                AdventurerVisitRules.ResolveBudget(_currentGrade, visitorLevel, purpose, enemy.Trait));
             _remainingSpawns--;
 
             if (isBossSpawn)
@@ -437,17 +662,94 @@ namespace _01.Code.Manager
                     _currentBoss != null ? _currentBoss.attackMultiplier : bossAttackMultiplier,
                     _currentBoss != null ? _currentBoss.visualScale : bossVisualScale);
                 enemy.DeathStarted += HandleBossDeathStarted;
+                if (enemy.Health != null)
+                    enemy.Health.Changed += HandleBossHealthChanged;
             }
 
             // Initialize가 mover 위치를 노드 위치로 스냅하므로, 그 전에 대형 오프셋을 넣어야 한다
             if (enemy.Mover != null)
+            {
                 enemy.Mover.FormationOffset = formationOffset;
+                enemy.Mover.InitialSpawnPosition = spawnPos;
+                if (partyOccupancyId > 0)
+                    enemy.Mover.ConfigurePartyOccupancy(partyOccupancyId);
+            }
 
-            enemy.Initialize(_portalNode, costEventChannel, treasuryGoldLoss, nodeEventChannel);
+            enemy.Initialize(_entryNode, costEventChannel, treasuryGoldLoss, nodeEventChannel);
+            EnemyMoodHud.Attach(enemy);
             if (enemy != null)
+            {
                 _activeEnemies.Add(enemy);
+                ApplyPartyTraitSupport(enemy);
+            }
 
             return true;
+        }
+
+        /// <summary>
+        /// 교회에서 관을 되살린다. 같은 파티 번호·레벨·목적으로 그 방에 다시 세우고 체력을 비율만큼 둔다.
+        /// 예산은 0이다 — 돈은 이미 파티 공동 자금에 있다. 다시 쓰러지면 처치로 한 번 더 센다.
+        /// </summary>
+        public Enemy ReviveFromCoffin(
+            EnemyDataSO data, int level, int partyId, AdventurerVisitPurpose purpose, Node atNode, float healthRatio)
+        {
+            if (!_isWaveRunning || data == null || atNode == null)
+                return null;
+
+            var prefab = data.Prefab != null ? data.Prefab : ResolveEnemyPrefab();
+            if (prefab == null)
+                return null;
+
+            var spawnPos = atNode.EnemyPosition != null ? atNode.EnemyPosition.position : atNode.transform.position;
+            Enemy enemy = Instantiate(prefab, spawnPos, Quaternion.identity);
+            enemy.DeathStarted += HandleWaveEnemyDeathStarted;
+            enemy.Removed += HandleEnemyRemoved;
+            enemy.FacilityGoldSpent += HandleEnemyFacilityGoldSpent;
+            enemy.ConfigureData(data);
+            enemy.ApplyWaveLevel(level, enemyHealthPerLevel, enemyAttackPerLevel);
+            enemy.ConfigureVisitProfile(purpose, 0);
+
+            if (enemy.Mover != null)
+            {
+                enemy.Mover.InitialSpawnPosition = spawnPos;
+                enemy.Mover.ConfigurePartyOccupancy(partyId);
+            }
+
+            enemy.Initialize(atNode, costEventChannel, treasuryGoldLoss, nodeEventChannel);
+            enemy.Health?.SetCurrentRatio(healthRatio);
+            EnemyMoodHud.Attach(enemy);
+            _activeEnemies.Add(enemy);
+            _stats.RecordRevival();
+            return enemy;
+        }
+
+        private void ApplyPartyTraitSupport(Enemy spawnedEnemy)
+        {
+            if (spawnedEnemy == null)
+                return;
+
+            var newPriestCalm = AdventurerTraitRules.GetPartyCalmAmount(spawnedEnemy.Trait);
+            if (newPriestCalm > 0)
+            {
+                foreach (var ally in _activeEnemies)
+                {
+                    if (ally != null && ally != spawnedEnemy && ally.IsAlive)
+                        ally.ReduceFear(newPriestCalm);
+                }
+            }
+
+            foreach (var ally in _activeEnemies)
+            {
+                if (ally == null || ally == spawnedEnemy || !ally.IsAlive)
+                    continue;
+
+                var calm = AdventurerTraitRules.GetPartyCalmAmount(ally.Trait);
+                if (calm <= 0)
+                    continue;
+
+                spawnedEnemy.ReduceFear(calm);
+                break;
+            }
         }
 
         private Enemy ResolveEnemyPrefab()
@@ -462,7 +764,7 @@ namespace _01.Code.Manager
                 }
 
                 if (candidates.Count > 0)
-                    return candidates[Random.Range(0, candidates.Count)];
+                    return candidates[_waveRandom.Next(0, candidates.Count)];
             }
             
             return enemyPrefab;
@@ -490,6 +792,22 @@ namespace _01.Code.Manager
                     return;
             }
 
+            var authoredParty = waveConfig != null ? waveConfig.GetWaveForDay(_currentDay)?.party : null;
+            if (authoredParty != null && authoredParty.Members != null)
+            {
+                foreach (var member in authoredParty.Members)
+                {
+                    if (member != null)
+                        _partyQueue.Add(member);
+                }
+
+                if (_partyQueue.Count > 0)
+                {
+                    VaryPartyComposition();
+                    return;
+                }
+            }
+
             if (parties == null || parties.Length == 0)
                 return;
 
@@ -499,23 +817,45 @@ namespace _01.Code.Manager
                 if (party == null || party.Members == null || party.Members.Length == 0)
                     continue;
 
-                // 장악한 마을에서 오는 파티는 그만큼 발길을 끊는다. 완전히 장악하면 더 이상 오지 않는다.
-                var conquest = VillageConquestSystem.Current;
-                if (conquest != null && Random.value < conquest.GetSuppression(party))
-                    continue;
-
                 validParties.Add(party);
             }
 
             if (validParties.Count == 0)
                 return;
 
-            var chosen = validParties[Random.Range(0, validParties.Count)];
+            var chosen = validParties[_waveRandom.Next(0, validParties.Count)];
             foreach (var member in chosen.Members)
             {
                 if (member != null)
                     _partyQueue.Add(member);
             }
+
+            VaryPartyComposition();
+        }
+
+        /// <summary>
+        /// 이번 파티의 인원을 굴린다. 리더는 늘 오고, 나머지는 빠지거나 한 명이 더 붙는다(보스 호위는 그대로).
+        /// </summary>
+        private void VaryPartyComposition()
+        {
+            var isNight = DayManager.Current != null && DayManager.Current.Phase == DayManager.OperationPhase.Night;
+            PartyCompositionRules.Vary(
+                _partyQueue,
+                _waveRandom,
+                PartyCompositionRules.DropChance(isNight),
+                PartyCompositionRules.ExtraChance(_currentGrade, CountOperatingFacilities()));
+        }
+
+        private static int CountOperatingFacilities()
+        {
+            var count = 0;
+            foreach (var node in Node.ActiveNodes)
+            {
+                if (node != null && FacilityEconomyRules.IsOperatingFacility(node.AssignedBuilding))
+                    count++;
+            }
+
+            return count;
         }
 
         /// <summary>보스 데이터 — 그 날 보스 파티의 첫 멤버, 없으면 풀에서 최대 체력 적(승격은 SpawnEnemy가).</summary>
@@ -562,11 +902,14 @@ namespace _01.Code.Manager
                     candidates.Add(enemyData);
             }
 
-            return candidates.Count > 0 ? candidates[Random.Range(0, candidates.Count)] : null;
+            return candidates.Count > 0 ? candidates[_waveRandom.Next(0, candidates.Count)] : null;
         }
 
         private void HandleEnemyRemoved(Enemy enemy)
         {
+            if (enemy != null)
+                enemy.FacilityGoldSpent -= HandleEnemyFacilityGoldSpent;
+
             if (this == null || _isDestroying)
                 return;
 
@@ -574,8 +917,237 @@ namespace _01.Code.Manager
                 return;
 
             _activeEnemies.Remove(enemy);
+            TryActivateBossFinalPhase();
             CompleteWaveIfCleared(false);
         }
+
+        private void HandleEnemyFacilityGoldSpent(Enemy enemy, int amount, int baseAmount, GoldChangeSource source)
+        {
+            if (!_isWaveRunning || enemy == null)
+                return;
+
+            _stats.Exploitation.RecordFacilityGold(amount);
+            if (enemy.Trait == AdventurerTrait.Shopaholic)
+                _stats.RecordShopaholicBonusGold(amount - baseAmount);
+        }
+
+        private void HandleBossHealthChanged(float healthRatio)
+        {
+            if (!_isWaveRunning || _bossReinforcementStarted || _currentBoss == null
+                || !_currentBoss.enableReinforcementPhase
+                || healthRatio > Mathf.Clamp(_currentBoss.reinforcementHealthRatio, 0.1f, 0.9f))
+                return;
+
+            StartBossReinforcements();
+        }
+
+        private void StartBossReinforcements()
+        {
+            if (_bossReinforcementStarted || _reservedReinforcementSpawns <= 0)
+                return;
+
+            var party = _currentBoss?.reinforcementParty;
+            if (party == null || party.Members == null || party.Members.Length == 0)
+            {
+                _reservedReinforcementSpawns = 0;
+                return;
+            }
+
+            _bossReinforcementStarted = true;
+            EnsureBossPresenter().ShowReinforcementBanner(
+                _currentDay,
+                _currentBoss.title,
+                string.IsNullOrWhiteSpace(_currentBoss.reinforcementSubtitle)
+                    ? "두목의 호각에 후열 사냥꾼이 전투에 합류했다"
+                    : _currentBoss.reinforcementSubtitle);
+
+            _reinforcementSpawnCoroutine = StartCoroutine(SpawnBossReinforcements(party));
+        }
+
+        private IEnumerator SpawnBossReinforcements(AdventurerPartySO party)
+        {
+            var count = _reservedReinforcementSpawns;
+            var partyOccupancyId = EnemyMover.CreatePartyOccupancyId();
+            for (var i = 0; i < count; i++)
+            {
+                if (!_isWaveRunning || _entryNode == null)
+                    break;
+
+                var data = party.Members[i % party.Members.Length];
+                if (data != null && SpawnEnemy(FormationOffsetFor(i, count), data, partyOccupancyId))
+                    _reservedReinforcementSpawns--;
+
+                if (memberSpawnDelay > 0f && i < count - 1)
+                    yield return new WaitForSeconds(memberSpawnDelay);
+            }
+
+            // 잘못 비어 있는 멤버가 있어도 보류 수 때문에 웨이브가 영원히 끝나지 않게 한다.
+            _reservedReinforcementSpawns = 0;
+            _reinforcementSpawnCoroutine = null;
+            CompleteWaveIfCleared(false);
+        }
+
+        private void TryActivateBossFinalPhase()
+        {
+            if (!_isBossWave || _bossFinalPhaseStarted || _currentBoss == null
+                || !_currentBoss.enableFinalPhase || _bossEnemy == null || !_bossEnemy.IsAlive
+                || _remainingSpawns > 0)
+                return;
+
+            RemoveMissingEnemies();
+            foreach (var enemy in _activeEnemies)
+            {
+                if (enemy != null && enemy != _bossEnemy && enemy.IsAlive)
+                    return;
+            }
+
+            _bossFinalPhaseStarted = true;
+            _bossEnemy.ActivateBossFinalPhase(
+                _currentBoss.phaseDefensePenalty,
+                _currentBoss.phaseAttackIntervalMultiplier);
+
+            EnsureBossPresenter().ShowRageBanner(
+                _currentDay,
+                _currentBoss.title,
+                string.IsNullOrWhiteSpace(_currentBoss.phaseSubtitle)
+                    ? "호위가 무너지자 공격이 거세지고 방어의 빈틈이 드러났다"
+                    : _currentBoss.phaseSubtitle);
+        }
+
+        private static bool HasRoomUnderConstruction()
+        {
+            foreach (var node in Node.ActiveNodes)
+            {
+                if (node != null && node.IsUnderConstruction)
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>보스가 들어온 뒤 흐른 게임 시간. 제한 시간 판정과 HUD가 본다.</summary>
+        private float _bossElapsed;
+        private bool _bossTreasuryBreached;
+        private int _bossUnitsDowned;
+        private bool _bossDefeatRaised;
+
+        /// <summary>오늘이 보스 날이고 보스가 살아 있으면 HUD에 적을 패배 조건 진행. 아니면 빈 문자열.</summary>
+        public string BossDefeatProgressText => _isBossWave && _currentBoss != null && _bossSpawned && IsBossAlive
+            ? BossDefeatRules.DescribeProgress(
+                _bossElapsed, _currentBoss.timeLimitSeconds, _currentBoss.loseOnTreasuryBreach,
+                _bossUnitsDowned, _currentBoss.loseAfterUnitsDowned)
+            : string.Empty;
+
+        private bool IsBossAlive => _bossEnemy != null && _bossEnemy.IsAlive;
+
+        /// <summary>
+        /// 그날의 보스와 패배 조건. 전날 정산의 예고와 보스 날 준비 화면이 읽는다. 보스 날이 아니면 false.
+        /// </summary>
+        public bool TryGetBossPreview(int day, out string title, out string conditions)
+        {
+            title = string.Empty;
+            conditions = string.Empty;
+            var boss = waveConfig != null && waveConfig.IsBossDay(day) ? waveConfig.GetBossForDay(day) : null;
+            if (boss == null)
+                return false;
+
+            title = string.IsNullOrWhiteSpace(boss.title) ? "보스" : boss.title;
+            conditions = BossDefeatRules.DescribePreview(
+                boss.timeLimitSeconds, boss.loseOnTreasuryBreach, boss.loseAfterUnitsDowned, boss.allowChurchRevival);
+            return true;
+        }
+
+        /// <summary>
+        /// 오늘 교회 부활이 막혔는가. 교회 부활을 끈 보스의 날에는 쓰러진 파티원이 관이 되지 않는다
+        /// (기획서: 교회 부활 가능 여부는 보스 종류별로 다르다).
+        /// </summary>
+        public bool IsChurchRevivalBlocked =>
+            _isWaveRunning && _isBossWave && _currentBoss != null && !_currentBoss.allowChurchRevival;
+
+        /// <summary>보스가 방에 들어왔다. 금고가 있는 방이면 침입으로 본다.</summary>
+        public void ReportBossEnteredRoom(Node node)
+        {
+            if (!_isWaveRunning || node == null || _bossTreasuryBreached)
+                return;
+
+            var hasTreasury = node.Data != null && node.Data.Type == DungeonNodeType.Treasury;
+            foreach (var _ in node.EnumerateTreasuries())
+            {
+                hasTreasury = true;
+                break;
+            }
+
+            if (!hasTreasury)
+                return;
+
+            _bossTreasuryBreached = true;
+            TickBossDefeatConditions(0f);
+        }
+
+        /// <summary>보스가 살아 있는 동안 쓰러진 부하를 센다.</summary>
+        private void HandleUnitDowned(UnitDownedEvent evt)
+        {
+            if (!_isWaveRunning || !_isBossWave || !IsBossAlive)
+                return;
+
+            _bossUnitsDowned++;
+            TickBossDefeatConditions(0f);
+        }
+
+        /// <summary>
+        /// 보스가 살아 있는 동안 시간을 흘리고 패배 조건을 본다. 조건을 채우면 판이 끝난다.
+        /// 게임오버 화면은 다른 패배와 같은 경로(<see cref="GameOverManager"/>)로 띄운다.
+        /// </summary>
+        private void TickBossDefeatConditions(float deltaTime)
+        {
+            if (_bossDefeatRaised || !_isWaveRunning || !_isBossWave || _currentBoss == null || !IsBossAlive)
+                return;
+
+            _bossElapsed += Mathf.Max(0f, deltaTime);
+            var reason = BossDefeatRules.Check(
+                _currentBoss.title,
+                _bossElapsed,
+                _currentBoss.timeLimitSeconds,
+                _bossTreasuryBreached,
+                _currentBoss.loseOnTreasuryBreach,
+                _bossUnitsDowned,
+                _currentBoss.loseAfterUnitsDowned);
+            if (reason == null)
+                return;
+
+            _bossDefeatRaised = true;
+            if (gameOverManager == null)
+                gameOverManager = SceneReferenceFallback.Find<GameOverManager>(this, nameof(gameOverManager));
+            gameOverManager?.TriggerRunDefeat(reason);
+        }
+
+        /// <summary>엘리트·보스가 던전에 남아 있는 동안 플레이어 일시정지를 잠근다.</summary>
+        private void RefreshPauseLock()
+        {
+            var speed = GameSpeedController.Current;
+            if (speed == null)
+                return;
+
+            var lockingBoss = false;
+            var lockingElite = false;
+            foreach (var enemy in _activeEnemies)
+            {
+                if (!PauseLockRules.LocksPause(enemy))
+                    continue;
+
+                if (enemy.IsBoss)
+                    lockingBoss = true;
+                else
+                    lockingElite = true;
+            }
+
+            if (lockingBoss || lockingElite)
+                speed.SetPauseLock(this, true, lockingBoss ? PauseLockRules.BossLockReason : PauseLockRules.EliteLockReason);
+            else
+                speed.SetPauseLock(this, false, null);
+        }
+
+        private void ReleasePauseLock() => GameSpeedController.Current?.SetPauseLock(this, false, null);
 
         private void RemoveMissingEnemies()
         {
@@ -606,8 +1178,10 @@ namespace _01.Code.Manager
             
             _isWaveRunning = false;
             _remainingSpawns = 0;
+            _reservedReinforcementSpawns = 0;
             _activeEnemies.Clear();
-            
+            ReleasePauseLock();
+
             if (stopRunningCoroutine && _waveCoroutine != null)
             {
                 StopCoroutine(_waveCoroutine);
@@ -618,8 +1192,7 @@ namespace _01.Code.Manager
                 _waveCoroutine = null;
             }
 
-            // 잡은 만큼만 받는다. 아래 지급처와 정산 표시가 같은 값을 봐야 하므로 여기서 한 번만 깎는다.
-            _currentClearGoldReward = ResolveClearGoldReward();
+            ResolveObjectiveReward();
 
             // 최종 보스 웨이브 클리어 = 승리 — 보상 패널 대신 승리 패널(시네마틱이 끝난 뒤).
             if (_isFinalWave && !_isGameCleared)
@@ -627,7 +1200,7 @@ namespace _01.Code.Manager
                 _isGameCleared = true;
 
                 if (_currentClearGoldReward > 0)
-                    costEventChannel?.RaiseEvent(new GoldEarnedEvent(_currentClearGoldReward, GoldChangeSource.WaveReward));
+                    costEventChannel?.RaiseEvent(new GoldEarnedEvent(_currentClearGoldReward, GoldChangeSource.Bounty));
 
                 waveEventChannel?.RaiseEvent(new GameClearedEvent(_currentDay));
                 StartCoroutine(ShowVictoryAfterCinematic());
@@ -638,9 +1211,28 @@ namespace _01.Code.Manager
             // 보상 선택 없이 정산으로만 마무리한다.
             // 여기서 발행한 수입은 CostManager가 바로 반영하지 않고 정산 장부에만 쌓인다.
             if (_currentClearGoldReward > 0)
-                costEventChannel?.RaiseEvent(new GoldEarnedEvent(_currentClearGoldReward, GoldChangeSource.WaveReward));
+                costEventChannel?.RaiseEvent(new GoldEarnedEvent(_currentClearGoldReward, GoldChangeSource.Bounty));
 
             RaiseWaveEnded();
+        }
+
+        private void ResolveObjectiveReward()
+        {
+            LastObjectiveTitle = WaveObjectiveRules.GetTitle(SelectedObjective);
+            LastObjectiveCompleted = WaveObjectiveRules.IsCompleted(
+                SelectedObjective,
+                _stats.EnemyCount,
+                _stats.KillCount,
+                _stats.Exploitation.FacilityGold,
+                _stats.TrapDamage,
+                _stats.CriticalHitCount);
+            LastObjectiveRewardGold = LastObjectiveCompleted
+                ? WaveObjectiveRules.GetRewardGold(SelectedObjective)
+                : 0;
+
+            if (LastObjectiveRewardGold > 0)
+                costEventChannel?.RaiseEvent(
+                    new GoldEarnedEvent(LastObjectiveRewardGold, GoldChangeSource.WaveObjective));
         }
 
         private BossWavePresenter EnsureBossPresenter()
@@ -652,11 +1244,16 @@ namespace _01.Code.Manager
         private void HandleBossDeathStarted(Enemy boss)
         {
             if (boss != null)
+            {
                 boss.DeathStarted -= HandleBossDeathStarted;
+                if (boss.Health != null)
+                    boss.Health.Changed -= HandleBossHealthChanged;
+            }
 
             if (this == null || _isDestroying || boss == null)
                 return;
 
+            MetaProfileStore.RecordBossDefeat();
             EnsureBossPresenter().PlayBossDeathCinematic(boss.transform.position);
         }
 
@@ -670,33 +1267,22 @@ namespace _01.Code.Manager
             presenter.ShowVictoryPanel(_currentDay);
         }
 
-        /// <summary>
-        /// 클리어 보상 중 실제로 지급할 몫. 도망친 침입자는 전리품을 남기지 않는다.
-        /// 전액을 주면 쫓아내는 쪽이 잡는 쪽보다 싸게 먹혀서, 겁을 주거나 길을 막아
-        /// 아무도 죽이지 않고 매일 만액을 걷는 편이 최적해가 된다.
-        /// </summary>
-        private int ResolveClearGoldReward()
-        {
-            if (_currentClearGoldReward <= 0)
-                return 0;
-
-            var total = Mathf.Max(0, _waveEnemyCount);
-            if (total <= 0)
-                return _currentClearGoldReward;
-
-            var killed = Mathf.Clamp(_waveKillCount, 0, total);
-            return Mathf.RoundToInt(_currentClearGoldReward * (killed / (float)total));
-        }
-
         private void RaiseWaveEnded()
         {
             if (_isDestroying || waveEventChannel == null)
                 return;
 
+            DungeonGrade?.FinalizeBusinessDay();
             ApplyUnitConditionWear();
             // 웨이브 집계는 다음 웨이브에서 초기화되므로, 판 전체 전과는 여기서 넘겨 둔다.
-            RunSummarySystem.Current?.RecordWave(_waveEnemyCount, _waveKillCount, _waveDamageDealt, _waveDamageTaken, _waveCriticalHitCount);
-            waveEventChannel.RaiseEvent(new WaveEndedEvent(_currentDay, _currentClearGoldReward));
+            RunSummary?.RecordWave(_stats.EnemyCount, _stats.KillCount, _stats.DamageDealt, _stats.DamageTaken, _stats.CriticalHitCount);
+            // 판이 끝나도 남는 기록은 이어하기를 거쳐도 쌓이도록 메타 프로필에 바로 적는다.
+            MetaProfileStore.RecordWaveEnd(_stats.KillCount, CurrentGrade);
+            GameSfxPlayer.Play(GameSfxCue.WaveClear);
+            // 웨이브가 끝나면 다시 짓고 배치하는 시간으로 돌아간다.
+            GameMusicPlayer.Play(MusicCue.Management);
+            waveEventChannel.RaiseEvent(
+                new WaveEndedEvent(_currentDay, _currentClearGoldReward, _stats.EnemyCount, _stats.KillCount));
         }
 
         private void ApplyUnitConditionWear()
@@ -730,12 +1316,8 @@ namespace _01.Code.Manager
 
         private void ResetWaveResults(int enemyCount)
         {
-            _waveEnemyCount = Mathf.Max(0, enemyCount);
-            _waveKillCount = 0;
-            _waveDamageDealt = 0;
-            _waveDamageTaken = 0;
-            _waveCriticalHitCount = 0;
-            _waveTrapDamage = 0;
+            DungeonGrade?.BeginBusinessDay();
+            _stats.Reset(enemyCount);
         }
 
         private void HandleWaveEnemyDeathStarted(Enemy enemy)
@@ -746,9 +1328,13 @@ namespace _01.Code.Manager
             if (!_isWaveRunning)
                 return;
 
-            _waveKillCount++;
-            // 잘 막아낼수록 권능이 붙어 더 개입할 수 있다.
-            DungeonPowerSystem.Current?.RewardKill();
+            _stats.RecordKill();
+
+            // 막아낸 하나가 전리품이 되고, 동시에 이 던전이 위험하다는 소문이 된다.
+            // 벌이와 난이도가 같은 행동에서 나온다 — 잘 막을수록 더 센 자들이 찾아온다.
+            var level = enemy != null ? enemy.Level : 1;
+            _currentClearGoldReward += DungeonGradeRules.ResolveBounty(level);
+            DungeonGrade?.RecordKill();
         }
 
         private void HandleAnyDamage(Health damagedHealth, int damage, bool isCritical)
@@ -758,14 +1344,12 @@ namespace _01.Code.Manager
 
             if (damagedHealth.GetComponentInParent<Enemy>() != null)
             {
-                _waveDamageDealt += damage;
-                if (isCritical)
-                    _waveCriticalHitCount++;
+                _stats.RecordDamageDealt(damage, isCritical);
                 return;
             }
 
             if (damagedHealth.GetComponentInParent<Unit>() != null)
-                _waveDamageTaken += damage;
+                _stats.RecordDamageTaken(damage);
         }
 
 
@@ -783,6 +1367,13 @@ namespace _01.Code.Manager
                 _groupSpawnCoroutine = null;
             }
 
+
+            if (_reinforcementSpawnCoroutine != null)
+            {
+                StopCoroutine(_reinforcementSpawnCoroutine);
+                _reinforcementSpawnCoroutine = null;
+            }
+
             _isWaveRunning = false;
         }
 
@@ -791,6 +1382,7 @@ namespace _01.Code.Manager
         {
             StopRunningWave();
             _remainingSpawns = 0;
+            _reservedReinforcementSpawns = 0;
             _unitConditionWearPending = false;
             _partyQueue.Clear();
             _partyIndex = 0;
@@ -801,7 +1393,11 @@ namespace _01.Code.Manager
         private void ClearEnemyTrackers()
         {
             if (_bossEnemy != null)
+            {
                 _bossEnemy.DeathStarted -= HandleBossDeathStarted;
+                if (_bossEnemy.Health != null)
+                    _bossEnemy.Health.Changed -= HandleBossHealthChanged;
+            }
 
             foreach (var enemy in _activeEnemies)
             {
@@ -810,9 +1406,81 @@ namespace _01.Code.Manager
 
                 enemy.DeathStarted -= HandleWaveEnemyDeathStarted;
                 enemy.Removed -= HandleEnemyRemoved;
+                enemy.FacilityGoldSpent -= HandleEnemyFacilityGoldSpent;
             }
 
             _activeEnemies.Clear();
+            // 영업이 끝나면 남은 관도 치운다. 다음 날까지 끌고 다닐 파티가 없다.
+            PartyCoffin.ClearAll();
+            ReleasePauseLock();
+        }
+
+        /// <summary>
+        /// 한 웨이브에서 누적되는 전투/시설 지표의 단일 소유자.
+        /// 스폰 순서나 Unity 생명주기와 무관한 값은 여기에서만 변경한다.
+        /// </summary>
+        private sealed class WaveRunStats
+        {
+            public int EnemyCount { get; private set; }
+            public int KillCount { get; private set; }
+            public int DamageDealt { get; private set; }
+            public int DamageTaken { get; private set; }
+            public int CriticalHitCount { get; private set; }
+            public int TrapDamage { get; private set; }
+            public int CowardTrapTriggers { get; private set; }
+            public int CowardBonusFear { get; private set; }
+            public int PriestHealingPrevented { get; private set; }
+            public int ShopaholicBonusGold { get; private set; }
+            public WaveExploitationProgress Exploitation { get; } = new();
+
+            public void Reset(int enemyCount)
+            {
+                EnemyCount = Mathf.Max(0, enemyCount);
+                KillCount = 0;
+                Revivals = 0;
+                DamageDealt = 0;
+                DamageTaken = 0;
+                CriticalHitCount = 0;
+                TrapDamage = 0;
+                CowardTrapTriggers = 0;
+                CowardBonusFear = 0;
+                PriestHealingPrevented = 0;
+                ShopaholicBonusGold = 0;
+                Exploitation.Reset();
+            }
+
+            public void RecordKill() => KillCount++;
+
+            /// <summary>교회에서 되살아난 모험가는 새 방문객으로 센다. 다시 쓰러지면 처치도 한 번 더 센다.</summary>
+            public void RecordRevival()
+            {
+                EnemyCount++;
+                Revivals++;
+            }
+
+            public int Revivals { get; private set; }
+
+            public void RecordDamageDealt(int damage, bool isCritical)
+            {
+                DamageDealt += Mathf.Max(0, damage);
+                if (isCritical)
+                    CriticalHitCount++;
+            }
+
+            public void RecordDamageTaken(int damage) => DamageTaken += Mathf.Max(0, damage);
+            public void RecordTrapDamage(int damage) => TrapDamage += Mathf.Max(0, damage);
+
+            public void RecordCowardTrapPressure(int bonusFear)
+            {
+                CowardTrapTriggers++;
+                CowardBonusFear += Mathf.Max(0, bonusFear);
+            }
+
+            public void RecordPriestHealingPrevented(int preventedHealing) =>
+                PriestHealingPrevented += Mathf.Max(0, preventedHealing);
+
+            public void RecordShopaholicBonusGold(int bonusGold) =>
+                ShopaholicBonusGold += Mathf.Max(0, bonusGold);
         }
     }
 }

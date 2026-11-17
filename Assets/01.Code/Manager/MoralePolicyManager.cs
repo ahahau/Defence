@@ -1,10 +1,12 @@
 using System.Collections.Generic;
-using _01.Code.Core;
-using _01.Code.Events;
+using Code.Core;
+using Code.Events;
+using System;
 using UnityEngine;
-using _01.Code.Persistence;
+using Code.Persistence;
+using Random = UnityEngine.Random;
 
-namespace _01.Code.Manager
+namespace Code.Manager
 {
     public class MoralePolicyManager : MonoBehaviour
     {
@@ -15,7 +17,14 @@ namespace _01.Code.Manager
 
         [Header("Morale")]
         [SerializeField, Range(0, 100)] private int initialMorale = 50;
-        [SerializeField, Range(-20, 20)] private int waveClearMoraleDelta = 2;
+        [SerializeField, Range(-20, 20),
+         Tooltip("완전히 막아냈을 때의 민심 변화.")]
+        private int waveClearMoraleDelta = 2;
+
+        [SerializeField, Range(-20, 20),
+         Tooltip("한 명도 못 막았을 때의 민심 변화. 격퇴율에 따라 이 값과 완전 방어 값 사이를 오간다.\n" +
+                 "예전에는 이 축이 없어서, 0/14로 전멸한 날에도 '방어 성공' 보너스가 그대로 붙었다.")]
+        private int waveBreachMoraleDelta = -6;
         [SerializeField, Range(-20, 20)] private int dailyRecoveryDelta = 1;
 
         [Header("Morale Consequences")]
@@ -35,16 +44,97 @@ namespace _01.Code.Manager
         [SerializeField, Min(1)] private int offerIntervalDays = 3;
         [SerializeField] private bool offerAfterWaveEnd = true;
 
+        [SerializeField, Tooltip("두 정책이 동시에 살아 있을 때 따로 붙는 효과. 비어 있으면 조합이 없다.")]
+        private PolicyComboCatalogSO policyCombos;
+
         private readonly List<PolicyDataSO> currentChoices = new();
         private readonly List<PolicyDataSO> selectedPolicies = new();
         private readonly List<ActivePolicy> activePolicies = new();
+        private readonly List<PolicyDataSO> activePolicyBuffer = new();
+        private readonly List<PolicyCombo> activeCombos = new();
 
         private int currentDay;
+        private int _situationDay = -1;
+        private SituationKind _situation;
 
-        public static MoralePolicyManager Current { get; private set; }
+        /// <summary>이번 전환에 판정한 상황 사건. 대화 실행기가 사건 내용을 만들 때 읽는다.</summary>
+        public SituationKind CurrentSituation => _situation;
 
         public int CurrentMorale { get; private set; }
+
+        /// <summary>이 판의 사건 순서(쉬는 시간)와 고른 선택지 기록. 운영 방침과 일차 대화가 함께 쓴다.</summary>
+        public RunEventLedger Events { get; } = new();
+        public event Action<int, int, string> MoraleChanged;
         public IReadOnlyList<PolicyDataSO> CurrentChoices => currentChoices;
+        public event System.Action CombatModifiersChanged;
+
+        /// <summary>제시된 방침이 바뀌었다(새로 제시·공포·넘김). 운영 방침 창이 듣고 열고 닫는다.</summary>
+        public event System.Action ChoicesChanged;
+
+        /// <summary>지금 시행 중인 방침과 남은 일수를 채운다(창 머리의 "시행 중" 칩).</summary>
+        public void CollectActivePolicies(List<KeyValuePair<PolicyDataSO, int>> target)
+        {
+            if (target == null)
+                return;
+
+            target.Clear();
+            foreach (var active in activePolicies)
+            {
+                if (active?.Policy != null)
+                    target.Add(new KeyValuePair<PolicyDataSO, int>(active.Policy, active.RemainingDays));
+            }
+        }
+
+        /// <summary>그 방침이 참여하는 조합(짝이 시행 중인지 포함). 창의 조합 칸이 그린다.</summary>
+        public void CollectCombosFor(PolicyDataSO policy, List<(PolicyCombo combo, PolicyDataSO partner, bool partnerActive)> target)
+        {
+            if (target == null)
+                return;
+
+            target.Clear();
+            if (policy == null || policyCombos == null)
+                return;
+
+            foreach (var combo in policyCombos.Combos)
+            {
+                var partner = combo?.GetPartnerOf(policy);
+                if (partner == null)
+                    continue;
+
+                var partnerActive = false;
+                foreach (var active in activePolicies)
+                {
+                    if (active?.Policy == partner)
+                        partnerActive = true;
+                }
+
+                target.Add((combo, partner, partnerActive));
+            }
+        }
+
+        /// <summary>
+        /// 이번 제시를 고르지 않고 넘긴다. 제시된 방침이 모두 금화 부족으로 잠겼을 때 창이 여는 기본 선택이다
+        /// (<see cref="PolicyChoiceRules.ShouldOfferDecline"/>). 금화·민심은 움직이지 않는다.
+        /// </summary>
+        public void DeclinePolicies()
+        {
+            if (currentChoices.Count == 0)
+                return;
+
+            currentChoices.Clear();
+            ChoicesChanged?.Invoke();
+        }
+
+        /// <summary>지금 성립한 조합. 화면에 무엇이 걸려 있는지 보여 주는 데 쓴다.</summary>
+        public IReadOnlyList<PolicyCombo> ActiveCombos
+        {
+            get { RefreshActiveCombos(); return activeCombos; }
+        }
+
+        public float UnitDamageMultiplier =>
+            Mathf.Max(0.1f, MultiplyActivePolicies(policy => policy.UnitDamageMultiplier) * MultiplyActiveCombos(combo => combo.UnitDamageMultiplier));
+        public int UnitDefenseBonus =>
+            SumActivePolicies(policy => policy.UnitDefenseBonus) + SumActiveCombos(combo => combo.UnitDefenseBonus);
 
         /// <summary>민심 0~100을 0~1로. 곡선을 한 곳에 모아 두어 소비처마다 다르게 해석하지 않게 한다.</summary>
         private float MoraleRatio => Mathf.Clamp01(CurrentMorale / 100f);
@@ -68,28 +158,25 @@ namespace _01.Code.Manager
 
         private void Awake()
         {
-            if (Current != null && Current != this)
-            {
-                Debug.LogError($"Duplicate {nameof(MoralePolicyManager)} detected. Keep exactly one scene instance.", this);
-                enabled = false;
-                return;
-            }
-
-            Current = this;
             CurrentMorale = Mathf.Clamp(initialMorale, 0, 100);
-        }
-
-        private void OnDestroy()
-        {
-            if (Current == this)
-                Current = null;
         }
 
         private void OnEnable()
         {
+            RegisterListeners();
+        }
+
+        private void OnDisable()
+        {
+            UnregisterListeners();
+        }
+
+        private void RegisterListeners()
+        {
             dayEventChannel?.AddListener<DayChangedEvent>(HandleDayChanged);
             waveEventChannel?.AddListener<WaveEndedEvent>(HandleWaveEnded);
             managementEventChannel?.AddListener<MoraleChangeRequestedEvent>(HandleMoraleChangeRequested);
+            costEventChannel?.AddListener<CreditStatusChangedEvent>(HandleDayLedgerClosed);
         }
 
         private void Start()
@@ -97,11 +184,12 @@ namespace _01.Code.Manager
             RaiseMoraleChanged(0, "초기 민심");
         }
 
-        private void OnDisable()
+        private void UnregisterListeners()
         {
             dayEventChannel?.RemoveListener<DayChangedEvent>(HandleDayChanged);
             waveEventChannel?.RemoveListener<WaveEndedEvent>(HandleWaveEnded);
             managementEventChannel?.RemoveListener<MoraleChangeRequestedEvent>(HandleMoraleChangeRequested);
+            costEventChannel?.RemoveListener<CreditStatusChangedEvent>(HandleDayLedgerClosed);
         }
 
         public void SelectPolicy(PolicyDataSO policy)
@@ -109,12 +197,21 @@ namespace _01.Code.Manager
             if (policy == null || !currentChoices.Contains(policy))
                 return;
 
+            // 금화가 모자란 방침은 공포하지 못한다(창도 잠그지만, 다른 경로로 불려도 빚으로 넘어가지 않게).
+            var cost = CostManager.Current;
+            if (cost != null && !PolicyChoiceRules.IsAffordable(policy.GoldDeltaOnSelect, cost.CurrentGold))
+                return;
+
             selectedPolicies.Add(policy);
             currentChoices.Clear();
+            // 고른 방침은 다음에 다시 만나면 지속 효과까지 보여 준다.
+            Events.MarkChosen(RunEventLedger.PolicyKey(policy));
 
             ApplyImmediatePolicyEffect(policy);
             AddActivePolicy(policy);
+            CombatModifiersChanged?.Invoke();
             managementEventChannel?.RaiseEvent(new PolicySelectedEvent(currentDay, policy));
+            ChoicesChanged?.Invoke();
         }
 
         public void OfferPolicies()
@@ -136,7 +233,11 @@ namespace _01.Code.Manager
 
             if (currentChoices.Count > 0)
                 managementEventChannel?.RaiseEvent(new PolicyChoicesOfferedEvent(currentDay, currentChoices));
+            ChoicesChanged?.Invoke();
         }
+
+        /// <summary>제시가 열린 날(창 제목의 일차).</summary>
+        public int OfferDay => currentDay;
 
         private void HandleDayChanged(DayChangedEvent evt)
         {
@@ -151,10 +252,77 @@ namespace _01.Code.Manager
         private void HandleWaveEnded(WaveEndedEvent evt)
         {
             currentDay = evt.Day;
-            ChangeMorale(waveClearMoraleDelta, "방어 성공");
 
-            if (offerAfterWaveEnd && ShouldOfferPolicy())
+            // 격퇴율에 따라 완전 방어와 완전 돌파 사이를 오간다.
+            // 완전히 막으면 예전과 같은 값이라 잘 막던 판의 감각은 그대로다.
+            var clearRate = evt.ClearRate;
+            var delta = Mathf.RoundToInt(Mathf.Lerp(waveBreachMoraleDelta, waveClearMoraleDelta, clearRate));
+            var reason = clearRate >= 1f
+                ? "방어 성공"
+                : $"방어 실패 ({evt.KillCount}/{evt.EnemyCount})";
+            ChangeMorale(delta, reason);
+
+            // 상황 사건은 정산이 끝난 금화·빚을 봐야 해서, 비용 채널이 있으면 정산 마지막 신호
+            // (부채 한도 판정)에서 사건을 고른다. 없으면(테스트 씬 등) 여기서 바로 고른다.
+            if (costEventChannel == null)
+                ResolveTransitionAndOffer(evt.Day);
+        }
+
+        /// <summary>영업 종료 정산의 맨 끝(청산·부채 한도 판정 뒤). 이 전환의 사건을 고른다.</summary>
+        private void HandleDayLedgerClosed(CreditStatusChangedEvent evt)
+        {
+            if (evt.Outcome == Economy.CreditDayEndOutcome.Bankrupt)
+                return;
+
+            ResolveTransitionAndOffer(currentDay);
+        }
+
+        private void ResolveTransitionAndOffer(int day)
+        {
+            // 이 전환의 사건 순서를 먼저 정한다. 대화 이벤트 쪽이 먼저 물어도 같은 판정을 받는다.
+            if (ResolveTransitionEvent(day) == TransitionEventKind.Major)
                 OfferPolicies();
+        }
+
+        /// <summary>
+        /// 이 영업 종료(전환)에 일반 사건(일차 대화)을 띄워도 되는가. 운영 방침이나 상황 사건이 뜨는 전환이면 미룬다.
+        /// 한 전환에 한 번만 판정하고, 같은 날 다시 물으면 같은 답을 준다.
+        /// </summary>
+        public bool TryGrantNormalEvent(int day) => ResolveTransitionEvent(day) == TransitionEventKind.Normal;
+
+        /// <summary>
+        /// 이 전환에 띄울 사건 하나. 청산 위기 → 운영 방침 → 상황 사건 → 일반 사건 순이다.
+        /// 한 전환에 한 번만 판정하고(상황도 그때 정해 둠), 같은 날 다시 물으면 같은 답을 준다.
+        /// </summary>
+        public TransitionEventKind ResolveTransitionEvent(int day)
+        {
+            if (day != _situationDay)
+            {
+                _situationDay = day;
+                _situation = SituationEventRules.Detect(CaptureSituation(day));
+            }
+
+            var urgent = SituationEventRules.IsUrgent(_situation);
+            var major = offerAfterWaveEnd && ShouldOfferPolicyOn(day);
+            var situation = _situation != SituationKind.None && !urgent;
+            return Events.ResolveTransition(day, urgent, major, situation, Random.value);
+        }
+
+        private static SituationSnapshot CaptureSituation(int day)
+        {
+            var cost = CostManager.Current;
+            if (cost == null)
+                return default;
+
+            return new SituationSnapshot(
+                DayManager.IsSettlementDay(day + 1),
+                cost.CurrentGold,
+                cost.WeeklyDue,
+                cost.CurrentDebt,
+                cost.CreditLimit,
+                cost.CreditWarnings,
+                FacilityEconomyRules.CountWornOutFacilities(),
+                FacilityClosureSystem.WornOutRepairCost(1f));
         }
 
         private void HandleMoraleChangeRequested(MoraleChangeRequestedEvent evt)
@@ -162,12 +330,15 @@ namespace _01.Code.Manager
             ChangeMorale(evt.Delta, evt.Reason);
         }
 
-        private bool ShouldOfferPolicy()
+        private bool ShouldOfferPolicy() => ShouldOfferPolicyOn(currentDay);
+
+        /// <summary>그날이 운영 방침(주요 사건)이 뜨는 날인가.</summary>
+        private bool ShouldOfferPolicyOn(int day)
         {
-            if (!autoOfferPolicies)
+            if (!autoOfferPolicies || availablePolicies == null || availablePolicies.Length == 0)
                 return false;
 
-            return offerIntervalDays <= 1 || currentDay % offerIntervalDays == 0;
+            return offerIntervalDays <= 1 || day % offerIntervalDays == 0;
         }
 
         private List<PolicyDataSO> BuildCandidatePolicies()
@@ -199,7 +370,7 @@ namespace _01.Code.Manager
 
         private void AddActivePolicy(PolicyDataSO policy)
         {
-            if (policy.DurationDays <= 0 || policy.DailyMoraleDelta == 0)
+            if (policy.DurationDays <= 0 || (policy.DailyMoraleDelta == 0 && !policy.HasCombatEffect))
                 return;
 
             activePolicies.Add(new ActivePolicy(policy, policy.DurationDays));
@@ -207,6 +378,12 @@ namespace _01.Code.Manager
 
         private void ApplyActivePolicyEffects()
         {
+            // 조합은 정책이 줄어들기 전에 센다. 오늘 하루는 두 정책이 함께 살아 있던 날이므로,
+            // 오늘 만료되는 정책의 조합도 오늘 몫은 받아야 한다.
+            RefreshActiveCombos();
+            var todaysCombos = new List<PolicyCombo>(activeCombos);
+
+            var changed = false;
             for (var i = activePolicies.Count - 1; i >= 0; i--)
             {
                 var activePolicy = activePolicies[i];
@@ -214,9 +391,165 @@ namespace _01.Code.Manager
                 activePolicy.RemainingDays--;
 
                 if (activePolicy.RemainingDays <= 0)
+                {
                     activePolicies.RemoveAt(i);
+                    changed = true;
+                }
             }
+
+            foreach (var combo in todaysCombos)
+            {
+                if (combo != null && combo.DailyMoraleDelta != 0)
+                    ChangeMorale(combo.DailyMoraleDelta, combo.DisplayName);
+            }
+
+            if (changed)
+                CombatModifiersChanged?.Invoke();
         }
+
+        /// <summary>
+        /// 지금 살아 있는 정책으로 성립하는 조합을 다시 센다.
+        /// 매 프레임 읽히는 값이라 할당 없이 버퍼를 재사용한다.
+        /// </summary>
+        private void RefreshActiveCombos()
+        {
+            activeCombos.Clear();
+            if (policyCombos == null || activePolicies.Count < 2)
+                return;
+
+            activePolicyBuffer.Clear();
+            foreach (var active in activePolicies)
+            {
+                if (active?.Policy != null)
+                    activePolicyBuffer.Add(active.Policy);
+            }
+
+            policyCombos.CollectActive(activePolicyBuffer, activeCombos);
+        }
+
+        /// <summary>
+        /// 이 정책이 참여하는 조합 안내. 짝이 지금 돌고 있으면 그렇다고 알려 준다.
+        ///
+        /// 이게 없으면 조합은 우연히 걸리는 보너스일 뿐 선택이 되지 않는다.
+        /// 무엇과 묶이는지 고르는 순간에 보여야 "어제 계엄령을 걸어 뒀으니 오늘은 철벽"이 성립한다.
+        /// </summary>
+        public string DescribeCombosFor(PolicyDataSO policy)
+        {
+            if (policy == null || policyCombos == null)
+                return string.Empty;
+
+            var lines = new List<string>();
+            foreach (var combo in policyCombos.Combos)
+            {
+                var partner = combo?.GetPartnerOf(policy);
+                if (partner == null)
+                    continue;
+
+                var partnerActive = false;
+                foreach (var active in activePolicies)
+                {
+                    if (active?.Policy == partner)
+                        partnerActive = true;
+                }
+
+                var effect = DescribeComboEffect(combo);
+                lines.Add(partnerActive
+                    ? $"<color=#7ADB8A>조합 성립 · {combo.DisplayName}</color>  {effect}"
+                    : $"<color=#9A8B78>조합 · {combo.DisplayName}  ({WithParticle(partner.DisplayName)} 겹칠 때)  {effect}</color>");
+            }
+
+            return lines.Count == 0 ? string.Empty : string.Join("\n", lines);
+        }
+
+        /// <summary>
+        /// 이름 뒤에 붙는 "와/과"를 고른다. 한글 음절의 받침 유무로 갈린다 —
+        /// 고정으로 "와"를 쓰면 "계엄령와"처럼 읽는 사람이 걸리는 문장이 나온다.
+        /// </summary>
+        public static string WithParticle(string noun)
+        {
+            if (string.IsNullOrEmpty(noun))
+                return noun;
+
+            var last = noun[noun.Length - 1];
+            if (last < 0xAC00 || last > 0xD7A3)
+                return noun + "와";
+
+            var hasFinalConsonant = (last - 0xAC00) % 28 != 0;
+            return noun + (hasFinalConsonant ? "과" : "와");
+        }
+
+        /// <summary>조합의 추가 효과 한 줄("공격 +15% · 방어 +3 · 민심 -2/일"). 운영 방침 창도 쓴다.</summary>
+        public static string DescribeComboEffect(PolicyCombo combo)
+        {
+            var parts = new List<string>();
+            if (!Mathf.Approximately(combo.UnitDamageMultiplier, 1f))
+                parts.Add($"공격 {FormatComboPercent(combo.UnitDamageMultiplier)}");
+            if (combo.UnitDefenseBonus != 0)
+                parts.Add($"방어 {(combo.UnitDefenseBonus > 0 ? "+" : string.Empty)}{combo.UnitDefenseBonus}");
+            if (combo.DailyMoraleDelta != 0)
+                parts.Add($"민심 {(combo.DailyMoraleDelta > 0 ? "+" : string.Empty)}{combo.DailyMoraleDelta}/일");
+
+            return parts.Count > 0 ? string.Join(" · ", parts) : string.Empty;
+        }
+
+        private static string FormatComboPercent(float multiplier)
+        {
+            var percent = Mathf.RoundToInt((multiplier - 1f) * 100f);
+            return percent > 0 ? $"+{percent}%" : $"{percent}%";
+        }
+
+        private float MultiplyActiveCombos(System.Func<PolicyCombo, float> selector)
+        {
+            RefreshActiveCombos();
+            var value = 1f;
+            foreach (var combo in activeCombos)
+            {
+                if (combo != null)
+                    value *= selector(combo);
+            }
+
+            return value;
+        }
+
+        private int SumActiveCombos(System.Func<PolicyCombo, int> selector)
+        {
+            RefreshActiveCombos();
+            var value = 0;
+            foreach (var combo in activeCombos)
+            {
+                if (combo != null)
+                    value += selector(combo);
+            }
+
+            return value;
+        }
+
+        private float MultiplyActivePolicies(System.Func<PolicyDataSO, float> selector)
+        {
+            var value = 1f;
+            foreach (var activePolicy in activePolicies)
+            {
+                if (activePolicy?.Policy != null)
+                    value *= selector(activePolicy.Policy);
+            }
+
+            return Mathf.Max(0.1f, value);
+        }
+
+        private int SumActivePolicies(System.Func<PolicyDataSO, int> selector)
+        {
+            var value = 0;
+            foreach (var activePolicy in activePolicies)
+            {
+                if (activePolicy?.Policy != null)
+                    value += selector(activePolicy.Policy);
+            }
+
+            return value;
+        }
+
+        /// <summary>바깥(시작 보정 등)에서 민심을 바꾼다. 0~100을 넘지 않는다.</summary>
+        public void ApplyBonusMorale(int delta, string reason) => ChangeMorale(delta, reason);
 
         private void ChangeMorale(int delta, string reason)
         {
@@ -231,6 +564,7 @@ namespace _01.Code.Manager
         private void RaiseMoraleChanged(int delta, string reason)
         {
             managementEventChannel?.RaiseEvent(new MoraleChangedEvent(CurrentMorale, delta, reason));
+            MoraleChanged?.Invoke(CurrentMorale, delta, reason);
         }
 
         public void CaptureSaveState(SavedPolicyState target)
@@ -239,6 +573,11 @@ namespace _01.Code.Manager
                 return;
             target.selected.Clear();
             target.active.Clear();
+            target.hasEventLedger = true;
+            target.normalEventCooldown = Events.NormalCooldown;
+            target.policyDeferred = Events.PolicyDeferred;
+            target.chosenEventKeys = new List<string>(Events.ChosenKeys);
+            Events.CaptureFollowUps(target);
             foreach (var policy in selectedPolicies)
                 if (policy != null) target.selected.Add(policy.name);
             foreach (var policy in activePolicies)
@@ -253,6 +592,8 @@ namespace _01.Code.Manager
         {
             CurrentMorale = Mathf.Clamp(morale, 0, 100);
             currentDay = Mathf.Max(0, day);
+            _situationDay = -1;
+            _situation = SituationKind.None;
             currentChoices.Clear();
             selectedPolicies.Clear();
             activePolicies.Clear();
@@ -271,8 +612,19 @@ namespace _01.Code.Manager
                         if (policy != null && saved.remainingDays > 0)
                             activePolicies.Add(new ActivePolicy(policy, saved.remainingDays));
                     }
+                Events.Restore(
+                    savedPolicies.chosenEventKeys,
+                    savedPolicies.normalEventCooldown,
+                    savedPolicies.hasEventLedger,
+                    savedPolicies.policyDeferred);
+                Events.RestoreFollowUps(savedPolicies);
+            }
+            else
+            {
+                Events.Restore(null, 0, false);
             }
             RaiseMoraleChanged(0, "저장 불러오기");
+            CombatModifiersChanged?.Invoke();
         }
 
         private PolicyDataSO ResolvePolicy(string key)

@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01dd91c8cfa8fac4997dcf6fb275ff8c, type: 3}
+  m_Name: EnemyBanditSpearmanAnim
+  m_EditorClassIdentifier: DungeonKeeper.Runtime::Code.Entities.CharacterAnimationSetSO
+  idleFrames:
+  - {fileID: 21300000, guid: 98226ca0700824d8cbd9196064bf5952, type: 3}
+  - {fileID: 21300000, guid: 797e88c5aad5c45f4adc81505448a9cb, type: 3}
+  - {fileID: 21300000, guid: fc903bf4dedfd453b85765791d2bb92e, type: 3}
+  - {fileID: 21300000, guid: 9056a4c42bddf46d4b9ccf8b0825f2cd, type: 3}
+  - {fileID: 21300000, guid: d14890409660542dfaa0fff21334a2ab, type: 3}
+  - {fileID: 21300000, guid: 7ea4fa2b609234cecac680ff35004123, type: 3}
+  walkFrames:
+  - {fileID: 21300000, guid: 6ce58f4c894074627b63170ab7c38366, type: 3}
+  - {fileID: 21300000, guid: 6a9927a2ff775470091551a6e5d036ad, type: 3}
+  - {fileID: 21300000, guid: 227affdf8e31048c3ae5bb8cdbe2cac4, type: 3}
+  - {fileID: 21300000, guid: 00ac1fed1bec2488daa5ed9d88fbc381, type: 3}
+  - {fileID: 21300000, guid: 5b94356eb025f4ac7bd84e818acfcfa7, type: 3}
+  - {fileID: 21300000, guid: 7d1238a517a664bacaf7811df7ba6a6f, type: 3}
+  attackFrames:
+  - {fileID: 21300000, guid: e166bd1c9a7ce4610b432758d631719b, type: 3}
+  - {fileID: 21300000, guid: e941de81c440148ea875a83319492d39, type: 3}
+  - {fileID: 21300000, guid: ea1678be845234f1686b8d238d98c797, type: 3}
+  - {fileID: 21300000, guid: bd41c44d6b09a4cb9b53aa2e60ab2b90, type: 3}
+  - {fileID: 21300000, guid: e8368b34ef32b42a6a84e2d1d990de07, type: 3}
+  - {fileID: 21300000, guid: 40d59a899fa004928bce4ec196d46d54, type: 3}
+  defeatedFrames:
+  - {fileID: 21300000, guid: f8b93b1c7a1b1426a8f5f8924f5ca0be, type: 3}
+  - {fileID: 21300000, guid: a9e908f2b1ee348219707189f28e7dd0, type: 3}
+  - {fileID: 21300000, guid: f7bec7a320575479caf98d1f09d472d3, type: 3}
+  - {fileID: 21300000, guid: 2249908280fb7462594660c442dd8446, type: 3}
+  - {fileID: 21300000, guid: db4ee243c10664deea2043651c724eea, type: 3}
+  - {fileID: 21300000, guid: a78e45f7c284640febe62b9f0a682c2c, type: 3}
+  attackAltFrames: []
+  hurtFrames: []
+  idleFramesPerSecond: 8
+  walkFramesPerSecond: 10
+  attackFramesPerSecond: 12
+  defeatedFramesPerSecond: 10
+  hurtFramesPerSecond: 15
+  attackImpactRatio: 0.55
+  projectileFrames: []
+  projectileImpactFrames: []
+  projectileFramesPerSecond: 12

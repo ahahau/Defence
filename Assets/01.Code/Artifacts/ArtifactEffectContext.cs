@@ -1,11 +1,11 @@
 using System.Collections.Generic;
-using _01.Code.Combat;
-using _01.Code.Enemies;
-using _01.Code.MapCreateSystem;
-using _01.Code.Units;
+using Code.Combat;
+using Code.Enemies;
+using Code.MapCreateSystem;
+using Code.Units;
 using UnityEngine;
 
-namespace _01.Code.Artifacts
+namespace Code.Artifacts
 {
     public class ArtifactEffectContext
     {
@@ -28,8 +28,10 @@ namespace _01.Code.Artifacts
             Combatant attacker,
             Combatant target,
             int damage,
-            IReadOnlyList<EnemyMover> enemies)
+            IReadOnlyList<EnemyMover> enemies,
+            IArtifactField field = null)
         {
+            Field = field;
             Artifact = artifact;
             AttackerUnit = attackerUnit;
             AttackerNode = attackerNode;
@@ -45,6 +47,8 @@ namespace _01.Code.Artifacts
         public Combatant Attacker { get; }
         public Combatant Target { get; }
         public IReadOnlyList<EnemyMover> Enemies { get; }
+        /// <summary>스테이지 전장. null이면 구 방 그래프 기준으로 판정한다.</summary>
+        public IArtifactField Field { get; }
         public int Damage { get; set; }
 
         public float AttackerHealthRatio

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace _01.Code.Core
+namespace Code.Core
 {
     /// <summary>맵 배경을 카메라에 맞춰 따라다니게 하고 항상 뷰포트를 덮는 크기로 스케일한다.
     /// 노드 간격/최대 줌이 커져도 배경 밖 빈 화면이 보이지 않는다(원점 고정 배경의 한계 해소).</summary>

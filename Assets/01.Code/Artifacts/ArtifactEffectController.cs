@@ -1,12 +1,12 @@
 using System.Collections.Generic;
-using _01.Code.Core;
-using _01.Code.Enemies;
-using _01.Code.Events;
-using _01.Code.MapCreateSystem;
-using _01.Code.Units;
+using Code.Core;
+using Code.Enemies;
+using Code.Events;
+using Code.MapCreateSystem;
+using Code.Units;
 using UnityEngine;
 
-namespace _01.Code.Artifacts
+namespace Code.Artifacts
 {
     [DefaultExecutionOrder(-1000)]
     public class ArtifactEffectController : MonoBehaviour

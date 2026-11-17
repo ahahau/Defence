@@ -1,46 +1,111 @@
-using _01.Code.MapCreateSystem;
-using _01.Code.Buildings;
-using _01.Code.Manager;
+using Code.MapCreateSystem;
+using Code.Buildings;
+using Code.Manager;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using DG.Tweening;
-using _01.Code.BT;
+using Code.BT;
 using UnityEngine;
 
-namespace _01.Code.Enemies
+namespace Code.Enemies
 {
-    public class EnemyMover : MonoBehaviour
+    public partial class EnemyMover : MonoBehaviour
     {
         [SerializeField] private float moveSpeed = 5f;
-        [SerializeField, Min(0.01f)] private float minMoveDuration = 0.28f;
-        [SerializeField, Min(0.01f)] private float maxMoveDuration = 0.75f;
-        [SerializeField, Min(0f)] private float visualHopHeight = 0.12f;
-        [SerializeField, Min(0f)] private float visualSquashAmount = 0.08f;
-        [SerializeField, Min(0f)] private float visualLeanAngle = 7f;
+
+        /// <summary>피로로 느려지는 배율. 1이면 평소 속도다. 시설에 머문 모험가가 낮춘다.</summary>
+        public float FatigueSpeedMultiplier { get; set; } = 1f;
+
+        /// <summary>모험가 기동성이 주는 이동 속도 배율(<see cref="MobilityRules.SpeedMultiplier"/>).</summary>
+        public float MobilitySpeedMultiplier { get; set; } = 1f;
+
+        [SerializeField, Min(0f), Tooltip("걸음마다 몸이 튀는 높이(월드).")] private float visualHopHeight = 0.12f;
         [SerializeField] private Transform visual;
 
-        private static readonly Dictionary<string, int> _occupiedNodeCounts = new();
+        // 일반 방은 파티 단위로만 점유한다. 같은 파티의 멤버 수는 따로 세야 마지막 멤버가
+        // 떠날 때까지 뒤 파티를 막을 수 있다.
+        private static readonly Dictionary<string, Dictionary<int, int>> _occupiedNodeCounts = new();
+        private static int _nextPartyOccupancyId;
         private static readonly List<EnemyMover> _activeEnemies = new();
         public static IReadOnlyList<EnemyMover> ActiveEnemies => _activeEnemies;
 
         private readonly HashSet<string> _visitedNodes = new();
         private Node _currentNode;
-        private Tween _moveTween;
         private Vector3 _visualStartLocalPosition;
         private Vector3 _visualStartLocalScale;
         private Vector3 _visualStartLocalEulerAngles;
         private bool _isTurning;
         private BattleAgent _battleAgent;
+        private int _partyOccupancyId;
+        private int _blockedNodeWaitTurns = 2;
+        private int _blockedNodeWaitCount;
 
         public Func<Node, bool> NodeArrived { get; set; }
+        /// <summary>
+        /// 다음에 향할 곳을 정한다. null을 돌려주면 목적지 없이 배회한다.
+        ///
+        /// 비워 두면 예전처럼 금고를 향한다 — 목적을 모르는 이동체(보스·테스트)는 침입자로 본다.
+        /// </summary>
+        public Func<Node> RouteGoalResolver { get; set; }
+
+        /// <summary>
+        /// 다음 방 후보(첫 인자)를 목적지(둘째 인자)까지 갈 때 얼마나 고를 만한가. 0보다 큰 값.
+        /// 비워 두면 후보를 고르게 무작위로 뽑는다.
+        /// </summary>
+        public Func<Node, Node, float> RouteWeightResolver { get; set; }
         /// <summary>라인(엣지)에 설치된 건물을 지나갈 때 호출 — 이동 구간 중간(라인 위 건물 위치)에서 발동.</summary>
-        public Action<_01.Code.Buildings.Building> EdgeBuildingPassed { get; set; }
+        public Action<global::Code.Buildings.Building> EdgeBuildingPassed { get; set; }
         /// <summary>파티(그룹) 스폰 시 멤버끼리 겹치지 않도록 노드 기준 위치에 더하는 대형 오프셋.</summary>
         public Vector3 FormationOffset { get; set; }
+        public Vector3? InitialSpawnPosition { get; set; }
         public Node CurrentNode => _currentNode;
         public bool IsMoving => _isTurning;
         public NodeBattlefield CurrentBattlefield => _battleAgent != null ? _battleAgent.Battlefield : null;
+
+        /// <summary>새 스폰 그룹에 붙일, 실행 중 유일한 파티 점유 식별자를 만든다.</summary>
+        public static int CreatePartyOccupancyId()
+        {
+            return ++_nextPartyOccupancyId;
+        }
+
+        /// <summary>같은 그룹의 멤버가 일반 노드를 함께 점유하도록 식별자를 설정한다.</summary>
+        public void ConfigurePartyOccupancy(int partyOccupancyId)
+        {
+            _partyOccupancyId = partyOccupancyId > 0
+                ? partyOccupancyId
+                : CreatePartyOccupancyId();
+
+            // 파티에 처음 붙은(살아 있는) 멤버가 리더다. 리더가 쓰러지면 다음에 붙는 멤버가 이어받는다.
+            ResolvePartyLeader();
+        }
+
+        /// <summary>이 파티원이 파티 리더인가.</summary>
+        public bool IsPartyLeader => _partyOccupancyId > 0 && ResolvePartyLeader() == this;
+
+        // 파티 번호별 리더. 파티원이 리더보다 너무 앞서지 않게 기다리는 데 쓴다.
+        private static readonly Dictionary<int, EnemyMover> _partyLeaders = new();
+        private Enemy _ownerEnemy;
+
+        private static bool IsLeaderAvailable(EnemyMover leader)
+        {
+            if (leader == null || !leader.isActiveAndEnabled
+                || leader._hasEnteredDungeon && leader._currentNode == null)
+                return false;
+
+            return leader._ownerEnemy == null || !leader._ownerEnemy.IsDead && !leader._ownerEnemy.IsReturning;
+        }
+
+        private void Awake()
+        {
+            _ownerEnemy = GetComponent<Enemy>();
+            _battleAgent = GetComponent<BattleAgent>();
+        }
+
+        /// <summary>막힌 일반 노드 앞에서 우회 탐색 전까지 기다릴 이동 턴 수를 설정한다.</summary>
+        public void ConfigureBlockedNodeWaitTurns(int turns)
+        {
+            _blockedNodeWaitTurns = Mathf.Max(1, turns);
+        }
 
         public void Initialize(Node startNode)
         {
@@ -48,23 +113,26 @@ namespace _01.Code.Enemies
             _battleAgent ??= GetComponent<BattleAgent>();
 
             if (_currentNode?.Data != null)
-                VacateNode(_currentNode.Data.Id);
+                VacateNode(_currentNode, PartyOccupancyId);
 
             _currentNode = startNode;
+            _hasEnteredDungeon = true;
             _visitedNodes.Clear();
+            _blockedNodeWaitCount = 0;
 
             if (_currentNode == null)
                 return;
 
             _visitedNodes.Add(_currentNode.Data.Id);
-            OccupyNode(_currentNode.Data.Id);
-            transform.position = GetEnemyPosition(_currentNode);
+            OccupyNode(_currentNode, PartyOccupancyId);
+            transform.position = InitialSpawnPosition ?? GetEnemyPosition(_currentNode);
+            InitialSpawnPosition = null;
             TryEnterBattlefield(_currentNode);
         }
 
         public void TakeTurn()
         {
-            if (_isTurning || _currentNode == null)
+            if (_isTurning || _currentNode == null || IsPartyLeader && !CanLeadParty(false))
                 return;
 
             StartCoroutine(DoTurn());
@@ -73,16 +141,82 @@ namespace _01.Code.Enemies
         public void StopMoving()
         {
             StopAllCoroutines();
-            _moveTween?.Kill();
-            _moveTween = null;
             _isTurning = false;
             _battleAgent?.EndTraversal();
             ResetVisualPose();
         }
 
+        /// <summary>
+        /// 방문을 마친 모험가를 현재 방에서 입구 방까지 되짚어 보낸 뒤 실제 출입문으로 이동시킨다.
+        /// 돌아가는 동안에는 시설·함정·전투를 다시 처리하지 않는다.
+        /// </summary>
+        public void ReturnToExit(Node exitNode, Vector3 exitPosition, Action onComplete)
+        {
+            StopMoving();
+            StartCoroutine(ReturnToExitRoutine(exitNode, exitPosition, onComplete));
+        }
+
+        private IEnumerator ReturnToExitRoutine(Node exitNode, Vector3 exitPosition, Action onComplete)
+        {
+            _isTurning = true;
+            CurrentBattlefield?.Leave(_battleAgent);
+
+            while (_currentNode != null && exitNode != null && _currentNode != exitNode)
+            {
+                var path = NodePathfinder.FindPath(_currentNode, exitNode, node => node.IsPassBlocked);
+                if (path == null || path.Count < 2)
+                    break;
+
+                var nextNode = path[1];
+                var fromNode = _currentNode;
+                if (_currentNode.Data != null)
+                    VacateNode(_currentNode, PartyOccupancyId);
+                if (nextNode.Data != null)
+                    OccupyNode(nextNode, PartyOccupancyId);
+                _currentNode = nextNode;
+                yield return WalkRoute(fromNode, GetEnemyPosition(_currentNode), null);
+            }
+
+            if (_currentNode?.Data != null)
+                VacateNode(_currentNode, PartyOccupancyId);
+            _currentNode = null;
+
+            _walkPoints.Clear();
+            _walkPoints.Add(exitPosition);
+            yield return WalkPath(_walkPoints, -1, null, null);
+            _isTurning = false;
+            onComplete?.Invoke();
+        }
+
         private IEnumerator DoTurn()
         {
             _isTurning = true;
+
+            // 다음 방으로 넘어가기 전에 지금 방을 한 번 어슬렁거린다. 곧장 옆으로 직진하면
+            // 침입자가 아니라 레일 위를 도는 말처럼 보인다.
+            EnemyMover leader = ResolvePartyLeader();
+            if (leader != null && leader != this)
+                yield return FollowSharedExploration(leader);
+            else
+                yield return WanderInsideNode();
+
+            // 동선을 따르던 중 승계했다면 다음 차례에 새 탐색을 공유하고 모두 합류시킨다.
+            if (leader != this && IsPartyLeader)
+            {
+                _isTurning = false;
+                yield break;
+            }
+
+            // 탐색을 먼저 끝낸 리더가 시설 이용·전투·이동 중인 동료를 두고 떠나지 않는다.
+            while (leader == this && IsPartyLeader && !CanLeadParty(true))
+            {
+                if (HasPartyCombat())
+                {
+                    _isTurning = false;
+                    yield break;
+                }
+                yield return null;
+            }
 
             var nextNode = SelectNextNode();
             if (nextNode == null)
@@ -103,10 +237,12 @@ namespace _01.Code.Enemies
 
             _battleAgent?.BeginTraversal();
 
+            var previousNode = _currentNode;
             var previousNodeId = _currentNode.Data.Id;
-            VacateNode(_currentNode.Data.Id);
-            OccupyNode(nextNode.Data.Id);
+            VacateNode(_currentNode, PartyOccupancyId);
+            OccupyNode(nextNode, PartyOccupancyId);
 
+            SharePartyDestination(nextNode);
             _currentNode = nextNode;
             _visitedNodes.Add(_currentNode.Data.Id);
 
@@ -114,74 +250,374 @@ namespace _01.Code.Enemies
             var edge = EdgeLine.FindBetween(previousNodeId, _currentNode.Data.Id);
             var edgeBuilding = edge != null ? edge.InstalledBuilding : null;
 
-            yield return SmoothMove(edgeBuilding);
+            yield return SmoothMove(previousNode, edgeBuilding);
 
             _battleAgent?.EndTraversal();
             _isTurning = false;
             NodeArrived?.Invoke(_currentNode);
         }
 
-        private IEnumerator SmoothMove(_01.Code.Buildings.Building edgeBuilding = null)
+        [Header("Node Wander")]
+        [SerializeField, Range(0f, 1f), Tooltip("다음 방으로 가기 전 방 안을 둘러볼 확률.")]
+        private float wanderChance = 0.55f;
+
+        [SerializeField, Min(0f), Tooltip("둘러보는 거리(월드 단위). 아레나 반지름 안으로 잘린다.")]
+        private float wanderDistance = 1.1f;
+
+        [SerializeField, Min(0),
+         Tooltip("최단 경로보다 이만큼까지 돌아가는 길도 후보로 삼는다. 0이면 늘 최단 경로만 탄다.")]
+        private int detourTolerance = 2;
+
+        /// <summary>
+        /// 방 안을 둘러본다. 방에 처음 들어온 차례에는 늘, 그 뒤에는 <see cref="wanderChance"/>로
+        /// 칸 길을 따라 2~3곳(방 크기만큼)을 들렀다 돌아온다.
+        ///
+        /// 방이 커져(바닥 칸이 예전의 4배) 문에서 문으로 곧장 지나가면 함정 칸을 거의 밟지 않았다.
+        /// 둘러보는 길이 함정 칸을 지나가야 칸 배치와 칸막이로 동선을 모으는 설계가 의미를 가진다.
+        ///
+        /// 싸움이 붙은 방에서는 건너뛴다. 전투 중에 배회하면 전투 연출과 겹쳐 어지럽고,
+        /// 어차피 그 자리에 붙들려 있어야 맞다.
+        /// </summary>
+        private IEnumerator WanderInsideNode()
+        {
+            if (_currentNode == null)
+                yield break;
+
+            PublishExploration();
+            var firstVisit = _exploredNodeId != _currentNode.Data?.Id;
+            if (!firstVisit && (wanderChance <= 0f || UnityEngine.Random.value > wanderChance))
+                yield break;
+
+            var battlefield = CurrentBattlefield;
+            if (battlefield != null && battlefield.PlayerCount > 0)
+                yield break;
+
+            _exploredNodeId = _currentNode.Data?.Id;
+            var grid = _currentNode.TrapGrid;
+            if (grid == null || _currentNode.Layout == null)
+            {
+                yield return WanderStep(battlefield);
+                yield break;
+            }
+
+            var start = transform.position;
+            var from = start;
+            _exploreRoute.Clear();
+            var stops = ExploreStops(_currentNode.Size);
+            for (var i = 0; i < stops; i++)
+            {
+                if (!TryPickExploreCell(grid, out var stop))
+                    break;
+
+                RoomRoute.Inside(_currentNode, from, stop, _route);
+                _exploreRoute.AddRange(_route);
+                from = stop;
+            }
+
+            // 마지막에는 이 방에서 설 자리로 돌아와, 다음 방으로 가는 길이 늘 같은 곳에서 시작한다.
+            RoomRoute.Inside(_currentNode, from, GetEnemyPosition(_currentNode), _route);
+            _exploreRoute.AddRange(_route);
+            if (_exploreRoute.Count == 0)
+                yield break;
+
+            _sharedExploreRoute.Clear();
+            _sharedExploreRoute.AddRange(_exploreRoute);
+            yield return WalkPath(_exploreRoute, -1, null, null, true);
+        }
+
+        /// <summary>방 모양이 없는 방(예전 노드·테스트)의 짧은 어슬렁거림.</summary>
+        private IEnumerator WanderStep(NodeBattlefield battlefield)
+        {
+            var anchor = GetEnemyPosition(_currentNode);
+            var radius = battlefield != null && battlefield.ArenaRadius > 0f
+                ? battlefield.ArenaRadius * 0.6f
+                : wanderDistance;
+
+            var offset = UnityEngine.Random.insideUnitCircle.normalized * Mathf.Min(wanderDistance, radius);
+            _walkPoints.Clear();
+            _walkPoints.Add(anchor + new Vector3(offset.x, offset.y, 0f));
+            _sharedExploreRoute.AddRange(_walkPoints);
+            yield return WalkPath(_walkPoints, -1, null, null, true);
+        }
+
+        /// <summary>둘러볼 곳: 걸을 수 있는 칸 중 무작위 한 곳(지금 칸은 피한다).</summary>
+        private bool TryPickExploreCell(NodeTrapGrid grid, out Vector3 position)
+        {
+            position = default;
+            grid.TryGetCell(transform.position, out var hereColumn, out var hereRow);
+            for (var attempt = 0; attempt < 12; attempt++)
+            {
+                var column = UnityEngine.Random.Range(0, grid.Columns);
+                var row = UnityEngine.Random.Range(0, grid.Rows);
+                if (!grid.IsWalkableCell(column, row) || (column == hereColumn && row == hereRow))
+                    continue;
+
+                position = grid.CellWorldPosition(column, row);
+                position.z = transform.position.z;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static int ExploreStops(RoomSize size) => size switch
+        {
+            RoomSize.Small => 2,
+            RoomSize.Large => 3,
+            _ => UnityEngine.Random.Range(2, 4)
+        };
+
+        /// <summary>걸음 하나의 길이(월드). 이만큼 걸을 때마다 몸이 한 번 작게 튄다.</summary>
+        private const float StepLength = 0.6f;
+
+        private string _exploredNodeId;
+        private readonly List<Vector3> _walkPoints = new();
+        private readonly List<Vector3> _exploreRoute = new();
+
+        /// <summary>경유점 목록. 이동마다 새로 만들지 않는다.</summary>
+        private readonly List<Vector3> _route = new();
+        private readonly List<Vector2Int> _wallPath = new();
+        private readonly List<Vector2Int> _floorPath = new();
+        private readonly RoomFloorMap _floorMap = new();
+
+        private IEnumerator SmoothMove(Node fromNode, global::Code.Buildings.Building edgeBuilding = null)
         {
             var targetPos = GetEnemyPosition(_currentNode);
-            var distance = Vector3.Distance(transform.position, targetPos);
-            var duration = Mathf.Clamp(distance / Mathf.Max(moveSpeed, 0.1f), minMoveDuration, maxMoveDuration);
-            var direction = targetPos - transform.position;
-            FaceMoveDirection(direction);
 
-            _moveTween?.Kill();
+            // 칸막이 때문에 크게 돌아가야 하면 벽 앞까지 가서 부수고, 나머지 길을 이어 간다.
+            // 새 방 안에 들어선 뒤 싸움이 붙으면 줄 자리까지 가지 않고 그 자리에서 전투에 맡긴다.
+            if (TryPlanSmash(fromNode, targetPos, out var smashStand, out var wall))
+            {
+                yield return WalkRoute(fromNode, smashStand, edgeBuilding, true);
+                if (_walkBrokenForCombat)
+                    yield break;
+                yield return SmashPartition(wall);
+                if (_currentNode == null)
+                    yield break;
+
+                yield return WalkRoute(null, targetPos, null, true);
+                yield break;
+            }
+
+            yield return WalkRoute(fromNode, targetPos, edgeBuilding, true);
+        }
+
+        /// <summary>
+        /// 들어갈 방의 문에서 서 있을 자리까지, 칸막이를 돌아가는 길이 벽이 없을 때보다
+        /// <see cref="PartitionRules.SmashDetourCells"/>칸 넘게 길면 부술 벽과 그 앞 자리를 고른다.
+        /// </summary>
+        private bool TryPlanSmash(Node fromNode, Vector3 targetPos, out Vector3 stand, out Partition wall)
+        {
+            stand = default;
+            wall = null;
+            var grid = _currentNode != null ? _currentNode.TrapGrid : null;
+            if (grid == null || !grid.HasWalkBlockers || _ownerEnemy == null && (_ownerEnemy = GetComponent<Enemy>()) == null)
+                return false;
+
+            Vector3 entry;
+            if (fromNode == null || !RoomRoute.TryGetEntry(fromNode, _currentNode, out entry, out _))
+                entry = transform.position;
+
+            if (!grid.TryGetNearestWalkableCell(entry, out var start)
+                || !grid.TryGetCell(targetPos, out var goalColumn, out var goalRow))
+                return false;
+
+            var goal = new Vector2Int(goalColumn, goalRow);
+            _floorMap.Grid = grid;
+            if (!RoomCellPathfinder.TryFindPath(_floorMap, start, goal, _floorPath))
+                return false;
+
+            var detour = RoomCellPathfinder.TryFindPath(grid, start, goal, _wallPath)
+                ? _wallPath.Count - _floorPath.Count
+                : int.MaxValue;
+            if (detour <= PartitionRules.SmashDetourCells)
+                return false;
+
+            for (var i = 1; i < _floorPath.Count; i++)
+            {
+                var cell = _floorPath[i];
+                if (!grid.IsPartitionCell(cell.x, cell.y))
+                    continue;
+
+                wall = grid.BuildingAt(cell.x, cell.y) as Partition;
+                var before = _floorPath[i - 1];
+                stand = grid.CellWorldPosition(before.x, before.y);
+                stand.z = transform.position.z;
+                return wall != null;
+            }
+
+            return false;
+        }
+
+        /// <summary>벽이 무너지거나 모험가가 쓰러지거나, 오래 걸리면 그만둔다. 그 방에 싸울 상대가 오면 멈춘다.</summary>
+        private IEnumerator SmashPartition(Partition wall)
+        {
+            var combatant = GetComponent<Code.Combat.Combatant>();
+            if (wall == null || combatant == null)
+                yield break;
+
+            FaceMoveDirection(wall.transform.position - transform.position);
+            var interval = Mathf.Max(PartitionRules.MinSmashInterval, combatant.AttackInterval);
+            var elapsed = 0f;
+            while (wall != null && !wall.IsDestroyed && elapsed < PartitionRules.MaxSmashSeconds)
+            {
+                if (_ownerEnemy == null || _ownerEnemy.IsDead)
+                    yield break;
+
+                var battlefield = CurrentBattlefield;
+                if (battlefield != null && battlefield.PlayerCount > 0)
+                    yield break;
+
+                yield return new WaitForSeconds(interval);
+                elapsed += interval;
+                if (wall != null && !wall.IsDestroyed)
+                    wall.TakeBuildingDamage(Mathf.Max(1, combatant.AttackDamage));
+            }
+        }
+
+        private IEnumerator WalkRoute(Node fromNode, Vector3 targetPos, global::Code.Buildings.Building edgeBuilding,
+            bool breakForCombat = false)
+        {
+            var start = transform.position;
+            var doorIndex = -1;
+            if (fromNode != null)
+                RoomRoute.Between(fromNode, _currentNode, start, targetPos, _route, out doorIndex);
+            else
+                RoomRoute.Inside(_currentNode, start, targetPos, _route);
+
+            // 문 앞까지 걸어가 잠깐 서서 문을 열고, 문을 지나 다음 방으로 들어간다.
+            _walkPoints.Clear();
+            _walkPoints.AddRange(_route);
+            var doorFrom = fromNode;
+            var doorTo = _currentNode;
+            var pauseAt = doorIndex >= 0 && doorIndex < _walkPoints.Count - 1 ? doorIndex : -1;
+            yield return WalkPath(_walkPoints, pauseAt, () => OpenDoorsBetween(doorFrom, doorTo), edgeBuilding,
+                breakForCombat, fromNode != null);
+        }
+
+        /// <summary>마지막 걸음이 싸움 때문에 중간에 그쳤는지. 그친 뒤 이어지는 걸음(벽 부수기 등)을 건너뛴다.</summary>
+        private bool _walkBrokenForCombat;
+
+        /// <summary>몸이 지금 방(<c>_currentNode</c>)의 걸을 수 있는 바닥 칸 위인지. 방 모양이 없으면 아레나 반경 안인지.</summary>
+        private bool IsOnCurrentRoomFloor()
+        {
+            if (_currentNode == null)
+                return false;
+
+            var grid = _currentNode.TrapGrid;
+            if (grid != null)
+                return grid.TryGetCell(transform.position, out var column, out var row) && grid.IsWalkableCell(column, row);
+
+            var battlefield = CurrentBattlefield;
+            return battlefield != null && battlefield.ArenaRadius > 0f
+                   && Vector2.Distance(transform.position, _currentNode.transform.position) <= battlefield.ArenaRadius;
+        }
+
+        private bool ShouldBreakWalkForCombat(bool crossingRooms, bool passedDoor)
+        {
+            var battlefield = CurrentBattlefield;
+            var hasOpponents = battlefield != null && _battleAgent != null && battlefield.HasOpponents(_battleAgent.Team);
+            return PartyCohesionRules.ShouldBreakWalkForCombat(
+                _ownerEnemy != null && _ownerEnemy.IsReturning,
+                crossingRooms,
+                passedDoor,
+                _ownerEnemy != null && _ownerEnemy.IsInCombat,
+                hasOpponents);
+        }
+
+        /// <summary>
+        /// 경유점을 따라 일정한 속도로 걷는다(게임 시간이라 일시정지 중에는 멈춘다). 구간마다 방향을 바꾸고 걸음마다 작게 튄다.
+        /// <paramref name="pauseAt"/>번 경유점(문 앞)에 닿으면 <paramref name="atPause"/>를 부르고 잠깐 선다.
+        /// 길 절반을 지날 때 라인 건물 통과를 알린다.
+        ///
+        /// 예전에는 DOTween 경로를 거리와 상관없이 정해진 시간(최대 1.5초)에 가감속 곡선으로 끝내, 방 사이는 내달리고
+        /// 방 안은 느리며 미끄러지듯 움직였다. 이동 한 번에 큰 점프·찌그러짐·기울기도 한 번씩 들어갔다.
+        ///
+        /// <paramref name="breakForCombat"/>이면 싸움이 붙는 순간 그만둔다(줄은 전투 전까지만 따른다,
+        /// <see cref="PartyCohesionRules.ShouldBreakWalkForCombat"/>). 방을 옮기는 걸음(<paramref name="crossingRooms"/>)은
+        /// 몸이 새 방 바닥 위에 들어선 뒤에만 그만둔다.
+        /// </summary>
+        private IEnumerator WalkPath(List<Vector3> points, int pauseAt, Action atPause,
+            global::Code.Buildings.Building edgeBuilding, bool breakForCombat = false, bool crossingRooms = false)
+        {
+            _walkBrokenForCombat = false;
             ResetVisualPose();
-
-            var sequence = DOTween.Sequence();
-            sequence.Join(transform.DOMove(targetPos, duration).SetEase(Ease.InOutQuad));
-
-            // 라인 위 건물(중점) 통과 시점(구간의 절반)에 효과 발동.
-            if (edgeBuilding != null)
+            var halfway = RoomRoute.Length(transform.position, points) * 0.5f;
+            var travelled = 0f;
+            var edgeAnnounced = edgeBuilding == null;
+            for (var i = 0; i < points.Count && !_walkBrokenForCombat; i++)
             {
-                var passedBuilding = edgeBuilding;
-                sequence.InsertCallback(duration * 0.5f, () => EdgeBuildingPassed?.Invoke(passedBuilding));
+                var target = points[i];
+                FaceMoveDirection(target - transform.position);
+                while (true)
+                {
+                    // 문 경유점 번호로는 알 수 없다(떠나는 방의 문일 수 있고, 방 사이 길이 길다). 몸이 새 방 바닥 위인지 본다.
+                    if (breakForCombat && ShouldBreakWalkForCombat(crossingRooms, !crossingRooms || IsOnCurrentRoomFloor()))
+                    {
+                        _walkBrokenForCombat = true;
+                        break;
+                    }
+
+                    var here = transform.position;
+                    var remaining = Vector3.Distance(here, target);
+                    var step = PartyWalkSpeed * Time.deltaTime;
+                    if (step >= remaining)
+                    {
+                        transform.position = target;
+                        travelled += remaining;
+                        break;
+                    }
+
+                    transform.position = Vector3.MoveTowards(here, target, step);
+                    travelled += step;
+                    BobVisual(travelled);
+                    if (!edgeAnnounced && travelled >= halfway)
+                    {
+                        edgeAnnounced = true;
+                        EdgeBuildingPassed?.Invoke(edgeBuilding);
+                    }
+
+                    yield return null;
+                }
+
+                if (_walkBrokenForCombat || i != pauseAt)
+                    continue;
+
+                ResetVisualPose();
+                atPause?.Invoke();
+                yield return new WaitForSeconds(DoorPauseSeconds);
             }
 
-            if (visual != null && visualHopHeight > 0f)
-            {
-                sequence.Join(visual.DOLocalMoveY(_visualStartLocalPosition.y + visualHopHeight, duration * 0.5f)
-                    .SetEase(Ease.OutSine)
-                    .SetLoops(2, LoopType.Yoyo));
-            }
+            if (!edgeAnnounced)
+                EdgeBuildingPassed?.Invoke(edgeBuilding);
+            ResetVisualPose();
+        }
 
-            if (visual != null && visualSquashAmount > 0f)
-            {
-                var squashScale = new Vector3(
-                    _visualStartLocalScale.x * (1f + visualSquashAmount),
-                    _visualStartLocalScale.y * (1f - visualSquashAmount),
-                    _visualStartLocalScale.z);
-                var stretchScale = new Vector3(
-                    _visualStartLocalScale.x * (1f - visualSquashAmount * 0.45f),
-                    _visualStartLocalScale.y * (1f + visualSquashAmount * 0.45f),
-                    _visualStartLocalScale.z);
+        /// <summary>어디서나 같은 걸음 속도(사용자 결정). 피로가 늦추고 기동성이 올린다.</summary>
+        private float WalkSpeed => Mathf.Max(0.1f,
+            moveSpeed * Mathf.Clamp(FatigueSpeedMultiplier, 0.1f, 1f) * Mathf.Max(0.1f, MobilitySpeedMultiplier));
 
-                sequence.Insert(0f, visual.DOScale(squashScale, duration * 0.2f).SetEase(Ease.OutSine));
-                sequence.Insert(duration * 0.2f, visual.DOScale(stretchScale, duration * 0.2f).SetEase(Ease.InOutSine));
-                sequence.Insert(duration * 0.42f, visual.DOScale(_visualStartLocalScale, duration * 0.28f).SetEase(Ease.OutBack));
-            }
+        /// <summary>걸은 거리만큼 걸음마다 몸을 작게 튀긴다.</summary>
+        private void BobVisual(float travelled)
+        {
+            if (visual == null || visualHopHeight <= 0f)
+                return;
 
-            if (visual != null && visualLeanAngle > 0f)
-            {
-                var leanDirection = Mathf.Abs(direction.x) > 0.001f
-                    ? -Mathf.Sign(direction.x)
-                    : Mathf.Sign(direction.y);
-                var leanRotation = new Vector3(0f, 0f, visualLeanAngle * leanDirection);
+            var lift = Mathf.Abs(Mathf.Sin(travelled / StepLength * Mathf.PI)) * visualHopHeight;
+            visual.localPosition = _visualStartLocalPosition + new Vector3(0f, lift, 0f);
+        }
 
-                sequence.Join(visual.DOLocalRotate(leanRotation, duration * 0.25f).SetEase(Ease.OutSine));
-                sequence.Insert(duration * 0.55f, visual.DOLocalRotate(Vector3.zero, duration * 0.35f).SetEase(Ease.OutQuad));
-            }
+        /// <summary>문 앞에서 서서 문을 여는 시간(초).</summary>
+        private const float DoorPauseSeconds = 0.18f;
 
-            sequence.OnKill(ResetVisualPose);
-            sequence.OnComplete(ResetVisualPose);
-            _moveTween = sequence
-                .SetLink(gameObject);
+        /// <summary>두 방 사이 복도 양 끝의 문을 연다(그림이 있는 위쪽 문만 실제로 열린다).</summary>
+        private static void OpenDoorsBetween(Node from, Node to)
+        {
+            if (from == null || to == null || !RoomRoute.TryGetSides(from, to, out var fromSide, out var toSide))
+                return;
 
-            yield return _moveTween.WaitForCompletion();
+            from.OpenDoor(fromSide);
+            to.OpenDoor(toSide);
         }
 
         private Node SelectNextNode()
@@ -189,16 +625,35 @@ namespace _01.Code.Enemies
             if (_currentNode?.Data == null)
                 return null;
 
-            // 1순위: A*로 금고까지의 최단 경로를 따라간다(벽 회피).
+            EnemyMover leader = ResolvePartyLeader();
+            if (leader != null && leader != this)
+                return SelectPartyFollowNode(leader);
+
+            // 1순위: A*로 목적지까지의 최단 경로를 따라간다(벽 회피).
+            // 목적지는 저마다 다르다 — 보물을 노린 자는 금고로, 볼일이 있는 모험가는 그 시설로.
             var pathStep = SelectNextNodeByPathfinding(out var waitForPath);
             if (pathStep != null)
+            {
+                _blockedNodeWaitCount = 0;
                 return pathStep;
+            }
 
-            // 경로는 있는데 다음 칸이 붐빔(점유/정원 초과) → 딴 길로 새지 않고 이번 턴 대기(줄서기).
+            // 경로는 있는데 다음 칸이 붐비면 먼저 줄을 선다. 성격·예산별 한도를 넘기면
+            // 아래의 랜덤 배회 폴백으로 넘어가 다른 열린 길을 찾는다.
             if (waitForPath)
-                return null;
+            {
+                _blockedNodeWaitCount++;
+                if (_blockedNodeWaitCount <= _blockedNodeWaitTurns)
+                    return null;
 
-            // 폴백: 금고가 없거나 경로가 완전히 막힌 경우 기존 랜덤 배회(벽 노드는 제외).
+                _blockedNodeWaitCount = 0;
+            }
+            else
+            {
+                _blockedNodeWaitCount = 0;
+            }
+
+            // 폴백: 목적지가 없거나(볼일을 마친 모험가) 경로가 완전히 막힌 경우 랜덤 배회(벽 노드는 제외).
             var unvisitedFree = new List<Node>();
             var visitedFree = new List<Node>();
 
@@ -208,7 +663,7 @@ namespace _01.Code.Enemies
                 if (node == null || node.IsPassBlocked)
                     continue;
 
-                if (IsNodeOccupied(id))
+                if (IsNodeOccupied(node, PartyOccupancyId))
                     continue;
 
                 var battlefield = node.GetComponent<NodeBattlefield>();
@@ -230,14 +685,16 @@ namespace _01.Code.Enemies
             return null;
         }
 
-        /// <summary>A*: 금고 우선, 없으면 핵심부로 가는 최단 경로의 다음 노드.
+        /// <summary>A*: <see cref="RouteGoalResolver"/>가 정한 목적지로 가는 최단 경로의 다음 노드.
         /// 경로 자체가 없으면 null + shouldWait=false(랜덤 배회 폴백),
         /// 경로는 있는데 다음 칸이 점유/정원 초과면 null + shouldWait=true(이번 턴 대기).</summary>
         private Node SelectNextNodeByPathfinding(out bool shouldWait)
         {
             shouldWait = false;
 
-            var goal = IntrusionThreat.FindPriorityTarget(transform.position, out _);
+            var goal = RouteGoalResolver != null
+                ? RouteGoalResolver()
+                : IntrusionThreat.FindPriorityTarget(transform.position, out _);
             if (goal == null || goal == _currentNode)
                 return null;
 
@@ -245,25 +702,97 @@ namespace _01.Code.Enemies
             if (path == null || path.Count < 2)
                 return null;
 
-            var next = path[1];
-            if (next == null)
-                return null;
-
-            if (IsNodeOccupied(next.Data.Id))
+            var candidates = CollectRouteCandidates(goal, path.Count);
+            if (candidates.Count == 0)
             {
+                // 길은 있는데 갈 수 있는 다음 칸이 없다 → 딴 길로 새지 않고 이번 턴은 줄을 선다.
                 shouldWait = true;
                 return null;
             }
 
-            var battlefield = next.GetComponent<NodeBattlefield>();
-            if (battlefield != null && _battleAgent != null && !battlefield.CanEnter(_battleAgent.Team))
-            {
-                shouldWait = true;
-                return null;
-            }
-
-            return next;
+            return PickRouteCandidate(candidates, goal);
         }
+
+        /// <summary>
+        /// 후보 하나를 고른다. 가중치가 있으면 소문·보상에 따라 기울여 뽑고, 없으면 고르게 뽑는다.
+        /// 후보가 하나면 따질 것이 없다.
+        /// </summary>
+        private Node PickRouteCandidate(List<Node> candidates, Node goal)
+        {
+            if (candidates.Count == 1 || RouteWeightResolver == null)
+                return candidates[UnityEngine.Random.Range(0, candidates.Count)];
+
+            _routeWeights.Clear();
+            var total = 0f;
+            foreach (var candidate in candidates)
+            {
+                var weight = Mathf.Max(0f, RouteWeightResolver(candidate, goal));
+                _routeWeights.Add(weight);
+                total += weight;
+            }
+
+            if (total <= 0f)
+                return candidates[UnityEngine.Random.Range(0, candidates.Count)];
+
+            var roll = UnityEngine.Random.value * total;
+            for (var i = 0; i < candidates.Count; i++)
+            {
+                roll -= _routeWeights[i];
+                if (roll <= 0f)
+                    return candidates[i];
+            }
+
+            return candidates[candidates.Count - 1];
+        }
+
+        private readonly List<float> _routeWeights = new();
+
+        /// <summary>
+        /// 갈 만한 다음 칸을 모은다. 최단만 고집하지 않고 조금 돌아가는 길까지 넣는다.
+        ///
+        /// 예전에는 A*가 내놓은 경로의 두 번째 칸을 그대로 썼다. 최단 경로는 하나로 정해지므로
+        /// 모든 침입자가 같은 줄을 따라 지도 한가운데로만 내려왔다. 비슷한 길이의 길을 모아 두고
+        /// 그중 하나를 고르면, 목적지는 그대로면서 지나는 길이 판마다 달라진다.
+        ///
+        /// <see cref="detourTolerance"/>만큼만 봐준다. 이걸 크게 열면 헤매는 것이 아니라
+        /// 길을 잃은 것처럼 보이고, 금고에 닿는 시간이 들쭉날쭉해져 밸런스가 흔들린다.
+        /// </summary>
+        private List<Node> CollectRouteCandidates(Node goal, int bestPathLength)
+        {
+            _routeCandidates.Clear();
+            if (_currentNode?.Data == null)
+                return _routeCandidates;
+
+            foreach (var id in _currentNode.Data.ConnectedNodeIds)
+            {
+                var node = ResolveNodeByDataId(id);
+                if (node == null || node.IsPassBlocked || IsNodeOccupied(node, PartyOccupancyId))
+                    continue;
+
+                var battlefield = node.GetComponent<NodeBattlefield>();
+                if (battlefield != null && _battleAgent != null && !battlefield.CanEnter(_battleAgent.Team))
+                    continue;
+
+                if (node == goal)
+                {
+                    _routeCandidates.Add(node);
+                    continue;
+                }
+
+                var rest = NodePathfinder.FindPath(node, goal, n => n.IsPassBlocked);
+                if (rest == null || rest.Count < 1)
+                    continue;
+
+                if (1 + rest.Count > bestPathLength + detourTolerance)
+                    continue;
+
+                _routeCandidates.Add(node);
+            }
+
+            return _routeCandidates;
+        }
+
+        private readonly List<Node> _routeCandidates = new();
 
         private Node ResolveNodeByDataId(string dataId)
         {
@@ -276,32 +805,82 @@ namespace _01.Code.Enemies
             return null;
         }
 
-        private static bool IsNodeOccupied(string nodeId)
+        /// <summary>같은 파티를 묶는 번호. 방 점유와 파티 공동 자금이 같은 번호를 쓴다.</summary>
+        public int PartyId => PartyOccupancyId;
+
+        private int PartyOccupancyId
+        {
+            get
+            {
+                if (_partyOccupancyId <= 0)
+                    _partyOccupancyId = CreatePartyOccupancyId();
+
+                return _partyOccupancyId;
+            }
+        }
+
+        private static bool IsNodeOccupied(Node node, int partyOccupancyId)
+        {
+            if (node == null || node.HasInstalledBuilding || node.Data == null)
+                return false;
+
+            return IsNodeOccupied(node.Data.Id, partyOccupancyId);
+        }
+
+        private static bool IsNodeOccupied(string nodeId, int partyOccupancyId)
         {
             return !string.IsNullOrEmpty(nodeId)
-                   && _occupiedNodeCounts.TryGetValue(nodeId, out var count)
-                   && count > 0;
+                   && _occupiedNodeCounts.TryGetValue(nodeId, out var parties)
+                   && parties.Count > 0
+                   && !parties.ContainsKey(partyOccupancyId);
         }
 
-        private static void OccupyNode(string nodeId)
+        private static void OccupyNode(string nodeId, int partyOccupancyId)
         {
-            if (string.IsNullOrEmpty(nodeId))
+            if (string.IsNullOrEmpty(nodeId) || partyOccupancyId <= 0)
                 return;
 
-            _occupiedNodeCounts.TryGetValue(nodeId, out var count);
-            _occupiedNodeCounts[nodeId] = count + 1;
+            if (!_occupiedNodeCounts.TryGetValue(nodeId, out var parties))
+            {
+                parties = new Dictionary<int, int>();
+                _occupiedNodeCounts.Add(nodeId, parties);
+            }
+
+            parties.TryGetValue(partyOccupancyId, out var memberCount);
+            parties[partyOccupancyId] = memberCount + 1;
         }
 
-        private static void VacateNode(string nodeId)
+        private static void OccupyNode(Node node, int partyOccupancyId)
+        {
+            if (node == null || node.HasInstalledBuilding || node.Data == null)
+                return;
+
+            OccupyNode(node.Data.Id, partyOccupancyId);
+        }
+
+        private static void VacateNode(string nodeId, int partyOccupancyId)
         {
             if (string.IsNullOrEmpty(nodeId)
-                || !_occupiedNodeCounts.TryGetValue(nodeId, out var count))
+                || partyOccupancyId <= 0
+                || !_occupiedNodeCounts.TryGetValue(nodeId, out var parties)
+                || !parties.TryGetValue(partyOccupancyId, out var memberCount))
                 return;
 
-            if (count <= 1)
-                _occupiedNodeCounts.Remove(nodeId);
+            if (memberCount <= 1)
+                parties.Remove(partyOccupancyId);
             else
-                _occupiedNodeCounts[nodeId] = count - 1;
+                parties[partyOccupancyId] = memberCount - 1;
+
+            if (parties.Count == 0)
+                _occupiedNodeCounts.Remove(nodeId);
+        }
+
+        private static void VacateNode(Node node, int partyOccupancyId)
+        {
+            if (node == null || node.HasInstalledBuilding || node.Data == null)
+                return;
+
+            VacateNode(node.Data.Id, partyOccupancyId);
         }
 
         private Vector3 GetEnemyPosition(Node node)
@@ -309,8 +888,52 @@ namespace _01.Code.Enemies
             var basePosition = node.EnemyPosition != null
                 ? node.EnemyPosition.position
                 : node.transform.position;
-            return basePosition + FormationOffset;
+            return SnapToWalkable(node, basePosition + FormationOffset + ResolveNodeScatter(node));
         }
+
+        /// <summary>기둥·칸막이 벽·깎인 모서리 위에 서지 않게 가장 가까운 걸을 수 있는 칸으로 옮긴다.</summary>
+        private static Vector3 SnapToWalkable(Node node, Vector3 position)
+        {
+            var grid = node != null ? node.TrapGrid : null;
+            if (grid == null || grid.IsWalkableWorld(position) || !grid.TryGetNearestWalkableCell(position, out var cell))
+                return position;
+
+            var snapped = grid.CellWorldPosition(cell.x, cell.y);
+            return new Vector3(snapped.x, snapped.y, position.z);
+        }
+
+        /// <summary>
+        /// 이 침입자가 이 방에서 설 자리. 방마다 다르게, 그러나 같은 방 안에서는 늘 같게.
+        ///
+        /// <see cref="FormationOffset"/>은 스폰할 때 한 번 정해지고 죽을 때까지 바뀌지 않는다.
+        /// 그래서 모든 침입자가 방마다 똑같은 상대 위치에 서고, 결과적으로 지도 한가운데를
+        /// 일렬로 지나가는 것처럼 보였다. 방이 바뀔 때마다 자리를 새로 뽑아 흩어 놓는다.
+        ///
+        /// 매번 새로 뽑으면 안 된다 — 이동 목표를 정할 때와 도착한 뒤에 다른 자리가 나오면
+        /// 침입자가 제자리에서 떠는 것처럼 보인다. 그래서 방이 바뀔 때만 다시 뽑아 들고 있는다.
+        /// </summary>
+        private Vector3 ResolveNodeScatter(Node node)
+        {
+            var nodeId = node != null && node.Data != null ? node.Data.Id : null;
+            if (string.IsNullOrEmpty(nodeId) || HasPartyCompanions())
+                return Vector3.zero;
+
+            if (nodeId == _scatterNodeId)
+                return _nodeScatter;
+
+            var battlefield = node.GetComponent<NodeBattlefield>();
+            var radius = battlefield != null && battlefield.ArenaRadius > 0f
+                ? battlefield.ArenaRadius * 0.55f
+                : wanderDistance;
+
+            var offset = UnityEngine.Random.insideUnitCircle * radius;
+            _nodeScatter = new Vector3(offset.x, offset.y, 0f);
+            _scatterNodeId = nodeId;
+            return _nodeScatter;
+        }
+
+        private string _scatterNodeId;
+        private Vector3 _nodeScatter;
 
         private void TryEnterBattlefield(Node node)
         {
@@ -354,13 +977,13 @@ namespace _01.Code.Enemies
         private void OnDestroy()
         {
             _activeEnemies.Remove(this);
+            if (_partyOccupancyId > 0 && _partyLeaders.TryGetValue(_partyOccupancyId, out var leader) && leader == this)
+                _partyLeaders.Remove(_partyOccupancyId);
 
             if (_currentNode?.Data != null)
-                VacateNode(_currentNode.Data.Id);
+                VacateNode(_currentNode, PartyOccupancyId);
 
             CurrentBattlefield?.Leave(_battleAgent);
-
-            _moveTween?.Kill();
         }
 
         private void OnEnable()

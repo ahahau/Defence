@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace _01.Code.Dialogue
+namespace Code.Dialogue
 {
     [CreateAssetMenu(menuName = "SO/Dialogue/Value Table", fileName = "DialogueValueTable", order = 1)]
     public class DialogueValueTableSO : ScriptableObject

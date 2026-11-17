@@ -92,7 +92,7 @@ MonoBehaviour:
   - rid: 5910678155460870240
   - rid: 5910678155460870289
   - rid: 5910678155460870319
-  m_VersionTimestamp: 639180068797544731
+  m_VersionTimestamp: 639264817183392839
   m_SerializedVersion: 3
   m_DebugInfo: {fileID: 2259732520346266456}
   m_RuntimeGraph: {fileID: 4253047209375283788}
@@ -106,8 +106,7 @@ MonoBehaviour:
   m_NodeModelsInfo:
   - Name: On Start
     Story: 
-    RuntimeTypeString: Unity.Behavior.Start, Unity.Behavior, Version=0.0.0.0, Culture=neutral,
-      PublicKeyToken=null
+    RuntimeTypeString: Unity.Behavior.Start, Unity.Behavior, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
     RuntimeTypeID:
       m_Value0: 3335272451348827663
       m_Value1: 11549843281177505721
@@ -116,8 +115,7 @@ MonoBehaviour:
     IsPlaceholder: 0
   - Name: Try In Order
     Story: 
-    RuntimeTypeString: Unity.Behavior.SelectorComposite, Unity.Behavior, Version=0.0.0.0,
-      Culture=neutral, PublicKeyToken=null
+    RuntimeTypeString: Unity.Behavior.SelectorComposite, Unity.Behavior, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
     RuntimeTypeID:
       m_Value0: 11477120919463386923
       m_Value1: 7730102824742023565
@@ -126,8 +124,7 @@ MonoBehaviour:
     IsPlaceholder: 0
   - Name: Conditional Guard (Modifier)
     Story: 
-    RuntimeTypeString: Unity.Behavior.ConditionalGuardModifier, Unity.Behavior, Version=0.0.0.0,
-      Culture=neutral, PublicKeyToken=null
+    RuntimeTypeString: Unity.Behavior.ConditionalGuardModifier, Unity.Behavior, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
     RuntimeTypeID:
       m_Value0: 3048858705937822632
       m_Value1: 3282115049331433116
@@ -136,46 +133,39 @@ MonoBehaviour:
     IsPlaceholder: 0
   - Name: Support Heal
     Story: '[Agent] heals an ally'
-    RuntimeTypeString: _01.Code.BT.SupportHealAction, Assembly-CSharp, Version=0.0.0.0,
-      Culture=neutral, PublicKeyToken=null
+    RuntimeTypeString: Code.BT.SupportHealAction, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
     RuntimeTypeID:
       m_Value0: 11612271084278625504
       m_Value1: 5334939760879226575
     Variables:
     - Name: Agent
       Type:
-        m_SerializableType: _01.Code.BT.BattleAgent, Assembly-CSharp, Version=0.0.0.0,
-          Culture=neutral, PublicKeyToken=null
+        m_SerializableType: Code.BT.BattleAgent, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
       Tooltip: 
     NamedChildren: []
     IsPlaceholder: 0
   - Name: Engage Target
     Story: '[Agent] engages the enemy'
-    RuntimeTypeString: _01.Code.BT.Actions.EngageTargetAction, Assembly-CSharp, Version=0.0.0.0,
-      Culture=neutral, PublicKeyToken=null
+    RuntimeTypeString: Code.BT.Actions.EngageTargetAction, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
     RuntimeTypeID:
       m_Value0: 597952012063205811
       m_Value1: 9515586341754431145
     Variables:
     - Name: Agent
       Type:
-        m_SerializableType: _01.Code.BT.BattleAgent, Assembly-CSharp, Version=0.0.0.0,
-          Culture=neutral, PublicKeyToken=null
+        m_SerializableType: Code.BT.BattleAgent, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
       Tooltip: 
     - Name: Priority
       Type:
-        m_SerializableType: _01.Code.BT.TargetPriority, Assembly-CSharp, Version=0.0.0.0,
-          Culture=neutral, PublicKeyToken=null
+        m_SerializableType: Code.BT.TargetPriority, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
       Tooltip: 
     - Name: VariedMovement
       Type:
-        m_SerializableType: System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral,
-          PublicKeyToken=b77a5c561934e089
+        m_SerializableType: System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
       Tooltip: 
     - Name: SwitchTargets
       Type:
-        m_SerializableType: System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral,
-          PublicKeyToken=b77a5c561934e089
+        m_SerializableType: System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
       Tooltip: 
     NamedChildren: []
     IsPlaceholder: 0
@@ -189,8 +179,8 @@ MonoBehaviour:
   m_HasMissingTypeInManagedRef: 0
   m_EnumDependencyCache:
     Entries:
-    - EnumTypeId: _01.Code.BT.TargetPriority, Assembly-CSharp
-      SignatureHash: 09eaa0466245db7b4f65c3838022695f
+    - EnumTypeId: Code.BT.TargetPriority, DungeonKeeper.Runtime
+      SignatureHash: a4ff55b0138935d7ca494631154a3384
   references:
     version: 2
     RefIds:
@@ -207,8 +197,7 @@ MonoBehaviour:
         PortModels:
         - rid: 5910678149043847268
         NodeType:
-          m_SerializableType: Unity.Behavior.Start, Unity.Behavior, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Unity.Behavior.Start, Unity.Behavior, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         NodeTypeID:
           m_Value0: 3335272451348827663
           m_Value1: 11549843281177505721
@@ -237,8 +226,7 @@ MonoBehaviour:
         - rid: 5910678153497411700
         - rid: 5910678153497411701
         NodeType:
-          m_SerializableType: Unity.Behavior.SelectorComposite, Unity.Behavior, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Unity.Behavior.SelectorComposite, Unity.Behavior, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         NodeTypeID:
           m_Value0: 11477120919463386923
           m_Value1: 7730102824742023565
@@ -278,8 +266,7 @@ MonoBehaviour:
         - rid: 5910678153497411706
         - rid: 5910678153497411707
         NodeType:
-          m_SerializableType: Unity.Behavior.ConditionalGuardModifier, Unity.Behavior,
-            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Unity.Behavior.ConditionalGuardModifier, Unity.Behavior, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         NodeTypeID:
           m_Value0: 3048858705937822632
           m_Value1: 3282115049331433116
@@ -314,8 +301,7 @@ MonoBehaviour:
       type: {class: ConditionModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
       data:
         ConditionType:
-          m_SerializableType: _01.Code.BT.IsRoleCondition, Assembly-CSharp, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.IsRoleCondition, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         ConditionTypeID:
           m_Value0: 11195669280447656648
           m_Value1: 2501575115582352557
@@ -331,8 +317,7 @@ MonoBehaviour:
       data:
         FieldName: Agent
         Type:
-          m_SerializableType: _01.Code.BT.BattleAgent, Assembly-CSharp, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.BattleAgent, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         LocalValue:
           rid: 5910678153497411715
         LinkedVariable:
@@ -342,14 +327,13 @@ MonoBehaviour:
       data:
         FieldName: Role
         Type:
-          m_SerializableType: _01.Code.BT.BattleRole, Assembly-CSharp, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.BattleRole, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         LocalValue:
           rid: 5910678153497411716
         LinkedVariable:
           rid: -2
     - rid: 5910678153497411715
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.BattleAgent, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      type: {class: 'BlackboardVariable`1[[Code.BT.BattleAgent, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -357,7 +341,7 @@ MonoBehaviour:
         Name: 
         m_Value: {fileID: 0}
     - rid: 5910678153497411716
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.BattleRole, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      type: {class: 'BlackboardVariable`1[[Code.BT.BattleRole, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -386,8 +370,7 @@ MonoBehaviour:
         - rid: 5910678153497411737
         - rid: 5910678153497411738
         NodeType:
-          m_SerializableType: Unity.Behavior.ConditionalGuardModifier, Unity.Behavior,
-            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Unity.Behavior.ConditionalGuardModifier, Unity.Behavior, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         NodeTypeID:
           m_Value0: 3048858705937822632
           m_Value1: 3282115049331433116
@@ -422,8 +405,7 @@ MonoBehaviour:
       type: {class: ConditionModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
       data:
         ConditionType:
-          m_SerializableType: _01.Code.BT.IsRoleCondition, Assembly-CSharp, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.IsRoleCondition, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         ConditionTypeID:
           m_Value0: 11195669280447656648
           m_Value1: 2501575115582352557
@@ -439,8 +421,7 @@ MonoBehaviour:
       data:
         FieldName: Agent
         Type:
-          m_SerializableType: _01.Code.BT.BattleAgent, Assembly-CSharp, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.BattleAgent, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         LocalValue:
           rid: 5910678153497411742
         LinkedVariable:
@@ -450,14 +431,13 @@ MonoBehaviour:
       data:
         FieldName: Role
         Type:
-          m_SerializableType: _01.Code.BT.BattleRole, Assembly-CSharp, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.BattleRole, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         LocalValue:
           rid: 5910678153497411743
         LinkedVariable:
           rid: -2
     - rid: 5910678153497411742
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.BattleAgent, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      type: {class: 'BlackboardVariable`1[[Code.BT.BattleAgent, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -465,7 +445,7 @@ MonoBehaviour:
         Name: 
         m_Value: {fileID: 0}
     - rid: 5910678153497411743
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.BattleRole, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      type: {class: 'BlackboardVariable`1[[Code.BT.BattleRole, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -484,8 +464,7 @@ MonoBehaviour:
         - rid: 5910678153497411750
         - rid: 5910678153497411751
         NodeType:
-          m_SerializableType: Unity.Behavior.ConditionalGuardModifier, Unity.Behavior,
-            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Unity.Behavior.ConditionalGuardModifier, Unity.Behavior, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         NodeTypeID:
           m_Value0: 3048858705937822632
           m_Value1: 3282115049331433116
@@ -520,8 +499,7 @@ MonoBehaviour:
       type: {class: ConditionModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
       data:
         ConditionType:
-          m_SerializableType: _01.Code.BT.IsRoleCondition, Assembly-CSharp, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.IsRoleCondition, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         ConditionTypeID:
           m_Value0: 11195669280447656648
           m_Value1: 2501575115582352557
@@ -537,8 +515,7 @@ MonoBehaviour:
       data:
         FieldName: Agent
         Type:
-          m_SerializableType: _01.Code.BT.BattleAgent, Assembly-CSharp, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.BattleAgent, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         LocalValue:
           rid: 5910678153497411755
         LinkedVariable:
@@ -548,14 +525,13 @@ MonoBehaviour:
       data:
         FieldName: Role
         Type:
-          m_SerializableType: _01.Code.BT.BattleRole, Assembly-CSharp, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.BattleRole, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         LocalValue:
           rid: 5910678153497411756
         LinkedVariable:
           rid: -2
     - rid: 5910678153497411755
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.BattleAgent, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      type: {class: 'BlackboardVariable`1[[Code.BT.BattleAgent, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -563,7 +539,7 @@ MonoBehaviour:
         Name: 
         m_Value: {fileID: 0}
     - rid: 5910678153497411756
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.BattleRole, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      type: {class: 'BlackboardVariable`1[[Code.BT.BattleRole, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -582,8 +558,7 @@ MonoBehaviour:
         - rid: 5910678153497411763
         - rid: 5910678153497411764
         NodeType:
-          m_SerializableType: Unity.Behavior.ConditionalGuardModifier, Unity.Behavior,
-            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Unity.Behavior.ConditionalGuardModifier, Unity.Behavior, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         NodeTypeID:
           m_Value0: 3048858705937822632
           m_Value1: 3282115049331433116
@@ -618,8 +593,7 @@ MonoBehaviour:
       type: {class: ConditionModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
       data:
         ConditionType:
-          m_SerializableType: _01.Code.BT.IsRoleCondition, Assembly-CSharp, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.IsRoleCondition, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         ConditionTypeID:
           m_Value0: 11195669280447656648
           m_Value1: 2501575115582352557
@@ -635,8 +609,7 @@ MonoBehaviour:
       data:
         FieldName: Agent
         Type:
-          m_SerializableType: _01.Code.BT.BattleAgent, Assembly-CSharp, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.BattleAgent, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         LocalValue:
           rid: 5910678153497411768
         LinkedVariable:
@@ -646,14 +619,13 @@ MonoBehaviour:
       data:
         FieldName: Role
         Type:
-          m_SerializableType: _01.Code.BT.BattleRole, Assembly-CSharp, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.BattleRole, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         LocalValue:
           rid: 5910678153497411769
         LinkedVariable:
           rid: -2
     - rid: 5910678153497411768
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.BattleAgent, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      type: {class: 'BlackboardVariable`1[[Code.BT.BattleAgent, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -661,7 +633,7 @@ MonoBehaviour:
         Name: 
         m_Value: {fileID: 0}
     - rid: 5910678153497411769
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.BattleRole, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      type: {class: 'BlackboardVariable`1[[Code.BT.BattleRole, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -680,8 +652,7 @@ MonoBehaviour:
         - rid: 5910678154635117518
         - rid: 5910678154635117519
         NodeType:
-          m_SerializableType: _01.Code.BT.SupportHealAction, Assembly-CSharp, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.SupportHealAction, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         NodeTypeID:
           m_Value0: 11612271084278625504
           m_Value1: 5334939760879226575
@@ -711,14 +682,13 @@ MonoBehaviour:
       data:
         FieldName: Agent
         Type:
-          m_SerializableType: _01.Code.BT.BattleAgent, Assembly-CSharp, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.BattleAgent, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         LocalValue:
           rid: 5910678154635117521
         LinkedVariable:
           rid: 5910678154635117538
     - rid: 5910678154635117521
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.BattleAgent, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      type: {class: 'BlackboardVariable`1[[Code.BT.BattleAgent, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -747,8 +717,7 @@ MonoBehaviour:
         - rid: 5910678154635117557
         - rid: 5910678154635117558
         NodeType:
-          m_SerializableType: _01.Code.BT.Actions.EngageTargetAction, Assembly-CSharp,
-            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.Actions.EngageTargetAction, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         NodeTypeID:
           m_Value0: 597952012063205811
           m_Value1: 9515586341754431145
@@ -781,8 +750,7 @@ MonoBehaviour:
       data:
         FieldName: Agent
         Type:
-          m_SerializableType: _01.Code.BT.BattleAgent, Assembly-CSharp, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.BattleAgent, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         LocalValue:
           rid: 5910678154635117561
         LinkedVariable:
@@ -792,14 +760,13 @@ MonoBehaviour:
       data:
         FieldName: Priority
         Type:
-          m_SerializableType: _01.Code.BT.TargetPriority, Assembly-CSharp, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.TargetPriority, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         LocalValue:
           rid: 5910678154635117562
         LinkedVariable:
           rid: -2
     - rid: 5910678154635117561
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.BattleAgent, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      type: {class: 'BlackboardVariable`1[[Code.BT.BattleAgent, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -807,7 +774,7 @@ MonoBehaviour:
         Name: 
         m_Value: {fileID: 0}
     - rid: 5910678154635117562
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.TargetPriority, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      type: {class: 'BlackboardVariable`1[[Code.BT.TargetPriority, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -826,8 +793,7 @@ MonoBehaviour:
         - rid: 5910678155460870186
         - rid: 5910678155460870187
         NodeType:
-          m_SerializableType: Unity.Behavior.SelectorComposite, Unity.Behavior, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Unity.Behavior.SelectorComposite, Unity.Behavior, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         NodeTypeID:
           m_Value0: 11477120919463386923
           m_Value1: 7730102824742023565
@@ -865,8 +831,7 @@ MonoBehaviour:
         - rid: 5910678155460870241
         - rid: 5910678155460870242
         NodeType:
-          m_SerializableType: _01.Code.BT.Actions.EngageTargetAction, Assembly-CSharp,
-            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.Actions.EngageTargetAction, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         NodeTypeID:
           m_Value0: 597952012063205811
           m_Value1: 9515586341754431145
@@ -899,8 +864,7 @@ MonoBehaviour:
       data:
         FieldName: Agent
         Type:
-          m_SerializableType: _01.Code.BT.BattleAgent, Assembly-CSharp, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.BattleAgent, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         LocalValue:
           rid: 5910678155460870245
         LinkedVariable:
@@ -910,14 +874,13 @@ MonoBehaviour:
       data:
         FieldName: Priority
         Type:
-          m_SerializableType: _01.Code.BT.TargetPriority, Assembly-CSharp, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.TargetPriority, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         LocalValue:
           rid: 5910678155460870246
         LinkedVariable:
           rid: -2
     - rid: 5910678155460870245
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.BattleAgent, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      type: {class: 'BlackboardVariable`1[[Code.BT.BattleAgent, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -925,7 +888,7 @@ MonoBehaviour:
         Name: 
         m_Value: {fileID: 0}
     - rid: 5910678155460870246
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.TargetPriority, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      type: {class: 'BlackboardVariable`1[[Code.BT.TargetPriority, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -944,8 +907,7 @@ MonoBehaviour:
         - rid: 5910678155460870290
         - rid: 5910678155460870291
         NodeType:
-          m_SerializableType: _01.Code.BT.Actions.EngageTargetAction, Assembly-CSharp,
-            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.Actions.EngageTargetAction, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         NodeTypeID:
           m_Value0: 597952012063205811
           m_Value1: 9515586341754431145
@@ -978,8 +940,7 @@ MonoBehaviour:
       data:
         FieldName: Agent
         Type:
-          m_SerializableType: _01.Code.BT.BattleAgent, Assembly-CSharp, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.BattleAgent, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         LocalValue:
           rid: 5910678155460870294
         LinkedVariable:
@@ -989,14 +950,13 @@ MonoBehaviour:
       data:
         FieldName: Priority
         Type:
-          m_SerializableType: _01.Code.BT.TargetPriority, Assembly-CSharp, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.TargetPriority, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         LocalValue:
           rid: 5910678155460870295
         LinkedVariable:
           rid: -2
     - rid: 5910678155460870294
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.BattleAgent, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      type: {class: 'BlackboardVariable`1[[Code.BT.BattleAgent, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -1004,7 +964,7 @@ MonoBehaviour:
         Name: 
         m_Value: {fileID: 0}
     - rid: 5910678155460870295
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.TargetPriority, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      type: {class: 'BlackboardVariable`1[[Code.BT.TargetPriority, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -1023,8 +983,7 @@ MonoBehaviour:
         - rid: 5910678155460870320
         - rid: 5910678155460870321
         NodeType:
-          m_SerializableType: _01.Code.BT.Actions.EngageTargetAction, Assembly-CSharp,
-            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.Actions.EngageTargetAction, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         NodeTypeID:
           m_Value0: 597952012063205811
           m_Value1: 9515586341754431145
@@ -1057,8 +1016,7 @@ MonoBehaviour:
       data:
         FieldName: Agent
         Type:
-          m_SerializableType: _01.Code.BT.BattleAgent, Assembly-CSharp, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.BattleAgent, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         LocalValue:
           rid: 5910678155460870324
         LinkedVariable:
@@ -1068,14 +1026,13 @@ MonoBehaviour:
       data:
         FieldName: Priority
         Type:
-          m_SerializableType: _01.Code.BT.TargetPriority, Assembly-CSharp, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
+          m_SerializableType: Code.BT.TargetPriority, DungeonKeeper.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
         LocalValue:
           rid: 5910678155460870325
         LinkedVariable:
           rid: -2
     - rid: 5910678155460870324
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.BattleAgent, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      type: {class: 'BlackboardVariable`1[[Code.BT.BattleAgent, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -1083,7 +1040,7 @@ MonoBehaviour:
         Name: 
         m_Value: {fileID: 0}
     - rid: 5910678155460870325
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.TargetPriority, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      type: {class: 'BlackboardVariable`1[[Code.BT.TargetPriority, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -1095,8 +1052,7 @@ MonoBehaviour:
       data:
         FieldName: VariedMovement
         Type:
-          m_SerializableType: System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral,
-            PublicKeyToken=b77a5c561934e089
+          m_SerializableType: System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
         LocalValue:
           rid: 5910678217424633864
         LinkedVariable:
@@ -1106,8 +1062,7 @@ MonoBehaviour:
       data:
         FieldName: SwitchTargets
         Type:
-          m_SerializableType: System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral,
-            PublicKeyToken=b77a5c561934e089
+          m_SerializableType: System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
         LocalValue:
           rid: 5910678217424633865
         LinkedVariable:
@@ -1117,8 +1072,7 @@ MonoBehaviour:
       data:
         FieldName: VariedMovement
         Type:
-          m_SerializableType: System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral,
-            PublicKeyToken=b77a5c561934e089
+          m_SerializableType: System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
         LocalValue:
           rid: 5910678217424633866
         LinkedVariable:
@@ -1128,8 +1082,7 @@ MonoBehaviour:
       data:
         FieldName: SwitchTargets
         Type:
-          m_SerializableType: System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral,
-            PublicKeyToken=b77a5c561934e089
+          m_SerializableType: System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
         LocalValue:
           rid: 5910678217424633867
         LinkedVariable:
@@ -1139,8 +1092,7 @@ MonoBehaviour:
       data:
         FieldName: VariedMovement
         Type:
-          m_SerializableType: System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral,
-            PublicKeyToken=b77a5c561934e089
+          m_SerializableType: System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
         LocalValue:
           rid: 5910678217424633868
         LinkedVariable:
@@ -1150,8 +1102,7 @@ MonoBehaviour:
       data:
         FieldName: SwitchTargets
         Type:
-          m_SerializableType: System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral,
-            PublicKeyToken=b77a5c561934e089
+          m_SerializableType: System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
         LocalValue:
           rid: 5910678217424633869
         LinkedVariable:
@@ -1161,8 +1112,7 @@ MonoBehaviour:
       data:
         FieldName: VariedMovement
         Type:
-          m_SerializableType: System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral,
-            PublicKeyToken=b77a5c561934e089
+          m_SerializableType: System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
         LocalValue:
           rid: 5910678217424633870
         LinkedVariable:
@@ -1172,8 +1122,7 @@ MonoBehaviour:
       data:
         FieldName: SwitchTargets
         Type:
-          m_SerializableType: System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral,
-            PublicKeyToken=b77a5c561934e089
+          m_SerializableType: System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
         LocalValue:
           rid: 5910678217424633871
         LinkedVariable:
@@ -1287,8 +1236,8 @@ MonoBehaviour:
           rid: 5910678149043847270
         BlackboardGroupReferences: []
         Root:
-          rid: 5910678217424633872
-        m_VersionTimestamp: 639180068797544731
+          rid: 8506295874847506725
+        m_VersionTimestamp: 639264817183392839
     - rid: 5910678149043847270
       type: {class: BlackboardReference, ns: Unity.Behavior, asm: Unity.Behavior}
       data:
@@ -1308,7 +1257,7 @@ MonoBehaviour:
           m_Value1: 0
         Name: Self
         m_Value: {fileID: 0}
-    - rid: 5910678217424633872
+    - rid: 8506295874847506725
       type: {class: Start, ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         ID:
@@ -1319,10 +1268,10 @@ MonoBehaviour:
         m_Parent:
           rid: -2
         m_Child:
-          rid: 5910678217424633873
+          rid: 8506295874847506726
         Repeat: 1
         AllowMultipleRepeatsPerTick: 0
-    - rid: 5910678217424633873
+    - rid: 8506295874847506726
       type: {class: SelectorComposite, ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         ID:
@@ -1331,14 +1280,14 @@ MonoBehaviour:
         Graph:
           rid: 5910678149043847269
         m_Parent:
-          rid: 5910678217424633872
+          rid: 8506295874847506725
         m_Children:
-        - rid: 5910678217424633874
-        - rid: 5910678217424633875
-        - rid: 5910678217424633876
-        - rid: 5910678217424633877
+        - rid: 8506295874847506727
+        - rid: 8506295874847506728
+        - rid: 8506295874847506729
+        - rid: 8506295874847506730
         m_RegisteredObservers: []
-    - rid: 5910678217424633874
+    - rid: 8506295874847506727
       type: {class: ConditionalGuardModifier, ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         ID:
@@ -1347,14 +1296,14 @@ MonoBehaviour:
         Graph:
           rid: 5910678149043847269
         m_Parent:
-          rid: 5910678217424633873
+          rid: 8506295874847506726
         m_Child:
-          rid: 5910678217424633878
+          rid: 8506295874847506731
         m_Conditions:
-        - rid: 5910678217424633879
+        - rid: 8506295874847506732
         m_RequiresAllConditions: 0
         m_ObserverType: 0
-    - rid: 5910678217424633875
+    - rid: 8506295874847506728
       type: {class: ConditionalGuardModifier, ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         ID:
@@ -1363,14 +1312,14 @@ MonoBehaviour:
         Graph:
           rid: 5910678149043847269
         m_Parent:
-          rid: 5910678217424633873
+          rid: 8506295874847506726
         m_Child:
-          rid: 5910678217424633880
+          rid: 8506295874847506733
         m_Conditions:
-        - rid: 5910678217424633881
+        - rid: 8506295874847506734
         m_RequiresAllConditions: 0
         m_ObserverType: 0
-    - rid: 5910678217424633876
+    - rid: 8506295874847506729
       type: {class: ConditionalGuardModifier, ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         ID:
@@ -1379,14 +1328,14 @@ MonoBehaviour:
         Graph:
           rid: 5910678149043847269
         m_Parent:
-          rid: 5910678217424633873
+          rid: 8506295874847506726
         m_Child:
-          rid: 5910678217424633882
+          rid: 8506295874847506735
         m_Conditions:
-        - rid: 5910678217424633883
+        - rid: 8506295874847506736
         m_RequiresAllConditions: 0
         m_ObserverType: 0
-    - rid: 5910678217424633877
+    - rid: 8506295874847506730
       type: {class: ConditionalGuardModifier, ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         ID:
@@ -1395,14 +1344,14 @@ MonoBehaviour:
         Graph:
           rid: 5910678149043847269
         m_Parent:
-          rid: 5910678217424633873
+          rid: 8506295874847506726
         m_Child:
-          rid: 5910678217424633884
+          rid: 8506295874847506737
         m_Conditions:
-        - rid: 5910678217424633885
+        - rid: 8506295874847506738
         m_RequiresAllConditions: 0
         m_ObserverType: 0
-    - rid: 5910678217424633878
+    - rid: 8506295874847506731
       type: {class: SelectorComposite, ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         ID:
@@ -1411,22 +1360,22 @@ MonoBehaviour:
         Graph:
           rid: 5910678149043847269
         m_Parent:
-          rid: 5910678217424633874
+          rid: 8506295874847506727
         m_Children:
-        - rid: 5910678217424633886
-        - rid: 5910678217424633887
+        - rid: 8506295874847506739
+        - rid: 8506295874847506740
         m_RegisteredObservers: []
-    - rid: 5910678217424633879
-      type: {class: IsRoleCondition, ns: _01.Code.BT, asm: Assembly-CSharp}
+    - rid: 8506295874847506732
+      type: {class: IsRoleCondition, ns: Code.BT, asm: DungeonKeeper.Runtime}
       data:
         Graph:
           rid: 5910678149043847269
         Agent:
-          rid: 5910678217424633888
+          rid: 8506295874847506741
         Role:
-          rid: 5910678217424633889
-    - rid: 5910678217424633880
-      type: {class: EngageTargetAction, ns: _01.Code.BT.Actions, asm: Assembly-CSharp}
+          rid: 8506295874847506742
+    - rid: 8506295874847506733
+      type: {class: EngageTargetAction, ns: Code.BT.Actions, asm: DungeonKeeper.Runtime}
       data:
         ID:
           m_Value0: 5757396198404084395
@@ -1434,26 +1383,26 @@ MonoBehaviour:
         Graph:
           rid: 5910678149043847269
         m_Parent:
-          rid: 5910678217424633875
+          rid: 8506295874847506728
         Agent:
-          rid: 5910678217424633890
+          rid: 8506295874847506743
         Priority:
-          rid: 5910678217424633891
+          rid: 8506295874847506744
         VariedMovement:
-          rid: 5910678217424633892
+          rid: 8506295874847506745
         SwitchTargets:
-          rid: 5910678217424633893
-    - rid: 5910678217424633881
-      type: {class: IsRoleCondition, ns: _01.Code.BT, asm: Assembly-CSharp}
+          rid: 8506295874847506746
+    - rid: 8506295874847506734
+      type: {class: IsRoleCondition, ns: Code.BT, asm: DungeonKeeper.Runtime}
       data:
         Graph:
           rid: 5910678149043847269
         Agent:
-          rid: 5910678217424633894
+          rid: 8506295874847506747
         Role:
-          rid: 5910678217424633895
-    - rid: 5910678217424633882
-      type: {class: EngageTargetAction, ns: _01.Code.BT.Actions, asm: Assembly-CSharp}
+          rid: 8506295874847506748
+    - rid: 8506295874847506735
+      type: {class: EngageTargetAction, ns: Code.BT.Actions, asm: DungeonKeeper.Runtime}
       data:
         ID:
           m_Value0: 4180009890882951124
@@ -1461,26 +1410,26 @@ MonoBehaviour:
         Graph:
           rid: 5910678149043847269
         m_Parent:
-          rid: 5910678217424633876
+          rid: 8506295874847506729
         Agent:
-          rid: 5910678217424633896
+          rid: 8506295874847506749
         Priority:
-          rid: 5910678217424633897
+          rid: 8506295874847506750
         VariedMovement:
-          rid: 5910678217424633898
+          rid: 8506295874847506751
         SwitchTargets:
-          rid: 5910678217424633899
-    - rid: 5910678217424633883
-      type: {class: IsRoleCondition, ns: _01.Code.BT, asm: Assembly-CSharp}
+          rid: 8506295874847506752
+    - rid: 8506295874847506736
+      type: {class: IsRoleCondition, ns: Code.BT, asm: DungeonKeeper.Runtime}
       data:
         Graph:
           rid: 5910678149043847269
         Agent:
-          rid: 5910678217424633900
+          rid: 8506295874847506753
         Role:
-          rid: 5910678217424633901
-    - rid: 5910678217424633884
-      type: {class: EngageTargetAction, ns: _01.Code.BT.Actions, asm: Assembly-CSharp}
+          rid: 8506295874847506754
+    - rid: 8506295874847506737
+      type: {class: EngageTargetAction, ns: Code.BT.Actions, asm: DungeonKeeper.Runtime}
       data:
         ID:
           m_Value0: 7907016516020441669
@@ -1488,26 +1437,26 @@ MonoBehaviour:
         Graph:
           rid: 5910678149043847269
         m_Parent:
-          rid: 5910678217424633877
+          rid: 8506295874847506730
         Agent:
-          rid: 5910678217424633902
+          rid: 8506295874847506755
         Priority:
-          rid: 5910678217424633903
+          rid: 8506295874847506756
         VariedMovement:
-          rid: 5910678217424633904
+          rid: 8506295874847506757
         SwitchTargets:
-          rid: 5910678217424633905
-    - rid: 5910678217424633885
-      type: {class: IsRoleCondition, ns: _01.Code.BT, asm: Assembly-CSharp}
+          rid: 8506295874847506758
+    - rid: 8506295874847506738
+      type: {class: IsRoleCondition, ns: Code.BT, asm: DungeonKeeper.Runtime}
       data:
         Graph:
           rid: 5910678149043847269
         Agent:
-          rid: 5910678217424633906
+          rid: 8506295874847506759
         Role:
-          rid: 5910678217424633907
-    - rid: 5910678217424633886
-      type: {class: SupportHealAction, ns: _01.Code.BT, asm: Assembly-CSharp}
+          rid: 8506295874847506760
+    - rid: 8506295874847506739
+      type: {class: SupportHealAction, ns: Code.BT, asm: DungeonKeeper.Runtime}
       data:
         ID:
           m_Value0: 5034751772552479176
@@ -1515,11 +1464,11 @@ MonoBehaviour:
         Graph:
           rid: 5910678149043847269
         m_Parent:
-          rid: 5910678217424633878
+          rid: 8506295874847506731
         Agent:
-          rid: 5910678217424633908
-    - rid: 5910678217424633887
-      type: {class: EngageTargetAction, ns: _01.Code.BT.Actions, asm: Assembly-CSharp}
+          rid: 8506295874847506761
+    - rid: 8506295874847506740
+      type: {class: EngageTargetAction, ns: Code.BT.Actions, asm: DungeonKeeper.Runtime}
       data:
         ID:
           m_Value0: 2330960311805982679
@@ -1527,17 +1476,17 @@ MonoBehaviour:
         Graph:
           rid: 5910678149043847269
         m_Parent:
-          rid: 5910678217424633878
+          rid: 8506295874847506731
         Agent:
-          rid: 5910678217424633909
+          rid: 8506295874847506762
         Priority:
-          rid: 5910678217424633910
+          rid: 8506295874847506763
         VariedMovement:
-          rid: 5910678217424633911
+          rid: 8506295874847506764
         SwitchTargets:
-          rid: 5910678217424633912
-    - rid: 5910678217424633888
-      type: {class: 'GameObjectToComponentBlackboardVariable`1[[_01.Code.BT.BattleAgent, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+          rid: 8506295874847506765
+    - rid: 8506295874847506741
+      type: {class: 'GameObjectToComponentBlackboardVariable`1[[Code.BT.BattleAgent, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -1546,16 +1495,16 @@ MonoBehaviour:
         m_Value: {fileID: 0}
         m_LinkedVariable:
           rid: 5910678155460870422
-    - rid: 5910678217424633889
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.BattleRole, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+    - rid: 8506295874847506742
+      type: {class: 'BlackboardVariable`1[[Code.BT.BattleRole, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
           m_Value1: 0
         Name: 
         m_Value: 2
-    - rid: 5910678217424633890
-      type: {class: 'GameObjectToComponentBlackboardVariable`1[[_01.Code.BT.BattleAgent, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+    - rid: 8506295874847506743
+      type: {class: 'GameObjectToComponentBlackboardVariable`1[[Code.BT.BattleAgent, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -1564,15 +1513,15 @@ MonoBehaviour:
         m_Value: {fileID: 0}
         m_LinkedVariable:
           rid: 5910678155460870422
-    - rid: 5910678217424633891
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.TargetPriority, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+    - rid: 8506295874847506744
+      type: {class: 'BlackboardVariable`1[[Code.BT.TargetPriority, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
           m_Value1: 0
         Name: 
         m_Value: 4
-    - rid: 5910678217424633892
+    - rid: 8506295874847506745
       type: {class: 'BlackboardVariable`1[[System.Boolean, mscorlib]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
@@ -1580,7 +1529,7 @@ MonoBehaviour:
           m_Value1: 0
         Name: 
         m_Value: 1
-    - rid: 5910678217424633893
+    - rid: 8506295874847506746
       type: {class: 'BlackboardVariable`1[[System.Boolean, mscorlib]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
@@ -1588,8 +1537,8 @@ MonoBehaviour:
           m_Value1: 0
         Name: 
         m_Value: 1
-    - rid: 5910678217424633894
-      type: {class: 'GameObjectToComponentBlackboardVariable`1[[_01.Code.BT.BattleAgent, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+    - rid: 8506295874847506747
+      type: {class: 'GameObjectToComponentBlackboardVariable`1[[Code.BT.BattleAgent, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -1598,16 +1547,16 @@ MonoBehaviour:
         m_Value: {fileID: 0}
         m_LinkedVariable:
           rid: 5910678155460870422
-    - rid: 5910678217424633895
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.BattleRole, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+    - rid: 8506295874847506748
+      type: {class: 'BlackboardVariable`1[[Code.BT.BattleRole, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
           m_Value1: 0
         Name: 
         m_Value: 3
-    - rid: 5910678217424633896
-      type: {class: 'GameObjectToComponentBlackboardVariable`1[[_01.Code.BT.BattleAgent, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+    - rid: 8506295874847506749
+      type: {class: 'GameObjectToComponentBlackboardVariable`1[[Code.BT.BattleAgent, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -1616,15 +1565,15 @@ MonoBehaviour:
         m_Value: {fileID: 0}
         m_LinkedVariable:
           rid: 5910678155460870422
-    - rid: 5910678217424633897
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.TargetPriority, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+    - rid: 8506295874847506750
+      type: {class: 'BlackboardVariable`1[[Code.BT.TargetPriority, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
           m_Value1: 0
         Name: 
         m_Value: 2
-    - rid: 5910678217424633898
+    - rid: 8506295874847506751
       type: {class: 'BlackboardVariable`1[[System.Boolean, mscorlib]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
@@ -1632,7 +1581,7 @@ MonoBehaviour:
           m_Value1: 0
         Name: 
         m_Value: 1
-    - rid: 5910678217424633899
+    - rid: 8506295874847506752
       type: {class: 'BlackboardVariable`1[[System.Boolean, mscorlib]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
@@ -1640,8 +1589,8 @@ MonoBehaviour:
           m_Value1: 0
         Name: 
         m_Value: 1
-    - rid: 5910678217424633900
-      type: {class: 'GameObjectToComponentBlackboardVariable`1[[_01.Code.BT.BattleAgent, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+    - rid: 8506295874847506753
+      type: {class: 'GameObjectToComponentBlackboardVariable`1[[Code.BT.BattleAgent, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -1650,16 +1599,16 @@ MonoBehaviour:
         m_Value: {fileID: 0}
         m_LinkedVariable:
           rid: 5910678155460870422
-    - rid: 5910678217424633901
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.BattleRole, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+    - rid: 8506295874847506754
+      type: {class: 'BlackboardVariable`1[[Code.BT.BattleRole, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
           m_Value1: 0
         Name: 
         m_Value: 1
-    - rid: 5910678217424633902
-      type: {class: 'GameObjectToComponentBlackboardVariable`1[[_01.Code.BT.BattleAgent, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+    - rid: 8506295874847506755
+      type: {class: 'GameObjectToComponentBlackboardVariable`1[[Code.BT.BattleAgent, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -1668,15 +1617,15 @@ MonoBehaviour:
         m_Value: {fileID: 0}
         m_LinkedVariable:
           rid: 5910678155460870422
-    - rid: 5910678217424633903
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.TargetPriority, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+    - rid: 8506295874847506756
+      type: {class: 'BlackboardVariable`1[[Code.BT.TargetPriority, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
           m_Value1: 0
         Name: 
         m_Value: 1
-    - rid: 5910678217424633904
+    - rid: 8506295874847506757
       type: {class: 'BlackboardVariable`1[[System.Boolean, mscorlib]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
@@ -1684,7 +1633,7 @@ MonoBehaviour:
           m_Value1: 0
         Name: 
         m_Value: 1
-    - rid: 5910678217424633905
+    - rid: 8506295874847506758
       type: {class: 'BlackboardVariable`1[[System.Boolean, mscorlib]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
@@ -1692,8 +1641,8 @@ MonoBehaviour:
           m_Value1: 0
         Name: 
         m_Value: 1
-    - rid: 5910678217424633906
-      type: {class: 'GameObjectToComponentBlackboardVariable`1[[_01.Code.BT.BattleAgent, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+    - rid: 8506295874847506759
+      type: {class: 'GameObjectToComponentBlackboardVariable`1[[Code.BT.BattleAgent, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -1702,16 +1651,16 @@ MonoBehaviour:
         m_Value: {fileID: 0}
         m_LinkedVariable:
           rid: 5910678155460870422
-    - rid: 5910678217424633907
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.BattleRole, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+    - rid: 8506295874847506760
+      type: {class: 'BlackboardVariable`1[[Code.BT.BattleRole, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
           m_Value1: 0
         Name: 
         m_Value: 0
-    - rid: 5910678217424633908
-      type: {class: 'GameObjectToComponentBlackboardVariable`1[[_01.Code.BT.BattleAgent, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+    - rid: 8506295874847506761
+      type: {class: 'GameObjectToComponentBlackboardVariable`1[[Code.BT.BattleAgent, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -1720,8 +1669,8 @@ MonoBehaviour:
         m_Value: {fileID: 0}
         m_LinkedVariable:
           rid: 5910678155460870422
-    - rid: 5910678217424633909
-      type: {class: 'GameObjectToComponentBlackboardVariable`1[[_01.Code.BT.BattleAgent, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+    - rid: 8506295874847506762
+      type: {class: 'GameObjectToComponentBlackboardVariable`1[[Code.BT.BattleAgent, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
@@ -1730,15 +1679,15 @@ MonoBehaviour:
         m_Value: {fileID: 0}
         m_LinkedVariable:
           rid: 5910678155460870422
-    - rid: 5910678217424633910
-      type: {class: 'BlackboardVariable`1[[_01.Code.BT.TargetPriority, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+    - rid: 8506295874847506763
+      type: {class: 'BlackboardVariable`1[[Code.BT.TargetPriority, DungeonKeeper.Runtime]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
           m_Value0: 0
           m_Value1: 0
         Name: 
         m_Value: 3
-    - rid: 5910678217424633911
+    - rid: 8506295874847506764
       type: {class: 'BlackboardVariable`1[[System.Boolean, mscorlib]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:
@@ -1746,7 +1695,7 @@ MonoBehaviour:
           m_Value1: 0
         Name: 
         m_Value: 1
-    - rid: 5910678217424633912
+    - rid: 8506295874847506765
       type: {class: 'BlackboardVariable`1[[System.Boolean, mscorlib]]', ns: Unity.Behavior, asm: Unity.Behavior}
       data:
         GUID:

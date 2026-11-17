@@ -1,14 +1,17 @@
+using System;
 using System.Collections.Generic;
-using _01.Code.Buildings;
-using _01.Code.BT;
+using Code.Buildings;
+using Code.BT;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
-namespace _01.Code.MapCreateSystem
+namespace Code.MapCreateSystem
 {
     /// <summary>노드 내부의 격자. 셀 단위로 건물(트랩 포함)을 자유 배치하고 점유를 관리한다.
     /// 셀 좌표는 노드 중심 기준 '월드 단위'로 계산해 노드의 큰 스케일 영향을 받지 않는다.
-    /// (클래스명은 직렬화 참조 호환을 위해 유지하되, 트랩 외 일반 건물도 여러 개 배치할 수 있다.)</summary>
-    public class NodeTrapGrid : MonoBehaviour
+    /// (클래스명은 직렬화 참조 호환을 위해 유지하되, 트랩 외 일반 건물도 여러 개 배치할 수 있다.)
+    /// 방 안 길찾기(<see cref="RoomCellPathfinder"/>)도 이 격자를 칸 지도로 읽는다.</summary>
+    public class NodeTrapGrid : MonoBehaviour, IRoomCellMap
     {
         [SerializeField, Min(1)] private int columns = 6;
         [SerializeField, Min(1)] private int rows = 6;
@@ -18,6 +21,8 @@ namespace _01.Code.MapCreateSystem
 
         [Header("Focused Grid Visual")]
         [SerializeField] private bool showGridWhenFocused = true;
+        [SerializeField, Tooltip("격자 셰이더 재질(DungeonGridOverlay). 실행 중에는 복사본을 쓴다.")]
+        private Material focusedGridMaterial;
         [SerializeField] private Color focusedGridColor = new(0.3f, 0.85f, 1f, 0.58f);
         [SerializeField, Min(0.005f)] private float focusedGridLineWidth = 0.03f;
         [SerializeField] private int focusedGridSortingOrder = 5;
@@ -31,10 +36,28 @@ namespace _01.Code.MapCreateSystem
 
         private Building[] _cells;
         private readonly List<Building> _placed = new();
+
+        /// <summary>방 모양에서 막힌 칸(기둥·빈 공간). 아무것도 놓을 수 없다. null이면 막힌 칸이 없다.</summary>
+        private bool[] _blocked;
+
+        /// <summary>문 앞 칸. 칸막이 벽으로 막을 수 없다.</summary>
+        private readonly List<Vector2Int> _doorCells = new();
+
+        /// <summary>칸막이 벽이 서거나 사라졌을 때. 방 그림과 길찾기가 다시 읽는다.</summary>
+        public event Action PartitionsChanged;
+
+        /// <summary>여러 칸을 차지하는 건물의 기준 칸(왼쪽 아래). 저장과 철거가 이 칸으로 건물을 찾는다.</summary>
+        private readonly Dictionary<Building, Vector2Int> _anchors = new();
+
+        /// <summary>여러 칸 건물을 한 번만 세려고 쓰는 임시 집합. 매번 새로 만들지 않는다.</summary>
+        private readonly HashSet<Building> _countBuffer = new();
         private GameObject _focusedGridRoot;
         private SpriteRenderer _focusedGridSurface;
         private SpriteRenderer _selectedCellMarker;
-        private static Material _focusedGridMaterial;
+
+        /// <summary>격자 셰이더에 넘기는 열린 칸 표(칸마다 1텍셀, 1 = 방 바닥이고 칸막이 없음). 닫힌 칸끼리의 선은 그리지 않는다.</summary>
+        private Texture2D _openCellMask;
+        private static Material _focusedGridMaterialCopy;
         private static Sprite _cellMarkerSprite;
 
         public int Columns => columns;
@@ -68,11 +91,12 @@ namespace _01.Code.MapCreateSystem
             EnsureCells();
             var bounds = GetCentralSlotBounds();
             var count = 0;
+            _countBuffer.Clear();
             for (var row = 0; row < rows; row++)
             for (var column = 0; column < columns; column++)
             {
                 var building = _cells[Index(column, row)];
-                if (building == null || building.IsDestroyed)
+                if (building == null || building.IsDestroyed || _countBuffer.Contains(building))
                     continue;
 
                 var besideHorizontalEdge = (column == bounds.minColumn - 1 || column == bounds.maxColumn + 1)
@@ -82,7 +106,10 @@ namespace _01.Code.MapCreateSystem
                                          && column >= bounds.minColumn
                                          && column <= bounds.maxColumn;
                 if (besideHorizontalEdge || besideVerticalEdge)
+                {
+                    _countBuffer.Add(building);
                     count++;
+                }
             }
 
             return count;
@@ -115,19 +142,249 @@ namespace _01.Code.MapCreateSystem
                 _cells = new Building[CellCount];
         }
 
+        /// <summary>
+        /// 방 프리팹에 맞춰 칸 수·칸 간격·막힌 칸을 정한다. 방을 만들 때 건물을 놓기 전에 한 번 부른다.
+        /// 칸 간격을 정해 주므로 아레나에 맞춰 늘리는 자동 조정은 끈다.
+        /// </summary>
+        public void ConfigureCells(RoomShape layout, float worldCellSize)
+        {
+            if (layout == null || layout.Columns <= 0 || layout.Rows <= 0)
+                return;
+
+            if (_placed.Count > 0)
+            {
+                Debug.LogError($"{name}: 건물이 놓인 격자의 크기를 바꿀 수 없습니다.", this);
+                return;
+            }
+
+            columns = layout.Columns;
+            rows = layout.Rows;
+            cellSize = worldCellSize;
+            originOffset = Vector2.zero;
+            autoFitToArena = false;
+            _cells = new Building[CellCount];
+            _blocked = new bool[CellCount];
+            for (var row = 0; row < rows; row++)
+            for (var column = 0; column < columns; column++)
+                _blocked[Index(column, row)] = !layout.IsFloor(column, row);
+
+            _doorCells.Clear();
+            foreach (var side in RoomDoorRules.Sides)
+            {
+                if (!layout.HasDoor(side))
+                    continue;
+
+                var (a, b) = RoomLayoutRules.DoorCells(columns, rows, side);
+                _doorCells.Add(a);
+                if (b != a)
+                    _doorCells.Add(b);
+            }
+
+            // 칸 수가 바뀌면 격자선·표시도 새 크기로 다시 만든다.
+            if (_focusedGridRoot != null)
+            {
+                DestroyRuntimeObject(_focusedGridRoot);
+                _focusedGridRoot = null;
+                _focusedGridSurface = null;
+                _selectedCellMarker = null;
+            }
+
+            if (_openCellMask != null)
+            {
+                DestroyRuntimeObject(_openCellMask);
+                _openCellMask = null;
+            }
+
+            if (_placementHintRoot != null)
+            {
+                DestroyRuntimeObject(_placementHintRoot);
+                _placementHintRoot = null;
+                _placementHints.Clear();
+            }
+        }
+
+        private static void DestroyRuntimeObject(Object target)
+        {
+            if (Application.isPlaying)
+                Destroy(target);
+            else
+                DestroyImmediate(target);
+        }
+
         public bool IsValidCell(int column, int row) =>
             column >= 0 && column < columns && row >= 0 && row < rows;
+
+        /// <summary>기둥·빈 공간처럼 방 모양에서 막힌 칸인가.</summary>
+        public bool IsBlockedCell(int column, int row) =>
+            IsValidCell(column, row) && _blocked != null && _blocked.Length == CellCount && _blocked[Index(column, row)];
+
+        /// <summary>
+        /// 걸어 지나갈 수 있는 칸인가. 막힌 칸, 서 있는 칸막이 벽, 시설이 선 중앙 슬롯은 못 지나간다. 함정·유닛 칸은 지나간다.
+        /// </summary>
+        public bool IsWalkableCell(int column, int row) =>
+            IsValidCell(column, row) && !IsBlockedCell(column, row) && !IsPartitionCell(column, row)
+            && !(_centralSlotBlocked && IsCentralBuildingSlotCell(column, row));
+
+        /// <summary>중앙 슬롯에 시설이 서 있어 통행을 막는가(<see cref="SetCentralSlotBlocked"/>).</summary>
+        private bool _centralSlotBlocked;
+
+        /// <summary>
+        /// 중앙 슬롯 시설이 통행을 막는지 정한다. 방(<see cref="Node"/>)이 시설을 세우거나 치울 때 부른다.
+        /// 예전에는 상점·여관 같은 시설 그림 위를 부하·모험가가 그냥 걸어 지나갔다.
+        /// </summary>
+        public void SetCentralSlotBlocked(bool blocked)
+        {
+            _centralSlotBlocked = blocked;
+        }
+
+        /// <summary>서 있는(부서지지 않은) 칸막이 벽이 있는 칸인가.</summary>
+        public bool IsPartitionCell(int column, int row)
+        {
+            if (!IsValidCell(column, row) || _cells == null || _cells.Length != CellCount)
+                return false;
+
+            var building = _cells[Index(column, row)];
+            return building is Partition && building != null && !building.IsDestroyed;
+        }
+
+        /// <summary>그 월드 위치가 걸을 수 있는 칸 위인가. 격자 밖이면 false.</summary>
+        public bool IsWalkableWorld(Vector3 worldPosition) =>
+            TryGetCell(worldPosition, out var column, out var row) && IsWalkableCell(column, row);
+
+        /// <summary>막힌 칸이나 칸막이 벽이 하나라도 있는가. 없으면 방 안 어디로든 곧장 걸어도 된다.</summary>
+        public bool HasWalkBlockers
+        {
+            get
+            {
+                if (_blocked != null)
+                {
+                    for (var i = 0; i < _blocked.Length; i++)
+                    {
+                        if (_blocked[i])
+                            return true;
+                    }
+                }
+
+                foreach (var building in _placed)
+                {
+                    if (building is Partition && building != null && !building.IsDestroyed)
+                        return true;
+                }
+
+                return _centralSlotBlocked;
+            }
+        }
+
+        /// <summary>문 앞 칸인가.</summary>
+        public bool IsDoorCell(int column, int row) => _doorCells.Contains(new Vector2Int(column, row));
+
+        /// <summary>그 변 문 앞 칸(두 칸 중 아래·왼쪽). 문이 없으면 false.</summary>
+        public bool TryGetDoorCell(RoomDoors side, out Vector2Int cell)
+        {
+            var (a, _) = RoomLayoutRules.DoorCells(columns, rows, side);
+            cell = a;
+            return _doorCells.Contains(a);
+        }
+
+        /// <summary>
+        /// 그 칸에 칸막이 벽을 세워도 방이 열려 있는가. 문 앞 칸이 아니고, 걸을 수 있는 칸이 모두 한 덩어리로 남아야 한다.
+        /// </summary>
+        public bool KeepsRoomOpen(int column, int row) =>
+            IsValidCell(column, row)
+            && !IsDoorCell(column, row)
+            && RoomCellPathfinder.StaysConnectedWithout(this, new Vector2Int(column, row));
+
+        /// <summary>그 건물을 그 칸에 놓을 수 있는가. 칸막이 벽이면 방이 열려 있는지도 본다.</summary>
+        public bool CanPlace(int column, int row, Building buildingPrefab)
+        {
+            if (buildingPrefab == null || !CanPlace(column, row, buildingPrefab.Footprint))
+                return false;
+
+            return buildingPrefab is not Partition || KeepsRoomOpen(column, row);
+        }
+
+        /// <summary>칸막이 벽이 선 칸들을 담는다(서 있는 것만).</summary>
+        public void CollectPartitionCells(ICollection<Vector2Int> into)
+        {
+            if (into == null)
+                return;
+
+            foreach (var building in _placed)
+            {
+                if (building is Partition && building != null && !building.IsDestroyed
+                    && _anchors.TryGetValue(building, out var anchor))
+                    into.Add(anchor);
+            }
+        }
+
+        /// <summary>그 월드 위치에서 가장 가까운 걸을 수 있는 칸. 그런 칸이 없으면 false.</summary>
+        public bool TryGetNearestWalkableCell(Vector3 worldPosition, out Vector2Int cell)
+        {
+            cell = new Vector2Int(-1, -1);
+            var best = float.MaxValue;
+            for (var row = 0; row < rows; row++)
+            for (var column = 0; column < columns; column++)
+            {
+                if (!IsWalkableCell(column, row))
+                    continue;
+
+                var distance = (CellWorldPosition(column, row) - worldPosition).sqrMagnitude;
+                if (distance >= best)
+                    continue;
+
+                best = distance;
+                cell = new Vector2Int(column, row);
+            }
+
+            return cell.x >= 0;
+        }
+
+        /// <summary>
+        /// 부서진 건물을 칸에서 뺀다. 오브젝트는 건물이 스스로 지운다(<see cref="Remove"/>와 달리 파괴하지 않는다).
+        /// </summary>
+        public void Release(Building building)
+        {
+            if (building is null || _cells == null)
+                return;
+
+            for (var i = 0; i < _cells.Length; i++)
+            {
+                if (ReferenceEquals(_cells[i], building))
+                    _cells[i] = null;
+            }
+
+            _anchors.Remove(building);
+            _placed.Remove(building);
+            if (building is Partition)
+                NotifyPartitionsChanged();
+        }
 
         public bool IsCellFree(int column, int row)
         {
             EnsureCells();
             return IsValidCell(column, row)
+                   && !IsBlockedCell(column, row)
                    && !IsCentralBuildingSlotCell(column, row)
                    && _cells[Index(column, row)] == null;
         }
 
         /// <summary>현재 배치된 개수.</summary>
         public int PlacedCount => _placed.Count;
+
+        /// <summary>살아 있는 함정이 하나라도 있는가. 손님이 머무는 시설과 한 방에 두지 않기 위해 본다.</summary>
+        public bool HasLiveTrap
+        {
+            get
+            {
+                foreach (var building in _placed)
+                {
+                    if (building is Trap trap && trap != null && !trap.IsDestroyed)
+                        return true;
+                }
+
+                return false;
+            }
+        }
 
         private int Index(int column, int row) => row * columns + column;
 
@@ -172,19 +429,90 @@ namespace _01.Code.MapCreateSystem
             return IsValidCell(column, row);
         }
 
-        /// <summary>지정 셀에 건물 프리팹을 설치한다(빈 셀일 때만). 성공 시 인스턴스 반환.</summary>
+        /// <summary>
+        /// (column, row)를 왼쪽 아래로 하는 <paramref name="footprint"/> 칸이 모두 비어 있는가.
+        /// 하나라도 격자 밖·중앙 슬롯·다른 건물이면 놓을 수 없다.
+        /// </summary>
+        public bool CanPlace(int column, int row, Vector2Int footprint)
+        {
+            var width = Mathf.Max(1, footprint.x);
+            var height = Mathf.Max(1, footprint.y);
+            for (var dy = 0; dy < height; dy++)
+            for (var dx = 0; dx < width; dx++)
+            {
+                if (!IsCellFree(column + dx, row + dy))
+                    return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>그 크기의 건물을 놓을 자리가 하나라도 있는가.</summary>
+        public bool HasRoomFor(Vector2Int footprint)
+        {
+            for (var r = 0; r < rows; r++)
+            for (var c = 0; c < columns; c++)
+            {
+                if (CanPlace(c, r, footprint))
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>덮은 칸들의 가운데 월드 좌표.</summary>
+        public Vector3 FootprintWorldCenter(int column, int row, Vector2Int footprint)
+        {
+            var min = CellWorldPosition(column, row);
+            var max = CellWorldPosition(column + Mathf.Max(1, footprint.x) - 1, row + Mathf.Max(1, footprint.y) - 1);
+            return (min + max) * 0.5f;
+        }
+
+        /// <summary>
+        /// 지정 칸을 왼쪽 아래로 하여 건물 프리팹을 설치한다. 프리팹이 여러 칸짜리면 덮는 칸이 모두 비어야 한다.
+        /// </summary>
         public Building TryPlace(int column, int row, Building buildingPrefab)
         {
             EnsureCells();
-            if (buildingPrefab == null || !IsCellFree(column, row))
+            if (buildingPrefab == null)
                 return null;
 
-            var building = Instantiate(buildingPrefab, CellWorldPosition(column, row), Quaternion.identity);
+            var footprint = buildingPrefab.Footprint;
+            if (!CanPlace(column, row, footprint))
+                return null;
+
+            var building = Instantiate(buildingPrefab, FootprintWorldCenter(column, row, footprint), Quaternion.identity);
             building.transform.SetParent(transform, true); // worldPositionStays=true → 노드 스케일에 안 끌려감
 
-            _cells[Index(column, row)] = building;
+            // 그림이 한 칸 크기 그대로면 두 칸을 막고 있다는 것이 보이지 않는다. 덮은 칸만큼 늘린다.
+            if (footprint.x > 1 || footprint.y > 1)
+            {
+                var scale = building.transform.localScale;
+                building.transform.localScale = new Vector3(scale.x * footprint.x, scale.y * footprint.y, scale.z);
+            }
+
+            for (var dy = 0; dy < footprint.y; dy++)
+            for (var dx = 0; dx < footprint.x; dx++)
+                _cells[Index(column + dx, row + dy)] = building;
+
+            _anchors[building] = new Vector2Int(column, row);
             _placed.Add(building);
+            if (building is Partition)
+                NotifyPartitionsChanged();
             return building;
+        }
+
+        /// <summary>건물의 기준 칸(왼쪽 아래). 이 격자에 없으면 false.</summary>
+        public bool TryGetAnchor(Building building, out int column, out int row)
+        {
+            column = -1;
+            row = -1;
+            if (building == null || !_anchors.TryGetValue(building, out var anchor))
+                return false;
+
+            column = anchor.x;
+            row = anchor.y;
+            return true;
         }
 
         /// <summary>월드 클릭 위치에서 가장 가까운 셀에 설치(클릭 배치용 진입점).</summary>
@@ -213,7 +541,13 @@ namespace _01.Code.MapCreateSystem
         }
 
         /// <summary>기준 위치에서 가장 가까운 '빈' 셀을 찾는다. 빈 셀이 없으면 false.</summary>
-        public bool TryGetNearestFreeCell(Vector3 worldPosition, out int column, out int row)
+        public bool TryGetNearestFreeCell(Vector3 worldPosition, out int column, out int row) =>
+            TryGetNearestFreeCell(worldPosition, Vector2Int.one, out column, out row);
+
+        /// <summary>
+        /// 그 크기의 건물이 들어갈 자리 중 가운데가 기준 위치에서 가장 가까운 기준 칸(왼쪽 아래)을 찾는다.
+        /// </summary>
+        public bool TryGetNearestFreeCell(Vector3 worldPosition, Vector2Int footprint, out int column, out int row)
         {
             EnsureCells();
 
@@ -223,8 +557,8 @@ namespace _01.Code.MapCreateSystem
             for (var r = 0; r < rows; r++)
             for (var c = 0; c < columns; c++)
             {
-                if (!IsCellFree(c, r)) continue;
-                var d = (CellWorldPosition(c, r) - worldPosition).sqrMagnitude;
+                if (!CanPlace(c, r, footprint)) continue;
+                var d = (FootprintWorldCenter(c, r, footprint) - worldPosition).sqrMagnitude;
                 if (d >= bestDistance) continue;
 
                 bestDistance = d;
@@ -261,9 +595,23 @@ namespace _01.Code.MapCreateSystem
             var building = _cells[Index(column, row)];
             if (building == null) return false;
 
-            _cells[Index(column, row)] = null;
+            // 여러 칸 건물은 덮은 칸을 모두 비운다.
+            for (var i = 0; i < _cells.Length; i++)
+            {
+                if (_cells[i] == building)
+                    _cells[i] = null;
+            }
+
+            _anchors.Remove(building);
             _placed.Remove(building);
-            Destroy(building.gameObject);
+            var wasPartition = building is Partition;
+            // EditMode 테스트에서도 같은 경로를 탄다. 런타임 Destroy는 에디트 모드에서 경고를 남긴다.
+            if (Application.isPlaying)
+                Destroy(building.gameObject);
+            else
+                DestroyImmediate(building.gameObject);
+            if (wasPartition)
+                NotifyPartitionsChanged();
             return true;
         }
 
@@ -280,6 +628,33 @@ namespace _01.Code.MapCreateSystem
 
             EnsureFocusedGridVisual();
             _focusedGridRoot.SetActive(true);
+        }
+
+        private void NotifyPartitionsChanged()
+        {
+            RefreshOpenCellMask();
+            PartitionsChanged?.Invoke();
+        }
+
+        /// <summary>격자 선을 그릴 열린 칸: 방 바닥이고 칸막이가 서 있지 않은 칸.</summary>
+        public bool IsOpenGridCell(int column, int row) =>
+            IsValidCell(column, row) && !IsBlockedCell(column, row) && !IsPartitionCell(column, row);
+
+        private void RefreshOpenCellMask()
+        {
+            if (_openCellMask == null)
+                return;
+
+            for (var row = 0; row < rows; row++)
+            for (var column = 0; column < columns; column++)
+                _openCellMask.SetPixel(column, row, IsOpenGridCell(column, row) ? Color.white : Color.clear);
+            _openCellMask.Apply(false);
+        }
+
+        private void OnDestroy()
+        {
+            if (_openCellMask != null)
+                DestroyRuntimeObject(_openCellMask);
         }
 
         public bool TrySelectCell(Vector3 worldPosition, out int column, out int row)
@@ -316,6 +691,79 @@ namespace _01.Code.MapCreateSystem
                 _selectedCellMarker.enabled = false;
         }
 
+        /// <summary>
+        /// 놓을 수 있는 칸을 칠해 보여 준다.
+        ///
+        /// 격자는 선만 그려서 "칸이 있다"까지만 알려 준다. 정작 어디가 비었는지는 보이지 않아
+        /// 어디에 놓이는지 알기 어려웠다. 빈 칸만 옅게 칠하면 물어볼 것이 없어진다.
+        ///
+        /// 어느 칸이 비었는지는 <see cref="Node"/>가 안다(유닛 배치를 들고 있는 쪽이다).
+        /// 여기는 좌표를 받아 그리기만 한다.
+        /// </summary>
+        public void ShowPlacementHints(IReadOnlyList<Vector2Int> cells)
+        {
+            EnsurePlacementHintRoot();
+
+            var needed = cells != null ? cells.Count : 0;
+            while (_placementHints.Count < needed)
+                _placementHints.Add(CreatePlacementHint());
+
+            for (var i = 0; i < _placementHints.Count; i++)
+            {
+                var marker = _placementHints[i];
+                if (marker == null)
+                    continue;
+
+                if (i >= needed)
+                {
+                    marker.enabled = false;
+                    continue;
+                }
+
+                marker.transform.position = CellWorldPosition(cells[i].x, cells[i].y) + Vector3.back * 0.02f;
+                marker.enabled = true;
+            }
+
+            _placementHintRoot.SetActive(needed > 0);
+        }
+
+        public void ClearPlacementHints()
+        {
+            if (_placementHintRoot != null)
+                _placementHintRoot.SetActive(false);
+        }
+
+        private void EnsurePlacementHintRoot()
+        {
+            if (_placementHintRoot != null)
+                return;
+
+            _placementHintRoot = new GameObject("PlacementHints");
+            _placementHintRoot.transform.SetParent(transform, false);
+        }
+
+        private SpriteRenderer CreatePlacementHint()
+        {
+            var go = new GameObject("PlacementHint");
+            go.transform.SetParent(_placementHintRoot.transform, false);
+
+            var marker = go.AddComponent<SpriteRenderer>();
+            marker.sprite = CellMarkerSprite;
+            marker.color = PlacementHintColor;
+            marker.sortingOrder = focusedGridSortingOrder + 2;
+
+            // 부모 배율을 그대로 받으면 노드 크기에 따라 표시가 커졌다 작아진다.
+            // 한 칸을 조금 안쪽으로 채우도록 월드 크기로 맞춘다.
+            var parentScale = transform.lossyScale;
+            var side = cellSize * 0.78f;
+            go.transform.localScale = new Vector3(
+                side / Mathf.Max(0.0001f, Mathf.Abs(parentScale.x)),
+                side / Mathf.Max(0.0001f, Mathf.Abs(parentScale.y)),
+                1f);
+
+            return marker;
+        }
+
         private void EnsureFocusedGridVisual()
         {
             if (_focusedGridRoot != null)
@@ -343,7 +791,7 @@ namespace _01.Code.MapCreateSystem
 
             _focusedGridSurface = surfaceObject.AddComponent<SpriteRenderer>();
             _focusedGridSurface.sprite = CellMarkerSprite;
-            _focusedGridSurface.sharedMaterial = FocusedGridMaterial;
+            _focusedGridSurface.sharedMaterial = ResolveFocusedGridMaterial();
             _focusedGridSurface.sortingOrder = focusedGridSortingOrder;
 
             var worldSize = max - min;
@@ -359,6 +807,15 @@ namespace _01.Code.MapCreateSystem
             properties.SetColor("_CenterColor", centralBuildingSlotColor);
             properties.SetFloat("_LineWidth", Mathf.Clamp(focusedGridLineWidth / cellSize * 0.62f, 0.008f, 0.04f));
             properties.SetFloat("_GlowStrength", 0.09f);
+            _openCellMask = new Texture2D(columns, rows, TextureFormat.R8, false, true)
+            {
+                name = "OpenCellMask",
+                filterMode = FilterMode.Point,
+                wrapMode = TextureWrapMode.Clamp,
+                hideFlags = HideFlags.HideAndDontSave
+            };
+            RefreshOpenCellMask();
+            properties.SetTexture("_CellMask", _openCellMask);
             properties.SetVector("_CentralRect", reserveCentralBuildingSlot
                 ? new Vector4(
                     centralBounds.minColumn / (float)columns,
@@ -392,6 +849,12 @@ namespace _01.Code.MapCreateSystem
                 1f);
         }
 
+        /// <summary>놓을 수 있는 칸 표시. 초록은 "여기 된다"로 읽히는 몇 안 되는 색이다.</summary>
+        private static readonly Color PlacementHintColor = new(0.42f, 0.92f, 0.55f, 0.3f);
+
+        private GameObject _placementHintRoot;
+        private readonly List<SpriteRenderer> _placementHints = new();
+
         private static Sprite CellMarkerSprite
         {
             get
@@ -413,27 +876,24 @@ namespace _01.Code.MapCreateSystem
             }
         }
 
-        private static Material FocusedGridMaterial
+        /// <summary>모든 방이 한 복사본을 나눠 쓴다. 칸 수·색은 MaterialPropertyBlock으로 방마다 준다.</summary>
+        private Material ResolveFocusedGridMaterial()
         {
-            get
-            {
-                if (_focusedGridMaterial == null)
-                {
-                    var template = Resources.Load<Material>("Materials/DungeonGridOverlay");
-                    if (template == null)
-                    {
-                        Debug.LogError("DungeonGridOverlay material is missing from Resources/Materials.");
-                        return null;
-                    }
+            if (_focusedGridMaterialCopy != null)
+                return _focusedGridMaterialCopy;
 
-                    _focusedGridMaterial = new Material(template)
-                    {
-                        name = "Dungeon Grid Overlay (Runtime)",
-                        hideFlags = HideFlags.HideAndDontSave
-                    };
-                }
-                return _focusedGridMaterial;
+            if (focusedGridMaterial == null)
+            {
+                Debug.LogError($"{name}의 {nameof(NodeTrapGrid)}.{nameof(focusedGridMaterial)}이(가) 비어 있습니다.", this);
+                return null;
             }
+
+            _focusedGridMaterialCopy = new Material(focusedGridMaterial)
+            {
+                name = "Dungeon Grid Overlay (Runtime)",
+                hideFlags = HideFlags.HideAndDontSave
+            };
+            return _focusedGridMaterialCopy;
         }
 
         private (int minColumn, int maxColumn, int minRow, int maxRow) GetCentralSlotBounds()
@@ -457,33 +917,18 @@ namespace _01.Code.MapCreateSystem
                     _cells[i] = null;
             }
 
+            var hadPartition = false;
             foreach (var building in _placed)
             {
+                hadPartition |= building is Partition;
                 if (building != null)
                     Destroy(building.gameObject);
             }
             _placed.Clear();
+            _anchors.Clear();
+            if (hadPartition)
+                NotifyPartitionsChanged();
         }
 
-#if UNITY_EDITOR
-        // 에디터에서 격자 셀 위치를 시각화(배치 칸 확인용).
-        private void OnDrawGizmosSelected()
-        {
-            Gizmos.color = new Color(0.3f, 0.8f, 1f, 0.5f);
-            for (var r = 0; r < rows; r++)
-            for (var c = 0; c < columns; c++)
-            {
-                if (IsCentralBuildingSlotCell(c, r))
-                    continue;
-
-                Gizmos.DrawWireCube(CellWorldPosition(c, r), new Vector3(cellSize * 0.9f, cellSize * 0.9f, 0.01f));
-            }
-
-            if (reserveCentralBuildingSlot)
-                Gizmos.DrawWireCube(
-                    CentralBuildingWorldPosition(),
-                    new Vector3(CentralBuildingSlotWorldSize.x * 0.9f, CentralBuildingSlotWorldSize.y * 0.9f, 0.01f));
-        }
-#endif
     }
 }

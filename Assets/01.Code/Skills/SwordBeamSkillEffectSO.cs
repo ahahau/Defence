@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace _01.Code.Skills
+namespace Code.Skills
 {
     /// <summary>근접: 타깃에게 검기(사각형 발사체)를 날려 원거리 피해를 준다.</summary>
     [CreateAssetMenu(menuName = "SO/Skill/Effect/Sword Beam", fileName = "SwordBeamSkillEffect", order = 0)]

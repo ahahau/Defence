@@ -1,4 +1,4 @@
-namespace _01.Code.Buildings
+namespace Code.Buildings
 {
     public enum InstallCategory
     {

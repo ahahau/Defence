@@ -2,7 +2,7 @@ using System;
 using Unity.Behavior;
 using UnityEngine;
 
-namespace _01.Code.BT
+namespace Code.BT
 {
     [Serializable, Unity.Properties.GeneratePropertyBag]
     [Condition(

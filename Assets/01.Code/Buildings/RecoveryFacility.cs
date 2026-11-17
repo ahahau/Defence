@@ -1,8 +1,8 @@
-using _01.Code.MapCreateSystem;
-using _01.Code.Units;
+using Code.MapCreateSystem;
+using Code.Units;
 using UnityEngine;
 
-namespace _01.Code.Buildings
+namespace Code.Buildings
 {
     public class RecoveryFacility : Building
     {
