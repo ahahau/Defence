@@ -365,6 +365,7 @@ namespace Code.Run
                     if (_battle.OrderMove(_selected, hoveredRoom))
                     {
                         _coachMemory?.MarkDone(RunCoachStep.SendMinion);
+                        session.PlayLog?.Event("이동 명령", $"{_selected.Definition.DisplayName} → {session.RoomName(hoveredRoom)}{(_paused ? " (멈춤 중)" : string.Empty)}", _battle.Elapsed);
                         // 입구 첫 방의 마지막 부하를 빼는 명령이면 매번 알린다(2026-11-17 사용자 목업 승인 A, 첫 판 안내와 달리 경고라 끝나지 않는다).
                         if (!_battle.IsRaid && entryHeld && !RunEntryGuardRules.IsHeld(_battle, _battle.EntryRoom))
                             session.Notify("입구 첫 방이 비면 적이 멈추지 않고 지나갑니다");
@@ -414,6 +415,7 @@ namespace Code.Run
             if (session.IsCrisis) { session.Resume(); _grid.SetHighlights(null); RefreshSlow(); }
             _paused = !_paused;
             if (_paused) _coachMemory?.MarkDone(RunCoachStep.Pause);
+            session.PlayLog?.Pause(_paused, _battle.Elapsed);
             ApplyTime();
         }
 
@@ -422,8 +424,11 @@ namespace Code.Run
             if (session.IsPreparing || session.IsResult) return;
             // 위기는 계속 조작으로만 닫는다. 배속 버튼으로 건너뛰지 않는다.
             if (session.IsCrisis) return;
+            int before = _speed;
             _speed = Mathf.Clamp(speed, 1, 2);
             _paused = false;
+            session.PlayLog?.Pause(false, _battle.Elapsed);
+            if (_speed != before) session.PlayLog?.Event("배속", _speed + "배", _battle.Elapsed);
             ApplyTime();
         }
 
