@@ -117,7 +117,8 @@ namespace Code.Run
         // 정예 침입은 한 무리였으나 약 17초 만에 끝나 공병 침입보다 쉬워서 두 무리로 늘렸다(2026-11-16 사용자 결정 "S4 + E1").
         internal const float WaveGapSeconds = 20f;
 
-        internal static int DefenseWaves(int number) => 2;
+        // 공병 침입만 세 무리다(2026-11-17 사용자 결정 "P2"). 두 무리면 대응하지 않아도 런을 다 이겼다.
+        internal static int DefenseWaves(int number) => number == 2 ? 3 : 2;
 
         internal bool Has(RunDemoRelic relic) => (Relics & relic) != 0;
 
