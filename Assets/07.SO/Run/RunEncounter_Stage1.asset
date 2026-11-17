@@ -90,7 +90,7 @@ MonoBehaviour:
     <VaultGold>k__BackingField: 100
     <StartingManaCapacity>k__BackingField: 3
     <ManaPerKill>k__BackingField: 1
-    <GoldPerKill>k__BackingField: 10
+    <GoldPerKill>k__BackingField: 5
     <RoomDurability>k__BackingField: 16
     <DoorDurability>k__BackingField: 10
     <FavoredRoomMultiplier>k__BackingField: 1.5

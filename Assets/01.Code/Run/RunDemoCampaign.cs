@@ -87,8 +87,9 @@ namespace Code.Run
 
         // ── 값(2026-11-11 사용자 "이 표로 시뮬레이션", 시연 런 기획 "지도와 경제") ──
 
-        internal const int RepairPrice = 20;
-        internal const int HealPrice = 20;
+        // 정비 20 → 30(처치 금화 10 → 5와 함께, 2026-11-17 사용자 결정 "G3"). 금화가 남아돌아 정비에서 고를 일이 없었다.
+        internal const int RepairPrice = 30;
+        internal const int HealPrice = 30;
         internal const int MaxExtraCapacity = 2;
         internal const int MaxExtraMinions = 1;
         internal const float QuickTrapCooldownSeconds = 3f;
