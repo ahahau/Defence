@@ -381,28 +381,12 @@ namespace Code.Run
                 target.NoteAttacker(source);
                 amount = RunAffinityRules.Damage(amount, affinity ?? source.Affinity, target.Affinity);
             }
-            if (IsExposedRoomAttacker(target))
-                amount = (int)Math.Ceiling(amount * Settings.RoomAttackerDamageTakenMultiplier);
             int actualDamage = target.TakeDamage(amount);
             _telegraphRules.OnDamage(target, actualDamage);
             if (!IsRaid && target.IsDown && target.Side == RunSide.Intruder)
             {
                 VaultGold += Settings.GoldPerKill + target.DropGold();
             }
-        }
-
-        /// <summary>
-        /// 목표 방을 치는 통과 적은 무방비라 피해를 더 받는다. 쫓아가 잡는 쪽이 이득이 되게 한다(2026-11-11 사용자 결정).
-        /// 켜기 값이 있으면 방을 치기 시작한 뒤 그 방에 있는 동안(쫓아온 부하와 싸우는 중 포함) 내내 무방비다.
-        /// 부하가 지키던 목표 방에 들어와 바로 싸운 적은 방을 치지 않았으므로 무방비가 아니다.
-        /// </summary>
-        public bool IsExposedRoomAttacker(RunCombatant target)
-        {
-            if (Settings.RoomAttackerDamageTakenMultiplier <= 1f + Epsilon || target.Side != RunSide.Intruder) return false;
-            if (target.Definition.Goal != RunGoal.Room || target.IsEscaping) return false;
-            if (Settings.RoomAttackerStaysExposed)
-                return target.HasHitGoalRoom && RoomOf(target) == GoalRoomOf(target) && RoomOf(target) != HeartRoom;
-            return target.Activity == RunActionKind.AttackRoom;
         }
 
         // ── 한 걸음 ──
@@ -775,7 +759,6 @@ namespace Code.Run
                 if (intruder.AttackTimer <= Epsilon)
                 {
                     _rooms[room].Damage(intruder.Definition.Attack);
-                    intruder.HasHitGoalRoom = true;
                     intruder.Strike(AttackInterval(intruder));
                 }
                 return;

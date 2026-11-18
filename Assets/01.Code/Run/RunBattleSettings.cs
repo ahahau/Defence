@@ -82,10 +82,6 @@ namespace Code.Run
         public bool RoomGoalsPassDefenders { get; private set; }
         [field: SerializeField, Tooltip("켜면 금화를 들고 도망치는 도적도 부하를 지나친다.")]
         public bool EscapingThievesPass { get; private set; }
-        [field: SerializeField, Min(1f), Tooltip("목표 방을 치는 통과 적(궁수·마법사)이 받는 피해 배율. 1이면 끔.")]
-        public float RoomAttackerDamageTakenMultiplier { get; private set; } = 1f;
-        [field: SerializeField, Tooltip("켜면 방을 치기 시작한 뒤 그 방에 있는 동안(싸우는 중 포함) 내내 무방비다. 끄면 방을 치는 동안만.")]
-        public bool RoomAttackerStaysExposed { get; private set; }
 
         internal int TrapDamageBonus { get; private set; }
 

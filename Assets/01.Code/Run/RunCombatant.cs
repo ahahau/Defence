@@ -95,9 +95,6 @@ namespace Code.Run
         public int CarriedGold { get; private set; }
         public bool IsEscaping { get; private set; }
 
-        /// <summary>목표 방 시스템을 한 번이라도 쳤다. 방 치는 적 무방비 판정에 쓴다.</summary>
-        public bool HasHitGoalRoom { get; internal set; }
-
         internal float StealProgress { get; set; }
 
         public void Heal(int amount)
