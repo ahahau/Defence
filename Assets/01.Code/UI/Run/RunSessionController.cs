@@ -42,6 +42,8 @@ namespace Code.UI.Run
         private string[] _roomNames;
         private int _selection = -1;
         private bool _bound;
+        // 사람 플레이 기록(2026-11-17 사용자 결정: 항상 기록). 씬 한 번에 하나다.
+        private RunPlayLog _log;
 
         public event Action Started;
         public event Action Prepared;
@@ -80,8 +82,24 @@ namespace Code.UI.Run
             _ => "뒷 통로",
         };
 
+        /// <summary>사람 플레이 기록. 열지 못했으면 null이다.</summary>
+        public RunPlayLog PlayLog => _log;
+
         private void OnEnable() => Bind();
-        private void OnDestroy() => _demo?.Dispose();
+        private void OnDestroy()
+        {
+            _demo?.Dispose();
+            _log?.Dispose();
+            _log = null;
+        }
+
+        // 구간(지도·정비·준비·전투…)이 바뀐 순간에만 상태 줄을 만들어 남긴다.
+        private void Update()
+        {
+            if (_log == null || _demo == null) return;
+            string phase = PlayPhase();
+            if (phase != _log.Phase) _log.SetPhase(phase, PlayState());
+        }
         private void OnDisable()
         {
             if (!_bound) return;
@@ -154,6 +172,8 @@ namespace Code.UI.Run
             _demo = new RunDemoCampaign(encounter, postRaidBranch: true);
             _flow = new RunBattleFlow(encounter, _memory, _demo.DefenseSettings(1), _demo.DefenseParty(1));
             RestoreCheckpoint(encounter);
+            _log?.Dispose();
+            _log = RunPlayLog.Open((_demo.Carryover == null ? "새 런" : "이어하기") + " · " + NodeLabel(_demo.Route.Current));
             ShowPreparation(encounter);
             if (_saveBlocked)
                 PopupController.Show(PopupRequest.Notice("시연 저장 확인", "기존 저장을 보존했습니다. 이번 진행은 자동 저장되지 않습니다."));
@@ -170,7 +190,11 @@ namespace Code.UI.Run
             {
                 if (!_raid.IsRaidRetreating)
                     PopupController.Show(PopupRequest.Confirm("원정 후퇴", "부하가 진지 입구까지 걸어 나갑니다. 이동 중에도 공격받습니다.",
-                        _raid.RequestRaidRetreat, confirmLabel: "후퇴").PauseGame().WithAccent(HudPalette.Danger, null));
+                        () =>
+                        {
+                            _raid.RequestRaidRetreat();
+                            _log?.Event("원정 후퇴", PlayBattleState(), _raid.Elapsed);
+                        }, confirmLabel: "후퇴").PauseGame().WithAccent(HudPalette.Danger, null));
                 return;
             }
             if (!IsResult) return;
@@ -430,6 +454,7 @@ namespace Code.UI.Run
         {
             if (bought)
             {
+                _log?.Event("정비", PlayState());
                 // 끝난 전투가 지도 뒤 화면을 그리므로 고친 방·치료한 부하·금화를 바로 보인다.
                 _demo.Carryover.ApplyTo(Battle);
                 SaveCheckpoint();
@@ -449,6 +474,7 @@ namespace Code.UI.Run
         // 글 사건 "굴 속 거래"가 끝났다(교환 또는 떠나기). 칸은 이미 끝났으므로 이어지는 상태를 보이고 저장한 뒤 다음으로 간다.
         private void HandleExchangeFinished()
         {
+            _log?.Event("글 사건 끝", PlayState());
             _demo.Carryover.ApplyTo(Battle);
             SaveCheckpoint();
             OpenNextEncounter();
@@ -456,6 +482,7 @@ namespace Code.UI.Run
 
         private void HandleMerchantBought()
         {
+            _log?.Event("상인 구매", PlayState());
             // 끝난 전투가 지도 뒤 화면을 그리므로 고친 심장·되살린 부하·금화를 바로 보인다.
             _demo.Carryover.ApplyTo(Battle);
             SaveCheckpoint();
@@ -467,6 +494,7 @@ namespace Code.UI.Run
         {
             bool merchantPurchase = _demo.Route.Current == RunDemoRoute.Node.Merchant && choice >= 0;
             if (!_demo.ResolveBranch(choice)) return;
+            if (merchantPurchase) _log?.Event("상인 구매", PlayState());
             // 끝난 전투가 지도 뒤 화면을 그리므로 고용·치료한 부하 체력까지 이어지는 값으로 맞춘다.
             _demo.Carryover.ApplyTo(Battle);
             SaveCheckpoint();
@@ -555,6 +583,7 @@ namespace Code.UI.Run
         private void StartRaid(bool detour)
         {
             _raid = _demo.CreateRaid(_raiders, detour);
+            _log?.BattleStarted(NodeLabel(RunDemoRoute.Node.OutpostRaid), (detour ? "우회" : "정면") + " · 파견 " + RaiderNames());
             _trapRoom = -1;
             IsCrisis = false;
             _monitor = new RunCrisisMonitor(_raid);
@@ -592,7 +621,10 @@ namespace Code.UI.Run
             AppendMinions(state, alive: false);
             int maxHeart = Deployment.Encounter.Settings.HeartHealth;
             string warning = won ? null : state.HeartHealth <= 0 ? "심장이 무너졌습니다" : "방어에 실패했습니다";
-            PopupController.Show(PopupRequest.Notice(won ? "시연 런 방어 성공" : "시연 런 패배", _text.ToString(),
+            string body = _text.ToString();
+            // 상태 줄이 같은 글 버퍼를 쓰므로 본문을 먼저 꺼내 둔다.
+            _log?.Finish((won ? "방어 성공" : "패배") + " · " + body.Replace('\n', ' ') + " · " + PlayState());
+            PopupController.Show(PopupRequest.Notice(won ? "시연 런 방어 성공" : "시연 런 패배", body,
                     () => UnityEngine.SceneManagement.SceneManager.LoadScene("Start"), "타이틀로")
                 .WithLines($"심장 {state.HeartHealth}/{maxHeart} · 금화 {state.Gold}", warning)
                 .WithAccent(HudPalette.Accent, "1구역 시연 런 결과"));
@@ -760,7 +792,12 @@ namespace Code.UI.Run
 
         public bool ChangeMana(int room, int amount)
         {
-            if (!IsPreparing) return Battle.SetMana(room, amount);
+            if (!IsPreparing)
+            {
+                if (!Battle.SetMana(room, amount)) return false;
+                _log?.Event("마력", $"{RoomName(room)} {amount}", Battle.Elapsed);
+                return true;
+            }
             if (!Deployment.SetMana(room, amount)) return false;
             Battle.SetMana(room, amount);
             RefreshPreparation();
@@ -814,6 +851,7 @@ namespace Code.UI.Run
         public void StartBattle()
         {
             if (!_flow.StartBattle()) return;
+            _log?.BattleStarted(NodeLabel(_demo.Route.Current), PlaySetup());
             _monitor = new RunCrisisMonitor(Battle);
             BindTrap();
             preparation.Show(false);
@@ -833,8 +871,15 @@ namespace Code.UI.Run
             else _flow.Advance(seconds);
             if (IsResult)
             {
+                RunDemoRoute.Node finished = _demo.Route.Current;
                 if (_raid != null) _demo.ResolveRaid(_raid, _raiders);
                 else _demo.ResolveDefense(Battle);
+                _log?.BattleEnded(NodeLabel(finished), Battle.Outcome switch
+                    {
+                        RunBattleOutcome.Victory => "승리",
+                        RunBattleOutcome.Retreat => "후퇴",
+                        _ => "패배",
+                    }, Battle.Elapsed, PlayBattleState());
                 // 끝난 전투의 경고(돌진 예고 등)가 결과 화면 위에 남지 않게 한다(2026-11-16 원정 중 작은 표기).
                 crisisView.ClearNotice();
                 SaveCheckpoint();
@@ -963,7 +1008,87 @@ namespace Code.UI.Run
         {
             if (IsPreparing || IsResult || !Battle.CanActivateTrap(_trapRoom)) return;
             _queuedTrap = _trapRoom;
+            _log?.Event("함정", "발동", Battle.Elapsed);
             _trapCancelled = false;
+        }
+
+        // ── 플레이 기록 글 ──
+
+        /// <summary>지금 구간 이름. 매 프레임 불리므로 고정 문자열만 돌려준다.</summary>
+        private string PlayPhase()
+        {
+            RunDemoRoute route = _demo.Route;
+            if (_raidSelect != null && _raidSelect.IsOpen) return "원정 파견";
+            if (_raid != null) return IsResult ? "원정 결과" : "원정";
+            if (route.IsFinished && IsResult) return "정산";
+            if (IsPreparing) return route.Current switch
+            {
+                RunDemoRoute.Node.ThiefDefense => "준비 · 도적 침입",
+                RunDemoRoute.Node.SapperDefense => "준비 · 공병 침입",
+                _ => "준비 · 정예 침입",
+            };
+            if (!IsResult) return route.Current switch
+            {
+                RunDemoRoute.Node.ThiefDefense => "전투 · 도적 침입",
+                RunDemoRoute.Node.SapperDefense => "전투 · 공병 침입",
+                _ => "전투 · 정예 침입",
+            };
+            if (routeMap != null && routeMap.IsOpen) return "지도";
+            if (route.CurrentResult == RunDemoRoute.Result.Pending)
+                return route.Current switch
+                {
+                    RunDemoRoute.Node.Merchant => "상인",
+                    RunDemoRoute.Node.StoryEvent => "글 사건",
+                    RunDemoRoute.Node.OutpostRaid => "원정 파견",
+                    _ => "결과 화면",
+                };
+            return !_upkeepDone && PopupController.IsOpen ? "정비" : "결과 화면";
+        }
+
+        /// <summary>이어지는 상태 한 줄: 심장·금화·부하 체력·고장 난 방·산 것.</summary>
+        private string PlayState()
+        {
+            RunBattleCarryover state = _demo.Carryover;
+            if (state == null) return PlayBattleState();
+            _text.Clear().Append("심장 ").Append(state.HeartHealth).Append(" · 금화 ").Append(state.Gold).Append(" · 부하");
+            for (int i = 0; i < state.MinionHealth.Length && i < _demo.Roster.Length; i++)
+                _text.Append(' ').Append(_demo.Roster[i].Combatant.DisplayName).Append(' ').Append(state.MinionHealth[i]);
+            for (int i = 0; i < state.RoomBroken.Length; i++)
+                if (state.RoomBroken[i]) _text.Append(" · 고장 ").Append(RunBattleText.RoomName(Deployment.Encounter.GridLayout[i].Kind));
+            _text.Append(" · 함정 강화 ").Append(_demo.TrapBonus).Append(" · 추가 마력 ").Append(_demo.ExtraCapacity);
+            return _text.ToString();
+        }
+
+        /// <summary>지금 전투 화면의 상태 한 줄(원정이면 파견 부하만).</summary>
+        private string PlayBattleState()
+        {
+            RunBattle battle = Battle;
+            _text.Clear().Append("심장 ").Append(battle.HeartHealth).Append(" · 금화 ").Append(battle.VaultGold).Append(" · 부하");
+            foreach (RunCombatant actor in battle.Combatants)
+                if (actor.Side == RunSide.Minion) _text.Append(' ').Append(actor.Definition.DisplayName).Append(' ').Append(Mathf.Max(0, actor.Health));
+            int intruders = 0, down = 0;
+            foreach (RunCombatant actor in battle.Combatants)
+            {
+                if (actor.Side != RunSide.Intruder) continue;
+                intruders++;
+                if (actor.IsDown) down++;
+            }
+            _text.Append(" · 적 처치 ").Append(down).Append('/').Append(intruders);
+            return _text.ToString();
+        }
+
+        /// <summary>전투 시작 때의 배치와 마력.</summary>
+        private string PlaySetup()
+        {
+            RunBattle battle = Battle;
+            _text.Clear().Append("마력");
+            for (int i = 0; i < battle.Rooms.Count; i++)
+                if (battle.Rooms[i].Mana > 0) _text.Append(' ').Append(RoomName(i)).Append(' ').Append(battle.Rooms[i].Mana);
+            _text.Append(" · 배치");
+            foreach (RunCombatant actor in battle.Combatants)
+                if (actor.Side == RunSide.Minion && actor.IsActive)
+                    _text.Append(' ').Append(actor.Definition.DisplayName).Append('@').Append(battle.RoomOf(actor) >= 0 ? RoomName(battle.RoomOf(actor)) : "복도");
+            return _text.ToString();
         }
 
         public void RefreshDisplay(float seconds)
@@ -972,6 +1097,9 @@ namespace Code.UI.Run
             if (trapControl != null) trapControl.Render(!IsPreparing && !IsResult, _queuedTrap >= 0, _trapCancelled);
         }
         public void LayoutCrisis(Camera camera, RunGridView grid) => crisisView.LayoutLinks(camera, grid, _highlighted);
+
+        /// <summary>전투 감시 밖에서 생긴 일을 한 줄 알림으로 띄운다(지금은 입구 첫 방을 비우는 명령).</summary>
+        public void Notify(string text) => crisisView.Notify(text);
         public void Drag(Vector2 point) => preparation.MoveGhost(point);
         public void EndDrag() => preparation.HideGhost();
     }

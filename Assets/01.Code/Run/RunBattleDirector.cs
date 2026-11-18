@@ -359,7 +359,18 @@ namespace Code.Run
             else if (hoveredRoom >= 0)
             {
                 if (_selected == null) _infoRoom = hoveredRoom;
-                else if (_battle.OrderMove(_selected, hoveredRoom)) _coachMemory?.MarkDone(RunCoachStep.SendMinion);
+                else
+                {
+                    bool entryHeld = RunEntryGuardRules.IsHeld(_battle, _battle.EntryRoom);
+                    if (_battle.OrderMove(_selected, hoveredRoom))
+                    {
+                        _coachMemory?.MarkDone(RunCoachStep.SendMinion);
+                        session.PlayLog?.Event("이동 명령", $"{_selected.Definition.DisplayName} → {session.RoomName(hoveredRoom)}{(_paused ? " (멈춤 중)" : string.Empty)}", _battle.Elapsed);
+                        // 입구 첫 방의 마지막 부하를 빼는 명령이면 매번 알린다(2026-11-17 사용자 목업 승인 A, 첫 판 안내와 달리 경고라 끝나지 않는다).
+                        if (!_battle.IsRaid && entryHeld && !RunEntryGuardRules.IsHeld(_battle, _battle.EntryRoom))
+                            session.Notify("입구 첫 방이 비면 적이 멈추지 않고 지나갑니다");
+                    }
+                }
             }
             RefreshSlow();
         }
@@ -404,6 +415,7 @@ namespace Code.Run
             if (session.IsCrisis) { session.Resume(); _grid.SetHighlights(null); RefreshSlow(); }
             _paused = !_paused;
             if (_paused) _coachMemory?.MarkDone(RunCoachStep.Pause);
+            session.PlayLog?.Pause(_paused, _battle.Elapsed);
             ApplyTime();
         }
 
@@ -412,8 +424,11 @@ namespace Code.Run
             if (session.IsPreparing || session.IsResult) return;
             // 위기는 계속 조작으로만 닫는다. 배속 버튼으로 건너뛰지 않는다.
             if (session.IsCrisis) return;
+            int before = _speed;
             _speed = Mathf.Clamp(speed, 1, 2);
             _paused = false;
+            session.PlayLog?.Pause(false, _battle.Elapsed);
+            if (_speed != before) session.PlayLog?.Event("배속", _speed + "배", _battle.Elapsed);
             ApplyTime();
         }
 
@@ -1001,13 +1016,38 @@ namespace Code.Run
         /// </summary>
         private (string, Color) PlateStatus(RunRoom room)
         {
-            if (_battle.IsRaid || !room.HasSystem) return (string.Empty, HudPalette.TextMuted);
-            if (room.IsBroken) return ("고장", HudPalette.Danger);
-            if (IsRoomUnderAttack(room.Index)) return ("공격받는 중", HudPalette.Danger);
+            if (_battle.IsRaid) return (string.Empty, HudPalette.TextMuted);
+            if (room.HasSystem && room.IsBroken) return ("고장", HudPalette.Danger);
+            if (room.HasSystem && IsRoomUnderAttack(room.Index)) return ("공격받는 중", HudPalette.Danger);
+            if (room.Index == _battle.EntryRoom && TryEntryGuardStatus(out string guard, out Color guardColor))
+                return (guard, guardColor);
+            if (!room.HasSystem) return (string.Empty, HudPalette.TextMuted);
             if (room.Mana > 0 && !_battle.IsConnected(room.Index)) return ("끊김", HudPalette.Warn);
             if (room.Mana == 0) return ("꺼짐", HudPalette.TextMuted);
             if (room.Kind == RunRoomKind.DoorControl && ControlledDoorBroken(room.Index)) return ("문 부서짐", HudPalette.Warn);
             return (string.Empty, HudPalette.TextMuted);
+        }
+
+        /// <summary>
+        /// 입구 첫 방 이름판 글. 준비 화면에서는 늘 규칙을 알리고, 전투 중에는 방이 빌 때만 경고한다
+        /// (2026-11-17 사용자 목업 승인 "A + B", 이 방을 비우면 적이 함정 방에 묶이지 않는다).
+        /// </summary>
+        private bool TryEntryGuardStatus(out string text, out Color color)
+        {
+            bool held = RunEntryGuardRules.IsHeld(_battle, _battle.EntryRoom);
+            if (session.IsPreparing)
+            {
+                // 이름판 한 줄은 한글 6~7자까지 들어간다. 자세한 말은 비우는 순간의 한 줄 알림이 한다(2026-11-17 플레이 확인 뒤 "짧은 문구로").
+                text = held ? "적을 막는 방" : "빔 · 적 통과";
+                color = held ? HudPalette.TextMuted : HudPalette.Warn;
+                return true;
+            }
+            text = null;
+            color = HudPalette.TextMuted;
+            if (held || _battle.Outcome != RunBattleOutcome.Ongoing) return false;
+            text = "빔 · 적 통과";
+            color = HudPalette.Warn;
+            return true;
         }
 
         private (string, Color) RoomStatus(RunRoom room)
