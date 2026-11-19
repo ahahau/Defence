@@ -1099,7 +1099,8 @@ namespace Code.UI.Run
         public void LayoutCrisis(Camera camera, RunGridView grid) => crisisView.LayoutLinks(camera, grid, _highlighted);
 
         /// <summary>전투 감시 밖에서 생긴 일을 한 줄 알림으로 띄운다(지금은 입구 첫 방을 비우는 명령).</summary>
-        public void Notify(string text) => crisisView.Notify(text);
+        /// <summary>다른 위기 알림에 바로 덮이지 않는 한 줄 알림(입구 첫 방 경고).</summary>
+        public void Notify(string text) => crisisView.NotifyPinned(text);
         public void Drag(Vector2 point) => preparation.MoveGhost(point);
         public void EndDrag() => preparation.HideGhost();
     }

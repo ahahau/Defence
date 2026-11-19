@@ -1036,7 +1036,10 @@ namespace Code.Run
         /// </summary>
         private bool TryEntryGuardStatus(out string text, out Color color)
         {
-            bool held = RunEntryGuardRules.IsHeld(_battle, _battle.EntryRoom);
+            // 준비 중에는 옮긴 자리가 배치에만 있다(2026-11-19 화면 확인에서 비워도 "적을 막는 방"으로 나옴).
+            bool held = session.IsPreparing
+                ? RunEntryGuardRules.IsHeld(session.Deployment, _battle, _battle.EntryRoom)
+                : RunEntryGuardRules.IsHeld(_battle, _battle.EntryRoom);
             if (session.IsPreparing)
             {
                 // 이름판 한 줄은 한글 6~7자까지 들어간다. 자세한 말은 비우는 순간의 한 줄 알림이 한다(2026-11-17 플레이 확인 뒤 "짧은 문구로").

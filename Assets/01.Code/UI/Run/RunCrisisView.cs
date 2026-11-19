@@ -23,6 +23,9 @@ namespace Code.UI.Run
 
         private string _normalFooter;
         private float _noticeLeft;
+        private const float NoticeSeconds = 4f;
+        private string _pinned;
+        private float _pinnedLeft;
         private bool _battleMode;
         private bool _legendOpen;
         private UnityEngine.Events.UnityAction _toggle;
@@ -72,7 +75,21 @@ namespace Code.UI.Run
             RefreshLegend();
         }
 
-        public void Notify(string text)
+        /// <summary>한 줄 알림. 붙박은 알림이 떠 있으면 그 아래 줄로 붙인다.</summary>
+        public void Notify(string text) => ShowNotice(_pinnedLeft > 0f ? _pinned + "\n" + text : text);
+
+        /// <summary>
+        /// 다른 알림에 덮이지 않게 잠깐 붙박는 알림. 그동안 오는 알림은 아래 줄에 붙는다
+        /// (2026-11-19 사용자 결정 "입구 알림을 잠깐 지키기", 위기 알림에 0.4초 만에 덮였다).
+        /// </summary>
+        public void NotifyPinned(string text)
+        {
+            _pinned = text;
+            _pinnedLeft = NoticeSeconds;
+            ShowNotice(text);
+        }
+
+        private void ShowNotice(string text)
         {
             notificationText.SetText(text);
             // 한 줄 알림이라 칸 높이를 글 줄 수에 맞춘다(2026-11-12 사용자 요청 "알림도 줄이기"). 위아래 여백은 글 칸 위치와 같다.
@@ -83,17 +100,19 @@ namespace Code.UI.Run
                 box.sizeDelta = new Vector2(box.sizeDelta.x, lines - body.anchoredPosition.y * 2f);
             }
             notification.SetActive(true);
-            _noticeLeft = 4f;
+            _noticeLeft = NoticeSeconds;
         }
 
         public void ClearNotice()
         {
             _noticeLeft = 0f;
+            _pinnedLeft = 0f;
             notification.SetActive(false);
         }
 
         public void AdvanceDisplay(float seconds)
         {
+            if (_pinnedLeft > 0f) _pinnedLeft = Mathf.Max(0f, _pinnedLeft - seconds);
             if (_noticeLeft <= 0f) return;
             _noticeLeft = Mathf.Max(0f, _noticeLeft - seconds);
             if (_noticeLeft <= 0f) notification.SetActive(false);
