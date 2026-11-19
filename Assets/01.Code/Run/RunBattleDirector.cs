@@ -35,6 +35,8 @@ namespace Code.Run
         [SerializeField, Min(0.3f), Tooltip("머리 위 표시 높이(인물 로컬 단위).")] private float headHeight = 1.1f;
         [SerializeField, Range(0f, 0.4f), Tooltip("왼쪽 부하 목록이 가리는 화면 몫.")] private float leftHudFraction = 0.12f;
         [SerializeField, Range(0f, 0.4f), Tooltip("위 HUD가 가리는 화면 몫.")] private float topHudFraction = 0.1f;
+        // 런 길이를 늘리려고 1배속의 실제 속도를 낮췄다(2026-11-18 사용자 결정 "3/3/3 + 0.75배"). 2배 버튼은 이 값의 두 배다.
+        [SerializeField, Range(0.25f, 1f), Tooltip("1배속일 때의 timeScale. 2배속은 이 값의 두 배다.")] private float baseTimeScale = 0.75f;
 
         private const float RefreshSeconds = 0.2f;
         private const float DownVisibleSeconds = 0.8f;
@@ -435,7 +437,7 @@ namespace Code.Run
         /// <summary>멈춤·배속을 timeScale로 건다. 그림 애니메이션도 함께 멈춘다(프로젝트 기본 timeScale은 0이다).</summary>
         private void ApplyTime()
         {
-            Time.timeScale = session.IsPreparing || _paused ? 0f : _speed;
+            Time.timeScale = session.IsPreparing || _paused ? 0f : _speed * baseTimeScale;
             hud.ShowTimeControls(!session.IsPreparing && _paused, _speed);
         }
 
