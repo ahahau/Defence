@@ -284,6 +284,8 @@ namespace Code.Run
                 foreach (RunRoom room in _rooms)
                 {
                     if (!IsPowered(room.Index)) continue;
+                    // 비교용 켜기 값: 입구 첫 방은 건너뛰고 안쪽 방을 노린다(2026-11-19 사용자 "공병이 입구 방을 지나침" 시뮬레이션).
+                    if (Settings.SappersPassEntry && room.Index == EntryRoom) continue;
                     float distance = Distance(intruder.Position, CenterOf(room.Index));
                     if (distance < best - Epsilon)
                     {
@@ -292,6 +294,7 @@ namespace Code.Run
                     }
                 }
                 if (nearest >= 0) return nearest;
+                if (Settings.SappersPassEntry && IsPowered(EntryRoom)) return EntryRoom;
             }
             if (intruder.Definition.Goal == RunGoal.Room)
             {
@@ -797,7 +800,8 @@ namespace Code.Run
         {
             if (!Settings.RoomGoalsPassDefenders || intruder.Telegraph.IsActive) return false;
             bool roomSeeker = intruder.Definition.IntruderRole == RunIntruderRole.Thief
-                || intruder.Definition.Goal == RunGoal.Vault || intruder.Definition.Goal == RunGoal.Room;
+                || intruder.Definition.Goal == RunGoal.Vault || intruder.Definition.Goal == RunGoal.Room
+                || (Settings.SappersPassEntry && intruder.Definition.IntruderRole == RunIntruderRole.Sapper);
             if (!roomSeeker) return false;
             if (intruder.IsEscaping)
             {
