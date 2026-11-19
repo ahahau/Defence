@@ -953,8 +953,8 @@ namespace Code.UI.Run
                 case RunCrisisKind.RoomUnderAttack: _notice.Append(room).Append(" 공격"); break;
                 case RunCrisisKind.DoorUnderAttack: _notice.Append(room).Append(" 문"); break;
                 default:
-                    _notice.Append(actor.Telegraph.Skill.DisplayName).Append(' ')
-                        .Append(actor.Telegraph.RemainingSeconds.ToString("0.0")).Append('초');
+                    // 알림은 한 번 쓰고 바꾸지 않아 남은 초가 멈춰 보였다. 줄어드는 초는 평면도 예고 표시에 맡긴다(2026-11-19 사용자 결정).
+                    _notice.Append(actor.Telegraph.Skill.DisplayName).Append(" 예고");
                     break;
             }
         }
