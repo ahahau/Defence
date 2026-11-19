@@ -370,7 +370,7 @@ namespace Code.Run
                         session.PlayLog?.Event("이동 명령", $"{_selected.Definition.DisplayName} → {session.RoomName(hoveredRoom)}{(_paused ? " (멈춤 중)" : string.Empty)}", _battle.Elapsed);
                         // 입구 첫 방의 마지막 부하를 빼는 명령이면 매번 알린다(2026-11-17 사용자 목업 승인 A, 첫 판 안내와 달리 경고라 끝나지 않는다).
                         if (!_battle.IsRaid && entryHeld && !RunEntryGuardRules.IsHeld(_battle, _battle.EntryRoom))
-                            session.Notify("입구 첫 방이 비면 적이 멈추지 않고 지나갑니다");
+                            session.Notify("입구 첫 방이 비면 적이 지나갑니다");
                     }
                 }
             }
