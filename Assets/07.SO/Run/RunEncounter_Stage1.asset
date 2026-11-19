@@ -113,6 +113,5 @@ MonoBehaviour:
     <SapperRoomDamageMultiplier>k__BackingField: 2
     <RoomGoalsPassDefenders>k__BackingField: 1
     <EscapingThievesPass>k__BackingField: 0
-    <RoomAttackerDamageTakenMultiplier>k__BackingField: 1
-    <RoomAttackerStaysExposed>k__BackingField: 0
+    <SappersPassEntry>k__BackingField: 1
   <DemoEliteAppearance>k__BackingField: {fileID: 11400000, guid: daa1222371f323d4c944f6fe5d34916a, type: 2}

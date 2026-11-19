@@ -177,7 +177,8 @@ namespace Code.UI.Run
                     _text.Append("굴 속 거래 · 대가를 내고 강화나 유물을 얻습니다.");
                     break;
                 case RunDemoRoute.Node.SapperDefense:
-                    AppendParty(2).Append("\n공병이 켜진 방을 폭파합니다.");
+                    AppendParty(2).Append(_demo.DefenseSettings(2).SappersPassEntry
+                        ? "\n공병이 입구를 지나쳐 안쪽의 켜진 방을 폭파합니다." : "\n공병이 켜진 방을 폭파합니다.");
                     break;
                 case RunDemoRoute.Node.OutpostRaid:
                     _text.Append("부하 최대 3명 · 진지 대장 처치\n지키는 적 · ").Append(_demo.RaidDefenders);

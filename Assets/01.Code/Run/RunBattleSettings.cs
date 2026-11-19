@@ -82,6 +82,8 @@ namespace Code.Run
         public bool RoomGoalsPassDefenders { get; private set; }
         [field: SerializeField, Tooltip("켜면 금화를 들고 도망치는 도적도 부하를 지나친다.")]
         public bool EscapingThievesPass { get; private set; }
+        [field: SerializeField, Tooltip("켜면 공병이 입구 첫 방을 노리지 않고 부하를 지나쳐 그다음 켜진 방으로 간다. 비교용, 기본 꺼짐.")]
+        public bool SappersPassEntry { get; private set; }
 
         internal int TrapDamageBonus { get; private set; }
 

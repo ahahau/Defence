@@ -763,7 +763,9 @@ namespace Code.UI.Run
             return final ? withFinal : withoutFinal;
         }
 
-        private static string GoalTarget(RunCombatantSO data) => data.IntruderRole == RunIntruderRole.Sapper ? "켜진 방"
+        // 공병이 입구 첫 방을 지나치면 "안쪽"을 붙인다(2026-11-19 사용자 결정 "공병 통과 켜서 적용").
+        private string GoalTarget(RunCombatantSO data) => data.IntruderRole == RunIntruderRole.Sapper
+                ? (Deployment.Encounter.Settings.SappersPassEntry ? "안쪽 켜진 방" : "켜진 방")
             : data.Goal == RunGoal.Vault ? "금고"
             : data.Goal == RunGoal.Room ? RunBattleText.RoomName(data.GoalRoomKind)
             : "심장";
