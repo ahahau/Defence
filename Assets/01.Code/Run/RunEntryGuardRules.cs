@@ -17,5 +17,17 @@ namespace Code.Run
             }
             return false;
         }
+
+        /// <summary>준비 중에는 평면도가 배치대로 그리고 전투 인물은 움직이지 않으므로 배치에서 본다.</summary>
+        public static bool IsHeld(RunDeployment deployment, RunBattle battle, int room)
+        {
+            if (deployment == null || battle == null || room < 0) return false;
+            for (int i = 0; i < deployment.MinionCount && i < battle.Combatants.Count; i++)
+            {
+                RunCombatant minion = battle.Combatants[i];
+                if (minion.Side == RunSide.Minion && minion.IsActive && deployment.RoomOf(i) == room) return true;
+            }
+            return false;
+        }
     }
 }
