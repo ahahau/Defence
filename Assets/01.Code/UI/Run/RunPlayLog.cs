@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace Code.UI.Run
@@ -15,6 +16,9 @@ namespace Code.UI.Run
     public sealed class RunPlayLog : IDisposable
     {
         private const string FolderName = "playlogs";
+        // 화면 글(정산 본문 등)을 그대로 받으면 TMP 서식 태그가 섞인다. 기록에는 글만 남긴다.
+        private static readonly Regex RichTag = new(@"</?(nobr|color|b|i|u|s|size|mark|sup|sub|br|alpha|font|style)\b[^>]*>",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private readonly StreamWriter _events;
         private readonly string _summaryPath;
@@ -106,7 +110,7 @@ namespace Code.UI.Run
             if (battleSeconds >= 0f) _line.Append(",\"battle\":").Append(battleSeconds.ToString("0.00", CultureInfo.InvariantCulture));
             _line.Append(",\"phase\":"); AppendJson(_phase ?? string.Empty);
             _line.Append(",\"kind\":"); AppendJson(kind);
-            _line.Append(",\"detail\":"); AppendJson(detail ?? string.Empty);
+            _line.Append(",\"detail\":"); AppendJson(Plain(detail) ?? string.Empty);
             _line.Append('}');
             try { _events.WriteLine(_line.ToString()); }
             catch (Exception exception) { Debug.LogWarning($"플레이 기록 쓰기 실패: {exception.Message}"); }
@@ -150,15 +154,15 @@ namespace Code.UI.Run
                 .Append($" · 실제 {Clock(realSeconds)} · 게임 {battleSeconds:0.0}초")
                 .Append($" · 멈춤 {_pauses}번 {Clock(_pausedSeconds)}")
                 .Append($" · 이동 명령 {_orders} · 마력 바꿈 {_manaChanges} · 함정 {_traps} · 배속 바꿈 {_speedChanges}\n")
-                .Append("  ").Append(state).Append('\n');
+                .Append("  ").Append(Plain(state)).Append('\n');
         }
 
         /// <summary>런이 끝났다(정산). 요약을 쓴다.</summary>
         public void Finish(string result)
         {
             if (_disposed || _result != null) return;
-            _result = result;
-            Event("런 끝", result);
+            _result = Plain(result);
+            Event("런 끝", _result);
             WriteSummary();
         }
 
@@ -196,6 +200,8 @@ namespace Code.UI.Run
             try { File.WriteAllText(_summaryPath, text.ToString(), new UTF8Encoding(false)); }
             catch (Exception exception) { Debug.LogWarning($"플레이 기록 요약 쓰기 실패: {exception.Message}"); }
         }
+
+        private static string Plain(string text) => string.IsNullOrEmpty(text) || text.IndexOf('<') < 0 ? text : RichTag.Replace(text, string.Empty);
 
         private static string Clock(double seconds)
         {
